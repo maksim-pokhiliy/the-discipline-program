@@ -65,13 +65,6 @@ tasks:
     cmds:
       - pnpm typecheck
 
-  deploy:
-    desc: "Deploy app to Vercel (default: marketing)"
-    prompt: "Are you sure you want to deploy '{{.APP}}' to Vercel?"
-    cmds:
-      - task: typecheck
-      - vercel --prod
-
   clean-start:
     desc: "Clean project, install dependencies, start dev server"
     cmds:
