@@ -1,0 +1,80 @@
+version: "3"
+
+vars:
+  DEFAULT_APP: marketing
+  APP: "{{.APP | default .DEFAULT_APP}}"
+
+tasks:
+  install:
+    desc: "Install all dependencies"
+    cmds:
+      - pnpm install
+
+  ci:
+    desc: "Install dependencies in CI mode (frozen lockfile)"
+    cmds:
+      - pnpm install --frozen-lockfile
+
+  clean:
+    desc: "Remove node_modules, .turbo, .next"
+    cmds:
+      - rm -rf node_modules
+      - rm -rf .turbo
+      - find . -name "node_modules" -type d -prune -exec rm -rf '{}' +
+      - find . -name ".next" -type d -prune -exec rm -rf '{}' +
+      - pnpm store prune
+
+  dev:
+    desc: "Run dev server for selected app (default: marketing)"
+    cmds:
+      - pnpm --filter {{.APP}} dev
+
+  build:
+    desc: "Build the entire repo"
+    cmds:
+      - pnpm build
+
+  preview:
+    desc: "Build + start app in prod mode (default: marketing)"
+    cmds:
+      - pnpm --filter {{.APP}} build
+      - pnpm --filter {{.APP}} start
+
+  lint:
+    desc: "Run lint with fix across all packages"
+    cmds:
+      - pnpm lint
+
+  lint-check:
+    desc: "Run lint in check mode (no fix)"
+    cmds:
+      - pnpm lint:check
+
+  format:
+    desc: "Format all files"
+    cmds:
+      - pnpm format
+
+  format-check:
+    desc: "Check formatting without writing"
+    cmds:
+      - pnpm format:check
+
+  typecheck:
+    desc: "Run type checks across all packages"
+    cmds:
+      - pnpm typecheck
+
+  deploy:
+    desc: "Deploy app to Vercel (default: marketing)"
+    prompt: "Are you sure you want to deploy '{{.APP}}' to Vercel?"
+    cmds:
+      - task: typecheck
+      - vercel --prod
+
+  clean-start:
+    desc: "Clean project, install dependencies, start dev server"
+    cmds:
+      - task: clean
+      - task: ci
+      - task: dev

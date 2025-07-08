@@ -1,0 +1,63 @@
+import { Box } from "@mui/material";
+import { NextProvider } from "@repo/mui";
+import { Metadata } from "next";
+
+import { QueryProvider } from "@app/lib/providers/query-provider";
+import { Footer } from "@app/shared/components/layout/footer";
+import { Header } from "@app/shared/components/layout/header";
+import { StructuredData } from "@app/shared/components/seo";
+import { DOM_ANCHORS } from "@app/shared/constants/dom-anchors";
+import { SEO_CONFIG } from "@app/shared/constants/seo-config";
+
+export const metadata: Metadata = {
+  title: SEO_CONFIG.defaultTitle,
+  description: SEO_CONFIG.defaultDescription,
+  keywords: SEO_CONFIG.defaultKeywords,
+  metadataBase: new URL(SEO_CONFIG.siteUrl),
+  openGraph: {
+    type: "website",
+    siteName: SEO_CONFIG.siteName,
+    title: SEO_CONFIG.defaultTitle,
+    description: SEO_CONFIG.defaultDescription,
+    images: [SEO_CONFIG.defaultOgImage],
+  },
+  twitter: {
+    card: "summary_large_image",
+    site: SEO_CONFIG.twitterHandle,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+type RootLayoutProps = Readonly<{
+  children: React.ReactElement;
+}>;
+
+export default function RootLayout({ children }: RootLayoutProps) {
+  return (
+    <html lang="en">
+      <head>
+        <StructuredData type="website" />
+        <StructuredData type="organization" />
+      </head>
+
+      <body id={DOM_ANCHORS.BODY}>
+        <NextProvider>
+          <QueryProvider>
+            <>
+              <Header />
+
+              <Box component="main" sx={{ minHeight: "100vh" }}>
+                {children}
+              </Box>
+
+              <Footer />
+            </>
+          </QueryProvider>
+        </NextProvider>
+      </body>
+    </html>
+  );
+}

@@ -1,0 +1,16 @@
+module.exports = {
+  plugins: ["prettier-plugin-sort-json"],
+  arrowParens: "always",
+  bracketSameLine: false,
+  bracketSpacing: true,
+  endOfLine: "lf",
+  jsxSingleQuote: false,
+  printWidth: 100,
+  semi: true,
+  singleQuote: false,
+  tabWidth: 2,
+  trailingComma: "all",
+  useTabs: false,
+  jsonRecursiveSort: true,
+  proseWrap: "preserve",
+};

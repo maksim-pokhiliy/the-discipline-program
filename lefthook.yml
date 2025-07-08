@@ -1,0 +1,23 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint:
+      files: git diff --name-only --staged
+      glob: "{src,public}/**/*.{js,ts,jsx,tsx,d.ts}"
+      run: pnpm eslint --fix --cache --cache-location node_modules/.cache/.eslint {files}
+
+    format:
+      files: git diff --name-only --staged
+      glob: "{src,public}/**/*.{js,ts,jsx,tsx,json}"
+      run: pnpm prettier --write {files}
+
+    types:
+      files: git diff --name-only --staged
+      glob: "{src,public}/**/*.{ts,tsx}"
+      run: pnpm tsc --noEmit --incremental
+
+commit-msg:
+  parallel: true
+  commands:
+    commitlint:
+      run: pnpm commitlint --edit --verbose
