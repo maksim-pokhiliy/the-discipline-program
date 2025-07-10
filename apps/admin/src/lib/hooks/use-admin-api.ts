@@ -3,6 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { adminApi } from "../api";
 
 export const useAdminApi = {
+  useDashboardData: () =>
+    useQuery({
+      queryKey: ["admin", "dashboard"],
+      queryFn: adminApi.dashboard.getData,
+    }),
+
   useDashboardStats: () =>
     useQuery({
       queryKey: ["admin", "dashboard", "stats"],
@@ -28,6 +34,7 @@ export const useAdminApi = {
     }),
 };
 
+export const useDashboardData = useAdminApi.useDashboardData;
 export const useDashboardStats = useAdminApi.useDashboardStats;
 export const usePrograms = useAdminApi.usePrograms;
 export const useReviews = useAdminApi.useReviews;

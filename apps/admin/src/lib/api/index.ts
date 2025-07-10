@@ -1,10 +1,12 @@
-import { Program, Review, DashboardStats, ContactSubmission } from "@repo/api";
+import { Program, Review, DashboardData, ContactSubmission } from "@repo/api";
 
 import { adminApiClient } from "./client";
 
 export const adminApi = {
   dashboard: {
-    getStats: (): Promise<DashboardStats> => adminApiClient.request("/api/admin/dashboard/stats"),
+    getData: (): Promise<DashboardData> => adminApiClient.request("/api/admin/dashboard"),
+    getStats: (): Promise<DashboardData["stats"]> =>
+      adminApiClient.request("/api/admin/dashboard/stats"),
   },
 
   programs: {
