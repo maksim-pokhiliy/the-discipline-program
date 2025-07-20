@@ -5,11 +5,11 @@ import { Stack } from "@mui/material";
 import { useAboutPage } from "@app/lib/hooks/use-marketing-api";
 import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
 
-import { AboutCredentialsSection } from "./components/about-credentials";
-import { AboutCTASection } from "./components/about-cta";
-import { AboutHeroSection } from "./components/about-hero";
-import { AboutJourneySection } from "./components/about-journey";
-import { AboutPersonalSection } from "./components/about-personal";
+import { AboutCredentialsSection } from "./sections/about-credentials";
+import { AboutCTASection } from "./sections/about-cta";
+import { AboutHeroSection } from "./sections/about-hero";
+import { AboutJourneySection } from "./sections/about-journey";
+import { AboutPersonalSection } from "./sections/about-personal";
 
 export const AboutPage = () => {
   const { data, isLoading, error } = useAboutPage();

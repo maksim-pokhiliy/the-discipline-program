@@ -5,8 +5,8 @@ import { Stack } from "@mui/material";
 import { usePrograms } from "@app/lib/hooks/use-admin-api";
 import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
 
-import { ProgramsHeaderSection } from "./components/programs-header";
-import { ProgramsTableSection } from "./components/programs-table-section";
+import { ProgramsHeaderSection } from "./sections/programs-header";
+import { ProgramsTableSection } from "./sections/programs-table-section";
 
 export const ProgramsPage = () => {
   const { data, isLoading, error } = usePrograms();

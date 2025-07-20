@@ -7,11 +7,11 @@ import { useHomePage } from "@app/lib/hooks/use-marketing-api";
 import { StructuredData } from "@app/shared/components/seo";
 import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
 
-import { HomeFeaturesSection } from "./components/home-features";
-import { HomeFinalCTASection } from "./components/home-final-cta-section";
-import { HomeHeroSection } from "./components/home-hero";
-import { HomeProgramsPreview } from "./components/home-programs-preview";
-import { HomeReviewsSection } from "./components/home-reviews";
+import { HomeFeaturesSection } from "./sections/home-features";
+import { HomeFinalCTASection } from "./sections/home-final-cta-section";
+import { HomeHeroSection } from "./sections/home-hero";
+import { HomeProgramsPreview } from "./sections/home-programs-preview";
+import { HomeReviewsSection } from "./sections/home-reviews";
 
 export const HomePage = () => {
   const { data, isLoading, error } = useHomePage();

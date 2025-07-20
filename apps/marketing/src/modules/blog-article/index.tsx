@@ -9,9 +9,9 @@ import { StructuredData } from "@app/shared/components/seo";
 import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
 import { SEO_CONFIG } from "@app/shared/constants/seo-config";
 
-import { BlogArticleContent } from "./components/blog-article-content";
-import { BlogArticleHero } from "./components/blog-article-hero";
-import { BlogArticleRelated } from "./components/blog-article-related";
+import { BlogArticleContent } from "./sections/blog-article-content";
+import { BlogArticleHero } from "./sections/blog-article-hero";
+import { BlogArticleRelated } from "./sections/blog-article-related";
 
 export const BlogArticlePage = () => {
   const { slug } = useParams() as { slug: string };

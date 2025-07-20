@@ -8,9 +8,9 @@ import { usePaymentOrder } from "@app/lib/hooks/use-payment-order";
 import { StructuredData } from "@app/shared/components/seo";
 import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
 
-import { PaymentSuccessActionsSection } from "./components/payment-success-actions";
-import { PaymentSuccessDetailsSection } from "./components/payment-success-details";
-import { PaymentSuccessHeroSection } from "./components/payment-success-hero";
+import { PaymentSuccessActionsSection } from "./sections/payment-success-actions";
+import { PaymentSuccessDetailsSection } from "./sections/payment-success-details";
+import { PaymentSuccessHeroSection } from "./sections/payment-success-hero";
 
 export const PaymentSuccessPage = () => {
   const searchParams = useSearchParams();

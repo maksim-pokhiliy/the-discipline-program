@@ -5,6 +5,7 @@ export const MuiCard: Components<Theme>["MuiCard"] = {
     root: ({ theme }) => ({
       padding: theme.spacing(2),
       border: `2px solid ${theme.palette.divider}`,
+      height: "100%",
     }),
   },
 };

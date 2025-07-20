@@ -7,9 +7,9 @@ import { useProgramsPage } from "@app/lib/hooks/use-marketing-api";
 import { StructuredData } from "@app/shared/components/seo";
 import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
 
-import { ProgramsCTA } from "./components/programs-cta";
-import { ProgramsGridSection } from "./components/programs-grid";
-import { ProgramsHeroSection } from "./components/programs-hero";
+import { ProgramsCTA } from "./sections/programs-cta";
+import { ProgramsGridSection } from "./sections/programs-grid";
+import { ProgramsHeroSection } from "./sections/programs-hero";
 
 export const ProgramsPage = () => {
   const { data, isLoading, error } = useProgramsPage();

@@ -5,8 +5,6 @@ import { adminApiClient } from "./client";
 export const adminApi = {
   dashboard: {
     getData: (): Promise<DashboardData> => adminApiClient.request("/api/admin/dashboard"),
-    getStats: (): Promise<DashboardData["stats"]> =>
-      adminApiClient.request("/api/admin/dashboard/stats"),
   },
 
   programs: {

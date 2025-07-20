@@ -1,33 +1,61 @@
-// packages/api/src/types/dashboard.ts
-export interface DashboardStats {
-  programsCount: number;
-  reviewsCount: number;
-  blogPostsCount: number;
-  totalRevenue: number;
-  contactsCount: number;
-  ordersCount: number;
+import { OrderStatus } from "@prisma/client";
+
+export interface ContentStats {
+  programs: {
+    total: number;
+    active: number;
+    inactive: number;
+  };
+  reviews: {
+    total: number;
+    active: number;
+    featured: number;
+  };
+  blogPosts: {
+    total: number;
+    published: number;
+    drafts: number;
+    featured: number;
+  };
+  contactSubmissions: {
+    total: number;
+    new: number;
+    processed: number;
+  };
 }
 
-export interface RecentActivityItem {
-  id: string;
-  type: "contact" | "order" | "review" | "blog";
-  title: string;
-  subtitle: string;
-  timestamp: string;
-  status?: string;
-  amount?: number;
-  currency?: string;
-  rating?: number;
-  href?: string;
+export interface BusinessStats {
+  revenue: {
+    total: number;
+    thisMonth: number;
+    thisWeek: number;
+  };
+  orders: {
+    total: number;
+    completed: number;
+    failed: number;
+    processing: number;
+  };
+  averageOrderValue: number;
+  conversionRate: number;
+  topPrograms: Array<{
+    id: string;
+    name: string;
+    orderCount: number;
+    revenue: number;
+  }>;
+  recentOrders: Array<{
+    id: string;
+    programName: string;
+    amount: number;
+    currency: string;
+    customerEmail: string;
+    status: OrderStatus;
+    createdAt: string;
+  }>;
 }
 
 export interface DashboardData {
-  stats: DashboardStats;
-  recentActivity: RecentActivityItem[];
-  quickStats: {
-    newContactsCount: number;
-    pendingOrdersCount: number;
-    unpublishedPostsCount: number;
-    featuredReviewsCount: number;
-  };
+  contentStats: ContentStats;
+  businessStats: BusinessStats;
 }

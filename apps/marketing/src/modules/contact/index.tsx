@@ -7,10 +7,10 @@ import { useContactPage } from "@app/lib/hooks/use-marketing-api";
 import { StructuredData } from "@app/shared/components/seo";
 import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
 
-import { ContactDirectInfo } from "./components/contact-direct-info";
-import { ContactFAQ } from "./components/contact-faq";
-import { ContactForm } from "./components/contact-form";
-import { ContactHero } from "./components/contact-hero";
+import { ContactDirectInfo } from "./sections/contact-direct-info";
+import { ContactFAQ } from "./sections/contact-faq";
+import { ContactForm } from "./sections/contact-form";
+import { ContactHero } from "./sections/contact-hero";
 
 export const ContactPage = () => {
   const { data, isLoading, error } = useContactPage();
