@@ -7,9 +7,9 @@ import { useSearchParams } from "next/navigation";
 import { StructuredData } from "@app/shared/components/seo";
 import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
 
-import { PaymentErrorActionsSection } from "./components/payment-error-actions";
-import { PaymentErrorDetailsSection } from "./components/payment-error-details";
-import { PaymentErrorHeroSection } from "./components/payment-error-hero";
+import { PaymentErrorActionsSection } from "./sections/payment-error-actions";
+import { PaymentErrorDetailsSection } from "./sections/payment-error-details";
+import { PaymentErrorHeroSection } from "./sections/payment-error-hero";
 
 export const PaymentErrorPage = () => {
   const searchParams = useSearchParams();

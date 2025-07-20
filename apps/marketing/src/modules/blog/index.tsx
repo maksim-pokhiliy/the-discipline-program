@@ -5,9 +5,9 @@ import { Stack } from "@mui/material";
 import { useBlogPage } from "@app/lib/hooks/use-marketing-api";
 import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
 
-import { BlogFeaturedSection } from "./components/blog-featured";
-import { BlogHeroSection } from "./components/blog-hero";
-import { BlogPostsGrid } from "./components/blog-posts-grid";
+import { BlogFeaturedSection } from "./sections/blog-featured";
+import { BlogHeroSection } from "./sections/blog-hero";
+import { BlogPostsGrid } from "./sections/blog-posts-grid";
 
 export const BlogPage = () => {
   const { data, isLoading, error } = useBlogPage();

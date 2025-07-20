@@ -9,7 +9,7 @@ import { HideOnScroll } from "./hide-on-scroll";
 import { Navigation } from "./navigation";
 
 export const Header = () => {
-  const isMobile = useMediaQuery((theme) => theme.breakpoints.between("xs", "sm"));
+  const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
 
   return (
     <HideOnScroll>

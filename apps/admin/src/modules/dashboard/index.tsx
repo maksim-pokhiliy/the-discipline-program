@@ -1,13 +1,13 @@
 "use client";
 
-import { Stack, Grid } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import { useDashboardData } from "@app/lib/hooks/use-admin-api";
 import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
 
-import { DashboardStatsSection } from "./components/dashboard-stats";
-import { QuickActionsSection } from "./components/quick-actions";
-import { RecentActivitySection } from "./components/recent-activity";
+import { BusinessStatsSection } from "./sections/business-stats-section";
+import { ContentStatsSection } from "./sections/content-stats-section";
+import { QuickActionsSection } from "./sections/quick-actions-section";
 
 export const DashboardPage = () => {
   const { data, isLoading, error } = useDashboardData();
@@ -20,18 +20,10 @@ export const DashboardPage = () => {
       loadingMessage="Loading dashboard..."
     >
       {(data) => (
-        <Stack spacing={6} sx={{ p: 3 }}>
-          <DashboardStatsSection stats={data.stats} />
-
-          <Grid container spacing={4}>
-            <Grid size={{ xs: 12, lg: 8 }}>
-              <RecentActivitySection activities={data.recentActivity} />
-            </Grid>
-
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <QuickActionsSection quickStats={data.quickStats} />
-            </Grid>
-          </Grid>
+        <Stack>
+          <ContentStatsSection contentStats={data.contentStats} />
+          <BusinessStatsSection businessStats={data.businessStats} />
+          <QuickActionsSection />
         </Stack>
       )}
     </QueryWrapper>
