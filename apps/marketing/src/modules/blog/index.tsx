@@ -17,7 +17,9 @@ export const BlogPage = () => {
       {(data) => (
         <Stack spacing={0}>
           <BlogHeroSection hero={data.hero} />
+
           {data.featuredPost && <BlogFeaturedSection featuredPost={data.featuredPost} />}
+
           <BlogPostsGrid posts={data.posts} categories={data.categories} />
         </Stack>
       )}

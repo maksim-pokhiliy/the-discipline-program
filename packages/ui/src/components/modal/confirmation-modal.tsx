@@ -1,4 +1,12 @@
-import { DialogActions, Button, Typography, Box, CircularProgress, Alert } from "@mui/material";
+import {
+  DialogActions,
+  Button,
+  Typography,
+  Box,
+  CircularProgress,
+  Alert,
+  Stack,
+} from "@mui/material";
 import WarningIcon from "@mui/icons-material/Warning";
 import ErrorIcon from "@mui/icons-material/Error";
 import InfoIcon from "@mui/icons-material/Info";
@@ -62,29 +70,28 @@ export const ConfirmationModal = ({
       maxWidth="xs"
     >
       <Box sx={{ p: 3 }}>
-        <Box
+        <Stack
+          spacing={2}
+          direction="row"
           sx={{
-            display: "flex",
             alignItems: "flex-start",
-            gap: 2,
             mb: 3,
           }}
         >
-          <Box
+          <Stack
             sx={(theme) => ({
-              display: "flex",
               alignItems: "center",
               justifyContent: "center",
               width: 48,
               height: 48,
               borderRadius: "50%",
               backgroundColor: `${config.color}.light`,
-              color: theme.palette.mode === "dark" ? "common.white" : `${config.color}.dark`,
+              color: "common.white",
               flexShrink: 0,
             })}
           >
             <IconComponent />
-          </Box>
+          </Stack>
 
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>
             <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
@@ -97,7 +104,7 @@ export const ConfirmationModal = ({
               </Typography>
             )}
           </Box>
-        </Box>
+        </Stack>
 
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
@@ -105,7 +112,7 @@ export const ConfirmationModal = ({
           </Alert>
         )}
 
-        <DialogActions sx={{ p: 0, gap: 2 }}>
+        <DialogActions sx={(theme) => ({ p: theme.spacing(2, 0, 0), gap: 2 })}>
           <Button
             onClick={onClose}
             disabled={isConfirming}

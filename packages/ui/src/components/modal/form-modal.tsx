@@ -42,11 +42,7 @@ export const FormModal = ({
       disableBackdropClick={shouldDisableClose}
       disableEscapeKeyDown={shouldDisableEscape}
     >
-      <Box
-        component="form"
-        onSubmit={handleSubmit}
-        sx={{ display: "flex", flexDirection: "column" }}
-      >
+      <Stack component="form" onSubmit={handleSubmit}>
         <Box sx={{ p: 3, flexGrow: 1 }}>
           <Stack spacing={3}>
             {error && (
@@ -87,7 +83,7 @@ export const FormModal = ({
             </Button>
           </DialogActions>
         )}
-      </Box>
+      </Stack>
     </BaseModal>
   );
 };

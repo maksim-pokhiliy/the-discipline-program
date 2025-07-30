@@ -26,14 +26,15 @@ export const ContactFAQ = ({ faq }: ContactFAQProps) => {
           >
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
-              sx={{
+              sx={(theme) => ({
                 "& .MuiAccordionSummary-content": {
-                  margin: "16px 0",
+                  margin: theme.spacing(4, 0),
                 },
+
                 "&.Mui-expanded": {
                   minHeight: "auto",
                 },
-              }}
+              })}
             >
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 {item.question}
@@ -41,7 +42,7 @@ export const ContactFAQ = ({ faq }: ContactFAQProps) => {
             </AccordionSummary>
 
             <AccordionDetails sx={{ pt: 0 }}>
-              <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+              <Typography variant="body1" color="text.secondary">
                 {item.answer}
               </Typography>
             </AccordionDetails>

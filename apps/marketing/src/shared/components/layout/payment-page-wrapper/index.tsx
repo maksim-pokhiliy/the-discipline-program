@@ -21,6 +21,7 @@ export const PaymentPageWrapper = ({
           spacing={2}
         >
           <CircularProgress size={20} />
+
           <Typography variant="body1">{loadingMessage}</Typography>
         </Stack>
       }

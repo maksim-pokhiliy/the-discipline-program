@@ -1,4 +1,4 @@
-import { Dialog, DialogTitle, DialogContent, IconButton, Box } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, IconButton, Box, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { ReactNode } from "react";
 
@@ -47,18 +47,16 @@ export const BaseModal = ({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          pr: 1,
         }}
       >
-        <Box component="span" sx={{ fontWeight: 600 }}>
-          {title}
-        </Box>
+        <Typography>{title}</Typography>
 
         <IconButton
           onClick={onClose}
           size="small"
           sx={{
             color: "text.secondary",
+
             "&:hover": {
               backgroundColor: "action.hover",
             },
@@ -68,7 +66,7 @@ export const BaseModal = ({
         </IconButton>
       </DialogTitle>
 
-      <DialogContent sx={{ p: 0 }}>{children}</DialogContent>
+      <DialogContent>{children}</DialogContent>
     </Dialog>
   );
 };

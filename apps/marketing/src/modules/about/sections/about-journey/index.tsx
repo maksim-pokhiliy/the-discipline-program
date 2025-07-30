@@ -14,10 +14,10 @@ export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
         <Box
           sx={{
             position: "absolute",
-            left: { xs: "20px", md: "50%" },
+            left: { xs: 20, md: "50%" },
             top: 0,
             bottom: 0,
-            width: "2px",
+            width: 4,
             backgroundColor: "primary.main",
             transform: { md: "translateX(-50%)" },
           }}
@@ -67,8 +67,8 @@ export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
                       border: "4px solid",
                       borderColor: "background.paper",
                       position: { xs: "absolute", md: "relative" },
-                      left: { xs: "12px", md: "auto" },
-                      top: { xs: "8px", md: "auto" },
+                      left: { xs: 12, md: "auto" },
+                      top: { xs: 8, md: "auto" },
                       zIndex: 1,
                     }}
                   />

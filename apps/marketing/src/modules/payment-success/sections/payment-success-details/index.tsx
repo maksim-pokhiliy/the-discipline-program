@@ -24,6 +24,7 @@ export const PaymentSuccessDetailsSection = ({ order }: PaymentSuccessDetailsSec
 
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography color="text.secondary">Amount:</Typography>
+
                 <Typography variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
                   ${order.amount} {order.currency}
                 </Typography>
@@ -31,16 +32,17 @@ export const PaymentSuccessDetailsSection = ({ order }: PaymentSuccessDetailsSec
 
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography color="text.secondary">Email:</Typography>
+
                 <Typography sx={{ fontWeight: 500 }}>{order.customerEmail}</Typography>
               </Stack>
 
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography color="text.secondary">Order ID:</Typography>
+
                 <Typography
                   sx={{
                     fontWeight: 400,
                     fontFamily: "monospace",
-                    fontSize: "0.875rem",
                     color: "text.secondary",
                   }}
                 >
@@ -50,6 +52,7 @@ export const PaymentSuccessDetailsSection = ({ order }: PaymentSuccessDetailsSec
 
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography color="text.secondary">Status:</Typography>
+
                 <Typography
                   sx={{
                     fontWeight: 600,
@@ -64,6 +67,7 @@ export const PaymentSuccessDetailsSection = ({ order }: PaymentSuccessDetailsSec
               {order.completedAt && (
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography color="text.secondary">Completed:</Typography>
+
                   <Typography sx={{ fontWeight: 500 }}>
                     {new Date(order.completedAt).toLocaleDateString()}
                   </Typography>
