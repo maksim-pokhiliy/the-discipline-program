@@ -13,7 +13,7 @@ export const ContentSection = ({
   title,
   subtitle,
   backgroundColor = "light",
-  maxWidth = "lg",
+  maxWidth = "xl",
   children,
 }: ContentSectionProps) => {
   const isDark = backgroundColor === "dark";

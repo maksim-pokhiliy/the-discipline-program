@@ -11,7 +11,7 @@ class ApiClient {
 
   async request<T>(
     url: string,
-    method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+    method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" = "GET",
     body?: unknown,
     queryParams?: Record<string, string>,
   ): Promise<T> {

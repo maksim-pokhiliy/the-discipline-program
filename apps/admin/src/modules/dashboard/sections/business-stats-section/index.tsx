@@ -20,7 +20,7 @@ import { BusinessStats } from "@repo/api";
 
 import { ContentSection } from "@app/shared/components/ui/content-section";
 
-import { StatsCard } from "../../components/stats-card";
+import { StatsCard } from "../../../../shared/components/ui/stats-card";
 
 interface BusinessStatsSectionProps {
   businessStats: BusinessStats;
@@ -36,7 +36,7 @@ export const BusinessStatsSection = ({ businessStats }: BusinessStatsSectionProp
               title="Total Revenue"
               value={`$${businessStats.revenue.total}`}
               subtitle={`This month: $${businessStats.revenue.thisMonth}`}
-              icon={<AttachMoneyIcon fontSize="medium" />}
+              icon={<AttachMoneyIcon fontSize="large" />}
               color="success"
             />
           </Grid>
@@ -46,7 +46,7 @@ export const BusinessStatsSection = ({ businessStats }: BusinessStatsSectionProp
               title="Orders"
               value={businessStats.orders.total}
               subtitle={`${businessStats.orders.completed} completed, ${businessStats.orders.failed} failed`}
-              icon={<ShoppingCartIcon fontSize="medium" />}
+              icon={<ShoppingCartIcon fontSize="large" />}
               color="primary"
             />
           </Grid>
@@ -56,7 +56,7 @@ export const BusinessStatsSection = ({ businessStats }: BusinessStatsSectionProp
               title="Average Order"
               value={`$${businessStats.averageOrderValue}`}
               subtitle="Per completed order"
-              icon={<TrendingUpIcon fontSize="medium" />}
+              icon={<TrendingUpIcon fontSize="large" />}
               color="primary"
             />
           </Grid>
@@ -66,7 +66,7 @@ export const BusinessStatsSection = ({ businessStats }: BusinessStatsSectionProp
               title="Conversion Rate"
               value={`${businessStats.conversionRate}%`}
               subtitle="From contacts to orders"
-              icon={<PercentIcon fontSize="medium" />}
+              icon={<PercentIcon fontSize="large" />}
               color={businessStats.conversionRate > 5 ? "success" : "warning"}
             />
           </Grid>

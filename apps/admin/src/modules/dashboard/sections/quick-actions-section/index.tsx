@@ -1,57 +1,16 @@
-import ArticleIcon from "@mui/icons-material/Article";
-import ContactMailIcon from "@mui/icons-material/ContactMail";
-import ErrorIcon from "@mui/icons-material/Error";
-import PsychologyIcon from "@mui/icons-material/Psychology";
-import RateReviewIcon from "@mui/icons-material/RateReview";
 import { Grid, Card, CardContent, Typography, Stack } from "@mui/material";
 import Link from "next/link";
 
 import { ContentSection } from "@app/shared/components/ui/content-section";
 
-const quickActions = [
-  {
-    title: "Add Program",
-    description: "Create a new training program",
-    icon: <PsychologyIcon fontSize="large" />,
-    href: "/programs?action=create",
-    color: "primary" as const,
-  },
-  {
-    title: "Add Review",
-    description: "Add a new client review",
-    icon: <RateReviewIcon fontSize="large" />,
-    href: "/reviews?action=create",
-    color: "primary" as const,
-  },
-  {
-    title: "Add Blog Post",
-    description: "Create a new blog article",
-    icon: <ArticleIcon fontSize="large" />,
-    href: "/blog?action=create",
-    color: "primary" as const,
-  },
-  {
-    title: "View New Contacts",
-    description: "Check new contact submissions",
-    icon: <ContactMailIcon fontSize="large" />,
-    href: "/contacts?filter=new",
-    color: "primary" as const,
-  },
-  {
-    title: "Manage Failed Orders",
-    description: "Review and fix payment issues",
-    icon: <ErrorIcon fontSize="large" />,
-    href: "/orders?filter=failed",
-    color: "primary" as const,
-  },
-];
+import { quickActions } from "./data";
 
 export const QuickActionsSection = () => {
   return (
     <ContentSection title="Quick Actions" backgroundColor="dark">
       <Grid container spacing={3}>
         {quickActions.map((action) => (
-          <Grid key={action.title} size={{ xs: 12, sm: 6, md: 4 }}>
+          <Grid key={action.title} size={{ xs: 12, sm: 6, md: 3 }}>
             <Card
               component={Link}
               href={action.href}
@@ -61,16 +20,12 @@ export const QuickActionsSection = () => {
                 justifyContent: "center",
                 alignItems: "center",
                 textDecoration: "none",
-                transition: theme.transitions.create(
-                  ["background-color", "transform", "box-shadow"],
-                  {
-                    easing: theme.transitions.easing.easeInOut,
-                    duration: theme.transitions.duration.short,
-                  },
-                ),
+                transition: theme.transitions.create(["background-color", "box-shadow"], {
+                  easing: theme.transitions.easing.easeInOut,
+                  duration: theme.transitions.duration.short,
+                }),
                 "&:hover": {
-                  bgcolor: `${theme.palette[action.color].main}`,
-                  transform: "translateY(-2px)",
+                  bgcolor: theme.palette[action.color].main,
                   boxShadow: theme.shadows[4],
                   "& .action-icon": {
                     bgcolor: theme.palette.common.white,

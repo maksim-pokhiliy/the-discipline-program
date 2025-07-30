@@ -7,7 +7,7 @@ import { ContentStats } from "@repo/api";
 
 import { ContentSection } from "@app/shared/components/ui/content-section";
 
-import { StatsCard } from "../../components/stats-card";
+import { StatsCard } from "../../../../shared/components/ui/stats-card";
 
 interface ContentStatsSectionProps {
   contentStats: ContentStats;
@@ -22,7 +22,7 @@ export const ContentStatsSection = ({ contentStats }: ContentStatsSectionProps) 
             title="Programs"
             value={contentStats.programs.total}
             subtitle={`${contentStats.programs.active} active, ${contentStats.programs.inactive} inactive`}
-            icon={<SportsIcon fontSize="medium" />}
+            icon={<SportsIcon fontSize="large" />}
             color="primary"
           />
         </Grid>
@@ -32,7 +32,7 @@ export const ContentStatsSection = ({ contentStats }: ContentStatsSectionProps) 
             title="Reviews"
             value={contentStats.reviews.total}
             subtitle={`${contentStats.reviews.featured} featured, ${contentStats.reviews.active} active`}
-            icon={<RateReviewIcon fontSize="medium" />}
+            icon={<RateReviewIcon fontSize="large" />}
             color="primary"
           />
         </Grid>
@@ -42,7 +42,7 @@ export const ContentStatsSection = ({ contentStats }: ContentStatsSectionProps) 
             title="Blog Posts"
             value={contentStats.blogPosts.total}
             subtitle={`${contentStats.blogPosts.published} published, ${contentStats.blogPosts.drafts} drafts`}
-            icon={<ArticleIcon fontSize="medium" />}
+            icon={<ArticleIcon fontSize="large" />}
             color="primary"
           />
         </Grid>
@@ -52,7 +52,7 @@ export const ContentStatsSection = ({ contentStats }: ContentStatsSectionProps) 
             title="Contact Submissions"
             value={contentStats.contactSubmissions.total}
             subtitle={`${contentStats.contactSubmissions.new} new, ${contentStats.contactSubmissions.processed} processed`}
-            icon={<ContactMailIcon fontSize="medium" />}
+            icon={<ContactMailIcon fontSize="large" />}
             color={contentStats.contactSubmissions.new > 0 ? "warning" : "success"}
           />
         </Grid>
