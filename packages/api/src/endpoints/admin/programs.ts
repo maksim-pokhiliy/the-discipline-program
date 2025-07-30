@@ -32,6 +32,18 @@ export const adminProgramsApi = {
     };
   },
 
+  getProgramsPageData: async () => {
+    const [stats, programs] = await Promise.all([
+      adminProgramsApi.getProgramsStats(),
+      adminProgramsApi.getPrograms(),
+    ]);
+
+    return {
+      stats,
+      programs,
+    };
+  },
+
   createProgram: async (
     data: Omit<Program, "id" | "createdAt" | "updatedAt">,
   ): Promise<Program> => {

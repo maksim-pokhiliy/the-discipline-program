@@ -63,6 +63,9 @@ importers:
       '@repo/mui':
         specifier: workspace:*
         version: link:../../packages/mui
+      '@repo/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@tanstack/react-query':
         specifier: ^5.80.2
         version: 5.80.2(react@19.1.0)

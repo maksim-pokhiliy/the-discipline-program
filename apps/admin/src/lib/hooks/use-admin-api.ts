@@ -10,6 +10,12 @@ export const useAdminApi = {
       queryFn: adminApi.dashboard.getData,
     }),
 
+  useProgramsPageData: () =>
+    useQuery({
+      queryKey: ["admin", "programs", "page-data"],
+      queryFn: adminApi.programs.getPageData,
+    }),
+
   usePrograms: () =>
     useQuery({
       queryKey: ["admin", "programs"],
@@ -80,6 +86,7 @@ export const useAdminApi = {
 };
 
 export const useDashboardData = useAdminApi.useDashboardData;
+export const useProgramsPageData = useAdminApi.useProgramsPageData;
 export const usePrograms = useAdminApi.usePrograms;
 export const useProgramsStats = useAdminApi.useProgramsStats;
 export const useProgram = useAdminApi.useProgram;
