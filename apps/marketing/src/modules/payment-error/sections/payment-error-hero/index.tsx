@@ -1,5 +1,5 @@
 import { ErrorOutline } from "@mui/icons-material";
-import { alpha, Box } from "@mui/material";
+import { alpha, Box, Stack } from "@mui/material";
 
 import { ContentSection } from "@app/shared/components/ui/content-section";
 
@@ -16,20 +16,19 @@ export const PaymentErrorHeroSection = () => {
           justifyContent: "center",
         }}
       >
-        <Box
+        <Stack
           sx={(theme) => ({
             width: 120,
             height: 120,
             borderRadius: "50%",
             backgroundColor: "error.main",
-            display: "flex",
             alignItems: "center",
             justifyContent: "center",
             boxShadow: `0 0 32px ${alpha(theme.palette.error.light, 0.4)}`,
           })}
         >
           <ErrorOutline sx={{ fontSize: 80, color: "white" }} />
-        </Box>
+        </Stack>
       </Box>
     </ContentSection>
   );

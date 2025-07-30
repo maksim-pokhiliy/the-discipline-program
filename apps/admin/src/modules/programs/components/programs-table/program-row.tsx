@@ -10,7 +10,6 @@ import {
   IconButton,
   Switch,
   Tooltip,
-  Box,
 } from "@mui/material";
 import { Program } from "@repo/api";
 
@@ -58,14 +57,15 @@ export const ProgramRow = ({
             </IconButton>
           </Tooltip>
 
-          <Box>
+          <Stack>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               {program.name}
             </Typography>
+
             <Typography variant="caption" color="text.secondary">
               /{program.slug}
             </Typography>
-          </Box>
+          </Stack>
         </Stack>
       </TableCell>
 
@@ -94,6 +94,7 @@ export const ProgramRow = ({
             disabled={isToggling}
             size="small"
           />
+
           <Chip
             label={program.isActive ? "Active" : "Inactive"}
             color={program.isActive ? "success" : "default"}

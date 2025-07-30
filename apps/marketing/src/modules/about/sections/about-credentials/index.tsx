@@ -40,10 +40,7 @@ export const AboutCredentialsSection = ({ credentials }: AboutCredentialsSection
                     variant="h6"
                     sx={{
                       fontWeight: 600,
-                      lineHeight: 1.4,
-                      minHeight: "48px",
-                      display: "flex",
-                      alignItems: "center",
+                      minHeight: 48,
                     }}
                   >
                     {item}

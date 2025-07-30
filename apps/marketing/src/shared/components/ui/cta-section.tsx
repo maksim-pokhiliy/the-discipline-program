@@ -1,4 +1,4 @@
-import { Typography, Button, Box, Container, Stack } from "@mui/material";
+import { Typography, Button, Box, Container, Stack, alpha } from "@mui/material";
 
 interface CtaSectionProps {
   title: string;
@@ -25,8 +25,7 @@ export const CTASection = ({ title, subtitle, buttonText, buttonHref }: CtaSecti
           left: 0,
           right: 0,
           bottom: 0,
-          background:
-            "radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)",
+          background: `radial-gradient(circle at 30% 20%, ${alpha(theme.palette.common.white, 0.1)} 0%, transparent 50%)`,
           pointerEvents: "none",
         },
       })}
@@ -37,21 +36,21 @@ export const CTASection = ({ title, subtitle, buttonText, buttonHref }: CtaSecti
             <Typography
               variant="h2"
               component="h2"
-              sx={{
+              sx={(theme) => ({
                 fontWeight: 800,
-                textShadow: "0 2px 4px rgba(0,0,0,0.3)",
-              }}
+                textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.3)}`,
+              })}
             >
               {title}
             </Typography>
 
             <Typography
               variant="h5"
-              sx={{
+              sx={(theme) => ({
                 opacity: 0.95,
                 lineHeight: 1.5,
-                textShadow: "0 1px 2px rgba(0,0,0,0.2)",
-              }}
+                textShadow: `0 1px 2px ${alpha(theme.palette.common.black, 0.3)}`,
+              })}
             >
               {subtitle}
             </Typography>
@@ -70,12 +69,12 @@ export const CTASection = ({ title, subtitle, buttonText, buttonHref }: CtaSecti
               px: 6,
               textTransform: "uppercase",
               letterSpacing: "0.5px",
-              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+              boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.3)}`,
               transition: "all 0.3s ease",
               "&:hover": {
                 backgroundColor: theme.palette.grey[50],
                 transform: "translateY(-4px)",
-                boxShadow: "0 12px 40px rgba(0, 0, 0, 0.4)",
+                boxShadow: `0 12px 40px ${alpha(theme.palette.common.black, 0.4)}`,
               },
             })}
           >

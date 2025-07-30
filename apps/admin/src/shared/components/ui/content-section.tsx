@@ -27,7 +27,7 @@ export const ContentSection = ({
       })}
     >
       <Container maxWidth={maxWidth}>
-        <Stack spacing={children ? 8 : 0}>
+        <Stack spacing={8}>
           {(title || subtitle) && (
             <Stack spacing={2} textAlign="center" alignItems="center">
               {title && (
@@ -48,8 +48,6 @@ export const ContentSection = ({
                     variant="h5"
                     sx={(theme) => ({
                       color: theme.palette.text.secondary,
-                      fontWeight: 400,
-                      lineHeight: 1.4,
                     })}
                   >
                     {subtitle}

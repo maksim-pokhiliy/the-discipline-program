@@ -41,7 +41,7 @@ export const BlogFeaturedSection = ({ featuredPost }: BlogFeaturedSectionProps) 
                 {featuredPost.title}
               </Typography>
 
-              <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+              <Typography variant="body1" color="text.secondary">
                 {featuredPost.excerpt}
               </Typography>
             </Stack>
@@ -51,9 +51,11 @@ export const BlogFeaturedSection = ({ featuredPost }: BlogFeaturedSectionProps) 
                 <Typography variant="body2" color="text.secondary">
                   {featuredPost.author}
                 </Typography>
+
                 <Typography variant="body2" color="text.secondary">
                   •
                 </Typography>
+
                 <Typography variant="body2" color="text.secondary">
                   {featuredPost.readTime} хв читання
                 </Typography>

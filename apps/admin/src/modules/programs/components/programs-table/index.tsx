@@ -27,12 +27,12 @@ type SortField = keyof Pick<Program, "name" | "price" | "sortOrder" | "createdAt
 type SortDirection = "asc" | "desc";
 
 export const ProgramsTable = ({ programs, onEditProgram }: ProgramsTableProps) => {
+  const deleteModal = useModal();
+  const { deleteProgram, toggleStatus } = useProgramMutations();
+
   const [sortField, setSortField] = useState<SortField>("sortOrder");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [programToDelete, setProgramToDelete] = useState<Program | null>(null);
-
-  const deleteModal = useModal();
-  const { deleteProgram, toggleStatus } = useProgramMutations();
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {

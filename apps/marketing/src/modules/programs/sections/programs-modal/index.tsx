@@ -107,13 +107,12 @@ export const ProgramModal = ({ program, open, onClose }: ProgramModalProps) => {
                   {program.features.map((feature, index) => (
                     <Grid key={index} size={{ xs: 12, sm: 6 }}>
                       <Stack direction="row" spacing={2} alignItems="flex-start">
-                        <Box
+                        <Stack
                           sx={(theme) => ({
                             backgroundColor: theme.palette.primary.main,
                             borderRadius: "50%",
                             width: 24,
                             height: 24,
-                            display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             flexShrink: 0,
@@ -121,7 +120,7 @@ export const ProgramModal = ({ program, open, onClose }: ProgramModalProps) => {
                           })}
                         >
                           <CheckIcon sx={{ fontSize: 16, color: "white" }} />
-                        </Box>
+                        </Stack>
 
                         <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
                           {feature}

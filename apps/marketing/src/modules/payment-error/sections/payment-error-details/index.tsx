@@ -32,7 +32,6 @@ export const PaymentErrorDetailsSection = ({ error, orderId }: PaymentErrorDetai
                     sx={{
                       fontWeight: 400,
                       fontFamily: "monospace",
-                      fontSize: "0.875rem",
                       color: "text.secondary",
                     }}
                   >

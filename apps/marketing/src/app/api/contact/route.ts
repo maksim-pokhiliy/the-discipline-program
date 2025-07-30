@@ -42,14 +42,15 @@ export async function POST(request: NextRequest) {
       hour12: true,
     });
 
-    const telegramMessage = `🔥 New Contact Form Submission
+    const telegramMessage = `
+    🔥 New Contact Form Submission
 
-👤 Name: ${body.name}
-📧 Email: ${body.email}
-🎯 Program: ${body.program || "Not specified"}
-💬 Message: ${body.message}
+    👤 Name: ${body.name}
+    📧 Email: ${body.email}
+    🎯 Program: ${body.program || "Not specified"}
+    💬 Message: ${body.message}
 
-⏰ ${currentTime}`;
+    ⏰ ${currentTime}`;
 
     const telegramResponse = await fetch(
       `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
