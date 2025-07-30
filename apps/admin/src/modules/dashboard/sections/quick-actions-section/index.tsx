@@ -20,13 +20,12 @@ export const QuickActionsSection = () => {
                 justifyContent: "center",
                 alignItems: "center",
                 textDecoration: "none",
-                transition: theme.transitions.create(["background-color", "box-shadow"], {
+                transition: theme.transitions.create(["background-color"], {
                   easing: theme.transitions.easing.easeInOut,
                   duration: theme.transitions.duration.short,
                 }),
                 "&:hover": {
                   bgcolor: theme.palette[action.color].main,
-                  boxShadow: theme.shadows[4],
                   "& .action-icon": {
                     bgcolor: theme.palette.common.white,
                     color: `${theme.palette[action.color].main}`,

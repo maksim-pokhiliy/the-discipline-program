@@ -32,3 +32,8 @@ export interface CreateProgramData {
 export interface UpdateProgramData extends Partial<CreateProgramData> {
   id: string;
 }
+
+export interface AdminProgramsPageData {
+  stats: ProgramStats;
+  programs: Program[];
+}

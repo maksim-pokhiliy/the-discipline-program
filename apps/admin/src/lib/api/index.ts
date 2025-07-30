@@ -1,4 +1,11 @@
-import { Program, Review, DashboardData, ContactSubmission, ProgramStats } from "@repo/api";
+import {
+  Program,
+  Review,
+  DashboardData,
+  ContactSubmission,
+  ProgramStats,
+  AdminProgramsPageData,
+} from "@repo/api";
 
 import { adminApiClient } from "./client";
 
@@ -8,6 +15,8 @@ export const adminApi = {
   },
 
   programs: {
+    getPageData: (): Promise<AdminProgramsPageData> =>
+      adminApiClient.request("/api/programs/page-data"),
     getAll: (): Promise<Program[]> => adminApiClient.request("/api/programs"),
     getById: (id: string): Promise<Program> => adminApiClient.request(`/api/programs/${id}`),
     getStats: (): Promise<ProgramStats> => adminApiClient.request("/api/programs/stats"),
