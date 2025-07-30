@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { ContentSection } from "@app/shared/components/ui/content-section";
 
+import { ProgramModal } from "../../components";
 import { ProgramsTable } from "../../components/programs-table";
 
 interface ProgramsTableSectionProps {
@@ -14,18 +15,21 @@ interface ProgramsTableSectionProps {
 
 export const ProgramsTableSection = ({ programs }: ProgramsTableSectionProps) => {
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
-
-  const createModal = useModal();
-  const editModal = useModal();
+  const modal = useModal();
 
   const handleCreateProgram = () => {
     setSelectedProgram(null);
-    createModal.open();
+    modal.open();
   };
 
   const handleEditProgram = (program: Program) => {
     setSelectedProgram(program);
-    editModal.open();
+    modal.open();
+  };
+
+  const handleCloseModal = () => {
+    modal.close();
+    setSelectedProgram(null);
   };
 
   return (
@@ -46,6 +50,7 @@ export const ProgramsTableSection = ({ programs }: ProgramsTableSectionProps) =>
         </Stack>
 
         <ProgramsTable programs={programs} onEditProgram={handleEditProgram} />
+        <ProgramModal open={modal.isOpen} onClose={handleCloseModal} program={selectedProgram} />
       </Stack>
     </ContentSection>
   );
