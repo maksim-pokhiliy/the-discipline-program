@@ -1,5 +1,4 @@
 import DeleteIcon from "@mui/icons-material/Delete";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import EditIcon from "@mui/icons-material/Edit";
 import {
   TableRow,
@@ -19,6 +18,7 @@ interface ProgramRowProps {
   onDelete: () => void;
   onToggleStatus: () => void;
   isToggling?: boolean;
+  isDragDisabled?: boolean;
 }
 
 export const ProgramRow = ({
@@ -50,22 +50,14 @@ export const ProgramRow = ({
   return (
     <TableRow hover>
       <TableCell>
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Tooltip title="Drag to reorder">
-            <IconButton size="small" sx={{ cursor: "grab", color: "text.disabled" }}>
-              <DragIndicatorIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+        <Stack alignItems="center">
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            {program.name}
+          </Typography>
 
-          <Stack>
-            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-              {program.name}
-            </Typography>
-
-            <Typography variant="caption" color="text.secondary">
-              /{program.slug}
-            </Typography>
-          </Stack>
+          <Typography variant="caption" color="text.secondary">
+            /{program.slug}
+          </Typography>
         </Stack>
       </TableCell>
 
@@ -81,6 +73,7 @@ export const ProgramRow = ({
         <Typography variant="body2" sx={{ fontWeight: 500 }}>
           ${program.price}
         </Typography>
+
         <Typography variant="caption" color="text.secondary">
           {program.currency}
         </Typography>
