@@ -39,7 +39,7 @@ export const ProgramsTableSection = ({ programs }: ProgramsTableSectionProps) =>
             variant="contained"
             startIcon={<AddIcon />}
             onClick={handleCreateProgram}
-            size="large"
+            size="medium"
           >
             Add New Program
           </Button>
