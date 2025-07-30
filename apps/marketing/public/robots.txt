@@ -7,4 +7,4 @@ Sitemap: https://the-discipline-program.vercel.app/sitemap.xml
 # Block admin and API routes
 Disallow: /api/
 Disallow: /_next/
-Disallow: /admin/
+Disallow: /
