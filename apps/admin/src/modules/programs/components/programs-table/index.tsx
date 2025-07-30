@@ -33,6 +33,7 @@ export const ProgramsTable = ({ programs, onEditProgram }: ProgramsTableProps) =
   const [sortField, setSortField] = useState<SortField>("sortOrder");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [programToDelete, setProgramToDelete] = useState<Program | null>(null);
+  const [togglingProgramId, setTogglingProgramId] = useState<string | null>(null);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -92,16 +93,19 @@ export const ProgramsTable = ({ programs, onEditProgram }: ProgramsTableProps) =
       deleteModal.close();
       setProgramToDelete(null);
     } catch (error) {
-      // Error handling is done in the modal
       console.error("Delete failed:", error);
     }
   };
 
   const handleToggleStatus = async (programId: string) => {
+    setTogglingProgramId(programId);
+
     try {
       await toggleStatus.mutateAsync(programId);
     } catch (error) {
       console.error("Toggle status failed:", error);
+    } finally {
+      setTogglingProgramId(null);
     }
   };
 
@@ -159,7 +163,7 @@ export const ProgramsTable = ({ programs, onEditProgram }: ProgramsTableProps) =
                 onEdit={() => onEditProgram(program)}
                 onDelete={() => handleDeleteClick(program)}
                 onToggleStatus={() => handleToggleStatus(program.id)}
-                isToggling={toggleStatus.isPending}
+                isToggling={togglingProgramId === program.id}
               />
             ))}
           </TableBody>
