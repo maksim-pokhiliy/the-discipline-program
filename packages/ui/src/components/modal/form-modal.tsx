@@ -43,7 +43,7 @@ export const FormModal = ({
       disableEscapeKeyDown={shouldDisableEscape}
     >
       <Stack component="form" onSubmit={handleSubmit}>
-        <Box sx={{ p: 3, flexGrow: 1 }}>
+        <Box sx={{ p: 2, flexGrow: 1 }}>
           <Stack spacing={3}>
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
@@ -55,29 +55,17 @@ export const FormModal = ({
         </Box>
 
         {!hideActions && (
-          <DialogActions
-            sx={{
-              p: 3,
-              borderTop: 1,
-              borderColor: "divider",
-              gap: 2,
-            }}
-          >
-            <Button
-              onClick={onClose}
-              disabled={isSubmitting}
-              variant="outlined"
-              sx={{ minWidth: 100 }}
-            >
+          <DialogActions>
+            <Button onClick={onClose} disabled={isSubmitting} size="small" variant="outlined">
               {cancelText}
             </Button>
 
             <Button
+              size="small"
               type="submit"
               variant="contained"
               disabled={submitDisabled || isSubmitting}
               startIcon={isSubmitting ? <CircularProgress size={16} /> : null}
-              sx={{ minWidth: 100 }}
             >
               {isSubmitting ? "Saving..." : submitText}
             </Button>
