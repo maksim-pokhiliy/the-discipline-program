@@ -14,9 +14,9 @@ export const MuiDialogTitle: Components<Theme>["MuiDialogTitle"] = {
     root: ({ theme }) => ({
       backgroundColor: theme.palette.background.paper,
       borderBottom: `1px solid ${theme.palette.divider}`,
-      padding: theme.spacing(3),
-      fontSize: theme.typography.h6.fontSize,
-      fontWeight: theme.typography.fontWeightBold,
+      padding: theme.spacing(2),
+      justifyContent: "space-between",
+      alignItems: "center",
     }),
   },
 };
@@ -35,7 +35,7 @@ export const MuiDialogContent: Components<Theme>["MuiDialogContent"] = {
 export const MuiDialogActions: Components<Theme>["MuiDialogActions"] = {
   styleOverrides: {
     root: ({ theme }) => ({
-      padding: theme.spacing(3),
+      padding: theme.spacing(2),
       borderTop: `1px solid ${theme.palette.divider}`,
       gap: theme.spacing(2),
 
