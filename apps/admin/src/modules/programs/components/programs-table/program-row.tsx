@@ -50,7 +50,7 @@ export const ProgramRow = ({
   return (
     <TableRow hover>
       <TableCell>
-        <Stack alignItems="center">
+        <Stack>
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {program.name}
           </Typography>
