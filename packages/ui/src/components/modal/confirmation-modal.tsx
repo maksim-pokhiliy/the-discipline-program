@@ -69,71 +69,63 @@ export const ConfirmationModal = ({
       disableEscapeKeyDown={isConfirming}
       maxWidth="xs"
     >
-      <Box sx={{ p: 3 }}>
+      <Stack
+        spacing={2}
+        direction="row"
+        sx={{
+          alignItems: "flex-start",
+          p: 2,
+          flexGrow: 1,
+        }}
+      >
         <Stack
-          spacing={2}
-          direction="row"
           sx={{
-            alignItems: "flex-start",
-            mb: 3,
+            alignItems: "center",
+            justifyContent: "center",
+            width: 44,
+            height: 44,
+            borderRadius: "50%",
+            backgroundColor: `${config.color}.light`,
+            color: "common.white",
+            flexShrink: 0,
           }}
         >
-          <Stack
-            sx={(theme) => ({
-              alignItems: "center",
-              justifyContent: "center",
-              width: 48,
-              height: 48,
-              borderRadius: "50%",
-              backgroundColor: `${config.color}.light`,
-              color: "common.white",
-              flexShrink: 0,
-            })}
-          >
-            <IconComponent />
-          </Stack>
-
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
-              {message}
-            </Typography>
-
-            {details && (
-              <Typography variant="body2" color="text.secondary">
-                {details}
-              </Typography>
-            )}
-          </Box>
+          <IconComponent fontSize="medium" />
         </Stack>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
+        <Stack sx={{ flexGrow: 1 }} spacing={2}>
+          <Typography variant="body1">{message}</Typography>
 
-        <DialogActions sx={(theme) => ({ p: theme.spacing(2, 0, 0), gap: 2 })}>
-          <Button
-            onClick={onClose}
-            disabled={isConfirming}
-            variant="outlined"
-            sx={{ minWidth: 100 }}
-          >
-            {cancelText}
-          </Button>
+          {details && (
+            <Typography variant="body2" color="text.secondary">
+              {details}
+            </Typography>
+          )}
+        </Stack>
+      </Stack>
 
-          <Button
-            onClick={handleConfirm}
-            disabled={isConfirming}
-            variant="contained"
-            color={config.color}
-            startIcon={isConfirming ? <CircularProgress size={16} /> : null}
-            sx={{ minWidth: 100 }}
-          >
-            {isConfirming ? "Processing..." : finalConfirmText}
-          </Button>
-        </DialogActions>
-      </Box>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
+      <DialogActions>
+        <Button onClick={onClose} disabled={isConfirming} variant="outlined" size="small">
+          {cancelText}
+        </Button>
+
+        <Button
+          onClick={handleConfirm}
+          size="small"
+          disabled={isConfirming}
+          variant="contained"
+          color={config.color}
+          startIcon={isConfirming ? <CircularProgress size={16} /> : null}
+        >
+          {isConfirming ? "Processing..." : finalConfirmText}
+        </Button>
+      </DialogActions>
     </BaseModal>
   );
 };
