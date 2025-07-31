@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(ADMIN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Program {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String
+  price       Float
+  currency    String   @default("USD")
+  features    String[]
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  orders Order[]
+
+  @@map("programs")
+}
+
+model Feature {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  iconName    String
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("features")
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  text         String
+  authorName   String
+  authorRole   String
+  authorAvatar String?
+  rating       Int      @db.SmallInt
+  programId    String?
+  isActive     Boolean  @default(true)
+  isFeatured   Boolean  @default(false)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("reviews")
+}
+
+model BlogPost {
+  id          String    @id @default(cuid())
+  title       String
+  slug        String    @unique
+  excerpt     String
+  content     String    @db.Text
+  coverImage  String?
+  author      String
+  publishedAt DateTime?
+  readTime    Int?
+  category    String
+  tags        String[]
+  isPublished Boolean   @default(false)
+  isFeatured  Boolean   @default(false)
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("blog_posts")
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  programId     String
+  programName   String
+  amount        Float
+  currency      String      @default("USD")
+  customerEmail String
+  customerName  String?
+  status        OrderStatus @default(PENDING)
+  monoInvoiceId String?
+  monoPageUrl   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  completedAt   DateTime?
+
+  // Relations
+  program Program @relation(fields: [programId], references: [id])
+
+  @@map("orders")
+}
+
+model PageSection {
+  id        String   @id @default(cuid())
+  pageSlug  String
+  section   String
+  data      Json
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pageSlug, section])
+  @@map("page_sections")
+}
+
+model ContactSubmission {
+  id        String        @id @default(cuid())
+  name      String
+  email     String
+  program   String?
+  message   String        @db.Text
+  status    ContactStatus @default(NEW)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("contact_submissions")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+enum ContactStatus {
+  NEW
+  IN_PROGRESS
+  REPLIED
+  CLOSED
+}

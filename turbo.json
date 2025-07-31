@@ -1,0 +1,106 @@
+{
+  "$schema": "https://turborepo.com/schema.json",
+  "globalEnv": [
+    "NODE_ENV",
+    "TELEGRAM_BOT_TOKEN",
+    "TELEGRAM_CHAT_ID",
+    "NEXT_PUBLIC_API_URL",
+    "MONOBANK_TOKEN",
+    "DATABASE_URL",
+    "DATABASE_URL_UNPOOLED",
+    "POSTGRES_PRISMA_URL"
+  ],
+  "tasks": {
+    "admin#build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_API_URL",
+        "DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "POSTGRES_PRISMA_URL"
+      ],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "NODE_ENV",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_CHAT_ID",
+        "NEXT_PUBLIC_API_URL",
+        "DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "POSTGRES_PRISMA_URL"
+      ],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "dev": {
+      "cache": false,
+      "env": [
+        "NODE_ENV",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_CHAT_ID",
+        "NEXT_PUBLIC_API_URL",
+        "DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "POSTGRES_PRISMA_URL"
+      ],
+      "persistent": true
+    },
+    "format": {
+      "cache": false,
+      "dependsOn": ["^format"]
+    },
+    "format:check": {
+      "cache": false,
+      "dependsOn": ["^format:check"]
+    },
+    "lint": {
+      "cache": false,
+      "dependsOn": ["^lint"],
+      "env": [
+        "NODE_ENV",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_CHAT_ID",
+        "NEXT_PUBLIC_API_URL",
+        "DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "POSTGRES_PRISMA_URL"
+      ]
+    },
+    "lint:check": {
+      "cache": false,
+      "dependsOn": ["^lint:check"],
+      "env": [
+        "NODE_ENV",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_CHAT_ID",
+        "NEXT_PUBLIC_API_URL",
+        "DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "POSTGRES_PRISMA_URL"
+      ]
+    },
+    "marketing#build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "NODE_ENV",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_CHAT_ID",
+        "NEXT_PUBLIC_API_URL",
+        "DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "POSTGRES_PRISMA_URL"
+      ],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    }
+  },
+  "ui": "tui"
+}

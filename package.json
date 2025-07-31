@@ -1,0 +1,41 @@
+{
+  "name": "the-discipline-program",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "lint:check": "turbo run lint:check",
+    "format": "turbo run format",
+    "format:check": "turbo run format:check",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "lefthook": "^1.11.12",
+    "prettier": "^3.5.3",
+    "prettier-plugin-sort-json": "^4.1.1",
+    "turbo": "^2.5.5",
+    "typescript": "^5.8.2"
+  },
+  "packageManager": "pnpm@10.13.1",
+  "engines": {
+    "node": ">=18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "lefthook",
+      "sharp",
+      "unrs-resolver",
+      "@prisma/client",
+      "@prisma/engines",
+      "esbuild",
+      "prisma"
+    ]
+  },
+  "dependencies": {
+    "@prisma/client": "^6.13.0",
+    "prisma": "^6.13.0"
+  }
+}
