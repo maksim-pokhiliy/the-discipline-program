@@ -1,3 +1,5 @@
+"use client";
+
 import { CircularProgress, Typography, Stack } from "@mui/material";
 
 interface QueryWrapperProps<T> {

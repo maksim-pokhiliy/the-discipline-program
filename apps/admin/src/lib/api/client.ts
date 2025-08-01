@@ -1,3 +1,5 @@
+"use client";
+
 import { ApiClient } from "@repo/api";
 
 import apiConfig from "./config";
