@@ -36,12 +36,17 @@ import { ProgramRow } from "./program-row";
 interface ProgramsTableProps {
   programs: Program[];
   onEditProgram: (program: Program) => void;
+  onDuplicateProgram: (program: Program) => void;
 }
 
 type SortField = keyof Pick<Program, "name" | "price" | "sortOrder" | "createdAt">;
 type SortDirection = "asc" | "desc";
 
-export const ProgramsTable = ({ programs, onEditProgram }: ProgramsTableProps) => {
+export const ProgramsTable = ({
+  programs,
+  onEditProgram,
+  onDuplicateProgram,
+}: ProgramsTableProps) => {
   const deleteModal = useModal();
   const { deleteProgram, toggleStatus, updateProgramsOrder } = useProgramMutations();
 
@@ -233,6 +238,7 @@ export const ProgramsTable = ({ programs, onEditProgram }: ProgramsTableProps) =
                     program={program}
                     onEdit={() => onEditProgram(program)}
                     onDelete={() => handleDeleteClick(program)}
+                    onDuplicate={() => onDuplicateProgram(program)}
                     onToggleStatus={() => handleToggleStatus(program.id)}
                     isToggling={togglingProgramId === program.id}
                     isDragDisabled={!isDragEnabled}
