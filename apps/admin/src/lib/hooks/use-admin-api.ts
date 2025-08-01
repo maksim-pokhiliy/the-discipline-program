@@ -1,4 +1,4 @@
-import { Program } from "@repo/api";
+import { Program, AdminProgramsPageData } from "@repo/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { adminApi } from "../api";
@@ -64,11 +64,79 @@ export const useAdminApi = {
       onSuccess: invalidatePrograms,
     });
 
+    const updateProgramsOrder = useMutation({
+      mutationFn: async (reorderedPrograms: Program[]) => {
+        const updates = reorderedPrograms.map((program, index) => ({
+          id: program.id,
+          sortOrder: index + 1,
+        }));
+
+        await Promise.all(
+          updates.map((update) =>
+            adminApi.programs.update(update.id, { sortOrder: update.sortOrder }),
+          ),
+        );
+
+        return reorderedPrograms;
+      },
+
+      onMutate: async (reorderedPrograms: Program[]) => {
+        await queryClient.cancelQueries({ queryKey: ["admin", "programs"] });
+
+        const previousPageData = queryClient.getQueryData<AdminProgramsPageData>([
+          "admin",
+          "programs",
+          "page-data",
+        ]);
+
+        const previousPrograms = queryClient.getQueryData<Program[]>(["admin", "programs"]);
+
+        const updatedPrograms = reorderedPrograms.map((program, index) => ({
+          ...program,
+          sortOrder: index + 1,
+        }));
+
+        queryClient.setQueryData<AdminProgramsPageData>(
+          ["admin", "programs", "page-data"],
+          (oldData) => {
+            if (!oldData) return oldData;
+
+            return {
+              ...oldData,
+              programs: updatedPrograms,
+            };
+          },
+        );
+
+        queryClient.setQueryData<Program[]>(["admin", "programs"], updatedPrograms);
+
+        return { previousPageData, previousPrograms };
+      },
+
+      onError: (error, _, context) => {
+        if (context?.previousPageData) {
+          queryClient.setQueryData(["admin", "programs", "page-data"], context.previousPageData);
+        }
+
+        if (context?.previousPrograms) {
+          queryClient.setQueryData(["admin", "programs"], context.previousPrograms);
+        }
+
+        console.error("Failed to update programs order:", error);
+      },
+
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: ["admin", "programs"] });
+        queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+      },
+    });
+
     return {
       createProgram,
       updateProgram,
       deleteProgram,
       toggleStatus,
+      updateProgramsOrder,
     };
   },
 
