@@ -1,3 +1,5 @@
+"use client";
+
 import { ProgramCurrency } from "./types";
 
 export const CURRENCIES: Array<{ value: ProgramCurrency; label: string }> = [

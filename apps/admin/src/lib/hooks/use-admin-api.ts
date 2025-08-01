@@ -1,3 +1,5 @@
+"use client";
+
 import { Program, AdminProgramsPageData } from "@repo/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 

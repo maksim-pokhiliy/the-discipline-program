@@ -1,3 +1,5 @@
+"use client";
+
 import ArticleIcon from "@mui/icons-material/Article";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
 import ErrorIcon from "@mui/icons-material/Error";

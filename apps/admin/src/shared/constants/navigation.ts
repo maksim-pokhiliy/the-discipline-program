@@ -1,3 +1,5 @@
+"use client";
+
 import Article from "@mui/icons-material/Article";
 import ContactMail from "@mui/icons-material/ContactMail";
 import Dashboard from "@mui/icons-material/Dashboard";

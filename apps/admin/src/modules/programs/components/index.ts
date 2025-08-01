@@ -1,3 +1,5 @@
+"use client";
+
 export { ProgramForm } from "./program-form";
 export { ProgramModal } from "./program-modal";
 export { ProgramsTable } from "./programs-table";
