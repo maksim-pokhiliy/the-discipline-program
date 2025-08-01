@@ -1,4 +1,19 @@
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import {
   Table,
   TableBody,
   TableCell,
@@ -28,12 +43,20 @@ type SortDirection = "asc" | "desc";
 
 export const ProgramsTable = ({ programs, onEditProgram }: ProgramsTableProps) => {
   const deleteModal = useModal();
-  const { deleteProgram, toggleStatus } = useProgramMutations();
+  const { deleteProgram, toggleStatus, updateProgramsOrder } = useProgramMutations();
 
   const [sortField, setSortField] = useState<SortField>("sortOrder");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [programToDelete, setProgramToDelete] = useState<Program | null>(null);
   const [togglingProgramId, setTogglingProgramId] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -109,71 +132,123 @@ export const ProgramsTable = ({ programs, onEditProgram }: ProgramsTableProps) =
     }
   };
 
+  const handleDragStart = () => {
+    setIsDragging(true);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setIsDragging(false);
+
+    const { active, over } = event;
+
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = sortedPrograms.findIndex((program) => program.id === active.id);
+    const newIndex = sortedPrograms.findIndex((program) => program.id === over.id);
+
+    if (oldIndex === -1 || newIndex === -1) {
+      return;
+    }
+
+    const reorderedPrograms = arrayMove(sortedPrograms, oldIndex, newIndex);
+
+    try {
+      await updateProgramsOrder.mutateAsync(reorderedPrograms);
+    } catch (error) {
+      console.error("Failed to update sort order:", error);
+    }
+  };
+
+  const isDragEnabled = sortField === "sortOrder" && sortDirection === "asc";
+
   return (
     <>
-      <TableContainer component={Paper} variant="outlined">
-        <Table stickyHeader>
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <TableSortLabel
-                  active={sortField === "name"}
-                  direction={sortField === "name" ? sortDirection : "asc"}
-                  onClick={() => handleSort("name")}
-                >
-                  Program
-                </TableSortLabel>
-              </TableCell>
+      <TableContainer
+        component={Paper}
+        variant="outlined"
+        sx={{
+          overflow: isDragging ? "hidden" : "auto",
+        }}
+      >
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        >
+          <Table stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                  <TableSortLabel
+                    active={sortField === "name"}
+                    direction={sortField === "name" ? sortDirection : "asc"}
+                    onClick={() => handleSort("name")}
+                  >
+                    Program
+                  </TableSortLabel>
+                </TableCell>
 
-              <TableCell>Description</TableCell>
+                <TableCell>Description</TableCell>
 
-              <TableCell>
-                <TableSortLabel
-                  active={sortField === "price"}
-                  direction={sortField === "price" ? sortDirection : "asc"}
-                  onClick={() => handleSort("price")}
-                >
-                  Price
-                </TableSortLabel>
-              </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={sortField === "price"}
+                    direction={sortField === "price" ? sortDirection : "asc"}
+                    onClick={() => handleSort("price")}
+                  >
+                    Price
+                  </TableSortLabel>
+                </TableCell>
 
-              <TableCell>Status</TableCell>
+                <TableCell>Status</TableCell>
 
-              <TableCell>Features</TableCell>
+                <TableCell>Features</TableCell>
 
-              <TableCell>
-                <TableSortLabel
-                  active={sortField === "sortOrder"}
-                  direction={sortField === "sortOrder" ? sortDirection : "asc"}
-                  onClick={() => handleSort("sortOrder")}
-                >
-                  Sort Order
-                </TableSortLabel>
-              </TableCell>
+                <TableCell>
+                  <TableSortLabel
+                    active={sortField === "sortOrder"}
+                    direction={sortField === "sortOrder" ? sortDirection : "asc"}
+                    onClick={() => handleSort("sortOrder")}
+                  >
+                    Sort Order
+                  </TableSortLabel>
+                </TableCell>
 
-              <TableCell align="right">Actions</TableCell>
-            </TableRow>
-          </TableHead>
+                <TableCell align="right">Actions</TableCell>
+              </TableRow>
+            </TableHead>
 
-          <TableBody>
-            {sortedPrograms.map((program) => (
-              <ProgramRow
-                key={program.id}
-                program={program}
-                onEdit={() => onEditProgram(program)}
-                onDelete={() => handleDeleteClick(program)}
-                onToggleStatus={() => handleToggleStatus(program.id)}
-                isToggling={togglingProgramId === program.id}
-              />
-            ))}
-          </TableBody>
-        </Table>
+            <TableBody>
+              <SortableContext
+                items={sortedPrograms.map((p) => p.id)}
+                strategy={verticalListSortingStrategy}
+                disabled={!isDragEnabled}
+              >
+                {sortedPrograms.map((program) => (
+                  <ProgramRow
+                    key={program.id}
+                    program={program}
+                    onEdit={() => onEditProgram(program)}
+                    onDelete={() => handleDeleteClick(program)}
+                    onToggleStatus={() => handleToggleStatus(program.id)}
+                    isToggling={togglingProgramId === program.id}
+                    isDragDisabled={!isDragEnabled}
+                    isDragging={isDragging}
+                  />
+                ))}
+              </SortableContext>
+            </TableBody>
+          </Table>
 
-        {programs.length === 0 && (
-          <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
-            No programs found. Create your first program to get started.
-          </Box>
-        )}
+          {programs.length === 0 && (
+            <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
+              No programs found. Create your first program to get started.
+            </Box>
+          )}
+        </DndContext>
       </TableContainer>
 
       <DeleteConfirmationModal
