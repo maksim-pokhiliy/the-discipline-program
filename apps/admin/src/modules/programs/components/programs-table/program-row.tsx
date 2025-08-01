@@ -1,5 +1,6 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import EditIcon from "@mui/icons-material/Edit";
@@ -20,6 +21,7 @@ interface ProgramRowProps {
   program: Program;
   onEdit: () => void;
   onDelete: () => void;
+  onDuplicate: () => void;
   onToggleStatus: () => void;
   isToggling?: boolean;
   isDragDisabled?: boolean;
@@ -30,6 +32,7 @@ export const ProgramRow = ({
   program,
   onEdit,
   onDelete,
+  onDuplicate,
   onToggleStatus,
   isToggling = false,
   isDragDisabled = true,
@@ -163,6 +166,12 @@ export const ProgramRow = ({
 
       <TableCell align="right">
         <Stack direction="row" spacing={1}>
+          <Tooltip title="Duplicate program">
+            <IconButton size="small" onClick={onDuplicate} color="primary">
+              <ContentCopyIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+
           <Tooltip title="Edit program">
             <IconButton size="small" onClick={onEdit} color="primary">
               <EditIcon fontSize="small" />
@@ -170,7 +179,7 @@ export const ProgramRow = ({
           </Tooltip>
 
           <Tooltip title="Delete program">
-            <IconButton size="small" onClick={onDelete} color="error">
+            <IconButton size="small" onClick={onDelete} color="primary">
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
