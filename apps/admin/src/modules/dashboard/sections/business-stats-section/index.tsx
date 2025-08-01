@@ -1,3 +1,5 @@
+"use client";
+
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import PercentIcon from "@mui/icons-material/Percent";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";

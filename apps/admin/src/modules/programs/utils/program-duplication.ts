@@ -1,3 +1,5 @@
+"use client";
+
 import { Program } from "@repo/api";
 
 export const generateUniqueSlug = (baseName: string, existingPrograms: Program[]): string => {

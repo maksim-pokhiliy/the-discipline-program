@@ -1,3 +1,5 @@
+"use client";
+
 import { TextField, Stack, MenuItem } from "@mui/material";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 
