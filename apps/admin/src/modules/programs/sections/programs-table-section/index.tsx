@@ -8,6 +8,7 @@ import { ContentSection } from "@app/shared/components/ui/content-section";
 
 import { ProgramModal } from "../../components";
 import { ProgramsTable } from "../../components/programs-table";
+import { createDuplicateProgram } from "../../utils/program-duplication";
 
 interface ProgramsTableSectionProps {
   programs: Program[];
@@ -15,6 +16,7 @@ interface ProgramsTableSectionProps {
 
 export const ProgramsTableSection = ({ programs }: ProgramsTableSectionProps) => {
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
+
   const modal = useModal();
 
   const handleCreateProgram = () => {
@@ -24,6 +26,13 @@ export const ProgramsTableSection = ({ programs }: ProgramsTableSectionProps) =>
 
   const handleEditProgram = (program: Program) => {
     setSelectedProgram(program);
+    modal.open();
+  };
+
+  const handleDuplicateProgram = (program: Program) => {
+    const duplicateData = createDuplicateProgram(program, programs);
+
+    setSelectedProgram({ ...duplicateData, id: "", createdAt: new Date(), updatedAt: new Date() });
     modal.open();
   };
 
@@ -49,7 +58,11 @@ export const ProgramsTableSection = ({ programs }: ProgramsTableSectionProps) =>
           </Button>
         </Stack>
 
-        <ProgramsTable programs={programs} onEditProgram={handleEditProgram} />
+        <ProgramsTable
+          programs={programs}
+          onEditProgram={handleEditProgram}
+          onDuplicateProgram={handleDuplicateProgram}
+        />
 
         <ProgramModal open={modal.isOpen} onClose={handleCloseModal} program={selectedProgram} />
       </Stack>

@@ -7,10 +7,11 @@ import { ProgramModalProps } from "../shared/types";
 import { useProgramModal } from "./hooks/use-program-modal";
 
 export const ProgramModal = ({ open, onClose, program }: ProgramModalProps) => {
-  const { isEditing, isSubmitting, submitError, handleSubmit, handleClose } = useProgramModal({
-    program,
-    onClose,
-  });
+  const { isEditing, isDuplicating, isSubmitting, submitError, handleSubmit, handleClose } =
+    useProgramModal({
+      program,
+      onClose,
+    });
 
   const formRef = useRef<ProgramFormRef>(null);
 
@@ -23,10 +24,14 @@ export const ProgramModal = ({ open, onClose, program }: ProgramModalProps) => {
     <FormModal
       open={open}
       onClose={handleClose}
-      title={isEditing ? "Edit Program" : "Create New Program"}
+      title={
+        isEditing ? "Edit Program" : isDuplicating ? "Duplicate Program" : "Create New Program"
+      }
       onSubmit={handleFormSubmit}
       isSubmitting={isSubmitting}
-      submitText={isEditing ? "Update Program" : "Create Program"}
+      submitText={
+        isEditing ? "Update Program" : isDuplicating ? "Duplicate Program" : "Create Program"
+      }
       error={submitError}
       maxWidth="sm"
     >

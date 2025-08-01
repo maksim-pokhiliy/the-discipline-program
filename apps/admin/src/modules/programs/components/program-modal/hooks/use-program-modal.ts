@@ -11,10 +11,12 @@ interface UseProgramModalProps {
 }
 
 export const useProgramModal = ({ program, onClose }: UseProgramModalProps) => {
-  const { createProgram, updateProgram } = useProgramMutations();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const isEditing = !!program;
+  const { createProgram, updateProgram } = useProgramMutations();
+
+  const isEditing = Boolean(program && program.id);
+  const isDuplicating = Boolean(program && !program.id);
   const isSubmitting = createProgram.isPending || updateProgram.isPending;
 
   const handleSubmit = async (data: ProgramFormData) => {
@@ -53,6 +55,7 @@ export const useProgramModal = ({ program, onClose }: UseProgramModalProps) => {
 
   return {
     isEditing,
+    isDuplicating,
     isSubmitting,
     submitError,
     handleSubmit,
