@@ -1,3 +1,5 @@
+"use client";
+
 import { Program } from "@repo/api";
 
 export type ProgramCurrency = "USD" | "EUR" | "UAH";

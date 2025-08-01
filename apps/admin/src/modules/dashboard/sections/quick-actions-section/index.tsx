@@ -1,3 +1,5 @@
+"use client";
+
 import { Grid, Card, CardContent, Typography, Stack } from "@mui/material";
 import Link from "next/link";
 
@@ -26,13 +28,16 @@ export const QuickActionsSection = () => {
                 }),
                 "&:hover": {
                   bgcolor: theme.palette[action.color].main,
+
                   "& .action-icon": {
                     bgcolor: theme.palette.common.white,
                     color: `${theme.palette[action.color].main}`,
                   },
+
                   "& .action-title": {
                     color: theme.palette.common.white,
                   },
+
                   "& .action-description": {
                     color: theme.palette.common.white,
                     opacity: 0.9,

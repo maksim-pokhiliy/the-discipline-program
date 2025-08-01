@@ -1,3 +1,5 @@
+"use client";
+
 import CancelIcon from "@mui/icons-material/Cancel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PsychologyIcon from "@mui/icons-material/Psychology";
