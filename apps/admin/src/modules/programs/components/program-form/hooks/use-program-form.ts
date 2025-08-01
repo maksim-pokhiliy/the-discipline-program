@@ -1,3 +1,5 @@
+"use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Program } from "@repo/api";
 import { useEffect } from "react";
@@ -43,7 +45,6 @@ export const useProgramForm = ({ program, onSubmit, isSubmitting }: UseProgramFo
   const watchedName = watch("name");
   const slugGeneration = useSlugGeneration(watchedName);
 
-  // Auto-generate slug from name
   useEffect(() => {
     const autoSlug = slugGeneration.getAutoSlug();
 

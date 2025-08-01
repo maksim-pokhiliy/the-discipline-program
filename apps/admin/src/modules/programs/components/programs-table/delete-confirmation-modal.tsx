@@ -1,3 +1,5 @@
+"use client";
+
 import { Program } from "@repo/api";
 import { ConfirmationModal } from "@repo/ui";
 

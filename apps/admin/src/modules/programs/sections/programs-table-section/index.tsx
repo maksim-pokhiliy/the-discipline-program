@@ -1,3 +1,5 @@
+"use client";
+
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Stack } from "@mui/material";
 import { Program } from "@repo/api";
