@@ -24,4 +24,5 @@ export interface ProgramModalProps {
   open: boolean;
   onClose: () => void;
   program?: Program | null;
+  title?: string;
 }
