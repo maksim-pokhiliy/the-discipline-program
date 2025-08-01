@@ -1,3 +1,5 @@
+"use client";
+
 import { TextField, FormControlLabel, Checkbox, Stack } from "@mui/material";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 

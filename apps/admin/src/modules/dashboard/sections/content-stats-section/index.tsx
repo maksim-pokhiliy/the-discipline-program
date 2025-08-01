@@ -1,3 +1,5 @@
+"use client";
+
 import ArticleIcon from "@mui/icons-material/Article";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
 import SportsIcon from "@mui/icons-material/Person";

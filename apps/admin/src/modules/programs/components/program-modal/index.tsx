@@ -1,3 +1,5 @@
+"use client";
+
 import { FormModal } from "@repo/ui";
 import { useRef, FormEvent } from "react";
 
