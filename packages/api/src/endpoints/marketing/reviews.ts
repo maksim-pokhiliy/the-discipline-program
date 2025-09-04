@@ -7,14 +7,12 @@ export const reviewsApi = {
       where: {
         isActive: true,
         isFeatured: true,
-        authorAvatar: { not: null },
       },
       orderBy: { sortOrder: "asc" },
     });
 
     const transformedReviews = reviews.map((review) => ({
       ...review,
-      authorAvatar: review.authorAvatar || "/images/default-avatar.jpg",
     }));
 
     return transformedReviews;
