@@ -8,7 +8,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <>
       <Header />
 
-      <Box sx={{ minHeight: "100vh" }}>{children}</Box>
+      <Box>{children}</Box>
     </>
   );
 }
