@@ -13,9 +13,11 @@
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@prisma/client": "^6.15.0",
     "lefthook": "^1.11.12",
     "prettier": "^3.5.3",
     "prettier-plugin-sort-json": "^4.1.1",
+    "prisma": "^6.15.0",
     "turbo": "^2.5.5",
     "typescript": "^5.8.2"
   },
@@ -33,9 +35,5 @@
       "esbuild",
       "prisma"
     ]
-  },
-  "dependencies": {
-    "@prisma/client": "^6.13.0",
-    "prisma": "^6.13.0"
   }
 }
