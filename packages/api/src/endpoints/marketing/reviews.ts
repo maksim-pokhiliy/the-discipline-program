@@ -14,7 +14,7 @@ export const reviewsApi = {
 
     const transformedReviews = reviews.map((review) => ({
       ...review,
-      authorAvatar: review.authorAvatar || "/images/default-avatar.jpg",
+      authorAvatar: review.authorAvatar || "",
     }));
 
     return transformedReviews;

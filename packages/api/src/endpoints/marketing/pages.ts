@@ -33,7 +33,7 @@ export const pagesApi = {
 
     const reviews = rawReviews.map((review) => ({
       ...review,
-      authorAvatar: review.authorAvatar || "/images/default-avatar.jpg",
+      authorAvatar: review.authorAvatar || "",
     }));
 
     const getSectionData = <T>(sectionName: string): T => {

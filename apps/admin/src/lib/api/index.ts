@@ -7,6 +7,8 @@ import {
   ContactSubmission,
   ProgramStats,
   AdminProgramsPageData,
+  ReviewStats,
+  AdminReviewsPageData,
 } from "@repo/api";
 
 import { adminApiClient } from "./client";
@@ -32,13 +34,20 @@ export const adminApi = {
   },
 
   reviews: {
+    getPageData: (): Promise<AdminReviewsPageData> =>
+      adminApiClient.request("/api/reviews/page-data"),
     getAll: (): Promise<Review[]> => adminApiClient.request("/api/reviews"),
     getById: (id: string): Promise<Review> => adminApiClient.request(`/api/reviews/${id}`),
+    getStats: (): Promise<ReviewStats> => adminApiClient.request("/api/reviews/stats"),
     create: (data: Partial<Review>): Promise<Review> =>
       adminApiClient.request("/api/reviews", "POST", data),
     update: (id: string, data: Partial<Review>): Promise<Review> =>
       adminApiClient.request(`/api/reviews/${id}`, "PUT", data),
     delete: (id: string): Promise<void> => adminApiClient.request(`/api/reviews/${id}`, "DELETE"),
+    toggleActive: (id: string): Promise<Review> =>
+      adminApiClient.request(`/api/reviews/${id}/toggle-active`, "PATCH"),
+    toggleFeatured: (id: string): Promise<Review> =>
+      adminApiClient.request(`/api/reviews/${id}/toggle-featured`, "PATCH"),
   },
 
   contacts: {
@@ -47,5 +56,18 @@ export const adminApi = {
       adminApiClient.request(`/api/contacts/${id}`),
     updateStatus: (id: string, status: ContactSubmission["status"]): Promise<ContactSubmission> =>
       adminApiClient.request(`/api/contacts/${id}`, "PUT", { status }),
+  },
+
+  upload: {
+    avatar: (file: File): Promise<{ url: string }> => {
+      const formData = new FormData();
+
+      formData.append("file", file);
+
+      return adminApiClient.request("/api/upload/avatar", "POST", formData);
+    },
+
+    deleteAvatar: (url: string): Promise<void> =>
+      adminApiClient.request("/api/upload/avatar", "DELETE", { url }),
   },
 };
