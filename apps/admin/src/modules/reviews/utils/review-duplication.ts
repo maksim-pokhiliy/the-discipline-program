@@ -15,8 +15,8 @@ export const createDuplicateReview = (
     text: originalReview.text,
     rating: originalReview.rating,
     programId: originalReview.programId,
-    isActive: false, // Дубликат начинает как неактивный
-    isFeatured: false, // Дубликат не featured по умолчанию
+    isActive: false,
+    isFeatured: false,
     sortOrder: maxSortOrder + 1,
   };
 };

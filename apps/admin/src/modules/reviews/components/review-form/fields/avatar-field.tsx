@@ -16,6 +16,7 @@ import { useState, useRef } from "react";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 
 import { adminApi } from "@app/lib/api";
+import { UPLOAD_CONFIG } from "@app/shared/constants/upload";
 
 import { ReviewFormData } from "../../shared/types";
 
@@ -33,7 +34,7 @@ export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps)
   const handleFileUpload = async (
     file: File,
     onChange: (value: string) => void,
-    currentUrl?: string,
+    currentUrl: string | null,
   ) => {
     setIsUploading(true);
     setUploadError(null);
@@ -53,7 +54,7 @@ export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps)
     }
 
     try {
-      if (currentUrl && currentUrl.includes("blob.vercel-storage.com")) {
+      if (currentUrl && currentUrl.includes(UPLOAD_CONFIG.avatarStorage.domain)) {
         await adminApi.upload.deleteAvatar(currentUrl).catch(console.error);
       }
 
@@ -86,7 +87,7 @@ export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps)
             <Stack spacing={2}>
               <Stack direction="row" spacing={3} alignItems="flex-start">
                 <Avatar
-                  src={field.value || ""}
+                  src={field.value ?? ""}
                   alt="Author avatar"
                   sx={{
                     width: 80,
@@ -131,7 +132,7 @@ export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps)
                         color="error"
                         startIcon={<DeleteIcon />}
                         onClick={() => {
-                          field.onChange("");
+                          field.onChange(null);
 
                           if (fileInputRef.current) {
                             fileInputRef.current.value = "";

@@ -31,10 +31,7 @@ export const pagesApi = {
       }),
     ]);
 
-    const reviews = rawReviews.map((review) => ({
-      ...review,
-      authorAvatar: review.authorAvatar || "",
-    }));
+    const reviews = rawReviews.map((review) => review);
 
     const getSectionData = <T>(sectionName: string): T => {
       const section = sections.find((s) => s.section === sectionName);

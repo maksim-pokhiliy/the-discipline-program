@@ -102,7 +102,7 @@ export const ReviewRow = ({
 
           <Stack direction="row" alignItems="center" spacing={2}>
             <Avatar
-              src={review.authorAvatar}
+              src={review.authorAvatar ?? ""}
               alt={review.authorName}
               sx={{ width: 40, height: 40 }}
             />

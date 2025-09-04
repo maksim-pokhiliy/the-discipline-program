@@ -5,10 +5,10 @@ import { Program, Review } from "@repo/api";
 export interface ReviewFormData {
   authorName: string;
   authorRole: string;
-  authorAvatar?: string;
+  authorAvatar: string | null;
   text: string;
   rating: number;
-  programId?: string | null;
+  programId: string | null;
   isActive: boolean;
   isFeatured: boolean;
   sortOrder: number;

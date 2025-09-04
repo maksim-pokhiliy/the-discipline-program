@@ -55,14 +55,20 @@ export const useReviewMutations = () => {
   });
 
   const toggleActive = useMutation({
-    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      adminApi.reviews.update(id, { isActive: !isActive }),
+    mutationFn: async (reviewId: string) => {
+      const review = await adminApi.reviews.getById(reviewId);
+
+      return adminApi.reviews.update(reviewId, { isActive: !review.isActive });
+    },
     onSuccess: invalidateReviews,
   });
 
   const toggleFeatured = useMutation({
-    mutationFn: ({ id, isFeatured }: { id: string; isFeatured: boolean }) =>
-      adminApi.reviews.update(id, { isFeatured: !isFeatured }),
+    mutationFn: async (reviewId: string) => {
+      const review = await adminApi.reviews.getById(reviewId);
+
+      return adminApi.reviews.update(reviewId, { isFeatured: !review.isFeatured });
+    },
     onSuccess: invalidateReviews,
   });
 

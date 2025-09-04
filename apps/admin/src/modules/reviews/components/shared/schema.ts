@@ -7,7 +7,7 @@ export const reviewFormSchema = z.object({
 
   authorRole: z.string().min(1, "Author role is required").max(100, "Role is too long"),
 
-  authorAvatar: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  authorAvatar: z.union([z.string().url("Must be a valid URL"), z.literal(""), z.null()]),
 
   text: z
     .string()
@@ -20,7 +20,7 @@ export const reviewFormSchema = z.object({
     .max(5, "Rating must be between 1 and 5")
     .int("Rating must be a whole number"),
 
-  programId: z.string().optional().nullable(),
+  programId: z.union([z.string(), z.null()]),
 
   isActive: z.boolean(),
 
