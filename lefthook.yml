@@ -1,23 +1,28 @@
 pre-commit:
-  parallel: true
+  parallel: false
   commands:
     lint:
-      files: git diff --name-only --staged
-      glob: "{src,public}/**/*.{js,ts,jsx,tsx,d.ts}"
-      run: pnpm eslint --fix --cache --cache-location node_modules/.cache/.eslint {files}
+      run: pnpm lint
+      stage_fixed: true
+      fail_text: "ESLint failed - check the errors above"
 
-    format:
-      files: git diff --name-only --staged
-      glob: "{src,public}/**/*.{js,ts,jsx,tsx,json}"
-      run: pnpm prettier --write {files}
+    prettier:
+      run: pnpm format
+      stage_fixed: true
+      fail_text: "Prettier formatting failed"
 
-    types:
-      files: git diff --name-only --staged
-      glob: "{src,public}/**/*.{ts,tsx}"
-      run: pnpm tsc --noEmit --incremental
+    type-check:
+      run: pnpm typecheck
+      fail_text: "TypeScript compilation failed"
 
 commit-msg:
-  parallel: true
   commands:
     commitlint:
-      run: pnpm commitlint --edit --verbose
+      run: pnpm dlx commitlint --edit {1}
+      fail_text: "Commit message format is invalid"
+
+pre-push:
+  commands:
+    build-check:
+      run: pnpm build
+      fail_text: "Build failed - fix errors before pushing"

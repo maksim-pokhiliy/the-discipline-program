@@ -124,26 +124,28 @@ export const ReviewsTable = ({ reviews, onEditReview, onDuplicateReview }: Revie
     }
   };
 
-  const handleToggleActive = async (review: Review) => {
-    setTogglingReviewId(review.id);
+  const handleToggleActive = async (reviewId: string) => {
+    setTogglingReviewId(reviewId);
 
-    await toggleActive.mutateAsync({
-      id: review.id,
-      isActive: review.isActive,
-    });
-
-    setTogglingReviewId(null);
+    try {
+      await toggleActive.mutateAsync(reviewId);
+    } catch (error) {
+      console.error("Toggle active failed:", error);
+    } finally {
+      setTogglingReviewId(null);
+    }
   };
 
-  const handleToggleFeatured = async (review: Review) => {
-    setTogglingFeaturedId(review.id);
+  const handleToggleFeatured = async (reviewId: string) => {
+    setTogglingFeaturedId(reviewId);
 
-    await toggleFeatured.mutateAsync({
-      id: review.id,
-      isFeatured: review.isFeatured,
-    });
-
-    setTogglingFeaturedId(null);
+    try {
+      await toggleFeatured.mutateAsync(reviewId);
+    } catch (error) {
+      console.error("Toggle featured failed:", error);
+    } finally {
+      setTogglingFeaturedId(null);
+    }
   };
 
   const handleDragStart = () => {
@@ -250,8 +252,8 @@ export const ReviewsTable = ({ reviews, onEditReview, onDuplicateReview }: Revie
                     onEdit={() => onEditReview(review)}
                     onDelete={() => handleDeleteClick(review)}
                     onDuplicate={() => onDuplicateReview(review)}
-                    onToggleActive={() => handleToggleActive(review)}
-                    onToggleFeatured={() => handleToggleFeatured(review)}
+                    onToggleActive={() => handleToggleActive(review.id)}
+                    onToggleFeatured={() => handleToggleFeatured(review.id)}
                     isTogglingActive={togglingReviewId === review.id}
                     isTogglingFeatured={togglingFeaturedId === review.id}
                     isDragDisabled={!isDragEnabled}

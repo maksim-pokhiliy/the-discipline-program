@@ -14,7 +14,6 @@ export const adminReviewsApi = {
 
     const transformedReviews = reviews.map((review) => ({
       ...review,
-      authorAvatar: review.authorAvatar || "",
     }));
 
     return transformedReviews;
@@ -25,14 +24,7 @@ export const adminReviewsApi = {
       where: { id },
     });
 
-    if (!review) {
-      return null;
-    }
-
-    return {
-      ...review,
-      authorAvatar: review.authorAvatar || "",
-    };
+    return review ?? null;
   },
 
   getReviewsStats: async () => {
@@ -63,45 +55,19 @@ export const adminReviewsApi = {
 
   createReview: async (data: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<Review> => {
     const review = await prisma.review.create({
-      data: {
-        authorName: data.authorName,
-        authorRole: data.authorRole,
-        authorAvatar: data.authorAvatar || null,
-        text: data.text,
-        rating: data.rating,
-        programId: data.programId || null,
-        isActive: data.isActive,
-        isFeatured: data.isFeatured,
-        sortOrder: data.sortOrder,
-      },
+      data,
     });
 
-    return {
-      ...review,
-      authorAvatar: review.authorAvatar || "",
-    };
+    return review;
   },
 
   updateReview: async (id: string, data: Partial<Review>): Promise<Review> => {
     const review = await prisma.review.update({
       where: { id },
-      data: {
-        ...(data.authorName !== undefined && { authorName: data.authorName }),
-        ...(data.authorRole !== undefined && { authorRole: data.authorRole }),
-        ...(data.authorAvatar !== undefined && { authorAvatar: data.authorAvatar || null }),
-        ...(data.text !== undefined && { text: data.text }),
-        ...(data.rating !== undefined && { rating: data.rating }),
-        ...(data.programId !== undefined && { programId: data.programId || null }),
-        ...(data.isActive !== undefined && { isActive: data.isActive }),
-        ...(data.isFeatured !== undefined && { isFeatured: data.isFeatured }),
-        ...(data.sortOrder !== undefined && { sortOrder: data.sortOrder }),
-      },
+      data,
     });
 
-    return {
-      ...review,
-      authorAvatar: review.authorAvatar || "",
-    };
+    return review;
   },
 
   deleteReview: async (id: string): Promise<void> => {
@@ -124,10 +90,7 @@ export const adminReviewsApi = {
       data: { isActive: !review.isActive },
     });
 
-    return {
-      ...updated,
-      authorAvatar: updated.authorAvatar || "",
-    };
+    return updated;
   },
 
   toggleReviewFeatured: async (id: string): Promise<Review> => {
@@ -144,9 +107,6 @@ export const adminReviewsApi = {
       data: { isFeatured: !review.isFeatured },
     });
 
-    return {
-      ...updated,
-      authorAvatar: updated.authorAvatar || "",
-    };
+    return updated;
   },
 };

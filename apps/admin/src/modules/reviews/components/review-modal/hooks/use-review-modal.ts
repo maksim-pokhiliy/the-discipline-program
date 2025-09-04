@@ -27,7 +27,7 @@ export const useReviewModal = ({ review, onClose }: UseReviewModalProps) => {
     try {
       const submitData = {
         ...data,
-        authorAvatar: data.authorAvatar?.trim() || null,
+        authorAvatar: data.authorAvatar?.trim(),
         programId: data.programId?.trim() || null,
       };
 

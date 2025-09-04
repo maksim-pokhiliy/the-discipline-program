@@ -3,7 +3,7 @@ export interface Review {
   text: string;
   authorName: string;
   authorRole: string;
-  authorAvatar: string;
+  authorAvatar: string | null;
   rating: number;
   programId?: string | null;
   isActive: boolean;
