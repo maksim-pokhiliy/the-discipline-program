@@ -15,15 +15,17 @@ class ApiClient {
     body?: unknown,
     queryParams?: Record<string, string>,
   ): Promise<T> {
-    const headers: Record<string, string> = {
-      "Content-Type": "application/json",
-    };
+    const isFormData = body instanceof FormData;
+    const headers: Record<string, string> = {};
+
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json";
+    }
 
     let fullUrl = `${this.baseUrl}${url}`;
 
     if (queryParams) {
       const params = new URLSearchParams(queryParams).toString();
-
       if (params) {
         fullUrl += `?${params}`;
       }
@@ -32,11 +34,14 @@ class ApiClient {
     const response = await fetch(fullUrl, {
       method,
       headers,
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFormData ? body : body ? JSON.stringify(body) : undefined,
     });
 
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status}`);
+      const error = await response
+        .json()
+        .catch(() => ({ error: `Request failed: ${response.status}` }));
+      throw new Error(error.error || `API request failed: ${response.status}`);
     }
 
     return response.json();

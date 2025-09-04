@@ -14,7 +14,6 @@ export const adminReviewsApi = {
 
     const transformedReviews = reviews.map((review) => ({
       ...review,
-      authorAvatar: review.authorAvatar || "/images/default-avatar.jpg",
     }));
 
     return transformedReviews;
@@ -25,14 +24,7 @@ export const adminReviewsApi = {
       where: { id },
     });
 
-    if (!review) {
-      return null;
-    }
-
-    return {
-      ...review,
-      authorAvatar: review.authorAvatar || "/images/default-avatar.jpg",
-    };
+    return review ?? null;
   },
 
   getReviewsStats: async () => {
@@ -47,5 +39,74 @@ export const adminReviewsApi = {
       active,
       featured,
     };
+  },
+
+  getReviewsPageData: async () => {
+    const [stats, reviews] = await Promise.all([
+      adminReviewsApi.getReviewsStats(),
+      adminReviewsApi.getReviews(),
+    ]);
+
+    return {
+      stats,
+      reviews,
+    };
+  },
+
+  createReview: async (data: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<Review> => {
+    const review = await prisma.review.create({
+      data,
+    });
+
+    return review;
+  },
+
+  updateReview: async (id: string, data: Partial<Review>): Promise<Review> => {
+    const review = await prisma.review.update({
+      where: { id },
+      data,
+    });
+
+    return review;
+  },
+
+  deleteReview: async (id: string): Promise<void> => {
+    await prisma.review.delete({
+      where: { id },
+    });
+  },
+
+  toggleReviewStatus: async (id: string): Promise<Review> => {
+    const review = await prisma.review.findUnique({
+      where: { id },
+    });
+
+    if (!review) {
+      throw new Error("Review not found");
+    }
+
+    const updated = await prisma.review.update({
+      where: { id },
+      data: { isActive: !review.isActive },
+    });
+
+    return updated;
+  },
+
+  toggleReviewFeatured: async (id: string): Promise<Review> => {
+    const review = await prisma.review.findUnique({
+      where: { id },
+    });
+
+    if (!review) {
+      throw new Error("Review not found");
+    }
+
+    const updated = await prisma.review.update({
+      where: { id },
+      data: { isFeatured: !review.isFeatured },
+    });
+
+    return updated;
   },
 };

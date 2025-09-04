@@ -34,7 +34,7 @@ export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionP
 
                   <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
                     <Avatar
-                      src={review.authorAvatar}
+                      src={review.authorAvatar ?? ""}
                       alt={review.authorName}
                       sx={{ width: 50, height: 50 }}
                     />
