@@ -3,9 +3,8 @@
 import { Program } from "@repo/api";
 import { useState } from "react";
 
-import { useProgramMutations } from "@app/lib/hooks/use-admin-api";
-
-import { ProgramFormData } from "../../shared/types";
+import { useProgramMutations } from "@app/lib/hooks";
+import { ProgramFormData } from "@app/modules/programs/shared";
 
 interface UseProgramModalProps {
   program?: Program | null;

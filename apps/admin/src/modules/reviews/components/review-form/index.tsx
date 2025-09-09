@@ -1,11 +1,11 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import { useImperativeHandle, forwardRef } from "react";
+import { forwardRef, useImperativeHandle } from "react";
 
-import { ReviewFormProps } from "../shared/types";
+import { ReviewFormProps } from "../../shared";
 
-import { BasicFields, RatingField, AvatarField, SettingsFields } from "./fields";
+import { AvatarField, BasicFields, RatingField, SettingsFields } from "./fields";
 import { useReviewForm } from "./hooks/use-review-form";
 
 export interface ReviewFormRef {
@@ -46,4 +46,4 @@ export const ReviewForm = forwardRef<ReviewFormRef, ReviewFormProps>(
 
 ReviewForm.displayName = "ReviewForm";
 
-export type { ReviewFormData } from "../shared/types";
+export type { ReviewFormData } from "../../shared/types";

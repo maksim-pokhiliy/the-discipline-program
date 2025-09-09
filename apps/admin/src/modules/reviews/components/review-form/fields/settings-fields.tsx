@@ -3,7 +3,7 @@
 import { TextField, FormControlLabel, Checkbox, Stack, Typography } from "@mui/material";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 
-import { ReviewFormData } from "../../shared/types";
+import { ReviewFormData } from "../../../shared/types";
 
 interface SettingsFieldsProps {
   control: Control<ReviewFormData>;

@@ -3,9 +3,9 @@
 import { Review } from "@repo/api";
 import { useState } from "react";
 
-import { useReviewMutations } from "@app/lib/hooks/use-admin-api";
+import { useReviewMutations } from "@app/lib/hooks";
 
-import { ReviewFormData } from "../../shared/types";
+import { ReviewFormData } from "../../review-form";
 
 interface UseReviewModalProps {
   review?: Review | null;

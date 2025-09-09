@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
-import { LOGO_SIZE } from "@app/shared/constants/layout";
+import { LOGO_SIZE } from "@app/shared/constants";
 
 export const Logo = () => {
   return (
