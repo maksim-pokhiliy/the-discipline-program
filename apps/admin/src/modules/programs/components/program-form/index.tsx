@@ -1,9 +1,9 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import { useImperativeHandle, forwardRef } from "react";
+import { forwardRef, useImperativeHandle } from "react";
 
-import { ProgramFormProps } from "../shared/types";
+import { ProgramFormProps } from "../../shared";
 
 import { BasicFields } from "./fields/basic-fields";
 import { FeaturesField } from "./fields/features-field";
@@ -55,5 +55,3 @@ export const ProgramForm = forwardRef<ProgramFormRef, ProgramFormProps>(
 );
 
 ProgramForm.displayName = "ProgramForm";
-
-export type { ProgramFormData } from "../shared/types";

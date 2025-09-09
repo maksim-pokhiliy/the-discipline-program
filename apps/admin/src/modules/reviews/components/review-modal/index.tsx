@@ -1,12 +1,12 @@
 "use client";
 
 import { FormModal } from "@repo/ui";
-import { useRef, FormEvent } from "react";
+import { FormEvent, useRef } from "react";
 
-import { usePrograms } from "@app/lib/hooks/use-admin-api";
+import { usePrograms } from "@app/lib/hooks";
 
+import { ReviewModalProps } from "../../shared";
 import { ReviewForm, ReviewFormRef } from "../review-form";
-import { ReviewModalProps } from "../shared/types";
 
 import { useReviewModal } from "./hooks/use-review-modal";
 

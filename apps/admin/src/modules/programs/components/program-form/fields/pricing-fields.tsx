@@ -1,10 +1,9 @@
 "use client";
 
-import { TextField, Stack, MenuItem } from "@mui/material";
+import { MenuItem, Stack, TextField } from "@mui/material";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 
-import { CURRENCIES } from "../../shared/constants";
-import { ProgramFormData } from "../../shared/types";
+import { CURRENCIES, ProgramFormData } from "@app/modules/programs/shared";
 
 interface PricingFieldsProps {
   control: Control<ProgramFormData>;

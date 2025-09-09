@@ -5,10 +5,10 @@ import PercentIcon from "@mui/icons-material/Percent";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import {
-  Grid,
-  Typography,
   Card,
   CardContent,
+  Chip,
+  Grid,
   Stack,
   Table,
   TableBody,
@@ -16,13 +16,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Chip,
+  Typography,
 } from "@mui/material";
 import { BusinessStats } from "@repo/api";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
-
-import { StatsCard } from "../../../../shared/components/ui/stats-card";
+import { ContentSection, StatsCard } from "@app/shared/components/ui";
 
 interface BusinessStatsSectionProps {
   businessStats: BusinessStats;
@@ -82,39 +80,35 @@ export const BusinessStatsSection = ({ businessStats }: BusinessStatsSectionProp
                   Top Programs
                 </Typography>
 
-                {businessStats.topPrograms.length > 0 ? (
-                  <Stack spacing={2}>
-                    {businessStats.topPrograms.map((program, index) => (
-                      <Stack
-                        key={program.id}
-                        direction="row"
-                        sx={{
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          p: 2,
-                          backgroundColor: index === 0 ? "primary.main" : "background.default",
-                          color: index === 0 ? "primary.contrastText" : "text.primary",
-                        }}
-                      >
-                        <Stack>
-                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                            {program.name}
-                          </Typography>
+                <Stack spacing={2}>
+                  {businessStats.topPrograms.map((program, index) => (
+                    <Stack
+                      key={program.id}
+                      direction="row"
+                      sx={{
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        p: 2,
+                        backgroundColor: index === 0 ? "primary.main" : "background.default",
+                        color: index === 0 ? "primary.contrastText" : "text.primary",
+                      }}
+                    >
+                      <Stack>
+                        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                          {program.name}
+                        </Typography>
 
-                          <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                            {program.orderCount} orders
-                          </Typography>
-                        </Stack>
-
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                          ${program.revenue}
+                        <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                          {program.orderCount} orders
                         </Typography>
                       </Stack>
-                    ))}
-                  </Stack>
-                ) : (
-                  <Typography color="text.secondary">No sales data yet</Typography>
-                )}
+
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        ${program.revenue}
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
               </CardContent>
             </Card>
           </Grid>
