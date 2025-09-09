@@ -6,11 +6,10 @@ import { Review } from "@repo/api";
 import { useModal } from "@repo/ui";
 import { useState } from "react";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
-import { ReviewModal } from "../../components";
-import { ReviewsTable } from "../../components/reviews-table";
-import { createDuplicateReview } from "../../utils/review-duplication";
+import { ReviewModal, ReviewsTable } from "../../components";
+import { createDuplicateReview } from "../../utils";
 
 interface ReviewsTableSectionProps {
   reviews: Review[];

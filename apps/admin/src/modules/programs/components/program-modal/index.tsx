@@ -1,10 +1,10 @@
 "use client";
 
 import { FormModal } from "@repo/ui";
-import { useRef, FormEvent } from "react";
+import { FormEvent, useRef } from "react";
 
+import { ProgramModalProps } from "../../shared";
 import { ProgramForm, ProgramFormRef } from "../program-form";
-import { ProgramModalProps } from "../shared/types";
 
 import { useProgramModal } from "./hooks/use-program-modal";
 

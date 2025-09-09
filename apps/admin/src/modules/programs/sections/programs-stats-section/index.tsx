@@ -6,8 +6,7 @@ import PsychologyIcon from "@mui/icons-material/Psychology";
 import { Grid } from "@mui/material";
 import { ProgramStats } from "@repo/api";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
-import { StatsCard } from "@app/shared/components/ui/stats-card";
+import { ContentSection, StatsCard } from "@app/shared/components/ui";
 
 interface ProgramsStatsSectionProps {
   stats: ProgramStats;

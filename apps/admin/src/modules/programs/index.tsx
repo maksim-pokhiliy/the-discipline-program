@@ -2,11 +2,10 @@
 
 import { Stack } from "@mui/material";
 
-import { useProgramsPageData } from "@app/lib/hooks/use-admin-api";
-import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
+import { useProgramsPageData } from "@app/lib/hooks";
+import { QueryWrapper } from "@app/shared/components/providers";
 
-import { ProgramsStatsSection } from "./sections/programs-stats-section";
-import { ProgramsTableSection } from "./sections/programs-table-section";
+import { ProgramsStatsSection, ProgramsTableSection } from "./sections";
 
 export const ProgramsPage = () => {
   const { data, isLoading, error } = useProgramsPageData();

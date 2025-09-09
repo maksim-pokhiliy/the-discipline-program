@@ -1,9 +1,9 @@
 "use client";
 
-import { TextField, FormControlLabel, Checkbox, Stack } from "@mui/material";
+import { Checkbox, FormControlLabel, Stack, TextField } from "@mui/material";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 
-import { ProgramFormData } from "../../shared/types";
+import { ProgramFormData } from "@app/modules/programs/shared";
 
 interface SettingsFieldsProps {
   control: Control<ProgramFormData>;

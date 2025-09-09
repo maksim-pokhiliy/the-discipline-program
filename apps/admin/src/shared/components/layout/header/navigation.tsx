@@ -2,9 +2,9 @@
 
 import { Stack } from "@mui/material";
 
-import { NAV_LINKS } from "@app/shared/constants/navigation";
+import { NAV_LINKS } from "@app/shared/constants";
 
-import { NavLinkButton } from "../../ui/nav-link-button";
+import { NavLinkButton } from "../../ui";
 
 export const Navigation = () => (
   <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 0, sm: 2 }}>

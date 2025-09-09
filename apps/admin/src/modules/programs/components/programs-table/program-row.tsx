@@ -7,15 +7,15 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import EditIcon from "@mui/icons-material/Edit";
 import {
-  TableRow,
-  TableCell,
-  Typography,
-  Chip,
-  Stack,
-  IconButton,
-  Switch,
-  Tooltip,
   alpha,
+  Chip,
+  IconButton,
+  Stack,
+  Switch,
+  TableCell,
+  TableRow,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import { Program } from "@repo/api";
 
