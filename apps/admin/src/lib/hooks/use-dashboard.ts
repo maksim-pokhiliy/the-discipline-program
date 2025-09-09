@@ -2,10 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { adminApi } from "../api";
+import { api } from "../api";
 
 export const useDashboardData = () =>
   useQuery({
     queryKey: ["admin", "dashboard"],
-    queryFn: adminApi.dashboard.getData,
+    queryFn: api.dashboard.getData,
   });

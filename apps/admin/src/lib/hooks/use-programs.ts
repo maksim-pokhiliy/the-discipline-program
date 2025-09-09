@@ -3,30 +3,30 @@
 import { Program, AdminProgramsPageData } from "@repo/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { adminApi } from "../api";
+import { api } from "../api";
 
 export const useProgramsPageData = () =>
   useQuery({
     queryKey: ["admin", "programs", "page-data"],
-    queryFn: adminApi.programs.getPageData,
+    queryFn: api.programs.getPageData,
   });
 
 export const usePrograms = () =>
   useQuery({
     queryKey: ["admin", "programs"],
-    queryFn: adminApi.programs.getAll,
+    queryFn: api.programs.getAll,
   });
 
 export const useProgramsStats = () =>
   useQuery({
     queryKey: ["admin", "programs", "stats"],
-    queryFn: adminApi.programs.getStats,
+    queryFn: api.programs.getStats,
   });
 
 export const useProgram = (id: string) =>
   useQuery({
     queryKey: ["admin", "programs", id],
-    queryFn: () => adminApi.programs.getById(id),
+    queryFn: () => api.programs.getById(id),
     enabled: !!id,
   });
 
@@ -39,23 +39,23 @@ export const useProgramMutations = () => {
   };
 
   const createProgram = useMutation({
-    mutationFn: adminApi.programs.create,
+    mutationFn: api.programs.create,
     onSuccess: invalidatePrograms,
   });
 
   const updateProgram = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Program> }) =>
-      adminApi.programs.update(id, data),
+      api.programs.update(id, data),
     onSuccess: invalidatePrograms,
   });
 
   const deleteProgram = useMutation({
-    mutationFn: adminApi.programs.delete,
+    mutationFn: api.programs.delete,
     onSuccess: invalidatePrograms,
   });
 
   const toggleStatus = useMutation({
-    mutationFn: adminApi.programs.toggleStatus,
+    mutationFn: api.programs.toggleStatus,
     onSuccess: invalidatePrograms,
   });
 
@@ -67,9 +67,7 @@ export const useProgramMutations = () => {
       }));
 
       await Promise.all(
-        updates.map((update) =>
-          adminApi.programs.update(update.id, { sortOrder: update.sortOrder }),
-        ),
+        updates.map((update) => api.programs.update(update.id, { sortOrder: update.sortOrder })),
       );
 
       return reorderedPrograms;

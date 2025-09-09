@@ -7,9 +7,7 @@ import RateReviewIcon from "@mui/icons-material/RateReview";
 import { Grid } from "@mui/material";
 import { ContentStats } from "@repo/api";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
-
-import { StatsCard } from "../../../../shared/components/ui/stats-card";
+import { ContentSection, StatsCard } from "@app/shared/components/ui";
 
 interface ContentStatsSectionProps {
   contentStats: ContentStats;

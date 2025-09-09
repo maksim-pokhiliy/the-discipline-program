@@ -3,30 +3,30 @@
 import { Review, AdminReviewsPageData } from "@repo/api";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { adminApi } from "../api";
+import { api } from "../api";
 
 export const useReviewsPageData = () =>
   useQuery({
     queryKey: ["admin", "reviews", "page-data"],
-    queryFn: adminApi.reviews.getPageData,
+    queryFn: api.reviews.getPageData,
   });
 
 export const useReviews = () =>
   useQuery({
     queryKey: ["admin", "reviews"],
-    queryFn: adminApi.reviews.getAll,
+    queryFn: api.reviews.getAll,
   });
 
 export const useReviewsStats = () =>
   useQuery({
     queryKey: ["admin", "reviews", "stats"],
-    queryFn: adminApi.reviews.getStats,
+    queryFn: api.reviews.getStats,
   });
 
 export const useReview = (id: string) =>
   useQuery({
     queryKey: ["admin", "reviews", id],
-    queryFn: () => adminApi.reviews.getById(id),
+    queryFn: () => api.reviews.getById(id),
     enabled: !!id,
   });
 
@@ -39,35 +39,35 @@ export const useReviewMutations = () => {
   };
 
   const createReview = useMutation({
-    mutationFn: adminApi.reviews.create,
+    mutationFn: api.reviews.create,
     onSuccess: invalidateReviews,
   });
 
   const updateReview = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Review> }) =>
-      adminApi.reviews.update(id, data),
+      api.reviews.update(id, data),
     onSuccess: invalidateReviews,
   });
 
   const deleteReview = useMutation({
-    mutationFn: adminApi.reviews.delete,
+    mutationFn: api.reviews.delete,
     onSuccess: invalidateReviews,
   });
 
   const toggleActive = useMutation({
     mutationFn: async (reviewId: string) => {
-      const review = await adminApi.reviews.getById(reviewId);
+      const review = await api.reviews.getById(reviewId);
 
-      return adminApi.reviews.update(reviewId, { isActive: !review.isActive });
+      return api.reviews.update(reviewId, { isActive: !review.isActive });
     },
     onSuccess: invalidateReviews,
   });
 
   const toggleFeatured = useMutation({
     mutationFn: async (reviewId: string) => {
-      const review = await adminApi.reviews.getById(reviewId);
+      const review = await api.reviews.getById(reviewId);
 
-      return adminApi.reviews.update(reviewId, { isFeatured: !review.isFeatured });
+      return api.reviews.update(reviewId, { isFeatured: !review.isFeatured });
     },
     onSuccess: invalidateReviews,
   });
@@ -80,9 +80,7 @@ export const useReviewMutations = () => {
       }));
 
       await Promise.all(
-        updates.map((update) =>
-          adminApi.reviews.update(update.id, { sortOrder: update.sortOrder }),
-        ),
+        updates.map((update) => api.reviews.update(update.id, { sortOrder: update.sortOrder })),
       );
 
       return reorderedReviews;

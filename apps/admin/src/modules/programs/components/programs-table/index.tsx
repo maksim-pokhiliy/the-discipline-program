@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  DndContext,
   closestCenter,
+  DndContext,
+  DragEndEvent,
   KeyboardSensor,
   PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -16,21 +16,21 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import {
+  Box,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   TableSortLabel,
-  Box,
 } from "@mui/material";
 import { Program } from "@repo/api";
 import { useModal } from "@repo/ui";
 import { useState } from "react";
 
-import { useProgramMutations } from "@app/lib/hooks/use-admin-api";
+import { useProgramMutations } from "@app/lib/hooks";
 
 import { DeleteConfirmationModal } from "./delete-confirmation-modal";
 import { ProgramRow } from "./program-row";

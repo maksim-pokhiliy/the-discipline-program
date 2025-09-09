@@ -1,7 +1,3 @@
-"use client";
-
-export { ProgramForm } from "./program-form";
-export { ProgramModal } from "./program-modal";
-export { ProgramsTable } from "./programs-table";
-
-export type { ProgramFormData } from "./shared/types";
+export * from "./program-form";
+export * from "./program-modal";
+export * from "./programs-table";

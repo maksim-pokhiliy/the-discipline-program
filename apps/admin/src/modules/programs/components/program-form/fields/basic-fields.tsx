@@ -1,9 +1,9 @@
 "use client";
 
-import { TextField, Stack, Typography } from "@mui/material";
+import { Stack, TextField, Typography } from "@mui/material";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 
-import { ProgramFormData } from "../../shared/types";
+import { ProgramFormData } from "@app/modules/programs/shared";
 
 interface BasicFieldsProps {
   control: Control<ProgramFormData>;
