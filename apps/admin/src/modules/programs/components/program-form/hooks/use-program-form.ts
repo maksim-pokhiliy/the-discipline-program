@@ -5,9 +5,12 @@ import { Program } from "@repo/api";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
-import { FORM_DEFAULTS } from "../../shared/constants";
-import { programFormSchema } from "../../shared/schema";
-import { ProgramFormData, ProgramCurrency } from "../../shared/types";
+import {
+  FORM_DEFAULTS,
+  ProgramCurrency,
+  ProgramFormData,
+  programFormSchema,
+} from "@app/modules/programs/shared";
 
 import { useSlugGeneration } from "./use-slug-generation";
 

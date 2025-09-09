@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import { NextProvider } from "@repo/mui";
 import { Metadata } from "next";
 
-import { QueryProvider } from "@app/lib/providers/query-provider";
+import { QueryProvider } from "@app/shared/components/providers";
 
 export const metadata: Metadata = {
   title: "The Discipline Program - Admin",

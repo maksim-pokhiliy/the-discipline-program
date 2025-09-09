@@ -1,10 +1,10 @@
 "use client";
 
-import { TextField, Stack, MenuItem } from "@mui/material";
+import { MenuItem, Stack, TextField } from "@mui/material";
 import { Program } from "@repo/api";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 
-import { ReviewFormData } from "../../shared/types";
+import { ReviewFormData } from "@app/modules/reviews/shared";
 
 interface BasicFieldsProps {
   control: Control<ReviewFormData>;
@@ -70,6 +70,7 @@ export const BasicFields = ({ control, errors, isSubmitting, programs }: BasicFi
             <MenuItem value="">
               <em>No specific program</em>
             </MenuItem>
+
             {programs.map((program) => (
               <MenuItem key={program.id} value={program.id}>
                 {program.name}

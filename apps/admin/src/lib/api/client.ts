@@ -2,8 +2,8 @@
 
 import { ApiClient } from "@repo/api";
 
-import apiConfig from "./config";
+import { apiConfig } from "./config";
 
-export const adminApiClient = new ApiClient({
+export const apiClient = new ApiClient({
   baseUrl: apiConfig.baseUrl,
 });

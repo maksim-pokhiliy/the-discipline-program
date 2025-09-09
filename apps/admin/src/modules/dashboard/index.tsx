@@ -2,12 +2,10 @@
 
 import { Stack } from "@mui/material";
 
-import { useDashboardData } from "@app/lib/hooks/use-admin-api";
-import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
+import { useDashboardData } from "@app/lib/hooks";
+import { QueryWrapper } from "@app/shared/components/providers";
 
-import { BusinessStatsSection } from "./sections/business-stats-section";
-import { ContentStatsSection } from "./sections/content-stats-section";
-import { QuickActionsSection } from "./sections/quick-actions-section";
+import { BusinessStatsSection, ContentStatsSection, QuickActionsSection } from "./sections";
 
 export const DashboardPage = () => {
   const { data, isLoading, error } = useDashboardData();

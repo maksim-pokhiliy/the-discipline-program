@@ -2,7 +2,7 @@
 
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import MenuIcon from "@mui/icons-material/Menu";
-import { Drawer as MuiDrawer, IconButton } from "@mui/material";
+import { IconButton, Drawer as MuiDrawer } from "@mui/material";
 import { useState } from "react";
 
 import { Navigation } from "./navigation";
