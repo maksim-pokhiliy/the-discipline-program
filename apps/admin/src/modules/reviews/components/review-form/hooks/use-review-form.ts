@@ -4,9 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Review } from "@repo/api";
 import { useForm } from "react-hook-form";
 
-import { FORM_DEFAULTS } from "../../shared/constants";
-import { reviewFormSchema } from "../../shared/schema";
-import { ReviewFormData } from "../../shared/types";
+import { FORM_DEFAULTS, ReviewFormData, reviewFormSchema } from "@app/modules/reviews/shared";
 
 interface UseReviewFormProps {
   review?: Review | null;

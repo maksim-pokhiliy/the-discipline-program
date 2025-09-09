@@ -3,22 +3,20 @@
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
-  TextField,
-  Stack,
+  Alert,
   Avatar,
-  Typography,
-  Box,
   Button,
   CircularProgress,
-  Alert,
+  Stack,
+  TextField,
+  Typography,
 } from "@mui/material";
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 
-import { adminApi } from "@app/lib/api";
-import { UPLOAD_CONFIG } from "@app/shared/constants/upload";
-
-import { ReviewFormData } from "../../shared/types";
+import { api } from "@app/lib/api";
+import { ReviewFormData } from "@app/modules/reviews/shared";
+import { UPLOAD_CONFIG } from "@app/shared/constants";
 
 interface AvatarFieldProps {
   control: Control<ReviewFormData>;
@@ -29,6 +27,7 @@ interface AvatarFieldProps {
 export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async (
@@ -55,10 +54,10 @@ export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps)
 
     try {
       if (currentUrl && currentUrl.includes(UPLOAD_CONFIG.avatarStorage.domain)) {
-        await adminApi.upload.deleteAvatar(currentUrl).catch(console.error);
+        await api.upload.deleteAvatar(currentUrl).catch(console.error);
       }
 
-      const { url } = await adminApi.upload.avatar(file);
+      const { url } = await api.upload.avatar(file);
 
       onChange(url);
 
@@ -74,10 +73,8 @@ export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps)
   };
 
   return (
-    <Box>
-      <Typography variant="h6" gutterBottom>
-        Author Avatar
-      </Typography>
+    <Stack>
+      <Typography variant="h6">Author Avatar</Typography>
 
       <Controller
         name="authorAvatar"
@@ -175,6 +172,6 @@ export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps)
           </>
         )}
       />
-    </Box>
+    </Stack>
   );
 };

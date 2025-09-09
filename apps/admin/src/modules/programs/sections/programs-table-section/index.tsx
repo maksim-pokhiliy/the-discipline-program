@@ -6,11 +6,10 @@ import { Program } from "@repo/api";
 import { useModal } from "@repo/ui";
 import { useState } from "react";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
-import { ProgramModal } from "../../components";
-import { ProgramsTable } from "../../components/programs-table";
-import { createDuplicateProgram } from "../../utils/program-duplication";
+import { ProgramModal, ProgramsTable } from "../../components";
+import { createDuplicateProgram } from "../../utils";
 
 interface ProgramsTableSectionProps {
   programs: Program[];

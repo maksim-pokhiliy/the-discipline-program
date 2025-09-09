@@ -2,11 +2,11 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Typography, Stack, Chip, TextField, IconButton, Box } from "@mui/material";
-import { useState, useEffect, useMemo } from "react";
-import { Control, useWatch, FieldErrors } from "react-hook-form";
+import { Chip, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { useEffect, useMemo, useState } from "react";
+import { Control, FieldErrors, useWatch } from "react-hook-form";
 
-import { ProgramFormData } from "../../shared/types";
+import { ProgramFormData } from "@app/modules/programs/shared";
 
 interface FeaturesFieldProps {
   control: Control<ProgramFormData>;
@@ -56,10 +56,8 @@ export const FeaturesField = ({
   };
 
   return (
-    <Box>
-      <Typography variant="h6" gutterBottom>
-        Features
-      </Typography>
+    <Stack>
+      <Typography variant="h6">Features</Typography>
 
       <Stack spacing={2}>
         <Stack direction="row" flexWrap="wrap" gap={1}>
@@ -85,6 +83,7 @@ export const FeaturesField = ({
             fullWidth
             disabled={isSubmitting}
           />
+
           <IconButton
             onClick={addFeature}
             disabled={!newFeature.trim() || isSubmitting}
@@ -100,6 +99,6 @@ export const FeaturesField = ({
           </Typography>
         )}
       </Stack>
-    </Box>
+    </Stack>
   );
 };

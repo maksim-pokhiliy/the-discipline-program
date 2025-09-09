@@ -2,11 +2,10 @@
 
 import { Stack } from "@mui/material";
 
-import { useReviewsPageData } from "@app/lib/hooks/use-admin-api";
-import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
+import { useReviewsPageData } from "@app/lib/hooks";
+import { QueryWrapper } from "@app/shared/components/providers";
 
-import { ReviewsStatsSection } from "./sections/reviews-stats-section";
-import { ReviewsTableSection } from "./sections/reviews-table-section";
+import { ReviewsStatsSection, ReviewsTableSection } from "./sections";
 
 export const ReviewsPage = () => {
   const { data, isLoading, error } = useReviewsPageData();

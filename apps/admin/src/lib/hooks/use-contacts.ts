@@ -2,10 +2,10 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { adminApi } from "../api";
+import { api } from "../api";
 
 export const useContacts = () =>
   useQuery({
     queryKey: ["admin", "contacts"],
-    queryFn: adminApi.contacts.getAll,
+    queryFn: api.contacts.getAll,
   });
