@@ -2,7 +2,7 @@ interface ApiClientConfig {
   baseUrl: string;
 }
 
-class ApiClient {
+export class ApiClient {
   private baseUrl: string;
 
   constructor({ baseUrl }: ApiClientConfig) {
@@ -47,5 +47,3 @@ class ApiClient {
     return response.json();
   }
 }
-
-export default ApiClient;

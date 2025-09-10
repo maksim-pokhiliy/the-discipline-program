@@ -11,12 +11,12 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useRef, useState } from "react";
+import { UPLOAD_CONFIG } from "@repo/api";
+import { useRef } from "react";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 
-import { api } from "@app/lib/api";
+import { useUploadMutations } from "@app/lib/hooks";
 import { ReviewFormData } from "@app/modules/reviews/shared";
-import { UPLOAD_CONFIG } from "@app/shared/constants";
 
 interface AvatarFieldProps {
   control: Control<ReviewFormData>;
@@ -25,39 +25,20 @@ interface AvatarFieldProps {
 }
 
 export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps) => {
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadAvatar, deleteAvatar } = useUploadMutations();
 
   const handleFileUpload = async (
     file: File,
     onChange: (value: string) => void,
     currentUrl: string | null,
   ) => {
-    setIsUploading(true);
-    setUploadError(null);
-
-    if (file.size > 2 * 1024 * 1024) {
-      setUploadError("File too large (max 2MB)");
-      setIsUploading(false);
-
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      setUploadError("Please select an image file");
-      setIsUploading(false);
-
-      return;
-    }
-
     try {
-      if (currentUrl && currentUrl.includes(UPLOAD_CONFIG.avatarStorage.domain)) {
-        await api.upload.deleteAvatar(currentUrl).catch(console.error);
+      if (currentUrl && currentUrl.includes("blob.vercel-storage.com")) {
+        await deleteAvatar.mutateAsync(currentUrl).catch(console.error);
       }
 
-      const { url } = await api.upload.avatar(file);
+      const { url } = await uploadAvatar.mutateAsync(file);
 
       onChange(url);
 
@@ -66,11 +47,11 @@ export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps)
       }
     } catch (error) {
       console.error("Upload error:", error);
-      setUploadError(error instanceof Error ? error.message : "Upload failed");
-    } finally {
-      setIsUploading(false);
     }
   };
+
+  const isUploading = uploadAvatar.isPending || deleteAvatar.isPending;
+  const uploadError = uploadAvatar.error || deleteAvatar.error;
 
   return (
     <Stack>
@@ -129,7 +110,7 @@ export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps)
                         color="error"
                         startIcon={<DeleteIcon />}
                         onClick={() => {
-                          field.onChange(null);
+                          field.onChange("");
 
                           if (fileInputRef.current) {
                             fileInputRef.current.value = "";
@@ -143,13 +124,20 @@ export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps)
                   </Stack>
 
                   {uploadError && (
-                    <Alert severity="error" onClose={() => setUploadError(null)}>
-                      {uploadError}
+                    <Alert
+                      severity="error"
+                      onClose={() => {
+                        uploadAvatar.reset();
+                        deleteAvatar.reset();
+                      }}
+                    >
+                      {uploadError instanceof Error ? uploadError.message : "Upload failed"}
                     </Alert>
                   )}
 
                   <Typography variant="caption" color="text.secondary">
-                    Recommended: 200x200px, max 2MB (JPG, PNG, WebP, GIF)
+                    Recommended: 200x200px, max {UPLOAD_CONFIG.avatar.maxSize / 1024 / 1024}MB (JPG,
+                    PNG, WebP, GIF)
                   </Typography>
                 </Stack>
               </Stack>
@@ -158,7 +146,7 @@ export const AvatarField = ({ control, errors, isSubmitting }: AvatarFieldProps)
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
+              accept={UPLOAD_CONFIG.avatar.acceptedTypes.join(",")}
               style={{ display: "none" }}
               onChange={(e) => {
                 const file = e.target.files?.[0];
