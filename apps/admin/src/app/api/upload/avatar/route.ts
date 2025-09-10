@@ -1,4 +1,4 @@
-import { put, del } from "@vercel/blob";
+import { adminUploadApi } from "@repo/api";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -10,28 +10,18 @@ export async function POST(request: Request): Promise<NextResponse> {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    const result = await adminUploadApi.uploadAvatar(file);
 
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: "Invalid file type" }, { status: 400 });
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      return NextResponse.json({ error: "File too large (max 2MB)" }, { status: 400 });
-    }
-
-    const timestamp = Date.now();
-    const filename = `avatars/${timestamp}-${file.name}`;
-
-    const blob = await put(filename, file, {
-      access: "public",
-    });
-
-    return NextResponse.json({ url: blob.url });
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Upload error:", error);
 
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Upload failed";
+
+    const status =
+      message.includes("Invalid file type") || message.includes("too large") ? 400 : 500;
+
+    return NextResponse.json({ error: message }, { status });
   }
 }
 
@@ -39,16 +29,14 @@ export async function DELETE(request: Request): Promise<NextResponse> {
   try {
     const { url } = await request.json();
 
-    if (!url) {
-      return NextResponse.json({ error: "No URL provided" }, { status: 400 });
-    }
-
-    await del(url);
+    await adminUploadApi.deleteAvatar(url);
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Delete error:", error);
 
-    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Delete failed";
+
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
