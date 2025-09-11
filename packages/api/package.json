@@ -14,16 +14,19 @@
     "lint:check": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:seed": "tsx prisma/seed.ts"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20.17.57",
     "eslint": "^9.30.1",
     "tsx": "^4.20.3"
   },
   "dependencies": {
-    "@vercel/blob": "^1.1.1"
+    "@vercel/blob": "^1.1.1",
+    "bcryptjs": "^3.0.2"
   }
 }

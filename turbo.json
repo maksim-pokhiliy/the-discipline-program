@@ -8,7 +8,9 @@
     "MONOBANK_TOKEN",
     "DATABASE_URL",
     "DATABASE_URL_UNPOOLED",
-    "POSTGRES_PRISMA_URL"
+    "POSTGRES_PRISMA_URL",
+    "NEXTAUTH_URL",
+    "NEXTAUTH_SECRET"
   ],
   "tasks": {
     "admin#build": {
@@ -18,7 +20,9 @@
         "NEXT_PUBLIC_API_URL",
         "DATABASE_URL",
         "DATABASE_URL_UNPOOLED",
-        "POSTGRES_PRISMA_URL"
+        "POSTGRES_PRISMA_URL",
+        "NEXTAUTH_URL",
+        "NEXTAUTH_SECRET"
       ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"]
