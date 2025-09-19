@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 type RootLayoutProps = Readonly<{
-  children: React.ReactElement;
+  children: React.ReactNode;
 }>;
 
 export default function RootLayout({ children }: RootLayoutProps) {

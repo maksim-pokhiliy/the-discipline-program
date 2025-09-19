@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import { NextProvider } from "@repo/mui";
 import { Metadata } from "next";
 
-import { QueryProvider } from "@app/shared/components/providers";
+import { AuthProvider, QueryProvider } from "@app/shared/components/providers";
 
 export const metadata: Metadata = {
   title: "The Discipline Program - Admin",
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 type RootLayoutProps = Readonly<{
-  children: React.ReactElement;
+  children: React.ReactNode;
 }>;
 
 export default function RootLayout({ children }: RootLayoutProps) {
@@ -18,11 +18,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="en">
       <body>
         <NextProvider>
-          <QueryProvider>
-            <Box component="main" sx={{ minHeight: "100vh" }}>
-              {children}
-            </Box>
-          </QueryProvider>
+          <AuthProvider>
+            <QueryProvider>
+              <Box component="main" sx={{ minHeight: "100vh" }}>
+                {children}
+              </Box>
+            </QueryProvider>
+          </AuthProvider>
         </NextProvider>
       </body>
     </html>
