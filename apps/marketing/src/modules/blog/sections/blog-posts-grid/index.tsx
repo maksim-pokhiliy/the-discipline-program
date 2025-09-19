@@ -1,9 +1,9 @@
-import { Grid, Card, CardContent, Typography, Stack, Box, Chip, Button } from "@mui/material";
+import { Box, Button, Card, CardContent, Chip, Grid, Stack, Typography } from "@mui/material";
 import { BlogPost } from "@repo/api";
 import Image from "next/image";
 import Link from "next/link";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
 interface BlogPostsGridProps {
   posts: BlogPost[];

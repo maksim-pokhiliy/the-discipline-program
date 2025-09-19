@@ -3,14 +3,11 @@
 import { Stack } from "@mui/material";
 import Head from "next/head";
 
-import { useContactPage } from "@app/lib/hooks/use-marketing-api";
+import { useContactPage } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";
-import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
+import { QueryWrapper } from "@app/shared/components/ui";
 
-import { ContactDirectInfo } from "./sections/contact-direct-info";
-import { ContactFAQ } from "./sections/contact-faq";
-import { ContactForm } from "./sections/contact-form";
-import { ContactHero } from "./sections/contact-hero";
+import { ContactDirectInfo, ContactFAQ, ContactForm, ContactHero } from "./sections";
 
 export const ContactPage = () => {
   const { data, isLoading, error } = useContactPage();

@@ -1,6 +1,6 @@
 import { Program, Review } from "@repo/api";
 
-import { SEO_CONFIG } from "../constants/seo-config";
+import { SEO_CONFIG } from "../constants";
 
 export interface SEOData {
   title?: string;

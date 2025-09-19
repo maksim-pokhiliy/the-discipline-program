@@ -1,7 +1,7 @@
-import { ErrorOutline } from "@mui/icons-material";
+import ErrorOutline from "@mui/icons-material/ErrorOutline";
 import { alpha, Box, Stack } from "@mui/material";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
 export const PaymentErrorHeroSection = () => {
   return (

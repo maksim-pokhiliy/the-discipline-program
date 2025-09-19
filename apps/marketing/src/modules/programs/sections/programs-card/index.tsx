@@ -1,4 +1,4 @@
-import { Card, CardContent, Stack, Typography, Button } from "@mui/material";
+import { Button, Card, CardContent, Stack, Typography } from "@mui/material";
 import { Program } from "@repo/api";
 
 interface ProgramCardProps {

@@ -1,6 +1,6 @@
 import { ProgramsPageData } from "@repo/api";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
 interface ProgramsHeroSectionProps {
   hero: ProgramsPageData["hero"];

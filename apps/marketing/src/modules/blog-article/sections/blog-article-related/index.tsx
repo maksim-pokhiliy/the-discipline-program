@@ -1,13 +1,13 @@
 import {
-  Typography,
-  Container,
-  Grid,
+  Box,
+  Button,
   Card,
   CardContent,
-  Stack,
-  Box,
   Chip,
-  Button,
+  Container,
+  Grid,
+  Stack,
+  Typography,
 } from "@mui/material";
 import { BlogPost } from "@repo/api";
 import Image from "next/image";
@@ -44,6 +44,7 @@ export const BlogArticleRelated = ({ relatedPosts }: BlogArticleRelatedProps) =>
                       style={{ objectFit: "cover" }}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
+
                     <Box
                       sx={{
                         position: "absolute",

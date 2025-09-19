@@ -1,7 +1,7 @@
-import { CheckCircle } from "@mui/icons-material";
+import CheckCircle from "@mui/icons-material/CheckCircle";
 import { alpha, Box, Stack } from "@mui/material";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
 export const PaymentSuccessHeroSection = () => {
   return (

@@ -1,6 +1,6 @@
 import { Program, Review } from "@repo/api";
 
-import { generateStructuredData } from "@app/shared/utils/seo-utils";
+import { generateStructuredData } from "@app/shared/utils";
 
 interface StructuredDataProps {
   type: "website" | "organization" | "article" | "programs" | "reviews" | "faq" | "person";

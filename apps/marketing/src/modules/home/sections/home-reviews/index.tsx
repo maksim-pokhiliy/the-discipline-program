@@ -1,7 +1,7 @@
-import { Grid, Card, CardContent, Stack, Typography, Rating, Avatar, Box } from "@mui/material";
+import { Avatar, Box, Card, CardContent, Grid, Rating, Stack, Typography } from "@mui/material";
 import { HomePageData } from "@repo/api";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
 interface HomeReviewsSectionProps {
   reviews: HomePageData["reviews"];

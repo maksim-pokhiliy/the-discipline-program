@@ -2,14 +2,16 @@
 
 import { Stack } from "@mui/material";
 
-import { useAboutPage } from "@app/lib/hooks/use-marketing-api";
-import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
+import { useAboutPage } from "@app/lib/hooks";
+import { QueryWrapper } from "@app/shared/components/ui";
 
-import { AboutCredentialsSection } from "./sections/about-credentials";
-import { AboutCTASection } from "./sections/about-cta";
-import { AboutHeroSection } from "./sections/about-hero";
-import { AboutJourneySection } from "./sections/about-journey";
-import { AboutPersonalSection } from "./sections/about-personal";
+import {
+  AboutCredentialsSection,
+  AboutCTASection,
+  AboutHeroSection,
+  AboutJourneySection,
+  AboutPersonalSection,
+} from "./sections";
 
 export const AboutPage = () => {
   const { data, isLoading, error } = useAboutPage();

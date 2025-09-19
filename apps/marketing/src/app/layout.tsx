@@ -2,12 +2,10 @@ import { Box } from "@mui/material";
 import { NextProvider } from "@repo/mui";
 import { Metadata } from "next";
 
-import { QueryProvider } from "@app/lib/providers/query-provider";
-import { Footer } from "@app/shared/components/layout/footer";
-import { Header } from "@app/shared/components/layout/header";
+import { QueryProvider } from "@app/lib/providers";
+import { Footer, Header } from "@app/shared/components/layout";
 import { StructuredData } from "@app/shared/components/seo";
-import { DOM_ANCHORS } from "@app/shared/constants/dom-anchors";
-import { SEO_CONFIG } from "@app/shared/constants/seo-config";
+import { DOM_ANCHORS, SEO_CONFIG } from "@app/shared/constants";
 
 export const metadata: Metadata = {
   title: SEO_CONFIG.defaultTitle,

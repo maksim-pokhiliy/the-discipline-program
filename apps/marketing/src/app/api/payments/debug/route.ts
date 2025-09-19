@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { getPaymentStorage } from "@app/lib/storage/payment-storage";
+import { getPaymentStorage } from "@app/lib/storage";
 
 export async function GET() {
   const storage = getPaymentStorage();

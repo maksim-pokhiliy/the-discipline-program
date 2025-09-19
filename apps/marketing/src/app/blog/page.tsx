@@ -1,7 +1,7 @@
 import { Metadata } from "next";
 
 import { BlogPage } from "@app/modules/blog";
-import { PAGE_SEO, SEO_CONFIG } from "@app/shared/constants/seo-config";
+import { PAGE_SEO, SEO_CONFIG } from "@app/shared/constants";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.blog.title,
