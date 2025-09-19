@@ -7,6 +7,7 @@ import { Logo } from "../../ui";
 import { Drawer } from "./drawer";
 import { HideOnScroll } from "./hide-on-scroll";
 import { Navigation } from "./navigation";
+import { UserMenu } from "./user-menu";
 
 export const Header = () => {
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
@@ -22,6 +23,7 @@ export const Header = () => {
           <Logo />
 
           {isMobile ? <Drawer /> : <Navigation />}
+          <UserMenu />
         </Stack>
       </AppBar>
     </HideOnScroll>

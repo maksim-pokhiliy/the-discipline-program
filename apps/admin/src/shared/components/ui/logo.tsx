@@ -5,15 +5,20 @@ import Link from "next/link";
 
 import { LOGO_SIZE } from "@app/shared/constants";
 
-export const Logo = () => {
+interface ILogoProps {
+  width?: number;
+  height?: number;
+}
+
+export const Logo = ({ width = LOGO_SIZE, height = LOGO_SIZE }: ILogoProps) => {
   return (
     <Link href="/" style={{ width: "min-content", lineHeight: 0 }}>
       <Image
         alt="The Discipline Program"
-        height={LOGO_SIZE}
+        height={height}
         src={"/icons/logo.svg"}
         style={{ cursor: "pointer" }}
-        width={LOGO_SIZE}
+        width={width}
         priority
       />
     </Link>
