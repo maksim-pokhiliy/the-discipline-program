@@ -1,29 +1,26 @@
-import { NextResponse } from "next/server";
-import { withAuth } from "next-auth/middleware";
+import { NextRequest, NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default withAuth(
-  function middleware() {
-    return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ req, token }) => {
-        if (req.nextUrl.pathname.startsWith("/login")) {
-          return true;
-        }
+import { AUTH_ROUTES, isPublicRoute } from "@app/shared/constants/auth";
 
-        if (req.nextUrl.pathname.startsWith("/api/auth")) {
-          return true;
-        }
+export async function middleware(req: NextRequest) {
+  const path = req.nextUrl.pathname;
+  const token = await getToken({ req });
 
-        return !!token;
-      },
-    },
-    pages: {
-      signIn: "/login",
-    },
-  },
-);
+  if (token && path === AUTH_ROUTES.LOGIN) {
+    return NextResponse.redirect(new URL("/", req.url));
+  }
+
+  if (!token && !isPublicRoute(path)) {
+    const loginUrl = new URL(AUTH_ROUTES.LOGIN, req.url);
+
+    loginUrl.searchParams.set("callbackUrl", path);
+
+    return NextResponse.redirect(loginUrl);
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|public|icons).*)"],
