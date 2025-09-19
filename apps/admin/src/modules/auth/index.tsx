@@ -33,6 +33,7 @@ export const LoginPage = () => {
         setError("Invalid email or password");
       } else if (result?.ok) {
         router.replace(callbackUrl);
+        router.refresh();
       }
     } catch (error) {
       setError("An unexpected error occurred");
