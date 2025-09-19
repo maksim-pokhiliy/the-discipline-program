@@ -1,6 +1,6 @@
-import { ContactPage } from "@mui/icons-material";
 import { Metadata } from "next";
 
+import { ContactPage } from "@app/modules/contact";
 import { PAGE_SEO, SEO_CONFIG } from "@app/shared/constants";
 
 export const metadata: Metadata = {
