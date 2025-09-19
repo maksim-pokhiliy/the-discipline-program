@@ -1,6 +1,6 @@
 import { BlogPageData } from "@repo/api";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
 interface BlogHeroSectionProps {
   hero: BlogPageData["hero"];

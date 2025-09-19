@@ -4,14 +4,12 @@ import { Stack } from "@mui/material";
 import Head from "next/head";
 import { useParams } from "next/navigation";
 
-import { useBlogArticle } from "@app/lib/hooks/use-marketing-api";
+import { useBlogArticle } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";
-import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
-import { SEO_CONFIG } from "@app/shared/constants/seo-config";
+import { QueryWrapper } from "@app/shared/components/ui";
+import { SEO_CONFIG } from "@app/shared/constants";
 
-import { BlogArticleContent } from "./sections/blog-article-content";
-import { BlogArticleHero } from "./sections/blog-article-hero";
-import { BlogArticleRelated } from "./sections/blog-article-related";
+import { BlogArticleContent, BlogArticleHero, BlogArticleRelated } from "./sections";
 
 export const BlogArticlePage = () => {
   const { slug } = useParams() as { slug: string };

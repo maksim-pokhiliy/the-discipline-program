@@ -13,11 +13,11 @@
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
-    "@prisma/client": "^6.16.1",
+    "@prisma/client": "^6.16.2",
     "lefthook": "^1.11.12",
     "prettier": "^3.5.3",
     "prettier-plugin-sort-json": "^4.1.1",
-    "prisma": "^6.16.1",
+    "prisma": "^6.16.2",
     "turbo": "^2.5.6",
     "typescript": "^5.8.2"
   },

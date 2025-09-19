@@ -6,9 +6,9 @@ import {
   programsApi,
 } from "@repo/api";
 import { NextRequest, NextResponse } from "next/server";
-import { v4 as uuidv4 } from "uuid";
+import { v7 as uuidv7 } from "uuid";
 
-import { getPaymentStorage } from "@app/lib/storage/payment-storage";
+import { getPaymentStorage } from "@app/lib/storage";
 
 const MONOBANK_TOKEN = process.env.MONOBANK_TOKEN;
 const APP_URL = process.env.NEXT_PUBLIC_API_URL || "https://the-discipline-program.vercel.app";
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Program not found" }, { status: 404 });
     }
 
-    const orderId = uuidv4();
+    const orderId = uuidv7();
 
     const order: PaymentOrder = {
       id: orderId,

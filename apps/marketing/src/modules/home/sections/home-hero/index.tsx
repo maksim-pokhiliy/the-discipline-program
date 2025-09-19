@@ -1,8 +1,8 @@
-import { Typography, Button } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import { HomePageData } from "@repo/api";
 import Link from "next/link";
 
-import { FullscreenSection } from "@app/shared/components/ui/fullscreen-section";
+import { FullscreenSection } from "@app/shared/components/ui";
 
 interface HomeHeroSectionProps {
   hero: HomePageData["hero"];

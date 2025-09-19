@@ -1,9 +1,9 @@
-import { Typography, Button, Card, CardContent, Stack, Box, Chip } from "@mui/material";
+import { Box, Button, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
 import { BlogPost } from "@repo/api";
 import Image from "next/image";
 import Link from "next/link";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
 interface BlogFeaturedSectionProps {
   featuredPost: BlogPost;
@@ -22,6 +22,7 @@ export const BlogFeaturedSection = ({ featuredPost }: BlogFeaturedSectionProps) 
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             style={{ objectFit: "cover" }}
           />
+
           <Box
             sx={{
               position: "absolute",

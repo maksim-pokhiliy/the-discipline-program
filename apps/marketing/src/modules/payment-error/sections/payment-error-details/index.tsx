@@ -1,6 +1,6 @@
-import { Stack, Typography, Card, CardContent, Alert } from "@mui/material";
+import { Alert, Card, CardContent, Stack, Typography } from "@mui/material";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
 interface PaymentErrorDetailsSectionProps {
   error: string;

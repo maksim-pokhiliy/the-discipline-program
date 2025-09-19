@@ -1,6 +1,6 @@
 import { Button, Stack, Typography } from "@mui/material";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
 export const PaymentErrorActionsSection = () => {
   return (
