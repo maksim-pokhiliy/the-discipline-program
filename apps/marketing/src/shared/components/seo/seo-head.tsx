@@ -1,6 +1,6 @@
 import Head from "next/head";
 
-import { generateSEOData, SEOData } from "@app/shared/utils/seo-utils";
+import { generateSEOData, SEOData } from "@app/shared/utils";
 
 type SEOHeadProps = SEOData;
 

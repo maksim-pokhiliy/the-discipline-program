@@ -1,7 +1,7 @@
-import { Typography, Button } from "@mui/material";
+import { Button, Typography } from "@mui/material";
 import { AboutPageData } from "@repo/api";
 
-import { FullscreenSection } from "@app/shared/components/ui/fullscreen-section";
+import { FullscreenSection } from "@app/shared/components/ui";
 
 interface AboutHeroSectionProps {
   hero: AboutPageData["hero"];

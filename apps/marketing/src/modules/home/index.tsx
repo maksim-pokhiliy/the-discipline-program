@@ -3,15 +3,17 @@
 import { Stack } from "@mui/material";
 import Head from "next/head";
 
-import { useHomePage } from "@app/lib/hooks/use-marketing-api";
+import { useHomePage } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";
-import { QueryWrapper } from "@app/shared/components/ui/query-wrapper";
+import { QueryWrapper } from "@app/shared/components/ui";
 
-import { HomeFeaturesSection } from "./sections/home-features";
-import { HomeFinalCTASection } from "./sections/home-final-cta-section";
-import { HomeHeroSection } from "./sections/home-hero";
-import { HomeProgramsPreview } from "./sections/home-programs-preview";
-import { HomeReviewsSection } from "./sections/home-reviews";
+import {
+  HomeFeaturesSection,
+  HomeFinalCTASection,
+  HomeHeroSection,
+  HomeProgramsPreview,
+  HomeReviewsSection,
+} from "./sections";
 
 export const HomePage = () => {
   const { data, isLoading, error } = useHomePage();
@@ -29,9 +31,7 @@ export const HomePage = () => {
             <StructuredData type="website" />
             <StructuredData type="organization" />
             <StructuredData type="person" />
-
             <StructuredData type="programs" data={{ programs: data.programsList }} />
-
             <StructuredData type="reviews" data={{ reviews: data.reviewsList }} />
           </Head>
 

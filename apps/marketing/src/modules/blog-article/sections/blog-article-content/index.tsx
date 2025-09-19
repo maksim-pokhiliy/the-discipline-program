@@ -1,4 +1,4 @@
-import { Container, Box } from "@mui/material";
+import { Box, Container } from "@mui/material";
 import { BlogPost } from "@repo/api";
 import ReactMarkdown from "react-markdown";
 

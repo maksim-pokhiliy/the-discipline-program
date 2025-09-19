@@ -1,7 +1,7 @@
-import { Stack, Typography, Card, CardContent } from "@mui/material";
+import { Card, CardContent, Stack, Typography } from "@mui/material";
 import { PaymentOrder } from "@repo/api";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
 interface PaymentSuccessDetailsSectionProps {
   order: PaymentOrder;

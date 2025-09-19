@@ -1,4 +1,4 @@
-import { CTASection } from "@app/shared/components/ui/cta-section";
+import { CTASection } from "@app/shared/components/ui";
 
 export const HomeFinalCTASection = () => {
   return (

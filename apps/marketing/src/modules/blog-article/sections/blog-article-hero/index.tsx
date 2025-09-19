@@ -1,4 +1,4 @@
-import { Typography, Container, Stack, Chip, Box, alpha } from "@mui/material";
+import { alpha, Box, Chip, Container, Stack, Typography } from "@mui/material";
 import { BlogPost } from "@repo/api";
 import Image from "next/image";
 
@@ -36,6 +36,7 @@ export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
             objectPosition: "center",
           }}
         />
+
         <Box
           sx={(theme) => ({
             position: "absolute",

@@ -3,19 +3,19 @@
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import {
+  alpha,
+  Box,
+  Button,
   Dialog,
   DialogContent,
-  Typography,
-  Button,
-  Stack,
-  Box,
-  IconButton,
   Grid,
-  alpha,
+  IconButton,
+  Stack,
+  Typography,
 } from "@mui/material";
 import { Program } from "@repo/api";
 
-import { usePayment } from "@app/lib/hooks/use-payment";
+import { usePayment } from "@app/lib/hooks";
 
 interface ProgramModalProps {
   program: Program | null;
@@ -31,17 +31,15 @@ export const ProgramModal = ({ program, open, onClose }: ProgramModalProps) => {
   });
 
   const handleGetStarted = async () => {
-    if (!program) return;
-
-    try {
-      await createPayment({
-        programId: program.id,
-        customerEmail: "test@example.com",
-        customerName: "Test User",
-      });
-    } catch {
-      // Ошибка уже обработана в хуке
+    if (!program) {
+      return;
     }
+
+    await createPayment({
+      programId: program.id,
+      customerEmail: "test@example.com",
+      customerName: "Test User",
+    });
   };
 
   if (!program) return null;

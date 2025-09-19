@@ -1,19 +1,19 @@
 import {
-  Typography,
-  TextField,
+  Alert,
   Button,
-  Grid,
   Card,
   CardContent,
-  Stack,
-  MenuItem,
-  Alert,
   CircularProgress,
+  Grid,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
 } from "@mui/material";
 import { ContactPageData } from "@repo/api";
 import { useState } from "react";
 
-import { ContentSection } from "@app/shared/components/ui/content-section";
+import { ContentSection } from "@app/shared/components/ui";
 
 interface ContactFormProps {
   form: ContactPageData["form"];

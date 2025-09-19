@@ -1,4 +1,4 @@
-import { programsApi, reviewsApi, pagesApi } from "@repo/api";
+import { pagesApi, programsApi, reviewsApi } from "@repo/api";
 
 export async function GET(_: Request, { params }: { params: Promise<{ path: string[] }> }) {
   try {

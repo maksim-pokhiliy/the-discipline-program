@@ -1,6 +1,6 @@
 import { AboutPageData } from "@repo/api";
 
-import { CTASection } from "@app/shared/components/ui/cta-section";
+import { CTASection } from "@app/shared/components/ui";
 
 interface AboutCtaSectionProps {
   cta: AboutPageData["cta"];

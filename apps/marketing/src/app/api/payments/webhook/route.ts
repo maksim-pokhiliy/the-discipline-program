@@ -1,7 +1,7 @@
 import { MonobankWebhook } from "@repo/api";
 import { NextRequest, NextResponse } from "next/server";
 
-import { getPaymentStorage } from "@app/lib/storage/payment-storage";
+import { getPaymentStorage } from "@app/lib/storage";
 
 export async function POST(request: NextRequest) {
   try {

@@ -1,7 +1,7 @@
 import { pagesApi } from "@repo/api";
 import { MetadataRoute } from "next";
 
-import { SEO_CONFIG } from "@app/shared/constants/seo-config";
+import { SEO_CONFIG } from "@app/shared/constants";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = SEO_CONFIG.siteUrl;
