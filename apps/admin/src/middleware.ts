@@ -14,8 +14,6 @@ export async function middleware(req: NextRequest) {
   if (!token && !isPublicRoute(path)) {
     const loginUrl = new URL(AUTH_ROUTES.LOGIN, req.url);
 
-    loginUrl.searchParams.set("callbackUrl", path);
-
     return NextResponse.redirect(loginUrl);
   }
 
