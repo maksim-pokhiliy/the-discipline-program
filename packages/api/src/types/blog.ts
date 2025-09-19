@@ -35,3 +35,15 @@ export interface BlogPostPageData {
   post: BlogPost;
   relatedPosts: BlogPost[];
 }
+
+export interface BlogStats {
+  total: number;
+  published: number;
+  draft: number;
+  featured: number;
+}
+
+export interface AdminBlogPageData {
+  stats: BlogStats;
+  posts: BlogPost[];
+}
