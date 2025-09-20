@@ -9,15 +9,9 @@ export const blogFormSchema = z.object({
     .string()
     .min(3, "Slug must be at least 3 characters")
     .max(200, "Slug is too long")
-    .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens")
-    .optional()
-    .or(z.literal("")),
+    .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens"),
 
-  excerpt: z
-    .string()
-    .max(300, "Excerpt must be less than 300 characters")
-    .optional()
-    .or(z.literal("")),
+  excerpt: z.string().max(300, "Excerpt must be less than 300 characters"),
 
   content: z
     .string()
@@ -30,7 +24,7 @@ export const blogFormSchema = z.object({
 
   category: z.string().min(1, "Category is required"),
 
-  tags: z.array(z.string()).max(10, "Maximum 10 tags allowed").default([]),
+  tags: z.array(z.string()).max(10, "Maximum 10 tags allowed"),
 
   isPublished: z.boolean(),
 
