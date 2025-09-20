@@ -3,6 +3,7 @@
 import * as endpoints from "./endpoints";
 
 export const api = {
+  blog: endpoints.blogAPI,
   contacts: endpoints.contactsAPI,
   dashboard: endpoints.dashboardAPI,
   programs: endpoints.programsAPI,
