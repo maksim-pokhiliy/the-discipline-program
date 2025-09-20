@@ -20,6 +20,7 @@ export interface ConfirmationModalProps extends Omit<BaseModalProps, "children">
   confirmText?: string;
   cancelText?: string;
   isConfirming?: boolean;
+  showCancel?: boolean;
   error?: string | null;
 }
 
@@ -49,6 +50,7 @@ export const ConfirmationModal = ({
   confirmText,
   cancelText = "Cancel",
   isConfirming = false,
+  showCancel = true,
   error,
   onClose,
   ...baseProps
@@ -111,9 +113,11 @@ export const ConfirmationModal = ({
       )}
 
       <DialogActions>
-        <Button onClick={onClose} disabled={isConfirming} variant="outlined" size="small">
-          {cancelText}
-        </Button>
+        {showCancel && (
+          <Button onClick={onClose} disabled={isConfirming} variant="outlined" size="small">
+            {cancelText}
+          </Button>
+        )}
 
         <Button
           onClick={handleConfirm}

@@ -30,9 +30,7 @@ export const generateUniqueSlug = (title: string, existingPosts: BlogPost[]): st
 export const createDuplicatePost = (
   originalPost: BlogPost,
   posts: BlogPost[],
-): Omit<BlogPost, "id" | "createdAt" | "updatedAt" | "publishedAt"> & {
-  publishedAt: Date | null;
-} => {
+): Partial<BlogPost> => {
   const duplicateTitle = `${originalPost.title} (Copy)`;
   const duplicateSlug = generateUniqueSlug(duplicateTitle, posts);
   const maxSortOrder = Math.max(...posts.map((p) => p.sortOrder), 0);
@@ -44,7 +42,6 @@ export const createDuplicatePost = (
     content: originalPost.content,
     coverImage: originalPost.coverImage,
     author: originalPost.author,
-    publishedAt: null,
     readTime: originalPost.readTime,
     category: originalPost.category,
     tags: [...originalPost.tags],
