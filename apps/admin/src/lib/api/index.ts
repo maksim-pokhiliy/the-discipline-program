@@ -7,5 +7,6 @@ export const api = {
   dashboard: endpoints.dashboardAPI,
   programs: endpoints.programsAPI,
   reviews: endpoints.reviewsAPI,
+  blog: endpoints.blogAPI,
   upload: endpoints.uploadAPI,
 };

@@ -82,3 +82,14 @@ Learn more about the power of Turborepo:
 - [Filtering](https://turborepo.com/docs/crafting-your-repository/running-tasks#using-filters)
 - [Configuration Options](https://turborepo.com/docs/reference/configuration)
 - [CLI Usage](https://turborepo.com/docs/reference/command-line-reference)
+
+## Admin Blog Module
+
+This repository now contains a full-featured blog management module inside the admin application. It provides:
+
+- CRUD APIs backed by Prisma models and admin endpoints.
+- React Query data hooks for listing posts, fetching statistics, and performing mutations.
+- A drag-and-drop table for reordering posts, quick publish/feature toggles, and duplication utilities.
+- A rich blog post form with cover image uploads, tag management, and publishing controls.
+
+Refer to `apps/admin/src/modules/blog` for the module's components and to `apps/admin/src/app/(dashboard)/blog` for the entry point page.

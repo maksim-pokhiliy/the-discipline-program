@@ -11,8 +11,7 @@ import {
   ProgramFormData,
   programFormSchema,
 } from "@app/modules/programs/shared";
-
-import { useSlugGeneration } from "./use-slug-generation";
+import { useSlugGeneration } from "@app/shared/hooks/use-slug-generation";
 
 interface UseProgramFormProps {
   program?: Program | null;

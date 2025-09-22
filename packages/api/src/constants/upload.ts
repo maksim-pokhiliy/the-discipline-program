@@ -4,4 +4,9 @@ export const UPLOAD_CONFIG = {
     acceptedTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
     storagePrefix: "avatars",
   },
+  blogCover: {
+    maxSize: 5 * 1024 * 1024,
+    acceptedTypes: ["image/jpeg", "image/png", "image/webp"],
+    storagePrefix: "blog-covers",
+  },
 };

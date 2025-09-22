@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 
-const generateSlug = (name: string): string => {
-  return name
+const generateSlug = (value: string): string => {
+  return value
     .toLowerCase()
     .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, "-")
@@ -11,7 +11,7 @@ const generateSlug = (name: string): string => {
     .trim();
 };
 
-export const useSlugGeneration = (name: string) => {
+export const useSlugGeneration = (value: string) => {
   const [isManuallyChanged, setIsManuallyChanged] = useState(false);
 
   const handleSlugManualChange = () => {
@@ -21,7 +21,7 @@ export const useSlugGeneration = (name: string) => {
   const getAutoSlug = () => {
     if (isManuallyChanged) return "";
 
-    return generateSlug(name);
+    return generateSlug(value);
   };
 
   return {
