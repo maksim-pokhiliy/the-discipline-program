@@ -21,6 +21,23 @@ export interface BlogPost {
   updatedAt: Date;
 }
 
+export interface AdminBlogPost extends Omit<BlogPost, "coverImage" | "publishedAt"> {
+  coverImage: string | null;
+  publishedAt: Date | null;
+}
+
+export interface BlogStats {
+  total: number;
+  published: number;
+  drafts: number;
+  featured: number;
+}
+
+export interface AdminBlogPageData {
+  stats: BlogStats;
+  posts: AdminBlogPost[];
+}
+
 export interface BlogPageData {
   hero: {
     title: string;

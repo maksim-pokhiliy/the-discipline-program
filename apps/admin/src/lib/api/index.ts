@@ -8,4 +8,5 @@ export const api = {
   programs: endpoints.programsAPI,
   reviews: endpoints.reviewsAPI,
   upload: endpoints.uploadAPI,
+  blog: endpoints.blogAPI,
 };
