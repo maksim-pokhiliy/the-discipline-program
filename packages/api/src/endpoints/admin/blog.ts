@@ -2,8 +2,8 @@ import { BlogStats, Review } from "../../types";
 import { prisma } from "../../db/client";
 
 export const adminBlogApi = {
-  getArticles: async (): Promise<Review[]> => {
-    const reviews = await prisma.review.findMany({
+  getPosts: async (): Promise<Review[]> => {
+    const posts = await prisma.review.findMany({
       orderBy: [
         { isFeatured: "desc" },
         { isActive: "desc" },
@@ -12,20 +12,20 @@ export const adminBlogApi = {
       ],
     });
 
-    const transformedReviews = reviews.map((review) => ({
+    const transformedPosts = posts.map((review) => ({
       ...review,
     }));
 
-    return transformedReviews;
+    return transformedPosts;
   },
 
-  getReviewById: async (id: string): Promise<Review | null> => {
-    const review = await prisma.review.findUnique({
-      where: { id },
-    });
+  // getReviewById: async (id: string): Promise<Review | null> => {
+  //   const review = await prisma.review.findUnique({
+  //     where: { id },
+  //   });
 
-    return review ?? null;
-  },
+  //   return review ?? null;
+  // },
 
   getBlogStats: async (): Promise<BlogStats> => {
     const [total, published, drafts, featured] = await Promise.all([
@@ -44,71 +44,71 @@ export const adminBlogApi = {
   },
 
   getBlogPageData: async () => {
-    const [stats, articles] = await Promise.all([
+    const [stats, posts] = await Promise.all([
       adminBlogApi.getBlogStats(),
-      adminBlogApi.getArticles(),
+      adminBlogApi.getPosts(),
     ]);
 
     return {
       stats,
-      articles,
+      posts,
     };
   },
 
-  createReview: async (data: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<Review> => {
-    const review = await prisma.review.create({
-      data,
-    });
+  // createReview: async (data: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<Review> => {
+  //   const review = await prisma.review.create({
+  //     data,
+  //   });
 
-    return review;
-  },
+  //   return review;
+  // },
 
-  updateReview: async (id: string, data: Partial<Review>): Promise<Review> => {
-    const review = await prisma.review.update({
-      where: { id },
-      data,
-    });
+  // updateReview: async (id: string, data: Partial<Review>): Promise<Review> => {
+  //   const review = await prisma.review.update({
+  //     where: { id },
+  //     data,
+  //   });
 
-    return review;
-  },
+  //   return review;
+  // },
 
-  deleteReview: async (id: string): Promise<void> => {
-    await prisma.review.delete({
-      where: { id },
-    });
-  },
+  // deleteReview: async (id: string): Promise<void> => {
+  //   await prisma.review.delete({
+  //     where: { id },
+  //   });
+  // },
 
-  toggleReviewStatus: async (id: string): Promise<Review> => {
-    const review = await prisma.review.findUnique({
-      where: { id },
-    });
+  // toggleReviewStatus: async (id: string): Promise<Review> => {
+  //   const review = await prisma.review.findUnique({
+  //     where: { id },
+  //   });
 
-    if (!review) {
-      throw new Error("Review not found");
-    }
+  //   if (!review) {
+  //     throw new Error("Review not found");
+  //   }
 
-    const updated = await prisma.review.update({
-      where: { id },
-      data: { isActive: !review.isActive },
-    });
+  //   const updated = await prisma.review.update({
+  //     where: { id },
+  //     data: { isActive: !review.isActive },
+  //   });
 
-    return updated;
-  },
+  //   return updated;
+  // },
 
-  toggleReviewFeatured: async (id: string): Promise<Review> => {
-    const review = await prisma.review.findUnique({
-      where: { id },
-    });
+  // toggleReviewFeatured: async (id: string): Promise<Review> => {
+  //   const review = await prisma.review.findUnique({
+  //     where: { id },
+  //   });
 
-    if (!review) {
-      throw new Error("Review not found");
-    }
+  //   if (!review) {
+  //     throw new Error("Review not found");
+  //   }
 
-    const updated = await prisma.review.update({
-      where: { id },
-      data: { isFeatured: !review.isFeatured },
-    });
+  //   const updated = await prisma.review.update({
+  //     where: { id },
+  //     data: { isFeatured: !review.isFeatured },
+  //   });
 
-    return updated;
-  },
+  //   return updated;
+  // },
 };
