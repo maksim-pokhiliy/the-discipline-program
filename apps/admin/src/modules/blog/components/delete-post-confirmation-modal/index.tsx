@@ -1,12 +1,12 @@
 "use client";
 
-import { Review } from "@repo/api";
+import { AdminBlogPost } from "@repo/api";
 import { ConfirmationModal } from "@repo/ui";
 
 interface DeleteConfirmationModalProps {
   open: boolean;
   onClose: () => void;
-  review: Review | null;
+  post: AdminBlogPost | null;
   onConfirm: () => void | Promise<void>;
   isDeleting?: boolean;
   error?: string | null;
@@ -15,23 +15,23 @@ interface DeleteConfirmationModalProps {
 export const DeleteConfirmationModal = ({
   open,
   onClose,
-  review,
+  post,
   onConfirm,
   isDeleting = false,
   error,
 }: DeleteConfirmationModalProps) => {
-  if (!review) return null;
+  if (!post) return null;
 
   return (
     <ConfirmationModal
       open={open}
       onClose={onClose}
-      title="Delete Review"
+      title="Delete Blog Post"
       type="danger"
-      message={`Are you sure you want to delete the review by "${review.authorName}"?`}
-      details="This action cannot be undone. The review will be permanently removed from the system."
+      message={`Are you sure you want to delete "${post.title}"?`}
+      details="This action cannot be undone. The article and its media references will be permanently removed."
       onConfirm={onConfirm}
-      confirmText="Delete Review"
+      confirmText="Delete Post"
       isConfirming={isDeleting}
       error={error}
     />

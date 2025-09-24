@@ -1,1 +1,2 @@
-export * from "./review-duplication";
+export * from "./blog-duplication";
+export * from "./helpers";

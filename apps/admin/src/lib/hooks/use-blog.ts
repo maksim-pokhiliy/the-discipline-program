@@ -1,8 +1,10 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { AdminBlogPageData, AdminBlogPost } from "@repo/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../api";
+import { BlogPayload } from "../api/endpoints";
 
 export const useBlogPageData = () =>
   useQuery({
@@ -10,138 +12,112 @@ export const useBlogPageData = () =>
     queryFn: api.blog.getPageData,
   });
 
-// export const useReviews = () =>
-//   useQuery({
-//     queryKey: ["admin", "reviews"],
-//     queryFn: api.reviews.getAll,
-//   });
+export const useBlogMutations = () => {
+  const queryClient = useQueryClient();
 
-// export const useReviewsStats = () =>
-//   useQuery({
-//     queryKey: ["admin", "reviews", "stats"],
-//     queryFn: api.reviews.getStats,
-//   });
+  const invalidateBlog = () => {
+    queryClient.invalidateQueries({ queryKey: ["admin", "blog"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "blog", "page-data"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "blog", "stats"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+  };
 
-// export const useReview = (id: string) =>
-//   useQuery({
-//     queryKey: ["admin", "reviews", id],
-//     queryFn: () => api.reviews.getById(id),
-//     enabled: !!id,
-//   });
+  const createPost = useMutation({
+    mutationFn: api.blog.create,
+    onSuccess: invalidateBlog,
+  });
 
-// export const useReviewMutations = () => {
-//   const queryClient = useQueryClient();
+  const updatePost = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: BlogPayload }) => api.blog.update(id, data),
+    onSuccess: invalidateBlog,
+  });
 
-//   const invalidateReviews = () => {
-//     queryClient.invalidateQueries({ queryKey: ["admin", "reviews"] });
-//     queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-//   };
+  const deletePost = useMutation({
+    mutationFn: api.blog.delete,
+    onSuccess: invalidateBlog,
+  });
 
-//   const createReview = useMutation({
-//     mutationFn: api.reviews.create,
-//     onSuccess: invalidateReviews,
-//   });
+  const togglePublished = useMutation({
+    mutationFn: async (postId: string) => {
+      const post = await api.blog.getById(postId);
 
-//   const updateReview = useMutation({
-//     mutationFn: ({ id, data }: { id: string; data: Partial<Review> }) =>
-//       api.reviews.update(id, data),
-//     onSuccess: invalidateReviews,
-//   });
+      return api.blog.update(postId, { isPublished: !post.isPublished });
+    },
+    onSuccess: invalidateBlog,
+  });
 
-//   const deleteReview = useMutation({
-//     mutationFn: api.reviews.delete,
-//     onSuccess: invalidateReviews,
-//   });
+  const toggleFeatured = useMutation({
+    mutationFn: async (postId: string) => {
+      const post = await api.blog.getById(postId);
 
-//   const toggleActive = useMutation({
-//     mutationFn: async (reviewId: string) => {
-//       const review = await api.reviews.getById(reviewId);
+      return api.blog.update(postId, { isFeatured: !post.isFeatured });
+    },
+    onSuccess: invalidateBlog,
+  });
 
-//       return api.reviews.update(reviewId, { isActive: !review.isActive });
-//     },
-//     onSuccess: invalidateReviews,
-//   });
+  const updatePostsOrder = useMutation({
+    mutationFn: async (reorderedPosts: AdminBlogPost[]) => {
+      const updates = reorderedPosts.map((post, index) => ({
+        id: post.id,
+        sortOrder: index + 1,
+      }));
 
-//   const toggleFeatured = useMutation({
-//     mutationFn: async (reviewId: string) => {
-//       const review = await api.reviews.getById(reviewId);
+      return api.blog.updateOrder(updates);
+    },
 
-//       return api.reviews.update(reviewId, { isFeatured: !review.isFeatured });
-//     },
-//     onSuccess: invalidateReviews,
-//   });
+    onMutate: async (reorderedPosts: AdminBlogPost[]) => {
+      await queryClient.cancelQueries({ queryKey: ["admin", "blog"] });
 
-//   const updateReviewsOrder = useMutation({
-//     mutationFn: async (reorderedReviews: Review[]) => {
-//       const updates = reorderedReviews.map((review, index) => ({
-//         id: review.id,
-//         sortOrder: index + 1,
-//       }));
+      const previousPageData = queryClient.getQueryData<AdminBlogPageData>([
+        "admin",
+        "blog",
+        "page-data",
+      ]);
 
-//       await Promise.all(
-//         updates.map((update) => api.reviews.update(update.id, { sortOrder: update.sortOrder })),
-//       );
+      const previousPosts = queryClient.getQueryData<AdminBlogPost[]>(["admin", "blog"]);
 
-//       return reorderedReviews;
-//     },
+      const updatedPosts = reorderedPosts.map((post, index) => ({
+        ...post,
+        sortOrder: index + 1,
+      }));
 
-//     onMutate: async (reorderedReviews: Review[]) => {
-//       await queryClient.cancelQueries({ queryKey: ["admin", "reviews"] });
+      queryClient.setQueryData<AdminBlogPageData>(["admin", "blog", "page-data"], (oldData) => {
+        if (!oldData) return oldData;
 
-//       const previousPageData = queryClient.getQueryData<AdminReviewsPageData>([
-//         "admin",
-//         "reviews",
-//         "page-data",
-//       ]);
+        return {
+          ...oldData,
+          posts: updatedPosts,
+        };
+      });
 
-//       const previousReviews = queryClient.getQueryData<Review[]>(["admin", "reviews"]);
+      queryClient.setQueryData<AdminBlogPost[]>(["admin", "blog"], updatedPosts);
 
-//       const updatedReviews = reorderedReviews.map((review, index) => ({
-//         ...review,
-//         sortOrder: index + 1,
-//       }));
+      return { previousPageData, previousPosts };
+    },
 
-//       queryClient.setQueryData<AdminReviewsPageData>(
-//         ["admin", "reviews", "page-data"],
-//         (oldData) => {
-//           if (!oldData) return oldData;
+    onError: (error, _, context) => {
+      if (context?.previousPageData) {
+        queryClient.setQueryData(["admin", "blog", "page-data"], context.previousPageData);
+      }
 
-//           return {
-//             ...oldData,
-//             reviews: updatedReviews,
-//           };
-//         },
-//       );
+      if (context?.previousPosts) {
+        queryClient.setQueryData(["admin", "blog"], context.previousPosts);
+      }
 
-//       queryClient.setQueryData<Review[]>(["admin", "reviews"], updatedReviews);
+      console.error("Failed to update blog order:", error);
+    },
 
-//       return { previousPageData, previousReviews };
-//     },
+    onSettled: () => {
+      invalidateBlog();
+    },
+  });
 
-//     onError: (error, _, context) => {
-//       if (context?.previousPageData) {
-//         queryClient.setQueryData(["admin", "reviews", "page-data"], context.previousPageData);
-//       }
-
-//       if (context?.previousReviews) {
-//         queryClient.setQueryData(["admin", "reviews"], context.previousReviews);
-//       }
-
-//       console.error("Failed to update reviews order:", error);
-//     },
-
-//     onSettled: () => {
-//       queryClient.invalidateQueries({ queryKey: ["admin", "reviews"] });
-//       queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-//     },
-//   });
-
-//   return {
-//     createReview,
-//     updateReview,
-//     deleteReview,
-//     toggleActive,
-//     toggleFeatured,
-//     updateReviewsOrder,
-//   };
-// };
+  return {
+    createPost,
+    updatePost,
+    deletePost,
+    togglePublished,
+    toggleFeatured,
+    updatePostsOrder,
+  };
+};
