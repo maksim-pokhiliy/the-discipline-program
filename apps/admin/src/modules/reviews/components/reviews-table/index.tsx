@@ -57,6 +57,7 @@ export const ReviewsTable = ({ reviews, onEditReview, onDuplicateReview }: Revie
 
   const sensors = useSensors(
     useSensor(PointerSensor),
+
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
