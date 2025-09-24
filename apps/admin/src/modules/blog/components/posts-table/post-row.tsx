@@ -9,10 +9,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import StarIcon from "@mui/icons-material/Star";
 import {
   alpha,
-  Avatar,
   Chip,
   IconButton,
-  Rating,
   Stack,
   Switch,
   TableCell,
@@ -20,35 +18,35 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Program, Review } from "@repo/api";
+import { AdminBlogPost } from "@repo/api";
 
-interface ReviewRowProps {
-  review: Review;
-  program?: Program;
+import { formatPublishedAt } from "@app/modules/blog/utils";
+
+interface PostRowProps {
+  post: AdminBlogPost;
   onEdit: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
-  onToggleActive: () => void;
+  onTogglePublished: () => void;
   onToggleFeatured: () => void;
-  isTogglingActive?: boolean;
+  isTogglingPublished?: boolean;
   isTogglingFeatured?: boolean;
   isDragDisabled?: boolean;
   isDragging?: boolean;
 }
 
-export const ReviewRow = ({
-  review,
-  program,
+export const PostRow = ({
+  post,
   onEdit,
   onDelete,
   onDuplicate,
-  onToggleActive,
+  onTogglePublished,
   onToggleFeatured,
-  isTogglingActive = false,
+  isTogglingPublished = false,
   isTogglingFeatured = false,
   isDragDisabled = true,
   isDragging = false,
-}: ReviewRowProps) => {
+}: PostRowProps) => {
   const {
     attributes,
     listeners,
@@ -56,22 +54,13 @@ export const ReviewRow = ({
     transform,
     transition,
     isDragging: isCurrentlyDragging,
-  } = useSortable({
-    id: review.id,
-    disabled: isDragDisabled,
-  });
+  } = useSortable({ id: post.id, disabled: isDragDisabled });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     zIndex: isCurrentlyDragging ? 1000 : "auto",
-  };
-
-  const truncateText = (text: string, maxLength = 100) => {
-    if (text.length <= maxLength) return text;
-
-    return `${text.substring(0, maxLength)}...`;
-  };
+  } as const;
 
   return (
     <TableRow
@@ -80,7 +69,7 @@ export const ReviewRow = ({
       style={style}
       sx={(theme) => ({
         opacity: isCurrentlyDragging ? 0.5 : 1,
-        backgroundColor: isCurrentlyDragging ? alpha(theme.palette.primary.main, 0.1) : "inherit",
+        backgroundColor: isCurrentlyDragging ? alpha(theme.palette.primary.main, 0.08) : "inherit",
       })}
     >
       <TableCell>
@@ -100,50 +89,37 @@ export const ReviewRow = ({
             </IconButton>
           )}
 
-          <Stack direction="row" alignItems="center" spacing={2}>
-            <Avatar
-              src={review.authorAvatar ?? ""}
-              alt={review.authorName}
-              sx={{ width: 40, height: 40 }}
-            />
+          <Stack>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              {post.title}
+            </Typography>
 
-            <Stack>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {review.authorName}
-              </Typography>
-
-              <Typography variant="caption" color="text.secondary">
-                {review.authorRole}
-              </Typography>
-            </Stack>
+            <Typography variant="caption" color="text.secondary" sx={{ fontFamily: "monospace" }}>
+              {post.slug}
+            </Typography>
           </Stack>
         </Stack>
       </TableCell>
 
       <TableCell>
-        <Tooltip title={review.text}>
-          <Typography variant="body2" color="text.secondary">
-            {truncateText(review.text)}
-          </Typography>
-        </Tooltip>
+        <Chip label={post.category} size="small" variant="outlined" color="primary" />
       </TableCell>
 
       <TableCell>
-        <Rating value={review.rating} readOnly size="small" />
+        <Typography variant="body2">{post.author}</Typography>
       </TableCell>
 
       <TableCell>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Switch
-            checked={review.isActive}
-            onChange={onToggleActive}
-            disabled={isTogglingActive}
+            checked={post.isPublished}
+            onChange={onTogglePublished}
+            disabled={isTogglingPublished}
             size="small"
           />
-
           <Chip
-            label={review.isActive ? "Active" : "Inactive"}
-            color={review.isActive ? "success" : "default"}
+            label={post.isPublished ? "Published" : "Draft"}
+            color={post.isPublished ? "success" : "default"}
             size="small"
             variant="outlined"
           />
@@ -153,56 +129,72 @@ export const ReviewRow = ({
       <TableCell>
         <Stack direction="row" alignItems="center" spacing={1}>
           <Switch
-            checked={review.isFeatured}
+            checked={post.isFeatured}
             onChange={onToggleFeatured}
             disabled={isTogglingFeatured}
             size="small"
             color="secondary"
           />
 
-          {review.isFeatured && (
+          {post.isFeatured && (
             <Chip
               label="Featured"
               color="secondary"
               size="small"
               icon={<StarIcon fontSize="small" />}
-              variant="filled"
             />
           )}
         </Stack>
       </TableCell>
 
       <TableCell>
-        {program ? (
-          <Chip label={program.name} size="small" variant="outlined" color="primary" />
+        {post.tags.length > 0 ? (
+          <Stack direction="row" gap={0.5} flexWrap="wrap">
+            {post.tags.map((tag) => (
+              <Chip key={tag} label={tag} size="small" variant="outlined" />
+            ))}
+          </Stack>
         ) : (
-          <Typography variant="caption" color="text.disabled">
-            No program
+          <Typography variant="caption" color="text.disabled" sx={{ whiteSpace: "nowrap" }}>
+            No tags
           </Typography>
         )}
       </TableCell>
 
       <TableCell>
+        <Stack spacing={0.5}>
+          <Typography variant="body2" sx={{ whiteSpace: "nowrap" }}>
+            {formatPublishedAt(post.publishedAt)}
+          </Typography>
+          {post.readTime ? (
+            <Typography variant="caption" color="text.secondary">
+              {post.readTime} min read
+            </Typography>
+          ) : null}
+        </Stack>
+      </TableCell>
+
+      <TableCell>
         <Typography variant="body2" sx={{ fontFamily: "monospace" }}>
-          {review.sortOrder}
+          {post.sortOrder}
         </Typography>
       </TableCell>
 
       <TableCell align="right">
         <Stack direction="row" spacing={1}>
-          <Tooltip title="Duplicate review">
+          <Tooltip title="Duplicate post">
             <IconButton size="small" onClick={onDuplicate} color="primary">
               <ContentCopyIcon fontSize="small" />
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Edit review">
+          <Tooltip title="Edit post">
             <IconButton size="small" onClick={onEdit} color="primary">
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
 
-          <Tooltip title="Delete review">
+          <Tooltip title="Delete post">
             <IconButton size="small" onClick={onDelete} color="primary">
               <DeleteIcon fontSize="small" />
             </IconButton>

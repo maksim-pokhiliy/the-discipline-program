@@ -1,12 +1,22 @@
-import { BlogStats, Review } from "../../types";
+import { AdminBlogPost, BlogStats, RawBlogPost } from "../../types";
 import { prisma } from "../../db/client";
 
+type BlogPostOrderUpdate = { id: string; sortOrder: number };
+
+const transformPost = (post: RawBlogPost): AdminBlogPost => ({
+  ...post,
+  coverImage: post.coverImage ?? null,
+  publishedAt: post.publishedAt ?? null,
+  tags: post.tags ?? [],
+  readTime: post.readTime ?? null,
+});
+
 export const adminBlogApi = {
-  getPosts: async (): Promise<Review[]> => {
-    const posts = await prisma.review.findMany({
+  getPosts: async (): Promise<AdminBlogPost[]> => {
+    const posts = await prisma.blogPost.findMany({
       orderBy: [
         { isFeatured: "desc" },
-        { isActive: "desc" },
+        { isPublished: "desc" },
         { sortOrder: "asc" },
         { createdAt: "desc" },
       ],
@@ -55,60 +65,13 @@ export const adminBlogApi = {
     };
   },
 
-  // createReview: async (data: Omit<Review, "id" | "createdAt" | "updatedAt">): Promise<Review> => {
-  //   const review = await prisma.review.create({
-  //     data,
-  //   });
+  updatePostsOrder: async (updates: BlogPostOrderUpdate[]): Promise<AdminBlogPost[]> => {
+    const transactions = updates.map(({ id, sortOrder }) =>
+      prisma.blogPost.update({ where: { id }, data: { sortOrder } }),
+    );
 
-  //   return review;
-  // },
+    const posts = await prisma.$transaction(transactions);
 
-  // updateReview: async (id: string, data: Partial<Review>): Promise<Review> => {
-  //   const review = await prisma.review.update({
-  //     where: { id },
-  //     data,
-  //   });
-
-  //   return review;
-  // },
-
-  // deleteReview: async (id: string): Promise<void> => {
-  //   await prisma.review.delete({
-  //     where: { id },
-  //   });
-  // },
-
-  // toggleReviewStatus: async (id: string): Promise<Review> => {
-  //   const review = await prisma.review.findUnique({
-  //     where: { id },
-  //   });
-
-  //   if (!review) {
-  //     throw new Error("Review not found");
-  //   }
-
-  //   const updated = await prisma.review.update({
-  //     where: { id },
-  //     data: { isActive: !review.isActive },
-  //   });
-
-  //   return updated;
-  // },
-
-  // toggleReviewFeatured: async (id: string): Promise<Review> => {
-  //   const review = await prisma.review.findUnique({
-  //     where: { id },
-  //   });
-
-  //   if (!review) {
-  //     throw new Error("Review not found");
-  //   }
-
-  //   const updated = await prisma.review.update({
-  //     where: { id },
-  //     data: { isFeatured: !review.isFeatured },
-  //   });
-
-  //   return updated;
-  // },
+    return posts.map(transformPost);
+  },
 };

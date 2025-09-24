@@ -1,3 +1,2 @@
-export * from "./review-form";
-export * from "./review-modal";
-export * from "./reviews-table";
+export * from "./posts-table";
+export * from "./delete-post-confirmation-modal";
