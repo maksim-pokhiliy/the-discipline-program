@@ -3,7 +3,7 @@
 import { AdminBlogPost } from "@repo/api";
 import { ConfirmationModal } from "@repo/ui";
 
-interface DeleteConfirmationModalProps {
+interface DeletePostConfirmationModal {
   open: boolean;
   onClose: () => void;
   post: AdminBlogPost | null;
@@ -12,15 +12,17 @@ interface DeleteConfirmationModalProps {
   error?: string | null;
 }
 
-export const DeleteConfirmationModal = ({
+export const DeletePostConfirmationModal = ({
   open,
   onClose,
   post,
   onConfirm,
   isDeleting = false,
   error,
-}: DeleteConfirmationModalProps) => {
-  if (!post) return null;
+}: DeletePostConfirmationModal) => {
+  if (!post) {
+    return null;
+  }
 
   return (
     <ConfirmationModal

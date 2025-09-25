@@ -36,6 +36,7 @@ interface BlogTableProps {
   posts: AdminBlogPost[];
   onEditPost: (post: AdminBlogPost) => void;
   onDuplicatePost: (post: AdminBlogPost) => void;
+  onDeletePost: (post: AdminBlogPost) => void;
 }
 
 type SortField = keyof Pick<
@@ -44,7 +45,12 @@ type SortField = keyof Pick<
 >;
 type SortDirection = "asc" | "desc";
 
-export const PostsTable = ({ posts, onEditPost, onDuplicatePost }: BlogTableProps) => {
+export const PostsTable = ({
+  posts,
+  onEditPost,
+  onDuplicatePost,
+  onDeletePost,
+}: BlogTableProps) => {
   const { togglePublished, toggleFeatured, updatePostsOrder } = useBlogMutations();
 
   const [sortField, setSortField] = useState<SortField>("sortOrder");
@@ -106,8 +112,6 @@ export const PostsTable = ({ posts, onEditPost, onDuplicatePost }: BlogTableProp
 
     return 0;
   });
-
-  const handleDeleteClick = (post: AdminBlogPost) => {};
 
   const handleTogglePublished = async (postId: string) => {
     setTogglingPublishedId(postId);
@@ -189,6 +193,7 @@ export const PostsTable = ({ posts, onEditPost, onDuplicatePost }: BlogTableProp
                     Title
                   </TableSortLabel>
                 </TableCell>
+
                 <TableCell sortDirection={sortField === "category" ? sortDirection : false}>
                   <TableSortLabel
                     active={sortField === "category"}
@@ -198,10 +203,15 @@ export const PostsTable = ({ posts, onEditPost, onDuplicatePost }: BlogTableProp
                     Category
                   </TableSortLabel>
                 </TableCell>
+
                 <TableCell>Author</TableCell>
+
                 <TableCell>Published</TableCell>
+
                 <TableCell>Featured</TableCell>
+
                 <TableCell>Tags</TableCell>
+
                 <TableCell sortDirection={sortField === "publishedAt" ? sortDirection : false}>
                   <TableSortLabel
                     active={sortField === "publishedAt"}
@@ -211,6 +221,7 @@ export const PostsTable = ({ posts, onEditPost, onDuplicatePost }: BlogTableProp
                     Published At
                   </TableSortLabel>
                 </TableCell>
+
                 <TableCell sortDirection={sortField === "sortOrder" ? sortDirection : false}>
                   <TableSortLabel
                     active={sortField === "sortOrder"}
@@ -235,7 +246,7 @@ export const PostsTable = ({ posts, onEditPost, onDuplicatePost }: BlogTableProp
                     post={post}
                     onEdit={() => onEditPost(post)}
                     onDuplicate={() => onDuplicatePost(post)}
-                    onDelete={() => handleDeleteClick(post)}
+                    onDelete={() => onDeletePost(post)}
                     onTogglePublished={() => handleTogglePublished(post.id)}
                     onToggleFeatured={() => handleToggleFeatured(post.id)}
                     isTogglingPublished={togglingPublishedId === post.id}
