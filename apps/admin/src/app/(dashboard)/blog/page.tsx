@@ -1,3 +1,1 @@
-import { BlogPage } from "@app/modules/blog";
-
-export default BlogPage;
+export { BlogPage as default } from "@app/modules/blog";

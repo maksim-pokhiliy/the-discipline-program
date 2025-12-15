@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 
-import { BlogPage } from "@app/modules/blog";
 import { PAGE_SEO, SEO_CONFIG } from "@app/shared/constants";
+
+export { BlogPage as default } from "@app/modules/blog";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.blog.title,
@@ -13,5 +14,3 @@ export const metadata: Metadata = {
     url: `${SEO_CONFIG.siteUrl}/blog`,
   },
 };
-
-export default BlogPage;

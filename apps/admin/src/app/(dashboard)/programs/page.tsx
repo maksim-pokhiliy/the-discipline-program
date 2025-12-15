@@ -1,3 +1,1 @@
-import { ProgramsPage } from "@app/modules/programs";
-
-export default ProgramsPage;
+export { ProgramsPage as default } from "@app/modules/programs";

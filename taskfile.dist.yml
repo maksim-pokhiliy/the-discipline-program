@@ -1,10 +1,21 @@
 version: "3"
 
 vars:
-  DEFAULT_APP: marketing
+  DEFAULT_APP: admin
   APP: "{{.APP | default .DEFAULT_APP}}"
 
 tasks:
+  clean:
+    desc: "Remove node_modules, .turbo, .next"
+    cmds:
+      - rm -rf node_modules
+      - rm -rf .turbo
+      - find . -name "node_modules" -type d -prune -exec rm -rf '{}' +
+      - find . -name "dist" -type d -prune -exec rm -rf '{}' +
+      - find . -name ".next" -type d -prune -exec rm -rf '{}' +
+      - find . -name ".turbo" -type d -prune -exec rm -rf '{}' +
+      - pnpm store prune
+
   install:
     desc: "Install all dependencies"
     cmds:
@@ -15,19 +26,10 @@ tasks:
     cmds:
       - pnpm install --frozen-lockfile
 
-  clean:
-    desc: "Remove node_modules, .turbo, .next"
-    cmds:
-      - rm -rf node_modules
-      - rm -rf .turbo
-      - find . -name "node_modules" -type d -prune -exec rm -rf '{}' +
-      - find . -name ".next" -type d -prune -exec rm -rf '{}' +
-      - pnpm store prune
-
   dev:
-    desc: "Run dev server for selected app (default: marketing)"
+    desc: "Run dev server for selected app (default: admin)"
     cmds:
-      - pnpm --filter {{.APP}} dev
+      - pnpm turbo run dev --filter={{.APP}}
 
   build:
     desc: "Build the entire repo"
@@ -35,7 +37,7 @@ tasks:
       - pnpm build
 
   preview:
-    desc: "Build + start app in prod mode (default: marketing)"
+    desc: "Build + start app in prod mode (default: admin)"
     cmds:
       - pnpm --filter {{.APP}} build
       - pnpm --filter {{.APP}} start
@@ -45,25 +47,15 @@ tasks:
     cmds:
       - pnpm lint
 
-  lint-check:
-    desc: "Run lint in check mode (no fix)"
-    cmds:
-      - pnpm lint:check
-
   format:
     desc: "Format all files"
     cmds:
       - pnpm format
 
-  format-check:
-    desc: "Check formatting without writing"
-    cmds:
-      - pnpm format:check
-
-  typecheck:
+  check-types:
     desc: "Run type checks across all packages"
     cmds:
-      - pnpm typecheck
+      - pnpm check-types
 
   clean-start:
     desc: "Clean project, install dependencies, start dev server"

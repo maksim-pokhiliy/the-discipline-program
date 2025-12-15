@@ -1,3 +1,3 @@
-export * from "./payment-success-actions";
-export * from "./payment-success-details";
-export * from "./payment-success-hero";
+export * from "./success-actions";
+export * from "./success-details";
+export * from "./success-hero";

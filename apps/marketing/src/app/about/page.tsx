@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 
-import { AboutPage } from "@app/modules/about";
 import { PAGE_SEO, SEO_CONFIG } from "@app/shared/constants";
+
+export { AboutPage as default } from "@app/modules/about";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.about.title,
@@ -13,5 +14,3 @@ export const metadata: Metadata = {
     url: `${SEO_CONFIG.siteUrl}/about`,
   },
 };
-
-export default AboutPage;

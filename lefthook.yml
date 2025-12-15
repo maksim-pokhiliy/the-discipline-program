@@ -12,7 +12,7 @@ pre-commit:
       fail_text: "Prettier formatting failed"
 
     type-check:
-      run: pnpm typecheck
+      run: pnpm check-types
       fail_text: "TypeScript compilation failed"
 
 commit-msg:

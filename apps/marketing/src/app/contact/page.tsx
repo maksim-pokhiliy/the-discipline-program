@@ -1,7 +1,8 @@
 import { Metadata } from "next";
 
-import { ContactPage } from "@app/modules/contact";
 import { PAGE_SEO, SEO_CONFIG } from "@app/shared/constants";
+
+export { ContactPage as default } from "@app/modules/contact";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.contact.title,
@@ -13,5 +14,3 @@ export const metadata: Metadata = {
     url: `${SEO_CONFIG.siteUrl}/contact`,
   },
 };
-
-export default ContactPage;

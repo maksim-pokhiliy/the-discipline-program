@@ -26,11 +26,15 @@ export const blogAPI = {
   getPageData: (): Promise<AdminBlogPageData> => apiClient.request("/api/blog/page-data"),
   getAll: (): Promise<AdminBlogPost[]> => apiClient.request("/api/blog"),
   getById: (id: string): Promise<AdminBlogPost> => apiClient.request(`/api/blog/${id}`),
+
   create: (data: Partial<AdminBlogPost>): Promise<AdminBlogPost> =>
     apiClient.request("/api/blog", "POST", data),
+
   update: (id: string, data: Partial<AdminBlogPost>): Promise<AdminBlogPost> =>
     apiClient.request(`/api/blog/${id}`, "PUT", data),
+
   delete: (id: string): Promise<void> => apiClient.request(`/api/blog/${id}`, "DELETE"),
+
   updateOrder: (updates: BlogOrderUpdate[]): Promise<AdminBlogPost[]> =>
     apiClient.request("/api/blog/order", "PUT", updates),
 };

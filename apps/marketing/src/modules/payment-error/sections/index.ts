@@ -1,3 +1,3 @@
-export * from "./payment-error-actions";
-export * from "./payment-error-details";
-export * from "./payment-error-hero";
+export * from "./error-actions";
+export * from "./error-details";
+export * from "./error-hero";
