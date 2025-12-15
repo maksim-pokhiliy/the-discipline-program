@@ -1,21 +1,6 @@
 "use client";
 
 import {
-  closestCenter,
-  DndContext,
-  DragEndEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import {
   Box,
   Paper,
   Table,
@@ -46,22 +31,13 @@ type SortDirection = "asc" | "desc";
 
 export const ReviewsTable = ({ reviews, onEditReview, onDuplicateReview }: ReviewsTableProps) => {
   const deleteModal = useModal();
-  const { deleteReview, toggleActive, toggleFeatured, updateReviewsOrder } = useReviewMutations();
+  const { deleteReview, toggleActive, toggleFeatured } = useReviewMutations();
 
   const [sortField, setSortField] = useState<SortField>("sortOrder");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [reviewToDelete, setReviewToDelete] = useState<Review | null>(null);
   const [togglingReviewId, setTogglingReviewId] = useState<string | null>(null);
   const [togglingFeaturedId, setTogglingFeaturedId] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    }),
-  );
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -149,128 +125,76 @@ export const ReviewsTable = ({ reviews, onEditReview, onDuplicateReview }: Revie
     }
   };
 
-  const handleDragStart = () => {
-    setIsDragging(true);
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    setIsDragging(false);
-
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    const oldIndex = sortedReviews.findIndex((review) => review.id === active.id);
-    const newIndex = sortedReviews.findIndex((review) => review.id === over.id);
-
-    if (oldIndex === -1 || newIndex === -1) {
-      return;
-    }
-
-    const reorderedReviews = arrayMove(sortedReviews, oldIndex, newIndex);
-
-    try {
-      await updateReviewsOrder.mutateAsync(reorderedReviews);
-    } catch (error) {
-      console.error("Failed to update sort order:", error);
-    }
-  };
-
-  const isDragEnabled = sortField === "sortOrder" && sortDirection === "asc";
-
   return (
     <>
-      <TableContainer
-        component={Paper}
-        variant="outlined"
-        sx={{
-          overflow: isDragging ? "hidden" : "auto",
-        }}
-      >
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell>
-                  <TableSortLabel
-                    active={sortField === "authorName"}
-                    direction={sortField === "authorName" ? sortDirection : "asc"}
-                    onClick={() => handleSort("authorName")}
-                  >
-                    Author
-                  </TableSortLabel>
-                </TableCell>
+      <TableContainer component={Paper} variant="outlined">
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell>
+                <TableSortLabel
+                  active={sortField === "authorName"}
+                  direction={sortField === "authorName" ? sortDirection : "asc"}
+                  onClick={() => handleSort("authorName")}
+                >
+                  Author
+                </TableSortLabel>
+              </TableCell>
 
-                <TableCell>Review Text</TableCell>
+              <TableCell>Review Text</TableCell>
 
-                <TableCell>
-                  <TableSortLabel
-                    active={sortField === "rating"}
-                    direction={sortField === "rating" ? sortDirection : "asc"}
-                    onClick={() => handleSort("rating")}
-                  >
-                    Rating
-                  </TableSortLabel>
-                </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={sortField === "rating"}
+                  direction={sortField === "rating" ? sortDirection : "asc"}
+                  onClick={() => handleSort("rating")}
+                >
+                  Rating
+                </TableSortLabel>
+              </TableCell>
 
-                <TableCell>Status</TableCell>
+              <TableCell>Status</TableCell>
 
-                <TableCell>Featured</TableCell>
+              <TableCell>Featured</TableCell>
 
-                <TableCell>Program</TableCell>
+              <TableCell>Program</TableCell>
 
-                <TableCell>
-                  <TableSortLabel
-                    active={sortField === "sortOrder"}
-                    direction={sortField === "sortOrder" ? sortDirection : "asc"}
-                    onClick={() => handleSort("sortOrder")}
-                  >
-                    Sort Order
-                  </TableSortLabel>
-                </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={sortField === "sortOrder"}
+                  direction={sortField === "sortOrder" ? sortDirection : "asc"}
+                  onClick={() => handleSort("sortOrder")}
+                >
+                  Sort Order
+                </TableSortLabel>
+              </TableCell>
 
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
 
-            <TableBody>
-              <SortableContext
-                items={sortedReviews.map((r) => r.id)}
-                strategy={verticalListSortingStrategy}
-                disabled={!isDragEnabled}
-              >
-                {sortedReviews.map((review) => (
-                  <ReviewRow
-                    key={review.id}
-                    review={review}
-                    onEdit={() => onEditReview(review)}
-                    onDelete={() => handleDeleteClick(review)}
-                    onDuplicate={() => onDuplicateReview(review)}
-                    onToggleActive={() => handleToggleActive(review.id)}
-                    onToggleFeatured={() => handleToggleFeatured(review.id)}
-                    isTogglingActive={togglingReviewId === review.id}
-                    isTogglingFeatured={togglingFeaturedId === review.id}
-                    isDragDisabled={!isDragEnabled}
-                    isDragging={isDragging}
-                  />
-                ))}
-              </SortableContext>
-            </TableBody>
-          </Table>
+          <TableBody>
+            {sortedReviews.map((review) => (
+              <ReviewRow
+                key={review.id}
+                review={review}
+                onEdit={() => onEditReview(review)}
+                onDelete={() => handleDeleteClick(review)}
+                onDuplicate={() => onDuplicateReview(review)}
+                onToggleActive={() => handleToggleActive(review.id)}
+                onToggleFeatured={() => handleToggleFeatured(review.id)}
+                isTogglingActive={togglingReviewId === review.id}
+                isTogglingFeatured={togglingFeaturedId === review.id}
+              />
+            ))}
+          </TableBody>
+        </Table>
 
-          {reviews.length === 0 && (
-            <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
-              No reviews found. Create your first review to get started.
-            </Box>
-          )}
-        </DndContext>
+        {reviews.length === 0 && (
+          <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
+            No reviews found. Create your first review to get started.
+          </Box>
+        )}
       </TableContainer>
 
       <DeleteConfirmationModal

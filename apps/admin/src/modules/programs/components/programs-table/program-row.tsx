@@ -1,13 +1,9 @@
 "use client";
 
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import EditIcon from "@mui/icons-material/Edit";
 import {
-  alpha,
   Chip,
   IconButton,
   Stack,
@@ -26,8 +22,6 @@ interface ProgramRowProps {
   onDuplicate: () => void;
   onToggleStatus: () => void;
   isToggling?: boolean;
-  isDragDisabled?: boolean;
-  isDragging?: boolean;
 }
 
 export const ProgramRow = ({
@@ -37,27 +31,7 @@ export const ProgramRow = ({
   onDuplicate,
   onToggleStatus,
   isToggling = false,
-  isDragDisabled = true,
-  isDragging = false,
 }: ProgramRowProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging: isCurrentlyDragging,
-  } = useSortable({
-    id: program.id,
-    disabled: isDragDisabled,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isCurrentlyDragging ? 1000 : "auto",
-  };
-
   const formatFeatures = (features: string[]) => {
     if (features.length === 0) return "No features";
 
@@ -78,32 +52,9 @@ export const ProgramRow = ({
   };
 
   return (
-    <TableRow
-      hover={!isDragging}
-      ref={setNodeRef}
-      style={style}
-      sx={(theme) => ({
-        opacity: isCurrentlyDragging ? 0.5 : 1,
-        backgroundColor: isCurrentlyDragging ? alpha(theme.palette.primary.main, 0.1) : "inherit",
-      })}
-    >
+    <TableRow>
       <TableCell>
         <Stack direction="row" alignItems="center" spacing={1}>
-          {!isDragDisabled && (
-            <IconButton
-              size="small"
-              {...attributes}
-              {...listeners}
-              sx={{
-                cursor: "grab",
-                "&:active": { cursor: "grabbing" },
-                color: "text.secondary",
-              }}
-            >
-              <DragIndicatorIcon fontSize="small" />
-            </IconButton>
-          )}
-
           <Stack>
             <Typography variant="body2" sx={{ fontWeight: 600 }}>
               {program.name}

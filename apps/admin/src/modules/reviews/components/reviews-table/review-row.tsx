@@ -1,14 +1,10 @@
 "use client";
 
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import EditIcon from "@mui/icons-material/Edit";
 import StarIcon from "@mui/icons-material/Star";
 import {
-  alpha,
   Avatar,
   Chip,
   IconButton,
@@ -32,8 +28,6 @@ interface ReviewRowProps {
   onToggleFeatured: () => void;
   isTogglingActive?: boolean;
   isTogglingFeatured?: boolean;
-  isDragDisabled?: boolean;
-  isDragging?: boolean;
 }
 
 export const ReviewRow = ({
@@ -46,27 +40,7 @@ export const ReviewRow = ({
   onToggleFeatured,
   isTogglingActive = false,
   isTogglingFeatured = false,
-  isDragDisabled = true,
-  isDragging = false,
 }: ReviewRowProps) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging: isCurrentlyDragging,
-  } = useSortable({
-    id: review.id,
-    disabled: isDragDisabled,
-  });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    zIndex: isCurrentlyDragging ? 1000 : "auto",
-  };
-
   const truncateText = (text: string, maxLength = 100) => {
     if (text.length <= maxLength) return text;
 
@@ -74,32 +48,9 @@ export const ReviewRow = ({
   };
 
   return (
-    <TableRow
-      hover={!isDragging}
-      ref={setNodeRef}
-      style={style}
-      sx={(theme) => ({
-        opacity: isCurrentlyDragging ? 0.5 : 1,
-        backgroundColor: isCurrentlyDragging ? alpha(theme.palette.primary.main, 0.1) : "inherit",
-      })}
-    >
+    <TableRow>
       <TableCell>
         <Stack direction="row" alignItems="center" spacing={1}>
-          {!isDragDisabled && (
-            <IconButton
-              size="small"
-              {...attributes}
-              {...listeners}
-              sx={{
-                cursor: "grab",
-                "&:active": { cursor: "grabbing" },
-                color: "text.secondary",
-              }}
-            >
-              <DragIndicatorIcon fontSize="small" />
-            </IconButton>
-          )}
-
           <Stack direction="row" alignItems="center" spacing={2}>
             <Avatar
               src={review.authorAvatar ?? ""}
