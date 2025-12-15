@@ -7,8 +7,8 @@ import { useEffect, useState } from "react";
 
 import { ContentSection } from "@app/shared/components/ui";
 
-import { ProgramCard } from "../programs-card";
-import { ProgramModal } from "../programs-modal";
+import { ProgramCard } from "../card";
+import { ProgramModal } from "../modal";
 
 interface ProgramsGridSectionProps {
   programsList: ProgramsPageData["programsList"];

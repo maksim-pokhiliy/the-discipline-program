@@ -1,3 +1,1 @@
-import { ReviewsPage } from "@app/modules/reviews";
-
-export default ReviewsPage;
+export { ReviewsPage as default } from "@app/modules/reviews";

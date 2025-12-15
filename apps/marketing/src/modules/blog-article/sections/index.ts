@@ -1,3 +1,3 @@
-export * from "./blog-article-content";
-export * from "./blog-article-hero";
-export * from "./blog-article-related";
+export * from "./content";
+export * from "./hero";
+export * from "./related";
