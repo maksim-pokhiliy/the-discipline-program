@@ -22,7 +22,7 @@
     "@repo/api": "workspace:*",
     "@repo/mui": "workspace:*",
     "@tanstack/react-query": "^5.76.2",
-    "next": "15.5.3",
+    "next": "15.5.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
