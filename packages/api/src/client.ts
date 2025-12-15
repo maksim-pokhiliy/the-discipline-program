@@ -18,14 +18,15 @@ export class ApiClient {
     const isFormData = body instanceof FormData;
     const headers: Record<string, string> = {};
 
+    let fullUrl = `${this.baseUrl}${url}`;
+
     if (!isFormData) {
       headers["Content-Type"] = "application/json";
     }
 
-    let fullUrl = `${this.baseUrl}${url}`;
-
     if (queryParams) {
       const params = new URLSearchParams(queryParams).toString();
+
       if (params) {
         fullUrl += `?${params}`;
       }
@@ -41,6 +42,7 @@ export class ApiClient {
       const error = await response
         .json()
         .catch(() => ({ error: `Request failed: ${response.status}` }));
+
       throw new Error(error.error || `API request failed: ${response.status}`);
     }
 

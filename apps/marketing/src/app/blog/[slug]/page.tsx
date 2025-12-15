@@ -1,12 +1,13 @@
 import { pagesApi } from "@repo/api";
 import { Metadata } from "next";
 
-import { BlogArticlePage } from "@app/modules/blog-article";
 import { SEO_CONFIG } from "@app/shared/constants";
 
 interface BlogArticlePageProps {
   params: Promise<{ slug: string }>;
 }
+
+export { BlogArticlePage as default } from "@app/modules/blog-article";
 
 export async function generateMetadata({ params }: BlogArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -43,5 +44,3 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
     };
   }
 }
-
-export default BlogArticlePage;

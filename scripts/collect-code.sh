@@ -2,7 +2,7 @@
 
 OUTPUT_FILE="codebase.txt"
 
-EXCLUDE_DIRS=(".git" ".next" ".vercel" ".turbo" "node_modules" ".vscode" ".idea" "dist" "build" "coverage" "temp" "tmp")
+EXCLUDE_DIRS=(".git" ".next" ".vercel" ".turbo" "node_modules" ".vscode" ".idea" "dist" "build" "coverage" "temp" "tmp" "marketing" "api" "eslint-config" "ui" "typescript-config")
 EXCLUDE_FILES=("*.log" "*.tmp" "*.cache" "pnpm-lock.yaml" "package-lock.json" "yarn.lock" "tsconfig.tsbuildinfo" ".DS_Store" "Thumbs.db" "$OUTPUT_FILE")
 INCLUDE_EXTENSIONS=("*.ts" "*.tsx" "*.js" "*.jsx" "*.json" "*.md" "*.yml" "*.yaml" "*.env" "*.env.example" "*.sql" "*.prisma" "*.txt" "*.config.*")
 
