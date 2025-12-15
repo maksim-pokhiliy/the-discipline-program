@@ -74,11 +74,6 @@ export const SettingsFields = ({ control, errors, isSubmitting }: SettingsFields
         <Typography variant="caption" color="text.secondary">
           • <strong>Featured:</strong> Review appears on homepage and has priority display
         </Typography>
-
-        <Typography variant="caption" color="text.secondary">
-          • <strong>Sort Order:</strong> Lower numbers appear first (drag & drop also available in
-          table)
-        </Typography>
       </Stack>
     </Stack>
   );

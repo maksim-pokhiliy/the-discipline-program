@@ -1,21 +1,6 @@
 "use client";
 
 import {
-  closestCenter,
-  DndContext,
-  DragEndEvent,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  arrayMove,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import {
   Paper,
   Table,
   TableBody,
@@ -51,18 +36,12 @@ export const PostsTable = ({
   onDuplicatePost,
   onDeletePost,
 }: BlogTableProps) => {
-  const { togglePublished, toggleFeatured, updatePostsOrder } = useBlogMutations();
+  const { togglePublished, toggleFeatured } = useBlogMutations();
 
   const [sortField, setSortField] = useState<SortField>("sortOrder");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [togglingPublishedId, setTogglingPublishedId] = useState<string | null>(null);
   const [togglingFeaturedId, setTogglingFeaturedId] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -137,128 +116,79 @@ export const PostsTable = ({
     }
   };
 
-  const handleDragStart = () => {
-    setIsDragging(true);
-  };
-
-  const handleDragEnd = async (event: DragEndEvent) => {
-    setIsDragging(false);
-
-    const { active, over } = event;
-
-    if (!over || active.id === over.id) {
-      return;
-    }
-
-    const oldIndex = sortedPosts.findIndex((post) => post.id === active.id);
-    const newIndex = sortedPosts.findIndex((post) => post.id === over.id);
-
-    if (oldIndex === -1 || newIndex === -1) {
-      return;
-    }
-
-    const reordered = arrayMove(sortedPosts, oldIndex, newIndex);
-
-    try {
-      await updatePostsOrder.mutateAsync(reordered);
-    } catch (error) {
-      console.error("Failed to update blog order:", error);
-    }
-  };
-
-  const isDragEnabled = sortField === "sortOrder" && sortDirection === "asc";
-
   return (
     <>
-      <TableContainer
-        component={Paper}
-        variant="outlined"
-        sx={{ overflow: isDragging ? "hidden" : "auto" }}
-      >
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell sortDirection={sortField === "title" ? sortDirection : false}>
-                  <TableSortLabel
-                    active={sortField === "title"}
-                    direction={sortField === "title" ? sortDirection : "asc"}
-                    onClick={() => handleSort("title")}
-                  >
-                    Title
-                  </TableSortLabel>
-                </TableCell>
+      <TableContainer component={Paper} variant="outlined">
+        <Table stickyHeader>
+          <TableHead>
+            <TableRow>
+              <TableCell sortDirection={sortField === "title" ? sortDirection : false}>
+                <TableSortLabel
+                  active={sortField === "title"}
+                  direction={sortField === "title" ? sortDirection : "asc"}
+                  onClick={() => handleSort("title")}
+                >
+                  Title
+                </TableSortLabel>
+              </TableCell>
 
-                <TableCell sortDirection={sortField === "category" ? sortDirection : false}>
-                  <TableSortLabel
-                    active={sortField === "category"}
-                    direction={sortField === "category" ? sortDirection : "asc"}
-                    onClick={() => handleSort("category")}
-                  >
-                    Category
-                  </TableSortLabel>
-                </TableCell>
+              <TableCell sortDirection={sortField === "category" ? sortDirection : false}>
+                <TableSortLabel
+                  active={sortField === "category"}
+                  direction={sortField === "category" ? sortDirection : "asc"}
+                  onClick={() => handleSort("category")}
+                >
+                  Category
+                </TableSortLabel>
+              </TableCell>
 
-                <TableCell>Author</TableCell>
+              <TableCell>Author</TableCell>
 
-                <TableCell>Published</TableCell>
+              <TableCell>Published</TableCell>
 
-                <TableCell>Featured</TableCell>
+              <TableCell>Featured</TableCell>
 
-                <TableCell>Tags</TableCell>
+              <TableCell>Tags</TableCell>
 
-                <TableCell sortDirection={sortField === "publishedAt" ? sortDirection : false}>
-                  <TableSortLabel
-                    active={sortField === "publishedAt"}
-                    direction={sortField === "publishedAt" ? sortDirection : "asc"}
-                    onClick={() => handleSort("publishedAt")}
-                  >
-                    Published At
-                  </TableSortLabel>
-                </TableCell>
+              <TableCell sortDirection={sortField === "publishedAt" ? sortDirection : false}>
+                <TableSortLabel
+                  active={sortField === "publishedAt"}
+                  direction={sortField === "publishedAt" ? sortDirection : "asc"}
+                  onClick={() => handleSort("publishedAt")}
+                >
+                  Published At
+                </TableSortLabel>
+              </TableCell>
 
-                <TableCell sortDirection={sortField === "sortOrder" ? sortDirection : false}>
-                  <TableSortLabel
-                    active={sortField === "sortOrder"}
-                    direction={sortField === "sortOrder" ? sortDirection : "asc"}
-                    onClick={() => handleSort("sortOrder")}
-                  >
-                    Sort Order
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
+              <TableCell sortDirection={sortField === "sortOrder" ? sortDirection : false}>
+                <TableSortLabel
+                  active={sortField === "sortOrder"}
+                  direction={sortField === "sortOrder" ? sortDirection : "asc"}
+                  onClick={() => handleSort("sortOrder")}
+                >
+                  Sort Order
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
 
-            <SortableContext
-              items={sortedPosts.map((post) => post.id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <TableBody>
-                {sortedPosts.map((post) => (
-                  <PostRow
-                    key={post.id}
-                    post={post}
-                    onEdit={() => onEditPost(post)}
-                    onDuplicate={() => onDuplicatePost(post)}
-                    onDelete={() => onDeletePost(post)}
-                    onTogglePublished={() => handleTogglePublished(post.id)}
-                    onToggleFeatured={() => handleToggleFeatured(post.id)}
-                    isTogglingPublished={togglingPublishedId === post.id}
-                    isTogglingFeatured={togglingFeaturedId === post.id}
-                    isDragDisabled={!isDragEnabled}
-                    isDragging={isDragging}
-                  />
-                ))}
-              </TableBody>
-            </SortableContext>
-          </Table>
-        </DndContext>
+          <TableBody>
+            {sortedPosts.map((post) => (
+              <PostRow
+                key={post.id}
+                post={post}
+                onEdit={() => onEditPost(post)}
+                onDuplicate={() => onDuplicatePost(post)}
+                onDelete={() => onDeletePost(post)}
+                onTogglePublished={() => handleTogglePublished(post.id)}
+                onToggleFeatured={() => handleToggleFeatured(post.id)}
+                isTogglingPublished={togglingPublishedId === post.id}
+                isTogglingFeatured={togglingFeaturedId === post.id}
+              />
+            ))}
+          </TableBody>
+        </Table>
       </TableContainer>
     </>
   );
