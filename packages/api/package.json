@@ -3,7 +3,11 @@
   "version": "0.1.0",
   "main": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./contracts": "./src/contracts.ts",
+    "./client": "./src/client.ts",
+    "./server": "./src/server.ts",
+    "./db": "./src/db.ts"
   },
   "scripts": {
     "postinstall": "prisma generate",
@@ -11,9 +15,7 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "lint": "eslint . --fix",
-    "lint:check": "eslint . --max-warnings 0",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {

@@ -1,4 +1,4 @@
-import { adminBlogApi } from "@repo/api";
+import { adminBlogApi } from "@repo/api/server";
 import { NextResponse } from "next/server";
 
 interface OrderPayload {

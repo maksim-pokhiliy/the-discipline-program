@@ -40,8 +40,8 @@ export const PostsTable = ({
 
   const [sortField, setSortField] = useState<SortField>("sortOrder");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [togglingPublishedId, setTogglingPublishedId] = useState<string | null>(null);
-  const [togglingFeaturedId, setTogglingFeaturedId] = useState<string | null>(null);
+  const [togglingPublishedIds, setTogglingPublishedIds] = useState<string[]>([]);
+  const [togglingFeaturedIds, setTogglingFeaturedIds] = useState<string[]>([]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -93,26 +93,26 @@ export const PostsTable = ({
   });
 
   const handleTogglePublished = async (postId: string) => {
-    setTogglingPublishedId(postId);
+    setTogglingPublishedIds((prevIds) => [...prevIds, postId]);
 
     try {
       await togglePublished.mutateAsync(postId);
     } catch (error) {
       console.error("Failed to toggle publish state:", error);
     } finally {
-      setTogglingPublishedId(null);
+      setTogglingPublishedIds((prevIds) => prevIds.filter((id) => id !== postId));
     }
   };
 
   const handleToggleFeatured = async (postId: string) => {
-    setTogglingFeaturedId(postId);
+    setTogglingFeaturedIds((prevIds) => [...prevIds, postId]);
 
     try {
-      await toggleFeatured.mutateAsync(postId);
+      toggleFeatured.mutateAsync(postId);
     } catch (error) {
       console.error("Failed to toggle featured state:", error);
     } finally {
-      setTogglingFeaturedId(null);
+      setTogglingFeaturedIds((prevIds) => prevIds.filter((id) => id !== postId));
     }
   };
 
@@ -183,8 +183,8 @@ export const PostsTable = ({
                 onDelete={() => onDeletePost(post)}
                 onTogglePublished={() => handleTogglePublished(post.id)}
                 onToggleFeatured={() => handleToggleFeatured(post.id)}
-                isTogglingPublished={togglingPublishedId === post.id}
-                isTogglingFeatured={togglingFeaturedId === post.id}
+                isTogglingPublished={togglingPublishedIds.includes(post.id)}
+                isTogglingFeatured={togglingFeaturedIds.includes(post.id)}
               />
             ))}
           </TableBody>

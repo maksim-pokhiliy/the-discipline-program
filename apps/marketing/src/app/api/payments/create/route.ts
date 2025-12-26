@@ -1,10 +1,5 @@
-import {
-  createMonobankService,
-  CreatePaymentRequest,
-  PaymentOrder,
-  Program,
-  programsApi,
-} from "@repo/api";
+import { CreatePaymentRequest, PaymentOrder, Program } from "@repo/api/contracts";
+import { createMonobankService, programsApi } from "@repo/api/server";
 import { NextRequest, NextResponse } from "next/server";
 import { v7 as uuidv7 } from "uuid";
 

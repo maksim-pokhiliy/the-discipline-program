@@ -42,7 +42,9 @@ export const ProgramModal = ({ program, open, onClose }: ProgramModalProps) => {
     });
   };
 
-  if (!program) return null;
+  if (!program) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>

@@ -1,12 +1,17 @@
 "use client";
 
 import { UPLOAD_CONFIG } from "@repo/api";
+import { adminKeys } from "@repo/query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../api";
 
 export const useUploadMutations = () => {
   const queryClient = useQueryClient();
+
+  const invalidateAffected = async () => {
+    await queryClient.invalidateQueries({ queryKey: adminKeys.reviews.page() });
+  };
 
   const uploadAvatar = useMutation({
     mutationFn: async (file: File) => {
@@ -22,16 +27,12 @@ export const useUploadMutations = () => {
 
       return api.upload.avatar(file);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "reviews"] });
-    },
+    onSuccess: invalidateAffected,
   });
 
   const deleteAvatar = useMutation({
     mutationFn: (url: string) => api.upload.deleteAvatar(url),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin", "reviews"] });
-    },
+    onSuccess: invalidateAffected,
   });
 
   return {

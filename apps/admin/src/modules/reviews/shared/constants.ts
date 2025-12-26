@@ -5,7 +5,7 @@ import { ReviewFormData } from "./types";
 export const FORM_DEFAULTS: ReviewFormData = {
   authorName: "",
   authorRole: "",
-  authorAvatar: null,
+  authorAvatar: "",
   text: "",
   rating: 5,
   programId: null,
