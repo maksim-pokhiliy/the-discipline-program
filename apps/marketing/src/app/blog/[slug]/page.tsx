@@ -1,4 +1,4 @@
-import { pagesApi } from "@repo/api";
+import { pagesApi } from "@repo/api/server";
 import { Metadata } from "next";
 
 import { SEO_CONFIG } from "@app/shared/constants";

@@ -20,7 +20,9 @@ export const DeleteConfirmationModal = ({
   isDeleting = false,
   error,
 }: DeleteConfirmationModalProps) => {
-  if (!review) return null;
+  if (!review) {
+    return null;
+  }
 
   return (
     <ConfirmationModal

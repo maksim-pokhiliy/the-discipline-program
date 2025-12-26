@@ -1,10 +1,15 @@
 import { Program } from "../../types";
 import { prisma } from "../../db/client";
 
+type SortOrderUpdate = {
+  id: string;
+  sortOrder: number;
+};
+
 export const adminProgramsApi = {
   getPrograms: async (): Promise<Program[]> => {
     const programs = await prisma.program.findMany({
-      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+      orderBy: [{ isActive: "desc" }, { sortOrder: "asc" }, { createdAt: "desc" }],
     });
 
     return programs;
@@ -15,7 +20,7 @@ export const adminProgramsApi = {
       where: { id },
     });
 
-    return program;
+    return program ?? null;
   },
 
   getProgramsStats: async () => {
@@ -90,5 +95,20 @@ export const adminProgramsApi = {
       where: { id },
       data: { isActive: !program.isActive },
     });
+  },
+
+  updateProgramsOrder: async (updates: SortOrderUpdate[]): Promise<void> => {
+    if (updates.length === 0) {
+      return;
+    }
+
+    await prisma.$transaction(
+      updates.map((u) =>
+        prisma.program.update({
+          where: { id: u.id },
+          data: { sortOrder: u.sortOrder },
+        }),
+      ),
+    );
   },
 };

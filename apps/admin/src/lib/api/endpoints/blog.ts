@@ -37,4 +37,10 @@ export const blogAPI = {
 
   updateOrder: (updates: BlogOrderUpdate[]): Promise<AdminBlogPost[]> =>
     apiClient.request("/api/blog/order", "PUT", updates),
+
+  togglePublished: (id: string): Promise<AdminBlogPost> =>
+    apiClient.request(`/api/blog/${id}/toggle?field=isPublished`, "PATCH"),
+
+  toggleFeatured: (id: string): Promise<AdminBlogPost> =>
+    apiClient.request(`/api/blog/${id}/toggle?field=isFeatured`, "PATCH"),
 };

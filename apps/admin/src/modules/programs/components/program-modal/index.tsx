@@ -35,7 +35,7 @@ export const ProgramModal = ({ open, onClose, program }: ProgramModalProps) => {
         isEditing ? "Update Program" : isDuplicating ? "Duplicate Program" : "Create Program"
       }
       error={submitError}
-      maxWidth="sm"
+      maxWidth="md"
     >
       <ProgramForm
         ref={formRef}

@@ -8,12 +8,6 @@ import pluginNext from "@next/eslint-plugin-next";
 import { config as baseConfig } from "./base.js";
 import importPlugin from "eslint-plugin-import";
 
-/**
- * A custom ESLint configuration for libraries that use Next.js.
- *
- * @type {import("eslint").Linter.Config[]}
- */
-
 export const nextJsConfig = [
   ...baseConfig,
   js.configs.recommended,
@@ -59,6 +53,7 @@ export const nextJsConfig = [
     rules: {
       ...pluginReactHooks.configs.recommended.rules,
       "react/react-in-jsx-scope": "off",
+      curly: ["error", "all"],
       "import/order": [
         "warn",
         {

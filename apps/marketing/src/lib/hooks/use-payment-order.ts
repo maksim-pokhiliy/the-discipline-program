@@ -5,7 +5,9 @@ export const usePaymentOrder = (orderId: string | null) => {
   return useQuery({
     queryKey: ["payment-order", orderId],
     queryFn: async (): Promise<PaymentOrder> => {
-      if (!orderId) throw new Error("Order ID is required");
+      if (!orderId) {
+        throw new Error("Order ID is required");
+      }
 
       const response = await fetch(`/api/payments/create?orderId=${orderId}`);
 

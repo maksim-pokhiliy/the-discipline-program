@@ -1,4 +1,4 @@
-import { authService } from "@repo/api";
+import { authService } from "@repo/api/server";
 import type { NextAuthOptions, User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 

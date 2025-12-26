@@ -1,4 +1,4 @@
-import { adminDashboardApi } from "@repo/api";
+import { adminDashboardApi } from "@repo/api/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {

@@ -40,7 +40,7 @@ export const ProgramsTable = ({
   const [sortField, setSortField] = useState<SortField>("sortOrder");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [programToDelete, setProgramToDelete] = useState<Program | null>(null);
-  const [togglingProgramId, setTogglingProgramId] = useState<string | null>(null);
+  const [togglingProgramIds, setTogglingProgramIds] = useState<string[]>([]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -93,7 +93,9 @@ export const ProgramsTable = ({
   };
 
   const handleDeleteConfirm = async () => {
-    if (!programToDelete) return;
+    if (!programToDelete) {
+      return;
+    }
 
     try {
       await deleteProgram.mutateAsync(programToDelete.id);
@@ -105,14 +107,14 @@ export const ProgramsTable = ({
   };
 
   const handleToggleStatus = async (programId: string) => {
-    setTogglingProgramId(programId);
+    setTogglingProgramIds((prevIds) => [...prevIds, programId]);
 
     try {
       await toggleStatus.mutateAsync(programId);
     } catch (error) {
       console.error("Toggle status failed:", error);
     } finally {
-      setTogglingProgramId(null);
+      setTogglingProgramIds((prevIds) => prevIds.filter((id) => id !== programId));
     }
   };
 
@@ -128,7 +130,7 @@ export const ProgramsTable = ({
                   direction={sortField === "name" ? sortDirection : "asc"}
                   onClick={() => handleSort("name")}
                 >
-                  Program
+                  Title
                 </TableSortLabel>
               </TableCell>
 
@@ -163,17 +165,19 @@ export const ProgramsTable = ({
           </TableHead>
 
           <TableBody>
-            {sortedPrograms.map((program) => (
-              <ProgramRow
-                key={program.id}
-                program={program}
-                onEdit={() => onEditProgram(program)}
-                onDelete={() => handleDeleteClick(program)}
-                onDuplicate={() => onDuplicateProgram(program)}
-                onToggleStatus={() => handleToggleStatus(program.id)}
-                isToggling={togglingProgramId === program.id}
-              />
-            ))}
+            {sortedPrograms.map((program) => {
+              return (
+                <ProgramRow
+                  key={program.id}
+                  program={program}
+                  onEdit={() => onEditProgram(program)}
+                  onDelete={() => handleDeleteClick(program)}
+                  onDuplicate={() => onDuplicateProgram(program)}
+                  onToggleStatus={() => handleToggleStatus(program.id)}
+                  isToggling={togglingProgramIds.includes(program.id)}
+                />
+              );
+            })}
           </TableBody>
         </Table>
 

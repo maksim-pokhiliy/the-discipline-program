@@ -174,4 +174,38 @@ export const adminBlogApi = {
 
     return posts.map(transformPost);
   },
+
+  toggleBlogPostStatus: async (id: string): Promise<AdminBlogPost> => {
+    const blogPost = await prisma.blogPost.findUnique({
+      where: { id },
+    });
+
+    if (!blogPost) {
+      throw new Error("Blog Post not found");
+    }
+
+    const updated = await prisma.blogPost.update({
+      where: { id },
+      data: { isPublished: !blogPost.isPublished },
+    });
+
+    return updated;
+  },
+
+  toggleBlogPostFeatured: async (id: string): Promise<AdminBlogPost> => {
+    const blogPost = await prisma.blogPost.findUnique({
+      where: { id },
+    });
+
+    if (!blogPost) {
+      throw new Error("Blog Post not found");
+    }
+
+    const updated = await prisma.blogPost.update({
+      where: { id },
+      data: { isFeatured: !blogPost.isFeatured },
+    });
+
+    return updated;
+  },
 };

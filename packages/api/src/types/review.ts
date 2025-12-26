@@ -1,3 +1,5 @@
+import { Program } from "./program";
+
 export interface Review {
   id: string;
   text: string;
@@ -6,6 +8,7 @@ export interface Review {
   authorAvatar: string | null;
   rating: number;
   programId?: string | null;
+  program?: Program | null;
   isActive: boolean;
   isFeatured: boolean;
   sortOrder: number;
