@@ -1,19 +1,4 @@
 import { nextJsConfig } from "@repo/eslint-config/next-js";
+import { reactQueryConfig } from "@repo/eslint-config/react-query";
 
-/** @type {import("eslint").Linter.Config} */
-
-export default [
-  ...nextJsConfig,
-  {
-    files: ["src/**/*.{ts,tsx}"],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        {
-          selector: "Property[key.name='queryKey'] > ArrayExpression",
-          message: "Do not use raw queryKey arrays. Use adminKeys/marketingKeys from @repo/query.",
-        },
-      ],
-    },
-  },
-];
+export default [...nextJsConfig, ...reactQueryConfig];

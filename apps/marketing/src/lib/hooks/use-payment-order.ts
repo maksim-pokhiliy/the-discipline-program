@@ -1,9 +1,11 @@
 import { PaymentOrder } from "@repo/api";
+import { marketingKeys } from "@repo/query";
 import { useQuery } from "@tanstack/react-query";
 
 export const usePaymentOrder = (orderId: string | null) => {
   return useQuery({
-    queryKey: ["payment-order", orderId],
+    queryKey: orderId ? marketingKeys.payments.order(orderId) : [],
+
     queryFn: async (): Promise<PaymentOrder> => {
       if (!orderId) {
         throw new Error("Order ID is required");
@@ -17,6 +19,7 @@ export const usePaymentOrder = (orderId: string | null) => {
 
       return response.json();
     },
+
     enabled: !!orderId,
   });
 };
