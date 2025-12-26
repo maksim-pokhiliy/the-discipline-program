@@ -16,11 +16,11 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { Program, Review } from "@repo/api";
+import { Review } from "@repo/api";
 
 interface ReviewRowProps {
   review: Review;
-  program?: Program;
+  program?: Review["program"];
   onEdit: () => void;
   onDelete: () => void;
   onDuplicate: () => void;
@@ -42,7 +42,9 @@ export const ReviewRow = ({
   isTogglingFeatured = false,
 }: ReviewRowProps) => {
   const truncateText = (text: string, maxLength = 100) => {
-    if (text.length <= maxLength) return text;
+    if (text.length <= maxLength) {
+      return text;
+    }
 
     return `${text.substring(0, maxLength)}...`;
   };

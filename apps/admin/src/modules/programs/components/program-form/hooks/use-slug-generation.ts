@@ -19,7 +19,9 @@ export const useSlugGeneration = (name: string) => {
   };
 
   const getAutoSlug = () => {
-    if (isManuallyChanged) return "";
+    if (isManuallyChanged) {
+      return "";
+    }
 
     return generateSlug(name);
   };

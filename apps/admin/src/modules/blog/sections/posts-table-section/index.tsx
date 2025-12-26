@@ -54,7 +54,9 @@ export const PostsTableSection = ({ posts }: BlogTableSectionProps) => {
   };
 
   const handleDeleteConfirm = async () => {
-    if (!postToDelete) return;
+    if (!postToDelete) {
+      return;
+    }
 
     try {
       await deletePost.mutateAsync(postToDelete.id);

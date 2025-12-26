@@ -10,12 +10,12 @@ import {
 import { apiClient } from "../client";
 
 export const pagesAPI = {
-  getHome: (): Promise<HomePageData> => apiClient.request("/api/marketing/pages/home"),
-  getPrograms: (): Promise<ProgramsPageData> => apiClient.request("/api/marketing/pages/programs"),
-  getAbout: (): Promise<AboutPageData> => apiClient.request("/api/marketing/pages/about"),
-  getBlog: (): Promise<BlogPageData> => apiClient.request("/api/marketing/pages/blog"),
-  getContact: (): Promise<ContactPageData> => apiClient.request("/api/marketing/pages/contact"),
+  getHome: (): Promise<HomePageData> => apiClient.request("/api/pages/home"),
+  getPrograms: (): Promise<ProgramsPageData> => apiClient.request("/api/pages/programs"),
+  getAbout: (): Promise<AboutPageData> => apiClient.request("/api/pages/about"),
+  getBlog: (): Promise<BlogPageData> => apiClient.request("/api/pages/blog"),
+  getContact: (): Promise<ContactPageData> => apiClient.request("/api/pages/contact"),
 
   getBlogArticle: (slug: string): Promise<BlogPostPageData> =>
-    apiClient.request(`/api/marketing/blog-articles/${slug}`),
+    apiClient.request(`/api/blog-articles/${slug}`),
 };

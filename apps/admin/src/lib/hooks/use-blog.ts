@@ -1,123 +1,66 @@
 "use client";
 
-import { AdminBlogPageData, AdminBlogPost } from "@repo/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { AdminBlogPageData, AdminBlogPost } from "@repo/api";
+import { adminKeys, createPageDataCrudHooks } from "@repo/query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../api";
-import { BlogPayload } from "../api/endpoints";
 
-export const useBlogPageData = () =>
-  useQuery({
-    queryKey: ["admin", "blog", "page-data"],
-    queryFn: api.blog.getPageData,
-  });
+const blog = createPageDataCrudHooks<AdminBlogPageData, AdminBlogPost, "posts", "stats">({
+  keys: {
+    page: adminKeys.blog.page,
+    byId: adminKeys.blog.byId,
+    invalidate: () => [adminKeys.dashboard()],
+  },
+
+  api: {
+    getPageData: api.blog.getPageData,
+    getById: api.blog.getById,
+    create: api.blog.create,
+    update: api.blog.update,
+    delete: api.blog.delete,
+    updateOrder: api.blog.updateOrder,
+  },
+
+  fields: {
+    items: "posts",
+    stats: "stats",
+  },
+});
+
+export const useBlogPageData = blog.usePageData;
+export const useBlogPosts = blog.useItems;
+export const useBlogStats = blog.useStats;
 
 export const useBlogMutations = () => {
   const queryClient = useQueryClient();
 
-  const invalidateBlog = () => {
-    queryClient.invalidateQueries({ queryKey: ["admin", "blog"] });
-    queryClient.invalidateQueries({ queryKey: ["admin", "blog", "page-data"] });
-    queryClient.invalidateQueries({ queryKey: ["admin", "blog", "stats"] });
-    queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-  };
-
-  const createPost = useMutation({
-    mutationFn: api.blog.create,
-    onSuccess: invalidateBlog,
-  });
-
-  const updatePost = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: BlogPayload }) => api.blog.update(id, data),
-    onSuccess: invalidateBlog,
-  });
-
-  const deletePost = useMutation({
-    mutationFn: api.blog.delete,
-    onSuccess: invalidateBlog,
-  });
+  const { createItem, updateItem, deleteItem, updateOrder } = blog.useMutations();
 
   const togglePublished = useMutation({
-    mutationFn: async (postId: string) => {
-      const post = await api.blog.getById(postId);
+    mutationFn: (id: string) => api.blog.togglePublished(id),
 
-      return api.blog.update(postId, { isPublished: !post.isPublished });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
+      await queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
     },
-    onSuccess: invalidateBlog,
   });
 
   const toggleFeatured = useMutation({
-    mutationFn: async (postId: string) => {
-      const post = await api.blog.getById(postId);
+    mutationFn: (id: string) => api.blog.toggleFeatured(id),
 
-      return api.blog.update(postId, { isFeatured: !post.isFeatured });
-    },
-    onSuccess: invalidateBlog,
-  });
-
-  const updatePostsOrder = useMutation({
-    mutationFn: async (reorderedPosts: AdminBlogPost[]) => {
-      const updates = reorderedPosts.map((post, index) => ({
-        id: post.id,
-        sortOrder: index + 1,
-      }));
-
-      return api.blog.updateOrder(updates);
-    },
-
-    onMutate: async (reorderedPosts: AdminBlogPost[]) => {
-      await queryClient.cancelQueries({ queryKey: ["admin", "blog"] });
-
-      const previousPageData = queryClient.getQueryData<AdminBlogPageData>([
-        "admin",
-        "blog",
-        "page-data",
-      ]);
-
-      const previousPosts = queryClient.getQueryData<AdminBlogPost[]>(["admin", "blog"]);
-
-      const updatedPosts = reorderedPosts.map((post, index) => ({
-        ...post,
-        sortOrder: index + 1,
-      }));
-
-      queryClient.setQueryData<AdminBlogPageData>(["admin", "blog", "page-data"], (oldData) => {
-        if (!oldData) return oldData;
-
-        return {
-          ...oldData,
-          posts: updatedPosts,
-        };
-      });
-
-      queryClient.setQueryData<AdminBlogPost[]>(["admin", "blog"], updatedPosts);
-
-      return { previousPageData, previousPosts };
-    },
-
-    onError: (error, _, context) => {
-      if (context?.previousPageData) {
-        queryClient.setQueryData(["admin", "blog", "page-data"], context.previousPageData);
-      }
-
-      if (context?.previousPosts) {
-        queryClient.setQueryData(["admin", "blog"], context.previousPosts);
-      }
-
-      console.error("Failed to update blog order:", error);
-    },
-
-    onSettled: () => {
-      invalidateBlog();
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
+      await queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
     },
   });
 
   return {
-    createPost,
-    updatePost,
-    deletePost,
+    createPost: createItem,
+    updatePost: updateItem,
+    deletePost: deleteItem,
+    updatePostsOrder: updateOrder,
     togglePublished,
     toggleFeatured,
-    updatePostsOrder,
   };
 };

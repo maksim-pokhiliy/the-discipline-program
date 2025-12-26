@@ -1,4 +1,4 @@
-import { adminUploadApi } from "@repo/api";
+import { adminUploadApi } from "@repo/api/server";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request): Promise<NextResponse> {

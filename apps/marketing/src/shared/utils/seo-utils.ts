@@ -131,7 +131,9 @@ export const generateStructuredData = (
       };
 
     case "programs":
-      if (!data?.programs) return baseData;
+      if (!data?.programs) {
+        return baseData;
+      }
 
       return {
         ...baseData,
@@ -168,7 +170,9 @@ export const generateStructuredData = (
       };
 
     case "reviews":
-      if (!data?.reviews) return baseData;
+      if (!data?.reviews) {
+        return baseData;
+      }
 
       return {
         ...baseData,
@@ -202,7 +206,9 @@ export const generateStructuredData = (
       };
 
     case "faq":
-      if (!data?.faqItems) return baseData;
+      if (!data?.faqItems) {
+        return baseData;
+      }
 
       return {
         ...baseData,

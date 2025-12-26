@@ -36,8 +36,8 @@ export const ReviewsTable = ({ reviews, onEditReview, onDuplicateReview }: Revie
   const [sortField, setSortField] = useState<SortField>("sortOrder");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [reviewToDelete, setReviewToDelete] = useState<Review | null>(null);
-  const [togglingReviewId, setTogglingReviewId] = useState<string | null>(null);
-  const [togglingFeaturedId, setTogglingFeaturedId] = useState<string | null>(null);
+  const [togglingReviewIds, setTogglingReviewIds] = useState<string[]>([]);
+  const [togglingFeaturedIds, setTogglingFeaturedIds] = useState<string[]>([]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -90,7 +90,9 @@ export const ReviewsTable = ({ reviews, onEditReview, onDuplicateReview }: Revie
   };
 
   const handleDeleteConfirm = async () => {
-    if (!reviewToDelete) return;
+    if (!reviewToDelete) {
+      return;
+    }
 
     try {
       await deleteReview.mutateAsync(reviewToDelete.id);
@@ -102,26 +104,26 @@ export const ReviewsTable = ({ reviews, onEditReview, onDuplicateReview }: Revie
   };
 
   const handleToggleActive = async (reviewId: string) => {
-    setTogglingReviewId(reviewId);
+    setTogglingReviewIds((prevIds) => [...prevIds, reviewId]);
 
     try {
       await toggleActive.mutateAsync(reviewId);
     } catch (error) {
       console.error("Toggle active failed:", error);
     } finally {
-      setTogglingReviewId(null);
+      setTogglingReviewIds((prevIds) => prevIds.filter((id) => id !== reviewId));
     }
   };
 
   const handleToggleFeatured = async (reviewId: string) => {
-    setTogglingFeaturedId(reviewId);
+    setTogglingFeaturedIds((prevIds) => [...prevIds, reviewId]);
 
     try {
       await toggleFeatured.mutateAsync(reviewId);
     } catch (error) {
       console.error("Toggle featured failed:", error);
     } finally {
-      setTogglingFeaturedId(null);
+      setTogglingFeaturedIds((prevIds) => prevIds.filter((id) => id !== reviewId));
     }
   };
 
@@ -178,13 +180,14 @@ export const ReviewsTable = ({ reviews, onEditReview, onDuplicateReview }: Revie
               <ReviewRow
                 key={review.id}
                 review={review}
+                program={review.program}
                 onEdit={() => onEditReview(review)}
                 onDelete={() => handleDeleteClick(review)}
                 onDuplicate={() => onDuplicateReview(review)}
                 onToggleActive={() => handleToggleActive(review.id)}
                 onToggleFeatured={() => handleToggleFeatured(review.id)}
-                isTogglingActive={togglingReviewId === review.id}
-                isTogglingFeatured={togglingFeaturedId === review.id}
+                isTogglingActive={togglingReviewIds.includes(review.id)}
+                isTogglingFeatured={togglingFeaturedIds.includes(review.id)}
               />
             ))}
           </TableBody>

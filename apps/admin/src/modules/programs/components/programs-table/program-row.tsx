@@ -33,7 +33,9 @@ export const ProgramRow = ({
   isToggling = false,
 }: ProgramRowProps) => {
   const formatFeatures = (features: string[]) => {
-    if (features.length === 0) return "No features";
+    if (features.length === 0) {
+      return "No features";
+    }
 
     if (features.length <= 3) {
       return features.join(", ");
@@ -46,7 +48,9 @@ export const ProgramRow = ({
   };
 
   const truncateDescription = (text: string, maxLength = 80) => {
-    if (text.length <= maxLength) return text;
+    if (text.length <= maxLength) {
+      return text;
+    }
 
     return `${text.substring(0, maxLength)}...`;
   };

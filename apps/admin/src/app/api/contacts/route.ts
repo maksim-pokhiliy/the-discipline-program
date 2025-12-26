@@ -1,4 +1,4 @@
-import { contactApi } from "@repo/api";
+import { contactApi } from "@repo/api/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
