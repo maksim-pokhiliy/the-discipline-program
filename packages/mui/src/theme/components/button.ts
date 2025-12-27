@@ -1,11 +1,4 @@
 import { alpha, Components, Theme } from "@mui/material/styles";
-import "@mui/material/Button";
-
-declare module "@mui/material/Button" {
-  interface ButtonPropsVariantOverrides {
-    nav: true;
-  }
-}
 
 export const MuiButton: Components<Theme>["MuiButton"] = {
   defaultProps: {
@@ -27,7 +20,7 @@ export const MuiButton: Components<Theme>["MuiButton"] = {
 
   variants: [
     {
-      props: { variant: "nav", color: "primary" },
+      props: { variant: "text", color: "primary" },
       style: ({ theme }) => ({
         ...theme.typography.body2,
         fontWeight: theme.typography.fontWeightMedium,
@@ -44,7 +37,7 @@ export const MuiButton: Components<Theme>["MuiButton"] = {
       }),
     },
     {
-      props: { variant: "nav", color: "secondary" },
+      props: { variant: "text", color: "secondary" },
       style: ({ theme }) => ({
         ...theme.typography.body2,
         fontWeight: theme.typography.fontWeightRegular,

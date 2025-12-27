@@ -1,11 +1,11 @@
 import { Box } from "@mui/material";
 import { NextProvider } from "@repo/mui";
+import { DOMANCHORS, SEO_CONFIG } from "@repo/shared";
 import { Metadata } from "next";
 
 import { QueryProvider } from "@app/lib/providers";
 import { Footer, Header } from "@app/shared/components/layout";
 import { StructuredData } from "@app/shared/components/seo";
-import { DOM_ANCHORS, SEO_CONFIG } from "@app/shared/constants";
 
 export const metadata: Metadata = {
   title: SEO_CONFIG.defaultTitle,
@@ -41,18 +41,16 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <StructuredData type="organization" />
       </head>
 
-      <body id={DOM_ANCHORS.BODY}>
+      <body id={DOMANCHORS.BODY}>
         <NextProvider>
           <QueryProvider>
-            <>
-              <Header />
+            <Header />
 
-              <Box component="main" sx={{ minHeight: "100vh" }}>
-                {children}
-              </Box>
+            <Box component="main" sx={{ minHeight: "100vh" }}>
+              {children}
+            </Box>
 
-              <Footer />
-            </>
+            <Footer />
           </QueryProvider>
         </NextProvider>
       </body>

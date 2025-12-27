@@ -1,14 +1,12 @@
 "use client";
 
 import { Stack } from "@mui/material";
-
-import { NAV_LINKS } from "@app/shared/constants";
-
-import { NavLinkButton } from "../../ui";
+import { MARKETING_NAVIGATION } from "@repo/shared";
+import { NavLinkButton } from "@repo/ui";
 
 export const Navigation = () => (
   <Stack direction={{ xs: "column", sm: "row" }} spacing={{ sm: 2 }}>
-    {NAV_LINKS.map(({ text, href }) => (
+    {MARKETING_NAVIGATION.headerLinks.map(({ text, href }) => (
       <NavLinkButton key={text} href={href}>
         {text}
       </NavLinkButton>

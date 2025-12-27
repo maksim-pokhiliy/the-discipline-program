@@ -1,8 +1,7 @@
 "use client";
 
 import { AppBar, Stack, Toolbar, useMediaQuery } from "@mui/material";
-
-import { Logo } from "../../ui";
+import { Logo } from "@repo/ui";
 
 import { Drawer } from "./drawer";
 import { HideOnScroll } from "./hide-on-scroll";

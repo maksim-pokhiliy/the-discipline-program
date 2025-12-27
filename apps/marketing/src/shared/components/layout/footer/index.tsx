@@ -1,12 +1,10 @@
 "use client";
 
 import { Divider, Stack, Toolbar, Typography } from "@mui/material";
+import { MARKETING_NAVIGATION } from "@repo/shared";
+import { Logo } from "@repo/ui";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-import { NAV_LINKS } from "@app/shared/constants";
-
-import { Logo } from "../../ui";
 
 export const Footer = () => {
   const pathname = usePathname();
@@ -37,7 +35,7 @@ export const Footer = () => {
             </Stack>
 
             <Stack direction={{ md: "row" }} sx={{ alignItems: "center" }} rowGap={2} columnGap={2}>
-              {NAV_LINKS.map(({ text, href }) => (
+              {MARKETING_NAVIGATION.footerLinks.map(({ text, href }) => (
                 <Typography
                   key={text}
                   component={Link}

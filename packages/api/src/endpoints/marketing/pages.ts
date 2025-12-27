@@ -35,6 +35,7 @@ export const pagesApi = {
 
     const getSectionData = <T>(sectionName: string): T => {
       const section = sections.find((s) => s.section === sectionName);
+
       return section?.data as T;
     };
 
@@ -58,6 +59,7 @@ export const pagesApi = {
 
     const getSectionData = <T>(sectionName: string): T => {
       const section = sections.find((s) => s.section === sectionName);
+
       return section?.data as T;
     };
 
@@ -74,6 +76,7 @@ export const pagesApi = {
 
     const getSectionData = <T>(sectionName: string): T => {
       const section = sections.find((s) => s.section === sectionName);
+
       return section?.data as T;
     };
 
@@ -101,6 +104,7 @@ export const pagesApi = {
 
     const getSectionData = <T>(sectionName: string): T => {
       const section = sections.find((s) => s.section === sectionName);
+
       return section?.data as T;
     };
 
@@ -122,6 +126,7 @@ export const pagesApi = {
 
     const getSectionData = <T>(sectionName: string): T => {
       const section = sections.find((s) => s.section === sectionName);
+
       return section?.data as T;
     };
 
