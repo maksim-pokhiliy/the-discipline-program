@@ -1,17 +1,14 @@
+import { generateSEOData, PageSeoKey } from "@repo/shared";
 import Head from "next/head";
 
-import { generateSEOData, SEOData } from "@app/shared/utils";
-
-type SEOHeadProps = SEOData;
-
-export const SEOHead = (props: SEOHeadProps) => {
+export const SEOHead = (props: PageSeoKey) => {
   const seoData = generateSEOData(props);
 
   return (
     <Head>
       <title>{seoData.title}</title>
       <meta name="description" content={seoData.description} />
-      <meta name="keywords" content={seoData.keywords} />
+      <meta name="keywords" content={seoData.keywords.join(",")} />
 
       {seoData.canonical && <link rel="canonical" href={seoData.canonical} />}
 
@@ -27,15 +24,19 @@ export const SEOHead = (props: SEOHeadProps) => {
       {seoData.article && (
         <>
           <meta property="article:published_time" content={seoData.article.publishedTime} />
+
           {seoData.article.modifiedTime && (
             <meta property="article:modified_time" content={seoData.article.modifiedTime} />
           )}
+
           {seoData.article.author && (
             <meta property="article:author" content={seoData.article.author} />
           )}
+
           {seoData.article.section && (
             <meta property="article:section" content={seoData.article.section} />
           )}
+
           {seoData.article.tags?.map((tag, index) => (
             <meta key={index} property="article:tag" content={tag} />
           ))}
@@ -47,7 +48,6 @@ export const SEOHead = (props: SEOHeadProps) => {
       <meta name="twitter:title" content={seoData.title} />
       <meta name="twitter:description" content={seoData.description} />
       <meta name="twitter:image" content={seoData.ogImage} />
-
       <meta name="viewport" content="width=device-width, initial-scale=1" />
       <meta name="theme-color" content="#FF4B4B" />
       <link rel="icon" href="/favicon.ico" />
