@@ -1,4 +1,3 @@
-/* eslint-disable no-var */
 import { PaymentOrder } from "@repo/api";
 
 class PaymentStorage {

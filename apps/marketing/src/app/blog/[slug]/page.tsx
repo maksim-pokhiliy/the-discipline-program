@@ -1,7 +1,6 @@
 import { pagesApi } from "@repo/api/server";
+import { SEO_CONFIG } from "@repo/shared";
 import { Metadata } from "next";
-
-import { SEO_CONFIG } from "@app/shared/constants";
 
 interface BlogArticlePageProps {
   params: Promise<{ slug: string }>;

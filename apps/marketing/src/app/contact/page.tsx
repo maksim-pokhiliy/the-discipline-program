@@ -1,6 +1,5 @@
+import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
 import { Metadata } from "next";
-
-import { PAGE_SEO, SEO_CONFIG } from "@app/shared/constants";
 
 export { ContactPage as default } from "@app/modules/contact";
 

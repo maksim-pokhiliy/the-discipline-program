@@ -1,11 +1,10 @@
 "use client";
 
 import { Alert, Card, CardContent, Stack, Typography } from "@mui/material";
+import { Logo } from "@repo/ui";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
-
-import { Logo } from "@app/shared/components/ui";
 
 import { LoginForm } from "./components";
 import { LoginFormData } from "./shared";

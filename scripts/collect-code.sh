@@ -1,69 +1,134 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
 OUTPUT_FILE="codebase.txt"
 
-EXCLUDE_DIRS=(".git" ".next" ".vercel" ".turbo" "node_modules" ".vscode" ".idea" "dist" "build" "coverage" "temp" "tmp")
+EXCLUDE_DIRS=(.git .next .vercel .turbo node_modules .vscode .idea dist build coverage temp tmp)
 EXCLUDE_FILES=("*.log" "*.tmp" "*.cache" "pnpm-lock.yaml" "package-lock.json" "yarn.lock" "tsconfig.tsbuildinfo" ".DS_Store" "Thumbs.db" "$OUTPUT_FILE")
-INCLUDE_EXTENSIONS=("*.ts" "*.tsx" "*.js" "*.jsx" "*.json" "*.md" "*.yml" "*.yaml" "*.env" "*.env.example" "*.sql" "*.prisma" "*.txt" "*.config.*")
+
+# Важно: лучше задавать расширения как regex, а не как bash glob в цикле
+INCLUDE_REGEX='\.((c|m)?js|tsx?|json|md|ya?ml|env(\.example)?|sql|prisma|txt)$'
+
+# Защита от гигантских файлов: можно поднять лимит если хочешь
+MAX_BYTES=$((512 * 1024)) # 512 KB
 
 echo "🚀 Сбор кодовой базы проекта..."
-> "$OUTPUT_FILE"
+: > "$OUTPUT_FILE"
 
-echo "=== КОДОВАЯ БАЗА ПРОЕКТА ===" >> "$OUTPUT_FILE"
-echo "Сгенерировано: $(date)" >> "$OUTPUT_FILE"
-echo "Директория: $(pwd)" >> "$OUTPUT_FILE"
-echo "" >> "$OUTPUT_FILE"
+write() { printf "%s\n" "$*" >> "$OUTPUT_FILE"; }
 
-should_exclude_dir() {
-    local dir_name="$1"
-    for exclude in "${EXCLUDE_DIRS[@]}"; do
-        [[ "$dir_name" == $exclude ]] && return 0
-    done
-    return 1
-}
+# --- Header ---
+write "=== CODEBASE DUMP ==="
+write "Generated: $(date -Iseconds)"
+write "Dir: $(pwd)"
+write "Git:"
+if command -v git >/dev/null 2>&1; then
+  write "  branch: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'n/a')"
+  write "  commit: $(git rev-parse --short HEAD 2>/dev/null || echo 'n/a')"
+  write "  status:"
+  git status --porcelain 2>/dev/null | sed 's/^/    /' >> "$OUTPUT_FILE" || true
+else
+  write "  (git not found)"
+fi
+write ""
 
-should_exclude_file() {
-    local file_name="$1"
-    for exclude in "${EXCLUDE_FILES[@]}"; do
-        [[ "$file_name" == $exclude ]] && return 0
-    done
-    return 1
-}
+# --- Project tree (structure is reality) ---
+write "=== PROJECT TREE (filtered) ==="
+if command -v tree >/dev/null 2>&1; then
+  # tree сам по себе полезнее любых фантазий
+  tree -a -I "$(IFS="|"; echo "${EXCLUDE_DIRS[*]}")" \
+    --dirsfirst >> "$OUTPUT_FILE" 2>/dev/null || write "[tree failed]"
+else
+  write "[tree not installed]"
+fi
+write ""
 
-should_include_file() {
-    local file_name="$1"
-    for ext in "${INCLUDE_EXTENSIONS[@]}"; do
-        [[ "$file_name" == $ext ]] && return 0
-    done
-    return 1
-}
+# --- Build a deterministic file list using find ---
+# Prune excluded dirs, filter by regex, exclude excluded files (glob patterns)
+write "=== FILE INDEX (filtered, deterministic) ==="
 
-process_file() {
-    local file_path="$1"
-    echo "=== ${file_path#./} ===" >> "$OUTPUT_FILE"
-    cat "$file_path" >> "$OUTPUT_FILE" 2>/dev/null || echo "[ОШИБКА ЧТЕНИЯ ФАЙЛА]" >> "$OUTPUT_FILE"
-    echo "" >> "$OUTPUT_FILE"
-}
+# Build prune expression
+PRUNE_EXPR=()
+for d in "${EXCLUDE_DIRS[@]}"; do
+  PRUNE_EXPR+=( -name "$d" -o )
+done
+# remove last -o
+unset 'PRUNE_EXPR[${#PRUNE_EXPR[@]}-1]'
 
-traverse_directory() {
-    local current_dir="$1"
+# Find files
+# Note: LC_ALL=C sort for deterministic ordering
+mapfile -t FILES < <(
+  find . \
+    \( -type d \( "${PRUNE_EXPR[@]}" \) -prune \) -o \
+    \( -type f -print \) \
+  | LC_ALL=C sort
+)
 
-    for item in "$current_dir"/*; do
-        [[ ! -e "$item" ]] && continue
+# Filter include + exclude patterns
+FILTERED=()
+for f in "${FILES[@]}"; do
+  base="$(basename "$f")"
 
-        local item_name=$(basename "$item")
+  # exclude file globs
+  excluded=0
+  for pat in "${EXCLUDE_FILES[@]}"; do
+    if [[ "$base" == $pat ]]; then
+      excluded=1; break
+    fi
+  done
+  [[ "$excluded" == 1 ]] && continue
 
-        if [[ -f "$item" ]]; then
-            should_exclude_file "$item_name" && continue
-            should_include_file "$item_name" && { echo "📄 $item"; process_file "$item"; }
-        elif [[ -d "$item" ]]; then
-            should_exclude_dir "$item_name" && { echo "⏭️  Пропускаем: $item"; continue; }
-            echo "📁 $item"
-            traverse_directory "$item"
-        fi
-    done
-}
+  # include by regex
+  if [[ "$f" =~ $INCLUDE_REGEX ]]; then
+    FILTERED+=( "$f" )
+  fi
+done
 
-traverse_directory "."
+# Write index with sizes
+for f in "${FILTERED[@]}"; do
+  # size in bytes
+  sz="$(wc -c < "$f" 2>/dev/null || echo 0)"
+  printf "%10s  %s\n" "$sz" "${f#./}" >> "$OUTPUT_FILE"
+done
+write ""
+
+# --- File contents ---
+write "=== FILE CONTENTS ==="
+write "Format:"
+write "----- BEGIN FILE: path (bytes=N) -----"
+write "...content..."
+write "----- END FILE: path -----"
+write ""
+
+for f in "${FILTERED[@]}"; do
+  rel="${f#./}"
+  bytes="$(wc -c < "$f" 2>/dev/null || echo 0)"
+
+  write "----- BEGIN FILE: $rel (bytes=$bytes) -----"
+
+  # Skip binaries (very basic heuristic)
+  if command -v file >/dev/null 2>&1; then
+    if file -b --mime "$f" | grep -q 'charset=binary'; then
+      write "[SKIPPED BINARY FILE]"
+      write "----- END FILE: $rel -----"
+      write ""
+      continue
+    fi
+  fi
+
+  if (( bytes > MAX_BYTES )); then
+    write "[TRUNCATED: file is larger than ${MAX_BYTES} bytes]"
+    # show head + tail to preserve useful context
+    write "--- HEAD (first 200 lines) ---"
+    sed -n '1,200p' "$f" >> "$OUTPUT_FILE" 2>/dev/null || write "[READ ERROR]"
+    write "--- TAIL (last 200 lines) ---"
+    tail -n 200 "$f" >> "$OUTPUT_FILE" 2>/dev/null || true
+  else
+    cat "$f" >> "$OUTPUT_FILE" 2>/dev/null || write "[READ ERROR]"
+  fi
+
+  write "----- END FILE: $rel -----"
+  write ""
+done
 
 echo "✅ Готово! Размер: $(du -h "$OUTPUT_FILE" | cut -f1), строк: $(wc -l < "$OUTPUT_FILE")"

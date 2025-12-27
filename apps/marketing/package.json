@@ -19,9 +19,11 @@
     "@mui/material-nextjs": "^7.1.0",
     "@repo/api": "workspace:*",
     "@repo/mui": "workspace:*",
+    "@repo/ui": "workspace:*",
     "@repo/query": "workspace:*",
+    "@repo/shared": "workspace:*",
     "@tanstack/react-query": "^5.80.2",
-    "next": "15.5.9",
+    "next": "^15.5.9",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
@@ -34,7 +36,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
-    "eslint": "^9",
-    "typescript": "^5"
+    "eslint": "^9.30.1",
+    "typescript": "^5.8.2"
   }
 }
