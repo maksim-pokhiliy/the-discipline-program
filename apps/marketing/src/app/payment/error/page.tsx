@@ -1,5 +1,5 @@
 import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
-import { PaymentPageWrapper } from "@repo/ui";
+import { SuspenseWrapper } from "@repo/ui";
 import { Metadata } from "next";
 
 import { PaymentErrorPage } from "@app/modules/payment-error";
@@ -17,8 +17,8 @@ export const metadata: Metadata = {
 
 export default function PaymentError() {
   return (
-    <PaymentPageWrapper>
+    <SuspenseWrapper>
       <PaymentErrorPage />
-    </PaymentPageWrapper>
+    </SuspenseWrapper>
   );
 }

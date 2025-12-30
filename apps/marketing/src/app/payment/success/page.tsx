@@ -1,5 +1,5 @@
 import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
-import { PaymentPageWrapper } from "@repo/ui";
+import { SuspenseWrapper } from "@repo/ui";
 import { Metadata } from "next";
 
 import { PaymentSuccessPage } from "@app/modules/payment-success";
@@ -17,8 +17,8 @@ export const metadata: Metadata = {
 
 export default function PaymentSuccess() {
   return (
-    <PaymentPageWrapper>
+    <SuspenseWrapper>
       <PaymentSuccessPage />
-    </PaymentPageWrapper>
+    </SuspenseWrapper>
   );
 }
