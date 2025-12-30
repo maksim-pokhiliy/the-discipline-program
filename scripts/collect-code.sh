@@ -21,15 +21,6 @@ write() { printf "%s\n" "$*" >> "$OUTPUT_FILE"; }
 write "=== CODEBASE DUMP ==="
 write "Generated: $(date -Iseconds)"
 write "Dir: $(pwd)"
-write "Git:"
-if command -v git >/dev/null 2>&1; then
-  write "  branch: $(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'n/a')"
-  write "  commit: $(git rev-parse --short HEAD 2>/dev/null || echo 'n/a')"
-  write "  status:"
-  git status --porcelain 2>/dev/null | sed 's/^/    /' >> "$OUTPUT_FILE" || true
-else
-  write "  (git not found)"
-fi
 write ""
 
 # --- Project tree (structure is reality) ---

@@ -5,8 +5,9 @@ import RateReviewIcon from "@mui/icons-material/RateReview";
 import StarIcon from "@mui/icons-material/Star";
 import { Grid } from "@mui/material";
 import { ReviewStats } from "@repo/api";
+import { ContentSection } from "@repo/ui";
 
-import { ContentSection, StatsCard } from "@app/shared/components/ui";
+import { StatsCard } from "@app/shared/components/ui";
 
 interface ReviewsStatsSectionProps {
   stats: ReviewStats;

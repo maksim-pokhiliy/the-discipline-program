@@ -1,12 +1,12 @@
 "use client";
 
 import { Stack } from "@mui/material";
+import { QueryWrapper } from "@repo/query";
 import Head from "next/head";
 import { useSearchParams } from "next/navigation";
 
 import { usePaymentOrder } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";
-import { QueryWrapper } from "@app/shared/components/ui";
 
 import {
   PaymentSuccessActionsSection,

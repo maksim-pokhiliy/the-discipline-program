@@ -1,13 +1,13 @@
 "use client";
 
 import { Stack } from "@mui/material";
+import { QueryWrapper } from "@repo/query";
 import { SEO_CONFIG } from "@repo/shared";
 import Head from "next/head";
 import { useParams } from "next/navigation";
 
 import { useBlogArticle } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";
-import { QueryWrapper } from "@app/shared/components/ui";
 
 import { BlogArticleContent, BlogArticleHero, BlogArticleRelated } from "./sections";
 

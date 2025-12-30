@@ -1,66 +1,96 @@
 "use client";
 
 import type { AdminBlogPageData, AdminBlogPost } from "@repo/api";
-import { adminKeys, createPageDataCrudHooks } from "@repo/query";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { adminKeys } from "@repo/query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../api";
 
-const blog = createPageDataCrudHooks<AdminBlogPageData, AdminBlogPost, "posts", "stats">({
-  keys: {
-    page: adminKeys.blog.page,
-    byId: adminKeys.blog.byId,
-    invalidate: () => [adminKeys.dashboard()],
-  },
+interface UseBlogPageDataOptions {
+  initialData?: AdminBlogPageData;
+}
 
-  api: {
-    getPageData: api.blog.getPageData,
-    getById: api.blog.getById,
-    create: api.blog.create,
-    update: api.blog.update,
-    delete: api.blog.delete,
-    updateOrder: api.blog.updateOrder,
-  },
+export const useBlogPageData = ({ initialData }: UseBlogPageDataOptions = {}) => {
+  return useQuery({
+    queryKey: adminKeys.blog.page(),
+    queryFn: api.blog.getPageData,
+    initialData,
+    staleTime: 30_000,
+  });
+};
 
-  fields: {
-    items: "posts",
-    stats: "stats",
-  },
-});
-
-export const useBlogPageData = blog.usePageData;
-export const useBlogPosts = blog.useItems;
-export const useBlogStats = blog.useStats;
+export const useBlogPost = (id: string) => {
+  return useQuery({
+    queryKey: adminKeys.blog.byId(id),
+    queryFn: () => api.blog.getById(id),
+    enabled: !!id,
+  });
+};
 
 export const useBlogMutations = () => {
   const queryClient = useQueryClient();
 
-  const { createItem, updateItem, deleteItem, updateOrder } = blog.useMutations();
+  const createPost = useMutation({
+    mutationFn: api.blog.create,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    },
+  });
+
+  const updatePost = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<AdminBlogPost> }) =>
+      api.blog.update(id, data),
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.blog.byId(variables.id) });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    },
+  });
+
+  const deletePost = useMutation({
+    mutationFn: api.blog.delete,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    },
+  });
 
   const togglePublished = useMutation({
-    mutationFn: (id: string) => api.blog.togglePublished(id),
+    mutationFn: api.blog.togglePublished,
 
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
-      await queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
     },
   });
 
   const toggleFeatured = useMutation({
-    mutationFn: (id: string) => api.blog.toggleFeatured(id),
+    mutationFn: api.blog.toggleFeatured,
 
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
-      await queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    },
+  });
+
+  const updatePostsOrder = useMutation({
+    mutationFn: api.blog.updateOrder,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
     },
   });
 
   return {
-    createPost: createItem,
-    updatePost: updateItem,
-    deletePost: deleteItem,
-    updatePostsOrder: updateOrder,
+    createPost,
+    updatePost,
+    deletePost,
     togglePublished,
     toggleFeatured,
+    updatePostsOrder,
   };
 };

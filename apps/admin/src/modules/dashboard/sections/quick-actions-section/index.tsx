@@ -1,9 +1,8 @@
 "use client";
 
 import { Card, CardContent, Grid, Stack, Typography } from "@mui/material";
+import { ContentSection } from "@repo/ui";
 import Link from "next/link";
-
-import { ContentSection } from "@app/shared/components/ui";
 
 import { quickActions } from "./data";
 

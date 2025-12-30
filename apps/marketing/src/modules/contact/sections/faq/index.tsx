@@ -1,8 +1,7 @@
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from "@mui/material";
 import { ContactPageData } from "@repo/api";
-
-import { ContentSection } from "@app/shared/components/ui";
+import { ContentSection } from "@repo/ui";
 
 interface ContactFAQProps {
   faq: ContactPageData["faq"];

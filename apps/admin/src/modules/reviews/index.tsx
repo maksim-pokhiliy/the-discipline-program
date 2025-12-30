@@ -1,14 +1,19 @@
 "use client";
 
 import { Stack } from "@mui/material";
+import { AdminReviewsPageData } from "@repo/api";
+import { QueryWrapper } from "@repo/query";
 
 import { useReviewsPageData } from "@app/lib/hooks";
-import { QueryWrapper } from "@app/shared/components/providers";
 
-import { ReviewsStatsSection, ReviewsTableSection } from "./sections";
+import { ReviewsStatsSection } from "./sections";
 
-export const ReviewsPage = () => {
-  const { data, isLoading, error } = useReviewsPageData();
+interface ReviewsPageClientProps {
+  initialData: AdminReviewsPageData;
+}
+
+export const ReviewsPageClient = ({ initialData }: ReviewsPageClientProps) => {
+  const { data, isLoading, error } = useReviewsPageData({ initialData });
 
   return (
     <QueryWrapper
@@ -20,7 +25,6 @@ export const ReviewsPage = () => {
       {(data) => (
         <Stack spacing={0}>
           <ReviewsStatsSection stats={data.stats} />
-          <ReviewsTableSection reviews={data.reviews} />
         </Stack>
       )}
     </QueryWrapper>
