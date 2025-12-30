@@ -1,6 +1,7 @@
 "use client";
 
 import { Stack } from "@mui/material";
+import { ContactPageData } from "@repo/api";
 import { QueryWrapper } from "@repo/query";
 import Head from "next/head";
 
@@ -9,8 +10,12 @@ import { StructuredData } from "@app/shared/components/seo";
 
 import { ContactDirectInfo, ContactFAQ, ContactForm, ContactHero } from "./sections";
 
-export const ContactPage = () => {
-  const { data, isLoading, error } = useContactPage();
+interface ContactPageClientProps {
+  initialData: ContactPageData;
+}
+
+export const ContactPageClient = ({ initialData }: ContactPageClientProps) => {
+  const { data, isLoading, error } = useContactPage({ initialData });
 
   return (
     <QueryWrapper

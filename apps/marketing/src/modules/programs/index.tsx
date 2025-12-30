@@ -1,6 +1,7 @@
 "use client";
 
 import { Stack } from "@mui/material";
+import { ProgramsPageData } from "@repo/api";
 import { QueryWrapper } from "@repo/query";
 import Head from "next/head";
 
@@ -9,8 +10,12 @@ import { StructuredData } from "@app/shared/components/seo";
 
 import { ProgramsCTA, ProgramsGridSection, ProgramsHeroSection } from "./sections";
 
-export const ProgramsPage = () => {
-  const { data, isLoading, error } = useProgramsPage();
+interface ProgramsPageClientProps {
+  initialData: ProgramsPageData;
+}
+
+export const ProgramsPageClient = ({ initialData }: ProgramsPageClientProps) => {
+  const { data, isLoading, error } = useProgramsPage({ initialData });
 
   return (
     <QueryWrapper

@@ -5,11 +5,38 @@ export async function GET(_: Request, { params }: { params: Promise<{ pageSlug: 
   try {
     const { pageSlug } = await params;
 
-    if (!pageSlug) {
-      return Response.json({ error: "Page slug is required" }, { status: 400 });
-    }
+    let pageData;
 
-    const pageData = await pagesApi.getPage(pageSlug);
+    switch (pageSlug) {
+      case "home": {
+        pageData = await pagesApi.getHomePage();
+        break;
+      }
+
+      case "programs": {
+        pageData = await pagesApi.getProgramsPage();
+        break;
+      }
+
+      case "about": {
+        pageData = await pagesApi.getAboutPage();
+        break;
+      }
+
+      case "blog": {
+        pageData = await pagesApi.getBlogPage();
+        break;
+      }
+
+      case "contact": {
+        pageData = await pagesApi.getContactPage();
+        break;
+      }
+
+      default: {
+        return NextResponse.json({ error: "Page not found" }, { status: 404 });
+      }
+    }
 
     return NextResponse.json(pageData);
   } catch (error) {

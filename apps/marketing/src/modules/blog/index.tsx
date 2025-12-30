@@ -1,14 +1,19 @@
 "use client";
 
 import { Stack } from "@mui/material";
+import { BlogPageData } from "@repo/api";
 import { QueryWrapper } from "@repo/query";
 
 import { useBlogPage } from "@app/lib/hooks";
 
 import { BlogFeaturedSection, BlogHeroSection, BlogPostsGrid } from "./sections";
 
-export const BlogPage = () => {
-  const { data, isLoading, error } = useBlogPage();
+interface BlogPageClientProps {
+  initialData: BlogPageData;
+}
+
+export const BlogPageClient = ({ initialData }: BlogPageClientProps) => {
+  const { data, isLoading, error } = useBlogPage({ initialData });
 
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage="Loading blog...">

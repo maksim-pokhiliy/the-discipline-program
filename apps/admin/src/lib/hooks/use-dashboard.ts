@@ -15,6 +15,5 @@ export const useDashboardData = ({ initialData }: UseDashboardDataOptions = {}) 
     queryKey: adminKeys.dashboard(),
     queryFn: api.dashboard.getData,
     initialData,
-    staleTime: 30_000,
   });
 };

@@ -1,7 +1,8 @@
+import { pagesApi } from "@repo/api/server";
 import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
 import { Metadata } from "next";
 
-export { BlogPage as default } from "@app/modules/blog";
+import { BlogPageClient } from "@app/modules/blog";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.blog.title,
@@ -13,3 +14,9 @@ export const metadata: Metadata = {
     url: `${SEO_CONFIG.siteUrl}/blog`,
   },
 };
+
+export default async function BlogPage() {
+  const initialData = await pagesApi.getBlogPage();
+
+  return <BlogPageClient initialData={initialData} />;
+}
