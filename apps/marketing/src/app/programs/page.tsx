@@ -1,7 +1,8 @@
+import { pagesApi } from "@repo/api/server";
 import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
 import { Metadata } from "next";
 
-export { ProgramsPage as default } from "@app/modules/programs";
+import { ProgramsPageClient } from "@app/modules/programs";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.programs.title,
@@ -13,3 +14,9 @@ export const metadata: Metadata = {
     url: `${SEO_CONFIG.siteUrl}/programs`,
   },
 };
+
+export default async function ProgramsPage() {
+  const initialData = await pagesApi.getProgramsPage();
+
+  return <ProgramsPageClient initialData={initialData} />;
+}

@@ -15,7 +15,6 @@ export const useReviewsPageData = ({ initialData }: UseReviewsPageDataOptions = 
     queryKey: adminKeys.reviews.page(),
     queryFn: api.reviews.getPageData,
     initialData,
-    staleTime: 30_000,
   });
 };
 

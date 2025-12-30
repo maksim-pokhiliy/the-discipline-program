@@ -15,7 +15,6 @@ export const useBlogPageData = ({ initialData }: UseBlogPageDataOptions = {}) =>
     queryKey: adminKeys.blog.page(),
     queryFn: api.blog.getPageData,
     initialData,
-    staleTime: 30_000,
   });
 };
 

@@ -16,7 +16,7 @@
     "prettier": "^3.5.3",
     "prettier-plugin-sort-json": "^4.1.1",
     "prisma": "^6.16.2",
-    "turbo": "^2.6.3",
+    "turbo": "^2.7.2",
     "typescript": "^5.8.2"
   },
   "packageManager": "pnpm@10.26.2",

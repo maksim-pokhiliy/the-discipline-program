@@ -1,19 +1,23 @@
 "use client";
 
 import { Stack } from "@mui/material";
+import { BlogPostPageData } from "@repo/api";
 import { QueryWrapper } from "@repo/query";
 import { SEO_CONFIG } from "@repo/shared";
 import Head from "next/head";
-import { useParams } from "next/navigation";
 
 import { useBlogArticle } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";
 
 import { BlogArticleContent, BlogArticleHero, BlogArticleRelated } from "./sections";
 
-export const BlogArticlePage = () => {
-  const { slug } = useParams() as { slug: string };
-  const { data, isLoading, error } = useBlogArticle(slug);
+interface BlogArticlePageClientProps {
+  slug: string;
+  initialData: BlogPostPageData;
+}
+
+export const BlogArticlePageClient = ({ slug, initialData }: BlogArticlePageClientProps) => {
+  const { data, isLoading, error } = useBlogArticle(slug, { initialData });
 
   return (
     <QueryWrapper

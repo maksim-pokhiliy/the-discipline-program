@@ -164,23 +164,4 @@ export const pagesApi = {
       relatedPosts: relatedPosts.map(transformPost),
     };
   },
-
-  getPage: async (
-    pageSlug: string,
-  ): Promise<HomePageData | ProgramsPageData | AboutPageData | BlogPageData | ContactPageData> => {
-    switch (pageSlug) {
-      case "home":
-        return pagesApi.getHomePage();
-      case "programs":
-        return pagesApi.getProgramsPage();
-      case "about":
-        return pagesApi.getAboutPage();
-      case "blog":
-        return pagesApi.getBlogPage();
-      case "contact":
-        return pagesApi.getContactPage();
-      default:
-        throw new Error(`Page not found: ${pageSlug}`);
-    }
-  },
 };
