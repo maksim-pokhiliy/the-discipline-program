@@ -1,6 +1,7 @@
 "use client";
 
 import { Stack } from "@mui/material";
+import { HomePageData } from "@repo/api";
 import { QueryWrapper } from "@repo/query";
 import Head from "next/head";
 
@@ -15,8 +16,12 @@ import {
   HomeReviewsSection,
 } from "./sections";
 
-export const HomePage = () => {
-  const { data, isLoading, error } = useHomePage();
+interface HomePageClientProps {
+  initialData: HomePageData;
+}
+
+export const HomePageClient = ({ initialData }: HomePageClientProps) => {
+  const { data, isLoading, error } = useHomePage({ initialData });
 
   return (
     <QueryWrapper

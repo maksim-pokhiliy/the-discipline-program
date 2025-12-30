@@ -1,7 +1,8 @@
+import { pagesApi } from "@repo/api/server";
 import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
 import { Metadata } from "next";
 
-export { AboutPage as default } from "@app/modules/about";
+import { AboutPageClient } from "@app/modules/about";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.about.title,
@@ -13,3 +14,9 @@ export const metadata: Metadata = {
     url: `${SEO_CONFIG.siteUrl}/about`,
   },
 };
+
+export default async function AboutPage() {
+  const initialData = await pagesApi.getAboutPage();
+
+  return <AboutPageClient initialData={initialData} />;
+}

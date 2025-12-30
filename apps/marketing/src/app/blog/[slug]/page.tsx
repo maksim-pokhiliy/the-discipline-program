@@ -2,11 +2,11 @@ import { pagesApi } from "@repo/api/server";
 import { SEO_CONFIG } from "@repo/shared";
 import { Metadata } from "next";
 
+import { BlogArticlePageClient } from "@app/modules/blog-article";
+
 interface BlogArticlePageProps {
   params: Promise<{ slug: string }>;
 }
-
-export { BlogArticlePage as default } from "@app/modules/blog-article";
 
 export async function generateMetadata({ params }: BlogArticlePageProps): Promise<Metadata> {
   const { slug } = await params;
@@ -42,4 +42,11 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
       description: "The requested article could not be found.",
     };
   }
+}
+
+export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
+  const { slug } = await params;
+  const initialData = await pagesApi.getBlogArticle(slug);
+
+  return <BlogArticlePageClient slug={slug} initialData={initialData} />;
 }

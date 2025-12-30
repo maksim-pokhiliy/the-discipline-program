@@ -1,6 +1,7 @@
 "use client";
 
 import { Stack } from "@mui/material";
+import { AboutPageData } from "@repo/api";
 import { QueryWrapper } from "@repo/query";
 
 import { useAboutPage } from "@app/lib/hooks";
@@ -13,8 +14,12 @@ import {
   AboutPersonalSection,
 } from "./sections";
 
-export const AboutPage = () => {
-  const { data, isLoading, error } = useAboutPage();
+interface AboutPageClientProps {
+  initialData: AboutPageData;
+}
+
+export const AboutPageClient = ({ initialData }: AboutPageClientProps) => {
+  const { data, isLoading, error } = useAboutPage({ initialData });
 
   return (
     <QueryWrapper
