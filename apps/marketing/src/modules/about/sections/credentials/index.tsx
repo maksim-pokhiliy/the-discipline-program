@@ -1,7 +1,6 @@
 import { Box, Card, CardContent, Grid, Stack, Typography } from "@mui/material";
 import { AboutPageData } from "@repo/api";
-
-import { ContentSection } from "@app/shared/components/ui";
+import { ContentSection } from "@repo/ui";
 
 interface AboutCredentialsSectionProps {
   credentials: AboutPageData["credentials"];

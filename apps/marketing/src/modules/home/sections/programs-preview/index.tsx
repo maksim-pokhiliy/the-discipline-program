@@ -1,7 +1,6 @@
 import { Button, Card, CardContent, Grid, Stack, Typography } from "@mui/material";
 import { HomePageData } from "@repo/api";
-
-import { ContentSection } from "@app/shared/components/ui";
+import { ContentSection } from "@repo/ui";
 
 interface HomeProgramsPreviewProps {
   programs: HomePageData["programs"];

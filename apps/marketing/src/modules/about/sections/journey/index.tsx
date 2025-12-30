@@ -1,7 +1,6 @@
 import { Box, Grid, Stack, Typography } from "@mui/material";
 import { AboutPageData } from "@repo/api";
-
-import { ContentSection } from "@app/shared/components/ui";
+import { ContentSection } from "@repo/ui";
 
 interface AboutJourneySectionProps {
   journey: AboutPageData["journey"];

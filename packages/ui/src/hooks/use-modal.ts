@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useCallback } from "react";
 
 interface UseModalReturn {
@@ -42,7 +44,9 @@ export const useModalManager = (): UseModalManagerReturn => {
   const close = useCallback((modalId: string) => {
     setOpenModals((prev) => {
       const newSet = new Set(prev);
+
       newSet.delete(modalId);
+
       return newSet;
     });
   }, []);

@@ -1,14 +1,19 @@
 "use client";
 
 import { Stack } from "@mui/material";
+import { DashboardData } from "@repo/api";
+import { QueryWrapper } from "@repo/query";
 
 import { useDashboardData } from "@app/lib/hooks";
-import { QueryWrapper } from "@app/shared/components/providers";
 
 import { BusinessStatsSection, ContentStatsSection, QuickActionsSection } from "./sections";
 
-export const DashboardPage = () => {
-  const { data, isLoading, error } = useDashboardData();
+interface DashboardPageClientProps {
+  initialData: DashboardData;
+}
+
+export const DashboardPageClient = ({ initialData }: DashboardPageClientProps) => {
+  const { data, isLoading, error } = useDashboardData({ initialData });
 
   return (
     <QueryWrapper

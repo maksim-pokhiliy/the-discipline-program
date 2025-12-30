@@ -1,14 +1,19 @@
 "use client";
 
 import { Stack } from "@mui/material";
+import { AdminProgramsPageData } from "@repo/api";
+import { QueryWrapper } from "@repo/query";
 
 import { useProgramsPageData } from "@app/lib/hooks";
-import { QueryWrapper } from "@app/shared/components/providers";
 
-import { ProgramsStatsSection, ProgramsTableSection } from "./sections";
+import { ProgramsStatsSection } from "./sections";
 
-export const ProgramsPage = () => {
-  const { data, isLoading, error } = useProgramsPageData();
+interface ProgramsPageClientProps {
+  initialData: AdminProgramsPageData;
+}
+
+export const ProgramsPageClient = ({ initialData }: ProgramsPageClientProps) => {
+  const { data, isLoading, error } = useProgramsPageData({ initialData });
 
   return (
     <QueryWrapper
@@ -20,7 +25,6 @@ export const ProgramsPage = () => {
       {(data) => (
         <Stack spacing={0}>
           <ProgramsStatsSection stats={data.stats} />
-          <ProgramsTableSection programs={data.programs} />
         </Stack>
       )}
     </QueryWrapper>

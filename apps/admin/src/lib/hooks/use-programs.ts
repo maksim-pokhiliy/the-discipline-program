@@ -1,47 +1,85 @@
 "use client";
 
 import type { AdminProgramsPageData, Program } from "@repo/api";
-import { adminKeys, createPageDataCrudHooks } from "@repo/query";
+import { adminKeys } from "@repo/query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { api } from "../api";
 
-const programs = createPageDataCrudHooks<AdminProgramsPageData, Program, "programs", "stats">({
-  keys: {
-    page: adminKeys.programs.page,
-    byId: adminKeys.programs.byId,
-    invalidate: () => [adminKeys.dashboard()],
-  },
-  api: {
-    getPageData: api.programs.getPageData,
-    getById: api.programs.getById,
-    create: api.programs.create,
-    update: api.programs.update,
-    delete: api.programs.delete,
-    toggle: api.programs.toggleStatus,
-    updateOrder: api.programs.updateOrder,
-  },
-  fields: {
-    items: "programs",
-    stats: "stats",
-  },
-});
+interface UseProgramsPageDataOptions {
+  initialData?: AdminProgramsPageData;
+}
 
-export const useProgramsPageData = programs.usePageData;
+export const useProgramsPageData = ({ initialData }: UseProgramsPageDataOptions = {}) => {
+  return useQuery({
+    queryKey: adminKeys.programs.page(),
+    queryFn: api.programs.getPageData,
+    initialData,
+  });
+};
 
-export const usePrograms = programs.useItems;
-
-export const useProgramsStats = programs.useStats;
-
-export const useProgram = programs.useById;
+export const useProgram = (id: string) => {
+  return useQuery({
+    queryKey: adminKeys.programs.byId(id),
+    queryFn: () => api.programs.getById(id),
+    enabled: !!id,
+  });
+};
 
 export const useProgramMutations = () => {
-  const { createItem, updateItem, deleteItem, toggleItem, updateOrder } = programs.useMutations();
+  const queryClient = useQueryClient();
+
+  const createProgram = useMutation({
+    mutationFn: api.programs.create,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.programs.page() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    },
+  });
+
+  const updateProgram = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Program> }) =>
+      api.programs.update(id, data),
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.programs.page() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.programs.byId(variables.id) });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    },
+  });
+
+  const deleteProgram = useMutation({
+    mutationFn: api.programs.delete,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.programs.page() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    },
+  });
+
+  const toggleStatus = useMutation({
+    mutationFn: api.programs.toggleStatus,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.programs.page() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    },
+  });
+
+  const updateProgramsOrder = useMutation({
+    mutationFn: api.programs.updateOrder,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: adminKeys.programs.page() });
+    },
+  });
 
   return {
-    createProgram: createItem,
-    updateProgram: updateItem,
-    deleteProgram: deleteItem,
-    toggleStatus: toggleItem,
-    updateProgramsOrder: updateOrder,
+    createProgram,
+    updateProgram,
+    deleteProgram,
+    toggleStatus,
+    updateProgramsOrder,
   };
 };

@@ -1,7 +1,6 @@
+import { AUTH_ROUTES, isPublicRoute } from "@repo/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-
-import { AUTH_ROUTES, isPublicRoute } from "@app/shared/constants/auth";
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;

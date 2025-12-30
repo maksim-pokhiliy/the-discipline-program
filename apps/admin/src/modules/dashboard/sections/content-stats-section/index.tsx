@@ -6,8 +6,9 @@ import SportsIcon from "@mui/icons-material/Person";
 import RateReviewIcon from "@mui/icons-material/RateReview";
 import { Grid } from "@mui/material";
 import { ContentStats } from "@repo/api";
+import { ContentSection } from "@repo/ui";
 
-import { ContentSection, StatsCard } from "@app/shared/components/ui";
+import { StatsCard } from "@app/shared/components/ui";
 
 interface ContentStatsSectionProps {
   contentStats: ContentStats;

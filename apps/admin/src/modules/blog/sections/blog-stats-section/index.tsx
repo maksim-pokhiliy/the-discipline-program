@@ -6,8 +6,9 @@ import PublicIcon from "@mui/icons-material/Public";
 import StarIcon from "@mui/icons-material/Star";
 import { Grid } from "@mui/material";
 import { BlogStats } from "@repo/api";
+import { ContentSection } from "@repo/ui";
 
-import { ContentSection, StatsCard } from "@app/shared/components/ui";
+import { StatsCard } from "@app/shared/components/ui";
 
 interface BlogStatsSectionProps {
   stats: BlogStats;

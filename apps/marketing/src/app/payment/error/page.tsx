@@ -1,8 +1,8 @@
 import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
+import { PaymentPageWrapper } from "@repo/ui";
 import { Metadata } from "next";
 
 import { PaymentErrorPage } from "@app/modules/payment-error";
-import { PaymentPageWrapper } from "@app/shared/components/layout";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.paymentError.title,

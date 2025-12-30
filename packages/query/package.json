@@ -18,5 +18,9 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.80.2"
+  },
+  "peerDependencies": {
+    "@mui/material": "^7.1.1",
+    "@tanstack/react-query": "^5.80.2"
   }
 }
