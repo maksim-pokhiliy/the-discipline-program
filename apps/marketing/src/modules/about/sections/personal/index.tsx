@@ -1,8 +1,7 @@
 import { Box, Grid, Stack, Typography } from "@mui/material";
 import { AboutPageData } from "@repo/api";
+import { ContentSection } from "@repo/ui";
 import Image from "next/image";
-
-import { ContentSection } from "@app/shared/components/ui";
 
 interface AboutPersonalSectionProps {
   personal: AboutPageData["personal"];

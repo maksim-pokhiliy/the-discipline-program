@@ -2,10 +2,9 @@
 
 import { Container, Grid } from "@mui/material";
 import { Program, ProgramsPageData } from "@repo/api";
+import { ContentSection } from "@repo/ui";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
-import { ContentSection } from "@app/shared/components/ui";
 
 import { ProgramCard } from "../card";
 import { ProgramModal } from "../modal";

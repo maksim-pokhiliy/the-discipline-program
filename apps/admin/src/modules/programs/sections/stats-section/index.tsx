@@ -5,8 +5,9 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import { Grid } from "@mui/material";
 import { ProgramStats } from "@repo/api";
+import { ContentSection } from "@repo/ui";
 
-import { ContentSection, StatsCard } from "@app/shared/components/ui";
+import { StatsCard } from "@app/shared/components/ui";
 
 interface ProgramsStatsSectionProps {
   stats: ProgramStats;

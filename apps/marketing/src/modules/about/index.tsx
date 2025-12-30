@@ -1,9 +1,9 @@
 "use client";
 
 import { Stack } from "@mui/material";
+import { QueryWrapper } from "@repo/query";
 
 import { useAboutPage } from "@app/lib/hooks";
-import { QueryWrapper } from "@app/shared/components/ui";
 
 import {
   AboutCredentialsSection,

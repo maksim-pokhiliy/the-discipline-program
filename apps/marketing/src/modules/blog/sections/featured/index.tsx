@@ -1,9 +1,8 @@
 import { Box, Button, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
 import { BlogPost } from "@repo/api";
+import { ContentSection } from "@repo/ui";
 import Image from "next/image";
 import Link from "next/link";
-
-import { ContentSection } from "@app/shared/components/ui";
 
 interface BlogFeaturedSectionProps {
   featuredPost: BlogPost;

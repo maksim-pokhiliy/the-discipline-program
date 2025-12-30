@@ -11,9 +11,8 @@ import {
   Typography,
 } from "@mui/material";
 import { ContactPageData } from "@repo/api";
+import { ContentSection } from "@repo/ui";
 import { useState } from "react";
-
-import { ContentSection } from "@app/shared/components/ui";
 
 interface ContactFormProps {
   form: ContactPageData["form"];

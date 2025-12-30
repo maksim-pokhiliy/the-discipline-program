@@ -19,8 +19,9 @@ import {
   Typography,
 } from "@mui/material";
 import { BusinessStats } from "@repo/api";
+import { ContentSection } from "@repo/ui";
 
-import { ContentSection, StatsCard } from "@app/shared/components/ui";
+import { StatsCard } from "@app/shared/components/ui";
 
 interface BusinessStatsSectionProps {
   businessStats: BusinessStats;

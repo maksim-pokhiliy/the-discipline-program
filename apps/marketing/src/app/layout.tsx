@@ -1,10 +1,11 @@
 import { Box } from "@mui/material";
 import { NextProvider } from "@repo/mui";
-import { DOMANCHORS, SEO_CONFIG } from "@repo/shared";
+import { QueryProvider } from "@repo/query";
+import { DOM_ANCHORS, SEO_CONFIG } from "@repo/shared";
+import { Header } from "@repo/ui";
 import { Metadata } from "next";
 
-import { QueryProvider } from "@app/lib/providers";
-import { Footer, Header } from "@app/shared/components/layout";
+import { Footer } from "@app/shared/components/layout";
 import { StructuredData } from "@app/shared/components/seo";
 
 export const metadata: Metadata = {
@@ -41,10 +42,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <StructuredData type="organization" />
       </head>
 
-      <body id={DOMANCHORS.BODY}>
+      <body id={DOM_ANCHORS.BODY}>
         <NextProvider>
           <QueryProvider>
-            <Header />
+            <Header navigationType="marketing" showUserMenu={false} />
 
             <Box component="main" sx={{ minHeight: "100vh" }}>
               {children}

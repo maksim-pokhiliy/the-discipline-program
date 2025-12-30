@@ -1,6 +1,5 @@
 import { ContactPageData } from "@repo/api";
-
-import { ContentSection } from "@app/shared/components/ui";
+import { ContentSection } from "@repo/ui";
 
 interface ContactHeroProps {
   hero: ContactPageData["hero"];
