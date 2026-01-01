@@ -1,4 +1,9 @@
 import { adminUploadApi } from "@repo/api/server";
+import {
+  deleteAvatarRequestSchema,
+  uploadAvatarResponseSchema,
+  deleteAvatarResponseSchema,
+} from "@repo/contracts/upload";
 import { handleApiError, BadRequestError } from "@repo/errors";
 import { NextResponse } from "next/server";
 
@@ -12,8 +17,9 @@ export async function POST(request: Request) {
     }
 
     const result = await adminUploadApi.uploadAvatar(file);
+    const validated = uploadAvatarResponseSchema.parse(result);
 
-    return NextResponse.json(result);
+    return NextResponse.json(validated);
   } catch (error) {
     return handleApiError(error);
   }
@@ -21,11 +27,14 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const { url } = await request.json();
+    const body = await request.json();
+    const { url } = deleteAvatarRequestSchema.parse(body);
 
     await adminUploadApi.deleteAvatar(url);
 
-    return NextResponse.json({ success: true });
+    const validated = deleteAvatarResponseSchema.parse({ success: true });
+
+    return NextResponse.json(validated);
   } catch (error) {
     return handleApiError(error);
   }

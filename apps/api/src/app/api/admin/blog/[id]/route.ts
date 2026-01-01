@@ -1,6 +1,7 @@
 import { adminBlogApi } from "@repo/api/server";
 import {
   getBlogPostByIdParamsSchema,
+  updateBlogPostParamsSchema,
   updateBlogPostRequestSchema,
   deleteBlogPostParamsSchema,
 } from "@repo/contracts/blog";
@@ -12,10 +13,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     const { id } = getBlogPostByIdParamsSchema.parse(await params);
     const post = await adminBlogApi.getPostById(id);
 
-    if (!post) {
-      return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
-    }
-
     return NextResponse.json(post);
   } catch (error) {
     return handleApiError(error);
@@ -24,7 +21,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
+    const { id } = updateBlogPostParamsSchema.parse(await params);
     const body = await request.json();
     const data = updateBlogPostRequestSchema.parse(body);
     const post = await adminBlogApi.updatePost(id, data);

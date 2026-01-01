@@ -5,16 +5,16 @@ import { NextRequest, NextResponse } from "next/server";
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-if (!TELEGRAM_BOT_TOKEN) {
-  throw new Error("TELEGRAM_BOT_TOKEN environment variable is required");
-}
-
-if (!TELEGRAM_CHAT_ID) {
-  throw new Error("TELEGRAM_CHAT_ID environment variable is required");
-}
-
 export async function POST(request: NextRequest) {
   try {
+    if (!TELEGRAM_BOT_TOKEN) {
+      throw new InternalServerError("TELEGRAM_BOT_TOKEN environment variable is required");
+    }
+
+    if (!TELEGRAM_CHAT_ID) {
+      throw new InternalServerError("TELEGRAM_CHAT_ID environment variable is required");
+    }
+
     const body = await request.json();
     const data = createContactSubmissionRequestSchema.parse(body);
 

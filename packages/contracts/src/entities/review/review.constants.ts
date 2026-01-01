@@ -15,7 +15,4 @@ export const REVIEW_DEFAULTS = {
   programId: null,
 } as const;
 
-export const TOGGLE_FIELDS = {
-  IS_ACTIVE: "isActive",
-  IS_FEATURED: "isFeatured",
-} as const;
+export const TOGGLE_FIELDS = ["isActive", "isFeatured"] as const;

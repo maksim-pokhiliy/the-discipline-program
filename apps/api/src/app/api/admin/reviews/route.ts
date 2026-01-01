@@ -1,13 +1,14 @@
 import { adminReviewsApi } from "@repo/api/server";
-import { createReviewRequestSchema } from "@repo/contracts/review";
+import { createReviewRequestSchema, getReviewsResponseSchema } from "@repo/contracts/review";
 import { handleApiError } from "@repo/errors";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
     const reviews = await adminReviewsApi.getReviews();
+    const validated = getReviewsResponseSchema.parse(reviews);
 
-    return NextResponse.json(reviews);
+    return NextResponse.json(validated);
   } catch (error) {
     return handleApiError(error);
   }

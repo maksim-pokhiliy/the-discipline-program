@@ -4,6 +4,7 @@ import {
   updateBlogPostSchema,
   updateBlogPostsOrderSchema,
 } from "./blog.schema";
+import { BLOG_TOGGLE_FIELDS } from "./blog.constants";
 
 export const getBlogPostsResponseSchema = z.array(
   z.object({
@@ -47,7 +48,7 @@ export const toggleBlogPostParamsSchema = z.object({
 });
 
 export const toggleBlogPostQuerySchema = z.object({
-  field: z.enum(["isPublished", "isFeatured"]),
+  field: z.enum(BLOG_TOGGLE_FIELDS),
 });
 
 export const updateBlogPostsOrderRequestSchema = updateBlogPostsOrderSchema;

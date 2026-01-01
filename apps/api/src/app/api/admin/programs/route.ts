@@ -1,13 +1,14 @@
 import { adminProgramsApi } from "@repo/api/server";
-import { createProgramRequestSchema } from "@repo/contracts/program";
+import { createProgramRequestSchema, getProgramsResponseSchema } from "@repo/contracts/program";
 import { handleApiError } from "@repo/errors";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
     const programs = await adminProgramsApi.getPrograms();
+    const validated = getProgramsResponseSchema.parse(programs);
 
-    return NextResponse.json(programs);
+    return NextResponse.json(validated);
   } catch (error) {
     return handleApiError(error);
   }

@@ -1,13 +1,14 @@
 import { adminBlogApi } from "@repo/api/server";
-import { createBlogPostRequestSchema } from "@repo/contracts/blog";
+import { createBlogPostRequestSchema, getBlogPostsResponseSchema } from "@repo/contracts/blog";
 import { handleApiError } from "@repo/errors";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
     const posts = await adminBlogApi.getPosts();
+    const validated = getBlogPostsResponseSchema.parse(posts);
 
-    return NextResponse.json(posts);
+    return NextResponse.json(validated);
   } catch (error) {
     return handleApiError(error);
   }

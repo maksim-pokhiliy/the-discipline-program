@@ -1,6 +1,7 @@
 import { adminProgramsApi } from "@repo/api/server";
 import {
   getProgramByIdParamsSchema,
+  updateProgramParamsSchema,
   updateProgramRequestSchema,
   deleteProgramParamsSchema,
 } from "@repo/contracts/program";
@@ -12,10 +13,6 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
     const { id } = getProgramByIdParamsSchema.parse(await params);
     const program = await adminProgramsApi.getProgramById(id);
 
-    if (!program) {
-      return NextResponse.json({ error: "Program not found" }, { status: 404 });
-    }
-
     return NextResponse.json(program);
   } catch (error) {
     return handleApiError(error);
@@ -24,7 +21,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
+    const { id } = updateProgramParamsSchema.parse(await params);
     const body = await request.json();
     const data = updateProgramRequestSchema.parse(body);
     const program = await adminProgramsApi.updateProgram(id, data);

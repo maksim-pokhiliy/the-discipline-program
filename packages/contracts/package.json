@@ -9,7 +9,10 @@
     "./review": "./src/entities/review/index.ts",
     "./blog": "./src/entities/blog/index.ts",
     "./contact": "./src/entities/contact/index.ts",
-    "./auth": "./src/entities/auth/index.ts"
+    "./auth": "./src/entities/auth/index.ts",
+    "./upload": "./src/entities/upload/index.ts",
+    "./pages": "./src/entities/pages/index.ts",
+    "./dashboard": "./src/entities/dashboard/index.ts"
   },
   "scripts": {
     "lint": "eslint . --fix",

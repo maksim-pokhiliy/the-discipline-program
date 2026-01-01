@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createReviewSchema, updateReviewSchema, updateReviewsOrderSchema } from "./review.schema";
+import { TOGGLE_FIELDS } from "./review.constants";
 
 export const getReviewsResponseSchema = z.array(
   z.object({
@@ -39,7 +40,7 @@ export const toggleReviewParamsSchema = z.object({
 });
 
 export const toggleReviewQuerySchema = z.object({
-  field: z.enum(["isActive", "isFeatured"]),
+  field: z.enum(TOGGLE_FIELDS),
 });
 
 export const updateReviewsOrderRequestSchema = updateReviewsOrderSchema;

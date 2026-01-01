@@ -13,14 +13,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
 
     if (field === "isPublished") {
-      const post = await adminBlogApi.toggleBlogPostStatus(id);
-
-      return NextResponse.json(post);
+      return NextResponse.json(await adminBlogApi.toggleBlogPostStatus(id));
     }
 
-    const post = await adminBlogApi.toggleBlogPostFeatured(id);
-
-    return NextResponse.json(post);
+    return NextResponse.json(await adminBlogApi.toggleBlogPostFeatured(id));
   } catch (error) {
     return handleApiError(error);
   }

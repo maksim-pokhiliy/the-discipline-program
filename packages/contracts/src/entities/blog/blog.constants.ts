@@ -20,7 +20,4 @@ export const BLOG_DEFAULTS = {
   readTime: null,
 } as const;
 
-export const BLOG_TOGGLE_FIELDS = {
-  IS_PUBLISHED: "isPublished",
-  IS_FEATURED: "isFeatured",
-} as const;
+export const BLOG_TOGGLE_FIELDS = ["isPublished", "isFeatured"] as const;

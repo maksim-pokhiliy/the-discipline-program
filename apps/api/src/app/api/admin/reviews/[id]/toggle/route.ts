@@ -13,14 +13,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
 
     if (field === "isActive") {
-      const review = await adminReviewsApi.toggleReviewStatus(id);
-
-      return NextResponse.json(review);
+      return NextResponse.json(await adminReviewsApi.toggleReviewStatus(id));
     }
 
-    const review = await adminReviewsApi.toggleReviewFeatured(id);
-
-    return NextResponse.json(review);
+    return NextResponse.json(await adminReviewsApi.toggleReviewFeatured(id));
   } catch (error) {
     return handleApiError(error);
   }
