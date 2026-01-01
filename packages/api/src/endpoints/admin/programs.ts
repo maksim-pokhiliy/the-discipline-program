@@ -1,5 +1,6 @@
 import { Program } from "../../types";
 import { prisma } from "../../db/client";
+import { NotFoundError, BadRequestError } from "@repo/errors";
 
 type SortOrderUpdate = {
   id: string;
@@ -74,7 +75,10 @@ export const adminProgramsApi = {
     });
 
     if (orderCount > 0) {
-      throw new Error(`Cannot delete program with ${orderCount} existing orders`);
+      throw new BadRequestError(`Cannot delete program with ${orderCount} existing orders`, {
+        programId: id,
+        orderCount,
+      });
     }
 
     await prisma.program.delete({
@@ -88,7 +92,7 @@ export const adminProgramsApi = {
     });
 
     if (!program) {
-      throw new Error("Program not found");
+      throw new NotFoundError("Program not found", { id });
     }
 
     return prisma.program.update({

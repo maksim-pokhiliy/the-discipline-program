@@ -18,13 +18,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
     <html lang="en">
       <body>
         <NextProvider>
-          <AuthProvider>
-            <QueryProvider>
+          <QueryProvider>
+            <AuthProvider>
               <Box component="main" sx={{ minHeight: "100vh" }}>
                 {children}
               </Box>
-            </QueryProvider>
-          </AuthProvider>
+            </AuthProvider>
+          </QueryProvider>
         </NextProvider>
       </body>
     </html>

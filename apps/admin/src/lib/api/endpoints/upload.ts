@@ -8,9 +8,9 @@ export const uploadAPI = {
 
     formData.append("file", file);
 
-    return apiClient.request("/api/upload/avatar", "POST", formData);
+    return apiClient.request("/api/admin/upload/avatar", "POST", formData);
   },
 
   deleteAvatar: (url: string): Promise<void> =>
-    apiClient.request("/api/upload/avatar", "DELETE", { url }),
+    apiClient.request("/api/admin/upload/avatar", "DELETE", { url }),
 };

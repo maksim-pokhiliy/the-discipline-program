@@ -10,28 +10,29 @@ type SortOrderUpdate = {
 };
 
 export const reviewsAPI = {
-  getPageData: (): Promise<AdminReviewsPageData> => apiClient.request("/api/reviews/page-data"),
+  getPageData: (): Promise<AdminReviewsPageData> =>
+    apiClient.request("/api/admin/reviews/page-data"),
 
-  getAll: (): Promise<Review[]> => apiClient.request("/api/reviews"),
+  getAll: (): Promise<Review[]> => apiClient.request("/api/admin/reviews"),
 
-  getById: (id: string): Promise<Review> => apiClient.request(`/api/reviews/${id}`),
+  getById: (id: string): Promise<Review> => apiClient.request(`/api/admin/reviews/${id}`),
 
-  getStats: (): Promise<ReviewStats> => apiClient.request("/api/reviews/stats"),
+  getStats: (): Promise<ReviewStats> => apiClient.request("/api/admin/reviews/stats"),
 
   create: (data: Partial<Review>): Promise<Review> =>
-    apiClient.request("/api/reviews", "POST", data),
+    apiClient.request("/api/admin/reviews", "POST", data),
 
   update: (id: string, data: Partial<Review>): Promise<Review> =>
-    apiClient.request(`/api/reviews/${id}`, "PUT", data),
+    apiClient.request(`/api/admin/reviews/${id}`, "PUT", data),
 
-  delete: (id: string): Promise<void> => apiClient.request(`/api/reviews/${id}`, "DELETE"),
+  delete: (id: string): Promise<void> => apiClient.request(`/api/admin/reviews/${id}`, "DELETE"),
 
   toggleActive: (id: string): Promise<Review> =>
-    apiClient.request(`/api/reviews/${id}/toggle?field=isActive`, "PATCH"),
+    apiClient.request(`/api/admin/reviews/${id}/toggle?field=isActive`, "PATCH"),
 
   toggleFeatured: (id: string): Promise<Review> =>
-    apiClient.request(`/api/reviews/${id}/toggle?field=isFeatured`, "PATCH"),
+    apiClient.request(`/api/admin/reviews/${id}/toggle?field=isFeatured`, "PATCH"),
 
   updateOrder: (updates: SortOrderUpdate[]): Promise<{ success: true }> =>
-    apiClient.request("/api/reviews/order", "PATCH", { updates }),
+    apiClient.request("/api/admin/reviews/order", "PATCH", { updates }),
 };

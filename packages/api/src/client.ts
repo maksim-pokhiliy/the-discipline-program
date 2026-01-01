@@ -1,3 +1,5 @@
+import { InternalServerError } from "@repo/errors";
+
 interface ApiClientConfig {
   baseUrl: string;
 }
@@ -43,7 +45,10 @@ export class ApiClient {
         .json()
         .catch(() => ({ error: `Request failed: ${response.status}` }));
 
-      throw new Error(error.error || `API request failed: ${response.status}`);
+      throw new InternalServerError(error.error || `API request failed`, {
+        status: response.status,
+        url: fullUrl,
+      });
     }
 
     return response.json();

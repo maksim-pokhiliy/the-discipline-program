@@ -21,6 +21,7 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/errors": "workspace:*",
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "^20.17.57",
     "eslint": "^9.30.1",

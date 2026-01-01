@@ -33,6 +33,7 @@ export const UserMenu = () => {
           <AccountCircleIcon />
         </Avatar>
       </IconButton>
+
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
@@ -50,14 +51,18 @@ export const UserMenu = () => {
           <Typography variant="subtitle1" fontWeight={600}>
             Admin User
           </Typography>
+
           <Typography variant="body2" color="text.secondary">
             {session.user?.email}
           </Typography>
         </Box>
+
         <Divider />
+
         <MenuItem onClick={handleLogout}>
           <Stack direction="row" spacing={1} alignItems="center">
             <LogoutIcon fontSize="small" />
+
             <Typography>Logout</Typography>
           </Stack>
         </MenuItem>

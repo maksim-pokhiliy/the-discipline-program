@@ -11,6 +11,7 @@ import {
   Typography,
 } from "@mui/material";
 import { ContactPageData } from "@repo/api";
+import { InternalServerError } from "@repo/errors";
 import { ContentSection } from "@repo/ui";
 import { useState } from "react";
 
@@ -73,7 +74,7 @@ export const ContactForm = ({ form }: ContactFormProps) => {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to send message");
+        throw new InternalServerError(result.error || "Failed to send message");
       }
 
       setSubmission({

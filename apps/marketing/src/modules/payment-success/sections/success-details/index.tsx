@@ -1,12 +1,13 @@
 import { Card, CardContent, Stack, Typography } from "@mui/material";
-import { PaymentOrder } from "@repo/api";
+// import { PaymentOrder } from "@repo/api";
 import { ContentSection } from "@repo/ui";
 
-interface PaymentSuccessDetailsSectionProps {
-  order: PaymentOrder;
-}
+// interface PaymentSuccessDetailsSectionProps {
+//   order: PaymentOrder;
+// }
 
-export const PaymentSuccessDetailsSection = ({ order }: PaymentSuccessDetailsSectionProps) => {
+export const PaymentSuccessDetailsSection = () => {
+  // export const PaymentSuccessDetailsSection = ({ order }: PaymentSuccessDetailsSectionProps) => {
   return (
     <ContentSection title="Order Details" maxWidth="md">
       <Card>
@@ -17,7 +18,7 @@ export const PaymentSuccessDetailsSection = ({ order }: PaymentSuccessDetailsSec
                 <Typography color="text.secondary">Program:</Typography>
 
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  {order.programName}
+                  {"order.programName"}
                 </Typography>
               </Stack>
 
@@ -25,14 +26,14 @@ export const PaymentSuccessDetailsSection = ({ order }: PaymentSuccessDetailsSec
                 <Typography color="text.secondary">Amount:</Typography>
 
                 <Typography variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
-                  ${order.amount} {order.currency}
+                  ${"order.amount"} {"order.currency"}
                 </Typography>
               </Stack>
 
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography color="text.secondary">Email:</Typography>
 
-                <Typography sx={{ fontWeight: 500 }}>{order.customerEmail}</Typography>
+                <Typography sx={{ fontWeight: 500 }}>{"order.customerEmail"}</Typography>
               </Stack>
 
               <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -45,7 +46,7 @@ export const PaymentSuccessDetailsSection = ({ order }: PaymentSuccessDetailsSec
                     color: "text.secondary",
                   }}
                 >
-                  {order.id}
+                  {"order.id"}
                 </Typography>
               </Stack>
 
@@ -55,15 +56,16 @@ export const PaymentSuccessDetailsSection = ({ order }: PaymentSuccessDetailsSec
                 <Typography
                   sx={{
                     fontWeight: 600,
-                    color: order.status === "completed" ? "success.main" : "warning.main",
+                    color: "success.main",
+                    // color: order.status === "completed" ? "success.main" : "warning.main",
                     textTransform: "capitalize",
                   }}
                 >
-                  {order.status}
+                  {"order.status"}
                 </Typography>
               </Stack>
 
-              {order.completedAt && (
+              {/* {order.completedAt && (
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography color="text.secondary">Completed:</Typography>
 
@@ -71,7 +73,7 @@ export const PaymentSuccessDetailsSection = ({ order }: PaymentSuccessDetailsSec
                     {new Date(order.completedAt).toLocaleDateString()}
                   </Typography>
                 </Stack>
-              )}
+              )} */}
             </Stack>
           </Stack>
         </CardContent>

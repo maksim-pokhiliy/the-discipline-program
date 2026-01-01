@@ -1,0 +1,46 @@
+import { pagesApi } from "@repo/api/server";
+import { handleApiError, NotFoundError } from "@repo/errors";
+import { NextResponse } from "next/server";
+
+export async function GET(_: Request, { params }: { params: Promise<{ pageSlug: string }> }) {
+  try {
+    const { pageSlug } = await params;
+
+    let pageData;
+
+    switch (pageSlug) {
+      case "home": {
+        pageData = await pagesApi.getHomePage();
+        break;
+      }
+
+      case "programs": {
+        pageData = await pagesApi.getProgramsPage();
+        break;
+      }
+
+      case "about": {
+        pageData = await pagesApi.getAboutPage();
+        break;
+      }
+
+      case "blog": {
+        pageData = await pagesApi.getBlogPage();
+        break;
+      }
+
+      case "contact": {
+        pageData = await pagesApi.getContactPage();
+        break;
+      }
+
+      default: {
+        throw new NotFoundError("Page not found", { pageSlug });
+      }
+    }
+
+    return NextResponse.json(pageData);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}

@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { Program } from "@repo/api";
 
-import { usePayment } from "@app/lib/hooks";
+// import { usePayment } from "@app/lib/hooks";
 
 interface ProgramModalProps {
   program: Program | null;
@@ -24,22 +24,22 @@ interface ProgramModalProps {
 }
 
 export const ProgramModal = ({ program, open, onClose }: ProgramModalProps) => {
-  const { createPayment, isLoading: isCreatingPayment } = usePayment({
-    onError: (error) => {
-      console.error("Payment creation failed:", error);
-    },
-  });
+  // const { createPayment, isLoading: isCreatingPayment } = usePayment({
+  //   onError: (error) => {
+  //     console.error("Payment creation failed:", error);
+  //   },
+  // });
 
   const handleGetStarted = async () => {
     if (!program) {
       return;
     }
 
-    await createPayment({
-      programId: program.id,
-      customerEmail: "test@example.com",
-      customerName: "Test User",
-    });
+    // await createPayment({
+    //   programId: program.id,
+    //   customerEmail: "test@example.com",
+    //   customerName: "Test User",
+    // });
   };
 
   if (!program) {
@@ -161,9 +161,10 @@ export const ProgramModal = ({ program, open, onClose }: ProgramModalProps) => {
                       fullWidth
                       sx={{ py: 2 }}
                       onClick={handleGetStarted}
-                      disabled={isCreatingPayment}
+                      // disabled={isCreatingPayment}
                     >
-                      {isCreatingPayment ? "Creating Payment..." : "Get Started Now"}
+                      {"Get Started Now"}
+                      {/* {isCreatingPayment ? "Creating Payment..." : "Get Started Now"} */}
                     </Button>
 
                     <Button variant="outlined" onClick={onClose} size="large" fullWidth>

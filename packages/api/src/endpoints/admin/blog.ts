@@ -1,6 +1,7 @@
 import { AdminBlogPost, BlogStats, RawBlogPost } from "../../types";
 import { prisma } from "../../db/client";
 import { Prisma } from "@prisma/client";
+import { NotFoundError, ConflictError } from "@repo/errors";
 
 type BlogPostCreateData = Omit<RawBlogPost, "id" | "createdAt" | "updatedAt">;
 type BlogPostUpdateData = Partial<BlogPostCreateData>;
@@ -73,6 +74,18 @@ const prepareUpdateData = (data: BlogPostUpdateData, current: RawBlogPost): Blog
   return updated;
 };
 
+const prepareCreateData = (data: BlogPostCreateData): BlogPostCreateData => {
+  const prepared: BlogPostCreateData = {
+    ...data,
+    tags: sanitizeTags(data.tags),
+    coverImage: normalizeCoverImage(data.coverImage),
+    readTime: data.readTime ?? null,
+    publishedAt: data.isPublished ? (data.publishedAt ?? new Date()) : null,
+  };
+
+  return prepared;
+};
+
 const handlePrismaError = (error: unknown): never => {
   if (
     error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -80,7 +93,7 @@ const handlePrismaError = (error: unknown): never => {
     Array.isArray(error.meta?.target) &&
     error.meta?.target.includes("slug")
   ) {
-    throw new Error("Slug must be unique");
+    throw new ConflictError("Slug must be unique", { field: "slug" });
   }
 
   throw error;
@@ -97,11 +110,7 @@ export const adminBlogApi = {
       ],
     });
 
-    const transformedPosts = posts.map((review) => ({
-      ...review,
-    }));
-
-    return transformedPosts;
+    return posts;
   },
 
   getPostById: async (id: string): Promise<AdminBlogPost | null> => {
@@ -140,11 +149,23 @@ export const adminBlogApi = {
     };
   },
 
+  createPost: async (data: BlogPostCreateData): Promise<AdminBlogPost> => {
+    try {
+      const post = await prisma.blogPost.create({
+        data: prepareCreateData(data),
+      });
+
+      return transformPost(post);
+    } catch (error) {
+      return handlePrismaError(error);
+    }
+  },
+
   updatePost: async (id: string, data: BlogPostUpdateData): Promise<AdminBlogPost> => {
     const existing = await prisma.blogPost.findUnique({ where: { id } });
 
     if (!existing) {
-      throw new Error("Blog post not found");
+      throw new NotFoundError("Blog post not found", { id });
     }
 
     try {
@@ -181,7 +202,7 @@ export const adminBlogApi = {
     });
 
     if (!blogPost) {
-      throw new Error("Blog Post not found");
+      throw new NotFoundError("Blog post not found", { id });
     }
 
     const updated = await prisma.blogPost.update({
@@ -198,7 +219,7 @@ export const adminBlogApi = {
     });
 
     if (!blogPost) {
-      throw new Error("Blog Post not found");
+      throw new NotFoundError("Blog post not found", { id });
     }
 
     const updated = await prisma.blogPost.update({

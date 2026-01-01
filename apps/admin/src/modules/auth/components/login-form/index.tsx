@@ -3,10 +3,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Button, IconButton, InputAdornment, Stack, TextField } from "@mui/material";
+import { LoginFormData, loginFormSchema } from "@repo/contracts/auth";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-
-import { LoginFormData, loginFormSchema } from "../../shared";
 
 interface LoginFormProps {
   onSubmit: (data: LoginFormData) => void;

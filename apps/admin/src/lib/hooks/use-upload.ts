@@ -1,6 +1,7 @@
 "use client";
 
 import { UPLOAD_CONFIG } from "@repo/api";
+import { ValidationError } from "@repo/errors";
 import { adminKeys } from "@repo/query";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -18,11 +19,17 @@ export const useUploadMutations = () => {
       const { maxSize, acceptedTypes } = UPLOAD_CONFIG.avatar;
 
       if (!acceptedTypes.includes(file.type)) {
-        throw new Error("Invalid file type. Allowed: JPG, PNG, WebP, GIF");
+        throw new ValidationError("Invalid file type. Allowed: JPG, PNG, WebP, GIF", {
+          fileType: file.type,
+          acceptedTypes,
+        });
       }
 
       if (file.size > maxSize) {
-        throw new Error("File too large (max 2MB)");
+        throw new ValidationError("File too large (max 2MB)", {
+          fileSize: file.size,
+          maxSize,
+        });
       }
 
       return api.upload.avatar(file);

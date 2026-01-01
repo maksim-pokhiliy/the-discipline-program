@@ -1,13 +1,13 @@
 "use client";
 
 import { Alert, Card, CardContent, Stack, Typography } from "@mui/material";
+import { LoginFormData } from "@repo/contracts/auth";
 import { Logo } from "@repo/ui";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { useState } from "react";
 
 import { LoginForm } from "./components";
-import { LoginFormData } from "./shared";
 
 export const LoginPage = () => {
   const router = useRouter();

@@ -1,5 +1,6 @@
 import type { Review } from "@prisma/client";
 import { prisma } from "../../db/client";
+import { NotFoundError } from "@repo/errors";
 
 type CreateReviewInput = Omit<Review, "id" | "createdAt" | "updatedAt">;
 type UpdateReviewInput = Partial<Review>;
@@ -52,7 +53,7 @@ export const adminReviewsApi = {
     const review = await prisma.review.findUnique({ where: { id } });
 
     if (!review) {
-      throw new Error("Review not found");
+      throw new NotFoundError("Review not found", { id });
     }
 
     return prisma.review.update({
@@ -65,7 +66,7 @@ export const adminReviewsApi = {
     const review = await prisma.review.findUnique({ where: { id } });
 
     if (!review) {
-      throw new Error("Review not found");
+      throw new NotFoundError("Review not found", { id });
     }
 
     return prisma.review.update({

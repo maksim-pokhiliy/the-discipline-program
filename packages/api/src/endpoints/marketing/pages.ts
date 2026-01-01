@@ -9,6 +9,7 @@ import {
   RawBlogPost,
 } from "../../types";
 import { prisma } from "../../db/client";
+import { NotFoundError } from "@repo/errors";
 
 const transformPost = (post: RawBlogPost): BlogPost => ({
   ...post,
@@ -144,7 +145,7 @@ export const pagesApi = {
     });
 
     if (!post) {
-      throw new Error(`Article not found: ${slug}`);
+      throw new NotFoundError(`Article not found: ${slug}`, { slug });
     }
 
     const relatedPosts = await prisma.blogPost.findMany({

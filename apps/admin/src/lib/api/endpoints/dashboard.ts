@@ -5,5 +5,5 @@ import { DashboardData } from "@repo/api";
 import { apiClient } from "../client";
 
 export const dashboardAPI = {
-  getData: (): Promise<DashboardData> => apiClient.request("/api/dashboard"),
+  getData: (): Promise<DashboardData> => apiClient.request("/api/admin/dashboard"),
 };
