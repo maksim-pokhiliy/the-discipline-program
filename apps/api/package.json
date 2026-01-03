@@ -16,7 +16,6 @@
     "@repo/errors": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/auth": "workspace:*",
-    "next-auth": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

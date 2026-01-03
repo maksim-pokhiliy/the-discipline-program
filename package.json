@@ -10,13 +10,17 @@
     "check-types": "turbo run check-types",
     "db:generate": "turbo run db:generate",
     "db:push": "turbo run db:push",
-    "postinstall": "turbo run db:generate"
+    "postinstall": "turbo run db:generate",
+    "prepare": "lefthook install"
   },
   "devDependencies": {
+    "@commitlint/cli": "catalog:",
+    "@commitlint/config-conventional": "catalog:",
     "prettier": "catalog:",
     "prettier-plugin-sort-json": "catalog:",
     "turbo": "2.7.2",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "lefthook": "catalog:"
   },
   "engines": {
     "node": ">=20.0.0"

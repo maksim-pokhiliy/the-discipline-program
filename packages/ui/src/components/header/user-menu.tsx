@@ -5,7 +5,8 @@ import { useState } from "react";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Avatar, Box, Divider, IconButton, Menu, MenuItem, Stack, Typography } from "@mui/material";
-import { signOut, useSession } from "next-auth/react";
+
+import { signOut, useSession } from "@repo/auth";
 
 export const UserMenu = () => {
   const { data: session } = useSession();

@@ -18,13 +18,13 @@
     "@mui/icons-material": "catalog:",
     "@mui/material": "catalog:",
     "@repo/shared": "workspace:*",
+    "@repo/auth": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "lucide-react": "catalog:"
   },
   "peerDependencies": {
     "next": "catalog:",
-    "next-auth": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:"
   },
@@ -36,7 +36,6 @@
     "@types/react-dom": "catalog:",
     "eslint": "catalog:",
     "next": "catalog:",
-    "next-auth": "catalog:",
     "prettier": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
