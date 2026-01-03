@@ -1,6 +1,4 @@
-"use client";
-
-import { ContactSubmission } from "@repo/api";
+import { type ContactSubmission } from "@repo/contracts/contact";
 
 import { apiClient } from "../client";
 

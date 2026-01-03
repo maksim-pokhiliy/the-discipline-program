@@ -1,5 +1,6 @@
 import { Card, CardContent, Stack, Typography } from "@mui/material";
-// import { PaymentOrder } from "@repo/api";
+
+// import { PaymentOrder } from "@repo/api-client";
 import { ContentSection } from "@repo/ui";
 
 // interface PaymentSuccessDetailsSectionProps {

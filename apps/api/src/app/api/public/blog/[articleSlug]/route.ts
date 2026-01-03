@@ -1,7 +1,8 @@
-import { pagesApi } from "@repo/api/server";
+import { NextResponse } from "next/server";
+
+import { pagesApi } from "@repo/api-server";
 import { getBlogArticleBySlugParamsSchema } from "@repo/contracts/blog";
 import { handleApiError } from "@repo/errors";
-import { NextResponse } from "next/server";
 
 export async function GET(_: Request, { params }: { params: Promise<{ articleSlug: string }> }) {
   try {

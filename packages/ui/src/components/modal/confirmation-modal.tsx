@@ -1,8 +1,9 @@
-import { DialogActions, Button, Typography, CircularProgress, Alert, Stack } from "@mui/material";
-import WarningIcon from "@mui/icons-material/Warning";
 import ErrorIcon from "@mui/icons-material/Error";
 import InfoIcon from "@mui/icons-material/Info";
-import { BaseModal, BaseModalProps } from "./base-modal";
+import WarningIcon from "@mui/icons-material/Warning";
+import { DialogActions, Button, Typography, CircularProgress, Alert, Stack } from "@mui/material";
+
+import { BaseModal, type BaseModalProps } from "./base-modal";
 
 export interface ConfirmationModalProps extends Omit<BaseModalProps, "children"> {
   type: "warning" | "danger" | "info";

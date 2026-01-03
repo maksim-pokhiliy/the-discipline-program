@@ -6,3 +6,4 @@ export * from "./entities/review";
 export * from "./entities/upload";
 export * from "./entities/pages";
 export * from "./entities/dashboard";
+export * from "./entities/feature";

@@ -1,11 +1,11 @@
 import {
-  AboutPageData,
-  BlogPageData,
-  BlogPostPageData,
-  ContactPageData,
-  HomePageData,
-  ProgramsPageData,
-} from "@repo/api";
+  type AboutPageData,
+  type BlogPageData,
+  type BlogPostPageData,
+  type ContactPageData,
+  type HomePageData,
+  type ProgramsPageData,
+} from "@repo/contracts";
 
 import { apiClient } from "../client";
 

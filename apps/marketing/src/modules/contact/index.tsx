@@ -1,9 +1,10 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import { ContactPageData } from "@repo/api";
-import { QueryWrapper } from "@repo/query";
 import Head from "next/head";
+
+import { type ContactPageData } from "@repo/contracts/pages";
+import { QueryWrapper } from "@repo/query";
 
 import { useContactPage } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";

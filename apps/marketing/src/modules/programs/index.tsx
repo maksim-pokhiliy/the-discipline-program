@@ -1,10 +1,11 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import { ProgramsPageData } from "@repo/api";
+import Head from "next/head";
+
+import { type ProgramsPageData } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/query";
 import { SuspenseWrapper } from "@repo/ui";
-import Head from "next/head";
 
 import { useProgramsPage } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";

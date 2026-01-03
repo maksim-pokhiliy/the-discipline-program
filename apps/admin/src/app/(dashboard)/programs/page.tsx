@@ -1,9 +1,8 @@
-import { adminProgramsApi } from "@repo/api/server";
-
+import { api } from "@app/lib/api";
 import { ProgramsPageClient } from "@app/modules/programs";
 
 export default async function ProgramsPage() {
-  const initialData = await adminProgramsApi.getProgramsPageData();
+  const initialData = await api.programs.getPageData();
 
   return <ProgramsPageClient initialData={initialData} />;
 }

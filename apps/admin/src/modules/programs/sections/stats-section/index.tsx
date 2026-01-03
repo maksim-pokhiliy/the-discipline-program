@@ -4,7 +4,8 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import { Grid } from "@mui/material";
-import { ProgramStats } from "@repo/api";
+
+import { type ProgramStats } from "@repo/contracts/program";
 import { ContentSection } from "@repo/ui";
 
 import { StatsCard } from "@app/shared/components/ui";

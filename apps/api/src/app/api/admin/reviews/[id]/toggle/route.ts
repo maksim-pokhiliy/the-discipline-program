@@ -1,7 +1,8 @@
-import { adminReviewsApi } from "@repo/api/server";
+import { NextResponse } from "next/server";
+
+import { adminReviewsApi } from "@repo/api-server";
 import { toggleReviewParamsSchema, toggleReviewQuerySchema } from "@repo/contracts/review";
 import { handleApiError } from "@repo/errors";
-import { NextResponse } from "next/server";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

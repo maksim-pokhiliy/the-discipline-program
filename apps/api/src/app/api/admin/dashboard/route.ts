@@ -1,7 +1,8 @@
-import { adminDashboardApi } from "@repo/api/server";
+import { NextResponse } from "next/server";
+
+import { adminDashboardApi } from "@repo/api-server";
 import { getDashboardDataResponseSchema } from "@repo/contracts/dashboard";
 import { handleApiError } from "@repo/errors";
-import { NextResponse } from "next/server";
 
 export async function GET() {
   try {

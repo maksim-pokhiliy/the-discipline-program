@@ -1,7 +1,8 @@
 "use client";
 
-import { adminKeys } from "@repo/query";
 import { useQuery } from "@tanstack/react-query";
+
+import { adminKeys } from "@repo/query";
 
 import { api } from "../api";
 

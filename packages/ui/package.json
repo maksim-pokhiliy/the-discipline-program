@@ -1,34 +1,45 @@
 {
   "name": "@repo/ui",
   "version": "0.1.0",
+  "type": "module",
+  "private": true,
   "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./*": "./src/*.tsx"
   },
   "scripts": {
-    "lint": "eslint . --fix",
-    "format": "prettier --write .",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "lint": "eslint . --fix --max-warnings 0",
+    "format": "prettier --check \"**/*.{ts,tsx,md}\""
   },
   "dependencies": {
-    "next-auth": "^4.24.11",
-    "@repo/shared": "workspace:*"
+    "@mui/icons-material": "catalog:",
+    "@mui/material": "catalog:",
+    "@repo/shared": "workspace:*",
+    "class-variance-authority": "catalog:",
+    "clsx": "catalog:",
+    "lucide-react": "catalog:"
+  },
+  "peerDependencies": {
+    "next": "catalog:",
+    "next-auth": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9.30.1",
-    "@mui/material": "^7.1.1"
-  },
-  "peerDependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.0",
-    "@mui/icons-material": "^7.1.1",
-    "@mui/system": "^7.1.1",
-    "next": "16.1.1",
-    "react": ">=18.0.0",
-    "react-dom": ">=18.0.0"
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "eslint": "catalog:",
+    "next": "catalog:",
+    "next-auth": "catalog:",
+    "prettier": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "typescript": "catalog:"
   }
 }

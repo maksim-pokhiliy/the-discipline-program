@@ -1,4 +1,6 @@
-import { adminProgramsApi } from "@repo/api/server";
+import { NextResponse } from "next/server";
+
+import { adminProgramsApi } from "@repo/api-server";
 import {
   getProgramByIdParamsSchema,
   updateProgramParamsSchema,
@@ -6,7 +8,6 @@ import {
   deleteProgramParamsSchema,
 } from "@repo/contracts/program";
 import { handleApiError } from "@repo/errors";
-import { NextResponse } from "next/server";
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {

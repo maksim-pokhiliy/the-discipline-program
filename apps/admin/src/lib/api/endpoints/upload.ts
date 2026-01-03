@@ -1,5 +1,3 @@
-"use client";
-
 import { apiClient } from "../client";
 
 export const uploadAPI = {

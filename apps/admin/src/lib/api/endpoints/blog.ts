@@ -1,6 +1,4 @@
-"use client";
-
-import { AdminBlogPageData, AdminBlogPost } from "@repo/api";
+import { type AdminBlogPageData, type AdminBlogPost } from "@repo/contracts/blog";
 
 import { apiClient } from "../client";
 

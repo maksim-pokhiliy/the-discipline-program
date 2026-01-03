@@ -1,10 +1,11 @@
 "use client";
 
 import { Divider, Stack, Toolbar, Typography } from "@mui/material";
-import { MARKETING_NAVIGATION } from "@repo/shared";
-import { Logo } from "@repo/ui";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import { MARKETING_NAVIGATION } from "@repo/shared";
+import { Logo } from "@repo/ui";
 
 export const Footer = () => {
   const pathname = usePathname();

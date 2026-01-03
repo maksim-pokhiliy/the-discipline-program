@@ -1,7 +1,8 @@
-import { contactApi } from "@repo/api/server";
+import { NextResponse } from "next/server";
+
+import { contactApi } from "@repo/api-server";
 import { getContactSubmissionsResponseSchema } from "@repo/contracts/contact";
 import { handleApiError } from "@repo/errors";
-import { NextResponse } from "next/server";
 
 export async function GET() {
   try {

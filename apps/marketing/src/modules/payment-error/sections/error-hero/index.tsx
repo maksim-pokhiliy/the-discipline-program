@@ -1,5 +1,6 @@
 import ErrorOutline from "@mui/icons-material/ErrorOutline";
 import { alpha, Box, Stack } from "@mui/material";
+
 import { ContentSection } from "@repo/ui";
 
 export const PaymentErrorHeroSection = () => {

@@ -1,4 +1,4 @@
-import { ErrorCode, ERROR_CODES } from "./error-codes";
+import { type ErrorCode, ERROR_CODES } from "./error-codes";
 
 export interface AppErrorOptions {
   code?: ErrorCode;

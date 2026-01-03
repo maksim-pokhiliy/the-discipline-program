@@ -2,7 +2,8 @@
 
 import { Stack } from "@mui/material";
 
-import { ADMIN_NAVIGATION, MARKETING_NAVIGATION, NavLink } from "@repo/shared";
+import { ADMIN_NAVIGATION, MARKETING_NAVIGATION, type NavLink } from "@repo/shared";
+
 import { NavLinkButton } from "../nav-link-button";
 
 type NavigationProps = {

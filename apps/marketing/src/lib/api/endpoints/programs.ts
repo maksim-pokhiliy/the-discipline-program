@@ -1,4 +1,4 @@
-import { Program } from "@repo/api";
+import { type Program } from "@repo/contracts/program";
 
 import { apiClient } from "../client";
 

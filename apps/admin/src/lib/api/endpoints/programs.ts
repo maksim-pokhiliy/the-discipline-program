@@ -1,6 +1,8 @@
-"use client";
-
-import { Program, ProgramStats, AdminProgramsPageData } from "@repo/api";
+import {
+  type Program,
+  type ProgramStats,
+  type AdminProgramsPageData,
+} from "@repo/contracts/program";
 
 import { apiClient } from "../client";
 

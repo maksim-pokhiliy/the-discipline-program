@@ -1,5 +1,6 @@
-import { generateSEOData, PageSeoKey } from "@repo/shared";
 import Head from "next/head";
+
+import { generateSEOData, type PageSeoKey } from "@repo/shared";
 
 export const SEOHead = (props: PageSeoKey) => {
   const seoData = generateSEOData(props);

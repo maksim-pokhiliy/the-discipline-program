@@ -1,4 +1,3 @@
-import { nextJsConfig } from "@repo/eslint-config/next-js";
-import { reactQueryConfig } from "@repo/eslint-config/react-query";
+import { nextJsConfig } from "@repo/eslint-config/next";
 
-export default [...nextJsConfig, ...reactQueryConfig];
+export default nextJsConfig;

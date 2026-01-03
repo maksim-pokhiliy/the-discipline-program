@@ -4,7 +4,8 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RateReviewIcon from "@mui/icons-material/RateReview";
 import StarIcon from "@mui/icons-material/Star";
 import { Grid } from "@mui/material";
-import { ReviewStats } from "@repo/api";
+
+import { type ReviewStats } from "@repo/contracts/review";
 import { ContentSection } from "@repo/ui";
 
 import { StatsCard } from "@app/shared/components/ui";

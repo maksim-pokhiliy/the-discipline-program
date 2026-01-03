@@ -1,11 +1,12 @@
-import { adminUploadApi } from "@repo/api/server";
+import { NextResponse } from "next/server";
+
+import { adminUploadApi } from "@repo/api-server";
 import {
   deleteAvatarRequestSchema,
   uploadAvatarResponseSchema,
   deleteAvatarResponseSchema,
 } from "@repo/contracts/upload";
 import { handleApiError, BadRequestError } from "@repo/errors";
-import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {

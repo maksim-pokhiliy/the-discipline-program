@@ -1,5 +1,6 @@
 import { Button, Typography } from "@mui/material";
-import { AboutPageData } from "@repo/api";
+
+import { type AboutPageData } from "@repo/contracts/pages";
 
 import { FullscreenSection } from "@app/shared/components/ui";
 

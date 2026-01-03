@@ -1,32 +1,35 @@
 {
   "name": "@repo/contracts",
   "version": "0.1.0",
+  "private": true,
+  "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./program": "./src/entities/program/index.ts",
-    "./review": "./src/entities/review/index.ts",
+    "./auth": "./src/entities/auth/index.ts",
     "./blog": "./src/entities/blog/index.ts",
     "./contact": "./src/entities/contact/index.ts",
-    "./auth": "./src/entities/auth/index.ts",
-    "./upload": "./src/entities/upload/index.ts",
+    "./dashboard": "./src/entities/dashboard/index.ts",
+    "./feature": "./src/entities/feature/index.ts",
     "./pages": "./src/entities/pages/index.ts",
-    "./dashboard": "./src/entities/dashboard/index.ts"
+    "./program": "./src/entities/program/index.ts",
+    "./review": "./src/entities/review/index.ts",
+    "./upload": "./src/entities/upload/index.ts"
   },
   "scripts": {
-    "lint": "eslint . --fix",
-    "format": "prettier --write .",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "lint": "eslint . --fix --max-warnings 0",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
+  },
+  "dependencies": {
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/node": "^20",
-    "eslint": "^9.30.1",
-    "typescript": "^5.8.2"
-  },
-  "dependencies": {
-    "zod": "^3.25.76"
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
   }
 }

@@ -1,26 +1,30 @@
 {
   "name": "@repo/query",
   "version": "0.1.0",
+  "private": true,
+  "type": "module",
   "main": "./src/index.ts",
-  "exports": {
-    ".": "./src/index.ts"
-  },
+  "types": "./src/index.ts",
   "scripts": {
-    "lint": "eslint . --fix",
-    "format": "prettier --write .",
-    "check-types": "tsc --noEmit"
+    "check-types": "tsc --noEmit",
+    "lint": "eslint . --fix --max-warnings 0",
+    "format": "prettier --check \"**/*.{ts,tsx}\""
+  },
+  "dependencies": {
+    "@emotion/react": "catalog:",
+    "@emotion/styled": "catalog:",
+    "@mui/material": "catalog:",
+    "@tanstack/react-query": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "eslint": "^9.30.1",
-    "@types/react": "^19"
-  },
-  "dependencies": {
-    "@tanstack/react-query": "^5.80.2"
+    "@types/react": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
   },
   "peerDependencies": {
-    "@mui/material": "^7.1.1",
-    "@tanstack/react-query": "^5.80.2"
+    "react": "catalog:"
   }
 }

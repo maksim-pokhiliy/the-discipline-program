@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import {
   Alert,
   Button,
@@ -10,87 +12,53 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { ContactPageData } from "@repo/api";
-import { InternalServerError } from "@repo/errors";
+
+// Проверь, что путь к типам верный (зависит от структуры экспортов в твоем contracts)
+import type { CreateContactSubmissionRequest } from "@repo/contracts/contact";
+import { type ContactPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
-import { useState } from "react";
+
+// Импорт твоего хука
+import { useSubmitContact } from "@app/lib/hooks";
 
 interface ContactFormProps {
   form: ContactPageData["form"];
 }
 
-interface FormData {
-  name: string;
-  email: string;
-  program: string;
-  message: string;
-}
-
-interface SubmissionState {
-  isSubmitting: boolean;
-  submitted: boolean;
-  error: string | null;
-}
-
 export const ContactForm = ({ form }: ContactFormProps) => {
-  const [formData, setFormData] = useState<FormData>({
+  // 1. Стейт только для данных формы
+  const [formData, setFormData] = useState<CreateContactSubmissionRequest>({
     name: "",
     email: "",
     program: "",
     message: "",
   });
 
-  const [submission, setSubmission] = useState<SubmissionState>({
-    isSubmitting: false,
-    submitted: false,
-    error: null,
-  });
+  // 2. Логика отправки через React Query (hook)
+  const { mutate, isPending, isSuccess, error, reset } = useSubmitContact();
 
-  const handleChange = (field: keyof FormData) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: event.target.value,
-    }));
+  const handleChange =
+    (field: keyof CreateContactSubmissionRequest) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: event.target.value,
+      }));
 
-    if (submission.error) {
-      setSubmission((prev) => ({ ...prev, error: null }));
-    }
-  };
+      // Сбрасываем ошибку/успех при редактировании
+      if (error || isSuccess) {
+        reset();
+      }
+    };
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
 
-    setSubmission({ isSubmitting: true, submitted: false, error: null });
-
-    try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new InternalServerError(result.error || "Failed to send message");
-      }
-
-      setSubmission({
-        isSubmitting: false,
-        submitted: true,
-        error: null,
-      });
-
-      setFormData({ name: "", email: "", program: "", message: "" });
-    } catch (error) {
-      setSubmission({
-        isSubmitting: false,
-        submitted: false,
-        error: error instanceof Error ? error.message : "Something went wrong",
-      });
-    }
+    mutate(formData, {
+      onSuccess: () => {
+        setFormData({ name: "", email: "", program: "", message: "" });
+      },
+    });
   };
 
   const isValid = formData.name.trim() && formData.email.trim() && formData.message.trim();
@@ -101,8 +69,8 @@ export const ContactForm = ({ form }: ContactFormProps) => {
         <Grid size={{ xs: 12, md: 8, lg: 6 }}>
           <Card>
             <CardContent sx={{ p: 4 }}>
-              {submission.submitted ? (
-                <Alert severity="success" sx={{ mb: 4 }}>
+              {isSuccess ? (
+                <Alert severity="success" sx={{ width: "100%" }}>
                   <Typography variant="h6" gutterBottom>
                     Message sent successfully! 🎉
                   </Typography>
@@ -110,12 +78,18 @@ export const ContactForm = ({ form }: ContactFormProps) => {
                   <Typography variant="body2">
                     Thank you for contacting us. We&apos;ll get back to you within 24 hours.
                   </Typography>
+
+                  <Button onClick={() => reset()} sx={{ mt: 2 }} size="small">
+                    Send another message
+                  </Button>
                 </Alert>
               ) : (
                 <Stack component="form" onSubmit={handleSubmit} spacing={3}>
-                  {submission.error && (
+                  {error && (
                     <Alert severity="error">
-                      <Typography variant="body2">{submission.error}</Typography>
+                      <Typography variant="body2">
+                        {error instanceof Error ? error.message : "Something went wrong"}
+                      </Typography>
                     </Alert>
                   )}
 
@@ -125,7 +99,7 @@ export const ContactForm = ({ form }: ContactFormProps) => {
                     onChange={handleChange("name")}
                     required
                     fullWidth
-                    disabled={submission.isSubmitting}
+                    disabled={isPending}
                   />
 
                   <TextField
@@ -135,7 +109,7 @@ export const ContactForm = ({ form }: ContactFormProps) => {
                     onChange={handleChange("email")}
                     required
                     fullWidth
-                    disabled={submission.isSubmitting}
+                    disabled={isPending}
                   />
 
                   <TextField
@@ -144,7 +118,7 @@ export const ContactForm = ({ form }: ContactFormProps) => {
                     value={formData.program}
                     onChange={handleChange("program")}
                     fullWidth
-                    disabled={submission.isSubmitting}
+                    disabled={isPending}
                   >
                     {form.programs.map((program) => (
                       <MenuItem key={program.value} value={program.value}>
@@ -161,19 +135,19 @@ export const ContactForm = ({ form }: ContactFormProps) => {
                     onChange={handleChange("message")}
                     required
                     fullWidth
-                    disabled={submission.isSubmitting}
-                    placeholder="Tell us about your fitness goals, experience level, or any questions you have..."
+                    disabled={isPending}
+                    placeholder="Tell us about your fitness goals..."
                   />
 
                   <Button
                     type="submit"
                     variant="contained"
                     size="large"
-                    disabled={!isValid || submission.isSubmitting}
+                    disabled={!isValid || isPending}
                     sx={{ py: 2 }}
-                    startIcon={submission.isSubmitting ? <CircularProgress size={20} /> : null}
+                    startIcon={isPending ? <CircularProgress size={20} color="inherit" /> : null}
                   >
-                    {submission.isSubmitting ? "Sending..." : "Send Message"}
+                    {isPending ? "Sending..." : "Send Message"}
                   </Button>
                 </Stack>
               )}

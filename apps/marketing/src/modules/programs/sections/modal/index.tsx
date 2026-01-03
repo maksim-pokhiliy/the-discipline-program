@@ -13,7 +13,8 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { Program } from "@repo/api";
+
+import { type Program } from "@repo/contracts/program";
 
 // import { usePayment } from "@app/lib/hooks";
 

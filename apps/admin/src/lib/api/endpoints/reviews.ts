@@ -1,6 +1,4 @@
-"use client";
-
-import { Review, ReviewStats, AdminReviewsPageData } from "@repo/api";
+import { type Review, type ReviewStats, type AdminReviewsPageData } from "@repo/contracts/review";
 
 import { apiClient } from "../client";
 

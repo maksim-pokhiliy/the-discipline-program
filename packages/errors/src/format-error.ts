@@ -16,8 +16,13 @@ export function formatError(error: unknown): FormattedError {
   }
 
   if (error instanceof Error) {
-    if ("error" in error && typeof (error as any).error === "object") {
-      const apiError = (error as any).error;
+    if ("error" in error && typeof (error as Record<string, unknown>).error === "object") {
+      const apiError = (error as Record<string, unknown>).error as {
+        message?: string;
+        code?: string;
+        details?: Record<string, unknown>;
+      };
+
       return {
         message: apiError.message || error.message,
         code: apiError.code,

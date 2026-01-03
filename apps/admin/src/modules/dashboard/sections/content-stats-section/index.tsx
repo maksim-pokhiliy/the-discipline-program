@@ -5,7 +5,8 @@ import ContactMailIcon from "@mui/icons-material/ContactMail";
 import SportsIcon from "@mui/icons-material/Person";
 import RateReviewIcon from "@mui/icons-material/RateReview";
 import { Grid } from "@mui/material";
-import { ContentStats } from "@repo/api";
+
+import { type ContentStats } from "@repo/contracts/dashboard";
 import { ContentSection } from "@repo/ui";
 
 import { StatsCard } from "@app/shared/components/ui";

@@ -1,1 +1,8 @@
-export const DASHBOARD_ACTIVITY_TYPES = ["program", "review", "blog", "contact"] as const;
+export const ORDER_STATUSES = [
+  "PENDING",
+  "PROCESSING",
+  "COMPLETED",
+  "FAILED",
+  "REFUNDED",
+  "EXPIRED",
+] as const;

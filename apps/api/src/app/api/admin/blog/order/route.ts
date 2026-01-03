@@ -1,7 +1,8 @@
-import { adminBlogApi } from "@repo/api/server";
+import { NextResponse } from "next/server";
+
+import { adminBlogApi } from "@repo/api-server";
 import { updateBlogPostsOrderRequestSchema } from "@repo/contracts/blog";
 import { handleApiError } from "@repo/errors";
-import { NextResponse } from "next/server";
 
 export async function PUT(request: Request) {
   try {

@@ -1,11 +1,13 @@
 "use client";
 
-import { Alert, Card, CardContent, Stack, Typography } from "@mui/material";
-import { LoginFormData } from "@repo/contracts/auth";
-import { Logo } from "@repo/ui";
-import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
 import { useState } from "react";
+
+import { Alert, Card, CardContent, Stack, Typography } from "@mui/material";
+import { useRouter, useSearchParams } from "next/navigation";
+
+import { signIn } from "@repo/auth";
+import { type LoginFormData } from "@repo/contracts/auth";
+import { Logo } from "@repo/ui";
 
 import { LoginForm } from "./components";
 

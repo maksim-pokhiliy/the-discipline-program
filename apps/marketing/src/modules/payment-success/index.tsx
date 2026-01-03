@@ -1,8 +1,9 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import { QueryWrapper } from "@repo/query";
 import Head from "next/head";
+
+import { QueryWrapper } from "@repo/query";
 // import { useSearchParams } from "next/navigation";
 
 import { StructuredData } from "@app/shared/components/seo";
@@ -27,8 +28,8 @@ export const PaymentSuccessPage = () => {
       data={data}
       loadingMessage="Loading payment details..."
     >
-      {/* eslint-disable-next-line @typescript-eslint/no-unused-vars */}
-      {(order) => (
+      {() => (
+        // {(order) => (
         <>
           <Head>
             <StructuredData type="website" />

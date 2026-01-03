@@ -1,8 +1,9 @@
 import { Box } from "@mui/material";
+import { type Metadata } from "next";
+
 import { AuthProvider } from "@repo/auth";
 import { NextProvider } from "@repo/mui";
 import { QueryProvider } from "@repo/query";
-import { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "The Discipline Program - Admin",

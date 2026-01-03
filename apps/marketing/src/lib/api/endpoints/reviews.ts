@@ -1,4 +1,4 @@
-import { Review } from "@repo/api";
+import { type Review } from "@repo/contracts/review";
 
 import { apiClient } from "../client";
 

@@ -1,6 +1,7 @@
+import { type NextRequest, NextResponse } from "next/server";
+
 import { createContactSubmissionRequestSchema } from "@repo/contracts/contact";
 import { handleApiError, InternalServerError } from "@repo/errors";
-import { NextRequest, NextResponse } from "next/server";
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;

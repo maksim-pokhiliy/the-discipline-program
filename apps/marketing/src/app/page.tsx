@@ -1,7 +1,8 @@
-import { pagesApi } from "@repo/api/server";
-import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 
+import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
+
+import { api } from "@app/lib/api";
 import { HomePageClient } from "@app/modules/home";
 
 export const metadata: Metadata = {
@@ -16,7 +17,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const initialData = await pagesApi.getHomePage();
+  const initialData = await api.pages.getHome();
 
   return <HomePageClient initialData={initialData} />;
 }

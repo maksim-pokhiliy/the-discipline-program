@@ -1,37 +1,24 @@
 {
   "name": "the-discipline-program",
   "private": true,
+  "packageManager": "pnpm@10.27.0",
   "scripts": {
-    "dev": "turbo run dev",
     "build": "turbo run build",
+    "dev": "turbo run dev",
     "lint": "turbo run lint",
-    "format": "turbo run format",
-    "check-types": "turbo run check-types"
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "check-types": "turbo run check-types",
+    "db:generate": "turbo run db:generate",
+    "db:push": "turbo run db:push",
+    "postinstall": "turbo run db:generate"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1",
-    "@prisma/client": "^6.16.2",
-    "lefthook": "^1.11.12",
-    "prettier": "^3.5.3",
-    "prettier-plugin-sort-json": "^4.1.1",
-    "prisma": "^6.16.2",
-    "turbo": "^2.7.2",
-    "typescript": "^5.8.2"
+    "prettier": "catalog:",
+    "prettier-plugin-sort-json": "catalog:",
+    "turbo": "2.7.2",
+    "typescript": "catalog:"
   },
-  "packageManager": "pnpm@10.27.0+sha512.72d699da16b1179c14ba9e64dc71c9a40988cbdc65c264cb0e489db7de917f20dcf4d64d8723625f2969ba52d4b7e2a1170682d9ac2a5dcaeaab732b7e16f04a",
   "engines": {
-    "node": ">=18"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "lefthook",
-      "sharp",
-      "unrs-resolver",
-      "@prisma/client",
-      "@prisma/engines",
-      "esbuild",
-      "prisma"
-    ]
+    "node": ">=20.0.0"
   }
 }

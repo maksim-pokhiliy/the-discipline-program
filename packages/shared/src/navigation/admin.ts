@@ -1,4 +1,4 @@
-import { AdminNavigationConfig } from "../types";
+import { type AdminNavigationConfig } from "../types";
 
 export const ADMIN_NAVIGATION: AdminNavigationConfig = {
   links: [

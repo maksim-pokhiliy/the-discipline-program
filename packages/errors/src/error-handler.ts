@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
+
 import { AppError } from "./app-error";
-import { ValidationError } from "./http-errors";
 import { ERROR_CODES } from "./error-codes";
+import { ValidationError } from "./http-errors";
 
 export interface ErrorResponse {
   error: string;
