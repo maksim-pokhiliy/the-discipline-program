@@ -7,5 +7,5 @@ import { apiClient } from "../client";
 
 export const contactAPI = {
   submit: (data: CreateContactSubmissionRequest): Promise<CreateContactSubmissionResponse> =>
-    apiClient.request("/api/public/contact", "POST", data),
+    apiClient.request("api/public/contact", "POST", data),
 };
