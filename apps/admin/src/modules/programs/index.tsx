@@ -1,7 +1,8 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import { AdminProgramsPageData } from "@repo/api";
+
+import { type AdminProgramsPageData } from "@repo/contracts/program";
 import { QueryWrapper } from "@repo/query";
 
 import { useProgramsPageData } from "@app/lib/hooks";

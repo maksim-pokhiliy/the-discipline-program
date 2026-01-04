@@ -1,5 +1,6 @@
+import { type ReactNode } from "react";
+
 import { Box, Stack, Container, alpha } from "@mui/material";
-import { ReactNode } from "react";
 
 interface FullscreenSectionProps {
   backgroundImage: string;

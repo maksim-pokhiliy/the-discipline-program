@@ -1,3 +1,6 @@
+import { type ReactNode } from "react";
+
+import CloseIcon from "@mui/icons-material/Close";
 import {
   Dialog,
   DialogTitle,
@@ -5,10 +8,8 @@ import {
   IconButton,
   Typography,
   Stack,
-  DialogProps,
+  type DialogProps,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import { ReactNode } from "react";
 
 export interface BaseModalProps {
   open: boolean;

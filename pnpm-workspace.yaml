@@ -1,3 +1,46 @@
 packages:
-  - "apps/*"
-  - "packages/*"
+  - apps/*
+  - packages/*
+
+catalog:
+  '@commitlint/cli': ^20.1.0
+  '@commitlint/config-conventional': ^20.0.0
+  '@emotion/cache': ^11.14.0
+  '@emotion/react': ^11.14.0
+  '@emotion/styled': ^11.14.0
+  '@hookform/resolvers': ^3.9.1
+  '@mui/icons-material': ^7.3.6
+  '@mui/material': ^7.3.6
+  '@mui/material-nextjs': ^7.3.6
+  '@prisma/client': 6.1.0
+  '@tanstack/react-query': ^5.62.8
+  '@types/bcryptjs': ^2.4.6
+  '@types/node': ^22.10.5
+  '@types/react': ^19.0.2
+  '@types/react-dom': ^19.0.2
+  '@vercel/blob': ^0.27.0
+  bcryptjs: ^2.4.3
+  class-variance-authority: ^0.7.1
+  clsx: ^2.1.1
+  eslint: ^9.17.0
+  lefthook: ^2.0.2
+  lucide-react: ^0.469.0
+  next: 16.1.1
+  next-auth: 4.24.11
+  prettier: 3.5.3
+  prettier-plugin-sort-json: ^4.1.1
+  prisma: 6.1.0
+  react: ^19.0.0
+  react-dom: ^19.0.0
+  react-hook-form: ^7.54.2
+  react-markdown: ^10.1.0
+  typescript: 5.7.2
+  zod: ^3.24.1
+
+onlyBuiltDependencies:
+  - '@prisma/client'
+  - '@prisma/engines'
+  - lefthook
+  - prisma
+  - sharp
+  - unrs-resolver

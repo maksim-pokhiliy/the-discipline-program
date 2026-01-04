@@ -1,5 +1,3 @@
-"use client";
-
 import * as endpoints from "./endpoints";
 
 export const api = {

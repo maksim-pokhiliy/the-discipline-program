@@ -1,10 +1,11 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import { BlogPostPageData } from "@repo/api";
+import Head from "next/head";
+
+import { type BlogPostPageData } from "@repo/contracts/blog";
 import { QueryWrapper } from "@repo/query";
 import { SEO_CONFIG } from "@repo/shared";
-import Head from "next/head";
 
 import { useBlogArticle } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";

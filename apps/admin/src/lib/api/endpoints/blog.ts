@@ -1,6 +1,4 @@
-"use client";
-
-import { AdminBlogPageData, AdminBlogPost } from "@repo/api";
+import { type AdminBlogPageData, type AdminBlogPost } from "@repo/contracts/blog";
 
 import { apiClient } from "../client";
 
@@ -23,24 +21,24 @@ export type BlogPayload = Partial<AdminBlogPost> & {
 };
 
 export const blogAPI = {
-  getPageData: (): Promise<AdminBlogPageData> => apiClient.request("/api/blog/page-data"),
-  getAll: (): Promise<AdminBlogPost[]> => apiClient.request("/api/blog"),
-  getById: (id: string): Promise<AdminBlogPost> => apiClient.request(`/api/blog/${id}`),
+  getPageData: (): Promise<AdminBlogPageData> => apiClient.request("/api/admin/blog/page-data"),
+  getAll: (): Promise<AdminBlogPost[]> => apiClient.request("/api/admin/blog"),
+  getById: (id: string): Promise<AdminBlogPost> => apiClient.request(`/api/admin/blog/${id}`),
 
   create: (data: Partial<AdminBlogPost>): Promise<AdminBlogPost> =>
-    apiClient.request("/api/blog", "POST", data),
+    apiClient.request("/api/admin/blog", "POST", data),
 
   update: (id: string, data: Partial<AdminBlogPost>): Promise<AdminBlogPost> =>
-    apiClient.request(`/api/blog/${id}`, "PUT", data),
+    apiClient.request(`/api/admin/blog/${id}`, "PUT", data),
 
-  delete: (id: string): Promise<void> => apiClient.request(`/api/blog/${id}`, "DELETE"),
+  delete: (id: string): Promise<void> => apiClient.request(`/api/admin/blog/${id}`, "DELETE"),
 
   updateOrder: (updates: BlogOrderUpdate[]): Promise<AdminBlogPost[]> =>
-    apiClient.request("/api/blog/order", "PUT", updates),
+    apiClient.request("/api/admin/blog/order", "PUT", updates),
 
   togglePublished: (id: string): Promise<AdminBlogPost> =>
-    apiClient.request(`/api/blog/${id}/toggle?field=isPublished`, "PATCH"),
+    apiClient.request(`/api/admin/blog/${id}/toggle?field=isPublished`, "PATCH"),
 
   toggleFeatured: (id: string): Promise<AdminBlogPost> =>
-    apiClient.request(`/api/blog/${id}/toggle?field=isFeatured`, "PATCH"),
+    apiClient.request(`/api/admin/blog/${id}/toggle?field=isFeatured`, "PATCH"),
 };

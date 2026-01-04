@@ -1,8 +1,9 @@
 "use client";
 
-import type { AdminReviewsPageData, Review } from "@repo/api";
-import { adminKeys } from "@repo/query";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import type { AdminReviewsPageData, Review } from "@repo/contracts/review";
+import { adminKeys, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
 
@@ -15,6 +16,7 @@ export const useReviewsPageData = ({ initialData }: UseReviewsPageDataOptions = 
     queryKey: adminKeys.reviews.page(),
     queryFn: api.reviews.getPageData,
     initialData,
+    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
   });
 };
 

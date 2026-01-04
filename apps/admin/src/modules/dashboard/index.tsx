@@ -1,7 +1,8 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import { DashboardData } from "@repo/api";
+
+import { type DashboardData } from "@repo/contracts/dashboard";
 import { QueryWrapper } from "@repo/query";
 
 import { useDashboardData } from "@app/lib/hooks";

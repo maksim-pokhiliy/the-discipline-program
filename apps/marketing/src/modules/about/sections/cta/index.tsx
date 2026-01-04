@@ -1,4 +1,4 @@
-import { AboutPageData } from "@repo/api";
+import { type AboutPageData } from "@repo/contracts/pages";
 
 import { CTASection } from "@app/shared/components/ui";
 

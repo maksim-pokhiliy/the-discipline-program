@@ -5,7 +5,6 @@
     "TELEGRAM_BOT_TOKEN",
     "TELEGRAM_CHAT_ID",
     "NEXT_PUBLIC_API_URL",
-    "MONOBANK_TOKEN",
     "DATABASE_URL",
     "DATABASE_URL_UNPOOLED",
     "POSTGRES_PRISMA_URL",
@@ -27,6 +26,33 @@
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"]
     },
+    "api#build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_API_URL",
+        "DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "POSTGRES_PRISMA_URL",
+        "NEXTAUTH_URL",
+        "NEXTAUTH_SECRET"
+      ],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "api#dev": {
+      "cache": false,
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_API_URL",
+        "DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "POSTGRES_PRISMA_URL",
+        "NEXTAUTH_URL",
+        "NEXTAUTH_SECRET"
+      ],
+      "persistent": true
+    },
     "build": {
       "dependsOn": ["^build"],
       "env": [
@@ -43,6 +69,12 @@
     },
     "check-types": {
       "dependsOn": ["^check-types"]
+    },
+    "db:generate": {
+      "cache": false
+    },
+    "db:push": {
+      "cache": false
     },
     "dev": {
       "cache": false,
@@ -88,6 +120,5 @@
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"]
     }
-  },
-  "ui": "tui"
+  }
 }

@@ -1,6 +1,8 @@
+import { type ReactNode, type FormEvent } from "react";
+
 import { DialogActions, Button, Box, CircularProgress, Alert, Stack } from "@mui/material";
-import { ReactNode, FormEvent } from "react";
-import { BaseModal, BaseModalProps } from "./base-modal";
+
+import { BaseModal, type BaseModalProps } from "./base-modal";
 
 export interface FormModalProps extends Omit<BaseModalProps, "children"> {
   children: ReactNode;

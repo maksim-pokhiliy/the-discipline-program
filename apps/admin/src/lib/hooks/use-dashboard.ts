@@ -1,8 +1,9 @@
 "use client";
 
-import { DashboardData } from "@repo/api";
-import { adminKeys } from "@repo/query";
 import { useQuery } from "@tanstack/react-query";
+
+import { type DashboardData } from "@repo/contracts/dashboard";
+import { adminKeys, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
 
@@ -15,5 +16,6 @@ export const useDashboardData = ({ initialData }: UseDashboardDataOptions = {}) 
     queryKey: adminKeys.dashboard(),
     queryFn: api.dashboard.getData,
     initialData,
+    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
   });
 };

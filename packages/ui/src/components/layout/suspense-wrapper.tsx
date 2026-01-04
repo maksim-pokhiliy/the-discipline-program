@@ -1,5 +1,6 @@
-import { CircularProgress, Stack, Typography } from "@mui/material";
 import { Suspense } from "react";
+
+import { CircularProgress, Stack, Typography } from "@mui/material";
 
 interface PaymentPageWrapperProps {
   children: React.ReactNode;

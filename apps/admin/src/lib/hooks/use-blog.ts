@@ -1,8 +1,9 @@
 "use client";
 
-import type { AdminBlogPageData, AdminBlogPost } from "@repo/api";
-import { adminKeys } from "@repo/query";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import type { AdminBlogPageData, AdminBlogPost } from "@repo/contracts/blog";
+import { adminKeys, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
 
@@ -15,6 +16,7 @@ export const useBlogPageData = ({ initialData }: UseBlogPageDataOptions = {}) =>
     queryKey: adminKeys.blog.page(),
     queryFn: api.blog.getPageData,
     initialData,
+    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
   });
 };
 

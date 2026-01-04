@@ -1,9 +1,10 @@
 import { Box, Container } from "@mui/material";
-import { BlogPost } from "@repo/api";
 import ReactMarkdown from "react-markdown";
 
+import { type PublicBlogPost } from "@repo/contracts/blog";
+
 interface BlogArticleContentProps {
-  post: BlogPost;
+  post: PublicBlogPost;
 }
 
 export const BlogArticleContent = ({ post }: BlogArticleContentProps) => {

@@ -1,4 +1,5 @@
-import { Theme, ThemeOptions } from "@mui/material";
+import { type Theme, type ThemeOptions } from "@mui/material";
+
 import { poppins } from "../assets/fonts/poppins";
 
 export const typography = (baseTheme: Theme): ThemeOptions["typography"] => ({

@@ -1,7 +1,8 @@
 import { Box, Grid, Stack, Typography } from "@mui/material";
-import { AboutPageData } from "@repo/api";
-import { ContentSection } from "@repo/ui";
 import Image from "next/image";
+
+import { type AboutPageData } from "@repo/contracts/pages";
+import { ContentSection } from "@repo/ui";
 
 interface AboutPersonalSectionProps {
   personal: AboutPageData["personal"];

@@ -1,11 +1,12 @@
 import { Box, Button, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
-import { BlogPost } from "@repo/api";
-import { ContentSection } from "@repo/ui";
 import Image from "next/image";
 import Link from "next/link";
 
+import { type PublicBlogPost } from "@repo/contracts/blog";
+import { ContentSection } from "@repo/ui";
+
 interface BlogFeaturedSectionProps {
-  featuredPost: BlogPost;
+  featuredPost: PublicBlogPost;
 }
 
 export const BlogFeaturedSection = ({ featuredPost }: BlogFeaturedSectionProps) => {

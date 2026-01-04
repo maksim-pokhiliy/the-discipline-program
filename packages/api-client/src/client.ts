@@ -1,0 +1,60 @@
+import { InternalServerError } from "@repo/errors";
+
+interface ApiClientConfig {
+  baseUrl: string;
+}
+
+export class ApiClient {
+  private baseUrl: string;
+
+  constructor({ baseUrl }: ApiClientConfig) {
+    this.baseUrl = baseUrl;
+  }
+
+  async request<T>(
+    url: string,
+    method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" = "GET",
+    body?: unknown,
+    queryParams?: Record<string, string>,
+  ): Promise<T> {
+    const isFormData = body instanceof FormData;
+    const headers: Record<string, string> = {};
+
+    let fullUrl = `${this.baseUrl}${url}`;
+
+    if (!isFormData) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    if (queryParams) {
+      const params = new URLSearchParams(queryParams).toString();
+
+      if (params) {
+        fullUrl += `?${params}`;
+      }
+    }
+
+    const response = await fetch(fullUrl, {
+      method,
+      headers,
+      body: isFormData ? body : body ? JSON.stringify(body) : undefined,
+    });
+
+    if (!response.ok) {
+      const error = await response
+        .json()
+        .catch(() => ({ error: `Request failed: ${response.status}` }));
+
+      throw new InternalServerError(error.error || `API request failed`, {
+        status: response.status,
+        url: fullUrl,
+      });
+    }
+
+    return response.json();
+  }
+}
+
+export const createBrowserApiClient = (baseUrl: string = "") => new ApiClient({ baseUrl });
+
+export const createServerApiClient = (baseUrl: string) => new ApiClient({ baseUrl });

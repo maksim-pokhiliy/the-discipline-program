@@ -1,7 +1,8 @@
-import { pagesApi } from "@repo/api/server";
-import { SEO_CONFIG } from "@repo/shared";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 
+import { SEO_CONFIG } from "@repo/shared";
+
+import { api } from "@app/lib/api";
 import { BlogArticlePageClient } from "@app/modules/blog-article";
 
 interface BlogArticlePageProps {
@@ -12,7 +13,7 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
   const { slug } = await params;
 
   try {
-    const { post } = await pagesApi.getBlogArticle(slug);
+    const { post } = await api.pages.getBlogArticle(slug);
 
     return {
       title: `${post.title} | The Discipline Program`,
@@ -44,9 +45,11 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
   }
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
   const { slug } = await params;
-  const initialData = await pagesApi.getBlogArticle(slug);
+  const initialData = await api.pages.getBlogArticle(slug);
 
   return <BlogArticlePageClient slug={slug} initialData={initialData} />;
 }

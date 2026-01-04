@@ -1,6 +1,7 @@
+import { type Metadata } from "next";
+
 import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
 import { SuspenseWrapper } from "@repo/ui";
-import { Metadata } from "next";
 
 import { PaymentErrorPage } from "@app/modules/payment-error";
 
@@ -14,6 +15,8 @@ export const metadata: Metadata = {
     url: `${SEO_CONFIG.siteUrl}/payment/error`,
   },
 };
+
+export const dynamic = "force-dynamic";
 
 export default function PaymentError() {
   return (

@@ -3,6 +3,7 @@
 import { AppBar, Stack, Toolbar, useMediaQuery } from "@mui/material";
 
 import { Logo } from "../logo";
+
 import { Drawer } from "./drawer";
 import { HideOnScroll } from "./hide-on-scroll";
 import { Navigation } from "./navigation";

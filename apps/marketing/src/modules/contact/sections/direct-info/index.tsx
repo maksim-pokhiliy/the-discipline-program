@@ -2,7 +2,8 @@ import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import EmailIcon from "@mui/icons-material/Email";
 import TelegramIcon from "@mui/icons-material/Telegram";
 import { Box, Card, CardContent, Grid, IconButton, Stack, Typography } from "@mui/material";
-import { ContactPageData } from "@repo/api";
+
+import { type ContactPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
 interface ContactDirectInfoProps {

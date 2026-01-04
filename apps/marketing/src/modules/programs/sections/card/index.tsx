@@ -1,5 +1,6 @@
 import { Button, Card, CardContent, Stack, Typography } from "@mui/material";
-import { Program } from "@repo/api";
+
+import { type Program } from "@repo/contracts/program";
 
 interface ProgramCardProps {
   program: Program;

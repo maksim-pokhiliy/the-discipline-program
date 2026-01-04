@@ -1,7 +1,8 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import { AdminReviewsPageData } from "@repo/api";
+
+import { type AdminReviewsPageData } from "@repo/contracts/review";
 import { QueryWrapper } from "@repo/query";
 
 import { useReviewsPageData } from "@app/lib/hooks";

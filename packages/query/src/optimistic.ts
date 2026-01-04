@@ -1,6 +1,7 @@
 import type { QueryClient, QueryKey } from "@tanstack/react-query";
 
 export type WithId = { id: string };
+
 export type WithSortOrder = { sortOrder: number };
 
 type Snapshot<TData> = {
@@ -78,6 +79,7 @@ export const optimisticReorderPageList = <
         if (!old) {
           return old;
         }
+
         return setList(old, applyReorderSortOrder(reordered));
       });
 
