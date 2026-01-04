@@ -45,6 +45,8 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
   }
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
   const { slug } = await params;
   const initialData = await api.pages.getBlogArticle(slug);
