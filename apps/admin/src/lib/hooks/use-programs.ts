@@ -1,8 +1,9 @@
 "use client";
 
-import type { AdminProgramsPageData, Program } from "@repo/api";
-import { adminKeys } from "@repo/query";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import type { AdminProgramsPageData, Program } from "@repo/contracts/program";
+import { adminKeys, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
 
@@ -15,6 +16,7 @@ export const useProgramsPageData = ({ initialData }: UseProgramsPageDataOptions 
     queryKey: adminKeys.programs.page(),
     queryFn: api.programs.getPageData,
     initialData,
+    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
   });
 };
 

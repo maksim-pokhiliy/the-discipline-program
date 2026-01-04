@@ -1,7 +1,8 @@
-import { pagesApi } from "@repo/api/server";
-import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
-import { Metadata } from "next";
+import { type Metadata } from "next";
 
+import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
+
+import { api } from "@app/lib/api";
 import { ProgramsPageClient } from "@app/modules/programs";
 
 export const metadata: Metadata = {
@@ -15,8 +16,10 @@ export const metadata: Metadata = {
   },
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function ProgramsPage() {
-  const initialData = await pagesApi.getProgramsPage();
+  const initialData = await api.pages.getPrograms();
 
   return <ProgramsPageClient initialData={initialData} />;
 }

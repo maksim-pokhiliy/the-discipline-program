@@ -1,7 +1,8 @@
 "use client";
 
+import { type ReactNode } from "react";
+
 import { Card, CardContent, Typography, Stack, Box } from "@mui/material";
-import { ReactNode } from "react";
 
 interface StatsCardProps {
   title: string;

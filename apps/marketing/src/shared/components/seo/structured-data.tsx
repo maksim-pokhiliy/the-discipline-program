@@ -1,4 +1,4 @@
-import { Program, Review } from "@repo/api";
+import { type Program, type Review } from "@repo/contracts";
 import { generateStructuredData } from "@repo/shared";
 
 interface StructuredDataProps {

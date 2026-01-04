@@ -1,4 +1,4 @@
-import { alpha, Components, Theme } from "@mui/material/styles";
+import { alpha, type Components, type Theme } from "@mui/material/styles";
 
 export const MuiButton: Components<Theme>["MuiButton"] = {
   defaultProps: {

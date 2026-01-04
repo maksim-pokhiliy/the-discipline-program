@@ -1,7 +1,8 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import { AdminBlogPageData } from "@repo/api";
+
+import { type AdminBlogPageData } from "@repo/contracts/blog";
 import { QueryWrapper } from "@repo/query";
 
 import { useBlogPageData } from "@app/lib/hooks";

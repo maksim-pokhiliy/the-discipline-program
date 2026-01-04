@@ -5,7 +5,8 @@ import DraftsIcon from "@mui/icons-material/Drafts";
 import PublicIcon from "@mui/icons-material/Public";
 import StarIcon from "@mui/icons-material/Star";
 import { Grid } from "@mui/material";
-import { BlogStats } from "@repo/api";
+
+import { type BlogStats } from "@repo/contracts/blog";
 import { ContentSection } from "@repo/ui";
 
 import { StatsCard } from "@app/shared/components/ui";

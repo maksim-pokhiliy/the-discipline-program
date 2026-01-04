@@ -1,9 +1,10 @@
 import { Box } from "@mui/material";
+import { type Metadata } from "next";
+
 import { NextProvider } from "@repo/mui";
 import { QueryProvider } from "@repo/query";
 import { DOM_ANCHORS, SEO_CONFIG } from "@repo/shared";
 import { Header } from "@repo/ui";
-import { Metadata } from "next";
 
 import { Footer } from "@app/shared/components/layout";
 import { StructuredData } from "@app/shared/components/seo";

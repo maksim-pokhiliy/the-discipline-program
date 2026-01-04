@@ -1,9 +1,10 @@
 "use client";
 
-import { IconButton, Drawer as MuiDrawer } from "@mui/material";
+import { useState } from "react";
+
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import MenuIcon from "@mui/icons-material/Menu";
-import { useState } from "react";
+import { IconButton, Drawer as MuiDrawer } from "@mui/material";
 
 import { Navigation } from "./navigation";
 

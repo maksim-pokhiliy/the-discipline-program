@@ -1,7 +1,7 @@
-import { Program, Review } from "@repo/api";
+import { type Program, type Review } from "@repo/contracts";
 
 import { SEO_CONFIG } from "./seo";
-import { PAGE_SEO, PageSeoKey } from "./seo-page";
+import { PAGE_SEO, type PageSeoKey } from "./seo-page";
 
 export interface SEOData {
   title: string;

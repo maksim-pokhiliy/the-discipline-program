@@ -1,4 +1,4 @@
-import { ContactPageData } from "@repo/api";
+import { type ContactPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
 interface ContactHeroProps {

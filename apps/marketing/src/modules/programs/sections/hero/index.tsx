@@ -1,4 +1,4 @@
-import { ProgramsPageData } from "@repo/api";
+import { type ProgramsPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
 interface ProgramsHeroSectionProps {

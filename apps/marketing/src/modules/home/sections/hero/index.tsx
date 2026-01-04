@@ -1,6 +1,7 @@
 import { Button, Typography } from "@mui/material";
-import { HomePageData } from "@repo/api";
 import Link from "next/link";
+
+import { type HomePageData } from "@repo/contracts/pages";
 
 import { FullscreenSection } from "@app/shared/components/ui";
 

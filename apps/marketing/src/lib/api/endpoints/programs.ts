@@ -1,7 +1,7 @@
-import { Program } from "@repo/api";
+import { type Program } from "@repo/contracts/program";
 
 import { apiClient } from "../client";
 
 export const programsAPI = {
-  getAll: (): Promise<Program[]> => apiClient.request("/api/programs"),
+  getAll: (): Promise<Program[]> => apiClient.request("/api/public/programs"),
 };

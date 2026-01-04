@@ -1,10 +1,12 @@
 "use client";
 
-import { Container, Grid } from "@mui/material";
-import { Program, ProgramsPageData } from "@repo/api";
-import { ContentSection } from "@repo/ui";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+
+import { Container, Grid } from "@mui/material";
+import { useRouter, useSearchParams } from "next/navigation";
+
+import { type Program, type ProgramsPageData } from "@repo/contracts";
+import { ContentSection } from "@repo/ui";
 
 import { ProgramCard } from "../card";
 import { ProgramModal } from "../modal";

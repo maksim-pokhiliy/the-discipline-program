@@ -1,5 +1,6 @@
 import { Button, Card, CardContent, Grid, Stack, Typography } from "@mui/material";
-import { HomePageData } from "@repo/api";
+
+import { type HomePageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
 interface HomeProgramsPreviewProps {

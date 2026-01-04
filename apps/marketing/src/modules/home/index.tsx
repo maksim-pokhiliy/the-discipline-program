@@ -1,9 +1,10 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import { HomePageData } from "@repo/api";
-import { QueryWrapper } from "@repo/query";
 import Head from "next/head";
+
+import { type HomePageData } from "@repo/contracts/pages";
+import { QueryWrapper } from "@repo/query";
 
 import { useHomePage } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";

@@ -1,6 +1,8 @@
-"use client";
-
-import { Program, ProgramStats, AdminProgramsPageData } from "@repo/api";
+import {
+  type Program,
+  type ProgramStats,
+  type AdminProgramsPageData,
+} from "@repo/contracts/program";
 
 import { apiClient } from "../client";
 
@@ -10,25 +12,26 @@ type SortOrderUpdate = {
 };
 
 export const programsAPI = {
-  getPageData: (): Promise<AdminProgramsPageData> => apiClient.request("/api/programs/page-data"),
+  getPageData: (): Promise<AdminProgramsPageData> =>
+    apiClient.request("/api/admin/programs/page-data"),
 
-  getAll: (): Promise<Program[]> => apiClient.request("/api/programs"),
+  getAll: (): Promise<Program[]> => apiClient.request("/api/admin/programs"),
 
-  getById: (id: string): Promise<Program> => apiClient.request(`/api/programs/${id}`),
+  getById: (id: string): Promise<Program> => apiClient.request(`/api/admin/programs/${id}`),
 
-  getStats: (): Promise<ProgramStats> => apiClient.request("/api/programs/stats"),
+  getStats: (): Promise<ProgramStats> => apiClient.request("/api/admin/programs/stats"),
 
   create: (data: Partial<Program>): Promise<Program> =>
-    apiClient.request("/api/programs", "POST", data),
+    apiClient.request("/api/admin/programs", "POST", data),
 
   update: (id: string, data: Partial<Program>): Promise<Program> =>
-    apiClient.request(`/api/programs/${id}`, "PUT", data),
+    apiClient.request(`/api/admin/programs/${id}`, "PUT", data),
 
-  delete: (id: string): Promise<void> => apiClient.request(`/api/programs/${id}`, "DELETE"),
+  delete: (id: string): Promise<void> => apiClient.request(`/api/admin/programs/${id}`, "DELETE"),
 
   toggleStatus: (id: string): Promise<Program> =>
-    apiClient.request(`/api/programs/${id}/toggle`, "PATCH"),
+    apiClient.request(`/api/admin/programs/${id}/toggle`, "PATCH"),
 
   updateOrder: (updates: SortOrderUpdate[]): Promise<{ success: true }> =>
-    apiClient.request("/api/programs/order", "PATCH", { updates }),
+    apiClient.request("/api/admin/programs/order", "PATCH", { updates }),
 };

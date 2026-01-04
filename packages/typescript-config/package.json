@@ -1,9 +1,10 @@
 {
   "name": "@repo/typescript-config",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
-  "license": "MIT",
-  "publishConfig": {
-    "access": "public"
+  "type": "module",
+  "main": "./base.json",
+  "devDependencies": {
+    "typescript": "catalog:"
   }
 }

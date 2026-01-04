@@ -1,6 +1,10 @@
-import { pagesApi } from "@repo/api/server";
+import { type MetadataRoute } from "next";
+
 import { SEO_CONFIG } from "@repo/shared";
-import { MetadataRoute } from "next";
+
+import { api } from "@app/lib/api";
+
+export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = SEO_CONFIG.siteUrl;
@@ -39,7 +43,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const blogData = await pagesApi.getBlogPage();
+    const blogData = await api.pages.getBlog();
 
     const blogPages = blogData.posts.map((post) => ({
       url: `${baseUrl}/blog/${post.slug}`,

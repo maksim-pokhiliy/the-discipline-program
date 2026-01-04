@@ -1,17 +1,20 @@
 import { alpha, Box, Chip, Container, Stack, Typography } from "@mui/material";
-import { BlogPost } from "@repo/api";
 import Image from "next/image";
 
+import { type PublicBlogPost } from "@repo/contracts/blog";
+
 interface BlogArticleHeroProps {
-  post: BlogPost;
+  post: PublicBlogPost;
 }
 
 export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
-  const publishedDate = new Date(post.publishedAt).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  const publishedDate = post.publishedAt
+    ? new Date(post.publishedAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
+    : "Not published";
 
   return (
     <Box sx={{ position: "relative", overflow: "hidden" }}>

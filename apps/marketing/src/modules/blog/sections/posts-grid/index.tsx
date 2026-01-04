@@ -1,11 +1,12 @@
 import { Box, Button, Card, CardContent, Chip, Grid, Stack, Typography } from "@mui/material";
-import { BlogPost } from "@repo/api";
-import { ContentSection } from "@repo/ui";
 import Image from "next/image";
 import Link from "next/link";
 
+import { type PublicBlogPost } from "@repo/contracts/blog";
+import { ContentSection } from "@repo/ui";
+
 interface BlogPostsGridProps {
-  posts: BlogPost[];
+  posts: PublicBlogPost[];
   categories: string[];
 }
 

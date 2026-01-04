@@ -9,12 +9,13 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { BlogPost } from "@repo/api";
 import Image from "next/image";
 import Link from "next/link";
 
+import { type PublicBlogPostPreview } from "@repo/contracts/blog";
+
 interface BlogArticleRelatedProps {
-  relatedPosts: BlogPost[];
+  relatedPosts: PublicBlogPostPreview[];
 }
 
 export const BlogArticleRelated = ({ relatedPosts }: BlogArticleRelatedProps) => {

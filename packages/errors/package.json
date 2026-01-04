@@ -1,0 +1,28 @@
+{
+  "name": "@repo/errors",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "type": "module",
+  "types": "./src/index.ts",
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "lint": "eslint . --fix --max-warnings 0",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
+  },
+  "dependencies": {
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "next": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "next": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  }
+}

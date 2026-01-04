@@ -1,7 +1,8 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import { AboutPageData } from "@repo/api";
+
+import { type AboutPageData } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/query";
 
 import { useAboutPage } from "@app/lib/hooks";

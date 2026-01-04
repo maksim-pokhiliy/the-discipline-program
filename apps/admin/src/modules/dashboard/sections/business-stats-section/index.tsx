@@ -18,7 +18,8 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import { BusinessStats } from "@repo/api";
+
+import { type BusinessStats } from "@repo/contracts/dashboard";
 import { ContentSection } from "@repo/ui";
 
 import { StatsCard } from "@app/shared/components/ui";

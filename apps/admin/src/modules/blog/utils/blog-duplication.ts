@@ -1,6 +1,6 @@
 "use client";
 
-import { AdminBlogPost } from "@repo/api";
+import { type AdminBlogPost } from "@repo/contracts/blog";
 
 import { getMaxSortOrder } from "./helpers";
 

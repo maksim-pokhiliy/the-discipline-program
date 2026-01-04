@@ -2,7 +2,8 @@ import PersonIcon from "@mui/icons-material/Person";
 import SchoolIcon from "@mui/icons-material/School";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Card, CardContent, Grid, Stack, Typography } from "@mui/material";
-import { HomePageData } from "@repo/api";
+
+import { type HomePageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
 interface FeaturesSectionProps {

@@ -1,4 +1,4 @@
-import { BlogPageData } from "@repo/api";
+import { type BlogPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
 interface BlogHeroSectionProps {
