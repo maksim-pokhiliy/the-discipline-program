@@ -1,9 +1,5 @@
 version: "3"
 
-vars:
-  DEFAULT_APP: admin
-  APP: "{{.APP | default .DEFAULT_APP}}"
-
 tasks:
   clean:
     desc: "Remove node_modules, .turbo, .next"
@@ -29,7 +25,7 @@ tasks:
   dev:
     desc: "Run dev server for selected app (default: admin)"
     cmds:
-      - pnpm turbo run dev --filter={{.APP}}
+      - pnpm turbo run dev
 
   build:
     desc: "Build the entire repo"
@@ -39,8 +35,8 @@ tasks:
   preview:
     desc: "Build + start app in prod mode (default: admin)"
     cmds:
-      - pnpm --filter {{.APP}} build
-      - pnpm --filter {{.APP}} start
+      - pnpm build
+      - pnpm start
 
   lint:
     desc: "Run lint with fix across all packages"
