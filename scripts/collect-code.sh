@@ -1,16 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OUTPUT_FILE="codebase.txt"
+OUTPUT_FILE="the-discipline-program-codebase-dump.txt"
 
-EXCLUDE_DIRS=(.git .next .vercel .turbo node_modules .vscode .idea dist build coverage temp tmp migrations)
-EXCLUDE_FILES=("*.log" "*.tmp" "*.cache" "pnpm-lock.yaml" "package-lock.json" "yarn.lock" "tsconfig.tsbuildinfo" ".DS_Store" "Thumbs.db" "$OUTPUT_FILE" "*.svg" "*.png" "*.jpg" "*.jpeg" "*.ico" "*.snap" "next-env.d.ts")
-
-# Важно: лучше задавать расширения как regex, а не как bash glob в цикле
+EXCLUDE_DIRS=(.git .next .vercel .turbo node_modules .vscode .idea dist build coverage temp tmp public)
+EXCLUDE_FILES=("*.log" "*.tmp" "*.cache" "pnpm-lock.yaml" "package-lock.json" "yarn.lock" "tsconfig.tsbuildinfo" ".DS_Store" "Thumbs.db" "$OUTPUT_FILE" "*.svg" "next-env.d.ts")
 INCLUDE_REGEX='\.((c|m)?js|tsx?|json|md|ya?ml|env(\.example)?|sql|prisma|txt)$'
-
-# Защита от гигантских файлов: можно поднять лимит если хочешь
-MAX_BYTES=$((512 * 1024)) # 512 KB
+MAX_BYTES=$((512 * 1024))
 
 echo "🚀 Сбор кодовой базы проекта..."
 : > "$OUTPUT_FILE"
@@ -26,7 +22,6 @@ write ""
 # --- Project tree (structure is reality) ---
 write "=== PROJECT TREE (filtered) ==="
 if command -v tree >/dev/null 2>&1; then
-  # tree сам по себе полезнее любых фантазий
   tree -a -I "$(IFS="|"; echo "${EXCLUDE_DIRS[*]}")" \
     --dirsfirst >> "$OUTPUT_FILE" 2>/dev/null || write "[tree failed]"
 else
@@ -35,7 +30,6 @@ fi
 write ""
 
 # --- Build a deterministic file list using find ---
-# Prune excluded dirs, filter by regex, exclude excluded files (glob patterns)
 write "=== FILE INDEX (filtered, deterministic) ==="
 
 # Build prune expression
