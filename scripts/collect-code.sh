@@ -3,8 +3,8 @@ set -euo pipefail
 
 OUTPUT_FILE="codebase.txt"
 
-EXCLUDE_DIRS=(.git .next .vercel .turbo node_modules .vscode .idea dist build coverage temp tmp)
-EXCLUDE_FILES=("*.log" "*.tmp" "*.cache" "pnpm-lock.yaml" "package-lock.json" "yarn.lock" "tsconfig.tsbuildinfo" ".DS_Store" "Thumbs.db" "$OUTPUT_FILE")
+EXCLUDE_DIRS=(.git .next .vercel .turbo node_modules .vscode .idea dist build coverage temp tmp migrations)
+EXCLUDE_FILES=("*.log" "*.tmp" "*.cache" "pnpm-lock.yaml" "package-lock.json" "yarn.lock" "tsconfig.tsbuildinfo" ".DS_Store" "Thumbs.db" "$OUTPUT_FILE" "*.svg" "*.png" "*.jpg" "*.jpeg" "*.ico" "*.snap" "next-env.d.ts")
 
 # Важно: лучше задавать расширения как regex, а не как bash glob в цикле
 INCLUDE_REGEX='\.((c|m)?js|tsx?|json|md|ya?ml|env(\.example)?|sql|prisma|txt)$'
