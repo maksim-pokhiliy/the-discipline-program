@@ -13,16 +13,16 @@ type SortOrderUpdate = {
 
 export const programsAPI = {
   getPageData: (): Promise<AdminProgramsPageData> =>
-    apiClient.request("api/admin/programs/page-data"),
+    apiClient.request("/api/admin/programs/page-data"),
 
-  getAll: (): Promise<Program[]> => apiClient.request("api/admin/programs"),
+  getAll: (): Promise<Program[]> => apiClient.request("/api/admin/programs"),
 
   getById: (id: string): Promise<Program> => apiClient.request(`/api/admin/programs/${id}`),
 
-  getStats: (): Promise<ProgramStats> => apiClient.request("api/admin/programs/stats"),
+  getStats: (): Promise<ProgramStats> => apiClient.request("/api/admin/programs/stats"),
 
   create: (data: Partial<Program>): Promise<Program> =>
-    apiClient.request("api/admin/programs", "POST", data),
+    apiClient.request("/api/admin/programs", "POST", data),
 
   update: (id: string, data: Partial<Program>): Promise<Program> =>
     apiClient.request(`/api/admin/programs/${id}`, "PUT", data),
@@ -33,5 +33,5 @@ export const programsAPI = {
     apiClient.request(`/api/admin/programs/${id}/toggle`, "PATCH"),
 
   updateOrder: (updates: SortOrderUpdate[]): Promise<{ success: true }> =>
-    apiClient.request("api/admin/programs/order", "PATCH", { updates }),
+    apiClient.request("/api/admin/programs/order", "PATCH", { updates }),
 };
