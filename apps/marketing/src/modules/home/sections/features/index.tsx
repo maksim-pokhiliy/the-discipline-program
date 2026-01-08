@@ -19,9 +19,9 @@ const iconMap = {
 
 export const HomeFeaturesSection = ({ whyChoose, features }: FeaturesSectionProps) => {
   return (
-    <ContentSection title={whyChoose.title} subtitle={whyChoose.subtitle} backgroundColor="dark">
+    <ContentSection title={whyChoose?.title} subtitle={whyChoose?.subtitle} backgroundColor="dark">
       <Grid container spacing={4}>
-        {features.map((feature) => {
+        {features?.map((feature) => {
           const IconComponent = iconMap[feature.iconName as keyof typeof iconMap];
 
           return (

@@ -64,7 +64,7 @@ export const ContactForm = ({ form }: ContactFormProps) => {
   const isValid = formData.name.trim() && formData.email.trim() && formData.message.trim();
 
   return (
-    <ContentSection title={form.title} subtitle={form.subtitle}>
+    <ContentSection title={form?.title} subtitle={form?.subtitle}>
       <Grid container justifyContent="center">
         <Grid size={{ xs: 12, md: 8, lg: 6 }}>
           <Card>
@@ -112,20 +112,22 @@ export const ContactForm = ({ form }: ContactFormProps) => {
                     disabled={isPending}
                   />
 
-                  <TextField
-                    select
-                    label="Program Interest"
-                    value={formData.program}
-                    onChange={handleChange("program")}
-                    fullWidth
-                    disabled={isPending}
-                  >
-                    {form.programs.map((program) => (
-                      <MenuItem key={program.value} value={program.value}>
-                        {program.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                  {form?.programs && (
+                    <TextField
+                      select
+                      label="Program Interest"
+                      value={formData.program}
+                      onChange={handleChange("program")}
+                      fullWidth
+                      disabled={isPending}
+                    >
+                      {form.programs.map((program) => (
+                        <MenuItem key={program.value} value={program.value}>
+                          {program.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  )}
 
                   <TextField
                     label="Your Message"

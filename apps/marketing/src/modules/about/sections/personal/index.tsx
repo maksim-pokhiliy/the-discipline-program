@@ -10,7 +10,7 @@ interface AboutPersonalSectionProps {
 
 export const AboutPersonalSection = ({ personal }: AboutPersonalSectionProps) => {
   return (
-    <ContentSection title={personal.title} backgroundColor="dark">
+    <ContentSection title={personal?.title} backgroundColor="dark">
       <Grid container spacing={8} alignItems="center">
         <Grid size={{ xs: 12, md: 5 }}>
           <Box
@@ -21,16 +21,18 @@ export const AboutPersonalSection = ({ personal }: AboutPersonalSectionProps) =>
               borderRadius: theme.shape.borderRadius,
             })}
           >
-            <Image
-              src={personal.image}
-              alt="Denis with Chekhov"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              fill
-              style={{
-                objectFit: "cover",
-                filter: "brightness(1.1) contrast(1.1)",
-              }}
-            />
+            {personal?.image && (
+              <Image
+                src={personal.image}
+                alt="Denis with Chekhov"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                fill
+                style={{
+                  objectFit: "cover",
+                  filter: "brightness(1.1) contrast(1.1)",
+                }}
+              />
+            )}
           </Box>
         </Grid>
 
@@ -43,7 +45,7 @@ export const AboutPersonalSection = ({ personal }: AboutPersonalSectionProps) =>
                 fontStyle: "italic",
               }}
             >
-              &quot;{personal.description}&quot;
+              &quot;{personal?.description}&quot;
             </Typography>
 
             <Box>

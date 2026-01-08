@@ -1,157 +1,435 @@
+// packages/api-server/prisma/schema.prisma
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL_UNPOOLED")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
+// =========================================================================
+// DOMAIN: IDENTITY & ACCESS (Shared)
+// =========================================================================
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  role      Role     @default(ADMIN)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Profiles
+  athleteProfile AthleteProfile?
+  coachProfile   CoachProfile?
+
+  // Relations: Billing (Singleton Subscription)
+  subscription Subscription?
+  transactions Transaction[]
+
+  // Relations: Training
+  workoutLogs WorkoutLog[]
+
+  // NextAuth.js standard models
+  accounts Account[]
+  sessions Session[]
 
   @@map("users")
 }
 
-model Program {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  description String
-  price       Float
-  currency    String   @default("USD")
-  features    String[]
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  orders      Order[]
-  reviews     Review[]
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
-  @@map("programs")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
-model Feature {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  iconName    String
-  sortOrder   Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("features")
-}
-
-model Review {
+model Session {
   id           String   @id @default(cuid())
-  text         String
-  authorName   String
-  authorRole   String
-  authorAvatar String?
-  rating       Int      @db.SmallInt
-  programId    String?
-  program      Program? @relation(fields: [programId], references: [id])
-  isActive     Boolean  @default(true)
-  isFeatured   Boolean  @default(false)
-  sortOrder    Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("reviews")
+  @@map("sessions")
 }
 
-model BlogPost {
-  id          String    @id @default(cuid())
-  title       String
-  slug        String    @unique
-  excerpt     String
-  content     String    @db.Text
-  coverImage  String?
-  author      String
-  publishedAt DateTime?
-  readTime    Int?
-  category    String
-  tags        String[]
-  isPublished Boolean   @default(false)
-  isFeatured  Boolean   @default(false)
-  sortOrder   Int       @default(0)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-  @@map("blog_posts")
+  @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
-model Order {
-  id            String      @id @default(cuid())
-  programId     String
-  programName   String
-  amount        Float
-  currency      String      @default("USD")
-  customerEmail String
-  customerName  String?
-  status        OrderStatus @default(PENDING)
-  monoInvoiceId String?
-  monoPageUrl   String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  completedAt   DateTime?
+model AthleteProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  program Program @relation(fields: [programId], references: [id])
+  name     String?
+  gender   Gender?
+  heightCm Int?
+  weightKg Decimal? @db.Decimal(5, 2)
 
-  @@map("orders")
-}
-
-model PageSection {
-  id        String   @id @default(cuid())
-  pageSlug  String
-  section   String
-  data      Json
-  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([pageSlug, section])
-  @@map("page_sections")
+  @@map("app_athlete_profiles")
 }
 
-model ContactSubmission {
-  id        String        @id @default(cuid())
-  name      String
-  email     String
-  program   String?
-  message   String        @db.Text
-  status    ContactStatus @default(NEW)
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
+model CoachProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("contact_submissions")
+  bio String?
+
+  plans TrainingPlan[]
+
+  @@map("app_coach_profiles")
 }
 
 enum Role {
+  USER
+  COACH
   ADMIN
-  EDITOR
 }
 
-enum OrderStatus {
+enum Gender {
+  MALE
+  FEMALE
+}
+
+// =========================================================================
+// DOMAIN: BILLING (Singleton State Machine)
+// =========================================================================
+
+model BillingProduct {
+  id       String  @id // Stripe Product ID
+  name     String
+  isActive Boolean @default(true)
+
+  // Loose link to Platform Content
+  trainingPlanId String?
+
+  prices Price[]
+
+  @@map("app_billing_products")
+}
+
+model Price {
+  id        String         @id // Stripe Price ID
+  productId String
+  product   BillingProduct @relation(fields: [productId], references: [id])
+
+  amountCents Int
+  currency    String  @default("USD")
+  interval    String // "month", "year"
+  isActive    Boolean @default(true)
+
+  subscriptions Subscription[]
+
+  @@map("app_prices")
+}
+
+model Subscription {
+  id String @id // Stripe Subscription ID (stable)
+
+  // Singleton relation: One User = One Subscription
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id])
+
+  priceId String
+  price   Price  @relation(fields: [priceId], references: [id])
+
+  status SubscriptionStatus
+
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+
+  // Grace Period Logic
+  graceEndsAt DateTime?
+
+  canceledAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("app_subscriptions")
+}
+
+model Transaction {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  subscriptionId String?
+  amountCents    Int
+  currency       String
+  status         TransactionStatus
+
+  providerTxId   String  @unique
+  idempotencyKey String? @unique
+
+  createdAt DateTime @default(now())
+
+  @@map("app_transactions")
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELED
+}
+
+enum TransactionStatus {
   PENDING
-  PROCESSING
-  COMPLETED
+  SUCCEEDED
   FAILED
-  EXPIRED
 }
 
-enum ContactStatus {
-  NEW
-  IN_PROGRESS
-  REPLIED
-  CLOSED
+// =========================================================================
+// DOMAIN: TRAINING CORE (Immutable Logs & Exercise Library)
+// =========================================================================
+
+// Reference Dictionary for Movements
+model Exercise {
+  id          String  @id @default(cuid())
+  name        String  @unique // Unique name for analytics grouping
+  description String? // Movement standards text
+  videoUrl    String? // Vimeo/YouTube link for technique
+
+  // Categorization for filtering
+  category BlockType?
+
+  // Relations
+  prescribedSets      PrescribedSet[]
+  setLogSubstitutions SetLog[] // When used as a substitution
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("app_exercises")
+}
+
+model TrainingPlan {
+  id      String       @id @default(cuid())
+  coachId String
+  coach   CoachProfile @relation(fields: [coachId], references: [id])
+
+  name        String
+  description String?
+  isActive    Boolean @default(true)
+
+  workouts Workout[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("app_training_plans")
+}
+
+model Workout {
+  id     String       @id @default(cuid())
+  planId String
+  plan   TrainingPlan @relation(fields: [planId], references: [id])
+
+  dayOrder    Int
+  title       String
+  description String?
+
+  // Copy-on-Write / Versioning
+  isArchived Boolean @default(false)
+
+  blocks WorkoutBlock[]
+  logs   WorkoutLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("app_workouts")
+}
+
+model WorkoutBlock {
+  id        String  @id @default(cuid())
+  workoutId String
+  workout   Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+
+  sortOrder Int
+  type      BlockType @default(STRENGTH)
+
+  rounds     Int?
+  timeCapSec Int?
+
+  sets PrescribedSet[]
+
+  @@map("app_workout_blocks")
+}
+
+model PrescribedSet {
+  id      String       @id @default(cuid())
+  blockId String
+  block   WorkoutBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  // RELATIONAL LINK TO LIBRARY
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+
+  sets Int?
+  reps Int?
+
+  weightValue Decimal? @db.Decimal(6, 2)
+  weightUnit  Unit     @default(KG)
+  rpe         Int?
+
+  notes String?
+
+  logs SetLog[]
+
+  @@map("app_prescribed_sets")
+}
+
+// --- LOGGING ---
+
+model WorkoutLog {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  workoutId String
+  workout   Workout @relation(fields: [workoutId], references: [id])
+
+  date  DateTime @default(now())
+  notes String?
+  isRx  Boolean  @default(true)
+
+  setLogs SetLog[]
+
+  @@map("app_workout_logs")
+}
+
+model SetLog {
+  id           String     @id @default(cuid())
+  workoutLogId String
+  workoutLog   WorkoutLog @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
+
+  // Link to what was prescribed
+  prescribedSetId String?
+  prescribedSet   PrescribedSet? @relation(fields: [prescribedSetId], references: [id])
+
+  // EXPLICIT SUBSTITUTION TRACKING
+  // If null -> User performed the prescribed exercise.
+  // If set -> User performed THIS exercise instead.
+  substitutionExerciseId String?
+  substitutionExercise   Exercise? @relation(fields: [substitutionExerciseId], references: [id])
+
+  repsDone   Int
+  weightDone Decimal? @db.Decimal(6, 2)
+  rpeActual  Int?
+
+  @@map("app_set_logs")
+}
+
+enum BlockType {
+  STRENGTH
+  METCON
+  CARDIO
+  ACCESSORY
+  WARMUP
+  SKILL
+}
+
+enum Unit {
+  KG
+  LB
+}
+
+// =========================================================================
+// DOMAIN: MARKETING CMS
+// =========================================================================
+
+model MarketingPageSection {
+  id       String  @id @default(cuid())
+  pageSlug String
+  section  String
+  data     Json
+  isActive Boolean @default(true)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([pageSlug, section])
+  @@map("marketing_page_sections")
+}
+
+model MarketingBlogPost {
+  id         String  @id @default(cuid())
+  slug       String  @unique
+  title      String
+  excerpt    String?
+  content    String  @db.Text
+  coverImage String?
+  authorName String?
+
+  readTime    Int?
+  publishedAt DateTime?
+  isPublished Boolean   @default(false)
+  isFeatured  Boolean   @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("marketing_blog_posts")
+}
+
+model MarketingProgramPreview {
+  id          String @id @default(cuid())
+  slug        String @unique
+  title       String
+  description String
+
+  priceLabel String
+  features   Json
+
+  billingPriceId String?
+
+  sortOrder Int     @default(0)
+  isActive  Boolean @default(true)
+
+  @@map("marketing_program_previews")
+}
+
+model MarketingReview {
+  id           String  @id @default(cuid())
+  authorName   String
+  authorRole   String?
+  authorAvatar String?
+  text         String
+  rating       Int     @default(5)
+
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("marketing_reviews")
 }

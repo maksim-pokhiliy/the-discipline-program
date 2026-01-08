@@ -6,5 +6,5 @@ interface BlogHeroSectionProps {
 }
 
 export const BlogHeroSection = ({ hero }: BlogHeroSectionProps) => {
-  return <ContentSection title={hero.title} subtitle={hero.subtitle} backgroundColor="dark" />;
+  return <ContentSection title={hero?.title} subtitle={hero?.subtitle} backgroundColor="dark" />;
 };
