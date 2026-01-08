@@ -433,3 +433,17 @@ model MarketingReview {
 
   @@map("marketing_reviews")
 }
+
+model MarketingContactSubmission {
+  id      String  @id @default(cuid())
+  name    String?
+  email   String?
+  message String  @db.Text
+
+  status String @default("PENDING")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("marketing_contact_submissions")
+}
