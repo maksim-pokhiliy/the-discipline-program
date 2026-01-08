@@ -23,9 +23,9 @@ const getContactIcon = (type: string) => {
 
 export const ContactDirectInfo = ({ directContact }: ContactDirectInfoProps) => {
   return (
-    <ContentSection title={directContact.title} backgroundColor="dark">
+    <ContentSection title={directContact?.title} backgroundColor="dark">
       <Grid container spacing={4}>
-        {directContact.contacts.map((contact, index) => (
+        {directContact?.contacts.map((contact, index) => (
           <Grid key={index} size={{ xs: 12, md: 6 }}>
             <Card sx={{ height: "100%", textAlign: "center" }}>
               <CardContent sx={{ p: 4 }}>
@@ -111,7 +111,7 @@ export const ContactDirectInfo = ({ directContact }: ContactDirectInfoProps) => 
                       lineHeight: 1.6,
                     }}
                   >
-                    {directContact.workingHours}
+                    {directContact?.workingHours}
                   </Typography>
                 </Stack>
               </Stack>

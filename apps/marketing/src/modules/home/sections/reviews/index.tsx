@@ -10,9 +10,9 @@ interface HomeReviewsSectionProps {
 
 export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionProps) => {
   return (
-    <ContentSection title={reviews.title} subtitle={reviews.subtitle} backgroundColor="dark">
+    <ContentSection title={reviews?.title} subtitle={reviews?.subtitle} backgroundColor="dark">
       <Grid container spacing={4}>
-        {reviewsList.map((review) => (
+        {reviewsList?.map((review) => (
           <Grid key={review.id} size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: "100%", display: "flex" }}>
               <CardContent sx={{ display: "flex", flexDirection: "column", width: "100%" }}>

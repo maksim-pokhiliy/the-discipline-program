@@ -4,7 +4,7 @@ import { prisma } from "../../db/client";
 
 export const programsApi = {
   getPrograms: async (): Promise<Program[]> => {
-    const programs = await prisma.program.findMany({
+    const programs = await prisma.marketingProgramPreview.findMany({
       where: { isActive: true },
       orderBy: { sortOrder: "asc" },
     });
@@ -13,7 +13,7 @@ export const programsApi = {
   },
 
   getProgramBySlug: async (slug: string): Promise<Program | null> => {
-    const program = await prisma.program.findFirst({
+    const program = await prisma.marketingProgramPreview.findFirst({
       where: {
         slug: slug,
         isActive: true,
@@ -25,18 +25,19 @@ export const programsApi = {
 
   getProgramStats: async (programId: string) => {
     const [totalOrders, completedOrders, revenue] = await Promise.all([
-      prisma.order.count({ where: { programId } }),
-      prisma.order.count({ where: { programId, status: "COMPLETED" } }),
-      prisma.order.aggregate({
-        where: { programId, status: "COMPLETED" },
-        _sum: { amount: true },
-      }),
+      // prisma.order.count({ where: { programId } }),
+      // prisma.order.count({ where: { programId, status: "COMPLETED" } }),
+      // prisma.order.aggregate({
+      //   where: { programId, status: "COMPLETED" },
+      //   _sum: { amount: true },
+      // }),
+      0, 0, 0,
     ]);
 
     return {
       totalOrders,
       completedOrders,
-      revenue: revenue._sum.amount || 0,
+      revenue,
     };
   },
 };

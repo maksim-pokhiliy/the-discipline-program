@@ -28,7 +28,7 @@ export const ContactPageClient = ({ initialData }: ContactPageClientProps) => {
       {(data) => (
         <>
           <Head>
-            <StructuredData type="faq" data={{ faqItems: data.faq.items }} />
+            <StructuredData type="faq" data={{ faqItems: data?.faq?.items }} />
           </Head>
 
           <Stack spacing={0}>
