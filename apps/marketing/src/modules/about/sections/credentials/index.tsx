@@ -9,9 +9,9 @@ interface AboutCredentialsSectionProps {
 
 export const AboutCredentialsSection = ({ credentials }: AboutCredentialsSectionProps) => {
   return (
-    <ContentSection title={credentials.title}>
+    <ContentSection title={credentials?.title}>
       <Grid container spacing={4}>
-        {credentials.items.map((item, index) => (
+        {credentials?.items.map((item, index) => (
           <Grid key={index} size={{ xs: 12, sm: 6, lg: 4 }}>
             <Card
               sx={{

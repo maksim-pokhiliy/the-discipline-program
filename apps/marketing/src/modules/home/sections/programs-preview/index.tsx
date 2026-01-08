@@ -12,9 +12,9 @@ export const HomeProgramsPreview = ({ programs, programsList }: HomeProgramsPrev
   const previewPrograms = programsList.slice(0, 3);
 
   return (
-    <ContentSection title={programs.title} subtitle={programs.subtitle}>
+    <ContentSection title={programs?.title} subtitle={programs?.subtitle}>
       <Grid container spacing={4}>
-        {previewPrograms.map((program) => (
+        {previewPrograms?.map((program) => (
           <Grid key={program.id} size={{ xs: 12, md: 4 }}>
             <Card sx={{ height: "100%", display: "flex" }}>
               <CardContent sx={{ display: "flex", flexDirection: "column", width: "100%" }}>

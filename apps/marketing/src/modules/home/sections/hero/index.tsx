@@ -11,17 +11,17 @@ interface HomeHeroSectionProps {
 
 export const HomeHeroSection = ({ hero }: HomeHeroSectionProps) => {
   return (
-    <FullscreenSection backgroundImage={hero.backgroundImage} maxWidth="lg">
+    <FullscreenSection backgroundImage={hero?.backgroundImage} maxWidth="lg">
       <Typography variant="h1" component="h1">
-        {hero.title}
+        {hero?.title}
       </Typography>
 
       <Typography variant="h5" sx={{ opacity: 0.8 }}>
-        {hero.subtitle}
+        {hero?.subtitle}
       </Typography>
 
-      <Button component={Link} href={hero.ctaHref} variant="contained" size="large">
-        {hero.ctaText}
+      <Button component={Link} href={hero?.ctaHref ?? ""} variant="contained" size="large">
+        {hero?.ctaText}
       </Button>
     </FullscreenSection>
   );

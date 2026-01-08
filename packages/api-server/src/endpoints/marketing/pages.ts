@@ -16,15 +16,19 @@ import { prisma } from "../../db/client";
 
 export const pagesApi = {
   getHomePage: async (): Promise<HomePageData> => {
-    const sections = await prisma.pageSection.findMany({
+    const sections = await prisma.marketingPageSection.findMany({
       where: { pageSlug: "home", isActive: true },
     });
 
-    const [features, programs, rawReviews] = await Promise.all([
-      prisma.feature.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
-      prisma.program.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
-      prisma.review.findMany({
-        where: { isActive: true, isFeatured: true },
+    const [programs, rawReviews] = await Promise.all([
+      // const [features, programs, rawReviews] = await Promise.all([
+      // prisma.feature.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.marketingProgramPreview.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: "asc" },
+      }),
+      prisma.marketingReview.findMany({
+        where: { isActive: true },
         orderBy: { sortOrder: "asc" },
       }),
     ]);
@@ -43,7 +47,7 @@ export const pagesApi = {
       programs: getSectionData<HomePageData["programs"]>("programs"),
       reviews: getSectionData<HomePageData["reviews"]>("reviews"),
       contact: getSectionData<HomePageData["contact"]>("contact"),
-      features,
+      // features,
       programsList: programs,
       reviewsList: reviews,
     };
@@ -51,8 +55,11 @@ export const pagesApi = {
 
   getProgramsPage: async (): Promise<ProgramsPageData> => {
     const [sections, programs] = await Promise.all([
-      prisma.pageSection.findMany({ where: { pageSlug: "programs", isActive: true } }),
-      prisma.program.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.marketingPageSection.findMany({ where: { pageSlug: "programs", isActive: true } }),
+      prisma.marketingProgramPreview.findMany({
+        where: { isActive: true },
+        orderBy: { sortOrder: "asc" },
+      }),
     ]);
 
     const getSectionData = <T>(sectionName: string): T => {
@@ -68,7 +75,7 @@ export const pagesApi = {
   },
 
   getAboutPage: async (): Promise<AboutPageData> => {
-    const sections = await prisma.pageSection.findMany({
+    const sections = await prisma.marketingPageSection.findMany({
       where: { pageSlug: "about", isActive: true },
     });
 
@@ -89,8 +96,8 @@ export const pagesApi = {
 
   getBlogPage: async (): Promise<BlogPageData> => {
     const [sections, posts] = await Promise.all([
-      prisma.pageSection.findMany({ where: { pageSlug: "blog", isActive: true } }),
-      prisma.blogPost.findMany({
+      prisma.marketingPageSection.findMany({ where: { pageSlug: "blog", isActive: true } }),
+      prisma.marketingBlogPost.findMany({
         where: {
           isPublished: true,
           coverImage: { not: null },
@@ -118,7 +125,7 @@ export const pagesApi = {
   },
 
   getContactPage: async (): Promise<ContactPageData> => {
-    const sections = await prisma.pageSection.findMany({
+    const sections = await prisma.marketingPageSection.findMany({
       where: { pageSlug: "contact", isActive: true },
     });
 
@@ -137,7 +144,7 @@ export const pagesApi = {
   },
 
   getBlogArticle: async (slug: string): Promise<BlogPostPageData> => {
-    const post = await prisma.blogPost.findFirst({
+    const post = await prisma.marketingBlogPost.findFirst({
       where: {
         slug,
         isPublished: true,
@@ -150,7 +157,7 @@ export const pagesApi = {
       throw new NotFoundError(`Article not found: ${slug}`, { slug });
     }
 
-    const relatedPosts = await prisma.blogPost.findMany({
+    const relatedPosts = await prisma.marketingBlogPost.findMany({
       where: {
         isPublished: true,
         category: post.category,
