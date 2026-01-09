@@ -6,5 +6,5 @@ interface ProgramsHeroSectionProps {
 }
 
 export const ProgramsHeroSection = ({ hero }: ProgramsHeroSectionProps) => (
-  <ContentSection title={hero?.title} subtitle={hero?.subtitle} backgroundColor="dark" />
+  <ContentSection title={hero.title} subtitle={hero.subtitle} backgroundColor="dark" />
 );

@@ -6,5 +6,5 @@ interface ContactHeroProps {
 }
 
 export const ContactHero = ({ hero }: ContactHeroProps) => {
-  return <ContentSection title={hero?.title} subtitle={hero?.subtitle} backgroundColor="dark" />;
+  return <ContentSection title={hero.title} subtitle={hero.subtitle} backgroundColor="dark" />;
 };

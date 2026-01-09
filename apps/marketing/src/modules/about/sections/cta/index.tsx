@@ -9,10 +9,10 @@ interface AboutCtaSectionProps {
 export const AboutCTASection = ({ cta }: AboutCtaSectionProps) => {
   return (
     <CTASection
-      title={cta?.title}
-      subtitle={cta?.subtitle}
-      buttonText={cta?.buttonText}
-      buttonHref={cta?.buttonHref}
+      title={cta.title}
+      subtitle={cta.subtitle}
+      buttonText={cta.buttonText}
+      buttonHref={cta.buttonHref}
       backgroundColor="dark"
     />
   );

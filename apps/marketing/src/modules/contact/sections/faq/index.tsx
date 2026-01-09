@@ -10,9 +10,9 @@ interface ContactFAQProps {
 
 export const ContactFAQ = ({ faq }: ContactFAQProps) => {
   return (
-    <ContentSection title={faq?.title} maxWidth="md">
+    <ContentSection title={faq.title} maxWidth="md">
       <Stack spacing={2}>
-        {faq?.items.map((item, index) => (
+        {faq.items.map((item, index) => (
           <Accordion
             key={index}
             sx={{
