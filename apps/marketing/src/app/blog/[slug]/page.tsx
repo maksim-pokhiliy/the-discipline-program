@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
     return {
       title: `${post.title} | The Discipline Program`,
       description: post.excerpt,
-      keywords: post.tags?.join(", "),
+      keywords: post.tags.join(", "),
       openGraph: {
         type: "article",
         title: post.title,

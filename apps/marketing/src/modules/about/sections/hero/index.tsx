@@ -10,13 +10,13 @@ interface AboutHeroSectionProps {
 
 export const AboutHeroSection = ({ hero }: AboutHeroSectionProps) => {
   return (
-    <FullscreenSection backgroundImage={hero?.backgroundImage} maxWidth="lg">
+    <FullscreenSection backgroundImage={hero.backgroundImage} maxWidth="lg">
       <Typography variant="h1" component="h1" textAlign="center">
-        {hero?.title}
+        {hero.title}
       </Typography>
 
       <Typography variant="h5" sx={{ opacity: 0.9, textAlign: "center", maxWidth: "800px" }}>
-        {hero?.subtitle}
+        {hero.subtitle}
       </Typography>
 
       <Button variant="contained" size="large" href="#journey">

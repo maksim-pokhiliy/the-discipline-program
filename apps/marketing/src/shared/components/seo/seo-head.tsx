@@ -38,7 +38,7 @@ export const SEOHead = (props: PageSeoKey) => {
             <meta property="article:section" content={seoData.article.section} />
           )}
 
-          {seoData.article.tags?.map((tag, index) => (
+          {seoData.article.tags.map((tag, index) => (
             <meta key={index} property="article:tag" content={tag} />
           ))}
         </>

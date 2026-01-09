@@ -18,7 +18,7 @@ const transformPost = (post: RawBlogPost): AdminBlogPost => ({
 });
 
 const sanitizeTags = (tags?: string[] | null): string[] =>
-  tags?.map((tag) => tag.trim()).filter(Boolean) ?? [];
+  tags.map((tag) => tag.trim()).filter(Boolean) ?? [];
 
 const normalizeCoverImage = (coverImage?: string | null): string | null => {
   if (!coverImage) {
@@ -92,8 +92,8 @@ const handlePrismaError = (error: unknown): never => {
   if (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2002" &&
-    Array.isArray(error.meta?.target) &&
-    error.meta?.target.includes("slug")
+    Array.isArray(error.meta.target) &&
+    error.meta.target.includes("slug")
   ) {
     throw new ConflictError("Slug must be unique", { field: "slug" });
   }

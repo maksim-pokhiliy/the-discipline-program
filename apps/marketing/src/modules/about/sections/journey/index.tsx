@@ -9,7 +9,7 @@ interface AboutJourneySectionProps {
 
 export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
   return (
-    <ContentSection title={journey?.title} subtitle={journey?.subtitle} backgroundColor="dark">
+    <ContentSection title={journey.title} subtitle={journey.subtitle} backgroundColor="dark">
       <Box sx={{ position: "relative" }}>
         <Box
           sx={{
@@ -24,7 +24,7 @@ export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
         />
 
         <Stack spacing={6}>
-          {journey?.timeline.map((item, index) => (
+          {journey.timeline.map((item, index) => (
             <Grid container key={index} alignItems="center">
               <Grid size={{ xs: 12, md: 6 }} order={{ xs: 2, md: index % 2 === 0 ? 1 : 2 }}>
                 <Box

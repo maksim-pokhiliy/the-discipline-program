@@ -13,12 +13,10 @@ import {
   Typography,
 } from "@mui/material";
 
-// Проверь, что путь к типам верный (зависит от структуры экспортов в твоем contracts)
 import type { CreateContactSubmissionRequest } from "@repo/contracts/contact";
 import { type ContactPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
-// Импорт твоего хука
 import { useSubmitContact } from "@app/lib/hooks";
 
 interface ContactFormProps {
@@ -26,7 +24,6 @@ interface ContactFormProps {
 }
 
 export const ContactForm = ({ form }: ContactFormProps) => {
-  // 1. Стейт только для данных формы
   const [formData, setFormData] = useState<CreateContactSubmissionRequest>({
     name: "",
     email: "",
@@ -34,7 +31,6 @@ export const ContactForm = ({ form }: ContactFormProps) => {
     message: "",
   });
 
-  // 2. Логика отправки через React Query (hook)
   const { mutate, isPending, isSuccess, error, reset } = useSubmitContact();
 
   const handleChange =
@@ -45,7 +41,6 @@ export const ContactForm = ({ form }: ContactFormProps) => {
         [field]: event.target.value,
       }));
 
-      // Сбрасываем ошибку/успех при редактировании
       if (error || isSuccess) {
         reset();
       }
@@ -64,7 +59,7 @@ export const ContactForm = ({ form }: ContactFormProps) => {
   const isValid = formData.name.trim() && formData.email.trim() && formData.message.trim();
 
   return (
-    <ContentSection title={form?.title} subtitle={form?.subtitle}>
+    <ContentSection title={form.title} subtitle={form.subtitle}>
       <Grid container justifyContent="center">
         <Grid size={{ xs: 12, md: 8, lg: 6 }}>
           <Card>
@@ -112,22 +107,20 @@ export const ContactForm = ({ form }: ContactFormProps) => {
                     disabled={isPending}
                   />
 
-                  {form?.programs && (
-                    <TextField
-                      select
-                      label="Program Interest"
-                      value={formData.program}
-                      onChange={handleChange("program")}
-                      fullWidth
-                      disabled={isPending}
-                    >
-                      {form.programs.map((program) => (
-                        <MenuItem key={program.value} value={program.value}>
-                          {program.label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
+                  <TextField
+                    select
+                    label="Program Interest"
+                    value={formData.program}
+                    onChange={handleChange("program")}
+                    fullWidth
+                    disabled={isPending}
+                  >
+                    {form.programs.map((program) => (
+                      <MenuItem key={program.value} value={program.value}>
+                        {program.label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
 
                   <TextField
                     label="Your Message"
