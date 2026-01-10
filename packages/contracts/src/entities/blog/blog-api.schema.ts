@@ -1,11 +1,7 @@
 import { z } from "zod";
 
 import { BLOG_TOGGLE_FIELDS } from "./blog.constants";
-import {
-  createBlogPostSchema,
-  updateBlogPostSchema,
-  updateBlogPostsOrderSchema,
-} from "./blog.schema";
+import { createBlogPostSchema, updateBlogPostSchema } from "./blog.schema";
 
 export const getBlogPostsResponseSchema = z.array(
   z
@@ -23,7 +19,6 @@ export const getBlogPostsResponseSchema = z.array(
       tags: z.array(z.string()),
       isPublished: z.boolean(),
       isFeatured: z.boolean(),
-      sortOrder: z.number(),
       createdAt: z.date(),
       updatedAt: z.date(),
     })
@@ -63,8 +58,6 @@ export const toggleBlogPostQuerySchema = z
     field: z.enum(BLOG_TOGGLE_FIELDS),
   })
   .strict();
-
-export const updateBlogPostsOrderRequestSchema = updateBlogPostsOrderSchema;
 
 export const getBlogPageDataResponseSchema = z
   .object({

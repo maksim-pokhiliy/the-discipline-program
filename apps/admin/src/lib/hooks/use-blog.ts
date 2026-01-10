@@ -78,20 +78,11 @@ export const useBlogMutations = () => {
     },
   });
 
-  const updatePostsOrder = useMutation({
-    mutationFn: api.blog.updateOrder,
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
-    },
-  });
-
   return {
     createPost,
     updatePost,
     deletePost,
     togglePublished,
     toggleFeatured,
-    updatePostsOrder,
   };
 };

@@ -11,6 +11,5 @@ export const PROGRAM_CURRENCIES = ["USD", "EUR", "UAH"] as const;
 export const PROGRAM_DEFAULTS = {
   currency: "USD",
   isActive: true,
-  sortOrder: 0,
   features: [],
 } as const;

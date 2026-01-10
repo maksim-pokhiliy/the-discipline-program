@@ -6,7 +6,6 @@ export const programsApi = {
   getPrograms: async (): Promise<Program[]> => {
     const programs = await prisma.marketingProgramPreview.findMany({
       where: { isActive: true },
-      orderBy: { sortOrder: "asc" },
     });
 
     return programs;
@@ -23,7 +22,8 @@ export const programsApi = {
     return program;
   },
 
-  getProgramStats: async (programId: string) => {
+  getProgramStats: async () => {
+    // getProgramStats: async (programId: string) => {
     const [totalOrders, completedOrders, revenue] = await Promise.all([
       // prisma.order.count({ where: { programId } }),
       // prisma.order.count({ where: { programId, status: "COMPLETED" } }),

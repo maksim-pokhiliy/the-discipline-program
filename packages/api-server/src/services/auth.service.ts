@@ -16,7 +16,7 @@ export const authService = {
       where: { email },
     });
 
-    if (!user) {
+    if (!user || !user.password) {
       return null;
     }
 

@@ -2,8 +2,6 @@ import type { QueryClient, QueryKey } from "@tanstack/react-query";
 
 export type WithId = { id: string };
 
-export type WithSortOrder = { sortOrder: number };
-
 type Snapshot<TData> = {
   previous?: TData;
 };
@@ -48,52 +46,6 @@ export const createOptimisticSingleHandler = <TVars, TData>(params: {
           }),
         ),
       );
-    },
-  };
-};
-
-export const applyReorderSortOrder = <TItem extends WithId & Partial<WithSortOrder>>(
-  items: TItem[],
-): TItem[] => {
-  return items.map((item, index) => ({ ...item, sortOrder: index + 1 }));
-};
-
-export const optimisticReorderPageList = <
-  TPageData,
-  TItem extends WithId & Partial<WithSortOrder>,
->(params: {
-  queryClient: QueryClient;
-  pageKey: QueryKey;
-  getList: (page: TPageData) => TItem[];
-  setList: (page: TPageData, next: TItem[]) => TPageData;
-}) => {
-  const { queryClient, pageKey, setList } = params;
-
-  return {
-    onMutate: async (reordered: TItem[]) => {
-      await queryClient.cancelQueries({ queryKey: pageKey });
-
-      const previous = queryClient.getQueryData<TPageData>(pageKey);
-
-      queryClient.setQueryData<TPageData>(pageKey, (old) => {
-        if (!old) {
-          return old;
-        }
-
-        return setList(old, applyReorderSortOrder(reordered));
-      });
-
-      return { previous };
-    },
-
-    onError: (_err: unknown, _vars: TItem[], ctx?: { previous?: TPageData }) => {
-      if (ctx?.previous) {
-        queryClient.setQueryData(pageKey, ctx.previous);
-      }
-    },
-
-    onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: pageKey });
     },
   };
 };

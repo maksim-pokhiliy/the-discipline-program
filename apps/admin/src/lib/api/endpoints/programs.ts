@@ -6,11 +6,6 @@ import {
 
 import { apiClient } from "../client";
 
-type SortOrderUpdate = {
-  id: string;
-  sortOrder: number;
-};
-
 export const programsAPI = {
   getPageData: (): Promise<AdminProgramsPageData> =>
     apiClient.request("/api/admin/programs/page-data"),
@@ -31,7 +26,4 @@ export const programsAPI = {
 
   toggleStatus: (id: string): Promise<Program> =>
     apiClient.request(`/api/admin/programs/${id}/toggle`, "PATCH"),
-
-  updateOrder: (updates: SortOrderUpdate[]): Promise<{ success: true }> =>
-    apiClient.request("/api/admin/programs/order", "PATCH", { updates }),
 };

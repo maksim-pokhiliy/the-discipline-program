@@ -1,7 +1,5 @@
 // import { ContactStatus } from "@prisma/client";
 
-import { prisma } from "../../db/client";
-
 export interface ContactSubmissionData {
   name: string;
   email: string;
@@ -11,7 +9,7 @@ export interface ContactSubmissionData {
 
 export const contactApi = {
   createSubmission: async (data: ContactSubmissionData) => {
-    // const submission = await prisma.contactSubmission.create({
+    // const submission = await prisma.marketingContactSubmission.create({
     //   data: {
     //     name: data.name,
     //     email: data.email,
@@ -26,14 +24,14 @@ export const contactApi = {
       email: data.email,
       program: data.program,
       message: data.message,
-      status: ContactStatus.NEW,
+      // status: ContactStatus.NEW,
     };
 
     // return submission;
   },
 
   getSubmissions: async () => {
-    // return prisma.contactSubmission.findMany({
+    // return prisma.marketingContactSubmission.findMany({
     //   orderBy: { createdAt: "desc" },
     // });
 

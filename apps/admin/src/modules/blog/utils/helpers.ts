@@ -1,7 +1,5 @@
 "use client";
 
-import { type AdminBlogPost } from "@repo/contracts/blog";
-
 export const formatPublishedAt = (date: Date | null): string => {
   if (!date) {
     return "Not published";
@@ -14,12 +12,4 @@ export const formatPublishedAt = (date: Date | null): string => {
     hour: "2-digit",
     minute: "2-digit",
   });
-};
-
-export const getMaxSortOrder = (posts: AdminBlogPost[]): number => {
-  if (posts.length === 0) {
-    return 0;
-  }
-
-  return Math.max(...posts.map((post) => post.sortOrder));
 };

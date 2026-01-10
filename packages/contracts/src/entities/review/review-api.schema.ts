@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { TOGGLE_FIELDS } from "./review.constants";
-import { createReviewSchema, updateReviewSchema, updateReviewsOrderSchema } from "./review.schema";
+import { createReviewSchema, updateReviewSchema } from "./review.schema";
 
 export const getReviewsResponseSchema = z.array(
   z
@@ -15,7 +15,6 @@ export const getReviewsResponseSchema = z.array(
       programId: z.string().nullable(),
       isActive: z.boolean(),
       isFeatured: z.boolean(),
-      sortOrder: z.number(),
       createdAt: z.date(),
       updatedAt: z.date(),
     })
@@ -55,8 +54,6 @@ export const toggleReviewQuerySchema = z
     field: z.enum(TOGGLE_FIELDS),
   })
   .strict();
-
-export const updateReviewsOrderRequestSchema = updateReviewsOrderSchema;
 
 export const getReviewsPageDataResponseSchema = z
   .object({

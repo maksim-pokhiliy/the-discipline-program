@@ -25,11 +25,9 @@ export const pagesApi = {
       // prisma.feature.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
       prisma.marketingProgramPreview.findMany({
         where: { isActive: true },
-        orderBy: { sortOrder: "asc" },
       }),
       prisma.marketingReview.findMany({
         where: { isActive: true },
-        orderBy: { sortOrder: "asc" },
       }),
     ]);
 
@@ -58,7 +56,6 @@ export const pagesApi = {
       prisma.marketingPageSection.findMany({ where: { pageSlug: "programs", isActive: true } }),
       prisma.marketingProgramPreview.findMany({
         where: { isActive: true },
-        orderBy: { sortOrder: "asc" },
       }),
     ]);
 

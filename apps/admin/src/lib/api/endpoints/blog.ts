@@ -2,8 +2,6 @@ import { type AdminBlogPageData, type AdminBlogPost } from "@repo/contracts/blog
 
 import { apiClient } from "../client";
 
-type BlogOrderUpdate = { id: string; sortOrder: number };
-
 export type BlogPayload = Partial<AdminBlogPost> & {
   title?: string;
   slug?: string;
@@ -15,7 +13,6 @@ export type BlogPayload = Partial<AdminBlogPost> & {
   readTime?: number | null;
   isPublished?: boolean;
   isFeatured?: boolean;
-  sortOrder?: number;
   coverImage?: string | null;
   publishedAt?: string | null | Date;
 };
@@ -32,9 +29,6 @@ export const blogAPI = {
     apiClient.request(`/api/admin/blog/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> => apiClient.request(`/api/admin/blog/${id}`, "DELETE"),
-
-  updateOrder: (updates: BlogOrderUpdate[]): Promise<AdminBlogPost[]> =>
-    apiClient.request("/api/admin/blog/order", "PUT", updates),
 
   togglePublished: (id: string): Promise<AdminBlogPost> =>
     apiClient.request(`/api/admin/blog/${id}/toggle?field=isPublished`, "PATCH"),
