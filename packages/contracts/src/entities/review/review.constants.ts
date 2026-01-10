@@ -9,10 +9,9 @@ export const REVIEW_CONSTANTS = {
 export const REVIEW_DEFAULTS = {
   isActive: true,
   isFeatured: false,
-  sortOrder: 0,
   rating: 5,
   authorAvatar: null,
   programId: null,
 } as const;
 
-export const TOGGLE_FIELDS = ["isActive", "isFeatured"] as const;
+export const TOGGLE_FIELDS = ["isActive"] as const;

@@ -90,7 +90,7 @@ export const generateStructuredData = (
           data?.programs?.map((program, index) => ({
             "@type": "ListItem",
             position: index + 1,
-            name: program.name,
+            name: program.title,
             description: program.description,
             url: `${SEO_CONFIG.siteUrl}/programs`,
           })) || [],

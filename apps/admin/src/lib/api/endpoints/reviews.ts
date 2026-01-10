@@ -2,11 +2,6 @@ import { type Review, type ReviewStats, type AdminReviewsPageData } from "@repo/
 
 import { apiClient } from "../client";
 
-type SortOrderUpdate = {
-  id: string;
-  sortOrder: number;
-};
-
 export const reviewsAPI = {
   getPageData: (): Promise<AdminReviewsPageData> =>
     apiClient.request("/api/admin/reviews/page-data"),
@@ -30,7 +25,4 @@ export const reviewsAPI = {
 
   toggleFeatured: (id: string): Promise<Review> =>
     apiClient.request(`/api/admin/reviews/${id}/toggle?field=isFeatured`, "PATCH"),
-
-  updateOrder: (updates: SortOrderUpdate[]): Promise<{ success: true }> =>
-    apiClient.request("/api/admin/reviews/order", "PATCH", { updates }),
 };

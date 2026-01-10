@@ -7,18 +7,13 @@ import { prisma } from "../../db/client";
 
 type BlogPostCreateData = Omit<RawBlogPost, "id" | "createdAt" | "updatedAt">;
 type BlogPostUpdateData = Partial<BlogPostCreateData>;
-type BlogPostOrderUpdate = { id: string; sortOrder: number };
 
 const transformPost = (post: RawBlogPost): AdminBlogPost => ({
   ...post,
   coverImage: post.coverImage ?? null,
   publishedAt: post.publishedAt ?? null,
-  tags: post.tags ?? [],
   readTime: post.readTime ?? null,
 });
-
-const sanitizeTags = (tags?: string[] | null): string[] =>
-  tags.map((tag) => tag.trim()).filter(Boolean) ?? [];
 
 const normalizeCoverImage = (coverImage?: string | null): string | null => {
   if (!coverImage) {
@@ -53,10 +48,6 @@ const computePublishedAt = (
 const prepareUpdateData = (data: BlogPostUpdateData, current: RawBlogPost): BlogPostUpdateData => {
   const updated: BlogPostUpdateData = { ...data };
 
-  if (data.tags !== undefined) {
-    updated.tags = sanitizeTags(data.tags);
-  }
-
   if (data.coverImage !== undefined) {
     updated.coverImage = normalizeCoverImage(data.coverImage);
   }
@@ -79,7 +70,6 @@ const prepareUpdateData = (data: BlogPostUpdateData, current: RawBlogPost): Blog
 const prepareCreateData = (data: BlogPostCreateData): BlogPostCreateData => {
   const prepared: BlogPostCreateData = {
     ...data,
-    tags: sanitizeTags(data.tags),
     coverImage: normalizeCoverImage(data.coverImage),
     readTime: data.readTime ?? null,
     publishedAt: data.isPublished ? (data.publishedAt ?? new Date()) : null,
@@ -92,6 +82,7 @@ const handlePrismaError = (error: unknown): never => {
   if (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2002" &&
+    error.meta &&
     Array.isArray(error.meta.target) &&
     error.meta.target.includes("slug")
   ) {
@@ -103,20 +94,15 @@ const handlePrismaError = (error: unknown): never => {
 
 export const adminBlogApi = {
   getPosts: async (): Promise<AdminBlogPost[]> => {
-    const posts = await prisma.blogPost.findMany({
-      orderBy: [
-        { isFeatured: "desc" },
-        { isPublished: "desc" },
-        { sortOrder: "asc" },
-        { createdAt: "desc" },
-      ],
+    const posts = await prisma.marketingBlogPost.findMany({
+      orderBy: [{ isFeatured: "desc" }, { isPublished: "desc" }, { createdAt: "desc" }],
     });
 
     return posts;
   },
 
   getPostById: async (id: string): Promise<AdminBlogPost | null> => {
-    const post = await prisma.blogPost.findUnique({
+    const post = await prisma.marketingBlogPost.findUnique({
       where: { id },
     });
 
@@ -125,10 +111,10 @@ export const adminBlogApi = {
 
   getBlogStats: async (): Promise<BlogStats> => {
     const [total, published, drafts, featured] = await Promise.all([
-      prisma.blogPost.count(),
-      prisma.blogPost.count({ where: { isPublished: true } }),
-      prisma.blogPost.count({ where: { isPublished: false } }),
-      prisma.blogPost.count({ where: { isFeatured: true } }),
+      prisma.marketingBlogPost.count(),
+      prisma.marketingBlogPost.count({ where: { isPublished: true } }),
+      prisma.marketingBlogPost.count({ where: { isPublished: false } }),
+      prisma.marketingBlogPost.count({ where: { isFeatured: true } }),
     ]);
 
     return {
@@ -153,7 +139,7 @@ export const adminBlogApi = {
 
   createPost: async (data: BlogPostCreateData): Promise<AdminBlogPost> => {
     try {
-      const post = await prisma.blogPost.create({
+      const post = await prisma.marketingBlogPost.create({
         data: prepareCreateData(data),
       });
 
@@ -164,14 +150,14 @@ export const adminBlogApi = {
   },
 
   updatePost: async (id: string, data: BlogPostUpdateData): Promise<AdminBlogPost> => {
-    const existing = await prisma.blogPost.findUnique({ where: { id } });
+    const existing = await prisma.marketingBlogPost.findUnique({ where: { id } });
 
     if (!existing) {
       throw new NotFoundError("Blog post not found", { id });
     }
 
     try {
-      const post = await prisma.blogPost.update({
+      const post = await prisma.marketingBlogPost.update({
         where: { id },
         data: prepareUpdateData(data, existing),
       });
@@ -183,50 +169,40 @@ export const adminBlogApi = {
   },
 
   deletePost: async (id: string): Promise<void> => {
-    await prisma.blogPost.delete({
+    await prisma.marketingBlogPost.delete({
       where: { id },
     });
-  },
-
-  updatePostsOrder: async (updates: BlogPostOrderUpdate[]): Promise<AdminBlogPost[]> => {
-    const transactions = updates.map(({ id, sortOrder }) =>
-      prisma.blogPost.update({ where: { id }, data: { sortOrder } }),
-    );
-
-    const posts = await prisma.$transaction(transactions);
-
-    return posts.map(transformPost);
   },
 
   toggleBlogPostStatus: async (id: string): Promise<AdminBlogPost> => {
-    const blogPost = await prisma.blogPost.findUnique({
+    const marketingBlogPost = await prisma.marketingBlogPost.findUnique({
       where: { id },
     });
 
-    if (!blogPost) {
+    if (!marketingBlogPost) {
       throw new NotFoundError("Blog post not found", { id });
     }
 
-    const updated = await prisma.blogPost.update({
+    const updated = await prisma.marketingBlogPost.update({
       where: { id },
-      data: { isPublished: !blogPost.isPublished },
+      data: { isPublished: !marketingBlogPost.isPublished },
     });
 
     return updated;
   },
 
   toggleBlogPostFeatured: async (id: string): Promise<AdminBlogPost> => {
-    const blogPost = await prisma.blogPost.findUnique({
+    const marketingBlogPost = await prisma.marketingBlogPost.findUnique({
       where: { id },
     });
 
-    if (!blogPost) {
+    if (!marketingBlogPost) {
       throw new NotFoundError("Blog post not found", { id });
     }
 
-    const updated = await prisma.blogPost.update({
+    const updated = await prisma.marketingBlogPost.update({
       where: { id },
-      data: { isFeatured: !blogPost.isFeatured },
+      data: { isFeatured: !marketingBlogPost.isFeatured },
     });
 
     return updated;

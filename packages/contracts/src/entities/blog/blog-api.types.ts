@@ -9,7 +9,6 @@ import {
   type deleteBlogPostParamsSchema,
   type toggleBlogPostParamsSchema,
   type toggleBlogPostQuerySchema,
-  type updateBlogPostsOrderRequestSchema,
   type getBlogPageDataResponseSchema,
   type getBlogArticleBySlugParamsSchema,
 } from "./blog-api.schema";
@@ -29,8 +28,6 @@ export type DeleteBlogPostParams = z.infer<typeof deleteBlogPostParamsSchema>;
 export type ToggleBlogPostParams = z.infer<typeof toggleBlogPostParamsSchema>;
 
 export type ToggleBlogPostQuery = z.infer<typeof toggleBlogPostQuerySchema>;
-
-export type UpdateBlogPostsOrderRequest = z.infer<typeof updateBlogPostsOrderRequestSchema>;
 
 export type GetBlogPageDataResponse = z.infer<typeof getBlogPageDataResponseSchema>;
 

@@ -13,8 +13,6 @@ export const BLOG_CATEGORIES = ["Fitness", "Nutrition", "Mindset", "Training", "
 export const BLOG_DEFAULTS = {
   isPublished: false,
   isFeatured: false,
-  sortOrder: 0,
-  tags: [],
   coverImage: null,
   publishedAt: null,
   readTime: null,

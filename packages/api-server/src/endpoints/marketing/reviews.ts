@@ -8,7 +8,6 @@ export const reviewsApi = {
       where: {
         isActive: true,
       },
-      orderBy: { sortOrder: "asc" },
     });
 
     const transformedReviews = reviews.map((review) => ({

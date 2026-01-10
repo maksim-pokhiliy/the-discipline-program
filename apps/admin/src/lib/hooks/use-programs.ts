@@ -69,19 +69,10 @@ export const useProgramMutations = () => {
     },
   });
 
-  const updateProgramsOrder = useMutation({
-    mutationFn: api.programs.updateOrder,
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.programs.page() });
-    },
-  });
-
   return {
     createProgram,
     updateProgram,
     deleteProgram,
     toggleStatus,
-    updateProgramsOrder,
   };
 };

@@ -78,20 +78,11 @@ export const useReviewMutations = () => {
     },
   });
 
-  const updateReviewsOrder = useMutation({
-    mutationFn: api.reviews.updateOrder,
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.reviews.page() });
-    },
-  });
-
   return {
     createReview,
     updateReview,
     deleteReview,
     toggleActive,
     toggleFeatured,
-    updateReviewsOrder,
   };
 };
