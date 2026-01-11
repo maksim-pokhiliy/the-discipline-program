@@ -21,7 +21,7 @@ export const HomeProgramsPreview = ({ programs, programsList }: HomeProgramsPrev
                 <Stack spacing={4} alignItems="center" textAlign="center" sx={{ height: "100%" }}>
                   <Stack spacing={2}>
                     <Typography variant="h4" component="h3">
-                      {program.name}
+                      {program.title}
                     </Typography>
 
                     <Typography variant="body1" color="text.secondary" sx={{ flexGrow: 1 }}>
@@ -31,7 +31,7 @@ export const HomeProgramsPreview = ({ programs, programsList }: HomeProgramsPrev
 
                   <Stack alignItems="center" spacing={0.5}>
                     <Typography variant="h3" color="text.primary">
-                      ${program.price}
+                      {program.priceLabel ?? "$0"}
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary">

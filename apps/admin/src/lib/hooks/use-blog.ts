@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import type { AdminBlogPageData, AdminBlogPost } from "@repo/contracts/blog";
+import type { AdminBlogPageData, BlogPost } from "@repo/contracts/blog";
 import { adminKeys, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
@@ -41,7 +41,7 @@ export const useBlogMutations = () => {
   });
 
   const updatePost = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<AdminBlogPost> }) =>
+    mutationFn: ({ id, data }: { id: string; data: Partial<BlogPost> }) =>
       api.blog.update(id, data),
 
     onSuccess: (_, variables) => {

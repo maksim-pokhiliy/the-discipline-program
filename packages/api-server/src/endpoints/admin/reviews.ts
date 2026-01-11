@@ -1,15 +1,17 @@
-import type { MarketingReview } from "@prisma/client";
+import { type Prisma, type MarketingReview } from "@prisma/client";
 
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 
-type CreateReviewInput = Omit<MarketingReview, "id" | "createdAt" | "updatedAt">;
-type UpdateReviewInput = Partial<MarketingReview>;
+type CreateReviewInput = Prisma.MarketingReviewCreateInput;
+type UpdateReviewInput = Prisma.MarketingReviewUpdateInput;
 
 export const adminReviewsApi = {
   async getReviews(): Promise<MarketingReview[]> {
-    return prisma.marketingReview.findMany();
+    return prisma.marketingReview.findMany({
+      orderBy: { createdAt: "desc" },
+    });
   },
 
   async getReviewById(id: string): Promise<MarketingReview | null> {
@@ -46,12 +48,28 @@ export const adminReviewsApi = {
     });
   },
 
+  async toggleReviewFeatured(id: string): Promise<MarketingReview> {
+    const review = await prisma.marketingReview.findUnique({ where: { id } });
+
+    if (!review) {
+      throw new NotFoundError("Review not found", { id });
+    }
+
+    return prisma.marketingReview.update({
+      where: { id },
+      data: { isFeatured: !review.isFeatured },
+    });
+  },
+
   async getReviewsPageData() {
-    const reviews = await prisma.marketingReview.findMany();
+    const reviews = await prisma.marketingReview.findMany({
+      orderBy: { createdAt: "desc" },
+    });
 
     const stats = {
       total: reviews.length,
       active: reviews.filter((r) => r.isActive).length,
+      featured: reviews.filter((r) => r.isFeatured).length,
     };
 
     return { reviews, stats };

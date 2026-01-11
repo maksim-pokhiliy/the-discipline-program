@@ -14,7 +14,7 @@ export const ProgramCard = ({ program, onLearnMore }: ProgramCardProps) => {
         <Stack spacing={2} sx={{ height: "100%", justifyContent: "space-between" }}>
           <Stack spacing={2}>
             <Typography variant="h4" component="h3">
-              {program.name}
+              {program.title}
             </Typography>
 
             <Typography variant="body1" color="text.secondary">
@@ -25,7 +25,7 @@ export const ProgramCard = ({ program, onLearnMore }: ProgramCardProps) => {
           <Stack spacing={2}>
             <Stack alignItems="center" spacing={1}>
               <Typography variant="h2" color="primary">
-                ${program.price}
+                {program.priceLabel ?? "$0"}
               </Typography>
 
               <Typography variant="body2" color="text.secondary">

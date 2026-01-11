@@ -38,13 +38,15 @@ export const BlogArticleRelated = ({ relatedPosts }: BlogArticleRelatedProps) =>
               <Grid key={post.id} size={{ xs: 12, md: 4 }}>
                 <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
                   <Box sx={{ position: "relative", height: 200 }}>
-                    <Image
-                      src={post.coverImage}
-                      alt={post.title}
-                      fill
-                      style={{ objectFit: "cover" }}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
+                    {post.coverImage && (
+                      <Image
+                        src={post.coverImage}
+                        alt={post.title}
+                        fill
+                        style={{ objectFit: "cover" }}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                    )}
 
                     <Box
                       sx={{
@@ -91,9 +93,11 @@ export const BlogArticleRelated = ({ relatedPosts }: BlogArticleRelatedProps) =>
                         alignItems="center"
                         justifyContent="space-between"
                       >
-                        <Typography variant="caption" color="text.secondary">
-                          {post.readTime} min read
-                        </Typography>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Typography variant="caption" color="text.secondary">
+                            {post.readTime} min read
+                          </Typography>
+                        </Stack>
 
                         <Button
                           component={Link}

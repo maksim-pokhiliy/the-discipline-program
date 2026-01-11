@@ -15,15 +15,17 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
   try {
     const { post } = await api.pages.getBlogArticle(slug);
 
+    const images = post.coverImage ? [post.coverImage] : [];
+
     return {
       title: `${post.title} | The Discipline Program`,
-      description: post.excerpt,
+      description: post.excerpt ?? undefined,
       keywords: post.tags.join(", "),
       openGraph: {
         type: "article",
         title: post.title,
-        description: post.excerpt,
-        images: [post.coverImage],
+        description: post.excerpt ?? undefined,
+        images: images,
         url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
         publishedTime: post.publishedAt.toISOString(),
         authors: [post.author],
@@ -33,8 +35,8 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
       twitter: {
         card: "summary_large_image",
         title: post.title,
-        description: post.excerpt,
-        images: [post.coverImage],
+        description: post.excerpt ?? undefined,
+        images: images,
       },
     };
   } catch {

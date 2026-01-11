@@ -16,8 +16,6 @@ import {
 
 import { type Program } from "@repo/contracts/program";
 
-// import { usePayment } from "@app/lib/hooks";
-
 interface ProgramModalProps {
   program: Program | null;
   open: boolean;
@@ -25,22 +23,11 @@ interface ProgramModalProps {
 }
 
 export const ProgramModal = ({ program, open, onClose }: ProgramModalProps) => {
-  // const { createPayment, isLoading: isCreatingPayment } = usePayment({
-  //   onError: (error) => {
-  //     console.error("Payment creation failed:", error);
-  //   },
-  // });
-
   const handleGetStarted = async () => {
     if (!program) {
       return;
     }
-
-    // await createPayment({
-    //   programId: program.id,
-    //   customerEmail: "test@example.com",
-    //   customerName: "Test User",
-    // });
+    // Payment logic...
   };
 
   if (!program) {
@@ -76,7 +63,7 @@ export const ProgramModal = ({ program, open, onClose }: ProgramModalProps) => {
           <Stack spacing={4}>
             <Stack spacing={2}>
               <Typography variant="h2" sx={{ fontWeight: "bold" }}>
-                {program.name}
+                {program.title}
               </Typography>
 
               <Typography variant="h5" sx={{ opacity: 0.9, maxWidth: "70%" }}>
@@ -86,7 +73,7 @@ export const ProgramModal = ({ program, open, onClose }: ProgramModalProps) => {
 
             <Box>
               <Typography variant="h1" sx={{ fontWeight: "bold", display: "inline" }}>
-                ${program.price}
+                {program.priceLabel ?? "$0"}
               </Typography>
 
               <Typography variant="h4" sx={{ opacity: 0.8, ml: 2, display: "inline" }}>
@@ -147,7 +134,7 @@ export const ProgramModal = ({ program, open, onClose }: ProgramModalProps) => {
                 <Stack spacing={4} alignItems="center" textAlign="center">
                   <Stack>
                     <Typography variant="h3" color="primary" sx={{ fontWeight: "bold" }}>
-                      ${program.price}
+                      {program.priceLabel ?? "$0"}
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary">
@@ -162,10 +149,8 @@ export const ProgramModal = ({ program, open, onClose }: ProgramModalProps) => {
                       fullWidth
                       sx={{ py: 2 }}
                       onClick={handleGetStarted}
-                      // disabled={isCreatingPayment}
                     >
                       {"Get Started Now"}
-                      {/* {isCreatingPayment ? "Creating Payment..." : "Get Started Now"} */}
                     </Button>
 
                     <Button variant="outlined" onClick={onClose} size="large" fullWidth>
