@@ -1,112 +1,61 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type MarketingBlogPost } from "@prisma/client";
 
-import { type AdminBlogPost, type BlogStats, type RawBlogPost } from "@repo/contracts/blog";
+import {
+  type BlogPost,
+  type BlogStats,
+  type CreateBlogPostData,
+  type UpdateBlogPostData,
+} from "@repo/contracts/blog";
 import { NotFoundError, ConflictError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 
-type BlogPostCreateData = Omit<RawBlogPost, "id" | "createdAt" | "updatedAt">;
-type BlogPostUpdateData = Partial<BlogPostCreateData>;
-
-const transformPost = (post: RawBlogPost): AdminBlogPost => ({
-  ...post,
-  coverImage: post.coverImage ?? null,
-  publishedAt: post.publishedAt ?? null,
-  readTime: post.readTime ?? null,
-});
-
-const normalizeCoverImage = (coverImage?: string | null): string | null => {
-  if (!coverImage) {
-    return null;
-  }
-
-  const trimmed = coverImage.trim();
-
-  return trimmed.length > 0 ? trimmed : null;
-};
-
-const computePublishedAt = (
-  current: Date | null,
-  isPublished?: boolean,
-  provided?: Date | null,
-): Date | null => {
-  if (typeof isPublished === "boolean") {
-    if (isPublished) {
-      return provided ?? current ?? new Date();
-    }
-
-    return null;
-  }
-
-  if (provided !== undefined) {
-    return provided ?? null;
-  }
-
-  return current;
-};
-
-const prepareUpdateData = (data: BlogPostUpdateData, current: RawBlogPost): BlogPostUpdateData => {
-  const updated: BlogPostUpdateData = { ...data };
-
-  if (data.coverImage !== undefined) {
-    updated.coverImage = normalizeCoverImage(data.coverImage);
-  }
-
-  if (data.readTime !== undefined) {
-    updated.readTime = data.readTime ?? null;
-  }
-
-  if (data.isPublished !== undefined || data.publishedAt !== undefined) {
-    updated.publishedAt = computePublishedAt(
-      current.publishedAt,
-      data.isPublished,
-      data.publishedAt ?? null,
-    );
-  }
-
-  return updated;
-};
-
-const prepareCreateData = (data: BlogPostCreateData): BlogPostCreateData => {
-  const prepared: BlogPostCreateData = {
-    ...data,
-    coverImage: normalizeCoverImage(data.coverImage),
-    readTime: data.readTime ?? null,
-    publishedAt: data.isPublished ? (data.publishedAt ?? new Date()) : null,
+const mapToAdminBlogPost = (record: MarketingBlogPost): BlogPost => {
+  return {
+    id: record.id,
+    title: record.title,
+    slug: record.slug,
+    excerpt: record.excerpt,
+    content: record.content,
+    coverImage: record.coverImage,
+    publishedAt: record.publishedAt,
+    readTime: record.readTime,
+    author: record.authorName,
+    category: record.category,
+    tags: record.tags,
+    isPublished: record.isPublished,
+    isFeatured: record.isFeatured,
+    createdAt: record.createdAt,
+    updatedAt: record.updatedAt,
   };
-
-  return prepared;
 };
 
-const handlePrismaError = (error: unknown): never => {
-  if (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2002" &&
-    error.meta &&
-    Array.isArray(error.meta.target) &&
-    error.meta.target.includes("slug")
-  ) {
-    throw new ConflictError("Slug must be unique", { field: "slug" });
-  }
+const prepareCreateInput = (data: CreateBlogPostData): Prisma.MarketingBlogPostCreateInput => {
+  const { author, ...rest } = data;
 
-  throw error;
+  return {
+    ...rest,
+    authorName: author,
+    coverImage: data.coverImage?.trim() || null,
+    publishedAt: data.publishedAt,
+  };
 };
 
 export const adminBlogApi = {
-  getPosts: async (): Promise<AdminBlogPost[]> => {
+  getPosts: async (): Promise<BlogPost[]> => {
     const posts = await prisma.marketingBlogPost.findMany({
       orderBy: [{ isFeatured: "desc" }, { isPublished: "desc" }, { createdAt: "desc" }],
     });
 
-    return posts;
+    return posts.map(mapToAdminBlogPost);
   },
 
-  getPostById: async (id: string): Promise<AdminBlogPost | null> => {
+  getPostById: async (id: string): Promise<BlogPost | null> => {
     const post = await prisma.marketingBlogPost.findUnique({
       where: { id },
     });
 
-    return post ?? null;
+    return post ? mapToAdminBlogPost(post) : null;
   },
 
   getBlogStats: async (): Promise<BlogStats> => {
@@ -137,19 +86,31 @@ export const adminBlogApi = {
     };
   },
 
-  createPost: async (data: BlogPostCreateData): Promise<AdminBlogPost> => {
+  createPost: async (data: CreateBlogPostData): Promise<BlogPost> => {
     try {
+      const dbInput = prepareCreateInput(data);
+
       const post = await prisma.marketingBlogPost.create({
-        data: prepareCreateData(data),
+        data: dbInput,
       });
 
-      return transformPost(post);
+      return mapToAdminBlogPost(post);
     } catch (error) {
-      return handlePrismaError(error);
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002" &&
+        error.meta?.target &&
+        Array.isArray(error.meta.target) &&
+        error.meta.target.includes("slug")
+      ) {
+        throw new ConflictError("Slug must be unique", { field: "slug" });
+      }
+
+      throw error;
     }
   },
 
-  updatePost: async (id: string, data: BlogPostUpdateData): Promise<AdminBlogPost> => {
+  updatePost: async (id: string, data: UpdateBlogPostData): Promise<BlogPost> => {
     const existing = await prisma.marketingBlogPost.findUnique({ where: { id } });
 
     if (!existing) {
@@ -157,14 +118,32 @@ export const adminBlogApi = {
     }
 
     try {
+      const { author, ...rest } = data;
+
+      const updateData: Prisma.MarketingBlogPostUpdateInput = {
+        ...rest,
+      };
+
+      if (author !== undefined) {
+        updateData.authorName = author;
+      }
+
+      if (data.coverImage !== undefined) {
+        updateData.coverImage = data.coverImage?.trim() || null;
+      }
+
       const post = await prisma.marketingBlogPost.update({
         where: { id },
-        data: prepareUpdateData(data, existing),
+        data: updateData,
       });
 
-      return transformPost(post);
+      return mapToAdminBlogPost(post);
     } catch (error) {
-      return handlePrismaError(error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        throw new ConflictError("Slug must be unique", { field: "slug" });
+      }
+
+      throw error;
     }
   },
 
@@ -174,37 +153,37 @@ export const adminBlogApi = {
     });
   },
 
-  toggleBlogPostStatus: async (id: string): Promise<AdminBlogPost> => {
-    const marketingBlogPost = await prisma.marketingBlogPost.findUnique({
+  toggleBlogPostStatus: async (id: string): Promise<BlogPost> => {
+    const post = await prisma.marketingBlogPost.findUnique({
       where: { id },
     });
 
-    if (!marketingBlogPost) {
+    if (!post) {
       throw new NotFoundError("Blog post not found", { id });
     }
 
     const updated = await prisma.marketingBlogPost.update({
       where: { id },
-      data: { isPublished: !marketingBlogPost.isPublished },
+      data: { isPublished: !post.isPublished },
     });
 
-    return updated;
+    return mapToAdminBlogPost(updated);
   },
 
-  toggleBlogPostFeatured: async (id: string): Promise<AdminBlogPost> => {
-    const marketingBlogPost = await prisma.marketingBlogPost.findUnique({
+  toggleBlogPostFeatured: async (id: string): Promise<BlogPost> => {
+    const post = await prisma.marketingBlogPost.findUnique({
       where: { id },
     });
 
-    if (!marketingBlogPost) {
+    if (!post) {
       throw new NotFoundError("Blog post not found", { id });
     }
 
     const updated = await prisma.marketingBlogPost.update({
       where: { id },
-      data: { isFeatured: !marketingBlogPost.isFeatured },
+      data: { isFeatured: !post.isFeatured },
     });
 
-    return updated;
+    return mapToAdminBlogPost(updated);
   },
 };

@@ -1,29 +1,9 @@
 import { z } from "zod";
 
 import { BLOG_TOGGLE_FIELDS } from "./blog.constants";
-import { createBlogPostSchema, updateBlogPostSchema } from "./blog.schema";
+import { blogPostSchema, createBlogPostSchema, updateBlogPostSchema } from "./blog.schema";
 
-export const getBlogPostsResponseSchema = z.array(
-  z
-    .object({
-      id: z.string(),
-      title: z.string(),
-      slug: z.string(),
-      excerpt: z.string(),
-      content: z.string(),
-      coverImage: z.string().nullable(),
-      author: z.string(),
-      publishedAt: z.date().nullable(),
-      readTime: z.number().nullable(),
-      category: z.string(),
-      tags: z.array(z.string()),
-      isPublished: z.boolean(),
-      isFeatured: z.boolean(),
-      createdAt: z.date(),
-      updatedAt: z.date(),
-    })
-    .strict(),
-);
+export const getBlogPostsResponseSchema = z.array(blogPostSchema);
 
 export const getBlogPostByIdParamsSchema = z
   .object({
@@ -76,34 +56,5 @@ export const getBlogPageDataResponseSchema = z
 export const getBlogArticleBySlugParamsSchema = z
   .object({
     articleSlug: z.string().min(1),
-  })
-  .strict();
-
-export const publicBlogPostSchema = z
-  .object({
-    id: z.string(),
-    slug: z.string(),
-    title: z.string(),
-    excerpt: z.string(),
-    content: z.string(),
-    coverImage: z.string(),
-    author: z.string(),
-    publishedAt: z.date(),
-    readTime: z.number().nullable(),
-    category: z.string(),
-    tags: z.array(z.string()),
-  })
-  .strict();
-
-export const publicBlogPostPreviewSchema = z
-  .object({
-    id: z.string(),
-    slug: z.string(),
-    title: z.string(),
-    excerpt: z.string(),
-    coverImage: z.string(),
-    category: z.string(),
-    publishedAt: z.date(),
-    readTime: z.number().nullable(),
   })
   .strict();

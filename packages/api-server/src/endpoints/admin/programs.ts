@@ -1,13 +1,34 @@
+import { type MarketingProgramPreview } from "@prisma/client";
+
 import { type Program } from "@repo/contracts/program";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 
+// --- Mappers ---
+
+const mapToProgram = (p: MarketingProgramPreview): Program => ({
+  id: p.id,
+  title: p.title,
+  slug: p.slug,
+  description: p.description,
+  // В БД String?, в Контракте string | null. Совпадает.
+  priceLabel: p.priceLabel,
+  features: p.features,
+  isActive: p.isActive,
+  createdAt: p.createdAt,
+  updatedAt: p.updatedAt,
+});
+
+// --- API ---
+
 export const adminProgramsApi = {
   getPrograms: async (): Promise<Program[]> => {
-    return prisma.marketingProgramPreview.findMany({
+    const programs = await prisma.marketingProgramPreview.findMany({
       orderBy: [{ isActive: "desc" }],
     });
+
+    return programs.map(mapToProgram);
   },
 
   getProgramById: async (id: string): Promise<Program | null> => {
@@ -15,7 +36,7 @@ export const adminProgramsApi = {
       where: { id },
     });
 
-    return program ?? null;
+    return program ? mapToProgram(program) : null;
   },
 
   getProgramsStats: async () => {
@@ -44,12 +65,17 @@ export const adminProgramsApi = {
     };
   },
 
-  createProgram: async (data: Omit<Program, "id" | "updatedAt">): Promise<Program> => {
+  createProgram: async (
+    data: Omit<Program, "id" | "updatedAt" | "createdAt">,
+  ): Promise<Program> => {
     const program = await prisma.marketingProgramPreview.create({
-      data,
+      data: {
+        ...data,
+        priceLabel: data.priceLabel ?? null,
+      },
     });
 
-    return program;
+    return mapToProgram(program);
   },
 
   updateProgram: async (id: string, data: Partial<Program>): Promise<Program> => {
@@ -58,7 +84,7 @@ export const adminProgramsApi = {
       data,
     });
 
-    return program;
+    return mapToProgram(program);
   },
 
   deleteProgram: async (id: string): Promise<void> => {
@@ -76,9 +102,11 @@ export const adminProgramsApi = {
       throw new NotFoundError("Program not found", { id });
     }
 
-    return prisma.marketingProgramPreview.update({
+    const updated = await prisma.marketingProgramPreview.update({
       where: { id },
       data: { isActive: !program.isActive },
     });
+
+    return mapToProgram(updated);
   },
 };
