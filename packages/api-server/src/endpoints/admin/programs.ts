@@ -5,22 +5,17 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 
-// --- Mappers ---
-
 const mapToProgram = (p: MarketingProgramPreview): Program => ({
   id: p.id,
   title: p.title,
   slug: p.slug,
   description: p.description,
-  // В БД String?, в Контракте string | null. Совпадает.
   priceLabel: p.priceLabel,
   features: p.features,
   isActive: p.isActive,
   createdAt: p.createdAt,
   updatedAt: p.updatedAt,
 });
-
-// --- API ---
 
 export const adminProgramsApi = {
   getPrograms: async (): Promise<Program[]> => {
