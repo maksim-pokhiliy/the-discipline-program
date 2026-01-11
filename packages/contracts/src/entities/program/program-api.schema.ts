@@ -1,23 +1,8 @@
 import { z } from "zod";
 
-import { createProgramSchema, updateProgramSchema } from "./program.schema";
+import { createProgramSchema, updateProgramSchema, programSchema } from "./program.schema";
 
-export const getProgramsResponseSchema = z.array(
-  z
-    .object({
-      id: z.string(),
-      name: z.string(),
-      slug: z.string(),
-      description: z.string(),
-      price: z.number(),
-      currency: z.string(),
-      features: z.array(z.string()),
-      isActive: z.boolean(),
-      createdAt: z.date(),
-      updatedAt: z.date(),
-    })
-    .strict(),
-);
+export const getProgramsResponseSchema = z.array(programSchema);
 
 export const getProgramByIdParamsSchema = z
   .object({

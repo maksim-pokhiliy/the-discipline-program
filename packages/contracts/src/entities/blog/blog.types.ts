@@ -5,36 +5,29 @@ import {
   type blogPostSchema,
   type createBlogPostSchema,
   type updateBlogPostSchema,
+  type publicBlogPostSchema,
 } from "./blog.schema";
 
 export type BlogPost = z.infer<typeof blogPostSchema>;
-
 export type CreateBlogPostData = z.infer<typeof createBlogPostSchema>;
-
 export type UpdateBlogPostData = z.infer<typeof updateBlogPostSchema>;
 
 export type AdminBlogPageData = z.infer<typeof getBlogPageDataResponseSchema>;
-
 export type BlogStats = AdminBlogPageData["stats"];
 
-export type AdminBlogPost = Omit<BlogPost, "coverImage" | "publishedAt"> & {
-  coverImage: string | null;
-  publishedAt: Date | null;
-};
-
-export type RawBlogPost = BlogPost;
-
-export type PublicBlogPost = Omit<
-  BlogPost,
-  "coverImage" | "publishedAt" | "createdAt" | "updatedAt" | "isFeatured" | "isPublished"
-> & {
-  coverImage: string;
-  publishedAt: Date;
-};
+export type PublicBlogPost = z.infer<typeof publicBlogPostSchema>;
 
 export type PublicBlogPostPreview = Pick<
   PublicBlogPost,
-  "id" | "slug" | "title" | "excerpt" | "coverImage" | "publishedAt" | "readTime"
+  | "id"
+  | "slug"
+  | "title"
+  | "excerpt"
+  | "coverImage"
+  | "publishedAt"
+  | "readTime"
+  | "category"
+  | "tags"
 >;
 
 export type BlogPostPageData = {

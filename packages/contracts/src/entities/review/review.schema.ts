@@ -4,7 +4,7 @@ export const reviewSchema = z
   .object({
     id: z.string().cuid(),
     authorName: z.string().min(1),
-    authorRole: z.string().min(1),
+    authorRole: z.string().min(1).nullable(),
     authorAvatar: z.string().nullable(),
     text: z.string().min(1),
     rating: z.number().int().min(1).max(5),

@@ -1,8 +1,7 @@
-import {
-  type PublicBlogPost,
-  type PublicBlogPostPreview,
-  type BlogPostPageData,
-} from "@repo/contracts/blog";
+import { type MarketingBlogPost, type MarketingFeature } from "@prisma/client";
+
+import { type PublicBlogPost, type BlogPostPageData } from "@repo/contracts/blog";
+import { type Feature } from "@repo/contracts/feature";
 import {
   type HomePageData,
   type ProgramsPageData,
@@ -14,27 +13,58 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 
+type PublishedPost = MarketingBlogPost & { publishedAt: Date };
+
+function hasPublishedDate(post: MarketingBlogPost): post is PublishedPost {
+  return post.publishedAt !== null;
+}
+
+const mapToPublicBlogPost = (post: PublishedPost): PublicBlogPost => {
+  return {
+    id: post.id,
+    title: post.title,
+    slug: post.slug,
+    excerpt: post.excerpt,
+    content: post.content,
+    coverImage: post.coverImage,
+    publishedAt: post.publishedAt,
+    isFeatured: post.isFeatured,
+    readTime: post.readTime,
+    author: post.authorName,
+    category: post.category,
+    tags: post.tags,
+  };
+};
+
+const mapToFeature = (feature: MarketingFeature): Feature => ({
+  id: feature.id,
+  title: feature.title,
+  description: feature.description,
+  iconName: feature.iconName,
+  isActive: feature.isActive,
+});
+
 export const pagesApi = {
   getHomePage: async (): Promise<HomePageData> => {
     const sections = await prisma.marketingPageSection.findMany({
       where: { pageSlug: "home", isActive: true },
     });
 
-    const [programs, rawReviews] = await Promise.all([
-      // const [features, programs, rawReviews] = await Promise.all([
-      // prisma.feature.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
-      prisma.marketingProgramPreview.findMany({
+    const [programs, reviews, features] = await Promise.all([
+      prisma.marketingProgramPreview.findMany({ where: { isActive: true } }),
+      prisma.marketingReview.findMany({ where: { isActive: true } }),
+      prisma.marketingFeature.findMany({
         where: { isActive: true },
-      }),
-      prisma.marketingReview.findMany({
-        where: { isActive: true },
+        orderBy: { sortOrder: "asc" },
       }),
     ]);
 
-    const reviews = rawReviews.map((review) => review);
-
     const getSectionData = <T>(sectionName: string): T => {
       const section = sections.find((s) => s.section === sectionName);
+
+      if (!section) {
+        throw new Error(`Section '${sectionName}' not found for home page`);
+      }
 
       return section.data as T;
     };
@@ -45,7 +75,8 @@ export const pagesApi = {
       programs: getSectionData<HomePageData["programs"]>("programs"),
       reviews: getSectionData<HomePageData["reviews"]>("reviews"),
       contact: getSectionData<HomePageData["contact"]>("contact"),
-      // features,
+
+      features: features.map(mapToFeature),
       programsList: programs,
       reviewsList: reviews,
     };
@@ -61,6 +92,10 @@ export const pagesApi = {
 
     const getSectionData = <T>(sectionName: string): T => {
       const section = sections.find((s) => s.section === sectionName);
+
+      if (!section) {
+        throw new Error(`Section '${sectionName}' not found`);
+      }
 
       return section.data as T;
     };
@@ -78,6 +113,10 @@ export const pagesApi = {
 
     const getSectionData = <T>(sectionName: string): T => {
       const section = sections.find((s) => s.section === sectionName);
+
+      if (!section) {
+        throw new Error(`Section '${sectionName}' not found`);
+      }
 
       return section.data as T;
     };
@@ -107,16 +146,22 @@ export const pagesApi = {
     const getSectionData = <T>(sectionName: string): T => {
       const section = sections.find((s) => s.section === sectionName);
 
+      if (!section) {
+        throw new Error(`Section '${sectionName}' not found`);
+      }
+
       return section.data as T;
     };
 
-    const featuredPost = posts.find((post) => post.isFeatured);
-    const categories = [...new Set(posts.map((post) => post.category))];
+    const publicPosts = posts.filter(hasPublishedDate).map(mapToPublicBlogPost);
+
+    const featuredPost = publicPosts.find((post) => post.isFeatured) || publicPosts[0];
+    const categories = [...new Set(publicPosts.map((post) => post.category))];
 
     return {
       hero: getSectionData<BlogPageData["hero"]>("hero"),
-      featuredPost: featuredPost as PublicBlogPost | undefined,
-      posts: posts as PublicBlogPost[],
+      featuredPost,
+      posts: publicPosts,
       categories,
     };
   },
@@ -128,6 +173,10 @@ export const pagesApi = {
 
     const getSectionData = <T>(sectionName: string): T => {
       const section = sections.find((s) => s.section === sectionName);
+
+      if (!section) {
+        throw new Error(`Section '${sectionName}' not found`);
+      }
 
       return section.data as T;
     };
@@ -150,11 +199,13 @@ export const pagesApi = {
       },
     });
 
-    if (!post) {
+    if (!post || !hasPublishedDate(post)) {
       throw new NotFoundError(`Article not found: ${slug}`, { slug });
     }
 
-    const relatedPosts = await prisma.marketingBlogPost.findMany({
+    const publicPost = mapToPublicBlogPost(post);
+
+    const relatedPostsRaw = await prisma.marketingBlogPost.findMany({
       where: {
         isPublished: true,
         category: post.category,
@@ -166,9 +217,11 @@ export const pagesApi = {
       orderBy: { publishedAt: "desc" },
     });
 
+    const relatedPosts = relatedPostsRaw.filter(hasPublishedDate).map(mapToPublicBlogPost);
+
     return {
-      post: post as PublicBlogPost,
-      relatedPosts: relatedPosts as PublicBlogPostPreview[],
+      post: publicPost,
+      relatedPosts,
     };
   },
 };
