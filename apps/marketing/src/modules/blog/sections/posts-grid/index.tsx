@@ -18,14 +18,16 @@ export const BlogPostsGrid = ({ posts }: BlogPostsGridProps) => {
           <Grid key={post.id} size={{ xs: 12, md: 6, lg: 4 }}>
             <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
               <Box sx={{ position: "relative", height: 200 }}>
-                <Image
-                  src={post.coverImage}
-                  alt={post.title}
-                  fill
-                  priority
-                  style={{ objectFit: "cover" }}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
+                {post.coverImage && (
+                  <Image
+                    src={post.coverImage}
+                    alt={post.title}
+                    fill
+                    priority
+                    style={{ objectFit: "cover" }}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                )}
 
                 <Box
                   sx={{

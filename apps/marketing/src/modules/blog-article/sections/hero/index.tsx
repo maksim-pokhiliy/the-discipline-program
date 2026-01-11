@@ -28,17 +28,19 @@ export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
           zIndex: 0,
         }}
       >
-        <Image
-          src={post.coverImage}
-          alt={post.title}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          fill
-          priority
-          style={{
-            objectFit: "cover",
-            objectPosition: "center",
-          }}
-        />
+        {post.coverImage && (
+          <Image
+            src={post.coverImage}
+            alt={post.title}
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            fill
+            priority
+            style={{
+              objectFit: "cover",
+              objectPosition: "center",
+            }}
+          />
+        )}
 
         <Box
           sx={(theme) => ({

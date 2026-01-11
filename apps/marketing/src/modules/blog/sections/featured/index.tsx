@@ -14,14 +14,16 @@ export const BlogFeaturedSection = ({ featuredPost }: BlogFeaturedSectionProps) 
     <ContentSection title="Featured Article">
       <Card sx={{ overflow: "hidden" }}>
         <Box sx={{ position: "relative", height: 300 }}>
-          <Image
-            src={featuredPost.coverImage}
-            alt={featuredPost.title}
-            priority
-            fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            style={{ objectFit: "cover" }}
-          />
+          {featuredPost.coverImage && (
+            <Image
+              src={featuredPost.coverImage}
+              alt={featuredPost.title}
+              priority
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              style={{ objectFit: "cover" }}
+            />
+          )}
 
           <Box
             sx={{

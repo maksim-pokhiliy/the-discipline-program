@@ -1,8 +1,8 @@
 "use client";
 
-import { type AdminBlogPost } from "@repo/contracts/blog";
+import { type BlogPost } from "@repo/contracts/blog";
 
-const ensureUniqueSlug = (slug: string, posts: AdminBlogPost[]): string => {
+const ensureUniqueSlug = (slug: string, posts: BlogPost[]): string => {
   const existingSlugs = new Set(posts.map((post) => post.slug));
 
   if (!existingSlugs.has(slug)) {
@@ -21,9 +21,9 @@ const ensureUniqueSlug = (slug: string, posts: AdminBlogPost[]): string => {
 };
 
 export const createDuplicateBlogPost = (
-  original: AdminBlogPost,
-  posts: AdminBlogPost[],
-): Omit<AdminBlogPost, "id" | "createdAt" | "updatedAt"> => {
+  original: BlogPost,
+  posts: BlogPost[],
+): Omit<BlogPost, "id" | "createdAt" | "updatedAt"> => {
   const baseSlug = ensureUniqueSlug(`${original.slug}-copy`, posts);
 
   return {
@@ -32,7 +32,9 @@ export const createDuplicateBlogPost = (
     excerpt: original.excerpt,
     content: original.content,
     coverImage: original.coverImage,
-    authorName: original.authorName,
+    author: original.author,
+    category: original.category,
+    tags: original.tags,
     readTime: original.readTime,
     isPublished: false,
     isFeatured: false,
