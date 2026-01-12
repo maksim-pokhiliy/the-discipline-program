@@ -77,7 +77,7 @@ export const ProgramModal = ({ program, open, onClose }: ProgramModalProps) => {
               </Typography>
 
               <Typography variant="h4" sx={{ opacity: 0.8, ml: 2, display: "inline" }}>
-                /month
+                /mo
               </Typography>
             </Box>
           </Stack>
