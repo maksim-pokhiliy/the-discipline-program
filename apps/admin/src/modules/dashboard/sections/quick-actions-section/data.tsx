@@ -2,7 +2,6 @@
 
 import ArticleIcon from "@mui/icons-material/Article";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
-import ErrorIcon from "@mui/icons-material/Error";
 import PsychologyIcon from "@mui/icons-material/Psychology";
 import RateReviewIcon from "@mui/icons-material/RateReview";
 
@@ -33,13 +32,6 @@ export const quickActions = [
     description: "Check new contact submissions",
     icon: <ContactMailIcon fontSize="large" />,
     href: "/contacts?filter=new",
-    color: "primary" as const,
-  },
-  {
-    title: "Manage Failed Orders",
-    description: "Review and fix payment issues",
-    icon: <ErrorIcon fontSize="large" />,
-    href: "/orders?filter=failed",
     color: "primary" as const,
   },
 ];
