@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { env } from "@repo/env";
+
 import { AppError } from "./app-error";
 import { ERROR_CODES } from "./error-codes";
 import { ValidationError } from "./http-errors";
@@ -25,7 +27,7 @@ export function handleApiError(error: unknown): NextResponse {
         statusCode: error.statusCode,
         details: error.details,
         timestamp: error.timestamp,
-        ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
+        ...(env.NODE_ENV === "development" && { stack: error.stack }),
       },
       { status: error.statusCode },
     );
@@ -103,7 +105,7 @@ export function handleApiError(error: unknown): NextResponse {
       code: ERROR_CODES.INTERNAL_SERVER_ERROR,
       statusCode: 500,
       timestamp: new Date().toISOString(),
-      ...(process.env.NODE_ENV === "development" && { stack }),
+      ...(env.NODE_ENV === "development" && { stack }),
     },
     { status: 500 },
   );

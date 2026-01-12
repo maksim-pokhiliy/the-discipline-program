@@ -1,3 +1,5 @@
+import { env } from "@repo/env";
+
 import { type ErrorCode, ERROR_CODES } from "./error-codes";
 
 export interface AppErrorOptions {
@@ -39,7 +41,7 @@ export class AppError extends Error {
       statusCode: this.statusCode,
       details: this.details,
       timestamp: this.timestamp,
-      ...(process.env.NODE_ENV === "development" && {
+      ...(env.NODE_ENV === "development" && {
         stack: this.stack,
       }),
     };

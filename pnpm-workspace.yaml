@@ -3,22 +3,22 @@ packages:
   - packages/*
 
 catalog:
-  '@commitlint/cli': ^20.1.0
-  '@commitlint/config-conventional': ^20.0.0
-  '@emotion/cache': ^11.14.0
-  '@emotion/react': ^11.14.0
-  '@emotion/styled': ^11.14.0
-  '@hookform/resolvers': ^3.9.1
-  '@mui/icons-material': ^7.3.6
-  '@mui/material': ^7.3.6
-  '@mui/material-nextjs': ^7.3.6
-  '@prisma/client': 6.1.0
-  '@tanstack/react-query': ^5.62.8
-  '@types/bcryptjs': ^2.4.6
-  '@types/node': ^22.10.5
-  '@types/react': ^19.0.2
-  '@types/react-dom': ^19.0.2
-  '@vercel/blob': ^0.27.0
+  "@commitlint/cli": ^20.1.0
+  "@commitlint/config-conventional": ^20.0.0
+  "@emotion/cache": ^11.14.0
+  "@emotion/react": ^11.14.0
+  "@emotion/styled": ^11.14.0
+  "@hookform/resolvers": ^3.9.1
+  "@mui/icons-material": ^7.3.6
+  "@mui/material": ^7.3.6
+  "@mui/material-nextjs": ^7.3.6
+  "@prisma/client": 6.1.0
+  "@tanstack/react-query": ^5.62.8
+  "@types/bcryptjs": ^2.4.6
+  "@types/node": ^22.10.5
+  "@types/react": ^19.0.2
+  "@types/react-dom": ^19.0.2
+  "@vercel/blob": ^0.27.0
   bcryptjs: ^2.4.3
   class-variance-authority: ^0.7.1
   clsx: ^2.1.1
@@ -37,10 +37,11 @@ catalog:
   tsx: ^4.21.0
   typescript: 5.7.2
   zod: ^3.24.1
+  "@t3-oss/env-nextjs": 0.13.10
 
 onlyBuiltDependencies:
-  - '@prisma/client'
-  - '@prisma/engines'
+  - "@prisma/client"
+  - "@prisma/engines"
   - esbuild
   - lefthook
   - prisma

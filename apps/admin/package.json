@@ -20,6 +20,7 @@
     "@repo/ui": "workspace:*",
     "@repo/query": "workspace:*",
     "@repo/shared": "workspace:*",
+    "@repo/env": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "@mui/material": "catalog:",
     "@mui/icons-material": "catalog:",
@@ -27,7 +28,8 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "next-auth": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

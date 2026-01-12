@@ -1,40 +1,17 @@
-// import { ContactStatus } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
 
-export interface ContactSubmissionData {
-  name: string;
-  email: string;
-  program?: string;
-  message: string;
-}
+import { prisma } from "../../db/client";
 
 export const contactApi = {
-  createSubmission: async (data: ContactSubmissionData) => {
-    // const submission = await prisma.marketingContactSubmission.create({
-    //   data: {
-    //     name: data.name,
-    //     email: data.email,
-    //     program: data.program,
-    //     message: data.message,
-    //     status: ContactStatus.NEW,
-    //   },
-    // });
-
-    return {
-      name: data.name,
-      email: data.email,
-      program: data.program,
-      message: data.message,
-      // status: ContactStatus.NEW,
-    };
-
-    // return submission;
+  createSubmission: async (data: Prisma.MarketingContactSubmissionCreateInput) => {
+    return prisma.marketingContactSubmission.create({
+      data,
+    });
   },
 
   getSubmissions: async () => {
-    // return prisma.marketingContactSubmission.findMany({
-    //   orderBy: { createdAt: "desc" },
-    // });
-
-    return [];
+    return prisma.marketingContactSubmission.findMany({
+      orderBy: { createdAt: "desc" },
+    });
   },
 };
