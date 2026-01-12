@@ -11,6 +11,7 @@ export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
   return (
     <ContentSection title={journey.title} subtitle={journey.subtitle} backgroundColor="dark">
       <Box sx={{ position: "relative" }}>
+        {/* Вертикальная линия (оставляем) */}
         <Box
           sx={{
             position: "absolute",
@@ -26,6 +27,7 @@ export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
         <Stack spacing={6}>
           {journey.timeline.map((item, index) => (
             <Grid container key={index} alignItems="center">
+              {/* Блок с текстом (оставляем без изменений) */}
               <Grid size={{ xs: 12, md: 6 }} order={{ xs: 2, md: index % 2 === 0 ? 1 : 2 }}>
                 <Box
                   sx={{
@@ -50,30 +52,7 @@ export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
                 </Box>
               </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }} order={{ xs: 1, md: index % 2 === 0 ? 2 : 1 }}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: { xs: "flex-start", md: "center" },
-                    position: "relative",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 16,
-                      height: 16,
-                      backgroundColor: "primary.main",
-                      borderRadius: "50%",
-                      border: "4px solid",
-                      borderColor: "background.paper",
-                      position: { xs: "absolute", md: "relative" },
-                      left: { xs: 12, md: "auto" },
-                      top: { xs: 8, md: "auto" },
-                      zIndex: 1,
-                    }}
-                  />
-                </Box>
-              </Grid>
+              <Grid size={{ xs: 12, md: 6 }} order={{ xs: 1, md: index % 2 === 0 ? 2 : 1 }} />
             </Grid>
           ))}
         </Stack>
