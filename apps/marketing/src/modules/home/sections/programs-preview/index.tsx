@@ -35,7 +35,7 @@ export const HomeProgramsPreview = ({ programs, programsList }: HomeProgramsPrev
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary">
-                      /mo
+                      /month
                     </Typography>
                   </Stack>
 

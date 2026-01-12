@@ -36,15 +36,20 @@ export const AboutCredentialsSection = ({ credentials }: AboutCredentialsSection
                     </Typography>
                   </Box>
 
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 600,
-                      minHeight: 48,
-                    }}
-                  >
-                    {item}
-                  </Typography>
+                  <Stack spacing={1}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 600,
+                      }}
+                    >
+                      {item.title}
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary">
+                      {item.description}
+                    </Typography>
+                  </Stack>
                 </Stack>
               </CardContent>
             </Card>
