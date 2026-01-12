@@ -1,3 +1,7 @@
-import { authHandler } from "@repo/auth";
+import NextAuth from "next-auth";
 
-export { authHandler as GET, authHandler as POST };
+import { authOptions } from "@repo/auth/config";
+
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };

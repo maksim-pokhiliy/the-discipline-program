@@ -1,71 +1,63 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
+import { contactApi } from "@repo/api-server";
 import { createContactSubmissionRequestSchema } from "@repo/contracts/contact";
-import { handleApiError, InternalServerError } from "@repo/errors";
+import { env } from "@repo/env";
+import { handleApiError } from "@repo/errors";
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
+// 1. Строгий тип ответа сервиса
+type ContactSubmission = Awaited<ReturnType<typeof contactApi.createSubmission>>;
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
-    if (!TELEGRAM_BOT_TOKEN) {
-      throw new InternalServerError("TELEGRAM_BOT_TOKEN environment variable is required");
-    }
-
-    if (!TELEGRAM_CHAT_ID) {
-      throw new InternalServerError("TELEGRAM_CHAT_ID environment variable is required");
-    }
-
     const body = await request.json();
     const data = createContactSubmissionRequestSchema.parse(body);
 
-    const currentTime = new Date().toLocaleString("en-US", {
-      timeZone: "Europe/Kiev",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
+    const submission = await contactApi.createSubmission({
+      name: data.name,
+      email: data.email,
+      message: data.message,
     });
 
-    const telegramMessage = `
-🔥 New Contact Form Submission
-
-👤 Name: ${data.name}
-📧 Email: ${data.email}
-🎯 Program: ${data.program || "Not specified"}
-💬 Message: ${data.message}
-
-⏰ ${currentTime}`;
-
-    const telegramResponse = await fetch(
-      `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          chat_id: TELEGRAM_CHAT_ID,
-          text: telegramMessage,
-          parse_mode: "HTML",
-        }),
-      },
-    );
-
-    if (!telegramResponse.ok) {
-      const telegramError = await telegramResponse.text();
-
-      console.error("Telegram API error:", telegramError);
-      throw new InternalServerError("Failed to send notification");
+    if (env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID) {
+      await sendTelegramNotification(
+        env.TELEGRAM_BOT_TOKEN,
+        env.TELEGRAM_CHAT_ID,
+        submission,
+      ).catch((err) => {
+        console.error("Failed to send Telegram notification:", err);
+      });
     }
 
-    return NextResponse.json({
-      success: true,
-      message: "Message sent successfully",
-    });
+    return NextResponse.json(submission);
   } catch (error) {
     return handleApiError(error);
+  }
+}
+
+async function sendTelegramNotification(token: string, chatId: string, data: ContactSubmission) {
+  const text = `
+📩 <b>New Contact Submission</b>
+
+👤 <b>Name:</b> ${data.name}
+📧 <b>Email:</b> ${data.email}
+📝 <b>Message:</b>
+${data.message}
+  `.trim();
+
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      text: text,
+      parse_mode: "HTML",
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Telegram API Error: ${response.statusText}`);
   }
 }

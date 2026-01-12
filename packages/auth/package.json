@@ -5,6 +5,10 @@
   "main": "./src/index.ts",
   "type": "module",
   "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./config": "./src/auth-options.ts"
+  },
   "scripts": {
     "check-types": "tsc --noEmit",
     "lint": "eslint . --fix --max-warnings 0",
@@ -13,6 +17,7 @@
   "dependencies": {
     "@repo/api-server": "workspace:*",
     "@repo/contracts": "workspace:*",
+    "@repo/env": "workspace:*",
     "next-auth": "catalog:"
   },
   "peerDependencies": {

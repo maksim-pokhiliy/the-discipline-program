@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+import { env } from "@repo/env";
+
 const allowedOrigins = [
-  process.env.NEXT_PUBLIC_MARKETING_URL,
-  process.env.NEXT_PUBLIC_ADMIN_URL,
-  process.env.NODE_ENV === "development" ? "http://localhost:3000" : null,
+  env.NEXT_PUBLIC_MARKETING_URL,
+  env.NEXT_PUBLIC_ADMIN_URL,
+  env.NODE_ENV === "development" ? "http://localhost:3000" : null,
 ].filter(Boolean) as string[];
 
 export function proxy(request: NextRequest) {

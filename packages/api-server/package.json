@@ -22,6 +22,7 @@
     "@repo/errors": "workspace:*",
     "@vercel/blob": "catalog:",
     "bcryptjs": "catalog:",
+    "@repo/env": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -16,10 +16,12 @@
     "@repo/errors": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/auth": "workspace:*",
+    "@repo/env": "workspace:*",
     "next": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "next-auth": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
