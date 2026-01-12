@@ -22,6 +22,7 @@ model User {
   role          Role      @default(USER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
 
   // Profiles
   athleteProfile AthleteProfile?
@@ -38,8 +39,9 @@ model User {
   accounts Account[]
   sessions Session[]
 
-  @@map("users")
   @@index([createdAt])
+  @@index([deletedAt])
+  @@map("users")
 }
 
 model Account {
@@ -94,8 +96,8 @@ model AthleteProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("app_athlete_profiles")
   @@index([createdAt])
+  @@map("app_athlete_profiles")
 }
 
 model CoachProfile {
@@ -107,6 +109,9 @@ model CoachProfile {
 
   plans TrainingPlan[]
 
+  deletedAt DateTime?
+
+  @@index([deletedAt])
   @@map("app_coach_profiles")
 }
 
@@ -176,8 +181,8 @@ model Subscription {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("app_subscriptions")
   @@index([createdAt])
+  @@map("app_subscriptions")
 }
 
 model Transaction {
@@ -196,8 +201,8 @@ model Transaction {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("app_transactions")
   @@index([createdAt])
+  @@map("app_transactions")
 }
 
 enum SubscriptionStatus {
@@ -231,11 +236,13 @@ model Exercise {
   prescribedSets      PrescribedSet[]
   setLogSubstitutions SetLog[] // When used as a substitution
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  @@map("app_exercises")
   @@index([createdAt])
+  @@index([deletedAt])
+  @@map("app_exercises")
 }
 
 model TrainingPlan {
@@ -249,11 +256,13 @@ model TrainingPlan {
 
   workouts Workout[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  @@map("app_training_plans")
   @@index([createdAt])
+  @@index([deletedAt])
+  @@map("app_training_plans")
 }
 
 model Workout {
@@ -270,11 +279,13 @@ model Workout {
   blocks WorkoutBlock[]
   logs   WorkoutLog[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  @@map("app_workouts")
   @@index([createdAt])
+  @@index([deletedAt])
+  @@map("app_workouts")
 }
 
 model WorkoutBlock {
@@ -331,11 +342,11 @@ model WorkoutLog {
 
   setLogs SetLog[]
 
-  createdAt     DateTime  @default(now())
+  createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("app_workout_logs")
   @@index([createdAt])
+  @@map("app_workout_logs")
 }
 
 model SetLog {
@@ -392,19 +403,19 @@ model MarketingPageSection {
 }
 
 model MarketingFeature {
-  id          String   @id @default(cuid())
+  id          String @id @default(cuid())
   title       String
   description String
   iconName    String
 
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@map("marketing_features")
   @@index([createdAt])
+  @@map("marketing_features")
 }
 
 model MarketingBlogPost {
@@ -424,11 +435,13 @@ model MarketingBlogPost {
   isPublished Boolean   @default(false)
   isFeatured  Boolean   @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  @@map("marketing_blog_posts")
   @@index([createdAt])
+  @@index([deletedAt])
+  @@map("marketing_blog_posts")
 }
 
 model MarketingProgramPreview {
@@ -447,8 +460,8 @@ model MarketingProgramPreview {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("marketing_program_previews")
   @@index([createdAt])
+  @@map("marketing_program_previews")
 }
 
 model MarketingReview {
@@ -462,11 +475,13 @@ model MarketingReview {
   isActive   Boolean @default(true)
   isFeatured Boolean @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  @@map("marketing_reviews")
   @@index([createdAt])
+  @@index([deletedAt])
+  @@map("marketing_reviews")
 }
 
 model MarketingContactSubmission {
@@ -480,6 +495,6 @@ model MarketingContactSubmission {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("marketing_contact_submissions")
   @@index([createdAt])
+  @@map("marketing_contact_submissions")
 }
