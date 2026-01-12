@@ -20,8 +20,8 @@ export const HomeHeroSection = ({ hero }: HomeHeroSectionProps) => {
         {hero.subtitle}
       </Typography>
 
-      <Button component={Link} href={hero.ctaHref ?? ""} variant="contained" size="large">
-        {hero.ctaText}
+      <Button component={Link} href={hero.buttonHref ?? ""} variant="contained" size="large">
+        {hero.buttonText}
       </Button>
     </FullscreenSection>
   );

@@ -1,6 +1,4 @@
-import PersonIcon from "@mui/icons-material/Person";
-import SchoolIcon from "@mui/icons-material/School";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import * as MuiIcons from "@mui/icons-material";
 import { Card, CardContent, Grid, Stack, Typography } from "@mui/material";
 
 import { type HomePageData } from "@repo/contracts/pages";
@@ -11,18 +9,12 @@ interface FeaturesSectionProps {
   features: HomePageData["features"];
 }
 
-const iconMap = {
-  person: PersonIcon,
-  school: SchoolIcon,
-  trending_up: TrendingUpIcon,
-};
-
 export const HomeFeaturesSection = ({ whyChoose, features }: FeaturesSectionProps) => {
   return (
     <ContentSection title={whyChoose.title} subtitle={whyChoose.subtitle} backgroundColor="dark">
       <Grid container spacing={4}>
         {features.map((feature) => {
-          const IconComponent = iconMap[feature.iconName as keyof typeof iconMap];
+          const IconComponent = MuiIcons[feature.iconName as keyof typeof MuiIcons];
 
           return (
             <Grid key={feature.id} size={{ xs: 12, md: 4 }}>

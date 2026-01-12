@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { Container, Grid } from "@mui/material";
+import { Grid } from "@mui/material";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { type Program, type ProgramsPageData } from "@repo/contracts";
@@ -45,15 +45,13 @@ export const ProgramsGridSection = ({ programsList }: ProgramsGridSectionProps) 
 
   return (
     <ContentSection>
-      <Container maxWidth="lg">
-        <Grid container spacing={4}>
-          {programsList.map((program) => (
-            <Grid key={program.id} size={{ xs: 12, sm: 6, md: 4 }}>
-              <ProgramCard program={program} onLearnMore={() => handleOpenModal(program)} />
-            </Grid>
-          ))}
-        </Grid>
-      </Container>
+      <Grid container spacing={4}>
+        {programsList.map((program) => (
+          <Grid key={program.id} size={{ xs: 12, sm: 6, md: 4 }}>
+            <ProgramCard program={program} onLearnMore={() => handleOpenModal(program)} />
+          </Grid>
+        ))}
+      </Grid>
 
       <ProgramModal
         program={selectedProgram}

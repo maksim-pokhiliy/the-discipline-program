@@ -23,7 +23,7 @@ export const AboutPersonalSection = ({ personal }: AboutPersonalSectionProps) =>
           >
             <Image
               src={personal.image}
-              alt="Denis with Chekhov"
+              alt={personal.name}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               fill
               style={{
@@ -48,11 +48,11 @@ export const AboutPersonalSection = ({ personal }: AboutPersonalSectionProps) =>
 
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 600 }}>
-                Denis Sergeev
+                {personal.name}
               </Typography>
 
               <Typography variant="body1" color="primary" sx={{ fontWeight: 500 }}>
-                Founder, The Discipline Program
+                {personal.role}
               </Typography>
             </Box>
           </Stack>

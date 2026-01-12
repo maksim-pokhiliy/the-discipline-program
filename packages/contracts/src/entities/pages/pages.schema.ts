@@ -6,8 +6,8 @@ export const homePageHeroSchema = z
   .object({
     title: z.string(),
     subtitle: z.string(),
-    ctaText: z.string(),
-    ctaHref: z.string(),
+    buttonText: z.string(),
+    buttonHref: z.string(),
     backgroundImage: z.string(),
   })
   .strict();
@@ -45,6 +45,7 @@ export const programsPageHeroSchema = z
   .object({
     title: z.string(),
     subtitle: z.string(),
+    backgroundImage: z.string().optional(),
   })
   .strict();
 
@@ -72,10 +73,17 @@ export const aboutPageJourneySchema = z
   })
   .strict();
 
+export const credentialItemSchema = z
+  .object({
+    title: z.string(),
+    description: z.string(),
+  })
+  .strict();
+
 export const aboutPageCredentialsSchema = z
   .object({
     title: z.string(),
-    items: z.array(z.string()),
+    items: z.array(credentialItemSchema),
   })
   .strict();
 
@@ -84,6 +92,8 @@ export const aboutPagePersonalSchema = z
     title: z.string(),
     description: z.string(),
     image: z.string(),
+    name: z.string(),
+    role: z.string(),
   })
   .strict();
 
@@ -100,6 +110,7 @@ export const contactPageHeroSchema = z
   .object({
     title: z.string(),
     subtitle: z.string(),
+    backgroundImage: z.string().optional(),
   })
   .strict();
 
@@ -153,5 +164,6 @@ export const blogPageHeroSchema = z
   .object({
     title: z.string(),
     subtitle: z.string(),
+    backgroundImage: z.string().optional(),
   })
   .strict();

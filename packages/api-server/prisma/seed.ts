@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Starting CrossFit-themed seed...");
 
-  // 1. Cleanup
   await prisma.marketingPageSection.deleteMany();
   await prisma.marketingFeature.deleteMany();
   await prisma.marketingProgramPreview.deleteMany();
@@ -14,8 +13,7 @@ async function main() {
   await prisma.marketingReview.deleteMany();
   await prisma.user.deleteMany();
 
-  // 2. Create Admin User
-  const passwordHash = await bcrypt.hash("password", 12);
+  const passwordHash = await bcrypt.hash("password123", 12);
   const adminEmail = "admin@example.com";
 
   await prisma.user.create({
@@ -25,13 +23,9 @@ async function main() {
       password: passwordHash,
     },
   });
+
   console.log(`👤 Created Admin: ${adminEmail} / password`);
 
-  // =========================================================================
-  // MARKETING PAGES CONTENT (CMS)
-  // =========================================================================
-
-  // --- HOME PAGE ---
   const homeSections = [
     {
       section: "hero",
@@ -39,10 +33,8 @@ async function main() {
         title: "Forging Elite Discipline",
         subtitle:
           "Functional fitness for those who refuse to settle. Master gymnastics, weightlifting, and metabolic conditioning to prepare for the unknown.",
-        ctaText: "Start Training",
-        ctaLink: "/programs",
-        ctaHref: "/programs",
-        // ЗАМЕНА: Рабочая ссылка (Barbell/Gym)
+        buttonText: "Start Training",
+        buttonHref: "/programs",
         backgroundImage:
           "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=2000&q=80",
       },
@@ -60,6 +52,8 @@ async function main() {
       data: {
         title: "Choose Your Track",
         subtitle: "From Open preparation to daily GPP (General Physical Preparedness).",
+        backgroundImage:
+          "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&w=2000&q=80",
       },
     },
     {
@@ -84,7 +78,6 @@ async function main() {
     });
   }
 
-  // --- ABOUT PAGE ---
   await prisma.marketingPageSection.create({
     data: {
       pageSlug: "about",
@@ -92,7 +85,6 @@ async function main() {
       data: {
         title: "Head Coach",
         subtitle: "10 years in the affiliate community. Games athlete mindset.",
-        // ЗАМЕНА: Рабочая ссылка
         backgroundImage:
           "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=2000&q=80",
       },
@@ -156,10 +148,12 @@ async function main() {
       section: "personal",
       data: {
         title: "Outside The Box",
-        content:
+        description:
           "When I'm not coaching the snatch or analyzing WOD times, I'm trail running or grilling huge amounts of protein. I believe fitness is a hedge against sickness and a path to mental fortitude.",
         image:
-          "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=1000&q=80",
+          "https://scontent-iev1-1.cdninstagram.com/v/t51.82787-15/587955069_18369718234082563_4226589904146166759_n.jpg?stp=dst-jpg_e35_p720x720_tt6&_nc_cat=107&ig_cache_key=Mzc3MjE0NTYyODc5Nzk5NTYwNQ%3D%3D.3-ccb7-5&ccb=7-5&_nc_sid=58cdad&efg=eyJ2ZW5jb2RlX3RhZyI6InhwaWRzLjE0NDB4MTkyMC5zZHIuQzMifQ%3D%3D&_nc_ohc=xvLHHDUGnQAQ7kNvwFWedWr&_nc_oc=AdmnmhZU9cdK_lhTBXfrcKqO7aCAnxEadxAO6rUnbpiSjcRFwfx1ZCva3-f1kfJIz1g&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent-iev1-1.cdninstagram.com&_nc_gid=uBeRmLKCn9m2AtW6LNWErg&oh=00_Afqjlj1flKiNP-JzcTxlN_FmesDP8spBNlChHldAFUa3rQ&oe=696AE3B9",
+        name: "Denis Sergeev",
+        role: "Head Coach & Founder",
       },
       isActive: true,
     },
@@ -172,14 +166,13 @@ async function main() {
       data: {
         title: "3... 2... 1... GO!",
         subtitle: "The clock is ticking. Are you ready to work?",
-        ctaText: "Join The Program",
-        ctaLink: "/programs",
+        buttonText: "Join The Program",
+        buttonHref: "/programs",
       },
       isActive: true,
     },
   });
 
-  // --- OTHER CMS SECTIONS ---
   const otherPages = [
     {
       slug: "programs",
@@ -232,7 +225,24 @@ async function main() {
     data: {
       pageSlug: "contact",
       section: "directContact",
-      data: { email: "coach@crossfitdiscipline.com", phone: "+1 (555) WOD-TIME" },
+      data: {
+        title: "Contact Info",
+        contacts: [
+          {
+            type: "email",
+            label: "Email",
+            value: "coach@crossfitdiscipline.com",
+            href: "mailto:coach@crossfitdiscipline.com",
+          },
+          {
+            type: "phone",
+            label: "Phone",
+            value: "+1 (555) WOD-TIME",
+            href: "tel:+15559638463",
+          },
+        ],
+        workingHours: "Mon-Fri: 6am - 8pm\nSat: 8am - 12pm\nSun: Rest Day",
+      },
       isActive: true,
     },
   });
@@ -262,11 +272,6 @@ async function main() {
 
   console.log("✨ Created CMS Sections");
 
-  // =========================================================================
-  // DOMAIN CONTENT
-  // =========================================================================
-
-  // 1. Features (CrossFit Theme)
   await prisma.marketingFeature.createMany({
     data: [
       {
@@ -279,21 +284,20 @@ async function main() {
       {
         title: "High Intensity",
         description: "Maximize power output with measurable results in short time domains.",
-        iconName: "Zap",
+        iconName: "Bolt",
         sortOrder: 2,
         isActive: true,
       },
       {
         title: "Functional Movement",
         description: "Natural, multi-joint movements that transfer to real life.",
-        iconName: "Activity",
+        iconName: "FitnessCenter",
         sortOrder: 3,
         isActive: true,
       },
     ],
   });
 
-  // 2. Programs (4 items)
   await prisma.marketingProgramPreview.create({
     data: {
       title: "The Competitor",
@@ -345,19 +349,6 @@ async function main() {
     },
   });
 
-  await prisma.marketingProgramPreview.create({
-    data: {
-      title: "Masters (35+)",
-      slug: "masters-track",
-      description:
-        "Intensity adjusted for longevity. Same stimulus, smarter volume management for the seasoned athlete.",
-      priceLabel: "$39",
-      features: ["Joint-Friendly Options", "Recovery Protocols", "4 Days/Week", "Strength Bias"],
-      isActive: true,
-    },
-  });
-
-  // 3. Blog Posts (3 items) - Markdown Content
   await prisma.marketingBlogPost.create({
     data: {
       title: "Mastering the Bar Muscle-Up",
@@ -406,7 +397,6 @@ Redlining in the first minute is a rookie mistake. In a 12-minute AMRAP, the wor
       isPublished: true,
       isFeatured: false,
       publishedAt: new Date(),
-      // ЗАМЕНА: Битая ссылка заменена на рабочую
       coverImage:
         "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1600&q=80",
       tags: ["Competition", "Strategy", "Open"],
@@ -439,7 +429,6 @@ Cycling a barbell efficiently requires using the rebound of the plates.
     },
   });
 
-  // 4. Reviews (3 items) with Avatars
   await prisma.marketingReview.createMany({
     data: [
       {
