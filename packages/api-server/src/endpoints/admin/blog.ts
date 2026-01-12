@@ -20,7 +20,7 @@ const mapToAdminBlogPost = (record: MarketingBlogPost): BlogPost => {
     coverImage: record.coverImage,
     publishedAt: record.publishedAt,
     readTime: record.readTime,
-    author: record.authorName,
+    authorName: record.authorName,
     category: record.category,
     tags: record.tags,
     isPublished: record.isPublished,
@@ -31,11 +31,8 @@ const mapToAdminBlogPost = (record: MarketingBlogPost): BlogPost => {
 };
 
 const prepareCreateInput = (data: CreateBlogPostData): Prisma.MarketingBlogPostCreateInput => {
-  const { author, ...rest } = data;
-
   return {
-    ...rest,
-    authorName: author,
+    ...data,
     coverImage: data.coverImage?.trim() || null,
     publishedAt: data.publishedAt,
   };
@@ -118,15 +115,9 @@ export const adminBlogApi = {
     }
 
     try {
-      const { author, ...rest } = data;
-
       const updateData: Prisma.MarketingBlogPostUpdateInput = {
-        ...rest,
+        ...data,
       };
-
-      if (author !== undefined) {
-        updateData.authorName = author;
-      }
 
       if (data.coverImage !== undefined) {
         updateData.coverImage = data.coverImage?.trim() || null;
