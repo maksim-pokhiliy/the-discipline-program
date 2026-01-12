@@ -39,6 +39,7 @@ model User {
   sessions Session[]
 
   @@map("users")
+  @@index([createdAt])
 }
 
 model Account {
@@ -94,6 +95,7 @@ model AthleteProfile {
   updatedAt DateTime @updatedAt
 
   @@map("app_athlete_profiles")
+  @@index([createdAt])
 }
 
 model CoachProfile {
@@ -175,6 +177,7 @@ model Subscription {
   updatedAt DateTime @updatedAt
 
   @@map("app_subscriptions")
+  @@index([createdAt])
 }
 
 model Transaction {
@@ -191,8 +194,10 @@ model Transaction {
   idempotencyKey String? @unique
 
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("app_transactions")
+  @@index([createdAt])
 }
 
 enum SubscriptionStatus {
@@ -230,6 +235,7 @@ model Exercise {
   updatedAt DateTime @updatedAt
 
   @@map("app_exercises")
+  @@index([createdAt])
 }
 
 model TrainingPlan {
@@ -247,6 +253,7 @@ model TrainingPlan {
   updatedAt DateTime @updatedAt
 
   @@map("app_training_plans")
+  @@index([createdAt])
 }
 
 model Workout {
@@ -267,6 +274,7 @@ model Workout {
   updatedAt DateTime @updatedAt
 
   @@map("app_workouts")
+  @@index([createdAt])
 }
 
 model WorkoutBlock {
@@ -323,7 +331,11 @@ model WorkoutLog {
 
   setLogs SetLog[]
 
+  createdAt     DateTime  @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("app_workout_logs")
+  @@index([createdAt])
 }
 
 model SetLog {
@@ -392,6 +404,7 @@ model MarketingFeature {
   updatedAt   DateTime @updatedAt
 
   @@map("marketing_features")
+  @@index([createdAt])
 }
 
 model MarketingBlogPost {
@@ -415,6 +428,7 @@ model MarketingBlogPost {
   updatedAt DateTime @updatedAt
 
   @@map("marketing_blog_posts")
+  @@index([createdAt])
 }
 
 model MarketingProgramPreview {
@@ -434,6 +448,7 @@ model MarketingProgramPreview {
   updatedAt DateTime @updatedAt
 
   @@map("marketing_program_previews")
+  @@index([createdAt])
 }
 
 model MarketingReview {
@@ -451,6 +466,7 @@ model MarketingReview {
   updatedAt DateTime @updatedAt
 
   @@map("marketing_reviews")
+  @@index([createdAt])
 }
 
 model MarketingContactSubmission {
@@ -465,4 +481,5 @@ model MarketingContactSubmission {
   updatedAt DateTime @updatedAt
 
   @@map("marketing_contact_submissions")
+  @@index([createdAt])
 }
