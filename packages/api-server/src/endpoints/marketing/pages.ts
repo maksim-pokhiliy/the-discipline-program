@@ -30,7 +30,7 @@ const mapToPublicBlogPost = (post: PublishedPost): PublicBlogPost => {
     publishedAt: post.publishedAt,
     isFeatured: post.isFeatured,
     readTime: post.readTime,
-    author: post.authorName,
+    authorName: post.authorName,
     category: post.category,
     tags: post.tags,
   };

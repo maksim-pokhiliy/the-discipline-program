@@ -98,7 +98,7 @@ export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
                 fontSize: "0.875rem",
               })}
             >
-              <Typography variant="body2">{post.author}</Typography>
+              <Typography variant="body2">{post.authorName}</Typography>
               <Typography variant="body2">•</Typography>
               <Typography variant="body2">{publishedDate}</Typography>
               <Typography variant="body2">•</Typography>

@@ -32,7 +32,7 @@ export const createDuplicateBlogPost = (
     excerpt: original.excerpt,
     content: original.content,
     coverImage: original.coverImage,
-    author: original.author,
+    authorName: original.authorName,
     category: original.category,
     tags: original.tags,
     readTime: original.readTime,

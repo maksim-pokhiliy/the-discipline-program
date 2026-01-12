@@ -10,7 +10,7 @@ export const blogPostSchema = z
     coverImage: z.string().nullable(),
     publishedAt: z.date().nullable(),
     readTime: z.number().int().positive().nullable(),
-    author: z.string().min(1, "Author name is required"),
+    authorName: z.string().min(1, "Author name is required"),
     category: z.string().default("Uncategorized"),
     tags: z.array(z.string()).default([]),
     isPublished: z.boolean(),
@@ -39,7 +39,7 @@ export const publicBlogPostSchema = z
     publishedAt: z.date(),
     readTime: z.number().nullable(),
     isFeatured: z.boolean(),
-    author: z.string(),
+    authorName: z.string(),
     category: z.string(),
     tags: z.array(z.string()),
   })

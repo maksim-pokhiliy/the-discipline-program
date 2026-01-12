@@ -52,7 +52,7 @@ export const BlogFeaturedSection = ({ featuredPost }: BlogFeaturedSectionProps) 
             <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
               <Stack direction="row" spacing={2} alignItems="center">
                 <Typography variant="body2" color="text.secondary">
-                  {featuredPost.author}
+                  {featuredPost.authorName}
                 </Typography>
 
                 <Typography variant="body2" color="text.secondary">

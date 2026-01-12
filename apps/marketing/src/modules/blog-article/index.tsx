@@ -36,7 +36,7 @@ export const BlogArticlePageClient = ({ slug, initialData }: BlogArticlePageClie
                 title: data.post.title,
                 description: data.post.excerpt ?? "",
                 image: data.post.coverImage ?? "",
-                author: data.post.author,
+                author: data.post.authorName,
                 publishedTime: `${data.post.publishedAt}`,
                 url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
               }}

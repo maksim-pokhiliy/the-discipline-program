@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-import { CONTACT_STATUSES } from "./contact.constants";
 import { createContactSubmissionSchema } from "./contact.schema";
 
 export const createContactSubmissionRequestSchema = createContactSubmissionSchema;
@@ -16,11 +15,11 @@ export const getContactSubmissionsResponseSchema = z.array(
   z
     .object({
       id: z.string(),
-      name: z.string(),
-      email: z.string(),
+      name: z.string().nullable(),
+      email: z.string().nullable(),
       program: z.string().optional(),
       message: z.string(),
-      status: z.enum(CONTACT_STATUSES),
+      status: z.string(),
       createdAt: z.date(),
       updatedAt: z.date(),
     })

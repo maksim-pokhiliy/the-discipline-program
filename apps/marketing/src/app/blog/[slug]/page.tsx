@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
         images: images,
         url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
         publishedTime: post.publishedAt.toISOString(),
-        authors: [post.author],
+        authors: [post.authorName],
         section: post.category,
         tags: post.tags,
       },
