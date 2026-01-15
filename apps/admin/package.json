@@ -29,7 +29,8 @@
     "react-dom": "catalog:",
     "react-hook-form": "catalog:",
     "zod": "catalog:",
-    "next-auth": "catalog:"
+    "next-auth": "catalog:",
+    "sonner": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

@@ -21,7 +21,8 @@
     "@repo/auth": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
-    "lucide-react": "catalog:"
+    "lucide-react": "catalog:",
+    "sonner": "catalog:"
   },
   "peerDependencies": {
     "next": "catalog:",

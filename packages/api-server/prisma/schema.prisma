@@ -1,5 +1,3 @@
-// packages/api-server/prisma/schema.prisma
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,35 +7,23 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// =========================================================================
-// DOMAIN: IDENTITY & ACCESS (Shared)
-// =========================================================================
-
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  role          Role      @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  deletedAt     DateTime?
-
-  // Profiles
+  id             String          @id @default(cuid())
+  email          String          @unique
+  emailVerified  DateTime?
+  image          String?
+  password       String?
+  role           Role            @default(USER)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
   athleteProfile AthleteProfile?
   coachProfile   CoachProfile?
-
-  // Relations: Billing (Singleton Subscription)
-  subscription Subscription?
-  transactions Transaction[]
-
-  // Relations: Training
-  workoutLogs WorkoutLog[]
-
-  // NextAuth.js standard models
-  accounts Account[]
-  sessions Session[]
+  subscription   Subscription?
+  transactions   Transaction[]
+  workoutLogs    WorkoutLog[]
+  accounts       Account[]
+  sessions       Session[]
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -57,8 +43,7 @@ model Account {
   scope             String?
   id_token          String? @db.Text
   session_state     String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -84,15 +69,13 @@ model VerificationToken {
 }
 
 model AthleteProfile {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  name     String?
-  gender   Gender?
-  heightCm Int?
-  weightKg Decimal? @db.Decimal(5, 2)
-
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String?
+  gender    Gender?
+  heightCm  Int?
+  weightKg  Decimal? @db.Decimal(5, 2)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -101,14 +84,11 @@ model AthleteProfile {
 }
 
 model CoachProfile {
-  id     String @id @default(cuid())
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  bio String?
-
-  plans TrainingPlan[]
-
+  id        String         @id @default(cuid())
+  userId    String         @unique
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio       String?
+  plans     TrainingPlan[]
   deletedAt DateTime?
 
   @@index([deletedAt])
@@ -126,80 +106,59 @@ enum Gender {
   FEMALE
 }
 
-// =========================================================================
-// DOMAIN: BILLING (Singleton State Machine)
-// =========================================================================
-
 model BillingProduct {
-  id       String  @id // Stripe Product ID
-  name     String
-  isActive Boolean @default(true)
-
-  // Loose link to Platform Content
+  id             String  @id
+  name           String
+  isActive       Boolean @default(true)
   trainingPlanId String?
-
-  prices Price[]
+  prices         Price[]
 
   @@map("app_billing_products")
 }
 
 model Price {
-  id        String         @id // Stripe Price ID
-  productId String
-  product   BillingProduct @relation(fields: [productId], references: [id])
-
-  amountCents Int
-  currency    String  @default("USD")
-  interval    String // "month", "year"
-  isActive    Boolean @default(true)
-
+  id            String         @id
+  productId     String
+  product       BillingProduct @relation(fields: [productId], references: [id])
+  amountCents   Int
+  currency      String         @default("USD")
+  interval      String
+  isActive      Boolean        @default(true)
   subscriptions Subscription[]
 
   @@map("app_prices")
 }
 
 model Subscription {
-  id String @id // Stripe Subscription ID (stable)
-
-  // Singleton relation: One User = One Subscription
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
-
-  priceId String
-  price   Price  @relation(fields: [priceId], references: [id])
-
-  status SubscriptionStatus
-
+  id                 String             @id
+  userId             String             @unique
+  user               User               @relation(fields: [userId], references: [id])
+  priceId            String
+  price              Price              @relation(fields: [priceId], references: [id])
+  status             SubscriptionStatus
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
-
-  // Grace Period Logic
-  graceEndsAt DateTime?
-
-  canceledAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  graceEndsAt        DateTime?
+  canceledAt         DateTime?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
 
   @@index([createdAt])
   @@map("app_subscriptions")
 }
 
 model Transaction {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
+  id             String            @id @default(cuid())
+  userId         String
+  user           User              @relation(fields: [userId], references: [id])
   subscriptionId String?
   amountCents    Int
   currency       String
   status         TransactionStatus
-
-  providerTxId   String  @unique
-  idempotencyKey String? @unique
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  providerTxId   String            @unique
+  idempotencyKey String?           @unique
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   @@index([createdAt])
   @@map("app_transactions")
@@ -218,27 +177,17 @@ enum TransactionStatus {
   FAILED
 }
 
-// =========================================================================
-// DOMAIN: TRAINING CORE (Immutable Logs & Exercise Library)
-// =========================================================================
-
-// Reference Dictionary for Movements
 model Exercise {
-  id          String  @id @default(cuid())
-  name        String  @unique // Unique name for analytics grouping
-  description String? // Movement standards text
-  videoUrl    String? // Vimeo/YouTube link for technique
-
-  // Categorization for filtering
-  category BlockType?
-
-  // Relations
+  id                  String          @id @default(cuid())
+  name                String          @unique
+  description         String?
+  videoUrl            String?
+  category            BlockType?
   prescribedSets      PrescribedSet[]
-  setLogSubstitutions SetLog[] // When used as a substitution
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  setLogSubstitutions SetLog[]
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  deletedAt           DateTime?
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -246,19 +195,16 @@ model Exercise {
 }
 
 model TrainingPlan {
-  id      String       @id @default(cuid())
-  coachId String
-  coach   CoachProfile @relation(fields: [coachId], references: [id])
-
+  id          String       @id @default(cuid())
+  coachId     String
+  coach       CoachProfile @relation(fields: [coachId], references: [id])
   name        String
   description String?
-  isActive    Boolean @default(true)
-
-  workouts Workout[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  isActive    Boolean      @default(true)
+  workouts    Workout[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -266,22 +212,18 @@ model TrainingPlan {
 }
 
 model Workout {
-  id     String       @id @default(cuid())
-  planId String
-  plan   TrainingPlan @relation(fields: [planId], references: [id])
-
+  id          String         @id @default(cuid())
+  planId      String
+  plan        TrainingPlan   @relation(fields: [planId], references: [id])
   dayOrder    Int
   title       String
   description String?
-
-  isArchived Boolean @default(false)
-
-  blocks WorkoutBlock[]
-  logs   WorkoutLog[]
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  isArchived  Boolean        @default(false)
+  blocks      WorkoutBlock[]
+  logs        WorkoutLog[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -289,59 +231,44 @@ model Workout {
 }
 
 model WorkoutBlock {
-  id        String  @id @default(cuid())
-  workoutId String
-  workout   Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-
-  type BlockType @default(STRENGTH)
-
+  id         String          @id @default(cuid())
+  workoutId  String
+  workout    Workout         @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  type       BlockType       @default(STRENGTH)
   rounds     Int?
   timeCapSec Int?
-
-  sets PrescribedSet[]
+  sets       PrescribedSet[]
 
   @@map("app_workout_blocks")
 }
 
 model PrescribedSet {
-  id      String       @id @default(cuid())
-  blockId String
-  block   WorkoutBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
-
-  // RELATIONAL LINK TO LIBRARY
-  exerciseId String
-  exercise   Exercise @relation(fields: [exerciseId], references: [id])
-
-  sets Int?
-  reps Int?
-
-  weightValue Decimal? @db.Decimal(6, 2)
-  weightUnit  Unit     @default(KG)
+  id          String       @id @default(cuid())
+  blockId     String
+  block       WorkoutBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  exerciseId  String
+  exercise    Exercise     @relation(fields: [exerciseId], references: [id])
+  sets        Int?
+  reps        Int?
+  weightValue Decimal?     @db.Decimal(6, 2)
+  weightUnit  Unit         @default(KG)
   rpe         Int?
-
-  notes String?
-
-  logs SetLog[]
+  notes       String?
+  logs        SetLog[]
 
   @@map("app_prescribed_sets")
 }
 
-// --- LOGGING ---
-
 model WorkoutLog {
-  id     String @id @default(cuid())
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
-
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
   workoutId String
-  workout   Workout @relation(fields: [workoutId], references: [id])
-
-  date  DateTime @default(now())
-  notes String?
-  isRx  Boolean  @default(true)
-
-  setLogs SetLog[]
-
+  workout   Workout  @relation(fields: [workoutId], references: [id])
+  date      DateTime @default(now())
+  notes     String?
+  isRx      Boolean  @default(true)
+  setLogs   SetLog[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -350,23 +277,16 @@ model WorkoutLog {
 }
 
 model SetLog {
-  id           String     @id @default(cuid())
-  workoutLogId String
-  workoutLog   WorkoutLog @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
-
-  // Link to what was prescribed
-  prescribedSetId String?
-  prescribedSet   PrescribedSet? @relation(fields: [prescribedSetId], references: [id])
-
-  // EXPLICIT SUBSTITUTION TRACKING
-  // If null -> User performed the prescribed exercise.
-  // If set -> User performed THIS exercise instead.
+  id                     String         @id @default(cuid())
+  workoutLogId           String
+  workoutLog             WorkoutLog     @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
+  prescribedSetId        String?
+  prescribedSet          PrescribedSet? @relation(fields: [prescribedSetId], references: [id])
   substitutionExerciseId String?
-  substitutionExercise   Exercise? @relation(fields: [substitutionExerciseId], references: [id])
-
-  repsDone   Int
-  weightDone Decimal? @db.Decimal(6, 2)
-  rpeActual  Int?
+  substitutionExercise   Exercise?      @relation(fields: [substitutionExerciseId], references: [id])
+  repsDone               Int
+  weightDone             Decimal?       @db.Decimal(6, 2)
+  rpeActual              Int?
 
   @@map("app_set_logs")
 }
@@ -385,17 +305,12 @@ enum Unit {
   LB
 }
 
-// =========================================================================
-// DOMAIN: MARKETING CMS
-// =========================================================================
-
 model MarketingPageSection {
-  id       String  @id @default(cuid())
-  pageSlug String
-  section  String
-  data     Json
-  isActive Boolean @default(true)
-
+  id        String   @id @default(cuid())
+  pageSlug  String
+  section   String
+  data      Json
+  isActive  Boolean  @default(true)
   updatedAt DateTime @updatedAt
 
   @@unique([pageSlug, section])
@@ -403,41 +318,36 @@ model MarketingPageSection {
 }
 
 model MarketingFeature {
-  id          String @id @default(cuid())
+  id          String   @id @default(cuid())
   title       String
   description String
   iconName    String
-
-  isActive  Boolean @default(true)
-  sortOrder Int     @default(0)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([createdAt])
   @@map("marketing_features")
 }
 
 model MarketingBlogPost {
-  id         String  @id @default(cuid())
-  slug       String  @unique
-  title      String
-  excerpt    String?
-  content    String  @db.Text
-  coverImage String?
-  authorName String
-
-  category String   @default("Uncategorized")
-  tags     String[]
-
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  excerpt     String?
+  content     String    @db.Text
+  coverImage  String?
+  authorName  String
+  category    String    @default("Uncategorized")
+  tags        String[]
   readTime    Int?
   publishedAt DateTime?
   isPublished Boolean   @default(false)
   isFeatured  Boolean   @default(false)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -445,39 +355,33 @@ model MarketingBlogPost {
 }
 
 model MarketingProgramPreview {
-  id          String @id @default(cuid())
-  slug        String @unique
-  title       String
-  description String
-
-  priceLabel String?
-  features   String[]
-
+  id             String   @id @default(cuid())
+  slug           String   @unique
+  title          String
+  description    String
+  priceLabel     String?
+  features       String[]
   billingPriceId String?
-
-  isActive Boolean @default(true)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@index([createdAt])
   @@map("marketing_program_previews")
 }
 
 model MarketingReview {
-  id           String  @id @default(cuid())
+  id           String    @id @default(cuid())
   authorName   String
   authorRole   String?
   authorAvatar String?
   text         String
-  rating       Int     @default(5)
-
-  isActive   Boolean @default(true)
-  isFeatured Boolean @default(false)
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  rating       Int       @default(5)
+  isActive     Boolean   @default(true)
+  isFeatured   Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -485,13 +389,11 @@ model MarketingReview {
 }
 
 model MarketingContactSubmission {
-  id      String  @id @default(cuid())
-  name    String?
-  email   String?
-  message String  @db.Text
-
-  status String @default("PENDING")
-
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?
+  message   String   @db.Text
+  status    String   @default("PENDING")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -25,21 +25,20 @@ async function getContentStats(): Promise<ContentStats> {
     contactsTotal,
     contactsNew,
   ] = await Promise.all([
-    // Programs
     prisma.marketingProgramPreview.count(),
     prisma.marketingProgramPreview.count({ where: { isActive: true } }),
 
-    // Reviews
     prisma.marketingReview.count(),
     prisma.marketingReview.count({ where: { isActive: true } }),
     prisma.marketingReview.count({ where: { isFeatured: true } }),
 
-    // Blog Posts
-    prisma.marketingBlogPost.count(),
-    prisma.marketingBlogPost.count({ where: { isPublished: true } }),
-    prisma.marketingBlogPost.count({ where: { isPublished: true, isFeatured: true } }),
+    prisma.marketingBlogPost.count({ where: { deletedAt: null } }),
+    prisma.marketingBlogPost.count({ where: { isPublished: true, deletedAt: null } }),
 
-    // Contact Submissions
+    prisma.marketingBlogPost.count({
+      where: { isPublished: true, isFeatured: true, deletedAt: null },
+    }),
+
     prisma.marketingContactSubmission.count(),
     prisma.marketingContactSubmission.count({ where: { status: "PENDING" } }),
   ]);
