@@ -24,7 +24,7 @@ async function main() {
     },
   });
 
-  console.log(`👤 Created Admin: ${adminEmail} / password`);
+  console.log(`👤 Created Admin: ${adminEmail} / password123`);
 
   const homeSections = [
     {

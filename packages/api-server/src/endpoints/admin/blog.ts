@@ -6,7 +6,7 @@ import {
   type CreateBlogPostData,
   type UpdateBlogPostData,
 } from "@repo/contracts/blog";
-import { NotFoundError, ConflictError } from "@repo/errors";
+import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 
@@ -41,7 +41,7 @@ const prepareCreateInput = (data: CreateBlogPostData): Prisma.MarketingBlogPostC
 export const adminBlogApi = {
   getPosts: async (): Promise<BlogPost[]> => {
     const posts = await prisma.marketingBlogPost.findMany({
-      orderBy: [{ isFeatured: "desc" }, { isPublished: "desc" }, { createdAt: "desc" }],
+      orderBy: [{ createdAt: "desc" }, { title: "desc" }],
     });
 
     return posts.map(mapToAdminBlogPost);
@@ -57,10 +57,10 @@ export const adminBlogApi = {
 
   getBlogStats: async (): Promise<BlogStats> => {
     const [total, published, drafts, featured] = await Promise.all([
-      prisma.marketingBlogPost.count(),
-      prisma.marketingBlogPost.count({ where: { isPublished: true } }),
-      prisma.marketingBlogPost.count({ where: { isPublished: false } }),
-      prisma.marketingBlogPost.count({ where: { isFeatured: true } }),
+      prisma.marketingBlogPost.count({ where: { deletedAt: null } }),
+      prisma.marketingBlogPost.count({ where: { isPublished: true, deletedAt: null } }),
+      prisma.marketingBlogPost.count({ where: { isPublished: false, deletedAt: null } }),
+      prisma.marketingBlogPost.count({ where: { isFeatured: true, deletedAt: null } }),
     ]);
 
     return {
@@ -162,19 +162,33 @@ export const adminBlogApi = {
   },
 
   toggleBlogPostFeatured: async (id: string): Promise<BlogPost> => {
-    const post = await prisma.marketingBlogPost.findUnique({
-      where: { id },
+    return prisma.$transaction(async (tx) => {
+      const post = await tx.marketingBlogPost.findUnique({
+        where: { id },
+      });
+
+      if (!post) {
+        throw new NotFoundError("Blog post not found", { id });
+      }
+
+      const newValue = !post.isFeatured;
+
+      if (newValue === true) {
+        await tx.marketingBlogPost.updateMany({
+          where: {
+            isFeatured: true,
+            id: { not: id },
+          },
+          data: { isFeatured: false },
+        });
+      }
+
+      const updated = await tx.marketingBlogPost.update({
+        where: { id },
+        data: { isFeatured: newValue },
+      });
+
+      return mapToAdminBlogPost(updated);
     });
-
-    if (!post) {
-      throw new NotFoundError("Blog post not found", { id });
-    }
-
-    const updated = await prisma.marketingBlogPost.update({
-      where: { id },
-      data: { isFeatured: !post.isFeatured },
-    });
-
-    return mapToAdminBlogPost(updated);
   },
 };

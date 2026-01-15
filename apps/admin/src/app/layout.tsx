@@ -4,6 +4,7 @@ import { type Metadata } from "next";
 import { AuthProvider } from "@repo/auth";
 import { NextProvider } from "@repo/mui";
 import { QueryProvider } from "@repo/query";
+import { Toaster } from "@repo/ui";
 
 export const metadata: Metadata = {
   title: "The Discipline Program - Admin",
@@ -23,6 +24,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <AuthProvider>
               <Box component="main" sx={{ minHeight: "100vh" }}>
                 {children}
+
+                <Toaster />
               </Box>
             </AuthProvider>
           </QueryProvider>

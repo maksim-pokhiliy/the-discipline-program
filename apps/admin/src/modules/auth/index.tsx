@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Alert, Card, CardContent, Stack, Typography } from "@mui/material";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 import { signIn } from "@repo/auth";
 import { type LoginFormData } from "@repo/contracts/auth";
@@ -33,6 +34,7 @@ export const LoginPage = () => {
       if (result?.error) {
         setError("Invalid email or password");
       } else if (result?.ok) {
+        toast.success("You have successfully logged in");
         router.replace(callbackUrl);
         router.refresh();
       }
