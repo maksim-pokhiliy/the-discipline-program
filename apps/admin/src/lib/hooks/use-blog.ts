@@ -1,8 +1,9 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-import type { AdminBlogPageData, BlogPost } from "@repo/contracts/blog";
+import { type AdminBlogPageData } from "@repo/contracts/blog";
 import { adminKeys, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
@@ -20,69 +21,50 @@ export const useBlogPageData = ({ initialData }: UseBlogPageDataOptions = {}) =>
   });
 };
 
-export const useBlogPost = (id: string) => {
-  return useQuery({
-    queryKey: adminKeys.blog.byId(id),
-    queryFn: () => api.blog.getById(id),
-    enabled: !!id,
+export const useToggleBlogPost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: api.blog.togglePublished,
+    onSuccess: () => {
+      toast.success("Post status updated");
+      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    },
+    onError: () => {
+      toast.error("Failed to update post status");
+    },
   });
 };
 
-export const useBlogMutations = () => {
+export const useToggleBlogFeatured = () => {
   const queryClient = useQueryClient();
 
-  const createPost = useMutation({
-    mutationFn: api.blog.create,
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
-      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
-    },
-  });
-
-  const updatePost = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<BlogPost> }) =>
-      api.blog.update(id, data),
-
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
-      queryClient.invalidateQueries({ queryKey: adminKeys.blog.byId(variables.id) });
-      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
-    },
-  });
-
-  const deletePost = useMutation({
-    mutationFn: api.blog.delete,
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
-      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
-    },
-  });
-
-  const togglePublished = useMutation({
-    mutationFn: api.blog.togglePublished,
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
-      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
-    },
-  });
-
-  const toggleFeatured = useMutation({
+  return useMutation({
     mutationFn: api.blog.toggleFeatured,
-
     onSuccess: () => {
+      toast.success("Featured post updated");
       queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
     },
+    onError: () => {
+      toast.error("Failed to update featured post");
+    },
   });
+};
 
-  return {
-    createPost,
-    updatePost,
-    deletePost,
-    togglePublished,
-    toggleFeatured,
-  };
+export const useDeleteBlogPost = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: api.blog.delete,
+    onSuccess: () => {
+      toast.success("Post deleted successfully");
+      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
+    },
+    onError: () => {
+      toast.error("Failed to delete post");
+    },
+  });
 };

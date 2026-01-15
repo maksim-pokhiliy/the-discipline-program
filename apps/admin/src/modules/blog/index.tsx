@@ -7,7 +7,7 @@ import { QueryWrapper } from "@repo/query";
 
 import { useBlogPageData } from "@app/lib/hooks";
 
-import { BlogStatsSection } from "./sections";
+import { BlogListSection, BlogStatsSection } from "./sections";
 
 interface BlogPageClientProps {
   initialData: AdminBlogPageData;
@@ -21,6 +21,7 @@ export const BlogPageClient = ({ initialData }: BlogPageClientProps) => {
       {(data) => (
         <Stack spacing={0}>
           <BlogStatsSection stats={data.stats} />
+          <BlogListSection posts={data.posts} />
         </Stack>
       )}
     </QueryWrapper>
