@@ -4,4 +4,4 @@ export * from "./layout";
 export * from "./modal";
 export * from "./logo";
 export * from "./nav-link-button";
-export * from "./toast/toaster";
+export * from "./toast";
