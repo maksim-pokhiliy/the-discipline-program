@@ -1,14 +1,17 @@
+import { type UploadContext } from "@repo/contracts/upload";
+
 import { apiClient } from "../client";
 
 export const uploadAPI = {
-  avatar: (file: File): Promise<{ url: string }> => {
+  uploadImage: (file: File, context: UploadContext) => {
     const formData = new FormData();
 
     formData.append("file", file);
+    formData.append("context", context);
 
-    return apiClient.request("/api/admin/upload/avatar", "POST", formData);
+    return apiClient.request<{ url: string }>("/api/admin/upload/image", "POST", formData);
   },
 
-  deleteAvatar: (url: string): Promise<void> =>
-    apiClient.request("/api/admin/upload/avatar", "DELETE", { url }),
+  deleteImage: (url: string) =>
+    apiClient.request("/api/admin/upload/image", "DELETE", { url }),
 };

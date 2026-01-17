@@ -136,7 +136,6 @@ export const pagesApi = {
       prisma.marketingBlogPost.findMany({
         where: {
           isPublished: true,
-          coverImage: { not: null },
           publishedAt: { not: null },
         },
         orderBy: { publishedAt: "desc" },
@@ -194,7 +193,6 @@ export const pagesApi = {
       where: {
         slug,
         isPublished: true,
-        coverImage: { not: null },
         publishedAt: { not: null },
       },
     });
@@ -210,7 +208,6 @@ export const pagesApi = {
         isPublished: true,
         category: post.category,
         id: { not: post.id },
-        coverImage: { not: null },
         publishedAt: { not: null },
       },
       take: 3,

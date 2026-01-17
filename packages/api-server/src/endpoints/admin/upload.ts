@@ -1,28 +1,31 @@
 import { put, del } from "@vercel/blob";
 
-import { UPLOAD_CONFIG } from "@repo/contracts/upload";
+import { UPLOAD_CONFIG, type UploadContext } from "@repo/contracts/upload";
 import { BadRequestError, ValidationError } from "@repo/errors";
 
 export const adminUploadApi = {
-  uploadAvatar: async (file: File): Promise<{ url: string }> => {
-    const { maxSize, acceptedTypes, storagePrefix } = UPLOAD_CONFIG.avatar;
+  uploadImage: async (file: File, context: UploadContext): Promise<{ url: string }> => {
+    const config = UPLOAD_CONFIG[context];
 
-    if (!acceptedTypes.some((type) => type === file.type)) {
-      throw new ValidationError("Invalid file type. Allowed: JPG, PNG, WebP, GIF", {
+    if (!config.acceptedTypes.some((type) => type === file.type)) {
+      throw new ValidationError(`Invalid file type. Allowed: ${config.acceptedTypes.join(", ")}`, {
         fileType: file.type,
-        acceptedTypes,
+        acceptedTypes: config.acceptedTypes,
       });
     }
 
-    if (file.size > maxSize) {
-      throw new ValidationError("File too large (max 2MB)", {
+    if (file.size > config.maxSize) {
+      const maxSizeMB = config.maxSize / (1024 * 1024);
+
+      throw new ValidationError(`File too large (max ${maxSizeMB}MB)`, {
         fileSize: file.size,
-        maxSize,
+        maxSize: config.maxSize,
       });
     }
 
     const timestamp = Date.now();
-    const filename = `${storagePrefix}/${timestamp}-${file.name}`;
+    const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "-");
+    const filename = `${config.storagePrefix}/${timestamp}-${safeName}`;
 
     const blob = await put(filename, file, {
       access: "public",
@@ -31,7 +34,7 @@ export const adminUploadApi = {
     return { url: blob.url };
   },
 
-  deleteAvatar: async (url: string): Promise<void> => {
+  deleteImage: async (url: string): Promise<void> => {
     if (!url) {
       throw new BadRequestError("No URL provided");
     }
