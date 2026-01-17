@@ -30,13 +30,11 @@ export const FormCard = ({
           title: { variant: "h6", fontWeight: "bold" },
           subheader: { variant: "subtitle2", color: "text.secondary" },
         }}
-      ></CardHeader>
+      />
 
-      <CardContent>
-        {!noDivider && <Divider sx={{ mb: 4 }} />}
+      {!noDivider && <Divider sx={{ mb: 4 }} />}
 
-        {children}
-      </CardContent>
+      <CardContent>{children}</CardContent>
     </Card>
   );
 };
