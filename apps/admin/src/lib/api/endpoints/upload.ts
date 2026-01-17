@@ -12,6 +12,5 @@ export const uploadAPI = {
     return apiClient.request<{ url: string }>("/api/admin/upload/image", "POST", formData);
   },
 
-  deleteImage: (url: string) =>
-    apiClient.request("/api/admin/upload/image", "DELETE", { url }),
+  deleteImage: (url: string) => apiClient.request("/api/admin/upload/image", "DELETE", { url }),
 };

@@ -1,7 +1,10 @@
 "use client";
 
-import SaveIcon from "@mui/icons-material/Save"; // Иконка для красоты
+import { zodResolver } from "@hookform/resolvers/zod";
+import SaveIcon from "@mui/icons-material/Save";
+import { FormProvider, useForm } from "react-hook-form";
 
+import { createBlogPostSchema, type CreateBlogPostData } from "@repo/contracts/blog";
 import { ContentSection } from "@repo/ui";
 
 import { useCreateBlogPost } from "@app/lib/hooks";
@@ -10,30 +13,46 @@ import { BlogPostForm } from "../components/blog-post-form";
 
 export const BlogCreateView = () => {
   const { mutate: createPost, isPending } = useCreateBlogPost();
-  const FORM_ID = "create-blog-post-form";
+
+  const methods = useForm<CreateBlogPostData>({
+    resolver: zodResolver(createBlogPostSchema),
+    defaultValues: {
+      title: "",
+      slug: "",
+      excerpt: "",
+      content: "",
+      coverImage: "",
+      authorName: "",
+      category: "Uncategorized",
+      tags: [],
+      isPublished: false,
+      isFeatured: false,
+      readTime: null,
+      publishedAt: null,
+    },
+  });
+
+  const { handleSubmit } = methods;
 
   return (
-    <ContentSection
-      title="Create New Post"
-      subtitle="Write and publish a new article"
-      backgroundColor="light"
-      backHref="/blog"
-      backLabel="Back to List"
-      actions={[
-        {
-          label: "Create Post",
-          type: "submit",
-          form: FORM_ID, // <--- MAGIC: Кнопка здесь, а сабмит там
-          loading: isPending,
-          startIcon: <SaveIcon />,
-        },
-      ]}
-    >
-      <BlogPostForm
-        id={FORM_ID} // <--- ID формы
-        onSubmit={(data) => createPost(data)}
-        isLoading={isPending}
-      />
-    </ContentSection>
+    <FormProvider {...methods}>
+      <ContentSection
+        title="Create Post"
+        subtitle="New entry"
+        backgroundColor="light"
+        backHref="/blog"
+        backLabel="Back to List"
+        actions={[
+          {
+            label: "Publish / Save",
+            onClick: handleSubmit((data) => createPost(data)),
+            loading: isPending,
+            startIcon: <SaveIcon />,
+          },
+        ]}
+      >
+        <BlogPostForm isLoading={isPending} />
+      </ContentSection>
+    </FormProvider>
   );
 };

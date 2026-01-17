@@ -48,7 +48,10 @@ export const ImageUpload = ({
   const formatSize = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(0)}MB`;
 
   const formatTypes = (types: string[]) =>
-    types.map((t) => t.split("/")[1]?.toUpperCase()).filter(Boolean).join(", ");
+    types
+      .map((t) => t.split("/")[1]?.toUpperCase())
+      .filter(Boolean)
+      .join(", ");
 
   return (
     <Stack spacing={2} width="100%">
@@ -101,12 +104,7 @@ export const ImageUpload = ({
             />
 
             <Stack direction="row" spacing={2}>
-              <Button
-                size="small"
-                variant="outlined"
-                onClick={triggerSelect}
-                disabled={disabled}
-              >
+              <Button size="small" variant="outlined" onClick={triggerSelect} disabled={disabled}>
                 Change
               </Button>
 

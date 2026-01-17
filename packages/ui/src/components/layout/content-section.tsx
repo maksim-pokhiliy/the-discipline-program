@@ -44,7 +44,6 @@ export const ContentSection = ({
     >
       <Container maxWidth={maxWidth}>
         <Stack spacing={4}>
-
           {(title || subtitle) && (
             <Stack
               spacing={2}
@@ -95,10 +94,11 @@ export const ContentSection = ({
                   startIcon={<ArrowBackIcon />}
                   color="inherit"
                   variant="text"
+                  size="small"
                   fullWidth
                   sx={{
                     width: { md: "auto" },
-                    justifyContent: { xs: "center", md: "flex-start" }
+                    justifyContent: { xs: "center", md: "flex-start" },
                   }}
                 >
                   {backLabel}
@@ -106,11 +106,7 @@ export const ContentSection = ({
               )}
 
               {actions.length > 0 && (
-                <Stack
-                  direction={{ xs: "column", md: "row" }}
-                  spacing={2}
-                  alignItems="stretch"
-                >
+                <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="stretch">
                   {actions.map((action, index) => (
                     <Button
                       key={index}
@@ -122,6 +118,7 @@ export const ContentSection = ({
                       href={action.href}
                       component={action.href ? Link : "button"}
                       startIcon={action.startIcon}
+                      size="small"
                       fullWidth
                       sx={{ width: { md: "auto" } }}
                     >
