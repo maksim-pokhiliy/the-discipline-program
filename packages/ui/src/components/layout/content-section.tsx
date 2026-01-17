@@ -1,13 +1,25 @@
 "use client";
 
-import { Box, Container, Stack, Typography } from "@mui/material";
+import { type ReactNode } from "react";
+
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { Box, Button, Container, Stack, Typography, type ButtonProps } from "@mui/material";
+import Link from "next/link";
+
+export type ContentAction = ButtonProps & {
+  label: string;
+  startIcon?: ReactNode;
+};
 
 type ContentSectionProps = {
   title?: string;
   subtitle?: string;
   backgroundColor?: "light" | "dark";
   maxWidth?: "sm" | "md" | "lg" | "xl";
-  children?: React.ReactNode;
+  backHref?: string;
+  backLabel?: string;
+  actions?: ContentAction[];
+  children?: ReactNode;
 };
 
 export const ContentSection = ({
@@ -15,6 +27,9 @@ export const ContentSection = ({
   subtitle,
   backgroundColor = "light",
   maxWidth = "xl",
+  backHref,
+  backLabel = "Back",
+  actions = [],
   children,
 }: ContentSectionProps) => {
   const isDark = backgroundColor === "dark";
@@ -28,9 +43,17 @@ export const ContentSection = ({
       })}
     >
       <Container maxWidth={maxWidth}>
-        <Stack spacing={title || subtitle ? 8 : 0}>
-          {title || subtitle ? (
-            <Stack spacing={2} sx={{ textAlign: "center", alignItems: "center" }}>
+        <Stack spacing={4}>
+
+          {(title || subtitle) && (
+            <Stack
+              spacing={2}
+              sx={{
+                textAlign: "center",
+                alignItems: "center",
+                width: "100%",
+              }}
+            >
               {title && (
                 <Typography
                   variant="h2"
@@ -44,23 +67,73 @@ export const ContentSection = ({
               )}
 
               {subtitle && (
-                <Container maxWidth="md">
-                  <Typography
-                    variant="h5"
-                    sx={(theme) => ({
-                      color: theme.palette.text.secondary,
-                      fontWeight: 400,
-                      lineHeight: 1.4,
-                    })}
-                  >
-                    {subtitle}
-                  </Typography>
-                </Container>
+                <Typography
+                  variant="h5"
+                  sx={(theme) => ({
+                    color: theme.palette.text.secondary,
+                    fontWeight: 400,
+                    lineHeight: 1.4,
+                  })}
+                >
+                  {subtitle}
+                </Typography>
               )}
             </Stack>
-          ) : null}
+          )}
 
-          <Stack spacing={4}>{children}</Stack>
+          {(backHref || actions.length > 0) && (
+            <Stack
+              direction={{ xs: "column", md: "row" }}
+              alignItems={{ xs: "stretch", md: "center" }}
+              justifyContent="space-between"
+              spacing={2}
+            >
+              {backHref && (
+                <Button
+                  component={Link}
+                  href={backHref}
+                  startIcon={<ArrowBackIcon />}
+                  color="inherit"
+                  variant="text"
+                  fullWidth
+                  sx={{
+                    width: { md: "auto" },
+                    justifyContent: { xs: "center", md: "flex-start" }
+                  }}
+                >
+                  {backLabel}
+                </Button>
+              )}
+
+              {actions.length > 0 && (
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  spacing={2}
+                  alignItems="stretch"
+                >
+                  {actions.map((action, index) => (
+                    <Button
+                      key={index}
+                      variant={action.variant || "contained"}
+                      color={action.color || "primary"}
+                      type={action.type || "button"}
+                      disabled={Boolean(action.disabled || action.loading)}
+                      onClick={action.onClick}
+                      href={action.href}
+                      component={action.href ? Link : "button"}
+                      startIcon={action.startIcon}
+                      fullWidth
+                      sx={{ width: { md: "auto" } }}
+                    >
+                      {action.loading ? "Loading..." : action.label}
+                    </Button>
+                  ))}
+                </Stack>
+              )}
+            </Stack>
+          )}
+
+          <Box>{children}</Box>
         </Stack>
       </Container>
     </Box>

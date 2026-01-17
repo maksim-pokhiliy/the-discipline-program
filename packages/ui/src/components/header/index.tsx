@@ -26,8 +26,17 @@ export const Header = ({ navigationType = "admin", showUserMenu = true }: Header
           direction="row"
         >
           <Logo />
-          {isMobile ? <Drawer /> : <Navigation navigationType={navigationType} />}
-          {showUserMenu && <UserMenu />}
+
+          {!isMobile && <Navigation navigationType={navigationType} />}
+
+          {!isMobile && showUserMenu && <UserMenu />}
+
+          {isMobile && (
+            <Stack direction="row" sx={{ alignItems: "center" }}>
+              {showUserMenu && <UserMenu />}
+              {<Drawer />}
+            </Stack>
+          )}
         </Stack>
       </AppBar>
     </HideOnScroll>

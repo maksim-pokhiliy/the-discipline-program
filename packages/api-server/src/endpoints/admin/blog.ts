@@ -10,6 +10,19 @@ import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 
+const WORDS_PER_MINUTE = 200;
+
+const calculateReadTime = (content: string): number => {
+  const cleanContent = content.trim();
+
+  if (!cleanContent) {return 0;}
+
+  const wordCount = cleanContent.split(/\s+/).length;
+  const minutes = Math.ceil(wordCount / WORDS_PER_MINUTE);
+
+  return Math.max(1, minutes);
+};
+
 const mapToAdminBlogPost = (record: MarketingBlogPost): BlogPost => {
   return {
     id: record.id,
@@ -31,10 +44,20 @@ const mapToAdminBlogPost = (record: MarketingBlogPost): BlogPost => {
 };
 
 const prepareCreateInput = (data: CreateBlogPostData): Prisma.MarketingBlogPostCreateInput => {
+  const now = new Date();
+  let publishedAt = data.publishedAt;
+
+  if (data.isPublished && !publishedAt) {
+    publishedAt = now;
+  }
+
+  const readTime = calculateReadTime(data.content);
+
   return {
     ...data,
+    readTime,
     coverImage: data.coverImage?.trim() || null,
-    publishedAt: data.publishedAt,
+    publishedAt: publishedAt,
   };
 };
 
@@ -87,11 +110,20 @@ export const adminBlogApi = {
     try {
       const dbInput = prepareCreateInput(data);
 
-      const post = await prisma.marketingBlogPost.create({
-        data: dbInput,
-      });
+      return await prisma.$transaction(async (tx) => {
+        if (dbInput.isFeatured) {
+          await tx.marketingBlogPost.updateMany({
+            where: { isFeatured: true },
+            data: { isFeatured: false },
+          });
+        }
 
-      return mapToAdminBlogPost(post);
+        const post = await tx.marketingBlogPost.create({
+          data: dbInput,
+        });
+
+        return mapToAdminBlogPost(post);
+      });
     } catch (error) {
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -123,12 +155,29 @@ export const adminBlogApi = {
         updateData.coverImage = data.coverImage?.trim() || null;
       }
 
-      const post = await prisma.marketingBlogPost.update({
-        where: { id },
-        data: updateData,
-      });
+      if (data.isPublished === true && !existing.publishedAt && !data.publishedAt) {
+        updateData.publishedAt = new Date();
+      }
 
-      return mapToAdminBlogPost(post);
+      if (data.content !== undefined) {
+        updateData.readTime = calculateReadTime(data.content);
+      }
+
+      return await prisma.$transaction(async (tx) => {
+        if (data.isFeatured === true) {
+          await tx.marketingBlogPost.updateMany({
+            where: { isFeatured: true, id: { not: id } },
+            data: { isFeatured: false },
+          });
+        }
+
+        const post = await tx.marketingBlogPost.update({
+          where: { id },
+          data: updateData,
+        });
+
+        return mapToAdminBlogPost(post);
+      });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
         throw new ConflictError("Slug must be unique", { field: "slug" });
@@ -139,8 +188,22 @@ export const adminBlogApi = {
   },
 
   deletePost: async (id: string): Promise<void> => {
-    await prisma.marketingBlogPost.delete({
+    const post = await prisma.marketingBlogPost.findUnique({
       where: { id },
+    });
+
+    if (!post) {
+      throw new NotFoundError("Blog post not found", { id });
+    }
+
+    await prisma.marketingBlogPost.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        isPublished: false,
+        isFeatured: false,
+        slug: `${post.slug}-deleted-${Date.now()}`,
+      },
     });
   },
 
@@ -153,9 +216,18 @@ export const adminBlogApi = {
       throw new NotFoundError("Blog post not found", { id });
     }
 
+    const newIsPublished = !post.isPublished;
+    const updateData: Prisma.MarketingBlogPostUpdateInput = {
+      isPublished: newIsPublished,
+    };
+
+    if (newIsPublished && !post.publishedAt) {
+      updateData.publishedAt = new Date();
+    }
+
     const updated = await prisma.marketingBlogPost.update({
       where: { id },
-      data: { isPublished: !post.isPublished },
+      data: updateData,
     });
 
     return mapToAdminBlogPost(updated);
