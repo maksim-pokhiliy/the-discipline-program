@@ -1,5 +1,3 @@
-// packages/shared/src/seo.ts
-
 export interface OrganizationConfig {
   name: string;
   url: string;

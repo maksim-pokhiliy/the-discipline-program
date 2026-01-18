@@ -5,7 +5,6 @@ import { createContactSubmissionRequestSchema } from "@repo/contracts/contact";
 import { env } from "@repo/env";
 import { handleApiError } from "@repo/errors";
 
-// 1. Строгий тип ответа сервиса
 type ContactSubmission = Awaited<ReturnType<typeof contactApi.createSubmission>>;
 
 export async function POST(request: Request) {
