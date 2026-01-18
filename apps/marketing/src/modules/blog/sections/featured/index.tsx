@@ -68,7 +68,7 @@ export const BlogFeaturedSection = ({ featuredPost }: BlogFeaturedSectionProps) 
                 component={Link}
                 href={`/blog/${featuredPost.slug}`}
                 variant="contained"
-                size="large"
+                size="small"
               >
                 Read Article
               </Button>

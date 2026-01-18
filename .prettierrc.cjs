@@ -1,5 +1,6 @@
+/** @type {import("prettier").Config} */
 module.exports = {
-  plugins: ["prettier-plugin-sort-json"],
+  plugins: [require.resolve("prettier-plugin-sort-json")],
   arrowParens: "always",
   bracketSameLine: false,
   bracketSpacing: true,

@@ -75,7 +75,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
             {post.title}
           </Typography>
 
-          <Typography variant="caption" color="text.secondary" >
+          <Typography variant="caption" color="text.secondary">
             /{post.slug}
           </Typography>
         </Stack>
