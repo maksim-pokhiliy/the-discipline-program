@@ -15,7 +15,9 @@ const WORDS_PER_MINUTE = 200;
 const calculateReadTime = (content: string): number => {
   const cleanContent = content.trim();
 
-  if (!cleanContent) {return 0;}
+  if (!cleanContent) {
+    return 0;
+  }
 
   const wordCount = cleanContent.split(/\s+/).length;
   const minutes = Math.ceil(wordCount / WORDS_PER_MINUTE);

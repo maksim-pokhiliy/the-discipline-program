@@ -3,8 +3,16 @@ import { z } from "zod";
 export const blogPostSchema = z.object({
   id: z.string().cuid(),
   title: z.string().min(1).max(200),
-  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/),
-  excerpt: z.string().min(1).max(500).nullable(),
+  slug: z
+    .string()
+    .min(1)
+    .max(200)
+    .regex(/^[a-z0-9-]+$/),
+  excerpt: z
+    .string()
+    .max(500)
+    .nullable()
+    .transform((v) => (v === "" ? null : v)),
   content: z.string().min(1),
   coverImage: z.string().nullable(),
   publishedAt: z.date().nullable(),

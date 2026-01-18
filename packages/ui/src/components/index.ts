@@ -6,3 +6,5 @@ export * from "./modal";
 export * from "./logo";
 export * from "./nav-link-button";
 export * from "./toast";
+export * from "./tags-input";
+export * from "./form-card";
