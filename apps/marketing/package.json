@@ -22,7 +22,6 @@
     "@tanstack/react-query": "catalog:",
     "@mui/material": "catalog:",
     "@mui/icons-material": "catalog:",
-    "react-markdown": "catalog:",
     "lucide-react": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
