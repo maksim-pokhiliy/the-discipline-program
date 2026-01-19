@@ -159,12 +159,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
           )}
 
           <Tooltip title="Edit">
-            <IconButton
-              component={Link}
-              href={`/blog/${post.id}/edit`}
-              size="small"
-              color="primary"
-            >
+            <IconButton component={Link} href={`/blog/${post.id}`} size="small" color="primary">
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
