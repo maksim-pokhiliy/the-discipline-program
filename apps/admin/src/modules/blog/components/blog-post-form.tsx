@@ -27,9 +27,10 @@ import { slugify } from "../utils/helpers";
 
 interface BlogPostFormProps {
   isLoading?: boolean;
+  disableAutoSlug?: boolean;
 }
 
-export const BlogPostForm = ({ isLoading = false }: BlogPostFormProps) => {
+export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: BlogPostFormProps) => {
   const {
     register,
     watch,
@@ -45,10 +46,10 @@ export const BlogPostForm = ({ isLoading = false }: BlogPostFormProps) => {
   const excerpt = watch("excerpt");
 
   useEffect(() => {
-    if (title && !dirtyFields.slug) {
+    if (!disableAutoSlug && title && !dirtyFields.slug) {
       setValue("slug", slugify(title), { shouldValidate: true });
     }
-  }, [title, dirtyFields.slug, setValue]);
+  }, [title, dirtyFields.slug, setValue, disableAutoSlug]);
 
   const wordCount = useMemo(() => {
     if (!content) {
