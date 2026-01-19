@@ -15,15 +15,15 @@ export const blogPostSchema = z.object({
     .transform((v) => (v === "" ? null : v)),
   content: z.string().min(1),
   coverImage: z.string().nullable(),
-  publishedAt: z.date().nullable(),
+  publishedAt: z.coerce.date().nullable(),
   readTime: z.number().int().positive().nullable(),
   authorName: z.string().min(1, "Author name is required"),
   category: z.string().default("Uncategorized"),
   tags: z.array(z.string()).default([]),
   isPublished: z.boolean(),
   isFeatured: z.boolean(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
+  createdAt: z.coerce.date(),
+  updatedAt: z.coerce.date(),
 });
 
 export const createBlogPostSchema = blogPostSchema.omit({
@@ -41,7 +41,7 @@ export const publicBlogPostSchema = z.object({
   excerpt: z.string().nullable(),
   content: z.string(),
   coverImage: z.string().nullable(),
-  publishedAt: z.date(),
+  publishedAt: z.coerce.date(),
   readTime: z.number().nullable(),
   isFeatured: z.boolean(),
   authorName: z.string(),
