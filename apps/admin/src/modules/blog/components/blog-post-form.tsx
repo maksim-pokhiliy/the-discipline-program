@@ -19,7 +19,7 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import { BLOG_CATEGORIES, type CreateBlogPostData } from "@repo/contracts/blog";
 import { UPLOAD_CONFIG } from "@repo/contracts/upload";
-import { FormCard, ImageUpload, TagsInput } from "@repo/ui";
+import { FormCard, ImageUpload, RichTextEditor, TagsInput } from "@repo/ui";
 
 import { useUploadImage } from "@app/lib/hooks";
 
@@ -51,7 +51,13 @@ export const BlogPostForm = ({ isLoading = false }: BlogPostFormProps) => {
   }, [title, dirtyFields.slug, setValue]);
 
   const wordCount = useMemo(() => {
-    return content ? content.trim().split(/\s+/).length : 0;
+    if (!content) {
+      return 0;
+    }
+
+    const text = content.replace(/<[^>]*>?/gm, "");
+
+    return text.trim().split(/\s+/).length;
   }, [content]);
 
   return (
@@ -72,23 +78,21 @@ export const BlogPostForm = ({ isLoading = false }: BlogPostFormProps) => {
             />
 
             <Stack spacing={1}>
-              <TextField
-                label="Content"
-                placeholder="Write your article content (Markdown supported)..."
-                variant="outlined"
-                fullWidth
-                multiline
-                minRows={20}
-                size="small"
-                disabled={isLoading}
-                error={!!errors.content}
-                helperText={errors.content?.message}
-                sx={{
-                  "& .MuiInputBase-root": {
-                    fontFamily: "monospace",
-                  },
-                }}
-                {...register("content")}
+              <Controller
+                name="content"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <RichTextEditor
+                    label="Content"
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder="Write your article content..."
+                    disabled={isLoading}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                    minRows={20}
+                  />
+                )}
               />
 
               <Typography variant="caption" color="text.secondary" align="right">
