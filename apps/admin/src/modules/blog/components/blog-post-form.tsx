@@ -55,7 +55,6 @@ export const BlogPostForm = ({ isLoading = false }: BlogPostFormProps) => {
       return 0;
     }
 
-    // Strip HTML tags for word count
     const text = content.replace(/<[^>]*>?/gm, "");
 
     return text.trim().split(/\s+/).length;
