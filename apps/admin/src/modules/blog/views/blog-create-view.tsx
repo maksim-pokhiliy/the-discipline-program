@@ -39,7 +39,7 @@ export const BlogCreateView = () => {
       <ContentSection
         title="Create Post"
         subtitle="New entry"
-        backgroundColor="light"
+        backgroundColor="dark"
         backHref="/blog"
         backLabel="Back to List"
         actions={[
