@@ -1,7 +1,7 @@
-import { type MarketingProgramPreview } from "@prisma/client";
+import { Prisma, type MarketingProgramPreview } from "@prisma/client";
 
 import { type Program } from "@repo/contracts/program";
-import { NotFoundError } from "@repo/errors";
+import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 
@@ -20,7 +20,10 @@ const mapToProgram = (p: MarketingProgramPreview): Program => ({
 export const adminProgramsApi = {
   getPrograms: async (): Promise<Program[]> => {
     const programs = await prisma.marketingProgramPreview.findMany({
-      orderBy: [{ isActive: "desc" }],
+      where: {
+        deletedAt: null,
+      },
+      orderBy: [{ createdAt: "desc" }, { title: "asc" }],
     });
 
     return programs.map(mapToProgram);
@@ -31,14 +34,18 @@ export const adminProgramsApi = {
       where: { id },
     });
 
-    return program ? mapToProgram(program) : null;
+    if (!program || program.deletedAt) {
+      return null;
+    }
+
+    return mapToProgram(program);
   },
 
   getProgramsStats: async () => {
     const [total, active, inactive] = await Promise.all([
-      prisma.marketingProgramPreview.count(),
-      prisma.marketingProgramPreview.count({ where: { isActive: true } }),
-      prisma.marketingProgramPreview.count({ where: { isActive: false } }),
+      prisma.marketingProgramPreview.count({ where: { deletedAt: null } }),
+      prisma.marketingProgramPreview.count({ where: { isActive: true, deletedAt: null } }),
+      prisma.marketingProgramPreview.count({ where: { isActive: false, deletedAt: null } }),
     ]);
 
     return {
@@ -63,28 +70,73 @@ export const adminProgramsApi = {
   createProgram: async (
     data: Omit<Program, "id" | "updatedAt" | "createdAt">,
   ): Promise<Program> => {
-    const program = await prisma.marketingProgramPreview.create({
-      data: {
-        ...data,
-        priceLabel: data.priceLabel ?? null,
-      },
-    });
+    try {
+      const program = await prisma.marketingProgramPreview.create({
+        data: {
+          ...data,
+          priceLabel: data.priceLabel ?? null,
+        },
+      });
 
-    return mapToProgram(program);
+      return mapToProgram(program);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002" &&
+        error.meta?.target &&
+        Array.isArray(error.meta.target) &&
+        error.meta.target.includes("slug")
+      ) {
+        throw new ConflictError("Program with this slug already exists", { field: "slug" });
+      }
+
+      throw error;
+    }
   },
 
   updateProgram: async (id: string, data: Partial<Program>): Promise<Program> => {
-    const program = await prisma.marketingProgramPreview.update({
-      where: { id },
-      data,
-    });
+    try {
+      const program = await prisma.marketingProgramPreview.update({
+        where: { id },
+        data,
+      });
 
-    return mapToProgram(program);
+      return mapToProgram(program);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002" &&
+        error.meta?.target &&
+        Array.isArray(error.meta.target) &&
+        error.meta.target.includes("slug")
+      ) {
+        throw new ConflictError("Program with this slug already exists", { field: "slug" });
+      }
+
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+        throw new NotFoundError("Program not found", { id });
+      }
+
+      throw error;
+    }
   },
 
   deleteProgram: async (id: string): Promise<void> => {
-    await prisma.marketingProgramPreview.delete({
+    const program = await prisma.marketingProgramPreview.findUnique({
       where: { id },
+    });
+
+    if (!program) {
+      throw new NotFoundError("Program not found", { id });
+    }
+
+    await prisma.marketingProgramPreview.update({
+      where: { id },
+      data: {
+        deletedAt: new Date(),
+        isActive: false,
+        slug: `${program.slug}-deleted-${Date.now()}`,
+      },
     });
   },
 
@@ -93,7 +145,7 @@ export const adminProgramsApi = {
       where: { id },
     });
 
-    if (!program) {
+    if (!program || program.deletedAt) {
       throw new NotFoundError("Program not found", { id });
     }
 

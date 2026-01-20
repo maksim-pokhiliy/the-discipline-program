@@ -77,7 +77,11 @@ export const adminBlogApi = {
       where: { id },
     });
 
-    return post ? mapToAdminBlogPost(post) : null;
+    if (!post || post.deletedAt) {
+      return null;
+    }
+
+    return mapToAdminBlogPost(post);
   },
 
   getBlogStats: async (): Promise<BlogStats> => {
