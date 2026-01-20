@@ -7,13 +7,13 @@ import { QueryWrapper } from "@repo/query";
 
 import { useProgramsPageData } from "@app/lib/hooks";
 
-import { ProgramsStatsSection } from "./sections";
+import { ProgramsListSection, ProgramsStatsSection } from "../sections";
 
-interface ProgramsPageClientProps {
+interface ProgramsListViewProps {
   initialData: AdminProgramsPageData;
 }
 
-export const ProgramsPageClient = ({ initialData }: ProgramsPageClientProps) => {
+export const ProgramsListView = ({ initialData }: ProgramsListViewProps) => {
   const { data, isLoading, error } = useProgramsPageData({ initialData });
 
   return (
@@ -26,6 +26,7 @@ export const ProgramsPageClient = ({ initialData }: ProgramsPageClientProps) => 
       {(data) => (
         <Stack spacing={0}>
           <ProgramsStatsSection stats={data.stats} />
+          <ProgramsListSection programs={data.programs} />
         </Stack>
       )}
     </QueryWrapper>
