@@ -19,11 +19,10 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import { BLOG_CATEGORIES, type CreateBlogPostData } from "@repo/contracts/blog";
 import { UPLOAD_CONFIG } from "@repo/contracts/upload";
+import { slugify } from "@repo/shared";
 import { FormCard, ImageUpload, RichTextEditor, TagsInput } from "@repo/ui";
 
 import { useUploadImage } from "@app/lib/hooks";
-
-import { slugify } from "../utils/helpers";
 
 interface BlogPostFormProps {
   isLoading?: boolean;

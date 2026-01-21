@@ -1,1 +1,1 @@
-export * from "./views/storefront-programs-list-view";
+export * from "./views";
