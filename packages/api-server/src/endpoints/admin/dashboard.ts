@@ -25,8 +25,8 @@ async function getContentStats(): Promise<ContentStats> {
     contactsTotal,
     contactsNew,
   ] = await Promise.all([
-    prisma.marketingProgramPreview.count(),
-    prisma.marketingProgramPreview.count({ where: { isActive: true } }),
+    prisma.marketingStorefrontProgram.count(),
+    prisma.marketingStorefrontProgram.count({ where: { isActive: true } }),
 
     prisma.marketingReview.count(),
     prisma.marketingReview.count({ where: { isActive: true } }),
@@ -44,7 +44,7 @@ async function getContentStats(): Promise<ContentStats> {
   ]);
 
   return {
-    programs: {
+    storefrontPrograms: {
       total: programsTotal,
       active: programsActive,
       inactive: programsTotal - programsActive,

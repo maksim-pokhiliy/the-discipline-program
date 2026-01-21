@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import {
   type HomePageData,
-  type ProgramsPageData,
+  type StorefrontProgramsPageData,
   type AboutPageData,
   type BlogPageData,
   type ContactPageData,
@@ -15,8 +15,8 @@ interface UseHomePageOptions {
   initialData?: HomePageData;
 }
 
-interface UseProgramsPageOptions {
-  initialData?: ProgramsPageData;
+interface UseStorefrontProgramsPageOptions {
+  initialData?: StorefrontProgramsPageData;
 }
 
 interface UseAboutPageOptions {
@@ -39,10 +39,10 @@ export const useHomePage = ({ initialData }: UseHomePageOptions = {}) =>
     staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
   });
 
-export const useProgramsPage = ({ initialData }: UseProgramsPageOptions = {}) =>
+export const useStorefrontProgramsPage = ({ initialData }: UseStorefrontProgramsPageOptions = {}) =>
   useQuery({
-    queryKey: marketingKeys.pages.programs(),
-    queryFn: api.pages.getPrograms,
+    queryKey: marketingKeys.pages.storefront(),
+    queryFn: api.pages.getStorefrontPrograms,
     initialData,
     staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
   });

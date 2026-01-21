@@ -1,8 +1,8 @@
-import { type Program, type Review } from "@repo/contracts";
+import { type StorefrontProgram, type Review } from "@repo/contracts";
 import { generateStructuredData } from "@repo/shared";
 
 interface StructuredDataProps {
-  type: "website" | "organization" | "article" | "programs" | "reviews" | "faq" | "person";
+  type: "website" | "organization" | "article" | "storefront" | "reviews" | "faq" | "person";
   data?: {
     title?: string;
     description?: string;
@@ -11,7 +11,7 @@ interface StructuredDataProps {
     publishedTime?: string;
     modifiedTime?: string;
     url?: string;
-    programs?: Program[];
+    storefrontPrograms?: StorefrontProgram[];
     reviews?: Review[];
     faqItems?: Array<{
       question: string;

@@ -13,7 +13,7 @@
     "./dashboard": "./src/entities/dashboard/index.ts",
     "./feature": "./src/entities/feature/index.ts",
     "./pages": "./src/entities/pages/index.ts",
-    "./program": "./src/entities/program/index.ts",
+    "./storefront": "./src/entities/storefront/index.ts",
     "./review": "./src/entities/review/index.ts",
     "./upload": "./src/entities/upload/index.ts"
   },

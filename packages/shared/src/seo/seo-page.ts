@@ -6,8 +6,8 @@ export const PAGE_SEO = {
     keywords: ["fitness", "discipline", "training program", "workout", "online coaching"],
   },
 
-  programs: {
-    title: "Programs — The Discipline Program",
+  storefront: {
+    title: "Storefront — The Discipline Program",
     description:
       "Explore training programs tailored to your goals: strength, conditioning, fat loss, and performance.",
     keywords: ["fitness programs", "strength training", "conditioning", "workout plans"],

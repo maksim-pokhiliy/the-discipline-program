@@ -21,9 +21,9 @@ export const ContentStatsSection = ({ contentStats }: ContentStatsSectionProps) 
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatsCard
-            title="Programs"
-            value={contentStats.programs.total}
-            subtitle={`${contentStats.programs.active} active, ${contentStats.programs.inactive} inactive`}
+            title="Storefront Programs"
+            value={contentStats.storefrontPrograms.total}
+            subtitle={`${contentStats.storefrontPrograms.active} active, ${contentStats.storefrontPrograms.inactive} inactive`}
             icon={<SportsIcon fontSize="large" />}
             color="primary"
           />

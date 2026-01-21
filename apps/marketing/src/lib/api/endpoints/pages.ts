@@ -4,14 +4,17 @@ import {
   type BlogPostPageData,
   type ContactPageData,
   type HomePageData,
-  type ProgramsPageData,
+  type StorefrontProgramsPageData,
 } from "@repo/contracts";
 
 import { apiClient } from "../client";
 
 export const pagesAPI = {
   getHome: (): Promise<HomePageData> => apiClient.request("/api/public/pages/home"),
-  getPrograms: (): Promise<ProgramsPageData> => apiClient.request("/api/public/pages/programs"),
+
+  getStorefrontPrograms: (): Promise<StorefrontProgramsPageData> =>
+    apiClient.request("/api/public/pages/storefront"),
+
   getAbout: (): Promise<AboutPageData> => apiClient.request("/api/public/pages/about"),
   getBlog: (): Promise<BlogPageData> => apiClient.request("/api/public/pages/blog"),
   getContact: (): Promise<ContactPageData> => apiClient.request("/api/public/pages/contact"),
