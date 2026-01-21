@@ -3,7 +3,7 @@ import type { MarketingNavigationConfig } from "../types";
 export const MARKETING_NAVIGATION: MarketingNavigationConfig = {
   headerLinks: [
     { text: "Home", href: "/" },
-    { text: "Programs", href: "/programs" },
+    { text: "Programs", href: "/storefront" },
     { text: "About", href: "/about" },
     { text: "Blog", href: "/blog" },
     { text: "Contact", href: "/contact" },

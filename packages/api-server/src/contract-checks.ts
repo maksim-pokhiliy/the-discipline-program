@@ -2,7 +2,7 @@ import {
   type MarketingBlogPost,
   type MarketingContactSubmission,
   type MarketingFeature,
-  type MarketingProgramPreview,
+  type MarketingStorefrontProgram,
   type MarketingReview,
   type User,
 } from "@prisma/client";
@@ -26,9 +26,12 @@ type BlogPostFromDb = MarketingBlogPost;
 type BlogPostContract = z.infer<typeof Contracts.getBlogPostsResponseSchema>[number];
 assertType<Satisfies<BlogPostFromDb, BlogPostContract>>();
 
-type ProgramFromDb = MarketingProgramPreview;
-type ProgramContract = z.infer<typeof Contracts.getProgramsResponseSchema>[number];
-assertType<Satisfies<ProgramFromDb, ProgramContract>>();
+type StorefrontProgramFromDb = MarketingStorefrontProgram;
+
+type StorefrontProgramContract = z.infer<
+  typeof Contracts.getStorefrontProgramsResponseSchema
+>[number];
+assertType<Satisfies<StorefrontProgramFromDb, StorefrontProgramContract>>();
 
 type FeatureFromDb = MarketingFeature;
 type FeatureContract = z.infer<typeof Contracts.featureSchema>;

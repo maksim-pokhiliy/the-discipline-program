@@ -4,7 +4,7 @@ import { type PublicBlogPost, type BlogPostPageData } from "@repo/contracts/blog
 import { type Feature } from "@repo/contracts/feature";
 import {
   type HomePageData,
-  type ProgramsPageData,
+  type StorefrontProgramsPageData,
   type AboutPageData,
   type BlogPageData,
   type ContactPageData,
@@ -51,7 +51,7 @@ export const pagesApi = {
     });
 
     const [programs, reviews, features] = await Promise.all([
-      prisma.marketingProgramPreview.findMany({ where: { isActive: true } }),
+      prisma.marketingStorefrontProgram.findMany({ where: { isActive: true } }),
       prisma.marketingReview.findMany({ where: { isActive: true } }),
       prisma.marketingFeature.findMany({
         where: { isActive: true },
@@ -72,20 +72,20 @@ export const pagesApi = {
     return {
       hero: getSectionData<HomePageData["hero"]>("hero"),
       whyChoose: getSectionData<HomePageData["whyChoose"]>("whyChoose"),
-      programs: getSectionData<HomePageData["programs"]>("programs"),
+      storefront: getSectionData<HomePageData["storefront"]>("storefront"),
       reviews: getSectionData<HomePageData["reviews"]>("reviews"),
       contact: getSectionData<HomePageData["contact"]>("contact"),
 
       features: features.map(mapToFeature),
-      programsList: programs,
+      storefrontProgramsList: programs,
       reviewsList: reviews,
     };
   },
 
-  getProgramsPage: async (): Promise<ProgramsPageData> => {
+  getStorefrontProgramsPage: async (): Promise<StorefrontProgramsPageData> => {
     const [sections, programs] = await Promise.all([
-      prisma.marketingPageSection.findMany({ where: { pageSlug: "programs", isActive: true } }),
-      prisma.marketingProgramPreview.findMany({
+      prisma.marketingPageSection.findMany({ where: { pageSlug: "storefront", isActive: true } }),
+      prisma.marketingStorefrontProgram.findMany({
         where: { isActive: true },
       }),
     ]);
@@ -101,7 +101,7 @@ export const pagesApi = {
     };
 
     return {
-      hero: getSectionData<ProgramsPageData["hero"]>("hero"),
+      hero: getSectionData<StorefrontProgramsPageData["hero"]>("hero"),
       programsList: programs,
     };
   },

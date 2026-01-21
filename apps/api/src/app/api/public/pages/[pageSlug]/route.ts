@@ -16,8 +16,8 @@ export async function GET(_: Request, { params }: { params: Promise<{ pageSlug: 
         break;
       }
 
-      case "programs": {
-        pageData = await pagesApi.getProgramsPage();
+      case "storefront": {
+        pageData = await pagesApi.getStorefrontProgramsPage();
         break;
       }
 

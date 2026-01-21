@@ -5,7 +5,7 @@ export const marketingKeys = {
 
   pages: {
     home: (): QueryKey => [...marketingKeys.root, "pages", "home"] as const,
-    programs: (): QueryKey => [...marketingKeys.root, "pages", "programs"] as const,
+    storefront: (): QueryKey => [...marketingKeys.root, "pages", "storefront"] as const,
     about: (): QueryKey => [...marketingKeys.root, "pages", "about"] as const,
     blog: (): QueryKey => [...marketingKeys.root, "pages", "blog"] as const,
     contact: (): QueryKey => [...marketingKeys.root, "pages", "contact"] as const,
@@ -15,8 +15,8 @@ export const marketingKeys = {
     article: (slug: string): QueryKey => [...marketingKeys.root, "blog-articles", slug] as const,
   },
 
-  programs: {
-    all: (): QueryKey => [...marketingKeys.root, "programs"] as const,
+  storefront: {
+    all: (): QueryKey => [...marketingKeys.root, "storefront"] as const,
   },
 
   reviews: {

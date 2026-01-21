@@ -354,7 +354,7 @@ model MarketingBlogPost {
   @@map("marketing_blog_posts")
 }
 
-model MarketingProgramPreview {
+model MarketingStorefrontProgram {
   id             String    @id @default(cuid())
   slug           String    @unique
   title          String
@@ -369,7 +369,7 @@ model MarketingProgramPreview {
 
   @@index([createdAt])
   @@index([deletedAt])
-  @@map("marketing_program_previews")
+  @@map("marketing_storefront_programs")
 }
 
 model MarketingReview {

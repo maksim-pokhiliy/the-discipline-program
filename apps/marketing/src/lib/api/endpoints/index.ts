@@ -1,4 +1,4 @@
 export * from "./pages";
-export * from "./programs";
+export * from "./storefront";
 export * from "./reviews";
 export * from "./contact";

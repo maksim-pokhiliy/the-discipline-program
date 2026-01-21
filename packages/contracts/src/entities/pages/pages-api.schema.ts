@@ -2,17 +2,17 @@ import { z } from "zod";
 
 import { publicBlogPostSchema } from "../blog";
 import { featureSchema } from "../feature/feature.schema";
-import { programSchema } from "../program/program.schema";
 import { reviewSchema } from "../review/review.schema";
+import { storefrontProgramSchema } from "../storefront/storefront.schema";
 
 import { PAGE_SLUGS } from "./pages.constants";
 import {
   homePageHeroSchema,
   homePageWhyChooseSchema,
-  homePageProgramsSchema,
+  homePageStorefrontProgramsSchema,
   homePageReviewsSchema,
   homePageContactSchema,
-  programsPageHeroSchema,
+  storefrontProgramsPageHeroSchema,
   aboutPageHeroSchema,
   aboutPageJourneySchema,
   aboutPageCredentialsSchema,
@@ -32,17 +32,17 @@ export const getPageBySlugParamsSchema = z.object({
 export const getHomePageResponseSchema = z.object({
   hero: homePageHeroSchema,
   whyChoose: homePageWhyChooseSchema,
-  programs: homePageProgramsSchema,
+  storefront: homePageStorefrontProgramsSchema,
   reviews: homePageReviewsSchema,
   contact: homePageContactSchema,
   features: z.array(featureSchema),
-  programsList: z.array(programSchema),
+  storefrontProgramsList: z.array(storefrontProgramSchema),
   reviewsList: z.array(reviewSchema),
 });
 
-export const getProgramsPageResponseSchema = z.object({
-  hero: programsPageHeroSchema,
-  programsList: z.array(programSchema),
+export const getStorefrontProgramsPageResponseSchema = z.object({
+  hero: storefrontProgramsPageHeroSchema,
+  programsList: z.array(storefrontProgramSchema),
 });
 
 export const getAboutPageResponseSchema = z.object({

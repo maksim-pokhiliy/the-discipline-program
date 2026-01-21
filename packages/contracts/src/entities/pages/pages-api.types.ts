@@ -3,7 +3,7 @@ import { type z } from "zod";
 import {
   type getPageBySlugParamsSchema,
   type getHomePageResponseSchema,
-  type getProgramsPageResponseSchema,
+  type getStorefrontProgramsPageResponseSchema,
   type getAboutPageResponseSchema,
   type getBlogPageResponseSchema,
   type getContactPageResponseSchema,
@@ -13,7 +13,7 @@ export type GetPageBySlugParams = z.infer<typeof getPageBySlugParamsSchema>;
 
 export type HomePageData = z.infer<typeof getHomePageResponseSchema>;
 
-export type ProgramsPageData = z.infer<typeof getProgramsPageResponseSchema>;
+export type StorefrontProgramsPageData = z.infer<typeof getStorefrontProgramsPageResponseSchema>;
 
 export type AboutPageData = z.infer<typeof getAboutPageResponseSchema>;
 

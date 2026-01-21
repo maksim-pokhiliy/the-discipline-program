@@ -57,5 +57,4 @@ export class ApiClient {
 }
 
 export const createBrowserApiClient = (baseUrl: string = "") => new ApiClient({ baseUrl });
-
 export const createServerApiClient = (baseUrl: string) => new ApiClient({ baseUrl });

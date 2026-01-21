@@ -8,9 +8,9 @@ import RateReviewIcon from "@mui/icons-material/RateReview";
 export const quickActions = [
   {
     title: "Add Program",
-    description: "Create a new training program",
+    description: "Create a new storefront program",
     icon: <PsychologyIcon fontSize="large" />,
-    href: "/programs?action=create",
+    href: "/storefront/create",
     color: "primary" as const,
   },
   {

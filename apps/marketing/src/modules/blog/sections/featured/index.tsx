@@ -60,7 +60,7 @@ export const BlogFeaturedSection = ({ featuredPost }: BlogFeaturedSectionProps) 
                 </Typography>
 
                 <Typography variant="body2" color="text.secondary">
-                  {featuredPost.readTime} хв читання
+                  {featuredPost.readTime} min read
                 </Typography>
               </Stack>
 

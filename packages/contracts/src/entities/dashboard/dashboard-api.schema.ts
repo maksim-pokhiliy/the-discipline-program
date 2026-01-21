@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const getDashboardDataResponseSchema = z.object({
   contentStats: z.object({
-    programs: z.object({
+    storefrontPrograms: z.object({
       total: z.number(),
       active: z.number(),
       inactive: z.number(),
