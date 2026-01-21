@@ -3,7 +3,7 @@ import { type AdminNavigationConfig } from "../types";
 export const ADMIN_NAVIGATION: AdminNavigationConfig = {
   links: [
     { text: "Dashboard", href: "/" },
-    { text: "Programs", href: "/programs" },
+    { text: "Storefront", href: "/storefront" },
     { text: "Reviews", href: "/reviews" },
     { text: "Blog", href: "/blog" },
     { text: "Pages", href: "/pages" },

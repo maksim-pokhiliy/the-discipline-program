@@ -12,9 +12,9 @@ export const adminKeys = {
     byId: (id: string) => [...adminKeys.root, "blog", id] as const,
   },
 
-  programs: {
-    page: () => [...adminKeys.root, "programs", "page-data"] as const,
-    byId: (id: string) => [...adminKeys.root, "programs", id] as const,
+  storefront: {
+    page: () => [...adminKeys.root, "storefront", "page-data"] as const,
+    byId: (id: string) => [...adminKeys.root, "storefront", id] as const,
   },
 
   reviews: {

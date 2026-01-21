@@ -13,7 +13,7 @@ import {
   HomeFeaturesSection,
   HomeFinalCTASection,
   HomeHeroSection,
-  HomeProgramsPreview,
+  HomeStorefrontProgramsPreview,
   HomeReviewsSection,
 } from "./sections";
 
@@ -37,14 +37,24 @@ export const HomePageClient = ({ initialData }: HomePageClientProps) => {
             <StructuredData type="website" />
             <StructuredData type="organization" />
             <StructuredData type="person" />
-            <StructuredData type="programs" data={{ programs: data.programsList }} />
+
+            <StructuredData
+              type="storefront"
+              data={{ storefrontPrograms: data.storefrontProgramsList }}
+            />
+
             <StructuredData type="reviews" data={{ reviews: data.reviewsList }} />
           </Head>
 
           <Stack spacing={0}>
             <HomeHeroSection hero={data.hero} />
             <HomeFeaturesSection whyChoose={data.whyChoose} features={data.features} />
-            <HomeProgramsPreview programs={data.programs} programsList={data.programsList} />
+
+            <HomeStorefrontProgramsPreview
+              programs={data.storefront}
+              programsList={data.storefrontProgramsList}
+            />
+
             <HomeReviewsSection reviews={data.reviews} reviewsList={data.reviewsList} />
             <HomeFinalCTASection />
           </Stack>

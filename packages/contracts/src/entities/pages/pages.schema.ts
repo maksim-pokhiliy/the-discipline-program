@@ -15,7 +15,7 @@ export const homePageWhyChooseSchema = z.object({
   subtitle: z.string(),
 });
 
-export const homePageProgramsSchema = z.object({
+export const homePageStorefrontProgramsSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
   backgroundImage: z.string(),
@@ -31,7 +31,7 @@ export const homePageContactSchema = z.object({
   subtitle: z.string(),
 });
 
-export const programsPageHeroSchema = z.object({
+export const storefrontProgramsPageHeroSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
   backgroundImage: z.string().optional(),

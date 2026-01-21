@@ -11,7 +11,7 @@ export const PaymentErrorActionsSection = () => {
     >
       <Stack spacing={6} alignItems="center">
         <Stack spacing={2} direction={{ xs: "column", sm: "row" }}>
-          <Button variant="contained" size="large" href="/programs" sx={{ minWidth: 200 }}>
+          <Button variant="contained" size="large" href="/storefront" sx={{ minWidth: 200 }}>
             Try Again
           </Button>
 

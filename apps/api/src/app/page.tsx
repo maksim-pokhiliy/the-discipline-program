@@ -6,7 +6,7 @@ export default function Page() {
       <p>API Server is running on port 3001</p>
 
       <ul>
-        <li>GET /api/programs</li>
+        <li>GET /api/storefront</li>
         <li>GET /api/reviews</li>
         <li>GET /api/blog</li>
       </ul>

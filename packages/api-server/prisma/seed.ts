@@ -8,7 +8,7 @@ async function main() {
 
   await prisma.marketingPageSection.deleteMany();
   await prisma.marketingFeature.deleteMany();
-  await prisma.marketingProgramPreview.deleteMany();
+  await prisma.marketingStorefrontProgram.deleteMany();
   await prisma.marketingBlogPost.deleteMany();
   await prisma.marketingReview.deleteMany();
   await prisma.user.deleteMany();
@@ -34,7 +34,7 @@ async function main() {
         subtitle:
           "Functional fitness for those who refuse to settle. Master gymnastics, weightlifting, and metabolic conditioning to prepare for the unknown.",
         buttonText: "Start Training",
-        buttonHref: "/programs",
+        buttonHref: "/storefront",
         backgroundImage:
           "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=2000&q=80",
       },
@@ -48,7 +48,7 @@ async function main() {
       },
     },
     {
-      section: "programs",
+      section: "storefront",
       data: {
         title: "Choose Your Track",
         subtitle: "From Open preparation to daily GPP (General Physical Preparedness).",
@@ -167,7 +167,7 @@ async function main() {
         title: "3... 2... 1... GO!",
         subtitle: "The clock is ticking. Are you ready to work?",
         buttonText: "Join The Program",
-        buttonHref: "/programs",
+        buttonHref: "/storefront",
       },
       isActive: true,
     },
@@ -175,7 +175,7 @@ async function main() {
 
   const otherPages = [
     {
-      slug: "programs",
+      slug: "storefront",
       title: "Programming Tracks",
       subtitle: "Structured paths for Competitors and Everyday Athletes.",
     },
@@ -298,7 +298,7 @@ async function main() {
     ],
   });
 
-  await prisma.marketingProgramPreview.create({
+  await prisma.marketingStorefrontProgram.create({
     data: {
       title: "The Competitor",
       slug: "competitor-track",
@@ -315,7 +315,7 @@ async function main() {
     },
   });
 
-  await prisma.marketingProgramPreview.create({
+  await prisma.marketingStorefrontProgram.create({
     data: {
       title: "Performance Rx",
       slug: "performance-rx",
@@ -332,7 +332,7 @@ async function main() {
     },
   });
 
-  await prisma.marketingProgramPreview.create({
+  await prisma.marketingStorefrontProgram.create({
     data: {
       title: "Engine Builder",
       slug: "engine-builder",
