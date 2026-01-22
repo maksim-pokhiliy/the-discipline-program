@@ -10,7 +10,6 @@ export const getDashboardDataResponseSchema = z.object({
     reviews: z.object({
       total: z.number(),
       active: z.number(),
-      featured: z.number(),
     }),
     blogPosts: z.object({
       total: z.number(),

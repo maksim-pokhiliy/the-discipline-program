@@ -8,7 +8,6 @@ export const REVIEW_CONSTANTS = {
 
 export const REVIEW_DEFAULTS = {
   isActive: true,
-  isFeatured: false,
   rating: 5,
   authorAvatar: null,
   programId: null,

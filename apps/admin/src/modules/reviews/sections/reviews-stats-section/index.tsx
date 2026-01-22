@@ -2,7 +2,6 @@
 
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import RateReviewIcon from "@mui/icons-material/RateReview";
-import StarIcon from "@mui/icons-material/Star";
 import { Grid } from "@mui/material";
 
 import { type ReviewStats } from "@repo/contracts/review";
@@ -18,7 +17,7 @@ export const ReviewsStatsSection = ({ stats }: ReviewsStatsSectionProps) => {
   return (
     <ContentSection backgroundColor="dark" title="Reviews Statistics">
       <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <StatsCard
             title="Total Reviews"
             value={stats.total}
@@ -28,23 +27,13 @@ export const ReviewsStatsSection = ({ stats }: ReviewsStatsSectionProps) => {
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <StatsCard
             title="Active Reviews"
             value={stats.active}
             subtitle="Visible on website"
             icon={<CheckCircleIcon fontSize="large" />}
             color="success"
-          />
-        </Grid>
-
-        <Grid size={{ xs: 12, md: 4 }}>
-          <StatsCard
-            title="Featured Reviews"
-            value={stats.featured}
-            subtitle="Shown on homepage"
-            icon={<StarIcon fontSize="large" />}
-            color="secondary"
           />
         </Grid>
       </Grid>

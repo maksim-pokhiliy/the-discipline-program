@@ -18,19 +18,17 @@ async function getContentStats(): Promise<ContentStats> {
     programsActive,
     reviewsTotal,
     reviewsActive,
-    reviewsFeatured,
     blogTotal,
     blogPublished,
     blogFeatured,
     contactsTotal,
     contactsNew,
   ] = await Promise.all([
-    prisma.marketingStorefrontProgram.count(),
-    prisma.marketingStorefrontProgram.count({ where: { isActive: true } }),
+    prisma.marketingStorefrontProgram.count({ where: { deletedAt: null } }),
+    prisma.marketingStorefrontProgram.count({ where: { isActive: true, deletedAt: null } }),
 
     prisma.marketingReview.count(),
     prisma.marketingReview.count({ where: { isActive: true } }),
-    prisma.marketingReview.count({ where: { isFeatured: true } }),
 
     prisma.marketingBlogPost.count({ where: { deletedAt: null } }),
     prisma.marketingBlogPost.count({ where: { isPublished: true, deletedAt: null } }),
@@ -52,7 +50,6 @@ async function getContentStats(): Promise<ContentStats> {
     reviews: {
       total: reviewsTotal,
       active: reviewsActive,
-      featured: reviewsFeatured,
     },
     blogPosts: {
       total: blogTotal,

@@ -33,7 +33,7 @@ export const ContentStatsSection = ({ contentStats }: ContentStatsSectionProps) 
           <StatsCard
             title="Reviews"
             value={contentStats.reviews.total}
-            subtitle={`${contentStats.reviews.featured} featured, ${contentStats.reviews.active} active`}
+            subtitle={`${contentStats.reviews.active} active`}
             icon={<RateReviewIcon fontSize="large" />}
             color="primary"
           />
