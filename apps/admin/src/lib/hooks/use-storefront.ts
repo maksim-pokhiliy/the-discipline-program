@@ -25,11 +25,13 @@ export const useStorefrontPageData = ({ initialData }: UseStorefrontPageDataOpti
   });
 };
 
-export const useStorefrontProgram = (id: string) => {
+export const useStorefrontProgram = (id: string, initialData?: StorefrontProgram) => {
   return useQuery({
     queryKey: adminKeys.storefront.byId(id),
     queryFn: () => api.storefront.getById(id),
+    initialData,
     enabled: !!id,
+    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
   });
 };
 
