@@ -48,19 +48,6 @@ export const adminReviewsApi = {
     });
   },
 
-  async toggleReviewFeatured(id: string): Promise<MarketingReview> {
-    const review = await prisma.marketingReview.findUnique({ where: { id } });
-
-    if (!review) {
-      throw new NotFoundError("Review not found", { id });
-    }
-
-    return prisma.marketingReview.update({
-      where: { id },
-      data: { isFeatured: !review.isFeatured },
-    });
-  },
-
   async getReviewsPageData() {
     const reviews = await prisma.marketingReview.findMany({
       orderBy: { createdAt: "desc" },
@@ -69,7 +56,6 @@ export const adminReviewsApi = {
     const stats = {
       total: reviews.length,
       active: reviews.filter((r) => r.isActive).length,
-      featured: reviews.filter((r) => r.isFeatured).length,
     };
 
     return { reviews, stats };

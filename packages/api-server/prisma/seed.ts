@@ -439,7 +439,6 @@ Cycling a barbell efficiently requires using the rebound of the plates.
         text: "The programming volume is perfect. I hit PRs on my Snatch and Clean & Jerk while improving my 5k run time.",
         rating: 5,
         isActive: true,
-        isFeatured: true,
       },
       {
         authorName: "Tia C.",
@@ -449,7 +448,6 @@ Cycling a barbell efficiently requires using the rebound of the plates.
         text: "Finally, a track that bridges the gap between class workouts and competitor training. My engine has never been better.",
         rating: 5,
         isActive: true,
-        isFeatured: true,
       },
       {
         authorName: "Rich F.",
@@ -459,7 +457,6 @@ Cycling a barbell efficiently requires using the rebound of the plates.
         text: "Smart scaling options allowed me to train around an old shoulder injury and still get fit.",
         rating: 5,
         isActive: true,
-        isFeatured: true,
       },
     ],
   });

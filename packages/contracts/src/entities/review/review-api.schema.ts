@@ -12,7 +12,6 @@ export const getReviewsResponseSchema = z.array(
     authorAvatar: z.string().nullable(),
     rating: z.number(),
     isActive: z.boolean(),
-    isFeatured: z.boolean(),
     createdAt: z.date(),
     updatedAt: z.date(),
   }),
@@ -46,7 +45,6 @@ export const getReviewsPageDataResponseSchema = z.object({
   stats: z.object({
     total: z.number(),
     active: z.number(),
-    featured: z.number(),
   }),
   reviews: getReviewsResponseSchema,
 });
