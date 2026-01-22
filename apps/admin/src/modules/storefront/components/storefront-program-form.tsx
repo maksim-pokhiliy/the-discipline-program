@@ -43,6 +43,7 @@ export const StorefrontProgramForm = ({
               <TextField
                 label="Product Title"
                 placeholder="e.g. Strength Mastery 1.0"
+                size="small"
                 variant="outlined"
                 fullWidth
                 disabled={isLoading}
