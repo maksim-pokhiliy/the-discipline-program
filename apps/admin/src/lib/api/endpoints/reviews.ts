@@ -22,7 +22,4 @@ export const reviewsAPI = {
 
   toggleActive: (id: string): Promise<Review> =>
     apiClient.request(`/api/admin/reviews/${id}/toggle?field=isActive`, "PATCH"),
-
-  toggleFeatured: (id: string): Promise<Review> =>
-    apiClient.request(`/api/admin/reviews/${id}/toggle?field=isFeatured`, "PATCH"),
 };

@@ -7,13 +7,13 @@ import { QueryWrapper } from "@repo/query";
 
 import { useReviewsPageData } from "@app/lib/hooks";
 
-import { ReviewsStatsSection } from "./sections";
+import { ReviewsListSection, ReviewsStatsSection } from "../../sections";
 
-interface ReviewsPageClientProps {
+interface ReviewsListViewProps {
   initialData: AdminReviewsPageData;
 }
 
-export const ReviewsPageClient = ({ initialData }: ReviewsPageClientProps) => {
+export const ReviewsListView = ({ initialData }: ReviewsListViewProps) => {
   const { data, isLoading, error } = useReviewsPageData({ initialData });
 
   return (
@@ -24,8 +24,9 @@ export const ReviewsPageClient = ({ initialData }: ReviewsPageClientProps) => {
       loadingMessage="Loading reviews..."
     >
       {(data) => (
-        <Stack spacing={0}>
+        <Stack spacing={4}>
           <ReviewsStatsSection stats={data.stats} />
+          <ReviewsListSection reviews={data.reviews} />
         </Stack>
       )}
     </QueryWrapper>
