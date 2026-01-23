@@ -9,7 +9,7 @@ import { quickActions } from "./data";
 
 export const QuickActionsSection = () => {
   return (
-    <ContentSection title="Quick Actions" backgroundColor="dark">
+    <ContentSection title="Quick Actions">
       <Grid container spacing={3}>
         {quickActions.map((action) => (
           <Grid key={action.title} size={{ xs: 12, sm: 6, md: 3 }}>
