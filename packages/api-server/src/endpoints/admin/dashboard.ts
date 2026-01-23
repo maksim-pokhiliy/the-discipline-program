@@ -27,8 +27,8 @@ async function getContentStats(): Promise<ContentStats> {
     prisma.marketingStorefrontProgram.count({ where: { deletedAt: null } }),
     prisma.marketingStorefrontProgram.count({ where: { isActive: true, deletedAt: null } }),
 
-    prisma.marketingReview.count(),
-    prisma.marketingReview.count({ where: { isActive: true } }),
+    prisma.marketingReview.count({ where: { deletedAt: null } }),
+    prisma.marketingReview.count({ where: { isActive: true, deletedAt: null } }),
 
     prisma.marketingBlogPost.count({ where: { deletedAt: null } }),
     prisma.marketingBlogPost.count({ where: { isPublished: true, deletedAt: null } }),
