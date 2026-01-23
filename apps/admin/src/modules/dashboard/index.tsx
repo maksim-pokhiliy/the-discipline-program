@@ -7,7 +7,7 @@ import { QueryWrapper } from "@repo/query";
 
 import { useDashboardData } from "@app/lib/hooks";
 
-import { ContentStatsSection, QuickActionsSection } from "./sections";
+import { ContentStatsSection, QuickActionsSection, RecentActivitySection } from "./sections";
 
 interface DashboardPageClientProps {
   initialData: DashboardData;
@@ -24,9 +24,10 @@ export const DashboardPageClient = ({ initialData }: DashboardPageClientProps) =
       loadingMessage="Loading dashboard..."
     >
       {(data) => (
-        <Stack spacing={4}>
-          <ContentStatsSection contentStats={data.contentStats} />
+        <Stack>
+          <ContentStatsSection contentStats={data.contentStats} userStats={data.userStats} />
           <QuickActionsSection />
+          <RecentActivitySection activity={data.recentActivity} />
         </Stack>
       )}
     </QueryWrapper>

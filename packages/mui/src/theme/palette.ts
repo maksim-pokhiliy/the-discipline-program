@@ -56,10 +56,10 @@ export const palette: PaletteOptions = {
     contrastText: "#FFFFFF",
   },
   info: {
-    main: "#FF6B35",
-    dark: "#E55A2B",
-    light: "#FF8A65",
-    contrastText: "#FFFFFF",
+    main: "#29B6F6",
+    dark: "#0288D1",
+    light: "#4FC3F7",
+    contrastText: "#000000",
   },
   grey: {
     50: "#FAFAFA",
