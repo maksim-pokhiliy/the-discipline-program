@@ -8,7 +8,6 @@ export const activityItemSchema = z.object({
   title: z.string(),
   subtitle: z.string().nullable(),
   date: z.date(),
-  status: z.string().optional(),
   rating: z.number().optional(),
   href: z.string(),
 });
