@@ -135,7 +135,6 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
       subtitle: null,
       rating: r.rating,
       date: r.createdAt,
-      status: r.isActive ? "Active" : "Hidden",
       href: `/reviews/${r.id}`,
     })),
     ...contacts.map((c) => ({
@@ -161,7 +160,6 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
       title: `New post: ${p.title}`,
       subtitle: p.category,
       date: p.createdAt,
-      status: p.isPublished ? "Published" : "Draft",
       href: `/blog/${p.id}`,
     })),
     ...programs.map((p) => ({
@@ -170,7 +168,6 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
       title: `New program: ${p.title}`,
       subtitle: p.priceLabel || "Free",
       date: p.createdAt,
-      status: p.isActive ? "Active" : "Inactive",
       href: `/storefront/${p.id}`,
     })),
   ];

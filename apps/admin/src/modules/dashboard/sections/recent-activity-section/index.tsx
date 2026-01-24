@@ -8,7 +8,6 @@ import RateReviewIcon from "@mui/icons-material/RateReview";
 import {
   Avatar,
   Box,
-  Chip,
   List,
   ListItem,
   ListItemAvatar,
@@ -116,7 +115,6 @@ export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) 
                   <Typography variant="subtitle2" component="span">
                     {item.title}
                   </Typography>
-                  {item.status && <Chip label={item.status} size="small" variant="outlined" />}
                 </Stack>
               }
               secondary={
