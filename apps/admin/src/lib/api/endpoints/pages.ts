@@ -1,18 +1,23 @@
-import { type PageSection } from "@repo/contracts/pages";
+import {
+  type PageListItemDto,
+  type PageSectionDto,
+  type PageSlug,
+  type SectionData,
+  type SectionKey,
+} from "@repo/contracts/pages";
 
 import { apiClient } from "../client";
 
-export interface PageListItem {
-  slug: string;
-  label: string;
-}
-
 export const pagesAPI = {
-  getList: (): Promise<PageListItem[]> => apiClient.request("/api/admin/pages"),
+  getList: (): Promise<PageListItemDto[]> => apiClient.request("/api/admin/pages"),
 
-  getSections: (slug: string): Promise<PageSection[]> =>
+  getSections: (slug: string): Promise<PageSectionDto[]> =>
     apiClient.request(`/api/admin/pages/${slug}`),
 
-  updateSection: (slug: string, section: string, data: unknown): Promise<PageSection> =>
-    apiClient.request(`/api/admin/pages/${slug}/sections/${section}`, "PUT", data),
+  updateSection: <P extends PageSlug, S extends SectionKey<P>>(
+    slug: P,
+    section: S,
+    data: SectionData<P, S>,
+  ): Promise<PageSectionDto> =>
+    apiClient.request(`/api/admin/pages/${slug}/sections/${String(section)}`, "PUT", data),
 };

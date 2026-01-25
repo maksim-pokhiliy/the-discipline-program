@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { adminPagesApi } from "@repo/api-server";
-import { PAGES_SECTIONS_REGISTRY } from "@repo/contracts/pages";
+import { PAGES_REGISTRY, type PageSlug } from "@repo/contracts/pages";
 import { NotFoundError, handleApiError } from "@repo/errors";
+
+function isValidPageSlug(slug: string): slug is PageSlug {
+  return slug in PAGES_REGISTRY;
+}
 
 interface RouteParams {
   params: Promise<{
@@ -14,18 +18,18 @@ interface RouteParams {
 export async function PUT(request: Request, { params }: RouteParams) {
   try {
     const { slug, section } = await params;
-    const pageSchemas = PAGES_SECTIONS_REGISTRY[slug];
 
-    if (!pageSchemas) {
+    if (!isValidPageSlug(slug)) {
       throw new NotFoundError(`Page configuration not found for slug: ${slug}`);
     }
 
-    const schema = pageSchemas[section];
+    const pageSchemas = PAGES_REGISTRY[slug];
 
-    if (!schema) {
+    if (!(section in pageSchemas)) {
       throw new NotFoundError(`Section schema not found: ${section} for page ${slug}`);
     }
 
+    const schema = pageSchemas[section as keyof typeof pageSchemas];
     const body = await request.json();
     const validatedData = schema.parse(body);
     const updatedSection = await adminPagesApi.updateSection(slug, section, validatedData);

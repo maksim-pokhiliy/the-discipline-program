@@ -1,52 +1,48 @@
 import { type z } from "zod";
 
-import {
-  aboutPageCredentialsSchema,
-  aboutPageCtaSchema,
-  aboutPageHeroSchema,
-  aboutPageJourneySchema,
-  aboutPagePersonalSchema,
-  blogPageHeroSchema,
-  contactDirectContactSchema,
-  contactFormSchema,
-  contactPageFaqSchema,
-  contactPageHeroSchema,
-  homePageContactSchema,
-  homePageHeroSchema,
-  homePageReviewsSchema,
-  homePageStorefrontProgramsSchema,
-  homePageWhyChooseSchema,
-  storefrontProgramsPageHeroSchema,
-} from "./pages.schema";
+import * as schemas from "./pages.schema";
 
-export const PAGES_SECTIONS_REGISTRY: Record<string, Record<string, z.ZodType>> = {
+export const PAGES_REGISTRY = {
   home: {
-    hero: homePageHeroSchema,
-    whyChoose: homePageWhyChooseSchema,
-    storefront: homePageStorefrontProgramsSchema,
-    reviews: homePageReviewsSchema,
-    contact: homePageContactSchema,
+    hero: schemas.homePageHeroSchema,
+    whyChoose: schemas.homePageWhyChooseSchema,
+    storefront: schemas.homePageStorefrontProgramsSchema,
+    reviews: schemas.homePageReviewsSchema,
+    contact: schemas.homePageContactSchema,
   },
   storefront: {
-    hero: storefrontProgramsPageHeroSchema,
+    hero: schemas.storefrontProgramsPageHeroSchema,
   },
   about: {
-    hero: aboutPageHeroSchema,
-    journey: aboutPageJourneySchema,
-    credentials: aboutPageCredentialsSchema,
-    personal: aboutPagePersonalSchema,
-    cta: aboutPageCtaSchema,
-  },
-  blog: {
-    hero: blogPageHeroSchema,
+    hero: schemas.aboutPageHeroSchema,
+    journey: schemas.aboutPageJourneySchema,
+    credentials: schemas.aboutPageCredentialsSchema,
+    personal: schemas.aboutPagePersonalSchema,
+    cta: schemas.aboutPageCtaSchema,
   },
   contact: {
-    hero: contactPageHeroSchema,
-    form: contactFormSchema,
-    directContact: contactDirectContactSchema,
-    faq: contactPageFaqSchema,
+    hero: schemas.contactPageHeroSchema,
+    form: schemas.contactFormSchema,
+    directContact: schemas.contactDirectContactSchema,
+    faq: schemas.contactPageFaqSchema,
   },
+  blog: {
+    hero: schemas.blogPageHeroSchema,
+  },
+} as const;
+
+export type PagesRegistry = typeof PAGES_REGISTRY;
+
+export type PageSlug = keyof PagesRegistry;
+
+export type SectionKey<P extends PageSlug> = keyof PagesRegistry[P];
+
+export type RegistryData = {
+  [P in PageSlug]: {
+    [S in SectionKey<P>]: PagesRegistry[P][S] extends z.ZodTypeAny
+      ? z.infer<PagesRegistry[P][S]>
+      : never;
+  };
 };
 
-export type PageSectionKey<T extends keyof typeof PAGES_SECTIONS_REGISTRY> =
-  keyof (typeof PAGES_SECTIONS_REGISTRY)[T];
+export type SectionData<P extends PageSlug, S extends SectionKey<P>> = RegistryData[P][S];
