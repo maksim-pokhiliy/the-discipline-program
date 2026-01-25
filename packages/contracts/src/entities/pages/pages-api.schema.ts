@@ -66,3 +66,17 @@ export const getContactPageResponseSchema = z.object({
   directContact: contactDirectContactSchema,
   faq: contactPageFaqSchema,
 });
+
+export const pageListItemSchema = z.object({
+  slug: z.string(),
+  label: z.string(),
+});
+
+export const marketingPageSectionSchema = z.object({
+  id: z.string(),
+  pageSlug: z.string(),
+  section: z.string(),
+  data: z.unknown(),
+  isActive: z.boolean(),
+  updatedAt: z.coerce.date(),
+});
