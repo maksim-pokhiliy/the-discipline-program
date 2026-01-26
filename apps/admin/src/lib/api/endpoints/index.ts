@@ -4,4 +4,3 @@ export * from "./storefront";
 export * from "./reviews";
 export * from "./upload";
 export * from "./blog";
-export * from "./pages";
