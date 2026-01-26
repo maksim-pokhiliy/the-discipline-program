@@ -7,4 +7,5 @@ export const api = {
   reviews: endpoints.reviewsAPI,
   upload: endpoints.uploadAPI,
   blog: endpoints.blogAPI,
+  pages: endpoints.pagesAPI,
 };
