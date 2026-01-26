@@ -25,10 +25,6 @@ import {
   blogPageHeroSchema,
 } from "./pages.schema";
 
-export const getPageBySlugParamsSchema = z.object({
-  pageSlug: z.enum(PAGE_SLUGS),
-});
-
 export const getHomePageResponseSchema = z.object({
   hero: homePageHeroSchema,
   whyChoose: homePageWhyChooseSchema,
@@ -65,4 +61,47 @@ export const getContactPageResponseSchema = z.object({
   form: contactFormSchema,
   directContact: contactDirectContactSchema,
   faq: contactPageFaqSchema,
+});
+
+export const adminPageListItemSchema = z.object({
+  id: z.string(),
+  slug: z.enum(PAGE_SLUGS),
+  updatedAt: z.date(),
+});
+
+export const updatePageSectionSchema = z
+  .discriminatedUnion("section", [
+    z.object({ section: z.literal("hero"), data: homePageHeroSchema }),
+    z.object({ section: z.literal("whyChoose"), data: homePageWhyChooseSchema }),
+    z.object({ section: z.literal("storefront"), data: homePageStorefrontProgramsSchema }),
+    z.object({ section: z.literal("reviews"), data: homePageReviewsSchema }),
+    z.object({ section: z.literal("contact"), data: homePageContactSchema }),
+    z.object({ section: z.literal("about:hero"), data: aboutPageHeroSchema }),
+    z.object({ section: z.literal("journey"), data: aboutPageJourneySchema }),
+    z.object({ section: z.literal("credentials"), data: aboutPageCredentialsSchema }),
+    z.object({ section: z.literal("personal"), data: aboutPagePersonalSchema }),
+    z.object({ section: z.literal("cta"), data: aboutPageCtaSchema }),
+    z.object({ section: z.literal("contact:hero"), data: contactPageHeroSchema }),
+    z.object({ section: z.literal("form"), data: contactFormSchema }),
+    z.object({ section: z.literal("directContact"), data: contactDirectContactSchema }),
+    z.object({ section: z.literal("faq"), data: contactPageFaqSchema }),
+    z.object({ section: z.literal("blog:hero"), data: blogPageHeroSchema }),
+    z.object({ section: z.literal("storefront:hero"), data: storefrontProgramsPageHeroSchema }),
+  ])
+  .and(z.object({ pageSlug: z.enum(PAGE_SLUGS) }));
+
+export const adminPageDetailsSchema = z.object({
+  slug: z.enum(PAGE_SLUGS),
+  sections: z.array(
+    z.object({
+      id: z.string(),
+      section: z.string(),
+      data: z.record(z.unknown()),
+      updatedAt: z.date(),
+    }),
+  ),
+});
+
+export const getPageBySlugParamsSchema = z.object({
+  pageSlug: z.enum(PAGE_SLUGS),
 });
