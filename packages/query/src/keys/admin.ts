@@ -25,9 +25,4 @@ export const adminKeys = {
   upload: {
     root: () => [...adminKeys.root, "upload"] as const,
   },
-
-  pages: {
-    list: () => [...adminKeys.root, "pages", "list"] as const,
-    sections: (slug: string) => [...adminKeys.root, "pages", slug, "sections"] as const,
-  },
 } as const;

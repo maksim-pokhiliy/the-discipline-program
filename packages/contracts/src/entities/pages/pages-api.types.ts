@@ -16,12 +16,3 @@ export type StorefrontProgramsPageData = z.infer<typeof getStorefrontProgramsPag
 export type AboutPageData = z.infer<typeof getAboutPageResponseSchema>;
 export type BlogPageData = z.infer<typeof getBlogPageResponseSchema>;
 export type ContactPageData = z.infer<typeof getContactPageResponseSchema>;
-
-export interface PageSection {
-  id: string;
-  pageSlug: string;
-  section: string;
-  data: unknown;
-  isActive: boolean;
-  updatedAt: Date;
-}
