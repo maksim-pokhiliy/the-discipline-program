@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { adminPagesApi } from "@repo/api-server";
-import { formatError } from "@repo/errors";
+import { adminPageListItemSchema } from "@repo/contracts/pages";
+import { handleApiError } from "@repo/errors";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
     const pages = await adminPagesApi.getPages();
+    const validated = z.array(adminPageListItemSchema).parse(pages);
 
-    return NextResponse.json(pages);
+    return NextResponse.json(validated);
   } catch (error) {
-    return formatError(error);
+    return handleApiError(error);
   }
 }

@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { adminPagesApi } from "@repo/api-server";
-import { formatError } from "@repo/errors";
+import { adminPageDetailsSchema } from "@repo/contracts/pages";
+import { handleApiError } from "@repo/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +14,10 @@ export async function GET(_: NextRequest, { params }: Props) {
   try {
     const { slug } = await params;
     const page = await adminPagesApi.getPageBySlug(slug);
+    const validated = adminPageDetailsSchema.parse(page);
 
-    return NextResponse.json(page);
+    return NextResponse.json(validated);
   } catch (error) {
-    return formatError(error);
+    return handleApiError(error);
   }
 }

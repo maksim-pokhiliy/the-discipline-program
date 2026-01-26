@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { adminPagesApi } from "@repo/api-server";
 import { updatePageSectionSchema } from "@repo/contracts/pages";
-import { formatError } from "@repo/errors";
+import { handleApiError } from "@repo/errors";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -22,6 +22,6 @@ export async function PATCH(req: NextRequest, { params }: Props) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return formatError(error);
+    return handleApiError(error);
   }
 }
