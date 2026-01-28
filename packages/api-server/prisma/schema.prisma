@@ -305,13 +305,27 @@ enum Unit {
   LB
 }
 
+model MarketingPage {
+  id        String                 @id @default(cuid())
+  slug      String                 @unique
+  title     String
+  seoTitle  String?
+  seoDesc   String?
+  sections  MarketingPageSection[]
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+
+  @@map("marketing_pages")
+}
+
 model MarketingPageSection {
-  id        String   @id @default(cuid())
+  id        String        @id @default(cuid())
   pageSlug  String
+  page      MarketingPage @relation(fields: [pageSlug], references: [slug], onDelete: Cascade)
   section   String
   data      Json
-  isActive  Boolean  @default(true)
-  updatedAt DateTime @updatedAt
+  isActive  Boolean       @default(true)
+  updatedAt DateTime      @updatedAt
 
   @@unique([pageSlug, section])
   @@map("marketing_page_sections")

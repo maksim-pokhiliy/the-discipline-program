@@ -9,11 +9,13 @@ import {
   type getAboutPageResponseSchema,
   type getBlogPageResponseSchema,
   type getContactPageResponseSchema,
+  type updatePageMetadataSchema,
 } from "./pages-api.schema";
 
 export type AdminPageListItem = z.infer<typeof adminPageListItemSchema>;
 export type AdminPageDetails = z.infer<typeof adminPageDetailsSchema>;
 export type UpdatePageSectionData = z.infer<typeof updatePageSectionSchema>;
+export type UpdatePageMetadataInput = z.infer<typeof updatePageMetadataSchema>;
 
 export type HomePageData = z.infer<typeof getHomePageResponseSchema>;
 export type StorefrontProgramsPageData = z.infer<typeof getStorefrontProgramsPageResponseSchema>;

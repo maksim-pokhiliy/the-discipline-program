@@ -1,9 +1,8 @@
 "use client";
 
-import { Stack } from "@mui/material";
-
 import { type AdminPageListItem } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/query";
+import { ContentSection } from "@repo/ui";
 
 import { usePagesListData } from "@app/lib/hooks/use-pages";
 
@@ -17,12 +16,15 @@ export const PagesListView = ({ initialData }: PagesListViewProps) => {
   const { data, isLoading, error } = usePagesListData({ initialData });
 
   return (
-    <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage="Loading pages...">
-      {(data) => (
-        <Stack spacing={4}>
-          <PagesListSection pages={data} />
-        </Stack>
-      )}
-    </QueryWrapper>
+    <ContentSection title="Marketing Pages" backgroundColor="dark">
+      <QueryWrapper
+        isLoading={isLoading}
+        error={error}
+        data={data}
+        loadingMessage="Loading pages..."
+      >
+        {(pages) => <PagesListSection pages={pages} />}
+      </QueryWrapper>
+    </ContentSection>
   );
 };
