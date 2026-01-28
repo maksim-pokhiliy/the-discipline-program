@@ -66,7 +66,14 @@ export const getContactPageResponseSchema = z.object({
 export const adminPageListItemSchema = z.object({
   id: z.string(),
   slug: z.enum(PAGE_SLUGS),
+  title: z.string(),
   updatedAt: z.date(),
+});
+
+export const updatePageMetadataSchema = z.object({
+  title: z.string().min(1, "Name is required"),
+  seoTitle: z.string().optional().nullable(),
+  seoDesc: z.string().optional().nullable(),
 });
 
 export const updatePageSectionSchema = z
