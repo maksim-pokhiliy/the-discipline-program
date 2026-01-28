@@ -27,7 +27,8 @@ export const adminKeys = {
   },
 
   pages: {
-    list: () => [...adminKeys.root, "pages", "list"] as const,
-    bySlug: (slug: string) => [...adminKeys.root, "pages", slug] as const,
+    all: ["admin", "pages"] as const,
+    list: () => [...adminKeys.pages.all, "list"] as const,
+    bySlug: (slug: string) => [...adminKeys.pages.all, slug] as const,
   },
 } as const;
