@@ -1,11 +1,10 @@
 import { z } from "zod";
 
 import { publicBlogPostSchema } from "../blog";
-import { featureSchema } from "../feature/feature.schema";
 import { reviewSchema } from "../review/review.schema";
 import { storefrontProgramSchema } from "../storefront/storefront.schema";
 
-import { PAGE_SLUGS } from "./pages.constants";
+import { PAGE_SLUGS, PAGE_SECTIONS_MAP } from "./pages.constants";
 import {
   homePageHeroSchema,
   homePageWhyChooseSchema,
@@ -31,7 +30,6 @@ export const getHomePageResponseSchema = z.object({
   storefront: homePageStorefrontProgramsSchema,
   reviews: homePageReviewsSchema,
   contact: homePageContactSchema,
-  features: z.array(featureSchema),
   storefrontProgramsList: z.array(storefrontProgramSchema),
   reviewsList: z.array(reviewSchema),
 });
@@ -78,22 +76,40 @@ export const updatePageMetadataSchema = z.object({
 
 export const updatePageSectionSchema = z
   .discriminatedUnion("section", [
-    z.object({ section: z.literal("hero"), data: homePageHeroSchema }),
-    z.object({ section: z.literal("whyChoose"), data: homePageWhyChooseSchema }),
-    z.object({ section: z.literal("storefront"), data: homePageStorefrontProgramsSchema }),
-    z.object({ section: z.literal("reviews"), data: homePageReviewsSchema }),
-    z.object({ section: z.literal("contact"), data: homePageContactSchema }),
-    z.object({ section: z.literal("about:hero"), data: aboutPageHeroSchema }),
-    z.object({ section: z.literal("journey"), data: aboutPageJourneySchema }),
-    z.object({ section: z.literal("credentials"), data: aboutPageCredentialsSchema }),
-    z.object({ section: z.literal("personal"), data: aboutPagePersonalSchema }),
-    z.object({ section: z.literal("cta"), data: aboutPageCtaSchema }),
-    z.object({ section: z.literal("contact:hero"), data: contactPageHeroSchema }),
-    z.object({ section: z.literal("form"), data: contactFormSchema }),
-    z.object({ section: z.literal("directContact"), data: contactDirectContactSchema }),
-    z.object({ section: z.literal("faq"), data: contactPageFaqSchema }),
-    z.object({ section: z.literal("blog:hero"), data: blogPageHeroSchema }),
-    z.object({ section: z.literal("storefront:hero"), data: storefrontProgramsPageHeroSchema }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.home.hero), data: homePageHeroSchema }),
+    z.object({
+      section: z.literal(PAGE_SECTIONS_MAP.home.whyChoose),
+      data: homePageWhyChooseSchema,
+    }),
+    z.object({
+      section: z.literal(PAGE_SECTIONS_MAP.home.storefront),
+      data: homePageStorefrontProgramsSchema,
+    }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.home.reviews), data: homePageReviewsSchema }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.home.contact), data: homePageContactSchema }),
+    z.object({
+      section: z.literal(PAGE_SECTIONS_MAP.storefront.hero),
+      data: storefrontProgramsPageHeroSchema,
+    }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.about.hero), data: aboutPageHeroSchema }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.about.journey), data: aboutPageJourneySchema }),
+    z.object({
+      section: z.literal(PAGE_SECTIONS_MAP.about.credentials),
+      data: aboutPageCredentialsSchema,
+    }),
+    z.object({
+      section: z.literal(PAGE_SECTIONS_MAP.about.personal),
+      data: aboutPagePersonalSchema,
+    }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.about.cta), data: aboutPageCtaSchema }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.blog.hero), data: blogPageHeroSchema }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.contact.hero), data: contactPageHeroSchema }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.contact.form), data: contactFormSchema }),
+    z.object({
+      section: z.literal(PAGE_SECTIONS_MAP.contact.directContact),
+      data: contactDirectContactSchema,
+    }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.contact.faq), data: contactPageFaqSchema }),
   ])
   .and(z.object({ pageSlug: z.enum(PAGE_SLUGS) }));
 
@@ -112,3 +128,22 @@ export const adminPageDetailsSchema = z.object({
 export const getPageBySlugParamsSchema = z.object({
   pageSlug: z.enum(PAGE_SLUGS),
 });
+
+export const SECTION_SCHEMAS = {
+  [PAGE_SECTIONS_MAP.home.hero]: homePageHeroSchema,
+  [PAGE_SECTIONS_MAP.home.whyChoose]: homePageWhyChooseSchema,
+  [PAGE_SECTIONS_MAP.home.storefront]: homePageStorefrontProgramsSchema,
+  [PAGE_SECTIONS_MAP.home.reviews]: homePageReviewsSchema,
+  [PAGE_SECTIONS_MAP.home.contact]: homePageContactSchema,
+  [PAGE_SECTIONS_MAP.storefront.hero]: storefrontProgramsPageHeroSchema,
+  [PAGE_SECTIONS_MAP.about.hero]: aboutPageHeroSchema,
+  [PAGE_SECTIONS_MAP.about.journey]: aboutPageJourneySchema,
+  [PAGE_SECTIONS_MAP.about.credentials]: aboutPageCredentialsSchema,
+  [PAGE_SECTIONS_MAP.about.personal]: aboutPagePersonalSchema,
+  [PAGE_SECTIONS_MAP.about.cta]: aboutPageCtaSchema,
+  [PAGE_SECTIONS_MAP.blog.hero]: blogPageHeroSchema,
+  [PAGE_SECTIONS_MAP.contact.hero]: contactPageHeroSchema,
+  [PAGE_SECTIONS_MAP.contact.form]: contactFormSchema,
+  [PAGE_SECTIONS_MAP.contact.directContact]: contactDirectContactSchema,
+  [PAGE_SECTIONS_MAP.contact.faq]: contactPageFaqSchema,
+} as const;

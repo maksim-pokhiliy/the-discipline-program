@@ -6,14 +6,13 @@ import { ContentSection } from "@repo/ui";
 
 interface FeaturesSectionProps {
   whyChoose: HomePageData["whyChoose"];
-  features: HomePageData["features"];
 }
 
-export const HomeFeaturesSection = ({ whyChoose, features }: FeaturesSectionProps) => {
+export const HomeFeaturesSection = ({ whyChoose }: FeaturesSectionProps) => {
   return (
     <ContentSection title={whyChoose.title} subtitle={whyChoose.subtitle} backgroundColor="dark">
       <Grid container spacing={4}>
-        {features.map((feature) => {
+        {whyChoose.features.map((feature) => {
           const IconComponent = MuiIcons[feature.iconName as keyof typeof MuiIcons];
 
           return (

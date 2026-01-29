@@ -9,7 +9,6 @@ async function main() {
   // Cleanup
   await prisma.marketingPageSection.deleteMany();
   await prisma.marketingPage.deleteMany();
-  await prisma.marketingFeature.deleteMany();
   await prisma.marketingStorefrontProgram.deleteMany();
   await prisma.marketingBlogPost.deleteMany();
   await prisma.marketingReview.deleteMany();
@@ -47,8 +46,7 @@ async function main() {
       section: "hero",
       data: {
         title: "Forging Elite Discipline",
-        subtitle:
-          "Functional fitness for those who refuse to settle. Master gymnastics, weightlifting, and metabolic conditioning to prepare for the unknown.",
+        subtitle: "Functional fitness for those who refuse to settle.",
         buttonText: "Start Training",
         buttonHref: "/storefront",
         backgroundImage:
@@ -59,8 +57,27 @@ async function main() {
       section: "whyChoose",
       data: {
         title: "Why The Discipline Program?",
-        subtitle:
-          "Random workouts give random results. We provide a periodized system to crush your WODs.",
+        subtitle: "Random workouts give random results.",
+        features: [
+          {
+            id: "f1",
+            title: "Constantly Varied",
+            description: "Prepare for the unknown and unknowable.",
+            iconName: "Shuffle",
+          },
+          {
+            id: "f2",
+            title: "High Intensity",
+            description: "Maximize power output.",
+            iconName: "Bolt",
+          },
+          {
+            id: "f3",
+            title: "Functional Movement",
+            description: "Transfer to real life.",
+            iconName: "FitnessCenter",
+          },
+        ],
       },
     },
     {
@@ -268,32 +285,6 @@ async function main() {
   });
 
   // 6. Features, Programs, Posts, Reviews (Same as before)
-  await prisma.marketingFeature.createMany({
-    data: [
-      {
-        title: "Constantly Varied",
-        description: "No two days are the same.",
-        iconName: "Shuffle",
-        sortOrder: 1,
-        isActive: true,
-      },
-      {
-        title: "High Intensity",
-        description: "Maximize power output.",
-        iconName: "Bolt",
-        sortOrder: 2,
-        isActive: true,
-      },
-      {
-        title: "Functional Movement",
-        description: "Transfer to real life.",
-        iconName: "FitnessCenter",
-        sortOrder: 3,
-        isActive: true,
-      },
-    ],
-  });
-
   await prisma.marketingStorefrontProgram.createMany({
     data: [
       {

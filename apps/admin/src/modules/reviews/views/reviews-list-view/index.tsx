@@ -24,7 +24,7 @@ export const ReviewsListView = ({ initialData }: ReviewsListViewProps) => {
       loadingMessage="Loading reviews..."
     >
       {(data) => (
-        <Stack spacing={4}>
+        <Stack>
           <ReviewsStatsSection stats={data.stats} />
           <ReviewsListSection reviews={data.reviews} />
         </Stack>
