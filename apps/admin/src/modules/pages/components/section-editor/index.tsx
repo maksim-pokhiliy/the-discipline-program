@@ -1,5 +1,6 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import SaveIcon from "@mui/icons-material/Save";
 import {
@@ -12,9 +13,15 @@ import {
 } from "@mui/material";
 import { FormProvider, useForm } from "react-hook-form";
 
-import { type AdminPageDetails, type UpdatePageSectionData } from "@repo/contracts/pages";
+import {
+  SECTION_SCHEMAS,
+  type AdminPageDetails,
+  type SectionSchemaKey,
+  type UpdatePageSectionData,
+} from "@repo/contracts/pages";
 
 import { HeroSectionForm } from "../sections/hero-section-form";
+import { WhyChooseSectionForm } from "../sections/why-choose-section-form";
 
 type SectionData = AdminPageDetails["sections"][number];
 
@@ -33,13 +40,37 @@ export const SectionEditor = ({
   onSave,
   isLoading,
 }: SectionEditorProps) => {
+  const currentSchema = SECTION_SCHEMAS[section.section as SectionSchemaKey];
+
   const methods = useForm<UpdatePageSectionData["data"]>({
     defaultValues: section.data as UpdatePageSectionData["data"],
+    resolver: currentSchema ? zodResolver(currentSchema) : undefined,
+    mode: "onChange",
   });
 
-  const isHero = section.section.includes("hero");
+  const renderForm = () => {
+    switch (section.section) {
+      case "hero":
+      case "about:hero":
+      case "contact:hero":
+      case "blog:hero":
+      case "storefront:hero": {
+        return <HeroSectionForm />;
+      }
 
-  if (!isHero) {
+      case "whyChoose": {
+        return <WhyChooseSectionForm />;
+      }
+
+      default: {
+        return null;
+      }
+    }
+  };
+
+  const formContent = renderForm();
+
+  if (!formContent) {
     return null;
   }
 
@@ -54,7 +85,7 @@ export const SectionEditor = ({
       <AccordionDetails>
         <FormProvider {...methods}>
           <Stack spacing={3}>
-            <HeroSectionForm />
+            {formContent}
 
             <Stack direction="row" justifyContent="flex-end">
               <Button
@@ -63,7 +94,7 @@ export const SectionEditor = ({
                 onClick={methods.handleSubmit(onSave)}
                 disabled={isLoading || !methods.formState.isDirty}
               >
-                {isLoading ? "Loading..." : "Update Section"}
+                Update Section
               </Button>
             </Stack>
           </Stack>

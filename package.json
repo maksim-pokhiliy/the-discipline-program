@@ -19,7 +19,7 @@
     "lefthook": "catalog:",
     "prettier": "catalog:",
     "prettier-plugin-sort-json": "catalog:",
-    "turbo": "2.7.5",
+    "turbo": "2.8.0",
     "typescript": "catalog:"
   },
   "engines": {

@@ -1,13 +1,13 @@
-import { type MarketingBlogPost, type MarketingFeature } from "@prisma/client";
+import { type Prisma, type MarketingBlogPost } from "@prisma/client";
 
-import { type PublicBlogPost, type BlogPostPageData } from "@repo/contracts/blog";
-import { type Feature } from "@repo/contracts/feature";
+import type { BlogPostPageData, PublicBlogPost } from "@repo/contracts";
 import {
   type HomePageData,
   type StorefrontProgramsPageData,
   type AboutPageData,
   type BlogPageData,
   type ContactPageData,
+  PAGE_SECTIONS_MAP,
 } from "@repo/contracts/pages";
 import { NotFoundError } from "@repo/errors";
 
@@ -36,13 +36,18 @@ const mapToPublicBlogPost = (post: PublishedPost): PublicBlogPost => {
   };
 };
 
-const mapToFeature = (feature: MarketingFeature): Feature => ({
-  id: feature.id,
-  title: feature.title,
-  description: feature.description,
-  iconName: feature.iconName,
-  isActive: feature.isActive,
-});
+const extractSectionData = <TPageData>(
+  sections: { section: string; data: Prisma.JsonValue }[],
+  sectionName: string,
+): TPageData => {
+  const section = sections.find((s) => s.section === sectionName);
+
+  if (!section) {
+    throw new Error(`Required section '${sectionName}' missing in database`);
+  }
+
+  return section.data as TPageData;
+};
 
 export const pagesApi = {
   getHomePage: async (): Promise<HomePageData> => {
@@ -50,33 +55,19 @@ export const pagesApi = {
       where: { pageSlug: "home", isActive: true },
     });
 
-    const [programs, reviews, features] = await Promise.all([
+    const [programs, reviews] = await Promise.all([
       prisma.marketingStorefrontProgram.findMany({ where: { isActive: true } }),
       prisma.marketingReview.findMany({ where: { isActive: true } }),
-      prisma.marketingFeature.findMany({
-        where: { isActive: true },
-        orderBy: { sortOrder: "asc" },
-      }),
     ]);
 
-    const getSectionData = <T>(sectionName: string): T => {
-      const section = sections.find((s) => s.section === sectionName);
-
-      if (!section) {
-        throw new Error(`Section '${sectionName}' not found for home page`);
-      }
-
-      return section.data as T;
-    };
+    const map = PAGE_SECTIONS_MAP.home;
 
     return {
-      hero: getSectionData<HomePageData["hero"]>("hero"),
-      whyChoose: getSectionData<HomePageData["whyChoose"]>("whyChoose"),
-      storefront: getSectionData<HomePageData["storefront"]>("storefront"),
-      reviews: getSectionData<HomePageData["reviews"]>("reviews"),
-      contact: getSectionData<HomePageData["contact"]>("contact"),
-
-      features: features.map(mapToFeature),
+      hero: extractSectionData<HomePageData["hero"]>(sections, map.hero),
+      whyChoose: extractSectionData<HomePageData["whyChoose"]>(sections, map.whyChoose),
+      storefront: extractSectionData<HomePageData["storefront"]>(sections, map.storefront),
+      reviews: extractSectionData<HomePageData["reviews"]>(sections, map.reviews),
+      contact: extractSectionData<HomePageData["contact"]>(sections, map.contact),
       storefrontProgramsList: programs,
       reviewsList: reviews,
     };
@@ -85,23 +76,14 @@ export const pagesApi = {
   getStorefrontProgramsPage: async (): Promise<StorefrontProgramsPageData> => {
     const [sections, programs] = await Promise.all([
       prisma.marketingPageSection.findMany({ where: { pageSlug: "storefront", isActive: true } }),
-      prisma.marketingStorefrontProgram.findMany({
-        where: { isActive: true },
-      }),
+      prisma.marketingStorefrontProgram.findMany({ where: { isActive: true } }),
     ]);
 
-    const getSectionData = <T>(sectionName: string): T => {
-      const section = sections.find((s) => s.section === sectionName);
-
-      if (!section) {
-        throw new Error(`Section '${sectionName}' not found`);
-      }
-
-      return section.data as T;
-    };
-
     return {
-      hero: getSectionData<StorefrontProgramsPageData["hero"]>("hero"),
+      hero: extractSectionData<StorefrontProgramsPageData["hero"]>(
+        sections,
+        PAGE_SECTIONS_MAP.storefront.hero,
+      ),
       programsList: programs,
     };
   },
@@ -111,22 +93,14 @@ export const pagesApi = {
       where: { pageSlug: "about", isActive: true },
     });
 
-    const getSectionData = <T>(sectionName: string): T => {
-      const section = sections.find((s) => s.section === sectionName);
-
-      if (!section) {
-        throw new Error(`Section '${sectionName}' not found`);
-      }
-
-      return section.data as T;
-    };
+    const map = PAGE_SECTIONS_MAP.about;
 
     return {
-      hero: getSectionData<AboutPageData["hero"]>("hero"),
-      journey: getSectionData<AboutPageData["journey"]>("journey"),
-      credentials: getSectionData<AboutPageData["credentials"]>("credentials"),
-      personal: getSectionData<AboutPageData["personal"]>("personal"),
-      cta: getSectionData<AboutPageData["cta"]>("cta"),
+      hero: extractSectionData<AboutPageData["hero"]>(sections, map.hero),
+      journey: extractSectionData<AboutPageData["journey"]>(sections, map.journey),
+      credentials: extractSectionData<AboutPageData["credentials"]>(sections, map.credentials),
+      personal: extractSectionData<AboutPageData["personal"]>(sections, map.personal),
+      cta: extractSectionData<AboutPageData["cta"]>(sections, map.cta),
     };
   },
 
@@ -134,34 +108,18 @@ export const pagesApi = {
     const [sections, posts] = await Promise.all([
       prisma.marketingPageSection.findMany({ where: { pageSlug: "blog", isActive: true } }),
       prisma.marketingBlogPost.findMany({
-        where: {
-          isPublished: true,
-          publishedAt: { not: null },
-        },
+        where: { isPublished: true, publishedAt: { not: null } },
         orderBy: { publishedAt: "desc" },
       }),
     ]);
 
-    const getSectionData = <T>(sectionName: string): T => {
-      const section = sections.find((s) => s.section === sectionName);
-
-      if (!section) {
-        throw new Error(`Section '${sectionName}' not found`);
-      }
-
-      return section.data as T;
-    };
-
     const publicPosts = posts.filter(hasPublishedDate).map(mapToPublicBlogPost);
 
-    const featuredPost = publicPosts.find((post) => post.isFeatured) || publicPosts[0];
-    const categories = [...new Set(publicPosts.map((post) => post.category))];
-
     return {
-      hero: getSectionData<BlogPageData["hero"]>("hero"),
-      featuredPost,
+      hero: extractSectionData<BlogPageData["hero"]>(sections, PAGE_SECTIONS_MAP.blog.hero),
+      featuredPost: publicPosts.find((p) => p.isFeatured) || publicPosts[0],
       posts: publicPosts,
-      categories,
+      categories: [...new Set(publicPosts.map((p) => p.category))],
     };
   },
 
@@ -170,21 +128,16 @@ export const pagesApi = {
       where: { pageSlug: "contact", isActive: true },
     });
 
-    const getSectionData = <T>(sectionName: string): T => {
-      const section = sections.find((s) => s.section === sectionName);
-
-      if (!section) {
-        throw new Error(`Section '${sectionName}' not found`);
-      }
-
-      return section.data as T;
-    };
+    const map = PAGE_SECTIONS_MAP.contact;
 
     return {
-      hero: getSectionData<ContactPageData["hero"]>("hero"),
-      form: getSectionData<ContactPageData["form"]>("form"),
-      directContact: getSectionData<ContactPageData["directContact"]>("directContact"),
-      faq: getSectionData<ContactPageData["faq"]>("faq"),
+      hero: extractSectionData<ContactPageData["hero"]>(sections, map.hero),
+      form: extractSectionData<ContactPageData["form"]>(sections, map.form),
+      directContact: extractSectionData<ContactPageData["directContact"]>(
+        sections,
+        map.directContact,
+      ),
+      faq: extractSectionData<ContactPageData["faq"]>(sections, map.faq),
     };
   },
 

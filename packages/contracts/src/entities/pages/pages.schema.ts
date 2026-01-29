@@ -10,9 +10,17 @@ export const homePageHeroSchema = z.object({
   backgroundImage: z.string(),
 });
 
+export const whyChooseFeatureItemSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  iconName: z.string().min(1, "Icon name is required"),
+});
+
 export const homePageWhyChooseSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
+  title: z.string().min(1, "Section title is required"),
+  subtitle: z.string().min(1, "Section subtitle is required"),
+  features: z.array(whyChooseFeatureItemSchema),
 });
 
 export const homePageStorefrontProgramsSchema = z.object({

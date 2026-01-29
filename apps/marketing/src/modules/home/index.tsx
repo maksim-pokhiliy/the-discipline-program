@@ -48,7 +48,7 @@ export const HomePageClient = ({ initialData }: HomePageClientProps) => {
 
           <Stack spacing={0}>
             <HomeHeroSection hero={data.hero} />
-            <HomeFeaturesSection whyChoose={data.whyChoose} features={data.features} />
+            <HomeFeaturesSection whyChoose={data.whyChoose} />
 
             <HomeStorefrontProgramsPreview
               programs={data.storefront}
