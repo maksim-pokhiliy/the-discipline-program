@@ -331,20 +331,6 @@ model MarketingPageSection {
   @@map("marketing_page_sections")
 }
 
-model MarketingFeature {
-  id          String   @id @default(cuid())
-  title       String
-  description String
-  iconName    String
-  isActive    Boolean  @default(true)
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@index([createdAt])
-  @@map("marketing_features")
-}
-
 model MarketingBlogPost {
   id          String    @id @default(cuid())
   slug        String    @unique

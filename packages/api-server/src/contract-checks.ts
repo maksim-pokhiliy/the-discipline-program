@@ -1,7 +1,6 @@
 import {
   type MarketingBlogPost,
   type MarketingContactSubmission,
-  type MarketingFeature,
   type MarketingStorefrontProgram,
   type MarketingReview,
   type User,
@@ -32,10 +31,6 @@ type StorefrontProgramContract = z.infer<
   typeof Contracts.getStorefrontProgramsResponseSchema
 >[number];
 assertType<Satisfies<StorefrontProgramFromDb, StorefrontProgramContract>>();
-
-type FeatureFromDb = MarketingFeature;
-type FeatureContract = z.infer<typeof Contracts.featureSchema>;
-assertType<Satisfies<FeatureFromDb, FeatureContract>>();
 
 type UserFromDb = User;
 type UserContract = z.infer<typeof Contracts.userSchema>;
