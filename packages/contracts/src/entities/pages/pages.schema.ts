@@ -55,6 +55,8 @@ export const storefrontPageCtaSchema = z.object({
 export const aboutPageHeroSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
+  buttonText: z.string(),
+  buttonHref: z.string(),
   backgroundImage: z.string(),
 });
 

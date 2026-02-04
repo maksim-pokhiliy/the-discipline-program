@@ -19,8 +19,8 @@ export const AboutHeroSection = ({ hero }: AboutHeroSectionProps) => {
         {hero.subtitle}
       </Typography>
 
-      <Button variant="contained" size="large" href="#journey">
-        Learn My Story
+      <Button variant="contained" size="large" href={hero.buttonHref}>
+        {hero.buttonText}
       </Button>
     </FullscreenSection>
   );

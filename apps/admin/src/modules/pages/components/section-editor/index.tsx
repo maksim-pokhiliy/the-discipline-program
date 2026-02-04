@@ -22,7 +22,10 @@ import {
 } from "@repo/contracts/pages";
 
 import { ContactSectionForm } from "../sections/contact-section-form";
+import { CredentialsSectionForm } from "../sections/credentials-section-form";
 import { HeroSectionForm } from "../sections/hero-section-form";
+import { JourneySectionForm } from "../sections/journey-section-form";
+import { PersonalSectionForm } from "../sections/personal-section-form";
 import { ReviewsSectionForm } from "../sections/reviews-section-form";
 import { StorefrontSectionForm } from "../sections/storefront-section-form";
 import { WhyChooseSectionForm } from "../sections/why-choose-section-form";
@@ -75,8 +78,21 @@ export const SectionEditor = ({
       }
 
       case "contact":
-      case "storefront:cta": {
+      case "storefront:cta":
+      case "cta": {
         return <ContactSectionForm />;
+      }
+
+      case "journey": {
+        return <JourneySectionForm />;
+      }
+
+      case "credentials": {
+        return <CredentialsSectionForm />;
+      }
+
+      case "personal": {
+        return <PersonalSectionForm />;
       }
 
       default: {
