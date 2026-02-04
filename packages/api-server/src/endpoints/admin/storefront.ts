@@ -1,28 +1,14 @@
-import { Prisma, type MarketingStorefrontProgram } from "@prisma/client";
-
 import { type StorefrontProgram } from "@repo/contracts/storefront";
-import { ConflictError, NotFoundError } from "@repo/errors";
+import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-
-const mapToStorefrontProgram = (p: MarketingStorefrontProgram): StorefrontProgram => ({
-  id: p.id,
-  title: p.title,
-  slug: p.slug,
-  description: p.description,
-  priceLabel: p.priceLabel,
-  features: p.features,
-  isActive: p.isActive,
-  createdAt: p.createdAt,
-  updatedAt: p.updatedAt,
-});
+import { mapToStorefrontProgram } from "../../mappers";
+import { handlePrismaError } from "../../utils";
 
 export const adminStorefrontApi = {
   getPrograms: async (): Promise<StorefrontProgram[]> => {
     const programs = await prisma.marketingStorefrontProgram.findMany({
-      where: {
-        deletedAt: null,
-      },
+      where: { deletedAt: null },
       orderBy: [{ createdAt: "desc" }, { title: "asc" }],
     });
 
@@ -48,11 +34,7 @@ export const adminStorefrontApi = {
       prisma.marketingStorefrontProgram.count({ where: { isActive: false, deletedAt: null } }),
     ]);
 
-    return {
-      total,
-      active,
-      inactive,
-    };
+    return { total, active, inactive };
   },
 
   getProgramsPageData: async () => {
@@ -61,10 +43,7 @@ export const adminStorefrontApi = {
       adminStorefrontApi.getPrograms(),
     ]);
 
-    return {
-      stats,
-      programs,
-    };
+    return { stats, programs };
   },
 
   createProgram: async (
@@ -80,17 +59,7 @@ export const adminStorefrontApi = {
 
       return mapToStorefrontProgram(program);
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002" &&
-        error.meta?.target &&
-        Array.isArray(error.meta.target) &&
-        error.meta.target.includes("slug")
-      ) {
-        throw new ConflictError("Program with this slug already exists", { field: "slug" });
-      }
-
-      throw error;
+      return handlePrismaError(error, { entity: "Program", field: "slug" });
     }
   },
 
@@ -106,21 +75,7 @@ export const adminStorefrontApi = {
 
       return mapToStorefrontProgram(program);
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002" &&
-        error.meta?.target &&
-        Array.isArray(error.meta.target) &&
-        error.meta.target.includes("slug")
-      ) {
-        throw new ConflictError("Program with this slug already exists", { field: "slug" });
-      }
-
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
-        throw new NotFoundError("Program not found", { id });
-      }
-
-      throw error;
+      return handlePrismaError(error, { entity: "Program", field: "slug" });
     }
   },
 
@@ -129,7 +84,7 @@ export const adminStorefrontApi = {
       where: { id },
     });
 
-    if (!program) {
+    if (!program || program.deletedAt) {
       throw new NotFoundError("Program not found", { id });
     }
 

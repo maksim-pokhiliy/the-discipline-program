@@ -64,7 +64,7 @@ export const Footer = () => {
             rowGap={2}
             columnGap={2}
           >
-            <Typography color="text.secondary" variant="caption">
+            <Typography color="text.secondary" variant="caption" suppressHydrationWarning>
               © {new Date().getFullYear()} The Discipline Program. All rights reserved.
             </Typography>
 

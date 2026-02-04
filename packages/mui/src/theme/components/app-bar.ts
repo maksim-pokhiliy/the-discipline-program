@@ -7,7 +7,7 @@ export const MuiAppBar: Components<Theme>["MuiAppBar"] = {
 
   styleOverrides: {
     root: ({ theme }) => ({
-      height: theme.spacing(theme.layout.appBarHeight),
+      height: theme.layout.appBarHeight,
       justifyContent: "center",
       backgroundColor: theme.palette.appBar.main,
       position: "sticky",
