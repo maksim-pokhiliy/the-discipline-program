@@ -18,9 +18,13 @@ import {
   type AdminPageDetails,
   type SectionSchemaKey,
   type UpdatePageSectionData,
+  type HeroSectionType,
 } from "@repo/contracts/pages";
 
+import { ContactSectionForm } from "../sections/contact-section-form";
 import { HeroSectionForm } from "../sections/hero-section-form";
+import { ReviewsSectionForm } from "../sections/reviews-section-form";
+import { StorefrontSectionForm } from "../sections/storefront-section-form";
 import { WhyChooseSectionForm } from "../sections/why-choose-section-form";
 
 type SectionData = AdminPageDetails["sections"][number];
@@ -55,11 +59,24 @@ export const SectionEditor = ({
       case "contact:hero":
       case "blog:hero":
       case "storefront:hero": {
-        return <HeroSectionForm />;
+        return <HeroSectionForm sectionType={section.section as HeroSectionType} />;
       }
 
       case "whyChoose": {
         return <WhyChooseSectionForm />;
+      }
+
+      case "storefront": {
+        return <StorefrontSectionForm />;
+      }
+
+      case "reviews": {
+        return <ReviewsSectionForm />;
+      }
+
+      case "contact":
+      case "storefront:cta": {
+        return <ContactSectionForm />;
       }
 
       default: {

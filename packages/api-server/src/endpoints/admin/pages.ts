@@ -8,6 +8,7 @@ import {
   updatePageSectionSchema,
   updatePageMetadataSchema,
   PAGE_SLUGS,
+  getPageSectionsOrder,
 } from "@repo/contracts/pages";
 import { NotFoundError } from "@repo/errors";
 
@@ -39,9 +40,7 @@ export const adminPagesApi = {
     const page = await prisma.marketingPage.findUnique({
       where: { slug },
       include: {
-        sections: {
-          orderBy: { section: "asc" },
-        },
+        sections: true,
       },
     });
 
@@ -53,9 +52,17 @@ export const adminPagesApi = {
       throw new NotFoundError(`Invalid page slug: ${slug}`);
     }
 
+    const sectionsOrder = getPageSectionsOrder(page.slug);
+    const sortedSections = [...page.sections].sort((a, b) => {
+      const aIndex = sectionsOrder.indexOf(a.section);
+      const bIndex = sectionsOrder.indexOf(b.section);
+
+      return aIndex - bIndex;
+    });
+
     return {
       slug: page.slug,
-      sections: page.sections.map((s) => ({
+      sections: sortedSections.map((s) => ({
         id: s.id,
         section: s.section,
         data: s.data as Record<string, unknown>,

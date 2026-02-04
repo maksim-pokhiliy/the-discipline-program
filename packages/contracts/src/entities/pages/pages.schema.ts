@@ -26,7 +26,6 @@ export const homePageWhyChooseSchema = z.object({
 export const homePageStorefrontProgramsSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
-  backgroundImage: z.string(),
 });
 
 export const homePageReviewsSchema = z.object({
@@ -37,12 +36,20 @@ export const homePageReviewsSchema = z.object({
 export const homePageContactSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
+  buttonText: z.string(),
+  buttonHref: z.string(),
 });
 
 export const storefrontProgramsPageHeroSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
-  backgroundImage: z.string().optional(),
+});
+
+export const storefrontPageCtaSchema = z.object({
+  title: z.string(),
+  subtitle: z.string(),
+  buttonText: z.string(),
+  buttonHref: z.string(),
 });
 
 export const aboutPageHeroSchema = z.object({

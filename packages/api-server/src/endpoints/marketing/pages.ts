@@ -62,11 +62,11 @@ export const pagesApi = {
       prisma.marketingStorefrontProgram.findMany({ where: { isActive: true, deletedAt: null } }),
     ]);
 
+    const map = PAGE_SECTIONS_MAP.storefront;
+
     return {
-      hero: extractSectionData<StorefrontProgramsPageData["hero"]>(
-        sections,
-        PAGE_SECTIONS_MAP.storefront.hero,
-      ),
+      hero: extractSectionData<StorefrontProgramsPageData["hero"]>(sections, map.hero),
+      cta: extractSectionData<StorefrontProgramsPageData["cta"]>(sections, map.cta),
       programsList: programs.map(mapToStorefrontProgram),
     };
   },
