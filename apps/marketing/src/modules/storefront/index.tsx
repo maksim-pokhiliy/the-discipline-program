@@ -1,7 +1,6 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import Head from "next/head";
 
 import { type StorefrontProgramsPageData } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/query";
@@ -35,9 +34,7 @@ export const StorefrontProgramsPageClient = ({
       >
         {(data) => (
           <>
-            <Head>
-              <StructuredData type="storefront" data={{ storefrontPrograms: data.programsList }} />
-            </Head>
+            <StructuredData type="storefront" data={{ storefrontPrograms: data.programsList }} />
 
             <Stack spacing={0}>
               <StorefrontProgramsHeroSection hero={data.hero} />

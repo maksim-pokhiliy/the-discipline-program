@@ -1,6 +1,6 @@
 export const LAYOUT = {
-  logoSize: 54,
-  appBarHeight: 64,
+  logoSize: 64,
+  appBarHeight: 100,
   drawerWidth: 260,
 } as const;
 

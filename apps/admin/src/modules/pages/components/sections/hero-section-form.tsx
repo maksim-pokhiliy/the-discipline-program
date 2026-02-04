@@ -23,7 +23,7 @@ export const HeroSectionForm = () => {
           label="Title"
           fullWidth
           error={!!errors.title}
-          helperText={errors.title?.message as string}
+          helperText={errors.title?.message?.toString()}
           {...register("title")}
         />
 
@@ -33,7 +33,7 @@ export const HeroSectionForm = () => {
           multiline
           minRows={3}
           error={!!errors.subtitle}
-          helperText={errors.subtitle?.message as string}
+          helperText={errors.subtitle?.message?.toString()}
           {...register("subtitle")}
         />
 

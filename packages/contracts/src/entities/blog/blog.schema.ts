@@ -48,3 +48,20 @@ export const publicBlogPostSchema = z.object({
   category: z.string(),
   tags: z.array(z.string()),
 });
+
+export const publicBlogPostPreviewSchema = publicBlogPostSchema.pick({
+  id: true,
+  slug: true,
+  title: true,
+  excerpt: true,
+  coverImage: true,
+  publishedAt: true,
+  readTime: true,
+  category: true,
+  tags: true,
+});
+
+export const blogPostPageDataSchema = z.object({
+  post: publicBlogPostSchema,
+  relatedPosts: z.array(publicBlogPostPreviewSchema),
+});

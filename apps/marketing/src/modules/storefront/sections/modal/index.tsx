@@ -27,7 +27,6 @@ export const StorefrontProgramModal = ({ program, open, onClose }: StorefrontPro
     if (!program) {
       return;
     }
-    // Payment logic...
   };
 
   if (!program) {

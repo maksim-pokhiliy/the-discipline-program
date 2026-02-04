@@ -1,7 +1,6 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import Head from "next/head";
 
 import { type ContactPageData } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/query";
@@ -27,9 +26,7 @@ export const ContactPageClient = ({ initialData }: ContactPageClientProps) => {
     >
       {(data) => (
         <>
-          <Head>
-            <StructuredData type="faq" data={{ faqItems: data.faq.items }} />
-          </Head>
+          <StructuredData type="faq" data={{ faqItems: data.faq.items }} />
 
           <Stack spacing={0}>
             <ContactHero hero={data.hero} />
