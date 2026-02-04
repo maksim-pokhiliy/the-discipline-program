@@ -3,16 +3,14 @@
 import { Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 
+import { SECTION_FEATURES, type HeroSectionType } from "@repo/contracts/pages";
 import { FormCard, ImageUpload } from "@repo/ui";
 
 import { useUploadImage } from "@app/lib/hooks";
 
 interface HeroSectionFormProps {
-  sectionType: string;
+  sectionType: HeroSectionType;
 }
-
-const SECTIONS_WITH_BUTTON = ["hero"];
-const SECTIONS_WITH_BACKGROUND = ["hero", "about:hero", "contact:hero", "blog:hero"];
 
 export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
   const {
@@ -23,8 +21,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
   } = useFormContext();
   const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
 
-  const showButton = SECTIONS_WITH_BUTTON.includes(sectionType);
-  const showBackground = SECTIONS_WITH_BACKGROUND.includes(sectionType);
+  const features = SECTION_FEATURES[sectionType];
 
   return (
     <FormCard title="Hero Section Settings">
@@ -47,7 +44,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
           {...register("subtitle")}
         />
 
-        {showButton && (
+        {features.hasButton && (
           <>
             <TextField
               label="Button Text"
@@ -67,7 +64,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
           </>
         )}
 
-        {showBackground && (
+        {features.hasBackground && (
           <ImageUpload
             previewUrl={watch("backgroundImage") || ""}
             isUploading={isUploading}

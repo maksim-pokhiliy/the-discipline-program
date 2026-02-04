@@ -18,6 +18,7 @@ import {
   type AdminPageDetails,
   type SectionSchemaKey,
   type UpdatePageSectionData,
+  type HeroSectionType,
 } from "@repo/contracts/pages";
 
 import { ContactSectionForm } from "../sections/contact-section-form";
@@ -58,7 +59,7 @@ export const SectionEditor = ({
       case "contact:hero":
       case "blog:hero":
       case "storefront:hero": {
-        return <HeroSectionForm sectionType={section.section} />;
+        return <HeroSectionForm sectionType={section.section as HeroSectionType} />;
       }
 
       case "whyChoose": {

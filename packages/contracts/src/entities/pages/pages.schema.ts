@@ -36,8 +36,8 @@ export const homePageReviewsSchema = z.object({
 export const homePageContactSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
-  buttonText: z.string().default("Get Started"),
-  buttonHref: z.string().default("/storefront"),
+  buttonText: z.string(),
+  buttonHref: z.string(),
 });
 
 export const storefrontProgramsPageHeroSchema = z.object({
@@ -46,14 +46,10 @@ export const storefrontProgramsPageHeroSchema = z.object({
 });
 
 export const storefrontPageCtaSchema = z.object({
-  title: z.string().default("Ready to Transform Your Fitness?"),
-  subtitle: z
-    .string()
-    .default(
-      "Join 100+ athletes who have already started their transformation journey. Your discipline determines your success.",
-    ),
-  buttonText: z.string().default("Start Your Journey"),
-  buttonHref: z.string().default("/contact"),
+  title: z.string(),
+  subtitle: z.string(),
+  buttonText: z.string(),
+  buttonHref: z.string(),
 });
 
 export const aboutPageHeroSchema = z.object({

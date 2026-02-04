@@ -8,8 +8,6 @@ import {
   type BlogPageData,
   type ContactPageData,
   PAGE_SECTIONS_MAP,
-  homePageContactSchema,
-  storefrontPageCtaSchema,
 } from "@repo/contracts/pages";
 import { NotFoundError } from "@repo/errors";
 
@@ -34,15 +32,6 @@ const extractSectionData = <TPageData>(
   return section.data as TPageData;
 };
 
-const tryExtractSectionData = (
-  sections: { section: string; data: Prisma.JsonValue }[],
-  sectionName: string,
-): Record<string, unknown> | undefined => {
-  const section = sections.find((s) => s.section === sectionName);
-
-  return section?.data as Record<string, unknown> | undefined;
-};
-
 export const pagesApi = {
   getHomePage: async (): Promise<HomePageData> => {
     const sections = await prisma.marketingPageSection.findMany({
@@ -56,14 +45,12 @@ export const pagesApi = {
 
     const map = PAGE_SECTIONS_MAP.home;
 
-    const contactRaw = extractSectionData<Record<string, unknown>>(sections, map.contact);
-
     return {
       hero: extractSectionData<HomePageData["hero"]>(sections, map.hero),
       whyChoose: extractSectionData<HomePageData["whyChoose"]>(sections, map.whyChoose),
       storefront: extractSectionData<HomePageData["storefront"]>(sections, map.storefront),
       reviews: extractSectionData<HomePageData["reviews"]>(sections, map.reviews),
-      contact: homePageContactSchema.parse(contactRaw),
+      contact: extractSectionData<HomePageData["contact"]>(sections, map.contact),
       storefrontProgramsList: programs.map(mapToStorefrontProgram),
       reviewsList: reviews.map(mapToReview),
     };
@@ -75,14 +62,11 @@ export const pagesApi = {
       prisma.marketingStorefrontProgram.findMany({ where: { isActive: true, deletedAt: null } }),
     ]);
 
-    const ctaRaw = tryExtractSectionData(sections, PAGE_SECTIONS_MAP.storefront.cta);
+    const map = PAGE_SECTIONS_MAP.storefront;
 
     return {
-      hero: extractSectionData<StorefrontProgramsPageData["hero"]>(
-        sections,
-        PAGE_SECTIONS_MAP.storefront.hero,
-      ),
-      cta: storefrontPageCtaSchema.parse(ctaRaw ?? {}),
+      hero: extractSectionData<StorefrontProgramsPageData["hero"]>(sections, map.hero),
+      cta: extractSectionData<StorefrontProgramsPageData["cta"]>(sections, map.cta),
       programsList: programs.map(mapToStorefrontProgram),
     };
   },
