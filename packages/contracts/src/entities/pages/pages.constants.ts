@@ -13,6 +13,7 @@ export const PAGE_SECTIONS_MAP = {
   },
   storefront: {
     hero: "storefront:hero",
+    cta: "storefront:cta",
   },
   about: {
     hero: "about:hero",
@@ -31,3 +32,9 @@ export const PAGE_SECTIONS_MAP = {
     faq: "faq",
   },
 } as const;
+
+export const getPageSectionsOrder = (pageSlug: PageSlug): string[] => {
+  const sections = PAGE_SECTIONS_MAP[pageSlug];
+
+  return Object.values(sections);
+};

@@ -12,6 +12,7 @@ import {
   homePageReviewsSchema,
   homePageContactSchema,
   storefrontProgramsPageHeroSchema,
+  storefrontPageCtaSchema,
   aboutPageHeroSchema,
   aboutPageJourneySchema,
   aboutPageCredentialsSchema,
@@ -36,6 +37,7 @@ export const getHomePageResponseSchema = z.object({
 
 export const getStorefrontProgramsPageResponseSchema = z.object({
   hero: storefrontProgramsPageHeroSchema,
+  cta: storefrontPageCtaSchema,
   programsList: z.array(storefrontProgramSchema),
 });
 
@@ -91,6 +93,10 @@ export const updatePageSectionSchema = z
       section: z.literal(PAGE_SECTIONS_MAP.storefront.hero),
       data: storefrontProgramsPageHeroSchema,
     }),
+    z.object({
+      section: z.literal(PAGE_SECTIONS_MAP.storefront.cta),
+      data: storefrontPageCtaSchema,
+    }),
     z.object({ section: z.literal(PAGE_SECTIONS_MAP.about.hero), data: aboutPageHeroSchema }),
     z.object({ section: z.literal(PAGE_SECTIONS_MAP.about.journey), data: aboutPageJourneySchema }),
     z.object({
@@ -136,6 +142,7 @@ export const SECTION_SCHEMAS = {
   [PAGE_SECTIONS_MAP.home.reviews]: homePageReviewsSchema,
   [PAGE_SECTIONS_MAP.home.contact]: homePageContactSchema,
   [PAGE_SECTIONS_MAP.storefront.hero]: storefrontProgramsPageHeroSchema,
+  [PAGE_SECTIONS_MAP.storefront.cta]: storefrontPageCtaSchema,
   [PAGE_SECTIONS_MAP.about.hero]: aboutPageHeroSchema,
   [PAGE_SECTIONS_MAP.about.journey]: aboutPageJourneySchema,
   [PAGE_SECTIONS_MAP.about.credentials]: aboutPageCredentialsSchema,

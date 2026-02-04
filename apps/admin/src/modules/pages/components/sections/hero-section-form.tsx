@@ -7,7 +7,14 @@ import { FormCard, ImageUpload } from "@repo/ui";
 
 import { useUploadImage } from "@app/lib/hooks";
 
-export const HeroSectionForm = () => {
+interface HeroSectionFormProps {
+  sectionType: string;
+}
+
+const SECTIONS_WITH_BUTTON = ["hero"];
+const SECTIONS_WITH_BACKGROUND = ["hero", "about:hero", "contact:hero", "blog:hero"];
+
+export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
   const {
     register,
     watch,
@@ -15,6 +22,9 @@ export const HeroSectionForm = () => {
     formState: { errors },
   } = useFormContext();
   const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
+
+  const showButton = SECTIONS_WITH_BUTTON.includes(sectionType);
+  const showBackground = SECTIONS_WITH_BACKGROUND.includes(sectionType);
 
   return (
     <FormCard title="Hero Section Settings">
@@ -37,7 +47,27 @@ export const HeroSectionForm = () => {
           {...register("subtitle")}
         />
 
-        <Stack spacing={1}>
+        {showButton && (
+          <>
+            <TextField
+              label="Button Text"
+              fullWidth
+              error={!!errors.buttonText}
+              helperText={errors.buttonText?.message?.toString()}
+              {...register("buttonText")}
+            />
+
+            <TextField
+              label="Button Link"
+              fullWidth
+              error={!!errors.buttonHref}
+              helperText={errors.buttonHref?.message?.toString()}
+              {...register("buttonHref")}
+            />
+          </>
+        )}
+
+        {showBackground && (
           <ImageUpload
             previewUrl={watch("backgroundImage") || ""}
             isUploading={isUploading}
@@ -51,7 +81,7 @@ export const HeroSectionForm = () => {
             }}
             onRemove={() => setValue("backgroundImage", "", { shouldDirty: true })}
           />
-        </Stack>
+        )}
       </Stack>
     </FormCard>
   );
