@@ -1,7 +1,6 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import Head from "next/head";
 
 import { type HomePageData } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/query";
@@ -33,18 +32,14 @@ export const HomePageClient = ({ initialData }: HomePageClientProps) => {
     >
       {(data) => (
         <>
-          <Head>
-            <StructuredData type="website" />
-            <StructuredData type="organization" />
-            <StructuredData type="person" />
-
-            <StructuredData
-              type="storefront"
-              data={{ storefrontPrograms: data.storefrontProgramsList }}
-            />
-
-            <StructuredData type="reviews" data={{ reviews: data.reviewsList }} />
-          </Head>
+          <StructuredData type="website" />
+          <StructuredData type="organization" />
+          <StructuredData type="person" />
+          <StructuredData
+            type="storefront"
+            data={{ storefrontPrograms: data.storefrontProgramsList }}
+          />
+          <StructuredData type="reviews" data={{ reviews: data.reviewsList }} />
 
           <Stack spacing={0}>
             <HomeHeroSection hero={data.hero} />

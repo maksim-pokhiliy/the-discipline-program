@@ -1,7 +1,6 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import Head from "next/head";
 
 import { type BlogPostPageData } from "@repo/contracts/blog";
 import { QueryWrapper } from "@repo/query";
@@ -29,19 +28,17 @@ export const BlogArticlePageClient = ({ slug, initialData }: BlogArticlePageClie
     >
       {(data) => (
         <>
-          <Head>
-            <StructuredData
-              type="article"
-              data={{
-                title: data.post.title,
-                description: data.post.excerpt ?? "",
-                image: data.post.coverImage ?? "",
-                author: data.post.authorName,
-                publishedTime: `${data.post.publishedAt}`,
-                url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
-              }}
-            />
-          </Head>
+          <StructuredData
+            type="article"
+            data={{
+              title: data.post.title,
+              description: data.post.excerpt ?? "",
+              image: data.post.coverImage ?? "",
+              author: data.post.authorName,
+              publishedTime: `${data.post.publishedAt}`,
+              url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
+            }}
+          />
 
           <Stack spacing={0}>
             <BlogArticleHero post={data.post} />

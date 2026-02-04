@@ -7,7 +7,6 @@ import { ContentSection } from "@repo/ui";
 
 interface BlogPostsGridProps {
   posts: PublicBlogPost[];
-  categories: string[];
 }
 
 export const BlogPostsGrid = ({ posts }: BlogPostsGridProps) => {

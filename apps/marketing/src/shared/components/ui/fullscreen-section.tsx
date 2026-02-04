@@ -21,7 +21,7 @@ export const FullscreenSection = ({
     <Box
       sx={(theme) => ({
         position: "relative",
-        height: `calc(100vh - ${theme.spacing(theme.layout.appBarHeight)})`,
+        height: `calc(100vh - ${theme.layout.appBarHeight}px)`,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",

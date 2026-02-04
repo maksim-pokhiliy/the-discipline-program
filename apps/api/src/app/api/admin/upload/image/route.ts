@@ -1,21 +1,29 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { adminUploadApi } from "@repo/api-server";
-import { type UploadContext } from "@repo/contracts/upload";
+import {
+  deleteAvatarRequestSchema,
+  type UploadContext,
+  UPLOAD_CONFIG,
+} from "@repo/contracts/upload";
 import { BadRequestError, handleApiError } from "@repo/errors";
+
+const isValidUploadContext = (value: unknown): value is UploadContext => {
+  return typeof value === "string" && value in UPLOAD_CONFIG;
+};
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const file = formData.get("file") as File | null;
-    const context = formData.get("context") as UploadContext | null;
+    const file = formData.get("file");
+    const context = formData.get("context");
 
-    if (!file) {
-      throw new BadRequestError("No file provided");
+    if (!(file instanceof File)) {
+      throw new BadRequestError("No valid file provided");
     }
 
-    if (!context) {
-      throw new BadRequestError("No context provided");
+    if (!isValidUploadContext(context)) {
+      throw new BadRequestError("Invalid or missing context");
     }
 
     const result = await adminUploadApi.uploadImage(file, context);
@@ -29,13 +37,9 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const body = await req.json();
-    const { url } = body;
+    const validated = deleteAvatarRequestSchema.parse(body);
 
-    if (!url) {
-      throw new BadRequestError("No URL provided");
-    }
-
-    await adminUploadApi.deleteImage(url);
+    await adminUploadApi.deleteImage(validated.url);
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -1,6 +1,6 @@
-import { type Prisma, type MarketingBlogPost } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
 
-import type { BlogPostPageData, PublicBlogPost } from "@repo/contracts";
+import type { BlogPostPageData } from "@repo/contracts";
 import {
   type HomePageData,
   type StorefrontProgramsPageData,
@@ -12,29 +12,12 @@ import {
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-
-type PublishedPost = MarketingBlogPost & { publishedAt: Date };
-
-function hasPublishedDate(post: MarketingBlogPost): post is PublishedPost {
-  return post.publishedAt !== null;
-}
-
-const mapToPublicBlogPost = (post: PublishedPost): PublicBlogPost => {
-  return {
-    id: post.id,
-    title: post.title,
-    slug: post.slug,
-    excerpt: post.excerpt,
-    content: post.content,
-    coverImage: post.coverImage,
-    publishedAt: post.publishedAt,
-    isFeatured: post.isFeatured,
-    readTime: post.readTime,
-    authorName: post.authorName,
-    category: post.category,
-    tags: post.tags,
-  };
-};
+import {
+  isPublishedPost,
+  mapToPublicBlogPost,
+  mapToReview,
+  mapToStorefrontProgram,
+} from "../../mappers";
 
 const extractSectionData = <TPageData>(
   sections: { section: string; data: Prisma.JsonValue }[],
@@ -43,7 +26,7 @@ const extractSectionData = <TPageData>(
   const section = sections.find((s) => s.section === sectionName);
 
   if (!section) {
-    throw new Error(`Required section '${sectionName}' missing in database`);
+    throw new NotFoundError(`Required section '${sectionName}' missing in database`);
   }
 
   return section.data as TPageData;
@@ -56,8 +39,8 @@ export const pagesApi = {
     });
 
     const [programs, reviews] = await Promise.all([
-      prisma.marketingStorefrontProgram.findMany({ where: { isActive: true } }),
-      prisma.marketingReview.findMany({ where: { isActive: true } }),
+      prisma.marketingStorefrontProgram.findMany({ where: { isActive: true, deletedAt: null } }),
+      prisma.marketingReview.findMany({ where: { isActive: true, deletedAt: null } }),
     ]);
 
     const map = PAGE_SECTIONS_MAP.home;
@@ -68,15 +51,15 @@ export const pagesApi = {
       storefront: extractSectionData<HomePageData["storefront"]>(sections, map.storefront),
       reviews: extractSectionData<HomePageData["reviews"]>(sections, map.reviews),
       contact: extractSectionData<HomePageData["contact"]>(sections, map.contact),
-      storefrontProgramsList: programs,
-      reviewsList: reviews,
+      storefrontProgramsList: programs.map(mapToStorefrontProgram),
+      reviewsList: reviews.map(mapToReview),
     };
   },
 
   getStorefrontProgramsPage: async (): Promise<StorefrontProgramsPageData> => {
     const [sections, programs] = await Promise.all([
       prisma.marketingPageSection.findMany({ where: { pageSlug: "storefront", isActive: true } }),
-      prisma.marketingStorefrontProgram.findMany({ where: { isActive: true } }),
+      prisma.marketingStorefrontProgram.findMany({ where: { isActive: true, deletedAt: null } }),
     ]);
 
     return {
@@ -84,7 +67,7 @@ export const pagesApi = {
         sections,
         PAGE_SECTIONS_MAP.storefront.hero,
       ),
-      programsList: programs,
+      programsList: programs.map(mapToStorefrontProgram),
     };
   },
 
@@ -108,12 +91,12 @@ export const pagesApi = {
     const [sections, posts] = await Promise.all([
       prisma.marketingPageSection.findMany({ where: { pageSlug: "blog", isActive: true } }),
       prisma.marketingBlogPost.findMany({
-        where: { isPublished: true, publishedAt: { not: null } },
+        where: { isPublished: true, publishedAt: { not: null }, deletedAt: null },
         orderBy: { publishedAt: "desc" },
       }),
     ]);
 
-    const publicPosts = posts.filter(hasPublishedDate).map(mapToPublicBlogPost);
+    const publicPosts = posts.filter(isPublishedPost).map(mapToPublicBlogPost);
 
     return {
       hero: extractSectionData<BlogPageData["hero"]>(sections, PAGE_SECTIONS_MAP.blog.hero),
@@ -147,10 +130,11 @@ export const pagesApi = {
         slug,
         isPublished: true,
         publishedAt: { not: null },
+        deletedAt: null,
       },
     });
 
-    if (!post || !hasPublishedDate(post)) {
+    if (!post || !isPublishedPost(post)) {
       throw new NotFoundError(`Article not found: ${slug}`, { slug });
     }
 
@@ -162,12 +146,13 @@ export const pagesApi = {
         category: post.category,
         id: { not: post.id },
         publishedAt: { not: null },
+        deletedAt: null,
       },
       take: 3,
       orderBy: { publishedAt: "desc" },
     });
 
-    const relatedPosts = relatedPostsRaw.filter(hasPublishedDate).map(mapToPublicBlogPost);
+    const relatedPosts = relatedPostsRaw.filter(isPublishedPost).map(mapToPublicBlogPost);
 
     return {
       post: publicPost,

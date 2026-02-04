@@ -1,57 +1,80 @@
-import { type Prisma, type MarketingReview } from "@prisma/client";
-
+import { type CreateReviewData, type Review, type UpdateReviewData } from "@repo/contracts/review";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-
-type CreateReviewInput = Prisma.MarketingReviewCreateInput;
-type UpdateReviewInput = Prisma.MarketingReviewUpdateInput;
+import { mapToReview } from "../../mappers";
 
 export const adminReviewsApi = {
-  async getReviews(): Promise<MarketingReview[]> {
-    return prisma.marketingReview.findMany({
+  async getReviews(): Promise<Review[]> {
+    const reviews = await prisma.marketingReview.findMany({
+      where: { deletedAt: null },
       orderBy: { createdAt: "desc" },
     });
+
+    return reviews.map(mapToReview);
   },
 
-  async getReviewById(id: string): Promise<MarketingReview | null> {
-    return prisma.marketingReview.findUnique({ where: { id } });
-  },
-
-  async createReview(data: CreateReviewInput): Promise<MarketingReview> {
-    return prisma.marketingReview.create({
-      data,
-    });
-  },
-
-  async updateReview(id: string, data: UpdateReviewInput): Promise<MarketingReview> {
-    return prisma.marketingReview.update({
-      where: { id },
-      data,
-    });
-  },
-
-  async deleteReview(id: string): Promise<void> {
-    await prisma.marketingReview.delete({ where: { id } });
-  },
-
-  async toggleReviewStatus(id: string): Promise<MarketingReview> {
+  async getReviewById(id: string): Promise<Review | null> {
     const review = await prisma.marketingReview.findUnique({ where: { id } });
 
-    if (!review) {
+    if (!review || review.deletedAt) {
+      return null;
+    }
+
+    return mapToReview(review);
+  },
+
+  async createReview(data: CreateReviewData): Promise<Review> {
+    const review = await prisma.marketingReview.create({ data });
+
+    return mapToReview(review);
+  },
+
+  async updateReview(id: string, data: UpdateReviewData): Promise<Review> {
+    const existing = await prisma.marketingReview.findUnique({ where: { id } });
+
+    if (!existing || existing.deletedAt) {
       throw new NotFoundError("Review not found", { id });
     }
 
-    return prisma.marketingReview.update({
+    const review = await prisma.marketingReview.update({
       where: { id },
-      data: { isActive: !review.isActive },
+      data,
+    });
+
+    return mapToReview(review);
+  },
+
+  async deleteReview(id: string): Promise<void> {
+    const review = await prisma.marketingReview.findUnique({ where: { id } });
+
+    if (!review || review.deletedAt) {
+      throw new NotFoundError("Review not found", { id });
+    }
+
+    await prisma.marketingReview.update({
+      where: { id },
+      data: { deletedAt: new Date() },
     });
   },
 
-  async getReviewsPageData() {
-    const reviews = await prisma.marketingReview.findMany({
-      orderBy: { createdAt: "desc" },
+  async toggleReviewStatus(id: string): Promise<Review> {
+    const review = await prisma.marketingReview.findUnique({ where: { id } });
+
+    if (!review || review.deletedAt) {
+      throw new NotFoundError("Review not found", { id });
+    }
+
+    const updated = await prisma.marketingReview.update({
+      where: { id },
+      data: { isActive: !review.isActive },
     });
+
+    return mapToReview(updated);
+  },
+
+  async getReviewsPageData() {
+    const reviews = await adminReviewsApi.getReviews();
 
     const stats = {
       total: reviews.length,

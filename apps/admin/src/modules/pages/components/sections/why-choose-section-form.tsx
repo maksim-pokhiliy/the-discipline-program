@@ -28,7 +28,7 @@ export const WhyChooseSectionForm = () => {
             label="Section Title"
             fullWidth
             error={!!errors.title}
-            helperText={errors.title?.message as string}
+            helperText={errors.title?.message?.toString()}
             {...register("title")}
           />
 
@@ -38,7 +38,7 @@ export const WhyChooseSectionForm = () => {
             multiline
             minRows={2}
             error={!!errors.subtitle}
-            helperText={errors.subtitle?.message as string}
+            helperText={errors.subtitle?.message?.toString()}
             {...register("subtitle")}
           />
         </Stack>

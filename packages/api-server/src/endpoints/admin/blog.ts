@@ -1,4 +1,4 @@
-import { Prisma, type MarketingBlogPost } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
 
 import {
   type BlogPost,
@@ -6,9 +6,11 @@ import {
   type CreateBlogPostData,
   type UpdateBlogPostData,
 } from "@repo/contracts/blog";
-import { ConflictError, NotFoundError } from "@repo/errors";
+import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
+import { mapToBlogPost } from "../../mappers";
+import { handlePrismaError } from "../../utils";
 
 const WORDS_PER_MINUTE = 200;
 
@@ -23,26 +25,6 @@ const calculateReadTime = (content: string): number => {
   const minutes = Math.ceil(wordCount / WORDS_PER_MINUTE);
 
   return Math.max(1, minutes);
-};
-
-const mapToAdminBlogPost = (record: MarketingBlogPost): BlogPost => {
-  return {
-    id: record.id,
-    title: record.title,
-    slug: record.slug,
-    excerpt: record.excerpt,
-    content: record.content,
-    coverImage: record.coverImage,
-    publishedAt: record.publishedAt,
-    readTime: record.readTime,
-    authorName: record.authorName,
-    category: record.category,
-    tags: record.tags,
-    isPublished: record.isPublished,
-    isFeatured: record.isFeatured,
-    createdAt: record.createdAt,
-    updatedAt: record.updatedAt,
-  };
 };
 
 const prepareCreateInput = (data: CreateBlogPostData): Prisma.MarketingBlogPostCreateInput => {
@@ -66,10 +48,11 @@ const prepareCreateInput = (data: CreateBlogPostData): Prisma.MarketingBlogPostC
 export const adminBlogApi = {
   getPosts: async (): Promise<BlogPost[]> => {
     const posts = await prisma.marketingBlogPost.findMany({
+      where: { deletedAt: null },
       orderBy: [{ createdAt: "desc" }, { title: "desc" }],
     });
 
-    return posts.map(mapToAdminBlogPost);
+    return posts.map(mapToBlogPost);
   },
 
   getPostById: async (id: string): Promise<BlogPost | null> => {
@@ -81,7 +64,7 @@ export const adminBlogApi = {
       return null;
     }
 
-    return mapToAdminBlogPost(post);
+    return mapToBlogPost(post);
   },
 
   getBlogStats: async (): Promise<BlogStats> => {
@@ -92,12 +75,7 @@ export const adminBlogApi = {
       prisma.marketingBlogPost.count({ where: { isFeatured: true, deletedAt: null } }),
     ]);
 
-    return {
-      total,
-      published,
-      drafts,
-      featured,
-    };
+    return { total, published, drafts, featured };
   },
 
   getBlogPageData: async () => {
@@ -106,10 +84,7 @@ export const adminBlogApi = {
       adminBlogApi.getPosts(),
     ]);
 
-    return {
-      stats,
-      posts,
-    };
+    return { stats, posts };
   },
 
   createPost: async (data: CreateBlogPostData): Promise<BlogPost> => {
@@ -128,34 +103,22 @@ export const adminBlogApi = {
           data: dbInput,
         });
 
-        return mapToAdminBlogPost(post);
+        return mapToBlogPost(post);
       });
     } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === "P2002" &&
-        error.meta?.target &&
-        Array.isArray(error.meta.target) &&
-        error.meta.target.includes("slug")
-      ) {
-        throw new ConflictError("Slug must be unique", { field: "slug" });
-      }
-
-      throw error;
+      return handlePrismaError(error, { entity: "Blog post", field: "slug" });
     }
   },
 
   updatePost: async (id: string, data: UpdateBlogPostData): Promise<BlogPost> => {
     const existing = await prisma.marketingBlogPost.findUnique({ where: { id } });
 
-    if (!existing) {
+    if (!existing || existing.deletedAt) {
       throw new NotFoundError("Blog post not found", { id });
     }
 
     try {
-      const updateData: Prisma.MarketingBlogPostUpdateInput = {
-        ...data,
-      };
+      const updateData: Prisma.MarketingBlogPostUpdateInput = { ...data };
 
       if (data.coverImage !== undefined) {
         updateData.coverImage = data.coverImage?.trim() || null;
@@ -182,14 +145,10 @@ export const adminBlogApi = {
           data: updateData,
         });
 
-        return mapToAdminBlogPost(post);
+        return mapToBlogPost(post);
       });
     } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-        throw new ConflictError("Slug must be unique", { field: "slug" });
-      }
-
-      throw error;
+      return handlePrismaError(error, { entity: "Blog post", field: "slug" });
     }
   },
 
@@ -198,7 +157,7 @@ export const adminBlogApi = {
       where: { id },
     });
 
-    if (!post) {
+    if (!post || post.deletedAt) {
       throw new NotFoundError("Blog post not found", { id });
     }
 
@@ -218,7 +177,7 @@ export const adminBlogApi = {
       where: { id },
     });
 
-    if (!post) {
+    if (!post || post.deletedAt) {
       throw new NotFoundError("Blog post not found", { id });
     }
 
@@ -236,7 +195,7 @@ export const adminBlogApi = {
       data: updateData,
     });
 
-    return mapToAdminBlogPost(updated);
+    return mapToBlogPost(updated);
   },
 
   toggleBlogPostFeatured: async (id: string): Promise<BlogPost> => {
@@ -245,7 +204,7 @@ export const adminBlogApi = {
         where: { id },
       });
 
-      if (!post) {
+      if (!post || post.deletedAt) {
         throw new NotFoundError("Blog post not found", { id });
       }
 
@@ -253,10 +212,7 @@ export const adminBlogApi = {
 
       if (newValue === true) {
         await tx.marketingBlogPost.updateMany({
-          where: {
-            isFeatured: true,
-            id: { not: id },
-          },
+          where: { isFeatured: true, id: { not: id } },
           data: { isFeatured: false },
         });
       }
@@ -266,7 +222,7 @@ export const adminBlogApi = {
         data: { isFeatured: newValue },
       });
 
-      return mapToAdminBlogPost(updated);
+      return mapToBlogPost(updated);
     });
   },
 };

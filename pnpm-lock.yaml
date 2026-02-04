@@ -660,6 +660,9 @@ importers:
       '@mui/material-nextjs':
         specifier: 'catalog:'
         version: 7.3.6(@emotion/cache@11.14.0)(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(next@16.1.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../shared
       next:
         specifier: 'catalog:'
         version: 16.1.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)

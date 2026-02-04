@@ -1,7 +1,6 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import Head from "next/head";
 import { useSearchParams } from "next/navigation";
 
 import { QueryWrapper } from "@repo/query";
@@ -35,9 +34,7 @@ export const PaymentErrorPage = () => {
     >
       {(data) => (
         <>
-          <Head>
-            <StructuredData type="website" />
-          </Head>
+          <StructuredData type="website" />
 
           <Stack spacing={0}>
             <PaymentErrorHeroSection />

@@ -1,19 +1,13 @@
+import { LAYOUT } from "@repo/shared";
+
 declare module "@mui/material/styles" {
   interface Theme {
-    layout: {
-      appBarHeight: number;
-    };
+    layout: typeof LAYOUT;
   }
 
   interface ThemeOptions {
-    layout: {
-      appBarHeight: number;
-    };
+    layout: typeof LAYOUT;
   }
 }
 
-const APP_BAR_HEIGHT = 10;
-
-export const layout = {
-  appBarHeight: APP_BAR_HEIGHT,
-};
+export const layout = LAYOUT;

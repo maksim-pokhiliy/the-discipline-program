@@ -19,6 +19,9 @@ export const createContactSubmissionSchema = z.object({
   program: z.string().max(CONTACT_CONSTANTS.MAX_PROGRAM_LENGTH).optional(),
   message: z
     .string()
-    .min(CONTACT_CONSTANTS.MIN_MESSAGE_LENGTH, "Message must be at least 10 characters")
+    .min(
+      CONTACT_CONSTANTS.MIN_MESSAGE_LENGTH,
+      `Message must be at least ${CONTACT_CONSTANTS.MIN_MESSAGE_LENGTH} characters`,
+    )
     .max(CONTACT_CONSTANTS.MAX_MESSAGE_LENGTH),
 });
