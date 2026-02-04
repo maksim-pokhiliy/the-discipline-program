@@ -118,6 +118,8 @@ async function main() {
       data: {
         title: "Head Coach",
         subtitle: "10 years in the affiliate community. Games athlete mindset.",
+        buttonText: "Learn My Story",
+        buttonHref: "#journey",
         backgroundImage:
           "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=2000&q=80",
       },
