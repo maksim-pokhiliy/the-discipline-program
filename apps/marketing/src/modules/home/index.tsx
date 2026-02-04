@@ -51,7 +51,7 @@ export const HomePageClient = ({ initialData }: HomePageClientProps) => {
             />
 
             <HomeReviewsSection reviews={data.reviews} reviewsList={data.reviewsList} />
-            <HomeFinalCTASection />
+            <HomeFinalCTASection contact={data.contact} />
           </Stack>
         </>
       )}

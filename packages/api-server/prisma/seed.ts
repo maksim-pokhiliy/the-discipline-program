@@ -85,8 +85,6 @@ async function main() {
       data: {
         title: "Choose Your Track",
         subtitle: "From Open preparation to daily GPP (General Physical Preparedness).",
-        backgroundImage:
-          "https://images.unsplash.com/photo-1599058945522-28d584b6f0ff?auto=format&fit=crop&w=2000&q=80",
       },
     },
     {
@@ -101,6 +99,8 @@ async function main() {
       data: {
         title: "Join The Box",
         subtitle: "Questions about scaling or equipment? Ask us.",
+        buttonText: "Get Started",
+        buttonHref: "/contact",
       },
     },
   ];
@@ -228,6 +228,22 @@ async function main() {
       },
     });
   }
+
+  // Storefront CTA
+  await prisma.marketingPageSection.create({
+    data: {
+      pageSlug: "storefront",
+      section: "storefront:cta",
+      data: {
+        title: "Ready to Transform Your Fitness?",
+        subtitle:
+          "Join 100+ athletes who have already started their transformation journey. Your discipline determines your success.",
+        buttonText: "Start Your Journey",
+        buttonHref: "/contact",
+      },
+      isActive: true,
+    },
+  });
 
   // 5. Contact Specific
   await prisma.marketingPageSection.create({

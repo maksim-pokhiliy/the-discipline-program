@@ -39,7 +39,7 @@ export const StorefrontProgramsPageClient = ({
             <Stack spacing={0}>
               <StorefrontProgramsHeroSection hero={data.hero} />
               <StorefrontProgramsGridSection programsList={data.programsList} />
-              <StorefrontProgramsCTA />
+              <StorefrontProgramsCTA cta={data.cta} />
             </Stack>
           </>
         )}

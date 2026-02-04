@@ -13,6 +13,7 @@ export const PAGE_SECTIONS_MAP = {
   },
   storefront: {
     hero: "storefront:hero",
+    cta: "storefront:cta",
   },
   about: {
     hero: "about:hero",
