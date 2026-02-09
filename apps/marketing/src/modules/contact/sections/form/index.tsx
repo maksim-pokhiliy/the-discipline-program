@@ -21,9 +21,10 @@ import { useSubmitContact } from "@app/lib/hooks";
 
 interface ContactFormProps {
   form: ContactPageData["form"];
+  programOptions: ContactPageData["programOptions"];
 }
 
-export const ContactForm = ({ form }: ContactFormProps) => {
+export const ContactForm = ({ form, programOptions }: ContactFormProps) => {
   const [formData, setFormData] = useState<CreateContactSubmissionRequest>({
     name: "",
     email: "",
@@ -115,9 +116,9 @@ export const ContactForm = ({ form }: ContactFormProps) => {
                     fullWidth
                     disabled={isPending}
                   >
-                    {form.programs.map((program) => (
-                      <MenuItem key={program.value} value={program.value}>
-                        {program.label}
+                    {programOptions.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
                       </MenuItem>
                     ))}
                   </TextField>

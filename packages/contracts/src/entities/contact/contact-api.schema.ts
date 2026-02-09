@@ -14,7 +14,7 @@ export const getContactSubmissionsResponseSchema = z.array(
     id: z.string(),
     name: z.string().nullable(),
     email: z.string().nullable(),
-    program: z.string().optional(),
+    program: z.string().nullable(),
     message: z.string(),
     status: z.string(),
     createdAt: z.date(),

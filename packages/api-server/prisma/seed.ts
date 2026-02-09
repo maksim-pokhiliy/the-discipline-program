@@ -6,7 +6,6 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Starting CrossFit-themed seed with Page entities...");
 
-  // Cleanup
   await prisma.marketingPageSection.deleteMany();
   await prisma.marketingPage.deleteMany();
   await prisma.marketingStorefrontProgram.deleteMany();
@@ -27,7 +26,6 @@ async function main() {
 
   console.log(`👤 Created Admin: ${adminEmail} / password123`);
 
-  // 1. Create Pages
   const pages = [
     { slug: "home", title: "Home Page" },
     { slug: "about", title: "About Us" },
@@ -40,7 +38,6 @@ async function main() {
     await prisma.marketingPage.create({ data: page });
   }
 
-  // 2. Home Sections
   const homeSections = [
     {
       section: "hero",
@@ -111,7 +108,6 @@ async function main() {
     });
   }
 
-  // 3. About Sections
   const aboutSections = [
     {
       section: "about:hero",
@@ -193,8 +189,7 @@ async function main() {
     });
   }
 
-  // 4. Hero sections for other pages
-  const heroes = [
+  const heroesWithBackground = [
     {
       slug: "storefront",
       section: "storefront:hero",
@@ -207,15 +202,9 @@ async function main() {
       title: "The Whiteboard",
       subtitle: "WOD tips, movement standards, and nutrition advice.",
     },
-    {
-      slug: "contact",
-      section: "contact:hero",
-      title: "Drop Us A Line",
-      subtitle: "We love talking shop.",
-    },
   ];
 
-  for (const h of heroes) {
+  for (const h of heroesWithBackground) {
     await prisma.marketingPageSection.create({
       data: {
         pageSlug: h.slug,
@@ -231,7 +220,18 @@ async function main() {
     });
   }
 
-  // Storefront CTA
+  await prisma.marketingPageSection.create({
+    data: {
+      pageSlug: "contact",
+      section: "contact:hero",
+      data: {
+        title: "Drop Us A Line",
+        subtitle: "We love talking shop.",
+      },
+      isActive: true,
+    },
+  });
+
   await prisma.marketingPageSection.create({
     data: {
       pageSlug: "storefront",
@@ -247,7 +247,6 @@ async function main() {
     },
   });
 
-  // 5. Contact Specific
   await prisma.marketingPageSection.create({
     data: {
       pageSlug: "contact",
@@ -255,12 +254,6 @@ async function main() {
       data: {
         title: "Get in Touch",
         subtitle: "Feedback on programming?",
-        programs: [
-          { value: "competitor", label: "The Competitor" },
-          { value: "performance", label: "Performance Rx" },
-          { value: "engine", label: "Engine Builder" },
-          { value: "general", label: "General Question" },
-        ],
       },
     },
   });
@@ -302,7 +295,6 @@ async function main() {
     },
   });
 
-  // 6. Features, Programs, Posts, Reviews (Same as before)
   await prisma.marketingStorefrontProgram.createMany({
     data: [
       {

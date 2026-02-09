@@ -107,9 +107,14 @@ export const pagesApi = {
   },
 
   getContactPage: async (): Promise<ContactPageData> => {
-    const sections = await prisma.marketingPageSection.findMany({
-      where: { pageSlug: "contact", isActive: true },
-    });
+    const [sections, programs] = await Promise.all([
+      prisma.marketingPageSection.findMany({
+        where: { pageSlug: "contact", isActive: true },
+      }),
+      prisma.marketingStorefrontProgram.findMany({
+        where: { isActive: true, deletedAt: null },
+      }),
+    ]);
 
     const map = PAGE_SECTIONS_MAP.contact;
 
@@ -121,6 +126,7 @@ export const pagesApi = {
         map.directContact,
       ),
       faq: extractSectionData<ContactPageData["faq"]>(sections, map.faq),
+      programOptions: programs.map((p) => ({ value: p.slug, label: p.title })),
     };
   },
 
