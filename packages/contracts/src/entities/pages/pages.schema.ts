@@ -100,18 +100,16 @@ export const aboutPageCtaSchema = z.object({
 export const contactPageHeroSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
-  backgroundImage: z.string().optional(),
 });
 
 export const contactFormSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
-  programs: z.array(
-    z.object({
-      value: z.string(),
-      label: z.string(),
-    }),
-  ),
+});
+
+export const programOptionSchema = z.object({
+  value: z.string(),
+  label: z.string(),
 });
 
 export const contactMethodSchema = z.object({

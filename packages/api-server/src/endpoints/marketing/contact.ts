@@ -9,6 +9,7 @@ export const contactApi = {
       data: {
         name: data.name,
         email: data.email,
+        program: data.program,
         message: data.message,
       },
     });
@@ -17,6 +18,7 @@ export const contactApi = {
       .sendContactSubmissionNotification({
         name: submission.name,
         email: submission.email,
+        program: submission.program,
         message: submission.message,
       })
       .catch((err) => {

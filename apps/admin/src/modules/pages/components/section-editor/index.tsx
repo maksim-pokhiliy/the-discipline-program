@@ -21,8 +21,11 @@ import {
   type HeroSectionType,
 } from "@repo/contracts/pages";
 
+import { ContactFormSectionForm } from "../sections/contact-form-section-form";
 import { ContactSectionForm } from "../sections/contact-section-form";
 import { CredentialsSectionForm } from "../sections/credentials-section-form";
+import { DirectContactSectionForm } from "../sections/direct-contact-section-form";
+import { FaqSectionForm } from "../sections/faq-section-form";
 import { HeroSectionForm } from "../sections/hero-section-form";
 import { JourneySectionForm } from "../sections/journey-section-form";
 import { PersonalSectionForm } from "../sections/personal-section-form";
@@ -93,6 +96,18 @@ export const SectionEditor = ({
 
       case "personal": {
         return <PersonalSectionForm />;
+      }
+
+      case "form": {
+        return <ContactFormSectionForm />;
+      }
+
+      case "directContact": {
+        return <DirectContactSectionForm />;
+      }
+
+      case "faq": {
+        return <FaqSectionForm />;
       }
 
       default: {

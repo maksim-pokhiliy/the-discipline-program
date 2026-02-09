@@ -393,6 +393,7 @@ model MarketingContactSubmission {
   id        String   @id @default(cuid())
   name      String?
   email     String?
+  program   String?
   message   String   @db.Text
   status    String   @default("PENDING")
   createdAt DateTime @default(now())
