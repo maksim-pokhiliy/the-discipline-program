@@ -30,7 +30,7 @@ export const ContactPageClient = ({ initialData }: ContactPageClientProps) => {
 
           <Stack spacing={0}>
             <ContactHero hero={data.hero} />
-            <ContactForm form={data.form} />
+            <ContactForm form={data.form} programOptions={data.programOptions} />
             <ContactDirectInfo directContact={data.directContact} />
             <ContactFAQ faq={data.faq} />
           </Stack>

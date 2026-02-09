@@ -23,6 +23,7 @@ import {
   contactDirectContactSchema,
   contactPageFaqSchema,
   blogPageHeroSchema,
+  programOptionSchema,
 } from "./pages.schema";
 
 export const getHomePageResponseSchema = z.object({
@@ -61,6 +62,7 @@ export const getContactPageResponseSchema = z.object({
   form: contactFormSchema,
   directContact: contactDirectContactSchema,
   faq: contactPageFaqSchema,
+  programOptions: z.array(programOptionSchema),
 });
 
 export const adminPageListItemSchema = z.object({

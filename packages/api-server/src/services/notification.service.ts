@@ -3,6 +3,7 @@ import { env } from "@repo/env";
 interface ContactNotificationData {
   name: string | null;
   email: string | null;
+  program?: string | null;
   message: string;
 }
 
@@ -17,6 +18,7 @@ export const notificationService = {
 
 👤 <b>Name:</b> ${data.name || "Not provided"}
 📧 <b>Email:</b> ${data.email || "Not provided"}
+📋 <b>Program:</b> ${data.program || "General Question"}
 📝 <b>Message:</b>
 ${data.message}
     `.trim();
