@@ -5,6 +5,8 @@ export const adminKeys = {
 
   contacts: {
     all: () => [...adminKeys.root, "contacts"] as const,
+    page: () => [...adminKeys.root, "contacts", "page-data"] as const,
+    byId: (id: string) => [...adminKeys.root, "contacts", id] as const,
   },
 
   blog: {

@@ -55,8 +55,8 @@ async function getContentStats(): Promise<ContentStats> {
       where: { isPublished: true, isFeatured: true, deletedAt: null },
     }),
 
-    prisma.marketingContactSubmission.count(),
-    prisma.marketingContactSubmission.count({ where: { status: "PENDING" } }),
+    prisma.marketingContactSubmission.count({ where: { deletedAt: null } }),
+    prisma.marketingContactSubmission.count({ where: { status: "NEW", deletedAt: null } }),
   ]);
 
   return {
@@ -109,6 +109,7 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
     prisma.marketingContactSubmission.findMany({
       take,
       orderBy: { createdAt: "desc" },
+      where: { deletedAt: null },
     }),
     prisma.user.findMany({
       take,
@@ -144,7 +145,7 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
       subtitle: c.email || "No email",
       date: c.createdAt,
       status: c.status,
-      href: `/contacts`,
+      href: `/contacts/${c.id}`,
     })),
     ...users.map((u) => ({
       id: u.id,

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 
 import { adminContactsApi } from "@repo/api-server";
-import { getContactSubmissionsResponseSchema } from "@repo/contracts/contact";
+import { getContactsPageDataResponseSchema } from "@repo/contracts/contact";
 import { handleApiError } from "@repo/errors";
 
 export async function GET() {
   try {
-    const contacts = await adminContactsApi.getContacts();
-    const validated = getContactSubmissionsResponseSchema.parse(contacts);
+    const pageData = await adminContactsApi.getContactsPageData();
+    const validated = getContactsPageDataResponseSchema.parse(pageData);
 
     return NextResponse.json(validated);
   } catch (error) {
