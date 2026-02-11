@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { Stack } from "@mui/material";
 
 import { type AdminBlogPageData } from "@repo/contracts/blog";
@@ -15,13 +17,22 @@ interface BlogListViewProps {
 
 export const BlogListView = ({ initialData }: BlogListViewProps) => {
   const { data, isLoading, error } = useBlogPageData({ initialData });
+  const [filter, setFilter] = useState<string | null>(null);
+
+  const handleFilterChange = (key: string) => {
+    setFilter((prev) => (prev === key ? null : key));
+  };
 
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage="Loading posts...">
       {(data) => (
         <Stack spacing={0}>
-          <BlogStatsSection stats={data.stats} />
-          <BlogListSection posts={data.posts} />
+          <BlogStatsSection
+            stats={data.stats}
+            selectedFilter={filter}
+            onFilterChange={handleFilterChange}
+          />
+          <BlogListSection posts={data.posts} filter={filter} />
         </Stack>
       )}
     </QueryWrapper>

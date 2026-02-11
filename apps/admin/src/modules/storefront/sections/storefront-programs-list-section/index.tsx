@@ -15,9 +15,27 @@ import { useDeleteStorefrontProgram, useToggleStorefrontProgramStatus } from "@a
 
 interface StorefrontProgramsListSectionProps {
   programs: StorefrontProgram[];
+  filter?: string | null;
 }
 
-export const StorefrontProgramsListSection = ({ programs }: StorefrontProgramsListSectionProps) => {
+export const StorefrontProgramsListSection = ({
+  programs,
+  filter,
+}: StorefrontProgramsListSectionProps) => {
+  const filteredPrograms = filter
+    ? programs.filter((program) => {
+        if (filter === "active") {
+          return program.isActive;
+        }
+
+        if (filter === "inactive") {
+          return !program.isActive;
+        }
+
+        return true;
+      })
+    : programs;
+
   const { mutateAsync: toggleStatus } = useToggleStorefrontProgramStatus();
   const { mutate: deleteProgram, isPending: isDeleting } = useDeleteStorefrontProgram();
 
@@ -143,7 +161,7 @@ export const StorefrontProgramsListSection = ({ programs }: StorefrontProgramsLi
         }
       >
         <DataTable
-          data={programs}
+          data={filteredPrograms}
           columns={columns}
           emptyMessage="No programs found. Start by creating one!"
         />

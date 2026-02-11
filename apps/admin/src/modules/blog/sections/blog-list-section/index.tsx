@@ -22,9 +22,28 @@ import {
 
 interface BlogListSectionProps {
   posts: BlogPost[];
+  filter?: string | null;
 }
 
-export const BlogListSection = ({ posts }: BlogListSectionProps) => {
+export const BlogListSection = ({ posts, filter }: BlogListSectionProps) => {
+  const filteredPosts = filter
+    ? posts.filter((post) => {
+        if (filter === "published") {
+          return post.isPublished;
+        }
+
+        if (filter === "draft") {
+          return !post.isPublished;
+        }
+
+        if (filter === "featured") {
+          return post.isFeatured;
+        }
+
+        return true;
+      })
+    : posts;
+
   const { mutateAsync: toggleStatus } = useToggleBlogPost();
   const { mutateAsync: toggleFeatured } = useToggleBlogFeatured();
   const { mutate: deletePost, isPending: isDeleting } = useDeleteBlogPost();
@@ -191,7 +210,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
         }
       >
         <DataTable
-          data={posts}
+          data={filteredPosts}
           columns={columns}
           emptyMessage="No blog posts yet. Create the first one!"
         />

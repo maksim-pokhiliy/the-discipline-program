@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { Stack } from "@mui/material";
 
 import { type AdminStorefrontProgramsPageData } from "@repo/contracts/storefront";
@@ -15,6 +17,11 @@ interface StorefrontProgramsListViewProps {
 
 export const StorefrontProgramsListView = ({ initialData }: StorefrontProgramsListViewProps) => {
   const { data, isLoading, error } = useStorefrontPageData({ initialData });
+  const [filter, setFilter] = useState<string | null>(null);
+
+  const handleFilterChange = (key: string) => {
+    setFilter((prev) => (prev === key ? null : key));
+  };
 
   return (
     <QueryWrapper
@@ -25,8 +32,12 @@ export const StorefrontProgramsListView = ({ initialData }: StorefrontProgramsLi
     >
       {(data) => (
         <Stack spacing={0}>
-          <StorefrontStatsSection stats={data.stats} />
-          <StorefrontProgramsListSection programs={data.programs} />
+          <StorefrontStatsSection
+            stats={data.stats}
+            selectedFilter={filter}
+            onFilterChange={handleFilterChange}
+          />
+          <StorefrontProgramsListSection programs={data.programs} filter={filter} />
         </Stack>
       )}
     </QueryWrapper>

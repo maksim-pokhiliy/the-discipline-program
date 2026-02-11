@@ -12,9 +12,15 @@ import { StatsCard } from "@app/shared/components/ui";
 
 interface StorefrontStatsSectionProps {
   stats: StorefrontProgramsStats;
+  selectedFilter: string | null;
+  onFilterChange: (key: string) => void;
 }
 
-export const StorefrontStatsSection = ({ stats }: StorefrontStatsSectionProps) => {
+export const StorefrontStatsSection = ({
+  stats,
+  selectedFilter,
+  onFilterChange,
+}: StorefrontStatsSectionProps) => {
   return (
     <ContentSection backgroundColor="dark" title="Storefront Statistics">
       <Grid container spacing={3}>
@@ -35,6 +41,8 @@ export const StorefrontStatsSection = ({ stats }: StorefrontStatsSectionProps) =
             subtitle="Currently available"
             icon={<CheckCircleIcon fontSize="large" />}
             color="success"
+            onClick={() => onFilterChange("active")}
+            selected={selectedFilter === null ? undefined : selectedFilter === "active"}
           />
         </Grid>
 
@@ -45,6 +53,8 @@ export const StorefrontStatsSection = ({ stats }: StorefrontStatsSectionProps) =
             subtitle="Hidden from users"
             icon={<CancelIcon fontSize="large" />}
             color="warning"
+            onClick={() => onFilterChange("inactive")}
+            selected={selectedFilter === null ? undefined : selectedFilter === "inactive"}
           />
         </Grid>
       </Grid>

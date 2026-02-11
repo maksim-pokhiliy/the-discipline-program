@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { Stack } from "@mui/material";
 
 import { type AdminContactsPageData } from "@repo/contracts/contact";
@@ -15,6 +17,11 @@ interface ContactsListViewProps {
 
 export const ContactsListView = ({ initialData }: ContactsListViewProps) => {
   const { data, isLoading, error } = useContactsPageData({ initialData });
+  const [filter, setFilter] = useState<string | null>(null);
+
+  const handleFilterChange = (key: string) => {
+    setFilter((prev) => (prev === key ? null : key));
+  };
 
   return (
     <QueryWrapper
@@ -25,8 +32,12 @@ export const ContactsListView = ({ initialData }: ContactsListViewProps) => {
     >
       {(data) => (
         <Stack>
-          <ContactsStatsSection stats={data.stats} />
-          <ContactsListSection contacts={data.contacts} />
+          <ContactsStatsSection
+            stats={data.stats}
+            selectedFilter={filter}
+            onFilterChange={handleFilterChange}
+          />
+          <ContactsListSection contacts={data.contacts} filter={filter} />
         </Stack>
       )}
     </QueryWrapper>

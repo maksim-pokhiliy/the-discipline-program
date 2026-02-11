@@ -13,9 +13,15 @@ import { StatsCard } from "@app/shared/components/ui";
 
 interface BlogStatsSectionProps {
   stats: BlogStats;
+  selectedFilter: string | null;
+  onFilterChange: (key: string) => void;
 }
 
-export const BlogStatsSection = ({ stats }: BlogStatsSectionProps) => {
+export const BlogStatsSection = ({
+  stats,
+  selectedFilter,
+  onFilterChange,
+}: BlogStatsSectionProps) => {
   return (
     <ContentSection backgroundColor="dark" title="Blog Overview">
       <Grid container spacing={3}>
@@ -36,6 +42,8 @@ export const BlogStatsSection = ({ stats }: BlogStatsSectionProps) => {
             subtitle="Live on the website"
             icon={<PublicIcon fontSize="large" />}
             color="success"
+            onClick={() => onFilterChange("published")}
+            selected={selectedFilter === null ? undefined : selectedFilter === "published"}
           />
         </Grid>
 
@@ -46,6 +54,8 @@ export const BlogStatsSection = ({ stats }: BlogStatsSectionProps) => {
             subtitle="Still in progress"
             icon={<DraftsIcon fontSize="large" />}
             color="warning"
+            onClick={() => onFilterChange("draft")}
+            selected={selectedFilter === null ? undefined : selectedFilter === "draft"}
           />
         </Grid>
 
@@ -56,6 +66,8 @@ export const BlogStatsSection = ({ stats }: BlogStatsSectionProps) => {
             subtitle="Highlighted articles"
             icon={<StarIcon fontSize="large" />}
             color="secondary"
+            onClick={() => onFilterChange("featured")}
+            selected={selectedFilter === null ? undefined : selectedFilter === "featured"}
           />
         </Grid>
       </Grid>

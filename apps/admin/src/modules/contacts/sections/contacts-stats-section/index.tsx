@@ -13,9 +13,15 @@ import { StatsCard } from "@app/shared/components/ui";
 
 interface ContactsStatsSectionProps {
   stats: ContactStats;
+  selectedFilter: string | null;
+  onFilterChange: (key: string) => void;
 }
 
-export const ContactsStatsSection = ({ stats }: ContactsStatsSectionProps) => {
+export const ContactsStatsSection = ({
+  stats,
+  selectedFilter,
+  onFilterChange,
+}: ContactsStatsSectionProps) => {
   return (
     <ContentSection backgroundColor="dark" title="Contacts Statistics">
       <Grid container spacing={3}>
@@ -36,6 +42,8 @@ export const ContactsStatsSection = ({ stats }: ContactsStatsSectionProps) => {
             subtitle="Awaiting review"
             icon={<FiberNewIcon fontSize="large" />}
             color="info"
+            onClick={() => onFilterChange("new")}
+            selected={selectedFilter === null ? undefined : selectedFilter === "new"}
           />
         </Grid>
 
@@ -46,6 +54,8 @@ export const ContactsStatsSection = ({ stats }: ContactsStatsSectionProps) => {
             subtitle="Being handled"
             icon={<HourglassEmptyIcon fontSize="large" />}
             color="warning"
+            onClick={() => onFilterChange("in_progress")}
+            selected={selectedFilter === null ? undefined : selectedFilter === "in_progress"}
           />
         </Grid>
 
@@ -56,6 +66,8 @@ export const ContactsStatsSection = ({ stats }: ContactsStatsSectionProps) => {
             subtitle="Replied & closed"
             icon={<CheckCircleIcon fontSize="large" />}
             color="success"
+            onClick={() => onFilterChange("resolved")}
+            selected={selectedFilter === null ? undefined : selectedFilter === "resolved"}
           />
         </Grid>
       </Grid>

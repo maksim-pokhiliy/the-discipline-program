@@ -30,9 +30,28 @@ const STATUS_CONFIG: Record<
 
 interface ContactsListSectionProps {
   contacts: GetContactByIdResponse[];
+  filter?: string | null;
 }
 
-export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
+export const ContactsListSection = ({ contacts, filter }: ContactsListSectionProps) => {
+  const filteredContacts = filter
+    ? contacts.filter((contact) => {
+        if (filter === "new") {
+          return contact.status === "NEW";
+        }
+
+        if (filter === "in_progress") {
+          return contact.status === "IN_PROGRESS";
+        }
+
+        if (filter === "resolved") {
+          return contact.status === "REPLIED" || contact.status === "CLOSED";
+        }
+
+        return true;
+      })
+    : contacts;
+
   const { mutate: deleteContact, isPending: isDeleting } = useDeleteContact();
   const { mutate: updateContact } = useUpdateContact();
 
@@ -170,7 +189,11 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
   return (
     <>
       <PanelSection title="All Submissions">
-        <DataTable data={contacts} columns={columns} emptyMessage="No contact submissions found." />
+        <DataTable
+          data={filteredContacts}
+          columns={columns}
+          emptyMessage="No contact submissions found."
+        />
       </PanelSection>
 
       <Menu anchorEl={statusMenuAnchor} open={!!statusMenuAnchor} onClose={handleStatusMenuClose}>

@@ -15,6 +15,8 @@ interface StatsCardProps {
     isPositive: boolean;
     label: string;
   };
+  onClick?: () => void;
+  selected?: boolean;
 }
 
 export const StatsCard = ({
@@ -24,9 +26,27 @@ export const StatsCard = ({
   icon,
   color = "primary",
   trend,
+  onClick,
+  selected,
 }: StatsCardProps) => {
   return (
-    <Card sx={{ height: "100%" }} variant="outlined">
+    <Card
+      sx={(theme) => ({
+        height: "100%",
+        transition: "opacity 0.2s, border-color 0.2s",
+        ...(onClick && { cursor: "pointer" }),
+        ...(selected === false && { opacity: 0.5 }),
+        ...(selected && { borderColor: theme.palette[color].main }),
+        ...(onClick && {
+          "&:hover": {
+            borderColor: theme.palette[color].main,
+            opacity: 1,
+          },
+        }),
+      })}
+      variant="outlined"
+      onClick={onClick}
+    >
       <CardContent>
         <Stack
           spacing={4}
