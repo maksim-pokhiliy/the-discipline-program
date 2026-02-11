@@ -3,27 +3,11 @@
 import { useState } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import {
-  Box,
-  IconButton,
-  MenuItem,
-  Select,
-  type SelectChangeEvent,
-  Stack,
-  ToggleButton,
-  ToggleButtonGroup,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import EditIcon from "@mui/icons-material/Edit";
+import { Box, Chip, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 
-import {
-  type ContactStats,
-  type GetContactByIdResponse,
-  CONTACT_STATUSES,
-} from "@repo/contracts/contact";
+import { type GetContactByIdResponse, CONTACT_STATUSES } from "@repo/contracts/contact";
 import { ConfirmationModal, DataTable, type Column, PanelSection } from "@repo/ui";
 
 import { useDeleteContact, useUpdateContact } from "@app/lib/hooks";
@@ -44,55 +28,40 @@ const STATUS_CONFIG: Record<
   CLOSED: { label: "Closed", color: "default" },
 };
 
-const FILTER_OPTIONS = [
-  { value: "ALL", label: "All" },
-  ...CONTACT_STATUSES.map((s) => ({ value: s, label: STATUS_CONFIG[s]?.label || s })),
-] as const;
-
 interface ContactsListSectionProps {
   contacts: GetContactByIdResponse[];
-  stats: ContactStats;
 }
 
-export const ContactsListSection = ({ contacts, stats }: ContactsListSectionProps) => {
-  const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const statusFilter = searchParams.get("filters.status") || "ALL";
-
+export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
   const { mutate: deleteContact, isPending: isDeleting } = useDeleteContact();
   const { mutate: updateContact } = useUpdateContact();
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [statusMenuAnchor, setStatusMenuAnchor] = useState<HTMLElement | null>(null);
+  const [statusMenuContactId, setStatusMenuContactId] = useState<string | null>(null);
 
-  const filteredContacts =
-    statusFilter === "ALL" ? contacts : contacts.filter((c) => c.status === statusFilter);
-
-  const handleFilterChange = (_: React.MouseEvent<HTMLElement>, value: string | null) => {
-    if (!value) {
-      return;
-    }
-
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (value === "ALL") {
-      params.delete("filters.status");
-    } else {
-      params.set("filters.status", value);
-    }
-
-    const query = params.toString();
-
-    router.push(query ? `/contacts?${query}` : "/contacts");
+  const handleStatusChipClick = (event: React.MouseEvent<HTMLElement>, contactId: string) => {
+    event.stopPropagation();
+    setStatusMenuAnchor(event.currentTarget);
+    setStatusMenuContactId(contactId);
   };
 
-  const handleStatusChange = (id: string, event: SelectChangeEvent<string>) => {
-    setUpdatingId(id);
-    updateContact(
-      { id, data: { status: event.target.value as (typeof CONTACT_STATUSES)[number] } },
-      { onSettled: () => setUpdatingId(null) },
-    );
+  const handleStatusMenuClose = () => {
+    setStatusMenuAnchor(null);
+    setStatusMenuContactId(null);
+  };
+
+  const handleStatusSelect = (status: (typeof CONTACT_STATUSES)[number]) => {
+    if (statusMenuContactId) {
+      setUpdatingId(statusMenuContactId);
+      updateContact(
+        { id: statusMenuContactId, data: { status } },
+        { onSettled: () => setUpdatingId(null) },
+      );
+    }
+
+    handleStatusMenuClose();
   };
 
   const handleDeleteConfirm = () => {
@@ -101,30 +70,6 @@ export const ContactsListSection = ({ contacts, stats }: ContactsListSectionProp
         onSuccess: () => setDeleteId(null),
       });
     }
-  };
-
-  const getCount = (value: string) => {
-    if (value === "ALL") {
-      return stats.total;
-    }
-
-    if (value === "NEW") {
-      return stats.new;
-    }
-
-    if (value === "IN_PROGRESS") {
-      return stats.inProgress;
-    }
-
-    if (value === "REPLIED") {
-      return stats.replied;
-    }
-
-    if (value === "CLOSED") {
-      return stats.closed;
-    }
-
-    return 0;
   };
 
   const columns: Column<GetContactByIdResponse>[] = [
@@ -176,23 +121,24 @@ export const ContactsListSection = ({ contacts, stats }: ContactsListSectionProp
     {
       id: "status",
       label: "Status",
-      width: "15%",
-      render: (item) => (
-        <Select
-          value={item.status}
-          onChange={(e) => handleStatusChange(item.id, e)}
-          size="small"
-          variant="standard"
-          disabled={updatingId === item.id}
-          sx={{ minWidth: 110, fontSize: "0.875rem" }}
-        >
-          {CONTACT_STATUSES.map((status) => (
-            <MenuItem key={status} value={status}>
-              {STATUS_CONFIG[status]?.label || status}
-            </MenuItem>
-          ))}
-        </Select>
-      ),
+      width: "12%",
+      render: (item) => {
+        const config = STATUS_CONFIG[item.status] || {
+          label: item.status,
+          color: "default" as const,
+        };
+
+        return (
+          <Chip
+            label={config.label}
+            color={config.color}
+            size="small"
+            variant="outlined"
+            onClick={(e) => handleStatusChipClick(e, item.id)}
+            disabled={updatingId === item.id}
+          />
+        );
+      },
     },
     {
       id: "createdAt",
@@ -206,9 +152,9 @@ export const ContactsListSection = ({ contacts, stats }: ContactsListSectionProp
       align: "right",
       render: (item) => (
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Tooltip title="View Details">
+          <Tooltip title="Edit">
             <IconButton component={Link} href={`/contacts/${item.id}`} size="small" color="primary">
-              <VisibilityIcon fontSize="small" />
+              <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Delete">
@@ -224,27 +170,24 @@ export const ContactsListSection = ({ contacts, stats }: ContactsListSectionProp
   return (
     <>
       <PanelSection title="All Submissions">
-        <Stack spacing={2}>
-          <ToggleButtonGroup
-            value={statusFilter}
-            exclusive
-            onChange={handleFilterChange}
-            size="small"
-          >
-            {FILTER_OPTIONS.map((opt) => (
-              <ToggleButton key={opt.value} value={opt.value}>
-                {opt.label} ({getCount(opt.value)})
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-
-          <DataTable
-            data={filteredContacts}
-            columns={columns}
-            emptyMessage="No contact submissions found."
-          />
-        </Stack>
+        <DataTable data={contacts} columns={columns} emptyMessage="No contact submissions found." />
       </PanelSection>
+
+      <Menu anchorEl={statusMenuAnchor} open={!!statusMenuAnchor} onClose={handleStatusMenuClose}>
+        {CONTACT_STATUSES.map((status) => {
+          const currentContact = contacts.find((c) => c.id === statusMenuContactId);
+
+          return (
+            <MenuItem
+              key={status}
+              onClick={() => handleStatusSelect(status)}
+              selected={currentContact?.status === status}
+            >
+              {STATUS_CONFIG[status]?.label || status}
+            </MenuItem>
+          );
+        })}
+      </Menu>
 
       <ConfirmationModal
         open={!!deleteId}

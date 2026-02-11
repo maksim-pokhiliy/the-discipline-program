@@ -51,9 +51,9 @@ export const ContactsStatsSection = ({ stats }: ContactsStatsSectionProps) => {
 
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatsCard
-            title="Closed"
-            value={stats.closed}
-            subtitle="Resolved"
+            title="Resolved"
+            value={stats.replied + stats.closed}
+            subtitle="Replied & closed"
             icon={<CheckCircleIcon fontSize="large" />}
             color="success"
           />

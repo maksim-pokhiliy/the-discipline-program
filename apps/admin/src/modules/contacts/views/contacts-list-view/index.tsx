@@ -26,7 +26,7 @@ export const ContactsListView = ({ initialData }: ContactsListViewProps) => {
       {(data) => (
         <Stack>
           <ContactsStatsSection stats={data.stats} />
-          <ContactsListSection contacts={data.contacts} stats={data.stats} />
+          <ContactsListSection contacts={data.contacts} />
         </Stack>
       )}
     </QueryWrapper>
