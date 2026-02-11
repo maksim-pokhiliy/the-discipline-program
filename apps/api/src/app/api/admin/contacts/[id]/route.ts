@@ -3,8 +3,8 @@ import { NextResponse } from "next/server";
 import { adminContactsApi } from "@repo/api-server";
 import {
   getContactByIdParamsSchema,
-  updateContactStatusParamsSchema,
-  updateContactStatusRequestSchema,
+  updateContactParamsSchema,
+  updateContactRequestSchema,
   deleteContactParamsSchema,
 } from "@repo/contracts/contact";
 import { handleApiError } from "@repo/errors";
@@ -22,10 +22,10 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = updateContactStatusParamsSchema.parse(await params);
+    const { id } = updateContactParamsSchema.parse(await params);
     const body = await request.json();
-    const data = updateContactStatusRequestSchema.parse(body);
-    const contact = await adminContactsApi.updateContactStatus(id, data);
+    const data = updateContactRequestSchema.parse(body);
+    const contact = await adminContactsApi.updateContact(id, data);
 
     return NextResponse.json(contact);
   } catch (error) {

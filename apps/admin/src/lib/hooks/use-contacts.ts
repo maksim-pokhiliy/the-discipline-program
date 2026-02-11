@@ -1,13 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
   type AdminContactsPageData,
   type GetContactByIdResponse,
-  type UpdateContactStatusRequest,
+  type UpdateContactRequest,
 } from "@repo/contracts/contact";
 import { adminKeys, STALE_TIMES } from "@repo/query";
 
@@ -36,22 +35,25 @@ export const useContact = (id: string, initialData?: GetContactByIdResponse) => 
   });
 };
 
-export const useUpdateContactStatus = () => {
+interface UseUpdateContactOptions {
+  onSuccess?: (data: GetContactByIdResponse) => void;
+}
+
+export const useUpdateContact = ({ onSuccess }: UseUpdateContactOptions = {}) => {
   const queryClient = useQueryClient();
-  const router = useRouter();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateContactStatusRequest }) =>
-      api.contacts.updateStatus(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateContactRequest }) =>
+      api.contacts.update(id, data),
     onSuccess: (data) => {
-      toast.success("Contact status updated");
+      toast.success("Contact updated");
       queryClient.invalidateQueries({ queryKey: adminKeys.contacts.page() });
       queryClient.invalidateQueries({ queryKey: adminKeys.contacts.byId(data.id) });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
-      router.push("/contacts");
+      onSuccess?.(data);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update contact status");
+      toast.error(error.message || "Failed to update contact");
     },
   });
 };

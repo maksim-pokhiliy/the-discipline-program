@@ -17,6 +17,7 @@ const contactSubmissionItemSchema = z.object({
   program: z.string().nullable(),
   message: z.string(),
   status: z.string(),
+  notes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -29,12 +30,13 @@ export const getContactByIdParamsSchema = z.object({
 
 export const getContactByIdResponseSchema = contactSubmissionItemSchema;
 
-export const updateContactStatusParamsSchema = z.object({
+export const updateContactParamsSchema = z.object({
   id: z.string().cuid(),
 });
 
-export const updateContactStatusRequestSchema = z.object({
-  status: z.enum(CONTACT_STATUSES),
+export const updateContactRequestSchema = z.object({
+  status: z.enum(CONTACT_STATUSES).optional(),
+  notes: z.string().max(2000).nullable().optional(),
 });
 
 export const deleteContactParamsSchema = z.object({

@@ -1,19 +1,22 @@
 "use client";
 
+import { useEffect } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import SaveIcon from "@mui/icons-material/Save";
 import { Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { useRouter } from "next/navigation";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 
 import {
   CONTACT_STATUSES,
   type GetContactByIdResponse,
-  type UpdateContactStatusRequest,
-  updateContactStatusRequestSchema,
+  type UpdateContactRequest,
+  updateContactRequestSchema,
 } from "@repo/contracts/contact";
 import { ContentSection, FormCard } from "@repo/ui";
 
-import { useContact, useUpdateContactStatus } from "@app/lib/hooks";
+import { useContact, useUpdateContact } from "@app/lib/hooks";
 
 interface ContactsDetailViewProps {
   initialData: GetContactByIdResponse;
@@ -34,24 +37,44 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export const ContactsDetailView = ({ initialData }: ContactsDetailViewProps) => {
+  const router = useRouter();
   const { data: contact } = useContact(initialData.id, initialData);
-  const { mutate: updateStatus, isPending } = useUpdateContactStatus();
+  const { mutate: updateContact, isPending } = useUpdateContact({
+    onSuccess: () => router.push("/contacts"),
+  });
 
-  const currentStatus = (contact?.status ||
-    initialData.status) as UpdateContactStatusRequest["status"];
-
-  const methods = useForm<UpdateContactStatusRequest>({
-    resolver: zodResolver(updateContactStatusRequestSchema),
+  const methods = useForm<UpdateContactRequest>({
+    resolver: zodResolver(updateContactRequestSchema),
     defaultValues: {
-      status: currentStatus,
+      status: (contact?.status || initialData.status) as UpdateContactRequest["status"],
+      notes: contact?.notes ?? initialData.notes ?? null,
     },
   });
 
-  const { handleSubmit, control } = methods;
+  const { handleSubmit, control, reset } = methods;
+
+  useEffect(() => {
+    if (contact) {
+      reset({
+        status: contact.status as UpdateContactRequest["status"],
+        notes: contact.notes ?? null,
+      });
+    }
+  }, [contact, reset]);
 
   if (!contact) {
     return null;
   }
+
+  const onSubmit = (data: UpdateContactRequest) => {
+    updateContact({
+      id: contact.id,
+      data: {
+        status: data.status,
+        notes: data.notes?.trim() || null,
+      },
+    });
+  };
 
   return (
     <FormProvider {...methods}>
@@ -62,8 +85,8 @@ export const ContactsDetailView = ({ initialData }: ContactsDetailViewProps) => 
         backLabel="Back to List"
         actions={[
           {
-            label: "Save Status",
-            onClick: handleSubmit((data) => updateStatus({ id: contact.id, data })),
+            label: "Save Changes",
+            onClick: handleSubmit(onSubmit),
             loading: isPending,
             startIcon: <SaveIcon />,
           },
@@ -113,21 +136,44 @@ export const ContactsDetailView = ({ initialData }: ContactsDetailViewProps) => 
           </Grid>
 
           <Grid size={{ xs: 12, lg: 4 }}>
-            <FormCard title="Status">
-              <Controller
-                name="status"
-                control={control}
-                render={({ field }) => (
-                  <TextField {...field} select fullWidth size="small" disabled={isPending}>
-                    {CONTACT_STATUSES.map((status) => (
-                      <MenuItem key={status} value={status}>
-                        {STATUS_LABELS[status]}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                )}
-              />
-            </FormCard>
+            <Stack spacing={3}>
+              <FormCard title="Status">
+                <Controller
+                  name="status"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField {...field} select fullWidth size="small" disabled={isPending}>
+                      {CONTACT_STATUSES.map((status) => (
+                        <MenuItem key={status} value={status}>
+                          {STATUS_LABELS[status]}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  )}
+                />
+              </FormCard>
+
+              <FormCard title="Notes">
+                <Controller
+                  name="notes"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <TextField
+                      {...field}
+                      value={field.value ?? ""}
+                      multiline
+                      rows={6}
+                      fullWidth
+                      size="small"
+                      placeholder="Add internal notes about this contact..."
+                      disabled={isPending}
+                      error={!!fieldState.error}
+                      helperText={fieldState.error?.message}
+                    />
+                  )}
+                />
+              </FormCard>
+            </Stack>
           </Grid>
         </Grid>
       </ContentSection>

@@ -1,7 +1,7 @@
 import {
   type AdminContactsPageData,
   type GetContactByIdResponse,
-  type UpdateContactStatusRequest,
+  type UpdateContactRequest,
 } from "@repo/contracts/contact";
 
 import { apiClient } from "../client";
@@ -15,7 +15,7 @@ export const contactsAPI = {
   getById: (id: string): Promise<GetContactByIdResponse> =>
     apiClient.request(`/api/admin/contacts/${id}`),
 
-  updateStatus: (id: string, data: UpdateContactStatusRequest): Promise<GetContactByIdResponse> =>
+  update: (id: string, data: UpdateContactRequest): Promise<GetContactByIdResponse> =>
     apiClient.request(`/api/admin/contacts/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> => apiClient.request(`/api/admin/contacts/${id}`, "DELETE"),

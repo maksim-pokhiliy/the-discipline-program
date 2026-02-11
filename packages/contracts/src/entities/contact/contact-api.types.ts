@@ -6,8 +6,8 @@ import {
   type getContactSubmissionsResponseSchema,
   type getContactByIdParamsSchema,
   type getContactByIdResponseSchema,
-  type updateContactStatusParamsSchema,
-  type updateContactStatusRequestSchema,
+  type updateContactParamsSchema,
+  type updateContactRequestSchema,
   type deleteContactParamsSchema,
   type contactStatsSchema,
   type getContactsPageDataResponseSchema,
@@ -23,9 +23,9 @@ export type GetContactByIdParams = z.infer<typeof getContactByIdParamsSchema>;
 
 export type GetContactByIdResponse = z.infer<typeof getContactByIdResponseSchema>;
 
-export type UpdateContactStatusParams = z.infer<typeof updateContactStatusParamsSchema>;
+export type UpdateContactParams = z.infer<typeof updateContactParamsSchema>;
 
-export type UpdateContactStatusRequest = z.infer<typeof updateContactStatusRequestSchema>;
+export type UpdateContactRequest = z.infer<typeof updateContactRequestSchema>;
 
 export type DeleteContactParams = z.infer<typeof deleteContactParamsSchema>;
 

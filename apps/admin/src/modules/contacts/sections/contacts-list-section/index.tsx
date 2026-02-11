@@ -4,13 +4,29 @@ import { useState } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { Box, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  MenuItem,
+  Select,
+  type SelectChangeEvent,
+  Stack,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
+  Typography,
+} from "@mui/material";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
-import { type GetContactByIdResponse } from "@repo/contracts/contact";
+import {
+  type ContactStats,
+  type GetContactByIdResponse,
+  CONTACT_STATUSES,
+} from "@repo/contracts/contact";
 import { ConfirmationModal, DataTable, type Column, PanelSection } from "@repo/ui";
 
-import { useDeleteContact } from "@app/lib/hooks";
+import { useDeleteContact, useUpdateContact } from "@app/lib/hooks";
 
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat("en-US", {
@@ -28,13 +44,56 @@ const STATUS_CONFIG: Record<
   CLOSED: { label: "Closed", color: "default" },
 };
 
+const FILTER_OPTIONS = [
+  { value: "ALL", label: "All" },
+  ...CONTACT_STATUSES.map((s) => ({ value: s, label: STATUS_CONFIG[s]?.label || s })),
+] as const;
+
 interface ContactsListSectionProps {
   contacts: GetContactByIdResponse[];
+  stats: ContactStats;
 }
 
-export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
+export const ContactsListSection = ({ contacts, stats }: ContactsListSectionProps) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const statusFilter = searchParams.get("filters.status") || "ALL";
+
   const { mutate: deleteContact, isPending: isDeleting } = useDeleteContact();
+  const { mutate: updateContact } = useUpdateContact();
+
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  const filteredContacts =
+    statusFilter === "ALL" ? contacts : contacts.filter((c) => c.status === statusFilter);
+
+  const handleFilterChange = (_: React.MouseEvent<HTMLElement>, value: string | null) => {
+    if (!value) {
+      return;
+    }
+
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (value === "ALL") {
+      params.delete("filters.status");
+    } else {
+      params.set("filters.status", value);
+    }
+
+    const query = params.toString();
+
+    router.push(query ? `/contacts?${query}` : "/contacts");
+  };
+
+  const handleStatusChange = (id: string, event: SelectChangeEvent<string>) => {
+    setUpdatingId(id);
+    updateContact(
+      { id, data: { status: event.target.value as (typeof CONTACT_STATUSES)[number] } },
+      { onSettled: () => setUpdatingId(null) },
+    );
+  };
 
   const handleDeleteConfirm = () => {
     if (deleteId) {
@@ -42,6 +101,30 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
         onSuccess: () => setDeleteId(null),
       });
     }
+  };
+
+  const getCount = (value: string) => {
+    if (value === "ALL") {
+      return stats.total;
+    }
+
+    if (value === "NEW") {
+      return stats.new;
+    }
+
+    if (value === "IN_PROGRESS") {
+      return stats.inProgress;
+    }
+
+    if (value === "REPLIED") {
+      return stats.replied;
+    }
+
+    if (value === "CLOSED") {
+      return stats.closed;
+    }
+
+    return 0;
   };
 
   const columns: Column<GetContactByIdResponse>[] = [
@@ -73,7 +156,7 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
     {
       id: "message",
       label: "Message",
-      width: "30%",
+      width: "25%",
       render: (item) => (
         <Tooltip title={item.message}>
           <Typography
@@ -93,15 +176,23 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
     {
       id: "status",
       label: "Status",
-      width: "12%",
-      render: (item) => {
-        const config = STATUS_CONFIG[item.status] || {
-          label: item.status,
-          color: "default" as const,
-        };
-
-        return <Chip label={config.label} color={config.color} size="small" variant="outlined" />;
-      },
+      width: "15%",
+      render: (item) => (
+        <Select
+          value={item.status}
+          onChange={(e) => handleStatusChange(item.id, e)}
+          size="small"
+          variant="standard"
+          disabled={updatingId === item.id}
+          sx={{ minWidth: 110, fontSize: "0.875rem" }}
+        >
+          {CONTACT_STATUSES.map((status) => (
+            <MenuItem key={status} value={status}>
+              {STATUS_CONFIG[status]?.label || status}
+            </MenuItem>
+          ))}
+        </Select>
+      ),
     },
     {
       id: "createdAt",
@@ -115,7 +206,7 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
       align: "right",
       render: (item) => (
         <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Tooltip title="View">
+          <Tooltip title="View Details">
             <IconButton component={Link} href={`/contacts/${item.id}`} size="small" color="primary">
               <VisibilityIcon fontSize="small" />
             </IconButton>
@@ -133,7 +224,26 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
   return (
     <>
       <PanelSection title="All Submissions">
-        <DataTable data={contacts} columns={columns} emptyMessage="No contact submissions yet." />
+        <Stack spacing={2}>
+          <ToggleButtonGroup
+            value={statusFilter}
+            exclusive
+            onChange={handleFilterChange}
+            size="small"
+          >
+            {FILTER_OPTIONS.map((opt) => (
+              <ToggleButton key={opt.value} value={opt.value}>
+                {opt.label} ({getCount(opt.value)})
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
+
+          <DataTable
+            data={filteredContacts}
+            columns={columns}
+            emptyMessage="No contact submissions found."
+          />
+        </Stack>
       </PanelSection>
 
       <ConfirmationModal

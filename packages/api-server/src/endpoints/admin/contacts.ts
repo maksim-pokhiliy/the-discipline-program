@@ -1,6 +1,6 @@
 import {
   type GetContactByIdResponse,
-  type UpdateContactStatusRequest,
+  type UpdateContactRequest,
   CONTACT_STATUS_ENUM,
 } from "@repo/contracts/contact";
 import { NotFoundError } from "@repo/errors";
@@ -14,6 +14,7 @@ const mapToContact = (c: {
   program: string | null;
   message: string;
   status: string;
+  notes: string | null;
   createdAt: Date;
   updatedAt: Date;
 }): GetContactByIdResponse => ({
@@ -23,6 +24,7 @@ const mapToContact = (c: {
   program: c.program,
   message: c.message,
   status: c.status,
+  notes: c.notes,
   createdAt: c.createdAt,
   updatedAt: c.updatedAt,
 });
@@ -47,16 +49,26 @@ export const adminContactsApi = {
     return mapToContact(contact);
   },
 
-  async updateContactStatus(id: string, data: UpdateContactStatusRequest) {
+  async updateContact(id: string, data: UpdateContactRequest) {
     const existing = await prisma.marketingContactSubmission.findUnique({ where: { id } });
 
     if (!existing || existing.deletedAt) {
       throw new NotFoundError("Contact submission not found", { id });
     }
 
+    const updateData: { status?: string; notes?: string | null } = {};
+
+    if (data.status !== undefined) {
+      updateData.status = data.status;
+    }
+
+    if (data.notes !== undefined) {
+      updateData.notes = data.notes?.trim() || null;
+    }
+
     const updated = await prisma.marketingContactSubmission.update({
       where: { id },
-      data: { status: data.status },
+      data: updateData,
     });
 
     return mapToContact(updated);

@@ -1173,6 +1173,7 @@ const seedContactSubmissions = async () => {
         message:
           "Hey! I'm currently training for the Open and looking to step up my programming. I've been doing CrossFit for 3 years and can do most movements RX. How does The Competitor track compare to what I'd get at a competitive affiliate? Do you provide any video feedback on lifts or is it programming only?",
         status: "NEW",
+        notes: null,
         createdAt: daysAgo(1),
       },
       {
@@ -1182,6 +1183,7 @@ const seedContactSubmissions = async () => {
         message:
           "I have a garage gym with a barbell, plates, pull-up bar, and rings. Will the Foundations track work for me or do I need more equipment like a rower or assault bike? Also, can I start mid-month or do I need to wait until the 1st?",
         status: "NEW",
+        notes: null,
         createdAt: daysAgo(2),
       },
       {
@@ -1191,6 +1193,7 @@ const seedContactSubmissions = async () => {
         message:
           "I'm 52 and have been doing CrossFit for about a year. I noticed the Masters 40+ program is listed but appears inactive. Is this coming back soon? Or would you recommend Performance RX with scaling? I want programming that respects recovery needs at my age.",
         status: "NEW",
+        notes: null,
         createdAt: daysAgo(4),
       },
       {
@@ -1200,6 +1203,7 @@ const seedContactSubmissions = async () => {
         message:
           "I'm interested in signing up but have a question about billing. Do you offer any discounts for annual subscriptions instead of monthly? I'm committed to training long-term and would prefer to pay upfront if there's a savings. Also curious about family plans — my wife and I both train.",
         status: "IN_PROGRESS",
+        notes: "Sent annual pricing info and family discount options. Waiting for reply.",
         createdAt: daysAgo(5),
       },
       {
@@ -1209,6 +1213,7 @@ const seedContactSubmissions = async () => {
         message:
           "I signed up yesterday but I'm not seeing the workouts in my account. I received the confirmation email but when I log in, the training section is empty. Can someone help me troubleshoot? Really excited to get started and don't want to miss today's session!",
         status: "IN_PROGRESS",
+        notes: "Likely a subscription sync issue. Escalated to check Stripe webhook logs.",
         createdAt: daysAgo(3),
       },
       {
@@ -1218,6 +1223,8 @@ const seedContactSubmissions = async () => {
         message:
           "I'm 6 weeks into Foundations and loving it — the progressions are perfectly paced. I'm ready for more volume and wondering when to move up to Performance RX. I can do most movements but my gymnastics are still developing (only 2-3 strict pull-ups). Should I wait until I'm stronger?",
         status: "REPLIED",
+        notes:
+          "Recommended staying on Foundations for 2 more weeks until he hits 5 strict pull-ups consistently.",
         createdAt: daysAgo(11),
       },
       {
@@ -1227,6 +1234,8 @@ const seedContactSubmissions = async () => {
         message:
           "I'm dealing with a nagging shoulder issue (rotator cuff tendinitis from overhead work). Are there movement substitutions built into the programming or should I consult with my PT first? I don't want to make it worse but also don't want to take time completely off training.",
         status: "REPLIED",
+        notes:
+          "Advised to consult PT first. Sent list of common overhead substitutions (DB press → landmine press, etc.).",
         createdAt: daysAgo(15),
       },
       {
@@ -1236,6 +1245,8 @@ const seedContactSubmissions = async () => {
         message:
           "Just wanted to say thanks for the incredible programming. Four months on The Competitor track and I just hit a 20lb PR on my back squat. Also qualified for Quarterfinals for the first time in my career. The structure and progressive overload have been exactly what I needed. Keep up the amazing work!",
         status: "CLOSED",
+        notes:
+          "Success story — added to testimonials list. Asked permission to feature on social media.",
         createdAt: daysAgo(18),
       },
       {
@@ -1245,6 +1256,8 @@ const seedContactSubmissions = async () => {
         message:
           "Hi Coach Ben, I run a CrossFit affiliate in Austin, TX. I'm interested in potentially using your programming for our competitors class (about 8-12 athletes). Would you be open to discussing bulk licensing or affiliate partnerships? Happy to jump on a call whenever works for you.",
         status: "CLOSED",
+        notes:
+          "Had a call. Not ready for affiliate partnerships yet — revisit in Q3 when platform is more mature.",
         createdAt: daysAgo(14),
       },
       {
@@ -1254,6 +1267,7 @@ const seedContactSubmissions = async () => {
         message:
           "Quick question — do you have a mobile app or is everything web-based? I'd love to log workouts from my phone at the gym without having to open a browser. Also, are the video demonstrations detailed enough for someone training completely solo without a coach watching?",
         status: "CLOSED",
+        notes: "Explained PWA is in development. She signed up for Foundations in the meantime.",
         createdAt: daysAgo(20),
       },
     ],
