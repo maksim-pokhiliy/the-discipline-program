@@ -15,8 +15,8 @@ export const marketingKeys = {
     article: (slug: string): QueryKey => [...marketingKeys.root, "blog-articles", slug] as const,
   },
 
-  storefront: {
-    all: (): QueryKey => [...marketingKeys.root, "storefront"] as const,
+  products: {
+    all: (): QueryKey => [...marketingKeys.root, "products"] as const,
   },
 
   reviews: {

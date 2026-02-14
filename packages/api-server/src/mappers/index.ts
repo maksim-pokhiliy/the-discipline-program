@@ -1,3 +1,3 @@
 export * from "./blog.mapper";
 export * from "./review.mapper";
-export * from "./storefront.mapper";
+export * from "./product.mapper";

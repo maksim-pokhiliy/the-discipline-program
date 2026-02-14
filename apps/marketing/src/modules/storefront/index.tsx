@@ -34,11 +34,11 @@ export const StorefrontProgramsPageClient = ({
       >
         {(data) => (
           <>
-            <StructuredData type="storefront" data={{ storefrontPrograms: data.programsList }} />
+            <StructuredData type="storefront" data={{ products: data.productsList }} />
 
             <Stack spacing={0}>
               <StorefrontProgramsHeroSection hero={data.hero} />
-              <StorefrontProgramsGridSection programsList={data.programsList} />
+              <StorefrontProgramsGridSection productsList={data.productsList} />
               <StorefrontProgramsCTA cta={data.cta} />
             </Stack>
           </>

@@ -14,24 +14,31 @@ import {
   Typography,
 } from "@mui/material";
 
-import { type StorefrontProgram } from "@repo/contracts/storefront";
+import { type Product, PRICE_INTERVAL_LABELS } from "@repo/contracts/product";
+import { formatPrice } from "@repo/shared";
 
 interface StorefrontProgramModalProps {
-  program: StorefrontProgram | null;
+  product: Product | null;
   open: boolean;
   onClose: () => void;
 }
 
-export const StorefrontProgramModal = ({ program, open, onClose }: StorefrontProgramModalProps) => {
+export const StorefrontProgramModal = ({ product, open, onClose }: StorefrontProgramModalProps) => {
   const handleGetStarted = async () => {
-    if (!program) {
+    if (!product) {
       return;
     }
   };
 
-  if (!program) {
+  if (!product) {
     return null;
   }
+
+  const activePrice = product.prices.find((p) => p.isActive);
+  const displayPrice = activePrice
+    ? formatPrice(activePrice.amountCents, activePrice.currency)
+    : "Free";
+  const displayInterval = activePrice ? PRICE_INTERVAL_LABELS[activePrice.interval] : null;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
@@ -62,22 +69,24 @@ export const StorefrontProgramModal = ({ program, open, onClose }: StorefrontPro
           <Stack spacing={4}>
             <Stack spacing={2}>
               <Typography variant="h2" sx={{ fontWeight: "bold" }}>
-                {program.title}
+                {product.title}
               </Typography>
 
               <Typography variant="h5" sx={{ opacity: 0.9, maxWidth: "70%" }}>
-                {program.description}
+                {product.description}
               </Typography>
             </Stack>
 
             <Box>
               <Typography variant="h1" sx={{ fontWeight: "bold", display: "inline" }}>
-                {program.priceLabel ?? "$0"}
+                {displayPrice}
               </Typography>
 
-              <Typography variant="h4" sx={{ opacity: 0.8, ml: 2, display: "inline" }}>
-                /month
-              </Typography>
+              {displayInterval && (
+                <Typography variant="h4" sx={{ opacity: 0.8, ml: 2, display: "inline" }}>
+                  /{displayInterval}
+                </Typography>
+              )}
             </Box>
           </Stack>
         </Box>
@@ -91,7 +100,7 @@ export const StorefrontProgramModal = ({ program, open, onClose }: StorefrontPro
                 </Typography>
 
                 <Grid container spacing={2}>
-                  {program.features.map((feature, index) => (
+                  {product.features.map((feature, index) => (
                     <Grid key={index} size={{ xs: 12, sm: 6 }}>
                       <Stack direction="row" spacing={2} alignItems="flex-start">
                         <Stack
@@ -133,12 +142,14 @@ export const StorefrontProgramModal = ({ program, open, onClose }: StorefrontPro
                 <Stack spacing={4} alignItems="center" textAlign="center">
                   <Stack>
                     <Typography variant="h3" color="primary" sx={{ fontWeight: "bold" }}>
-                      {program.priceLabel ?? "$0"}
+                      {displayPrice}
                     </Typography>
 
-                    <Typography variant="body2" color="text.secondary">
-                      per month
-                    </Typography>
+                    {displayInterval && (
+                      <Typography variant="body2" color="text.secondary">
+                        per {displayInterval}
+                      </Typography>
+                    )}
                   </Stack>
 
                   <Stack spacing={2} sx={{ width: "100%" }}>

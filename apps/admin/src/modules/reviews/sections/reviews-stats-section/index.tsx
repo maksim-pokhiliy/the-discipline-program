@@ -11,9 +11,15 @@ import { StatsCard } from "@app/shared/components/ui";
 
 interface ReviewsStatsSectionProps {
   stats: ReviewStats;
+  selectedFilter: string | null;
+  onFilterChange: (key: string) => void;
 }
 
-export const ReviewsStatsSection = ({ stats }: ReviewsStatsSectionProps) => {
+export const ReviewsStatsSection = ({
+  stats,
+  selectedFilter,
+  onFilterChange,
+}: ReviewsStatsSectionProps) => {
   return (
     <ContentSection backgroundColor="dark" title="Reviews Statistics">
       <Grid container spacing={3}>
@@ -34,6 +40,8 @@ export const ReviewsStatsSection = ({ stats }: ReviewsStatsSectionProps) => {
             subtitle="Visible on website"
             icon={<CheckCircleIcon fontSize="large" />}
             color="success"
+            onClick={() => onFilterChange("active")}
+            selected={selectedFilter === null ? undefined : selectedFilter === "active"}
           />
         </Grid>
       </Grid>
