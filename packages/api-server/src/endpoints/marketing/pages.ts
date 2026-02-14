@@ -12,12 +12,7 @@ import {
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-import {
-  isPublishedPost,
-  mapToPublicBlogPost,
-  mapToReview,
-  mapToStorefrontProgram,
-} from "../../mappers";
+import { isPublishedPost, mapToPublicBlogPost, mapToReview, mapToProduct } from "../../mappers";
 
 const extractSectionData = <TPageData>(
   sections: { section: string; data: Prisma.JsonValue }[],
@@ -38,8 +33,11 @@ export const pagesApi = {
       where: { pageSlug: "home", isActive: true },
     });
 
-    const [programs, reviews] = await Promise.all([
-      prisma.marketingStorefrontProgram.findMany({ where: { isActive: true, deletedAt: null } }),
+    const [products, reviews] = await Promise.all([
+      prisma.product.findMany({
+        where: { isActive: true, deletedAt: null },
+        include: { prices: { where: { isActive: true } } },
+      }),
       prisma.marketingReview.findMany({ where: { isActive: true, deletedAt: null } }),
     ]);
 
@@ -51,15 +49,18 @@ export const pagesApi = {
       storefront: extractSectionData<HomePageData["storefront"]>(sections, map.storefront),
       reviews: extractSectionData<HomePageData["reviews"]>(sections, map.reviews),
       contact: extractSectionData<HomePageData["contact"]>(sections, map.contact),
-      storefrontProgramsList: programs.map(mapToStorefrontProgram),
+      productsList: products.map(mapToProduct),
       reviewsList: reviews.map(mapToReview),
     };
   },
 
   getStorefrontProgramsPage: async (): Promise<StorefrontProgramsPageData> => {
-    const [sections, programs] = await Promise.all([
+    const [sections, products] = await Promise.all([
       prisma.marketingPageSection.findMany({ where: { pageSlug: "storefront", isActive: true } }),
-      prisma.marketingStorefrontProgram.findMany({ where: { isActive: true, deletedAt: null } }),
+      prisma.product.findMany({
+        where: { isActive: true, deletedAt: null },
+        include: { prices: { where: { isActive: true } } },
+      }),
     ]);
 
     const map = PAGE_SECTIONS_MAP.storefront;
@@ -67,7 +68,7 @@ export const pagesApi = {
     return {
       hero: extractSectionData<StorefrontProgramsPageData["hero"]>(sections, map.hero),
       cta: extractSectionData<StorefrontProgramsPageData["cta"]>(sections, map.cta),
-      programsList: programs.map(mapToStorefrontProgram),
+      productsList: products.map(mapToProduct),
     };
   },
 
@@ -107,11 +108,11 @@ export const pagesApi = {
   },
 
   getContactPage: async (): Promise<ContactPageData> => {
-    const [sections, programs] = await Promise.all([
+    const [sections, products] = await Promise.all([
       prisma.marketingPageSection.findMany({
         where: { pageSlug: "contact", isActive: true },
       }),
-      prisma.marketingStorefrontProgram.findMany({
+      prisma.product.findMany({
         where: { isActive: true, deletedAt: null },
       }),
     ]);
@@ -126,7 +127,7 @@ export const pagesApi = {
         map.directContact,
       ),
       faq: extractSectionData<ContactPageData["faq"]>(sections, map.faq),
-      programOptions: programs.map((p) => ({ value: p.slug, label: p.title })),
+      programOptions: products.map((p) => ({ value: p.slug, label: p.title })),
     };
   },
 

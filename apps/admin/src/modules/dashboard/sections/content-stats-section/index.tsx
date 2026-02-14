@@ -53,9 +53,9 @@ export const ContentStatsSection = ({ contentStats, userStats }: ContentStatsSec
 
         <Grid size={{ xs: 12, sm: 6, md: 6 }}>
           <StatsCard
-            title="Storefront Programs"
-            value={contentStats.storefrontPrograms.total}
-            subtitle={`${contentStats.storefrontPrograms.active} active`}
+            title="Products"
+            value={contentStats.products.total}
+            subtitle={`${contentStats.products.active} active`}
             icon={<SportsIcon fontSize="large" />}
             color="secondary"
           />

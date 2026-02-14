@@ -1,4 +1,4 @@
-export * from "./storefront";
+export * from "./products";
 export * from "./reviews";
 export * from "./contacts";
 export * from "./dashboard";

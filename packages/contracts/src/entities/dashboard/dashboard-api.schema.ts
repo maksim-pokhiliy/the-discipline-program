@@ -14,7 +14,7 @@ export const activityItemSchema = z.object({
 
 export const getDashboardDataResponseSchema = z.object({
   contentStats: z.object({
-    storefrontPrograms: z.object({
+    products: z.object({
       total: z.number(),
       active: z.number(),
       inactive: z.number(),

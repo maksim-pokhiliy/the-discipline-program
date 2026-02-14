@@ -19,7 +19,8 @@ const clearAll = async () => {
   await prisma.marketingContactSubmission.deleteMany();
   await prisma.marketingPageSection.deleteMany();
   await prisma.marketingPage.deleteMany();
-  await prisma.marketingStorefrontProgram.deleteMany();
+  await prisma.price.deleteMany();
+  await prisma.product.deleteMany();
   await prisma.marketingBlogPost.deleteMany();
   await prisma.marketingReview.deleteMany();
   await prisma.user.deleteMany();
@@ -464,77 +465,90 @@ const seedMarketingPages = async () => {
 // Storefront Programs
 // ---------------------------------------------------------------------------
 
-const seedStorefrontPrograms = async () => {
-  await prisma.marketingStorefrontProgram.createMany({
-    data: [
-      {
-        title: "The Competitor",
-        slug: "competitor-track",
-        description:
-          "High-volume programming designed for athletes preparing for the Open, Quarterfinals, or local throwdowns. Two sessions per day with sport-specific skill work, heavy lifting, and advanced conditioning. For athletes who have mastered the basics and are ready to test themselves against the best.",
-        priceLabel: "$99/mo",
-        features: [
-          "2 Sessions/Day (Morning + Evening)",
-          "Advanced Gymnastics Progressions",
-          "Dedicated Olympic Lifting Days",
-          "Competition-Specific Metcons",
-          "Video Movement Analysis",
-          "Monthly Performance Testing",
-        ],
-        isActive: true,
-        createdAt: daysAgo(58),
-      },
-      {
-        title: "Performance RX",
-        slug: "performance-rx",
-        description:
-          "Daily WOD programming for dedicated athletes who want to perform movements as prescribed. 60-minute sessions combining strength work, skill development, and metabolic conditioning. Perfect for experienced CrossFitters looking to maintain and improve their fitness year-round.",
-        priceLabel: "$69/mo",
-        features: [
-          "60-Min Daily WODs",
-          "Full RX Movement Standards",
-          "Progressive Strength Cycles",
-          "Gymnastic Skill Sessions",
-          "Benchmark WOD Tracking",
-        ],
-        isActive: true,
-        createdAt: daysAgo(58),
-      },
-      {
-        title: "Foundations GPP",
-        slug: "foundations-gpp",
-        description:
-          "General Physical Preparedness for athletes new to CrossFit or returning after time away. Emphasis on movement quality, building strength, and developing aerobic capacity. Scalable workouts with detailed coaching cues and video demonstrations for every movement.",
-        priceLabel: "$49/mo",
-        features: [
-          "45-Min Scalable Workouts",
-          "Movement Fundamentals Focus",
-          "Beginner-Friendly Progressions",
-          "Detailed Video Tutorials",
-          "Injury Prevention Emphasis",
-        ],
-        isActive: true,
-        createdAt: daysAgo(55),
-      },
-      {
-        title: "Masters 40+",
-        slug: "masters-40-plus",
-        description:
-          "Strength and conditioning designed for athletes over 40. Smart programming that respects recovery needs while building sustainable fitness. Modified movements and volume to match the unique demands of the Masters division.",
-        priceLabel: "$59/mo",
-        features: [
-          "4 Days/Week Programming",
-          "Joint-Friendly Movement Variations",
-          "Extended Warm-Up Protocols",
-          "Mobility & Recovery Focus",
-        ],
-        isActive: false,
-        createdAt: daysAgo(52),
-      },
-    ],
-  });
+const seedProducts = async () => {
+  const products = [
+    {
+      title: "The Competitor",
+      slug: "competitor-track",
+      description:
+        "High-volume programming designed for athletes preparing for the Open, Quarterfinals, or local throwdowns. Two sessions per day with sport-specific skill work, heavy lifting, and advanced conditioning. For athletes who have mastered the basics and are ready to test themselves against the best.",
+      features: [
+        "2 Sessions/Day (Morning + Evening)",
+        "Advanced Gymnastics Progressions",
+        "Dedicated Olympic Lifting Days",
+        "Competition-Specific Metcons",
+        "Video Movement Analysis",
+        "Monthly Performance Testing",
+      ],
+      isActive: true,
+      createdAt: daysAgo(58),
+      amountCents: 9900,
+    },
+    {
+      title: "Performance RX",
+      slug: "performance-rx",
+      description:
+        "Daily WOD programming for dedicated athletes who want to perform movements as prescribed. 60-minute sessions combining strength work, skill development, and metabolic conditioning. Perfect for experienced CrossFitters looking to maintain and improve their fitness year-round.",
+      features: [
+        "60-Min Daily WODs",
+        "Full RX Movement Standards",
+        "Progressive Strength Cycles",
+        "Gymnastic Skill Sessions",
+        "Benchmark WOD Tracking",
+      ],
+      isActive: true,
+      createdAt: daysAgo(58),
+      amountCents: 6900,
+    },
+    {
+      title: "Foundations GPP",
+      slug: "foundations-gpp",
+      description:
+        "General Physical Preparedness for athletes new to CrossFit or returning after time away. Emphasis on movement quality, building strength, and developing aerobic capacity. Scalable workouts with detailed coaching cues and video demonstrations for every movement.",
+      features: [
+        "45-Min Scalable Workouts",
+        "Movement Fundamentals Focus",
+        "Beginner-Friendly Progressions",
+        "Detailed Video Tutorials",
+        "Injury Prevention Emphasis",
+      ],
+      isActive: true,
+      createdAt: daysAgo(55),
+      amountCents: 4900,
+    },
+    {
+      title: "Masters 40+",
+      slug: "masters-40-plus",
+      description:
+        "Strength and conditioning designed for athletes over 40. Smart programming that respects recovery needs while building sustainable fitness. Modified movements and volume to match the unique demands of the Masters division.",
+      features: [
+        "4 Days/Week Programming",
+        "Joint-Friendly Movement Variations",
+        "Extended Warm-Up Protocols",
+        "Mobility & Recovery Focus",
+      ],
+      isActive: false,
+      createdAt: daysAgo(52),
+      amountCents: 5900,
+    },
+  ];
 
-  console.log("  Programs: 4 (3 active, 1 inactive)");
+  for (const { amountCents, ...productData } of products) {
+    await prisma.product.create({
+      data: {
+        ...productData,
+        prices: {
+          create: {
+            amountCents,
+            currency: "USD",
+            interval: "MONTHLY",
+          },
+        },
+      },
+    });
+  }
+
+  console.log("  Products: 4 (3 active, 1 inactive) with prices");
 };
 
 // ---------------------------------------------------------------------------
@@ -1289,7 +1303,7 @@ const main = async () => {
 
   await seedUsers(passwordHash);
   await seedMarketingPages();
-  await seedStorefrontPrograms();
+  await seedProducts();
   await seedBlogPosts();
   await seedReviews();
   await seedContactSubmissions();

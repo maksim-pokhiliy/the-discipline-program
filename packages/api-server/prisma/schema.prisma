@@ -106,27 +106,43 @@ enum Gender {
   FEMALE
 }
 
-model BillingProduct {
-  id             String  @id
-  name           String
-  isActive       Boolean @default(true)
-  trainingPlanId String?
-  prices         Price[]
+model Product {
+  id              String    @id @default(cuid())
+  slug            String    @unique
+  title           String
+  description     String
+  features        String[]
+  trainingPlanId  String?
+  stripeProductId String?   @unique
+  isActive        Boolean   @default(true)
+  prices          Price[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
 
-  @@map("app_billing_products")
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("app_products")
 }
 
 model Price {
-  id            String         @id
+  id            String         @id @default(cuid())
   productId     String
-  product       BillingProduct @relation(fields: [productId], references: [id])
+  product       Product        @relation(fields: [productId], references: [id])
   amountCents   Int
   currency      String         @default("USD")
-  interval      String
+  interval      PriceInterval  @default(MONTHLY)
+  stripePriceId String?        @unique
   isActive      Boolean        @default(true)
   subscriptions Subscription[]
 
   @@map("app_prices")
+}
+
+enum PriceInterval {
+  MONTHLY
+  YEARLY
+  ONE_TIME
 }
 
 model Subscription {
@@ -354,23 +370,6 @@ model MarketingBlogPost {
   @@map("marketing_blog_posts")
 }
 
-model MarketingStorefrontProgram {
-  id             String    @id @default(cuid())
-  slug           String    @unique
-  title          String
-  description    String
-  priceLabel     String?
-  features       String[]
-  billingPriceId String?
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime?
-
-  @@index([createdAt])
-  @@index([deletedAt])
-  @@map("marketing_storefront_programs")
-}
 
 model MarketingReview {
   id           String    @id @default(cuid())

@@ -12,7 +12,7 @@
     "./contact": "./src/entities/contact/index.ts",
     "./dashboard": "./src/entities/dashboard/index.ts",
     "./pages": "./src/entities/pages/index.ts",
-    "./storefront": "./src/entities/storefront/index.ts",
+    "./product": "./src/entities/product/index.ts",
     "./review": "./src/entities/review/index.ts",
     "./upload": "./src/entities/upload/index.ts"
   },
