@@ -35,10 +35,7 @@ export const HomePageClient = ({ initialData }: HomePageClientProps) => {
           <StructuredData type="website" />
           <StructuredData type="organization" />
           <StructuredData type="person" />
-          <StructuredData
-            type="storefront"
-            data={{ storefrontPrograms: data.storefrontProgramsList }}
-          />
+          <StructuredData type="storefront" data={{ products: data.productsList }} />
           <StructuredData type="reviews" data={{ reviews: data.reviewsList }} />
 
           <Stack spacing={0}>
@@ -47,7 +44,7 @@ export const HomePageClient = ({ initialData }: HomePageClientProps) => {
 
             <HomeStorefrontProgramsPreview
               programs={data.storefront}
-              programsList={data.storefrontProgramsList}
+              productsList={data.productsList}
             />
 
             <HomeReviewsSection reviews={data.reviews} reviewsList={data.reviewsList} />

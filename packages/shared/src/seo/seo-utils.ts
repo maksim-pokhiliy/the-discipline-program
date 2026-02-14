@@ -1,4 +1,4 @@
-import { type StorefrontProgram, type Review } from "@repo/contracts";
+import { type Product, type Review } from "@repo/contracts";
 
 import { SEO_CONFIG } from "./seo";
 import { PAGE_SEO, type PageSeoKey } from "./seo-page";
@@ -50,7 +50,7 @@ export interface StructuredDataProps {
     publishedTime?: string;
     modifiedTime?: string;
     url?: string;
-    programs?: StorefrontProgram[];
+    products?: Product[];
     reviews?: Review[];
     faqItems?: Array<{
       question: string;
@@ -87,11 +87,11 @@ export const generateStructuredData = (
         "@context": "https://schema.org",
         "@type": "ItemList",
         itemListElement:
-          data?.programs?.map((program, index) => ({
+          data?.products?.map((product, index) => ({
             "@type": "ListItem",
             position: index + 1,
-            name: program.title,
-            description: program.description,
+            name: product.title,
+            description: product.description,
             url: `${SEO_CONFIG.siteUrl}/programs`,
           })) || [],
       };

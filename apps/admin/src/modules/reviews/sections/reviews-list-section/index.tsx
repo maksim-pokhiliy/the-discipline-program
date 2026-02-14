@@ -32,9 +32,20 @@ const formatDate = (date: Date) => {
 
 interface ReviewsListSectionProps {
   reviews: Review[];
+  filter?: string | null;
 }
 
-export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
+export const ReviewsListSection = ({ reviews, filter }: ReviewsListSectionProps) => {
+  const filteredReviews = filter
+    ? reviews.filter((review) => {
+        if (filter === "active") {
+          return review.isActive;
+        }
+
+        return true;
+      })
+    : reviews;
+
   const { mutateAsync: toggleActive } = useToggleReviewActive();
   const { mutate: deleteReview, isPending: isDeleting } = useDeleteReview();
 
@@ -176,7 +187,7 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
         }
       >
         <DataTable
-          data={reviews}
+          data={filteredReviews}
           columns={columns}
           emptyMessage="No reviews found. Add your first review!"
         />

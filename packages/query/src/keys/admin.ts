@@ -5,6 +5,8 @@ export const adminKeys = {
 
   contacts: {
     all: () => [...adminKeys.root, "contacts"] as const,
+    page: () => [...adminKeys.root, "contacts", "page-data"] as const,
+    byId: (id: string) => [...adminKeys.root, "contacts", id] as const,
   },
 
   blog: {
@@ -12,9 +14,9 @@ export const adminKeys = {
     byId: (id: string) => [...adminKeys.root, "blog", id] as const,
   },
 
-  storefront: {
-    page: () => [...adminKeys.root, "storefront", "page-data"] as const,
-    byId: (id: string) => [...adminKeys.root, "storefront", id] as const,
+  products: {
+    page: () => [...adminKeys.root, "products", "page-data"] as const,
+    byId: (id: string) => [...adminKeys.root, "products", id] as const,
   },
 
   reviews: {

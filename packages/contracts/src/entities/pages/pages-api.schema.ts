@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import { publicBlogPostSchema } from "../blog";
+import { productSchema } from "../product/product.schema";
 import { reviewSchema } from "../review/review.schema";
-import { storefrontProgramSchema } from "../storefront/storefront.schema";
 
 import { PAGE_SLUGS, PAGE_SECTIONS_MAP } from "./pages.constants";
 import {
@@ -32,14 +32,14 @@ export const getHomePageResponseSchema = z.object({
   storefront: homePageStorefrontProgramsSchema,
   reviews: homePageReviewsSchema,
   contact: homePageContactSchema,
-  storefrontProgramsList: z.array(storefrontProgramSchema),
+  productsList: z.array(productSchema),
   reviewsList: z.array(reviewSchema),
 });
 
 export const getStorefrontProgramsPageResponseSchema = z.object({
   hero: storefrontProgramsPageHeroSchema,
   cta: storefrontPageCtaSchema,
-  programsList: z.array(storefrontProgramSchema),
+  productsList: z.array(productSchema),
 });
 
 export const getAboutPageResponseSchema = z.object({

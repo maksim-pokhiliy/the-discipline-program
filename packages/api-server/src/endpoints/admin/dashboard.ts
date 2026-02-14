@@ -7,6 +7,7 @@ import {
 } from "@repo/contracts/dashboard";
 
 import { prisma } from "../../db/client";
+import { mapToPrice } from "../../mappers";
 
 export const adminDashboardApi = {
   getDashboardData: async (): Promise<DashboardData> => {
@@ -26,8 +27,8 @@ export const adminDashboardApi = {
 
 async function getContentStats(): Promise<ContentStats> {
   const [
-    programsTotal,
-    programsActive,
+    productsTotal,
+    productsActive,
     reviewsTotal,
     reviewsActive,
     blogTotal,
@@ -36,8 +37,8 @@ async function getContentStats(): Promise<ContentStats> {
     contactsTotal,
     contactsNew,
   ] = await Promise.all([
-    prisma.marketingStorefrontProgram.count({ where: { deletedAt: null } }),
-    prisma.marketingStorefrontProgram.count({
+    prisma.product.count({ where: { deletedAt: null } }),
+    prisma.product.count({
       where: { isActive: true, deletedAt: null },
     }),
 
@@ -55,15 +56,15 @@ async function getContentStats(): Promise<ContentStats> {
       where: { isPublished: true, isFeatured: true, deletedAt: null },
     }),
 
-    prisma.marketingContactSubmission.count(),
-    prisma.marketingContactSubmission.count({ where: { status: "PENDING" } }),
+    prisma.marketingContactSubmission.count({ where: { deletedAt: null } }),
+    prisma.marketingContactSubmission.count({ where: { status: "NEW", deletedAt: null } }),
   ]);
 
   return {
-    storefrontPrograms: {
-      total: programsTotal,
-      active: programsActive,
-      inactive: programsTotal - programsActive,
+    products: {
+      total: productsTotal,
+      active: productsActive,
+      inactive: productsTotal - productsActive,
     },
     reviews: {
       total: reviewsTotal,
@@ -100,7 +101,7 @@ async function getUserStats(): Promise<UserStats> {
 async function getRecentActivity(): Promise<ActivityItem[]> {
   const take = 5;
 
-  const [reviews, contacts, users, posts, programs] = await Promise.all([
+  const [reviews, contacts, users, posts, products] = await Promise.all([
     prisma.marketingReview.findMany({
       take,
       orderBy: { createdAt: "desc" },
@@ -109,6 +110,7 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
     prisma.marketingContactSubmission.findMany({
       take,
       orderBy: { createdAt: "desc" },
+      where: { deletedAt: null },
     }),
     prisma.user.findMany({
       take,
@@ -120,12 +122,23 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
       orderBy: { createdAt: "desc" },
       where: { deletedAt: null },
     }),
-    prisma.marketingStorefrontProgram.findMany({
+    prisma.product.findMany({
       take,
       orderBy: { createdAt: "desc" },
       where: { deletedAt: null },
+      include: { prices: { where: { isActive: true }, take: 1 } },
     }),
   ]);
+
+  const formatPriceSubtitle = (prices: { amountCents: number; currency: string }[]): string => {
+    if (prices.length === 0) {
+      return "No price set";
+    }
+
+    const p = mapToPrice(prices[0] as Parameters<typeof mapToPrice>[0]);
+
+    return `${(p.amountCents / 100).toFixed(0)} ${p.currency}`;
+  };
 
   const activities: ActivityItem[] = [
     ...reviews.map((r) => ({
@@ -144,7 +157,7 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
       subtitle: c.email || "No email",
       date: c.createdAt,
       status: c.status,
-      href: `/contacts`,
+      href: `/contacts/${c.id}`,
     })),
     ...users.map((u) => ({
       id: u.id,
@@ -162,13 +175,13 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
       date: p.createdAt,
       href: `/blog/${p.id}`,
     })),
-    ...programs.map((p) => ({
+    ...products.map((p) => ({
       id: p.id,
       type: ACTIVITY_TYPE.PROGRAM,
-      title: `New program: ${p.title}`,
-      subtitle: p.priceLabel || "Free",
+      title: `New product: ${p.title}`,
+      subtitle: formatPriceSubtitle(p.prices),
       date: p.createdAt,
-      href: `/storefront/${p.id}`,
+      href: `/products/${p.id}`,
     })),
   ];
 
