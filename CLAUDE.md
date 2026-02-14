@@ -41,9 +41,9 @@ DB Schema → Contracts (Zod) → API Server → API Routes → Client UI
 ```
 apps/
   api/          # Next.js Route Handlers (BFF). NO business logic, NO Prisma.
-  admin/        # Coach/CMS dashboard
+  admin/        # Business panel + Marketing CMS (desktop-first)
   marketing/    # Public landing pages
-  platform/     # [TO BE CREATED] Athlete PWA
+  platform/     # [TO BE CREATED] Coach + Athlete product experience (mobile-first PWA)
 
 packages/
   api-server/   # Business logic + Prisma. ONLY package that imports @prisma/client
