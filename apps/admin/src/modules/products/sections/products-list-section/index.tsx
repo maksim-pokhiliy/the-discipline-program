@@ -10,35 +10,19 @@ import Link from "next/link";
 
 import { type Product } from "@repo/contracts/product";
 import { formatPrice } from "@repo/shared";
-import { ConfirmationModal, DataTable, type Column, PanelSection } from "@repo/ui";
+import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { useDeleteProduct, useToggleProductStatus } from "@app/lib/hooks";
 
 interface ProductsListSectionProps {
   products: Product[];
-  filter?: string | null;
 }
 
-export const ProductsListSection = ({ products, filter }: ProductsListSectionProps) => {
-  const filteredProducts = filter
-    ? products.filter((product) => {
-        if (filter === "active") {
-          return product.isActive;
-        }
-
-        if (filter === "inactive") {
-          return !product.isActive;
-        }
-
-        return true;
-      })
-    : products;
-
+export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
   const { mutateAsync: toggleStatus } = useToggleProductStatus();
   const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
 
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
-
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const handleToggleStatus = async (id: string) => {
@@ -69,11 +53,26 @@ export const ProductsListSection = ({ products, filter }: ProductsListSectionPro
     return formatPrice(activePrice.amountCents, activePrice.currency);
   };
 
+  const filters: DataTableFilter<Product>[] = [
+    {
+      id: "status",
+      label: "Status",
+      options: [
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
+      match: (item, value) => (value === "active" ? item.isActive : !item.isActive),
+    },
+  ];
+
   const columns: Column<Product>[] = [
     {
       id: "title",
       label: "Product Name",
       width: "35%",
+      sortable: true,
+      sortValue: (product) => product.title,
+      searchValue: (product) => product.title,
       render: (product) => (
         <Stack spacing={0.5}>
           <Typography variant="subtitle2" component="span" fontWeight={600}>
@@ -154,26 +153,26 @@ export const ProductsListSection = ({ products, filter }: ProductsListSectionPro
 
   return (
     <>
-      <PanelSection
+      <DataTable
+        data={products}
+        columns={columns}
         title="Products"
+        searchPlaceholder="Search products..."
+        filters={filters}
         action={
           <Button
             component={Link}
             href="/products/create"
             variant="contained"
             startIcon={<AddIcon />}
-            size="small"
+            size="medium"
           >
             Create Product
           </Button>
         }
-      >
-        <DataTable
-          data={filteredProducts}
-          columns={columns}
-          emptyMessage="No products found. Start by creating one!"
-        />
-      </PanelSection>
+        paginated
+        emptyMessage="No products found. Start by creating one!"
+      />
 
       <ConfirmationModal
         open={!!productToDelete}

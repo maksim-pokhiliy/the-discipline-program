@@ -20,7 +20,7 @@ import {
 import Link from "next/link";
 
 import { type Review } from "@repo/contracts/review";
-import { ConfirmationModal, DataTable, type Column, PanelSection } from "@repo/ui";
+import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { useDeleteReview, useToggleReviewActive } from "@app/lib/hooks";
 
@@ -32,20 +32,9 @@ const formatDate = (date: Date) => {
 
 interface ReviewsListSectionProps {
   reviews: Review[];
-  filter?: string | null;
 }
 
-export const ReviewsListSection = ({ reviews, filter }: ReviewsListSectionProps) => {
-  const filteredReviews = filter
-    ? reviews.filter((review) => {
-        if (filter === "active") {
-          return review.isActive;
-        }
-
-        return true;
-      })
-    : reviews;
-
+export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
   const { mutateAsync: toggleActive } = useToggleReviewActive();
   const { mutate: deleteReview, isPending: isDeleting } = useDeleteReview();
 
@@ -69,11 +58,26 @@ export const ReviewsListSection = ({ reviews, filter }: ReviewsListSectionProps)
     }
   };
 
+  const filters: DataTableFilter<Review>[] = [
+    {
+      id: "status",
+      label: "Status",
+      options: [
+        { label: "Active", value: "active" },
+        { label: "Hidden", value: "hidden" },
+      ],
+      match: (item, value) => (value === "active" ? item.isActive : !item.isActive),
+    },
+  ];
+
   const columns: Column<Review>[] = [
     {
       id: "author",
       label: "Author",
       width: "30%",
+      sortable: true,
+      sortValue: (review) => review.authorName,
+      searchValue: (review) => review.authorName,
       render: (review) => (
         <Stack direction="row" spacing={2} alignItems="center">
           <Avatar src={review.authorAvatar || undefined} alt={review.authorName}>
@@ -94,6 +98,8 @@ export const ReviewsListSection = ({ reviews, filter }: ReviewsListSectionProps)
       id: "rating",
       label: "Rating",
       width: "15%",
+      sortable: true,
+      sortValue: (review) => review.rating,
       render: (review) => <Rating value={review.rating} readOnly size="small" />,
     },
     {
@@ -142,6 +148,8 @@ export const ReviewsListSection = ({ reviews, filter }: ReviewsListSectionProps)
       id: "createdAt",
       label: "Date",
       width: "10%",
+      sortable: true,
+      sortValue: (review) => new Date(review.createdAt).getTime(),
       render: (review) => <Typography variant="body2">{formatDate(review.createdAt)}</Typography>,
     },
     {
@@ -172,26 +180,26 @@ export const ReviewsListSection = ({ reviews, filter }: ReviewsListSectionProps)
 
   return (
     <>
-      <PanelSection
-        title="All Reviews"
+      <DataTable
+        data={reviews}
+        columns={columns}
+        title="Reviews"
+        searchPlaceholder="Search by author..."
+        filters={filters}
         action={
           <Button
             component={Link}
             href="/reviews/create"
             variant="contained"
             startIcon={<AddIcon />}
-            size="small"
+            size="medium"
           >
             Create Review
           </Button>
         }
-      >
-        <DataTable
-          data={filteredReviews}
-          columns={columns}
-          emptyMessage="No reviews found. Add your first review!"
-        />
-      </PanelSection>
+        paginated
+        emptyMessage="No reviews found. Add your first review!"
+      />
 
       <ConfirmationModal
         open={!!deleteId}

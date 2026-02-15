@@ -1,15 +1,13 @@
 "use client";
 
-import { useState } from "react";
-
-import { Stack } from "@mui/material";
+import { Container } from "@mui/material";
 
 import { type AdminReviewsPageData } from "@repo/contracts/review";
 import { QueryWrapper } from "@repo/query";
 
 import { useReviewsPageData } from "@app/lib/hooks";
 
-import { ReviewsListSection, ReviewsStatsSection } from "../../sections";
+import { ReviewsListSection } from "../../sections";
 
 interface ReviewsListViewProps {
   initialData: AdminReviewsPageData;
@@ -17,11 +15,6 @@ interface ReviewsListViewProps {
 
 export const ReviewsListView = ({ initialData }: ReviewsListViewProps) => {
   const { data, isLoading, error } = useReviewsPageData({ initialData });
-  const [filter, setFilter] = useState<string | null>(null);
-
-  const handleFilterChange = (key: string) => {
-    setFilter((prev) => (prev === key ? null : key));
-  };
 
   return (
     <QueryWrapper
@@ -31,14 +24,9 @@ export const ReviewsListView = ({ initialData }: ReviewsListViewProps) => {
       loadingMessage="Loading reviews..."
     >
       {(data) => (
-        <Stack>
-          <ReviewsStatsSection
-            stats={data.stats}
-            selectedFilter={filter}
-            onFilterChange={handleFilterChange}
-          />
-          <ReviewsListSection reviews={data.reviews} filter={filter} />
-        </Stack>
+        <Container maxWidth="xl" sx={{ py: 4 }}>
+          <ReviewsListSection reviews={data.reviews} />
+        </Container>
       )}
     </QueryWrapper>
   );

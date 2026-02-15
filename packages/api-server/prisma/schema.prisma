@@ -193,18 +193,35 @@ enum TransactionStatus {
   FAILED
 }
 
+model ExerciseCategory {
+  id        String         @id @default(cuid())
+  name      String         @unique
+  sortOrder Int            @default(0)
+  exercises Exercise[]
+  blocks    WorkoutBlock[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  deletedAt DateTime?
+
+  @@index([sortOrder])
+  @@index([deletedAt])
+  @@map("app_exercise_categories")
+}
+
 model Exercise {
-  id                  String          @id @default(cuid())
-  name                String          @unique
+  id                  String            @id @default(cuid())
+  name                String            @unique
   description         String?
   videoUrl            String?
-  category            BlockType?
+  categoryId          String?
+  category            ExerciseCategory? @relation(fields: [categoryId], references: [id])
   prescribedSets      PrescribedSet[]
   setLogSubstitutions SetLog[]
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
   deletedAt           DateTime?
 
+  @@index([categoryId])
   @@index([createdAt])
   @@index([deletedAt])
   @@map("app_exercises")
@@ -247,14 +264,16 @@ model Workout {
 }
 
 model WorkoutBlock {
-  id         String          @id @default(cuid())
+  id         String           @id @default(cuid())
   workoutId  String
-  workout    Workout         @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-  type       BlockType       @default(STRENGTH)
+  workout    Workout          @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   ExerciseCategory @relation(fields: [categoryId], references: [id])
   rounds     Int?
   timeCapSec Int?
   sets       PrescribedSet[]
 
+  @@index([categoryId])
   @@map("app_workout_blocks")
 }
 
@@ -305,15 +324,6 @@ model SetLog {
   rpeActual              Int?
 
   @@map("app_set_logs")
-}
-
-enum BlockType {
-  STRENGTH
-  METCON
-  CARDIO
-  ACCESSORY
-  WARMUP
-  SKILL
 }
 
 enum Unit {

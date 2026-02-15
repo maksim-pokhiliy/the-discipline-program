@@ -16,6 +16,7 @@ const createClient = () => {
             model === "User" ||
             model === "TrainingPlan" ||
             model === "Workout" ||
+            model === "ExerciseCategory" ||
             model === "Exercise" ||
             model === "MarketingBlogPost" ||
             model === "MarketingReview"
@@ -37,6 +38,7 @@ const createClient = () => {
             model === "User" ||
             model === "TrainingPlan" ||
             model === "Workout" ||
+            model === "ExerciseCategory" ||
             model === "Exercise" ||
             model === "MarketingBlogPost" ||
             model === "MarketingReview"
@@ -67,6 +69,11 @@ const createClient = () => {
               });
             case "Workout":
               return client.workout.findFirst({
+                ...args,
+                where: { ...args.where, deletedAt: null },
+              });
+            case "ExerciseCategory":
+              return client.exerciseCategory.findFirst({
                 ...args,
                 where: { ...args.where, deletedAt: null },
               });
@@ -107,6 +114,11 @@ const createClient = () => {
                 ...args,
                 data: { deletedAt: new Date() },
               });
+            case "ExerciseCategory":
+              return client.exerciseCategory.update({
+                ...args,
+                data: { deletedAt: new Date() },
+              });
             case "Exercise":
               return client.exercise.update({
                 ...args,
@@ -141,6 +153,11 @@ const createClient = () => {
               });
             case "Workout":
               return client.workout.updateMany({
+                ...args,
+                data: { deletedAt: new Date() },
+              });
+            case "ExerciseCategory":
+              return client.exerciseCategory.updateMany({
                 ...args,
                 data: { deletedAt: new Date() },
               });

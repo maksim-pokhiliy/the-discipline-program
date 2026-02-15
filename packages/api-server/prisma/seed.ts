@@ -1,4 +1,4 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient, type Prisma, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -16,6 +16,14 @@ const daysAgo = (days: number): Date => {
 // ---------------------------------------------------------------------------
 
 const clearAll = async () => {
+  await prisma.setLog.deleteMany();
+  await prisma.prescribedSet.deleteMany();
+  await prisma.workoutBlock.deleteMany();
+  await prisma.workoutLog.deleteMany();
+  await prisma.workout.deleteMany();
+  await prisma.trainingPlan.deleteMany();
+  await prisma.exercise.deleteMany();
+  await prisma.exerciseCategory.deleteMany();
   await prisma.marketingContactSubmission.deleteMany();
   await prisma.marketingPageSection.deleteMany();
   await prisma.marketingPage.deleteMany();
@@ -85,6 +93,61 @@ const seedUsers = async (passwordHash: string) => {
   });
 
   console.log("  Users: 8 (1 admin, 1 coach, 6 regular)");
+};
+
+// ---------------------------------------------------------------------------
+// Exercise Categories & Exercises
+// ---------------------------------------------------------------------------
+
+const seedExerciseCategories = async () => {
+  const categories: Prisma.ExerciseCategoryCreateManyInput[] = [
+    { name: "Strength", sortOrder: 0 },
+    { name: "Metcon", sortOrder: 1 },
+    { name: "Cardio", sortOrder: 2 },
+    { name: "Accessory", sortOrder: 3 },
+    { name: "Warmup", sortOrder: 4 },
+    { name: "Skill", sortOrder: 5 },
+  ];
+
+  await prisma.exerciseCategory.createMany({ data: categories });
+
+  console.log("  Exercise categories: 6");
+};
+
+const seedExercises = async () => {
+  const categories = await prisma.exerciseCategory.findMany();
+  const categoryMap = new Map(categories.map((c) => [c.name, c.id]));
+
+  const exercises: Prisma.ExerciseCreateManyInput[] = [
+    { name: "Back Squat", categoryId: categoryMap.get("Strength"), createdAt: daysAgo(30) },
+    { name: "Deadlift", categoryId: categoryMap.get("Strength"), createdAt: daysAgo(30) },
+    { name: "Bench Press", categoryId: categoryMap.get("Strength"), createdAt: daysAgo(30) },
+    { name: "Overhead Press", categoryId: categoryMap.get("Strength"), createdAt: daysAgo(29) },
+    { name: "Front Squat", categoryId: categoryMap.get("Strength"), createdAt: daysAgo(29) },
+    { name: "Clean & Jerk", categoryId: categoryMap.get("Skill"), createdAt: daysAgo(28) },
+    { name: "Snatch", categoryId: categoryMap.get("Skill"), createdAt: daysAgo(28) },
+    { name: "Bar Muscle-Up", categoryId: categoryMap.get("Skill"), createdAt: daysAgo(27) },
+    { name: "Ring Muscle-Up", categoryId: categoryMap.get("Skill"), createdAt: daysAgo(27) },
+    { name: "Handstand Walk", categoryId: categoryMap.get("Skill"), createdAt: daysAgo(26) },
+    { name: "Burpee", categoryId: categoryMap.get("Metcon"), createdAt: daysAgo(25) },
+    { name: "Wall Ball", categoryId: categoryMap.get("Metcon"), createdAt: daysAgo(25) },
+    { name: "Box Jump", categoryId: categoryMap.get("Metcon"), createdAt: daysAgo(25) },
+    { name: "Kettlebell Swing", categoryId: categoryMap.get("Metcon"), createdAt: daysAgo(24) },
+    { name: "Rowing", categoryId: categoryMap.get("Cardio"), createdAt: daysAgo(24) },
+    { name: "Assault Bike", categoryId: categoryMap.get("Cardio"), createdAt: daysAgo(24) },
+    { name: "Running", categoryId: categoryMap.get("Cardio"), createdAt: daysAgo(23) },
+    { name: "Jump Rope", categoryId: categoryMap.get("Cardio"), createdAt: daysAgo(23) },
+    { name: "Tricep Pushdown", categoryId: categoryMap.get("Accessory"), createdAt: daysAgo(22) },
+    { name: "Lateral Raise", categoryId: categoryMap.get("Accessory"), createdAt: daysAgo(22) },
+    { name: "GHD Sit-Up", categoryId: categoryMap.get("Accessory"), createdAt: daysAgo(21) },
+    { name: "PVC Pass-Through", categoryId: categoryMap.get("Warmup"), createdAt: daysAgo(21) },
+    { name: "Arm Circles", categoryId: categoryMap.get("Warmup"), createdAt: daysAgo(20) },
+    { name: "Jumping Jacks", categoryId: categoryMap.get("Warmup"), createdAt: daysAgo(20) },
+  ];
+
+  await prisma.exercise.createMany({ data: exercises });
+
+  console.log("  Exercises: 24");
 };
 
 // ---------------------------------------------------------------------------
@@ -1302,6 +1365,8 @@ const main = async () => {
   const passwordHash = await bcrypt.hash("password123", 12);
 
   await seedUsers(passwordHash);
+  await seedExerciseCategories();
+  await seedExercises();
   await seedMarketingPages();
   await seedProducts();
   await seedBlogPosts();
