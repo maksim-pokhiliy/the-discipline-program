@@ -12,7 +12,7 @@ import Link from "next/link";
 
 import { type BlogPost } from "@repo/contracts/blog";
 import { env } from "@repo/env";
-import { ConfirmationModal, DataTable, type Column, PanelSection } from "@repo/ui";
+import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import {
   useDeleteBlogPost,
@@ -22,28 +22,9 @@ import {
 
 interface BlogListSectionProps {
   posts: BlogPost[];
-  filter?: string | null;
 }
 
-export const BlogListSection = ({ posts, filter }: BlogListSectionProps) => {
-  const filteredPosts = filter
-    ? posts.filter((post) => {
-        if (filter === "published") {
-          return post.isPublished;
-        }
-
-        if (filter === "draft") {
-          return !post.isPublished;
-        }
-
-        if (filter === "featured") {
-          return post.isFeatured;
-        }
-
-        return true;
-      })
-    : posts;
-
+export const BlogListSection = ({ posts }: BlogListSectionProps) => {
   const { mutateAsync: toggleStatus } = useToggleBlogPost();
   const { mutateAsync: toggleFeatured } = useToggleBlogFeatured();
   const { mutate: deletePost, isPending: isDeleting } = useDeleteBlogPost();
@@ -83,11 +64,35 @@ export const BlogListSection = ({ posts, filter }: BlogListSectionProps) => {
     }
   };
 
+  const filters: DataTableFilter<BlogPost>[] = [
+    {
+      id: "status",
+      label: "Status",
+      options: [
+        { label: "Published", value: "published" },
+        { label: "Draft", value: "draft" },
+      ],
+      match: (item, value) => (value === "published" ? item.isPublished : !item.isPublished),
+    },
+    {
+      id: "spotlight",
+      label: "Spotlight",
+      options: [
+        { label: "Featured", value: "featured" },
+        { label: "Standard", value: "standard" },
+      ],
+      match: (item, value) => (value === "featured" ? item.isFeatured : !item.isFeatured),
+    },
+  ];
+
   const columns: Column<BlogPost>[] = [
     {
       id: "title",
       label: "Title & Slug",
       width: "30%",
+      sortable: true,
+      sortValue: (post) => post.title,
+      searchValue: (post) => post.title,
       render: (post) => (
         <Stack spacing={0.5}>
           <Typography variant="subtitle2" component="span" fontWeight={600}>
@@ -153,6 +158,8 @@ export const BlogListSection = ({ posts, filter }: BlogListSectionProps) => {
       id: "date",
       label: "Created",
       width: "15%",
+      sortable: true,
+      sortValue: (post) => new Date(post.createdAt).getTime(),
       render: (post) => (
         <Typography variant="body2">{new Date(post.createdAt).toLocaleDateString()}</Typography>
       ),
@@ -195,26 +202,26 @@ export const BlogListSection = ({ posts, filter }: BlogListSectionProps) => {
 
   return (
     <>
-      <PanelSection
-        title="All Posts"
+      <DataTable
+        data={posts}
+        columns={columns}
+        title="Posts"
+        searchPlaceholder="Search posts..."
+        filters={filters}
         action={
           <Button
             component={Link}
             href="/blog/create"
             variant="contained"
             startIcon={<AddIcon />}
-            size="small"
+            size="medium"
           >
             Create Post
           </Button>
         }
-      >
-        <DataTable
-          data={filteredPosts}
-          columns={columns}
-          emptyMessage="No blog posts yet. Create the first one!"
-        />
-      </PanelSection>
+        paginated
+        emptyMessage="No blog posts yet. Create the first one!"
+      />
 
       <ConfirmationModal
         open={!!postToDelete}

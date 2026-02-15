@@ -11,6 +11,8 @@
     "./blog": "./src/entities/blog/index.ts",
     "./contact": "./src/entities/contact/index.ts",
     "./dashboard": "./src/entities/dashboard/index.ts",
+    "./exercise": "./src/entities/exercise/index.ts",
+    "./exercise-category": "./src/entities/exercise-category/index.ts",
     "./pages": "./src/entities/pages/index.ts",
     "./product": "./src/entities/product/index.ts",
     "./review": "./src/entities/review/index.ts",

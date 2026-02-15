@@ -3,6 +3,15 @@ export const adminKeys = {
 
   dashboard: () => [...adminKeys.root, "dashboard"] as const,
 
+  exerciseCategories: {
+    all: () => [...adminKeys.root, "exercise-categories"] as const,
+  },
+
+  exercises: {
+    page: () => [...adminKeys.root, "exercises", "page-data"] as const,
+    byId: (id: string) => [...adminKeys.root, "exercises", id] as const,
+  },
+
   contacts: {
     all: () => [...adminKeys.root, "contacts"] as const,
     page: () => [...adminKeys.root, "contacts", "page-data"] as const,
