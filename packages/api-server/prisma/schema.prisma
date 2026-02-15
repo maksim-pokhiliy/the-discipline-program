@@ -201,10 +201,8 @@ model ExerciseCategory {
   blocks    WorkoutBlock[]
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
-  deletedAt DateTime?
 
   @@index([sortOrder])
-  @@index([deletedAt])
   @@map("app_exercise_categories")
 }
 
