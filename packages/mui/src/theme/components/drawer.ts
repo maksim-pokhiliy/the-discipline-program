@@ -8,8 +8,6 @@ export const MuiDrawer: Components<Theme>["MuiDrawer"] = {
 
   styleOverrides: {
     paper: ({ theme }) => ({
-      width: "100vw",
-      maxWidth: 300,
       backgroundColor: theme.palette.drawer.main,
     }),
   },

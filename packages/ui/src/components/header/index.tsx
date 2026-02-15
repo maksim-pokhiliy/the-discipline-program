@@ -2,6 +2,8 @@
 
 import { AppBar, Stack, Toolbar, useMediaQuery } from "@mui/material";
 
+import { LAYOUT } from "@repo/shared";
+
 import { Logo } from "../logo";
 
 import { Drawer } from "./drawer";
@@ -10,16 +12,15 @@ import { Navigation } from "./navigation";
 import { UserMenu } from "./user-menu";
 
 export type HeaderProps = {
-  navigationType?: "admin" | "marketing";
   showUserMenu?: boolean;
 };
 
-export const Header = ({ navigationType = "admin", showUserMenu = true }: HeaderProps) => {
+export const Header = ({ showUserMenu = true }: HeaderProps) => {
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
 
   return (
     <HideOnScroll>
-      <AppBar>
+      <AppBar sx={{ height: LAYOUT.appBarHeight, justifyContent: "center" }}>
         <Stack
           component={Toolbar}
           sx={{ width: "100%", justifyContent: "space-between" }}
@@ -27,7 +28,7 @@ export const Header = ({ navigationType = "admin", showUserMenu = true }: Header
         >
           <Logo />
 
-          {!isMobile && <Navigation navigationType={navigationType} />}
+          {!isMobile && <Navigation />}
 
           {!isMobile && showUserMenu && <UserMenu />}
 
