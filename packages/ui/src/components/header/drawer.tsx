@@ -19,7 +19,11 @@ export const Drawer = () => {
         <MenuIcon color="primary" />
       </IconButton>
 
-      <MuiDrawer open={open} onClose={toggleDrawer}>
+      <MuiDrawer
+        open={open}
+        onClose={toggleDrawer}
+        PaperProps={{ sx: { width: "100vw", maxWidth: 300 } }}
+      >
         <IconButton color="primary" onClick={toggleDrawer} sx={{ alignSelf: "flex-end", m: 1 }}>
           <ChevronLeftIcon color="primary" />
         </IconButton>

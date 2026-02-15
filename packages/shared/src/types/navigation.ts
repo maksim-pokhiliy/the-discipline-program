@@ -4,8 +4,20 @@ export interface NavLink {
   icon?: string;
 }
 
+export interface AdminNavLink {
+  text: string;
+  href: string;
+  icon: string;
+}
+
+export interface AdminNavGroup {
+  label: string;
+  links: AdminNavLink[];
+}
+
 export interface AdminNavigationConfig {
-  links: NavLink[];
+  dashboard: AdminNavLink;
+  groups: AdminNavGroup[];
 }
 
 export interface MarketingNavigationConfig {

@@ -46,7 +46,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body id={DOM_ANCHORS.BODY}>
         <NextProvider>
           <QueryProvider>
-            <Header navigationType="marketing" showUserMenu={false} />
+            <Header showUserMenu={false} />
 
             <Box component="main" sx={{ minHeight: "100vh" }}>
               {children}
