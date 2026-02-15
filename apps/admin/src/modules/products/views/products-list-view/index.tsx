@@ -1,15 +1,13 @@
 "use client";
 
-import { useState } from "react";
-
-import { Stack } from "@mui/material";
+import { Container } from "@mui/material";
 
 import { type AdminProductsPageData } from "@repo/contracts/product";
 import { QueryWrapper } from "@repo/query";
 
 import { useProductsPageData } from "@app/lib/hooks";
 
-import { ProductsListSection, ProductsStatsSection } from "../../sections";
+import { ProductsListSection } from "../../sections";
 
 interface ProductsListViewProps {
   initialData: AdminProductsPageData;
@@ -17,11 +15,6 @@ interface ProductsListViewProps {
 
 export const ProductsListView = ({ initialData }: ProductsListViewProps) => {
   const { data, isLoading, error } = useProductsPageData({ initialData });
-  const [filter, setFilter] = useState<string | null>(null);
-
-  const handleFilterChange = (key: string) => {
-    setFilter((prev) => (prev === key ? null : key));
-  };
 
   return (
     <QueryWrapper
@@ -31,14 +24,9 @@ export const ProductsListView = ({ initialData }: ProductsListViewProps) => {
       loadingMessage="Loading products..."
     >
       {(data) => (
-        <Stack spacing={0}>
-          <ProductsStatsSection
-            stats={data.stats}
-            selectedFilter={filter}
-            onFilterChange={handleFilterChange}
-          />
-          <ProductsListSection products={data.products} filter={filter} />
-        </Stack>
+        <Container maxWidth="xl" sx={{ py: 4 }}>
+          <ProductsListSection products={data.products} />
+        </Container>
       )}
     </QueryWrapper>
   );

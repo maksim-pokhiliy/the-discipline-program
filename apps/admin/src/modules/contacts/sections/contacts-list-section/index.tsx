@@ -8,7 +8,7 @@ import { Box, Chip, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } fro
 import Link from "next/link";
 
 import { type GetContactByIdResponse, CONTACT_STATUSES } from "@repo/contracts/contact";
-import { ConfirmationModal, DataTable, type Column, PanelSection } from "@repo/ui";
+import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { useDeleteContact, useUpdateContact } from "@app/lib/hooks";
 
@@ -30,28 +30,9 @@ const STATUS_CONFIG: Record<
 
 interface ContactsListSectionProps {
   contacts: GetContactByIdResponse[];
-  filter?: string | null;
 }
 
-export const ContactsListSection = ({ contacts, filter }: ContactsListSectionProps) => {
-  const filteredContacts = filter
-    ? contacts.filter((contact) => {
-        if (filter === "new") {
-          return contact.status === "NEW";
-        }
-
-        if (filter === "in_progress") {
-          return contact.status === "IN_PROGRESS";
-        }
-
-        if (filter === "resolved") {
-          return contact.status === "REPLIED" || contact.status === "CLOSED";
-        }
-
-        return true;
-      })
-    : contacts;
-
+export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
   const { mutate: deleteContact, isPending: isDeleting } = useDeleteContact();
   const { mutate: updateContact } = useUpdateContact();
 
@@ -91,11 +72,26 @@ export const ContactsListSection = ({ contacts, filter }: ContactsListSectionPro
     }
   };
 
+  const filters: DataTableFilter<GetContactByIdResponse>[] = [
+    {
+      id: "status",
+      label: "Status",
+      options: [
+        { label: "New", value: "NEW" },
+        { label: "In Progress", value: "IN_PROGRESS" },
+        { label: "Replied", value: "REPLIED" },
+        { label: "Closed", value: "CLOSED" },
+      ],
+      match: (item, value) => item.status === value,
+    },
+  ];
+
   const columns: Column<GetContactByIdResponse>[] = [
     {
       id: "contact",
       label: "Contact",
       width: "25%",
+      searchValue: (item) => `${item.name || ""} ${item.email || ""}`,
       render: (item) => (
         <Box>
           <Typography variant="subtitle2">{item.name || "Anonymous"}</Typography>
@@ -163,6 +159,8 @@ export const ContactsListSection = ({ contacts, filter }: ContactsListSectionPro
       id: "createdAt",
       label: "Date",
       width: "10%",
+      sortable: true,
+      sortValue: (item) => new Date(item.createdAt).getTime(),
       render: (item) => <Typography variant="body2">{formatDate(item.createdAt)}</Typography>,
     },
     {
@@ -188,13 +186,15 @@ export const ContactsListSection = ({ contacts, filter }: ContactsListSectionPro
 
   return (
     <>
-      <PanelSection title="All Submissions">
-        <DataTable
-          data={filteredContacts}
-          columns={columns}
-          emptyMessage="No contact submissions found."
-        />
-      </PanelSection>
+      <DataTable
+        data={contacts}
+        columns={columns}
+        title="Submissions"
+        searchPlaceholder="Search by name or email..."
+        filters={filters}
+        paginated
+        emptyMessage="No contact submissions found."
+      />
 
       <Menu anchorEl={statusMenuAnchor} open={!!statusMenuAnchor} onClose={handleStatusMenuClose}>
         {CONTACT_STATUSES.map((status) => {
