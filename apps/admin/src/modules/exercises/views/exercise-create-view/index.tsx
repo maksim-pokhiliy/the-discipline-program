@@ -11,7 +11,11 @@ import { createExerciseSchema } from "@repo/contracts/exercise";
 import { type ExerciseCategory } from "@repo/contracts/exercise-category";
 import { ContentSection } from "@repo/ui";
 
-import { useCreateExercise, useCreateExerciseCategory } from "@app/lib/hooks";
+import {
+  useCreateExercise,
+  useCreateExerciseCategory,
+  useExerciseCategories,
+} from "@app/lib/hooks";
 
 import { ExerciseForm } from "../../components/exercise-form";
 
@@ -19,7 +23,8 @@ interface ExerciseCreateViewProps {
   categories: ExerciseCategory[];
 }
 
-export const ExerciseCreateView = ({ categories }: ExerciseCreateViewProps) => {
+export const ExerciseCreateView = ({ categories: initialCategories }: ExerciseCreateViewProps) => {
+  const { data: categories = initialCategories } = useExerciseCategories(initialCategories);
   const { mutate: createExercise, isPending } = useCreateExercise();
   const { mutateAsync: createCategory } = useCreateExerciseCategory();
 

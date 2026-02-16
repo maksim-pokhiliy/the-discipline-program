@@ -13,6 +13,7 @@ import { type ExerciseCategory } from "@repo/contracts/exercise-category";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { useDeleteExercise } from "@app/lib/hooks";
+import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
 import { ManageCategoriesDialog } from "../../components/manage-categories-dialog";
 
@@ -22,17 +23,10 @@ interface ExercisesListSectionProps {
 }
 
 export const ExercisesListSection = ({ exercises, categories }: ExercisesListSectionProps) => {
-  const { mutate: deleteExercise, isPending: isDeleting } = useDeleteExercise();
-  const [exerciseToDelete, setExerciseToDelete] = useState<string | null>(null);
+  const deleteMutation = useDeleteExercise();
+  const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
+    useDeleteConfirmation({ deleteMutation });
   const [categoriesOpen, setCategoriesOpen] = useState(false);
-
-  const handleDeleteConfirm = async () => {
-    if (exerciseToDelete) {
-      await deleteExercise(exerciseToDelete, {
-        onSuccess: () => setExerciseToDelete(null),
-      });
-    }
-  };
 
   const filters: DataTableFilter<Exercise>[] = [
     {
@@ -104,7 +98,7 @@ export const ExercisesListSection = ({ exercises, categories }: ExercisesListSec
           </Tooltip>
 
           <Tooltip title="Delete">
-            <IconButton size="small" color="error" onClick={() => setExerciseToDelete(exercise.id)}>
+            <IconButton size="small" color="error" onClick={() => requestDelete(exercise.id)}>
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -143,15 +137,15 @@ export const ExercisesListSection = ({ exercises, categories }: ExercisesListSec
       />
 
       <ConfirmationModal
-        open={!!exerciseToDelete}
+        open={!!deleteId}
         title="Delete Exercise"
-        onClose={() => setExerciseToDelete(null)}
+        onClose={cancelDelete}
         type="danger"
         message="Are you sure you want to delete this exercise?"
         details="This will remove the exercise from the library. This action cannot be undone."
         confirmText="Delete"
         isConfirming={isDeleting}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={confirmDelete}
       />
 
       <ManageCategoriesDialog

@@ -31,7 +31,7 @@ export const ProductEditView = ({ initialData }: ProductEditViewProps) => {
       isActive: product?.isActive || false,
       price: activePrice
         ? {
-            amountCents: activePrice.amountCents,
+            amountCents: activePrice.amountCents / 100,
             currency: activePrice.currency as "USD" | "EUR" | "UAH",
             interval: activePrice.interval,
           }

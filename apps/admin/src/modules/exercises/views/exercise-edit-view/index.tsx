@@ -11,7 +11,12 @@ import { createExerciseSchema } from "@repo/contracts/exercise";
 import { type ExerciseCategory } from "@repo/contracts/exercise-category";
 import { ContentSection } from "@repo/ui";
 
-import { useCreateExerciseCategory, useExercise, useUpdateExercise } from "@app/lib/hooks";
+import {
+  useCreateExerciseCategory,
+  useExercise,
+  useExerciseCategories,
+  useUpdateExercise,
+} from "@app/lib/hooks";
 
 import { ExerciseForm } from "../../components/exercise-form";
 
@@ -20,8 +25,12 @@ interface ExerciseEditViewProps {
   categories: ExerciseCategory[];
 }
 
-export const ExerciseEditView = ({ initialData, categories }: ExerciseEditViewProps) => {
+export const ExerciseEditView = ({
+  initialData,
+  categories: initialCategories,
+}: ExerciseEditViewProps) => {
   const { data: exercise } = useExercise(initialData.id, initialData);
+  const { data: categories = initialCategories } = useExerciseCategories(initialCategories);
   const { mutate: updateExercise, isPending } = useUpdateExercise();
   const { mutateAsync: createCategory } = useCreateExerciseCategory();
 

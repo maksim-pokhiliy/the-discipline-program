@@ -13,6 +13,7 @@ import { formatPrice } from "@repo/shared";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { useDeleteProduct, useToggleProductStatus } from "@app/lib/hooks";
+import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
 interface ProductsListSectionProps {
   products: Product[];
@@ -20,9 +21,10 @@ interface ProductsListSectionProps {
 
 export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
   const { mutateAsync: toggleStatus } = useToggleProductStatus();
-  const { mutate: deleteProduct, isPending: isDeleting } = useDeleteProduct();
+  const deleteMutation = useDeleteProduct();
+  const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
+    useDeleteConfirmation({ deleteMutation });
 
-  const [productToDelete, setProductToDelete] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const handleToggleStatus = async (id: string) => {
@@ -32,14 +34,6 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
       await toggleStatus(id);
     } finally {
       setLoadingId(null);
-    }
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (productToDelete) {
-      await deleteProduct(productToDelete, {
-        onSuccess: () => setProductToDelete(null),
-      });
     }
   };
 
@@ -142,7 +136,7 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
           </Tooltip>
 
           <Tooltip title="Delete">
-            <IconButton size="small" color="error" onClick={() => setProductToDelete(product.id)}>
+            <IconButton size="small" color="error" onClick={() => requestDelete(product.id)}>
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -175,15 +169,15 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
       />
 
       <ConfirmationModal
-        open={!!productToDelete}
+        open={!!deleteId}
         title="Delete Product"
-        onClose={() => setProductToDelete(null)}
+        onClose={cancelDelete}
         type="danger"
         message="Are you sure you want to delete this product?"
         details="This will remove the product from the storefront immediately. This action cannot be undone."
         confirmText="Delete"
         isConfirming={isDeleting}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={confirmDelete}
       />
     </>
   );

@@ -19,6 +19,7 @@ import {
 import Link from "next/link";
 
 import { ACTIVITY_TYPE, type ActivityItem } from "@repo/contracts/dashboard";
+import { formatDate } from "@repo/shared";
 import { ContentSection } from "@repo/ui";
 
 interface RecentActivitySectionProps {
@@ -57,15 +58,6 @@ const getActivityColor = (type: ActivityItem["type"]) => {
     default:
       return "grey.500";
   }
-};
-
-const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(date));
 };
 
 export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) => {
@@ -127,7 +119,7 @@ export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) 
             />
             <Box>
               <Typography variant="caption" color="text.secondary">
-                {formatDate(item.date)}
+                {formatDate(item.date, "compact")}
               </Typography>
             </Box>
           </ListItem>

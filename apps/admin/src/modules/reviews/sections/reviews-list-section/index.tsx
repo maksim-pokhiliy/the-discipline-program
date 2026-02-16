@@ -20,15 +20,11 @@ import {
 import Link from "next/link";
 
 import { type Review } from "@repo/contracts/review";
+import { formatDate } from "@repo/shared";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { useDeleteReview, useToggleReviewActive } from "@app/lib/hooks";
-
-const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-  }).format(new Date(date));
-};
+import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
 interface ReviewsListSectionProps {
   reviews: Review[];
@@ -36,9 +32,10 @@ interface ReviewsListSectionProps {
 
 export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
   const { mutateAsync: toggleActive } = useToggleReviewActive();
-  const { mutate: deleteReview, isPending: isDeleting } = useDeleteReview();
+  const deleteMutation = useDeleteReview();
+  const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
+    useDeleteConfirmation({ deleteMutation });
 
-  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const handleToggleActive = async (id: string) => {
@@ -47,14 +44,6 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
       await toggleActive(id);
     } finally {
       setLoadingId(null);
-    }
-  };
-
-  const handleDeleteConfirm = () => {
-    if (deleteId) {
-      deleteReview(deleteId, {
-        onSuccess: () => setDeleteId(null),
-      });
     }
   };
 
@@ -169,7 +158,7 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
             </IconButton>
           </Tooltip>
           <Tooltip title="Delete">
-            <IconButton onClick={() => setDeleteId(review.id)} size="small" color="error">
+            <IconButton onClick={() => requestDelete(review.id)} size="small" color="error">
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -209,8 +198,8 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
         confirmText="Delete"
         type="danger"
         isConfirming={isDeleting}
-        onConfirm={handleDeleteConfirm}
-        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        onClose={cancelDelete}
       />
     </>
   );

@@ -14,6 +14,7 @@ import {
   type UpdateContactRequest,
   updateContactRequestSchema,
 } from "@repo/contracts/contact";
+import { formatDate } from "@repo/shared";
 import { ContentSection, FormCard } from "@repo/ui";
 
 import { useContact, useUpdateContact } from "@app/lib/hooks";
@@ -21,13 +22,6 @@ import { useContact, useUpdateContact } from "@app/lib/hooks";
 interface ContactsDetailViewProps {
   initialData: GetContactByIdResponse;
 }
-
-const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "long",
-    timeStyle: "short",
-  }).format(new Date(date));
-};
 
 const STATUS_LABELS: Record<string, string> = {
   NEW: "New",
@@ -128,7 +122,7 @@ export const ContactsDetailView = ({ initialData }: ContactsDetailViewProps) => 
                     <Typography variant="subtitle2" sx={{ minWidth: 80 }}>
                       Date:
                     </Typography>
-                    <Typography variant="body2">{formatDate(contact.createdAt)}</Typography>
+                    <Typography variant="body2">{formatDate(contact.createdAt, "long")}</Typography>
                   </Stack>
                 </Stack>
               </FormCard>

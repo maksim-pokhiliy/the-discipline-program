@@ -1,5 +1,7 @@
 "use client";
 
+import { useCallback, useMemo, useState } from "react";
+
 import { Grid, Stack, TextField } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
@@ -23,6 +25,27 @@ export const ExerciseForm = ({
     control,
     formState: { errors },
   } = useFormContext<CreateExerciseData>();
+
+  const [createdCategory, setCreatedCategory] = useState<ExerciseCategory | null>(null);
+
+  const allCategories = useMemo(() => {
+    if (!createdCategory || categories.some((c) => c.id === createdCategory.id)) {
+      return categories;
+    }
+
+    return [...categories, createdCategory];
+  }, [categories, createdCategory]);
+
+  const handleCreateCategory = useCallback(
+    async (name: string) => {
+      const created = await onCreateCategory(name);
+
+      setCreatedCategory(created);
+
+      return created;
+    },
+    [onCreateCategory],
+  );
 
   return (
     <Grid container spacing={3}>
@@ -67,10 +90,10 @@ export const ExerciseForm = ({
               control={control}
               render={({ field, fieldState }) => (
                 <CreatableAutocomplete
-                  options={categories}
-                  value={categories.find((c) => c.id === field.value) ?? null}
+                  options={allCategories}
+                  value={allCategories.find((c) => c.id === field.value) ?? null}
                   onChange={(category) => field.onChange(category?.id ?? "")}
-                  onCreate={onCreateCategory}
+                  onCreate={handleCreateCategory}
                   getOptionLabel={(c) => c.name}
                   isOptionEqualToValue={(a, b) => a.id === b.id}
                   label="Category"

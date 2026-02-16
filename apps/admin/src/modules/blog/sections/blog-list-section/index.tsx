@@ -19,6 +19,7 @@ import {
   useToggleBlogFeatured,
   useToggleBlogPost,
 } from "@app/lib/hooks/use-blog";
+import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
 interface BlogListSectionProps {
   posts: BlogPost[];
@@ -27,9 +28,9 @@ interface BlogListSectionProps {
 export const BlogListSection = ({ posts }: BlogListSectionProps) => {
   const { mutateAsync: toggleStatus } = useToggleBlogPost();
   const { mutateAsync: toggleFeatured } = useToggleBlogFeatured();
-  const { mutate: deletePost, isPending: isDeleting } = useDeleteBlogPost();
-
-  const [postToDelete, setPostToDelete] = useState<string | null>(null);
+  const deleteMutation = useDeleteBlogPost();
+  const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
+    useDeleteConfirmation({ deleteMutation });
 
   const [loadingState, setLoadingState] = useState<{
     id: string;
@@ -53,14 +54,6 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
       await toggleFeatured(id);
     } finally {
       setLoadingState(null);
-    }
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (postToDelete) {
-      await deletePost(postToDelete, {
-        onSuccess: () => setPostToDelete(null),
-      });
     }
   };
 
@@ -191,7 +184,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
           </Tooltip>
 
           <Tooltip title="Delete">
-            <IconButton size="small" color="error" onClick={() => setPostToDelete(post.id)}>
+            <IconButton size="small" color="error" onClick={() => requestDelete(post.id)}>
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -224,15 +217,15 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
       />
 
       <ConfirmationModal
-        open={!!postToDelete}
+        open={!!deleteId}
         title="Delete Blog Post"
-        onClose={() => setPostToDelete(null)}
+        onClose={cancelDelete}
         type="danger"
         message="Are you sure you want to delete this post?"
         details="This action cannot be undone."
         confirmText="Delete"
         isConfirming={isDeleting}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={confirmDelete}
       />
     </>
   );
