@@ -1,46 +1,21 @@
-import { NextResponse } from "next/server";
-
 import { adminReviewsApi } from "@repo/api-server";
 import {
+  deleteReviewParamsSchema,
   getReviewByIdParamsSchema,
   updateReviewParamsSchema,
   updateReviewRequestSchema,
-  deleteReviewParamsSchema,
 } from "@repo/contracts/review";
-import { handleApiError } from "@repo/errors";
 
-export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = getReviewByIdParamsSchema.parse(await params);
-    const review = await adminReviewsApi.getReviewById(id);
+import {
+  createDeleteHandler,
+  createGetByIdHandler,
+  createPutHandler,
+} from "@app/lib/route-helpers";
 
-    return NextResponse.json(review);
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
-
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = updateReviewParamsSchema.parse(await params);
-    const body = await request.json();
-    const data = updateReviewRequestSchema.parse(body);
-    const review = await adminReviewsApi.updateReview(id, data);
-
-    return NextResponse.json(review);
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
-
-export async function DELETE(_: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = deleteReviewParamsSchema.parse(await params);
-
-    await adminReviewsApi.deleteReview(id);
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
+export const GET = createGetByIdHandler(adminReviewsApi.getReviewById, getReviewByIdParamsSchema);
+export const PUT = createPutHandler(
+  adminReviewsApi.updateReview,
+  updateReviewParamsSchema,
+  updateReviewRequestSchema,
+);
+export const DELETE = createDeleteHandler(adminReviewsApi.deleteReview, deleteReviewParamsSchema);

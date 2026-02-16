@@ -33,13 +33,18 @@ export const adminKeys = {
     byId: (id: string) => [...adminKeys.root, "reviews", id] as const,
   },
 
+  users: {
+    page: () => [...adminKeys.root, "users", "page-data"] as const,
+    byId: (id: string) => [...adminKeys.root, "users", id] as const,
+  },
+
   upload: {
     root: () => [...adminKeys.root, "upload"] as const,
   },
 
   pages: {
-    all: ["admin", "pages"] as const,
-    list: () => [...adminKeys.pages.all, "list"] as const,
-    bySlug: (slug: string) => [...adminKeys.pages.all, slug] as const,
+    all: () => [...adminKeys.root, "pages"] as const,
+    list: () => [...adminKeys.pages.all(), "list"] as const,
+    bySlug: (slug: string) => [...adminKeys.pages.all(), slug] as const,
   },
 } as const;

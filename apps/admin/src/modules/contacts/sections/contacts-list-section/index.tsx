@@ -8,15 +8,11 @@ import { Box, Chip, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } fro
 import Link from "next/link";
 
 import { type GetContactByIdResponse, CONTACT_STATUSES } from "@repo/contracts/contact";
+import { formatDate } from "@repo/shared";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { useDeleteContact, useUpdateContact } from "@app/lib/hooks";
-
-const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-  }).format(new Date(date));
-};
+import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
 const STATUS_CONFIG: Record<
   string,
@@ -33,10 +29,11 @@ interface ContactsListSectionProps {
 }
 
 export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
-  const { mutate: deleteContact, isPending: isDeleting } = useDeleteContact();
+  const deleteMutation = useDeleteContact();
+  const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
+    useDeleteConfirmation({ deleteMutation });
   const { mutate: updateContact } = useUpdateContact();
 
-  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [statusMenuAnchor, setStatusMenuAnchor] = useState<HTMLElement | null>(null);
   const [statusMenuContactId, setStatusMenuContactId] = useState<string | null>(null);
@@ -62,14 +59,6 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
     }
 
     handleStatusMenuClose();
-  };
-
-  const handleDeleteConfirm = () => {
-    if (deleteId) {
-      deleteContact(deleteId, {
-        onSuccess: () => setDeleteId(null),
-      });
-    }
   };
 
   const filters: DataTableFilter<GetContactByIdResponse>[] = [
@@ -175,7 +164,7 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
             </IconButton>
           </Tooltip>
           <Tooltip title="Delete">
-            <IconButton onClick={() => setDeleteId(item.id)} size="small" color="error">
+            <IconButton onClick={() => requestDelete(item.id)} size="small" color="error">
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>
@@ -220,8 +209,8 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
         confirmText="Delete"
         type="danger"
         isConfirming={isDeleting}
-        onConfirm={handleDeleteConfirm}
-        onClose={() => setDeleteId(null)}
+        onConfirm={confirmDelete}
+        onClose={cancelDelete}
       />
     </>
   );

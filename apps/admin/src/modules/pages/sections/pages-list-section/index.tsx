@@ -5,14 +5,8 @@ import { IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
 import { type AdminPageListItem } from "@repo/contracts/pages";
+import { formatDate } from "@repo/shared";
 import { DataTable, type Column } from "@repo/ui";
-
-const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat("en-US", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(date));
-};
 
 interface PagesListSectionProps {
   pages: AdminPageListItem[];
@@ -34,7 +28,9 @@ export const PagesListSection = ({ pages }: PagesListSectionProps) => {
       id: "updatedAt",
       label: "Last Updated",
       width: "30%",
-      render: (page) => <Typography variant="body2">{formatDate(page.updatedAt)}</Typography>,
+      render: (page) => (
+        <Typography variant="body2">{formatDate(page.updatedAt, "medium")}</Typography>
+      ),
     },
     {
       id: "actions",
