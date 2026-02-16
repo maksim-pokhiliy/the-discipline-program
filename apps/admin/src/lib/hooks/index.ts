@@ -9,3 +9,4 @@ export * from "./use-pages";
 export * from "./use-products";
 export * from "./use-reviews";
 export * from "./use-upload";
+export * from "./use-users";

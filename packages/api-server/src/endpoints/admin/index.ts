@@ -7,3 +7,4 @@ export * from "./pages";
 export * from "./products";
 export * from "./reviews";
 export * from "./upload";
+export * from "./users";

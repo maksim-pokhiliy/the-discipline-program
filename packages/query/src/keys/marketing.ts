@@ -24,7 +24,7 @@ export const marketingKeys = {
   },
 
   payments: {
-    all: (): QueryKey => ["marketing", "payments"],
-    order: (orderId: string): QueryKey => ["marketing", "payments", "order", orderId],
+    all: (): QueryKey => [...marketingKeys.root, "payments"],
+    order: (orderId: string): QueryKey => [...marketingKeys.root, "payments", "order", orderId],
   },
 } as const;

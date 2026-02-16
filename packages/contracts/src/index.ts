@@ -1,5 +1,7 @@
+export * from "./entities/athlete-profile";
 export * from "./entities/auth";
 export * from "./entities/blog";
+export * from "./entities/coach-profile";
 export * from "./entities/contact";
 export * from "./entities/exercise";
 export * from "./entities/exercise-category";
@@ -8,3 +10,4 @@ export * from "./entities/review";
 export * from "./entities/upload";
 export * from "./entities/pages";
 export * from "./entities/dashboard";
+export * from "./entities/user";

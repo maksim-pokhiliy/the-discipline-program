@@ -10,4 +10,5 @@ export const api = {
   products: endpoints.productsAPI,
   reviews: endpoints.reviewsAPI,
   upload: endpoints.uploadAPI,
+  users: endpoints.usersAPI,
 };

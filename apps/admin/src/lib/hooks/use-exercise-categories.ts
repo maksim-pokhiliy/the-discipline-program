@@ -5,16 +5,18 @@ import { toast } from "sonner";
 
 import type {
   CreateExerciseCategoryData,
+  ExerciseCategory,
   UpdateExerciseCategoryData,
 } from "@repo/contracts/exercise-category";
 import { adminKeys, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
 
-export const useExerciseCategories = () => {
+export const useExerciseCategories = (initialData?: ExerciseCategory[]) => {
   return useQuery({
     queryKey: adminKeys.exerciseCategories.all(),
     queryFn: api.exerciseCategories.getAll,
+    initialData,
     staleTime: STALE_TIMES.MEDIUM,
   });
 };
