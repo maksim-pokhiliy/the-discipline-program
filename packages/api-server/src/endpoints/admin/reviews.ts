@@ -76,11 +76,6 @@ export const adminReviewsApi = {
   async getReviewsPageData() {
     const reviews = await adminReviewsApi.getReviews();
 
-    const stats = {
-      total: reviews.length,
-      active: reviews.filter((r) => r.isActive).length,
-    };
-
-    return { reviews, stats };
+    return { reviews };
   },
 };

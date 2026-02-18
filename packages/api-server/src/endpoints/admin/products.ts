@@ -35,23 +35,10 @@ export const adminProductsApi = {
     return mapToProduct(product);
   },
 
-  getStats: async () => {
-    const [total, active, inactive] = await Promise.all([
-      prisma.product.count({ where: { deletedAt: null } }),
-      prisma.product.count({ where: { isActive: true, deletedAt: null } }),
-      prisma.product.count({ where: { isActive: false, deletedAt: null } }),
-    ]);
-
-    return { total, active, inactive };
-  },
-
   getPageData: async () => {
-    const [stats, products] = await Promise.all([
-      adminProductsApi.getStats(),
-      adminProductsApi.getAll(),
-    ]);
+    const products = await adminProductsApi.getAll();
 
-    return { stats, products };
+    return { products };
   },
 
   create: async (data: CreateProductData): Promise<Product> => {

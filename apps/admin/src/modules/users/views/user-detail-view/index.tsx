@@ -1,9 +1,14 @@
 "use client";
 
-import { type AdminUser } from "@repo/contracts/user";
-import { ContentSection } from "@repo/ui";
+import { useEffect } from "react";
 
-import { useUser } from "@app/lib/hooks";
+import { useForm } from "react-hook-form";
+
+import { type UserRole } from "@repo/contracts/auth";
+import { type AdminUser } from "@repo/contracts/user";
+import { FormView } from "@repo/ui";
+
+import { useUpdateUserRole, useUser } from "@app/lib/hooks";
 
 import { UserDetailSection } from "../../sections";
 
@@ -13,19 +18,38 @@ interface UserDetailViewProps {
 
 export const UserDetailView = ({ initialData }: UserDetailViewProps) => {
   const { data: user } = useUser(initialData.id, initialData);
+  const { mutate: updateRole, isPending } = useUpdateUserRole();
+
+  const methods = useForm<{ role: UserRole }>({
+    defaultValues: {
+      role: (user?.role ?? initialData.role) as UserRole,
+    },
+  });
+
+  const { reset } = methods;
+
+  useEffect(() => {
+    if (user) {
+      reset({ role: user.role as UserRole });
+    }
+  }, [user, reset]);
 
   if (!user) {
     return null;
   }
 
   return (
-    <ContentSection
+    <FormView
+      methods={methods}
+      onSubmit={(data) => updateRole({ id: user.id, data: { role: data.role } })}
+      isPending={isPending}
       title="User Details"
       subtitle={user.email}
       backHref="/users"
       backLabel="Back to Users"
+      backgroundColor="dark"
     >
-      <UserDetailSection user={user} />
-    </ContentSection>
+      <UserDetailSection user={user} isPending={isPending} />
+    </FormView>
   );
 };

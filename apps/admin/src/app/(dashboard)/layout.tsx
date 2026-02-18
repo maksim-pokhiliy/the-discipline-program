@@ -15,7 +15,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handleMobileClose = useCallback(() => setMobileOpen(false), []);
 
   return (
-    <Stack direction="row">
+    <Stack direction="row" sx={{ height: "100vh" }}>
       <Sidebar
         config={ADMIN_NAVIGATION}
         expanded={expanded}
@@ -26,7 +26,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
         <AdminHeader onMenuClick={handleMobileToggle} />
-        {children}
+        <Stack sx={{ flexGrow: 1, overflow: "auto" }}>{children}</Stack>
       </Stack>
     </Stack>
   );

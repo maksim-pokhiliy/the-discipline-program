@@ -43,15 +43,6 @@ export const deleteContactParamsSchema = z.object({
   id: z.string().cuid(),
 });
 
-export const contactStatsSchema = z.object({
-  total: z.number(),
-  new: z.number(),
-  inProgress: z.number(),
-  replied: z.number(),
-  closed: z.number(),
-});
-
 export const getContactsPageDataResponseSchema = z.object({
-  stats: contactStatsSchema,
   contacts: getContactSubmissionsResponseSchema,
 });

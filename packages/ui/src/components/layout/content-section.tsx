@@ -19,6 +19,7 @@ type ContentSectionProps = {
   backHref?: string;
   backLabel?: string;
   actions?: ContentAction[];
+  stickyToolbar?: boolean;
   children?: ReactNode;
 };
 
@@ -30,6 +31,7 @@ export const ContentSection = ({
   backHref,
   backLabel = "Back",
   actions = [],
+  stickyToolbar = false,
   children,
 }: ContentSectionProps) => {
   const isDark = backgroundColor === "dark";
@@ -86,6 +88,21 @@ export const ContentSection = ({
               alignItems={{ xs: "stretch", md: "center" }}
               justifyContent="space-between"
               spacing={2}
+              sx={
+                stickyToolbar
+                  ? (theme) => ({
+                      position: "sticky",
+                      top: 0,
+                      zIndex: theme.zIndex.appBar - 1,
+                      backgroundColor: isDark
+                        ? theme.palette.background.default
+                        : theme.palette.background.paper,
+                      py: 2,
+                      mx: -2,
+                      px: 2,
+                    })
+                  : undefined
+              }
             >
               {backHref && (
                 <Button

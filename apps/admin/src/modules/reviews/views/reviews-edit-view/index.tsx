@@ -1,11 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import SaveIcon from "@mui/icons-material/Save";
-import { FormProvider, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import { createReviewSchema, type CreateReviewData, type Review } from "@repo/contracts/review";
-import { ContentSection } from "@repo/ui";
+import { FormView } from "@repo/ui";
 
 import { useReview, useUpdateReview } from "@app/lib/hooks";
 
@@ -31,30 +30,21 @@ export const ReviewsEditView = ({ initialData }: ReviewsEditViewProps) => {
     },
   });
 
-  const { handleSubmit } = methods;
-
   if (!review) {
     return null;
   }
 
   return (
-    <FormProvider {...methods}>
-      <ContentSection
-        title="Edit Review"
-        subtitle={review.authorName}
-        backHref="/reviews"
-        backLabel="Back to List"
-        actions={[
-          {
-            label: "Save Changes",
-            onClick: handleSubmit((data) => updateReview({ id: review.id, data })),
-            loading: isPending,
-            startIcon: <SaveIcon />,
-          },
-        ]}
-      >
-        <ReviewForm isLoading={isPending} />
-      </ContentSection>
-    </FormProvider>
+    <FormView
+      methods={methods}
+      onSubmit={(data) => updateReview({ id: review.id, data })}
+      isPending={isPending}
+      title="Edit Review"
+      subtitle={review.authorName}
+      backHref="/reviews"
+      backLabel="Back to List"
+    >
+      <ReviewForm isLoading={isPending} />
+    </FormView>
   );
 };
