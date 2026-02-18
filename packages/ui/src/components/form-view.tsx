@@ -33,22 +33,25 @@ export const FormView = <T extends FieldValues>({
   children,
 }: FormViewProps<T>) => (
   <FormProvider {...methods}>
-    <ContentSection
-      title={title}
-      subtitle={subtitle}
-      backHref={backHref}
-      backLabel={backLabel}
-      backgroundColor={backgroundColor}
-      actions={[
-        {
-          label: submitLabel,
-          onClick: methods.handleSubmit(onSubmit),
-          loading: isPending,
-          startIcon: <SaveIcon />,
-        },
-      ]}
-    >
-      {children}
-    </ContentSection>
+    <form onSubmit={methods.handleSubmit(onSubmit)} noValidate>
+      <ContentSection
+        title={title}
+        subtitle={subtitle}
+        backHref={backHref}
+        backLabel={backLabel}
+        backgroundColor={backgroundColor}
+        stickyToolbar
+        actions={[
+          {
+            label: submitLabel,
+            type: "submit",
+            loading: isPending,
+            startIcon: <SaveIcon />,
+          },
+        ]}
+      >
+        {children}
+      </ContentSection>
+    </form>
   </FormProvider>
 );

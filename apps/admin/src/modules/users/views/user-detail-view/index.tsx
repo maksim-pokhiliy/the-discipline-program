@@ -47,6 +47,7 @@ export const UserDetailView = ({ initialData }: UserDetailViewProps) => {
       subtitle={user.email}
       backHref="/users"
       backLabel="Back to Users"
+      backgroundColor="dark"
     >
       <UserDetailSection user={user} isPending={isPending} />
     </FormView>
