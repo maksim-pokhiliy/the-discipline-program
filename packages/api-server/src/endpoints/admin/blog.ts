@@ -2,7 +2,6 @@ import { type Prisma } from "@prisma/client";
 
 import {
   type BlogPost,
-  type BlogStats,
   type CreateBlogPostData,
   type UpdateBlogPostData,
 } from "@repo/contracts/blog";
@@ -67,24 +66,10 @@ export const adminBlogApi = {
     return mapToBlogPost(post);
   },
 
-  getBlogStats: async (): Promise<BlogStats> => {
-    const [total, published, drafts, featured] = await Promise.all([
-      prisma.marketingBlogPost.count({ where: { deletedAt: null } }),
-      prisma.marketingBlogPost.count({ where: { isPublished: true, deletedAt: null } }),
-      prisma.marketingBlogPost.count({ where: { isPublished: false, deletedAt: null } }),
-      prisma.marketingBlogPost.count({ where: { isFeatured: true, deletedAt: null } }),
-    ]);
-
-    return { total, published, drafts, featured };
-  },
-
   getBlogPageData: async () => {
-    const [stats, posts] = await Promise.all([
-      adminBlogApi.getBlogStats(),
-      adminBlogApi.getPosts(),
-    ]);
+    const posts = await adminBlogApi.getPosts();
 
-    return { stats, posts };
+    return { posts };
   },
 
   createPost: async (data: CreateBlogPostData): Promise<BlogPost> => {

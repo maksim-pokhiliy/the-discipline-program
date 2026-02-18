@@ -3,13 +3,15 @@
 import { useCallback } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import SaveIcon from "@mui/icons-material/Save";
-import { FormProvider, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
-import { type CreateExerciseData, type Exercise } from "@repo/contracts/exercise";
-import { createExerciseSchema } from "@repo/contracts/exercise";
+import {
+  type CreateExerciseData,
+  type Exercise,
+  createExerciseSchema,
+} from "@repo/contracts/exercise";
 import { type ExerciseCategory } from "@repo/contracts/exercise-category";
-import { ContentSection } from "@repo/ui";
+import { FormView } from "@repo/ui";
 
 import {
   useCreateExerciseCategory,
@@ -44,8 +46,6 @@ export const ExerciseEditView = ({
     },
   });
 
-  const { handleSubmit } = methods;
-
   const handleCreateCategory = useCallback(
     (name: string) => createCategory({ name, sortOrder: categories.length }),
     [createCategory, categories.length],
@@ -56,28 +56,21 @@ export const ExerciseEditView = ({
   }
 
   return (
-    <FormProvider {...methods}>
-      <ContentSection
-        title="Edit Exercise"
-        subtitle={exercise.name}
-        backgroundColor="dark"
-        backHref="/exercises"
-        backLabel="Back to Exercises"
-        actions={[
-          {
-            label: "Save Changes",
-            onClick: handleSubmit((data) => updateExercise({ id: exercise.id, data })),
-            loading: isPending,
-            startIcon: <SaveIcon />,
-          },
-        ]}
-      >
-        <ExerciseForm
-          categories={categories}
-          onCreateCategory={handleCreateCategory}
-          isLoading={isPending}
-        />
-      </ContentSection>
-    </FormProvider>
+    <FormView
+      methods={methods}
+      onSubmit={(data) => updateExercise({ id: exercise.id, data })}
+      isPending={isPending}
+      title="Edit Exercise"
+      subtitle={exercise.name}
+      backgroundColor="dark"
+      backHref="/exercises"
+      backLabel="Back to Exercises"
+    >
+      <ExerciseForm
+        categories={categories}
+        onCreateCategory={handleCreateCategory}
+        isLoading={isPending}
+      />
+    </FormView>
   );
 };

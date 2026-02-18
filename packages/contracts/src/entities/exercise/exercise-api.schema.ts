@@ -22,14 +22,7 @@ export const deleteExerciseParamsSchema = z.object({
   id: z.string().cuid(),
 });
 
-export const getExerciseStatsResponseSchema = z.object({
-  total: z.number(),
-  categorized: z.number(),
-  uncategorized: z.number(),
-});
-
 export const getExercisesPageDataResponseSchema = z.object({
-  stats: getExerciseStatsResponseSchema,
   exercises: getExercisesResponseSchema,
   categories: z.array(exerciseCategorySchema),
 });

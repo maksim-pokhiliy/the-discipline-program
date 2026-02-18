@@ -29,6 +29,7 @@
     "clsx": "catalog:",
     "isomorphic-dompurify": "catalog:",
     "lucide-react": "catalog:",
+    "react-hook-form": "catalog:",
     "sonner": "catalog:"
   },
   "peerDependencies": {

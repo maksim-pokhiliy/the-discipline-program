@@ -36,31 +36,10 @@ export const adminUsersApi = {
     return mapToAdminUser(user);
   },
 
-  getStats: async () => {
-    const now = new Date();
-    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-
-    const [total, newThisMonth, users, coaches, admins] = await Promise.all([
-      prisma.user.count({ where: { deletedAt: null } }),
-      prisma.user.count({
-        where: { createdAt: { gte: firstDayOfMonth }, deletedAt: null },
-      }),
-      prisma.user.count({ where: { role: "USER", deletedAt: null } }),
-      prisma.user.count({ where: { role: "COACH", deletedAt: null } }),
-      prisma.user.count({ where: { role: "ADMIN", deletedAt: null } }),
-    ]);
-
-    return {
-      total,
-      newThisMonth,
-      byRole: { user: users, coach: coaches, admin: admins },
-    };
-  },
-
   getPageData: async () => {
-    const [stats, users] = await Promise.all([adminUsersApi.getStats(), adminUsersApi.getAll()]);
+    const users = await adminUsersApi.getAll();
 
-    return { stats, users };
+    return { users };
   },
 
   updateRole: async (id: string, data: UpdateUserRoleData): Promise<AdminUser> => {

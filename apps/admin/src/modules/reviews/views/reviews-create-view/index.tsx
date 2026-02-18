@@ -1,11 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import SaveIcon from "@mui/icons-material/Save";
-import { FormProvider, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import { createReviewSchema, type CreateReviewData } from "@repo/contracts/review";
-import { ContentSection } from "@repo/ui";
+import { FormView } from "@repo/ui";
 
 import { useCreateReview } from "@app/lib/hooks";
 
@@ -26,26 +25,18 @@ export const ReviewsCreateView = () => {
     },
   });
 
-  const { handleSubmit } = methods;
-
   return (
-    <FormProvider {...methods}>
-      <ContentSection
-        title="Create Review"
-        subtitle="Add a new customer testimonial"
-        backHref="/reviews"
-        backLabel="Back to List"
-        actions={[
-          {
-            label: "Create Review",
-            onClick: handleSubmit((data) => createReview(data)),
-            loading: isPending,
-            startIcon: <SaveIcon />,
-          },
-        ]}
-      >
-        <ReviewForm isLoading={isPending} />
-      </ContentSection>
-    </FormProvider>
+    <FormView
+      methods={methods}
+      onSubmit={(data) => createReview(data)}
+      isPending={isPending}
+      title="Create Review"
+      subtitle="Add a new customer testimonial"
+      backHref="/reviews"
+      backLabel="Back to List"
+      submitLabel="Create Review"
+    >
+      <ReviewForm isLoading={isPending} />
+    </FormView>
   );
 };

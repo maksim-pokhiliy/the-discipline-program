@@ -1,11 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import SaveIcon from "@mui/icons-material/Save";
-import { FormProvider, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import { createProductSchema, type CreateProductData, type Product } from "@repo/contracts/product";
-import { ContentSection } from "@repo/ui";
+import { FormView } from "@repo/ui";
 
 import { useProduct, useUpdateProduct } from "@app/lib/hooks/use-products";
 
@@ -39,31 +38,22 @@ export const ProductEditView = ({ initialData }: ProductEditViewProps) => {
     },
   });
 
-  const { handleSubmit } = methods;
-
   if (!product) {
     return null;
   }
 
   return (
-    <FormProvider {...methods}>
-      <ContentSection
-        title="Edit Product"
-        subtitle={product.title}
-        backgroundColor="dark"
-        backHref="/products"
-        backLabel="Back to List"
-        actions={[
-          {
-            label: "Save Changes",
-            onClick: handleSubmit((data) => updateProduct({ id: product.id, data })),
-            loading: isPending,
-            startIcon: <SaveIcon />,
-          },
-        ]}
-      >
-        <ProductForm isLoading={isPending} disableAutoSlug={true} />
-      </ContentSection>
-    </FormProvider>
+    <FormView
+      methods={methods}
+      onSubmit={(data) => updateProduct({ id: product.id, data })}
+      isPending={isPending}
+      title="Edit Product"
+      subtitle={product.title}
+      backgroundColor="dark"
+      backHref="/products"
+      backLabel="Back to List"
+    >
+      <ProductForm isLoading={isPending} disableAutoSlug={true} />
+    </FormView>
   );
 };

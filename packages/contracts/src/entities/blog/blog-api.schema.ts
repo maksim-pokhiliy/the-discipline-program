@@ -30,12 +30,6 @@ export const toggleBlogPostQuerySchema = z.object({
 });
 
 export const getBlogPageDataResponseSchema = z.object({
-  stats: z.object({
-    total: z.number(),
-    published: z.number(),
-    drafts: z.number(),
-    featured: z.number(),
-  }),
   posts: getBlogPostsResponseSchema,
 });
 
