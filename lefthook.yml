@@ -3,6 +3,7 @@ pre-commit:
   commands:
     lint:
       run: pnpm lint
+      stage_fixed: true
       fail_text: "ESLint failed - check the errors above"
 
     prettier:
