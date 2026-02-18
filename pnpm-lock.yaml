@@ -807,6 +807,9 @@ importers:
       lucide-react:
         specifier: 'catalog:'
         version: 0.469.0(react@19.2.3)
+      react-hook-form:
+        specifier: 'catalog:'
+        version: 7.60.0(react@19.2.3)
       sonner:
         specifier: 'catalog:'
         version: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)

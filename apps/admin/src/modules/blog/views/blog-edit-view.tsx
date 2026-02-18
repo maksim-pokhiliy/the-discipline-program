@@ -1,11 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import SaveIcon from "@mui/icons-material/Save";
-import { FormProvider, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import { createBlogPostSchema, type BlogPost, type CreateBlogPostData } from "@repo/contracts/blog";
-import { ContentSection } from "@repo/ui";
+import { FormView } from "@repo/ui";
 
 import { useBlogPost, useUpdateBlogPost } from "@app/lib/hooks";
 
@@ -37,31 +36,22 @@ export const BlogEditView = ({ initialData }: BlogEditViewProps) => {
     },
   });
 
-  const { handleSubmit } = methods;
-
   if (!post) {
     return null;
   }
 
   return (
-    <FormProvider {...methods}>
-      <ContentSection
-        title="Edit Post"
-        subtitle={post.title}
-        backgroundColor="dark"
-        backHref="/blog"
-        backLabel="Back to List"
-        actions={[
-          {
-            label: "Save Changes",
-            onClick: handleSubmit((data) => updatePost({ id: post.id, data })),
-            loading: isPending,
-            startIcon: <SaveIcon />,
-          },
-        ]}
-      >
-        <BlogPostForm isLoading={isPending} disableAutoSlug={true} />
-      </ContentSection>
-    </FormProvider>
+    <FormView
+      methods={methods}
+      onSubmit={(data) => updatePost({ id: post.id, data })}
+      isPending={isPending}
+      title="Edit Post"
+      subtitle={post.title}
+      backgroundColor="dark"
+      backHref="/blog"
+      backLabel="Back to List"
+    >
+      <BlogPostForm isLoading={isPending} disableAutoSlug={true} />
+    </FormView>
   );
 };

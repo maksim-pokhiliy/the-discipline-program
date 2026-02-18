@@ -3,10 +3,9 @@
 import { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import SaveIcon from "@mui/icons-material/Save";
 import { Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
-import { Controller, FormProvider, useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 import {
   CONTACT_STATUSES,
@@ -15,7 +14,7 @@ import {
   updateContactRequestSchema,
 } from "@repo/contracts/contact";
 import { formatDate } from "@repo/shared";
-import { ContentSection, DetailField, FormCard } from "@repo/ui";
+import { DetailField, FormCard, FormView } from "@repo/ui";
 
 import { useContact, useUpdateContact } from "@app/lib/hooks";
 
@@ -45,7 +44,7 @@ export const ContactsDetailView = ({ initialData }: ContactsDetailViewProps) => 
     },
   });
 
-  const { handleSubmit, control, reset } = methods;
+  const { control, reset } = methods;
 
   useEffect(() => {
     if (contact) {
@@ -71,87 +70,80 @@ export const ContactsDetailView = ({ initialData }: ContactsDetailViewProps) => 
   };
 
   return (
-    <FormProvider {...methods}>
-      <ContentSection
-        title="Contact Submission"
-        subtitle={contact.name || contact.email || "Anonymous"}
-        backHref="/contacts"
-        backLabel="Back to List"
-        actions={[
-          {
-            label: "Save Changes",
-            onClick: handleSubmit(onSubmit),
-            loading: isPending,
-            startIcon: <SaveIcon />,
-          },
-        ]}
-      >
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <Stack spacing={3}>
-              <FormCard title="Message">
-                <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
-                  {contact.message}
-                </Typography>
-              </FormCard>
+    <FormView
+      methods={methods}
+      onSubmit={onSubmit}
+      isPending={isPending}
+      title="Contact Submission"
+      subtitle={contact.name || contact.email || "Anonymous"}
+      backHref="/contacts"
+      backLabel="Back to List"
+    >
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Stack spacing={3}>
+            <FormCard title="Message">
+              <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
+                {contact.message}
+              </Typography>
+            </FormCard>
 
-              <FormCard title="Contact Details">
-                <Stack spacing={2}>
-                  <DetailField label="Name" labelWidth={80} value={contact.name || "—"} />
-                  <DetailField label="Email" labelWidth={80} value={contact.email || "—"} />
-                  <DetailField label="Program" labelWidth={80} value={contact.program || "—"} />
-                  <DetailField
-                    label="Date"
-                    labelWidth={80}
-                    value={formatDate(contact.createdAt, "long")}
-                  />
-                </Stack>
-              </FormCard>
-            </Stack>
-          </Grid>
-
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <Stack spacing={3}>
-              <FormCard title="Status">
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField {...field} select fullWidth size="small" disabled={isPending}>
-                      {CONTACT_STATUSES.map((status) => (
-                        <MenuItem key={status} value={status}>
-                          {STATUS_LABELS[status]}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
+            <FormCard title="Contact Details">
+              <Stack spacing={2}>
+                <DetailField label="Name" labelWidth={80} value={contact.name || "—"} />
+                <DetailField label="Email" labelWidth={80} value={contact.email || "—"} />
+                <DetailField label="Program" labelWidth={80} value={contact.program || "—"} />
+                <DetailField
+                  label="Date"
+                  labelWidth={80}
+                  value={formatDate(contact.createdAt, "long")}
                 />
-              </FormCard>
-
-              <FormCard title="Notes">
-                <Controller
-                  name="notes"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      value={field.value ?? ""}
-                      multiline
-                      rows={6}
-                      fullWidth
-                      size="small"
-                      placeholder="Add internal notes about this contact..."
-                      disabled={isPending}
-                      error={!!fieldState.error}
-                      helperText={fieldState.error?.message}
-                    />
-                  )}
-                />
-              </FormCard>
-            </Stack>
-          </Grid>
+              </Stack>
+            </FormCard>
+          </Stack>
         </Grid>
-      </ContentSection>
-    </FormProvider>
+
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Stack spacing={3}>
+            <FormCard title="Status">
+              <Controller
+                name="status"
+                control={control}
+                render={({ field }) => (
+                  <TextField {...field} select fullWidth size="small" disabled={isPending}>
+                    {CONTACT_STATUSES.map((status) => (
+                      <MenuItem key={status} value={status}>
+                        {STATUS_LABELS[status]}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              />
+            </FormCard>
+
+            <FormCard title="Notes">
+              <Controller
+                name="notes"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    value={field.value ?? ""}
+                    multiline
+                    rows={6}
+                    fullWidth
+                    size="small"
+                    placeholder="Add internal notes about this contact..."
+                    disabled={isPending}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  />
+                )}
+              />
+            </FormCard>
+          </Stack>
+        </Grid>
+      </Grid>
+    </FormView>
   );
 };

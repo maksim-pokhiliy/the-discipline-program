@@ -1,11 +1,10 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import SaveIcon from "@mui/icons-material/Save";
-import { FormProvider, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import { createProductSchema, type CreateProductData } from "@repo/contracts/product";
-import { ContentSection } from "@repo/ui";
+import { FormView } from "@repo/ui";
 
 import { useCreateProduct } from "@app/lib/hooks/use-products";
 
@@ -25,27 +24,19 @@ export const ProductCreateView = () => {
     },
   });
 
-  const { handleSubmit } = methods;
-
   return (
-    <FormProvider {...methods}>
-      <ContentSection
-        title="Create Product"
-        subtitle="New product"
-        backgroundColor="dark"
-        backHref="/products"
-        backLabel="Back to List"
-        actions={[
-          {
-            label: "Create Product",
-            onClick: handleSubmit((data) => createProduct(data)),
-            loading: isPending,
-            startIcon: <SaveIcon />,
-          },
-        ]}
-      >
-        <ProductForm isLoading={isPending} />
-      </ContentSection>
-    </FormProvider>
+    <FormView
+      methods={methods}
+      onSubmit={(data) => createProduct(data)}
+      isPending={isPending}
+      title="Create Product"
+      subtitle="New product"
+      backgroundColor="dark"
+      backHref="/products"
+      backLabel="Back to List"
+      submitLabel="Create Product"
+    >
+      <ProductForm isLoading={isPending} />
+    </FormView>
   );
 };

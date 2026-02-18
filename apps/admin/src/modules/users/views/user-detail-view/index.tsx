@@ -2,12 +2,11 @@
 
 import { useEffect } from "react";
 
-import SaveIcon from "@mui/icons-material/Save";
-import { FormProvider, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import { type UserRole } from "@repo/contracts/auth";
 import { type AdminUser } from "@repo/contracts/user";
-import { ContentSection } from "@repo/ui";
+import { FormView } from "@repo/ui";
 
 import { useUpdateUserRole, useUser } from "@app/lib/hooks";
 
@@ -27,7 +26,7 @@ export const UserDetailView = ({ initialData }: UserDetailViewProps) => {
     },
   });
 
-  const { handleSubmit, reset } = methods;
+  const { reset } = methods;
 
   useEffect(() => {
     if (user) {
@@ -39,28 +38,17 @@ export const UserDetailView = ({ initialData }: UserDetailViewProps) => {
     return null;
   }
 
-  const onSubmit = (data: { role: UserRole }) => {
-    updateRole({ id: user.id, data: { role: data.role } });
-  };
-
   return (
-    <FormProvider {...methods}>
-      <ContentSection
-        title="User Details"
-        subtitle={user.email}
-        backHref="/users"
-        backLabel="Back to Users"
-        actions={[
-          {
-            label: "Save Changes",
-            onClick: handleSubmit(onSubmit),
-            loading: isPending,
-            startIcon: <SaveIcon />,
-          },
-        ]}
-      >
-        <UserDetailSection user={user} isPending={isPending} />
-      </ContentSection>
-    </FormProvider>
+    <FormView
+      methods={methods}
+      onSubmit={(data) => updateRole({ id: user.id, data: { role: data.role } })}
+      isPending={isPending}
+      title="User Details"
+      subtitle={user.email}
+      backHref="/users"
+      backLabel="Back to Users"
+    >
+      <UserDetailSection user={user} isPending={isPending} />
+    </FormView>
   );
 };

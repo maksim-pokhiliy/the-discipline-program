@@ -52,6 +52,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
 
   const handleRoleSelect = (newRole: UserRole) => {
     const currentUser = users.find((u) => u.id === menuUserId);
+
     handleMenuClose();
 
     if (!currentUser || currentUser.role === newRole) {
