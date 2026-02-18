@@ -1,8 +1,4 @@
-import {
-  type Product,
-  type ProductsStats,
-  type AdminProductsPageData,
-} from "@repo/contracts/product";
+import { type Product, type AdminProductsPageData } from "@repo/contracts/product";
 
 import { apiClient } from "../client";
 
@@ -13,8 +9,6 @@ export const productsAPI = {
   getAll: (): Promise<Product[]> => apiClient.request("/api/admin/products"),
 
   getById: (id: string): Promise<Product> => apiClient.request(`/api/admin/products/${id}`),
-
-  getStats: (): Promise<ProductsStats> => apiClient.request("/api/admin/products/stats"),
 
   create: (data: Partial<Product>): Promise<Product> =>
     apiClient.request("/api/admin/products", "POST", data),

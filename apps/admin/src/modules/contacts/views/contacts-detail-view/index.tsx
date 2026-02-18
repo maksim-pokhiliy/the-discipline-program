@@ -15,7 +15,7 @@ import {
   updateContactRequestSchema,
 } from "@repo/contracts/contact";
 import { formatDate } from "@repo/shared";
-import { ContentSection, FormCard } from "@repo/ui";
+import { ContentSection, DetailField, FormCard } from "@repo/ui";
 
 import { useContact, useUpdateContact } from "@app/lib/hooks";
 
@@ -97,33 +97,14 @@ export const ContactsDetailView = ({ initialData }: ContactsDetailViewProps) => 
 
               <FormCard title="Contact Details">
                 <Stack spacing={2}>
-                  <Stack direction="row" spacing={1}>
-                    <Typography variant="subtitle2" sx={{ minWidth: 80 }}>
-                      Name:
-                    </Typography>
-                    <Typography variant="body2">{contact.name || "—"}</Typography>
-                  </Stack>
-
-                  <Stack direction="row" spacing={1}>
-                    <Typography variant="subtitle2" sx={{ minWidth: 80 }}>
-                      Email:
-                    </Typography>
-                    <Typography variant="body2">{contact.email || "—"}</Typography>
-                  </Stack>
-
-                  <Stack direction="row" spacing={1}>
-                    <Typography variant="subtitle2" sx={{ minWidth: 80 }}>
-                      Program:
-                    </Typography>
-                    <Typography variant="body2">{contact.program || "—"}</Typography>
-                  </Stack>
-
-                  <Stack direction="row" spacing={1}>
-                    <Typography variant="subtitle2" sx={{ minWidth: 80 }}>
-                      Date:
-                    </Typography>
-                    <Typography variant="body2">{formatDate(contact.createdAt, "long")}</Typography>
-                  </Stack>
+                  <DetailField label="Name" labelWidth={80} value={contact.name || "—"} />
+                  <DetailField label="Email" labelWidth={80} value={contact.email || "—"} />
+                  <DetailField label="Program" labelWidth={80} value={contact.program || "—"} />
+                  <DetailField
+                    label="Date"
+                    labelWidth={80}
+                    value={formatDate(contact.createdAt, "long")}
+                  />
                 </Stack>
               </FormCard>
             </Stack>

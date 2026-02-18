@@ -1,13 +1,13 @@
 pre-commit:
-  parallel: false
+  parallel: true
   commands:
     lint:
       run: pnpm lint
-      stage_fixed: true
       fail_text: "ESLint failed - check the errors above"
 
     prettier:
-      run: pnpm format
+      glob: "*.{ts,tsx,md,json}"
+      run: npx prettier --write {staged_files}
       stage_fixed: true
       fail_text: "Prettier formatting failed"
 

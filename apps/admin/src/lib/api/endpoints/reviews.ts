@@ -1,4 +1,4 @@
-import { type Review, type ReviewStats, type AdminReviewsPageData } from "@repo/contracts/review";
+import { type Review, type AdminReviewsPageData } from "@repo/contracts/review";
 
 import { apiClient } from "../client";
 
@@ -9,8 +9,6 @@ export const reviewsAPI = {
   getAll: (): Promise<Review[]> => apiClient.request("/api/admin/reviews"),
 
   getById: (id: string): Promise<Review> => apiClient.request(`/api/admin/reviews/${id}`),
-
-  getStats: (): Promise<ReviewStats> => apiClient.request("/api/admin/reviews/stats"),
 
   create: (data: Partial<Review>): Promise<Review> =>
     apiClient.request("/api/admin/reviews", "POST", data),

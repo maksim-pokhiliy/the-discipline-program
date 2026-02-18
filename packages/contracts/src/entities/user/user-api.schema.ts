@@ -16,17 +16,6 @@ export const updateUserRoleParamsSchema = z.object({
 
 export const updateUserRoleRequestSchema = updateUserRoleSchema;
 
-export const getUserStatsResponseSchema = z.object({
-  total: z.number(),
-  newThisMonth: z.number(),
-  byRole: z.object({
-    user: z.number(),
-    coach: z.number(),
-    admin: z.number(),
-  }),
-});
-
 export const getUsersPageDataResponseSchema = z.object({
-  stats: getUserStatsResponseSchema,
   users: getUsersResponseSchema,
 });

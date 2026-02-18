@@ -36,24 +36,13 @@ export const adminExercisesApi = {
     return mapToExercise(exercise);
   },
 
-  getStats: async () => {
-    const [total, categorized, uncategorized] = await Promise.all([
-      prisma.exercise.count({ where: { deletedAt: null } }),
-      prisma.exercise.count({ where: { categoryId: { not: null }, deletedAt: null } }),
-      prisma.exercise.count({ where: { categoryId: null, deletedAt: null } }),
-    ]);
-
-    return { total, categorized, uncategorized };
-  },
-
   getPageData: async () => {
-    const [stats, exercises, categories] = await Promise.all([
-      adminExercisesApi.getStats(),
+    const [exercises, categories] = await Promise.all([
       adminExercisesApi.getAll(),
       adminExerciseCategoriesApi.getAll(),
     ]);
 
-    return { stats, exercises, categories };
+    return { exercises, categories };
   },
 
   create: async (data: CreateExerciseData): Promise<Exercise> => {

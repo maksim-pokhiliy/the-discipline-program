@@ -24,13 +24,6 @@ export const toggleProductStatusParamsSchema = z.object({
   id: z.string().cuid(),
 });
 
-export const getProductStatsResponseSchema = z.object({
-  total: z.number(),
-  active: z.number(),
-  inactive: z.number(),
-});
-
 export const getProductsPageDataResponseSchema = z.object({
-  stats: getProductStatsResponseSchema,
   products: getProductsResponseSchema,
 });

@@ -16,7 +16,7 @@ export const authService = {
       where: { email },
     });
 
-    if (!user || !user.password) {
+    if (!user || !user.password || user.deletedAt) {
       return null;
     }
 
@@ -34,7 +34,7 @@ export const authService = {
 
   getUserById: async (id: string) => {
     const user = await prisma.user.findUnique({
-      where: { id },
+      where: { id, deletedAt: null },
       select: {
         id: true,
         email: true,

@@ -42,9 +42,5 @@ export const toggleReviewQuerySchema = z.object({
 });
 
 export const getReviewsPageDataResponseSchema = z.object({
-  stats: z.object({
-    total: z.number(),
-    active: z.number(),
-  }),
   reviews: getReviewsResponseSchema,
 });

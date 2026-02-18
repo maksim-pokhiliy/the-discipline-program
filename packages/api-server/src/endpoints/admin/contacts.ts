@@ -1,8 +1,4 @@
-import {
-  type GetContactByIdResponse,
-  type UpdateContactRequest,
-  CONTACT_STATUS_ENUM,
-} from "@repo/contracts/contact";
+import { type GetContactByIdResponse, type UpdateContactRequest } from "@repo/contracts/contact";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
@@ -90,14 +86,6 @@ export const adminContactsApi = {
   async getContactsPageData() {
     const contacts = await adminContactsApi.getContacts();
 
-    const stats = {
-      total: contacts.length,
-      new: contacts.filter((c) => c.status === CONTACT_STATUS_ENUM.NEW).length,
-      inProgress: contacts.filter((c) => c.status === CONTACT_STATUS_ENUM.IN_PROGRESS).length,
-      replied: contacts.filter((c) => c.status === CONTACT_STATUS_ENUM.REPLIED).length,
-      closed: contacts.filter((c) => c.status === CONTACT_STATUS_ENUM.CLOSED).length,
-    };
-
-    return { stats, contacts };
+    return { contacts };
   },
 };

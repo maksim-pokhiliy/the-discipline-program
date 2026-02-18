@@ -1,6 +1,7 @@
 export * from "./admin-header";
 export * from "./creatable-autocomplete";
 export * from "./data-table";
+export * from "./detail-field";
 export * from "./dynamic-list-item";
 export * from "./form-card";
 export * from "./header";

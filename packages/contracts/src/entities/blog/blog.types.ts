@@ -15,7 +15,6 @@ export type CreateBlogPostData = z.infer<typeof createBlogPostSchema>;
 export type UpdateBlogPostData = z.infer<typeof updateBlogPostSchema>;
 
 export type AdminBlogPageData = z.infer<typeof getBlogPageDataResponseSchema>;
-export type BlogStats = AdminBlogPageData["stats"];
 
 export type PublicBlogPost = z.infer<typeof publicBlogPostSchema>;
 export type PublicBlogPostPreview = z.infer<typeof publicBlogPostPreviewSchema>;

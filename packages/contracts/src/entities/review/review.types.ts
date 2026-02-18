@@ -14,5 +14,3 @@ export type CreateReviewData = z.infer<typeof createReviewSchema>;
 export type UpdateReviewData = z.infer<typeof updateReviewSchema>;
 
 export type AdminReviewsPageData = z.infer<typeof getReviewsPageDataResponseSchema>;
-
-export type ReviewStats = AdminReviewsPageData["stats"];

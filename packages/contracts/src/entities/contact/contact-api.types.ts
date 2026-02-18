@@ -9,7 +9,6 @@ import {
   type updateContactParamsSchema,
   type updateContactRequestSchema,
   type deleteContactParamsSchema,
-  type contactStatsSchema,
   type getContactsPageDataResponseSchema,
 } from "./contact-api.schema";
 
@@ -28,7 +27,5 @@ export type UpdateContactParams = z.infer<typeof updateContactParamsSchema>;
 export type UpdateContactRequest = z.infer<typeof updateContactRequestSchema>;
 
 export type DeleteContactParams = z.infer<typeof deleteContactParamsSchema>;
-
-export type ContactStats = z.infer<typeof contactStatsSchema>;
 
 export type AdminContactsPageData = z.infer<typeof getContactsPageDataResponseSchema>;
