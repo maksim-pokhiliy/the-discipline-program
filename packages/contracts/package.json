@@ -23,7 +23,8 @@
     "./upload": "./src/entities/upload/index.ts",
     "./user": "./src/entities/user/index.ts",
     "./workout": "./src/entities/workout/index.ts",
-    "./workout-block": "./src/entities/workout-block/index.ts"
+    "./workout-block": "./src/entities/workout-block/index.ts",
+    "./workout-log": "./src/entities/workout-log/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

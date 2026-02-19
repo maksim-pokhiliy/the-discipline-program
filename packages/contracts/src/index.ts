@@ -13,5 +13,6 @@ export * from "./entities/dashboard";
 export * from "./entities/training-plan";
 export * from "./entities/workout";
 export * from "./entities/workout-block";
+export * from "./entities/workout-log";
 export * from "./entities/prescribed-set";
 export * from "./entities/user";

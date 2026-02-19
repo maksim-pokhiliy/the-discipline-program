@@ -8,3 +8,4 @@ export * from "./training-plan.mapper";
 export * from "./user.mapper";
 export * from "./workout-block.mapper";
 export * from "./workout.mapper";
+export * from "./workout-log.mapper";
