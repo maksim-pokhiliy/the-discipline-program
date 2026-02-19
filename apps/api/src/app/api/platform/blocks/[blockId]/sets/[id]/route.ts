@@ -7,6 +7,7 @@ import {
   getPrescribedSetResponseSchema,
   updatePrescribedSetParamsSchema,
   updatePrescribedSetRequestSchema,
+  updatePrescribedSetResponseSchema,
 } from "@repo/contracts/prescribed-set";
 import { handleApiError } from "@repo/errors";
 
@@ -34,8 +35,9 @@ export const PUT = async (request: Request, context: RouteContext) => {
     const body = await request.json();
     const data = updatePrescribedSetRequestSchema.parse(body);
     const result = await platformPrescribedSetsApi.update(userId, blockId, id, data);
+    const validated = updatePrescribedSetResponseSchema.parse(result);
 
-    return NextResponse.json(result);
+    return NextResponse.json(validated);
   } catch (error) {
     return handleApiError(error);
   }

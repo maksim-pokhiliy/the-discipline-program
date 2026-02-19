@@ -4,6 +4,7 @@ import { platformWorkoutBlocksApi } from "@repo/api-server";
 import {
   createWorkoutBlockParamsSchema,
   createWorkoutBlockRequestSchema,
+  createWorkoutBlockResponseSchema,
   getWorkoutBlocksParamsSchema,
   getWorkoutBlocksResponseSchema,
 } from "@repo/contracts/workout-block";
@@ -33,8 +34,9 @@ export const POST = async (request: Request, context: RouteContext) => {
     const body = await request.json();
     const data = createWorkoutBlockRequestSchema.parse(body);
     const result = await platformWorkoutBlocksApi.create(userId, workoutId, data);
+    const validated = createWorkoutBlockResponseSchema.parse(result);
 
-    return NextResponse.json(result, { status: 201 });
+    return NextResponse.json(validated, { status: 201 });
   } catch (error) {
     return handleApiError(error);
   }

@@ -17,6 +17,6 @@ export const createTrainingPlanSchema = z.object({
 
 export const updateTrainingPlanSchema = z.object({
   name: z.string().min(1).max(200).optional(),
-  description: z.string().max(2000).optional(),
+  description: z.string().max(2000).nullable().optional(),
   isActive: z.boolean().optional(),
 });

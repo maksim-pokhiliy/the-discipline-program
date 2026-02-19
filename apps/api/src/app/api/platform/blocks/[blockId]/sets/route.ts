@@ -4,6 +4,7 @@ import { platformPrescribedSetsApi } from "@repo/api-server";
 import {
   createPrescribedSetParamsSchema,
   createPrescribedSetRequestSchema,
+  createPrescribedSetResponseSchema,
   getPrescribedSetsParamsSchema,
   getPrescribedSetsResponseSchema,
 } from "@repo/contracts/prescribed-set";
@@ -33,8 +34,9 @@ export const POST = async (request: Request, context: RouteContext) => {
     const body = await request.json();
     const data = createPrescribedSetRequestSchema.parse(body);
     const result = await platformPrescribedSetsApi.create(userId, blockId, data);
+    const validated = createPrescribedSetResponseSchema.parse(result);
 
-    return NextResponse.json(result, { status: 201 });
+    return NextResponse.json(validated, { status: 201 });
   } catch (error) {
     return handleApiError(error);
   }

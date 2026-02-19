@@ -25,12 +25,16 @@ export const createPrescribedSetParamsSchema = z.object({
 
 export const createPrescribedSetRequestSchema = createPrescribedSetSchema;
 
+export const createPrescribedSetResponseSchema = prescribedSetSchema;
+
 export const updatePrescribedSetParamsSchema = z.object({
   blockId: z.string().cuid(),
   id: z.string().cuid(),
 });
 
 export const updatePrescribedSetRequestSchema = updatePrescribedSetSchema;
+
+export const updatePrescribedSetResponseSchema = prescribedSetSchema;
 
 export const deletePrescribedSetParamsSchema = z.object({
   blockId: z.string().cuid(),

@@ -10,4 +10,8 @@ export * from "./entities/review";
 export * from "./entities/upload";
 export * from "./entities/pages";
 export * from "./entities/dashboard";
+export * from "./entities/training-plan";
+export * from "./entities/workout";
+export * from "./entities/workout-block";
+export * from "./entities/prescribed-set";
 export * from "./entities/user";
