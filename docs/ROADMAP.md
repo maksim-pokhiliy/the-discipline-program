@@ -1,6 +1,6 @@
 # ROADMAP: The Discipline Program
 
-> Last updated: 2026-02-19 (Phase 1.1–1.4 complete)
+> Last updated: 2026-02-19 (Phase 1 complete)
 > Approach: Quality > Speed. Sequential execution. No deadlines.
 
 ## Current State (Phase 0 — Complete)
@@ -73,23 +73,22 @@ Foundation built. Architecture enforced. All layers aligned.
 - [x] Hard delete (CASCADE from parent), no soft delete
 - [x] API Server endpoints + Route Handlers + Mappers
 
-### 1.5 WorkoutLog + SetLog — contracts + API
+### 1.5 WorkoutLog + SetLog — contracts + API ✅
 
-- [ ] Create `packages/contracts/src/entities/workout-log/`
-- [ ] Create `packages/contracts/src/entities/set-log/`
-- [ ] WorkoutLog: athlete creates log for a workout session
-- [ ] SetLog: individual set records, supports exercise substitution
-- [ ] Immutability invariant: logs never change (Global Invariant #3)
-- [ ] API Server endpoints
-- [ ] API Route Handlers
+- [x] WorkoutLog + SetLog contracts in single `workout-log/` directory (SetLog has no standalone lifecycle)
+- [x] Immutable design: create/read/delete only, no update endpoints
+- [x] SetLogs nested in WorkoutLog (created together via Prisma nested create, CASCADE delete)
+- [x] Athlete-scoped ownership (userId match, no coach guard chain)
+- [x] Flat route: `/platform/workout-logs/` (not nested under workouts)
+- [x] Decimal→number mapping for weightDone, z.coerce.date() for request date field
 
-### 1.6 Verification
+### 1.6 Verification ✅
 
-- [ ] `pnpm check-types` passes
-- [ ] `pnpm lint` passes
-- [ ] `pnpm build` passes
-- [ ] All contracts follow entity structure convention
-- [ ] No Prisma types leak into contracts
+- [x] `pnpm check-types` passes
+- [x] `pnpm lint` passes
+- [x] `pnpm build` passes (all 3 apps: api, admin, marketing)
+- [x] All contracts follow entity structure convention
+- [x] No Prisma types leak into contracts
 
 ---
 
