@@ -16,10 +16,15 @@
     "./exercise": "./src/entities/exercise/index.ts",
     "./exercise-category": "./src/entities/exercise-category/index.ts",
     "./pages": "./src/entities/pages/index.ts",
+    "./prescribed-set": "./src/entities/prescribed-set/index.ts",
     "./product": "./src/entities/product/index.ts",
     "./review": "./src/entities/review/index.ts",
+    "./training-plan": "./src/entities/training-plan/index.ts",
     "./upload": "./src/entities/upload/index.ts",
-    "./user": "./src/entities/user/index.ts"
+    "./user": "./src/entities/user/index.ts",
+    "./workout": "./src/entities/workout/index.ts",
+    "./workout-block": "./src/entities/workout-block/index.ts",
+    "./workout-log": "./src/entities/workout-log/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
