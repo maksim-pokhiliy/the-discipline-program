@@ -89,8 +89,11 @@ model CoachProfile {
   user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   bio       String?
   plans     TrainingPlan[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
   deletedAt DateTime?
 
+  @@index([createdAt])
   @@index([deletedAt])
   @@map("app_coach_profiles")
 }
