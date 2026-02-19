@@ -23,6 +23,8 @@ export const mapToCoachProfile = (p: PrismaCoachProfile): CoachProfile => ({
   id: p.id,
   userId: p.userId,
   bio: p.bio,
+  createdAt: p.createdAt,
+  updatedAt: p.updatedAt,
 });
 
 type UserWithProfiles = PrismaUser & {
