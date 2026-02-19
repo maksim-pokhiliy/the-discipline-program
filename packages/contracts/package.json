@@ -18,6 +18,7 @@
     "./pages": "./src/entities/pages/index.ts",
     "./product": "./src/entities/product/index.ts",
     "./review": "./src/entities/review/index.ts",
+    "./training-plan": "./src/entities/training-plan/index.ts",
     "./upload": "./src/entities/upload/index.ts",
     "./user": "./src/entities/user/index.ts"
   },
