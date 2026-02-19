@@ -20,6 +20,6 @@ export const createWorkoutSchema = z.object({
 export const updateWorkoutSchema = z.object({
   dayOrder: z.number().int().positive().optional(),
   title: z.string().min(1).max(200).optional(),
-  description: z.string().max(2000).optional(),
+  description: z.string().max(2000).nullable().optional(),
   isArchived: z.boolean().optional(),
 });

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { platformTrainingPlansApi } from "@repo/api-server";
 import {
   createTrainingPlanRequestSchema,
+  createTrainingPlanResponseSchema,
   getTrainingPlansResponseSchema,
 } from "@repo/contracts/training-plan";
 import { handleApiError } from "@repo/errors";
@@ -27,8 +28,9 @@ export const POST = async (request: Request) => {
     const body = await request.json();
     const data = createTrainingPlanRequestSchema.parse(body);
     const result = await platformTrainingPlansApi.create(userId, data);
+    const validated = createTrainingPlanResponseSchema.parse(result);
 
-    return NextResponse.json(result, { status: 201 });
+    return NextResponse.json(validated, { status: 201 });
   } catch (error) {
     return handleApiError(error);
   }

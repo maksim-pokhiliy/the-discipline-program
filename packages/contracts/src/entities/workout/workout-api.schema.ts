@@ -21,12 +21,16 @@ export const createWorkoutParamsSchema = z.object({
 
 export const createWorkoutRequestSchema = createWorkoutSchema;
 
+export const createWorkoutResponseSchema = workoutSchema;
+
 export const updateWorkoutParamsSchema = z.object({
   planId: z.string().cuid(),
   id: z.string().cuid(),
 });
 
 export const updateWorkoutRequestSchema = updateWorkoutSchema;
+
+export const updateWorkoutResponseSchema = workoutSchema;
 
 export const deleteWorkoutParamsSchema = z.object({
   planId: z.string().cuid(),

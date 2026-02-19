@@ -7,6 +7,7 @@ import {
   getWorkoutResponseSchema,
   updateWorkoutParamsSchema,
   updateWorkoutRequestSchema,
+  updateWorkoutResponseSchema,
 } from "@repo/contracts/workout";
 import { handleApiError } from "@repo/errors";
 
@@ -34,8 +35,9 @@ export const PUT = async (request: Request, context: RouteContext) => {
     const body = await request.json();
     const data = updateWorkoutRequestSchema.parse(body);
     const result = await platformWorkoutsApi.update(userId, planId, id, data);
+    const validated = updateWorkoutResponseSchema.parse(result);
 
-    return NextResponse.json(result);
+    return NextResponse.json(validated);
   } catch (error) {
     return handleApiError(error);
   }

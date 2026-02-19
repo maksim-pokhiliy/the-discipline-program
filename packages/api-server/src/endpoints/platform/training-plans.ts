@@ -3,7 +3,7 @@ import {
   type TrainingPlan,
   type UpdateTrainingPlanData,
 } from "@repo/contracts/training-plan";
-import { NotFoundError } from "@repo/errors";
+import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToTrainingPlan } from "../../mappers";
@@ -25,14 +25,16 @@ export const platformTrainingPlansApi = {
   getById: async (userId: string, id: string): Promise<TrainingPlan> => {
     const coachId = await resolveCoachId(userId);
 
-    await verifyPlanOwnership(id, coachId);
-
     const plan = await prisma.trainingPlan.findUnique({
       where: { id },
     });
 
     if (!plan || plan.deletedAt) {
       throw new NotFoundError("Training plan not found", { id });
+    }
+
+    if (plan.coachId !== coachId) {
+      throw new ForbiddenError("Training plan does not belong to this coach");
     }
 
     return mapToTrainingPlan(plan);
