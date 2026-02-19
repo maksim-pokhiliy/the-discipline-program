@@ -1,6 +1,6 @@
 # ROADMAP: The Discipline Program
 
-> Last updated: 2026-02-19
+> Last updated: 2026-02-19 (Phase 1 complete)
 > Approach: Quality > Speed. Sequential execution. No deadlines.
 
 ## Current State (Phase 0 — Complete)
@@ -39,62 +39,56 @@ Foundation built. Architecture enforced. All layers aligned.
 
 **Order:** DB Schema (done) → Contracts (Zod) → API Server endpoints → API Route Handlers.
 
-### 1.1 CoachProfile & AthleteProfile — flesh out contracts + API
+### 1.1 CoachProfile & AthleteProfile — flesh out contracts + API ✅
 
-Contracts exist partially. Need:
+- [x] Review and complete `coach-profile` contracts (schema, types, API request/response)
+- [x] Review and complete `athlete-profile` contracts
+- [x] API Server endpoints: platform profile get/upsert
+- [x] API Route Handlers
+- [x] Added `createdAt`/`updatedAt` to CoachProfile schema
+- [x] Auth helper: `getAuthenticatedUserId()` for platform routes
 
-- [ ] Review and complete `coach-profile` contracts (schema, types, API request/response)
-- [ ] Review and complete `athlete-profile` contracts
-- [ ] API Server endpoints: CRUD for profiles
-- [ ] API Route Handlers
+### 1.2 TrainingPlan — contracts + API ✅
 
-### 1.2 TrainingPlan — contracts + API
+- [x] Full entity contract structure (schema, types, API schemas/types)
+- [x] API Server: `endpoints/platform/training-plans.ts` with soft delete
+- [x] Guards: `resolveCoachId`, `verifyPlanOwnership` (extracted to `guards.ts`)
+- [x] API Route Handlers
+- [x] Mapper: `training-plan.mapper.ts`
 
-- [ ] Create `packages/contracts/src/entities/training-plan/`
-  - `training-plan.schema.ts` — Zod schemas
-  - `training-plan.types.ts` — inferred types
-  - `training-plan-api.schema.ts` — request/response schemas
-  - `training-plan-api.types.ts` — API types
-  - `index.ts` — barrel export
-- [ ] API Server: `endpoints/platform/training-plans.ts` (or coach-scoped)
-  - getAll (by coachId), getById, create, update, delete (soft)
-- [ ] API Route Handlers
-- [ ] Mapper: `training-plan.mapper.ts`
+### 1.3 Workout — contracts + API ✅
 
-### 1.3 Workout — contracts + API
+- [x] Full entity contract structure (dayOrder, isArchived, nested under plan)
+- [x] API Server endpoints: CRUD scoped to plan with ownership chain
+- [x] Guard: `verifyWorkoutOwnership` (traverses plan → coach)
+- [x] API Route Handlers (nested: `/training-plans/[planId]/workouts/`)
+- [x] Mapper
 
-- [ ] Create `packages/contracts/src/entities/workout/`
-- [ ] Full entity contract structure (schema, types, API schemas)
-- [ ] Workout belongs to TrainingPlan, has dayOrder, blocks
-- [ ] API Server endpoints: CRUD scoped to plan
-- [ ] API Route Handlers
-- [ ] Mapper
+### 1.4 WorkoutBlock + PrescribedSet — contracts + API ✅
 
-### 1.4 WorkoutBlock + PrescribedSet — contracts + API
+- [x] WorkoutBlock contracts (with category relation)
+- [x] PrescribedSet contracts (with Unit constants KG/LB, Decimal mapping)
+- [x] Guard: `verifyBlockOwnership` (traverses workout → plan → coach)
+- [x] Flat route design: `/workouts/[workoutId]/blocks/`, `/blocks/[blockId]/sets/`
+- [x] Hard delete (CASCADE from parent), no soft delete
+- [x] API Server endpoints + Route Handlers + Mappers
 
-- [ ] Create `packages/contracts/src/entities/workout-block/`
-- [ ] Create `packages/contracts/src/entities/prescribed-set/`
-- [ ] These are nested within Workout — may be managed as part of Workout CRUD (nested create/update) rather than standalone endpoints. Decision during implementation.
-- [ ] API Server endpoints
-- [ ] API Route Handlers
+### 1.5 WorkoutLog + SetLog — contracts + API ✅
 
-### 1.5 WorkoutLog + SetLog — contracts + API
+- [x] WorkoutLog + SetLog contracts in single `workout-log/` directory (SetLog has no standalone lifecycle)
+- [x] Immutable design: create/read/delete only, no update endpoints
+- [x] SetLogs nested in WorkoutLog (created together via Prisma nested create, CASCADE delete)
+- [x] Athlete-scoped ownership (userId match, no coach guard chain)
+- [x] Flat route: `/platform/workout-logs/` (not nested under workouts)
+- [x] Decimal→number mapping for weightDone, z.coerce.date() for request date field
 
-- [ ] Create `packages/contracts/src/entities/workout-log/`
-- [ ] Create `packages/contracts/src/entities/set-log/`
-- [ ] WorkoutLog: athlete creates log for a workout session
-- [ ] SetLog: individual set records, supports exercise substitution
-- [ ] Immutability invariant: logs never change (Global Invariant #3)
-- [ ] API Server endpoints
-- [ ] API Route Handlers
+### 1.6 Verification ✅
 
-### 1.6 Verification
-
-- [ ] `pnpm check-types` passes
-- [ ] `pnpm lint` passes
-- [ ] `pnpm build` passes
-- [ ] All contracts follow entity structure convention
-- [ ] No Prisma types leak into contracts
+- [x] `pnpm check-types` passes
+- [x] `pnpm lint` passes
+- [x] `pnpm build` passes (all 3 apps: api, admin, marketing)
+- [x] All contracts follow entity structure convention
+- [x] No Prisma types leak into contracts
 
 ---
 

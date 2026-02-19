@@ -12,3 +12,10 @@ export const athleteProfileSchema = z.object({
   createdAt: z.date(),
   updatedAt: z.date(),
 });
+
+export const updateAthleteProfileSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  gender: z.enum(GENDERS).optional(),
+  heightCm: z.number().int().positive().optional(),
+  weightKg: z.number().positive().optional(),
+});
