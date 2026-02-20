@@ -6,11 +6,9 @@ import type {
   Exercise,
   UpdateExerciseData,
 } from "@repo/contracts/exercise";
-import { adminKeys } from "@repo/query";
+import { adminKeys, createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
-
-import { createCrudHooks } from "./create-crud-hooks";
 
 const exerciseHooks = createCrudHooks<
   AdminExercisesPageData,
@@ -28,6 +26,7 @@ const exerciseHooks = createCrudHooks<
     delete: api.exercises.delete,
   },
   redirectTo: "/exercises",
+  additionalInvalidateKeys: [adminKeys.dashboard()],
 });
 
 export const useExercisesPageData = exerciseHooks.usePageData;

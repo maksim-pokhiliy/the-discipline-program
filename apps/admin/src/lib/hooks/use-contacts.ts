@@ -8,11 +8,9 @@ import {
   type GetContactByIdResponse,
   type UpdateContactRequest,
 } from "@repo/contracts/contact";
-import { adminKeys } from "@repo/query";
+import { adminKeys, createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
-
-import { createCrudHooks } from "./create-crud-hooks";
 
 const contactHooks = createCrudHooks<AdminContactsPageData, GetContactByIdResponse>({
   entityName: "Contact",
@@ -23,6 +21,7 @@ const contactHooks = createCrudHooks<AdminContactsPageData, GetContactByIdRespon
     delete: api.contacts.delete,
   },
   redirectTo: "/contacts",
+  additionalInvalidateKeys: [adminKeys.dashboard()],
 });
 
 export const useContactsPageData = contactHooks.usePageData;

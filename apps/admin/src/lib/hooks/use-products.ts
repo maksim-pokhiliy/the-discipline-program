@@ -4,11 +4,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import type { AdminProductsPageData, Product } from "@repo/contracts/product";
-import { adminKeys } from "@repo/query";
+import { adminKeys, createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
-
-import { createCrudHooks } from "./create-crud-hooks";
 
 const productHooks = createCrudHooks<
   AdminProductsPageData,
@@ -26,6 +24,7 @@ const productHooks = createCrudHooks<
     delete: api.products.delete,
   },
   redirectTo: "/products",
+  additionalInvalidateKeys: [adminKeys.dashboard()],
 });
 
 export const useProductsPageData = productHooks.usePageData;

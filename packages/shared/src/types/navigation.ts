@@ -24,3 +24,13 @@ export interface MarketingNavigationConfig {
   headerLinks: NavLink[];
   footerLinks: NavLink[];
 }
+
+export interface PlatformNavItem {
+  label: string;
+  href: string;
+  icon: string;
+}
+
+export interface PlatformNavigationConfig {
+  items: PlatformNavItem[];
+}

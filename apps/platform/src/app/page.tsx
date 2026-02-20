@@ -1,11 +1,16 @@
-import { Stack, Typography } from "@mui/material";
+import { redirect } from "next/navigation";
+import { getServerSession } from "next-auth/next";
 
-const HomePage = () => {
-  return (
-    <Stack sx={{ alignItems: "center", justifyContent: "center", height: "100vh" }}>
-      <Typography variant="h4">The Discipline Program</Typography>
-    </Stack>
-  );
+import { authOptions } from "@repo/auth/config";
+
+const RootPage = async () => {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  redirect(session.user.role === "USER" ? "/athlete" : "/coach/plans");
 };
 
-export default HomePage;
+export default RootPage;

@@ -4,11 +4,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import type { AdminUser, GetUsersPageDataResponse, UpdateUserRoleData } from "@repo/contracts/user";
-import { adminKeys } from "@repo/query";
+import { adminKeys, createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
-
-import { createCrudHooks } from "./create-crud-hooks";
 
 const userHooks = createCrudHooks<GetUsersPageDataResponse, AdminUser>({
   entityName: "User",
@@ -18,6 +16,7 @@ const userHooks = createCrudHooks<GetUsersPageDataResponse, AdminUser>({
     getById: api.users.getById,
   },
   redirectTo: "/users",
+  additionalInvalidateKeys: [adminKeys.dashboard()],
 });
 
 export const useUsersPageData = userHooks.usePageData;
