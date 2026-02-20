@@ -5,3 +5,6 @@ export * from "./training-plans";
 export * from "./workout-blocks";
 export * from "./workout-logs";
 export * from "./workouts";
+export * from "./plan-enrollments";
+export * from "./benchmark-definitions";
+export * from "./user-benchmarks";

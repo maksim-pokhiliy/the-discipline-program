@@ -24,7 +24,10 @@
     "./user": "./src/entities/user/index.ts",
     "./workout": "./src/entities/workout/index.ts",
     "./workout-block": "./src/entities/workout-block/index.ts",
-    "./workout-log": "./src/entities/workout-log/index.ts"
+    "./workout-log": "./src/entities/workout-log/index.ts",
+    "./plan-enrollment": "./src/entities/plan-enrollment/index.ts",
+    "./benchmark-definition": "./src/entities/benchmark-definition/index.ts",
+    "./user-benchmark": "./src/entities/user-benchmark/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

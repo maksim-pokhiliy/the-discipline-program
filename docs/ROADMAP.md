@@ -1,202 +1,236 @@
 # ROADMAP: The Discipline Program
 
-> Last updated: 2026-02-19 (Phase 1 complete)
+> Last updated: 2026-02-19 (Phase 1 complete, concept revised)
 > Approach: Quality > Speed. Sequential execution. No deadlines.
+> Product concept: see docs/ARCHITECTURE.md
 
-## Current State (Phase 0 — Complete)
+## Phase 0 — Foundation (Complete)
 
-Foundation built. Architecture enforced. All layers aligned.
+| Area                                                      | Status                     |
+| --------------------------------------------------------- | -------------------------- |
+| DB Schema (core entities)                                 | ✅                         |
+| Marketing site                                            | ✅ (billing flow excluded) |
+| Admin CMS (blog, pages, reviews, products, contacts)      | ✅                         |
+| Admin Platform (exercises + categories, users, dashboard) | ✅                         |
+| API (serves admin + marketing)                            | ✅                         |
+| CRUD boilerplate elimination                              | ✅ (PR #92)                |
 
-| Area                                                      | Status                              |
-| --------------------------------------------------------- | ----------------------------------- |
-| DB Schema (all entities)                                  | ✅ Complete                         |
-| Marketing site                                            | ✅ Complete (billing flow excluded) |
-| Admin CMS (blog, pages, reviews, products, contacts)      | ✅ Complete                         |
-| Admin Platform (exercises + categories, users, dashboard) | ✅ Complete                         |
-| API (serves admin + marketing)                            | ✅ Complete                         |
-| CRUD boilerplate elimination                              | ✅ Complete (PR #92)                |
-| `pnpm check-types` passes                                 | ✅                                  |
+### Known schema debt
 
-### What exists in schema but has NO contracts/API/UI:
-
-- `TrainingPlan`, `Workout`, `WorkoutBlock`, `PrescribedSet` — Training core
-- `WorkoutLog`, `SetLog` — Athlete workout logging
-- `Subscription`, `Transaction` — Billing (provider TBD, NOT necessarily Stripe)
-- `AthleteProfile`, `CoachProfile` — Contracts exist partially, no meaningful API/UI
-
-### Known schema debt:
-
-- `Product.stripeProductId`, `Price.stripePriceId` — hardcoded to Stripe. Will need renaming when payment provider is chosen (e.g. `providerProductId`, `providerPriceId`).
-- `Subscription.id` has no `@default(cuid())` — likely expects external provider ID. Review when billing starts.
+- `Product.stripeProductId`, `Price.stripePriceId` — hardcoded to Stripe. Rename when payment provider is chosen.
+- `Subscription.id` has no `@default(cuid())` — expects external provider ID. Review when billing starts.
+- `Product.trainingPlanId` exists as field but missing `@relation` definition.
 
 ---
 
-## Phase 1 — Training Core (Contracts + API)
+## Phase 1 — Training Core: Contracts + API (Complete)
 
-**Goal:** Full contract and API layer for the training domain. No UI yet.
+**Goal:** Full contract and API layer for the training domain. No UI.
 
-**Why first:** This is the product. Without training plans and workout logging, there's nothing to sell or use.
+### 1.1 CoachProfile & AthleteProfile ✅
 
-**Order:** DB Schema (done) → Contracts (Zod) → API Server endpoints → API Route Handlers.
+### 1.2 TrainingPlan ✅
 
-### 1.1 CoachProfile & AthleteProfile — flesh out contracts + API ✅
+### 1.3 Workout ✅
 
-- [x] Review and complete `coach-profile` contracts (schema, types, API request/response)
-- [x] Review and complete `athlete-profile` contracts
-- [x] API Server endpoints: platform profile get/upsert
-- [x] API Route Handlers
-- [x] Added `createdAt`/`updatedAt` to CoachProfile schema
-- [x] Auth helper: `getAuthenticatedUserId()` for platform routes
+### 1.4 WorkoutBlock + PrescribedSet ✅
 
-### 1.2 TrainingPlan — contracts + API ✅
-
-- [x] Full entity contract structure (schema, types, API schemas/types)
-- [x] API Server: `endpoints/platform/training-plans.ts` with soft delete
-- [x] Guards: `resolveCoachId`, `verifyPlanOwnership` (extracted to `guards.ts`)
-- [x] API Route Handlers
-- [x] Mapper: `training-plan.mapper.ts`
-
-### 1.3 Workout — contracts + API ✅
-
-- [x] Full entity contract structure (dayOrder, isArchived, nested under plan)
-- [x] API Server endpoints: CRUD scoped to plan with ownership chain
-- [x] Guard: `verifyWorkoutOwnership` (traverses plan → coach)
-- [x] API Route Handlers (nested: `/training-plans/[planId]/workouts/`)
-- [x] Mapper
-
-### 1.4 WorkoutBlock + PrescribedSet — contracts + API ✅
-
-- [x] WorkoutBlock contracts (with category relation)
-- [x] PrescribedSet contracts (with Unit constants KG/LB, Decimal mapping)
-- [x] Guard: `verifyBlockOwnership` (traverses workout → plan → coach)
-- [x] Flat route design: `/workouts/[workoutId]/blocks/`, `/blocks/[blockId]/sets/`
-- [x] Hard delete (CASCADE from parent), no soft delete
-- [x] API Server endpoints + Route Handlers + Mappers
-
-### 1.5 WorkoutLog + SetLog — contracts + API ✅
-
-- [x] WorkoutLog + SetLog contracts in single `workout-log/` directory (SetLog has no standalone lifecycle)
-- [x] Immutable design: create/read/delete only, no update endpoints
-- [x] SetLogs nested in WorkoutLog (created together via Prisma nested create, CASCADE delete)
-- [x] Athlete-scoped ownership (userId match, no coach guard chain)
-- [x] Flat route: `/platform/workout-logs/` (not nested under workouts)
-- [x] Decimal→number mapping for weightDone, z.coerce.date() for request date field
+### 1.5 WorkoutLog + SetLog ✅
 
 ### 1.6 Verification ✅
 
-- [x] `pnpm check-types` passes
-- [x] `pnpm lint` passes
-- [x] `pnpm build` passes (all 3 apps: api, admin, marketing)
-- [x] All contracts follow entity structure convention
-- [x] No Prisma types leak into contracts
+---
+
+## Phase 2 — Schema Extension + Data Layer
+
+**Goal:** Complete the data model for the full product vision. Add missing entities, contracts, and API endpoints.
+
+**Why now:** ARCHITECTURE.md revision revealed critical gaps — no plan enrollment, no benchmarks, no exercise access from platform, no admin role protection. Must fix data model before building UI.
+
+### 2.1 Platform app scaffolding ✅
+
+- [x] Create `apps/platform` (Next.js 16, PWA-ready)
+- [x] Auth integration (NextAuth route handler)
+- [x] turbo.json platform#build task
+- [x] Build passes (all 4 apps)
+
+### 2.2 Schema: new entities
+
+- [ ] Add `PlanEnrollmentStatus` enum (ACTIVE, PAUSED, COMPLETED)
+- [ ] Add `PlanEnrollment` model (trainingPlanId, userId, startDate, endDate?, status, createdAt)
+- [ ] Add `BenchmarkDefinition` model (name, unit, category?)
+- [ ] Add `UserBenchmark` model (userId, benchmarkDefinitionId, value, updatedAt)
+- [ ] Fix `Product` → `TrainingPlan` relation (add @relation to existing trainingPlanId field)
+- [ ] Add relations on User (planEnrollments, userBenchmarks)
+- [ ] `pnpm db:generate` + `pnpm db:push`
+
+### 2.3 Contracts + API: PlanEnrollment
+
+- [ ] `packages/contracts/src/entities/plan-enrollment/` (schema, types, API schemas/types)
+- [ ] `packages/api-server/src/endpoints/platform/plan-enrollments.ts`
+- [ ] API routes: GET (by plan), POST (enroll), PUT (update status), DELETE (unenroll)
+- [ ] Guard: coach can manage enrollments for own plans only
+
+### 2.4 Contracts + API: Benchmarks
+
+- [ ] `packages/contracts/src/entities/benchmark-definition/` (schema, types, API schemas/types)
+- [ ] `packages/contracts/src/entities/user-benchmark/` (schema, types, API schemas/types)
+- [ ] `packages/api-server/src/endpoints/platform/benchmark-definitions.ts`
+- [ ] `packages/api-server/src/endpoints/platform/user-benchmarks.ts`
+- [ ] API routes for both entities
+- [ ] Access: ADMIN + COACH can CRUD definitions, any auth user can manage own benchmarks
+
+### 2.5 Platform exercise access
+
+- [ ] API routes: `/api/platform/exercises` (GET all, POST create) — for COACH
+- [ ] API routes: `/api/platform/exercise-categories` (GET all, POST create) — for COACH
+- [ ] Reuse existing admin api-server endpoints or create platform-specific ones
+
+### 2.6 Admin role protection
+
+- [ ] Add middleware to `apps/admin` — only ADMIN role can access
+- [ ] Redirect non-ADMIN to login or error page
+
+### 2.7 Verification
+
+- [ ] `pnpm check-types` passes
+- [ ] `pnpm build` passes (all 4 apps)
+- [ ] All new contracts follow entity structure convention
+- [ ] No Prisma types leak into contracts
 
 ---
 
-## Phase 2 — Platform App: Coach Experience
+## Phase 3 — Platform App: Coach Experience
 
-**Goal:** Coach can create and manage training programs.
+**Goal:** Coach can manage training programs, exercises, athletes, and benchmarks through the platform UI.
 
-**Why second:** Content must exist before athletes can consume it.
+**Why after Phase 2:** Data model must be complete before building UI (Rule #3: no mocks, no fakes).
 
-### 2.1 App scaffolding
+### 3.1 App infrastructure
 
-- [ ] Create `apps/platform` (Next.js, PWA-ready, mobile-first)
-- [ ] Auth integration (NextAuth, role-based)
-- [ ] Role-based routing: COACH vs USER (Athlete)
-- [ ] Navigation structure
-- [ ] API client setup (`packages/api-client` integration)
+- [ ] Auth middleware / route protection (role-based)
+- [ ] Role-based routing: COACH vs USER layout groups
+- [ ] Coach navigation structure
+- [ ] API client layer (endpoints + hooks)
+- [ ] Login page
 
-### 2.2 Coach: Training Plan management
+### 3.2 Coach: Training Plan management
 
-- [ ] List plans (dashboard view)
+- [ ] List plans (DataTable: name, status, athletes count, created date)
 - [ ] Create/edit plan (name, description)
 - [ ] Activate/deactivate plan
+- [ ] Delete plan (with enrollment/product link checks)
 
-### 2.3 Coach: Workout builder
+### 3.3 Coach: Workout builder
 
-- [ ] List workouts within a plan (day order)
-- [ ] Create/edit workout
-- [ ] Workout block editor (group exercises by category)
-- [ ] Prescribed set editor (exercise picker, sets, reps, weight, RPE)
+- [ ] Plan detail page = workout builder entry point
+- [ ] Workouts as accordion items (sorted by dayOrder)
+- [ ] Add/edit/delete workouts (dialog)
+- [ ] Blocks within workout (category, rounds, time cap)
+- [ ] Prescribed sets within block (exercise picker, sets, reps, weight, unit, RPE, notes)
+- [ ] Lazy loading: workouts → blocks → sets per level
 
-### 2.4 Coach: Athlete oversight
+### 3.4 Coach: Exercise library
 
-- [ ] View assigned athletes
-- [ ] View athlete workout logs and progress
+- [ ] Browse exercises from platform (with search/filter by category)
+- [ ] Add new exercise (name, description, video URL, category)
+- [ ] Add new category
+- [ ] Integrated into workout builder (inline create when exercise not found)
 
----
+### 3.5 Coach: Athlete management
 
-## Phase 3 — Billing
+- [ ] View athletes enrolled in plans (derived from PlanEnrollment)
+- [ ] Enroll/unenroll athletes from plans
+- [ ] View athlete profile and benchmarks
+- [ ] View athlete workout logs
 
-**Goal:** Accept payments. Control platform access via subscription state.
+### 3.6 Coach: Benchmarks
 
-**Why third:** Invariant #5 — access = subscription state. Athletes need this before they can use the platform.
-
-**Payment provider:** TBD. Architecture must be provider-agnostic where possible.
-
-### 3.1 Provider selection & schema alignment
-
-- [ ] Choose payment provider
-- [ ] Align schema fields (rename stripe-specific fields if needed)
-- [ ] Provider SDK integration in `api-server`
-
-### 3.2 Billing contracts + API
-
-- [ ] Create `packages/contracts/src/entities/subscription/`
-- [ ] Create `packages/contracts/src/entities/transaction/`
-- [ ] API: checkout flow, subscription management, webhook handler
-- [ ] Idempotent webhook processing (Global Invariant: DB is source of truth)
-
-### 3.3 Access control middleware
-
-- [ ] Subscription-gated access in Platform app
-- [ ] Status check: ACTIVE | TRIAL | PAST_DUE (within grace period)
-- [ ] Grace policy: 72 hours
-
-### 3.4 Marketing checkout integration
-
-- [ ] Storefront → checkout → provider → success/error pages
-- [ ] Complete payment success/error pages (currently stubs)
+- [ ] Manage benchmark catalog (CRUD definitions)
+- [ ] Add/update benchmarks on athlete profiles
+- [ ] View benchmarks dashboard per athlete
 
 ---
 
 ## Phase 4 — Platform App: Athlete Experience
 
-**Goal:** Athletes subscribe, train, log workouts, track progress.
+**Goal:** Athletes see their program, train, log, and track progress.
 
 ### 4.1 Onboarding & profile
 
-- [ ] Athlete registration flow
-- [ ] Profile setup (AthleteProfile: name, gender, height, weight)
-- [ ] Subscription activation
+- [ ] Athlete profile setup (name, gender, height, weight)
+- [ ] Benchmarks input (select from catalog, enter values)
 
 ### 4.2 Training
 
-- [ ] View assigned training plan and workouts
-- [ ] Workout execution view (prescribed sets with targets)
-- [ ] Workout logging (SetLog creation, exercise substitution support)
-- [ ] Rx/scaled tracking (isRx flag)
+- [ ] View assigned training plan(s) and workouts
+- [ ] Workout view (prescribed sets with targets)
+- [ ] Workout completion (mark as done)
+- [ ] Detailed workout logging (SetLog: reps, weight, RPE per exercise)
+- [ ] Exercise substitution support
+- [ ] Rx/scaled tracking
 
 ### 4.3 Progress
 
 - [ ] Workout history
-- [ ] Progress tracking / trends
+- [ ] PR tracking (computed best results from logs)
+- [ ] Benchmark history and trends
 
 ---
 
-## Phase 5 — Admin Billing Views + Release Polish
+## Phase 5 — Billing
+
+**Goal:** Accept payments. Control platform access via subscription state. Auto-enroll on purchase.
+
+**Payment provider:** TBD. Architecture must be provider-agnostic.
+
+### 5.1 Provider selection & schema alignment
+
+- [ ] Choose payment provider
+- [ ] Rename stripe-specific fields (providerProductId, providerPriceId)
+- [ ] Provider SDK integration in api-server
+
+### 5.2 Billing contracts + API
+
+- [ ] Subscription contracts
+- [ ] Transaction contracts
+- [ ] Checkout flow, subscription management, webhook handler
+- [ ] Idempotent webhook processing
+
+### 5.3 Auto-enrollment on purchase
+
+- [ ] Product → TrainingPlan link in admin product form
+- [ ] Purchase webhook → auto-create PlanEnrollment
+- [ ] Handle edge cases (plan deleted, product archived)
+
+### 5.4 Access control
+
+- [ ] Subscription-gated access in Platform app
+- [ ] Status check: ACTIVE | TRIAL | PAST_DUE (grace period 72h)
+
+### 5.5 Marketing checkout integration
+
+- [ ] Storefront → checkout → provider → success/error pages
+
+---
+
+## Phase 6 — Admin Billing Views + Release Polish
 
 **Goal:** Admin visibility into billing. Final quality pass.
 
-### 5.1 Admin billing
+### 6.1 Admin billing
 
-- [ ] Subscription list/detail views in admin
+- [ ] Subscription list/detail views
 - [ ] Transaction history
 - [ ] Revenue metrics in dashboard
 
-### 5.2 Polish
+### 6.2 Admin benchmark catalog management
 
-- [ ] E2E testing of full flow (coach creates → athlete subscribes → athlete trains → coach reviews)
+- [ ] BenchmarkDefinition CRUD in admin UI
+
+### 6.3 Polish
+
+- [ ] E2E testing (coach creates → athlete subscribes → athlete trains → coach reviews)
 - [ ] PWA enhancements (offline, push notifications)
 - [ ] Performance optimization
 - [ ] Accessibility audit
@@ -207,7 +241,8 @@ Foundation built. Architecture enforced. All layers aligned.
 ## Execution Rules
 
 1. **Sequential only.** One phase at a time. One step at a time.
-2. **Each step verified.** `check-types` + `lint` after every meaningful change.
+2. **Each step verified.** `check-types` + `build` after every meaningful change.
 3. **No mocks, no fakes.** If the data layer doesn't support it, UI doesn't pretend it does.
 4. **Schema first.** Any new data need starts at `schema.prisma`, flows down through contracts → API → UI.
-5. **Payment provider agnostic.** No Stripe-specific code until provider is chosen.
+5. **Payment provider agnostic.** No provider-specific code until provider is chosen.
+6. **Concept is law.** All decisions aligned with docs/ARCHITECTURE.md.

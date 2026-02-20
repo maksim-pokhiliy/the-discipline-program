@@ -16,3 +16,6 @@ export * from "./entities/workout-block";
 export * from "./entities/workout-log";
 export * from "./entities/prescribed-set";
 export * from "./entities/user";
+export * from "./entities/plan-enrollment";
+export * from "./entities/benchmark-definition";
+export * from "./entities/user-benchmark";
