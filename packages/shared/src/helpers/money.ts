@@ -1,0 +1,14 @@
+const CENTS_PER_UNIT = 100;
+
+export const centsToAmount = (cents: number): number => cents / CENTS_PER_UNIT;
+
+export const amountToCents = (amount: number): number => Math.round(amount * CENTS_PER_UNIT);
+
+export const formatPrice = (amountCents: number, currency: string): string => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(centsToAmount(amountCents));
+};

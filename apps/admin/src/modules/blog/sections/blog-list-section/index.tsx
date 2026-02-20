@@ -1,19 +1,17 @@
 "use client";
 
-import { useState } from "react";
-
-import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import StarIcon from "@mui/icons-material/Star";
-import { Button, Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/material";
+import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
 import { type BlogPost } from "@repo/contracts/blog";
 import { env } from "@repo/env";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
+import { CreateButton } from "@app/lib/components/create-button";
 import {
   useDeleteBlogPost,
   useToggleBlogFeatured,
@@ -21,62 +19,37 @@ import {
 } from "@app/lib/hooks/use-blog";
 import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
+const filters: DataTableFilter<BlogPost>[] = [
+  {
+    id: "status",
+    label: "Status",
+    options: [
+      { label: "Published", value: "published" },
+      { label: "Draft", value: "draft" },
+    ],
+    match: (item, value) => (value === "published" ? item.isPublished : !item.isPublished),
+  },
+  {
+    id: "spotlight",
+    label: "Spotlight",
+    options: [
+      { label: "Featured", value: "featured" },
+      { label: "Standard", value: "standard" },
+    ],
+    match: (item, value) => (value === "featured" ? item.isFeatured : !item.isFeatured),
+  },
+];
+
 interface BlogListSectionProps {
   posts: BlogPost[];
 }
 
 export const BlogListSection = ({ posts }: BlogListSectionProps) => {
-  const { mutateAsync: toggleStatus } = useToggleBlogPost();
-  const { mutateAsync: toggleFeatured } = useToggleBlogFeatured();
+  const toggleStatusMutation = useToggleBlogPost();
+  const toggleFeaturedMutation = useToggleBlogFeatured();
   const deleteMutation = useDeleteBlogPost();
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
-
-  const [loadingState, setLoadingState] = useState<{
-    id: string;
-    field: "status" | "featured";
-  } | null>(null);
-
-  const handleToggleStatus = async (id: string) => {
-    setLoadingState({ id, field: "status" });
-
-    try {
-      await toggleStatus(id);
-    } finally {
-      setLoadingState(null);
-    }
-  };
-
-  const handleToggleFeatured = async (id: string) => {
-    setLoadingState({ id, field: "featured" });
-
-    try {
-      await toggleFeatured(id);
-    } finally {
-      setLoadingState(null);
-    }
-  };
-
-  const filters: DataTableFilter<BlogPost>[] = [
-    {
-      id: "status",
-      label: "Status",
-      options: [
-        { label: "Published", value: "published" },
-        { label: "Draft", value: "draft" },
-      ],
-      match: (item, value) => (value === "published" ? item.isPublished : !item.isPublished),
-    },
-    {
-      id: "spotlight",
-      label: "Spotlight",
-      options: [
-        { label: "Featured", value: "featured" },
-        { label: "Standard", value: "standard" },
-      ],
-      match: (item, value) => (value === "featured" ? item.isFeatured : !item.isFeatured),
-    },
-  ];
 
   const columns: Column<BlogPost>[] = [
     {
@@ -107,8 +80,8 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
           <Switch
             size="small"
             checked={post.isPublished}
-            disabled={loadingState?.field === "status" && loadingState?.id === post.id}
-            onChange={() => handleToggleStatus(post.id)}
+            disabled={toggleStatusMutation.isPending && toggleStatusMutation.variables === post.id}
+            onChange={() => toggleStatusMutation.mutate(post.id)}
             color="success"
           />
 
@@ -131,8 +104,10 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
           <Switch
             size="small"
             checked={post.isFeatured}
-            disabled={loadingState?.field === "featured" && loadingState?.id === post.id}
-            onChange={() => handleToggleFeatured(post.id)}
+            disabled={
+              toggleFeaturedMutation.isPending && toggleFeaturedMutation.variables === post.id
+            }
+            onChange={() => toggleFeaturedMutation.mutate(post.id)}
             color="warning"
           />
 
@@ -201,17 +176,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
         title="Posts"
         searchPlaceholder="Search posts..."
         filters={filters}
-        action={
-          <Button
-            component={Link}
-            href="/blog/create"
-            variant="contained"
-            startIcon={<AddIcon />}
-            size="medium"
-          >
-            Create Post
-          </Button>
-        }
+        action={<CreateButton href="/blog/create">Create Post</CreateButton>}
         paginated
         emptyMessage="No blog posts yet. Create the first one!"
       />

@@ -10,7 +10,7 @@ import { Grid } from "@mui/material";
 import { type ContentStats, type UserStats } from "@repo/contracts/dashboard";
 import { ContentSection } from "@repo/ui";
 
-import { StatsCard } from "@app/shared/components/ui";
+import { StatsCard } from "@app/lib/components/stats-card";
 
 interface ContentStatsSectionProps {
   contentStats: ContentStats;

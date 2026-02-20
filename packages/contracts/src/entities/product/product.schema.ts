@@ -5,7 +5,7 @@ import { PRICE_INTERVALS, PRODUCT_CURRENCIES } from "./product.constants";
 export const priceSchema = z.object({
   id: z.string().cuid(),
   amountCents: z.number().int().min(0),
-  currency: z.string(),
+  currency: z.enum(PRODUCT_CURRENCIES),
   interval: z.enum(PRICE_INTERVALS),
   isActive: z.boolean(),
 });

@@ -24,6 +24,18 @@ import { useUpdateUserRole } from "@app/lib/hooks";
 
 import { ROLE_CONFIG } from "../../constants";
 
+const filters: DataTableFilter<AdminUserListItem>[] = [
+  {
+    id: "role",
+    label: "Role",
+    options: USER_ROLES.map((role) => ({
+      label: ROLE_CONFIG[role].label,
+      value: role,
+    })),
+    match: (item, value) => item.role === value,
+  },
+];
+
 interface UsersListSectionProps {
   users: AdminUserListItem[];
 }
@@ -61,7 +73,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
 
     setPendingChange({
       userId: currentUser.id,
-      currentRole: currentUser.role as UserRole,
+      currentRole: currentUser.role,
       newRole,
     });
   };
@@ -74,18 +86,6 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
       );
     }
   };
-
-  const filters: DataTableFilter<AdminUserListItem>[] = [
-    {
-      id: "role",
-      label: "Role",
-      options: USER_ROLES.map((role) => ({
-        label: ROLE_CONFIG[role].label,
-        value: role,
-      })),
-      match: (item, value) => item.role === value,
-    },
-  ];
 
   const columns: Column<AdminUserListItem>[] = [
     {

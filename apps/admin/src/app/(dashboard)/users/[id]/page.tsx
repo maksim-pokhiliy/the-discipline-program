@@ -1,5 +1,5 @@
 import { api } from "@app/lib/api";
-import { fetchOrNotFound } from "@app/lib/fetch-or-not-found";
+import { fetchOrNotFound } from "@app/lib/server/fetch-or-not-found";
 import { UserDetailView } from "@app/modules/users";
 
 interface PageProps {

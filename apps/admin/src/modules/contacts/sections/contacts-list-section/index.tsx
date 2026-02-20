@@ -5,6 +5,7 @@ import { useState } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { Box, Chip, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
+import { type ChipProps } from "@mui/material";
 import Link from "next/link";
 
 import { type GetContactByIdResponse, CONTACT_STATUSES } from "@repo/contracts/contact";
@@ -14,15 +15,26 @@ import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from 
 import { useDeleteContact, useUpdateContact } from "@app/lib/hooks";
 import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
-const STATUS_CONFIG: Record<
-  string,
-  { label: string; color: "info" | "warning" | "success" | "default" }
-> = {
+const STATUS_CONFIG: Record<string, { label: string; color: ChipProps["color"] }> = {
   NEW: { label: "New", color: "info" },
   IN_PROGRESS: { label: "In Progress", color: "warning" },
   REPLIED: { label: "Replied", color: "success" },
   CLOSED: { label: "Closed", color: "default" },
 };
+
+const filters: DataTableFilter<GetContactByIdResponse>[] = [
+  {
+    id: "status",
+    label: "Status",
+    options: [
+      { label: "New", value: "NEW" },
+      { label: "In Progress", value: "IN_PROGRESS" },
+      { label: "Replied", value: "REPLIED" },
+      { label: "Closed", value: "CLOSED" },
+    ],
+    match: (item, value) => item.status === value,
+  },
+];
 
 interface ContactsListSectionProps {
   contacts: GetContactByIdResponse[];
@@ -32,9 +44,8 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
   const deleteMutation = useDeleteContact();
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
-  const { mutate: updateContact } = useUpdateContact();
+  const updateContactMutation = useUpdateContact();
 
-  const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [statusMenuAnchor, setStatusMenuAnchor] = useState<HTMLElement | null>(null);
   const [statusMenuContactId, setStatusMenuContactId] = useState<string | null>(null);
 
@@ -51,29 +62,11 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
 
   const handleStatusSelect = (status: (typeof CONTACT_STATUSES)[number]) => {
     if (statusMenuContactId) {
-      setUpdatingId(statusMenuContactId);
-      updateContact(
-        { id: statusMenuContactId, data: { status } },
-        { onSettled: () => setUpdatingId(null) },
-      );
+      updateContactMutation.mutate({ id: statusMenuContactId, data: { status } });
     }
 
     handleStatusMenuClose();
   };
-
-  const filters: DataTableFilter<GetContactByIdResponse>[] = [
-    {
-      id: "status",
-      label: "Status",
-      options: [
-        { label: "New", value: "NEW" },
-        { label: "In Progress", value: "IN_PROGRESS" },
-        { label: "Replied", value: "REPLIED" },
-        { label: "Closed", value: "CLOSED" },
-      ],
-      match: (item, value) => item.status === value,
-    },
-  ];
 
   const columns: Column<GetContactByIdResponse>[] = [
     {
@@ -139,7 +132,9 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
             size="small"
             variant="outlined"
             onClick={(e) => handleStatusChipClick(e, item.id)}
-            disabled={updatingId === item.id}
+            disabled={
+              updateContactMutation.isPending && updateContactMutation.variables?.id === item.id
+            }
           />
         );
       },

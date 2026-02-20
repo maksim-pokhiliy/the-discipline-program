@@ -136,13 +136,19 @@ model Price {
   productId     String
   product       Product        @relation(fields: [productId], references: [id])
   amountCents   Int
-  currency      String         @default("USD")
+  currency      Currency       @default(USD)
   interval      PriceInterval  @default(MONTHLY)
   stripePriceId String?        @unique
   isActive      Boolean        @default(true)
   subscriptions Subscription[]
 
   @@map("app_prices")
+}
+
+enum Currency {
+  USD
+  EUR
+  UAH
 }
 
 enum PriceInterval {
@@ -175,7 +181,7 @@ model Transaction {
   user           User              @relation(fields: [userId], references: [id])
   subscriptionId String?
   amountCents    Int
-  currency       String
+  currency       Currency
   status         TransactionStatus
   providerTxId   String            @unique
   idempotencyKey String?           @unique

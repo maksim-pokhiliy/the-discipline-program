@@ -19,7 +19,7 @@ import {
   PRICE_INTERVALS,
   PRICE_INTERVAL_LABELS,
 } from "@repo/contracts/product";
-import { slugify } from "@repo/shared";
+import { amountToCents, slugify } from "@repo/shared";
 import { FormCard, TagsInput } from "@repo/ui";
 
 interface ProductFormProps {
@@ -138,7 +138,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                   },
                 }}
                 {...register("price.amountCents", {
-                  setValueAs: (v: string) => (v === "" ? undefined : Math.round(Number(v) * 100)),
+                  setValueAs: (v: string) => (v === "" ? undefined : amountToCents(Number(v))),
                 })}
               />
 

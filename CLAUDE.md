@@ -197,6 +197,12 @@ export default async function BlogPage() {
 **Meta-rule:** When the user points out a mistake or a bad pattern, add it here immediately. These rules are permanent and must be followed in all future work.
 
 - **No `display: "flex"` in sx.** Use MUI `Stack` component instead. Stack is already `display: flex`. Exceptions: Card/CardContent where flex is needed for stretch behavior, styled circle/shape containers for icon centering, complex styled components (e.g. RichTextEditor).
+- **One directory per concern.** Never create parallel directories for the same thing (`src/lib/components/` and `src/shared/components/`, two `hooks/` dirs, etc.). Pick one canonical location and stick to it.
+- **No manual MUI type unions.** Don't hardcode `"primary" | "secondary" | "success" | ...` — derive from MUI types (e.g., `PaletteColorKey` from `Palette` + `PaletteColor`). If the theme changes, the type updates automatically.
+- **No loose files in organized directories.** If a directory uses subdirectories for grouping (e.g. `lib/` has `api/`, `hooks/`, `components/`), don't drop files at the root level. Place them in a semantically appropriate subdirectory (e.g. `lib/server/` for server-only utils).
+- **No manual loading state for mutations.** Don't use `useState` to track mutation loading (`loadingId`, `updatingId`). Use React Query's built-in `mutation.isPending` + `mutation.variables` for per-item disabled state.
+- **Static data outside components.** Arrays and objects that don't depend on props/state (`filters`, config maps, pure helper functions) must be defined at module level, not inside component bodies.
+- **No inline money math.** Never write `/ 100`, `* 100` for cents↔amount conversion. Use `centsToAmount()` / `amountToCents()` from `@repo/shared`. Magic number 100 must exist in exactly one place.
 
 ## Commit Convention
 

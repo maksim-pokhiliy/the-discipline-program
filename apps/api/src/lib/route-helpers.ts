@@ -4,10 +4,6 @@ import { type ZodSchema, type ZodType, type ZodTypeDef } from "zod";
 import { handleApiError } from "./error-handler";
 
 type RouteContext = { params: Promise<{ id: string }> };
-
-// ZodSchema<T> constrains both _input and _output to T, which breaks for schemas
-// with .default()/.optional() where input differs from output. ZodType<T, ZodTypeDef, unknown>
-// only constrains the output type, allowing flexible input.
 type ParseSchema<T> = ZodType<T, ZodTypeDef, unknown>;
 
 export const createGetHandler = <TResponse>(

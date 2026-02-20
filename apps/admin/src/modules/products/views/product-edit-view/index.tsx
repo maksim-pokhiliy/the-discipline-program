@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { createProductSchema, type CreateProductData, type Product } from "@repo/contracts/product";
+import { centsToAmount } from "@repo/shared";
 import { FormView } from "@repo/ui";
 
 import { useProduct, useUpdateProduct } from "@app/lib/hooks/use-products";
@@ -30,8 +31,8 @@ export const ProductEditView = ({ initialData }: ProductEditViewProps) => {
       isActive: product?.isActive || false,
       price: activePrice
         ? {
-            amountCents: activePrice.amountCents / 100,
-            currency: activePrice.currency as "USD" | "EUR" | "UAH",
+            amountCents: centsToAmount(activePrice.amountCents),
+            currency: activePrice.currency,
             interval: activePrice.interval,
           }
         : undefined,
