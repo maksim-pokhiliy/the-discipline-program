@@ -21,9 +21,11 @@ model User {
   coachProfile   CoachProfile?
   subscription   Subscription?
   transactions   Transaction[]
-  workoutLogs    WorkoutLog[]
-  accounts       Account[]
-  sessions       Session[]
+  workoutLogs      WorkoutLog[]
+  planEnrollments  PlanEnrollment[]
+  userBenchmarks   UserBenchmark[]
+  accounts         Account[]
+  sessions         Session[]
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -116,7 +118,8 @@ model Product {
   description     String
   features        String[]
   trainingPlanId  String?
-  stripeProductId String?   @unique
+  trainingPlan    TrainingPlan? @relation(fields: [trainingPlanId], references: [id])
+  stripeProductId String?      @unique
   isActive        Boolean   @default(true)
   prices          Price[]
   createdAt       DateTime  @default(now())
@@ -234,9 +237,11 @@ model TrainingPlan {
   coach       CoachProfile @relation(fields: [coachId], references: [id])
   name        String
   description String?
-  isActive    Boolean      @default(true)
+  isActive    Boolean          @default(true)
   workouts    Workout[]
-  createdAt   DateTime     @default(now())
+  enrollments PlanEnrollment[]
+  products    Product[]
+  createdAt   DateTime         @default(now())
   updatedAt   DateTime     @updatedAt
   deletedAt   DateTime?
 
@@ -330,6 +335,55 @@ model SetLog {
 enum Unit {
   KG
   LB
+}
+
+enum PlanEnrollmentStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+}
+
+model PlanEnrollment {
+  id             String               @id @default(cuid())
+  trainingPlanId String
+  trainingPlan   TrainingPlan         @relation(fields: [trainingPlanId], references: [id])
+  userId         String
+  user           User                 @relation(fields: [userId], references: [id])
+  startDate      DateTime             @default(now())
+  endDate        DateTime?
+  status         PlanEnrollmentStatus @default(ACTIVE)
+  createdAt      DateTime             @default(now())
+
+  @@unique([trainingPlanId, userId])
+  @@index([userId])
+  @@index([status])
+  @@map("app_plan_enrollments")
+}
+
+model BenchmarkDefinition {
+  id             String          @id @default(cuid())
+  name           String          @unique
+  unit           String
+  category       String?
+  userBenchmarks UserBenchmark[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@map("app_benchmark_definitions")
+}
+
+model UserBenchmark {
+  id                    String              @id @default(cuid())
+  userId                String
+  user                  User                @relation(fields: [userId], references: [id])
+  benchmarkDefinitionId String
+  benchmarkDefinition   BenchmarkDefinition @relation(fields: [benchmarkDefinitionId], references: [id])
+  value                 Decimal             @db.Decimal(10, 2)
+  updatedAt             DateTime            @updatedAt
+
+  @@unique([userId, benchmarkDefinitionId])
+  @@index([benchmarkDefinitionId])
+  @@map("app_user_benchmarks")
 }
 
 model MarketingPage {

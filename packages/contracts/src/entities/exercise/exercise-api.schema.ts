@@ -10,6 +10,8 @@ export const getExerciseByIdParamsSchema = z.object({
   id: z.string().cuid(),
 });
 
+export const getExerciseResponseSchema = exerciseSchema;
+
 export const createExerciseRequestSchema = createExerciseSchema;
 
 export const updateExerciseParamsSchema = z.object({

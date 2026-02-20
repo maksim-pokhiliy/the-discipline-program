@@ -17,6 +17,14 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  if (token && token.role !== "ADMIN" && !isPublicRoute(path)) {
+    const loginUrl = new URL(AUTH_ROUTES.LOGIN, req.url);
+
+    loginUrl.searchParams.set("error", "AccessDenied");
+
+    return NextResponse.redirect(loginUrl);
+  }
+
   return NextResponse.next();
 }
 
