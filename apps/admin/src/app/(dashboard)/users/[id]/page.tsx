@@ -1,6 +1,5 @@
-import { notFound } from "next/navigation";
-
 import { api } from "@app/lib/api";
+import { fetchOrNotFound } from "@app/lib/fetch-or-not-found";
 import { UserDetailView } from "@app/modules/users";
 
 interface PageProps {
@@ -11,12 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function UserDetailPage({ params }: PageProps) {
   const { id } = await params;
+  const user = await fetchOrNotFound(() => api.users.getById(id));
 
-  try {
-    const user = await api.users.getById(id);
-
-    return <UserDetailView initialData={user} />;
-  } catch {
-    return notFound();
-  }
+  return <UserDetailView initialData={user} />;
 }

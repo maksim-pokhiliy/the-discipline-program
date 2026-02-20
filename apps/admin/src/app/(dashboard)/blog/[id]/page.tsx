@@ -1,6 +1,5 @@
-import { notFound } from "next/navigation";
-
 import { api } from "@app/lib/api";
+import { fetchOrNotFound } from "@app/lib/fetch-or-not-found";
 import { BlogEditView } from "@app/modules/blog";
 
 interface PageProps {
@@ -11,12 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function BlogEditPage({ params }: PageProps) {
   const { id } = await params;
+  const post = await fetchOrNotFound(() => api.blog.getById(id));
 
-  try {
-    const post = await api.blog.getById(id);
-
-    return <BlogEditView initialData={post} />;
-  } catch {
-    return notFound();
-  }
+  return <BlogEditView initialData={post} />;
 }
