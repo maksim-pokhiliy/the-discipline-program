@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 
 import { pagesApi } from "@repo/api-server";
 import { getPageBySlugParamsSchema } from "@repo/contracts/pages";
-import { handleApiError, NotFoundError } from "@repo/errors";
+import { NotFoundError } from "@repo/errors";
+
+import { handleApiError } from "@app/lib/error-handler";
 
 export async function GET(_: Request, { params }: { params: Promise<{ pageSlug: string }> }) {
   try {

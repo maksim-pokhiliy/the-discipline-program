@@ -6,9 +6,9 @@ import {
   updateAthleteProfileRequestSchema,
   updateAthleteProfileResponseSchema,
 } from "@repo/contracts/athlete-profile";
-import { handleApiError } from "@repo/errors";
 
 import { getAuthenticatedUserId } from "@app/lib/auth";
+import { handleApiError } from "@app/lib/error-handler";
 
 export const GET = async () => {
   try {

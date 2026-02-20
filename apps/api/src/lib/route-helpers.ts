@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { type ZodSchema, type ZodType, type ZodTypeDef } from "zod";
 
-import { handleApiError } from "@repo/errors";
+import { handleApiError } from "./error-handler";
 
 type RouteContext = { params: Promise<{ id: string }> };
 

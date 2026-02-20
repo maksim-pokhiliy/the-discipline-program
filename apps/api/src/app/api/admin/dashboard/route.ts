@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { adminDashboardApi } from "@repo/api-server";
 import { getDashboardDataResponseSchema } from "@repo/contracts/dashboard";
-import { handleApiError } from "@repo/errors";
+
+import { handleApiError } from "@app/lib/error-handler";
 
 export async function GET() {
   try {

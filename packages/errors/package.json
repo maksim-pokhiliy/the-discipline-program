@@ -14,15 +14,11 @@
     "@repo/env": "workspace:*",
     "zod": "catalog:"
   },
-  "peerDependencies": {
-    "next": "catalog:"
-  },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
-    "next": "catalog:",
     "prettier": "catalog:",
     "typescript": "catalog:"
   }
