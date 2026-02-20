@@ -27,7 +27,10 @@
     "./workout-log": "./src/entities/workout-log/index.ts",
     "./plan-enrollment": "./src/entities/plan-enrollment/index.ts",
     "./benchmark-definition": "./src/entities/benchmark-definition/index.ts",
-    "./user-benchmark": "./src/entities/user-benchmark/index.ts"
+    "./user-benchmark": "./src/entities/user-benchmark/index.ts",
+    "./coach-dashboard": "./src/entities/coach-dashboard/index.ts",
+    "./coach-note": "./src/entities/coach-note/index.ts",
+    "./athlete-flag": "./src/entities/athlete-flag/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

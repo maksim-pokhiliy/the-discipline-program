@@ -9,6 +9,7 @@ import Link from "next/link";
 
 import { type BlogPost } from "@repo/contracts/blog";
 import { env } from "@repo/env";
+import { useDeleteConfirmation } from "@repo/query";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
@@ -17,7 +18,6 @@ import {
   useToggleBlogFeatured,
   useToggleBlogPost,
 } from "@app/lib/hooks/use-blog";
-import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
 const filters: DataTableFilter<BlogPost>[] = [
   {

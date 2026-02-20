@@ -16,12 +16,12 @@ import {
 import Link from "next/link";
 
 import { type Review } from "@repo/contracts/review";
+import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteReview, useToggleReviewActive } from "@app/lib/hooks";
-import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
 const filters: DataTableFilter<Review>[] = [
   {

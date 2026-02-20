@@ -5,14 +5,16 @@ import {
   updateExerciseCategoryRequestSchema,
 } from "@repo/contracts/exercise-category";
 
+import { withAdminAuth } from "@app/lib/auth";
 import { createDeleteHandler, createPutHandler } from "@app/lib/route-helpers";
 
-export const PUT = createPutHandler(
-  adminExerciseCategoriesApi.update,
-  updateExerciseCategoryParamsSchema,
-  updateExerciseCategoryRequestSchema,
+export const PUT = withAdminAuth(
+  createPutHandler(
+    adminExerciseCategoriesApi.update,
+    updateExerciseCategoryParamsSchema,
+    updateExerciseCategoryRequestSchema,
+  ),
 );
-export const DELETE = createDeleteHandler(
-  adminExerciseCategoriesApi.delete,
-  deleteExerciseCategoryParamsSchema,
+export const DELETE = withAdminAuth(
+  createDeleteHandler(adminExerciseCategoriesApi.delete, deleteExerciseCategoryParamsSchema),
 );

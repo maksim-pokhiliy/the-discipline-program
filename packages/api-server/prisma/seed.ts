@@ -1,29 +1,57 @@
-import { PrismaClient, type Prisma, Role } from "@prisma/client";
+import {
+  FlagType,
+  Gender,
+  PlanEnrollmentStatus,
+  PrismaClient,
+  type Prisma,
+  Role,
+  TrainingPlanStatus,
+  Unit,
+} from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 const daysAgo = (days: number): Date => {
-  const date = new Date();
+  const d = new Date();
 
-  date.setDate(date.getDate() - days);
+  d.setDate(d.getDate() - days);
 
-  return date;
+  return d;
 };
 
-// ---------------------------------------------------------------------------
-// Clear
-// ---------------------------------------------------------------------------
+const daysFromNow = (days: number): Date => {
+  const d = new Date();
+
+  d.setDate(d.getDate() + days);
+
+  return d;
+};
+
+const todayAt = (hours: number, minutes = 0): Date => {
+  const d = new Date();
+
+  d.setHours(hours, minutes, 0, 0);
+
+  return d;
+};
 
 const clearAll = async () => {
   await prisma.setLog.deleteMany();
+  await prisma.workoutLog.deleteMany();
   await prisma.prescribedSet.deleteMany();
   await prisma.workoutBlock.deleteMany();
-  await prisma.workoutLog.deleteMany();
   await prisma.workout.deleteMany();
+  await prisma.userBenchmark.deleteMany();
+  await prisma.benchmarkDefinition.deleteMany();
+  await prisma.coachNote.deleteMany();
+  await prisma.athleteFlag.deleteMany();
+  await prisma.planEnrollment.deleteMany();
   await prisma.trainingPlan.deleteMany();
   await prisma.exercise.deleteMany();
   await prisma.exerciseCategory.deleteMany();
+  await prisma.athleteProfile.deleteMany();
+  await prisma.coachProfile.deleteMany();
   await prisma.marketingContactSubmission.deleteMany();
   await prisma.marketingPageSection.deleteMany();
   await prisma.marketingPage.deleteMany();
@@ -31,128 +59,899 @@ const clearAll = async () => {
   await prisma.product.deleteMany();
   await prisma.marketingBlogPost.deleteMany();
   await prisma.marketingReview.deleteMany();
+  await prisma.session.deleteMany();
+  await prisma.account.deleteMany();
   await prisma.user.deleteMany();
 };
 
-// ---------------------------------------------------------------------------
-// Users
-// ---------------------------------------------------------------------------
-
 const seedUsers = async (passwordHash: string) => {
-  await prisma.user.createMany({
-    data: [
-      {
+  const users = await Promise.all([
+    prisma.user.create({
+      data: {
         email: "admin@example.com",
+        name: "Admin",
         role: Role.ADMIN,
         password: passwordHash,
         createdAt: daysAgo(90),
       },
-      {
+    }),
+    prisma.user.create({
+      data: {
         email: "coach.ben@thedisciplineprogram.com",
+        name: "Ben Sergeev",
         role: Role.COACH,
         password: passwordHash,
         createdAt: daysAgo(60),
       },
-      {
+    }),
+    prisma.user.create({
+      data: {
         email: "sarah.mitchell@email.com",
+        name: "Sarah Mitchell",
         role: Role.USER,
         password: passwordHash,
         createdAt: daysAgo(55),
       },
-      {
+    }),
+    prisma.user.create({
+      data: {
         email: "mike.thompson@email.com",
+        name: "Mike Thompson",
         role: Role.USER,
         password: passwordHash,
         createdAt: daysAgo(48),
       },
-      {
+    }),
+    prisma.user.create({
+      data: {
         email: "jenny.park@email.com",
+        name: "Jenny Park",
         role: Role.USER,
         password: passwordHash,
         createdAt: daysAgo(34),
       },
-      {
+    }),
+    prisma.user.create({
+      data: {
         email: "david.rodriguez@email.com",
+        name: "David Rodriguez",
         role: Role.USER,
         password: passwordHash,
         createdAt: daysAgo(28),
       },
-      {
+    }),
+    prisma.user.create({
+      data: {
         email: "lisa.anderson@email.com",
+        name: "Lisa Anderson",
         role: Role.USER,
         password: passwordHash,
         createdAt: daysAgo(12),
       },
-      {
+    }),
+    prisma.user.create({
+      data: {
         email: "tom.bradley@email.com",
+        name: "Tom Bradley",
         role: Role.USER,
         password: passwordHash,
         createdAt: daysAgo(5),
       },
+    }),
+  ]);
+
+  console.log("  Users: 8 (1 admin, 1 coach, 6 athletes)");
+
+  return {
+    admin: users[0]!,
+    coach: users[1]!,
+    sarah: users[2]!,
+    mike: users[3]!,
+    jenny: users[4]!,
+    david: users[5]!,
+    lisa: users[6]!,
+    tom: users[7]!,
+  };
+};
+
+const seedProfiles = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
+  const coachProfile = await prisma.coachProfile.create({
+    data: {
+      userId: users.coach.id,
+      bio: "10+ years coaching competitive CrossFit athletes. Games athlete mindset. L3 CCFT certified.",
+      createdAt: daysAgo(60),
+    },
+  });
+
+  await prisma.athleteProfile.createMany({
+    data: [
+      { userId: users.sarah.id, gender: Gender.FEMALE, heightCm: 168, weightKg: 63 },
+      { userId: users.mike.id, gender: Gender.MALE, heightCm: 183, weightKg: 88 },
+      { userId: users.jenny.id, gender: Gender.FEMALE, heightCm: 160, weightKg: 55 },
+      { userId: users.david.id, gender: Gender.MALE, heightCm: 178, weightKg: 82 },
+      { userId: users.lisa.id, gender: Gender.FEMALE, heightCm: 172, weightKg: 67 },
+      { userId: users.tom.id, gender: Gender.MALE, heightCm: 175, weightKg: 78 },
     ],
   });
 
-  console.log("  Users: 8 (1 admin, 1 coach, 6 regular)");
-};
+  console.log("  Profiles: 1 coach, 6 athlete");
 
-// ---------------------------------------------------------------------------
-// Exercise Categories & Exercises
-// ---------------------------------------------------------------------------
-
-const seedExerciseCategories = async () => {
-  const categories: Prisma.ExerciseCategoryCreateManyInput[] = [
-    { name: "Strength", sortOrder: 0 },
-    { name: "Metcon", sortOrder: 1 },
-    { name: "Cardio", sortOrder: 2 },
-    { name: "Accessory", sortOrder: 3 },
-    { name: "Warmup", sortOrder: 4 },
-    { name: "Skill", sortOrder: 5 },
-  ];
-
-  await prisma.exerciseCategory.createMany({ data: categories });
-
-  console.log("  Exercise categories: 6");
+  return coachProfile;
 };
 
 const seedExercises = async () => {
-  const categories = await prisma.exerciseCategory.findMany();
-  const categoryMap = new Map(categories.map((c) => [c.name, c.id]));
+  const categories = await Promise.all([
+    prisma.exerciseCategory.create({ data: { name: "Strength", sortOrder: 0 } }),
+    prisma.exerciseCategory.create({ data: { name: "Metcon", sortOrder: 1 } }),
+    prisma.exerciseCategory.create({ data: { name: "Cardio", sortOrder: 2 } }),
+    prisma.exerciseCategory.create({ data: { name: "Accessory", sortOrder: 3 } }),
+    prisma.exerciseCategory.create({ data: { name: "Warmup", sortOrder: 4 } }),
+    prisma.exerciseCategory.create({ data: { name: "Skill", sortOrder: 5 } }),
+  ]);
 
-  const exercises: Prisma.ExerciseCreateManyInput[] = [
-    { name: "Back Squat", categoryId: categoryMap.get("Strength"), createdAt: daysAgo(30) },
-    { name: "Deadlift", categoryId: categoryMap.get("Strength"), createdAt: daysAgo(30) },
-    { name: "Bench Press", categoryId: categoryMap.get("Strength"), createdAt: daysAgo(30) },
-    { name: "Overhead Press", categoryId: categoryMap.get("Strength"), createdAt: daysAgo(29) },
-    { name: "Front Squat", categoryId: categoryMap.get("Strength"), createdAt: daysAgo(29) },
-    { name: "Clean & Jerk", categoryId: categoryMap.get("Skill"), createdAt: daysAgo(28) },
-    { name: "Snatch", categoryId: categoryMap.get("Skill"), createdAt: daysAgo(28) },
-    { name: "Bar Muscle-Up", categoryId: categoryMap.get("Skill"), createdAt: daysAgo(27) },
-    { name: "Ring Muscle-Up", categoryId: categoryMap.get("Skill"), createdAt: daysAgo(27) },
-    { name: "Handstand Walk", categoryId: categoryMap.get("Skill"), createdAt: daysAgo(26) },
-    { name: "Burpee", categoryId: categoryMap.get("Metcon"), createdAt: daysAgo(25) },
-    { name: "Wall Ball", categoryId: categoryMap.get("Metcon"), createdAt: daysAgo(25) },
-    { name: "Box Jump", categoryId: categoryMap.get("Metcon"), createdAt: daysAgo(25) },
-    { name: "Kettlebell Swing", categoryId: categoryMap.get("Metcon"), createdAt: daysAgo(24) },
-    { name: "Rowing", categoryId: categoryMap.get("Cardio"), createdAt: daysAgo(24) },
-    { name: "Assault Bike", categoryId: categoryMap.get("Cardio"), createdAt: daysAgo(24) },
-    { name: "Running", categoryId: categoryMap.get("Cardio"), createdAt: daysAgo(23) },
-    { name: "Jump Rope", categoryId: categoryMap.get("Cardio"), createdAt: daysAgo(23) },
-    { name: "Tricep Pushdown", categoryId: categoryMap.get("Accessory"), createdAt: daysAgo(22) },
-    { name: "Lateral Raise", categoryId: categoryMap.get("Accessory"), createdAt: daysAgo(22) },
-    { name: "GHD Sit-Up", categoryId: categoryMap.get("Accessory"), createdAt: daysAgo(21) },
-    { name: "PVC Pass-Through", categoryId: categoryMap.get("Warmup"), createdAt: daysAgo(21) },
-    { name: "Arm Circles", categoryId: categoryMap.get("Warmup"), createdAt: daysAgo(20) },
-    { name: "Jumping Jacks", categoryId: categoryMap.get("Warmup"), createdAt: daysAgo(20) },
+  const catMap = Object.fromEntries(categories.map((c) => [c.name, c.id])) as Record<
+    string,
+    string
+  >;
+
+  const exerciseData: Prisma.ExerciseCreateManyInput[] = [
+    { name: "Back Squat", categoryId: catMap["Strength"] },
+    { name: "Deadlift", categoryId: catMap["Strength"] },
+    { name: "Bench Press", categoryId: catMap["Strength"] },
+    { name: "Overhead Press", categoryId: catMap["Strength"] },
+    { name: "Front Squat", categoryId: catMap["Strength"] },
+    { name: "Clean & Jerk", categoryId: catMap["Skill"] },
+    { name: "Snatch", categoryId: catMap["Skill"] },
+    { name: "Bar Muscle-Up", categoryId: catMap["Skill"] },
+    { name: "Ring Muscle-Up", categoryId: catMap["Skill"] },
+    { name: "Handstand Walk", categoryId: catMap["Skill"] },
+    { name: "Burpee", categoryId: catMap["Metcon"] },
+    { name: "Wall Ball", categoryId: catMap["Metcon"] },
+    { name: "Box Jump", categoryId: catMap["Metcon"] },
+    { name: "Kettlebell Swing", categoryId: catMap["Metcon"] },
+    { name: "Rowing", categoryId: catMap["Cardio"] },
+    { name: "Assault Bike", categoryId: catMap["Cardio"] },
+    { name: "Running", categoryId: catMap["Cardio"] },
+    { name: "Jump Rope", categoryId: catMap["Cardio"] },
+    { name: "Tricep Pushdown", categoryId: catMap["Accessory"] },
+    { name: "Lateral Raise", categoryId: catMap["Accessory"] },
+    { name: "GHD Sit-Up", categoryId: catMap["Accessory"] },
+    { name: "PVC Pass-Through", categoryId: catMap["Warmup"] },
+    { name: "Arm Circles", categoryId: catMap["Warmup"] },
+    { name: "Jumping Jacks", categoryId: catMap["Warmup"] },
   ];
 
-  await prisma.exercise.createMany({ data: exercises });
+  await prisma.exercise.createMany({ data: exerciseData });
+  const exercises = await prisma.exercise.findMany();
+  const exMap = Object.fromEntries(exercises.map((e) => [e.name, e.id])) as Record<string, string>;
 
-  console.log("  Exercises: 24");
+  console.log("  Exercise categories: 6, Exercises: 24");
+
+  return { catMap, exMap };
 };
 
-// ---------------------------------------------------------------------------
-// Marketing Pages & Sections
-// ---------------------------------------------------------------------------
+type ExMap = Record<string, string>;
+type CatMap = Record<string, string>;
+
+const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: ExMap) => {
+  const createWorkoutWithBlocks = async (
+    planId: string,
+    dayOrder: number,
+    title: string,
+    blocks: {
+      categoryId: string;
+      rounds?: number;
+      timeCapSec?: number;
+      sets: {
+        exerciseId: string;
+        sets?: number;
+        reps?: number;
+        weightValue?: number;
+        weightUnit?: Unit;
+        rpe?: number;
+        notes?: string;
+      }[];
+    }[],
+  ) => {
+    const workout = await prisma.workout.create({
+      data: { planId, dayOrder, title, createdAt: daysAgo(30) },
+    });
+
+    for (const block of blocks) {
+      await prisma.workoutBlock.create({
+        data: {
+          workoutId: workout.id,
+          categoryId: block.categoryId,
+          rounds: block.rounds,
+          timeCapSec: block.timeCapSec,
+          sets: {
+            create: block.sets.map((s) => ({
+              exerciseId: s.exerciseId,
+              sets: s.sets,
+              reps: s.reps,
+              weightValue: s.weightValue,
+              weightUnit: s.weightUnit ?? Unit.KG,
+              rpe: s.rpe,
+              notes: s.notes,
+            })),
+          },
+        },
+      });
+    }
+
+    return workout;
+  };
+
+  const plan1 = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "Competitor Season 1",
+      description:
+        "High-volume programming for Open/Quarterfinals preparation. 2 sessions/day with sport-specific skill work.",
+      status: TrainingPlanStatus.ACTIVE,
+      createdAt: daysAgo(45),
+    },
+  });
+
+  const plan2 = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "Performance RX Q1",
+      description:
+        "Daily WOD programming for dedicated athletes. 60-minute sessions combining strength, skill, and conditioning.",
+      status: TrainingPlanStatus.ACTIVE,
+      createdAt: daysAgo(40),
+    },
+  });
+
+  const plan3 = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "Foundations Starter",
+      description:
+        "General Physical Preparedness for new athletes. Emphasis on movement quality and building base.",
+      status: TrainingPlanStatus.ACTIVE,
+      createdAt: daysAgo(35),
+    },
+  });
+
+  const plan4 = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "Off-Season Strength Block",
+      description:
+        "8-week hypertrophy and strength-focused cycle. Low metcon volume, high barbell work.",
+      status: TrainingPlanStatus.DRAFT,
+      createdAt: daysAgo(10),
+    },
+  });
+
+  const plan5 = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "Old Program 2024",
+      description: "Archived program from last year. No longer in use.",
+      status: TrainingPlanStatus.ARCHIVED,
+      createdAt: daysAgo(120),
+    },
+  });
+
+  const plan6 = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "Legacy Competition Prep",
+      description:
+        "Still has one active athlete enrolled. Cannot be deleted until enrollment ends.",
+      status: TrainingPlanStatus.ARCHIVED,
+      createdAt: daysAgo(90),
+    },
+  });
+
+  const p1w1 = await createWorkoutWithBlocks(plan1.id, 1, "Day 1: Heavy Squats + Sprint", [
+    {
+      categoryId: catMap["Strength"]!,
+      sets: [
+        { exerciseId: exMap["Back Squat"]!, sets: 5, reps: 3, weightValue: 100, rpe: 8 },
+        { exerciseId: exMap["Front Squat"]!, sets: 3, reps: 5, weightValue: 80, rpe: 7 },
+      ],
+    },
+    {
+      categoryId: catMap["Metcon"]!,
+      rounds: 3,
+      timeCapSec: 720,
+      sets: [
+        { exerciseId: exMap["Burpee"]!, reps: 15 },
+        { exerciseId: exMap["Box Jump"]!, reps: 12 },
+      ],
+    },
+  ]);
+
+  const p1w2 = await createWorkoutWithBlocks(plan1.id, 2, "Day 2: Olympic Lifting", [
+    {
+      categoryId: catMap["Skill"]!,
+      sets: [
+        { exerciseId: exMap["Clean & Jerk"]!, sets: 5, reps: 2, weightValue: 85, rpe: 9 },
+        { exerciseId: exMap["Snatch"]!, sets: 5, reps: 2, weightValue: 65, rpe: 8 },
+      ],
+    },
+    {
+      categoryId: catMap["Accessory"]!,
+      sets: [{ exerciseId: exMap["GHD Sit-Up"]!, sets: 3, reps: 15 }],
+    },
+  ]);
+
+  const p1w3 = await createWorkoutWithBlocks(plan1.id, 3, "Day 3: Gymnastics + Metcon", [
+    {
+      categoryId: catMap["Skill"]!,
+      sets: [
+        { exerciseId: exMap["Bar Muscle-Up"]!, sets: 5, reps: 3 },
+        { exerciseId: exMap["Handstand Walk"]!, sets: 4, reps: 1, notes: "50ft attempts" },
+      ],
+    },
+    {
+      categoryId: catMap["Metcon"]!,
+      rounds: 5,
+      timeCapSec: 900,
+      sets: [
+        { exerciseId: exMap["Wall Ball"]!, reps: 20 },
+        { exerciseId: exMap["Kettlebell Swing"]!, reps: 15 },
+        { exerciseId: exMap["Rowing"]!, reps: 1, notes: "250m" },
+      ],
+    },
+  ]);
+
+  const p1w4 = await createWorkoutWithBlocks(plan1.id, 4, "Day 4: Pressing + Cardio", [
+    {
+      categoryId: catMap["Strength"]!,
+      sets: [
+        { exerciseId: exMap["Bench Press"]!, sets: 5, reps: 5, weightValue: 70, rpe: 7 },
+        { exerciseId: exMap["Overhead Press"]!, sets: 4, reps: 6, weightValue: 50, rpe: 7 },
+      ],
+    },
+    {
+      categoryId: catMap["Cardio"]!,
+      timeCapSec: 1200,
+      sets: [
+        { exerciseId: exMap["Assault Bike"]!, reps: 1, notes: "30 cal" },
+        { exerciseId: exMap["Running"]!, reps: 1, notes: "400m" },
+      ],
+    },
+  ]);
+
+  const p1w5 = await createWorkoutWithBlocks(plan1.id, 5, "Day 5: Deadlift + Chipper", [
+    {
+      categoryId: catMap["Strength"]!,
+      sets: [{ exerciseId: exMap["Deadlift"]!, sets: 5, reps: 3, weightValue: 140, rpe: 9 }],
+    },
+    {
+      categoryId: catMap["Metcon"]!,
+      timeCapSec: 1200,
+      sets: [
+        { exerciseId: exMap["Wall Ball"]!, reps: 50 },
+        { exerciseId: exMap["Box Jump"]!, reps: 40 },
+        { exerciseId: exMap["Kettlebell Swing"]!, reps: 30 },
+        { exerciseId: exMap["Burpee"]!, reps: 20 },
+      ],
+    },
+  ]);
+
+  const p2w1 = await createWorkoutWithBlocks(plan2.id, 1, "Monday: Strength Focus", [
+    {
+      categoryId: catMap["Warmup"]!,
+      sets: [
+        { exerciseId: exMap["PVC Pass-Through"]!, reps: 20 },
+        { exerciseId: exMap["Arm Circles"]!, reps: 20 },
+      ],
+    },
+    {
+      categoryId: catMap["Strength"]!,
+      sets: [{ exerciseId: exMap["Back Squat"]!, sets: 5, reps: 5, weightValue: 80, rpe: 7 }],
+    },
+    {
+      categoryId: catMap["Metcon"]!,
+      rounds: 3,
+      timeCapSec: 600,
+      sets: [
+        { exerciseId: exMap["Wall Ball"]!, reps: 15 },
+        { exerciseId: exMap["Jump Rope"]!, reps: 50, notes: "Double unders" },
+      ],
+    },
+  ]);
+
+  const p2w2 = await createWorkoutWithBlocks(plan2.id, 2, "Tuesday: Conditioning", [
+    {
+      categoryId: catMap["Cardio"]!,
+      timeCapSec: 1200,
+      sets: [
+        { exerciseId: exMap["Rowing"]!, reps: 1, notes: "500m" },
+        { exerciseId: exMap["Assault Bike"]!, reps: 1, notes: "20 cal" },
+        { exerciseId: exMap["Running"]!, reps: 1, notes: "400m" },
+      ],
+    },
+  ]);
+
+  const p2w3 = await createWorkoutWithBlocks(plan2.id, 3, "Wednesday: Upper Body", [
+    {
+      categoryId: catMap["Strength"]!,
+      sets: [
+        { exerciseId: exMap["Bench Press"]!, sets: 4, reps: 8, weightValue: 60, rpe: 7 },
+        { exerciseId: exMap["Overhead Press"]!, sets: 3, reps: 8, weightValue: 40, rpe: 6 },
+      ],
+    },
+    {
+      categoryId: catMap["Accessory"]!,
+      sets: [
+        { exerciseId: exMap["Tricep Pushdown"]!, sets: 3, reps: 12 },
+        { exerciseId: exMap["Lateral Raise"]!, sets: 3, reps: 15 },
+      ],
+    },
+  ]);
+
+  const p2w4 = await createWorkoutWithBlocks(plan2.id, 4, "Thursday: Skill Day", [
+    {
+      categoryId: catMap["Skill"]!,
+      sets: [
+        { exerciseId: exMap["Clean & Jerk"]!, sets: 5, reps: 2, weightValue: 70, rpe: 7 },
+        { exerciseId: exMap["Snatch"]!, sets: 5, reps: 2, weightValue: 50, rpe: 7 },
+      ],
+    },
+  ]);
+
+  const p3w1 = await createWorkoutWithBlocks(plan3.id, 1, "Intro: Movement Basics", [
+    {
+      categoryId: catMap["Warmup"]!,
+      sets: [
+        { exerciseId: exMap["Jumping Jacks"]!, reps: 30 },
+        { exerciseId: exMap["Arm Circles"]!, reps: 20 },
+        { exerciseId: exMap["PVC Pass-Through"]!, reps: 15 },
+      ],
+    },
+    {
+      categoryId: catMap["Strength"]!,
+      sets: [
+        {
+          exerciseId: exMap["Back Squat"]!,
+          sets: 3,
+          reps: 10,
+          weightValue: 40,
+          rpe: 5,
+          notes: "Focus on depth",
+        },
+        {
+          exerciseId: exMap["Deadlift"]!,
+          sets: 3,
+          reps: 8,
+          weightValue: 50,
+          rpe: 5,
+          notes: "Flat back",
+        },
+      ],
+    },
+  ]);
+
+  const p3w2 = await createWorkoutWithBlocks(plan3.id, 2, "Day 2: Light Metcon", [
+    {
+      categoryId: catMap["Metcon"]!,
+      rounds: 3,
+      timeCapSec: 600,
+      sets: [
+        { exerciseId: exMap["Burpee"]!, reps: 8 },
+        { exerciseId: exMap["Box Jump"]!, reps: 10, notes: "Step-down option" },
+        { exerciseId: exMap["Kettlebell Swing"]!, reps: 12, weightValue: 16 },
+      ],
+    },
+  ]);
+
+  const p3w3 = await createWorkoutWithBlocks(plan3.id, 3, "Day 3: Cardio Base", [
+    {
+      categoryId: catMap["Cardio"]!,
+      timeCapSec: 1800,
+      sets: [
+        { exerciseId: exMap["Rowing"]!, reps: 1, notes: "2000m at easy pace" },
+        { exerciseId: exMap["Jump Rope"]!, reps: 100, notes: "Singles OK" },
+      ],
+    },
+  ]);
+
+  await createWorkoutWithBlocks(plan4.id, 1, "Week 1 Day 1: Squat Focus", [
+    {
+      categoryId: catMap["Strength"]!,
+      sets: [
+        { exerciseId: exMap["Back Squat"]!, sets: 4, reps: 8, weightValue: 85, rpe: 7 },
+        { exerciseId: exMap["Front Squat"]!, sets: 3, reps: 8, weightValue: 65, rpe: 7 },
+      ],
+    },
+    {
+      categoryId: catMap["Accessory"]!,
+      sets: [
+        { exerciseId: exMap["GHD Sit-Up"]!, sets: 3, reps: 20 },
+        { exerciseId: exMap["Lateral Raise"]!, sets: 3, reps: 15 },
+      ],
+    },
+  ]);
+
+  await createWorkoutWithBlocks(plan5.id, 1, "Legacy Day 1", [
+    {
+      categoryId: catMap["Strength"]!,
+      sets: [{ exerciseId: exMap["Deadlift"]!, sets: 5, reps: 5, weightValue: 120 }],
+    },
+  ]);
+
+  const p6w1 = await createWorkoutWithBlocks(plan6.id, 1, "Legacy Comp Day 1", [
+    {
+      categoryId: catMap["Strength"]!,
+      sets: [{ exerciseId: exMap["Back Squat"]!, sets: 5, reps: 3, weightValue: 110 }],
+    },
+    {
+      categoryId: catMap["Metcon"]!,
+      rounds: 5,
+      sets: [
+        { exerciseId: exMap["Burpee"]!, reps: 10 },
+        { exerciseId: exMap["Wall Ball"]!, reps: 15 },
+      ],
+    },
+  ]);
+
+  console.log("  Training plans: 6 (3 ACTIVE, 1 DRAFT, 2 ARCHIVED)");
+  console.log("  Workouts: 15 with blocks and prescribed sets");
+
+  return {
+    plans: { plan1, plan2, plan3, plan4, plan5, plan6 },
+    workouts: {
+      p1: [p1w1, p1w2, p1w3, p1w4, p1w5],
+      p2: [p2w1, p2w2, p2w3, p2w4],
+      p3: [p3w1, p3w2, p3w3],
+      p6: [p6w1],
+    },
+  };
+};
+
+const seedEnrollments = async (
+  users: Awaited<ReturnType<typeof seedUsers>>,
+  plans: Awaited<ReturnType<typeof seedTrainingData>>["plans"],
+) => {
+  await prisma.planEnrollment.createMany({
+    data: [
+      {
+        trainingPlanId: plans.plan1.id,
+        userId: users.sarah.id,
+        startDate: daysAgo(30),
+        endDate: daysFromNow(5),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plans.plan1.id,
+        userId: users.jenny.id,
+        startDate: daysAgo(20),
+        endDate: daysFromNow(40),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plans.plan2.id,
+        userId: users.mike.id,
+        startDate: daysAgo(25),
+        endDate: daysFromNow(12),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plans.plan2.id,
+        userId: users.lisa.id,
+        startDate: daysAgo(10),
+        endDate: daysFromNow(20),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plans.plan3.id,
+        userId: users.david.id,
+        startDate: daysAgo(5),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plans.plan3.id,
+        userId: users.tom.id,
+        startDate: daysAgo(3),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plans.plan6.id,
+        userId: users.sarah.id,
+        startDate: daysAgo(60),
+        endDate: daysFromNow(10),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plans.plan5.id,
+        userId: users.mike.id,
+        startDate: daysAgo(100),
+        endDate: daysAgo(30),
+        status: PlanEnrollmentStatus.COMPLETED,
+      },
+    ],
+  });
+
+  console.log("  Enrollments: 8 (6 active, 1 completed, 1 legacy-active)");
+};
+
+const seedWorkoutLogs = async (
+  users: Awaited<ReturnType<typeof seedUsers>>,
+  workouts: Awaited<ReturnType<typeof seedTrainingData>>["workouts"],
+) => {
+  const getPrescribedSets = async (workoutId: string) => {
+    const blocks = await prisma.workoutBlock.findMany({
+      where: { workoutId },
+      include: { sets: true },
+    });
+
+    return blocks.flatMap((b) => b.sets);
+  };
+
+  const createLog = async (
+    userId: string,
+    workoutId: string,
+    date: Date,
+    isRx: boolean,
+    notes: string | null,
+    setOverrides?: { weightDone?: number; repsDone?: number; rpeActual?: number }[],
+  ) => {
+    const prescribed = await getPrescribedSets(workoutId);
+
+    await prisma.workoutLog.create({
+      data: {
+        userId,
+        workoutId,
+        date,
+        isRx,
+        notes,
+        createdAt: date,
+        setLogs: {
+          create: prescribed.map((ps, i) => ({
+            prescribedSetId: ps.id,
+            repsDone: setOverrides?.[i]?.repsDone ?? ps.reps ?? 10,
+            weightDone:
+              setOverrides?.[i]?.weightDone ?? (ps.weightValue ? Number(ps.weightValue) : null),
+            rpeActual: setOverrides?.[i]?.rpeActual ?? ps.rpe,
+          })),
+        },
+      },
+    });
+  };
+
+  await createLog(users.sarah.id, workouts.p1[0]!.id, daysAgo(10), true, null, [
+    { weightDone: 95, repsDone: 3, rpeActual: 7 },
+    { weightDone: 75, repsDone: 5, rpeActual: 6 },
+    { repsDone: 15, rpeActual: 8 },
+    { repsDone: 12, rpeActual: 7 },
+  ]);
+  await createLog(users.sarah.id, workouts.p1[1]!.id, daysAgo(9), true, "Feeling strong on cleans");
+  await createLog(users.sarah.id, workouts.p1[2]!.id, daysAgo(8), true, null);
+  await createLog(users.sarah.id, workouts.p1[3]!.id, daysAgo(6), true, null, [
+    { weightDone: 72, repsDone: 5, rpeActual: 7 },
+    { weightDone: 52, repsDone: 6, rpeActual: 7 },
+  ]);
+  await createLog(users.sarah.id, workouts.p1[4]!.id, daysAgo(5), true, "PR on deadlift!", [
+    { weightDone: 145, repsDone: 3, rpeActual: 9 },
+  ]);
+  await createLog(users.sarah.id, workouts.p1[0]!.id, daysAgo(3), true, null, [
+    { weightDone: 100, repsDone: 3, rpeActual: 8 },
+    { weightDone: 82, repsDone: 5, rpeActual: 7 },
+  ]);
+  await createLog(users.sarah.id, workouts.p1[1]!.id, daysAgo(2), true, null);
+  await createLog(users.sarah.id, workouts.p1[2]!.id, daysAgo(1), true, null);
+  await createLog(users.sarah.id, workouts.p1[3]!.id, todayAt(7, 30), true, "Morning session done");
+
+  await createLog(users.jenny.id, workouts.p1[0]!.id, daysAgo(12), true, null);
+  await createLog(users.jenny.id, workouts.p1[1]!.id, daysAgo(11), true, null);
+  await createLog(users.jenny.id, workouts.p1[2]!.id, daysAgo(9), true, null);
+  await createLog(users.jenny.id, workouts.p1[3]!.id, daysAgo(7), false, "Scaled overhead press", [
+    { weightDone: 55, repsDone: 5, rpeActual: 8 },
+    { weightDone: 35, repsDone: 6, rpeActual: 7 },
+  ]);
+  await createLog(users.jenny.id, workouts.p1[4]!.id, daysAgo(5), true, null);
+  await createLog(users.jenny.id, workouts.p1[0]!.id, daysAgo(3), true, null);
+  await createLog(users.jenny.id, workouts.p1[1]!.id, daysAgo(2), true, null);
+  await createLog(users.jenny.id, workouts.p1[2]!.id, daysAgo(1), true, null);
+  await createLog(users.jenny.id, workouts.p1[3]!.id, todayAt(8, 0), true, null);
+
+  await createLog(users.mike.id, workouts.p2[0]!.id, daysAgo(20), true, null, [
+    { weightDone: 90, repsDone: 5, rpeActual: 7 },
+  ]);
+  await createLog(users.mike.id, workouts.p2[1]!.id, daysAgo(19), true, null);
+  await createLog(users.mike.id, workouts.p2[2]!.id, daysAgo(17), true, null);
+  await createLog(users.mike.id, workouts.p2[3]!.id, daysAgo(15), true, null);
+  await createLog(users.mike.id, workouts.p2[0]!.id, daysAgo(13), true, null, [
+    { weightDone: 85, repsDone: 5, rpeActual: 8 },
+  ]);
+  await createLog(users.mike.id, workouts.p2[1]!.id, daysAgo(11), true, null);
+  await createLog(users.mike.id, workouts.p2[2]!.id, daysAgo(9), true, null);
+  await createLog(users.mike.id, workouts.p2[3]!.id, daysAgo(7), true, null);
+  await createLog(
+    users.mike.id,
+    workouts.p2[0]!.id,
+    daysAgo(4),
+    true,
+    "Last session before disappearing",
+  );
+
+  await createLog(users.lisa.id, workouts.p2[0]!.id, daysAgo(8), false, "Shoulder bothering me", [
+    { weightDone: 50, repsDone: 5, rpeActual: 6 },
+  ]);
+  await createLog(
+    users.lisa.id,
+    workouts.p2[1]!.id,
+    daysAgo(5),
+    false,
+    "Easy pace, shoulder recovery",
+  );
+  await createLog(users.lisa.id, workouts.p2[2]!.id, daysAgo(3), false, "Skipped overhead press", [
+    { weightDone: 40, repsDone: 8, rpeActual: 5 },
+    { weightDone: 0, repsDone: 0, rpeActual: 0 },
+  ]);
+  await createLog(
+    users.lisa.id,
+    workouts.p2[3]!.id,
+    daysAgo(1),
+    false,
+    "Light technique work only",
+  );
+
+  console.log("  Workout logs: 31 (Sarah 9, Jenny 9, Mike 9, Lisa 4, David 0, Tom 0)");
+};
+
+const seedCoachNotes = async (
+  coachProfileId: string,
+  users: Awaited<ReturnType<typeof seedUsers>>,
+) => {
+  await prisma.coachNote.createMany({
+    data: [
+      {
+        coachId: coachProfileId,
+        athleteId: users.sarah.id,
+        content:
+          "Sarah is progressing really well on the Competitor track. Her squat numbers are climbing consistently. Consider adding more volume on Olympic lifts next cycle.",
+        createdAt: daysAgo(3),
+      },
+      {
+        coachId: coachProfileId,
+        athleteId: users.sarah.id,
+        content:
+          "Discussed competition goals. She wants to qualify for Quarterfinals this year. Plan is on track — we might add a second daily session for skill work.",
+        createdAt: daysAgo(1),
+      },
+      {
+        coachId: coachProfileId,
+        athleteId: users.mike.id,
+        content:
+          "Mike hasn't logged in 4 days. This is unusual — he was very consistent before. Need to reach out and check if everything is OK.",
+        createdAt: daysAgo(2),
+      },
+      {
+        coachId: coachProfileId,
+        athleteId: users.lisa.id,
+        content:
+          "Lisa reported shoulder pain during overhead work. Set INJURY flag. She should avoid pressing movements and focus on lower body and cardio until cleared by her PT.",
+        createdAt: daysAgo(5),
+      },
+      {
+        coachId: coachProfileId,
+        athleteId: users.lisa.id,
+        content:
+          "Spoke with Lisa about modifying her program. She's seeing a PT this week. In the meantime, substituting all overhead movements with landmine press and floor press.",
+        createdAt: daysAgo(2),
+      },
+      {
+        coachId: coachProfileId,
+        athleteId: users.jenny.id,
+        content:
+          "Jenny crushed it today. Her consistency is paying off. She's ready to try ring muscle-ups next week.",
+        createdAt: todayAt(9, 0),
+      },
+      {
+        coachId: coachProfileId,
+        athleteId: users.david.id,
+        content:
+          "New athlete David enrolled 5 days ago but hasn't started yet. Sent him a welcome message and walkthrough of how to access his first workout.",
+        createdAt: daysAgo(1),
+      },
+    ],
+  });
+
+  console.log("  Coach notes: 7");
+};
+
+const seedAthleteFlags = async (
+  coachProfileId: string,
+  users: Awaited<ReturnType<typeof seedUsers>>,
+) => {
+  await prisma.athleteFlag.createMany({
+    data: [
+      {
+        coachId: coachProfileId,
+        athleteId: users.lisa.id,
+        type: FlagType.INJURY,
+        note: "Right shoulder rotator cuff tendinitis. Avoid overhead pressing. PT evaluation scheduled.",
+        createdAt: daysAgo(5),
+      },
+      {
+        coachId: coachProfileId,
+        athleteId: users.mike.id,
+        type: FlagType.ATTENTION,
+        note: "Inactive for 4+ days. Unusual pattern — was previously very consistent. Check in.",
+        createdAt: daysAgo(2),
+      },
+      {
+        coachId: coachProfileId,
+        athleteId: users.sarah.id,
+        type: FlagType.RESTRICTION,
+        note: "Mild knee discomfort during deep squats. Limit squat depth to parallel for 2 weeks.",
+        resolvedAt: daysAgo(7),
+        createdAt: daysAgo(14),
+      },
+      {
+        coachId: coachProfileId,
+        athleteId: users.tom.id,
+        type: FlagType.ATTENTION,
+        note: "New athlete, hasn't started workouts yet. Follow up with onboarding guidance.",
+        createdAt: daysAgo(1),
+      },
+    ],
+  });
+
+  console.log("  Athlete flags: 4 (3 open, 1 resolved)");
+};
+
+const seedBenchmarks = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
+  const defs = await Promise.all([
+    prisma.benchmarkDefinition.create({
+      data: { name: "Back Squat 1RM", unit: "kg", category: "Strength" },
+    }),
+    prisma.benchmarkDefinition.create({
+      data: { name: "Deadlift 1RM", unit: "kg", category: "Strength" },
+    }),
+    prisma.benchmarkDefinition.create({
+      data: { name: "Clean & Jerk 1RM", unit: "kg", category: "Strength" },
+    }),
+    prisma.benchmarkDefinition.create({
+      data: { name: "Snatch 1RM", unit: "kg", category: "Strength" },
+    }),
+    prisma.benchmarkDefinition.create({
+      data: { name: "Fran", unit: "seconds", category: "Benchmark WOD" },
+    }),
+    prisma.benchmarkDefinition.create({
+      data: { name: "2000m Row", unit: "seconds", category: "Cardio" },
+    }),
+    prisma.benchmarkDefinition.create({
+      data: { name: "Max Pull-Ups", unit: "reps", category: "Gymnastics" },
+    }),
+  ]);
+
+  await prisma.userBenchmark.createMany({
+    data: [
+      { userId: users.sarah.id, benchmarkDefinitionId: defs[0]!.id, value: 105 },
+      { userId: users.sarah.id, benchmarkDefinitionId: defs[1]!.id, value: 140 },
+      { userId: users.sarah.id, benchmarkDefinitionId: defs[2]!.id, value: 85 },
+      { userId: users.sarah.id, benchmarkDefinitionId: defs[3]!.id, value: 65 },
+      { userId: users.sarah.id, benchmarkDefinitionId: defs[4]!.id, value: 195 },
+      { userId: users.sarah.id, benchmarkDefinitionId: defs[6]!.id, value: 22 },
+
+      { userId: users.mike.id, benchmarkDefinitionId: defs[0]!.id, value: 140 },
+      { userId: users.mike.id, benchmarkDefinitionId: defs[1]!.id, value: 180 },
+      { userId: users.mike.id, benchmarkDefinitionId: defs[2]!.id, value: 110 },
+      { userId: users.mike.id, benchmarkDefinitionId: defs[5]!.id, value: 420 },
+      { userId: users.mike.id, benchmarkDefinitionId: defs[6]!.id, value: 30 },
+
+      { userId: users.jenny.id, benchmarkDefinitionId: defs[0]!.id, value: 80 },
+      { userId: users.jenny.id, benchmarkDefinitionId: defs[1]!.id, value: 100 },
+      { userId: users.jenny.id, benchmarkDefinitionId: defs[4]!.id, value: 240 },
+      { userId: users.jenny.id, benchmarkDefinitionId: defs[6]!.id, value: 15 },
+
+      { userId: users.lisa.id, benchmarkDefinitionId: defs[0]!.id, value: 85 },
+      { userId: users.lisa.id, benchmarkDefinitionId: defs[1]!.id, value: 110 },
+      { userId: users.lisa.id, benchmarkDefinitionId: defs[5]!.id, value: 480 },
+    ],
+  });
+
+  console.log("  Benchmarks: 7 definitions, 18 athlete records");
+};
 
 const seedMarketingPages = async () => {
   const pages = [
@@ -160,36 +959,31 @@ const seedMarketingPages = async () => {
       slug: "home",
       title: "Home Page",
       seoTitle: "The Discipline Program — Forging Elite Fitness",
-      seoDesc:
-        "High-performance coaching platform for CrossFit athletes. Structured programming for competitors, RX athletes, and beginners.",
+      seoDesc: "High-performance coaching platform for CrossFit athletes.",
     },
     {
       slug: "about",
       title: "About Us",
       seoTitle: "About — The Discipline Program",
-      seoDesc:
-        "Meet Coach Ben. 10 years of coaching experience, Games athlete mindset, and a passion for building elite athletes.",
+      seoDesc: "Meet Coach Ben. 10 years of coaching experience.",
     },
     {
       slug: "storefront",
       title: "Programs Storefront",
       seoTitle: "Programs — The Discipline Program",
-      seoDesc:
-        "Choose your training track: Competitor, Performance RX, or Foundations. Structured CrossFit programming for every level.",
+      seoDesc: "Choose your training track.",
     },
     {
       slug: "blog",
       title: "The Whiteboard (Blog)",
       seoTitle: "The Whiteboard — Training Tips & Insights",
-      seoDesc:
-        "WOD tips, movement standards, nutrition advice, and mindset training from Coach Ben and the Discipline community.",
+      seoDesc: "WOD tips, movement standards, nutrition advice.",
     },
     {
       slug: "contact",
       title: "Contact Us",
       seoTitle: "Contact — The Discipline Program",
-      seoDesc:
-        "Questions about programming, equipment, or pricing? Get in touch with the Discipline team.",
+      seoDesc: "Questions about programming? Get in touch.",
     },
   ];
 
@@ -197,10 +991,9 @@ const seedMarketingPages = async () => {
     await prisma.marketingPage.create({ data: page });
   }
 
-  // --- Home Page Sections ---
-
-  const homeSections = [
+  const sections: { pageSlug: string; section: string; data: unknown }[] = [
     {
+      pageSlug: "home",
       section: "hero",
       data: {
         title: "Forging Elite Discipline",
@@ -212,6 +1005,7 @@ const seedMarketingPages = async () => {
       },
     },
     {
+      pageSlug: "home",
       section: "whyChoose",
       data: {
         title: "Why The Discipline Program?",
@@ -220,73 +1014,56 @@ const seedMarketingPages = async () => {
           {
             id: "f1",
             title: "Constantly Varied",
-            description:
-              "Prepare for the unknown and unknowable. Every cycle is different, every session purposeful.",
+            description: "Prepare for the unknown and unknowable.",
             iconName: "Shuffle",
           },
           {
             id: "f2",
             title: "High Intensity",
-            description:
-              "Maximize power output. Our programming is designed to push you beyond your comfort zone safely.",
+            description: "Maximize power output safely.",
             iconName: "Bolt",
           },
           {
             id: "f3",
             title: "Functional Movement",
-            description:
-              "Transfer to real life. Movements that build strength you can actually use.",
+            description: "Movements that build real strength.",
             iconName: "FitnessCenter",
           },
           {
             id: "f4",
             title: "Expert Coaching",
-            description:
-              "Every session designed by a certified coach with 10+ years of competitive experience.",
+            description: "Every session designed by a certified coach.",
             iconName: "School",
           },
         ],
       },
     },
     {
+      pageSlug: "home",
       section: "storefront",
-      data: {
-        title: "Choose Your Track",
-        subtitle: "From Open preparation to daily GPP. Programming for every level and every goal.",
-      },
+      data: { title: "Choose Your Track", subtitle: "From Open preparation to daily GPP." },
     },
     {
+      pageSlug: "home",
       section: "reviews",
-      data: {
-        title: "Community Results",
-        subtitle: "Athletes hitting PRs and mastering new skills every day.",
-      },
+      data: { title: "Community Results", subtitle: "Athletes hitting PRs every day." },
     },
     {
+      pageSlug: "home",
       section: "contact",
       data: {
         title: "Join The Box",
-        subtitle: "Questions about scaling or equipment? We're here to help.",
+        subtitle: "Questions? We're here to help.",
         buttonText: "Get In Touch",
         buttonHref: "/contact",
       },
     },
-  ];
-
-  for (const s of homeSections) {
-    await prisma.marketingPageSection.create({
-      data: { pageSlug: "home", section: s.section, data: s.data, isActive: true },
-    });
-  }
-
-  // --- About Page Sections ---
-
-  const aboutSections = [
     {
+      pageSlug: "about",
       section: "about:hero",
       data: {
         title: "Head Coach",
-        subtitle: "10 years in the affiliate community. Games athlete mindset.",
+        subtitle: "10 years in the affiliate community.",
         buttonText: "Learn My Story",
         buttonHref: "#journey",
         backgroundImage:
@@ -294,6 +1071,7 @@ const seedMarketingPages = async () => {
       },
     },
     {
+      pageSlug: "about",
       section: "journey",
       data: {
         title: "Burpees, Barbells, and Belief",
@@ -302,68 +1080,46 @@ const seedMarketingPages = async () => {
           {
             year: "2013",
             title: "The Garage",
-            description:
-              "Started with a rusty barbell and a dream. First taste of CrossFit in a friend's garage gym.",
+            description: "Started with a rusty barbell and a dream.",
           },
           {
             year: "2015",
             title: "First Competition",
-            description:
-              "Entered a local throwdown and got destroyed. That feeling of falling short became the fuel.",
+            description: "Got destroyed at a local throwdown. That became fuel.",
           },
           {
             year: "2016",
             title: "First Certification",
-            description:
-              "Earned my L1 and started coaching local athletes. Found my calling on the whiteboard, not just under the barbell.",
+            description: "Earned L1 and started coaching.",
           },
-          {
-            year: "2019",
-            title: "Regionals",
-            description:
-              "Qualified for Regionals as an individual athlete. Proved that disciplined programming beats random WODs.",
-          },
+          { year: "2019", title: "Regionals", description: "Qualified as an individual athlete." },
           {
             year: "2023",
             title: "The Discipline Program",
-            description:
-              "Launched the online platform to reach more athletes. Same methodology, no geographic limits.",
+            description: "Launched the online platform.",
           },
         ],
       },
     },
     {
+      pageSlug: "about",
       section: "credentials",
       data: {
         title: "Certifications",
         items: [
-          {
-            title: "CrossFit Level 3 (CCFT)",
-            description:
-              "Certified CrossFit Trainer — the highest individual credential in the methodology.",
-          },
-          {
-            title: "USA Weightlifting Level 1",
-            description:
-              "Sports Performance Coach with focus on snatch and clean & jerk technique.",
-          },
-          {
-            title: "Burgener Strength",
-            description: "Weightlifting Staff certification under Mike Burgener's program.",
-          },
-          {
-            title: "Precision Nutrition L1",
-            description: "Evidence-based nutrition coaching for performance athletes.",
-          },
+          { title: "CrossFit Level 3 (CCFT)", description: "Highest individual credential." },
+          { title: "USA Weightlifting Level 1", description: "Sports Performance Coach." },
+          { title: "Burgener Strength", description: "Weightlifting Staff certification." },
+          { title: "Precision Nutrition L1", description: "Evidence-based nutrition coaching." },
         ],
       },
     },
     {
+      pageSlug: "about",
       section: "personal",
       data: {
         title: "Outside The Box",
-        description:
-          "When I'm not coaching the snatch or analyzing WOD times, I'm trail running in the mountains or grilling huge amounts of protein for the week ahead. I believe fitness should enhance your life, not consume it.",
+        description: "Trail running and grilling protein.",
         image:
           "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=800&q=80",
         name: "Denis Sergeev",
@@ -371,98 +1127,56 @@ const seedMarketingPages = async () => {
       },
     },
     {
+      pageSlug: "about",
       section: "cta",
       data: {
         title: "3... 2... 1... GO!",
-        subtitle: "The clock is ticking. Are you ready to work?",
+        subtitle: "The clock is ticking.",
         buttonText: "Join The Program",
         buttonHref: "/storefront",
       },
     },
-  ];
-
-  for (const s of aboutSections) {
-    await prisma.marketingPageSection.create({
-      data: { pageSlug: "about", section: s.section, data: s.data, isActive: true },
-    });
-  }
-
-  // --- Storefront Page Sections ---
-
-  await prisma.marketingPageSection.create({
-    data: {
+    {
       pageSlug: "storefront",
       section: "storefront:hero",
       data: {
         title: "Programming Tracks",
-        subtitle: "Structured paths for Competitors and Everyday Athletes.",
+        subtitle: "Structured paths for every level.",
         backgroundImage:
           "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=2000&q=80",
       },
-      isActive: true,
     },
-  });
-
-  await prisma.marketingPageSection.create({
-    data: {
+    {
       pageSlug: "storefront",
       section: "storefront:cta",
       data: {
-        title: "Ready to Transform Your Fitness?",
-        subtitle:
-          "Join 100+ athletes who have already started their transformation journey. Your discipline determines your success.",
+        title: "Ready to Transform?",
+        subtitle: "Join 100+ athletes.",
         buttonText: "Start Your Journey",
         buttonHref: "/contact",
       },
-      isActive: true,
     },
-  });
-
-  // --- Blog Page Section ---
-
-  await prisma.marketingPageSection.create({
-    data: {
+    {
       pageSlug: "blog",
       section: "blog:hero",
       data: {
         title: "The Whiteboard",
-        subtitle: "WOD tips, movement standards, and nutrition advice.",
+        subtitle: "WOD tips and nutrition advice.",
         backgroundImage:
           "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=2000&q=80",
       },
-      isActive: true,
     },
-  });
-
-  // --- Contact Page Sections ---
-
-  await prisma.marketingPageSection.create({
-    data: {
+    {
       pageSlug: "contact",
       section: "contact:hero",
-      data: {
-        title: "Drop Us A Line",
-        subtitle:
-          "We love talking shop. Whether you're a seasoned competitor or just starting out, we're here to help.",
-      },
-      isActive: true,
+      data: { title: "Drop Us A Line", subtitle: "We love talking shop." },
     },
-  });
-
-  await prisma.marketingPageSection.create({
-    data: {
+    {
       pageSlug: "contact",
       section: "form",
-      data: {
-        title: "Get in Touch",
-        subtitle: "Feedback on programming? Questions about getting started? Let us know.",
-      },
-      isActive: true,
+      data: { title: "Get in Touch", subtitle: "Let us know how we can help." },
     },
-  });
-
-  await prisma.marketingPageSection.create({
-    data: {
+    {
       pageSlug: "contact",
       section: "directContact",
       data: {
@@ -484,12 +1198,8 @@ const seedMarketingPages = async () => {
         ],
         workingHours: "Mon-Fri: 6am - 8pm\nSat: 8am - 12pm\nSun: Rest Day",
       },
-      isActive: true,
     },
-  });
-
-  await prisma.marketingPageSection.create({
-    data: {
+    {
       pageSlug: "contact",
       section: "faq",
       data: {
@@ -498,50 +1208,52 @@ const seedMarketingPages = async () => {
           {
             question: "Do I need a gym membership?",
             answer:
-              "Yes, you'll need access to a barbell, plates, pull-up bar, and ideally some conditioning equipment (rower, bike, or jump rope). A CrossFit affiliate or well-equipped garage gym works perfectly.",
+              "Yes, you'll need access to a barbell, plates, pull-up bar, and conditioning equipment.",
           },
           {
             question: "How long are the daily sessions?",
-            answer:
-              "Depending on your track: Foundations sessions run about 45 minutes, Performance RX is 60 minutes, and The Competitor has two sessions totaling about 90-120 minutes per day.",
+            answer: "Foundations: 45min, Performance RX: 60min, Competitor: 90-120min.",
           },
           {
             question: "Can I switch between tracks?",
-            answer:
-              "Absolutely. You can change your track at any time. We recommend finishing at least 4 weeks on one track before switching to get a fair sense of the programming.",
+            answer: "Yes, any time. We recommend at least 4 weeks before switching.",
           },
           {
             question: "Is there a free trial?",
-            answer:
-              "We offer a 7-day free trial on all tracks so you can experience the programming before committing. No credit card required to start.",
+            answer: "7-day free trial on all tracks. No credit card required.",
           },
         ],
       },
-      isActive: true,
     },
-  });
+  ];
 
-  console.log("  Pages: 5 with 16 sections");
+  for (const s of sections) {
+    await prisma.marketingPageSection.create({
+      data: {
+        pageSlug: s.pageSlug,
+        section: s.section,
+        data: s.data as Prisma.InputJsonValue,
+        isActive: true,
+      },
+    });
+  }
+
+  console.log("  Pages: 5 with 17 sections");
 };
-
-// ---------------------------------------------------------------------------
-// Storefront Programs
-// ---------------------------------------------------------------------------
 
 const seedProducts = async () => {
   const products = [
     {
       title: "The Competitor",
       slug: "competitor-track",
-      description:
-        "High-volume programming designed for athletes preparing for the Open, Quarterfinals, or local throwdowns. Two sessions per day with sport-specific skill work, heavy lifting, and advanced conditioning. For athletes who have mastered the basics and are ready to test themselves against the best.",
+      description: "High-volume programming for Open/Quarterfinals. Two sessions per day.",
       features: [
-        "2 Sessions/Day (Morning + Evening)",
-        "Advanced Gymnastics Progressions",
-        "Dedicated Olympic Lifting Days",
-        "Competition-Specific Metcons",
-        "Video Movement Analysis",
-        "Monthly Performance Testing",
+        "2 Sessions/Day",
+        "Advanced Gymnastics",
+        "Olympic Lifting Days",
+        "Competition Metcons",
+        "Video Analysis",
+        "Monthly Testing",
       ],
       isActive: true,
       createdAt: daysAgo(58),
@@ -551,13 +1263,13 @@ const seedProducts = async () => {
       title: "Performance RX",
       slug: "performance-rx",
       description:
-        "Daily WOD programming for dedicated athletes who want to perform movements as prescribed. 60-minute sessions combining strength work, skill development, and metabolic conditioning. Perfect for experienced CrossFitters looking to maintain and improve their fitness year-round.",
+        "Daily WOD programming. 60-minute sessions combining strength, skill, and conditioning.",
       features: [
         "60-Min Daily WODs",
-        "Full RX Movement Standards",
-        "Progressive Strength Cycles",
-        "Gymnastic Skill Sessions",
-        "Benchmark WOD Tracking",
+        "Full RX Standards",
+        "Strength Cycles",
+        "Gymnastic Skills",
+        "Benchmark Tracking",
       ],
       isActive: true,
       createdAt: daysAgo(58),
@@ -567,13 +1279,13 @@ const seedProducts = async () => {
       title: "Foundations GPP",
       slug: "foundations-gpp",
       description:
-        "General Physical Preparedness for athletes new to CrossFit or returning after time away. Emphasis on movement quality, building strength, and developing aerobic capacity. Scalable workouts with detailed coaching cues and video demonstrations for every movement.",
+        "General Physical Preparedness for new athletes. Movement quality and base building.",
       features: [
         "45-Min Scalable Workouts",
-        "Movement Fundamentals Focus",
-        "Beginner-Friendly Progressions",
-        "Detailed Video Tutorials",
-        "Injury Prevention Emphasis",
+        "Movement Fundamentals",
+        "Beginner Progressions",
+        "Video Tutorials",
+        "Injury Prevention",
       ],
       isActive: true,
       createdAt: daysAgo(55),
@@ -582,90 +1294,33 @@ const seedProducts = async () => {
     {
       title: "Masters 40+",
       slug: "masters-40-plus",
-      description:
-        "Strength and conditioning designed for athletes over 40. Smart programming that respects recovery needs while building sustainable fitness. Modified movements and volume to match the unique demands of the Masters division.",
-      features: [
-        "4 Days/Week Programming",
-        "Joint-Friendly Movement Variations",
-        "Extended Warm-Up Protocols",
-        "Mobility & Recovery Focus",
-      ],
+      description: "Smart programming for athletes over 40. Modified volume and recovery focus.",
+      features: ["4 Days/Week", "Joint-Friendly Variations", "Extended Warm-Up", "Mobility Focus"],
       isActive: false,
       createdAt: daysAgo(52),
       amountCents: 5900,
     },
   ];
 
-  for (const { amountCents, ...productData } of products) {
+  for (const { amountCents, ...data } of products) {
     await prisma.product.create({
-      data: {
-        ...productData,
-        prices: {
-          create: {
-            amountCents,
-            currency: "USD",
-            interval: "MONTHLY",
-          },
-        },
-      },
+      data: { ...data, prices: { create: { amountCents, currency: "USD", interval: "MONTHLY" } } },
     });
   }
 
   console.log("  Products: 4 (3 active, 1 inactive) with prices");
 };
 
-// ---------------------------------------------------------------------------
-// Blog Posts
-// ---------------------------------------------------------------------------
-
 const seedBlogPosts = async () => {
   await prisma.marketingBlogPost.createMany({
     data: [
-      // --- Post 1: Featured (Training) ---
       {
         slug: "mastering-bar-muscle-up",
         title: "Mastering the Bar Muscle-Up: From Zero to Hero",
         excerpt:
-          "Stop struggling with the chicken wing and start owning this movement. A complete technical breakdown for athletes stuck at 0-5 reps.",
-        content: `## The Problem
-
-The bar muscle-up is the gateway to high-level gymnastics work in CrossFit. But most athletes approach it wrong — trying to muscle their way through instead of understanding the mechanics.
-
-If you can do 10+ chest-to-bar pull-ups and 10+ ring dips, you have the strength. What you're missing is technique.
-
-## Technical Breakdown
-
-### 1. The Pull Phase
-
-Your pull must be explosive and vertical. Think "chest to bar" on steroids. The goal is maximum height with your chest clearing the bar by several inches. This is not a kipping pull-up — it's a completely different movement pattern.
-
-**Key cue:** "Pull the bar to your hips, not your chin."
-
-### 2. The Transition
-
-This is where most athletes fail. As you reach peak height, aggressively push your hands away from your body while leaning forward over the bar. Your elbows should travel backward and around the bar — never flaring outward (the dreaded chicken wing).
-
-**Key cue:** "Sit up fast — like you're getting out of bed late."
-
-### 3. The Dip
-
-Once your hips are against the bar and your torso is upright, finish with a strong press. This should feel identical to a straight bar dip. Lock out fully at the top.
-
-## 8-Week Progression
-
-- **Weeks 1-2:** High pull-ups with chest clearance focus. 5 sets of 3 reps with maximal explosion.
-- **Weeks 3-4:** Hollow body drills + explosive chest-to-bar work. Build the body position that enables the transition.
-- **Weeks 5-6:** Banded bar muscle-up transitions. Focus on the lean-over, not the pull.
-- **Weeks 7-8:** Volume work. Singles and doubles, accumulating to 15-20 total reps per session.
-
-## Common Mistakes
-
-- Not pulling high enough before initiating the transition
-- Trying to muscle through with arm strength alone
-- Letting elbows flare sideways instead of traveling backward
-- Losing hollow body position during the kip
-
-Master these principles and you'll add 5-10 reps to your capacity in 8 weeks. The bar muscle-up is a skill, not a strength movement — treat it like one.`,
+          "Stop struggling with the chicken wing. Complete technical breakdown for athletes stuck at 0-5 reps.",
+        content:
+          '## The Problem\n\nThe bar muscle-up is the gateway to high-level gymnastics work. Most athletes approach it wrong — trying to muscle through instead of understanding mechanics.\n\n## Technical Breakdown\n\n### 1. The Pull Phase\nYour pull must be explosive and vertical. Think "chest to bar" on steroids.\n\n**Key cue:** "Pull the bar to your hips, not your chin."\n\n### 2. The Transition\nAs you reach peak height, aggressively push your hands away while leaning forward over the bar.\n\n**Key cue:** "Sit up fast — like you\'re getting out of bed late."\n\n### 3. The Dip\nOnce your hips are against the bar, finish with a strong press. Lock out fully.\n\n## 8-Week Progression\n\n- **Weeks 1-2:** High pull-ups with chest clearance focus\n- **Weeks 3-4:** Hollow body drills + explosive chest-to-bar\n- **Weeks 5-6:** Banded transitions\n- **Weeks 7-8:** Volume work, singles and doubles',
         coverImage:
           "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Ben",
@@ -677,67 +1332,12 @@ Master these principles and you'll add 5-10 reps to your capacity in 8 weeks. Th
         publishedAt: daysAgo(35),
         createdAt: daysAgo(36),
       },
-
-      // --- Post 2: Nutrition ---
       {
         slug: "pre-workout-nutrition-timing",
         title: "Pre-Workout Nutrition: When and What to Eat Before Training",
-        excerpt:
-          "Optimize your training performance with science-backed meal timing strategies. Stop guessing and start fueling properly.",
-        content: `## Why Timing Matters
-
-Your body needs 2-3 hours to digest a full meal. Train too soon after eating and you'll feel sluggish with food sitting in your stomach. Train fully fasted and you might bonk mid-WOD when you need energy the most.
-
-The solution? Strategic fueling based on your training schedule.
-
-## The 3-Hour Window: Full Meal
-
-**Best for:** Morning WODs after breakfast, evening training after lunch.
-
-**Example meal:**
-- 6oz grilled chicken or salmon
-- 1 cup sweet potato or rice
-- Mixed vegetables
-- Small side of avocado or olive oil
-
-**Macro target:** ~40g protein / ~50g carbs / ~15g fat
-
-This gives your body plenty of time to digest and convert food into usable energy. You'll feel fueled but not heavy.
-
-## The 60-90 Minute Window: Light Snack
-
-**Best for:** Lunch-hour WODs, training between meals.
-
-**Example snacks:**
-- Banana with 1 tbsp almond butter
-- Rice cakes with honey
-- Greek yogurt with berries
-- Small smoothie (banana, protein powder, oats)
-
-**Focus:** Fast-digesting carbs with minimal fat. Fat slows digestion — save it for post-workout.
-
-## The 15-30 Minute Window: Emergency Fuel
-
-**Best for:** Early AM training when you can't eat hours before, or unexpected session invites.
-
-**Quick options:**
-- 2-3 Medjool dates
-- Applesauce pouch
-- Sports drink (20-30g carbs)
-- Half a banana
-
-**The rule:** If you can't eat 2+ hours before, go very light. Something is better than nothing, but too much will backfire.
-
-## Post-Workout: The Recovery Window
-
-Within 60 minutes after training:
-- 30-40g protein (shake, chicken, eggs)
-- 40-60g fast carbs (rice, potatoes, fruit)
-- Rehydrate with water + electrolytes
-
-## The Bottom Line
-
-Consistency beats perfection. Find what works for YOUR body through experimentation — everyone's gut is different. Once you find your formula, stick with it. Your performance will thank you.`,
+        excerpt: "Science-backed meal timing strategies for optimal performance.",
+        content:
+          "## Why Timing Matters\n\nYour body needs 2-3 hours to digest a full meal.\n\n## The 3-Hour Window\n6oz protein + 1 cup carbs + vegetables. ~40g protein / ~50g carbs / ~15g fat.\n\n## The 60-90 Minute Window\nBanana with almond butter, rice cakes with honey, Greek yogurt with berries.\n\n## Post-Workout\nWithin 60 minutes: 30-40g protein + 40-60g fast carbs + rehydrate.",
         coverImage:
           "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Ben",
@@ -749,404 +1349,102 @@ Consistency beats perfection. Find what works for YOUR body through experimentat
         publishedAt: daysAgo(28),
         createdAt: daysAgo(29),
       },
-
-      // --- Post 3: Mindset ---
       {
         slug: "mental-game-of-amraps",
         title: "The Mental Game of AMRAPs: Pacing, Pain, and Strategy",
-        excerpt:
-          "How to pace, when to push, and the psychological warfare of 'as many rounds as possible' workouts.",
-        content: `## AMRAPs Are Mind Games
-
-12 minutes. No prescribed rounds. No finish line. Just you, the clock, and your willingness to suffer.
-
-AMRAPs (As Many Rounds As Possible) are unique in CrossFit because there's no "done." The workout doesn't end when you finish the work — it ends when the clock runs out. This means the limiting factor isn't your body. It's your brain.
-
-## The Opening Sprint Trap
-
-Every athlete has done this: the clock starts, adrenaline kicks in, and you blast through the first two rounds like it's a sprint. Round one feels easy. Round two is still good. Round three... the wheels come off. By round five, you're staring at the barbell wondering why you signed up for this.
-
-**The fix:** Aim for negative splits. Your last round should be your fastest, not your first.
-
-## The Pacing Formula
-
-Break the time cap into thirds:
-
-- **First third (0-33%):** 70-75% effort. Establish your rhythm, focus on movement quality, keep your heart rate manageable.
-- **Middle third (33-66%):** 80-85% effort. Settle into controlled discomfort. This is where you make up time through efficiency, not speed.
-- **Final third (66-100%):** 90-100% effort. Empty the tank. This is where your mental toughness earns you extra rounds.
-
-For a 12-minute AMRAP, that's 4 minutes easy, 4 minutes steady, 4 minutes all-out.
-
-## Mental Checkpoints
-
-Don't think about the whole workout. Set micro-goals:
-
-- "Just finish this round, then reassess"
-- "Beat my score from last time by one round"
-- "Stay within 5 seconds of my target round time"
-- "Don't put the barbell down until the set is complete"
-
-Breaking a long AMRAP into 2-3 minute chunks makes 12 or 20 minutes manageable.
-
-## The Final 60 Seconds
-
-This is where champions are made. When your lungs are burning and your legs are screaming, your mind has two choices: slow down or dig deeper.
-
-Count the seconds. Make every rep deliberate. Don't coast to the finish — attack it.
-
-The pain is temporary. Your score is permanent.`,
+        excerpt: "How to pace, when to push, and the psychological warfare of AMRAP workouts.",
+        content:
+          "## AMRAPs Are Mind Games\n\n12 minutes. No prescribed rounds. No finish line.\n\n## The Pacing Formula\n- **First third:** 70-75% effort\n- **Middle third:** 80-85% effort\n- **Final third:** 90-100% effort\n\n## The Final 60 Seconds\nCount the seconds. Make every rep deliberate. The pain is temporary. Your score is permanent.",
         coverImage:
           "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Ben",
         category: "Mindset",
-        tags: ["mental-toughness", "pacing", "amrap", "strategy"],
+        tags: ["mental-toughness", "pacing", "amrap"],
         readTime: 4,
         isPublished: true,
         isFeatured: false,
         publishedAt: daysAgo(21),
         createdAt: daysAgo(22),
       },
-
-      // --- Post 4: Fitness ---
       {
         slug: "why-rest-days-matter",
         title: "Why Rest Days Matter More Than Extra Training",
         excerpt:
-          "More is not always better. Understanding recovery, adaptation, and why elite athletes program rest strategically.",
-        content: `## The Biggest Mistake Intermediate Athletes Make
-
-"I'll just do an active recovery WOD on my rest day."
-
-No. Rest means rest. If you're doing burpees, it's not a rest day.
-
-This might be the hardest concept in CrossFit: sometimes doing less makes you stronger. But the science is unambiguous.
-
-## The Science of Supercompensation
-
-Training doesn't make you stronger. Recovery does. Here's the cycle:
-
-1. **Training stimulus** — you break down muscle fibers and stress your central nervous system
-2. **Fatigue** — immediately after training, you're weaker than before
-3. **Recovery** — your body repairs the damage over 24-72 hours
-4. **Supercompensation** — if you rest enough, you rebuild stronger than your baseline
-
-You only get step 4 if you actually rest. Skip recovery and you accumulate fatigue without the adaptation. That's called overtraining, and it leads to plateaus, injuries, and burnout.
-
-## What a Real Rest Day Looks Like
-
-**DO:**
-- Light walking (20-30 minutes, easy pace)
-- Gentle stretching or yoga (nothing intense)
-- Mobility work (15 minutes with a foam roller or lacrosse ball)
-- Eat well — your body needs fuel to rebuild
-- Sleep 8+ hours — this is when growth hormone peaks
-
-**DON'T:**
-- "Light metcon" — it's still a metcon
-- Running 5K — that's cardio training
-- Heavy lifting — even "just a few sets"
-- Any workout that raises your heart rate above 120 BPM
-
-## The Optimal Training Split
-
-For most CrossFit athletes, the sweet spot is:
-
-- **Monday:** Training
-- **Tuesday:** Training
-- **Wednesday:** Training
-- **Thursday:** REST
-- **Friday:** Training
-- **Saturday:** Training or competition prep
-- **Sunday:** REST
-
-That's 4-5 training days and 2-3 rest days per week. Elite competitors might do 5-6 days, but they've built that work capacity over years of progressive overload.
-
-## Listen to Your Body
-
-Feeling run down after three consecutive training days? Take an extra rest day. The WOD will be there tomorrow. Your joints, tendons, and nervous system need more recovery than your ego wants to admit.
-
-The strongest athletes aren't the ones who train the most. They're the ones who recover the best.`,
+          "Understanding recovery, adaptation, and why elite athletes program rest strategically.",
+        content:
+          '## The Biggest Mistake\n\n"I\'ll just do an active recovery WOD on my rest day." No. Rest means rest.\n\n## The Science of Supercompensation\n1. Training stimulus → break down\n2. Fatigue → immediately weaker\n3. Recovery → repair over 24-72h\n4. Supercompensation → rebuild stronger\n\nYou only get step 4 if you actually rest.',
         coverImage:
           "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Ben",
         category: "Fitness",
-        tags: ["recovery", "programming", "rest-days", "overtraining"],
+        tags: ["recovery", "programming", "rest-days"],
         readTime: 4,
         isPublished: true,
         isFeatured: false,
         publishedAt: daysAgo(14),
         createdAt: daysAgo(15),
       },
-
-      // --- Post 5: Recovery ---
       {
         slug: "mobility-vs-flexibility",
         title: "Mobility vs. Flexibility: What CrossFit Athletes Actually Need",
-        excerpt:
-          "Why being flexible doesn't mean you're mobile — and why it matters for overhead squats, snatches, and injury prevention.",
-        content: `## The Confusion
-
-Athletes constantly confuse flexibility and mobility. They sound similar, but they're fundamentally different — and understanding the distinction will change how you warm up, cool down, and train.
-
-## Flexibility: Passive Range of Motion
-
-Flexibility is how far a joint can move when an external force is applied. Lie on your back while someone pushes your leg toward your head — that's passive hamstring flexibility.
-
-**Example:** You can touch your toes in a seated forward fold because gravity is helping you get there.
-
-Flexibility is necessary, but insufficient for CrossFit performance.
-
-## Mobility: Active Control Through Range
-
-Mobility is how far a joint can move under your own muscular control, especially under load. Stand up and lift your leg as high as possible without assistance — that's active hamstring mobility.
-
-**Example:** You can hold a deep overhead squat with a loaded barbell because your shoulders, thoracic spine, hips, and ankles are all actively controlling their positions.
-
-## Why CrossFit Demands Mobility
-
-Every benchmark CrossFit movement requires active control through full range of motion:
-
-- **Overhead squat:** Active shoulder flexion + thoracic extension + hip/ankle mobility — all under load
-- **Snatch:** Demands coordinated mobility in every joint simultaneously during an explosive movement
-- **Front rack:** Active thoracic extension + wrist flexibility + lat length
-- **Pistol squat:** Single-leg hip and ankle mobility with full body control
-
-You can't fake mobility under a loaded barbell. Either you own the position or the position owns you.
-
-## Building Mobility: A Daily Practice
-
-### The 15-Minute Daily Routine
-
-1. **Deep squat hold** — 2 minutes. Sit in the bottom of a squat with heels down, chest up. Use a post for support if needed.
-2. **PVC pass-throughs** — 20 reps. Slow, controlled. Progressively narrow your grip over weeks.
-3. **Active leg raises** — 10 each leg. Lying on your back, actively lift one leg as high as possible while keeping the other flat.
-4. **Thoracic rotations** — 10 each side. On all fours, hand behind head, rotate toward ceiling.
-5. **Ankle dorsiflexion** — 2 minutes per side. Knee over toe against a wall, driving the knee forward.
-
-### The Key Principles
-
-- **Load it:** Practice positions with light weight (PVC pipe, empty barbell). Unloaded mobility doesn't always transfer.
-- **Active over passive:** Control through full ROM instead of just sitting in positions.
-- **Consistency > intensity:** 15 minutes daily beats a 2-hour mobility session once a week.
-- **Specificity:** Work on the positions that limit YOUR performance.
-
-## Start Today
-
-You don't need a mobility coach or expensive tools. A PVC pipe, a lacrosse ball, and 15 minutes of daily practice will transform your positions within 8 weeks.
-
-Mobility is the foundation. Build it, and everything else gets easier.`,
+        excerpt: "Why being flexible doesn't mean you're mobile — and why it matters for snatches.",
+        content:
+          "## Flexibility: Passive Range\nHow far a joint moves with external force.\n\n## Mobility: Active Control\nHow far a joint moves under your own muscular control, under load.\n\n## The 15-Minute Daily Routine\n1. Deep squat hold — 2 min\n2. PVC pass-throughs — 20 reps\n3. Active leg raises — 10 each\n4. Thoracic rotations — 10 each\n5. Ankle dorsiflexion — 2 min/side",
         coverImage:
           "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Ben",
         category: "Recovery",
-        tags: ["mobility", "flexibility", "injury-prevention", "warm-up"],
+        tags: ["mobility", "flexibility", "injury-prevention"],
         readTime: 5,
         isPublished: true,
         isFeatured: false,
         publishedAt: daysAgo(7),
         createdAt: daysAgo(8),
       },
-
-      // --- Post 6: Training (Olympic Lifting) ---
       {
         slug: "olympic-lifting-cues-that-work",
         title: "5 Olympic Lifting Cues That Actually Work",
-        excerpt:
-          "Simple coaching cues that fixed my snatch and clean technique. No complicated biomechanics — just practical fixes you can use today.",
-        content: `## Why Cues Matter
-
-Your brain can't process a paragraph of technical feedback mid-lift. You need one simple thought — a single mental trigger — that produces the right movement pattern.
-
-After coaching hundreds of athletes through thousands of snatches and cleans, these are the five cues that consistently produce the biggest improvements.
-
-## Cue 1: "Push The Floor Away"
-
-**For:** First pull (bar from floor to knees) in the snatch and clean.
-
-**Why it works:** When athletes think "lift the bar," they often pull with their back, leading to early hip rise and the bar drifting forward. Thinking "push the floor away" engages the legs first and maintains proper back angle.
-
-**The difference:** Bar stays close, back stays tight, legs do the work.
-
-## Cue 2: "Patience Off The Floor"
-
-**For:** The transition from first pull to second pull.
-
-**Why it works:** The most common error in Olympic lifting is rushing. Athletes want to explode immediately, but the second pull only works if the bar is in the right position (mid-thigh for the clean, hip crease for the snatch). Being patient through the first pull sets up an explosive second pull.
-
-**The difference:** Controlled speed off the floor, violent speed at the hip.
-
-## Cue 3: "Elbows High and Outside"
-
-**For:** Third pull (the turnover) in the clean.
-
-**Why it works:** Fast elbows = fast turnover. When athletes focus on pulling the bar high, they create a slow, arcing bar path. Driving elbows "high and outside" keeps the bar close and accelerates the turnover.
-
-**The difference:** Bar travels inches instead of feet during the turnover.
-
-## Cue 4: "Meet The Bar"
-
-**For:** The receiving position in both the snatch and clean.
-
-**Why it works:** Most athletes wait for the bar to crash on them. "Meeting the bar" means actively pulling yourself under — a deliberate, aggressive descent into the catch position. This cuts inches off the height you need to pull and gives you more time to stabilize.
-
-**The difference:** Catching the bar at a higher percentage of your pull height.
-
-## Cue 5: "Punch To The Ceiling"
-
-**For:** Overhead lockout in the snatch and jerk.
-
-**Why it works:** A passive catch leads to a wobbly, unstable overhead position. "Punching" creates active shoulder engagement — external rotation, upward push, locked elbows — that stabilizes heavy loads overhead.
-
-**The difference:** Confident lockout instead of a shaky save.
-
-## How to Use Cues Effectively
-
-1. **Pick ONE cue per training session.** Multiple cues create confusion.
-2. **Use light weight (60-70% of max).** Cues need reps to become automatic.
-3. **Drill 10+ focused reps.** Each rep with deliberate attention on the cue.
-4. **Only then add load.** Once the pattern is automatic, start loading.
-
-Master these five cues and your lifts will feel completely different within a training cycle.`,
+        excerpt: "Simple coaching cues that fix snatch and clean technique instantly.",
+        content:
+          '## Cue 1: "Push The Floor Away"\nEngages legs first, maintains back angle.\n\n## Cue 2: "Patience Off The Floor"\nControlled first pull → explosive second pull.\n\n## Cue 3: "Elbows High and Outside"\nFast elbows = fast turnover in the clean.\n\n## Cue 4: "Meet The Bar"\nActively pull yourself under.\n\n## Cue 5: "Punch To The Ceiling"\nActive shoulder engagement overhead.',
         coverImage:
           "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Ben",
         category: "Training",
-        tags: ["olympic-lifting", "technique", "coaching-cues", "snatch", "clean"],
+        tags: ["olympic-lifting", "technique", "coaching-cues"],
         readTime: 4,
         isPublished: true,
         isFeatured: false,
         publishedAt: daysAgo(42),
         createdAt: daysAgo(43),
       },
-
-      // --- Post 7: Draft (Unpublished) ---
       {
         slug: "open-preparation-timeline",
         title: "12-Week Open Preparation Timeline",
-        excerpt:
-          "Strategic programming phases to peak for the CrossFit Open. How to build, maintain, and taper for competition day.",
-        content: `## The Framework
-
-Peaking for the Open requires periodized programming — not just "training harder" as the announcement gets closer. This 12-week timeline gives you a structured approach to arrive at Week 1 in the best shape of your life.
-
-## Phase 1: Volume (Weeks 12-9)
-
-**Goal:** Build work capacity and address weaknesses.
-
-This is where you put in the hard yards. Higher volume, moderate intensity. Focus on:
-- Aerobic engine development (longer conditioning pieces, 15-25 minutes)
-- Skill acquisition (practice movements you avoid)
-- Hypertrophy work for lagging muscle groups
-- Movement quality over speed
-
-**Weekly structure:** 5-6 training days, 1-2 longer conditioning pieces, 2-3 strength sessions.
-
-## Phase 2: Intensity (Weeks 8-5)
-
-**Goal:** Convert volume into power output.
-
-Shift from "more work" to "harder work." Intensity goes up, volume comes down:
-- Shorter, more intense conditioning (8-15 minutes)
-- Heavier lifting (working toward peak singles and doubles)
-- Sport-specific combinations (classic Open-style couplets and triplets)
-- Test benchmark WODs to gauge fitness
-
-**Weekly structure:** 5 training days, sharper conditioning, competition-pace practice.
-
-## Phase 3: Taper (Weeks 4-1)
-
-**Goal:** Arrive fresh, confident, and ready.
-
-The hardest phase psychologically. You'll feel like you should be doing more, but less is more here:
-- Reduce volume by 30-40% from Phase 2
-- Maintain intensity on key lifts (don't lose peak strength)
-- Short, fast conditioning to keep the engine sharp
-- Extra sleep, nutrition dialed in, stress management
-
-**Weekly structure:** 4 training days, focused and brief. Rest aggressively.
-
-## Competition Week Tips
-
-[Section in progress — will cover day-of nutrition, warm-up protocols, and heat strategy]`,
+        excerpt: "Strategic programming phases to peak for the CrossFit Open.",
+        content:
+          "## The Framework\n\nPeaking requires periodized programming.\n\n## Phase 1: Volume (Weeks 12-9)\nBuild work capacity and address weaknesses.\n\n## Phase 2: Intensity (Weeks 8-5)\nConvert volume into power output.\n\n## Phase 3: Taper (Weeks 4-1)\nReduce volume by 30-40%, maintain intensity.\n\n[Competition week section in progress]",
         coverImage: null,
         authorName: "Coach Ben",
         category: "Training",
-        tags: ["open", "competition", "programming", "periodization"],
+        tags: ["open", "competition", "periodization"],
         readTime: null,
         isPublished: false,
         isFeatured: false,
         publishedAt: null,
         createdAt: daysAgo(3),
       },
-
-      // --- Post 8: Nutrition ---
       {
         slug: "protein-for-crossfit-athletes",
         title: "How Much Protein Do CrossFit Athletes Really Need?",
-        excerpt:
-          "Cut through the bro-science. Evidence-based protein intake recommendations for strength and conditioning athletes.",
-        content: `## The Short Answer
-
-**1.6-2.2 grams per kilogram of bodyweight per day** for most CrossFit athletes.
-
-For a 75kg (165lb) athlete, that's 120-165g of protein daily. For a 90kg (200lb) athlete, 144-198g daily.
-
-Not complicated. Not controversial. Just science.
-
-## Why Protein Matters for CrossFitters
-
-CrossFit is uniquely demanding because it combines strength training, gymnastics, and metabolic conditioning — often in the same session. This means:
-
-- **Muscle repair:** High-rep movements create significant muscle damage that requires amino acids to rebuild.
-- **Strength adaptation:** Progressive overload only works if your body has the raw materials to build stronger tissue.
-- **Recovery between sessions:** Adequate protein reduces soreness and accelerates recovery between training days.
-- **Body composition:** Higher protein intake supports lean mass while creating satiety that helps manage body fat.
-
-## The Nuance: More Isn't Always Better
-
-Research consistently shows benefits up to about 2.2g/kg. Beyond that? Diminishing returns. You're not harming yourself, but you're not gaining additional muscle-building benefit either.
-
-**Exception:** During a caloric deficit (cutting weight), higher protein intake (up to 2.4g/kg) helps preserve muscle mass. If you're trying to lean out while maintaining performance, err on the higher end.
-
-## Protein Timing: Does It Matter?
-
-**Yes, but less than you think.**
-
-The "anabolic window" — the idea that you must consume protein within 30 minutes of training — has been largely debunked in its extreme form. However, eating protein-rich meals within 2 hours of training does optimize recovery.
-
-**What matters most:**
-1. Total daily intake (hit your target every day)
-2. Distribution across meals (3-4 protein-rich meals vs. one huge meal)
-3. Post-workout timing (within 2 hours, not 30 minutes)
-
-## Practical Meal Targets
-
-Spread your protein across 3-4 meals for optimal muscle protein synthesis:
-
-- **Breakfast:** 30-40g (eggs, Greek yogurt, protein oats)
-- **Lunch:** 35-45g (chicken breast, fish, lean beef)
-- **Dinner:** 35-45g (salmon, steak, turkey)
-- **Snack (optional):** 15-25g (protein shake, cottage cheese, jerky)
-
-## Best Protein Sources
-
-**Animal-based:** Chicken breast (31g/100g), salmon (25g/100g), lean beef (26g/100g), eggs (6g each), Greek yogurt (15-20g/cup).
-
-**Plant-based:** Lentils (18g/cup cooked), chickpeas (15g/cup), tofu (20g/cup), tempeh (31g/cup), protein powder (20-30g/scoop).
-
-**Pro tip:** Mix animal and plant sources throughout the day for a complete amino acid profile and better gut health.
-
-## The Takeaway
-
-Hit 1.6-2.2g/kg daily. Spread it across 3-4 meals. Prioritize whole food sources. Time it reasonably around training. Don't overthink it beyond that.
-
-Protein isn't magic, but it is the single most important macronutrient for a CrossFit athlete. Get it right, and everything else falls into place.`,
+        excerpt: "Evidence-based protein intake recommendations. Cut through the bro-science.",
+        content:
+          "## The Short Answer\n\n**1.6-2.2 grams per kilogram of bodyweight per day.**\n\nFor a 75kg athlete: 120-165g daily.\n\n## Protein Timing\nTotal daily intake > timing. But eating within 2 hours of training helps.\n\n## Best Sources\nChicken breast (31g/100g), salmon (25g), lean beef (26g), eggs (6g each), Greek yogurt (15-20g/cup).",
         coverImage:
           "https://images.unsplash.com/photo-1432139555190-58524dae6a55?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Ben",
         category: "Nutrition",
-        tags: ["protein", "nutrition", "macros", "recovery"],
+        tags: ["protein", "nutrition", "macros"],
         readTime: 5,
         isPublished: true,
         isFeatured: false,
@@ -1159,17 +1457,13 @@ Protein isn't magic, but it is the single most important macronutrient for a Cro
   console.log("  Blog posts: 8 (7 published, 1 draft, 1 featured)");
 };
 
-// ---------------------------------------------------------------------------
-// Reviews
-// ---------------------------------------------------------------------------
-
 const seedReviews = async () => {
   await prisma.marketingReview.createMany({
     data: [
       {
         authorName: "Sarah Mitchell",
         authorRole: "Regional Athlete",
-        text: "I've been following The Competitor track for 6 months and my results speak for themselves. PRs on my clean & jerk (+15kg), increased my bar muscle-up capacity from 10 to 25 unbroken, and qualified for Quarterfinals for the first time. The programming is intelligent — the volume is challenging but sustainable, and the periodization makes sense. Worth every penny.",
+        text: "I've been following The Competitor track for 6 months. PRs on clean & jerk (+15kg), bar muscle-ups from 10 to 25 unbroken, and qualified for Quarterfinals. Worth every penny.",
         rating: 5,
         isActive: true,
         createdAt: daysAgo(38),
@@ -1177,7 +1471,7 @@ const seedReviews = async () => {
       {
         authorName: "Mike Thompson",
         authorRole: "Performance RX Member",
-        text: "Best programming I've ever followed. The daily WODs are perfectly balanced — enough volume to see real progress without destroying my body. I'm hitting PRs consistently and my engine has never been better. Coach Ben knows how to structure a training cycle that builds on itself week after week.",
+        text: "Best programming I've ever followed. Daily WODs are perfectly balanced. Hitting PRs consistently and my engine has never been better.",
         rating: 5,
         isActive: true,
         createdAt: daysAgo(31),
@@ -1185,7 +1479,7 @@ const seedReviews = async () => {
       {
         authorName: "Jennifer Park",
         authorRole: "Garage Gym Athlete",
-        text: "After my local box closed, I thought my CrossFit days were over. Found The Discipline Program and haven't looked back. The Foundations GPP track gave me the structure I needed to train solo in my garage. The video demos are crystal clear and the progressions are perfectly paced. I actually feel more consistent now than when I had daily class times.",
+        text: "After my local box closed, I thought my CrossFit days were over. Foundations GPP gave me the structure I needed for solo training.",
         rating: 5,
         isActive: true,
         createdAt: daysAgo(25),
@@ -1193,7 +1487,7 @@ const seedReviews = async () => {
       {
         authorName: "David Rodriguez",
         authorRole: "Comeback Athlete",
-        text: "Took 2 years off for work and family. Coming back at 38 was humbling, but the Foundations track has been perfect for rebuilding my base. Movements are scalable, volume is reasonable, and I'm not wrecked for days after training. Only thing I'd add is more mobility content, but the programming itself is excellent.",
+        text: "Took 2 years off. Coming back at 38 was humbling, but Foundations has been perfect for rebuilding. Movements are scalable, volume is reasonable.",
         rating: 4,
         isActive: true,
         createdAt: daysAgo(19),
@@ -1201,7 +1495,7 @@ const seedReviews = async () => {
       {
         authorName: "Emma Lawson",
         authorRole: "Open Competitor",
-        text: "The Competitor track is absolutely brutal in the best way possible. Two sessions daily keeps me honest and the sport-specific work has carried over directly to my competition results. Finished top 500 worldwide in the Open this year — a massive jump from last year. If you're serious about competing, this is the program.",
+        text: "The Competitor track is absolutely brutal in the best way. Finished top 500 worldwide in the Open this year.",
         rating: 5,
         isActive: true,
         createdAt: daysAgo(16),
@@ -1209,7 +1503,7 @@ const seedReviews = async () => {
       {
         authorName: "Lisa Anderson",
         authorRole: "Masters 45-49",
-        text: "I was hesitant about online programming at my age, but Performance RX has been a game-changer. The movement standards keep me accountable and the pacing guidance prevents me from going too hard too fast. My joints feel better than they did 5 years ago, and I'm stronger to boot. Highly recommend for Masters athletes who want smart, sustainable training.",
+        text: "My joints feel better than 5 years ago, and I'm stronger. Highly recommend for Masters athletes.",
         rating: 5,
         isActive: true,
         createdAt: daysAgo(12),
@@ -1217,7 +1511,7 @@ const seedReviews = async () => {
       {
         authorName: "Tom Bradley",
         authorRole: "Weekend Warrior",
-        text: "Great programming for someone who can't commit to 5-6 days per week. The Foundations track works perfectly with my garage gym setup — barbell, plates, pull-up bar, and a jump rope is all I've needed. Deadlift up 30lbs in 3 months and I finally got my first strict pull-up. Solid value for the price.",
+        text: "Great programming for someone who can't commit to 5-6 days. Deadlift up 30lbs in 3 months and first strict pull-up.",
         rating: 4,
         isActive: true,
         createdAt: daysAgo(8),
@@ -1225,7 +1519,7 @@ const seedReviews = async () => {
       {
         authorName: "Anonymous",
         authorRole: null,
-        text: "Decent programming but I found the pacing too slow for my level. Switched to a different program after 2 months. May work better for less experienced athletes.",
+        text: "Decent programming but pacing too slow for my level. Switched after 2 months.",
         rating: 3,
         isActive: false,
         createdAt: daysAgo(45),
@@ -1236,10 +1530,6 @@ const seedReviews = async () => {
   console.log("  Reviews: 8 (7 active, 1 inactive)");
 };
 
-// ---------------------------------------------------------------------------
-// Contact Submissions
-// ---------------------------------------------------------------------------
-
 const seedContactSubmissions = async () => {
   await prisma.marketingContactSubmission.createMany({
     data: [
@@ -1248,9 +1538,8 @@ const seedContactSubmissions = async () => {
         email: "alex.chen@email.com",
         program: "The Competitor",
         message:
-          "Hey! I'm currently training for the Open and looking to step up my programming. I've been doing CrossFit for 3 years and can do most movements RX. How does The Competitor track compare to what I'd get at a competitive affiliate? Do you provide any video feedback on lifts or is it programming only?",
+          "I'm training for the Open. How does The Competitor compare to a competitive affiliate?",
         status: "NEW",
-        notes: null,
         createdAt: daysAgo(1),
       },
       {
@@ -1258,9 +1547,8 @@ const seedContactSubmissions = async () => {
         email: "rachel.m@email.com",
         program: "Foundations GPP",
         message:
-          "I have a garage gym with a barbell, plates, pull-up bar, and rings. Will the Foundations track work for me or do I need more equipment like a rower or assault bike? Also, can I start mid-month or do I need to wait until the 1st?",
+          "I have a garage gym with barbell, plates, pull-up bar, and rings. Will Foundations work?",
         status: "NEW",
-        notes: null,
         createdAt: daysAgo(2),
       },
       {
@@ -1268,83 +1556,69 @@ const seedContactSubmissions = async () => {
         email: "patricia.j@email.com",
         program: "Masters 40+",
         message:
-          "I'm 52 and have been doing CrossFit for about a year. I noticed the Masters 40+ program is listed but appears inactive. Is this coming back soon? Or would you recommend Performance RX with scaling? I want programming that respects recovery needs at my age.",
+          "I'm 52. Is the Masters 40+ program coming back? Or would Performance RX with scaling work?",
         status: "NEW",
-        notes: null,
         createdAt: daysAgo(4),
       },
       {
         name: "Mark Sullivan",
         email: "mark.sullivan@email.com",
-        program: null,
-        message:
-          "I'm interested in signing up but have a question about billing. Do you offer any discounts for annual subscriptions instead of monthly? I'm committed to training long-term and would prefer to pay upfront if there's a savings. Also curious about family plans — my wife and I both train.",
+        message: "Do you offer annual discounts? Also curious about family plans.",
         status: "IN_PROGRESS",
-        notes: "Sent annual pricing info and family discount options. Waiting for reply.",
+        notes: "Sent annual pricing. Waiting for reply.",
         createdAt: daysAgo(5),
       },
       {
         name: "Sophie Williams",
         email: "sophie.w@email.com",
         program: "Performance RX",
-        message:
-          "I signed up yesterday but I'm not seeing the workouts in my account. I received the confirmation email but when I log in, the training section is empty. Can someone help me troubleshoot? Really excited to get started and don't want to miss today's session!",
+        message: "Signed up yesterday but training section is empty. Can someone help?",
         status: "IN_PROGRESS",
-        notes: "Likely a subscription sync issue. Escalated to check Stripe webhook logs.",
+        notes: "Subscription sync issue. Checking webhook logs.",
         createdAt: daysAgo(3),
       },
       {
         name: "Brian Foster",
         email: "brian.foster@email.com",
         program: "Foundations GPP",
-        message:
-          "I'm 6 weeks into Foundations and loving it — the progressions are perfectly paced. I'm ready for more volume and wondering when to move up to Performance RX. I can do most movements but my gymnastics are still developing (only 2-3 strict pull-ups). Should I wait until I'm stronger?",
+        message: "6 weeks into Foundations and loving it. When should I move to Performance RX?",
         status: "REPLIED",
-        notes:
-          "Recommended staying on Foundations for 2 more weeks until he hits 5 strict pull-ups consistently.",
+        notes: "Stay on Foundations 2 more weeks until 5 strict pull-ups.",
         createdAt: daysAgo(11),
       },
       {
         name: "Christina Lee",
         email: "christina.lee@email.com",
         program: "Performance RX",
-        message:
-          "I'm dealing with a nagging shoulder issue (rotator cuff tendinitis from overhead work). Are there movement substitutions built into the programming or should I consult with my PT first? I don't want to make it worse but also don't want to take time completely off training.",
+        message: "Dealing with rotator cuff tendinitis. Are there built-in substitutions?",
         status: "REPLIED",
-        notes:
-          "Advised to consult PT first. Sent list of common overhead substitutions (DB press → landmine press, etc.).",
+        notes: "Advised PT first. Sent overhead substitutions list.",
         createdAt: daysAgo(15),
       },
       {
         name: "Jason Miller",
         email: "jason.m@email.com",
         program: "The Competitor",
-        message:
-          "Just wanted to say thanks for the incredible programming. Four months on The Competitor track and I just hit a 20lb PR on my back squat. Also qualified for Quarterfinals for the first time in my career. The structure and progressive overload have been exactly what I needed. Keep up the amazing work!",
+        message: "Hit a 20lb PR on back squat and qualified for Quarterfinals. Thanks!",
         status: "CLOSED",
-        notes:
-          "Success story — added to testimonials list. Asked permission to feature on social media.",
+        notes: "Success story. Added to testimonials list.",
         createdAt: daysAgo(18),
       },
       {
         name: "Kevin Davis",
         email: "kevin@crossfitcentral.com",
-        program: null,
-        message:
-          "Hi Coach Ben, I run a CrossFit affiliate in Austin, TX. I'm interested in potentially using your programming for our competitors class (about 8-12 athletes). Would you be open to discussing bulk licensing or affiliate partnerships? Happy to jump on a call whenever works for you.",
+        message: "I run a CrossFit affiliate. Interested in bulk licensing or partnerships.",
         status: "CLOSED",
-        notes:
-          "Had a call. Not ready for affiliate partnerships yet — revisit in Q3 when platform is more mature.",
+        notes: "Not ready for affiliates yet. Revisit Q3.",
         createdAt: daysAgo(14),
       },
       {
         name: "Nicole Anderson",
         email: "nicole.a@email.com",
         program: "Foundations GPP",
-        message:
-          "Quick question — do you have a mobile app or is everything web-based? I'd love to log workouts from my phone at the gym without having to open a browser. Also, are the video demonstrations detailed enough for someone training completely solo without a coach watching?",
+        message: "Do you have a mobile app? I'd love to log workouts from my phone.",
         status: "CLOSED",
-        notes: "Explained PWA is in development. She signed up for Foundations in the meantime.",
+        notes: "PWA in development. She signed up anyway.",
         createdAt: daysAgo(20),
       },
     ],
@@ -1353,28 +1627,33 @@ const seedContactSubmissions = async () => {
   console.log("  Contacts: 10 (3 NEW, 2 IN_PROGRESS, 2 REPLIED, 3 CLOSED)");
 };
 
-// ---------------------------------------------------------------------------
-// Main
-// ---------------------------------------------------------------------------
-
 const main = async () => {
-  console.log("🌱 Starting enriched seed...\n");
+  console.log("Starting seed...\n");
 
   await clearAll();
 
   const passwordHash = await bcrypt.hash("password123", 12);
 
-  await seedUsers(passwordHash);
-  await seedExerciseCategories();
-  await seedExercises();
+  const users = await seedUsers(passwordHash);
+  const coachProfile = await seedProfiles(users);
+  const { catMap, exMap } = await seedExercises();
+  const { plans, workouts } = await seedTrainingData(coachProfile.id, catMap, exMap);
+
+  await seedEnrollments(users, plans);
+  await seedWorkoutLogs(users, workouts);
+  await seedCoachNotes(coachProfile.id, users);
+  await seedAthleteFlags(coachProfile.id, users);
+  await seedBenchmarks(users);
   await seedMarketingPages();
   await seedProducts();
   await seedBlogPosts();
   await seedReviews();
   await seedContactSubmissions();
 
-  console.log("\n✅ Seed completed!");
-  console.log("   Admin login: admin@example.com / password123");
+  console.log("\nSeed completed!");
+  console.log("  Admin:   admin@example.com / password123");
+  console.log("  Coach:   coach.ben@thedisciplineprogram.com / password123");
+  console.log("  Athlete: sarah.mitchell@email.com / password123");
 };
 
 main()

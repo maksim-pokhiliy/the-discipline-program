@@ -1,14 +1,50 @@
 import { getServerSession } from "next-auth/next";
 
 import { authOptions } from "@repo/auth/config";
-import { UnauthorizedError } from "@repo/errors";
+import { ForbiddenError, UnauthorizedError } from "@repo/errors";
 
-export const getAuthenticatedUserId = async (): Promise<string> => {
-  const session = await getServerSession(authOptions);
+import { handleApiError } from "./error-handler";
 
-  if (!session?.user?.id) {
-    throw new UnauthorizedError();
-  }
+type RouteContext = { params: Promise<Record<string, string>> };
+type RouteHandler = (request: Request, context: RouteContext) => Promise<Response>;
+type AuthenticatedHandler = (
+  request: Request,
+  context: RouteContext,
+  userId: string,
+) => Promise<Response>;
 
-  return session.user.id;
+export const withAdminAuth = (handler: RouteHandler): RouteHandler => {
+  return async (request, context) => {
+    try {
+      const session = await getServerSession(authOptions);
+
+      if (!session?.user?.id) {
+        throw new UnauthorizedError();
+      }
+
+      if (session.user.role !== "ADMIN") {
+        throw new ForbiddenError();
+      }
+
+      return await handler(request, context);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+};
+
+export const withPlatformAuth = (handler: AuthenticatedHandler): RouteHandler => {
+  return async (request, context) => {
+    try {
+      const session = await getServerSession(authOptions);
+
+      if (!session?.user?.id) {
+        throw new UnauthorizedError();
+      }
+
+      return await handler(request, context, session.user.id);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
 };

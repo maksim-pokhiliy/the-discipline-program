@@ -27,7 +27,7 @@ export const ProfileCard = ({ user }: ProfileCardProps) => {
     return (
       <FormCard title="Athlete Profile">
         <Stack spacing={2}>
-          <DetailField label="Name" value={athleteProfile.name || "—"} />
+          <DetailField label="Name" value={user.name || "—"} />
           <DetailField
             label="Gender"
             value={athleteProfile.gender ? GENDER_LABELS[athleteProfile.gender] : "—"}

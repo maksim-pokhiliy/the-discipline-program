@@ -7,31 +7,20 @@ import {
   updateCoachProfileResponseSchema,
 } from "@repo/contracts/coach-profile";
 
-import { getAuthenticatedUserId } from "@app/lib/auth";
-import { handleApiError } from "@app/lib/error-handler";
+import { withPlatformAuth } from "@app/lib/auth";
 
-export const GET = async () => {
-  try {
-    const userId = await getAuthenticatedUserId();
-    const data = await platformCoachProfileApi.get(userId);
-    const validated = getCoachProfileResponseSchema.parse(data);
+export const GET = withPlatformAuth(async (_, _context, userId) => {
+  const data = await platformCoachProfileApi.get(userId);
+  const validated = getCoachProfileResponseSchema.parse(data);
 
-    return NextResponse.json(validated);
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
+  return NextResponse.json(validated);
+});
 
-export const PUT = async (request: Request) => {
-  try {
-    const userId = await getAuthenticatedUserId();
-    const body = await request.json();
-    const data = updateCoachProfileRequestSchema.parse(body);
-    const result = await platformCoachProfileApi.upsert(userId, data);
-    const validated = updateCoachProfileResponseSchema.parse(result);
+export const PUT = withPlatformAuth(async (request, _context, userId) => {
+  const body = await request.json();
+  const data = updateCoachProfileRequestSchema.parse(body);
+  const result = await platformCoachProfileApi.upsert(userId, data);
+  const validated = updateCoachProfileResponseSchema.parse(result);
 
-    return NextResponse.json(validated);
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
+  return NextResponse.json(validated);
+});

@@ -6,12 +6,12 @@ import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/mater
 import Link from "next/link";
 
 import { type Product } from "@repo/contracts/product";
+import { useDeleteConfirmation } from "@repo/query";
 import { formatPrice } from "@repo/shared";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteProduct, useToggleProductStatus } from "@app/lib/hooks";
-import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
 const getDisplayPrice = (product: Product): string => {
   const activePrice = product.prices.find((p) => p.isActive);

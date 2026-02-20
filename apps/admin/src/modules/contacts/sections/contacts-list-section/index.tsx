@@ -9,11 +9,11 @@ import { type ChipProps } from "@mui/material";
 import Link from "next/link";
 
 import { type GetContactByIdResponse, CONTACT_STATUSES } from "@repo/contracts/contact";
+import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { useDeleteContact, useUpdateContact } from "@app/lib/hooks";
-import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
 const STATUS_CONFIG: Record<string, { label: string; color: ChipProps["color"] }> = {
   NEW: { label: "New", color: "info" },

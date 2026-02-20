@@ -8,24 +8,27 @@ datasource db {
 }
 
 model User {
-  id             String          @id @default(cuid())
-  email          String          @unique
-  emailVerified  DateTime?
-  image          String?
-  password       String?
-  role           Role            @default(USER)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  deletedAt      DateTime?
-  athleteProfile AthleteProfile?
-  coachProfile   CoachProfile?
-  subscription   Subscription?
-  transactions   Transaction[]
-  workoutLogs      WorkoutLog[]
-  planEnrollments  PlanEnrollment[]
-  userBenchmarks   UserBenchmark[]
-  accounts         Account[]
-  sessions         Session[]
+  id              String          @id @default(cuid())
+  email           String          @unique
+  emailVerified   DateTime?
+  name            String?
+  image           String?
+  password        String?
+  role            Role            @default(USER)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+  athleteProfile  AthleteProfile?
+  coachProfile    CoachProfile?
+  subscription    Subscription?
+  transactions    Transaction[]
+  workoutLogs     WorkoutLog[]
+  planEnrollments PlanEnrollment[]
+  userBenchmarks  UserBenchmark[]
+  coachNotes      CoachNote[]
+  athleteFlags    AthleteFlag[]
+  accounts        Account[]
+  sessions        Session[]
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -74,7 +77,6 @@ model AthleteProfile {
   id        String   @id @default(cuid())
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  name      String?
   gender    Gender?
   heightCm  Int?
   weightKg  Decimal? @db.Decimal(5, 2)
@@ -86,14 +88,16 @@ model AthleteProfile {
 }
 
 model CoachProfile {
-  id        String         @id @default(cuid())
-  userId    String         @unique
-  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bio       String?
-  plans     TrainingPlan[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  deletedAt DateTime?
+  id           String         @id @default(cuid())
+  userId       String         @unique
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio          String?
+  plans        TrainingPlan[]
+  coachNotes   CoachNote[]
+  athleteFlags AthleteFlag[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -238,21 +242,22 @@ model Exercise {
 }
 
 model TrainingPlan {
-  id          String       @id @default(cuid())
+  id          String             @id @default(cuid())
   coachId     String
-  coach       CoachProfile @relation(fields: [coachId], references: [id])
+  coach       CoachProfile       @relation(fields: [coachId], references: [id])
   name        String
   description String?
-  isActive    Boolean          @default(true)
+  status      TrainingPlanStatus @default(DRAFT)
   workouts    Workout[]
   enrollments PlanEnrollment[]
   products    Product[]
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime     @updatedAt
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
   deletedAt   DateTime?
 
   @@index([createdAt])
   @@index([deletedAt])
+  @@index([status])
   @@map("app_training_plans")
 }
 
@@ -341,6 +346,50 @@ model SetLog {
 enum Unit {
   KG
   LB
+}
+
+enum TrainingPlanStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum FlagType {
+  INJURY
+  RESTRICTION
+  ATTENTION
+}
+
+model CoachNote {
+  id        String       @id @default(cuid())
+  coachId   String
+  coach     CoachProfile @relation(fields: [coachId], references: [id])
+  athleteId String
+  athlete   User         @relation(fields: [athleteId], references: [id])
+  content   String       @db.Text
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([coachId, athleteId])
+  @@index([createdAt])
+  @@map("app_coach_notes")
+}
+
+model AthleteFlag {
+  id         String       @id @default(cuid())
+  coachId    String
+  coach      CoachProfile @relation(fields: [coachId], references: [id])
+  athleteId  String
+  athlete    User         @relation(fields: [athleteId], references: [id])
+  type       FlagType
+  note       String?
+  resolvedAt DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([coachId, resolvedAt])
+  @@index([athleteId])
+  @@map("app_athlete_flags")
 }
 
 enum PlanEnrollmentStatus {

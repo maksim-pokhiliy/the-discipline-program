@@ -19,3 +19,6 @@ export * from "./entities/user";
 export * from "./entities/plan-enrollment";
 export * from "./entities/benchmark-definition";
 export * from "./entities/user-benchmark";
+export * from "./entities/coach-dashboard";
+export * from "./entities/coach-note";
+export * from "./entities/athlete-flag";

@@ -1,11 +1,10 @@
-import { Stack, Typography } from "@mui/material";
+import { api } from "@app/lib/api";
+import { PlansListView } from "@app/modules/plans";
 
-const PlansPage = () => {
-  return (
-    <Stack sx={{ p: 3 }}>
-      <Typography variant="h5">Training Plans</Typography>
-    </Stack>
-  );
-};
+export const dynamic = "force-dynamic";
 
-export default PlansPage;
+export default async function PlansPage() {
+  const initialData = await api.trainingPlans.getPageData();
+
+  return <PlansListView initialData={initialData} />;
+}
