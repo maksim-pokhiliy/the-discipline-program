@@ -2,7 +2,7 @@
 
 import { type ReactNode } from "react";
 
-import { Card, CardContent, Typography, Stack, Box } from "@mui/material";
+import { Card, CardContent, Typography, Stack } from "@mui/material";
 
 interface StatsCardProps {
   title: string;
@@ -61,15 +61,14 @@ export const StatsCard = ({
             </Typography>
 
             {icon && (
-              <Box
+              <Stack
                 sx={(theme) => ({
                   color: theme.palette[color].main,
-                  display: "flex",
                   alignItems: "center",
                 })}
               >
                 {icon}
-              </Box>
+              </Stack>
             )}
           </Stack>
 

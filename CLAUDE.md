@@ -192,6 +192,12 @@ export default async function BlogPage() {
 
 `page.tsx` is the only file that uses default export (Next.js requirement).
 
+## Anti-patterns (Learned Rules)
+
+**Meta-rule:** When the user points out a mistake or a bad pattern, add it here immediately. These rules are permanent and must be followed in all future work.
+
+- **No `display: "flex"` in sx.** Use MUI `Stack` component instead. Stack is already `display: flex`. Exceptions: Card/CardContent where flex is needed for stretch behavior, styled circle/shape containers for icon centering, complex styled components (e.g. RichTextEditor).
+
 ## Commit Convention
 
 Conventional commits enforced via commitlint:
