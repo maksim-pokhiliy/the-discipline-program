@@ -4,11 +4,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { type AdminReviewsPageData, type Review } from "@repo/contracts/review";
-import { adminKeys } from "@repo/query";
+import { adminKeys, createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
-
-import { createCrudHooks } from "./create-crud-hooks";
 
 const reviewHooks = createCrudHooks<AdminReviewsPageData, Review, Partial<Review>, Partial<Review>>(
   {
@@ -22,6 +20,7 @@ const reviewHooks = createCrudHooks<AdminReviewsPageData, Review, Partial<Review
       delete: api.reviews.delete,
     },
     redirectTo: "/reviews",
+    additionalInvalidateKeys: [adminKeys.dashboard()],
   },
 );
 

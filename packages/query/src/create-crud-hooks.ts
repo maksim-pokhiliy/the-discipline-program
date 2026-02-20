@@ -11,7 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { adminKeys, STALE_TIMES } from "@repo/query";
+import { STALE_TIMES } from "./constants";
 
 interface CrudHooksConfig<
   TPageData,
@@ -51,7 +51,7 @@ export const createCrudHooks = <
 >(
   config: CrudHooksConfig<TPageData, TEntity, TCreateData, TUpdateData>,
 ): CrudHooks<TPageData, TEntity, TCreateData, TUpdateData> => {
-  const invalidateKeys = config.additionalInvalidateKeys ?? [adminKeys.dashboard()];
+  const invalidateKeys = config.additionalInvalidateKeys ?? [];
 
   const usePageData = ({ initialData }: { initialData?: TPageData } = {}) => {
     return useQuery({

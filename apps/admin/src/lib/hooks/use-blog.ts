@@ -9,11 +9,9 @@ import {
   type CreateBlogPostData,
   type UpdateBlogPostData,
 } from "@repo/contracts/blog";
-import { adminKeys } from "@repo/query";
+import { adminKeys, createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
-
-import { createCrudHooks } from "./create-crud-hooks";
 
 const blogHooks = createCrudHooks<
   AdminBlogPageData,
@@ -31,6 +29,7 @@ const blogHooks = createCrudHooks<
     delete: api.blog.delete,
   },
   redirectTo: "/blog",
+  additionalInvalidateKeys: [adminKeys.dashboard()],
 });
 
 export const useBlogPageData = blogHooks.usePageData;
