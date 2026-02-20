@@ -3,20 +3,23 @@
 import { type ReactNode } from "react";
 
 import { Card, CardContent, Typography, Stack } from "@mui/material";
+import { type Palette, type PaletteColor } from "@mui/material/styles";
+
+type PaletteColorKey = {
+  [K in keyof Palette]: Palette[K] extends PaletteColor ? K : never;
+}[keyof Palette];
 
 interface StatsCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
   icon?: ReactNode;
-  color?: "primary" | "secondary" | "success" | "warning" | "error" | "info";
+  color?: PaletteColorKey;
   trend?: {
     value: number;
     isPositive: boolean;
     label: string;
   };
-  onClick?: () => void;
-  selected?: boolean;
 }
 
 export const StatsCard = ({
@@ -26,26 +29,13 @@ export const StatsCard = ({
   icon,
   color = "primary",
   trend,
-  onClick,
-  selected,
 }: StatsCardProps) => {
   return (
     <Card
-      sx={(theme) => ({
+      sx={{
         height: "100%",
-        transition: "opacity 0.2s, border-color 0.2s",
-        ...(onClick && { cursor: "pointer" }),
-        ...(selected === false && { opacity: 0.5 }),
-        ...(selected && { borderColor: theme.palette[color].main }),
-        ...(onClick && {
-          "&:hover": {
-            borderColor: theme.palette[color].main,
-            opacity: 1,
-          },
-        }),
-      })}
+      }}
       variant="outlined"
-      onClick={onClick}
     >
       <CardContent>
         <Stack

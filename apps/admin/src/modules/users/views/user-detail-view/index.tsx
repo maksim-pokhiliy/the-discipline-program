@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-
 import { useForm } from "react-hook-form";
 
 import { type UserRole } from "@repo/contracts/auth";
@@ -21,18 +19,10 @@ export const UserDetailView = ({ initialData }: UserDetailViewProps) => {
   const { mutate: updateRole, isPending } = useUpdateUserRole();
 
   const methods = useForm<{ role: UserRole }>({
-    defaultValues: {
-      role: (user?.role ?? initialData.role) as UserRole,
+    values: {
+      role: user?.role ?? initialData.role,
     },
   });
-
-  const { reset } = methods;
-
-  useEffect(() => {
-    if (user) {
-      reset({ role: user.role as UserRole });
-    }
-  }, [user, reset]);
 
   if (!user) {
     return null;

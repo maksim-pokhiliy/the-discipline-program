@@ -5,6 +5,7 @@ import {
   type DashboardData,
   type UserStats,
 } from "@repo/contracts/dashboard";
+import { centsToAmount } from "@repo/shared";
 
 import { prisma } from "../../db/client";
 import { mapToPrice } from "../../mappers";
@@ -137,7 +138,7 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
 
     const p = mapToPrice(prices[0] as Parameters<typeof mapToPrice>[0]);
 
-    return `${(p.amountCents / 100).toFixed(0)} ${p.currency}`;
+    return `${centsToAmount(p.amountCents).toFixed(0)} ${p.currency}`;
   };
 
   const activities: ActivityItem[] = [

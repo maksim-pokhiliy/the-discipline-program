@@ -1,14 +1,10 @@
 "use client";
 
-import { useState } from "react";
-
-import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import {
   Avatar,
   Box,
-  Button,
   Chip,
   IconButton,
   Rating,
@@ -23,41 +19,31 @@ import { type Review } from "@repo/contracts/review";
 import { formatDate } from "@repo/shared";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
+import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteReview, useToggleReviewActive } from "@app/lib/hooks";
 import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
+
+const filters: DataTableFilter<Review>[] = [
+  {
+    id: "status",
+    label: "Status",
+    options: [
+      { label: "Active", value: "active" },
+      { label: "Hidden", value: "hidden" },
+    ],
+    match: (item, value) => (value === "active" ? item.isActive : !item.isActive),
+  },
+];
 
 interface ReviewsListSectionProps {
   reviews: Review[];
 }
 
 export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
-  const { mutateAsync: toggleActive } = useToggleReviewActive();
+  const toggleActiveMutation = useToggleReviewActive();
   const deleteMutation = useDeleteReview();
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
-
-  const [loadingId, setLoadingId] = useState<string | null>(null);
-
-  const handleToggleActive = async (id: string) => {
-    setLoadingId(id);
-    try {
-      await toggleActive(id);
-    } finally {
-      setLoadingId(null);
-    }
-  };
-
-  const filters: DataTableFilter<Review>[] = [
-    {
-      id: "status",
-      label: "Status",
-      options: [
-        { label: "Active", value: "active" },
-        { label: "Hidden", value: "hidden" },
-      ],
-      match: (item, value) => (value === "active" ? item.isActive : !item.isActive),
-    },
-  ];
 
   const columns: Column<Review>[] = [
     {
@@ -120,8 +106,10 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
           <Switch
             size="small"
             checked={review.isActive}
-            disabled={loadingId === review.id}
-            onChange={() => handleToggleActive(review.id)}
+            disabled={
+              toggleActiveMutation.isPending && toggleActiveMutation.variables === review.id
+            }
+            onChange={() => toggleActiveMutation.mutate(review.id)}
             color="success"
           />
           <Chip
@@ -175,17 +163,7 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
         title="Reviews"
         searchPlaceholder="Search by author..."
         filters={filters}
-        action={
-          <Button
-            component={Link}
-            href="/reviews/create"
-            variant="contained"
-            startIcon={<AddIcon />}
-            size="medium"
-          >
-            Create Review
-          </Button>
-        }
+        action={<CreateButton href="/reviews/create">Create Review</CreateButton>}
         paginated
         emptyMessage="No reviews found. Add your first review!"
       />

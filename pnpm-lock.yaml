@@ -520,6 +520,9 @@ importers:
       '@repo/errors':
         specifier: workspace:*
         version: link:../errors
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@vercel/blob':
         specifier: 'catalog:'
         version: 0.27.3

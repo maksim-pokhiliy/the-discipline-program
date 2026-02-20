@@ -20,6 +20,7 @@
     "@prisma/client": "catalog:",
     "@repo/contracts": "workspace:*",
     "@repo/errors": "workspace:*",
+    "@repo/shared": "workspace:*",
     "@vercel/blob": "catalog:",
     "bcryptjs": "catalog:",
     "@repo/env": "workspace:*",

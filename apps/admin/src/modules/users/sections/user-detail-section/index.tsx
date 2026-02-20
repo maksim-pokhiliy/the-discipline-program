@@ -1,14 +1,14 @@
 "use client";
 
-import { Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Grid, MenuItem, Stack, TextField } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { GENDER_LABELS } from "@repo/contracts/athlete-profile";
 import { USER_ROLES, type UserRole } from "@repo/contracts/auth";
 import { type AdminUser } from "@repo/contracts/user";
 import { formatDate } from "@repo/shared";
 import { DetailField, FormCard } from "@repo/ui";
 
+import { ProfileCard } from "../../components/profile-card";
 import { ROLE_CONFIG } from "../../constants";
 
 interface UserDetailSectionProps {
@@ -18,8 +18,6 @@ interface UserDetailSectionProps {
 
 export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) => {
   const { control } = useFormContext<{ role: UserRole }>();
-
-  const profileCard = getProfileCard(user);
 
   return (
     <Grid container spacing={3}>
@@ -58,7 +56,7 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
             </Stack>
           </FormCard>
 
-          {profileCard}
+          <ProfileCard user={user} />
         </Stack>
       </Grid>
 
@@ -74,62 +72,4 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
       </Grid>
     </Grid>
   );
-};
-
-const getProfileCard = (user: AdminUser) => {
-  const { role, athleteProfile, coachProfile } = user;
-
-  if (role === "USER") {
-    if (!athleteProfile) {
-      return (
-        <FormCard title="Athlete Profile">
-          <Typography variant="body2" color="text.secondary">
-            Profile not created yet.
-          </Typography>
-        </FormCard>
-      );
-    }
-
-    return (
-      <FormCard title="Athlete Profile">
-        <Stack spacing={2}>
-          <DetailField label="Name" value={athleteProfile.name || "—"} />
-          <DetailField
-            label="Gender"
-            value={athleteProfile.gender ? GENDER_LABELS[athleteProfile.gender] : "—"}
-          />
-          <DetailField
-            label="Height"
-            value={athleteProfile.heightCm ? `${athleteProfile.heightCm} cm` : "—"}
-          />
-          <DetailField
-            label="Weight"
-            value={athleteProfile.weightKg ? `${athleteProfile.weightKg} kg` : "—"}
-          />
-        </Stack>
-      </FormCard>
-    );
-  }
-
-  if (role === "COACH") {
-    if (!coachProfile) {
-      return (
-        <FormCard title="Coach Profile">
-          <Typography variant="body2" color="text.secondary">
-            Profile not created yet.
-          </Typography>
-        </FormCard>
-      );
-    }
-
-    return (
-      <FormCard title="Coach Profile">
-        <Stack spacing={2}>
-          <DetailField label="Bio" value={coachProfile.bio || "—"} />
-        </Stack>
-      </FormCard>
-    );
-  }
-
-  return null;
 };

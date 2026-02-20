@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { Button, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
@@ -12,6 +11,7 @@ import { type Exercise } from "@repo/contracts/exercise";
 import { type ExerciseCategory } from "@repo/contracts/exercise-category";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
+import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteExercise } from "@app/lib/hooks";
 import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
@@ -121,15 +121,7 @@ export const ExercisesListSection = ({ exercises, categories }: ExercisesListSec
               Manage Categories
             </Button>
 
-            <Button
-              component={Link}
-              href="/exercises/create"
-              variant="contained"
-              startIcon={<AddIcon />}
-              size="medium"
-            >
-              Create Exercise
-            </Button>
+            <CreateButton href="/exercises/create">Create Exercise</CreateButton>
           </Stack>
         }
         paginated

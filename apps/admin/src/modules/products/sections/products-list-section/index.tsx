@@ -1,63 +1,49 @@
 "use client";
 
-import { useState } from "react";
-
-import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { Button, Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/material";
+import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
 import { type Product } from "@repo/contracts/product";
 import { formatPrice } from "@repo/shared";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
+import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteProduct, useToggleProductStatus } from "@app/lib/hooks";
 import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
+
+const getDisplayPrice = (product: Product): string => {
+  const activePrice = product.prices.find((p) => p.isActive);
+
+  if (!activePrice) {
+    return "No price";
+  }
+
+  return formatPrice(activePrice.amountCents, activePrice.currency);
+};
+
+const filters: DataTableFilter<Product>[] = [
+  {
+    id: "status",
+    label: "Status",
+    options: [
+      { label: "Active", value: "active" },
+      { label: "Inactive", value: "inactive" },
+    ],
+    match: (item, value) => (value === "active" ? item.isActive : !item.isActive),
+  },
+];
 
 interface ProductsListSectionProps {
   products: Product[];
 }
 
 export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
-  const { mutateAsync: toggleStatus } = useToggleProductStatus();
+  const toggleStatusMutation = useToggleProductStatus();
   const deleteMutation = useDeleteProduct();
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
-
-  const [loadingId, setLoadingId] = useState<string | null>(null);
-
-  const handleToggleStatus = async (id: string) => {
-    setLoadingId(id);
-
-    try {
-      await toggleStatus(id);
-    } finally {
-      setLoadingId(null);
-    }
-  };
-
-  const getDisplayPrice = (product: Product): string => {
-    const activePrice = product.prices.find((p) => p.isActive);
-
-    if (!activePrice) {
-      return "No price";
-    }
-
-    return formatPrice(activePrice.amountCents, activePrice.currency);
-  };
-
-  const filters: DataTableFilter<Product>[] = [
-    {
-      id: "status",
-      label: "Status",
-      options: [
-        { label: "Active", value: "active" },
-        { label: "Inactive", value: "inactive" },
-      ],
-      match: (item, value) => (value === "active" ? item.isActive : !item.isActive),
-    },
-  ];
 
   const columns: Column<Product>[] = [
     {
@@ -88,8 +74,10 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
           <Switch
             size="small"
             checked={product.isActive}
-            disabled={loadingId === product.id}
-            onChange={() => handleToggleStatus(product.id)}
+            disabled={
+              toggleStatusMutation.isPending && toggleStatusMutation.variables === product.id
+            }
+            onChange={() => toggleStatusMutation.mutate(product.id)}
             color="success"
           />
 
@@ -153,17 +141,7 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
         title="Products"
         searchPlaceholder="Search products..."
         filters={filters}
-        action={
-          <Button
-            component={Link}
-            href="/products/create"
-            variant="contained"
-            startIcon={<AddIcon />}
-            size="medium"
-          >
-            Create Product
-          </Button>
-        }
+        action={<CreateButton href="/products/create">Create Product</CreateButton>}
         paginated
         emptyMessage="No products found. Start by creating one!"
       />
