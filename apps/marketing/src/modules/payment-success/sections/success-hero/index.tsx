@@ -1,5 +1,5 @@
 import CheckCircle from "@mui/icons-material/CheckCircle";
-import { alpha, Box, Stack } from "@mui/material";
+import { alpha, Stack } from "@mui/material";
 
 import { ContentSection } from "@repo/ui";
 
@@ -10,12 +10,7 @@ export const PaymentSuccessHeroSection = () => {
       subtitle="Welcome to The Discipline Program! Your transformation journey begins now."
       backgroundColor="dark"
     >
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-        }}
-      >
+      <Stack sx={{ alignItems: "center" }}>
         <Stack
           sx={(theme) => ({
             width: 120,
@@ -29,7 +24,7 @@ export const PaymentSuccessHeroSection = () => {
         >
           <CheckCircle sx={{ fontSize: 80, color: "white" }} />
         </Stack>
-      </Box>
+      </Stack>
     </ContentSection>
   );
 };

@@ -1,4 +1,4 @@
-import { Avatar, Box, Card, CardContent, Grid, Rating, Stack, Typography } from "@mui/material";
+import { Avatar, Card, CardContent, Grid, Rating, Stack, Typography } from "@mui/material";
 
 import { type HomePageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
@@ -32,7 +32,7 @@ export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionP
                     </Typography>
                   </Stack>
 
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
                     <Avatar
                       src={review.authorAvatar ?? ""}
                       alt={review.authorName}
@@ -48,7 +48,7 @@ export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionP
                         {review.authorRole}
                       </Typography>
                     </Stack>
-                  </Box>
+                  </Stack>
                 </Stack>
               </CardContent>
             </Card>

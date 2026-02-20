@@ -1,10 +1,10 @@
-import { Box, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 
 const HomePage = () => {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+    <Stack sx={{ alignItems: "center", justifyContent: "center", height: "100vh" }}>
       <Typography variant="h4">The Discipline Program</Typography>
-    </Box>
+    </Stack>
   );
 };
 

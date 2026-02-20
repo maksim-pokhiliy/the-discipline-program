@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 
-import { Box, Stack, Container, alpha } from "@mui/material";
+import { Stack, Container, alpha } from "@mui/material";
 
 interface FullscreenSectionProps {
   backgroundImage: string;
@@ -18,11 +18,10 @@ export const FullscreenSection = ({
   maxWidth = "md",
 }: FullscreenSectionProps) => {
   return (
-    <Box
+    <Stack
       sx={(theme) => ({
         position: "relative",
         height: `calc(100vh - ${theme.layout.appBarHeight}px)`,
-        display: "flex",
         alignItems: "center",
         justifyContent: "center",
         backgroundImage: overlay
@@ -40,6 +39,6 @@ export const FullscreenSection = ({
           {children}
         </Stack>
       </Container>
-    </Box>
+    </Stack>
   );
 };

@@ -1,5 +1,5 @@
 import ErrorOutline from "@mui/icons-material/ErrorOutline";
-import { alpha, Box, Stack } from "@mui/material";
+import { alpha, Stack } from "@mui/material";
 
 import { ContentSection } from "@repo/ui";
 
@@ -10,12 +10,7 @@ export const PaymentErrorHeroSection = () => {
       subtitle="There was an issue processing your payment. Don't worry, no charges were made to your account."
       backgroundColor="dark"
     >
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-        }}
-      >
+      <Stack sx={{ alignItems: "center" }}>
         <Stack
           sx={(theme) => ({
             width: 120,
@@ -29,7 +24,7 @@ export const PaymentErrorHeroSection = () => {
         >
           <ErrorOutline sx={{ fontSize: 80, color: "white" }} />
         </Stack>
-      </Box>
+      </Stack>
     </ContentSection>
   );
 };
