@@ -1,6 +1,6 @@
 # ROADMAP: The Discipline Program
 
-> Last updated: 2026-02-19 (Phase 1 complete, concept revised)
+> Last updated: 2026-02-20 (Phase 2 complete)
 > Approach: Quality > Speed. Sequential execution. No deadlines.
 > Product concept: see docs/ARCHITECTURE.md
 
@@ -19,7 +19,7 @@
 
 - `Product.stripeProductId`, `Price.stripePriceId` — hardcoded to Stripe. Rename when payment provider is chosen.
 - `Subscription.id` has no `@default(cuid())` — expects external provider ID. Review when billing starts.
-- `Product.trainingPlanId` exists as field but missing `@relation` definition.
+- ~`Product.trainingPlanId` exists as field but missing `@relation` definition.~ Fixed in Phase 2.
 
 ---
 
@@ -41,62 +41,23 @@
 
 ---
 
-## Phase 2 — Schema Extension + Data Layer
+## Phase 2 — Schema Extension + Data Layer (Complete)
 
 **Goal:** Complete the data model for the full product vision. Add missing entities, contracts, and API endpoints.
 
-**Why now:** ARCHITECTURE.md revision revealed critical gaps — no plan enrollment, no benchmarks, no exercise access from platform, no admin role protection. Must fix data model before building UI.
-
 ### 2.1 Platform app scaffolding ✅
 
-- [x] Create `apps/platform` (Next.js 16, PWA-ready)
-- [x] Auth integration (NextAuth route handler)
-- [x] turbo.json platform#build task
-- [x] Build passes (all 4 apps)
+### 2.2 Schema: new entities ✅
 
-### 2.2 Schema: new entities
+### 2.3 Contracts + API: PlanEnrollment ✅
 
-- [ ] Add `PlanEnrollmentStatus` enum (ACTIVE, PAUSED, COMPLETED)
-- [ ] Add `PlanEnrollment` model (trainingPlanId, userId, startDate, endDate?, status, createdAt)
-- [ ] Add `BenchmarkDefinition` model (name, unit, category?)
-- [ ] Add `UserBenchmark` model (userId, benchmarkDefinitionId, value, updatedAt)
-- [ ] Fix `Product` → `TrainingPlan` relation (add @relation to existing trainingPlanId field)
-- [ ] Add relations on User (planEnrollments, userBenchmarks)
-- [ ] `pnpm db:generate` + `pnpm db:push`
+### 2.4 Contracts + API: Benchmarks ✅
 
-### 2.3 Contracts + API: PlanEnrollment
+### 2.5 Platform exercise access ✅
 
-- [ ] `packages/contracts/src/entities/plan-enrollment/` (schema, types, API schemas/types)
-- [ ] `packages/api-server/src/endpoints/platform/plan-enrollments.ts`
-- [ ] API routes: GET (by plan), POST (enroll), PUT (update status), DELETE (unenroll)
-- [ ] Guard: coach can manage enrollments for own plans only
+### 2.6 Admin role protection ✅
 
-### 2.4 Contracts + API: Benchmarks
-
-- [ ] `packages/contracts/src/entities/benchmark-definition/` (schema, types, API schemas/types)
-- [ ] `packages/contracts/src/entities/user-benchmark/` (schema, types, API schemas/types)
-- [ ] `packages/api-server/src/endpoints/platform/benchmark-definitions.ts`
-- [ ] `packages/api-server/src/endpoints/platform/user-benchmarks.ts`
-- [ ] API routes for both entities
-- [ ] Access: ADMIN + COACH can CRUD definitions, any auth user can manage own benchmarks
-
-### 2.5 Platform exercise access
-
-- [ ] API routes: `/api/platform/exercises` (GET all, POST create) — for COACH
-- [ ] API routes: `/api/platform/exercise-categories` (GET all, POST create) — for COACH
-- [ ] Reuse existing admin api-server endpoints or create platform-specific ones
-
-### 2.6 Admin role protection
-
-- [ ] Add middleware to `apps/admin` — only ADMIN role can access
-- [ ] Redirect non-ADMIN to login or error page
-
-### 2.7 Verification
-
-- [ ] `pnpm check-types` passes
-- [ ] `pnpm build` passes (all 4 apps)
-- [ ] All new contracts follow entity structure convention
-- [ ] No Prisma types leak into contracts
+### 2.7 Verification ✅
 
 ---
 
