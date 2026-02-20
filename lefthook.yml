@@ -2,7 +2,7 @@ pre-commit:
   parallel: true
   commands:
     lint:
-      run: pnpm lint
+      run: pnpm lint --filter="...[HEAD]"
       stage_fixed: true
       fail_text: "ESLint failed - check the errors above"
 
@@ -13,7 +13,7 @@ pre-commit:
       fail_text: "Prettier formatting failed"
 
     type-check:
-      run: pnpm check-types
+      run: pnpm check-types --filter="...[HEAD]"
       fail_text: "TypeScript compilation failed"
 
 commit-msg:
