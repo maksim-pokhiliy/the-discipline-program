@@ -6,7 +6,9 @@ import {
   type UploadContext,
   UPLOAD_CONFIG,
 } from "@repo/contracts/upload";
-import { BadRequestError, handleApiError } from "@repo/errors";
+import { BadRequestError } from "@repo/errors";
+
+import { handleApiError } from "@app/lib/error-handler";
 
 const isValidUploadContext = (value: unknown): value is UploadContext => {
   return typeof value === "string" && value in UPLOAD_CONFIG;

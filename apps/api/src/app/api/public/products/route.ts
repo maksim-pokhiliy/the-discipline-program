@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { marketingProductsApi } from "@repo/api-server";
 import { getProductsResponseSchema } from "@repo/contracts/product";
-import { handleApiError } from "@repo/errors";
+
+import { handleApiError } from "@app/lib/error-handler";
 
 export async function GET() {
   try {

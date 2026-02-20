@@ -6,9 +6,9 @@ import {
   createTrainingPlanResponseSchema,
   getTrainingPlansResponseSchema,
 } from "@repo/contracts/training-plan";
-import { handleApiError } from "@repo/errors";
 
 import { getAuthenticatedUserId } from "@app/lib/auth";
+import { handleApiError } from "@app/lib/error-handler";
 
 export const GET = async () => {
   try {

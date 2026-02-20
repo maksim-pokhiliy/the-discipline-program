@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 
 import { adminExercisesApi } from "@repo/api-server";
 import { createExerciseRequestSchema, getExercisesResponseSchema } from "@repo/contracts/exercise";
-import { handleApiError } from "@repo/errors";
 
 import { getAuthenticatedUserId } from "@app/lib/auth";
+import { handleApiError } from "@app/lib/error-handler";
 
 export const GET = async () => {
   try {

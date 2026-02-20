@@ -8,9 +8,9 @@ import {
   getWorkoutsParamsSchema,
   getWorkoutsResponseSchema,
 } from "@repo/contracts/workout";
-import { handleApiError } from "@repo/errors";
 
 import { getAuthenticatedUserId } from "@app/lib/auth";
+import { handleApiError } from "@app/lib/error-handler";
 
 type RouteContext = { params: Promise<{ planId: string }> };
 

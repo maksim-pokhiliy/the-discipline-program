@@ -7,9 +7,9 @@ import {
   updateUserBenchmarkRequestSchema,
   updateUserBenchmarkResponseSchema,
 } from "@repo/contracts/user-benchmark";
-import { handleApiError } from "@repo/errors";
 
 import { getAuthenticatedUserId } from "@app/lib/auth";
+import { handleApiError } from "@app/lib/error-handler";
 
 type RouteContext = { params: Promise<{ userId: string; benchmarkId: string }> };
 

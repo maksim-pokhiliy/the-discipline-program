@@ -3,7 +3,8 @@ import { z } from "zod";
 
 import { adminPagesApi } from "@repo/api-server";
 import { adminPageListItemSchema } from "@repo/contracts/pages";
-import { handleApiError } from "@repo/errors";
+
+import { handleApiError } from "@app/lib/error-handler";
 
 export const dynamic = "force-dynamic";
 

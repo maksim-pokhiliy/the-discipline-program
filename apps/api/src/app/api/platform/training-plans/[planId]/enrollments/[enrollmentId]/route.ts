@@ -9,9 +9,9 @@ import {
   updatePlanEnrollmentRequestSchema,
   updatePlanEnrollmentResponseSchema,
 } from "@repo/contracts/plan-enrollment";
-import { handleApiError } from "@repo/errors";
 
 import { getAuthenticatedUserId } from "@app/lib/auth";
+import { handleApiError } from "@app/lib/error-handler";
 
 type RouteContext = { params: Promise<{ planId: string; enrollmentId: string }> };
 

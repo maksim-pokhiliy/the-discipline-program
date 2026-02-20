@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { contactApi } from "@repo/api-server";
 import { createContactSubmissionRequestSchema } from "@repo/contracts/contact";
-import { handleApiError } from "@repo/errors";
+
+import { handleApiError } from "@app/lib/error-handler";
 
 export async function POST(request: Request) {
   try {

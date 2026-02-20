@@ -2,7 +2,8 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { adminPagesApi } from "@repo/api-server";
 import { updatePageSectionSchema } from "@repo/contracts/pages";
-import { handleApiError } from "@repo/errors";
+
+import { handleApiError } from "@app/lib/error-handler";
 
 interface Props {
   params: Promise<{ slug: string }>;

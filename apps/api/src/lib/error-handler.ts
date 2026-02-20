@@ -2,19 +2,7 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { env } from "@repo/env";
-
-import { AppError } from "./app-error";
-import { ERROR_CODES } from "./error-codes";
-import { ValidationError } from "./http-errors";
-
-export interface ErrorResponse {
-  error: string;
-  code: string;
-  statusCode: number;
-  details?: Record<string, unknown>;
-  timestamp: string;
-  stack?: string;
-}
+import { AppError, ERROR_CODES, ValidationError } from "@repo/errors";
 
 export function handleApiError(error: unknown): NextResponse {
   console.error("API Error:", error);

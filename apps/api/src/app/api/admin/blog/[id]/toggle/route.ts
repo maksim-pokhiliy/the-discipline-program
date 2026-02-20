@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 
 import { adminBlogApi } from "@repo/api-server";
 import { toggleBlogPostParamsSchema, toggleBlogPostQuerySchema } from "@repo/contracts/blog";
-import { handleApiError } from "@repo/errors";
+
+import { handleApiError } from "@app/lib/error-handler";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
