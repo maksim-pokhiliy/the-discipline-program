@@ -1,6 +1,5 @@
-import { notFound } from "next/navigation";
-
 import { api } from "@app/lib/api";
+import { fetchOrNotFound } from "@app/lib/fetch-or-not-found";
 import { ContactsDetailView } from "@app/modules/contacts";
 
 interface PageProps {
@@ -11,12 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ContactsDetailPage({ params }: PageProps) {
   const { id } = await params;
+  const contact = await fetchOrNotFound(() => api.contacts.getById(id));
 
-  try {
-    const contact = await api.contacts.getById(id);
-
-    return <ContactsDetailView initialData={contact} />;
-  } catch {
-    return notFound();
-  }
+  return <ContactsDetailView initialData={contact} />;
 }
