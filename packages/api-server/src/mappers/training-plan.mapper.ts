@@ -7,7 +7,7 @@ export const mapToTrainingPlan = (p: PrismaTrainingPlan): TrainingPlan => ({
   coachId: p.coachId,
   name: p.name,
   description: p.description,
-  isActive: p.isActive,
+  status: p.status,
   createdAt: p.createdAt,
   updatedAt: p.updatedAt,
 });

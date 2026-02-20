@@ -10,48 +10,30 @@ import {
   updatePlanEnrollmentResponseSchema,
 } from "@repo/contracts/plan-enrollment";
 
-import { getAuthenticatedUserId } from "@app/lib/auth";
-import { handleApiError } from "@app/lib/error-handler";
+import { withPlatformAuth } from "@app/lib/auth";
 
-type RouteContext = { params: Promise<{ planId: string; enrollmentId: string }> };
+export const GET = withPlatformAuth(async (_, context, userId) => {
+  const { planId, enrollmentId } = getPlanEnrollmentByIdParamsSchema.parse(await context.params);
+  const data = await platformPlanEnrollmentsApi.getById(userId, planId, enrollmentId);
+  const validated = getPlanEnrollmentResponseSchema.parse(data);
 
-export const GET = async (_: Request, context: RouteContext) => {
-  try {
-    const userId = await getAuthenticatedUserId();
-    const { planId, enrollmentId } = getPlanEnrollmentByIdParamsSchema.parse(await context.params);
-    const data = await platformPlanEnrollmentsApi.getById(userId, planId, enrollmentId);
-    const validated = getPlanEnrollmentResponseSchema.parse(data);
+  return NextResponse.json(validated);
+});
 
-    return NextResponse.json(validated);
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
+export const PUT = withPlatformAuth(async (request, context, userId) => {
+  const { planId, enrollmentId } = updatePlanEnrollmentParamsSchema.parse(await context.params);
+  const body = await request.json();
+  const data = updatePlanEnrollmentRequestSchema.parse(body);
+  const result = await platformPlanEnrollmentsApi.update(userId, planId, enrollmentId, data);
+  const validated = updatePlanEnrollmentResponseSchema.parse(result);
 
-export const PUT = async (request: Request, context: RouteContext) => {
-  try {
-    const userId = await getAuthenticatedUserId();
-    const { planId, enrollmentId } = updatePlanEnrollmentParamsSchema.parse(await context.params);
-    const body = await request.json();
-    const data = updatePlanEnrollmentRequestSchema.parse(body);
-    const result = await platformPlanEnrollmentsApi.update(userId, planId, enrollmentId, data);
-    const validated = updatePlanEnrollmentResponseSchema.parse(result);
+  return NextResponse.json(validated);
+});
 
-    return NextResponse.json(validated);
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
+export const DELETE = withPlatformAuth(async (_, context, userId) => {
+  const { planId, enrollmentId } = deletePlanEnrollmentParamsSchema.parse(await context.params);
 
-export const DELETE = async (_: Request, context: RouteContext) => {
-  try {
-    const userId = await getAuthenticatedUserId();
-    const { planId, enrollmentId } = deletePlanEnrollmentParamsSchema.parse(await context.params);
+  await platformPlanEnrollmentsApi.delete(userId, planId, enrollmentId);
 
-    await platformPlanEnrollmentsApi.delete(userId, planId, enrollmentId);
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
+  return NextResponse.json({ success: true });
+});

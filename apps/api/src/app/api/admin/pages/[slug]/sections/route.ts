@@ -1,28 +1,20 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { adminPagesApi } from "@repo/api-server";
 import { updatePageSectionSchema } from "@repo/contracts/pages";
 
-import { handleApiError } from "@app/lib/error-handler";
+import { withAdminAuth } from "@app/lib/auth";
 
-interface Props {
-  params: Promise<{ slug: string }>;
-}
+export const PATCH = withAdminAuth(async (request, { params }) => {
+  const { slug } = (await params) as { slug: string };
+  const body = await request.json();
 
-export async function PATCH(req: NextRequest, { params }: Props) {
-  try {
-    const { slug } = await params;
-    const body = await req.json();
+  const validatedData = updatePageSectionSchema.parse({
+    ...body,
+    pageSlug: slug,
+  });
 
-    const validatedData = updatePageSectionSchema.parse({
-      ...body,
-      pageSlug: slug,
-    });
+  await adminPagesApi.updateSection(validatedData);
 
-    await adminPagesApi.updateSection(validatedData);
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
+  return NextResponse.json({ success: true });
+});

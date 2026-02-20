@@ -17,4 +17,9 @@ export const platformKeys = {
   },
   workoutLogs: createEntityKeys(["platform"], "workout-logs"),
   benchmarkDefinitions: createEntityKeys(["platform"], "benchmark-definitions"),
+  coachDashboard: {
+    data: () => [...platformKeys.root, "coach-dashboard"] as const,
+  },
+  coachNotes: createEntityKeys(["platform"], "coach-notes"),
+  athleteFlags: createEntityKeys(["platform"], "athlete-flags"),
 } as const;

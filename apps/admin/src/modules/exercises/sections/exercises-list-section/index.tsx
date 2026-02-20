@@ -9,11 +9,11 @@ import Link from "next/link";
 
 import { type Exercise } from "@repo/contracts/exercise";
 import { type ExerciseCategory } from "@repo/contracts/exercise-category";
+import { useDeleteConfirmation } from "@repo/query";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteExercise } from "@app/lib/hooks";
-import { useDeleteConfirmation } from "@app/lib/hooks/use-delete-confirmation";
 
 import { ManageCategoriesDialog } from "../../components/manage-categories-dialog";
 

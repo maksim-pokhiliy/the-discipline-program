@@ -7,31 +7,20 @@ import {
   getBenchmarkDefinitionsResponseSchema,
 } from "@repo/contracts/benchmark-definition";
 
-import { getAuthenticatedUserId } from "@app/lib/auth";
-import { handleApiError } from "@app/lib/error-handler";
+import { withPlatformAuth } from "@app/lib/auth";
 
-export const GET = async () => {
-  try {
-    await getAuthenticatedUserId();
-    const data = await platformBenchmarkDefinitionsApi.getAll();
-    const validated = getBenchmarkDefinitionsResponseSchema.parse(data);
+export const GET = withPlatformAuth(async () => {
+  const data = await platformBenchmarkDefinitionsApi.getAll();
+  const validated = getBenchmarkDefinitionsResponseSchema.parse(data);
 
-    return NextResponse.json(validated);
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
+  return NextResponse.json(validated);
+});
 
-export const POST = async (request: Request) => {
-  try {
-    await getAuthenticatedUserId();
-    const body = await request.json();
-    const data = createBenchmarkDefinitionRequestSchema.parse(body);
-    const result = await platformBenchmarkDefinitionsApi.create(data);
-    const validated = createBenchmarkDefinitionResponseSchema.parse(result);
+export const POST = withPlatformAuth(async (request) => {
+  const body = await request.json();
+  const data = createBenchmarkDefinitionRequestSchema.parse(body);
+  const result = await platformBenchmarkDefinitionsApi.create(data);
+  const validated = createBenchmarkDefinitionResponseSchema.parse(result);
 
-    return NextResponse.json(validated, { status: 201 });
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
+  return NextResponse.json(validated, { status: 201 });
+});

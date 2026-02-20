@@ -11,7 +11,6 @@ import { type AdminUser, type AdminUserListItem } from "@repo/contracts/user";
 export const mapToAthleteProfile = (p: PrismaAthleteProfile): AthleteProfile => ({
   id: p.id,
   userId: p.userId,
-  name: p.name,
   gender: p.gender,
   heightCm: p.heightCm,
   weightKg: p.weightKg ? Number(p.weightKg) : null,
@@ -35,6 +34,7 @@ type UserWithProfiles = PrismaUser & {
 export const mapToAdminUser = (u: UserWithProfiles): AdminUser => ({
   id: u.id,
   email: u.email,
+  name: u.name,
   role: u.role,
   image: u.image,
   emailVerified: u.emailVerified,
@@ -47,6 +47,7 @@ export const mapToAdminUser = (u: UserWithProfiles): AdminUser => ({
 export const mapToAdminUserListItem = (u: PrismaUser): AdminUserListItem => ({
   id: u.id,
   email: u.email,
+  name: u.name,
   role: u.role,
   image: u.image,
   createdAt: u.createdAt,

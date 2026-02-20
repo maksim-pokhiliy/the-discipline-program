@@ -203,6 +203,7 @@ export default async function BlogPage() {
 - **No manual loading state for mutations.** Don't use `useState` to track mutation loading (`loadingId`, `updatingId`). Use React Query's built-in `mutation.isPending` + `mutation.variables` for per-item disabled state.
 - **Static data outside components.** Arrays and objects that don't depend on props/state (`filters`, config maps, pure helper functions) must be defined at module level, not inside component bodies.
 - **No inline money math.** Never write `/ 100`, `* 100` for cents↔amount conversion. Use `centsToAmount()` / `amountToCents()` from `@repo/shared`. Magic number 100 must exist in exactly one place.
+- **No unprotected API routes.** Every route handler in `apps/api` must use `withAdminAuth` or `withPlatformAuth` wrapper. Public routes (`/api/public/*`) are the only exception. Never export a raw handler without an auth wrapper.
 
 ## Commit Convention
 

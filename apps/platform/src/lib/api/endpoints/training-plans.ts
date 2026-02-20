@@ -1,6 +1,6 @@
 import type {
+  CoachPlansPageData,
   CreateTrainingPlanData,
-  GetTrainingPlansResponse,
   TrainingPlan,
   UpdateTrainingPlanData,
 } from "@repo/contracts/training-plan";
@@ -8,8 +8,7 @@ import type {
 import { apiClient } from "../client";
 
 export const trainingPlansAPI = {
-  getAll: (): Promise<GetTrainingPlansResponse> =>
-    apiClient.request("/api/platform/training-plans"),
+  getPageData: (): Promise<CoachPlansPageData> => apiClient.request("/api/platform/training-plans"),
 
   getById: (id: string): Promise<TrainingPlan> =>
     apiClient.request(`/api/platform/training-plans/${id}`),
@@ -22,4 +21,16 @@ export const trainingPlansAPI = {
 
   delete: (id: string): Promise<void> =>
     apiClient.request(`/api/platform/training-plans/${id}`, "DELETE"),
+
+  duplicate: (id: string): Promise<TrainingPlan> =>
+    apiClient.request(`/api/platform/training-plans/${id}/duplicate`, "POST"),
+
+  archive: (id: string): Promise<TrainingPlan> =>
+    apiClient.request(`/api/platform/training-plans/${id}/archive`, "POST"),
+
+  restore: (id: string): Promise<TrainingPlan> =>
+    apiClient.request(`/api/platform/training-plans/${id}/restore`, "POST"),
+
+  activate: (id: string): Promise<TrainingPlan> =>
+    apiClient.request(`/api/platform/training-plans/${id}/activate`, "POST"),
 };

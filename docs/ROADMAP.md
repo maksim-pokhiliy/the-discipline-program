@@ -1,6 +1,6 @@
 # ROADMAP: The Discipline Program
 
-> Last updated: 2026-02-20 (Phase 2 complete)
+> Last updated: 2026-02-20 (Phase 3.2 in progress)
 > Approach: Quality > Speed. Sequential execution. No deadlines.
 > Product concept: see docs/ARCHITECTURE.md
 
@@ -67,20 +67,43 @@
 
 **Why after Phase 2:** Data model must be complete before building UI (Rule #3: no mocks, no fakes).
 
-### 3.1 App infrastructure
+### 3.1 App infrastructure ✅
 
-- [ ] Auth middleware / route protection (role-based)
-- [ ] Role-based routing: COACH vs USER layout groups
-- [ ] Coach navigation structure
-- [ ] API client layer (endpoints + hooks)
-- [ ] Login page
+- [x] Auth middleware / route protection (role-based)
+- [x] Role-based routing: COACH vs USER layout groups
+- [x] Coach navigation structure (5 tabs: Home, Plans, Athletes, Exercises, Profile)
+- [x] API client layer (endpoints + hooks)
+- [x] Login page
 
-### 3.2 Coach: Training Plan management
+### 3.2 Coach: Dashboard & Training Plan management ✅
 
-- [ ] List plans (DataTable: name, status, athletes count, created date)
-- [ ] Create/edit plan (name, description)
-- [ ] Activate/deactivate plan
-- [ ] Delete plan (with enrollment/product link checks)
+Schema changes:
+
+- [x] `User.name: String?` (moved from AthleteProfile — design debt resolved)
+- [x] `TrainingPlanStatus` enum (DRAFT → ACTIVE → ARCHIVED), replaces `isActive: Boolean`
+- [x] `CoachNote` model (coach→athlete notes)
+- [x] `AthleteFlag` model (INJURY/RESTRICTION/ATTENTION flags)
+- [x] DB trigger: enrollment protection (prevents soft-deleting plans with active enrollments)
+
+Dashboard (9 sections):
+
+- [x] Overview (2×2 grid: active athletes, today's completions, open flags, ending plans)
+- [x] Needs Attention (computed alerts: missed workouts, plan ending, new athletes, open flags)
+- [x] Athletes Today (compact list with status chips, search, flags)
+- [x] Quick Actions (create plan, add exercise, view athletes)
+- [x] Training Load Today (category distribution)
+- [x] Progress & Analytics (improving/stagnating/declining buckets)
+- [x] Communication (recent coach notes)
+- [x] Onboarding (new athletes, step indicators)
+- [x] Ending Plans (enrollments ending within 14 days)
+
+Training Plans:
+
+- [x] List with filter tabs (All/Active/Draft/Archived), mobile-first cards
+- [x] Create/edit plan (FormView)
+- [x] Archive-first delete flow (ACTIVE → archive → delete from ARCHIVED)
+- [x] Plan duplication (deep copy: workouts → blocks → prescribed sets)
+- [x] Enriched list data (workouts count, enrolled athletes, last activity, linked products)
 
 ### 3.3 Coach: Workout builder
 
@@ -104,6 +127,8 @@
 - [ ] Enroll/unenroll athletes from plans
 - [ ] View athlete profile and benchmarks
 - [ ] View athlete workout logs
+- [ ] Coach notes per athlete (CRUD)
+- [ ] Athlete flags (INJURY/RESTRICTION/ATTENTION) with resolve
 
 ### 3.6 Coach: Benchmarks
 

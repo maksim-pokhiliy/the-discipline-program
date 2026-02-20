@@ -6,6 +6,7 @@ import {
   EventNoteRounded,
   FitnessCenterRounded,
   GroupRounded,
+  HomeRounded,
   PersonRounded,
 } from "@mui/icons-material";
 import { BottomNavigation, BottomNavigationAction, Paper } from "@mui/material";
@@ -14,6 +15,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { COACH_NAVIGATION } from "@repo/shared";
 
 const ICON_MAP: Record<string, ReactNode> = {
+  home: <HomeRounded />,
   plans: <EventNoteRounded />,
   athletes: <GroupRounded />,
   exercises: <FitnessCenterRounded />,
@@ -24,7 +26,17 @@ export const PlatformBottomNav = () => {
   const pathname = usePathname();
   const router = useRouter();
 
-  const activeIndex = COACH_NAVIGATION.items.findIndex((item) => pathname.startsWith(item.href));
+  const activeIndex = COACH_NAVIGATION.items.reduce<number>((bestIndex, item, index) => {
+    if (!pathname.startsWith(item.href)) {
+      return bestIndex;
+    }
+
+    if (bestIndex === -1) {
+      return index;
+    }
+
+    return item.href.length > COACH_NAVIGATION.items[bestIndex]!.href.length ? index : bestIndex;
+  }, -1);
 
   return (
     <Paper
@@ -44,7 +56,9 @@ export const PlatformBottomNav = () => {
         onChange={(_, newValue: number) => {
           const item = COACH_NAVIGATION.items[newValue];
 
-          if (item) {router.push(item.href);}
+          if (item) {
+            router.push(item.href);
+          }
         }}
         showLabels
         sx={{
