@@ -7,6 +7,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **The Discipline Program** — High-Performance Coaching Platform (LMS + Billing) with Marketing CMS.
 Monorepo architecture using Turbo, Next.js 16, TypeScript, PostgreSQL + Prisma.
 
+**Philosophy:** Quality > Speed. No deadlines. Clean and strong solutions over fast ones.
+Don't be afraid to break and rebuild if necessary.
+
+**Product concept:** see `docs/ARCHITECTURE.md`.
+
 ## Commands
 
 ```bash
@@ -24,6 +29,7 @@ pnpm db:push          # Push schema to database
 pnpm --filter admin dev
 pnpm --filter marketing dev
 pnpm --filter api dev
+pnpm --filter platform dev
 ```
 
 ## Architecture
@@ -35,6 +41,7 @@ DB Schema → Contracts (Zod) → API Server → API Routes → Client UI
 ```
 
 **Any change must follow this order.** If a field is required in Contracts, it must be required in DB.
+Validate every change in order: Product → Business → Architecture → Code.
 
 ### Monorepo Structure
 
@@ -43,7 +50,7 @@ apps/
   api/          # Next.js Route Handlers (BFF). NO business logic, NO Prisma.
   admin/        # Business panel + Marketing CMS (desktop-first)
   marketing/    # Public landing pages
-  platform/     # [TO BE CREATED] Coach + Athlete product experience (mobile-first PWA)
+  platform/     # Coach + Athlete product experience (mobile-first PWA)
 
 packages/
   api-server/   # Business logic + Prisma. ONLY package that imports @prisma/client
@@ -51,10 +58,21 @@ packages/
   api-client/   # HTTP client for API consumption
   auth/         # NextAuth configuration
   errors/       # Error hierarchy (AppError, HttpError)
-  ui/           # Shared React components
-  mui/          # MUI theme customization
-  shared/       # Utilities, SEO constants
+  ui/           # Shared React components (Sidebar, DataTable, FormView, FormCard, etc.)
+  query/        # React Query setup: QueryProvider, query keys, CRUD hooks factory
+  shared/       # Navigation configs, types, SEO constants, layout constants
+  mui/          # MUI theme, NextProvider (AppRouterCacheProvider + ThemeProvider)
+  env/          # Environment variable validation (Zod)
 ```
+
+### App Status
+
+| App       | Status                                                                                                                                 |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Marketing | Working. Billing flow excluded (pages exist as stubs).                                                                                 |
+| Admin     | Working. CMS (blog, pages, reviews, products, contacts) + Platform section (exercises, categories, users, dashboard).                  |
+| API       | Working. Serves admin, platform, marketing, auth. Route namespaces: `/api/admin/*`, `/api/platform/*`, `/api/public/*`, `/api/auth/*`. |
+| Platform  | Scaffolded (Phase 2). Auth, routing, base layout exist. UI screens — Phase 3+.                                                         |
 
 ### Source of Truth
 
@@ -78,42 +96,101 @@ Each entity in `packages/contracts/src/entities/` follows:
 {entity}/
   {entity}.schema.ts       # Zod schemas for data
   {entity}.types.ts        # TypeScript types (inferred from schemas)
-  {entity}.constants.ts    # Constants
+  {entity}.constants.ts    # Constants (if needed)
   {entity}-api.schema.ts   # Request/response schemas
   {entity}-api.types.ts    # API types
   index.ts                 # Barrel export
 ```
 
-### Page Pattern (Admin/Marketing)
+New entities also need:
 
-Server Component fetches data, passes to Client Component:
-
-```tsx
-// apps/admin/src/app/(dashboard)/blog/page.tsx
-export default async function BlogPage() {
-  const initialData = await api.blog.getPageData();
-  return <BlogListView initialData={initialData} />;
-}
-```
-
-Each navigation item = one module in `src/modules/`. Related CRUD pages (list/create/edit) share a module.
+- Export path in `packages/contracts/package.json` (`"./entity-name": "./src/entities/entity-name/index.ts"`)
+- Barrel export in `packages/contracts/src/index.ts`
 
 ## Global Invariants (System Laws)
 
 1. **Singleton Subscription**: 1 User = 1 Subscription record
 2. **Money is Integer**: All monetary values in cents/kopeks. No floats.
-3. **Logs are Immutable**: WorkoutLog never changes. Edits use Copy-on-Write.
-4. **Reference Data Integrity**: Exercise references by ID only, never string names.
+3. **Logs are Immutable**: WorkoutLog never changes. Created once. Deleted whole (cascade SetLogs).
+4. **Reference Data Integrity**: Exercise references by ID only, never string names. Exercise with active references cannot be hard-deleted.
 5. **Access = Subscription State**: Platform access via ACTIVE/TRIAL/PAST_DUE status only.
+6. **Purchase = Immediate Value**: Product purchase → auto-enroll on linked TrainingPlan. No "empty platform" state.
+7. **Shared Exercise Library**: One library for the whole business. Read access for all roles, write for ADMIN and COACH.
 
 ## Code Standards
 
+### General
+
 - No `any`, no `@ts-ignore`, no "temporary solutions"
-- No mock data in API if DB doesn't support it
-- Named exports + arrow functions only
-- Functional components only
-- kebab-case for all file/directory names
-- Component files: `.tsx`, non-components: `.ts`
+- No mock data in API if DB doesn't support it. Better to break UI than lie in API.
+- Named exports only. No default exports.
+- Arrow functions only.
+- Functional components only. No class components.
+- kebab-case for all file/directory names.
+- Component files: `.tsx`, non-component files: `.ts`.
+
+### DRY & Reusability
+
+- Don't repeat yourself. When code gets reused, refactor and extract — don't copy-paste.
+- Write code for reusability across different parts of the project.
+
+### Components
+
+- **Atomic components.** Split complex components into small, focused, reusable parts. Prefix child components with parent name (`CategoriesTable`, `CategoriesTableRow`, `CategoriesTableCell`).
+- **Customizable.** Allow component usage to be customized — accept props with sensible defaults, spread remaining props.
+- **MUI Box as base.** When not using a specific MUI component, use `Box` instead of `div`/`span`. This gives access to MUI theme, `sx` and CSS utilities.
+- **Separate types from component props.** Define prop types as a named type above the component.
+
+```tsx
+type TypographyTitleProps = TypographyProps & { content: ReactNode };
+
+export const TypographyTitle: React.FC<TypographyTitleProps> = ({
+  content,
+  children,
+  variant = "title",
+  ...props
+}) => {
+  return (
+    <Typography variant={variant} {...props}>
+      {content || children}
+    </Typography>
+  );
+};
+```
+
+### Naming
+
+- Components and hooks: descriptive, prefixed when related to parent.
+- No generic names (`Index`, `Table`, `Row`). Always context-specific (`CategoriesTable`, `CategoriesTableRow`).
+
+### Modules
+
+Each navigation item = one module in `src/modules/`.
+Related CRUD pages (list/create/edit) share a module.
+
+### URL State
+
+- All pages must be reproducible — URL is the state. Filtered/sorted views must be shareable.
+- All filter state goes into URL params: `page/url?filters.statuses=1,2,3&filters.createdAfter=2024-01-01`
+- Any button/link must be openable in a new tab.
+
+### Page Pattern
+
+Server Component fetches data, passes to Client Component:
+
+```tsx
+import { api } from "@app/lib/api";
+import { BlogPageClient } from "@app/modules/blog";
+
+export const dynamic = "force-dynamic";
+
+export default async function BlogPage() {
+  const initialData = await api.blog.getPageData();
+  return <BlogPageClient initialData={initialData} />;
+}
+```
+
+`page.tsx` is the only file that uses default export (Next.js requirement).
 
 ## Commit Convention
 
@@ -123,4 +200,4 @@ Conventional commits enforced via commitlint:
 feat|fix|docs|style|refactor|test|chore|revert|perf: subject in lowercase
 ```
 
-Pre-commit hooks run: lint → format → check-types. Pre-push runs build.
+Pre-commit hooks (lefthook): format → lint → check-types → commitlint. Pre-push runs build.
