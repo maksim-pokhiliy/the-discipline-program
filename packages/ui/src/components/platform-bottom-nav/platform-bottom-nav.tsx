@@ -49,6 +49,7 @@ export const PlatformBottomNav = () => {
         zIndex: (theme) => theme.zIndex.appBar,
         borderTop: 1,
         borderColor: "divider",
+        borderRadius: 0,
       }}
     >
       <BottomNavigation

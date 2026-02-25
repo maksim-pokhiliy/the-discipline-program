@@ -11,7 +11,7 @@ const CoachLayout = ({ children }: CoachLayoutProps) => {
     <>
       <PlatformHeader />
 
-      <Container component="main" maxWidth="lg" disableGutters sx={{ py: 4 }}>
+      <Container component="main" maxWidth="lg" sx={{ pt: 4, pb: 10 }}>
         <Box component="section">{children}</Box>
       </Container>
 
