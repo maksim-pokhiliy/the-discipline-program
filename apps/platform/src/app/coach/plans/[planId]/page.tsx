@@ -1,11 +1,12 @@
-import { PlanEditView } from "@app/modules/plans";
+import { Stack, Typography } from "@mui/material";
 
-type PageProps = {
-  params: Promise<{ planId: string }>;
-};
-
-export default async function PlanEditPage({ params }: PageProps) {
-  const { planId } = await params;
-
-  return <PlanEditView planId={planId} />;
+export default function PlanEditPage() {
+  return (
+    <Stack>
+      <Typography variant="h5">Edit Plan</Typography>
+      <Typography variant="body2" color="text.secondary">
+        Coming soon
+      </Typography>
+    </Stack>
+  );
 }

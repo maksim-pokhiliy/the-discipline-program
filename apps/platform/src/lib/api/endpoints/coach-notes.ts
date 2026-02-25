@@ -1,3 +1,4 @@
+import { type ApiClient } from "@repo/api-client";
 import type {
   CoachNote,
   CreateCoachNoteData,
@@ -5,19 +6,17 @@ import type {
   UpdateCoachNoteData,
 } from "@repo/contracts/coach-note";
 
-import { apiClient } from "../client";
+export const createCoachNotesAPI = (client: ApiClient) => ({
+  getAll: (): Promise<GetCoachNotesResponse> => client.request("/api/platform/coach/notes"),
 
-export const coachNotesAPI = {
-  getAll: (): Promise<GetCoachNotesResponse> => apiClient.request("/api/platform/coach/notes"),
-
-  getById: (id: string): Promise<CoachNote> => apiClient.request(`/api/platform/coach/notes/${id}`),
+  getById: (id: string): Promise<CoachNote> => client.request(`/api/platform/coach/notes/${id}`),
 
   create: (data: CreateCoachNoteData): Promise<CoachNote> =>
-    apiClient.request("/api/platform/coach/notes", "POST", data),
+    client.request("/api/platform/coach/notes", "POST", data),
 
   update: (id: string, data: UpdateCoachNoteData): Promise<CoachNote> =>
-    apiClient.request(`/api/platform/coach/notes/${id}`, "PUT", data),
+    client.request(`/api/platform/coach/notes/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> =>
-    apiClient.request(`/api/platform/coach/notes/${id}`, "DELETE"),
-};
+    client.request(`/api/platform/coach/notes/${id}`, "DELETE"),
+});

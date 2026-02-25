@@ -1,4 +1,3 @@
-import { Box } from "@mui/material";
 import { type Metadata } from "next";
 
 import { AuthProvider } from "@repo/auth";
@@ -20,10 +19,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         <NextProvider>
           <QueryProvider>
             <AuthProvider>
-              <Box component="main" sx={{ minHeight: "100vh" }}>
-                {children}
-                <Toaster />
-              </Box>
+              {children}
+              <Toaster />
             </AuthProvider>
           </QueryProvider>
         </NextProvider>

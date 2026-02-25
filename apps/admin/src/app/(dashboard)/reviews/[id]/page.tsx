@@ -1,4 +1,4 @@
-import { api } from "@app/lib/api";
+import { serverApi } from "@app/lib/api/server";
 import { fetchOrNotFound } from "@app/lib/server/fetch-or-not-found";
 import { ReviewsEditView } from "@app/modules/reviews";
 
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ReviewsEditPage({ params }: PageProps) {
   const { id } = await params;
-  const review = await fetchOrNotFound(() => api.reviews.getById(id));
+  const review = await fetchOrNotFound(() => serverApi.reviews.getById(id));
 
   return <ReviewsEditView initialData={review} />;
 }
