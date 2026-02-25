@@ -212,7 +212,7 @@ export const computeAttentionAlerts = (enrollments: EnrollmentWithData[]): Atten
             severity: "CRITICAL",
             athleteId: user.id,
             athleteName: user.name,
-            message: `Open ${flag.type.toLowerCase()} flag`,
+            message: `Open ${flag.type.toLowerCase()} flag${flag.note ? `: ${flag.note}` : ""}`,
             href: `/coach/athletes/${user.id}`,
           });
         }

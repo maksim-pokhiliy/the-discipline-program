@@ -18,7 +18,7 @@ export const PlatformHeader = () => {
         borderColor: "divider",
       }}
     >
-      <Container maxWidth="lg" disableGutters>
+      <Container maxWidth="lg">
         <Stack
           direction="row"
           sx={{
