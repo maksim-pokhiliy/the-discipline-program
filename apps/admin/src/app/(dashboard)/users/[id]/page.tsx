@@ -1,4 +1,4 @@
-import { api } from "@app/lib/api";
+import { serverApi } from "@app/lib/api/server";
 import { fetchOrNotFound } from "@app/lib/server/fetch-or-not-found";
 import { UserDetailView } from "@app/modules/users";
 
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function UserDetailPage({ params }: PageProps) {
   const { id } = await params;
-  const user = await fetchOrNotFound(() => api.users.getById(id));
+  const user = await fetchOrNotFound(() => serverApi.users.getById(id));
 
   return <UserDetailView initialData={user} />;
 }

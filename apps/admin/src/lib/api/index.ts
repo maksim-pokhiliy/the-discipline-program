@@ -1,14 +1,19 @@
+import { type ApiClient } from "@repo/api-client";
+
+import { browserApiClient } from "./client";
 import * as endpoints from "./endpoints";
 
-export const api = {
-  blog: endpoints.blogAPI,
-  contacts: endpoints.contactsAPI,
-  dashboard: endpoints.dashboardAPI,
-  exerciseCategories: endpoints.exerciseCategoriesAPI,
-  exercises: endpoints.exercisesAPI,
-  pages: endpoints.pagesAPI,
-  products: endpoints.productsAPI,
-  reviews: endpoints.reviewsAPI,
-  upload: endpoints.uploadAPI,
-  users: endpoints.usersAPI,
-};
+export const createApi = (client: ApiClient) => ({
+  blog: endpoints.createBlogAPI(client),
+  contacts: endpoints.createContactsAPI(client),
+  dashboard: endpoints.createDashboardAPI(client),
+  exerciseCategories: endpoints.createExerciseCategoriesAPI(client),
+  exercises: endpoints.createExercisesAPI(client),
+  pages: endpoints.createPagesAPI(client),
+  products: endpoints.createProductsAPI(client),
+  reviews: endpoints.createReviewsAPI(client),
+  upload: endpoints.createUploadAPI(client),
+  users: endpoints.createUsersAPI(client),
+});
+
+export const api = createApi(browserApiClient);

@@ -1,35 +1,23 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { adminPagesApi } from "@repo/api-server";
 import { updatePageMetadataSchema } from "@repo/contracts/pages";
 
-import { handleApiError } from "@app/lib/error-handler";
+import { withAdminAuth } from "@app/lib/auth";
 
-interface Props {
-  params: Promise<{ slug: string }>;
-}
+export const GET = withAdminAuth(async (_request, { params }) => {
+  const { slug } = (await params) as { slug: string };
+  const data = await adminPagesApi.getPageBySlug(slug);
 
-export async function GET(_req: NextRequest, { params }: Props) {
-  try {
-    const { slug } = await params;
-    const data = await adminPagesApi.getPageBySlug(slug);
+  return NextResponse.json(data);
+});
 
-    return NextResponse.json(data);
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
+export const PATCH = withAdminAuth(async (request, { params }) => {
+  const { slug } = (await params) as { slug: string };
+  const body = await request.json();
+  const validated = updatePageMetadataSchema.parse(body);
 
-export async function PATCH(req: NextRequest, { params }: Props) {
-  try {
-    const { slug } = await params;
-    const body = await req.json();
-    const validated = updatePageMetadataSchema.parse(body);
+  await adminPagesApi.updatePageMetadata(slug, validated);
 
-    await adminPagesApi.updatePageMetadata(slug, validated);
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
+  return NextResponse.json({ success: true });
+});

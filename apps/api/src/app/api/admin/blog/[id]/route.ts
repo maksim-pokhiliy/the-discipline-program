@@ -6,16 +6,23 @@ import {
   updateBlogPostRequestSchema,
 } from "@repo/contracts/blog";
 
+import { withAdminAuth } from "@app/lib/auth";
 import {
   createDeleteHandler,
   createGetByIdHandler,
   createPutHandler,
 } from "@app/lib/route-helpers";
 
-export const GET = createGetByIdHandler(adminBlogApi.getPostById, getBlogPostByIdParamsSchema);
-export const PUT = createPutHandler(
-  adminBlogApi.updatePost,
-  updateBlogPostParamsSchema,
-  updateBlogPostRequestSchema,
+export const GET = withAdminAuth(
+  createGetByIdHandler(adminBlogApi.getPostById, getBlogPostByIdParamsSchema),
 );
-export const DELETE = createDeleteHandler(adminBlogApi.deletePost, deleteBlogPostParamsSchema);
+export const PUT = withAdminAuth(
+  createPutHandler(
+    adminBlogApi.updatePost,
+    updateBlogPostParamsSchema,
+    updateBlogPostRequestSchema,
+  ),
+);
+export const DELETE = withAdminAuth(
+  createDeleteHandler(adminBlogApi.deletePost, deleteBlogPostParamsSchema),
+);

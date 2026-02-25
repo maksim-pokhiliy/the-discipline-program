@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import { Alert, Card, CardContent, Stack, Typography } from "@mui/material";
+import { Alert, Container, Divider, Stack, Typography } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -34,45 +35,63 @@ export const LoginPage = () => {
       if (result?.error) {
         setError("Invalid email or password");
       } else if (result?.ok) {
-        toast.success("You have successfully logged in");
+        toast.success("Welcome back");
         router.replace(callbackUrl);
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       setError("An unexpected error occurred");
-      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card variant="outlined">
-      <CardContent>
-        <Stack spacing={4}>
-          <Stack alignItems="center">
-            <Logo width={100} height={100} />
-          </Stack>
+    <Stack
+      sx={{
+        minHeight: "100vh",
+        justifyContent: "center",
+        background: (theme) =>
+          `radial-gradient(ellipse at 50% 20%, ${alpha(theme.palette.primary.main, 0.08)}, transparent 70%)`,
+      }}
+    >
+      <Container maxWidth="xs">
+        <Stack spacing={5} alignItems="center">
+          <Stack spacing={3} alignItems="center">
+            <Logo />
 
-          <Stack spacing={1} textAlign="center">
-            <Typography variant="h4" component="h1">
-              Welcome Back
+            <Typography
+              variant="h3"
+              component="h1"
+              textAlign="center"
+              sx={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
+            >
+              The Discipline Program
             </Typography>
 
-            <Typography variant="body2" color="text.secondary">
-              Sign in to your admin account
+            <Typography variant="body2" color="text.secondary" textAlign="center">
+              Admin Panel
             </Typography>
+
+            <Divider
+              sx={{
+                width: (theme) => theme.spacing(8),
+                borderColor: "primary.main",
+              }}
+            />
           </Stack>
 
-          {error && (
-            <Alert severity="error" onClose={() => setError(null)}>
-              {error}
-            </Alert>
-          )}
+          <Stack spacing={3} sx={{ width: "100%" }}>
+            {error && (
+              <Alert severity="error" onClose={() => setError(null)}>
+                {error}
+              </Alert>
+            )}
 
-          <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
+            <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
+          </Stack>
         </Stack>
-      </CardContent>
-    </Card>
+      </Container>
+    </Stack>
   );
 };

@@ -1,11 +1,12 @@
 import { Stack, Typography } from "@mui/material";
 
-const PlansPage = () => {
+export default function PlansPage() {
   return (
-    <Stack sx={{ p: 3 }}>
+    <Stack>
       <Typography variant="h5">Training Plans</Typography>
+      <Typography variant="body2" color="text.secondary">
+        Coming soon
+      </Typography>
     </Stack>
   );
-};
-
-export default PlansPage;
+}

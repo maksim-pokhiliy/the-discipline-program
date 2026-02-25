@@ -1,4 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { adminUploadApi } from "@repo/api-server";
 import {
@@ -8,43 +8,35 @@ import {
 } from "@repo/contracts/upload";
 import { BadRequestError } from "@repo/errors";
 
-import { handleApiError } from "@app/lib/error-handler";
+import { withAdminAuth } from "@app/lib/auth";
 
 const isValidUploadContext = (value: unknown): value is UploadContext => {
   return typeof value === "string" && value in UPLOAD_CONFIG;
 };
 
-export async function POST(req: NextRequest) {
-  try {
-    const formData = await req.formData();
-    const file = formData.get("file");
-    const context = formData.get("context");
+export const POST = withAdminAuth(async (request) => {
+  const formData = await request.formData();
+  const file = formData.get("file");
+  const context = formData.get("context");
 
-    if (!(file instanceof File)) {
-      throw new BadRequestError("No valid file provided");
-    }
-
-    if (!isValidUploadContext(context)) {
-      throw new BadRequestError("Invalid or missing context");
-    }
-
-    const result = await adminUploadApi.uploadImage(file, context);
-
-    return NextResponse.json(result);
-  } catch (error) {
-    return handleApiError(error);
+  if (!(file instanceof File)) {
+    throw new BadRequestError("No valid file provided");
   }
-}
 
-export async function DELETE(req: NextRequest) {
-  try {
-    const body = await req.json();
-    const validated = deleteAvatarRequestSchema.parse(body);
-
-    await adminUploadApi.deleteImage(validated.url);
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    return handleApiError(error);
+  if (!isValidUploadContext(context)) {
+    throw new BadRequestError("Invalid or missing context");
   }
-}
+
+  const result = await adminUploadApi.uploadImage(file, context);
+
+  return NextResponse.json(result);
+});
+
+export const DELETE = withAdminAuth(async (request) => {
+  const body = await request.json();
+  const validated = deleteAvatarRequestSchema.parse(body);
+
+  await adminUploadApi.deleteImage(validated.url);
+
+  return NextResponse.json({ success: true });
+});

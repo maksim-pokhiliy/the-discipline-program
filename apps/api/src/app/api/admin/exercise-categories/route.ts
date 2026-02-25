@@ -4,13 +4,12 @@ import {
   getExerciseCategoriesResponseSchema,
 } from "@repo/contracts/exercise-category";
 
+import { withAdminAuth } from "@app/lib/auth";
 import { createGetHandler, createPostHandler } from "@app/lib/route-helpers";
 
-export const GET = createGetHandler(
-  adminExerciseCategoriesApi.getAll,
-  getExerciseCategoriesResponseSchema,
+export const GET = withAdminAuth(
+  createGetHandler(adminExerciseCategoriesApi.getAll, getExerciseCategoriesResponseSchema),
 );
-export const POST = createPostHandler(
-  adminExerciseCategoriesApi.create,
-  createExerciseCategoryRequestSchema,
+export const POST = withAdminAuth(
+  createPostHandler(adminExerciseCategoriesApi.create, createExerciseCategoryRequestSchema),
 );

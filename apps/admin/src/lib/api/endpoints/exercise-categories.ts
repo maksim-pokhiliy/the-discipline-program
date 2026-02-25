@@ -1,20 +1,19 @@
+import { type ApiClient } from "@repo/api-client";
 import type {
   CreateExerciseCategoryData,
   ExerciseCategory,
   UpdateExerciseCategoryData,
 } from "@repo/contracts/exercise-category";
 
-import { apiClient } from "../client";
-
-export const exerciseCategoriesAPI = {
-  getAll: (): Promise<ExerciseCategory[]> => apiClient.request("/api/admin/exercise-categories"),
+export const createExerciseCategoriesAPI = (client: ApiClient) => ({
+  getAll: (): Promise<ExerciseCategory[]> => client.request("/api/admin/exercise-categories"),
 
   create: (data: CreateExerciseCategoryData): Promise<ExerciseCategory> =>
-    apiClient.request("/api/admin/exercise-categories", "POST", data),
+    client.request("/api/admin/exercise-categories", "POST", data),
 
   update: (id: string, data: UpdateExerciseCategoryData): Promise<ExerciseCategory> =>
-    apiClient.request(`/api/admin/exercise-categories/${id}`, "PUT", data),
+    client.request(`/api/admin/exercise-categories/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> =>
-    apiClient.request(`/api/admin/exercise-categories/${id}`, "DELETE"),
-};
+    client.request(`/api/admin/exercise-categories/${id}`, "DELETE"),
+});

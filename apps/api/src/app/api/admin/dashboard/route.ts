@@ -3,15 +3,11 @@ import { NextResponse } from "next/server";
 import { adminDashboardApi } from "@repo/api-server";
 import { getDashboardDataResponseSchema } from "@repo/contracts/dashboard";
 
-import { handleApiError } from "@app/lib/error-handler";
+import { withAdminAuth } from "@app/lib/auth";
 
-export async function GET() {
-  try {
-    const data = await adminDashboardApi.getDashboardData();
-    const validated = getDashboardDataResponseSchema.parse(data);
+export const GET = withAdminAuth(async () => {
+  const data = await adminDashboardApi.getDashboardData();
+  const validated = getDashboardDataResponseSchema.parse(data);
 
-    return NextResponse.json(validated);
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
+  return NextResponse.json(validated);
+});

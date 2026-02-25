@@ -7,6 +7,7 @@ import { coachProfileSchema } from "../coach-profile";
 export const adminUserSchema = z.object({
   id: z.string().cuid(),
   email: z.string().email(),
+  name: z.string().nullable(),
   role: userRoleSchema,
   image: z.string().nullable(),
   emailVerified: z.date().nullable(),
@@ -19,6 +20,7 @@ export const adminUserSchema = z.object({
 export const adminUserListItemSchema = z.object({
   id: z.string().cuid(),
   email: z.string().email(),
+  name: z.string().nullable(),
   role: userRoleSchema,
   image: z.string().nullable(),
   createdAt: z.date(),

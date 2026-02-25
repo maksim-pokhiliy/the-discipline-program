@@ -2,6 +2,7 @@ import { type PlatformNavigationConfig } from "../types";
 
 export const COACH_NAVIGATION: PlatformNavigationConfig = {
   items: [
+    { label: "Home", href: "/coach", icon: "home" },
     { label: "Plans", href: "/coach/plans", icon: "plans" },
     { label: "Athletes", href: "/coach/athletes", icon: "athletes" },
     { label: "Exercises", href: "/coach/exercises", icon: "exercises" },

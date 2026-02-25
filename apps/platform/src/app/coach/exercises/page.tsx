@@ -2,7 +2,7 @@ import { Stack, Typography } from "@mui/material";
 
 const ExercisesPage = () => {
   return (
-    <Stack sx={{ p: 3 }}>
+    <Stack>
       <Typography variant="h5">Exercises</Typography>
     </Stack>
   );

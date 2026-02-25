@@ -1,4 +1,7 @@
+export * from "./athlete-flags";
 export * from "./athlete-profile";
+export * from "./coach-dashboard";
+export * from "./coach-notes";
 export * from "./coach-profile";
 export * from "./prescribed-sets";
 export * from "./training-plans";

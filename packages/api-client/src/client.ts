@@ -2,13 +2,19 @@ import { InternalServerError } from "@repo/errors";
 
 interface ApiClientConfig {
   baseUrl: string;
+  getHeaders?: () => Record<string, string> | Promise<Record<string, string>>;
+  credentials?: RequestCredentials;
 }
 
 export class ApiClient {
   private baseUrl: string;
+  private getHeadersFn?: ApiClientConfig["getHeaders"];
+  private credentials?: RequestCredentials;
 
-  constructor({ baseUrl }: ApiClientConfig) {
+  constructor({ baseUrl, getHeaders, credentials }: ApiClientConfig) {
     this.baseUrl = baseUrl;
+    this.getHeadersFn = getHeaders;
+    this.credentials = credentials;
   }
 
   async request<T>(
@@ -18,7 +24,8 @@ export class ApiClient {
     queryParams?: Record<string, string>,
   ): Promise<T> {
     const isFormData = body instanceof FormData;
-    const headers: Record<string, string> = {};
+    const dynamicHeaders = this.getHeadersFn ? await this.getHeadersFn() : {};
+    const headers: Record<string, string> = { ...dynamicHeaders };
 
     let fullUrl = `${this.baseUrl}${url}`;
 
@@ -39,6 +46,7 @@ export class ApiClient {
       headers,
       body: isFormData ? body : body ? JSON.stringify(body) : undefined,
       cache: "no-store",
+      credentials: this.credentials,
     });
 
     if (!response.ok) {
