@@ -1,7 +1,6 @@
 import { type CreateContactSubmission } from "@repo/contracts/contact";
 
 import { prisma } from "../../db/client";
-import { notificationService } from "../../services";
 
 export const contactApi = {
   createSubmission: async (data: CreateContactSubmission) => {
@@ -13,17 +12,6 @@ export const contactApi = {
         message: data.message,
       },
     });
-
-    notificationService
-      .sendContactSubmissionNotification({
-        name: submission.name,
-        email: submission.email,
-        program: submission.program,
-        message: submission.message,
-      })
-      .catch((err) => {
-        console.error("Failed to send notification:", err);
-      });
 
     return submission;
   },

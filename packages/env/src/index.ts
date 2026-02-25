@@ -6,8 +6,6 @@ export const env = createEnv({
     DATABASE_URL: z.string().url(),
     NEXTAUTH_SECRET: z.string().min(1),
     NEXTAUTH_URL: z.string().url().optional(),
-    TELEGRAM_BOT_TOKEN: z.string().min(1).optional(),
-    TELEGRAM_CHAT_ID: z.string().min(1).optional(),
     BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   },
