@@ -75,7 +75,7 @@
 - [x] API client layer (endpoints + hooks)
 - [x] Login page
 
-### 3.2 Coach: Dashboard & Training Plan management ✅
+### 3.2 Coach: Dashboard & Training Plan management
 
 Schema changes:
 
@@ -85,17 +85,15 @@ Schema changes:
 - [x] `AthleteFlag` model (INJURY/RESTRICTION/ATTENTION flags)
 - [x] DB trigger: enrollment protection (prevents soft-deleting plans with active enrollments)
 
-Dashboard (9 sections):
+Dashboard (7 sections):
 
-- [x] Overview (2×2 grid: active athletes, today's completions, open flags, ending plans)
-- [x] Needs Attention (computed alerts: missed workouts, plan ending, new athletes, open flags)
-- [x] Athletes Today (compact list with status chips, search, flags)
-- [x] Quick Actions (create plan, add exercise, view athletes)
-- [x] Training Load Today (category distribution)
-- [x] Progress & Analytics (improving/stagnating/declining buckets)
-- [x] Communication (recent coach notes)
-- [x] Onboarding (new athletes, step indicators)
-- [x] Ending Plans (enrollments ending within 14 days)
+- [ ] Needs Attention — priority-sorted alerts requiring coach intervention (missed workouts, unreviewed logs, injuries, subscription issues, new enrollees)
+- [ ] Today Overview — athletes scheduled today with completion status, plan info, last activity
+- [ ] Athlete Activity Feed — reverse-chronological stream of athlete events (completions, substitutions, benchmarks, enrollments, status changes)
+- [ ] Compliance / Adherence Summary — weekly adherence %, active athletes count, missed sessions, per-plan engagement metrics
+- [ ] PR & Benchmark Changes — personal records and benchmark improvements from current week
+- [ ] Quick Actions — shortcuts: create plan, add workout, add athlete to plan, add exercise, view athletes, manage benchmarks
+- [ ] Coach Snapshot — portfolio overview: total active athletes, active plans, new athletes in period, paused/completed enrollments
 
 Training Plans:
 

@@ -1,5 +1,6 @@
 export const LAYOUT = {
   logoSize: 64,
+  platformLogoSize: 52,
   appBarHeight: 100,
   adminHeaderHeight: 64,
   drawerWidth: 280,

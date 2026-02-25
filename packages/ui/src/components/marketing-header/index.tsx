@@ -9,13 +9,8 @@ import { Logo } from "../logo";
 import { Drawer } from "./drawer";
 import { HideOnScroll } from "./hide-on-scroll";
 import { Navigation } from "./navigation";
-import { UserMenu } from "./user-menu";
 
-export type HeaderProps = {
-  showUserMenu?: boolean;
-};
-
-export const Header = ({ showUserMenu = true }: HeaderProps) => {
+export const MarketingHeader = () => {
   const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
 
   return (
@@ -30,14 +25,7 @@ export const Header = ({ showUserMenu = true }: HeaderProps) => {
 
           {!isMobile && <Navigation />}
 
-          {!isMobile && showUserMenu && <UserMenu />}
-
-          {isMobile && (
-            <Stack direction="row" sx={{ alignItems: "center" }}>
-              {showUserMenu && <UserMenu />}
-              {<Drawer />}
-            </Stack>
-          )}
+          {isMobile && <Drawer />}
         </Stack>
       </AppBar>
     </HideOnScroll>

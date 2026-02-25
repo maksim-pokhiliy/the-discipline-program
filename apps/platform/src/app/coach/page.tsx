@@ -1,10 +1,13 @@
-import { api } from "@app/lib/api";
-import { DashboardView } from "@app/modules/dashboard";
+import { Stack, Typography } from "@mui/material";
 
-export const dynamic = "force-dynamic";
+export default function CoachPage() {
+  return (
+    <Stack>
+      <Typography variant="h5">Dashboard</Typography>
 
-export default async function CoachPage() {
-  const initialData = await api.coachDashboard.getDashboard();
-
-  return <DashboardView initialData={initialData} />;
+      <Typography variant="body2" color="text.secondary">
+        Coming soon
+      </Typography>
+    </Stack>
+  );
 }

@@ -1,4 +1,4 @@
-import { api } from "@app/lib/api";
+import { serverApi } from "@app/lib/api/server";
 import { fetchOrNotFound } from "@app/lib/server/fetch-or-not-found";
 import { PagesEditView } from "@app/modules/pages";
 
@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function PageEditPage({ params }: PageProps) {
   const { slug } = await params;
-  const pageData = await fetchOrNotFound(() => api.pages.getPageBySlug(slug));
+  const pageData = await fetchOrNotFound(() => serverApi.pages.getPageBySlug(slug));
 
   return <PagesEditView initialData={pageData} />;
 }

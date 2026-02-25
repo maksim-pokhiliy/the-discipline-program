@@ -4,7 +4,7 @@ import { type Metadata } from "next";
 import { NextProvider } from "@repo/mui";
 import { QueryProvider } from "@repo/query";
 import { DOM_ANCHORS, SEO_CONFIG } from "@repo/shared";
-import { Header } from "@repo/ui";
+import { MarketingHeader } from "@repo/ui";
 
 import { Footer } from "@app/shared/components/layout";
 import { StructuredData } from "@app/shared/components/seo";
@@ -46,7 +46,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
       <body id={DOM_ANCHORS.BODY}>
         <NextProvider>
           <QueryProvider>
-            <Header showUserMenu={false} />
+            <MarketingHeader />
 
             <Box component="main" sx={{ minHeight: "100vh" }}>
               {children}

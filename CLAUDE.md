@@ -11,6 +11,12 @@ Monorepo architecture using Turbo, Next.js 16, TypeScript, PostgreSQL + Prisma.
 Don't be afraid to break and rebuild if necessary.
 
 **Product concept:** see `docs/ARCHITECTURE.md`.
+**Progress & roadmap:** see `docs/ROADMAP.md`.
+
+## Role
+
+Act as Senior Lead Architect, Senior Lead Software Engineer, Project Manager, Product Manager, Business Analyst, and Product Owner — all at Magnificent 7 level.
+Think 12 months ahead. Every change validated in order: Product → Business → Architecture → Code.
 
 ## Commands
 
@@ -41,7 +47,6 @@ DB Schema → Contracts (Zod) → API Server → API Routes → Client UI
 ```
 
 **Any change must follow this order.** If a field is required in Contracts, it must be required in DB.
-Validate every change in order: Product → Business → Architecture → Code.
 
 ### Monorepo Structure
 
@@ -203,6 +208,7 @@ export default async function BlogPage() {
 - **No manual loading state for mutations.** Don't use `useState` to track mutation loading (`loadingId`, `updatingId`). Use React Query's built-in `mutation.isPending` + `mutation.variables` for per-item disabled state.
 - **Static data outside components.** Arrays and objects that don't depend on props/state (`filters`, config maps, pure helper functions) must be defined at module level, not inside component bodies.
 - **No inline money math.** Never write `/ 100`, `* 100` for cents↔amount conversion. Use `centsToAmount()` / `amountToCents()` from `@repo/shared`. Magic number 100 must exist in exactly one place.
+- **MUI-consistent sizing and spacing.** Never use raw pixel strings (`"24px"`, `"0.75rem"`) for spacing, sizes, or dimensions in `sx` props. Use `theme.spacing()` or MUI's numeric spacing shorthand (`p: 2`, `mr: 1`). For widths/heights, use theme spacing units or responsive breakpoints. For font sizes, use MUI Typography variants, not custom sizes. Exception: one-off decorative values (border-radius, letter-spacing) where no MUI token exists.
 - **No unprotected API routes.** Every route handler in `apps/api` must use `withAdminAuth` or `withPlatformAuth` wrapper. Public routes (`/api/public/*`) are the only exception. Never export a raw handler without an auth wrapper.
 
 ## Commit Convention

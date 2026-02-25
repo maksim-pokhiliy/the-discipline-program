@@ -1,3 +1,4 @@
+import { type ApiClient } from "@repo/api-client";
 import type {
   CoachPlansPageData,
   CreateTrainingPlanData,
@@ -5,32 +6,30 @@ import type {
   UpdateTrainingPlanData,
 } from "@repo/contracts/training-plan";
 
-import { apiClient } from "../client";
-
-export const trainingPlansAPI = {
-  getPageData: (): Promise<CoachPlansPageData> => apiClient.request("/api/platform/training-plans"),
+export const createTrainingPlansAPI = (client: ApiClient) => ({
+  getPageData: (): Promise<CoachPlansPageData> => client.request("/api/platform/training-plans"),
 
   getById: (id: string): Promise<TrainingPlan> =>
-    apiClient.request(`/api/platform/training-plans/${id}`),
+    client.request(`/api/platform/training-plans/${id}`),
 
   create: (data: CreateTrainingPlanData): Promise<TrainingPlan> =>
-    apiClient.request("/api/platform/training-plans", "POST", data),
+    client.request("/api/platform/training-plans", "POST", data),
 
   update: (id: string, data: UpdateTrainingPlanData): Promise<TrainingPlan> =>
-    apiClient.request(`/api/platform/training-plans/${id}`, "PUT", data),
+    client.request(`/api/platform/training-plans/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> =>
-    apiClient.request(`/api/platform/training-plans/${id}`, "DELETE"),
+    client.request(`/api/platform/training-plans/${id}`, "DELETE"),
 
   duplicate: (id: string): Promise<TrainingPlan> =>
-    apiClient.request(`/api/platform/training-plans/${id}/duplicate`, "POST"),
+    client.request(`/api/platform/training-plans/${id}/duplicate`, "POST"),
 
   archive: (id: string): Promise<TrainingPlan> =>
-    apiClient.request(`/api/platform/training-plans/${id}/archive`, "POST"),
+    client.request(`/api/platform/training-plans/${id}/archive`, "POST"),
 
   restore: (id: string): Promise<TrainingPlan> =>
-    apiClient.request(`/api/platform/training-plans/${id}/restore`, "POST"),
+    client.request(`/api/platform/training-plans/${id}/restore`, "POST"),
 
   activate: (id: string): Promise<TrainingPlan> =>
-    apiClient.request(`/api/platform/training-plans/${id}/activate`, "POST"),
-};
+    client.request(`/api/platform/training-plans/${id}/activate`, "POST"),
+});

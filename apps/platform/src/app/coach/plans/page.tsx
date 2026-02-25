@@ -1,10 +1,12 @@
-import { api } from "@app/lib/api";
-import { PlansListView } from "@app/modules/plans";
+import { Stack, Typography } from "@mui/material";
 
-export const dynamic = "force-dynamic";
-
-export default async function PlansPage() {
-  const initialData = await api.trainingPlans.getPageData();
-
-  return <PlansListView initialData={initialData} />;
+export default function PlansPage() {
+  return (
+    <Stack>
+      <Typography variant="h5">Training Plans</Typography>
+      <Typography variant="body2" color="text.secondary">
+        Coming soon
+      </Typography>
+    </Stack>
+  );
 }
