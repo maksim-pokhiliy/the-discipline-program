@@ -6,8 +6,8 @@ import { env } from "@repo/env";
 const allowedOrigins = [
   env.NEXT_PUBLIC_MARKETING_URL,
   env.NEXT_PUBLIC_ADMIN_URL,
-  env.NODE_ENV === "development" ? "http://localhost:3000" : null,
-].filter(Boolean) as string[];
+  env.NEXT_PUBLIC_PLATFORM_URL,
+];
 
 export function proxy(request: NextRequest) {
   const origin = request.headers.get("origin");

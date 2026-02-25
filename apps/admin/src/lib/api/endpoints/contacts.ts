@@ -1,22 +1,21 @@
+import { type ApiClient } from "@repo/api-client";
 import {
   type AdminContactsPageData,
   type GetContactByIdResponse,
   type UpdateContactRequest,
 } from "@repo/contracts/contact";
 
-import { apiClient } from "../client";
-
-export const contactsAPI = {
+export const createContactsAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminContactsPageData> =>
-    apiClient.request("/api/admin/contacts/page-data"),
+    client.request("/api/admin/contacts/page-data"),
 
-  getAll: (): Promise<GetContactByIdResponse[]> => apiClient.request("/api/admin/contacts"),
+  getAll: (): Promise<GetContactByIdResponse[]> => client.request("/api/admin/contacts"),
 
   getById: (id: string): Promise<GetContactByIdResponse> =>
-    apiClient.request(`/api/admin/contacts/${id}`),
+    client.request(`/api/admin/contacts/${id}`),
 
   update: (id: string, data: UpdateContactRequest): Promise<GetContactByIdResponse> =>
-    apiClient.request(`/api/admin/contacts/${id}`, "PUT", data),
+    client.request(`/api/admin/contacts/${id}`, "PUT", data),
 
-  delete: (id: string): Promise<void> => apiClient.request(`/api/admin/contacts/${id}`, "DELETE"),
-};
+  delete: (id: string): Promise<void> => client.request(`/api/admin/contacts/${id}`, "DELETE"),
+});

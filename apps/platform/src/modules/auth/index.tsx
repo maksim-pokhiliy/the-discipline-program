@@ -70,7 +70,7 @@ export const PlatformLoginPage = () => {
             </Typography>
 
             <Typography variant="body2" color="text.secondary" textAlign="center">
-              Train smarter. Get results.
+              Your Discipline dictates your success.
             </Typography>
 
             <Divider

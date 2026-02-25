@@ -1,23 +1,22 @@
+import { type ApiClient } from "@repo/api-client";
 import { type Product, type AdminProductsPageData } from "@repo/contracts/product";
 
-import { apiClient } from "../client";
-
-export const productsAPI = {
+export const createProductsAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminProductsPageData> =>
-    apiClient.request("/api/admin/products/page-data"),
+    client.request("/api/admin/products/page-data"),
 
-  getAll: (): Promise<Product[]> => apiClient.request("/api/admin/products"),
+  getAll: (): Promise<Product[]> => client.request("/api/admin/products"),
 
-  getById: (id: string): Promise<Product> => apiClient.request(`/api/admin/products/${id}`),
+  getById: (id: string): Promise<Product> => client.request(`/api/admin/products/${id}`),
 
   create: (data: Partial<Product>): Promise<Product> =>
-    apiClient.request("/api/admin/products", "POST", data),
+    client.request("/api/admin/products", "POST", data),
 
   update: (id: string, data: Partial<Product>): Promise<Product> =>
-    apiClient.request(`/api/admin/products/${id}`, "PUT", data),
+    client.request(`/api/admin/products/${id}`, "PUT", data),
 
-  delete: (id: string): Promise<void> => apiClient.request(`/api/admin/products/${id}`, "DELETE"),
+  delete: (id: string): Promise<void> => client.request(`/api/admin/products/${id}`, "DELETE"),
 
   toggleStatus: (id: string): Promise<Product> =>
-    apiClient.request(`/api/admin/products/${id}/toggle`, "PATCH"),
-};
+    client.request(`/api/admin/products/${id}/toggle`, "PATCH"),
+});

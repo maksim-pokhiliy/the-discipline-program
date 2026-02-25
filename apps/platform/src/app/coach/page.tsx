@@ -1,7 +1,13 @@
-import { redirect } from "next/navigation";
+import { Stack, Typography } from "@mui/material";
 
-const CoachPage = () => {
-  redirect("/coach/plans");
-};
+export default function CoachPage() {
+  return (
+    <Stack>
+      <Typography variant="h5">Dashboard</Typography>
 
-export default CoachPage;
+      <Typography variant="body2" color="text.secondary">
+        Coming soon
+      </Typography>
+    </Stack>
+  );
+}

@@ -1,13 +1,12 @@
+import { type ApiClient } from "@repo/api-client";
 import type {
   CreateExerciseCategoryData,
   ExerciseCategory,
 } from "@repo/contracts/exercise-category";
 
-import { apiClient } from "../client";
-
-export const exerciseCategoriesAPI = {
-  getAll: (): Promise<ExerciseCategory[]> => apiClient.request("/api/platform/exercise-categories"),
+export const createExerciseCategoriesAPI = (client: ApiClient) => ({
+  getAll: (): Promise<ExerciseCategory[]> => client.request("/api/platform/exercise-categories"),
 
   create: (data: CreateExerciseCategoryData): Promise<ExerciseCategory> =>
-    apiClient.request("/api/platform/exercise-categories", "POST", data),
-};
+    client.request("/api/platform/exercise-categories", "POST", data),
+});

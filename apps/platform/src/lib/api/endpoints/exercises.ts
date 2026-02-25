@@ -1,18 +1,16 @@
+import { type ApiClient } from "@repo/api-client";
 import type { CreateExerciseData, Exercise, UpdateExerciseData } from "@repo/contracts/exercise";
 
-import { apiClient } from "../client";
+export const createExercisesAPI = (client: ApiClient) => ({
+  getAll: (): Promise<Exercise[]> => client.request("/api/platform/exercises"),
 
-export const exercisesAPI = {
-  getAll: (): Promise<Exercise[]> => apiClient.request("/api/platform/exercises"),
-
-  getById: (id: string): Promise<Exercise> => apiClient.request(`/api/platform/exercises/${id}`),
+  getById: (id: string): Promise<Exercise> => client.request(`/api/platform/exercises/${id}`),
 
   create: (data: CreateExerciseData): Promise<Exercise> =>
-    apiClient.request("/api/platform/exercises", "POST", data),
+    client.request("/api/platform/exercises", "POST", data),
 
   update: (id: string, data: UpdateExerciseData): Promise<Exercise> =>
-    apiClient.request(`/api/platform/exercises/${id}`, "PUT", data),
+    client.request(`/api/platform/exercises/${id}`, "PUT", data),
 
-  delete: (id: string): Promise<void> =>
-    apiClient.request(`/api/platform/exercises/${id}`, "DELETE"),
-};
+  delete: (id: string): Promise<void> => client.request(`/api/platform/exercises/${id}`, "DELETE"),
+});

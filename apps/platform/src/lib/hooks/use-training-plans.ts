@@ -1,8 +1,11 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
 import type {
+  CoachPlansPageData,
   CreateTrainingPlanData,
-  GetTrainingPlansResponse,
   TrainingPlan,
   UpdateTrainingPlanData,
 } from "@repo/contracts/training-plan";
@@ -11,7 +14,7 @@ import { createCrudHooks, platformKeys } from "@repo/query";
 import { api } from "../api";
 
 const trainingPlanHooks = createCrudHooks<
-  GetTrainingPlansResponse,
+  CoachPlansPageData,
   TrainingPlan,
   CreateTrainingPlanData,
   UpdateTrainingPlanData
@@ -19,7 +22,7 @@ const trainingPlanHooks = createCrudHooks<
   entityName: "Training Plan",
   keys: platformKeys.trainingPlans,
   api: {
-    getPageData: api.trainingPlans.getAll,
+    getPageData: api.trainingPlans.getPageData,
     getById: api.trainingPlans.getById,
     create: api.trainingPlans.create,
     update: api.trainingPlans.update,
@@ -33,3 +36,63 @@ export const useTrainingPlan = trainingPlanHooks.useById;
 export const useCreateTrainingPlan = trainingPlanHooks.useCreate;
 export const useUpdateTrainingPlan = trainingPlanHooks.useUpdate;
 export const useDeleteTrainingPlan = trainingPlanHooks.useDelete;
+
+export const useDuplicateTrainingPlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.trainingPlans.duplicate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      toast.success("Training plan duplicated");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to duplicate training plan");
+    },
+  });
+};
+
+export const useArchiveTrainingPlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.trainingPlans.archive(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      toast.success("Training plan archived");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to archive training plan");
+    },
+  });
+};
+
+export const useRestoreTrainingPlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.trainingPlans.restore(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      toast.success("Training plan restored");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to restore training plan");
+    },
+  });
+};
+
+export const useActivateTrainingPlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.trainingPlans.activate(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      toast.success("Training plan activated");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to activate training plan");
+    },
+  });
+};

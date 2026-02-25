@@ -8,35 +8,22 @@ import {
   getUserBenchmarksResponseSchema,
 } from "@repo/contracts/user-benchmark";
 
-import { getAuthenticatedUserId } from "@app/lib/auth";
-import { handleApiError } from "@app/lib/error-handler";
+import { withPlatformAuth } from "@app/lib/auth";
 
-type RouteContext = { params: Promise<{ userId: string }> };
+export const GET = withPlatformAuth(async (_, context) => {
+  const { userId } = getUserBenchmarksParamsSchema.parse(await context.params);
+  const data = await platformUserBenchmarksApi.getByUser(userId);
+  const validated = getUserBenchmarksResponseSchema.parse(data);
 
-export const GET = async (_: Request, context: RouteContext) => {
-  try {
-    await getAuthenticatedUserId();
-    const { userId } = getUserBenchmarksParamsSchema.parse(await context.params);
-    const data = await platformUserBenchmarksApi.getByUser(userId);
-    const validated = getUserBenchmarksResponseSchema.parse(data);
+  return NextResponse.json(validated);
+});
 
-    return NextResponse.json(validated);
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
+export const POST = withPlatformAuth(async (request, context) => {
+  const { userId } = getUserBenchmarksParamsSchema.parse(await context.params);
+  const body = await request.json();
+  const data = createUserBenchmarkRequestSchema.parse(body);
+  const result = await platformUserBenchmarksApi.create(userId, data);
+  const validated = createUserBenchmarkResponseSchema.parse(result);
 
-export const POST = async (request: Request, context: RouteContext) => {
-  try {
-    await getAuthenticatedUserId();
-    const { userId } = getUserBenchmarksParamsSchema.parse(await context.params);
-    const body = await request.json();
-    const data = createUserBenchmarkRequestSchema.parse(body);
-    const result = await platformUserBenchmarksApi.create(userId, data);
-    const validated = createUserBenchmarkResponseSchema.parse(result);
-
-    return NextResponse.json(validated, { status: 201 });
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
+  return NextResponse.json(validated, { status: 201 });
+});

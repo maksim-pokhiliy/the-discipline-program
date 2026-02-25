@@ -1,7 +1,6 @@
+import { type ApiClient } from "@repo/api-client";
 import { type DashboardData } from "@repo/contracts/dashboard";
 
-import { apiClient } from "../client";
-
-export const dashboardAPI = {
-  getData: (): Promise<DashboardData> => apiClient.request("/api/admin/dashboard"),
-};
+export const createDashboardAPI = (client: ApiClient) => ({
+  getData: (): Promise<DashboardData> => client.request("/api/admin/dashboard"),
+});
