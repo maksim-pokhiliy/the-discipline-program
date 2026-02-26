@@ -8,7 +8,7 @@ import { platformKeys, QueryWrapper, STALE_TIMES } from "@repo/query";
 
 import { api } from "@app/lib/api";
 
-import { NeedsAttentionSection } from "../sections";
+import { ActionItemsSection } from "../sections";
 
 type DashboardViewProps = {
   initialData: CoachDashboardData;
@@ -26,7 +26,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ initialData }) => 
     <QueryWrapper isLoading={query.isLoading} error={query.error} data={query.data}>
       {(data) => (
         <Stack spacing={2}>
-          <NeedsAttentionSection alerts={data.attentionAlerts} />
+          <ActionItemsSection items={data.actionItems} />
         </Stack>
       )}
     </QueryWrapper>

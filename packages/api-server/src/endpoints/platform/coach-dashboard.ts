@@ -1,5 +1,7 @@
+import { SEVERITY_PRIORITY } from "@repo/contracts/coach-action-item";
 import {
   type CoachDashboardData,
+  type DashboardActionItem,
   type DashboardNote,
   type EndingPlan,
   type OnboardingAthlete,
@@ -10,52 +12,13 @@ import {
 import { prisma } from "../../db/client";
 import {
   computeAthletesSummary,
-  computeAttentionAlerts,
   computeLoadDistribution,
   computeProgressBuckets,
 } from "../../utils/dashboard-computations";
+import { daysBetween } from "../../utils/date-helpers";
+import { enrollmentInclude } from "../../utils/enrollment-query";
 
 import { resolveCoachId } from "./guards";
-
-const enrollmentInclude = {
-  user: {
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      image: true,
-      workoutLogs: {
-        select: { id: true, workoutId: true, date: true },
-        orderBy: { date: "desc" as const },
-      },
-      athleteFlags: {
-        where: { resolvedAt: null },
-        select: { id: true, type: true, note: true, createdAt: true },
-      },
-    },
-  },
-  trainingPlan: {
-    select: {
-      id: true,
-      name: true,
-      workouts: {
-        where: { deletedAt: null },
-        select: {
-          id: true,
-          dayOrder: true,
-          title: true,
-          blocks: {
-            select: {
-              categoryId: true,
-              category: { select: { id: true, name: true } },
-            },
-          },
-        },
-        orderBy: { dayOrder: "asc" as const },
-      },
-    },
-  },
-} as const;
 
 export const platformCoachDashboardApi = {
   getDashboard: async (userId: string): Promise<CoachDashboardData> => {
@@ -69,7 +32,7 @@ export const platformCoachDashboardApi = {
 
     endingThreshold.setDate(endingThreshold.getDate() + PLAN_ENDING_THRESHOLD_DAYS);
 
-    const [enrollments, openFlagsCount, recentNotesRaw, recentEnrollments] = await Promise.all([
+    const [enrollments, openActionItems, recentNotesRaw, recentEnrollments] = await Promise.all([
       prisma.planEnrollment.findMany({
         where: {
           status: "ACTIVE",
@@ -78,8 +41,12 @@ export const platformCoachDashboardApi = {
         include: enrollmentInclude,
       }),
 
-      prisma.athleteFlag.count({
-        where: { coachId, resolvedAt: null },
+      prisma.coachActionItem.findMany({
+        where: { coachId, status: "OPEN" },
+        include: {
+          athlete: { select: { id: true, name: true, image: true } },
+        },
+        orderBy: { createdAt: "desc" },
       }),
 
       prisma.coachNote.findMany({
@@ -115,12 +82,25 @@ export const platformCoachDashboardApi = {
     ]);
 
     const athletesSummary = computeAthletesSummary(enrollments);
-    const attentionAlerts = computeAttentionAlerts(enrollments);
     const loadDistributionToday = computeLoadDistribution(enrollments);
     const progressBuckets = computeProgressBuckets(enrollments);
 
     const uniqueAthletes = new Set(enrollments.map((e) => e.user.id));
     const completedToday = athletesSummary.filter((a) => a.todayStatus === "COMPLETED").length;
+
+    const actionItems: DashboardActionItem[] = openActionItems
+      .map((item) => ({
+        id: item.id,
+        type: item.type as DashboardActionItem["type"],
+        severity: item.severity as DashboardActionItem["severity"],
+        athleteId: item.athleteId,
+        athleteName: item.athlete.name,
+        athleteImage: item.athlete.image,
+        message: item.message,
+        href: `/coach/athletes/${item.athleteId}`,
+        createdAt: item.createdAt,
+      }))
+      .sort((a, b) => SEVERITY_PRIORITY[a.severity] - SEVERITY_PRIORITY[b.severity]);
 
     const endingPlans: EndingPlan[] = enrollments
       .filter((e) => {
@@ -128,22 +108,22 @@ export const platformCoachDashboardApi = {
           return false;
         }
 
-        const daysLeft = Math.floor(
-          (new Date(e.endDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-        );
+        const daysLeft = daysBetween(now, new Date(e.endDate));
 
         return daysLeft >= 0 && daysLeft <= PLAN_ENDING_THRESHOLD_DAYS;
       })
-      .map((e) => ({
-        athleteId: e.user.id,
-        athleteName: e.user.name,
-        planId: e.trainingPlan.id,
-        planName: e.trainingPlan.name,
-        endDate: e.endDate!,
-        daysLeft: Math.floor(
-          (new Date(e.endDate!).getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-        ),
-      }))
+      .map((e) => {
+        const daysLeft = daysBetween(now, new Date(e.endDate!));
+
+        return {
+          athleteId: e.user.id,
+          athleteName: e.user.name,
+          planId: e.trainingPlan.id,
+          planName: e.trainingPlan.name,
+          endDate: e.endDate!,
+          daysLeft,
+        };
+      })
       .sort((a, b) => a.daysLeft - b.daysLeft);
 
     const recentNotes: DashboardNote[] = recentNotesRaw.map((n) => ({
@@ -186,10 +166,10 @@ export const platformCoachDashboardApi = {
         totalActiveAthletes: uniqueAthletes.size,
         workoutsPlannedToday: uniqueAthletes.size,
         workoutsCompletedToday: completedToday,
-        openFlagsCount,
+        openActionItemsCount: openActionItems.length,
         endingPlansCount: endingPlans.length,
       },
-      attentionAlerts,
+      actionItems,
       athletesSummary,
       loadDistributionToday,
       progressBuckets,
