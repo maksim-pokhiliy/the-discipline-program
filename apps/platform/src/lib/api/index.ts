@@ -10,7 +10,7 @@ export const createApi = (client: ApiClient) => ({
   coachProfile: endpoints.createCoachProfileAPI(client),
   coachDashboard: endpoints.createCoachDashboardAPI(client),
   coachNotes: endpoints.createCoachNotesAPI(client),
-  athleteFlags: endpoints.createAthleteFlagsAPI(client),
+  coachActionItems: endpoints.createCoachActionItemsAPI(client),
 });
 
 export const api = createApi(browserApiClient);

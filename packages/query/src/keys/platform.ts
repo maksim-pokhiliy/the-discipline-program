@@ -21,5 +21,7 @@ export const platformKeys = {
     data: () => [...platformKeys.root, "coach-dashboard"] as const,
   },
   coachNotes: createEntityKeys(["platform"], "coach-notes"),
-  athleteFlags: createEntityKeys(["platform"], "athlete-flags"),
+  coachActionItems: {
+    all: () => [...platformKeys.root, "coach-action-items"] as const,
+  },
 } as const;

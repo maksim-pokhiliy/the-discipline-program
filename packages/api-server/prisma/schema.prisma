@@ -26,7 +26,7 @@ model User {
   planEnrollments PlanEnrollment[]
   userBenchmarks  UserBenchmark[]
   coachNotes      CoachNote[]
-  athleteFlags    AthleteFlag[]
+  actionItems     CoachActionItem[] @relation("ActionItemAthlete")
   accounts        Account[]
   sessions        Session[]
 
@@ -74,14 +74,16 @@ model VerificationToken {
 }
 
 model AthleteProfile {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  gender    Gender?
-  heightCm  Int?
-  weightKg  Decimal? @db.Decimal(5, 2)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String       @id @default(cuid())
+  userId       String       @unique
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gender       Gender?
+  heightCm     Int?
+  weightKg     Decimal?     @db.Decimal(5, 2)
+  healthStatus HealthStatus @default(HEALTHY)
+  healthNote   String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   @@index([createdAt])
   @@map("app_athlete_profiles")
@@ -94,8 +96,8 @@ model CoachProfile {
   bio          String?
   plans        TrainingPlan[]
   coachNotes   CoachNote[]
-  athleteFlags AthleteFlag[]
-  createdAt    DateTime       @default(now())
+  actionItems  CoachActionItem[]
+  createdAt    DateTime         @default(now())
   updatedAt    DateTime       @updatedAt
   deletedAt    DateTime?
 
@@ -354,10 +356,55 @@ enum TrainingPlanStatus {
   ARCHIVED
 }
 
-enum FlagType {
-  INJURY
-  RESTRICTION
-  ATTENTION
+enum HealthStatus {
+  HEALTHY
+  INJURED
+  RESTRICTED
+}
+
+enum ActionItemType {
+  MISSED_WORKOUTS
+  NEW_NO_START
+  HEALTH_REPORT
+}
+
+enum ActionItemStatus {
+  OPEN
+  RESOLVED
+}
+
+enum ActionItemResolveReason {
+  AUTO_CONDITION_CLEARED
+  AUTO_ENROLLMENT_ENDED
+  MANUAL_CONTACTED
+}
+
+model CoachActionItem {
+  id            String                    @id @default(cuid())
+  coachId       String
+  coach         CoachProfile              @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  athleteId     String
+  athlete       User                      @relation("ActionItemAthlete", fields: [athleteId], references: [id])
+  type          ActionItemType
+  severity      ActionItemSeverity
+  status        ActionItemStatus          @default(OPEN)
+  message       String
+  metadata      Json?
+  resolvedAt    DateTime?
+  resolveReason ActionItemResolveReason?
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+
+  @@index([coachId, status])
+  @@index([athleteId])
+  @@index([createdAt])
+  @@map("app_coach_action_items")
+}
+
+enum ActionItemSeverity {
+  INFO
+  WARNING
+  CRITICAL
 }
 
 model CoachNote {
@@ -373,23 +420,6 @@ model CoachNote {
   @@index([coachId, athleteId])
   @@index([createdAt])
   @@map("app_coach_notes")
-}
-
-model AthleteFlag {
-  id         String       @id @default(cuid())
-  coachId    String
-  coach      CoachProfile @relation(fields: [coachId], references: [id])
-  athleteId  String
-  athlete    User         @relation(fields: [athleteId], references: [id])
-  type       FlagType
-  note       String?
-  resolvedAt DateTime?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-
-  @@index([coachId, resolvedAt])
-  @@index([athleteId])
-  @@map("app_athlete_flags")
 }
 
 enum PlanEnrollmentStatus {

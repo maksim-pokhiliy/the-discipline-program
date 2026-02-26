@@ -211,6 +211,7 @@ export default async function BlogPage() {
 - **MUI-consistent sizing and spacing.** Never use raw pixel strings (`"24px"`, `"0.75rem"`) for spacing, sizes, or dimensions in `sx` props. Use `theme.spacing()` or MUI's numeric spacing shorthand (`p: 2`, `mr: 1`). For widths/heights, use theme spacing units or responsive breakpoints. For font sizes, use MUI Typography variants, not custom sizes. Exception: one-off decorative values (border-radius, letter-spacing) where no MUI token exists.
 - **No unprotected API routes.** Every route handler in `apps/api` must use `withAdminAuth` or `withPlatformAuth` wrapper. Public routes (`/api/public/*`) are the only exception. Never export a raw handler without an auth wrapper.
 - **No custom UI when MUI has a native component.** Use MUI components as-is (e.g. `Alert` for alerts, `Chip` for tags). Customize appearance through the global MUI theme, not per-instance `sx` overrides or custom wrappers. Never reinvent what the design system already provides.
+- **No raw color values in components.** Never use `rgba(...)`, `#hex`, `rgb(...)` in `sx` props or inline styles. Always use MUI theme tokens: `"background.paper"`, `theme.palette.error.main`, `alpha()` from `@mui/material/styles`, etc.
 
 ## Commit Convention
 

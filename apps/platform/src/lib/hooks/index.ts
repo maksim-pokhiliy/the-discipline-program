@@ -1,4 +1,4 @@
-export * from "./use-athlete-flags";
+export * from "./use-coach-action-items";
 export * from "./use-coach-dashboard";
 export * from "./use-coach-notes";
 export * from "./use-exercises";

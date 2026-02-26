@@ -1,37 +1,30 @@
 import { z } from "zod";
 
-import { flagTypeSchema } from "../athlete-flag";
+import { HEALTH_STATUSES } from "../athlete-profile";
+import { ACTION_ITEM_SEVERITIES, ACTION_ITEM_TYPES } from "../coach-action-item";
 
-import {
-  ACTIVITY_TYPES,
-  ALERT_SEVERITIES,
-  ATTENTION_ALERT_TYPES,
-  PROGRESS_TRENDS,
-  TODAY_STATUSES,
-} from "./coach-dashboard.constants";
+import { ACTIVITY_TYPES, PROGRESS_TRENDS, TODAY_STATUSES } from "./coach-dashboard.constants";
+
+export const todayStatusSchema = z.enum(TODAY_STATUSES);
 
 export const dashboardOverviewSchema = z.object({
   totalActiveAthletes: z.number().int(),
   workoutsPlannedToday: z.number().int(),
   workoutsCompletedToday: z.number().int(),
-  openFlagsCount: z.number().int(),
+  openActionItemsCount: z.number().int(),
   endingPlansCount: z.number().int(),
 });
 
-export const athleteFlagSummarySchema = z.object({
+export const dashboardActionItemSchema = z.object({
   id: z.string().cuid(),
-  type: flagTypeSchema,
-  note: z.string().nullable(),
-  createdAt: z.date(),
-});
-
-export const attentionAlertSchema = z.object({
-  type: z.enum(ATTENTION_ALERT_TYPES),
-  severity: z.enum(ALERT_SEVERITIES),
+  type: z.enum(ACTION_ITEM_TYPES),
+  severity: z.enum(ACTION_ITEM_SEVERITIES),
   athleteId: z.string().cuid(),
   athleteName: z.string().nullable(),
+  athleteImage: z.string().nullable(),
   message: z.string(),
   href: z.string(),
+  createdAt: z.date(),
 });
 
 export const athleteDailySummarySchema = z.object({
@@ -41,11 +34,11 @@ export const athleteDailySummarySchema = z.object({
   image: z.string().nullable(),
   planId: z.string().cuid().nullable(),
   planName: z.string().nullable(),
-  todayStatus: z.enum(TODAY_STATUSES),
+  todayStatus: todayStatusSchema,
   todayWorkoutTitle: z.string().nullable(),
   lastActivityDate: z.date().nullable(),
   daysSinceLastActivity: z.number().int().nullable(),
-  activeFlags: z.array(athleteFlagSummarySchema),
+  healthStatus: z.enum(HEALTH_STATUSES),
 });
 
 export const loadDistributionItemSchema = z.object({
@@ -109,7 +102,7 @@ export const endingPlanSchema = z.object({
 
 export const coachDashboardDataSchema = z.object({
   overview: dashboardOverviewSchema,
-  attentionAlerts: z.array(attentionAlertSchema),
+  actionItems: z.array(dashboardActionItemSchema),
   athletesSummary: z.array(athleteDailySummarySchema),
   loadDistributionToday: z.array(loadDistributionItemSchema),
   progressBuckets: progressBucketsSchema,
