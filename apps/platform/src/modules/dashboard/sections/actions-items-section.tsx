@@ -4,7 +4,6 @@ import { useState } from "react";
 
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import {
   Accordion,
   AccordionDetails,
@@ -12,7 +11,6 @@ import {
   Badge,
   Button,
   Stack,
-  Tooltip,
   Typography,
 } from "@mui/material";
 
@@ -51,14 +49,10 @@ export const ActionItemsSection: React.FC<ActionItemsSectionProps> = ({ items })
   return (
     <Accordion>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={3} alignItems="center">
           <Typography variant="h6">Needs Attention</Typography>
 
-          <Tooltip title="Missed workouts, new athletes without activity, health reports">
-            <Badge color="error" variant="dot">
-              <InfoOutlinedIcon fontSize="small" color="action" />
-            </Badge>
-          </Tooltip>
+          <Badge color="error" badgeContent={items.length} />
         </Stack>
       </AccordionSummary>
 

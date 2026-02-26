@@ -4,17 +4,20 @@ interface ApiClientConfig {
   baseUrl: string;
   getHeaders?: () => Record<string, string> | Promise<Record<string, string>>;
   credentials?: RequestCredentials;
+  onUnauthorized?: () => never;
 }
 
 export class ApiClient {
   private baseUrl: string;
   private getHeadersFn?: ApiClientConfig["getHeaders"];
   private credentials?: RequestCredentials;
+  private onUnauthorized?: () => never;
 
-  constructor({ baseUrl, getHeaders, credentials }: ApiClientConfig) {
+  constructor({ baseUrl, getHeaders, credentials, onUnauthorized }: ApiClientConfig) {
     this.baseUrl = baseUrl;
     this.getHeadersFn = getHeaders;
     this.credentials = credentials;
+    this.onUnauthorized = onUnauthorized;
   }
 
   async request<T>(
@@ -50,6 +53,10 @@ export class ApiClient {
     });
 
     if (!response.ok) {
+      if (response.status === 401 && this.onUnauthorized) {
+        this.onUnauthorized();
+      }
+
       const error = await response
         .json()
         .catch(() => ({ error: `Request failed: ${response.status}` }));
