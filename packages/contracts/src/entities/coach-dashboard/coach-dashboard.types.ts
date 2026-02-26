@@ -3,9 +3,8 @@ import { type z } from "zod";
 import {
   type coachActivityItemSchema,
   type athleteDailySummarySchema,
-  type athleteFlagSummarySchema,
-  type attentionAlertSchema,
   type coachDashboardDataSchema,
+  type dashboardActionItemSchema,
   type dashboardNoteSchema,
   type dashboardOverviewSchema,
   type endingPlanSchema,
@@ -13,11 +12,12 @@ import {
   type onboardingAthleteSchema,
   type progressAthleteSchema,
   type progressBucketsSchema,
+  type todayStatusSchema,
 } from "./coach-dashboard.schema";
 
+export type TodayStatus = z.infer<typeof todayStatusSchema>;
 export type DashboardOverview = z.infer<typeof dashboardOverviewSchema>;
-export type AthleteFlagSummary = z.infer<typeof athleteFlagSummarySchema>;
-export type AttentionAlert = z.infer<typeof attentionAlertSchema>;
+export type DashboardActionItem = z.infer<typeof dashboardActionItemSchema>;
 export type AthleteDailySummary = z.infer<typeof athleteDailySummarySchema>;
 export type LoadDistributionItem = z.infer<typeof loadDistributionItemSchema>;
 export type ProgressAthlete = z.infer<typeof progressAthleteSchema>;

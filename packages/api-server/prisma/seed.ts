@@ -1,5 +1,4 @@
 import {
-  FlagType,
   Gender,
   PlanEnrollmentStatus,
   PrismaClient,
@@ -45,7 +44,7 @@ const clearAll = async () => {
   await prisma.userBenchmark.deleteMany();
   await prisma.benchmarkDefinition.deleteMany();
   await prisma.coachNote.deleteMany();
-  await prisma.athleteFlag.deleteMany();
+  await prisma.coachActionItem.deleteMany();
   await prisma.planEnrollment.deleteMany();
   await prisma.trainingPlan.deleteMany();
   await prisma.exercise.deleteMany();
@@ -138,9 +137,45 @@ const seedUsers = async (passwordHash: string) => {
         createdAt: daysAgo(5),
       },
     }),
+    prisma.user.create({
+      data: {
+        email: "alex.kovac@email.com",
+        name: "Alex Kovac",
+        role: Role.USER,
+        password: passwordHash,
+        createdAt: daysAgo(40),
+      },
+    }),
+    prisma.user.create({
+      data: {
+        email: "nina.reyes@email.com",
+        name: "Nina Reyes",
+        role: Role.USER,
+        password: passwordHash,
+        createdAt: daysAgo(30),
+      },
+    }),
+    prisma.user.create({
+      data: {
+        email: "chris.walker@email.com",
+        name: "Chris Walker",
+        role: Role.USER,
+        password: passwordHash,
+        createdAt: daysAgo(2),
+      },
+    }),
+    prisma.user.create({
+      data: {
+        email: "maria.santos@email.com",
+        name: "Maria Santos",
+        role: Role.USER,
+        password: passwordHash,
+        createdAt: daysAgo(6),
+      },
+    }),
   ]);
 
-  console.log("  Users: 8 (1 admin, 1 coach, 6 athletes)");
+  console.log("  Users: 12 (1 admin, 1 coach, 10 athletes)");
 
   return {
     admin: users[0]!,
@@ -151,6 +186,10 @@ const seedUsers = async (passwordHash: string) => {
     david: users[5]!,
     lisa: users[6]!,
     tom: users[7]!,
+    alex: users[8]!,
+    nina: users[9]!,
+    chris: users[10]!,
+    maria: users[11]!,
   };
 };
 
@@ -169,12 +208,28 @@ const seedProfiles = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
       { userId: users.mike.id, gender: Gender.MALE, heightCm: 183, weightKg: 88 },
       { userId: users.jenny.id, gender: Gender.FEMALE, heightCm: 160, weightKg: 55 },
       { userId: users.david.id, gender: Gender.MALE, heightCm: 178, weightKg: 82 },
-      { userId: users.lisa.id, gender: Gender.FEMALE, heightCm: 172, weightKg: 67 },
+      {
+        userId: users.lisa.id,
+        gender: Gender.FEMALE,
+        heightCm: 172,
+        weightKg: 67,
+        healthStatus: "RESTRICTED",
+      },
       { userId: users.tom.id, gender: Gender.MALE, heightCm: 175, weightKg: 78 },
+      {
+        userId: users.alex.id,
+        gender: Gender.MALE,
+        heightCm: 190,
+        weightKg: 95,
+        healthStatus: "INJURED",
+      },
+      { userId: users.nina.id, gender: Gender.FEMALE, heightCm: 165, weightKg: 58 },
+      { userId: users.chris.id, gender: Gender.MALE, heightCm: 180, weightKg: 85 },
+      { userId: users.maria.id, gender: Gender.FEMALE, heightCm: 162, weightKg: 56 },
     ],
   });
 
-  console.log("  Profiles: 1 coach, 6 athlete");
+  console.log("  Profiles: 1 coach, 10 athlete");
 
   return coachProfile;
 };
@@ -666,10 +721,37 @@ const seedEnrollments = async (
         endDate: daysAgo(30),
         status: PlanEnrollmentStatus.COMPLETED,
       },
+      {
+        trainingPlanId: plans.plan1.id,
+        userId: users.alex.id,
+        startDate: daysAgo(35),
+        endDate: daysFromNow(25),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plans.plan2.id,
+        userId: users.nina.id,
+        startDate: daysAgo(25),
+        endDate: daysFromNow(35),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plans.plan3.id,
+        userId: users.chris.id,
+        startDate: daysAgo(2),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plans.plan2.id,
+        userId: users.maria.id,
+        startDate: daysAgo(6),
+        endDate: daysFromNow(54),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
     ],
   });
 
-  console.log("  Enrollments: 8 (6 active, 1 completed, 1 legacy-active)");
+  console.log("  Enrollments: 12 (10 active, 1 completed, 1 legacy-active)");
 };
 
 const seedWorkoutLogs = async (
@@ -794,7 +876,24 @@ const seedWorkoutLogs = async (
     "Light technique work only",
   );
 
-  console.log("  Workout logs: 31 (Sarah 9, Jenny 9, Mike 9, Lisa 4, David 0, Tom 0)");
+  await createLog(users.alex.id, workouts.p1[0]!.id, daysAgo(20), true, null);
+  await createLog(users.alex.id, workouts.p1[1]!.id, daysAgo(18), true, null);
+  await createLog(users.alex.id, workouts.p1[2]!.id, daysAgo(15), true, "Knee started hurting");
+  await createLog(
+    users.alex.id,
+    workouts.p1[3]!.id,
+    daysAgo(12),
+    false,
+    "Last session before injury",
+  );
+
+  await createLog(users.nina.id, workouts.p2[0]!.id, daysAgo(18), true, null);
+  await createLog(users.nina.id, workouts.p2[1]!.id, daysAgo(16), true, null);
+  await createLog(users.nina.id, workouts.p2[2]!.id, daysAgo(10), true, "Dropped off after this");
+
+  console.log(
+    "  Workout logs: 38 (Sarah 9, Jenny 9, Mike 9, Lisa 4, Alex 4, Nina 3, David 0, Tom 0, Chris 0, Maria 0)",
+  );
 };
 
 const seedCoachNotes = async (
@@ -856,47 +955,6 @@ const seedCoachNotes = async (
   });
 
   console.log("  Coach notes: 7");
-};
-
-const seedAthleteFlags = async (
-  coachProfileId: string,
-  users: Awaited<ReturnType<typeof seedUsers>>,
-) => {
-  await prisma.athleteFlag.createMany({
-    data: [
-      {
-        coachId: coachProfileId,
-        athleteId: users.lisa.id,
-        type: FlagType.INJURY,
-        note: "Right shoulder rotator cuff tendinitis. Avoid overhead pressing. PT evaluation scheduled.",
-        createdAt: daysAgo(5),
-      },
-      {
-        coachId: coachProfileId,
-        athleteId: users.mike.id,
-        type: FlagType.ATTENTION,
-        note: "Inactive for 4+ days. Unusual pattern — was previously very consistent. Check in.",
-        createdAt: daysAgo(2),
-      },
-      {
-        coachId: coachProfileId,
-        athleteId: users.sarah.id,
-        type: FlagType.RESTRICTION,
-        note: "Mild knee discomfort during deep squats. Limit squat depth to parallel for 2 weeks.",
-        resolvedAt: daysAgo(7),
-        createdAt: daysAgo(14),
-      },
-      {
-        coachId: coachProfileId,
-        athleteId: users.tom.id,
-        type: FlagType.ATTENTION,
-        note: "New athlete, hasn't started workouts yet. Follow up with onboarding guidance.",
-        createdAt: daysAgo(1),
-      },
-    ],
-  });
-
-  console.log("  Athlete flags: 4 (3 open, 1 resolved)");
 };
 
 const seedBenchmarks = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
@@ -1642,7 +1700,6 @@ const main = async () => {
   await seedEnrollments(users, plans);
   await seedWorkoutLogs(users, workouts);
   await seedCoachNotes(coachProfile.id, users);
-  await seedAthleteFlags(coachProfile.id, users);
   await seedBenchmarks(users);
   await seedMarketingPages();
   await seedProducts();
