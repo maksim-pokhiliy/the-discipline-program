@@ -14,6 +14,8 @@ export const mapToAthleteProfile = (p: PrismaAthleteProfile): AthleteProfile => 
   gender: p.gender,
   heightCm: p.heightCm,
   weightKg: p.weightKg ? Number(p.weightKg) : null,
+  healthStatus: p.healthStatus,
+  healthNote: p.healthNote,
   createdAt: p.createdAt,
   updatedAt: p.updatedAt,
 });

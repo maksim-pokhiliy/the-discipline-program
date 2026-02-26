@@ -1,4 +1,4 @@
-export { createAthleteFlagsAPI } from "./athlete-flags";
+export { createCoachActionItemsAPI } from "./coach-action-items";
 export { createCoachDashboardAPI } from "./coach-dashboard";
 export { createCoachNotesAPI } from "./coach-notes";
 export { createCoachProfileAPI } from "./coach-profile";

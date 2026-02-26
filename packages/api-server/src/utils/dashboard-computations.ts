@@ -1,57 +1,27 @@
 import {
-  type AttentionAlert,
   type AthleteDailySummary,
-  type AthleteFlagSummary,
-  MISSED_DAYS_CRITICAL,
-  MISSED_DAYS_WARNING,
-  NEW_ATHLETE_THRESHOLD_DAYS,
-  PLAN_ENDING_THRESHOLD_DAYS,
+  type LoadDistributionItem,
+  type ProgressAthlete,
+  type ProgressBuckets,
+  type TodayStatus,
   LOW_COMPLETION_RATE,
 } from "@repo/contracts/coach-dashboard";
 
-type TodayStatus = "COMPLETED" | "PENDING" | "MISSED" | "NO_PLAN";
+import { daysBetween, startOfToday } from "./date-helpers";
+import type { EnrollmentWithData } from "./enrollment-query";
 
-type EnrollmentWithData = {
-  id: string;
-  userId: string;
-  startDate: Date;
-  endDate: Date | null;
-  status: string;
-  trainingPlan: {
-    id: string;
-    name: string;
-    workouts: {
-      id: string;
-      dayOrder: number;
-      title: string;
-      blocks: { categoryId: string; category: { id: string; name: string } }[];
-    }[];
-  };
-  user: {
-    id: string;
-    name: string | null;
-    email: string;
-    image: string | null;
-    workoutLogs: { id: string; workoutId: string; date: Date }[];
-    athleteFlags: { id: string; type: string; note: string | null; createdAt: Date }[];
-  };
-};
+export type { EnrollmentWithData };
 
-const daysBetween = (a: Date, b: Date): number =>
-  Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
-
-const startOfToday = (): Date => {
-  const d = new Date();
-
-  d.setHours(0, 0, 0, 0);
-
-  return d;
+type TodayStatusResult = {
+  status: TodayStatus;
+  currentWorkoutId: string | null;
+  lastActivityDate: Date | null;
 };
 
 export const computeTodayStatus = (
   workouts: { id: string; dayOrder: number }[],
   logs: { workoutId: string; date: Date }[],
-): { status: TodayStatus; currentWorkoutId: string | null; lastActivityDate: Date | null } => {
+): TodayStatusResult => {
   if (workouts.length === 0) {
     return { status: "NO_PLAN", currentWorkoutId: null, lastActivityDate: null };
   }
@@ -131,13 +101,6 @@ export const computeAthletesSummary = (
       ? e.trainingPlan.workouts.find((w) => w.id === currentWorkoutId)
       : null;
 
-    const flags: AthleteFlagSummary[] = user.athleteFlags.map((f) => ({
-      id: f.id,
-      type: f.type as AthleteFlagSummary["type"],
-      note: f.note,
-      createdAt: f.createdAt,
-    }));
-
     const existing = athleteMap.get(user.id);
 
     if (!existing || status === "COMPLETED") {
@@ -152,7 +115,7 @@ export const computeAthletesSummary = (
         todayWorkoutTitle: currentWorkout?.title ?? null,
         lastActivityDate,
         daysSinceLastActivity,
-        activeFlags: flags,
+        healthStatus: user.athleteProfile?.healthStatus ?? "HEALTHY",
       });
     }
   }
@@ -160,89 +123,9 @@ export const computeAthletesSummary = (
   return Array.from(athleteMap.values());
 };
 
-export const computeAttentionAlerts = (enrollments: EnrollmentWithData[]): AttentionAlert[] => {
-  const alerts: AttentionAlert[] = [];
-  const today = startOfToday();
-  const processedAthletes = new Set<string>();
-
-  for (const e of enrollments) {
-    const user = e.user;
-    const athleteKey = user.id;
-
-    if (!processedAthletes.has(athleteKey)) {
-      processedAthletes.add(athleteKey);
-
-      const lastLog =
-        user.workoutLogs.length > 0
-          ? user.workoutLogs.reduce((latest, l) => (l.date > latest.date ? l : latest))
-          : null;
-
-      if (lastLog) {
-        const daysSince = daysBetween(new Date(lastLog.date), today);
-
-        if (daysSince >= MISSED_DAYS_WARNING) {
-          alerts.push({
-            type: "MISSED_WORKOUTS",
-            severity: daysSince >= MISSED_DAYS_CRITICAL ? "CRITICAL" : "WARNING",
-            athleteId: user.id,
-            athleteName: user.name,
-            message: `${daysSince} days without activity`,
-            href: `/coach/athletes/${user.id}`,
-          });
-        }
-      }
-
-      const enrolledDays = daysBetween(e.startDate, today);
-
-      if (enrolledDays <= NEW_ATHLETE_THRESHOLD_DAYS && user.workoutLogs.length === 0) {
-        alerts.push({
-          type: "NEW_NO_START",
-          severity: "INFO",
-          athleteId: user.id,
-          athleteName: user.name,
-          message: `Enrolled ${enrolledDays} day(s) ago, no workouts started`,
-          href: `/coach/athletes/${user.id}`,
-        });
-      }
-
-      for (const flag of user.athleteFlags) {
-        if (flag.type === "INJURY" || flag.type === "RESTRICTION") {
-          alerts.push({
-            type: "OPEN_FLAG",
-            severity: "CRITICAL",
-            athleteId: user.id,
-            athleteName: user.name,
-            message: `Open ${flag.type.toLowerCase()} flag${flag.note ? `: ${flag.note}` : ""}`,
-            href: `/coach/athletes/${user.id}`,
-          });
-        }
-      }
-    }
-
-    if (e.endDate) {
-      const daysLeft = daysBetween(today, new Date(e.endDate));
-
-      if (daysLeft >= 0 && daysLeft <= PLAN_ENDING_THRESHOLD_DAYS) {
-        alerts.push({
-          type: "PLAN_ENDING",
-          severity: daysLeft < 7 ? "WARNING" : "INFO",
-          athleteId: user.id,
-          athleteName: user.name,
-          message: `"${e.trainingPlan.name}" ends in ${daysLeft} day(s)`,
-          href: `/coach/athletes/${user.id}`,
-        });
-      }
-    }
-  }
-
-  const severityOrder = { CRITICAL: 0, WARNING: 1, INFO: 2 };
-
-  return alerts.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
-};
-
 export const computeLoadDistribution = (
   enrollments: EnrollmentWithData[],
-): { categoryId: string; categoryName: string; athleteCount: number; percentage: number }[] => {
+): LoadDistributionItem[] => {
   const categoryMap = new Map<string, { name: string; athletes: Set<string> }>();
 
   for (const e of enrollments) {
@@ -275,26 +158,7 @@ export const computeLoadDistribution = (
     .sort((a, b) => b.athleteCount - a.athleteCount);
 };
 
-type ProgressEntry = {
-  userId: string;
-  name: string | null;
-  image: string | null;
-  completionRate: number;
-  trend: "UP" | "DOWN" | "STABLE";
-  href: string;
-};
-
-type ProgressBucketsResult = {
-  improving: ProgressEntry[];
-  stagnating: ProgressEntry[];
-  declining: ProgressEntry[];
-  avgCompletionRate: number;
-  avgEngagementRate: number;
-};
-
-export const computeProgressBuckets = (
-  enrollments: EnrollmentWithData[],
-): ProgressBucketsResult => {
+export const computeProgressBuckets = (enrollments: EnrollmentWithData[]): ProgressBuckets => {
   const athleteData = new Map<
     string,
     {
@@ -326,9 +190,9 @@ export const computeProgressBuckets = (
     }
   }
 
-  const improving: ProgressEntry[] = [];
-  const stagnating: ProgressEntry[] = [];
-  const declining: ProgressEntry[] = [];
+  const improving: ProgressAthlete[] = [];
+  const stagnating: ProgressAthlete[] = [];
+  const declining: ProgressAthlete[] = [];
   let totalRate = 0;
 
   for (const [userId, data] of athleteData) {
@@ -336,7 +200,7 @@ export const computeProgressBuckets = (
 
     totalRate += rate;
 
-    const entry: ProgressEntry = {
+    const entry: ProgressAthlete = {
       userId,
       name: data.name,
       image: data.image,

@@ -1,2 +1,1 @@
-export { AttentionAlertItem } from "./attention-alert-item";
-export { SectionHeader } from "./section-header";
+export { ActionItemAlert } from "./attention-item-alert";
