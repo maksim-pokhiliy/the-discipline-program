@@ -1,13 +1,3 @@
-import { cookies } from "next/headers";
+import { createNextServerClient } from "@repo/api-client/server";
 
-import { ApiClient } from "@repo/api-client";
-import { env } from "@repo/env";
-
-export const serverApiClient = new ApiClient({
-  baseUrl: env.NEXT_PUBLIC_API_URL,
-  getHeaders: async () => {
-    const cookieStore = await cookies();
-
-    return { Cookie: cookieStore.toString() };
-  },
-});
+export const serverApiClient = createNextServerClient();

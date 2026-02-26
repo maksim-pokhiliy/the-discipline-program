@@ -45,20 +45,8 @@ export const ActionItemAlert: React.FC<ActionItemCardProps> = ({
   return (
     <Alert
       severity={SEVERITY_MAP[item.severity]}
-      icon={
-        <Avatar
-          src={item.athleteImage ?? undefined}
-          sx={(theme) => ({
-            width: theme.spacing(4),
-            height: theme.spacing(4),
-            bgcolor: theme.palette[SEVERITY_MAP[item.severity]].light,
-            color: theme.palette[SEVERITY_MAP[item.severity]].contrastText,
-            fontSize: theme.typography.caption.fontSize,
-          })}
-        >
-          {item.athleteName?.[0] ?? "?"}
-        </Avatar>
-      }
+      variant="filled"
+      icon={<Avatar src={item.athleteImage ?? undefined}>{item.athleteName?.[0] ?? "?"}</Avatar>}
       action={
         <IconButton
           ref={anchorRef}
@@ -71,17 +59,16 @@ export const ActionItemAlert: React.FC<ActionItemCardProps> = ({
         </IconButton>
       }
       sx={(theme) => ({
-        alignItems: "center",
         transition: theme.transitions.create("opacity", {
           duration: theme.transitions.duration.short,
         }),
         opacity: isResolving ? 0.5 : 1,
       })}
     >
-      <Stack spacing={0}>
+      <Stack>
         {item.athleteName && <AlertTitle gutterBottom={false}>{item.athleteName}</AlertTitle>}
 
-        <Typography variant="overline" sx={{ lineHeight: 1.5 }}>
+        <Typography variant="body2" color="text.secondary">
           {item.message}
         </Typography>
       </Stack>
@@ -99,6 +86,7 @@ export const ActionItemAlert: React.FC<ActionItemCardProps> = ({
           </ListItemIcon>
           <ListItemText>Contacted</ListItemText>
         </MenuItem>
+
         <MenuItem component={Link} href={item.href} onClick={() => setMenuOpen(false)}>
           <ListItemIcon>
             <PersonIcon fontSize="small" />

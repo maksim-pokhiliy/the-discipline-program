@@ -45,7 +45,17 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name;
         token.image = user.image;
         token.role = user.role;
+
+        return token;
       }
+
+      const dbUser = await authService.getUserById(token.id);
+
+      if (!dbUser) {
+        return null as unknown as typeof token;
+      }
+
+      token.role = dbUser.role;
 
       return token;
     },
