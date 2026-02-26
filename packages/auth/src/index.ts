@@ -1,4 +1,5 @@
 export * from "./constants";
+export * from "./logout-handler";
 export * from "./providers";
 export * from "./utils";
 
