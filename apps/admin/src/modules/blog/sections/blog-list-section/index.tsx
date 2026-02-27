@@ -8,7 +8,7 @@ import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/mater
 import Link from "next/link";
 
 import { type BlogPost } from "@repo/contracts/blog";
-import { env } from "@repo/env";
+import { env } from "@repo/env/base";
 import { useDeleteConfirmation } from "@repo/query";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 

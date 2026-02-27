@@ -34,7 +34,6 @@ pnpm db:push          # Push schema to database
 # Single app dev
 pnpm --filter admin dev
 pnpm --filter marketing dev
-pnpm --filter api dev
 pnpm --filter platform dev
 ```
 
@@ -52,13 +51,13 @@ DB Schema → Contracts (Zod) → API Server → API Routes → Client UI
 
 ```
 apps/
-  api/          # Next.js Route Handlers (BFF). NO business logic, NO Prisma.
-  admin/        # Business panel + Marketing CMS (desktop-first)
-  marketing/    # Public landing pages
-  platform/     # Coach + Athlete product experience (mobile-first PWA)
+  admin/        # Business panel + Marketing CMS (desktop-first). Own route handlers: /api/admin/*
+  marketing/    # Public landing pages. Own route handlers: /api/public/*
+  platform/     # Coach + Athlete product experience (mobile-first PWA). Own route handlers: /api/platform/*
 
 packages/
   api-server/   # Business logic + Prisma. ONLY package that imports @prisma/client
+  api-routes/   # Route handler utilities: auth wrappers, error handler, CRUD factories
   contracts/    # Zod schemas + TypeScript types. The Law. NO Prisma types allowed.
   api-client/   # HTTP client for API consumption
   auth/         # NextAuth configuration
@@ -72,12 +71,11 @@ packages/
 
 ### App Status
 
-| App       | Status                                                                                                                                 |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Marketing | Working. Billing flow excluded (pages exist as stubs).                                                                                 |
-| Admin     | Working. CMS (blog, pages, reviews, products, contacts) + Platform section (exercises, categories, users, dashboard).                  |
-| API       | Working. Serves admin, platform, marketing, auth. Route namespaces: `/api/admin/*`, `/api/platform/*`, `/api/public/*`, `/api/auth/*`. |
-| Platform  | Scaffolded (Phase 2). Auth, routing, base layout exist. UI screens — Phase 3+.                                                         |
+| App       | Status                                                                                                                                       |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Marketing | Working. Billing flow excluded (pages exist as stubs). Routes: `/api/public/*`                                                               |
+| Admin     | Working. CMS (blog, pages, reviews, products, contacts) + Platform section (exercises, categories, users, dashboard). Routes: `/api/admin/*` |
+| Platform  | Scaffolded (Phase 2). Auth, routing, base layout exist. UI screens — Phase 3+. Routes: `/api/platform/*`                                     |
 
 ### Source of Truth
 
@@ -86,12 +84,12 @@ packages/
 
 ### Layer Responsibilities
 
-| Layer                 | Knows About                   | Does NOT Know About    |
-| --------------------- | ----------------------------- | ---------------------- |
-| `apps/*` (UI)         | Contracts, api-client         | Prisma, DB structure   |
-| `apps/api`            | Contracts, api-server methods | Prisma client directly |
-| `packages/api-server` | Prisma, Contracts             | UI components          |
-| `packages/contracts`  | Zod                           | Prisma types, DB       |
+| Layer                  | Knows About                                    | Does NOT Know About    |
+| ---------------------- | ---------------------------------------------- | ---------------------- |
+| `apps/*` (UI + routes) | Contracts, api-client, api-server, api-routes  | Prisma client directly |
+| `packages/api-server`  | Prisma, Contracts                              | UI components          |
+| `packages/api-routes`  | Auth wrappers, error handling, route factories | Business logic, Prisma |
+| `packages/contracts`   | Zod                                            | Prisma types, DB       |
 
 ### Contract Entity Structure
 
@@ -181,21 +179,23 @@ Related CRUD pages (list/create/edit) share a module.
 
 ### Page Pattern
 
-Server Component fetches data, passes to Client Component:
+Server Component fetches data via server API client, passes to Client Component:
 
 ```tsx
-import { api } from "@app/lib/api";
+import { serverApi } from "@app/lib/api/server";
 import { BlogPageClient } from "@app/modules/blog";
 
 export const dynamic = "force-dynamic";
 
 export default async function BlogPage() {
-  const initialData = await api.blog.getPageData();
+  const initialData = await serverApi.blog.getPageData();
   return <BlogPageClient initialData={initialData} />;
 }
 ```
 
 `page.tsx` is the only file that uses default export (Next.js requirement).
+
+**API client pattern:** Each app has `browserApiClient` (baseUrl: `""`, same-origin) for client components and `serverApiClient` (baseUrl: `NEXT_PUBLIC_APP_URL`) for server components. Route handlers live inside each app — no separate BFF.
 
 ## Anti-patterns (Learned Rules)
 
@@ -209,7 +209,7 @@ export default async function BlogPage() {
 - **Static data outside components.** Arrays and objects that don't depend on props/state (`filters`, config maps, pure helper functions) must be defined at module level, not inside component bodies.
 - **No inline money math.** Never write `/ 100`, `* 100` for cents↔amount conversion. Use `centsToAmount()` / `amountToCents()` from `@repo/shared`. Magic number 100 must exist in exactly one place.
 - **MUI-consistent sizing and spacing.** Never use raw pixel strings (`"24px"`, `"0.75rem"`) for spacing, sizes, or dimensions in `sx` props. Use `theme.spacing()` or MUI's numeric spacing shorthand (`p: 2`, `mr: 1`). For widths/heights, use theme spacing units or responsive breakpoints. For font sizes, use MUI Typography variants, not custom sizes. Exception: one-off decorative values (border-radius, letter-spacing) where no MUI token exists.
-- **No unprotected API routes.** Every route handler in `apps/api` must use `withAdminAuth` or `withPlatformAuth` wrapper. Public routes (`/api/public/*`) are the only exception. Never export a raw handler without an auth wrapper.
+- **No unprotected API routes.** Every route handler must use `withAdminAuth` or `withPlatformAuth` wrapper from `@repo/api-routes`. Public routes (`/api/public/*`) are the only exception. Never export a raw handler without an auth wrapper.
 - **No custom UI when MUI has a native component.** Use MUI components as-is (e.g. `Alert` for alerts, `Chip` for tags). Customize appearance through the global MUI theme, not per-instance `sx` overrides or custom wrappers. Never reinvent what the design system already provides.
 - **No raw color values in components.** Never use `rgba(...)`, `#hex`, `rgb(...)` in `sx` props or inline styles. Always use MUI theme tokens: `"background.paper"`, `theme.palette.error.main`, `alpha()` from `@mui/material/styles`, etc.
 

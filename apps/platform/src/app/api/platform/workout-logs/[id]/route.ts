@@ -1,0 +1,25 @@
+import { NextResponse } from "next/server";
+
+import { withPlatformAuth } from "@repo/api-routes/auth";
+import { platformWorkoutLogsApi } from "@repo/api-server";
+import {
+  deleteWorkoutLogParamsSchema,
+  getWorkoutLogByIdParamsSchema,
+  getWorkoutLogResponseSchema,
+} from "@repo/contracts/workout-log";
+
+export const GET = withPlatformAuth(async (_, context, userId) => {
+  const { id } = getWorkoutLogByIdParamsSchema.parse(await context.params);
+  const data = await platformWorkoutLogsApi.getById(userId, id);
+  const validated = getWorkoutLogResponseSchema.parse(data);
+
+  return NextResponse.json(validated);
+});
+
+export const DELETE = withPlatformAuth(async (_, context, userId) => {
+  const { id } = deleteWorkoutLogParamsSchema.parse(await context.params);
+
+  await platformWorkoutLogsApi.delete(userId, id);
+
+  return NextResponse.json({ success: true });
+});

@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogTitle,
   IconButton,
+  InputAdornment,
   List,
   ListItem,
   ListItemText,
@@ -133,7 +134,7 @@ export const ManageCategoriesDialog = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>Manage Categories</DialogTitle>
 
       <DialogContent>
@@ -169,16 +170,7 @@ export const ManageCategoriesDialog = ({
                   key={category.id}
                   divider
                   secondaryAction={
-                    isEditing ? (
-                      <Stack direction="row" spacing={0.5}>
-                        <IconButton size="small" onClick={handleSave} disabled={isLoading}>
-                          <CheckIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton size="small" onClick={handleCancelEdit} disabled={isLoading}>
-                          <CloseIcon fontSize="small" />
-                        </IconButton>
-                      </Stack>
-                    ) : (
+                    !isEditing && (
                       <Stack direction="row" spacing={0.5}>
                         <IconButton
                           size="small"
@@ -218,7 +210,30 @@ export const ManageCategoriesDialog = ({
                       fullWidth
                       autoFocus
                       disabled={isLoading}
-                      sx={{ mr: 2 }}
+                      slotProps={{
+                        input: {
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                size="small"
+                                onClick={handleSave}
+                                disabled={isLoading}
+                                edge="end"
+                              >
+                                <CheckIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                onClick={handleCancelEdit}
+                                disabled={isLoading}
+                                edge="end"
+                              >
+                                <CloseIcon fontSize="small" />
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
                     />
                   ) : (
                     <ListItemText

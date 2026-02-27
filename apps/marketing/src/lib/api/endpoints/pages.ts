@@ -1,3 +1,4 @@
+import { type ApiClient } from "@repo/api-client";
 import {
   type AboutPageData,
   type BlogPageData,
@@ -7,18 +8,16 @@ import {
   type StorefrontProgramsPageData,
 } from "@repo/contracts";
 
-import { apiClient } from "../client";
-
-export const pagesAPI = {
-  getHome: (): Promise<HomePageData> => apiClient.request("/api/public/pages/home"),
+export const createPagesAPI = (client: ApiClient) => ({
+  getHome: (): Promise<HomePageData> => client.request("/api/public/pages/home"),
 
   getStorefrontPrograms: (): Promise<StorefrontProgramsPageData> =>
-    apiClient.request("/api/public/pages/storefront"),
+    client.request("/api/public/pages/storefront"),
 
-  getAbout: (): Promise<AboutPageData> => apiClient.request("/api/public/pages/about"),
-  getBlog: (): Promise<BlogPageData> => apiClient.request("/api/public/pages/blog"),
-  getContact: (): Promise<ContactPageData> => apiClient.request("/api/public/pages/contact"),
+  getAbout: (): Promise<AboutPageData> => client.request("/api/public/pages/about"),
+  getBlog: (): Promise<BlogPageData> => client.request("/api/public/pages/blog"),
+  getContact: (): Promise<ContactPageData> => client.request("/api/public/pages/contact"),
 
   getBlogArticle: (slug: string): Promise<BlogPostPageData> =>
-    apiClient.request(`/api/public/blog/${slug}`),
-};
+    client.request(`/api/public/blog/${slug}`),
+});

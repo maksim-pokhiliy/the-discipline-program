@@ -2,7 +2,7 @@ import { type Metadata } from "next";
 
 import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
 
-import { api } from "@app/lib/api";
+import { serverApi } from "@app/lib/api/server";
 import { BlogPageClient } from "@app/modules/blog";
 
 export const metadata: Metadata = {
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function BlogPage() {
-  const initialData = await api.pages.getBlog();
+  const initialData = await serverApi.pages.getBlog();
 
   return <BlogPageClient initialData={initialData} />;
 }
