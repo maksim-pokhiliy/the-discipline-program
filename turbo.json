@@ -2,90 +2,15 @@
   "$schema": "https://turborepo.com/schema.json",
   "globalEnv": [
     "NODE_ENV",
-    "BLOB_READ_WRITE_TOKEN",
-    "NEXT_PUBLIC_API_URL",
     "NEXT_PUBLIC_APP_URL",
     "NEXT_PUBLIC_MARKETING_URL",
-    "NEXT_PUBLIC_ADMIN_URL",
-    "NEXT_PUBLIC_PLATFORM_URL",
     "SKIP_ENV_VALIDATION",
     "DATABASE_URL",
-    "DATABASE_URL_UNPOOLED",
-    "POSTGRES_PRISMA_URL",
-    "NEXTAUTH_URL",
     "NEXTAUTH_SECRET"
   ],
   "tasks": {
-    "admin#build": {
-      "dependsOn": ["^build"],
-      "env": [
-        "NODE_ENV",
-        "NEXT_PUBLIC_API_URL",
-        "NEXT_PUBLIC_APP_URL",
-        "NEXT_PUBLIC_MARKETING_URL",
-        "NEXT_PUBLIC_ADMIN_URL",
-        "NEXT_PUBLIC_PLATFORM_URL",
-        "SKIP_ENV_VALIDATION",
-        "DATABASE_URL",
-        "DATABASE_URL_UNPOOLED",
-        "POSTGRES_PRISMA_URL",
-        "NEXTAUTH_URL",
-        "NEXTAUTH_SECRET"
-      ],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
-    },
-    "api#build": {
-      "dependsOn": ["^build"],
-      "env": [
-        "NODE_ENV",
-        "NEXT_PUBLIC_API_URL",
-        "NEXT_PUBLIC_APP_URL",
-        "NEXT_PUBLIC_MARKETING_URL",
-        "NEXT_PUBLIC_ADMIN_URL",
-        "NEXT_PUBLIC_PLATFORM_URL",
-        "SKIP_ENV_VALIDATION",
-        "DATABASE_URL",
-        "DATABASE_URL_UNPOOLED",
-        "POSTGRES_PRISMA_URL",
-        "NEXTAUTH_URL",
-        "NEXTAUTH_SECRET"
-      ],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
-    },
-    "api#dev": {
-      "cache": false,
-      "env": [
-        "NODE_ENV",
-        "NEXT_PUBLIC_API_URL",
-        "NEXT_PUBLIC_APP_URL",
-        "NEXT_PUBLIC_MARKETING_URL",
-        "NEXT_PUBLIC_ADMIN_URL",
-        "NEXT_PUBLIC_PLATFORM_URL",
-        "SKIP_ENV_VALIDATION",
-        "DATABASE_URL",
-        "DATABASE_URL_UNPOOLED",
-        "POSTGRES_PRISMA_URL",
-        "NEXTAUTH_URL",
-        "NEXTAUTH_SECRET"
-      ],
-      "persistent": true
-    },
     "build": {
       "dependsOn": ["^build"],
-      "env": [
-        "NODE_ENV",
-        "NEXT_PUBLIC_API_URL",
-        "NEXT_PUBLIC_APP_URL",
-        "NEXT_PUBLIC_MARKETING_URL",
-        "NEXT_PUBLIC_ADMIN_URL",
-        "NEXT_PUBLIC_PLATFORM_URL",
-        "SKIP_ENV_VALIDATION",
-        "DATABASE_URL",
-        "DATABASE_URL_UNPOOLED",
-        "POSTGRES_PRISMA_URL"
-      ],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
       "outputs": [".next/**", "!.next/cache/**"]
     },
@@ -100,18 +25,6 @@
     },
     "dev": {
       "cache": false,
-      "env": [
-        "NODE_ENV",
-        "NEXT_PUBLIC_API_URL",
-        "NEXT_PUBLIC_APP_URL",
-        "NEXT_PUBLIC_MARKETING_URL",
-        "NEXT_PUBLIC_ADMIN_URL",
-        "NEXT_PUBLIC_PLATFORM_URL",
-        "SKIP_ENV_VALIDATION",
-        "DATABASE_URL",
-        "DATABASE_URL_UNPOOLED",
-        "POSTGRES_PRISMA_URL"
-      ],
       "persistent": true
     },
     "format": {
@@ -120,55 +33,7 @@
     },
     "lint": {
       "cache": false,
-      "dependsOn": ["^lint"],
-      "env": [
-        "NODE_ENV",
-        "NEXT_PUBLIC_API_URL",
-        "NEXT_PUBLIC_APP_URL",
-        "NEXT_PUBLIC_MARKETING_URL",
-        "NEXT_PUBLIC_ADMIN_URL",
-        "NEXT_PUBLIC_PLATFORM_URL",
-        "SKIP_ENV_VALIDATION",
-        "DATABASE_URL",
-        "DATABASE_URL_UNPOOLED",
-        "POSTGRES_PRISMA_URL"
-      ]
-    },
-    "marketing#build": {
-      "dependsOn": ["^build"],
-      "env": [
-        "NODE_ENV",
-        "NEXT_PUBLIC_API_URL",
-        "NEXT_PUBLIC_APP_URL",
-        "NEXT_PUBLIC_MARKETING_URL",
-        "NEXT_PUBLIC_ADMIN_URL",
-        "NEXT_PUBLIC_PLATFORM_URL",
-        "SKIP_ENV_VALIDATION",
-        "DATABASE_URL",
-        "DATABASE_URL_UNPOOLED",
-        "POSTGRES_PRISMA_URL"
-      ],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
-    },
-    "platform#build": {
-      "dependsOn": ["^build"],
-      "env": [
-        "NODE_ENV",
-        "NEXT_PUBLIC_API_URL",
-        "NEXT_PUBLIC_APP_URL",
-        "NEXT_PUBLIC_MARKETING_URL",
-        "NEXT_PUBLIC_ADMIN_URL",
-        "NEXT_PUBLIC_PLATFORM_URL",
-        "SKIP_ENV_VALIDATION",
-        "DATABASE_URL",
-        "DATABASE_URL_UNPOOLED",
-        "POSTGRES_PRISMA_URL",
-        "NEXTAUTH_URL",
-        "NEXTAUTH_SECRET"
-      ],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "dependsOn": ["^lint"]
     }
   }
 }

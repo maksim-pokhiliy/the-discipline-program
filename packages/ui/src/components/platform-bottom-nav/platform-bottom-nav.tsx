@@ -42,7 +42,7 @@ export const PlatformBottomNav = () => {
     <Paper
       elevation={0}
       sx={{
-        position: "fixed",
+        position: "sticky",
         bottom: 0,
         left: 0,
         right: 0,

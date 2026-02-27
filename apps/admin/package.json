@@ -13,6 +13,8 @@
   "dependencies": {
     "@hookform/resolvers": "catalog:",
     "@repo/api-client": "workspace:*",
+    "@repo/api-routes": "workspace:*",
+    "@repo/api-server": "workspace:*",
     "@repo/auth": "workspace:*",
     "@repo/contracts": "workspace:*",
     "@repo/errors": "workspace:*",

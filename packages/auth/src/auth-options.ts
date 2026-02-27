@@ -4,7 +4,7 @@ import { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 import { authService } from "@repo/api-server";
-import { env } from "@repo/env";
+import { env } from "@repo/env/auth";
 
 import { AUTH_ROUTES } from "./constants";
 

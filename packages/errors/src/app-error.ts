@@ -1,4 +1,4 @@
-import { env } from "@repo/env";
+import { env } from "@repo/env/base";
 
 import { type ErrorCode, ERROR_CODES } from "./error-codes";
 
