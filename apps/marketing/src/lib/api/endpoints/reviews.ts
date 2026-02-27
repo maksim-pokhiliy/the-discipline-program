@@ -1,7 +1,6 @@
+import { type ApiClient } from "@repo/api-client";
 import { type Review } from "@repo/contracts/review";
 
-import { apiClient } from "../client";
-
-export const reviewsAPI = {
-  getAll: (): Promise<Review[]> => apiClient.request("/api/public/reviews"),
-};
+export const createReviewsAPI = (client: ApiClient) => ({
+  getAll: (): Promise<Review[]> => client.request("/api/public/reviews"),
+});

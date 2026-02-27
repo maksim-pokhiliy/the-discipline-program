@@ -1,4 +1,5 @@
-import "@repo/env";
+import "@repo/env/base";
+import "@repo/env/auth";
 
 import type { NextConfig } from "next";
 

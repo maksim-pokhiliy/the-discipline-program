@@ -68,7 +68,7 @@ export const ActionItemsSection: React.FC<ActionItemsSectionProps> = ({ items })
           ))}
 
           {!showAll && remainingCount > 0 && (
-            <Button variant="contained" onClick={() => setShowAll(true)}>
+            <Button variant="outlined" onClick={() => setShowAll(true)}>
               Show all ({remainingCount} more)
             </Button>
           )}
