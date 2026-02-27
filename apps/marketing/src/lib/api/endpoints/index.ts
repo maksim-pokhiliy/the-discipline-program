@@ -1,4 +1,4 @@
-export * from "./pages";
-export * from "./products";
-export * from "./reviews";
-export * from "./contact";
+export { createPagesAPI } from "./pages";
+export { createProductsAPI } from "./products";
+export { createReviewsAPI } from "./reviews";
+export { createContactAPI } from "./contact";

@@ -2,7 +2,7 @@ import { type Metadata } from "next";
 
 import { SEO_CONFIG } from "@repo/shared";
 
-import { api } from "@app/lib/api";
+import { serverApi } from "@app/lib/api/server";
 import { BlogArticlePageClient } from "@app/modules/blog-article";
 
 interface BlogArticlePageProps {
@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
   const { slug } = await params;
 
   try {
-    const { post } = await api.pages.getBlogArticle(slug);
+    const { post } = await serverApi.pages.getBlogArticle(slug);
 
     const images = post.coverImage ? [post.coverImage] : [];
 
@@ -51,7 +51,7 @@ export const dynamic = "force-dynamic";
 
 export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
   const { slug } = await params;
-  const initialData = await api.pages.getBlogArticle(slug);
+  const initialData = await serverApi.pages.getBlogArticle(slug);
 
   return <BlogArticlePageClient slug={slug} initialData={initialData} />;
 }

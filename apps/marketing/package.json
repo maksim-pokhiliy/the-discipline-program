@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@repo/api-client": "workspace:*",
+    "@repo/api-routes": "workspace:*",
+    "@repo/api-server": "workspace:*",
     "@repo/contracts": "workspace:*",
     "@repo/errors": "workspace:*",
     "@repo/query": "workspace:*",

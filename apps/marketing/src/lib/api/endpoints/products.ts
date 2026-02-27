@@ -1,7 +1,6 @@
+import { type ApiClient } from "@repo/api-client";
 import { type Product } from "@repo/contracts/product";
 
-import { apiClient } from "../client";
-
-export const productsAPI = {
-  getAll: (): Promise<Product[]> => apiClient.request("/api/public/products"),
-};
+export const createProductsAPI = (client: ApiClient) => ({
+  getAll: (): Promise<Product[]> => client.request("/api/public/products"),
+});
