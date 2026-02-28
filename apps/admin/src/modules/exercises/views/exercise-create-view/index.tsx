@@ -6,7 +6,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { type CreateExerciseData, createExerciseSchema } from "@repo/contracts/exercise";
-import { type ExerciseCategory } from "@repo/contracts/exercise-category";
 import { FormView } from "@repo/ui";
 
 import {
@@ -17,12 +16,8 @@ import {
 
 import { ExerciseForm } from "../../components/exercise-form";
 
-interface ExerciseCreateViewProps {
-  categories: ExerciseCategory[];
-}
-
-export const ExerciseCreateView = ({ categories: initialCategories }: ExerciseCreateViewProps) => {
-  const { data: categories = initialCategories } = useExerciseCategories(initialCategories);
+export const ExerciseCreateView = () => {
+  const { data: categories = [] } = useExerciseCategories();
   const { mutate: createExercise, isPending } = useCreateExercise();
   const { mutateAsync: createCategory } = useCreateExerciseCategory();
 

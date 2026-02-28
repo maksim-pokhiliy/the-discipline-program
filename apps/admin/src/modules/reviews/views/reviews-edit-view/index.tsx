@@ -4,35 +4,31 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { createReviewSchema, type CreateReviewData, type Review } from "@repo/contracts/review";
+import { QueryWrapper } from "@repo/query";
 import { FormView } from "@repo/ui";
 
 import { useReview, useUpdateReview } from "@app/lib/hooks";
 
 import { ReviewForm } from "../../components";
 
-interface ReviewsEditViewProps {
-  initialData: Review;
-}
+type ReviewsEditFormProps = {
+  review: Review;
+};
 
-export const ReviewsEditView = ({ initialData }: ReviewsEditViewProps) => {
-  const { data: review } = useReview(initialData.id, initialData);
+const ReviewsEditForm: React.FC<ReviewsEditFormProps> = ({ review }) => {
   const { mutate: updateReview, isPending } = useUpdateReview();
 
   const methods = useForm<CreateReviewData>({
     resolver: zodResolver(createReviewSchema),
     defaultValues: {
-      authorName: review?.authorName || "",
-      authorRole: review?.authorRole || "",
-      authorAvatar: review?.authorAvatar || null,
-      text: review?.text || "",
-      rating: review?.rating || 5,
-      isActive: review?.isActive || false,
+      authorName: review.authorName,
+      authorRole: review.authorRole || "",
+      authorAvatar: review.authorAvatar || null,
+      text: review.text,
+      rating: review.rating,
+      isActive: review.isActive,
     },
   });
-
-  if (!review) {
-    return null;
-  }
 
   return (
     <FormView
@@ -46,5 +42,24 @@ export const ReviewsEditView = ({ initialData }: ReviewsEditViewProps) => {
     >
       <ReviewForm isLoading={isPending} />
     </FormView>
+  );
+};
+
+type ReviewsEditViewProps = {
+  id: string;
+};
+
+export const ReviewsEditView: React.FC<ReviewsEditViewProps> = ({ id }) => {
+  const { data, isLoading, error } = useReview(id);
+
+  return (
+    <QueryWrapper
+      isLoading={isLoading}
+      error={error}
+      data={data}
+      loadingMessage="Loading review..."
+    >
+      {(review) => <ReviewsEditForm review={review} />}
+    </QueryWrapper>
   );
 };

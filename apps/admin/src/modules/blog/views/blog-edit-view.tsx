@@ -4,41 +4,37 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { createBlogPostSchema, type BlogPost, type CreateBlogPostData } from "@repo/contracts/blog";
+import { QueryWrapper } from "@repo/query";
 import { FormView } from "@repo/ui";
 
 import { useBlogPost, useUpdateBlogPost } from "@app/lib/hooks";
 
 import { BlogPostForm } from "../components/blog-post-form";
 
-interface BlogEditViewProps {
-  initialData: BlogPost;
-}
+type BlogEditFormProps = {
+  post: BlogPost;
+};
 
-export const BlogEditView = ({ initialData }: BlogEditViewProps) => {
-  const { data: post } = useBlogPost(initialData.id, initialData);
+const BlogEditForm: React.FC<BlogEditFormProps> = ({ post }) => {
   const { mutate: updatePost, isPending } = useUpdateBlogPost();
 
   const methods = useForm<CreateBlogPostData>({
     resolver: zodResolver(createBlogPostSchema),
     defaultValues: {
-      title: post?.title || "",
-      slug: post?.slug || "",
-      excerpt: post?.excerpt || "",
-      content: post?.content || "",
-      coverImage: post?.coverImage || "",
-      authorName: post?.authorName || "",
-      category: post?.category || "Uncategorized",
-      tags: post?.tags || [],
-      isPublished: post?.isPublished || false,
-      isFeatured: post?.isFeatured || false,
-      readTime: post?.readTime || null,
-      publishedAt: post?.publishedAt ? new Date(post.publishedAt) : null,
+      title: post.title,
+      slug: post.slug,
+      excerpt: post.excerpt || "",
+      content: post.content || "",
+      coverImage: post.coverImage || "",
+      authorName: post.authorName,
+      category: post.category,
+      tags: post.tags,
+      isPublished: post.isPublished,
+      isFeatured: post.isFeatured,
+      readTime: post.readTime || null,
+      publishedAt: post.publishedAt ? new Date(post.publishedAt) : null,
     },
   });
-
-  if (!post) {
-    return null;
-  }
 
   return (
     <FormView
@@ -53,5 +49,19 @@ export const BlogEditView = ({ initialData }: BlogEditViewProps) => {
     >
       <BlogPostForm isLoading={isPending} disableAutoSlug={true} />
     </FormView>
+  );
+};
+
+type BlogEditViewProps = {
+  id: string;
+};
+
+export const BlogEditView: React.FC<BlogEditViewProps> = ({ id }) => {
+  const { data, isLoading, error } = useBlogPost(id);
+
+  return (
+    <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage="Loading post...">
+      {(post) => <BlogEditForm post={post} />}
+    </QueryWrapper>
   );
 };

@@ -3,41 +3,23 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import {
-  type AdminPageListItem,
-  type AdminPageDetails,
-  type UpdatePageSectionData,
-} from "@repo/contracts/pages";
-import { adminKeys, STALE_TIMES } from "@repo/query";
+import { type UpdatePageSectionData } from "@repo/contracts/pages";
+import { adminKeys } from "@repo/query";
 
 import { api } from "../api";
 
-interface UsePagesListDataOptions {
-  initialData?: AdminPageListItem[];
-}
-
-interface UsePageDetailsOptions {
-  initialData?: AdminPageDetails;
-}
-
-export const usePagesListData = ({ initialData }: UsePagesListDataOptions = {}) => {
-  return useQuery({
+export const usePagesListData = () =>
+  useQuery({
     queryKey: adminKeys.pages.list(),
     queryFn: api.pages.getPages,
-    initialData,
-    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
   });
-};
 
-export const usePageDetails = (slug: string, { initialData }: UsePageDetailsOptions = {}) => {
-  return useQuery({
+export const usePageDetails = (slug: string) =>
+  useQuery({
     queryKey: adminKeys.pages.bySlug(slug),
     queryFn: () => api.pages.getPageBySlug(slug),
-    initialData,
-    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
     enabled: !!slug,
   });
-};
 
 export const useUpdatePageSection = () => {
   const queryClient = useQueryClient();

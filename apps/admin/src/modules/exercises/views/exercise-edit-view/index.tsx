@@ -11,6 +11,7 @@ import {
   createExerciseSchema,
 } from "@repo/contracts/exercise";
 import { type ExerciseCategory } from "@repo/contracts/exercise-category";
+import { QueryWrapper } from "@repo/query";
 import { FormView } from "@repo/ui";
 
 import {
@@ -22,27 +23,22 @@ import {
 
 import { ExerciseForm } from "../../components/exercise-form";
 
-interface ExerciseEditViewProps {
-  initialData: Exercise;
+type ExerciseEditFormProps = {
+  exercise: Exercise;
   categories: ExerciseCategory[];
-}
+};
 
-export const ExerciseEditView = ({
-  initialData,
-  categories: initialCategories,
-}: ExerciseEditViewProps) => {
-  const { data: exercise } = useExercise(initialData.id, initialData);
-  const { data: categories = initialCategories } = useExerciseCategories(initialCategories);
+const ExerciseEditForm: React.FC<ExerciseEditFormProps> = ({ exercise, categories }) => {
   const { mutate: updateExercise, isPending } = useUpdateExercise();
   const { mutateAsync: createCategory } = useCreateExerciseCategory();
 
   const methods = useForm<CreateExerciseData>({
     resolver: zodResolver(createExerciseSchema),
     defaultValues: {
-      name: exercise?.name ?? "",
-      description: exercise?.description ?? "",
-      videoUrl: exercise?.videoUrl ?? "",
-      categoryId: exercise?.categoryId ?? "",
+      name: exercise.name,
+      description: exercise.description ?? "",
+      videoUrl: exercise.videoUrl ?? "",
+      categoryId: exercise.categoryId ?? "",
     },
   });
 
@@ -50,10 +46,6 @@ export const ExerciseEditView = ({
     (name: string) => createCategory({ name, sortOrder: categories.length }),
     [createCategory, categories.length],
   );
-
-  if (!exercise) {
-    return null;
-  }
 
   return (
     <FormView
@@ -72,5 +64,25 @@ export const ExerciseEditView = ({
         isLoading={isPending}
       />
     </FormView>
+  );
+};
+
+type ExerciseEditViewProps = {
+  id: string;
+};
+
+export const ExerciseEditView: React.FC<ExerciseEditViewProps> = ({ id }) => {
+  const exerciseQuery = useExercise(id);
+  const { data: categories = [] } = useExerciseCategories();
+
+  return (
+    <QueryWrapper
+      isLoading={exerciseQuery.isLoading}
+      error={exerciseQuery.error}
+      data={exerciseQuery.data}
+      loadingMessage="Loading exercise..."
+    >
+      {(exercise) => <ExerciseEditForm exercise={exercise} categories={categories} />}
+    </QueryWrapper>
   );
 };

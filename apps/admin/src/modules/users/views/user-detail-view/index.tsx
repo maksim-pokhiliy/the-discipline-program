@@ -4,29 +4,25 @@ import { useForm } from "react-hook-form";
 
 import { type UserRole } from "@repo/contracts/auth";
 import { type AdminUser } from "@repo/contracts/user";
+import { QueryWrapper } from "@repo/query";
 import { FormView } from "@repo/ui";
 
 import { useUpdateUserRole, useUser } from "@app/lib/hooks";
 
 import { UserDetailSection } from "../../sections";
 
-interface UserDetailViewProps {
-  initialData: AdminUser;
-}
+type UserDetailFormProps = {
+  user: AdminUser;
+};
 
-export const UserDetailView = ({ initialData }: UserDetailViewProps) => {
-  const { data: user } = useUser(initialData.id, initialData);
+const UserDetailForm: React.FC<UserDetailFormProps> = ({ user }) => {
   const { mutate: updateRole, isPending } = useUpdateUserRole();
 
   const methods = useForm<{ role: UserRole }>({
-    values: {
-      role: user?.role ?? initialData.role,
+    defaultValues: {
+      role: user.role,
     },
   });
-
-  if (!user) {
-    return null;
-  }
 
   return (
     <FormView
@@ -41,5 +37,19 @@ export const UserDetailView = ({ initialData }: UserDetailViewProps) => {
     >
       <UserDetailSection user={user} isPending={isPending} />
     </FormView>
+  );
+};
+
+type UserDetailViewProps = {
+  id: string;
+};
+
+export const UserDetailView: React.FC<UserDetailViewProps> = ({ id }) => {
+  const { data, isLoading, error } = useUser(id);
+
+  return (
+    <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage="Loading user...">
+      {(user) => <UserDetailForm user={user} />}
+    </QueryWrapper>
   );
 };

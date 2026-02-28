@@ -70,6 +70,3 @@ export class ApiClient {
     return response.json();
   }
 }
-
-export const createBrowserApiClient = (baseUrl: string = "") => new ApiClient({ baseUrl });
-export const createServerApiClient = (baseUrl: string) => new ApiClient({ baseUrl });
