@@ -8,9 +8,7 @@ import RateReviewIcon from "@mui/icons-material/RateReview";
 import { Grid } from "@mui/material";
 
 import { type ContentStats, type UserStats } from "@repo/contracts/dashboard";
-import { ContentSection } from "@repo/ui";
-
-import { StatsCard } from "@app/lib/components/stats-card";
+import { ContentSection, StatsCard } from "@repo/ui";
 
 interface ContentStatsSectionProps {
   contentStats: ContentStats;

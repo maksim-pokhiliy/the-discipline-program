@@ -12,7 +12,7 @@ export const dashboardOverviewSchema = z.object({
   workoutsPlannedToday: z.number().int(),
   workoutsCompletedToday: z.number().int(),
   openActionItemsCount: z.number().int(),
-  endingPlansCount: z.number().int(),
+  trainedThisWeekCount: z.number().int(),
 });
 
 export const dashboardActionItemSchema = z.object({
@@ -61,7 +61,6 @@ export const progressBucketsSchema = z.object({
   improving: z.array(progressAthleteSchema),
   stagnating: z.array(progressAthleteSchema),
   declining: z.array(progressAthleteSchema),
-  avgCompletionRate: z.number(),
   avgEngagementRate: z.number(),
 });
 
@@ -91,15 +90,6 @@ export const onboardingAthleteSchema = z.object({
   planName: z.string().nullable(),
 });
 
-export const endingPlanSchema = z.object({
-  athleteId: z.string().cuid(),
-  athleteName: z.string().nullable(),
-  planId: z.string().cuid(),
-  planName: z.string(),
-  endDate: z.date(),
-  daysLeft: z.number().int(),
-});
-
 export const coachDashboardDataSchema = z.object({
   overview: dashboardOverviewSchema,
   actionItems: z.array(dashboardActionItemSchema),
@@ -109,5 +99,4 @@ export const coachDashboardDataSchema = z.object({
   recentNotes: z.array(dashboardNoteSchema),
   recentActivity: z.array(coachActivityItemSchema),
   onboarding: z.array(onboardingAthleteSchema),
-  endingPlans: z.array(endingPlanSchema),
 });

@@ -17,4 +17,5 @@ export * from "./rich-text-editor";
 export * from "./rich-text-viewer";
 export * from "./sidebar";
 export * from "./tags-input";
+export * from "./stats-card";
 export * from "./toast";
