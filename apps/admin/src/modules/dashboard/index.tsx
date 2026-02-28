@@ -2,19 +2,14 @@
 
 import { Stack } from "@mui/material";
 
-import { type DashboardData } from "@repo/contracts/dashboard";
 import { QueryWrapper } from "@repo/query";
 
 import { useDashboardData } from "@app/lib/hooks";
 
 import { ContentStatsSection, RecentActivitySection } from "./sections";
 
-interface DashboardPageClientProps {
-  initialData: DashboardData;
-}
-
-export const DashboardPageClient = ({ initialData }: DashboardPageClientProps) => {
-  const { data, isLoading, error } = useDashboardData({ initialData });
+export const DashboardPageClient = () => {
+  const { data, isLoading, error } = useDashboardData();
 
   return (
     <QueryWrapper

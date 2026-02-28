@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { createProductSchema, type CreateProductData, type Product } from "@repo/contracts/product";
+import { QueryWrapper } from "@repo/query";
 import { centsToAmount } from "@repo/shared";
 import { FormView } from "@repo/ui";
 
@@ -11,24 +12,23 @@ import { useProduct, useUpdateProduct } from "@app/lib/hooks/use-products";
 
 import { ProductForm } from "../../components/product-form";
 
-interface ProductEditViewProps {
-  initialData: Product;
-}
+type ProductEditFormProps = {
+  product: Product;
+};
 
-export const ProductEditView = ({ initialData }: ProductEditViewProps) => {
-  const { data: product } = useProduct(initialData.id, initialData);
+const ProductEditForm: React.FC<ProductEditFormProps> = ({ product }) => {
   const { mutate: updateProduct, isPending } = useUpdateProduct();
 
-  const activePrice = product?.prices.find((p) => p.isActive);
+  const activePrice = product.prices.find((p) => p.isActive);
 
   const methods = useForm<CreateProductData>({
     resolver: zodResolver(createProductSchema),
     defaultValues: {
-      title: product?.title || "",
-      slug: product?.slug || "",
-      description: product?.description || "",
-      features: product?.features || [],
-      isActive: product?.isActive || false,
+      title: product.title,
+      slug: product.slug,
+      description: product.description || "",
+      features: product.features,
+      isActive: product.isActive,
       price: activePrice
         ? {
             amountCents: centsToAmount(activePrice.amountCents),
@@ -38,10 +38,6 @@ export const ProductEditView = ({ initialData }: ProductEditViewProps) => {
         : undefined,
     },
   });
-
-  if (!product) {
-    return null;
-  }
 
   return (
     <FormView
@@ -56,5 +52,24 @@ export const ProductEditView = ({ initialData }: ProductEditViewProps) => {
     >
       <ProductForm isLoading={isPending} disableAutoSlug={true} />
     </FormView>
+  );
+};
+
+type ProductEditViewProps = {
+  id: string;
+};
+
+export const ProductEditView: React.FC<ProductEditViewProps> = ({ id }) => {
+  const { data, isLoading, error } = useProduct(id);
+
+  return (
+    <QueryWrapper
+      isLoading={isLoading}
+      error={error}
+      data={data}
+      loadingMessage="Loading product..."
+    >
+      {(product) => <ProductEditForm product={product} />}
+    </QueryWrapper>
   );
 };

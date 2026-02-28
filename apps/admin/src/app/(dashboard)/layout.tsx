@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 
 import { Stack } from "@mui/material";
 
+import { SessionGuard } from "@repo/auth";
 import { ADMIN_NAVIGATION } from "@repo/shared";
 import { AdminHeader, Sidebar, useSidebar } from "@repo/ui";
 
@@ -15,19 +16,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handleMobileClose = useCallback(() => setMobileOpen(false), []);
 
   return (
-    <Stack direction="row" sx={{ height: "100vh" }}>
-      <Sidebar
-        config={ADMIN_NAVIGATION}
-        expanded={expanded}
-        onToggle={toggle}
-        mobileOpen={mobileOpen}
-        onMobileClose={handleMobileClose}
-      />
+    <SessionGuard>
+      <Stack direction="row" sx={{ height: "100vh" }}>
+        <Sidebar
+          config={ADMIN_NAVIGATION}
+          expanded={expanded}
+          onToggle={toggle}
+          mobileOpen={mobileOpen}
+          onMobileClose={handleMobileClose}
+        />
 
-      <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
-        <AdminHeader onMenuClick={handleMobileToggle} />
-        <Stack sx={{ flexGrow: 1, overflow: "auto" }}>{children}</Stack>
+        <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
+          <AdminHeader onMenuClick={handleMobileToggle} />
+          <Stack sx={{ flexGrow: 1, overflow: "auto" }}>{children}</Stack>
+        </Stack>
       </Stack>
-    </Stack>
+    </SessionGuard>
   );
 }
