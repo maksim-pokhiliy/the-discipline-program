@@ -11,8 +11,6 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { STALE_TIMES } from "./constants";
-
 interface CrudHooksConfig<
   TPageData,
   TEntity extends { id: string },
@@ -36,8 +34,8 @@ interface CrudHooksConfig<
 }
 
 interface CrudHooks<TPageData, TEntity extends { id: string }, TCreateData, TUpdateData> {
-  usePageData: (options?: { initialData?: TPageData }) => UseQueryResult<TPageData, Error>;
-  useById: (id: string, initialData?: TEntity) => UseQueryResult<TEntity, Error>;
+  usePageData: () => UseQueryResult<TPageData, Error>;
+  useById: (id: string) => UseQueryResult<TEntity, Error>;
   useCreate: () => UseMutationResult<TEntity, Error, TCreateData>;
   useUpdate: () => UseMutationResult<TEntity, Error, { id: string; data: TUpdateData }>;
   useDelete: () => UseMutationResult<void, Error, string>;
@@ -53,24 +51,18 @@ export const createCrudHooks = <
 ): CrudHooks<TPageData, TEntity, TCreateData, TUpdateData> => {
   const invalidateKeys = config.additionalInvalidateKeys ?? [];
 
-  const usePageData = ({ initialData }: { initialData?: TPageData } = {}) => {
-    return useQuery({
+  const usePageData = () =>
+    useQuery({
       queryKey: config.keys.page(),
       queryFn: config.api.getPageData,
-      initialData,
-      staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
     });
-  };
 
-  const useById = (id: string, initialData?: TEntity) => {
-    return useQuery({
+  const useById = (id: string) =>
+    useQuery({
       queryKey: config.keys.byId(id),
       queryFn: () => config.api.getById(id),
-      initialData,
       enabled: !!id,
-      staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
     });
-  };
 
   const useCreate = () => {
     const queryClient = useQueryClient();

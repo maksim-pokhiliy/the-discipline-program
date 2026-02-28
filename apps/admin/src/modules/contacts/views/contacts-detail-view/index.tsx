@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
@@ -13,14 +11,11 @@ import {
   type UpdateContactRequest,
   updateContactRequestSchema,
 } from "@repo/contracts/contact";
+import { QueryWrapper } from "@repo/query";
 import { formatDate } from "@repo/shared";
 import { DetailField, FormCard, FormView } from "@repo/ui";
 
 import { useContact, useUpdateContact } from "@app/lib/hooks";
-
-interface ContactsDetailViewProps {
-  initialData: GetContactByIdResponse;
-}
 
 const STATUS_LABELS: Record<string, string> = {
   NEW: "New",
@@ -29,9 +24,12 @@ const STATUS_LABELS: Record<string, string> = {
   CLOSED: "Closed",
 };
 
-export const ContactsDetailView = ({ initialData }: ContactsDetailViewProps) => {
+type ContactsDetailFormProps = {
+  contact: GetContactByIdResponse;
+};
+
+const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
   const router = useRouter();
-  const { data: contact } = useContact(initialData.id, initialData);
   const { mutate: updateContact, isPending } = useUpdateContact({
     onSuccess: () => router.push("/contacts"),
   });
@@ -39,40 +37,25 @@ export const ContactsDetailView = ({ initialData }: ContactsDetailViewProps) => 
   const methods = useForm<UpdateContactRequest>({
     resolver: zodResolver(updateContactRequestSchema),
     defaultValues: {
-      status: (contact?.status || initialData.status) as UpdateContactRequest["status"],
-      notes: contact?.notes ?? initialData.notes ?? null,
+      status: contact.status as UpdateContactRequest["status"],
+      notes: contact.notes ?? null,
     },
   });
 
-  const { control, reset } = methods;
-
-  useEffect(() => {
-    if (contact) {
-      reset({
-        status: contact.status as UpdateContactRequest["status"],
-        notes: contact.notes ?? null,
-      });
-    }
-  }, [contact, reset]);
-
-  if (!contact) {
-    return null;
-  }
-
-  const onSubmit = (data: UpdateContactRequest) => {
-    updateContact({
-      id: contact.id,
-      data: {
-        status: data.status,
-        notes: data.notes?.trim() || null,
-      },
-    });
-  };
+  const { control } = methods;
 
   return (
     <FormView
       methods={methods}
-      onSubmit={onSubmit}
+      onSubmit={(data) =>
+        updateContact({
+          id: contact.id,
+          data: {
+            status: data.status,
+            notes: data.notes?.trim() || null,
+          },
+        })
+      }
       isPending={isPending}
       title="Contact Submission"
       subtitle={contact.name || contact.email || "Anonymous"}
@@ -145,5 +128,24 @@ export const ContactsDetailView = ({ initialData }: ContactsDetailViewProps) => 
         </Grid>
       </Grid>
     </FormView>
+  );
+};
+
+type ContactsDetailViewProps = {
+  id: string;
+};
+
+export const ContactsDetailView: React.FC<ContactsDetailViewProps> = ({ id }) => {
+  const { data, isLoading, error } = useContact(id);
+
+  return (
+    <QueryWrapper
+      isLoading={isLoading}
+      error={error}
+      data={data}
+      loadingMessage="Loading contact..."
+    >
+      {(contact) => <ContactsDetailForm contact={contact} />}
+    </QueryWrapper>
   );
 };
