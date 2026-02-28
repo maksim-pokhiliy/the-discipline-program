@@ -173,9 +173,45 @@ const seedUsers = async (passwordHash: string) => {
         createdAt: daysAgo(6),
       },
     }),
+    prisma.user.create({
+      data: {
+        email: "coach.elena@thedisciplineprogram.com",
+        name: "Elena Volkov",
+        role: Role.COACH,
+        password: passwordHash,
+        createdAt: daysAgo(45),
+      },
+    }),
+    prisma.user.create({
+      data: {
+        email: "ryan.garcia@email.com",
+        name: "Ryan Garcia",
+        role: Role.USER,
+        password: passwordHash,
+        createdAt: daysAgo(30),
+      },
+    }),
+    prisma.user.create({
+      data: {
+        email: "emma.white@email.com",
+        name: "Emma White",
+        role: Role.USER,
+        password: passwordHash,
+        createdAt: daysAgo(20),
+      },
+    }),
+    prisma.user.create({
+      data: {
+        email: "jake.kim@email.com",
+        name: "Jake Kim",
+        role: Role.USER,
+        password: passwordHash,
+        createdAt: daysAgo(3),
+      },
+    }),
   ]);
 
-  console.log("  Users: 12 (1 admin, 1 coach, 10 athletes)");
+  console.log("  Users: 16 (1 admin, 2 coaches, 13 athletes)");
 
   return {
     admin: users[0]!,
@@ -190,6 +226,10 @@ const seedUsers = async (passwordHash: string) => {
     nina: users[9]!,
     chris: users[10]!,
     maria: users[11]!,
+    coach2: users[12]!,
+    ryan: users[13]!,
+    emma: users[14]!,
+    jake: users[15]!,
   };
 };
 
@@ -199,6 +239,14 @@ const seedProfiles = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
       userId: users.coach.id,
       bio: "10+ years coaching competitive CrossFit athletes. Games athlete mindset. L3 CCFT certified.",
       createdAt: daysAgo(60),
+    },
+  });
+
+  const coach2Profile = await prisma.coachProfile.create({
+    data: {
+      userId: users.coach2.id,
+      bio: "Former gymnastics athlete turned functional fitness coach. Specializes in bodyweight movements and endurance programming.",
+      createdAt: daysAgo(45),
     },
   });
 
@@ -226,12 +274,15 @@ const seedProfiles = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
       { userId: users.nina.id, gender: Gender.FEMALE, heightCm: 165, weightKg: 58 },
       { userId: users.chris.id, gender: Gender.MALE, heightCm: 180, weightKg: 85 },
       { userId: users.maria.id, gender: Gender.FEMALE, heightCm: 162, weightKg: 56 },
+      { userId: users.ryan.id, gender: Gender.MALE, heightCm: 176, weightKg: 79 },
+      { userId: users.emma.id, gender: Gender.FEMALE, heightCm: 170, weightKg: 62 },
+      { userId: users.jake.id, gender: Gender.MALE, heightCm: 182, weightKg: 84 },
     ],
   });
 
-  console.log("  Profiles: 1 coach, 10 athlete");
+  console.log("  Profiles: 2 coaches, 13 athletes");
 
-  return coachProfile;
+  return { coachProfile, coach2Profile };
 };
 
 const seedExercises = async () => {
@@ -1011,6 +1062,286 @@ const seedBenchmarks = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
   console.log("  Benchmarks: 7 definitions, 18 athlete records");
 };
 
+const seedCoach2Data = async (
+  coachProfileId: string,
+  users: Awaited<ReturnType<typeof seedUsers>>,
+  catMap: CatMap,
+  exMap: ExMap,
+) => {
+  console.log("\n  --- Coach 2 (Elena) data ---");
+
+  const plan1 = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "Bodyweight Mastery",
+      description:
+        "Gymnastics-focused program. Pull-ups, muscle-ups, handstands, and conditioning.",
+      status: TrainingPlanStatus.ACTIVE,
+      createdAt: daysAgo(30),
+    },
+  });
+
+  const plan2 = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "Endurance Track",
+      description:
+        "Long-duration conditioning for runners and rowers crossing into functional fitness.",
+      status: TrainingPlanStatus.ACTIVE,
+      createdAt: daysAgo(25),
+    },
+  });
+
+  const createWorkout = async (
+    planId: string,
+    dayOrder: number,
+    title: string,
+    blocks: {
+      categoryId: string;
+      rounds?: number;
+      timeCapSec?: number;
+      sets: {
+        exerciseId: string;
+        sets?: number;
+        reps?: number;
+        weightValue?: number;
+        weightUnit?: Unit;
+        rpe?: number;
+        notes?: string;
+      }[];
+    }[],
+  ) => {
+    const workout = await prisma.workout.create({
+      data: { planId, dayOrder, title, createdAt: daysAgo(25) },
+    });
+
+    for (const block of blocks) {
+      await prisma.workoutBlock.create({
+        data: {
+          workoutId: workout.id,
+          categoryId: block.categoryId,
+          rounds: block.rounds,
+          timeCapSec: block.timeCapSec,
+          sets: {
+            create: block.sets.map((s) => ({
+              exerciseId: s.exerciseId,
+              sets: s.sets,
+              reps: s.reps,
+              weightValue: s.weightValue,
+              weightUnit: s.weightUnit ?? Unit.KG,
+              rpe: s.rpe,
+              notes: s.notes,
+            })),
+          },
+        },
+      });
+    }
+
+    return workout;
+  };
+
+  const bw1 = await createWorkout(plan1.id, 1, "Day 1: Pull Strength", [
+    {
+      categoryId: catMap["Skill"]!,
+      sets: [
+        { exerciseId: exMap["Bar Muscle-Up"]!, sets: 5, reps: 3 },
+        { exerciseId: exMap["Ring Muscle-Up"]!, sets: 3, reps: 2 },
+      ],
+    },
+    {
+      categoryId: catMap["Accessory"]!,
+      sets: [{ exerciseId: exMap["GHD Sit-Up"]!, sets: 3, reps: 15 }],
+    },
+  ]);
+
+  const bw2 = await createWorkout(plan1.id, 2, "Day 2: Handstand + Metcon", [
+    {
+      categoryId: catMap["Skill"]!,
+      sets: [{ exerciseId: exMap["Handstand Walk"]!, sets: 5, reps: 1, notes: "50ft" }],
+    },
+    {
+      categoryId: catMap["Metcon"]!,
+      rounds: 4,
+      timeCapSec: 720,
+      sets: [
+        { exerciseId: exMap["Burpee"]!, reps: 12 },
+        { exerciseId: exMap["Box Jump"]!, reps: 15 },
+      ],
+    },
+  ]);
+
+  const bw3 = await createWorkout(plan1.id, 3, "Day 3: Volume Gymnastics", [
+    {
+      categoryId: catMap["Skill"]!,
+      sets: [
+        { exerciseId: exMap["Bar Muscle-Up"]!, sets: 10, reps: 2 },
+        { exerciseId: exMap["Handstand Walk"]!, sets: 6, reps: 1, notes: "25ft" },
+      ],
+    },
+  ]);
+
+  const en1 = await createWorkout(plan2.id, 1, "Monday: Row + Run", [
+    {
+      categoryId: catMap["Cardio"]!,
+      timeCapSec: 2400,
+      sets: [
+        { exerciseId: exMap["Rowing"]!, reps: 1, notes: "2000m" },
+        { exerciseId: exMap["Running"]!, reps: 1, notes: "1600m" },
+      ],
+    },
+  ]);
+
+  const en2 = await createWorkout(plan2.id, 2, "Wednesday: Bike + Metcon", [
+    {
+      categoryId: catMap["Cardio"]!,
+      timeCapSec: 1800,
+      sets: [{ exerciseId: exMap["Assault Bike"]!, reps: 1, notes: "50 cal" }],
+    },
+    {
+      categoryId: catMap["Metcon"]!,
+      rounds: 3,
+      timeCapSec: 600,
+      sets: [
+        { exerciseId: exMap["Kettlebell Swing"]!, reps: 20 },
+        { exerciseId: exMap["Wall Ball"]!, reps: 15 },
+      ],
+    },
+  ]);
+
+  const en3 = await createWorkout(plan2.id, 3, "Friday: Long Conditioning", [
+    {
+      categoryId: catMap["Cardio"]!,
+      timeCapSec: 3600,
+      sets: [
+        { exerciseId: exMap["Rowing"]!, reps: 1, notes: "5000m" },
+        { exerciseId: exMap["Jump Rope"]!, reps: 200, notes: "Singles" },
+      ],
+    },
+  ]);
+
+  console.log("  Plans: 2 ACTIVE, Workouts: 6");
+
+  await prisma.planEnrollment.createMany({
+    data: [
+      {
+        trainingPlanId: plan1.id,
+        userId: users.ryan.id,
+        startDate: daysAgo(25),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plan1.id,
+        userId: users.emma.id,
+        startDate: daysAgo(15),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plan2.id,
+        userId: users.ryan.id,
+        startDate: daysAgo(20),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+      {
+        trainingPlanId: plan2.id,
+        userId: users.jake.id,
+        startDate: daysAgo(3),
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+    ],
+  });
+
+  console.log("  Enrollments: 4 (Ryan on both plans, Emma on BW, Jake on Endurance)");
+
+  const getPrescribedSets = async (workoutId: string) => {
+    const blocks = await prisma.workoutBlock.findMany({
+      where: { workoutId },
+      include: { sets: true },
+    });
+
+    return blocks.flatMap((b) => b.sets);
+  };
+
+  const createLog = async (
+    userId: string,
+    workoutId: string,
+    date: Date,
+    isRx: boolean,
+    notes: string | null,
+  ) => {
+    const prescribed = await getPrescribedSets(workoutId);
+
+    await prisma.workoutLog.create({
+      data: {
+        userId,
+        workoutId,
+        date,
+        isRx,
+        notes,
+        createdAt: date,
+        setLogs: {
+          create: prescribed.map((ps) => ({
+            prescribedSetId: ps.id,
+            repsDone: ps.reps ?? 10,
+            weightDone: ps.weightValue ? Number(ps.weightValue) : null,
+            rpeActual: ps.rpe,
+          })),
+        },
+      },
+    });
+  };
+
+  await createLog(users.ryan.id, bw1.id, daysAgo(20), true, null);
+  await createLog(users.ryan.id, bw2.id, daysAgo(18), true, null);
+  await createLog(users.ryan.id, bw3.id, daysAgo(16), true, null);
+  await createLog(users.ryan.id, bw1.id, daysAgo(13), true, "First unbroken set of 3 MU");
+  await createLog(users.ryan.id, bw2.id, daysAgo(11), true, null);
+  await createLog(users.ryan.id, bw3.id, daysAgo(9), true, null);
+  await createLog(users.ryan.id, en1.id, daysAgo(7), true, "Sub-7 min 2k row");
+  await createLog(users.ryan.id, en2.id, daysAgo(5), true, null);
+  await createLog(users.ryan.id, bw1.id, daysAgo(3), true, null);
+  await createLog(users.ryan.id, en3.id, daysAgo(1), true, null);
+  await createLog(users.ryan.id, bw2.id, todayAt(6, 45), true, "Early session");
+
+  await createLog(users.emma.id, bw1.id, daysAgo(12), false, "Scaled to chest-to-bar");
+  await createLog(users.emma.id, bw2.id, daysAgo(10), true, null);
+  await createLog(users.emma.id, bw3.id, daysAgo(8), false, "Half reps on MU");
+  await createLog(users.emma.id, bw1.id, daysAgo(5), true, "First RX muscle-up!");
+  await createLog(users.emma.id, bw2.id, daysAgo(3), true, null);
+  await createLog(users.emma.id, bw3.id, daysAgo(1), true, null);
+
+  await createLog(users.jake.id, en1.id, daysAgo(1), true, "First workout, felt good");
+
+  console.log("  Workout logs: 18 (Ryan 11, Emma 6, Jake 1)");
+
+  await prisma.coachNote.createMany({
+    data: [
+      {
+        coachId: coachProfileId,
+        athleteId: users.ryan.id,
+        content:
+          "Ryan is crushing it. Consistent across both programs. Ready to test ring muscle-up EMOM next week.",
+        createdAt: daysAgo(2),
+      },
+      {
+        coachId: coachProfileId,
+        athleteId: users.emma.id,
+        content:
+          "Emma got her first RX bar muscle-up! Huge milestone. Adjusting volume up slightly for next cycle.",
+        createdAt: daysAgo(4),
+      },
+      {
+        coachId: coachProfileId,
+        athleteId: users.jake.id,
+        content:
+          "Jake just enrolled. Background in running, zero barbell experience. Keep endurance focus, introduce basics slowly.",
+        createdAt: daysAgo(2),
+      },
+    ],
+  });
+
+  console.log("  Coach notes: 3");
+};
+
 const seedMarketingPages = async () => {
   const pages = [
     {
@@ -1693,7 +2024,7 @@ const main = async () => {
   const passwordHash = await bcrypt.hash("password123", 12);
 
   const users = await seedUsers(passwordHash);
-  const coachProfile = await seedProfiles(users);
+  const { coachProfile, coach2Profile } = await seedProfiles(users);
   const { catMap, exMap } = await seedExercises();
   const { plans, workouts } = await seedTrainingData(coachProfile.id, catMap, exMap);
 
@@ -1701,6 +2032,9 @@ const main = async () => {
   await seedWorkoutLogs(users, workouts);
   await seedCoachNotes(coachProfile.id, users);
   await seedBenchmarks(users);
+
+  await seedCoach2Data(coach2Profile.id, users, catMap, exMap);
+
   await seedMarketingPages();
   await seedProducts();
   await seedBlogPosts();
@@ -1708,9 +2042,10 @@ const main = async () => {
   await seedContactSubmissions();
 
   console.log("\nSeed completed!");
-  console.log("  Admin:   admin@example.com / password123");
-  console.log("  Coach:   coach.ben@thedisciplineprogram.com / password123");
-  console.log("  Athlete: sarah.mitchell@email.com / password123");
+  console.log("  Admin:    admin@example.com / password123");
+  console.log("  Coach 1:  coach.ben@thedisciplineprogram.com / password123");
+  console.log("  Coach 2:  coach.elena@thedisciplineprogram.com / password123");
+  console.log("  Athlete:  sarah.mitchell@email.com / password123");
 };
 
 main()
