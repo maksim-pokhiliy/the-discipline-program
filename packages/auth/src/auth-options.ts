@@ -52,7 +52,7 @@ export const authOptions: NextAuthOptions = {
       const dbUser = await authService.getUserById(token.id);
 
       if (!dbUser) {
-        return null as unknown as typeof token;
+        throw new Error("User no longer exists");
       }
 
       token.role = dbUser.role;
@@ -60,13 +60,19 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
-        session.user.email = token.email;
-        session.user.name = token.name;
-        session.user.image = token.image;
-        session.user.role = token.role;
+      const dbUser = await authService.getUserById(token.id);
+
+      if (!dbUser) {
+        session.user = { id: "", email: null, name: null, image: null, role: null };
+
+        return session;
       }
+
+      session.user.id = token.id;
+      session.user.email = token.email;
+      session.user.name = token.name;
+      session.user.image = token.image;
+      session.user.role = dbUser.role;
 
       return session;
     },
