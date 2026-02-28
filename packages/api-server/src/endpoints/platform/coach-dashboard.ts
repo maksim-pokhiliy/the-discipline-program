@@ -3,10 +3,9 @@ import {
   type CoachDashboardData,
   type DashboardActionItem,
   type DashboardNote,
-  type EndingPlan,
   type OnboardingAthlete,
   NEW_ATHLETE_THRESHOLD_DAYS,
-  PLAN_ENDING_THRESHOLD_DAYS,
+  TRAINED_THIS_WEEK_DAYS,
 } from "@repo/contracts/coach-dashboard";
 
 import { prisma } from "../../db/client";
@@ -15,7 +14,6 @@ import {
   computeLoadDistribution,
   computeProgressBuckets,
 } from "../../utils/dashboard-computations";
-import { daysBetween } from "../../utils/date-helpers";
 import { enrollmentInclude } from "../../utils/enrollment-query";
 
 import { resolveCoachId } from "./guards";
@@ -28,9 +26,9 @@ export const platformCoachDashboardApi = {
     const thresholdDate = new Date(now);
 
     thresholdDate.setDate(thresholdDate.getDate() - NEW_ATHLETE_THRESHOLD_DAYS);
-    const endingThreshold = new Date(now);
+    const weekAgo = new Date(now);
 
-    endingThreshold.setDate(endingThreshold.getDate() + PLAN_ENDING_THRESHOLD_DAYS);
+    weekAgo.setDate(weekAgo.getDate() - TRAINED_THIS_WEEK_DAYS);
 
     const [enrollments, openActionItems, recentNotesRaw, recentEnrollments] = await Promise.all([
       prisma.planEnrollment.findMany({
@@ -102,29 +100,11 @@ export const platformCoachDashboardApi = {
       }))
       .sort((a, b) => SEVERITY_PRIORITY[a.severity] - SEVERITY_PRIORITY[b.severity]);
 
-    const endingPlans: EndingPlan[] = enrollments
-      .filter((e) => {
-        if (!e.endDate) {
-          return false;
-        }
-
-        const daysLeft = daysBetween(now, new Date(e.endDate));
-
-        return daysLeft >= 0 && daysLeft <= PLAN_ENDING_THRESHOLD_DAYS;
-      })
-      .map((e) => {
-        const daysLeft = daysBetween(now, new Date(e.endDate!));
-
-        return {
-          athleteId: e.user.id,
-          athleteName: e.user.name,
-          planId: e.trainingPlan.id,
-          planName: e.trainingPlan.name,
-          endDate: e.endDate!,
-          daysLeft,
-        };
-      })
-      .sort((a, b) => a.daysLeft - b.daysLeft);
+    const trainedThisWeek = new Set(
+      enrollments.flatMap((e) =>
+        e.user.workoutLogs.filter((l) => l.date >= weekAgo).map(() => e.user.id),
+      ),
+    );
 
     const recentNotes: DashboardNote[] = recentNotesRaw.map((n) => ({
       id: n.id,
@@ -167,7 +147,7 @@ export const platformCoachDashboardApi = {
         workoutsPlannedToday: uniqueAthletes.size,
         workoutsCompletedToday: completedToday,
         openActionItemsCount: openActionItems.length,
-        endingPlansCount: endingPlans.length,
+        trainedThisWeekCount: trainedThisWeek.size,
       },
       actionItems,
       athletesSummary,
@@ -176,7 +156,6 @@ export const platformCoachDashboardApi = {
       recentNotes,
       recentActivity,
       onboarding,
-      endingPlans,
     };
   },
 };

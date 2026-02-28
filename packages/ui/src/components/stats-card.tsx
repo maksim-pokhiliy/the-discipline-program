@@ -2,7 +2,7 @@
 
 import { type ReactNode } from "react";
 
-import { Card, CardContent, Typography, Stack } from "@mui/material";
+import { Card, CardContent, Typography, Stack, Tooltip } from "@mui/material";
 import { type Palette, type PaletteColor } from "@mui/material/styles";
 
 type PaletteColorKey = {
@@ -13,6 +13,7 @@ interface StatsCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
+  tooltip?: string;
   icon?: ReactNode;
   color?: PaletteColorKey;
   trend?: {
@@ -26,11 +27,12 @@ export const StatsCard = ({
   title,
   value,
   subtitle,
+  tooltip,
   icon,
   color = "primary",
   trend,
 }: StatsCardProps) => {
-  return (
+  const card = (
     <Card
       sx={{
         height: "100%",
@@ -109,5 +111,15 @@ export const StatsCard = ({
         </Stack>
       </CardContent>
     </Card>
+  );
+
+  if (!tooltip) {
+    return card;
+  }
+
+  return (
+    <Tooltip title={tooltip} arrow placement="top">
+      {card}
+    </Tooltip>
   );
 };

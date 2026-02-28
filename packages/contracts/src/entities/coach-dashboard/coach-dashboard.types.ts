@@ -7,7 +7,6 @@ import {
   type dashboardActionItemSchema,
   type dashboardNoteSchema,
   type dashboardOverviewSchema,
-  type endingPlanSchema,
   type loadDistributionItemSchema,
   type onboardingAthleteSchema,
   type progressAthleteSchema,
@@ -25,5 +24,4 @@ export type ProgressBuckets = z.infer<typeof progressBucketsSchema>;
 export type DashboardNote = z.infer<typeof dashboardNoteSchema>;
 export type CoachActivityItem = z.infer<typeof coachActivityItemSchema>;
 export type OnboardingAthlete = z.infer<typeof onboardingAthleteSchema>;
-export type EndingPlan = z.infer<typeof endingPlanSchema>;
 export type CoachDashboardData = z.infer<typeof coachDashboardDataSchema>;

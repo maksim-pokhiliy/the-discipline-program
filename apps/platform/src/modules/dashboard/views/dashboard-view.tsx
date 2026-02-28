@@ -6,7 +6,7 @@ import { QueryWrapper } from "@repo/query";
 
 import { useCoachDashboard } from "@app/lib/hooks";
 
-import { ActionItemsSection } from "../sections";
+import { ActionItemsSection, OverviewSection } from "../sections";
 
 export const DashboardView = () => {
   const { data, isLoading, error } = useCoachDashboard();
@@ -20,6 +20,7 @@ export const DashboardView = () => {
     >
       {(data) => (
         <Stack spacing={2}>
+          <OverviewSection overview={data.overview} />
           <ActionItemsSection items={data.actionItems} />
         </Stack>
       )}

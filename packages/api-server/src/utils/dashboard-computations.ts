@@ -193,13 +193,9 @@ export const computeProgressBuckets = (enrollments: EnrollmentWithData[]): Progr
   const improving: ProgressAthlete[] = [];
   const stagnating: ProgressAthlete[] = [];
   const declining: ProgressAthlete[] = [];
-  let totalRate = 0;
 
   for (const [userId, data] of athleteData) {
     const rate = data.totalWorkouts > 0 ? data.completedWorkouts / data.totalWorkouts : 0;
-
-    totalRate += rate;
-
     const entry: ProgressAthlete = {
       userId,
       name: data.name,
@@ -227,7 +223,6 @@ export const computeProgressBuckets = (enrollments: EnrollmentWithData[]): Progr
     improving,
     stagnating,
     declining,
-    avgCompletionRate: totalAthletes > 0 ? totalRate / totalAthletes : 0,
     avgEngagementRate: totalAthletes > 0 ? activeAthletes / totalAthletes : 0,
   };
 };
