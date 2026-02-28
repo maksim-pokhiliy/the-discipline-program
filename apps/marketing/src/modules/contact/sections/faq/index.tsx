@@ -11,19 +11,9 @@ interface ContactFAQProps {
 export const ContactFAQ = ({ faq }: ContactFAQProps) => {
   return (
     <ContentSection title={faq.title} maxWidth="md">
-      <Stack spacing={2}>
+      <Stack>
         {faq.items.map((item, index) => (
-          <Accordion
-            key={index}
-            sx={{
-              "&:before": {
-                display: "none",
-              },
-              "&.Mui-expanded": {
-                margin: 0,
-              },
-            }}
-          >
+          <Accordion key={index}>
             <AccordionSummary
               expandIcon={<ExpandMoreIcon />}
               sx={(theme) => ({

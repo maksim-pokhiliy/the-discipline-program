@@ -16,17 +16,14 @@ import { usePageDetails, useUpdatePageSection } from "@app/lib/hooks";
 
 import { SectionEditor } from "../../components/section-editor";
 
-interface PagesEditViewProps {
-  initialData: AdminPageDetails;
-}
+type PagesEditFormProps = {
+  page: AdminPageDetails;
+};
 
-export const PagesEditView = ({ initialData }: PagesEditViewProps) => {
-  const { data, isLoading, error } = usePageDetails(initialData.slug, { initialData });
+const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
   const { mutate: updateSection, isPending } = useUpdatePageSection();
 
-  const [expanded, setExpanded] = useState<string | false>(
-    initialData.sections[0]?.section || false,
-  );
+  const [expanded, setExpanded] = useState<string | false>(page.sections[0]?.section || false);
 
   const handleToggle = (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
     setExpanded(isExpanded ? panel : false);
@@ -55,38 +52,43 @@ export const PagesEditView = ({ initialData }: PagesEditViewProps) => {
   return (
     <ContentSection
       title="Edit Marketing Page"
-      subtitle={initialData.slug.toUpperCase()}
+      subtitle={page.slug.toUpperCase()}
       backHref="/pages"
       backLabel="Back to Pages"
       backgroundColor="dark"
     >
-      <QueryWrapper
-        isLoading={isLoading}
-        error={error}
-        data={data}
-        loadingMessage="Loading page details..."
-      >
-        {(page) => (
-          <Stack spacing={2}>
-            {page.sections.map((section) => (
-              <SectionEditor
-                key={section.id}
-                section={section}
-                isExpanded={expanded === section.section}
-                onToggle={handleToggle(section.section)}
-                onSave={(formData) =>
-                  onSaveSection(
-                    page.slug,
-                    section.section as UpdatePageSectionData["section"],
-                    formData as UpdatePageSectionData["data"],
-                  )
-                }
-                isLoading={isPending}
-              />
-            ))}
-          </Stack>
-        )}
-      </QueryWrapper>
+      <Stack spacing={2}>
+        {page.sections.map((section) => (
+          <SectionEditor
+            key={section.id}
+            section={section}
+            isExpanded={expanded === section.section}
+            onToggle={handleToggle(section.section)}
+            onSave={(formData) =>
+              onSaveSection(
+                page.slug,
+                section.section as UpdatePageSectionData["section"],
+                formData as UpdatePageSectionData["data"],
+              )
+            }
+            isLoading={isPending}
+          />
+        ))}
+      </Stack>
     </ContentSection>
+  );
+};
+
+type PagesEditViewProps = {
+  slug: string;
+};
+
+export const PagesEditView: React.FC<PagesEditViewProps> = ({ slug }) => {
+  const { data, isLoading, error } = usePageDetails(slug);
+
+  return (
+    <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage="Loading page...">
+      {(page) => <PagesEditForm page={page} />}
+    </QueryWrapper>
   );
 };
