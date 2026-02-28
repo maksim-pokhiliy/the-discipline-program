@@ -2,20 +2,26 @@
 
 import { useEffect, useRef } from "react";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { platformKeys } from "@repo/query";
 
 import { api } from "../api";
 
 export const useCoachDashboard = () => {
+  const queryClient = useQueryClient();
   const reconciled = useRef(false);
 
-  const reconcile = useMutation({
+  const { mutate } = useMutation({
     mutationFn: () => api.coachActionItems.reconcile(),
+    onSuccess: (data) => {
+      if (data.created > 0 || data.updated > 0 || data.resolved > 0) {
+        queryClient.invalidateQueries({
+          queryKey: platformKeys.coachDashboard.data(),
+        });
+      }
+    },
   });
-
-  const { mutate } = reconcile;
 
   useEffect(() => {
     if (reconciled.current) {
@@ -29,6 +35,5 @@ export const useCoachDashboard = () => {
   return useQuery({
     queryKey: platformKeys.coachDashboard.data(),
     queryFn: () => api.coachDashboard.getDashboard(),
-    enabled: reconcile.isSuccess || reconcile.isError,
   });
 };
