@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Accordion,
@@ -32,15 +31,7 @@ export const ActionItemsSection: React.FC<ActionItemsSectionProps> = ({ items })
   const [showAll, setShowAll] = useState(false);
 
   if (items.length === 0) {
-    return (
-      <Stack spacing={1} alignItems="center" py={4}>
-        <CheckCircleOutlineIcon color="success" fontSize="large" />
-
-        <Typography variant="body2" color="text.secondary">
-          All clear — no issues right now
-        </Typography>
-      </Stack>
-    );
+    return null;
   }
 
   const visibleItems = showAll ? items : items.slice(0, INITIAL_VISIBLE_COUNT);

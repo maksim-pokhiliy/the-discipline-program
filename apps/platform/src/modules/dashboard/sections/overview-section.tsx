@@ -16,7 +16,7 @@ type OverviewSectionProps = {
 export const OverviewSection: React.FC<OverviewSectionProps> = ({ overview }) => {
   return (
     <Grid container spacing={2}>
-      <Grid size={{ xs: 6, md: 3 }}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <StatsCard
           title="Active Athletes"
           tooltip="Athletes with active enrollment"
@@ -26,7 +26,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ overview }) =>
         />
       </Grid>
 
-      <Grid size={{ xs: 6, md: 3 }}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <StatsCard
           title="Workouts Today"
           tooltip="Completed / planned workouts for today"
@@ -36,7 +36,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ overview }) =>
         />
       </Grid>
 
-      <Grid size={{ xs: 6, md: 3 }}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <StatsCard
           title="Need Attention"
           tooltip="Open action items requiring your review"
@@ -46,7 +46,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ overview }) =>
         />
       </Grid>
 
-      <Grid size={{ xs: 6, md: 3 }}>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <StatsCard
           title="Trained This Week"
           tooltip="Unique athletes who logged at least 1 workout in the last 7 days"
