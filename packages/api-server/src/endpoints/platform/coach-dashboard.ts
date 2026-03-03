@@ -16,10 +16,13 @@ import {
 } from "../../utils/dashboard-computations";
 import { enrollmentInclude } from "../../utils/enrollment-query";
 
+import { platformCoachActionItemsApi } from "./coach-action-items";
 import { resolveCoachId } from "./guards";
 
 export const platformCoachDashboardApi = {
   getDashboard: async (userId: string): Promise<CoachDashboardData> => {
+    await platformCoachActionItemsApi.reconcile(userId);
+
     const coachId = await resolveCoachId(userId);
 
     const now = new Date();
