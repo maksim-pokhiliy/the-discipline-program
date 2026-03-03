@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-import { ACTIVITY_TYPES_LIST } from "./dashboard.constants";
+import { DashboardActivityType } from "./dashboard.constants";
 
 export const activityItemSchema = z.object({
   id: z.string(),
-  type: z.enum(ACTIVITY_TYPES_LIST),
+  type: z.nativeEnum(DashboardActivityType),
   title: z.string(),
   subtitle: z.string().nullable(),
   date: z.date(),

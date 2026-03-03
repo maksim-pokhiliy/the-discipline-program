@@ -1,12 +1,12 @@
 import { z } from "zod";
 
-import { PRICE_INTERVALS, PRODUCT_CURRENCIES } from "./product.constants";
+import { PriceInterval, ProductCurrency } from "./product.constants";
 
 export const priceSchema = z.object({
   id: z.string().cuid(),
   amountCents: z.number().int().min(0),
-  currency: z.enum(PRODUCT_CURRENCIES),
-  interval: z.enum(PRICE_INTERVALS),
+  currency: z.nativeEnum(ProductCurrency),
+  interval: z.nativeEnum(PriceInterval),
   isActive: z.boolean(),
 });
 
@@ -25,8 +25,8 @@ export const productSchema = z.object({
 
 export const createProductPriceSchema = z.object({
   amountCents: z.number().int().min(0),
-  currency: z.enum(PRODUCT_CURRENCIES).default("USD"),
-  interval: z.enum(PRICE_INTERVALS).default("MONTHLY"),
+  currency: z.nativeEnum(ProductCurrency).default(ProductCurrency.USD),
+  interval: z.nativeEnum(PriceInterval).default(PriceInterval.MONTHLY),
 });
 
 export const createProductSchema = z.object({

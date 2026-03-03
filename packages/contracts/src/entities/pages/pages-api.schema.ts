@@ -4,7 +4,7 @@ import { publicBlogPostSchema } from "../blog";
 import { productSchema } from "../product/product.schema";
 import { reviewSchema } from "../review/review.schema";
 
-import { PAGE_SLUGS, PAGE_SECTIONS_MAP } from "./pages.constants";
+import { PageSlug, PAGE_SECTIONS_MAP } from "./pages.constants";
 import {
   homePageHeroSchema,
   homePageWhyChooseSchema,
@@ -67,7 +67,7 @@ export const getContactPageResponseSchema = z.object({
 
 export const adminPageListItemSchema = z.object({
   id: z.string(),
-  slug: z.enum(PAGE_SLUGS),
+  slug: z.nativeEnum(PageSlug),
   title: z.string(),
   updatedAt: z.date(),
 });
@@ -119,10 +119,10 @@ export const updatePageSectionSchema = z
     }),
     z.object({ section: z.literal(PAGE_SECTIONS_MAP.contact.faq), data: contactPageFaqSchema }),
   ])
-  .and(z.object({ pageSlug: z.enum(PAGE_SLUGS) }));
+  .and(z.object({ pageSlug: z.nativeEnum(PageSlug) }));
 
 export const adminPageDetailsSchema = z.object({
-  slug: z.enum(PAGE_SLUGS),
+  slug: z.nativeEnum(PageSlug),
   sections: z.array(
     z.object({
       id: z.string(),
@@ -134,7 +134,7 @@ export const adminPageDetailsSchema = z.object({
 });
 
 export const getPageBySlugParamsSchema = z.object({
-  pageSlug: z.enum(PAGE_SLUGS),
+  pageSlug: z.nativeEnum(PageSlug),
 });
 
 export const SECTION_SCHEMAS = {

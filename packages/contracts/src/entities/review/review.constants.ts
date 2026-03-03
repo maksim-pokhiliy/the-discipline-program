@@ -13,4 +13,6 @@ export const REVIEW_DEFAULTS = {
   programId: null,
 } as const;
 
-export const TOGGLE_FIELDS = ["isActive"] as const;
+export enum ReviewToggleField {
+  IS_ACTIVE = "isActive",
+}

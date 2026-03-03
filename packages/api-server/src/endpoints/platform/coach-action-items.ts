@@ -1,10 +1,13 @@
 import type { CoachActionItem as PrismaCoachActionItemRecord } from "@prisma/client";
 
-import type {
+import { HealthStatus } from "@repo/contracts/athlete-profile";
+import {
+  ActionItemResolveReason,
   ActionItemSeverity,
+  ActionItemStatus,
   ActionItemType,
-  CoachActionItem,
-  ReconcileResponse,
+  type CoachActionItem,
+  type ReconcileResponse,
 } from "@repo/contracts/coach-action-item";
 import {
   MISSED_DAYS_CRITICAL,
@@ -52,8 +55,11 @@ const computeConditions = (enrollments: EnrollmentWithData[]): Condition[] => {
       if (daysSince >= MISSED_DAYS_WARNING) {
         conditions.push({
           athleteId: user.id,
-          type: "MISSED_WORKOUTS",
-          severity: daysSince >= MISSED_DAYS_CRITICAL ? "CRITICAL" : "WARNING",
+          type: ActionItemType.MISSED_WORKOUTS,
+          severity:
+            daysSince >= MISSED_DAYS_CRITICAL
+              ? ActionItemSeverity.CRITICAL
+              : ActionItemSeverity.WARNING,
           message: `${daysSince} days without activity`,
           metadata: { lastActivityDate: lastLog.date.toISOString() },
         });
@@ -65,20 +71,24 @@ const computeConditions = (enrollments: EnrollmentWithData[]): Condition[] => {
     if (enrolledDays <= NEW_ATHLETE_THRESHOLD_DAYS && user.workoutLogs.length === 0) {
       conditions.push({
         athleteId: user.id,
-        type: "NEW_NO_START",
-        severity: "INFO",
+        type: ActionItemType.NEW_NO_START,
+        severity: ActionItemSeverity.INFO,
         message: `Enrolled ${enrolledDays} day(s) ago, no workouts started`,
         metadata: { enrollmentId: e.id },
       });
     }
 
-    const healthStatus = user.athleteProfile?.healthStatus ?? "HEALTHY";
+    const healthStatus =
+      (user.athleteProfile?.healthStatus as HealthStatus | undefined) ?? HealthStatus.HEALTHY;
 
-    if (healthStatus !== "HEALTHY") {
+    if (healthStatus !== HealthStatus.HEALTHY) {
       conditions.push({
         athleteId: user.id,
-        type: "HEALTH_REPORT",
-        severity: healthStatus === "INJURED" ? "CRITICAL" : "WARNING",
+        type: ActionItemType.HEALTH_REPORT,
+        severity:
+          healthStatus === HealthStatus.INJURED
+            ? ActionItemSeverity.CRITICAL
+            : ActionItemSeverity.WARNING,
         message: `Athlete reported: ${healthStatus.toLowerCase()}`,
         metadata: { healthStatus },
       });
@@ -97,11 +107,11 @@ const conditionMatchesResolved = (
   }
 
   switch (condition.type) {
-    case "MISSED_WORKOUTS":
+    case ActionItemType.MISSED_WORKOUTS:
       return condition.metadata.lastActivityDate === resolvedMetadata.lastActivityDate;
-    case "NEW_NO_START":
+    case ActionItemType.NEW_NO_START:
       return condition.metadata.enrollmentId === resolvedMetadata.enrollmentId;
-    case "HEALTH_REPORT":
+    case ActionItemType.HEALTH_REPORT:
       return condition.metadata.healthStatus === resolvedMetadata.healthStatus;
     default:
       return false;
@@ -112,13 +122,13 @@ const mapToCoachActionItem = (item: PrismaCoachActionItemRecord): CoachActionIte
   id: item.id,
   coachId: item.coachId,
   athleteId: item.athleteId,
-  type: item.type as CoachActionItem["type"],
-  severity: item.severity as CoachActionItem["severity"],
-  status: item.status as CoachActionItem["status"],
+  type: item.type as ActionItemType,
+  severity: item.severity as ActionItemSeverity,
+  status: item.status as ActionItemStatus,
   message: item.message,
   metadata: item.metadata as Record<string, unknown> | null,
   resolvedAt: item.resolvedAt,
-  resolveReason: item.resolveReason as CoachActionItem["resolveReason"],
+  resolveReason: item.resolveReason as ActionItemResolveReason | null,
   createdAt: item.createdAt,
   updatedAt: item.updatedAt,
 });
@@ -139,10 +149,10 @@ export const platformCoachActionItemsApi = {
           include: enrollmentInclude,
         }),
         tx.coachActionItem.findMany({
-          where: { coachId, status: "OPEN" },
+          where: { coachId, status: ActionItemStatus.OPEN },
         }),
         tx.coachActionItem.findMany({
-          where: { coachId, status: "RESOLVED" },
+          where: { coachId, status: ActionItemStatus.RESOLVED },
           orderBy: { resolvedAt: "desc" },
           distinct: ["athleteId", "type"],
         }),
@@ -177,9 +187,9 @@ export const platformCoachActionItemsApi = {
         await tx.coachActionItem.update({
           where: { id: item.id },
           data: {
-            status: "RESOLVED",
+            status: ActionItemStatus.RESOLVED,
             resolvedAt: new Date(),
-            resolveReason: "AUTO_CONDITION_CLEARED",
+            resolveReason: ActionItemResolveReason.AUTO_CONDITION_CLEARED,
           },
         });
         resolved++;
@@ -236,15 +246,15 @@ export const platformCoachActionItemsApi = {
       }
 
       for (const [key, item] of openByKey) {
-        const athleteId = key.split(":")[1];
-        const reason = activeAthleteIds.has(athleteId!)
-          ? "AUTO_CONDITION_CLEARED"
-          : "AUTO_ENROLLMENT_ENDED";
+        const athleteId = key.split(":")[1] ?? "";
+        const reason = activeAthleteIds.has(athleteId)
+          ? ActionItemResolveReason.AUTO_CONDITION_CLEARED
+          : ActionItemResolveReason.AUTO_ENROLLMENT_ENDED;
 
         await tx.coachActionItem.update({
           where: { id: item.id },
           data: {
-            status: "RESOLVED",
+            status: ActionItemStatus.RESOLVED,
             resolvedAt: new Date(),
             resolveReason: reason,
           },
@@ -265,16 +275,16 @@ export const platformCoachActionItemsApi = {
       throw new NotFoundError("Action item not found", { itemId });
     }
 
-    if (item.status === "RESOLVED") {
+    if (item.status === ActionItemStatus.RESOLVED) {
       return mapToCoachActionItem(item);
     }
 
     const updated = await prisma.coachActionItem.update({
       where: { id: itemId },
       data: {
-        status: "RESOLVED",
+        status: ActionItemStatus.RESOLVED,
         resolvedAt: new Date(),
-        resolveReason: "MANUAL_CONTACTED",
+        resolveReason: ActionItemResolveReason.MANUAL_CONTACTED,
       },
     });
 

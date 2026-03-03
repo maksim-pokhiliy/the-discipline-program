@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { CONTACT_STATUSES } from "./contact.constants";
+import { ContactStatus } from "./contact.constants";
 import { createContactSubmissionSchema } from "./contact.schema";
 
 export const createContactSubmissionRequestSchema = createContactSubmissionSchema;
@@ -35,7 +35,7 @@ export const updateContactParamsSchema = z.object({
 });
 
 export const updateContactRequestSchema = z.object({
-  status: z.enum(CONTACT_STATUSES).optional(),
+  status: z.nativeEnum(ContactStatus).optional(),
   notes: z.string().max(2000).nullable().optional(),
 });
 

@@ -7,17 +7,15 @@ import {
   type UpdatePageMetadataInput,
   updatePageSectionSchema,
   updatePageMetadataSchema,
-  PAGE_SLUGS,
+  PageSlug,
   getPageSectionsOrder,
 } from "@repo/contracts/pages";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 
-type PageSlug = (typeof PAGE_SLUGS)[number];
-
 const isValidPageSlug = (slug: string): slug is PageSlug => {
-  return PAGE_SLUGS.includes(slug as PageSlug);
+  return Object.values(PageSlug).includes(slug as PageSlug);
 };
 
 export const adminPagesApi = {

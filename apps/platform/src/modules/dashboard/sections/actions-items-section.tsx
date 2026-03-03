@@ -38,7 +38,7 @@ export const ActionItemsSection: React.FC<ActionItemsSectionProps> = ({ items })
   const remainingCount = items.length - INITIAL_VISIBLE_COUNT;
 
   return (
-    <Accordion>
+    <Accordion variant="outlined">
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Stack direction="row" spacing={3} alignItems="center">
           <Typography variant="h6">Needs Attention</Typography>

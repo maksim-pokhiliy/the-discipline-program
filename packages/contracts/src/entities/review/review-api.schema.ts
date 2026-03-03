@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { TOGGLE_FIELDS } from "./review.constants";
+import { ReviewToggleField } from "./review.constants";
 import { createReviewSchema, updateReviewSchema } from "./review.schema";
 
 export const getReviewsResponseSchema = z.array(
@@ -38,7 +38,7 @@ export const toggleReviewParamsSchema = z.object({
 });
 
 export const toggleReviewQuerySchema = z.object({
-  field: z.enum(TOGGLE_FIELDS),
+  field: z.nativeEnum(ReviewToggleField),
 });
 
 export const getReviewsPageDataResponseSchema = z.object({

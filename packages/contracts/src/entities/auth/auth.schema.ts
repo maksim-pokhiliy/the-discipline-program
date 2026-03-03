@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { USER_ROLES } from "./auth.constants";
+import { UserRole } from "./auth.constants";
 
-export const userRoleSchema = z.enum(USER_ROLES);
+export const userRoleSchema = z.nativeEnum(UserRole);
 
 export const loginFormSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -12,7 +12,7 @@ export const loginFormSchema = z.object({
 export const userSchema = z.object({
   id: z.string().cuid(),
   email: z.string().email(),
-  role: z.enum(USER_ROLES),
+  role: z.nativeEnum(UserRole),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

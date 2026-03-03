@@ -3,7 +3,7 @@
 import { Grid, MenuItem, Stack, TextField } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { USER_ROLES, type UserRole } from "@repo/contracts/auth";
+import { UserRole } from "@repo/contracts/auth";
 import { type AdminUser } from "@repo/contracts/user";
 import { formatDate } from "@repo/shared";
 import { DetailField, FormCard } from "@repo/ui";
@@ -38,7 +38,7 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
                       disabled={isPending}
                       sx={{ minWidth: 160 }}
                     >
-                      {USER_ROLES.map((role) => (
+                      {Object.values(UserRole).map((role) => (
                         <MenuItem key={role} value={role}>
                           {ROLE_CONFIG[role].label}
                         </MenuItem>

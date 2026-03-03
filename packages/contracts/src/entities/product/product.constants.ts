@@ -1,16 +1,24 @@
-export const PRODUCT_CURRENCIES = ["USD", "EUR", "UAH"] as const;
+export enum ProductCurrency {
+  USD = "USD",
+  EUR = "EUR",
+  UAH = "UAH",
+}
 
-export const PRICE_INTERVALS = ["MONTHLY", "YEARLY", "ONE_TIME"] as const;
+export enum PriceInterval {
+  MONTHLY = "MONTHLY",
+  YEARLY = "YEARLY",
+  ONE_TIME = "ONE_TIME",
+}
 
-export const PRICE_INTERVAL_LABELS: Record<(typeof PRICE_INTERVALS)[number], string> = {
-  MONTHLY: "month",
-  YEARLY: "year",
-  ONE_TIME: "one-time",
+export const PRICE_INTERVAL_LABELS: Record<PriceInterval, string> = {
+  [PriceInterval.MONTHLY]: "month",
+  [PriceInterval.YEARLY]: "year",
+  [PriceInterval.ONE_TIME]: "one-time",
 };
 
 export const PRODUCT_DEFAULTS = {
-  currency: "USD",
-  interval: "MONTHLY",
+  currency: ProductCurrency.USD,
+  interval: PriceInterval.MONTHLY,
   isActive: true,
   features: [],
 } as const;

@@ -70,11 +70,18 @@ export const config = [
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-non-null-assertion": "error",
     },
   },
   {
     plugins: {
       onlyWarn,
+    },
+  },
+  {
+    files: ["**/prisma/seed.ts"],
+    rules: {
+      "@typescript-eslint/no-non-null-assertion": "off",
     },
   },
   {

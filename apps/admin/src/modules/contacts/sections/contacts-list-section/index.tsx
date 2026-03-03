@@ -8,7 +8,7 @@ import { Box, Chip, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } fro
 import { type ChipProps } from "@mui/material";
 import Link from "next/link";
 
-import { type GetContactByIdResponse, CONTACT_STATUSES } from "@repo/contracts/contact";
+import { type GetContactByIdResponse, ContactStatus } from "@repo/contracts/contact";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
@@ -60,7 +60,7 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
     setStatusMenuContactId(null);
   };
 
-  const handleStatusSelect = (status: (typeof CONTACT_STATUSES)[number]) => {
+  const handleStatusSelect = (status: ContactStatus) => {
     if (statusMenuContactId) {
       updateContactMutation.mutate({ id: statusMenuContactId, data: { status } });
     }
@@ -181,7 +181,7 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
       />
 
       <Menu anchorEl={statusMenuAnchor} open={!!statusMenuAnchor} onClose={handleStatusMenuClose}>
-        {CONTACT_STATUSES.map((status) => {
+        {Object.values(ContactStatus).map((status) => {
           const currentContact = contacts.find((c) => c.id === statusMenuContactId);
 
           return (

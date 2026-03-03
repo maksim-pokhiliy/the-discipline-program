@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { CONTACT_STATUSES, CONTACT_CONSTANTS } from "./contact.constants";
+import { ContactStatus, CONTACT_CONSTANTS } from "./contact.constants";
 
 export const contactSubmissionSchema = z.object({
   id: z.string().cuid(),
@@ -8,7 +8,7 @@ export const contactSubmissionSchema = z.object({
   email: z.string().email(),
   program: z.string().max(CONTACT_CONSTANTS.MAX_PROGRAM_LENGTH).optional(),
   message: z.string().min(1).max(CONTACT_CONSTANTS.MAX_MESSAGE_LENGTH),
-  status: z.enum(CONTACT_STATUSES),
+  status: z.nativeEnum(ContactStatus),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

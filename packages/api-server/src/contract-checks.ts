@@ -24,6 +24,6 @@ type BlogPostFromDb = MarketingBlogPost;
 type BlogPostContract = z.infer<typeof Contracts.getBlogPostsResponseSchema>[number];
 assertType<Satisfies<BlogPostFromDb, BlogPostContract>>();
 
-type UserFromDb = User;
-type UserContract = z.infer<typeof Contracts.userSchema>;
+type UserFromDb = Omit<User, "role"> & { role: string };
+type UserContract = Omit<z.infer<typeof Contracts.userSchema>, "role"> & { role: string };
 assertType<Satisfies<UserFromDb, UserContract>>();

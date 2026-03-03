@@ -1,12 +1,17 @@
 import { type Price as PrismaPrice, type Product as PrismaProduct } from "@prisma/client";
 
-import { type Price, type Product } from "@repo/contracts/product";
+import {
+  type Price,
+  type Product,
+  type PriceInterval,
+  type ProductCurrency,
+} from "@repo/contracts/product";
 
 export const mapToPrice = (p: PrismaPrice): Price => ({
   id: p.id,
   amountCents: p.amountCents,
-  currency: p.currency,
-  interval: p.interval,
+  currency: p.currency as ProductCurrency,
+  interval: p.interval as PriceInterval,
   isActive: p.isActive,
 });
 

@@ -1,5 +1,6 @@
 import { SEVERITY_PRIORITY } from "@repo/contracts/coach-action-item";
 import {
+  CoachActivityType,
   type CoachDashboardData,
   type DashboardActionItem,
   type DashboardNote,
@@ -139,7 +140,7 @@ export const platformCoachDashboardApi = {
     const recentActivity = enrollments
       .flatMap((e) =>
         e.user.workoutLogs.slice(0, 3).map((log) => ({
-          type: "WORKOUT_COMPLETED" as const,
+          type: CoachActivityType.WORKOUT_COMPLETED,
           athleteId: e.user.id,
           athleteName: e.user.name,
           description: `Completed workout`,

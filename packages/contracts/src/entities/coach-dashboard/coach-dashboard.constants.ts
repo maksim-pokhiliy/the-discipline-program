@@ -1,8 +1,20 @@
-export const TODAY_STATUSES = ["COMPLETED", "PENDING", "MISSED", "NO_PLAN"] as const;
+export enum TodayStatus {
+  COMPLETED = "COMPLETED",
+  PENDING = "PENDING",
+  MISSED = "MISSED",
+  NO_PLAN = "NO_PLAN",
+}
 
-export const PROGRESS_TRENDS = ["UP", "DOWN", "STABLE"] as const;
+export enum ProgressTrend {
+  UP = "UP",
+  DOWN = "DOWN",
+  STABLE = "STABLE",
+}
 
-export const ACTIVITY_TYPES = ["WORKOUT_COMPLETED", "NEW_ENROLLMENT"] as const;
+export enum CoachActivityType {
+  WORKOUT_COMPLETED = "WORKOUT_COMPLETED",
+  NEW_ENROLLMENT = "NEW_ENROLLMENT",
+}
 
 export const MISSED_DAYS_WARNING = 3;
 export const MISSED_DAYS_CRITICAL = 7;

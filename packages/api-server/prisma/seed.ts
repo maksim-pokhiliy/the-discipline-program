@@ -342,7 +342,7 @@ type CatMap = Record<string, string>;
 const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: ExMap) => {
   const createWorkoutWithBlocks = async (
     planId: string,
-    dayOrder: number,
+    scheduledDate: Date | null,
     title: string,
     blocks: {
       categoryId: string;
@@ -360,7 +360,7 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     }[],
   ) => {
     const workout = await prisma.workout.create({
-      data: { planId, dayOrder, title, createdAt: daysAgo(30) },
+      data: { planId, scheduledDate, title, createdAt: daysAgo(30) },
     });
 
     for (const block of blocks) {
@@ -453,26 +453,31 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   });
 
-  const p1w1 = await createWorkoutWithBlocks(plan1.id, 1, "Day 1: Heavy Squats + Sprint", [
-    {
-      categoryId: catMap["Strength"]!,
-      sets: [
-        { exerciseId: exMap["Back Squat"]!, sets: 5, reps: 3, weightValue: 100, rpe: 8 },
-        { exerciseId: exMap["Front Squat"]!, sets: 3, reps: 5, weightValue: 80, rpe: 7 },
-      ],
-    },
-    {
-      categoryId: catMap["Metcon"]!,
-      rounds: 3,
-      timeCapSec: 720,
-      sets: [
-        { exerciseId: exMap["Burpee"]!, reps: 15 },
-        { exerciseId: exMap["Box Jump"]!, reps: 12 },
-      ],
-    },
-  ]);
+  const p1w1 = await createWorkoutWithBlocks(
+    plan1.id,
+    daysAgo(21),
+    "Day 1: Heavy Squats + Sprint",
+    [
+      {
+        categoryId: catMap["Strength"]!,
+        sets: [
+          { exerciseId: exMap["Back Squat"]!, sets: 5, reps: 3, weightValue: 100, rpe: 8 },
+          { exerciseId: exMap["Front Squat"]!, sets: 3, reps: 5, weightValue: 80, rpe: 7 },
+        ],
+      },
+      {
+        categoryId: catMap["Metcon"]!,
+        rounds: 3,
+        timeCapSec: 720,
+        sets: [
+          { exerciseId: exMap["Burpee"]!, reps: 15 },
+          { exerciseId: exMap["Box Jump"]!, reps: 12 },
+        ],
+      },
+    ],
+  );
 
-  const p1w2 = await createWorkoutWithBlocks(plan1.id, 2, "Day 2: Olympic Lifting", [
+  const p1w2 = await createWorkoutWithBlocks(plan1.id, daysAgo(20), "Day 2: Olympic Lifting", [
     {
       categoryId: catMap["Skill"]!,
       sets: [
@@ -486,7 +491,7 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   ]);
 
-  const p1w3 = await createWorkoutWithBlocks(plan1.id, 3, "Day 3: Gymnastics + Metcon", [
+  const p1w3 = await createWorkoutWithBlocks(plan1.id, daysAgo(19), "Day 3: Gymnastics + Metcon", [
     {
       categoryId: catMap["Skill"]!,
       sets: [
@@ -506,7 +511,7 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   ]);
 
-  const p1w4 = await createWorkoutWithBlocks(plan1.id, 4, "Day 4: Pressing + Cardio", [
+  const p1w4 = await createWorkoutWithBlocks(plan1.id, daysAgo(18), "Day 4: Pressing + Cardio", [
     {
       categoryId: catMap["Strength"]!,
       sets: [
@@ -524,7 +529,7 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   ]);
 
-  const p1w5 = await createWorkoutWithBlocks(plan1.id, 5, "Day 5: Deadlift + Chipper", [
+  const p1w5 = await createWorkoutWithBlocks(plan1.id, daysAgo(17), "Day 5: Deadlift + Chipper", [
     {
       categoryId: catMap["Strength"]!,
       sets: [{ exerciseId: exMap["Deadlift"]!, sets: 5, reps: 3, weightValue: 140, rpe: 9 }],
@@ -541,7 +546,7 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   ]);
 
-  const p2w1 = await createWorkoutWithBlocks(plan2.id, 1, "Monday: Strength Focus", [
+  const p2w1 = await createWorkoutWithBlocks(plan2.id, daysAgo(14), "Monday: Strength Focus", [
     {
       categoryId: catMap["Warmup"]!,
       sets: [
@@ -564,7 +569,7 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   ]);
 
-  const p2w2 = await createWorkoutWithBlocks(plan2.id, 2, "Tuesday: Conditioning", [
+  const p2w2 = await createWorkoutWithBlocks(plan2.id, daysAgo(13), "Tuesday: Conditioning", [
     {
       categoryId: catMap["Cardio"]!,
       timeCapSec: 1200,
@@ -576,7 +581,7 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   ]);
 
-  const p2w3 = await createWorkoutWithBlocks(plan2.id, 3, "Wednesday: Upper Body", [
+  const p2w3 = await createWorkoutWithBlocks(plan2.id, daysAgo(12), "Wednesday: Upper Body", [
     {
       categoryId: catMap["Strength"]!,
       sets: [
@@ -593,7 +598,7 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   ]);
 
-  const p2w4 = await createWorkoutWithBlocks(plan2.id, 4, "Thursday: Skill Day", [
+  const p2w4 = await createWorkoutWithBlocks(plan2.id, daysAgo(11), "Thursday: Skill Day", [
     {
       categoryId: catMap["Skill"]!,
       sets: [
@@ -603,7 +608,7 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   ]);
 
-  const p3w1 = await createWorkoutWithBlocks(plan3.id, 1, "Intro: Movement Basics", [
+  const p3w1 = await createWorkoutWithBlocks(plan3.id, daysAgo(7), "Intro: Movement Basics", [
     {
       categoryId: catMap["Warmup"]!,
       sets: [
@@ -635,7 +640,7 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   ]);
 
-  const p3w2 = await createWorkoutWithBlocks(plan3.id, 2, "Day 2: Light Metcon", [
+  const p3w2 = await createWorkoutWithBlocks(plan3.id, daysAgo(5), "Day 2: Light Metcon", [
     {
       categoryId: catMap["Metcon"]!,
       rounds: 3,
@@ -648,7 +653,7 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   ]);
 
-  const p3w3 = await createWorkoutWithBlocks(plan3.id, 3, "Day 3: Cardio Base", [
+  const p3w3 = await createWorkoutWithBlocks(plan3.id, daysAgo(3), "Day 3: Cardio Base", [
     {
       categoryId: catMap["Cardio"]!,
       timeCapSec: 1800,
@@ -659,7 +664,7 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   ]);
 
-  await createWorkoutWithBlocks(plan4.id, 1, "Week 1 Day 1: Squat Focus", [
+  await createWorkoutWithBlocks(plan4.id, daysAgo(2), "Week 1 Day 1: Squat Focus", [
     {
       categoryId: catMap["Strength"]!,
       sets: [
@@ -676,14 +681,14 @@ const seedTrainingData = async (coachProfileId: string, catMap: CatMap, exMap: E
     },
   ]);
 
-  await createWorkoutWithBlocks(plan5.id, 1, "Legacy Day 1", [
+  await createWorkoutWithBlocks(plan5.id, null, "Legacy Day 1", [
     {
       categoryId: catMap["Strength"]!,
       sets: [{ exerciseId: exMap["Deadlift"]!, sets: 5, reps: 5, weightValue: 120 }],
     },
   ]);
 
-  const p6w1 = await createWorkoutWithBlocks(plan6.id, 1, "Legacy Comp Day 1", [
+  const p6w1 = await createWorkoutWithBlocks(plan6.id, daysAgo(1), "Legacy Comp Day 1", [
     {
       categoryId: catMap["Strength"]!,
       sets: [{ exerciseId: exMap["Back Squat"]!, sets: 5, reps: 3, weightValue: 110 }],
@@ -1094,7 +1099,7 @@ const seedCoach2Data = async (
 
   const createWorkout = async (
     planId: string,
-    dayOrder: number,
+    scheduledDate: Date | null,
     title: string,
     blocks: {
       categoryId: string;
@@ -1112,7 +1117,7 @@ const seedCoach2Data = async (
     }[],
   ) => {
     const workout = await prisma.workout.create({
-      data: { planId, dayOrder, title, createdAt: daysAgo(25) },
+      data: { planId, scheduledDate, title, createdAt: daysAgo(25) },
     });
 
     for (const block of blocks) {
@@ -1140,7 +1145,7 @@ const seedCoach2Data = async (
     return workout;
   };
 
-  const bw1 = await createWorkout(plan1.id, 1, "Day 1: Pull Strength", [
+  const bw1 = await createWorkout(plan1.id, daysAgo(10), "Day 1: Pull Strength", [
     {
       categoryId: catMap["Skill"]!,
       sets: [
@@ -1154,7 +1159,7 @@ const seedCoach2Data = async (
     },
   ]);
 
-  const bw2 = await createWorkout(plan1.id, 2, "Day 2: Handstand + Metcon", [
+  const bw2 = await createWorkout(plan1.id, daysAgo(9), "Day 2: Handstand + Metcon", [
     {
       categoryId: catMap["Skill"]!,
       sets: [{ exerciseId: exMap["Handstand Walk"]!, sets: 5, reps: 1, notes: "50ft" }],
@@ -1170,7 +1175,7 @@ const seedCoach2Data = async (
     },
   ]);
 
-  const bw3 = await createWorkout(plan1.id, 3, "Day 3: Volume Gymnastics", [
+  const bw3 = await createWorkout(plan1.id, daysAgo(8), "Day 3: Volume Gymnastics", [
     {
       categoryId: catMap["Skill"]!,
       sets: [
@@ -1180,7 +1185,7 @@ const seedCoach2Data = async (
     },
   ]);
 
-  const en1 = await createWorkout(plan2.id, 1, "Monday: Row + Run", [
+  const en1 = await createWorkout(plan2.id, daysAgo(6), "Monday: Row + Run", [
     {
       categoryId: catMap["Cardio"]!,
       timeCapSec: 2400,
@@ -1191,7 +1196,7 @@ const seedCoach2Data = async (
     },
   ]);
 
-  const en2 = await createWorkout(plan2.id, 2, "Wednesday: Bike + Metcon", [
+  const en2 = await createWorkout(plan2.id, daysAgo(4), "Wednesday: Bike + Metcon", [
     {
       categoryId: catMap["Cardio"]!,
       timeCapSec: 1800,
@@ -1208,7 +1213,7 @@ const seedCoach2Data = async (
     },
   ]);
 
-  const en3 = await createWorkout(plan2.id, 3, "Friday: Long Conditioning", [
+  const en3 = await createWorkout(plan2.id, daysAgo(2), "Friday: Long Conditioning", [
     {
       categoryId: catMap["Cardio"]!,
       timeCapSec: 3600,

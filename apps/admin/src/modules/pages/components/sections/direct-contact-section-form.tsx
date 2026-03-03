@@ -4,7 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { Button, Divider, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
-import { CONTACT_METHOD_TYPES } from "@repo/contracts/pages";
+import { ContactMethodType } from "@repo/contracts/pages";
 import { DynamicListItem, FormCard } from "@repo/ui";
 
 export const DirectContactSectionForm = () => {
@@ -47,7 +47,7 @@ export const DirectContactSectionForm = () => {
                 defaultValue={(field as Record<string, unknown>).type ?? "email"}
                 {...register(`contacts.${index}.type`)}
               >
-                {CONTACT_METHOD_TYPES.map((type) => (
+                {Object.values(ContactMethodType).map((type) => (
                   <MenuItem key={type} value={type}>
                     {type.charAt(0).toUpperCase() + type.slice(1)}
                   </MenuItem>

@@ -18,7 +18,7 @@ type OverviewSectionProps = {
 export const OverviewSection: React.FC<OverviewSectionProps> = ({ overview }) => {
   return (
     <Grid container spacing={{ xs: 1.5, md: 3 }}>
-      <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+      <Grid size={{ xs: 12, sm: 4, lg: 2 }}>
         <StatsCard
           size="small"
           title="Active Athletes"
@@ -29,7 +29,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ overview }) =>
         />
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+      <Grid size={{ xs: 12, sm: 4, lg: 2 }}>
         <StatsCard
           size="small"
           title="Training Plans"
@@ -40,7 +40,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ overview }) =>
         />
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+      <Grid size={{ xs: 12, sm: 4, lg: 2 }}>
         <StatsCard
           size="small"
           title="Workouts Today"
@@ -51,7 +51,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ overview }) =>
         />
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+      <Grid size={{ xs: 12, sm: 4, lg: 2 }}>
         <StatsCard
           size="small"
           title="Trained This Week"
@@ -62,7 +62,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ overview }) =>
         />
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+      <Grid size={{ xs: 12, sm: 4, lg: 2 }}>
         <StatsCard
           size="small"
           title="Need Attention"
@@ -73,7 +73,7 @@ export const OverviewSection: React.FC<OverviewSectionProps> = ({ overview }) =>
         />
       </Grid>
 
-      <Grid size={{ xs: 12, sm: 4, md: 2 }}>
+      <Grid size={{ xs: 12, sm: 4, lg: 2 }}>
         <StatsCard
           size="small"
           title="New Athletes"

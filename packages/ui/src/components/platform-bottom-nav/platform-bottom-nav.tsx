@@ -35,7 +35,9 @@ export const PlatformBottomNav = () => {
       return index;
     }
 
-    return item.href.length > COACH_NAVIGATION.items[bestIndex]!.href.length ? index : bestIndex;
+    const best = COACH_NAVIGATION.items[bestIndex];
+
+    return best && item.href.length > best.href.length ? index : bestIndex;
   }, -1);
 
   return (

@@ -119,7 +119,7 @@ Frontend layer: not started
 
 - [ ] API client endpoints + React Query hooks (workouts, blocks, sets)
 - [ ] Plan detail page = workout builder entry point
-- [ ] Workouts as accordion items (sorted by dayOrder)
+- [ ] Workouts as accordion items (sorted by scheduledDate)
 - [ ] Add/edit/delete workouts (dialog)
 - [ ] Blocks within workout (category, rounds, time cap)
 - [ ] Prescribed sets within block (exercise picker, sets, reps, weight, unit, RPE, notes)

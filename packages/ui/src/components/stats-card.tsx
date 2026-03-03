@@ -10,7 +10,7 @@ type PaletteColorKey = {
 }[keyof Palette];
 
 const sizeConfig = {
-  small: { titleVariant: "body2", valueVariant: "h5", spacing: 2, iconSize: "medium" },
+  small: { titleVariant: "body2", valueVariant: "h5", spacing: 3, iconSize: "medium" },
   medium: { titleVariant: "h6", valueVariant: "h3", spacing: 4, iconSize: "large" },
 } as const;
 
@@ -43,7 +43,7 @@ export const StatsCard = ({
 
   const card = (
     <Card sx={{ height: "100%" }} variant="outlined">
-      <CardContent sx={size === "small" ? { p: 1.5, "&:last-child": { pb: 1.5 } } : undefined}>
+      <CardContent>
         <Stack
           spacing={config.spacing}
           sx={{

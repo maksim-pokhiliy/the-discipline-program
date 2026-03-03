@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { BLOG_TOGGLE_FIELDS } from "./blog.constants";
+import { BlogToggleField } from "./blog.constants";
 import { blogPostSchema, createBlogPostSchema, updateBlogPostSchema } from "./blog.schema";
 
 export const getBlogPostsResponseSchema = z.array(blogPostSchema);
@@ -26,7 +26,7 @@ export const toggleBlogPostParamsSchema = z.object({
 });
 
 export const toggleBlogPostQuerySchema = z.object({
-  field: z.enum(BLOG_TOGGLE_FIELDS),
+  field: z.nativeEnum(BlogToggleField),
 });
 
 export const getBlogPageDataResponseSchema = z.object({

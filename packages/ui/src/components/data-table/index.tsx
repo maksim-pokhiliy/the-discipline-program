@@ -76,7 +76,7 @@ export const DataTable = <T extends { id: string }>({
       const query = searchQuery.toLowerCase();
 
       result = result.filter((item) =>
-        searchableColumns.some((col) => col.searchValue!(item).toLowerCase().includes(query)),
+        searchableColumns.some((col) => col.searchValue?.(item).toLowerCase().includes(query)),
       );
     }
 

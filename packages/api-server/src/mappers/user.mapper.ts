@@ -4,17 +4,22 @@ import {
   type User as PrismaUser,
 } from "@prisma/client";
 
-import { type AthleteProfile } from "@repo/contracts/athlete-profile";
+import {
+  type AthleteProfile,
+  type Gender,
+  type HealthStatus,
+} from "@repo/contracts/athlete-profile";
+import { type UserRole } from "@repo/contracts/auth";
 import { type CoachProfile } from "@repo/contracts/coach-profile";
 import { type AdminUser, type AdminUserListItem } from "@repo/contracts/user";
 
 export const mapToAthleteProfile = (p: PrismaAthleteProfile): AthleteProfile => ({
   id: p.id,
   userId: p.userId,
-  gender: p.gender,
+  gender: p.gender as Gender | null,
   heightCm: p.heightCm,
   weightKg: p.weightKg ? Number(p.weightKg) : null,
-  healthStatus: p.healthStatus,
+  healthStatus: p.healthStatus as HealthStatus,
   healthNote: p.healthNote,
   createdAt: p.createdAt,
   updatedAt: p.updatedAt,
@@ -37,7 +42,7 @@ export const mapToAdminUser = (u: UserWithProfiles): AdminUser => ({
   id: u.id,
   email: u.email,
   name: u.name,
-  role: u.role,
+  role: u.role as UserRole,
   image: u.image,
   emailVerified: u.emailVerified,
   createdAt: u.createdAt,
@@ -50,7 +55,7 @@ export const mapToAdminUserListItem = (u: PrismaUser): AdminUserListItem => ({
   id: u.id,
   email: u.email,
   name: u.name,
-  role: u.role,
+  role: u.role as UserRole,
   image: u.image,
   createdAt: u.createdAt,
 });
