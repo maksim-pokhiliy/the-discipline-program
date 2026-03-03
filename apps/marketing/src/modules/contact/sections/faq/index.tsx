@@ -14,18 +14,7 @@ export const ContactFAQ = ({ faq }: ContactFAQProps) => {
       <Stack>
         {faq.items.map((item, index) => (
           <Accordion key={index}>
-            <AccordionSummary
-              expandIcon={<ExpandMoreIcon />}
-              sx={(theme) => ({
-                "& .MuiAccordionSummary-content": {
-                  margin: theme.spacing(4, 0),
-                },
-
-                "&.Mui-expanded": {
-                  minHeight: "auto",
-                },
-              })}
-            >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 {item.question}
               </Typography>

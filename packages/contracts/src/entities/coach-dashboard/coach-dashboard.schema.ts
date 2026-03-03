@@ -9,10 +9,12 @@ export const todayStatusSchema = z.enum(TODAY_STATUSES);
 
 export const dashboardOverviewSchema = z.object({
   totalActiveAthletes: z.number().int(),
+  activePlansCount: z.number().int(),
   workoutsPlannedToday: z.number().int(),
   workoutsCompletedToday: z.number().int(),
   openActionItemsCount: z.number().int(),
   trainedThisWeekCount: z.number().int(),
+  newAthletesCount: z.number().int(),
 });
 
 export const dashboardActionItemSchema = z.object({

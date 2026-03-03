@@ -73,6 +73,8 @@ export const PlatformBottomNav = () => {
             label={item.label}
             icon={ICON_MAP[item.icon]}
             sx={{
+              minWidth: "auto",
+              px: 0.5,
               color: "text.secondary",
               "&.Mui-selected": {
                 color: "primary.main",

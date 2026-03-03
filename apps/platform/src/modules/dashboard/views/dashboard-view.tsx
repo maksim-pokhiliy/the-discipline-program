@@ -19,7 +19,7 @@ export const DashboardView = () => {
       loadingMessage="Loading dashboard..."
     >
       {(data) => (
-        <Stack spacing={2}>
+        <Stack spacing={{ xs: 1.5, md: 3 }}>
           <OverviewSection overview={data.overview} />
           <ActionItemsSection items={data.actionItems} />
         </Stack>

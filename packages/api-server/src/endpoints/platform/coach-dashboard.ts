@@ -33,54 +33,59 @@ export const platformCoachDashboardApi = {
 
     weekAgo.setDate(weekAgo.getDate() - TRAINED_THIS_WEEK_DAYS);
 
-    const [enrollments, openActionItems, recentNotesRaw, recentEnrollments] = await Promise.all([
-      prisma.planEnrollment.findMany({
-        where: {
-          status: "ACTIVE",
-          trainingPlan: { coachId, deletedAt: null },
-        },
-        include: enrollmentInclude,
-      }),
+    const [enrollments, openActionItems, recentNotesRaw, recentEnrollments, activePlansCount] =
+      await Promise.all([
+        prisma.planEnrollment.findMany({
+          where: {
+            status: "ACTIVE",
+            trainingPlan: { coachId, deletedAt: null },
+          },
+          include: enrollmentInclude,
+        }),
 
-      prisma.coachActionItem.findMany({
-        where: { coachId, status: "OPEN" },
-        include: {
-          athlete: { select: { id: true, name: true, image: true } },
-        },
-        orderBy: { createdAt: "desc" },
-      }),
+        prisma.coachActionItem.findMany({
+          where: { coachId, status: "OPEN" },
+          include: {
+            athlete: { select: { id: true, name: true, image: true } },
+          },
+          orderBy: { createdAt: "desc" },
+        }),
 
-      prisma.coachNote.findMany({
-        where: { coachId },
-        orderBy: { createdAt: "desc" },
-        take: 10,
-        include: {
-          athlete: { select: { id: true, name: true } },
-        },
-      }),
+        prisma.coachNote.findMany({
+          where: { coachId },
+          orderBy: { createdAt: "desc" },
+          take: 10,
+          include: {
+            athlete: { select: { id: true, name: true } },
+          },
+        }),
 
-      prisma.planEnrollment.findMany({
-        where: {
-          status: "ACTIVE",
-          startDate: { gte: thresholdDate },
-          trainingPlan: { coachId, deletedAt: null },
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-              workoutLogs: {
-                select: { id: true },
-                take: 1,
+        prisma.planEnrollment.findMany({
+          where: {
+            status: "ACTIVE",
+            startDate: { gte: thresholdDate },
+            trainingPlan: { coachId, deletedAt: null },
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+                workoutLogs: {
+                  select: { id: true },
+                  take: 1,
+                },
               },
             },
+            trainingPlan: { select: { name: true } },
           },
-          trainingPlan: { select: { name: true } },
-        },
-      }),
-    ]);
+        }),
+
+        prisma.trainingPlan.count({
+          where: { coachId, status: "ACTIVE", deletedAt: null },
+        }),
+      ]);
 
     const athletesSummary = computeAthletesSummary(enrollments);
     const loadDistributionToday = computeLoadDistribution(enrollments);
@@ -147,10 +152,12 @@ export const platformCoachDashboardApi = {
     return {
       overview: {
         totalActiveAthletes: uniqueAthletes.size,
+        activePlansCount,
         workoutsPlannedToday: uniqueAthletes.size,
         workoutsCompletedToday: completedToday,
         openActionItemsCount: openActionItems.length,
         trainedThisWeekCount: trainedThisWeek.size,
+        newAthletesCount: recentEnrollments.length,
       },
       actionItems,
       athletesSummary,
