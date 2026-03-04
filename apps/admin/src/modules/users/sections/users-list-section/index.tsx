@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 
-import { USER_ROLES, type UserRole } from "@repo/contracts/auth";
+import { UserRole } from "@repo/contracts/auth";
 import { type AdminUserListItem } from "@repo/contracts/user";
 import { formatDate } from "@repo/shared";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
@@ -28,7 +28,7 @@ const filters: DataTableFilter<AdminUserListItem>[] = [
   {
     id: "role",
     label: "Role",
-    options: USER_ROLES.map((role) => ({
+    options: Object.values(UserRole).map((role) => ({
       label: ROLE_CONFIG[role].label,
       value: role,
     })),
@@ -170,7 +170,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
       />
 
       <Menu anchorEl={menuAnchor} open={!!menuAnchor} onClose={handleMenuClose}>
-        {USER_ROLES.map((role) => {
+        {Object.values(UserRole).map((role) => {
           const currentUser = users.find((u) => u.id === menuUserId);
 
           return (

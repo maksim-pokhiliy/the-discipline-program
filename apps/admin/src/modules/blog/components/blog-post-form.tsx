@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { BLOG_CATEGORIES, type CreateBlogPostData } from "@repo/contracts/blog";
+import { BlogCategory, type CreateBlogPostData } from "@repo/contracts/blog";
 import { UPLOAD_CONFIG } from "@repo/contracts/upload";
 import { slugify } from "@repo/shared";
 import { FormCard, ImageUpload, RichTextEditor, TagsInput } from "@repo/ui";
@@ -153,7 +153,7 @@ export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: Blo
                 >
                   <MenuItem value="Uncategorized">Uncategorized</MenuItem>
 
-                  {BLOG_CATEGORIES.map((cat) => (
+                  {Object.values(BlogCategory).map((cat) => (
                     <MenuItem key={cat} value={cat}>
                       {cat}
                     </MenuItem>

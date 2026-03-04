@@ -24,7 +24,7 @@ const getInitial = (name?: string | null, email?: string | null): string => {
     return "";
   }
 
-  return source[0]!.toUpperCase();
+  return (source[0] ?? "").toUpperCase();
 };
 
 export const PlatformUserMenu = () => {

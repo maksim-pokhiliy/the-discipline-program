@@ -1,16 +1,16 @@
 import { z } from "zod";
 
 import {
-  ACTION_ITEM_RESOLVE_REASONS,
-  ACTION_ITEM_SEVERITIES,
-  ACTION_ITEM_STATUSES,
-  ACTION_ITEM_TYPES,
+  ActionItemResolveReason,
+  ActionItemSeverity,
+  ActionItemStatus,
+  ActionItemType,
 } from "./coach-action-item.constants";
 
-export const actionItemTypeSchema = z.enum(ACTION_ITEM_TYPES);
-export const actionItemSeveritySchema = z.enum(ACTION_ITEM_SEVERITIES);
-export const actionItemStatusSchema = z.enum(ACTION_ITEM_STATUSES);
-export const actionItemResolveReasonSchema = z.enum(ACTION_ITEM_RESOLVE_REASONS);
+export const actionItemTypeSchema = z.nativeEnum(ActionItemType);
+export const actionItemSeveritySchema = z.nativeEnum(ActionItemSeverity);
+export const actionItemStatusSchema = z.nativeEnum(ActionItemStatus);
+export const actionItemResolveReasonSchema = z.nativeEnum(ActionItemResolveReason);
 
 export const coachActionItemSchema = z.object({
   id: z.string().cuid(),

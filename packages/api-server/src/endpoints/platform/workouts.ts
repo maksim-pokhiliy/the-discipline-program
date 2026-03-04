@@ -18,7 +18,7 @@ export const platformWorkoutsApi = {
 
     const workouts = await prisma.workout.findMany({
       where: { planId, deletedAt: null },
-      orderBy: { dayOrder: "asc" },
+      orderBy: [{ scheduledDate: "asc" }, { createdAt: "asc" }],
     });
 
     return workouts.map(mapToWorkout);

@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 
-import { ACTIVITY_TYPE, type ActivityItem } from "@repo/contracts/dashboard";
+import { DashboardActivityType, type ActivityItem } from "@repo/contracts/dashboard";
 import { formatDate } from "@repo/shared";
 import { ContentSection } from "@repo/ui";
 
@@ -28,15 +28,15 @@ interface RecentActivitySectionProps {
 
 const getActivityIcon = (type: ActivityItem["type"]) => {
   switch (type) {
-    case ACTIVITY_TYPE.REVIEW:
+    case DashboardActivityType.REVIEW:
       return <RateReviewIcon />;
-    case ACTIVITY_TYPE.CONTACT:
+    case DashboardActivityType.CONTACT:
       return <ContactMailIcon />;
-    case ACTIVITY_TYPE.USER:
+    case DashboardActivityType.USER:
       return <PersonIcon />;
-    case ACTIVITY_TYPE.BLOG_POST:
+    case DashboardActivityType.BLOG_POST:
       return <ArticleIcon />;
-    case ACTIVITY_TYPE.PROGRAM:
+    case DashboardActivityType.PROGRAM:
       return <FitnessCenterIcon />;
     default:
       return <PersonIcon />;
@@ -45,15 +45,15 @@ const getActivityIcon = (type: ActivityItem["type"]) => {
 
 const getActivityColor = (type: ActivityItem["type"]) => {
   switch (type) {
-    case ACTIVITY_TYPE.REVIEW:
+    case DashboardActivityType.REVIEW:
       return "primary.main";
-    case ACTIVITY_TYPE.CONTACT:
+    case DashboardActivityType.CONTACT:
       return "warning.main";
-    case ACTIVITY_TYPE.USER:
+    case DashboardActivityType.USER:
       return "success.main";
-    case ACTIVITY_TYPE.BLOG_POST:
+    case DashboardActivityType.BLOG_POST:
       return "secondary.main";
-    case ACTIVITY_TYPE.PROGRAM:
+    case DashboardActivityType.PROGRAM:
       return "info.main";
     default:
       return "grey.500";
@@ -110,7 +110,7 @@ export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) 
                 </Stack>
               }
               secondary={
-                item.type === ACTIVITY_TYPE.REVIEW && item.rating ? (
+                item.type === DashboardActivityType.REVIEW && item.rating ? (
                   <Rating value={item.rating} readOnly size="small" sx={{ mt: 0.5 }} />
                 ) : (
                   item.subtitle

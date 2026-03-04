@@ -119,7 +119,7 @@ CRUD доступен из Admin app и Platform app.
 Иерархия тренировочного программирования:
 
 - `TrainingPlan` — программа, созданная тренером. name, description, isActive. Принадлежит Coach (coachId).
-- `Workout` — одна тренировочная сессия в плане. title, dayOrder, description. Soft delete.
+- `Workout` — одна тренировочная сессия в плане. title, scheduledDate, description. Soft delete.
 - `WorkoutBlock` — секция внутри тренировки. Группирует упражнения по категории. rounds, restSeconds, timeCap. Hard delete (CASCADE).
 - `PrescribedSet` — конкретное предписание. exerciseId, sets, reps, weight, unit, rpe, notes. Hard delete (CASCADE).
 

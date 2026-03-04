@@ -1,109 +1,153 @@
+import { HealthStatus } from "@repo/contracts/athlete-profile";
 import {
   type AthleteDailySummary,
   type LoadDistributionItem,
   type ProgressAthlete,
   type ProgressBuckets,
-  type TodayStatus,
   LOW_COMPLETION_RATE,
+  ProgressTrend,
+  TodayStatus,
 } from "@repo/contracts/coach-dashboard";
 
-import { daysBetween, startOfToday } from "./date-helpers";
+import { daysBetween, startOfDay, startOfToday, startOfWeek } from "./date-helpers";
 import type { EnrollmentWithData } from "./enrollment-query";
 
 export type { EnrollmentWithData };
 
 type TodayStatusResult = {
   status: TodayStatus;
-  currentWorkoutId: string | null;
+  missedCount: number;
+  currentWorkoutTitle: string | null;
   lastActivityDate: Date | null;
 };
 
+type ScheduledWorkout = { id: string; scheduledDate: Date; createdAt: Date; title: string };
+
+const hasScheduledDate = (w: {
+  id: string;
+  scheduledDate: Date | null;
+  createdAt: Date;
+  title: string;
+}): w is ScheduledWorkout => w.scheduledDate !== null;
+
 export const computeTodayStatus = (
-  workouts: { id: string; dayOrder: number }[],
+  workouts: { id: string; scheduledDate: Date | null; createdAt: Date; title: string }[],
   logs: { workoutId: string; date: Date }[],
 ): TodayStatusResult => {
-  if (workouts.length === 0) {
-    return { status: "NO_PLAN", currentWorkoutId: null, lastActivityDate: null };
-  }
-
-  const sortedWorkouts = [...workouts].sort((a, b) => a.dayOrder - b.dayOrder);
-  const loggedWorkoutIds = new Set(logs.map((l) => l.workoutId));
-  const today = startOfToday();
-
   const lastLog =
     logs.length > 0 ? logs.reduce((latest, l) => (l.date > latest.date ? l : latest)) : null;
+  const lastActivityDate = lastLog?.date ?? null;
 
-  const currentWorkout = sortedWorkouts.find((w) => !loggedWorkoutIds.has(w.id)) ?? null;
+  const scheduledWorkouts = workouts
+    .filter(hasScheduledDate)
+    .sort((a, b) => a.scheduledDate.getTime() - b.scheduledDate.getTime());
 
-  if (!currentWorkout) {
+  if (scheduledWorkouts.length === 0) {
     return {
-      status: "COMPLETED",
-      currentWorkoutId: null,
-      lastActivityDate: lastLog?.date ?? null,
+      status: TodayStatus.NO_SCHEDULE,
+      missedCount: 0,
+      currentWorkoutTitle: null,
+      lastActivityDate,
     };
   }
 
-  if (lastLog) {
-    const logDate = new Date(lastLog.date);
+  const today = startOfToday();
+  const weekStart = startOfWeek(today);
+  const loggedWorkoutIds = new Set(logs.map((l) => l.workoutId));
 
-    logDate.setHours(0, 0, 0, 0);
+  const todayWorkouts = scheduledWorkouts.filter(
+    (w) => startOfDay(w.scheduledDate).getTime() === today.getTime(),
+  );
 
-    if (logDate.getTime() === today.getTime()) {
-      return {
-        status: "COMPLETED",
-        currentWorkoutId: currentWorkout.id,
-        lastActivityDate: lastLog.date,
-      };
+  const pastWorkoutsThisWeek = scheduledWorkouts
+    .filter((w) => {
+      const d = startOfDay(w.scheduledDate);
+
+      return d.getTime() >= weekStart.getTime() && d.getTime() < today.getTime();
+    })
+    .filter((w) => startOfDay(w.createdAt).getTime() <= startOfDay(w.scheduledDate).getTime())
+    .sort((a, b) => b.scheduledDate.getTime() - a.scheduledDate.getTime());
+
+  let missedCount = 0;
+
+  for (const w of pastWorkoutsThisWeek) {
+    if (loggedWorkoutIds.has(w.id)) {
+      break;
     }
 
-    const daysSince = daysBetween(logDate, today);
+    missedCount++;
+  }
 
-    if (daysSince <= 1) {
-      return {
-        status: "PENDING",
-        currentWorkoutId: currentWorkout.id,
-        lastActivityDate: lastLog.date,
-      };
-    }
+  const todayAllDone =
+    todayWorkouts.length > 0 && todayWorkouts.every((w) => loggedWorkoutIds.has(w.id));
 
+  if (todayAllDone) {
     return {
-      status: "MISSED",
-      currentWorkoutId: currentWorkout.id,
-      lastActivityDate: lastLog.date,
+      status: TodayStatus.COMPLETED,
+      missedCount,
+      currentWorkoutTitle: null,
+      lastActivityDate,
+    };
+  }
+
+  const currentTodayWorkout = todayWorkouts.find((w) => !loggedWorkoutIds.has(w.id));
+
+  if (todayWorkouts.length > 0) {
+    return {
+      status: TodayStatus.PENDING,
+      missedCount,
+      currentWorkoutTitle: currentTodayWorkout?.title ?? null,
+      lastActivityDate,
+    };
+  }
+
+  if (missedCount > 0) {
+    return {
+      status: TodayStatus.MISSED,
+      missedCount,
+      currentWorkoutTitle: null,
+      lastActivityDate,
     };
   }
 
   return {
-    status: "PENDING",
-    currentWorkoutId: currentWorkout.id,
-    lastActivityDate: null,
+    status: TodayStatus.REST_DAY,
+    missedCount: 0,
+    currentWorkoutTitle: null,
+    lastActivityDate,
   };
+};
+
+const STATUS_PRIORITY: Record<TodayStatus, number> = {
+  [TodayStatus.MISSED]: 0,
+  [TodayStatus.PENDING]: 1,
+  [TodayStatus.COMPLETED]: 2,
+  [TodayStatus.REST_DAY]: 3,
+  [TodayStatus.NO_SCHEDULE]: 4,
 };
 
 export const computeAthletesSummary = (
   enrollments: EnrollmentWithData[],
 ): AthleteDailySummary[] => {
   const athleteMap = new Map<string, AthleteDailySummary>();
+  const today = startOfToday();
 
   for (const e of enrollments) {
     const user = e.user;
-    const { status, currentWorkoutId, lastActivityDate } = computeTodayStatus(
+    const { status, missedCount, currentWorkoutTitle, lastActivityDate } = computeTodayStatus(
       e.trainingPlan.workouts,
       user.workoutLogs,
     );
 
-    const today = startOfToday();
     const daysSinceLastActivity = lastActivityDate
       ? daysBetween(new Date(lastActivityDate), today)
       : null;
 
-    const currentWorkout = currentWorkoutId
-      ? e.trainingPlan.workouts.find((w) => w.id === currentWorkoutId)
-      : null;
-
     const existing = athleteMap.get(user.id);
+    const isHigherPriority =
+      !existing || STATUS_PRIORITY[status] < STATUS_PRIORITY[existing.todayStatus];
 
-    if (!existing || status === "COMPLETED") {
+    if (isHigherPriority) {
       athleteMap.set(user.id, {
         userId: user.id,
         name: user.name,
@@ -112,11 +156,14 @@ export const computeAthletesSummary = (
         planId: e.trainingPlan.id,
         planName: e.trainingPlan.name,
         todayStatus: status,
-        todayWorkoutTitle: currentWorkout?.title ?? null,
+        missedCount,
+        todayWorkoutTitle: currentWorkoutTitle,
         lastActivityDate,
         daysSinceLastActivity,
-        healthStatus: user.athleteProfile?.healthStatus ?? "HEALTHY",
+        healthStatus: (user.athleteProfile?.healthStatus as HealthStatus) ?? HealthStatus.HEALTHY,
       });
+    } else if (existing && missedCount > existing.missedCount) {
+      existing.missedCount = missedCount;
     }
   }
 
@@ -127,16 +174,15 @@ export const computeLoadDistribution = (
   enrollments: EnrollmentWithData[],
 ): LoadDistributionItem[] => {
   const categoryMap = new Map<string, { name: string; athletes: Set<string> }>();
+  const today = startOfToday();
 
   for (const e of enrollments) {
-    const { currentWorkoutId } = computeTodayStatus(e.trainingPlan.workouts, e.user.workoutLogs);
+    const todayWorkouts = e.trainingPlan.workouts.filter(
+      (w) => w.scheduledDate && startOfDay(w.scheduledDate).getTime() === today.getTime(),
+    );
 
-    const currentWorkout = currentWorkoutId
-      ? e.trainingPlan.workouts.find((w) => w.id === currentWorkoutId)
-      : null;
-
-    if (currentWorkout) {
-      for (const block of currentWorkout.blocks) {
+    for (const workout of todayWorkouts) {
+      for (const block of workout.blocks) {
         const cat = block.category;
         const entry = categoryMap.get(cat.id) ?? { name: cat.name, athletes: new Set<string>() };
 
@@ -201,7 +247,12 @@ export const computeProgressBuckets = (enrollments: EnrollmentWithData[]): Progr
       name: data.name,
       image: data.image,
       completionRate: rate,
-      trend: rate >= 0.7 ? "UP" : rate < LOW_COMPLETION_RATE ? "DOWN" : "STABLE",
+      trend:
+        rate >= 0.7
+          ? ProgressTrend.UP
+          : rate < LOW_COMPLETION_RATE
+            ? ProgressTrend.DOWN
+            : ProgressTrend.STABLE,
       href: `/coach/athletes/${userId}`,
     };
 

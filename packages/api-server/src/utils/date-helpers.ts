@@ -8,3 +8,32 @@ export const startOfToday = (): Date => {
 
   return d;
 };
+
+export const startOfWeek = (date: Date): Date => {
+  const d = new Date(date);
+
+  d.setHours(0, 0, 0, 0);
+
+  const day = d.getDay();
+  const diff = day === 0 ? 6 : day - 1;
+
+  d.setDate(d.getDate() - diff);
+
+  return d;
+};
+
+export const endOfWeek = (date: Date): Date => {
+  const d = startOfWeek(date);
+
+  d.setDate(d.getDate() + 6);
+
+  return d;
+};
+
+export const startOfDay = (date: Date): Date => {
+  const d = new Date(date);
+
+  d.setHours(0, 0, 0, 0);
+
+  return d;
+};

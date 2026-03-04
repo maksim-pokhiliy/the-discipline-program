@@ -15,8 +15,8 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import {
   type CreateProductData,
-  PRODUCT_CURRENCIES,
-  PRICE_INTERVALS,
+  ProductCurrency,
+  PriceInterval,
   PRICE_INTERVAL_LABELS,
 } from "@repo/contracts/product";
 import { amountToCents, slugify } from "@repo/shared";
@@ -156,7 +156,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                     disabled={isLoading}
                     value={field.value || "USD"}
                   >
-                    {PRODUCT_CURRENCIES.map((currency) => (
+                    {Object.values(ProductCurrency).map((currency) => (
                       <MenuItem key={currency} value={currency}>
                         {currency}
                       </MenuItem>
@@ -179,7 +179,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                     disabled={isLoading}
                     value={field.value || "MONTHLY"}
                   >
-                    {PRICE_INTERVALS.map((interval) => (
+                    {Object.values(PriceInterval).map((interval) => (
                       <MenuItem key={interval} value={interval}>
                         {PRICE_INTERVAL_LABELS[interval]}
                       </MenuItem>

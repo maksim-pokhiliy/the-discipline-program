@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { TRAINING_PLAN_STATUSES } from "./training-plan.constants";
+import { TrainingPlanStatus } from "./training-plan.constants";
 
-export const trainingPlanStatusSchema = z.enum(TRAINING_PLAN_STATUSES);
+export const trainingPlanStatusSchema = z.nativeEnum(TrainingPlanStatus);
 
 export const trainingPlanSchema = z.object({
   id: z.string().cuid(),

@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-import { GENDERS, HEALTH_STATUSES } from "./athlete-profile.constants";
+import { Gender, HealthStatus } from "./athlete-profile.constants";
 
-export const healthStatusSchema = z.enum(HEALTH_STATUSES);
+export const healthStatusSchema = z.nativeEnum(HealthStatus);
 
 export const athleteProfileSchema = z.object({
   id: z.string().cuid(),
   userId: z.string().cuid(),
-  gender: z.enum(GENDERS).nullable(),
+  gender: z.nativeEnum(Gender).nullable(),
   heightCm: z.number().int().nullable(),
   weightKg: z.number().nullable(),
   healthStatus: healthStatusSchema,
@@ -17,7 +17,7 @@ export const athleteProfileSchema = z.object({
 });
 
 export const updateAthleteProfileSchema = z.object({
-  gender: z.enum(GENDERS).optional(),
+  gender: z.nativeEnum(Gender).optional(),
   heightCm: z.number().int().positive().optional(),
   weightKg: z.number().positive().optional(),
   healthStatus: healthStatusSchema.optional(),

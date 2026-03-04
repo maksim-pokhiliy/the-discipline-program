@@ -1,6 +1,6 @@
 # ROADMAP: The Discipline Program
 
-> Last updated: 2026-02-20 (Phase 3.2 in progress)
+> Last updated: 2026-03-03 (Phase 3.2 in progress)
 > Approach: Quality > Speed. Sequential execution. No deadlines.
 > Product concept: see docs/ARCHITECTURE.md
 
@@ -82,37 +82,52 @@ Schema changes:
 - [x] `User.name: String?` (moved from AthleteProfile — design debt resolved)
 - [x] `TrainingPlanStatus` enum (DRAFT → ACTIVE → ARCHIVED), replaces `isActive: Boolean`
 - [x] `CoachNote` model (coach→athlete notes)
-- [x] `AthleteFlag` model (INJURY/RESTRICTION/ATTENTION flags)
-- [x] DB trigger: enrollment protection (prevents soft-deleting plans with active enrollments)
+- [ ] `AthleteFlag` model (INJURY/RESTRICTION/ATTENTION flags) — not in schema yet
+- [ ] DB trigger: enrollment protection — not implemented (API-level check exists in delete handler)
 
 Dashboard (7 sections):
 
-- [ ] Needs Attention — priority-sorted alerts requiring coach intervention (missed workouts, unreviewed logs, injuries, subscription issues, new enrollees)
-- [ ] Today Overview — athletes scheduled today with completion status, plan info, last activity
-- [ ] Athlete Activity Feed — reverse-chronological stream of athlete events (completions, substitutions, benchmarks, enrollments, status changes)
-- [ ] Compliance / Adherence Summary — weekly adherence %, active athletes count, missed sessions, per-plan engagement metrics
-- [ ] PR & Benchmark Changes — personal records and benchmark improvements from current week
-- [ ] Quick Actions — shortcuts: create plan, add workout, add athlete to plan, add exercise, view athletes, manage benchmarks
-- [ ] Coach Snapshot — portfolio overview: total active athletes, active plans, new athletes in period, paused/completed enrollments
+- [x] Needs Attention — backend (reconcile + severity) ✅, UI ✅
+- [x] Coach Snapshot — backend ✅, UI partial (4 metric cards, missing: active plans, new athletes, paused enrollments)
+- [ ] Today Overview — backend ✅ (`athletesSummary` computed), UI not started
+- [ ] Athlete Activity Feed — backend ✅ (`recentActivity` computed), UI not started
+- [ ] Compliance / Adherence Summary — backend ✅ (`progressBuckets` computed), UI not started
+- [ ] PR & Benchmark Changes — backend not started, UI not started
+- [ ] Quick Actions — UI not started
 
 Training Plans:
 
-- [x] List with filter tabs (All/Active/Draft/Archived), mobile-first cards
-- [x] Create/edit plan (FormView)
+- [x] Backend: full CRUD + archive/restore/activate/duplicate endpoints
+- [x] API client + React Query hooks
 - [x] Archive-first delete flow (ACTIVE → archive → delete from ARCHIVED)
 - [x] Plan duplication (deep copy: workouts → blocks → prescribed sets)
 - [x] Enriched list data (workouts count, enrolled athletes, last activity, linked products)
+- [ ] UI: list page with filter tabs — backend ready, UI is stub (was implemented, reset in `0af5807`)
+- [ ] UI: create/edit form — backend ready, UI is stub
+
+Known bug: Dashboard loading flash — reconcile mutation races with getDashboard query, causing ~2s delay where action items appear empty.
 
 ### 3.3 Coach: Workout builder
 
+Backend layer (contracts + API server + route handlers): ✅ complete
+
+- [x] Contracts: Workout, WorkoutBlock, PrescribedSet — full CRUD schemas
+- [x] API Server: CRUD endpoints with ownership verification and mappers
+- [x] Route handlers: all protected with `withPlatformAuth`
+
+Frontend layer: not started
+
+- [ ] API client endpoints + React Query hooks (workouts, blocks, sets)
 - [ ] Plan detail page = workout builder entry point
-- [ ] Workouts as accordion items (sorted by dayOrder)
+- [ ] Workouts as accordion items (sorted by scheduledDate)
 - [ ] Add/edit/delete workouts (dialog)
 - [ ] Blocks within workout (category, rounds, time cap)
 - [ ] Prescribed sets within block (exercise picker, sets, reps, weight, unit, RPE, notes)
 - [ ] Lazy loading: workouts → blocks → sets per level
 
 ### 3.4 Coach: Exercise library
+
+Backend layer: ✅ complete (contracts, API server, route handlers, API client + hooks)
 
 - [ ] Browse exercises from platform (with search/filter by category)
 - [ ] Add new exercise (name, description, video URL, category)
@@ -121,14 +136,22 @@ Training Plans:
 
 ### 3.5 Coach: Athlete management
 
+Backend layer: ✅ complete (enrollments CRUD, coach notes CRUD, athlete profile get/upsert, action items)
+
+Missing API client: planEnrollments, athleteProfile hooks not created
+
 - [ ] View athletes enrolled in plans (derived from PlanEnrollment)
 - [ ] Enroll/unenroll athletes from plans
 - [ ] View athlete profile and benchmarks
 - [ ] View athlete workout logs
-- [ ] Coach notes per athlete (CRUD)
-- [ ] Athlete flags (INJURY/RESTRICTION/ATTENTION) with resolve
+- [ ] Coach notes per athlete (CRUD) — backend + hooks ready
+- [ ] Athlete flags (INJURY/RESTRICTION/ATTENTION) with resolve — schema not created yet
 
 ### 3.6 Coach: Benchmarks
+
+Backend layer: ✅ complete (BenchmarkDefinition CRUD, UserBenchmark CRUD, route handlers)
+
+Missing API client: benchmarkDefinitions, userBenchmarks hooks not created
 
 - [ ] Manage benchmark catalog (CRUD definitions)
 - [ ] Add/update benchmarks on athlete profiles

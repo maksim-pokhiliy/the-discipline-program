@@ -35,7 +35,9 @@ export const PlatformBottomNav = () => {
       return index;
     }
 
-    return item.href.length > COACH_NAVIGATION.items[bestIndex]!.href.length ? index : bestIndex;
+    const best = COACH_NAVIGATION.items[bestIndex];
+
+    return best && item.href.length > best.href.length ? index : bestIndex;
   }, -1);
 
   return (
@@ -73,6 +75,8 @@ export const PlatformBottomNav = () => {
             label={item.label}
             icon={ICON_MAP[item.icon]}
             sx={{
+              minWidth: "auto",
+              px: 0.5,
               color: "text.secondary",
               "&.Mui-selected": {
                 color: "primary.main",
