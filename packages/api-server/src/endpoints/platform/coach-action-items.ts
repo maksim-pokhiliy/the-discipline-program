@@ -17,7 +17,7 @@ import {
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-import { daysBetween, startOfToday } from "../../utils/date-helpers";
+import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
 import { type EnrollmentWithData, enrollmentInclude } from "../../utils/enrollment-query";
 
 import { resolveCoachId } from "./guards";
@@ -30,9 +30,9 @@ type Condition = {
   metadata: Record<string, unknown>;
 };
 
-const computeConditions = (enrollments: EnrollmentWithData[]): Condition[] => {
+const computeConditions = (enrollments: EnrollmentWithData[], tz: string): Condition[] => {
   const conditions: Condition[] = [];
-  const today = startOfToday();
+  const today = startOfTodayInTz(tz);
   const processedAthletes = new Set<string>();
 
   for (const e of enrollments) {
@@ -50,7 +50,7 @@ const computeConditions = (enrollments: EnrollmentWithData[]): Condition[] => {
         : null;
 
     if (lastLog) {
-      const daysSince = daysBetween(new Date(lastLog.date), today);
+      const daysSince = daysBetweenInTz(new Date(lastLog.date), today, tz);
 
       if (daysSince >= MISSED_DAYS_WARNING) {
         conditions.push({
@@ -66,7 +66,7 @@ const computeConditions = (enrollments: EnrollmentWithData[]): Condition[] => {
       }
     }
 
-    const enrolledDays = daysBetween(e.startDate, today);
+    const enrolledDays = daysBetweenInTz(e.startDate, today, tz);
 
     if (enrolledDays <= NEW_ATHLETE_THRESHOLD_DAYS && user.workoutLogs.length === 0) {
       const enrolledText =
@@ -144,6 +144,13 @@ export const platformCoachActionItemsApi = {
   reconcile: async (userId: string): Promise<ReconcileResponse> => {
     const coachId = await resolveCoachId(userId);
 
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { timezone: true },
+    });
+
+    const tz = user.timezone;
+
     return prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`reconcile:${coachId}`}))`;
 
@@ -165,7 +172,7 @@ export const platformCoachActionItemsApi = {
         }),
       ]);
 
-      const conditions = computeConditions(enrollments);
+      const conditions = computeConditions(enrollments, tz);
 
       const openByKey = new Map<string, PrismaCoachActionItemRecord>();
       const duplicates: PrismaCoachActionItemRecord[] = [];

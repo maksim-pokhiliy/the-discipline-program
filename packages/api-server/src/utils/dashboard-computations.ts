@@ -9,7 +9,7 @@ import {
   TodayStatus,
 } from "@repo/contracts/coach-dashboard";
 
-import { daysBetween, startOfDay, startOfToday, startOfWeek } from "./date-helpers";
+import { daysBetweenInTz, startOfDayInTz, startOfTodayInTz, startOfWeekInTz } from "./date-helpers";
 import type { EnrollmentWithData } from "./enrollment-query";
 
 export type { EnrollmentWithData };
@@ -33,6 +33,7 @@ const hasScheduledDate = (w: {
 export const computeTodayStatus = (
   workouts: { id: string; scheduledDate: Date | null; createdAt: Date; title: string }[],
   logs: { workoutId: string; date: Date }[],
+  tz: string,
 ): TodayStatusResult => {
   const lastLog =
     logs.length > 0 ? logs.reduce((latest, l) => (l.date > latest.date ? l : latest)) : null;
@@ -51,21 +52,24 @@ export const computeTodayStatus = (
     };
   }
 
-  const today = startOfToday();
-  const weekStart = startOfWeek(today);
+  const today = startOfTodayInTz(tz);
+  const weekStart = startOfWeekInTz(today, tz);
   const loggedWorkoutIds = new Set(logs.map((l) => l.workoutId));
 
   const todayWorkouts = scheduledWorkouts.filter(
-    (w) => startOfDay(w.scheduledDate).getTime() === today.getTime(),
+    (w) => startOfDayInTz(w.scheduledDate, tz).getTime() === today.getTime(),
   );
 
   const pastWorkoutsThisWeek = scheduledWorkouts
     .filter((w) => {
-      const d = startOfDay(w.scheduledDate);
+      const d = startOfDayInTz(w.scheduledDate, tz);
 
       return d.getTime() >= weekStart.getTime() && d.getTime() < today.getTime();
     })
-    .filter((w) => startOfDay(w.createdAt).getTime() <= startOfDay(w.scheduledDate).getTime())
+    .filter(
+      (w) =>
+        startOfDayInTz(w.createdAt, tz).getTime() <= startOfDayInTz(w.scheduledDate, tz).getTime(),
+    )
     .sort((a, b) => b.scheduledDate.getTime() - a.scheduledDate.getTime());
 
   let missedCount = 0;
@@ -128,19 +132,21 @@ const STATUS_PRIORITY: Record<TodayStatus, number> = {
 
 export const computeAthletesSummary = (
   enrollments: EnrollmentWithData[],
+  tz: string,
 ): AthleteDailySummary[] => {
   const athleteMap = new Map<string, AthleteDailySummary>();
-  const today = startOfToday();
+  const today = startOfTodayInTz(tz);
 
   for (const e of enrollments) {
     const user = e.user;
     const { status, missedCount, currentWorkoutTitle, lastActivityDate } = computeTodayStatus(
       e.trainingPlan.workouts,
       user.workoutLogs,
+      tz,
     );
 
     const daysSinceLastActivity = lastActivityDate
-      ? daysBetween(new Date(lastActivityDate), today)
+      ? daysBetweenInTz(new Date(lastActivityDate), today, tz)
       : null;
 
     const existing = athleteMap.get(user.id);
@@ -172,13 +178,14 @@ export const computeAthletesSummary = (
 
 export const computeLoadDistribution = (
   enrollments: EnrollmentWithData[],
+  tz: string,
 ): LoadDistributionItem[] => {
   const categoryMap = new Map<string, { name: string; athletes: Set<string> }>();
-  const today = startOfToday();
+  const today = startOfTodayInTz(tz);
 
   for (const e of enrollments) {
     const todayWorkouts = e.trainingPlan.workouts.filter(
-      (w) => w.scheduledDate && startOfDay(w.scheduledDate).getTime() === today.getTime(),
+      (w) => w.scheduledDate && startOfDayInTz(w.scheduledDate, tz).getTime() === today.getTime(),
     );
 
     for (const workout of todayWorkouts) {

@@ -13,7 +13,12 @@ import {
   computeLoadDistribution,
   computeProgressBuckets,
 } from "../../utils/dashboard-computations";
-import { endOfWeek, startOfDay, startOfToday, startOfWeek } from "../../utils/date-helpers";
+import {
+  endOfWeekInTz,
+  startOfDayInTz,
+  startOfTodayInTz,
+  startOfWeekInTz,
+} from "../../utils/date-helpers";
 import { enrollmentInclude } from "../../utils/enrollment-query";
 
 import { platformCoachActionItemsApi } from "./coach-action-items";
@@ -24,9 +29,16 @@ export const platformCoachDashboardApi = {
     await platformCoachActionItemsApi.reconcile(userId);
 
     const coachId = await resolveCoachId(userId);
-    const today = startOfToday();
-    const weekStart = startOfWeek(today);
-    const weekEnd = endOfWeek(today);
+
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { timezone: true },
+    });
+
+    const tz = user.timezone;
+    const today = startOfTodayInTz(tz);
+    const weekStart = startOfWeekInTz(today, tz);
+    const weekEnd = endOfWeekInTz(today, tz);
 
     const [enrollments, openActionItems, recentNotesRaw, recentEnrollments, activePlansCount] =
       await Promise.all([
@@ -82,8 +94,8 @@ export const platformCoachDashboardApi = {
         }),
       ]);
 
-    const athletesSummary = computeAthletesSummary(enrollments);
-    const loadDistributionToday = computeLoadDistribution(enrollments);
+    const athletesSummary = computeAthletesSummary(enrollments, tz);
+    const loadDistributionToday = computeLoadDistribution(enrollments, tz);
     const progressBuckets = computeProgressBuckets(enrollments);
 
     const uniqueAthletes = new Set(enrollments.map((e) => e.user.id));
@@ -110,7 +122,7 @@ export const platformCoachDashboardApi = {
 
         seen.add(key);
 
-        const d = startOfDay(w.scheduledDate);
+        const d = startOfDayInTz(w.scheduledDate, tz);
         const isThisWeek = d.getTime() >= weekStart.getTime() && d.getTime() <= weekEnd.getTime();
 
         if (!isThisWeek) {
@@ -198,7 +210,7 @@ export const platformCoachDashboardApi = {
         workoutsPlannedThisWeek: plannedThisWeek,
         workoutsCompletedThisWeek: completedThisWeek,
         openActionItemsCount: openActionItems.length,
-        newAthletesCount: recentEnrollments.length,
+        newAthletesCount: new Set(recentEnrollments.map((e) => e.user.id)).size,
       },
       actionItems,
       athletesSummary,
