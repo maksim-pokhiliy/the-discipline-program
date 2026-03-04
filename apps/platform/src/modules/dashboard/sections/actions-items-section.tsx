@@ -11,7 +11,7 @@ import { useResolveActionItem } from "@app/lib/hooks";
 import { AthleteCard } from "../components";
 import { ActionMenu } from "../components/action-menu";
 
-import { INITIAL_VISIBLE_COUNT, getChip, getTypeConfig } from "./action-items-config";
+import { INITIAL_VISIBLE_COUNT, getChip, getSeverityColor } from "./action-items-config";
 
 type ActionItemsSectionProps = {
   items: DashboardActionItem[];
@@ -30,7 +30,6 @@ export const ActionItemsSection: React.FC<ActionItemsSectionProps> = ({ items })
   const hiddenItems = items.slice(INITIAL_VISIBLE_COUNT);
 
   const renderItem = (item: DashboardActionItem) => {
-    const config = getTypeConfig(item.type);
     const chip = getChip(item);
     const isResolving = resolveMutation.isPending && resolveMutation.variables === item.id;
 
@@ -39,7 +38,7 @@ export const ActionItemsSection: React.FC<ActionItemsSectionProps> = ({ items })
         key={item.id}
         name={item.athleteName ?? "Unknown"}
         image={item.athleteImage}
-        severity={config.severity}
+        severity={getSeverityColor(item.severity)}
         message={item.message}
         chips={[chip]}
         action={
