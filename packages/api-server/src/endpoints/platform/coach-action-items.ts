@@ -1,6 +1,6 @@
 import type { CoachActionItem as PrismaCoachActionItemRecord } from "@prisma/client";
 
-import { HealthStatus } from "@repo/contracts/athlete-profile";
+import { HEALTH_STATUS_LABELS, HealthStatus } from "@repo/contracts/athlete-profile";
 import {
   ActionItemResolveReason,
   ActionItemSeverity,
@@ -69,11 +69,18 @@ const computeConditions = (enrollments: EnrollmentWithData[]): Condition[] => {
     const enrolledDays = daysBetween(e.startDate, today);
 
     if (enrolledDays <= NEW_ATHLETE_THRESHOLD_DAYS && user.workoutLogs.length === 0) {
+      const enrolledText =
+        enrolledDays === 0
+          ? "Enrolled today"
+          : enrolledDays === 1
+            ? "Enrolled yesterday"
+            : `Enrolled ${enrolledDays} days ago`;
+
       conditions.push({
         athleteId: user.id,
         type: ActionItemType.NEW_NO_START,
         severity: ActionItemSeverity.INFO,
-        message: `Enrolled ${enrolledDays} day(s) ago, no workouts started`,
+        message: `${enrolledText}, no workouts started`,
         metadata: { enrollmentId: e.id },
       });
     }
@@ -89,7 +96,7 @@ const computeConditions = (enrollments: EnrollmentWithData[]): Condition[] => {
           healthStatus === HealthStatus.INJURED
             ? ActionItemSeverity.CRITICAL
             : ActionItemSeverity.WARNING,
-        message: `Athlete reported: ${healthStatus.toLowerCase()}`,
+        message: `Status: ${HEALTH_STATUS_LABELS[healthStatus].toLowerCase()} — review exercise assignments`,
         metadata: { healthStatus },
       });
     }

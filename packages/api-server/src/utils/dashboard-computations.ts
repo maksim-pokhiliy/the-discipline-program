@@ -34,20 +34,6 @@ export const computeTodayStatus = (
   workouts: { id: string; scheduledDate: Date | null; createdAt: Date; title: string }[],
   logs: { workoutId: string; date: Date }[],
 ): TodayStatusResult => {
-  const noResult: TodayStatusResult = {
-    status: TodayStatus.NO_PLAN,
-    missedCount: 0,
-    currentWorkoutTitle: null,
-    lastActivityDate: null,
-  };
-
-  if (workouts.length === 0) {
-    return noResult;
-  }
-
-  const today = startOfToday();
-  const weekStart = startOfWeek(today);
-  const loggedWorkoutIds = new Set(logs.map((l) => l.workoutId));
   const lastLog =
     logs.length > 0 ? logs.reduce((latest, l) => (l.date > latest.date ? l : latest)) : null;
   const lastActivityDate = lastLog?.date ?? null;
@@ -57,17 +43,21 @@ export const computeTodayStatus = (
     .sort((a, b) => a.scheduledDate.getTime() - b.scheduledDate.getTime());
 
   if (scheduledWorkouts.length === 0) {
-    return noResult;
+    return {
+      status: TodayStatus.NO_SCHEDULE,
+      missedCount: 0,
+      currentWorkoutTitle: null,
+      lastActivityDate,
+    };
   }
+
+  const today = startOfToday();
+  const weekStart = startOfWeek(today);
+  const loggedWorkoutIds = new Set(logs.map((l) => l.workoutId));
 
   const todayWorkouts = scheduledWorkouts.filter(
     (w) => startOfDay(w.scheduledDate).getTime() === today.getTime(),
   );
-
-  const todayAllDone =
-    todayWorkouts.length > 0 && todayWorkouts.every((w) => loggedWorkoutIds.has(w.id));
-
-  const currentTodayWorkout = todayWorkouts.find((w) => !loggedWorkoutIds.has(w.id));
 
   const pastWorkoutsThisWeek = scheduledWorkouts
     .filter((w) => {
@@ -88,6 +78,9 @@ export const computeTodayStatus = (
     missedCount++;
   }
 
+  const todayAllDone =
+    todayWorkouts.length > 0 && todayWorkouts.every((w) => loggedWorkoutIds.has(w.id));
+
   if (todayAllDone) {
     return {
       status: TodayStatus.COMPLETED,
@@ -96,6 +89,8 @@ export const computeTodayStatus = (
       lastActivityDate,
     };
   }
+
+  const currentTodayWorkout = todayWorkouts.find((w) => !loggedWorkoutIds.has(w.id));
 
   if (todayWorkouts.length > 0) {
     return {
@@ -116,17 +111,26 @@ export const computeTodayStatus = (
   }
 
   return {
-    status: TodayStatus.COMPLETED,
+    status: TodayStatus.REST_DAY,
     missedCount: 0,
     currentWorkoutTitle: null,
     lastActivityDate,
   };
 };
 
+const STATUS_PRIORITY: Record<TodayStatus, number> = {
+  [TodayStatus.MISSED]: 0,
+  [TodayStatus.PENDING]: 1,
+  [TodayStatus.COMPLETED]: 2,
+  [TodayStatus.REST_DAY]: 3,
+  [TodayStatus.NO_SCHEDULE]: 4,
+};
+
 export const computeAthletesSummary = (
   enrollments: EnrollmentWithData[],
 ): AthleteDailySummary[] => {
   const athleteMap = new Map<string, AthleteDailySummary>();
+  const today = startOfToday();
 
   for (const e of enrollments) {
     const user = e.user;
@@ -135,14 +139,15 @@ export const computeAthletesSummary = (
       user.workoutLogs,
     );
 
-    const today = startOfToday();
     const daysSinceLastActivity = lastActivityDate
       ? daysBetween(new Date(lastActivityDate), today)
       : null;
 
     const existing = athleteMap.get(user.id);
+    const isHigherPriority =
+      !existing || STATUS_PRIORITY[status] < STATUS_PRIORITY[existing.todayStatus];
 
-    if (!existing || status === TodayStatus.COMPLETED) {
+    if (isHigherPriority) {
       athleteMap.set(user.id, {
         userId: user.id,
         name: user.name,
@@ -157,6 +162,8 @@ export const computeAthletesSummary = (
         daysSinceLastActivity,
         healthStatus: (user.athleteProfile?.healthStatus as HealthStatus) ?? HealthStatus.HEALTHY,
       });
+    } else if (existing && missedCount > existing.missedCount) {
+      existing.missedCount = missedCount;
     }
   }
 

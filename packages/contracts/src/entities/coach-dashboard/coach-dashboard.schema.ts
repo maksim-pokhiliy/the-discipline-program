@@ -12,8 +12,9 @@ export const dashboardOverviewSchema = z.object({
   activePlansCount: z.number().int(),
   workoutsPlannedToday: z.number().int(),
   workoutsCompletedToday: z.number().int(),
+  workoutsPlannedThisWeek: z.number().int(),
+  workoutsCompletedThisWeek: z.number().int(),
   openActionItemsCount: z.number().int(),
-  trainedThisWeekCount: z.number().int(),
   newAthletesCount: z.number().int(),
 });
 

@@ -6,7 +6,7 @@ import { QueryWrapper } from "@repo/query";
 
 import { useCoachDashboard } from "@app/lib/hooks";
 
-import { ActionItemsSection, OverviewSection } from "../sections";
+import { ActionItemsSection, AthletesTodaySection, PulseSection } from "../sections";
 
 export const DashboardView = () => {
   const { data, isLoading, error } = useCoachDashboard();
@@ -19,9 +19,10 @@ export const DashboardView = () => {
       loadingMessage="Loading dashboard..."
     >
       {(data) => (
-        <Stack spacing={{ xs: 1.5, md: 3 }}>
-          <OverviewSection overview={data.overview} />
+        <Stack spacing={{ xs: 2, md: 3 }}>
+          <PulseSection overview={data.overview} />
           <ActionItemsSection items={data.actionItems} />
+          <AthletesTodaySection athletes={data.athletesSummary} />
         </Stack>
       )}
     </QueryWrapper>

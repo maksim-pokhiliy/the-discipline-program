@@ -1,2 +1,3 @@
 export { ActionItemsSection } from "./actions-items-section";
-export { OverviewSection } from "./overview-section";
+export { AthletesTodaySection } from "./athletes-today-section";
+export { PulseSection } from "./pulse-section";

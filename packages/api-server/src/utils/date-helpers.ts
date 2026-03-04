@@ -22,6 +22,14 @@ export const startOfWeek = (date: Date): Date => {
   return d;
 };
 
+export const endOfWeek = (date: Date): Date => {
+  const d = startOfWeek(date);
+
+  d.setDate(d.getDate() + 6);
+
+  return d;
+};
+
 export const startOfDay = (date: Date): Date => {
   const d = new Date(date);
 

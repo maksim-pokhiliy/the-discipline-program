@@ -21,6 +21,12 @@ export enum ActionItemResolveReason {
   MANUAL_CONTACTED = "MANUAL_CONTACTED",
 }
 
+export const TYPE_PRIORITY: Record<ActionItemType, number> = {
+  [ActionItemType.HEALTH_REPORT]: 0,
+  [ActionItemType.MISSED_WORKOUTS]: 1,
+  [ActionItemType.NEW_NO_START]: 2,
+};
+
 export const SEVERITY_PRIORITY: Record<ActionItemSeverity, number> = {
   [ActionItemSeverity.CRITICAL]: 0,
   [ActionItemSeverity.WARNING]: 1,

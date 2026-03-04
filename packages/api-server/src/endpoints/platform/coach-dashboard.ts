@@ -1,12 +1,10 @@
-import { SEVERITY_PRIORITY } from "@repo/contracts/coach-action-item";
+import { SEVERITY_PRIORITY, TYPE_PRIORITY } from "@repo/contracts/coach-action-item";
 import {
   CoachActivityType,
   type CoachDashboardData,
   type DashboardActionItem,
   type DashboardNote,
   type OnboardingAthlete,
-  NEW_ATHLETE_THRESHOLD_DAYS,
-  TRAINED_THIS_WEEK_DAYS,
 } from "@repo/contracts/coach-dashboard";
 
 import { prisma } from "../../db/client";
@@ -15,6 +13,7 @@ import {
   computeLoadDistribution,
   computeProgressBuckets,
 } from "../../utils/dashboard-computations";
+import { endOfWeek, startOfDay, startOfToday, startOfWeek } from "../../utils/date-helpers";
 import { enrollmentInclude } from "../../utils/enrollment-query";
 
 import { platformCoachActionItemsApi } from "./coach-action-items";
@@ -25,14 +24,9 @@ export const platformCoachDashboardApi = {
     await platformCoachActionItemsApi.reconcile(userId);
 
     const coachId = await resolveCoachId(userId);
-
-    const now = new Date();
-    const thresholdDate = new Date(now);
-
-    thresholdDate.setDate(thresholdDate.getDate() - NEW_ATHLETE_THRESHOLD_DAYS);
-    const weekAgo = new Date(now);
-
-    weekAgo.setDate(weekAgo.getDate() - TRAINED_THIS_WEEK_DAYS);
+    const today = startOfToday();
+    const weekStart = startOfWeek(today);
+    const weekEnd = endOfWeek(today);
 
     const [enrollments, openActionItems, recentNotesRaw, recentEnrollments, activePlansCount] =
       await Promise.all([
@@ -64,7 +58,7 @@ export const platformCoachDashboardApi = {
         prisma.planEnrollment.findMany({
           where: {
             status: "ACTIVE",
-            startDate: { gte: thresholdDate },
+            startDate: { gte: weekStart },
             trainingPlan: { coachId, deletedAt: null },
           },
           include: {
@@ -93,7 +87,54 @@ export const platformCoachDashboardApi = {
     const progressBuckets = computeProgressBuckets(enrollments);
 
     const uniqueAthletes = new Set(enrollments.map((e) => e.user.id));
-    const completedToday = athletesSummary.filter((a) => a.todayStatus === "COMPLETED").length;
+
+    const seen = new Set<string>();
+    let plannedToday = 0;
+    let completedToday = 0;
+    let plannedThisWeek = 0;
+    let completedThisWeek = 0;
+
+    for (const e of enrollments) {
+      const loggedIds = new Set(e.user.workoutLogs.map((l) => l.workoutId));
+
+      for (const w of e.trainingPlan.workouts) {
+        if (!w.scheduledDate) {
+          continue;
+        }
+
+        const key = `${e.user.id}:${w.id}`;
+
+        if (seen.has(key)) {
+          continue;
+        }
+
+        seen.add(key);
+
+        const d = startOfDay(w.scheduledDate);
+        const isThisWeek = d.getTime() >= weekStart.getTime() && d.getTime() <= weekEnd.getTime();
+
+        if (!isThisWeek) {
+          continue;
+        }
+
+        const isToday = d.getTime() === today.getTime();
+        const isLogged = loggedIds.has(w.id);
+
+        plannedThisWeek++;
+
+        if (isLogged) {
+          completedThisWeek++;
+        }
+
+        if (isToday) {
+          plannedToday++;
+
+          if (isLogged) {
+            completedToday++;
+          }
+        }
+      }
+    }
 
     const actionItems: DashboardActionItem[] = openActionItems
       .map((item) => ({
@@ -107,13 +148,11 @@ export const platformCoachDashboardApi = {
         href: `/coach/athletes/${item.athleteId}`,
         createdAt: item.createdAt,
       }))
-      .sort((a, b) => SEVERITY_PRIORITY[a.severity] - SEVERITY_PRIORITY[b.severity]);
-
-    const trainedThisWeek = new Set(
-      enrollments.flatMap((e) =>
-        e.user.workoutLogs.filter((l) => l.date >= weekAgo).map(() => e.user.id),
-      ),
-    );
+      .sort(
+        (a, b) =>
+          TYPE_PRIORITY[a.type] - TYPE_PRIORITY[b.type] ||
+          SEVERITY_PRIORITY[a.severity] - SEVERITY_PRIORITY[b.severity],
+      );
 
     const recentNotes: DashboardNote[] = recentNotesRaw.map((n) => ({
       id: n.id,
@@ -154,10 +193,11 @@ export const platformCoachDashboardApi = {
       overview: {
         totalActiveAthletes: uniqueAthletes.size,
         activePlansCount,
-        workoutsPlannedToday: uniqueAthletes.size,
+        workoutsPlannedToday: plannedToday,
         workoutsCompletedToday: completedToday,
+        workoutsPlannedThisWeek: plannedThisWeek,
+        workoutsCompletedThisWeek: completedThisWeek,
         openActionItemsCount: openActionItems.length,
-        trainedThisWeekCount: trainedThisWeek.size,
         newAthletesCount: recentEnrollments.length,
       },
       actionItems,

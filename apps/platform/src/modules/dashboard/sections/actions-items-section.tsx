@@ -2,24 +2,16 @@
 
 import { useState } from "react";
 
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Badge,
-  Button,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Button, Chip, Collapse, Divider, Paper, Stack, Typography } from "@mui/material";
 
 import type { DashboardActionItem } from "@repo/contracts/coach-dashboard";
 
 import { useResolveActionItem } from "@app/lib/hooks";
 
-import { ActionItemAlert } from "../components";
+import { AthleteCard } from "../components";
+import { ActionMenu } from "../components/action-menu";
 
-const INITIAL_VISIBLE_COUNT = 5;
+import { INITIAL_VISIBLE_COUNT, getChip, getTypeConfig } from "./action-items-config";
 
 type ActionItemsSectionProps = {
   items: DashboardActionItem[];
@@ -34,37 +26,58 @@ export const ActionItemsSection: React.FC<ActionItemsSectionProps> = ({ items })
     return null;
   }
 
-  const visibleItems = showAll ? items : items.slice(0, INITIAL_VISIBLE_COUNT);
-  const remainingCount = items.length - INITIAL_VISIBLE_COUNT;
+  const firstItems = items.slice(0, INITIAL_VISIBLE_COUNT);
+  const hiddenItems = items.slice(INITIAL_VISIBLE_COUNT);
+
+  const renderItem = (item: DashboardActionItem) => {
+    const config = getTypeConfig(item.type);
+    const chip = getChip(item);
+    const isResolving = resolveMutation.isPending && resolveMutation.variables === item.id;
+
+    return (
+      <AthleteCard
+        key={item.id}
+        name={item.athleteName ?? "Unknown"}
+        image={item.athleteImage}
+        severity={config.severity}
+        message={item.message}
+        chips={[chip]}
+        action={
+          <ActionMenu
+            itemId={item.id}
+            href={item.href}
+            onResolve={resolveMutation.mutate}
+            isResolving={isResolving}
+          />
+        }
+      />
+    );
+  };
 
   return (
-    <Accordion variant="outlined">
-      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Stack direction="row" spacing={3} alignItems="center">
+    <Paper variant="outlined" sx={{ p: 2 }}>
+      <Stack spacing={2}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
           <Typography variant="h6">Needs Attention</Typography>
-
-          <Badge color="error" badgeContent={items.length} />
+          <Chip size="small" label={items.length} color="error" />
         </Stack>
-      </AccordionSummary>
 
-      <AccordionDetails>
+        <Divider />
+
         <Stack spacing={2}>
-          {visibleItems.map((item) => (
-            <ActionItemAlert
-              key={item.id}
-              item={item}
-              onResolve={resolveMutation.mutate}
-              isResolving={resolveMutation.isPending && resolveMutation.variables === item.id}
-            />
-          ))}
+          {firstItems.map(renderItem)}
 
-          {!showAll && remainingCount > 0 && (
-            <Button variant="outlined" onClick={() => setShowAll(true)}>
-              Show all ({remainingCount} more)
-            </Button>
-          )}
+          <Collapse in={showAll}>
+            <Stack spacing={2}>{hiddenItems.map(renderItem)}</Stack>
+          </Collapse>
         </Stack>
-      </AccordionDetails>
-    </Accordion>
+
+        {hiddenItems.length > 0 && (
+          <Button variant="outlined" onClick={() => setShowAll((prev) => !prev)}>
+            {showAll ? "Show less" : `Show ${hiddenItems.length} more`}
+          </Button>
+        )}
+      </Stack>
+    </Paper>
   );
 };
