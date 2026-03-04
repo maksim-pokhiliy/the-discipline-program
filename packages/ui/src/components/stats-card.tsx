@@ -9,9 +9,15 @@ type PaletteColorKey = {
   [K in keyof Palette]: Palette[K] extends PaletteColor ? K : never;
 }[keyof Palette];
 
-interface StatsCardProps {
+const sizeConfig = {
+  small: { titleVariant: "body2", valueVariant: "h5", spacing: 3, iconSize: "medium" },
+  medium: { titleVariant: "h6", valueVariant: "h3", spacing: 4, iconSize: "large" },
+} as const;
+
+type StatsCardProps = {
   title: string;
   value: string | number;
+  size?: "small" | "medium";
   subtitle?: string;
   tooltip?: string;
   icon?: ReactNode;
@@ -21,34 +27,32 @@ interface StatsCardProps {
     isPositive: boolean;
     label: string;
   };
-}
+};
 
 export const StatsCard = ({
   title,
   value,
+  size = "medium",
   subtitle,
   tooltip,
   icon,
   color = "primary",
   trend,
 }: StatsCardProps) => {
+  const config = sizeConfig[size];
+
   const card = (
-    <Card
-      sx={{
-        height: "100%",
-      }}
-      variant="outlined"
-    >
+    <Card sx={{ height: "100%" }} variant="elevation">
       <CardContent>
         <Stack
-          spacing={4}
+          spacing={config.spacing}
           sx={{
             justifyContent: "space-between",
             height: "100%",
           }}
         >
           <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
-            <Typography variant="h6" sx={{ color: "text.secondary" }}>
+            <Typography variant={config.titleVariant} sx={{ color: "text.secondary" }}>
               {title}
             </Typography>
 
@@ -66,7 +70,7 @@ export const StatsCard = ({
 
           <Stack>
             <Typography
-              variant="h3"
+              variant={config.valueVariant}
               sx={(theme) => ({
                 fontWeight: 700,
                 color: theme.palette[color].main,

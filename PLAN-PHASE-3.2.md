@@ -130,18 +130,18 @@ Dashboard отвечает на 5 вопросов:
 4. Какие программы в работе?
 5. Что я должен сделать прямо сейчас?
 
-### "Today" в sequential модели
+### "Today" в calendar модели
 
-Тренировки не привязаны к календарю. "Текущая тренировка" атлета = следующая невыполненная по dayOrder.
+Тренировки привязаны к календарю через `scheduledDate: DateTime?`.
 
 **Алгоритм:**
 
-1. Для каждого enrolled атлета: найти MAX(dayOrder) из выполненных WorkoutLogs
-2. Текущий workout = workout с dayOrder = MAX + 1
-3. Если WorkoutLog для текущего workout создан сегодня → COMPLETED
-4. Если нет, но последняя активность была вчера → PENDING
-5. Если >1 день без активности → MISSED
-6. Нет enrollment → NO_PLAN
+1. Для каждого enrolled атлета: проверить тренировки с scheduledDate на сегодня
+2. Все сегодняшние тренировки выполнены → COMPLETED
+3. Есть невыполненные сегодня → PENDING
+4. Нет тренировок на сегодня, но есть пропущенные на этой неделе → MISSED
+5. Нет тренировок вообще → NO_PLAN
+6. missedCount = непрерывная серия невыполненных тренировок назад от вчера (в пределах текущей недели), выполненная тренировка прерывает серию
 
 ### Секции Dashboard
 
@@ -254,7 +254,7 @@ Data: `endingPlans[]: { athleteId, athleteName, planId, planName, endDate, daysL
 
 API server: `Promise.all` параллельных Prisma запросов → compute all metrics in memory → return structured response.
 
-Key Prisma query: `getActiveEnrollments(coachId)` с include `user { name, image, workoutLogs(take:1), athleteProfile }` + `trainingPlan { name, workouts { dayOrder, title, blocks { category } } }`.
+Key Prisma query: `getActiveEnrollments(coachId)` с include `user { name, image, workoutLogs, athleteProfile }` + `trainingPlan { name, workouts { scheduledDate, createdAt, title, blocks { category } } }`.
 
 ---
 

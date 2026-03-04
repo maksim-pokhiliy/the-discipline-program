@@ -264,19 +264,20 @@ model TrainingPlan {
 }
 
 model Workout {
-  id          String         @id @default(cuid())
-  planId      String
-  plan        TrainingPlan   @relation(fields: [planId], references: [id])
-  dayOrder    Int
-  title       String
-  description String?
-  isArchived  Boolean        @default(false)
-  blocks      WorkoutBlock[]
-  logs        WorkoutLog[]
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  deletedAt   DateTime?
+  id            String         @id @default(cuid())
+  planId        String
+  plan          TrainingPlan   @relation(fields: [planId], references: [id])
+  scheduledDate DateTime?
+  title         String
+  description   String?
+  isArchived    Boolean        @default(false)
+  blocks        WorkoutBlock[]
+  logs          WorkoutLog[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  deletedAt     DateTime?
 
+  @@index([scheduledDate])
   @@index([createdAt])
   @@index([deletedAt])
   @@map("app_workouts")

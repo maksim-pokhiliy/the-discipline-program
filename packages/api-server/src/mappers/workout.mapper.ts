@@ -5,7 +5,7 @@ import { type Workout } from "@repo/contracts/workout";
 export const mapToWorkout = (w: PrismaWorkout): Workout => ({
   id: w.id,
   planId: w.planId,
-  dayOrder: w.dayOrder,
+  scheduledDate: w.scheduledDate,
   title: w.title,
   description: w.description,
   isArchived: w.isArchived,

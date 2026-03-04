@@ -1,24 +1,27 @@
 import { z } from "zod";
 
-import { HEALTH_STATUSES } from "../athlete-profile";
-import { ACTION_ITEM_SEVERITIES, ACTION_ITEM_TYPES } from "../coach-action-item";
+import { HealthStatus } from "../athlete-profile";
+import { ActionItemSeverity, ActionItemType } from "../coach-action-item";
 
-import { ACTIVITY_TYPES, PROGRESS_TRENDS, TODAY_STATUSES } from "./coach-dashboard.constants";
+import { CoachActivityType, ProgressTrend, TodayStatus } from "./coach-dashboard.constants";
 
-export const todayStatusSchema = z.enum(TODAY_STATUSES);
+export const todayStatusSchema = z.nativeEnum(TodayStatus);
 
 export const dashboardOverviewSchema = z.object({
   totalActiveAthletes: z.number().int(),
+  activePlansCount: z.number().int(),
   workoutsPlannedToday: z.number().int(),
   workoutsCompletedToday: z.number().int(),
+  workoutsPlannedThisWeek: z.number().int(),
+  workoutsCompletedThisWeek: z.number().int(),
   openActionItemsCount: z.number().int(),
-  trainedThisWeekCount: z.number().int(),
+  newAthletesCount: z.number().int(),
 });
 
 export const dashboardActionItemSchema = z.object({
   id: z.string().cuid(),
-  type: z.enum(ACTION_ITEM_TYPES),
-  severity: z.enum(ACTION_ITEM_SEVERITIES),
+  type: z.nativeEnum(ActionItemType),
+  severity: z.nativeEnum(ActionItemSeverity),
   athleteId: z.string().cuid(),
   athleteName: z.string().nullable(),
   athleteImage: z.string().nullable(),
@@ -35,10 +38,11 @@ export const athleteDailySummarySchema = z.object({
   planId: z.string().cuid().nullable(),
   planName: z.string().nullable(),
   todayStatus: todayStatusSchema,
+  missedCount: z.number().int(),
   todayWorkoutTitle: z.string().nullable(),
   lastActivityDate: z.date().nullable(),
   daysSinceLastActivity: z.number().int().nullable(),
-  healthStatus: z.enum(HEALTH_STATUSES),
+  healthStatus: z.nativeEnum(HealthStatus),
 });
 
 export const loadDistributionItemSchema = z.object({
@@ -53,7 +57,7 @@ export const progressAthleteSchema = z.object({
   name: z.string().nullable(),
   image: z.string().nullable(),
   completionRate: z.number(),
-  trend: z.enum(PROGRESS_TRENDS),
+  trend: z.nativeEnum(ProgressTrend),
   href: z.string(),
 });
 
@@ -73,7 +77,7 @@ export const dashboardNoteSchema = z.object({
 });
 
 export const coachActivityItemSchema = z.object({
-  type: z.enum(ACTIVITY_TYPES),
+  type: z.nativeEnum(CoachActivityType),
   athleteId: z.string().cuid(),
   athleteName: z.string().nullable(),
   description: z.string(),

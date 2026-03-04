@@ -1,7 +1,16 @@
-export const PAGE_SLUGS = ["home", "storefront", "about", "blog", "contact"] as const;
-export type PageSlug = (typeof PAGE_SLUGS)[number];
+export enum PageSlug {
+  HOME = "home",
+  STOREFRONT = "storefront",
+  ABOUT = "about",
+  BLOG = "blog",
+  CONTACT = "contact",
+}
 
-export const CONTACT_METHOD_TYPES = ["telegram", "email", "phone"] as const;
+export enum ContactMethodType {
+  TELEGRAM = "telegram",
+  EMAIL = "email",
+  PHONE = "phone",
+}
 
 export const PAGE_SECTIONS_MAP = {
   home: {

@@ -1,5 +1,5 @@
 import {
-  ACTIVITY_TYPE,
+  DashboardActivityType,
   type ActivityItem,
   type ContentStats,
   type DashboardData,
@@ -144,7 +144,7 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
   const activities: ActivityItem[] = [
     ...reviews.map((r) => ({
       id: r.id,
-      type: ACTIVITY_TYPE.REVIEW,
+      type: DashboardActivityType.REVIEW,
       title: `Review from ${r.authorName}`,
       subtitle: null,
       rating: r.rating,
@@ -153,7 +153,7 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
     })),
     ...contacts.map((c) => ({
       id: c.id,
-      type: ACTIVITY_TYPE.CONTACT,
+      type: DashboardActivityType.CONTACT,
       title: `Message from ${c.name || "Unknown"}`,
       subtitle: c.email || "No email",
       date: c.createdAt,
@@ -162,7 +162,7 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
     })),
     ...users.map((u) => ({
       id: u.id,
-      type: ACTIVITY_TYPE.USER,
+      type: DashboardActivityType.USER,
       title: "New user registration",
       subtitle: u.email,
       date: u.createdAt,
@@ -170,7 +170,7 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
     })),
     ...posts.map((p) => ({
       id: p.id,
-      type: ACTIVITY_TYPE.BLOG_POST,
+      type: DashboardActivityType.BLOG_POST,
       title: `New post: ${p.title}`,
       subtitle: p.category,
       date: p.createdAt,
@@ -178,7 +178,7 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
     })),
     ...products.map((p) => ({
       id: p.id,
-      type: ACTIVITY_TYPE.PROGRAM,
+      type: DashboardActivityType.PROGRAM,
       title: `New product: ${p.title}`,
       subtitle: formatPriceSubtitle(p.prices),
       date: p.createdAt,

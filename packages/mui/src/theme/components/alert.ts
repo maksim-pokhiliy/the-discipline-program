@@ -8,16 +8,18 @@ export const MuiAlert: Components<Theme>["MuiAlert"] = {
       const contrastText = theme.palette[color].contrastText;
 
       return {
-        alignItems: "center",
         backgroundColor: alpha(main, 0.08),
         color: theme.palette.text.primary,
         borderLeft: `4px solid ${main}`,
+
         "& .MuiAlertTitle-root": {
           color: theme.palette.text.primary,
         },
+
         "& .MuiAlert-icon": {
           color: main,
         },
+
         "& .MuiAlert-icon .MuiAvatar-root": {
           width: theme.spacing(4),
           height: theme.spacing(4),
@@ -25,6 +27,7 @@ export const MuiAlert: Components<Theme>["MuiAlert"] = {
           color: contrastText,
           fontSize: theme.typography.caption.fontSize,
         },
+
         "& .MuiAlert-action": {
           color: theme.palette.text.secondary,
         },

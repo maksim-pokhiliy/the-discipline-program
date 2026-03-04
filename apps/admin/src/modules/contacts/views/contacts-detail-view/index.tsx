@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 
 import {
-  CONTACT_STATUSES,
+  ContactStatus,
   type GetContactByIdResponse,
   type UpdateContactRequest,
   updateContactRequestSchema,
@@ -94,7 +94,7 @@ const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
                 control={control}
                 render={({ field }) => (
                   <TextField {...field} select fullWidth size="small" disabled={isPending}>
-                    {CONTACT_STATUSES.map((status) => (
+                    {Object.values(ContactStatus).map((status) => (
                       <MenuItem key={status} value={status}>
                         {STATUS_LABELS[status]}
                       </MenuItem>

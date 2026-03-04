@@ -9,7 +9,7 @@ export const enrollmentInclude = {
       image: true,
       workoutLogs: {
         select: { id: true, workoutId: true, date: true },
-        orderBy: { date: "desc" as const },
+        orderBy: { date: "desc" },
       },
       athleteProfile: {
         select: { healthStatus: true },
@@ -24,7 +24,8 @@ export const enrollmentInclude = {
         where: { deletedAt: null },
         select: {
           id: true,
-          dayOrder: true,
+          scheduledDate: true,
+          createdAt: true,
           title: true,
           blocks: {
             select: {
@@ -33,11 +34,11 @@ export const enrollmentInclude = {
             },
           },
         },
-        orderBy: { dayOrder: "asc" as const },
+        orderBy: [{ scheduledDate: "asc" }, { createdAt: "asc" }],
       },
     },
   },
-} as const;
+} satisfies Prisma.PlanEnrollmentInclude;
 
 export type EnrollmentWithData = Prisma.PlanEnrollmentGetPayload<{
   include: typeof enrollmentInclude;

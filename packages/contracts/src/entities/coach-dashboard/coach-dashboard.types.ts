@@ -11,10 +11,8 @@ import {
   type onboardingAthleteSchema,
   type progressAthleteSchema,
   type progressBucketsSchema,
-  type todayStatusSchema,
 } from "./coach-dashboard.schema";
 
-export type TodayStatus = z.infer<typeof todayStatusSchema>;
 export type DashboardOverview = z.infer<typeof dashboardOverviewSchema>;
 export type DashboardActionItem = z.infer<typeof dashboardActionItemSchema>;
 export type AthleteDailySummary = z.infer<typeof athleteDailySummarySchema>;

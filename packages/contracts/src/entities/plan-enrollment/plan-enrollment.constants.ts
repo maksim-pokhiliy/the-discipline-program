@@ -1,10 +1,11 @@
-export const PLAN_ENROLLMENT_STATUSES = ["ACTIVE", "PAUSED", "COMPLETED"] as const;
+export enum PlanEnrollmentStatus {
+  ACTIVE = "ACTIVE",
+  PAUSED = "PAUSED",
+  COMPLETED = "COMPLETED",
+}
 
-export const PLAN_ENROLLMENT_STATUS_LABELS: Record<
-  (typeof PLAN_ENROLLMENT_STATUSES)[number],
-  string
-> = {
-  ACTIVE: "Active",
-  PAUSED: "Paused",
-  COMPLETED: "Completed",
+export const PLAN_ENROLLMENT_STATUS_LABELS: Record<PlanEnrollmentStatus, string> = {
+  [PlanEnrollmentStatus.ACTIVE]: "Active",
+  [PlanEnrollmentStatus.PAUSED]: "Paused",
+  [PlanEnrollmentStatus.COMPLETED]: "Completed",
 };

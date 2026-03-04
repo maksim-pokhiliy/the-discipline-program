@@ -182,7 +182,7 @@ export const platformTrainingPlansApi = {
         const newWorkout = await tx.workout.create({
           data: {
             planId: plan.id,
-            dayOrder: workout.dayOrder,
+            scheduledDate: workout.scheduledDate,
             title: workout.title,
             description: workout.description,
           },

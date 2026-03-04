@@ -5,15 +5,13 @@ export const CONTACT_CONSTANTS = {
   MAX_PROGRAM_LENGTH: 100,
 } as const;
 
-export const CONTACT_STATUSES = ["NEW", "IN_PROGRESS", "REPLIED", "CLOSED"] as const;
-
-export const CONTACT_STATUS_ENUM = {
-  NEW: "NEW",
-  IN_PROGRESS: "IN_PROGRESS",
-  REPLIED: "REPLIED",
-  CLOSED: "CLOSED",
-} as const;
+export enum ContactStatus {
+  NEW = "NEW",
+  IN_PROGRESS = "IN_PROGRESS",
+  REPLIED = "REPLIED",
+  CLOSED = "CLOSED",
+}
 
 export const CONTACT_DEFAULTS = {
-  status: "NEW",
+  status: ContactStatus.NEW,
 } as const;

@@ -213,6 +213,9 @@ export default async function BlogPage() {
 - **No custom UI when MUI has a native component.** Use MUI components as-is (e.g. `Alert` for alerts, `Chip` for tags). Customize appearance through the global MUI theme, not per-instance `sx` overrides or custom wrappers. Never reinvent what the design system already provides.
 - **No raw color values in components.** Never use `rgba(...)`, `#hex`, `rgb(...)` in `sx` props or inline styles. Always use MUI theme tokens: `"background.paper"`, `theme.palette.error.main`, `alpha()` from `@mui/material/styles`, etc.
 - **No side effects in queryFn.** Never call mutating endpoints (POST/PUT/DELETE) inside a React Query `queryFn`. Queries auto-refetch on focus, reconnect, and retry — turning mutations into repeated uncontrolled side effects. Use `useMutation` for side effects and gate the query with `enabled` on mutation completion.
+- **No hardcoded enum/status strings.** Never use string literals (`"COMPLETED"`, `"ACTIVE"`, etc.) for domain statuses or enum values in logic. Import named constants from `@repo/contracts` and use them. If individual constants don't exist — create them. Hardcoded strings silently break when values change and bypass refactoring tools.
+- **No non-null assertions (`!`).** Never use `!` to silence TypeScript's null checks. Use type predicates in `.filter()`, explicit null guards, or optional chaining. If TypeScript says it might be null — handle it, don't muzzle the compiler. Enforced by `@typescript-eslint/no-non-null-assertion` ESLint rule.
+- **No raw CSS transition strings.** Never use `transition: "background-color 0.15s"` or similar raw strings. Use MUI's `theme.transitions.create()` API — it ensures consistent durations and easing across the app and respects `prefers-reduced-motion`.
 
 ## Commit Convention
 

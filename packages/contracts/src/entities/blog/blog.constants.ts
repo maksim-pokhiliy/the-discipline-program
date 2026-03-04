@@ -8,7 +8,13 @@ export const BLOG_CONSTANTS = {
   DEFAULT_SORT_ORDER: 0,
 } as const;
 
-export const BLOG_CATEGORIES = ["Fitness", "Nutrition", "Mindset", "Training", "Recovery"] as const;
+export enum BlogCategory {
+  FITNESS = "Fitness",
+  NUTRITION = "Nutrition",
+  MINDSET = "Mindset",
+  TRAINING = "Training",
+  RECOVERY = "Recovery",
+}
 
 export const BLOG_DEFAULTS = {
   isPublished: false,
@@ -18,4 +24,7 @@ export const BLOG_DEFAULTS = {
   readTime: null,
 } as const;
 
-export const BLOG_TOGGLE_FIELDS = ["isPublished", "isFeatured"] as const;
+export enum BlogToggleField {
+  IS_PUBLISHED = "isPublished",
+  IS_FEATURED = "isFeatured",
+}

@@ -4,8 +4,9 @@ export const MuiCardContent: Components<Theme>["MuiCardContent"] = {
   styleOverrides: {
     root: ({ theme }) => ({
       padding: theme.spacing(2),
-      paddingBottom: `${theme.spacing(2)} !important`,
       height: "100%",
+
+      "&:last-child": { paddingBottom: theme.spacing(2) },
     }),
   },
 };

@@ -15,7 +15,7 @@ const CoachLayout = ({ children }: CoachLayoutProps) => {
       <Stack sx={{ minHeight: "100dvh" }}>
         <PlatformHeader />
 
-        <Container component="main" maxWidth="xl" sx={{ flex: 1, py: 4 }}>
+        <Container component="main" maxWidth="lg" sx={{ flex: 1, py: 4 }}>
           <Box component="section">{children}</Box>
         </Container>
 

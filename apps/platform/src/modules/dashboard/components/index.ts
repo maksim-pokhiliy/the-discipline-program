@@ -1,1 +1,1 @@
-export { ActionItemAlert } from "./attention-item-alert";
+export { AthleteCard, type AthleteCardChip } from "./athlete-card";

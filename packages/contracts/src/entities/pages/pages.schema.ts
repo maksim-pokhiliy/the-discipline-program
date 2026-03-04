@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { CONTACT_METHOD_TYPES } from "./pages.constants";
+import { ContactMethodType } from "./pages.constants";
 
 export const homePageHeroSchema = z.object({
   title: z.string(),
@@ -113,7 +113,7 @@ export const programOptionSchema = z.object({
 });
 
 export const contactMethodSchema = z.object({
-  type: z.enum(CONTACT_METHOD_TYPES),
+  type: z.nativeEnum(ContactMethodType),
   label: z.string(),
   value: z.string(),
   href: z.string(),

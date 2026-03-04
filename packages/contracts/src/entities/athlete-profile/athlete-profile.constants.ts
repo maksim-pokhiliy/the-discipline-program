@@ -1,19 +1,21 @@
-export const GENDERS = ["MALE", "FEMALE"] as const;
+export enum Gender {
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+}
 
-export const GENDER_ENUM = {
-  MALE: "MALE",
-  FEMALE: "FEMALE",
-} as const;
-
-export const GENDER_LABELS: Record<(typeof GENDERS)[number], string> = {
-  MALE: "Male",
-  FEMALE: "Female",
+export const GENDER_LABELS: Record<Gender, string> = {
+  [Gender.MALE]: "Male",
+  [Gender.FEMALE]: "Female",
 };
 
-export const HEALTH_STATUSES = ["HEALTHY", "INJURED", "RESTRICTED"] as const;
+export enum HealthStatus {
+  HEALTHY = "HEALTHY",
+  INJURED = "INJURED",
+  RESTRICTED = "RESTRICTED",
+}
 
-export const HEALTH_STATUS_LABELS: Record<(typeof HEALTH_STATUSES)[number], string> = {
-  HEALTHY: "Healthy",
-  INJURED: "Injured",
-  RESTRICTED: "Restricted",
+export const HEALTH_STATUS_LABELS: Record<HealthStatus, string> = {
+  [HealthStatus.HEALTHY]: "Healthy",
+  [HealthStatus.INJURED]: "Injured",
+  [HealthStatus.RESTRICTED]: "Restricted",
 };
