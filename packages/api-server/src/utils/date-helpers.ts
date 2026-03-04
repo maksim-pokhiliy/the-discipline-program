@@ -1,39 +1,72 @@
-export const daysBetween = (a: Date, b: Date): number =>
-  Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+const MS_PER_DAY = 86_400_000;
 
-export const startOfToday = (): Date => {
-  const d = new Date();
+const getDatePartsInTz = (
+  date: Date,
+  tz: string,
+): { year: number; month: number; day: number; weekday: number } => {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    weekday: "short",
+  });
 
-  d.setHours(0, 0, 0, 0);
+  const parts = Object.fromEntries(formatter.formatToParts(date).map((p) => [p.type, p.value]));
 
-  return d;
+  const weekdayMap: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+
+  return {
+    year: Number(parts.year),
+    month: Number(parts.month),
+    day: Number(parts.day),
+    weekday: weekdayMap[parts.weekday ?? "Mon"] ?? 1,
+  };
 };
 
-export const startOfWeek = (date: Date): Date => {
-  const d = new Date(date);
+const getOffsetMs = (date: Date, tz: string): number => {
+  const utcStr = date.toLocaleString("en-US", { timeZone: "UTC" });
+  const tzStr = date.toLocaleString("en-US", { timeZone: tz });
 
-  d.setHours(0, 0, 0, 0);
-
-  const day = d.getDay();
-  const diff = day === 0 ? 6 : day - 1;
-
-  d.setDate(d.getDate() - diff);
-
-  return d;
+  return new Date(tzStr).getTime() - new Date(utcStr).getTime();
 };
 
-export const endOfWeek = (date: Date): Date => {
-  const d = startOfWeek(date);
+export const startOfDayInTz = (date: Date, tz: string): Date => {
+  const { year, month, day } = getDatePartsInTz(date, tz);
+  const fakeUtcMidnight = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  const offset = getOffsetMs(fakeUtcMidnight, tz);
 
-  d.setDate(d.getDate() + 6);
-
-  return d;
+  return new Date(fakeUtcMidnight.getTime() - offset);
 };
 
-export const startOfDay = (date: Date): Date => {
-  const d = new Date(date);
+export const startOfTodayInTz = (tz: string): Date => startOfDayInTz(new Date(), tz);
 
-  d.setHours(0, 0, 0, 0);
+export const startOfWeekInTz = (date: Date, tz: string): Date => {
+  const { weekday } = getDatePartsInTz(date, tz);
+  const diff = weekday === 0 ? 6 : weekday - 1;
+  const mondayApprox = new Date(date.getTime() - diff * MS_PER_DAY);
 
-  return d;
+  return startOfDayInTz(mondayApprox, tz);
+};
+
+export const endOfWeekInTz = (date: Date, tz: string): Date => {
+  const weekStart = startOfWeekInTz(date, tz);
+  const sundayApprox = new Date(weekStart.getTime() + 6 * MS_PER_DAY);
+
+  return startOfDayInTz(sundayApprox, tz);
+};
+
+export const daysBetweenInTz = (a: Date, b: Date, tz: string): number => {
+  const aDay = startOfDayInTz(a, tz);
+  const bDay = startOfDayInTz(b, tz);
+
+  return Math.floor((bDay.getTime() - aDay.getTime()) / MS_PER_DAY);
 };

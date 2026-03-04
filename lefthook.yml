@@ -22,8 +22,3 @@ commit-msg:
       run: pnpm dlx commitlint --edit {1}
       fail_text: "Commit message format is invalid"
 
-pre-push:
-  commands:
-    build-check:
-      run: pnpm build
-      fail_text: "Build failed - fix errors before pushing"

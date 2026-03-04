@@ -44,6 +44,7 @@ export const mapToAdminUser = (u: UserWithProfiles): AdminUser => ({
   name: u.name,
   role: u.role as UserRole,
   image: u.image,
+  timezone: u.timezone,
   emailVerified: u.emailVerified,
   createdAt: u.createdAt,
   updatedAt: u.updatedAt,
@@ -57,5 +58,6 @@ export const mapToAdminUserListItem = (u: PrismaUser): AdminUserListItem => ({
   name: u.name,
   role: u.role as UserRole,
   image: u.image,
+  timezone: u.timezone,
   createdAt: u.createdAt,
 });

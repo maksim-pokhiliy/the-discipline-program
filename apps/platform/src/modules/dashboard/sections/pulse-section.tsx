@@ -26,23 +26,17 @@ export const PulseSection: React.FC<PulseSectionProps> = ({ overview }) => {
       icon: <GroupIcon fontSize="small" />,
     },
     {
-      value:
-        overview.workoutsPlannedToday > 0
-          ? `${overview.workoutsCompletedToday}/${overview.workoutsPlannedToday}`
-          : "—",
+      value: `${overview.workoutsCompletedToday}/${overview.workoutsPlannedToday}`,
       label: "Today",
       tooltip: "Completed / planned workouts for today",
       color: "primary",
       icon: <FitnessCenterIcon fontSize="small" />,
     },
     {
-      value:
-        overview.workoutsPlannedThisWeek > 0
-          ? `${overview.workoutsCompletedThisWeek}/${overview.workoutsPlannedThisWeek}`
-          : "—",
+      value: `${overview.workoutsCompletedThisWeek}/${overview.workoutsPlannedThisWeek}`,
       label: "This Week",
       tooltip: "Completed / planned workouts for this week",
-      color: overview.workoutsPlannedThisWeek > 0 ? "primary" : "warning",
+      color: "primary",
       icon: <DirectionsRunIcon fontSize="small" />,
     },
     {
