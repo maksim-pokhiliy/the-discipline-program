@@ -11,7 +11,12 @@ import { useResolveActionItem } from "@app/lib/hooks";
 import { AthleteCard } from "../components";
 import { ActionMenu } from "../components/action-menu";
 
-import { INITIAL_VISIBLE_COUNT, getChip, getSeverityColor } from "./action-items-config";
+import {
+  INITIAL_VISIBLE_COUNT,
+  getChip,
+  getSeverityColor,
+  sortBySeverity,
+} from "./action-items-config";
 
 type ActionItemsSectionProps = {
   items: DashboardActionItem[];
@@ -26,8 +31,9 @@ export const ActionItemsSection: React.FC<ActionItemsSectionProps> = ({ items })
     return null;
   }
 
-  const firstItems = items.slice(0, INITIAL_VISIBLE_COUNT);
-  const hiddenItems = items.slice(INITIAL_VISIBLE_COUNT);
+  const sorted = sortBySeverity(items);
+  const firstItems = sorted.slice(0, INITIAL_VISIBLE_COUNT);
+  const hiddenItems = sorted.slice(INITIAL_VISIBLE_COUNT);
 
   const renderItem = (item: DashboardActionItem) => {
     const chip = getChip(item);
@@ -40,7 +46,7 @@ export const ActionItemsSection: React.FC<ActionItemsSectionProps> = ({ items })
         image={item.athleteImage}
         severity={getSeverityColor(item.severity)}
         message={item.message}
-        chips={[chip]}
+        chips={chip ? [chip] : undefined}
         action={
           <ActionMenu
             itemId={item.id}

@@ -1,7 +1,6 @@
 import { createElement } from "react";
 
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import type { AlertColor } from "@mui/material";
 
 import { ActionItemSeverity, ActionItemType } from "@repo/contracts/coach-action-item";
@@ -18,27 +17,26 @@ const SEVERITY_TO_ALERT_COLOR: Record<ActionItemSeverity, AlertColor> = {
   [ActionItemSeverity.INFO]: "info",
 };
 
-const TYPE_CHIP: Record<ActionItemType, AthleteCardChip> = {
-  [ActionItemType.HEALTH_REPORT]: { label: "Health", color: "error" },
-  [ActionItemType.MISSED_WORKOUTS]: {
-    label: "Missed",
-    color: "warning",
-    icon: createElement(WarningAmberIcon),
-  },
-  [ActionItemType.NEW_NO_START]: {
-    label: "New",
-    color: "info",
-    icon: createElement(PersonAddIcon),
-  },
+const SEVERITY_ORDER: Record<ActionItemSeverity, number> = {
+  [ActionItemSeverity.CRITICAL]: 0,
+  [ActionItemSeverity.WARNING]: 1,
+  [ActionItemSeverity.INFO]: 2,
 };
+
+export const sortBySeverity = (items: DashboardActionItem[]): DashboardActionItem[] =>
+  [...items].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
 
 export const getSeverityColor = (severity: DashboardActionItem["severity"]): AlertColor =>
   SEVERITY_TO_ALERT_COLOR[severity];
 
-export const getChip = (item: DashboardActionItem): AthleteCardChip => {
+export const getChip = (item: DashboardActionItem): AthleteCardChip | null => {
   if (item.type === ActionItemType.HEALTH_REPORT) {
-    return getHealthChipFromMessage(item.message) ?? TYPE_CHIP[item.type];
+    return getHealthChipFromMessage(item.message);
   }
 
-  return TYPE_CHIP[item.type];
+  if (item.type === ActionItemType.NEW_NO_START) {
+    return { label: "New", color: "info", icon: createElement(PersonAddIcon) };
+  }
+
+  return null;
 };
