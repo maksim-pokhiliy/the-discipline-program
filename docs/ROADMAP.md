@@ -85,13 +85,15 @@ Schema changes:
 - [ ] `AthleteFlag` model (INJURY/RESTRICTION/ATTENTION flags) — not in schema yet
 - [ ] DB trigger: enrollment protection — not implemented (API-level check exists in delete handler)
 
-Dashboard (7 sections):
+Dashboard (9 sections):
 
+- [x] Pulse (Coach Snapshot) — backend ✅, UI ✅ (6 metric cards)
 - [x] Needs Attention — backend (reconcile + severity) ✅, UI ✅
-- [x] Coach Snapshot — backend ✅, UI partial (4 metric cards, missing: active plans, new athletes, paused enrollments)
-- [ ] Today Overview — backend ✅ (`athletesSummary` computed), UI not started
-- [ ] Athlete Activity Feed — backend ✅ (`recentActivity` computed), UI not started
-- [ ] Compliance / Adherence Summary — backend ✅ (`progressBuckets` computed), UI not started
+- [x] Athletes Today — backend ✅ (`athletesSummary`), UI ✅ (5 tabs: Missed/Pending/Completed/Rest Day/No Schedule)
+- [ ] Compliance / Adherence Summary — backend ✅ (`progressBuckets`), UI not started
+- [ ] Load Distribution — backend ✅ (`loadDistributionToday`), UI not started
+- [ ] Onboarding Tracker — backend ✅ (`onboarding`), UI not started
+- [ ] Athlete Leaderboard — not started
 - [ ] PR & Benchmark Changes — backend not started, UI not started
 - [ ] Quick Actions — UI not started
 
@@ -106,6 +108,8 @@ Training Plans:
 - [ ] UI: create/edit form — backend ready, UI is stub
 
 Known bug: Dashboard loading flash — reconcile mutation races with getDashboard query, causing ~2s delay where action items appear empty.
+
+Recent notes (`recentNotes`) are returned from API but not rendered — no dedicated section yet.
 
 ### 3.3 Coach: Workout builder
 

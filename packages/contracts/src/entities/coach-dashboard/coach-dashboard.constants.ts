@@ -12,11 +12,6 @@ export enum ProgressTrend {
   STABLE = "STABLE",
 }
 
-export enum CoachActivityType {
-  WORKOUT_COMPLETED = "WORKOUT_COMPLETED",
-  NEW_ENROLLMENT = "NEW_ENROLLMENT",
-}
-
 export const MISSED_DAYS_WARNING = 3;
 export const MISSED_DAYS_CRITICAL = 7;
 export const NEW_ATHLETE_THRESHOLD_DAYS = 7;
