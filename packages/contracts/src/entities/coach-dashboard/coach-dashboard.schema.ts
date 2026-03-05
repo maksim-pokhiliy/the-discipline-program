@@ -3,7 +3,7 @@ import { z } from "zod";
 import { HealthStatus } from "../athlete-profile";
 import { ActionItemSeverity, ActionItemType } from "../coach-action-item";
 
-import { CoachActivityType, ProgressTrend, TodayStatus } from "./coach-dashboard.constants";
+import { ProgressTrend, TodayStatus } from "./coach-dashboard.constants";
 
 export const todayStatusSchema = z.nativeEnum(TodayStatus);
 
@@ -76,14 +76,6 @@ export const dashboardNoteSchema = z.object({
   createdAt: z.date(),
 });
 
-export const coachActivityItemSchema = z.object({
-  type: z.nativeEnum(CoachActivityType),
-  athleteId: z.string().cuid(),
-  athleteName: z.string().nullable(),
-  description: z.string(),
-  timestamp: z.date(),
-});
-
 export const onboardingAthleteSchema = z.object({
   userId: z.string().cuid(),
   name: z.string().nullable(),
@@ -101,6 +93,5 @@ export const coachDashboardDataSchema = z.object({
   loadDistributionToday: z.array(loadDistributionItemSchema),
   progressBuckets: progressBucketsSchema,
   recentNotes: z.array(dashboardNoteSchema),
-  recentActivity: z.array(coachActivityItemSchema),
   onboarding: z.array(onboardingAthleteSchema),
 });

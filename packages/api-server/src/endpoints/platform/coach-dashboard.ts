@@ -1,6 +1,5 @@
 import { SEVERITY_PRIORITY, TYPE_PRIORITY } from "@repo/contracts/coach-action-item";
 import {
-  CoachActivityType,
   type CoachDashboardData,
   type DashboardActionItem,
   type DashboardNote,
@@ -188,19 +187,6 @@ export const platformCoachDashboardApi = {
       };
     });
 
-    const recentActivity = enrollments
-      .flatMap((e) =>
-        e.user.workoutLogs.slice(0, 3).map((log) => ({
-          type: CoachActivityType.WORKOUT_COMPLETED,
-          athleteId: e.user.id,
-          athleteName: e.user.name,
-          description: `Completed workout`,
-          timestamp: log.date,
-        })),
-      )
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
-      .slice(0, 10);
-
     return {
       overview: {
         totalActiveAthletes: uniqueAthletes.size,
@@ -217,7 +203,6 @@ export const platformCoachDashboardApi = {
       loadDistributionToday,
       progressBuckets,
       recentNotes,
-      recentActivity,
       onboarding,
     };
   },

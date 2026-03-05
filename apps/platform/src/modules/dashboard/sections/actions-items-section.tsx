@@ -1,14 +1,11 @@
 "use client";
 
-import { useState } from "react";
-
-import { Button, Chip, Collapse, Divider, Paper, Stack, Typography } from "@mui/material";
-
 import type { DashboardActionItem } from "@repo/contracts/coach-dashboard";
+import { CollapsibleList } from "@repo/ui";
 
 import { useResolveActionItem } from "@app/lib/hooks";
 
-import { AthleteCard } from "../components";
+import { AthleteCard, DashboardSection } from "../components";
 import { ActionMenu } from "../components/action-menu";
 
 import {
@@ -25,17 +22,13 @@ type ActionItemsSectionProps = {
 export const ActionItemsSection: React.FC<ActionItemsSectionProps> = ({ items }) => {
   const resolveMutation = useResolveActionItem();
 
-  const [showAll, setShowAll] = useState(false);
-
   if (items.length === 0) {
     return null;
   }
 
   const sorted = sortBySeverity(items);
-  const firstItems = sorted.slice(0, INITIAL_VISIBLE_COUNT);
-  const hiddenItems = sorted.slice(INITIAL_VISIBLE_COUNT);
 
-  const renderItem = (item: DashboardActionItem) => {
+  const rendered = sorted.map((item) => {
     const chip = getChip(item);
     const isResolving = resolveMutation.isPending && resolveMutation.variables === item.id;
 
@@ -57,32 +50,11 @@ export const ActionItemsSection: React.FC<ActionItemsSectionProps> = ({ items })
         }
       />
     );
-  };
+  });
 
   return (
-    <Paper variant="outlined" sx={{ p: 2 }}>
-      <Stack spacing={2}>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-          <Typography variant="h6">Needs Attention</Typography>
-          <Chip size="small" label={items.length} color="error" />
-        </Stack>
-
-        <Divider />
-
-        <Stack spacing={2}>
-          {firstItems.map(renderItem)}
-
-          <Collapse in={showAll}>
-            <Stack spacing={2}>{hiddenItems.map(renderItem)}</Stack>
-          </Collapse>
-        </Stack>
-
-        {hiddenItems.length > 0 && (
-          <Button variant="outlined" onClick={() => setShowAll((prev) => !prev)}>
-            {showAll ? "Show less" : `Show ${hiddenItems.length} more`}
-          </Button>
-        )}
-      </Stack>
-    </Paper>
+    <DashboardSection title="Needs Attention" badge={{ label: items.length, color: "error" }}>
+      <CollapsibleList items={rendered} initialCount={INITIAL_VISIBLE_COUNT} />
+    </DashboardSection>
   );
 };

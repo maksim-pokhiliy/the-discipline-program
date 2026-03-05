@@ -1,7 +1,6 @@
 import { type z } from "zod";
 
 import {
-  type coachActivityItemSchema,
   type athleteDailySummarySchema,
   type coachDashboardDataSchema,
   type dashboardActionItemSchema,
@@ -20,6 +19,5 @@ export type LoadDistributionItem = z.infer<typeof loadDistributionItemSchema>;
 export type ProgressAthlete = z.infer<typeof progressAthleteSchema>;
 export type ProgressBuckets = z.infer<typeof progressBucketsSchema>;
 export type DashboardNote = z.infer<typeof dashboardNoteSchema>;
-export type CoachActivityItem = z.infer<typeof coachActivityItemSchema>;
 export type OnboardingAthlete = z.infer<typeof onboardingAthleteSchema>;
 export type CoachDashboardData = z.infer<typeof coachDashboardDataSchema>;

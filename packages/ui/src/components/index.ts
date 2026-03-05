@@ -1,4 +1,5 @@
 export * from "./admin-header";
+export * from "./collapsible-list";
 export * from "./creatable-autocomplete";
 export * from "./data-table";
 export * from "./detail-field";

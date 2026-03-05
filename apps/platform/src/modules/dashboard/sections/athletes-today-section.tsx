@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 
-import { Box, Chip, Divider, Paper, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { Box, Chip, Stack, Tab, Tabs, Typography } from "@mui/material";
 import Link from "next/link";
 
 import { type AthleteDailySummary, TodayStatus } from "@repo/contracts/coach-dashboard";
 
-import { AthleteCard } from "../components";
+import { AthleteCard, DashboardSection } from "../components";
 import { getHealthChip } from "../components/health-chips-config";
 
 import {
@@ -51,73 +51,69 @@ export const AthletesTodaySection: React.FC<AthletesTodaySectionProps> = ({ athl
   const activeConfig = STATUS_GROUPS.find((g) => g.status === activeTab);
 
   return (
-    <Paper variant="outlined" sx={{ p: 2 }}>
-      <Stack spacing={2}>
-        <Typography variant="h6">Athletes Today</Typography>
+    <DashboardSection title="Athletes Today">
+      <Tabs
+        value={activeTab}
+        onChange={(_, value: TodayStatus) => setActiveTab(value)}
+        variant="scrollable"
+        scrollButtons="auto"
+      >
+        {STATUS_GROUPS.map((group) => {
+          const count = grouped.get(group.status)?.length ?? 0;
 
-        <Divider />
+          return (
+            <Tab
+              key={group.status}
+              value={group.status}
+              label={
+                <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
+                  <Typography variant="body2" component="span">
+                    {group.title}
+                  </Typography>
+                  <Chip size="small" label={count} color={group.chipColor} />
+                </Stack>
+              }
+            />
+          );
+        })}
+      </Tabs>
 
-        <Tabs
-          value={activeTab}
-          onChange={(_, value: TodayStatus) => setActiveTab(value)}
-          variant="scrollable"
-          scrollButtons="auto"
-        >
-          {STATUS_GROUPS.map((group) => {
-            const count = grouped.get(group.status)?.length ?? 0;
+      {activeAthletes.length > 0 ? (
+        <Stack spacing={2}>
+          {activeAthletes.map((athlete) => {
+            const healthChip = getHealthChip(athlete.healthStatus);
+            const chips = healthChip ? [healthChip] : undefined;
 
             return (
-              <Tab
-                key={group.status}
-                value={group.status}
-                label={
-                  <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
-                    <span>{group.title}</span>
-                    <Chip size="small" label={count} color={group.chipColor} />
-                  </Stack>
-                }
-              />
+              <Box
+                key={athlete.userId}
+                component={Link}
+                href={`/coach/athletes/${athlete.userId}`}
+                sx={(theme) => ({
+                  display: "block",
+                  textDecoration: "none",
+                  borderRadius: 1,
+                  transition: theme.transitions.create("opacity"),
+                  "&:hover": { opacity: 0.85 },
+                })}
+              >
+                <AthleteCard
+                  name={athlete.name ?? athlete.email}
+                  image={athlete.image}
+                  severity={activeConfig?.severity ?? "info"}
+                  message={buildMessage(athlete)}
+                  chips={chips}
+                  details={buildDetails(athlete)}
+                />
+              </Box>
             );
           })}
-        </Tabs>
-
-        {activeAthletes.length > 0 ? (
-          <Stack spacing={2}>
-            {activeAthletes.map((athlete) => {
-              const healthChip = getHealthChip(athlete.healthStatus);
-              const chips = healthChip ? [healthChip] : undefined;
-
-              return (
-                <Box
-                  key={athlete.userId}
-                  component={Link}
-                  href={`/coach/athletes/${athlete.userId}`}
-                  sx={(theme) => ({
-                    display: "block",
-                    textDecoration: "none",
-                    borderRadius: 1,
-                    transition: theme.transitions.create("opacity"),
-                    "&:hover": { opacity: 0.85 },
-                  })}
-                >
-                  <AthleteCard
-                    name={athlete.name ?? athlete.email}
-                    image={athlete.image}
-                    severity={activeConfig?.severity ?? "info"}
-                    message={buildMessage(athlete)}
-                    chips={chips}
-                    details={buildDetails(athlete)}
-                  />
-                </Box>
-              );
-            })}
-          </Stack>
-        ) : (
-          <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>
-            {activeConfig?.emptyMessage}
-          </Typography>
-        )}
-      </Stack>
-    </Paper>
+        </Stack>
+      ) : (
+        <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>
+          {activeConfig?.emptyMessage}
+        </Typography>
+      )}
+    </DashboardSection>
   );
 };

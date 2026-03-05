@@ -216,6 +216,7 @@ export default async function BlogPage() {
 - **No hardcoded enum/status strings.** Never use string literals (`"COMPLETED"`, `"ACTIVE"`, etc.) for domain statuses or enum values in logic. Import named constants from `@repo/contracts` and use them. If individual constants don't exist — create them. Hardcoded strings silently break when values change and bypass refactoring tools.
 - **No non-null assertions (`!`).** Never use `!` to silence TypeScript's null checks. Use type predicates in `.filter()`, explicit null guards, or optional chaining. If TypeScript says it might be null — handle it, don't muzzle the compiler. Enforced by `@typescript-eslint/no-non-null-assertion` ESLint rule.
 - **No raw CSS transition strings.** Never use `transition: "background-color 0.15s"` or similar raw strings. Use MUI's `theme.transitions.create()` API — it ensures consistent durations and easing across the app and respects `prefers-reduced-motion`.
+- **No raw HTML elements in components.** Never use `<div>`, `<span>`, `<ul>`, `<li>`, etc. directly. Use MUI equivalents: `Box`, `Typography`, `Stack`, `List`, `ListItem`, etc. MUI components provide theme integration, `sx` prop, and consistent spacing. The only exception is `<table>`-related tags if MUI Table is overkill for a trivial case.
 
 ## Commit Convention
 
