@@ -16,14 +16,14 @@ export const STATUS_GROUPS: StatusGroupConfig[] = [
     status: TodayStatus.MISSED,
     title: "Missed",
     chipColor: "error",
-    severity: "error",
+    severity: "info",
     emptyMessage: "Nobody missed — coach life is good",
   },
   {
     status: TodayStatus.PENDING,
     title: "Pending",
     chipColor: "warning",
-    severity: "warning",
+    severity: "info",
     emptyMessage: "All done for today — or nobody planned",
   },
   {
