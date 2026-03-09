@@ -1,7 +1,6 @@
 import { HealthStatus } from "@repo/contracts/athlete-profile";
 import {
   type AthleteDailySummary,
-  type LoadDistributionItem,
   type ProgressAthlete,
   type ProgressBuckets,
   LOW_COMPLETION_RATE,
@@ -174,41 +173,6 @@ export const computeAthletesSummary = (
   }
 
   return Array.from(athleteMap.values());
-};
-
-export const computeLoadDistribution = (
-  enrollments: EnrollmentWithData[],
-  tz: string,
-): LoadDistributionItem[] => {
-  const categoryMap = new Map<string, { name: string; athletes: Set<string> }>();
-  const today = startOfTodayInTz(tz);
-
-  for (const e of enrollments) {
-    const todayWorkouts = e.trainingPlan.workouts.filter(
-      (w) => w.scheduledDate && startOfDayInTz(w.scheduledDate, tz).getTime() === today.getTime(),
-    );
-
-    for (const workout of todayWorkouts) {
-      for (const block of workout.blocks) {
-        const cat = block.category;
-        const entry = categoryMap.get(cat.id) ?? { name: cat.name, athletes: new Set<string>() };
-
-        entry.athletes.add(e.user.id);
-        categoryMap.set(cat.id, entry);
-      }
-    }
-  }
-
-  const totalAthletes = new Set(enrollments.map((e) => e.user.id)).size;
-
-  return Array.from(categoryMap.entries())
-    .map(([categoryId, { name, athletes }]) => ({
-      categoryId,
-      categoryName: name,
-      athleteCount: athletes.size,
-      percentage: totalAthletes > 0 ? athletes.size / totalAthletes : 0,
-    }))
-    .sort((a, b) => b.athleteCount - a.athleteCount);
 };
 
 export const computeProgressBuckets = (enrollments: EnrollmentWithData[]): ProgressBuckets => {
