@@ -1,6 +1,6 @@
 # ROADMAP: The Discipline Program
 
-> Last updated: 2026-03-03 (Phase 3.2 in progress)
+> Last updated: 2026-03-09 (Phase 3.2 in progress — Dashboard MVP complete, Training Plans UI next)
 > Approach: Quality > Speed. Sequential execution. No deadlines.
 > Product concept: see docs/ARCHITECTURE.md
 
@@ -85,17 +85,20 @@ Schema changes:
 - [ ] `AthleteFlag` model (INJURY/RESTRICTION/ATTENTION flags) — not in schema yet
 - [ ] DB trigger: enrollment protection — not implemented (API-level check exists in delete handler)
 
-Dashboard (9 sections):
+Dashboard ✅ (MVP complete — 5 sections):
 
-- [x] Pulse (Coach Snapshot) — backend ✅, UI ✅ (6 metric cards)
-- [x] Needs Attention — backend (reconcile + severity) ✅, UI ✅
-- [x] Athletes Today — backend ✅ (`athletesSummary`), UI ✅ (5 tabs: Missed/Pending/Completed/Rest Day/No Schedule)
-- [ ] Compliance / Adherence Summary — backend ✅ (`progressBuckets`), UI not started
-- [ ] Load Distribution — backend ✅ (`loadDistributionToday`), UI not started
-- [ ] Onboarding Tracker — backend ✅ (`onboarding`), UI not started
-- [ ] Athlete Leaderboard — not started
-- [ ] PR & Benchmark Changes — backend not started, UI not started
-- [ ] Quick Actions — UI not started
+- [x] Pulse (Coach Snapshot) — 6 metric cards
+- [x] Quick Actions — Create Plan, Athletes, Exercises
+- [x] Needs Attention — reconcile + severity, action items with resolve
+- [x] Progress — completion rate buckets (Declining/Stagnating/Improving)
+- [x] Athletes Today — 5 tabs: Missed/Pending/Completed/Rest Day/No Schedule
+
+Dashboard (deferred — post-MVP):
+
+- [ ] Load Distribution
+- [ ] Onboarding Tracker
+- [ ] Athlete Leaderboard
+- [ ] PR & Benchmark Changes
 
 Training Plans:
 
@@ -104,12 +107,8 @@ Training Plans:
 - [x] Archive-first delete flow (ACTIVE → archive → delete from ARCHIVED)
 - [x] Plan duplication (deep copy: workouts → blocks → prescribed sets)
 - [x] Enriched list data (workouts count, enrolled athletes, last activity, linked products)
-- [ ] UI: list page with filter tabs — backend ready, UI is stub (was implemented, reset in `0af5807`)
+- [ ] UI: list page with filter tabs — backend ready, UI is stub
 - [ ] UI: create/edit form — backend ready, UI is stub
-
-Known bug: Dashboard loading flash — reconcile mutation races with getDashboard query, causing ~2s delay where action items appear empty.
-
-Recent notes (`recentNotes`) are returned from API but not rendered — no dedicated section yet.
 
 ### 3.3 Coach: Workout builder
 
