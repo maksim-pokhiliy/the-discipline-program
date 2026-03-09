@@ -45,13 +45,6 @@ export const athleteDailySummarySchema = z.object({
   healthStatus: z.nativeEnum(HealthStatus),
 });
 
-export const loadDistributionItemSchema = z.object({
-  categoryId: z.string().cuid(),
-  categoryName: z.string(),
-  athleteCount: z.number().int(),
-  percentage: z.number(),
-});
-
 export const progressAthleteSchema = z.object({
   userId: z.string().cuid(),
   name: z.string().nullable(),
@@ -68,30 +61,9 @@ export const progressBucketsSchema = z.object({
   avgEngagementRate: z.number(),
 });
 
-export const dashboardNoteSchema = z.object({
-  id: z.string().cuid(),
-  athleteId: z.string().cuid(),
-  athleteName: z.string().nullable(),
-  content: z.string(),
-  createdAt: z.date(),
-});
-
-export const onboardingAthleteSchema = z.object({
-  userId: z.string().cuid(),
-  name: z.string().nullable(),
-  image: z.string().nullable(),
-  enrolledAt: z.date(),
-  hasAnyLog: z.boolean(),
-  hasCompletedFirst: z.boolean(),
-  planName: z.string().nullable(),
-});
-
 export const coachDashboardDataSchema = z.object({
   overview: dashboardOverviewSchema,
   actionItems: z.array(dashboardActionItemSchema),
   athletesSummary: z.array(athleteDailySummarySchema),
-  loadDistributionToday: z.array(loadDistributionItemSchema),
   progressBuckets: progressBucketsSchema,
-  recentNotes: z.array(dashboardNoteSchema),
-  onboarding: z.array(onboardingAthleteSchema),
 });

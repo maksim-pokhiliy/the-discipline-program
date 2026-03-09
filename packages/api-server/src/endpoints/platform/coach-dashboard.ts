@@ -1,17 +1,8 @@
 import { SEVERITY_PRIORITY, TYPE_PRIORITY } from "@repo/contracts/coach-action-item";
-import {
-  type CoachDashboardData,
-  type DashboardActionItem,
-  type DashboardNote,
-  type OnboardingAthlete,
-} from "@repo/contracts/coach-dashboard";
+import { type CoachDashboardData, type DashboardActionItem } from "@repo/contracts/coach-dashboard";
 
 import { prisma } from "../../db/client";
-import {
-  computeAthletesSummary,
-  computeLoadDistribution,
-  computeProgressBuckets,
-} from "../../utils/dashboard-computations";
+import { computeAthletesSummary, computeProgressBuckets } from "../../utils/dashboard-computations";
 import {
   endOfWeekInTz,
   startOfDayInTz,
@@ -39,65 +30,33 @@ export const platformCoachDashboardApi = {
     const weekStart = startOfWeekInTz(today, tz);
     const weekEnd = endOfWeekInTz(today, tz);
 
-    const [enrollments, openActionItems, recentNotesRaw, recentEnrollments, activePlansCount] =
-      await Promise.all([
-        prisma.planEnrollment.findMany({
-          where: {
-            status: "ACTIVE",
-            trainingPlan: { coachId, deletedAt: null },
-          },
-          include: enrollmentInclude,
-        }),
+    const [enrollments, openActionItems, activePlansCount] = await Promise.all([
+      prisma.planEnrollment.findMany({
+        where: {
+          status: "ACTIVE",
+          trainingPlan: { coachId, deletedAt: null },
+        },
+        include: enrollmentInclude,
+      }),
 
-        prisma.coachActionItem.findMany({
-          where: { coachId, status: "OPEN" },
-          include: {
-            athlete: { select: { id: true, name: true, image: true } },
-          },
-          orderBy: { createdAt: "desc" },
-        }),
+      prisma.coachActionItem.findMany({
+        where: { coachId, status: "OPEN" },
+        include: {
+          athlete: { select: { id: true, name: true, image: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      }),
 
-        prisma.coachNote.findMany({
-          where: { coachId },
-          orderBy: { createdAt: "desc" },
-          take: 10,
-          include: {
-            athlete: { select: { id: true, name: true } },
-          },
-        }),
-
-        prisma.planEnrollment.findMany({
-          where: {
-            status: "ACTIVE",
-            startDate: { gte: weekStart },
-            trainingPlan: { coachId, deletedAt: null },
-          },
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                image: true,
-                workoutLogs: {
-                  select: { id: true },
-                  take: 1,
-                },
-              },
-            },
-            trainingPlan: { select: { name: true } },
-          },
-        }),
-
-        prisma.trainingPlan.count({
-          where: { coachId, status: "ACTIVE", deletedAt: null },
-        }),
-      ]);
+      prisma.trainingPlan.count({
+        where: { coachId, status: "ACTIVE", deletedAt: null },
+      }),
+    ]);
 
     const athletesSummary = computeAthletesSummary(enrollments, tz);
-    const loadDistributionToday = computeLoadDistribution(enrollments, tz);
     const progressBuckets = computeProgressBuckets(enrollments);
 
     const uniqueAthletes = new Set(enrollments.map((e) => e.user.id));
+    const recentAthletes = new Set<string>();
 
     const seen = new Set<string>();
     let plannedToday = 0;
@@ -107,6 +66,10 @@ export const platformCoachDashboardApi = {
 
     for (const e of enrollments) {
       const loggedIds = new Set(e.user.workoutLogs.map((l) => l.workoutId));
+
+      if (e.startDate && e.startDate >= weekStart) {
+        recentAthletes.add(e.user.id);
+      }
 
       for (const w of e.trainingPlan.workouts) {
         if (!w.scheduledDate) {
@@ -165,28 +128,6 @@ export const platformCoachDashboardApi = {
           SEVERITY_PRIORITY[a.severity] - SEVERITY_PRIORITY[b.severity],
       );
 
-    const recentNotes: DashboardNote[] = recentNotesRaw.map((n) => ({
-      id: n.id,
-      athleteId: n.athleteId,
-      athleteName: n.athlete.name,
-      content: n.content,
-      createdAt: n.createdAt,
-    }));
-
-    const onboarding: OnboardingAthlete[] = recentEnrollments.map((e) => {
-      const hasAnyLog = e.user.workoutLogs.length > 0;
-
-      return {
-        userId: e.user.id,
-        name: e.user.name,
-        image: e.user.image,
-        enrolledAt: e.startDate,
-        hasAnyLog,
-        hasCompletedFirst: hasAnyLog,
-        planName: e.trainingPlan.name,
-      };
-    });
-
     return {
       overview: {
         totalActiveAthletes: uniqueAthletes.size,
@@ -196,14 +137,11 @@ export const platformCoachDashboardApi = {
         workoutsPlannedThisWeek: plannedThisWeek,
         workoutsCompletedThisWeek: completedThisWeek,
         openActionItemsCount: openActionItems.length,
-        newAthletesCount: new Set(recentEnrollments.map((e) => e.user.id)).size,
+        newAthletesCount: recentAthletes.size,
       },
       actionItems,
       athletesSummary,
-      loadDistributionToday,
       progressBuckets,
-      recentNotes,
-      onboarding,
     };
   },
 };
