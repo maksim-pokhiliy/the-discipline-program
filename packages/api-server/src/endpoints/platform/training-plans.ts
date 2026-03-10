@@ -123,24 +123,6 @@ export const platformTrainingPlansApi = {
 
     await verifyPlanOwnership(id, coachId);
 
-    const plan = await prisma.trainingPlan.findUniqueOrThrow({
-      where: { id },
-      select: {
-        status: true,
-        _count: { select: { enrollments: { where: { status: "ACTIVE" } } } },
-      },
-    });
-
-    if (plan.status === "ACTIVE") {
-      throw new ConflictError("Cannot delete an active training plan. Archive it first.");
-    }
-
-    if (plan._count.enrollments > 0) {
-      throw new ConflictError(
-        `Cannot delete: ${plan._count.enrollments} athlete(s) have active enrollments.`,
-      );
-    }
-
     await prisma.trainingPlan.update({
       where: { id },
       data: { deletedAt: new Date() },
