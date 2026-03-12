@@ -13,21 +13,46 @@ import { mapToTrainingPlan } from "../../mappers";
 import { resolveCoachId, verifyPlanOwnership } from "./guards";
 
 type PlanWithStats = Parameters<typeof mapToTrainingPlan>[0] & {
-  _count: { workouts: number; enrollments: number; products: number };
-  workouts: { logs: { date: Date }[] }[];
+  _count: { enrollments: number };
+  enrollments: { userId: string }[];
+  workouts: { logs: { userId: string }[] }[];
+};
+
+const getWeekBounds = (): { start: Date; end: Date } => {
+  const now = new Date();
+  const day = now.getDay();
+  const diffToMonday = day === 0 ? -6 : 1 - day;
+
+  const start = new Date(now);
+
+  start.setDate(now.getDate() + diffToMonday);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+
+  end.setDate(start.getDate() + 7);
+
+  return { start, end };
 };
 
 const mapToListItem = (p: PlanWithStats): TrainingPlanListItem => {
-  const lastLog = p.workouts
-    .flatMap((w) => w.logs)
-    .sort((a, b) => b.date.getTime() - a.date.getTime())[0];
+  const enrolledCount = p._count.enrollments;
+
+  let weeklyComplianceRate: number | null = null;
+
+  if (enrolledCount > 0) {
+    const activeUserIds = new Set(p.enrollments.map((e) => e.userId));
+    const usersWithLogs = new Set(
+      p.workouts.flatMap((w) => w.logs.map((l) => l.userId)).filter((id) => activeUserIds.has(id)),
+    );
+
+    weeklyComplianceRate = Math.round((usersWithLogs.size / activeUserIds.size) * 100);
+  }
 
   return {
     ...mapToTrainingPlan(p),
-    workoutsCount: p._count.workouts,
-    enrolledAthletesCount: p._count.enrollments,
-    lastActivityAt: lastLog?.date ?? null,
-    hasLinkedProducts: p._count.products > 0,
+    enrolledAthletesCount: enrolledCount,
+    weeklyComplianceRate,
   };
 };
 
@@ -45,6 +70,7 @@ export const platformTrainingPlansApi = {
 
   getPageData: async (userId: string): Promise<CoachPlansPageData> => {
     const coachId = await resolveCoachId(userId);
+    const { start, end } = getWeekBounds();
 
     const plans = await prisma.trainingPlan.findMany({
       where: { coachId, deletedAt: null },
@@ -52,18 +78,19 @@ export const platformTrainingPlansApi = {
       include: {
         _count: {
           select: {
-            workouts: { where: { deletedAt: null } },
             enrollments: { where: { status: "ACTIVE" } },
-            products: { where: { deletedAt: null } },
           },
+        },
+        enrollments: {
+          where: { status: "ACTIVE" },
+          select: { userId: true },
         },
         workouts: {
           where: { deletedAt: null },
           select: {
             logs: {
-              select: { date: true },
-              orderBy: { date: "desc" },
-              take: 1,
+              where: { date: { gte: start, lt: end } },
+              select: { userId: true },
             },
           },
         },

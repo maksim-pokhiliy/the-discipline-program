@@ -1,0 +1,118 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
+import AddIcon from "@mui/icons-material/Add";
+import { Chip, Fab, Stack, Tab, Tabs, Typography } from "@mui/material";
+
+import type { TrainingPlanListItem } from "@repo/contracts/training-plan";
+import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+
+import {
+  useActivateTrainingPlan,
+  useArchiveTrainingPlan,
+  useDeleteTrainingPlan,
+  useDuplicateTrainingPlan,
+  useRestoreTrainingPlan,
+} from "@app/lib/hooks";
+
+import { PlanCard } from "../components";
+
+import { STATUS_TABS } from "./plans-list-config";
+
+type PlansListSectionProps = {
+  plans: TrainingPlanListItem[];
+  onCreateClick: () => void;
+};
+
+export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCreateClick }) => {
+  const [activeTab, setActiveTab] = useState<TrainingPlanStatus | "ALL">("ALL");
+
+  const activate = useActivateTrainingPlan();
+  const archive = useArchiveTrainingPlan();
+  const restore = useRestoreTrainingPlan();
+  const duplicate = useDuplicateTrainingPlan();
+  const deletePlan = useDeleteTrainingPlan();
+
+  const pendingPlanId =
+    (activate.isPending && activate.variables) ||
+    (archive.isPending && archive.variables) ||
+    (restore.isPending && restore.variables) ||
+    (duplicate.isPending && duplicate.variables) ||
+    (deletePlan.isPending && deletePlan.variables) ||
+    null;
+
+  const counts = useMemo(() => {
+    const map: Record<string, number> = { ALL: plans.length };
+
+    for (const status of Object.values(TrainingPlanStatus)) {
+      map[status] = 0;
+    }
+
+    for (const plan of plans) {
+      map[plan.status] = (map[plan.status] ?? 0) + 1;
+    }
+
+    return map;
+  }, [plans]);
+
+  const filteredPlans = useMemo(
+    () => (activeTab === "ALL" ? plans : plans.filter((p) => p.status === activeTab)),
+    [plans, activeTab],
+  );
+
+  return (
+    <Stack spacing={2}>
+      <Tabs
+        value={activeTab}
+        onChange={(_, value: TrainingPlanStatus | "ALL") => setActiveTab(value)}
+        variant="scrollable"
+        scrollButtons="auto"
+      >
+        {STATUS_TABS.map((tab) => (
+          <Tab
+            key={tab.value}
+            value={tab.value}
+            label={
+              <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
+                <Typography variant="body2" component="span">
+                  {tab.label}
+                </Typography>
+                <Chip size="small" label={counts[tab.value] ?? 0} color={tab.chipColor} />
+              </Stack>
+            }
+          />
+        ))}
+      </Tabs>
+
+      {filteredPlans.length > 0 ? (
+        <Stack spacing={1.5}>
+          {filteredPlans.map((plan) => (
+            <PlanCard
+              key={plan.id}
+              plan={plan}
+              onActivate={(id) => activate.mutate(id)}
+              onArchive={(id) => archive.mutate(id)}
+              onRestore={(id) => restore.mutate(id)}
+              onDuplicate={(id) => duplicate.mutate(id)}
+              onDelete={(id) => deletePlan.mutate(id)}
+              isPending={pendingPlanId === plan.id}
+            />
+          ))}
+        </Stack>
+      ) : (
+        <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
+          No plans in this category
+        </Typography>
+      )}
+
+      <Fab
+        color="primary"
+        onClick={onCreateClick}
+        sx={{ position: "fixed", bottom: 80, right: 16 }}
+      >
+        <AddIcon />
+      </Fab>
+    </Stack>
+  );
+};

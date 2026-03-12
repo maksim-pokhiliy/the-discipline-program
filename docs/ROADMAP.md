@@ -102,31 +102,28 @@ Dashboard (deferred — post-MVP):
 
 Training Plans:
 
-- [x] Backend: full CRUD + archive/restore/activate/duplicate endpoints
+Backend ✅:
+
+- [x] Full CRUD + archive/restore/activate/duplicate endpoints
 - [x] API client + React Query hooks
 - [x] Archive-first delete flow (ACTIVE → archive → delete from ARCHIVED)
 - [x] Plan duplication (deep copy: workouts → blocks → prescribed sets)
 - [x] Enriched list data (workouts count, enrolled athletes, last activity, linked products)
-- [ ] UI: list page with filter tabs — backend ready, UI is stub
-- [ ] UI: create/edit form — backend ready, UI is stub
 
-### 3.3 Coach: Workout builder
+UI — Hybrid drill-down (3 levels):
 
-Backend layer (contracts + API server + route handlers): ✅ complete
+- Level 1: Plans list (`/coach/plans`) — cards with status/stats, filter tabs, CRUD + status actions
+- Level 2: Plan detail (`/coach/plans/[planId]`) — meta + workouts as cards, plan-level actions
+- Level 3: Workout detail (`/coach/plans/[planId]/workouts/[workoutId]`) — blocks + prescribed sets inline
 
-- [x] Contracts: Workout, WorkoutBlock, PrescribedSet — full CRUD schemas
-- [x] API Server: CRUD endpoints with ownership verification and mappers
-- [x] Route handlers: all protected with `withPlatformAuth`
+Implementation:
 
-Frontend layer: not started
-
-- [ ] API client endpoints + React Query hooks (workouts, blocks, sets)
-- [ ] Plan detail page = workout builder entry point
-- [ ] Workouts as accordion items (sorted by scheduledDate)
-- [ ] Add/edit/delete workouts (dialog)
-- [ ] Blocks within workout (category, rounds, time cap)
-- [ ] Prescribed sets within block (exercise picker, sets, reps, weight, unit, RPE, notes)
-- [ ] Lazy loading: workouts → blocks → sets per level
+- [ ] UI: Plans list page (filter tabs by status, plan cards, create/actions menu)
+- [ ] UI: Create/edit plan (name, description — dialog or inline)
+- [ ] UI: Plan detail page (overview + workouts list)
+- [ ] UI: Workout detail page (blocks + prescribed sets)
+- [ ] API client + React Query hooks for workouts, blocks, sets
+- [ ] Enrollment management on plan detail page
 
 ### 3.4 Coach: Exercise library
 
