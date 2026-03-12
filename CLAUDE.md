@@ -217,6 +217,8 @@ export default async function BlogPage() {
 - **No non-null assertions (`!`).** Never use `!` to silence TypeScript's null checks. Use type predicates in `.filter()`, explicit null guards, or optional chaining. If TypeScript says it might be null — handle it, don't muzzle the compiler. Enforced by `@typescript-eslint/no-non-null-assertion` ESLint rule.
 - **No raw CSS transition strings.** Never use `transition: "background-color 0.15s"` or similar raw strings. Use MUI's `theme.transitions.create()` API — it ensures consistent durations and easing across the app and respects `prefers-reduced-motion`.
 - **No raw HTML elements in components.** Never use `<div>`, `<span>`, `<ul>`, `<li>`, etc. directly. Use MUI equivalents: `Box`, `Typography`, `Stack`, `List`, `ListItem`, etc. MUI components provide theme integration, `sx` prop, and consistent spacing. The only exception is `<table>`-related tags if MUI Table is overkill for a trivial case.
+- **Use shared UI abstractions.** Never hand-roll `Dialog`/`DialogTitle`/`DialogContent`/`DialogActions` directly. Use `FormModal`, `ConfirmationModal`, or `BaseModal` from `@repo/ui`. They handle padding, button sizing, loading states, backdrop blocking, and escape key consistently. Same principle applies to any component that already has a shared abstraction.
+- **Destructive actions require confirmation.** Every destructive action (delete, archive, etc.) must go through `ConfirmationModal` with `type="danger"`. The modal must show `isConfirming` loading state from the mutation — never close the modal optimistically before the operation completes.
 
 ## Commit Convention
 
