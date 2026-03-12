@@ -65,7 +65,7 @@ export const PlatformBottomNav = () => {
         }}
         showLabels
         sx={{
-          height: (theme) => theme.spacing(7),
+          height: (theme) => theme.spacing(10),
           bgcolor: "background.paper",
         }}
       >
@@ -76,7 +76,6 @@ export const PlatformBottomNav = () => {
             icon={ICON_MAP[item.icon]}
             sx={{
               minWidth: "auto",
-              px: 0.5,
               color: "text.secondary",
               "&.Mui-selected": {
                 color: "primary.main",

@@ -108,7 +108,7 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
       <Fab
         color="primary"
         onClick={onCreateClick}
-        sx={{ position: "fixed", bottom: 80, right: 16 }}
+        sx={{ position: "fixed", bottom: 100, right: 16 }}
       >
         <AddIcon />
       </Fab>
