@@ -34,13 +34,12 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
   const duplicate = useDuplicateTrainingPlan();
   const deletePlan = useDeleteTrainingPlan();
 
-  const pendingPlanId =
-    (activate.isPending && activate.variables) ||
-    (archive.isPending && archive.variables) ||
-    (restore.isPending && restore.variables) ||
-    (duplicate.isPending && duplicate.variables) ||
-    (deletePlan.isPending && deletePlan.variables) ||
-    null;
+  const isPlanPending = (planId: string) =>
+    (activate.isPending && activate.variables === planId) ||
+    (archive.isPending && archive.variables === planId) ||
+    (restore.isPending && restore.variables === planId) ||
+    (duplicate.isPending && duplicate.variables === planId) ||
+    (deletePlan.isPending && deletePlan.variables === planId);
 
   const counts = useMemo(() => {
     const map: Record<string, number> = { ALL: plans.length };
@@ -96,7 +95,7 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
               onRestore={(id) => restore.mutate(id)}
               onDuplicate={(id) => duplicate.mutate(id)}
               onDelete={(id) => deletePlan.mutate(id)}
-              isPending={pendingPlanId === plan.id}
+              isPending={isPlanPending(plan.id)}
             />
           ))}
         </Stack>
