@@ -53,10 +53,8 @@ export const restoreTrainingPlanParamsSchema = z.object({
 });
 
 export const calendarWorkoutSchema = workoutSchema.extend({
-  planId: z.string().cuid(),
   planName: z.string(),
   planStatus: trainingPlanStatusSchema,
-  blockCount: z.number().int(),
 });
 
 export const getCalendarWeekParamsSchema = z.object({

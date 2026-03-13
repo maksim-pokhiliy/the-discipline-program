@@ -23,5 +23,4 @@ const exerciseHooks = createCrudHooks<Exercise[], Exercise, CreateExerciseData, 
 export const useExercisesPageData = exerciseHooks.usePageData;
 export const useExercise = exerciseHooks.useById;
 export const useCreateExercise = exerciseHooks.useCreate;
-export const useUpdateExercise = exerciseHooks.useUpdate;
 export const useDeleteExercise = exerciseHooks.useDelete;

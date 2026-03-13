@@ -60,7 +60,7 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
             <ListItemIcon>
               <PauseIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Pause</ListItemText>
+            <ListItemText primary="Pause" secondary="Temporarily stop (injury, vacation)" />
           </MenuItem>
         )}
 
@@ -72,7 +72,7 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
             <ListItemIcon>
               <PlayArrowIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Resume</ListItemText>
+            <ListItemText primary="Resume" secondary="Reactivate athlete on this plan" />
           </MenuItem>
         )}
 
@@ -84,7 +84,7 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
             <ListItemIcon>
               <DoneIcon fontSize="small" />
             </ListItemIcon>
-            <ListItemText>Complete</ListItemText>
+            <ListItemText primary="Complete" secondary="Mark program as finished" />
           </MenuItem>
         )}
 
@@ -99,7 +99,7 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
           <ListItemIcon sx={{ color: "inherit" }}>
             <DeleteIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Remove</ListItemText>
+          <ListItemText primary="Remove" secondary="Detach athlete from plan entirely" />
         </MenuItem>
       </Menu>
 

@@ -40,7 +40,7 @@ export const EnrollmentCard: React.FC<EnrollmentCardProps> = ({
         <Avatar
           src={enrollment.user.image ?? undefined}
           alt={displayName}
-          sx={{ width: 36, height: 36, fontSize: 14 }}
+          sx={(theme) => ({ width: theme.spacing(4.5), height: theme.spacing(4.5) })}
         >
           {displayName.charAt(0).toUpperCase()}
         </Avatar>

@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 
-import { Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import { QueryWrapper } from "@repo/query";
 
+import { PlatformPageHeader } from "@app/lib/components";
 import { useTrainingPlansPageData } from "@app/lib/hooks";
 
 import { CreatePlanDialog } from "../components";
@@ -18,7 +19,7 @@ export const PlansView = () => {
   return (
     <>
       <Stack spacing={2}>
-        <Typography variant="h5">Training Plans</Typography>
+        <PlatformPageHeader title="Training Plans" />
 
         <QueryWrapper
           isLoading={isLoading}

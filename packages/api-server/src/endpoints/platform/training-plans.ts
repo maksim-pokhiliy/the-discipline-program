@@ -16,45 +16,48 @@ import { resolveCoachId, verifyPlanOwnership } from "./guards";
 
 type PlanWithStats = Parameters<typeof mapToTrainingPlan>[0] & {
   _count: { enrollments: number };
-  enrollments: { userId: string }[];
-  workouts: { logs: { userId: string }[] }[];
+  workouts: { scheduledDate: Date | null }[];
 };
 
-const getWeekBounds = (): { start: Date; end: Date } => {
+const getWeekBounds = (): { weekStart: Date; weekEnd: Date; todayStart: Date; todayEnd: Date } => {
   const now = new Date();
   const day = now.getDay();
   const diffToMonday = day === 0 ? -6 : 1 - day;
 
-  const start = new Date(now);
+  const weekStart = new Date(now);
 
-  start.setDate(now.getDate() + diffToMonday);
-  start.setHours(0, 0, 0, 0);
+  weekStart.setDate(now.getDate() + diffToMonday);
+  weekStart.setHours(0, 0, 0, 0);
 
-  const end = new Date(start);
+  const weekEnd = new Date(weekStart);
 
-  end.setDate(start.getDate() + 7);
+  weekEnd.setDate(weekStart.getDate() + 7);
 
-  return { start, end };
+  const todayStart = new Date(now);
+
+  todayStart.setHours(0, 0, 0, 0);
+
+  const todayEnd = new Date(todayStart);
+
+  todayEnd.setDate(todayStart.getDate() + 1);
+
+  return { weekStart, weekEnd, todayStart, todayEnd };
 };
 
-const mapToListItem = (p: PlanWithStats): TrainingPlanListItem => {
-  const enrolledCount = p._count.enrollments;
-
-  let weeklyComplianceRate: number | null = null;
-
-  if (enrolledCount > 0) {
-    const activeUserIds = new Set(p.enrollments.map((e) => e.userId));
-    const usersWithLogs = new Set(
-      p.workouts.flatMap((w) => w.logs.map((l) => l.userId)).filter((id) => activeUserIds.has(id)),
-    );
-
-    weeklyComplianceRate = Math.round((usersWithLogs.size / activeUserIds.size) * 100);
-  }
+const mapToListItem = (
+  p: PlanWithStats,
+  todayStart: Date,
+  todayEnd: Date,
+): TrainingPlanListItem => {
+  const todayWorkouts = p.workouts.filter(
+    (w) => w.scheduledDate && w.scheduledDate >= todayStart && w.scheduledDate < todayEnd,
+  );
 
   return {
     ...mapToTrainingPlan(p),
-    enrolledAthletesCount: enrolledCount,
-    weeklyComplianceRate,
+    enrolledAthletesCount: p._count.enrollments,
+    workoutsToday: todayWorkouts.length,
+    workoutsThisWeek: p.workouts.length,
   };
 };
 
@@ -81,10 +84,8 @@ export const platformTrainingPlansApi = {
 
     return workouts.map((w) => ({
       ...mapToWorkout(w),
-      planId: w.plan.id,
       planName: w.plan.name,
       planStatus: w.plan.status as TrainingPlanStatus,
-      blockCount: w._count.blocks,
     }));
   },
 
@@ -101,7 +102,7 @@ export const platformTrainingPlansApi = {
 
   getPageData: async (userId: string): Promise<CoachPlansPageData> => {
     const coachId = await resolveCoachId(userId);
-    const { start, end } = getWeekBounds();
+    const { weekStart, weekEnd, todayStart, todayEnd } = getWeekBounds();
 
     const plans = await prisma.trainingPlan.findMany({
       where: { coachId, deletedAt: null },
@@ -112,23 +113,17 @@ export const platformTrainingPlansApi = {
             enrollments: { where: { status: "ACTIVE" } },
           },
         },
-        enrollments: {
-          where: { status: "ACTIVE" },
-          select: { userId: true },
-        },
         workouts: {
-          where: { deletedAt: null },
-          select: {
-            logs: {
-              where: { date: { gte: start, lt: end } },
-              select: { userId: true },
-            },
+          where: {
+            deletedAt: null,
+            scheduledDate: { gte: weekStart, lt: weekEnd },
           },
+          select: { scheduledDate: true },
         },
       },
     });
 
-    return { plans: plans.map(mapToListItem) };
+    return { plans: plans.map((p) => mapToListItem(p, todayStart, todayEnd)) };
   },
 
   getById: async (userId: string, id: string): Promise<TrainingPlan> => {

@@ -1,3 +1,5 @@
+import { type Workout as PrismaWorkout } from "@prisma/client";
+
 import {
   type CreateWorkoutData,
   type UpdateWorkoutData,
@@ -18,7 +20,8 @@ export const platformWorkoutsApi = {
 
     const workouts = await prisma.workout.findMany({
       where: { planId, deletedAt: null },
-      orderBy: [{ scheduledDate: "asc" }, { createdAt: "asc" }],
+      include: { _count: { select: { blocks: true } } },
+      orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
     });
 
     return workouts.map(mapToWorkout);
@@ -31,6 +34,7 @@ export const platformWorkoutsApi = {
 
     const workout = await prisma.workout.findUnique({
       where: { id },
+      include: { _count: { select: { blocks: true } } },
     });
 
     if (!workout || workout.deletedAt || workout.planId !== planId) {
@@ -45,8 +49,14 @@ export const platformWorkoutsApi = {
 
     await verifyPlanOwnership(planId, coachId);
 
+    const maxOrder = await prisma.workout.aggregate({
+      where: { planId, scheduledDate: data.scheduledDate ?? null, deletedAt: null },
+      _max: { sortOrder: true },
+    });
+
     const workout = await prisma.workout.create({
-      data: { planId, ...data },
+      data: { planId, ...data, sortOrder: (maxOrder._max.sortOrder ?? -1) + 1 },
+      include: { _count: { select: { blocks: true } } },
     });
 
     return mapToWorkout(workout);
@@ -74,6 +84,7 @@ export const platformWorkoutsApi = {
     const workout = await prisma.workout.update({
       where: { id },
       data,
+      include: { _count: { select: { blocks: true } } },
     });
 
     return mapToWorkout(workout);
@@ -99,17 +110,67 @@ export const platformWorkoutsApi = {
     });
   },
 
-  move: async (userId: string, workoutId: string, scheduledDate: Date): Promise<Workout> => {
+  move: async (
+    userId: string,
+    workoutId: string,
+    scheduledDate: Date,
+    targetDayOrderedIds?: string[],
+  ): Promise<Workout> => {
     const coachId = await resolveCoachId(userId);
 
-    await verifyWorkoutOwnership(workoutId, coachId);
+    const owned = await verifyWorkoutOwnership(workoutId, coachId);
 
-    const workout = await prisma.workout.update({
+    if (targetDayOrderedIds) {
+      await prisma.$transaction([
+        prisma.workout.update({
+          where: { id: workoutId },
+          data: { scheduledDate },
+        }),
+        ...targetDayOrderedIds.map((id, index) =>
+          prisma.workout.update({ where: { id }, data: { sortOrder: index } }),
+        ),
+      ]);
+    } else {
+      const maxOrder = await prisma.workout.aggregate({
+        where: { planId: owned.planId, scheduledDate, deletedAt: null },
+        _max: { sortOrder: true },
+      });
+
+      await prisma.workout.update({
+        where: { id: workoutId },
+        data: { scheduledDate, sortOrder: (maxOrder._max.sortOrder ?? -1) + 1 },
+      });
+    }
+
+    const workout = await prisma.workout.findUniqueOrThrow({
       where: { id: workoutId },
-      data: { scheduledDate },
+      include: { _count: { select: { blocks: true } } },
     });
 
     return mapToWorkout(workout);
+  },
+
+  reorder: async (userId: string, planId: string, orderedIds: string[]): Promise<void> => {
+    const coachId = await resolveCoachId(userId);
+
+    await verifyPlanOwnership(planId, coachId);
+
+    const workouts = await prisma.workout.findMany({
+      where: { planId, deletedAt: null, id: { in: orderedIds } },
+      select: { id: true },
+    });
+
+    const existingIds = new Set(workouts.map((w) => w.id));
+
+    if (orderedIds.some((id) => !existingIds.has(id))) {
+      throw new BadRequestError("orderedIds contain workouts not belonging to this plan");
+    }
+
+    await prisma.$transaction(
+      orderedIds.map((id, index) =>
+        prisma.workout.update({ where: { id }, data: { sortOrder: index } }),
+      ),
+    );
   },
 
   reorderBlocks: async (userId: string, workoutId: string, orderedIds: string[]): Promise<void> => {
@@ -164,7 +225,7 @@ export const platformWorkoutsApi = {
           orderBy: { sortOrder: "asc" },
         },
       },
-      orderBy: [{ scheduledDate: "asc" }, { createdAt: "asc" }],
+      orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
     });
 
     if (sourceWorkouts.length === 0) {
@@ -174,7 +235,7 @@ export const platformWorkoutsApi = {
     const dayShiftMs = targetDate.getTime() - sourceDate.getTime();
 
     const created = await prisma.$transaction(async (tx) => {
-      const results: Awaited<ReturnType<typeof tx.workout.create>>[] = [];
+      const results: (PrismaWorkout & { _count: { blocks: number } })[] = [];
 
       for (const workout of sourceWorkouts) {
         const newDate = workout.scheduledDate
@@ -187,7 +248,9 @@ export const platformWorkoutsApi = {
             scheduledDate: newDate,
             title: workout.title,
             description: workout.description,
+            sortOrder: workout.sortOrder,
           },
+          include: { _count: { select: { blocks: true } } },
         });
 
         for (const block of workout.blocks) {

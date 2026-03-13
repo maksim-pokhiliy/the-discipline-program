@@ -30,10 +30,13 @@ export const verifyPlanOwnership = async (planId: string, coachId: string): Prom
   }
 };
 
-export const verifyWorkoutOwnership = async (workoutId: string, coachId: string): Promise<void> => {
+export const verifyWorkoutOwnership = async (
+  workoutId: string,
+  coachId: string,
+): Promise<{ planId: string }> => {
   const workout = await prisma.workout.findUnique({
     where: { id: workoutId },
-    select: { deletedAt: true, plan: { select: { coachId: true, deletedAt: true } } },
+    select: { planId: true, deletedAt: true, plan: { select: { coachId: true, deletedAt: true } } },
   });
 
   if (!workout || workout.deletedAt) {
@@ -43,6 +46,8 @@ export const verifyWorkoutOwnership = async (workoutId: string, coachId: string)
   if (workout.plan.deletedAt || workout.plan.coachId !== coachId) {
     throw new ForbiddenError("Workout does not belong to this coach");
   }
+
+  return { planId: workout.planId };
 };
 
 export const resolveCoachAthleteIds = async (coachId: string): Promise<string[]> => {

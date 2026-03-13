@@ -1,74 +1,126 @@
 "use client";
 
-import { useDraggable } from "@dnd-kit/core";
+import { type KeyboardEvent, useCallback, useState } from "react";
+
+import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import CloseIcon from "@mui/icons-material/Close";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { Box, Paper, Stack, Typography } from "@mui/material";
+import { IconButton, InputBase, Paper, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 
 import type { Workout } from "@repo/contracts/workout";
+import { ConfirmationModal } from "@repo/ui";
+
+import { useDeleteWorkout, useUpdateWorkout } from "@app/lib/hooks";
 
 type WeekWorkoutCardProps = {
   workout: Workout;
   planId: string;
+  autoFocus?: boolean;
 };
 
-export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planId }) => {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planId, autoFocus }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: workout.id,
-    data: { workout },
+    data: { workout, scheduledDate: workout.scheduledDate },
   });
+  const deleteWorkout = useDeleteWorkout(planId);
+  const updateWorkout = useUpdateWorkout(planId);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [editValue, setEditValue] = useState(workout.title);
+
+  const commitEdit = useCallback(() => {
+    const trimmed = editValue.trim();
+
+    if (trimmed !== workout.title) {
+      updateWorkout.mutate({ id: workout.id, data: { title: trimmed } });
+    } else {
+      setEditValue(workout.title);
+    }
+  }, [editValue, workout.id, workout.title, updateWorkout]);
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      (e.target as HTMLInputElement).blur();
+    }
+  };
 
   const style = {
-    transform: CSS.Translate.toString(transform),
+    transform: CSS.Transform.toString(transform),
+    transition,
     opacity: isDragging ? 0.4 : 1,
   };
 
   return (
-    <Paper
-      ref={setNodeRef}
-      variant="outlined"
-      style={style}
-      sx={(theme) => ({
-        transition: theme.transitions.create("border-color"),
-        "&:hover": { borderColor: theme.palette.primary.main },
-      })}
-    >
-      <Stack direction="row" sx={{ alignItems: "center" }}>
-        <Box
-          {...listeners}
-          {...attributes}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            px: 0.5,
-            py: 1.5,
-            cursor: "grab",
-            color: "text.disabled",
-            touchAction: "none",
-          }}
-        >
-          <DragIndicatorIcon fontSize="small" />
-        </Box>
+    <>
+      <Paper ref={setNodeRef} {...attributes} tabIndex={-1} variant="outlined" style={style}>
+        <Stack direction="row" sx={{ alignItems: "center" }}>
+          <Stack
+            {...listeners}
+            tabIndex={-1}
+            sx={{
+              alignItems: "center",
+              justifyContent: "center",
+              px: 0.5,
+              py: 1.5,
+              cursor: "grab",
+              color: "text.disabled",
+              touchAction: "none",
+            }}
+          >
+            <DragIndicatorIcon fontSize="small" />
+          </Stack>
 
-        <Box
-          component={Link}
-          href={`/coach/plans/${planId}/workouts/${workout.id}`}
-          sx={{
-            flex: 1,
-            textDecoration: "none",
-            color: "inherit",
-            py: 1,
-            pr: 1.5,
-            minWidth: 0,
-          }}
-        >
-          <Typography variant="body2" noWrap sx={{ fontWeight: 500 }}>
-            {workout.title}
-          </Typography>
-        </Box>
-      </Stack>
-    </Paper>
+          <InputBase
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={commitEdit}
+            onKeyDown={handleKeyDown}
+            autoFocus={autoFocus}
+            placeholder="Workout title..."
+            sx={{ flex: 1, typography: "body2", "& input": { p: 0, py: 1, fontWeight: 500 } }}
+            slotProps={{ input: { maxLength: 200 } }}
+          />
+
+          {workout.blockCount > 0 && (
+            <Typography variant="caption" sx={{ color: "text.secondary", whiteSpace: "nowrap" }}>
+              {workout.blockCount} blk
+            </Typography>
+          )}
+
+          <IconButton
+            component={Link}
+            href={`/coach/plans/${planId}/workouts/${workout.id}`}
+            size="small"
+            sx={{ color: "text.disabled" }}
+          >
+            <ChevronRightIcon fontSize="small" />
+          </IconButton>
+
+          <IconButton
+            size="small"
+            onClick={() => setConfirmOpen(true)}
+            sx={{ mr: 0.5, color: "text.disabled", "&:hover": { color: "error.main" } }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Stack>
+      </Paper>
+
+      <ConfirmationModal
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() =>
+          deleteWorkout.mutate(workout.id, { onSuccess: () => setConfirmOpen(false) })
+        }
+        title="Delete Workout"
+        message={`Are you sure you want to delete "${workout.title || "Untitled workout"}"? This action cannot be undone.`}
+        type="danger"
+        isConfirming={deleteWorkout.isPending}
+      />
+    </>
   );
 };
 
@@ -82,7 +134,7 @@ export const WorkoutDragOverlay: React.FC<{ workout: Workout }> = ({ workout }) 
     })}
   >
     <Typography variant="body2" sx={{ fontWeight: 500 }}>
-      {workout.title}
+      {workout.title || "Untitled workout"}
     </Typography>
   </Paper>
 );

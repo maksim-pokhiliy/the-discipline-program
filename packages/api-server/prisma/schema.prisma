@@ -271,8 +271,9 @@ model Workout {
   planId        String
   plan          TrainingPlan   @relation(fields: [planId], references: [id])
   scheduledDate DateTime?
-  title         String
+  title         String         @default("")
   description   String?
+  sortOrder     Int            @default(0)
   isArchived    Boolean        @default(false)
   blocks        WorkoutBlock[]
   logs          WorkoutLog[]

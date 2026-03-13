@@ -15,6 +15,7 @@ export const QueryProvider = ({ children }: QueryProviderProps) => {
         defaultOptions: {
           queries: {
             gcTime: 10 * 60 * 1000,
+            staleTime: 30 * 1000,
           },
         },
       }),

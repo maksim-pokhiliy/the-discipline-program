@@ -34,8 +34,38 @@ const trainingPlanHooks = createCrudHooks<
 export const useTrainingPlansPageData = trainingPlanHooks.usePageData;
 export const useTrainingPlan = trainingPlanHooks.useById;
 export const useCreateTrainingPlan = trainingPlanHooks.useCreate;
-export const useUpdateTrainingPlan = trainingPlanHooks.useUpdate;
 export const useDeleteTrainingPlan = trainingPlanHooks.useDelete;
+
+export const useUpdateTrainingPlan = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: UpdateTrainingPlanData }) =>
+      api.trainingPlans.update(id, data),
+    onMutate: async ({ id, data }) => {
+      await queryClient.cancelQueries({ queryKey: platformKeys.trainingPlans.byId(id) });
+
+      const previous = queryClient.getQueryData<TrainingPlan>(platformKeys.trainingPlans.byId(id));
+
+      if (previous) {
+        queryClient.setQueryData(platformKeys.trainingPlans.byId(id), { ...previous, ...data });
+      }
+
+      return { previous };
+    },
+    onError: (_error, { id }, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(platformKeys.trainingPlans.byId(id), context.previous);
+      }
+
+      toast.error("Failed to update training plan");
+    },
+    onSettled: (_data, _error, { id }) => {
+      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.byId(id) });
+      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+    },
+  });
+};
 
 export const useDuplicateTrainingPlan = () => {
   const queryClient = useQueryClient();
@@ -57,8 +87,9 @@ export const useArchiveTrainingPlan = () => {
 
   return useMutation({
     mutationFn: (id: string) => api.trainingPlans.archive(id),
-    onSuccess: () => {
+    onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      queryClient.setQueryData(platformKeys.trainingPlans.byId(plan.id), plan);
       toast.success("Training plan archived");
     },
     onError: (error: Error) => {
@@ -72,8 +103,9 @@ export const useRestoreTrainingPlan = () => {
 
   return useMutation({
     mutationFn: (id: string) => api.trainingPlans.restore(id),
-    onSuccess: () => {
+    onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      queryClient.setQueryData(platformKeys.trainingPlans.byId(plan.id), plan);
       toast.success("Training plan restored");
     },
     onError: (error: Error) => {
@@ -87,8 +119,9 @@ export const useActivateTrainingPlan = () => {
 
   return useMutation({
     mutationFn: (id: string) => api.trainingPlans.activate(id),
-    onSuccess: () => {
+    onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      queryClient.setQueryData(platformKeys.trainingPlans.byId(plan.id), plan);
       toast.success("Training plan activated");
     },
     onError: (error: Error) => {

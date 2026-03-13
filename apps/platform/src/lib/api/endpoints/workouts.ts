@@ -17,8 +17,20 @@ export const createWorkoutsAPI = (client: ApiClient) => ({
   delete: (planId: string, id: string): Promise<void> =>
     client.request(`/api/platform/training-plans/${planId}/workouts/${id}`, "DELETE"),
 
-  move: (workoutId: string, scheduledDate: Date): Promise<Workout> =>
-    client.request(`/api/platform/workouts/${workoutId}/move`, "PUT", { scheduledDate }),
+  move: (
+    workoutId: string,
+    scheduledDate: Date,
+    targetDayOrderedIds?: string[],
+  ): Promise<Workout> =>
+    client.request(`/api/platform/workouts/${workoutId}/move`, "PUT", {
+      scheduledDate,
+      targetDayOrderedIds,
+    }),
+
+  reorder: (planId: string, orderedIds: string[]): Promise<void> =>
+    client.request(`/api/platform/training-plans/${planId}/reorder-workouts`, "PUT", {
+      orderedIds,
+    }),
 
   reorderBlocks: (workoutId: string, orderedIds: string[]): Promise<void> =>
     client.request(`/api/platform/workouts/${workoutId}/reorder-blocks`, "PUT", { orderedIds }),

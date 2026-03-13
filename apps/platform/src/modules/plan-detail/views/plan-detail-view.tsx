@@ -1,17 +1,17 @@
 "use client";
 
-import { useCallback } from "react";
+import { type KeyboardEvent, useCallback, useState } from "react";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { IconButton, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { IconButton, InputBase, Stack, Tab, Tabs } from "@mui/material";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { QueryWrapper } from "@repo/query";
 
-import { useTrainingPlan } from "@app/lib/hooks";
-import { PlanStatusChip } from "@app/modules/plans/components";
+import { useTrainingPlan, useUpdateTrainingPlan } from "@app/lib/hooks";
 
+import { PlanStatusSelect } from "../components";
 import { PlanAthletesSection } from "../sections";
 import { PlanScheduleSection } from "../sections";
 
@@ -23,9 +23,20 @@ type TabValue = "schedule" | "athletes";
 
 export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
   const { data: plan, isLoading, error } = useTrainingPlan(planId);
+  const updatePlan = useUpdateTrainingPlan();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const [nameValue, setNameValue] = useState("");
+  const [descValue, setDescValue] = useState("");
+  const [initialized, setInitialized] = useState(false);
+
+  if (plan && !initialized) {
+    setNameValue(plan.name);
+    setDescValue(plan.description ?? "");
+    setInitialized(true);
+  }
 
   const activeTab = (searchParams.get("tab") as TabValue) ?? "schedule";
 
@@ -44,36 +55,77 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
     [router, pathname, searchParams],
   );
 
+  const commitName = useCallback(() => {
+    const trimmed = nameValue.trim();
+
+    if (trimmed && plan && trimmed !== plan.name) {
+      updatePlan.mutate({ id: planId, data: { name: trimmed } });
+    } else if (plan) {
+      setNameValue(plan.name);
+    }
+  }, [nameValue, plan, planId, updatePlan]);
+
+  const commitDescription = useCallback(() => {
+    if (!plan) {
+      return;
+    }
+
+    const trimmed = descValue.trim();
+    const current = plan.description ?? "";
+
+    if (trimmed !== current) {
+      updatePlan.mutate({ id: planId, data: { description: trimmed || null } });
+    }
+  }, [descValue, plan, planId, updatePlan]);
+
+  const handleNameKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      (e.target as HTMLInputElement).blur();
+    }
+  };
+
   return (
-    <Stack spacing={2}>
-      <QueryWrapper
-        isLoading={isLoading}
-        error={error}
-        data={plan}
-        loadingMessage="Loading plan..."
-      >
-        {(data) => (
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <IconButton component={Link} href="/coach/plans" size="small">
-              <ArrowBackIcon />
-            </IconButton>
+    <QueryWrapper isLoading={isLoading} error={error} data={plan} loadingMessage="Loading plan...">
+      {(data) => (
+        <Stack spacing={2}>
+          <Stack spacing={0.5}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+              <IconButton component={Link} href="/coach/plans" size="small">
+                <ArrowBackIcon />
+              </IconButton>
 
-            <Typography variant="h6" noWrap sx={{ flex: 1, fontWeight: 600 }}>
-              {data.name}
-            </Typography>
+              <InputBase
+                value={nameValue}
+                onChange={(e) => setNameValue(e.target.value)}
+                onBlur={commitName}
+                onKeyDown={handleNameKeyDown}
+                sx={{ flex: 1, typography: "h5", "& input": { p: 0 } }}
+                slotProps={{ input: { maxLength: 200 } }}
+              />
 
-            <PlanStatusChip status={data.status} />
+              <PlanStatusSelect planId={data.id} status={data.status} />
+            </Stack>
+
+            <InputBase
+              value={descValue}
+              onChange={(e) => setDescValue(e.target.value)}
+              onBlur={commitDescription}
+              placeholder="Add description..."
+              multiline
+              sx={{ typography: "body2", color: "text.secondary", pl: 5.5, "& textarea": { p: 0 } }}
+              slotProps={{ input: { maxLength: 2000 } }}
+            />
           </Stack>
-        )}
-      </QueryWrapper>
 
-      <Tabs value={activeTab} onChange={handleTabChange}>
-        <Tab value="schedule" label="Schedule" />
-        <Tab value="athletes" label="Athletes" />
-      </Tabs>
+          <Tabs value={activeTab} onChange={handleTabChange}>
+            <Tab value="schedule" label="Schedule" />
+            <Tab value="athletes" label="Athletes" />
+          </Tabs>
 
-      {activeTab === "schedule" && <PlanScheduleSection planId={planId} />}
-      {activeTab === "athletes" && <PlanAthletesSection planId={planId} />}
-    </Stack>
+          {activeTab === "schedule" && <PlanScheduleSection planId={planId} />}
+          {activeTab === "athletes" && <PlanAthletesSection planId={planId} />}
+        </Stack>
+      )}
+    </QueryWrapper>
   );
 };
