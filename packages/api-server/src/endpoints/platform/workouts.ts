@@ -1,5 +1,3 @@
-import { type Workout as PrismaWorkout } from "@prisma/client";
-
 import {
   type CreateWorkoutData,
   type UpdateWorkoutData,
@@ -248,7 +246,7 @@ export const platformWorkoutsApi = {
     const dayShiftMs = targetDate.getTime() - sourceDate.getTime();
 
     const created = await prisma.$transaction(async (tx) => {
-      const results: (PrismaWorkout & { _count: { blocks: number } })[] = [];
+      const createdIds: string[] = [];
 
       for (const workout of sourceWorkouts) {
         const newDate = workout.scheduledDate
@@ -263,7 +261,6 @@ export const platformWorkoutsApi = {
             description: workout.description,
             sortOrder: workout.sortOrder,
           },
-          include: { _count: { select: { blocks: true } } },
         });
 
         for (const block of workout.blocks) {
@@ -295,10 +292,14 @@ export const platformWorkoutsApi = {
           }
         }
 
-        results.push(newWorkout);
+        createdIds.push(newWorkout.id);
       }
 
-      return results;
+      return tx.workout.findMany({
+        where: { id: { in: createdIds } },
+        include: { _count: { select: { blocks: true } } },
+        orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }],
+      });
     });
 
     return created.map(mapToWorkout);

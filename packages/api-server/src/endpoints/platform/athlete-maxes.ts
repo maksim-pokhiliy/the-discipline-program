@@ -1,4 +1,5 @@
 import type { AthleteMax, CreateAthleteMaxData } from "@repo/contracts/athlete-max";
+import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
@@ -41,7 +42,7 @@ export const platformAthleteMaxesApi = {
     await verifyPlanOwnership(planId, coachId);
 
     const enrollments = await prisma.planEnrollment.findMany({
-      where: { trainingPlanId: planId, status: "ACTIVE" },
+      where: { trainingPlanId: planId, status: PlanEnrollmentStatus.ACTIVE },
       select: { userId: true },
     });
 

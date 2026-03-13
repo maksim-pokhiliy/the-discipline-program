@@ -79,34 +79,14 @@ export const useDeletePlanEnrollment = (planId: string) => {
 
   return useMutation({
     mutationFn: (id: string) => api.planEnrollments.delete(planId, id),
-    onMutate: async (id) => {
-      const key = platformKeys.planEnrollments.byPlan(planId);
-
-      await queryClient.cancelQueries({ queryKey: key });
-
-      const previous = queryClient.getQueryData<PlanEnrollment[]>(key);
-
-      if (previous) {
-        queryClient.setQueryData(
-          key,
-          previous.filter((e) => e.id !== id),
-        );
-      }
-
-      return { previous };
-    },
-    onError: (_error, _id, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(platformKeys.planEnrollments.byPlan(planId), context.previous);
-      }
-
-      toast.error("Failed to remove enrollment");
-    },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: platformKeys.planEnrollments.byPlan(planId),
       });
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+    },
+    onError: () => {
+      toast.error("Failed to remove enrollment");
     },
   });
 };

@@ -1,3 +1,4 @@
+import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
@@ -54,7 +55,7 @@ export const resolveCoachAthleteIds = async (coachId: string): Promise<string[]>
   const enrollments = await prisma.planEnrollment.findMany({
     where: {
       trainingPlan: { coachId, deletedAt: null },
-      status: "ACTIVE",
+      status: PlanEnrollmentStatus.ACTIVE,
     },
     select: { userId: true },
     distinct: ["userId"],
@@ -71,7 +72,7 @@ export const verifyAthleteBelongsToCoach = async (
     where: {
       userId: athleteUserId,
       trainingPlan: { coachId, deletedAt: null },
-      status: "ACTIVE",
+      status: PlanEnrollmentStatus.ACTIVE,
     },
     select: { id: true },
   });

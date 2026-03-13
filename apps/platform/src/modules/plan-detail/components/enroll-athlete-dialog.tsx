@@ -83,7 +83,14 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
             sx={{ alignItems: "center" }}
             {...props}
           >
-            <Avatar src={option.image ?? undefined} sx={{ width: 28, height: 28, fontSize: 12 }}>
+            <Avatar
+              src={option.image ?? undefined}
+              sx={(theme) => ({
+                width: theme.spacing(3.5),
+                height: theme.spacing(3.5),
+                fontSize: theme.typography.caption.fontSize,
+              })}
+            >
               {(option.name ?? option.email).charAt(0).toUpperCase()}
             </Avatar>
             <Stack>
