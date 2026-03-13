@@ -18,4 +18,5 @@ export const mapToWorkoutBlock = (b: WorkoutBlockWithCategory): WorkoutBlock => 
   category: mapToExerciseCategory(b.category),
   rounds: b.rounds,
   timeCapSec: b.timeCapSec,
+  sortOrder: b.sortOrder,
 });

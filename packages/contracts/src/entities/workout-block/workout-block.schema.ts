@@ -9,6 +9,7 @@ export const workoutBlockSchema = z.object({
   category: exerciseCategorySchema,
   rounds: z.number().int().positive().nullable(),
   timeCapSec: z.number().int().positive().nullable(),
+  sortOrder: z.number().int(),
 });
 
 export const createWorkoutBlockSchema = z.object({

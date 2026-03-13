@@ -21,4 +21,5 @@ export * from "./entities/benchmark-definition";
 export * from "./entities/user-benchmark";
 export * from "./entities/coach-dashboard";
 export * from "./entities/coach-note";
+export * from "./entities/athlete-max";
 export * from "./entities/coach-action-item";

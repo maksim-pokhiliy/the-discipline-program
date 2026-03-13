@@ -40,3 +40,11 @@ export const deleteWorkoutBlockParamsSchema = z.object({
   workoutId: z.string().cuid(),
   id: z.string().cuid(),
 });
+
+export const reorderSetsParamsSchema = z.object({
+  blockId: z.string().cuid(),
+});
+
+export const reorderSetsRequestSchema = z.object({
+  orderedIds: z.array(z.string().cuid()).min(1),
+});

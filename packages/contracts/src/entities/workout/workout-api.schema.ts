@@ -36,3 +36,21 @@ export const deleteWorkoutParamsSchema = z.object({
   planId: z.string().cuid(),
   id: z.string().cuid(),
 });
+
+export const moveWorkoutParamsSchema = z.object({
+  workoutId: z.string().cuid(),
+});
+
+export const moveWorkoutRequestSchema = z.object({
+  scheduledDate: z.coerce.date(),
+});
+
+export const moveWorkoutResponseSchema = workoutSchema;
+
+export const reorderBlocksParamsSchema = z.object({
+  workoutId: z.string().cuid(),
+});
+
+export const reorderBlocksRequestSchema = z.object({
+  orderedIds: z.array(z.string().cuid()).min(1),
+});
