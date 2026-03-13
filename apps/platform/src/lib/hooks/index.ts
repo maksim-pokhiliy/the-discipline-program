@@ -8,5 +8,6 @@ export * from "./use-exercise-categories";
 export * from "./use-plan-enrollments";
 export * from "./use-prescribed-sets";
 export * from "./use-training-plans";
+export * from "./use-users";
 export * from "./use-workout-blocks";
 export * from "./use-workouts";

@@ -10,4 +10,5 @@ export { createPlanEnrollmentsAPI } from "./plan-enrollments";
 export { createPrescribedSetsAPI } from "./prescribed-sets";
 export { createTrainingPlansAPI } from "./training-plans";
 export { createWorkoutBlocksAPI } from "./workout-blocks";
+export { createUsersAPI } from "./users";
 export { createWorkoutsAPI } from "./workouts";

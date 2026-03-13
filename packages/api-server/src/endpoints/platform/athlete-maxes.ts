@@ -16,7 +16,9 @@ export const platformAthleteMaxesApi = {
     const coachId = await resolveCoachId(userId);
     const athleteIds = await resolveCoachAthleteIds(coachId);
 
-    if (athleteIds.length === 0) {return [];}
+    if (athleteIds.length === 0) {
+      return [];
+    }
 
     const maxes = await prisma.athleteMax.findMany({
       where: {

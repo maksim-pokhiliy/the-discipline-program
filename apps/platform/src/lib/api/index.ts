@@ -15,6 +15,7 @@ export const createApi = (client: ApiClient) => ({
   planEnrollments: endpoints.createPlanEnrollmentsAPI(client),
   prescribedSets: endpoints.createPrescribedSetsAPI(client),
   trainingPlans: endpoints.createTrainingPlansAPI(client),
+  users: endpoints.createUsersAPI(client),
   workoutBlocks: endpoints.createWorkoutBlocksAPI(client),
   workouts: endpoints.createWorkoutsAPI(client),
 });
