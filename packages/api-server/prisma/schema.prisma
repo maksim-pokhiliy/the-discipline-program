@@ -28,6 +28,7 @@ model User {
   userBenchmarks  UserBenchmark[]
   coachNotes      CoachNote[]
   actionItems     CoachActionItem[] @relation("ActionItemAthlete")
+  athleteMaxes    AthleteMax[]
   accounts        Account[]
   sessions        Session[]
 
@@ -233,6 +234,7 @@ model Exercise {
   categoryId          String?
   category            ExerciseCategory? @relation(fields: [categoryId], references: [id])
   prescribedSets      PrescribedSet[]
+  athleteMaxes        AthleteMax[]
   setLogSubstitutions SetLog[]
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
@@ -269,8 +271,9 @@ model Workout {
   planId        String
   plan          TrainingPlan   @relation(fields: [planId], references: [id])
   scheduledDate DateTime?
-  title         String
+  title         String         @default("")
   description   String?
+  sortOrder     Int            @default(0)
   isArchived    Boolean        @default(false)
   blocks        WorkoutBlock[]
   logs          WorkoutLog[]
@@ -292,6 +295,7 @@ model WorkoutBlock {
   category   ExerciseCategory @relation(fields: [categoryId], references: [id])
   rounds     Int?
   timeCapSec Int?
+  sortOrder  Int              @default(0)
   sets       PrescribedSet[]
 
   @@index([categoryId])
@@ -308,8 +312,10 @@ model PrescribedSet {
   reps        Int?
   weightValue Decimal?     @db.Decimal(6, 2)
   weightUnit  Unit         @default(KG)
+  weightType  WeightType   @default(ABSOLUTE)
   rpe         Int?
   notes       String?
+  sortOrder   Int          @default(0)
   logs        SetLog[]
 
   @@map("app_prescribed_sets")
@@ -350,6 +356,11 @@ model SetLog {
 enum Unit {
   KG
   LB
+}
+
+enum WeightType {
+  ABSOLUTE
+  PERCENTAGE
 }
 
 enum TrainingPlanStatus {
@@ -445,6 +456,21 @@ model PlanEnrollment {
   @@index([userId])
   @@index([status])
   @@map("app_plan_enrollments")
+}
+
+model AthleteMax {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id])
+  value      Decimal  @db.Decimal(6, 2)
+  unit       Unit     @default(KG)
+  testedAt   DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  @@index([userId, exerciseId, testedAt])
+  @@map("app_athlete_maxes")
 }
 
 model BenchmarkDefinition {

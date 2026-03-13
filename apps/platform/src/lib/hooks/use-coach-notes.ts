@@ -31,5 +31,4 @@ const coachNoteHooks = createCrudHooks<
 export const useCoachNotesPageData = coachNoteHooks.usePageData;
 export const useCoachNote = coachNoteHooks.useById;
 export const useCreateCoachNote = coachNoteHooks.useCreate;
-export const useUpdateCoachNote = coachNoteHooks.useUpdate;
 export const useDeleteCoachNote = coachNoteHooks.useDelete;

@@ -1,9 +1,11 @@
-import { Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
+
+import { PlatformPageHeader } from "@app/lib/components";
 
 const ProfilePage = () => {
   return (
     <Stack>
-      <Typography variant="h5">Profile</Typography>
+      <PlatformPageHeader title="Profile" />
     </Stack>
   );
 };

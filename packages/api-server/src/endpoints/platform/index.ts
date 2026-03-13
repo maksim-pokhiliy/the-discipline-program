@@ -1,3 +1,4 @@
+export * from "./athlete-maxes";
 export * from "./coach-action-items";
 export * from "./athlete-profile";
 export * from "./coach-dashboard";
@@ -11,3 +12,4 @@ export * from "./workouts";
 export * from "./plan-enrollments";
 export * from "./benchmark-definitions";
 export * from "./user-benchmarks";
+export * from "./users";

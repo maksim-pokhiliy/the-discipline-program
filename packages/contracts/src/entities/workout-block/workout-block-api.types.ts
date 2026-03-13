@@ -9,6 +9,8 @@ import {
   type getWorkoutBlockResponseSchema,
   type getWorkoutBlocksParamsSchema,
   type getWorkoutBlocksResponseSchema,
+  type reorderSetsParamsSchema,
+  type reorderSetsRequestSchema,
   type updateWorkoutBlockParamsSchema,
   type updateWorkoutBlockRequestSchema,
   type updateWorkoutBlockResponseSchema,
@@ -25,3 +27,5 @@ export type UpdateWorkoutBlockParams = z.infer<typeof updateWorkoutBlockParamsSc
 export type UpdateWorkoutBlockRequest = z.infer<typeof updateWorkoutBlockRequestSchema>;
 export type UpdateWorkoutBlockResponse = z.infer<typeof updateWorkoutBlockResponseSchema>;
 export type DeleteWorkoutBlockParams = z.infer<typeof deleteWorkoutBlockParamsSchema>;
+export type ReorderSetsParams = z.infer<typeof reorderSetsParamsSchema>;
+export type ReorderSetsRequest = z.infer<typeof reorderSetsRequestSchema>;

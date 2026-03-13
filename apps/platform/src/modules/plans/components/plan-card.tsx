@@ -1,7 +1,7 @@
 "use client";
 
+import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import GroupIcon from "@mui/icons-material/Group";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Box, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
@@ -93,18 +93,14 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             </Stack>
           </Tooltip>
 
-          {plan.weeklyComplianceRate !== null && (
-            <Tooltip
-              title="Athletes who logged at least one workout this week"
-              arrow
-              placement="top"
-            >
-              <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-                <TrendingUpIcon sx={{ fontSize: 16 }} />
-                <Typography variant="caption">{plan.weeklyComplianceRate}% this week</Typography>
-              </Stack>
-            </Tooltip>
-          )}
+          <Tooltip title="Scheduled workouts" arrow placement="top">
+            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+              <FitnessCenterIcon sx={{ fontSize: 16 }} />
+              <Typography variant="caption">
+                {plan.workoutsToday} today · {plan.workoutsThisWeek} this week
+              </Typography>
+            </Stack>
+          </Tooltip>
 
           <Tooltip title="Plan created" arrow placement="top">
             <Typography variant="caption" sx={{ ml: "auto !important" }}>
