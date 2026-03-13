@@ -121,6 +121,19 @@ export const platformWorkoutsApi = {
     const owned = await verifyWorkoutOwnership(workoutId, coachId);
 
     if (targetDayOrderedIds) {
+      const targetWorkouts = await prisma.workout.findMany({
+        where: { id: { in: targetDayOrderedIds }, planId: owned.planId, deletedAt: null },
+        select: { id: true },
+      });
+
+      const validIds = new Set(targetWorkouts.map((w) => w.id));
+
+      if (targetDayOrderedIds.some((id) => !validIds.has(id))) {
+        throw new BadRequestError(
+          "targetDayOrderedIds contain workouts not belonging to this plan",
+        );
+      }
+
       await prisma.$transaction([
         prisma.workout.update({
           where: { id: workoutId },

@@ -53,8 +53,13 @@ export const platformWorkoutBlocksApi = {
 
     await verifyWorkoutOwnership(workoutId, coachId);
 
+    const maxOrder = await prisma.workoutBlock.aggregate({
+      where: { workoutId },
+      _max: { sortOrder: true },
+    });
+
     const block = await prisma.workoutBlock.create({
-      data: { workoutId, ...data },
+      data: { workoutId, ...data, sortOrder: (maxOrder._max.sortOrder ?? -1) + 1 },
       include: includeCategory,
     });
 
