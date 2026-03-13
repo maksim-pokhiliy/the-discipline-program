@@ -30,6 +30,7 @@
     "./user-benchmark": "./src/entities/user-benchmark/index.ts",
     "./coach-dashboard": "./src/entities/coach-dashboard/index.ts",
     "./coach-note": "./src/entities/coach-note/index.ts",
+    "./athlete-max": "./src/entities/athlete-max/index.ts",
     "./coach-action-item": "./src/entities/coach-action-item/index.ts"
   },
   "scripts": {

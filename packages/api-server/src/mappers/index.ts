@@ -1,3 +1,4 @@
+export * from "./athlete-max.mapper";
 export * from "./blog.mapper";
 export * from "./exercise-category.mapper";
 export * from "./exercise.mapper";

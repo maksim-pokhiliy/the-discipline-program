@@ -10,6 +10,10 @@ import { mapToPlanEnrollment } from "../../mappers";
 
 import { resolveCoachId, verifyPlanOwnership } from "./guards";
 
+const includeUser = {
+  user: { select: { id: true, name: true, email: true, image: true } },
+} as const;
+
 export const platformPlanEnrollmentsApi = {
   getAll: async (userId: string, planId: string): Promise<PlanEnrollment[]> => {
     const coachId = await resolveCoachId(userId);
@@ -18,6 +22,7 @@ export const platformPlanEnrollmentsApi = {
 
     const enrollments = await prisma.planEnrollment.findMany({
       where: { trainingPlanId: planId },
+      include: includeUser,
       orderBy: { createdAt: "desc" },
     });
 
@@ -35,6 +40,7 @@ export const platformPlanEnrollmentsApi = {
 
     const enrollment = await prisma.planEnrollment.findUnique({
       where: { id: enrollmentId },
+      include: includeUser,
     });
 
     if (!enrollment || enrollment.trainingPlanId !== planId) {
@@ -55,6 +61,7 @@ export const platformPlanEnrollmentsApi = {
 
     const enrollment = await prisma.planEnrollment.create({
       data: { trainingPlanId: planId, ...data },
+      include: includeUser,
     });
 
     return mapToPlanEnrollment(enrollment);
@@ -82,6 +89,7 @@ export const platformPlanEnrollmentsApi = {
     const enrollment = await prisma.planEnrollment.update({
       where: { id: enrollmentId },
       data,
+      include: includeUser,
     });
 
     return mapToPlanEnrollment(enrollment);

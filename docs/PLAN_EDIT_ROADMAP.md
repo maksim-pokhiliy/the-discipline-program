@@ -1,4 +1,4 @@
-Plan: Coach Plan Editor — Week View, Workout Editor, Calendar, % Weights
+Plan: Coach Plan Editor — Week View, Workout Editor, Calendar, % Weights, DnD
 
 Context
 
@@ -25,6 +25,22 @@ Product decisions (confirmed by user):
 - Weight prescription: both absolute and percentage of 1RM, with auto-calculation
 - Cross-plan calendar = tab within Plans page (not a separate nav item)
 - Navigation stays unchanged: Home, Plans, Athletes, Exercises, Profile
+- Drag & drop: workouts between days, blocks within workout, sets within block
+- Optimistic updates on all mutations for instant UI feedback
+
+---
+
+DnD Library: @dnd-kit
+
+Using @dnd-kit/core + @dnd-kit/sortable + @dnd-kit/utilities. Reasons:
+
+- Headless (no forced styles) — works with MUI without fighting
+- Built for React, supports touch + pointer sensors
+- SortableContext for reorder within list, DndContext for cross-container moves
+- Tree-shakeable, small bundle
+- Active maintenance, good TypeScript support
+
+Install in apps/platform (not root — only platform needs it).
 
 ---
 
@@ -40,10 +56,18 @@ ABSOLUTE
 PERCENTAGE
 }
 
-Add weightType field to PrescribedSet:
+Add weightType and sortOrder to PrescribedSet:
 model PrescribedSet {
 ...
 weightType WeightType @default(ABSOLUTE)
+sortOrder Int @default(0)
+...
+}
+
+Add sortOrder to WorkoutBlock:
+model WorkoutBlock {
+...
+sortOrder Int @default(0)
 ...
 }
 
@@ -122,7 +146,32 @@ Add getCalendarWeek(userId, weekStart: Date):
 - Returns workouts enriched with plan name, plan id, plan status
 - Ordered by scheduledDate, then createdAt
 
-  2.3 Copy Week Endpoint
+  2.3 Reorder Endpoints
+
+File: packages/api-server/src/endpoints/platform/workouts.ts
+
+Add reorderBlocks(userId, workoutId, orderedIds: string[]):
+
+- Receives array of block IDs in desired order
+- Updates sortOrder for each block in a transaction
+- Validates all IDs belong to the given workout
+
+File: packages/api-server/src/endpoints/platform/workout-blocks.ts
+
+Add reorderSets(userId, blockId, orderedIds: string[]):
+
+- Receives array of set IDs in desired order
+- Updates sortOrder for each set in a transaction
+- Validates all IDs belong to the given block
+
+File: packages/api-server/src/endpoints/platform/workouts.ts
+
+Add moveWorkout(userId, workoutId, newDate: Date):
+
+- Updates scheduledDate on a single workout
+- Used by DnD when dragging workout between days
+
+  2.4 Copy Week Endpoint
 
 File: packages/api-server/src/endpoints/platform/workouts.ts
 
@@ -133,7 +182,7 @@ Add copyWeek(userId, planId, sourceDate: Date, targetDate: Date):
 - Returns created workouts
 - Runs in a transaction
 
-  2.4 Route Handlers for New Endpoints
+  2.5 Route Handlers for New Endpoints
 
 Create:
 
@@ -141,13 +190,16 @@ Create:
 - apps/platform/src/app/api/platform/athlete-maxes/[id]/route.ts — GET, DELETE
 - apps/platform/src/app/api/platform/training-plans/calendar/route.ts — GET (query param: weekStart)
 - apps/platform/src/app/api/platform/training-plans/[planId]/copy-week/route.ts — POST
+- apps/platform/src/app/api/platform/workouts/[workoutId]/reorder-blocks/route.ts — PUT
+- apps/platform/src/app/api/platform/workouts/[workoutId]/move/route.ts — PUT
+- apps/platform/src/app/api/platform/workout-blocks/[blockId]/reorder-sets/route.ts — PUT
 
-  2.5 API Clients (Platform App)
+  2.6 API Clients (Platform App)
 
 Create in apps/platform/src/lib/api/endpoints/:
 
-- workouts.ts — createWorkoutsAPI: getAll(planId), getById(planId, id), create(planId, data), update(planId, id, data), delete(planId, id)
-- workout-blocks.ts — createWorkoutBlocksAPI: getAll(workoutId), create(workoutId, data), update(workoutId, id, data), delete(workoutId, id)
+- workouts.ts — createWorkoutsAPI: getAll(planId), getById(planId, id), create(planId, data), update(planId, id, data), delete(planId, id), move(id, newDate), reorderBlocks(id, orderedIds)
+- workout-blocks.ts — createWorkoutBlocksAPI: getAll(workoutId), create(workoutId, data), update(workoutId, id, data), delete(workoutId, id), reorderSets(id, orderedIds)
 - prescribed-sets.ts — createPrescribedSetsAPI: getAll(blockId), create(blockId, data), update(blockId, id, data), delete(blockId, id)
 - plan-enrollments.ts — createPlanEnrollmentsAPI: getAll(planId), create(planId, data), update(planId, id, data), delete(planId, id)
 - athlete-maxes.ts — createAthleteMaxesAPI: getForPlanExercises(planId, exerciseIds), create(data), delete(id)
@@ -156,17 +208,37 @@ Create in apps/platform/src/lib/api/endpoints/:
 
 Update apps/platform/src/lib/api/endpoints/index.ts with all new exports.
 
-2.6 React Query Hooks (Platform App)
+2.7 React Query Hooks (Platform App)
 
 Create in apps/platform/src/lib/hooks/:
 
-- use-workouts.ts — useWorkouts(planId), useWorkout(planId, id), useCreateWorkout(), useUpdateWorkout(), useDeleteWorkout()
-- use-workout-blocks.ts — useWorkoutBlocks(workoutId), useCreateWorkoutBlock(), useUpdateWorkoutBlock(), useDeleteWorkoutBlock()
+- use-workouts.ts — useWorkouts(planId), useWorkout(planId, id), useCreateWorkout(), useUpdateWorkout(), useDeleteWorkout(), useMoveWorkout(), useReorderBlocks()
+- use-workout-blocks.ts — useWorkoutBlocks(workoutId), useCreateWorkoutBlock(), useUpdateWorkoutBlock(), useDeleteWorkoutBlock(), useReorderSets()
 - use-prescribed-sets.ts — usePrescribedSets(blockId), useCreatePrescribedSet(), useUpdatePrescribedSet(), useDeletePrescribedSet()
 - use-plan-enrollments.ts — usePlanEnrollments(planId), useCreatePlanEnrollment(), useUpdatePlanEnrollment(), useDeletePlanEnrollment()
 - use-athlete-maxes.ts — useAthleteMaxesForPlan(planId, exerciseIds), useCreateAthleteMax(), useDeleteAthleteMax()
 - use-calendar.ts — useCalendarWeek(weekStart)
 - Update use-training-plans.ts — add useCopyWeek()
+
+Optimistic Updates Pattern (all mutation hooks):
+
+Every mutation hook uses React Query's optimistic update pattern:
+
+- onMutate: cancel outgoing queries → snapshot previous data → optimistically update cache
+- onError: rollback to snapshot
+- onSettled: invalidate queries to resync with server
+
+Priority targets (user-facing latency):
+
+- useMoveWorkout — instant day-to-day DnD feel
+- useReorderBlocks / useReorderSets — instant drag reorder
+- useUpdateWorkout / useUpdateWorkoutBlock / useUpdatePrescribedSet — inline edit saves
+- useDeleteWorkout / useDeleteWorkoutBlock / useDeletePrescribedSet — instant removal from list
+
+Lower priority (modal-based, user expects a brief wait):
+
+- useCreateWorkout, useCreateWorkoutBlock, useCreatePrescribedSet — dialog closes, list refreshes
+- useCopyWeek — bulk operation, spinner is acceptable
 
 ---
 
@@ -236,7 +308,8 @@ week-workout-card.tsx:
 
 - Title, block count, brief info
 - Click → navigate to /coach/plans/[planId]/workouts/[workoutId]
-- Action menu: edit, move to another day, duplicate, delete
+- Action menu: edit, duplicate, delete
+- Draggable via @dnd-kit useSortable — drag handle on card
 
   3.5 Athletes Section
 
@@ -256,6 +329,21 @@ enrollment-card.tsx:
 
 - Avatar/name, status chip, start date
 - Action menu: Pause, Complete, Remove (with ConfirmationModal for remove)
+
+  3.6 Drag & Drop: Workouts Between Days
+
+DndContext wraps the entire week view (plan-schedule-section.tsx).
+Each WeekDayGroup is a droppable container (useDroppable with day date as ID).
+Each WeekWorkoutCard is a draggable item (useDraggable).
+
+On drop:
+
+- If same day → no-op (multiple workouts per day have no ordering — they sort by createdAt)
+- If different day → useMoveWorkout(workoutId, newDate) — optimistic: move card to target day instantly
+
+DragOverlay renders a lightweight ghost card (workout title only).
+Touch sensor with 150ms activation delay to distinguish tap (navigate) from drag.
+Pointer sensor with 5px distance threshold.
 
 ---
 
@@ -344,7 +432,32 @@ prescribed-set-edit-form.tsx:
   - Displays: "Ivan: 82.5 kg · Maria: 67.5 kg · Oleg: no 1RM"
 - Each field saves on blur via useUpdatePrescribedSet()
 
-  4.8 Adding a Block
+  4.8 Drag & Drop: Reorder Blocks within Workout
+
+DndContext + SortableContext wraps workout-blocks-section.tsx.
+Each WorkoutBlockCard uses useSortable — drag handle on the block header.
+Vertical list strategy (verticalListSortingStrategy).
+
+On reorder:
+
+- Optimistic: reorder blocks in cache immediately
+- Fire useReorderBlocks(workoutId, orderedBlockIds)
+- On error: rollback to previous order
+
+  4.9 Drag & Drop: Reorder Sets within Block
+
+SortableContext inside each WorkoutBlockCard's expanded content.
+Each PrescribedSetCard uses useSortable — drag handle on the set card.
+
+On reorder:
+
+- Optimistic: reorder sets in cache immediately
+- Fire useReorderSets(blockId, orderedSetIds)
+- On error: rollback to previous order
+
+Note: sets only reorder within their own block. Cross-block drag is not supported (move exercise = delete + create in new block).
+
+4.10 Adding a Block
 
 add-block-button.tsx:
 
@@ -353,7 +466,7 @@ add-block-button.tsx:
 - Optional: rounds, timeCap
 - Submit → useCreateWorkoutBlock() → block appears in the list
 
-  4.9 Adding an Exercise to Block
+  4.11 Adding an Exercise to Block
 
 add-set-button.tsx:
 
@@ -406,6 +519,7 @@ plans-calendar-section.tsx:
 - Each workout card shows: plan name + workout title + block count
 - Click → navigates to /coach/plans/[planId]/workouts/[workoutId]
 - "+" on any day → CalendarAddWorkoutDialog (select plan → title → date pre-filled)
+- DnD: same as Plan Detail week view — drag workouts between days (reuses same DndContext pattern, fires useMoveWorkout)
 
   5.4 Shared Week Components
 
@@ -440,10 +554,7 @@ End-to-end flow to test:
 8.  Go back to Plans → Calendar tab → see workouts from all plans
 9.  Copy previous week → verify workouts cloned with +7 day shift
 10. Navigate between weeks → verify URL state preserved (?tab=calendar&week=...)
-    ╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
-
-Claude has written up a plan and is ready to execute. Would you like to proceed?
-
-❯ 1. Yes, clear context (38% used) and auto-accept edits 2. Yes, auto-accept edits 3. Yes, manually approve edits 4. Type here to tell Claude what to change
-
-ctrl-g to edit in VS Code · ~/.claude/plans/concurrent-waddling-unicorn.md
+11. Drag a workout from Monday to Wednesday → verify instant move (optimistic), date updated in DB
+12. In workout editor: drag blocks to reorder → verify order persists after refresh
+13. In workout editor: drag sets within a block to reorder → verify order persists after refresh
+14. Drag workout in Calendar tab between days → verify move works cross-plan

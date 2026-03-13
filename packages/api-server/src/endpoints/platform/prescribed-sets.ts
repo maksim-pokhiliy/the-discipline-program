@@ -18,6 +18,7 @@ export const platformPrescribedSetsApi = {
 
     const sets = await prisma.prescribedSet.findMany({
       where: { blockId },
+      orderBy: { sortOrder: "asc" },
     });
 
     return sets.map(mapToPrescribedSet);
@@ -48,8 +49,13 @@ export const platformPrescribedSetsApi = {
 
     await verifyBlockOwnership(blockId, coachId);
 
+    const maxOrder = await prisma.prescribedSet.aggregate({
+      where: { blockId },
+      _max: { sortOrder: true },
+    });
+
     const set = await prisma.prescribedSet.create({
-      data: { blockId, ...data },
+      data: { blockId, ...data, sortOrder: (maxOrder._max.sortOrder ?? -1) + 1 },
     });
 
     return mapToPrescribedSet(set);

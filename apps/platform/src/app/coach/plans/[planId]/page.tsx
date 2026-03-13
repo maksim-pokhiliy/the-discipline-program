@@ -1,12 +1,13 @@
-import { Stack, Typography } from "@mui/material";
+import { PlanDetailView } from "@app/modules/plan-detail";
 
-export default function PlanEditPage() {
-  return (
-    <Stack>
-      <Typography variant="h5">Edit Plan</Typography>
-      <Typography variant="body2" color="text.secondary">
-        Coming soon
-      </Typography>
-    </Stack>
-  );
+export const dynamic = "force-dynamic";
+
+type PlanDetailPageProps = {
+  params: Promise<{ planId: string }>;
+};
+
+export default async function PlanDetailPage({ params }: PlanDetailPageProps) {
+  const { planId } = await params;
+
+  return <PlanDetailView planId={planId} />;
 }
