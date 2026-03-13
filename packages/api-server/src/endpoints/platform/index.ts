@@ -1,3 +1,4 @@
+export * from "./athlete-maxes";
 export * from "./coach-action-items";
 export * from "./athlete-profile";
 export * from "./coach-dashboard";

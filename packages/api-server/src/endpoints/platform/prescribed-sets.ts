@@ -18,6 +18,7 @@ export const platformPrescribedSetsApi = {
 
     const sets = await prisma.prescribedSet.findMany({
       where: { blockId },
+      orderBy: { sortOrder: "asc" },
     });
 
     return sets.map(mapToPrescribedSet);

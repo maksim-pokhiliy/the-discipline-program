@@ -3,12 +3,12 @@ import {
   type UpdateWorkoutBlockData,
   type WorkoutBlock,
 } from "@repo/contracts/workout-block";
-import { NotFoundError } from "@repo/errors";
+import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToWorkoutBlock } from "../../mappers";
 
-import { resolveCoachId, verifyWorkoutOwnership } from "./guards";
+import { resolveCoachId, verifyBlockOwnership, verifyWorkoutOwnership } from "./guards";
 
 const includeCategory = { category: true } as const;
 
@@ -21,6 +21,7 @@ export const platformWorkoutBlocksApi = {
     const blocks = await prisma.workoutBlock.findMany({
       where: { workoutId },
       include: includeCategory,
+      orderBy: { sortOrder: "asc" },
     });
 
     return blocks.map(mapToWorkoutBlock);
@@ -103,5 +104,28 @@ export const platformWorkoutBlocksApi = {
     }
 
     await prisma.workoutBlock.delete({ where: { id } });
+  },
+
+  reorderSets: async (userId: string, blockId: string, orderedIds: string[]): Promise<void> => {
+    const coachId = await resolveCoachId(userId);
+
+    await verifyBlockOwnership(blockId, coachId);
+
+    const sets = await prisma.prescribedSet.findMany({
+      where: { blockId },
+      select: { id: true },
+    });
+
+    const existingIds = new Set(sets.map((s) => s.id));
+
+    if (orderedIds.length !== existingIds.size || orderedIds.some((id) => !existingIds.has(id))) {
+      throw new BadRequestError("orderedIds must match all sets in the block");
+    }
+
+    await prisma.$transaction(
+      orderedIds.map((id, index) =>
+        prisma.prescribedSet.update({ where: { id }, data: { sortOrder: index } }),
+      ),
+    );
   },
 };

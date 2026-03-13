@@ -1,14 +1,16 @@
 import {
+  type CalendarWorkout,
   type CoachPlansPageData,
   type CreateTrainingPlanData,
   type TrainingPlan,
   type TrainingPlanListItem,
+  type TrainingPlanStatus,
   type UpdateTrainingPlanData,
 } from "@repo/contracts/training-plan";
 import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-import { mapToTrainingPlan } from "../../mappers";
+import { mapToTrainingPlan, mapToWorkout } from "../../mappers";
 
 import { resolveCoachId, verifyPlanOwnership } from "./guards";
 
@@ -57,6 +59,35 @@ const mapToListItem = (p: PlanWithStats): TrainingPlanListItem => {
 };
 
 export const platformTrainingPlansApi = {
+  getCalendarWeek: async (userId: string, weekStart: Date): Promise<CalendarWorkout[]> => {
+    const coachId = await resolveCoachId(userId);
+
+    const weekEnd = new Date(weekStart);
+
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    const workouts = await prisma.workout.findMany({
+      where: {
+        deletedAt: null,
+        scheduledDate: { gte: weekStart, lt: weekEnd },
+        plan: { coachId, deletedAt: null },
+      },
+      include: {
+        plan: { select: { id: true, name: true, status: true } },
+        _count: { select: { blocks: true } },
+      },
+      orderBy: [{ scheduledDate: "asc" }, { createdAt: "asc" }],
+    });
+
+    return workouts.map((w) => ({
+      ...mapToWorkout(w),
+      planId: w.plan.id,
+      planName: w.plan.name,
+      planStatus: w.plan.status as TrainingPlanStatus,
+      blockCount: w._count.blocks,
+    }));
+  },
+
   getAll: async (userId: string): Promise<TrainingPlan[]> => {
     const coachId = await resolveCoachId(userId);
 
