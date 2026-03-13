@@ -45,6 +45,37 @@ export const verifyWorkoutOwnership = async (workoutId: string, coachId: string)
   }
 };
 
+export const resolveCoachAthleteIds = async (coachId: string): Promise<string[]> => {
+  const enrollments = await prisma.planEnrollment.findMany({
+    where: {
+      trainingPlan: { coachId, deletedAt: null },
+      status: "ACTIVE",
+    },
+    select: { userId: true },
+    distinct: ["userId"],
+  });
+
+  return enrollments.map((e) => e.userId);
+};
+
+export const verifyAthleteBelongsToCoach = async (
+  athleteUserId: string,
+  coachId: string,
+): Promise<void> => {
+  const enrollment = await prisma.planEnrollment.findFirst({
+    where: {
+      userId: athleteUserId,
+      trainingPlan: { coachId, deletedAt: null },
+      status: "ACTIVE",
+    },
+    select: { id: true },
+  });
+
+  if (!enrollment) {
+    throw new ForbiddenError("Athlete does not belong to this coach");
+  }
+};
+
 export const verifyBlockOwnership = async (blockId: string, coachId: string): Promise<void> => {
   const block = await prisma.workoutBlock.findUnique({
     where: { id: blockId },

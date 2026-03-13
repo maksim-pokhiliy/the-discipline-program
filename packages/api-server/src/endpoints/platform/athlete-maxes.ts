@@ -4,14 +4,25 @@ import { NotFoundError } from "@repo/errors";
 import { prisma } from "../../db/client";
 import { mapToAthleteMax } from "../../mappers";
 
-import { resolveCoachId, verifyPlanOwnership } from "./guards";
+import {
+  resolveCoachAthleteIds,
+  resolveCoachId,
+  verifyAthleteBelongsToCoach,
+  verifyPlanOwnership,
+} from "./guards";
 
 export const platformAthleteMaxesApi = {
   getAll: async (userId: string, exerciseId?: string): Promise<AthleteMax[]> => {
-    await resolveCoachId(userId);
+    const coachId = await resolveCoachId(userId);
+    const athleteIds = await resolveCoachAthleteIds(coachId);
+
+    if (athleteIds.length === 0) {return [];}
 
     const maxes = await prisma.athleteMax.findMany({
-      where: exerciseId ? { exerciseId } : {},
+      where: {
+        userId: { in: athleteIds },
+        ...(exerciseId && { exerciseId }),
+      },
       orderBy: { testedAt: "desc" },
     });
 
@@ -69,7 +80,9 @@ export const platformAthleteMaxesApi = {
   },
 
   create: async (userId: string, data: CreateAthleteMaxData): Promise<AthleteMax> => {
-    await resolveCoachId(userId);
+    const coachId = await resolveCoachId(userId);
+
+    await verifyAthleteBelongsToCoach(data.userId, coachId);
 
     const max = await prisma.athleteMax.create({ data });
 
@@ -77,7 +90,7 @@ export const platformAthleteMaxesApi = {
   },
 
   delete: async (userId: string, id: string): Promise<void> => {
-    await resolveCoachId(userId);
+    const coachId = await resolveCoachId(userId);
 
     const existing = await prisma.athleteMax.findUnique({
       where: { id },
@@ -86,6 +99,8 @@ export const platformAthleteMaxesApi = {
     if (!existing) {
       throw new NotFoundError("Athlete max not found", { id });
     }
+
+    await verifyAthleteBelongsToCoach(existing.userId, coachId);
 
     await prisma.athleteMax.delete({ where: { id } });
   },

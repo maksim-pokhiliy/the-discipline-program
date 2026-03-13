@@ -118,7 +118,10 @@ export const platformWorkoutBlocksApi = {
 
     const existingIds = new Set(sets.map((s) => s.id));
 
-    if (orderedIds.length !== existingIds.size || orderedIds.some((id) => !existingIds.has(id))) {
+    if (
+      new Set(orderedIds).size !== existingIds.size ||
+      orderedIds.some((id) => !existingIds.has(id))
+    ) {
       throw new BadRequestError("orderedIds must match all sets in the block");
     }
 
