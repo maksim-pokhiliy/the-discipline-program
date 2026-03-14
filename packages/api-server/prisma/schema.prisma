@@ -53,6 +53,7 @@ model Account {
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
   @@map("accounts")
 }
 
@@ -63,6 +64,7 @@ model Session {
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("sessions")
 }
 
@@ -142,7 +144,7 @@ model Product {
 model Price {
   id            String         @id @default(cuid())
   productId     String
-  product       Product        @relation(fields: [productId], references: [id])
+  product       Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
   amountCents   Int
   currency      Currency       @default(USD)
   interval      PriceInterval  @default(MONTHLY)
@@ -150,6 +152,7 @@ model Price {
   isActive      Boolean        @default(true)
   subscriptions Subscription[]
 
+  @@index([productId])
   @@map("app_prices")
 }
 
@@ -180,6 +183,7 @@ model Subscription {
   updatedAt          DateTime           @updatedAt
 
   @@index([createdAt])
+  @@index([status])
   @@map("app_subscriptions")
 }
 
@@ -197,6 +201,7 @@ model Transaction {
   updatedAt      DateTime          @updatedAt
 
   @@index([createdAt])
+  @@index([userId, status])
   @@map("app_transactions")
 }
 
@@ -270,7 +275,7 @@ model Workout {
   id            String         @id @default(cuid())
   planId        String
   plan          TrainingPlan   @relation(fields: [planId], references: [id])
-  scheduledDate DateTime?
+  scheduledDate DateTime? @db.Date
   title         String         @default("")
   description   String?
   sortOrder     Int            @default(0)
@@ -281,6 +286,7 @@ model Workout {
   updatedAt     DateTime       @updatedAt
   deletedAt     DateTime?
 
+  @@index([planId])
   @@index([scheduledDate])
   @@index([createdAt])
   @@index([deletedAt])
@@ -298,6 +304,7 @@ model WorkoutBlock {
   sortOrder  Int              @default(0)
   sets       PrescribedSet[]
 
+  @@index([workoutId])
   @@index([categoryId])
   @@map("app_workout_blocks")
 }
@@ -318,6 +325,7 @@ model PrescribedSet {
   sortOrder   Int          @default(0)
   logs        SetLog[]
 
+  @@index([exerciseId])
   @@map("app_prescribed_sets")
 }
 
@@ -349,7 +357,9 @@ model SetLog {
   repsDone               Int
   weightDone             Decimal?       @db.Decimal(6, 2)
   rpeActual              Int?
+  createdAt              DateTime       @default(now())
 
+  @@index([workoutLogId])
   @@map("app_set_logs")
 }
 
@@ -397,7 +407,7 @@ model CoachActionItem {
   coachId       String
   coach         CoachProfile              @relation(fields: [coachId], references: [id], onDelete: Cascade)
   athleteId     String
-  athlete       User                      @relation("ActionItemAthlete", fields: [athleteId], references: [id])
+  athlete       User                      @relation("ActionItemAthlete", fields: [athleteId], references: [id], onDelete: Cascade)
   type          ActionItemType
   severity      ActionItemSeverity
   status        ActionItemStatus          @default(OPEN)
@@ -423,9 +433,9 @@ enum ActionItemSeverity {
 model CoachNote {
   id        String       @id @default(cuid())
   coachId   String
-  coach     CoachProfile @relation(fields: [coachId], references: [id])
+  coach     CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
   athleteId String
-  athlete   User         @relation(fields: [athleteId], references: [id])
+  athlete   User         @relation(fields: [athleteId], references: [id], onDelete: Cascade)
   content   String       @db.Text
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt

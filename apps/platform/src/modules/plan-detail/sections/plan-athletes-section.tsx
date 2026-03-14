@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Fab, Stack, Typography } from "@mui/material";
+import { Button, Fab, Stack, Typography } from "@mui/material";
 
 import { type PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { QueryWrapper } from "@repo/query";
@@ -56,12 +56,18 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
               ))}
             </Stack>
           ) : (
-            <Typography
-              variant="body2"
-              sx={{ color: "text.secondary", textAlign: "center", py: 4 }}
-            >
-              No athletes enrolled yet
-            </Typography>
+            <Stack spacing={2} sx={{ alignItems: "center", py: 4 }}>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                No athletes enrolled yet
+              </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() => setEnrollOpen(true)}
+              >
+                Enroll Athlete
+              </Button>
+            </Stack>
           )
         }
       </QueryWrapper>

@@ -2,53 +2,31 @@ import { type GetContactByIdResponse, type UpdateContactRequest } from "@repo/co
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-
-const mapToContact = (c: {
-  id: string;
-  name: string | null;
-  email: string | null;
-  program: string | null;
-  message: string;
-  status: string;
-  notes: string | null;
-  createdAt: Date;
-  updatedAt: Date;
-}): GetContactByIdResponse => ({
-  id: c.id,
-  name: c.name,
-  email: c.email,
-  program: c.program,
-  message: c.message,
-  status: c.status,
-  notes: c.notes,
-  createdAt: c.createdAt,
-  updatedAt: c.updatedAt,
-});
+import { mapToContact } from "../../mappers";
 
 export const adminContactsApi = {
-  async getContacts() {
+  async getContacts(): Promise<GetContactByIdResponse[]> {
     const contacts = await prisma.marketingContactSubmission.findMany({
-      where: { deletedAt: null },
       orderBy: { createdAt: "desc" },
     });
 
     return contacts.map(mapToContact);
   },
 
-  async getContactById(id: string) {
+  async getContactById(id: string): Promise<GetContactByIdResponse> {
     const contact = await prisma.marketingContactSubmission.findUnique({ where: { id } });
 
-    if (!contact || contact.deletedAt) {
+    if (!contact) {
       throw new NotFoundError("Contact submission not found", { id });
     }
 
     return mapToContact(contact);
   },
 
-  async updateContact(id: string, data: UpdateContactRequest) {
+  async updateContact(id: string, data: UpdateContactRequest): Promise<GetContactByIdResponse> {
     const existing = await prisma.marketingContactSubmission.findUnique({ where: { id } });
 
-    if (!existing || existing.deletedAt) {
+    if (!existing) {
       throw new NotFoundError("Contact submission not found", { id });
     }
 
@@ -70,17 +48,14 @@ export const adminContactsApi = {
     return mapToContact(updated);
   },
 
-  async deleteContact(id: string) {
+  async deleteContact(id: string): Promise<void> {
     const contact = await prisma.marketingContactSubmission.findUnique({ where: { id } });
 
-    if (!contact || contact.deletedAt) {
+    if (!contact) {
       throw new NotFoundError("Contact submission not found", { id });
     }
 
-    await prisma.marketingContactSubmission.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    await prisma.marketingContactSubmission.delete({ where: { id } });
   },
 
   async getContactsPageData() {

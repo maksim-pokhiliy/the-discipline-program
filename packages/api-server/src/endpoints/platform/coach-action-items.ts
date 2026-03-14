@@ -14,9 +14,17 @@ import {
   MISSED_DAYS_WARNING,
   NEW_ATHLETE_THRESHOLD_DAYS,
 } from "@repo/contracts/coach-dashboard";
+import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
+import {
+  ACTION_ITEM_RESOLVE_REASON_MAP,
+  ACTION_ITEM_SEVERITY_MAP,
+  ACTION_ITEM_STATUS_MAP,
+  ACTION_ITEM_TYPE_MAP,
+  HEALTH_STATUS_MAP,
+} from "../../mappers/enum-maps";
 import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
 import { type EnrollmentWithData, enrollmentInclude } from "../../utils/enrollment-query";
 
@@ -85,8 +93,9 @@ const computeConditions = (enrollments: EnrollmentWithData[], tz: string): Condi
       });
     }
 
-    const healthStatus =
-      (user.athleteProfile?.healthStatus as HealthStatus | undefined) ?? HealthStatus.HEALTHY;
+    const healthStatus = user.athleteProfile
+      ? HEALTH_STATUS_MAP[user.athleteProfile.healthStatus]
+      : HealthStatus.HEALTHY;
 
     if (healthStatus !== HealthStatus.HEALTHY) {
       conditions.push({
@@ -129,13 +138,13 @@ const mapToCoachActionItem = (item: PrismaCoachActionItemRecord): CoachActionIte
   id: item.id,
   coachId: item.coachId,
   athleteId: item.athleteId,
-  type: item.type as ActionItemType,
-  severity: item.severity as ActionItemSeverity,
-  status: item.status as ActionItemStatus,
+  type: ACTION_ITEM_TYPE_MAP[item.type],
+  severity: ACTION_ITEM_SEVERITY_MAP[item.severity],
+  status: ACTION_ITEM_STATUS_MAP[item.status],
   message: item.message,
   metadata: item.metadata as Record<string, unknown> | null,
   resolvedAt: item.resolvedAt,
-  resolveReason: item.resolveReason as ActionItemResolveReason | null,
+  resolveReason: item.resolveReason ? ACTION_ITEM_RESOLVE_REASON_MAP[item.resolveReason] : null,
   createdAt: item.createdAt,
   updatedAt: item.updatedAt,
 });
@@ -157,7 +166,7 @@ export const platformCoachActionItemsApi = {
       const [enrollments, openItems, latestResolved] = await Promise.all([
         tx.planEnrollment.findMany({
           where: {
-            status: "ACTIVE",
+            status: PlanEnrollmentStatus.ACTIVE,
             trainingPlan: { coachId, deletedAt: null },
           },
           include: enrollmentInclude,

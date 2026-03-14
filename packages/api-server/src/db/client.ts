@@ -1,10 +1,48 @@
 import { PrismaClient } from "@prisma/client";
 
-import { env } from "@repo/env/base";
+import { baseEnv } from "@repo/env/base";
+
+const SOFT_DELETE_MODELS = new Set([
+  "User",
+  "Product",
+  "Exercise",
+  "TrainingPlan",
+  "Workout",
+  "CoachProfile",
+  "MarketingBlogPost",
+  "MarketingReview",
+  "MarketingContactSubmission",
+]);
+
+const SOFT_DELETE_UNIQUE_FIELDS: Record<string, string[]> = {
+  Exercise: ["name"],
+  Product: ["slug"],
+};
+
+type ModelDelegate = {
+  findUnique: (args: {
+    where: Record<string, unknown>;
+    select?: Record<string, boolean>;
+  }) => Promise<Record<string, unknown> | null>;
+  findFirst: (args: Record<string, unknown>) => Promise<unknown>;
+  update: (args: Record<string, unknown>) => Promise<unknown>;
+  updateMany: (args: Record<string, unknown>) => Promise<unknown>;
+};
+
+const getDelegate = (client: PrismaClient, model: string): ModelDelegate | undefined => {
+  const key = model.charAt(0).toLowerCase() + model.slice(1);
+  const delegate = (client as unknown as Record<string, unknown>)[key];
+
+  if (delegate && typeof delegate === "object" && "findFirst" in delegate) {
+    return delegate as unknown as ModelDelegate;
+  }
+
+  return undefined;
+};
 
 const createClient = () => {
   const client = new PrismaClient({
-    log: env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    log: baseEnv.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
   });
 
   return client.$extends({
@@ -12,156 +50,95 @@ const createClient = () => {
     query: {
       $allModels: {
         async findMany({ model, args, query }) {
-          if (
-            model === "User" ||
-            model === "TrainingPlan" ||
-            model === "Workout" ||
-            model === "Exercise" ||
-            model === "MarketingBlogPost" ||
-            model === "MarketingReview"
-          ) {
-            if (!args.where) {
-              args.where = {};
+          if (SOFT_DELETE_MODELS.has(model)) {
+            const where = (args.where ?? {}) as Record<string, unknown>;
+
+            if (where.deletedAt === undefined) {
+              where.deletedAt = null;
             }
 
-            if (args.where.deletedAt === undefined) {
-              args.where.deletedAt = null;
-            }
+            args.where = where;
           }
 
           return query(args);
         },
 
         async findFirst({ model, args, query }) {
-          if (
-            model === "User" ||
-            model === "TrainingPlan" ||
-            model === "Workout" ||
-            model === "Exercise" ||
-            model === "MarketingBlogPost" ||
-            model === "MarketingReview"
-          ) {
-            if (!args.where) {
-              args.where = {};
+          if (SOFT_DELETE_MODELS.has(model)) {
+            const where = (args.where ?? {}) as Record<string, unknown>;
+
+            if (where.deletedAt === undefined) {
+              where.deletedAt = null;
             }
 
-            if (args.where.deletedAt === undefined) {
-              args.where.deletedAt = null;
-            }
+            args.where = where;
           }
 
           return query(args);
         },
 
         async findUnique({ model, args, query }) {
-          switch (model) {
-            case "User":
-              return client.user.findFirst({
-                ...args,
-                where: { ...args.where, deletedAt: null },
-              });
-            case "TrainingPlan":
-              return client.trainingPlan.findFirst({
-                ...args,
-                where: { ...args.where, deletedAt: null },
-              });
-            case "Workout":
-              return client.workout.findFirst({
-                ...args,
-                where: { ...args.where, deletedAt: null },
-              });
-            case "Exercise":
-              return client.exercise.findFirst({
-                ...args,
-                where: { ...args.where, deletedAt: null },
-              });
-            case "MarketingBlogPost":
-              return client.marketingBlogPost.findFirst({
-                ...args,
-                where: { ...args.where, deletedAt: null },
-              });
-            case "MarketingReview":
-              return client.marketingReview.findFirst({
-                ...args,
-                where: { ...args.where, deletedAt: null },
-              });
-            default:
-              return query(args);
+          if (!SOFT_DELETE_MODELS.has(model)) {
+            return query(args);
           }
+
+          const delegate = getDelegate(client, model);
+
+          if (!delegate) {
+            return query(args);
+          }
+
+          return delegate.findFirst({
+            ...args,
+            where: { ...args.where, deletedAt: null },
+          });
         },
 
         async delete({ model, args, query }) {
-          switch (model) {
-            case "User":
-              return client.user.update({
-                ...args,
-                data: { deletedAt: new Date() },
-              });
-            case "TrainingPlan":
-              return client.trainingPlan.update({
-                ...args,
-                data: { deletedAt: new Date() },
-              });
-            case "Workout":
-              return client.workout.update({
-                ...args,
-                data: { deletedAt: new Date() },
-              });
-            case "Exercise":
-              return client.exercise.update({
-                ...args,
-                data: { deletedAt: new Date() },
-              });
-            case "MarketingBlogPost":
-              return client.marketingBlogPost.update({
-                ...args,
-                data: { deletedAt: new Date() },
-              });
-            case "MarketingReview":
-              return client.marketingReview.update({
-                ...args,
-                data: { deletedAt: new Date() },
-              });
-            default:
-              return query(args);
+          if (!SOFT_DELETE_MODELS.has(model)) {
+            return query(args);
           }
+
+          const delegate = getDelegate(client, model);
+
+          if (!delegate) {
+            return query(args);
+          }
+
+          const uniqueFields = SOFT_DELETE_UNIQUE_FIELDS[model];
+          const data: Record<string, unknown> = { deletedAt: new Date() };
+
+          if (uniqueFields) {
+            const select = Object.fromEntries(uniqueFields.map((f) => [f, true]));
+            const current = await delegate.findUnique({
+              where: args.where as Record<string, unknown>,
+              select,
+            });
+
+            if (current) {
+              const suffix = `_deleted_${Date.now()}`;
+
+              for (const field of uniqueFields) {
+                data[field] = `${current[field]}${suffix}`;
+              }
+            }
+          }
+
+          return delegate.update({ ...args, data });
         },
 
         async deleteMany({ model, args, query }) {
-          switch (model) {
-            case "User":
-              return client.user.updateMany({
-                ...args,
-                data: { deletedAt: new Date() },
-              });
-            case "TrainingPlan":
-              return client.trainingPlan.updateMany({
-                ...args,
-                data: { deletedAt: new Date() },
-              });
-            case "Workout":
-              return client.workout.updateMany({
-                ...args,
-                data: { deletedAt: new Date() },
-              });
-            case "Exercise":
-              return client.exercise.updateMany({
-                ...args,
-                data: { deletedAt: new Date() },
-              });
-            case "MarketingBlogPost":
-              return client.marketingBlogPost.updateMany({
-                ...args,
-                data: { deletedAt: new Date() },
-              });
-            case "MarketingReview":
-              return client.marketingReview.updateMany({
-                ...args,
-                data: { deletedAt: new Date() },
-              });
-            default:
-              return query(args);
+          if (!SOFT_DELETE_MODELS.has(model)) {
+            return query(args);
           }
+
+          const delegate = getDelegate(client, model);
+
+          if (!delegate) {
+            return query(args);
+          }
+
+          return delegate.updateMany({ ...args, data: { deletedAt: new Date() } });
         },
       },
     },
@@ -174,7 +151,7 @@ const globalForPrisma = globalThis as unknown as {
 
 export const prisma = globalForPrisma.prisma ?? createClient();
 
-if (env.NODE_ENV !== "production") {
+if (baseEnv.NODE_ENV !== "production") {
   globalForPrisma.prisma = prisma;
 }
 

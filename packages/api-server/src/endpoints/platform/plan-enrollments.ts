@@ -59,6 +59,15 @@ export const platformPlanEnrollmentsApi = {
 
     await verifyPlanOwnership(planId, coachId);
 
+    const targetUser = await prisma.user.findUnique({
+      where: { id: data.userId },
+      select: { id: true },
+    });
+
+    if (!targetUser) {
+      throw new NotFoundError("User not found", { userId: data.userId });
+    }
+
     const enrollment = await prisma.planEnrollment.create({
       data: { trainingPlanId: planId, ...data },
       include: includeUser,

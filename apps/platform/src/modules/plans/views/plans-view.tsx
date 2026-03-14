@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import { Stack } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { Button, Stack } from "@mui/material";
 
 import { QueryWrapper } from "@repo/query";
 
@@ -19,7 +20,20 @@ export const PlansView = () => {
   return (
     <>
       <Stack spacing={2}>
-        <PlatformPageHeader title="Training Plans" />
+        <PlatformPageHeader
+          title="Training Plans"
+          actions={
+            <Button
+              endIcon={<AddIcon />}
+              variant="outlined"
+              size="small"
+              color="primary"
+              onClick={() => setCreateOpen(true)}
+            >
+              Create
+            </Button>
+          }
+        />
 
         <QueryWrapper
           isLoading={isLoading}

@@ -10,6 +10,17 @@ import { mapToWorkout } from "../../mappers";
 
 import { resolveCoachId, verifyPlanOwnership, verifyWorkoutOwnership } from "./guards";
 
+const toUTCMidnight = (date: Date): Date => {
+  const hours = date.getUTCHours();
+  const base = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+
+  if (hours >= 12) {
+    base.setUTCDate(base.getUTCDate() + 1);
+  }
+
+  return base;
+};
+
 export const platformWorkoutsApi = {
   getAll: async (userId: string, planId: string): Promise<Workout[]> => {
     const coachId = await resolveCoachId(userId);
@@ -47,13 +58,15 @@ export const platformWorkoutsApi = {
 
     await verifyPlanOwnership(planId, coachId);
 
-    const maxOrder = await prisma.workout.aggregate({
-      where: { planId, scheduledDate: data.scheduledDate ?? null, deletedAt: null },
-      _max: { sortOrder: true },
+    const scheduledDate = data.scheduledDate ? toUTCMidnight(data.scheduledDate) : null;
+
+    await prisma.workout.updateMany({
+      where: { planId, scheduledDate, deletedAt: null },
+      data: { sortOrder: { increment: 1 } },
     });
 
     const workout = await prisma.workout.create({
-      data: { planId, ...data, sortOrder: (maxOrder._max.sortOrder ?? -1) + 1 },
+      data: { ...data, planId, scheduledDate, sortOrder: 0 },
       include: { _count: { select: { blocks: true } } },
     });
 
@@ -81,7 +94,9 @@ export const platformWorkoutsApi = {
 
     const workout = await prisma.workout.update({
       where: { id },
-      data,
+      data: data.scheduledDate
+        ? { ...data, scheduledDate: toUTCMidnight(data.scheduledDate) }
+        : data,
       include: { _count: { select: { blocks: true } } },
     });
 
@@ -102,10 +117,7 @@ export const platformWorkoutsApi = {
       throw new NotFoundError("Workout not found", { id, planId });
     }
 
-    await prisma.workout.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    await prisma.workout.delete({ where: { id } });
   },
 
   move: async (
@@ -115,6 +127,7 @@ export const platformWorkoutsApi = {
     targetDayOrderedIds?: string[],
   ): Promise<Workout> => {
     const coachId = await resolveCoachId(userId);
+    const normalizedDate = toUTCMidnight(scheduledDate);
 
     const owned = await verifyWorkoutOwnership(workoutId, coachId);
 
@@ -135,21 +148,23 @@ export const platformWorkoutsApi = {
       await prisma.$transaction([
         prisma.workout.update({
           where: { id: workoutId },
-          data: { scheduledDate },
+          data: { scheduledDate: normalizedDate },
         }),
         ...targetDayOrderedIds.map((id, index) =>
           prisma.workout.update({ where: { id }, data: { sortOrder: index } }),
         ),
       ]);
     } else {
-      const maxOrder = await prisma.workout.aggregate({
-        where: { planId: owned.planId, scheduledDate, deletedAt: null },
-        _max: { sortOrder: true },
-      });
+      await prisma.$transaction(async (tx) => {
+        const maxOrder = await tx.workout.aggregate({
+          where: { planId: owned.planId, scheduledDate: normalizedDate, deletedAt: null },
+          _max: { sortOrder: true },
+        });
 
-      await prisma.workout.update({
-        where: { id: workoutId },
-        data: { scheduledDate, sortOrder: (maxOrder._max.sortOrder ?? -1) + 1 },
+        await tx.workout.update({
+          where: { id: workoutId },
+          data: { scheduledDate: normalizedDate, sortOrder: (maxOrder._max.sortOrder ?? -1) + 1 },
+        });
       });
     }
 
@@ -220,15 +235,18 @@ export const platformWorkoutsApi = {
 
     await verifyPlanOwnership(planId, coachId);
 
-    const sourceEnd = new Date(sourceDate);
+    const normalizedSource = toUTCMidnight(sourceDate);
+    const normalizedTarget = toUTCMidnight(targetDate);
 
-    sourceEnd.setDate(sourceEnd.getDate() + 7);
+    const sourceEnd = new Date(normalizedSource);
+
+    sourceEnd.setUTCDate(sourceEnd.getUTCDate() + 7);
 
     const sourceWorkouts = await prisma.workout.findMany({
       where: {
         planId,
         deletedAt: null,
-        scheduledDate: { gte: sourceDate, lt: sourceEnd },
+        scheduledDate: { gte: normalizedSource, lt: sourceEnd },
       },
       include: {
         blocks: {
@@ -243,14 +261,14 @@ export const platformWorkoutsApi = {
       return [];
     }
 
-    const dayShiftMs = targetDate.getTime() - sourceDate.getTime();
+    const dayShiftMs = normalizedTarget.getTime() - normalizedSource.getTime();
 
     const created = await prisma.$transaction(async (tx) => {
       const createdIds: string[] = [];
 
       for (const workout of sourceWorkouts) {
         const newDate = workout.scheduledDate
-          ? new Date(workout.scheduledDate.getTime() + dayShiftMs)
+          ? toUTCMidnight(new Date(workout.scheduledDate.getTime() + dayShiftMs))
           : null;
 
         const newWorkout = await tx.workout.create({

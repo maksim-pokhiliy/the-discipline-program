@@ -1,7 +1,14 @@
-import { SEVERITY_PRIORITY, TYPE_PRIORITY } from "@repo/contracts/coach-action-item";
+import {
+  ActionItemStatus,
+  SEVERITY_PRIORITY,
+  TYPE_PRIORITY,
+} from "@repo/contracts/coach-action-item";
 import { type CoachDashboardData, type DashboardActionItem } from "@repo/contracts/coach-dashboard";
+import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+import { TrainingPlanStatus } from "@repo/contracts/training-plan";
 
 import { prisma } from "../../db/client";
+import { ACTION_ITEM_SEVERITY_MAP, ACTION_ITEM_TYPE_MAP } from "../../mappers/enum-maps";
 import { computeAthletesSummary, computeProgressBuckets } from "../../utils/dashboard-computations";
 import {
   endOfWeekInTz,
@@ -33,14 +40,14 @@ export const platformCoachDashboardApi = {
     const [enrollments, openActionItems, activePlansCount] = await Promise.all([
       prisma.planEnrollment.findMany({
         where: {
-          status: "ACTIVE",
+          status: PlanEnrollmentStatus.ACTIVE,
           trainingPlan: { coachId, deletedAt: null },
         },
         include: enrollmentInclude,
       }),
 
       prisma.coachActionItem.findMany({
-        where: { coachId, status: "OPEN" },
+        where: { coachId, status: ActionItemStatus.OPEN },
         include: {
           athlete: { select: { id: true, name: true, image: true } },
         },
@@ -48,7 +55,7 @@ export const platformCoachDashboardApi = {
       }),
 
       prisma.trainingPlan.count({
-        where: { coachId, status: "ACTIVE", deletedAt: null },
+        where: { coachId, status: TrainingPlanStatus.ACTIVE, deletedAt: null },
       }),
     ]);
 
@@ -113,8 +120,8 @@ export const platformCoachDashboardApi = {
     const actionItems: DashboardActionItem[] = openActionItems
       .map((item) => ({
         id: item.id,
-        type: item.type as DashboardActionItem["type"],
-        severity: item.severity as DashboardActionItem["severity"],
+        type: ACTION_ITEM_TYPE_MAP[item.type],
+        severity: ACTION_ITEM_SEVERITY_MAP[item.severity],
         athleteId: item.athleteId,
         athleteName: item.athlete.name,
         athleteImage: item.athlete.image,

@@ -12,8 +12,7 @@ import { QueryWrapper } from "@repo/query";
 import { useTrainingPlan, useUpdateTrainingPlan } from "@app/lib/hooks";
 
 import { PlanStatusSelect } from "../components";
-import { PlanAthletesSection } from "../sections";
-import { PlanScheduleSection } from "../sections";
+import { PlanAthletesSection, PlanScheduleSection } from "../sections";
 
 type PlanDetailViewProps = {
   planId: string;
