@@ -16,9 +16,12 @@ pre-commit:
       run: pnpm check-types --filter="...[HEAD]"
       fail_text: "TypeScript compilation failed"
 
+    test:
+      run: pnpm test
+      fail_text: "Tests failed - check the errors above"
+
 commit-msg:
   commands:
     commitlint:
       run: pnpm dlx commitlint --edit {1}
       fail_text: "Commit message format is invalid"
-
