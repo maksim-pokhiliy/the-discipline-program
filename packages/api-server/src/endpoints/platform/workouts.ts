@@ -2,11 +2,13 @@ import {
   type CreateWorkoutData,
   type UpdateWorkoutData,
   type Workout,
+  type WorkoutPreview,
 } from "@repo/contracts/workout";
 import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToWorkout } from "../../mappers";
+import { UNIT_MAP, WEIGHT_TYPE_MAP } from "../../mappers/enum-maps";
 
 import { resolveCoachId, verifyPlanOwnership, verifyWorkoutOwnership } from "./guards";
 
@@ -51,6 +53,51 @@ export const platformWorkoutsApi = {
     }
 
     return mapToWorkout(workout);
+  },
+
+  getPreview: async (userId: string, planId: string, id: string): Promise<WorkoutPreview> => {
+    const coachId = await resolveCoachId(userId);
+
+    await verifyPlanOwnership(planId, coachId);
+
+    const workout = await prisma.workout.findUnique({
+      where: { id },
+      select: {
+        planId: true,
+        blocks: {
+          orderBy: { sortOrder: "asc" },
+          include: {
+            category: true,
+            sets: {
+              orderBy: { sortOrder: "asc" },
+              include: { exercise: { select: { name: true } } },
+            },
+          },
+        },
+      },
+    });
+
+    if (!workout || workout.planId !== planId) {
+      throw new NotFoundError("Workout not found", { id, planId });
+    }
+
+    return {
+      blocks: workout.blocks.map((block) => ({
+        id: block.id,
+        categoryName: block.category.name,
+        rounds: block.rounds,
+        timeCapSec: block.timeCapSec,
+        exercises: block.sets.map((set) => ({
+          name: set.exercise.name,
+          sets: set.sets,
+          reps: set.reps,
+          weightValue: set.weightValue ? Number(set.weightValue) : null,
+          weightUnit: UNIT_MAP[set.weightUnit],
+          weightType: WEIGHT_TYPE_MAP[set.weightType],
+          rpe: set.rpe,
+        })),
+      })),
+    };
   },
 
   create: async (userId: string, planId: string, data: CreateWorkoutData): Promise<Workout> => {
