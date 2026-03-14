@@ -37,6 +37,35 @@ export const useCreatePlanEnrollment = (planId: string) => {
   });
 };
 
+export const useBulkEnrollAthletes = (planId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userIds: string[]) => {
+      const results: Awaited<ReturnType<typeof api.planEnrollments.create>>[] = [];
+
+      for (const id of userIds) {
+        results.push(await api.planEnrollments.create(planId, { userId: id }));
+      }
+
+      return results;
+    },
+    onSuccess: (results) => {
+      queryClient.invalidateQueries({
+        queryKey: platformKeys.planEnrollments.byPlan(planId),
+      });
+      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      toast.success(`${results.length} athlete${results.length === 1 ? "" : "s"} enrolled`);
+    },
+    onError: (error: Error) => {
+      queryClient.invalidateQueries({
+        queryKey: platformKeys.planEnrollments.byPlan(planId),
+      });
+      toast.error(error.message || "Failed to enroll athletes");
+    },
+  });
+};
+
 export const useUpdatePlanEnrollment = (planId: string) => {
   const queryClient = useQueryClient();
 

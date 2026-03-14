@@ -1,13 +1,13 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { env } from "@repo/env/base";
+import { baseEnv } from "@repo/env/base";
 
 import { ApiClient } from "./client";
 
 export const createNextServerClient = () =>
   new ApiClient({
-    baseUrl: env.NEXT_PUBLIC_APP_URL,
+    baseUrl: baseEnv.NEXT_PUBLIC_APP_URL,
     getHeaders: async () => {
       const cookieStore = await cookies();
 

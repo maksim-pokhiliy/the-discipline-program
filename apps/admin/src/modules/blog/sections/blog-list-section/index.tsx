@@ -8,7 +8,7 @@ import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/mater
 import Link from "next/link";
 
 import { type BlogPost } from "@repo/contracts/blog";
-import { env } from "@repo/env/base";
+import { baseEnv } from "@repo/env/base";
 import { useDeleteConfirmation } from "@repo/query";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
@@ -143,7 +143,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
             <Tooltip title="View Public Page">
               <IconButton
                 component={Link}
-                href={`${env.NEXT_PUBLIC_MARKETING_URL}/blog/${post.slug}`}
+                href={`${baseEnv.NEXT_PUBLIC_MARKETING_URL}/blog/${post.slug}`}
                 target="_blank"
                 size="small"
               >

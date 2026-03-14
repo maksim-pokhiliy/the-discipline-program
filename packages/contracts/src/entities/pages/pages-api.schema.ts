@@ -137,6 +137,10 @@ export const getPageBySlugParamsSchema = z.object({
   pageSlug: z.nativeEnum(PageSlug),
 });
 
+export const pageSlugRouteParamsSchema = z.object({
+  slug: z.nativeEnum(PageSlug),
+});
+
 export const SECTION_SCHEMAS = {
   [PAGE_SECTIONS_MAP.home.hero]: homePageHeroSchema,
   [PAGE_SECTIONS_MAP.home.whyChoose]: homePageWhyChooseSchema,

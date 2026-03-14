@@ -4,22 +4,19 @@ import {
   type User as PrismaUser,
 } from "@prisma/client";
 
-import {
-  type AthleteProfile,
-  type Gender,
-  type HealthStatus,
-} from "@repo/contracts/athlete-profile";
-import { type UserRole } from "@repo/contracts/auth";
+import { type AthleteProfile } from "@repo/contracts/athlete-profile";
 import { type CoachProfile } from "@repo/contracts/coach-profile";
 import { type AdminUser, type AdminUserListItem } from "@repo/contracts/user";
+
+import { GENDER_MAP, HEALTH_STATUS_MAP, ROLE_MAP } from "./enum-maps";
 
 export const mapToAthleteProfile = (p: PrismaAthleteProfile): AthleteProfile => ({
   id: p.id,
   userId: p.userId,
-  gender: p.gender as Gender | null,
+  gender: p.gender ? GENDER_MAP[p.gender] : null,
   heightCm: p.heightCm,
   weightKg: p.weightKg ? Number(p.weightKg) : null,
-  healthStatus: p.healthStatus as HealthStatus,
+  healthStatus: HEALTH_STATUS_MAP[p.healthStatus],
   healthNote: p.healthNote,
   createdAt: p.createdAt,
   updatedAt: p.updatedAt,
@@ -42,7 +39,7 @@ export const mapToAdminUser = (u: UserWithProfiles): AdminUser => ({
   id: u.id,
   email: u.email,
   name: u.name,
-  role: u.role as UserRole,
+  role: ROLE_MAP[u.role],
   image: u.image,
   timezone: u.timezone,
   emailVerified: u.emailVerified,
@@ -56,7 +53,7 @@ export const mapToAdminUserListItem = (u: PrismaUser): AdminUserListItem => ({
   id: u.id,
   email: u.email,
   name: u.name,
-  role: u.role as UserRole,
+  role: ROLE_MAP[u.role],
   image: u.image,
   timezone: u.timezone,
   createdAt: u.createdAt,

@@ -8,6 +8,8 @@ import {
   TodayStatus,
 } from "@repo/contracts/coach-dashboard";
 
+import { HEALTH_STATUS_MAP } from "../mappers/enum-maps";
+
 import { daysBetweenInTz, startOfDayInTz, startOfTodayInTz, startOfWeekInTz } from "./date-helpers";
 import type { EnrollmentWithData } from "./enrollment-query";
 
@@ -165,7 +167,9 @@ export const computeAthletesSummary = (
         todayWorkoutTitle: currentWorkoutTitle,
         lastActivityDate,
         daysSinceLastActivity,
-        healthStatus: (user.athleteProfile?.healthStatus as HealthStatus) ?? HealthStatus.HEALTHY,
+        healthStatus: user.athleteProfile
+          ? HEALTH_STATUS_MAP[user.athleteProfile.healthStatus]
+          : HealthStatus.HEALTHY,
       });
     } else if (existing && missedCount > existing.missedCount) {
       existing.missedCount = missedCount;
