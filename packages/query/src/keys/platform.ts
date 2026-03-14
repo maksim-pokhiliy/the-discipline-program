@@ -7,6 +7,8 @@ export const platformKeys = {
   workouts: {
     ...createEntityKeys(["platform"], "workouts"),
     byPlan: (planId: string) => [...platformKeys.root, "workouts", "plan", planId] as const,
+    preview: (workoutId: string) =>
+      [...platformKeys.root, "workouts", "preview", workoutId] as const,
   },
   workoutBlocks: {
     ...createEntityKeys(["platform"], "workout-blocks"),

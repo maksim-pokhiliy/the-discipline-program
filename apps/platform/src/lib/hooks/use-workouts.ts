@@ -22,6 +22,14 @@ export const useWorkout = (planId: string, id: string) =>
     enabled: !!planId && !!id,
   });
 
+export const useWorkoutPreview = (planId: string, workoutId: string, enabled: boolean) =>
+  useQuery({
+    queryKey: platformKeys.workouts.preview(workoutId),
+    queryFn: () => api.workouts.getPreview(planId, workoutId),
+    enabled: enabled && !!planId && !!workoutId,
+    staleTime: 30_000,
+  });
+
 export const useCreateWorkout = (planId: string) => {
   const queryClient = useQueryClient();
 
