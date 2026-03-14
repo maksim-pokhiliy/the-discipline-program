@@ -20,6 +20,7 @@ const SOFT_DELETE_UNIQUE_FIELDS: Record<string, string[]> = {
 };
 
 type ModelDelegate = {
+  findMany: (args: Record<string, unknown>) => Promise<Record<string, unknown>[]>;
   findUnique: (args: {
     where: Record<string, unknown>;
     select?: Record<string, boolean>;
@@ -136,6 +137,32 @@ const createClient = () => {
 
           if (!delegate) {
             return query(args);
+          }
+
+          const uniqueFields = SOFT_DELETE_UNIQUE_FIELDS[model];
+
+          if (uniqueFields) {
+            const select = Object.fromEntries([
+              ["id", true],
+              ...uniqueFields.map((f) => [f, true]),
+            ]);
+            const records = await delegate.findMany({ where: args.where, select });
+            const suffix = `_deleted_${Date.now()}`;
+
+            for (const record of records) {
+              const data: Record<string, unknown> = { deletedAt: new Date() };
+
+              for (const field of uniqueFields) {
+                data[field] = `${record[field]}${suffix}`;
+              }
+
+              await delegate.update({
+                where: { id: record.id },
+                data,
+              });
+            }
+
+            return { count: records.length };
           }
 
           return delegate.updateMany({ ...args, data: { deletedAt: new Date() } });

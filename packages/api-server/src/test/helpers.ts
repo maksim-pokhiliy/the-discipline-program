@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
+import { UserRole } from "@repo/contracts/auth";
+
 const rawPrisma = new PrismaClient();
 
 export const createTestUser = async (
@@ -11,14 +13,14 @@ export const createTestUser = async (
     data: {
       email: `test-${id}@test.local`,
       name: `Test User ${id.slice(0, 8)}`,
-      role: "USER",
+      role: UserRole.USER,
       ...overrides,
     },
   });
 };
 
 export const createTestCoach = async () => {
-  const user = await createTestUser({ role: "COACH" });
+  const user = await createTestUser({ role: UserRole.COACH });
   const profile = await rawPrisma.coachProfile.create({
     data: { userId: user.id },
   });

@@ -1,10 +1,10 @@
 import type { AthleteMax, CreateAthleteMaxData } from "@repo/contracts/athlete-max";
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { WeightUnit } from "@repo/contracts/prescribed-set";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToAthleteMax } from "../../mappers";
+import { UNIT_MAP } from "../../mappers/enum-maps";
 
 import {
   resolveCoachAthleteIds,
@@ -72,23 +72,15 @@ export const platformAthleteMaxesApi = {
       ORDER BY "userId", "exerciseId", "testedAt" DESC
     `;
 
-    const unitValues = new Set(Object.values(WeightUnit));
-
-    return maxes.map((m) => {
-      if (!unitValues.has(m.unit as WeightUnit)) {
-        throw new Error(`Unknown weight unit: ${m.unit}`);
-      }
-
-      return {
-        id: m.id,
-        userId: m.userId,
-        exerciseId: m.exerciseId,
-        value: Number(m.value),
-        unit: m.unit as WeightUnit,
-        testedAt: m.testedAt,
-        createdAt: m.createdAt,
-      };
-    });
+    return maxes.map((m) => ({
+      id: m.id,
+      userId: m.userId,
+      exerciseId: m.exerciseId,
+      value: Number(m.value),
+      unit: UNIT_MAP[m.unit as keyof typeof UNIT_MAP],
+      testedAt: m.testedAt,
+      createdAt: m.createdAt,
+    }));
   },
 
   create: async (userId: string, data: CreateAthleteMaxData): Promise<AthleteMax> => {
