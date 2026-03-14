@@ -2,6 +2,8 @@ import { type PlanEnrollment as PrismaPlanEnrollment, type User } from "@prisma/
 
 import { type PlanEnrollment } from "@repo/contracts/plan-enrollment";
 
+import { PLAN_ENROLLMENT_STATUS_MAP } from "./enum-maps";
+
 type PlanEnrollmentWithUser = PrismaPlanEnrollment & {
   user: Pick<User, "id" | "name" | "email" | "image">;
 };
@@ -18,6 +20,6 @@ export const mapToPlanEnrollment = (e: PlanEnrollmentWithUser): PlanEnrollment =
   },
   startDate: e.startDate,
   endDate: e.endDate,
-  status: e.status as PlanEnrollment["status"],
+  status: PLAN_ENROLLMENT_STATUS_MAP[e.status],
   createdAt: e.createdAt,
 });

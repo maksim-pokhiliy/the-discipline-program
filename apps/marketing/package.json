@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint . --fix --max-warnings 0",
     "check-types": "tsc --noEmit",
-    "format": "prettier --check \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },
   "dependencies": {
     "@repo/api-client": "workspace:*",

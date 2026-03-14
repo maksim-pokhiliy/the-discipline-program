@@ -7,7 +7,7 @@ import { Autocomplete, Avatar, Stack, TextField, Typography } from "@mui/materia
 import type { PlanEnrollment } from "@repo/contracts/plan-enrollment";
 import { FormModal } from "@repo/ui";
 
-import { useCreatePlanEnrollment, useSearchUsers } from "@app/lib/hooks";
+import { useBulkEnrollAthletes, useSearchUsers } from "@app/lib/hooks";
 
 type UserOption = {
   id: string;
@@ -30,26 +30,30 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
   enrollments,
 }) => {
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<UserOption | null>(null);
-  const { data: users = [] } = useSearchUsers(query);
-  const create = useCreatePlanEnrollment(planId);
+  const [selected, setSelected] = useState<UserOption[]>([]);
+  const { data: users = [] } = useSearchUsers(query, open);
+  const bulkEnroll = useBulkEnrollAthletes(planId);
 
   const enrolledIds = new Set(enrollments.map((e: PlanEnrollment) => e.userId));
-  const options = users.filter((u: UserOption) => !enrolledIds.has(u.id));
+  const selectedIds = new Set(selected.map((u) => u.id));
+  const options = users.filter((u: UserOption) => !enrolledIds.has(u.id) && !selectedIds.has(u.id));
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!selected) {
+    if (selected.length === 0) {
       return;
     }
 
-    create.mutate({ userId: selected.id }, { onSuccess: () => handleClose() });
+    bulkEnroll.mutate(
+      selected.map((u) => u.id),
+      { onSuccess: () => handleClose() },
+    );
   };
 
   const handleClose = () => {
     setQuery("");
-    setSelected(null);
+    setSelected([]);
     onClose();
   };
 
@@ -57,23 +61,25 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
     <FormModal
       open={open}
       onClose={handleClose}
-      title="Enroll Athlete"
+      title="Enroll Athletes"
       onSubmit={handleSubmit}
-      isSubmitting={create.isPending}
-      submitText="Enroll"
-      submitDisabled={!selected}
+      isSubmitting={bulkEnroll.isPending}
+      submitText={selected.length > 1 ? `Enroll ${selected.length} Athletes` : "Enroll"}
+      submitDisabled={selected.length === 0}
     >
       <Autocomplete
+        multiple
         options={options}
         getOptionLabel={(o) => o.name ?? o.email}
         getOptionKey={(o) => o.id}
         value={selected}
-        onChange={(_: SyntheticEvent, value: UserOption | null) => setSelected(value)}
+        onChange={(_: SyntheticEvent, value: UserOption[]) => setSelected(value)}
         inputValue={query}
         onInputChange={(_, value) => setQuery(value)}
         filterOptions={(x) => x}
-        noOptionsText={query.length < 2 ? "Type to search..." : "No athletes found"}
-        disabled={create.isPending}
+        disableCloseOnSelect
+        noOptionsText="No athletes found"
+        disabled={bulkEnroll.isPending}
         renderOption={({ key, ...props }, option) => (
           <Stack
             key={key}
@@ -108,7 +114,7 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
         renderInput={(params) => (
           <TextField
             {...params}
-            label="Search athlete"
+            label="Search athletes"
             placeholder="Name or email"
             size="small"
             autoFocus

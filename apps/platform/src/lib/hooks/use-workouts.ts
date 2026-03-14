@@ -27,13 +27,44 @@ export const useCreateWorkout = (planId: string) => {
 
   return useMutation({
     mutationFn: (data: CreateWorkoutData) => api.workouts.create(planId, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: platformKeys.workouts.byPlan(planId) });
-      queryClient.invalidateQueries({ queryKey: [...platformKeys.root, "calendar"] });
-      toast.success("Workout created");
+    onMutate: async (data) => {
+      await queryClient.cancelQueries({ queryKey: platformKeys.workouts.byPlan(planId) });
+
+      const previousWorkouts = queryClient.getQueryData<Workout[]>(
+        platformKeys.workouts.byPlan(planId),
+      );
+
+      const optimisticWorkout: Workout = {
+        id: `temp-${crypto.randomUUID()}`,
+        planId,
+        scheduledDate: data.scheduledDate ?? null,
+        title: data.title ?? "",
+        description: data.description ?? null,
+        blockCount: 0,
+        sortOrder: -1,
+        isArchived: false,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      queryClient.setQueryData(platformKeys.workouts.byPlan(planId), [
+        ...(previousWorkouts ?? []),
+        optimisticWorkout,
+      ]);
+
+      return { previousWorkouts };
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to create workout");
+    onError: (_error, _vars, context) => {
+      if (context?.previousWorkouts) {
+        queryClient.setQueryData(platformKeys.workouts.byPlan(planId), context.previousWorkouts);
+      }
+
+      toast.error("Failed to create workout");
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: platformKeys.workouts.byPlan(planId) });
+      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      queryClient.invalidateQueries({ queryKey: [...platformKeys.root, "calendar"] });
     },
   });
 };
@@ -80,6 +111,7 @@ export const useDeleteWorkout = (planId: string) => {
     mutationFn: (id: string) => api.workouts.delete(planId, id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.workouts.byPlan(planId) });
+      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
       queryClient.invalidateQueries({ queryKey: [...platformKeys.root, "calendar"] });
       toast.success("Workout deleted");
     },
@@ -138,6 +170,7 @@ export const useMoveWorkout = (planId: string) => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.workouts.byPlan(planId) });
+      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
       queryClient.invalidateQueries({ queryKey: [...platformKeys.root, "calendar"] });
     },
   });
@@ -205,6 +238,7 @@ export const useCopyWeek = (planId: string) => {
       api.workouts.copyWeek(planId, sourceDate, targetDate),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.workouts.byPlan(planId) });
+      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
       queryClient.invalidateQueries({ queryKey: [...platformKeys.root, "calendar"] });
       toast.success("Week copied");
     },

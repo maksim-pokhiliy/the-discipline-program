@@ -1,5 +1,7 @@
 export * from "./athlete-max.mapper";
 export * from "./blog.mapper";
+export * from "./contact.mapper";
+export * from "./enum-maps";
 export * from "./exercise-category.mapper";
 export * from "./exercise.mapper";
 export * from "./prescribed-set.mapper";

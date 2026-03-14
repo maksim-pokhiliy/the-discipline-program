@@ -6,11 +6,6 @@ import { platformUsersApi } from "@repo/api-server";
 export const GET = withPlatformAuth(async (request, _context, userId) => {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("q") ?? "";
-
-  if (query.length < 2) {
-    return NextResponse.json([]);
-  }
-
   const data = await platformUsersApi.search(userId, query);
 
   return NextResponse.json(data);

@@ -8,19 +8,39 @@ import { ForbiddenError, NotFoundError } from "@repo/errors";
 import { prisma } from "../../db/client";
 import { mapToUserBenchmark } from "../../mappers";
 
+import { resolveCoachId, verifyAthleteBelongsToCoach } from "./guards";
+
+const verifyAccessToUser = async (authUserId: string, targetUserId: string): Promise<void> => {
+  if (authUserId === targetUserId) {
+    return;
+  }
+
+  const coachId = await resolveCoachId(authUserId);
+
+  await verifyAthleteBelongsToCoach(targetUserId, coachId);
+};
+
 export const platformUserBenchmarksApi = {
-  getByUser: async (userId: string): Promise<UserBenchmark[]> => {
+  getByUser: async (authUserId: string, targetUserId: string): Promise<UserBenchmark[]> => {
+    await verifyAccessToUser(authUserId, targetUserId);
+
     const benchmarks = await prisma.userBenchmark.findMany({
-      where: { userId },
+      where: { userId: targetUserId },
       orderBy: { updatedAt: "desc" },
     });
 
     return benchmarks.map(mapToUserBenchmark);
   },
 
-  create: async (userId: string, data: CreateUserBenchmarkData): Promise<UserBenchmark> => {
+  create: async (
+    authUserId: string,
+    targetUserId: string,
+    data: CreateUserBenchmarkData,
+  ): Promise<UserBenchmark> => {
+    await verifyAccessToUser(authUserId, targetUserId);
+
     const benchmark = await prisma.userBenchmark.create({
-      data: { userId, ...data },
+      data: { userId: targetUserId, ...data },
     });
 
     return mapToUserBenchmark(benchmark);

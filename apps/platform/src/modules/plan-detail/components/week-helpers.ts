@@ -1,32 +1,23 @@
 export const getMonday = (date: Date): Date => {
-  const d = new Date(date);
-  const day = d.getDay();
+  const day = date.getUTCDay();
   const diff = day === 0 ? -6 : 1 - day;
 
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
-
-  return d;
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + diff));
 };
 
-export const addDays = (date: Date, days: number): Date => {
-  const d = new Date(date);
-
-  d.setDate(d.getDate() + days);
-
-  return d;
-};
+export const addDays = (date: Date, days: number): Date =>
+  new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days));
 
 export const isSameDay = (a: Date, b: Date): boolean =>
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
+  a.getUTCFullYear() === b.getUTCFullYear() &&
+  a.getUTCMonth() === b.getUTCMonth() &&
+  a.getUTCDate() === b.getUTCDate();
 
 export const getWeekDays = (monday: Date): Date[] =>
   Array.from({ length: 7 }, (_, i) => addDays(monday, i));
 
 export const getISOWeekNumber = (date: Date): number => {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 
   d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
 
@@ -36,9 +27,9 @@ export const getISOWeekNumber = (date: Date): number => {
 };
 
 export const formatDateParam = (date: Date): string => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
 
   return `${y}-${m}-${d}`;
 };
@@ -46,15 +37,20 @@ export const formatDateParam = (date: Date): string => {
 export const parseDateParam = (param: string): Date => {
   const parts = param.split("-").map(Number);
 
-  return new Date(parts[0] ?? 0, (parts[1] ?? 1) - 1, parts[2] ?? 1);
+  return new Date(Date.UTC(parts[0] ?? 0, (parts[1] ?? 1) - 1, parts[2] ?? 1));
 };
 
-const DAY_FORMAT = new Intl.DateTimeFormat("en-US", { weekday: "short" });
-const DATE_FORMAT = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
+const DAY_FORMAT = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: "UTC" });
+const DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  timeZone: "UTC",
+});
 const RANGE_FORMAT = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
   year: "numeric",
+  timeZone: "UTC",
 });
 
 export const formatDayHeader = (date: Date): string =>

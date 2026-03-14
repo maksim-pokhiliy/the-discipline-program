@@ -6,9 +6,9 @@ import { platformKeys } from "@repo/query";
 
 import { api } from "../api";
 
-export const useSearchUsers = (query: string) =>
+export const useSearchUsers = (query: string, enabled = true) =>
   useQuery({
     queryKey: [...platformKeys.root, "users", "search", query],
     queryFn: () => api.users.search(query),
-    enabled: query.length >= 2,
+    enabled,
   });

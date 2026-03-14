@@ -16,16 +16,25 @@ export const prescribedSetSchema = z.object({
   sortOrder: z.number().int(),
 });
 
-export const createPrescribedSetSchema = z.object({
-  exerciseId: z.string().cuid(),
-  sets: z.number().int().positive().optional(),
-  reps: z.number().int().positive().optional(),
-  weightValue: z.number().positive().optional(),
-  weightUnit: z.nativeEnum(WeightUnit).optional(),
-  weightType: z.nativeEnum(WeightType).optional(),
-  rpe: z.number().int().min(1).max(10).optional(),
-  notes: z.string().max(500).optional(),
-});
+export const createPrescribedSetSchema = z
+  .object({
+    exerciseId: z.string().cuid(),
+    sets: z.number().int().positive().optional(),
+    reps: z.number().int().positive().optional(),
+    weightValue: z.number().positive().optional(),
+    weightUnit: z.nativeEnum(WeightUnit).optional(),
+    weightType: z.nativeEnum(WeightType).optional(),
+    rpe: z.number().int().min(1).max(10).optional(),
+    notes: z.string().max(500).optional(),
+  })
+  .refine(
+    (data) =>
+      data.sets !== undefined ||
+      data.reps !== undefined ||
+      data.weightValue !== undefined ||
+      data.rpe !== undefined,
+    { message: "At least one of sets, reps, weightValue, or rpe is required" },
+  );
 
 export const updatePrescribedSetSchema = z.object({
   exerciseId: z.string().cuid().optional(),

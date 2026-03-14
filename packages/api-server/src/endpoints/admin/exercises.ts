@@ -102,12 +102,6 @@ export const adminExercisesApi = {
       throw new NotFoundError("Exercise not found", { id });
     }
 
-    await prisma.exercise.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-        name: `${exercise.name}-deleted-${Date.now()}`,
-      },
-    });
+    await prisma.exercise.delete({ where: { id } });
   },
 };

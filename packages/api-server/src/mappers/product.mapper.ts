@@ -1,17 +1,14 @@
 import { type Price as PrismaPrice, type Product as PrismaProduct } from "@prisma/client";
 
-import {
-  type Price,
-  type Product,
-  type PriceInterval,
-  type ProductCurrency,
-} from "@repo/contracts/product";
+import { type Price, type Product } from "@repo/contracts/product";
+
+import { CURRENCY_MAP, PRICE_INTERVAL_MAP } from "./enum-maps";
 
 export const mapToPrice = (p: PrismaPrice): Price => ({
   id: p.id,
   amountCents: p.amountCents,
-  currency: p.currency as ProductCurrency,
-  interval: p.interval as PriceInterval,
+  currency: CURRENCY_MAP[p.currency],
+  interval: PRICE_INTERVAL_MAP[p.interval],
   isActive: p.isActive,
 });
 

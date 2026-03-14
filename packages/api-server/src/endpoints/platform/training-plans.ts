@@ -1,16 +1,18 @@
+import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import {
   type CalendarWorkout,
   type CoachPlansPageData,
   type CreateTrainingPlanData,
   type TrainingPlan,
   type TrainingPlanListItem,
-  type TrainingPlanStatus,
+  TrainingPlanStatus,
   type UpdateTrainingPlanData,
 } from "@repo/contracts/training-plan";
 import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToTrainingPlan, mapToWorkout } from "../../mappers";
+import { TRAINING_PLAN_STATUS_MAP } from "../../mappers/enum-maps";
 
 import { resolveCoachId, verifyPlanOwnership } from "./guards";
 
@@ -21,25 +23,19 @@ type PlanWithStats = Parameters<typeof mapToTrainingPlan>[0] & {
 
 const getWeekBounds = (): { weekStart: Date; weekEnd: Date; todayStart: Date; todayEnd: Date } => {
   const now = new Date();
-  const day = now.getDay();
+  const day = now.getUTCDay();
   const diffToMonday = day === 0 ? -6 : 1 - day;
 
-  const weekStart = new Date(now);
-
-  weekStart.setDate(now.getDate() + diffToMonday);
-  weekStart.setHours(0, 0, 0, 0);
-
-  const weekEnd = new Date(weekStart);
-
-  weekEnd.setDate(weekStart.getDate() + 7);
-
-  const todayStart = new Date(now);
-
-  todayStart.setHours(0, 0, 0, 0);
-
-  const todayEnd = new Date(todayStart);
-
-  todayEnd.setDate(todayStart.getDate() + 1);
+  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const todayEnd = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
+  );
+  const weekStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diffToMonday),
+  );
+  const weekEnd = new Date(
+    Date.UTC(weekStart.getUTCFullYear(), weekStart.getUTCMonth(), weekStart.getUTCDate() + 7),
+  );
 
   return { weekStart, weekEnd, todayStart, todayEnd };
 };
@@ -71,7 +67,6 @@ export const platformTrainingPlansApi = {
 
     const workouts = await prisma.workout.findMany({
       where: {
-        deletedAt: null,
         scheduledDate: { gte: weekStart, lt: weekEnd },
         plan: { coachId, deletedAt: null },
       },
@@ -85,7 +80,7 @@ export const platformTrainingPlansApi = {
     return workouts.map((w) => ({
       ...mapToWorkout(w),
       planName: w.plan.name,
-      planStatus: w.plan.status as TrainingPlanStatus,
+      planStatus: TRAINING_PLAN_STATUS_MAP[w.plan.status],
     }));
   },
 
@@ -93,7 +88,7 @@ export const platformTrainingPlansApi = {
     const coachId = await resolveCoachId(userId);
 
     const plans = await prisma.trainingPlan.findMany({
-      where: { coachId, deletedAt: null },
+      where: { coachId },
       orderBy: { createdAt: "desc" },
     });
 
@@ -105,12 +100,12 @@ export const platformTrainingPlansApi = {
     const { weekStart, weekEnd, todayStart, todayEnd } = getWeekBounds();
 
     const plans = await prisma.trainingPlan.findMany({
-      where: { coachId, deletedAt: null },
+      where: { coachId },
       orderBy: { createdAt: "desc" },
       include: {
         _count: {
           select: {
-            enrollments: { where: { status: "ACTIVE" } },
+            enrollments: { where: { status: PlanEnrollmentStatus.ACTIVE } },
           },
         },
         workouts: {
@@ -133,7 +128,7 @@ export const platformTrainingPlansApi = {
       where: { id },
     });
 
-    if (!plan || plan.deletedAt) {
+    if (!plan) {
       throw new NotFoundError("Training plan not found", { id });
     }
 
@@ -176,10 +171,7 @@ export const platformTrainingPlansApi = {
 
     await verifyPlanOwnership(id, coachId);
 
-    await prisma.trainingPlan.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    await prisma.trainingPlan.delete({ where: { id } });
   },
 
   duplicate: async (userId: string, id: string): Promise<TrainingPlan> => {
@@ -209,7 +201,7 @@ export const platformTrainingPlansApi = {
           coachId,
           name: `Copy of ${source.name}`,
           description: source.description,
-          status: "DRAFT",
+          status: TrainingPlanStatus.DRAFT,
         },
       });
 
@@ -266,13 +258,13 @@ export const platformTrainingPlansApi = {
       select: { status: true },
     });
 
-    if (plan.status !== "ACTIVE") {
+    if (plan.status !== TrainingPlanStatus.ACTIVE) {
       throw new ConflictError("Only active plans can be archived.");
     }
 
     const updated = await prisma.trainingPlan.update({
       where: { id },
-      data: { status: "ARCHIVED" },
+      data: { status: TrainingPlanStatus.ARCHIVED },
     });
 
     return mapToTrainingPlan(updated);
@@ -288,13 +280,13 @@ export const platformTrainingPlansApi = {
       select: { status: true },
     });
 
-    if (plan.status !== "ARCHIVED") {
+    if (plan.status !== TrainingPlanStatus.ARCHIVED) {
       throw new ConflictError("Only archived plans can be restored.");
     }
 
     const updated = await prisma.trainingPlan.update({
       where: { id },
-      data: { status: "ACTIVE" },
+      data: { status: TrainingPlanStatus.ACTIVE },
     });
 
     return mapToTrainingPlan(updated);
@@ -310,13 +302,13 @@ export const platformTrainingPlansApi = {
       select: { status: true },
     });
 
-    if (plan.status !== "DRAFT") {
+    if (plan.status !== TrainingPlanStatus.DRAFT) {
       throw new ConflictError("Only draft plans can be activated.");
     }
 
     const updated = await prisma.trainingPlan.update({
       where: { id },
-      data: { status: "ACTIVE" },
+      data: { status: TrainingPlanStatus.ACTIVE },
     });
 
     return mapToTrainingPlan(updated);
