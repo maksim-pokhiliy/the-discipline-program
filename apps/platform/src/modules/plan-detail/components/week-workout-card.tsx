@@ -12,6 +12,7 @@ import {
   Box,
   CircularProgress,
   Collapse,
+  Divider,
   IconButton,
   InputBase,
   Paper,
@@ -102,20 +103,24 @@ const WorkoutPreviewContent: React.FC<{ planId: string; workout: Workout }> = ({
             </Typography>
           )}
 
-          {block.exercises.map((ex, exIndex) => (
-            <Stack
-              key={exIndex}
-              direction="row"
-              sx={{ justifyContent: "space-between", pl: 1.5, py: 0.25 }}
-            >
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
+          {block.exercises.map((ex, exIndex) => {
+            const detail = formatExerciseDetail(ex);
+
+            return (
+              <Typography
+                key={exIndex}
+                variant="caption"
+                sx={{ color: "text.secondary", pl: 1.5, py: 0.25, display: "block" }}
+              >
                 {ex.name}
+                {detail && (
+                  <Typography component="span" variant="caption" sx={{ fontWeight: 500, ml: 1 }}>
+                    {detail}
+                  </Typography>
+                )}
               </Typography>
-              <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 500 }}>
-                {formatExerciseDetail(ex)}
-              </Typography>
-            </Stack>
-          ))}
+            );
+          })}
         </Box>
       ))}
     </Stack>
@@ -236,7 +241,8 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
         </Stack>
 
         <Collapse in={expanded} unmountOnExit>
-          <Box sx={{ px: 1.5, pb: 1.5 }}>
+          <Divider />
+          <Box sx={{ px: 1.5, py: 1.5 }}>
             <WorkoutPreviewContent planId={planId} workout={workout} />
           </Box>
         </Collapse>
