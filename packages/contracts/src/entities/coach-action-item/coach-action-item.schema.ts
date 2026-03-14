@@ -24,11 +24,6 @@ export const healthReportMetadataSchema = z.object({
   healthStatus: z.string(),
 });
 
-export type MissedWorkoutsMetadata = z.infer<typeof missedWorkoutsMetadataSchema>;
-export type NewNoStartMetadata = z.infer<typeof newNoStartMetadataSchema>;
-export type HealthReportMetadata = z.infer<typeof healthReportMetadataSchema>;
-export type ActionItemMetadata = MissedWorkoutsMetadata | NewNoStartMetadata | HealthReportMetadata;
-
 export const coachActionItemSchema = z.object({
   id: z.string().cuid(),
   coachId: z.string().cuid(),

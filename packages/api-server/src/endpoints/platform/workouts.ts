@@ -28,7 +28,7 @@ export const platformWorkoutsApi = {
     await verifyPlanOwnership(planId, coachId);
 
     const workouts = await prisma.workout.findMany({
-      where: { planId, deletedAt: null },
+      where: { planId },
       include: { _count: { select: { blocks: true } } },
       orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
     });
@@ -61,7 +61,7 @@ export const platformWorkoutsApi = {
     const scheduledDate = data.scheduledDate ? toUTCMidnight(data.scheduledDate) : null;
 
     await prisma.workout.updateMany({
-      where: { planId, scheduledDate, deletedAt: null },
+      where: { planId, scheduledDate },
       data: { sortOrder: { increment: 1 } },
     });
 
@@ -133,7 +133,7 @@ export const platformWorkoutsApi = {
 
     if (targetDayOrderedIds) {
       const targetWorkouts = await prisma.workout.findMany({
-        where: { id: { in: targetDayOrderedIds }, planId: owned.planId, deletedAt: null },
+        where: { id: { in: targetDayOrderedIds }, planId: owned.planId },
         select: { id: true },
       });
 
@@ -182,7 +182,7 @@ export const platformWorkoutsApi = {
     await verifyPlanOwnership(planId, coachId);
 
     const workouts = await prisma.workout.findMany({
-      where: { planId, deletedAt: null, id: { in: orderedIds } },
+      where: { planId, id: { in: orderedIds } },
       select: { id: true },
     });
 
@@ -245,7 +245,6 @@ export const platformWorkoutsApi = {
     const sourceWorkouts = await prisma.workout.findMany({
       where: {
         planId,
-        deletedAt: null,
         scheduledDate: { gte: normalizedSource, lt: sourceEnd },
       },
       include: {

@@ -1,3 +1,5 @@
+import { type Unit } from "@prisma/client";
+
 import type { AthleteMax, CreateAthleteMaxData } from "@repo/contracts/athlete-max";
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { NotFoundError } from "@repo/errors";
@@ -59,7 +61,7 @@ export const platformAthleteMaxesApi = {
         userId: string;
         exerciseId: string;
         value: unknown;
-        unit: string;
+        unit: Unit;
         testedAt: Date;
         createdAt: Date;
       }>
@@ -77,7 +79,7 @@ export const platformAthleteMaxesApi = {
       userId: m.userId,
       exerciseId: m.exerciseId,
       value: Number(m.value),
-      unit: UNIT_MAP[m.unit as keyof typeof UNIT_MAP],
+      unit: UNIT_MAP[m.unit],
       testedAt: m.testedAt,
       createdAt: m.createdAt,
     }));

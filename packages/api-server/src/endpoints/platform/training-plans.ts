@@ -67,7 +67,6 @@ export const platformTrainingPlansApi = {
 
     const workouts = await prisma.workout.findMany({
       where: {
-        deletedAt: null,
         scheduledDate: { gte: weekStart, lt: weekEnd },
         plan: { coachId, deletedAt: null },
       },
@@ -89,7 +88,7 @@ export const platformTrainingPlansApi = {
     const coachId = await resolveCoachId(userId);
 
     const plans = await prisma.trainingPlan.findMany({
-      where: { coachId, deletedAt: null },
+      where: { coachId },
       orderBy: { createdAt: "desc" },
     });
 
@@ -101,7 +100,7 @@ export const platformTrainingPlansApi = {
     const { weekStart, weekEnd, todayStart, todayEnd } = getWeekBounds();
 
     const plans = await prisma.trainingPlan.findMany({
-      where: { coachId, deletedAt: null },
+      where: { coachId },
       orderBy: { createdAt: "desc" },
       include: {
         _count: {
