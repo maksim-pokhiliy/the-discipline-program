@@ -70,7 +70,6 @@ describe("platformPrescribedSetsApi", () => {
     it("first set in block gets sortOrder 0", async () => {
       const set = await platformPrescribedSetsApi.create(coach.user.id, block2Id, {
         exerciseId: exercise.id,
-        sets: 3,
         reps: 10,
       });
 
@@ -82,7 +81,6 @@ describe("platformPrescribedSetsApi", () => {
     it("assigns correct sortOrder (max + 1)", async () => {
       const set1 = await platformPrescribedSetsApi.create(coach.user.id, blockId, {
         exerciseId: exercise.id,
-        sets: 3,
         reps: 10,
       });
 
@@ -90,7 +88,6 @@ describe("platformPrescribedSetsApi", () => {
 
       const set2 = await platformPrescribedSetsApi.create(coach.user.id, blockId, {
         exerciseId: exercise2.id,
-        sets: 5,
         reps: 8,
       });
 
@@ -103,7 +100,6 @@ describe("platformPrescribedSetsApi", () => {
     it("multiple creates keep incrementing sortOrder", async () => {
       const set3 = await platformPrescribedSetsApi.create(coach.user.id, blockId, {
         exerciseId: exercise.id,
-        sets: 4,
         reps: 6,
       });
 

@@ -22,6 +22,7 @@ import {
 
 import { WEIGHT_UNIT_LABELS, WeightType } from "@repo/contracts/prescribed-set";
 import type { Workout, WorkoutPreviewBlock } from "@repo/contracts/workout";
+import { SECTION_TYPE_LABELS, SectionType } from "@repo/contracts/workout-block";
 import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteWorkout, useUpdateWorkout, useWorkoutPreview } from "@app/lib/hooks";
@@ -32,15 +33,43 @@ type WeekWorkoutCardProps = {
   autoFocus?: boolean;
 };
 
-const formatExerciseDetail = (ex: WorkoutPreviewBlock["exercises"][number]): string => {
+type ExerciseEntry = WorkoutPreviewBlock["exercises"][number];
+
+type GroupedExercise = ExerciseEntry & { count: number };
+
+const groupExercises = (exercises: ExerciseEntry[]): GroupedExercise[] => {
+  const groups: GroupedExercise[] = [];
+
+  for (const ex of exercises) {
+    const prev = groups[groups.length - 1];
+    const isSame =
+      prev &&
+      prev.name === ex.name &&
+      prev.reps === ex.reps &&
+      prev.weightValue === ex.weightValue &&
+      prev.weightUnit === ex.weightUnit &&
+      prev.weightType === ex.weightType &&
+      prev.rpe === ex.rpe;
+
+    if (isSame) {
+      prev.count += 1;
+    } else {
+      groups.push({ ...ex, count: 1 });
+    }
+  }
+
+  return groups;
+};
+
+const formatExerciseDetail = (ex: GroupedExercise): string => {
   const parts: string[] = [];
 
-  if (ex.sets && ex.reps) {
-    parts.push(`${ex.sets}×${ex.reps}`);
-  } else if (ex.sets) {
-    parts.push(`${ex.sets} sets`);
+  if (ex.count > 1 && ex.reps) {
+    parts.push(`${ex.count}×${ex.reps}`);
   } else if (ex.reps) {
     parts.push(`${ex.reps} reps`);
+  } else if (ex.count > 1) {
+    parts.push(`${ex.count} sets`);
   }
 
   if (ex.weightValue) {
@@ -53,6 +82,46 @@ const formatExerciseDetail = (ex: WorkoutPreviewBlock["exercises"][number]): str
   }
 
   return parts.join(" ");
+};
+
+const formatBlockHeader = (block: WorkoutPreviewBlock): string => {
+  if (block.title) {
+    return block.title;
+  }
+
+  if (block.categoryName) {
+    return block.categoryName;
+  }
+
+  return SECTION_TYPE_LABELS[block.sectionType];
+};
+
+const GROUPABLE_TYPES = new Set([SectionType.STRENGTH, SectionType.CUSTOM]);
+
+const formatBlockMeta = (block: WorkoutPreviewBlock): string | null => {
+  const parts: string[] = [];
+
+  if (block.sectionType === SectionType.EMOM) {
+    if (block.intervalSec) {
+      const mins = Math.floor(block.intervalSec / 60);
+
+      parts.push(mins <= 1 ? "EMOM" : `E${mins}MOM`);
+    } else {
+      parts.push("EMOM");
+    }
+  } else if (block.sectionType !== SectionType.CUSTOM) {
+    parts.push(SECTION_TYPE_LABELS[block.sectionType]);
+  }
+
+  if (block.rounds) {
+    parts.push(`× ${block.rounds}`);
+  }
+
+  if (block.timeCapSec) {
+    parts.push(`${Math.floor(block.timeCapSec / 60)} min cap`);
+  }
+
+  return parts.length > 0 ? parts.join(" ") : null;
 };
 
 const WorkoutPreviewContent: React.FC<{ planId: string; workout: Workout }> = ({
@@ -79,51 +148,53 @@ const WorkoutPreviewContent: React.FC<{ planId: string; workout: Workout }> = ({
 
   return (
     <Stack spacing={1.5}>
-      {preview.blocks.map((block) => (
-        <Box key={block.id}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 0.5 }}>
-            <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary" }}>
-              {block.categoryName}
-            </Typography>
-            {block.rounds && (
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {block.rounds} {block.rounds === 1 ? "round" : "rounds"}
+      {preview.blocks.map((block) => {
+        const meta = formatBlockMeta(block);
+
+        return (
+          <Box key={block.id}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 0.5 }}>
+              <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary" }}>
+                {formatBlockHeader(block)}
               </Typography>
-            )}
-            {block.timeCapSec && (
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {Math.floor(block.timeCapSec / 60)} min cap
-              </Typography>
-            )}
-          </Stack>
-
-          {block.exercises.length === 0 && (
-            <Typography variant="caption" sx={{ color: "text.disabled", pl: 1.5 }}>
-              No exercises
-            </Typography>
-          )}
-
-          {block.exercises.map((ex, exIndex) => {
-            const detail = formatExerciseDetail(ex);
-
-            return (
-              <Box key={exIndex} sx={{ pl: 1.5, py: 0.5 }}>
-                <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
-                  {ex.name}
+              {meta && (
+                <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                  {meta}
                 </Typography>
-                {detail && (
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "text.secondary", fontWeight: 500, display: "block" }}
-                  >
-                    {detail}
+              )}
+            </Stack>
+
+            {block.exercises.length === 0 && (
+              <Typography variant="caption" sx={{ color: "text.disabled", pl: 1.5 }}>
+                No exercises
+              </Typography>
+            )}
+
+            {(GROUPABLE_TYPES.has(block.sectionType)
+              ? groupExercises(block.exercises)
+              : block.exercises.map((ex) => ({ ...ex, count: 1 }))
+            ).map((ex, exIndex) => {
+              const detail = formatExerciseDetail(ex);
+
+              return (
+                <Box key={exIndex} sx={{ pl: 1.5, py: 0.5 }}>
+                  <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
+                    {ex.name}
                   </Typography>
-                )}
-              </Box>
-            );
-          })}
-        </Box>
-      ))}
+                  {detail && (
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "text.secondary", fontWeight: 500, display: "block" }}
+                    >
+                      {detail}
+                    </Typography>
+                  )}
+                </Box>
+              );
+            })}
+          </Box>
+        );
+      })}
     </Stack>
   );
 };

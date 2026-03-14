@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 import { WeightType, WeightUnit } from "../prescribed-set/prescribed-set.constants";
+import { ScoreType, SectionType } from "../workout-block/workout-block.constants";
 
 export const workoutPreviewExerciseSchema = z.object({
   name: z.string(),
-  sets: z.number().int().positive().nullable(),
   reps: z.number().int().positive().nullable(),
   weightValue: z.number().nullable(),
   weightUnit: z.nativeEnum(WeightUnit),
@@ -14,9 +14,17 @@ export const workoutPreviewExerciseSchema = z.object({
 
 export const workoutPreviewBlockSchema = z.object({
   id: z.string().cuid(),
-  categoryName: z.string(),
+  sectionType: z.nativeEnum(SectionType),
+  scoreType: z.nativeEnum(ScoreType),
+  title: z.string().nullable(),
+  categoryName: z.string().nullable(),
+  notes: z.string().nullable(),
   rounds: z.number().int().positive().nullable(),
   timeCapSec: z.number().int().positive().nullable(),
+  intervalSec: z.number().int().positive().nullable(),
+  workSec: z.number().int().positive().nullable(),
+  restSec: z.number().int().positive().nullable(),
+  restAfterSec: z.number().int().positive().nullable(),
   exercises: z.array(workoutPreviewExerciseSchema),
 });
 

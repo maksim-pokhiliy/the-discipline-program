@@ -221,14 +221,13 @@ describe("platformWorkoutsApi", () => {
       toCleanup.push({ table: "workout", id: srcWorkout.id });
 
       const block = await cleanupRaw.workoutBlock.create({
-        data: { workoutId: srcWorkout.id, categoryId, sortOrder: 0, rounds: 3 },
+        data: { workoutId: srcWorkout.id, sortOrder: 0, rounds: 3 },
       });
 
       await cleanupRaw.prescribedSet.create({
         data: {
           blockId: block.id,
           exerciseId,
-          sets: 4,
           reps: 10,
           sortOrder: 0,
         },
@@ -318,11 +317,11 @@ describe("platformWorkoutsApi", () => {
       toCleanup.push({ table: "workout", id: workout.id });
 
       const b1 = await cleanupRaw.workoutBlock.create({
-        data: { workoutId: workout.id, categoryId, sortOrder: 0 },
+        data: { workoutId: workout.id, sortOrder: 0 },
       });
 
       const b2 = await cleanupRaw.workoutBlock.create({
-        data: { workoutId: workout.id, categoryId, sortOrder: 1 },
+        data: { workoutId: workout.id, sortOrder: 1 },
       });
 
       await platformWorkoutsApi.reorderBlocks(coach.user.id, workout.id, [b2.id, b1.id]);
@@ -345,11 +344,11 @@ describe("platformWorkoutsApi", () => {
       toCleanup.push({ table: "workout", id: workout.id });
 
       await cleanupRaw.workoutBlock.create({
-        data: { workoutId: workout.id, categoryId, sortOrder: 0 },
+        data: { workoutId: workout.id, sortOrder: 0 },
       });
 
       await cleanupRaw.workoutBlock.create({
-        data: { workoutId: workout.id, categoryId, sortOrder: 1 },
+        data: { workoutId: workout.id, sortOrder: 1 },
       });
 
       await expect(

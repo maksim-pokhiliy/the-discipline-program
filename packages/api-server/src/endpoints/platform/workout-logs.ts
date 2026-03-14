@@ -4,13 +4,13 @@ import { NotFoundError } from "@repo/errors";
 import { prisma } from "../../db/client";
 import { mapToWorkoutLog } from "../../mappers";
 
-const includeSetLogs = { setLogs: true } as const;
+const includeRelations = { setLogs: true, blockScores: true } as const;
 
 export const platformWorkoutLogsApi = {
   getAll: async (userId: string): Promise<WorkoutLog[]> => {
     const logs = await prisma.workoutLog.findMany({
       where: { userId },
-      include: includeSetLogs,
+      include: includeRelations,
       orderBy: { date: "desc" },
     });
 
@@ -20,7 +20,7 @@ export const platformWorkoutLogsApi = {
   getById: async (userId: string, id: string): Promise<WorkoutLog> => {
     const log = await prisma.workoutLog.findUnique({
       where: { id },
-      include: includeSetLogs,
+      include: includeRelations,
     });
 
     if (!log || log.userId !== userId) {
@@ -40,7 +40,7 @@ export const platformWorkoutLogsApi = {
       throw new NotFoundError("Workout not found", { workoutId: data.workoutId });
     }
 
-    const { setLogs, ...logData } = data;
+    const { setLogs, blockScores, ...logData } = data;
 
     const log = await prisma.workoutLog.create({
       data: {
@@ -49,8 +49,9 @@ export const platformWorkoutLogsApi = {
         setLogs: {
           create: setLogs,
         },
+        ...(blockScores?.length ? { blockScores: { create: blockScores } } : {}),
       },
-      include: includeSetLogs,
+      include: includeRelations,
     });
 
     return mapToWorkoutLog(log);

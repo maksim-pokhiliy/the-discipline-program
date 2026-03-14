@@ -75,7 +75,6 @@ describe("platformTrainingPlansApi", () => {
       data: {
         blockId: block.id,
         exerciseId: exercise.id,
-        sets: 3,
         reps: 10,
         sortOrder: 0,
       },
@@ -225,7 +224,6 @@ describe("platformTrainingPlansApi", () => {
       }
 
       expect(copiedSet.exerciseId).toBe(exercise.id);
-      expect(copiedSet.sets).toBe(3);
       expect(copiedSet.reps).toBe(10);
       expect(copiedSet.id).not.toBe(setId);
     });

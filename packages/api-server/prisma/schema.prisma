@@ -294,18 +294,28 @@ model Workout {
 }
 
 model WorkoutBlock {
-  id         String           @id @default(cuid())
-  workoutId  String
-  workout    Workout          @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-  categoryId String
-  category   ExerciseCategory @relation(fields: [categoryId], references: [id])
-  rounds     Int?
-  timeCapSec Int?
-  sortOrder  Int              @default(0)
-  sets       PrescribedSet[]
+  id          String           @id @default(cuid())
+  workoutId   String
+  workout     Workout          @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  categoryId  String?
+  category    ExerciseCategory? @relation(fields: [categoryId], references: [id])
+  sectionType SectionType      @default(CUSTOM)
+  scoreType   ScoreType        @default(NONE)
+  title       String?
+  notes       String?
+  rounds      Int?
+  timeCapSec  Int?
+  intervalSec Int?
+  workSec     Int?
+  restSec     Int?
+  restAfterSec Int?
+  sortOrder   Int              @default(0)
+  sets        PrescribedSet[]
+  blockScores BlockScore[]
 
   @@index([workoutId])
   @@index([categoryId])
+  @@index([sectionType])
   @@map("app_workout_blocks")
 }
 
@@ -315,7 +325,6 @@ model PrescribedSet {
   block       WorkoutBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
   exerciseId  String
   exercise    Exercise     @relation(fields: [exerciseId], references: [id])
-  sets        Int?
   reps        Int?
   weightValue Decimal?     @db.Decimal(6, 2)
   weightUnit  Unit         @default(KG)
@@ -330,20 +339,39 @@ model PrescribedSet {
 }
 
 model WorkoutLog {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  workoutId String
-  workout   Workout  @relation(fields: [workoutId], references: [id])
-  date      DateTime @default(now())
-  notes     String?
-  isRx      Boolean  @default(true)
-  setLogs   SetLog[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  workoutId   String
+  workout     Workout      @relation(fields: [workoutId], references: [id])
+  date        DateTime     @default(now())
+  notes       String?
+  isRx        Boolean      @default(true)
+  setLogs     SetLog[]
+  blockScores BlockScore[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@index([createdAt])
   @@map("app_workout_logs")
+}
+
+model BlockScore {
+  id           String       @id @default(cuid())
+  workoutLogId String
+  workoutLog   WorkoutLog   @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
+  blockId      String
+  block        WorkoutBlock @relation(fields: [blockId], references: [id])
+  scoreType    ScoreType
+  scoreValue   Decimal?     @db.Decimal(10, 2)
+  scoreRounds  Int?
+  scoreReps    Int?
+  scoreTimeSec Int?
+  notes        String?
+
+  @@index([workoutLogId])
+  @@index([blockId])
+  @@map("app_block_scores")
 }
 
 model SetLog {
@@ -371,6 +399,24 @@ enum Unit {
 enum WeightType {
   ABSOLUTE
   PERCENTAGE
+}
+
+enum SectionType {
+  FOR_TIME
+  AMRAP
+  EMOM
+  TABATA
+  STRENGTH
+  CUSTOM
+}
+
+enum ScoreType {
+  TIME
+  ROUNDS_REPS
+  LOAD
+  REPS
+  PASS_FAIL
+  NONE
 }
 
 enum TrainingPlanStatus {

@@ -9,7 +9,6 @@ const makeSet = (overrides = {}) => ({
   id: "cls_set_1",
   blockId: "cls_block_1",
   exerciseId: "cls_exercise_1",
-  sets: 3,
   reps: 10,
   weightValue: new Decimal("72.50"),
   weightUnit: "KG" as const,
@@ -29,7 +28,6 @@ describe("mapToPrescribedSet", () => {
       id: "cls_set_1",
       blockId: "cls_block_1",
       exerciseId: "cls_exercise_1",
-      sets: 3,
       reps: 10,
       weightValue: 72.5,
       weightUnit: WeightUnit.KG,
@@ -53,13 +51,6 @@ describe("mapToPrescribedSet", () => {
     const result = mapToPrescribedSet(input);
 
     expect(result.weightValue).toBeNull();
-  });
-
-  it("handles null sets", () => {
-    const input = makeSet({ sets: null });
-    const result = mapToPrescribedSet(input);
-
-    expect(result.sets).toBeNull();
   });
 
   it("handles null reps", () => {
@@ -99,7 +90,6 @@ describe("mapToPrescribedSet", () => {
 
   it("handles all nullable fields being null simultaneously", () => {
     const input = makeSet({
-      sets: null,
       reps: null,
       weightValue: null,
       rpe: null,
@@ -107,7 +97,6 @@ describe("mapToPrescribedSet", () => {
     });
     const result = mapToPrescribedSet(input);
 
-    expect(result.sets).toBeNull();
     expect(result.reps).toBeNull();
     expect(result.weightValue).toBeNull();
     expect(result.rpe).toBeNull();

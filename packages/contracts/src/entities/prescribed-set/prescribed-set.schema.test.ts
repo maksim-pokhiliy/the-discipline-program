@@ -16,7 +16,6 @@ describe("prescribedSetSchema", () => {
       id: VALID_CUID,
       blockId: VALID_CUID_2,
       exerciseId: VALID_CUID,
-      sets: 3,
       reps: 10,
       weightValue: 80.5,
       weightUnit: WeightUnit.KG,
@@ -34,7 +33,6 @@ describe("prescribedSetSchema", () => {
       id: VALID_CUID,
       blockId: VALID_CUID_2,
       exerciseId: VALID_CUID,
-      sets: null,
       reps: null,
       weightValue: null,
       weightUnit: WeightUnit.KG,
@@ -52,7 +50,6 @@ describe("prescribedSetSchema", () => {
       id: VALID_CUID,
       blockId: VALID_CUID_2,
       exerciseId: VALID_CUID,
-      sets: 3,
       reps: 10,
       weightValue: 100,
       weightUnit: "STONE",
@@ -70,7 +67,6 @@ describe("prescribedSetSchema", () => {
       id: VALID_CUID,
       blockId: VALID_CUID_2,
       exerciseId: VALID_CUID,
-      sets: 3,
       reps: 10,
       weightValue: 100,
       weightUnit: WeightUnit.LB,
@@ -89,7 +85,6 @@ describe("prescribedSetSchema", () => {
         id: VALID_CUID,
         blockId: VALID_CUID_2,
         exerciseId: VALID_CUID,
-        sets: 3,
         reps: 10,
         weightValue: 50,
         weightUnit: unit,
@@ -109,7 +104,6 @@ describe("prescribedSetSchema", () => {
         id: VALID_CUID,
         blockId: VALID_CUID_2,
         exerciseId: VALID_CUID,
-        sets: 3,
         reps: 10,
         weightValue: 50,
         weightUnit: WeightUnit.KG,
@@ -125,15 +119,6 @@ describe("prescribedSetSchema", () => {
 });
 
 describe("createPrescribedSetSchema", () => {
-  it("accepts exerciseId + sets only", () => {
-    const result = createPrescribedSetSchema.safeParse({
-      exerciseId: VALID_CUID,
-      sets: 5,
-    });
-
-    expect(result.success).toBe(true);
-  });
-
   it("accepts exerciseId + reps only", () => {
     const result = createPrescribedSetSchema.safeParse({
       exerciseId: VALID_CUID,
@@ -164,7 +149,6 @@ describe("createPrescribedSetSchema", () => {
   it("accepts all fields present", () => {
     const result = createPrescribedSetSchema.safeParse({
       exerciseId: VALID_CUID,
-      sets: 4,
       reps: 8,
       weightValue: 60,
       weightUnit: WeightUnit.KG,
@@ -176,7 +160,7 @@ describe("createPrescribedSetSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects exerciseId only with no sets/reps/weightValue/rpe", () => {
+  it("rejects exerciseId only with no reps/weightValue/rpe", () => {
     const result = createPrescribedSetSchema.safeParse({
       exerciseId: VALID_CUID,
     });
@@ -186,7 +170,6 @@ describe("createPrescribedSetSchema", () => {
 
   it("rejects missing exerciseId", () => {
     const result = createPrescribedSetSchema.safeParse({
-      sets: 3,
       reps: 10,
     });
 
@@ -206,15 +189,6 @@ describe("createPrescribedSetSchema", () => {
     const result = createPrescribedSetSchema.safeParse({
       exerciseId: VALID_CUID,
       reps: 0,
-    });
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects negative sets", () => {
-    const result = createPrescribedSetSchema.safeParse({
-      exerciseId: VALID_CUID,
-      sets: -3,
     });
 
     expect(result.success).toBe(false);
@@ -259,7 +233,7 @@ describe("createPrescribedSetSchema", () => {
   it("rejects notes exceeding 500 characters", () => {
     const result = createPrescribedSetSchema.safeParse({
       exerciseId: VALID_CUID,
-      sets: 3,
+      reps: 10,
       notes: "a".repeat(501),
     });
 
@@ -269,7 +243,7 @@ describe("createPrescribedSetSchema", () => {
   it("accepts notes at exactly 500 characters", () => {
     const result = createPrescribedSetSchema.safeParse({
       exerciseId: VALID_CUID,
-      sets: 3,
+      reps: 10,
       notes: "a".repeat(500),
     });
 
@@ -279,7 +253,7 @@ describe("createPrescribedSetSchema", () => {
   it("rejects invalid weightUnit enum", () => {
     const result = createPrescribedSetSchema.safeParse({
       exerciseId: VALID_CUID,
-      sets: 3,
+      reps: 5,
       weightUnit: "STONE",
     });
 
@@ -289,7 +263,7 @@ describe("createPrescribedSetSchema", () => {
   it("rejects invalid weightType enum", () => {
     const result = createPrescribedSetSchema.safeParse({
       exerciseId: VALID_CUID,
-      sets: 3,
+      reps: 5,
       weightType: "RELATIVE",
     });
 
@@ -307,14 +281,6 @@ describe("createPrescribedSetSchema", () => {
 });
 
 describe("updatePrescribedSetSchema", () => {
-  it("accepts partial update with just sets", () => {
-    const result = updatePrescribedSetSchema.safeParse({
-      sets: 5,
-    });
-
-    expect(result.success).toBe(true);
-  });
-
   it("accepts partial update with just reps", () => {
     const result = updatePrescribedSetSchema.safeParse({
       reps: 12,
@@ -333,7 +299,6 @@ describe("updatePrescribedSetSchema", () => {
 
   it("accepts setting nullable fields to null", () => {
     const result = updatePrescribedSetSchema.safeParse({
-      sets: null,
       reps: null,
       weightValue: null,
       rpe: null,
@@ -352,7 +317,6 @@ describe("updatePrescribedSetSchema", () => {
   it("accepts full update with all fields", () => {
     const result = updatePrescribedSetSchema.safeParse({
       exerciseId: VALID_CUID,
-      sets: 4,
       reps: 10,
       weightValue: 80,
       weightUnit: WeightUnit.LB,

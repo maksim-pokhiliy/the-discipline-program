@@ -220,8 +220,16 @@ export const platformTrainingPlansApi = {
             data: {
               workoutId: newWorkout.id,
               categoryId: block.categoryId,
+              sectionType: block.sectionType,
+              scoreType: block.scoreType,
+              title: block.title,
+              notes: block.notes,
               rounds: block.rounds,
               timeCapSec: block.timeCapSec,
+              intervalSec: block.intervalSec,
+              workSec: block.workSec,
+              restSec: block.restSec,
+              restAfterSec: block.restAfterSec,
             },
           });
 
@@ -230,7 +238,6 @@ export const platformTrainingPlansApi = {
               data: block.sets.map((s) => ({
                 blockId: newBlock.id,
                 exerciseId: s.exerciseId,
-                sets: s.sets,
                 reps: s.reps,
                 weightValue: s.weightValue,
                 weightUnit: s.weightUnit,

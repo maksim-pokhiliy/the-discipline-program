@@ -6,7 +6,6 @@ export const prescribedSetSchema = z.object({
   id: z.string().cuid(),
   blockId: z.string().cuid(),
   exerciseId: z.string().cuid(),
-  sets: z.number().int().positive().nullable(),
   reps: z.number().int().positive().nullable(),
   weightValue: z.number().nullable(),
   weightUnit: z.nativeEnum(WeightUnit),
@@ -19,7 +18,6 @@ export const prescribedSetSchema = z.object({
 export const createPrescribedSetSchema = z
   .object({
     exerciseId: z.string().cuid(),
-    sets: z.number().int().positive().optional(),
     reps: z.number().int().positive().optional(),
     weightValue: z.number().positive().optional(),
     weightUnit: z.nativeEnum(WeightUnit).optional(),
@@ -28,17 +26,12 @@ export const createPrescribedSetSchema = z
     notes: z.string().max(500).optional(),
   })
   .refine(
-    (data) =>
-      data.sets !== undefined ||
-      data.reps !== undefined ||
-      data.weightValue !== undefined ||
-      data.rpe !== undefined,
-    { message: "At least one of sets, reps, weightValue, or rpe is required" },
+    (data) => data.reps !== undefined || data.weightValue !== undefined || data.rpe !== undefined,
+    { message: "At least one of reps, weightValue, or rpe is required" },
   );
 
 export const updatePrescribedSetSchema = z.object({
   exerciseId: z.string().cuid().optional(),
-  sets: z.number().int().positive().nullable().optional(),
   reps: z.number().int().positive().nullable().optional(),
   weightValue: z.number().positive().nullable().optional(),
   weightUnit: z.nativeEnum(WeightUnit).optional(),

@@ -8,7 +8,12 @@ import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToWorkout } from "../../mappers";
-import { UNIT_MAP, WEIGHT_TYPE_MAP } from "../../mappers/enum-maps";
+import {
+  SCORE_TYPE_MAP,
+  SECTION_TYPE_MAP,
+  UNIT_MAP,
+  WEIGHT_TYPE_MAP,
+} from "../../mappers/enum-maps";
 
 import { resolveCoachId, verifyPlanOwnership, verifyWorkoutOwnership } from "./guards";
 
@@ -84,12 +89,19 @@ export const platformWorkoutsApi = {
     return {
       blocks: workout.blocks.map((block) => ({
         id: block.id,
-        categoryName: block.category.name,
+        sectionType: SECTION_TYPE_MAP[block.sectionType],
+        scoreType: SCORE_TYPE_MAP[block.scoreType],
+        title: block.title,
+        categoryName: block.category?.name ?? null,
+        notes: block.notes,
         rounds: block.rounds,
         timeCapSec: block.timeCapSec,
+        intervalSec: block.intervalSec,
+        workSec: block.workSec,
+        restSec: block.restSec,
+        restAfterSec: block.restAfterSec,
         exercises: block.sets.map((set) => ({
           name: set.exercise.name,
-          sets: set.sets,
           reps: set.reps,
           weightValue: set.weightValue ? Number(set.weightValue) : null,
           weightUnit: UNIT_MAP[set.weightUnit],
@@ -332,8 +344,16 @@ export const platformWorkoutsApi = {
             data: {
               workoutId: newWorkout.id,
               categoryId: block.categoryId,
+              sectionType: block.sectionType,
+              scoreType: block.scoreType,
+              title: block.title,
+              notes: block.notes,
               rounds: block.rounds,
               timeCapSec: block.timeCapSec,
+              intervalSec: block.intervalSec,
+              workSec: block.workSec,
+              restSec: block.restSec,
+              restAfterSec: block.restAfterSec,
               sortOrder: block.sortOrder,
             },
           });
@@ -343,7 +363,6 @@ export const platformWorkoutsApi = {
               data: block.sets.map((s) => ({
                 blockId: newBlock.id,
                 exerciseId: s.exerciseId,
-                sets: s.sets,
                 reps: s.reps,
                 weightValue: s.weightValue,
                 weightUnit: s.weightUnit,
