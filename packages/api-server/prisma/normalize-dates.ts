@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const main = async () => {
-  const result = await prisma.$executeRawUnsafe(`
+  const result = await prisma.$executeRaw`
     UPDATE "app_workouts"
     SET "scheduledDate" = CASE
       WHEN EXTRACT(HOUR FROM "scheduledDate") >= 12
@@ -12,7 +12,7 @@ const main = async () => {
     END
     WHERE "scheduledDate" IS NOT NULL
       AND EXTRACT(HOUR FROM "scheduledDate") != 0
-  `);
+  `;
 
   console.log(`Normalized ${result} workout scheduled dates to UTC midnight`);
 };

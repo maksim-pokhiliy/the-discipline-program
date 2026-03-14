@@ -46,7 +46,7 @@ export const platformWorkoutsApi = {
       include: { _count: { select: { blocks: true } } },
     });
 
-    if (!workout || workout.deletedAt || workout.planId !== planId) {
+    if (!workout || workout.planId !== planId) {
       throw new NotFoundError("Workout not found", { id, planId });
     }
 
@@ -85,10 +85,10 @@ export const platformWorkoutsApi = {
 
     const existing = await prisma.workout.findUnique({
       where: { id },
-      select: { planId: true, deletedAt: true },
+      select: { planId: true },
     });
 
-    if (!existing || existing.deletedAt || existing.planId !== planId) {
+    if (!existing || existing.planId !== planId) {
       throw new NotFoundError("Workout not found", { id, planId });
     }
 
@@ -110,10 +110,10 @@ export const platformWorkoutsApi = {
 
     const existing = await prisma.workout.findUnique({
       where: { id },
-      select: { planId: true, deletedAt: true },
+      select: { planId: true },
     });
 
-    if (!existing || existing.deletedAt || existing.planId !== planId) {
+    if (!existing || existing.planId !== planId) {
       throw new NotFoundError("Workout not found", { id, planId });
     }
 

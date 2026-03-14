@@ -128,7 +128,7 @@ export const platformTrainingPlansApi = {
       where: { id },
     });
 
-    if (!plan || plan.deletedAt) {
+    if (!plan) {
       throw new NotFoundError("Training plan not found", { id });
     }
 
