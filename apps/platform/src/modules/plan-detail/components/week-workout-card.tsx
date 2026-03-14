@@ -107,7 +107,7 @@ const WorkoutPreviewContent: React.FC<{ planId: string; workout: Workout }> = ({
             const detail = formatExerciseDetail(ex);
 
             return (
-              <Box key={exIndex} sx={{ pl: 1.5, py: 0.25 }}>
+              <Box key={exIndex} sx={{ pl: 1.5, py: 0.5 }}>
                 <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
                   {ex.name}
                 </Typography>
