@@ -7,7 +7,17 @@ import { CSS } from "@dnd-kit/utilities";
 import CloseIcon from "@mui/icons-material/Close";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import EditIcon from "@mui/icons-material/Edit";
-import { IconButton, InputBase, Paper, Stack, Typography } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import {
+  Box,
+  Collapse,
+  Divider,
+  IconButton,
+  InputBase,
+  Paper,
+  Stack,
+  Typography,
+} from "@mui/material";
 
 import type { Workout } from "@repo/contracts/workout";
 import { ConfirmationModal } from "@repo/ui";
@@ -29,6 +39,9 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
   const updateWorkout = useUpdateWorkout(planId);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editValue, setEditValue] = useState(workout.title);
+  const [expanded, setExpanded] = useState(false);
+
+  const hasContent = Boolean(workout.content);
 
   const commitEdit = useCallback(() => {
     const trimmed = editValue.trim();
@@ -83,6 +96,22 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
             slotProps={{ input: { maxLength: 200 } }}
           />
 
+          {hasContent && (
+            <IconButton
+              size="small"
+              onClick={() => setExpanded((prev) => !prev)}
+              sx={{ color: "text.disabled" }}
+            >
+              <ExpandMoreIcon
+                fontSize="small"
+                sx={(theme) => ({
+                  transition: theme.transitions.create("transform"),
+                  transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+                })}
+              />
+            </IconButton>
+          )}
+
           <IconButton size="small" sx={{ color: "text.disabled" }}>
             <EditIcon fontSize="small" />
           </IconButton>
@@ -95,6 +124,18 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
             <CloseIcon fontSize="small" />
           </IconButton>
         </Stack>
+
+        <Collapse in={expanded} unmountOnExit>
+          <Divider />
+          <Box sx={{ px: 2, py: 1.5 }}>
+            <Typography
+              variant="caption"
+              sx={{ color: "text.secondary", whiteSpace: "pre-wrap", lineHeight: 1.6 }}
+            >
+              {workout.content}
+            </Typography>
+          </Box>
+        </Collapse>
       </Paper>
 
       <ConfirmationModal

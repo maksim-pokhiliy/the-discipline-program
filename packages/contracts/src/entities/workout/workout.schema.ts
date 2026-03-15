@@ -17,13 +17,13 @@ export const createWorkoutSchema = z.object({
   scheduledDate: z.coerce.date().optional(),
   title: z.string().max(200).optional(),
   description: z.string().max(2000).optional(),
-  content: z.string().optional(),
+  content: z.string().max(50_000).optional(),
 });
 
 export const updateWorkoutSchema = z.object({
   scheduledDate: z.coerce.date().nullable().optional(),
   title: z.string().max(200).optional(),
   description: z.string().max(2000).nullable().optional(),
-  content: z.string().nullable().optional(),
+  content: z.string().max(50_000).nullable().optional(),
   isArchived: z.boolean().optional(),
 });
