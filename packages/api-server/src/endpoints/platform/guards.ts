@@ -81,26 +81,3 @@ export const verifyAthleteBelongsToCoach = async (
     throw new ForbiddenError("Athlete does not belong to this coach");
   }
 };
-
-export const verifyBlockOwnership = async (blockId: string, coachId: string): Promise<void> => {
-  const block = await prisma.workoutBlock.findUnique({
-    where: { id: blockId },
-    select: {
-      workout: {
-        select: { deletedAt: true, plan: { select: { coachId: true, deletedAt: true } } },
-      },
-    },
-  });
-
-  if (!block) {
-    throw new NotFoundError("Workout block not found", { blockId });
-  }
-
-  if (
-    block.workout.deletedAt ||
-    block.workout.plan.deletedAt ||
-    block.workout.plan.coachId !== coachId
-  ) {
-    throw new ForbiddenError("Workout block does not belong to this coach");
-  }
-};

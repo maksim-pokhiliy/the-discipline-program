@@ -1,7 +1,6 @@
 "use client";
 
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import GroupIcon from "@mui/icons-material/Group";
 import { Box, Grid, Paper, Stack, Typography } from "@mui/material";
 import Link from "next/link";
@@ -22,11 +21,6 @@ const QUICK_ACTIONS: QuickAction[] = [
     label: "Athletes",
     href: "/coach/athletes",
     icon: <GroupIcon />,
-  },
-  {
-    label: "Exercises",
-    href: "/coach/exercises",
-    icon: <FitnessCenterIcon />,
   },
 ];
 

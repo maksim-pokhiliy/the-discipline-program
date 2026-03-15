@@ -5,7 +5,6 @@ export const COACH_NAVIGATION: PlatformNavigationConfig = {
     { label: "Home", href: "/coach", icon: "home" },
     { label: "Plans", href: "/coach/plans", icon: "plans" },
     { label: "Athletes", href: "/coach/athletes", icon: "athletes" },
-    { label: "Exercises", href: "/coach/exercises", icon: "exercises" },
     { label: "Profile", href: "/coach/profile", icon: "profile" },
   ],
 };

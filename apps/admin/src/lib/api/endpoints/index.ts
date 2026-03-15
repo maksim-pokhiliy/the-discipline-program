@@ -1,8 +1,6 @@
 export { createBlogAPI } from "./blog";
 export { createContactsAPI } from "./contacts";
 export { createDashboardAPI } from "./dashboard";
-export { createExerciseCategoriesAPI } from "./exercise-categories";
-export { createExercisesAPI } from "./exercises";
 export { createPagesAPI } from "./pages";
 export { createProductsAPI } from "./products";
 export { createReviewsAPI } from "./reviews";

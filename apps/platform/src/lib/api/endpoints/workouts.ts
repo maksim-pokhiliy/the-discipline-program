@@ -1,10 +1,5 @@
 import { type ApiClient } from "@repo/api-client";
-import type {
-  CreateWorkoutData,
-  UpdateWorkoutData,
-  Workout,
-  WorkoutPreview,
-} from "@repo/contracts/workout";
+import type { CreateWorkoutData, UpdateWorkoutData, Workout } from "@repo/contracts/workout";
 
 export const createWorkoutsAPI = (client: ApiClient) => ({
   getAll: (planId: string): Promise<Workout[]> =>
@@ -12,9 +7,6 @@ export const createWorkoutsAPI = (client: ApiClient) => ({
 
   getById: (planId: string, id: string): Promise<Workout> =>
     client.request(`/api/platform/training-plans/${planId}/workouts/${id}`),
-
-  getPreview: (planId: string, id: string): Promise<WorkoutPreview> =>
-    client.request(`/api/platform/training-plans/${planId}/workouts/${id}/preview`),
 
   create: (planId: string, data: CreateWorkoutData): Promise<Workout> =>
     client.request(`/api/platform/training-plans/${planId}/workouts`, "POST", data),
@@ -39,9 +31,6 @@ export const createWorkoutsAPI = (client: ApiClient) => ({
     client.request(`/api/platform/training-plans/${planId}/reorder-workouts`, "PUT", {
       orderedIds,
     }),
-
-  reorderBlocks: (workoutId: string, orderedIds: string[]): Promise<void> =>
-    client.request(`/api/platform/workouts/${workoutId}/reorder-blocks`, "PUT", { orderedIds }),
 
   copyWeek: (planId: string, sourceDate: Date, targetDate: Date): Promise<Workout[]> =>
     client.request(`/api/platform/training-plans/${planId}/copy-week`, "POST", {

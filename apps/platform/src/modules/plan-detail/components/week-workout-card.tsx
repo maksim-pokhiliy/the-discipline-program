@@ -10,7 +10,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Box,
-  CircularProgress,
   Collapse,
   Divider,
   IconButton,
@@ -20,112 +19,15 @@ import {
   Typography,
 } from "@mui/material";
 
-import { WEIGHT_UNIT_LABELS, WeightType } from "@repo/contracts/prescribed-set";
-import type { Workout, WorkoutPreviewBlock } from "@repo/contracts/workout";
+import type { Workout } from "@repo/contracts/workout";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useDeleteWorkout, useUpdateWorkout, useWorkoutPreview } from "@app/lib/hooks";
+import { useDeleteWorkout, useUpdateWorkout } from "@app/lib/hooks";
 
 type WeekWorkoutCardProps = {
   workout: Workout;
   planId: string;
   autoFocus?: boolean;
-};
-
-const formatExerciseDetail = (ex: WorkoutPreviewBlock["exercises"][number]): string => {
-  const parts: string[] = [];
-
-  if (ex.sets && ex.reps) {
-    parts.push(`${ex.sets}×${ex.reps}`);
-  } else if (ex.sets) {
-    parts.push(`${ex.sets} sets`);
-  } else if (ex.reps) {
-    parts.push(`${ex.reps} reps`);
-  }
-
-  if (ex.weightValue) {
-    const unit = WEIGHT_UNIT_LABELS[ex.weightUnit];
-    const suffix = ex.weightType === WeightType.PERCENTAGE ? "%" : unit;
-
-    parts.push(`@ ${ex.weightValue}${suffix}`);
-  } else if (ex.rpe) {
-    parts.push(`@ RPE ${ex.rpe}`);
-  }
-
-  return parts.join(" ");
-};
-
-const WorkoutPreviewContent: React.FC<{ planId: string; workout: Workout }> = ({
-  planId,
-  workout,
-}) => {
-  const { data: preview, isLoading } = useWorkoutPreview(planId, workout.id, true);
-
-  if (isLoading) {
-    return (
-      <Stack sx={{ alignItems: "center", py: 2 }}>
-        <CircularProgress size={20} />
-      </Stack>
-    );
-  }
-
-  if (!preview || preview.blocks.length === 0) {
-    return (
-      <Typography variant="caption" sx={{ color: "text.disabled" }}>
-        No blocks yet
-      </Typography>
-    );
-  }
-
-  return (
-    <Stack spacing={1.5}>
-      {preview.blocks.map((block) => (
-        <Box key={block.id}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 0.5 }}>
-            <Typography variant="caption" sx={{ fontWeight: 600, color: "text.primary" }}>
-              {block.categoryName}
-            </Typography>
-            {block.rounds && (
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {block.rounds} {block.rounds === 1 ? "round" : "rounds"}
-              </Typography>
-            )}
-            {block.timeCapSec && (
-              <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                {Math.floor(block.timeCapSec / 60)} min cap
-              </Typography>
-            )}
-          </Stack>
-
-          {block.exercises.length === 0 && (
-            <Typography variant="caption" sx={{ color: "text.disabled", pl: 1.5 }}>
-              No exercises
-            </Typography>
-          )}
-
-          {block.exercises.map((ex, exIndex) => {
-            const detail = formatExerciseDetail(ex);
-
-            return (
-              <Box key={exIndex} sx={{ pl: 1.5, py: 0.5 }}>
-                <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>
-                  {ex.name}
-                </Typography>
-                {detail && (
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "text.secondary", fontWeight: 500, display: "block" }}
-                  >
-                    {detail}
-                  </Typography>
-                )}
-              </Box>
-            );
-          })}
-        </Box>
-      ))}
-    </Stack>
-  );
 };
 
 export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planId, autoFocus }) => {
@@ -138,6 +40,8 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editValue, setEditValue] = useState(workout.title);
   const [expanded, setExpanded] = useState(false);
+
+  const hasContent = Boolean(workout.content);
 
   const commitEdit = useCallback(() => {
     const trimmed = editValue.trim();
@@ -152,14 +56,6 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       (e.target as HTMLInputElement).blur();
-    }
-  };
-
-  const canExpand = workout.blockCount > 0;
-
-  const handleToggle = () => {
-    if (canExpand) {
-      setExpanded((prev) => !prev);
     }
   };
 
@@ -200,24 +96,12 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
             slotProps={{ input: { maxLength: 200 } }}
           />
 
-          {canExpand && (
-            <Typography
-              variant="caption"
-              onClick={handleToggle}
-              sx={{
-                color: "text.secondary",
-                whiteSpace: "nowrap",
-                mr: 0.5,
-                cursor: "pointer",
-                userSelect: "none",
-              }}
+          {hasContent && (
+            <IconButton
+              size="small"
+              onClick={() => setExpanded((prev) => !prev)}
+              sx={{ color: "text.disabled" }}
             >
-              {workout.blockCount} {workout.blockCount === 1 ? "block" : "blocks"}
-            </Typography>
-          )}
-
-          {canExpand && (
-            <IconButton size="small" onClick={handleToggle} sx={{ color: "text.disabled" }}>
               <ExpandMoreIcon
                 fontSize="small"
                 sx={(theme) => ({
@@ -243,8 +127,13 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
 
         <Collapse in={expanded} unmountOnExit>
           <Divider />
-          <Box sx={{ px: 1.5, py: 1.5 }}>
-            <WorkoutPreviewContent planId={planId} workout={workout} />
+          <Box sx={{ px: 2, py: 1.5 }}>
+            <Typography
+              variant="caption"
+              sx={{ color: "text.secondary", whiteSpace: "pre-wrap", lineHeight: 1.6 }}
+            >
+              {workout.content}
+            </Typography>
           </Box>
         </Collapse>
       </Paper>

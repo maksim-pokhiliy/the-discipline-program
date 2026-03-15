@@ -72,7 +72,6 @@ export const platformTrainingPlansApi = {
       },
       include: {
         plan: { select: { id: true, name: true, status: true } },
-        _count: { select: { blocks: true } },
       },
       orderBy: [{ scheduledDate: "asc" }, { createdAt: "asc" }],
     });
@@ -184,13 +183,6 @@ export const platformTrainingPlansApi = {
       include: {
         workouts: {
           where: { deletedAt: null },
-          include: {
-            blocks: {
-              include: {
-                sets: true,
-              },
-            },
-          },
         },
       },
     });
@@ -206,40 +198,15 @@ export const platformTrainingPlansApi = {
       });
 
       for (const workout of source.workouts) {
-        const newWorkout = await tx.workout.create({
+        await tx.workout.create({
           data: {
             planId: plan.id,
             scheduledDate: workout.scheduledDate,
             title: workout.title,
             description: workout.description,
+            content: workout.content,
           },
         });
-
-        for (const block of workout.blocks) {
-          const newBlock = await tx.workoutBlock.create({
-            data: {
-              workoutId: newWorkout.id,
-              categoryId: block.categoryId,
-              rounds: block.rounds,
-              timeCapSec: block.timeCapSec,
-            },
-          });
-
-          if (block.sets.length > 0) {
-            await tx.prescribedSet.createMany({
-              data: block.sets.map((s) => ({
-                blockId: newBlock.id,
-                exerciseId: s.exerciseId,
-                sets: s.sets,
-                reps: s.reps,
-                weightValue: s.weightValue,
-                weightUnit: s.weightUnit,
-                rpe: s.rpe,
-                notes: s.notes,
-              })),
-            });
-          }
-        }
       }
 
       return plan;
