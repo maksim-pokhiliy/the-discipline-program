@@ -9,11 +9,7 @@ import {
   type PlanEnrollmentStatus as PrismaPlanEnrollmentStatus,
   type PriceInterval as PrismaPriceInterval,
   type Role as PrismaRole,
-  type ScoreType as PrismaScoreType,
-  type SectionType as PrismaSectionType,
   type TrainingPlanStatus as PrismaTrainingPlanStatus,
-  type Unit as PrismaUnit,
-  type WeightType as PrismaWeightType,
 } from "@prisma/client";
 
 import { Gender, HealthStatus } from "@repo/contracts/athlete-profile";
@@ -25,20 +21,8 @@ import {
   ActionItemType,
 } from "@repo/contracts/coach-action-item";
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { WeightType, WeightUnit } from "@repo/contracts/prescribed-set";
 import { PriceInterval, ProductCurrency } from "@repo/contracts/product";
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
-import { ScoreType, SectionType } from "@repo/contracts/workout-block";
-
-export const UNIT_MAP: Record<PrismaUnit, WeightUnit> = {
-  KG: WeightUnit.KG,
-  LB: WeightUnit.LB,
-};
-
-export const WEIGHT_TYPE_MAP: Record<PrismaWeightType, WeightType> = {
-  ABSOLUTE: WeightType.ABSOLUTE,
-  PERCENTAGE: WeightType.PERCENTAGE,
-};
 
 export const TRAINING_PLAN_STATUS_MAP: Record<PrismaTrainingPlanStatus, TrainingPlanStatus> = {
   DRAFT: TrainingPlanStatus.DRAFT,
@@ -106,22 +90,4 @@ export const ACTION_ITEM_RESOLVE_REASON_MAP: Record<
   AUTO_CONDITION_CLEARED: ActionItemResolveReason.AUTO_CONDITION_CLEARED,
   AUTO_ENROLLMENT_ENDED: ActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
   MANUAL_CONTACTED: ActionItemResolveReason.MANUAL_CONTACTED,
-};
-
-export const SECTION_TYPE_MAP: Record<PrismaSectionType, SectionType> = {
-  FOR_TIME: SectionType.FOR_TIME,
-  AMRAP: SectionType.AMRAP,
-  EMOM: SectionType.EMOM,
-  TABATA: SectionType.TABATA,
-  STRENGTH: SectionType.STRENGTH,
-  CUSTOM: SectionType.CUSTOM,
-};
-
-export const SCORE_TYPE_MAP: Record<PrismaScoreType, ScoreType> = {
-  TIME: ScoreType.TIME,
-  ROUNDS_REPS: ScoreType.ROUNDS_REPS,
-  LOAD: ScoreType.LOAD,
-  REPS: ScoreType.REPS,
-  PASS_FAIL: ScoreType.PASS_FAIL,
-  NONE: ScoreType.NONE,
 };

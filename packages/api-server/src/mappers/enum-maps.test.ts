@@ -10,8 +10,6 @@ import {
   PriceInterval as PrismaPriceInterval,
   Role as PrismaRole,
   TrainingPlanStatus as PrismaTrainingPlanStatus,
-  Unit as PrismaUnit,
-  WeightType as PrismaWeightType,
 } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
@@ -24,7 +22,6 @@ import {
   ActionItemType,
 } from "@repo/contracts/coach-action-item";
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { WeightType, WeightUnit } from "@repo/contracts/prescribed-set";
 import { PriceInterval, ProductCurrency } from "@repo/contracts/product";
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
 
@@ -40,41 +37,7 @@ import {
   PRICE_INTERVAL_MAP,
   ROLE_MAP,
   TRAINING_PLAN_STATUS_MAP,
-  UNIT_MAP,
-  WEIGHT_TYPE_MAP,
 } from "./enum-maps";
-
-describe("UNIT_MAP", () => {
-  it("covers every Prisma Unit value", () => {
-    const prismaValues = Object.values(PrismaUnit);
-
-    expect(Object.keys(UNIT_MAP)).toHaveLength(prismaValues.length);
-    prismaValues.forEach((v) => {
-      expect(UNIT_MAP).toHaveProperty(v);
-    });
-  });
-
-  it("maps to correct contract values", () => {
-    expect(UNIT_MAP.KG).toBe(WeightUnit.KG);
-    expect(UNIT_MAP.LB).toBe(WeightUnit.LB);
-  });
-});
-
-describe("WEIGHT_TYPE_MAP", () => {
-  it("covers every Prisma WeightType value", () => {
-    const prismaValues = Object.values(PrismaWeightType);
-
-    expect(Object.keys(WEIGHT_TYPE_MAP)).toHaveLength(prismaValues.length);
-    prismaValues.forEach((v) => {
-      expect(WEIGHT_TYPE_MAP).toHaveProperty(v);
-    });
-  });
-
-  it("maps to correct contract values", () => {
-    expect(WEIGHT_TYPE_MAP.ABSOLUTE).toBe(WeightType.ABSOLUTE);
-    expect(WEIGHT_TYPE_MAP.PERCENTAGE).toBe(WeightType.PERCENTAGE);
-  });
-});
 
 describe("TRAINING_PLAN_STATUS_MAP", () => {
   it("covers every Prisma TrainingPlanStatus value", () => {
@@ -270,8 +233,6 @@ describe("ACTION_ITEM_RESOLVE_REASON_MAP", () => {
 describe("symmetry", () => {
   it("no two Prisma keys map to the same contract value in any map", () => {
     const maps = [
-      UNIT_MAP,
-      WEIGHT_TYPE_MAP,
       TRAINING_PLAN_STATUS_MAP,
       CURRENCY_MAP,
       PRICE_INTERVAL_MAP,

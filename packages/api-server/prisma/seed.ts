@@ -4,10 +4,7 @@ import {
   PrismaClient,
   type Prisma,
   Role,
-  ScoreType,
-  SectionType,
   TrainingPlanStatus,
-  Unit,
 } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
@@ -37,76 +34,8 @@ const todayAt = (hours: number, minutes = 0): Date => {
   return d;
 };
 
-type SetConfig = {
-  exerciseId: string;
-  reps?: number;
-  weightValue?: number;
-  weightUnit?: Unit;
-  weightType?: "ABSOLUTE" | "PERCENTAGE";
-  rpe?: number;
-  notes?: string;
-  sortOrder?: number;
-};
-
-type BlockConfig = {
-  sectionType: SectionType;
-  scoreType: ScoreType;
-  title?: string;
-  notes?: string;
-  categoryId?: string;
-  rounds?: number;
-  timeCapSec?: number;
-  intervalSec?: number;
-  workSec?: number;
-  restSec?: number;
-  restAfterSec?: number;
-  sets: SetConfig[];
-};
-
-const block = (
-  sectionType: SectionType,
-  scoreType: ScoreType,
-  title: string,
-  sets: SetConfig[],
-  opts?: Omit<BlockConfig, "sectionType" | "scoreType" | "title" | "sets">,
-): BlockConfig => ({ sectionType, scoreType, title, sets, ...opts });
-
-const set = (
-  exerciseId: string,
-  reps?: number,
-  weightValue?: number,
-  opts?: Partial<Pick<SetConfig, "weightUnit" | "weightType" | "rpe" | "notes">>,
-): SetConfig => ({
-  exerciseId,
-  reps,
-  weightValue,
-  weightUnit: opts?.weightUnit ?? Unit.LB,
-  ...opts,
-});
-
-const repeat = (
-  n: number,
-  exerciseId: string,
-  reps?: number,
-  weightValue?: number,
-  opts?: Partial<Pick<SetConfig, "weightUnit" | "weightType" | "rpe" | "notes">>,
-): SetConfig[] => Array.from({ length: n }, () => set(exerciseId, reps, weightValue, opts));
-
-const wave = (
-  exerciseId: string,
-  reps: number,
-  weights: number[],
-  opts?: Partial<Pick<SetConfig, "weightUnit" | "weightType" | "rpe" | "notes">>,
-): SetConfig[] => weights.map((w) => set(exerciseId, reps, w, opts));
-
-type ExMap = Record<string, string>;
-
 const clearAll = async () => {
-  await prisma.blockScore.deleteMany();
-  await prisma.setLog.deleteMany();
   await prisma.workoutLog.deleteMany();
-  await prisma.prescribedSet.deleteMany();
-  await prisma.workoutBlock.deleteMany();
   await prisma.workout.deleteMany();
   await prisma.userBenchmark.deleteMany();
   await prisma.benchmarkDefinition.deleteMany();
@@ -114,8 +43,6 @@ const clearAll = async () => {
   await prisma.coachActionItem.deleteMany();
   await prisma.planEnrollment.deleteMany();
   await prisma.trainingPlan.deleteMany();
-  await prisma.exercise.deleteMany();
-  await prisma.exerciseCategory.deleteMany();
   await prisma.athleteProfile.deleteMany();
   await prisma.coachProfile.deleteMany();
   await prisma.marketingContactSubmission.deleteMany();
@@ -313,128 +240,19 @@ const seedProfiles = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
   return { coachProfile };
 };
 
-const EXERCISES: Record<string, string[]> = {
-  Weightlifting: [
-    "Back Squat",
-    "Front Squat",
-    "Deadlift",
-    "Clean",
-    "Power Clean",
-    "Clean & Jerk",
-    "Snatch",
-    "Power Snatch",
-    "Overhead Squat",
-    "Thruster",
-    "Sumo Deadlift High Pull",
-    "Push Press",
-    "Push Jerk",
-    "Split Jerk",
-    "Bench Press",
-  ],
-  Gymnastics: [
-    "Pull-Up",
-    "Chest-to-Bar Pull-Up",
-    "Bar Muscle-Up",
-    "Ring Muscle-Up",
-    "Handstand Push-Up",
-    "Handstand Walk",
-    "Toes-to-Bar",
-    "Rope Climb",
-    "Ring Dip",
-    "Pistol Squat",
-  ],
-  Monostructural: ["Row", "Assault Bike", "Ski Erg", "Running", "Double Under", "Single Under"],
-  "Metcon Movements": [
-    "Burpee",
-    "Wall Ball",
-    "Box Jump",
-    "Kettlebell Swing",
-    "Dumbbell Snatch",
-    "Thrusters (DB)",
-    "Devil Press",
-  ],
-  Accessory: ["GHD Sit-Up", "Hip Extension", "Banded Pull-Apart", "Poliquin Step-Up", "Face Pull"],
-  Mobility: ["PVC Pass-Through", "Samson Stretch", "Pigeon Stretch", "Couch Stretch"],
-};
-
-const seedExercises = async () => {
-  const categories = await Promise.all(
-    Object.keys(EXERCISES).map((name, i) =>
-      prisma.exerciseCategory.create({ data: { name, sortOrder: i } }),
-    ),
-  );
-
-  const catMap = Object.fromEntries(categories.map((c) => [c.name, c.id])) as Record<
-    string,
-    string
-  >;
-
-  const exerciseData: Prisma.ExerciseCreateManyInput[] = Object.entries(EXERCISES).flatMap(
-    ([cat, names]) => names.map((name) => ({ name, categoryId: catMap[cat] })),
-  );
-
-  await prisma.exercise.createMany({ data: exerciseData });
-  const exercises = await prisma.exercise.findMany();
-  const exMap = Object.fromEntries(exercises.map((e) => [e.name, e.id])) as Record<string, string>;
-
-  const total = Object.values(EXERCISES).reduce((sum, arr) => sum + arr.length, 0);
-
-  console.log(`  Exercise categories: ${Object.keys(EXERCISES).length}, Exercises: ${total}`);
-
-  return { catMap, exMap };
-};
-
 const createWorkout = async (
   planId: string,
   scheduledDate: Date | null,
   title: string,
-  blocks: BlockConfig[],
+  content: string,
   sortOrder = 0,
 ) => {
-  const workout = await prisma.workout.create({
-    data: { planId, scheduledDate, title, sortOrder, createdAt: daysAgo(30) },
+  return prisma.workout.create({
+    data: { planId, scheduledDate, title, content, sortOrder, createdAt: daysAgo(30) },
   });
-
-  for (let bi = 0; bi < blocks.length; bi++) {
-    const b = blocks[bi]!;
-
-    await prisma.workoutBlock.create({
-      data: {
-        workoutId: workout.id,
-        sectionType: b.sectionType,
-        scoreType: b.scoreType,
-        title: b.title,
-        notes: b.notes,
-        categoryId: b.categoryId,
-        rounds: b.rounds,
-        timeCapSec: b.timeCapSec,
-        intervalSec: b.intervalSec,
-        workSec: b.workSec,
-        restSec: b.restSec,
-        restAfterSec: b.restAfterSec,
-        sortOrder: bi,
-        sets: {
-          create: b.sets.map((s, si) => ({
-            exerciseId: s.exerciseId,
-            reps: s.reps,
-            weightValue: s.weightValue,
-            weightUnit: s.weightUnit ?? Unit.LB,
-            weightType: s.weightType ?? "ABSOLUTE",
-            rpe: s.rpe,
-            notes: s.notes,
-            sortOrder: s.sortOrder ?? si,
-          })),
-        },
-      },
-    });
-  }
-
-  return workout;
 };
 
-const seedTrainingData = async (coachProfileId: string, exMap: ExMap) => {
-  const e = exMap;
-
+const seedTrainingData = async (coachProfileId: string) => {
   const plan1 = await prisma.trainingPlan.create({
     data: {
       coachId: coachProfileId,
@@ -509,553 +327,215 @@ const seedTrainingData = async (coachProfileId: string, exMap: ExMap) => {
     },
   });
 
-  const p1w1 = await createWorkout(plan1.id, daysAgo(14), "Day 1: Heavy Squats + Fran", [
-    block(SectionType.CUSTOM, ScoreType.NONE, "A. Warm-Up", [
-      ...repeat(3, e["Row"]!, undefined, undefined, { notes: "250m" }),
-      ...repeat(3, e["PVC Pass-Through"]!, 10),
-    ]),
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "B. Back Squat",
-      wave(e["Back Squat"]!, 6, [155, 165, 175, 185, 185]),
-      { intervalSec: 150 },
-    ),
-    block(
-      SectionType.FOR_TIME,
-      ScoreType.TIME,
-      "C. Fran",
-      [
-        set(e["Thruster"]!, 21, 95),
-        set(e["Pull-Up"]!, 21),
-        set(e["Thruster"]!, 15, 95),
-        set(e["Pull-Up"]!, 15),
-        set(e["Thruster"]!, 9, 95),
-        set(e["Pull-Up"]!, 9),
-      ],
-      { timeCapSec: 720 },
-    ),
-    block(SectionType.CUSTOM, ScoreType.NONE, "D. Accessory", [
-      ...repeat(3, e["Poliquin Step-Up"]!, 8, 35),
-      ...repeat(3, e["GHD Sit-Up"]!, 15),
-    ]),
-  ]);
+  const p1w1 = await createWorkout(
+    plan1.id,
+    daysAgo(14),
+    "Day 1: Heavy Squats + Fran",
+    'A. Warm-Up\n3 rounds:\n200m Row\n10 PVC Pass-Throughs\n10 Air Squats\n\nB. Strength: Back Squat\nEvery 2:30 x 5 sets\n6 @ 155lb\n6 @ 165lb\n6 @ 175lb\n6 @ 185lb\n6 @ 185lb\n\nC. Metcon — "Fran" (For Time, 12 min cap)\n21-15-9\nThrusters (95/65 lb)\nPull-Ups\n\nD. Accessory\n3x15 GHD Sit-Ups\n3x8 Poliquin Step-Ups (35lb DBs)',
+  );
 
-  const p1w2 = await createWorkout(plan1.id, daysAgo(12), "Day 2: Olympic Lifting", [
-    block(SectionType.CUSTOM, ScoreType.NONE, "A. Warm-Up", [
-      ...repeat(2, e["Samson Stretch"]!, 10),
-      ...repeat(2, e["PVC Pass-Through"]!, 15),
-    ]),
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "B. Clean & Jerk",
-      wave(e["Clean & Jerk"]!, 2, [155, 165, 175, 185, 195]),
-      { intervalSec: 180 },
-    ),
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "C. Snatch",
-      wave(e["Snatch"]!, 2, [115, 125, 135, 145, 155]),
-      { intervalSec: 150 },
-    ),
-    block(SectionType.CUSTOM, ScoreType.NONE, "D. Cool-Down", [
-      ...repeat(3, e["Pigeon Stretch"]!, undefined, undefined, { notes: "1 min each side" }),
-    ]),
-  ]);
+  const p1w2 = await createWorkout(
+    plan1.id,
+    daysAgo(12),
+    "Day 2: Olympic Lifting",
+    "A. Warm-Up\n2 rounds:\n10 Samson Stretches\n15 PVC Pass-Throughs\n\nB. Clean & Jerk\nEvery 3:00 x 5 sets\n2 @ 155lb\n2 @ 165lb\n2 @ 175lb\n2 @ 185lb\n2 @ 195lb\n\nC. Snatch\nEvery 2:30 x 5 sets\n2 @ 115lb\n2 @ 125lb\n2 @ 135lb\n2 @ 145lb\n2 @ 155lb\n\nD. Cool-Down\n3x1 min each side Pigeon Stretch",
+  );
 
-  const p1w3 = await createWorkout(plan1.id, daysAgo(10), "Day 3: Gymnastics + Metcon", [
-    block(
-      SectionType.EMOM,
-      ScoreType.REPS,
-      "A. Gymnastics EMOM 16",
-      [
-        ...repeat(4, e["Bar Muscle-Up"]!, 3),
-        ...repeat(4, e["Handstand Walk"]!, undefined, undefined, { notes: "50ft" }),
-        ...repeat(4, e["Toes-to-Bar"]!, 8),
-        ...repeat(4, e["Ring Dip"]!, 10),
-      ],
-      { intervalSec: 60, rounds: 16 },
-    ),
-    block(
-      SectionType.AMRAP,
-      ScoreType.ROUNDS_REPS,
-      "B. Metcon",
-      [
-        set(e["Wall Ball"]!, 20, 20, { notes: "20 lb" }),
-        set(e["Box Jump"]!, 15, undefined, { notes: "24 in" }),
-        set(e["Kettlebell Swing"]!, 12, 53, { notes: "53 lb" }),
-      ],
-      { timeCapSec: 900, rounds: 5 },
-    ),
-  ]);
+  const p1w3 = await createWorkout(
+    plan1.id,
+    daysAgo(10),
+    "Day 3: Gymnastics + Metcon",
+    "A. Gymnastics EMOM 16\nMin 1-4: 3 Bar Muscle-Ups\nMin 5-8: 50ft Handstand Walk\nMin 9-12: 8 Toes-to-Bar\nMin 13-16: 10 Ring Dips\n\nB. AMRAP 15 (5 round cap)\n20 Wall Balls (20 lb)\n15 Box Jumps (24 in)\n12 KB Swings (53 lb)",
+  );
 
-  const p1w4 = await createWorkout(plan1.id, daysAgo(7), "Day 4: Pressing + Engine", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Push Press",
-      wave(e["Push Press"]!, 5, [115, 125, 135, 145, 155]),
-      { intervalSec: 120 },
-    ),
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "B. Bench Press",
-      wave(e["Bench Press"]!, 5, [155, 165, 175, 185, 185]),
-      { intervalSec: 120 },
-    ),
-    block(
-      SectionType.FOR_TIME,
-      ScoreType.TIME,
-      "C. Cardio Chipper",
-      [
-        set(e["Assault Bike"]!, undefined, undefined, { notes: "30 cal" }),
-        set(e["Running"]!, undefined, undefined, { notes: "400m" }),
-        set(e["Ski Erg"]!, undefined, undefined, { notes: "30 cal" }),
-        set(e["Running"]!, undefined, undefined, { notes: "400m" }),
-        set(e["Row"]!, undefined, undefined, { notes: "30 cal" }),
-      ],
-      { timeCapSec: 1200 },
-    ),
-  ]);
+  const p1w4 = await createWorkout(
+    plan1.id,
+    daysAgo(7),
+    "Day 4: Pressing + Engine",
+    "A. Push Press\nEvery 2:00 x 5 sets\n5 @ 115lb / 125 / 135 / 145 / 155lb\n\nB. Bench Press\nEvery 2:00 x 5 sets\n5 @ 155lb / 165 / 175 / 185 / 185lb\n\nC. Cardio Chipper (For Time, 20 min cap)\n30 cal Assault Bike\n400m Run\n30 cal Ski Erg\n400m Run\n30 cal Row",
+  );
 
-  const p1w5 = await createWorkout(plan1.id, daysAgo(5), "Day 5: Deadlift + DT", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Deadlift",
-      wave(e["Deadlift"]!, 3, [275, 295, 315, 335, 345]),
-      { intervalSec: 180 },
-    ),
-    block(
-      SectionType.FOR_TIME,
-      ScoreType.TIME,
-      "B. DT",
-      [
-        ...repeat(5, e["Deadlift"]!, 12, 155),
-        ...repeat(5, e["Power Clean"]!, 9, 155, { notes: "hang" }),
-        ...repeat(5, e["Push Jerk"]!, 6, 155),
-      ],
-      { timeCapSec: 600, rounds: 5 },
-    ),
-  ]);
+  const p1w5 = await createWorkout(
+    plan1.id,
+    daysAgo(5),
+    "Day 5: Deadlift + DT",
+    'A. Deadlift\nEvery 3:00 x 5 sets\n3 @ 275lb / 295 / 315 / 335 / 345lb\n\nB. "DT" — 5 Rounds For Time (10 min cap)\n12 Deadlifts (155 lb)\n9 Hang Power Cleans (155 lb)\n6 Push Jerks (155 lb)',
+  );
 
-  const p1w6 = await createWorkout(plan1.id, daysAgo(3), "Day 6: Snatch Complex", [
-    block(SectionType.CUSTOM, ScoreType.NONE, "A. Warm-Up", [
-      ...repeat(3, e["Couch Stretch"]!, undefined, undefined, { notes: "1 min each" }),
-      ...repeat(3, e["PVC Pass-Through"]!, 15),
-    ]),
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "B. Power Snatch",
-      wave(e["Power Snatch"]!, 2, [115, 125, 135, 145, 155]),
-      { intervalSec: 150 },
-    ),
-    block(
-      SectionType.TABATA,
-      ScoreType.REPS,
-      "C. Tabata",
-      [...repeat(8, e["Assault Bike"]!, undefined, undefined, { notes: "max cal" })],
-      { workSec: 20, restSec: 10, rounds: 8 },
-    ),
-  ]);
+  const p1w6 = await createWorkout(
+    plan1.id,
+    daysAgo(3),
+    "Day 6: Snatch Complex",
+    "A. Warm-Up\n3 rounds:\n1 min each Couch Stretch\n15 PVC Pass-Throughs\n\nB. Power Snatch\nEvery 2:30 x 5 sets\n2 @ 115lb / 125 / 135 / 145 / 155lb\n\nC. Tabata Assault Bike\n8 rounds: 20s on / 10s off\nMax calories each round",
+  );
 
-  const p1w7 = await createWorkout(plan1.id, daysAgo(1), "Day 7: Gymnastics Volume", [
-    block(
-      SectionType.EMOM,
-      ScoreType.REPS,
-      "A. EMOM 20",
-      [
-        ...repeat(5, e["Bar Muscle-Up"]!, 3),
-        ...repeat(5, e["Handstand Push-Up"]!, 7),
-        ...repeat(5, e["Chest-to-Bar Pull-Up"]!, 10),
-        ...repeat(5, e["Pistol Squat"]!, 8, undefined, { notes: "alternating" }),
-      ],
-      { intervalSec: 60, rounds: 20 },
-    ),
-    block(SectionType.CUSTOM, ScoreType.NONE, "B. Accessory", [
-      ...repeat(3, e["Banded Pull-Apart"]!, 20),
-      ...repeat(3, e["Face Pull"]!, 15),
-    ]),
-  ]);
+  const p1w7 = await createWorkout(
+    plan1.id,
+    daysAgo(1),
+    "Day 7: Gymnastics Volume",
+    "A. EMOM 20\nMin 1-5: 3 Bar Muscle-Ups\nMin 6-10: 7 Handstand Push-Ups\nMin 11-15: 10 Chest-to-Bar Pull-Ups\nMin 16-20: 8 Pistol Squats (alternating)\n\nB. Accessory\n3x20 Banded Pull-Aparts\n3x15 Face Pulls",
+  );
 
-  const p1w8 = await createWorkout(plan1.id, todayAt(0), "Day 8: Squat + Sprint", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Front Squat",
-      wave(e["Front Squat"]!, 3, [185, 195, 205, 215, 225]),
-      { intervalSec: 150 },
-    ),
-    block(
-      SectionType.FOR_TIME,
-      ScoreType.TIME,
-      "B. Sprint",
-      [
-        set(e["Burpee"]!, 10),
-        set(e["Thruster"]!, 10, 135),
-        set(e["Burpee"]!, 8),
-        set(e["Thruster"]!, 8, 135),
-        set(e["Burpee"]!, 6),
-        set(e["Thruster"]!, 6, 135),
-      ],
-      { timeCapSec: 600 },
-    ),
-  ]);
+  const p1w8 = await createWorkout(
+    plan1.id,
+    todayAt(0),
+    "Day 8: Squat + Sprint",
+    "A. Front Squat\nEvery 2:30 x 5 sets\n3 @ 185lb / 195 / 205 / 215 / 225lb\n\nB. Sprint (For Time, 10 min cap)\n10 Burpees + 10 Thrusters (135 lb)\n8 Burpees + 8 Thrusters (135 lb)\n6 Burpees + 6 Thrusters (135 lb)",
+  );
 
-  const p2w1 = await createWorkout(plan2.id, daysAgo(14), "Monday: Strength + Metcon", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Back Squat",
-      wave(e["Back Squat"]!, 5, [155, 165, 175, 185, 195]),
-      { intervalSec: 150 },
-    ),
-    block(
-      SectionType.AMRAP,
-      ScoreType.ROUNDS_REPS,
-      "B. AMRAP 12",
-      [set(e["Wall Ball"]!, 15, 20), set(e["Double Under"]!, 50), set(e["Toes-to-Bar"]!, 10)],
-      { timeCapSec: 720 },
-    ),
-  ]);
+  const p2w1 = await createWorkout(
+    plan2.id,
+    daysAgo(14),
+    "Monday: Strength + Metcon",
+    "A. Back Squat\nEvery 2:30 x 5 sets\n5 @ 155lb / 165 / 175 / 185 / 195lb\n\nB. AMRAP 12\n15 Wall Balls (20 lb)\n50 Double Unders\n10 Toes-to-Bar",
+  );
 
-  const p2w2 = await createWorkout(plan2.id, daysAgo(12), "Tuesday: Conditioning", [
-    block(
-      SectionType.FOR_TIME,
-      ScoreType.TIME,
-      "A. 5 Rounds",
-      [
-        ...repeat(5, e["Row"]!, undefined, undefined, { notes: "500m" }),
-        ...repeat(5, e["Burpee"]!, 15),
-      ],
-      { timeCapSec: 1500, rounds: 5 },
-    ),
-  ]);
+  const p2w2 = await createWorkout(
+    plan2.id,
+    daysAgo(12),
+    "Tuesday: Conditioning",
+    "A. 5 Rounds For Time (25 min cap)\n500m Row\n15 Burpees",
+  );
 
-  const p2w3 = await createWorkout(plan2.id, daysAgo(10), "Wednesday: Olympic + Skill", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Power Clean",
-      wave(e["Power Clean"]!, 3, [135, 145, 155, 165, 175]),
-      { intervalSec: 120 },
-    ),
-    block(
-      SectionType.EMOM,
-      ScoreType.REPS,
-      "B. EMOM 12",
-      [
-        ...repeat(4, e["Pull-Up"]!, 8),
-        ...repeat(4, e["Handstand Push-Up"]!, 5),
-        ...repeat(4, e["Ring Dip"]!, 8),
-      ],
-      { intervalSec: 60, rounds: 12 },
-    ),
-  ]);
+  const p2w3 = await createWorkout(
+    plan2.id,
+    daysAgo(10),
+    "Wednesday: Olympic + Skill",
+    "A. Power Clean\nEvery 2:00 x 5 sets\n3 @ 135lb / 145 / 155 / 165 / 175lb\n\nB. EMOM 12\nMin 1: 8 Pull-Ups\nMin 2: 5 Handstand Push-Ups\nMin 3: 8 Ring Dips\n(repeat 4x)",
+  );
 
-  const p2w4 = await createWorkout(plan2.id, daysAgo(7), "Thursday: Midline + Metcon", [
-    block(SectionType.CUSTOM, ScoreType.NONE, "A. Midline", [
-      ...repeat(3, e["GHD Sit-Up"]!, 20),
-      ...repeat(3, e["Hip Extension"]!, 15),
-    ]),
-    block(
-      SectionType.FOR_TIME,
-      ScoreType.TIME,
-      "B. Chipper",
-      [
-        set(e["Kettlebell Swing"]!, 50, 53),
-        set(e["Box Jump"]!, 40, undefined, { notes: "24 in" }),
-        set(e["Wall Ball"]!, 30, 20),
-        set(e["Burpee"]!, 20),
-        set(e["Pull-Up"]!, 10),
-      ],
-      { timeCapSec: 1200 },
-    ),
-  ]);
+  const p2w4 = await createWorkout(
+    plan2.id,
+    daysAgo(7),
+    "Thursday: Midline + Metcon",
+    "A. Midline\n3x20 GHD Sit-Ups\n3x15 Hip Extensions\n\nB. Chipper (For Time, 20 min cap)\n50 KB Swings (53 lb)\n40 Box Jumps (24 in)\n30 Wall Balls (20 lb)\n20 Burpees\n10 Pull-Ups",
+  );
 
-  const p2w5 = await createWorkout(plan2.id, daysAgo(5), "Friday: Deadlift + Metcon", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Deadlift",
-      wave(e["Deadlift"]!, 5, [185, 205, 225, 245, 265]),
-      { intervalSec: 150 },
-    ),
-    block(
-      SectionType.AMRAP,
-      ScoreType.ROUNDS_REPS,
-      "B. AMRAP 10",
-      [
-        set(e["Dumbbell Snatch"]!, 10, 50, { notes: "alternating" }),
-        set(e["Burpee"]!, 10),
-        set(e["Double Under"]!, 40),
-      ],
-      { timeCapSec: 600 },
-    ),
-  ]);
+  const p2w5 = await createWorkout(
+    plan2.id,
+    daysAgo(5),
+    "Friday: Deadlift + Metcon",
+    "A. Deadlift\nEvery 2:30 x 5 sets\n5 @ 185lb / 205 / 225 / 245 / 265lb\n\nB. AMRAP 10\n10 DB Snatches (50 lb, alternating)\n10 Burpees\n40 Double Unders",
+  );
 
-  const p2w6 = await createWorkout(plan2.id, daysAgo(3), "Saturday: Team Workout", [
-    block(
-      SectionType.FOR_TIME,
-      ScoreType.TIME,
-      "A. Partner Helen",
-      [
-        set(e["Running"]!, undefined, undefined, { notes: "400m" }),
-        set(e["Kettlebell Swing"]!, 21, 53),
-        set(e["Pull-Up"]!, 12),
-        set(e["Running"]!, undefined, undefined, { notes: "400m" }),
-        set(e["Kettlebell Swing"]!, 21, 53),
-        set(e["Pull-Up"]!, 12),
-        set(e["Running"]!, undefined, undefined, { notes: "400m" }),
-        set(e["Kettlebell Swing"]!, 21, 53),
-        set(e["Pull-Up"]!, 12),
-      ],
-      { timeCapSec: 1200 },
-    ),
-  ]);
+  const p2w6 = await createWorkout(
+    plan2.id,
+    daysAgo(3),
+    "Saturday: Team Workout",
+    "A. Partner Helen — 3 Rounds For Time (20 min cap)\n400m Run\n21 KB Swings (53 lb)\n12 Pull-Ups\n(split work as needed)",
+  );
 
-  const p2w7 = await createWorkout(plan2.id, daysAgo(1), "Monday: Squat Repeat", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Back Squat",
-      wave(e["Back Squat"]!, 5, [165, 175, 185, 195, 205]),
-      { intervalSec: 150 },
-    ),
-    block(
-      SectionType.TABATA,
-      ScoreType.REPS,
-      "B. Tabata Double Under",
-      [...repeat(8, e["Double Under"]!, undefined, undefined, { notes: "max reps" })],
-      { workSec: 20, restSec: 10, rounds: 8 },
-    ),
-  ]);
+  const p2w7 = await createWorkout(
+    plan2.id,
+    daysAgo(1),
+    "Monday: Squat Repeat",
+    "A. Back Squat\nEvery 2:30 x 5 sets\n5 @ 165lb / 175 / 185 / 195 / 205lb\n\nB. Tabata Double Unders\n8 rounds: 20s on / 10s off\nMax reps each round",
+  );
 
-  const p2w8 = await createWorkout(plan2.id, todayAt(0), "Tuesday: Conditioning Day", [
-    block(
-      SectionType.FOR_TIME,
-      ScoreType.TIME,
-      "A. Row + Bike",
-      [
-        set(e["Row"]!, undefined, undefined, { notes: "2000m" }),
-        set(e["Assault Bike"]!, undefined, undefined, { notes: "40 cal" }),
-      ],
-      { timeCapSec: 1800 },
-    ),
-    block(
-      SectionType.AMRAP,
-      ScoreType.ROUNDS_REPS,
-      "B. AMRAP 8",
-      [set(e["Kettlebell Swing"]!, 15, 53), set(e["Double Under"]!, 50)],
-      { timeCapSec: 480 },
-    ),
-  ]);
+  const p2w8 = await createWorkout(
+    plan2.id,
+    todayAt(0),
+    "Tuesday: Conditioning Day",
+    "A. Row + Bike (For Time, 30 min cap)\n2000m Row\n40 cal Assault Bike\n\nB. AMRAP 8\n15 KB Swings (53 lb)\n50 Double Unders",
+  );
 
-  const p3w1 = await createWorkout(plan3.id, daysAgo(7), "Intro: Movement Basics", [
-    block(SectionType.CUSTOM, ScoreType.NONE, "A. Warm-Up", [
-      set(e["Running"]!, undefined, undefined, { notes: "400m jog" }),
-      ...repeat(2, e["PVC Pass-Through"]!, 15),
-      ...repeat(2, e["Samson Stretch"]!, 10),
-    ]),
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "B. Back Squat",
-      [...repeat(3, e["Back Squat"]!, 10, 65, { rpe: 5 })],
-      { intervalSec: 120 },
-    ),
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "C. Deadlift",
-      [...repeat(3, e["Deadlift"]!, 8, 95, { rpe: 5 })],
-      { intervalSec: 120 },
-    ),
-  ]);
+  const p3w1 = await createWorkout(
+    plan3.id,
+    daysAgo(7),
+    "Intro: Movement Basics",
+    "A. Warm-Up\n400m Jog\n2x15 PVC Pass-Throughs\n2x10 Samson Stretches\n\nB. Back Squat\nEvery 2:00 x 3 sets\n10 @ 65lb (RPE 5)\n\nC. Deadlift\nEvery 2:00 x 3 sets\n8 @ 95lb (RPE 5)",
+  );
 
-  const p3w2 = await createWorkout(plan3.id, daysAgo(5), "Day 2: Light Metcon", [
-    block(
-      SectionType.AMRAP,
-      ScoreType.ROUNDS_REPS,
-      "A. AMRAP 10",
-      [
-        set(e["Burpee"]!, 8),
-        set(e["Box Jump"]!, 10, undefined, { notes: "20 in" }),
-        set(e["Kettlebell Swing"]!, 12, 35),
-      ],
-      { timeCapSec: 600 },
-    ),
-    block(SectionType.CUSTOM, ScoreType.NONE, "B. Cool-Down", [
-      set(e["Pigeon Stretch"]!, undefined, undefined, { notes: "2 min each side" }),
-      set(e["Couch Stretch"]!, undefined, undefined, { notes: "2 min each side" }),
-    ]),
-  ]);
+  const p3w2 = await createWorkout(
+    plan3.id,
+    daysAgo(5),
+    "Day 2: Light Metcon",
+    "A. AMRAP 10\n8 Burpees\n10 Box Jumps (20 in)\n12 KB Swings (35 lb)\n\nB. Cool-Down\n2 min each side Pigeon Stretch\n2 min each side Couch Stretch",
+  );
 
-  const p3w3 = await createWorkout(plan3.id, daysAgo(3), "Day 3: Cardio Base", [
-    block(
-      SectionType.FOR_TIME,
-      ScoreType.TIME,
-      "A. Cardio",
-      [set(e["Row"]!, undefined, undefined, { notes: "2000m at easy pace" })],
-      { timeCapSec: 1800 },
-    ),
-    block(SectionType.CUSTOM, ScoreType.NONE, "B. Single Unders", [
-      ...repeat(3, e["Single Under"]!, 100),
-    ]),
-  ]);
+  const p3w3 = await createWorkout(
+    plan3.id,
+    daysAgo(3),
+    "Day 3: Cardio Base",
+    "A. Row 2000m at easy pace (30 min cap)\n\nB. Single Unders\n3x100 reps",
+  );
 
-  const p3w4 = await createWorkout(plan3.id, todayAt(0), "Day 4: Upper Body Intro", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Bench Press",
-      [...repeat(3, e["Bench Press"]!, 8, 65, { rpe: 5 })],
-      { intervalSec: 90 },
-    ),
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "B. Push Press",
-      [...repeat(3, e["Push Press"]!, 8, 55, { rpe: 5 })],
-      { intervalSec: 90 },
-    ),
-    block(SectionType.CUSTOM, ScoreType.NONE, "C. Accessory", [
-      ...repeat(3, e["Banded Pull-Apart"]!, 15),
-      ...repeat(3, e["Face Pull"]!, 12),
-    ]),
-  ]);
+  const p3w4 = await createWorkout(
+    plan3.id,
+    todayAt(0),
+    "Day 4: Upper Body Intro",
+    "A. Bench Press\nEvery 1:30 x 3 sets\n8 @ 65lb (RPE 5)\n\nB. Push Press\nEvery 1:30 x 3 sets\n8 @ 55lb (RPE 5)\n\nC. Accessory\n3x15 Banded Pull-Aparts\n3x12 Face Pulls",
+  );
 
-  const p4w1 = await createWorkout(plan4.id, daysAgo(21), "Week 1: Squat Focus", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Back Squat",
-      wave(e["Back Squat"]!, 8, [165, 175, 185, 195]),
-      { intervalSec: 150 },
-    ),
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "B. Front Squat",
-      wave(e["Front Squat"]!, 8, [135, 145, 155]),
-      { intervalSec: 120 },
-    ),
-  ]);
+  const p4w1 = await createWorkout(
+    plan4.id,
+    daysAgo(21),
+    "Week 1: Squat Focus",
+    "A. Back Squat\nEvery 2:30 x 4 sets\n8 @ 165lb / 175 / 185 / 195lb\n\nB. Front Squat\nEvery 2:00 x 3 sets\n8 @ 135lb / 145 / 155lb",
+  );
 
-  const p4w2 = await createWorkout(plan4.id, daysAgo(14), "Week 2: Deadlift Focus", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Deadlift",
-      wave(e["Deadlift"]!, 5, [225, 245, 265, 275, 285]),
-      { intervalSec: 180 },
-    ),
-    block(SectionType.CUSTOM, ScoreType.NONE, "B. Accessory", [
-      ...repeat(3, e["GHD Sit-Up"]!, 20),
-      ...repeat(3, e["Hip Extension"]!, 15),
-    ]),
-  ]);
+  const p4w2 = await createWorkout(
+    plan4.id,
+    daysAgo(14),
+    "Week 2: Deadlift Focus",
+    "A. Deadlift\nEvery 3:00 x 5 sets\n5 @ 225lb / 245 / 265 / 275 / 285lb\n\nB. Accessory\n3x20 GHD Sit-Ups\n3x15 Hip Extensions",
+  );
 
-  const p4w3 = await createWorkout(plan4.id, daysAgo(10), "Week 3: Press Focus", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Bench Press",
-      wave(e["Bench Press"]!, 5, [145, 155, 165, 175, 185]),
-      { intervalSec: 150 },
-    ),
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "B. Push Press",
-      wave(e["Push Press"]!, 6, [105, 115, 125, 135]),
-      { intervalSec: 120 },
-    ),
-  ]);
+  const p4w3 = await createWorkout(
+    plan4.id,
+    daysAgo(10),
+    "Week 3: Press Focus",
+    "A. Bench Press\nEvery 2:30 x 5 sets\n5 @ 145lb / 155 / 165 / 175 / 185lb\n\nB. Push Press\nEvery 2:00 x 4 sets\n6 @ 105lb / 115 / 125 / 135lb",
+  );
 
-  const p4w4 = await createWorkout(plan4.id, daysAgo(5), "Week 4 Day 1: Heavy Squat", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Back Squat",
-      wave(e["Back Squat"]!, 3, [205, 215, 225, 235, 245]),
-      { intervalSec: 180 },
-    ),
-  ]);
+  const p4w4 = await createWorkout(
+    plan4.id,
+    daysAgo(5),
+    "Week 4 Day 1: Heavy Squat",
+    "A. Back Squat\nEvery 3:00 x 5 sets\n3 @ 205lb / 215 / 225 / 235 / 245lb",
+  );
 
-  const p4w5 = await createWorkout(plan4.id, daysAgo(3), "Week 4 Day 2: Heavy Deadlift", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Deadlift",
-      wave(e["Deadlift"]!, 3, [275, 295, 315, 335, 345]),
-      { intervalSec: 180 },
-    ),
-  ]);
+  const p4w5 = await createWorkout(
+    plan4.id,
+    daysAgo(3),
+    "Week 4 Day 2: Heavy Deadlift",
+    "A. Deadlift\nEvery 3:00 x 5 sets\n3 @ 275lb / 295 / 315 / 335 / 345lb",
+  );
 
-  const p4w6 = await createWorkout(plan4.id, daysAgo(2), "Week 4 Day 3: Heavy Press", [
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "A. Bench Press",
-      wave(e["Bench Press"]!, 3, [175, 185, 195, 205, 205]),
-      { intervalSec: 150 },
-    ),
-    block(
-      SectionType.STRENGTH,
-      ScoreType.LOAD,
-      "B. Push Jerk",
-      wave(e["Push Jerk"]!, 3, [155, 165, 175, 185]),
-      { intervalSec: 120 },
-    ),
-  ]);
+  const p4w6 = await createWorkout(
+    plan4.id,
+    daysAgo(2),
+    "Week 4 Day 3: Heavy Press",
+    "A. Bench Press\nEvery 2:30 x 5 sets\n3 @ 175lb / 185 / 195 / 205 / 205lb\n\nB. Push Jerk\nEvery 2:00 x 4 sets\n3 @ 155lb / 165 / 175 / 185lb",
+  );
 
-  const p4w7 = await createWorkout(plan4.id, daysAgo(1), "Week 4 Day 4: Accessory", [
-    block(SectionType.CUSTOM, ScoreType.NONE, "A. Accessory", [
-      ...repeat(4, e["GHD Sit-Up"]!, 15),
-      ...repeat(4, e["Poliquin Step-Up"]!, 12, 35),
-      ...repeat(4, e["Face Pull"]!, 15),
-    ]),
-  ]);
+  const p4w7 = await createWorkout(
+    plan4.id,
+    daysAgo(1),
+    "Week 4 Day 4: Accessory",
+    "A. Accessory\n4x15 GHD Sit-Ups\n4x12 Poliquin Step-Ups (35lb DBs)\n4x15 Face Pulls",
+  );
 
-  await createWorkout(plan5.id, null, "Assessment: Barbell Basics", [
-    block(SectionType.STRENGTH, ScoreType.LOAD, "A. Back Squat", [
-      ...repeat(3, e["Back Squat"]!, 5, undefined, { notes: "Find working weight" }),
-    ]),
-    block(SectionType.STRENGTH, ScoreType.LOAD, "B. Deadlift", [
-      ...repeat(3, e["Deadlift"]!, 5, undefined, { notes: "Find working weight" }),
-    ]),
-  ]);
+  await createWorkout(
+    plan5.id,
+    null,
+    "Assessment: Barbell Basics",
+    "A. Back Squat — Find working weight\n3x5 (start empty bar, add weight each set)\n\nB. Deadlift — Find working weight\n3x5 (start empty bar, add weight each set)",
+  );
 
-  await createWorkout(plan5.id, null, "Assessment: Conditioning", [
-    block(
-      SectionType.FOR_TIME,
-      ScoreType.TIME,
-      "A. 500m Row",
-      [set(e["Row"]!, undefined, undefined, { notes: "500m max effort" })],
-      { timeCapSec: 300 },
-    ),
-    block(
-      SectionType.FOR_TIME,
-      ScoreType.TIME,
-      "B. Bike Sprint",
-      [set(e["Assault Bike"]!, undefined, undefined, { notes: "15 cal max effort" })],
-      { timeCapSec: 300 },
-    ),
-  ]);
+  await createWorkout(
+    plan5.id,
+    null,
+    "Assessment: Conditioning",
+    "A. 500m Row — max effort (5 min cap)\n\nB. Assault Bike — 15 cal max effort (5 min cap)",
+  );
 
-  await createWorkout(plan5.id, null, "Assessment: Gymnastics", [
-    block(SectionType.CUSTOM, ScoreType.REPS, "A. Bar Muscle-Up Test", [
-      ...repeat(3, e["Bar Muscle-Up"]!, undefined, undefined, { notes: "max reps" }),
-    ]),
-    block(SectionType.CUSTOM, ScoreType.PASS_FAIL, "B. Handstand Walk Test", [
-      ...repeat(3, e["Handstand Walk"]!, undefined, undefined, { notes: "max distance" }),
-    ]),
-  ]);
+  await createWorkout(
+    plan5.id,
+    null,
+    "Assessment: Gymnastics",
+    "A. Bar Muscle-Up Test\n3 attempts, max reps each\n\nB. Handstand Walk Test\n3 attempts, max distance each",
+  );
 
   console.log("  Training plans: 7 (5 ACTIVE, 1 DRAFT, 1 ARCHIVED)");
   console.log("  Workouts: 27 (24 scheduled + 3 template)");
@@ -1158,53 +638,19 @@ const seedWorkoutLogs = async (
   users: Awaited<ReturnType<typeof seedUsers>>,
   workouts: Awaited<ReturnType<typeof seedTrainingData>>["workouts"],
 ) => {
-  const getPrescribedSets = async (workoutId: string) => {
-    const blocks = await prisma.workoutBlock.findMany({
-      where: { workoutId },
-      include: { sets: true },
-      orderBy: { sortOrder: "asc" },
-    });
-
-    return blocks.flatMap((b) => b.sets);
-  };
-
   const createLog = async (
     userId: string,
     workoutId: string,
     date: Date,
     isRx: boolean,
     notes: string | null,
-    setOverrides?: { weightDone?: number; repsDone?: number; rpeActual?: number }[],
   ) => {
-    const prescribed = await getPrescribedSets(workoutId);
-
     await prisma.workoutLog.create({
-      data: {
-        userId,
-        workoutId,
-        date,
-        isRx,
-        notes,
-        createdAt: date,
-        setLogs: {
-          create: prescribed.map((ps, i) => ({
-            prescribedSetId: ps.id,
-            repsDone: setOverrides?.[i]?.repsDone ?? ps.reps ?? 10,
-            weightDone:
-              setOverrides?.[i]?.weightDone ?? (ps.weightValue ? Number(ps.weightValue) : null),
-            rpeActual: setOverrides?.[i]?.rpeActual ?? ps.rpe,
-          })),
-        },
-      },
+      data: { userId, workoutId, date, isRx, notes, createdAt: date },
     });
   };
 
-  await createLog(users.sarah.id, workouts.p1[0]!.id, daysAgo(14), true, null, [
-    { weightDone: 95, repsDone: 3, rpeActual: 7 },
-    { weightDone: 75, repsDone: 5, rpeActual: 6 },
-    { repsDone: 15, rpeActual: 8 },
-    { repsDone: 12, rpeActual: 7 },
-  ]);
+  await createLog(users.sarah.id, workouts.p1[0]!.id, daysAgo(14), true, null);
   await createLog(
     users.sarah.id,
     workouts.p1[1]!.id,
@@ -1214,9 +660,7 @@ const seedWorkoutLogs = async (
   );
   await createLog(users.sarah.id, workouts.p1[2]!.id, daysAgo(10), true, null);
   await createLog(users.sarah.id, workouts.p1[3]!.id, daysAgo(7), true, null);
-  await createLog(users.sarah.id, workouts.p1[4]!.id, daysAgo(5), true, "PR on deadlift!", [
-    { weightDone: 145, repsDone: 3, rpeActual: 9 },
-  ]);
+  await createLog(users.sarah.id, workouts.p1[4]!.id, daysAgo(5), true, "PR on deadlift!");
   await createLog(users.sarah.id, workouts.p1[5]!.id, daysAgo(3), true, null);
   await createLog(users.sarah.id, workouts.p1[6]!.id, daysAgo(1), true, null);
   await createLog(users.sarah.id, workouts.p1[7]!.id, todayAt(7, 30), true, "Morning session done");
@@ -2127,8 +1571,7 @@ const main = async () => {
 
   const users = await seedUsers(passwordHash);
   const { coachProfile } = await seedProfiles(users);
-  const { exMap } = await seedExercises();
-  const { plans, workouts } = await seedTrainingData(coachProfile.id, exMap);
+  const { plans, workouts } = await seedTrainingData(coachProfile.id);
 
   await seedEnrollments(users, plans);
   await seedWorkoutLogs(users, workouts);

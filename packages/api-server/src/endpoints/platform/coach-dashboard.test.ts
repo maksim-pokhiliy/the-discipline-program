@@ -16,7 +16,6 @@ describe("platformCoachDashboardApi", () => {
   let emptyCoach: Awaited<ReturnType<typeof createTestCoach>>;
   let athlete1: Awaited<ReturnType<typeof createTestUser>>;
   let athlete2: Awaited<ReturnType<typeof createTestUser>>;
-  let category: Awaited<ReturnType<typeof cleanupRaw.exerciseCategory.create>>;
 
   let activePlanId: string;
   let draftPlanId: string;
@@ -29,10 +28,6 @@ describe("platformCoachDashboardApi", () => {
     emptyCoach = await createTestCoach();
     athlete1 = await createTestUser();
     athlete2 = await createTestUser();
-
-    category = await cleanupRaw.exerciseCategory.create({
-      data: { name: `DashCat ${crypto.randomUUID().slice(0, 8)}` },
-    });
 
     const activePlan = await cleanupRaw.trainingPlan.create({
       data: {
@@ -154,7 +149,6 @@ describe("platformCoachDashboardApi", () => {
     await cleanupRaw.workout.deleteMany({ where: { planId: draftPlanId } });
     await cleanupRaw.trainingPlan.delete({ where: { id: activePlanId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: draftPlanId } }).catch(() => {});
-    await cleanupRaw.exerciseCategory.delete({ where: { id: category.id } }).catch(() => {});
     await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
     await cleanupRaw.coachProfile.delete({ where: { id: emptyCoach.profile.id } }).catch(() => {});
     await cleanupRaw.user.delete({ where: { id: coach.user.id } }).catch(() => {});

@@ -22,14 +22,6 @@ export const useWorkout = (planId: string, id: string) =>
     enabled: !!planId && !!id,
   });
 
-export const useWorkoutPreview = (planId: string, workoutId: string, enabled: boolean) =>
-  useQuery({
-    queryKey: platformKeys.workouts.preview(workoutId),
-    queryFn: () => api.workouts.getPreview(planId, workoutId),
-    enabled: enabled && !!planId && !!workoutId,
-    staleTime: 30_000,
-  });
-
 export const useCreateWorkout = (planId: string) => {
   const queryClient = useQueryClient();
 
@@ -48,7 +40,7 @@ export const useCreateWorkout = (planId: string) => {
         scheduledDate: data.scheduledDate ?? null,
         title: data.title ?? "",
         description: data.description ?? null,
-        blockCount: 0,
+        content: data.content ?? null,
         sortOrder: -1,
         isArchived: false,
         createdAt: new Date(),
@@ -220,20 +212,6 @@ export const useReorderWorkouts = (planId: string) => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.workouts.byPlan(planId) });
-    },
-  });
-};
-
-export const useReorderBlocks = (workoutId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (orderedIds: string[]) => api.workouts.reorderBlocks(workoutId, orderedIds),
-    onError: () => {
-      queryClient.invalidateQueries({
-        queryKey: platformKeys.workoutBlocks.byWorkout(workoutId),
-      });
-      toast.error("Failed to reorder blocks");
     },
   });
 };
