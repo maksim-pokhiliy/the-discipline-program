@@ -1,11 +1,6 @@
 import { z } from "zod";
 
-import {
-  createWorkoutSchema,
-  updateWorkoutSchema,
-  workoutPreviewSchema,
-  workoutSchema,
-} from "./workout.schema";
+import { createWorkoutSchema, updateWorkoutSchema, workoutSchema } from "./workout.schema";
 
 export const getWorkoutsParamsSchema = z.object({
   planId: z.string().cuid(),
@@ -60,18 +55,3 @@ export const reorderWorkoutsParamsSchema = z.object({
 export const reorderWorkoutsRequestSchema = z.object({
   orderedIds: z.array(z.string().cuid()).min(1),
 });
-
-export const reorderBlocksParamsSchema = z.object({
-  workoutId: z.string().cuid(),
-});
-
-export const reorderBlocksRequestSchema = z.object({
-  orderedIds: z.array(z.string().cuid()).min(1),
-});
-
-export const getWorkoutPreviewParamsSchema = z.object({
-  planId: z.string().cuid(),
-  id: z.string().cuid(),
-});
-
-export const getWorkoutPreviewResponseSchema = workoutPreviewSchema;

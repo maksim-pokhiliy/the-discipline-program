@@ -2,13 +2,11 @@ import {
   type CreateWorkoutData,
   type UpdateWorkoutData,
   type Workout,
-  type WorkoutPreview,
 } from "@repo/contracts/workout";
 import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToWorkout } from "../../mappers";
-import { UNIT_MAP, WEIGHT_TYPE_MAP } from "../../mappers/enum-maps";
 
 import { resolveCoachId, verifyPlanOwnership, verifyWorkoutOwnership } from "./guards";
 
@@ -31,7 +29,6 @@ export const platformWorkoutsApi = {
 
     const workouts = await prisma.workout.findMany({
       where: { planId },
-      include: { _count: { select: { blocks: true } } },
       orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
     });
 
@@ -45,7 +42,6 @@ export const platformWorkoutsApi = {
 
     const workout = await prisma.workout.findUnique({
       where: { id },
-      include: { _count: { select: { blocks: true } } },
     });
 
     if (!workout || workout.planId !== planId) {
@@ -53,51 +49,6 @@ export const platformWorkoutsApi = {
     }
 
     return mapToWorkout(workout);
-  },
-
-  getPreview: async (userId: string, planId: string, id: string): Promise<WorkoutPreview> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(planId, coachId);
-
-    const workout = await prisma.workout.findUnique({
-      where: { id },
-      select: {
-        planId: true,
-        blocks: {
-          orderBy: { sortOrder: "asc" },
-          include: {
-            category: true,
-            sets: {
-              orderBy: { sortOrder: "asc" },
-              include: { exercise: { select: { name: true } } },
-            },
-          },
-        },
-      },
-    });
-
-    if (!workout || workout.planId !== planId) {
-      throw new NotFoundError("Workout not found", { id, planId });
-    }
-
-    return {
-      blocks: workout.blocks.map((block) => ({
-        id: block.id,
-        categoryName: block.category.name,
-        rounds: block.rounds,
-        timeCapSec: block.timeCapSec,
-        exercises: block.sets.map((set) => ({
-          name: set.exercise.name,
-          sets: set.sets,
-          reps: set.reps,
-          weightValue: set.weightValue ? Number(set.weightValue) : null,
-          weightUnit: UNIT_MAP[set.weightUnit],
-          weightType: WEIGHT_TYPE_MAP[set.weightType],
-          rpe: set.rpe,
-        })),
-      })),
-    };
   },
 
   create: async (userId: string, planId: string, data: CreateWorkoutData): Promise<Workout> => {
@@ -114,7 +65,6 @@ export const platformWorkoutsApi = {
 
     const workout = await prisma.workout.create({
       data: { ...data, planId, scheduledDate, sortOrder: 0 },
-      include: { _count: { select: { blocks: true } } },
     });
 
     return mapToWorkout(workout);
@@ -144,7 +94,6 @@ export const platformWorkoutsApi = {
       data: data.scheduledDate
         ? { ...data, scheduledDate: toUTCMidnight(data.scheduledDate) }
         : data,
-      include: { _count: { select: { blocks: true } } },
     });
 
     return mapToWorkout(workout);
@@ -217,7 +166,6 @@ export const platformWorkoutsApi = {
 
     const workout = await prisma.workout.findUniqueOrThrow({
       where: { id: workoutId },
-      include: { _count: { select: { blocks: true } } },
     });
 
     return mapToWorkout(workout);
@@ -246,32 +194,6 @@ export const platformWorkoutsApi = {
     );
   },
 
-  reorderBlocks: async (userId: string, workoutId: string, orderedIds: string[]): Promise<void> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyWorkoutOwnership(workoutId, coachId);
-
-    const blocks = await prisma.workoutBlock.findMany({
-      where: { workoutId },
-      select: { id: true },
-    });
-
-    const existingIds = new Set(blocks.map((b) => b.id));
-
-    if (
-      new Set(orderedIds).size !== existingIds.size ||
-      orderedIds.some((id) => !existingIds.has(id))
-    ) {
-      throw new BadRequestError("orderedIds must match all blocks in the workout");
-    }
-
-    await prisma.$transaction(
-      orderedIds.map((id, index) =>
-        prisma.workoutBlock.update({ where: { id }, data: { sortOrder: index } }),
-      ),
-    );
-  },
-
   copyWeek: async (
     userId: string,
     planId: string,
@@ -293,12 +215,6 @@ export const platformWorkoutsApi = {
       where: {
         planId,
         scheduledDate: { gte: normalizedSource, lt: sourceEnd },
-      },
-      include: {
-        blocks: {
-          include: { sets: true },
-          orderBy: { sortOrder: "asc" },
-        },
       },
       orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
     });
@@ -323,45 +239,16 @@ export const platformWorkoutsApi = {
             scheduledDate: newDate,
             title: workout.title,
             description: workout.description,
+            content: workout.content,
             sortOrder: workout.sortOrder,
           },
         });
-
-        for (const block of workout.blocks) {
-          const newBlock = await tx.workoutBlock.create({
-            data: {
-              workoutId: newWorkout.id,
-              categoryId: block.categoryId,
-              rounds: block.rounds,
-              timeCapSec: block.timeCapSec,
-              sortOrder: block.sortOrder,
-            },
-          });
-
-          if (block.sets.length > 0) {
-            await tx.prescribedSet.createMany({
-              data: block.sets.map((s) => ({
-                blockId: newBlock.id,
-                exerciseId: s.exerciseId,
-                sets: s.sets,
-                reps: s.reps,
-                weightValue: s.weightValue,
-                weightUnit: s.weightUnit,
-                weightType: s.weightType,
-                rpe: s.rpe,
-                notes: s.notes,
-                sortOrder: s.sortOrder,
-              })),
-            });
-          }
-        }
 
         createdIds.push(newWorkout.id);
       }
 
       return tx.workout.findMany({
         where: { id: { in: createdIds } },
-        include: { _count: { select: { blocks: true } } },
         orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }],
       });
     });

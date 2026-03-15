@@ -28,7 +28,6 @@ model User {
   userBenchmarks  UserBenchmark[]
   coachNotes      CoachNote[]
   actionItems     CoachActionItem[] @relation("ActionItemAthlete")
-  athleteMaxes    AthleteMax[]
   accounts        Account[]
   sessions        Session[]
 
@@ -218,39 +217,6 @@ enum TransactionStatus {
   FAILED
 }
 
-model ExerciseCategory {
-  id        String         @id @default(cuid())
-  name      String         @unique
-  sortOrder Int            @default(0)
-  exercises Exercise[]
-  blocks    WorkoutBlock[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-
-  @@index([sortOrder])
-  @@map("app_exercise_categories")
-}
-
-model Exercise {
-  id                  String            @id @default(cuid())
-  name                String            @unique
-  description         String?
-  videoUrl            String?
-  categoryId          String?
-  category            ExerciseCategory? @relation(fields: [categoryId], references: [id])
-  prescribedSets      PrescribedSet[]
-  athleteMaxes        AthleteMax[]
-  setLogSubstitutions SetLog[]
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-  deletedAt           DateTime?
-
-  @@index([categoryId])
-  @@index([createdAt])
-  @@index([deletedAt])
-  @@map("app_exercises")
-}
-
 model TrainingPlan {
   id          String             @id @default(cuid())
   coachId     String
@@ -278,9 +244,9 @@ model Workout {
   scheduledDate DateTime? @db.Date
   title         String         @default("")
   description   String?
+  content       String?        @db.Text
   sortOrder     Int            @default(0)
   isArchived    Boolean        @default(false)
-  blocks        WorkoutBlock[]
   logs          WorkoutLog[]
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
@@ -293,84 +259,20 @@ model Workout {
   @@map("app_workouts")
 }
 
-model WorkoutBlock {
-  id         String           @id @default(cuid())
-  workoutId  String
-  workout    Workout          @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-  categoryId String
-  category   ExerciseCategory @relation(fields: [categoryId], references: [id])
-  rounds     Int?
-  timeCapSec Int?
-  sortOrder  Int              @default(0)
-  sets       PrescribedSet[]
-
-  @@index([workoutId])
-  @@index([categoryId])
-  @@map("app_workout_blocks")
-}
-
-model PrescribedSet {
-  id          String       @id @default(cuid())
-  blockId     String
-  block       WorkoutBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
-  exerciseId  String
-  exercise    Exercise     @relation(fields: [exerciseId], references: [id])
-  sets        Int?
-  reps        Int?
-  weightValue Decimal?     @db.Decimal(6, 2)
-  weightUnit  Unit         @default(KG)
-  weightType  WeightType   @default(ABSOLUTE)
-  rpe         Int?
-  notes       String?
-  sortOrder   Int          @default(0)
-  logs        SetLog[]
-
-  @@index([exerciseId])
-  @@map("app_prescribed_sets")
-}
-
 model WorkoutLog {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  workoutId String
-  workout   Workout  @relation(fields: [workoutId], references: [id])
-  date      DateTime @default(now())
-  notes     String?
-  isRx      Boolean  @default(true)
-  setLogs   SetLog[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String       @id @default(cuid())
+  userId      String
+  user        User         @relation(fields: [userId], references: [id])
+  workoutId   String
+  workout     Workout      @relation(fields: [workoutId], references: [id])
+  date        DateTime     @default(now())
+  notes       String?
+  isRx        Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@index([createdAt])
   @@map("app_workout_logs")
-}
-
-model SetLog {
-  id                     String         @id @default(cuid())
-  workoutLogId           String
-  workoutLog             WorkoutLog     @relation(fields: [workoutLogId], references: [id], onDelete: Cascade)
-  prescribedSetId        String?
-  prescribedSet          PrescribedSet? @relation(fields: [prescribedSetId], references: [id])
-  substitutionExerciseId String?
-  substitutionExercise   Exercise?      @relation(fields: [substitutionExerciseId], references: [id])
-  repsDone               Int
-  weightDone             Decimal?       @db.Decimal(6, 2)
-  rpeActual              Int?
-  createdAt              DateTime       @default(now())
-
-  @@index([workoutLogId])
-  @@map("app_set_logs")
-}
-
-enum Unit {
-  KG
-  LB
-}
-
-enum WeightType {
-  ABSOLUTE
-  PERCENTAGE
 }
 
 enum TrainingPlanStatus {
@@ -466,21 +368,6 @@ model PlanEnrollment {
   @@index([userId])
   @@index([status])
   @@map("app_plan_enrollments")
-}
-
-model AthleteMax {
-  id         String   @id @default(cuid())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
-  exerciseId String
-  exercise   Exercise @relation(fields: [exerciseId], references: [id])
-  value      Decimal  @db.Decimal(6, 2)
-  unit       Unit     @default(KG)
-  testedAt   DateTime @default(now())
-  createdAt  DateTime @default(now())
-
-  @@index([userId, exerciseId, testedAt])
-  @@map("app_athlete_maxes")
 }
 
 model BenchmarkDefinition {

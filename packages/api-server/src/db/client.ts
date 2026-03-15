@@ -5,7 +5,6 @@ import { baseEnv } from "@repo/env/base";
 const SOFT_DELETE_MODELS = new Set([
   "User",
   "Product",
-  "Exercise",
   "TrainingPlan",
   "Workout",
   "CoachProfile",
@@ -15,7 +14,6 @@ const SOFT_DELETE_MODELS = new Set([
 ]);
 
 const SOFT_DELETE_UNIQUE_FIELDS: Record<string, string[]> = {
-  Exercise: ["name"],
   Product: ["slug"],
 };
 

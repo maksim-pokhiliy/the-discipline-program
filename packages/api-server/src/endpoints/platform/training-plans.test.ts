@@ -2,20 +2,16 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
 
-import { cleanupRaw, createTestCoach, createTestExercise } from "../../test/helpers";
+import { cleanupRaw, createTestCoach } from "../../test/helpers";
 
 import { platformTrainingPlansApi } from "./training-plans";
 
 describe("platformTrainingPlansApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let coach2: Awaited<ReturnType<typeof createTestCoach>>;
-  let category: Awaited<ReturnType<typeof cleanupRaw.exerciseCategory.create>>;
-  let exercise: Awaited<ReturnType<typeof createTestExercise>>;
 
   let planId: string;
   let workoutId: string;
-  let blockId: string;
-  let setId: string;
 
   let coach2PlanId: string;
   let coach2WorkoutId: string;
@@ -23,12 +19,6 @@ describe("platformTrainingPlansApi", () => {
   beforeAll(async () => {
     coach = await createTestCoach();
     coach2 = await createTestCoach();
-
-    category = await cleanupRaw.exerciseCategory.create({
-      data: { name: `Cat ${crypto.randomUUID().slice(0, 8)}` },
-    });
-
-    exercise = await createTestExercise({ categoryId: category.id });
 
     const plan = await cleanupRaw.trainingPlan.create({
       data: {
@@ -55,33 +45,11 @@ describe("platformTrainingPlansApi", () => {
         title: "Workout A",
         scheduledDate: monday,
         sortOrder: 0,
+        content: "A. Back Squat\n5x5 @ 185lb",
       },
     });
 
     workoutId = workout.id;
-
-    const block = await cleanupRaw.workoutBlock.create({
-      data: {
-        workoutId: workout.id,
-        categoryId: category.id,
-        rounds: 3,
-        sortOrder: 0,
-      },
-    });
-
-    blockId = block.id;
-
-    const pSet = await cleanupRaw.prescribedSet.create({
-      data: {
-        blockId: block.id,
-        exerciseId: exercise.id,
-        sets: 3,
-        reps: 10,
-        sortOrder: 0,
-      },
-    });
-
-    setId = pSet.id;
 
     await cleanupRaw.planEnrollment.create({
       data: {
@@ -114,8 +82,6 @@ describe("platformTrainingPlansApi", () => {
 
   afterAll(async () => {
     await cleanupRaw.planEnrollment.deleteMany({ where: { trainingPlanId: planId } });
-    await cleanupRaw.prescribedSet.deleteMany({ where: { blockId } });
-    await cleanupRaw.workoutBlock.deleteMany({ where: { workoutId } });
     await cleanupRaw.workout.deleteMany({ where: { planId } });
     await cleanupRaw.workout.deleteMany({ where: { planId: coach2PlanId } });
 
@@ -124,20 +90,12 @@ describe("platformTrainingPlansApi", () => {
     });
 
     for (const dp of duplicatedPlans) {
-      await cleanupRaw.prescribedSet.deleteMany({
-        where: { block: { workout: { planId: dp.id } } },
-      });
-      await cleanupRaw.workoutBlock.deleteMany({
-        where: { workout: { planId: dp.id } },
-      });
       await cleanupRaw.workout.deleteMany({ where: { planId: dp.id } });
       await cleanupRaw.trainingPlan.delete({ where: { id: dp.id } }).catch(() => {});
     }
 
     await cleanupRaw.trainingPlan.delete({ where: { id: planId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: coach2PlanId } }).catch(() => {});
-    await cleanupRaw.exercise.delete({ where: { id: exercise.id } }).catch(() => {});
-    await cleanupRaw.exerciseCategory.delete({ where: { id: category.id } }).catch(() => {});
     await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
     await cleanupRaw.coachProfile.delete({ where: { id: coach2.profile.id } }).catch(() => {});
     await cleanupRaw.user.delete({ where: { id: coach.user.id } }).catch(() => {});
@@ -170,12 +128,11 @@ describe("platformTrainingPlansApi", () => {
       expect(copy.status).toBe(TrainingPlanStatus.DRAFT);
     });
 
-    it("copies all workouts with same dates and title", async () => {
+    it("copies all workouts with same dates, title, and content", async () => {
       const copy = await platformTrainingPlansApi.duplicate(coach.user.id, planId);
 
       const copyWorkouts = await cleanupRaw.workout.findMany({
         where: { planId: copy.id, deletedAt: null },
-        include: { blocks: { include: { sets: true } } },
       });
 
       expect(copyWorkouts).toHaveLength(1);
@@ -187,47 +144,8 @@ describe("platformTrainingPlansApi", () => {
       }
 
       expect(copiedWorkout.title).toBe("Workout A");
+      expect(copiedWorkout.content).toBe("A. Back Squat\n5x5 @ 185lb");
       expect(copiedWorkout.id).not.toBe(workoutId);
-    });
-
-    it("copies blocks and prescribed sets", async () => {
-      const copy = await platformTrainingPlansApi.duplicate(coach.user.id, planId);
-
-      const copyWorkouts = await cleanupRaw.workout.findMany({
-        where: { planId: copy.id, deletedAt: null },
-        include: { blocks: { include: { sets: true } } },
-      });
-
-      const copiedWorkout = copyWorkouts[0];
-
-      if (!copiedWorkout) {
-        throw new Error("expected workout");
-      }
-
-      expect(copiedWorkout.blocks).toHaveLength(1);
-
-      const copiedBlock = copiedWorkout.blocks[0];
-
-      if (!copiedBlock) {
-        throw new Error("expected block");
-      }
-
-      expect(copiedBlock.rounds).toBe(3);
-      expect(copiedBlock.categoryId).toBe(category.id);
-      expect(copiedBlock.id).not.toBe(blockId);
-
-      expect(copiedBlock.sets).toHaveLength(1);
-
-      const copiedSet = copiedBlock.sets[0];
-
-      if (!copiedSet) {
-        throw new Error("expected set");
-      }
-
-      expect(copiedSet.exerciseId).toBe(exercise.id);
-      expect(copiedSet.sets).toBe(3);
-      expect(copiedSet.reps).toBe(10);
-      expect(copiedSet.id).not.toBe(setId);
     });
 
     it("does NOT copy enrollments", async () => {

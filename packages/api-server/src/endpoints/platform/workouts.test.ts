@@ -2,44 +2,19 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { BadRequestError } from "@repo/errors";
 
-import {
-  cleanupRaw,
-  createTestCoach,
-  createTestExercise,
-  createTestPlan,
-} from "../../test/helpers";
+import { cleanupRaw, createTestCoach, createTestPlan } from "../../test/helpers";
 
 import { platformWorkoutsApi } from "./workouts";
 
 describe("platformWorkoutsApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let plan: Awaited<ReturnType<typeof createTestPlan>>;
-  let categoryId: string;
-  let exerciseId: string;
-  let createdCategory = false;
 
   const toCleanup: { table: string; id: string }[] = [];
 
   beforeAll(async () => {
     coach = await createTestCoach();
     plan = await createTestPlan(coach.profile.id);
-
-    const existing = await cleanupRaw.exerciseCategory.findFirst();
-
-    if (existing) {
-      categoryId = existing.id;
-    } else {
-      const cat = await cleanupRaw.exerciseCategory.create({
-        data: { name: `Test Cat ${crypto.randomUUID().slice(0, 8)}` },
-      });
-
-      categoryId = cat.id;
-      createdCategory = true;
-    }
-
-    const exercise = await createTestExercise({ categoryId });
-
-    exerciseId = exercise.id;
   });
 
   afterAll(async () => {
@@ -54,12 +29,6 @@ describe("platformWorkoutsApi", () => {
       if (delegate) {
         await delegate.delete({ where: { id } }).catch(() => {});
       }
-    }
-
-    await cleanupRaw.exercise.delete({ where: { id: exerciseId } }).catch(() => {});
-
-    if (createdCategory) {
-      await cleanupRaw.exerciseCategory.delete({ where: { id: categoryId } }).catch(() => {});
     }
 
     await cleanupRaw.trainingPlan.delete({ where: { id: plan.id } }).catch(() => {});
@@ -210,29 +179,16 @@ describe("platformWorkoutsApi", () => {
       expect(copied[0]?.title).toBe("Source workout");
     });
 
-    it("copies nested blocks and sets", async () => {
+    it("copies workout content field", async () => {
       const srcDate = new Date("2025-11-03T00:00:00Z");
 
       const srcWorkout = await platformWorkoutsApi.create(coach.user.id, plan.id, {
         scheduledDate: srcDate,
-        title: "With blocks",
+        title: "With content",
+        content: "A. Back Squat\n5x5 @ 185lb",
       });
 
       toCleanup.push({ table: "workout", id: srcWorkout.id });
-
-      const block = await cleanupRaw.workoutBlock.create({
-        data: { workoutId: srcWorkout.id, categoryId, sortOrder: 0, rounds: 3 },
-      });
-
-      await cleanupRaw.prescribedSet.create({
-        data: {
-          blockId: block.id,
-          exerciseId,
-          sets: 4,
-          reps: 10,
-          sortOrder: 0,
-        },
-      });
 
       const targetDate = new Date("2025-11-10T00:00:00Z");
 
@@ -248,17 +204,7 @@ describe("platformWorkoutsApi", () => {
       }
 
       expect(copied).toHaveLength(1);
-      expect(copied[0]?.blockCount).toBe(1);
-
-      const copiedBlocks = await cleanupRaw.workoutBlock.findMany({
-        where: { workoutId: copied[0]?.id },
-        include: { sets: true },
-      });
-
-      expect(copiedBlocks).toHaveLength(1);
-      expect(copiedBlocks[0]?.rounds).toBe(3);
-      expect(copiedBlocks[0]?.sets).toHaveLength(1);
-      expect(copiedBlocks[0]?.sets[0]?.reps).toBe(10);
+      expect(copied[0]?.content).toBe("A. Back Squat\n5x5 @ 185lb");
     });
 
     it("returns empty array for empty source week", async () => {
@@ -304,56 +250,6 @@ describe("platformWorkoutsApi", () => {
     it("throws on IDs not belonging to the plan", async () => {
       await expect(
         platformWorkoutsApi.reorder(coach.user.id, plan.id, [crypto.randomUUID()]),
-      ).rejects.toThrow(BadRequestError);
-    });
-  });
-
-  describe("reorderBlocks", () => {
-    it("updates block sortOrder", async () => {
-      const workout = await platformWorkoutsApi.create(coach.user.id, plan.id, {
-        scheduledDate: new Date("2025-12-15T00:00:00Z"),
-        title: "Block reorder",
-      });
-
-      toCleanup.push({ table: "workout", id: workout.id });
-
-      const b1 = await cleanupRaw.workoutBlock.create({
-        data: { workoutId: workout.id, categoryId, sortOrder: 0 },
-      });
-
-      const b2 = await cleanupRaw.workoutBlock.create({
-        data: { workoutId: workout.id, categoryId, sortOrder: 1 },
-      });
-
-      await platformWorkoutsApi.reorderBlocks(coach.user.id, workout.id, [b2.id, b1.id]);
-
-      const blocks = await cleanupRaw.workoutBlock.findMany({
-        where: { workoutId: workout.id },
-        orderBy: { sortOrder: "asc" },
-      });
-
-      expect(blocks[0]?.id).toBe(b2.id);
-      expect(blocks[1]?.id).toBe(b1.id);
-    });
-
-    it("throws when orderedIds dont match all blocks", async () => {
-      const workout = await platformWorkoutsApi.create(coach.user.id, plan.id, {
-        scheduledDate: new Date("2025-12-16T00:00:00Z"),
-        title: "Block mismatch",
-      });
-
-      toCleanup.push({ table: "workout", id: workout.id });
-
-      await cleanupRaw.workoutBlock.create({
-        data: { workoutId: workout.id, categoryId, sortOrder: 0 },
-      });
-
-      await cleanupRaw.workoutBlock.create({
-        data: { workoutId: workout.id, categoryId, sortOrder: 1 },
-      });
-
-      await expect(
-        platformWorkoutsApi.reorderBlocks(coach.user.id, workout.id, [crypto.randomUUID()]),
       ).rejects.toThrow(BadRequestError);
     });
   });

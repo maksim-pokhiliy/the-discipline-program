@@ -10,8 +10,6 @@ import {
   type PriceInterval as PrismaPriceInterval,
   type Role as PrismaRole,
   type TrainingPlanStatus as PrismaTrainingPlanStatus,
-  type Unit as PrismaUnit,
-  type WeightType as PrismaWeightType,
 } from "@prisma/client";
 
 import { Gender, HealthStatus } from "@repo/contracts/athlete-profile";
@@ -23,19 +21,8 @@ import {
   ActionItemType,
 } from "@repo/contracts/coach-action-item";
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { WeightType, WeightUnit } from "@repo/contracts/prescribed-set";
 import { PriceInterval, ProductCurrency } from "@repo/contracts/product";
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
-
-export const UNIT_MAP: Record<PrismaUnit, WeightUnit> = {
-  KG: WeightUnit.KG,
-  LB: WeightUnit.LB,
-};
-
-export const WEIGHT_TYPE_MAP: Record<PrismaWeightType, WeightType> = {
-  ABSOLUTE: WeightType.ABSOLUTE,
-  PERCENTAGE: WeightType.PERCENTAGE,
-};
 
 export const TRAINING_PLAN_STATUS_MAP: Record<PrismaTrainingPlanStatus, TrainingPlanStatus> = {
   DRAFT: TrainingPlanStatus.DRAFT,

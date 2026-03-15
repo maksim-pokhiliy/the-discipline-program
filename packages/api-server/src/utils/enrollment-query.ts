@@ -27,12 +27,6 @@ export const enrollmentInclude = {
           scheduledDate: true,
           createdAt: true,
           title: true,
-          blocks: {
-            select: {
-              categoryId: true,
-              category: { select: { id: true, name: true } },
-            },
-          },
         },
         orderBy: [{ scheduledDate: "asc" }, { createdAt: "asc" }],
       },

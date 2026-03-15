@@ -41,15 +41,6 @@ export const createTestPlan = async (
   });
 };
 
-export const createTestExercise = async (overrides: Record<string, unknown> = {}) => {
-  return rawPrisma.exercise.create({
-    data: {
-      name: `Test Exercise ${crypto.randomUUID().slice(0, 8)}`,
-      ...overrides,
-    },
-  });
-};
-
 export const cleanup = async (...ids: { table: string; id: string }[]) => {
   for (const { table, id } of ids.reverse()) {
     const delegate = (

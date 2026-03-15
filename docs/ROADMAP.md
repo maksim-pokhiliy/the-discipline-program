@@ -107,22 +107,44 @@ Backend ✅:
 - [x] Full CRUD + archive/restore/activate/duplicate endpoints
 - [x] API client + React Query hooks
 - [x] Archive-first delete flow (ACTIVE → archive → delete from ARCHIVED)
-- [x] Plan duplication (deep copy: workouts → blocks → prescribed sets)
+- [x] Plan duplication (deep copy: workouts → blocks → content)
 - [x] Enriched list data (workouts count, enrolled athletes, last activity, linked products)
+
+Data model (PR #123):
+
+- [x] WorkoutBlock → typed section: `SectionType`, `ScoreType`, `title`, `notes`, timing metadata
+- [x] PrescribedSet.sets removed → one record = one physical set
+- [x] BlockScore model for section-level scoring
+- [ ] **Rich text content** — replace PrescribedSet[] with `content` field on WorkoutBlock (in progress)
+
+Content architecture:
+
+WorkoutBlock stores workout content as **rich text** (not structured PrescribedSet records).
+CrossFit programming formats are too diverse for structured data — EMOM alternating, chippers,
+ladders, death by, descending rep schemes, etc. Rich text gives coaches full freedom.
+
+**Future: @-trigger system (Notion-style)**
+Coach types `@` in the editor → context menu:
+
+- `@Exercise` — link from exercise library (enables usage stats, video links)
+- `@Percentage` — auto-calculate from each athlete's 1RM (e.g., `@75% Back Squat`)
+- `@Format` — insert EMOM/AMRAP/For Time template with timing metadata
+
+This gives structured data where it adds value, without constraining the content format.
+Rich text editor: TipTap (supports custom nodes/marks for @-mention extensibility).
 
 UI — Hybrid drill-down (3 levels):
 
 - Level 1: Plans list (`/coach/plans`) — cards with status/stats, filter tabs, CRUD + status actions
 - Level 2: Plan detail (`/coach/plans/[planId]`) — meta + workouts as cards, plan-level actions
-- Level 3: Workout detail (`/coach/plans/[planId]/workouts/[workoutId]`) — blocks + prescribed sets inline
+- Level 3: Workout detail (`/coach/plans/[planId]/workouts/[workoutId]`) — blocks with rich text content
 
 Implementation:
 
 - [ ] UI: Plans list page (filter tabs by status, plan cards, create/actions menu)
 - [ ] UI: Create/edit plan (name, description — dialog or inline)
 - [ ] UI: Plan detail page (overview + workouts list)
-- [ ] UI: Workout detail page (blocks + prescribed sets)
-- [ ] API client + React Query hooks for workouts, blocks, sets
+- [ ] UI: Workout detail page (blocks + rich text editor)
 - [ ] Enrollment management on plan detail page
 
 ### 3.4 Coach: Exercise library
