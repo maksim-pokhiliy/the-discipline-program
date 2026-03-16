@@ -1,12 +1,11 @@
 "use client";
 
-import { type KeyboardEvent, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import CloseIcon from "@mui/icons-material/Close";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import EditIcon from "@mui/icons-material/Edit";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import {
   Box,
@@ -53,12 +52,6 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
     }
   }, [editValue, workout.id, workout.title, updateWorkout]);
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      (e.target as HTMLInputElement).blur();
-    }
-  };
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -89,7 +82,6 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             onBlur={commitEdit}
-            onKeyDown={handleKeyDown}
             autoFocus={autoFocus}
             placeholder="Workout title..."
             sx={{ flex: 1, typography: "body2", "& input": { p: 0, py: 1, fontWeight: 500 } }}
@@ -111,10 +103,6 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
               />
             </IconButton>
           )}
-
-          <IconButton size="small" sx={{ color: "text.disabled" }}>
-            <EditIcon fontSize="small" />
-          </IconButton>
 
           <IconButton
             size="small"
