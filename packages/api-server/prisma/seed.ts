@@ -32,6 +32,16 @@ const utcDay = (offset: number): Date => {
   return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + offset));
 };
 
+const at = <T>(arr: T[], index: number): T => {
+  const item = arr[index];
+
+  if (item === undefined) {
+    throw new Error(`Seed error: index ${index} out of bounds (length ${arr.length})`);
+  }
+
+  return item;
+};
+
 const clearAll = async () => {
   await prisma.workoutLog.deleteMany();
   await prisma.workout.deleteMany();
@@ -182,18 +192,18 @@ const seedUsers = async (passwordHash: string) => {
   console.log("  Users: 12 (1 admin, 1 coach, 10 athletes)");
 
   return {
-    admin: users[0]!,
-    coach: users[1]!,
-    sarah: users[2]!,
-    mike: users[3]!,
-    jenny: users[4]!,
-    david: users[5]!,
-    lisa: users[6]!,
-    tom: users[7]!,
-    alex: users[8]!,
-    nina: users[9]!,
-    chris: users[10]!,
-    maria: users[11]!,
+    admin: at(users, 0),
+    coach: at(users, 1),
+    sarah: at(users, 2),
+    mike: at(users, 3),
+    jenny: at(users, 4),
+    david: at(users, 5),
+    lisa: at(users, 6),
+    tom: at(users, 7),
+    alex: at(users, 8),
+    nina: at(users, 9),
+    chris: at(users, 10),
+    maria: at(users, 11),
   };
 };
 
@@ -648,47 +658,59 @@ const seedWorkoutLogs = async (
     });
   };
 
-  await createLog(users.sarah.id, workouts.p1[0]!.id, utcDay(-10), true, null);
-  await createLog(users.sarah.id, workouts.p1[1]!.id, utcDay(-8), true, "Feeling strong on cleans");
-  await createLog(users.sarah.id, workouts.p1[2]!.id, utcDay(-5), true, null);
-  await createLog(users.sarah.id, workouts.p1[3]!.id, utcDay(-3), true, null);
-  await createLog(users.sarah.id, workouts.p1[4]!.id, utcDay(-1), true, "PR on deadlift!");
-  await createLog(users.sarah.id, workouts.p1[5]!.id, new Date(), true, "Morning session done");
+  await createLog(users.sarah.id, at(workouts.p1, 0).id, utcDay(-10), true, null);
+  await createLog(
+    users.sarah.id,
+    at(workouts.p1, 1).id,
+    utcDay(-8),
+    true,
+    "Feeling strong on cleans",
+  );
+  await createLog(users.sarah.id, at(workouts.p1, 2).id, utcDay(-5), true, null);
+  await createLog(users.sarah.id, at(workouts.p1, 3).id, utcDay(-3), true, null);
+  await createLog(users.sarah.id, at(workouts.p1, 4).id, utcDay(-1), true, "PR on deadlift!");
+  await createLog(users.sarah.id, at(workouts.p1, 5).id, new Date(), true, "Morning session done");
 
-  await createLog(users.jenny.id, workouts.p1[0]!.id, utcDay(-10), true, null);
-  await createLog(users.jenny.id, workouts.p1[1]!.id, utcDay(-8), true, null);
-  await createLog(users.jenny.id, workouts.p1[2]!.id, utcDay(-5), true, null);
-  await createLog(users.jenny.id, workouts.p1[3]!.id, utcDay(-3), false, "Scaled push press");
-  await createLog(users.jenny.id, workouts.p1[4]!.id, utcDay(-1), true, null);
-  await createLog(users.jenny.id, workouts.p1[5]!.id, new Date(), true, null);
+  await createLog(users.jenny.id, at(workouts.p1, 0).id, utcDay(-10), true, null);
+  await createLog(users.jenny.id, at(workouts.p1, 1).id, utcDay(-8), true, null);
+  await createLog(users.jenny.id, at(workouts.p1, 2).id, utcDay(-5), true, null);
+  await createLog(users.jenny.id, at(workouts.p1, 3).id, utcDay(-3), false, "Scaled push press");
+  await createLog(users.jenny.id, at(workouts.p1, 4).id, utcDay(-1), true, null);
+  await createLog(users.jenny.id, at(workouts.p1, 5).id, new Date(), true, null);
 
-  await createLog(users.mike.id, workouts.p2[0]!.id, utcDay(-11), true, null);
-  await createLog(users.mike.id, workouts.p2[1]!.id, utcDay(-9), true, null);
-  await createLog(users.mike.id, workouts.p2[2]!.id, utcDay(-6), true, null);
-  await createLog(users.mike.id, workouts.p2[3]!.id, utcDay(-4), true, null);
-  await createLog(users.mike.id, workouts.p2[4]!.id, utcDay(-2), true, null);
+  await createLog(users.mike.id, at(workouts.p2, 0).id, utcDay(-11), true, null);
+  await createLog(users.mike.id, at(workouts.p2, 1).id, utcDay(-9), true, null);
+  await createLog(users.mike.id, at(workouts.p2, 2).id, utcDay(-6), true, null);
+  await createLog(users.mike.id, at(workouts.p2, 3).id, utcDay(-4), true, null);
+  await createLog(users.mike.id, at(workouts.p2, 4).id, utcDay(-2), true, null);
 
-  await createLog(users.maria.id, workouts.p2[0]!.id, utcDay(-11), true, null);
-  await createLog(users.maria.id, workouts.p2[1]!.id, utcDay(-9), true, null);
-  await createLog(users.maria.id, workouts.p2[2]!.id, utcDay(-6), true, null);
-  await createLog(users.maria.id, workouts.p2[3]!.id, utcDay(-4), true, null);
-  await createLog(users.maria.id, workouts.p2[4]!.id, utcDay(-2), true, null);
-  await createLog(users.maria.id, workouts.p2[5]!.id, new Date(), true, "Early bird done");
+  await createLog(users.maria.id, at(workouts.p2, 0).id, utcDay(-11), true, null);
+  await createLog(users.maria.id, at(workouts.p2, 1).id, utcDay(-9), true, null);
+  await createLog(users.maria.id, at(workouts.p2, 2).id, utcDay(-6), true, null);
+  await createLog(users.maria.id, at(workouts.p2, 3).id, utcDay(-4), true, null);
+  await createLog(users.maria.id, at(workouts.p2, 4).id, utcDay(-2), true, null);
+  await createLog(users.maria.id, at(workouts.p2, 5).id, new Date(), true, "Early bird done");
 
-  await createLog(users.david.id, workouts.p3[0]!.id, utcDay(-5), true, "First workout ever");
-  await createLog(users.david.id, workouts.p3[1]!.id, utcDay(-2), true, null);
+  await createLog(users.david.id, at(workouts.p3, 0).id, utcDay(-5), true, "First workout ever");
+  await createLog(users.david.id, at(workouts.p3, 1).id, utcDay(-2), true, null);
 
-  await createLog(users.alex.id, workouts.p4[0]!.id, utcDay(-18), true, null);
-  await createLog(users.alex.id, workouts.p4[1]!.id, utcDay(-14), true, "Knee started hurting");
+  await createLog(users.alex.id, at(workouts.p4, 0).id, utcDay(-18), true, null);
+  await createLog(users.alex.id, at(workouts.p4, 1).id, utcDay(-14), true, "Knee started hurting");
 
-  await createLog(users.lisa.id, workouts.p4[0]!.id, utcDay(-18), false, null);
-  await createLog(users.lisa.id, workouts.p4[1]!.id, utcDay(-14), false, "Shoulder pain");
-  await createLog(users.lisa.id, workouts.p4[2]!.id, utcDay(-9), false, "Light weights only");
-  await createLog(users.lisa.id, workouts.p4[3]!.id, utcDay(-5), false, "Last session before rest");
+  await createLog(users.lisa.id, at(workouts.p4, 0).id, utcDay(-18), false, null);
+  await createLog(users.lisa.id, at(workouts.p4, 1).id, utcDay(-14), false, "Shoulder pain");
+  await createLog(users.lisa.id, at(workouts.p4, 2).id, utcDay(-9), false, "Light weights only");
+  await createLog(
+    users.lisa.id,
+    at(workouts.p4, 3).id,
+    utcDay(-5),
+    false,
+    "Last session before rest",
+  );
 
-  await createLog(users.nina.id, workouts.p4[0]!.id, utcDay(-18), true, null);
-  await createLog(users.nina.id, workouts.p4[1]!.id, utcDay(-14), true, null);
-  await createLog(users.nina.id, workouts.p4[2]!.id, utcDay(-9), true, "Dropped off after this");
+  await createLog(users.nina.id, at(workouts.p4, 0).id, utcDay(-18), true, null);
+  await createLog(users.nina.id, at(workouts.p4, 1).id, utcDay(-14), true, null);
+  await createLog(users.nina.id, at(workouts.p4, 2).id, utcDay(-9), true, "Dropped off after this");
 
   console.log(
     "  Workout logs: Sarah 6, Jenny 6, Mike 5, Maria 6, David 2, Alex 2, Lisa 4, Nina 3 (Tom 0, Chris 0)",
@@ -807,27 +829,27 @@ const seedBenchmarks = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
 
   await prisma.userBenchmark.createMany({
     data: [
-      { userId: users.sarah.id, benchmarkDefinitionId: defs[0]!.id, value: 225 },
-      { userId: users.sarah.id, benchmarkDefinitionId: defs[1]!.id, value: 285 },
-      { userId: users.sarah.id, benchmarkDefinitionId: defs[2]!.id, value: 185 },
-      { userId: users.sarah.id, benchmarkDefinitionId: defs[3]!.id, value: 145 },
-      { userId: users.sarah.id, benchmarkDefinitionId: defs[4]!.id, value: 195 },
-      { userId: users.sarah.id, benchmarkDefinitionId: defs[6]!.id, value: 22 },
+      { userId: users.sarah.id, benchmarkDefinitionId: at(defs, 0).id, value: 225 },
+      { userId: users.sarah.id, benchmarkDefinitionId: at(defs, 1).id, value: 285 },
+      { userId: users.sarah.id, benchmarkDefinitionId: at(defs, 2).id, value: 185 },
+      { userId: users.sarah.id, benchmarkDefinitionId: at(defs, 3).id, value: 145 },
+      { userId: users.sarah.id, benchmarkDefinitionId: at(defs, 4).id, value: 195 },
+      { userId: users.sarah.id, benchmarkDefinitionId: at(defs, 6).id, value: 22 },
 
-      { userId: users.mike.id, benchmarkDefinitionId: defs[0]!.id, value: 315 },
-      { userId: users.mike.id, benchmarkDefinitionId: defs[1]!.id, value: 405 },
-      { userId: users.mike.id, benchmarkDefinitionId: defs[2]!.id, value: 245 },
-      { userId: users.mike.id, benchmarkDefinitionId: defs[5]!.id, value: 420 },
-      { userId: users.mike.id, benchmarkDefinitionId: defs[6]!.id, value: 30 },
+      { userId: users.mike.id, benchmarkDefinitionId: at(defs, 0).id, value: 315 },
+      { userId: users.mike.id, benchmarkDefinitionId: at(defs, 1).id, value: 405 },
+      { userId: users.mike.id, benchmarkDefinitionId: at(defs, 2).id, value: 245 },
+      { userId: users.mike.id, benchmarkDefinitionId: at(defs, 5).id, value: 420 },
+      { userId: users.mike.id, benchmarkDefinitionId: at(defs, 6).id, value: 30 },
 
-      { userId: users.jenny.id, benchmarkDefinitionId: defs[0]!.id, value: 175 },
-      { userId: users.jenny.id, benchmarkDefinitionId: defs[1]!.id, value: 225 },
-      { userId: users.jenny.id, benchmarkDefinitionId: defs[4]!.id, value: 240 },
-      { userId: users.jenny.id, benchmarkDefinitionId: defs[6]!.id, value: 15 },
+      { userId: users.jenny.id, benchmarkDefinitionId: at(defs, 0).id, value: 175 },
+      { userId: users.jenny.id, benchmarkDefinitionId: at(defs, 1).id, value: 225 },
+      { userId: users.jenny.id, benchmarkDefinitionId: at(defs, 4).id, value: 240 },
+      { userId: users.jenny.id, benchmarkDefinitionId: at(defs, 6).id, value: 15 },
 
-      { userId: users.lisa.id, benchmarkDefinitionId: defs[0]!.id, value: 185 },
-      { userId: users.lisa.id, benchmarkDefinitionId: defs[1]!.id, value: 245 },
-      { userId: users.lisa.id, benchmarkDefinitionId: defs[5]!.id, value: 480 },
+      { userId: users.lisa.id, benchmarkDefinitionId: at(defs, 0).id, value: 185 },
+      { userId: users.lisa.id, benchmarkDefinitionId: at(defs, 1).id, value: 245 },
+      { userId: users.lisa.id, benchmarkDefinitionId: at(defs, 5).id, value: 480 },
     ],
   });
 
