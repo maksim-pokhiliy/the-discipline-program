@@ -26,12 +26,10 @@ const daysFromNow = (days: number): Date => {
   return d;
 };
 
-const todayAt = (hours: number, minutes = 0): Date => {
-  const d = new Date();
+const utcDay = (offset: number): Date => {
+  const now = new Date();
 
-  d.setHours(hours, minutes, 0, 0);
-
-  return d;
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + offset));
 };
 
 const clearAll = async () => {
@@ -329,189 +327,189 @@ const seedTrainingData = async (coachProfileId: string) => {
 
   const p1w1 = await createWorkout(
     plan1.id,
-    daysAgo(14),
+    utcDay(-10),
     "Day 1: Heavy Squats + Fran",
     'A. Warm-Up\n3 rounds:\n200m Row\n10 PVC Pass-Throughs\n10 Air Squats\n\nB. Strength: Back Squat\nEvery 2:30 x 5 sets\n6 @ 155lb\n6 @ 165lb\n6 @ 175lb\n6 @ 185lb\n6 @ 185lb\n\nC. Metcon — "Fran" (For Time, 12 min cap)\n21-15-9\nThrusters (95/65 lb)\nPull-Ups\n\nD. Accessory\n3x15 GHD Sit-Ups\n3x8 Poliquin Step-Ups (35lb DBs)',
   );
 
   const p1w2 = await createWorkout(
     plan1.id,
-    daysAgo(12),
+    utcDay(-8),
     "Day 2: Olympic Lifting",
     "A. Warm-Up\n2 rounds:\n10 Samson Stretches\n15 PVC Pass-Throughs\n\nB. Clean & Jerk\nEvery 3:00 x 5 sets\n2 @ 155lb\n2 @ 165lb\n2 @ 175lb\n2 @ 185lb\n2 @ 195lb\n\nC. Snatch\nEvery 2:30 x 5 sets\n2 @ 115lb\n2 @ 125lb\n2 @ 135lb\n2 @ 145lb\n2 @ 155lb\n\nD. Cool-Down\n3x1 min each side Pigeon Stretch",
   );
 
   const p1w3 = await createWorkout(
     plan1.id,
-    daysAgo(10),
+    utcDay(-5),
     "Day 3: Gymnastics + Metcon",
     "A. Gymnastics EMOM 16\nMin 1-4: 3 Bar Muscle-Ups\nMin 5-8: 50ft Handstand Walk\nMin 9-12: 8 Toes-to-Bar\nMin 13-16: 10 Ring Dips\n\nB. AMRAP 15 (5 round cap)\n20 Wall Balls (20 lb)\n15 Box Jumps (24 in)\n12 KB Swings (53 lb)",
   );
 
   const p1w4 = await createWorkout(
     plan1.id,
-    daysAgo(7),
+    utcDay(-3),
     "Day 4: Pressing + Engine",
     "A. Push Press\nEvery 2:00 x 5 sets\n5 @ 115lb / 125 / 135 / 145 / 155lb\n\nB. Bench Press\nEvery 2:00 x 5 sets\n5 @ 155lb / 165 / 175 / 185 / 185lb\n\nC. Cardio Chipper (For Time, 20 min cap)\n30 cal Assault Bike\n400m Run\n30 cal Ski Erg\n400m Run\n30 cal Row",
   );
 
   const p1w5 = await createWorkout(
     plan1.id,
-    daysAgo(5),
+    utcDay(-1),
     "Day 5: Deadlift + DT",
     'A. Deadlift\nEvery 3:00 x 5 sets\n3 @ 275lb / 295 / 315 / 335 / 345lb\n\nB. "DT" — 5 Rounds For Time (10 min cap)\n12 Deadlifts (155 lb)\n9 Hang Power Cleans (155 lb)\n6 Push Jerks (155 lb)',
   );
 
   const p1w6 = await createWorkout(
     plan1.id,
-    daysAgo(3),
+    utcDay(0),
     "Day 6: Snatch Complex",
     "A. Warm-Up\n3 rounds:\n1 min each Couch Stretch\n15 PVC Pass-Throughs\n\nB. Power Snatch\nEvery 2:30 x 5 sets\n2 @ 115lb / 125 / 135 / 145 / 155lb\n\nC. Tabata Assault Bike\n8 rounds: 20s on / 10s off\nMax calories each round",
   );
 
   const p1w7 = await createWorkout(
     plan1.id,
-    daysAgo(1),
+    utcDay(2),
     "Day 7: Gymnastics Volume",
     "A. EMOM 20\nMin 1-5: 3 Bar Muscle-Ups\nMin 6-10: 7 Handstand Push-Ups\nMin 11-15: 10 Chest-to-Bar Pull-Ups\nMin 16-20: 8 Pistol Squats (alternating)\n\nB. Accessory\n3x20 Banded Pull-Aparts\n3x15 Face Pulls",
   );
 
   const p1w8 = await createWorkout(
     plan1.id,
-    todayAt(0),
+    utcDay(4),
     "Day 8: Squat + Sprint",
     "A. Front Squat\nEvery 2:30 x 5 sets\n3 @ 185lb / 195 / 205 / 215 / 225lb\n\nB. Sprint (For Time, 10 min cap)\n10 Burpees + 10 Thrusters (135 lb)\n8 Burpees + 8 Thrusters (135 lb)\n6 Burpees + 6 Thrusters (135 lb)",
   );
 
   const p2w1 = await createWorkout(
     plan2.id,
-    daysAgo(14),
+    utcDay(-11),
     "Monday: Strength + Metcon",
     "A. Back Squat\nEvery 2:30 x 5 sets\n5 @ 155lb / 165 / 175 / 185 / 195lb\n\nB. AMRAP 12\n15 Wall Balls (20 lb)\n50 Double Unders\n10 Toes-to-Bar",
   );
 
   const p2w2 = await createWorkout(
     plan2.id,
-    daysAgo(12),
+    utcDay(-9),
     "Tuesday: Conditioning",
     "A. 5 Rounds For Time (25 min cap)\n500m Row\n15 Burpees",
   );
 
   const p2w3 = await createWorkout(
     plan2.id,
-    daysAgo(10),
+    utcDay(-6),
     "Wednesday: Olympic + Skill",
     "A. Power Clean\nEvery 2:00 x 5 sets\n3 @ 135lb / 145 / 155 / 165 / 175lb\n\nB. EMOM 12\nMin 1: 8 Pull-Ups\nMin 2: 5 Handstand Push-Ups\nMin 3: 8 Ring Dips\n(repeat 4x)",
   );
 
   const p2w4 = await createWorkout(
     plan2.id,
-    daysAgo(7),
+    utcDay(-4),
     "Thursday: Midline + Metcon",
     "A. Midline\n3x20 GHD Sit-Ups\n3x15 Hip Extensions\n\nB. Chipper (For Time, 20 min cap)\n50 KB Swings (53 lb)\n40 Box Jumps (24 in)\n30 Wall Balls (20 lb)\n20 Burpees\n10 Pull-Ups",
   );
 
   const p2w5 = await createWorkout(
     plan2.id,
-    daysAgo(5),
+    utcDay(-2),
     "Friday: Deadlift + Metcon",
     "A. Deadlift\nEvery 2:30 x 5 sets\n5 @ 185lb / 205 / 225 / 245 / 265lb\n\nB. AMRAP 10\n10 DB Snatches (50 lb, alternating)\n10 Burpees\n40 Double Unders",
   );
 
   const p2w6 = await createWorkout(
     plan2.id,
-    daysAgo(3),
+    utcDay(0),
     "Saturday: Team Workout",
     "A. Partner Helen — 3 Rounds For Time (20 min cap)\n400m Run\n21 KB Swings (53 lb)\n12 Pull-Ups\n(split work as needed)",
   );
 
   const p2w7 = await createWorkout(
     plan2.id,
-    daysAgo(1),
+    utcDay(1),
     "Monday: Squat Repeat",
     "A. Back Squat\nEvery 2:30 x 5 sets\n5 @ 165lb / 175 / 185 / 195 / 205lb\n\nB. Tabata Double Unders\n8 rounds: 20s on / 10s off\nMax reps each round",
   );
 
   const p2w8 = await createWorkout(
     plan2.id,
-    todayAt(0),
+    utcDay(3),
     "Tuesday: Conditioning Day",
     "A. Row + Bike (For Time, 30 min cap)\n2000m Row\n40 cal Assault Bike\n\nB. AMRAP 8\n15 KB Swings (53 lb)\n50 Double Unders",
   );
 
   const p3w1 = await createWorkout(
     plan3.id,
-    daysAgo(7),
+    utcDay(-5),
     "Intro: Movement Basics",
     "A. Warm-Up\n400m Jog\n2x15 PVC Pass-Throughs\n2x10 Samson Stretches\n\nB. Back Squat\nEvery 2:00 x 3 sets\n10 @ 65lb (RPE 5)\n\nC. Deadlift\nEvery 2:00 x 3 sets\n8 @ 95lb (RPE 5)",
   );
 
   const p3w2 = await createWorkout(
     plan3.id,
-    daysAgo(5),
+    utcDay(-2),
     "Day 2: Light Metcon",
     "A. AMRAP 10\n8 Burpees\n10 Box Jumps (20 in)\n12 KB Swings (35 lb)\n\nB. Cool-Down\n2 min each side Pigeon Stretch\n2 min each side Couch Stretch",
   );
 
   const p3w3 = await createWorkout(
     plan3.id,
-    daysAgo(3),
+    utcDay(0),
     "Day 3: Cardio Base",
     "A. Row 2000m at easy pace (30 min cap)\n\nB. Single Unders\n3x100 reps",
   );
 
   const p3w4 = await createWorkout(
     plan3.id,
-    todayAt(0),
+    utcDay(3),
     "Day 4: Upper Body Intro",
     "A. Bench Press\nEvery 1:30 x 3 sets\n8 @ 65lb (RPE 5)\n\nB. Push Press\nEvery 1:30 x 3 sets\n8 @ 55lb (RPE 5)\n\nC. Accessory\n3x15 Banded Pull-Aparts\n3x12 Face Pulls",
   );
 
   const p4w1 = await createWorkout(
     plan4.id,
-    daysAgo(21),
+    utcDay(-18),
     "Week 1: Squat Focus",
     "A. Back Squat\nEvery 2:30 x 4 sets\n8 @ 165lb / 175 / 185 / 195lb\n\nB. Front Squat\nEvery 2:00 x 3 sets\n8 @ 135lb / 145 / 155lb",
   );
 
   const p4w2 = await createWorkout(
     plan4.id,
-    daysAgo(14),
+    utcDay(-14),
     "Week 2: Deadlift Focus",
     "A. Deadlift\nEvery 3:00 x 5 sets\n5 @ 225lb / 245 / 265 / 275 / 285lb\n\nB. Accessory\n3x20 GHD Sit-Ups\n3x15 Hip Extensions",
   );
 
   const p4w3 = await createWorkout(
     plan4.id,
-    daysAgo(10),
+    utcDay(-9),
     "Week 3: Press Focus",
     "A. Bench Press\nEvery 2:30 x 5 sets\n5 @ 145lb / 155 / 165 / 175 / 185lb\n\nB. Push Press\nEvery 2:00 x 4 sets\n6 @ 105lb / 115 / 125 / 135lb",
   );
 
   const p4w4 = await createWorkout(
     plan4.id,
-    daysAgo(5),
+    utcDay(-5),
     "Week 4 Day 1: Heavy Squat",
     "A. Back Squat\nEvery 3:00 x 5 sets\n3 @ 205lb / 215 / 225 / 235 / 245lb",
   );
 
   const p4w5 = await createWorkout(
     plan4.id,
-    daysAgo(3),
+    utcDay(-3),
     "Week 4 Day 2: Heavy Deadlift",
     "A. Deadlift\nEvery 3:00 x 5 sets\n3 @ 275lb / 295 / 315 / 335 / 345lb",
   );
 
   const p4w6 = await createWorkout(
     plan4.id,
-    daysAgo(2),
+    utcDay(-1),
     "Week 4 Day 3: Heavy Press",
     "A. Bench Press\nEvery 2:30 x 5 sets\n3 @ 175lb / 185 / 195 / 205 / 205lb\n\nB. Push Jerk\nEvery 2:00 x 4 sets\n3 @ 155lb / 165 / 175 / 185lb",
   );
 
   const p4w7 = await createWorkout(
     plan4.id,
-    daysAgo(1),
+    utcDay(1),
     "Week 4 Day 4: Accessory",
     "A. Accessory\n4x15 GHD Sit-Ups\n4x12 Poliquin Step-Ups (35lb DBs)\n4x15 Face Pulls",
   );
@@ -650,64 +648,50 @@ const seedWorkoutLogs = async (
     });
   };
 
-  await createLog(users.sarah.id, workouts.p1[0]!.id, daysAgo(14), true, null);
-  await createLog(
-    users.sarah.id,
-    workouts.p1[1]!.id,
-    daysAgo(12),
-    true,
-    "Feeling strong on cleans",
-  );
-  await createLog(users.sarah.id, workouts.p1[2]!.id, daysAgo(10), true, null);
-  await createLog(users.sarah.id, workouts.p1[3]!.id, daysAgo(7), true, null);
-  await createLog(users.sarah.id, workouts.p1[4]!.id, daysAgo(5), true, "PR on deadlift!");
-  await createLog(users.sarah.id, workouts.p1[5]!.id, daysAgo(3), true, null);
-  await createLog(users.sarah.id, workouts.p1[6]!.id, daysAgo(1), true, null);
-  await createLog(users.sarah.id, workouts.p1[7]!.id, todayAt(7, 30), true, "Morning session done");
+  await createLog(users.sarah.id, workouts.p1[0]!.id, utcDay(-10), true, null);
+  await createLog(users.sarah.id, workouts.p1[1]!.id, utcDay(-8), true, "Feeling strong on cleans");
+  await createLog(users.sarah.id, workouts.p1[2]!.id, utcDay(-5), true, null);
+  await createLog(users.sarah.id, workouts.p1[3]!.id, utcDay(-3), true, null);
+  await createLog(users.sarah.id, workouts.p1[4]!.id, utcDay(-1), true, "PR on deadlift!");
+  await createLog(users.sarah.id, workouts.p1[5]!.id, new Date(), true, "Morning session done");
 
-  await createLog(users.jenny.id, workouts.p1[0]!.id, daysAgo(14), true, null);
-  await createLog(users.jenny.id, workouts.p1[1]!.id, daysAgo(12), true, null);
-  await createLog(users.jenny.id, workouts.p1[2]!.id, daysAgo(10), true, null);
-  await createLog(users.jenny.id, workouts.p1[3]!.id, daysAgo(7), false, "Scaled push press");
-  await createLog(users.jenny.id, workouts.p1[4]!.id, daysAgo(5), true, null);
-  await createLog(users.jenny.id, workouts.p1[5]!.id, daysAgo(3), true, null);
-  await createLog(users.jenny.id, workouts.p1[6]!.id, daysAgo(1), true, null);
-  await createLog(users.jenny.id, workouts.p1[7]!.id, todayAt(8, 0), true, null);
+  await createLog(users.jenny.id, workouts.p1[0]!.id, utcDay(-10), true, null);
+  await createLog(users.jenny.id, workouts.p1[1]!.id, utcDay(-8), true, null);
+  await createLog(users.jenny.id, workouts.p1[2]!.id, utcDay(-5), true, null);
+  await createLog(users.jenny.id, workouts.p1[3]!.id, utcDay(-3), false, "Scaled push press");
+  await createLog(users.jenny.id, workouts.p1[4]!.id, utcDay(-1), true, null);
+  await createLog(users.jenny.id, workouts.p1[5]!.id, new Date(), true, null);
 
-  await createLog(users.mike.id, workouts.p2[0]!.id, daysAgo(14), true, null);
-  await createLog(users.mike.id, workouts.p2[1]!.id, daysAgo(12), true, null);
-  await createLog(users.mike.id, workouts.p2[2]!.id, daysAgo(10), true, null);
-  await createLog(users.mike.id, workouts.p2[3]!.id, daysAgo(7), true, null);
-  await createLog(users.mike.id, workouts.p2[4]!.id, daysAgo(5), true, null);
-  await createLog(users.mike.id, workouts.p2[5]!.id, daysAgo(3), true, null);
-  await createLog(users.mike.id, workouts.p2[6]!.id, daysAgo(1), true, null);
+  await createLog(users.mike.id, workouts.p2[0]!.id, utcDay(-11), true, null);
+  await createLog(users.mike.id, workouts.p2[1]!.id, utcDay(-9), true, null);
+  await createLog(users.mike.id, workouts.p2[2]!.id, utcDay(-6), true, null);
+  await createLog(users.mike.id, workouts.p2[3]!.id, utcDay(-4), true, null);
+  await createLog(users.mike.id, workouts.p2[4]!.id, utcDay(-2), true, null);
 
-  await createLog(users.maria.id, workouts.p2[0]!.id, daysAgo(14), true, null);
-  await createLog(users.maria.id, workouts.p2[1]!.id, daysAgo(12), true, null);
-  await createLog(users.maria.id, workouts.p2[2]!.id, daysAgo(10), true, null);
-  await createLog(users.maria.id, workouts.p2[3]!.id, daysAgo(7), true, null);
-  await createLog(users.maria.id, workouts.p2[4]!.id, daysAgo(5), true, null);
-  await createLog(users.maria.id, workouts.p2[5]!.id, daysAgo(3), true, null);
-  await createLog(users.maria.id, workouts.p2[6]!.id, daysAgo(1), true, null);
-  await createLog(users.maria.id, workouts.p2[7]!.id, todayAt(6, 15), true, "Early bird done");
+  await createLog(users.maria.id, workouts.p2[0]!.id, utcDay(-11), true, null);
+  await createLog(users.maria.id, workouts.p2[1]!.id, utcDay(-9), true, null);
+  await createLog(users.maria.id, workouts.p2[2]!.id, utcDay(-6), true, null);
+  await createLog(users.maria.id, workouts.p2[3]!.id, utcDay(-4), true, null);
+  await createLog(users.maria.id, workouts.p2[4]!.id, utcDay(-2), true, null);
+  await createLog(users.maria.id, workouts.p2[5]!.id, new Date(), true, "Early bird done");
 
-  await createLog(users.david.id, workouts.p3[0]!.id, daysAgo(4), true, "First workout ever");
-  await createLog(users.david.id, workouts.p3[1]!.id, daysAgo(2), true, null);
+  await createLog(users.david.id, workouts.p3[0]!.id, utcDay(-5), true, "First workout ever");
+  await createLog(users.david.id, workouts.p3[1]!.id, utcDay(-2), true, null);
 
-  await createLog(users.alex.id, workouts.p4[0]!.id, daysAgo(21), true, null);
-  await createLog(users.alex.id, workouts.p4[1]!.id, daysAgo(14), true, "Knee started hurting");
+  await createLog(users.alex.id, workouts.p4[0]!.id, utcDay(-18), true, null);
+  await createLog(users.alex.id, workouts.p4[1]!.id, utcDay(-14), true, "Knee started hurting");
 
-  await createLog(users.lisa.id, workouts.p4[0]!.id, daysAgo(21), false, null);
-  await createLog(users.lisa.id, workouts.p4[1]!.id, daysAgo(14), false, "Shoulder pain");
-  await createLog(users.lisa.id, workouts.p4[2]!.id, daysAgo(10), false, "Light weights only");
-  await createLog(users.lisa.id, workouts.p4[3]!.id, daysAgo(5), false, "Last session before rest");
+  await createLog(users.lisa.id, workouts.p4[0]!.id, utcDay(-18), false, null);
+  await createLog(users.lisa.id, workouts.p4[1]!.id, utcDay(-14), false, "Shoulder pain");
+  await createLog(users.lisa.id, workouts.p4[2]!.id, utcDay(-9), false, "Light weights only");
+  await createLog(users.lisa.id, workouts.p4[3]!.id, utcDay(-5), false, "Last session before rest");
 
-  await createLog(users.nina.id, workouts.p4[0]!.id, daysAgo(21), true, null);
-  await createLog(users.nina.id, workouts.p4[1]!.id, daysAgo(14), true, null);
-  await createLog(users.nina.id, workouts.p4[2]!.id, daysAgo(10), true, "Dropped off after this");
+  await createLog(users.nina.id, workouts.p4[0]!.id, utcDay(-18), true, null);
+  await createLog(users.nina.id, workouts.p4[1]!.id, utcDay(-14), true, null);
+  await createLog(users.nina.id, workouts.p4[2]!.id, utcDay(-9), true, "Dropped off after this");
 
   console.log(
-    "  Workout logs: Sarah 8, Jenny 8, Mike 7, Maria 8, David 2, Alex 2, Lisa 4, Nina 3 (Tom 0, Chris 0)",
+    "  Workout logs: Sarah 6, Jenny 6, Mike 5, Maria 6, David 2, Alex 2, Lisa 4, Nina 3 (Tom 0, Chris 0)",
   );
   console.log(
     "  Dashboard expects: COMPLETED(Sarah,Jenny,Maria), PENDING(Mike,David), MISSED(Alex,Lisa,Nina), NO_SCHEDULE(Tom,Chris)",
@@ -774,7 +758,7 @@ const seedCoachNotes = async (
         athleteId: users.jenny.id,
         content:
           "Jenny crushed it today. Her consistency is paying off. Ready to try ring muscle-ups next week.",
-        createdAt: todayAt(9, 0),
+        createdAt: new Date(),
       },
       {
         coachId: coachProfileId,

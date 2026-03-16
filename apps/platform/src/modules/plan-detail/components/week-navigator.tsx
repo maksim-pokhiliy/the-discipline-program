@@ -47,10 +47,12 @@ export const WeekNavigator = () => {
   const isCurrentWeek = formatDateParam(weekStart) === formatDateParam(getMonday(new Date()));
 
   return (
-    <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
-      <IconButton onClick={() => navigate(addDays(weekStart, -7))} size="small">
-        <ChevronLeftIcon />
-      </IconButton>
+    <Stack direction="row" sx={{ alignItems: "center", position: "relative" }}>
+      <Stack direction="row" sx={{ flex: 1, justifyContent: "flex-start" }}>
+        <IconButton onClick={() => navigate(addDays(weekStart, -7))} size="small">
+          <ChevronLeftIcon />
+        </IconButton>
+      </Stack>
 
       <Stack sx={{ alignItems: "center" }}>
         <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
@@ -61,20 +63,22 @@ export const WeekNavigator = () => {
         </Typography>
       </Stack>
 
-      <Stack direction="row" spacing={0.5}>
-        {!isCurrentWeek && (
-          <Button
-            size="small"
-            startIcon={<TodayIcon />}
-            onClick={() => navigate(getMonday(new Date()))}
-          >
-            Today
-          </Button>
-        )}
+      <Stack direction="row" sx={{ flex: 1, justifyContent: "flex-end" }}>
         <IconButton onClick={() => navigate(addDays(weekStart, 7))} size="small">
           <ChevronRightIcon />
         </IconButton>
       </Stack>
+
+      {!isCurrentWeek && (
+        <Button
+          size="small"
+          startIcon={<TodayIcon />}
+          onClick={() => navigate(getMonday(new Date()))}
+          sx={(theme) => ({ position: "absolute", right: theme.spacing(5) })}
+        >
+          Today
+        </Button>
+      )}
     </Stack>
   );
 };

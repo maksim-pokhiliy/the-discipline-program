@@ -11,7 +11,6 @@ import {
   AthletesTodaySection,
   ProgressBucketsSection,
   PulseSection,
-  QuickActionsSection,
 } from "../sections";
 
 export const DashboardView = () => {
@@ -27,7 +26,6 @@ export const DashboardView = () => {
       {(data) => (
         <Stack spacing={{ xs: 2, md: 3 }}>
           <PulseSection overview={data.overview} />
-          <QuickActionsSection />
           <ActionItemsSection items={data.actionItems} />
           <ProgressBucketsSection buckets={data.progressBuckets} />
           <AthletesTodaySection athletes={data.athletesSummary} />
