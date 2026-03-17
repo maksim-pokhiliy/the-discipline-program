@@ -1,25 +1,16 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import CloseIcon from "@mui/icons-material/Close";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import {
-  Box,
-  Collapse,
-  Divider,
-  IconButton,
-  InputBase,
-  Paper,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Collapse, Divider, IconButton, InputBase, Paper, Stack, Typography } from "@mui/material";
 
 import type { Workout } from "@repo/contracts/workout";
-import { ConfirmationModal } from "@repo/ui";
+import { ConfirmationModal, RichTextEditor } from "@repo/ui";
 
 import { useDeleteWorkout, useUpdateWorkout } from "@app/lib/hooks";
 
@@ -39,10 +30,17 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editValue, setEditValue] = useState(workout.title);
   const [expanded, setExpanded] = useState(false);
+  const [contentValue, setContentValue] = useState(workout.content ?? "");
+  const contentRef = useRef(contentValue);
 
-  const hasContent = Boolean(workout.content);
+  useEffect(() => {
+    const next = workout.content ?? "";
 
-  const commitEdit = useCallback(() => {
+    setContentValue(next);
+    contentRef.current = next;
+  }, [workout.content]);
+
+  const commitTitle = useCallback(() => {
     const trimmed = editValue.trim();
 
     if (trimmed !== workout.title) {
@@ -51,6 +49,20 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
       setEditValue(workout.title);
     }
   }, [editValue, workout.id, workout.title, updateWorkout]);
+
+  const commitContent = useCallback(() => {
+    const current = contentRef.current;
+    const original = workout.content ?? "";
+
+    if (current !== original) {
+      updateWorkout.mutate({ id: workout.id, data: { content: current || null } });
+    }
+  }, [workout.id, workout.content, updateWorkout]);
+
+  const handleContentChange = useCallback((val: string) => {
+    setContentValue(val);
+    contentRef.current = val;
+  }, []);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -81,28 +93,26 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
           <InputBase
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
-            onBlur={commitEdit}
+            onBlur={commitTitle}
             autoFocus={autoFocus}
             placeholder="Workout title..."
             sx={{ flex: 1, typography: "body2", "& input": { p: 0, py: 1, fontWeight: 500 } }}
             slotProps={{ input: { maxLength: 200 } }}
           />
 
-          {hasContent && (
-            <IconButton
-              size="small"
-              onClick={() => setExpanded((prev) => !prev)}
-              sx={{ color: "text.disabled" }}
-            >
-              <ExpandMoreIcon
-                fontSize="small"
-                sx={(theme) => ({
-                  transition: theme.transitions.create("transform"),
-                  transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-                })}
-              />
-            </IconButton>
-          )}
+          <IconButton
+            size="small"
+            onClick={() => setExpanded((prev) => !prev)}
+            sx={{ color: "text.disabled" }}
+          >
+            <ExpandMoreIcon
+              fontSize="small"
+              sx={(theme) => ({
+                transition: theme.transitions.create("transform"),
+                transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+              })}
+            />
+          </IconButton>
 
           <IconButton
             size="small"
@@ -113,16 +123,15 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
           </IconButton>
         </Stack>
 
-        <Collapse in={expanded} unmountOnExit>
+        <Collapse in={expanded} unmountOnExit onExited={commitContent}>
           <Divider />
-          <Box sx={{ px: 2, py: 1.5 }}>
-            <Typography
-              variant="caption"
-              sx={{ color: "text.secondary", whiteSpace: "pre-wrap", lineHeight: 1.6 }}
-            >
-              {workout.content}
-            </Typography>
-          </Box>
+          <RichTextEditor
+            value={contentValue}
+            onChange={handleContentChange}
+            onBlur={commitContent}
+            placeholder="Workout content..."
+            variant="inline"
+          />
         </Collapse>
       </Paper>
 
