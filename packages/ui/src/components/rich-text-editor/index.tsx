@@ -6,29 +6,37 @@ import { EditorContent } from "@tiptap/react";
 import { EditorToolbar } from "./editor-toolbar";
 import { useEditor } from "./use-editor";
 
+type RichTextEditorVariant = "default" | "inline";
+
 interface RichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   placeholder?: string;
   label?: string;
   error?: boolean;
   helperText?: string;
   disabled?: boolean;
   minRows?: number;
+  variant?: RichTextEditorVariant;
 }
 
 export const RichTextEditor = ({
   value,
   onChange,
+  onBlur,
   placeholder = "Write something...",
   label,
   error,
   helperText,
   disabled = false,
-  minRows = 10,
+  minRows,
+  variant = "default",
 }: RichTextEditorProps) => {
   const theme = useTheme();
-  const editor = useEditor({ value, onChange, placeholder, disabled });
+  const editor = useEditor({ value, onChange, onBlur, placeholder, disabled });
+  const isInline = variant === "inline";
+  const resolvedMinRows = minRows ?? (isInline ? 3 : 10);
 
   const handleContainerClick = () => {
     if (editor && !editor.isFocused) {
@@ -50,20 +58,24 @@ export const RichTextEditor = ({
 
       <Box
         sx={{
-          border: 1,
-          borderColor: error ? "error.main" : "divider",
-          borderRadius: 1,
-          bgcolor: "background.paper",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          transition: "border-color 0.2s",
-          "&:focus-within": {
-            borderColor: error ? "error.main" : "primary.main",
-            boxShadow: error ? "none" : `0 0 0 1px ${theme.palette.primary.main}`,
-          },
           opacity: disabled ? 0.6 : 1,
           pointerEvents: disabled ? "none" : "auto",
+          ...(isInline
+            ? {}
+            : {
+                border: 1,
+                borderColor: error ? "error.main" : "divider",
+                borderRadius: 1,
+                bgcolor: "background.paper",
+                transition: theme.transitions.create("border-color"),
+                "&:focus-within": {
+                  borderColor: error ? "error.main" : "primary.main",
+                  boxShadow: error ? "none" : `0 0 0 1px ${theme.palette.primary.main}`,
+                },
+              }),
         }}
       >
         <EditorToolbar editor={editor} />
@@ -71,8 +83,8 @@ export const RichTextEditor = ({
         <Box
           onClick={handleContainerClick}
           sx={{
-            p: 2,
-            minHeight: minRows * 20,
+            p: isInline ? 1.5 : 2,
+            minHeight: resolvedMinRows * 20,
             cursor: "text",
             flexGrow: 1,
             display: "flex",

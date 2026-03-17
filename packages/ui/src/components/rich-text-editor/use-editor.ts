@@ -11,13 +11,15 @@ import StarterKit from "@tiptap/starter-kit";
 interface UseEditorProps {
   value: string;
   onChange: (value: string) => void;
+  onBlur?: () => void;
   placeholder: string;
   disabled: boolean;
 }
 
-export const useEditor = ({ value, onChange, placeholder, disabled }: UseEditorProps) => {
+export const useEditor = ({ value, onChange, onBlur, placeholder, disabled }: UseEditorProps) => {
   const editor = useTiptapEditor({
     immediatelyRender: false,
+    onBlur: () => onBlur?.(),
     extensions: [
       StarterKit,
       Underline,
