@@ -56,6 +56,8 @@ const RANGE_FORMAT = new Intl.DateTimeFormat("en-US", {
 export const formatDayHeader = (date: Date): string =>
   `${DAY_FORMAT.format(date)}, ${DATE_FORMAT.format(date)}`;
 
+export const formatDayName = (date: Date): string => DAY_FORMAT.format(date);
+
 export const formatWeekRange = (monday: Date): string => {
   const sunday = addDays(monday, 6);
 
