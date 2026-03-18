@@ -72,9 +72,20 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
 
   return (
     <>
-      <Paper ref={setNodeRef} {...attributes} tabIndex={-1} variant="outlined" style={style}>
+      <Paper
+        ref={setNodeRef}
+        {...attributes}
+        tabIndex={-1}
+        variant="outlined"
+        style={style}
+        sx={(theme) => ({
+          "& .workout-action": { opacity: 0, transition: theme.transitions.create("opacity") },
+          "&:hover .workout-action": { opacity: 1 },
+        })}
+      >
         <Stack direction="row" sx={{ alignItems: "center" }}>
           <Stack
+            className="workout-action"
             {...listeners}
             tabIndex={-1}
             sx={{
@@ -101,6 +112,7 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
           />
 
           <IconButton
+            className={expanded ? undefined : "workout-action"}
             size="small"
             onClick={() => setExpanded((prev) => !prev)}
             sx={{ color: "text.disabled" }}
@@ -115,6 +127,7 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
           </IconButton>
 
           <IconButton
+            className="workout-action"
             size="small"
             onClick={() => setConfirmOpen(true)}
             sx={{ mr: 0.5, color: "text.disabled", "&:hover": { color: "error.main" } }}
