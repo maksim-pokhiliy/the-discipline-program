@@ -78,7 +78,7 @@ export const StorefrontProgramModal = ({ product, open, onClose }: StorefrontPro
             </Stack>
 
             <Box>
-              <Typography variant="h1" sx={{ fontWeight: "bold", display: "inline" }}>
+              <Typography variant="display1" sx={{ fontWeight: "bold", display: "inline" }}>
                 {displayPrice}
               </Typography>
 
@@ -163,7 +163,7 @@ export const StorefrontProgramModal = ({ product, open, onClose }: StorefrontPro
                       {"Get Started Now"}
                     </Button>
 
-                    <Button variant="outlined" onClick={onClose} size="large" fullWidth>
+                    <Button onClick={onClose} size="large" fullWidth>
                       Maybe Later
                     </Button>
                   </Stack>

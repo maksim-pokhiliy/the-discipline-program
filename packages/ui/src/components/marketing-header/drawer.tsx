@@ -15,7 +15,7 @@ export const Drawer = () => {
 
   return (
     <>
-      <IconButton color="primary" onClick={toggleDrawer}>
+      <IconButton size="medium" color="primary" onClick={toggleDrawer}>
         <MenuIcon color="primary" />
       </IconButton>
 
@@ -24,7 +24,12 @@ export const Drawer = () => {
         onClose={toggleDrawer}
         PaperProps={{ sx: { width: "100vw", maxWidth: 300 } }}
       >
-        <IconButton color="primary" onClick={toggleDrawer} sx={{ alignSelf: "flex-end", m: 1 }}>
+        <IconButton
+          size="medium"
+          color="primary"
+          onClick={toggleDrawer}
+          sx={{ alignSelf: "flex-end", m: 1 }}
+        >
           <ChevronLeftIcon color="primary" />
         </IconButton>
         <Navigation />

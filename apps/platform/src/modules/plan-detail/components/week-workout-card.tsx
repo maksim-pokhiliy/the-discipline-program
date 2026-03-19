@@ -113,7 +113,6 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
 
           <IconButton
             className={expanded ? undefined : "workout-action"}
-            size="small"
             onClick={() => setExpanded((prev) => !prev)}
             sx={{ color: "text.disabled" }}
           >
@@ -128,7 +127,6 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
 
           <IconButton
             className="workout-action"
-            size="small"
             onClick={() => setConfirmOpen(true)}
             sx={{ mr: 0.5, color: "text.disabled", "&:hover": { color: "error.main" } }}
           >
@@ -169,7 +167,7 @@ export const WorkoutDragOverlay: React.FC<{ workout: Workout }> = ({ workout }) 
     sx={(theme) => ({
       p: 1.5,
       borderColor: theme.palette.primary.main,
-      boxShadow: theme.shadows[4],
+      borderWidth: 2,
     })}
   >
     <Typography variant="body2" sx={{ fontWeight: 500 }}>

@@ -35,6 +35,7 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
                       {...field}
                       select
                       size="small"
+                      fullWidth={false}
                       disabled={isPending}
                       sx={{ minWidth: 160 }}
                     >

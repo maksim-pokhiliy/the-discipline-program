@@ -66,7 +66,6 @@ export const BaseModal = ({
 
         <IconButton
           onClick={onClose}
-          size="small"
           sx={{
             color: "text.secondary",
           }}

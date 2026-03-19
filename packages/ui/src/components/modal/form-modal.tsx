@@ -58,7 +58,7 @@ export const FormModal = ({
 
         {!hideActions && (
           <DialogActions>
-            <Button onClick={onClose} disabled={isSubmitting} size="small" variant="outlined">
+            <Button onClick={onClose} disabled={isSubmitting} size="small">
               {cancelText}
             </Button>
 

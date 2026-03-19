@@ -61,7 +61,7 @@ export const Sidebar = ({
       >
         <Logo width={isExpanded ? 40 : 28} height={isExpanded ? 40 : 28} />
 
-        <IconButton onClick={isDesktop ? onToggle : onMobileClose} size="small">
+        <IconButton onClick={isDesktop ? onToggle : onMobileClose}>
           {isExpanded ? <ChevronLeftIcon /> : <ChevronRightIcon />}
         </IconButton>
       </Stack>

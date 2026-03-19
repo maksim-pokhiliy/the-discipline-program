@@ -67,7 +67,7 @@ export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
             <Chip label={post.category} color="primary" sx={{ fontWeight: 600 }} />
 
             <Typography
-              variant="h1"
+              variant="display1"
               component="h1"
               sx={(theme) => ({
                 textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.8)}`,

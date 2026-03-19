@@ -104,7 +104,7 @@ export const ConfirmationModal = ({
       )}
 
       <DialogActions>
-        <Button onClick={onClose} disabled={isConfirming} variant="outlined" size="small">
+        <Button onClick={onClose} disabled={isConfirming} size="small">
           {cancelText}
         </Button>
 

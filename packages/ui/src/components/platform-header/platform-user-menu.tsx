@@ -42,7 +42,7 @@ export const PlatformUserMenu = () => {
 
   return (
     <>
-      <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} size="small" sx={{ p: 0.5 }}>
+      <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ p: 0.5 }}>
         <Avatar
           src={isLoading ? undefined : (session?.user?.image ?? undefined)}
           sx={{

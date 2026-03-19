@@ -60,11 +60,7 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 No athletes enrolled yet
               </Typography>
-              <Button
-                variant="outlined"
-                startIcon={<AddIcon />}
-                onClick={() => setEnrollOpen(true)}
-              >
+              <Button startIcon={<AddIcon />} onClick={() => setEnrollOpen(true)}>
                 Enroll Athlete
               </Button>
             </Stack>

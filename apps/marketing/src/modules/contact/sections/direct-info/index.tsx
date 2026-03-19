@@ -35,7 +35,7 @@ export const ContactDirectInfo = ({ directContact }: ContactDirectInfoProps) => 
                     href={contact.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    sx={{
+                    sx={(theme) => ({
                       bgcolor: "primary.main",
                       color: "white",
                       width: 80,
@@ -44,8 +44,10 @@ export const ContactDirectInfo = ({ directContact }: ContactDirectInfoProps) => 
                         bgcolor: "primary.dark",
                         transform: "scale(1.05)",
                       },
-                      transition: "all 0.2s ease",
-                    }}
+                      transition: theme.transitions.create(["background-color", "transform"], {
+                        duration: theme.transitions.duration.short,
+                      }),
+                    })}
                   >
                     {getContactIcon(contact.type)}
                   </IconButton>

@@ -1,27 +1,41 @@
 import { type Theme, type ThemeOptions } from "@mui/material";
 
-import { poppins } from "../assets/fonts/poppins";
+import { barlow } from "../assets/fonts/barlow";
+import { barlowCondensed } from "../assets/fonts/barlow-condensed";
+
+declare module "@mui/material/styles" {
+  interface TypographyVariants {
+    display1: React.CSSProperties;
+    display2: React.CSSProperties;
+  }
+
+  interface TypographyVariantsOptions {
+    display1?: React.CSSProperties;
+    display2?: React.CSSProperties;
+  }
+}
+
+declare module "@mui/material/Typography" {
+  interface TypographyPropsVariantOverrides {
+    display1: true;
+    display2: true;
+  }
+}
 
 export const typography = (baseTheme: Theme): ThemeOptions["typography"] => ({
-  ...poppins.style,
-  h1: {
-    fontSize: baseTheme.typography.pxToRem(80),
-    fontWeight: baseTheme.typography.fontWeightBold,
-    lineHeight: 1.1,
+  ...barlow.style,
 
-    [baseTheme.breakpoints.down("lg")]: {
-      fontSize: baseTheme.typography.pxToRem(64),
+  display1: {
+    fontFamily: barlowCondensed.style.fontFamily,
+    fontSize: baseTheme.typography.pxToRem(72),
+    fontWeight: 800,
+    lineHeight: 1.15,
+    letterSpacing: "-0.02em",
+    textTransform: "uppercase" as const,
+
+    [baseTheme.breakpoints.up("xl")]: {
+      fontSize: baseTheme.typography.pxToRem(80),
     },
-
-    [baseTheme.breakpoints.down("md")]: {
-      fontSize: baseTheme.typography.pxToRem(48),
-    },
-  },
-
-  h2: {
-    fontSize: baseTheme.typography.pxToRem(64),
-    fontWeight: baseTheme.typography.fontWeightBold,
-    lineHeight: 1.2,
 
     [baseTheme.breakpoints.down("lg")]: {
       fontSize: baseTheme.typography.pxToRem(56),
@@ -32,13 +46,16 @@ export const typography = (baseTheme: Theme): ThemeOptions["typography"] => ({
     },
   },
 
-  h3: {
-    fontSize: baseTheme.typography.pxToRem(48),
-    fontWeight: baseTheme.typography.fontWeightBold,
-    lineHeight: 1.2,
+  display2: {
+    fontFamily: barlowCondensed.style.fontFamily,
+    fontSize: baseTheme.typography.pxToRem(52),
+    fontWeight: 700,
+    lineHeight: 1.1,
+    letterSpacing: "-0.01em",
+    textTransform: "uppercase" as const,
 
     [baseTheme.breakpoints.down("lg")]: {
-      fontSize: baseTheme.typography.pxToRem(40),
+      fontSize: baseTheme.typography.pxToRem(42),
     },
 
     [baseTheme.breakpoints.down("md")]: {
@@ -46,39 +63,69 @@ export const typography = (baseTheme: Theme): ThemeOptions["typography"] => ({
     },
   },
 
-  h4: {
-    fontSize: baseTheme.typography.pxToRem(36),
-    fontWeight: baseTheme.typography.fontWeightRegular,
+  h1: {
+    fontSize: baseTheme.typography.pxToRem(40),
+    fontWeight: 600,
     lineHeight: 1.3,
 
     [baseTheme.breakpoints.down("md")]: {
-      fontSize: baseTheme.typography.pxToRem(28),
+      fontSize: baseTheme.typography.pxToRem(32),
     },
+  },
+
+  h2: {
+    fontSize: baseTheme.typography.pxToRem(30),
+    fontWeight: 600,
+    lineHeight: 1.35,
+
+    [baseTheme.breakpoints.down("md")]: {
+      fontSize: baseTheme.typography.pxToRem(26),
+    },
+  },
+
+  h3: {
+    fontSize: baseTheme.typography.pxToRem(24),
+    fontWeight: 600,
+    lineHeight: 1.4,
+
+    [baseTheme.breakpoints.down("md")]: {
+      fontSize: baseTheme.typography.pxToRem(22),
+    },
+  },
+
+  h4: {
+    fontSize: baseTheme.typography.pxToRem(20),
+    fontWeight: 500,
+    lineHeight: 1.4,
   },
 
   h5: {
-    fontSize: baseTheme.typography.pxToRem(24),
-    fontWeight: baseTheme.typography.fontWeightRegular,
-    lineHeight: 1.4,
-
-    [baseTheme.breakpoints.down("md")]: {
-      fontSize: baseTheme.typography.pxToRem(20),
-    },
+    fontSize: baseTheme.typography.pxToRem(16),
+    fontWeight: 500,
+    lineHeight: 1.5,
   },
 
   h6: {
-    fontSize: baseTheme.typography.pxToRem(20),
-    fontWeight: baseTheme.typography.fontWeightRegular,
-    lineHeight: 1.4,
-
-    [baseTheme.breakpoints.down("md")]: {
-      fontSize: baseTheme.typography.pxToRem(18),
-    },
+    fontSize: baseTheme.typography.pxToRem(14),
+    fontWeight: 500,
+    lineHeight: 1.5,
   },
 
   body1: {
-    fontSize: baseTheme.typography.pxToRem(16),
+    fontSize: baseTheme.typography.pxToRem(14),
     lineHeight: 1.6,
-    fontWeight: baseTheme.typography.fontWeightRegular,
+    fontWeight: 400,
+  },
+
+  body2: {
+    fontSize: baseTheme.typography.pxToRem(13),
+    lineHeight: 1.6,
+    fontWeight: 400,
+  },
+
+  caption: {
+    fontSize: baseTheme.typography.pxToRem(12),
+    lineHeight: 1.5,
+    fontWeight: 400,
   },
 });

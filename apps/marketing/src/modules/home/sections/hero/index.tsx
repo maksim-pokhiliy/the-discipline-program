@@ -11,12 +11,22 @@ interface HomeHeroSectionProps {
 
 export const HomeHeroSection = ({ hero }: HomeHeroSectionProps) => {
   return (
-    <FullscreenSection backgroundImage={hero.backgroundImage} maxWidth="lg">
-      <Typography variant="h1" component="h1">
+    <FullscreenSection
+      backgroundImage={hero.backgroundImage}
+      maxWidth="lg"
+      overlayVariant="gradient"
+      contentAlign="left"
+      animate
+    >
+      <Typography variant="display1" component="h1">
         {hero.title}
       </Typography>
 
-      <Typography variant="h5" sx={{ opacity: 0.8 }}>
+      <Typography
+        variant="h3"
+        component="p"
+        sx={{ opacity: 0.7, fontWeight: 400, maxWidth: { xs: "100%", md: 550 } }}
+      >
         {hero.subtitle}
       </Typography>
 

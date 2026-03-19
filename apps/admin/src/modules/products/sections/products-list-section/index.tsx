@@ -113,18 +113,13 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
       render: (product) => (
         <Stack direction="row" spacing={0} justifyContent="flex-end">
           <Tooltip title="Edit">
-            <IconButton
-              component={Link}
-              href={`/products/${product.id}`}
-              size="small"
-              color="primary"
-            >
+            <IconButton component={Link} href={`/products/${product.id}`} color="primary">
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Delete">
-            <IconButton size="small" color="error" onClick={() => requestDelete(product.id)}>
+            <IconButton color="error" onClick={() => requestDelete(product.id)}>
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>

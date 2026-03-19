@@ -73,13 +73,7 @@ export const PlanStatusSelect: React.FC<PlanStatusSelectProps> = ({ planId, stat
         color={STATUS_COLORS[status]}
       />
 
-      <Button
-        size="small"
-        variant="outlined"
-        color={action.color}
-        onClick={handleClick}
-        disabled={isPending}
-      >
+      <Button size="small" color={action.color} onClick={handleClick} disabled={isPending}>
         {action.label}
       </Button>
     </Stack>

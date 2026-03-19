@@ -15,7 +15,7 @@ export const PaymentErrorActionsSection = () => {
             Try Again
           </Button>
 
-          <Button variant="outlined" size="large" href="/contact" sx={{ minWidth: 200 }}>
+          <Button size="large" href="/contact" sx={{ minWidth: 200 }}>
             Contact Support
           </Button>
         </Stack>

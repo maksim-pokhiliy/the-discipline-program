@@ -32,7 +32,7 @@ export const DynamicListItem = ({ children, onRemove }: DynamicListItemProps) =>
           {children}
         </Stack>
 
-        <IconButton color="error" onClick={onRemove} sx={{ mt: 0.5 }}>
+        <IconButton size="medium" color="error" onClick={onRemove} sx={{ mt: 0.5 }}>
           <DeleteIcon />
         </IconButton>
       </Stack>

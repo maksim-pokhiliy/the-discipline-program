@@ -79,12 +79,7 @@ export const BlogPostsGrid = ({ posts }: BlogPostsGridProps) => {
                       </Typography>
                     </Stack>
 
-                    <Button
-                      component={Link}
-                      href={`/blog/${post.slug}`}
-                      variant="outlined"
-                      size="small"
-                    >
+                    <Button component={Link} href={`/blog/${post.slug}`} size="small">
                       Read More
                     </Button>
                   </Stack>

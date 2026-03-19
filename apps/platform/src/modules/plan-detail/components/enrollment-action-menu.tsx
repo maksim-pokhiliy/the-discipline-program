@@ -42,12 +42,7 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
 
   return (
     <>
-      <IconButton
-        ref={anchorRef}
-        size="small"
-        onClick={() => setMenuOpen(true)}
-        disabled={isPending}
-      >
+      <IconButton ref={anchorRef} onClick={() => setMenuOpen(true)} disabled={isPending}>
         <MoreVertIcon fontSize="small" />
       </IconButton>
 

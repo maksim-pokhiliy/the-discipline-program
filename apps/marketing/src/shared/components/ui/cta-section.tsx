@@ -34,7 +34,7 @@ export const CTASection = ({ title, subtitle, buttonText, buttonHref }: CtaSecti
         <Stack spacing={8} sx={{ alignItems: "center", position: "relative", zIndex: 1 }}>
           <Stack spacing={4} sx={{ maxWidth: "800px" }}>
             <Typography
-              variant="h2"
+              variant="display2"
               component="h2"
               sx={(theme) => ({
                 fontWeight: 800,
@@ -70,7 +70,12 @@ export const CTASection = ({ title, subtitle, buttonText, buttonHref }: CtaSecti
               textTransform: "uppercase",
               letterSpacing: "0.5px",
               boxShadow: `0 8px 32px ${alpha(theme.palette.common.black, 0.3)}`,
-              transition: "all 0.3s ease",
+              transition: theme.transitions.create(
+                ["background-color", "transform", "box-shadow"],
+                {
+                  duration: theme.transitions.duration.standard,
+                },
+              ),
               "&:hover": {
                 backgroundColor: theme.palette.grey[50],
                 transform: "translateY(-4px)",

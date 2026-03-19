@@ -64,7 +64,9 @@ export const ImageUpload = ({
           p: 2,
           textAlign: "center",
           bgcolor: alpha(theme.palette.primary.main, 0.02),
-          transition: "all 0.2s",
+          transition: theme.transitions.create(["background-color", "border-color"], {
+            duration: theme.transitions.duration.short,
+          }),
 
           "&:hover": {
             bgcolor: alpha(theme.palette.primary.main, 0.05),
@@ -104,14 +106,13 @@ export const ImageUpload = ({
             />
 
             <Stack direction="row" spacing={2}>
-              <Button size="small" variant="outlined" onClick={triggerSelect} disabled={disabled}>
+              <Button size="small" onClick={triggerSelect} disabled={disabled}>
                 Change
               </Button>
 
               {onRemove && (
                 <Button
                   size="small"
-                  variant="outlined"
                   color="error"
                   startIcon={<DeleteIcon />}
                   onClick={onRemove}

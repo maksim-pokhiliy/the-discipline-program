@@ -3,8 +3,9 @@ import { type Components, type Theme } from "@mui/material/styles";
 export const MuiDialog: Components<Theme>["MuiDialog"] = {
   styleOverrides: {
     paper: ({ theme }) => ({
-      borderRadius: Number(theme.shape.borderRadius) * 2,
-      boxShadow: theme.shadows[24],
+      borderRadius: Number(theme.shape.borderRadius) * 1.5,
+      border: `1px solid ${theme.palette.divider}`,
+      backgroundColor: theme.palette.background.paper,
     }),
   },
 };

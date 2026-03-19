@@ -141,7 +141,6 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
 
       <Stack direction="row" spacing={0.5}>
         <IconButton
-          size="small"
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().chain().focus().undo().run()}
         >
@@ -149,7 +148,6 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
         </IconButton>
 
         <IconButton
-          size="small"
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().chain().focus().redo().run()}
         >

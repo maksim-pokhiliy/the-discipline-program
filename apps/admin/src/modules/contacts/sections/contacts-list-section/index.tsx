@@ -154,12 +154,12 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
       render: (item) => (
         <Stack direction="row" spacing={1} justifyContent="flex-end">
           <Tooltip title="Edit">
-            <IconButton component={Link} href={`/contacts/${item.id}`} size="small" color="primary">
+            <IconButton component={Link} href={`/contacts/${item.id}`} color="primary">
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
           <Tooltip title="Delete">
-            <IconButton onClick={() => requestDelete(item.id)} size="small" color="error">
+            <IconButton onClick={() => requestDelete(item.id)} color="error">
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>

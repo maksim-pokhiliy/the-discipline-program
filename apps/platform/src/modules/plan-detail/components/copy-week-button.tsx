@@ -50,7 +50,6 @@ export const CopyWeekButton: React.FC<CopyWeekButtonProps> = ({ planId, currentW
   return (
     <>
       <Button
-        variant="outlined"
         size="small"
         startIcon={<ContentCopyIcon />}
         onClick={handleCopy}

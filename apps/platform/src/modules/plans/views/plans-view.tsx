@@ -25,7 +25,6 @@ export const PlansView = () => {
           actions={
             <Button
               endIcon={<AddIcon />}
-              variant="outlined"
               size="small"
               color="primary"
               onClick={() => setCreateOpen(true)}
