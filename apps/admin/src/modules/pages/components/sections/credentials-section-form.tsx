@@ -55,7 +55,6 @@ export const CredentialsSectionForm = () => {
           ))}
 
           <Button
-            variant="outlined"
             startIcon={<AddIcon />}
             onClick={() => append({ title: "", description: "" })}
             sx={{ borderStyle: "dashed", borderWidth: 2, px: 4 }}

@@ -42,7 +42,7 @@ export const StatsCard = ({
   const config = sizeConfig[size];
 
   const card = (
-    <Card sx={{ height: "100%" }} variant="elevation">
+    <Card sx={{ height: "100%" }} variant="outlined">
       <CardContent>
         <Stack
           spacing={config.spacing}

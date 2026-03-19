@@ -145,7 +145,6 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
                 component={Link}
                 href={`${baseEnv.NEXT_PUBLIC_MARKETING_URL}/blog/${post.slug}`}
                 target="_blank"
-                size="small"
               >
                 <OpenInNewIcon fontSize="small" />
               </IconButton>
@@ -153,13 +152,13 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
           )}
 
           <Tooltip title="Edit">
-            <IconButton component={Link} href={`/blog/${post.id}`} size="small" color="primary">
+            <IconButton component={Link} href={`/blog/${post.id}`} color="primary">
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
 
           <Tooltip title="Delete">
-            <IconButton size="small" color="error" onClick={() => requestDelete(post.id)}>
+            <IconButton color="error" onClick={() => requestDelete(post.id)}>
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Tooltip>

@@ -11,7 +11,7 @@ interface AboutHeroSectionProps {
 export const AboutHeroSection = ({ hero }: AboutHeroSectionProps) => {
   return (
     <FullscreenSection backgroundImage={hero.backgroundImage} maxWidth="lg">
-      <Typography variant="h1" component="h1" textAlign="center">
+      <Typography variant="display1" component="h1" textAlign="center">
         {hero.title}
       </Typography>
 

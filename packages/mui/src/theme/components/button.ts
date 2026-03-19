@@ -3,62 +3,102 @@ import { alpha, type Components, type Theme } from "@mui/material/styles";
 export const MuiButton: Components<Theme>["MuiButton"] = {
   defaultProps: {
     disableElevation: true,
+    variant: "outlined",
   },
 
   styleOverrides: {
-    root: {
+    root: ({ theme }) => ({
       minWidth: "unset",
       textTransform: "none",
+      fontWeight: 500,
+      borderRadius: theme.shape.borderRadius,
+      transition: theme.transitions.create(
+        ["background-color", "border-color", "color", "box-shadow", "transform"],
+        { duration: theme.transitions.duration.short },
+      ),
+    }),
+
+    sizeSmall: ({ theme }) => ({
+      fontSize: theme.typography.pxToRem(13),
+      padding: theme.spacing(0.75, 2),
+      minHeight: 34,
+    }),
+
+    sizeMedium: ({ theme }) => ({
+      fontSize: theme.typography.pxToRem(14),
+      padding: theme.spacing(1, 2.5),
+      minHeight: 40,
+    }),
+
+    sizeLarge: ({ theme }) => ({
+      fontSize: theme.typography.pxToRem(16),
+      fontWeight: 600,
+      padding: theme.spacing(1.75, 5),
+      minHeight: 52,
+      letterSpacing: "0.01em",
+    }),
+
+    contained: {
+      fontWeight: 600,
     },
 
-    containedSizeLarge: ({ theme }) => ({
-      ...theme.typography.h6,
-      fontWeight: 600,
-      padding: theme.spacing(2, 4),
+    outlined: () => ({
+      borderWidth: 1,
+      "&:hover": {
+        borderWidth: 1,
+      },
+      "&.Mui-disabled": {
+        borderWidth: 1,
+      },
+    }),
+
+    textPrimary: ({ theme }) => ({
+      color: theme.palette.primary.main,
+      "&:hover": {
+        backgroundColor: alpha(theme.palette.primary.main, 0.06),
+      },
+    }),
+
+    textSecondary: ({ theme }) => ({
+      color: theme.palette.text.secondary,
+      "&:hover": {
+        color: theme.palette.text.primary,
+        backgroundColor: alpha(theme.palette.common.white, 0.04),
+      },
+    }),
+
+    textInherit: ({ theme }) => ({
+      "&:hover": {
+        backgroundColor: alpha(theme.palette.common.white, 0.04),
+      },
+    }),
+
+    outlinedPrimary: ({ theme }) => ({
+      "&:hover": {
+        backgroundColor: alpha(theme.palette.primary.main, 0.06),
+      },
+    }),
+
+    outlinedSecondary: ({ theme }) => ({
+      "&:hover": {
+        backgroundColor: alpha(theme.palette.secondary.main, 0.06),
+      },
+    }),
+
+    outlinedInherit: ({ theme }) => ({
+      borderColor: theme.palette.divider,
+      "&:hover": {
+        backgroundColor: alpha(theme.palette.common.white, 0.04),
+        borderColor: alpha(theme.palette.common.white, 0.2),
+      },
+    }),
+
+    containedInherit: ({ theme }) => ({
+      backgroundColor: alpha(theme.palette.common.white, 0.08),
+      color: theme.palette.text.primary,
+      "&:hover": {
+        backgroundColor: alpha(theme.palette.common.white, 0.12),
+      },
     }),
   },
-
-  variants: [
-    {
-      props: { variant: "text", color: "primary" },
-      style: ({ theme }) => ({
-        ...theme.typography.body2,
-        fontWeight: theme.typography.fontWeightMedium,
-        color: theme.palette.appBar.contrastText,
-        backgroundColor: alpha(theme.palette.primary.main, 0.1),
-        paddingLeft: theme.spacing(2),
-        paddingRight: theme.spacing(2),
-
-        [theme.breakpoints.down("sm")]: {
-          width: "100%",
-          padding: theme.spacing(2),
-          borderRadius: 0,
-        },
-      }),
-    },
-    {
-      props: { variant: "text", color: "secondary" },
-      style: ({ theme }) => ({
-        ...theme.typography.body2,
-        fontWeight: theme.typography.fontWeightRegular,
-        color: alpha(theme.palette.appBar.contrastText, 0.6),
-        paddingLeft: theme.spacing(2),
-        paddingRight: theme.spacing(2),
-        transition: theme.transitions.create(["color", "background-color"], {
-          duration: theme.transitions.duration.short,
-        }),
-
-        "&:hover": {
-          color: theme.palette.appBar.contrastText,
-          backgroundColor: alpha(theme.palette.primary.main, 0.1),
-        },
-
-        [theme.breakpoints.down("sm")]: {
-          width: "100%",
-          padding: theme.spacing(2),
-          borderRadius: 0,
-        },
-      }),
-    },
-  ],
 };

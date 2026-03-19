@@ -39,7 +39,7 @@ export const PagesListSection = ({ pages }: PagesListSectionProps) => {
       render: (page) => (
         <Stack direction="row" spacing={1} justifyContent="flex-end">
           <Tooltip title="Edit Content">
-            <IconButton component={Link} href={`/pages/${page.slug}`} size="small" color="primary">
+            <IconButton component={Link} href={`/pages/${page.slug}`} color="primary">
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>

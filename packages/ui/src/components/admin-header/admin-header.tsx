@@ -42,7 +42,13 @@ export const AdminHeader = ({ onMenuClick }: AdminHeaderProps) => {
     >
       <Toolbar>
         {isMobile && (
-          <IconButton color="inherit" edge="start" onClick={onMenuClick} sx={{ mr: 1 }}>
+          <IconButton
+            size="medium"
+            color="inherit"
+            edge="start"
+            onClick={onMenuClick}
+            sx={{ mr: 1 }}
+          >
             <MenuIcon />
           </IconButton>
         )}

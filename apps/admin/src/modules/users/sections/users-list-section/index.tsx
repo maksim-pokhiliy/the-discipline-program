@@ -147,7 +147,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
       render: (user) => (
         <Stack direction="row" spacing={0} justifyContent="flex-end">
           <Tooltip title="View">
-            <IconButton component={Link} href={`/users/${user.id}`} size="small" color="primary">
+            <IconButton component={Link} href={`/users/${user.id}`} color="primary">
               <VisibilityIcon fontSize="small" />
             </IconButton>
           </Tooltip>

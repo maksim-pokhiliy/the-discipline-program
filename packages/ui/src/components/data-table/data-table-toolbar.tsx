@@ -42,6 +42,7 @@ export const DataTableToolbar = ({
 
       {onSearchChange && (
         <TextField
+          fullWidth={false}
           size="small"
           placeholder={searchPlaceholder}
           value={searchValue}
@@ -62,6 +63,7 @@ export const DataTableToolbar = ({
       {filters?.map((filter) => (
         <TextField
           key={filter.id}
+          fullWidth={false}
           select
           size="small"
           label={filter.label}

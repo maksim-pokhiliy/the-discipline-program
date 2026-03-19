@@ -45,7 +45,7 @@ export const ContentSection = ({
       })}
     >
       <Container maxWidth={maxWidth}>
-        <Stack spacing={4}>
+        <Stack spacing={8}>
           {(title || subtitle) && (
             <Stack
               spacing={2}
@@ -57,7 +57,7 @@ export const ContentSection = ({
             >
               {title && (
                 <Typography
-                  variant="h2"
+                  variant="display2"
                   sx={(theme) => ({
                     fontWeight: 700,
                     color: theme.palette.text.primary,

@@ -61,7 +61,6 @@ export const WhyChooseSectionForm = () => {
           ))}
 
           <Button
-            variant="outlined"
             startIcon={<AddIcon />}
             onClick={() =>
               append({

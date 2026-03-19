@@ -78,7 +78,6 @@ export const DirectContactSectionForm = () => {
           ))}
 
           <Button
-            variant="outlined"
             startIcon={<AddIcon />}
             onClick={() => append({ type: "email", label: "", value: "", href: "" })}
             sx={{ borderStyle: "dashed", borderWidth: 2, px: 4 }}

@@ -19,7 +19,7 @@ export const PlatformPageHeader: React.FC<PlatformPageHeaderProps> = ({
 }) => (
   <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
     {backHref && (
-      <IconButton component={Link} href={backHref} size="small">
+      <IconButton component={Link} href={backHref}>
         <ArrowBackIcon />
       </IconButton>
     )}

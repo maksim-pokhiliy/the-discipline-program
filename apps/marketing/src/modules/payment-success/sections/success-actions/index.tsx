@@ -15,7 +15,7 @@ export const PaymentSuccessActionsSection = () => {
             Contact Support
           </Button>
 
-          <Button variant="outlined" size="large" href="/" sx={{ minWidth: 200 }}>
+          <Button size="large" href="/" sx={{ minWidth: 200 }}>
             Back to Home
           </Button>
         </Stack>

@@ -33,7 +33,7 @@ export const SidebarUserMenu = ({ expanded }: SidebarUserMenuProps) => {
     return (
       <Stack sx={{ alignItems: "center", py: 1, gap: 0.5 }}>
         <Tooltip title={email} placement="right">
-          <IconButton size="small">{avatar}</IconButton>
+          <IconButton>{avatar}</IconButton>
         </Tooltip>
 
         <Tooltip title="Logout" placement="right">
@@ -53,7 +53,7 @@ export const SidebarUserMenu = ({ expanded }: SidebarUserMenuProps) => {
         {email}
       </Typography>
 
-      <IconButton size="small" onClick={handleLogout} edge="end">
+      <IconButton onClick={handleLogout} edge="end">
         <LogoutIcon fontSize="small" />
       </IconButton>
     </Stack>

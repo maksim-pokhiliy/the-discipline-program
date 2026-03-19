@@ -39,7 +39,7 @@ export const CollapsibleList = ({
       {Container ? <Container>{content}</Container> : content}
 
       {hidden.length > 0 && (
-        <Button variant="outlined" onClick={() => setShowAll((prev) => !prev)}>
+        <Button onClick={() => setShowAll((prev) => !prev)}>
           {showAll ? "Show less" : `Show ${hidden.length} more`}
         </Button>
       )}

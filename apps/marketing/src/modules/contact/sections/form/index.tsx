@@ -75,7 +75,7 @@ export const ContactForm = ({ form, programOptions }: ContactFormProps) => {
                     Thank you for contacting us. We&apos;ll get back to you within 24 hours.
                   </Typography>
 
-                  <Button onClick={() => reset()} sx={{ mt: 2 }} size="small">
+                  <Button variant="text" onClick={() => reset()} sx={{ mt: 2 }} size="small">
                     Send another message
                   </Button>
                 </Alert>

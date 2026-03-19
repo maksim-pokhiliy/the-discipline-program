@@ -23,7 +23,6 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({ itemId, href, onResolve,
     <>
       <IconButton
         ref={anchorRef}
-        size="small"
         color="inherit"
         onClick={() => setMenuOpen(true)}
         disabled={isResolving}

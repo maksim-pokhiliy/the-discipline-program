@@ -53,7 +53,6 @@ export const PlanActionMenu: React.FC<PlanActionMenuProps> = ({
     <>
       <IconButton
         ref={anchorRef}
-        size="small"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();

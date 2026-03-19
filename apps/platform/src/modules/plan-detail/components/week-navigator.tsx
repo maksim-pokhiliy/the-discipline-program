@@ -49,7 +49,7 @@ export const WeekNavigator = () => {
   return (
     <Stack direction="row" sx={{ alignItems: "center", position: "relative" }}>
       <Stack direction="row" sx={{ flex: 1, justifyContent: "flex-start" }}>
-        <IconButton onClick={() => navigate(addDays(weekStart, -7))} size="small">
+        <IconButton onClick={() => navigate(addDays(weekStart, -7))}>
           <ChevronLeftIcon />
         </IconButton>
       </Stack>
@@ -64,13 +64,14 @@ export const WeekNavigator = () => {
       </Stack>
 
       <Stack direction="row" sx={{ flex: 1, justifyContent: "flex-end" }}>
-        <IconButton onClick={() => navigate(addDays(weekStart, 7))} size="small">
+        <IconButton onClick={() => navigate(addDays(weekStart, 7))}>
           <ChevronRightIcon />
         </IconButton>
       </Stack>
 
       {!isCurrentWeek && (
         <Button
+          variant="text"
           size="small"
           startIcon={<TodayIcon />}
           onClick={() => navigate(getMonday(new Date()))}

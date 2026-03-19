@@ -82,7 +82,6 @@ export const JourneySectionForm = () => {
           ))}
 
           <Button
-            variant="outlined"
             startIcon={<AddIcon />}
             onClick={() => append({ year: "", title: "", description: "" })}
             sx={{ borderStyle: "dashed", borderWidth: 2, px: 4 }}
