@@ -1,36 +1,53 @@
 import { type Components, type Theme, alpha } from "@mui/material/styles";
 
+const severityStyles = (theme: Theme, severity: "error" | "warning" | "info" | "success") => {
+  const main = theme.palette[severity].main;
+
+  return {
+    "& .MuiAlert-icon": { color: main },
+    "& .MuiAlert-action": { color: theme.palette.text.secondary },
+  };
+};
+
 export const MuiAlert: Components<Theme>["MuiAlert"] = {
+  defaultProps: {
+    variant: "standard",
+  },
+
   styleOverrides: {
-    filled: ({ theme, ownerState }) => {
-      const color = ownerState.severity ?? "info";
-      const main = theme.palette[color].main;
-      const contrastText = theme.palette[color].contrastText;
+    root: ({ theme }) => ({
+      borderRadius: theme.shape.borderRadius,
+      color: theme.palette.text.primary,
+    }),
+
+    standard: ({ theme, ownerState }) => {
+      const severity = ownerState.severity ?? "info";
+      const main = theme.palette[severity].main;
 
       return {
         backgroundColor: alpha(main, 0.08),
-        color: theme.palette.text.primary,
+        ...severityStyles(theme, severity),
+      };
+    },
+
+    filled: ({ theme, ownerState }) => {
+      const severity = ownerState.severity ?? "info";
+      const main = theme.palette[severity].main;
+
+      return {
+        backgroundColor: alpha(main, 0.15),
         borderLeft: `4px solid ${main}`,
+        ...severityStyles(theme, severity),
+      };
+    },
 
-        "& .MuiAlertTitle-root": {
-          color: theme.palette.text.primary,
-        },
+    outlined: ({ theme, ownerState }) => {
+      const severity = ownerState.severity ?? "info";
+      const main = theme.palette[severity].main;
 
-        "& .MuiAlert-icon": {
-          color: main,
-        },
-
-        "& .MuiAlert-icon .MuiAvatar-root": {
-          width: theme.spacing(4),
-          height: theme.spacing(4),
-          backgroundColor: main,
-          color: contrastText,
-          fontSize: theme.typography.caption.fontSize,
-        },
-
-        "& .MuiAlert-action": {
-          color: theme.palette.text.secondary,
-        },
+      return {
+        borderColor: alpha(main, 0.4),
+        ...severityStyles(theme, severity),
       };
     },
   },

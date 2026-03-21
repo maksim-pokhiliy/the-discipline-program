@@ -5,10 +5,9 @@ export const MuiDrawer: Components<Theme>["MuiDrawer"] = {
     anchor: "left",
     elevation: 0,
   },
-
   styleOverrides: {
     paper: ({ theme }) => ({
-      backgroundColor: theme.palette.drawer.main,
+      borderRight: `1px solid ${theme.palette.divider}`,
     }),
   },
 };

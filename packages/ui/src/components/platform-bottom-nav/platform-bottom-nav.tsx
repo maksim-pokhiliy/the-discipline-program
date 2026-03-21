@@ -9,7 +9,7 @@ import {
   HomeRounded,
   PersonRounded,
 } from "@mui/icons-material";
-import { BottomNavigation, BottomNavigationAction, Paper } from "@mui/material";
+import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import { usePathname, useRouter } from "next/navigation";
 
 import { COACH_NAVIGATION } from "@repo/shared";
@@ -41,49 +41,19 @@ export const PlatformBottomNav = () => {
   }, -1);
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        position: "sticky",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        zIndex: (theme) => theme.zIndex.appBar,
-        borderTop: 1,
-        borderColor: "divider",
-        borderRadius: 0,
+    <BottomNavigation
+      value={activeIndex}
+      onChange={(_, newValue: number) => {
+        const item = COACH_NAVIGATION.items[newValue];
+
+        if (item) {
+          router.push(item.href);
+        }
       }}
     >
-      <BottomNavigation
-        value={activeIndex}
-        onChange={(_, newValue: number) => {
-          const item = COACH_NAVIGATION.items[newValue];
-
-          if (item) {
-            router.push(item.href);
-          }
-        }}
-        showLabels
-        sx={{
-          height: (theme) => theme.spacing(10),
-          bgcolor: "background.paper",
-        }}
-      >
-        {COACH_NAVIGATION.items.map((item) => (
-          <BottomNavigationAction
-            key={item.href}
-            label={item.label}
-            icon={ICON_MAP[item.icon]}
-            sx={{
-              minWidth: "auto",
-              color: "text.secondary",
-              "&.Mui-selected": {
-                color: "primary.main",
-              },
-            }}
-          />
-        ))}
-      </BottomNavigation>
-    </Paper>
+      {COACH_NAVIGATION.items.map((item) => (
+        <BottomNavigationAction key={item.href} label={item.label} icon={ICON_MAP[item.icon]} />
+      ))}
+    </BottomNavigation>
   );
 };

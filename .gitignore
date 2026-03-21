@@ -38,3 +38,6 @@ yarn-error.log*
 *.pem
 the-discipline-program-codebase-dump.txt
 .vercel
+
+*storybook.log
+storybook-static

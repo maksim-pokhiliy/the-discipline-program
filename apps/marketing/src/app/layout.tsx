@@ -2,6 +2,7 @@ import { Box } from "@mui/material";
 import { type Metadata } from "next";
 
 import { NextProvider } from "@repo/mui";
+import { fontVariables } from "@repo/mui/fonts";
 import { QueryProvider } from "@repo/query";
 import { DOM_ANCHORS, SEO_CONFIG } from "@repo/shared";
 import { MarketingHeader } from "@repo/ui";
@@ -43,7 +44,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <StructuredData type="organization" />
       </head>
 
-      <body id={DOM_ANCHORS.BODY}>
+      <body id={DOM_ANCHORS.BODY} className={fontVariables}>
         <NextProvider>
           <QueryProvider>
             <MarketingHeader />
