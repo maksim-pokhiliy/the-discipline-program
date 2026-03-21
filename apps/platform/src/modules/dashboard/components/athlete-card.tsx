@@ -1,15 +1,6 @@
 "use client";
 
-import {
-  Alert,
-  type AlertColor,
-  AlertTitle,
-  Avatar,
-  Chip,
-  type ChipProps,
-  Stack,
-  Typography,
-} from "@mui/material";
+import { Alert, type AlertColor, AlertTitle, Avatar, Chip, type ChipProps } from "@mui/material";
 
 export type AthleteCardChip = {
   label: string;
@@ -39,38 +30,26 @@ export const AthleteCard: React.FC<AthleteCardProps> = ({
   <Alert
     severity={severity}
     variant="filled"
-    icon={
-      <Avatar src={image ?? undefined} sx={{ width: 32, height: 32 }}>
-        {name[0]?.toUpperCase()}
-      </Avatar>
-    }
+    icon={<Avatar src={image ?? undefined}>{name[0]?.toUpperCase()}</Avatar>}
     action={action}
   >
-    <Stack spacing={0.25}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-        <AlertTitle gutterBottom={false}>{name}</AlertTitle>
+    <AlertTitle>
+      {name}
+      {chips?.map((chip) => (
+        <Chip
+          key={chip.label}
+          size="small"
+          label={chip.label}
+          color={chip.color}
+          icon={chip.icon}
+          variant="outlined"
+          sx={{ ml: 1 }}
+        />
+      ))}
+    </AlertTitle>
 
-        {chips?.map((chip) => (
-          <Chip
-            key={chip.label}
-            size="small"
-            label={chip.label}
-            color={chip.color}
-            icon={chip.icon}
-            sx={{ height: 22 }}
-          />
-        ))}
-      </Stack>
+    {message}
 
-      <Typography variant="body2" sx={{ color: "text.secondary" }}>
-        {message}
-      </Typography>
-
-      {details && (
-        <Typography variant="caption" sx={{ color: "text.secondary", opacity: 0.8 }}>
-          {details}
-        </Typography>
-      )}
-    </Stack>
+    {details && details}
   </Alert>
 );

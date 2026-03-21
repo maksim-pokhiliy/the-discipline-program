@@ -3,24 +3,18 @@ import { alpha, type Components, type Theme } from "@mui/material/styles";
 export const MuiTextField: Components<Theme>["MuiTextField"] = {
   defaultProps: {
     fullWidth: true,
+    variant: "outlined",
   },
 };
 
 export const MuiOutlinedInput: Components<Theme>["MuiOutlinedInput"] = {
   styleOverrides: {
     root: ({ theme }) => ({
-      borderRadius: theme.shape.borderRadius,
       backgroundColor: alpha(theme.palette.common.white, 0.02),
-      transition: theme.transitions.create(["border-color", "background-color"], {
-        duration: theme.transitions.duration.short,
-      }),
 
       "& .MuiOutlinedInput-notchedOutline": {
-        borderWidth: 1,
         borderColor: theme.palette.divider,
-        transition: theme.transitions.create("border-color", {
-          duration: theme.transitions.duration.short,
-        }),
+        transition: theme.transitions.create("border-color"),
       },
 
       "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -29,29 +23,48 @@ export const MuiOutlinedInput: Components<Theme>["MuiOutlinedInput"] = {
 
       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
         borderWidth: 1,
-        borderColor: theme.palette.primary.main,
-      },
-
-      "&.Mui-error .MuiOutlinedInput-notchedOutline": {
-        borderColor: theme.palette.error.main,
-      },
-
-      "&.Mui-disabled": {
-        backgroundColor: alpha(theme.palette.common.white, 0.01),
       },
     }),
+
+    input: ({ theme }) => ({ fontSize: theme.typography.body1.fontSize }),
 
     sizeSmall: ({ theme }) => ({
-      fontSize: theme.typography.pxToRem(13),
+      "& .MuiOutlinedInput-input": { fontSize: theme.typography.body2.fontSize },
+    }),
+  },
+};
 
-      "& .MuiOutlinedInput-input": {
-        padding: theme.spacing(0.75, 1.5),
+export const MuiFilledInput: Components<Theme>["MuiFilledInput"] = {
+  styleOverrides: {
+    root: {
+      "&::before, &::after": { display: "none" },
+    },
+
+    input: ({ theme }) => ({ fontSize: theme.typography.body1.fontSize }),
+
+    sizeSmall: ({ theme }) => ({
+      "& .MuiFilledInput-input": { fontSize: theme.typography.body2.fontSize },
+    }),
+  },
+};
+
+export const MuiInput: Components<Theme>["MuiInput"] = {
+  styleOverrides: {
+    root: ({ theme }) => ({
+      "&::before": {
+        borderBottomColor: theme.palette.divider,
+        transition: theme.transitions.create("border-color"),
+      },
+
+      "&:hover:not(.Mui-disabled, .Mui-error)::before": {
+        borderBottomColor: alpha(theme.palette.common.white, 0.2),
       },
     }),
 
-    input: ({ theme }) => ({
-      fontSize: theme.typography.pxToRem(14),
-      padding: theme.spacing(1.25, 1.75),
+    input: ({ theme }) => ({ fontSize: theme.typography.body1.fontSize }),
+
+    sizeSmall: ({ theme }) => ({
+      "& .MuiInput-input": { fontSize: theme.typography.body2.fontSize },
     }),
   },
 };
@@ -59,28 +72,18 @@ export const MuiOutlinedInput: Components<Theme>["MuiOutlinedInput"] = {
 export const MuiInputLabel: Components<Theme>["MuiInputLabel"] = {
   styleOverrides: {
     root: ({ theme }) => ({
-      fontSize: theme.typography.pxToRem(14),
+      fontSize: theme.typography.body1.fontSize,
       color: theme.palette.text.secondary,
-
-      "&.Mui-focused": {
-        color: theme.palette.primary.main,
-      },
-
-      "&.Mui-error": {
-        color: theme.palette.error.main,
-      },
     }),
 
-    sizeSmall: ({ theme }) => ({
-      fontSize: theme.typography.pxToRem(13),
-    }),
+    sizeSmall: ({ theme }) => ({ fontSize: theme.typography.body2.fontSize }),
   },
 };
 
 export const MuiFormHelperText: Components<Theme>["MuiFormHelperText"] = {
   styleOverrides: {
     root: ({ theme }) => ({
-      fontSize: theme.typography.pxToRem(12),
+      fontSize: theme.typography.caption.fontSize,
       marginTop: theme.spacing(0.5),
       marginLeft: theme.spacing(0.5),
     }),
@@ -89,8 +92,6 @@ export const MuiFormHelperText: Components<Theme>["MuiFormHelperText"] = {
 
 export const MuiSelect: Components<Theme>["MuiSelect"] = {
   styleOverrides: {
-    icon: ({ theme }) => ({
-      color: theme.palette.text.secondary,
-    }),
+    icon: ({ theme }) => ({ color: theme.palette.text.secondary }),
   },
 };

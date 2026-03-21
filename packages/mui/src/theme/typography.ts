@@ -1,8 +1,5 @@
 import { type Theme, type ThemeOptions } from "@mui/material";
 
-import { barlow } from "../assets/fonts/barlow";
-import { barlowCondensed } from "../assets/fonts/barlow-condensed";
-
 declare module "@mui/material/styles" {
   interface TypographyVariants {
     display1: React.CSSProperties;
@@ -22,11 +19,14 @@ declare module "@mui/material/Typography" {
   }
 }
 
+const FONT_BASE = 'var(--font-base), "Barlow", sans-serif';
+const FONT_DISPLAY = 'var(--font-display), "Barlow Condensed", sans-serif';
+
 export const typography = (baseTheme: Theme): ThemeOptions["typography"] => ({
-  ...barlow.style,
+  fontFamily: FONT_BASE,
 
   display1: {
-    fontFamily: barlowCondensed.style.fontFamily,
+    fontFamily: FONT_DISPLAY,
     fontSize: baseTheme.typography.pxToRem(72),
     fontWeight: 800,
     lineHeight: 1.15,
@@ -47,7 +47,7 @@ export const typography = (baseTheme: Theme): ThemeOptions["typography"] => ({
   },
 
   display2: {
-    fontFamily: barlowCondensed.style.fontFamily,
+    fontFamily: FONT_DISPLAY,
     fontSize: baseTheme.typography.pxToRem(52),
     fontWeight: 700,
     lineHeight: 1.1,

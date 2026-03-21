@@ -10,7 +10,7 @@ const shadows = Array(25).fill("none") as Shadows;
 const baseTheme = createTheme({
   layout,
   palette,
-  shape: { borderRadius: 6 },
+  shape: { borderRadius: 4 },
   shadows,
 });
 
