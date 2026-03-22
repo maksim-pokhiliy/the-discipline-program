@@ -8,7 +8,6 @@ export * from "./badge";
 export * from "./card";
 export * from "./dialog";
 export * from "./drawer";
-export * from "./icon-button";
 export * from "./list-item-button";
 export * from "./menu";
 export * from "./table";

@@ -15,9 +15,9 @@ export const MuiAutocomplete: Components<Theme>["MuiAutocomplete"] = {
     }),
 
     option: ({ theme }) => ({
-      display: "flex",
       padding: theme.spacing(1),
-      minHeight: 38,
+      minHeight: "unset",
+      flexShrink: 0,
       borderRadius: Number(theme.shape.borderRadius),
     }),
   },
