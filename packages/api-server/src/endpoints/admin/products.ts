@@ -144,4 +144,34 @@ export const adminProductsApi = {
 
     return mapToProduct(updated);
   },
+
+  toggleFeatured: async (id: string): Promise<Product> => {
+    return prisma.$transaction(async (tx) => {
+      const product = await tx.product.findUnique({
+        where: { id },
+        include: includeWithPrices,
+      });
+
+      if (!product || product.deletedAt) {
+        throw new NotFoundError("Product not found", { id });
+      }
+
+      const newValue = !product.isFeatured;
+
+      if (newValue === true) {
+        await tx.product.updateMany({
+          where: { isFeatured: true, id: { not: id } },
+          data: { isFeatured: false },
+        });
+      }
+
+      const updated = await tx.product.update({
+        where: { id },
+        data: { isFeatured: newValue },
+        include: includeWithPrices,
+      });
+
+      return mapToProduct(updated);
+    });
+  },
 };

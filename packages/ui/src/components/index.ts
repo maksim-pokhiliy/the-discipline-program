@@ -6,7 +6,6 @@ export * from "./detail-field";
 export * from "./dynamic-list-item";
 export * from "./form-card";
 export * from "./form-view";
-export * from "./marketing-header";
 export * from "./image-upload";
 export * from "./layout";
 export * from "./logo";

@@ -5,9 +5,8 @@ import { NextProvider } from "@repo/mui";
 import { fontVariables } from "@repo/mui/fonts";
 import { QueryProvider } from "@repo/query";
 import { DOM_ANCHORS, SEO_CONFIG } from "@repo/shared";
-import { MarketingHeader } from "@repo/ui";
 
-import { Footer } from "@app/shared/components/layout";
+import { Footer, MarketingHeader } from "@app/shared/components/layout";
 import { StructuredData } from "@app/shared/components/seo";
 
 export const metadata: Metadata = {

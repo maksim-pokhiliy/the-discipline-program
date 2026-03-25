@@ -17,13 +17,13 @@ import {
 import { type Product, PRICE_INTERVAL_LABELS } from "@repo/contracts/product";
 import { formatPrice } from "@repo/shared";
 
-interface StorefrontProgramModalProps {
+interface ProductModalProps {
   product: Product | null;
   open: boolean;
   onClose: () => void;
 }
 
-export const StorefrontProgramModal = ({ product, open, onClose }: StorefrontProgramModalProps) => {
+export const ProductModal = ({ product, open, onClose }: ProductModalProps) => {
   const handleGetStarted = async () => {
     if (!product) {
       return;
@@ -153,14 +153,8 @@ export const StorefrontProgramModal = ({ product, open, onClose }: StorefrontPro
                   </Stack>
 
                   <Stack spacing={2} sx={{ width: "100%" }}>
-                    <Button
-                      variant="contained"
-                      size="large"
-                      fullWidth
-                      sx={{ py: 2 }}
-                      onClick={handleGetStarted}
-                    >
-                      {"Get Started Now"}
+                    <Button variant="contained" size="large" fullWidth onClick={handleGetStarted}>
+                      Get Started Now
                     </Button>
 
                     <Button onClick={onClose} size="large" fullWidth>

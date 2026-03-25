@@ -11,6 +11,7 @@ const baseTheme = createTheme({
   layout,
   palette,
   shape: { borderRadius: 4 },
+  mixins: { toolbar: { height: 80 } },
   shadows,
 });
 

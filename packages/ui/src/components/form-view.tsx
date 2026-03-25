@@ -16,7 +16,6 @@ interface FormViewProps<T extends FieldValues> {
   backHref: string;
   backLabel: string;
   submitLabel?: string;
-  backgroundColor?: "light" | "dark";
   children: ReactNode;
 }
 
@@ -29,7 +28,6 @@ export const FormView = <T extends FieldValues>({
   backHref,
   backLabel,
   submitLabel = "Save Changes",
-  backgroundColor,
   children,
 }: FormViewProps<T>) => (
   <FormProvider {...methods}>
@@ -39,7 +37,6 @@ export const FormView = <T extends FieldValues>({
         subtitle={subtitle}
         backHref={backHref}
         backLabel={backLabel}
-        backgroundColor={backgroundColor}
         stickyToolbar
         actions={[
           {

@@ -7,7 +7,8 @@ import {
   type updateProductParamsSchema,
   type updateProductRequestSchema,
   type deleteProductParamsSchema,
-  type toggleProductStatusParamsSchema,
+  type toggleProductParamsSchema,
+  type toggleProductQuerySchema,
   type getProductsPageDataResponseSchema,
 } from "./product-api.schema";
 
@@ -23,6 +24,8 @@ export type UpdateProductRequest = z.infer<typeof updateProductRequestSchema>;
 
 export type DeleteProductParams = z.infer<typeof deleteProductParamsSchema>;
 
-export type ToggleProductStatusParams = z.infer<typeof toggleProductStatusParamsSchema>;
+export type ToggleProductParams = z.infer<typeof toggleProductParamsSchema>;
+
+export type ToggleProductQuery = z.infer<typeof toggleProductQuerySchema>;
 
 export type GetProductsPageDataResponse = z.infer<typeof getProductsPageDataResponseSchema>;

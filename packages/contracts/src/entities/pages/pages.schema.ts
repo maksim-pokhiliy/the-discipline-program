@@ -79,11 +79,13 @@ export const credentialItemSchema = z.object({
 
 export const aboutPageCredentialsSchema = z.object({
   title: z.string(),
+  subtitle: z.string(),
   items: z.array(credentialItemSchema),
 });
 
 export const aboutPagePersonalSchema = z.object({
   title: z.string(),
+  subtitle: z.string(),
   description: z.string(),
   image: z.string(),
   name: z.string(),
@@ -122,7 +124,6 @@ export const contactMethodSchema = z.object({
 export const contactDirectContactSchema = z.object({
   title: z.string(),
   contacts: z.array(contactMethodSchema),
-  workingHours: z.string(),
 });
 
 export const faqItemSchema = z.object({

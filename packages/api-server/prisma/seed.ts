@@ -450,6 +450,20 @@ const seedMarketingPages = async () => {
               "Every session designed by CF-L2 certified coach with competition experience.",
             iconName: "School",
           },
+          {
+            id: "f5",
+            title: "Progress Tracking",
+            description:
+              "Built-in benchmarks, PR logs, and periodic testing to measure real gains over time.",
+            iconName: "TrendingUp",
+          },
+          {
+            id: "f6",
+            title: "Community Driven",
+            description:
+              "Train alongside athletes worldwide. Shared leaderboards, weekly challenges, and accountability.",
+            iconName: "Groups",
+          },
         ],
       },
     },
@@ -535,22 +549,38 @@ const seedMarketingPages = async () => {
       section: "credentials",
       data: {
         title: "Certifications",
+        subtitle:
+          "Internationally recognized qualifications in sport coaching, CrossFit methodology, and adaptive training.",
         items: [
           {
             title: "Wingate Sport Institute",
-            description: "Diploma in Sport Coaching and Training (Israel).",
+            description:
+              "Diploma in Sport Coaching and Training from Israel's premier sports science institution. Covers exercise physiology, biomechanics, and periodization.",
           },
           {
-            title: "CrossFit Coach",
-            description: "CrossFit training methodology and programming.",
+            title: "CrossFit Level 2 Coach",
+            description:
+              "Advanced coaching certification focused on programming design, movement correction, and athlete development across all skill levels.",
           },
           {
-            title: "Weightlifting Instructor",
-            description: "Olympic lifting technique and coaching.",
+            title: "Olympic Weightlifting Instructor",
+            description:
+              "Specialized credential in snatch, clean & jerk technique, and progressive coaching methods for competitive and recreational lifters.",
           },
           {
             title: "Adaptive CrossFit Specialist",
-            description: "Inclusive programming for athletes with disabilities.",
+            description:
+              "Certified to design inclusive programming for athletes with physical and cognitive disabilities. Scaling, equipment modification, and safety protocols.",
+          },
+          {
+            title: "Sports Nutrition Coach",
+            description:
+              "Evidence-based nutrition planning for performance athletes. Macro programming, competition fueling strategies, and body composition management.",
+          },
+          {
+            title: "Functional Movement Screen",
+            description:
+              "FMS certified for injury risk assessment and corrective exercise prescription. Integrated into every athlete onboarding and quarterly reassessment.",
           },
         ],
       },
@@ -560,7 +590,9 @@ const seedMarketingPages = async () => {
       section: "personal",
       data: {
         title: "Outside The Box",
-        description: "Trail running in the Carpathians, grilling meat, and building software.",
+        subtitle: "The person behind the programming — beyond the whiteboard and the stopwatch.",
+        description:
+          "When I am not writing training cycles or reviewing athlete videos, you will find me on a trail somewhere in the Carpathian mountains. Long runs above the treeline are my version of active recovery — and honestly, where most of my best programming ideas come from. I am a lifelong student of movement, a relentless meat griller, and a self-taught software engineer who built this entire platform from scratch. I believe coaching is a craft that gets better with obsession, not just experience. Every system in The Discipline Program exists because I was not satisfied with what was already out there.",
         image: "/images/coach-hero.jpg",
         name: "Denys Linetskyi",
         role: "Head Coach & Founder",
@@ -635,7 +667,6 @@ const seedMarketingPages = async () => {
             href: "https://t.me/thedisciplineprogram",
           },
         ],
-        workingHours: "Mon-Fri: 8:00 - 20:00 (Kyiv time)\nSat: 9:00 - 14:00\nSun: Rest Day",
       },
     },
     {
@@ -696,6 +727,7 @@ const seedProducts = async () => {
         "Video Analysis",
         "Monthly Testing",
       ],
+      isFeatured: true,
       isActive: true,
       createdAt: daysAgo(58),
       amountCents: 9900,
@@ -960,6 +992,22 @@ const seedReviews = async () => {
         createdAt: daysAgo(8),
       },
       {
+        authorName: "Rachel Kim",
+        authorRole: "Box Owner",
+        text: "I use The Discipline Program for my gym's competition team. The periodization is solid, the volume is right, and my athletes are peaking when it matters. Saved me hours of programming every week.",
+        rating: 5,
+        isActive: true,
+        createdAt: daysAgo(5),
+      },
+      {
+        authorName: "James O'Brien",
+        authorRole: "Military Athlete",
+        text: "Need to stay combat-ready and this delivers. The GPP base building is exactly what tactical athletes need. Ruck performance is up, recovery time is down.",
+        rating: 5,
+        isActive: true,
+        createdAt: daysAgo(3),
+      },
+      {
         authorName: "Anonymous",
         authorRole: null,
         text: "Decent programming but pacing was too slow for my level. Switched after 2 months.",
@@ -970,7 +1018,7 @@ const seedReviews = async () => {
     ],
   });
 
-  console.log("  Reviews: 8 (7 active, 1 inactive)");
+  console.log("  Reviews: 10 (9 active, 1 inactive)");
 };
 
 const seedContactSubmissions = async () => {

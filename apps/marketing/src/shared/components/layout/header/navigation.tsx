@@ -3,8 +3,7 @@
 import { Stack } from "@mui/material";
 
 import { MARKETING_NAVIGATION, type NavLink } from "@repo/shared";
-
-import { NavLinkButton } from "../nav-link-button";
+import { NavLinkButton } from "@repo/ui";
 
 type NavigationProps = {
   links?: NavLink[];

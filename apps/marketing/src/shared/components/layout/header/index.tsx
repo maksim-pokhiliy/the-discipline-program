@@ -2,9 +2,7 @@
 
 import { AppBar, Box, Toolbar, alpha, useMediaQuery, useScrollTrigger } from "@mui/material";
 
-import { LAYOUT } from "@repo/shared";
-
-import { Logo } from "../logo";
+import { Logo } from "@repo/ui";
 
 import { Drawer } from "./drawer";
 import { HideOnScroll } from "./hide-on-scroll";
@@ -19,8 +17,6 @@ export const MarketingHeader = () => {
       <AppBar
         sx={{
           position: "fixed",
-          height: LAYOUT.appBarHeight,
-          justifyContent: "center",
           backgroundColor: "transparent",
           backgroundImage: "none",
         }}

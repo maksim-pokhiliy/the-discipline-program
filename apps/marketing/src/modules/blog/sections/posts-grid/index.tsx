@@ -3,19 +3,29 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { type PublicBlogPost } from "@repo/contracts/blog";
+import { type BlogPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
 interface BlogPostsGridProps {
+  hero?: BlogPageData["hero"];
   posts: PublicBlogPost[];
 }
 
-export const BlogPostsGrid = ({ posts }: BlogPostsGridProps) => {
+export const BlogPostsGrid = ({ hero, posts }: BlogPostsGridProps) => {
   return (
-    <ContentSection title="All Articles" backgroundColor="dark">
+    <ContentSection
+      title={hero?.title ?? "All Articles"}
+      subtitle={hero?.subtitle}
+      surface="raised"
+      offset={hero ? 1 : 0}
+    >
       <Grid container spacing={4}>
         {posts.map((post) => (
           <Grid key={post.id} size={{ xs: 12, md: 6, lg: 4 }}>
-            <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+            <Card
+              sx={{ height: "100%", display: "flex", flexDirection: "column" }}
+              variant="elevation"
+            >
               <Box sx={{ position: "relative", height: 200 }}>
                 {post.coverImage && (
                   <Image

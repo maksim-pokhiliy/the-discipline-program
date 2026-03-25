@@ -62,7 +62,7 @@ const getActivityColor = (type: ActivityItem["type"]) => {
 
 export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) => {
   return (
-    <ContentSection title="Recent Activity" backgroundColor="dark">
+    <ContentSection title="Recent Activity">
       <List
         sx={{
           bgcolor: "background.paper",

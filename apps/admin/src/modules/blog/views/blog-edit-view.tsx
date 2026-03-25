@@ -43,7 +43,6 @@ const BlogEditForm: React.FC<BlogEditFormProps> = ({ post }) => {
       isPending={isPending}
       title="Edit Post"
       subtitle={post.title}
-      backgroundColor="dark"
       backHref="/blog"
       backLabel="Back to List"
     >

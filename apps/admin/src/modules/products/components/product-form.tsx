@@ -104,22 +104,40 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
       <Grid size={{ xs: 12, lg: 4 }}>
         <Stack spacing={3}>
           <FormCard title="Visibility">
-            <FormControlLabel
-              control={
-                <Controller
-                  name="isActive"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      disabled={isLoading}
-                    />
-                  )}
-                />
-              }
-              label="Active (Visible in Store)"
-            />
+            <Stack spacing={1}>
+              <FormControlLabel
+                control={
+                  <Controller
+                    name="isActive"
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        disabled={isLoading}
+                      />
+                    )}
+                  />
+                }
+                label="Active (Visible in Store)"
+              />
+              <FormControlLabel
+                control={
+                  <Controller
+                    name="isFeatured"
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        disabled={isLoading}
+                      />
+                    )}
+                  />
+                }
+                label="Featured Product"
+              />
+            </Stack>
           </FormCard>
 
           <FormCard title="Pricing">

@@ -10,14 +10,14 @@ interface AboutPersonalSectionProps {
 
 export const AboutPersonalSection = ({ personal }: AboutPersonalSectionProps) => {
   return (
-    <ContentSection title={personal.title} backgroundColor="dark">
+    <ContentSection title={personal.title} subtitle={personal.subtitle}>
       <Grid container spacing={8} alignItems="center">
-        <Grid size={{ xs: 12, md: 5 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Box
             sx={(theme) => ({
               position: "relative",
               overflow: "hidden",
-              aspectRatio: "4/5",
+              aspectRatio: "1/1",
               borderRadius: theme.shape.borderRadius,
             })}
           >
@@ -34,24 +34,24 @@ export const AboutPersonalSection = ({ personal }: AboutPersonalSectionProps) =>
           </Box>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 7 }}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Stack spacing={4}>
             <Typography
-              variant="h6"
+              variant="h3"
               sx={{
-                lineHeight: 1.6,
                 fontStyle: "italic",
+                fontWeight: 400,
               }}
             >
               &quot;{personal.description}&quot;
             </Typography>
 
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+              <Typography variant="h2" sx={{ fontWeight: 600 }}>
                 {personal.name}
               </Typography>
 
-              <Typography variant="body1" color="primary" sx={{ fontWeight: 500 }}>
+              <Typography variant="h3" color="primary" sx={{ fontWeight: 500 }}>
                 {personal.role}
               </Typography>
             </Box>

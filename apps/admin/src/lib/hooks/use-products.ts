@@ -48,3 +48,18 @@ export const useToggleProductStatus = () => {
     },
   });
 };
+
+export const useToggleProductFeatured = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: api.products.toggleFeatured,
+    onSuccess: () => {
+      toast.success("Featured status updated");
+      queryClient.invalidateQueries({ queryKey: adminKeys.products.page() });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update featured status");
+    },
+  });
+};

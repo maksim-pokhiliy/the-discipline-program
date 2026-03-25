@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 
-import { Stack, Container, alpha, keyframes } from "@mui/material";
+import { Stack, Container, alpha, keyframes, Box } from "@mui/material";
 
 const fadeSlideUp = keyframes`
   from {
@@ -14,7 +14,6 @@ const fadeSlideUp = keyframes`
 `;
 
 type OverlayVariant = "uniform" | "gradient";
-type ContentAlign = "center" | "left";
 
 interface FullscreenSectionProps {
   backgroundImage: string;
@@ -22,9 +21,7 @@ interface FullscreenSectionProps {
   overlay?: boolean;
   overlayOpacity?: number;
   overlayVariant?: OverlayVariant;
-  contentAlign?: ContentAlign;
-  animate?: boolean;
-  maxWidth?: "xs" | "sm" | "md" | "lg" | "xl";
+  offset?: number;
 }
 
 const buildOverlay =
@@ -50,18 +47,14 @@ export const FullscreenSection = ({
   overlay = true,
   overlayOpacity = 0.5,
   overlayVariant = "uniform",
-  contentAlign = "center",
-  animate = false,
-  maxWidth = "md",
+  offset = 0,
 }: FullscreenSectionProps) => {
-  const isLeft = contentAlign === "left";
-
   return (
     <Stack
       sx={(theme) => ({
         position: "relative",
         height: "100vh",
-        alignItems: isLeft ? { xs: "center", md: "flex-start" } : "center",
+        alignItems: { xs: "center", md: "flex-start" },
         justifyContent: "center",
         backgroundImage: overlay
           ? `${buildOverlay(overlayVariant, overlayOpacity)(theme)}, url(${backgroundImage})`
@@ -70,25 +63,27 @@ export const FullscreenSection = ({
         backgroundPosition: "center",
         backgroundRepeat: "no-repeat",
         color: theme.palette.common.white,
-        textAlign: isLeft ? { xs: "center", md: "left" } : "center",
+        textAlign: { xs: "center", md: "left" },
       })}
     >
-      <Container maxWidth={maxWidth}>
+      {Array.from({ length: offset }, (_, i) => (
+        <Box key={i} sx={(theme) => ({ ...theme.mixins.toolbar })} />
+      ))}
+
+      <Container maxWidth="lg">
         <Stack
           spacing={4}
-          alignItems={isLeft ? { xs: "center", md: "flex-start" } : "center"}
+          alignItems={{ xs: "center", md: "flex-start" }}
           sx={(theme) => ({
-            maxWidth: isLeft ? { md: "65%" } : undefined,
-            ...(animate && {
-              "& > *": {
-                opacity: 0,
-                animation: `${fadeSlideUp} 0.7s ${theme.transitions.easing.easeOut} forwards`,
-              },
-              "& > *:nth-of-type(1)": { animationDelay: "0.15s" },
-              "& > *:nth-of-type(2)": { animationDelay: "0.35s" },
-              "& > *:nth-of-type(3)": { animationDelay: "0.55s" },
-              "& > *:nth-of-type(n+4)": { animationDelay: "0.7s" },
-            }),
+            maxWidth: { md: "65%" },
+            "& > *": {
+              opacity: 0,
+              animation: `${fadeSlideUp} 0.7s ${theme.transitions.easing.easeOut} forwards`,
+            },
+            "& > *:nth-of-type(1)": { animationDelay: "0.15s" },
+            "& > *:nth-of-type(2)": { animationDelay: "0.35s" },
+            "& > *:nth-of-type(3)": { animationDelay: "0.55s" },
+            "& > *:nth-of-type(n+4)": { animationDelay: "0.7s" },
           })}
         >
           {children}

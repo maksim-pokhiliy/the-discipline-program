@@ -85,16 +85,6 @@ export const DirectContactSectionForm = () => {
             Add Contact Method
           </Button>
         </Stack>
-
-        <TextField
-          label="Working Hours"
-          fullWidth
-          multiline
-          minRows={3}
-          error={!!errors.workingHours}
-          helperText={errors.workingHours?.message?.toString()}
-          {...register("workingHours")}
-        />
       </Stack>
     </FormCard>
   );
