@@ -7,7 +7,7 @@ import { QueryWrapper } from "@repo/query";
 
 import { useBlogPage } from "@app/lib/hooks";
 
-import { BlogFeaturedSection, BlogHeroSection, BlogPostsGrid } from "./sections";
+import { BlogFeaturedSection, BlogPostsGrid } from "./sections";
 
 interface BlogPageClientProps {
   initialData: BlogPageData;
@@ -20,11 +20,11 @@ export const BlogPageClient = ({ initialData }: BlogPageClientProps) => {
     <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage="Loading blog...">
       {(data) => (
         <Stack spacing={0}>
-          <BlogHeroSection hero={data.hero} />
+          {data.featuredPost && (
+            <BlogFeaturedSection hero={data.hero} featuredPost={data.featuredPost} />
+          )}
 
-          {data.featuredPost && <BlogFeaturedSection featuredPost={data.featuredPost} />}
-
-          <BlogPostsGrid posts={data.posts} />
+          <BlogPostsGrid hero={data.featuredPost ? undefined : data.hero} posts={data.posts} />
         </Stack>
       )}
     </QueryWrapper>

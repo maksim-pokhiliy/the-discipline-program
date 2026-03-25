@@ -9,7 +9,7 @@ interface AboutJourneySectionProps {
 
 export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
   return (
-    <ContentSection title={journey.title} subtitle={journey.subtitle} backgroundColor="dark">
+    <ContentSection title={journey.title} subtitle={journey.subtitle}>
       <Box sx={{ position: "relative" }}>
         <Box
           sx={{

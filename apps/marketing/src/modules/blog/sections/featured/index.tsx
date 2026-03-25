@@ -3,15 +3,17 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { type PublicBlogPost } from "@repo/contracts/blog";
+import { type BlogPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
 interface BlogFeaturedSectionProps {
+  hero: BlogPageData["hero"];
   featuredPost: PublicBlogPost;
 }
 
-export const BlogFeaturedSection = ({ featuredPost }: BlogFeaturedSectionProps) => {
+export const BlogFeaturedSection = ({ hero, featuredPost }: BlogFeaturedSectionProps) => {
   return (
-    <ContentSection title="Featured Article">
+    <ContentSection title={hero.title} subtitle={hero.subtitle} offset={1}>
       <Card sx={{ overflow: "hidden" }}>
         <Box sx={{ position: "relative", height: 300 }}>
           {featuredPost.coverImage && (

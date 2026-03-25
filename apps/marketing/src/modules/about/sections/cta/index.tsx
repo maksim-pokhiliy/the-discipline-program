@@ -1,4 +1,5 @@
 import { type AboutPageData } from "@repo/contracts/pages";
+import { ContentSection } from "@repo/ui";
 
 import { CTASection } from "@app/shared/components/ui";
 
@@ -8,12 +9,13 @@ interface AboutCtaSectionProps {
 
 export const AboutCTASection = ({ cta }: AboutCtaSectionProps) => {
   return (
-    <CTASection
-      title={cta.title}
-      subtitle={cta.subtitle}
-      buttonText={cta.buttonText}
-      buttonHref={cta.buttonHref}
-      backgroundColor="dark"
-    />
+    <ContentSection surface="raised">
+      <CTASection
+        title={cta.title}
+        subtitle={cta.subtitle}
+        buttonText={cta.buttonText}
+        buttonHref={cta.buttonHref}
+      />
+    </ContentSection>
   );
 };

@@ -38,7 +38,6 @@ export const BlogCreateView = () => {
       isPending={isPending}
       title="Create Post"
       subtitle="New entry"
-      backgroundColor="dark"
       backHref="/blog"
       backLabel="Back to List"
       submitLabel="Publish / Save"

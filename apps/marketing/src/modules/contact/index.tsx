@@ -8,7 +8,7 @@ import { QueryWrapper } from "@repo/query";
 import { useContactPage } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";
 
-import { ContactDirectInfo, ContactFAQ, ContactForm, ContactHero } from "./sections";
+import { ContactDirectInfo, ContactFAQ, ContactForm } from "./sections";
 
 interface ContactPageClientProps {
   initialData: ContactPageData;
@@ -29,7 +29,6 @@ export const ContactPageClient = ({ initialData }: ContactPageClientProps) => {
           <StructuredData type="faq" data={{ faqItems: data.faq.items }} />
 
           <Stack spacing={0}>
-            <ContactHero hero={data.hero} />
             <ContactForm form={data.form} programOptions={data.programOptions} />
             <ContactDirectInfo directContact={data.directContact} />
             <ContactFAQ faq={data.faq} />

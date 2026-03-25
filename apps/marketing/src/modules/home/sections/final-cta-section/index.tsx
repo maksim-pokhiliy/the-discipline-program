@@ -1,4 +1,5 @@
 import { type HomePageData } from "@repo/contracts/pages";
+import { ContentSection } from "@repo/ui";
 
 import { CTASection } from "@app/shared/components/ui";
 
@@ -8,11 +9,13 @@ interface HomeFinalCTASectionProps {
 
 export const HomeFinalCTASection = ({ contact }: HomeFinalCTASectionProps) => {
   return (
-    <CTASection
-      title={contact.title}
-      subtitle={contact.subtitle}
-      buttonText={contact.buttonText}
-      buttonHref={contact.buttonHref}
-    />
+    <ContentSection surface="raised">
+      <CTASection
+        title={contact.title}
+        subtitle={contact.subtitle}
+        buttonText={contact.buttonText}
+        buttonHref={contact.buttonHref}
+      />
+    </ContentSection>
   );
 };

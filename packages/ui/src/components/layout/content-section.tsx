@@ -14,36 +14,40 @@ export type ContentAction = ButtonProps & {
 type ContentSectionProps = {
   title?: string;
   subtitle?: string;
-  backgroundColor?: "light" | "dark";
+  surface?: "base" | "raised";
   maxWidth?: "sm" | "md" | "lg" | "xl";
   backHref?: string;
   backLabel?: string;
   actions?: ContentAction[];
   stickyToolbar?: boolean;
+  offset?: number;
   children?: ReactNode;
 };
 
 export const ContentSection = ({
   title,
   subtitle,
-  backgroundColor = "light",
-  maxWidth = "xl",
+  surface = "base",
+  maxWidth = "lg",
   backHref,
   backLabel = "Back",
   actions = [],
   stickyToolbar = false,
+  offset = 0,
   children,
 }: ContentSectionProps) => {
-  const isDark = backgroundColor === "dark";
-
   return (
     <Box
       sx={(theme) => ({
         py: 8,
-        backgroundColor: isDark ? theme.palette.background.default : theme.palette.background.paper,
-        color: theme.palette.text.primary,
+        backgroundColor:
+          surface === "raised" ? theme.palette.background.paper : theme.palette.background.default,
       })}
     >
+      {Array.from({ length: offset }, (_, i) => (
+        <Box key={i} sx={(theme) => ({ ...theme.mixins.toolbar })} />
+      ))}
+
       <Container maxWidth={maxWidth}>
         <Stack spacing={8}>
           {(title || subtitle) && (
@@ -69,7 +73,7 @@ export const ContentSection = ({
 
               {subtitle && (
                 <Typography
-                  variant="h5"
+                  variant="h4"
                   sx={(theme) => ({
                     color: theme.palette.text.secondary,
                     fontWeight: 400,
@@ -94,9 +98,7 @@ export const ContentSection = ({
                       position: "sticky",
                       top: 0,
                       zIndex: theme.zIndex.appBar - 1,
-                      backgroundColor: isDark
-                        ? theme.palette.background.default
-                        : theme.palette.background.paper,
+                      backgroundColor: theme.palette.background.default,
                       py: 2,
                       mx: -2,
                       px: 2,

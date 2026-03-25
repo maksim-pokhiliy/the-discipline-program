@@ -9,11 +9,7 @@ import { SuspenseWrapper } from "@repo/ui";
 import { useStorefrontProgramsPage } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";
 
-import {
-  StorefrontProgramsCTA,
-  StorefrontProgramsGridSection,
-  StorefrontProgramsHeroSection,
-} from "./sections";
+import { StorefrontProgramsCTA, StorefrontProgramsGridSection } from "./sections";
 
 interface StorefrontProgramsPageClientProps {
   initialData: StorefrontProgramsPageData;
@@ -37,8 +33,7 @@ export const StorefrontProgramsPageClient = ({
             <StructuredData type="storefront" data={{ products: data.productsList }} />
 
             <Stack spacing={0}>
-              <StorefrontProgramsHeroSection hero={data.hero} />
-              <StorefrontProgramsGridSection productsList={data.productsList} />
+              <StorefrontProgramsGridSection hero={data.hero} productsList={data.productsList} />
               <StorefrontProgramsCTA cta={data.cta} />
             </Stack>
           </>

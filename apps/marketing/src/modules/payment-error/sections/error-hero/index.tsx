@@ -8,7 +8,6 @@ export const PaymentErrorHeroSection = () => {
     <ContentSection
       title="Payment Failed"
       subtitle="There was an issue processing your payment. Don't worry, no charges were made to your account."
-      backgroundColor="dark"
     >
       <Stack sx={{ alignItems: "center" }}>
         <Stack

@@ -17,6 +17,7 @@ export const productSchema = z.object({
   description: z.string().min(1),
   features: z.array(z.string()),
   trainingPlanId: z.string().nullable(),
+  isFeatured: z.boolean(),
   isActive: z.boolean(),
   prices: z.array(priceSchema),
   createdAt: z.date(),
@@ -34,6 +35,7 @@ export const createProductSchema = z.object({
   slug: z.string().regex(/^[a-z0-9-]+$/),
   description: z.string().min(1),
   features: z.array(z.string()),
+  isFeatured: z.boolean(),
   isActive: z.boolean(),
   price: createProductPriceSchema.optional(),
 });

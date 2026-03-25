@@ -11,13 +11,7 @@ interface HomeHeroSectionProps {
 
 export const HomeHeroSection = ({ hero }: HomeHeroSectionProps) => {
   return (
-    <FullscreenSection
-      backgroundImage={hero.backgroundImage}
-      maxWidth="lg"
-      overlayVariant="gradient"
-      contentAlign="left"
-      animate
-    >
+    <FullscreenSection backgroundImage={hero.backgroundImage} overlayVariant="gradient" offset={1}>
       <Typography variant="display1" component="h1">
         {hero.title}
       </Typography>

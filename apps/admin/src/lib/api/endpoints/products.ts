@@ -18,5 +18,8 @@ export const createProductsAPI = (client: ApiClient) => ({
   delete: (id: string): Promise<void> => client.request(`/api/admin/products/${id}`, "DELETE"),
 
   toggleStatus: (id: string): Promise<Product> =>
-    client.request(`/api/admin/products/${id}/toggle`, "PATCH"),
+    client.request(`/api/admin/products/${id}/toggle?field=isActive`, "PATCH"),
+
+  toggleFeatured: (id: string): Promise<Product> =>
+    client.request(`/api/admin/products/${id}/toggle?field=isFeatured`, "PATCH"),
 });

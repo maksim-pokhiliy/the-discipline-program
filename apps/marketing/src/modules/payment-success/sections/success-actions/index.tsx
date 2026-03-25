@@ -7,7 +7,6 @@ export const PaymentSuccessActionsSection = () => {
     <ContentSection
       title="What's Next?"
       subtitle="You will receive access instructions via email shortly"
-      backgroundColor="dark"
     >
       <Stack spacing={6} alignItems="center">
         <Stack spacing={2} direction={{ xs: "column", sm: "row" }}>

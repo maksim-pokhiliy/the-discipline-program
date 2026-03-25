@@ -129,6 +129,7 @@ model Product {
   trainingPlanId  String?
   trainingPlan    TrainingPlan? @relation(fields: [trainingPlanId], references: [id])
   stripeProductId String?      @unique
+  isFeatured      Boolean   @default(false)
   isActive        Boolean   @default(true)
   prices          Price[]
   createdAt       DateTime  @default(now())

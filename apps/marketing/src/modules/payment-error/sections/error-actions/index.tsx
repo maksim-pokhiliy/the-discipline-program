@@ -4,11 +4,7 @@ import { ContentSection } from "@repo/ui";
 
 export const PaymentErrorActionsSection = () => {
   return (
-    <ContentSection
-      title="What Can You Do?"
-      subtitle="Here are some options to resolve the issue"
-      backgroundColor="dark"
-    >
+    <ContentSection title="What Can You Do?" subtitle="Here are some options to resolve the issue">
       <Stack spacing={6} alignItems="center">
         <Stack spacing={2} direction={{ xs: "column", sm: "row" }}>
           <Button variant="contained" size="large" href="/storefront" sx={{ minWidth: 200 }}>

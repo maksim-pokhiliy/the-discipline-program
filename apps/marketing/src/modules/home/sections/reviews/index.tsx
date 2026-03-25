@@ -10,7 +10,7 @@ interface HomeReviewsSectionProps {
 
 export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionProps) => {
   return (
-    <ContentSection title={reviews.title} subtitle={reviews.subtitle} backgroundColor="dark">
+    <ContentSection title={reviews.title} subtitle={reviews.subtitle}>
       <Grid container spacing={4}>
         {reviewsList.map((review) => (
           <Grid key={review.id} size={{ xs: 12, md: 4 }}>
@@ -25,7 +25,6 @@ export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionP
                       sx={{
                         flexGrow: 1,
                         fontStyle: "italic",
-                        lineHeight: 1.6,
                       }}
                     >
                       &quot;{review.text}&quot;
@@ -33,11 +32,7 @@ export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionP
                   </Stack>
 
                   <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                    <Avatar
-                      src={review.authorAvatar ?? ""}
-                      alt={review.authorName}
-                      sx={{ width: 50, height: 50 }}
-                    />
+                    <Avatar src={review.authorAvatar ?? ""} alt={review.authorName} />
 
                     <Stack spacing={0.5}>
                       <Typography variant="body2" sx={{ fontWeight: 600 }}>

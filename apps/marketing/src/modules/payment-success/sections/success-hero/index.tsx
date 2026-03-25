@@ -8,7 +8,6 @@ export const PaymentSuccessHeroSection = () => {
     <ContentSection
       title="Payment Successful!"
       subtitle="Welcome to The Discipline Program! Your transformation journey begins now."
-      backgroundColor="dark"
     >
       <Stack sx={{ alignItems: "center" }}>
         <Stack

@@ -14,7 +14,7 @@ export const Footer = () => {
     <>
       <Divider />
 
-      <Toolbar component="footer">
+      <Toolbar component="footer" sx={{ height: "unset" }}>
         <Stack divider={<Divider />} sx={{ width: "100%", py: 4 }} spacing={4}>
           <Stack
             direction={{ md: "row" }}

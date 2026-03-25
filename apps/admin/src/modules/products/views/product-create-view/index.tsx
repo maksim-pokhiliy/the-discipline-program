@@ -31,7 +31,6 @@ export const ProductCreateView = () => {
       isPending={isPending}
       title="Create Product"
       subtitle="New product"
-      backgroundColor="dark"
       backHref="/products"
       backLabel="Back to List"
       submitLabel="Create Product"

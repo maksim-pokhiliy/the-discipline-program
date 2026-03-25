@@ -60,7 +60,7 @@ export const ContactForm = ({ form, programOptions }: ContactFormProps) => {
   const isValid = formData.name.trim() && formData.email.trim() && formData.message.trim();
 
   return (
-    <ContentSection title={form.title} subtitle={form.subtitle}>
+    <ContentSection title={form.title} subtitle={form.subtitle} offset={1}>
       <Grid container justifyContent="center">
         <Grid size={{ xs: 12, md: 8, lg: 6 }}>
           <Card>

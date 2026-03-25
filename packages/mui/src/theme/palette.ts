@@ -10,7 +10,7 @@ export const palette: PaletteOptions = {
   },
   background: {
     default: "#191919",
-    paper: "#252525",
+    paper: "#1F1F1F",
   },
   text: {
     primary: "rgba(255, 255, 255, 0.87)",

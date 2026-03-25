@@ -46,7 +46,6 @@ const ProductEditForm: React.FC<ProductEditFormProps> = ({ product }) => {
       isPending={isPending}
       title="Edit Product"
       subtitle={product.title}
-      backgroundColor="dark"
       backHref="/products"
       backLabel="Back to List"
     >
