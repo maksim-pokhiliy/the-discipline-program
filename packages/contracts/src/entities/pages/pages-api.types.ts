@@ -9,6 +9,7 @@ import {
   type getAboutPageResponseSchema,
   type getBlogPageResponseSchema,
   type getContactPageResponseSchema,
+  type getFaqPageResponseSchema,
   type updatePageMetadataSchema,
 } from "./pages-api.schema";
 
@@ -22,3 +23,4 @@ export type StorefrontProgramsPageData = z.infer<typeof getStorefrontProgramsPag
 export type AboutPageData = z.infer<typeof getAboutPageResponseSchema>;
 export type BlogPageData = z.infer<typeof getBlogPageResponseSchema>;
 export type ContactPageData = z.infer<typeof getContactPageResponseSchema>;
+export type FaqPageData = z.infer<typeof getFaqPageResponseSchema>;

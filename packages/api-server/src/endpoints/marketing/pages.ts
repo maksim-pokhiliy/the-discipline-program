@@ -7,6 +7,7 @@ import {
   type AboutPageData,
   type BlogPageData,
   type ContactPageData,
+  type FaqPageData,
   PAGE_SECTIONS_MAP,
 } from "@repo/contracts/pages";
 import { NotFoundError } from "@repo/errors";
@@ -126,8 +127,19 @@ export const pagesApi = {
         sections,
         map.directContact,
       ),
-      faq: extractSectionData<ContactPageData["faq"]>(sections, map.faq),
       programOptions: products.map((p) => ({ value: p.slug, label: p.title })),
+    };
+  },
+
+  getFaqPage: async (): Promise<FaqPageData> => {
+    const sections = await prisma.marketingPageSection.findMany({
+      where: { pageSlug: "faq", isActive: true },
+    });
+
+    const map = PAGE_SECTIONS_MAP.faq;
+
+    return {
+      content: extractSectionData<FaqPageData["content"]>(sections, map.content),
     };
   },
 

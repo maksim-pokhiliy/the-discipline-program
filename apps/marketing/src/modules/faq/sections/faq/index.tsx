@@ -1,18 +1,18 @@
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from "@mui/material";
 
-import { type ContactPageData } from "@repo/contracts/pages";
+import { type FaqPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
-interface ContactFAQProps {
-  faq: ContactPageData["faq"];
+interface FaqSectionProps {
+  content: FaqPageData["content"];
 }
 
-export const ContactFAQ = ({ faq }: ContactFAQProps) => {
+export const FaqSection = ({ content }: FaqSectionProps) => {
   return (
-    <ContentSection title={faq.title} maxWidth="md">
+    <ContentSection title={content.title} maxWidth="md" offset={1}>
       <Stack>
-        {faq.items.map((item, index) => (
+        {content.items.map((item, index) => (
           <Accordion key={index}>
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>

@@ -399,6 +399,12 @@ const seedMarketingPages = async () => {
       seoTitle: "Contact — The Discipline Program",
       seoDesc: "Questions about programming? Reach out via Telegram or email.",
     },
+    {
+      slug: "faq",
+      title: "FAQ",
+      seoTitle: "FAQ — The Discipline Program",
+      seoDesc: "Frequently asked questions about training programs, trials, and coaching.",
+    },
   ];
 
   for (const page of pages) {
@@ -670,8 +676,8 @@ const seedMarketingPages = async () => {
       },
     },
     {
-      pageSlug: "contact",
-      section: "faq",
+      pageSlug: "faq",
+      section: "faq:content",
       data: {
         title: "FAQ",
         items: [

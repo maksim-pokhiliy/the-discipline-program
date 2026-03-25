@@ -106,7 +106,8 @@ export const SectionEditor = ({
         return <DirectContactSectionForm />;
       }
 
-      case "faq": {
+      case "faq":
+      case "faq:content": {
         return <FaqSectionForm />;
       }
 
