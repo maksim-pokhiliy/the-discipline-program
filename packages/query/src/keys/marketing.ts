@@ -9,6 +9,7 @@ export const marketingKeys = {
     about: (): QueryKey => [...marketingKeys.root, "pages", "about"] as const,
     blog: (): QueryKey => [...marketingKeys.root, "pages", "blog"] as const,
     contact: (): QueryKey => [...marketingKeys.root, "pages", "contact"] as const,
+    faq: (): QueryKey => [...marketingKeys.root, "pages", "faq"] as const,
   },
 
   blog: {

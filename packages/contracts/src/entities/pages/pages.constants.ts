@@ -4,6 +4,7 @@ export enum PageSlug {
   ABOUT = "about",
   BLOG = "blog",
   CONTACT = "contact",
+  FAQ = "faq",
 }
 
 export enum ContactMethodType {
@@ -38,6 +39,8 @@ export const PAGE_SECTIONS_MAP = {
     hero: "contact:hero",
     form: "form",
     directContact: "directContact",
-    faq: "faq",
+  },
+  faq: {
+    content: "faq:content",
   },
 } as const;

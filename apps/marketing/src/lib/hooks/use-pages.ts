@@ -6,6 +6,7 @@ import {
   type AboutPageData,
   type BlogPageData,
   type ContactPageData,
+  type FaqPageData,
 } from "@repo/contracts";
 import { marketingKeys, STALE_TIMES } from "@repo/query";
 
@@ -29,6 +30,10 @@ interface UseBlogPageOptions {
 
 interface UseContactPageOptions {
   initialData?: ContactPageData;
+}
+
+interface UseFaqPageOptions {
+  initialData?: FaqPageData;
 }
 
 export const useHomePage = ({ initialData }: UseHomePageOptions = {}) =>
@@ -67,6 +72,14 @@ export const useContactPage = ({ initialData }: UseContactPageOptions = {}) =>
   useQuery({
     queryKey: marketingKeys.pages.contact(),
     queryFn: api.pages.getContact,
+    initialData,
+    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
+  });
+
+export const useFaqPage = ({ initialData }: UseFaqPageOptions = {}) =>
+  useQuery({
+    queryKey: marketingKeys.pages.faq(),
+    queryFn: api.pages.getFaq,
     initialData,
     staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
   });

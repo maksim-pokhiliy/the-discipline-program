@@ -61,8 +61,11 @@ export const getContactPageResponseSchema = z.object({
   hero: contactPageHeroSchema,
   form: contactFormSchema,
   directContact: contactDirectContactSchema,
-  faq: contactPageFaqSchema,
   programOptions: z.array(programOptionSchema),
+});
+
+export const getFaqPageResponseSchema = z.object({
+  content: contactPageFaqSchema,
 });
 
 export const adminPageListItemSchema = z.object({
@@ -117,7 +120,7 @@ export const updatePageSectionSchema = z
       section: z.literal(PAGE_SECTIONS_MAP.contact.directContact),
       data: contactDirectContactSchema,
     }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.contact.faq), data: contactPageFaqSchema }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.faq.content), data: contactPageFaqSchema }),
   ])
   .and(z.object({ pageSlug: z.nativeEnum(PageSlug) }));
 
@@ -158,5 +161,5 @@ export const SECTION_SCHEMAS = {
   [PAGE_SECTIONS_MAP.contact.hero]: contactPageHeroSchema,
   [PAGE_SECTIONS_MAP.contact.form]: contactFormSchema,
   [PAGE_SECTIONS_MAP.contact.directContact]: contactDirectContactSchema,
-  [PAGE_SECTIONS_MAP.contact.faq]: contactPageFaqSchema,
+  [PAGE_SECTIONS_MAP.faq.content]: contactPageFaqSchema,
 } as const;

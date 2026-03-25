@@ -37,6 +37,11 @@ export async function GET(_: Request, { params }: { params: Promise<{ pageSlug: 
         break;
       }
 
+      case "faq": {
+        pageData = await pagesApi.getFaqPage();
+        break;
+      }
+
       default: {
         throw new NotFoundError("Page not found", { pageSlug });
       }

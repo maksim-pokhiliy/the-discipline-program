@@ -41,6 +41,13 @@ export const PAGE_SEO = {
     keywords: ["contact coach", "fitness contact", "program questions"],
   },
 
+  faq: {
+    title: "FAQ — The Discipline Program",
+    description:
+      "Frequently asked questions about training programs, trials, equipment, and coaching.",
+    keywords: ["faq", "training questions", "program faq", "coaching faq"],
+  },
+
   paymentError: {
     title: "Payment Error — The Discipline Program",
     description: "Something went wrong with your payment. Check details and try again.",

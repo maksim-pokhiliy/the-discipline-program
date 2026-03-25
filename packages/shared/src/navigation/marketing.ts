@@ -6,6 +6,7 @@ export const MARKETING_NAVIGATION: MarketingNavigationConfig = {
     { text: "Programs", href: "/storefront" },
     { text: "About", href: "/about" },
     { text: "Blog", href: "/blog" },
+    { text: "FAQ", href: "/faq" },
     { text: "Contact", href: "/contact" },
   ],
 

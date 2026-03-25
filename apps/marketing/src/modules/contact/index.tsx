@@ -6,9 +6,8 @@ import { type ContactPageData } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/query";
 
 import { useContactPage } from "@app/lib/hooks";
-import { StructuredData } from "@app/shared/components/seo";
 
-import { ContactDirectInfo, ContactFAQ, ContactForm } from "./sections";
+import { ContactDirectInfo, ContactForm } from "./sections";
 
 interface ContactPageClientProps {
   initialData: ContactPageData;
@@ -25,15 +24,10 @@ export const ContactPageClient = ({ initialData }: ContactPageClientProps) => {
       loadingMessage="Loading contact page..."
     >
       {(data) => (
-        <>
-          <StructuredData type="faq" data={{ faqItems: data.faq.items }} />
-
-          <Stack spacing={0}>
-            <ContactForm form={data.form} programOptions={data.programOptions} />
-            <ContactDirectInfo directContact={data.directContact} />
-            <ContactFAQ faq={data.faq} />
-          </Stack>
-        </>
+        <Stack spacing={0}>
+          <ContactForm form={data.form} programOptions={data.programOptions} />
+          <ContactDirectInfo directContact={data.directContact} />
+        </Stack>
       )}
     </QueryWrapper>
   );
