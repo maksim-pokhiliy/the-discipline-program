@@ -4,7 +4,20 @@ import { type ReactNode } from "react";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { Box, Button, Container, Stack, Typography, type ButtonProps } from "@mui/material";
+import { type Variants, motion } from "framer-motion";
 import Link from "next/link";
+
+const staggerContainer: Variants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.2 },
+  },
+};
+
+const fadeSlideUp: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0, 0, 0.58, 1] } },
+};
 
 export type ContentAction = ButtonProps & {
   label: string;
@@ -49,108 +62,119 @@ export const ContentSection = ({
       ))}
 
       <Container maxWidth={maxWidth}>
-        <Stack spacing={8}>
-          {(title || subtitle) && (
-            <Stack
-              spacing={2}
-              sx={{
-                textAlign: "center",
-                alignItems: "center",
-                width: "100%",
-              }}
-            >
-              {title && (
-                <Typography
-                  variant="display2"
-                  sx={(theme) => ({
-                    fontWeight: 700,
-                    color: theme.palette.text.primary,
-                  })}
-                >
-                  {title}
-                </Typography>
-              )}
-
-              {subtitle && (
-                <Typography
-                  variant="h4"
-                  sx={(theme) => ({
-                    color: theme.palette.text.secondary,
-                    fontWeight: 400,
-                    lineHeight: 1.4,
-                  })}
-                >
-                  {subtitle}
-                </Typography>
-              )}
-            </Stack>
-          )}
-
-          {(backHref || actions.length > 0) && (
-            <Stack
-              direction={{ xs: "column", md: "row" }}
-              alignItems={{ xs: "stretch", md: "center" }}
-              justifyContent="space-between"
-              spacing={2}
-              sx={
-                stickyToolbar
-                  ? (theme) => ({
-                      position: "sticky",
-                      top: 0,
-                      zIndex: theme.zIndex.appBar - 1,
-                      backgroundColor: theme.palette.background.default,
-                      py: 2,
-                      mx: -2,
-                      px: 2,
-                    })
-                  : undefined
-              }
-            >
-              {backHref && (
-                <Button
-                  component={Link}
-                  href={backHref}
-                  startIcon={<ArrowBackIcon />}
-                  color="inherit"
-                  variant="text"
-                  size="small"
-                  fullWidth
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.1 }}
+        >
+          <Stack spacing={8}>
+            {(title || subtitle) && (
+              <motion.div variants={fadeSlideUp}>
+                <Stack
+                  spacing={2}
                   sx={{
-                    width: { md: "auto" },
-                    justifyContent: { xs: "center", md: "flex-start" },
+                    textAlign: "center",
+                    alignItems: "center",
+                    width: "100%",
                   }}
                 >
-                  {backLabel}
-                </Button>
-              )}
+                  {title && (
+                    <Typography
+                      variant="display2"
+                      sx={(theme) => ({
+                        fontWeight: 700,
+                        color: theme.palette.text.primary,
+                      })}
+                    >
+                      {title}
+                    </Typography>
+                  )}
 
-              {actions.length > 0 && (
-                <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="stretch">
-                  {actions.map((action, index) => (
+                  {subtitle && (
+                    <Typography
+                      variant="h4"
+                      sx={(theme) => ({
+                        color: theme.palette.text.secondary,
+                        fontWeight: 400,
+                        lineHeight: 1.4,
+                      })}
+                    >
+                      {subtitle}
+                    </Typography>
+                  )}
+                </Stack>
+              </motion.div>
+            )}
+
+            {(backHref || actions.length > 0) && (
+              <motion.div variants={fadeSlideUp}>
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  alignItems={{ xs: "stretch", md: "center" }}
+                  justifyContent="space-between"
+                  spacing={2}
+                  sx={
+                    stickyToolbar
+                      ? (theme) => ({
+                          position: "sticky",
+                          top: 0,
+                          zIndex: theme.zIndex.appBar - 1,
+                          backgroundColor: theme.palette.background.default,
+                          py: 2,
+                          mx: -2,
+                          px: 2,
+                        })
+                      : undefined
+                  }
+                >
+                  {backHref && (
                     <Button
-                      key={index}
-                      variant={action.variant || "contained"}
-                      color={action.color || "primary"}
-                      type={action.type || "button"}
-                      disabled={Boolean(action.disabled || action.loading)}
-                      onClick={action.onClick}
-                      href={action.href}
-                      component={action.href ? Link : "button"}
-                      startIcon={action.startIcon}
+                      component={Link}
+                      href={backHref}
+                      startIcon={<ArrowBackIcon />}
+                      color="inherit"
+                      variant="text"
                       size="small"
                       fullWidth
-                      sx={{ width: { md: "auto" } }}
+                      sx={{
+                        width: { md: "auto" },
+                        justifyContent: { xs: "center", md: "flex-start" },
+                      }}
                     >
-                      {action.loading ? "Loading..." : action.label}
+                      {backLabel}
                     </Button>
-                  ))}
-                </Stack>
-              )}
-            </Stack>
-          )}
+                  )}
 
-          <Box>{children}</Box>
-        </Stack>
+                  {actions.length > 0 && (
+                    <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="stretch">
+                      {actions.map((action, index) => (
+                        <Button
+                          key={index}
+                          variant={action.variant || "contained"}
+                          color={action.color || "primary"}
+                          type={action.type || "button"}
+                          disabled={Boolean(action.disabled || action.loading)}
+                          onClick={action.onClick}
+                          href={action.href}
+                          component={action.href ? Link : "button"}
+                          startIcon={action.startIcon}
+                          size="small"
+                          fullWidth
+                          sx={{ width: { md: "auto" } }}
+                        >
+                          {action.loading ? "Loading..." : action.label}
+                        </Button>
+                      ))}
+                    </Stack>
+                  )}
+                </Stack>
+              </motion.div>
+            )}
+
+            <motion.div variants={fadeSlideUp}>{children}</motion.div>
+          </Stack>
+        </motion.div>
       </Container>
     </Box>
   );

@@ -1,19 +1,23 @@
-import { type ReactNode } from "react";
+"use client";
 
-import { Stack, Container, alpha, keyframes, Box } from "@mui/material";
+import { Children, type ReactNode } from "react";
 
-const fadeSlideUp = keyframes`
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-`;
+import { Stack, Container, alpha, Box } from "@mui/material";
+import { type Variants, motion } from "framer-motion";
 
 type OverlayVariant = "uniform" | "gradient";
+
+const staggerContainer: Variants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.2 },
+  },
+};
+
+const fadeSlideUp: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0, 0, 0.58, 1] } },
+};
 
 interface FullscreenSectionProps {
   backgroundImage: string;
@@ -71,23 +75,22 @@ export const FullscreenSection = ({
       ))}
 
       <Container maxWidth="lg">
-        <Stack
-          spacing={4}
-          alignItems={{ xs: "center", md: "flex-start" }}
-          sx={(theme) => ({
-            maxWidth: { md: "65%" },
-            "& > *": {
-              opacity: 0,
-              animation: `${fadeSlideUp} 0.7s ${theme.transitions.easing.easeOut} forwards`,
-            },
-            "& > *:nth-of-type(1)": { animationDelay: "0.15s" },
-            "& > *:nth-of-type(2)": { animationDelay: "0.35s" },
-            "& > *:nth-of-type(3)": { animationDelay: "0.55s" },
-            "& > *:nth-of-type(n+4)": { animationDelay: "0.7s" },
-          })}
+        <motion.div
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.1 }}
         >
-          {children}
-        </Stack>
+          <Stack
+            spacing={4}
+            alignItems={{ xs: "center", md: "flex-start" }}
+            sx={{ maxWidth: { md: "65%" } }}
+          >
+            {Children.map(children, (child) => (
+              <motion.div variants={fadeSlideUp}>{child}</motion.div>
+            ))}
+          </Stack>
+        </motion.div>
       </Container>
     </Stack>
   );

@@ -647,7 +647,11 @@ const seedMarketingPages = async () => {
     {
       pageSlug: "contact",
       section: "contact:hero",
-      data: { title: "Drop Us A Line", subtitle: "We love talking training." },
+      data: {
+        title: "Drop Us A Line",
+        subtitle: "We love talking training.",
+        backgroundImage: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=80",
+      },
     },
     {
       pageSlug: "contact",

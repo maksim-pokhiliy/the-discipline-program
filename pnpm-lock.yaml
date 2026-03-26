@@ -12,6 +12,15 @@ catalogs:
     '@commitlint/config-conventional':
       specifier: ^20.0.0
       version: 20.3.0
+    '@dnd-kit/core':
+      specifier: ^6.3.1
+      version: 6.3.1
+    '@dnd-kit/sortable':
+      specifier: ^10.0.0
+      version: 10.0.0
+    '@dnd-kit/utilities':
+      specifier: ^3.2.2
+      version: 3.2.2
     '@emotion/cache':
       specifier: ^11.14.0
       version: 11.14.0
@@ -21,6 +30,9 @@ catalogs:
     '@emotion/styled':
       specifier: ^11.14.0
       version: 11.14.0
+    '@eslint/js':
+      specifier: ^9.17.0
+      version: 9.30.1
     '@hookform/resolvers':
       specifier: ^3.9.1
       version: 3.10.0
@@ -36,6 +48,9 @@ catalogs:
     '@mui/x-date-pickers':
       specifier: ^8.6.1
       version: 8.27.2
+    '@next/eslint-plugin-next':
+      specifier: 16.1.1
+      version: 16.1.1
     '@prisma/client':
       specifier: 6.1.0
       version: 6.1.0
@@ -93,9 +108,42 @@ catalogs:
     dayjs:
       specifier: ^1.11.13
       version: 1.11.20
+    dotenv:
+      specifier: ^17.3.1
+      version: 17.3.1
     eslint:
       specifier: ^9.17.0
       version: 9.30.1
+    eslint-config-next:
+      specifier: 16.1.1
+      version: 16.1.1
+    eslint-config-prettier:
+      specifier: ^9.1.0
+      version: 9.1.2
+    eslint-import-resolver-typescript:
+      specifier: ^3.7.0
+      version: 3.10.1
+    eslint-plugin-import:
+      specifier: ^2.31.0
+      version: 2.32.0
+    eslint-plugin-only-warn:
+      specifier: ^1.1.0
+      version: 1.1.0
+    eslint-plugin-react:
+      specifier: ^7.37.2
+      version: 7.37.5
+    eslint-plugin-react-hooks:
+      specifier: ^5.1.0
+      version: 5.2.0
+    eslint-plugin-turbo:
+      specifier: ^2.3.3
+      version: 2.7.2
+    framer-motion:
+      specifier: ^12.38.0
+      version: 12.38.0
+    globals:
+      specifier: ^15.14.0
+      version: 15.15.0
     isomorphic-dompurify:
       specifier: ^2.35.0
       version: 2.35.0
@@ -138,12 +186,21 @@ catalogs:
     tsx:
       specifier: ^4.21.0
       version: 4.21.0
+    turbo:
+      specifier: 2.8.0
+      version: 2.8.0
     typescript:
       specifier: 5.7.2
       version: 5.7.2
+    typescript-eslint:
+      specifier: ^8.18.2
+      version: 8.51.0
     vite:
       specifier: ^8.0.1
       version: 8.0.1
+    vitest:
+      specifier: ^4.1.0
+      version: 4.1.0
     zod:
       specifier: ^3.24.1
       version: 3.25.76
@@ -159,7 +216,7 @@ importers:
         specifier: 'catalog:'
         version: 20.3.0
       dotenv:
-        specifier: ^17.3.1
+        specifier: 'catalog:'
         version: 17.3.1
       lefthook:
         specifier: 'catalog:'
@@ -171,13 +228,13 @@ importers:
         specifier: 'catalog:'
         version: 4.1.1(prettier@3.5.3)
       turbo:
-        specifier: 2.8.0
+        specifier: 'catalog:'
         version: 2.8.0
       typescript:
         specifier: 'catalog:'
         version: 5.7.2
       vitest:
-        specifier: ^4.1.0
+        specifier: 'catalog:'
         version: 4.1.0(@types/node@22.19.3)(jsdom@27.4.0)(vite@8.0.1(@types/node@22.19.3)(esbuild@0.27.2)(jiti@2.6.1)(tsx@4.21.0))
 
   apps/admin:
@@ -315,6 +372,9 @@ importers:
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.80.2(react@19.2.3)
+      framer-motion:
+        specifier: 'catalog:'
+        version: 12.38.0(@emotion/is-prop-valid@1.3.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       lucide-react:
         specifier: 'catalog:'
         version: 0.469.0(react@19.2.3)
@@ -359,13 +419,13 @@ importers:
   apps/platform:
     dependencies:
       '@dnd-kit/core':
-        specifier: ^6.3.1
+        specifier: 'catalog:'
         version: 6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@dnd-kit/sortable':
-        specifier: ^10.0.0
+        specifier: 'catalog:'
         version: 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       '@dnd-kit/utilities':
-        specifier: ^3.2.2
+        specifier: 'catalog:'
         version: 3.2.2(react@19.2.3)
       '@hookform/resolvers':
         specifier: 'catalog:'
@@ -782,40 +842,40 @@ importers:
   packages/eslint-config:
     dependencies:
       '@eslint/js':
-        specifier: ^9.17.0
+        specifier: 'catalog:'
         version: 9.30.1
       '@next/eslint-plugin-next':
-        specifier: 16.1.1
+        specifier: 'catalog:'
         version: 16.1.1
       eslint-config-next:
-        specifier: 16.1.1
+        specifier: 'catalog:'
         version: 16.1.1(@typescript-eslint/parser@8.51.0(eslint@9.30.1(jiti@2.6.1))(typescript@5.7.2))(eslint@9.30.1(jiti@2.6.1))(typescript@5.7.2)
       eslint-config-prettier:
-        specifier: ^9.1.0
+        specifier: 'catalog:'
         version: 9.1.2(eslint@9.30.1(jiti@2.6.1))
       eslint-import-resolver-typescript:
-        specifier: ^3.7.0
+        specifier: 'catalog:'
         version: 3.10.1(eslint-plugin-import@2.32.0)(eslint@9.30.1(jiti@2.6.1))
       eslint-plugin-import:
-        specifier: ^2.31.0
+        specifier: 'catalog:'
         version: 2.32.0(@typescript-eslint/parser@8.51.0(eslint@9.30.1(jiti@2.6.1))(typescript@5.7.2))(eslint-import-resolver-typescript@3.10.1)(eslint@9.30.1(jiti@2.6.1))
       eslint-plugin-only-warn:
-        specifier: ^1.1.0
+        specifier: 'catalog:'
         version: 1.1.0
       eslint-plugin-react:
-        specifier: ^7.37.2
+        specifier: 'catalog:'
         version: 7.37.5(eslint@9.30.1(jiti@2.6.1))
       eslint-plugin-react-hooks:
-        specifier: ^5.1.0
+        specifier: 'catalog:'
         version: 5.2.0(eslint@9.30.1(jiti@2.6.1))
       eslint-plugin-turbo:
-        specifier: ^2.3.3
+        specifier: 'catalog:'
         version: 2.7.2(eslint@9.30.1(jiti@2.6.1))(turbo@2.8.0)
       globals:
-        specifier: ^15.14.0
+        specifier: 'catalog:'
         version: 15.15.0
       typescript-eslint:
-        specifier: ^8.18.2
+        specifier: 'catalog:'
         version: 8.51.0(eslint@9.30.1(jiti@2.6.1))(typescript@5.7.2)
     devDependencies:
       eslint:
@@ -998,6 +1058,9 @@ importers:
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
+      framer-motion:
+        specifier: 'catalog:'
+        version: 12.38.0(@emotion/is-prop-valid@1.3.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       isomorphic-dompurify:
         specifier: 'catalog:'
         version: 2.35.0
@@ -1273,9 +1336,6 @@ packages:
     peerDependencies:
       react: '>=16.8.0'
 
-  '@emnapi/core@1.4.3':
-    resolution: {integrity: sha512-4m62DuCE07lw01soJwPiBGC0nAww0Q+RY70VZ+n49yDIO13yyinhbWCeNnaob0lakDtWQzSdtNWzJeOJt2ma+g==}
-
   '@emnapi/core@1.9.0':
     resolution: {integrity: sha512-0DQ98G9ZQZOxfUcQn1waV2yS8aWdZ6kJMbYCJB3oUBecjWYO1fqJ+a1DRfPF3O5JEkwqwP1A9QEN/9mYm2Yd0w==}
 
@@ -1284,9 +1344,6 @@ packages:
 
   '@emnapi/runtime@1.9.0':
     resolution: {integrity: sha512-QN75eB0IH2ywSpRpNddCRfQIhmJYBCJ1x5Lb3IscKAL8bMnVAKnRg8dCoXbHzVLLH7P38N2Z3mtulB7W0J0FKw==}
-
-  '@emnapi/wasi-threads@1.0.2':
-    resolution: {integrity: sha512-5n3nTJblwRi8LlXkJ9eBzu+kZR8Yxcc7ubakyQTFzPMtIhFpUBRbsnc2Dv88IZDIbCDlBiWrknhB4Lsz7mg6BA==}
 
   '@emnapi/wasi-threads@1.2.0':
     resolution: {integrity: sha512-N10dEJNSsUx41Z6pZsXU8FjPjpBEplgH24sfkmITrBED1/U2Esum9F3lfLrMjKHHjmi557zQn7kR9R+XWXu5Rg==}
@@ -3417,6 +3474,20 @@ packages:
     resolution: {integrity: sha512-dKx12eRCVIzqCxFGplyFKJMPvLEWgmNtUrpTiJIR5u97zEhRG8ySrtboPHZXx7daLxQVrl643cTzbab2tkQjxg==}
     engines: {node: '>= 0.4'}
 
+  framer-motion@12.38.0:
+    resolution: {integrity: sha512-rFYkY/pigbcswl1XQSb7q424kSTQ8q6eAC+YUsSKooHQYuLdzdHjrt6uxUC+PRAO++q5IS7+TamgIw1AphxR+g==}
+    peerDependencies:
+      '@emotion/is-prop-valid': '*'
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@emotion/is-prop-valid':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -4065,6 +4136,12 @@ packages:
 
   module-alias@2.3.4:
     resolution: {integrity: sha512-bOclZt8hkpuGgSSoG07PKmvzTizROilUTvLNyrMqvlC9snhs7y7GzjNWAVbISIOlhCP1T14rH1PDAV9iNyBq/w==}
+
+  motion-dom@12.38.0:
+    resolution: {integrity: sha512-pdkHLD8QYRp8VfiNLb8xIBJis1byQ9gPT3Jnh2jqfFtAsWUA3dEepDlsWe/xMpO8McV+VdpKVcp+E+TGJEtOoA==}
+
+  motion-utils@12.36.0:
+    resolution: {integrity: sha512-eHWisygbiwVvf6PZ1vhaHCLamvkSbPIeAYxWUuL3a2PD/TROgE7FvfHWTIH4vMl798QLfMw15nRqIaRDXTlYRg==}
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
@@ -5381,12 +5458,6 @@ snapshots:
       react: 19.2.3
       tslib: 2.8.1
 
-  '@emnapi/core@1.4.3':
-    dependencies:
-      '@emnapi/wasi-threads': 1.0.2
-      tslib: 2.8.1
-    optional: true
-
   '@emnapi/core@1.9.0':
     dependencies:
       '@emnapi/wasi-threads': 1.2.0
@@ -5399,11 +5470,6 @@ snapshots:
     optional: true
 
   '@emnapi/runtime@1.9.0':
-    dependencies:
-      tslib: 2.8.1
-    optional: true
-
-  '@emnapi/wasi-threads@1.0.2':
     dependencies:
       tslib: 2.8.1
     optional: true
@@ -5913,8 +5979,8 @@ snapshots:
 
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:
-      '@emnapi/core': 1.4.3
-      '@emnapi/runtime': 1.5.0
+      '@emnapi/core': 1.9.0
+      '@emnapi/runtime': 1.9.0
       '@tybys/wasm-util': 0.10.1
     optional: true
 
@@ -6534,7 +6600,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 8.51.0
       debug: 4.4.1
       minimatch: 9.0.5
-      semver: 7.7.2
+      semver: 7.7.4
       tinyglobby: 0.2.15
       ts-api-utils: 2.4.0(typescript@5.7.2)
       typescript: 5.7.2
@@ -7376,7 +7442,7 @@ snapshots:
   eslint-plugin-react-hooks@7.0.1(eslint@9.30.1(jiti@2.6.1)):
     dependencies:
       '@babel/core': 7.28.5
-      '@babel/parser': 7.27.5
+      '@babel/parser': 7.28.5
       eslint: 9.30.1(jiti@2.6.1)
       hermes-parser: 0.25.1
       zod: 3.25.76
@@ -7548,6 +7614,16 @@ snapshots:
   for-each@0.3.5:
     dependencies:
       is-callable: 1.2.7
+
+  framer-motion@12.38.0(@emotion/is-prop-valid@1.3.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+    dependencies:
+      motion-dom: 12.38.0
+      motion-utils: 12.36.0
+      tslib: 2.8.1
+    optionalDependencies:
+      '@emotion/is-prop-valid': 1.3.1
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
 
   fsevents@2.3.3:
     optional: true
@@ -7742,7 +7818,7 @@ snapshots:
 
   is-bun-module@2.0.0:
     dependencies:
-      semver: 7.7.2
+      semver: 7.7.4
 
   is-callable@1.2.7: {}
 
@@ -8149,6 +8225,12 @@ snapshots:
   minipass@7.1.3: {}
 
   module-alias@2.3.4: {}
+
+  motion-dom@12.38.0:
+    dependencies:
+      motion-utils: 12.36.0
+
+  motion-utils@12.36.0: {}
 
   ms@2.1.3: {}
 
