@@ -24,6 +24,7 @@
     "@tanstack/react-query": "catalog:",
     "@mui/material": "catalog:",
     "@mui/icons-material": "catalog:",
+    "framer-motion": "catalog:",
     "lucide-react": "catalog:",
     "next": "catalog:",
     "react": "catalog:",

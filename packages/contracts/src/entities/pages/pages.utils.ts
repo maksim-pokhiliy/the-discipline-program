@@ -9,7 +9,7 @@ export const getPageSectionsOrder = (pageSlug: PageSlug): string[] => {
 export const SECTION_FEATURES = {
   hero: { hasButton: true, hasBackground: true },
   "about:hero": { hasButton: true, hasBackground: true },
-  "contact:hero": { hasButton: false, hasBackground: false },
+  "contact:hero": { hasButton: false, hasBackground: true },
   "blog:hero": { hasButton: false, hasBackground: true },
   "storefront:hero": { hasButton: false, hasBackground: false },
 } as const;

@@ -102,6 +102,7 @@ export const aboutPageCtaSchema = z.object({
 export const contactPageHeroSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
+  backgroundImage: z.string(),
 });
 
 export const contactFormSchema = z.object({

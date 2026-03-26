@@ -18,13 +18,13 @@
   "devDependencies": {
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
-    "dotenv": "^17.3.1",
+    "dotenv": "catalog:",
     "lefthook": "catalog:",
     "prettier": "catalog:",
     "prettier-plugin-sort-json": "catalog:",
-    "turbo": "2.8.0",
+    "turbo": "catalog:",
     "typescript": "catalog:",
-    "vitest": "^4.1.0"
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=20.0.0"
