@@ -1,11 +1,8 @@
 "use client";
 
 import { Stack, Tooltip, Typography } from "@mui/material";
-import { type Palette, type PaletteColor } from "@mui/material/styles";
 
-type PaletteColorKey = {
-  [K in keyof Palette]: Palette[K] extends PaletteColor ? K : never;
-}[keyof Palette];
+import { type PaletteColorKey } from "@repo/ui";
 
 export type PulseStatProps = {
   value: string | number;

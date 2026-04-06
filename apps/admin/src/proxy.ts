@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { getToken } from "@repo/auth";
-import { AUTH_ROUTES, isPublicRoute } from "@repo/auth";
+import { AUTH_ROUTES, getToken, isPublicRoute } from "@repo/auth";
+import { UserRole } from "@repo/contracts/auth";
 
 export async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
@@ -17,7 +17,7 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (token && token.role !== "ADMIN" && !isPublicRoute(path)) {
+  if (token && token.role !== UserRole.ADMIN && !isPublicRoute(path)) {
     const loginUrl = new URL(AUTH_ROUTES.LOGIN, req.url);
 
     loginUrl.searchParams.set("error", "AccessDenied");

@@ -5,7 +5,7 @@ import { prisma } from "../../db/client";
 import { mapToReview } from "../../mappers";
 
 export const adminReviewsApi = {
-  async getReviews(): Promise<Review[]> {
+  getReviews: async (): Promise<Review[]> => {
     const reviews = await prisma.marketingReview.findMany({
       where: { deletedAt: null },
       orderBy: { createdAt: "desc" },
@@ -14,7 +14,7 @@ export const adminReviewsApi = {
     return reviews.map(mapToReview);
   },
 
-  async getReviewById(id: string): Promise<Review | null> {
+  getReviewById: async (id: string): Promise<Review | null> => {
     const review = await prisma.marketingReview.findUnique({ where: { id } });
 
     if (!review || review.deletedAt) {
@@ -24,13 +24,13 @@ export const adminReviewsApi = {
     return mapToReview(review);
   },
 
-  async createReview(data: CreateReviewData): Promise<Review> {
+  createReview: async (data: CreateReviewData): Promise<Review> => {
     const review = await prisma.marketingReview.create({ data });
 
     return mapToReview(review);
   },
 
-  async updateReview(id: string, data: UpdateReviewData): Promise<Review> {
+  updateReview: async (id: string, data: UpdateReviewData): Promise<Review> => {
     const existing = await prisma.marketingReview.findUnique({ where: { id } });
 
     if (!existing || existing.deletedAt) {
@@ -45,7 +45,7 @@ export const adminReviewsApi = {
     return mapToReview(review);
   },
 
-  async deleteReview(id: string): Promise<void> {
+  deleteReview: async (id: string): Promise<void> => {
     const review = await prisma.marketingReview.findUnique({ where: { id } });
 
     if (!review || review.deletedAt) {
@@ -58,7 +58,7 @@ export const adminReviewsApi = {
     });
   },
 
-  async toggleReviewStatus(id: string): Promise<Review> {
+  toggleReviewStatus: async (id: string): Promise<Review> => {
     const review = await prisma.marketingReview.findUnique({ where: { id } });
 
     if (!review || review.deletedAt) {
@@ -73,7 +73,7 @@ export const adminReviewsApi = {
     return mapToReview(updated);
   },
 
-  async getReviewsPageData() {
+  getReviewsPageData: async () => {
     const reviews = await adminReviewsApi.getReviews();
 
     return { reviews };

@@ -13,15 +13,7 @@ import { NotFoundError } from "@repo/errors";
 import { cleanupRaw, createTestCoach, createTestPlan, createTestUser } from "../../test/helpers";
 
 import { platformCoachActionItemsApi } from "./coach-action-items";
-
-const daysAgo = (n: number): Date => {
-  const d = new Date();
-
-  d.setUTCDate(d.getUTCDate() - n);
-  d.setUTCHours(0, 0, 0, 0);
-
-  return d;
-};
+import { daysAgo } from "./coach-action-items.test-helpers";
 
 describe("platformCoachActionItemsApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;

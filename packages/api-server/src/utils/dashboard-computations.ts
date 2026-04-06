@@ -181,9 +181,9 @@ export const computeAthletesSummary = (
 
 const MS_PER_DAY = 86_400_000;
 
-type AdherenceWindow = { completed: number; available: number };
+export type AdherenceWindow = { completed: number; available: number };
 
-const computeAdherenceWindow = (
+export const computeAdherenceWindow = (
   scheduledWorkouts: { id: string; scheduledDate: Date | null }[],
   loggedWorkoutIds: Set<string>,
   windowStart: Date,

@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 
 import { QueryWrapper } from "@repo/query";
 
-import { StructuredData } from "@app/shared/components/seo";
+import { StructuredData } from "@app/lib/components/seo";
 
 import {
   PaymentErrorActionsSection,

@@ -6,8 +6,8 @@ import { fontVariables } from "@repo/mui/fonts";
 import { QueryProvider } from "@repo/query";
 import { DOM_ANCHORS, SEO_CONFIG } from "@repo/shared";
 
-import { Footer, MarketingHeader } from "@app/shared/components/layout";
-import { StructuredData } from "@app/shared/components/seo";
+import { Footer, MarketingHeader } from "@app/lib/components/layout";
+import { StructuredData } from "@app/lib/components/seo";
 
 export const metadata: Metadata = {
   title: SEO_CONFIG.defaultTitle,

@@ -5,8 +5,8 @@ import { Stack } from "@mui/material";
 import { type HomePageData } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/query";
 
+import { StructuredData } from "@app/lib/components/seo";
 import { useHomePage } from "@app/lib/hooks";
-import { StructuredData } from "@app/shared/components/seo";
 
 import {
   HomeFeaturesSection,

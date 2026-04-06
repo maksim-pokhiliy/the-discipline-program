@@ -70,6 +70,7 @@ export const config = [
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "max-lines": ["error", { max: 300, skipBlankLines: true, skipComments: true }],
       "@typescript-eslint/no-non-null-assertion": "error",
     },
   },
@@ -82,6 +83,7 @@ export const config = [
     files: ["**/prisma/seed.ts"],
     rules: {
       "@typescript-eslint/no-non-null-assertion": "off",
+      "max-lines": "off",
     },
   },
   {

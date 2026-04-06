@@ -13,6 +13,7 @@ import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 import { prisma } from "../../db/client";
 import { mapToTrainingPlan, mapToWorkout } from "../../mappers";
 import { TRAINING_PLAN_STATUS_MAP } from "../../mappers/enum-maps";
+import { endOfWeekInTz, startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
 
 import { resolveCoachId, verifyPlanOwnership } from "./guards";
 
@@ -21,21 +22,11 @@ type PlanWithStats = Parameters<typeof mapToTrainingPlan>[0] & {
   workouts: { scheduledDate: Date | null }[];
 };
 
-const getWeekBounds = (): { weekStart: Date; weekEnd: Date; todayStart: Date; todayEnd: Date } => {
-  const now = new Date();
-  const day = now.getUTCDay();
-  const diffToMonday = day === 0 ? -6 : 1 - day;
-
-  const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-  const todayEnd = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
-  );
-  const weekStart = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diffToMonday),
-  );
-  const weekEnd = new Date(
-    Date.UTC(weekStart.getUTCFullYear(), weekStart.getUTCMonth(), weekStart.getUTCDate() + 7),
-  );
+const getWeekBounds = (tz: string) => {
+  const todayStart = startOfTodayInTz(tz);
+  const todayEnd = new Date(todayStart.getTime() + 86_400_000);
+  const weekStart = startOfWeekInTz(todayStart, tz);
+  const weekEnd = new Date(endOfWeekInTz(todayStart, tz).getTime() + 86_400_000);
 
   return { weekStart, weekEnd, todayStart, todayEnd };
 };
@@ -96,7 +87,11 @@ export const platformTrainingPlansApi = {
 
   getPageData: async (userId: string): Promise<CoachPlansPageData> => {
     const coachId = await resolveCoachId(userId);
-    const { weekStart, weekEnd, todayStart, todayEnd } = getWeekBounds();
+    const { timezone: tz } = await prisma.user.findUniqueOrThrow({
+      where: { id: userId },
+      select: { timezone: true },
+    });
+    const { weekStart, weekEnd, todayStart, todayEnd } = getWeekBounds(tz);
 
     const plans = await prisma.trainingPlan.findMany({
       where: { coachId },

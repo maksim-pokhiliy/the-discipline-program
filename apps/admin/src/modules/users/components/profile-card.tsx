@@ -3,6 +3,7 @@
 import { Stack, Typography } from "@mui/material";
 
 import { GENDER_LABELS } from "@repo/contracts/athlete-profile";
+import { UserRole } from "@repo/contracts/auth";
 import { type AdminUser } from "@repo/contracts/user";
 import { DetailField, FormCard } from "@repo/ui";
 
@@ -13,7 +14,7 @@ interface ProfileCardProps {
 export const ProfileCard = ({ user }: ProfileCardProps) => {
   const { role, athleteProfile, coachProfile } = user;
 
-  if (role === "USER") {
+  if (role === UserRole.USER) {
     if (!athleteProfile) {
       return (
         <FormCard title="Athlete Profile">
@@ -45,7 +46,7 @@ export const ProfileCard = ({ user }: ProfileCardProps) => {
     );
   }
 
-  if (role === "COACH") {
+  if (role === UserRole.COACH) {
     if (!coachProfile) {
       return (
         <FormCard title="Coach Profile">

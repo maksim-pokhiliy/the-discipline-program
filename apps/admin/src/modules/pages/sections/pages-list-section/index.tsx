@@ -19,8 +19,8 @@ export const PagesListSection = ({ pages }: PagesListSectionProps) => {
       label: "Page Name",
       width: "60%",
       render: (page) => (
-        <Typography variant="subtitle2" sx={{ textTransform: "capitalize" }}>
-          {page.slug} Page
+        <Typography variant="subtitle2">
+          {page.slug.charAt(0).toUpperCase() + page.slug.slice(1)} Page
         </Typography>
       ),
     },

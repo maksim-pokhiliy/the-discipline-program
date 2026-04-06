@@ -1,4 +1,5 @@
 export * from "./blog.mapper";
+export * from "./coach-note.mapper";
 export * from "./contact.mapper";
 export * from "./enum-maps";
 export * from "./product.mapper";

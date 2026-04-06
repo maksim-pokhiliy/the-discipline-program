@@ -4,8 +4,8 @@ import { type BlogPostPageData } from "@repo/contracts/blog";
 import { QueryWrapper } from "@repo/query";
 import { SEO_CONFIG } from "@repo/shared";
 
+import { StructuredData } from "@app/lib/components/seo";
 import { useBlogArticle } from "@app/lib/hooks";
-import { StructuredData } from "@app/shared/components/seo";
 
 import { BlogArticleContent, BlogArticleHero, BlogArticleRelated } from "./sections";
 

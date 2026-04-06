@@ -1,6 +1,6 @@
 import { type AboutPageData } from "@repo/contracts/pages";
 
-import { FullscreenSection } from "@app/shared/components/ui";
+import { FullscreenSection } from "@app/lib/components/ui";
 
 interface AboutHeroSectionProps {
   hero: AboutPageData["hero"];

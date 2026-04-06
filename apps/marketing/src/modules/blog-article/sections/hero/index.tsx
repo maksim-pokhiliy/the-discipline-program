@@ -2,7 +2,7 @@ import { Button, Chip, Stack, Typography } from "@mui/material";
 
 import { type PublicBlogPost } from "@repo/contracts/blog";
 
-import { FullscreenSection } from "@app/shared/components/ui";
+import { FullscreenSection } from "@app/lib/components/ui";
 
 interface BlogArticleHeroProps {
   post: PublicBlogPost;

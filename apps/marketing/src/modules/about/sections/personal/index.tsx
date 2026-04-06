@@ -3,7 +3,7 @@ import { Box, Stack, Typography } from "@mui/material";
 import { type AboutPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
-import { SplitSection } from "@app/shared/components/ui";
+import { SplitSection } from "@app/lib/components/ui";
 
 interface AboutPersonalSectionProps {
   personal: AboutPageData["personal"];

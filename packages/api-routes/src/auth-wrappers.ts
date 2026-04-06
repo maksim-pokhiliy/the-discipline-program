@@ -1,5 +1,6 @@
 import { getServerSession } from "next-auth/next";
 
+import { UserRole } from "@repo/auth";
 import { authOptions } from "@repo/auth/config";
 import { ForbiddenError, UnauthorizedError } from "@repo/errors";
 
@@ -17,7 +18,7 @@ export const withAdminAuth = (handler: RouteHandler): RouteHandler => {
         throw new UnauthorizedError();
       }
 
-      if (session.user.role !== "ADMIN") {
+      if (session.user.role !== UserRole.ADMIN) {
         throw new ForbiddenError();
       }
 

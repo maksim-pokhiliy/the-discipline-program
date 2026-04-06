@@ -6,24 +6,9 @@ import {
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
+import { mapToCoachNote } from "../../mappers";
 
 import { resolveCoachId } from "./guards";
-
-const mapToCoachNote = (n: {
-  id: string;
-  coachId: string;
-  athleteId: string;
-  content: string;
-  createdAt: Date;
-  updatedAt: Date;
-}): CoachNote => ({
-  id: n.id,
-  coachId: n.coachId,
-  athleteId: n.athleteId,
-  content: n.content,
-  createdAt: n.createdAt,
-  updatedAt: n.updatedAt,
-});
 
 export const platformCoachNotesApi = {
   getAll: async (userId: string): Promise<CoachNote[]> => {

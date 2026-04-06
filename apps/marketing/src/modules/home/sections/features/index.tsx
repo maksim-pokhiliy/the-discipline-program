@@ -5,7 +5,7 @@ import { Grid } from "@mui/material";
 import { type HomePageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
-import { FeatureCard } from "@app/shared/components/ui";
+import { FeatureCard } from "@app/lib/components/ui";
 
 interface FeaturesSectionProps {
   whyChoose: HomePageData["whyChoose"];

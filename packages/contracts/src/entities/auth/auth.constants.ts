@@ -8,8 +8,3 @@ export enum UserRole {
   COACH = "COACH",
   ADMIN = "ADMIN",
 }
-
-export const AUTH_ROUTES = {
-  LOGIN: "/login",
-  LOGOUT: "/logout",
-} as const;

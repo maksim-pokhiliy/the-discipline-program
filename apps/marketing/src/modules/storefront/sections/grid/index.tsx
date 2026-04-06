@@ -5,8 +5,8 @@ import { Grid } from "@mui/material";
 import { type StorefrontProgramsPageData } from "@repo/contracts";
 import { ContentSection } from "@repo/ui";
 
+import { ProductCard, ProductModal } from "@app/lib/components/ui";
 import { useProductModal } from "@app/lib/hooks";
-import { ProductCard, ProductModal } from "@app/shared/components/ui";
 
 interface ProgramsGridSectionProps {
   grid: StorefrontProgramsPageData["grid"];

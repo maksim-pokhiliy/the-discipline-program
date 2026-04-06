@@ -1,19 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { HealthStatus } from "@repo/contracts/athlete-profile";
-import { ProcessStatus, TodayStatus } from "@repo/contracts/coach-dashboard";
+import { TodayStatus } from "@repo/contracts/coach-dashboard";
 
+import { computeAthletesSummary, computeTodayStatus } from "./dashboard-computations";
 import {
-  computeAthletesSummary,
-  computeProcessStatus,
-  computeProgressBuckets,
-  computeTodayStatus,
-} from "./dashboard-computations";
-import type { EnrollmentWithData } from "./enrollment-query";
+  FAKE_NOW,
+  makeEnrollment,
+  makeLog,
+  makeWorkout,
+} from "./dashboard-computations.test-helpers";
 
 const TZ = "UTC";
-
-const FAKE_NOW = new Date("2025-06-18T12:00:00Z");
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -23,63 +21,6 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
 });
-
-const makeWorkout = (
-  id: string,
-  scheduledDate: string | null,
-  title = `Workout ${id}`,
-  createdAt = "2025-06-01T00:00:00Z",
-) => ({
-  id,
-  scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
-  createdAt: new Date(createdAt),
-  title,
-  blocks: [] as { categoryId: string; category: { id: string; name: string } }[],
-});
-
-const makeLog = (workoutId: string, date: string) => ({
-  id: `log-${workoutId}`,
-  workoutId,
-  date: new Date(date),
-});
-
-const makeEnrollment = (overrides: {
-  userId?: string;
-  userName?: string | null;
-  userEmail?: string;
-  userImage?: string | null;
-  healthStatus?: "HEALTHY" | "INJURED" | "RESTRICTED";
-  hasProfile?: boolean;
-  planId?: string;
-  planName?: string;
-  workouts?: ReturnType<typeof makeWorkout>[];
-  logs?: ReturnType<typeof makeLog>[];
-}): EnrollmentWithData =>
-  ({
-    id: `enrollment-${overrides.userId ?? "u1"}-${overrides.planId ?? "p1"}`,
-    trainingPlanId: overrides.planId ?? "p1",
-    userId: overrides.userId ?? "u1",
-    startDate: new Date("2025-06-01T00:00:00Z"),
-    endDate: null,
-    status: "ACTIVE",
-    createdAt: new Date("2025-06-01T00:00:00Z"),
-    user: {
-      id: overrides.userId ?? "u1",
-      name: overrides.userName ?? "Test User",
-      email: overrides.userEmail ?? "test@example.com",
-      image: overrides.userImage ?? null,
-      workoutLogs: overrides.logs ?? [],
-      athleteProfile:
-        overrides.hasProfile === false
-          ? null
-          : { healthStatus: overrides.healthStatus ?? "HEALTHY" },
-    },
-    trainingPlan: {
-      id: overrides.planId ?? "p1",
-      name: overrides.planName ?? "Test Plan",
-      workouts: overrides.workouts ?? [],
-    },
-  }) as unknown as EnrollmentWithData;
 
 describe("computeTodayStatus", () => {
   describe("NO_SCHEDULE", () => {
@@ -381,136 +322,5 @@ describe("computeAthletesSummary", () => {
     }
 
     expect(athlete.daysSinceLastActivity).toBeNull();
-  });
-});
-
-describe("computeProcessStatus", () => {
-  it("returns ON_TRACK when current adherence is significantly better than previous", () => {
-    expect(computeProcessStatus(0.8, 0.5)).toBe(ProcessStatus.ON_TRACK);
-  });
-
-  it("returns FALLING_BEHIND when current adherence is significantly worse", () => {
-    expect(computeProcessStatus(0.3, 0.7)).toBe(ProcessStatus.FALLING_BEHIND);
-  });
-
-  it("returns ON_TRACK when adherence is stable and high", () => {
-    expect(computeProcessStatus(0.8, 0.8)).toBe(ProcessStatus.ON_TRACK);
-  });
-
-  it("returns STEADY when adherence is stable and moderate", () => {
-    expect(computeProcessStatus(0.5, 0.5)).toBe(ProcessStatus.STEADY);
-  });
-
-  it("returns STEADY when delta is within threshold", () => {
-    expect(computeProcessStatus(0.55, 0.5)).toBe(ProcessStatus.STEADY);
-  });
-});
-
-describe("computeProgressBuckets", () => {
-  it("places athlete with all recent workouts completed into onTrack", () => {
-    const enrollment = makeEnrollment({
-      userId: "u1",
-      userName: "Strong Athlete",
-      workouts: [
-        makeWorkout("w1", "2025-06-12T10:00:00Z"),
-        makeWorkout("w2", "2025-06-14T10:00:00Z"),
-        makeWorkout("w3", "2025-06-16T10:00:00Z"),
-      ],
-      logs: [
-        makeLog("w1", "2025-06-12T12:00:00Z"),
-        makeLog("w2", "2025-06-14T12:00:00Z"),
-        makeLog("w3", "2025-06-16T12:00:00Z"),
-      ],
-    });
-
-    const result = computeProgressBuckets([enrollment]);
-
-    expect(result.onTrack).toHaveLength(1);
-    expect(result.steady).toHaveLength(0);
-    expect(result.fallingBehind).toHaveLength(0);
-  });
-
-  it("places athlete with no recent completions but previous activity into fallingBehind", () => {
-    const enrollment = makeEnrollment({
-      userId: "u1",
-      workouts: [
-        makeWorkout("w1", "2025-06-05T10:00:00Z"),
-        makeWorkout("w2", "2025-06-07T10:00:00Z"),
-        makeWorkout("w3", "2025-06-12T10:00:00Z"),
-        makeWorkout("w4", "2025-06-14T10:00:00Z"),
-      ],
-      logs: [makeLog("w1", "2025-06-05T12:00:00Z"), makeLog("w2", "2025-06-07T12:00:00Z")],
-    });
-
-    const result = computeProgressBuckets([enrollment]);
-
-    expect(result.fallingBehind).toHaveLength(1);
-    expect(result.onTrack).toHaveLength(0);
-  });
-
-  it("calculates avgEngagementRate as athletes with logs / total athletes", () => {
-    const active = makeEnrollment({
-      userId: "u1",
-      workouts: [makeWorkout("w1", "2025-06-16T10:00:00Z")],
-      logs: [makeLog("w1", "2025-06-16T12:00:00Z")],
-    });
-
-    const inactive = makeEnrollment({
-      userId: "u2",
-      userEmail: "inactive@test.com",
-      workouts: [makeWorkout("w2", "2025-06-16T10:00:00Z")],
-      logs: [],
-    });
-
-    const result = computeProgressBuckets([active, inactive]);
-
-    expect(result.avgEngagementRate).toBe(0.5);
-  });
-
-  it("returns empty buckets when there are no enrollments", () => {
-    const result = computeProgressBuckets([]);
-
-    expect(result.avgEngagementRate).toBe(0);
-    expect(result.onTrack).toHaveLength(0);
-    expect(result.steady).toHaveLength(0);
-    expect(result.fallingBehind).toHaveLength(0);
-  });
-
-  it("aggregates workouts across multiple enrollments for the same athlete", () => {
-    const enrollment1 = makeEnrollment({
-      userId: "u1",
-      planId: "p1",
-      workouts: [makeWorkout("w1", "2025-06-14T10:00:00Z")],
-      logs: [makeLog("w1", "2025-06-14T12:00:00Z")],
-    });
-
-    const enrollment2 = makeEnrollment({
-      userId: "u1",
-      planId: "p2",
-      workouts: [makeWorkout("w2", "2025-06-15T10:00:00Z")],
-      logs: [makeLog("w2", "2025-06-15T12:00:00Z")],
-    });
-
-    const result = computeProgressBuckets([enrollment1, enrollment2]);
-    const allAthletes = [...result.onTrack, ...result.steady, ...result.fallingBehind];
-
-    expect(allAthletes).toHaveLength(1);
-  });
-
-  it("generates correct href for each athlete", () => {
-    const enrollment = makeEnrollment({
-      userId: "u-abc-123",
-      workouts: [makeWorkout("w1", "2025-06-16T10:00:00Z")],
-      logs: [makeLog("w1", "2025-06-16T12:00:00Z")],
-    });
-
-    const result = computeProgressBuckets([enrollment]);
-    const athlete = [...result.onTrack, ...result.steady, ...result.fallingBehind][0];
-
-    if (!athlete) {
-      throw new Error("expected athlete in buckets");
-    }
-
-    expect(athlete.href).toBe("/coach/athletes?athlete=u-abc-123");
   });
 });

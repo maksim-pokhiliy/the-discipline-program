@@ -4,7 +4,7 @@ import { Grid } from "@mui/material";
 import { type AboutPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
-import { FeatureCard } from "@app/shared/components/ui";
+import { FeatureCard } from "@app/lib/components/ui";
 
 interface AboutCredentialsSectionProps {
   credentials: AboutPageData["credentials"];

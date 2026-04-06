@@ -3,8 +3,8 @@
 import { type FaqPageData } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/query";
 
+import { StructuredData } from "@app/lib/components/seo";
 import { useFaqPage } from "@app/lib/hooks";
-import { StructuredData } from "@app/shared/components/seo";
 
 import { FaqCtaSection, FaqHeroSection, FaqSection } from "./sections";
 

@@ -5,7 +5,7 @@ import { type ReactNode } from "react";
 import { Card, CardContent, Typography, Stack, Tooltip } from "@mui/material";
 import { type Palette, type PaletteColor } from "@mui/material/styles";
 
-type PaletteColorKey = {
+export type PaletteColorKey = {
   [K in keyof Palette]: Palette[K] extends PaletteColor ? K : never;
 }[keyof Palette];
 

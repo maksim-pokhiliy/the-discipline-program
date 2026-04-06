@@ -1,3 +1,4 @@
+import { ContactStatus } from "@repo/contracts/contact";
 import {
   DashboardActivityType,
   type ActivityItem,
@@ -26,7 +27,7 @@ export const adminDashboardApi = {
   },
 };
 
-async function getContentStats(): Promise<ContentStats> {
+const getContentStats = async (): Promise<ContentStats> => {
   const [
     productsTotal,
     productsActive,
@@ -58,7 +59,9 @@ async function getContentStats(): Promise<ContentStats> {
     }),
 
     prisma.marketingContactSubmission.count({ where: { deletedAt: null } }),
-    prisma.marketingContactSubmission.count({ where: { status: "NEW", deletedAt: null } }),
+    prisma.marketingContactSubmission.count({
+      where: { status: ContactStatus.NEW, deletedAt: null },
+    }),
   ]);
 
   return {
@@ -83,9 +86,9 @@ async function getContentStats(): Promise<ContentStats> {
       processed: contactsTotal - contactsNew,
     },
   };
-}
+};
 
-async function getUserStats(): Promise<UserStats> {
+const getUserStats = async (): Promise<UserStats> => {
   const now = new Date();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
@@ -97,9 +100,9 @@ async function getUserStats(): Promise<UserStats> {
   ]);
 
   return { total, newThisMonth };
-}
+};
 
-async function getRecentActivity(): Promise<ActivityItem[]> {
+const getRecentActivity = async (): Promise<ActivityItem[]> => {
   const take = 5;
 
   const [reviews, contacts, users, posts, products] = await Promise.all([
@@ -187,4 +190,4 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
   ];
 
   return activities.sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 10);
-}
+};
