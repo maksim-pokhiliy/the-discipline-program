@@ -1,1 +1,1 @@
-export { getHealthChip, getHealthChipFromMessage, type HealthChipConfig } from "@app/lib/config";
+export { HEALTH_STATUS_CHIPS, getHealthChipFromMessage } from "@app/lib/config";

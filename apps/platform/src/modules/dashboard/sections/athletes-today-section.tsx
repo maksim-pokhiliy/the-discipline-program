@@ -5,9 +5,10 @@ import { useMemo, useState } from "react";
 import { Box, Chip, Stack, Tab, Tabs, Typography } from "@mui/material";
 import Link from "next/link";
 
+import { HealthStatus } from "@repo/contracts/athlete-profile";
 import { type AthleteDailySummary, TodayStatus } from "@repo/contracts/coach-dashboard";
 
-import { getHealthChip } from "@app/lib/config";
+import { HEALTH_STATUS_CHIPS } from "@app/lib/config";
 
 import { AthleteCard, DashboardSection } from "../components";
 
@@ -83,14 +84,16 @@ export const AthletesTodaySection: React.FC<AthletesTodaySectionProps> = ({ athl
         {activeAthletes.length > 0 ? (
           <Stack spacing={2}>
             {activeAthletes.map((athlete) => {
-              const healthChip = getHealthChip(athlete.healthStatus);
-              const chips = healthChip ? [healthChip] : undefined;
+              const chips =
+                athlete.healthStatus !== HealthStatus.HEALTHY
+                  ? [HEALTH_STATUS_CHIPS[athlete.healthStatus]]
+                  : undefined;
 
               return (
                 <Box
                   key={athlete.userId}
                   component={Link}
-                  href={`/coach/athletes/${athlete.userId}`}
+                  href={`/coach/athletes?athlete=${athlete.userId}`}
                   sx={(theme) => ({
                     display: "block",
                     textDecoration: "none",

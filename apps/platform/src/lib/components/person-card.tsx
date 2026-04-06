@@ -10,6 +10,7 @@ type PersonCardProps = {
   image: string | null;
   name: string;
   href?: string;
+  onClick?: () => void;
   children: ReactNode;
   action?: ReactNode;
 };
@@ -31,7 +32,14 @@ const ImageSlot: React.FC<{ image: string | null; name: string }> = ({ image, na
     </Stack>
   );
 
-export const PersonCard: React.FC<PersonCardProps> = ({ image, name, href, children, action }) => {
+export const PersonCard: React.FC<PersonCardProps> = ({
+  image,
+  name,
+  href,
+  onClick,
+  children,
+  action,
+}) => {
   const content = (
     <Stack direction="row">
       <ImageSlot image={image} name={name} />
@@ -39,11 +47,13 @@ export const PersonCard: React.FC<PersonCardProps> = ({ image, name, href, child
     </Stack>
   );
 
+  const interactive = href ?? onClick;
+
   return (
     <Card variant="outlined">
       <Stack direction="row">
-        {href ? (
-          <CardActionArea component={Link} href={href} sx={{ flex: 1 }}>
+        {interactive ? (
+          <CardActionArea {...(href ? { component: Link, href } : { onClick })} sx={{ flex: 1 }}>
             {content}
           </CardActionArea>
         ) : (

@@ -1,42 +1,19 @@
 "use client";
 
-import TrendingDownIcon from "@mui/icons-material/TrendingDown";
-import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import { Chip, Stack, Tooltip, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 
+import { HealthStatus } from "@repo/contracts/athlete-profile";
 import type { CoachAthleteListItem } from "@repo/contracts/coach-athletes";
-import { PROCESS_STATUS_LABELS, ProcessStatus } from "@repo/contracts/coach-dashboard";
 
-import { HealthChip, PersonCard } from "@app/lib/components";
+import { PersonCard, StatusChip } from "@app/lib/components";
+import { HEALTH_STATUS_CHIPS, PROCESS_STATUS_CHIPS } from "@app/lib/config";
 
 type AthleteListItemProps = {
   athlete: CoachAthleteListItem;
+  onSelect: (userId: string) => void;
 };
 
-const PROCESS_STATUS_CONFIG: Record<
-  ProcessStatus,
-  { icon: React.ReactElement; color: string; tooltip: string }
-> = {
-  [ProcessStatus.ON_TRACK]: {
-    icon: <TrendingUpIcon fontSize="small" />,
-    color: "success.main",
-    tooltip: "Adherence improving compared to previous week",
-  },
-  [ProcessStatus.STEADY]: {
-    icon: <TrendingFlatIcon fontSize="small" />,
-    color: "text.secondary",
-    tooltip: "Consistent adherence week over week",
-  },
-  [ProcessStatus.FALLING_BEHIND]: {
-    icon: <TrendingDownIcon fontSize="small" />,
-    color: "error.main",
-    tooltip: "Adherence declining compared to previous week",
-  },
-};
-
-export const AthleteListItem: React.FC<AthleteListItemProps> = ({ athlete }) => {
-  const statusConfig = PROCESS_STATUS_CONFIG[athlete.processStatus];
+export const AthleteListItem: React.FC<AthleteListItemProps> = ({ athlete, onSelect }) => {
   const plansText =
     athlete.activePlans.length > 0
       ? athlete.activePlans.map((p) => p.name).join(", ")
@@ -46,29 +23,20 @@ export const AthleteListItem: React.FC<AthleteListItemProps> = ({ athlete }) => 
     <PersonCard
       image={athlete.image}
       name={athlete.name ?? athlete.email}
-      href={`/coach/athletes/${athlete.userId}`}
+      onClick={() => onSelect(athlete.userId)}
     >
       <Stack spacing={0.75}>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
           <Typography variant="subtitle2" noWrap sx={{ flex: 1 }}>
             {athlete.name ?? athlete.email}
           </Typography>
-          <HealthChip healthStatus={athlete.healthStatus} />
+          {athlete.healthStatus !== HealthStatus.HEALTHY && (
+            <StatusChip {...HEALTH_STATUS_CHIPS[athlete.healthStatus]} />
+          )}
         </Stack>
 
         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          <Tooltip title={statusConfig.tooltip} arrow>
-            <Stack
-              direction="row"
-              spacing={0.5}
-              sx={{ alignItems: "center", color: statusConfig.color }}
-            >
-              {statusConfig.icon}
-              <Typography variant="body2" sx={{ color: "inherit", fontWeight: 500 }}>
-                {PROCESS_STATUS_LABELS[athlete.processStatus]}
-              </Typography>
-            </Stack>
-          </Tooltip>
+          <StatusChip {...PROCESS_STATUS_CHIPS[athlete.processStatus]} />
         </Stack>
 
         <Typography variant="body2" noWrap sx={{ color: "text.secondary" }}>

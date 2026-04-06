@@ -2,13 +2,15 @@
 
 import { Chip, type ChipProps, Stack, Typography } from "@mui/material";
 
+import { HealthStatus } from "@repo/contracts/athlete-profile";
 import type { PlanEnrollment } from "@repo/contracts/plan-enrollment";
 import {
   PLAN_ENROLLMENT_STATUS_LABELS,
   PlanEnrollmentStatus,
 } from "@repo/contracts/plan-enrollment";
 
-import { HealthChip, PersonCard } from "@app/lib/components";
+import { PersonCard, StatusChip } from "@app/lib/components";
+import { HEALTH_STATUS_CHIPS } from "@app/lib/config";
 
 import { EnrollmentActionMenu } from "./enrollment-action-menu";
 
@@ -57,7 +59,9 @@ export const EnrollmentCard: React.FC<EnrollmentCardProps> = ({
           <Typography variant="subtitle2" noWrap sx={{ flex: 1 }}>
             {displayName}
           </Typography>
-          <HealthChip healthStatus={enrollment.user.healthStatus} />
+          {enrollment.user.healthStatus !== HealthStatus.HEALTHY && (
+            <StatusChip {...HEALTH_STATUS_CHIPS[enrollment.user.healthStatus]} />
+          )}
         </Stack>
 
         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>

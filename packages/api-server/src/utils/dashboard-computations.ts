@@ -288,7 +288,7 @@ export const computeProgressBuckets = (enrollments: EnrollmentWithData[]): Progr
       name: data.name,
       image: data.image,
       processStatus: status,
-      href: `/coach/athletes/${userId}`,
+      href: `/coach/athletes?athlete=${userId}`,
     };
 
     if (status === ProcessStatus.ON_TRACK) {

@@ -1,38 +1,36 @@
 import { createElement } from "react";
 
 import HealingIcon from "@mui/icons-material/Healing";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
-import type { ChipProps } from "@mui/material";
 
 import { HEALTH_STATUS_LABELS, HealthStatus } from "@repo/contracts/athlete-profile";
 
-export type HealthChipConfig = {
-  label: string;
-  color: ChipProps["color"];
-  icon?: React.ReactElement;
-};
+import type { StatusChipConfig } from "../components/status-chip";
 
-const HEALTH_CHIPS: Partial<Record<HealthStatus, HealthChipConfig>> = {
+export const HEALTH_STATUS_CHIPS: Record<HealthStatus, StatusChipConfig> = {
+  [HealthStatus.HEALTHY]: {
+    label: HEALTH_STATUS_LABELS[HealthStatus.HEALTHY],
+    color: "success",
+    icon: createElement(HealthAndSafetyIcon, { fontSize: "small" }),
+  },
   [HealthStatus.INJURED]: {
     label: HEALTH_STATUS_LABELS[HealthStatus.INJURED],
     color: "error",
-    icon: createElement(LocalHospitalIcon),
+    icon: createElement(LocalHospitalIcon, { fontSize: "small" }),
   },
   [HealthStatus.RESTRICTED]: {
     label: HEALTH_STATUS_LABELS[HealthStatus.RESTRICTED],
     color: "warning",
-    icon: createElement(HealingIcon),
+    icon: createElement(HealingIcon, { fontSize: "small" }),
   },
 };
 
-export const getHealthChip = (status: HealthStatus): HealthChipConfig | null =>
-  HEALTH_CHIPS[status] ?? null;
-
-export const getHealthChipFromMessage = (message: string): HealthChipConfig | null => {
+export const getHealthChipFromMessage = (message: string): StatusChipConfig | null => {
   const lower = message.toLowerCase();
 
-  for (const [status, chip] of Object.entries(HEALTH_CHIPS)) {
-    if (chip && lower.includes(status.toLowerCase())) {
+  for (const [status, chip] of Object.entries(HEALTH_STATUS_CHIPS)) {
+    if (lower.includes(status.toLowerCase())) {
       return chip;
     }
   }
