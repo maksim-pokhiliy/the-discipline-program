@@ -4,7 +4,7 @@ import { ZodError } from "zod";
 import { baseEnv } from "@repo/env/base";
 import { AppError, ERROR_CODES, ValidationError } from "@repo/errors";
 
-export function handleApiError(error: unknown): NextResponse {
+export const handleApiError = (error: unknown): NextResponse => {
   console.error("API Error:", error);
 
   if (error instanceof AppError) {
@@ -97,4 +97,4 @@ export function handleApiError(error: unknown): NextResponse {
     },
     { status: 500 },
   );
-}
+};

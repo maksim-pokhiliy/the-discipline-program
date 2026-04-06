@@ -1,6 +1,6 @@
 import { type ContactPageData } from "@repo/contracts/pages";
 
-import { FullscreenSection } from "@app/shared/components/ui";
+import { FullscreenSection } from "@app/lib/components/ui";
 
 interface ContactHeroProps {
   hero: ContactPageData["hero"];

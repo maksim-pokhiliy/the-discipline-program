@@ -1,7 +1,7 @@
 import { type HomePageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
-import { CTASection } from "@app/shared/components/ui";
+import { CTASection } from "@app/lib/components/ui";
 
 interface HomeFinalCTASectionProps {
   contact: HomePageData["contact"];

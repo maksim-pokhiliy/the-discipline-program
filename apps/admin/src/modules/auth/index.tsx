@@ -60,12 +60,7 @@ export const LoginPage = () => {
           <Stack spacing={3} alignItems="center">
             <Logo />
 
-            <Typography
-              variant="display2"
-              component="h1"
-              textAlign="center"
-              sx={{ textTransform: "uppercase" }}
-            >
+            <Typography variant="display2" component="h1" textAlign="center">
               The Discipline Program
             </Typography>
 

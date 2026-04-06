@@ -46,13 +46,7 @@ export const WeekDayGroup: React.FC<WeekDayGroupProps> = ({
     >
       <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
         <Stack direction="row" sx={{ alignItems: "center", gap: 0.75 }}>
-          <Typography
-            variant="caption"
-            sx={{
-              color: "text.secondary",
-              textTransform: "uppercase",
-            }}
-          >
+          <Typography variant="overline" sx={{ color: "text.secondary" }}>
             {formatDayName(date)}
           </Typography>
 

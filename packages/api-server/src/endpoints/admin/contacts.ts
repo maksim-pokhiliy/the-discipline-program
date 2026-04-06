@@ -5,7 +5,7 @@ import { prisma } from "../../db/client";
 import { mapToContact } from "../../mappers";
 
 export const adminContactsApi = {
-  async getContacts(): Promise<GetContactByIdResponse[]> {
+  getContacts: async (): Promise<GetContactByIdResponse[]> => {
     const contacts = await prisma.marketingContactSubmission.findMany({
       orderBy: { createdAt: "desc" },
     });
@@ -13,7 +13,7 @@ export const adminContactsApi = {
     return contacts.map(mapToContact);
   },
 
-  async getContactById(id: string): Promise<GetContactByIdResponse> {
+  getContactById: async (id: string): Promise<GetContactByIdResponse> => {
     const contact = await prisma.marketingContactSubmission.findUnique({ where: { id } });
 
     if (!contact) {
@@ -23,7 +23,10 @@ export const adminContactsApi = {
     return mapToContact(contact);
   },
 
-  async updateContact(id: string, data: UpdateContactRequest): Promise<GetContactByIdResponse> {
+  updateContact: async (
+    id: string,
+    data: UpdateContactRequest,
+  ): Promise<GetContactByIdResponse> => {
     const existing = await prisma.marketingContactSubmission.findUnique({ where: { id } });
 
     if (!existing) {
@@ -48,7 +51,7 @@ export const adminContactsApi = {
     return mapToContact(updated);
   },
 
-  async deleteContact(id: string): Promise<void> {
+  deleteContact: async (id: string): Promise<void> => {
     const contact = await prisma.marketingContactSubmission.findUnique({ where: { id } });
 
     if (!contact) {
@@ -58,7 +61,7 @@ export const adminContactsApi = {
     await prisma.marketingContactSubmission.delete({ where: { id } });
   },
 
-  async getContactsPageData() {
+  getContactsPageData: async () => {
     const contacts = await adminContactsApi.getContacts();
 
     return { contacts };

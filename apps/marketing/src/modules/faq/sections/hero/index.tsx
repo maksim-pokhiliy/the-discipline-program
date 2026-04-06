@@ -1,6 +1,6 @@
 import { type FaqPageData } from "@repo/contracts/pages";
 
-import { FullscreenSection } from "@app/shared/components/ui";
+import { FullscreenSection } from "@app/lib/components/ui";
 
 interface FaqHeroSectionProps {
   hero: FaqPageData["hero"];

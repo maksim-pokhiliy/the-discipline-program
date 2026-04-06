@@ -4,7 +4,7 @@ import { Card, CardContent, Grid } from "@mui/material";
 
 import type { DashboardOverview } from "@repo/contracts/coach-dashboard";
 
-import { PulseStat, type PulseStatProps } from "../components/pulse-stat";
+import { PulseStat, type PulseStatProps } from "@app/lib/components";
 
 type PulseSectionProps = {
   overview: DashboardOverview;

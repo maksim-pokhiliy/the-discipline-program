@@ -4,8 +4,8 @@ import { type StorefrontProgramsPageData } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/query";
 import { SuspenseWrapper } from "@repo/ui";
 
+import { StructuredData } from "@app/lib/components/seo";
 import { useStorefrontProgramsPage } from "@app/lib/hooks";
-import { StructuredData } from "@app/shared/components/seo";
 
 import {
   StorefrontHeroSection,

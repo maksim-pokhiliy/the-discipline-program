@@ -6,8 +6,8 @@ import Link from "next/link";
 import { type HomePageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
+import { ProductCard, ProductModal } from "@app/lib/components/ui";
 import { useProductModal } from "@app/lib/hooks";
-import { ProductCard, ProductModal } from "@app/shared/components/ui";
 
 interface HomeProgramsPreviewProps {
   programs: HomePageData["storefront"];

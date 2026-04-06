@@ -1,9 +1,10 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { getToken } from "@repo/auth";
-import { AUTH_ROUTES, isPublicRoute } from "@repo/auth";
+import { AUTH_ROUTES, getToken, isPublicRoute } from "@repo/auth";
+import { UserRole } from "@repo/contracts/auth";
 
-const getRoleHome = (role?: string | null): string => (role === "USER" ? "/athlete" : "/coach");
+const getRoleHome = (role?: string | null): string =>
+  role === UserRole.USER ? "/athlete" : "/coach";
 
 export async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;

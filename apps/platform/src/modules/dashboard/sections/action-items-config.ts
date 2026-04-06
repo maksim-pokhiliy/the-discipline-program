@@ -3,7 +3,11 @@ import { createElement } from "react";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import type { AlertColor } from "@mui/material";
 
-import { ActionItemSeverity, ActionItemType } from "@repo/contracts/coach-action-item";
+import {
+  ActionItemSeverity,
+  ActionItemType,
+  SEVERITY_PRIORITY,
+} from "@repo/contracts/coach-action-item";
 import type { DashboardActionItem } from "@repo/contracts/coach-dashboard";
 
 import type { StatusChipConfig } from "@app/lib/components";
@@ -17,14 +21,8 @@ const SEVERITY_TO_ALERT_COLOR: Record<ActionItemSeverity, AlertColor> = {
   [ActionItemSeverity.INFO]: "info",
 };
 
-const SEVERITY_ORDER: Record<ActionItemSeverity, number> = {
-  [ActionItemSeverity.CRITICAL]: 0,
-  [ActionItemSeverity.WARNING]: 1,
-  [ActionItemSeverity.INFO]: 2,
-};
-
 export const sortBySeverity = (items: DashboardActionItem[]): DashboardActionItem[] =>
-  [...items].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]);
+  [...items].sort((a, b) => SEVERITY_PRIORITY[a.severity] - SEVERITY_PRIORITY[b.severity]);
 
 export const getSeverityColor = (severity: DashboardActionItem["severity"]): AlertColor =>
   SEVERITY_TO_ALERT_COLOR[severity];

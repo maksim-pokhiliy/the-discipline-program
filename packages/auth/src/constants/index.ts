@@ -1,3 +1,5 @@
+export { UserRole } from "@repo/contracts/auth";
+
 export const AUTH_ROUTES = {
   LOGIN: "/login",
   API_PREFIX: "/api/auth",

@@ -1,7 +1,7 @@
 import { type AboutPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
-import { CTASection } from "@app/shared/components/ui";
+import { CTASection } from "@app/lib/components/ui";
 
 interface AboutCtaSectionProps {
   cta: AboutPageData["cta"];

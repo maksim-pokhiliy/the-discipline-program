@@ -6,7 +6,7 @@ export interface FormattedError {
   details?: Record<string, unknown>;
 }
 
-export function formatError(error: unknown): FormattedError {
+export const formatError = (error: unknown): FormattedError => {
   if (error instanceof AppError) {
     return {
       message: error.message,
@@ -38,8 +38,6 @@ export function formatError(error: unknown): FormattedError {
   return {
     message: "An unexpected error occurred",
   };
-}
+};
 
-export function getErrorMessage(error: unknown): string {
-  return formatError(error).message;
-}
+export const getErrorMessage = (error: unknown): string => formatError(error).message;
