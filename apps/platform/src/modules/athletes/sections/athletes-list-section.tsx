@@ -17,6 +17,7 @@ import {
 
 type AthletesListSectionProps = {
   athletes: CoachAthleteListItem[];
+  onSelectAthlete: (userId: string) => void;
 };
 
 const HEALTH_STATUS_VALUES = new Set(Object.values(HealthStatus));
@@ -29,7 +30,10 @@ const parseHealthStatus = (value: string | null): HealthStatus | null => {
   return null;
 };
 
-export const AthletesListSection: React.FC<AthletesListSectionProps> = ({ athletes }) => {
+export const AthletesListSection: React.FC<AthletesListSectionProps> = ({
+  athletes,
+  onSelectAthlete,
+}) => {
   const searchParams = useSearchParams();
 
   const filters: AthleteFilters = useMemo(
@@ -67,7 +71,7 @@ export const AthletesListSection: React.FC<AthletesListSectionProps> = ({ athlet
     <Grid container spacing={2}>
       {displayedAthletes.map((athlete) => (
         <Grid key={athlete.userId} size={{ xs: 12, md: 6, lg: 4 }}>
-          <AthleteListItem athlete={athlete} />
+          <AthleteListItem athlete={athlete} onSelect={onSelectAthlete} />
         </Grid>
       ))}
     </Grid>

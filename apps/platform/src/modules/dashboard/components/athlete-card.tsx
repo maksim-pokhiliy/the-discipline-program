@@ -2,14 +2,14 @@
 
 import { Alert, type AlertColor, AlertTitle, Avatar, Chip } from "@mui/material";
 
-import type { HealthChipConfig } from "@app/lib/config";
+import type { StatusChipConfig } from "@app/lib/components";
 
 type AthleteCardProps = {
   name: string;
   image?: string | null;
   severity: AlertColor;
   message: string;
-  chips?: HealthChipConfig[];
+  chips?: StatusChipConfig[];
   details?: string;
   action?: React.ReactNode;
 };

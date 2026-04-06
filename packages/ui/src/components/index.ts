@@ -3,6 +3,7 @@ export * from "./collapsible-list";
 export * from "./creatable-autocomplete";
 export * from "./data-table";
 export * from "./detail-field";
+export * from "./drawer";
 export * from "./dynamic-list-item";
 export * from "./form-card";
 export * from "./form-view";
