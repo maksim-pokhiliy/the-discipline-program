@@ -49,17 +49,18 @@ export const Sidebar = ({
   const content = (
     <Stack sx={{ height: "100%" }}>
       <Stack
+        spacing={2}
         direction={isExpanded ? "row" : "column"}
         sx={{
           alignItems: "center",
           justifyContent: isExpanded ? "space-between" : "center",
           px: isExpanded ? 2 : 0,
-          py: 1,
+          py: 2,
           minHeight: LAYOUT.adminHeaderHeight,
           gap: isExpanded ? 0 : 0.5,
         }}
       >
-        <Logo width={isExpanded ? 40 : 28} height={isExpanded ? 40 : 28} />
+        <Logo width={isExpanded ? 60 : 50} height={isExpanded ? 60 : 50} />
 
         <IconButton onClick={isDesktop ? onToggle : onMobileClose}>
           {isExpanded ? <ChevronLeftIcon /> : <ChevronRightIcon />}

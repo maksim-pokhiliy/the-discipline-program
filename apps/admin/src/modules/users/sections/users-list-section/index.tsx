@@ -100,9 +100,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
           <Avatar src={user.image || undefined} sx={{ width: 32, height: 32, fontSize: 14 }}>
             {user.email.charAt(0).toUpperCase()}
           </Avatar>
-          <Typography variant="subtitle2" fontWeight={600}>
-            {user.email}
-          </Typography>
+          <Typography variant="subtitle2">{user.email}</Typography>
         </Stack>
       ),
     },
@@ -161,7 +159,6 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
       <DataTable
         data={users}
         columns={columns}
-        title="Users"
         searchPlaceholder="Search by email..."
         filters={filters}
         paginated

@@ -1,7 +1,5 @@
 "use client";
 
-import { Stack } from "@mui/material";
-
 import { type BlogPostPageData } from "@repo/contracts/blog";
 import { QueryWrapper } from "@repo/query";
 import { SEO_CONFIG } from "@repo/shared";
@@ -40,14 +38,10 @@ export const BlogArticlePageClient = ({ slug, initialData }: BlogArticlePageClie
             }}
           />
 
-          <Stack spacing={0}>
-            <BlogArticleHero post={data.post} />
-            <BlogArticleContent post={data.post} />
+          <BlogArticleHero post={data.post} />
+          <BlogArticleContent post={data.post} />
 
-            {data.relatedPosts.length > 0 && (
-              <BlogArticleRelated relatedPosts={data.relatedPosts} />
-            )}
-          </Stack>
+          {data.relatedPosts.length > 0 && <BlogArticleRelated relatedPosts={data.relatedPosts} />}
         </>
       )}
     </QueryWrapper>

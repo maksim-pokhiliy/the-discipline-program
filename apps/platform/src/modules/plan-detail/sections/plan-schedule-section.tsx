@@ -280,6 +280,7 @@ export const PlanScheduleSection: React.FC<PlanScheduleSectionProps> = ({ planId
                 variant="outlined"
                 label={`${weekWorkoutCount} workout${weekWorkoutCount === 1 ? "" : "s"} this week`}
               />
+
               <Chip
                 size="small"
                 variant="outlined"
@@ -316,13 +317,13 @@ export const PlanScheduleSection: React.FC<PlanScheduleSectionProps> = ({ planId
                 {activeWorkout && <WorkoutDragOverlay workout={activeWorkout} />}
               </DragOverlay>
             </DndContext>
+
+            <Stack direction="row" sx={{ justifyContent: "center" }}>
+              <CopyWeekButton planId={planId} currentWeekStart={weekStart} />
+            </Stack>
           </>
         )}
       </QueryWrapper>
-
-      <Stack direction="row" sx={{ justifyContent: "center" }}>
-        <CopyWeekButton planId={planId} currentWeekStart={weekStart} />
-      </Stack>
 
       {workouts?.length === 0 && (
         <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center" }}>

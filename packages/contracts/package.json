@@ -26,7 +26,8 @@
     "./user-benchmark": "./src/entities/user-benchmark/index.ts",
     "./coach-dashboard": "./src/entities/coach-dashboard/index.ts",
     "./coach-note": "./src/entities/coach-note/index.ts",
-    "./coach-action-item": "./src/entities/coach-action-item/index.ts"
+    "./coach-action-item": "./src/entities/coach-action-item/index.ts",
+    "./coach-athletes": "./src/entities/coach-athletes/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

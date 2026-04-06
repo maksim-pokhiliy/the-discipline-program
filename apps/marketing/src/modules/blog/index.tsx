@@ -24,7 +24,7 @@ export const BlogPageClient = ({ initialData }: BlogPageClientProps) => {
             <BlogFeaturedSection hero={data.hero} featuredPost={data.featuredPost} />
           )}
 
-          <BlogPostsGrid hero={data.featuredPost ? undefined : data.hero} posts={data.posts} />
+          <BlogPostsGrid grid={data.grid} posts={data.posts} />
         </Stack>
       )}
     </QueryWrapper>

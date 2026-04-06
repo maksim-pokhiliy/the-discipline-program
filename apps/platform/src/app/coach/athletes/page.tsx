@@ -1,13 +1,5 @@
-import { Stack } from "@mui/material";
+import { AthletesView } from "@app/modules/athletes";
 
-import { PlatformPageHeader } from "@app/lib/components";
-
-const AthletesPage = () => {
-  return (
-    <Stack>
-      <PlatformPageHeader title="Athletes" />
-    </Stack>
-  );
-};
-
-export default AthletesPage;
+export default function AthletesPage() {
+  return <AthletesView />;
+}

@@ -24,7 +24,7 @@ export const PaymentSuccessActionsSection = () => {
             <strong>Next Steps:</strong>
           </Typography>
 
-          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+          <Typography variant="body2" color="text.secondary">
             1. Check your email for access instructions
             <br />
             2. Download the mobile app or access the web platform

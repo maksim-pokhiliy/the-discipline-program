@@ -9,7 +9,7 @@ interface AboutCtaSectionProps {
 
 export const AboutCTASection = ({ cta }: AboutCtaSectionProps) => {
   return (
-    <ContentSection surface="raised">
+    <ContentSection id="about-cta" surface="raised">
       <CTASection
         title={cta.title}
         subtitle={cta.subtitle}

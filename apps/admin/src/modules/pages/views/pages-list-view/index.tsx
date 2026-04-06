@@ -6,7 +6,12 @@ import { usePagesListData } from "@app/lib/hooks/use-pages";
 import { PagesListSection } from "../../sections/pages-list-section";
 
 export const PagesListView = () => (
-  <AdminListView queryResult={usePagesListData()} loadingMessage="Loading pages...">
+  <AdminListView
+    queryResult={usePagesListData()}
+    loadingMessage="Loading pages..."
+    title="Pages"
+    subtitle="Edit content and sections for marketing site pages"
+  >
     {(pages) => <PagesListSection pages={pages} />}
   </AdminListView>
 );

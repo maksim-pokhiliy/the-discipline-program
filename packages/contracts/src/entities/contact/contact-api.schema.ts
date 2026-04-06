@@ -13,7 +13,7 @@ export const createContactSubmissionResponseSchema = z.object({
 const contactSubmissionItemSchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
-  email: z.string().nullable(),
+  contact: z.string().nullable(),
   program: z.string().nullable(),
   message: z.string(),
   status: z.string(),

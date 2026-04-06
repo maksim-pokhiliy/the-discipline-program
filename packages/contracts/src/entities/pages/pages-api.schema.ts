@@ -12,6 +12,7 @@ import {
   homePageReviewsSchema,
   homePageContactSchema,
   storefrontProgramsPageHeroSchema,
+  storefrontGridSchema,
   storefrontPageCtaSchema,
   aboutPageHeroSchema,
   aboutPageJourneySchema,
@@ -19,10 +20,12 @@ import {
   aboutPagePersonalSchema,
   aboutPageCtaSchema,
   contactPageHeroSchema,
-  contactFormSchema,
-  contactDirectContactSchema,
-  contactPageFaqSchema,
+  contactPageFormSchema,
+  faqContentSchema,
+  faqPageHeroSchema,
+  faqPageCtaSchema,
   blogPageHeroSchema,
+  blogGridSchema,
   programOptionSchema,
 } from "./pages.schema";
 
@@ -38,6 +41,7 @@ export const getHomePageResponseSchema = z.object({
 
 export const getStorefrontProgramsPageResponseSchema = z.object({
   hero: storefrontProgramsPageHeroSchema,
+  grid: storefrontGridSchema,
   cta: storefrontPageCtaSchema,
   productsList: z.array(productSchema),
 });
@@ -52,6 +56,7 @@ export const getAboutPageResponseSchema = z.object({
 
 export const getBlogPageResponseSchema = z.object({
   hero: blogPageHeroSchema,
+  grid: blogGridSchema,
   featuredPost: publicBlogPostSchema.optional(),
   posts: z.array(publicBlogPostSchema),
   categories: z.array(z.string()),
@@ -59,13 +64,14 @@ export const getBlogPageResponseSchema = z.object({
 
 export const getContactPageResponseSchema = z.object({
   hero: contactPageHeroSchema,
-  form: contactFormSchema,
-  directContact: contactDirectContactSchema,
+  form: contactPageFormSchema,
   programOptions: z.array(programOptionSchema),
 });
 
 export const getFaqPageResponseSchema = z.object({
-  content: contactPageFaqSchema,
+  hero: faqPageHeroSchema,
+  content: faqContentSchema,
+  cta: faqPageCtaSchema,
 });
 
 export const adminPageListItemSchema = z.object({
@@ -99,6 +105,10 @@ export const updatePageSectionSchema = z
       data: storefrontProgramsPageHeroSchema,
     }),
     z.object({
+      section: z.literal(PAGE_SECTIONS_MAP.storefront.grid),
+      data: storefrontGridSchema,
+    }),
+    z.object({
       section: z.literal(PAGE_SECTIONS_MAP.storefront.cta),
       data: storefrontPageCtaSchema,
     }),
@@ -114,13 +124,12 @@ export const updatePageSectionSchema = z
     }),
     z.object({ section: z.literal(PAGE_SECTIONS_MAP.about.cta), data: aboutPageCtaSchema }),
     z.object({ section: z.literal(PAGE_SECTIONS_MAP.blog.hero), data: blogPageHeroSchema }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.blog.grid), data: blogGridSchema }),
     z.object({ section: z.literal(PAGE_SECTIONS_MAP.contact.hero), data: contactPageHeroSchema }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.contact.form), data: contactFormSchema }),
-    z.object({
-      section: z.literal(PAGE_SECTIONS_MAP.contact.directContact),
-      data: contactDirectContactSchema,
-    }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.faq.content), data: contactPageFaqSchema }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.contact.form), data: contactPageFormSchema }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.faq.hero), data: faqPageHeroSchema }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.faq.content), data: faqContentSchema }),
+    z.object({ section: z.literal(PAGE_SECTIONS_MAP.faq.cta), data: faqPageCtaSchema }),
   ])
   .and(z.object({ pageSlug: z.nativeEnum(PageSlug) }));
 
@@ -151,6 +160,7 @@ export const SECTION_SCHEMAS = {
   [PAGE_SECTIONS_MAP.home.reviews]: homePageReviewsSchema,
   [PAGE_SECTIONS_MAP.home.contact]: homePageContactSchema,
   [PAGE_SECTIONS_MAP.storefront.hero]: storefrontProgramsPageHeroSchema,
+  [PAGE_SECTIONS_MAP.storefront.grid]: storefrontGridSchema,
   [PAGE_SECTIONS_MAP.storefront.cta]: storefrontPageCtaSchema,
   [PAGE_SECTIONS_MAP.about.hero]: aboutPageHeroSchema,
   [PAGE_SECTIONS_MAP.about.journey]: aboutPageJourneySchema,
@@ -158,8 +168,10 @@ export const SECTION_SCHEMAS = {
   [PAGE_SECTIONS_MAP.about.personal]: aboutPagePersonalSchema,
   [PAGE_SECTIONS_MAP.about.cta]: aboutPageCtaSchema,
   [PAGE_SECTIONS_MAP.blog.hero]: blogPageHeroSchema,
+  [PAGE_SECTIONS_MAP.blog.grid]: blogGridSchema,
   [PAGE_SECTIONS_MAP.contact.hero]: contactPageHeroSchema,
-  [PAGE_SECTIONS_MAP.contact.form]: contactFormSchema,
-  [PAGE_SECTIONS_MAP.contact.directContact]: contactDirectContactSchema,
-  [PAGE_SECTIONS_MAP.faq.content]: contactPageFaqSchema,
+  [PAGE_SECTIONS_MAP.contact.form]: contactPageFormSchema,
+  [PAGE_SECTIONS_MAP.faq.hero]: faqPageHeroSchema,
+  [PAGE_SECTIONS_MAP.faq.content]: faqContentSchema,
+  [PAGE_SECTIONS_MAP.faq.cta]: faqPageCtaSchema,
 } as const;

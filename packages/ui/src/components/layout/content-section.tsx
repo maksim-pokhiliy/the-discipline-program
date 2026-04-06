@@ -32,8 +32,9 @@ type ContentSectionProps = {
   backHref?: string;
   backLabel?: string;
   actions?: ContentAction[];
-  stickyToolbar?: boolean;
   offset?: number;
+  textAlign?: "left" | "center";
+  id?: string;
   children?: ReactNode;
 };
 
@@ -45,12 +46,14 @@ export const ContentSection = ({
   backHref,
   backLabel = "Back",
   actions = [],
-  stickyToolbar = false,
   offset = 0,
+  textAlign = "center",
+  id = "",
   children,
 }: ContentSectionProps) => {
   return (
     <Box
+      id={id}
       sx={(theme) => ({
         py: 8,
         backgroundColor:
@@ -83,8 +86,9 @@ export const ContentSection = ({
                     <Typography
                       variant="display2"
                       sx={(theme) => ({
-                        fontWeight: 700,
+                        width: "100%",
                         color: theme.palette.text.primary,
+                        textAlign,
                       })}
                     >
                       {title}
@@ -95,9 +99,9 @@ export const ContentSection = ({
                     <Typography
                       variant="h4"
                       sx={(theme) => ({
+                        width: "100%",
                         color: theme.palette.text.secondary,
-                        fontWeight: 400,
-                        lineHeight: 1.4,
+                        textAlign,
                       })}
                     >
                       {subtitle}
@@ -113,20 +117,8 @@ export const ContentSection = ({
                   direction={{ xs: "column", md: "row" }}
                   alignItems={{ xs: "stretch", md: "center" }}
                   justifyContent="space-between"
+                  sx={{ width: "100%" }}
                   spacing={2}
-                  sx={
-                    stickyToolbar
-                      ? (theme) => ({
-                          position: "sticky",
-                          top: 0,
-                          zIndex: theme.zIndex.appBar - 1,
-                          backgroundColor: theme.palette.background.default,
-                          py: 2,
-                          mx: -2,
-                          px: 2,
-                        })
-                      : undefined
-                  }
                 >
                   {backHref && (
                     <Button

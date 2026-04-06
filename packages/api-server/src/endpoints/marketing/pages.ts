@@ -68,6 +68,7 @@ export const pagesApi = {
 
     return {
       hero: extractSectionData<StorefrontProgramsPageData["hero"]>(sections, map.hero),
+      grid: extractSectionData<StorefrontProgramsPageData["grid"]>(sections, map.grid),
       cta: extractSectionData<StorefrontProgramsPageData["cta"]>(sections, map.cta),
       productsList: products.map(mapToProduct),
     };
@@ -102,6 +103,7 @@ export const pagesApi = {
 
     return {
       hero: extractSectionData<BlogPageData["hero"]>(sections, PAGE_SECTIONS_MAP.blog.hero),
+      grid: extractSectionData<BlogPageData["grid"]>(sections, PAGE_SECTIONS_MAP.blog.grid),
       featuredPost: publicPosts.find((p) => p.isFeatured) || publicPosts[0],
       posts: publicPosts,
       categories: [...new Set(publicPosts.map((p) => p.category))],
@@ -123,10 +125,6 @@ export const pagesApi = {
     return {
       hero: extractSectionData<ContactPageData["hero"]>(sections, map.hero),
       form: extractSectionData<ContactPageData["form"]>(sections, map.form),
-      directContact: extractSectionData<ContactPageData["directContact"]>(
-        sections,
-        map.directContact,
-      ),
       programOptions: products.map((p) => ({ value: p.slug, label: p.title })),
     };
   },
@@ -139,7 +137,9 @@ export const pagesApi = {
     const map = PAGE_SECTIONS_MAP.faq;
 
     return {
+      hero: extractSectionData<FaqPageData["hero"]>(sections, map.hero),
       content: extractSectionData<FaqPageData["content"]>(sections, map.content),
+      cta: extractSectionData<FaqPageData["cta"]>(sections, map.cta),
     };
   },
 

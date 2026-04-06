@@ -155,7 +155,6 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
       <DataTable
         data={reviews}
         columns={columns}
-        title="Reviews"
         searchPlaceholder="Search by author..."
         filters={filters}
         action={<CreateButton href="/reviews/create">Create Review</CreateButton>}

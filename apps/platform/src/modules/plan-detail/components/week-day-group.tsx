@@ -49,10 +49,8 @@ export const WeekDayGroup: React.FC<WeekDayGroupProps> = ({
           <Typography
             variant="caption"
             sx={{
-              fontWeight: 500,
               color: "text.secondary",
               textTransform: "uppercase",
-              letterSpacing: 0.5,
             }}
           >
             {formatDayName(date)}
@@ -69,15 +67,12 @@ export const WeekDayGroup: React.FC<WeekDayGroupProps> = ({
                 justifyContent: "center",
               }}
             >
-              <Typography
-                variant="caption"
-                sx={{ fontWeight: 700, color: "primary.contrastText", lineHeight: 1 }}
-              >
+              <Typography variant="caption" sx={{ color: "primary.contrastText" }}>
                 {date.getUTCDate()}
               </Typography>
             </Stack>
           ) : (
-            <Typography variant="caption" sx={{ fontWeight: 500, color: "text.secondary" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
               {date.getUTCDate()}
             </Typography>
           )}

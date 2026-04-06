@@ -1,11 +1,11 @@
 import ErrorIcon from "@mui/icons-material/Error";
 import InfoIcon from "@mui/icons-material/Info";
 import WarningIcon from "@mui/icons-material/Warning";
-import { DialogActions, Button, Typography, CircularProgress, Alert, Stack } from "@mui/material";
+import { Button, Typography, CircularProgress, Alert, Stack, Avatar } from "@mui/material";
 
 import { BaseModal, type BaseModalProps } from "./base-modal";
 
-export interface ConfirmationModalProps extends Omit<BaseModalProps, "children"> {
+export interface ConfirmationModalProps extends Omit<BaseModalProps, "children" | "actions"> {
   type: "warning" | "danger" | "info";
   message: string;
   details?: string;
@@ -24,7 +24,7 @@ const typeConfig = {
   },
   danger: {
     icon: ErrorIcon,
-    color: "error" as const,
+    color: "primary" as const,
     defaultConfirmText: "Delete",
   },
   info: {
@@ -61,32 +61,31 @@ export const ConfirmationModal = ({
       disableBackdropClick={isConfirming}
       disableEscapeKeyDown={isConfirming}
       maxWidth="xs"
-    >
-      <Stack
-        spacing={2}
-        direction="row"
-        sx={{
-          alignItems: "flex-start",
-          p: 2,
-          flexGrow: 1,
-        }}
-      >
-        <Stack
-          sx={{
-            alignItems: "center",
-            justifyContent: "center",
-            width: 44,
-            height: 44,
-            borderRadius: "50%",
-            backgroundColor: `${config.color}.light`,
-            color: "common.white",
-            flexShrink: 0,
-          }}
-        >
-          <IconComponent fontSize="medium" />
-        </Stack>
+      actions={
+        <Stack direction="row" spacing={2}>
+          <Button onClick={onClose} disabled={isConfirming} size="small">
+            {cancelText}
+          </Button>
 
-        <Stack sx={{ flexGrow: 1 }} spacing={2}>
+          <Button
+            onClick={handleConfirm}
+            size="small"
+            disabled={isConfirming}
+            variant="contained"
+            color={config.color}
+            startIcon={isConfirming ? <CircularProgress size={16} /> : null}
+          >
+            {isConfirming ? "Processing..." : finalConfirmText}
+          </Button>
+        </Stack>
+      }
+    >
+      <Stack spacing={2} direction="row">
+        <Avatar>
+          <IconComponent color="action" />
+        </Avatar>
+
+        <Stack sx={{ flexGrow: 1 }}>
           <Typography variant="body1">{message}</Typography>
 
           {details && (
@@ -97,28 +96,7 @@ export const ConfirmationModal = ({
         </Stack>
       </Stack>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
-
-      <DialogActions>
-        <Button onClick={onClose} disabled={isConfirming} size="small">
-          {cancelText}
-        </Button>
-
-        <Button
-          onClick={handleConfirm}
-          size="small"
-          disabled={isConfirming}
-          variant="contained"
-          color={config.color}
-          startIcon={isConfirming ? <CircularProgress size={16} /> : null}
-        >
-          {isConfirming ? "Processing..." : finalConfirmText}
-        </Button>
-      </DialogActions>
+      {error && <Alert severity="error">{error}</Alert>}
     </BaseModal>
   );
 };

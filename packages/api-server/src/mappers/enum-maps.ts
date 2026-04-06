@@ -63,7 +63,6 @@ export const PLAN_ENROLLMENT_STATUS_MAP: Record<PrismaPlanEnrollmentStatus, Plan
   {
     ACTIVE: PlanEnrollmentStatus.ACTIVE,
     PAUSED: PlanEnrollmentStatus.PAUSED,
-    COMPLETED: PlanEnrollmentStatus.COMPLETED,
   };
 
 export const ACTION_ITEM_TYPE_MAP: Record<PrismaActionItemType, ActionItemType> = {

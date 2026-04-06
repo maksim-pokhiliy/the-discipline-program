@@ -11,9 +11,9 @@ import {
   List,
   ListItem,
   ListItemAvatar,
+  ListItemButton,
   ListItemText,
   Rating,
-  Stack,
   Typography,
 } from "@mui/material";
 import Link from "next/link";
@@ -62,32 +62,20 @@ const getActivityColor = (type: ActivityItem["type"]) => {
 
 export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) => {
   return (
-    <ContentSection title="Recent Activity">
-      <List
-        sx={{
-          bgcolor: "background.paper",
-          borderRadius: 1,
-          border: 1,
-          borderColor: "divider",
-          py: 0,
-        }}
-      >
+    <ContentSection title="Recent Activity" surface="raised" maxWidth="xl">
+      <List sx={{}}>
         {activity.length === 0 && (
           <ListItem>
             <ListItemText primary="No recent activity found" />
           </ListItem>
         )}
+
         {activity.map((item, index) => (
-          <ListItem
+          <ListItemButton
             key={`${item.type}-${item.id}`}
             component={Link}
             href={item.href}
             divider={index < activity.length - 1}
-            sx={{
-              textDecoration: "none",
-              color: "inherit",
-              "&:hover": { bgcolor: "action.hover" },
-            }}
           >
             <ListItemAvatar>
               <Avatar
@@ -101,14 +89,9 @@ export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) 
                 {getActivityIcon(item.type)}
               </Avatar>
             </ListItemAvatar>
+
             <ListItemText
-              primary={
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <Typography variant="subtitle2" component="span">
-                    {item.title}
-                  </Typography>
-                </Stack>
-              }
+              primary={item.title}
               secondary={
                 item.type === DashboardActivityType.REVIEW && item.rating ? (
                   <Rating value={item.rating} readOnly size="small" sx={{ mt: 0.5 }} />
@@ -122,7 +105,7 @@ export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) 
                 {formatDate(item.date, "compact")}
               </Typography>
             </Box>
-          </ListItem>
+          </ListItemButton>
         ))}
       </List>
     </ContentSection>

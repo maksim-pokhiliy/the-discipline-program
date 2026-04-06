@@ -86,7 +86,7 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={plan} loadingMessage="Loading plan...">
       {(data) => (
-        <Stack spacing={2}>
+        <Stack spacing={4}>
           <Stack spacing={0.5}>
             <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
               <IconButton component={Link} href="/coach/plans">
@@ -98,8 +98,7 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
                 onChange={(e) => setNameValue(e.target.value)}
                 onBlur={commitName}
                 onKeyDown={handleNameKeyDown}
-                sx={{ flex: 1, typography: "h5", "& input": { p: 0 } }}
-                slotProps={{ input: { maxLength: 200 } }}
+                sx={{ flex: 1, typography: "h4", "& input": { p: 0 } }}
               />
 
               <PlanStatusSelect planId={data.id} status={data.status} />
@@ -111,8 +110,7 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
               onBlur={commitDescription}
               placeholder="Add description..."
               multiline
-              sx={{ typography: "body2", color: "text.secondary", pl: 5.5, "& textarea": { p: 0 } }}
-              slotProps={{ input: { maxLength: 2000 } }}
+              sx={{ typography: "body1", color: "text.secondary", "& textarea": { p: 0 } }}
             />
           </Stack>
 

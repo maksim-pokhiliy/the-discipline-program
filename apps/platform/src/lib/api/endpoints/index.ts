@@ -1,4 +1,5 @@
 export { createCalendarAPI } from "./calendar";
+export { createCoachAthletesAPI } from "./coach-athletes";
 export { createCoachActionItemsAPI } from "./coach-action-items";
 export { createCoachDashboardAPI } from "./coach-dashboard";
 export { createCoachNotesAPI } from "./coach-notes";

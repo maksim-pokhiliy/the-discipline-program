@@ -22,7 +22,7 @@ const Swatch = ({ color, label }: SwatchProps) => (
     <Typography variant="caption" sx={{ opacity: 0.7 }}>
       {label}
     </Typography>
-    <Typography variant="caption" sx={{ opacity: 0.4, fontFamily: "monospace" }}>
+    <Typography variant="caption" sx={{ opacity: 0.4 }}>
       {color}
     </Typography>
   </Stack>

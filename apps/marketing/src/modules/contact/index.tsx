@@ -5,7 +5,7 @@ import { QueryWrapper } from "@repo/query";
 
 import { useContactPage } from "@app/lib/hooks";
 
-import { ContactHero } from "./sections";
+import { ContactFormSection, ContactHero } from "./sections";
 
 interface ContactPageClientProps {
   initialData: ContactPageData;
@@ -21,7 +21,12 @@ export const ContactPageClient = ({ initialData }: ContactPageClientProps) => {
       data={data}
       loadingMessage="Loading contact page..."
     >
-      {(data) => <ContactHero hero={data.hero} />}
+      {(data) => (
+        <>
+          <ContactHero hero={data.hero} />
+          <ContactFormSection form={data.form} programOptions={data.programOptions} />
+        </>
+      )}
     </QueryWrapper>
   );
 };

@@ -227,6 +227,8 @@ export default async function BlogPage() {
 - **No custom MUI size/variant extensions.** Don't add custom sizes (`xlarge`) or variants via module augmentation when MUI already provides standard options (small/medium/large). Override the existing sizes in the theme to match the design system. Custom extensions add complexity and diverge from MUI conventions.
 - **No per-instance button styling.** Never override `backgroundColor`, `color`, `fontSize`, `padding`, or hover styles on MUI `Button` via `sx`. All button appearance must come from the theme (`variant`, `color`, `size` props). If the design needs a new look — add or adjust a theme-level variant/color, don't style individual buttons.
 - **Always verify resource access in API endpoints.** Every endpoint that accepts a user/resource ID from URL params must validate the authenticated user has access. For own-user resources: compare with auth userId. For coach-athlete resources: use `verifyAthleteBelongsToCoach()`. Never trust IDs from URL params without authorization check.
+- **No raw CSS grid in sx.** Use MUI `Grid` component instead of `display: "grid"` / `gridTemplateColumns` in `sx` props. Same principle as Stack vs `display: "flex"`.
+- **No hardcoded copy in CMS-managed pages.** Marketing section titles, subtitles, and body text must come from the backend via page contracts, not be written as string literals in components. If a section needs text that doesn't exist in the contract — extend the contract and seed data first, then consume it in UI. Follow the data flow: DB → Contracts → API → UI.
 
 ## Commit Convention
 

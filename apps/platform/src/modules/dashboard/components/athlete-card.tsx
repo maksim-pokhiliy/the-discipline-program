@@ -1,19 +1,15 @@
 "use client";
 
-import { Alert, type AlertColor, AlertTitle, Avatar, Chip, type ChipProps } from "@mui/material";
+import { Alert, type AlertColor, AlertTitle, Avatar, Chip } from "@mui/material";
 
-export type AthleteCardChip = {
-  label: string;
-  color: ChipProps["color"];
-  icon?: React.ReactElement;
-};
+import type { HealthChipConfig } from "@app/lib/config";
 
 type AthleteCardProps = {
   name: string;
   image?: string | null;
   severity: AlertColor;
   message: string;
-  chips?: AthleteCardChip[];
+  chips?: HealthChipConfig[];
   details?: string;
   action?: React.ReactNode;
 };

@@ -22,7 +22,12 @@ export const HomeStorefrontProgramsPreview = ({
   const modal = useProductModal({ products: previewProducts, basePath: "/" });
 
   return (
-    <ContentSection title={programs.title} subtitle={programs.subtitle} surface="raised">
+    <ContentSection
+      id="programs-preview"
+      title={programs.title}
+      subtitle={programs.subtitle}
+      surface="raised"
+    >
       <Grid container spacing={4} sx={{ alignItems: "stretch" }}>
         {previewProducts.map((product) => (
           <Grid key={product.id} size={{ xs: 12, md: 4 }}>
@@ -36,7 +41,7 @@ export const HomeStorefrontProgramsPreview = ({
       </Grid>
 
       <Stack alignItems="center" sx={{ mt: 10 }}>
-        <Button component={Link} href="/storefront" size="medium">
+        <Button component={Link} href="/storefront#programs" size="large">
           View All Programs
         </Button>
       </Stack>

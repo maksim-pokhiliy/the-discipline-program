@@ -1,9 +1,9 @@
 import type { AlertColor, ChipProps } from "@mui/material";
 
-import { ProgressTrend } from "@repo/contracts/coach-dashboard";
+import { ProcessStatus, PROCESS_STATUS_LABELS } from "@repo/contracts/coach-dashboard";
 
 export type ProgressGroupConfig = {
-  trend: ProgressTrend;
+  status: ProcessStatus;
   title: string;
   chipColor: ChipProps["color"];
   severity: AlertColor;
@@ -12,39 +12,36 @@ export type ProgressGroupConfig = {
 
 export const PROGRESS_GROUPS: ProgressGroupConfig[] = [
   {
-    trend: ProgressTrend.DOWN,
-    title: "Declining",
+    status: ProcessStatus.FALLING_BEHIND,
+    title: PROCESS_STATUS_LABELS[ProcessStatus.FALLING_BEHIND],
     chipColor: "error",
     severity: "error",
-    emptyMessage: "No declining athletes — great work",
+    emptyMessage: "Nobody falling behind — great work",
   },
   {
-    trend: ProgressTrend.STABLE,
-    title: "Stagnating",
+    status: ProcessStatus.STEADY,
+    title: PROCESS_STATUS_LABELS[ProcessStatus.STEADY],
     chipColor: "warning",
     severity: "warning",
-    emptyMessage: "Nobody stagnating — everyone is moving",
+    emptyMessage: "Nobody in steady state",
   },
   {
-    trend: ProgressTrend.UP,
-    title: "Improving",
+    status: ProcessStatus.ON_TRACK,
+    title: PROCESS_STATUS_LABELS[ProcessStatus.ON_TRACK],
     chipColor: "success",
     severity: "success",
-    emptyMessage: "No improving athletes yet",
+    emptyMessage: "No athletes on track yet",
   },
 ];
 
-export const getDefaultProgressTab = (grouped: Map<ProgressTrend, number>): ProgressTrend => {
+export const getDefaultProgressTab = (grouped: Map<ProcessStatus, number>): ProcessStatus => {
   for (const group of PROGRESS_GROUPS) {
-    const count = grouped.get(group.trend) ?? 0;
+    const count = grouped.get(group.status) ?? 0;
 
     if (count > 0) {
-      return group.trend;
+      return group.status;
     }
   }
 
-  return ProgressTrend.DOWN;
+  return ProcessStatus.FALLING_BEHIND;
 };
-
-export const formatCompletionRate = (rate: number): string =>
-  `${Math.round(rate * 100)}% completion rate`;

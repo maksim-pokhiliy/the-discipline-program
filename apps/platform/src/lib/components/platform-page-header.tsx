@@ -24,7 +24,7 @@ export const PlatformPageHeader: React.FC<PlatformPageHeaderProps> = ({
       </IconButton>
     )}
 
-    <Typography variant="h5" noWrap sx={{ flex: 1 }}>
+    <Typography variant="h3" noWrap sx={{ flex: 1 }}>
       {title}
     </Typography>
 

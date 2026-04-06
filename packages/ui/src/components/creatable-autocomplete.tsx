@@ -127,7 +127,7 @@ export const CreatableAutocomplete = <T,>({
               </ListItemIcon>
               <ListItemText
                 primary={`Add "${option.inputValue}"`}
-                primaryTypographyProps={{ color: "primary", fontWeight: 500 }}
+                primaryTypographyProps={{ color: "primary" }}
               />
             </ListItem>
           );

@@ -1,10 +1,10 @@
-import { type ReactNode, type FormEvent } from "react";
+import { type ReactNode, type FormEvent, useId } from "react";
 
-import { DialogActions, Button, Box, CircularProgress, Alert, Stack } from "@mui/material";
+import { Button, CircularProgress, Alert, Stack } from "@mui/material";
 
 import { BaseModal, type BaseModalProps } from "./base-modal";
 
-export interface FormModalProps extends Omit<BaseModalProps, "children"> {
+export interface FormModalProps extends Omit<BaseModalProps, "children" | "actions"> {
   children: ReactNode;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>;
   isSubmitting?: boolean;
@@ -29,6 +29,8 @@ export const FormModal = ({
   disableEscapeKeyDown,
   ...baseProps
 }: FormModalProps) => {
+  const formId = useId();
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     await onSubmit(event);
@@ -43,21 +45,9 @@ export const FormModal = ({
       onClose={onClose}
       disableBackdropClick={shouldDisableClose}
       disableEscapeKeyDown={shouldDisableEscape}
-    >
-      <Stack component="form" onSubmit={handleSubmit}>
-        <Box sx={{ p: 2, flexGrow: 1 }}>
-          <Stack spacing={3}>
-            {error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
-                {error}
-              </Alert>
-            )}
-            {children}
-          </Stack>
-        </Box>
-
-        {!hideActions && (
-          <DialogActions>
+      actions={
+        !hideActions && (
+          <>
             <Button onClick={onClose} disabled={isSubmitting} size="small">
               {cancelText}
             </Button>
@@ -65,14 +55,20 @@ export const FormModal = ({
             <Button
               size="small"
               type="submit"
+              form={formId}
               variant="contained"
               disabled={submitDisabled || isSubmitting}
               startIcon={isSubmitting ? <CircularProgress size={16} /> : null}
             >
               {isSubmitting ? "Saving..." : submitText}
             </Button>
-          </DialogActions>
-        )}
+          </>
+        )
+      }
+    >
+      <Stack component="form" id={formId} onSubmit={handleSubmit} spacing={3}>
+        {error && <Alert severity="error">{error}</Alert>}
+        {children}
       </Stack>
     </BaseModal>
   );

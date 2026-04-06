@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
-import DoneIcon from "@mui/icons-material/Done";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
@@ -68,18 +67,6 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
               <PlayArrowIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText primary="Resume" secondary="Reactivate athlete on this plan" />
-          </MenuItem>
-        )}
-
-        {status !== PlanEnrollmentStatus.COMPLETED && (
-          <MenuItem
-            onClick={handle(() => onUpdate(enrollmentId, PlanEnrollmentStatus.COMPLETED))}
-            disabled={isPending}
-          >
-            <ListItemIcon>
-              <DoneIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText primary="Complete" secondary="Mark program as finished" />
           </MenuItem>
         )}
 

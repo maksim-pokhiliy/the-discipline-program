@@ -61,7 +61,7 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
   );
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={4}>
       <Tabs
         value={activeTab}
         onChange={(_, value: TrainingPlanStatus | "ALL") => setActiveTab(value)}
@@ -73,10 +73,11 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
             key={tab.value}
             value={tab.value}
             label={
-              <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
-                <Typography variant="body2" component="span">
+              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                <Typography variant="body1" component="span">
                   {tab.label}
                 </Typography>
+
                 <Chip size="small" label={counts[tab.value] ?? 0} color={tab.chipColor} />
               </Stack>
             }
@@ -100,7 +101,7 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
           ))}
         </Stack>
       ) : (
-        <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
+        <Typography variant="body1" sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
           No plans in this category
         </Typography>
       )}

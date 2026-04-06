@@ -29,6 +29,7 @@ const trainingPlanHooks = createCrudHooks<
     delete: api.trainingPlans.delete,
   },
   redirectTo: "/coach/plans",
+  additionalInvalidateKeys: [platformKeys.coachDashboard.data()],
 });
 
 export const useTrainingPlansPageData = trainingPlanHooks.usePageData;
@@ -63,6 +64,7 @@ export const useUpdateTrainingPlan = () => {
     onSettled: (_data, _error, { id }) => {
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.byId(id) });
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      queryClient.invalidateQueries({ queryKey: platformKeys.coachDashboard.data() });
     },
   });
 };
@@ -74,6 +76,7 @@ export const useDuplicateTrainingPlan = () => {
     mutationFn: (id: string) => api.trainingPlans.duplicate(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      queryClient.invalidateQueries({ queryKey: platformKeys.coachDashboard.data() });
       toast.success("Training plan duplicated");
     },
     onError: (error: Error) => {
@@ -89,6 +92,7 @@ export const useArchiveTrainingPlan = () => {
     mutationFn: (id: string) => api.trainingPlans.archive(id),
     onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      queryClient.invalidateQueries({ queryKey: platformKeys.coachDashboard.data() });
       queryClient.setQueryData(platformKeys.trainingPlans.byId(plan.id), plan);
       toast.success("Training plan archived");
     },
@@ -105,6 +109,7 @@ export const useRestoreTrainingPlan = () => {
     mutationFn: (id: string) => api.trainingPlans.restore(id),
     onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      queryClient.invalidateQueries({ queryKey: platformKeys.coachDashboard.data() });
       queryClient.setQueryData(platformKeys.trainingPlans.byId(plan.id), plan);
       toast.success("Training plan restored");
     },
@@ -121,6 +126,7 @@ export const useActivateTrainingPlan = () => {
     mutationFn: (id: string) => api.trainingPlans.activate(id),
     onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      queryClient.invalidateQueries({ queryKey: platformKeys.coachDashboard.data() });
       queryClient.setQueryData(platformKeys.trainingPlans.byId(plan.id), plan);
       toast.success("Training plan activated");
     },

@@ -22,7 +22,6 @@ export interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
   emptyMessage?: string;
-  title?: string;
   searchPlaceholder?: string;
   filters?: DataTableFilter<T>[];
   action?: ReactNode;

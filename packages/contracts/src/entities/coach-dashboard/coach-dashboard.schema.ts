@@ -3,7 +3,7 @@ import { z } from "zod";
 import { HealthStatus } from "../athlete-profile";
 import { ActionItemSeverity, ActionItemType } from "../coach-action-item";
 
-import { ProgressTrend, TodayStatus } from "./coach-dashboard.constants";
+import { ProcessStatus, TodayStatus } from "./coach-dashboard.constants";
 
 export const todayStatusSchema = z.nativeEnum(TodayStatus);
 
@@ -49,15 +49,14 @@ export const progressAthleteSchema = z.object({
   userId: z.string().cuid(),
   name: z.string().nullable(),
   image: z.string().nullable(),
-  completionRate: z.number(),
-  trend: z.nativeEnum(ProgressTrend),
+  processStatus: z.nativeEnum(ProcessStatus),
   href: z.string(),
 });
 
 export const progressBucketsSchema = z.object({
-  improving: z.array(progressAthleteSchema),
-  stagnating: z.array(progressAthleteSchema),
-  declining: z.array(progressAthleteSchema),
+  onTrack: z.array(progressAthleteSchema),
+  steady: z.array(progressAthleteSchema),
+  fallingBehind: z.array(progressAthleteSchema),
   avgEngagementRate: z.number(),
 });
 

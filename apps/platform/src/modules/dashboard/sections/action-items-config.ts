@@ -6,8 +6,7 @@ import type { AlertColor } from "@mui/material";
 import { ActionItemSeverity, ActionItemType } from "@repo/contracts/coach-action-item";
 import type { DashboardActionItem } from "@repo/contracts/coach-dashboard";
 
-import type { AthleteCardChip } from "../components";
-import { getHealthChipFromMessage } from "../components/health-chips-config";
+import { type HealthChipConfig, getHealthChipFromMessage } from "@app/lib/config";
 
 export const INITIAL_VISIBLE_COUNT = 3;
 
@@ -29,7 +28,7 @@ export const sortBySeverity = (items: DashboardActionItem[]): DashboardActionIte
 export const getSeverityColor = (severity: DashboardActionItem["severity"]): AlertColor =>
   SEVERITY_TO_ALERT_COLOR[severity];
 
-export const getChip = (item: DashboardActionItem): AthleteCardChip | null => {
+export const getChip = (item: DashboardActionItem): HealthChipConfig | null => {
   if (item.type === ActionItemType.HEALTH_REPORT) {
     return getHealthChipFromMessage(item.message);
   }

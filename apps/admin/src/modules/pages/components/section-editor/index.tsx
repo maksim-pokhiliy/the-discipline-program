@@ -21,10 +21,8 @@ import {
   type HeroSectionType,
 } from "@repo/contracts/pages";
 
-import { ContactFormSectionForm } from "../sections/contact-form-section-form";
 import { ContactSectionForm } from "../sections/contact-section-form";
 import { CredentialsSectionForm } from "../sections/credentials-section-form";
-import { DirectContactSectionForm } from "../sections/direct-contact-section-form";
 import { FaqSectionForm } from "../sections/faq-section-form";
 import { HeroSectionForm } from "../sections/hero-section-form";
 import { JourneySectionForm } from "../sections/journey-section-form";
@@ -64,7 +62,8 @@ export const SectionEditor = ({
       case "about:hero":
       case "contact:hero":
       case "blog:hero":
-      case "storefront:hero": {
+      case "storefront:hero":
+      case "faq:hero": {
         return <HeroSectionForm sectionType={section.section as HeroSectionType} />;
       }
 
@@ -72,7 +71,10 @@ export const SectionEditor = ({
         return <WhyChooseSectionForm />;
       }
 
-      case "storefront": {
+      case "storefront":
+      case "storefront:grid":
+      case "blog:grid":
+      case "contact:form": {
         return <StorefrontSectionForm />;
       }
 
@@ -82,7 +84,8 @@ export const SectionEditor = ({
 
       case "contact":
       case "storefront:cta":
-      case "cta": {
+      case "cta":
+      case "faq:cta": {
         return <ContactSectionForm />;
       }
 
@@ -96,14 +99,6 @@ export const SectionEditor = ({
 
       case "personal": {
         return <PersonalSectionForm />;
-      }
-
-      case "form": {
-        return <ContactFormSectionForm />;
-      }
-
-      case "directContact": {
-        return <DirectContactSectionForm />;
       }
 
       case "faq":
@@ -126,9 +121,7 @@ export const SectionEditor = ({
   return (
     <Accordion expanded={isExpanded} onChange={onToggle}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          {section.section.toUpperCase()}
-        </Typography>
+        <Typography variant="subtitle1">{section.section.toUpperCase()}</Typography>
       </AccordionSummary>
 
       <AccordionDetails>

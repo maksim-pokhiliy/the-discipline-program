@@ -61,7 +61,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
       <Stack spacing={1.5}>
         <Stack spacing={0.5}>
           <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <Typography variant="subtitle1" noWrap sx={{ fontWeight: 600 }}>
+            <Typography variant="subtitle1" noWrap>
               {plan.name}
             </Typography>
             <PlanStatusChip status={plan.status} />

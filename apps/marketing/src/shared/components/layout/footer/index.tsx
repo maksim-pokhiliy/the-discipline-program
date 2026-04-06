@@ -43,7 +43,6 @@ export const Footer = () => {
                   href={href}
                   variant="body2"
                   sx={{
-                    fontWeight: 400,
                     textDecoration: "none",
                     color: pathname === href ? "text.primary" : "text.secondary",
 

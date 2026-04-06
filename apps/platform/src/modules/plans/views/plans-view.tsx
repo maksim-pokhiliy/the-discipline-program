@@ -19,7 +19,7 @@ export const PlansView = () => {
 
   return (
     <>
-      <Stack spacing={2}>
+      <Stack spacing={4}>
         <PlatformPageHeader
           title="Training Plans"
           actions={

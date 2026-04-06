@@ -7,7 +7,7 @@ export const contactApi = {
     const submission = await prisma.marketingContactSubmission.create({
       data: {
         name: data.name,
-        email: data.email,
+        contact: data.contact,
         program: data.program,
         message: data.message,
       },

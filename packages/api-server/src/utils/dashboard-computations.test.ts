@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { HealthStatus } from "@repo/contracts/athlete-profile";
-import { LOW_COMPLETION_RATE, ProgressTrend, TodayStatus } from "@repo/contracts/coach-dashboard";
+import { ProcessStatus, TodayStatus } from "@repo/contracts/coach-dashboard";
 
 import {
   computeAthletesSummary,
+  computeProcessStatus,
   computeProgressBuckets,
   computeTodayStatus,
 } from "./dashboard-computations";
@@ -383,98 +384,81 @@ describe("computeAthletesSummary", () => {
   });
 });
 
+describe("computeProcessStatus", () => {
+  it("returns ON_TRACK when current adherence is significantly better than previous", () => {
+    expect(computeProcessStatus(0.8, 0.5)).toBe(ProcessStatus.ON_TRACK);
+  });
+
+  it("returns FALLING_BEHIND when current adherence is significantly worse", () => {
+    expect(computeProcessStatus(0.3, 0.7)).toBe(ProcessStatus.FALLING_BEHIND);
+  });
+
+  it("returns ON_TRACK when adherence is stable and high", () => {
+    expect(computeProcessStatus(0.8, 0.8)).toBe(ProcessStatus.ON_TRACK);
+  });
+
+  it("returns STEADY when adherence is stable and moderate", () => {
+    expect(computeProcessStatus(0.5, 0.5)).toBe(ProcessStatus.STEADY);
+  });
+
+  it("returns STEADY when delta is within threshold", () => {
+    expect(computeProcessStatus(0.55, 0.5)).toBe(ProcessStatus.STEADY);
+  });
+});
+
 describe("computeProgressBuckets", () => {
-  it("places athlete with high completion rate (>=0.7) into improving with UP trend", () => {
+  it("places athlete with all recent workouts completed into onTrack", () => {
     const enrollment = makeEnrollment({
       userId: "u1",
       userName: "Strong Athlete",
       workouts: [
-        makeWorkout("w1", "2025-06-16T10:00:00Z"),
-        makeWorkout("w2", "2025-06-17T10:00:00Z"),
-        makeWorkout("w3", "2025-06-18T10:00:00Z"),
+        makeWorkout("w1", "2025-06-12T10:00:00Z"),
+        makeWorkout("w2", "2025-06-14T10:00:00Z"),
+        makeWorkout("w3", "2025-06-16T10:00:00Z"),
       ],
       logs: [
-        makeLog("w1", "2025-06-16T12:00:00Z"),
-        makeLog("w2", "2025-06-17T12:00:00Z"),
-        makeLog("w3", "2025-06-18T12:00:00Z"),
+        makeLog("w1", "2025-06-12T12:00:00Z"),
+        makeLog("w2", "2025-06-14T12:00:00Z"),
+        makeLog("w3", "2025-06-16T12:00:00Z"),
       ],
     });
 
     const result = computeProgressBuckets([enrollment]);
 
-    expect(result.improving).toHaveLength(1);
-    const athlete = result.improving[0];
-
-    if (!athlete) {
-      throw new Error("expected improving athlete");
-    }
-
-    expect(athlete.trend).toBe(ProgressTrend.UP);
-    expect(athlete.completionRate).toBeCloseTo(1.0);
-    expect(result.stagnating).toHaveLength(0);
-    expect(result.declining).toHaveLength(0);
+    expect(result.onTrack).toHaveLength(1);
+    expect(result.steady).toHaveLength(0);
+    expect(result.fallingBehind).toHaveLength(0);
   });
 
-  it("places athlete with low completion rate (<LOW_COMPLETION_RATE) into declining with DOWN trend", () => {
-    const workouts = Array.from({ length: 10 }, (_, i) =>
-      makeWorkout(`w${i}`, `2025-06-${String(10 + i).padStart(2, "0")}T10:00:00Z`),
-    );
+  it("places athlete with no recent completions but previous activity into fallingBehind", () => {
     const enrollment = makeEnrollment({
       userId: "u1",
-      workouts,
-      logs: [makeLog("w0", "2025-06-10T12:00:00Z")],
+      workouts: [
+        makeWorkout("w1", "2025-06-05T10:00:00Z"),
+        makeWorkout("w2", "2025-06-07T10:00:00Z"),
+        makeWorkout("w3", "2025-06-12T10:00:00Z"),
+        makeWorkout("w4", "2025-06-14T10:00:00Z"),
+      ],
+      logs: [makeLog("w1", "2025-06-05T12:00:00Z"), makeLog("w2", "2025-06-07T12:00:00Z")],
     });
 
     const result = computeProgressBuckets([enrollment]);
 
-    expect(result.declining).toHaveLength(1);
-    const athlete = result.declining[0];
-
-    if (!athlete) {
-      throw new Error("expected declining athlete");
-    }
-
-    expect(athlete.trend).toBe(ProgressTrend.DOWN);
-    expect(athlete.completionRate).toBeLessThan(LOW_COMPLETION_RATE);
+    expect(result.fallingBehind).toHaveLength(1);
+    expect(result.onTrack).toHaveLength(0);
   });
 
-  it("places athlete with medium completion rate into stagnating with STABLE trend", () => {
-    const workouts = Array.from({ length: 10 }, (_, i) =>
-      makeWorkout(`w${i}`, `2025-06-${String(10 + i).padStart(2, "0")}T10:00:00Z`),
-    );
-    const logs = Array.from({ length: 5 }, (_, i) =>
-      makeLog(`w${i}`, `2025-06-${String(10 + i).padStart(2, "0")}T12:00:00Z`),
-    );
-    const enrollment = makeEnrollment({
-      userId: "u1",
-      workouts,
-      logs,
-    });
-
-    const result = computeProgressBuckets([enrollment]);
-
-    expect(result.stagnating).toHaveLength(1);
-    const athlete = result.stagnating[0];
-
-    if (!athlete) {
-      throw new Error("expected stagnating athlete");
-    }
-
-    expect(athlete.trend).toBe(ProgressTrend.STABLE);
-    expect(athlete.completionRate).toBe(0.5);
-  });
-
-  it("calculates avgEngagementRate as active athletes / total athletes", () => {
+  it("calculates avgEngagementRate as athletes with logs / total athletes", () => {
     const active = makeEnrollment({
       userId: "u1",
-      workouts: [makeWorkout("w1", "2025-06-18T10:00:00Z")],
-      logs: [makeLog("w1", "2025-06-18T12:00:00Z")],
+      workouts: [makeWorkout("w1", "2025-06-16T10:00:00Z")],
+      logs: [makeLog("w1", "2025-06-16T12:00:00Z")],
     });
 
     const inactive = makeEnrollment({
       userId: "u2",
       userEmail: "inactive@test.com",
-      workouts: [makeWorkout("w2", "2025-06-18T10:00:00Z")],
+      workouts: [makeWorkout("w2", "2025-06-16T10:00:00Z")],
       logs: [],
     });
 
@@ -483,96 +467,45 @@ describe("computeProgressBuckets", () => {
     expect(result.avgEngagementRate).toBe(0.5);
   });
 
-  it("returns 0 engagement rate when there are no enrollments", () => {
+  it("returns empty buckets when there are no enrollments", () => {
     const result = computeProgressBuckets([]);
 
     expect(result.avgEngagementRate).toBe(0);
-    expect(result.improving).toHaveLength(0);
-    expect(result.stagnating).toHaveLength(0);
-    expect(result.declining).toHaveLength(0);
-  });
-
-  it("returns rate 0 and DOWN trend for athlete with workouts but zero completions", () => {
-    const enrollment = makeEnrollment({
-      userId: "u1",
-      workouts: [makeWorkout("w1", "2025-06-18T10:00:00Z")],
-      logs: [],
-    });
-
-    const result = computeProgressBuckets([enrollment]);
-
-    expect(result.declining).toHaveLength(1);
-    const athlete = result.declining[0];
-
-    if (!athlete) {
-      throw new Error("expected declining athlete");
-    }
-
-    expect(athlete.completionRate).toBe(0);
-    expect(athlete.trend).toBe(ProgressTrend.DOWN);
-  });
-
-  it("returns rate 0 and DOWN trend for athlete with zero workouts", () => {
-    const enrollment = makeEnrollment({
-      userId: "u1",
-      workouts: [],
-      logs: [],
-    });
-
-    const result = computeProgressBuckets([enrollment]);
-
-    expect(result.declining).toHaveLength(1);
-    const athlete = result.declining[0];
-
-    if (!athlete) {
-      throw new Error("expected declining athlete");
-    }
-
-    expect(athlete.completionRate).toBe(0);
+    expect(result.onTrack).toHaveLength(0);
+    expect(result.steady).toHaveLength(0);
+    expect(result.fallingBehind).toHaveLength(0);
   });
 
   it("aggregates workouts across multiple enrollments for the same athlete", () => {
     const enrollment1 = makeEnrollment({
       userId: "u1",
       planId: "p1",
-      workouts: [
-        makeWorkout("w1", "2025-06-16T10:00:00Z"),
-        makeWorkout("w2", "2025-06-17T10:00:00Z"),
-      ],
-      logs: [makeLog("w1", "2025-06-16T12:00:00Z"), makeLog("w2", "2025-06-17T12:00:00Z")],
+      workouts: [makeWorkout("w1", "2025-06-14T10:00:00Z")],
+      logs: [makeLog("w1", "2025-06-14T12:00:00Z")],
     });
 
     const enrollment2 = makeEnrollment({
       userId: "u1",
       planId: "p2",
-      workouts: [
-        makeWorkout("w3", "2025-06-16T10:00:00Z"),
-        makeWorkout("w4", "2025-06-17T10:00:00Z"),
-      ],
-      logs: [makeLog("w3", "2025-06-16T12:00:00Z"), makeLog("w4", "2025-06-17T12:00:00Z")],
+      workouts: [makeWorkout("w2", "2025-06-15T10:00:00Z")],
+      logs: [makeLog("w2", "2025-06-15T12:00:00Z")],
     });
 
     const result = computeProgressBuckets([enrollment1, enrollment2]);
+    const allAthletes = [...result.onTrack, ...result.steady, ...result.fallingBehind];
 
-    expect(result.improving).toHaveLength(1);
-    const athlete = result.improving[0];
-
-    if (!athlete) {
-      throw new Error("expected improving athlete");
-    }
-
-    expect(athlete.completionRate).toBe(1.0);
+    expect(allAthletes).toHaveLength(1);
   });
 
   it("generates correct href for each athlete", () => {
     const enrollment = makeEnrollment({
       userId: "u-abc-123",
-      workouts: [makeWorkout("w1", "2025-06-18T10:00:00Z")],
-      logs: [makeLog("w1", "2025-06-18T12:00:00Z")],
+      workouts: [makeWorkout("w1", "2025-06-16T10:00:00Z")],
+      logs: [makeLog("w1", "2025-06-16T12:00:00Z")],
     });
 
     const result = computeProgressBuckets([enrollment]);
-    const athlete = [...result.improving, ...result.stagnating, ...result.declining][0];
+    const athlete = [...result.onTrack, ...result.steady, ...result.fallingBehind][0];
 
     if (!athlete) {
       throw new Error("expected athlete in buckets");

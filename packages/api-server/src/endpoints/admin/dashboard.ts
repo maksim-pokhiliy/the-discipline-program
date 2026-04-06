@@ -155,7 +155,7 @@ async function getRecentActivity(): Promise<ActivityItem[]> {
       id: c.id,
       type: DashboardActivityType.CONTACT,
       title: `Message from ${c.name || "Unknown"}`,
-      subtitle: c.email || "No email",
+      subtitle: c.contact || "No contact",
       date: c.createdAt,
       status: c.status,
       href: `/contacts/${c.id}`,

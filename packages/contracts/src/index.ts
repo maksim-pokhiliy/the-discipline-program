@@ -18,3 +18,4 @@ export * from "./entities/user-benchmark";
 export * from "./entities/coach-dashboard";
 export * from "./entities/coach-note";
 export * from "./entities/coach-action-item";
+export * from "./entities/coach-athletes";

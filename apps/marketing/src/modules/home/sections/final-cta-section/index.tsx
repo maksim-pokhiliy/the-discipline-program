@@ -9,7 +9,7 @@ interface HomeFinalCTASectionProps {
 
 export const HomeFinalCTASection = ({ contact }: HomeFinalCTASectionProps) => {
   return (
-    <ContentSection surface="raised">
+    <ContentSection id="home-cta" surface="raised">
       <CTASection
         title={contact.title}
         subtitle={contact.subtitle}

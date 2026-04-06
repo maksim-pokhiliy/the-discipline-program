@@ -1,8 +1,9 @@
-import { Box, Grid, Stack, Typography } from "@mui/material";
-import Image from "next/image";
+import { Box, Stack, Typography } from "@mui/material";
 
 import { type AboutPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
+
+import { SplitSection } from "@app/shared/components/ui";
 
 interface AboutPersonalSectionProps {
   personal: AboutPageData["personal"];
@@ -10,54 +11,27 @@ interface AboutPersonalSectionProps {
 
 export const AboutPersonalSection = ({ personal }: AboutPersonalSectionProps) => {
   return (
-    <ContentSection title={personal.title} subtitle={personal.subtitle}>
-      <Grid container spacing={8} alignItems="center">
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Box
-            sx={(theme) => ({
-              position: "relative",
-              overflow: "hidden",
-              aspectRatio: "1/1",
-              borderRadius: theme.shape.borderRadius,
-            })}
+    <ContentSection id="personal" title={personal.title} subtitle={personal.subtitle}>
+      <SplitSection backgroundImage={personal.image}>
+        <Stack spacing={4} sx={{ justifyContent: "center", height: "100%" }}>
+          <Typography
+            variant="h3"
+            sx={{
+              fontStyle: "italic",
+            }}
           >
-            <Image
-              src={personal.image}
-              alt={personal.name}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              fill
-              style={{
-                objectFit: "cover",
-                filter: "brightness(1.1) contrast(1.1)",
-              }}
-            />
-          </Box>
-        </Grid>
+            &quot;{personal.description}&quot;
+          </Typography>
 
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Stack spacing={4}>
-            <Typography
-              variant="h3"
-              sx={{
-                fontStyle: "italic",
-                fontWeight: 400,
-              }}
-            >
-              &quot;{personal.description}&quot;
+          <Box>
+            <Typography variant="h2">{personal.name}</Typography>
+
+            <Typography variant="h3" color="primary">
+              {personal.role}
             </Typography>
-
-            <Box>
-              <Typography variant="h2" sx={{ fontWeight: 600 }}>
-                {personal.name}
-              </Typography>
-
-              <Typography variant="h3" color="primary" sx={{ fontWeight: 500 }}>
-                {personal.role}
-              </Typography>
-            </Box>
-          </Stack>
-        </Grid>
-      </Grid>
+          </Box>
+        </Stack>
+      </SplitSection>
     </ContentSection>
   );
 };

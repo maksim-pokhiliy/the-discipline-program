@@ -13,7 +13,7 @@ interface FeaturesSectionProps {
 
 export const HomeFeaturesSection = ({ whyChoose }: FeaturesSectionProps) => {
   return (
-    <ContentSection title={whyChoose.title} subtitle={whyChoose.subtitle}>
+    <ContentSection id="why-choose" title={whyChoose.title} subtitle={whyChoose.subtitle}>
       <Grid container spacing={6}>
         {whyChoose.features.map((feature) => {
           const IconComponent = MuiIcons[feature.iconName as keyof typeof MuiIcons] as

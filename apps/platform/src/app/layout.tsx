@@ -21,6 +21,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
           <QueryProvider>
             <AuthProvider>
               {children}
+
               <Toaster />
             </AuthProvider>
           </QueryProvider>

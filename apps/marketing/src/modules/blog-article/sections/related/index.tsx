@@ -29,7 +29,7 @@ export const BlogArticleRelated = ({ relatedPosts }: BlogArticleRelatedProps) =>
     >
       <Container maxWidth="lg">
         <Stack spacing={8}>
-          <Typography variant="h3" component="h2" textAlign="center" sx={{ fontWeight: 600 }}>
+          <Typography variant="h3" component="h2" textAlign="center">
             Related Articles
           </Typography>
 
@@ -56,33 +56,18 @@ export const BlogArticleRelated = ({ relatedPosts }: BlogArticleRelatedProps) =>
                         zIndex: 1,
                       }}
                     >
-                      <Chip
-                        label={post.category}
-                        size="small"
-                        color="primary"
-                        sx={{ fontWeight: 600 }}
-                      />
+                      <Chip label={post.category} size="small" color="primary" />
                     </Box>
                   </Box>
 
                   <CardContent sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
                     <Stack spacing={3} sx={{ height: "100%" }}>
                       <Stack spacing={2} sx={{ flexGrow: 1 }}>
-                        <Typography variant="h6" component="h3" sx={{ fontWeight: 600 }}>
+                        <Typography variant="h6" component="h3">
                           {post.title}
                         </Typography>
 
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            lineHeight: 1.6,
-                            display: "-webkit-box",
-                            WebkitLineClamp: 3,
-                            WebkitBoxOrient: "vertical",
-                            overflow: "hidden",
-                          }}
-                        >
+                        <Typography variant="body2" color="text.secondary">
                           {post.excerpt}
                         </Typography>
                       </Stack>

@@ -153,7 +153,6 @@ describe("PLAN_ENROLLMENT_STATUS_MAP", () => {
   it("maps to correct contract values", () => {
     expect(PLAN_ENROLLMENT_STATUS_MAP.ACTIVE).toBe(PlanEnrollmentStatus.ACTIVE);
     expect(PLAN_ENROLLMENT_STATUS_MAP.PAUSED).toBe(PlanEnrollmentStatus.PAUSED);
-    expect(PLAN_ENROLLMENT_STATUS_MAP.COMPLETED).toBe(PlanEnrollmentStatus.COMPLETED);
   });
 });
 

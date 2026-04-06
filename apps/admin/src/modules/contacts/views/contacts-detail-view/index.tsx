@@ -58,7 +58,7 @@ const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
       }
       isPending={isPending}
       title="Contact Submission"
-      subtitle={contact.name || contact.email || "Anonymous"}
+      subtitle={contact.name || contact.contact || "Anonymous"}
       backHref="/contacts"
       backLabel="Back to List"
     >
@@ -74,7 +74,7 @@ const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
             <FormCard title="Contact Details">
               <Stack spacing={2}>
                 <DetailField label="Name" labelWidth={80} value={contact.name || "—"} />
-                <DetailField label="Email" labelWidth={80} value={contact.email || "—"} />
+                <DetailField label="Contact" labelWidth={80} value={contact.contact || "—"} />
                 <DetailField label="Program" labelWidth={80} value={contact.program || "—"} />
                 <DetailField
                   label="Date"

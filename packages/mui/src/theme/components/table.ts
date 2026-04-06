@@ -8,7 +8,6 @@ export const MuiTableCell: Components<Theme>["MuiTableCell"] = {
     }),
 
     head: ({ theme }) => ({
-      fontWeight: 600,
       textTransform: "uppercase",
       color: alpha(theme.palette.text.primary, 0.7),
     }),
