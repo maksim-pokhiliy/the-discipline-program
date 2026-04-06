@@ -61,7 +61,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
       searchValue: (post) => post.title,
       render: (post) => (
         <Stack spacing={0.5}>
-          <Typography variant="subtitle2" component="span" fontWeight={600}>
+          <Typography variant="subtitle2" component="span">
             {post.title}
           </Typography>
 
@@ -172,7 +172,6 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
       <DataTable
         data={posts}
         columns={columns}
-        title="Posts"
         searchPlaceholder="Search posts..."
         filters={filters}
         action={<CreateButton href="/blog/create">Create Post</CreateButton>}

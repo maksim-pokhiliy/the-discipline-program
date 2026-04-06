@@ -18,15 +18,13 @@ export const PaymentSuccessDetailsSection = () => {
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography color="text.secondary">Program:</Typography>
 
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  {"order.programName"}
-                </Typography>
+                <Typography variant="h6">{"order.programName"}</Typography>
               </Stack>
 
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography color="text.secondary">Amount:</Typography>
 
-                <Typography variant="h6" sx={{ fontWeight: 600, color: "primary.main" }}>
+                <Typography variant="h6" sx={{ color: "primary.main" }}>
                   ${"order.amount"} {"order.currency"}
                 </Typography>
               </Stack>
@@ -34,7 +32,7 @@ export const PaymentSuccessDetailsSection = () => {
               <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Typography color="text.secondary">Email:</Typography>
 
-                <Typography sx={{ fontWeight: 500 }}>{"order.customerEmail"}</Typography>
+                <Typography>{"order.customerEmail"}</Typography>
               </Stack>
 
               <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -42,8 +40,6 @@ export const PaymentSuccessDetailsSection = () => {
 
                 <Typography
                   sx={{
-                    fontWeight: 400,
-                    fontFamily: "monospace",
                     color: "text.secondary",
                   }}
                 >
@@ -56,9 +52,7 @@ export const PaymentSuccessDetailsSection = () => {
 
                 <Typography
                   sx={{
-                    fontWeight: 600,
                     color: "success.main",
-                    // color: order.status === "completed" ? "success.main" : "warning.main",
                     textTransform: "capitalize",
                   }}
                 >
@@ -70,7 +64,7 @@ export const PaymentSuccessDetailsSection = () => {
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography color="text.secondary">Completed:</Typography>
 
-                  <Typography sx={{ fontWeight: 500 }}>
+                  <Typography >
                     {new Date(order.completedAt).toLocaleDateString()}
                   </Typography>
                 </Stack>

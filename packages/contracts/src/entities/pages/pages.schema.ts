@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { ContactMethodType } from "./pages.constants";
-
 export const homePageHeroSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
@@ -43,6 +41,9 @@ export const homePageContactSchema = z.object({
 export const storefrontProgramsPageHeroSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
+  buttonText: z.string(),
+  buttonHref: z.string(),
+  backgroundImage: z.string(),
 });
 
 export const storefrontPageCtaSchema = z.object({
@@ -102,10 +103,12 @@ export const aboutPageCtaSchema = z.object({
 export const contactPageHeroSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
+  buttonText: z.string(),
+  buttonHref: z.string(),
   backgroundImage: z.string(),
 });
 
-export const contactFormSchema = z.object({
+export const contactPageFormSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
 });
@@ -115,30 +118,44 @@ export const programOptionSchema = z.object({
   label: z.string(),
 });
 
-export const contactMethodSchema = z.object({
-  type: z.nativeEnum(ContactMethodType),
-  label: z.string(),
-  value: z.string(),
-  href: z.string(),
-});
-
-export const contactDirectContactSchema = z.object({
-  title: z.string(),
-  contacts: z.array(contactMethodSchema),
-});
-
 export const faqItemSchema = z.object({
   question: z.string(),
   answer: z.string(),
 });
 
-export const contactPageFaqSchema = z.object({
+export const faqContentSchema = z.object({
   title: z.string(),
+  subtitle: z.string(),
   items: z.array(faqItemSchema),
+});
+
+export const storefrontGridSchema = z.object({
+  title: z.string(),
+  subtitle: z.string(),
+});
+
+export const faqPageHeroSchema = z.object({
+  title: z.string(),
+  subtitle: z.string(),
+  buttonText: z.string(),
+  buttonHref: z.string(),
+  backgroundImage: z.string(),
+});
+
+export const faqPageCtaSchema = z.object({
+  title: z.string(),
+  subtitle: z.string(),
+  buttonText: z.string(),
+  buttonHref: z.string(),
 });
 
 export const blogPageHeroSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
   backgroundImage: z.string().optional(),
+});
+
+export const blogGridSchema = z.object({
+  title: z.string(),
+  subtitle: z.string(),
 });

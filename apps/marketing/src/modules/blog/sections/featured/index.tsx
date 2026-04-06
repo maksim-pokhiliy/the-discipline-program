@@ -1,5 +1,14 @@
-import { Box, Button, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
-import Image from "next/image";
+import {
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardMedia,
+  Chip,
+  Stack,
+  Typography,
+} from "@mui/material";
 import Link from "next/link";
 
 import { type PublicBlogPost } from "@repo/contracts/blog";
@@ -13,17 +22,15 @@ interface BlogFeaturedSectionProps {
 
 export const BlogFeaturedSection = ({ hero, featuredPost }: BlogFeaturedSectionProps) => {
   return (
-    <ContentSection title={hero.title} subtitle={hero.subtitle} offset={1}>
-      <Card sx={{ overflow: "hidden" }}>
-        <Box sx={{ position: "relative", height: 300 }}>
+    <ContentSection id="featured" title={hero.title} subtitle={hero.subtitle} offset={1}>
+      <Card>
+        <Box sx={{ position: "relative" }}>
           {featuredPost.coverImage && (
-            <Image
-              src={featuredPost.coverImage}
+            <CardMedia
+              component="img"
+              height="400"
+              image={featuredPost.coverImage}
               alt={featuredPost.title}
-              priority
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              style={{ objectFit: "cover" }}
             />
           )}
 
@@ -35,48 +42,54 @@ export const BlogFeaturedSection = ({ hero, featuredPost }: BlogFeaturedSectionP
               zIndex: 1,
             }}
           >
-            <Chip label={featuredPost.category} color="primary" sx={{ fontWeight: 600 }} />
+            <Chip label={featuredPost.category} color="primary" />
           </Box>
         </Box>
 
-        <CardContent sx={{ p: 4 }}>
+        <CardContent>
           <Stack spacing={4}>
             <Stack spacing={2}>
-              <Typography variant="h3" component="h2">
-                {featuredPost.title}
-              </Typography>
+              <Typography variant="h1">{featuredPost.title}</Typography>
 
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="h5" color="text.secondary">
                 {featuredPost.excerpt}
               </Typography>
             </Stack>
-
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Typography variant="body2" color="text.secondary">
-                  {featuredPost.authorName}
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary">
-                  •
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary">
-                  {featuredPost.readTime} min read
-                </Typography>
-              </Stack>
-
-              <Button
-                component={Link}
-                href={`/blog/${featuredPost.slug}`}
-                variant="contained"
-                size="small"
-              >
-                Read Article
-              </Button>
-            </Stack>
           </Stack>
         </CardContent>
+
+        <CardActions>
+          <Stack
+            direction="row"
+            spacing={2}
+            alignItems="center"
+            justifyContent="space-between"
+            sx={{ width: "100%" }}
+          >
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Typography variant="body1" color="text.secondary">
+                {featuredPost.authorName}
+              </Typography>
+
+              <Typography variant="body1" color="text.secondary">
+                •
+              </Typography>
+
+              <Typography variant="body1" color="text.secondary">
+                {featuredPost.readTime} min read
+              </Typography>
+            </Stack>
+
+            <Button
+              component={Link}
+              href={`/blog/${featuredPost.slug}`}
+              variant="contained"
+              size="medium"
+            >
+              read more
+            </Button>
+          </Stack>
+        </CardActions>
       </Card>
     </ContentSection>
   );

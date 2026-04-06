@@ -55,9 +55,7 @@ export const WeekNavigator = () => {
       </Stack>
 
       <Stack sx={{ alignItems: "center" }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          Week {weekNumber}
-        </Typography>
+        <Typography variant="subtitle2">Week {weekNumber}</Typography>
         <Typography variant="caption" sx={{ color: "text.secondary" }}>
           {formatWeekRange(weekStart)}
         </Typography>

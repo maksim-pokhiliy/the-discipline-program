@@ -48,12 +48,5 @@ export const PagesListSection = ({ pages }: PagesListSectionProps) => {
     },
   ];
 
-  return (
-    <DataTable
-      data={pages}
-      columns={columns}
-      title="Pages"
-      emptyMessage="No marketing pages found."
-    />
-  );
+  return <DataTable data={pages} columns={columns} emptyMessage="No marketing pages found." />;
 };

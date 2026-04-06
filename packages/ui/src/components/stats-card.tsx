@@ -11,7 +11,7 @@ type PaletteColorKey = {
 
 const sizeConfig = {
   small: { titleVariant: "body2", valueVariant: "h5", spacing: 3, iconSize: "medium" },
-  medium: { titleVariant: "h6", valueVariant: "h3", spacing: 4, iconSize: "large" },
+  medium: { titleVariant: "h3", valueVariant: "display2", spacing: 4, iconSize: "large" },
 } as const;
 
 type StatsCardProps = {
@@ -72,7 +72,6 @@ export const StatsCard = ({
             <Typography
               variant={config.valueVariant}
               sx={(theme) => ({
-                fontWeight: 700,
                 color: theme.palette[color].main,
               })}
             >
@@ -81,7 +80,7 @@ export const StatsCard = ({
 
             <Stack spacing={1}>
               {subtitle && (
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                <Typography variant="h5" sx={{ color: "text.secondary" }}>
                   {subtitle}
                 </Typography>
               )}
@@ -98,7 +97,6 @@ export const StatsCard = ({
                     variant="caption"
                     sx={{
                       color: trend.isPositive ? "success.main" : "error.main",
-                      fontWeight: 600,
                     }}
                   >
                     {trend.isPositive ? "+" : ""}

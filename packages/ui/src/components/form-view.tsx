@@ -37,7 +37,8 @@ export const FormView = <T extends FieldValues>({
         subtitle={subtitle}
         backHref={backHref}
         backLabel={backLabel}
-        stickyToolbar
+        maxWidth="xl"
+        textAlign="left"
         actions={[
           {
             label: submitLabel,

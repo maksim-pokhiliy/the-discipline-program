@@ -55,6 +55,8 @@ const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
       subtitle={page.slug.toUpperCase()}
       backHref="/pages"
       backLabel="Back to Pages"
+      maxWidth="xl"
+      textAlign="left"
     >
       <Stack spacing={2}>
         {page.sections.map((section) => (

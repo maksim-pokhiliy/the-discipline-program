@@ -55,21 +55,21 @@ export const PlatformLoginPage = () => {
           `radial-gradient(ellipse at 50% 20%, ${alpha(theme.palette.primary.main, 0.08)}, transparent 70%)`,
       }}
     >
-      <Container maxWidth="xs">
+      <Container maxWidth="sm">
         <Stack spacing={5} alignItems="center">
           <Stack spacing={3} alignItems="center">
             <Logo />
 
             <Typography
-              variant="h3"
+              variant="display2"
               component="h1"
               textAlign="center"
-              sx={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
+              sx={{ textTransform: "uppercase" }}
             >
               The Discipline Program
             </Typography>
 
-            <Typography variant="body2" color="text.secondary" textAlign="center">
+            <Typography variant="h4" color="text.secondary" textAlign="center">
               Your Discipline dictates your success.
             </Typography>
 

@@ -3,8 +3,8 @@ import {
   type AthleteDailySummary,
   type ProgressAthlete,
   type ProgressBuckets,
-  LOW_COMPLETION_RATE,
-  ProgressTrend,
+  ADHERENCE_IMPROVING_THRESHOLD,
+  ProcessStatus,
   TodayStatus,
 } from "@repo/contracts/coach-dashboard";
 
@@ -179,76 +179,134 @@ export const computeAthletesSummary = (
   return Array.from(athleteMap.values());
 };
 
+const MS_PER_DAY = 86_400_000;
+
+type AdherenceWindow = { completed: number; available: number };
+
+const computeAdherenceWindow = (
+  scheduledWorkouts: { id: string; scheduledDate: Date | null }[],
+  loggedWorkoutIds: Set<string>,
+  windowStart: Date,
+  windowEnd: Date,
+): AdherenceWindow => {
+  let available = 0;
+  let completed = 0;
+
+  for (const w of scheduledWorkouts) {
+    if (!w.scheduledDate) {
+      continue;
+    }
+
+    const t = w.scheduledDate.getTime();
+
+    if (t >= windowStart.getTime() && t < windowEnd.getTime()) {
+      available++;
+
+      if (loggedWorkoutIds.has(w.id)) {
+        completed++;
+      }
+    }
+  }
+
+  return { completed, available };
+};
+
+export const computeProcessStatus = (
+  currentAdherence: number,
+  previousAdherence: number,
+): ProcessStatus => {
+  const delta = currentAdherence - previousAdherence;
+
+  if (delta > ADHERENCE_IMPROVING_THRESHOLD) {
+    return ProcessStatus.ON_TRACK;
+  }
+
+  if (delta < -ADHERENCE_IMPROVING_THRESHOLD) {
+    return ProcessStatus.FALLING_BEHIND;
+  }
+
+  return currentAdherence >= 0.7 ? ProcessStatus.ON_TRACK : ProcessStatus.STEADY;
+};
+
 export const computeProgressBuckets = (enrollments: EnrollmentWithData[]): ProgressBuckets => {
+  const now = new Date();
+  const currentEnd = now;
+  const currentStart = new Date(now.getTime() - 7 * MS_PER_DAY);
+  const previousStart = new Date(now.getTime() - 14 * MS_PER_DAY);
+
   const athleteData = new Map<
     string,
     {
       name: string | null;
       image: string | null;
-      totalWorkouts: number;
-      completedWorkouts: number;
+      current: AdherenceWindow;
+      previous: AdherenceWindow;
+      hasLogs: boolean;
     }
   >();
 
   for (const e of enrollments) {
     const user = e.user;
+    const loggedIds = new Set(user.workoutLogs.map((l) => l.workoutId));
+    const workouts = e.trainingPlan.workouts;
+
+    const curWindow = computeAdherenceWindow(workouts, loggedIds, currentStart, currentEnd);
+    const prevWindow = computeAdherenceWindow(workouts, loggedIds, previousStart, currentStart);
+
     const existing = athleteData.get(user.id);
-    const planWorkoutsCount = e.trainingPlan.workouts.length;
-    const completedCount = user.workoutLogs.filter((l) =>
-      e.trainingPlan.workouts.some((w) => w.id === l.workoutId),
-    ).length;
 
     if (existing) {
-      existing.totalWorkouts += planWorkoutsCount;
-      existing.completedWorkouts += completedCount;
+      existing.current.completed += curWindow.completed;
+      existing.current.available += curWindow.available;
+      existing.previous.completed += prevWindow.completed;
+      existing.previous.available += prevWindow.available;
+      existing.hasLogs = existing.hasLogs || user.workoutLogs.length > 0;
     } else {
       athleteData.set(user.id, {
         name: user.name,
         image: user.image,
-        totalWorkouts: planWorkoutsCount,
-        completedWorkouts: completedCount,
+        current: { ...curWindow },
+        previous: { ...prevWindow },
+        hasLogs: user.workoutLogs.length > 0,
       });
     }
   }
 
-  const improving: ProgressAthlete[] = [];
-  const stagnating: ProgressAthlete[] = [];
-  const declining: ProgressAthlete[] = [];
+  const onTrack: ProgressAthlete[] = [];
+  const steady: ProgressAthlete[] = [];
+  const fallingBehind: ProgressAthlete[] = [];
 
   for (const [userId, data] of athleteData) {
-    const rate = data.totalWorkouts > 0 ? data.completedWorkouts / data.totalWorkouts : 0;
+    const curRate =
+      data.current.available > 0 ? data.current.completed / data.current.available : 0;
+    const prevRate =
+      data.previous.available > 0 ? data.previous.completed / data.previous.available : 0;
+
+    const status = computeProcessStatus(curRate, prevRate);
     const entry: ProgressAthlete = {
       userId,
       name: data.name,
       image: data.image,
-      completionRate: rate,
-      trend:
-        rate >= 0.7
-          ? ProgressTrend.UP
-          : rate < LOW_COMPLETION_RATE
-            ? ProgressTrend.DOWN
-            : ProgressTrend.STABLE,
+      processStatus: status,
       href: `/coach/athletes/${userId}`,
     };
 
-    if (entry.trend === "UP") {
-      improving.push(entry);
-    } else if (entry.trend === "DOWN") {
-      declining.push(entry);
+    if (status === ProcessStatus.ON_TRACK) {
+      onTrack.push(entry);
+    } else if (status === ProcessStatus.FALLING_BEHIND) {
+      fallingBehind.push(entry);
     } else {
-      stagnating.push(entry);
+      steady.push(entry);
     }
   }
 
   const totalAthletes = athleteData.size;
-  const activeAthletes = Array.from(athleteData.values()).filter(
-    (d) => d.completedWorkouts > 0,
-  ).length;
+  const activeAthletes = Array.from(athleteData.values()).filter((d) => d.hasLogs).length;
 
   return {
-    improving,
-    stagnating,
-    declining,
+    onTrack,
+    steady,
+    fallingBehind,
     avgEngagementRate: totalAthletes > 0 ? activeAthletes / totalAthletes : 0,
   };
 };

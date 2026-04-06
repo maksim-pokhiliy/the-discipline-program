@@ -1,5 +1,15 @@
-import { Box, Button, Card, CardContent, Chip, Grid, Stack, Typography } from "@mui/material";
-import Image from "next/image";
+import {
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardMedia,
+  Chip,
+  Grid,
+  Stack,
+  Typography,
+} from "@mui/material";
 import Link from "next/link";
 
 import { type PublicBlogPost } from "@repo/contracts/blog";
@@ -7,34 +17,24 @@ import { type BlogPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
 interface BlogPostsGridProps {
-  hero?: BlogPageData["hero"];
+  grid: BlogPageData["grid"];
   posts: PublicBlogPost[];
 }
 
-export const BlogPostsGrid = ({ hero, posts }: BlogPostsGridProps) => {
+export const BlogPostsGrid = ({ grid, posts }: BlogPostsGridProps) => {
   return (
-    <ContentSection
-      title={hero?.title ?? "All Articles"}
-      subtitle={hero?.subtitle}
-      surface="raised"
-      offset={hero ? 1 : 0}
-    >
+    <ContentSection id="articles" title={grid.title} subtitle={grid.subtitle} surface="raised">
       <Grid container spacing={4}>
         {posts.map((post) => (
           <Grid key={post.id} size={{ xs: 12, md: 6, lg: 4 }}>
-            <Card
-              sx={{ height: "100%", display: "flex", flexDirection: "column" }}
-              variant="elevation"
-            >
-              <Box sx={{ position: "relative", height: 200 }}>
+            <Card variant="elevation">
+              <Box sx={{ position: "relative" }}>
                 {post.coverImage && (
-                  <Image
-                    src={post.coverImage}
+                  <CardMedia
+                    component="img"
+                    height="200"
+                    image={post.coverImage}
                     alt={post.title}
-                    fill
-                    priority
-                    style={{ objectFit: "cover" }}
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                 )}
 
@@ -46,55 +46,41 @@ export const BlogPostsGrid = ({ hero, posts }: BlogPostsGridProps) => {
                     zIndex: 1,
                   }}
                 >
-                  <Chip
-                    label={post.category}
-                    size="small"
-                    color="primary"
-                    sx={{ fontWeight: 600 }}
-                  />
+                  <Chip label={post.category} size="small" color="primary" />
                 </Box>
               </Box>
 
-              <CardContent sx={{ flexGrow: 1, display: "flex", flexDirection: "column" }}>
-                <Stack spacing={3} sx={{ height: "100%" }}>
-                  <Stack spacing={2} sx={{ flexGrow: 1 }}>
-                    <Typography variant="h5" component="h3" sx={{ fontWeight: 600 }}>
-                      {post.title}
-                    </Typography>
+              <CardContent>
+                <Stack spacing={2}>
+                  <Typography variant="h5" component="h3">
+                    {post.title}
+                  </Typography>
 
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{
-                        lineHeight: 1.6,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {post.excerpt}
-                    </Typography>
-                  </Stack>
-
-                  <Stack
-                    direction="row"
-                    spacing={2}
-                    alignItems="center"
-                    justifyContent="space-between"
-                  >
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <Typography variant="caption" color="text.secondary">
-                        {post.readTime} min read
-                      </Typography>
-                    </Stack>
-
-                    <Button component={Link} href={`/blog/${post.slug}`} size="small">
-                      Read More
-                    </Button>
-                  </Stack>
+                  <Typography variant="body2" color="text.secondary">
+                    {post.excerpt}
+                  </Typography>
                 </Stack>
               </CardContent>
+
+              <CardActions>
+                <Stack
+                  direction="row"
+                  spacing={2}
+                  alignItems="center"
+                  justifyContent="space-between"
+                  sx={{ width: "100%" }}
+                >
+                  <Stack direction="row" spacing={1} alignItems="center">
+                    <Typography variant="caption" color="text.secondary">
+                      {post.readTime} min read
+                    </Typography>
+                  </Stack>
+
+                  <Button component={Link} href={`/blog/${post.slug}`} size="small">
+                    Read More
+                  </Button>
+                </Stack>
+              </CardActions>
             </Card>
           </Grid>
         ))}

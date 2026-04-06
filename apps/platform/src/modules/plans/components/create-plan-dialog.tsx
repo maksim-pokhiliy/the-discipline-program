@@ -53,10 +53,9 @@ export const CreatePlanDialog: React.FC<CreatePlanDialogProps> = ({ open, onClos
         value={name}
         onChange={(e) => setName(e.target.value)}
         autoFocus
-        size="small"
+        size="medium"
         fullWidth
         disabled={create.isPending}
-        slotProps={{ htmlInput: { maxLength: 200 } }}
       />
 
       <TextField
@@ -65,10 +64,9 @@ export const CreatePlanDialog: React.FC<CreatePlanDialogProps> = ({ open, onClos
         onChange={(e) => setDescription(e.target.value)}
         multiline
         minRows={8}
-        size="small"
+        size="medium"
         fullWidth
         disabled={create.isPending}
-        slotProps={{ htmlInput: { maxLength: 2000, style: { resize: "vertical" } } }}
       />
     </FormModal>
   );

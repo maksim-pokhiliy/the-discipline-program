@@ -73,13 +73,13 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
       id: "contact",
       label: "Contact",
       width: "25%",
-      searchValue: (item) => `${item.name || ""} ${item.email || ""}`,
+      searchValue: (item) => `${item.name || ""} ${item.contact || ""}`,
       render: (item) => (
         <Box>
           <Typography variant="subtitle2">{item.name || "Anonymous"}</Typography>
-          {item.email && (
+          {item.contact && (
             <Typography variant="caption" color="text.secondary">
-              {item.email}
+              {item.contact}
             </Typography>
           )}
         </Box>
@@ -173,7 +173,6 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
       <DataTable
         data={contacts}
         columns={columns}
-        title="Submissions"
         searchPlaceholder="Search by name or email..."
         filters={filters}
         paginated

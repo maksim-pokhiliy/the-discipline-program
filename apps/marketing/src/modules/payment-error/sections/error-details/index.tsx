@@ -14,29 +14,17 @@ export const PaymentErrorDetailsSection = ({ error, orderId }: PaymentErrorDetai
         <CardContent sx={{ p: 4 }}>
           <Stack spacing={3}>
             <Alert severity="error">
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {error}
-              </Typography>
+              <Typography variant="body1">{error}</Typography>
             </Alert>
 
             {orderId && (
               <Stack spacing={2}>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Transaction Details
-                </Typography>
+                <Typography variant="h6">Transaction Details</Typography>
 
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography color="text.secondary">Order ID:</Typography>
 
-                  <Typography
-                    sx={{
-                      fontWeight: 400,
-                      fontFamily: "monospace",
-                      color: "text.secondary",
-                    }}
-                  >
-                    {orderId}
-                  </Typography>
+                  <Typography sx={{ color: "text.secondary" }}>{orderId}</Typography>
                 </Stack>
               </Stack>
             )}

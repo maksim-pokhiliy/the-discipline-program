@@ -5,7 +5,7 @@ import { type GetContactByIdResponse } from "@repo/contracts/contact";
 export const mapToContact = (c: PrismaContact): GetContactByIdResponse => ({
   id: c.id,
   name: c.name,
-  email: c.email,
+  contact: c.contact,
   program: c.program,
   message: c.message,
   status: c.status,

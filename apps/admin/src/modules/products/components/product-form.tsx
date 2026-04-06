@@ -53,7 +53,6 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
               <TextField
                 label="Product Title"
                 placeholder="e.g. Strength Mastery 1.0"
-                size="small"
                 variant="outlined"
                 fullWidth
                 disabled={isLoading}
@@ -89,6 +88,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                     value={field.value || []}
                     onChange={field.onChange}
                     error={!!fieldState.error}
+                    size="medium"
                     helperText={
                       fieldState.error?.message || "Add bullet points for the marketing card"
                     }
@@ -141,14 +141,13 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
           </FormCard>
 
           <FormCard title="Pricing">
-            <Stack spacing={2}>
+            <Stack spacing={3}>
               <TextField
                 label="Price"
                 type="number"
                 placeholder="0"
                 variant="outlined"
                 fullWidth
-                size="small"
                 disabled={isLoading}
                 slotProps={{
                   input: {
@@ -170,7 +169,6 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                     label="Currency"
                     variant="outlined"
                     fullWidth
-                    size="small"
                     disabled={isLoading}
                     value={field.value || "USD"}
                   >
@@ -193,7 +191,6 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                     label="Billing Interval"
                     variant="outlined"
                     fullWidth
-                    size="small"
                     disabled={isLoading}
                     value={field.value || "MONTHLY"}
                   >
@@ -218,7 +215,6 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                   label="URL Slug"
                   variant="outlined"
                   fullWidth
-                  size="small"
                   disabled={isLoading}
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message || "Unique identifier for the link"}

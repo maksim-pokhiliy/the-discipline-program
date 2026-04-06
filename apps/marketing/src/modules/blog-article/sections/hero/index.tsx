@@ -1,7 +1,8 @@
-import { alpha, Box, Chip, Container, Stack, Typography } from "@mui/material";
-import Image from "next/image";
+import { Button, Chip, Stack, Typography } from "@mui/material";
 
 import { type PublicBlogPost } from "@repo/contracts/blog";
+
+import { FullscreenSection } from "@app/shared/components/ui";
 
 interface BlogArticleHeroProps {
   post: PublicBlogPost;
@@ -17,96 +18,39 @@ export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
     : "Not published";
 
   return (
-    <Box sx={{ position: "relative", overflow: "hidden" }}>
-      <Box
-        sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 0,
-        }}
+    <FullscreenSection backgroundImage={post.coverImage ?? ""}>
+      <Chip label={post.category} color="primary" />
+
+      <Typography variant="display1" component="h1" textAlign="center">
+        {post.title}
+      </Typography>
+
+      <Typography
+        variant="h5"
+        sx={(theme) => ({
+          color: theme.palette.text.secondary,
+        })}
       >
-        {post.coverImage && (
-          <Image
-            src={post.coverImage}
-            alt={post.title}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            fill
-            priority
-            style={{
-              objectFit: "cover",
-              objectPosition: "center",
-            }}
-          />
-        )}
+        {post.excerpt}
+      </Typography>
 
-        <Box
-          sx={(theme) => ({
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: alpha(theme.palette.common.black, 0.6),
-          })}
-        />
-      </Box>
-
-      <Box
-        sx={{
-          position: "relative",
-          zIndex: 1,
-          py: { xs: 8, md: 12 },
-          color: "white",
-        }}
+      <Stack
+        direction="row"
+        spacing={3}
+        alignItems="center"
+        sx={(theme) => ({
+          color: theme.palette.text.secondary,
+        })}
+        divider={<Typography variant="body1">•</Typography>}
       >
-        <Container maxWidth="md">
-          <Stack spacing={4} alignItems="center" textAlign="center">
-            <Chip label={post.category} color="primary" sx={{ fontWeight: 600 }} />
+        <Typography variant="body1">{post.authorName}</Typography>
+        <Typography variant="body1">{publishedDate}</Typography>
+        <Typography variant="body1">{post.readTime} min read</Typography>
+      </Stack>
 
-            <Typography
-              variant="display1"
-              component="h1"
-              sx={(theme) => ({
-                textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.8)}`,
-                color: "white",
-              })}
-            >
-              {post.title}
-            </Typography>
-
-            <Typography
-              variant="h5"
-              sx={(theme) => ({
-                maxWidth: "800px",
-                lineHeight: 1.6,
-                textShadow: `0 1px 2px ${alpha(theme.palette.common.black, 0.8)}`,
-                color: alpha(theme.palette.common.white, 0.8),
-              })}
-            >
-              {post.excerpt}
-            </Typography>
-
-            <Stack
-              direction="row"
-              spacing={3}
-              alignItems="center"
-              sx={(theme) => ({
-                color: alpha(theme.palette.common.white, 0.8),
-                fontSize: "0.875rem",
-              })}
-            >
-              <Typography variant="body2">{post.authorName}</Typography>
-              <Typography variant="body2">•</Typography>
-              <Typography variant="body2">{publishedDate}</Typography>
-              <Typography variant="body2">•</Typography>
-              <Typography variant="body2">{post.readTime} min read</Typography>
-            </Stack>
-          </Stack>
-        </Container>
-      </Box>
-    </Box>
+      <Button size="large" variant="contained" href="#content" sx={{ mt: 4 }}>
+        read article
+      </Button>
+    </FullscreenSection>
   );
 };

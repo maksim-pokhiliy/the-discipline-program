@@ -16,3 +16,5 @@ export * from "./text-field";
 export * from "./toggle-button";
 export * from "./tooltip";
 export * from "./chip";
+export * from "./tab";
+export * from "./css-baseline";

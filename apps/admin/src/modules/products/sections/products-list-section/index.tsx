@@ -55,7 +55,7 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
       searchValue: (product) => product.title,
       render: (product) => (
         <Stack spacing={0.5}>
-          <Typography variant="subtitle2" component="span" fontWeight={600}>
+          <Typography variant="subtitle2" component="span">
             {product.title}
           </Typography>
 
@@ -133,7 +133,6 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
       <DataTable
         data={products}
         columns={columns}
-        title="Products"
         searchPlaceholder="Search products..."
         filters={filters}
         action={<CreateButton href="/products/create">Create Product</CreateButton>}

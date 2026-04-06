@@ -10,3 +10,4 @@ export * from "./plan-enrollments";
 export * from "./benchmark-definitions";
 export * from "./user-benchmarks";
 export * from "./users";
+export * from "./coach-athletes";

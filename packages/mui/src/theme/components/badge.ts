@@ -4,7 +4,7 @@ export const MuiBadge: Components<Theme>["MuiBadge"] = {
   styleOverrides: {
     standard: ({ theme }) => ({
       fontSize: theme.typography.pxToRem(11),
-      fontWeight: 600,
+
       minWidth: 18,
       height: 18,
       padding: theme.spacing(0, 0.5),

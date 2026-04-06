@@ -3,3 +3,4 @@ export * from "./feature-card";
 export * from "./fullscreen-section";
 export * from "./product-card";
 export * from "./product-modal";
+export * from "./split-section";

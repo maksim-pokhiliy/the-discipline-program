@@ -7,12 +7,6 @@ export enum PageSlug {
   FAQ = "faq",
 }
 
-export enum ContactMethodType {
-  TELEGRAM = "telegram",
-  EMAIL = "email",
-  PHONE = "phone",
-}
-
 export const PAGE_SECTIONS_MAP = {
   home: {
     hero: "hero",
@@ -23,6 +17,7 @@ export const PAGE_SECTIONS_MAP = {
   },
   storefront: {
     hero: "storefront:hero",
+    grid: "storefront:grid",
     cta: "storefront:cta",
   },
   about: {
@@ -34,13 +29,15 @@ export const PAGE_SECTIONS_MAP = {
   },
   blog: {
     hero: "blog:hero",
+    grid: "blog:grid",
   },
   contact: {
     hero: "contact:hero",
-    form: "form",
-    directContact: "directContact",
+    form: "contact:form",
   },
   faq: {
+    hero: "faq:hero",
     content: "faq:content",
+    cta: "faq:cta",
   },
 } as const;

@@ -5,6 +5,7 @@ import * as endpoints from "./endpoints";
 
 export const createApi = (client: ApiClient) => ({
   calendar: endpoints.createCalendarAPI(client),
+  coachAthletes: endpoints.createCoachAthletesAPI(client),
   coachActionItems: endpoints.createCoachActionItemsAPI(client),
   coachDashboard: endpoints.createCoachDashboardAPI(client),
   coachNotes: endpoints.createCoachNotesAPI(client),

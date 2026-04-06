@@ -13,9 +13,9 @@ export const Navigation = ({ links }: NavigationProps) => {
   const finalLinks = links || MARKETING_NAVIGATION.headerLinks;
 
   return (
-    <Stack direction={{ xs: "column", md: "row" }} spacing={{ xs: 0, sm: 2 }}>
+    <Stack direction={{ xs: "column", md: "row" }} spacing={0}>
       {finalLinks.map(({ text, href }) => (
-        <NavLinkButton key={text} href={href}>
+        <NavLinkButton key={text} href={href} size="medium">
           {text}
         </NavLinkButton>
       ))}

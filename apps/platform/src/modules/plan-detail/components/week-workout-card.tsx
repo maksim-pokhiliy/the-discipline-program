@@ -107,7 +107,7 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
             onBlur={commitTitle}
             autoFocus={autoFocus}
             placeholder="Workout title..."
-            sx={{ flex: 1, typography: "body2", "& input": { p: 0, py: 1, fontWeight: 500 } }}
+            sx={{ flex: 1, typography: "body2", "& input": { p: 0, py: 1 } }}
             slotProps={{ input: { maxLength: 200 } }}
           />
 
@@ -170,8 +170,6 @@ export const WorkoutDragOverlay: React.FC<{ workout: Workout }> = ({ workout }) 
       borderWidth: 2,
     })}
   >
-    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-      {workout.title || "Untitled workout"}
-    </Typography>
+    <Typography variant="body2">{workout.title || "Untitled workout"}</Typography>
   </Paper>
 );

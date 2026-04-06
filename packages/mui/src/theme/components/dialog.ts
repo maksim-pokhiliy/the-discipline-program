@@ -10,21 +10,35 @@ export const MuiDialog: Components<Theme>["MuiDialog"] = {
 
 export const MuiDialogTitle: Components<Theme>["MuiDialogTitle"] = {
   styleOverrides: {
-    root: {
+    root: ({ theme }) => ({
       display: "flex",
       justifyContent: "space-between",
       alignItems: "center",
-    },
+      fontSize: theme.typography.h4.fontSize,
+    }),
   },
 };
 
 export const MuiDialogContent: Components<Theme>["MuiDialogContent"] = {
   styleOverrides: {
     root: ({ theme }) => ({
-      "&:first-of-type": {
-        paddingTop: theme.spacing(2),
-        paddingBottom: theme.spacing(2),
+      padding: theme.spacing(3),
+
+      ".MuiDialogTitle-root + &": {
+        paddingTop: theme.spacing(3),
       },
+    }),
+  },
+};
+
+export const MuiDialogActions: Components<Theme>["MuiDialogActions"] = {
+  defaultProps: {
+    disableSpacing: false,
+  },
+
+  styleOverrides: {
+    root: ({ theme }) => ({
+      padding: theme.spacing(3),
     }),
   },
 };

@@ -10,10 +10,7 @@ type StorySectionProps = {
 
 export const StorySection = ({ title, children, direction = "row" }: StorySectionProps) => (
   <Stack spacing={1.5}>
-    <Typography
-      variant="caption"
-      sx={{ opacity: 0.5, textTransform: "uppercase", letterSpacing: "0.08em" }}
-    >
+    <Typography variant="caption" sx={{ opacity: 0.5, textTransform: "uppercase" }}>
       {title}
     </Typography>
     <Stack

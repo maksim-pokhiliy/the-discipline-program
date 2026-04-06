@@ -10,6 +10,7 @@ interface BlogArticleContentProps {
 export const BlogArticleContent = ({ post }: BlogArticleContentProps) => {
   return (
     <Box
+      id="content"
       sx={(theme) => ({
         py: 8,
         backgroundColor: theme.palette.background.default,

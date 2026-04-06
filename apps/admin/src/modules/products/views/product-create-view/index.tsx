@@ -20,6 +20,7 @@ export const ProductCreateView = () => {
       slug: "",
       description: "",
       features: [],
+      isFeatured: false,
       isActive: true,
     },
   });

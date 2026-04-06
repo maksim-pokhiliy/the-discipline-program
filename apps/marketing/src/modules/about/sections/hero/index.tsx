@@ -1,5 +1,3 @@
-import { Button, Typography } from "@mui/material";
-
 import { type AboutPageData } from "@repo/contracts/pages";
 
 import { FullscreenSection } from "@app/shared/components/ui";
@@ -10,18 +8,12 @@ interface AboutHeroSectionProps {
 
 export const AboutHeroSection = ({ hero }: AboutHeroSectionProps) => {
   return (
-    <FullscreenSection backgroundImage={hero.backgroundImage}>
-      <Typography variant="display1" component="h1">
-        {hero.title}
-      </Typography>
-
-      <Typography variant="h5" sx={{ opacity: 0.9, maxWidth: "800px" }}>
-        {hero.subtitle}
-      </Typography>
-
-      <Button variant="contained" size="large" href={hero.buttonHref}>
-        {hero.buttonText}
-      </Button>
-    </FullscreenSection>
+    <FullscreenSection
+      backgroundImage={hero.backgroundImage}
+      title={hero.title}
+      subtitle={hero.subtitle}
+      buttonText={hero.buttonText}
+      buttonHref={hero.buttonHref}
+    />
   );
 };

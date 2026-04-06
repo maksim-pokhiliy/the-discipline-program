@@ -10,18 +10,16 @@ interface FaqSectionProps {
 
 export const FaqSection = ({ content }: FaqSectionProps) => {
   return (
-    <ContentSection title={content.title} maxWidth="md" offset={1}>
+    <ContentSection id="faq-content" title={content.title} subtitle={content.subtitle}>
       <Stack>
         {content.items.map((item, index) => (
-          <Accordion key={index}>
+          <Accordion key={index} variant="outlined">
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                {item.question}
-              </Typography>
+              <Typography variant="h3">{item.question}</Typography>
             </AccordionSummary>
 
             <AccordionDetails sx={{ pt: 0 }}>
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="h5" color="text.secondary">
                 {item.answer}
               </Typography>
             </AccordionDetails>

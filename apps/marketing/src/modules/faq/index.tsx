@@ -6,7 +6,7 @@ import { QueryWrapper } from "@repo/query";
 import { useFaqPage } from "@app/lib/hooks";
 import { StructuredData } from "@app/shared/components/seo";
 
-import { FaqSection } from "./sections";
+import { FaqCtaSection, FaqHeroSection, FaqSection } from "./sections";
 
 interface FaqPageClientProps {
   initialData: FaqPageData;
@@ -20,7 +20,9 @@ export const FaqPageClient = ({ initialData }: FaqPageClientProps) => {
       {(data) => (
         <>
           <StructuredData type="faq" data={{ faqItems: data.content.items }} />
+          <FaqHeroSection hero={data.hero} />
           <FaqSection content={data.content} />
+          <FaqCtaSection cta={data.cta} />
         </>
       )}
     </QueryWrapper>

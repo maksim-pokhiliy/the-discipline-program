@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Button, Fab, Stack, Typography } from "@mui/material";
+import { Button, Fab, Grid, Stack, Typography } from "@mui/material";
 
 import { type PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { QueryWrapper } from "@repo/query";
@@ -44,22 +44,24 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
       >
         {(data) =>
           data.length > 0 ? (
-            <Stack spacing={1}>
+            <Grid container spacing={2}>
               {data.map((enrollment) => (
-                <EnrollmentCard
-                  key={enrollment.id}
-                  enrollment={enrollment}
-                  onUpdate={handleUpdate}
-                  onDelete={(id) => deleteEnrollment.mutate(id)}
-                  isPending={isEnrollmentPending(enrollment.id)}
-                />
+                <Grid key={enrollment.id} size={{ xs: 12, md: 6, lg: 4 }}>
+                  <EnrollmentCard
+                    enrollment={enrollment}
+                    onUpdate={handleUpdate}
+                    onDelete={(id) => deleteEnrollment.mutate(id)}
+                    isPending={isEnrollmentPending(enrollment.id)}
+                  />
+                </Grid>
               ))}
-            </Stack>
+            </Grid>
           ) : (
             <Stack spacing={2} sx={{ alignItems: "center", py: 4 }}>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 No athletes enrolled yet
               </Typography>
+
               <Button startIcon={<AddIcon />} onClick={() => setEnrollOpen(true)}>
                 Enroll Athlete
               </Button>

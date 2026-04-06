@@ -92,6 +92,12 @@ export const MuiFormHelperText: Components<Theme>["MuiFormHelperText"] = {
 
 export const MuiSelect: Components<Theme>["MuiSelect"] = {
   styleOverrides: {
+    select: ({ theme }) => ({
+      "&.MuiInputBase-inputSizeSmall": {
+        paddingTop: theme.spacing(1),
+        paddingBottom: theme.spacing(1),
+      },
+    }),
     icon: ({ theme }) => ({ color: theme.palette.text.secondary }),
   },
 };

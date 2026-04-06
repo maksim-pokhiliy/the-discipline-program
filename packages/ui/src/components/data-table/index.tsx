@@ -28,7 +28,6 @@ export const DataTable = <T extends { id: string }>({
   data,
   columns,
   emptyMessage = "No data found",
-  title,
   searchPlaceholder,
   filters,
   action,
@@ -48,7 +47,7 @@ export const DataTable = <T extends { id: string }>({
 
   const searchableColumns = useMemo(() => columns.filter((col) => col.searchValue), [columns]);
 
-  const hasToolbar = !!(title || searchableColumns.length > 0 || filters?.length || action);
+  const hasToolbar = !!(searchableColumns.length > 0 || filters?.length || action);
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
@@ -135,7 +134,6 @@ export const DataTable = <T extends { id: string }>({
       {hasToolbar && (
         <>
           <DataTableToolbar
-            title={title}
             searchValue={searchQuery}
             searchPlaceholder={searchPlaceholder}
             onSearchChange={searchableColumns.length > 0 ? handleSearchChange : undefined}
@@ -148,7 +146,7 @@ export const DataTable = <T extends { id: string }>({
       )}
 
       <TableContainer>
-        <Table sx={{ minWidth: 650 }}>
+        <Table>
           <TableHead>
             <TableRow>
               {columns.map((col) => (
@@ -156,7 +154,6 @@ export const DataTable = <T extends { id: string }>({
                   key={col.id}
                   width={col.width}
                   align={col.align || "left"}
-                  sx={{ fontWeight: 600, backgroundColor: "action.hover" }}
                   sortDirection={sortColumn === col.id ? sortDirection : false}
                 >
                   {col.sortable ? (
@@ -189,7 +186,7 @@ export const DataTable = <T extends { id: string }>({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} align="center" sx={{ py: 8 }}>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body1" color="text.secondary">
                     {emptyMessage}
                   </Typography>
                 </TableCell>

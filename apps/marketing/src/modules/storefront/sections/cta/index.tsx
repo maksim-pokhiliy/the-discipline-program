@@ -9,7 +9,7 @@ interface StorefrontProgramsCTAProps {
 
 export const StorefrontProgramsCTA = ({ cta }: StorefrontProgramsCTAProps) => {
   return (
-    <ContentSection surface="raised">
+    <ContentSection id="storefront-cta" surface="raised">
       <CTASection
         title={cta.title}
         subtitle={cta.subtitle}

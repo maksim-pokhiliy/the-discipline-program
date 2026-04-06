@@ -1,10 +1,9 @@
-import { useState } from "react";
+"use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Alert,
   Button,
-  Card,
-  CardContent,
   CircularProgress,
   Grid,
   MenuItem,
@@ -12,145 +11,141 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useForm } from "react-hook-form";
 
-import type { CreateContactSubmissionRequest } from "@repo/contracts/contact";
+import {
+  type CreateContactSubmissionRequest,
+  createContactSubmissionSchema,
+} from "@repo/contracts/contact";
 import { type ContactPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
 import { useSubmitContact } from "@app/lib/hooks";
 
-interface ContactFormProps {
+interface ContactFormSectionProps {
   form: ContactPageData["form"];
   programOptions: ContactPageData["programOptions"];
 }
 
-export const ContactForm = ({ form, programOptions }: ContactFormProps) => {
-  const [formData, setFormData] = useState<CreateContactSubmissionRequest>({
-    name: "",
-    email: "",
-    program: "",
-    message: "",
+export const ContactFormSection = ({ form, programOptions }: ContactFormSectionProps) => {
+  const {
+    register,
+    handleSubmit,
+    reset: resetForm,
+    formState: { errors, isValid },
+  } = useForm<CreateContactSubmissionRequest>({
+    resolver: zodResolver(createContactSubmissionSchema),
+    defaultValues: { name: "", contact: "", program: "", message: "" },
+    mode: "onChange",
   });
 
-  const { mutate, isPending, isSuccess, error, reset } = useSubmitContact();
+  const { mutate, isPending, isSuccess, error, reset: resetMutation } = useSubmitContact();
 
-  const handleChange =
-    (field: keyof CreateContactSubmissionRequest) =>
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: event.target.value,
-      }));
-
-      if (error || isSuccess) {
-        reset();
-      }
-    };
-
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-
-    mutate(formData, {
-      onSuccess: () => {
-        setFormData({ name: "", email: "", program: "", message: "" });
-      },
-    });
+  const onSubmit = (data: CreateContactSubmissionRequest) => {
+    mutate(data, { onSuccess: () => resetForm() });
   };
 
-  const isValid = formData.name.trim() && formData.email.trim() && formData.message.trim();
-
   return (
-    <ContentSection title={form.title} subtitle={form.subtitle} offset={1}>
-      <Grid container justifyContent="center">
-        <Grid size={{ xs: 12, md: 8, lg: 6 }}>
-          <Card>
-            <CardContent sx={{ p: 4 }}>
-              {isSuccess ? (
-                <Alert severity="success" sx={{ width: "100%" }}>
-                  <Typography variant="h6" gutterBottom>
-                    Message sent successfully! 🎉
-                  </Typography>
+    <ContentSection
+      id="contact-form"
+      title={form.title}
+      subtitle={form.subtitle}
+      maxWidth="md"
+      surface="raised"
+    >
+      {isSuccess ? (
+        <Stack spacing={3} sx={{ alignItems: "center", textAlign: "center" }}>
+          <Typography variant="display2" component="h2">
+            Message Sent
+          </Typography>
 
-                  <Typography variant="body2">
-                    Thank you for contacting us. We&apos;ll get back to you within 24 hours.
-                  </Typography>
+          <Typography variant="h4" color="text.secondary">
+            Thank you for reaching out. We&apos;ll get back to you soon.
+          </Typography>
 
-                  <Button variant="text" onClick={() => reset()} sx={{ mt: 2 }} size="small">
-                    Send another message
-                  </Button>
-                </Alert>
-              ) : (
-                <Stack component="form" onSubmit={handleSubmit} spacing={3}>
-                  {error && (
-                    <Alert severity="error">
-                      <Typography variant="body2">
-                        {error instanceof Error ? error.message : "Something went wrong"}
-                      </Typography>
-                    </Alert>
-                  )}
+          <Button variant="contained" size="large" onClick={() => resetMutation()}>
+            Send Another
+          </Button>
+        </Stack>
+      ) : (
+        <Stack component="form" onSubmit={handleSubmit(onSubmit)} spacing={3}>
+          {error && (
+            <Alert severity="error">
+              <Typography variant="body2">
+                {error instanceof Error ? error.message : "Something went wrong"}
+              </Typography>
+            </Alert>
+          )}
 
-                  <TextField
-                    label="Your Name"
-                    value={formData.name}
-                    onChange={handleChange("name")}
-                    required
-                    fullWidth
-                    disabled={isPending}
-                  />
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                label="Name"
+                required
+                fullWidth
+                disabled={isPending}
+                error={!!errors.name}
+                helperText={errors.name?.message}
+                {...register("name")}
+              />
+            </Grid>
 
-                  <TextField
-                    label="Email Address"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange("email")}
-                    required
-                    fullWidth
-                    disabled={isPending}
-                  />
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <TextField
+                label="Phone / Telegram / WhatsApp"
+                required
+                fullWidth
+                disabled={isPending}
+                placeholder="+380..., @username"
+                error={!!errors.contact}
+                helperText={errors.contact?.message}
+                {...register("contact")}
+              />
+            </Grid>
+          </Grid>
 
-                  <TextField
-                    select
-                    label="Program Interest"
-                    value={formData.program}
-                    onChange={handleChange("program")}
-                    fullWidth
-                    disabled={isPending}
-                  >
-                    {programOptions.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+          <TextField
+            select
+            label="Program Interest"
+            fullWidth
+            disabled={isPending}
+            defaultValue=""
+            error={!!errors.program}
+            helperText={errors.program?.message}
+            {...register("program")}
+          >
+            {programOptions.map((option) => (
+              <MenuItem key={option.value} value={option.value}>
+                {option.label}
+              </MenuItem>
+            ))}
+          </TextField>
 
-                  <TextField
-                    label="Your Message"
-                    multiline
-                    rows={6}
-                    value={formData.message}
-                    onChange={handleChange("message")}
-                    required
-                    fullWidth
-                    disabled={isPending}
-                    placeholder="Tell us about your fitness goals..."
-                  />
+          <TextField
+            label="Your Message"
+            required
+            multiline
+            rows={4}
+            fullWidth
+            disabled={isPending}
+            placeholder="Tell us about your goals..."
+            error={!!errors.message}
+            helperText={errors.message?.message}
+            {...register("message")}
+          />
 
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    size="large"
-                    disabled={!isValid || isPending}
-                    sx={{ py: 2 }}
-                    startIcon={isPending ? <CircularProgress size={20} color="inherit" /> : null}
-                  >
-                    {isPending ? "Sending..." : "Send Message"}
-                  </Button>
-                </Stack>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            fullWidth
+            disabled={!isValid || isPending}
+            startIcon={isPending ? <CircularProgress size={20} color="inherit" /> : null}
+          >
+            {isPending ? "Sending..." : "Send Message"}
+          </Button>
+        </Stack>
+      )}
     </ContentSection>
   );
 };

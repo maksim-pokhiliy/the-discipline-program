@@ -12,7 +12,12 @@ interface AboutCredentialsSectionProps {
 
 export const AboutCredentialsSection = ({ credentials }: AboutCredentialsSectionProps) => {
   return (
-    <ContentSection title={credentials.title} subtitle={credentials.subtitle} surface="raised">
+    <ContentSection
+      id="credentials"
+      title={credentials.title}
+      subtitle={credentials.subtitle}
+      surface="raised"
+    >
       <Grid container spacing={6}>
         {credentials.items.map((item, index) => (
           <Grid key={index} size={{ xs: 12, sm: 6, md: 4 }}>

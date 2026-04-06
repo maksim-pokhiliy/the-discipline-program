@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { HealthStatus } from "../athlete-profile/athlete-profile.constants";
+
 import { PlanEnrollmentStatus } from "./plan-enrollment.constants";
 
 export const enrollmentUserSchema = z.object({
@@ -7,6 +9,7 @@ export const enrollmentUserSchema = z.object({
   name: z.string().nullable(),
   email: z.string(),
   image: z.string().nullable(),
+  healthStatus: z.nativeEnum(HealthStatus),
 });
 
 export const planEnrollmentSchema = z.object({

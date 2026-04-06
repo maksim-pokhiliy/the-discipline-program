@@ -21,7 +21,7 @@ export const PaymentErrorActionsSection = () => {
             <strong>Before trying again:</strong>
           </Typography>
 
-          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+          <Typography variant="body2" color="text.secondary">
             1. Verify your card details are correct
             <br />
             2. Ensure you have sufficient funds

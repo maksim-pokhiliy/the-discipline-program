@@ -1,0 +1,57 @@
+"use client";
+
+import type { ReactNode } from "react";
+
+import PersonIcon from "@mui/icons-material/Person";
+import { Card, CardActionArea, CardContent, CardMedia, Stack } from "@mui/material";
+import Link from "next/link";
+
+type PersonCardProps = {
+  image: string | null;
+  name: string;
+  href?: string;
+  children: ReactNode;
+  action?: ReactNode;
+};
+
+const ImageSlot: React.FC<{ image: string | null; name: string }> = ({ image, name }) =>
+  image ? (
+    <CardMedia component="img" image={image} alt={name} sx={{ width: 120, objectFit: "cover" }} />
+  ) : (
+    <Stack
+      sx={{
+        width: 120,
+        minHeight: 120,
+        alignItems: "center",
+        justifyContent: "center",
+        bgcolor: "action.hover",
+      }}
+    >
+      <PersonIcon sx={{ fontSize: 48, color: "text.disabled" }} />
+    </Stack>
+  );
+
+export const PersonCard: React.FC<PersonCardProps> = ({ image, name, href, children, action }) => {
+  const content = (
+    <Stack direction="row">
+      <ImageSlot image={image} name={name} />
+      <CardContent sx={{ flex: 1, "&:last-child": { pb: 2 } }}>{children}</CardContent>
+    </Stack>
+  );
+
+  return (
+    <Card variant="outlined">
+      <Stack direction="row">
+        {href ? (
+          <CardActionArea component={Link} href={href} sx={{ flex: 1 }}>
+            {content}
+          </CardActionArea>
+        ) : (
+          <Stack sx={{ flex: 1 }}>{content}</Stack>
+        )}
+
+        {action}
+      </Stack>
+    </Card>
+  );
+};

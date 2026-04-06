@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, Chip, type ChipProps, Paper, Stack, Typography } from "@mui/material";
+import { Chip, type ChipProps, Stack, Typography } from "@mui/material";
 
 import type { PlanEnrollment } from "@repo/contracts/plan-enrollment";
 import {
@@ -8,16 +8,17 @@ import {
   PlanEnrollmentStatus,
 } from "@repo/contracts/plan-enrollment";
 
+import { HealthChip, PersonCard } from "@app/lib/components";
+
 import { EnrollmentActionMenu } from "./enrollment-action-menu";
 
 const STATUS_COLORS: Record<PlanEnrollmentStatus, ChipProps["color"]> = {
   [PlanEnrollmentStatus.ACTIVE]: "success",
   [PlanEnrollmentStatus.PAUSED]: "warning",
-  [PlanEnrollmentStatus.COMPLETED]: "default",
 };
 
 const formatDate = (date: Date) =>
-  new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 type EnrollmentCardProps = {
   enrollment: PlanEnrollment;
@@ -35,41 +36,41 @@ export const EnrollmentCard: React.FC<EnrollmentCardProps> = ({
   const displayName = enrollment.user.name ?? enrollment.user.email;
 
   return (
-    <Paper variant="outlined" sx={{ p: 1.5 }}>
-      <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
-        <Avatar
-          src={enrollment.user.image ?? undefined}
-          alt={displayName}
-          sx={(theme) => ({ width: theme.spacing(4.5), height: theme.spacing(4.5) })}
-        >
-          {displayName.charAt(0).toUpperCase()}
-        </Avatar>
-
-        <Stack sx={{ flex: 1, minWidth: 0 }}>
-          <Typography variant="body2" noWrap sx={{ fontWeight: 500 }}>
+    <PersonCard
+      image={enrollment.user.image}
+      name={displayName}
+      action={
+        <Stack sx={{ pt: 1, pr: 1 }}>
+          <EnrollmentActionMenu
+            enrollmentId={enrollment.id}
+            status={enrollment.status}
+            athleteName={displayName}
+            onUpdate={onUpdate}
+            onDelete={onDelete}
+            isPending={isPending}
+          />
+        </Stack>
+      }
+    >
+      <Stack spacing={0.75}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <Typography variant="subtitle2" noWrap sx={{ flex: 1 }}>
             {displayName}
           </Typography>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-            <Chip
-              size="small"
-              label={PLAN_ENROLLMENT_STATUS_LABELS[enrollment.status]}
-              color={STATUS_COLORS[enrollment.status]}
-            />
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              Since {formatDate(enrollment.startDate)}
-            </Typography>
-          </Stack>
+          <HealthChip healthStatus={enrollment.user.healthStatus} />
         </Stack>
 
-        <EnrollmentActionMenu
-          enrollmentId={enrollment.id}
-          status={enrollment.status}
-          athleteName={displayName}
-          onUpdate={onUpdate}
-          onDelete={onDelete}
-          isPending={isPending}
-        />
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <Chip
+            size="small"
+            label={PLAN_ENROLLMENT_STATUS_LABELS[enrollment.status]}
+            color={STATUS_COLORS[enrollment.status]}
+          />
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>
+            Enrolled {formatDate(enrollment.startDate)}
+          </Typography>
+        </Stack>
       </Stack>
-    </Paper>
+    </PersonCard>
   );
 };

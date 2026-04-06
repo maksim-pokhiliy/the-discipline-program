@@ -2,10 +2,11 @@
 
 import { Children, type ReactNode } from "react";
 
-import { Stack, Container, alpha, Box } from "@mui/material";
+import { type SxProps, type Theme, Button, Stack, Container, Typography } from "@mui/material";
 import { type Variants, motion } from "framer-motion";
+import Link from "next/link";
 
-type OverlayVariant = "uniform" | "gradient";
+import { buildOverlay } from "@app/lib/utils/overlay";
 
 const staggerContainer: Variants = {
   hidden: {},
@@ -19,61 +20,47 @@ const fadeSlideUp: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0, 0, 0.58, 1] } },
 };
 
-interface FullscreenSectionProps {
+type FullscreenSectionProps = {
   backgroundImage: string;
-  children: ReactNode;
-  overlay?: boolean;
-  overlayOpacity?: number;
-  overlayVariant?: OverlayVariant;
-  offset?: number;
-}
-
-const buildOverlay =
-  (variant: OverlayVariant, opacity: number) =>
-  (theme: { palette: { common: { black: string } } }) => {
-    const black = theme.palette.common.black;
-
-    if (variant === "gradient") {
-      return `linear-gradient(
-      to top right,
-      ${alpha(black, Math.min(opacity * 1.5, 1))} 0%,
-      ${alpha(black, opacity * 0.85)} 40%,
-      ${alpha(black, opacity * 0.25)} 100%
-    )`;
+  sx?: SxProps<Theme>;
+} & (
+  | { children: ReactNode; title?: never; subtitle?: never; buttonText?: never; buttonHref?: never }
+  | {
+      children?: never;
+      title: string;
+      subtitle: string;
+      buttonText?: string;
+      buttonHref?: string;
     }
-
-    return `linear-gradient(${alpha(black, opacity)}, ${alpha(black, opacity)})`;
-  };
+);
 
 export const FullscreenSection = ({
   backgroundImage,
+  sx: sxOverride,
   children,
-  overlay = true,
-  overlayOpacity = 0.5,
-  overlayVariant = "uniform",
-  offset = 0,
+  title,
+  subtitle,
+  buttonText,
+  buttonHref,
 }: FullscreenSectionProps) => {
   return (
     <Stack
-      sx={(theme) => ({
-        position: "relative",
-        height: "100vh",
-        alignItems: { xs: "center", md: "flex-start" },
-        justifyContent: "center",
-        backgroundImage: overlay
-          ? `${buildOverlay(overlayVariant, overlayOpacity)(theme)}, url(${backgroundImage})`
-          : `url(${backgroundImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        color: theme.palette.common.white,
-        textAlign: { xs: "center", md: "left" },
-      })}
+      sx={[
+        (theme) => ({
+          position: "relative",
+          height: "100vh",
+          alignItems: { xs: "center", md: "flex-start" },
+          justifyContent: "center",
+          backgroundImage: `${buildOverlay(theme)}, url(${backgroundImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat",
+          color: theme.palette.common.white,
+          textAlign: { xs: "center", md: "left" },
+        }),
+        ...(Array.isArray(sxOverride) ? sxOverride : sxOverride ? [sxOverride] : []),
+      ]}
     >
-      {Array.from({ length: offset }, (_, i) => (
-        <Box key={i} sx={(theme) => ({ ...theme.mixins.toolbar })} />
-      ))}
-
       <Container maxWidth="lg">
         <motion.div
           variants={staggerContainer}
@@ -81,15 +68,45 @@ export const FullscreenSection = ({
           whileInView="visible"
           viewport={{ once: true, amount: 0.1 }}
         >
-          <Stack
-            spacing={4}
-            alignItems={{ xs: "center", md: "flex-start" }}
-            sx={{ maxWidth: { md: "65%" } }}
-          >
-            {Children.map(children, (child) => (
-              <motion.div variants={fadeSlideUp}>{child}</motion.div>
-            ))}
-          </Stack>
+          {children ? (
+            <Stack spacing={3} alignItems="center">
+              {Children.map(children, (child, i) => (
+                <motion.div key={i} variants={fadeSlideUp}>
+                  {child}
+                </motion.div>
+              ))}
+            </Stack>
+          ) : (
+            <Stack
+              spacing={4}
+              alignItems={{ xs: "center", md: "flex-start" }}
+              sx={{ maxWidth: { md: "65%" } }}
+            >
+              <motion.div variants={fadeSlideUp}>
+                <Typography variant="display1" component="h1">
+                  {title}
+                </Typography>
+              </motion.div>
+
+              <motion.div variants={fadeSlideUp}>
+                <Typography
+                  variant="h3"
+                  component="p"
+                  sx={{ opacity: 0.7, maxWidth: { xs: "100%", md: 550 } }}
+                >
+                  {subtitle}
+                </Typography>
+              </motion.div>
+
+              {buttonText && buttonHref && (
+                <motion.div variants={fadeSlideUp}>
+                  <Button component={Link} href={buttonHref} variant="contained" size="large">
+                    {buttonText}
+                  </Button>
+                </motion.div>
+              )}
+            </Stack>
+          )}
         </motion.div>
       </Container>
     </Stack>

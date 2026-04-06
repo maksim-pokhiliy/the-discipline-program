@@ -70,6 +70,8 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "sarah.mitchell@email.com",
         name: "Sarah Mitchell",
+        image:
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face",
         role: Role.USER,
         password: passwordHash,
         timezone: "Europe/Kyiv",
@@ -80,6 +82,8 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "mike.thompson@email.com",
         name: "Mike Thompson",
+        image:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
         role: Role.USER,
         password: passwordHash,
         timezone: "Europe/Kyiv",
@@ -90,6 +94,8 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "jenny.park@email.com",
         name: "Jenny Park",
+        image:
+          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",
         role: Role.USER,
         password: passwordHash,
         timezone: "Europe/Kyiv",
@@ -100,6 +106,8 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "david.rodriguez@email.com",
         name: "David Rodriguez",
+        image:
+          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face",
         role: Role.USER,
         password: passwordHash,
         timezone: "Europe/Kyiv",
@@ -110,6 +118,8 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "lisa.anderson@email.com",
         name: "Lisa Anderson",
+        image:
+          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face",
         role: Role.USER,
         password: passwordHash,
         timezone: "Europe/Kyiv",
@@ -130,6 +140,8 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "alex.kovac@email.com",
         name: "Alex Kovac",
+        image:
+          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
         role: Role.USER,
         password: passwordHash,
         timezone: "Europe/Kyiv",
@@ -620,8 +632,19 @@ const seedMarketingPages = async () => {
       data: {
         title: "Programming Tracks",
         subtitle: "Structured paths for every level of CrossFit athlete.",
+        buttonText: "Browse Programs",
+        buttonHref: "#programs",
         backgroundImage:
           "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=2000&q=80",
+      },
+    },
+    {
+      pageSlug: "storefront",
+      section: "storefront:grid",
+      data: {
+        title: "Find Your Track",
+        subtitle:
+          "Every program is built around a specific athlete profile. Pick the one that fits.",
       },
     },
     {
@@ -645,38 +668,41 @@ const seedMarketingPages = async () => {
       },
     },
     {
+      pageSlug: "blog",
+      section: "blog:grid",
+      data: {
+        title: "All Articles",
+        subtitle: "Training insights, recovery tips, and competition strategy.",
+      },
+    },
+    {
       pageSlug: "contact",
       section: "contact:hero",
       data: {
         title: "Drop Us A Line",
         subtitle: "We love talking training.",
+        buttonText: "Get In Touch",
+        buttonHref: "#contact-form",
         backgroundImage: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=80",
       },
     },
     {
       pageSlug: "contact",
-      section: "form",
-      data: { title: "Get in Touch", subtitle: "Let us know how we can help with your training." },
+      section: "contact:form",
+      data: {
+        title: "Send Us a Message",
+        subtitle: "Tell us about your goals and we'll craft the perfect plan",
+      },
     },
     {
-      pageSlug: "contact",
-      section: "directContact",
+      pageSlug: "faq",
+      section: "faq:hero",
       data: {
-        title: "Contact Info",
-        contacts: [
-          {
-            type: "email",
-            label: "Email",
-            value: "coach@thedisciplineprogram.com",
-            href: "mailto:coach@thedisciplineprogram.com",
-          },
-          {
-            type: "telegram",
-            label: "Telegram",
-            value: "@thedisciplineprogram",
-            href: "https://t.me/thedisciplineprogram",
-          },
-        ],
+        title: "Got Questions?",
+        subtitle: "We've got answers.",
+        buttonText: "Find Answers",
+        buttonHref: "#faq-content",
+        backgroundImage: "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=1920&q=80",
       },
     },
     {
@@ -684,6 +710,7 @@ const seedMarketingPages = async () => {
       section: "faq:content",
       data: {
         title: "FAQ",
+        subtitle: "Everything you need to know before you start.",
         items: [
           {
             question: "Do I need a gym membership?",
@@ -704,6 +731,16 @@ const seedMarketingPages = async () => {
             answer: "7-day free trial on all tracks. No credit card required.",
           },
         ],
+      },
+    },
+    {
+      pageSlug: "faq",
+      section: "faq:cta",
+      data: {
+        title: "Still Have Questions?",
+        subtitle: "Reach out and we'll help you find the right track.",
+        buttonText: "Get In Touch",
+        buttonHref: "/contact",
       },
     },
   ];
@@ -1036,7 +1073,7 @@ const seedContactSubmissions = async () => {
     data: [
       {
         name: "Oleksandr Shevchenko",
-        email: "oleksandr.s@email.com",
+        contact: "@oleksandr_shev",
         program: "The Competitor",
         message:
           "Training for the Open. How does The Competitor track compare to competitive affiliate programming?",
@@ -1045,7 +1082,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Rachel Martinez",
-        email: "rachel.m@email.com",
+        contact: "+1 555-234-5678",
         program: "Foundations GPP",
         message:
           "I have a garage gym with barbell, plates, pull-up bar, and rings. Will Foundations work for my setup?",
@@ -1054,7 +1091,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Iryna Bondarenko",
-        email: "iryna.b@email.com",
+        contact: "@iryna_bond",
         program: "Masters 40+",
         message:
           "I am 52. When is the Masters 40+ program coming back? My knees need the joint-friendly approach.",
@@ -1063,7 +1100,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Mark Sullivan",
-        email: "mark.sullivan@email.com",
+        contact: "+1 555-876-5432",
         message:
           "Do you offer annual discounts? Looking to commit for a full year of Performance RX.",
         status: "IN_PROGRESS",
@@ -1072,7 +1109,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Sophie Williams",
-        email: "sophie.w@email.com",
+        contact: "@sophie_fit",
         program: "Performance RX",
         message: "Signed up yesterday but the training section shows no WODs. Is this normal?",
         status: "IN_PROGRESS",
@@ -1081,7 +1118,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Dmytro Koval",
-        email: "dmytro.k@email.com",
+        contact: "+380 67 123 4567",
         program: "Foundations GPP",
         message:
           "6 weeks into Foundations. When should I move up to Performance RX? I can do 10 pull-ups and my Fran is under 6 minutes.",
@@ -1091,7 +1128,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Christina Lee",
-        email: "christina.lee@email.com",
+        contact: "@christina_lee",
         program: "Performance RX",
         message:
           "Dealing with rotator cuff tendinitis. Are there built-in substitutions for overhead work?",
@@ -1101,7 +1138,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Jason Miller",
-        email: "jason.m@email.com",
+        contact: "+1 555-999-0000",
         program: "The Competitor",
         message:
           "Hit a 20 lb PR on back squat and qualified for Quarterfinals. Just wanted to say thanks!",
@@ -1111,7 +1148,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Andrii Lysenko",
-        email: "andrii@crossfitlviv.com",
+        contact: "@andrii_lviv",
         message:
           "I run a CrossFit affiliate in Lviv. Interested in bulk licensing for our members.",
         status: "CLOSED",
@@ -1120,7 +1157,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Nicole Anderson",
-        email: "nicole.a@email.com",
+        contact: "@nicole_anderson",
         program: "Foundations GPP",
         message: "Do you have a mobile app? I train at a gym without good WiFi.",
         status: "CLOSED",

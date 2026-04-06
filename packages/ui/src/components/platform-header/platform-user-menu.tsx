@@ -30,11 +30,14 @@ const getInitial = (name?: string | null, email?: string | null): string => {
 export const PlatformUserMenu = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
+
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
   const handleSignOut = async () => {
     setAnchorEl(null);
+
     await signOut({ redirect: false });
+
     router.push("/login");
   };
 
@@ -42,17 +45,8 @@ export const PlatformUserMenu = () => {
 
   return (
     <>
-      <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ p: 0.5 }}>
-        <Avatar
-          src={isLoading ? undefined : (session?.user?.image ?? undefined)}
-          sx={{
-            width: 34,
-            height: 34,
-            bgcolor: "primary.main",
-            typography: "body1",
-            fontWeight: 600,
-          }}
-        >
+      <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+        <Avatar src={isLoading ? undefined : (session?.user?.image ?? undefined)}>
           {isLoading ? (
             <CircularProgress size={16} color="inherit" />
           ) : (

@@ -31,13 +31,19 @@ export const AdminHeader = ({ onMenuClick }: AdminHeaderProps) => {
   const isMobile = useMediaQuery<Theme>((theme) => theme.breakpoints.down("md"));
   const pageTitle = getPageTitle(pathname, ADMIN_NAVIGATION);
 
+  if (!isMobile) {
+    return null;
+  }
+
   return (
     <AppBar
       sx={{
-        height: LAYOUT.adminHeaderHeight,
+        height: LAYOUT.adminHeaderHeight + 1,
         justifyContent: "center",
         borderBottom: 1,
         borderColor: "divider",
+        position: "static",
+        backgroundColor: "background.paper",
       }}
     >
       <Toolbar>
@@ -53,7 +59,7 @@ export const AdminHeader = ({ onMenuClick }: AdminHeaderProps) => {
           </IconButton>
         )}
 
-        <Typography variant="h6" noWrap>
+        <Typography variant="h3" noWrap>
           {pageTitle}
         </Typography>
       </Toolbar>

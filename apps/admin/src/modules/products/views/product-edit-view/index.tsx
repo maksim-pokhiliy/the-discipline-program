@@ -28,6 +28,7 @@ const ProductEditForm: React.FC<ProductEditFormProps> = ({ product }) => {
       slug: product.slug,
       description: product.description || "",
       features: product.features,
+      isFeatured: product.isFeatured,
       isActive: product.isActive,
       price: activePrice
         ? {

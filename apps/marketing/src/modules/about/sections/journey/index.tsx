@@ -9,7 +9,7 @@ interface AboutJourneySectionProps {
 
 export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
   return (
-    <ContentSection title={journey.title} subtitle={journey.subtitle}>
+    <ContentSection id="journey" title={journey.title} subtitle={journey.subtitle}>
       <Box sx={{ position: "relative" }}>
         <Box
           sx={{
@@ -35,15 +35,13 @@ export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
                   }}
                 >
                   <Stack spacing={2}>
-                    <Typography variant="h6" color="primary" sx={{ fontWeight: 600 }}>
+                    <Typography variant="h4" color="primary">
                       {item.year}
                     </Typography>
 
-                    <Typography variant="h4" sx={{ fontWeight: 600 }}>
-                      {item.title}
-                    </Typography>
+                    <Typography variant="h2">{item.title}</Typography>
 
-                    <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                    <Typography variant="h5" color="text.secondary">
                       {item.description}
                     </Typography>
                   </Stack>

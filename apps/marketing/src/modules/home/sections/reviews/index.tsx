@@ -10,7 +10,7 @@ interface HomeReviewsSectionProps {
 
 export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionProps) => {
   return (
-    <ContentSection title={reviews.title} subtitle={reviews.subtitle}>
+    <ContentSection id="reviews" title={reviews.title} subtitle={reviews.subtitle}>
       <Grid container spacing={4}>
         {reviewsList.map((review) => (
           <Grid key={review.id} size={{ xs: 12, md: 4 }}>
@@ -35,9 +35,7 @@ export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionP
                     <Avatar src={review.authorAvatar ?? ""} alt={review.authorName} />
 
                     <Stack spacing={0.5}>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {review.authorName}
-                      </Typography>
+                      <Typography variant="body2">{review.authorName}</Typography>
 
                       <Typography variant="caption" color="text.secondary">
                         {review.authorRole}

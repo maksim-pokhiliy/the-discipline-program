@@ -1,19 +1,23 @@
 "use client";
 
-import { Container } from "@mui/material";
 import { type UseQueryResult } from "@tanstack/react-query";
 
 import { QueryWrapper } from "@repo/query";
+import { ContentSection } from "@repo/ui";
 
 interface AdminListViewProps<TData> {
   queryResult: UseQueryResult<TData, Error>;
   loadingMessage: string;
+  title?: string;
+  subtitle?: string;
   children: (data: TData) => React.ReactNode;
 }
 
 export const AdminListView = <TData,>({
   queryResult,
   loadingMessage,
+  title,
+  subtitle,
   children,
 }: AdminListViewProps<TData>) => {
   const { data, isLoading, error } = queryResult;
@@ -21,9 +25,9 @@ export const AdminListView = <TData,>({
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage={loadingMessage}>
       {(resolvedData) => (
-        <Container maxWidth="xl" sx={{ py: 4 }}>
+        <ContentSection maxWidth="xl" title={title} subtitle={subtitle} textAlign="left">
           {children(resolvedData)}
-        </Container>
+        </ContentSection>
       )}
     </QueryWrapper>
   );
