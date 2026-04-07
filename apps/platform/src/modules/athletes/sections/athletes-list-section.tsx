@@ -20,11 +20,13 @@ type AthletesListSectionProps = {
   onSelectAthlete: (userId: string) => void;
 };
 
-const HEALTH_STATUS_VALUES = new Set(Object.values(HealthStatus));
+const HEALTH_STATUS_VALUES: Set<string> = new Set(Object.values(HealthStatus));
+
+const isHealthStatus = (value: string): value is HealthStatus => HEALTH_STATUS_VALUES.has(value);
 
 const parseHealthStatus = (value: string | null): HealthStatus | null => {
-  if (value && HEALTH_STATUS_VALUES.has(value as HealthStatus)) {
-    return value as HealthStatus;
+  if (value && isHealthStatus(value)) {
+    return value;
   }
 
   return null;

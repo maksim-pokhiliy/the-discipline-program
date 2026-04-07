@@ -41,6 +41,13 @@ export const adminUserListItemSchema = z.object({
   createdAt: z.date(),
 });
 
+export const userSearchResultSchema = z.object({
+  id: z.string().cuid(),
+  name: z.string().nullable(),
+  email: z.string().email(),
+  image: z.string().nullable(),
+});
+
 export const updateUserRoleSchema = z.object({
   role: userRoleSchema,
 });

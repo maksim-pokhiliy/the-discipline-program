@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -8,24 +8,15 @@ import TodayIcon from "@mui/icons-material/Today";
 import { Button, IconButton, Stack, Typography } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { useWeekStart } from "@app/lib/hooks";
+
 import {
   addDays,
   formatDateParam,
   formatWeekRange,
   getISOWeekNumber,
   getMonday,
-  parseDateParam,
 } from "./week-helpers";
-
-export const useWeekStart = (): Date => {
-  const searchParams = useSearchParams();
-  const weekParam = searchParams.get("week");
-
-  return useMemo(
-    () => (weekParam ? getMonday(parseDateParam(weekParam)) : getMonday(new Date())),
-    [weekParam],
-  );
-};
 
 export const WeekNavigator = () => {
   const router = useRouter();

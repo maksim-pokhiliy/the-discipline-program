@@ -39,10 +39,10 @@ export const platformCoachNotesApi = {
 
     const athlete = await prisma.user.findUnique({
       where: { id: data.athleteId },
-      select: { id: true, deletedAt: true },
+      select: { id: true },
     });
 
-    if (!athlete || athlete.deletedAt) {
+    if (!athlete) {
       throw new NotFoundError("Athlete not found", { athleteId: data.athleteId });
     }
 

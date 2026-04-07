@@ -6,10 +6,11 @@ import {
   type DashboardData,
   type UserStats,
 } from "@repo/contracts/dashboard";
+import { ProductCurrency } from "@repo/contracts/product";
 import { centsToAmount } from "@repo/shared";
 
 import { prisma } from "../../db/client";
-import { mapToPrice } from "../../mappers";
+import { CURRENCY_MAP, PRICE_INTERVAL_MAP } from "../../mappers/enum-maps";
 
 export const adminDashboardApi = {
   getDashboardData: async (): Promise<DashboardData> => {
@@ -39,28 +40,28 @@ const getContentStats = async (): Promise<ContentStats> => {
     contactsTotal,
     contactsNew,
   ] = await Promise.all([
-    prisma.product.count({ where: { deletedAt: null } }),
+    prisma.product.count(),
     prisma.product.count({
-      where: { isActive: true, deletedAt: null },
+      where: { isActive: true },
     }),
 
-    prisma.marketingReview.count({ where: { deletedAt: null } }),
+    prisma.marketingReview.count(),
     prisma.marketingReview.count({
-      where: { isActive: true, deletedAt: null },
+      where: { isActive: true },
     }),
 
-    prisma.marketingBlogPost.count({ where: { deletedAt: null } }),
+    prisma.marketingBlogPost.count(),
     prisma.marketingBlogPost.count({
-      where: { isPublished: true, deletedAt: null },
+      where: { isPublished: true },
     }),
 
     prisma.marketingBlogPost.count({
-      where: { isPublished: true, isFeatured: true, deletedAt: null },
+      where: { isPublished: true, isFeatured: true },
     }),
 
-    prisma.marketingContactSubmission.count({ where: { deletedAt: null } }),
+    prisma.marketingContactSubmission.count(),
     prisma.marketingContactSubmission.count({
-      where: { status: ContactStatus.NEW, deletedAt: null },
+      where: { status: ContactStatus.NEW },
     }),
   ]);
 
@@ -93,9 +94,9 @@ const getUserStats = async (): Promise<UserStats> => {
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const [total, newThisMonth] = await Promise.all([
-    prisma.user.count({ where: { deletedAt: null } }),
+    prisma.user.count(),
     prisma.user.count({
-      where: { createdAt: { gte: firstDayOfMonth }, deletedAt: null },
+      where: { createdAt: { gte: firstDayOfMonth } },
     }),
   ]);
 
@@ -109,27 +110,22 @@ const getRecentActivity = async (): Promise<ActivityItem[]> => {
     prisma.marketingReview.findMany({
       take,
       orderBy: { createdAt: "desc" },
-      where: { deletedAt: null },
     }),
     prisma.marketingContactSubmission.findMany({
       take,
       orderBy: { createdAt: "desc" },
-      where: { deletedAt: null },
     }),
     prisma.user.findMany({
       take,
       orderBy: { createdAt: "desc" },
-      where: { deletedAt: null },
     }),
     prisma.marketingBlogPost.findMany({
       take,
       orderBy: { createdAt: "desc" },
-      where: { deletedAt: null },
     }),
     prisma.product.findMany({
       take,
       orderBy: { createdAt: "desc" },
-      where: { deletedAt: null },
       include: { prices: { where: { isActive: true }, take: 1 } },
     }),
   ]);
@@ -139,9 +135,24 @@ const getRecentActivity = async (): Promise<ActivityItem[]> => {
       return "No price set";
     }
 
-    const p = mapToPrice(prices[0] as Parameters<typeof mapToPrice>[0]);
+    const p = prices[0];
 
-    return `${centsToAmount(p.amountCents).toFixed(0)} ${p.currency}`;
+    if (!p) {
+      return "No price set";
+    }
+
+    const currency = CURRENCY_MAP[p.currency as keyof typeof CURRENCY_MAP] ?? ProductCurrency.USD;
+    const interval =
+      "interval" in p
+        ? (PRICE_INTERVAL_MAP[
+            (p as { interval: string }).interval as keyof typeof PRICE_INTERVAL_MAP
+          ] ?? null)
+        : null;
+
+    const amount = centsToAmount(p.amountCents).toFixed(0);
+    const suffix = interval ? `/${interval}` : "";
+
+    return `${amount} ${currency}${suffix}`;
   };
 
   const activities: ActivityItem[] = [

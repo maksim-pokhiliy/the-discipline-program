@@ -1,11 +1,11 @@
-import { type GetContactByIdResponse, type UpdateContactRequest } from "@repo/contracts/contact";
+import { type ContactSubmissionItem, type UpdateContactRequest } from "@repo/contracts/contact";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToContact } from "../../mappers";
 
 export const adminContactsApi = {
-  getContacts: async (): Promise<GetContactByIdResponse[]> => {
+  getContacts: async (): Promise<ContactSubmissionItem[]> => {
     const contacts = await prisma.marketingContactSubmission.findMany({
       orderBy: { createdAt: "desc" },
     });
@@ -13,7 +13,7 @@ export const adminContactsApi = {
     return contacts.map(mapToContact);
   },
 
-  getContactById: async (id: string): Promise<GetContactByIdResponse> => {
+  getContactById: async (id: string): Promise<ContactSubmissionItem> => {
     const contact = await prisma.marketingContactSubmission.findUnique({ where: { id } });
 
     if (!contact) {
@@ -23,10 +23,7 @@ export const adminContactsApi = {
     return mapToContact(contact);
   },
 
-  updateContact: async (
-    id: string,
-    data: UpdateContactRequest,
-  ): Promise<GetContactByIdResponse> => {
+  updateContact: async (id: string, data: UpdateContactRequest): Promise<ContactSubmissionItem> => {
     const existing = await prisma.marketingContactSubmission.findUnique({ where: { id } });
 
     if (!existing) {

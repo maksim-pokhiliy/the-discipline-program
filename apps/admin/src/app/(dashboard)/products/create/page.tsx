@@ -1,5 +1,5 @@
 import { ProductCreateView } from "@app/modules/products";
 
-export default async function ProductCreatePage() {
+export default function ProductCreatePage() {
   return <ProductCreateView />;
 }

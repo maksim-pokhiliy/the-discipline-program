@@ -47,7 +47,6 @@ const prepareCreateInput = (data: CreateBlogPostData): Prisma.MarketingBlogPostC
 export const adminBlogApi = {
   getPosts: async (): Promise<BlogPost[]> => {
     const posts = await prisma.marketingBlogPost.findMany({
-      where: { deletedAt: null },
       orderBy: [{ createdAt: "desc" }, { title: "desc" }],
     });
 
@@ -59,7 +58,7 @@ export const adminBlogApi = {
       where: { id },
     });
 
-    if (!post || post.deletedAt) {
+    if (!post) {
       return null;
     }
 
@@ -98,7 +97,7 @@ export const adminBlogApi = {
   updatePost: async (id: string, data: UpdateBlogPostData): Promise<BlogPost> => {
     const existing = await prisma.marketingBlogPost.findUnique({ where: { id } });
 
-    if (!existing || existing.deletedAt) {
+    if (!existing) {
       throw new NotFoundError("Blog post not found", { id });
     }
 
@@ -142,19 +141,11 @@ export const adminBlogApi = {
       where: { id },
     });
 
-    if (!post || post.deletedAt) {
+    if (!post) {
       throw new NotFoundError("Blog post not found", { id });
     }
 
-    await prisma.marketingBlogPost.update({
-      where: { id },
-      data: {
-        deletedAt: new Date(),
-        isPublished: false,
-        isFeatured: false,
-        slug: `${post.slug}-deleted-${Date.now()}`,
-      },
-    });
+    await prisma.marketingBlogPost.delete({ where: { id } });
   },
 
   toggleBlogPostStatus: async (id: string): Promise<BlogPost> => {
@@ -162,7 +153,7 @@ export const adminBlogApi = {
       where: { id },
     });
 
-    if (!post || post.deletedAt) {
+    if (!post) {
       throw new NotFoundError("Blog post not found", { id });
     }
 
@@ -189,7 +180,7 @@ export const adminBlogApi = {
         where: { id },
       });
 
-      if (!post || post.deletedAt) {
+      if (!post) {
         throw new NotFoundError("Blog post not found", { id });
       }
 

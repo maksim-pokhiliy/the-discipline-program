@@ -7,6 +7,8 @@ import Link from "next/link";
 
 import type { TrainingPlanListItem } from "@repo/contracts/training-plan";
 
+import { formatCreatedDate } from "@app/lib/utils/date-formatters";
+
 import { PlanActionMenu } from "./plan-action-menu";
 import { PlanStatusChip } from "./plan-status-chip";
 
@@ -19,13 +21,6 @@ type PlanCardProps = {
   onDelete: (id: string) => void;
   isPending: boolean;
 };
-
-const formatCreatedDate = (date: Date) =>
-  new Date(date).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 
 export const PlanCard: React.FC<PlanCardProps> = ({
   plan,
@@ -48,7 +43,6 @@ export const PlanCard: React.FC<PlanCardProps> = ({
       component={Link}
       href={`/coach/plans/${plan.id}`}
       sx={(theme) => ({
-        display: "block",
         textDecoration: "none",
         color: "inherit",
         p: 2,
@@ -85,7 +79,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         <Stack direction="row" spacing={2} sx={{ color: "text.secondary" }}>
           <Tooltip title="Active enrolled athletes" arrow placement="top">
             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-              <GroupIcon sx={{ fontSize: 16 }} />
+              <GroupIcon fontSize="small" />
               <Typography variant="caption">
                 {plan.enrolledAthletesCount}{" "}
                 {plan.enrolledAthletesCount === 1 ? "athlete" : "athletes"}
@@ -95,7 +89,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
 
           <Tooltip title="Scheduled workouts" arrow placement="top">
             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
-              <FitnessCenterIcon sx={{ fontSize: 16 }} />
+              <FitnessCenterIcon fontSize="small" />
               <Typography variant="caption">
                 {plan.workoutsToday} today · {plan.workoutsThisWeek} this week
               </Typography>
@@ -103,7 +97,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           </Tooltip>
 
           <Tooltip title="Plan created" arrow placement="top">
-            <Typography variant="caption" sx={{ ml: "auto !important" }}>
+            <Typography variant="caption" sx={{ ml: "auto" }}>
               {formatCreatedDate(plan.createdAt)}
             </Typography>
           </Tooltip>

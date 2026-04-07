@@ -2,14 +2,18 @@
 
 import { Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
+import { type z } from "zod";
 
+import { type homePageContactSchema } from "@repo/contracts/pages";
 import { FormCard } from "@repo/ui";
+
+type ContactSectionData = z.infer<typeof homePageContactSchema>;
 
 export const ContactSectionForm = () => {
   const {
     register,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<ContactSectionData>();
 
   return (
     <FormCard title="Final CTA Settings">

@@ -11,7 +11,6 @@ type SplitSectionProps = {
   imageContent?: ReactNode;
   minHeight?: string | Record<string, string>;
   surface?: "base" | "raised";
-  offset?: number;
   children: ReactNode;
 };
 

@@ -2,10 +2,14 @@
 
 import { Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
+import { type z } from "zod";
 
+import { type aboutPagePersonalSchema } from "@repo/contracts/pages";
 import { FormCard, ImageUpload } from "@repo/ui";
 
 import { useUploadImage } from "@app/lib/hooks";
+
+type PersonalSectionData = z.infer<typeof aboutPagePersonalSchema>;
 
 export const PersonalSectionForm = () => {
   const {
@@ -13,7 +17,7 @@ export const PersonalSectionForm = () => {
     watch,
     setValue,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<PersonalSectionData>();
   const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
 
   return (

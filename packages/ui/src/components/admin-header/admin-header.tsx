@@ -38,7 +38,7 @@ export const AdminHeader = ({ onMenuClick }: AdminHeaderProps) => {
   return (
     <AppBar
       sx={{
-        height: LAYOUT.adminHeaderHeight + 1,
+        height: LAYOUT.adminHeaderHeight,
         justifyContent: "center",
         borderBottom: 1,
         borderColor: "divider",
@@ -47,17 +47,9 @@ export const AdminHeader = ({ onMenuClick }: AdminHeaderProps) => {
       }}
     >
       <Toolbar>
-        {isMobile && (
-          <IconButton
-            size="medium"
-            color="inherit"
-            edge="start"
-            onClick={onMenuClick}
-            sx={{ mr: 1 }}
-          >
-            <MenuIcon />
-          </IconButton>
-        )}
+        <IconButton size="medium" color="inherit" edge="start" onClick={onMenuClick} sx={{ mr: 1 }}>
+          <MenuIcon />
+        </IconButton>
 
         <Typography variant="h3" noWrap>
           {pageTitle}

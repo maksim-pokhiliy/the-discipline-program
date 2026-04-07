@@ -1,8 +1,8 @@
 import { type MarketingContactSubmission as PrismaContact } from "@prisma/client";
 
-import { type GetContactByIdResponse } from "@repo/contracts/contact";
+import { type ContactSubmissionItem } from "@repo/contracts/contact";
 
-export const mapToContact = (c: PrismaContact): GetContactByIdResponse => ({
+export const mapToContact = (c: PrismaContact): ContactSubmissionItem => ({
   id: c.id,
   name: c.name,
   contact: c.contact,

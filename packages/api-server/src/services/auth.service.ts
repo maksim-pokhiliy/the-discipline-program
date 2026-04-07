@@ -16,7 +16,7 @@ export const authService = {
       where: { email },
     });
 
-    if (!user || !user.password || user.deletedAt) {
+    if (!user || !user.password) {
       return null;
     }
 
@@ -26,15 +26,26 @@ export const authService = {
       return null;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password: _, ...userWithoutPassword } = user;
+    const safeUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        image: true,
+        role: true,
+        createdAt: true,
+        updatedAt: true,
+        timezone: true,
+      },
+    });
 
-    return userWithoutPassword;
+    return safeUser;
   },
 
   getUserById: async (id: string) => {
     const user = await prisma.user.findUnique({
-      where: { id, deletedAt: null },
+      where: { id },
       select: {
         id: true,
         email: true,

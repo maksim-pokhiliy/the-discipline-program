@@ -8,7 +8,6 @@ export const reviewsApi = {
     const reviews = await prisma.marketingReview.findMany({
       where: {
         isActive: true,
-        deletedAt: null,
       },
     });
 

@@ -127,7 +127,7 @@ model Product {
   description     String
   features        String[]
   trainingPlanId  String?
-  trainingPlan    TrainingPlan? @relation(fields: [trainingPlanId], references: [id])
+  trainingPlan    TrainingPlan? @relation(fields: [trainingPlanId], references: [id], onDelete: SetNull)
   stripeProductId String?      @unique
   isFeatured      Boolean   @default(false)
   isActive        Boolean   @default(true)
@@ -171,7 +171,7 @@ enum PriceInterval {
 model Subscription {
   id                 String             @id
   userId             String             @unique
-  user               User               @relation(fields: [userId], references: [id])
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   priceId            String
   price              Price              @relation(fields: [priceId], references: [id])
   status             SubscriptionStatus
@@ -221,7 +221,7 @@ enum TransactionStatus {
 model TrainingPlan {
   id          String             @id @default(cuid())
   coachId     String
-  coach       CoachProfile       @relation(fields: [coachId], references: [id])
+  coach       CoachProfile       @relation(fields: [coachId], references: [id], onDelete: Cascade)
   name        String
   description String?
   status      TrainingPlanStatus @default(DRAFT)
@@ -241,7 +241,7 @@ model TrainingPlan {
 model Workout {
   id            String         @id @default(cuid())
   planId        String
-  plan          TrainingPlan   @relation(fields: [planId], references: [id])
+  plan          TrainingPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
   scheduledDate DateTime? @db.Date
   title         String         @default("")
   description   String?
@@ -263,9 +263,9 @@ model Workout {
 model WorkoutLog {
   id          String       @id @default(cuid())
   userId      String
-  user        User         @relation(fields: [userId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   workoutId   String
-  workout     Workout      @relation(fields: [workoutId], references: [id])
+  workout     Workout      @relation(fields: [workoutId], references: [id], onDelete: Cascade)
   date        DateTime     @default(now())
   notes       String?
   isRx        Boolean      @default(true)
@@ -356,9 +356,9 @@ enum PlanEnrollmentStatus {
 model PlanEnrollment {
   id             String               @id @default(cuid())
   trainingPlanId String
-  trainingPlan   TrainingPlan         @relation(fields: [trainingPlanId], references: [id])
+  trainingPlan   TrainingPlan         @relation(fields: [trainingPlanId], references: [id], onDelete: Cascade)
   userId         String
-  user           User                 @relation(fields: [userId], references: [id])
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   startDate      DateTime             @default(now())
   endDate        DateTime?
   status         PlanEnrollmentStatus @default(ACTIVE)
@@ -385,7 +385,7 @@ model BenchmarkDefinition {
 model UserBenchmark {
   id                    String              @id @default(cuid())
   userId                String
-  user                  User                @relation(fields: [userId], references: [id])
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   benchmarkDefinitionId String
   benchmarkDefinition   BenchmarkDefinition @relation(fields: [benchmarkDefinitionId], references: [id])
   value                 Decimal             @db.Decimal(10, 2)

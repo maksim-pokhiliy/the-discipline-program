@@ -29,10 +29,10 @@ export const platformWorkoutLogsApi = {
   create: async (userId: string, data: CreateWorkoutLogData): Promise<WorkoutLog> => {
     const workout = await prisma.workout.findUnique({
       where: { id: data.workoutId },
-      select: { id: true, deletedAt: true },
+      select: { id: true },
     });
 
-    if (!workout || workout.deletedAt) {
+    if (!workout) {
       throw new NotFoundError("Workout not found", { workoutId: data.workoutId });
     }
 

@@ -2,11 +2,11 @@ import { z } from "zod";
 
 import { workoutSchema } from "../workout/workout.schema";
 
-import { trainingPlanStatusSchema } from "./training-plan.schema";
 import {
   createTrainingPlanSchema,
   trainingPlanListItemSchema,
   trainingPlanSchema,
+  trainingPlanStatusSchema,
   updateTrainingPlanSchema,
 } from "./training-plan.schema";
 

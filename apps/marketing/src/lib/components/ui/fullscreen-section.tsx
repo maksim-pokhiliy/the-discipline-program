@@ -2,11 +2,13 @@
 
 import { Children, type ReactNode } from "react";
 
-import { type SxProps, type Theme, Button, Stack, Container, Typography } from "@mui/material";
+import { type SxProps, type Theme, Box, Button, Stack, Container, Typography } from "@mui/material";
 import { type Variants, motion } from "framer-motion";
 import Link from "next/link";
 
 import { buildOverlay } from "@app/lib/utils/overlay";
+
+const MotionBox = motion.create(Box);
 
 const staggerContainer: Variants = {
   hidden: {},
@@ -62,7 +64,7 @@ export const FullscreenSection = ({
       ]}
     >
       <Container maxWidth="lg">
-        <motion.div
+        <MotionBox
           variants={staggerContainer}
           initial="hidden"
           whileInView="visible"
@@ -71,9 +73,9 @@ export const FullscreenSection = ({
           {children ? (
             <Stack spacing={3} alignItems="center">
               {Children.map(children, (child, i) => (
-                <motion.div key={i} variants={fadeSlideUp}>
+                <MotionBox key={i} variants={fadeSlideUp}>
                   {child}
-                </motion.div>
+                </MotionBox>
               ))}
             </Stack>
           ) : (
@@ -82,13 +84,13 @@ export const FullscreenSection = ({
               alignItems={{ xs: "center", md: "flex-start" }}
               sx={{ maxWidth: { md: "65%" } }}
             >
-              <motion.div variants={fadeSlideUp}>
+              <MotionBox variants={fadeSlideUp}>
                 <Typography variant="display1" component="h1">
                   {title}
                 </Typography>
-              </motion.div>
+              </MotionBox>
 
-              <motion.div variants={fadeSlideUp}>
+              <MotionBox variants={fadeSlideUp}>
                 <Typography
                   variant="h3"
                   component="p"
@@ -96,18 +98,18 @@ export const FullscreenSection = ({
                 >
                   {subtitle}
                 </Typography>
-              </motion.div>
+              </MotionBox>
 
               {buttonText && buttonHref && (
-                <motion.div variants={fadeSlideUp}>
+                <MotionBox variants={fadeSlideUp}>
                   <Button component={Link} href={buttonHref} variant="contained" size="large">
                     {buttonText}
                   </Button>
-                </motion.div>
+                </MotionBox>
               )}
             </Stack>
           )}
-        </motion.div>
+        </MotionBox>
       </Container>
     </Stack>
   );

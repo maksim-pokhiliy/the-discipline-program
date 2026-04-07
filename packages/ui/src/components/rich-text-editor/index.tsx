@@ -1,10 +1,12 @@
 "use client";
 
-import { Box, FormHelperText, Typography, useTheme } from "@mui/material";
+import { Box, FormHelperText, Stack, Typography, useTheme } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
 
 import { EditorToolbar } from "./editor-toolbar";
 import { useEditor } from "./use-editor";
+
+const EDITOR_LINE_HEIGHT_PX = 20;
 
 type RichTextEditorVariant = "default" | "inline";
 
@@ -80,15 +82,13 @@ export const RichTextEditor = ({
       >
         <EditorToolbar editor={editor} />
 
-        <Box
+        <Stack
           onClick={handleContainerClick}
           sx={{
             p: isInline ? 1.5 : 2,
-            minHeight: resolvedMinRows * 20,
+            minHeight: resolvedMinRows * EDITOR_LINE_HEIGHT_PX,
             cursor: "text",
             flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
             "& .ProseMirror": {
               outline: "none",
               flexGrow: 1,
@@ -116,7 +116,7 @@ export const RichTextEditor = ({
           }}
         >
           <EditorContent editor={editor} style={{ flexGrow: 1 }} />
-        </Box>
+        </Stack>
       </Box>
 
       {helperText && (

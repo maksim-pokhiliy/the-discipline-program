@@ -29,7 +29,6 @@ const defaultStyles: SxProps<Theme> = {
     },
   },
 
-  "& strong": {},
   "& em": { fontStyle: "italic" },
   "& u": { textDecoration: "underline" },
 

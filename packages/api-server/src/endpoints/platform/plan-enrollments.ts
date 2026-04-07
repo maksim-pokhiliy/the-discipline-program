@@ -18,18 +18,6 @@ const includeEnriched = {
       email: true,
       image: true,
       athleteProfile: { select: { healthStatus: true } },
-      workoutLogs: {
-        select: { workoutId: true, date: true },
-        orderBy: { date: "desc" as const },
-      },
-    },
-  },
-  trainingPlan: {
-    select: {
-      workouts: {
-        where: { deletedAt: null },
-        select: { id: true },
-      },
     },
   },
 } as const;

@@ -6,6 +6,7 @@ export const LAYOUT = {
   drawerCollapsedWidth: 72,
   platformHeaderHeight: 56,
   platformBottomNavHeight: 56,
+  platformFabBottom: 100,
 } as const;
 
 export type LayoutConfig = typeof LAYOUT;

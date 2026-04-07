@@ -95,7 +95,6 @@ export const ProgressBucketsSection: React.FC<ProgressBucketsSectionProps> = ({ 
                 component={Link}
                 href={athlete.href}
                 sx={(theme) => ({
-                  display: "block",
                   textDecoration: "none",
                   borderRadius: 1,
                   transition: theme.transitions.create("opacity"),

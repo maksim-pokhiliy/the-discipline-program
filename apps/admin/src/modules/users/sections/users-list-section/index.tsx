@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
@@ -51,11 +51,11 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
     newRole: UserRole;
   } | null>(null);
 
-  const handleChipClick = (event: React.MouseEvent<HTMLElement>, userId: string) => {
+  const handleChipClick = useCallback((event: React.MouseEvent<HTMLElement>, userId: string) => {
     event.stopPropagation();
     setMenuAnchor(event.currentTarget);
     setMenuUserId(userId);
-  };
+  }, []);
 
   const handleMenuClose = () => {
     setMenuAnchor(null);
@@ -87,72 +87,75 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
     }
   };
 
-  const columns: Column<AdminUserListItem>[] = [
-    {
-      id: "email",
-      label: "Email",
-      width: "45%",
-      sortable: true,
-      sortValue: (user) => user.email,
-      searchValue: (user) => user.email,
-      render: (user) => (
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Avatar src={user.image || undefined} sx={{ width: 32, height: 32, fontSize: 14 }}>
-            {user.email.charAt(0).toUpperCase()}
-          </Avatar>
-          <Typography variant="subtitle2">{user.email}</Typography>
-        </Stack>
-      ),
-    },
-    {
-      id: "role",
-      label: "Role",
-      width: "20%",
-      sortable: true,
-      sortValue: (user) => user.role,
-      render: (user) => {
-        const config = ROLE_CONFIG[user.role];
-
-        return (
-          <Chip
-            label={config.label}
-            color={config.color}
-            size="small"
-            variant="outlined"
-            onClick={(e) => handleChipClick(e, user.id)}
-            sx={{ cursor: "pointer" }}
-          />
-        );
+  const columns: Column<AdminUserListItem>[] = useMemo(
+    () => [
+      {
+        id: "email",
+        label: "Email",
+        width: "45%",
+        sortable: true,
+        sortValue: (user) => user.email,
+        searchValue: (user) => user.email,
+        render: (user) => (
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Avatar src={user.image || undefined} sx={{ width: 32, height: 32, fontSize: 14 }}>
+              {user.email.charAt(0).toUpperCase()}
+            </Avatar>
+            <Typography variant="subtitle2">{user.email}</Typography>
+          </Stack>
+        ),
       },
-    },
-    {
-      id: "createdAt",
-      label: "Registered",
-      width: "20%",
-      sortable: true,
-      sortValue: (user) => new Date(user.createdAt).getTime(),
-      render: (user) => (
-        <Typography variant="body2" color="text.secondary">
-          {formatDate(user.createdAt)}
-        </Typography>
-      ),
-    },
-    {
-      id: "actions",
-      label: "Actions",
-      align: "right",
-      width: "15%",
-      render: (user) => (
-        <Stack direction="row" spacing={0} justifyContent="flex-end">
-          <Tooltip title="View">
-            <IconButton component={Link} href={`/users/${user.id}`} color="primary">
-              <VisibilityIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      ),
-    },
-  ];
+      {
+        id: "role",
+        label: "Role",
+        width: "20%",
+        sortable: true,
+        sortValue: (user) => user.role,
+        render: (user) => {
+          const config = ROLE_CONFIG[user.role];
+
+          return (
+            <Chip
+              label={config.label}
+              color={config.color}
+              size="small"
+              variant="outlined"
+              onClick={(e) => handleChipClick(e, user.id)}
+              sx={{ cursor: "pointer" }}
+            />
+          );
+        },
+      },
+      {
+        id: "createdAt",
+        label: "Registered",
+        width: "20%",
+        sortable: true,
+        sortValue: (user) => new Date(user.createdAt).getTime(),
+        render: (user) => (
+          <Typography variant="body2" color="text.secondary">
+            {formatDate(user.createdAt)}
+          </Typography>
+        ),
+      },
+      {
+        id: "actions",
+        label: "Actions",
+        align: "right",
+        width: "15%",
+        render: (user) => (
+          <Stack direction="row" spacing={0} justifyContent="flex-end">
+            <Tooltip title="View">
+              <IconButton component={Link} href={`/users/${user.id}`} color="primary">
+                <VisibilityIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        ),
+      },
+    ],
+    [handleChipClick],
+  );
 
   return (
     <>

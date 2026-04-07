@@ -17,16 +17,21 @@ type PersonCardProps = {
 
 const ImageSlot: React.FC<{ image: string | null; name: string }> = ({ image, name }) =>
   image ? (
-    <CardMedia component="img" image={image} alt={name} sx={{ width: 120, objectFit: "cover" }} />
+    <CardMedia
+      component="img"
+      image={image}
+      alt={name}
+      sx={(theme) => ({ width: theme.spacing(15), objectFit: "cover" })}
+    />
   ) : (
     <Stack
-      sx={{
-        width: 120,
-        minHeight: 120,
+      sx={(theme) => ({
+        width: theme.spacing(15),
+        minHeight: theme.spacing(15),
         alignItems: "center",
         justifyContent: "center",
         bgcolor: "action.hover",
-      }}
+      })}
     >
       <PersonIcon sx={{ fontSize: 48, color: "text.disabled" }} />
     </Stack>

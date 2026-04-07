@@ -13,6 +13,7 @@ import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 import { prisma } from "../../db/client";
 import { mapToTrainingPlan, mapToWorkout } from "../../mappers";
 import { TRAINING_PLAN_STATUS_MAP } from "../../mappers/enum-maps";
+import { MS_PER_DAY } from "../../utils/date-helpers";
 import { endOfWeekInTz, startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
 
 import { resolveCoachId, verifyPlanOwnership } from "./guards";
@@ -24,9 +25,9 @@ type PlanWithStats = Parameters<typeof mapToTrainingPlan>[0] & {
 
 const getWeekBounds = (tz: string) => {
   const todayStart = startOfTodayInTz(tz);
-  const todayEnd = new Date(todayStart.getTime() + 86_400_000);
+  const todayEnd = new Date(todayStart.getTime() + MS_PER_DAY);
   const weekStart = startOfWeekInTz(todayStart, tz);
-  const weekEnd = new Date(endOfWeekInTz(todayStart, tz).getTime() + 86_400_000);
+  const weekEnd = new Date(endOfWeekInTz(todayStart, tz).getTime() + MS_PER_DAY);
 
   return { weekStart, weekEnd, todayStart, todayEnd };
 };
@@ -59,7 +60,7 @@ export const platformTrainingPlansApi = {
     const workouts = await prisma.workout.findMany({
       where: {
         scheduledDate: { gte: weekStart, lt: weekEnd },
-        plan: { coachId, deletedAt: null },
+        plan: { coachId },
       },
       include: {
         plan: { select: { id: true, name: true, status: true } },
@@ -104,7 +105,6 @@ export const platformTrainingPlansApi = {
         },
         workouts: {
           where: {
-            deletedAt: null,
             scheduledDate: { gte: weekStart, lt: weekEnd },
           },
           select: { scheduledDate: true },
@@ -165,6 +165,11 @@ export const platformTrainingPlansApi = {
 
     await verifyPlanOwnership(id, coachId);
 
+    await prisma.planEnrollment.deleteMany({ where: { trainingPlanId: id } });
+    await prisma.product.updateMany({
+      where: { trainingPlanId: id },
+      data: { trainingPlanId: null },
+    });
     await prisma.trainingPlan.delete({ where: { id } });
   },
 
@@ -176,9 +181,7 @@ export const platformTrainingPlansApi = {
     const source = await prisma.trainingPlan.findUniqueOrThrow({
       where: { id },
       include: {
-        workouts: {
-          where: { deletedAt: null },
-        },
+        workouts: true,
       },
     });
 

@@ -44,14 +44,8 @@ export const useEditor = ({ value, onChange, onBlur, placeholder, disabled }: Us
   });
 
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      if (editor.getText() === "" && value === "") {
-        return;
-      }
-
-      if (value === "") {
-        editor.commands.setContent(value);
-      }
+    if (editor && editor.getHTML() !== value) {
+      editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [value, editor]);
 

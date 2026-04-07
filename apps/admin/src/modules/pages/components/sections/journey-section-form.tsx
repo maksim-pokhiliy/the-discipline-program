@@ -3,15 +3,21 @@
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Divider, Grid, Stack, TextField, Typography } from "@mui/material";
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { type z } from "zod";
 
+import { type aboutPageJourneySchema } from "@repo/contracts/pages";
 import { DynamicListItem, FormCard } from "@repo/ui";
+
+type JourneySectionData = z.infer<typeof aboutPageJourneySchema>;
+
+const ADD_BUTTON_SX = { borderStyle: "dashed", borderWidth: 2, px: 4 } as const;
 
 export const JourneySectionForm = () => {
   const {
     register,
     control,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<JourneySectionData>();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -84,7 +90,7 @@ export const JourneySectionForm = () => {
           <Button
             startIcon={<AddIcon />}
             onClick={() => append({ year: "", title: "", description: "" })}
-            sx={{ borderStyle: "dashed", borderWidth: 2, px: 4 }}
+            sx={ADD_BUTTON_SX}
           >
             Add Timeline Item
           </Button>

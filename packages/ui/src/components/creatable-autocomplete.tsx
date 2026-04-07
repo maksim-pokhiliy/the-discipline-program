@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode, type SyntheticEvent } from "react";
+import { useMemo, useState, type ReactNode, type SyntheticEvent } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import {
@@ -55,15 +55,14 @@ export const CreatableAutocomplete = <T,>({
 }: CreatableAutocompleteProps<T>) => {
   const [isCreating, setIsCreating] = useState(false);
 
-  const filter = createFilterOptions<OptionOrCreate<T>>({
-    stringify: (option) => {
-      if (isCreateOption(option)) {
-        return option.inputValue;
-      }
-
-      return getOptionLabel(option);
-    },
-  });
+  const filter = useMemo(
+    () =>
+      createFilterOptions<OptionOrCreate<T>>({
+        stringify: (option) =>
+          isCreateOption(option) ? option.inputValue : getOptionLabel(option),
+      }),
+    [getOptionLabel],
+  );
 
   const handleChange = async (_: SyntheticEvent, newValue: OptionOrCreate<T> | null) => {
     if (newValue && isCreateOption(newValue)) {

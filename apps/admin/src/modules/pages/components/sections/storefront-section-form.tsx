@@ -2,14 +2,18 @@
 
 import { Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
+import { type z } from "zod";
 
+import { type homePageStorefrontProgramsSchema } from "@repo/contracts/pages";
 import { FormCard } from "@repo/ui";
+
+type StorefrontSectionData = z.infer<typeof homePageStorefrontProgramsSchema>;
 
 export const StorefrontSectionForm = () => {
   const {
     register,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<StorefrontSectionData>();
 
   return (
     <FormCard title="Programs Preview Settings">

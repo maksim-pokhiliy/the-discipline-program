@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import { Chip, Fab, Stack, Tab, Tabs, Typography } from "@mui/material";
 
 import type { TrainingPlanListItem } from "@repo/contracts/training-plan";
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+import { LAYOUT } from "@repo/shared";
 
 import {
   useActivateTrainingPlan,
@@ -34,12 +35,15 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
   const duplicate = useDuplicateTrainingPlan();
   const deletePlan = useDeleteTrainingPlan();
 
-  const isPlanPending = (planId: string) =>
-    (activate.isPending && activate.variables === planId) ||
-    (archive.isPending && archive.variables === planId) ||
-    (restore.isPending && restore.variables === planId) ||
-    (duplicate.isPending && duplicate.variables === planId) ||
-    (deletePlan.isPending && deletePlan.variables === planId);
+  const isPlanPending = useCallback(
+    (planId: string) =>
+      (activate.isPending && activate.variables === planId) ||
+      (archive.isPending && archive.variables === planId) ||
+      (restore.isPending && restore.variables === planId) ||
+      (duplicate.isPending && duplicate.variables === planId) ||
+      (deletePlan.isPending && deletePlan.variables === planId),
+    [activate, archive, restore, duplicate, deletePlan],
+  );
 
   const counts = useMemo(() => {
     const map: Record<string, number> = { ALL: plans.length };
@@ -109,7 +113,7 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
       <Fab
         color="primary"
         onClick={onCreateClick}
-        sx={{ position: "fixed", bottom: 100, right: 16 }}
+        sx={{ position: "fixed", bottom: LAYOUT.platformFabBottom, right: 16 }}
       >
         <AddIcon />
       </Fab>

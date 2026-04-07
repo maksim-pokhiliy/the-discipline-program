@@ -10,7 +10,7 @@ export const platformCoachProfileApi = {
       where: { userId },
     });
 
-    if (!profile || profile.deletedAt) {
+    if (!profile) {
       throw new NotFoundError("Coach profile not found", { userId });
     }
 

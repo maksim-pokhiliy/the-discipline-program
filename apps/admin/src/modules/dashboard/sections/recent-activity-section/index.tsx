@@ -63,7 +63,7 @@ const getActivityColor = (type: ActivityItem["type"]) => {
 export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) => {
   return (
     <ContentSection title="Recent Activity" surface="raised" maxWidth="xl">
-      <List sx={{}}>
+      <List>
         {activity.length === 0 && (
           <ListItem>
             <ListItemText primary="No recent activity found" />

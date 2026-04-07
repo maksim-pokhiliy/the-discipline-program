@@ -10,7 +10,7 @@ import {
   computeAdherenceWindow,
   computeProcessStatus,
 } from "../../utils/dashboard-computations";
-import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
+import { daysBetweenInTz, MS_PER_DAY, startOfTodayInTz } from "../../utils/date-helpers";
 import { enrollmentInclude } from "../../utils/enrollment-query";
 
 import { resolveCoachId } from "./guards";
@@ -39,7 +39,7 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
     prisma.planEnrollment.findMany({
       where: {
         status: PlanEnrollmentStatus.ACTIVE,
-        trainingPlan: { coachId, deletedAt: null },
+        trainingPlan: { coachId },
       },
       include: enrollmentInclude,
     }),
@@ -54,8 +54,8 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
 
   const now = new Date();
   const today = startOfTodayInTz(tz);
-  const currentStart = new Date(now.getTime() - 7 * 86_400_000);
-  const previousStart = new Date(now.getTime() - 14 * 86_400_000);
+  const currentStart = new Date(now.getTime() - 7 * MS_PER_DAY);
+  const previousStart = new Date(now.getTime() - 14 * MS_PER_DAY);
   const athleteMap = new Map<string, AggregatedAthlete>();
 
   for (const e of enrollments) {
@@ -105,7 +105,7 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
   let injuredCount = 0;
   let restrictedCount = 0;
 
-  for (const [visitorId, data] of athleteMap) {
+  for (const [athleteUserId, data] of athleteMap) {
     const curRate =
       data.currentAdherence.available > 0
         ? data.currentAdherence.completed / data.currentAdherence.available
@@ -121,7 +121,7 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
       ? daysBetweenInTz(new Date(data.lastActivityDate), today, tz)
       : null;
 
-    const openActionItemsCount = actionItemsMap.get(visitorId) ?? 0;
+    const openActionItemsCount = actionItemsMap.get(athleteUserId) ?? 0;
     const needsAttention = openActionItemsCount > 0;
 
     if (needsAttention) {
@@ -137,7 +137,7 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
     }
 
     athletes.push({
-      userId: visitorId,
+      userId: athleteUserId,
       name: data.name,
       email: data.email,
       image: data.image,

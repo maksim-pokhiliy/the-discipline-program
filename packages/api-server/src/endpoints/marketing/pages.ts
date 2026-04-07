@@ -36,10 +36,10 @@ export const pagesApi = {
 
     const [products, reviews] = await Promise.all([
       prisma.product.findMany({
-        where: { isActive: true, deletedAt: null },
+        where: { isActive: true },
         include: { prices: { where: { isActive: true } } },
       }),
-      prisma.marketingReview.findMany({ where: { isActive: true, deletedAt: null } }),
+      prisma.marketingReview.findMany({ where: { isActive: true } }),
     ]);
 
     const map = PAGE_SECTIONS_MAP.home;
@@ -59,7 +59,7 @@ export const pagesApi = {
     const [sections, products] = await Promise.all([
       prisma.marketingPageSection.findMany({ where: { pageSlug: "storefront", isActive: true } }),
       prisma.product.findMany({
-        where: { isActive: true, deletedAt: null },
+        where: { isActive: true },
         include: { prices: { where: { isActive: true } } },
       }),
     ]);
@@ -94,7 +94,7 @@ export const pagesApi = {
     const [sections, posts] = await Promise.all([
       prisma.marketingPageSection.findMany({ where: { pageSlug: "blog", isActive: true } }),
       prisma.marketingBlogPost.findMany({
-        where: { isPublished: true, publishedAt: { not: null }, deletedAt: null },
+        where: { isPublished: true, publishedAt: { not: null } },
         orderBy: { publishedAt: "desc" },
       }),
     ]);
@@ -116,7 +116,7 @@ export const pagesApi = {
         where: { pageSlug: "contact", isActive: true },
       }),
       prisma.product.findMany({
-        where: { isActive: true, deletedAt: null },
+        where: { isActive: true },
       }),
     ]);
 
@@ -149,7 +149,6 @@ export const pagesApi = {
         slug,
         isPublished: true,
         publishedAt: { not: null },
-        deletedAt: null,
       },
     });
 
@@ -165,7 +164,6 @@ export const pagesApi = {
         category: post.category,
         id: { not: post.id },
         publishedAt: { not: null },
-        deletedAt: null,
       },
       take: 3,
       orderBy: { publishedAt: "desc" },

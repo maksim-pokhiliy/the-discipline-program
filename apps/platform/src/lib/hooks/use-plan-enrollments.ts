@@ -41,15 +41,8 @@ export const useBulkEnrollAthletes = (planId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userIds: string[]) => {
-      const results: Awaited<ReturnType<typeof api.planEnrollments.create>>[] = [];
-
-      for (const id of userIds) {
-        results.push(await api.planEnrollments.create(planId, { userId: id }));
-      }
-
-      return results;
-    },
+    mutationFn: async (userIds: string[]) =>
+      Promise.all(userIds.map((id) => api.planEnrollments.create(planId, { userId: id }))),
     onSuccess: (results) => {
       queryClient.invalidateQueries({
         queryKey: platformKeys.planEnrollments.byPlan(planId),

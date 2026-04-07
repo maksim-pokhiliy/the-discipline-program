@@ -1,6 +1,6 @@
 "use client";
 
-import { type KeyboardEvent, useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton, InputBase, Stack, Tab, Tabs } from "@mui/material";
@@ -31,11 +31,13 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
   const [descValue, setDescValue] = useState("");
   const [initialized, setInitialized] = useState(false);
 
-  if (plan && !initialized) {
-    setNameValue(plan.name);
-    setDescValue(plan.description ?? "");
-    setInitialized(true);
-  }
+  useEffect(() => {
+    if (plan && !initialized) {
+      setNameValue(plan.name);
+      setDescValue(plan.description ?? "");
+      setInitialized(true);
+    }
+  }, [plan, initialized]);
 
   const activeTab = (searchParams.get("tab") as TabValue) ?? "schedule";
 
@@ -77,12 +79,6 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
     }
   }, [descValue, plan, planId, updatePlan]);
 
-  const handleNameKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      (e.target as HTMLInputElement).blur();
-    }
-  };
-
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={plan} loadingMessage="Loading plan...">
       {(data) => (
@@ -97,7 +93,6 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
                 value={nameValue}
                 onChange={(e) => setNameValue(e.target.value)}
                 onBlur={commitName}
-                onKeyDown={handleNameKeyDown}
                 sx={{ flex: 1, typography: "h4", "& input": { p: 0 } }}
               />
 
