@@ -24,14 +24,14 @@ export const adminProductsApi = {
     return products.map(mapToProduct);
   },
 
-  getById: async (id: string): Promise<Product | null> => {
+  getById: async (id: string): Promise<Product> => {
     const product = await prisma.product.findUnique({
       where: { id },
       include: includeWithPrices,
     });
 
     if (!product) {
-      return null;
+      throw new NotFoundError("Product not found", { id });
     }
 
     return mapToProduct(product);

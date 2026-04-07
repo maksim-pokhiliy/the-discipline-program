@@ -19,11 +19,11 @@ export const adminReviewsApi = {
     return reviews.map(mapToReview);
   },
 
-  getReviewById: async (id: string): Promise<Review | null> => {
+  getReviewById: async (id: string): Promise<Review> => {
     const review = await prisma.marketingReview.findUnique({ where: { id } });
 
     if (!review) {
-      return null;
+      throw new NotFoundError("Review not found", { id });
     }
 
     return mapToReview(review);

@@ -1,4 +1,5 @@
 import { type Product } from "@repo/contracts/product";
+import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToProduct } from "../../mappers";
@@ -13,12 +14,16 @@ export const marketingProductsApi = {
     return products.map(mapToProduct);
   },
 
-  getBySlug: async (slug: string): Promise<Product | null> => {
+  getBySlug: async (slug: string): Promise<Product> => {
     const product = await prisma.product.findFirst({
       where: { slug, isActive: true },
       include: { prices: { where: { isActive: true } } },
     });
 
-    return product ? mapToProduct(product) : null;
+    if (!product) {
+      throw new NotFoundError("Product not found", { slug });
+    }
+
+    return mapToProduct(product);
   },
 };

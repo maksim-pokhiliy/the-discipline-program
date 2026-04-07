@@ -13,11 +13,14 @@ import {
 } from "../../mappers/enum-maps";
 import { computeAdherenceWindow, computeProcessStatus } from "../../utils/dashboard-computations";
 import {
+  DAYS_IN_WEEK,
   daysBetweenInTz,
+  FOUR_WEEKS,
   MS_PER_DAY,
   startOfDayInTz,
   startOfTodayInTz,
   startOfWeekInTz,
+  TWO_WEEKS,
 } from "../../utils/date-helpers";
 import { createEnrollmentInclude } from "../../utils/enrollment-query";
 
@@ -80,9 +83,9 @@ export const getAthleteDetail = async (
   const now = new Date();
   const today = startOfTodayInTz(tz);
   const weekStart = startOfWeekInTz(today, tz);
-  const nextWeekStart = new Date(weekStart.getTime() + 7 * MS_PER_DAY);
-  const rolling7Start = new Date(now.getTime() - 7 * MS_PER_DAY);
-  const rolling14Start = new Date(now.getTime() - 14 * MS_PER_DAY);
+  const nextWeekStart = new Date(weekStart.getTime() + DAYS_IN_WEEK * MS_PER_DAY);
+  const rolling7Start = new Date(now.getTime() - DAYS_IN_WEEK * MS_PER_DAY);
+  const rolling14Start = new Date(now.getTime() - TWO_WEEKS * MS_PER_DAY);
 
   let earliestEnrollment = enrollments[0]?.startDate ?? new Date();
   let lastActivityDate: Date | null = null;
@@ -177,7 +180,7 @@ export const getAthleteDetail = async (
     }
   }
 
-  const rolling28Start = new Date(now.getTime() - 28 * MS_PER_DAY);
+  const rolling28Start = new Date(now.getTime() - FOUR_WEEKS * MS_PER_DAY);
   const window28 = enrollments.reduce(
     (acc, e) => {
       const loggedIds = new Set(e.user.workoutLogs.map((l) => l.workoutId));

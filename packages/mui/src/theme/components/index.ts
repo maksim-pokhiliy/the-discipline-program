@@ -18,3 +18,6 @@ export * from "./tooltip";
 export * from "./chip";
 export * from "./tab";
 export * from "./css-baseline";
+export * from "./icon-button";
+export * from "./paper";
+export * from "./table-pagination";
