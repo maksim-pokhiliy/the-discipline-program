@@ -40,6 +40,7 @@ export const FormView = <T extends FieldValues>({
         backLabel={backLabel}
         maxWidth="xl"
         textAlign="left"
+        animated={false}
         actions={[
           {
             label: submitLabel,
