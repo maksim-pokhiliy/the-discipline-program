@@ -29,3 +29,5 @@ export type ToggleProductParams = z.infer<typeof toggleProductParamsSchema>;
 export type ToggleProductQuery = z.infer<typeof toggleProductQuerySchema>;
 
 export type GetProductsPageDataResponse = z.infer<typeof getProductsPageDataResponseSchema>;
+
+export type AdminProductsPageData = GetProductsPageDataResponse;

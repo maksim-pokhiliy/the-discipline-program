@@ -83,3 +83,19 @@ export const createToggleHandler = <TResponse>(
     return NextResponse.json(result);
   };
 };
+
+export const createMultiToggleHandler = <TField extends string, TResponse>(
+  handlers: Record<TField, (id: string) => Promise<TResponse>>,
+  paramsSchema: ZodSchema<{ id: string }>,
+  querySchema: ParseSchema<{ field: TField }>,
+) => {
+  return async (request: Request, context: RouteContext) => {
+    const { id } = paramsSchema.parse(await context.params);
+    const { field } = querySchema.parse({
+      field: new URL(request.url).searchParams.get("field"),
+    });
+    const result = await handlers[field](id);
+
+    return NextResponse.json(result);
+  };
+};

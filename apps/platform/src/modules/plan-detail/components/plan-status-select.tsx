@@ -1,20 +1,15 @@
 "use client";
 
-import { Button, type ButtonProps, Chip, type ChipProps, Stack } from "@mui/material";
+import { Button, type ButtonProps, Chip, Stack } from "@mui/material";
 
 import { TRAINING_PLAN_STATUS_LABELS, TrainingPlanStatus } from "@repo/contracts/training-plan";
 
+import { PLAN_STATUS_COLORS } from "@app/lib/config";
 import {
   useActivateTrainingPlan,
   useArchiveTrainingPlan,
   useRestoreTrainingPlan,
 } from "@app/lib/hooks";
-
-const STATUS_COLORS: Record<TrainingPlanStatus, ChipProps["color"]> = {
-  [TrainingPlanStatus.DRAFT]: "default",
-  [TrainingPlanStatus.ACTIVE]: "success",
-  [TrainingPlanStatus.ARCHIVED]: "warning",
-};
 
 type ActionConfig = {
   label: string;
@@ -84,7 +79,7 @@ export const PlanStatusSelect: React.FC<PlanStatusSelectProps> = ({ planId, stat
         variant="outlined"
         size="small"
         label={TRAINING_PLAN_STATUS_LABELS[status]}
-        color={STATUS_COLORS[status]}
+        color={PLAN_STATUS_COLORS[status]}
       />
 
       <Button size="small" color={action.color} onClick={handleClick} disabled={isPending}>

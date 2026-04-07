@@ -1,19 +1,22 @@
 "use client";
 
-import { Chip, type ChipProps } from "@mui/material";
+import { Chip } from "@mui/material";
 
-import { TrainingPlanStatus, TRAINING_PLAN_STATUS_LABELS } from "@repo/contracts/training-plan";
+import {
+  type TrainingPlanStatus,
+  TRAINING_PLAN_STATUS_LABELS,
+} from "@repo/contracts/training-plan";
 
-const STATUS_COLORS: Record<TrainingPlanStatus, ChipProps["color"]> = {
-  [TrainingPlanStatus.DRAFT]: "default",
-  [TrainingPlanStatus.ACTIVE]: "success",
-  [TrainingPlanStatus.ARCHIVED]: "warning",
-};
+import { PLAN_STATUS_COLORS } from "@app/lib/config";
 
 type PlanStatusChipProps = {
   status: TrainingPlanStatus;
 };
 
 export const PlanStatusChip: React.FC<PlanStatusChipProps> = ({ status }) => (
-  <Chip size="small" label={TRAINING_PLAN_STATUS_LABELS[status]} color={STATUS_COLORS[status]} />
+  <Chip
+    size="small"
+    label={TRAINING_PLAN_STATUS_LABELS[status]}
+    color={PLAN_STATUS_COLORS[status]}
+  />
 );

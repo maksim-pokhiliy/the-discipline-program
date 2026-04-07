@@ -7,16 +7,21 @@ export const PaymentErrorActionsSection = () => {
     <ContentSection title="What Can You Do?" subtitle="Here are some options to resolve the issue">
       <Stack spacing={6} alignItems="center">
         <Stack spacing={2} direction={{ xs: "column", sm: "row" }}>
-          <Button variant="contained" size="large" href="/storefront" sx={{ minWidth: 200 }}>
+          <Button
+            variant="contained"
+            size="large"
+            href="/storefront"
+            sx={(theme) => ({ minWidth: theme.spacing(25) })}
+          >
             Try Again
           </Button>
 
-          <Button size="large" href="/contact" sx={{ minWidth: 200 }}>
+          <Button size="large" href="/contact" sx={(theme) => ({ minWidth: theme.spacing(25) })}>
             Contact Support
           </Button>
         </Stack>
 
-        <Stack spacing={2} textAlign="center" sx={{ maxWidth: 500 }}>
+        <Stack spacing={2} textAlign="center" sx={(theme) => ({ maxWidth: theme.spacing(62.5) })}>
           <Typography variant="body1" color="text.secondary">
             <strong>Before trying again:</strong>
           </Typography>

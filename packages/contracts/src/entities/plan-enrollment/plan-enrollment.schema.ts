@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { HealthStatus } from "../athlete-profile/athlete-profile.constants";
+import { HealthStatus } from "../athlete-profile";
 
 import { PlanEnrollmentStatus } from "./plan-enrollment.constants";
 

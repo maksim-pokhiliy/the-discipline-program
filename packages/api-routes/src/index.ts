@@ -7,4 +7,5 @@ export {
   createPutHandler,
   createDeleteHandler,
   createToggleHandler,
+  createMultiToggleHandler,
 } from "./route-helpers";

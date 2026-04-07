@@ -53,14 +53,14 @@ export const WeekDayGroup: React.FC<WeekDayGroupProps> = ({
 
           {isToday ? (
             <Stack
-              sx={{
-                width: 22,
-                height: 22,
+              sx={(theme) => ({
+                width: theme.spacing(2.75),
+                height: theme.spacing(2.75),
                 borderRadius: "50%",
                 backgroundColor: "primary.main",
                 alignItems: "center",
                 justifyContent: "center",
-              }}
+              })}
             >
               <Typography variant="caption" sx={{ color: "primary.contrastText" }}>
                 {date.getUTCDate()}

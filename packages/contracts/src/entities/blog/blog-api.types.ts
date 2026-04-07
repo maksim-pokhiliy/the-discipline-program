@@ -31,4 +31,6 @@ export type ToggleBlogPostQuery = z.infer<typeof toggleBlogPostQuerySchema>;
 
 export type GetBlogPageDataResponse = z.infer<typeof getBlogPageDataResponseSchema>;
 
+export type AdminBlogPageData = GetBlogPageDataResponse;
+
 export type GetBlogArticleBySlugParams = z.infer<typeof getBlogArticleBySlugParamsSchema>;

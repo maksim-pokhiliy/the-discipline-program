@@ -12,16 +12,16 @@ export const PaymentSuccessHeroSection = () => {
       <Stack sx={{ alignItems: "center" }}>
         <Stack
           sx={(theme) => ({
-            width: 120,
-            height: 120,
+            width: theme.spacing(15),
+            height: theme.spacing(15),
             borderRadius: "50%",
             backgroundColor: "success.main",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: `0 0 32px ${alpha(theme.palette.success.light, 0.4)}`,
+            boxShadow: `0 0 ${theme.spacing(4)} ${alpha(theme.palette.success.light, 0.4)}`,
           })}
         >
-          <CheckCircle sx={{ fontSize: 80, color: "white" }} />
+          <CheckCircle sx={(theme) => ({ fontSize: theme.spacing(10), color: "common.white" })} />
         </Stack>
       </Stack>
     </ContentSection>

@@ -1,5 +1,3 @@
-"use client";
-
 import { Box, Container, Stack } from "@mui/material";
 
 import { SessionGuard } from "@repo/auth";
