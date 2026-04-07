@@ -1,4 +1,4 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Button, List, ListItem, ListItemText, Stack, Typography } from "@mui/material";
 
 import { ContentSection } from "@repo/ui";
 
@@ -25,19 +25,24 @@ export const PaymentSuccessActionsSection = () => {
         </Stack>
 
         <Stack spacing={2} textAlign="center" sx={(theme) => ({ maxWidth: theme.spacing(62.5) })}>
-          <Typography variant="body1" color="text.secondary">
-            <strong>Next Steps:</strong>
+          <Typography variant="body1" color="text.secondary" fontWeight="bold">
+            Next Steps:
           </Typography>
 
-          <Typography variant="body2" color="text.secondary">
-            1. Check your email for access instructions
-            <br />
-            2. Download the mobile app or access the web platform
-            <br />
-            3. Start your first workout with Denis Sergeev
-            <br />
-            4. Join our community and track your progress
-          </Typography>
+          <List dense disablePadding>
+            <ListItem disableGutters disablePadding>
+              <ListItemText secondary="1. Check your email for access instructions" />
+            </ListItem>
+            <ListItem disableGutters disablePadding>
+              <ListItemText secondary="2. Download the mobile app or access the web platform" />
+            </ListItem>
+            <ListItem disableGutters disablePadding>
+              <ListItemText secondary="3. Start your first workout with Denis Sergeev" />
+            </ListItem>
+            <ListItem disableGutters disablePadding>
+              <ListItemText secondary="4. Join our community and track your progress" />
+            </ListItem>
+          </List>
 
           <Typography variant="caption" color="text.disabled">
             If you don&apos;t receive an email within 15 minutes, please check your spam folder or

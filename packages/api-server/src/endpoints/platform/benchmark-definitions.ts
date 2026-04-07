@@ -7,6 +7,7 @@ import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToBenchmarkDefinition } from "../../mappers";
+import { handlePrismaError } from "../../utils";
 
 export const platformBenchmarkDefinitionsApi = {
   getAll: async (): Promise<BenchmarkDefinition[]> => {
@@ -30,9 +31,13 @@ export const platformBenchmarkDefinitionsApi = {
   },
 
   create: async (data: CreateBenchmarkDefinitionData): Promise<BenchmarkDefinition> => {
-    const definition = await prisma.benchmarkDefinition.create({ data });
+    try {
+      const definition = await prisma.benchmarkDefinition.create({ data });
 
-    return mapToBenchmarkDefinition(definition);
+      return mapToBenchmarkDefinition(definition);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Benchmark definition", field: "name" });
+    }
   },
 
   update: async (
@@ -47,12 +52,16 @@ export const platformBenchmarkDefinitionsApi = {
       throw new NotFoundError("Benchmark definition not found", { definitionId });
     }
 
-    const definition = await prisma.benchmarkDefinition.update({
-      where: { id: definitionId },
-      data,
-    });
+    try {
+      const definition = await prisma.benchmarkDefinition.update({
+        where: { id: definitionId },
+        data,
+      });
 
-    return mapToBenchmarkDefinition(definition);
+      return mapToBenchmarkDefinition(definition);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Benchmark definition", field: "name" });
+    }
   },
 
   delete: async (definitionId: string): Promise<void> => {
@@ -75,6 +84,10 @@ export const platformBenchmarkDefinitionsApi = {
       );
     }
 
-    await prisma.benchmarkDefinition.delete({ where: { id: definitionId } });
+    try {
+      await prisma.benchmarkDefinition.delete({ where: { id: definitionId } });
+    } catch (error) {
+      handlePrismaError(error, { entity: "Benchmark definition" });
+    }
   },
 };

@@ -7,6 +7,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToUserBenchmark } from "../../mappers";
+import { handlePrismaError } from "../../utils";
 
 import { resolveCoachId, verifyAthleteBelongsToCoach } from "./guards";
 
@@ -39,11 +40,15 @@ export const platformUserBenchmarksApi = {
   ): Promise<UserBenchmark> => {
     await verifyAccessToUser(authUserId, targetUserId);
 
-    const benchmark = await prisma.userBenchmark.create({
-      data: { userId: targetUserId, ...data },
-    });
+    try {
+      const benchmark = await prisma.userBenchmark.create({
+        data: { userId: targetUserId, ...data },
+      });
 
-    return mapToUserBenchmark(benchmark);
+      return mapToUserBenchmark(benchmark);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "User benchmark" });
+    }
   },
 
   update: async (
@@ -61,12 +66,16 @@ export const platformUserBenchmarksApi = {
 
     await verifyAccessToUser(authUserId, existing.userId);
 
-    const benchmark = await prisma.userBenchmark.update({
-      where: { id: benchmarkId },
-      data,
-    });
+    try {
+      const benchmark = await prisma.userBenchmark.update({
+        where: { id: benchmarkId },
+        data,
+      });
 
-    return mapToUserBenchmark(benchmark);
+      return mapToUserBenchmark(benchmark);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "User benchmark" });
+    }
   },
 
   delete: async (authUserId: string, benchmarkId: string): Promise<void> => {
@@ -80,6 +89,10 @@ export const platformUserBenchmarksApi = {
 
     await verifyAccessToUser(authUserId, existing.userId);
 
-    await prisma.userBenchmark.delete({ where: { id: benchmarkId } });
+    try {
+      await prisma.userBenchmark.delete({ where: { id: benchmarkId } });
+    } catch (error) {
+      handlePrismaError(error, { entity: "User benchmark" });
+    }
   },
 };

@@ -13,6 +13,7 @@ import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 import { prisma } from "../../db/client";
 import { mapToTrainingPlan, mapToWorkout } from "../../mappers";
 import { TRAINING_PLAN_STATUS_MAP } from "../../mappers/enum-maps";
+import { handlePrismaError } from "../../utils";
 import {
   MS_PER_DAY,
   endOfWeekInTz,
@@ -140,11 +141,15 @@ export const platformTrainingPlansApi = {
   create: async (userId: string, data: CreateTrainingPlanData): Promise<TrainingPlan> => {
     const coachId = await resolveCoachId(userId);
 
-    const plan = await prisma.trainingPlan.create({
-      data: { coachId, ...data },
-    });
+    try {
+      const plan = await prisma.trainingPlan.create({
+        data: { coachId, ...data },
+      });
 
-    return mapToTrainingPlan(plan);
+      return mapToTrainingPlan(plan);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Training plan", field: "name" });
+    }
   },
 
   update: async (
@@ -156,12 +161,16 @@ export const platformTrainingPlansApi = {
 
     await verifyPlanOwnership(id, coachId);
 
-    const plan = await prisma.trainingPlan.update({
-      where: { id },
-      data,
-    });
+    try {
+      const plan = await prisma.trainingPlan.update({
+        where: { id },
+        data,
+      });
 
-    return mapToTrainingPlan(plan);
+      return mapToTrainingPlan(plan);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Training plan", field: "name" });
+    }
   },
 
   delete: async (userId: string, id: string): Promise<void> => {
@@ -169,14 +178,18 @@ export const platformTrainingPlansApi = {
 
     await verifyPlanOwnership(id, coachId);
 
-    await prisma.$transaction(async (tx) => {
-      await tx.planEnrollment.deleteMany({ where: { trainingPlanId: id } });
-      await tx.product.updateMany({
-        where: { trainingPlanId: id },
-        data: { trainingPlanId: null },
+    try {
+      await prisma.$transaction(async (tx) => {
+        await tx.planEnrollment.deleteMany({ where: { trainingPlanId: id } });
+        await tx.product.updateMany({
+          where: { trainingPlanId: id },
+          data: { trainingPlanId: null },
+        });
+        await tx.trainingPlan.delete({ where: { id } });
       });
-      await tx.trainingPlan.delete({ where: { id } });
-    });
+    } catch (error) {
+      handlePrismaError(error, { entity: "Training plan" });
+    }
   },
 
   duplicate: async (userId: string, id: string): Promise<TrainingPlan> => {
@@ -191,32 +204,36 @@ export const platformTrainingPlansApi = {
       },
     });
 
-    const newPlan = await prisma.$transaction(async (tx) => {
-      const plan = await tx.trainingPlan.create({
-        data: {
-          coachId,
-          name: `Copy of ${source.name}`,
-          description: source.description,
-          status: TrainingPlanStatus.DRAFT,
-        },
+    try {
+      const newPlan = await prisma.$transaction(async (tx) => {
+        const plan = await tx.trainingPlan.create({
+          data: {
+            coachId,
+            name: `Copy of ${source.name}`,
+            description: source.description,
+            status: TrainingPlanStatus.DRAFT,
+          },
+        });
+
+        if (source.workouts.length > 0) {
+          await tx.workout.createMany({
+            data: source.workouts.map((workout) => ({
+              planId: plan.id,
+              scheduledDate: workout.scheduledDate,
+              title: workout.title,
+              description: workout.description,
+              content: workout.content,
+            })),
+          });
+        }
+
+        return plan;
       });
 
-      if (source.workouts.length > 0) {
-        await tx.workout.createMany({
-          data: source.workouts.map((workout) => ({
-            planId: plan.id,
-            scheduledDate: workout.scheduledDate,
-            title: workout.title,
-            description: workout.description,
-            content: workout.content,
-          })),
-        });
-      }
-
-      return plan;
-    });
-
-    return mapToTrainingPlan(newPlan);
+      return mapToTrainingPlan(newPlan);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Training plan", field: "name" });
+    }
   },
 
   archive: async (userId: string, id: string): Promise<TrainingPlan> => {
@@ -233,12 +250,16 @@ export const platformTrainingPlansApi = {
       throw new ConflictError("Only active plans can be archived.");
     }
 
-    const updated = await prisma.trainingPlan.update({
-      where: { id },
-      data: { status: TrainingPlanStatus.ARCHIVED },
-    });
+    try {
+      const updated = await prisma.trainingPlan.update({
+        where: { id },
+        data: { status: TrainingPlanStatus.ARCHIVED },
+      });
 
-    return mapToTrainingPlan(updated);
+      return mapToTrainingPlan(updated);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Training plan" });
+    }
   },
 
   restore: async (userId: string, id: string): Promise<TrainingPlan> => {
@@ -255,12 +276,16 @@ export const platformTrainingPlansApi = {
       throw new ConflictError("Only archived plans can be restored.");
     }
 
-    const updated = await prisma.trainingPlan.update({
-      where: { id },
-      data: { status: TrainingPlanStatus.ACTIVE },
-    });
+    try {
+      const updated = await prisma.trainingPlan.update({
+        where: { id },
+        data: { status: TrainingPlanStatus.ACTIVE },
+      });
 
-    return mapToTrainingPlan(updated);
+      return mapToTrainingPlan(updated);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Training plan" });
+    }
   },
 
   activate: async (userId: string, id: string): Promise<TrainingPlan> => {
@@ -277,11 +302,15 @@ export const platformTrainingPlansApi = {
       throw new ConflictError("Only draft plans can be activated.");
     }
 
-    const updated = await prisma.trainingPlan.update({
-      where: { id },
-      data: { status: TrainingPlanStatus.ACTIVE },
-    });
+    try {
+      const updated = await prisma.trainingPlan.update({
+        where: { id },
+        data: { status: TrainingPlanStatus.ACTIVE },
+      });
 
-    return mapToTrainingPlan(updated);
+      return mapToTrainingPlan(updated);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Training plan" });
+    }
   },
 };

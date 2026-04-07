@@ -7,6 +7,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToCoachNote } from "../../mappers";
+import { handlePrismaError } from "../../utils";
 
 import { resolveCoachId, verifyAthleteBelongsToCoach } from "./guards";
 
@@ -39,11 +40,15 @@ export const platformCoachNotesApi = {
 
     await verifyAthleteBelongsToCoach(data.athleteId, coachId);
 
-    const note = await prisma.coachNote.create({
-      data: { coachId, ...data },
-    });
+    try {
+      const note = await prisma.coachNote.create({
+        data: { coachId, ...data },
+      });
 
-    return mapToCoachNote(note);
+      return mapToCoachNote(note);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Coach note" });
+    }
   },
 
   update: async (userId: string, noteId: string, data: UpdateCoachNoteData): Promise<CoachNote> => {
@@ -55,12 +60,16 @@ export const platformCoachNotesApi = {
       throw new NotFoundError("Coach note not found", { noteId });
     }
 
-    const note = await prisma.coachNote.update({
-      where: { id: noteId },
-      data,
-    });
+    try {
+      const note = await prisma.coachNote.update({
+        where: { id: noteId },
+        data,
+      });
 
-    return mapToCoachNote(note);
+      return mapToCoachNote(note);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Coach note" });
+    }
   },
 
   delete: async (userId: string, noteId: string): Promise<void> => {
@@ -72,6 +81,10 @@ export const platformCoachNotesApi = {
       throw new NotFoundError("Coach note not found", { noteId });
     }
 
-    await prisma.coachNote.delete({ where: { id: noteId } });
+    try {
+      await prisma.coachNote.delete({ where: { id: noteId } });
+    } catch (error) {
+      handlePrismaError(error, { entity: "Coach note" });
+    }
   },
 };

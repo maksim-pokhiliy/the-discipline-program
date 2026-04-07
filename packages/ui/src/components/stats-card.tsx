@@ -3,11 +3,8 @@
 import { type ReactNode } from "react";
 
 import { Card, CardContent, Typography, Stack, Tooltip } from "@mui/material";
-import { type Palette, type PaletteColor } from "@mui/material/styles";
 
-export type PaletteColorKey = {
-  [K in keyof Palette]: Palette[K] extends PaletteColor ? K : never;
-}[keyof Palette];
+import { type PaletteColorKey } from "@repo/mui";
 
 const sizeConfig = {
   small: { titleVariant: "body2", valueVariant: "h5", spacing: 3, iconSize: "medium" },

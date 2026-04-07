@@ -1,9 +1,20 @@
 import { NextResponse } from "next/server";
 import { type ZodSchema, type ZodType, type ZodTypeDef } from "zod";
 
-import { type RouteContext } from "./types";
+import { handleApiError } from "./error-handler";
+import { type RouteContext, type RouteHandler } from "./types";
 
 type ParseSchema<T> = ZodType<T, ZodTypeDef, unknown>;
+
+export const withPublicRoute = (handler: RouteHandler): RouteHandler => {
+  return async (request, context) => {
+    try {
+      return await handler(request, context);
+    } catch (error) {
+      return handleApiError(error);
+    }
+  };
+};
 
 export const createGetHandler = <TResponse>(
   apiFn: () => Promise<TResponse>,

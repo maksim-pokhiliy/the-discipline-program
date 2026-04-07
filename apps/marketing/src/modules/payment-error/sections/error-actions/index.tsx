@@ -1,4 +1,4 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { Button, List, ListItem, ListItemText, Stack, Typography } from "@mui/material";
 
 import { ContentSection } from "@repo/ui";
 
@@ -22,19 +22,24 @@ export const PaymentErrorActionsSection = () => {
         </Stack>
 
         <Stack spacing={2} textAlign="center" sx={(theme) => ({ maxWidth: theme.spacing(62.5) })}>
-          <Typography variant="body1" color="text.secondary">
-            <strong>Before trying again:</strong>
+          <Typography variant="body1" color="text.secondary" fontWeight="bold">
+            Before trying again:
           </Typography>
 
-          <Typography variant="body2" color="text.secondary">
-            1. Verify your card details are correct
-            <br />
-            2. Ensure you have sufficient funds
-            <br />
-            3. Check if your card is enabled for online payments
-            <br />
-            4. Try using a different payment method
-          </Typography>
+          <List dense disablePadding>
+            <ListItem disableGutters disablePadding>
+              <ListItemText secondary="1. Verify your card details are correct" />
+            </ListItem>
+            <ListItem disableGutters disablePadding>
+              <ListItemText secondary="2. Ensure you have sufficient funds" />
+            </ListItem>
+            <ListItem disableGutters disablePadding>
+              <ListItemText secondary="3. Check if your card is enabled for online payments" />
+            </ListItem>
+            <ListItem disableGutters disablePadding>
+              <ListItemText secondary="4. Try using a different payment method" />
+            </ListItem>
+          </List>
 
           <Typography variant="caption" color="text.disabled">
             If the problem persists, please contact our support team. We&apos;re here to help you

@@ -7,6 +7,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToPlanEnrollment } from "../../mappers";
+import { handlePrismaError } from "../../utils";
 
 import { resolveCoachId, verifyPlanOwnership } from "./guards";
 
@@ -76,12 +77,16 @@ export const platformPlanEnrollmentsApi = {
       throw new NotFoundError("User not found", { userId: data.userId });
     }
 
-    const enrollment = await prisma.planEnrollment.create({
-      data: { trainingPlanId: planId, ...data },
-      include: includeEnriched,
-    });
+    try {
+      const enrollment = await prisma.planEnrollment.create({
+        data: { trainingPlanId: planId, ...data },
+        include: includeEnriched,
+      });
 
-    return mapToPlanEnrollment(enrollment);
+      return mapToPlanEnrollment(enrollment);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Enrollment" });
+    }
   },
 
   update: async (
@@ -103,13 +108,17 @@ export const platformPlanEnrollmentsApi = {
       throw new NotFoundError("Enrollment not found", { enrollmentId, planId });
     }
 
-    const enrollment = await prisma.planEnrollment.update({
-      where: { id: enrollmentId },
-      data,
-      include: includeEnriched,
-    });
+    try {
+      const enrollment = await prisma.planEnrollment.update({
+        where: { id: enrollmentId },
+        data,
+        include: includeEnriched,
+      });
 
-    return mapToPlanEnrollment(enrollment);
+      return mapToPlanEnrollment(enrollment);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Enrollment" });
+    }
   },
 
   delete: async (userId: string, planId: string, enrollmentId: string): Promise<void> => {
@@ -126,6 +135,10 @@ export const platformPlanEnrollmentsApi = {
       throw new NotFoundError("Enrollment not found", { enrollmentId, planId });
     }
 
-    await prisma.planEnrollment.delete({ where: { id: enrollmentId } });
+    try {
+      await prisma.planEnrollment.delete({ where: { id: enrollmentId } });
+    } catch (error) {
+      handlePrismaError(error, { entity: "Enrollment" });
+    }
   },
 };

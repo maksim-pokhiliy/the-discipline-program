@@ -1,54 +1,50 @@
 import { NextResponse } from "next/server";
 
-import { handleApiError } from "@repo/api-routes";
+import { withPublicRoute } from "@repo/api-routes";
 import { pagesApi } from "@repo/api-server";
 import { getPageBySlugParamsSchema } from "@repo/contracts/pages";
 import { NotFoundError } from "@repo/errors";
 
-export async function GET(_: Request, { params }: { params: Promise<{ pageSlug: string }> }) {
-  try {
-    const { pageSlug } = getPageBySlugParamsSchema.parse(await params);
+export const GET = withPublicRoute(async (_, context) => {
+  const { pageSlug } = getPageBySlugParamsSchema.parse(await context.params);
 
-    let pageData;
+  let pageData;
 
-    switch (pageSlug) {
-      case "home": {
-        pageData = await pagesApi.getHomePage();
-        break;
-      }
-
-      case "storefront": {
-        pageData = await pagesApi.getStorefrontProgramsPage();
-        break;
-      }
-
-      case "about": {
-        pageData = await pagesApi.getAboutPage();
-        break;
-      }
-
-      case "blog": {
-        pageData = await pagesApi.getBlogPage();
-        break;
-      }
-
-      case "contact": {
-        pageData = await pagesApi.getContactPage();
-        break;
-      }
-
-      case "faq": {
-        pageData = await pagesApi.getFaqPage();
-        break;
-      }
-
-      default: {
-        throw new NotFoundError("Page not found", { pageSlug });
-      }
+  switch (pageSlug) {
+    case "home": {
+      pageData = await pagesApi.getHomePage();
+      break;
     }
 
-    return NextResponse.json(pageData);
-  } catch (error) {
-    return handleApiError(error);
+    case "storefront": {
+      pageData = await pagesApi.getStorefrontProgramsPage();
+      break;
+    }
+
+    case "about": {
+      pageData = await pagesApi.getAboutPage();
+      break;
+    }
+
+    case "blog": {
+      pageData = await pagesApi.getBlogPage();
+      break;
+    }
+
+    case "contact": {
+      pageData = await pagesApi.getContactPage();
+      break;
+    }
+
+    case "faq": {
+      pageData = await pagesApi.getFaqPage();
+      break;
+    }
+
+    default: {
+      throw new NotFoundError("Page not found", { pageSlug });
+    }
   }
-}
+
+  return NextResponse.json(pageData);
+});

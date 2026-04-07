@@ -19,6 +19,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { HEALTH_STATUS_MAP, mapToCoachActionItem } from "../../mappers";
+import { handlePrismaError } from "../../utils";
 import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
 import { type EnrollmentWithData, createEnrollmentInclude } from "../../utils/enrollment-query";
 
@@ -139,133 +140,137 @@ export const platformCoachActionItemsApi = {
 
     const tz = user.timezone;
 
-    return prisma.$transaction(async (tx) => {
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`reconcile:${coachId}`}))`;
+    try {
+      return prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`reconcile:${coachId}`}))`;
 
-      const [enrollments, openItems, latestResolved] = await Promise.all([
-        tx.planEnrollment.findMany({
-          where: {
-            status: PlanEnrollmentStatus.ACTIVE,
-            trainingPlan: { coachId },
-          },
-          include: createEnrollmentInclude(coachId),
-        }),
-        tx.coachActionItem.findMany({
-          where: { coachId, status: ActionItemStatus.OPEN },
-        }),
-        tx.coachActionItem.findMany({
-          where: { coachId, status: ActionItemStatus.RESOLVED },
-          orderBy: { resolvedAt: "desc" },
-          distinct: ["athleteId", "type"],
-        }),
-      ]);
+        const [enrollments, openItems, latestResolved] = await Promise.all([
+          tx.planEnrollment.findMany({
+            where: {
+              status: PlanEnrollmentStatus.ACTIVE,
+              trainingPlan: { coachId },
+            },
+            include: createEnrollmentInclude(coachId),
+          }),
+          tx.coachActionItem.findMany({
+            where: { coachId, status: ActionItemStatus.OPEN },
+          }),
+          tx.coachActionItem.findMany({
+            where: { coachId, status: ActionItemStatus.RESOLVED },
+            orderBy: { resolvedAt: "desc" },
+            distinct: ["athleteId", "type"],
+          }),
+        ]);
 
-      const conditions = computeConditions(enrollments, tz);
+        const conditions = computeConditions(enrollments, tz);
 
-      const openByKey = new Map<string, PrismaCoachActionItemRecord>();
-      const duplicates: PrismaCoachActionItemRecord[] = [];
+        const openByKey = new Map<string, PrismaCoachActionItemRecord>();
+        const duplicates: PrismaCoachActionItemRecord[] = [];
 
-      for (const item of openItems) {
-        const key = `${item.type}:${item.athleteId}`;
+        for (const item of openItems) {
+          const key = `${item.type}:${item.athleteId}`;
 
-        if (openByKey.has(key)) {
-          duplicates.push(item);
-        } else {
-          openByKey.set(key, item);
+          if (openByKey.has(key)) {
+            duplicates.push(item);
+          } else {
+            openByKey.set(key, item);
+          }
         }
-      }
 
-      const resolvedByKey = new Map(
-        latestResolved.map((item) => [`${item.type}:${item.athleteId}`, item]),
-      );
+        const resolvedByKey = new Map(
+          latestResolved.map((item) => [`${item.type}:${item.athleteId}`, item]),
+        );
 
-      const activeAthleteIds = new Set(enrollments.map((e) => e.user.id));
+        const activeAthleteIds = new Set(enrollments.map((e) => e.user.id));
 
-      let created = 0;
-      let updated = 0;
-      let resolved = 0;
+        let created = 0;
+        let updated = 0;
+        let resolved = 0;
 
-      for (const item of duplicates) {
-        await tx.coachActionItem.update({
-          where: { id: item.id },
-          data: {
-            status: ActionItemStatus.RESOLVED,
-            resolvedAt: new Date(),
-            resolveReason: ActionItemResolveReason.AUTO_CONDITION_CLEARED,
-          },
-        });
-        resolved++;
-      }
+        for (const item of duplicates) {
+          await tx.coachActionItem.update({
+            where: { id: item.id },
+            data: {
+              status: ActionItemStatus.RESOLVED,
+              resolvedAt: new Date(),
+              resolveReason: ActionItemResolveReason.AUTO_CONDITION_CLEARED,
+            },
+          });
+          resolved++;
+        }
 
-      for (const condition of conditions) {
-        const key = `${condition.type}:${condition.athleteId}`;
-        const existingOpen = openByKey.get(key);
+        for (const condition of conditions) {
+          const key = `${condition.type}:${condition.athleteId}`;
+          const existingOpen = openByKey.get(key);
 
-        if (existingOpen) {
-          const needsUpdate =
-            existingOpen.message !== condition.message ||
-            existingOpen.severity !== condition.severity;
+          if (existingOpen) {
+            const needsUpdate =
+              existingOpen.message !== condition.message ||
+              existingOpen.severity !== condition.severity;
 
-          if (needsUpdate) {
-            await tx.coachActionItem.update({
-              where: { id: existingOpen.id },
-              data: {
-                message: condition.message,
-                severity: condition.severity,
-                metadata: condition.metadata,
-              },
-            });
-            updated++;
+            if (needsUpdate) {
+              await tx.coachActionItem.update({
+                where: { id: existingOpen.id },
+                data: {
+                  message: condition.message,
+                  severity: condition.severity,
+                  metadata: condition.metadata,
+                },
+              });
+              updated++;
+            }
+
+            openByKey.delete(key);
+            continue;
           }
 
-          openByKey.delete(key);
-          continue;
+          const latestResolvedItem = resolvedByKey.get(key);
+
+          if (
+            latestResolvedItem &&
+            conditionMatchesResolved(
+              condition,
+              latestResolvedItem.metadata as Record<string, unknown> | null,
+            )
+          ) {
+            continue;
+          }
+
+          await tx.coachActionItem.create({
+            data: {
+              coachId,
+              athleteId: condition.athleteId,
+              type: condition.type,
+              severity: condition.severity,
+              message: condition.message,
+              metadata: condition.metadata,
+            },
+          });
+          created++;
         }
 
-        const latestResolvedItem = resolvedByKey.get(key);
+        for (const [key, item] of openByKey) {
+          const athleteId = key.split(":")[1] ?? "";
+          const reason = activeAthleteIds.has(athleteId)
+            ? ActionItemResolveReason.AUTO_CONDITION_CLEARED
+            : ActionItemResolveReason.AUTO_ENROLLMENT_ENDED;
 
-        if (
-          latestResolvedItem &&
-          conditionMatchesResolved(
-            condition,
-            latestResolvedItem.metadata as Record<string, unknown> | null,
-          )
-        ) {
-          continue;
+          await tx.coachActionItem.update({
+            where: { id: item.id },
+            data: {
+              status: ActionItemStatus.RESOLVED,
+              resolvedAt: new Date(),
+              resolveReason: reason,
+            },
+          });
+          resolved++;
         }
 
-        await tx.coachActionItem.create({
-          data: {
-            coachId,
-            athleteId: condition.athleteId,
-            type: condition.type,
-            severity: condition.severity,
-            message: condition.message,
-            metadata: condition.metadata,
-          },
-        });
-        created++;
-      }
-
-      for (const [key, item] of openByKey) {
-        const athleteId = key.split(":")[1] ?? "";
-        const reason = activeAthleteIds.has(athleteId)
-          ? ActionItemResolveReason.AUTO_CONDITION_CLEARED
-          : ActionItemResolveReason.AUTO_ENROLLMENT_ENDED;
-
-        await tx.coachActionItem.update({
-          where: { id: item.id },
-          data: {
-            status: ActionItemStatus.RESOLVED,
-            resolvedAt: new Date(),
-            resolveReason: reason,
-          },
-        });
-        resolved++;
-      }
-
-      return { created, updated, resolved, coachId };
-    });
+        return { created, updated, resolved, coachId };
+      });
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Action item" });
+    }
   },
 
   resolve: async (userId: string, itemId: string): Promise<CoachActionItem> => {
@@ -281,15 +286,19 @@ export const platformCoachActionItemsApi = {
       return mapToCoachActionItem(item);
     }
 
-    const updated = await prisma.coachActionItem.update({
-      where: { id: itemId },
-      data: {
-        status: ActionItemStatus.RESOLVED,
-        resolvedAt: new Date(),
-        resolveReason: ActionItemResolveReason.MANUAL_CONTACTED,
-      },
-    });
+    try {
+      const updated = await prisma.coachActionItem.update({
+        where: { id: itemId },
+        data: {
+          status: ActionItemStatus.RESOLVED,
+          resolvedAt: new Date(),
+          resolveReason: ActionItemResolveReason.MANUAL_CONTACTED,
+        },
+      });
 
-    return mapToCoachActionItem(updated);
+      return mapToCoachActionItem(updated);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Action item" });
+    }
   },
 };
