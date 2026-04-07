@@ -1,5 +1,4 @@
 import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
 import { adminBlogApi } from "@repo/api-server";
 import {
   deleteBlogPostParamsSchema,
@@ -7,6 +6,8 @@ import {
   updateBlogPostParamsSchema,
   updateBlogPostRequestSchema,
 } from "@repo/contracts/blog";
+
+import { withAdminAuth } from "@app/lib/auth";
 
 export const GET = withAdminAuth(
   createGetByIdHandler(adminBlogApi.getPostById, getBlogPostByIdParamsSchema),

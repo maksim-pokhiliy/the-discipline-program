@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformPlanEnrollmentsApi } from "@repo/api-server";
 import {
   deletePlanEnrollmentParamsSchema,
@@ -10,6 +9,8 @@ import {
   updatePlanEnrollmentRequestSchema,
   updatePlanEnrollmentResponseSchema,
 } from "@repo/contracts/plan-enrollment";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const GET = withPlatformAuth(async (_, context, userId) => {
   const { planId, enrollmentId } = getPlanEnrollmentByIdParamsSchema.parse(await context.params);

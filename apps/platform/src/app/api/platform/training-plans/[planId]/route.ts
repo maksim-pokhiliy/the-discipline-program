@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformTrainingPlansApi } from "@repo/api-server";
 import {
   deleteTrainingPlanParamsSchema,
@@ -10,6 +9,8 @@ import {
   updateTrainingPlanRequestSchema,
   updateTrainingPlanResponseSchema,
 } from "@repo/contracts/training-plan";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const GET = withPlatformAuth(async (_, context, userId) => {
   const { planId } = getTrainingPlanByIdParamsSchema.parse(await context.params);

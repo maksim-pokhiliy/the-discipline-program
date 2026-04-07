@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformTrainingPlansApi } from "@repo/api-server";
 import {
   coachPlansPageDataSchema,
   createTrainingPlanRequestSchema,
   createTrainingPlanResponseSchema,
 } from "@repo/contracts/training-plan";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const GET = withPlatformAuth(async (_, _context, userId) => {
   const data = await platformTrainingPlansApi.getPageData(userId);

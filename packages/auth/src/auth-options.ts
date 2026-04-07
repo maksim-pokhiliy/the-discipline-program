@@ -3,13 +3,25 @@ import "./types/next-auth-extensions";
 import { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-import { authService } from "@repo/api-server";
-import { AUTH_CONSTANTS } from "@repo/contracts/auth";
+import { AUTH_CONSTANTS, type UserRole } from "@repo/contracts/auth";
 import { authEnv } from "@repo/env/auth";
 
 import { AUTH_ROUTES } from "./constants";
 
-export const authOptions: NextAuthOptions = {
+type AuthUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  image: string | null;
+  role: UserRole;
+};
+
+export type AuthServiceAdapter = {
+  validateUser: (email: string, password: string) => Promise<AuthUser | null>;
+  getUserById: (id: string) => Promise<{ role: UserRole } | null>;
+};
+
+export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions => ({
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -22,7 +34,7 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const user = await authService.validateUser(credentials.email, credentials.password);
+        const user = await service.validateUser(credentials.email, credentials.password);
 
         if (!user) {
           return null;
@@ -50,7 +62,7 @@ export const authOptions: NextAuthOptions = {
         return token;
       }
 
-      const dbUser = await authService.getUserById(token.id);
+      const dbUser = await service.getUserById(token.id);
 
       if (!dbUser) {
         throw new Error("User no longer exists");
@@ -79,4 +91,4 @@ export const authOptions: NextAuthOptions = {
     maxAge: AUTH_CONSTANTS.SESSION_MAX_AGE,
   },
   secret: authEnv.NEXTAUTH_SECRET,
-};
+});

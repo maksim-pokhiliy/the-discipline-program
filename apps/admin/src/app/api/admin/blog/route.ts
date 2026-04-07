@@ -1,7 +1,8 @@
 import { createGetHandler, createPostHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
 import { adminBlogApi } from "@repo/api-server";
 import { createBlogPostRequestSchema, getBlogPostsResponseSchema } from "@repo/contracts/blog";
+
+import { withAdminAuth } from "@app/lib/auth";
 
 export const GET = withAdminAuth(
   createGetHandler(adminBlogApi.getPosts, getBlogPostsResponseSchema),

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformCoachAthletesApi } from "@repo/api-server";
 import { coachAthletesDataSchema } from "@repo/contracts/coach-athletes";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const GET = withPlatformAuth(async (_, _context, userId) => {
   const data = await platformCoachAthletesApi.getAthletes(userId);

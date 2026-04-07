@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformAthleteProfileApi } from "@repo/api-server";
 import {
   getAthleteProfileResponseSchema,
   updateAthleteProfileRequestSchema,
   updateAthleteProfileResponseSchema,
 } from "@repo/contracts/athlete-profile";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const GET = withPlatformAuth(async (_, _context, userId) => {
   const data = await platformAthleteProfileApi.get(userId);

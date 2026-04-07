@@ -619,9 +619,9 @@ importers:
 
   packages/api-routes:
     dependencies:
-      '@repo/auth':
+      '@repo/contracts':
         specifier: workspace:*
-        version: link:../auth
+        version: link:../contracts
       '@repo/env':
         specifier: workspace:*
         version: link:../env
@@ -714,9 +714,6 @@ importers:
 
   packages/auth:
     dependencies:
-      '@repo/api-server':
-        specifier: workspace:*
-        version: link:../api-server
       '@repo/contracts':
         specifier: workspace:*
         version: link:../contracts

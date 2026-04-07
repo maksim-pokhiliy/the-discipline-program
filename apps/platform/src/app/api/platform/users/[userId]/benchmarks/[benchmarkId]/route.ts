@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformUserBenchmarksApi } from "@repo/api-server";
 import {
   deleteUserBenchmarkParamsSchema,
@@ -8,6 +7,8 @@ import {
   updateUserBenchmarkRequestSchema,
   updateUserBenchmarkResponseSchema,
 } from "@repo/contracts/user-benchmark";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const PUT = withPlatformAuth(async (request, context, userId) => {
   const { benchmarkId } = updateUserBenchmarkParamsSchema.parse(await context.params);

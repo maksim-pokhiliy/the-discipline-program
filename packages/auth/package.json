@@ -16,7 +16,6 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },
   "dependencies": {
-    "@repo/api-server": "workspace:*",
     "@repo/contracts": "workspace:*",
     "@repo/env": "workspace:*",
     "next-auth": "catalog:"

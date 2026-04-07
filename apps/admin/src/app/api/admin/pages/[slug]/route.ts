@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { withAdminAuth } from "@repo/api-routes/auth";
 import { adminPagesApi } from "@repo/api-server";
 import { pageSlugRouteParamsSchema, updatePageMetadataSchema } from "@repo/contracts/pages";
+
+import { withAdminAuth } from "@app/lib/auth";
 
 export const GET = withAdminAuth(async (_request, { params }) => {
   const { slug } = pageSlugRouteParamsSchema.parse(await params);

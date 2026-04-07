@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformWorkoutsApi } from "@repo/api-server";
 import {
   deleteWorkoutParamsSchema,
@@ -10,6 +9,8 @@ import {
   updateWorkoutRequestSchema,
   updateWorkoutResponseSchema,
 } from "@repo/contracts/workout";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const GET = withPlatformAuth(async (_, context, userId) => {
   const { planId, id } = getWorkoutByIdParamsSchema.parse(await context.params);

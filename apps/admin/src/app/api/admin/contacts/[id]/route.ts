@@ -1,5 +1,4 @@
 import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
 import { adminContactsApi } from "@repo/api-server";
 import {
   deleteContactParamsSchema,
@@ -7,6 +6,8 @@ import {
   updateContactParamsSchema,
   updateContactRequestSchema,
 } from "@repo/contracts/contact";
+
+import { withAdminAuth } from "@app/lib/auth";
 
 export const GET = withAdminAuth(
   createGetByIdHandler(adminContactsApi.getContactById, getContactByIdParamsSchema),

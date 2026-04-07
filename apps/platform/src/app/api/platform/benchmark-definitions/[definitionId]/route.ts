@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformBenchmarkDefinitionsApi } from "@repo/api-server";
 import {
   deleteBenchmarkDefinitionParamsSchema,
@@ -10,6 +9,8 @@ import {
   updateBenchmarkDefinitionRequestSchema,
   updateBenchmarkDefinitionResponseSchema,
 } from "@repo/contracts/benchmark-definition";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const GET = withPlatformAuth(async (_, context) => {
   const { definitionId } = getBenchmarkDefinitionByIdParamsSchema.parse(await context.params);

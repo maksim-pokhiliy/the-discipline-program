@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformCoachNotesApi } from "@repo/api-server";
 import {
   getCoachNoteByIdParamsSchema,
@@ -9,6 +8,8 @@ import {
   updateCoachNoteResponseSchema,
   deleteCoachNoteParamsSchema,
 } from "@repo/contracts/coach-note";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const GET = withPlatformAuth(async (_, context, userId) => {
   const { noteId } = getCoachNoteByIdParamsSchema.parse(await context.params);
