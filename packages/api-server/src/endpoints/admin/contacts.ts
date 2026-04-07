@@ -1,6 +1,10 @@
 import { type Prisma } from "@prisma/client";
 
-import { type ContactSubmissionItem, type UpdateContactRequest } from "@repo/contracts/contact";
+import {
+  type AdminContactsPageData,
+  type ContactSubmissionItem,
+  type UpdateContactRequest,
+} from "@repo/contracts/contact";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
@@ -61,7 +65,7 @@ export const adminContactsApi = {
     await prisma.marketingContactSubmission.delete({ where: { id } });
   },
 
-  getContactsPageData: async () => {
+  getContactsPageData: async (): Promise<AdminContactsPageData> => {
     const contacts = await adminContactsApi.getContacts();
 
     return { contacts };

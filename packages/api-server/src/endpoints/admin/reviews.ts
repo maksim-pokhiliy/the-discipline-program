@@ -1,4 +1,9 @@
-import { type CreateReviewData, type Review, type UpdateReviewData } from "@repo/contracts/review";
+import {
+  type AdminReviewsPageData,
+  type CreateReviewData,
+  type Review,
+  type UpdateReviewData,
+} from "@repo/contracts/review";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
@@ -69,7 +74,7 @@ export const adminReviewsApi = {
     return mapToReview(updated);
   },
 
-  getReviewsPageData: async () => {
+  getReviewsPageData: async (): Promise<AdminReviewsPageData> => {
     const reviews = await adminReviewsApi.getReviews();
 
     return { reviews };
