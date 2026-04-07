@@ -7,7 +7,7 @@ import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { COACH_NAVIGATION } from "@repo/shared";
+import { type PlatformNavigationConfig } from "@repo/shared";
 
 const ICON_MAP: Record<string, ReactNode> = {
   home: <HomeRounded />,
@@ -16,10 +16,14 @@ const ICON_MAP: Record<string, ReactNode> = {
   profile: <PersonRounded />,
 };
 
-export const PlatformBottomNav = () => {
+type PlatformBottomNavProps = {
+  navigation: PlatformNavigationConfig;
+};
+
+export const PlatformBottomNav = ({ navigation }: PlatformBottomNavProps) => {
   const pathname = usePathname();
 
-  const activeIndex = COACH_NAVIGATION.items.reduce<number>((bestIndex, item, index) => {
+  const activeIndex = navigation.items.reduce<number>((bestIndex, item, index) => {
     if (!pathname.startsWith(item.href)) {
       return bestIndex;
     }
@@ -28,14 +32,14 @@ export const PlatformBottomNav = () => {
       return index;
     }
 
-    const best = COACH_NAVIGATION.items[bestIndex];
+    const best = navigation.items[bestIndex];
 
     return best && item.href.length > best.href.length ? index : bestIndex;
   }, -1);
 
   return (
     <BottomNavigation value={activeIndex}>
-      {COACH_NAVIGATION.items.map((item) => (
+      {navigation.items.map((item) => (
         <BottomNavigationAction
           key={item.href}
           component={Link}

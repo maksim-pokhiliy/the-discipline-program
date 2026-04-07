@@ -1,25 +1,12 @@
-import { Box, Container, Stack } from "@mui/material";
+import { COACH_NAVIGATION } from "@repo/shared";
 
-import { SessionGuard } from "@repo/auth";
-import { PlatformBottomNav, PlatformHeader } from "@repo/ui";
+import { PlatformLayout } from "@app/lib/components/platform-layout";
 
-type CoachLayoutProps = {
-  children: React.ReactNode;
-};
-
-const CoachLayout = ({ children }: CoachLayoutProps) => {
+const CoachLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <SessionGuard>
-      <Stack sx={{ minHeight: "100dvh" }}>
-        <PlatformHeader />
-
-        <Container component="main" maxWidth="lg" sx={{ flex: 1, pt: 4, pb: 16 }}>
-          <Box component="section">{children}</Box>
-        </Container>
-
-        <PlatformBottomNav />
-      </Stack>
-    </SessionGuard>
+    <PlatformLayout logoHref="/coach" profileHref="/coach/profile" navigation={COACH_NAVIGATION}>
+      {children}
+    </PlatformLayout>
   );
 };
 

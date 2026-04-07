@@ -13,7 +13,6 @@ export class AppError extends Error {
   public readonly code: ErrorCode;
   public readonly statusCode: number;
   public readonly details?: Record<string, unknown>;
-  public readonly isOperational: boolean;
   public readonly timestamp: string;
 
   constructor(message: string, options: AppErrorOptions = {}) {
@@ -23,7 +22,6 @@ export class AppError extends Error {
     this.code = options.code || ERROR_CODES.INTERNAL_SERVER_ERROR;
     this.statusCode = options.statusCode || 500;
     this.details = options.details;
-    this.isOperational = true;
     this.timestamp = new Date().toISOString();
 
     if (options.cause) {

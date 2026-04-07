@@ -1,4 +1,6 @@
-export interface OrganizationConfig {
+import { baseEnv } from "@repo/env/base";
+
+interface OrganizationConfig {
   name: string;
   url: string;
   logo: string;
@@ -7,7 +9,7 @@ export interface OrganizationConfig {
   };
 }
 
-export interface SeoConfig {
+interface SeoConfig {
   siteName: string;
   siteUrl: string;
   defaultTitle: string;
@@ -20,7 +22,7 @@ export interface SeoConfig {
 
 export const SEO_CONFIG: SeoConfig = {
   siteName: "The Discipline Program",
-  siteUrl: "https://the-discipline-program.vercel.app",
+  siteUrl: baseEnv.NEXT_PUBLIC_MARKETING_URL,
   defaultTitle: "The Discipline Program",
   defaultDescription: "Structured training and coaching program for disciplined athletes.",
   defaultKeywords: ["fitness", "discipline", "training program", "coaching", "workout"],
@@ -28,7 +30,7 @@ export const SEO_CONFIG: SeoConfig = {
   twitterHandle: "@discipline_program",
   organization: {
     name: "The Discipline Program",
-    url: "https://the-discipline-program.vercel.app",
+    url: baseEnv.NEXT_PUBLIC_MARKETING_URL,
     logo: "/icons/logo.svg",
     founder: {
       name: "Denis Sergeev",

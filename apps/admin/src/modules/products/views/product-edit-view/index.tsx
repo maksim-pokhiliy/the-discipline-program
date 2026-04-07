@@ -4,18 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { type Product } from "@repo/contracts/product";
-import { amountToCents, centsToAmount } from "@repo/shared";
+import { centsToAmount } from "@repo/shared";
 import { FormView, QueryWrapper } from "@repo/ui";
 
 import { useProduct, useUpdateProduct } from "@app/lib/hooks";
 
+import { toProductApiData } from "../../components";
 import { ProductForm } from "../../components/product-form";
 import { productFormSchema, type ProductFormData } from "../../components/product-form-schema";
-
-const toUpdateProductData = (data: ProductFormData) => ({
-  ...data,
-  price: data.price ? { ...data.price, amountCents: amountToCents(data.price.amount) } : undefined,
-});
 
 type ProductEditFormProps = {
   product: Product;
@@ -48,7 +44,7 @@ const ProductEditForm: React.FC<ProductEditFormProps> = ({ product }) => {
   return (
     <FormView
       methods={methods}
-      onSubmit={(data) => updateProduct({ id: product.id, data: toUpdateProductData(data) })}
+      onSubmit={(data) => updateProduct({ id: product.id, data: toProductApiData(data) })}
       isPending={isPending}
       title="Edit Product"
       subtitle={product.title}

@@ -138,6 +138,7 @@ model Product {
 
   @@index([createdAt])
   @@index([deletedAt])
+  @@index([isActive])
   @@map("app_products")
 }
 
@@ -253,6 +254,7 @@ model Workout {
   updatedAt     DateTime       @updatedAt
   deletedAt     DateTime?
 
+  @@index([planId, scheduledDate])
   @@index([planId])
   @@index([scheduledDate])
   @@index([createdAt])
@@ -272,6 +274,7 @@ model WorkoutLog {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
+  @@unique([userId, workoutId])
   @@index([createdAt])
   @@index([userId])
   @@index([workoutId])
@@ -446,6 +449,7 @@ model MarketingBlogPost {
 
   @@index([createdAt])
   @@index([deletedAt])
+  @@index([isPublished, publishedAt])
   @@map("marketing_blog_posts")
 }
 
@@ -464,6 +468,7 @@ model MarketingReview {
 
   @@index([createdAt])
   @@index([deletedAt])
+  @@index([isActive])
   @@map("marketing_reviews")
 }
 

@@ -1,8 +1,7 @@
 import { type MetadataRoute } from "next";
 
-import { SEO_CONFIG } from "@repo/shared";
-
 import { serverApi } from "@app/lib/api/server";
+import { SEO_CONFIG } from "@app/lib/seo";
 
 export const dynamic = "force-dynamic";
 

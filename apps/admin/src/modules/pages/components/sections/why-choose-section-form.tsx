@@ -7,7 +7,7 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 import { type HomePageWhyChooseData } from "@repo/contracts/pages";
 import { FormCard } from "@repo/ui";
 
-import { ADD_BUTTON_SX } from "./shared-styles";
+import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./shared-styles";
 import { WhyChooseFeatureCard } from "./why-choose-feature-card";
 
 export const WhyChooseSectionForm = () => {
@@ -51,13 +51,7 @@ export const WhyChooseSectionForm = () => {
           </Typography>
         </Divider>
 
-        <Stack
-          spacing={3}
-          sx={{
-            width: "100%",
-            alignItems: "start",
-          }}
-        >
+        <Stack spacing={3} sx={ITEMS_STACK_SX}>
           {fields.map((field, index) => (
             <WhyChooseFeatureCard key={field.id} index={index} onRemove={() => remove(index)} />
           ))}

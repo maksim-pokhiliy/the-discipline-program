@@ -8,5 +8,3 @@ export const LAYOUT = {
   platformBottomNavHeight: 80,
   platformFabBottom: 100,
 } as const;
-
-export type LayoutConfig = typeof LAYOUT;

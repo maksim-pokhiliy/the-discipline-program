@@ -19,7 +19,10 @@ export const HomeFeaturesSection = ({ whyChoose }: FeaturesSectionProps) => {
     <ContentSection id="why-choose" title={whyChoose.title} subtitle={whyChoose.subtitle}>
       <Grid container spacing={6}>
         {whyChoose.features.map((feature) => {
-          const candidate = MuiIcons[feature.iconName as keyof typeof MuiIcons];
+          const candidate =
+            feature.iconName in MuiIcons
+              ? MuiIcons[feature.iconName as keyof typeof MuiIcons]
+              : undefined;
 
           if (!isSvgIconComponent(candidate)) {
             return null;

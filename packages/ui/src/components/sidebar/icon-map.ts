@@ -21,5 +21,5 @@ const icons = {
 type NavIconName = keyof typeof icons;
 
 export const getNavIcon = (name: string) => {
-  return icons[name as NavIconName] ?? DashboardOutlined;
+  return (name in icons ? icons[name as NavIconName] : undefined) ?? DashboardOutlined;
 };

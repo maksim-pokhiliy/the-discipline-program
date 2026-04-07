@@ -4,10 +4,10 @@ import { type Metadata } from "next";
 import { NextProvider } from "@repo/mui";
 import { fontVariables } from "@repo/mui/fonts";
 import { QueryProvider } from "@repo/query";
-import { DOM_ANCHORS, SEO_CONFIG } from "@repo/shared";
 
 import { Footer, MarketingHeader } from "@app/lib/components/layout";
 import { StructuredData } from "@app/lib/components/seo";
+import { SEO_CONFIG } from "@app/lib/seo";
 
 export const metadata: Metadata = {
   title: SEO_CONFIG.defaultTitle,
@@ -43,7 +43,7 @@ export default function RootLayout({ children }: RootLayoutProps) {
         <StructuredData type="organization" />
       </head>
 
-      <body id={DOM_ANCHORS.BODY} className={fontVariables}>
+      <body id="body-dom-anchor" className={fontVariables}>
         <NextProvider>
           <QueryProvider>
             <MarketingHeader />

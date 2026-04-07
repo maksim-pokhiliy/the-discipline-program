@@ -27,7 +27,11 @@ const getInitial = (name?: string | null, email?: string | null): string => {
   return (source[0] ?? "").toUpperCase();
 };
 
-export const PlatformUserMenu = () => {
+type PlatformUserMenuProps = {
+  profileHref?: string;
+};
+
+export const PlatformUserMenu = ({ profileHref = "/profile" }: PlatformUserMenuProps) => {
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -67,7 +71,7 @@ export const PlatformUserMenu = () => {
           },
         }}
       >
-        <MenuItem component={Link} href="/coach/profile" onClick={() => setAnchorEl(null)}>
+        <MenuItem component={Link} href={profileHref} onClick={() => setAnchorEl(null)}>
           <ListItemIcon>
             <SettingsRounded fontSize="small" />
           </ListItemIcon>

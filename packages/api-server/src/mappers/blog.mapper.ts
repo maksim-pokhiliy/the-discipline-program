@@ -4,10 +4,12 @@ import { BlogCategory, type BlogPost, type PublicBlogPost } from "@repo/contract
 
 type PublishedPost = MarketingBlogPost & { publishedAt: Date };
 
-const BLOG_CATEGORY_VALUES = new Set<string>(Object.values(BlogCategory));
+const BLOG_CATEGORY_MAP = new Map<string, BlogCategory>(
+  Object.values(BlogCategory).map((v) => [v, v]),
+);
 
 const mapBlogCategory = (category: string): BlogCategory =>
-  BLOG_CATEGORY_VALUES.has(category) ? (category as BlogCategory) : BlogCategory.UNCATEGORIZED;
+  BLOG_CATEGORY_MAP.get(category) ?? BlogCategory.UNCATEGORIZED;
 
 export const isPublishedPost = (post: MarketingBlogPost): post is PublishedPost => {
   return post.publishedAt !== null;

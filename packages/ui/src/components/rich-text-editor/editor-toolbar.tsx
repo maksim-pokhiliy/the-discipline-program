@@ -17,10 +17,6 @@ import {
 import {
   Box,
   Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   Divider,
   IconButton,
   Stack,
@@ -29,6 +25,8 @@ import {
   ToggleButtonGroup,
 } from "@mui/material";
 import { type Editor } from "@tiptap/react";
+
+import { BaseModal } from "../modal/base-modal";
 
 type LinkDialogState = {
   open: boolean;
@@ -186,32 +184,34 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
         </Stack>
       </Stack>
 
-      <Dialog open={linkDialog.open} onClose={closeLinkDialog} maxWidth="xs" fullWidth>
-        <DialogTitle>Insert Link</DialogTitle>
-
-        <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            placeholder="https://example.com"
-            value={linkDialog.url}
-            onChange={(e) => setLinkDialog((prev) => ({ ...prev, url: e.target.value }))}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                submitLink();
-              }
-            }}
-            sx={{ mt: 1 }}
-          />
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={closeLinkDialog}>Cancel</Button>
-          <Button variant="contained" onClick={submitLink}>
-            Apply
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <BaseModal
+        open={linkDialog.open}
+        onClose={closeLinkDialog}
+        title="Insert Link"
+        maxWidth="xs"
+        actions={
+          <>
+            <Button onClick={closeLinkDialog}>Cancel</Button>
+            <Button variant="contained" onClick={submitLink}>
+              Apply
+            </Button>
+          </>
+        }
+      >
+        <TextField
+          autoFocus
+          fullWidth
+          placeholder="https://example.com"
+          value={linkDialog.url}
+          onChange={(e) => setLinkDialog((prev) => ({ ...prev, url: e.target.value }))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              submitLink();
+            }
+          }}
+          sx={{ mt: 1 }}
+        />
+      </BaseModal>
     </>
   );
 };

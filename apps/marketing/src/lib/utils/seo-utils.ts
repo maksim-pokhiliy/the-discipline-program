@@ -1,5 +1,6 @@
 import { type Product, type Review } from "@repo/contracts";
-import { SEO_CONFIG } from "@repo/shared";
+
+import { SEO_CONFIG } from "@app/lib/seo";
 
 type StructuredDataType =
   | "website"

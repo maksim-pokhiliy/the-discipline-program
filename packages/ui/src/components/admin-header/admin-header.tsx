@@ -4,10 +4,11 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { AppBar, IconButton, Toolbar, Typography, useMediaQuery, type Theme } from "@mui/material";
 import { usePathname } from "next/navigation";
 
-import { ADMIN_NAVIGATION, LAYOUT, type AdminNavigationConfig } from "@repo/shared";
+import { LAYOUT, type AdminNavigationConfig } from "@repo/shared";
 
 type AdminHeaderProps = {
   onMenuClick: () => void;
+  navigation: AdminNavigationConfig;
 };
 
 const getPageTitle = (pathname: string, config: AdminNavigationConfig): string => {
@@ -26,10 +27,10 @@ const getPageTitle = (pathname: string, config: AdminNavigationConfig): string =
   return config.dashboard.text;
 };
 
-export const AdminHeader = ({ onMenuClick }: AdminHeaderProps) => {
+export const AdminHeader = ({ onMenuClick, navigation }: AdminHeaderProps) => {
   const pathname = usePathname();
   const isMobile = useMediaQuery<Theme>((theme) => theme.breakpoints.down("md"));
-  const pageTitle = getPageTitle(pathname, ADMIN_NAVIGATION);
+  const pageTitle = getPageTitle(pathname, navigation);
 
   if (!isMobile) {
     return null;

@@ -29,7 +29,7 @@ export const useDataTableUrlState = (
     search: searchParams.get(PARAM_SEARCH) ?? "",
     sortColumn: searchParams.get(PARAM_SORT) ?? options.defaultSort?.columnId ?? null,
     sortDirection:
-      (searchParams.get(PARAM_SORT_DIR) as "asc" | "desc") ??
+      (searchParams.get(PARAM_SORT_DIR) === "desc" ? "desc" : undefined) ??
       options.defaultSort?.direction ??
       "asc",
     page: Number(searchParams.get(PARAM_PAGE)) || 0,

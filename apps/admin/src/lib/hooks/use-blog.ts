@@ -48,8 +48,8 @@ export const useToggleBlogPost = () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
     },
-    onError: () => {
-      toast.error("Failed to update post status");
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update post status");
     },
   });
 };
@@ -64,8 +64,8 @@ export const useToggleBlogFeatured = () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
     },
-    onError: () => {
-      toast.error("Failed to update featured post");
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update featured post");
     },
   });
 };

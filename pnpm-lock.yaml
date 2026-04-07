@@ -619,6 +619,9 @@ importers:
 
   packages/api-routes:
     dependencies:
+      '@repo/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@repo/contracts':
         specifier: workspace:*
         version: link:../contracts

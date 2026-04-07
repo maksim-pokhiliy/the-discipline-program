@@ -1,9 +1,9 @@
 import { type Metadata } from "next";
 
 import { BLOG_CATEGORY_LABELS } from "@repo/contracts/blog";
-import { SEO_CONFIG } from "@repo/shared";
 
 import { serverApi } from "@app/lib/api/server";
+import { SEO_CONFIG } from "@app/lib/seo";
 import { BlogArticlePageClient } from "@app/modules/blog-article";
 
 interface BlogArticlePageProps {

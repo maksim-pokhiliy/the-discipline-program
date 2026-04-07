@@ -4,4 +4,3 @@ export * from "./providers";
 export * from "./utils";
 
 export { getToken } from "next-auth/jwt";
-export type { Session } from "next-auth";

@@ -1,5 +1,4 @@
-import { Role } from "@prisma/client";
-
+import { UserRole } from "@repo/contracts/auth";
 import type { UserSearchResult } from "@repo/contracts/user";
 
 import { prisma } from "../../db/client";
@@ -13,7 +12,7 @@ export const platformUsersApi = {
     const users = await prisma.user.findMany({
       where: {
         id: { not: userId },
-        role: Role.USER,
+        role: UserRole.USER,
         OR: [
           { name: { contains: query, mode: "insensitive" } },
           { email: { contains: query, mode: "insensitive" } },

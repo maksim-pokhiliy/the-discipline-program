@@ -3,8 +3,8 @@
 import ArticleIcon from "@mui/icons-material/Article";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
 import GroupIcon from "@mui/icons-material/Group";
-import SportsIcon from "@mui/icons-material/Person";
 import RateReviewIcon from "@mui/icons-material/RateReview";
+import StorefrontIcon from "@mui/icons-material/Storefront";
 import { Grid } from "@mui/material";
 
 import { type ContentStats, type UserStats } from "@repo/contracts/dashboard";
@@ -54,7 +54,7 @@ export const ContentStatsSection = ({ contentStats, userStats }: ContentStatsSec
             title="Products"
             value={contentStats.products.total}
             subtitle={`${contentStats.products.active} active`}
-            icon={<SportsIcon fontSize="large" />}
+            icon={<StorefrontIcon fontSize="large" />}
             color="secondary"
           />
         </Grid>
