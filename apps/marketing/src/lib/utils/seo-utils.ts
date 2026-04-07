@@ -59,7 +59,7 @@ export const generateStructuredData = (
             position: index + 1,
             name: product.title,
             description: product.description,
-            url: `${SEO_CONFIG.siteUrl}/programs`,
+            url: `${SEO_CONFIG.siteUrl}/storefront`,
           })) || [],
       };
 
@@ -91,7 +91,40 @@ export const generateStructuredData = (
         })),
       };
 
-    default:
-      return {};
+    case "article":
+      return {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: data?.title,
+        description: data?.description,
+        image: data?.image,
+        author: {
+          "@type": "Person",
+          name: data?.author,
+        },
+        datePublished: data?.publishedTime,
+        dateModified: data?.modifiedTime ?? data?.publishedTime,
+        url: data?.url,
+        publisher: {
+          "@type": "Organization",
+          name: SEO_CONFIG.organization.name,
+          logo: {
+            "@type": "ImageObject",
+            url: `${SEO_CONFIG.siteUrl}${SEO_CONFIG.organization.logo}`,
+          },
+        },
+      };
+
+    case "person":
+      return {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        name: data?.author ?? SEO_CONFIG.organization.founder.name,
+        url: data?.url ?? SEO_CONFIG.siteUrl,
+        worksFor: {
+          "@type": "Organization",
+          name: SEO_CONFIG.organization.name,
+        },
+      };
   }
 };

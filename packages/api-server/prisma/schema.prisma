@@ -273,6 +273,8 @@ model WorkoutLog {
   updatedAt   DateTime     @updatedAt
 
   @@index([createdAt])
+  @@index([userId])
+  @@index([workoutId])
   @@map("app_workout_logs")
 }
 
@@ -367,6 +369,7 @@ model PlanEnrollment {
   @@unique([trainingPlanId, userId])
   @@index([userId])
   @@index([status])
+  @@index([trainingPlanId])
   @@map("app_plan_enrollments")
 }
 

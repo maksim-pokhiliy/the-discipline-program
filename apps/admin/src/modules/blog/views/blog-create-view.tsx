@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { createBlogPostSchema, type CreateBlogPostData } from "@repo/contracts/blog";
+import { BlogCategory, createBlogPostSchema, type CreateBlogPostData } from "@repo/contracts/blog";
 import { FormView } from "@repo/ui";
 
 import { useCreateBlogPost } from "@app/lib/hooks";
@@ -22,7 +22,7 @@ export const BlogCreateView = () => {
       content: "",
       coverImage: "",
       authorName: "",
-      category: "Uncategorized",
+      category: BlogCategory.UNCATEGORIZED,
       tags: [],
       isPublished: false,
       isFeatured: false,

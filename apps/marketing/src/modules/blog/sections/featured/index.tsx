@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 
-import { type BlogCategory, BLOG_CATEGORY_LABELS, type PublicBlogPost } from "@repo/contracts/blog";
+import { BLOG_CATEGORY_LABELS, type PublicBlogPost } from "@repo/contracts/blog";
 import { type BlogPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
@@ -42,12 +42,7 @@ export const BlogFeaturedSection = ({ hero, featuredPost }: BlogFeaturedSectionP
               zIndex: 1,
             }}
           >
-            <Chip
-              label={
-                BLOG_CATEGORY_LABELS[featuredPost.category as BlogCategory] ?? featuredPost.category
-              }
-              color="primary"
-            />
+            <Chip label={BLOG_CATEGORY_LABELS[featuredPost.category]} color="primary" />
           </Box>
         </Box>
 

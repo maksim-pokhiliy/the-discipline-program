@@ -8,6 +8,7 @@ export const BLOG_CONSTANTS = {
 } as const;
 
 export enum BlogCategory {
+  UNCATEGORIZED = "Uncategorized",
   FITNESS = "FITNESS",
   NUTRITION = "NUTRITION",
   MINDSET = "MINDSET",
@@ -16,6 +17,7 @@ export enum BlogCategory {
 }
 
 export const BLOG_CATEGORY_LABELS: Record<BlogCategory, string> = {
+  [BlogCategory.UNCATEGORIZED]: "Uncategorized",
   [BlogCategory.FITNESS]: "Fitness",
   [BlogCategory.NUTRITION]: "Nutrition",
   [BlogCategory.MINDSET]: "Mindset",

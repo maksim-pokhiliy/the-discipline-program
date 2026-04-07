@@ -1,7 +1,6 @@
 "use client";
 
 import { Stack } from "@mui/material";
-import Head from "next/head";
 
 import { StructuredData } from "@app/lib/components/seo";
 
@@ -9,9 +8,7 @@ import { PaymentSuccessActionsSection, PaymentSuccessHeroSection } from "./secti
 
 export const PaymentSuccessPage = () => (
   <>
-    <Head>
-      <StructuredData type="website" />
-    </Head>
+    <StructuredData type="website" />
 
     <Stack spacing={0}>
       <PaymentSuccessHeroSection />

@@ -10,10 +10,7 @@
     "lint": "eslint . --fix --max-warnings 0",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },
-  "dependencies": {
-    "@repo/contracts": "workspace:*",
-    "clsx": "catalog:"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",

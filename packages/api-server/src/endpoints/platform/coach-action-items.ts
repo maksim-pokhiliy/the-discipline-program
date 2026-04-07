@@ -18,13 +18,7 @@ import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-import {
-  ACTION_ITEM_RESOLVE_REASON_MAP,
-  ACTION_ITEM_SEVERITY_MAP,
-  ACTION_ITEM_STATUS_MAP,
-  ACTION_ITEM_TYPE_MAP,
-  HEALTH_STATUS_MAP,
-} from "../../mappers/enum-maps";
+import { HEALTH_STATUS_MAP, mapToCoachActionItem } from "../../mappers";
 import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
 import { type EnrollmentWithData, createEnrollmentInclude } from "../../utils/enrollment-query";
 
@@ -134,23 +128,8 @@ const conditionMatchesResolved = (
   }
 };
 
-const mapToCoachActionItem = (item: PrismaCoachActionItemRecord): CoachActionItem => ({
-  id: item.id,
-  coachId: item.coachId,
-  athleteId: item.athleteId,
-  type: ACTION_ITEM_TYPE_MAP[item.type],
-  severity: ACTION_ITEM_SEVERITY_MAP[item.severity],
-  status: ACTION_ITEM_STATUS_MAP[item.status],
-  message: item.message,
-  metadata: item.metadata as Record<string, unknown> | null,
-  resolvedAt: item.resolvedAt,
-  resolveReason: item.resolveReason ? ACTION_ITEM_RESOLVE_REASON_MAP[item.resolveReason] : null,
-  createdAt: item.createdAt,
-  updatedAt: item.updatedAt,
-});
-
 export const platformCoachActionItemsApi = {
-  reconcile: async (userId: string): Promise<ReconcileResponse> => {
+  reconcile: async (userId: string): Promise<ReconcileResponse & { coachId: string }> => {
     const coachId = await resolveCoachId(userId);
 
     const user = await prisma.user.findUniqueOrThrow({
@@ -285,7 +264,7 @@ export const platformCoachActionItemsApi = {
         resolved++;
       }
 
-      return { created, updated, resolved };
+      return { created, updated, resolved, coachId };
     });
   },
 

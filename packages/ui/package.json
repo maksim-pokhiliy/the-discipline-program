@@ -17,6 +17,7 @@
   "dependencies": {
     "@mui/icons-material": "catalog:",
     "@mui/material": "catalog:",
+    "@repo/mui": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/auth": "workspace:*",
     "@tiptap/extension-link": "catalog:",

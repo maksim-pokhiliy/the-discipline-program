@@ -1,6 +1,6 @@
 import { type Metadata } from "next";
 
-import { type BlogCategory, BLOG_CATEGORY_LABELS } from "@repo/contracts/blog";
+import { BLOG_CATEGORY_LABELS } from "@repo/contracts/blog";
 import { SEO_CONFIG } from "@repo/shared";
 
 import { serverApi } from "@app/lib/api/server";
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
         url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
         publishedTime: post.publishedAt.toISOString(),
         authors: [post.authorName],
-        section: BLOG_CATEGORY_LABELS[post.category as BlogCategory] ?? post.category,
+        section: BLOG_CATEGORY_LABELS[post.category],
         tags: post.tags,
       },
       twitter: {

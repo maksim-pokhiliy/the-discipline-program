@@ -7,7 +7,7 @@ export const MuiBottomNavigation: Components<Theme>["MuiBottomNavigation"] = {
       bottom: 0,
       left: 0,
       right: 0,
-      height: 80,
+      height: theme.layout.platformBottomNavHeight,
       zIndex: theme.zIndex.appBar,
       borderTop: `1px solid ${theme.palette.divider}`,
       backgroundColor: theme.palette.background.default,

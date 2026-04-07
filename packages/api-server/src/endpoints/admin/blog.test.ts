@@ -1,5 +1,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 
+import { BlogCategory } from "@repo/contracts/blog";
+
 import { cleanupRaw } from "../../test/helpers";
 
 import { adminBlogApi } from "./blog";
@@ -17,7 +19,7 @@ const baseBlogData = (overrides: Record<string, unknown> = {}) => ({
   publishedAt: null,
   coverImage: null,
   excerpt: null,
-  category: "Uncategorized",
+  category: BlogCategory.UNCATEGORIZED,
   tags: [],
   ...overrides,
 });

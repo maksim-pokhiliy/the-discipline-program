@@ -4,6 +4,7 @@ import { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 import { authService } from "@repo/api-server";
+import { AUTH_CONSTANTS } from "@repo/contracts/auth";
 import { authEnv } from "@repo/env/auth";
 
 import { AUTH_ROUTES } from "./constants";
@@ -75,7 +76,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: AUTH_CONSTANTS.SESSION_MAX_AGE,
   },
   secret: authEnv.NEXTAUTH_SECRET,
 };

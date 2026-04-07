@@ -12,6 +12,7 @@ import Link from "next/link";
 import { type BlogPost } from "@repo/contracts/blog";
 import { baseEnv } from "@repo/env/base";
 import { useDeleteConfirmation } from "@repo/query";
+import { formatDate } from "@repo/shared";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
@@ -129,9 +130,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
         width: "15%",
         sortable: true,
         sortValue: (post) => new Date(post.createdAt).getTime(),
-        render: (post) => (
-          <Typography variant="body2">{new Date(post.createdAt).toLocaleDateString()}</Typography>
-        ),
+        render: (post) => <Typography variant="body2">{formatDate(post.createdAt)}</Typography>,
       },
       {
         id: "actions",
