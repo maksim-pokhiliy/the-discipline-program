@@ -167,7 +167,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                     variant="outlined"
                     fullWidth
                     disabled={isLoading}
-                    value={field.value || "USD"}
+                    value={field.value || ProductCurrency.USD}
                   >
                     {Object.values(ProductCurrency).map((currency) => (
                       <MenuItem key={currency} value={currency}>
@@ -189,7 +189,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                     variant="outlined"
                     fullWidth
                     disabled={isLoading}
-                    value={field.value || "MONTHLY"}
+                    value={field.value || PriceInterval.MONTHLY}
                   >
                     {Object.values(PriceInterval).map((interval) => (
                       <MenuItem key={interval} value={interval}>

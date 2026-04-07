@@ -1,0 +1,25 @@
+import type { CoachActionItem as PrismaCoachActionItemRecord } from "@prisma/client";
+
+import type { CoachActionItem } from "@repo/contracts/coach-action-item";
+
+import {
+  ACTION_ITEM_RESOLVE_REASON_MAP,
+  ACTION_ITEM_SEVERITY_MAP,
+  ACTION_ITEM_STATUS_MAP,
+  ACTION_ITEM_TYPE_MAP,
+} from "./enum-maps";
+
+export const mapToCoachActionItem = (item: PrismaCoachActionItemRecord): CoachActionItem => ({
+  id: item.id,
+  coachId: item.coachId,
+  athleteId: item.athleteId,
+  type: ACTION_ITEM_TYPE_MAP[item.type],
+  severity: ACTION_ITEM_SEVERITY_MAP[item.severity],
+  status: ACTION_ITEM_STATUS_MAP[item.status],
+  message: item.message,
+  metadata: item.metadata as Record<string, unknown> | null,
+  resolvedAt: item.resolvedAt,
+  resolveReason: item.resolveReason ? ACTION_ITEM_RESOLVE_REASON_MAP[item.resolveReason] : null,
+  createdAt: item.createdAt,
+  updatedAt: item.updatedAt,
+});

@@ -72,36 +72,38 @@ export const adminProductsApi = {
     try {
       const { price, ...productData } = data;
 
-      if (price) {
-        const existingPrice = await prisma.price.findFirst({
-          where: { productId: id, isActive: true },
-        });
+      const product = await prisma.$transaction(async (tx) => {
+        if (price) {
+          const existingPrice = await tx.price.findFirst({
+            where: { productId: id, isActive: true },
+          });
 
-        if (existingPrice) {
-          await prisma.price.update({
-            where: { id: existingPrice.id },
-            data: {
-              amountCents: price.amountCents,
-              currency: price.currency,
-              interval: price.interval,
-            },
-          });
-        } else {
-          await prisma.price.create({
-            data: {
-              productId: id,
-              amountCents: price.amountCents,
-              currency: price.currency ?? ProductCurrency.USD,
-              interval: price.interval ?? PriceInterval.MONTHLY,
-            },
-          });
+          if (existingPrice) {
+            await tx.price.update({
+              where: { id: existingPrice.id },
+              data: {
+                amountCents: price.amountCents,
+                currency: price.currency,
+                interval: price.interval,
+              },
+            });
+          } else {
+            await tx.price.create({
+              data: {
+                productId: id,
+                amountCents: price.amountCents,
+                currency: price.currency ?? ProductCurrency.USD,
+                interval: price.interval ?? PriceInterval.MONTHLY,
+              },
+            });
+          }
         }
-      }
 
-      const product = await prisma.product.update({
-        where: { id },
-        data: productData,
-        include: includeWithPrices,
+        return tx.product.update({
+          where: { id },
+          data: productData,
+          include: includeWithPrices,
+        });
       });
 
       return mapToProduct(product);

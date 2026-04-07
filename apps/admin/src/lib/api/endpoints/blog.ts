@@ -2,6 +2,7 @@ import { type ApiClient } from "@repo/api-client";
 import {
   type AdminBlogPageData,
   type BlogPost,
+  BlogToggleField,
   type CreateBlogPostData,
   type UpdateBlogPostData,
 } from "@repo/contracts/blog";
@@ -20,8 +21,8 @@ export const createBlogAPI = (client: ApiClient) => ({
   delete: (id: string): Promise<void> => client.request(`/api/admin/blog/${id}`, "DELETE"),
 
   togglePublished: (id: string): Promise<BlogPost> =>
-    client.request(`/api/admin/blog/${id}/toggle?field=isPublished`, "PATCH"),
+    client.request(`/api/admin/blog/${id}/toggle?field=${BlogToggleField.IS_PUBLISHED}`, "PATCH"),
 
   toggleFeatured: (id: string): Promise<BlogPost> =>
-    client.request(`/api/admin/blog/${id}/toggle?field=isFeatured`, "PATCH"),
+    client.request(`/api/admin/blog/${id}/toggle?field=${BlogToggleField.IS_FEATURED}`, "PATCH"),
 });

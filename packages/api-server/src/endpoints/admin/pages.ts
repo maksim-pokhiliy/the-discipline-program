@@ -5,8 +5,6 @@ import {
   type AdminPageDetails,
   type UpdatePageSectionData,
   type UpdatePageMetadataInput,
-  updatePageSectionSchema,
-  updatePageMetadataSchema,
   PageSlug,
 } from "@repo/contracts/pages";
 import { NotFoundError } from "@repo/errors";
@@ -70,36 +68,30 @@ export const adminPagesApi = {
   },
 
   updatePageMetadata: async (slug: string, payload: UpdatePageMetadataInput): Promise<void> => {
-    const validated = updatePageMetadataSchema.parse(payload);
-
     await prisma.marketingPage.update({
       where: { slug },
-      data: validated,
+      data: payload,
     });
   },
 
   updateSection: async (payload: UpdatePageSectionData): Promise<void> => {
-    const validated = updatePageSectionSchema.parse(payload);
-
     const existing = await prisma.marketingPageSection.findUnique({
       where: {
         pageSlug_section: {
-          pageSlug: validated.pageSlug,
-          section: validated.section,
+          pageSlug: payload.pageSlug,
+          section: payload.section,
         },
       },
     });
 
     if (!existing) {
-      throw new NotFoundError(
-        `Section ${validated.section} for page ${validated.pageSlug} not found`,
-      );
+      throw new NotFoundError(`Section ${payload.section} for page ${payload.pageSlug} not found`);
     }
 
     await prisma.marketingPageSection.update({
       where: { id: existing.id },
       data: {
-        data: validated.data as Prisma.InputJsonValue,
+        data: payload.data as Prisma.InputJsonValue,
       },
     });
   },

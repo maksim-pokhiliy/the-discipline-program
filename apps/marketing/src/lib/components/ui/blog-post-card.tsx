@@ -19,11 +19,10 @@ type BlogPostCardProps = {
   excerpt: string | null;
   coverImage: string | null;
   readTime: number | null;
-  category: string;
+  category: BlogCategory;
 };
 
-const getCategoryLabel = (category: string): string =>
-  BLOG_CATEGORY_LABELS[category as BlogCategory] ?? category;
+const getCategoryLabel = (category: BlogCategory): string => BLOG_CATEGORY_LABELS[category];
 
 export const BlogPostCard = ({
   slug,

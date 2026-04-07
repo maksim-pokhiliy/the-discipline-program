@@ -19,13 +19,10 @@ import {
 import { createEnrollmentInclude } from "../../utils/enrollment-query";
 
 import { platformCoachActionItemsApi } from "./coach-action-items";
-import { resolveCoachId } from "./guards";
 
 export const platformCoachDashboardApi = {
   getDashboard: async (userId: string): Promise<CoachDashboardData> => {
-    await platformCoachActionItemsApi.reconcile(userId);
-
-    const coachId = await resolveCoachId(userId);
+    const { coachId } = await platformCoachActionItemsApi.reconcile(userId);
 
     const user = await prisma.user.findUniqueOrThrow({
       where: { id: userId },

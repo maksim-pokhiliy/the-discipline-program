@@ -3,7 +3,7 @@ import {
   type ActionItemSeverity as PrismaActionItemSeverity,
   type ActionItemStatus as PrismaActionItemStatus,
   type ActionItemType as PrismaActionItemType,
-  type ContactSubmissionStatus as PrismaContactSubmissionStatus,
+  ContactSubmissionStatus as PrismaContactSubmissionStatus,
   type Currency as PrismaCurrency,
   type Gender as PrismaGender,
   type HealthStatus as PrismaHealthStatus,
@@ -101,8 +101,8 @@ export const CONTACT_SUBMISSION_STATUS_MAP: Record<PrismaContactSubmissionStatus
 };
 
 export const CONTACT_STATUS_TO_PRISMA_MAP: Record<ContactStatus, PrismaContactSubmissionStatus> = {
-  [ContactStatus.NEW]: "NEW",
-  [ContactStatus.IN_PROGRESS]: "IN_PROGRESS",
-  [ContactStatus.REPLIED]: "REPLIED",
-  [ContactStatus.CLOSED]: "CLOSED",
+  [ContactStatus.NEW]: PrismaContactSubmissionStatus.NEW,
+  [ContactStatus.IN_PROGRESS]: PrismaContactSubmissionStatus.IN_PROGRESS,
+  [ContactStatus.REPLIED]: PrismaContactSubmissionStatus.REPLIED,
+  [ContactStatus.CLOSED]: PrismaContactSubmissionStatus.CLOSED,
 };

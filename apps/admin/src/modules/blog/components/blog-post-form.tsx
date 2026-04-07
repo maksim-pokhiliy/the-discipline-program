@@ -147,12 +147,10 @@ export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: Blo
 
                 <Select
                   label="Category"
-                  defaultValue="Uncategorized"
+                  defaultValue={BlogCategory.UNCATEGORIZED}
                   {...register("category")}
                   disabled={isLoading}
                 >
-                  <MenuItem value="Uncategorized">Uncategorized</MenuItem>
-
                   {Object.values(BlogCategory).map((cat) => (
                     <MenuItem key={cat} value={cat}>
                       {BLOG_CATEGORY_LABELS[cat]}

@@ -8,7 +8,7 @@ import { ContentSection } from "@repo/ui";
 import { FeatureCard } from "@app/lib/components/ui";
 
 const isSvgIconComponent = (value: unknown): value is SvgIconComponent =>
-  typeof value === "object" || typeof value === "function";
+  typeof value === "function";
 
 interface FeaturesSectionProps {
   whyChoose: HomePageData["whyChoose"];

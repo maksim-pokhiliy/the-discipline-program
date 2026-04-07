@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { BLOG_CONSTANTS } from "./blog.constants";
+import { BlogCategory, BLOG_CONSTANTS } from "./blog.constants";
 
 export const blogPostSchema = z.object({
   id: z.string().cuid(),
@@ -16,7 +16,7 @@ export const blogPostSchema = z.object({
   publishedAt: z.coerce.date().nullable(),
   readTime: z.number().int().positive().nullable(),
   authorName: z.string().min(1, "Author name is required"),
-  category: z.string().default("Uncategorized"),
+  category: z.nativeEnum(BlogCategory).default(BlogCategory.UNCATEGORIZED),
   tags: z.array(z.string()).default([]),
   isPublished: z.boolean(),
   isFeatured: z.boolean(),
@@ -48,7 +48,7 @@ export const publicBlogPostSchema = z.object({
   readTime: z.number().nullable(),
   isFeatured: z.boolean(),
   authorName: z.string(),
-  category: z.string(),
+  category: z.nativeEnum(BlogCategory),
   tags: z.array(z.string()),
 });
 

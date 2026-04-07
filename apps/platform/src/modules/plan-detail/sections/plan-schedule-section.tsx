@@ -17,7 +17,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import { Chip, Divider, Stack, Typography } from "@mui/material";
+import { Chip, Divider, Stack } from "@mui/material";
 
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import type { Workout } from "@repo/contracts/workout";
@@ -273,13 +273,9 @@ export const PlanScheduleSection: React.FC<PlanScheduleSectionProps> = ({ planId
         data={workouts}
         loadingMessage="Loading workouts..."
       >
-        {(data) =>
-          data.length === 0 ? (
-            <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center" }}>
-              No workouts yet. Click + on any day to get started.
-            </Typography>
-          ) : (
-            <>
+        {() => (
+          <>
+            {weekWorkoutCount > 0 && (
               <Stack direction="row" spacing={1}>
                 <Chip
                   size="small"
@@ -293,43 +289,45 @@ export const PlanScheduleSection: React.FC<PlanScheduleSectionProps> = ({ planId
                   label={`${activeAthletesCount} athlete${activeAthletesCount === 1 ? "" : "s"} enrolled`}
                 />
               </Stack>
+            )}
 
-              <DndContext
-                sensors={sensors}
-                collisionDetection={collisionDetection}
-                onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
-                onDragEnd={handleDragEnd}
-              >
-                <Stack divider={<Divider />}>
-                  {weekDays.map((day) => {
-                    const dayKey = day.toISOString();
+            <DndContext
+              sensors={sensors}
+              collisionDetection={collisionDetection}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragEnd={handleDragEnd}
+            >
+              <Stack divider={<Divider />}>
+                {weekDays.map((day) => {
+                  const dayKey = day.toISOString();
 
-                    return (
-                      <WeekDayGroup
-                        key={dayKey}
-                        date={day}
-                        workouts={displayItems.get(dayKey) ?? []}
-                        planId={planId}
-                        isHighlighted={overDayKey === dayKey}
-                        autoFocusWorkoutId={focusWorkoutId}
-                        onAddWorkout={handleAddWorkout}
-                      />
-                    );
-                  })}
-                </Stack>
+                  return (
+                    <WeekDayGroup
+                      key={dayKey}
+                      date={day}
+                      workouts={displayItems.get(dayKey) ?? []}
+                      planId={planId}
+                      isHighlighted={overDayKey === dayKey}
+                      autoFocusWorkoutId={focusWorkoutId}
+                      onAddWorkout={handleAddWorkout}
+                    />
+                  );
+                })}
+              </Stack>
 
-                <DragOverlay dropAnimation={null}>
-                  {activeWorkout && <WorkoutDragOverlay workout={activeWorkout} />}
-                </DragOverlay>
-              </DndContext>
+              <DragOverlay dropAnimation={null}>
+                {activeWorkout && <WorkoutDragOverlay workout={activeWorkout} />}
+              </DragOverlay>
+            </DndContext>
 
+            {weekWorkoutCount > 0 && (
               <Stack direction="row" sx={{ justifyContent: "center" }}>
                 <CopyWeekButton planId={planId} currentWeekStart={weekStart} />
               </Stack>
-            </>
-          )
-        }
+            )}
+          </>
+        )}
       </QueryWrapper>
     </Stack>
   );

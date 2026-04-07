@@ -24,11 +24,14 @@ export const palette: PaletteOptions = {
   },
   warning: {
     main: "#E8C844",
+    contrastText: "#FFFFFF",
   },
   success: {
     main: "#4DB76A",
+    contrastText: "#FFFFFF",
   },
   info: {
     main: "#6CB4EE",
+    contrastText: "#FFFFFF",
   },
 };
