@@ -1,8 +1,11 @@
+import { type Prisma } from "@prisma/client";
+
 import { type ContactSubmissionItem, type UpdateContactRequest } from "@repo/contracts/contact";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToContact } from "../../mappers";
+import { CONTACT_STATUS_TO_PRISMA_MAP } from "../../mappers/enum-maps";
 
 export const adminContactsApi = {
   getContacts: async (): Promise<ContactSubmissionItem[]> => {
@@ -30,10 +33,10 @@ export const adminContactsApi = {
       throw new NotFoundError("Contact submission not found", { id });
     }
 
-    const updateData: { status?: string; notes?: string | null } = {};
+    const updateData: Prisma.MarketingContactSubmissionUpdateInput = {};
 
     if (data.status !== undefined) {
-      updateData.status = data.status;
+      updateData.status = CONTACT_STATUS_TO_PRISMA_MAP[data.status];
     }
 
     if (data.notes !== undefined) {

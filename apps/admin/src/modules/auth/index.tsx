@@ -2,12 +2,11 @@
 
 import { useState } from "react";
 
-import { Alert, Container, Divider, Stack, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { Alert, Divider, Stack, Typography } from "@mui/material";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-import { signIn } from "@repo/auth";
+import { signIn } from "@repo/auth/client";
 import { type LoginFormData } from "@repo/contracts/auth";
 import { Logo } from "@repo/ui";
 
@@ -47,46 +46,35 @@ export const LoginPage = () => {
   };
 
   return (
-    <Stack
-      sx={{
-        minHeight: "100vh",
-        justifyContent: "center",
-        background: (theme) =>
-          `radial-gradient(ellipse at 50% 20%, ${alpha(theme.palette.primary.main, 0.08)}, transparent 70%)`,
-      }}
-    >
-      <Container maxWidth="sm">
-        <Stack spacing={5} alignItems="center">
-          <Stack spacing={3} alignItems="center">
-            <Logo />
+    <Stack spacing={5} alignItems="center">
+      <Stack spacing={3} alignItems="center">
+        <Logo />
 
-            <Typography variant="display2" component="h1" textAlign="center">
-              The Discipline Program
-            </Typography>
+        <Typography variant="display2" component="h1" textAlign="center">
+          The Discipline Program
+        </Typography>
 
-            <Typography variant="h4" color="text.secondary" textAlign="center">
-              Admin Panel
-            </Typography>
+        <Typography variant="h4" color="text.secondary" textAlign="center">
+          Admin Panel
+        </Typography>
 
-            <Divider
-              sx={{
-                width: (theme) => theme.spacing(8),
-                borderColor: "primary.main",
-              }}
-            />
-          </Stack>
+        <Divider
+          sx={{
+            width: (theme) => theme.spacing(8),
+            borderColor: "primary.main",
+          }}
+        />
+      </Stack>
 
-          <Stack spacing={3} sx={{ width: "100%" }}>
-            {error && (
-              <Alert severity="error" onClose={() => setError(null)}>
-                {error}
-              </Alert>
-            )}
+      <Stack spacing={3} sx={{ width: "100%" }}>
+        {error && (
+          <Alert severity="error" onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
 
-            <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
-          </Stack>
-        </Stack>
-      </Container>
+        <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
+      </Stack>
     </Stack>
   );
 };

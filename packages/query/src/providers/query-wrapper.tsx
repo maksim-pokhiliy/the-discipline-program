@@ -1,8 +1,8 @@
 "use client";
 
-import { CircularProgress, Stack, Typography } from "@mui/material";
+import { Alert, CircularProgress, Stack, Typography } from "@mui/material";
 
-interface QueryWrapperProps<TData> {
+type QueryWrapperProps<TData> = {
   isLoading: boolean;
   error: Error | null;
   data: TData | undefined;
@@ -10,7 +10,7 @@ interface QueryWrapperProps<TData> {
   loadingMessage?: string;
   errorMessage?: string;
   noDataMessage?: string;
-}
+};
 
 export const QueryWrapper = <TData,>({
   isLoading,
@@ -37,16 +37,12 @@ export const QueryWrapper = <TData,>({
   }
 
   if (error) {
-    return (
-      <Typography variant="h4" color="error" textAlign="center">
-        {errorMessage}
-      </Typography>
-    );
+    return <Alert severity="error">{errorMessage}</Alert>;
   }
 
   if (!data) {
     return (
-      <Typography variant="h4" textAlign="center">
+      <Typography variant="body1" textAlign="center">
         {noDataMessage}
       </Typography>
     );

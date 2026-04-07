@@ -17,9 +17,9 @@ import {
 import { Box, Divider, IconButton, Stack, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import { type Editor } from "@tiptap/react";
 
-interface EditorToolbarProps {
+type EditorToolbarProps = {
   editor: Editor | null;
-}
+};
 
 export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
   const setLink = useCallback(() => {

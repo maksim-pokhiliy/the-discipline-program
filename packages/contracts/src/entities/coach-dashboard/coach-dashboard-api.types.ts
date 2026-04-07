@@ -7,7 +7,7 @@ import {
   type dashboardOverviewSchema,
   type progressAthleteSchema,
   type progressBucketsSchema,
-} from "./coach-dashboard.schema";
+} from "./coach-dashboard-api.schema";
 
 export type DashboardOverview = z.infer<typeof dashboardOverviewSchema>;
 export type DashboardActionItem = z.infer<typeof dashboardActionItemSchema>;

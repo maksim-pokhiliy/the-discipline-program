@@ -2,10 +2,10 @@ import { Suspense } from "react";
 
 import { CircularProgress, Stack, Typography } from "@mui/material";
 
-interface SuspenseWrapperProps {
+type SuspenseWrapperProps = {
   children: React.ReactNode;
   loadingMessage?: string;
-}
+};
 
 export const SuspenseWrapper = ({
   children,

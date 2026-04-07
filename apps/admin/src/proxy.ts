@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { AUTH_ROUTES, getToken, isPublicRoute } from "@repo/auth";
 import { UserRole } from "@repo/contracts/auth";
 
-export async function proxy(req: NextRequest) {
+export const proxy = async (req: NextRequest) => {
   const path = req.nextUrl.pathname;
   const token = await getToken({ req });
 
@@ -26,7 +26,7 @@ export async function proxy(req: NextRequest) {
   }
 
   return NextResponse.next();
-}
+};
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|public|icons).*)"],

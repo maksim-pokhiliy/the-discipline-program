@@ -20,7 +20,7 @@ export const MuiMenuItem: Components<Theme>["MuiMenuItem"] = {
     root: ({ theme }) => ({
       padding: theme.spacing(1),
       minHeight: "unset",
-      borderRadius: Number(theme.shape.borderRadius),
+      borderRadius: theme.shape.borderRadius,
     }),
   },
 };

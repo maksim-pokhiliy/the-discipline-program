@@ -37,7 +37,7 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
                       size="small"
                       fullWidth={false}
                       disabled={isPending}
-                      sx={{ minWidth: 160 }}
+                      sx={{ minWidth: (theme) => theme.spacing(20) }}
                     >
                       {Object.values(UserRole).map((role) => (
                         <MenuItem key={role} value={role}>

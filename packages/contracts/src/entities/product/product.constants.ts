@@ -16,14 +16,6 @@ export const PRICE_INTERVAL_LABELS: Record<PriceInterval, string> = {
   [PriceInterval.ONE_TIME]: "one-time",
 };
 
-export const PRODUCT_DEFAULTS = {
-  currency: ProductCurrency.USD,
-  interval: PriceInterval.MONTHLY,
-  isFeatured: false,
-  isActive: true,
-  features: [],
-} as const;
-
 export enum ProductToggleField {
   IS_ACTIVE = "isActive",
   IS_FEATURED = "isFeatured",

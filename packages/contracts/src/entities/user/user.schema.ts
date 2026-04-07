@@ -4,19 +4,6 @@ import { athleteProfileSchema } from "../athlete-profile";
 import { userRoleSchema } from "../auth";
 import { coachProfileSchema } from "../coach-profile";
 
-export const timezoneSchema = z.string().refine(
-  (tz) => {
-    try {
-      Intl.DateTimeFormat(undefined, { timeZone: tz });
-
-      return true;
-    } catch {
-      return false;
-    }
-  },
-  { message: "Invalid IANA timezone" },
-);
-
 export const adminUserSchema = z.object({
   id: z.string().cuid(),
   email: z.string().email(),

@@ -3,11 +3,12 @@
 import { type ReactNode } from "react";
 
 import SaveIcon from "@mui/icons-material/Save";
+import { Stack } from "@mui/material";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
 
 import { ContentSection } from "./layout";
 
-interface FormViewProps<T extends FieldValues> {
+type FormViewProps<T extends FieldValues> = {
   methods: UseFormReturn<T>;
   onSubmit: (data: T) => void;
   isPending: boolean;
@@ -17,7 +18,7 @@ interface FormViewProps<T extends FieldValues> {
   backLabel: string;
   submitLabel?: string;
   children: ReactNode;
-}
+};
 
 export const FormView = <T extends FieldValues>({
   methods,
@@ -31,7 +32,7 @@ export const FormView = <T extends FieldValues>({
   children,
 }: FormViewProps<T>) => (
   <FormProvider {...methods}>
-    <form onSubmit={methods.handleSubmit(onSubmit)} noValidate>
+    <Stack component="form" onSubmit={methods.handleSubmit(onSubmit)} noValidate>
       <ContentSection
         title={title}
         subtitle={subtitle}
@@ -50,6 +51,6 @@ export const FormView = <T extends FieldValues>({
       >
         {children}
       </ContentSection>
-    </form>
+    </Stack>
   </FormProvider>
 );

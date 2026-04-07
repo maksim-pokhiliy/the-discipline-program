@@ -15,7 +15,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { signOut, useSession } from "@repo/auth";
+import { signOut, useSession } from "@repo/auth/client";
 
 const getInitial = (name?: string | null, email?: string | null): string => {
   const source = name || email;

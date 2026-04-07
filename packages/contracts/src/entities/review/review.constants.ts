@@ -3,14 +3,6 @@ export const REVIEW_CONSTANTS = {
   MAX_RATING: 5,
   MIN_TEXT_LENGTH: 10,
   MAX_TEXT_LENGTH: 1000,
-  DEFAULT_SORT_ORDER: 0,
-} as const;
-
-export const REVIEW_DEFAULTS = {
-  isActive: true,
-  rating: 5,
-  authorAvatar: null,
-  programId: null,
 } as const;
 
 export enum ReviewToggleField {

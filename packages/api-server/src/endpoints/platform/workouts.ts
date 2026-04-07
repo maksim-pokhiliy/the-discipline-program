@@ -226,29 +226,28 @@ export const platformWorkoutsApi = {
     const dayShiftMs = normalizedTarget.getTime() - normalizedSource.getTime();
 
     const created = await prisma.$transaction(async (tx) => {
-      const createdIds: string[] = [];
+      const existingIds = (
+        await tx.workout.findMany({
+          where: { planId },
+          select: { id: true },
+        })
+      ).map((w) => w.id);
 
-      for (const workout of sourceWorkouts) {
-        const newDate = workout.scheduledDate
-          ? toUTCMidnight(new Date(workout.scheduledDate.getTime() + dayShiftMs))
-          : null;
-
-        const newWorkout = await tx.workout.create({
-          data: {
-            planId,
-            scheduledDate: newDate,
-            title: workout.title,
-            description: workout.description,
-            content: workout.content,
-            sortOrder: workout.sortOrder,
-          },
-        });
-
-        createdIds.push(newWorkout.id);
-      }
+      await tx.workout.createMany({
+        data: sourceWorkouts.map((workout) => ({
+          planId,
+          scheduledDate: workout.scheduledDate
+            ? toUTCMidnight(new Date(workout.scheduledDate.getTime() + dayShiftMs))
+            : null,
+          title: workout.title,
+          description: workout.description,
+          content: workout.content,
+          sortOrder: workout.sortOrder,
+        })),
+      });
 
       return tx.workout.findMany({
-        where: { id: { in: createdIds } },
+        where: { planId, id: { notIn: existingIds } },
         orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }],
       });
     });

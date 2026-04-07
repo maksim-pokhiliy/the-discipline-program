@@ -8,9 +8,9 @@ import { type z } from "zod";
 import { type aboutPageCredentialsSchema } from "@repo/contracts/pages";
 import { DynamicListItem, FormCard } from "@repo/ui";
 
-type CredentialsSectionData = z.infer<typeof aboutPageCredentialsSchema>;
+import { ADD_BUTTON_SX } from "./shared-styles";
 
-const ADD_BUTTON_SX = { borderStyle: "dashed", borderWidth: 2, px: 4 } as const;
+type CredentialsSectionData = z.infer<typeof aboutPageCredentialsSchema>;
 
 export const CredentialsSectionForm = () => {
   const {

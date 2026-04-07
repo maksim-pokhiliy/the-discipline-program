@@ -11,7 +11,3 @@ export enum ContactStatus {
   REPLIED = "REPLIED",
   CLOSED = "CLOSED",
 }
-
-export const CONTACT_DEFAULTS = {
-  status: ContactStatus.NEW,
-} as const;

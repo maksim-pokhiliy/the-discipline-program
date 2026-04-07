@@ -3,7 +3,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import type { AdminProductsPageData, Product } from "@repo/contracts/product";
+import type {
+  AdminProductsPageData,
+  Product,
+  CreateProductData,
+  UpdateProductData,
+} from "@repo/contracts/product";
 import { adminKeys, createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
@@ -11,8 +16,8 @@ import { api } from "../api";
 const productHooks = createCrudHooks<
   AdminProductsPageData,
   Product,
-  Partial<Product>,
-  Partial<Product>
+  CreateProductData,
+  UpdateProductData
 >({
   entityName: "Product",
   keys: adminKeys.products,

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { HealthStatus } from "@repo/contracts/athlete-profile";
 import {
   ActionItemResolveReason,
   ActionItemSeverity,
@@ -8,6 +9,7 @@ import {
 } from "@repo/contracts/coach-action-item";
 import { MISSED_DAYS_CRITICAL, MISSED_DAYS_WARNING } from "@repo/contracts/coach-dashboard";
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+import { TrainingPlanStatus } from "@repo/contracts/training-plan";
 import { NotFoundError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach, createTestPlan, createTestUser } from "../../test/helpers";
@@ -37,7 +39,7 @@ describe("platformCoachActionItemsApi", () => {
       data: { timezone: "UTC" },
     });
 
-    plan = await createTestPlan(coach.profile.id, { status: "ACTIVE" });
+    plan = await createTestPlan(coach.profile.id, { status: TrainingPlanStatus.ACTIVE });
 
     athleteMissed = await createTestUser();
     athleteNew = await createTestUser();
@@ -94,7 +96,7 @@ describe("platformCoachActionItemsApi", () => {
     trackCleanup("planEnrollment", enr3.id);
 
     const profile = await cleanupRaw.athleteProfile.create({
-      data: { userId: athleteHealth.id, healthStatus: "INJURED" },
+      data: { userId: athleteHealth.id, healthStatus: HealthStatus.INJURED },
     });
 
     trackCleanup("athleteProfile", profile.id);
@@ -253,7 +255,7 @@ describe("platformCoachActionItemsApi", () => {
     it("resolves open items when condition clears", async () => {
       await cleanupRaw.athleteProfile.update({
         where: { userId: athleteHealth.id },
-        data: { healthStatus: "HEALTHY" },
+        data: { healthStatus: HealthStatus.HEALTHY },
       });
 
       const result = await platformCoachActionItemsApi.reconcile(coach.user.id);
@@ -274,14 +276,14 @@ describe("platformCoachActionItemsApi", () => {
 
       await cleanupRaw.athleteProfile.update({
         where: { userId: athleteHealth.id },
-        data: { healthStatus: "INJURED" },
+        data: { healthStatus: HealthStatus.INJURED },
       });
     });
 
     it("does NOT recreate recently resolved items with same metadata", async () => {
       await cleanupRaw.athleteProfile.update({
         where: { userId: athleteHealth.id },
-        data: { healthStatus: "INJURED" },
+        data: { healthStatus: HealthStatus.INJURED },
       });
 
       const existingResolved = await cleanupRaw.coachActionItem.findFirst({

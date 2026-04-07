@@ -1,3 +1,5 @@
+import { SuspenseWrapper } from "@repo/ui";
+
 import { PlanDetailView } from "@app/modules/plan-detail";
 
 export const dynamic = "force-dynamic";
@@ -9,5 +11,9 @@ type PlanDetailPageProps = {
 export default async function PlanDetailPage({ params }: PlanDetailPageProps) {
   const { planId } = await params;
 
-  return <PlanDetailView planId={planId} />;
+  return (
+    <SuspenseWrapper>
+      <PlanDetailView planId={planId} />
+    </SuspenseWrapper>
+  );
 }

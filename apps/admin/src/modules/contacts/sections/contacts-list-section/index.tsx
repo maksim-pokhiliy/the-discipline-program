@@ -13,15 +13,9 @@ import { formatDate } from "@repo/shared";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { useDeleteContact, useUpdateContact } from "@app/lib/hooks";
+import { TEXT_CLAMP_SX } from "@app/lib/styles/text-clamp";
 
 import { CONTACT_STATUS_CONFIG } from "../../constants";
-
-const TEXT_CLAMP_SX = {
-  display: "-webkit-box",
-  WebkitLineClamp: 2,
-  WebkitBoxOrient: "vertical",
-  overflow: "hidden",
-} as const;
 
 const filters: DataTableFilter<GetContactByIdResponse>[] = [
   {
@@ -115,10 +109,7 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
         label: "Status",
         width: "12%",
         render: (item) => {
-          const config = CONTACT_STATUS_CONFIG[item.status as ContactStatus] || {
-            label: item.status,
-            color: "default" as const,
-          };
+          const config = CONTACT_STATUS_CONFIG[item.status];
 
           return (
             <Chip
@@ -177,10 +168,10 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
       />
 
       <Menu anchorEl={statusMenuAnchor} open={!!statusMenuAnchor} onClose={handleStatusMenuClose}>
-        {Object.values(ContactStatus).map((status) => {
+        {(() => {
           const currentContact = contacts.find((c) => c.id === statusMenuContactId);
 
-          return (
+          return Object.values(ContactStatus).map((status) => (
             <MenuItem
               key={status}
               onClick={() => handleStatusSelect(status)}
@@ -188,8 +179,8 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
             >
               {CONTACT_STATUS_CONFIG[status].label}
             </MenuItem>
-          );
-        })}
+          ));
+        })()}
       </Menu>
 
       <ConfirmationModal

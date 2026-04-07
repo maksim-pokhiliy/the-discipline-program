@@ -1,5 +1,10 @@
 import { type ApiClient } from "@repo/api-client";
-import { type Product, type AdminProductsPageData } from "@repo/contracts/product";
+import {
+  type Product,
+  type AdminProductsPageData,
+  type CreateProductData,
+  type UpdateProductData,
+} from "@repo/contracts/product";
 
 export const createProductsAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminProductsPageData> =>
@@ -9,10 +14,10 @@ export const createProductsAPI = (client: ApiClient) => ({
 
   getById: (id: string): Promise<Product> => client.request(`/api/admin/products/${id}`),
 
-  create: (data: Partial<Product>): Promise<Product> =>
+  create: (data: CreateProductData): Promise<Product> =>
     client.request("/api/admin/products", "POST", data),
 
-  update: (id: string, data: Partial<Product>): Promise<Product> =>
+  update: (id: string, data: UpdateProductData): Promise<Product> =>
     client.request(`/api/admin/products/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> => client.request(`/api/admin/products/${id}`, "DELETE"),

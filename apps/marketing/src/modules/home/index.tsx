@@ -32,8 +32,6 @@ export const HomePageClient = ({ initialData }: HomePageClientProps) => {
     >
       {(data) => (
         <>
-          <StructuredData type="website" />
-          <StructuredData type="organization" />
           <StructuredData type="person" />
           <StructuredData type="storefront" data={{ products: data.productsList }} />
           <StructuredData type="reviews" data={{ reviews: data.reviewsList }} />

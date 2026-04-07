@@ -1,5 +1,6 @@
 import CheckIcon from "@mui/icons-material/Check";
 import {
+  alpha,
   Button,
   Card,
   CardContent,
@@ -34,7 +35,7 @@ export const ProductCard = ({
   const isFeatured = variant === "featured" || product.isFeatured;
 
   return (
-    <Card sx={{ height: "100%", display: "flex" }} variant={cardVariant}>
+    <Card variant={cardVariant}>
       <Stack sx={{ width: "100%" }}>
         <Stack
           spacing={1}
@@ -56,14 +57,22 @@ export const ProductCard = ({
             </Typography>
 
             {activePrice && (
-              <Typography variant="body2" sx={{ opacity: 0.7 }}>
+              <Typography
+                variant="body2"
+                sx={(theme) => ({
+                  color: alpha(
+                    isFeatured ? theme.palette.primary.contrastText : theme.palette.text.primary,
+                    0.7,
+                  ),
+                })}
+              >
                 /{PRICE_INTERVAL_LABELS[activePrice.interval]}
               </Typography>
             )}
           </Stack>
         </Stack>
 
-        <CardContent sx={{ display: "flex", flexDirection: "column", flexGrow: 1 }}>
+        <CardContent>
           <Stack spacing={3} sx={{ height: "100%" }}>
             <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center" }}>
               {product.description}

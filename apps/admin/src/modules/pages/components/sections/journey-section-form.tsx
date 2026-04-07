@@ -8,9 +8,9 @@ import { type z } from "zod";
 import { type aboutPageJourneySchema } from "@repo/contracts/pages";
 import { DynamicListItem, FormCard } from "@repo/ui";
 
-type JourneySectionData = z.infer<typeof aboutPageJourneySchema>;
+import { ADD_BUTTON_SX } from "./shared-styles";
 
-const ADD_BUTTON_SX = { borderStyle: "dashed", borderWidth: 2, px: 4 } as const;
+type JourneySectionData = z.infer<typeof aboutPageJourneySchema>;
 
 export const JourneySectionForm = () => {
   const {

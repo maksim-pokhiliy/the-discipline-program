@@ -1,12 +1,17 @@
 import { z } from "zod";
 
-import { UserRole } from "./auth.constants";
+import { AUTH_CONSTANTS, UserRole } from "./auth.constants";
 
 export const userRoleSchema = z.nativeEnum(UserRole);
 
 export const loginFormSchema = z.object({
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z
+    .string()
+    .min(
+      AUTH_CONSTANTS.MIN_PASSWORD_LENGTH,
+      `Password must be at least ${AUTH_CONSTANTS.MIN_PASSWORD_LENGTH} characters`,
+    ),
 });
 
 export const userSchema = z.object({

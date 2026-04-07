@@ -8,7 +8,7 @@ import { NotFoundError } from "@repo/errors";
 import { prisma } from "../../db/client";
 import { mapToCoachNote } from "../../mappers";
 
-import { resolveCoachId } from "./guards";
+import { resolveCoachId, verifyAthleteBelongsToCoach } from "./guards";
 
 export const platformCoachNotesApi = {
   getAll: async (userId: string): Promise<CoachNote[]> => {
@@ -37,14 +37,7 @@ export const platformCoachNotesApi = {
   create: async (userId: string, data: CreateCoachNoteData): Promise<CoachNote> => {
     const coachId = await resolveCoachId(userId);
 
-    const athlete = await prisma.user.findUnique({
-      where: { id: data.athleteId },
-      select: { id: true },
-    });
-
-    if (!athlete) {
-      throw new NotFoundError("Athlete not found", { athleteId: data.athleteId });
-    }
+    await verifyAthleteBelongsToCoach(data.athleteId, coachId);
 
     const note = await prisma.coachNote.create({
       data: { coachId, ...data },

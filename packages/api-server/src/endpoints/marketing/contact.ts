@@ -15,10 +15,4 @@ export const contactApi = {
 
     return submission;
   },
-
-  getSubmissions: async () => {
-    return prisma.marketingContactSubmission.findMany({
-      orderBy: { createdAt: "desc" },
-    });
-  },
 };

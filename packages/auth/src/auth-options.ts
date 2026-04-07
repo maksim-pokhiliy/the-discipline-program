@@ -60,19 +60,11 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      const dbUser = await authService.getUserById(token.id);
-
-      if (!dbUser) {
-        session.user = { id: "", email: null, name: null, image: null, role: null };
-
-        return session;
-      }
-
       session.user.id = token.id;
-      session.user.email = token.email;
-      session.user.name = token.name;
-      session.user.image = token.image;
-      session.user.role = dbUser.role;
+      session.user.email = token.email ?? null;
+      session.user.name = token.name ?? null;
+      session.user.image = token.image ?? null;
+      session.user.role = token.role ?? null;
 
       return session;
     },

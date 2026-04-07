@@ -11,7 +11,7 @@ import {
   computeProcessStatus,
 } from "../../utils/dashboard-computations";
 import { daysBetweenInTz, MS_PER_DAY, startOfTodayInTz } from "../../utils/date-helpers";
-import { enrollmentInclude } from "../../utils/enrollment-query";
+import { createEnrollmentInclude } from "../../utils/enrollment-query";
 
 import { resolveCoachId } from "./guards";
 
@@ -41,7 +41,7 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
         status: PlanEnrollmentStatus.ACTIVE,
         trainingPlan: { coachId },
       },
-      include: enrollmentInclude,
+      include: createEnrollmentInclude(coachId),
     }),
     prisma.coachActionItem.groupBy({
       by: ["athleteId"],

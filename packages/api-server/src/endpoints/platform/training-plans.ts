@@ -165,12 +165,14 @@ export const platformTrainingPlansApi = {
 
     await verifyPlanOwnership(id, coachId);
 
-    await prisma.planEnrollment.deleteMany({ where: { trainingPlanId: id } });
-    await prisma.product.updateMany({
-      where: { trainingPlanId: id },
-      data: { trainingPlanId: null },
+    await prisma.$transaction(async (tx) => {
+      await tx.planEnrollment.deleteMany({ where: { trainingPlanId: id } });
+      await tx.product.updateMany({
+        where: { trainingPlanId: id },
+        data: { trainingPlanId: null },
+      });
+      await tx.trainingPlan.delete({ where: { id } });
     });
-    await prisma.trainingPlan.delete({ where: { id } });
   },
 
   duplicate: async (userId: string, id: string): Promise<TrainingPlan> => {
@@ -195,15 +197,15 @@ export const platformTrainingPlansApi = {
         },
       });
 
-      for (const workout of source.workouts) {
-        await tx.workout.create({
-          data: {
+      if (source.workouts.length > 0) {
+        await tx.workout.createMany({
+          data: source.workouts.map((workout) => ({
             planId: plan.id,
             scheduledDate: workout.scheduledDate,
             title: workout.title,
             description: workout.description,
             content: workout.content,
-          },
+          })),
         });
       }
 

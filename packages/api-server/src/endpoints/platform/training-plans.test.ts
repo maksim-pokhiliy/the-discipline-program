@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
 
 import { cleanupRaw, createTestCoach } from "../../test/helpers";
@@ -25,7 +26,7 @@ describe("platformTrainingPlansApi", () => {
         coachId: coach.profile.id,
         name: "Original Plan",
         description: "Plan description",
-        status: "ACTIVE",
+        status: TrainingPlanStatus.ACTIVE,
       },
     });
 
@@ -55,7 +56,7 @@ describe("platformTrainingPlansApi", () => {
       data: {
         trainingPlanId: plan.id,
         userId: coach.user.id,
-        status: "ACTIVE",
+        status: PlanEnrollmentStatus.ACTIVE,
       },
     });
 

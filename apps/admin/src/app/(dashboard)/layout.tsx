@@ -8,7 +8,7 @@ import { SessionGuard } from "@repo/auth";
 import { ADMIN_NAVIGATION } from "@repo/shared";
 import { AdminHeader, Sidebar, useSidebar } from "@repo/ui";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { expanded, toggle } = useSidebar();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -33,4 +33,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </Stack>
     </SessionGuard>
   );
-}
+};
+
+export default DashboardLayout;

@@ -29,7 +29,7 @@ interface CrudHooksConfig<
     update?: (id: string, data: TUpdateData) => Promise<TEntity>;
     delete?: (id: string) => Promise<void>;
   };
-  redirectTo: string;
+  redirectTo?: string;
   additionalInvalidateKeys?: QueryKey[];
 }
 
@@ -82,7 +82,10 @@ export const createCrudHooks = <
         for (const key of invalidateKeys) {
           queryClient.invalidateQueries({ queryKey: key });
         }
-        router.push(config.redirectTo);
+
+        if (config.redirectTo) {
+          router.push(config.redirectTo);
+        }
       },
       onError: (error: Error) => {
         toast.error(error.message || `Failed to create ${config.entityName.toLowerCase()}`);
@@ -111,7 +114,10 @@ export const createCrudHooks = <
         for (const key of invalidateKeys) {
           queryClient.invalidateQueries({ queryKey: key });
         }
-        router.push(config.redirectTo);
+
+        if (config.redirectTo) {
+          router.push(config.redirectTo);
+        }
       },
       onError: (error: Error) => {
         toast.error(error.message || `Failed to update ${config.entityName.toLowerCase()}`);

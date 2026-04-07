@@ -262,7 +262,7 @@ describe("computeAthletesSummary", () => {
 
   it("maps healthStatus from athleteProfile", () => {
     const enrollment = makeEnrollment({
-      healthStatus: "INJURED",
+      healthStatus: HealthStatus.INJURED,
       workouts: [],
     });
 

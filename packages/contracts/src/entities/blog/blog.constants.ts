@@ -5,24 +5,23 @@ export const BLOG_CONSTANTS = {
   MIN_EXCERPT_LENGTH: 1,
   MAX_EXCERPT_LENGTH: 500,
   MIN_CONTENT_LENGTH: 100,
-  DEFAULT_SORT_ORDER: 0,
 } as const;
 
 export enum BlogCategory {
-  FITNESS = "Fitness",
-  NUTRITION = "Nutrition",
-  MINDSET = "Mindset",
-  TRAINING = "Training",
-  RECOVERY = "Recovery",
+  FITNESS = "FITNESS",
+  NUTRITION = "NUTRITION",
+  MINDSET = "MINDSET",
+  TRAINING = "TRAINING",
+  RECOVERY = "RECOVERY",
 }
 
-export const BLOG_DEFAULTS = {
-  isPublished: false,
-  isFeatured: false,
-  coverImage: null,
-  publishedAt: null,
-  readTime: null,
-} as const;
+export const BLOG_CATEGORY_LABELS: Record<BlogCategory, string> = {
+  [BlogCategory.FITNESS]: "Fitness",
+  [BlogCategory.NUTRITION]: "Nutrition",
+  [BlogCategory.MINDSET]: "Mindset",
+  [BlogCategory.TRAINING]: "Training",
+  [BlogCategory.RECOVERY]: "Recovery",
+};
 
 export enum BlogToggleField {
   IS_PUBLISHED = "isPublished",

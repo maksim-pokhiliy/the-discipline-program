@@ -32,7 +32,7 @@ const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
   const methods = useForm<UpdateContactRequest>({
     resolver: zodResolver(updateContactRequestSchema),
     defaultValues: {
-      status: contact.status as ContactStatus,
+      status: contact.status,
       notes: contact.notes ?? null,
     },
   });

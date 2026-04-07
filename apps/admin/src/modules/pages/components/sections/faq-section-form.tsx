@@ -8,9 +8,9 @@ import { type z } from "zod";
 import { type faqContentSchema } from "@repo/contracts/pages";
 import { DynamicListItem, FormCard } from "@repo/ui";
 
-type FaqSectionData = z.infer<typeof faqContentSchema>;
+import { ADD_BUTTON_SX } from "./shared-styles";
 
-const ADD_BUTTON_SX = { borderStyle: "dashed", borderWidth: 2, px: 4 } as const;
+type FaqSectionData = z.infer<typeof faqContentSchema>;
 
 export const FaqSectionForm = () => {
   const {

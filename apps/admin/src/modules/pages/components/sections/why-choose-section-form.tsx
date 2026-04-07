@@ -7,9 +7,8 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 import { type HomePageWhyChooseData } from "@repo/contracts/pages";
 import { FormCard } from "@repo/ui";
 
+import { ADD_BUTTON_SX } from "./shared-styles";
 import { WhyChooseFeatureCard } from "./why-choose-feature-card";
-
-const ADD_BUTTON_SX = { borderStyle: "dashed", borderWidth: 2, px: 4 } as const;
 
 export const WhyChooseSectionForm = () => {
   const {

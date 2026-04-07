@@ -1,3 +1,6 @@
+import { HealthStatus } from "@repo/contracts/athlete-profile";
+import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+
 import type { EnrollmentWithData } from "./enrollment-query";
 
 export const FAKE_NOW = new Date("2025-06-18T12:00:00Z");
@@ -12,7 +15,6 @@ export const makeWorkout = (
   scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
   createdAt: new Date(createdAt),
   title,
-  blocks: [] as { categoryId: string; category: { id: string; name: string } }[],
 });
 
 export const makeLog = (workoutId: string, date: string) => ({
@@ -26,7 +28,7 @@ export const makeEnrollment = (overrides: {
   userName?: string | null;
   userEmail?: string;
   userImage?: string | null;
-  healthStatus?: "HEALTHY" | "INJURED" | "RESTRICTED";
+  healthStatus?: HealthStatus;
   hasProfile?: boolean;
   planId?: string;
   planName?: string;
@@ -39,7 +41,7 @@ export const makeEnrollment = (overrides: {
     userId: overrides.userId ?? "u1",
     startDate: new Date("2025-06-01T00:00:00Z"),
     endDate: null,
-    status: "ACTIVE",
+    status: PlanEnrollmentStatus.ACTIVE,
     createdAt: new Date("2025-06-01T00:00:00Z"),
     user: {
       id: overrides.userId ?? "u1",
@@ -50,7 +52,7 @@ export const makeEnrollment = (overrides: {
       athleteProfile:
         overrides.hasProfile === false
           ? null
-          : { healthStatus: overrides.healthStatus ?? "HEALTHY" },
+          : { healthStatus: overrides.healthStatus ?? HealthStatus.HEALTHY },
     },
     trainingPlan: {
       id: overrides.planId ?? "p1",

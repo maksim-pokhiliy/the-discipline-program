@@ -16,18 +16,21 @@ export const formatError = (error: unknown): FormattedError => {
   }
 
   if (error instanceof Error) {
-    if ("error" in error && typeof (error as Record<string, unknown>).error === "object") {
-      const apiError = (error as Record<string, unknown>).error as {
-        message?: string;
-        code?: string;
-        details?: Record<string, unknown>;
-      };
+    if ("error" in error) {
+      const nested = (error as unknown as Record<string, unknown>).error;
 
-      return {
-        message: apiError.message || error.message,
-        code: apiError.code,
-        details: apiError.details,
-      };
+      if (typeof nested === "object" && nested !== null) {
+        const obj = nested as Record<string, unknown>;
+
+        return {
+          message: typeof obj.message === "string" ? obj.message : error.message,
+          code: typeof obj.code === "string" ? obj.code : undefined,
+          details:
+            typeof obj.details === "object" && obj.details !== null
+              ? (obj.details as Record<string, unknown>)
+              : undefined,
+        };
+      }
     }
 
     return {

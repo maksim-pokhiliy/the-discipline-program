@@ -71,3 +71,5 @@ export const copyWeekRequestSchema = z.object({
   sourceDate: z.coerce.date(),
   targetDate: z.coerce.date(),
 });
+
+export const copyWeekResponseSchema = z.array(workoutSchema);

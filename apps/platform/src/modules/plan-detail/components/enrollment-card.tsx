@@ -10,8 +10,7 @@ import {
 } from "@repo/contracts/plan-enrollment";
 
 import { PersonCard, StatusChip } from "@app/lib/components";
-import { HEALTH_STATUS_CHIPS } from "@app/lib/config";
-import { ENROLLMENT_STATUS_COLORS } from "@app/lib/config/enrollment-status";
+import { ENROLLMENT_STATUS_COLORS, HEALTH_STATUS_CHIPS } from "@app/lib/config";
 import { formatShortDate } from "@app/lib/utils/date-formatters";
 
 import { EnrollmentActionMenu } from "./enrollment-action-menu";

@@ -18,10 +18,9 @@ import {
   type AdminPageDetails,
   type SectionSchemaKey,
   type UpdatePageSectionData,
-  type HeroSectionType,
-  SECTION_FEATURES,
 } from "@repo/contracts/pages";
 
+import { SECTION_FEATURES, type HeroSectionType } from "../../config/section-features";
 import { ContactSectionForm } from "../sections/contact-section-form";
 import { CredentialsSectionForm } from "../sections/credentials-section-form";
 import { FaqSectionForm } from "../sections/faq-section-form";
@@ -81,8 +80,11 @@ export const SectionEditor = ({
     ? SECTION_SCHEMAS[section.section]
     : undefined;
 
+  const parsedData = currentSchema?.safeParse(section.data);
+  const safeDefaultValues = parsedData?.success ? parsedData.data : {};
+
   const methods = useForm<UpdatePageSectionData["data"]>({
-    defaultValues: section.data as UpdatePageSectionData["data"],
+    defaultValues: safeDefaultValues,
     resolver: currentSchema ? zodResolver(currentSchema) : undefined,
     mode: "onChange",
   });

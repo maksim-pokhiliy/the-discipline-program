@@ -16,7 +16,7 @@ import {
   startOfTodayInTz,
   startOfWeekInTz,
 } from "../../utils/date-helpers";
-import { enrollmentInclude } from "../../utils/enrollment-query";
+import { createEnrollmentInclude } from "../../utils/enrollment-query";
 
 import { platformCoachActionItemsApi } from "./coach-action-items";
 import { resolveCoachId } from "./guards";
@@ -43,7 +43,7 @@ export const platformCoachDashboardApi = {
           status: PlanEnrollmentStatus.ACTIVE,
           trainingPlan: { coachId },
         },
-        include: enrollmentInclude,
+        include: createEnrollmentInclude(coachId),
       }),
 
       prisma.coachActionItem.findMany({

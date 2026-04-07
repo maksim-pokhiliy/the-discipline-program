@@ -3,6 +3,7 @@ import {
   type ActionItemSeverity as PrismaActionItemSeverity,
   type ActionItemStatus as PrismaActionItemStatus,
   type ActionItemType as PrismaActionItemType,
+  type ContactSubmissionStatus as PrismaContactSubmissionStatus,
   type Currency as PrismaCurrency,
   type Gender as PrismaGender,
   type HealthStatus as PrismaHealthStatus,
@@ -20,6 +21,7 @@ import {
   ActionItemStatus,
   ActionItemType,
 } from "@repo/contracts/coach-action-item";
+import { ContactStatus } from "@repo/contracts/contact";
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { PriceInterval, ProductCurrency } from "@repo/contracts/product";
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
@@ -89,4 +91,18 @@ export const ACTION_ITEM_RESOLVE_REASON_MAP: Record<
   AUTO_CONDITION_CLEARED: ActionItemResolveReason.AUTO_CONDITION_CLEARED,
   AUTO_ENROLLMENT_ENDED: ActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
   MANUAL_CONTACTED: ActionItemResolveReason.MANUAL_CONTACTED,
+};
+
+export const CONTACT_SUBMISSION_STATUS_MAP: Record<PrismaContactSubmissionStatus, ContactStatus> = {
+  NEW: ContactStatus.NEW,
+  IN_PROGRESS: ContactStatus.IN_PROGRESS,
+  REPLIED: ContactStatus.REPLIED,
+  CLOSED: ContactStatus.CLOSED,
+};
+
+export const CONTACT_STATUS_TO_PRISMA_MAP: Record<ContactStatus, PrismaContactSubmissionStatus> = {
+  [ContactStatus.NEW]: "NEW",
+  [ContactStatus.IN_PROGRESS]: "IN_PROGRESS",
+  [ContactStatus.REPLIED]: "REPLIED",
+  [ContactStatus.CLOSED]: "CLOSED",
 };

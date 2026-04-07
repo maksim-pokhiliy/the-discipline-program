@@ -19,7 +19,7 @@ import {
   startOfTodayInTz,
   startOfWeekInTz,
 } from "../../utils/date-helpers";
-import { enrollmentInclude } from "../../utils/enrollment-query";
+import { createEnrollmentInclude } from "../../utils/enrollment-query";
 
 import { resolveCoachId, verifyAthleteBelongsToCoach } from "./guards";
 
@@ -53,7 +53,7 @@ export const getAthleteDetail = async (
         status: PlanEnrollmentStatus.ACTIVE,
         trainingPlan: { coachId },
       },
-      include: enrollmentInclude,
+      include: createEnrollmentInclude(coachId),
       orderBy: { startDate: "asc" },
     }),
 

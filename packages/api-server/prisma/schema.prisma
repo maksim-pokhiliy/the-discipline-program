@@ -379,6 +379,7 @@ model BenchmarkDefinition {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
+  @@index([category])
   @@map("app_benchmark_definitions")
 }
 
@@ -463,16 +464,23 @@ model MarketingReview {
   @@map("marketing_reviews")
 }
 
+enum ContactSubmissionStatus {
+  NEW
+  IN_PROGRESS
+  REPLIED
+  CLOSED
+}
+
 model MarketingContactSubmission {
-  id        String    @id @default(cuid())
+  id        String                  @id @default(cuid())
   name      String?
   contact   String?
   program   String?
-  message   String    @db.Text
-  status    String    @default("NEW")
-  notes     String?   @db.Text
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  message   String                  @db.Text
+  status    ContactSubmissionStatus @default(NEW)
+  notes     String?                 @db.Text
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
   deletedAt DateTime?
 
   @@index([createdAt])

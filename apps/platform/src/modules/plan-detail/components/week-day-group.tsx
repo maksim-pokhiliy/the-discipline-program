@@ -7,7 +7,8 @@ import { IconButton, Stack, Typography } from "@mui/material";
 
 import type { Workout } from "@repo/contracts/workout";
 
-import { formatDayName, isSameDay } from "./week-helpers";
+import { formatDayName, isSameDay } from "@app/lib/utils/date-utils";
+
 import { WeekWorkoutCard } from "./week-workout-card";
 
 type WeekDayGroupProps = {

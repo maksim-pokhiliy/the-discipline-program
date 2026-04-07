@@ -2,9 +2,9 @@
 
 import { signOut, useSession } from "next-auth/react";
 
-interface SessionGuardProps {
+type SessionGuardProps = {
   children: React.ReactNode;
-}
+};
 
 export const SessionGuard = ({ children }: SessionGuardProps) => {
   const { status } = useSession({

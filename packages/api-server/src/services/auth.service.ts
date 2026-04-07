@@ -1,6 +1,7 @@
 import bcrypt from "bcryptjs";
 
 import { prisma } from "../db/client";
+import { ROLE_MAP } from "../mappers/enum-maps";
 
 export const authService = {
   hashPassword: async (password: string): Promise<string> => {
@@ -11,36 +12,40 @@ export const authService = {
     return bcrypt.compare(password, hash);
   },
 
-  validateUser: async (email: string, password: string) => {
+  validateUser: async (email: string, rawPassword: string) => {
     const user = await prisma.user.findUnique({
       where: { email },
-    });
-
-    if (!user || !user.password) {
-      return null;
-    }
-
-    const isValid = await bcrypt.compare(password, user.password);
-
-    if (!isValid) {
-      return null;
-    }
-
-    const safeUser = await prisma.user.findUnique({
-      where: { id: user.id },
       select: {
         id: true,
         email: true,
         name: true,
         image: true,
         role: true,
+        password: true,
         createdAt: true,
         updatedAt: true,
-        timezone: true,
       },
     });
 
-    return safeUser;
+    if (!user || !user.password) {
+      return null;
+    }
+
+    const isValid = await bcrypt.compare(rawPassword, user.password);
+
+    if (!isValid) {
+      return null;
+    }
+
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      image: user.image,
+      role: ROLE_MAP[user.role],
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   },
 
   getUserById: async (id: string) => {
@@ -55,6 +60,10 @@ export const authService = {
       },
     });
 
-    return user;
+    if (!user) {
+      return null;
+    }
+
+    return { ...user, role: ROLE_MAP[user.role] };
   },
 };

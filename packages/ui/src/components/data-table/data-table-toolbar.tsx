@@ -5,22 +5,22 @@ import { type ReactNode } from "react";
 import SearchIcon from "@mui/icons-material/Search";
 import { Box, InputAdornment, MenuItem, Stack, TextField, Typography } from "@mui/material";
 
-interface FilterConfig {
+type FilterConfig = {
   id: string;
   label: string;
   value: string;
   options: { label: string; value: string }[];
   onChange: (value: string) => void;
-}
+};
 
-interface DataTableToolbarProps {
+type DataTableToolbarProps = {
   title?: string;
   searchValue?: string;
   searchPlaceholder?: string;
   onSearchChange?: (value: string) => void;
   filters?: FilterConfig[];
   action?: ReactNode;
-}
+};
 
 export const DataTableToolbar = ({
   title,
@@ -32,11 +32,7 @@ export const DataTableToolbar = ({
 }: DataTableToolbarProps) => {
   return (
     <Stack direction="row" alignItems="center" gap={2} sx={{ px: 2, py: 1.5 }} flexWrap="wrap">
-      {title && (
-        <Typography variant="h6" fontWeight={600}>
-          {title}
-        </Typography>
-      )}
+      {title && <Typography variant="h6">{title}</Typography>}
 
       <Box sx={{ flexGrow: 1 }} />
 

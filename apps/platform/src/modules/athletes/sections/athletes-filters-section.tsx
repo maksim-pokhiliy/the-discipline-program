@@ -48,16 +48,19 @@ export const AthletesFiltersSection: React.FC<AthletesFiltersSectionProps> = ({ 
     [searchParams, router, pathname],
   );
 
-  const toggleParam = (key: string, value: string) => {
-    const current = searchParams.get(key);
+  const toggleParam = useCallback(
+    (key: string, value: string) => {
+      const current = searchParams.get(key);
 
-    updateParam(key, current === value ? null : value);
-  };
+      updateParam(key, current === value ? null : value);
+    },
+    [searchParams, updateParam],
+  );
 
-  const clearAll = () => {
+  const clearAll = useCallback(() => {
     router.push(pathname, { scroll: false });
     setSearchInput("");
-  };
+  }, [router, pathname]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {

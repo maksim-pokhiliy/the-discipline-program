@@ -24,7 +24,6 @@ export const Logo = ({
         width={width}
         height={height}
         priority
-        style={{ cursor: "pointer" }}
       />
     </Link>
   );
