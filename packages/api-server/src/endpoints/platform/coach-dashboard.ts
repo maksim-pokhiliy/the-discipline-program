@@ -41,7 +41,7 @@ export const platformCoachDashboardApi = {
       prisma.planEnrollment.findMany({
         where: {
           status: PlanEnrollmentStatus.ACTIVE,
-          trainingPlan: { coachId, deletedAt: null },
+          trainingPlan: { coachId },
         },
         include: enrollmentInclude,
       }),
@@ -55,7 +55,7 @@ export const platformCoachDashboardApi = {
       }),
 
       prisma.trainingPlan.count({
-        where: { coachId, status: TrainingPlanStatus.ACTIVE, deletedAt: null },
+        where: { coachId, status: TrainingPlanStatus.ACTIVE },
       }),
     ]);
 

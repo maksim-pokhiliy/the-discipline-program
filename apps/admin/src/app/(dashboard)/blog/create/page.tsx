@@ -1,5 +1,5 @@
 import { BlogCreateView } from "@app/modules/blog";
 
-export default async function BlogCreatePage() {
+export default function BlogCreatePage() {
   return <BlogCreateView />;
 }

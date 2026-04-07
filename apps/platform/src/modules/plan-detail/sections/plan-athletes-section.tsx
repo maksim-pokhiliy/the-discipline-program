@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Fab, Grid, Stack, Typography } from "@mui/material";
 
 import { type PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { QueryWrapper } from "@repo/query";
+import { LAYOUT } from "@repo/shared";
 
 import {
   useDeletePlanEnrollment,
@@ -26,9 +27,12 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
   const deleteEnrollment = useDeletePlanEnrollment(planId);
   const [enrollOpen, setEnrollOpen] = useState(false);
 
-  const isEnrollmentPending = (id: string) =>
-    (updateEnrollment.isPending && updateEnrollment.variables?.id === id) ||
-    (deleteEnrollment.isPending && deleteEnrollment.variables === id);
+  const isEnrollmentPending = useCallback(
+    (id: string) =>
+      (updateEnrollment.isPending && updateEnrollment.variables?.id === id) ||
+      (deleteEnrollment.isPending && deleteEnrollment.variables === id),
+    [updateEnrollment, deleteEnrollment],
+  );
 
   const handleUpdate = (id: string, status: PlanEnrollmentStatus) => {
     updateEnrollment.mutate({ id, data: { status } });
@@ -73,7 +77,7 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
       <Fab
         color="primary"
         onClick={() => setEnrollOpen(true)}
-        sx={{ position: "fixed", bottom: 100, right: 16 }}
+        sx={{ position: "fixed", bottom: LAYOUT.platformFabBottom, right: 16 }}
       >
         <AddIcon />
       </Fab>

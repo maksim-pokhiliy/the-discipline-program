@@ -7,4 +7,5 @@ export * from "./use-coach-profile";
 export * from "./use-plan-enrollments";
 export * from "./use-training-plans";
 export * from "./use-users";
+export * from "./use-week-start";
 export * from "./use-workouts";

@@ -167,7 +167,7 @@ export const platformCoachActionItemsApi = {
         tx.planEnrollment.findMany({
           where: {
             status: PlanEnrollmentStatus.ACTIVE,
-            trainingPlan: { coachId, deletedAt: null },
+            trainingPlan: { coachId },
           },
           include: enrollmentInclude,
         }),

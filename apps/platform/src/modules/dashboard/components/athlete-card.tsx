@@ -46,6 +46,6 @@ export const AthleteCard: React.FC<AthleteCardProps> = ({
 
     {message}
 
-    {details && details}
+    {details}
   </Alert>
 );

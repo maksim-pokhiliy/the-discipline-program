@@ -2,7 +2,7 @@ import { Suspense } from "react";
 
 import { CircularProgress, Stack, Typography } from "@mui/material";
 
-interface PaymentPageWrapperProps {
+interface SuspenseWrapperProps {
   children: React.ReactNode;
   loadingMessage?: string;
 }
@@ -10,7 +10,7 @@ interface PaymentPageWrapperProps {
 export const SuspenseWrapper = ({
   children,
   loadingMessage = "Loading...",
-}: PaymentPageWrapperProps) => {
+}: SuspenseWrapperProps) => {
   return (
     <Suspense
       fallback={

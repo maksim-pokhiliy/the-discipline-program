@@ -21,7 +21,6 @@ export const enrollmentInclude = {
       id: true,
       name: true,
       workouts: {
-        where: { deletedAt: null },
         select: {
           id: true,
           scheduledDate: true,

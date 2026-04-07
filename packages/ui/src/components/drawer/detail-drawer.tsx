@@ -16,14 +16,14 @@ type DetailDrawerProps = {
   children: ReactNode;
 };
 
-export const DetailDrawer: React.FC<DetailDrawerProps> = ({
+export const DetailDrawer = ({
   open,
   onClose,
   title,
   width = DEFAULT_WIDTH,
   loading,
   children,
-}) => (
+}: DetailDrawerProps) => (
   <Drawer
     anchor="right"
     open={open}

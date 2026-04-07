@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -51,121 +53,126 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
 
-  const columns: Column<BlogPost>[] = [
-    {
-      id: "title",
-      label: "Title & Slug",
-      width: "30%",
-      sortable: true,
-      sortValue: (post) => post.title,
-      searchValue: (post) => post.title,
-      render: (post) => (
-        <Stack spacing={0.5}>
-          <Typography variant="subtitle2" component="span">
-            {post.title}
-          </Typography>
+  const columns: Column<BlogPost>[] = useMemo(
+    () => [
+      {
+        id: "title",
+        label: "Title & Slug",
+        width: "30%",
+        sortable: true,
+        sortValue: (post) => post.title,
+        searchValue: (post) => post.title,
+        render: (post) => (
+          <Stack spacing={0.5}>
+            <Typography variant="subtitle2" component="span">
+              {post.title}
+            </Typography>
 
-          <Typography variant="caption" color="text.secondary">
-            /{post.slug}
-          </Typography>
-        </Stack>
-      ),
-    },
-    {
-      id: "status",
-      label: "Status",
-      width: "20%",
-      render: (post) => (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Switch
-            size="small"
-            checked={post.isPublished}
-            disabled={toggleStatusMutation.isPending && toggleStatusMutation.variables === post.id}
-            onChange={() => toggleStatusMutation.mutate(post.id)}
-            color="success"
-          />
+            <Typography variant="caption" color="text.secondary">
+              /{post.slug}
+            </Typography>
+          </Stack>
+        ),
+      },
+      {
+        id: "status",
+        label: "Status",
+        width: "20%",
+        render: (post) => (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Switch
+              size="small"
+              checked={post.isPublished}
+              disabled={
+                toggleStatusMutation.isPending && toggleStatusMutation.variables === post.id
+              }
+              onChange={() => toggleStatusMutation.mutate(post.id)}
+              color="success"
+            />
 
-          <Chip
-            label={post.isPublished ? "Published" : "Draft"}
-            color={post.isPublished ? "success" : "default"}
-            size="small"
-            variant="outlined"
-            sx={{ minWidth: 85, justifyContent: "center" }}
-          />
-        </Stack>
-      ),
-    },
-    {
-      id: "featured",
-      label: "Spotlight",
-      width: "20%",
-      render: (post) => (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Switch
-            size="small"
-            checked={post.isFeatured}
-            disabled={
-              toggleFeaturedMutation.isPending && toggleFeaturedMutation.variables === post.id
-            }
-            onChange={() => toggleFeaturedMutation.mutate(post.id)}
-            color="warning"
-          />
+            <Chip
+              label={post.isPublished ? "Published" : "Draft"}
+              color={post.isPublished ? "success" : "default"}
+              size="small"
+              variant="outlined"
+              sx={{ minWidth: 85, justifyContent: "center" }}
+            />
+          </Stack>
+        ),
+      },
+      {
+        id: "featured",
+        label: "Spotlight",
+        width: "20%",
+        render: (post) => (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Switch
+              size="small"
+              checked={post.isFeatured}
+              disabled={
+                toggleFeaturedMutation.isPending && toggleFeaturedMutation.variables === post.id
+              }
+              onChange={() => toggleFeaturedMutation.mutate(post.id)}
+              color="warning"
+            />
 
-          <Chip
-            icon={post.isFeatured ? <StarIcon fontSize="small" /> : undefined}
-            label={post.isFeatured ? "Featured" : "Standard"}
-            color={post.isFeatured ? "warning" : "default"}
-            size="small"
-            variant="outlined"
-            sx={{ minWidth: 105, justifyContent: "center" }}
-          />
-        </Stack>
-      ),
-    },
-    {
-      id: "date",
-      label: "Created",
-      width: "15%",
-      sortable: true,
-      sortValue: (post) => new Date(post.createdAt).getTime(),
-      render: (post) => (
-        <Typography variant="body2">{new Date(post.createdAt).toLocaleDateString()}</Typography>
-      ),
-    },
-    {
-      id: "actions",
-      label: "Actions",
-      align: "right",
-      width: "15%",
-      render: (post) => (
-        <Stack direction="row" spacing={0} justifyContent="flex-end">
-          {post.isPublished && (
-            <Tooltip title="View Public Page">
-              <IconButton
-                component={Link}
-                href={`${baseEnv.NEXT_PUBLIC_MARKETING_URL}/blog/${post.slug}`}
-                target="_blank"
-              >
-                <OpenInNewIcon fontSize="small" />
+            <Chip
+              icon={post.isFeatured ? <StarIcon fontSize="small" /> : undefined}
+              label={post.isFeatured ? "Featured" : "Standard"}
+              color={post.isFeatured ? "warning" : "default"}
+              size="small"
+              variant="outlined"
+              sx={{ minWidth: 105, justifyContent: "center" }}
+            />
+          </Stack>
+        ),
+      },
+      {
+        id: "date",
+        label: "Created",
+        width: "15%",
+        sortable: true,
+        sortValue: (post) => new Date(post.createdAt).getTime(),
+        render: (post) => (
+          <Typography variant="body2">{new Date(post.createdAt).toLocaleDateString()}</Typography>
+        ),
+      },
+      {
+        id: "actions",
+        label: "Actions",
+        align: "right",
+        width: "15%",
+        render: (post) => (
+          <Stack direction="row" spacing={0} justifyContent="flex-end">
+            {post.isPublished && (
+              <Tooltip title="View Public Page">
+                <IconButton
+                  component={Link}
+                  href={`${baseEnv.NEXT_PUBLIC_MARKETING_URL}/blog/${post.slug}`}
+                  target="_blank"
+                >
+                  <OpenInNewIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            <Tooltip title="Edit">
+              <IconButton component={Link} href={`/blog/${post.id}`} color="primary">
+                <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-          )}
 
-          <Tooltip title="Edit">
-            <IconButton component={Link} href={`/blog/${post.id}`} color="primary">
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Delete">
-            <IconButton color="error" onClick={() => requestDelete(post.id)}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      ),
-    },
-  ];
+            <Tooltip title="Delete">
+              <IconButton color="error" onClick={() => requestDelete(post.id)}>
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        ),
+      },
+    ],
+    [toggleStatusMutation, toggleFeaturedMutation, requestDelete],
+  );
 
   return (
     <>

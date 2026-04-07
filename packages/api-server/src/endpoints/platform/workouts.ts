@@ -153,7 +153,7 @@ export const platformWorkoutsApi = {
     } else {
       await prisma.$transaction(async (tx) => {
         const maxOrder = await tx.workout.aggregate({
-          where: { planId: owned.planId, scheduledDate: normalizedDate, deletedAt: null },
+          where: { planId: owned.planId, scheduledDate: normalizedDate },
           _max: { sortOrder: true },
         });
 

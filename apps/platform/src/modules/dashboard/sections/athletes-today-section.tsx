@@ -95,7 +95,6 @@ export const AthletesTodaySection: React.FC<AthletesTodaySectionProps> = ({ athl
                   component={Link}
                   href={`/coach/athletes?athlete=${athlete.userId}`}
                   sx={(theme) => ({
-                    display: "block",
                     textDecoration: "none",
                     borderRadius: 1,
                     transition: theme.transitions.create("opacity"),

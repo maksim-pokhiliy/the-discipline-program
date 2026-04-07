@@ -7,7 +7,6 @@ import { mapToReview } from "../../mappers";
 export const adminReviewsApi = {
   getReviews: async (): Promise<Review[]> => {
     const reviews = await prisma.marketingReview.findMany({
-      where: { deletedAt: null },
       orderBy: { createdAt: "desc" },
     });
 
@@ -17,7 +16,7 @@ export const adminReviewsApi = {
   getReviewById: async (id: string): Promise<Review | null> => {
     const review = await prisma.marketingReview.findUnique({ where: { id } });
 
-    if (!review || review.deletedAt) {
+    if (!review) {
       return null;
     }
 
@@ -33,7 +32,7 @@ export const adminReviewsApi = {
   updateReview: async (id: string, data: UpdateReviewData): Promise<Review> => {
     const existing = await prisma.marketingReview.findUnique({ where: { id } });
 
-    if (!existing || existing.deletedAt) {
+    if (!existing) {
       throw new NotFoundError("Review not found", { id });
     }
 
@@ -48,20 +47,17 @@ export const adminReviewsApi = {
   deleteReview: async (id: string): Promise<void> => {
     const review = await prisma.marketingReview.findUnique({ where: { id } });
 
-    if (!review || review.deletedAt) {
+    if (!review) {
       throw new NotFoundError("Review not found", { id });
     }
 
-    await prisma.marketingReview.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    await prisma.marketingReview.delete({ where: { id } });
   },
 
   toggleReviewStatus: async (id: string): Promise<Review> => {
     const review = await prisma.marketingReview.findUnique({ where: { id } });
 
-    if (!review || review.deletedAt) {
+    if (!review) {
       throw new NotFoundError("Review not found", { id });
     }
 

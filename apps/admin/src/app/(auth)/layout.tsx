@@ -1,5 +1,3 @@
-"use client";
-
 import { Container, Stack } from "@mui/material";
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -9,7 +7,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         minHeight: "100vh",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: (theme) => theme.palette.background.default,
+        backgroundColor: "background.default",
       }}
     >
       <Container maxWidth="sm">{children}</Container>

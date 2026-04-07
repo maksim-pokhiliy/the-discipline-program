@@ -31,7 +31,7 @@ const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
 
   const onSaveSection = (
     pageSlug: string,
-    sectionName: UpdatePageSectionData["section"],
+    sectionName: string,
     data: UpdatePageSectionData["data"],
   ) => {
     const validated = updatePageSectionSchema.parse({
@@ -65,13 +65,7 @@ const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
             section={section}
             isExpanded={expanded === section.section}
             onToggle={handleToggle(section.section)}
-            onSave={(formData) =>
-              onSaveSection(
-                page.slug,
-                section.section as UpdatePageSectionData["section"],
-                formData as UpdatePageSectionData["data"],
-              )
-            }
+            onSave={(formData) => onSaveSection(page.slug, section.section, formData)}
             isLoading={isPending}
           />
         ))}

@@ -3,15 +3,21 @@
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Divider, Stack, TextField, Typography } from "@mui/material";
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { type z } from "zod";
 
+import { type faqContentSchema } from "@repo/contracts/pages";
 import { DynamicListItem, FormCard } from "@repo/ui";
+
+type FaqSectionData = z.infer<typeof faqContentSchema>;
+
+const ADD_BUTTON_SX = { borderStyle: "dashed", borderWidth: 2, px: 4 } as const;
 
 export const FaqSectionForm = () => {
   const {
     register,
     control,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<FaqSectionData>();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -59,7 +65,7 @@ export const FaqSectionForm = () => {
           <Button
             startIcon={<AddIcon />}
             onClick={() => append({ question: "", answer: "" })}
-            sx={{ borderStyle: "dashed", borderWidth: 2, px: 4 }}
+            sx={ADD_BUTTON_SX}
           >
             Add FAQ Item
           </Button>

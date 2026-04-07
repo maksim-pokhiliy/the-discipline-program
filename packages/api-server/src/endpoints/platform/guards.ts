@@ -6,10 +6,10 @@ import { prisma } from "../../db/client";
 export const resolveCoachId = async (userId: string): Promise<string> => {
   const profile = await prisma.coachProfile.findUnique({
     where: { userId },
-    select: { id: true, deletedAt: true },
+    select: { id: true },
   });
 
-  if (!profile || profile.deletedAt) {
+  if (!profile) {
     throw new ForbiddenError("User does not have a coach profile", { userId });
   }
 
@@ -19,10 +19,10 @@ export const resolveCoachId = async (userId: string): Promise<string> => {
 export const verifyPlanOwnership = async (planId: string, coachId: string): Promise<void> => {
   const plan = await prisma.trainingPlan.findUnique({
     where: { id: planId },
-    select: { coachId: true, deletedAt: true },
+    select: { coachId: true },
   });
 
-  if (!plan || plan.deletedAt) {
+  if (!plan) {
     throw new NotFoundError("Training plan not found", { planId });
   }
 
@@ -37,14 +37,14 @@ export const verifyWorkoutOwnership = async (
 ): Promise<{ planId: string }> => {
   const workout = await prisma.workout.findUnique({
     where: { id: workoutId },
-    select: { planId: true, deletedAt: true, plan: { select: { coachId: true, deletedAt: true } } },
+    select: { planId: true, plan: { select: { coachId: true } } },
   });
 
-  if (!workout || workout.deletedAt) {
+  if (!workout) {
     throw new NotFoundError("Workout not found", { workoutId });
   }
 
-  if (workout.plan.deletedAt || workout.plan.coachId !== coachId) {
+  if (workout.plan.coachId !== coachId) {
     throw new ForbiddenError("Workout does not belong to this coach");
   }
 
@@ -54,7 +54,7 @@ export const verifyWorkoutOwnership = async (
 export const resolveCoachAthleteIds = async (coachId: string): Promise<string[]> => {
   const enrollments = await prisma.planEnrollment.findMany({
     where: {
-      trainingPlan: { coachId, deletedAt: null },
+      trainingPlan: { coachId },
       status: PlanEnrollmentStatus.ACTIVE,
     },
     select: { userId: true },
@@ -71,7 +71,7 @@ export const verifyAthleteBelongsToCoach = async (
   const enrollment = await prisma.planEnrollment.findFirst({
     where: {
       userId: athleteUserId,
-      trainingPlan: { coachId, deletedAt: null },
+      trainingPlan: { coachId },
       status: PlanEnrollmentStatus.ACTIVE,
     },
     select: { id: true },

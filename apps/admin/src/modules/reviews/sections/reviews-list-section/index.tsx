@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import {
@@ -23,6 +25,13 @@ import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from 
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteReview, useToggleReviewActive } from "@app/lib/hooks";
 
+const TEXT_CLAMP_SX = {
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+} as const;
+
 const filters: DataTableFilter<Review>[] = [
   {
     id: "status",
@@ -45,110 +54,105 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
 
-  const columns: Column<Review>[] = [
-    {
-      id: "author",
-      label: "Author",
-      width: "30%",
-      sortable: true,
-      sortValue: (review) => review.authorName,
-      searchValue: (review) => review.authorName,
-      render: (review) => (
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Avatar src={review.authorAvatar || undefined} alt={review.authorName}>
-            {review.authorName.charAt(0)}
-          </Avatar>
-          <Box>
-            <Typography variant="subtitle2">{review.authorName}</Typography>
-            {review.authorRole && (
-              <Typography variant="caption" color="text.secondary">
-                {review.authorRole}
-              </Typography>
-            )}
-          </Box>
-        </Stack>
-      ),
-    },
-    {
-      id: "rating",
-      label: "Rating",
-      width: "15%",
-      sortable: true,
-      sortValue: (review) => review.rating,
-      render: (review) => <Rating value={review.rating} readOnly size="small" />,
-    },
-    {
-      id: "text",
-      label: "Review",
-      width: "35%",
-      render: (review) => (
-        <Tooltip title={review.text}>
-          <Typography
-            variant="body2"
-            sx={{
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {review.text}
-          </Typography>
-        </Tooltip>
-      ),
-    },
-    {
-      id: "isActive",
-      label: "Status",
-      width: "10%",
-      render: (review) => (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Switch
-            size="small"
-            checked={review.isActive}
-            disabled={
-              toggleActiveMutation.isPending && toggleActiveMutation.variables === review.id
-            }
-            onChange={() => toggleActiveMutation.mutate(review.id)}
-            color="success"
-          />
-          <Chip
-            label={review.isActive ? "Active" : "Hidden"}
-            color={review.isActive ? "success" : "default"}
-            size="small"
-            variant="outlined"
-          />
-        </Stack>
-      ),
-    },
-    {
-      id: "createdAt",
-      label: "Date",
-      width: "10%",
-      sortable: true,
-      sortValue: (review) => new Date(review.createdAt).getTime(),
-      render: (review) => <Typography variant="body2">{formatDate(review.createdAt)}</Typography>,
-    },
-    {
-      id: "actions",
-      label: "Actions",
-      align: "right",
-      render: (review) => (
-        <Stack direction="row" spacing={1} justifyContent="flex-end">
-          <Tooltip title="Edit">
-            <IconButton component={Link} href={`/reviews/${review.id}`} color="primary">
-              <EditIcon fontSize="small" />
-            </IconButton>
+  const columns: Column<Review>[] = useMemo(
+    () => [
+      {
+        id: "author",
+        label: "Author",
+        width: "30%",
+        sortable: true,
+        sortValue: (review) => review.authorName,
+        searchValue: (review) => review.authorName,
+        render: (review) => (
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Avatar src={review.authorAvatar || undefined} alt={review.authorName}>
+              {review.authorName.charAt(0)}
+            </Avatar>
+            <Box>
+              <Typography variant="subtitle2">{review.authorName}</Typography>
+              {review.authorRole && (
+                <Typography variant="caption" color="text.secondary">
+                  {review.authorRole}
+                </Typography>
+              )}
+            </Box>
+          </Stack>
+        ),
+      },
+      {
+        id: "rating",
+        label: "Rating",
+        width: "15%",
+        sortable: true,
+        sortValue: (review) => review.rating,
+        render: (review) => <Rating value={review.rating} readOnly size="small" />,
+      },
+      {
+        id: "text",
+        label: "Review",
+        width: "35%",
+        render: (review) => (
+          <Tooltip title={review.text}>
+            <Typography variant="body2" sx={TEXT_CLAMP_SX}>
+              {review.text}
+            </Typography>
           </Tooltip>
-          <Tooltip title="Delete">
-            <IconButton onClick={() => requestDelete(review.id)} color="error">
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      ),
-    },
-  ];
+        ),
+      },
+      {
+        id: "isActive",
+        label: "Status",
+        width: "10%",
+        render: (review) => (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Switch
+              size="small"
+              checked={review.isActive}
+              disabled={
+                toggleActiveMutation.isPending && toggleActiveMutation.variables === review.id
+              }
+              onChange={() => toggleActiveMutation.mutate(review.id)}
+              color="success"
+            />
+            <Chip
+              label={review.isActive ? "Active" : "Hidden"}
+              color={review.isActive ? "success" : "default"}
+              size="small"
+              variant="outlined"
+            />
+          </Stack>
+        ),
+      },
+      {
+        id: "createdAt",
+        label: "Date",
+        width: "10%",
+        sortable: true,
+        sortValue: (review) => new Date(review.createdAt).getTime(),
+        render: (review) => <Typography variant="body2">{formatDate(review.createdAt)}</Typography>,
+      },
+      {
+        id: "actions",
+        label: "Actions",
+        align: "right",
+        render: (review) => (
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Tooltip title="Edit">
+              <IconButton component={Link} href={`/reviews/${review.id}`} color="primary">
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Delete">
+              <IconButton onClick={() => requestDelete(review.id)} color="error">
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        ),
+      },
+    ],
+    [toggleActiveMutation, requestDelete],
+  );
 
   return (
     <>

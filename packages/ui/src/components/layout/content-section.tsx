@@ -140,9 +140,9 @@ export const ContentSection = ({
 
                   {actions.length > 0 && (
                     <Stack direction={{ xs: "column", md: "row" }} spacing={2} alignItems="stretch">
-                      {actions.map((action, index) => (
+                      {actions.map((action) => (
                         <Button
-                          key={index}
+                          key={action.label}
                           variant={action.variant || "contained"}
                           color={action.color || "primary"}
                           type={action.type || "button"}

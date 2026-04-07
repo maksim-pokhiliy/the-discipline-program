@@ -15,6 +15,7 @@ const SOFT_DELETE_MODELS = new Set([
 
 const SOFT_DELETE_UNIQUE_FIELDS: Record<string, string[]> = {
   Product: ["slug"],
+  MarketingBlogPost: ["slug"],
 };
 
 type ModelDelegate = {

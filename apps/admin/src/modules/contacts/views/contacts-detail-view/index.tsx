@@ -17,12 +17,7 @@ import { DetailField, FormCard, FormView } from "@repo/ui";
 
 import { useContact, useUpdateContact } from "@app/lib/hooks";
 
-const STATUS_LABELS: Record<string, string> = {
-  NEW: "New",
-  IN_PROGRESS: "In Progress",
-  REPLIED: "Replied",
-  CLOSED: "Closed",
-};
+import { CONTACT_STATUS_CONFIG } from "../../constants";
 
 type ContactsDetailFormProps = {
   contact: GetContactByIdResponse;
@@ -37,7 +32,7 @@ const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
   const methods = useForm<UpdateContactRequest>({
     resolver: zodResolver(updateContactRequestSchema),
     defaultValues: {
-      status: contact.status as UpdateContactRequest["status"],
+      status: contact.status as ContactStatus,
       notes: contact.notes ?? null,
     },
   });
@@ -96,7 +91,7 @@ const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
                   <TextField {...field} select fullWidth size="small" disabled={isPending}>
                     {Object.values(ContactStatus).map((status) => (
                       <MenuItem key={status} value={status}>
-                        {STATUS_LABELS[status]}
+                        {CONTACT_STATUS_CONFIG[status].label}
                       </MenuItem>
                     ))}
                   </TextField>

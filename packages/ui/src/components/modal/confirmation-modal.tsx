@@ -50,10 +50,6 @@ export const ConfirmationModal = ({
   const IconComponent = config.icon;
   const finalConfirmText = confirmText || config.defaultConfirmText;
 
-  const handleConfirm = async () => {
-    await onConfirm();
-  };
-
   return (
     <BaseModal
       {...baseProps}
@@ -68,7 +64,7 @@ export const ConfirmationModal = ({
           </Button>
 
           <Button
-            onClick={handleConfirm}
+            onClick={onConfirm}
             size="small"
             disabled={isConfirming}
             variant="contained"

@@ -28,10 +28,11 @@ import {
   useMoveWorkout,
   usePlanEnrollments,
   useReorderWorkouts,
+  useWeekStart,
   useWorkouts,
 } from "@app/lib/hooks";
 
-import { CopyWeekButton, WeekNavigator, WorkoutDragOverlay, useWeekStart } from "../components";
+import { CopyWeekButton, WeekNavigator, WorkoutDragOverlay } from "../components";
 import { WeekDayGroup } from "../components/week-day-group";
 import { getWeekDays, isSameDay } from "../components/week-helpers";
 

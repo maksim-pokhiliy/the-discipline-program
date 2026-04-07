@@ -1,7 +1,6 @@
 import { type FaqPageData } from "@repo/contracts/pages";
-import { ContentSection } from "@repo/ui";
 
-import { CTASection } from "@app/lib/components/ui";
+import { PageCTASection } from "@app/lib/components/ui";
 
 interface FaqCtaSectionProps {
   cta: FaqPageData["cta"];
@@ -9,13 +8,12 @@ interface FaqCtaSectionProps {
 
 export const FaqCtaSection = ({ cta }: FaqCtaSectionProps) => {
   return (
-    <ContentSection id="faq-cta" surface="raised">
-      <CTASection
-        title={cta.title}
-        subtitle={cta.subtitle}
-        buttonText={cta.buttonText}
-        buttonHref={cta.buttonHref}
-      />
-    </ContentSection>
+    <PageCTASection
+      id="faq-cta"
+      title={cta.title}
+      subtitle={cta.subtitle}
+      buttonText={cta.buttonText}
+      buttonHref={cta.buttonHref}
+    />
   );
 };

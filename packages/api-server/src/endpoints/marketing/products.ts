@@ -6,7 +6,7 @@ import { mapToProduct } from "../../mappers";
 export const marketingProductsApi = {
   getAll: async (): Promise<Product[]> => {
     const products = await prisma.product.findMany({
-      where: { isActive: true, deletedAt: null },
+      where: { isActive: true },
       include: { prices: { where: { isActive: true } } },
     });
 
@@ -15,7 +15,7 @@ export const marketingProductsApi = {
 
   getBySlug: async (slug: string): Promise<Product | null> => {
     const product = await prisma.product.findFirst({
-      where: { slug, isActive: true, deletedAt: null },
+      where: { slug, isActive: true },
       include: { prices: { where: { isActive: true } } },
     });
 

@@ -1,7 +1,6 @@
 import { type StorefrontProgramsPageData } from "@repo/contracts/pages";
-import { ContentSection } from "@repo/ui";
 
-import { CTASection } from "@app/lib/components/ui";
+import { PageCTASection } from "@app/lib/components/ui";
 
 interface StorefrontProgramsCTAProps {
   cta: StorefrontProgramsPageData["cta"];
@@ -9,13 +8,12 @@ interface StorefrontProgramsCTAProps {
 
 export const StorefrontProgramsCTA = ({ cta }: StorefrontProgramsCTAProps) => {
   return (
-    <ContentSection id="storefront-cta" surface="raised">
-      <CTASection
-        title={cta.title}
-        subtitle={cta.subtitle}
-        buttonText={cta.buttonText}
-        buttonHref={cta.buttonHref}
-      />
-    </ContentSection>
+    <PageCTASection
+      id="storefront-cta"
+      title={cta.title}
+      subtitle={cta.subtitle}
+      buttonText={cta.buttonText}
+      buttonHref={cta.buttonHref}
+    />
   );
 };

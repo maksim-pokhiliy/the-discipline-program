@@ -2,11 +2,18 @@
 
 import { Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
+import { type z } from "zod";
 
-import { SECTION_FEATURES, type HeroSectionType } from "@repo/contracts/pages";
+import {
+  SECTION_FEATURES,
+  type HeroSectionType,
+  type homePageHeroSchema,
+} from "@repo/contracts/pages";
 import { FormCard, ImageUpload } from "@repo/ui";
 
 import { useUploadImage } from "@app/lib/hooks";
+
+type HeroSectionData = z.infer<typeof homePageHeroSchema>;
 
 interface HeroSectionFormProps {
   sectionType: HeroSectionType;
@@ -18,7 +25,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
     watch,
     setValue,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<HeroSectionData>();
   const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
 
   const features = SECTION_FEATURES[sectionType];

@@ -1,26 +1,20 @@
 "use client";
 
-import { Chip, type ChipProps, Stack, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 
 import { HealthStatus } from "@repo/contracts/athlete-profile";
 import type { PlanEnrollment } from "@repo/contracts/plan-enrollment";
 import {
   PLAN_ENROLLMENT_STATUS_LABELS,
-  PlanEnrollmentStatus,
+  type PlanEnrollmentStatus,
 } from "@repo/contracts/plan-enrollment";
 
 import { PersonCard, StatusChip } from "@app/lib/components";
 import { HEALTH_STATUS_CHIPS } from "@app/lib/config";
+import { ENROLLMENT_STATUS_COLORS } from "@app/lib/config/enrollment-status";
+import { formatShortDate } from "@app/lib/utils/date-formatters";
 
 import { EnrollmentActionMenu } from "./enrollment-action-menu";
-
-const STATUS_COLORS: Record<PlanEnrollmentStatus, ChipProps["color"]> = {
-  [PlanEnrollmentStatus.ACTIVE]: "success",
-  [PlanEnrollmentStatus.PAUSED]: "warning",
-};
-
-const formatDate = (date: Date) =>
-  new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
 type EnrollmentCardProps = {
   enrollment: PlanEnrollment;
@@ -68,10 +62,10 @@ export const EnrollmentCard: React.FC<EnrollmentCardProps> = ({
           <Chip
             size="small"
             label={PLAN_ENROLLMENT_STATUS_LABELS[enrollment.status]}
-            color={STATUS_COLORS[enrollment.status]}
+            color={ENROLLMENT_STATUS_COLORS[enrollment.status]}
           />
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Enrolled {formatDate(enrollment.startDate)}
+            Enrolled {formatShortDate(enrollment.startDate)}
           </Typography>
         </Stack>
       </Stack>

@@ -3,15 +3,21 @@
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Divider, Stack, TextField, Typography } from "@mui/material";
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { type z } from "zod";
 
+import { type aboutPageCredentialsSchema } from "@repo/contracts/pages";
 import { DynamicListItem, FormCard } from "@repo/ui";
+
+type CredentialsSectionData = z.infer<typeof aboutPageCredentialsSchema>;
+
+const ADD_BUTTON_SX = { borderStyle: "dashed", borderWidth: 2, px: 4 } as const;
 
 export const CredentialsSectionForm = () => {
   const {
     register,
     control,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<CredentialsSectionData>();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -57,7 +63,7 @@ export const CredentialsSectionForm = () => {
           <Button
             startIcon={<AddIcon />}
             onClick={() => append({ title: "", description: "" })}
-            sx={{ borderStyle: "dashed", borderWidth: 2, px: 4 }}
+            sx={ADD_BUTTON_SX}
           >
             Add Credential
           </Button>

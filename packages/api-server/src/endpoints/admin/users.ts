@@ -16,7 +16,6 @@ const includeWithProfiles = {
 export const adminUsersApi = {
   getAll: async (): Promise<AdminUserListItem[]> => {
     const users = await prisma.user.findMany({
-      where: { deletedAt: null },
       orderBy: { createdAt: "desc" },
     });
 
@@ -29,7 +28,7 @@ export const adminUsersApi = {
       include: includeWithProfiles,
     });
 
-    if (!user || user.deletedAt) {
+    if (!user) {
       throw new NotFoundError("User not found", { id });
     }
 
@@ -45,7 +44,7 @@ export const adminUsersApi = {
   updateRole: async (id: string, data: UpdateUserRoleData): Promise<AdminUser> => {
     const existing = await prisma.user.findUnique({ where: { id } });
 
-    if (!existing || existing.deletedAt) {
+    if (!existing) {
       throw new NotFoundError("User not found", { id });
     }
 

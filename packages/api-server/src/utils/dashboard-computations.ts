@@ -10,7 +10,13 @@ import {
 
 import { HEALTH_STATUS_MAP } from "../mappers/enum-maps";
 
-import { daysBetweenInTz, startOfDayInTz, startOfTodayInTz, startOfWeekInTz } from "./date-helpers";
+import {
+  daysBetweenInTz,
+  MS_PER_DAY,
+  startOfDayInTz,
+  startOfTodayInTz,
+  startOfWeekInTz,
+} from "./date-helpers";
 import type { EnrollmentWithData } from "./enrollment-query";
 
 export type { EnrollmentWithData };
@@ -178,8 +184,6 @@ export const computeAthletesSummary = (
 
   return Array.from(athleteMap.values());
 };
-
-const MS_PER_DAY = 86_400_000;
 
 export type AdherenceWindow = { completed: number; available: number };
 

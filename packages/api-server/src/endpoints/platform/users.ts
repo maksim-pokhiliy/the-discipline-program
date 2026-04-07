@@ -1,13 +1,8 @@
+import type { UserSearchResult } from "@repo/contracts/user";
+
 import { prisma } from "../../db/client";
 
 import { resolveCoachId } from "./guards";
-
-type UserSearchResult = {
-  id: string;
-  name: string | null;
-  email: string;
-  image: string | null;
-};
 
 export const platformUsersApi = {
   search: async (userId: string, query: string): Promise<UserSearchResult[]> => {
@@ -16,7 +11,6 @@ export const platformUsersApi = {
     const users = await prisma.user.findMany({
       where: {
         id: { not: userId },
-        deletedAt: null,
         OR: [
           { name: { contains: query, mode: "insensitive" } },
           { email: { contains: query, mode: "insensitive" } },

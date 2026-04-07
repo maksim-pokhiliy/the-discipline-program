@@ -19,6 +19,7 @@ import {
   type SectionSchemaKey,
   type UpdatePageSectionData,
   type HeroSectionType,
+  SECTION_FEATURES,
 } from "@repo/contracts/pages";
 
 import { ContactSectionForm } from "../sections/contact-section-form";
@@ -30,6 +31,34 @@ import { PersonalSectionForm } from "../sections/personal-section-form";
 import { ReviewsSectionForm } from "../sections/reviews-section-form";
 import { StorefrontSectionForm } from "../sections/storefront-section-form";
 import { WhyChooseSectionForm } from "../sections/why-choose-section-form";
+
+const SECTION_LABELS: Record<string, string> = {
+  hero: "Hero",
+  "about:hero": "About Hero",
+  "contact:hero": "Contact Hero",
+  "blog:hero": "Blog Hero",
+  "storefront:hero": "Storefront Hero",
+  "faq:hero": "FAQ Hero",
+  whyChoose: "Why Choose Us",
+  storefront: "Storefront",
+  "storefront:grid": "Storefront Grid",
+  "storefront:cta": "Storefront CTA",
+  "blog:grid": "Blog Grid",
+  "contact:form": "Contact Form",
+  reviews: "Reviews",
+  contact: "Contact",
+  cta: "Call to Action",
+  "faq:cta": "FAQ CTA",
+  journey: "Journey",
+  credentials: "Credentials",
+  personal: "Personal",
+  faq: "FAQ",
+  "faq:content": "FAQ Content",
+};
+
+const isSectionSchemaKey = (key: string): key is SectionSchemaKey => key in SECTION_SCHEMAS;
+
+const isHeroSectionType = (key: string): key is HeroSectionType => key in SECTION_FEATURES;
 
 type SectionData = AdminPageDetails["sections"][number];
 
@@ -48,7 +77,9 @@ export const SectionEditor = ({
   onSave,
   isLoading,
 }: SectionEditorProps) => {
-  const currentSchema = SECTION_SCHEMAS[section.section as SectionSchemaKey];
+  const currentSchema = isSectionSchemaKey(section.section)
+    ? SECTION_SCHEMAS[section.section]
+    : undefined;
 
   const methods = useForm<UpdatePageSectionData["data"]>({
     defaultValues: section.data as UpdatePageSectionData["data"],
@@ -64,7 +95,11 @@ export const SectionEditor = ({
       case "blog:hero":
       case "storefront:hero":
       case "faq:hero": {
-        return <HeroSectionForm sectionType={section.section as HeroSectionType} />;
+        if (!isHeroSectionType(section.section)) {
+          return null;
+        }
+
+        return <HeroSectionForm sectionType={section.section} />;
       }
 
       case "whyChoose": {
@@ -121,7 +156,9 @@ export const SectionEditor = ({
   return (
     <Accordion expanded={isExpanded} onChange={onToggle}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography variant="subtitle1">{section.section.toUpperCase()}</Typography>
+        <Typography variant="subtitle1">
+          {SECTION_LABELS[section.section] || section.section}
+        </Typography>
       </AccordionSummary>
 
       <AccordionDetails>

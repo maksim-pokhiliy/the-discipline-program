@@ -1,8 +1,8 @@
 import { HealthStatus } from "@repo/contracts/athlete-profile";
 import { ActionItemStatus } from "@repo/contracts/coach-action-item";
 import type { CoachAthleteDetail } from "@repo/contracts/coach-athletes";
-import { ProcessStatus } from "@repo/contracts/coach-dashboard";
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import {
@@ -14,6 +14,7 @@ import {
 import { computeAdherenceWindow, computeProcessStatus } from "../../utils/dashboard-computations";
 import {
   daysBetweenInTz,
+  MS_PER_DAY,
   startOfDayInTz,
   startOfTodayInTz,
   startOfWeekInTz,
@@ -50,7 +51,7 @@ export const getAthleteDetail = async (
       where: {
         userId: athleteUserId,
         status: PlanEnrollmentStatus.ACTIVE,
-        trainingPlan: { coachId, deletedAt: null },
+        trainingPlan: { coachId },
       },
       include: enrollmentInclude,
       orderBy: { startDate: "asc" },
@@ -73,32 +74,15 @@ export const getAthleteDetail = async (
     }));
 
   if (enrollments.length === 0) {
-    return {
-      userId: athleteUserId,
-      name: athlete.name,
-      email: athlete.email,
-      image: athlete.image,
-      healthStatus: athlete.athleteProfile
-        ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
-        : HealthStatus.HEALTHY,
-      processStatus: ProcessStatus.STEADY,
-      planDiscipline: [],
-      recentWorkouts: [],
-      actionItems: mapActionItems(),
-      nextWorkout: null,
-      consistency: { adherenceRate4w: 0, currentStreak: 0, missedThisWeek: 0 },
-      enrolledSince: new Date(),
-      lastActivityDate: null,
-      daysSinceLastActivity: null,
-    };
+    throw new NotFoundError("No active enrollments found for this athlete", { athleteUserId });
   }
 
   const now = new Date();
   const today = startOfTodayInTz(tz);
   const weekStart = startOfWeekInTz(today, tz);
-  const nextWeekStart = new Date(weekStart.getTime() + 7 * 86_400_000);
-  const rolling7Start = new Date(now.getTime() - 7 * 86_400_000);
-  const rolling14Start = new Date(now.getTime() - 14 * 86_400_000);
+  const nextWeekStart = new Date(weekStart.getTime() + 7 * MS_PER_DAY);
+  const rolling7Start = new Date(now.getTime() - 7 * MS_PER_DAY);
+  const rolling14Start = new Date(now.getTime() - 14 * MS_PER_DAY);
 
   let earliestEnrollment = enrollments[0]?.startDate ?? new Date();
   let lastActivityDate: Date | null = null;
@@ -193,7 +177,7 @@ export const getAthleteDetail = async (
     }
   }
 
-  const rolling28Start = new Date(now.getTime() - 28 * 86_400_000);
+  const rolling28Start = new Date(now.getTime() - 28 * MS_PER_DAY);
   const window28 = enrollments.reduce(
     (acc, e) => {
       const loggedIds = new Set(e.user.workoutLogs.map((l) => l.workoutId));

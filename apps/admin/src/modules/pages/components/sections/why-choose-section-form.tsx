@@ -4,16 +4,19 @@ import AddIcon from "@mui/icons-material/Add";
 import { Button, Stack, TextField, Typography, Divider } from "@mui/material";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
+import { type HomePageWhyChooseData } from "@repo/contracts/pages";
 import { FormCard } from "@repo/ui";
 
 import { WhyChooseFeatureCard } from "./why-choose-feature-card";
+
+const ADD_BUTTON_SX = { borderStyle: "dashed", borderWidth: 2, px: 4 } as const;
 
 export const WhyChooseSectionForm = () => {
   const {
     register,
     control,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<HomePageWhyChooseData>();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -70,7 +73,7 @@ export const WhyChooseSectionForm = () => {
                 iconName: "",
               })
             }
-            sx={{ borderStyle: "dashed", borderWidth: 2, px: 4 }}
+            sx={ADD_BUTTON_SX}
           >
             Add New Card
           </Button>

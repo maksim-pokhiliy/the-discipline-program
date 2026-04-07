@@ -1,5 +1,4 @@
 import { ActionItemSeverity } from "@repo/contracts/coach-action-item";
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 
 export const SEVERITY_COLORS: Record<ActionItemSeverity, string> = {
   [ActionItemSeverity.CRITICAL]: "error.main",
@@ -7,13 +6,5 @@ export const SEVERITY_COLORS: Record<ActionItemSeverity, string> = {
   [ActionItemSeverity.INFO]: "info.main",
 };
 
-export const ENROLLMENT_CHIP_COLORS: Record<PlanEnrollmentStatus, "success" | "warning"> = {
-  [PlanEnrollmentStatus.ACTIVE]: "success",
-  [PlanEnrollmentStatus.PAUSED]: "warning",
-};
-
-export const formatShortDate = (date: Date) =>
-  new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-
-export const formatWorkoutDate = (date: Date) =>
-  new Date(date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+export { ENROLLMENT_STATUS_COLORS as ENROLLMENT_CHIP_COLORS } from "@app/lib/config";
+export { formatShortDate, formatWorkoutDate } from "@app/lib/utils/date-formatters";
