@@ -3,7 +3,7 @@ import {
   type UpdateUserBenchmarkData,
   type UserBenchmark,
 } from "@repo/contracts/user-benchmark";
-import { ForbiddenError, NotFoundError } from "@repo/errors";
+import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToUserBenchmark } from "../../mappers";
@@ -47,7 +47,7 @@ export const platformUserBenchmarksApi = {
   },
 
   update: async (
-    userId: string,
+    authUserId: string,
     benchmarkId: string,
     data: UpdateUserBenchmarkData,
   ): Promise<UserBenchmark> => {
@@ -59,9 +59,7 @@ export const platformUserBenchmarksApi = {
       throw new NotFoundError("User benchmark not found", { benchmarkId });
     }
 
-    if (existing.userId !== userId) {
-      throw new ForbiddenError("Benchmark does not belong to this user");
-    }
+    await verifyAccessToUser(authUserId, existing.userId);
 
     const benchmark = await prisma.userBenchmark.update({
       where: { id: benchmarkId },
@@ -71,7 +69,7 @@ export const platformUserBenchmarksApi = {
     return mapToUserBenchmark(benchmark);
   },
 
-  delete: async (userId: string, benchmarkId: string): Promise<void> => {
+  delete: async (authUserId: string, benchmarkId: string): Promise<void> => {
     const existing = await prisma.userBenchmark.findUnique({
       where: { id: benchmarkId },
     });
@@ -80,9 +78,7 @@ export const platformUserBenchmarksApi = {
       throw new NotFoundError("User benchmark not found", { benchmarkId });
     }
 
-    if (existing.userId !== userId) {
-      throw new ForbiddenError("Benchmark does not belong to this user");
-    }
+    await verifyAccessToUser(authUserId, existing.userId);
 
     await prisma.userBenchmark.delete({ where: { id: benchmarkId } });
   },

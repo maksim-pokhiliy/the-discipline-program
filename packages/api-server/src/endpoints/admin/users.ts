@@ -1,9 +1,10 @@
+import { UserRole } from "@repo/contracts/auth";
 import {
   type AdminUser,
   type AdminUserListItem,
   type UpdateUserRoleData,
 } from "@repo/contracts/user";
-import { NotFoundError } from "@repo/errors";
+import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToAdminUser, mapToAdminUserListItem } from "../../mappers";
@@ -46,6 +47,14 @@ export const adminUsersApi = {
 
     if (!existing) {
       throw new NotFoundError("User not found", { id });
+    }
+
+    if (existing.role === UserRole.ADMIN && data.role !== UserRole.ADMIN) {
+      const adminCount = await prisma.user.count({ where: { role: UserRole.ADMIN } });
+
+      if (adminCount <= 1) {
+        throw new ConflictError("Cannot remove the last admin");
+      }
     }
 
     const user = await prisma.user.update({

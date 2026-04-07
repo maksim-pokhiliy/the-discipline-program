@@ -3,4 +3,4 @@ export { EnrollAthleteDialog } from "./enroll-athlete-dialog";
 export { EnrollmentCard } from "./enrollment-card";
 export { PlanStatusSelect } from "./plan-status-select";
 export { WeekNavigator } from "./week-navigator";
-export { WorkoutDragOverlay } from "./week-workout-card";
+export { WorkoutDragOverlay } from "./workout-drag-overlay";

@@ -24,13 +24,7 @@ import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from 
 
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteReview, useToggleReviewActive } from "@app/lib/hooks";
-
-const TEXT_CLAMP_SX = {
-  display: "-webkit-box",
-  WebkitLineClamp: 2,
-  WebkitBoxOrient: "vertical",
-  overflow: "hidden",
-} as const;
+import { TEXT_CLAMP_SX } from "@app/lib/styles/text-clamp";
 
 const filters: DataTableFilter<Review>[] = [
   {

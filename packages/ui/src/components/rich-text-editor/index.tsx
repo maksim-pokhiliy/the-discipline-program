@@ -10,7 +10,7 @@ const EDITOR_LINE_HEIGHT_PX = 20;
 
 type RichTextEditorVariant = "default" | "inline";
 
-interface RichTextEditorProps {
+type RichTextEditorProps = {
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
@@ -21,7 +21,7 @@ interface RichTextEditorProps {
   disabled?: boolean;
   minRows?: number;
   variant?: RichTextEditorVariant;
-}
+};
 
 export const RichTextEditor = ({
   value,
@@ -58,11 +58,10 @@ export const RichTextEditor = ({
         </Typography>
       )}
 
-      <Box
+      <Stack
+        direction="column"
         sx={{
           overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
           opacity: disabled ? 0.6 : 1,
           pointerEvents: disabled ? "none" : "auto",
           ...(isInline
@@ -104,7 +103,9 @@ export const RichTextEditor = ({
             "& ul": { pl: 3 },
             "& ol": { pl: 3 },
             "& blockquote": {
-              borderLeft: `3px solid ${theme.palette.divider}`,
+              borderLeft: 3,
+              borderLeftStyle: "solid",
+              borderLeftColor: "divider",
               pl: 2,
               color: "text.secondary",
             },
@@ -117,7 +118,7 @@ export const RichTextEditor = ({
         >
           <EditorContent editor={editor} style={{ flexGrow: 1 }} />
         </Stack>
-      </Box>
+      </Stack>
 
       {helperText && (
         <FormHelperText error={error} sx={{ ml: 1 }}>

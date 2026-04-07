@@ -27,7 +27,6 @@ export const SidebarLink = ({ text, href, icon, expanded }: SidebarLinkProps) =>
       href={href}
       selected={isActive}
       sx={{
-        minHeight: 48,
         px: 2.5,
         justifyContent: expanded ? "initial" : "center",
       }}

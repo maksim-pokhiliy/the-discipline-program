@@ -31,7 +31,7 @@ export const SEO_CONFIG: SeoConfig = {
     url: "https://the-discipline-program.vercel.app",
     logo: "/icons/logo.svg",
     founder: {
-      name: "Coach",
+      name: "Denis Sergeev",
     },
   },
 };

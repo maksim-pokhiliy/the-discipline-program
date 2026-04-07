@@ -9,14 +9,13 @@ import { Button, IconButton, Stack, Typography } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useWeekStart } from "@app/lib/hooks";
-
 import {
   addDays,
   formatDateParam,
   formatWeekRange,
   getISOWeekNumber,
   getMonday,
-} from "./week-helpers";
+} from "@app/lib/utils/date-utils";
 
 export const WeekNavigator = () => {
   const router = useRouter();

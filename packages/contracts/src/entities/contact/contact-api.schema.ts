@@ -16,7 +16,7 @@ export const contactSubmissionItemSchema = z.object({
   contact: z.string().nullable(),
   program: z.string().nullable(),
   message: z.string(),
-  status: z.string(),
+  status: z.nativeEnum(ContactStatus),
   notes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),

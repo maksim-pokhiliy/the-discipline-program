@@ -24,7 +24,7 @@ const typeConfig = {
   },
   danger: {
     icon: ErrorIcon,
-    color: "primary" as const,
+    color: "error" as const,
     defaultConfirmText: "Delete",
   },
   info: {

@@ -5,7 +5,7 @@ export const LAYOUT = {
   drawerWidth: 280,
   drawerCollapsedWidth: 72,
   platformHeaderHeight: 56,
-  platformBottomNavHeight: 56,
+  platformBottomNavHeight: 80,
   platformFabBottom: 100,
 } as const;
 

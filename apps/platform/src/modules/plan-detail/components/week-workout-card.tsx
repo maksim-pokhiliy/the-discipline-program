@@ -7,7 +7,7 @@ import { CSS } from "@dnd-kit/utilities";
 import CloseIcon from "@mui/icons-material/Close";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Collapse, Divider, IconButton, InputBase, Paper, Stack, Typography } from "@mui/material";
+import { Collapse, Divider, IconButton, InputBase, Paper, Stack } from "@mui/material";
 
 import type { Workout } from "@repo/contracts/workout";
 import { ConfirmationModal, RichTextEditor } from "@repo/ui";
@@ -160,16 +160,3 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
     </>
   );
 };
-
-export const WorkoutDragOverlay: React.FC<{ workout: Workout }> = ({ workout }) => (
-  <Paper
-    variant="outlined"
-    sx={(theme) => ({
-      p: 1.5,
-      borderColor: theme.palette.primary.main,
-      borderWidth: 2,
-    })}
-  >
-    <Typography variant="body2">{workout.title || "Untitled workout"}</Typography>
-  </Paper>
-);

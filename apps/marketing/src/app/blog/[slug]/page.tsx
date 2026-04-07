@@ -1,5 +1,6 @@
 import { type Metadata } from "next";
 
+import { type BlogCategory, BLOG_CATEGORY_LABELS } from "@repo/contracts/blog";
 import { SEO_CONFIG } from "@repo/shared";
 
 import { serverApi } from "@app/lib/api/server";
@@ -18,7 +19,7 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
     const images = post.coverImage ? [post.coverImage] : [];
 
     return {
-      title: `${post.title} | The Discipline Program`,
+      title: `${post.title} | ${SEO_CONFIG.siteName}`,
       description: post.excerpt ?? undefined,
       keywords: post.tags.join(", "),
       openGraph: {
@@ -29,7 +30,7 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
         url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
         publishedTime: post.publishedAt.toISOString(),
         authors: [post.authorName],
-        section: post.category,
+        section: BLOG_CATEGORY_LABELS[post.category as BlogCategory] ?? post.category,
         tags: post.tags,
       },
       twitter: {
@@ -41,7 +42,7 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
     };
   } catch {
     return {
-      title: "Article Not Found | The Discipline Program",
+      title: `Article Not Found | ${SEO_CONFIG.siteName}`,
       description: "The requested article could not be found.",
     };
   }

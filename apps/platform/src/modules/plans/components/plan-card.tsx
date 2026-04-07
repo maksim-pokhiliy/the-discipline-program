@@ -105,7 +105,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
       </Stack>
     </Box>
 
-    <Box sx={{ position: "absolute", top: 8, right: 8 }}>
+    <Box sx={{ position: "absolute", top: 1, right: 1 }}>
       <PlanActionMenu
         planId={plan.id}
         planName={plan.name}

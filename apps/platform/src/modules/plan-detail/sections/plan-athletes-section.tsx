@@ -77,7 +77,7 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
       <Fab
         color="primary"
         onClick={() => setEnrollOpen(true)}
-        sx={{ position: "fixed", bottom: LAYOUT.platformFabBottom, right: 16 }}
+        sx={{ position: "fixed", bottom: LAYOUT.platformFabBottom, right: 2 }}
       >
         <AddIcon />
       </Fab>

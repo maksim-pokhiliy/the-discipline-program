@@ -13,14 +13,11 @@ import {
 } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import {
-  type CreateProductData,
-  ProductCurrency,
-  PriceInterval,
-  PRICE_INTERVAL_LABELS,
-} from "@repo/contracts/product";
-import { amountToCents, slugify } from "@repo/shared";
+import { ProductCurrency, PriceInterval, PRICE_INTERVAL_LABELS } from "@repo/contracts/product";
+import { slugify } from "@repo/shared";
 import { FormCard, TagsInput } from "@repo/ui";
+
+import { type ProductFormData } from "./product-form-schema";
 
 interface ProductFormProps {
   isLoading?: boolean;
@@ -34,7 +31,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
     setValue,
     control,
     formState: { errors, dirtyFields },
-  } = useFormContext<CreateProductData>();
+  } = useFormContext<ProductFormData>();
 
   const title = watch("title");
 
@@ -154,8 +151,8 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                     startAdornment: <InputAdornment position="start">$</InputAdornment>,
                   },
                 }}
-                {...register("price.amountCents", {
-                  setValueAs: (v: string) => (v === "" ? undefined : amountToCents(Number(v))),
+                {...register("price.amount", {
+                  valueAsNumber: true,
                 })}
               />
 

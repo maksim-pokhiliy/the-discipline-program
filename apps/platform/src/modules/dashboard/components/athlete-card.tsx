@@ -1,8 +1,8 @@
 "use client";
 
-import { Alert, type AlertColor, AlertTitle, Avatar, Chip } from "@mui/material";
+import { Alert, type AlertColor, AlertTitle, Avatar, Stack } from "@mui/material";
 
-import type { StatusChipConfig } from "@app/lib/components";
+import { StatusChip, type StatusChipConfig } from "@app/lib/components";
 
 type AthleteCardProps = {
   name: string;
@@ -30,18 +30,10 @@ export const AthleteCard: React.FC<AthleteCardProps> = ({
     action={action}
   >
     <AlertTitle>
-      {name}
-      {chips?.map((chip) => (
-        <Chip
-          key={chip.label}
-          size="small"
-          label={chip.label}
-          color={chip.color}
-          icon={chip.icon}
-          variant="outlined"
-          sx={{ ml: 1 }}
-        />
-      ))}
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+        {name}
+        {chips?.map((chip) => <StatusChip key={chip.label} {...chip} />)}
+      </Stack>
     </AlertTitle>
 
     {message}

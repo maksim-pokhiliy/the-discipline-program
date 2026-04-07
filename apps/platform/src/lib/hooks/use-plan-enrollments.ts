@@ -41,20 +41,39 @@ export const useBulkEnrollAthletes = (planId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (userIds: string[]) =>
-      Promise.all(userIds.map((id) => api.planEnrollments.create(planId, { userId: id }))),
-    onSuccess: (results) => {
+    mutationFn: async (userIds: string[]) => {
+      const results = await Promise.allSettled(
+        userIds.map((id) => api.planEnrollments.create(planId, { userId: id })),
+      );
+
+      const fulfilled = results.filter(
+        (r): r is PromiseFulfilledResult<PlanEnrollment> => r.status === "fulfilled",
+      );
+      const rejected = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+
+      if (rejected.length > 0 && fulfilled.length === 0) {
+        throw new Error("Failed to enroll athletes");
+      }
+
+      return { fulfilled, rejected };
+    },
+    onSuccess: ({ fulfilled, rejected }) => {
       queryClient.invalidateQueries({
         queryKey: platformKeys.planEnrollments.byPlan(planId),
       });
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-      toast.success(`${results.length} athlete${results.length === 1 ? "" : "s"} enrolled`);
+
+      if (rejected.length > 0) {
+        toast.warning(`${fulfilled.length} enrolled, ${rejected.length} failed`);
+      } else {
+        toast.success(`${fulfilled.length} athlete${fulfilled.length === 1 ? "" : "s"} enrolled`);
+      }
     },
-    onError: (error: Error) => {
+    onError: () => {
       queryClient.invalidateQueries({
         queryKey: platformKeys.planEnrollments.byPlan(planId),
       });
-      toast.error(error.message || "Failed to enroll athletes");
+      toast.error("Failed to enroll athletes");
     },
   });
 };

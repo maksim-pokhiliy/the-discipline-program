@@ -14,8 +14,8 @@ export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionP
       <Grid container spacing={4}>
         {reviewsList.map((review) => (
           <Grid key={review.id} size={{ xs: 12, md: 4 }}>
-            <Card sx={{ height: "100%", display: "flex" }}>
-              <CardContent sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+            <Card>
+              <CardContent>
                 <Stack spacing={4} sx={{ height: "100%" }}>
                   <Stack spacing={2} sx={{ height: "100%" }}>
                     <Rating value={review.rating} readOnly size="small" />

@@ -3,9 +3,9 @@
 import { Box, type BoxProps, type SxProps, type Theme } from "@mui/material";
 import DOMPurify from "isomorphic-dompurify";
 
-interface RichTextViewerProps extends BoxProps {
+type RichTextViewerProps = BoxProps & {
   content: string;
-}
+};
 
 const defaultStyles: SxProps<Theme> = {
   "& h1": { typography: "h3", mt: 4, mb: 2 },

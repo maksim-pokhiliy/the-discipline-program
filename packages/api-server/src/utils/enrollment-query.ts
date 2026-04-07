@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 
-export const enrollmentInclude = {
+const baseEnrollmentInclude = {
   user: {
     select: {
       id: true,
@@ -9,7 +9,7 @@ export const enrollmentInclude = {
       image: true,
       workoutLogs: {
         select: { id: true, workoutId: true, date: true },
-        orderBy: { date: "desc" },
+        orderBy: { date: "desc" as const },
       },
       athleteProfile: {
         select: { healthStatus: true },
@@ -27,11 +27,27 @@ export const enrollmentInclude = {
           createdAt: true,
           title: true,
         },
-        orderBy: [{ scheduledDate: "asc" }, { createdAt: "asc" }],
+        orderBy: [{ scheduledDate: "asc" as const }, { createdAt: "asc" as const }],
       },
     },
   },
 } satisfies Prisma.PlanEnrollmentInclude;
+
+export const createEnrollmentInclude = (coachId: string) =>
+  ({
+    ...baseEnrollmentInclude,
+    user: {
+      select: {
+        ...baseEnrollmentInclude.user.select,
+        workoutLogs: {
+          ...baseEnrollmentInclude.user.select.workoutLogs,
+          where: { workout: { plan: { coachId } } },
+        },
+      },
+    },
+  }) satisfies Prisma.PlanEnrollmentInclude;
+
+export const enrollmentInclude = baseEnrollmentInclude;
 
 export type EnrollmentWithData = Prisma.PlanEnrollmentGetPayload<{
   include: typeof enrollmentInclude;

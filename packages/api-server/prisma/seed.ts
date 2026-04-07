@@ -845,7 +845,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Training",
+        category: "TRAINING",
         tags: ["gymnastics", "technique", "progressions"],
         readTime: 4,
         isPublished: true,
@@ -862,7 +862,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Nutrition",
+        category: "NUTRITION",
         tags: ["nutrition", "performance", "meal-timing"],
         readTime: 4,
         isPublished: true,
@@ -879,7 +879,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Mindset",
+        category: "MINDSET",
         tags: ["mental-toughness", "pacing", "amrap"],
         readTime: 4,
         isPublished: true,
@@ -897,7 +897,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Fitness",
+        category: "FITNESS",
         tags: ["recovery", "programming", "rest-days"],
         readTime: 4,
         isPublished: true,
@@ -915,7 +915,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Recovery",
+        category: "RECOVERY",
         tags: ["mobility", "flexibility", "injury-prevention"],
         readTime: 5,
         isPublished: true,
@@ -932,7 +932,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Training",
+        category: "TRAINING",
         tags: ["olympic-lifting", "technique", "coaching-cues"],
         readTime: 4,
         isPublished: true,
@@ -948,7 +948,7 @@ const seedBlogPosts = async () => {
           "## The Framework\n\nPeaking for the Open requires periodized programming. You cannot go hard 52 weeks a year.\n\n## Phase 1: Volume (Weeks 12-9)\nBuild work capacity. High volume, moderate intensity.\n\n## Phase 2: Intensity (Weeks 8-5)\nReduce volume, increase intensity. Test benchmark WODs.\n\n## Phase 3: Taper (Weeks 4-1)\nSharp, short workouts. Practice Open-style formats.\n\n[Full program details coming soon]",
         coverImage: null,
         authorName: "Coach Denys",
-        category: "Training",
+        category: "TRAINING",
         tags: ["open", "competition", "periodization"],
         readTime: null,
         isPublished: false,
@@ -965,7 +965,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1432139555190-58524dae6a55?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Nutrition",
+        category: "NUTRITION",
         tags: ["protein", "nutrition", "macros"],
         readTime: 5,
         isPublished: true,

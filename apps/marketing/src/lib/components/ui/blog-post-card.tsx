@@ -11,6 +11,8 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 
+import { type BlogCategory, BLOG_CATEGORY_LABELS } from "@repo/contracts/blog";
+
 type BlogPostCardProps = {
   slug: string;
   title: string;
@@ -19,6 +21,9 @@ type BlogPostCardProps = {
   readTime: number | null;
   category: string;
 };
+
+const getCategoryLabel = (category: string): string =>
+  BLOG_CATEGORY_LABELS[category as BlogCategory] ?? category;
 
 export const BlogPostCard = ({
   slug,
@@ -29,23 +34,23 @@ export const BlogPostCard = ({
   category,
 }: BlogPostCardProps) => {
   return (
-    <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+    <Card>
       <Box sx={{ position: "relative" }}>
         {coverImage && <CardMedia component="img" height="200" image={coverImage} alt={title} />}
 
         <Box
           sx={{
             position: "absolute",
-            top: 12,
-            left: 12,
+            top: 1.5,
+            left: 1.5,
             zIndex: 1,
           }}
         >
-          <Chip label={category} size="small" color="primary" />
+          <Chip label={getCategoryLabel(category)} size="small" color="primary" />
         </Box>
       </Box>
 
-      <CardContent sx={{ flexGrow: 1 }}>
+      <CardContent>
         <Stack spacing={2}>
           <Typography variant="h5" component="h3">
             {title}

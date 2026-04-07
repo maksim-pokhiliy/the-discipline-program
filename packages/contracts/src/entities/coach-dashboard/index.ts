@@ -1,3 +1,3 @@
 export * from "./coach-dashboard.constants";
-export * from "./coach-dashboard.schema";
-export * from "./coach-dashboard.types";
+export * from "./coach-dashboard-api.schema";
+export * from "./coach-dashboard-api.types";

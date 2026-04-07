@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { type Prisma, PrismaClient } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/auth";
 
@@ -30,7 +30,7 @@ export const createTestCoach = async () => {
 
 export const createTestPlan = async (
   coachProfileId: string,
-  overrides: Record<string, unknown> = {},
+  overrides: Partial<Prisma.TrainingPlanUncheckedCreateInput> = {},
 ) => {
   return rawPrisma.trainingPlan.create({
     data: {

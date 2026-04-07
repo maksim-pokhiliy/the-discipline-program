@@ -3,5 +3,5 @@ import type { UserSearchResult } from "@repo/contracts/user";
 
 export const createUsersAPI = (client: ApiClient) => ({
   search: (query: string): Promise<UserSearchResult[]> =>
-    client.request(`/api/platform/users/search?q=${encodeURIComponent(query)}`, "GET"),
+    client.request("/api/platform/users/search", "GET", undefined, { q: query }),
 });

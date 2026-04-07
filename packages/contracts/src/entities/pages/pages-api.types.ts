@@ -3,6 +3,8 @@ import { type z } from "zod";
 import {
   type adminPageListItemSchema,
   type adminPageDetailsSchema,
+  type getPageBySlugParamsSchema,
+  type pageSlugRouteParamsSchema,
   type updatePageSectionSchema,
   type getHomePageResponseSchema,
   type getStorefrontProgramsPageResponseSchema,
@@ -24,3 +26,5 @@ export type AboutPageData = z.infer<typeof getAboutPageResponseSchema>;
 export type BlogPageData = z.infer<typeof getBlogPageResponseSchema>;
 export type ContactPageData = z.infer<typeof getContactPageResponseSchema>;
 export type FaqPageData = z.infer<typeof getFaqPageResponseSchema>;
+export type PageSlugRouteParams = z.infer<typeof pageSlugRouteParamsSchema>;
+export type GetPageBySlugParams = z.infer<typeof getPageBySlugParamsSchema>;

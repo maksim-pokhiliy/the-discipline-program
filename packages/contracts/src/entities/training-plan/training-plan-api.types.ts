@@ -6,6 +6,7 @@ import {
   type coachPlansPageDataSchema,
   type copyWeekParamsSchema,
   type copyWeekRequestSchema,
+  type copyWeekResponseSchema,
   type createTrainingPlanRequestSchema,
   type createTrainingPlanResponseSchema,
   type deleteTrainingPlanParamsSchema,
@@ -41,3 +42,4 @@ export type GetCalendarWeekParams = z.infer<typeof getCalendarWeekParamsSchema>;
 export type GetCalendarWeekResponse = z.infer<typeof getCalendarWeekResponseSchema>;
 export type CopyWeekParams = z.infer<typeof copyWeekParamsSchema>;
 export type CopyWeekRequest = z.infer<typeof copyWeekRequestSchema>;
+export type CopyWeekResponse = z.infer<typeof copyWeekResponseSchema>;

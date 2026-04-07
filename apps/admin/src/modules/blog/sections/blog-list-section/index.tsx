@@ -15,11 +15,7 @@ import { useDeleteConfirmation } from "@repo/query";
 import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
-import {
-  useDeleteBlogPost,
-  useToggleBlogFeatured,
-  useToggleBlogPost,
-} from "@app/lib/hooks/use-blog";
+import { useDeleteBlogPost, useToggleBlogFeatured, useToggleBlogPost } from "@app/lib/hooks";
 
 const filters: DataTableFilter<BlogPost>[] = [
   {
@@ -95,7 +91,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
               color={post.isPublished ? "success" : "default"}
               size="small"
               variant="outlined"
-              sx={{ minWidth: 85, justifyContent: "center" }}
+              sx={{ justifyContent: "center" }}
             />
           </Stack>
         ),
@@ -122,7 +118,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
               color={post.isFeatured ? "warning" : "default"}
               size="small"
               variant="outlined"
-              sx={{ minWidth: 105, justifyContent: "center" }}
+              sx={{ justifyContent: "center" }}
             />
           </Stack>
         ),

@@ -15,13 +15,6 @@ export const useWorkouts = (planId: string) =>
     enabled: !!planId,
   });
 
-export const useWorkout = (planId: string, id: string) =>
-  useQuery({
-    queryKey: platformKeys.workouts.byId(id),
-    queryFn: () => api.workouts.getById(planId, id),
-    enabled: !!planId && !!id,
-  });
-
 export const useCreateWorkout = (planId: string) => {
   const queryClient = useQueryClient();
 

@@ -4,7 +4,7 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Avatar, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 
-import { signOut, useSession } from "@repo/auth";
+import { signOut, useSession } from "@repo/auth/client";
 
 type SidebarUserMenuProps = {
   expanded: boolean;

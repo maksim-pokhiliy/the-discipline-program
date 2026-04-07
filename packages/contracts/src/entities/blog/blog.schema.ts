@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { BLOG_CONSTANTS } from "./blog.constants";
+
 export const blogPostSchema = z.object({
   id: z.string().cuid(),
   title: z.string().min(1).max(200),
@@ -8,12 +10,8 @@ export const blogPostSchema = z.object({
     .min(1)
     .max(200)
     .regex(/^[a-z0-9-]+$/),
-  excerpt: z
-    .string()
-    .max(500)
-    .nullable()
-    .transform((v) => (v === "" ? null : v)),
-  content: z.string().min(1),
+  excerpt: z.string().max(500).nullable(),
+  content: z.string().min(BLOG_CONSTANTS.MIN_CONTENT_LENGTH),
   coverImage: z.string().nullable(),
   publishedAt: z.coerce.date().nullable(),
   readTime: z.number().int().positive().nullable(),
@@ -26,13 +24,18 @@ export const blogPostSchema = z.object({
   updatedAt: z.coerce.date(),
 });
 
-export const createBlogPostSchema = blogPostSchema.omit({
+const createBlogPostBaseSchema = blogPostSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
 });
 
-export const updateBlogPostSchema = createBlogPostSchema.partial();
+export const createBlogPostSchema = createBlogPostBaseSchema.transform((data) => ({
+  ...data,
+  excerpt: data.excerpt === "" ? null : data.excerpt,
+}));
+
+export const updateBlogPostSchema = createBlogPostBaseSchema.partial();
 
 export const publicBlogPostSchema = z.object({
   id: z.string().cuid(),

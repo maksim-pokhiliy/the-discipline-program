@@ -18,7 +18,7 @@ export const MuiAutocomplete: Components<Theme>["MuiAutocomplete"] = {
       padding: theme.spacing(1),
       minHeight: "unset",
       flexShrink: 0,
-      borderRadius: Number(theme.shape.borderRadius),
+      borderRadius: theme.shape.borderRadius,
     }),
   },
 };

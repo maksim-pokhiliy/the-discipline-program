@@ -4,14 +4,12 @@ import { Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 import { type z } from "zod";
 
-import {
-  SECTION_FEATURES,
-  type HeroSectionType,
-  type homePageHeroSchema,
-} from "@repo/contracts/pages";
+import { type homePageHeroSchema } from "@repo/contracts/pages";
 import { FormCard, ImageUpload } from "@repo/ui";
 
 import { useUploadImage } from "@app/lib/hooks";
+
+import { SECTION_FEATURES, type HeroSectionType } from "../../config/section-features";
 
 type HeroSectionData = z.infer<typeof homePageHeroSchema>;
 

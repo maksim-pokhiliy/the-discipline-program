@@ -1,8 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { AUTH_ROUTES } from "./constants";
-
-const SESSION_COOKIES = ["next-auth.session-token", "__Secure-next-auth.session-token"];
+import { AUTH_ROUTES, SESSION_COOKIES } from "./constants";
 
 export const logoutHandler = (req: NextRequest) => {
   const response = NextResponse.redirect(new URL(AUTH_ROUTES.LOGIN, req.url));

@@ -1,24 +1,9 @@
-import { type Product, type Review } from "@repo/contracts";
-import { generateStructuredData } from "@repo/shared";
+import { generateStructuredData } from "@app/lib/utils/seo-utils";
 
-interface StructuredDataProps {
-  type: "website" | "organization" | "article" | "storefront" | "reviews" | "faq" | "person";
-  data?: {
-    title?: string;
-    description?: string;
-    image?: string;
-    author?: string;
-    publishedTime?: string;
-    modifiedTime?: string;
-    url?: string;
-    products?: Product[];
-    reviews?: Review[];
-    faqItems?: Array<{
-      question: string;
-      answer: string;
-    }>;
-  };
-}
+type StructuredDataProps = {
+  type: Parameters<typeof generateStructuredData>[0];
+  data?: Parameters<typeof generateStructuredData>[1];
+};
 
 export const StructuredData = ({ type, data }: StructuredDataProps) => {
   const structuredData = generateStructuredData(type, data);

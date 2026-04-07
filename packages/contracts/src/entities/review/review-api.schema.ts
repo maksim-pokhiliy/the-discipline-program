@@ -1,21 +1,9 @@
 import { z } from "zod";
 
 import { ReviewToggleField } from "./review.constants";
-import { createReviewSchema, updateReviewSchema } from "./review.schema";
+import { createReviewSchema, reviewSchema, updateReviewSchema } from "./review.schema";
 
-export const getReviewsResponseSchema = z.array(
-  z.object({
-    id: z.string(),
-    text: z.string(),
-    authorName: z.string(),
-    authorRole: z.string().nullable(),
-    authorAvatar: z.string().nullable(),
-    rating: z.number(),
-    isActive: z.boolean(),
-    createdAt: z.date(),
-    updatedAt: z.date(),
-  }),
-);
+export const getReviewsResponseSchema = z.array(reviewSchema);
 
 export const getReviewByIdParamsSchema = z.object({
   id: z.string().cuid(),

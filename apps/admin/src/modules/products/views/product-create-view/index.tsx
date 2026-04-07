@@ -3,18 +3,24 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { createProductSchema, type CreateProductData } from "@repo/contracts/product";
+import { amountToCents } from "@repo/shared";
 import { FormView } from "@repo/ui";
 
-import { useCreateProduct } from "@app/lib/hooks/use-products";
+import { useCreateProduct } from "@app/lib/hooks";
 
 import { ProductForm } from "../../components";
+import { productFormSchema, type ProductFormData } from "../../components/product-form-schema";
+
+const toCreateProductData = (data: ProductFormData) => ({
+  ...data,
+  price: data.price ? { ...data.price, amountCents: amountToCents(data.price.amount) } : undefined,
+});
 
 export const ProductCreateView = () => {
   const { mutate: createProduct, isPending } = useCreateProduct();
 
-  const methods = useForm<CreateProductData>({
-    resolver: zodResolver(createProductSchema),
+  const methods = useForm<ProductFormData>({
+    resolver: zodResolver(productFormSchema),
     defaultValues: {
       title: "",
       slug: "",
@@ -28,7 +34,7 @@ export const ProductCreateView = () => {
   return (
     <FormView
       methods={methods}
-      onSubmit={(data) => createProduct(data)}
+      onSubmit={(data) => createProduct(toCreateProductData(data))}
       isPending={isPending}
       title="Create Product"
       subtitle="New product"

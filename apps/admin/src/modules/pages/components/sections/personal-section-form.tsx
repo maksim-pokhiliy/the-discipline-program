@@ -1,6 +1,6 @@
 "use client";
 
-import { Stack, TextField } from "@mui/material";
+import { Grid, Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 import { type z } from "zod";
 
@@ -41,23 +41,27 @@ export const PersonalSectionForm = () => {
           {...register("description")}
         />
 
-        <Stack direction="row" spacing={3}>
-          <TextField
-            label="Name"
-            sx={{ flex: 1 }}
-            error={!!errors.name}
-            helperText={errors.name?.message?.toString()}
-            {...register("name")}
-          />
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Name"
+              fullWidth
+              error={!!errors.name}
+              helperText={errors.name?.message?.toString()}
+              {...register("name")}
+            />
+          </Grid>
 
-          <TextField
-            label="Role"
-            sx={{ flex: 1 }}
-            error={!!errors.role}
-            helperText={errors.role?.message?.toString()}
-            {...register("role")}
-          />
-        </Stack>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Role"
+              fullWidth
+              error={!!errors.role}
+              helperText={errors.role?.message?.toString()}
+              {...register("role")}
+            />
+          </Grid>
+        </Grid>
 
         <ImageUpload
           previewUrl={watch("image") || ""}

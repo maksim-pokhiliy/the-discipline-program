@@ -1,4 +1,4 @@
-import { Button, Stack, Typography } from "@mui/material";
+import { alpha, Button, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 
 interface CtaSectionProps {
@@ -24,7 +24,10 @@ export const CTASection = ({ title, subtitle, buttonText, buttonHref }: CtaSecti
     >
       <Stack spacing={2}>
         {subtitle && (
-          <Typography variant="h4" sx={{ opacity: 0.85 }}>
+          <Typography
+            variant="h4"
+            sx={(theme) => ({ color: alpha(theme.palette.primary.contrastText, 0.85) })}
+          >
             {subtitle}
           </Typography>
         )}

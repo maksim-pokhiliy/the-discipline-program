@@ -8,11 +8,11 @@ import {
   updatePageSectionSchema,
   updatePageMetadataSchema,
   PageSlug,
-  getPageSectionsOrder,
 } from "@repo/contracts/pages";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
+import { getPageSectionsOrder } from "../../utils/page-sections";
 
 const isValidPageSlug = (slug: string): slug is PageSlug => {
   return Object.values(PageSlug).includes(slug as PageSlug);

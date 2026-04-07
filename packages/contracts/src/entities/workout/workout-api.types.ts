@@ -12,6 +12,8 @@ import {
   type moveWorkoutParamsSchema,
   type moveWorkoutRequestSchema,
   type moveWorkoutResponseSchema,
+  type reorderWorkoutsParamsSchema,
+  type reorderWorkoutsRequestSchema,
   type updateWorkoutParamsSchema,
   type updateWorkoutRequestSchema,
   type updateWorkoutResponseSchema,
@@ -31,3 +33,5 @@ export type DeleteWorkoutParams = z.infer<typeof deleteWorkoutParamsSchema>;
 export type MoveWorkoutParams = z.infer<typeof moveWorkoutParamsSchema>;
 export type MoveWorkoutRequest = z.infer<typeof moveWorkoutRequestSchema>;
 export type MoveWorkoutResponse = z.infer<typeof moveWorkoutResponseSchema>;
+export type ReorderWorkoutsParams = z.infer<typeof reorderWorkoutsParamsSchema>;
+export type ReorderWorkoutsRequest = z.infer<typeof reorderWorkoutsRequestSchema>;

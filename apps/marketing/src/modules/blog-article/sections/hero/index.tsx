@@ -1,6 +1,6 @@
 import { Button, Chip, Stack, Typography } from "@mui/material";
 
-import { type PublicBlogPost } from "@repo/contracts/blog";
+import { type BlogCategory, BLOG_CATEGORY_LABELS, type PublicBlogPost } from "@repo/contracts/blog";
 
 import { FullscreenSection } from "@app/lib/components/ui";
 
@@ -19,7 +19,10 @@ export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
 
   return (
     <FullscreenSection backgroundImage={post.coverImage ?? ""}>
-      <Chip label={post.category} color="primary" />
+      <Chip
+        label={BLOG_CATEGORY_LABELS[post.category as BlogCategory] ?? post.category}
+        color="primary"
+      />
 
       <Typography variant="display1" component="h1" textAlign="center">
         {post.title}

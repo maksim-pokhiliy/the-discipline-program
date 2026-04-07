@@ -6,6 +6,14 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Box, Button, CircularProgress, Stack, Typography, alpha, useTheme } from "@mui/material";
 
+const formatSize = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(0)}MB`;
+
+const formatTypes = (types: string[]) =>
+  types
+    .map((t) => t.split("/")[1]?.toUpperCase())
+    .filter(Boolean)
+    .join(", ");
+
 export interface ImageUploadProps {
   previewUrl?: string | null;
   onFileSelect: (file: File) => void;
@@ -45,21 +53,15 @@ export const ImageUpload = ({
 
   const acceptAttribute = acceptedTypes.join(",");
 
-  const formatSize = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(0)}MB`;
-
-  const formatTypes = (types: string[]) =>
-    types
-      .map((t) => t.split("/")[1]?.toUpperCase())
-      .filter(Boolean)
-      .join(", ");
-
   return (
     <Stack spacing={2} width="100%">
       {label && <Typography variant="subtitle2">{label}</Typography>}
 
       <Box
         sx={{
-          border: `1px dashed ${theme.palette.divider}`,
+          border: 1,
+          borderStyle: "dashed",
+          borderColor: "divider",
           borderRadius: 1,
           p: 2,
           textAlign: "center",
@@ -132,12 +134,10 @@ export const ImageUpload = ({
             sx={{ cursor: "pointer" }}
             onClick={triggerSelect}
           >
-            <CloudUploadIcon color="primary" sx={{ fontSize: 40, opacity: 0.5 }} />
+            <CloudUploadIcon color="primary" fontSize="large" sx={{ opacity: 0.5 }} />
 
             <Box>
-              <Typography variant="body2" fontWeight={500}>
-                Click to upload
-              </Typography>
+              <Typography variant="body2">Click to upload</Typography>
 
               <Typography variant="caption" color="text.secondary">
                 {formatTypes(acceptedTypes)} (max {formatSize(maxSizeBytes)})

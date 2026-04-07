@@ -1,3 +1,5 @@
+const MS_PER_DAY = 86_400_000;
+
 export const getMonday = (date: Date): Date => {
   const day = date.getUTCDay();
   const diff = day === 0 ? -6 : 1 - day;
@@ -23,7 +25,7 @@ export const getISOWeekNumber = (date: Date): number => {
 
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
 
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / MS_PER_DAY + 1) / 7);
 };
 
 export const formatDateParam = (date: Date): string => {

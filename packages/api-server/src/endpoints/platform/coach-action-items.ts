@@ -26,7 +26,7 @@ import {
   HEALTH_STATUS_MAP,
 } from "../../mappers/enum-maps";
 import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
-import { type EnrollmentWithData, enrollmentInclude } from "../../utils/enrollment-query";
+import { type EnrollmentWithData, createEnrollmentInclude } from "../../utils/enrollment-query";
 
 import { resolveCoachId } from "./guards";
 
@@ -169,7 +169,7 @@ export const platformCoachActionItemsApi = {
             status: PlanEnrollmentStatus.ACTIVE,
             trainingPlan: { coachId },
           },
-          include: enrollmentInclude,
+          include: createEnrollmentInclude(coachId),
         }),
         tx.coachActionItem.findMany({
           where: { coachId, status: ActionItemStatus.OPEN },

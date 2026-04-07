@@ -10,7 +10,7 @@ interface FeatureCardProps {
 export const FeatureCard = ({ icon: Icon, title, description }: FeatureCardProps) => {
   return (
     <Stack spacing={1.5}>
-      <Icon sx={{ fontSize: 32, color: "text.secondary" }} />
+      <Icon fontSize="large" sx={{ color: "text.secondary" }} />
 
       <Typography variant="h4" component="h3">
         {title}

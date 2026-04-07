@@ -98,7 +98,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         searchValue: (user) => user.email,
         render: (user) => (
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <Avatar src={user.image || undefined} sx={{ width: 32, height: 32, fontSize: 14 }}>
+            <Avatar src={user.image || undefined} sx={{ width: 32, height: 32 }}>
               {user.email.charAt(0).toUpperCase()}
             </Avatar>
             <Typography variant="subtitle2">{user.email}</Typography>
@@ -170,10 +170,10 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
       />
 
       <Menu anchorEl={menuAnchor} open={!!menuAnchor} onClose={handleMenuClose}>
-        {Object.values(UserRole).map((role) => {
+        {(() => {
           const currentUser = users.find((u) => u.id === menuUserId);
 
-          return (
+          return Object.values(UserRole).map((role) => (
             <MenuItem
               key={role}
               onClick={() => handleRoleSelect(role)}
@@ -181,8 +181,8 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
             >
               {ROLE_CONFIG[role].label}
             </MenuItem>
-          );
-        })}
+          ));
+        })()}
       </Menu>
 
       <ConfirmationModal

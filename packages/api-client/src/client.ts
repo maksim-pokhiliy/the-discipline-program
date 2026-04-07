@@ -1,4 +1,23 @@
-import { InternalServerError } from "@repo/errors";
+import {
+  type AppError,
+  ConflictError,
+  ForbiddenError,
+  InternalServerError,
+  NotFoundError,
+  UnauthorizedError,
+  ValidationError,
+} from "@repo/errors";
+
+type AppErrorConstructor = new (message: string, details?: Record<string, unknown>) => AppError;
+
+const HTTP_STATUS_ERROR_MAP: Record<number, AppErrorConstructor> = {
+  400: ValidationError,
+  401: UnauthorizedError,
+  403: ForbiddenError,
+  404: NotFoundError,
+  409: ConflictError,
+  422: ValidationError,
+};
 
 interface ApiClientConfig {
   baseUrl: string;
@@ -61,10 +80,12 @@ export class ApiClient {
         .json()
         .catch(() => ({ error: `Request failed: ${response.status}` }));
 
-      throw new InternalServerError(error.error || `API request failed`, {
-        status: response.status,
-        url: fullUrl,
-      });
+      const message = error.error || "API request failed";
+      const details = { status: response.status, url: fullUrl };
+
+      const ErrorClass = HTTP_STATUS_ERROR_MAP[response.status] ?? InternalServerError;
+
+      throw new ErrorClass(message, details);
     }
 
     return response.json();

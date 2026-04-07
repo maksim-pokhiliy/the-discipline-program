@@ -1,3 +1,8 @@
+import type {
+  Currency as PrismaCurrency,
+  PriceInterval as PrismaPriceInterval,
+} from "@prisma/client";
+
 import { ContactStatus } from "@repo/contracts/contact";
 import {
   DashboardActivityType,
@@ -130,7 +135,13 @@ const getRecentActivity = async (): Promise<ActivityItem[]> => {
     }),
   ]);
 
-  const formatPriceSubtitle = (prices: { amountCents: number; currency: string }[]): string => {
+  const formatPriceSubtitle = (
+    prices: {
+      amountCents: number;
+      currency: PrismaCurrency;
+      interval: PrismaPriceInterval;
+    }[],
+  ): string => {
     if (prices.length === 0) {
       return "No price set";
     }
@@ -141,14 +152,8 @@ const getRecentActivity = async (): Promise<ActivityItem[]> => {
       return "No price set";
     }
 
-    const currency = CURRENCY_MAP[p.currency as keyof typeof CURRENCY_MAP] ?? ProductCurrency.USD;
-    const interval =
-      "interval" in p
-        ? (PRICE_INTERVAL_MAP[
-            (p as { interval: string }).interval as keyof typeof PRICE_INTERVAL_MAP
-          ] ?? null)
-        : null;
-
+    const currency = CURRENCY_MAP[p.currency] ?? ProductCurrency.USD;
+    const interval = PRICE_INTERVAL_MAP[p.interval] ?? null;
     const amount = centsToAmount(p.amountCents).toFixed(0);
     const suffix = interval ? `/${interval}` : "";
 

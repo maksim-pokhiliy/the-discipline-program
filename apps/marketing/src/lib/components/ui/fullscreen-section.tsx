@@ -1,8 +1,17 @@
 "use client";
 
-import { Children, type ReactNode } from "react";
+import { Children, isValidElement, type ReactNode } from "react";
 
-import { type SxProps, type Theme, Box, Button, Stack, Container, Typography } from "@mui/material";
+import {
+  type SxProps,
+  type Theme,
+  alpha,
+  Box,
+  Button,
+  Stack,
+  Container,
+  Typography,
+} from "@mui/material";
 import { type Variants, motion } from "framer-motion";
 import Link from "next/link";
 
@@ -73,7 +82,10 @@ export const FullscreenSection = ({
           {children ? (
             <Stack spacing={3} alignItems="center">
               {Children.map(children, (child, i) => (
-                <MotionBox key={i} variants={fadeSlideUp}>
+                <MotionBox
+                  key={isValidElement(child) ? (child.key ?? i) : i}
+                  variants={fadeSlideUp}
+                >
                   {child}
                 </MotionBox>
               ))}
@@ -94,7 +106,10 @@ export const FullscreenSection = ({
                 <Typography
                   variant="h3"
                   component="p"
-                  sx={{ opacity: 0.7, maxWidth: { xs: "100%", md: 550 } }}
+                  sx={(theme) => ({
+                    color: alpha(theme.palette.common.white, 0.7),
+                    maxWidth: { xs: "100%", md: 550 },
+                  })}
                 >
                   {subtitle}
                 </Typography>

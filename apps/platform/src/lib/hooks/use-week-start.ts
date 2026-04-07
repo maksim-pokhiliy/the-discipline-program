@@ -4,7 +4,7 @@ import { useMemo } from "react";
 
 import { useSearchParams } from "next/navigation";
 
-import { getMonday, parseDateParam } from "@app/modules/plan-detail/components/week-helpers";
+import { getMonday, parseDateParam } from "@app/lib/utils/date-utils";
 
 export const useWeekStart = (): Date => {
   const searchParams = useSearchParams();

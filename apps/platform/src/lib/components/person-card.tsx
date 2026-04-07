@@ -33,7 +33,7 @@ const ImageSlot: React.FC<{ image: string | null; name: string }> = ({ image, na
         bgcolor: "action.hover",
       })}
     >
-      <PersonIcon sx={{ fontSize: 48, color: "text.disabled" }} />
+      <PersonIcon fontSize="large" sx={{ color: "text.disabled" }} />
     </Stack>
   );
 

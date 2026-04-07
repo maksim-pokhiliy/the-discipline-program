@@ -1,17 +1,20 @@
 import { z } from "zod";
 
-export const uploadAvatarRequestSchema = z.object({
-  file: z.instanceof(File),
+export const uploadImageRequestSchema = z.object({
+  file: z.custom<File>(
+    (v) => typeof globalThis.File !== "undefined" && v instanceof File,
+    "Expected a File",
+  ),
 });
 
-export const uploadAvatarResponseSchema = z.object({
+export const uploadImageResponseSchema = z.object({
   url: z.string().url(),
 });
 
-export const deleteAvatarRequestSchema = z.object({
+export const deleteImageRequestSchema = z.object({
   url: z.string().url(),
 });
 
-export const deleteAvatarResponseSchema = z.object({
+export const deleteImageResponseSchema = z.object({
   success: z.boolean(),
 });
