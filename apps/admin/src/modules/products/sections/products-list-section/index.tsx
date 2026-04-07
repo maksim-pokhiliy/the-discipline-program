@@ -10,7 +10,13 @@ import Link from "next/link";
 import { type Product } from "@repo/contracts/product";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatPrice } from "@repo/shared";
-import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
+import {
+  ConfirmationModal,
+  DataTable,
+  useDataTableUrlState,
+  type Column,
+  type DataTableFilter,
+} from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteProduct, useToggleProductStatus } from "@app/lib/hooks";
@@ -42,6 +48,7 @@ interface ProductsListSectionProps {
 }
 
 export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
+  const { state, onStateChange } = useDataTableUrlState();
   const toggleStatusMutation = useToggleProductStatus();
   const deleteMutation = useDeleteProduct();
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
@@ -143,6 +150,8 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
         action={<CreateButton href="/products/create">Create Product</CreateButton>}
         paginated
         emptyMessage="No products found. Start by creating one!"
+        state={state}
+        onStateChange={onStateChange}
       />
 
       <ConfirmationModal

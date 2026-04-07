@@ -17,9 +17,9 @@ import {
 } from "@mui/material";
 
 import { DataTableToolbar } from "./data-table-toolbar";
-import type { Column, DataTableFilter, DataTableProps } from "./types";
+import type { Column, DataTableFilter, DataTableProps, DataTableState } from "./types";
 
-export type { Column, DataTableFilter, DataTableProps };
+export type { Column, DataTableFilter, DataTableProps, DataTableState };
 
 const DEFAULT_ROWS_PER_PAGE = 10;
 const DEFAULT_ROWS_PER_PAGE_OPTIONS = [10, 25, 50];
@@ -35,44 +35,55 @@ export const DataTable = <T extends { id: string }>({
   defaultRowsPerPage = DEFAULT_ROWS_PER_PAGE,
   rowsPerPageOptions = DEFAULT_ROWS_PER_PAGE_OPTIONS,
   defaultSort,
+  state: controlledState,
+  onStateChange,
 }: DataTableProps<T>) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
-  const [sortColumn, setSortColumn] = useState<string | null>(defaultSort?.columnId ?? null);
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">(
-    defaultSort?.direction ?? "asc",
-  );
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
+  const [internalState, setInternalState] = useState<DataTableState>({
+    search: controlledState?.search ?? "",
+    filters: controlledState?.filters ?? {},
+    sortColumn: controlledState?.sortColumn ?? defaultSort?.columnId ?? null,
+    sortDirection: controlledState?.sortDirection ?? defaultSort?.direction ?? "asc",
+    page: controlledState?.page ?? 0,
+    rowsPerPage: controlledState?.rowsPerPage ?? defaultRowsPerPage,
+  });
+
+  const state = controlledState ?? internalState;
+
+  const updateState = (patch: Partial<DataTableState>) => {
+    const next = { ...state, ...patch };
+
+    if (onStateChange) {
+      onStateChange(next);
+    } else {
+      setInternalState(next);
+    }
+  };
 
   const searchableColumns = useMemo(() => columns.filter((col) => col.searchValue), [columns]);
 
   const hasToolbar = !!(searchableColumns.length > 0 || filters?.length || action);
 
   const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
-    setPage(0);
+    updateState({ search: value, page: 0 });
   };
 
   const handleFilterChange = (filterId: string, value: string) => {
-    setActiveFilters((prev) => ({ ...prev, [filterId]: value }));
-    setPage(0);
+    updateState({ filters: { ...state.filters, [filterId]: value }, page: 0 });
   };
 
   const handleSortClick = (columnId: string) => {
-    if (sortColumn === columnId) {
-      setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+    if (state.sortColumn === columnId) {
+      updateState({ sortDirection: state.sortDirection === "asc" ? "desc" : "asc" });
     } else {
-      setSortColumn(columnId);
-      setSortDirection("asc");
+      updateState({ sortColumn: columnId, sortDirection: "asc" });
     }
   };
 
   const processedData = useMemo(() => {
     let result = data;
 
-    if (searchQuery && searchableColumns.length > 0) {
-      const query = searchQuery.toLowerCase();
+    if (state.search && searchableColumns.length > 0) {
+      const query = state.search.toLowerCase();
 
       result = result.filter((item) =>
         searchableColumns.some((col) => col.searchValue?.(item).toLowerCase().includes(query)),
@@ -81,7 +92,7 @@ export const DataTable = <T extends { id: string }>({
 
     if (filters) {
       for (const filter of filters) {
-        const activeValue = activeFilters[filter.id];
+        const activeValue = state.filters[filter.id];
 
         if (activeValue) {
           result = result.filter((item) => filter.match(item, activeValue));
@@ -89,8 +100,8 @@ export const DataTable = <T extends { id: string }>({
       }
     }
 
-    if (sortColumn) {
-      const column = columns.find((col) => col.id === sortColumn);
+    if (state.sortColumn) {
+      const column = columns.find((col) => col.id === state.sortColumn);
 
       if (column?.sortValue) {
         const getValue = column.sortValue;
@@ -100,7 +111,7 @@ export const DataTable = <T extends { id: string }>({
           const bVal = getValue(b);
           const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
 
-          return sortDirection === "asc" ? comparison : -comparison;
+          return state.sortDirection === "asc" ? comparison : -comparison;
         });
       }
     }
@@ -108,23 +119,26 @@ export const DataTable = <T extends { id: string }>({
     return result;
   }, [
     data,
-    searchQuery,
+    state.search,
     searchableColumns,
     filters,
-    activeFilters,
-    sortColumn,
-    sortDirection,
+    state.filters,
+    state.sortColumn,
+    state.sortDirection,
     columns,
   ]);
 
   const displayData = paginated
-    ? processedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+    ? processedData.slice(
+        state.page * state.rowsPerPage,
+        state.page * state.rowsPerPage + state.rowsPerPage,
+      )
     : processedData;
 
   const toolbarFilters = filters?.map((filter) => ({
     id: filter.id,
     label: filter.label,
-    value: activeFilters[filter.id] || "",
+    value: state.filters[filter.id] || "",
     options: filter.options,
     onChange: (value: string) => handleFilterChange(filter.id, value),
   }));
@@ -134,7 +148,7 @@ export const DataTable = <T extends { id: string }>({
       {hasToolbar && (
         <>
           <DataTableToolbar
-            searchValue={searchQuery}
+            searchValue={state.search}
             searchPlaceholder={searchPlaceholder}
             onSearchChange={searchableColumns.length > 0 ? handleSearchChange : undefined}
             filters={toolbarFilters}
@@ -154,12 +168,12 @@ export const DataTable = <T extends { id: string }>({
                   key={col.id}
                   width={col.width}
                   align={col.align || "left"}
-                  sortDirection={sortColumn === col.id ? sortDirection : false}
+                  sortDirection={state.sortColumn === col.id ? state.sortDirection : false}
                 >
                   {col.sortable ? (
                     <TableSortLabel
-                      active={sortColumn === col.id}
-                      direction={sortColumn === col.id ? sortDirection : "asc"}
+                      active={state.sortColumn === col.id}
+                      direction={state.sortColumn === col.id ? state.sortDirection : "asc"}
                       onClick={() => handleSortClick(col.id)}
                     >
                       {col.label}
@@ -200,12 +214,11 @@ export const DataTable = <T extends { id: string }>({
         <TablePagination
           component="div"
           count={processedData.length}
-          page={page}
-          onPageChange={(_, newPage) => setPage(newPage)}
-          rowsPerPage={rowsPerPage}
+          page={state.page}
+          onPageChange={(_, newPage) => updateState({ page: newPage })}
+          rowsPerPage={state.rowsPerPage}
           onRowsPerPageChange={(e) => {
-            setRowsPerPage(parseInt(e.target.value, 10));
-            setPage(0);
+            updateState({ rowsPerPage: parseInt(e.target.value, 10), page: 0 });
           }}
           rowsPerPageOptions={rowsPerPageOptions}
         />

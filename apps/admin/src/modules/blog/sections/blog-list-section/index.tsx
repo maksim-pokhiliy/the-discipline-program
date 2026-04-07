@@ -13,7 +13,13 @@ import { type BlogPost } from "@repo/contracts/blog";
 import { baseEnv } from "@repo/env/base";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";
-import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
+import {
+  ConfirmationModal,
+  DataTable,
+  useDataTableUrlState,
+  type Column,
+  type DataTableFilter,
+} from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteBlogPost, useToggleBlogFeatured, useToggleBlogPost } from "@app/lib/hooks";
@@ -44,6 +50,7 @@ interface BlogListSectionProps {
 }
 
 export const BlogListSection = ({ posts }: BlogListSectionProps) => {
+  const { state, onStateChange } = useDataTableUrlState();
   const toggleStatusMutation = useToggleBlogPost();
   const toggleFeaturedMutation = useToggleBlogFeatured();
   const deleteMutation = useDeleteBlogPost();
@@ -179,6 +186,8 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
         action={<CreateButton href="/blog/create">Create Post</CreateButton>}
         paginated
         emptyMessage="No blog posts yet. Create the first one!"
+        state={state}
+        onStateChange={onStateChange}
       />
 
       <ConfirmationModal

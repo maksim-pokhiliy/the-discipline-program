@@ -18,7 +18,13 @@ import Link from "next/link";
 import { UserRole } from "@repo/contracts/auth";
 import { type AdminUserListItem } from "@repo/contracts/user";
 import { formatDate } from "@repo/shared";
-import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
+import {
+  ConfirmationModal,
+  DataTable,
+  useDataTableUrlState,
+  type Column,
+  type DataTableFilter,
+} from "@repo/ui";
 
 import { useUpdateUserRole } from "@app/lib/hooks";
 
@@ -41,6 +47,9 @@ interface UsersListSectionProps {
 }
 
 export const UsersListSection = ({ users }: UsersListSectionProps) => {
+  const { state, onStateChange } = useDataTableUrlState({
+    defaultSort: { columnId: "createdAt", direction: "desc" },
+  });
   const { mutate: updateRole, isPending } = useUpdateUserRole();
 
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
@@ -175,6 +184,8 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         paginated
         defaultSort={{ columnId: "createdAt", direction: "desc" }}
         emptyMessage="No users found."
+        state={state}
+        onStateChange={onStateChange}
       />
 
       <Menu anchorEl={menuAnchor} open={!!menuAnchor} onClose={handleMenuClose}>
