@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformUserBenchmarksApi } from "@repo/api-server";
 import {
   createUserBenchmarkRequestSchema,
@@ -8,6 +7,8 @@ import {
   getUserBenchmarksParamsSchema,
   getUserBenchmarksResponseSchema,
 } from "@repo/contracts/user-benchmark";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const GET = withPlatformAuth(async (_, context, authUserId) => {
   const { userId } = getUserBenchmarksParamsSchema.parse(await context.params);

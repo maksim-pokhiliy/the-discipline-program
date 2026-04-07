@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformWorkoutLogsApi } from "@repo/api-server";
 import {
   deleteWorkoutLogParamsSchema,
   getWorkoutLogByIdParamsSchema,
   getWorkoutLogResponseSchema,
 } from "@repo/contracts/workout-log";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const GET = withPlatformAuth(async (_, context, userId) => {
   const { id } = getWorkoutLogByIdParamsSchema.parse(await context.params);

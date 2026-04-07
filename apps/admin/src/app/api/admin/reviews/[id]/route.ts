@@ -1,5 +1,4 @@
 import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
 import { adminReviewsApi } from "@repo/api-server";
 import {
   deleteReviewParamsSchema,
@@ -7,6 +6,8 @@ import {
   updateReviewParamsSchema,
   updateReviewRequestSchema,
 } from "@repo/contracts/review";
+
+import { withAdminAuth } from "@app/lib/auth";
 
 export const GET = withAdminAuth(
   createGetByIdHandler(adminReviewsApi.getReviewById, getReviewByIdParamsSchema),

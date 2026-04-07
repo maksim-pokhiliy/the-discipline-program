@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformWorkoutsApi } from "@repo/api-server";
 import {
   moveWorkoutParamsSchema,
   moveWorkoutRequestSchema,
   moveWorkoutResponseSchema,
 } from "@repo/contracts/workout";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const PUT = withPlatformAuth(async (request, context, userId) => {
   const { workoutId } = moveWorkoutParamsSchema.parse(await context.params);

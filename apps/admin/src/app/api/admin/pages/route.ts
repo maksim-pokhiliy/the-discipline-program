@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { withAdminAuth } from "@repo/api-routes/auth";
 import { adminPagesApi } from "@repo/api-server";
 import { adminPageListItemSchema } from "@repo/contracts/pages";
+
+import { withAdminAuth } from "@app/lib/auth";
 
 export const dynamic = "force-dynamic";
 

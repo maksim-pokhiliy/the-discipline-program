@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformCoachActionItemsApi } from "@repo/api-server";
 import {
   resolveActionItemParamsSchema,
   resolveActionItemResponseSchema,
 } from "@repo/contracts/coach-action-item";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const POST = withPlatformAuth(async (_, context, userId) => {
   const { itemId } = resolveActionItemParamsSchema.parse(await context.params);

@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformCoachAthletesApi } from "@repo/api-server";
 import { coachAthleteDetailSchema } from "@repo/contracts/coach-athletes";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 const paramsSchema = z.object({ userId: z.string() });
 

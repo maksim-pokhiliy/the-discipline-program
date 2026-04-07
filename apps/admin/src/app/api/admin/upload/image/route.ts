@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 
-import { withAdminAuth } from "@repo/api-routes/auth";
 import { adminUploadApi } from "@repo/api-server";
 import {
   deleteImageRequestSchema,
@@ -8,6 +7,8 @@ import {
   UPLOAD_CONFIG,
 } from "@repo/contracts/upload";
 import { BadRequestError } from "@repo/errors";
+
+import { withAdminAuth } from "@app/lib/auth";
 
 const isValidUploadContext = (value: unknown): value is UploadContext => {
   return typeof value === "string" && value in UPLOAD_CONFIG;

@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformCoachProfileApi } from "@repo/api-server";
 import {
   getCoachProfileResponseSchema,
   updateCoachProfileRequestSchema,
   updateCoachProfileResponseSchema,
 } from "@repo/contracts/coach-profile";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const GET = withPlatformAuth(async (_, _context, userId) => {
   const data = await platformCoachProfileApi.get(userId);

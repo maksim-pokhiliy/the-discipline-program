@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformWorkoutsApi } from "@repo/api-server";
 import { copyWeekParamsSchema, copyWeekRequestSchema } from "@repo/contracts/training-plan";
 import { getWorkoutsResponseSchema } from "@repo/contracts/workout";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const POST = withPlatformAuth(async (request, context, userId) => {
   const { planId } = copyWeekParamsSchema.parse(await context.params);

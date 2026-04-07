@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
 import { platformBenchmarkDefinitionsApi } from "@repo/api-server";
 import {
   createBenchmarkDefinitionRequestSchema,
   createBenchmarkDefinitionResponseSchema,
   getBenchmarkDefinitionsResponseSchema,
 } from "@repo/contracts/benchmark-definition";
+
+import { withPlatformAuth } from "@app/lib/auth";
 
 export const GET = withPlatformAuth(async () => {
   const data = await platformBenchmarkDefinitionsApi.getAll();

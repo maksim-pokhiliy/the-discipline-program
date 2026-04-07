@@ -1,11 +1,12 @@
 import { createMultiToggleHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
 import { adminBlogApi } from "@repo/api-server";
 import {
   BlogToggleField,
   toggleBlogPostParamsSchema,
   toggleBlogPostQuerySchema,
 } from "@repo/contracts/blog";
+
+import { withAdminAuth } from "@app/lib/auth";
 
 export const PATCH = withAdminAuth(
   createMultiToggleHandler(
