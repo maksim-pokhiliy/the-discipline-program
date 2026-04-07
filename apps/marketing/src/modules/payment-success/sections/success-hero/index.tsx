@@ -1,5 +1,5 @@
 import CheckCircle from "@mui/icons-material/CheckCircle";
-import { alpha, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import { ContentSection } from "@repo/ui";
 
@@ -18,7 +18,6 @@ export const PaymentSuccessHeroSection = () => {
             backgroundColor: "success.main",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: `0 0 ${theme.spacing(4)} ${alpha(theme.palette.success.light, 0.4)}`,
           })}
         >
           <CheckCircle sx={(theme) => ({ fontSize: theme.spacing(10), color: "common.white" })} />

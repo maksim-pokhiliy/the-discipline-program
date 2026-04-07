@@ -74,7 +74,9 @@ export const RichTextEditor = ({
                 transition: theme.transitions.create("border-color"),
                 "&:focus-within": {
                   borderColor: error ? "error.main" : "primary.main",
-                  boxShadow: error ? "none" : `0 0 0 1px ${theme.palette.primary.main}`,
+                  outlineWidth: error ? 0 : 1,
+                  outlineStyle: "solid",
+                  outlineColor: theme.palette.primary.main,
                 },
               }),
         }}

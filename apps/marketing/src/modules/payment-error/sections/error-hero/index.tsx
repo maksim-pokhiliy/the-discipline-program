@@ -1,5 +1,5 @@
 import ErrorOutline from "@mui/icons-material/ErrorOutline";
-import { alpha, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import { ContentSection } from "@repo/ui";
 
@@ -18,7 +18,6 @@ export const PaymentErrorHeroSection = () => {
             backgroundColor: "error.main",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: `0 0 ${theme.spacing(4)} ${alpha(theme.palette.error.light, 0.4)}`,
           })}
         >
           <ErrorOutline sx={(theme) => ({ fontSize: theme.spacing(10), color: "common.white" })} />
