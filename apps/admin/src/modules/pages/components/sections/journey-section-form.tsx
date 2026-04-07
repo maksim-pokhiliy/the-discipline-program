@@ -8,7 +8,7 @@ import { type z } from "zod";
 import { type aboutPageJourneySchema } from "@repo/contracts/pages";
 import { DynamicListItem, FormCard } from "@repo/ui";
 
-import { ADD_BUTTON_SX } from "./shared-styles";
+import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./shared-styles";
 
 type JourneySectionData = z.infer<typeof aboutPageJourneySchema>;
 
@@ -53,7 +53,7 @@ export const JourneySectionForm = () => {
           </Typography>
         </Divider>
 
-        <Stack spacing={3} sx={{ width: "100%", alignItems: "start" }}>
+        <Stack spacing={3} sx={ITEMS_STACK_SX}>
           {fields.map((field, index) => (
             <DynamicListItem key={field.id} onRemove={() => remove(index)}>
               <Grid container spacing={2}>
