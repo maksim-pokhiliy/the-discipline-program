@@ -24,7 +24,13 @@ export const AdminListView = <TData,>({
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage={loadingMessage}>
       {(resolvedData) => (
-        <ContentSection maxWidth="xl" title={title} subtitle={subtitle} textAlign="left">
+        <ContentSection
+          maxWidth="xl"
+          title={title}
+          subtitle={subtitle}
+          textAlign="left"
+          animated={false}
+        >
           {children(resolvedData)}
         </ContentSection>
       )}

@@ -17,7 +17,7 @@ interface ContentStatsSectionProps {
 
 export const ContentStatsSection = ({ contentStats, userStats }: ContentStatsSectionProps) => {
   return (
-    <ContentSection title="Overview" maxWidth="xl">
+    <ContentSection title="Overview" maxWidth="xl" animated={false}>
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatsCard

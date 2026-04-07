@@ -35,6 +35,7 @@ type ContentSectionProps = {
   offset?: number;
   textAlign?: "left" | "center";
   id?: string;
+  animated?: boolean;
   children?: ReactNode;
 };
 
@@ -49,8 +50,21 @@ export const ContentSection = ({
   offset = 0,
   textAlign = "center",
   id = "",
+  animated = true,
   children,
 }: ContentSectionProps) => {
+  const MotionWrapper = animated ? motion.div : Box;
+  const motionWrapperProps = animated
+    ? {
+        variants: staggerContainer,
+        initial: "hidden",
+        whileInView: "visible",
+        viewport: { once: true, amount: 0.1 },
+      }
+    : {};
+  const MotionItem = animated ? motion.div : Box;
+  const motionItemProps = animated ? { variants: fadeSlideUp } : {};
+
   return (
     <Box
       id={id}
@@ -65,15 +79,10 @@ export const ContentSection = ({
       ))}
 
       <Container maxWidth={maxWidth}>
-        <motion.div
-          variants={staggerContainer}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.1 }}
-        >
+        <MotionWrapper {...motionWrapperProps}>
           <Stack spacing={8}>
             {(title || subtitle) && (
-              <motion.div variants={fadeSlideUp}>
+              <MotionItem {...motionItemProps}>
                 <Stack
                   spacing={2}
                   sx={{
@@ -108,11 +117,11 @@ export const ContentSection = ({
                     </Typography>
                   )}
                 </Stack>
-              </motion.div>
+              </MotionItem>
             )}
 
             {(backHref || actions.length > 0) && (
-              <motion.div variants={fadeSlideUp}>
+              <MotionItem {...motionItemProps}>
                 <Stack
                   direction={{ xs: "column", md: "row" }}
                   alignItems={{ xs: "stretch", md: "center" }}
@@ -161,12 +170,12 @@ export const ContentSection = ({
                     </Stack>
                   )}
                 </Stack>
-              </motion.div>
+              </MotionItem>
             )}
 
-            <motion.div variants={fadeSlideUp}>{children}</motion.div>
+            <MotionItem {...motionItemProps}>{children}</MotionItem>
           </Stack>
-        </motion.div>
+        </MotionWrapper>
       </Container>
     </Box>
   );

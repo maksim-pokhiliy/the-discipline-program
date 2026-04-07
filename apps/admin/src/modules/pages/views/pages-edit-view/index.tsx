@@ -56,6 +56,7 @@ const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
       backLabel="Back to Pages"
       maxWidth="xl"
       textAlign="left"
+      animated={false}
     >
       <Stack spacing={2}>
         {page.sections.map((section) => (

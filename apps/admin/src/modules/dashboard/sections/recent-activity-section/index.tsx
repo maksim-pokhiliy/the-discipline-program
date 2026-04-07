@@ -40,7 +40,7 @@ interface RecentActivitySectionProps {
 
 export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) => {
   return (
-    <ContentSection title="Recent Activity" surface="raised" maxWidth="xl">
+    <ContentSection title="Recent Activity" surface="raised" maxWidth="xl" animated={false}>
       <List>
         {activity.length === 0 && (
           <ListItem>
