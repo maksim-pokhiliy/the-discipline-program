@@ -12,7 +12,11 @@ export const platformKeys = {
     ...createEntityKeys(["platform"], "plan-enrollments"),
     byPlan: (planId: string) => [...platformKeys.root, "plan-enrollments", "plan", planId] as const,
   },
+  users: {
+    search: (query: string) => [...platformKeys.root, "users", "search", query] as const,
+  },
   calendar: {
+    all: () => [...platformKeys.root, "calendar"] as const,
     week: (weekStart: string) => [...platformKeys.root, "calendar", weekStart] as const,
   },
   athletes: createEntityKeys(["platform"], "athletes"),

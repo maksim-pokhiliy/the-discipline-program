@@ -48,29 +48,14 @@ export const PlanStatusSelect: React.FC<PlanStatusSelectProps> = ({ planId, stat
   const isPending = activate.isPending || archive.isPending || restore.isPending;
   const action = STATUS_ACTIONS[status];
 
-  const MUTATION_MAP: Record<
-    TrainingPlanStatus,
-    Record<TrainingPlanStatus, (id: string) => void>
-  > = {
-    [TrainingPlanStatus.DRAFT]: {
-      [TrainingPlanStatus.DRAFT]: () => {},
-      [TrainingPlanStatus.ACTIVE]: (id) => activate.mutate(id),
-      [TrainingPlanStatus.ARCHIVED]: (id) => archive.mutate(id),
-    },
-    [TrainingPlanStatus.ACTIVE]: {
-      [TrainingPlanStatus.DRAFT]: () => {},
-      [TrainingPlanStatus.ACTIVE]: () => {},
-      [TrainingPlanStatus.ARCHIVED]: (id) => archive.mutate(id),
-    },
-    [TrainingPlanStatus.ARCHIVED]: {
-      [TrainingPlanStatus.DRAFT]: () => {},
-      [TrainingPlanStatus.ACTIVE]: (id) => restore.mutate(id),
-      [TrainingPlanStatus.ARCHIVED]: () => {},
-    },
+  const mutations: Record<TrainingPlanStatus, (id: string) => void> = {
+    [TrainingPlanStatus.DRAFT]: (id) => activate.mutate(id),
+    [TrainingPlanStatus.ACTIVE]: (id) => archive.mutate(id),
+    [TrainingPlanStatus.ARCHIVED]: (id) => restore.mutate(id),
   };
 
   const handleClick = () => {
-    MUTATION_MAP[status][action.target](planId);
+    mutations[status](planId);
   };
 
   return (

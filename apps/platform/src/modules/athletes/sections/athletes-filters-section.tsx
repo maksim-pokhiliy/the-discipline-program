@@ -63,6 +63,10 @@ export const AthletesFiltersSection: React.FC<AthletesFiltersSectionProps> = ({ 
   }, [router, pathname]);
 
   useEffect(() => {
+    setSearchInput(currentSearch);
+  }, [currentSearch]);
+
+  useEffect(() => {
     const timeout = setTimeout(() => {
       if (searchInput !== currentSearch) {
         updateParam("search", searchInput || null);

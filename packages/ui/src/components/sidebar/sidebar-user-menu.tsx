@@ -24,7 +24,7 @@ export const SidebarUserMenu = ({ expanded }: SidebarUserMenuProps) => {
   const email = session.user?.email ?? "";
 
   const avatar = (
-    <Avatar sx={{ width: 32, height: 32 }}>
+    <Avatar sx={(theme) => ({ width: theme.spacing(4), height: theme.spacing(4) })}>
       <AccountCircleIcon />
     </Avatar>
   );

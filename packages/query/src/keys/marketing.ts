@@ -1,31 +1,29 @@
-import { type QueryKey } from "@tanstack/react-query";
-
 export const marketingKeys = {
   root: ["marketing"] as const,
 
   pages: {
-    home: (): QueryKey => [...marketingKeys.root, "pages", "home"] as const,
-    storefront: (): QueryKey => [...marketingKeys.root, "pages", "storefront"] as const,
-    about: (): QueryKey => [...marketingKeys.root, "pages", "about"] as const,
-    blog: (): QueryKey => [...marketingKeys.root, "pages", "blog"] as const,
-    contact: (): QueryKey => [...marketingKeys.root, "pages", "contact"] as const,
-    faq: (): QueryKey => [...marketingKeys.root, "pages", "faq"] as const,
+    home: () => [...marketingKeys.root, "pages", "home"] as const,
+    storefront: () => [...marketingKeys.root, "pages", "storefront"] as const,
+    about: () => [...marketingKeys.root, "pages", "about"] as const,
+    blog: () => [...marketingKeys.root, "pages", "blog"] as const,
+    contact: () => [...marketingKeys.root, "pages", "contact"] as const,
+    faq: () => [...marketingKeys.root, "pages", "faq"] as const,
   },
 
   blog: {
-    article: (slug: string): QueryKey => [...marketingKeys.root, "blog-articles", slug] as const,
+    article: (slug: string) => [...marketingKeys.root, "blog-articles", slug] as const,
   },
 
   products: {
-    all: (): QueryKey => [...marketingKeys.root, "products"] as const,
+    all: () => [...marketingKeys.root, "products"] as const,
   },
 
   reviews: {
-    all: (): QueryKey => [...marketingKeys.root, "reviews"] as const,
+    all: () => [...marketingKeys.root, "reviews"] as const,
   },
 
   payments: {
-    all: (): QueryKey => [...marketingKeys.root, "payments"],
-    order: (orderId: string): QueryKey => [...marketingKeys.root, "payments", "order", orderId],
+    all: () => [...marketingKeys.root, "payments"] as const,
+    order: (orderId: string) => [...marketingKeys.root, "payments", "order", orderId] as const,
   },
 } as const;

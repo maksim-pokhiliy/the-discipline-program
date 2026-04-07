@@ -8,7 +8,7 @@ import { api } from "../api";
 
 export const useSearchUsers = (query: string, enabled = true) =>
   useQuery({
-    queryKey: [...platformKeys.root, "users", "search", query],
+    queryKey: platformKeys.users.search(query),
     queryFn: () => api.users.search(query),
     enabled,
   });

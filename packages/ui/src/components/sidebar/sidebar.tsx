@@ -93,8 +93,10 @@ export const Sidebar = ({
         variant="temporary"
         open={mobileOpen}
         onClose={onMobileClose}
-        ModalProps={{ keepMounted: true }}
-        PaperProps={{ sx: { width: LAYOUT.drawerWidth } }}
+        slotProps={{
+          root: { keepMounted: true },
+          paper: { sx: { width: LAYOUT.drawerWidth } },
+        }}
       >
         {content}
       </Drawer>
@@ -109,11 +111,13 @@ export const Sidebar = ({
         flexShrink: 0,
         transition: drawerTransition,
       }}
-      PaperProps={{
-        sx: {
-          width,
-          overflowX: "hidden",
-          transition: drawerTransition,
+      slotProps={{
+        paper: {
+          sx: {
+            width,
+            overflowX: "hidden",
+            transition: drawerTransition,
+          },
         },
       }}
     >

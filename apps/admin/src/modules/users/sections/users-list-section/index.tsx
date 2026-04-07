@@ -98,7 +98,10 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         searchValue: (user) => user.email,
         render: (user) => (
           <Stack direction="row" spacing={1.5} alignItems="center">
-            <Avatar src={user.image || undefined} sx={{ width: 32, height: 32 }}>
+            <Avatar
+              src={user.image || undefined}
+              sx={(theme) => ({ width: theme.spacing(4), height: theme.spacing(4) })}
+            >
               {user.email.charAt(0).toUpperCase()}
             </Avatar>
             <Typography variant="subtitle2">{user.email}</Typography>

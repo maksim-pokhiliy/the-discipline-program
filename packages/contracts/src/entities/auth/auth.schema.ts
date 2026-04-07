@@ -13,11 +13,3 @@ export const loginFormSchema = z.object({
       `Password must be at least ${AUTH_CONSTANTS.MIN_PASSWORD_LENGTH} characters`,
     ),
 });
-
-export const userSchema = z.object({
-  id: z.string().cuid(),
-  email: z.string().email(),
-  role: z.nativeEnum(UserRole),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
