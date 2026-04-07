@@ -121,7 +121,7 @@ export const CreatableAutocomplete = <T,>({
         if (isCreateOption(option)) {
           return (
             <ListItem key="__create__" {...props}>
-              <ListItemIcon sx={{ minWidth: 36 }}>
+              <ListItemIcon sx={(theme) => ({ minWidth: theme.spacing(4.5) })}>
                 <AddIcon fontSize="small" color="primary" />
               </ListItemIcon>
               <ListItemText

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Grid, MenuItem, Stack, TextField, Typography, useTheme } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 
@@ -23,6 +23,7 @@ type ContactsDetailFormProps = {
 };
 
 const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
+  const theme = useTheme();
   const router = useRouter();
   const { mutate: updateContact, isPending } = useUpdateContact({
     onSuccess: () => router.push("/contacts"),
@@ -67,12 +68,24 @@ const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
 
             <FormCard title="Contact Details">
               <Stack spacing={2}>
-                <DetailField label="Name" labelWidth={80} value={contact.name || "—"} />
-                <DetailField label="Contact" labelWidth={80} value={contact.contact || "—"} />
-                <DetailField label="Program" labelWidth={80} value={contact.program || "—"} />
+                <DetailField
+                  label="Name"
+                  labelWidth={theme.spacing(10)}
+                  value={contact.name || "—"}
+                />
+                <DetailField
+                  label="Contact"
+                  labelWidth={theme.spacing(10)}
+                  value={contact.contact || "—"}
+                />
+                <DetailField
+                  label="Program"
+                  labelWidth={theme.spacing(10)}
+                  value={contact.program || "—"}
+                />
                 <DetailField
                   label="Date"
-                  labelWidth={80}
+                  labelWidth={theme.spacing(10)}
                   value={formatDate(contact.createdAt, "long")}
                 />
               </Stack>

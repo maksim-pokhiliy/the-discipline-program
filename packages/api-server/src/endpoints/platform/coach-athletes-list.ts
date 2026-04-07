@@ -10,7 +10,13 @@ import {
   computeAdherenceWindow,
   computeProcessStatus,
 } from "../../utils/dashboard-computations";
-import { daysBetweenInTz, MS_PER_DAY, startOfTodayInTz } from "../../utils/date-helpers";
+import {
+  DAYS_IN_WEEK,
+  daysBetweenInTz,
+  MS_PER_DAY,
+  startOfTodayInTz,
+  TWO_WEEKS,
+} from "../../utils/date-helpers";
 import { createEnrollmentInclude } from "../../utils/enrollment-query";
 
 import { resolveCoachId } from "./guards";
@@ -54,8 +60,8 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
 
   const now = new Date();
   const today = startOfTodayInTz(tz);
-  const currentStart = new Date(now.getTime() - 7 * MS_PER_DAY);
-  const previousStart = new Date(now.getTime() - 14 * MS_PER_DAY);
+  const currentStart = new Date(now.getTime() - DAYS_IN_WEEK * MS_PER_DAY);
+  const previousStart = new Date(now.getTime() - TWO_WEEKS * MS_PER_DAY);
   const athleteMap = new Map<string, AggregatedAthlete>();
 
   for (const e of enrollments) {

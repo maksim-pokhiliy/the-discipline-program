@@ -1,4 +1,7 @@
 export const MS_PER_DAY = 86_400_000;
+export const DAYS_IN_WEEK = 7;
+export const TWO_WEEKS = 14;
+export const FOUR_WEEKS = 28;
 
 const getDatePartsInTz = (
   date: Date,

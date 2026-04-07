@@ -99,12 +99,12 @@ export const ImageUpload = ({
               component="img"
               src={previewUrl}
               alt="Preview"
-              sx={{
+              sx={(theme) => ({
                 maxWidth: "100%",
-                maxHeight: 300,
+                maxHeight: theme.spacing(37.5),
                 borderRadius: 1,
                 objectFit: "contain",
-              }}
+              })}
             />
 
             <Stack direction="row" spacing={2}>

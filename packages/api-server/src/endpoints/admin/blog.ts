@@ -54,13 +54,13 @@ export const adminBlogApi = {
     return posts.map(mapToBlogPost);
   },
 
-  getPostById: async (id: string): Promise<BlogPost | null> => {
+  getPostById: async (id: string): Promise<BlogPost> => {
     const post = await prisma.marketingBlogPost.findUnique({
       where: { id },
     });
 
     if (!post) {
-      return null;
+      throw new NotFoundError("Blog post not found", { id });
     }
 
     return mapToBlogPost(post);

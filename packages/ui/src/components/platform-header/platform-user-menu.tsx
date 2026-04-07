@@ -67,7 +67,7 @@ export const PlatformUserMenu = ({ profileHref = "/profile" }: PlatformUserMenuP
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
         slotProps={{
           paper: {
-            sx: { minWidth: 180, mt: 1 },
+            sx: (theme) => ({ minWidth: theme.spacing(22.5), mt: 1 }),
           },
         }}
       >

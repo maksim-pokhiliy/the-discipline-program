@@ -11,11 +11,13 @@ import {
 import { HEALTH_STATUS_MAP } from "../mappers/enum-maps";
 
 import {
+  DAYS_IN_WEEK,
   daysBetweenInTz,
   MS_PER_DAY,
   startOfDayInTz,
   startOfTodayInTz,
   startOfWeekInTz,
+  TWO_WEEKS,
 } from "./date-helpers";
 import type { EnrollmentWithData } from "./enrollment-query";
 
@@ -235,8 +237,8 @@ export const computeProcessStatus = (
 export const computeProgressBuckets = (enrollments: EnrollmentWithData[]): ProgressBuckets => {
   const now = new Date();
   const currentEnd = now;
-  const currentStart = new Date(now.getTime() - 7 * MS_PER_DAY);
-  const previousStart = new Date(now.getTime() - 14 * MS_PER_DAY);
+  const currentStart = new Date(now.getTime() - DAYS_IN_WEEK * MS_PER_DAY);
+  const previousStart = new Date(now.getTime() - TWO_WEEKS * MS_PER_DAY);
 
   const athleteData = new Map<
     string,

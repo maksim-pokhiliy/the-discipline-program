@@ -1,6 +1,6 @@
 "use client";
 
-import { Grid, MenuItem, Stack, TextField } from "@mui/material";
+import { Grid, MenuItem, Stack, TextField, useTheme } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
 import { UserRole } from "@repo/contracts/auth";
@@ -17,6 +17,7 @@ interface UserDetailSectionProps {
 }
 
 export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) => {
+  const theme = useTheme();
   const { control } = useFormContext<{ role: UserRole }>();
 
   return (
@@ -65,8 +66,12 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
         <Stack spacing={3}>
           <FormCard title="Account">
             <Stack spacing={2}>
-              <DetailField label="ID" labelWidth={80} value={user.id} />
-              <DetailField label="Image" labelWidth={80} value={user.image || "No image"} />
+              <DetailField label="ID" labelWidth={theme.spacing(10)} value={user.id} />
+              <DetailField
+                label="Image"
+                labelWidth={theme.spacing(10)}
+                value={user.image || "No image"}
+              />
             </Stack>
           </FormCard>
         </Stack>
