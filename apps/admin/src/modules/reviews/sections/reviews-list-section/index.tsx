@@ -20,7 +20,13 @@ import Link from "next/link";
 import { type Review } from "@repo/contracts/review";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";
-import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
+import {
+  ConfirmationModal,
+  DataTable,
+  useDataTableUrlState,
+  type Column,
+  type DataTableFilter,
+} from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteReview, useToggleReviewActive } from "@app/lib/hooks";
@@ -43,6 +49,7 @@ interface ReviewsListSectionProps {
 }
 
 export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
+  const { state, onStateChange } = useDataTableUrlState();
   const toggleActiveMutation = useToggleReviewActive();
   const deleteMutation = useDeleteReview();
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
@@ -158,6 +165,8 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
         action={<CreateButton href="/reviews/create">Create Review</CreateButton>}
         paginated
         emptyMessage="No reviews found. Add your first review!"
+        state={state}
+        onStateChange={onStateChange}
       />
 
       <ConfirmationModal

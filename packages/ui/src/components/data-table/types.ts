@@ -18,6 +18,15 @@ export interface DataTableFilter<T> {
   match: (item: T, value: string) => boolean;
 }
 
+export type DataTableState = {
+  search: string;
+  filters: Record<string, string>;
+  sortColumn: string | null;
+  sortDirection: "asc" | "desc";
+  page: number;
+  rowsPerPage: number;
+};
+
 export interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
@@ -29,4 +38,6 @@ export interface DataTableProps<T> {
   defaultRowsPerPage?: number;
   rowsPerPageOptions?: number[];
   defaultSort?: { columnId: string; direction: "asc" | "desc" };
+  state?: DataTableState;
+  onStateChange?: (state: DataTableState) => void;
 }

@@ -10,7 +10,13 @@ import Link from "next/link";
 import { type GetContactByIdResponse, ContactStatus } from "@repo/contracts/contact";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";
-import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
+import {
+  ConfirmationModal,
+  DataTable,
+  useDataTableUrlState,
+  type Column,
+  type DataTableFilter,
+} from "@repo/ui";
 
 import { useDeleteContact, useUpdateContact } from "@app/lib/hooks";
 import { TEXT_CLAMP_SX } from "@app/lib/styles/text-clamp";
@@ -34,6 +40,7 @@ interface ContactsListSectionProps {
 }
 
 export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
+  const { state, onStateChange } = useDataTableUrlState();
   const deleteMutation = useDeleteContact();
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
@@ -173,6 +180,8 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
         filters={filters}
         paginated
         emptyMessage="No contact submissions found."
+        state={state}
+        onStateChange={onStateChange}
       />
 
       <Menu anchorEl={statusMenuAnchor} open={!!statusMenuAnchor} onClose={handleStatusMenuClose}>
