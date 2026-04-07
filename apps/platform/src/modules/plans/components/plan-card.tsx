@@ -6,8 +6,7 @@ import { Box, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
 import type { TrainingPlanListItem } from "@repo/contracts/training-plan";
-
-import { formatCreatedDate } from "@app/lib/utils/date-formatters";
+import { formatDate } from "@repo/shared";
 
 import { PlanActionMenu } from "./plan-action-menu";
 import { PlanStatusChip } from "./plan-status-chip";
@@ -98,7 +97,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
 
           <Tooltip title="Plan created" arrow placement="top">
             <Typography variant="caption" sx={{ ml: "auto" }}>
-              {formatCreatedDate(plan.createdAt)}
+              {formatDate(plan.createdAt, "short")}
             </Typography>
           </Tooltip>
         </Stack>

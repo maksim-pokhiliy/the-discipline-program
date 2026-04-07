@@ -3,10 +3,10 @@ import { Avatar, Card, CardContent, Grid, Rating, Stack, Typography } from "@mui
 import { type HomePageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
-interface HomeReviewsSectionProps {
+type HomeReviewsSectionProps = {
   reviews: HomePageData["reviews"];
   reviewsList: HomePageData["reviewsList"];
-}
+};
 
 export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionProps) => {
   return (

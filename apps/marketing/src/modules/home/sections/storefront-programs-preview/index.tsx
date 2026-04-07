@@ -9,10 +9,10 @@ import { ContentSection } from "@repo/ui";
 import { ProductCard, ProductModal } from "@app/lib/components/ui";
 import { useProductModal } from "@app/lib/hooks";
 
-interface HomeProgramsPreviewProps {
+type HomeProgramsPreviewProps = {
   programs: HomePageData["storefront"];
   productsList: HomePageData["productsList"];
-}
+};
 
 export const HomeStorefrontProgramsPreview = ({
   programs,

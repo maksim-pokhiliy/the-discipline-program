@@ -1,4 +1,4 @@
-type DateFormatStyle = "short" | "medium" | "long" | "compact";
+type DateFormatStyle = "short" | "medium" | "long" | "compact" | "day" | "weekday";
 
 const DEFAULT_LOCALE = "en-US";
 
@@ -24,6 +24,17 @@ export const formatDate = (date: Date | string, style: DateFormatStyle = "short"
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
+      }).format(d);
+    case "day":
+      return new Intl.DateTimeFormat(DEFAULT_LOCALE, {
+        month: "short",
+        day: "numeric",
+      }).format(d);
+    case "weekday":
+      return new Intl.DateTimeFormat(DEFAULT_LOCALE, {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
       }).format(d);
   }
 };

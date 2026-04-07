@@ -6,10 +6,10 @@ import { ContentSection } from "@repo/ui";
 
 import { BlogPostCard } from "@app/lib/components/ui";
 
-interface BlogPostsGridProps {
+type BlogPostsGridProps = {
   grid: BlogPageData["grid"];
   posts: PublicBlogPost[];
-}
+};
 
 export const BlogPostsGrid = ({ grid, posts }: BlogPostsGridProps) => {
   return (

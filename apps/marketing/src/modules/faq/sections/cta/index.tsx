@@ -2,9 +2,9 @@ import { type FaqPageData } from "@repo/contracts/pages";
 
 import { PageCTASection } from "@app/lib/components/ui";
 
-interface FaqCtaSectionProps {
+type FaqCtaSectionProps = {
   cta: FaqPageData["cta"];
-}
+};
 
 export const FaqCtaSection = ({ cta }: FaqCtaSectionProps) => {
   return (

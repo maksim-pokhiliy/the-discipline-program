@@ -3,9 +3,9 @@ import { Box, Grid, Stack, Typography } from "@mui/material";
 import { type AboutPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
-interface AboutJourneySectionProps {
+type AboutJourneySectionProps = {
   journey: AboutPageData["journey"];
-}
+};
 
 export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
   return (

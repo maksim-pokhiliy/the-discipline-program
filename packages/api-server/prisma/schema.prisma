@@ -437,7 +437,7 @@ model MarketingBlogPost {
   content     String    @db.Text
   coverImage  String?
   authorName  String
-  category    String    @default("Uncategorized")
+  category    String    @default("UNCATEGORIZED")
   tags        String[]
   readTime    Int?
   publishedAt DateTime?

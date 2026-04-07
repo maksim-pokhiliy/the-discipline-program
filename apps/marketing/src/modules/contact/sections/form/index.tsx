@@ -22,10 +22,10 @@ import { ContentSection } from "@repo/ui";
 
 import { useSubmitContact } from "@app/lib/hooks";
 
-interface ContactFormSectionProps {
+type ContactFormSectionProps = {
   form: ContactPageData["form"];
   programOptions: ContactPageData["programOptions"];
-}
+};
 
 export const ContactFormSection = ({ form, programOptions }: ContactFormSectionProps) => {
   const {

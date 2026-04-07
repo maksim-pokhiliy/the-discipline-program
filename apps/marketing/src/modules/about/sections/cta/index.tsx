@@ -2,9 +2,9 @@ import { type AboutPageData } from "@repo/contracts/pages";
 
 import { PageCTASection } from "@app/lib/components/ui";
 
-interface AboutCtaSectionProps {
+type AboutCtaSectionProps = {
   cta: AboutPageData["cta"];
-}
+};
 
 export const AboutCTASection = ({ cta }: AboutCtaSectionProps) => {
   return (

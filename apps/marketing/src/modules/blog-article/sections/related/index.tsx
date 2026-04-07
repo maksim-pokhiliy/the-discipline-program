@@ -4,9 +4,9 @@ import { type PublicBlogPostPreview } from "@repo/contracts/blog";
 
 import { BlogPostCard } from "@app/lib/components/ui";
 
-interface BlogArticleRelatedProps {
+type BlogArticleRelatedProps = {
   relatedPosts: PublicBlogPostPreview[];
-}
+};
 
 export const BlogArticleRelated = ({ relatedPosts }: BlogArticleRelatedProps) => {
   return (

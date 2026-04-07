@@ -2,9 +2,9 @@ import { type FaqPageData } from "@repo/contracts/pages";
 
 import { FullscreenSection } from "@app/lib/components/ui";
 
-interface FaqHeroSectionProps {
+type FaqHeroSectionProps = {
   hero: FaqPageData["hero"];
-}
+};
 
 export const FaqHeroSection = ({ hero }: FaqHeroSectionProps) => {
   return (

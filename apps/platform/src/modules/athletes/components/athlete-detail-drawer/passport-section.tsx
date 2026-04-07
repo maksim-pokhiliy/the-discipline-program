@@ -9,7 +9,7 @@ import type { ProcessStatus } from "@repo/contracts/coach-dashboard";
 import { StatusChip } from "@app/lib/components";
 import { HEALTH_STATUS_CHIPS, PROCESS_STATUS_CHIPS } from "@app/lib/config";
 
-import { formatShortDate, formatWorkoutDate } from "./config";
+import { formatDate } from "./config";
 
 type PassportSectionProps = {
   name: string | null;
@@ -59,7 +59,7 @@ export const PassportSection: React.FC<PassportSectionProps> = ({
             {displayName}
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Enrolled since {formatShortDate(enrolledSince)}
+            Enrolled since {formatDate(enrolledSince, "day")}
           </Typography>
         </Stack>
       </Stack>
@@ -75,7 +75,7 @@ export const PassportSection: React.FC<PassportSectionProps> = ({
         </Typography>
         {nextWorkout && (
           <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            Next: {nextWorkout.title} · {formatWorkoutDate(nextWorkout.date)}
+            Next: {nextWorkout.title} · {formatDate(nextWorkout.date, "weekday")}
           </Typography>
         )}
       </Stack>

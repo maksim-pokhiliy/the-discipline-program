@@ -15,9 +15,9 @@ import {
   AboutPersonalSection,
 } from "./sections";
 
-interface AboutPageClientProps {
+type AboutPageClientProps = {
   initialData: AboutPageData;
-}
+};
 
 export const AboutPageClient = ({ initialData }: AboutPageClientProps) => {
   const { data, isLoading, error } = useAboutPage({ initialData });

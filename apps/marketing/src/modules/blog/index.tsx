@@ -9,9 +9,9 @@ import { useBlogPage } from "@app/lib/hooks";
 
 import { BlogFeaturedSection, BlogPostsGrid } from "./sections";
 
-interface BlogPageClientProps {
+type BlogPageClientProps = {
   initialData: BlogPageData;
-}
+};
 
 export const BlogPageClient = ({ initialData }: BlogPageClientProps) => {
   const { data, isLoading, error } = useBlogPage({ initialData });

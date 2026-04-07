@@ -15,10 +15,10 @@ import { BLOG_CATEGORY_LABELS, type PublicBlogPost } from "@repo/contracts/blog"
 import { type BlogPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
-interface BlogFeaturedSectionProps {
+type BlogFeaturedSectionProps = {
   hero: BlogPageData["hero"];
   featuredPost: PublicBlogPost;
-}
+};
 
 export const BlogFeaturedSection = ({ hero, featuredPost }: BlogFeaturedSectionProps) => {
   return (

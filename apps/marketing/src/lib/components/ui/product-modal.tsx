@@ -7,11 +7,11 @@ import { type Product, PRICE_INTERVAL_LABELS } from "@repo/contracts/product";
 import { formatPrice } from "@repo/shared";
 import { BaseModal } from "@repo/ui";
 
-interface ProductModalProps {
+type ProductModalProps = {
   product: Product | null;
   open: boolean;
   onClose: () => void;
-}
+};
 
 export const ProductModal = ({ product, open, onClose }: ProductModalProps) => {
   if (!product) {

@@ -6,8 +6,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { IconButton, Stack, Typography } from "@mui/material";
 
 import type { Workout } from "@repo/contracts/workout";
-
-import { formatDayName, isSameDay } from "@app/lib/utils/date-utils";
+import { formatDayName, isSameDay } from "@repo/shared";
 
 import { WeekWorkoutCard } from "./week-workout-card";
 

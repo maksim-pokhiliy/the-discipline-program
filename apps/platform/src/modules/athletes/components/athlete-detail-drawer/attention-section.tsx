@@ -8,7 +8,7 @@ import { Box, Stack, Typography } from "@mui/material";
 import { ActionItemSeverity } from "@repo/contracts/coach-action-item";
 import type { AthleteActionItem } from "@repo/contracts/coach-athletes";
 
-import { SEVERITY_COLORS, formatShortDate } from "./config";
+import { SEVERITY_COLORS, formatDate } from "./config";
 
 type AttentionSectionProps = {
   actionItems: AthleteActionItem[];
@@ -36,7 +36,7 @@ export const AttentionSection: React.FC<AttentionSectionProps> = ({ actionItems 
           <Stack sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="body2">{item.message}</Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              {formatShortDate(item.createdAt)}
+              {formatDate(item.createdAt, "day")}
             </Typography>
           </Stack>
         </Stack>

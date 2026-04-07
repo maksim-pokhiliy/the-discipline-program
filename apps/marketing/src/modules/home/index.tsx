@@ -16,9 +16,9 @@ import {
   HomeReviewsSection,
 } from "./sections";
 
-interface HomePageClientProps {
+type HomePageClientProps = {
   initialData: HomePageData;
-}
+};
 
 export const HomePageClient = ({ initialData }: HomePageClientProps) => {
   const { data, isLoading, error } = useHomePage({ initialData });

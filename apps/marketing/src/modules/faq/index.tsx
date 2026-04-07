@@ -8,9 +8,9 @@ import { useFaqPage } from "@app/lib/hooks";
 
 import { FaqCtaSection, FaqHeroSection, FaqSection } from "./sections";
 
-interface FaqPageClientProps {
+type FaqPageClientProps = {
   initialData: FaqPageData;
-}
+};
 
 export const FaqPageClient = ({ initialData }: FaqPageClientProps) => {
   const { data, isLoading, error } = useFaqPage({ initialData });

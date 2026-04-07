@@ -12,9 +12,9 @@ import {
   StorefrontProgramsGridSection,
 } from "./sections";
 
-interface StorefrontProgramsPageClientProps {
+type StorefrontProgramsPageClientProps = {
   initialData: StorefrontProgramsPageData;
-}
+};
 
 export const StorefrontProgramsPageClient = ({
   initialData,
