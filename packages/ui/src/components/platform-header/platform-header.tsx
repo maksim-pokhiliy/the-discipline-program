@@ -8,7 +8,15 @@ import { Logo } from "../logo";
 
 import { PlatformUserMenu } from "./platform-user-menu";
 
-export const PlatformHeader = () => {
+type PlatformHeaderProps = {
+  logoHref?: string;
+  profileHref?: string;
+};
+
+export const PlatformHeader = ({
+  logoHref = "/",
+  profileHref = "/profile",
+}: PlatformHeaderProps) => {
   return (
     <AppBar
       position="sticky"
@@ -27,9 +35,9 @@ export const PlatformHeader = () => {
             py: 2,
           }}
         >
-          <Logo href="/coach" width={LAYOUT.platformLogoSize} height={LAYOUT.platformLogoSize} />
+          <Logo href={logoHref} width={LAYOUT.platformLogoSize} height={LAYOUT.platformLogoSize} />
 
-          <PlatformUserMenu />
+          <PlatformUserMenu profileHref={profileHref} />
         </Stack>
       </Container>
     </AppBar>

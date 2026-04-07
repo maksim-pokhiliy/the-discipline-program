@@ -51,19 +51,6 @@ export const verifyWorkoutOwnership = async (
   return { planId: workout.planId };
 };
 
-export const resolveCoachAthleteIds = async (coachId: string): Promise<string[]> => {
-  const enrollments = await prisma.planEnrollment.findMany({
-    where: {
-      trainingPlan: { coachId },
-      status: PlanEnrollmentStatus.ACTIVE,
-    },
-    select: { userId: true },
-    distinct: ["userId"],
-  });
-
-  return enrollments.map((e) => e.userId);
-};
-
 export const verifyAthleteBelongsToCoach = async (
   athleteUserId: string,
   coachId: string,

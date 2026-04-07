@@ -62,6 +62,7 @@ export const useToggleProductFeatured = () => {
     onSuccess: () => {
       toast.success("Featured status updated");
       queryClient.invalidateQueries({ queryKey: adminKeys.products.page() });
+      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to update featured status");

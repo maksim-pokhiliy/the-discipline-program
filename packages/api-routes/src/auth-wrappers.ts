@@ -1,4 +1,4 @@
-import "./next-auth-extensions";
+import "@repo/auth/types";
 
 import { type NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth/next";

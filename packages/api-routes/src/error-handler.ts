@@ -41,49 +41,6 @@ export const handleApiError = (error: unknown): NextResponse => {
     );
   }
 
-  if (error && typeof error === "object" && "code" in error) {
-    const prismaError = error as { code: string; meta?: Record<string, unknown> };
-
-    if (prismaError.code === "P2002") {
-      return NextResponse.json(
-        {
-          error: "Resource already exists",
-          code: ERROR_CODES.DUPLICATE_ENTRY,
-          statusCode: 409,
-          details: prismaError.meta,
-          timestamp: new Date().toISOString(),
-        },
-        { status: 409 },
-      );
-    }
-
-    if (prismaError.code === "P2003") {
-      return NextResponse.json(
-        {
-          error: "Invalid reference",
-          code: ERROR_CODES.FOREIGN_KEY_CONSTRAINT_VIOLATION,
-          statusCode: 400,
-          details: prismaError.meta,
-          timestamp: new Date().toISOString(),
-        },
-        { status: 400 },
-      );
-    }
-
-    if (prismaError.code === "P2025") {
-      return NextResponse.json(
-        {
-          error: "Resource not found",
-          code: ERROR_CODES.NOT_FOUND,
-          statusCode: 404,
-          details: prismaError.meta,
-          timestamp: new Date().toISOString(),
-        },
-        { status: 404 },
-      );
-    }
-  }
-
   const message = error instanceof Error ? error.message : "Internal server error";
   const stack = error instanceof Error ? error.stack : undefined;
 

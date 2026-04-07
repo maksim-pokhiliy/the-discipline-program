@@ -13,6 +13,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },
   "dependencies": {
+    "@repo/auth": "workspace:*",
     "@repo/contracts": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/errors": "workspace:*",

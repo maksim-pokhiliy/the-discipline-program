@@ -1,8 +1,7 @@
 import { type Metadata } from "next";
 
-import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
-
 import { serverApi } from "@app/lib/api/server";
+import { PAGE_SEO, SEO_CONFIG } from "@app/lib/seo";
 import { BlogPageClient } from "@app/modules/blog";
 
 export const metadata: Metadata = {

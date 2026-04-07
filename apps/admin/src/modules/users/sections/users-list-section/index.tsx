@@ -138,7 +138,6 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
               size="small"
               variant="outlined"
               onClick={(e) => handleChipClick(e, user.id)}
-              sx={{ cursor: "pointer" }}
             />
           );
         },

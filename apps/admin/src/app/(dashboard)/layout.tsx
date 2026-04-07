@@ -27,7 +27,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         />
 
         <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
-          <AdminHeader onMenuClick={handleMobileToggle} />
+          <AdminHeader onMenuClick={handleMobileToggle} navigation={ADMIN_NAVIGATION} />
           <Stack sx={{ flexGrow: 1, overflow: "auto" }}>{children}</Stack>
         </Stack>
       </Stack>

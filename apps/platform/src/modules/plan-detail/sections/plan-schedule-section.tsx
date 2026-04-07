@@ -145,8 +145,8 @@ export const PlanScheduleSection: React.FC<PlanScheduleSectionProps> = ({ planId
         return;
       }
 
-      const activeId = active.id as string;
-      const overId = over.id as string;
+      const activeId = String(active.id);
+      const overId = String(over.id);
 
       const activeDayKey = findDayKeyForWorkout(activeId, localItems);
 
@@ -222,7 +222,7 @@ export const PlanScheduleSection: React.FC<PlanScheduleSectionProps> = ({ planId
         return;
       }
 
-      const activeId = event.active.id as string;
+      const activeId = String(event.active.id);
       const activeDayKey = findDayKeyForWorkout(activeId, localItems);
 
       if (!activeDayKey) {
@@ -230,8 +230,10 @@ export const PlanScheduleSection: React.FC<PlanScheduleSectionProps> = ({ planId
       }
 
       const dayWorkouts = localItems.get(activeDayKey) ?? [];
-      const activeData = event.active.data.current as { scheduledDate?: Date | string | null };
-      const originalDate = activeData.scheduledDate ? new Date(activeData.scheduledDate) : null;
+      const activeData = event.active.data.current ?? {};
+      const rawDate = "scheduledDate" in activeData ? activeData.scheduledDate : null;
+      const originalDate =
+        rawDate instanceof Date ? rawDate : typeof rawDate === "string" ? new Date(rawDate) : null;
       const targetDate = new Date(activeDayKey);
       const crossDay = originalDate && !isSameDay(originalDate, targetDate);
 

@@ -39,7 +39,8 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
     }
   }, [plan, initialized]);
 
-  const activeTab = (searchParams.get("tab") as TabValue) ?? "schedule";
+  const rawTab = searchParams.get("tab");
+  const activeTab: TabValue = rawTab === "athletes" ? "athletes" : "schedule";
 
   const handleTabChange = useCallback(
     (_: React.SyntheticEvent, value: TabValue) => {

@@ -7,6 +7,8 @@ import { Box, Button, Container, Stack, Typography, type ButtonProps } from "@mu
 import { type Variants, motion } from "framer-motion";
 import Link from "next/link";
 
+const MotionBox = motion.create(Box);
+
 const staggerContainer: Variants = {
   hidden: {},
   visible: {
@@ -53,7 +55,7 @@ export const ContentSection = ({
   animated = true,
   children,
 }: ContentSectionProps) => {
-  const MotionWrapper = animated ? motion.div : Box;
+  const MotionWrapper = animated ? MotionBox : Box;
   const motionWrapperProps = animated
     ? {
         variants: staggerContainer,
@@ -62,7 +64,7 @@ export const ContentSection = ({
         viewport: { once: true, amount: 0.1 },
       }
     : {};
-  const MotionItem = animated ? motion.div : Box;
+  const MotionItem = animated ? MotionBox : Box;
   const motionItemProps = animated ? { variants: fadeSlideUp } : {};
 
   return (
