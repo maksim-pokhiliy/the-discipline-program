@@ -87,50 +87,41 @@ export const updatePageMetadataSchema = z.object({
   seoDesc: z.string().optional().nullable(),
 });
 
+const SECTION_DEFINITIONS = [
+  [PAGE_SECTIONS_MAP.home.hero, homePageHeroSchema],
+  [PAGE_SECTIONS_MAP.home.whyChoose, homePageWhyChooseSchema],
+  [PAGE_SECTIONS_MAP.home.storefront, homePageStorefrontProgramsSchema],
+  [PAGE_SECTIONS_MAP.home.reviews, homePageReviewsSchema],
+  [PAGE_SECTIONS_MAP.home.contact, homePageContactSchema],
+  [PAGE_SECTIONS_MAP.storefront.hero, storefrontProgramsPageHeroSchema],
+  [PAGE_SECTIONS_MAP.storefront.grid, storefrontGridSchema],
+  [PAGE_SECTIONS_MAP.storefront.cta, storefrontPageCtaSchema],
+  [PAGE_SECTIONS_MAP.about.hero, aboutPageHeroSchema],
+  [PAGE_SECTIONS_MAP.about.journey, aboutPageJourneySchema],
+  [PAGE_SECTIONS_MAP.about.credentials, aboutPageCredentialsSchema],
+  [PAGE_SECTIONS_MAP.about.personal, aboutPagePersonalSchema],
+  [PAGE_SECTIONS_MAP.about.cta, aboutPageCtaSchema],
+  [PAGE_SECTIONS_MAP.blog.hero, blogPageHeroSchema],
+  [PAGE_SECTIONS_MAP.blog.grid, blogGridSchema],
+  [PAGE_SECTIONS_MAP.contact.hero, contactPageHeroSchema],
+  [PAGE_SECTIONS_MAP.contact.form, contactPageFormSchema],
+  [PAGE_SECTIONS_MAP.faq.hero, faqPageHeroSchema],
+  [PAGE_SECTIONS_MAP.faq.content, faqContentSchema],
+  [PAGE_SECTIONS_MAP.faq.cta, faqPageCtaSchema],
+] as const;
+
+const sectionVariants = SECTION_DEFINITIONS.map(([key, schema]) =>
+  z.object({ section: z.literal(key), data: schema }),
+);
+
 export const updatePageSectionSchema = z
-  .discriminatedUnion("section", [
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.home.hero), data: homePageHeroSchema }),
-    z.object({
-      section: z.literal(PAGE_SECTIONS_MAP.home.whyChoose),
-      data: homePageWhyChooseSchema,
-    }),
-    z.object({
-      section: z.literal(PAGE_SECTIONS_MAP.home.storefront),
-      data: homePageStorefrontProgramsSchema,
-    }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.home.reviews), data: homePageReviewsSchema }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.home.contact), data: homePageContactSchema }),
-    z.object({
-      section: z.literal(PAGE_SECTIONS_MAP.storefront.hero),
-      data: storefrontProgramsPageHeroSchema,
-    }),
-    z.object({
-      section: z.literal(PAGE_SECTIONS_MAP.storefront.grid),
-      data: storefrontGridSchema,
-    }),
-    z.object({
-      section: z.literal(PAGE_SECTIONS_MAP.storefront.cta),
-      data: storefrontPageCtaSchema,
-    }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.about.hero), data: aboutPageHeroSchema }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.about.journey), data: aboutPageJourneySchema }),
-    z.object({
-      section: z.literal(PAGE_SECTIONS_MAP.about.credentials),
-      data: aboutPageCredentialsSchema,
-    }),
-    z.object({
-      section: z.literal(PAGE_SECTIONS_MAP.about.personal),
-      data: aboutPagePersonalSchema,
-    }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.about.cta), data: aboutPageCtaSchema }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.blog.hero), data: blogPageHeroSchema }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.blog.grid), data: blogGridSchema }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.contact.hero), data: contactPageHeroSchema }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.contact.form), data: contactPageFormSchema }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.faq.hero), data: faqPageHeroSchema }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.faq.content), data: faqContentSchema }),
-    z.object({ section: z.literal(PAGE_SECTIONS_MAP.faq.cta), data: faqPageCtaSchema }),
-  ])
+  .discriminatedUnion(
+    "section",
+    sectionVariants as unknown as [
+      (typeof sectionVariants)[number],
+      ...(typeof sectionVariants)[number][],
+    ],
+  )
   .and(z.object({ pageSlug: z.nativeEnum(PageSlug) }));
 
 export const adminPageDetailsSchema = z.object({
@@ -153,25 +144,10 @@ export const pageSlugRouteParamsSchema = z.object({
   slug: z.nativeEnum(PageSlug),
 });
 
-export const SECTION_SCHEMAS = {
-  [PAGE_SECTIONS_MAP.home.hero]: homePageHeroSchema,
-  [PAGE_SECTIONS_MAP.home.whyChoose]: homePageWhyChooseSchema,
-  [PAGE_SECTIONS_MAP.home.storefront]: homePageStorefrontProgramsSchema,
-  [PAGE_SECTIONS_MAP.home.reviews]: homePageReviewsSchema,
-  [PAGE_SECTIONS_MAP.home.contact]: homePageContactSchema,
-  [PAGE_SECTIONS_MAP.storefront.hero]: storefrontProgramsPageHeroSchema,
-  [PAGE_SECTIONS_MAP.storefront.grid]: storefrontGridSchema,
-  [PAGE_SECTIONS_MAP.storefront.cta]: storefrontPageCtaSchema,
-  [PAGE_SECTIONS_MAP.about.hero]: aboutPageHeroSchema,
-  [PAGE_SECTIONS_MAP.about.journey]: aboutPageJourneySchema,
-  [PAGE_SECTIONS_MAP.about.credentials]: aboutPageCredentialsSchema,
-  [PAGE_SECTIONS_MAP.about.personal]: aboutPagePersonalSchema,
-  [PAGE_SECTIONS_MAP.about.cta]: aboutPageCtaSchema,
-  [PAGE_SECTIONS_MAP.blog.hero]: blogPageHeroSchema,
-  [PAGE_SECTIONS_MAP.blog.grid]: blogGridSchema,
-  [PAGE_SECTIONS_MAP.contact.hero]: contactPageHeroSchema,
-  [PAGE_SECTIONS_MAP.contact.form]: contactPageFormSchema,
-  [PAGE_SECTIONS_MAP.faq.hero]: faqPageHeroSchema,
-  [PAGE_SECTIONS_MAP.faq.content]: faqContentSchema,
-  [PAGE_SECTIONS_MAP.faq.cta]: faqPageCtaSchema,
-} as const;
+type SectionEntry = (typeof SECTION_DEFINITIONS)[number];
+type SectionKey = SectionEntry[0];
+type SectionSchemaMap = { [K in SectionKey]: Extract<SectionEntry, readonly [K, unknown]>[1] };
+
+export const SECTION_SCHEMAS: SectionSchemaMap = Object.fromEntries(
+  SECTION_DEFINITIONS,
+) as SectionSchemaMap;

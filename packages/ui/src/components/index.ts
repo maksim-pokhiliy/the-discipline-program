@@ -14,6 +14,7 @@ export * from "./modal";
 export * from "./nav-link-button";
 export * from "./platform-bottom-nav";
 export * from "./platform-header";
+export * from "./query-wrapper";
 export * from "./rich-text-editor";
 export * from "./rich-text-viewer";
 export * from "./sidebar";

@@ -11,9 +11,8 @@ import {
   type UpdateContactRequest,
   updateContactRequestSchema,
 } from "@repo/contracts/contact";
-import { QueryWrapper } from "@repo/query";
 import { formatDate } from "@repo/shared";
-import { DetailField, FormCard, FormView } from "@repo/ui";
+import { DetailField, FormCard, FormView, QueryWrapper } from "@repo/ui";
 
 import { useContact, useUpdateContact } from "@app/lib/hooks";
 

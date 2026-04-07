@@ -21,7 +21,7 @@ import { Chip, Divider, Stack } from "@mui/material";
 
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import type { Workout } from "@repo/contracts/workout";
-import { QueryWrapper } from "@repo/query";
+import { QueryWrapper } from "@repo/ui";
 
 import {
   useCreateWorkout,

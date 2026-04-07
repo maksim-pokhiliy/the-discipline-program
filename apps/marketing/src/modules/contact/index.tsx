@@ -1,7 +1,7 @@
 "use client";
 
 import { type ContactPageData } from "@repo/contracts/pages";
-import { QueryWrapper } from "@repo/query";
+import { QueryWrapper } from "@repo/ui";
 
 import { useContactPage } from "@app/lib/hooks";
 

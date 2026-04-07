@@ -11,9 +11,6 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },
   "dependencies": {
-    "@emotion/react": "catalog:",
-    "@emotion/styled": "catalog:",
-    "@mui/material": "catalog:",
     "@tanstack/react-query": "catalog:"
   },
   "devDependencies": {

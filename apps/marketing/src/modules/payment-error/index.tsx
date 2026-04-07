@@ -3,7 +3,7 @@
 import { Stack } from "@mui/material";
 import { useSearchParams } from "next/navigation";
 
-import { QueryWrapper } from "@repo/query";
+import { QueryWrapper } from "@repo/ui";
 
 import { StructuredData } from "@app/lib/components/seo";
 

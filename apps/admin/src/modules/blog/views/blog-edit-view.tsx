@@ -4,8 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { createBlogPostSchema, type BlogPost, type CreateBlogPostData } from "@repo/contracts/blog";
-import { QueryWrapper } from "@repo/query";
-import { FormView } from "@repo/ui";
+import { FormView, QueryWrapper } from "@repo/ui";
 
 import { useBlogPost, useUpdateBlogPost } from "@app/lib/hooks";
 

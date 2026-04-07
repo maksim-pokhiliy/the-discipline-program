@@ -3,7 +3,7 @@
 import { Stack } from "@mui/material";
 
 import { type BlogPageData } from "@repo/contracts/pages";
-import { QueryWrapper } from "@repo/query";
+import { QueryWrapper } from "@repo/ui";
 
 import { useBlogPage } from "@app/lib/hooks";
 

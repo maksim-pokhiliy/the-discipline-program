@@ -2,8 +2,7 @@
 
 import { type UseQueryResult } from "@tanstack/react-query";
 
-import { QueryWrapper } from "@repo/query";
-import { ContentSection } from "@repo/ui";
+import { ContentSection, QueryWrapper } from "@repo/ui";
 
 interface AdminListViewProps<TData> {
   queryResult: UseQueryResult<TData, Error>;

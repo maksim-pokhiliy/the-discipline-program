@@ -5,7 +5,7 @@ import { useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Stack } from "@mui/material";
 
-import { QueryWrapper } from "@repo/query";
+import { QueryWrapper } from "@repo/ui";
 
 import { PlatformPageHeader } from "@app/lib/components";
 import { useTrainingPlansPageData } from "@app/lib/hooks";
