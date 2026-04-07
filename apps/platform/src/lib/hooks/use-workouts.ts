@@ -57,7 +57,7 @@ export const useCreateWorkout = (planId: string) => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.workouts.byPlan(planId) });
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-      queryClient.invalidateQueries({ queryKey: [...platformKeys.root, "calendar"] });
+      queryClient.invalidateQueries({ queryKey: platformKeys.calendar.all() });
     },
   });
 };
@@ -105,7 +105,7 @@ export const useDeleteWorkout = (planId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.workouts.byPlan(planId) });
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-      queryClient.invalidateQueries({ queryKey: [...platformKeys.root, "calendar"] });
+      queryClient.invalidateQueries({ queryKey: platformKeys.calendar.all() });
       toast.success("Workout deleted");
     },
     onError: () => {
@@ -164,7 +164,7 @@ export const useMoveWorkout = (planId: string) => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.workouts.byPlan(planId) });
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-      queryClient.invalidateQueries({ queryKey: [...platformKeys.root, "calendar"] });
+      queryClient.invalidateQueries({ queryKey: platformKeys.calendar.all() });
     },
   });
 };
@@ -218,7 +218,7 @@ export const useCopyWeek = (planId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.workouts.byPlan(planId) });
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-      queryClient.invalidateQueries({ queryKey: [...platformKeys.root, "calendar"] });
+      queryClient.invalidateQueries({ queryKey: platformKeys.calendar.all() });
       toast.success("Week copied");
     },
     onError: (error: Error) => {

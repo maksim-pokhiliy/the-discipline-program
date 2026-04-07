@@ -22,7 +22,9 @@ export const Drawer = () => {
       <MuiDrawer
         open={open}
         onClose={toggleDrawer}
-        PaperProps={{ sx: (theme) => ({ width: "100vw", maxWidth: theme.spacing(37.5) }) }}
+        slotProps={{
+          paper: { sx: (theme) => ({ width: "100vw", maxWidth: theme.spacing(37.5) }) },
+        }}
       >
         <IconButton
           size="medium"

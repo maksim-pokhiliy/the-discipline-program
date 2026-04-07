@@ -121,8 +121,28 @@ export const typography = (baseTheme: Theme): ThemeOptions["typography"] => ({
     lineHeight: 1.6,
   },
 
+  subtitle1: {
+    fontSize: baseTheme.typography.pxToRem(14),
+    fontWeight: 600,
+    lineHeight: 1.5,
+  },
+
+  subtitle2: {
+    fontSize: baseTheme.typography.pxToRem(13),
+    fontWeight: 600,
+    lineHeight: 1.5,
+  },
+
   caption: {
     fontSize: baseTheme.typography.pxToRem(12),
     lineHeight: 1.5,
+  },
+
+  overline: {
+    fontSize: baseTheme.typography.pxToRem(11),
+    fontWeight: 600,
+    lineHeight: 1.5,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase" as const,
   },
 });

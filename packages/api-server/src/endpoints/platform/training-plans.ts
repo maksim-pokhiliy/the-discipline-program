@@ -13,8 +13,12 @@ import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 import { prisma } from "../../db/client";
 import { mapToTrainingPlan, mapToWorkout } from "../../mappers";
 import { TRAINING_PLAN_STATUS_MAP } from "../../mappers/enum-maps";
-import { MS_PER_DAY } from "../../utils/date-helpers";
-import { endOfWeekInTz, startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
+import {
+  MS_PER_DAY,
+  endOfWeekInTz,
+  startOfTodayInTz,
+  startOfWeekInTz,
+} from "../../utils/date-helpers";
 
 import { resolveCoachId, verifyPlanOwnership } from "./guards";
 

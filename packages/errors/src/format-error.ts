@@ -17,7 +17,7 @@ export const formatError = (error: unknown): FormattedError => {
 
   if (error instanceof Error) {
     if ("error" in error) {
-      const nested = (error as unknown as Record<string, unknown>).error;
+      const nested = (error as Error & { error: unknown }).error;
 
       if (typeof nested === "object" && nested !== null) {
         const obj = nested as Record<string, unknown>;
