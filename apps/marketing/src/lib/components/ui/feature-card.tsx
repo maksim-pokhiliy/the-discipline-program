@@ -1,11 +1,11 @@
 import { type SvgIconComponent } from "@mui/icons-material";
 import { Stack, Typography } from "@mui/material";
 
-interface FeatureCardProps {
+type FeatureCardProps = {
   icon: SvgIconComponent;
   title: string;
   description: string;
-}
+};
 
 export const FeatureCard = ({ icon: Icon, title, description }: FeatureCardProps) => {
   return (

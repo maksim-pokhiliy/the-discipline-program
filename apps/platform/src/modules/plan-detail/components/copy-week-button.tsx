@@ -5,10 +5,10 @@ import { useState } from "react";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { Button } from "@mui/material";
 
+import { addDays } from "@repo/shared";
 import { ConfirmationModal } from "@repo/ui";
 
 import { useCopyWeek, useWorkouts } from "@app/lib/hooks";
-import { addDays } from "@app/lib/utils/date-utils";
 
 type CopyWeekButtonProps = {
   planId: string;

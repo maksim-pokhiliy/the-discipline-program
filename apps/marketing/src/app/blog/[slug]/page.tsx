@@ -6,9 +6,9 @@ import { serverApi } from "@app/lib/api/server";
 import { SEO_CONFIG } from "@app/lib/seo";
 import { BlogArticlePageClient } from "@app/modules/blog-article";
 
-interface BlogArticlePageProps {
+type BlogArticlePageProps = {
   params: Promise<{ slug: string }>;
-}
+};
 
 export async function generateMetadata({ params }: BlogArticlePageProps): Promise<Metadata> {
   const { slug } = await params;

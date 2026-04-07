@@ -8,14 +8,15 @@ import TodayIcon from "@mui/icons-material/Today";
 import { Button, IconButton, Stack, Typography } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { useWeekStart } from "@app/lib/hooks";
 import {
   addDays,
   formatDateParam,
   formatWeekRange,
   getISOWeekNumber,
   getMonday,
-} from "@app/lib/utils/date-utils";
+} from "@repo/shared";
+
+import { useWeekStart } from "@app/lib/hooks";
 
 export const WeekNavigator = () => {
   const router = useRouter();

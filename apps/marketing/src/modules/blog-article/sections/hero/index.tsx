@@ -4,9 +4,9 @@ import { BLOG_CATEGORY_LABELS, type PublicBlogPost } from "@repo/contracts/blog"
 
 import { FullscreenSection } from "@app/lib/components/ui";
 
-interface BlogArticleHeroProps {
+type BlogArticleHeroProps = {
   post: PublicBlogPost;
-}
+};
 
 export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
   const publishedDate = post.publishedAt

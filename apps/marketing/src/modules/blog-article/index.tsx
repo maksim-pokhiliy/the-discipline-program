@@ -9,10 +9,10 @@ import { SEO_CONFIG } from "@app/lib/seo";
 
 import { BlogArticleContent, BlogArticleHero, BlogArticleRelated } from "./sections";
 
-interface BlogArticlePageClientProps {
+type BlogArticlePageClientProps = {
   slug: string;
   initialData: BlogPostPageData;
-}
+};
 
 export const BlogArticlePageClient = ({ slug, initialData }: BlogArticlePageClientProps) => {
   const { data, isLoading, error } = useBlogArticle(slug, { initialData });

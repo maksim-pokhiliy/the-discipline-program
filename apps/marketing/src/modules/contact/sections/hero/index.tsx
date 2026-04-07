@@ -2,9 +2,9 @@ import { type ContactPageData } from "@repo/contracts/pages";
 
 import { FullscreenSection } from "@app/lib/components/ui";
 
-interface ContactHeroProps {
+type ContactHeroProps = {
   hero: ContactPageData["hero"];
-}
+};
 
 export const ContactHero = ({ hero }: ContactHeroProps) => {
   return (

@@ -5,7 +5,7 @@ import { Stack, Typography } from "@mui/material";
 
 import type { RecentWorkout } from "@repo/contracts/coach-athletes";
 
-import { formatWorkoutDate } from "./config";
+import { formatDate } from "./config";
 
 type RecentWorkoutsSectionProps = {
   workouts: RecentWorkout[];
@@ -27,7 +27,7 @@ export const RecentWorkoutsSection: React.FC<RecentWorkoutsSectionProps> = ({ wo
               {workout.title}
             </Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              {formatWorkoutDate(workout.date)} · {workout.planName}
+              {formatDate(workout.date, "weekday")} · {workout.planName}
             </Typography>
           </Stack>
         </Stack>

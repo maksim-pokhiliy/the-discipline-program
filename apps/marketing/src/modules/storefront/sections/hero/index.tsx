@@ -2,9 +2,9 @@ import { type StorefrontProgramsPageData } from "@repo/contracts/pages";
 
 import { FullscreenSection } from "@app/lib/components/ui";
 
-interface StorefrontHeroSectionProps {
+type StorefrontHeroSectionProps = {
   hero: StorefrontProgramsPageData["hero"];
-}
+};
 
 export const StorefrontHeroSection = ({ hero }: StorefrontHeroSectionProps) => {
   return (

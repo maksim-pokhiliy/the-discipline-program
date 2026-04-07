@@ -3,7 +3,7 @@ export const BLOG_CONSTANTS = {
 } as const;
 
 export enum BlogCategory {
-  UNCATEGORIZED = "Uncategorized",
+  UNCATEGORIZED = "UNCATEGORIZED",
   FITNESS = "FITNESS",
   NUTRITION = "NUTRITION",
   MINDSET = "MINDSET",

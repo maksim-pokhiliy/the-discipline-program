@@ -1,12 +1,12 @@
 import { alpha, Button, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 
-interface CtaSectionProps {
+type CtaSectionProps = {
   title: string;
   subtitle?: string;
   buttonText: string;
   buttonHref: string;
-}
+};
 
 export const CTASection = ({ title, subtitle, buttonText, buttonHref }: CtaSectionProps) => {
   return (

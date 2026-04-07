@@ -10,9 +10,9 @@ import { FeatureCard } from "@app/lib/components/ui";
 const isSvgIconComponent = (value: unknown): value is SvgIconComponent =>
   typeof value === "function";
 
-interface FeaturesSectionProps {
+type FeaturesSectionProps = {
   whyChoose: HomePageData["whyChoose"];
-}
+};
 
 export const HomeFeaturesSection = ({ whyChoose }: FeaturesSectionProps) => {
   return (

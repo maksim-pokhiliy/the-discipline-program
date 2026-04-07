@@ -6,9 +6,9 @@ import { ContentSection } from "@repo/ui";
 
 import { FeatureCard } from "@app/lib/components/ui";
 
-interface AboutCredentialsSectionProps {
+type AboutCredentialsSectionProps = {
   credentials: AboutPageData["credentials"];
-}
+};
 
 export const AboutCredentialsSection = ({ credentials }: AboutCredentialsSectionProps) => {
   return (

@@ -2,9 +2,9 @@ import { type HomePageData } from "@repo/contracts/pages";
 
 import { FullscreenSection } from "@app/lib/components/ui";
 
-interface HomeHeroSectionProps {
+type HomeHeroSectionProps = {
   hero: HomePageData["hero"];
-}
+};
 
 export const HomeHeroSection = ({ hero }: HomeHeroSectionProps) => {
   return (

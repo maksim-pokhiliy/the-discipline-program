@@ -11,10 +11,10 @@ import {
 
 import { ContentSection } from "@repo/ui";
 
-interface PaymentErrorDetailsSectionProps {
+type PaymentErrorDetailsSectionProps = {
   error: string;
   orderId: string | null;
-}
+};
 
 export const PaymentErrorDetailsSection = ({ error, orderId }: PaymentErrorDetailsSectionProps) => {
   return (

@@ -16,13 +16,13 @@ import {
 import { type Product, PRICE_INTERVAL_LABELS } from "@repo/contracts/product";
 import { formatPrice } from "@repo/shared";
 
-interface ProductCardProps {
+type ProductCardProps = {
   product: Product;
   onAction: () => void;
   actionLabel?: string;
   variant?: "default" | "featured";
   cardVariant?: CardProps["variant"];
-}
+};
 
 export const ProductCard = ({
   product,

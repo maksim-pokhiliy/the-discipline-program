@@ -7,9 +7,9 @@ import { useContactPage } from "@app/lib/hooks";
 
 import { ContactFormSection, ContactHero } from "./sections";
 
-interface ContactPageClientProps {
+type ContactPageClientProps = {
   initialData: ContactPageData;
-}
+};
 
 export const ContactPageClient = ({ initialData }: ContactPageClientProps) => {
   const { data, isLoading, error } = useContactPage({ initialData });

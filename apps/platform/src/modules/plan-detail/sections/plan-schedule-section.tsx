@@ -21,6 +21,7 @@ import { Chip, Divider, Stack } from "@mui/material";
 
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import type { Workout } from "@repo/contracts/workout";
+import { getWeekDays, isSameDay } from "@repo/shared";
 import { QueryWrapper } from "@repo/ui";
 
 import {
@@ -31,7 +32,6 @@ import {
   useWeekStart,
   useWorkouts,
 } from "@app/lib/hooks";
-import { getWeekDays, isSameDay } from "@app/lib/utils/date-utils";
 
 import { CopyWeekButton, WeekNavigator, WorkoutDragOverlay } from "../components";
 import { WeekDayGroup } from "../components/week-day-group";

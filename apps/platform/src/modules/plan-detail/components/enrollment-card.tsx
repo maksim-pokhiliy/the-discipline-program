@@ -8,10 +8,10 @@ import {
   PLAN_ENROLLMENT_STATUS_LABELS,
   type PlanEnrollmentStatus,
 } from "@repo/contracts/plan-enrollment";
+import { formatDate } from "@repo/shared";
 
 import { PersonCard, StatusChip } from "@app/lib/components";
 import { ENROLLMENT_STATUS_COLORS, HEALTH_STATUS_CHIPS } from "@app/lib/config";
-import { formatShortDate } from "@app/lib/utils/date-formatters";
 
 import { EnrollmentActionMenu } from "./enrollment-action-menu";
 
@@ -64,7 +64,7 @@ export const EnrollmentCard: React.FC<EnrollmentCardProps> = ({
             color={ENROLLMENT_STATUS_COLORS[enrollment.status]}
           />
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Enrolled {formatShortDate(enrollment.startDate)}
+            Enrolled {formatDate(enrollment.startDate, "day")}
           </Typography>
         </Stack>
       </Stack>

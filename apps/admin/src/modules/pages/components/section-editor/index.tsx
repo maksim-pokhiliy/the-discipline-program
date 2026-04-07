@@ -31,7 +31,7 @@ import { ReviewsSectionForm } from "../sections/reviews-section-form";
 import { StorefrontSectionForm } from "../sections/storefront-section-form";
 import { WhyChooseSectionForm } from "../sections/why-choose-section-form";
 
-const SECTION_LABELS: Record<string, string> = {
+const SECTION_LABELS: Record<SectionSchemaKey, string> = {
   hero: "Hero",
   "about:hero": "About Hero",
   "contact:hero": "Contact Hero",
@@ -51,7 +51,6 @@ const SECTION_LABELS: Record<string, string> = {
   journey: "Journey",
   credentials: "Credentials",
   personal: "Personal",
-  faq: "FAQ",
   "faq:content": "FAQ Content",
 };
 
@@ -138,7 +137,6 @@ export const SectionEditor = ({
         return <PersonalSectionForm />;
       }
 
-      case "faq":
       case "faq:content": {
         return <FaqSectionForm />;
       }
@@ -159,7 +157,7 @@ export const SectionEditor = ({
     <Accordion expanded={isExpanded} onChange={onToggle}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
         <Typography variant="subtitle1">
-          {SECTION_LABELS[section.section] || section.section}
+          {isSectionSchemaKey(section.section) ? SECTION_LABELS[section.section] : section.section}
         </Typography>
       </AccordionSummary>
 

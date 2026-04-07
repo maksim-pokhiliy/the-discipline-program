@@ -4,9 +4,9 @@ import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from
 import { type FaqPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
-interface FaqSectionProps {
+type FaqSectionProps = {
   content: FaqPageData["content"];
-}
+};
 
 export const FaqSection = ({ content }: FaqSectionProps) => {
   return (
