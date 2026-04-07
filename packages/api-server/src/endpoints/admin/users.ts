@@ -2,6 +2,7 @@ import { UserRole } from "@repo/contracts/auth";
 import {
   type AdminUser,
   type AdminUserListItem,
+  type GetUsersPageDataResponse,
   type UpdateUserRoleData,
 } from "@repo/contracts/user";
 import { ConflictError, NotFoundError } from "@repo/errors";
@@ -36,7 +37,7 @@ export const adminUsersApi = {
     return mapToAdminUser(user);
   },
 
-  getPageData: async () => {
+  getPageData: async (): Promise<GetUsersPageDataResponse> => {
     const users = await adminUsersApi.getAll();
 
     return { users };

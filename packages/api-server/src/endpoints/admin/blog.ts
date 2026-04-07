@@ -1,6 +1,7 @@
 import { type Prisma } from "@prisma/client";
 
 import {
+  type AdminBlogPageData,
   type BlogPost,
   type CreateBlogPostData,
   type UpdateBlogPostData,
@@ -65,7 +66,7 @@ export const adminBlogApi = {
     return mapToBlogPost(post);
   },
 
-  getBlogPageData: async () => {
+  getBlogPageData: async (): Promise<AdminBlogPageData> => {
     const posts = await adminBlogApi.getPosts();
 
     return { posts };

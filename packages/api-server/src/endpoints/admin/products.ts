@@ -1,4 +1,5 @@
 import {
+  type AdminProductsPageData,
   type CreateProductData,
   type Product,
   type UpdateProductData,
@@ -36,7 +37,7 @@ export const adminProductsApi = {
     return mapToProduct(product);
   },
 
-  getPageData: async () => {
+  getPageData: async (): Promise<AdminProductsPageData> => {
     const products = await adminProductsApi.getAll();
 
     return { products };
