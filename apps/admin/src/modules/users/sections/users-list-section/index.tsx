@@ -57,26 +57,31 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
     setMenuUserId(userId);
   }, []);
 
-  const handleMenuClose = () => {
+  const handleMenuClose = useCallback(() => {
     setMenuAnchor(null);
     setMenuUserId(null);
-  };
+  }, []);
 
-  const handleRoleSelect = (newRole: UserRole) => {
-    const currentUser = users.find((u) => u.id === menuUserId);
+  const handleRoleSelect = useCallback(
+    (newRole: UserRole) => {
+      const currentUser = users.find((u) => u.id === menuUserId);
 
-    handleMenuClose();
+      handleMenuClose();
 
-    if (!currentUser || currentUser.role === newRole) {
-      return;
-    }
+      if (!currentUser || currentUser.role === newRole) {
+        return;
+      }
 
-    setPendingChange({
-      userId: currentUser.id,
-      currentRole: currentUser.role,
-      newRole,
-    });
-  };
+      setPendingChange({
+        userId: currentUser.id,
+        currentRole: currentUser.role,
+        newRole,
+      });
+    },
+    [users, menuUserId, handleMenuClose],
+  );
+
+  const menuUser = useMemo(() => users.find((u) => u.id === menuUserId), [users, menuUserId]);
 
   const handleConfirm = () => {
     if (pendingChange) {
@@ -173,19 +178,15 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
       />
 
       <Menu anchorEl={menuAnchor} open={!!menuAnchor} onClose={handleMenuClose}>
-        {(() => {
-          const currentUser = users.find((u) => u.id === menuUserId);
-
-          return Object.values(UserRole).map((role) => (
-            <MenuItem
-              key={role}
-              onClick={() => handleRoleSelect(role)}
-              selected={currentUser?.role === role}
-            >
-              {ROLE_CONFIG[role].label}
-            </MenuItem>
-          ));
-        })()}
+        {Object.values(UserRole).map((role) => (
+          <MenuItem
+            key={role}
+            onClick={() => handleRoleSelect(role)}
+            selected={menuUser?.role === role}
+          >
+            {ROLE_CONFIG[role].label}
+          </MenuItem>
+        ))}
       </Menu>
 
       <ConfirmationModal

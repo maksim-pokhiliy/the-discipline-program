@@ -1,17 +1,9 @@
-"use client";
-
-import { type SxProps, type Theme, Divider, Stack, Toolbar, Typography } from "@mui/material";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Divider, Stack, Toolbar, Typography } from "@mui/material";
 
 import { MARKETING_NAVIGATION } from "@repo/shared";
 import { Logo } from "@repo/ui";
 
-const footerLinkHoverSx: SxProps<Theme> = {
-  "&:hover": {
-    color: "text.primary",
-  },
-};
+import { FooterNavLink } from "./footer-nav-link";
 
 type FooterProps = {
   tagline?: string;
@@ -22,8 +14,6 @@ export const Footer = ({
   tagline = "Your Discipline Dictates Your Success",
   subcopy = "Transform your fitness through discipline",
 }: FooterProps) => {
-  const pathname = usePathname();
-
   return (
     <>
       <Divider />
@@ -51,21 +41,7 @@ export const Footer = ({
 
             <Stack direction={{ md: "row" }} sx={{ alignItems: "center" }} rowGap={2} columnGap={2}>
               {MARKETING_NAVIGATION.footerLinks.map(({ text, href }) => (
-                <Typography
-                  key={text}
-                  component={Link}
-                  href={href}
-                  variant="body2"
-                  sx={[
-                    {
-                      textDecoration: "none",
-                      color: pathname === href ? "text.primary" : "text.secondary",
-                    },
-                    footerLinkHoverSx,
-                  ]}
-                >
-                  {text}
-                </Typography>
+                <FooterNavLink key={text} text={text} href={href} />
               ))}
             </Stack>
           </Stack>

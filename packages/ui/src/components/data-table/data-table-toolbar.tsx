@@ -3,7 +3,7 @@
 import { type ReactNode } from "react";
 
 import SearchIcon from "@mui/icons-material/Search";
-import { Box, InputAdornment, MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { Box, InputAdornment, MenuItem, Stack, TextField } from "@mui/material";
 
 type FilterConfig = {
   id: string;
@@ -14,7 +14,6 @@ type FilterConfig = {
 };
 
 type DataTableToolbarProps = {
-  title?: string;
   searchValue?: string;
   searchPlaceholder?: string;
   onSearchChange?: (value: string) => void;
@@ -23,7 +22,6 @@ type DataTableToolbarProps = {
 };
 
 export const DataTableToolbar = ({
-  title,
   searchValue,
   searchPlaceholder = "Search...",
   onSearchChange,
@@ -32,8 +30,6 @@ export const DataTableToolbar = ({
 }: DataTableToolbarProps) => {
   return (
     <Stack direction="row" alignItems="center" gap={2} sx={{ px: 2, py: 1.5 }} flexWrap="wrap">
-      {title && <Typography variant="h6">{title}</Typography>}
-
       <Box sx={{ flexGrow: 1 }} />
 
       {onSearchChange && (
@@ -52,7 +48,7 @@ export const DataTableToolbar = ({
               ),
             },
           }}
-          sx={{ minWidth: 200 }}
+          sx={(theme) => ({ minWidth: theme.spacing(25) })}
         />
       )}
 
@@ -65,7 +61,7 @@ export const DataTableToolbar = ({
           label={filter.label}
           value={filter.value}
           onChange={(e) => filter.onChange(e.target.value)}
-          sx={{ minWidth: 150 }}
+          sx={(theme) => ({ minWidth: theme.spacing(18.75) })}
         >
           <MenuItem value="">All</MenuItem>
 

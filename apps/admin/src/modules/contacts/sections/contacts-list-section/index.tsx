@@ -51,18 +51,26 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
     [],
   );
 
-  const handleStatusMenuClose = () => {
+  const handleStatusMenuClose = useCallback(() => {
     setStatusMenuAnchor(null);
     setStatusMenuContactId(null);
-  };
+  }, []);
 
-  const handleStatusSelect = (status: ContactStatus) => {
-    if (statusMenuContactId) {
-      updateContactMutation.mutate({ id: statusMenuContactId, data: { status } });
-    }
+  const handleStatusSelect = useCallback(
+    (status: ContactStatus) => {
+      if (statusMenuContactId) {
+        updateContactMutation.mutate({ id: statusMenuContactId, data: { status } });
+      }
 
-    handleStatusMenuClose();
-  };
+      handleStatusMenuClose();
+    },
+    [statusMenuContactId, updateContactMutation, handleStatusMenuClose],
+  );
+
+  const menuContact = useMemo(
+    () => contacts.find((c) => c.id === statusMenuContactId),
+    [contacts, statusMenuContactId],
+  );
 
   const columns: Column<GetContactByIdResponse>[] = useMemo(
     () => [
@@ -168,19 +176,15 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
       />
 
       <Menu anchorEl={statusMenuAnchor} open={!!statusMenuAnchor} onClose={handleStatusMenuClose}>
-        {(() => {
-          const currentContact = contacts.find((c) => c.id === statusMenuContactId);
-
-          return Object.values(ContactStatus).map((status) => (
-            <MenuItem
-              key={status}
-              onClick={() => handleStatusSelect(status)}
-              selected={currentContact?.status === status}
-            >
-              {CONTACT_STATUS_CONFIG[status].label}
-            </MenuItem>
-          ));
-        })()}
+        {Object.values(ContactStatus).map((status) => (
+          <MenuItem
+            key={status}
+            onClick={() => handleStatusSelect(status)}
+            selected={menuContact?.status === status}
+          >
+            {CONTACT_STATUS_CONFIG[status].label}
+          </MenuItem>
+        ))}
       </Menu>
 
       <ConfirmationModal
