@@ -9,8 +9,7 @@ import {
   updatePageSectionSchema,
   type UpdatePageSectionData,
 } from "@repo/contracts/pages";
-import { QueryWrapper } from "@repo/query";
-import { ContentSection } from "@repo/ui";
+import { ContentSection, QueryWrapper } from "@repo/ui";
 
 import { usePageDetails, useUpdatePageSection } from "@app/lib/hooks";
 

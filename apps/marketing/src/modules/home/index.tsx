@@ -3,7 +3,7 @@
 import { Stack } from "@mui/material";
 
 import { type HomePageData } from "@repo/contracts/pages";
-import { QueryWrapper } from "@repo/query";
+import { QueryWrapper } from "@repo/ui";
 
 import { StructuredData } from "@app/lib/components/seo";
 import { useHomePage } from "@app/lib/hooks";

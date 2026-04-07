@@ -939,15 +939,6 @@ importers:
 
   packages/query:
     dependencies:
-      '@emotion/react':
-        specifier: 'catalog:'
-        version: 11.14.0(@types/react@19.1.6)(react@19.2.3)
-      '@emotion/styled':
-        specifier: 'catalog:'
-        version: 11.14.0(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react@19.2.3)
-      '@mui/material':
-        specifier: 'catalog:'
-        version: 7.3.6(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.80.2(react@19.2.3)

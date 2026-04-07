@@ -1,8 +1,8 @@
 "use client";
 
 import { type BlogPostPageData } from "@repo/contracts/blog";
-import { QueryWrapper } from "@repo/query";
 import { SEO_CONFIG } from "@repo/shared";
+import { QueryWrapper } from "@repo/ui";
 
 import { StructuredData } from "@app/lib/components/seo";
 import { useBlogArticle } from "@app/lib/hooks";

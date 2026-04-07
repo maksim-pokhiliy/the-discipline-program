@@ -7,7 +7,7 @@ import { IconButton, InputBase, Stack, Tab, Tabs } from "@mui/material";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { QueryWrapper } from "@repo/query";
+import { QueryWrapper } from "@repo/ui";
 
 import { useTrainingPlan, useUpdateTrainingPlan } from "@app/lib/hooks";
 

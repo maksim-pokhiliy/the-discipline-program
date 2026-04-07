@@ -1,7 +1,7 @@
 "use client";
 
 import { type FaqPageData } from "@repo/contracts/pages";
-import { QueryWrapper } from "@repo/query";
+import { QueryWrapper } from "@repo/ui";
 
 import { StructuredData } from "@app/lib/components/seo";
 import { useFaqPage } from "@app/lib/hooks";

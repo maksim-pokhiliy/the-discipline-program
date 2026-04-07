@@ -5,7 +5,7 @@ import { useCallback } from "react";
 import { Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { QueryWrapper } from "@repo/query";
+import { QueryWrapper } from "@repo/ui";
 
 import { PlatformPageHeader } from "@app/lib/components";
 import { useCoachAthletes } from "@app/lib/hooks";

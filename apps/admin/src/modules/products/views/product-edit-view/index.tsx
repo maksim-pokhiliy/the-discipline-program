@@ -4,9 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { type Product } from "@repo/contracts/product";
-import { QueryWrapper } from "@repo/query";
 import { amountToCents, centsToAmount } from "@repo/shared";
-import { FormView } from "@repo/ui";
+import { FormView, QueryWrapper } from "@repo/ui";
 
 import { useProduct, useUpdateProduct } from "@app/lib/hooks";
 

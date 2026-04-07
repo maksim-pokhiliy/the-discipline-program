@@ -3,7 +3,7 @@
 import { Stack } from "@mui/material";
 
 import { type AboutPageData } from "@repo/contracts/pages";
-import { QueryWrapper } from "@repo/query";
+import { QueryWrapper } from "@repo/ui";
 
 import { useAboutPage } from "@app/lib/hooks";
 

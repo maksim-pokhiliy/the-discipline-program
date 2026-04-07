@@ -6,8 +6,8 @@ import AddIcon from "@mui/icons-material/Add";
 import { Button, Fab, Grid, Stack, Typography } from "@mui/material";
 
 import { type PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { QueryWrapper } from "@repo/query";
 import { LAYOUT } from "@repo/shared";
+import { QueryWrapper } from "@repo/ui";
 
 import {
   useDeletePlanEnrollment,

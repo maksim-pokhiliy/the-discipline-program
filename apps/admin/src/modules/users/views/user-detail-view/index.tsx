@@ -4,8 +4,7 @@ import { useForm } from "react-hook-form";
 
 import { type UserRole } from "@repo/contracts/auth";
 import { type AdminUser } from "@repo/contracts/user";
-import { QueryWrapper } from "@repo/query";
-import { FormView } from "@repo/ui";
+import { FormView, QueryWrapper } from "@repo/ui";
 
 import { useUpdateUserRole, useUser } from "@app/lib/hooks";
 
