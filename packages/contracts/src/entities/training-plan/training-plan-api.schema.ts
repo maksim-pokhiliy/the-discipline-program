@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { workoutSchema } from "../workout/workout.schema";
+import { workoutSchema } from "../workout";
 
 import {
   createTrainingPlanSchema,

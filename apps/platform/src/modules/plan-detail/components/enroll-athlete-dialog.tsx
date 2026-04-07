@@ -5,16 +5,12 @@ import { type FormEvent, type SyntheticEvent, useState } from "react";
 import { Autocomplete, Avatar, Checkbox, Stack, TextField, Typography } from "@mui/material";
 
 import type { PlanEnrollment } from "@repo/contracts/plan-enrollment";
+import type { UserSearchResult } from "@repo/contracts/user";
 import { FormModal } from "@repo/ui";
 
 import { useBulkEnrollAthletes, useSearchUsers } from "@app/lib/hooks";
 
-type UserOption = {
-  id: string;
-  name: string | null;
-  email: string;
-  image: string | null;
-};
+type UserOption = UserSearchResult;
 
 const SELECT_ALL_ID = "__select_all__";
 const SELECT_ALL_OPTION: UserOption = {

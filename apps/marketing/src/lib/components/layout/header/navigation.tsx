@@ -10,7 +10,7 @@ type NavigationProps = {
 };
 
 export const Navigation = ({ links }: NavigationProps) => {
-  const finalLinks = links || MARKETING_NAVIGATION.headerLinks;
+  const finalLinks = links ?? MARKETING_NAVIGATION.headerLinks;
 
   return (
     <Stack direction={{ xs: "column", md: "row" }} spacing={0}>

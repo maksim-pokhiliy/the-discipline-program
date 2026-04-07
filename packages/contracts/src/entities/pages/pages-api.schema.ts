@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import { publicBlogPostSchema } from "../blog";
-import { productSchema } from "../product/product.schema";
-import { reviewSchema } from "../review/review.schema";
+import { productSchema } from "../product";
+import { reviewSchema } from "../review";
 
 import { PageSlug, PAGE_SECTIONS_MAP } from "./pages.constants";
 import {

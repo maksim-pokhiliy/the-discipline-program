@@ -29,3 +29,5 @@ export type ToggleReviewParams = z.infer<typeof toggleReviewParamsSchema>;
 export type ToggleReviewQuery = z.infer<typeof toggleReviewQuerySchema>;
 
 export type GetReviewsPageDataResponse = z.infer<typeof getReviewsPageDataResponseSchema>;
+
+export type AdminReviewsPageData = GetReviewsPageDataResponse;
