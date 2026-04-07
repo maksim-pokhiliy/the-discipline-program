@@ -3,6 +3,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToWorkoutLog } from "../../mappers";
+import { handlePrismaError } from "../../utils";
 
 export const platformWorkoutLogsApi = {
   getAll: async (userId: string): Promise<WorkoutLog[]> => {
@@ -36,14 +37,18 @@ export const platformWorkoutLogsApi = {
       throw new NotFoundError("Workout not found", { workoutId: data.workoutId });
     }
 
-    const log = await prisma.workoutLog.create({
-      data: {
-        userId,
-        ...data,
-      },
-    });
+    try {
+      const log = await prisma.workoutLog.create({
+        data: {
+          userId,
+          ...data,
+        },
+      });
 
-    return mapToWorkoutLog(log);
+      return mapToWorkoutLog(log);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Workout log" });
+    }
   },
 
   delete: async (userId: string, id: string): Promise<void> => {
@@ -56,6 +61,10 @@ export const platformWorkoutLogsApi = {
       throw new NotFoundError("Workout log not found", { id });
     }
 
-    await prisma.workoutLog.delete({ where: { id } });
+    try {
+      await prisma.workoutLog.delete({ where: { id } });
+    } catch (error) {
+      handlePrismaError(error, { entity: "Workout log" });
+    }
   },
 };

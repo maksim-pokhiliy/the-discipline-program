@@ -3,6 +3,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToCoachProfile } from "../../mappers";
+import { handlePrismaError } from "../../utils";
 
 export const platformCoachProfileApi = {
   get: async (userId: string): Promise<CoachProfile> => {
@@ -18,12 +19,16 @@ export const platformCoachProfileApi = {
   },
 
   upsert: async (userId: string, data: UpdateCoachProfileData): Promise<CoachProfile> => {
-    const profile = await prisma.coachProfile.upsert({
-      where: { userId },
-      create: { userId, ...data },
-      update: data,
-    });
+    try {
+      const profile = await prisma.coachProfile.upsert({
+        where: { userId },
+        create: { userId, ...data },
+        update: data,
+      });
 
-    return mapToCoachProfile(profile);
+      return mapToCoachProfile(profile);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Coach profile" });
+    }
   },
 };

@@ -10,6 +10,7 @@ import {
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
+import { handlePrismaError } from "../../utils";
 import { getPageSectionsOrder } from "../../utils/page-sections";
 
 const isValidPageSlug = (slug: string): slug is PageSlug => {
@@ -68,10 +69,14 @@ export const adminPagesApi = {
   },
 
   updatePageMetadata: async (slug: string, payload: UpdatePageMetadataInput): Promise<void> => {
-    await prisma.marketingPage.update({
-      where: { slug },
-      data: payload,
-    });
+    try {
+      await prisma.marketingPage.update({
+        where: { slug },
+        data: payload,
+      });
+    } catch (error) {
+      handlePrismaError(error, { entity: "Page", field: "slug" });
+    }
   },
 
   updateSection: async (payload: UpdatePageSectionData): Promise<void> => {
@@ -88,11 +93,15 @@ export const adminPagesApi = {
       throw new NotFoundError(`Section ${payload.section} for page ${payload.pageSlug} not found`);
     }
 
-    await prisma.marketingPageSection.update({
-      where: { id: existing.id },
-      data: {
-        data: payload.data as Prisma.InputJsonValue,
-      },
-    });
+    try {
+      await prisma.marketingPageSection.update({
+        where: { id: existing.id },
+        data: {
+          data: payload.data as Prisma.InputJsonValue,
+        },
+      });
+    } catch (error) {
+      handlePrismaError(error, { entity: "Page section" });
+    }
   },
 };

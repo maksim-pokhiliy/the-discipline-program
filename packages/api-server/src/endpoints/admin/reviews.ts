@@ -8,6 +8,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToReview } from "../../mappers";
+import { handlePrismaError } from "../../utils";
 
 export const adminReviewsApi = {
   getReviews: async (): Promise<Review[]> => {
@@ -29,9 +30,13 @@ export const adminReviewsApi = {
   },
 
   createReview: async (data: CreateReviewData): Promise<Review> => {
-    const review = await prisma.marketingReview.create({ data });
+    try {
+      const review = await prisma.marketingReview.create({ data });
 
-    return mapToReview(review);
+      return mapToReview(review);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Review" });
+    }
   },
 
   updateReview: async (id: string, data: UpdateReviewData): Promise<Review> => {
@@ -41,12 +46,16 @@ export const adminReviewsApi = {
       throw new NotFoundError("Review not found", { id });
     }
 
-    const review = await prisma.marketingReview.update({
-      where: { id },
-      data,
-    });
+    try {
+      const review = await prisma.marketingReview.update({
+        where: { id },
+        data,
+      });
 
-    return mapToReview(review);
+      return mapToReview(review);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Review" });
+    }
   },
 
   deleteReview: async (id: string): Promise<void> => {
@@ -56,7 +65,11 @@ export const adminReviewsApi = {
       throw new NotFoundError("Review not found", { id });
     }
 
-    await prisma.marketingReview.delete({ where: { id } });
+    try {
+      await prisma.marketingReview.delete({ where: { id } });
+    } catch (error) {
+      handlePrismaError(error, { entity: "Review" });
+    }
   },
 
   toggleReviewStatus: async (id: string): Promise<Review> => {
@@ -66,12 +79,16 @@ export const adminReviewsApi = {
       throw new NotFoundError("Review not found", { id });
     }
 
-    const updated = await prisma.marketingReview.update({
-      where: { id },
-      data: { isActive: !review.isActive },
-    });
+    try {
+      const updated = await prisma.marketingReview.update({
+        where: { id },
+        data: { isActive: !review.isActive },
+      });
 
-    return mapToReview(updated);
+      return mapToReview(updated);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Review" });
+    }
   },
 
   getReviewsPageData: async (): Promise<AdminReviewsPageData> => {

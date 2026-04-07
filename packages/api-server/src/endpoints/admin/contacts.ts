@@ -10,6 +10,7 @@ import { NotFoundError } from "@repo/errors";
 import { prisma } from "../../db/client";
 import { mapToContact } from "../../mappers";
 import { CONTACT_STATUS_TO_PRISMA_MAP } from "../../mappers/enum-maps";
+import { handlePrismaError } from "../../utils";
 
 export const adminContactsApi = {
   getContacts: async (): Promise<ContactSubmissionItem[]> => {
@@ -37,22 +38,26 @@ export const adminContactsApi = {
       throw new NotFoundError("Contact submission not found", { id });
     }
 
-    const updateData: Prisma.MarketingContactSubmissionUpdateInput = {};
+    try {
+      const updateData: Prisma.MarketingContactSubmissionUpdateInput = {};
 
-    if (data.status !== undefined) {
-      updateData.status = CONTACT_STATUS_TO_PRISMA_MAP[data.status];
+      if (data.status !== undefined) {
+        updateData.status = CONTACT_STATUS_TO_PRISMA_MAP[data.status];
+      }
+
+      if (data.notes !== undefined) {
+        updateData.notes = data.notes?.trim() || null;
+      }
+
+      const updated = await prisma.marketingContactSubmission.update({
+        where: { id },
+        data: updateData,
+      });
+
+      return mapToContact(updated);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Contact submission" });
     }
-
-    if (data.notes !== undefined) {
-      updateData.notes = data.notes?.trim() || null;
-    }
-
-    const updated = await prisma.marketingContactSubmission.update({
-      where: { id },
-      data: updateData,
-    });
-
-    return mapToContact(updated);
   },
 
   deleteContact: async (id: string): Promise<void> => {
@@ -62,7 +67,11 @@ export const adminContactsApi = {
       throw new NotFoundError("Contact submission not found", { id });
     }
 
-    await prisma.marketingContactSubmission.delete({ where: { id } });
+    try {
+      await prisma.marketingContactSubmission.delete({ where: { id } });
+    } catch (error) {
+      handlePrismaError(error, { entity: "Contact submission" });
+    }
   },
 
   getContactsPageData: async (): Promise<AdminContactsPageData> => {

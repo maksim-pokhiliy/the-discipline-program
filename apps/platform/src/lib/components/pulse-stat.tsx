@@ -2,7 +2,7 @@
 
 import { Stack, Tooltip, Typography } from "@mui/material";
 
-import { type PaletteColorKey } from "@repo/ui";
+import { type PaletteColorKey } from "@repo/mui";
 
 export type PulseStatProps = {
   value: string | number;

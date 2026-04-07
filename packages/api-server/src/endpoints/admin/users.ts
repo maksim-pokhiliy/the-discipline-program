@@ -9,6 +9,7 @@ import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToAdminUser, mapToAdminUserListItem } from "../../mappers";
+import { handlePrismaError } from "../../utils";
 
 const includeWithProfiles = {
   athleteProfile: true,
@@ -58,12 +59,16 @@ export const adminUsersApi = {
       }
     }
 
-    const user = await prisma.user.update({
-      where: { id },
-      data: { role: data.role },
-      include: includeWithProfiles,
-    });
+    try {
+      const user = await prisma.user.update({
+        where: { id },
+        data: { role: data.role },
+        include: includeWithProfiles,
+      });
 
-    return mapToAdminUser(user);
+      return mapToAdminUser(user);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "User" });
+    }
   },
 };

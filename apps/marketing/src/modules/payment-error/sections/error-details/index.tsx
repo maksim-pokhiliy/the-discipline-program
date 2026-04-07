@@ -39,8 +39,8 @@ export const PaymentErrorDetailsSection = ({ error, orderId }: PaymentErrorDetai
             )}
 
             <Stack spacing={1}>
-              <Typography variant="body2" color="text.secondary">
-                <strong>Common reasons for payment failure:</strong>
+              <Typography variant="body2" color="text.secondary" fontWeight="bold">
+                Common reasons for payment failure:
               </Typography>
 
               <List dense disablePadding sx={{ pl: 2 }}>
