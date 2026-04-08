@@ -5,6 +5,7 @@ import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 
 import { prisma } from "../../db/client";
 import { HEALTH_STATUS_MAP } from "../../mappers/enum-maps";
+import { findOrThrow } from "../../utils";
 import {
   type AdherenceWindow,
   computeAdherenceWindow,
@@ -36,10 +37,10 @@ type AggregatedAthlete = {
 export const getAthletes = async (userId: string): Promise<CoachAthletesData> => {
   const coachId = await resolveCoachId(userId);
 
-  const { timezone: tz } = await prisma.user.findUniqueOrThrow({
-    where: { id: userId },
-    select: { timezone: true },
-  });
+  const { timezone: tz } = await findOrThrow(
+    prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } }),
+    "User",
+  );
 
   const [enrollments, actionItemCounts] = await Promise.all([
     prisma.planEnrollment.findMany({

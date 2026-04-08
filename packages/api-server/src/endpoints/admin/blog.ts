@@ -10,7 +10,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToBlogPost } from "../../mappers";
-import { handlePrismaError } from "../../utils";
+import { handlePrismaError, toggleExclusiveFeatured } from "../../utils";
 
 const WORDS_PER_MINUTE = 200;
 
@@ -175,31 +175,20 @@ export const adminBlogApi = {
     return mapToBlogPost(updated);
   },
 
-  toggleBlogPostFeatured: async (id: string): Promise<BlogPost> => {
-    return prisma.$transaction(async (tx) => {
-      const post = await tx.marketingBlogPost.findUnique({
-        where: { id },
-      });
-
-      if (!post) {
-        throw new NotFoundError("Blog post not found", { id });
-      }
-
-      const newValue = !post.isFeatured;
-
-      if (newValue === true) {
-        await tx.marketingBlogPost.updateMany({
-          where: { isFeatured: true, id: { not: id } },
-          data: { isFeatured: false },
-        });
-      }
-
-      const updated = await tx.marketingBlogPost.update({
-        where: { id },
-        data: { isFeatured: newValue },
-      });
-
-      return mapToBlogPost(updated);
-    });
-  },
+  toggleBlogPostFeatured: async (id: string): Promise<BlogPost> =>
+    prisma.$transaction((tx) =>
+      toggleExclusiveFeatured({
+        find: () => tx.marketingBlogPost.findUnique({ where: { id } }),
+        unfeaturedOthers: () =>
+          tx.marketingBlogPost.updateMany({
+            where: { isFeatured: true, id: { not: id } },
+            data: { isFeatured: false },
+          }),
+        update: (isFeatured) =>
+          tx.marketingBlogPost.update({ where: { id }, data: { isFeatured } }),
+        map: mapToBlogPost,
+        entityName: "Blog post",
+        id,
+      }),
+    ),
 };

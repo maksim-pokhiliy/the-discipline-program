@@ -11,6 +11,7 @@ import {
   HEALTH_STATUS_MAP,
   PLAN_ENROLLMENT_STATUS_MAP,
 } from "../../mappers/enum-maps";
+import { findOrThrow } from "../../utils";
 import { computeAdherenceWindow, computeProcessStatus } from "../../utils/dashboard-computations";
 import {
   DAYS_IN_WEEK,
@@ -34,21 +35,24 @@ export const getAthleteDetail = async (
 
   await verifyAthleteBelongsToCoach(athleteUserId, coachId);
 
-  const { timezone: tz } = await prisma.user.findUniqueOrThrow({
-    where: { id: coachUserId },
-    select: { timezone: true },
-  });
+  const { timezone: tz } = await findOrThrow(
+    prisma.user.findUnique({ where: { id: coachUserId }, select: { timezone: true } }),
+    "User",
+  );
 
   const [athlete, enrollments, actionItems] = await Promise.all([
-    prisma.user.findUniqueOrThrow({
-      where: { id: athleteUserId },
-      select: {
-        name: true,
-        email: true,
-        image: true,
-        athleteProfile: { select: { healthStatus: true } },
-      },
-    }),
+    findOrThrow(
+      prisma.user.findUnique({
+        where: { id: athleteUserId },
+        select: {
+          name: true,
+          email: true,
+          image: true,
+          athleteProfile: { select: { healthStatus: true } },
+        },
+      }),
+      "Athlete",
+    ),
 
     prisma.planEnrollment.findMany({
       where: {

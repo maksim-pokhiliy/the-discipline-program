@@ -8,8 +8,11 @@ import {
   type UseMutationResult,
   type UseQueryResult,
 } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
+type NavigateHook = () => (path: string) => void;
+
+const noopNavigateHook: NavigateHook = () => () => {};
 
 type CrudHooksConfig<
   TPageData,
@@ -30,6 +33,7 @@ type CrudHooksConfig<
     delete?: (id: string) => Promise<void>;
   };
   redirectTo?: string;
+  useNavigate?: NavigateHook;
   additionalInvalidateKeys?: QueryKey[];
 };
 
@@ -66,7 +70,7 @@ export const createCrudHooks = <
 
   const useCreate = () => {
     const queryClient = useQueryClient();
-    const router = useRouter();
+    const navigate = (config.useNavigate ?? noopNavigateHook)();
 
     return useMutation({
       mutationFn: (data: TCreateData) => {
@@ -84,7 +88,7 @@ export const createCrudHooks = <
         }
 
         if (config.redirectTo) {
-          router.push(config.redirectTo);
+          navigate(config.redirectTo);
         }
       },
       onError: (error: Error) => {
@@ -95,7 +99,7 @@ export const createCrudHooks = <
 
   const useUpdate = () => {
     const queryClient = useQueryClient();
-    const router = useRouter();
+    const navigate = (config.useNavigate ?? noopNavigateHook)();
 
     return useMutation({
       mutationFn: ({ id, data }: { id: string; data: TUpdateData }) => {
@@ -116,7 +120,7 @@ export const createCrudHooks = <
         }
 
         if (config.redirectTo) {
-          router.push(config.redirectTo);
+          navigate(config.redirectTo);
         }
       },
       onError: (error: Error) => {

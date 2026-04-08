@@ -5,3 +5,4 @@ export * from "./find-or-throw";
 export * from "./json-record";
 export * from "./page-sections";
 export * from "./prisma-error-handler";
+export * from "./toggle-exclusive-featured";

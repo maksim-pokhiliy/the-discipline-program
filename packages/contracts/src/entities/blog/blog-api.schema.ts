@@ -1,29 +1,23 @@
 import { z } from "zod";
 
+import { idParamSchema } from "../../common";
+
 import { BlogToggleField } from "./blog.constants";
 import { blogPostSchema, createBlogPostSchema, updateBlogPostSchema } from "./blog.schema";
 
 export const getBlogPostsResponseSchema = z.array(blogPostSchema);
 
-export const getBlogPostByIdParamsSchema = z.object({
-  id: z.string().cuid(),
-});
+export const getBlogPostByIdParamsSchema = idParamSchema;
 
 export const createBlogPostRequestSchema = createBlogPostSchema;
 
-export const updateBlogPostParamsSchema = z.object({
-  id: z.string().cuid(),
-});
+export const updateBlogPostParamsSchema = idParamSchema;
 
 export const updateBlogPostRequestSchema = updateBlogPostSchema;
 
-export const deleteBlogPostParamsSchema = z.object({
-  id: z.string().cuid(),
-});
+export const deleteBlogPostParamsSchema = idParamSchema;
 
-export const toggleBlogPostParamsSchema = z.object({
-  id: z.string().cuid(),
-});
+export const toggleBlogPostParamsSchema = idParamSchema;
 
 export const toggleBlogPostQuerySchema = z.object({
   field: z.nativeEnum(BlogToggleField),

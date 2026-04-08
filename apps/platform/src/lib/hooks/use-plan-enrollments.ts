@@ -12,6 +12,8 @@ import { platformKeys } from "@repo/query";
 
 import { api } from "../api";
 
+import { useOptimisticMutation } from "./use-optimistic-mutation";
+
 export const usePlanEnrollments = (planId: string) =>
   useQuery({
     queryKey: platformKeys.planEnrollments.byPlan(planId),
@@ -78,42 +80,14 @@ export const useBulkEnrollAthletes = (planId: string) => {
   });
 };
 
-export const useUpdatePlanEnrollment = (planId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdatePlanEnrollmentData }) =>
-      api.planEnrollments.update(planId, id, data),
-    onMutate: async ({ id, data }) => {
-      const key = platformKeys.planEnrollments.byPlan(planId);
-
-      await queryClient.cancelQueries({ queryKey: key });
-
-      const previous = queryClient.getQueryData<PlanEnrollment[]>(key);
-
-      if (previous) {
-        queryClient.setQueryData(
-          key,
-          previous.map((e) => (e.id === id ? { ...e, ...data } : e)),
-        );
-      }
-
-      return { previous };
-    },
-    onError: (_error, _vars, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(platformKeys.planEnrollments.byPlan(planId), context.previous);
-      }
-
-      toast.error("Failed to update enrollment");
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: platformKeys.planEnrollments.byPlan(planId),
-      });
-    },
+export const useUpdatePlanEnrollment = (planId: string) =>
+  useOptimisticMutation<PlanEnrollment[], { id: string; data: UpdatePlanEnrollmentData }>({
+    mutationFn: ({ id, data }) => api.planEnrollments.update(planId, id, data),
+    queryKey: platformKeys.planEnrollments.byPlan(planId),
+    transform: (prev, { id, data }) => prev.map((e) => (e.id === id ? { ...e, ...data } : e)),
+    invalidateKeys: [platformKeys.planEnrollments.byPlan(planId)],
+    errorMessage: "Failed to update enrollment",
   });
-};
 
 export const useDeletePlanEnrollment = (planId: string) => {
   const queryClient = useQueryClient();

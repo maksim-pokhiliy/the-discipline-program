@@ -9,6 +9,7 @@ import { TrainingPlanStatus } from "@repo/contracts/training-plan";
 
 import { prisma } from "../../db/client";
 import { ACTION_ITEM_SEVERITY_MAP, ACTION_ITEM_TYPE_MAP } from "../../mappers/enum-maps";
+import { findOrThrow } from "../../utils";
 import { computeAthletesSummary, computeProgressBuckets } from "../../utils/dashboard-computations";
 import {
   endOfWeekInTz,
@@ -24,10 +25,10 @@ export const platformCoachDashboardApi = {
   getDashboard: async (userId: string): Promise<CoachDashboardData> => {
     const { coachId } = await platformCoachActionItemsApi.reconcile(userId);
 
-    const user = await prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { timezone: true },
-    });
+    const user = await findOrThrow(
+      prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } }),
+      "User",
+    );
 
     const tz = user.timezone;
     const today = startOfTodayInTz(tz);

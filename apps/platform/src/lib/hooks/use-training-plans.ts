@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import type {
@@ -12,6 +13,10 @@ import type {
 import { createCrudHooks, platformKeys } from "@repo/query";
 
 import { api } from "../api";
+
+import { useOptimisticMutation } from "./use-optimistic-mutation";
+
+const useNavigate = () => useRouter().push;
 
 const trainingPlanHooks = createCrudHooks<
   CoachPlansPageData,
@@ -29,6 +34,7 @@ const trainingPlanHooks = createCrudHooks<
     delete: api.trainingPlans.delete,
   },
   redirectTo: "/coach/plans",
+  useNavigate,
   additionalInvalidateKeys: [platformKeys.coachDashboard.data()],
 });
 
@@ -37,37 +43,18 @@ export const useTrainingPlan = trainingPlanHooks.useById;
 export const useCreateTrainingPlan = trainingPlanHooks.useCreate;
 export const useDeleteTrainingPlan = trainingPlanHooks.useDelete;
 
-export const useUpdateTrainingPlan = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateTrainingPlanData }) =>
-      api.trainingPlans.update(id, data),
-    onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: platformKeys.trainingPlans.byId(id) });
-
-      const previous = queryClient.getQueryData<TrainingPlan>(platformKeys.trainingPlans.byId(id));
-
-      if (previous) {
-        queryClient.setQueryData(platformKeys.trainingPlans.byId(id), { ...previous, ...data });
-      }
-
-      return { previous };
-    },
-    onError: (_error, { id }, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(platformKeys.trainingPlans.byId(id), context.previous);
-      }
-
-      toast.error("Failed to update training plan");
-    },
-    onSettled: (_data, _error, { id }) => {
-      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.byId(id) });
-      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-      queryClient.invalidateQueries({ queryKey: platformKeys.coachDashboard.data() });
-    },
+export const useUpdateTrainingPlan = () =>
+  useOptimisticMutation<TrainingPlan, { id: string; data: UpdateTrainingPlanData }>({
+    mutationFn: ({ id, data }) => api.trainingPlans.update(id, data),
+    queryKey: ({ id }) => platformKeys.trainingPlans.byId(id),
+    transform: (prev, { data }) => ({ ...prev, ...data }),
+    invalidateKeys: ({ id }) => [
+      platformKeys.trainingPlans.byId(id),
+      platformKeys.trainingPlans.page(),
+      platformKeys.coachDashboard.data(),
+    ],
+    errorMessage: "Failed to update training plan",
   });
-};
 
 export const useDuplicateTrainingPlan = () => {
   const queryClient = useQueryClient();

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { idParamSchema } from "../../common";
+
 import { ContactStatus } from "./contact.constants";
 import { createContactSubmissionSchema } from "./contact.schema";
 
@@ -24,24 +26,18 @@ export const contactSubmissionItemSchema = z.object({
 
 export const getContactSubmissionsResponseSchema = z.array(contactSubmissionItemSchema);
 
-export const getContactByIdParamsSchema = z.object({
-  id: z.string().cuid(),
-});
+export const getContactByIdParamsSchema = idParamSchema;
 
 export const getContactByIdResponseSchema = contactSubmissionItemSchema;
 
-export const updateContactParamsSchema = z.object({
-  id: z.string().cuid(),
-});
+export const updateContactParamsSchema = idParamSchema;
 
 export const updateContactRequestSchema = z.object({
   status: z.nativeEnum(ContactStatus).optional(),
   notes: z.string().max(2000).nullable().optional(),
 });
 
-export const deleteContactParamsSchema = z.object({
-  id: z.string().cuid(),
-});
+export const deleteContactParamsSchema = idParamSchema;
 
 export const getContactsPageDataResponseSchema = z.object({
   contacts: getContactSubmissionsResponseSchema,
