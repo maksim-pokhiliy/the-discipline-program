@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { platformCoachNotesApi } from "@repo/api-server";
 import {
   getCoachNoteByIdParamsSchema,
+  getCoachNoteByIdResponseSchema,
   updateCoachNoteParamsSchema,
   updateCoachNoteRequestSchema,
   updateCoachNoteResponseSchema,
@@ -14,8 +15,9 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 export const GET = withPlatformAuth(async (_, context, userId) => {
   const { noteId } = getCoachNoteByIdParamsSchema.parse(await context.params);
   const data = await platformCoachNotesApi.getById(userId, noteId);
+  const validated = getCoachNoteByIdResponseSchema.parse(data);
 
-  return NextResponse.json(data);
+  return NextResponse.json(validated);
 });
 
 export const PUT = withPlatformAuth(async (request, context, userId) => {

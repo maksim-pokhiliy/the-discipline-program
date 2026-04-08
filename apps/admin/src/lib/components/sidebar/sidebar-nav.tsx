@@ -19,11 +19,11 @@ export const SidebarNav = ({ groups, expanded }: SidebarNavProps) => {
           {expanded ? (
             <Typography
               variant="overline"
+              component="div"
               sx={{
                 px: 2.5,
                 pt: index === 0 ? 1 : 2,
                 pb: 1,
-                display: "block",
                 color: "text.secondary",
               }}
             >

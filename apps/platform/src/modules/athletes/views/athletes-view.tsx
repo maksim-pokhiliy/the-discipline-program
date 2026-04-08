@@ -5,9 +5,8 @@ import { useCallback } from "react";
 import { Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { QueryWrapper } from "@repo/ui";
+import { PageHeader, QueryWrapper } from "@repo/ui";
 
-import { PlatformPageHeader } from "@app/lib/components";
 import { useCoachAthletes } from "@app/lib/hooks";
 
 import { AthleteDetailDrawer, extractUniquePlans } from "../components";
@@ -42,7 +41,7 @@ export const AthletesView = () => {
 
   return (
     <Stack spacing={4}>
-      <PlatformPageHeader title="Athletes" />
+      <PageHeader title="Athletes" />
 
       <QueryWrapper
         isLoading={isLoading}

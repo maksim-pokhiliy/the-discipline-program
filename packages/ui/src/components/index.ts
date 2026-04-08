@@ -1,6 +1,5 @@
-export * from "./admin-header";
+export * from "./chip-tab";
 export * from "./collapsible-list";
-
 export * from "./data-table";
 export * from "./detail-field";
 export * from "./drawer";
@@ -12,12 +11,14 @@ export * from "./layout";
 export * from "./logo";
 export * from "./modal";
 export * from "./nav-link-button";
-export * from "./platform-bottom-nav";
-export * from "./platform-header";
+export * from "./page-header";
+export * from "./person-card";
+export * from "./pulse-stat";
+export * from "./pulse-stats-card";
 export * from "./query-wrapper";
 export * from "./rich-text-editor";
 export * from "./rich-text-viewer";
-export * from "./sidebar";
+export * from "./status-chip";
 export * from "./tags-input";
 export * from "./stats-card";
 export * from "./toast";

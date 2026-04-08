@@ -1,8 +1,7 @@
 "use client";
 
 import type { DashboardOverview } from "@repo/contracts/coach-dashboard";
-
-import { type PulseStatProps, PulseStatsCard } from "@app/lib/components";
+import { type PulseStatProps, PulseStatsCard } from "@repo/ui";
 
 type PulseSectionProps = {
   overview: DashboardOverview;

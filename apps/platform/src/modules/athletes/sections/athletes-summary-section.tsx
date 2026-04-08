@@ -1,8 +1,7 @@
 "use client";
 
 import type { CoachAthletesSummary } from "@repo/contracts/coach-athletes";
-
-import { type PulseStatProps, PulseStatsCard } from "@app/lib/components";
+import { type PulseStatProps, PulseStatsCard } from "@repo/ui";
 
 type AthletesSummarySectionProps = {
   summary: CoachAthletesSummary;

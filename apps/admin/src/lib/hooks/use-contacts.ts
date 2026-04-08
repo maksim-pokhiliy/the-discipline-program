@@ -8,9 +8,10 @@ import {
   type GetContactByIdResponse,
   type UpdateContactRequest,
 } from "@repo/contracts/contact";
-import { adminKeys, createCrudHooks } from "@repo/query";
+import { createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
+import { adminKeys } from "../api/keys";
 
 import { useNavigate } from "./use-navigate";
 

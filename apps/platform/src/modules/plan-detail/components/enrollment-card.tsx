@@ -9,8 +9,8 @@ import {
   type PlanEnrollmentStatus,
 } from "@repo/contracts/plan-enrollment";
 import { formatDate } from "@repo/shared";
+import { PersonCard, StatusChip } from "@repo/ui";
 
-import { PersonCard, StatusChip } from "@app/lib/components";
 import { ENROLLMENT_STATUS_COLORS, HEALTH_STATUS_CHIPS } from "@app/lib/config";
 
 import { EnrollmentActionMenu } from "./enrollment-action-menu";

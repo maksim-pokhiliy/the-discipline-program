@@ -10,8 +10,9 @@ import {
   ProcessStatus,
 } from "@repo/contracts/coach-dashboard";
 import { rateToPercent } from "@repo/shared";
+import { ChipTab } from "@repo/ui";
 
-import { AthleteCardLink, ChipTab } from "@app/lib/components";
+import { AthleteCardLink } from "@app/lib/components";
 
 import { AthleteCard, DashboardSection } from "../components";
 

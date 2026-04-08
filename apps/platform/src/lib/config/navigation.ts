@@ -1,4 +1,4 @@
-import { type PlatformNavigationConfig } from "../types";
+import { type PlatformNavigationConfig } from "@repo/shared";
 
 export const COACH_NAVIGATION: PlatformNavigationConfig = {
   items: [

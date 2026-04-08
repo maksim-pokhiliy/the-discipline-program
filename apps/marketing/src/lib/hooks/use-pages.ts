@@ -10,9 +10,10 @@ import {
   type ContactPageData,
   type FaqPageData,
 } from "@repo/contracts/pages";
-import { marketingKeys, STALE_TIMES } from "@repo/query";
+import { STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
+import { marketingKeys } from "../api/keys";
 
 type UsePageOptions<T> = {
   initialData?: T;

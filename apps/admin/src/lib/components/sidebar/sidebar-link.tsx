@@ -4,7 +4,7 @@ import { ListItemButton, ListItemIcon, ListItemText, Tooltip } from "@mui/materi
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { isActiveHref } from "../../hooks";
+import { isActiveHref } from "@repo/ui";
 
 import { getNavIcon } from "./icon-map";
 

@@ -1,4 +1,4 @@
-import { type AdminNavigationConfig } from "../types";
+import { type AdminNavigationConfig } from "@repo/shared";
 
 export const ADMIN_NAVIGATION: AdminNavigationConfig = {
   dashboard: { text: "Dashboard", href: "/", icon: "dashboard" },

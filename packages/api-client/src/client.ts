@@ -51,7 +51,7 @@ export class ApiClient {
 
     let fullUrl = `${this.baseUrl}${url}`;
 
-    if (!isFormData) {
+    if (body && !isFormData) {
       headers["Content-Type"] = "application/json";
     }
 

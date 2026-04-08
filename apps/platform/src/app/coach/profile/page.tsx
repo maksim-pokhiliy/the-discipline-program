@@ -1,11 +1,11 @@
 import { Stack } from "@mui/material";
 
-import { PlatformPageHeader } from "@app/lib/components";
+import { PageHeader } from "@repo/ui";
 
 const ProfilePage = () => {
   return (
     <Stack>
-      <PlatformPageHeader title="Profile" />
+      <PageHeader title="Profile" />
     </Stack>
   );
 };

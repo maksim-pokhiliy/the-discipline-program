@@ -6,9 +6,10 @@ import {
   type CreateBlogPostData,
   type UpdateBlogPostData,
 } from "@repo/contracts/blog";
-import { adminKeys, createCrudHooks, createToggleHook } from "@repo/query";
+import { createCrudHooks, createToggleHook } from "@repo/query";
 
 import { api } from "../api";
+import { adminKeys } from "../api/keys";
 
 import { useNavigate } from "./use-navigate";
 

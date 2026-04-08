@@ -3,9 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { type BlogPostPageData } from "@repo/contracts/blog";
-import { marketingKeys } from "@repo/query";
 
 import { api } from "../api";
+import { marketingKeys } from "../api/keys";
 
 type UseBlogArticleOptions = {
   initialData?: BlogPostPageData;

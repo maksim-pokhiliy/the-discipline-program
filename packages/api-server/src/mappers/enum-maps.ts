@@ -7,14 +7,16 @@ import {
   type Currency as PrismaCurrency,
   type Gender as PrismaGender,
   type HealthStatus as PrismaHealthStatus,
+  MarketingBlogCategory as PrismaMarketingBlogCategory,
   PlanEnrollmentStatus as PrismaPlanEnrollmentStatus,
   type PriceInterval as PrismaPriceInterval,
-  type Role as PrismaRole,
+  Role as PrismaRole,
   TrainingPlanStatus as PrismaTrainingPlanStatus,
 } from "@prisma/client";
 
 import { Gender, HealthStatus } from "@repo/contracts/athlete-profile";
 import { UserRole } from "@repo/contracts/auth";
+import { BlogCategory } from "@repo/contracts/blog";
 import {
   ActionItemResolveReason,
   ActionItemSeverity,
@@ -60,9 +62,18 @@ export const ROLE_MAP: Record<PrismaRole, UserRole> = {
 };
 
 export const ROLE_TO_PRISMA_MAP: Record<UserRole, PrismaRole> = {
-  [UserRole.USER]: "USER",
-  [UserRole.COACH]: "COACH",
-  [UserRole.ADMIN]: "ADMIN",
+  [UserRole.USER]: PrismaRole.USER,
+  [UserRole.COACH]: PrismaRole.COACH,
+  [UserRole.ADMIN]: PrismaRole.ADMIN,
+};
+
+export const BLOG_CATEGORY_MAP: Record<PrismaMarketingBlogCategory, BlogCategory> = {
+  [PrismaMarketingBlogCategory.UNCATEGORIZED]: BlogCategory.UNCATEGORIZED,
+  [PrismaMarketingBlogCategory.FITNESS]: BlogCategory.FITNESS,
+  [PrismaMarketingBlogCategory.NUTRITION]: BlogCategory.NUTRITION,
+  [PrismaMarketingBlogCategory.MINDSET]: BlogCategory.MINDSET,
+  [PrismaMarketingBlogCategory.TRAINING]: BlogCategory.TRAINING,
+  [PrismaMarketingBlogCategory.RECOVERY]: BlogCategory.RECOVERY,
 };
 
 export const GENDER_MAP: Record<PrismaGender, Gender> = {

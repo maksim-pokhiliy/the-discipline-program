@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { type Metadata } from "next";
 
 import { BLOG_CATEGORY_LABELS } from "@repo/contracts/blog";
@@ -5,6 +7,8 @@ import { BLOG_CATEGORY_LABELS } from "@repo/contracts/blog";
 import { serverApi } from "@app/lib/api/server";
 import { SEO_CONFIG } from "@app/lib/seo";
 import { BlogArticlePageClient } from "@app/modules/blog-article";
+
+const getBlogArticle = cache((slug: string) => serverApi.pages.getBlogArticle(slug));
 
 type BlogArticlePageProps = {
   params: Promise<{ slug: string }>;
@@ -14,7 +18,7 @@ export const generateMetadata = async ({ params }: BlogArticlePageProps): Promis
   const { slug } = await params;
 
   try {
-    const { post } = await serverApi.pages.getBlogArticle(slug);
+    const { post } = await getBlogArticle(slug);
 
     const images = post.coverImage ? [post.coverImage] : [];
 
@@ -52,7 +56,7 @@ export const dynamic = "force-dynamic";
 
 const BlogArticlePage = async ({ params }: BlogArticlePageProps) => {
   const { slug } = await params;
-  const initialData = await serverApi.pages.getBlogArticle(slug);
+  const initialData = await getBlogArticle(slug);
 
   return <BlogArticlePageClient slug={slug} initialData={initialData} />;
 };

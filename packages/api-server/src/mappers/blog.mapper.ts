@@ -1,23 +1,10 @@
-import {
-  type MarketingBlogCategory as PrismaMarketingBlogCategory,
-  type MarketingBlogPost,
-} from "@prisma/client";
+import { type MarketingBlogPost } from "@prisma/client";
 
-import { BlogCategory, type BlogPost, type PublicBlogPost } from "@repo/contracts/blog";
+import { type BlogPost, type PublicBlogPost } from "@repo/contracts/blog";
+
+import { BLOG_CATEGORY_MAP } from "./enum-maps";
 
 type PublishedPost = MarketingBlogPost & { publishedAt: Date };
-
-const BLOG_CATEGORY_MAP: Record<PrismaMarketingBlogCategory, BlogCategory> = {
-  UNCATEGORIZED: BlogCategory.UNCATEGORIZED,
-  FITNESS: BlogCategory.FITNESS,
-  NUTRITION: BlogCategory.NUTRITION,
-  MINDSET: BlogCategory.MINDSET,
-  TRAINING: BlogCategory.TRAINING,
-  RECOVERY: BlogCategory.RECOVERY,
-};
-
-const mapBlogCategory = (category: PrismaMarketingBlogCategory): BlogCategory =>
-  BLOG_CATEGORY_MAP[category];
 
 export const isPublishedPost = (post: MarketingBlogPost): post is PublishedPost => {
   return post.publishedAt !== null;
@@ -33,7 +20,7 @@ export const mapToBlogPost = (record: MarketingBlogPost): BlogPost => ({
   publishedAt: record.publishedAt,
   readTime: record.readTime,
   authorName: record.authorName,
-  category: mapBlogCategory(record.category),
+  category: BLOG_CATEGORY_MAP[record.category],
   tags: record.tags,
   isPublished: record.isPublished,
   isFeatured: record.isFeatured,
@@ -52,6 +39,6 @@ export const mapToPublicBlogPost = (post: PublishedPost): PublicBlogPost => ({
   isFeatured: post.isFeatured,
   readTime: post.readTime,
   authorName: post.authorName,
-  category: mapBlogCategory(post.category),
+  category: BLOG_CATEGORY_MAP[post.category],
   tags: post.tags,
 });

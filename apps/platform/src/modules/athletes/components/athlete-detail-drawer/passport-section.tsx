@@ -6,8 +6,8 @@ import type { HealthStatus } from "@repo/contracts/athlete-profile";
 import type { NextWorkout } from "@repo/contracts/coach-athletes";
 import type { ProcessStatus } from "@repo/contracts/coach-dashboard";
 import { formatDate } from "@repo/shared";
+import { StatusChip } from "@repo/ui";
 
-import { StatusChip } from "@app/lib/components";
 import { HEALTH_STATUS_CHIPS, PROCESS_STATUS_CHIPS } from "@app/lib/config";
 
 type PassportSectionProps = {

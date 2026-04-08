@@ -96,7 +96,7 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
                 sx={{ flex: 1, typography: "h4", "& input": { p: 0 } }}
               />
 
-              <PlanStatusSelect planId={data.id} status={data.status} />
+              <PlanStatusSelect planId={data.id} planName={data.name} status={data.status} />
             </Stack>
 
             <InputBase

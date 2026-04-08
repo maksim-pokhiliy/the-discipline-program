@@ -1,6 +1,5 @@
-import { COACH_NAVIGATION } from "@repo/shared";
-
 import { PlatformLayout } from "@app/lib/components";
+import { COACH_NAVIGATION } from "@app/lib/config";
 
 const CoachLayout = ({ children }: { children: React.ReactNode }) => {
   return (

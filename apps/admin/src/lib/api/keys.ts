@@ -1,4 +1,4 @@
-import { createEntityKeys } from "./create-entity-keys";
+import { createEntityKeys } from "@repo/query";
 
 const ROOT = ["admin"] as const;
 

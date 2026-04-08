@@ -14,8 +14,7 @@ import {
 } from "@mui/material";
 
 import { LAYOUT, type AdminNavigationConfig } from "@repo/shared";
-
-import { Logo } from "../logo";
+import { Logo } from "@repo/ui";
 
 import { SidebarLink } from "./sidebar-link";
 import { SidebarNav } from "./sidebar-nav";

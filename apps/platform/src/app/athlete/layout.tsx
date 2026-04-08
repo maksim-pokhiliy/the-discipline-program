@@ -1,6 +1,5 @@
-import { ATHLETE_NAVIGATION } from "@repo/shared";
-
 import { PlatformLayout } from "@app/lib/components";
+import { ATHLETE_NAVIGATION } from "@app/lib/config";
 
 const AthleteLayout = ({ children }: { children: React.ReactNode }) => {
   return (
