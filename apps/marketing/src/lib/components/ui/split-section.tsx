@@ -2,7 +2,7 @@ import { type ReactNode } from "react";
 
 import { Box, Grid, type Theme } from "@mui/material";
 
-import { buildOverlay } from "@app/lib/utils/overlay";
+import { buildOverlay } from "@repo/mui";
 
 type SplitSectionProps = {
   backgroundImage: string;

@@ -3,8 +3,7 @@
 import { AppBar, Container, Stack } from "@mui/material";
 
 import { LAYOUT } from "@repo/shared";
-
-import { Logo } from "../logo";
+import { Logo } from "@repo/ui";
 
 import { PlatformUserMenu } from "./platform-user-menu";
 

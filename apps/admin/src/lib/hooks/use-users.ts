@@ -4,9 +4,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import type { AdminUser, GetUsersPageDataResponse, UpdateUserRoleData } from "@repo/contracts/user";
-import { adminKeys, createCrudHooks } from "@repo/query";
+import { createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
+import { adminKeys } from "../api/keys";
 
 import { useNavigate } from "./use-navigate";
 

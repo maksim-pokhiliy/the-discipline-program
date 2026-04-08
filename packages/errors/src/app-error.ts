@@ -14,17 +14,13 @@ export class AppError extends Error {
   public readonly timestamp: string;
 
   constructor(message: string, options: AppErrorOptions = {}) {
-    super(message);
+    super(message, options.cause ? { cause: options.cause } : undefined);
 
     this.name = this.constructor.name;
     this.code = options.code || ERROR_CODES.INTERNAL_SERVER_ERROR;
     this.statusCode = options.statusCode || 500;
     this.details = options.details;
     this.timestamp = new Date().toISOString();
-
-    if (options.cause) {
-      this.cause = options.cause;
-    }
 
     Error.captureStackTrace(this, this.constructor);
   }

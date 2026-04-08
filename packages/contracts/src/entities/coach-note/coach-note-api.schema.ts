@@ -8,6 +8,8 @@ export const getCoachNoteByIdParamsSchema = z.object({
   noteId: z.string().cuid(),
 });
 
+export const getCoachNoteByIdResponseSchema = coachNoteSchema;
+
 export const createCoachNoteRequestSchema = createCoachNoteSchema;
 export const createCoachNoteResponseSchema = coachNoteSchema;
 

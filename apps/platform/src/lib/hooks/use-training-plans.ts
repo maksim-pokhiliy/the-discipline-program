@@ -10,11 +10,10 @@ import type {
   TrainingPlan,
   UpdateTrainingPlanData,
 } from "@repo/contracts/training-plan";
-import { createCrudHooks, platformKeys } from "@repo/query";
+import { createCrudHooks, useOptimisticMutation } from "@repo/query";
 
 import { api } from "../api";
-
-import { useOptimisticMutation } from "./use-optimistic-mutation";
+import { platformKeys } from "../api/keys";
 
 const useNavigate = () => useRouter().push;
 

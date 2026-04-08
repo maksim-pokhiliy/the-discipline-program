@@ -2,8 +2,9 @@
 
 import { Stack } from "@mui/material";
 
-import { MARKETING_NAVIGATION } from "@repo/shared";
 import { NavLinkButton } from "@repo/ui";
+
+import { MARKETING_NAVIGATION } from "@app/lib/config";
 
 export const Navigation = () => {
   const finalLinks = MARKETING_NAVIGATION.headerLinks;

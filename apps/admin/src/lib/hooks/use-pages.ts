@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { type UpdatePageSectionData } from "@repo/contracts/pages";
-import { adminKeys } from "@repo/query";
 
 import { api } from "../api";
+import { adminKeys } from "../api/keys";
 
 export const usePagesListData = () =>
   useQuery({

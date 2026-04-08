@@ -1,4 +1,4 @@
-import type { MarketingNavigationConfig } from "../types";
+import type { MarketingNavigationConfig } from "@repo/shared";
 
 export const MARKETING_NAVIGATION: MarketingNavigationConfig = {
   headerLinks: [

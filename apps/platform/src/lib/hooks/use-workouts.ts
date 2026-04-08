@@ -4,11 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import type { CreateWorkoutData, UpdateWorkoutData, Workout } from "@repo/contracts/workout";
-import { platformKeys } from "@repo/query";
+import { useOptimisticMutation } from "@repo/query";
 
 import { api } from "../api";
-
-import { useOptimisticMutation } from "./use-optimistic-mutation";
+import { platformKeys } from "../api/keys";
 
 export const useWorkouts = (planId: string) =>
   useQuery({

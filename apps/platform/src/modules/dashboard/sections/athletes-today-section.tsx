@@ -6,8 +6,9 @@ import { Stack, Tabs, Typography } from "@mui/material";
 
 import { HealthStatus } from "@repo/contracts/athlete-profile";
 import { type AthleteDailySummary, TodayStatus } from "@repo/contracts/coach-dashboard";
+import { ChipTab } from "@repo/ui";
 
-import { AthleteCardLink, ChipTab } from "@app/lib/components";
+import { AthleteCardLink } from "@app/lib/components";
 import { HEALTH_STATUS_CHIPS } from "@app/lib/config";
 
 import { AthleteCard, DashboardSection } from "../components";

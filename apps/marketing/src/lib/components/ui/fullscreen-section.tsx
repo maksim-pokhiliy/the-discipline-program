@@ -15,7 +15,7 @@ import {
 import { type Variants, motion } from "framer-motion";
 import Link from "next/link";
 
-import { buildOverlay } from "@app/lib/utils/overlay";
+import { buildOverlay } from "@repo/mui";
 
 const MotionBox = motion.create(Box);
 

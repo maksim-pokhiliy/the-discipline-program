@@ -8,11 +8,10 @@ import type {
   PlanEnrollment,
   UpdatePlanEnrollmentData,
 } from "@repo/contracts/plan-enrollment";
-import { platformKeys } from "@repo/query";
+import { useOptimisticMutation } from "@repo/query";
 
 import { api } from "../api";
-
-import { useOptimisticMutation } from "./use-optimistic-mutation";
+import { platformKeys } from "../api/keys";
 
 export const usePlanEnrollments = (planId: string) =>
   useQuery({

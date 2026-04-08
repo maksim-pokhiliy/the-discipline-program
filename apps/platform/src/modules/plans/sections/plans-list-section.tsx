@@ -8,8 +8,8 @@ import { Fab, Stack, Tabs, Typography } from "@mui/material";
 import type { TrainingPlanListItem } from "@repo/contracts/training-plan";
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
 import { LAYOUT } from "@repo/shared";
+import { ChipTab } from "@repo/ui";
 
-import { ChipTab } from "@app/lib/components";
 import {
   useActivateTrainingPlan,
   useArchiveTrainingPlan,

@@ -16,6 +16,7 @@ import { centsToAmount } from "@repo/shared";
 
 import { prisma } from "../../db/client";
 import {
+  BLOG_CATEGORY_MAP,
   CONTACT_STATUS_TO_PRISMA_MAP,
   CURRENCY_MAP,
   PRICE_INTERVAL_MAP,
@@ -194,7 +195,7 @@ const getRecentActivity = async (): Promise<ActivityItem[]> => {
       id: p.id,
       type: DashboardActivityType.BLOG_POST,
       title: `New post: ${p.title}`,
-      subtitle: p.category,
+      subtitle: BLOG_CATEGORY_MAP[p.category],
       date: p.createdAt,
       href: `/blog/${p.id}`,
     })),

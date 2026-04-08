@@ -7,7 +7,9 @@ import { Box, Container, Stack } from "@mui/material";
 import { SessionGuard } from "@repo/auth";
 import { signOut, useSession } from "@repo/auth/client";
 import { type PlatformNavigationConfig } from "@repo/shared";
-import { PlatformBottomNav, PlatformHeader } from "@repo/ui";
+
+import { PlatformBottomNav } from "@app/lib/components/platform-bottom-nav";
+import { PlatformHeader } from "@app/lib/components/platform-header";
 
 type PlatformLayoutProps = {
   logoHref: string;

@@ -8,6 +8,7 @@ import { Box, Chip, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } fro
 import Link from "next/link";
 
 import { type GetContactByIdResponse, ContactStatus } from "@repo/contracts/contact";
+import { TEXT_CLAMP_SX } from "@repo/mui";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";
 import {
@@ -19,7 +20,6 @@ import {
 } from "@repo/ui";
 
 import { useDeleteContact, useUpdateContact } from "@app/lib/hooks";
-import { TEXT_CLAMP_SX } from "@app/lib/styles/text-clamp";
 
 import { CONTACT_STATUS_CONFIG } from "../../constants";
 

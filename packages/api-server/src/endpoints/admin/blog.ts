@@ -9,7 +9,7 @@ import {
 
 import { prisma } from "../../db/client";
 import { mapToBlogPost } from "../../mappers";
-import { findOrThrow, handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError, toggleExclusiveFeatured } from "../../utils";
 
 const WORDS_PER_MINUTE = 200;
 
@@ -46,7 +46,7 @@ const prepareCreateInput = (data: CreateBlogPostData): Prisma.MarketingBlogPostC
 
 type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
-const unfeaturedOthers = (tx: TxClient, excludeId?: string): Promise<Prisma.BatchPayload> =>
+const unfeatureOthers = (tx: TxClient, excludeId?: string): Promise<Prisma.BatchPayload> =>
   tx.marketingBlogPost.updateMany({
     where: { isFeatured: true, ...(excludeId ? { id: { not: excludeId } } : {}) },
     data: { isFeatured: false },
@@ -82,7 +82,7 @@ export const adminBlogApi = {
 
       return await prisma.$transaction(async (tx) => {
         if (dbInput.isFeatured) {
-          await unfeaturedOthers(tx);
+          await unfeatureOthers(tx);
         }
 
         const post = await tx.marketingBlogPost.create({
@@ -119,7 +119,7 @@ export const adminBlogApi = {
 
       return await prisma.$transaction(async (tx) => {
         if (data.isFeatured === true) {
-          await unfeaturedOthers(tx, id);
+          await unfeatureOthers(tx, id);
         }
 
         const post = await tx.marketingBlogPost.update({
@@ -164,23 +164,17 @@ export const adminBlogApi = {
   },
 
   toggleBlogPostFeatured: async (id: string): Promise<BlogPost> =>
-    prisma.$transaction(async (tx) => {
-      const post = await findOrThrow(
-        tx.marketingBlogPost.findUnique({ where: { id } }),
-        "Blog post",
-      );
-
-      const newValue = !post.isFeatured;
-
-      if (newValue) {
-        await unfeaturedOthers(tx, id);
-      }
-
-      const updated = await tx.marketingBlogPost.update({
-        where: { id },
-        data: { isFeatured: newValue },
-      });
-
-      return mapToBlogPost(updated);
+    toggleExclusiveFeatured({
+      find: () => prisma.marketingBlogPost.findUnique({ where: { id } }),
+      unfeatureOthers: () =>
+        prisma.marketingBlogPost.updateMany({
+          where: { isFeatured: true, id: { not: id } },
+          data: { isFeatured: false },
+        }),
+      update: (isFeatured) =>
+        prisma.marketingBlogPost.update({ where: { id }, data: { isFeatured } }),
+      map: mapToBlogPost,
+      entityName: "Blog post",
+      id,
     }),
 };

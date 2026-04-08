@@ -132,7 +132,7 @@ export const adminProductsApi = {
     prisma.$transaction((tx) =>
       toggleExclusiveFeatured({
         find: () => tx.product.findUnique({ where: { id }, include: includeWithPrices }),
-        unfeaturedOthers: () =>
+        unfeatureOthers: () =>
           tx.product.updateMany({
             where: { isFeatured: true, id: { not: id } },
             data: { isFeatured: false },

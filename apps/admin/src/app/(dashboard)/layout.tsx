@@ -6,8 +6,10 @@ import { Stack } from "@mui/material";
 
 import { AUTH_ROUTES, SessionGuard } from "@repo/auth";
 import { signOut, useSession } from "@repo/auth/client";
-import { ADMIN_NAVIGATION } from "@repo/shared";
-import { AdminHeader, Sidebar, useSidebar } from "@repo/ui";
+
+import { AdminHeader } from "@app/lib/components/admin-header";
+import { Sidebar, useSidebar } from "@app/lib/components/sidebar";
+import { ADMIN_NAVIGATION } from "@app/lib/config";
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   const { expanded, toggle } = useSidebar();

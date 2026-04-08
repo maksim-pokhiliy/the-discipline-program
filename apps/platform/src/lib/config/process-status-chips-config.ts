@@ -5,8 +5,7 @@ import TrendingFlatIcon from "@mui/icons-material/TrendingFlat";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 
 import { PROCESS_STATUS_LABELS, ProcessStatus } from "@repo/contracts/coach-dashboard";
-
-import type { StatusChipConfig } from "../components/status-chip";
+import type { StatusChipConfig } from "@repo/ui";
 
 export const PROCESS_STATUS_CHIPS: Record<ProcessStatus, StatusChipConfig> = {
   [ProcessStatus.ON_TRACK]: {

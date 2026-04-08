@@ -6,17 +6,13 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 
-type PlatformPageHeaderProps = {
+type PageHeaderProps = {
   title: string;
   backHref?: string;
   actions?: ReactNode;
 };
 
-export const PlatformPageHeader: React.FC<PlatformPageHeaderProps> = ({
-  title,
-  backHref,
-  actions,
-}) => (
+export const PageHeader: React.FC<PageHeaderProps> = ({ title, backHref, actions }) => (
   <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
     {backHref && (
       <IconButton component={Link} href={backHref}>

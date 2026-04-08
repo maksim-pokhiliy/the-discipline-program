@@ -9,8 +9,8 @@ import {
   SEVERITY_PRIORITY,
 } from "@repo/contracts/coach-action-item";
 import type { DashboardActionItem } from "@repo/contracts/coach-dashboard";
+import type { StatusChipConfig } from "@repo/ui";
 
-import type { StatusChipConfig } from "@app/lib/components";
 import { getHealthChipFromMessage } from "@app/lib/config";
 
 export const INITIAL_VISIBLE_COUNT = 3;

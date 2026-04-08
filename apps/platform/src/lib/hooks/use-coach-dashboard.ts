@@ -2,9 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { platformKeys } from "@repo/query";
-
 import { api } from "../api";
+import { platformKeys } from "../api/keys";
 
 export const useCoachDashboard = () => {
   return useQuery({

@@ -5,8 +5,7 @@ import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 
 import { HEALTH_STATUS_LABELS, HealthStatus } from "@repo/contracts/athlete-profile";
-
-import type { StatusChipConfig } from "../components/status-chip";
+import type { StatusChipConfig } from "@repo/ui";
 
 export const HEALTH_STATUS_CHIPS: Record<HealthStatus, StatusChipConfig> = {
   [HealthStatus.HEALTHY]: {

@@ -70,19 +70,23 @@ export const generateStructuredData = (
           })) || [],
       };
 
-    case "reviews":
+    case "reviews": {
+      const ratings = data?.reviews?.map((r) => r.rating) ?? [];
+      const avg = ratings.length > 0 ? ratings.reduce((a, b) => a + b, 0) / ratings.length : 0;
+
       return {
         "@context": "https://schema.org",
-        "@type": "Review",
-        itemReviewed: {
-          "@type": "Organization",
-          name: SEO_CONFIG.organization.name,
+        "@type": "Organization",
+        name: SEO_CONFIG.organization.name,
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: Math.round(avg * 10) / 10,
+          bestRating: 5,
+          worstRating: 1,
+          reviewCount: ratings.length,
         },
-        reviewRating: data?.reviews?.map((review) => ({
-          "@type": "Rating",
-          ratingValue: review.rating,
-        })),
       };
+    }
 
     case "faq":
       return {

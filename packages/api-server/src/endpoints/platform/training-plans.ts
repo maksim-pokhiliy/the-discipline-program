@@ -261,6 +261,7 @@ export const platformTrainingPlansApi = {
               title: workout.title,
               description: workout.description,
               content: workout.content,
+              sortOrder: workout.sortOrder,
             })),
           });
         }

@@ -5,8 +5,7 @@ import { AppBar, IconButton, Toolbar, Typography, useMediaQuery, type Theme } fr
 import { usePathname } from "next/navigation";
 
 import { LAYOUT, type AdminNavigationConfig } from "@repo/shared";
-
-import { isActiveHref } from "../../hooks";
+import { isActiveHref } from "@repo/ui";
 
 type AdminHeaderProps = {
   onMenuClick: () => void;

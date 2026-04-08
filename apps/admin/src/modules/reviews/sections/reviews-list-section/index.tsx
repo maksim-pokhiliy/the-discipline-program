@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 
 import { type Review } from "@repo/contracts/review";
+import { TEXT_CLAMP_SX } from "@repo/mui";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";
 import {
@@ -30,7 +31,6 @@ import {
 
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteReview, useToggleReviewActive } from "@app/lib/hooks";
-import { TEXT_CLAMP_SX } from "@app/lib/styles/text-clamp";
 
 const filters: DataTableFilter<Review>[] = [
   {

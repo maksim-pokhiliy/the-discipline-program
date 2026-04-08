@@ -2,7 +2,7 @@
 
 import { Alert, type AlertColor, AlertTitle, Avatar, Stack } from "@mui/material";
 
-import { StatusChip, type StatusChipConfig } from "@app/lib/components";
+import { StatusChip, type StatusChipConfig } from "@repo/ui";
 
 type AthleteCardProps = {
   name: string;
