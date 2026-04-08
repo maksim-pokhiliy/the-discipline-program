@@ -15,7 +15,7 @@ import { asJsonRecord } from "../../utils/json-record";
 import { getPageSectionsOrder } from "../../utils/page-sections";
 
 const isValidPageSlug = (slug: string): slug is PageSlug => {
-  return Object.values(PageSlug).includes(slug as PageSlug);
+  return (Object.values(PageSlug) as string[]).includes(slug);
 };
 
 export const adminPagesApi = {
@@ -25,10 +25,10 @@ export const adminPagesApi = {
     });
 
     return pages
-      .filter((p) => isValidPageSlug(p.slug))
+      .filter((p): p is typeof p & { slug: PageSlug } => isValidPageSlug(p.slug))
       .map((p) => ({
         id: p.id,
-        slug: p.slug as PageSlug,
+        slug: p.slug,
         title: p.title,
         updatedAt: p.updatedAt,
       }));
@@ -76,7 +76,7 @@ export const adminPagesApi = {
         data: payload,
       });
     } catch (error) {
-      handlePrismaError(error, { entity: "Page", field: "slug" });
+      return handlePrismaError(error, { entity: "Page", field: "slug" });
     }
   },
 
@@ -102,7 +102,7 @@ export const adminPagesApi = {
         },
       });
     } catch (error) {
-      handlePrismaError(error, { entity: "Page section" });
+      return handlePrismaError(error, { entity: "Page section" });
     }
   },
 };

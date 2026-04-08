@@ -20,20 +20,20 @@ export const GET = withPlatformAuth(async (_, context) => {
   return NextResponse.json(validated);
 });
 
-export const PUT = withPlatformAuth(async (request, context) => {
+export const PUT = withPlatformAuth(async (request, context, userId) => {
   const { definitionId } = updateBenchmarkDefinitionParamsSchema.parse(await context.params);
   const body = await request.json();
   const data = updateBenchmarkDefinitionRequestSchema.parse(body);
-  const result = await platformBenchmarkDefinitionsApi.update(definitionId, data);
+  const result = await platformBenchmarkDefinitionsApi.update(userId, definitionId, data);
   const validated = updateBenchmarkDefinitionResponseSchema.parse(result);
 
   return NextResponse.json(validated);
 });
 
-export const DELETE = withPlatformAuth(async (_, context) => {
+export const DELETE = withPlatformAuth(async (_, context, userId) => {
   const { definitionId } = deleteBenchmarkDefinitionParamsSchema.parse(await context.params);
 
-  await platformBenchmarkDefinitionsApi.delete(definitionId);
+  await platformBenchmarkDefinitionsApi.delete(userId, definitionId);
 
   return NextResponse.json({ success: true });
 });

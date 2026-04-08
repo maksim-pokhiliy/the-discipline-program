@@ -12,7 +12,13 @@ import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
 import { NotFoundError } from "@repo/errors";
 
-import { cleanupRaw, createTestCoach, createTestPlan, createTestUser } from "../../test/helpers";
+import {
+  cleanup,
+  cleanupRaw,
+  createTestCoach,
+  createTestPlan,
+  createTestUser,
+} from "../../test/helpers";
 
 import { platformCoachActionItemsApi } from "./coach-action-items";
 import { daysAgo } from "./coach-action-items.test-helpers";
@@ -118,26 +124,16 @@ describe("platformCoachActionItemsApi", () => {
       .deleteMany({ where: { coachId: coach.profile.id } })
       .catch(() => {});
 
-    for (const { table, id } of toCleanup.reverse()) {
-      const delegate = (
-        cleanupRaw as unknown as Record<
-          string,
-          { delete: (args: { where: { id: string } }) => Promise<unknown> }
-        >
-      )[table];
-
-      if (delegate) {
-        await delegate.delete({ where: { id } }).catch(() => {});
-      }
-    }
-
-    await cleanupRaw.trainingPlan.delete({ where: { id: plan.id } }).catch(() => {});
-    await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
-    await cleanupRaw.user.delete({ where: { id: coach.user.id } }).catch(() => {});
-    await cleanupRaw.user.delete({ where: { id: athleteMissed.id } }).catch(() => {});
-    await cleanupRaw.user.delete({ where: { id: athleteNew.id } }).catch(() => {});
-    await cleanupRaw.user.delete({ where: { id: athleteHealth.id } }).catch(() => {});
-    await cleanupRaw.user.delete({ where: { id: athleteResolve.id } }).catch(() => {});
+    await cleanup(
+      ...toCleanup,
+      { table: "trainingPlan", id: plan.id },
+      { table: "coachProfile", id: coach.profile.id },
+      { table: "user", id: coach.user.id },
+      { table: "user", id: athleteMissed.id },
+      { table: "user", id: athleteNew.id },
+      { table: "user", id: athleteHealth.id },
+      { table: "user", id: athleteResolve.id },
+    );
   });
 
   describe("reconcile", () => {

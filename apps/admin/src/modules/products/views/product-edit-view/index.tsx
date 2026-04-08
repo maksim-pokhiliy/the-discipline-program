@@ -9,9 +9,12 @@ import { FormView, QueryWrapper } from "@repo/ui";
 
 import { useProduct, useUpdateProduct } from "@app/lib/hooks";
 
-import { toProductApiData } from "../../components";
-import { ProductForm } from "../../components/product-form";
-import { productFormSchema, type ProductFormData } from "../../components/product-form-schema";
+import {
+  ProductForm,
+  productFormSchema,
+  toProductApiData,
+  type ProductFormData,
+} from "../../components";
 
 type ProductEditFormProps = {
   product: Product;

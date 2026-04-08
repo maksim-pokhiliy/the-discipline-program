@@ -125,7 +125,7 @@ export const platformWorkoutsApi = {
     try {
       await prisma.workout.delete({ where: { id } });
     } catch (error) {
-      handlePrismaError(error, { entity: "Workout" });
+      return handlePrismaError(error, { entity: "Workout" });
     }
   },
 
@@ -216,7 +216,7 @@ export const platformWorkoutsApi = {
         ),
       );
     } catch (error) {
-      handlePrismaError(error, { entity: "Workout" });
+      return handlePrismaError(error, { entity: "Workout" });
     }
   },
 

@@ -14,7 +14,7 @@ export const blogPostSchema = z.object({
   content: z.string().min(BLOG_CONSTANTS.MIN_CONTENT_LENGTH),
   coverImage: z.string().nullable(),
   publishedAt: z.coerce.date().nullable(),
-  readTime: z.number().int().positive().nullable(),
+  readTime: z.number().int().nonnegative().nullable(),
   authorName: z.string().min(1, "Author name is required"),
   category: z.nativeEnum(BlogCategory).default(BlogCategory.UNCATEGORIZED),
   tags: z.array(z.string()).default([]),

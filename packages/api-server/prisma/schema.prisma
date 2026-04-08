@@ -280,6 +280,7 @@ model WorkoutLog {
   @@unique([userId, workoutId])
   @@index([createdAt])
   @@index([userId])
+  @@index([userId, date])
   @@index([workoutId])
   @@map("app_workout_logs")
 }
@@ -443,7 +444,7 @@ model MarketingBlogPost {
   content     String    @db.Text
   coverImage  String?
   authorName  String
-  category    String    @default("UNCATEGORIZED")
+  category    MarketingBlogCategory @default(UNCATEGORIZED)
   tags        String[]
   readTime    Int?
   publishedAt DateTime?
@@ -461,6 +462,15 @@ model MarketingBlogPost {
   @@map("marketing_blog_posts")
 }
 
+
+enum MarketingBlogCategory {
+  UNCATEGORIZED
+  FITNESS
+  NUTRITION
+  MINDSET
+  TRAINING
+  RECOVERY
+}
 
 model MarketingReview {
   id           String    @id @default(cuid())

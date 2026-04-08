@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 
-import { Box, Chip, Stack, Tab, Tabs, Typography } from "@mui/material";
-import Link from "next/link";
+import { Stack, Tabs, Typography } from "@mui/material";
 
 import { HealthStatus } from "@repo/contracts/athlete-profile";
 import { type AthleteDailySummary, TodayStatus } from "@repo/contracts/coach-dashboard";
 
+import { AthleteCardLink, ChipTab } from "@app/lib/components";
 import { HEALTH_STATUS_CHIPS } from "@app/lib/config";
 
 import { AthleteCard, DashboardSection } from "../components";
@@ -61,24 +61,15 @@ export const AthletesTodaySection: React.FC<AthletesTodaySectionProps> = ({ athl
           variant="scrollable"
           scrollButtons="auto"
         >
-          {STATUS_GROUPS.map((group) => {
-            const count = grouped.get(group.status)?.length ?? 0;
-
-            return (
-              <Tab
-                key={group.status}
-                value={group.status}
-                label={
-                  <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
-                    <Typography variant="body2" component="span">
-                      {group.title}
-                    </Typography>
-                    <Chip size="small" label={count} color={group.chipColor} />
-                  </Stack>
-                }
-              />
-            );
-          })}
+          {STATUS_GROUPS.map((group) => (
+            <ChipTab
+              key={group.status}
+              value={group.status}
+              label={group.title}
+              count={grouped.get(group.status)?.length ?? 0}
+              chipColor={group.chipColor}
+            />
+          ))}
         </Tabs>
 
         {activeAthletes.length > 0 ? (
@@ -90,16 +81,9 @@ export const AthletesTodaySection: React.FC<AthletesTodaySectionProps> = ({ athl
                   : undefined;
 
               return (
-                <Box
+                <AthleteCardLink
                   key={athlete.userId}
-                  component={Link}
                   href={`/coach/athletes?athlete=${athlete.userId}`}
-                  sx={(theme) => ({
-                    textDecoration: "none",
-                    borderRadius: 1,
-                    transition: theme.transitions.create("opacity"),
-                    "&:hover": { opacity: 0.85 },
-                  })}
                 >
                   <AthleteCard
                     name={athlete.name ?? athlete.email}
@@ -109,7 +93,7 @@ export const AthletesTodaySection: React.FC<AthletesTodaySectionProps> = ({ athl
                     chips={chips}
                     details={buildDetails(athlete)}
                   />
-                </Box>
+                </AthleteCardLink>
               );
             })}
           </Stack>

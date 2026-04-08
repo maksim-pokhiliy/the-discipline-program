@@ -6,7 +6,6 @@ import {
   type UpdateContactRequest,
 } from "@repo/contracts/contact";
 
-
 import { prisma } from "../../db/client";
 import { mapToContact } from "../../mappers";
 import { CONTACT_STATUS_TO_PRISMA_MAP } from "../../mappers/enum-maps";
@@ -67,7 +66,7 @@ export const adminContactsApi = {
     try {
       await prisma.marketingContactSubmission.delete({ where: { id } });
     } catch (error) {
-      handlePrismaError(error, { entity: "Contact submission" });
+      return handlePrismaError(error, { entity: "Contact submission" });
     }
   },
 

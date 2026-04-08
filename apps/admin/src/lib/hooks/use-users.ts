@@ -1,7 +1,6 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import type { AdminUser, GetUsersPageDataResponse, UpdateUserRoleData } from "@repo/contracts/user";
@@ -9,7 +8,7 @@ import { adminKeys, createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
 
-const useNavigate = () => useRouter().push;
+import { useNavigate } from "./use-navigate";
 
 const userHooks = createCrudHooks<GetUsersPageDataResponse, AdminUser>({
   entityName: "User",

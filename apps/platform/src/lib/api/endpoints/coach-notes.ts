@@ -9,8 +9,6 @@ import type {
 export const createCoachNotesAPI = (client: ApiClient) => ({
   getAll: (): Promise<GetCoachNotesResponse> => client.request("/api/platform/coach/notes"),
 
-  getById: (id: string): Promise<CoachNote> => client.request(`/api/platform/coach/notes/${id}`),
-
   create: (data: CreateCoachNoteData): Promise<CoachNote> =>
     client.request("/api/platform/coach/notes", "POST", data),
 

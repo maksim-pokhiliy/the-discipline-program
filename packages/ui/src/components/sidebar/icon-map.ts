@@ -16,7 +16,7 @@ const icons = {
   users: PeopleOutlined,
 } as const;
 
-export type NavIconName = keyof typeof icons;
+type NavIconName = keyof typeof icons;
 
 const isNavIconName = (name: string): name is NavIconName => name in icons;
 

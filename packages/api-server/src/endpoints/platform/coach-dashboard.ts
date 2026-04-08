@@ -8,7 +8,13 @@ import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
 
 import { prisma } from "../../db/client";
-import { ACTION_ITEM_SEVERITY_MAP, ACTION_ITEM_TYPE_MAP } from "../../mappers/enum-maps";
+import {
+  ACTION_ITEM_SEVERITY_MAP,
+  ACTION_ITEM_STATUS_TO_PRISMA_MAP,
+  ACTION_ITEM_TYPE_MAP,
+  PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
+  TRAINING_PLAN_STATUS_TO_PRISMA_MAP,
+} from "../../mappers/enum-maps";
 import { findOrThrow } from "../../utils";
 import { computeAthletesSummary, computeProgressBuckets } from "../../utils/dashboard-computations";
 import {
@@ -38,14 +44,14 @@ export const platformCoachDashboardApi = {
     const [enrollments, openActionItems, activePlansCount] = await Promise.all([
       prisma.planEnrollment.findMany({
         where: {
-          status: PlanEnrollmentStatus.ACTIVE,
+          status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
           trainingPlan: { coachId },
         },
         include: createEnrollmentInclude(coachId),
       }),
 
       prisma.coachActionItem.findMany({
-        where: { coachId, status: ActionItemStatus.OPEN },
+        where: { coachId, status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN] },
         include: {
           athlete: { select: { id: true, name: true, image: true } },
         },
@@ -53,7 +59,7 @@ export const platformCoachDashboardApi = {
       }),
 
       prisma.trainingPlan.count({
-        where: { coachId, status: TrainingPlanStatus.ACTIVE },
+        where: { coachId, status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[TrainingPlanStatus.ACTIVE] },
       }),
     ]);
 

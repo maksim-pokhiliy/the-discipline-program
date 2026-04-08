@@ -4,7 +4,11 @@ import type { CoachAthleteListItem, CoachAthletesData } from "@repo/contracts/co
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 
 import { prisma } from "../../db/client";
-import { HEALTH_STATUS_MAP } from "../../mappers/enum-maps";
+import {
+  ACTION_ITEM_STATUS_TO_PRISMA_MAP,
+  HEALTH_STATUS_MAP,
+  PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
+} from "../../mappers/enum-maps";
 import { findOrThrow } from "../../utils";
 import {
   type AdherenceWindow,
@@ -45,14 +49,14 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
   const [enrollments, actionItemCounts] = await Promise.all([
     prisma.planEnrollment.findMany({
       where: {
-        status: PlanEnrollmentStatus.ACTIVE,
+        status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
         trainingPlan: { coachId },
       },
       include: createEnrollmentInclude(coachId),
     }),
     prisma.coachActionItem.groupBy({
       by: ["athleteId"],
-      where: { coachId, status: ActionItemStatus.OPEN },
+      where: { coachId, status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN] },
       _count: { id: true },
     }),
   ]);

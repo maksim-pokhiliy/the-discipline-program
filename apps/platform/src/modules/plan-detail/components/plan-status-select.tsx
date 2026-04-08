@@ -48,14 +48,15 @@ export const PlanStatusSelect: React.FC<PlanStatusSelectProps> = ({ planId, stat
   const isPending = activate.isPending || archive.isPending || restore.isPending;
   const action = STATUS_ACTIONS[status];
 
-  const mutations: Record<TrainingPlanStatus, (id: string) => void> = {
-    [TrainingPlanStatus.DRAFT]: (id) => activate.mutate(id),
-    [TrainingPlanStatus.ACTIVE]: (id) => archive.mutate(id),
-    [TrainingPlanStatus.ARCHIVED]: (id) => restore.mutate(id),
-  };
-
   const handleClick = () => {
-    mutations[status](planId);
+    switch (status) {
+      case TrainingPlanStatus.DRAFT:
+        return activate.mutate(planId);
+      case TrainingPlanStatus.ACTIVE:
+        return archive.mutate(planId);
+      case TrainingPlanStatus.ARCHIVED:
+        return restore.mutate(planId);
+    }
   };
 
   return (

@@ -7,8 +7,12 @@ import { FormView } from "@repo/ui";
 
 import { useCreateProduct } from "@app/lib/hooks";
 
-import { ProductForm, toProductApiData } from "../../components";
-import { productFormSchema, type ProductFormData } from "../../components/product-form-schema";
+import {
+  ProductForm,
+  productFormSchema,
+  toProductApiData,
+  type ProductFormData,
+} from "../../components";
 
 export const ProductCreateView = () => {
   const { mutate: createProduct, isPending } = useCreateProduct();

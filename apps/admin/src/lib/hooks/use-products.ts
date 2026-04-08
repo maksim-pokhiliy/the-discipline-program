@@ -1,7 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
 import type {
   AdminProductsPageData,
   Product,
@@ -12,7 +10,7 @@ import { adminKeys, createCrudHooks, createToggleHook } from "@repo/query";
 
 import { api } from "../api";
 
-const useNavigate = () => useRouter().push;
+import { useNavigate } from "./use-navigate";
 
 const productHooks = createCrudHooks<
   AdminProductsPageData,

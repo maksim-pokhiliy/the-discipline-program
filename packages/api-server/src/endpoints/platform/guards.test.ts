@@ -3,7 +3,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
-import { cleanupRaw, createTestCoach, createTestPlan, createTestUser } from "../../test/helpers";
+import {
+  cleanup,
+  cleanupRaw,
+  createTestCoach,
+  createTestPlan,
+  createTestUser,
+} from "../../test/helpers";
 
 import { resolveCoachId, verifyAthleteBelongsToCoach, verifyPlanOwnership } from "./guards";
 
@@ -39,7 +45,7 @@ describe("platform guards", () => {
   });
 
   afterAll(async () => {
-    const cleanups: { table: string; id: string }[] = [
+    await cleanup(
       { table: "planEnrollment", id: enrollmentId },
       { table: "trainingPlan", id: plan.id },
       { table: "trainingPlan", id: otherPlan.id },
@@ -50,22 +56,7 @@ describe("platform guards", () => {
       { table: "user", id: regularUser.id },
       { table: "user", id: athleteUser.id },
       { table: "user", id: nonEnrolledUser.id },
-    ];
-
-    for (const { table, id } of cleanups) {
-      const delegate = (
-        cleanupRaw as unknown as Record<
-          string,
-          { delete: (args: { where: { id: string } }) => Promise<unknown> }
-        >
-      )[table];
-
-      if (!delegate) {
-        continue;
-      }
-
-      await delegate.delete({ where: { id } }).catch(() => {});
-    }
+    );
   });
 
   describe("resolveCoachId", () => {

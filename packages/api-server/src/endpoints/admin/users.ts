@@ -5,12 +5,12 @@ import {
   type GetUsersPageDataResponse,
   type UpdateUserRoleData,
 } from "@repo/contracts/user";
-import { ConflictError, NotFoundError } from "@repo/errors";
+import { ConflictError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToAdminUser, mapToAdminUserListItem } from "../../mappers";
 import { ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/enum-maps";
-import { handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError } from "../../utils";
 
 const includeWithProfiles = {
   athleteProfile: true,
@@ -27,14 +27,10 @@ export const adminUsersApi = {
   },
 
   getById: async (id: string): Promise<AdminUser> => {
-    const user = await prisma.user.findUnique({
-      where: { id },
-      include: includeWithProfiles,
-    });
-
-    if (!user) {
-      throw new NotFoundError("User not found", { id });
-    }
+    const user = await findOrThrow(
+      prisma.user.findUnique({ where: { id }, include: includeWithProfiles }),
+      "User",
+    );
 
     return mapToAdminUser(user);
   },
@@ -46,11 +42,7 @@ export const adminUsersApi = {
   },
 
   updateRole: async (id: string, data: UpdateUserRoleData): Promise<AdminUser> => {
-    const existing = await prisma.user.findUnique({ where: { id } });
-
-    if (!existing) {
-      throw new NotFoundError("User not found", { id });
-    }
+    const existing = await findOrThrow(prisma.user.findUnique({ where: { id } }), "User");
 
     if (ROLE_MAP[existing.role] === UserRole.ADMIN && data.role !== UserRole.ADMIN) {
       const adminCount = await prisma.user.count({

@@ -33,11 +33,6 @@ export const useEditor = ({ value, onChange, onBlur, placeholder, disabled }: Us
     ],
     content: value,
     editable: !disabled,
-    editorProps: {
-      attributes: {
-        class: "prose prose-sm focus:outline-none max-w-none",
-      },
-    },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },

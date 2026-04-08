@@ -99,7 +99,6 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
               color={post.isPublished ? "success" : "default"}
               size="small"
               variant="outlined"
-              sx={{ justifyContent: "center" }}
             />
           </Stack>
         ),
@@ -126,7 +125,6 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
               color={post.isFeatured ? "warning" : "default"}
               size="small"
               variant="outlined"
-              sx={{ justifyContent: "center" }}
             />
           </Stack>
         ),

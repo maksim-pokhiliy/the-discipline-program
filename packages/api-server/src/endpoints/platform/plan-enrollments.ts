@@ -138,7 +138,7 @@ export const platformPlanEnrollmentsApi = {
     try {
       await prisma.planEnrollment.delete({ where: { id: enrollmentId } });
     } catch (error) {
-      handlePrismaError(error, { entity: "Enrollment" });
+      return handlePrismaError(error, { entity: "Enrollment" });
     }
   },
 };

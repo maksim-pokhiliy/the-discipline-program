@@ -16,10 +16,10 @@ export const GET = withPlatformAuth(async () => {
   return NextResponse.json(validated);
 });
 
-export const POST = withPlatformAuth(async (request) => {
+export const POST = withPlatformAuth(async (request, _context, userId) => {
   const body = await request.json();
   const data = createBenchmarkDefinitionRequestSchema.parse(body);
-  const result = await platformBenchmarkDefinitionsApi.create(data);
+  const result = await platformBenchmarkDefinitionsApi.create(userId, data);
   const validated = createBenchmarkDefinitionResponseSchema.parse(result);
 
   return NextResponse.json(validated, { status: 201 });

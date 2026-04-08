@@ -1,5 +1,11 @@
-import * as MuiIcons from "@mui/icons-material";
 import { type SvgIconComponent } from "@mui/icons-material";
+import BoltIcon from "@mui/icons-material/Bolt";
+import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import GroupsIcon from "@mui/icons-material/Groups";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import SchoolIcon from "@mui/icons-material/School";
+import ShuffleIcon from "@mui/icons-material/Shuffle";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Grid } from "@mui/material";
 
 import { type HomePageData } from "@repo/contracts/pages";
@@ -7,10 +13,16 @@ import { ContentSection } from "@repo/ui";
 
 import { FeatureCard } from "@app/lib/components/ui";
 
-const isMuiIconName = (name: string): name is keyof typeof MuiIcons => name in MuiIcons;
+const FEATURE_ICONS: Record<string, SvgIconComponent> = {
+  Shuffle: ShuffleIcon,
+  Bolt: BoltIcon,
+  FitnessCenter: FitnessCenterIcon,
+  School: SchoolIcon,
+  TrendingUp: TrendingUpIcon,
+  Groups: GroupsIcon,
+};
 
-const isSvgIconComponent = (value: unknown): value is SvgIconComponent =>
-  typeof value === "function";
+const FALLBACK_ICON: SvgIconComponent = HelpOutlineIcon;
 
 type FeaturesSectionProps = {
   whyChoose: HomePageData["whyChoose"];
@@ -20,27 +32,15 @@ export const HomeFeaturesSection = ({ whyChoose }: FeaturesSectionProps) => {
   return (
     <ContentSection id="why-choose" title={whyChoose.title} subtitle={whyChoose.subtitle}>
       <Grid container spacing={6}>
-        {whyChoose.features.map((feature) => {
-          if (!isMuiIconName(feature.iconName)) {
-            return null;
-          }
-
-          const candidate = MuiIcons[feature.iconName];
-
-          if (!isSvgIconComponent(candidate)) {
-            return null;
-          }
-
-          return (
-            <Grid key={feature.id} size={{ xs: 12, sm: 6, md: 4 }}>
-              <FeatureCard
-                icon={candidate}
-                title={feature.title}
-                description={feature.description}
-              />
-            </Grid>
-          );
-        })}
+        {whyChoose.features.map((feature) => (
+          <Grid key={feature.id} size={{ xs: 12, sm: 6, md: 4 }}>
+            <FeatureCard
+              icon={FEATURE_ICONS[feature.iconName] ?? FALLBACK_ICON}
+              title={feature.title}
+              description={feature.description}
+            />
+          </Grid>
+        ))}
       </Grid>
     </ContentSection>
   );

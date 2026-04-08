@@ -10,8 +10,7 @@ import { QueryWrapper } from "@repo/ui";
 import { PlatformPageHeader } from "@app/lib/components";
 import { useCoachAthletes } from "@app/lib/hooks";
 
-import { AthleteDetailDrawer } from "../components";
-import { extractUniquePlans } from "../components/athlete-list-item-config";
+import { AthleteDetailDrawer, extractUniquePlans } from "../components";
 import { AthletesFiltersSection, AthletesListSection, AthletesSummarySection } from "../sections";
 
 export const AthletesView = () => {

@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { BadRequestError } from "@repo/errors";
 
-import { cleanupRaw, createTestCoach, createTestPlan } from "../../test/helpers";
+import { cleanup, createTestCoach, createTestPlan } from "../../test/helpers";
 
 import { platformWorkoutsApi } from "./workouts";
 
@@ -18,22 +18,12 @@ describe("platformWorkoutsApi", () => {
   });
 
   afterAll(async () => {
-    for (const { table, id } of toCleanup.reverse()) {
-      const delegate = (
-        cleanupRaw as unknown as Record<
-          string,
-          { delete: (args: { where: { id: string } }) => Promise<unknown> }
-        >
-      )[table];
-
-      if (delegate) {
-        await delegate.delete({ where: { id } }).catch(() => {});
-      }
-    }
-
-    await cleanupRaw.trainingPlan.delete({ where: { id: plan.id } }).catch(() => {});
-    await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
-    await cleanupRaw.user.delete({ where: { id: coach.user.id } }).catch(() => {});
+    await cleanup(
+      ...toCleanup,
+      { table: "trainingPlan", id: plan.id },
+      { table: "coachProfile", id: coach.profile.id },
+      { table: "user", id: coach.user.id },
+    );
   });
 
   describe("toUTCMidnight (tested through create)", () => {

@@ -33,8 +33,7 @@ import {
   useWorkouts,
 } from "@app/lib/hooks";
 
-import { CopyWeekButton, WeekNavigator, WorkoutDragOverlay } from "../components";
-import { WeekDayGroup } from "../components/week-day-group";
+import { CopyWeekButton, WeekDayGroup, WeekNavigator, WorkoutDragOverlay } from "../components";
 
 type SortableWorkoutData = {
   workout: Workout;

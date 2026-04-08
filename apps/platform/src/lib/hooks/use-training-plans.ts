@@ -72,53 +72,48 @@ export const useDuplicateTrainingPlan = () => {
   });
 };
 
-export const useArchiveTrainingPlan = () => {
+const useStatusMutation = ({
+  mutationFn,
+  successMessage,
+  errorMessage,
+}: {
+  mutationFn: (id: string) => Promise<TrainingPlan>;
+  successMessage: string;
+  errorMessage: string;
+}) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => api.trainingPlans.archive(id),
+    mutationFn,
     onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
       queryClient.invalidateQueries({ queryKey: platformKeys.coachDashboard.data() });
       queryClient.setQueryData(platformKeys.trainingPlans.byId(plan.id), plan);
-      toast.success("Training plan archived");
+      toast.success(successMessage);
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to archive training plan");
+      toast.error(error.message || errorMessage);
     },
   });
 };
 
-export const useRestoreTrainingPlan = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => api.trainingPlans.restore(id),
-    onSuccess: (plan) => {
-      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-      queryClient.invalidateQueries({ queryKey: platformKeys.coachDashboard.data() });
-      queryClient.setQueryData(platformKeys.trainingPlans.byId(plan.id), plan);
-      toast.success("Training plan restored");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to restore training plan");
-    },
+export const useArchiveTrainingPlan = () =>
+  useStatusMutation({
+    mutationFn: (id) => api.trainingPlans.archive(id),
+    successMessage: "Training plan archived",
+    errorMessage: "Failed to archive training plan",
   });
-};
 
-export const useActivateTrainingPlan = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => api.trainingPlans.activate(id),
-    onSuccess: (plan) => {
-      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-      queryClient.invalidateQueries({ queryKey: platformKeys.coachDashboard.data() });
-      queryClient.setQueryData(platformKeys.trainingPlans.byId(plan.id), plan);
-      toast.success("Training plan activated");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to activate training plan");
-    },
+export const useRestoreTrainingPlan = () =>
+  useStatusMutation({
+    mutationFn: (id) => api.trainingPlans.restore(id),
+    successMessage: "Training plan restored",
+    errorMessage: "Failed to restore training plan",
   });
-};
+
+export const useActivateTrainingPlan = () =>
+  useStatusMutation({
+    mutationFn: (id) => api.trainingPlans.activate(id),
+    successMessage: "Training plan activated",
+    errorMessage: "Failed to activate training plan",
+  });

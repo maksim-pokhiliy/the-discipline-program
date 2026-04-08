@@ -29,7 +29,7 @@ export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions 
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      authorize: async (credentials) => {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -51,7 +51,7 @@ export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions 
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    jwt: async ({ token, user }) => {
       if (user) {
         token.id = user.id;
         token.email = user.email;
@@ -72,7 +72,7 @@ export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions 
 
       return token;
     },
-    async session({ session, token }) {
+    session: ({ session, token }) => {
       session.user.id = token.id;
       session.user.email = token.email ?? null;
       session.user.name = token.name ?? null;

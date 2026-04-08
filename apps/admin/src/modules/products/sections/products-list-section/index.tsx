@@ -96,7 +96,6 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
               color={product.isActive ? "success" : "default"}
               size="small"
               variant="outlined"
-              sx={{ justifyContent: "center" }}
             />
           </Stack>
         ),

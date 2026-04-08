@@ -22,6 +22,14 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { HEALTH_STATUS_MAP, mapToCoachActionItem } from "../../mappers";
+import {
+  ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP,
+  ACTION_ITEM_SEVERITY_TO_PRISMA_MAP,
+  ACTION_ITEM_STATUS_MAP,
+  ACTION_ITEM_STATUS_TO_PRISMA_MAP,
+  ACTION_ITEM_TYPE_TO_PRISMA_MAP,
+  PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
+} from "../../mappers/enum-maps";
 import { findOrThrow, handlePrismaError } from "../../utils";
 import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
 import { type EnrollmentWithData, createEnrollmentInclude } from "../../utils/enrollment-query";
@@ -154,16 +162,19 @@ export const platformCoachActionItemsApi = {
         const [enrollments, openItems, latestResolved] = await Promise.all([
           tx.planEnrollment.findMany({
             where: {
-              status: PlanEnrollmentStatus.ACTIVE,
+              status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
               trainingPlan: { coachId },
             },
             include: createEnrollmentInclude(coachId),
           }),
           tx.coachActionItem.findMany({
-            where: { coachId, status: ActionItemStatus.OPEN },
+            where: { coachId, status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN] },
           }),
           tx.coachActionItem.findMany({
-            where: { coachId, status: ActionItemStatus.RESOLVED },
+            where: {
+              coachId,
+              status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
+            },
             orderBy: { resolvedAt: "desc" },
             distinct: ["athleteId", "type"],
           }),
@@ -198,9 +209,12 @@ export const platformCoachActionItemsApi = {
           await tx.coachActionItem.update({
             where: { id: item.id },
             data: {
-              status: ActionItemStatus.RESOLVED,
+              status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
               resolvedAt: new Date(),
-              resolveReason: ActionItemResolveReason.AUTO_CONDITION_CLEARED,
+              resolveReason:
+                ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[
+                  ActionItemResolveReason.AUTO_CONDITION_CLEARED
+                ],
             },
           });
           resolved++;
@@ -220,7 +234,7 @@ export const platformCoachActionItemsApi = {
                 where: { id: existingOpen.id },
                 data: {
                   message: condition.message,
-                  severity: condition.severity,
+                  severity: ACTION_ITEM_SEVERITY_TO_PRISMA_MAP[condition.severity],
                   metadata: condition.metadata,
                 },
               });
@@ -244,8 +258,8 @@ export const platformCoachActionItemsApi = {
             data: {
               coachId,
               athleteId: condition.athleteId,
-              type: condition.type,
-              severity: condition.severity,
+              type: ACTION_ITEM_TYPE_TO_PRISMA_MAP[condition.type],
+              severity: ACTION_ITEM_SEVERITY_TO_PRISMA_MAP[condition.severity],
               message: condition.message,
               metadata: condition.metadata,
             },
@@ -262,9 +276,9 @@ export const platformCoachActionItemsApi = {
           await tx.coachActionItem.update({
             where: { id: item.id },
             data: {
-              status: ActionItemStatus.RESOLVED,
+              status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
               resolvedAt: new Date(),
-              resolveReason: reason,
+              resolveReason: ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[reason],
             },
           });
           resolved++;
@@ -286,7 +300,7 @@ export const platformCoachActionItemsApi = {
       throw new NotFoundError("Action item not found", { itemId });
     }
 
-    if (item.status === ActionItemStatus.RESOLVED) {
+    if (ACTION_ITEM_STATUS_MAP[item.status] === ActionItemStatus.RESOLVED) {
       return mapToCoachActionItem(item);
     }
 
@@ -294,9 +308,10 @@ export const platformCoachActionItemsApi = {
       const updated = await prisma.coachActionItem.update({
         where: { id: itemId },
         data: {
-          status: ActionItemStatus.RESOLVED,
+          status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
           resolvedAt: new Date(),
-          resolveReason: ActionItemResolveReason.MANUAL_CONTACTED,
+          resolveReason:
+            ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[ActionItemResolveReason.MANUAL_CONTACTED],
         },
       });
 
