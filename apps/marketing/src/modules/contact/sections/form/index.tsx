@@ -56,11 +56,11 @@ export const ContactFormSection = ({ form, programOptions }: ContactFormSectionP
       {isSuccess ? (
         <Stack spacing={3} sx={{ alignItems: "center", textAlign: "center" }}>
           <Typography variant="display2" component="h2">
-            Message Sent
+            {form.successTitle ?? "Message Sent"}
           </Typography>
 
           <Typography variant="h4" color="text.secondary">
-            Thank you for reaching out. We&apos;ll get back to you soon.
+            {form.successMessage ?? "Thank you for reaching out. We'll get back to you soon."}
           </Typography>
 
           <Button variant="contained" size="large" onClick={() => resetMutation()}>

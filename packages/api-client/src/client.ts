@@ -88,6 +88,11 @@ export class ApiClient {
       throw new ErrorClass(message, details);
     }
 
-    return response.json();
+    return response.json().catch(() => {
+      throw new InternalServerError("Failed to parse API response", {
+        status: response.status,
+        url: fullUrl,
+      });
+    });
   }
 }

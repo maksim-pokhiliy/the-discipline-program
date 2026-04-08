@@ -3,6 +3,8 @@ import { Divider, Stack, Toolbar, Typography } from "@mui/material";
 import { MARKETING_NAVIGATION } from "@repo/shared";
 import { Logo } from "@repo/ui";
 
+import { SEO_CONFIG } from "@app/lib/seo";
+
 import { FooterNavLink } from "./footer-nav-link";
 
 type FooterProps = {
@@ -11,8 +13,8 @@ type FooterProps = {
 };
 
 export const Footer = ({
-  tagline = "Your Discipline Dictates Your Success",
-  subcopy = "Transform your fitness through discipline",
+  tagline = SEO_CONFIG.tagline,
+  subcopy = SEO_CONFIG.subcopy,
 }: FooterProps) => {
   return (
     <>

@@ -81,7 +81,10 @@ export const aboutPageCtaSchema = ctaSectionSchema;
 
 export const contactPageHeroSchema = heroSectionSchema;
 
-export const contactPageFormSchema = titleSubtitleSchema;
+export const contactPageFormSchema = titleSubtitleSchema.extend({
+  successTitle: z.string().optional(),
+  successMessage: z.string().optional(),
+});
 
 export const programOptionSchema = z.object({
   value: z.string(),

@@ -7,7 +7,7 @@ import {
   updateAthleteProfileResponseSchema,
 } from "@repo/contracts/athlete-profile";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(async (_, _context, userId) => {
   const data = await platformAthleteProfileApi.get(userId);

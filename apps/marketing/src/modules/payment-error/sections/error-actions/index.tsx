@@ -1,17 +1,28 @@
 import { Button, List, ListItem, ListItemText, Stack, Typography } from "@mui/material";
+import Link from "next/link";
 
 import { ContentSection } from "@repo/ui";
+
+const TROUBLESHOOT_STEPS = [
+  "1. Verify your card details are correct",
+  "2. Ensure you have sufficient funds",
+  "3. Check if your card is enabled for online payments",
+  "4. Try using a different payment method",
+];
+
+const PERSIST_NOTICE =
+  "If the problem persists, please contact our support team. We're here to help you get started with your fitness journey.";
 
 export const PaymentErrorActionsSection = () => {
   return (
     <ContentSection title="What Can You Do?" subtitle="Here are some options to resolve the issue">
       <Stack spacing={6} alignItems="center">
         <Stack spacing={2} direction={{ xs: "column", sm: "row" }}>
-          <Button variant="contained" size="large" href="/storefront">
+          <Button variant="contained" size="large" component={Link} href="/storefront">
             Try Again
           </Button>
 
-          <Button size="large" href="/contact">
+          <Button size="large" component={Link} href="/contact">
             Contact Support
           </Button>
         </Stack>
@@ -22,23 +33,15 @@ export const PaymentErrorActionsSection = () => {
           </Typography>
 
           <List dense disablePadding>
-            <ListItem disableGutters disablePadding>
-              <ListItemText secondary="1. Verify your card details are correct" />
-            </ListItem>
-            <ListItem disableGutters disablePadding>
-              <ListItemText secondary="2. Ensure you have sufficient funds" />
-            </ListItem>
-            <ListItem disableGutters disablePadding>
-              <ListItemText secondary="3. Check if your card is enabled for online payments" />
-            </ListItem>
-            <ListItem disableGutters disablePadding>
-              <ListItemText secondary="4. Try using a different payment method" />
-            </ListItem>
+            {TROUBLESHOOT_STEPS.map((step) => (
+              <ListItem key={step} disableGutters disablePadding>
+                <ListItemText secondary={step} />
+              </ListItem>
+            ))}
           </List>
 
           <Typography variant="caption" color="text.disabled">
-            If the problem persists, please contact our support team. We&apos;re here to help you
-            get started with your fitness journey.
+            {PERSIST_NOTICE}
           </Typography>
         </Stack>
       </Stack>

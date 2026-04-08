@@ -9,7 +9,7 @@ import {
   deleteCoachNoteParamsSchema,
 } from "@repo/contracts/coach-note";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(async (_, context, userId) => {
   const { noteId } = getCoachNoteByIdParamsSchema.parse(await context.params);

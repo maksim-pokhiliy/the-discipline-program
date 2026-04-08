@@ -7,9 +7,9 @@ import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { type PlatformNavigationConfig } from "@repo/shared";
+import { type PlatformIconName, type PlatformNavigationConfig } from "@repo/shared";
 
-const ICON_MAP: Record<string, ReactNode> = {
+const ICON_MAP: Record<PlatformIconName, ReactNode> = {
   home: <HomeRounded />,
   plans: <EventNoteRounded />,
   athletes: <GroupRounded />,

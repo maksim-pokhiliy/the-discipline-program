@@ -9,7 +9,7 @@ import {
   getPlanEnrollmentsResponseSchema,
 } from "@repo/contracts/plan-enrollment";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(async (_, context, userId) => {
   const { planId } = getPlanEnrollmentsParamsSchema.parse(await context.params);

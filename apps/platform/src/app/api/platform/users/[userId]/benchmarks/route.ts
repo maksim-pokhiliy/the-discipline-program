@@ -8,7 +8,7 @@ import {
   getUserBenchmarksResponseSchema,
 } from "@repo/contracts/user-benchmark";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(async (_, context, authUserId) => {
   const { userId } = getUserBenchmarksParamsSchema.parse(await context.params);

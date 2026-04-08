@@ -10,7 +10,7 @@ import {
   updateBenchmarkDefinitionResponseSchema,
 } from "@repo/contracts/benchmark-definition";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(async (_, context) => {
   const { definitionId } = getBenchmarkDefinitionByIdParamsSchema.parse(await context.params);

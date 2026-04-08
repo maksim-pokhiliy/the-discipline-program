@@ -4,7 +4,7 @@ import { platformWorkoutsApi } from "@repo/api-server";
 import { copyWeekParamsSchema, copyWeekRequestSchema } from "@repo/contracts/training-plan";
 import { getWorkoutsResponseSchema } from "@repo/contracts/workout";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const POST = withPlatformAuth(async (request, context, userId) => {
   const { planId } = copyWeekParamsSchema.parse(await context.params);

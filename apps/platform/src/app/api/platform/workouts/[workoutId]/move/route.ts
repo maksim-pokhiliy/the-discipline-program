@@ -7,7 +7,7 @@ import {
   moveWorkoutResponseSchema,
 } from "@repo/contracts/workout";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const PUT = withPlatformAuth(async (request, context, userId) => {
   const { workoutId } = moveWorkoutParamsSchema.parse(await context.params);

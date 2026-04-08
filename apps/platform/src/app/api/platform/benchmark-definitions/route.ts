@@ -7,7 +7,7 @@ import {
   getBenchmarkDefinitionsResponseSchema,
 } from "@repo/contracts/benchmark-definition";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(async () => {
   const data = await platformBenchmarkDefinitionsApi.getAll();

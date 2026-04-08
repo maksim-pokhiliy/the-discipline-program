@@ -27,10 +27,16 @@ type StructuredDataInput = {
   }>;
 };
 
+type JsonLdObject = {
+  "@context": string;
+  "@type": string;
+  [key: string]: unknown;
+};
+
 export const generateStructuredData = (
   type: StructuredDataType,
   data?: StructuredDataInput,
-): Record<string, unknown> => {
+): JsonLdObject => {
   switch (type) {
     case "website":
       return {

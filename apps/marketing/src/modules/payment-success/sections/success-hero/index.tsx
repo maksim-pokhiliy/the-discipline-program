@@ -3,12 +3,12 @@ import { Stack } from "@mui/material";
 
 import { ContentSection } from "@repo/ui";
 
+const HERO_TITLE = "Payment Successful!";
+const HERO_SUBTITLE = "Welcome to The Discipline Program! Your transformation journey begins now.";
+
 export const PaymentSuccessHeroSection = () => {
   return (
-    <ContentSection
-      title="Payment Successful!"
-      subtitle="Welcome to The Discipline Program! Your transformation journey begins now."
-    >
+    <ContentSection title={HERO_TITLE} subtitle={HERO_SUBTITLE}>
       <Stack sx={{ alignItems: "center" }}>
         <Stack
           sx={(theme) => ({

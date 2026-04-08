@@ -7,7 +7,7 @@ import {
   updateCoachProfileResponseSchema,
 } from "@repo/contracts/coach-profile";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(async (_, _context, userId) => {
   const data = await platformCoachProfileApi.get(userId);

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { GC_TIMES, STALE_TIMES } from "../constants";
+import { GC_TIMES, STALE_TIMES } from "../hooks/constants";
 
 type QueryProviderProps = {
   children: React.ReactNode;

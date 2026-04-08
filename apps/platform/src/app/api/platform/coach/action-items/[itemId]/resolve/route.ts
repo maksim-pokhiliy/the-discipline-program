@@ -6,7 +6,7 @@ import {
   resolveActionItemResponseSchema,
 } from "@repo/contracts/coach-action-item";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const POST = withPlatformAuth(async (_, context, userId) => {
   const { itemId } = resolveActionItemParamsSchema.parse(await context.params);
