@@ -27,7 +27,7 @@ export const PersonalSectionForm = () => {
           label="Section Title"
           fullWidth
           error={!!errors.title}
-          helperText={errors.title?.message?.toString()}
+          helperText={errors.title?.message}
           {...register("title")}
         />
 
@@ -37,7 +37,7 @@ export const PersonalSectionForm = () => {
           multiline
           minRows={3}
           error={!!errors.description}
-          helperText={errors.description?.message?.toString()}
+          helperText={errors.description?.message}
           {...register("description")}
         />
 
@@ -47,7 +47,7 @@ export const PersonalSectionForm = () => {
               label="Name"
               fullWidth
               error={!!errors.name}
-              helperText={errors.name?.message?.toString()}
+              helperText={errors.name?.message}
               {...register("name")}
             />
           </Grid>
@@ -57,7 +57,7 @@ export const PersonalSectionForm = () => {
               label="Role"
               fullWidth
               error={!!errors.role}
-              helperText={errors.role?.message?.toString()}
+              helperText={errors.role?.message}
               {...register("role")}
             />
           </Grid>

@@ -22,7 +22,7 @@ export const ContactSectionForm = () => {
           label="Title"
           fullWidth
           error={!!errors.title}
-          helperText={errors.title?.message?.toString()}
+          helperText={errors.title?.message}
           {...register("title")}
         />
 
@@ -32,7 +32,7 @@ export const ContactSectionForm = () => {
           multiline
           minRows={2}
           error={!!errors.subtitle}
-          helperText={errors.subtitle?.message?.toString()}
+          helperText={errors.subtitle?.message}
           {...register("subtitle")}
         />
 
@@ -40,7 +40,7 @@ export const ContactSectionForm = () => {
           label="Button Text"
           fullWidth
           error={!!errors.buttonText}
-          helperText={errors.buttonText?.message?.toString()}
+          helperText={errors.buttonText?.message}
           {...register("buttonText")}
         />
 
@@ -48,7 +48,7 @@ export const ContactSectionForm = () => {
           label="Button Link"
           fullWidth
           error={!!errors.buttonHref}
-          helperText={errors.buttonHref?.message?.toString()}
+          helperText={errors.buttonHref?.message}
           {...register("buttonHref")}
         />
       </Stack>

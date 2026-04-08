@@ -32,7 +32,9 @@ export const coachActionItemSchema = z.object({
   severity: actionItemSeveritySchema,
   status: actionItemStatusSchema,
   message: z.string(),
-  metadata: z.record(z.string(), z.unknown()).nullable(),
+  metadata: z
+    .union([missedWorkoutsMetadataSchema, newNoStartMetadataSchema, healthReportMetadataSchema])
+    .nullable(),
   resolvedAt: z.date().nullable(),
   resolveReason: actionItemResolveReasonSchema.nullable(),
   createdAt: z.date(),

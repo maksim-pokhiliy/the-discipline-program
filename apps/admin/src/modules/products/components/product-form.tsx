@@ -138,6 +138,8 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                 variant="outlined"
                 fullWidth
                 disabled={isLoading}
+                error={!!errors.price?.amount}
+                helperText={errors.price?.amount?.message}
                 slotProps={{
                   input: {
                     startAdornment: <InputAdornment position="start">$</InputAdornment>,
@@ -151,7 +153,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
               <Controller
                 name="price.currency"
                 control={control}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <TextField
                     {...field}
                     select
@@ -159,6 +161,8 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                     variant="outlined"
                     fullWidth
                     disabled={isLoading}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
                     value={field.value || ProductCurrency.USD}
                   >
                     {Object.values(ProductCurrency).map((currency) => (
@@ -173,7 +177,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
               <Controller
                 name="price.interval"
                 control={control}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <TextField
                     {...field}
                     select
@@ -181,6 +185,8 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                     variant="outlined"
                     fullWidth
                     disabled={isLoading}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
                     value={field.value || PriceInterval.MONTHLY}
                   >
                     {Object.values(PriceInterval).map((interval) => (

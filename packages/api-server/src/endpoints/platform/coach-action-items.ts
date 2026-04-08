@@ -7,6 +7,9 @@ import {
   ActionItemStatus,
   ActionItemType,
   type CoachActionItem,
+  type HealthReportMetadata,
+  type MissedWorkoutsMetadata,
+  type NewNoStartMetadata,
   type ReconcileResponse,
 } from "@repo/contracts/coach-action-item";
 import {
@@ -22,16 +25,20 @@ import { HEALTH_STATUS_MAP, mapToCoachActionItem } from "../../mappers";
 import { handlePrismaError } from "../../utils";
 import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
 import { type EnrollmentWithData, createEnrollmentInclude } from "../../utils/enrollment-query";
+import { asJsonRecord } from "../../utils/json-record";
 
 import { resolveCoachId } from "./guards";
 
-type Condition = {
+type ConditionBase = {
   athleteId: string;
-  type: ActionItemType;
   severity: ActionItemSeverity;
   message: string;
-  metadata: Record<string, unknown>;
 };
+
+type Condition =
+  | (ConditionBase & { type: ActionItemType.MISSED_WORKOUTS; metadata: MissedWorkoutsMetadata })
+  | (ConditionBase & { type: ActionItemType.NEW_NO_START; metadata: NewNoStartMetadata })
+  | (ConditionBase & { type: ActionItemType.HEALTH_REPORT; metadata: HealthReportMetadata });
 
 const computeConditions = (enrollments: EnrollmentWithData[], tz: string): Condition[] => {
   const conditions: Condition[] = [];
@@ -228,10 +235,7 @@ export const platformCoachActionItemsApi = {
 
           if (
             latestResolvedItem &&
-            conditionMatchesResolved(
-              condition,
-              latestResolvedItem.metadata as Record<string, unknown> | null,
-            )
+            conditionMatchesResolved(condition, asJsonRecord(latestResolvedItem.metadata))
           ) {
             continue;
           }

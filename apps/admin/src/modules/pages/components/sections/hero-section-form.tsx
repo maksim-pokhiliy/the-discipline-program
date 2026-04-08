@@ -35,7 +35,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
           label="Title"
           fullWidth
           error={!!errors.title}
-          helperText={errors.title?.message?.toString()}
+          helperText={errors.title?.message}
           {...register("title")}
         />
 
@@ -45,7 +45,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
           multiline
           minRows={3}
           error={!!errors.subtitle}
-          helperText={errors.subtitle?.message?.toString()}
+          helperText={errors.subtitle?.message}
           {...register("subtitle")}
         />
 
@@ -55,7 +55,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
               label="Button Text"
               fullWidth
               error={!!errors.buttonText}
-              helperText={errors.buttonText?.message?.toString()}
+              helperText={errors.buttonText?.message}
               {...register("buttonText")}
             />
 
@@ -63,7 +63,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
               label="Button Link"
               fullWidth
               error={!!errors.buttonHref}
-              helperText={errors.buttonHref?.message?.toString()}
+              helperText={errors.buttonHref?.message}
               {...register("buttonHref")}
             />
           </>
