@@ -41,6 +41,11 @@ type SortableWorkoutData = {
   scheduledDate: Date | string | null;
 };
 
+const isSortableWorkoutData = (
+  data: Record<string, unknown> | undefined,
+): data is SortableWorkoutData =>
+  data !== undefined && "workout" in data && "scheduledDate" in data;
+
 type PlanScheduleSectionProps = {
   planId: string;
 };
@@ -235,8 +240,8 @@ export const PlanScheduleSection: React.FC<PlanScheduleSectionProps> = ({ planId
       }
 
       const dayWorkouts = localItems.get(activeDayKey) ?? [];
-      const activeData = event.active.data.current as SortableWorkoutData | undefined;
-      const rawDate = activeData?.scheduledDate ?? null;
+      const current = event.active.data.current;
+      const rawDate = isSortableWorkoutData(current) ? current.scheduledDate : null;
       const originalDate =
         rawDate instanceof Date ? rawDate : typeof rawDate === "string" ? new Date(rawDate) : null;
       const targetDate = new Date(activeDayKey);

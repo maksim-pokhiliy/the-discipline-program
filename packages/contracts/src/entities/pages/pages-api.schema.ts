@@ -114,14 +114,16 @@ const sectionVariants = SECTION_DEFINITIONS.map(([key, schema]) =>
   z.object({ section: z.literal(key), data: schema }),
 );
 
+const toNonEmptyArray = <T>(arr: T[]): [T, ...T[]] => {
+  const [first, ...rest] = arr;
+
+  if (first === undefined) {throw new Error("Expected non-empty array");}
+
+  return [first, ...rest];
+};
+
 export const updatePageSectionSchema = z
-  .discriminatedUnion(
-    "section",
-    sectionVariants as unknown as [
-      (typeof sectionVariants)[number],
-      ...(typeof sectionVariants)[number][],
-    ],
-  )
+  .discriminatedUnion("section", toNonEmptyArray(sectionVariants))
   .and(z.object({ pageSlug: z.nativeEnum(PageSlug) }));
 
 export const adminPageDetailsSchema = z.object({

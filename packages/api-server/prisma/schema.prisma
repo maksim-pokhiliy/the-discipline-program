@@ -33,6 +33,7 @@ model User {
 
   @@index([createdAt])
   @@index([deletedAt])
+  @@index([role])
   @@map("users")
 }
 

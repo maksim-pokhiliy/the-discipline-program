@@ -15,7 +15,11 @@ import { ProductCurrency } from "@repo/contracts/product";
 import { centsToAmount } from "@repo/shared";
 
 import { prisma } from "../../db/client";
-import { CURRENCY_MAP, PRICE_INTERVAL_MAP } from "../../mappers/enum-maps";
+import {
+  CONTACT_STATUS_TO_PRISMA_MAP,
+  CURRENCY_MAP,
+  PRICE_INTERVAL_MAP,
+} from "../../mappers/enum-maps";
 
 export const adminDashboardApi = {
   getDashboardData: async (): Promise<DashboardData> => {
@@ -66,7 +70,7 @@ const getContentStats = async (): Promise<ContentStats> => {
 
     prisma.marketingContactSubmission.count(),
     prisma.marketingContactSubmission.count({
-      where: { status: ContactStatus.NEW },
+      where: { status: CONTACT_STATUS_TO_PRISMA_MAP[ContactStatus.NEW] },
     }),
   ]);
 

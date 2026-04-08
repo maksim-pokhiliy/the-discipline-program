@@ -9,6 +9,7 @@ import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToAdminUser, mapToAdminUserListItem } from "../../mappers";
+import { ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/enum-maps";
 import { handlePrismaError } from "../../utils";
 
 const includeWithProfiles = {
@@ -51,8 +52,10 @@ export const adminUsersApi = {
       throw new NotFoundError("User not found", { id });
     }
 
-    if (existing.role === UserRole.ADMIN && data.role !== UserRole.ADMIN) {
-      const adminCount = await prisma.user.count({ where: { role: UserRole.ADMIN } });
+    if (ROLE_MAP[existing.role] === UserRole.ADMIN && data.role !== UserRole.ADMIN) {
+      const adminCount = await prisma.user.count({
+        where: { role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] },
+      });
 
       if (adminCount <= 1) {
         throw new ConflictError("Cannot remove the last admin");
@@ -62,7 +65,7 @@ export const adminUsersApi = {
     try {
       const user = await prisma.user.update({
         where: { id },
-        data: { role: data.role },
+        data: { role: ROLE_TO_PRISMA_MAP[data.role] },
         include: includeWithProfiles,
       });
 
