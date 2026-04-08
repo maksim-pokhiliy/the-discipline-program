@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import {
   type AdminReviewsPageData,
   type Review,
@@ -9,6 +11,8 @@ import {
 import { adminKeys, createCrudHooks, createToggleHook } from "@repo/query";
 
 import { api } from "../api";
+
+const useNavigate = () => useRouter().push;
 
 const reviewHooks = createCrudHooks<
   AdminReviewsPageData,
@@ -26,6 +30,7 @@ const reviewHooks = createCrudHooks<
     delete: api.reviews.delete,
   },
   redirectTo: "/reviews",
+  useNavigate,
   additionalInvalidateKeys: [adminKeys.dashboard()],
 });
 

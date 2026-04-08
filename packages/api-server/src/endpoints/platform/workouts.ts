@@ -7,7 +7,7 @@ import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToWorkout } from "../../mappers";
-import { handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError } from "../../utils";
 
 import { resolveCoachId, verifyPlanOwnership, verifyWorkoutOwnership } from "./guards";
 
@@ -178,9 +178,10 @@ export const platformWorkoutsApi = {
         });
       }
 
-      const workout = await prisma.workout.findUniqueOrThrow({
-        where: { id: workoutId },
-      });
+      const workout = await findOrThrow(
+        prisma.workout.findUnique({ where: { id: workoutId } }),
+        "Workout",
+      );
 
       return mapToWorkout(workout);
     } catch (error) {

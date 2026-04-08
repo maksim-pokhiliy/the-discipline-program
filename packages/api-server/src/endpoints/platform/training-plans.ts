@@ -13,7 +13,7 @@ import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 import { prisma } from "../../db/client";
 import { mapToTrainingPlan, mapToWorkout } from "../../mappers";
 import { TRAINING_PLAN_STATUS_MAP } from "../../mappers/enum-maps";
-import { handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError } from "../../utils";
 import {
   MS_PER_DAY,
   endOfWeekInTz,
@@ -93,10 +93,10 @@ export const platformTrainingPlansApi = {
 
   getPageData: async (userId: string): Promise<CoachPlansPageData> => {
     const coachId = await resolveCoachId(userId);
-    const { timezone: tz } = await prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { timezone: true },
-    });
+    const { timezone: tz } = await findOrThrow(
+      prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } }),
+      "User",
+    );
     const { weekStart, weekEnd, todayStart, todayEnd } = getWeekBounds(tz);
 
     const plans = await prisma.trainingPlan.findMany({
@@ -197,12 +197,10 @@ export const platformTrainingPlansApi = {
 
     await verifyPlanOwnership(id, coachId);
 
-    const source = await prisma.trainingPlan.findUniqueOrThrow({
-      where: { id },
-      include: {
-        workouts: true,
-      },
-    });
+    const source = await findOrThrow(
+      prisma.trainingPlan.findUnique({ where: { id }, include: { workouts: true } }),
+      "Training plan",
+    );
 
     try {
       const newPlan = await prisma.$transaction(async (tx) => {
@@ -241,10 +239,10 @@ export const platformTrainingPlansApi = {
 
     await verifyPlanOwnership(id, coachId);
 
-    const plan = await prisma.trainingPlan.findUniqueOrThrow({
-      where: { id },
-      select: { status: true },
-    });
+    const plan = await findOrThrow(
+      prisma.trainingPlan.findUnique({ where: { id }, select: { status: true } }),
+      "Training plan",
+    );
 
     if (plan.status !== TrainingPlanStatus.ACTIVE) {
       throw new ConflictError("Only active plans can be archived.");
@@ -267,10 +265,10 @@ export const platformTrainingPlansApi = {
 
     await verifyPlanOwnership(id, coachId);
 
-    const plan = await prisma.trainingPlan.findUniqueOrThrow({
-      where: { id },
-      select: { status: true },
-    });
+    const plan = await findOrThrow(
+      prisma.trainingPlan.findUnique({ where: { id }, select: { status: true } }),
+      "Training plan",
+    );
 
     if (plan.status !== TrainingPlanStatus.ARCHIVED) {
       throw new ConflictError("Only archived plans can be restored.");
@@ -293,10 +291,10 @@ export const platformTrainingPlansApi = {
 
     await verifyPlanOwnership(id, coachId);
 
-    const plan = await prisma.trainingPlan.findUniqueOrThrow({
-      where: { id },
-      select: { status: true },
-    });
+    const plan = await findOrThrow(
+      prisma.trainingPlan.findUnique({ where: { id }, select: { status: true } }),
+      "Training plan",
+    );
 
     if (plan.status !== TrainingPlanStatus.DRAFT) {
       throw new ConflictError("Only draft plans can be activated.");

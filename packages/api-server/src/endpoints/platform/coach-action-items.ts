@@ -22,7 +22,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { HEALTH_STATUS_MAP, mapToCoachActionItem } from "../../mappers";
-import { handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError } from "../../utils";
 import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
 import { type EnrollmentWithData, createEnrollmentInclude } from "../../utils/enrollment-query";
 import { asJsonRecord } from "../../utils/json-record";
@@ -140,10 +140,10 @@ export const platformCoachActionItemsApi = {
   reconcile: async (userId: string): Promise<ReconcileResponse & { coachId: string }> => {
     const coachId = await resolveCoachId(userId);
 
-    const user = await prisma.user.findUniqueOrThrow({
-      where: { id: userId },
-      select: { timezone: true },
-    });
+    const user = await findOrThrow(
+      prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } }),
+      "User",
+    );
 
     const tz = user.timezone;
 

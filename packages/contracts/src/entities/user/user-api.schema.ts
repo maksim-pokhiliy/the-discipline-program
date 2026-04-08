@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { idParamSchema } from "../../common";
+
 import {
   adminUserListItemSchema,
   adminUserSchema,
@@ -9,15 +11,11 @@ import {
 
 export const getUsersResponseSchema = z.array(adminUserListItemSchema);
 
-export const getUserByIdParamsSchema = z.object({
-  id: z.string().cuid(),
-});
+export const getUserByIdParamsSchema = idParamSchema;
 
 export const getAdminUserResponseSchema = adminUserSchema;
 
-export const updateUserRoleParamsSchema = z.object({
-  id: z.string().cuid(),
-});
+export const updateUserRoleParamsSchema = idParamSchema;
 
 export const updateUserRoleRequestSchema = updateUserRoleSchema;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
@@ -12,6 +13,8 @@ import { adminKeys, createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
 
+const useNavigate = () => useRouter().push;
+
 const contactHooks = createCrudHooks<AdminContactsPageData, GetContactByIdResponse>({
   entityName: "Contact",
   keys: adminKeys.contacts,
@@ -21,6 +24,7 @@ const contactHooks = createCrudHooks<AdminContactsPageData, GetContactByIdRespon
     delete: api.contacts.delete,
   },
   redirectTo: "/contacts",
+  useNavigate,
   additionalInvalidateKeys: [adminKeys.dashboard()],
 });
 
