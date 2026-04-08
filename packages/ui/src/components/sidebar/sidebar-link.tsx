@@ -4,6 +4,8 @@ import { ListItemButton, ListItemIcon, ListItemText, Tooltip } from "@mui/materi
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { isActiveHref } from "../../hooks";
+
 import { getNavIcon } from "./icon-map";
 
 type SidebarLinkProps = {
@@ -16,8 +18,7 @@ type SidebarLinkProps = {
 export const SidebarLink = ({ text, href, icon, expanded }: SidebarLinkProps) => {
   const pathname = usePathname();
 
-  const isActive =
-    href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = isActiveHref(href, pathname);
 
   const Icon = getNavIcon(icon);
 

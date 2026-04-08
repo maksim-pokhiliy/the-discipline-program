@@ -176,7 +176,6 @@ const getRecentActivity = async (): Promise<ActivityItem[]> => {
       title: `Message from ${c.name || "Unknown"}`,
       subtitle: c.contact || "No contact",
       date: c.createdAt,
-      status: c.status,
       href: `/contacts/${c.id}`,
     })),
     ...users.map((u) => ({

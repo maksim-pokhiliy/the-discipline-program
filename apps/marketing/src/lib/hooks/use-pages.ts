@@ -9,34 +9,34 @@ import {
   type BlogPageData,
   type ContactPageData,
   type FaqPageData,
-} from "@repo/contracts";
+} from "@repo/contracts/pages";
 import { marketingKeys, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
 
-interface UseHomePageOptions {
+type UseHomePageOptions = {
   initialData?: HomePageData;
-}
+};
 
-interface UseStorefrontProgramsPageOptions {
+type UseStorefrontProgramsPageOptions = {
   initialData?: StorefrontProgramsPageData;
-}
+};
 
-interface UseAboutPageOptions {
+type UseAboutPageOptions = {
   initialData?: AboutPageData;
-}
+};
 
-interface UseBlogPageOptions {
+type UseBlogPageOptions = {
   initialData?: BlogPageData;
-}
+};
 
-interface UseContactPageOptions {
+type UseContactPageOptions = {
   initialData?: ContactPageData;
-}
+};
 
-interface UseFaqPageOptions {
+type UseFaqPageOptions = {
   initialData?: FaqPageData;
-}
+};
 
 export const useHomePage = ({ initialData }: UseHomePageOptions = {}) =>
   useQuery({

@@ -8,7 +8,7 @@ type PlanDetailPageProps = {
   params: Promise<{ planId: string }>;
 };
 
-export default async function PlanDetailPage({ params }: PlanDetailPageProps) {
+const PlanDetailPage = async ({ params }: PlanDetailPageProps) => {
   const { planId } = await params;
 
   return (
@@ -16,4 +16,6 @@ export default async function PlanDetailPage({ params }: PlanDetailPageProps) {
       <PlanDetailView planId={planId} />
     </SuspenseWrapper>
   );
-}
+};
+
+export default PlanDetailPage;

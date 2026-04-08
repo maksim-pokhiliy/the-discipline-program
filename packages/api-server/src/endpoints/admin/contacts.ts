@@ -5,12 +5,11 @@ import {
   type ContactSubmissionItem,
   type UpdateContactRequest,
 } from "@repo/contracts/contact";
-import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToContact } from "../../mappers";
 import { CONTACT_STATUS_TO_PRISMA_MAP } from "../../mappers/enum-maps";
-import { handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError } from "../../utils";
 
 export const adminContactsApi = {
   getContacts: async (): Promise<ContactSubmissionItem[]> => {
@@ -22,21 +21,19 @@ export const adminContactsApi = {
   },
 
   getContactById: async (id: string): Promise<ContactSubmissionItem> => {
-    const contact = await prisma.marketingContactSubmission.findUnique({ where: { id } });
-
-    if (!contact) {
-      throw new NotFoundError("Contact submission not found", { id });
-    }
+    const contact = await findOrThrow(
+      prisma.marketingContactSubmission.findUnique({ where: { id } }),
+      "Contact submission",
+    );
 
     return mapToContact(contact);
   },
 
   updateContact: async (id: string, data: UpdateContactRequest): Promise<ContactSubmissionItem> => {
-    const existing = await prisma.marketingContactSubmission.findUnique({ where: { id } });
-
-    if (!existing) {
-      throw new NotFoundError("Contact submission not found", { id });
-    }
+    await findOrThrow(
+      prisma.marketingContactSubmission.findUnique({ where: { id } }),
+      "Contact submission",
+    );
 
     try {
       const updateData: Prisma.MarketingContactSubmissionUpdateInput = {};
@@ -61,11 +58,10 @@ export const adminContactsApi = {
   },
 
   deleteContact: async (id: string): Promise<void> => {
-    const contact = await prisma.marketingContactSubmission.findUnique({ where: { id } });
-
-    if (!contact) {
-      throw new NotFoundError("Contact submission not found", { id });
-    }
+    await findOrThrow(
+      prisma.marketingContactSubmission.findUnique({ where: { id } }),
+      "Contact submission",
+    );
 
     try {
       await prisma.marketingContactSubmission.delete({ where: { id } });

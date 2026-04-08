@@ -5,15 +5,10 @@ import { Stack } from "@mui/material";
 import { type AboutPageData } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/ui";
 
+import { FullscreenSection, PageCTASection } from "@app/lib/components/ui";
 import { useAboutPage } from "@app/lib/hooks";
 
-import {
-  AboutCredentialsSection,
-  AboutCTASection,
-  AboutHeroSection,
-  AboutJourneySection,
-  AboutPersonalSection,
-} from "./sections";
+import { AboutCredentialsSection, AboutJourneySection, AboutPersonalSection } from "./sections";
 
 type AboutPageClientProps = {
   initialData: AboutPageData;
@@ -31,11 +26,23 @@ export const AboutPageClient = ({ initialData }: AboutPageClientProps) => {
     >
       {(data) => (
         <Stack spacing={0}>
-          <AboutHeroSection hero={data.hero} />
+          <FullscreenSection
+            backgroundImage={data.hero.backgroundImage}
+            title={data.hero.title}
+            subtitle={data.hero.subtitle}
+            buttonText={data.hero.buttonText}
+            buttonHref={data.hero.buttonHref}
+          />
           <AboutJourneySection journey={data.journey} />
           <AboutCredentialsSection credentials={data.credentials} />
           <AboutPersonalSection personal={data.personal} />
-          <AboutCTASection cta={data.cta} />
+          <PageCTASection
+            id="about-cta"
+            title={data.cta.title}
+            subtitle={data.cta.subtitle}
+            buttonText={data.cta.buttonText}
+            buttonHref={data.cta.buttonHref}
+          />
         </Stack>
       )}
     </QueryWrapper>

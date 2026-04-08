@@ -6,8 +6,9 @@ import { Chip, LinearProgress, Stack, Tooltip, Typography } from "@mui/material"
 
 import type { PlanDiscipline } from "@repo/contracts/coach-athletes";
 import { PLAN_ENROLLMENT_STATUS_LABELS } from "@repo/contracts/plan-enrollment";
+import { rateToPercent } from "@repo/shared";
 
-import { ENROLLMENT_CHIP_COLORS } from "./config";
+import { ENROLLMENT_STATUS_COLORS } from "@app/lib/config";
 
 type DisciplineSectionProps = {
   planDiscipline: PlanDiscipline[];
@@ -32,7 +33,8 @@ export const DisciplineSection: React.FC<DisciplineSectionProps> = ({ planDiscip
     return null;
   }
 
-  const progress = aggregate.planned > 0 ? (aggregate.completed / aggregate.planned) * 100 : 0;
+  const progress =
+    aggregate.planned > 0 ? rateToPercent(aggregate.completed / aggregate.planned) : 0;
   const hasMultiplePlans = planDiscipline.length > 1;
   const remaining = aggregate.planned - aggregate.available;
 
@@ -70,7 +72,7 @@ export const DisciplineSection: React.FC<DisciplineSectionProps> = ({ planDiscip
               <Chip
                 size="small"
                 label={PLAN_ENROLLMENT_STATUS_LABELS[plan.enrollmentStatus]}
-                color={ENROLLMENT_CHIP_COLORS[plan.enrollmentStatus]}
+                color={ENROLLMENT_STATUS_COLORS[plan.enrollmentStatus]}
                 variant="outlined"
               />
               <Typography variant="caption" sx={{ fontWeight: 500, whiteSpace: "nowrap" }}>

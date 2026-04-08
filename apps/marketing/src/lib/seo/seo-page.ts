@@ -13,13 +13,6 @@ export const PAGE_SEO = {
     keywords: ["fitness programs", "strength training", "conditioning", "workout plans"],
   },
 
-  reviews: {
-    title: "Reviews — The Discipline Program",
-    description:
-      "Real feedback and success stories from athletes who followed The Discipline Program.",
-    keywords: ["fitness reviews", "client results", "success stories"],
-  },
-
   about: {
     title: "About — The Discipline Program",
     description:

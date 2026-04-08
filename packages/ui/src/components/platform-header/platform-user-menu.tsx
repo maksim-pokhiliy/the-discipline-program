@@ -3,19 +3,8 @@
 import { useState } from "react";
 
 import { LogoutRounded, SettingsRounded } from "@mui/icons-material";
-import {
-  Avatar,
-  CircularProgress,
-  IconButton,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-} from "@mui/material";
+import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-
-import { signOut, useSession } from "@repo/auth/client";
 
 const getInitial = (name?: string | null, email?: string | null): string => {
   const source = name || email;
@@ -29,34 +18,30 @@ const getInitial = (name?: string | null, email?: string | null): string => {
 
 type PlatformUserMenuProps = {
   profileHref?: string;
+  userName?: string | null;
+  userEmail?: string | null;
+  userImage?: string | null;
+  onSignOut: () => void;
 };
 
-export const PlatformUserMenu = ({ profileHref = "/profile" }: PlatformUserMenuProps) => {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-
+export const PlatformUserMenu = ({
+  profileHref = "/profile",
+  userName,
+  userEmail,
+  userImage,
+  onSignOut,
+}: PlatformUserMenuProps) => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 
-  const handleSignOut = async () => {
+  const handleSignOut = () => {
     setAnchorEl(null);
-
-    await signOut({ redirect: false });
-
-    router.push("/login");
+    onSignOut();
   };
-
-  const isLoading = status === "loading";
 
   return (
     <>
       <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
-        <Avatar src={isLoading ? undefined : (session?.user?.image ?? undefined)}>
-          {isLoading ? (
-            <CircularProgress size={16} color="inherit" />
-          ) : (
-            getInitial(session?.user?.name, session?.user?.email)
-          )}
-        </Avatar>
+        <Avatar src={userImage ?? undefined}>{getInitial(userName, userEmail)}</Avatar>
       </IconButton>
 
       <Menu

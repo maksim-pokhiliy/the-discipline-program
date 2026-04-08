@@ -7,6 +7,10 @@ import { PlanEnrollmentStatus } from "../plan-enrollment";
 
 import { coachAthleteListItemSchema, coachAthletesSummarySchema } from "./coach-athletes.schema";
 
+export const coachAthleteDetailParamsSchema = z.object({
+  userId: z.string(),
+});
+
 export const coachAthletesDataSchema = z.object({
   summary: coachAthletesSummarySchema,
   athletes: z.array(coachAthleteListItemSchema),

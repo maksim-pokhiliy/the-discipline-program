@@ -1,15 +1,15 @@
 import { baseEnv } from "@repo/env/base";
 
-interface OrganizationConfig {
+type OrganizationConfig = {
   name: string;
   url: string;
   logo: string;
   founder: {
     name: string;
   };
-}
+};
 
-interface SeoConfig {
+type SeoConfig = {
   siteName: string;
   siteUrl: string;
   defaultTitle: string;
@@ -18,7 +18,7 @@ interface SeoConfig {
   defaultOgImage: string;
   twitterHandle?: string;
   organization: OrganizationConfig;
-}
+};
 
 export const SEO_CONFIG: SeoConfig = {
   siteName: "The Discipline Program",

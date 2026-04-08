@@ -27,17 +27,16 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [nameValue, setNameValue] = useState("");
-  const [descValue, setDescValue] = useState("");
-  const [initialized, setInitialized] = useState(false);
+  const planName = plan?.name ?? "";
+  const planDescription = plan?.description ?? "";
+  const planDataId = plan?.id;
+  const [nameValue, setNameValue] = useState(planName);
+  const [descValue, setDescValue] = useState(planDescription);
 
   useEffect(() => {
-    if (plan && !initialized) {
-      setNameValue(plan.name);
-      setDescValue(plan.description ?? "");
-      setInitialized(true);
-    }
-  }, [plan, initialized]);
+    setNameValue(planName);
+    setDescValue(planDescription);
+  }, [planDataId, planName, planDescription]);
 
   const rawTab = searchParams.get("tab");
   const activeTab: TabValue = rawTab === "athletes" ? "athletes" : "schedule";

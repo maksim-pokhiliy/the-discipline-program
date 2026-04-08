@@ -1,36 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { type UseMutationResult } from "@tanstack/react-query";
 
-interface UseDeleteConfirmationOptions {
+type UseDeleteConfirmationOptions = {
   deleteMutation: UseMutationResult<void, Error, string>;
-}
+};
 
-interface UseDeleteConfirmationReturn {
+type UseDeleteConfirmationReturn = {
   deleteId: string | null;
   requestDelete: (id: string) => void;
   cancelDelete: () => void;
   confirmDelete: () => void;
   isDeleting: boolean;
-}
+};
 
 export const useDeleteConfirmation = ({
   deleteMutation,
 }: UseDeleteConfirmationOptions): UseDeleteConfirmationReturn => {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const requestDelete = (id: string) => setDeleteId(id);
-  const cancelDelete = () => setDeleteId(null);
+  const requestDelete = useCallback((id: string) => setDeleteId(id), []);
+  const cancelDelete = useCallback(() => setDeleteId(null), []);
 
-  const confirmDelete = () => {
+  const confirmDelete = useCallback(() => {
     if (deleteId) {
       deleteMutation.mutate(deleteId, {
         onSuccess: () => setDeleteId(null),
       });
     }
-  };
+  }, [deleteId, deleteMutation]);
 
   return {
     deleteId,

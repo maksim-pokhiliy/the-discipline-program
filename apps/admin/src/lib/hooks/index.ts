@@ -1,5 +1,3 @@
-"use client";
-
 export * from "./use-blog";
 export * from "./use-contacts";
 export * from "./use-dashboard";

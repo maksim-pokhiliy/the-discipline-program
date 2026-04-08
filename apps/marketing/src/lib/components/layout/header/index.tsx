@@ -13,9 +13,7 @@ export const MarketingHeader = () => {
   return (
     <AppBar
       sx={{
-        position: "fixed",
         backgroundColor: "transparent",
-        backgroundImage: "none",
       }}
     >
       <Toolbar sx={{ position: "relative" }}>

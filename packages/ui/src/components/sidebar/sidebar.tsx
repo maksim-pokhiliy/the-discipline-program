@@ -27,6 +27,8 @@ type SidebarProps = {
   onToggle: () => void;
   mobileOpen: boolean;
   onMobileClose: () => void;
+  userEmail: string;
+  onSignOut: () => void;
 };
 
 const drawerTransition = (theme: Theme) =>
@@ -41,6 +43,8 @@ export const Sidebar = ({
   onToggle,
   mobileOpen,
   onMobileClose,
+  userEmail,
+  onSignOut,
 }: SidebarProps) => {
   const isDesktop = useMediaQuery<Theme>((theme) => theme.breakpoints.up("md"));
   const isExpanded = isDesktop ? expanded : true;
@@ -83,7 +87,7 @@ export const Sidebar = ({
       <Box sx={{ flexGrow: 1 }} />
 
       <Divider />
-      <SidebarUserMenu expanded={isExpanded} />
+      <SidebarUserMenu expanded={isExpanded} email={userEmail} onSignOut={onSignOut} />
     </Stack>
   );
 

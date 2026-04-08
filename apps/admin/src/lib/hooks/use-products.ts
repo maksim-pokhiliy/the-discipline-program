@@ -1,15 +1,12 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-
 import type {
   AdminProductsPageData,
   Product,
   CreateProductData,
   UpdateProductData,
 } from "@repo/contracts/product";
-import { adminKeys, createCrudHooks } from "@repo/query";
+import { adminKeys, createCrudHooks, createToggleHook } from "@repo/query";
 
 import { api } from "../api";
 
@@ -38,34 +35,16 @@ export const useCreateProduct = productHooks.useCreate;
 export const useUpdateProduct = productHooks.useUpdate;
 export const useDeleteProduct = productHooks.useDelete;
 
-export const useToggleProductStatus = () => {
-  const queryClient = useQueryClient();
+export const useToggleProductStatus = createToggleHook({
+  mutationFn: api.products.toggleStatus,
+  successMessage: "Product status updated",
+  errorMessage: "Failed to update status",
+  invalidateKeys: [adminKeys.products.page(), adminKeys.dashboard()],
+});
 
-  return useMutation({
-    mutationFn: api.products.toggleStatus,
-    onSuccess: () => {
-      toast.success("Product status updated");
-      queryClient.invalidateQueries({ queryKey: adminKeys.products.page() });
-      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update status");
-    },
-  });
-};
-
-export const useToggleProductFeatured = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: api.products.toggleFeatured,
-    onSuccess: () => {
-      toast.success("Featured status updated");
-      queryClient.invalidateQueries({ queryKey: adminKeys.products.page() });
-      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update featured status");
-    },
-  });
-};
+export const useToggleProductFeatured = createToggleHook({
+  mutationFn: api.products.toggleFeatured,
+  successMessage: "Featured status updated",
+  errorMessage: "Failed to update featured status",
+  invalidateKeys: [adminKeys.products.page(), adminKeys.dashboard()],
+});

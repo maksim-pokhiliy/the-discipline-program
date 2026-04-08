@@ -4,25 +4,13 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Avatar, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 
-import { signOut, useSession } from "@repo/auth/client";
-
 type SidebarUserMenuProps = {
   expanded: boolean;
+  email: string;
+  onSignOut: () => void;
 };
 
-export const SidebarUserMenu = ({ expanded }: SidebarUserMenuProps) => {
-  const { data: session } = useSession();
-
-  if (!session) {
-    return null;
-  }
-
-  const handleLogout = () => {
-    void signOut({ callbackUrl: "/login" });
-  };
-
-  const email = session.user?.email ?? "";
-
+export const SidebarUserMenu = ({ expanded, email, onSignOut }: SidebarUserMenuProps) => {
   const avatar = (
     <Avatar sx={(theme) => ({ width: theme.spacing(4), height: theme.spacing(4) })}>
       <AccountCircleIcon />
@@ -37,7 +25,7 @@ export const SidebarUserMenu = ({ expanded }: SidebarUserMenuProps) => {
         </Tooltip>
 
         <Tooltip title="Logout" placement="right">
-          <IconButton size="medium" onClick={handleLogout}>
+          <IconButton size="medium" onClick={onSignOut}>
             <LogoutIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -53,7 +41,7 @@ export const SidebarUserMenu = ({ expanded }: SidebarUserMenuProps) => {
         {email}
       </Typography>
 
-      <IconButton onClick={handleLogout} edge="end">
+      <IconButton onClick={onSignOut} edge="end">
         <LogoutIcon fontSize="small" />
       </IconButton>
     </Stack>

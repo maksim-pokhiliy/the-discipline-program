@@ -7,6 +7,8 @@ import { ContentSection } from "@repo/ui";
 
 import { FeatureCard } from "@app/lib/components/ui";
 
+const isMuiIconName = (name: string): name is keyof typeof MuiIcons => name in MuiIcons;
+
 const isSvgIconComponent = (value: unknown): value is SvgIconComponent =>
   typeof value === "function";
 
@@ -19,10 +21,11 @@ export const HomeFeaturesSection = ({ whyChoose }: FeaturesSectionProps) => {
     <ContentSection id="why-choose" title={whyChoose.title} subtitle={whyChoose.subtitle}>
       <Grid container spacing={6}>
         {whyChoose.features.map((feature) => {
-          const candidate =
-            feature.iconName in MuiIcons
-              ? MuiIcons[feature.iconName as keyof typeof MuiIcons]
-              : undefined;
+          if (!isMuiIconName(feature.iconName)) {
+            return null;
+          }
+
+          const candidate = MuiIcons[feature.iconName];
 
           if (!isSvgIconComponent(candidate)) {
             return null;

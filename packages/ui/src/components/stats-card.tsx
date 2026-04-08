@@ -7,8 +7,8 @@ import { Card, CardContent, Typography, Stack, Tooltip } from "@mui/material";
 import { type PaletteColorKey } from "@repo/mui";
 
 const sizeConfig = {
-  small: { titleVariant: "body2", valueVariant: "h5", spacing: 3, iconSize: "medium" },
-  medium: { titleVariant: "h3", valueVariant: "display2", spacing: 4, iconSize: "large" },
+  small: { titleVariant: "body2", valueVariant: "h5", spacing: 3 },
+  medium: { titleVariant: "h3", valueVariant: "display2", spacing: 4 },
 } as const;
 
 type StatsCardProps = {
