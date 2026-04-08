@@ -10,6 +10,7 @@ import {
   type ProgressBuckets,
   ProcessStatus,
 } from "@repo/contracts/coach-dashboard";
+import { rateToPercent } from "@repo/shared";
 
 import { AthleteCard, DashboardSection } from "../components";
 
@@ -56,7 +57,7 @@ export const ProgressBucketsSection: React.FC<ProgressBucketsSectionProps> = ({ 
     <DashboardSection
       title="Progress"
       badge={{
-        label: `${Math.round(buckets.avgEngagementRate * 100)}% engaged`,
+        label: `${rateToPercent(buckets.avgEngagementRate)}% engaged`,
         color: "info",
       }}
     >

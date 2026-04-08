@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-
 import { Alert, Divider, Stack, Typography } from "@mui/material";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
@@ -15,16 +14,10 @@ import { LoginForm } from "./components";
 export const LoginPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
-  const handleSubmit = async (data: LoginFormData) => {
-    setIsLoading(true);
-
-    try {
+  const loginMutation = useMutation({
+    mutationFn: async (data: LoginFormData) => {
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
@@ -32,18 +25,17 @@ export const LoginPage = () => {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
-      } else if (result?.ok) {
-        toast.success("Welcome back");
-        router.replace(callbackUrl);
-        router.refresh();
+        throw new Error("Invalid email or password");
       }
-    } catch {
-      setError("An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
+      return result;
+    },
+    onSuccess: () => {
+      toast.success("Welcome back");
+      router.refresh();
+      router.replace(callbackUrl);
+    },
+  });
 
   return (
     <Stack spacing={5} alignItems="center">
@@ -67,13 +59,16 @@ export const LoginPage = () => {
       </Stack>
 
       <Stack spacing={3} sx={{ width: "100%" }}>
-        {error && (
-          <Alert severity="error" onClose={() => setError(null)}>
-            {error}
+        {loginMutation.error && (
+          <Alert severity="error" onClose={() => loginMutation.reset()}>
+            {loginMutation.error.message}
           </Alert>
         )}
 
-        <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
+        <LoginForm
+          onSubmit={(data) => loginMutation.mutate(data)}
+          isLoading={loginMutation.isPending}
+        />
       </Stack>
     </Stack>
   );

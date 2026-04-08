@@ -7,9 +7,9 @@ import { marketingKeys } from "@repo/query";
 
 import { api } from "../api";
 
-interface UseBlogArticleOptions {
+type UseBlogArticleOptions = {
   initialData?: BlogPostPageData;
-}
+};
 
 export const useBlogArticle = (slug: string, { initialData }: UseBlogArticleOptions = {}) =>
   useQuery({

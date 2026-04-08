@@ -1,7 +1,5 @@
 import { type z } from "zod";
 
-import { type contactSubmissionSchema, type createContactSubmissionSchema } from "./contact.schema";
-
-export type ContactSubmission = z.infer<typeof contactSubmissionSchema>;
+import { type createContactSubmissionSchema } from "./contact.schema";
 
 export type CreateContactSubmission = z.infer<typeof createContactSubmissionSchema>;

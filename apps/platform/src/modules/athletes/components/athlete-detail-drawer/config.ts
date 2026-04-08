@@ -6,5 +6,4 @@ export const SEVERITY_COLORS: Record<ActionItemSeverity, string> = {
   [ActionItemSeverity.INFO]: "info.main",
 };
 
-export { ENROLLMENT_STATUS_COLORS as ENROLLMENT_CHIP_COLORS } from "@app/lib/config";
 export { formatDate } from "@repo/shared";

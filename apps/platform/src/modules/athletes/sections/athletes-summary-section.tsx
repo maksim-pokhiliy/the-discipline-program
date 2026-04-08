@@ -1,10 +1,8 @@
 "use client";
 
-import { Card, CardContent, Grid } from "@mui/material";
-
 import type { CoachAthletesSummary } from "@repo/contracts/coach-athletes";
 
-import { PulseStat, type PulseStatProps } from "@app/lib/components";
+import { type PulseStatProps, PulseStatsCard } from "@app/lib/components";
 
 type AthletesSummarySectionProps = {
   summary: CoachAthletesSummary;
@@ -38,17 +36,5 @@ export const AthletesSummarySection: React.FC<AthletesSummarySectionProps> = ({ 
     },
   ];
 
-  return (
-    <Card>
-      <CardContent>
-        <Grid container>
-          {stats.map((stat) => (
-            <Grid key={stat.label} size={{ xs: 6, sm: 3 }}>
-              <PulseStat {...stat} />
-            </Grid>
-          ))}
-        </Grid>
-      </CardContent>
-    </Card>
-  );
+  return <PulseStatsCard stats={stats} columns={{ xs: 6, sm: 3 }} />;
 };

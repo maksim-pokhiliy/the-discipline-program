@@ -4,6 +4,8 @@ import { Button, type ButtonProps } from "@mui/material";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { isActiveHref } from "../hooks";
+
 export type NavLinkButtonProps = {
   href: string;
   exact?: boolean;
@@ -12,7 +14,7 @@ export type NavLinkButtonProps = {
 export const NavLinkButton = ({ href, exact = false, ...props }: NavLinkButtonProps) => {
   const pathname = usePathname();
 
-  const isActive = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = isActiveHref(href, pathname, exact);
   const color: ButtonProps["color"] = isActive ? "primary" : "secondary";
 
   return (

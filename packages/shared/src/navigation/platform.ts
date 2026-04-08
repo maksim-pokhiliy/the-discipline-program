@@ -8,3 +8,10 @@ export const COACH_NAVIGATION: PlatformNavigationConfig = {
     { label: "Profile", href: "/coach/profile", icon: "profile" },
   ],
 };
+
+export const ATHLETE_NAVIGATION: PlatformNavigationConfig = {
+  items: [
+    { label: "Home", href: "/athlete", icon: "home" },
+    { label: "Profile", href: "/athlete/profile", icon: "profile" },
+  ],
+};

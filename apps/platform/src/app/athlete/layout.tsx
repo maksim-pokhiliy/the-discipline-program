@@ -1,4 +1,4 @@
-import { COACH_NAVIGATION } from "@repo/shared";
+import { ATHLETE_NAVIGATION } from "@repo/shared";
 
 import { PlatformLayout } from "@app/lib/components/platform-layout";
 
@@ -7,7 +7,7 @@ const AthleteLayout = ({ children }: { children: React.ReactNode }) => {
     <PlatformLayout
       logoHref="/athlete"
       profileHref="/athlete/profile"
-      navigation={COACH_NAVIGATION}
+      navigation={ATHLETE_NAVIGATION}
     >
       {children}
     </PlatformLayout>

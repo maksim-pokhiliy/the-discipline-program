@@ -6,10 +6,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { type Product } from "@repo/contracts/product";
 
-interface UseProductModalOptions {
+type UseProductModalOptions = {
   products: Product[];
   basePath: string;
-}
+};
 
 export const useProductModal = ({ products, basePath }: UseProductModalOptions) => {
   const router = useRouter();

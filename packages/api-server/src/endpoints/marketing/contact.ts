@@ -1,9 +1,10 @@
-import { type CreateContactSubmission } from "@repo/contracts/contact";
+import { type ContactSubmissionItem, type CreateContactSubmission } from "@repo/contracts/contact";
 
 import { prisma } from "../../db/client";
+import { mapToContact } from "../../mappers";
 
 export const contactApi = {
-  createSubmission: async (data: CreateContactSubmission) => {
+  createSubmission: async (data: CreateContactSubmission): Promise<ContactSubmissionItem> => {
     const submission = await prisma.marketingContactSubmission.create({
       data: {
         name: data.name,
@@ -13,6 +14,6 @@ export const contactApi = {
       },
     });
 
-    return submission;
+    return mapToContact(submission);
   },
 };

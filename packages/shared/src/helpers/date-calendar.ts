@@ -1,3 +1,5 @@
+import { DEFAULT_LOCALE } from "./locale";
+
 const MS_PER_DAY = 86_400_000;
 const DAYS_IN_WEEK = 7;
 
@@ -42,8 +44,6 @@ export const parseDateParam = (param: string): Date => {
 
   return new Date(parts[0] ?? 0, (parts[1] ?? 1) - 1, parts[2] ?? 1);
 };
-
-const DEFAULT_LOCALE = "en-US";
 
 const DAY_FORMAT = new Intl.DateTimeFormat(DEFAULT_LOCALE, { weekday: "short" });
 const DATE_FORMAT = new Intl.DateTimeFormat(DEFAULT_LOCALE, { month: "short", day: "numeric" });

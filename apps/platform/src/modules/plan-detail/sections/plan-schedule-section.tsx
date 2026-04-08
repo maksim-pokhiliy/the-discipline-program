@@ -36,6 +36,11 @@ import {
 import { CopyWeekButton, WeekNavigator, WorkoutDragOverlay } from "../components";
 import { WeekDayGroup } from "../components/week-day-group";
 
+type SortableWorkoutData = {
+  workout: Workout;
+  scheduledDate: Date | string | null;
+};
+
 type PlanScheduleSectionProps = {
   planId: string;
 };
@@ -230,8 +235,8 @@ export const PlanScheduleSection: React.FC<PlanScheduleSectionProps> = ({ planId
       }
 
       const dayWorkouts = localItems.get(activeDayKey) ?? [];
-      const activeData = event.active.data.current ?? {};
-      const rawDate = "scheduledDate" in activeData ? activeData.scheduledDate : null;
+      const activeData = event.active.data.current as SortableWorkoutData | undefined;
+      const rawDate = activeData?.scheduledDate ?? null;
       const originalDate =
         rawDate instanceof Date ? rawDate : typeof rawDate === "string" ? new Date(rawDate) : null;
       const targetDate = new Date(activeDayKey);

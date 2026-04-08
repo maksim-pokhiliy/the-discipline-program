@@ -1,7 +1,7 @@
 import { type Prisma } from "@prisma/client";
 import { type z } from "zod";
 
-import type { BlogPostPageData } from "@repo/contracts";
+import { type BlogPostPageData } from "@repo/contracts/blog";
 import {
   type HomePageData,
   type StorefrontProgramsPageData,

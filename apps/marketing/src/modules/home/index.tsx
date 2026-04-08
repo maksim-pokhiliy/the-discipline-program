@@ -6,15 +6,10 @@ import { type HomePageData } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/ui";
 
 import { StructuredData } from "@app/lib/components/seo";
+import { FullscreenSection, PageCTASection } from "@app/lib/components/ui";
 import { useHomePage } from "@app/lib/hooks";
 
-import {
-  HomeFeaturesSection,
-  HomeFinalCTASection,
-  HomeHeroSection,
-  HomeStorefrontProgramsPreview,
-  HomeReviewsSection,
-} from "./sections";
+import { HomeFeaturesSection, HomeStorefrontProgramsPreview, HomeReviewsSection } from "./sections";
 
 type HomePageClientProps = {
   initialData: HomePageData;
@@ -37,7 +32,13 @@ export const HomePageClient = ({ initialData }: HomePageClientProps) => {
           <StructuredData type="reviews" data={{ reviews: data.reviewsList }} />
 
           <Stack spacing={0}>
-            <HomeHeroSection hero={data.hero} />
+            <FullscreenSection
+              backgroundImage={data.hero.backgroundImage}
+              title={data.hero.title}
+              subtitle={data.hero.subtitle}
+              buttonText={data.hero.buttonText}
+              buttonHref={data.hero.buttonHref}
+            />
             <HomeFeaturesSection whyChoose={data.whyChoose} />
 
             <HomeStorefrontProgramsPreview
@@ -46,7 +47,13 @@ export const HomePageClient = ({ initialData }: HomePageClientProps) => {
             />
 
             <HomeReviewsSection reviews={data.reviews} reviewsList={data.reviewsList} />
-            <HomeFinalCTASection contact={data.contact} />
+            <PageCTASection
+              id="home-cta"
+              title={data.contact.title}
+              subtitle={data.contact.subtitle}
+              buttonText={data.contact.buttonText}
+              buttonHref={data.contact.buttonHref}
+            />
           </Stack>
         </>
       )}

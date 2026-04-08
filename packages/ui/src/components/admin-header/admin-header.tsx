@@ -6,6 +6,8 @@ import { usePathname } from "next/navigation";
 
 import { LAYOUT, type AdminNavigationConfig } from "@repo/shared";
 
+import { isActiveHref } from "../../hooks";
+
 type AdminHeaderProps = {
   onMenuClick: () => void;
   navigation: AdminNavigationConfig;
@@ -18,7 +20,7 @@ const getPageTitle = (pathname: string, config: AdminNavigationConfig): string =
 
   for (const group of config.groups) {
     for (const link of group.links) {
-      if (pathname === link.href || pathname.startsWith(`${link.href}/`)) {
+      if (isActiveHref(link.href, pathname)) {
         return link.text;
       }
     }

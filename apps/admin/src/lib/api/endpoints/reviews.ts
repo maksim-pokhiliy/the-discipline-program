@@ -3,7 +3,6 @@ import {
   type Review,
   type AdminReviewsPageData,
   type CreateReviewData,
-  ReviewToggleField,
   type UpdateReviewData,
 } from "@repo/contracts/review";
 
@@ -23,5 +22,5 @@ export const createReviewsAPI = (client: ApiClient) => ({
   delete: (id: string): Promise<void> => client.request(`/api/admin/reviews/${id}`, "DELETE"),
 
   toggleActive: (id: string): Promise<Review> =>
-    client.request(`/api/admin/reviews/${id}/toggle?field=${ReviewToggleField.IS_ACTIVE}`, "PATCH"),
+    client.request(`/api/admin/reviews/${id}/toggle`, "PATCH"),
 });

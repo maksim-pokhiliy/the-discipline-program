@@ -1,6 +1,6 @@
-type DateFormatStyle = "short" | "medium" | "long" | "compact" | "day" | "weekday";
+import { DEFAULT_LOCALE } from "./locale";
 
-const DEFAULT_LOCALE = "en-US";
+type DateFormatStyle = "short" | "medium" | "long" | "compact" | "day" | "weekday";
 
 export const formatDate = (date: Date | string, style: DateFormatStyle = "short"): string => {
   const d = typeof date === "string" ? new Date(date) : date;

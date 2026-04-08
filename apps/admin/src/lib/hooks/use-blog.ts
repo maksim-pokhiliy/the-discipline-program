@@ -1,15 +1,12 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-
 import {
   type AdminBlogPageData,
   type BlogPost,
   type CreateBlogPostData,
   type UpdateBlogPostData,
 } from "@repo/contracts/blog";
-import { adminKeys, createCrudHooks } from "@repo/query";
+import { adminKeys, createCrudHooks, createToggleHook } from "@repo/query";
 
 import { api } from "../api";
 
@@ -38,34 +35,16 @@ export const useCreateBlogPost = blogHooks.useCreate;
 export const useUpdateBlogPost = blogHooks.useUpdate;
 export const useDeleteBlogPost = blogHooks.useDelete;
 
-export const useToggleBlogPost = () => {
-  const queryClient = useQueryClient();
+export const useToggleBlogPost = createToggleHook({
+  mutationFn: api.blog.togglePublished,
+  successMessage: "Post status updated",
+  errorMessage: "Failed to update post status",
+  invalidateKeys: [adminKeys.blog.page(), adminKeys.dashboard()],
+});
 
-  return useMutation({
-    mutationFn: api.blog.togglePublished,
-    onSuccess: () => {
-      toast.success("Post status updated");
-      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
-      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update post status");
-    },
-  });
-};
-
-export const useToggleBlogFeatured = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: api.blog.toggleFeatured,
-    onSuccess: () => {
-      toast.success("Featured post updated");
-      queryClient.invalidateQueries({ queryKey: adminKeys.blog.page() });
-      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update featured post");
-    },
-  });
-};
+export const useToggleBlogFeatured = createToggleHook({
+  mutationFn: api.blog.toggleFeatured,
+  successMessage: "Featured post updated",
+  errorMessage: "Failed to update featured post",
+  invalidateKeys: [adminKeys.blog.page(), adminKeys.dashboard()],
+});

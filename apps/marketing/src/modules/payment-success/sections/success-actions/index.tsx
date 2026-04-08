@@ -10,22 +10,17 @@ export const PaymentSuccessActionsSection = () => {
     >
       <Stack spacing={6} alignItems="center">
         <Stack spacing={2} direction={{ xs: "column", sm: "row" }}>
-          <Button
-            variant="contained"
-            size="large"
-            href="/contact"
-            sx={(theme) => ({ minWidth: theme.spacing(25) })}
-          >
+          <Button variant="contained" size="large" href="/contact">
             Contact Support
           </Button>
 
-          <Button size="large" href="/" sx={(theme) => ({ minWidth: theme.spacing(25) })}>
+          <Button size="large" href="/">
             Back to Home
           </Button>
         </Stack>
 
         <Stack spacing={2} textAlign="center" sx={(theme) => ({ maxWidth: theme.spacing(62.5) })}>
-          <Typography variant="body1" color="text.secondary" fontWeight="bold">
+          <Typography variant="subtitle2" color="text.secondary">
             Next Steps:
           </Typography>
 

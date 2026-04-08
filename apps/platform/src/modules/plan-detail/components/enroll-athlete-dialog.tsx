@@ -10,10 +10,8 @@ import { FormModal } from "@repo/ui";
 
 import { useBulkEnrollAthletes, useSearchUsers } from "@app/lib/hooks";
 
-type UserOption = UserSearchResult;
-
 const SELECT_ALL_ID = "__select_all__";
-const SELECT_ALL_OPTION: UserOption = {
+const SELECT_ALL_OPTION: UserSearchResult = {
   id: SELECT_ALL_ID,
   name: "Select All",
   email: "",
@@ -34,17 +32,17 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
   enrollments,
 }) => {
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<UserOption[]>([]);
+  const [selected, setSelected] = useState<UserSearchResult[]>([]);
   const { data: users = [] } = useSearchUsers(query, open);
   const bulkEnroll = useBulkEnrollAthletes(planId);
 
   const enrolledIds = new Set(enrollments.map((e: PlanEnrollment) => e.userId));
-  const options = users.filter((u: UserOption) => !enrolledIds.has(u.id));
+  const options = users.filter((u: UserSearchResult) => !enrolledIds.has(u.id));
   const selectedIds = new Set(selected.map((u) => u.id));
   const someSelected = options.some((o) => selectedIds.has(o.id));
   const allSelected = options.length > 0 && options.every((o) => selectedIds.has(o.id));
 
-  const handleChange = (_: SyntheticEvent, value: UserOption[]) => {
+  const handleChange = (_: SyntheticEvent, value: UserSearchResult[]) => {
     if (value.some((v) => v.id === SELECT_ALL_ID)) {
       if (allSelected) {
         setSelected(selected.filter((s) => !options.some((o) => o.id === s.id)));
