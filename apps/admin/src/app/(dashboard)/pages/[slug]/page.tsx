@@ -4,8 +4,10 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export default async function PageEditPage({ params }: PageProps) {
+const PageEditPage = async ({ params }: PageProps) => {
   const { slug } = await params;
 
   return <PagesEditView slug={slug} />;
-}
+};
+
+export default PageEditPage;

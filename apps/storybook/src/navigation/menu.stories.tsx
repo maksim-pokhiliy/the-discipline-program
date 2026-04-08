@@ -30,18 +30,19 @@ type Story = StoryObj<typeof meta>;
 const useMenu = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
+  const close = () => setAnchorEl(null);
   const bind: Pick<MenuProps, "anchorEl" | "open" | "onClose"> = {
     anchorEl,
     open,
-    onClose: () => setAnchorEl(null),
+    onClose: close,
   };
   const trigger = (e: React.MouseEvent<HTMLElement>) => setAnchorEl(e.currentTarget);
 
-  return { bind, trigger };
+  return { bind, trigger, close };
 };
 
 const BasicStory = () => {
-  const { bind, trigger } = useMenu();
+  const { bind, trigger, close } = useMenu();
 
   return (
     <StoryPage>
@@ -50,10 +51,10 @@ const BasicStory = () => {
           Open Menu
         </Button>
         <Menu {...bind}>
-          <MenuItem onClick={bind.onClose as () => void}>Workouts</MenuItem>
-          <MenuItem onClick={bind.onClose as () => void}>Athletes</MenuItem>
-          <MenuItem onClick={bind.onClose as () => void}>Programs</MenuItem>
-          <MenuItem onClick={bind.onClose as () => void}>Settings</MenuItem>
+          <MenuItem onClick={close}>Workouts</MenuItem>
+          <MenuItem onClick={close}>Athletes</MenuItem>
+          <MenuItem onClick={close}>Programs</MenuItem>
+          <MenuItem onClick={close}>Settings</MenuItem>
         </Menu>
       </StorySection>
     </StoryPage>
@@ -65,7 +66,7 @@ export const Basic: Story = {
 };
 
 const WithIconsStory = () => {
-  const { bind, trigger } = useMenu();
+  const { bind, trigger, close } = useMenu();
 
   return (
     <StoryPage>
@@ -74,20 +75,20 @@ const WithIconsStory = () => {
           Actions
         </Button>
         <Menu {...bind}>
-          <MenuItem onClick={bind.onClose as () => void}>
+          <MenuItem onClick={close}>
             <ListItemIcon>
               <EditIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>Edit</ListItemText>
           </MenuItem>
-          <MenuItem onClick={bind.onClose as () => void}>
+          <MenuItem onClick={close}>
             <ListItemIcon>
               <ContentCopyIcon fontSize="small" />
             </ListItemIcon>
             <ListItemText>Duplicate</ListItemText>
           </MenuItem>
           <Divider />
-          <MenuItem onClick={bind.onClose as () => void}>
+          <MenuItem onClick={close}>
             <ListItemIcon>
               <DeleteIcon fontSize="small" color="error" />
             </ListItemIcon>
@@ -104,7 +105,7 @@ export const WithIcons: Story = {
 };
 
 const DenseStory = () => {
-  const { bind, trigger } = useMenu();
+  const { bind, trigger, close } = useMenu();
 
   return (
     <StoryPage>
@@ -113,19 +114,19 @@ const DenseStory = () => {
           Dense Menu
         </Button>
         <Menu {...bind}>
-          <MenuItem dense onClick={bind.onClose as () => void}>
+          <MenuItem dense onClick={close}>
             Mon
           </MenuItem>
-          <MenuItem dense onClick={bind.onClose as () => void}>
+          <MenuItem dense onClick={close}>
             Tue
           </MenuItem>
-          <MenuItem dense onClick={bind.onClose as () => void}>
+          <MenuItem dense onClick={close}>
             Wed
           </MenuItem>
-          <MenuItem dense onClick={bind.onClose as () => void}>
+          <MenuItem dense onClick={close}>
             Thu
           </MenuItem>
-          <MenuItem dense onClick={bind.onClose as () => void}>
+          <MenuItem dense onClick={close}>
             Fri
           </MenuItem>
         </Menu>
@@ -139,7 +140,7 @@ export const Dense: Story = {
 };
 
 const SelectedStory = () => {
-  const { bind, trigger } = useMenu();
+  const { bind, trigger, close } = useMenu();
 
   return (
     <StoryPage>
@@ -148,11 +149,11 @@ const SelectedStory = () => {
           With Selection
         </Button>
         <Menu {...bind}>
-          <MenuItem onClick={bind.onClose as () => void}>All</MenuItem>
-          <MenuItem selected onClick={bind.onClose as () => void}>
+          <MenuItem onClick={close}>All</MenuItem>
+          <MenuItem selected onClick={close}>
             Active
           </MenuItem>
-          <MenuItem onClick={bind.onClose as () => void}>Completed</MenuItem>
+          <MenuItem onClick={close}>Completed</MenuItem>
           <MenuItem disabled>Archived</MenuItem>
         </Menu>
       </StorySection>
@@ -165,7 +166,7 @@ export const Selected: Story = {
 };
 
 const MaxHeightStory = () => {
-  const { bind, trigger } = useMenu();
+  const { bind, trigger, close } = useMenu();
 
   return (
     <StoryPage>
@@ -175,7 +176,7 @@ const MaxHeightStory = () => {
         </Button>
         <Menu {...bind} slotProps={{ paper: { sx: { maxHeight: 200 } } }}>
           {Array.from({ length: 20 }, (_, i) => (
-            <MenuItem key={i} onClick={bind.onClose as () => void}>
+            <MenuItem key={i} onClick={close}>
               Option {i + 1}
             </MenuItem>
           ))}

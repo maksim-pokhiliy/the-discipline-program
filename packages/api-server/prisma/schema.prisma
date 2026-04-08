@@ -235,6 +235,7 @@ model TrainingPlan {
   updatedAt   DateTime           @updatedAt
   deletedAt   DateTime?
 
+  @@index([coachId])
   @@index([createdAt])
   @@index([deletedAt])
   @@index([status])

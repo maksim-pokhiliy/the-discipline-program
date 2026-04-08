@@ -17,8 +17,10 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function ContactPage() {
+const ContactPage = async () => {
   const initialData = await serverApi.pages.getContact();
 
   return <ContactPageClient initialData={initialData} />;
-}
+};
+
+export default ContactPage;

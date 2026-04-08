@@ -16,22 +16,22 @@ type RootLayoutProps = Readonly<{
   children: React.ReactNode;
 }>;
 
-export default function RootLayout({ children }: RootLayoutProps) {
-  return (
-    <html lang="en">
-      <body className={fontVariables}>
-        <NextProvider>
-          <QueryProvider>
-            <AuthProvider>
-              <Box component="main" sx={{ minHeight: "100vh" }}>
-                {children}
+const RootLayout = ({ children }: RootLayoutProps) => (
+  <html lang="en">
+    <body className={fontVariables}>
+      <NextProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <Box component="main" sx={{ minHeight: "100vh" }}>
+              {children}
 
-                <Toaster />
-              </Box>
-            </AuthProvider>
-          </QueryProvider>
-        </NextProvider>
-      </body>
-    </html>
-  );
-}
+              <Toaster />
+            </Box>
+          </AuthProvider>
+        </QueryProvider>
+      </NextProvider>
+    </body>
+  </html>
+);
+
+export default RootLayout;

@@ -10,7 +10,7 @@ type BlogArticlePageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export async function generateMetadata({ params }: BlogArticlePageProps): Promise<Metadata> {
+export const generateMetadata = async ({ params }: BlogArticlePageProps): Promise<Metadata> => {
   const { slug } = await params;
 
   try {
@@ -46,13 +46,15 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
       description: "The requested article could not be found.",
     };
   }
-}
+};
 
 export const dynamic = "force-dynamic";
 
-export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
+const BlogArticlePage = async ({ params }: BlogArticlePageProps) => {
   const { slug } = await params;
   const initialData = await serverApi.pages.getBlogArticle(slug);
 
   return <BlogArticlePageClient slug={slug} initialData={initialData} />;
-}
+};
+
+export default BlogArticlePage;

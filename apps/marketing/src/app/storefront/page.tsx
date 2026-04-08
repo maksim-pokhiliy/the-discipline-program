@@ -17,8 +17,10 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function StorefrontProgramsPage() {
+const StorefrontProgramsPage = async () => {
   const initialData = await serverApi.pages.getStorefrontPrograms();
 
   return <StorefrontProgramsPageClient initialData={initialData} />;
-}
+};
+
+export default StorefrontProgramsPage;
