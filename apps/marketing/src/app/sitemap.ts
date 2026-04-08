@@ -5,7 +5,7 @@ import { SEO_CONFIG } from "@app/lib/seo";
 
 export const dynamic = "force-dynamic";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
   const baseUrl = SEO_CONFIG.siteUrl;
 
   const staticPages = [
@@ -55,4 +55,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {
     return staticPages;
   }
-}
+};
+
+export default sitemap;

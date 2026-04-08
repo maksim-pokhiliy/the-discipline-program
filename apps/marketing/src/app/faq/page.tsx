@@ -17,8 +17,10 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function FaqPage() {
+const FaqPage = async () => {
   const initialData = await serverApi.pages.getFaq();
 
   return <FaqPageClient initialData={initialData} />;
-}
+};
+
+export default FaqPage;

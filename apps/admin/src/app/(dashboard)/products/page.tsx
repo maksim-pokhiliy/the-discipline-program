@@ -1,5 +1,5 @@
 import { ProductsListView } from "@app/modules/products";
 
-export default function ProductsPage() {
-  return <ProductsListView />;
-}
+const ProductsPage = () => <ProductsListView />;
+
+export default ProductsPage;

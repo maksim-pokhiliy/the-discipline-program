@@ -17,8 +17,10 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+const HomePage = async () => {
   const initialData = await serverApi.pages.getHome();
 
   return <HomePageClient initialData={initialData} />;
-}
+};
+
+export default HomePage;

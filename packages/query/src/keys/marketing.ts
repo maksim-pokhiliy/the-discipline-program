@@ -21,9 +21,4 @@ export const marketingKeys = {
   reviews: {
     all: () => [...marketingKeys.root, "reviews"] as const,
   },
-
-  payments: {
-    all: () => [...marketingKeys.root, "payments"] as const,
-    order: (orderId: string) => [...marketingKeys.root, "payments", "order", orderId] as const,
-  },
 } as const;

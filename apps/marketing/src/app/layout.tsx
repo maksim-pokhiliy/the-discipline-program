@@ -35,27 +35,27 @@ type RootLayoutProps = Readonly<{
   children: React.ReactNode;
 }>;
 
-export default function RootLayout({ children }: RootLayoutProps) {
-  return (
-    <html lang="en">
-      <head>
-        <StructuredData type="website" />
-        <StructuredData type="organization" />
-      </head>
+const RootLayout = ({ children }: RootLayoutProps) => (
+  <html lang="en">
+    <head>
+      <StructuredData type="website" />
+      <StructuredData type="organization" />
+    </head>
 
-      <body id="body-dom-anchor" className={fontVariables}>
-        <NextProvider>
-          <QueryProvider>
-            <MarketingHeader />
+    <body id="body-dom-anchor" className={fontVariables}>
+      <NextProvider>
+        <QueryProvider>
+          <MarketingHeader />
 
-            <Box component="main" sx={{ minHeight: "100vh" }}>
-              {children}
-            </Box>
+          <Box component="main" sx={{ minHeight: "100vh" }}>
+            {children}
+          </Box>
 
-            <Footer />
-          </QueryProvider>
-        </NextProvider>
-      </body>
-    </html>
-  );
-}
+          <Footer />
+        </QueryProvider>
+      </NextProvider>
+    </body>
+  </html>
+);
+
+export default RootLayout;

@@ -40,16 +40,4 @@ export const PAGE_SEO = {
       "Frequently asked questions about training programs, trials, equipment, and coaching.",
     keywords: ["faq", "training questions", "program faq", "coaching faq"],
   },
-
-  paymentError: {
-    title: "Payment Error — The Discipline Program",
-    description: "Something went wrong with your payment. Check details and try again.",
-    keywords: ["payment error", "checkout issue"],
-  },
-
-  paymentSuccess: {
-    title: "Payment Success — The Discipline Program",
-    description: "Payment completed successfully. Check your email for all the details.",
-    keywords: ["payment success", "order confirmed"],
-  },
 };

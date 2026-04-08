@@ -16,7 +16,8 @@ const Swatch = ({ color, label }: SwatchProps) => (
         height: 64,
         borderRadius: 1,
         bgcolor: color,
-        border: "1px solid rgba(255,255,255,0.1)",
+        border: 1,
+        borderColor: "divider",
       }}
     />
     <Typography variant="caption" sx={{ opacity: 0.7 }}>
