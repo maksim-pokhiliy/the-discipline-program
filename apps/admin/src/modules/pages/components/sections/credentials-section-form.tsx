@@ -31,7 +31,7 @@ export const CredentialsSectionForm = () => {
           label="Section Title"
           fullWidth
           error={!!errors.title}
-          helperText={errors.title?.message?.toString()}
+          helperText={errors.title?.message}
           {...register("title")}
         />
 

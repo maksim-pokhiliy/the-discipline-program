@@ -18,9 +18,11 @@ const icons = {
 
 export type NavIconName = keyof typeof icons;
 
+const isNavIconName = (name: string): name is NavIconName => name in icons;
+
 export const getNavIcon = (name: string) => {
-  if (name in icons) {
-    return icons[name as NavIconName];
+  if (isNavIconName(name)) {
+    return icons[name];
   }
 
   return DashboardOutlined;

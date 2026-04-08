@@ -117,7 +117,9 @@ const sectionVariants = SECTION_DEFINITIONS.map(([key, schema]) =>
 const toNonEmptyArray = <T>(arr: T[]): [T, ...T[]] => {
   const [first, ...rest] = arr;
 
-  if (first === undefined) {throw new Error("Expected non-empty array");}
+  if (first === undefined) {
+    throw new Error("Expected non-empty array");
+  }
 
   return [first, ...rest];
 };
@@ -132,7 +134,7 @@ export const adminPageDetailsSchema = z.object({
     z.object({
       id: z.string(),
       section: z.string(),
-      data: z.record(z.unknown()),
+      data: z.record(z.string(), z.unknown()),
       updatedAt: z.date(),
     }),
   ),

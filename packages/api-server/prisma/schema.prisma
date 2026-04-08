@@ -193,7 +193,7 @@ model Subscription {
 model Transaction {
   id             String            @id @default(cuid())
   userId         String
-  user           User              @relation(fields: [userId], references: [id])
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscriptionId String?
   amountCents    Int
   currency       Currency
@@ -330,6 +330,7 @@ model CoachActionItem {
   updatedAt     DateTime                  @updatedAt
 
   @@index([coachId, status])
+  @@index([coachId, status, resolvedAt])
   @@index([athleteId])
   @@index([createdAt])
   @@map("app_coach_action_items")

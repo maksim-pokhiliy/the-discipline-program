@@ -22,7 +22,7 @@ export const ReviewsSectionForm = () => {
           label="Section Title"
           fullWidth
           error={!!errors.title}
-          helperText={errors.title?.message?.toString()}
+          helperText={errors.title?.message}
           {...register("title")}
         />
 
@@ -32,7 +32,7 @@ export const ReviewsSectionForm = () => {
           multiline
           minRows={2}
           error={!!errors.subtitle}
-          helperText={errors.subtitle?.message?.toString()}
+          helperText={errors.subtitle?.message}
           {...register("subtitle")}
         />
       </Stack>

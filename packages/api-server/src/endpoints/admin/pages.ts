@@ -11,6 +11,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { handlePrismaError } from "../../utils";
+import { asJsonRecord } from "../../utils/json-record";
 import { getPageSectionsOrder } from "../../utils/page-sections";
 
 const isValidPageSlug = (slug: string): slug is PageSlug => {
@@ -62,7 +63,7 @@ export const adminPagesApi = {
       sections: sortedSections.map((s) => ({
         id: s.id,
         section: s.section,
-        data: s.data as Record<string, unknown>,
+        data: asJsonRecord(s.data) ?? {},
         updatedAt: s.updatedAt,
       })),
     };
