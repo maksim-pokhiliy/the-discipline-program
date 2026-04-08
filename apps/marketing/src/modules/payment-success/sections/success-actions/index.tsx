@@ -1,6 +1,17 @@
 import { Button, List, ListItem, ListItemText, Stack, Typography } from "@mui/material";
+import Link from "next/link";
 
 import { ContentSection } from "@repo/ui";
+
+const NEXT_STEPS = [
+  "1. Check your email for access instructions",
+  "2. Download the mobile app or access the web platform",
+  "3. Start your first workout with Denis Sergeev",
+  "4. Join our community and track your progress",
+];
+
+const SPAM_NOTICE =
+  "If you don't receive an email within 15 minutes, please check your spam folder or contact our support team.";
 
 export const PaymentSuccessActionsSection = () => {
   return (
@@ -10,11 +21,11 @@ export const PaymentSuccessActionsSection = () => {
     >
       <Stack spacing={6} alignItems="center">
         <Stack spacing={2} direction={{ xs: "column", sm: "row" }}>
-          <Button variant="contained" size="large" href="/contact">
+          <Button variant="contained" size="large" component={Link} href="/contact">
             Contact Support
           </Button>
 
-          <Button size="large" href="/">
+          <Button size="large" component={Link} href="/">
             Back to Home
           </Button>
         </Stack>
@@ -25,23 +36,15 @@ export const PaymentSuccessActionsSection = () => {
           </Typography>
 
           <List dense disablePadding>
-            <ListItem disableGutters disablePadding>
-              <ListItemText secondary="1. Check your email for access instructions" />
-            </ListItem>
-            <ListItem disableGutters disablePadding>
-              <ListItemText secondary="2. Download the mobile app or access the web platform" />
-            </ListItem>
-            <ListItem disableGutters disablePadding>
-              <ListItemText secondary="3. Start your first workout with Denis Sergeev" />
-            </ListItem>
-            <ListItem disableGutters disablePadding>
-              <ListItemText secondary="4. Join our community and track your progress" />
-            </ListItem>
+            {NEXT_STEPS.map((step) => (
+              <ListItem key={step} disableGutters disablePadding>
+                <ListItemText secondary={step} />
+              </ListItem>
+            ))}
           </List>
 
           <Typography variant="caption" color="text.disabled">
-            If you don&apos;t receive an email within 15 minutes, please check your spam folder or
-            contact our support team.
+            {SPAM_NOTICE}
           </Typography>
         </Stack>
       </Stack>

@@ -7,7 +7,7 @@ import {
   getWorkoutLogResponseSchema,
 } from "@repo/contracts/workout-log";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(async (_, context, userId) => {
   const { id } = getWorkoutLogByIdParamsSchema.parse(await context.params);

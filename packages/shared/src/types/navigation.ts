@@ -25,10 +25,12 @@ export type MarketingNavigationConfig = {
   footerLinks: NavLink[];
 };
 
+export type PlatformIconName = "home" | "plans" | "athletes" | "profile";
+
 export type PlatformNavItem = {
   label: string;
   href: string;
-  icon: string;
+  icon: PlatformIconName;
 };
 
 export type PlatformNavigationConfig = {

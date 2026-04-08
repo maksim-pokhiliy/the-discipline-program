@@ -186,6 +186,7 @@ model Subscription {
 
   @@index([createdAt])
   @@index([status])
+  @@index([priceId])
   @@map("app_subscriptions")
 }
 

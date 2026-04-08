@@ -93,10 +93,7 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
         message={`Remove ${athleteName} from this plan?`}
         details="The athlete will lose access to this plan's workouts."
         isConfirming={isPending}
-        onConfirm={() => {
-          onDelete(enrollmentId);
-          setDeleteOpen(false);
-        }}
+        onConfirm={() => onDelete(enrollmentId)}
       />
     </>
   );

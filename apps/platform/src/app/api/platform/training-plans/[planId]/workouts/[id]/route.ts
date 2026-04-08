@@ -10,7 +10,7 @@ import {
   updateWorkoutResponseSchema,
 } from "@repo/contracts/workout";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(async (_, context, userId) => {
   const { planId, id } = getWorkoutByIdParamsSchema.parse(await context.params);

@@ -11,7 +11,9 @@ export type NavLinkButtonProps = {
   exact?: boolean;
 } & Omit<ButtonProps, "href" | "color" | "variant">;
 
-export const NavLinkButton = ({ href, exact = false, ...props }: NavLinkButtonProps) => {
+const navLinkSx = { borderRadius: 0, py: 2, px: 4 };
+
+export const NavLinkButton = ({ href, exact = false, sx, ...props }: NavLinkButtonProps) => {
   const pathname = usePathname();
 
   const isActive = isActiveHref(href, pathname, exact);
@@ -23,7 +25,7 @@ export const NavLinkButton = ({ href, exact = false, ...props }: NavLinkButtonPr
       href={href}
       variant="text"
       color={color}
-      sx={{ borderRadius: 0, py: 2, px: 4 }}
+      sx={[navLinkSx, ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
       {...props}
     />
   );

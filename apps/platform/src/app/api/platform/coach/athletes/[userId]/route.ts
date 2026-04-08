@@ -6,7 +6,7 @@ import {
   coachAthleteDetailSchema,
 } from "@repo/contracts/coach-athletes";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(async (_, context, userId) => {
   const { userId: athleteUserId } = coachAthleteDetailParamsSchema.parse(await context.params);

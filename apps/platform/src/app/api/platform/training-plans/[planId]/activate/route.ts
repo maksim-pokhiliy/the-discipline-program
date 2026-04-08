@@ -6,7 +6,7 @@ import {
   updateTrainingPlanResponseSchema,
 } from "@repo/contracts/training-plan";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const POST = withPlatformAuth(async (_, context, userId) => {
   const { planId } = getTrainingPlanByIdParamsSchema.parse(await context.params);

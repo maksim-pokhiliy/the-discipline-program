@@ -11,9 +11,10 @@ type ProductModalProps = {
   product: Product | null;
   open: boolean;
   onClose: () => void;
+  onGetStarted?: () => void;
 };
 
-export const ProductModal = ({ product, open, onClose }: ProductModalProps) => {
+export const ProductModal = ({ product, open, onClose, onGetStarted }: ProductModalProps) => {
   if (!product) {
     return null;
   }
@@ -31,11 +32,11 @@ export const ProductModal = ({ product, open, onClose }: ProductModalProps) => {
       title={product.title}
       actions={
         <Stack direction="row" spacing={3} sx={{ alignItems: "center", width: "100%" }}>
-          <Button variant="text" size="large" fullWidth>
+          <Button variant="text" size="large" fullWidth onClick={onClose}>
             maybe later
           </Button>
 
-          <Button variant="contained" size="large" fullWidth>
+          <Button variant="contained" size="large" fullWidth onClick={onGetStarted ?? onClose}>
             get started
           </Button>
         </Stack>

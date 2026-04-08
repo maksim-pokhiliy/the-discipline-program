@@ -12,6 +12,8 @@ type OrganizationConfig = {
 type SeoConfig = {
   siteName: string;
   siteUrl: string;
+  tagline: string;
+  subcopy: string;
   defaultTitle: string;
   defaultDescription: string;
   defaultKeywords: string[];
@@ -23,6 +25,8 @@ type SeoConfig = {
 export const SEO_CONFIG: SeoConfig = {
   siteName: "The Discipline Program",
   siteUrl: baseEnv.NEXT_PUBLIC_MARKETING_URL,
+  tagline: "Your Discipline Dictates Your Success",
+  subcopy: "Transform your fitness through discipline",
   defaultTitle: "The Discipline Program",
   defaultDescription: "Structured training and coaching program for disciplined athletes.",
   defaultKeywords: ["fitness", "discipline", "training program", "coaching", "workout"],

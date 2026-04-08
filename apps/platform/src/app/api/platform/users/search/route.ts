@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { platformUsersApi } from "@repo/api-server";
 import { searchUsersResponseSchema } from "@repo/contracts/user";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(async (request, _context, userId) => {
   const { searchParams } = new URL(request.url);

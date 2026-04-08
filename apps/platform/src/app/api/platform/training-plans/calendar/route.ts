@@ -6,7 +6,7 @@ import {
   getCalendarWeekResponseSchema,
 } from "@repo/contracts/training-plan";
 
-import { withPlatformAuth } from "@app/lib/auth";
+import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(async (request, _context, userId) => {
   const { searchParams } = new URL(request.url);
