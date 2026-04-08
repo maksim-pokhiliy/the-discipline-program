@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 
-export interface Column<T> {
+export type Column<T> = {
   id: string;
   label: string;
   width?: string | number;
@@ -9,14 +9,14 @@ export interface Column<T> {
   sortable?: boolean;
   sortValue?: (item: T) => string | number;
   searchValue?: (item: T) => string;
-}
+};
 
-export interface DataTableFilter<T> {
+export type DataTableFilter<T> = {
   id: string;
   label: string;
   options: { label: string; value: string }[];
   match: (item: T, value: string) => boolean;
-}
+};
 
 export type DataTableState = {
   search: string;
@@ -27,7 +27,7 @@ export type DataTableState = {
   rowsPerPage: number;
 };
 
-export interface DataTableProps<T> {
+export type DataTableProps<T> = {
   data: T[];
   columns: Column<T>[];
   emptyMessage?: string;
@@ -40,4 +40,4 @@ export interface DataTableProps<T> {
   defaultSort?: { columnId: string; direction: "asc" | "desc" };
   state?: DataTableState;
   onStateChange?: (state: DataTableState) => void;
-}
+};

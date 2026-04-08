@@ -18,8 +18,12 @@ const icons = {
   users: PeopleOutlined,
 } as const;
 
-type NavIconName = keyof typeof icons;
+export type NavIconName = keyof typeof icons;
 
 export const getNavIcon = (name: string) => {
-  return (name in icons ? icons[name as NavIconName] : undefined) ?? DashboardOutlined;
+  if (name in icons) {
+    return icons[name as NavIconName];
+  }
+
+  return DashboardOutlined;
 };

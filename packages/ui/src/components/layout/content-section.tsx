@@ -23,7 +23,6 @@ const fadeSlideUp: Variants = {
 
 export type ContentAction = ButtonProps & {
   label: string;
-  startIcon?: ReactNode;
 };
 
 type ContentSectionProps = {

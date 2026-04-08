@@ -1,4 +1,4 @@
-import { generateStructuredData } from "@app/lib/utils/seo-utils";
+import { generateStructuredData } from "@app/lib/seo/structured-data";
 
 type StructuredDataProps = {
   type: Parameters<typeof generateStructuredData>[0];

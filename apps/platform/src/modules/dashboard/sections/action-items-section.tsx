@@ -5,8 +5,7 @@ import { CollapsibleList } from "@repo/ui";
 
 import { useResolveActionItem } from "@app/lib/hooks";
 
-import { AthleteCard, DashboardSection } from "../components";
-import { ActionMenu } from "../components/action-menu";
+import { ActionMenu, AthleteCard, DashboardSection } from "../components";
 
 import {
   INITIAL_VISIBLE_COUNT,

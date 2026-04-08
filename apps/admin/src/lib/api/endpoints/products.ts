@@ -11,8 +11,6 @@ export const createProductsAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminProductsPageData> =>
     client.request("/api/admin/products/page-data"),
 
-  getAll: (): Promise<Product[]> => client.request("/api/admin/products"),
-
   getById: (id: string): Promise<Product> => client.request(`/api/admin/products/${id}`),
 
   create: (data: CreateProductData): Promise<Product> =>

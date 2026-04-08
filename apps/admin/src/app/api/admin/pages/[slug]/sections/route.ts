@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { adminPagesApi } from "@repo/api-server";
 import { pageSlugRouteParamsSchema, updatePageSectionSchema } from "@repo/contracts/pages";
 
-import { withAdminAuth } from "@app/lib/auth";
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const PATCH = withAdminAuth(async (request, { params }) => {
   const { slug } = pageSlugRouteParamsSchema.parse(await params);

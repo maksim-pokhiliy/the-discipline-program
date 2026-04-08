@@ -5,7 +5,7 @@ import { Button, Typography, CircularProgress, Alert, Stack, Avatar } from "@mui
 
 import { BaseModal, type BaseModalProps } from "./base-modal";
 
-export interface ConfirmationModalProps extends Omit<BaseModalProps, "children" | "actions"> {
+export type ConfirmationModalProps = Omit<BaseModalProps, "children" | "actions"> & {
   type: "warning" | "danger" | "info";
   message: string;
   details?: string;
@@ -14,7 +14,7 @@ export interface ConfirmationModalProps extends Omit<BaseModalProps, "children" 
   cancelText?: string;
   isConfirming?: boolean;
   error?: string | null;
-}
+};
 
 const typeConfig = {
   warning: {

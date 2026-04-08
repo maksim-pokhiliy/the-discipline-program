@@ -14,7 +14,7 @@ export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
         <Box
           sx={{
             position: "absolute",
-            left: { xs: 20, md: "50%" },
+            left: { xs: 2.5, md: "50%" },
             top: 0,
             bottom: 0,
             width: 4,

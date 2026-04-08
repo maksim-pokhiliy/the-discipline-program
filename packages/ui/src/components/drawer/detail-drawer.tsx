@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import CloseIcon from "@mui/icons-material/Close";
 import { CircularProgress, Divider, Drawer, IconButton, Stack, Typography } from "@mui/material";
 
-const DEFAULT_WIDTH = 420;
+import { LAYOUT } from "@repo/shared";
 
 type DetailDrawerProps = {
   open: boolean;
@@ -20,7 +20,7 @@ export const DetailDrawer = ({
   open,
   onClose,
   title,
-  width = DEFAULT_WIDTH,
+  width = LAYOUT.detailDrawerWidth,
   loading,
   children,
 }: DetailDrawerProps) => (

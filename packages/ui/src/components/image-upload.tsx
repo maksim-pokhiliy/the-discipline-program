@@ -14,7 +14,7 @@ const formatTypes = (types: string[]) =>
     .filter(Boolean)
     .join(", ");
 
-export interface ImageUploadProps {
+export type ImageUploadProps = {
   previewUrl?: string | null;
   onFileSelect: (file: File) => void;
   onRemove?: () => void;
@@ -23,7 +23,7 @@ export interface ImageUploadProps {
   label?: string;
   maxSizeBytes?: number;
   acceptedTypes?: string[];
-}
+};
 
 export const ImageUpload = ({
   previewUrl,

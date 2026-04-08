@@ -28,18 +28,4 @@ export class AppError extends Error {
 
     Error.captureStackTrace(this, this.constructor);
   }
-
-  toJSON() {
-    return {
-      name: this.name,
-      message: this.message,
-      code: this.code,
-      statusCode: this.statusCode,
-      details: this.details,
-      timestamp: this.timestamp,
-      ...(process.env.NODE_ENV === "development" && {
-        stack: this.stack,
-      }),
-    };
-  }
 }

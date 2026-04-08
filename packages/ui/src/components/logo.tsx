@@ -5,11 +5,11 @@ import Link from "next/link";
 
 import { LAYOUT } from "@repo/shared";
 
-export interface LogoProps {
+export type LogoProps = {
   width?: number;
   height?: number;
   href?: string;
-}
+};
 
 export const Logo = ({
   width = LAYOUT.logoSize,

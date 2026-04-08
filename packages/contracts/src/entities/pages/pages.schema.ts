@@ -1,12 +1,24 @@
 import { z } from "zod";
 
-export const homePageHeroSchema = z.object({
+export const idParamSchema = z.object({ id: z.string().cuid() });
+
+const titleSubtitleSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
+});
+
+const heroSectionSchema = titleSubtitleSchema.extend({
   buttonText: z.string(),
   buttonHref: z.string(),
   backgroundImage: z.string(),
 });
+
+const ctaSectionSchema = titleSubtitleSchema.extend({
+  buttonText: z.string(),
+  buttonHref: z.string(),
+});
+
+export const homePageHeroSchema = heroSectionSchema;
 
 export const whyChooseFeatureItemSchema = z.object({
   id: z.string(),
@@ -21,45 +33,17 @@ export const homePageWhyChooseSchema = z.object({
   features: z.array(whyChooseFeatureItemSchema),
 });
 
-export const homePageStorefrontProgramsSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-});
+export const homePageStorefrontProgramsSchema = titleSubtitleSchema;
 
-export const homePageReviewsSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-});
+export const homePageReviewsSchema = titleSubtitleSchema;
 
-export const homePageContactSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-  buttonText: z.string(),
-  buttonHref: z.string(),
-});
+export const homePageContactSchema = ctaSectionSchema;
 
-export const storefrontProgramsPageHeroSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-  buttonText: z.string(),
-  buttonHref: z.string(),
-  backgroundImage: z.string(),
-});
+export const storefrontProgramsPageHeroSchema = heroSectionSchema;
 
-export const storefrontPageCtaSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-  buttonText: z.string(),
-  buttonHref: z.string(),
-});
+export const storefrontPageCtaSchema = ctaSectionSchema;
 
-export const aboutPageHeroSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-  buttonText: z.string(),
-  buttonHref: z.string(),
-  backgroundImage: z.string(),
-});
+export const aboutPageHeroSchema = heroSectionSchema;
 
 export const timelineItemSchema = z.object({
   year: z.string(),
@@ -93,25 +77,11 @@ export const aboutPagePersonalSchema = z.object({
   role: z.string(),
 });
 
-export const aboutPageCtaSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-  buttonText: z.string(),
-  buttonHref: z.string(),
-});
+export const aboutPageCtaSchema = ctaSectionSchema;
 
-export const contactPageHeroSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-  buttonText: z.string(),
-  buttonHref: z.string(),
-  backgroundImage: z.string(),
-});
+export const contactPageHeroSchema = heroSectionSchema;
 
-export const contactPageFormSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-});
+export const contactPageFormSchema = titleSubtitleSchema;
 
 export const programOptionSchema = z.object({
   value: z.string(),
@@ -129,33 +99,14 @@ export const faqContentSchema = z.object({
   items: z.array(faqItemSchema),
 });
 
-export const storefrontGridSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-});
+export const storefrontGridSchema = titleSubtitleSchema;
 
-export const faqPageHeroSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-  buttonText: z.string(),
-  buttonHref: z.string(),
-  backgroundImage: z.string(),
-});
+export const faqPageHeroSchema = heroSectionSchema;
 
-export const faqPageCtaSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-  buttonText: z.string(),
-  buttonHref: z.string(),
-});
+export const faqPageCtaSchema = ctaSectionSchema;
 
-export const blogPageHeroSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
+export const blogPageHeroSchema = titleSubtitleSchema.extend({
   backgroundImage: z.string().optional(),
 });
 
-export const blogGridSchema = z.object({
-  title: z.string(),
-  subtitle: z.string(),
-});
+export const blogGridSchema = titleSubtitleSchema;

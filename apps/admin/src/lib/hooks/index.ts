@@ -1,3 +1,4 @@
+export * from "./use-auto-slug";
 export * from "./use-blog";
 export * from "./use-contacts";
 export * from "./use-dashboard";

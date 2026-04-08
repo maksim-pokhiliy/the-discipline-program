@@ -11,12 +11,12 @@ import {
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-interface CrudHooksConfig<
+type CrudHooksConfig<
   TPageData,
   TEntity extends { id: string },
   TCreateData = never,
   TUpdateData = never,
-> {
+> = {
   entityName: string;
   keys: {
     page: () => QueryKey;
@@ -31,15 +31,15 @@ interface CrudHooksConfig<
   };
   redirectTo?: string;
   additionalInvalidateKeys?: QueryKey[];
-}
+};
 
-interface CrudHooks<TPageData, TEntity extends { id: string }, TCreateData, TUpdateData> {
+type CrudHooks<TPageData, TEntity extends { id: string }, TCreateData, TUpdateData> = {
   usePageData: () => UseQueryResult<TPageData, Error>;
   useById: (id: string) => UseQueryResult<TEntity, Error>;
   useCreate: () => UseMutationResult<TEntity, Error, TCreateData>;
   useUpdate: () => UseMutationResult<TEntity, Error, { id: string; data: TUpdateData }>;
   useDelete: () => UseMutationResult<void, Error, string>;
-}
+};
 
 export const createCrudHooks = <
   TPageData,

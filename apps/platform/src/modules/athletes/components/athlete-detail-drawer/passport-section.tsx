@@ -5,11 +5,10 @@ import { Avatar, Stack, Typography } from "@mui/material";
 import type { HealthStatus } from "@repo/contracts/athlete-profile";
 import type { NextWorkout } from "@repo/contracts/coach-athletes";
 import type { ProcessStatus } from "@repo/contracts/coach-dashboard";
+import { formatDate } from "@repo/shared";
 
 import { StatusChip } from "@app/lib/components";
 import { HEALTH_STATUS_CHIPS, PROCESS_STATUS_CHIPS } from "@app/lib/config";
-
-import { formatDate } from "./config";
 
 type PassportSectionProps = {
   name: string | null;
@@ -53,7 +52,11 @@ export const PassportSection: React.FC<PassportSectionProps> = ({
   return (
     <Stack spacing={1.5} sx={{ p: 2.5 }}>
       <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-        <Avatar src={image ?? undefined} alt={displayName} sx={{ width: 56, height: 56 }} />
+        <Avatar
+          src={image ?? undefined}
+          alt={displayName}
+          sx={(theme) => ({ width: theme.spacing(7), height: theme.spacing(7) })}
+        />
         <Stack sx={{ flex: 1, minWidth: 0 }}>
           <Typography variant="h6" noWrap>
             {displayName}

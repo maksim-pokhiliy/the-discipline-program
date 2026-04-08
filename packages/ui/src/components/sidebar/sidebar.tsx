@@ -64,7 +64,10 @@ export const Sidebar = ({
           gap: isExpanded ? 0 : 0.5,
         }}
       >
-        <Logo width={isExpanded ? 60 : 50} height={isExpanded ? 60 : 50} />
+        <Logo
+          width={isExpanded ? LAYOUT.sidebarLogoExpanded : LAYOUT.sidebarLogoCollapsed}
+          height={isExpanded ? LAYOUT.sidebarLogoExpanded : LAYOUT.sidebarLogoCollapsed}
+        />
 
         <IconButton onClick={isDesktop ? onToggle : onMobileClose}>
           {isExpanded ? <ChevronLeftIcon /> : <ChevronRightIcon />}

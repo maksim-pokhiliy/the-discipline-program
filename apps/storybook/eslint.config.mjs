@@ -1,3 +1,3 @@
 import { config } from "@repo/eslint-config/react";
 
-export default config;
+export default [{ ignores: ["storybook-static/**"] }, ...config];

@@ -82,7 +82,7 @@ export const ProductCard = ({
               <List disablePadding>
                 {product.features.map((feature) => (
                   <ListItem key={feature} disableGutters disablePadding>
-                    <ListItemIcon sx={{ minWidth: 32 }}>
+                    <ListItemIcon sx={{ minWidth: (theme) => theme.spacing(4) }}>
                       <CheckIcon color={isFeatured ? "primary" : "success"} fontSize="small" />
                     </ListItemIcon>
                     <ListItemText primary={feature} slotProps={{ primary: { variant: "body2" } }} />

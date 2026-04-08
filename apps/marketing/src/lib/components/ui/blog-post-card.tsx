@@ -22,8 +22,6 @@ type BlogPostCardProps = {
   category: BlogCategory;
 };
 
-const getCategoryLabel = (category: BlogCategory): string => BLOG_CATEGORY_LABELS[category];
-
 export const BlogPostCard = ({
   slug,
   title,
@@ -35,7 +33,14 @@ export const BlogPostCard = ({
   return (
     <Card>
       <Box sx={{ position: "relative" }}>
-        {coverImage && <CardMedia component="img" height="200" image={coverImage} alt={title} />}
+        {coverImage && (
+          <CardMedia
+            component="img"
+            image={coverImage}
+            alt={title}
+            sx={{ height: (theme) => theme.spacing(25) }}
+          />
+        )}
 
         <Box
           sx={{
@@ -45,7 +50,7 @@ export const BlogPostCard = ({
             zIndex: 1,
           }}
         >
-          <Chip label={getCategoryLabel(category)} size="small" color="primary" />
+          <Chip label={BLOG_CATEGORY_LABELS[category]} size="small" color="primary" />
         </Box>
       </Box>
 

@@ -9,10 +9,10 @@ import { useForm } from "react-hook-form";
 
 import { type LoginFormData, loginFormSchema } from "@repo/contracts/auth";
 
-interface LoginFormProps {
+type LoginFormProps = {
   onSubmit: (data: LoginFormData) => void;
   isLoading?: boolean;
-}
+};
 
 export const LoginForm = ({ onSubmit, isLoading = false }: LoginFormProps) => {
   const [showPassword, setShowPassword] = useState(false);

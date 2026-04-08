@@ -7,8 +7,9 @@ import { Box, Stack, Typography } from "@mui/material";
 
 import { ActionItemSeverity } from "@repo/contracts/coach-action-item";
 import type { AthleteActionItem } from "@repo/contracts/coach-athletes";
+import { formatDate } from "@repo/shared";
 
-import { SEVERITY_COLORS, formatDate } from "./config";
+import { SEVERITY_COLORS } from "./config";
 
 type AttentionSectionProps = {
   actionItems: AthleteActionItem[];

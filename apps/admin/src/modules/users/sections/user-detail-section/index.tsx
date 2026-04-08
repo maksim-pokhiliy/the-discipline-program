@@ -11,10 +11,10 @@ import { DetailField, FormCard } from "@repo/ui";
 import { ProfileCard } from "../../components/profile-card";
 import { ROLE_CONFIG } from "../../constants";
 
-interface UserDetailSectionProps {
+type UserDetailSectionProps = {
   user: AdminUser;
   isPending: boolean;
-}
+};
 
 export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) => {
   const theme = useTheme();

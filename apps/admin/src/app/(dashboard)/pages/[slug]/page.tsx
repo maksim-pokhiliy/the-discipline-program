@@ -1,8 +1,8 @@
 import { PagesEditView } from "@app/modules/pages";
 
-interface PageProps {
+type PageProps = {
   params: Promise<{ slug: string }>;
-}
+};
 
 export default async function PageEditPage({ params }: PageProps) {
   const { slug } = await params;

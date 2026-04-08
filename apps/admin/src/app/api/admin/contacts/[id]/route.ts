@@ -7,7 +7,7 @@ import {
   updateContactRequestSchema,
 } from "@repo/contracts/contact";
 
-import { withAdminAuth } from "@app/lib/auth";
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
   createGetByIdHandler(adminContactsApi.getContactById, getContactByIdParamsSchema),

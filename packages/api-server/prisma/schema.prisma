@@ -350,6 +350,7 @@ model CoachNote {
   updatedAt DateTime     @updatedAt
 
   @@index([coachId, athleteId])
+  @@index([athleteId])
   @@index([createdAt])
   @@map("app_coach_notes")
 }
@@ -369,6 +370,7 @@ model PlanEnrollment {
   endDate        DateTime?
   status         PlanEnrollmentStatus @default(ACTIVE)
   createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@unique([trainingPlanId, userId])
   @@index([userId])
@@ -451,6 +453,8 @@ model MarketingBlogPost {
   @@index([createdAt])
   @@index([deletedAt])
   @@index([isPublished, publishedAt])
+  @@index([category])
+  @@index([isFeatured])
   @@map("marketing_blog_posts")
 }
 

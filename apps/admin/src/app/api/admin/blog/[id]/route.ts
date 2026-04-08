@@ -7,7 +7,7 @@ import {
   updateBlogPostRequestSchema,
 } from "@repo/contracts/blog";
 
-import { withAdminAuth } from "@app/lib/auth";
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
   createGetByIdHandler(adminBlogApi.getPostById, getBlogPostByIdParamsSchema),

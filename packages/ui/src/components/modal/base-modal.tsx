@@ -11,7 +11,7 @@ import {
   type DialogProps,
 } from "@mui/material";
 
-export interface BaseModalProps {
+export type BaseModalProps = {
   open: boolean;
   onClose: () => void;
   title: string;
@@ -21,7 +21,7 @@ export interface BaseModalProps {
   actions?: ReactNode;
   disableBackdropClick?: boolean;
   disableEscapeKeyDown?: boolean;
-}
+};
 
 export const BaseModal = ({
   open,

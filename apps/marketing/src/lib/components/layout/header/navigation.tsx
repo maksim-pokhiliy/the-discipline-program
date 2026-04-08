@@ -2,15 +2,11 @@
 
 import { Stack } from "@mui/material";
 
-import { MARKETING_NAVIGATION, type NavLink } from "@repo/shared";
+import { MARKETING_NAVIGATION } from "@repo/shared";
 import { NavLinkButton } from "@repo/ui";
 
-type NavigationProps = {
-  links?: NavLink[];
-};
-
-export const Navigation = ({ links }: NavigationProps) => {
-  const finalLinks = links ?? MARKETING_NAVIGATION.headerLinks;
+export const Navigation = () => {
+  const finalLinks = MARKETING_NAVIGATION.headerLinks;
 
   return (
     <Stack direction={{ xs: "column", md: "row" }} spacing={0}>

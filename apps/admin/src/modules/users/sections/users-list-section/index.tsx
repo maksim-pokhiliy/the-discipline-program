@@ -42,9 +42,9 @@ const filters: DataTableFilter<AdminUserListItem>[] = [
   },
 ];
 
-interface UsersListSectionProps {
+type UsersListSectionProps = {
   users: AdminUserListItem[];
-}
+};
 
 export const UsersListSection = ({ users }: UsersListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState({
@@ -92,14 +92,14 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
 
   const menuUser = useMemo(() => users.find((u) => u.id === menuUserId), [users, menuUserId]);
 
-  const handleConfirm = () => {
+  const handleConfirm = useCallback(() => {
     if (pendingChange) {
       updateRole(
         { id: pendingChange.userId, data: { role: pendingChange.newRole } },
         { onSettled: () => setPendingChange(null) },
       );
     }
-  };
+  }, [pendingChange, updateRole]);
 
   const columns: Column<AdminUserListItem>[] = useMemo(
     () => [

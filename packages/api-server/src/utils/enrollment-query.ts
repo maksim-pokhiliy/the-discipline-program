@@ -47,8 +47,6 @@ export const createEnrollmentInclude = (coachId: string) =>
     },
   }) satisfies Prisma.PlanEnrollmentInclude;
 
-export const enrollmentInclude = baseEnrollmentInclude;
-
 export type EnrollmentWithData = Prisma.PlanEnrollmentGetPayload<{
-  include: typeof enrollmentInclude;
+  include: typeof baseEnrollmentInclude;
 }>;

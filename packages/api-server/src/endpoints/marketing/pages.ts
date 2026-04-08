@@ -9,6 +9,8 @@ import {
   type BlogPageData,
   type ContactPageData,
   type FaqPageData,
+  type SectionSchemaKey,
+  PageSlug,
   PAGE_SECTIONS_MAP,
   SECTION_SCHEMAS,
 } from "@repo/contracts/pages";
@@ -16,8 +18,6 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { isPublishedPost, mapToPublicBlogPost, mapToReview, mapToProduct } from "../../mappers";
-
-type SectionSchemaKey = keyof typeof SECTION_SCHEMAS;
 
 const extractSectionData = <TKey extends SectionSchemaKey>(
   sections: { section: string; data: Prisma.JsonValue }[],
@@ -35,7 +35,7 @@ const extractSectionData = <TKey extends SectionSchemaKey>(
 export const pagesApi = {
   getHomePage: async (): Promise<HomePageData> => {
     const sections = await prisma.marketingPageSection.findMany({
-      where: { pageSlug: "home", isActive: true },
+      where: { pageSlug: PageSlug.HOME, isActive: true },
     });
 
     const [products, reviews] = await Promise.all([
@@ -61,7 +61,9 @@ export const pagesApi = {
 
   getStorefrontProgramsPage: async (): Promise<StorefrontProgramsPageData> => {
     const [sections, products] = await Promise.all([
-      prisma.marketingPageSection.findMany({ where: { pageSlug: "storefront", isActive: true } }),
+      prisma.marketingPageSection.findMany({
+        where: { pageSlug: PageSlug.STOREFRONT, isActive: true },
+      }),
       prisma.product.findMany({
         where: { isActive: true },
         include: { prices: { where: { isActive: true } } },
@@ -80,7 +82,7 @@ export const pagesApi = {
 
   getAboutPage: async (): Promise<AboutPageData> => {
     const sections = await prisma.marketingPageSection.findMany({
-      where: { pageSlug: "about", isActive: true },
+      where: { pageSlug: PageSlug.ABOUT, isActive: true },
     });
 
     const map = PAGE_SECTIONS_MAP.about;
@@ -96,7 +98,7 @@ export const pagesApi = {
 
   getBlogPage: async (): Promise<BlogPageData> => {
     const [sections, posts] = await Promise.all([
-      prisma.marketingPageSection.findMany({ where: { pageSlug: "blog", isActive: true } }),
+      prisma.marketingPageSection.findMany({ where: { pageSlug: PageSlug.BLOG, isActive: true } }),
       prisma.marketingBlogPost.findMany({
         where: { isPublished: true, publishedAt: { not: null } },
         orderBy: { publishedAt: "desc" },
@@ -117,7 +119,7 @@ export const pagesApi = {
   getContactPage: async (): Promise<ContactPageData> => {
     const [sections, products] = await Promise.all([
       prisma.marketingPageSection.findMany({
-        where: { pageSlug: "contact", isActive: true },
+        where: { pageSlug: PageSlug.CONTACT, isActive: true },
       }),
       prisma.product.findMany({
         where: { isActive: true },
@@ -135,7 +137,7 @@ export const pagesApi = {
 
   getFaqPage: async (): Promise<FaqPageData> => {
     const sections = await prisma.marketingPageSection.findMany({
-      where: { pageSlug: "faq", isActive: true },
+      where: { pageSlug: PageSlug.FAQ, isActive: true },
     });
 
     const map = PAGE_SECTIONS_MAP.faq;
