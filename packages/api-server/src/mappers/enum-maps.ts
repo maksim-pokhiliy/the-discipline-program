@@ -50,6 +50,12 @@ export const ROLE_MAP: Record<PrismaRole, UserRole> = {
   ADMIN: UserRole.ADMIN,
 };
 
+export const ROLE_TO_PRISMA_MAP: Record<UserRole, PrismaRole> = {
+  [UserRole.USER]: "USER",
+  [UserRole.COACH]: "COACH",
+  [UserRole.ADMIN]: "ADMIN",
+};
+
 export const GENDER_MAP: Record<PrismaGender, Gender> = {
   MALE: Gender.MALE,
   FEMALE: Gender.FEMALE,

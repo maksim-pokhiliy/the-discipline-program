@@ -1,3 +1,5 @@
+export { createAthleteProfileAPI } from "./athlete-profile";
+export { createBenchmarkDefinitionsAPI, createUserBenchmarksAPI } from "./benchmarks";
 export { createCalendarAPI } from "./calendar";
 export { createCoachAthletesAPI } from "./coach-athletes";
 export { createCoachActionItemsAPI } from "./coach-action-items";

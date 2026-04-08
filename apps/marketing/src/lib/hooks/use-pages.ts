@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { type QueryKey, useQuery } from "@tanstack/react-query";
 
 import {
   type HomePageData,
@@ -14,74 +14,43 @@ import { marketingKeys, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";
 
-type UseHomePageOptions = {
-  initialData?: HomePageData;
+type UsePageOptions<T> = {
+  initialData?: T;
 };
 
-type UseStorefrontProgramsPageOptions = {
-  initialData?: StorefrontProgramsPageData;
-};
+const createPageHook =
+  <T>(queryKey: QueryKey, queryFn: () => Promise<T>) =>
+  ({ initialData }: UsePageOptions<T> = {}) =>
+    useQuery({
+      queryKey,
+      queryFn,
+      initialData,
+      staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
+    });
 
-type UseAboutPageOptions = {
-  initialData?: AboutPageData;
-};
+export const useHomePage = createPageHook<HomePageData>(
+  marketingKeys.pages.home(),
+  api.pages.getHome,
+);
 
-type UseBlogPageOptions = {
-  initialData?: BlogPageData;
-};
+export const useStorefrontProgramsPage = createPageHook<StorefrontProgramsPageData>(
+  marketingKeys.pages.storefront(),
+  api.pages.getStorefrontPrograms,
+);
 
-type UseContactPageOptions = {
-  initialData?: ContactPageData;
-};
+export const useAboutPage = createPageHook<AboutPageData>(
+  marketingKeys.pages.about(),
+  api.pages.getAbout,
+);
 
-type UseFaqPageOptions = {
-  initialData?: FaqPageData;
-};
+export const useBlogPage = createPageHook<BlogPageData>(
+  marketingKeys.pages.blog(),
+  api.pages.getBlog,
+);
 
-export const useHomePage = ({ initialData }: UseHomePageOptions = {}) =>
-  useQuery({
-    queryKey: marketingKeys.pages.home(),
-    queryFn: api.pages.getHome,
-    initialData,
-    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
-  });
+export const useContactPage = createPageHook<ContactPageData>(
+  marketingKeys.pages.contact(),
+  api.pages.getContact,
+);
 
-export const useStorefrontProgramsPage = ({ initialData }: UseStorefrontProgramsPageOptions = {}) =>
-  useQuery({
-    queryKey: marketingKeys.pages.storefront(),
-    queryFn: api.pages.getStorefrontPrograms,
-    initialData,
-    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
-  });
-
-export const useAboutPage = ({ initialData }: UseAboutPageOptions = {}) =>
-  useQuery({
-    queryKey: marketingKeys.pages.about(),
-    queryFn: api.pages.getAbout,
-    initialData,
-    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
-  });
-
-export const useBlogPage = ({ initialData }: UseBlogPageOptions = {}) =>
-  useQuery({
-    queryKey: marketingKeys.pages.blog(),
-    queryFn: api.pages.getBlog,
-    initialData,
-    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
-  });
-
-export const useContactPage = ({ initialData }: UseContactPageOptions = {}) =>
-  useQuery({
-    queryKey: marketingKeys.pages.contact(),
-    queryFn: api.pages.getContact,
-    initialData,
-    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
-  });
-
-export const useFaqPage = ({ initialData }: UseFaqPageOptions = {}) =>
-  useQuery({
-    queryKey: marketingKeys.pages.faq(),
-    queryFn: api.pages.getFaq,
-    initialData,
-    staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
-  });
+export const useFaqPage = createPageHook<FaqPageData>(marketingKeys.pages.faq(), api.pages.getFaq);

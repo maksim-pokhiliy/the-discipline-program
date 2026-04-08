@@ -6,6 +6,7 @@ import {
   type UpdateContactRequest,
 } from "@repo/contracts/contact";
 
+
 import { prisma } from "../../db/client";
 import { mapToContact } from "../../mappers";
 import { CONTACT_STATUS_TO_PRISMA_MAP } from "../../mappers/enum-maps";

@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: PAGE_SEO.paymentError.title,
   description: PAGE_SEO.paymentError.description,
   keywords: PAGE_SEO.paymentError.keywords,
+  robots: { index: false, follow: false },
   openGraph: {
     title: PAGE_SEO.paymentError.title,
     description: PAGE_SEO.paymentError.description,
