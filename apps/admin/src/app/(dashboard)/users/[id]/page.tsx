@@ -1,8 +1,8 @@
 import { UserDetailView } from "@app/modules/users";
 
-interface PageProps {
+type PageProps = {
   params: Promise<{ id: string }>;
-}
+};
 
 export default async function UserDetailPage({ params }: PageProps) {
   const { id } = await params;

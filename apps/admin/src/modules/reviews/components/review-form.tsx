@@ -17,9 +17,9 @@ import { FormCard, ImageUpload } from "@repo/ui";
 
 import { useUploadImage } from "@app/lib/hooks";
 
-interface ReviewFormProps {
+type ReviewFormProps = {
   isLoading?: boolean;
-}
+};
 
 export const ReviewForm = ({ isLoading = false }: ReviewFormProps) => {
   const {

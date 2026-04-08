@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { type ZodSchema, type ZodType, type ZodTypeDef } from "zod";
+import { type ZodType, type ZodTypeDef } from "zod";
 
 import { handleApiError } from "./error-handler";
 import { type RouteContext, type RouteHandler } from "./types";
@@ -18,7 +18,7 @@ export const withPublicRoute = (handler: RouteHandler): RouteHandler => {
 
 export const createGetHandler = <TResponse>(
   apiFn: () => Promise<TResponse>,
-  responseSchema?: ZodSchema,
+  responseSchema?: ParseSchema<TResponse>,
 ) => {
   return async () => {
     const data = await apiFn();
@@ -30,8 +30,8 @@ export const createGetHandler = <TResponse>(
 
 export const createGetByIdHandler = <TResponse>(
   apiFn: (id: string) => Promise<TResponse>,
-  paramsSchema: ZodSchema<{ id: string }>,
-  responseSchema?: ZodSchema,
+  paramsSchema: ParseSchema<{ id: string }>,
+  responseSchema?: ParseSchema<TResponse>,
 ) => {
   return async (_: Request, context: RouteContext) => {
     const { id } = paramsSchema.parse(await context.params);
@@ -57,7 +57,7 @@ export const createPostHandler = <TRequest, TResponse>(
 
 export const createPutHandler = <TRequest, TResponse>(
   apiFn: (id: string, data: TRequest) => Promise<TResponse>,
-  paramsSchema: ZodSchema<{ id: string }>,
+  paramsSchema: ParseSchema<{ id: string }>,
   requestSchema: ParseSchema<TRequest>,
 ) => {
   return async (request: Request, context: RouteContext) => {
@@ -72,7 +72,7 @@ export const createPutHandler = <TRequest, TResponse>(
 
 export const createDeleteHandler = (
   apiFn: (id: string) => Promise<void>,
-  paramsSchema: ZodSchema<{ id: string }>,
+  paramsSchema: ParseSchema<{ id: string }>,
 ) => {
   return async (_: Request, context: RouteContext) => {
     const { id } = paramsSchema.parse(await context.params);
@@ -85,7 +85,7 @@ export const createDeleteHandler = (
 
 export const createToggleHandler = <TResponse>(
   apiFn: (id: string) => Promise<TResponse>,
-  paramsSchema: ZodSchema<{ id: string }>,
+  paramsSchema: ParseSchema<{ id: string }>,
 ) => {
   return async (_: Request, context: RouteContext) => {
     const { id } = paramsSchema.parse(await context.params);
@@ -97,7 +97,7 @@ export const createToggleHandler = <TResponse>(
 
 export const createMultiToggleHandler = <TField extends string, TResponse>(
   handlers: Record<TField, (id: string) => Promise<TResponse>>,
-  paramsSchema: ZodSchema<{ id: string }>,
+  paramsSchema: ParseSchema<{ id: string }>,
   querySchema: ParseSchema<{ field: TField }>,
 ) => {
   return async (request: Request, context: RouteContext) => {

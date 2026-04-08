@@ -28,9 +28,9 @@ export const useContactsPageData = contactHooks.usePageData;
 export const useContact = contactHooks.useById;
 export const useDeleteContact = contactHooks.useDelete;
 
-interface UseUpdateContactOptions {
+type UseUpdateContactOptions = {
   onSuccess?: (data: GetContactByIdResponse) => void;
-}
+};
 
 export const useUpdateContact = ({ onSuccess }: UseUpdateContactOptions = {}) => {
   const queryClient = useQueryClient();

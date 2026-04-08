@@ -8,7 +8,7 @@ import {
 } from "@repo/contracts/upload";
 import { BadRequestError } from "@repo/errors";
 
-import { withAdminAuth } from "@app/lib/auth";
+import { withAdminAuth } from "@app/lib/server/auth";
 
 const isValidUploadContext = (value: unknown): value is UploadContext => {
   return typeof value === "string" && value in UPLOAD_CONFIG;

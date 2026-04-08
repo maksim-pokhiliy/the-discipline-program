@@ -43,9 +43,9 @@ const columns: Column<AdminPageListItem>[] = [
   },
 ];
 
-interface PagesListSectionProps {
+type PagesListSectionProps = {
   pages: AdminPageListItem[];
-}
+};
 
 export const PagesListSection = ({ pages }: PagesListSectionProps) => {
   return <DataTable data={pages} columns={columns} emptyMessage="No marketing pages found." />;

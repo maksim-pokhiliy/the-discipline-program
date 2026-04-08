@@ -60,13 +60,13 @@ const isHeroSectionType = (key: string): key is HeroSectionType => key in SECTIO
 
 type SectionData = AdminPageDetails["sections"][number];
 
-interface SectionEditorProps {
+type SectionEditorProps = {
   section: SectionData;
   isExpanded: boolean;
   onToggle: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   onSave: (data: UpdatePageSectionData["data"]) => void;
   isLoading: boolean;
-}
+};
 
 export const SectionEditor = ({
   section,

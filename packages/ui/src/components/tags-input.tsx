@@ -4,7 +4,7 @@ import { useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { Chip, Stack, TextField, type TextFieldProps } from "@mui/material";
 
-export interface TagsInputProps {
+export type TagsInputProps = {
   value?: string[];
   onChange: (tags: string[]) => void;
   label?: string;
@@ -13,7 +13,7 @@ export interface TagsInputProps {
   size?: TextFieldProps["size"];
   error?: boolean;
   helperText?: ReactNode;
-}
+};
 
 export const TagsInput = ({
   value = [],

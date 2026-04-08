@@ -44,9 +44,9 @@ const filters: DataTableFilter<Review>[] = [
   },
 ];
 
-interface ReviewsListSectionProps {
+type ReviewsListSectionProps = {
   reviews: Review[];
-}
+};
 
 export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState();

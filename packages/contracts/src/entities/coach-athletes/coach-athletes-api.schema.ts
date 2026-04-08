@@ -8,7 +8,7 @@ import { PlanEnrollmentStatus } from "../plan-enrollment";
 import { coachAthleteListItemSchema, coachAthletesSummarySchema } from "./coach-athletes.schema";
 
 export const coachAthleteDetailParamsSchema = z.object({
-  userId: z.string(),
+  userId: z.string().cuid(),
 });
 
 export const coachAthletesDataSchema = z.object({

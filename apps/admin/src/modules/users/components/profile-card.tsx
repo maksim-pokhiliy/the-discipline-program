@@ -7,9 +7,9 @@ import { UserRole } from "@repo/contracts/auth";
 import { type AdminUser } from "@repo/contracts/user";
 import { DetailField, FormCard } from "@repo/ui";
 
-interface ProfileCardProps {
+type ProfileCardProps = {
   user: AdminUser;
-}
+};
 
 export const ProfileCard = ({ user }: ProfileCardProps) => {
   const { role, athleteProfile, coachProfile } = user;

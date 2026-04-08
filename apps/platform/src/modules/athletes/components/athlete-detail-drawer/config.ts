@@ -5,5 +5,3 @@ export const SEVERITY_COLORS: Record<ActionItemSeverity, string> = {
   [ActionItemSeverity.WARNING]: "warning.main",
   [ActionItemSeverity.INFO]: "info.main",
 };
-
-export { formatDate } from "@repo/shared";

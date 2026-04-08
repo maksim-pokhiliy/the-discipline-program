@@ -1,13 +1,12 @@
 import { type ReactNode } from "react";
 
-import { Box, Grid } from "@mui/material";
+import { Box, Grid, type Theme } from "@mui/material";
 
 import { buildOverlay } from "@app/lib/utils/overlay";
 
 type SplitSectionProps = {
   backgroundImage: string;
   imageContent?: ReactNode;
-  minHeight?: string | Record<string, string>;
   surface?: "base" | "raised";
   children: ReactNode;
 };
@@ -15,14 +14,13 @@ type SplitSectionProps = {
 export const SplitSection = ({
   backgroundImage,
   imageContent,
-  minHeight,
   surface = "raised",
   children,
 }: SplitSectionProps) => {
   return (
     <Grid
       container
-      sx={(theme) => ({ borderRadius: theme.shape.borderRadius, overflow: "hidden", minHeight })}
+      sx={(theme) => ({ borderRadius: theme.shape.borderRadius, overflow: "hidden" })}
     >
       <Grid
         size={{ xs: 12, md: 6 }}
@@ -33,7 +31,7 @@ export const SplitSection = ({
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           color: theme.palette.common.white,
-          minHeight: { xs: 300, md: "auto" },
+          minHeight: { xs: (theme: Theme) => theme.spacing(37.5), md: "auto" },
         })}
       >
         {imageContent && (

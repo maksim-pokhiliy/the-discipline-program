@@ -4,8 +4,7 @@ import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import { Stack, Typography } from "@mui/material";
 
 import type { RecentWorkout } from "@repo/contracts/coach-athletes";
-
-import { formatDate } from "./config";
+import { formatDate } from "@repo/shared";
 
 type RecentWorkoutsSectionProps = {
   workouts: RecentWorkout[];

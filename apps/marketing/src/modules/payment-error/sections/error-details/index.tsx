@@ -20,7 +20,7 @@ export const PaymentErrorDetailsSection = ({ error, orderId }: PaymentErrorDetai
   return (
     <ContentSection title="Error Details" maxWidth="md">
       <Card>
-        <CardContent sx={{ p: 4 }}>
+        <CardContent>
           <Stack spacing={3}>
             <Alert severity="error">
               <Typography variant="body1">{error}</Typography>
@@ -39,7 +39,7 @@ export const PaymentErrorDetailsSection = ({ error, orderId }: PaymentErrorDetai
             )}
 
             <Stack spacing={1}>
-              <Typography variant="body2" color="text.secondary" fontWeight="bold">
+              <Typography variant="subtitle2" color="text.secondary">
                 Common reasons for payment failure:
               </Typography>
 

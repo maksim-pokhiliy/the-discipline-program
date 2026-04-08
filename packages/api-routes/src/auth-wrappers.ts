@@ -9,8 +9,6 @@ import { ForbiddenError, UnauthorizedError } from "@repo/errors";
 import { handleApiError } from "./error-handler";
 import type { AuthenticatedHandler, RouteHandler } from "./types";
 
-export type { RouteContext, RouteHandler, AuthenticatedHandler } from "./types";
-
 export const createAuthWrappers = (authOptions: NextAuthOptions) => ({
   withAdminAuth: (handler: RouteHandler): RouteHandler => {
     return async (request, context) => {

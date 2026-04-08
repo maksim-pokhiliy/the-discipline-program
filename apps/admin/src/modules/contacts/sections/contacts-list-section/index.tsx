@@ -35,9 +35,9 @@ const filters: DataTableFilter<GetContactByIdResponse>[] = [
   },
 ];
 
-interface ContactsListSectionProps {
+type ContactsListSectionProps = {
   contacts: GetContactByIdResponse[];
-}
+};
 
 export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState();

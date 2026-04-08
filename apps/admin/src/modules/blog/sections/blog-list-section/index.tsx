@@ -45,9 +45,9 @@ const filters: DataTableFilter<BlogPost>[] = [
   },
 ];
 
-interface BlogListSectionProps {
+type BlogListSectionProps = {
   posts: BlogPost[];
-}
+};
 
 export const BlogListSection = ({ posts }: BlogListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState();

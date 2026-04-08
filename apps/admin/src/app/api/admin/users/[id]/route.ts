@@ -7,7 +7,7 @@ import {
   updateUserRoleRequestSchema,
 } from "@repo/contracts/user";
 
-import { withAdminAuth } from "@app/lib/auth";
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
   createGetByIdHandler(adminUsersApi.getById, getUserByIdParamsSchema, getAdminUserResponseSchema),

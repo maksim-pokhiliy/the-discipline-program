@@ -53,5 +53,3 @@ export const PAGE_SEO = {
     keywords: ["payment success", "order confirmed"],
   },
 };
-
-export type PageSeoKey = keyof typeof PAGE_SEO;

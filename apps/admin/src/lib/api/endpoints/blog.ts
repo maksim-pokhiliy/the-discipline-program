@@ -9,7 +9,6 @@ import {
 
 export const createBlogAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminBlogPageData> => client.request("/api/admin/blog/page-data"),
-  getAll: (): Promise<BlogPost[]> => client.request("/api/admin/blog"),
   getById: (id: string): Promise<BlogPost> => client.request(`/api/admin/blog/${id}`),
 
   create: (data: CreateBlogPostData): Promise<BlogPost> =>

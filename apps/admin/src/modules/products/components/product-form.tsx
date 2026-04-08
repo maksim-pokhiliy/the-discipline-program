@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-
 import {
   Checkbox,
   FormControlLabel,
@@ -14,32 +12,26 @@ import {
 import { Controller, useFormContext } from "react-hook-form";
 
 import { ProductCurrency, PriceInterval, PRICE_INTERVAL_LABELS } from "@repo/contracts/product";
-import { slugify } from "@repo/shared";
 import { FormCard, TagsInput } from "@repo/ui";
+
+import { useAutoSlug } from "@app/lib/hooks";
 
 import { type ProductFormData } from "./product-form-schema";
 
-interface ProductFormProps {
+type ProductFormProps = {
   isLoading?: boolean;
   disableAutoSlug?: boolean;
-}
+};
 
 export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: ProductFormProps) => {
+  const form = useFormContext<ProductFormData>();
   const {
     register,
-    watch,
-    setValue,
     control,
-    formState: { errors, dirtyFields },
-  } = useFormContext<ProductFormData>();
+    formState: { errors },
+  } = form;
 
-  const title = watch("title");
-
-  useEffect(() => {
-    if (!disableAutoSlug && title && !dirtyFields.slug) {
-      setValue("slug", slugify(title), { shouldValidate: true });
-    }
-  }, [title, dirtyFields.slug, setValue, disableAutoSlug]);
+  useAutoSlug({ disabled: disableAutoSlug, form });
 
   return (
     <Grid container spacing={3}>

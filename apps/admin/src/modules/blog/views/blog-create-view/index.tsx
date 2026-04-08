@@ -8,7 +8,7 @@ import { FormView } from "@repo/ui";
 
 import { useCreateBlogPost } from "@app/lib/hooks";
 
-import { BlogPostForm } from "../components/blog-post-form";
+import { BlogPostForm } from "../../components/blog-post-form";
 
 export const BlogCreateView = () => {
   const { mutate: createPost, isPending } = useCreateBlogPost();

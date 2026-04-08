@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
 import {
   Checkbox,
@@ -19,36 +19,31 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import { BLOG_CATEGORY_LABELS, BlogCategory, type CreateBlogPostData } from "@repo/contracts/blog";
 import { UPLOAD_CONFIG } from "@repo/contracts/upload";
-import { slugify } from "@repo/shared";
 import { FormCard, ImageUpload, RichTextEditor, TagsInput } from "@repo/ui";
 
-import { useUploadImage } from "@app/lib/hooks";
+import { useAutoSlug, useUploadImage } from "@app/lib/hooks";
 
-interface BlogPostFormProps {
+type BlogPostFormProps = {
   isLoading?: boolean;
   disableAutoSlug?: boolean;
-}
+};
 
 export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: BlogPostFormProps) => {
+  const form = useFormContext<CreateBlogPostData>();
   const {
     register,
     watch,
     setValue,
     control,
-    formState: { errors, dirtyFields },
-  } = useFormContext<CreateBlogPostData>();
+    formState: { errors },
+  } = form;
 
   const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
 
-  const title = watch("title");
+  useAutoSlug({ disabled: disableAutoSlug, form });
+
   const content = watch("content");
   const excerpt = watch("excerpt");
-
-  useEffect(() => {
-    if (!disableAutoSlug && title && !dirtyFields.slug) {
-      setValue("slug", slugify(title), { shouldValidate: true });
-    }
-  }, [title, dirtyFields.slug, setValue, disableAutoSlug]);
 
   const wordCount = useMemo(() => {
     if (!content) {

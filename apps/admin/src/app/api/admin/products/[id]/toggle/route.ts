@@ -6,7 +6,7 @@ import {
   toggleProductQuerySchema,
 } from "@repo/contracts/product";
 
-import { withAdminAuth } from "@app/lib/auth";
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const PATCH = withAdminAuth(
   createMultiToggleHandler(

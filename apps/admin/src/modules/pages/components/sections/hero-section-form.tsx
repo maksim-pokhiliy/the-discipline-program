@@ -13,9 +13,9 @@ import { SECTION_FEATURES, type HeroSectionType } from "../../config/section-fea
 
 type HeroSectionData = z.infer<typeof homePageHeroSchema>;
 
-interface HeroSectionFormProps {
+type HeroSectionFormProps = {
   sectionType: HeroSectionType;
-}
+};
 
 export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
   const {

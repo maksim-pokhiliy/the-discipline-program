@@ -28,9 +28,9 @@ export const BlogFeaturedSection = ({ hero, featuredPost }: BlogFeaturedSectionP
           {featuredPost.coverImage && (
             <CardMedia
               component="img"
-              height="400"
               image={featuredPost.coverImage}
               alt={featuredPost.title}
+              sx={{ height: (theme) => theme.spacing(50) }}
             />
           )}
 

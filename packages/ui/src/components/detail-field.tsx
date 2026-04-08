@@ -4,12 +4,12 @@ import { type ReactNode } from "react";
 
 import { Stack, Typography, type StackProps, useTheme } from "@mui/material";
 
-export interface DetailFieldProps extends Omit<StackProps, "children"> {
+export type DetailFieldProps = Omit<StackProps, "children"> & {
   label: string;
   value?: ReactNode;
   labelWidth?: number | string;
   children?: ReactNode;
-}
+};
 
 export const DetailField = ({ label, value, labelWidth, children, ...props }: DetailFieldProps) => {
   const theme = useTheme();

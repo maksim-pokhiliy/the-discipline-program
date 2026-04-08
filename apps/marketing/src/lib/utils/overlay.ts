@@ -1,6 +1,6 @@
-import { alpha } from "@mui/material";
+import { alpha, type Theme } from "@mui/material";
 
-export const buildOverlay = (theme: { palette: { common: { black: string } } }) => {
+export const buildOverlay = (theme: Theme) => {
   const black = theme.palette.common.black;
 
   return `linear-gradient(

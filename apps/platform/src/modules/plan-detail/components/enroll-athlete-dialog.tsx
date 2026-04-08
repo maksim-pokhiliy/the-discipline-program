@@ -113,9 +113,7 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
                 {...props}
               >
                 <Checkbox checked={allSelected} indeterminate={someSelected && !allSelected} />
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Select All
-                </Typography>
+                <Typography variant="subtitle2">Select All</Typography>
               </Stack>
             );
           }

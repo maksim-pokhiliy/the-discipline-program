@@ -34,9 +34,9 @@ const ACTIVITY_CONFIG: Record<DashboardActivityType, { icon: ReactNode; color: s
 
 const DEFAULT_ACTIVITY = { icon: <PersonIcon />, color: "grey.500" };
 
-interface RecentActivitySectionProps {
+type RecentActivitySectionProps = {
   activity: ActivityItem[];
-}
+};
 
 export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) => {
   return (

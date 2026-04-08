@@ -21,8 +21,6 @@ import {
 } from "./date-helpers";
 import type { EnrollmentWithData } from "./enrollment-query";
 
-export type { EnrollmentWithData };
-
 type TodayStatusResult = {
   status: TodayStatus;
   missedCount: number;

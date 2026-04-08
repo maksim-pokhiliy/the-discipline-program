@@ -6,10 +6,10 @@ import { useFormContext } from "react-hook-form";
 import { type HomePageWhyChooseData } from "@repo/contracts/pages";
 import { DynamicListItem } from "@repo/ui";
 
-interface WhyChooseFeatureCardProps {
+type WhyChooseFeatureCardProps = {
   index: number;
   onRemove: () => void;
-}
+};
 
 export const WhyChooseFeatureCard = ({ index, onRemove }: WhyChooseFeatureCardProps) => {
   const {

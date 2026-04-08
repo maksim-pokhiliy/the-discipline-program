@@ -7,7 +7,7 @@ import {
   updateProductRequestSchema,
 } from "@repo/contracts/product";
 
-import { withAdminAuth } from "@app/lib/auth";
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
   createGetByIdHandler(adminProductsApi.getById, getProductByIdParamsSchema),

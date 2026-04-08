@@ -43,9 +43,9 @@ const filters: DataTableFilter<Product>[] = [
   },
 ];
 
-interface ProductsListSectionProps {
+type ProductsListSectionProps = {
   products: Product[];
-}
+};
 
 export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState();

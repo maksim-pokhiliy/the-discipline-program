@@ -9,8 +9,6 @@ import {
 export const createReviewsAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminReviewsPageData> => client.request("/api/admin/reviews/page-data"),
 
-  getAll: (): Promise<Review[]> => client.request("/api/admin/reviews"),
-
   getById: (id: string): Promise<Review> => client.request(`/api/admin/reviews/${id}`),
 
   create: (data: CreateReviewData): Promise<Review> =>

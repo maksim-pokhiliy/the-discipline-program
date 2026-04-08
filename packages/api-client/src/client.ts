@@ -10,7 +10,7 @@ import {
 
 type AppErrorConstructor = new (message: string, details?: Record<string, unknown>) => AppError;
 
-const HTTP_STATUS_ERROR_MAP: Record<number, AppErrorConstructor> = {
+const HTTP_STATUS_ERROR_MAP: Partial<Record<number, AppErrorConstructor>> = {
   400: ValidationError,
   401: UnauthorizedError,
   403: ForbiddenError,

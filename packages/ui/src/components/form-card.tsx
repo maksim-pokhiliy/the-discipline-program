@@ -4,12 +4,12 @@ import { type ReactNode } from "react";
 
 import { Card, CardContent, CardHeader, type CardProps } from "@mui/material";
 
-export interface FormCardProps extends Omit<CardProps, "content"> {
+export type FormCardProps = Omit<CardProps, "content"> & {
   title: string;
   subtitle?: string;
   action?: ReactNode;
   children: ReactNode;
-}
+};
 
 export const FormCard = ({ title, subtitle, action, children, ...props }: FormCardProps) => {
   return (

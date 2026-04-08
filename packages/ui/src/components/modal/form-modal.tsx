@@ -4,7 +4,7 @@ import { Button, CircularProgress, Alert, Stack } from "@mui/material";
 
 import { BaseModal, type BaseModalProps } from "./base-modal";
 
-export interface FormModalProps extends Omit<BaseModalProps, "children" | "actions"> {
+export type FormModalProps = Omit<BaseModalProps, "children" | "actions"> & {
   children: ReactNode;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void | Promise<void>;
   isSubmitting?: boolean;
@@ -13,7 +13,7 @@ export interface FormModalProps extends Omit<BaseModalProps, "children" | "actio
   submitDisabled?: boolean;
   error?: string | null;
   hideActions?: boolean;
-}
+};
 
 export const FormModal = ({
   children,

@@ -14,7 +14,7 @@ export const Toaster = () => {
       style={
         {
           fontFamily: theme.typography.fontFamily,
-          zIndex: 2000,
+          zIndex: theme.zIndex.snackbar,
 
           "--normal-bg": theme.palette.background.paper,
           "--normal-border": theme.palette.divider,

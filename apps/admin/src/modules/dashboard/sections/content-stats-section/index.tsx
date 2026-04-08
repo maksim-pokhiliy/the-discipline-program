@@ -10,10 +10,10 @@ import { Grid } from "@mui/material";
 import { type ContentStats, type UserStats } from "@repo/contracts/dashboard";
 import { ContentSection, StatsCard } from "@repo/ui";
 
-interface ContentStatsSectionProps {
+type ContentStatsSectionProps = {
   contentStats: ContentStats;
   userStats: UserStats;
-}
+};
 
 export const ContentStatsSection = ({ contentStats, userStats }: ContentStatsSectionProps) => {
   return (

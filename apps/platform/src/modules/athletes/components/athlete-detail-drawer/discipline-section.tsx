@@ -51,7 +51,7 @@ export const DisciplineSection: React.FC<DisciplineSectionProps> = ({ planDiscip
               sx={{ height: 6, borderRadius: 1, flex: 1 }}
             />
           </Tooltip>
-          <Typography variant="body2" sx={{ whiteSpace: "nowrap", fontWeight: 500 }}>
+          <Typography variant="subtitle2" sx={{ whiteSpace: "nowrap" }}>
             {aggregate.completed}/{aggregate.planned}
           </Typography>
         </Stack>
@@ -75,7 +75,7 @@ export const DisciplineSection: React.FC<DisciplineSectionProps> = ({ planDiscip
                 color={ENROLLMENT_STATUS_COLORS[plan.enrollmentStatus]}
                 variant="outlined"
               />
-              <Typography variant="caption" sx={{ fontWeight: 500, whiteSpace: "nowrap" }}>
+              <Typography variant="caption" sx={{ whiteSpace: "nowrap" }}>
                 {plan.completed}/{plan.planned}
               </Typography>
             </Stack>
