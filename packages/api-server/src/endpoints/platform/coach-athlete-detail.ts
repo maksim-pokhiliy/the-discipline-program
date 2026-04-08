@@ -7,9 +7,11 @@ import { NotFoundError } from "@repo/errors";
 import { prisma } from "../../db/client";
 import {
   ACTION_ITEM_SEVERITY_MAP,
+  ACTION_ITEM_STATUS_TO_PRISMA_MAP,
   ACTION_ITEM_TYPE_MAP,
   HEALTH_STATUS_MAP,
   PLAN_ENROLLMENT_STATUS_MAP,
+  PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
 } from "../../mappers/enum-maps";
 import { findOrThrow } from "../../utils";
 import { computeAdherenceWindow, computeProcessStatus } from "../../utils/dashboard-computations";
@@ -57,7 +59,7 @@ export const getAthleteDetail = async (
     prisma.planEnrollment.findMany({
       where: {
         userId: athleteUserId,
-        status: PlanEnrollmentStatus.ACTIVE,
+        status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
         trainingPlan: { coachId },
       },
       include: createEnrollmentInclude(coachId),
@@ -65,7 +67,11 @@ export const getAthleteDetail = async (
     }),
 
     prisma.coachActionItem.findMany({
-      where: { coachId, athleteId: athleteUserId, status: ActionItemStatus.OPEN },
+      where: {
+        coachId,
+        athleteId: athleteUserId,
+        status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN],
+      },
       select: { id: true, type: true, severity: true, message: true, createdAt: true },
       orderBy: { createdAt: "desc" },
     }),

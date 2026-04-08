@@ -3,12 +3,13 @@
 import { useCallback, useMemo, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Chip, Fab, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { Fab, Stack, Tabs, Typography } from "@mui/material";
 
 import type { TrainingPlanListItem } from "@repo/contracts/training-plan";
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
 import { LAYOUT } from "@repo/shared";
 
+import { ChipTab } from "@app/lib/components";
 import {
   useActivateTrainingPlan,
   useArchiveTrainingPlan,
@@ -73,18 +74,12 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
         scrollButtons="auto"
       >
         {STATUS_TABS.map((tab) => (
-          <Tab
+          <ChipTab
             key={tab.value}
             value={tab.value}
-            label={
-              <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-                <Typography variant="body1" component="span">
-                  {tab.label}
-                </Typography>
-
-                <Chip size="small" label={counts[tab.value] ?? 0} color={tab.chipColor} />
-              </Stack>
-            }
+            label={tab.label}
+            count={counts[tab.value] ?? 0}
+            chipColor={tab.chipColor}
           />
         ))}
       </Tabs>

@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 
-import { cleanupRaw } from "../test/helpers";
+import { cleanup, cleanupRaw } from "../test/helpers";
 
 import { prisma } from "./client";
 
@@ -8,20 +8,7 @@ describe("soft-delete extension", () => {
   const toCleanup: { table: string; id: string }[] = [];
 
   afterAll(async () => {
-    for (const { table, id } of toCleanup.reverse()) {
-      const delegate = (
-        cleanupRaw as unknown as Record<
-          string,
-          { delete: (args: { where: { id: string } }) => Promise<unknown> }
-        >
-      )[table];
-
-      if (!delegate) {
-        continue;
-      }
-
-      await delegate.delete({ where: { id } }).catch(() => {});
-    }
+    await cleanup(...toCleanup);
   });
 
   describe("Product slug mangling on delete", () => {

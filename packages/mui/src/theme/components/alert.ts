@@ -1,6 +1,7 @@
+import { type AlertColor } from "@mui/material";
 import { type Components, type Theme, alpha } from "@mui/material/styles";
 
-const severityStyles = (theme: Theme, severity: "error" | "warning" | "info" | "success") => {
+const severityStyles = (theme: Theme, severity: AlertColor) => {
   const main = theme.palette[severity].main;
 
   return {

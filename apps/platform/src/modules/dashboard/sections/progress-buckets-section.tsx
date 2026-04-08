@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { Box, Chip, Stack, Tab, Tabs, Typography } from "@mui/material";
-import Link from "next/link";
+import { Stack, Tabs, Typography } from "@mui/material";
 
 import {
   PROCESS_STATUS_LABELS,
@@ -11,6 +10,8 @@ import {
   ProcessStatus,
 } from "@repo/contracts/coach-dashboard";
 import { rateToPercent } from "@repo/shared";
+
+import { AthleteCardLink, ChipTab } from "@app/lib/components";
 
 import { AthleteCard, DashboardSection } from "../components";
 
@@ -68,47 +69,28 @@ export const ProgressBucketsSection: React.FC<ProgressBucketsSectionProps> = ({ 
           variant="scrollable"
           scrollButtons="auto"
         >
-          {PROGRESS_GROUPS.map((group) => {
-            const count = counts.get(group.status) ?? 0;
-
-            return (
-              <Tab
-                key={group.status}
-                value={group.status}
-                label={
-                  <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
-                    <Typography variant="body2" component="span">
-                      {group.title}
-                    </Typography>
-                    <Chip size="small" label={count} color={group.chipColor} />
-                  </Stack>
-                }
-              />
-            );
-          })}
+          {PROGRESS_GROUPS.map((group) => (
+            <ChipTab
+              key={group.status}
+              value={group.status}
+              label={group.title}
+              count={counts.get(group.status) ?? 0}
+              chipColor={group.chipColor}
+            />
+          ))}
         </Tabs>
 
         {athletes.length > 0 ? (
           <Stack spacing={2}>
             {athletes.map((athlete) => (
-              <Box
-                key={athlete.userId}
-                component={Link}
-                href={athlete.href}
-                sx={(theme) => ({
-                  textDecoration: "none",
-                  borderRadius: 1,
-                  transition: theme.transitions.create("opacity"),
-                  "&:hover": { opacity: 0.85 },
-                })}
-              >
+              <AthleteCardLink key={athlete.userId} href={athlete.href}>
                 <AthleteCard
                   name={athlete.name ?? "Unknown"}
                   image={athlete.image}
                   severity={activeConfig?.severity ?? "info"}
                   message={PROCESS_STATUS_LABELS[athlete.processStatus]}
                 />
-              </Box>
+              </AthleteCardLink>
             ))}
           </Stack>
         ) : (

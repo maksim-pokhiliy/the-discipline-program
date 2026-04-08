@@ -2,6 +2,7 @@ import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
+import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/enum-maps";
 
 export const resolveCoachId = async (userId: string): Promise<string> => {
   const profile = await prisma.coachProfile.findUnique({
@@ -59,7 +60,7 @@ export const verifyAthleteBelongsToCoach = async (
     where: {
       userId: athleteUserId,
       trainingPlan: { coachId },
-      status: PlanEnrollmentStatus.ACTIVE,
+      status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
     },
     select: { id: true },
   });

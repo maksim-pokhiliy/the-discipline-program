@@ -1,8 +1,8 @@
 import { type Product } from "@repo/contracts/product";
-import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToProduct } from "../../mappers";
+import { findOrThrow } from "../../utils";
 
 export const marketingProductsApi = {
   getAll: async (): Promise<Product[]> => {
@@ -15,14 +15,13 @@ export const marketingProductsApi = {
   },
 
   getBySlug: async (slug: string): Promise<Product> => {
-    const product = await prisma.product.findFirst({
-      where: { slug, isActive: true },
-      include: { prices: { where: { isActive: true } } },
-    });
-
-    if (!product) {
-      throw new NotFoundError("Product not found", { slug });
-    }
+    const product = await findOrThrow(
+      prisma.product.findFirst({
+        where: { slug, isActive: true },
+        include: { prices: { where: { isActive: true } } },
+      }),
+      "Product",
+    );
 
     return mapToProduct(product);
   },

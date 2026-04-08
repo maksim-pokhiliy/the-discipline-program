@@ -3,11 +3,10 @@ import {
   type UpdateUserBenchmarkData,
   type UserBenchmark,
 } from "@repo/contracts/user-benchmark";
-import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToUserBenchmark } from "../../mappers";
-import { handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError } from "../../utils";
 
 import { resolveCoachId, verifyAthleteBelongsToCoach } from "./guards";
 
@@ -56,13 +55,10 @@ export const platformUserBenchmarksApi = {
     benchmarkId: string,
     data: UpdateUserBenchmarkData,
   ): Promise<UserBenchmark> => {
-    const existing = await prisma.userBenchmark.findUnique({
-      where: { id: benchmarkId },
-    });
-
-    if (!existing) {
-      throw new NotFoundError("User benchmark not found", { benchmarkId });
-    }
+    const existing = await findOrThrow(
+      prisma.userBenchmark.findUnique({ where: { id: benchmarkId } }),
+      "User benchmark",
+    );
 
     await verifyAccessToUser(authUserId, existing.userId);
 
@@ -79,20 +75,17 @@ export const platformUserBenchmarksApi = {
   },
 
   delete: async (authUserId: string, benchmarkId: string): Promise<void> => {
-    const existing = await prisma.userBenchmark.findUnique({
-      where: { id: benchmarkId },
-    });
-
-    if (!existing) {
-      throw new NotFoundError("User benchmark not found", { benchmarkId });
-    }
+    const existing = await findOrThrow(
+      prisma.userBenchmark.findUnique({ where: { id: benchmarkId } }),
+      "User benchmark",
+    );
 
     await verifyAccessToUser(authUserId, existing.userId);
 
     try {
       await prisma.userBenchmark.delete({ where: { id: benchmarkId } });
     } catch (error) {
-      handlePrismaError(error, { entity: "User benchmark" });
+      return handlePrismaError(error, { entity: "User benchmark" });
     }
   },
 };

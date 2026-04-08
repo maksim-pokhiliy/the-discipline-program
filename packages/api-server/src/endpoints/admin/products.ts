@@ -6,11 +6,10 @@ import {
   ProductCurrency,
   PriceInterval,
 } from "@repo/contracts/product";
-import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToProduct } from "../../mappers";
-import { handlePrismaError, toggleExclusiveFeatured } from "../../utils";
+import { findOrThrow, handlePrismaError, toggleExclusiveFeatured } from "../../utils";
 
 const includeWithPrices = { prices: { where: { isActive: true } } } as const;
 
@@ -25,14 +24,10 @@ export const adminProductsApi = {
   },
 
   getById: async (id: string): Promise<Product> => {
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: includeWithPrices,
-    });
-
-    if (!product) {
-      throw new NotFoundError("Product not found", { id });
-    }
+    const product = await findOrThrow(
+      prisma.product.findUnique({ where: { id }, include: includeWithPrices }),
+      "Product",
+    );
 
     return mapToProduct(product);
   },
@@ -114,24 +109,15 @@ export const adminProductsApi = {
   },
 
   delete: async (id: string): Promise<void> => {
-    const product = await prisma.product.findUnique({ where: { id } });
-
-    if (!product) {
-      throw new NotFoundError("Product not found", { id });
-    }
-
+    await findOrThrow(prisma.product.findUnique({ where: { id } }), "Product");
     await prisma.product.delete({ where: { id } });
   },
 
   toggleStatus: async (id: string): Promise<Product> => {
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: includeWithPrices,
-    });
-
-    if (!product) {
-      throw new NotFoundError("Product not found", { id });
-    }
+    const product = await findOrThrow(
+      prisma.product.findUnique({ where: { id }, include: includeWithPrices }),
+      "Product",
+    );
 
     const updated = await prisma.product.update({
       where: { id },

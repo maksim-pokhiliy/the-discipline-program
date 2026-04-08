@@ -2,7 +2,6 @@ import { type ApiClient } from "@repo/api-client";
 import type {
   CreateBenchmarkDefinitionRequest,
   CreateBenchmarkDefinitionResponse,
-  GetBenchmarkDefinitionResponse,
   GetBenchmarkDefinitionsResponse,
   UpdateBenchmarkDefinitionRequest,
   UpdateBenchmarkDefinitionResponse,
@@ -18,9 +17,6 @@ import type {
 export const createBenchmarkDefinitionsAPI = (client: ApiClient) => ({
   getAll: (): Promise<GetBenchmarkDefinitionsResponse> =>
     client.request("/api/platform/benchmark-definitions"),
-
-  getById: (id: string): Promise<GetBenchmarkDefinitionResponse> =>
-    client.request(`/api/platform/benchmark-definitions/${id}`),
 
   create: (data: CreateBenchmarkDefinitionRequest): Promise<CreateBenchmarkDefinitionResponse> =>
     client.request("/api/platform/benchmark-definitions", "POST", data),

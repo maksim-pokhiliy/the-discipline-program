@@ -8,7 +8,6 @@ export const Toaster = () => {
 
   return (
     <Sonner
-      className="toaster-wrapper"
       richColors
       position="bottom-right"
       style={

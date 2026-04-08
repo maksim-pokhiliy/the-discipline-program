@@ -25,7 +25,7 @@ const createPageHook =
       queryKey,
       queryFn,
       initialData,
-      staleTime: initialData ? STALE_TIMES.MEDIUM : STALE_TIMES.NONE,
+      staleTime: initialData ? STALE_TIMES.FIVE_MINUTES : STALE_TIMES.NONE,
     });
 
 export const useHomePage = createPageHook<HomePageData>(

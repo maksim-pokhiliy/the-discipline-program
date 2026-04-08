@@ -3,11 +3,13 @@ import {
   type CreateBenchmarkDefinitionData,
   type UpdateBenchmarkDefinitionData,
 } from "@repo/contracts/benchmark-definition";
-import { ConflictError, NotFoundError } from "@repo/errors";
+import { ConflictError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToBenchmarkDefinition } from "../../mappers";
-import { handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError } from "../../utils";
+
+import { resolveCoachId } from "./guards";
 
 export const platformBenchmarkDefinitionsApi = {
   getAll: async (): Promise<BenchmarkDefinition[]> => {
@@ -19,18 +21,20 @@ export const platformBenchmarkDefinitionsApi = {
   },
 
   getById: async (definitionId: string): Promise<BenchmarkDefinition> => {
-    const definition = await prisma.benchmarkDefinition.findUnique({
-      where: { id: definitionId },
-    });
-
-    if (!definition) {
-      throw new NotFoundError("Benchmark definition not found", { definitionId });
-    }
+    const definition = await findOrThrow(
+      prisma.benchmarkDefinition.findUnique({ where: { id: definitionId } }),
+      "Benchmark definition",
+    );
 
     return mapToBenchmarkDefinition(definition);
   },
 
-  create: async (data: CreateBenchmarkDefinitionData): Promise<BenchmarkDefinition> => {
+  create: async (
+    userId: string,
+    data: CreateBenchmarkDefinitionData,
+  ): Promise<BenchmarkDefinition> => {
+    await resolveCoachId(userId);
+
     try {
       const definition = await prisma.benchmarkDefinition.create({ data });
 
@@ -41,16 +45,16 @@ export const platformBenchmarkDefinitionsApi = {
   },
 
   update: async (
+    userId: string,
     definitionId: string,
     data: UpdateBenchmarkDefinitionData,
   ): Promise<BenchmarkDefinition> => {
-    const existing = await prisma.benchmarkDefinition.findUnique({
-      where: { id: definitionId },
-    });
+    await resolveCoachId(userId);
 
-    if (!existing) {
-      throw new NotFoundError("Benchmark definition not found", { definitionId });
-    }
+    await findOrThrow(
+      prisma.benchmarkDefinition.findUnique({ where: { id: definitionId } }),
+      "Benchmark definition",
+    );
 
     try {
       const definition = await prisma.benchmarkDefinition.update({
@@ -64,14 +68,13 @@ export const platformBenchmarkDefinitionsApi = {
     }
   },
 
-  delete: async (definitionId: string): Promise<void> => {
-    const existing = await prisma.benchmarkDefinition.findUnique({
-      where: { id: definitionId },
-    });
+  delete: async (userId: string, definitionId: string): Promise<void> => {
+    await resolveCoachId(userId);
 
-    if (!existing) {
-      throw new NotFoundError("Benchmark definition not found", { definitionId });
-    }
+    await findOrThrow(
+      prisma.benchmarkDefinition.findUnique({ where: { id: definitionId } }),
+      "Benchmark definition",
+    );
 
     const usageCount = await prisma.userBenchmark.count({
       where: { benchmarkDefinitionId: definitionId },
@@ -87,7 +90,7 @@ export const platformBenchmarkDefinitionsApi = {
     try {
       await prisma.benchmarkDefinition.delete({ where: { id: definitionId } });
     } catch (error) {
-      handlePrismaError(error, { entity: "Benchmark definition" });
+      return handlePrismaError(error, { entity: "Benchmark definition" });
     }
   },
 };

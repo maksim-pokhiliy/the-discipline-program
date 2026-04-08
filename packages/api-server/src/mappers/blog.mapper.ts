@@ -1,15 +1,23 @@
-import { type MarketingBlogPost } from "@prisma/client";
+import {
+  type MarketingBlogCategory as PrismaMarketingBlogCategory,
+  type MarketingBlogPost,
+} from "@prisma/client";
 
 import { BlogCategory, type BlogPost, type PublicBlogPost } from "@repo/contracts/blog";
 
 type PublishedPost = MarketingBlogPost & { publishedAt: Date };
 
-const BLOG_CATEGORY_MAP = new Map<string, BlogCategory>(
-  Object.values(BlogCategory).map((v) => [v, v]),
-);
+const BLOG_CATEGORY_MAP: Record<PrismaMarketingBlogCategory, BlogCategory> = {
+  UNCATEGORIZED: BlogCategory.UNCATEGORIZED,
+  FITNESS: BlogCategory.FITNESS,
+  NUTRITION: BlogCategory.NUTRITION,
+  MINDSET: BlogCategory.MINDSET,
+  TRAINING: BlogCategory.TRAINING,
+  RECOVERY: BlogCategory.RECOVERY,
+};
 
-const mapBlogCategory = (category: string): BlogCategory =>
-  BLOG_CATEGORY_MAP.get(category) ?? BlogCategory.UNCATEGORIZED;
+const mapBlogCategory = (category: PrismaMarketingBlogCategory): BlogCategory =>
+  BLOG_CATEGORY_MAP[category];
 
 export const isPublishedPost = (post: MarketingBlogPost): post is PublishedPost => {
   return post.publishedAt !== null;

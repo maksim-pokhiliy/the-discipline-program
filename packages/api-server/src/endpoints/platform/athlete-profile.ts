@@ -2,21 +2,17 @@ import {
   type AthleteProfile,
   type UpdateAthleteProfileData,
 } from "@repo/contracts/athlete-profile";
-import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToAthleteProfile } from "../../mappers";
-import { handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError } from "../../utils";
 
 export const platformAthleteProfileApi = {
   get: async (userId: string): Promise<AthleteProfile> => {
-    const profile = await prisma.athleteProfile.findUnique({
-      where: { userId },
-    });
-
-    if (!profile) {
-      throw new NotFoundError("Athlete profile not found", { userId });
-    }
+    const profile = await findOrThrow(
+      prisma.athleteProfile.findUnique({ where: { userId } }),
+      "Athlete profile",
+    );
 
     return mapToAthleteProfile(profile);
   },

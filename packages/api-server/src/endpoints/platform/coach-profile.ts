@@ -1,19 +1,15 @@
 import { type CoachProfile, type UpdateCoachProfileData } from "@repo/contracts/coach-profile";
-import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToCoachProfile } from "../../mappers";
-import { handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError } from "../../utils";
 
 export const platformCoachProfileApi = {
   get: async (userId: string): Promise<CoachProfile> => {
-    const profile = await prisma.coachProfile.findUnique({
-      where: { userId },
-    });
-
-    if (!profile) {
-      throw new NotFoundError("Coach profile not found", { userId });
-    }
+    const profile = await findOrThrow(
+      prisma.coachProfile.findUnique({ where: { userId } }),
+      "Coach profile",
+    );
 
     return mapToCoachProfile(profile);
   },

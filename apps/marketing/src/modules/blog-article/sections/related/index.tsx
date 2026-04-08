@@ -4,6 +4,8 @@ import { type PublicBlogPostPreview } from "@repo/contracts/blog";
 
 import { BlogPostCard } from "@app/lib/components/ui";
 
+const RELATED_SECTION_TITLE = "Related Articles";
+
 type BlogArticleRelatedProps = {
   relatedPosts: PublicBlogPostPreview[];
 };
@@ -20,7 +22,7 @@ export const BlogArticleRelated = ({ relatedPosts }: BlogArticleRelatedProps) =>
       <Container maxWidth="lg">
         <Stack spacing={8}>
           <Typography variant="h3" component="h2" textAlign="center">
-            Related Articles
+            {RELATED_SECTION_TITLE}
           </Typography>
 
           <Grid container spacing={4}>

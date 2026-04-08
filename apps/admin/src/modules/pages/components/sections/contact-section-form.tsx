@@ -1,11 +1,12 @@
 "use client";
 
-import { Stack, TextField } from "@mui/material";
+import { TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 import { type z } from "zod";
 
 import { type homePageContactSchema } from "@repo/contracts/pages";
-import { FormCard } from "@repo/ui";
+
+import { TitleSubtitleSectionForm } from "./title-subtitle-section-form";
 
 type ContactSectionData = z.infer<typeof homePageContactSchema>;
 
@@ -16,42 +17,22 @@ export const ContactSectionForm = () => {
   } = useFormContext<ContactSectionData>();
 
   return (
-    <FormCard title="Final CTA Settings">
-      <Stack spacing={3}>
-        <TextField
-          label="Title"
-          fullWidth
-          error={!!errors.title}
-          helperText={errors.title?.message}
-          {...register("title")}
-        />
+    <TitleSubtitleSectionForm cardTitle="Final CTA Settings">
+      <TextField
+        label="Button Text"
+        fullWidth
+        error={!!errors.buttonText}
+        helperText={errors.buttonText?.message}
+        {...register("buttonText")}
+      />
 
-        <TextField
-          label="Subtitle"
-          fullWidth
-          multiline
-          minRows={2}
-          error={!!errors.subtitle}
-          helperText={errors.subtitle?.message}
-          {...register("subtitle")}
-        />
-
-        <TextField
-          label="Button Text"
-          fullWidth
-          error={!!errors.buttonText}
-          helperText={errors.buttonText?.message}
-          {...register("buttonText")}
-        />
-
-        <TextField
-          label="Button Link"
-          fullWidth
-          error={!!errors.buttonHref}
-          helperText={errors.buttonHref?.message}
-          {...register("buttonHref")}
-        />
-      </Stack>
-    </FormCard>
+      <TextField
+        label="Button Link"
+        fullWidth
+        error={!!errors.buttonHref}
+        helperText={errors.buttonHref?.message}
+        {...register("buttonHref")}
+      />
+    </TitleSubtitleSectionForm>
   );
 };

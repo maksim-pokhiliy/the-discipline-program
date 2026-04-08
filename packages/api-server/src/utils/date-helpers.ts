@@ -3,6 +3,16 @@ export const DAYS_IN_WEEK = 7;
 export const TWO_WEEKS = 14;
 export const FOUR_WEEKS = 28;
 
+const WEEKDAY_MAP: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
 const getDatePartsInTz = (
   date: Date,
   tz: string,
@@ -17,21 +27,11 @@ const getDatePartsInTz = (
 
   const parts = Object.fromEntries(formatter.formatToParts(date).map((p) => [p.type, p.value]));
 
-  const weekdayMap: Record<string, number> = {
-    Sun: 0,
-    Mon: 1,
-    Tue: 2,
-    Wed: 3,
-    Thu: 4,
-    Fri: 5,
-    Sat: 6,
-  };
-
   return {
     year: Number(parts.year),
     month: Number(parts.month),
     day: Number(parts.day),
-    weekday: weekdayMap[parts.weekday ?? "Mon"] ?? 1,
+    weekday: WEEKDAY_MAP[parts.weekday ?? "Mon"] ?? 1,
   };
 };
 

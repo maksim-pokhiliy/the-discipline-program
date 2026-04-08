@@ -8,12 +8,12 @@ import { useSearchParams } from "next/navigation";
 import { HealthStatus } from "@repo/contracts/athlete-profile";
 import type { CoachAthleteListItem } from "@repo/contracts/coach-athletes";
 
-import { AthleteListItem } from "../components";
 import {
   type AthleteFilters,
+  AthleteListItem,
   filterAthletes,
   sortByAttentionPriority,
-} from "../components/athlete-list-item-config";
+} from "../components";
 
 type AthletesListSectionProps = {
   athletes: CoachAthleteListItem[];

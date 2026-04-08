@@ -1,16 +1,16 @@
 import {
-  type ActionItemResolveReason as PrismaActionItemResolveReason,
-  type ActionItemSeverity as PrismaActionItemSeverity,
-  type ActionItemStatus as PrismaActionItemStatus,
-  type ActionItemType as PrismaActionItemType,
+  ActionItemResolveReason as PrismaActionItemResolveReason,
+  ActionItemSeverity as PrismaActionItemSeverity,
+  ActionItemStatus as PrismaActionItemStatus,
+  ActionItemType as PrismaActionItemType,
   ContactSubmissionStatus as PrismaContactSubmissionStatus,
   type Currency as PrismaCurrency,
   type Gender as PrismaGender,
   type HealthStatus as PrismaHealthStatus,
-  type PlanEnrollmentStatus as PrismaPlanEnrollmentStatus,
+  PlanEnrollmentStatus as PrismaPlanEnrollmentStatus,
   type PriceInterval as PrismaPriceInterval,
   type Role as PrismaRole,
-  type TrainingPlanStatus as PrismaTrainingPlanStatus,
+  TrainingPlanStatus as PrismaTrainingPlanStatus,
 } from "@prisma/client";
 
 import { Gender, HealthStatus } from "@repo/contracts/athlete-profile";
@@ -30,6 +30,15 @@ export const TRAINING_PLAN_STATUS_MAP: Record<PrismaTrainingPlanStatus, Training
   DRAFT: TrainingPlanStatus.DRAFT,
   ACTIVE: TrainingPlanStatus.ACTIVE,
   ARCHIVED: TrainingPlanStatus.ARCHIVED,
+};
+
+export const TRAINING_PLAN_STATUS_TO_PRISMA_MAP: Record<
+  TrainingPlanStatus,
+  PrismaTrainingPlanStatus
+> = {
+  [TrainingPlanStatus.DRAFT]: PrismaTrainingPlanStatus.DRAFT,
+  [TrainingPlanStatus.ACTIVE]: PrismaTrainingPlanStatus.ACTIVE,
+  [TrainingPlanStatus.ARCHIVED]: PrismaTrainingPlanStatus.ARCHIVED,
 };
 
 export const CURRENCY_MAP: Record<PrismaCurrency, ProductCurrency> = {
@@ -73,10 +82,24 @@ export const PLAN_ENROLLMENT_STATUS_MAP: Record<PrismaPlanEnrollmentStatus, Plan
     PAUSED: PlanEnrollmentStatus.PAUSED,
   };
 
+export const PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP: Record<
+  PlanEnrollmentStatus,
+  PrismaPlanEnrollmentStatus
+> = {
+  [PlanEnrollmentStatus.ACTIVE]: PrismaPlanEnrollmentStatus.ACTIVE,
+  [PlanEnrollmentStatus.PAUSED]: PrismaPlanEnrollmentStatus.PAUSED,
+};
+
 export const ACTION_ITEM_TYPE_MAP: Record<PrismaActionItemType, ActionItemType> = {
   MISSED_WORKOUTS: ActionItemType.MISSED_WORKOUTS,
   NEW_NO_START: ActionItemType.NEW_NO_START,
   HEALTH_REPORT: ActionItemType.HEALTH_REPORT,
+};
+
+export const ACTION_ITEM_TYPE_TO_PRISMA_MAP: Record<ActionItemType, PrismaActionItemType> = {
+  [ActionItemType.MISSED_WORKOUTS]: PrismaActionItemType.MISSED_WORKOUTS,
+  [ActionItemType.NEW_NO_START]: PrismaActionItemType.NEW_NO_START,
+  [ActionItemType.HEALTH_REPORT]: PrismaActionItemType.HEALTH_REPORT,
 };
 
 export const ACTION_ITEM_SEVERITY_MAP: Record<PrismaActionItemSeverity, ActionItemSeverity> = {
@@ -85,9 +108,23 @@ export const ACTION_ITEM_SEVERITY_MAP: Record<PrismaActionItemSeverity, ActionIt
   CRITICAL: ActionItemSeverity.CRITICAL,
 };
 
+export const ACTION_ITEM_SEVERITY_TO_PRISMA_MAP: Record<
+  ActionItemSeverity,
+  PrismaActionItemSeverity
+> = {
+  [ActionItemSeverity.INFO]: PrismaActionItemSeverity.INFO,
+  [ActionItemSeverity.WARNING]: PrismaActionItemSeverity.WARNING,
+  [ActionItemSeverity.CRITICAL]: PrismaActionItemSeverity.CRITICAL,
+};
+
 export const ACTION_ITEM_STATUS_MAP: Record<PrismaActionItemStatus, ActionItemStatus> = {
   OPEN: ActionItemStatus.OPEN,
   RESOLVED: ActionItemStatus.RESOLVED,
+};
+
+export const ACTION_ITEM_STATUS_TO_PRISMA_MAP: Record<ActionItemStatus, PrismaActionItemStatus> = {
+  [ActionItemStatus.OPEN]: PrismaActionItemStatus.OPEN,
+  [ActionItemStatus.RESOLVED]: PrismaActionItemStatus.RESOLVED,
 };
 
 export const ACTION_ITEM_RESOLVE_REASON_MAP: Record<
@@ -97,6 +134,17 @@ export const ACTION_ITEM_RESOLVE_REASON_MAP: Record<
   AUTO_CONDITION_CLEARED: ActionItemResolveReason.AUTO_CONDITION_CLEARED,
   AUTO_ENROLLMENT_ENDED: ActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
   MANUAL_CONTACTED: ActionItemResolveReason.MANUAL_CONTACTED,
+};
+
+export const ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP: Record<
+  ActionItemResolveReason,
+  PrismaActionItemResolveReason
+> = {
+  [ActionItemResolveReason.AUTO_CONDITION_CLEARED]:
+    PrismaActionItemResolveReason.AUTO_CONDITION_CLEARED,
+  [ActionItemResolveReason.AUTO_ENROLLMENT_ENDED]:
+    PrismaActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
+  [ActionItemResolveReason.MANUAL_CONTACTED]: PrismaActionItemResolveReason.MANUAL_CONTACTED,
 };
 
 export const CONTACT_SUBMISSION_STATUS_MAP: Record<PrismaContactSubmissionStatus, ContactStatus> = {

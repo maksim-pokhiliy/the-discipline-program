@@ -64,7 +64,7 @@ export const platformWorkoutLogsApi = {
     try {
       await prisma.workoutLog.delete({ where: { id } });
     } catch (error) {
-      handlePrismaError(error, { entity: "Workout log" });
+      return handlePrismaError(error, { entity: "Workout log" });
     }
   },
 };

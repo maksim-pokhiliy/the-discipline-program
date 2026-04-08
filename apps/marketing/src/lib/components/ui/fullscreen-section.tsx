@@ -108,7 +108,7 @@ export const FullscreenSection = ({
                   component="p"
                   sx={(theme) => ({
                     color: alpha(theme.palette.common.white, 0.7),
-                    maxWidth: { xs: "100%", md: (theme: Theme) => theme.spacing(69) },
+                    maxWidth: { xs: "100%", md: theme.spacing(69) },
                   })}
                 >
                   {subtitle}

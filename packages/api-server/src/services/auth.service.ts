@@ -31,7 +31,7 @@ export const authService = {
       return null;
     }
 
-    const isValid = await bcrypt.compare(rawPassword, user.password);
+    const isValid = await authService.comparePassword(rawPassword, user.password);
 
     if (!isValid) {
       return null;

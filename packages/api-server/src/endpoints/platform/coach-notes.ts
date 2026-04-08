@@ -84,7 +84,7 @@ export const platformCoachNotesApi = {
     try {
       await prisma.coachNote.delete({ where: { id: noteId } });
     } catch (error) {
-      handlePrismaError(error, { entity: "Coach note" });
+      return handlePrismaError(error, { entity: "Coach note" });
     }
   },
 };
