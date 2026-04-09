@@ -11,7 +11,7 @@ const sizeConfig = {
   medium: { titleVariant: "h3", valueVariant: "display2", spacing: 4 },
 } as const;
 
-type StatsCardProps = {
+export type StatsCardProps = {
   title: string;
   value: string | number;
   size?: "small" | "medium";

@@ -10,7 +10,7 @@ const EDITOR_LINE_HEIGHT_SPACING = 2.5;
 
 type RichTextEditorVariant = "default" | "inline";
 
-type RichTextEditorProps = {
+export type RichTextEditorProps = {
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;

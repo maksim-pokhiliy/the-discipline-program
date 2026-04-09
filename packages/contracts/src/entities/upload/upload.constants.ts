@@ -15,5 +15,3 @@ export const UPLOAD_CONFIG = {
     storagePrefix: "marketing",
   },
 } as const;
-
-export type UploadContext = keyof typeof UPLOAD_CONFIG;

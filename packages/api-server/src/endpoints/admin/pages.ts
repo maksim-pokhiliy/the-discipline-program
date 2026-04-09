@@ -6,6 +6,7 @@ import {
   type UpdatePageSectionData,
   type UpdatePageMetadataInput,
   PageSlug,
+  SECTION_SCHEMAS,
 } from "@repo/contracts/pages";
 import { NotFoundError } from "@repo/errors";
 
@@ -14,9 +15,13 @@ import { handlePrismaError } from "../../utils";
 import { asJsonRecord } from "../../utils/json-record";
 import { getPageSectionsOrder } from "../../utils/page-sections";
 
-const isValidPageSlug = (slug: string): slug is PageSlug => {
-  return (Object.values(PageSlug) as string[]).includes(slug);
-};
+const PAGE_SLUGS: ReadonlySet<string> = new Set(Object.values(PageSlug));
+const SECTION_KEYS: ReadonlySet<string> = new Set(Object.keys(SECTION_SCHEMAS));
+
+type SectionKey = keyof typeof SECTION_SCHEMAS;
+
+const isValidPageSlug = (slug: string): slug is PageSlug => PAGE_SLUGS.has(slug);
+const isValidSectionKey = (key: string): key is SectionKey => SECTION_KEYS.has(key);
 
 export const adminPagesApi = {
   getPages: async (): Promise<AdminPageListItem[]> => {
@@ -60,12 +65,14 @@ export const adminPagesApi = {
 
     return {
       slug: page.slug,
-      sections: sortedSections.map((s) => ({
-        id: s.id,
-        section: s.section,
-        data: asJsonRecord(s.data) ?? {},
-        updatedAt: s.updatedAt,
-      })),
+      sections: sortedSections
+        .filter((s): s is typeof s & { section: SectionKey } => isValidSectionKey(s.section))
+        .map((s) => ({
+          id: s.id,
+          section: s.section,
+          data: asJsonRecord(s.data) ?? {},
+          updatedAt: s.updatedAt,
+        })),
     };
   },
 
@@ -98,7 +105,7 @@ export const adminPagesApi = {
       await prisma.marketingPageSection.update({
         where: { id: existing.id },
         data: {
-          data: payload.data as Prisma.InputJsonValue,
+          data: payload.data satisfies Record<string, unknown> as Prisma.InputJsonValue,
         },
       });
     } catch (error) {

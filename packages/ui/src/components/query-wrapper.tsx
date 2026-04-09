@@ -4,7 +4,7 @@ import { Alert, Typography } from "@mui/material";
 
 import { LoadingState } from "./loading-state";
 
-type QueryWrapperProps<TData> = {
+export type QueryWrapperProps<TData> = {
   isLoading: boolean;
   error: Error | null;
   data: TData | undefined;

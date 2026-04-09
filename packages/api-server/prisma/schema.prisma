@@ -359,6 +359,7 @@ model CoachNote {
   updatedAt DateTime     @updatedAt
 
   @@index([coachId, athleteId])
+  @@index([coachId, createdAt])
   @@index([athleteId])
   @@index([createdAt])
   @@map("app_coach_notes")
@@ -413,6 +414,7 @@ model UserBenchmark {
   updatedAt             DateTime            @updatedAt
 
   @@unique([userId, benchmarkDefinitionId])
+  @@index([userId])
   @@index([benchmarkDefinitionId])
   @@map("app_user_benchmarks")
 }

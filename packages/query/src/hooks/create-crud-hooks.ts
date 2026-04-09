@@ -53,7 +53,26 @@ export const createCrudHooks = <
 >(
   config: CrudHooksConfig<TPageData, TEntity, TCreateData, TUpdateData>,
 ): CrudHooks<TPageData, TEntity, TCreateData, TUpdateData> => {
-  const invalidateKeys = config.additionalInvalidateKeys ?? [];
+  const extraKeys = config.additionalInvalidateKeys ?? [];
+  const entityName = config.entityName;
+
+  const notifySuccess = (action: string) => {
+    toast.success(`${entityName} ${action} successfully`);
+  };
+
+  const notifyError = (action: string, error: Error) => {
+    toast.error(error.message || `Failed to ${action} ${entityName.toLowerCase()}`);
+  };
+
+  const invalidateRelated = (
+    queryClient: ReturnType<typeof useQueryClient>,
+    additionalKeys: QueryKey[] = [],
+  ) => {
+    queryClient.invalidateQueries({ queryKey: config.keys.page() });
+    for (const key of [...extraKeys, ...additionalKeys]) {
+      queryClient.invalidateQueries({ queryKey: key });
+    }
+  };
 
   const usePageData = () =>
     useQuery({
@@ -75,24 +94,21 @@ export const createCrudHooks = <
     return useMutation({
       mutationFn: (data: TCreateData) => {
         if (!config.api.create) {
-          throw new Error(`Create is not supported for ${config.entityName}`);
+          throw new Error(`Create is not supported for ${entityName}`);
         }
 
         return config.api.create(data);
       },
       onSuccess: () => {
-        toast.success(`${config.entityName} created successfully`);
-        queryClient.invalidateQueries({ queryKey: config.keys.page() });
-        for (const key of invalidateKeys) {
-          queryClient.invalidateQueries({ queryKey: key });
-        }
+        notifySuccess("created");
+        invalidateRelated(queryClient);
 
         if (config.redirectTo) {
           navigate(config.redirectTo);
         }
       },
       onError: (error: Error) => {
-        toast.error(error.message || `Failed to create ${config.entityName.toLowerCase()}`);
+        notifyError("create", error);
       },
     });
   };
@@ -104,27 +120,21 @@ export const createCrudHooks = <
     return useMutation({
       mutationFn: ({ id, data }: { id: string; data: TUpdateData }) => {
         if (!config.api.update) {
-          throw new Error(`Update is not supported for ${config.entityName}`);
+          throw new Error(`Update is not supported for ${entityName}`);
         }
 
         return config.api.update(id, data);
       },
       onSuccess: (result: TEntity) => {
-        toast.success(`${config.entityName} updated successfully`);
-        queryClient.invalidateQueries({ queryKey: config.keys.page() });
-        queryClient.invalidateQueries({
-          queryKey: config.keys.byId(result.id),
-        });
-        for (const key of invalidateKeys) {
-          queryClient.invalidateQueries({ queryKey: key });
-        }
+        notifySuccess("updated");
+        invalidateRelated(queryClient, [config.keys.byId(result.id)]);
 
         if (config.redirectTo) {
           navigate(config.redirectTo);
         }
       },
       onError: (error: Error) => {
-        toast.error(error.message || `Failed to update ${config.entityName.toLowerCase()}`);
+        notifyError("update", error);
       },
     });
   };
@@ -135,20 +145,17 @@ export const createCrudHooks = <
     return useMutation({
       mutationFn: (id: string) => {
         if (!config.api.delete) {
-          throw new Error(`Delete is not supported for ${config.entityName}`);
+          throw new Error(`Delete is not supported for ${entityName}`);
         }
 
         return config.api.delete(id);
       },
       onSuccess: () => {
-        toast.success(`${config.entityName} deleted successfully`);
-        queryClient.invalidateQueries({ queryKey: config.keys.page() });
-        for (const key of invalidateKeys) {
-          queryClient.invalidateQueries({ queryKey: key });
-        }
+        notifySuccess("deleted");
+        invalidateRelated(queryClient);
       },
       onError: (error: Error) => {
-        toast.error(error.message || `Failed to delete ${config.entityName.toLowerCase()}`);
+        notifyError("delete", error);
       },
     });
   };

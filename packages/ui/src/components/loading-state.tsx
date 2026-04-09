@@ -1,6 +1,6 @@
 import { CircularProgress, Stack, Typography } from "@mui/material";
 
-type LoadingStateProps = {
+export type LoadingStateProps = {
   message?: string;
   minHeight?: string;
 };

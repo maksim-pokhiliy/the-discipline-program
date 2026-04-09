@@ -4,7 +4,7 @@ import { type ReactNode, useState } from "react";
 
 import { Button, Collapse, Stack } from "@mui/material";
 
-type CollapsibleListProps = {
+export type CollapsibleListProps = {
   items: ReactNode[];
   initialCount?: number;
   spacing?: number;

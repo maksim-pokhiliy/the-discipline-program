@@ -25,7 +25,7 @@ export type ContentAction = ButtonProps & {
   label: string;
 };
 
-type ContentSectionProps = {
+export type ContentSectionProps = {
   title?: string;
   subtitle?: string;
   surface?: "base" | "raised";
