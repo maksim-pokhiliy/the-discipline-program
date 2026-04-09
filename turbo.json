@@ -6,7 +6,9 @@
     "NEXT_PUBLIC_MARKETING_URL",
     "SKIP_ENV_VALIDATION",
     "DATABASE_URL",
-    "NEXTAUTH_SECRET"
+    "NEXTAUTH_SECRET",
+    "NEXTAUTH_URL",
+    "BLOB_READ_WRITE_TOKEN"
   ],
   "tasks": {
     "build": {
