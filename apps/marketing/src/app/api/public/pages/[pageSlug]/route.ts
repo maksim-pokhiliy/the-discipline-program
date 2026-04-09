@@ -1,7 +1,6 @@
-import { NextResponse } from "next/server";
 import { type ZodType } from "zod";
 
-import { withPublicRoute } from "@repo/api-routes";
+import { createGetByParamHandler, withPublicRoute } from "@repo/api-routes";
 import { pagesApi } from "@repo/api-server";
 import {
   getPageBySlugParamsSchema,
@@ -26,8 +25,7 @@ const PAGE_HANDLERS: Record<string, { fetch: () => Promise<unknown>; schema: Zod
   faq: { fetch: pagesApi.getFaqPage, schema: getFaqPageResponseSchema },
 };
 
-export const GET = withPublicRoute(async (_, context) => {
-  const { pageSlug } = getPageBySlugParamsSchema.parse(await context.params);
+const fetchPageBySlug = async ({ pageSlug }: { pageSlug: string }) => {
   const handler = PAGE_HANDLERS[pageSlug];
 
   if (!handler) {
@@ -35,7 +33,10 @@ export const GET = withPublicRoute(async (_, context) => {
   }
 
   const data = await handler.fetch();
-  const validated = handler.schema.parse(data);
 
-  return NextResponse.json(validated);
-});
+  return handler.schema.parse(data);
+};
+
+export const GET = withPublicRoute(
+  createGetByParamHandler(fetchPageBySlug, getPageBySlugParamsSchema),
+);
