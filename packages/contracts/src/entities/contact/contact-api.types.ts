@@ -1,7 +1,6 @@
 import { type z } from "zod";
 
 import {
-  type contactSubmissionItemSchema,
   type createContactSubmissionRequestSchema,
   type createContactSubmissionResponseSchema,
   type getContactSubmissionsResponseSchema,
@@ -12,6 +11,7 @@ import {
   type deleteContactParamsSchema,
   type getContactsPageDataResponseSchema,
 } from "./contact-api.schema";
+import { type contactSubmissionItemSchema } from "./contact.schema";
 
 export type ContactSubmissionItem = z.infer<typeof contactSubmissionItemSchema>;
 

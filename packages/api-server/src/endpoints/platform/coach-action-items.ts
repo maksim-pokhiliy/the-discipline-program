@@ -21,7 +21,7 @@ import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-import { HEALTH_STATUS_MAP, mapToCoachActionItem } from "../../mappers";
+import { ACTION_ITEM_SEVERITY_MAP, HEALTH_STATUS_MAP, mapToCoachActionItem } from "../../mappers";
 import {
   ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP,
   ACTION_ITEM_SEVERITY_TO_PRISMA_MAP,
@@ -227,7 +227,7 @@ export const platformCoachActionItemsApi = {
           if (existingOpen) {
             const needsUpdate =
               existingOpen.message !== condition.message ||
-              existingOpen.severity !== condition.severity;
+              ACTION_ITEM_SEVERITY_MAP[existingOpen.severity] !== condition.severity;
 
             if (needsUpdate) {
               await tx.coachActionItem.update({

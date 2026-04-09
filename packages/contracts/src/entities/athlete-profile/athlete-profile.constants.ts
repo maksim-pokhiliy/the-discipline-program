@@ -1,3 +1,7 @@
+export const ATHLETE_PROFILE_CONSTANTS = {
+  MAX_HEALTH_NOTE_LENGTH: 2000,
+} as const;
+
 export enum Gender {
   MALE = "MALE",
   FEMALE = "FEMALE",

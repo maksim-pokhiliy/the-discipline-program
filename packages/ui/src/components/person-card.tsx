@@ -15,7 +15,9 @@ export type PersonCardProps = {
   action?: ReactNode;
 };
 
-const ImageSlot: React.FC<{ image: string | null; name: string }> = ({ image, name }) =>
+type ImageSlotProps = { image: string | null; name: string };
+
+const ImageSlot: React.FC<ImageSlotProps> = ({ image, name }) =>
   image ? (
     <CardMedia
       component="img"

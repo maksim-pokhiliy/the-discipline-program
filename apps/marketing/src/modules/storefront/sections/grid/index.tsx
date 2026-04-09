@@ -2,7 +2,7 @@
 
 import { Grid } from "@mui/material";
 
-import { type StorefrontProgramsPageData } from "@repo/contracts";
+import { type StorefrontProgramsPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
 import { ProductCard, ProductModal } from "@app/lib/components/ui";

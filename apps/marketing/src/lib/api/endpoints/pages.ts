@@ -1,13 +1,13 @@
 import { type ApiClient } from "@repo/api-client";
+import { type BlogPostPageData } from "@repo/contracts/blog";
 import {
   type AboutPageData,
   type BlogPageData,
-  type BlogPostPageData,
   type ContactPageData,
   type FaqPageData,
   type HomePageData,
   type StorefrontProgramsPageData,
-} from "@repo/contracts";
+} from "@repo/contracts/pages";
 
 export const createPagesAPI = (client: ApiClient) => ({
   getHome: (): Promise<HomePageData> => client.request("/api/public/pages/home"),

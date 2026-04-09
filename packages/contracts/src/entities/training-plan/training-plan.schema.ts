@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-import { TrainingPlanStatus } from "./training-plan.constants";
+import { TRAINING_PLAN_CONSTANTS, TrainingPlanStatus } from "./training-plan.constants";
 
 export const trainingPlanStatusSchema = z.nativeEnum(TrainingPlanStatus);
 
 export const trainingPlanSchema = z.object({
   id: z.string().cuid(),
   coachId: z.string().cuid(),
-  name: z.string().min(1).max(200),
+  name: z.string().min(1).max(TRAINING_PLAN_CONSTANTS.MAX_NAME_LENGTH),
   description: z.string().nullable(),
   status: trainingPlanStatusSchema,
   createdAt: z.date(),
@@ -15,13 +15,13 @@ export const trainingPlanSchema = z.object({
 });
 
 export const createTrainingPlanSchema = z.object({
-  name: z.string().min(1).max(200),
-  description: z.string().max(2000).optional(),
+  name: z.string().min(1).max(TRAINING_PLAN_CONSTANTS.MAX_NAME_LENGTH),
+  description: z.string().max(TRAINING_PLAN_CONSTANTS.MAX_DESCRIPTION_LENGTH).optional(),
 });
 
 export const updateTrainingPlanSchema = z.object({
-  name: z.string().min(1).max(200).optional(),
-  description: z.string().max(2000).nullable().optional(),
+  name: z.string().min(1).max(TRAINING_PLAN_CONSTANTS.MAX_NAME_LENGTH).optional(),
+  description: z.string().max(TRAINING_PLAN_CONSTANTS.MAX_DESCRIPTION_LENGTH).nullable().optional(),
 });
 
 export const trainingPlanListItemSchema = trainingPlanSchema.extend({

@@ -87,7 +87,7 @@ export const ContentSection = ({
                 <Stack
                   spacing={2}
                   sx={{
-                    textAlign: "center",
+                    textAlign,
                     alignItems: "center",
                     width: "100%",
                   }}
@@ -156,7 +156,8 @@ export const ContentSection = ({
                           variant={action.variant || "contained"}
                           color={action.color || "primary"}
                           type={action.type || "button"}
-                          disabled={Boolean(action.disabled || action.loading)}
+                          loading={Boolean(action.loading)}
+                          disabled={Boolean(action.disabled)}
                           onClick={action.onClick}
                           href={action.href}
                           component={action.href ? Link : "button"}
@@ -165,7 +166,7 @@ export const ContentSection = ({
                           fullWidth
                           sx={{ width: { md: "auto" } }}
                         >
-                          {action.loading ? "Loading..." : action.label}
+                          {action.label}
                         </Button>
                       ))}
                     </Stack>

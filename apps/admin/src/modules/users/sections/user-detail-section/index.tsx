@@ -8,7 +8,7 @@ import { type AdminUser } from "@repo/contracts/user";
 import { formatDate } from "@repo/shared";
 import { DetailField, FormCard } from "@repo/ui";
 
-import { ProfileCard } from "../../components/profile-card";
+import { ProfileCard } from "../../components";
 import { ROLE_CONFIG } from "../../constants";
 
 type UserDetailSectionProps = {

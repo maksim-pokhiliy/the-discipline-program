@@ -81,10 +81,21 @@ export const GENDER_MAP: Record<PrismaGender, Gender> = {
   FEMALE: Gender.FEMALE,
 };
 
+export const GENDER_TO_PRISMA_MAP: Record<Gender, PrismaGender> = {
+  [Gender.MALE]: "MALE",
+  [Gender.FEMALE]: "FEMALE",
+};
+
 export const HEALTH_STATUS_MAP: Record<PrismaHealthStatus, HealthStatus> = {
   HEALTHY: HealthStatus.HEALTHY,
   INJURED: HealthStatus.INJURED,
   RESTRICTED: HealthStatus.RESTRICTED,
+};
+
+export const HEALTH_STATUS_TO_PRISMA_MAP: Record<HealthStatus, PrismaHealthStatus> = {
+  [HealthStatus.HEALTHY]: "HEALTHY",
+  [HealthStatus.INJURED]: "INJURED",
+  [HealthStatus.RESTRICTED]: "RESTRICTED",
 };
 
 export const PLAN_ENROLLMENT_STATUS_MAP: Record<PrismaPlanEnrollmentStatus, PlanEnrollmentStatus> =

@@ -17,7 +17,7 @@ export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
             left: { xs: 2.5, md: "50%" },
             top: 0,
             bottom: 0,
-            width: "4px",
+            width: (theme) => theme.spacing(0.5),
             backgroundColor: "primary.main",
             transform: { md: "translateX(-50%)" },
           }}

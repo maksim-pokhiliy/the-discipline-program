@@ -1,8 +1,9 @@
 import { z } from "zod";
 
+import { planIdParamSchema } from "../../common";
+
 import { createWorkoutSchema, updateWorkoutSchema, workoutSchema } from "./workout.schema";
 
-const planIdParamSchema = z.object({ planId: z.string().cuid() });
 const planIdWithIdParamSchema = planIdParamSchema.extend({ id: z.string().cuid() });
 
 export const getWorkoutsParamsSchema = planIdParamSchema;

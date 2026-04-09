@@ -1,12 +1,13 @@
 import { z } from "zod";
 
+import { planIdParamSchema } from "../../common";
+
 import {
   createPlanEnrollmentSchema,
   planEnrollmentSchema,
   updatePlanEnrollmentSchema,
 } from "./plan-enrollment.schema";
 
-const planIdParamSchema = z.object({ planId: z.string().cuid() });
 const planIdWithEnrollmentIdParamSchema = planIdParamSchema.extend({
   enrollmentId: z.string().cuid(),
 });

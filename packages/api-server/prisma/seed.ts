@@ -1,4 +1,4 @@
-import { Gender, PrismaClient, type Prisma, Role } from "@prisma/client";
+import { Gender, HealthStatus, PrismaClient, type Prisma, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -218,7 +218,7 @@ const seedProfiles = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
         gender: Gender.FEMALE,
         heightCm: 172,
         weightKg: 67,
-        healthStatus: "RESTRICTED",
+        healthStatus: HealthStatus.RESTRICTED,
       },
       { userId: users.tom.id, gender: Gender.MALE, heightCm: 175, weightKg: 78 },
       {
@@ -226,7 +226,7 @@ const seedProfiles = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
         gender: Gender.MALE,
         heightCm: 190,
         weightKg: 95,
-        healthStatus: "INJURED",
+        healthStatus: HealthStatus.INJURED,
       },
       { userId: users.nina.id, gender: Gender.FEMALE, heightCm: 165, weightKg: 58 },
       { userId: users.chris.id, gender: Gender.MALE, heightCm: 180, weightKg: 85 },

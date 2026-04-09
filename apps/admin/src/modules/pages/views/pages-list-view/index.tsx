@@ -3,7 +3,7 @@
 import { AdminListView } from "@app/lib/components/admin-list-view";
 import { usePagesListData } from "@app/lib/hooks";
 
-import { PagesListSection } from "../../sections/pages-list-section";
+import { PagesListSection } from "../../sections";
 
 export const PagesListView = () => (
   <AdminListView

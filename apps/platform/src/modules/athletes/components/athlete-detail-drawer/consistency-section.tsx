@@ -16,9 +16,7 @@ type StatItemProps = {
 
 const StatItem: React.FC<StatItemProps> = ({ label, value }) => (
   <Stack sx={{ flex: 1, minWidth: 0 }}>
-    <Typography variant="h6" sx={{ lineHeight: 1.2 }}>
-      {value}
-    </Typography>
+    <Typography variant="h6">{value}</Typography>
     <Typography variant="caption" sx={{ color: "text.secondary" }}>
       {label}
     </Typography>

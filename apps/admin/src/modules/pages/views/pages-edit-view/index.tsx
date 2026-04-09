@@ -4,11 +4,7 @@ import { useState } from "react";
 
 import { Stack } from "@mui/material";
 
-import {
-  type AdminPageDetails,
-  updatePageSectionSchema,
-  type UpdatePageSectionData,
-} from "@repo/contracts/pages";
+import { type AdminPageDetails, type UpdatePageSectionData } from "@repo/contracts/pages";
 import { ContentSection, QueryWrapper } from "@repo/ui";
 
 import { usePageDetails, useUpdatePageSection } from "@app/lib/hooks";
@@ -30,20 +26,14 @@ const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
 
   const onSaveSection = (
     pageSlug: string,
-    sectionName: string,
+    sectionName: UpdatePageSectionData["section"],
     data: UpdatePageSectionData["data"],
   ) => {
-    const validated = updatePageSectionSchema.parse({
-      pageSlug,
-      section: sectionName,
-      data,
-    });
-
     updateSection({
       slug: pageSlug,
       data: {
-        section: validated.section,
-        data: validated.data,
+        section: sectionName,
+        data,
       },
     });
   };

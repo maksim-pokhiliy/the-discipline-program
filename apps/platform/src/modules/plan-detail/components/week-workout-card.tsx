@@ -128,7 +128,8 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
           <IconButton
             className="workout-action"
             onClick={() => setConfirmOpen(true)}
-            sx={{ mr: 0.5, color: "text.disabled", "&:hover": { color: "error.main" } }}
+            sx={{ mr: 0.5 }}
+            color="error"
           >
             <CloseIcon fontSize="small" />
           </IconButton>
