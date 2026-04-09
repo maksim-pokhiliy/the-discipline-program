@@ -34,6 +34,9 @@ model User {
   @@index([createdAt])
   @@index([deletedAt])
   @@index([role])
+  @@index([name])
+  @@index([email])
+  @@index([role, deletedAt])
   @@map("users")
 }
 
@@ -137,10 +140,11 @@ model Product {
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
 
-  @@index([createdAt])
   @@index([createdAt, title])
   @@index([deletedAt])
   @@index([isActive])
+  @@index([trainingPlanId])
+  @@index([isFeatured])
   @@map("app_products")
 }
 
@@ -260,7 +264,6 @@ model Workout {
 
   @@index([planId, scheduledDate])
   @@index([planId, isArchived])
-  @@index([planId])
   @@index([scheduledDate])
   @@index([createdAt])
   @@index([deletedAt])
@@ -380,8 +383,9 @@ model PlanEnrollment {
 
   @@unique([trainingPlanId, userId])
   @@index([userId])
-  @@index([status])
   @@index([trainingPlanId])
+  @@index([status, trainingPlanId])
+  @@index([userId, status, trainingPlanId])
   @@map("app_plan_enrollments")
 }
 
@@ -405,6 +409,7 @@ model UserBenchmark {
   benchmarkDefinitionId String
   benchmarkDefinition   BenchmarkDefinition @relation(fields: [benchmarkDefinitionId], references: [id])
   value                 Decimal             @db.Decimal(10, 2)
+  createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
 
   @@unique([userId, benchmarkDefinitionId])
@@ -435,6 +440,7 @@ model MarketingPageSection {
   updatedAt DateTime      @updatedAt
 
   @@unique([pageSlug, section])
+  @@index([pageSlug, isActive])
   @@map("marketing_page_sections")
 }
 
@@ -456,10 +462,10 @@ model MarketingBlogPost {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
-  @@index([createdAt])
   @@index([createdAt, title])
   @@index([deletedAt])
   @@index([isPublished, publishedAt])
+  @@index([isPublished, category, publishedAt])
   @@index([category])
   @@index([isFeatured])
   @@map("marketing_blog_posts")

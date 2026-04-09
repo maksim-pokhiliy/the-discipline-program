@@ -3,6 +3,7 @@ import {
   ActionItemSeverity as PrismaActionItemSeverity,
   ActionItemStatus as PrismaActionItemStatus,
   ActionItemType as PrismaActionItemType,
+  ContactSubmissionStatus as PrismaContactSubmissionStatus,
   Currency as PrismaCurrency,
   Gender as PrismaGender,
   HealthStatus as PrismaHealthStatus,
@@ -21,6 +22,7 @@ import {
   ActionItemStatus,
   ActionItemType,
 } from "@repo/contracts/coach-action-item";
+import { ContactStatus } from "@repo/contracts/contact";
 import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { PriceInterval, ProductCurrency } from "@repo/contracts/product";
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
@@ -30,6 +32,8 @@ import {
   ACTION_ITEM_SEVERITY_MAP,
   ACTION_ITEM_STATUS_MAP,
   ACTION_ITEM_TYPE_MAP,
+  CONTACT_SUBMISSION_STATUS_MAP,
+  CONTACT_STATUS_TO_PRISMA_MAP,
   CURRENCY_MAP,
   GENDER_MAP,
   HEALTH_STATUS_MAP,
@@ -229,6 +233,48 @@ describe("ACTION_ITEM_RESOLVE_REASON_MAP", () => {
   });
 });
 
+describe("CONTACT_SUBMISSION_STATUS_MAP", () => {
+  it("covers every Prisma ContactSubmissionStatus value", () => {
+    const prismaValues = Object.values(PrismaContactSubmissionStatus);
+
+    expect(Object.keys(CONTACT_SUBMISSION_STATUS_MAP)).toHaveLength(prismaValues.length);
+    prismaValues.forEach((v) => {
+      expect(CONTACT_SUBMISSION_STATUS_MAP).toHaveProperty(v);
+    });
+  });
+
+  it("maps to correct contract values", () => {
+    expect(CONTACT_SUBMISSION_STATUS_MAP.NEW).toBe(ContactStatus.NEW);
+    expect(CONTACT_SUBMISSION_STATUS_MAP.IN_PROGRESS).toBe(ContactStatus.IN_PROGRESS);
+    expect(CONTACT_SUBMISSION_STATUS_MAP.REPLIED).toBe(ContactStatus.REPLIED);
+    expect(CONTACT_SUBMISSION_STATUS_MAP.CLOSED).toBe(ContactStatus.CLOSED);
+  });
+});
+
+describe("CONTACT_STATUS_TO_PRISMA_MAP", () => {
+  it("covers every contract ContactStatus value", () => {
+    const contractValues = Object.values(ContactStatus);
+
+    expect(Object.keys(CONTACT_STATUS_TO_PRISMA_MAP)).toHaveLength(contractValues.length);
+    contractValues.forEach((v) => {
+      expect(CONTACT_STATUS_TO_PRISMA_MAP).toHaveProperty(v);
+    });
+  });
+
+  it("maps to correct Prisma values", () => {
+    expect(CONTACT_STATUS_TO_PRISMA_MAP[ContactStatus.NEW]).toBe(PrismaContactSubmissionStatus.NEW);
+    expect(CONTACT_STATUS_TO_PRISMA_MAP[ContactStatus.IN_PROGRESS]).toBe(
+      PrismaContactSubmissionStatus.IN_PROGRESS,
+    );
+    expect(CONTACT_STATUS_TO_PRISMA_MAP[ContactStatus.REPLIED]).toBe(
+      PrismaContactSubmissionStatus.REPLIED,
+    );
+    expect(CONTACT_STATUS_TO_PRISMA_MAP[ContactStatus.CLOSED]).toBe(
+      PrismaContactSubmissionStatus.CLOSED,
+    );
+  });
+});
+
 describe("symmetry", () => {
   it("no two Prisma keys map to the same contract value in any map", () => {
     const maps = [
@@ -243,6 +289,8 @@ describe("symmetry", () => {
       ACTION_ITEM_SEVERITY_MAP,
       ACTION_ITEM_STATUS_MAP,
       ACTION_ITEM_RESOLVE_REASON_MAP,
+      CONTACT_SUBMISSION_STATUS_MAP,
+      CONTACT_STATUS_TO_PRISMA_MAP,
     ];
 
     maps.forEach((map) => {

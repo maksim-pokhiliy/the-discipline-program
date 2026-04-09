@@ -6,43 +6,33 @@ import { getServerSession } from "next-auth/next";
 import { UserRole } from "@repo/contracts/auth";
 import { ForbiddenError, UnauthorizedError } from "@repo/errors";
 
-import { handleApiError } from "./error-handler";
+import { withErrorHandling } from "./route-helpers";
 import type { AuthenticatedHandler, RouteHandler } from "./types";
 
 export const createAuthWrappers = (authOptions: NextAuthOptions) => ({
-  withAdminAuth: (handler: AuthenticatedHandler): RouteHandler => {
-    return async (request, context) => {
-      try {
-        const session = await getServerSession(authOptions);
+  withAdminAuth: (handler: AuthenticatedHandler): RouteHandler =>
+    withErrorHandling(async (request, context) => {
+      const session = await getServerSession(authOptions);
 
-        if (!session?.user?.id) {
-          throw new UnauthorizedError();
-        }
-
-        if (session.user.role !== UserRole.ADMIN) {
-          throw new ForbiddenError();
-        }
-
-        return await handler(request, context, session.user.id);
-      } catch (error) {
-        return handleApiError(error);
+      if (!session?.user?.id) {
+        throw new UnauthorizedError();
       }
-    };
-  },
 
-  withPlatformAuth: (handler: AuthenticatedHandler): RouteHandler => {
-    return async (request, context) => {
-      try {
-        const session = await getServerSession(authOptions);
-
-        if (!session?.user?.id) {
-          throw new UnauthorizedError();
-        }
-
-        return await handler(request, context, session.user.id);
-      } catch (error) {
-        return handleApiError(error);
+      if (session.user.role !== UserRole.ADMIN) {
+        throw new ForbiddenError();
       }
-    };
-  },
+
+      return await handler(request, context, session.user.id);
+    }),
+
+  withPlatformAuth: (handler: AuthenticatedHandler): RouteHandler =>
+    withErrorHandling(async (request, context) => {
+      const session = await getServerSession(authOptions);
+
+      if (!session?.user?.id) {
+        throw new UnauthorizedError();
+      }
+
+      return await handler(request, context, session.user.id);
+    }),
 });

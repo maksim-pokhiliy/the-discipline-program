@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
@@ -19,7 +19,7 @@ import {
   type DataTableFilter,
 } from "@repo/ui";
 
-import { useDeleteContact, useUpdateContact } from "@app/lib/hooks";
+import { useChipMenu, useDeleteContact, useUpdateContact } from "@app/lib/hooks";
 
 import { CONTACT_STATUS_CONFIG } from "../../constants";
 
@@ -45,38 +45,22 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
   const updateContactMutation = useUpdateContact();
-
-  const [statusMenuAnchor, setStatusMenuAnchor] = useState<HTMLElement | null>(null);
-  const [statusMenuContactId, setStatusMenuContactId] = useState<string | null>(null);
-
-  const handleStatusChipClick = useCallback(
-    (event: React.MouseEvent<HTMLElement>, contactId: string) => {
-      event.stopPropagation();
-      setStatusMenuAnchor(event.currentTarget);
-      setStatusMenuContactId(contactId);
-    },
-    [],
-  );
-
-  const handleStatusMenuClose = useCallback(() => {
-    setStatusMenuAnchor(null);
-    setStatusMenuContactId(null);
-  }, []);
+  const { anchorEl, menuItemId, openMenu, closeMenu } = useChipMenu();
 
   const handleStatusSelect = useCallback(
     (status: ContactStatus) => {
-      if (statusMenuContactId) {
-        updateContactMutation.mutate({ id: statusMenuContactId, data: { status } });
+      if (menuItemId) {
+        updateContactMutation.mutate({ id: menuItemId, data: { status } });
       }
 
-      handleStatusMenuClose();
+      closeMenu();
     },
-    [statusMenuContactId, updateContactMutation, handleStatusMenuClose],
+    [menuItemId, updateContactMutation, closeMenu],
   );
 
   const menuContact = useMemo(
-    () => contacts.find((c) => c.id === statusMenuContactId),
-    [contacts, statusMenuContactId],
+    () => contacts.find((c) => c.id === menuItemId),
+    [contacts, menuItemId],
   );
 
   const columns: Column<GetContactByIdResponse>[] = useMemo(
@@ -132,7 +116,7 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
               color={config.color}
               size="small"
               variant="outlined"
-              onClick={(e) => handleStatusChipClick(e, item.id)}
+              onClick={(e) => openMenu(e, item.id)}
               disabled={
                 updateContactMutation.isPending && updateContactMutation.variables?.id === item.id
               }
@@ -168,7 +152,7 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
         ),
       },
     ],
-    [handleStatusChipClick, updateContactMutation, requestDelete],
+    [openMenu, updateContactMutation, requestDelete],
   );
 
   return (
@@ -184,7 +168,7 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
         onStateChange={onStateChange}
       />
 
-      <Menu anchorEl={statusMenuAnchor} open={!!statusMenuAnchor} onClose={handleStatusMenuClose}>
+      <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={closeMenu}>
         {Object.values(ContactStatus).map((status) => (
           <MenuItem
             key={status}

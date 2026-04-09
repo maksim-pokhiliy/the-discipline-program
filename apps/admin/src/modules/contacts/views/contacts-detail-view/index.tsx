@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Grid, MenuItem, Stack, TextField, Typography, useTheme } from "@mui/material";
-import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 
 import {
@@ -24,10 +23,7 @@ type ContactsDetailFormProps = {
 
 const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
   const theme = useTheme();
-  const router = useRouter();
-  const { mutate: updateContact, isPending } = useUpdateContact({
-    onSuccess: () => router.push("/contacts"),
-  });
+  const { mutate: updateContact, isPending } = useUpdateContact();
 
   const methods = useForm<UpdateContactRequest>({
     resolver: zodResolver(updateContactRequestSchema),

@@ -71,7 +71,7 @@ export const ContentSection = ({
       id={id}
       sx={(theme) => ({
         py: 8,
-        backgroundColor:
+        bgcolor:
           surface === "raised" ? theme.palette.background.paper : theme.palette.background.default,
       })}
     >

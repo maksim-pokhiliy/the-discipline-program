@@ -13,12 +13,4 @@ export const marketingKeys = {
   blog: {
     article: (slug: string) => [...marketingKeys.root, "blog-articles", slug] as const,
   },
-
-  products: {
-    all: () => [...marketingKeys.root, "products"] as const,
-  },
-
-  reviews: {
-    all: () => [...marketingKeys.root, "reviews"] as const,
-  },
 } as const;

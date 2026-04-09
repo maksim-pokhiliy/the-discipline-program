@@ -26,7 +26,7 @@ import {
   type DataTableFilter,
 } from "@repo/ui";
 
-import { useUpdateUserRole } from "@app/lib/hooks";
+import { useChipMenu, useUpdateUserRole } from "@app/lib/hooks";
 
 import { ROLE_CONFIG } from "../../constants";
 
@@ -51,31 +51,18 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
     defaultSort: { columnId: "createdAt", direction: "desc" },
   });
   const { mutate: updateRole, isPending } = useUpdateUserRole();
-
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-  const [menuUserId, setMenuUserId] = useState<string | null>(null);
+  const { anchorEl, menuItemId, openMenu, closeMenu } = useChipMenu();
   const [pendingChange, setPendingChange] = useState<{
     userId: string;
     currentRole: UserRole;
     newRole: UserRole;
   } | null>(null);
 
-  const handleChipClick = useCallback((event: React.MouseEvent<HTMLElement>, userId: string) => {
-    event.stopPropagation();
-    setMenuAnchor(event.currentTarget);
-    setMenuUserId(userId);
-  }, []);
-
-  const handleMenuClose = useCallback(() => {
-    setMenuAnchor(null);
-    setMenuUserId(null);
-  }, []);
-
   const handleRoleSelect = useCallback(
     (newRole: UserRole) => {
-      const currentUser = users.find((u) => u.id === menuUserId);
+      const currentUser = users.find((u) => u.id === menuItemId);
 
-      handleMenuClose();
+      closeMenu();
 
       if (!currentUser || currentUser.role === newRole) {
         return;
@@ -87,10 +74,10 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         newRole,
       });
     },
-    [users, menuUserId, handleMenuClose],
+    [users, menuItemId, closeMenu],
   );
 
-  const menuUser = useMemo(() => users.find((u) => u.id === menuUserId), [users, menuUserId]);
+  const menuUser = useMemo(() => users.find((u) => u.id === menuItemId), [users, menuItemId]);
 
   const handleConfirm = useCallback(() => {
     if (pendingChange) {
@@ -137,7 +124,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
               color={config.color}
               size="small"
               variant="outlined"
-              onClick={(e) => handleChipClick(e, user.id)}
+              onClick={(e) => openMenu(e, user.id)}
             />
           );
         },
@@ -170,7 +157,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         ),
       },
     ],
-    [handleChipClick],
+    [openMenu],
   );
 
   return (
@@ -181,13 +168,12 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         searchPlaceholder="Search by email..."
         filters={filters}
         paginated
-        defaultSort={{ columnId: "createdAt", direction: "desc" }}
         emptyMessage="No users found."
         state={state}
         onStateChange={onStateChange}
       />
 
-      <Menu anchorEl={menuAnchor} open={!!menuAnchor} onClose={handleMenuClose}>
+      <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={closeMenu}>
         {Object.values(UserRole).map((role) => (
           <MenuItem
             key={role}

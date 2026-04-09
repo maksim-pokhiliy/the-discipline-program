@@ -19,7 +19,7 @@ const ctaSectionSchema = titleSubtitleSchema.extend({
 export const homePageHeroSchema = heroSectionSchema;
 
 export const whyChooseFeatureItemSchema = z.object({
-  id: z.string(),
+  id: z.string().cuid(),
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   iconName: z.string().min(1, "Icon name is required"),

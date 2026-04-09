@@ -8,7 +8,6 @@ import {
   type updateReviewRequestSchema,
   type deleteReviewParamsSchema,
   type toggleReviewParamsSchema,
-  type toggleReviewQuerySchema,
   type getReviewsPageDataResponseSchema,
 } from "./review-api.schema";
 
@@ -25,8 +24,6 @@ export type UpdateReviewRequest = z.infer<typeof updateReviewRequestSchema>;
 export type DeleteReviewParams = z.infer<typeof deleteReviewParamsSchema>;
 
 export type ToggleReviewParams = z.infer<typeof toggleReviewParamsSchema>;
-
-export type ToggleReviewQuery = z.infer<typeof toggleReviewQuerySchema>;
 
 export type GetReviewsPageDataResponse = z.infer<typeof getReviewsPageDataResponseSchema>;
 

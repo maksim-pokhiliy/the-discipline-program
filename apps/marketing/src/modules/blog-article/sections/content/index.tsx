@@ -1,7 +1,5 @@
-import { Box, Container } from "@mui/material";
-
 import { type PublicBlogPost } from "@repo/contracts/blog";
-import { RichTextViewer } from "@repo/ui";
+import { ContentSection, RichTextViewer } from "@repo/ui";
 
 type BlogArticleContentProps = {
   post: PublicBlogPost;
@@ -9,16 +7,8 @@ type BlogArticleContentProps = {
 
 export const BlogArticleContent = ({ post }: BlogArticleContentProps) => {
   return (
-    <Box
-      id="content"
-      sx={(theme) => ({
-        py: 8,
-        backgroundColor: theme.palette.background.default,
-      })}
-    >
-      <Container maxWidth="md">
-        <RichTextViewer content={post.content} />
-      </Container>
-    </Box>
+    <ContentSection id="content" maxWidth="md" animated={false}>
+      <RichTextViewer content={post.content} />
+    </ContentSection>
   );
 };

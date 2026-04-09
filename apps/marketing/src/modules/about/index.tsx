@@ -1,7 +1,5 @@
 "use client";
 
-import { Stack } from "@mui/material";
-
 import { type AboutPageData } from "@repo/contracts/pages";
 import { QueryWrapper } from "@repo/ui";
 
@@ -25,7 +23,7 @@ export const AboutPageClient = ({ initialData }: AboutPageClientProps) => {
       loadingMessage="Loading about page..."
     >
       {(data) => (
-        <Stack spacing={0}>
+        <>
           <FullscreenSection
             backgroundImage={data.hero.backgroundImage}
             title={data.hero.title}
@@ -43,7 +41,7 @@ export const AboutPageClient = ({ initialData }: AboutPageClientProps) => {
             buttonText={data.cta.buttonText}
             buttonHref={data.cta.buttonHref}
           />
-        </Stack>
+        </>
       )}
     </QueryWrapper>
   );

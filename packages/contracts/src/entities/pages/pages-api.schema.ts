@@ -75,7 +75,7 @@ export const getFaqPageResponseSchema = z.object({
 });
 
 export const adminPageListItemSchema = z.object({
-  id: z.string(),
+  id: z.string().cuid(),
   slug: z.nativeEnum(PageSlug),
   title: z.string(),
   updatedAt: z.date(),
@@ -132,7 +132,7 @@ export const adminPageDetailsSchema = z.object({
   slug: z.nativeEnum(PageSlug),
   sections: z.array(
     z.object({
-      id: z.string(),
+      id: z.string().cuid(),
       section: z.string(),
       data: z.record(z.string(), z.unknown()),
       updatedAt: z.date(),

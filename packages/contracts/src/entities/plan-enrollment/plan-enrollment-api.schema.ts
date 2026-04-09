@@ -6,37 +6,29 @@ import {
   updatePlanEnrollmentSchema,
 } from "./plan-enrollment.schema";
 
-export const getPlanEnrollmentsParamsSchema = z.object({
-  planId: z.string().cuid(),
-});
-
-export const getPlanEnrollmentsResponseSchema = z.array(planEnrollmentSchema);
-
-export const getPlanEnrollmentByIdParamsSchema = z.object({
-  planId: z.string().cuid(),
+const planIdParamSchema = z.object({ planId: z.string().cuid() });
+const planIdWithEnrollmentIdParamSchema = planIdParamSchema.extend({
   enrollmentId: z.string().cuid(),
 });
 
+export const getPlanEnrollmentsParamsSchema = planIdParamSchema;
+
+export const getPlanEnrollmentsResponseSchema = z.array(planEnrollmentSchema);
+
+export const getPlanEnrollmentByIdParamsSchema = planIdWithEnrollmentIdParamSchema;
+
 export const getPlanEnrollmentResponseSchema = planEnrollmentSchema;
 
-export const createPlanEnrollmentParamsSchema = z.object({
-  planId: z.string().cuid(),
-});
+export const createPlanEnrollmentParamsSchema = planIdParamSchema;
 
 export const createPlanEnrollmentRequestSchema = createPlanEnrollmentSchema;
 
 export const createPlanEnrollmentResponseSchema = planEnrollmentSchema;
 
-export const updatePlanEnrollmentParamsSchema = z.object({
-  planId: z.string().cuid(),
-  enrollmentId: z.string().cuid(),
-});
+export const updatePlanEnrollmentParamsSchema = planIdWithEnrollmentIdParamSchema;
 
 export const updatePlanEnrollmentRequestSchema = updatePlanEnrollmentSchema;
 
 export const updatePlanEnrollmentResponseSchema = planEnrollmentSchema;
 
-export const deletePlanEnrollmentParamsSchema = z.object({
-  planId: z.string().cuid(),
-  enrollmentId: z.string().cuid(),
-});
+export const deletePlanEnrollmentParamsSchema = planIdWithEnrollmentIdParamSchema;

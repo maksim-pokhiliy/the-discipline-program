@@ -10,15 +10,15 @@ import {
   updateTrainingPlanSchema,
 } from "./training-plan.schema";
 
+const planIdParamSchema = z.object({ planId: z.string().cuid() });
+
 export const getTrainingPlansResponseSchema = z.array(trainingPlanSchema);
 
 export const coachPlansPageDataSchema = z.object({
   plans: z.array(trainingPlanListItemSchema),
 });
 
-export const getTrainingPlanByIdParamsSchema = z.object({
-  planId: z.string().cuid(),
-});
+export const getTrainingPlanByIdParamsSchema = planIdParamSchema;
 
 export const getTrainingPlanResponseSchema = trainingPlanSchema;
 
@@ -26,31 +26,21 @@ export const createTrainingPlanRequestSchema = createTrainingPlanSchema;
 
 export const createTrainingPlanResponseSchema = trainingPlanSchema;
 
-export const updateTrainingPlanParamsSchema = z.object({
-  planId: z.string().cuid(),
-});
+export const updateTrainingPlanParamsSchema = planIdParamSchema;
 
 export const updateTrainingPlanRequestSchema = updateTrainingPlanSchema;
 
 export const updateTrainingPlanResponseSchema = trainingPlanSchema;
 
-export const deleteTrainingPlanParamsSchema = z.object({
-  planId: z.string().cuid(),
-});
+export const deleteTrainingPlanParamsSchema = planIdParamSchema;
 
-export const duplicateTrainingPlanParamsSchema = z.object({
-  planId: z.string().cuid(),
-});
+export const duplicateTrainingPlanParamsSchema = planIdParamSchema;
 
 export const duplicateTrainingPlanResponseSchema = trainingPlanSchema;
 
-export const archiveTrainingPlanParamsSchema = z.object({
-  planId: z.string().cuid(),
-});
+export const archiveTrainingPlanParamsSchema = planIdParamSchema;
 
-export const restoreTrainingPlanParamsSchema = z.object({
-  planId: z.string().cuid(),
-});
+export const restoreTrainingPlanParamsSchema = planIdParamSchema;
 
 export const calendarWorkoutSchema = workoutSchema.extend({
   planName: z.string(),
@@ -63,9 +53,7 @@ export const getCalendarWeekParamsSchema = z.object({
 
 export const getCalendarWeekResponseSchema = z.array(calendarWorkoutSchema);
 
-export const copyWeekParamsSchema = z.object({
-  planId: z.string().cuid(),
-});
+export const copyWeekParamsSchema = planIdParamSchema;
 
 export const copyWeekRequestSchema = z.object({
   sourceDate: z.coerce.date(),

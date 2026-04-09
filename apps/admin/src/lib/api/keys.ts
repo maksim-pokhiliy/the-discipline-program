@@ -14,10 +14,6 @@ export const adminKeys = {
   reviews: createEntityKeys(ROOT, "reviews"),
   users: createEntityKeys(ROOT, "users"),
 
-  upload: {
-    root: () => [...ROOT, "upload"] as const,
-  },
-
   pages: {
     list: () => [...ROOT, "pages", "list"] as const,
     bySlug: (slug: string) => [...ROOT, "pages", slug] as const,

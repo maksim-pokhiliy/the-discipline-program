@@ -10,6 +10,4 @@ export const createUploadAPI = (client: ApiClient) => ({
 
     return client.request<{ url: string }>("/api/admin/upload/image", "POST", formData);
   },
-
-  deleteImage: (url: string) => client.request("/api/admin/upload/image", "DELETE", { url }),
 });
