@@ -8,7 +8,7 @@ import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-f
 
 import { ContentSection } from "./layout";
 
-type FormViewProps<T extends FieldValues> = {
+export type FormViewProps<T extends FieldValues> = {
   methods: UseFormReturn<T>;
   onSubmit: (data: T) => void;
   isPending: boolean;

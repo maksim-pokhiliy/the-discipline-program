@@ -6,7 +6,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import { Card, CardActionArea, CardContent, CardMedia, Stack } from "@mui/material";
 import Link from "next/link";
 
-type PersonCardProps = {
+export type PersonCardProps = {
   image: string | null;
   name: string;
   href?: string;

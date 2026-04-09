@@ -3,7 +3,7 @@
 import { Box, type BoxProps, type SxProps, type Theme } from "@mui/material";
 import DOMPurify from "isomorphic-dompurify";
 
-type RichTextViewerProps = BoxProps & {
+export type RichTextViewerProps = BoxProps & {
   content: string;
 };
 
@@ -75,7 +75,7 @@ export const RichTextViewer = ({ content, sx, ...props }: RichTextViewerProps) =
 
   return (
     <Box
-      sx={[defaultStyles, ...(Array.isArray(sx) ? sx : [sx])]}
+      sx={[defaultStyles, ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
       dangerouslySetInnerHTML={{ __html: sanitizedContent }}
       {...props}
     />

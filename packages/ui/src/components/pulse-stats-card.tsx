@@ -4,7 +4,7 @@ import { Card, CardContent, Grid, type GridSize } from "@mui/material";
 
 import { PulseStat, type PulseStatProps } from "./pulse-stat";
 
-type PulseStatsCardProps = {
+export type PulseStatsCardProps = {
   stats: PulseStatProps[];
   columns?: { xs: GridSize; sm: GridSize };
 };

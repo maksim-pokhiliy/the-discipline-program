@@ -2,7 +2,7 @@
 
 import { Chip, type ChipProps, Stack, Tab, type TabProps, Typography } from "@mui/material";
 
-type ChipTabProps = Omit<TabProps, "label"> & {
+export type ChipTabProps = Omit<TabProps, "label"> & {
   label: string;
   count: number;
   chipColor?: ChipProps["color"];

@@ -130,12 +130,14 @@ export const updatePageSectionSchema = z
   .discriminatedUnion("section", toNonEmptyArray(sectionVariants))
   .and(z.object({ pageSlug: z.nativeEnum(PageSlug) }));
 
+const sectionKeys = SECTION_DEFINITIONS.map(([key]) => key);
+
 export const adminPageDetailsSchema = z.object({
   slug: z.nativeEnum(PageSlug),
   sections: z.array(
     z.object({
       id: z.string().cuid(),
-      section: z.string(),
+      section: z.enum(toNonEmptyArray(sectionKeys)),
       data: z.record(z.string(), z.unknown()),
       updatedAt: z.date(),
     }),

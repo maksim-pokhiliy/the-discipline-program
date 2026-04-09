@@ -5,7 +5,7 @@ import { type ReactNode } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { IconButton, Stack, Paper, alpha } from "@mui/material";
 
-type DynamicListItemProps = {
+export type DynamicListItemProps = {
   children: ReactNode;
   onRemove: () => void;
 };

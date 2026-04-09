@@ -6,7 +6,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 
-type PageHeaderProps = {
+export type PageHeaderProps = {
   title: string;
   backHref?: string;
   actions?: ReactNode;
