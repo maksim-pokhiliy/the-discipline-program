@@ -5,8 +5,11 @@ import { toast } from "sonner";
 
 type ResolveFromVars<T, TVars> = T | ((vars: TVars) => T);
 
+const isFunction = <T, TVars>(value: ResolveFromVars<T, TVars>): value is (vars: TVars) => T =>
+  typeof value === "function";
+
 const resolve = <T, TVars>(value: ResolveFromVars<T, TVars>, vars: TVars): T =>
-  typeof value === "function" ? (value as (v: TVars) => T)(vars) : value;
+  isFunction(value) ? value(vars) : value;
 
 type OptimisticMutationConfig<TData, TVars, TResult = unknown> = {
   mutationFn: (vars: TVars) => Promise<TResult>;

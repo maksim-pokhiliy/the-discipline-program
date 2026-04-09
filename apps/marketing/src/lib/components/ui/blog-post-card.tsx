@@ -22,6 +22,8 @@ type BlogPostCardProps = {
   coverImage: string | null;
   readTime: number | null;
   category: BlogCategory;
+  variant?: "default" | "featured";
+  authorName?: string | null;
 };
 
 export const BlogPostCard = ({
@@ -31,7 +33,11 @@ export const BlogPostCard = ({
   coverImage,
   readTime,
   category,
+  variant = "default",
+  authorName,
 }: BlogPostCardProps) => {
+  const isFeatured = variant === "featured";
+
   return (
     <Card>
       <Box sx={{ position: "relative" }}>
@@ -40,7 +46,7 @@ export const BlogPostCard = ({
             component="img"
             image={coverImage}
             alt={title}
-            sx={{ height: (theme) => theme.spacing(25) }}
+            sx={{ height: (theme) => theme.spacing(isFeatured ? 50 : 25) }}
           />
         )}
 
@@ -52,17 +58,21 @@ export const BlogPostCard = ({
             zIndex: 1,
           }}
         >
-          <Chip label={BLOG_CATEGORY_LABELS[category]} size="small" color="primary" />
+          <Chip
+            label={BLOG_CATEGORY_LABELS[category]}
+            size={isFeatured ? "medium" : "small"}
+            color="primary"
+          />
         </Box>
       </Box>
 
       <CardContent>
         <Stack spacing={2}>
-          <Typography variant="h5" component="h3">
+          <Typography variant={isFeatured ? "h1" : "h5"} component={isFeatured ? "h2" : "h3"}>
             {title}
           </Typography>
 
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant={isFeatured ? "h5" : "body2"} color="text.secondary">
             {excerpt}
           </Typography>
         </Stack>
@@ -76,11 +86,30 @@ export const BlogPostCard = ({
           justifyContent="space-between"
           sx={{ width: "100%" }}
         >
-          <Typography variant="caption" color="text.secondary">
-            {readTime} {MIN_READ_SUFFIX}
-          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            {authorName && (
+              <>
+                <Typography variant="body1" color="text.secondary">
+                  {authorName}
+                </Typography>
 
-          <Button component={Link} href={`/blog/${slug}`} size="small">
+                <Typography variant="body1" color="text.secondary">
+                  •
+                </Typography>
+              </>
+            )}
+
+            <Typography variant={isFeatured ? "body1" : "caption"} color="text.secondary">
+              {readTime} {MIN_READ_SUFFIX}
+            </Typography>
+          </Stack>
+
+          <Button
+            component={Link}
+            href={`/blog/${slug}`}
+            variant={isFeatured ? "contained" : "text"}
+            size={isFeatured ? "medium" : "small"}
+          >
             {READ_MORE_LABEL}
           </Button>
         </Stack>

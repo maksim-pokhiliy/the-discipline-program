@@ -19,14 +19,16 @@ type EnrollmentCardProps = {
   enrollment: PlanEnrollment;
   onUpdate: (id: string, status: PlanEnrollmentStatus) => void;
   onDelete: (id: string) => void;
-  isPending: boolean;
+  isUpdating: boolean;
+  isDeleting: boolean;
 };
 
 export const EnrollmentCard: React.FC<EnrollmentCardProps> = ({
   enrollment,
   onUpdate,
   onDelete,
-  isPending,
+  isUpdating,
+  isDeleting,
 }) => {
   const displayName = enrollment.user.name ?? enrollment.user.email;
 
@@ -42,7 +44,8 @@ export const EnrollmentCard: React.FC<EnrollmentCardProps> = ({
             athleteName={displayName}
             onUpdate={onUpdate}
             onDelete={onDelete}
-            isPending={isPending}
+            isUpdating={isUpdating}
+            isDeleting={isDeleting}
           />
         </Stack>
       }

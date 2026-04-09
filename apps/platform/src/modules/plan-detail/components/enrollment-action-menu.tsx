@@ -17,7 +17,8 @@ type EnrollmentActionMenuProps = {
   athleteName: string;
   onUpdate: (id: string, status: PlanEnrollmentStatus) => void;
   onDelete: (id: string) => void;
-  isPending: boolean;
+  isUpdating: boolean;
+  isDeleting: boolean;
 };
 
 export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
@@ -26,8 +27,10 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
   athleteName,
   onUpdate,
   onDelete,
-  isPending,
+  isUpdating,
+  isDeleting,
 }) => {
+  const isPending = isUpdating || isDeleting;
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
@@ -92,7 +95,7 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
         type="danger"
         message={`Remove ${athleteName} from this plan?`}
         details="The athlete will lose access to this plan's workouts."
-        isConfirming={isPending}
+        isConfirming={isDeleting}
         onConfirm={() => onDelete(enrollmentId)}
       />
     </>

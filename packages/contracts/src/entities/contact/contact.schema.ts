@@ -1,6 +1,18 @@
 import { z } from "zod";
 
-import { CONTACT_CONSTANTS } from "./contact.constants";
+import { CONTACT_CONSTANTS, ContactStatus } from "./contact.constants";
+
+export const contactSubmissionItemSchema = z.object({
+  id: z.string().cuid(),
+  name: z.string().nullable(),
+  contact: z.string().nullable(),
+  program: z.string().nullable(),
+  message: z.string(),
+  status: z.nativeEnum(ContactStatus),
+  notes: z.string().nullable(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
 
 export const createContactSubmissionSchema = z.object({
   name: z.string().min(1, "Name is required").max(CONTACT_CONSTANTS.MAX_NAME_LENGTH),

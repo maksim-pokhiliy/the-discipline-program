@@ -7,6 +7,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToPlanEnrollment } from "../../mappers";
+import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/enum-maps";
 import { handlePrismaError } from "../../utils";
 
 import { resolveCoachId, verifyPlanOwnership } from "./guards";
@@ -111,7 +112,10 @@ export const platformPlanEnrollmentsApi = {
     try {
       const enrollment = await prisma.planEnrollment.update({
         where: { id: enrollmentId },
-        data,
+        data: {
+          ...data,
+          ...(data.status && { status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[data.status] }),
+        },
         include: includeEnriched,
       });
 

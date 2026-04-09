@@ -11,7 +11,9 @@ import { AdminHeader } from "@app/lib/components/admin-header";
 import { Sidebar, useSidebar } from "@app/lib/components/sidebar";
 import { ADMIN_NAVIGATION } from "@app/lib/config";
 
-const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
+type DashboardLayoutProps = { children: React.ReactNode };
+
+const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { expanded, toggle } = useSidebar();
   const { data: session } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);

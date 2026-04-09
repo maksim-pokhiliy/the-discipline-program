@@ -8,7 +8,7 @@ import { FormView, QueryWrapper } from "@repo/ui";
 
 import { useBlogPost, useUpdateBlogPost } from "@app/lib/hooks";
 
-import { BlogPostForm } from "../../components/blog-post-form";
+import { BlogPostForm } from "../../components";
 
 type BlogEditFormProps = {
   post: BlogPost;

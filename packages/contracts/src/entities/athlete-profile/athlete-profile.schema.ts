@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { Gender, HealthStatus } from "./athlete-profile.constants";
+import { ATHLETE_PROFILE_CONSTANTS, Gender, HealthStatus } from "./athlete-profile.constants";
 
 export const healthStatusSchema = z.nativeEnum(HealthStatus);
 
@@ -21,5 +21,9 @@ export const updateAthleteProfileSchema = z.object({
   heightCm: z.number().int().positive().optional(),
   weightKg: z.number().positive().optional(),
   healthStatus: healthStatusSchema.optional(),
-  healthNote: z.string().max(2000).nullable().optional(),
+  healthNote: z
+    .string()
+    .max(ATHLETE_PROFILE_CONSTANTS.MAX_HEALTH_NOTE_LENGTH)
+    .nullable()
+    .optional(),
 });

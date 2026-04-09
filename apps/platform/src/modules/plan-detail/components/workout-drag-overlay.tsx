@@ -7,11 +7,11 @@ import type { Workout } from "@repo/contracts/workout";
 export const WorkoutDragOverlay: React.FC<{ workout: Workout }> = ({ workout }) => (
   <Paper
     variant="outlined"
-    sx={(theme) => ({
+    sx={{
       p: 1.5,
-      borderColor: theme.palette.primary.main,
+      borderColor: "primary.main",
       borderWidth: 2,
-    })}
+    }}
   >
     <Typography variant="body2">{workout.title || "Untitled workout"}</Typography>
   </Paper>

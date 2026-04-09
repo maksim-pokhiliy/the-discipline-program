@@ -27,16 +27,22 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
   const deleteEnrollment = useDeletePlanEnrollment(planId);
   const [enrollOpen, setEnrollOpen] = useState(false);
 
-  const isEnrollmentPending = useCallback(
-    (id: string) =>
-      (updateEnrollment.isPending && updateEnrollment.variables?.id === id) ||
-      (deleteEnrollment.isPending && deleteEnrollment.variables === id),
-    [updateEnrollment, deleteEnrollment],
+  const isUpdating = useCallback(
+    (id: string) => updateEnrollment.isPending && updateEnrollment.variables?.id === id,
+    [updateEnrollment],
   );
 
-  const handleUpdate = (id: string, status: PlanEnrollmentStatus) => {
-    updateEnrollment.mutate({ id, data: { status } });
-  };
+  const isDeleting = useCallback(
+    (id: string) => deleteEnrollment.isPending && deleteEnrollment.variables === id,
+    [deleteEnrollment],
+  );
+
+  const handleUpdate = useCallback(
+    (id: string, status: PlanEnrollmentStatus) => {
+      updateEnrollment.mutate({ id, data: { status } });
+    },
+    [updateEnrollment],
+  );
 
   return (
     <Stack spacing={2}>
@@ -55,7 +61,8 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
                     enrollment={enrollment}
                     onUpdate={handleUpdate}
                     onDelete={(id) => deleteEnrollment.mutate(id)}
-                    isPending={isEnrollmentPending(enrollment.id)}
+                    isUpdating={isUpdating(enrollment.id)}
+                    isDeleting={isDeleting(enrollment.id)}
                   />
                 </Grid>
               ))}

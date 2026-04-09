@@ -3,6 +3,7 @@ export const CONTACT_CONSTANTS = {
   MAX_NAME_LENGTH: 100,
   MAX_CONTACT_LENGTH: 100,
   MAX_PROGRAM_LENGTH: 100,
+  MAX_NOTES_LENGTH: 2000,
 } as const;
 
 export enum ContactStatus {

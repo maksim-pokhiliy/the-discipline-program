@@ -42,7 +42,7 @@ export const generateStructuredData = (
       return {
         "@context": "https://schema.org",
         "@type": "WebSite",
-        url: data?.url || SEO_CONFIG.siteUrl,
+        url: data?.url ?? SEO_CONFIG.siteUrl,
         name: SEO_CONFIG.siteName,
       };
 
@@ -67,7 +67,7 @@ export const generateStructuredData = (
             name: product.title,
             description: product.description,
             url: `${SEO_CONFIG.siteUrl}/storefront`,
-          })) || [],
+          })) ?? [],
       };
 
     case "reviews": {

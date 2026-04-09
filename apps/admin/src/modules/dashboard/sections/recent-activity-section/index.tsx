@@ -9,7 +9,6 @@ import PersonIcon from "@mui/icons-material/Person";
 import RateReviewIcon from "@mui/icons-material/RateReview";
 import {
   Avatar,
-  Box,
   List,
   ListItem,
   ListItemAvatar,
@@ -81,11 +80,9 @@ export const RecentActivitySection = ({ activity }: RecentActivitySectionProps) 
                   )
                 }
               />
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  {formatDate(item.date, "compact")}
-                </Typography>
-              </Box>
+              <Typography variant="caption" color="text.secondary">
+                {formatDate(item.date, "compact")}
+              </Typography>
             </ListItemButton>
           );
         })}

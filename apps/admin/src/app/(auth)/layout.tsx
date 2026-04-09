@@ -3,7 +3,9 @@
 import { Container, Stack } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 
-const AuthLayout = ({ children }: { children: React.ReactNode }) => (
+type AuthLayoutProps = { children: React.ReactNode };
+
+const AuthLayout = ({ children }: AuthLayoutProps) => (
   <Stack
     sx={{
       minHeight: "100vh",
