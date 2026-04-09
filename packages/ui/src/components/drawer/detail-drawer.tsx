@@ -30,7 +30,7 @@ export const DetailDrawer = ({
     onClose={onClose}
     slotProps={{ paper: { sx: { width, maxWidth: "100%" } } }}
   >
-    <Stack direction="row" sx={{ p: 2, alignItems: "center" }}>
+    <Stack direction="row" alignItems="center" sx={{ p: 2 }}>
       <Typography variant="h6" sx={{ flex: 1 }}>
         {title}
       </Typography>
@@ -43,7 +43,7 @@ export const DetailDrawer = ({
     <Divider />
 
     {loading ? (
-      <Stack sx={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+      <Stack alignItems="center" justifyContent="center" sx={{ flex: 1 }}>
         <CircularProgress size={30} />
       </Stack>
     ) : (

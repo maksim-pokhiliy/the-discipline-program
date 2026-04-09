@@ -76,6 +76,50 @@ export const createPutHandler = <TRequest, TResponse>(
   };
 };
 
+export const createGetByParamHandler = <TParams, TResponse>(
+  apiFn: (params: TParams) => Promise<TResponse>,
+  paramsSchema: ParseSchema<TParams>,
+  responseSchema?: ParseSchema<TResponse>,
+) => {
+  return async (_: Request, context: RouteContext) => {
+    const params = paramsSchema.parse(await context.params);
+    const data = await apiFn(params);
+    const validated = responseSchema ? responseSchema.parse(data) : data;
+
+    return NextResponse.json(validated);
+  };
+};
+
+export const createPatchByParamHandler = <TParams, TRequest>(
+  apiFn: (params: TParams, data: TRequest) => Promise<void>,
+  paramsSchema: ParseSchema<TParams>,
+  requestSchema: ParseSchema<TRequest>,
+) => {
+  return async (request: Request, context: RouteContext) => {
+    const params = paramsSchema.parse(await context.params);
+    const body = await request.json();
+    const data = requestSchema.parse(body);
+
+    await apiFn(params, data);
+
+    return NextResponse.json({ success: true });
+  };
+};
+
+export const createDeleteWithBodyHandler = <TRequest>(
+  apiFn: (data: TRequest) => Promise<void>,
+  requestSchema: ParseSchema<TRequest>,
+) => {
+  return async (request: Request) => {
+    const body = await request.json();
+    const data = requestSchema.parse(body);
+
+    await apiFn(data);
+
+    return NextResponse.json({ success: true });
+  };
+};
+
 export const createDeleteHandler = (
   apiFn: (id: string) => Promise<void>,
   paramsSchema: ParseSchema<{ id: string }>,

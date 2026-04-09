@@ -23,4 +23,8 @@ export const getUsersPageDataResponseSchema = z.object({
   users: getUsersResponseSchema,
 });
 
+export const searchUsersQuerySchema = z.object({
+  q: z.string().default(""),
+});
+
 export const searchUsersResponseSchema = z.array(userSearchResultSchema);

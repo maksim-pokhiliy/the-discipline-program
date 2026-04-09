@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { createGetByParamHandler, createPatchByParamHandler } from "@repo/api-routes";
 import { adminPagesApi } from "@repo/api-server";
 import {
   adminPageDetailsSchema,
@@ -9,20 +8,18 @@ import {
 
 import { withAdminAuth } from "@app/lib/server/auth";
 
-export const GET = withAdminAuth(async (_request, { params }) => {
-  const { slug } = pageSlugRouteParamsSchema.parse(await params);
-  const data = await adminPagesApi.getPageBySlug(slug);
-  const validated = adminPageDetailsSchema.parse(data);
+export const GET = withAdminAuth(
+  createGetByParamHandler(
+    ({ slug }) => adminPagesApi.getPageBySlug(slug),
+    pageSlugRouteParamsSchema,
+    adminPageDetailsSchema,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
-
-export const PATCH = withAdminAuth(async (request, { params }) => {
-  const { slug } = pageSlugRouteParamsSchema.parse(await params);
-  const body = await request.json();
-  const validated = updatePageMetadataSchema.parse(body);
-
-  await adminPagesApi.updatePageMetadata(slug, validated);
-
-  return NextResponse.json({ success: true });
-});
+export const PATCH = withAdminAuth(
+  createPatchByParamHandler(
+    ({ slug }, data) => adminPagesApi.updatePageMetadata(slug, data),
+    pageSlugRouteParamsSchema,
+    updatePageMetadataSchema,
+  ),
+);

@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { createAuthGetWithQueryHandler } from "@repo/api-routes";
 import { platformTrainingPlansApi } from "@repo/api-server";
 import {
   getCalendarWeekParamsSchema,
@@ -8,13 +7,10 @@ import {
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (request, _context, userId) => {
-  const { searchParams } = new URL(request.url);
-  const { weekStart } = getCalendarWeekParamsSchema.parse({
-    weekStart: searchParams.get("weekStart"),
-  });
-  const data = await platformTrainingPlansApi.getCalendarWeek(userId, weekStart);
-  const validated = getCalendarWeekResponseSchema.parse(data);
-
-  return NextResponse.json(validated);
-});
+export const GET = withPlatformAuth(
+  createAuthGetWithQueryHandler(
+    (userId, { weekStart }) => platformTrainingPlansApi.getCalendarWeek(userId, weekStart),
+    getCalendarWeekParamsSchema,
+    getCalendarWeekResponseSchema,
+  ),
+);

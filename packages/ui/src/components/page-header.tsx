@@ -13,7 +13,7 @@ export type PageHeaderProps = {
 };
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ title, backHref, actions }) => (
-  <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+  <Stack direction="row" spacing={1} alignItems="center">
     {backHref && (
       <IconButton component={Link} href={backHref}>
         <ArrowBackIcon />
