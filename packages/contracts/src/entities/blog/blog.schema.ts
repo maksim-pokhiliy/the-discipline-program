@@ -20,8 +20,8 @@ export const blogPostSchema = z.object({
   tags: z.array(z.string()).default([]),
   isPublished: z.boolean(),
   isFeatured: z.boolean(),
-  createdAt: z.coerce.date(),
-  updatedAt: z.coerce.date(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
 });
 
 const createBlogPostBaseSchema = blogPostSchema.omit({

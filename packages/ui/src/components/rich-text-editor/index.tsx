@@ -6,7 +6,7 @@ import { EditorContent } from "@tiptap/react";
 import { EditorToolbar } from "./editor-toolbar";
 import { useEditor } from "./use-editor";
 
-const EDITOR_LINE_HEIGHT_PX = 20;
+const EDITOR_LINE_HEIGHT_SPACING = 2.5;
 
 type RichTextEditorVariant = "default" | "inline";
 
@@ -60,7 +60,6 @@ export const RichTextEditor = ({
       )}
 
       <Stack
-        direction="column"
         sx={{
           overflow: "hidden",
           opacity: disabled ? 0.6 : 1,
@@ -88,7 +87,7 @@ export const RichTextEditor = ({
           onClick={handleContainerClick}
           sx={{
             p: isInline ? 1.5 : 2,
-            minHeight: resolvedMinRows * EDITOR_LINE_HEIGHT_PX,
+            minHeight: theme.spacing(resolvedMinRows * EDITOR_LINE_HEIGHT_SPACING),
             cursor: "text",
             flexGrow: 1,
             "& .ProseMirror": {

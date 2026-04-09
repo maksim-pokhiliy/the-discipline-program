@@ -3,7 +3,7 @@ import { z } from "zod";
 import { DashboardActivityType } from "./dashboard.constants";
 
 export const activityItemSchema = z.object({
-  id: z.string(),
+  id: z.string().cuid(),
   type: z.nativeEnum(DashboardActivityType),
   title: z.string(),
   subtitle: z.string().nullable(),

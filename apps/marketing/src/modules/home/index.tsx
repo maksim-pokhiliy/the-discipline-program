@@ -1,7 +1,5 @@
 "use client";
 
-import { Stack } from "@mui/material";
-
 import { type HomePageData } from "@repo/contracts/pages";
 import { QueryWrapper, SuspenseWrapper } from "@repo/ui";
 
@@ -32,30 +30,28 @@ export const HomePageClient = ({ initialData }: HomePageClientProps) => {
             <StructuredData type="storefront" data={{ products: data.productsList }} />
             <StructuredData type="reviews" data={{ reviews: data.reviewsList }} />
 
-            <Stack spacing={0}>
-              <FullscreenSection
-                backgroundImage={data.hero.backgroundImage}
-                title={data.hero.title}
-                subtitle={data.hero.subtitle}
-                buttonText={data.hero.buttonText}
-                buttonHref={data.hero.buttonHref}
-              />
-              <HomeFeaturesSection whyChoose={data.whyChoose} />
+            <FullscreenSection
+              backgroundImage={data.hero.backgroundImage}
+              title={data.hero.title}
+              subtitle={data.hero.subtitle}
+              buttonText={data.hero.buttonText}
+              buttonHref={data.hero.buttonHref}
+            />
+            <HomeFeaturesSection whyChoose={data.whyChoose} />
 
-              <HomeStorefrontProgramsPreview
-                programs={data.storefront}
-                productsList={data.productsList}
-              />
+            <HomeStorefrontProgramsPreview
+              programs={data.storefront}
+              productsList={data.productsList}
+            />
 
-              <HomeReviewsSection reviews={data.reviews} reviewsList={data.reviewsList} />
-              <PageCTASection
-                id="home-cta"
-                title={data.contact.title}
-                subtitle={data.contact.subtitle}
-                buttonText={data.contact.buttonText}
-                buttonHref={data.contact.buttonHref}
-              />
-            </Stack>
+            <HomeReviewsSection reviews={data.reviews} reviewsList={data.reviewsList} />
+            <PageCTASection
+              id="home-cta"
+              title={data.contact.title}
+              subtitle={data.contact.subtitle}
+              buttonText={data.contact.buttonText}
+              buttonHref={data.contact.buttonHref}
+            />
           </>
         )}
       </QueryWrapper>

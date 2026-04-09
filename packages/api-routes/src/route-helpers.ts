@@ -6,15 +6,17 @@ import { type RouteContext, type RouteHandler } from "./types";
 
 type ParseSchema<T> = ZodType<T, ZodTypeDef, unknown>;
 
-export const withPublicRoute = (handler: RouteHandler): RouteHandler => {
-  return async (request, context) => {
+export const withErrorHandling =
+  <TArgs extends unknown[]>(fn: (...args: TArgs) => Promise<Response>) =>
+  async (...args: TArgs): Promise<Response> => {
     try {
-      return await handler(request, context);
+      return await fn(...args);
     } catch (error) {
       return handleApiError(error);
     }
   };
-};
+
+export const withPublicRoute = (handler: RouteHandler): RouteHandler => withErrorHandling(handler);
 
 export const createGetHandler = <TResponse>(
   apiFn: () => Promise<TResponse>,

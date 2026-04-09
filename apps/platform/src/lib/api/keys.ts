@@ -22,18 +22,9 @@ export const platformKeys = {
     week: (weekStart: string) => [...ROOT, "calendar", weekStart] as const,
   },
   athletes: createEntityKeys(ROOT, "athletes"),
-  coachProfile: {
-    me: () => [...ROOT, "coach-profile"] as const,
-  },
-  athleteProfile: {
-    me: () => [...ROOT, "athlete-profile"] as const,
-  },
-  workoutLogs: createEntityKeys(ROOT, "workout-logs"),
-  benchmarkDefinitions: createEntityKeys(ROOT, "benchmark-definitions"),
   coachDashboard: {
     data: () => [...ROOT, "coach-dashboard"] as const,
   },
-  coachNotes: createEntityKeys(ROOT, "coach-notes"),
   coachActionItems: {
     all: () => [...ROOT, "coach-action-items"] as const,
   },

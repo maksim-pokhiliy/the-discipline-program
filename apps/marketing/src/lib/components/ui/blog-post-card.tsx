@@ -47,8 +47,8 @@ export const BlogPostCard = ({
         <Box
           sx={{
             position: "absolute",
-            top: 1.5,
-            left: 1.5,
+            top: (theme) => theme.spacing(1.5),
+            left: (theme) => theme.spacing(1.5),
             zIndex: 1,
           }}
         >

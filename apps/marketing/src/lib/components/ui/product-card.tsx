@@ -77,25 +77,28 @@ export const ProductCard = ({
         </Stack>
 
         <CardContent>
-          <Stack spacing={3} sx={{ height: "100%" }}>
-            <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center" }}>
-              {product.description}
-            </Typography>
+          <Stack spacing={3} sx={{ height: "100%", justifyContent: "space-between" }}>
+            <Stack spacing={3}>
+              <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center" }}>
+                {product.description}
+              </Typography>
 
-            {product.features.length > 0 && (
-              <List disablePadding>
-                {product.features.map((feature) => (
-                  <ListItem key={feature} disableGutters disablePadding>
-                    <ListItemIcon sx={{ minWidth: (theme) => theme.spacing(4) }}>
-                      <CheckIcon color={isFeatured ? "primary" : "success"} fontSize="small" />
-                    </ListItemIcon>
-                    <ListItemText primary={feature} slotProps={{ primary: { variant: "body2" } }} />
-                  </ListItem>
-                ))}
-              </List>
-            )}
-
-            <Stack sx={{ flexGrow: 1 }} />
+              {product.features.length > 0 && (
+                <List disablePadding>
+                  {product.features.map((feature) => (
+                    <ListItem key={feature} disableGutters disablePadding>
+                      <ListItemIcon sx={{ minWidth: (theme) => theme.spacing(4) }}>
+                        <CheckIcon color={isFeatured ? "primary" : "success"} fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={feature}
+                        slotProps={{ primary: { variant: "body2" } }}
+                      />
+                    </ListItem>
+                  ))}
+                </List>
+              )}
+            </Stack>
 
             <Stack sx={{ alignItems: "center" }}>
               <Button

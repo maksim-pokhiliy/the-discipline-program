@@ -9,7 +9,12 @@ import {
 
 import { prisma } from "../../db/client";
 import { mapToBlogPost } from "../../mappers";
-import { findOrThrow, handlePrismaError, toggleExclusiveFeatured } from "../../utils";
+import {
+  ensureExclusiveFeatured,
+  findOrThrow,
+  handlePrismaError,
+  toggleExclusiveFeatured,
+} from "../../utils";
 
 const WORDS_PER_MINUTE = 200;
 
@@ -73,12 +78,12 @@ export const adminBlogApi = {
       const dbInput = prepareCreateInput(data);
 
       return await prisma.$transaction(async (tx) => {
-        if (dbInput.isFeatured) {
-          await tx.marketingBlogPost.updateMany({
+        await ensureExclusiveFeatured(dbInput.isFeatured ?? false, () =>
+          tx.marketingBlogPost.updateMany({
             where: { isFeatured: true },
             data: { isFeatured: false },
-          });
-        }
+          }),
+        );
 
         const post = await tx.marketingBlogPost.create({
           data: dbInput,
@@ -113,12 +118,12 @@ export const adminBlogApi = {
       }
 
       return await prisma.$transaction(async (tx) => {
-        if (data.isFeatured === true) {
-          await tx.marketingBlogPost.updateMany({
+        await ensureExclusiveFeatured(data.isFeatured === true, () =>
+          tx.marketingBlogPost.updateMany({
             where: { isFeatured: true, id: { not: id } },
             data: { isFeatured: false },
-          });
-        }
+          }),
+        );
 
         const post = await tx.marketingBlogPost.update({
           where: { id },
@@ -135,7 +140,11 @@ export const adminBlogApi = {
   deletePost: async (id: string): Promise<void> => {
     await findOrThrow(prisma.marketingBlogPost.findUnique({ where: { id } }), "Blog post");
 
-    await prisma.marketingBlogPost.delete({ where: { id } });
+    try {
+      await prisma.marketingBlogPost.delete({ where: { id } });
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Blog post" });
+    }
   },
 
   toggleBlogPostStatus: async (id: string): Promise<BlogPost> => {

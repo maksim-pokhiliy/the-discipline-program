@@ -110,7 +110,12 @@ export const adminProductsApi = {
 
   delete: async (id: string): Promise<void> => {
     await findOrThrow(prisma.product.findUnique({ where: { id } }), "Product");
-    await prisma.product.delete({ where: { id } });
+
+    try {
+      await prisma.product.delete({ where: { id } });
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Product" });
+    }
   },
 
   toggleStatus: async (id: string): Promise<Product> => {

@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 
-import { Box, Grid, type Theme } from "@mui/material";
+import { Box, Grid } from "@mui/material";
 
 import { buildOverlay } from "@repo/mui";
 
@@ -31,7 +31,7 @@ export const SplitSection = ({
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
           color: theme.palette.common.white,
-          minHeight: { xs: (theme: Theme) => theme.spacing(37.5), md: "auto" },
+          minHeight: { xs: theme.spacing(37.5), md: "auto" },
         })}
       >
         {imageContent && (

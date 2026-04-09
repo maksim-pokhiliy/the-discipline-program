@@ -1,6 +1,6 @@
 import { type ErrorCode, ERROR_CODES } from "./error-codes";
 
-export interface AppErrorOptions {
+interface AppErrorOptions {
   code?: ErrorCode;
   statusCode?: number;
   details?: Record<string, unknown>;

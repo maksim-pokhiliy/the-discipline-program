@@ -33,3 +33,12 @@ export const toggleExclusiveFeatured = async <TRaw extends { isFeatured: boolean
 
   return map(updated);
 };
+
+export const ensureExclusiveFeatured = async (
+  isFeatured: boolean,
+  unfeatureOthers: () => Promise<unknown>,
+): Promise<void> => {
+  if (isFeatured) {
+    await unfeatureOthers();
+  }
+};
