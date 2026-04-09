@@ -83,14 +83,14 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
           "&:hover .workout-action": { opacity: 1 },
         })}
       >
-        <Stack direction="row" sx={{ alignItems: "center" }}>
+        <Stack direction="row" alignItems="center">
           <Stack
             className="workout-action"
             {...listeners}
             tabIndex={-1}
+            alignItems="center"
+            justifyContent="center"
             sx={{
-              alignItems: "center",
-              justifyContent: "center",
               px: 0.5,
               py: 1.5,
               cursor: "grab",

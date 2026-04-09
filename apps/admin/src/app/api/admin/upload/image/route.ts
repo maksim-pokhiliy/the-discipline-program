@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { adminUploadApi } from "@repo/api-server";
 import {
   deleteImageRequestSchema,
+  uploadImageResponseSchema,
   type UploadContext,
   UPLOAD_CONFIG,
 } from "@repo/contracts/upload";
@@ -28,8 +29,9 @@ export const POST = withAdminAuth(async (request) => {
   }
 
   const result = await adminUploadApi.uploadImage(file, context);
+  const validated = uploadImageResponseSchema.parse(result);
 
-  return NextResponse.json(result);
+  return NextResponse.json(validated);
 });
 
 export const DELETE = withAdminAuth(async (request) => {

@@ -51,14 +51,14 @@ export const EnrollmentCard: React.FC<EnrollmentCardProps> = ({
       }
     >
       <Stack spacing={0.75}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+        <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="subtitle2" noWrap sx={{ flex: 1 }}>
             {displayName}
           </Typography>
           <HealthStatusChip healthStatus={enrollment.user.healthStatus} />
         </Stack>
 
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+        <Stack direction="row" spacing={1} alignItems="center">
           <Chip
             size="small"
             label={PLAN_ENROLLMENT_STATUS_LABELS[enrollment.status]}

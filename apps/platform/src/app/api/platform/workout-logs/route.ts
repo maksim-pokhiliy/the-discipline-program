@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { createAuthGetHandler, createAuthPostHandler } from "@repo/api-routes";
 import { platformWorkoutLogsApi } from "@repo/api-server";
 import {
   createWorkoutLogRequestSchema,
@@ -9,18 +8,17 @@ import {
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (_, _context, userId) => {
-  const data = await platformWorkoutLogsApi.getAll(userId);
-  const validated = getWorkoutLogsResponseSchema.parse(data);
+export const GET = withPlatformAuth(
+  createAuthGetHandler(
+    (userId) => platformWorkoutLogsApi.getAll(userId),
+    getWorkoutLogsResponseSchema,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
-
-export const POST = withPlatformAuth(async (request, _context, userId) => {
-  const body = await request.json();
-  const data = createWorkoutLogRequestSchema.parse(body);
-  const result = await platformWorkoutLogsApi.create(userId, data);
-  const validated = createWorkoutLogResponseSchema.parse(result);
-
-  return NextResponse.json(validated, { status: 201 });
-});
+export const POST = withPlatformAuth(
+  createAuthPostHandler(
+    (userId, data) => platformWorkoutLogsApi.create(userId, data),
+    createWorkoutLogRequestSchema,
+    createWorkoutLogResponseSchema,
+  ),
+);

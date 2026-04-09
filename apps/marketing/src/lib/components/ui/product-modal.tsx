@@ -42,7 +42,7 @@ export const ProductModal = ({
       onClose={onClose}
       title={product.title}
       actions={
-        <Stack direction="row" spacing={3} sx={{ alignItems: "center", width: "100%" }}>
+        <Stack direction="row" spacing={3} alignItems="center" sx={{ width: "100%" }}>
           <Button variant="text" size="large" fullWidth onClick={onClose}>
             {dismissLabel}
           </Button>
@@ -54,7 +54,7 @@ export const ProductModal = ({
       }
     >
       <Stack spacing={3}>
-        <Stack direction="row" sx={{ alignItems: "baseline" }} spacing={1}>
+        <Stack direction="row" alignItems="baseline" spacing={1}>
           <Typography variant="display2" component="p">
             {displayPrice}
           </Typography>
@@ -78,7 +78,7 @@ export const ProductModal = ({
                 size={{ xs: 12, sm: 6 }}
                 sx={(theme) => ({ backgroundColor: theme.palette.background.paper })}
               >
-                <Stack direction="row" spacing={1.5} sx={{ alignItems: "center", p: 2 }}>
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ p: 2 }}>
                   <CheckIcon color="primary" fontSize="small" />
                   <Typography>{feature}</Typography>
                 </Stack>

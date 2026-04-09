@@ -30,7 +30,7 @@ export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionP
                     </Typography>
                   </Stack>
 
-                  <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+                  <Stack direction="row" spacing={2} alignItems="center">
                     <Avatar src={review.authorAvatar ?? ""} alt={review.authorName} />
 
                     <Stack spacing={0.5}>

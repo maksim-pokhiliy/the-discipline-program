@@ -12,8 +12,8 @@ export const CTASection = ({ title, subtitle, buttonText, buttonHref }: CtaSecti
   return (
     <Stack
       spacing={4}
+      alignItems="center"
       sx={(theme) => ({
-        alignItems: "center",
         textAlign: "center",
         backgroundColor: theme.palette.primary.main,
         color: theme.palette.primary.contrastText,

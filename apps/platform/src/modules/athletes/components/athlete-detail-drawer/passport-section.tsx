@@ -51,7 +51,7 @@ export const PassportSection: React.FC<PassportSectionProps> = ({
 
   return (
     <Stack spacing={1.5} sx={{ p: 2.5 }}>
-      <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
+      <Stack direction="row" spacing={2} alignItems="center">
         <Avatar
           src={image ?? undefined}
           alt={displayName}

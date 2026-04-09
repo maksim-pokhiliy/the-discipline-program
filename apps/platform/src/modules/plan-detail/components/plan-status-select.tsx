@@ -66,7 +66,7 @@ export const PlanStatusSelect: React.FC<PlanStatusSelectProps> = ({ planId, plan
 
   return (
     <>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+      <Stack direction="row" spacing={1} alignItems="center">
         <Chip
           variant="outlined"
           size="small"

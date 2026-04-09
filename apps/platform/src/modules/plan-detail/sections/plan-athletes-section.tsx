@@ -68,7 +68,7 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
               ))}
             </Grid>
           ) : (
-            <Stack spacing={2} sx={{ alignItems: "center", py: 4 }}>
+            <Stack spacing={2} alignItems="center" sx={{ py: 4 }}>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 No athletes enrolled yet
               </Typography>

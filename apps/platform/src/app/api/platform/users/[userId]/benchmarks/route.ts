@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { createAuthGetByParamHandler, createAuthPostByParamHandler } from "@repo/api-routes";
 import { platformUserBenchmarksApi } from "@repo/api-server";
 import {
   createUserBenchmarkRequestSchema,
@@ -10,20 +9,19 @@ import {
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (_, context, authUserId) => {
-  const { userId } = getUserBenchmarksParamsSchema.parse(await context.params);
-  const data = await platformUserBenchmarksApi.getByUser(authUserId, userId);
-  const validated = getUserBenchmarksResponseSchema.parse(data);
+export const GET = withPlatformAuth(
+  createAuthGetByParamHandler(
+    (authUserId, { userId }) => platformUserBenchmarksApi.getByUser(authUserId, userId),
+    getUserBenchmarksParamsSchema,
+    getUserBenchmarksResponseSchema,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
-
-export const POST = withPlatformAuth(async (request, context, authUserId) => {
-  const { userId } = getUserBenchmarksParamsSchema.parse(await context.params);
-  const body = await request.json();
-  const data = createUserBenchmarkRequestSchema.parse(body);
-  const result = await platformUserBenchmarksApi.create(authUserId, userId, data);
-  const validated = createUserBenchmarkResponseSchema.parse(result);
-
-  return NextResponse.json(validated, { status: 201 });
-});
+export const POST = withPlatformAuth(
+  createAuthPostByParamHandler(
+    (authUserId, { userId }, data) => platformUserBenchmarksApi.create(authUserId, userId, data),
+    getUserBenchmarksParamsSchema,
+    createUserBenchmarkRequestSchema,
+    createUserBenchmarkResponseSchema,
+  ),
+);

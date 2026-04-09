@@ -43,7 +43,7 @@ export const DisciplineSection: React.FC<DisciplineSectionProps> = ({ planDiscip
       <Typography variant="subtitle2">Weekly Discipline</Typography>
 
       <Stack spacing={1}>
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+        <Stack direction="row" spacing={1.5} alignItems="center">
           <Tooltip title={`${aggregate.completed} of ${aggregate.planned} this week`} arrow>
             <LinearProgress
               variant="determinate"
@@ -65,7 +65,7 @@ export const DisciplineSection: React.FC<DisciplineSectionProps> = ({ planDiscip
       {hasMultiplePlans && (
         <Stack spacing={0.75} sx={{ pl: 1 }}>
           {planDiscipline.map((plan) => (
-            <Stack key={plan.planId} direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <Stack key={plan.planId} direction="row" spacing={1} alignItems="center">
               <Typography variant="caption" noWrap sx={{ flex: 1, color: "text.secondary" }}>
                 {plan.planName}
               </Typography>

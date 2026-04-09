@@ -22,15 +22,10 @@ export const Footer = ({
 
       <Toolbar component="footer" sx={{ height: "auto" }}>
         <Stack divider={<Divider />} sx={{ width: "100%", py: 4 }} spacing={4}>
-          <Stack
-            direction={{ md: "row" }}
-            sx={{ justifyContent: "space-between" }}
-            rowGap={2}
-            columnGap={2}
-          >
+          <Stack direction={{ md: "row" }} justifyContent="space-between" rowGap={2} columnGap={2}>
             <Stack
               direction={{ sm: "column", md: "row" }}
-              sx={{ alignItems: "center" }}
+              alignItems="center"
               rowGap={2}
               columnGap={2}
             >
@@ -41,7 +36,7 @@ export const Footer = ({
               </Typography>
             </Stack>
 
-            <Stack direction={{ md: "row" }} sx={{ alignItems: "center" }} rowGap={2} columnGap={2}>
+            <Stack direction={{ md: "row" }} alignItems="center" rowGap={2} columnGap={2}>
               {MARKETING_NAVIGATION.footerLinks.map(({ text, href }) => (
                 <FooterNavLink key={text} text={text} href={href} />
               ))}
@@ -50,7 +45,8 @@ export const Footer = ({
 
           <Stack
             direction={{ md: "row" }}
-            sx={{ justifyContent: "space-between", alignItems: "center" }}
+            justifyContent="space-between"
+            alignItems="center"
             rowGap={2}
             columnGap={2}
           >

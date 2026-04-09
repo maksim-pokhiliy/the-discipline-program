@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { createAuthPostHandler, createGetHandler } from "@repo/api-routes";
 import { platformBenchmarkDefinitionsApi } from "@repo/api-server";
 import {
   createBenchmarkDefinitionRequestSchema,
@@ -9,18 +8,17 @@ import {
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async () => {
-  const data = await platformBenchmarkDefinitionsApi.getAll();
-  const validated = getBenchmarkDefinitionsResponseSchema.parse(data);
+export const GET = withPlatformAuth(
+  createGetHandler(
+    () => platformBenchmarkDefinitionsApi.getAll(),
+    getBenchmarkDefinitionsResponseSchema,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
-
-export const POST = withPlatformAuth(async (request, _context, userId) => {
-  const body = await request.json();
-  const data = createBenchmarkDefinitionRequestSchema.parse(body);
-  const result = await platformBenchmarkDefinitionsApi.create(userId, data);
-  const validated = createBenchmarkDefinitionResponseSchema.parse(result);
-
-  return NextResponse.json(validated, { status: 201 });
-});
+export const POST = withPlatformAuth(
+  createAuthPostHandler(
+    (userId, data) => platformBenchmarkDefinitionsApi.create(userId, data),
+    createBenchmarkDefinitionRequestSchema,
+    createBenchmarkDefinitionResponseSchema,
+  ),
+);

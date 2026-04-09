@@ -44,9 +44,9 @@ export const PlatformLoginPage = () => {
 
   return (
     <Stack
+      justifyContent="center"
       sx={{
         minHeight: "100dvh",
-        justifyContent: "center",
         background: (theme) =>
           `radial-gradient(ellipse at 50% 20%, ${alpha(theme.palette.primary.main, 0.08)}, transparent 70%)`,
       }}

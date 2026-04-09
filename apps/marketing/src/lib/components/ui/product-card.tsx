@@ -41,8 +41,8 @@ export const ProductCard = ({
       <Stack sx={{ width: "100%" }}>
         <Stack
           spacing={1}
+          alignItems="center"
           sx={(theme) => ({
-            alignItems: "center",
             p: 4,
             backgroundColor: isFeatured
               ? theme.palette.primary.main
@@ -53,7 +53,7 @@ export const ProductCard = ({
         >
           <Typography variant="h5">{product.title}</Typography>
 
-          <Stack direction="row" sx={{ alignItems: "baseline" }} spacing={0.5}>
+          <Stack direction="row" alignItems="baseline" spacing={0.5}>
             <Typography variant="display2" component="p">
               {activePrice ? formatPrice(activePrice.amountCents, activePrice.currency) : freeLabel}
             </Typography>
@@ -75,7 +75,7 @@ export const ProductCard = ({
         </Stack>
 
         <CardContent>
-          <Stack spacing={3} sx={{ height: "100%", justifyContent: "space-between" }}>
+          <Stack spacing={3} justifyContent="space-between" sx={{ height: "100%" }}>
             <Stack spacing={3}>
               <Typography variant="body1" color="text.secondary" sx={{ textAlign: "center" }}>
                 {product.description}
@@ -98,7 +98,7 @@ export const ProductCard = ({
               )}
             </Stack>
 
-            <Stack sx={{ alignItems: "center" }}>
+            <Stack alignItems="center">
               <Button
                 variant={isFeatured ? "contained" : "outlined"}
                 size="large"

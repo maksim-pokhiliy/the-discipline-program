@@ -1,5 +1,3 @@
-import { type Prisma } from "@prisma/client";
-
 import {
   type AdminPageListItem,
   type AdminPageDetails,
@@ -105,7 +103,7 @@ export const adminPagesApi = {
       await prisma.marketingPageSection.update({
         where: { id: existing.id },
         data: {
-          data: payload.data satisfies Record<string, unknown> as Prisma.InputJsonValue,
+          data: JSON.parse(JSON.stringify(payload.data)),
         },
       });
     } catch (error) {

@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { createAuthGetHandler, createAuthPostHandler } from "@repo/api-routes";
 import { platformCoachNotesApi } from "@repo/api-server";
 import {
   createCoachNoteRequestSchema,
@@ -9,18 +8,17 @@ import {
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (_, _context, userId) => {
-  const data = await platformCoachNotesApi.getAll(userId);
-  const validated = getCoachNotesResponseSchema.parse(data);
+export const GET = withPlatformAuth(
+  createAuthGetHandler(
+    (userId) => platformCoachNotesApi.getAll(userId),
+    getCoachNotesResponseSchema,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
-
-export const POST = withPlatformAuth(async (request, _context, userId) => {
-  const body = await request.json();
-  const data = createCoachNoteRequestSchema.parse(body);
-  const result = await platformCoachNotesApi.create(userId, data);
-  const validated = createCoachNoteResponseSchema.parse(result);
-
-  return NextResponse.json(validated, { status: 201 });
-});
+export const POST = withPlatformAuth(
+  createAuthPostHandler(
+    (userId, data) => platformCoachNotesApi.create(userId, data),
+    createCoachNoteRequestSchema,
+    createCoachNoteResponseSchema,
+  ),
+);

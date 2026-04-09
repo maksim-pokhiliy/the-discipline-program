@@ -30,7 +30,7 @@ export const AthleteCard: React.FC<AthleteCardProps> = ({
     action={action}
   >
     <AlertTitle>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+      <Stack direction="row" spacing={1} alignItems="center">
         {name}
         {chips?.map((chip) => <StatusChip key={chip.label} {...chip} />)}
       </Stack>

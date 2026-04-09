@@ -30,7 +30,7 @@ export const AttentionSection: React.FC<AttentionSectionProps> = ({ actionItems 
     <Stack spacing={1} sx={{ p: 2.5 }}>
       <Typography variant="subtitle2">Attention</Typography>
       {actionItems.map((item) => (
-        <Stack key={item.id} direction="row" spacing={1} sx={{ alignItems: "flex-start" }}>
+        <Stack key={item.id} direction="row" spacing={1} alignItems="flex-start">
           <Box sx={{ color: SEVERITY_COLORS[item.severity], mt: 0.25 }}>
             {SEVERITY_ICONS[item.severity]}
           </Box>

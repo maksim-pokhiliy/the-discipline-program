@@ -84,7 +84,7 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
       {(data) => (
         <Stack spacing={4}>
           <Stack spacing={0.5}>
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+            <Stack direction="row" spacing={1} alignItems="center">
               <IconButton component={Link} href="/coach/plans">
                 <ArrowBackIcon />
               </IconButton>

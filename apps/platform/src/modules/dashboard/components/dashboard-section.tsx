@@ -20,7 +20,7 @@ export const DashboardSection: React.FC<DashboardSectionProps> = ({ title, badge
   <Card>
     <CardHeader
       title={
-        <Stack direction="row" spacing={1.5} sx={{ alignItems: "center" }}>
+        <Stack direction="row" spacing={1.5} alignItems="center">
           <Typography variant="h6">{title}</Typography>
           {badge && <Chip size="small" label={badge.label} color={badge.color} />}
         </Stack>

@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { createAuthGetHandler, createAuthPutHandler } from "@repo/api-routes";
 import { platformCoachProfileApi } from "@repo/api-server";
 import {
   getCoachProfileResponseSchema,
@@ -9,18 +8,17 @@ import {
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (_, _context, userId) => {
-  const data = await platformCoachProfileApi.get(userId);
-  const validated = getCoachProfileResponseSchema.parse(data);
+export const GET = withPlatformAuth(
+  createAuthGetHandler(
+    (userId) => platformCoachProfileApi.get(userId),
+    getCoachProfileResponseSchema,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
-
-export const PUT = withPlatformAuth(async (request, _context, userId) => {
-  const body = await request.json();
-  const data = updateCoachProfileRequestSchema.parse(body);
-  const result = await platformCoachProfileApi.upsert(userId, data);
-  const validated = updateCoachProfileResponseSchema.parse(result);
-
-  return NextResponse.json(validated);
-});
+export const PUT = withPlatformAuth(
+  createAuthPutHandler(
+    (userId, data) => platformCoachProfileApi.upsert(userId, data),
+    updateCoachProfileRequestSchema,
+    updateCoachProfileResponseSchema,
+  ),
+);

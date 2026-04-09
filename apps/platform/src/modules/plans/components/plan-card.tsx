@@ -53,7 +53,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
     >
       <Stack spacing={1.5}>
         <Stack spacing={0.5}>
-          <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+          <Stack direction="row" spacing={1} alignItems="center">
             <Typography variant="subtitle1" noWrap>
               {plan.name}
             </Typography>
@@ -77,7 +77,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
 
         <Stack direction="row" spacing={2} sx={{ color: "text.secondary" }}>
           <Tooltip title="Active enrolled athletes" arrow placement="top">
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+            <Stack direction="row" spacing={0.5} alignItems="center">
               <GroupIcon fontSize="small" />
               <Typography variant="caption">
                 {plan.enrolledAthletesCount}{" "}
@@ -87,7 +87,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           </Tooltip>
 
           <Tooltip title="Scheduled workouts" arrow placement="top">
-            <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+            <Stack direction="row" spacing={0.5} alignItems="center">
               <FitnessCenterIcon fontSize="small" />
               <Typography variant="caption">
                 {plan.workoutsToday} today · {plan.workoutsThisWeek} this week

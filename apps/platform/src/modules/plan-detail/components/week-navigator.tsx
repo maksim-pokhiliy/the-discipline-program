@@ -38,21 +38,21 @@ export const WeekNavigator = () => {
   const isCurrentWeek = formatDateParam(weekStart) === formatDateParam(getMonday(new Date()));
 
   return (
-    <Stack direction="row" sx={{ alignItems: "center", position: "relative" }}>
-      <Stack direction="row" sx={{ flex: 1, justifyContent: "flex-start" }}>
+    <Stack direction="row" alignItems="center" sx={{ position: "relative" }}>
+      <Stack direction="row" justifyContent="flex-start" sx={{ flex: 1 }}>
         <IconButton onClick={() => navigate(addDays(weekStart, -7))}>
           <ChevronLeftIcon />
         </IconButton>
       </Stack>
 
-      <Stack sx={{ alignItems: "center" }}>
+      <Stack alignItems="center">
         <Typography variant="subtitle2">Week {weekNumber}</Typography>
         <Typography variant="caption" sx={{ color: "text.secondary" }}>
           {formatWeekRange(weekStart)}
         </Typography>
       </Stack>
 
-      <Stack direction="row" sx={{ flex: 1, justifyContent: "flex-end" }}>
+      <Stack direction="row" justifyContent="flex-end" sx={{ flex: 1 }}>
         <IconButton onClick={() => navigate(addDays(weekStart, 7))}>
           <ChevronRightIcon />
         </IconButton>

@@ -1,5 +1,8 @@
-import { NextResponse } from "next/server";
-
+import {
+  createAuthDeleteHandler,
+  createAuthGetByParamHandler,
+  createAuthPutByParamHandler,
+} from "@repo/api-routes";
 import { platformPlanEnrollmentsApi } from "@repo/api-server";
 import {
   deletePlanEnrollmentParamsSchema,
@@ -12,28 +15,29 @@ import {
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (_, context, userId) => {
-  const { planId, enrollmentId } = getPlanEnrollmentByIdParamsSchema.parse(await context.params);
-  const data = await platformPlanEnrollmentsApi.getById(userId, planId, enrollmentId);
-  const validated = getPlanEnrollmentResponseSchema.parse(data);
+export const GET = withPlatformAuth(
+  createAuthGetByParamHandler(
+    (userId, { planId, enrollmentId }) =>
+      platformPlanEnrollmentsApi.getById(userId, planId, enrollmentId),
+    getPlanEnrollmentByIdParamsSchema,
+    getPlanEnrollmentResponseSchema,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
+export const PUT = withPlatformAuth(
+  createAuthPutByParamHandler(
+    (userId, { planId, enrollmentId }, data) =>
+      platformPlanEnrollmentsApi.update(userId, planId, enrollmentId, data),
+    updatePlanEnrollmentParamsSchema,
+    updatePlanEnrollmentRequestSchema,
+    updatePlanEnrollmentResponseSchema,
+  ),
+);
 
-export const PUT = withPlatformAuth(async (request, context, userId) => {
-  const { planId, enrollmentId } = updatePlanEnrollmentParamsSchema.parse(await context.params);
-  const body = await request.json();
-  const data = updatePlanEnrollmentRequestSchema.parse(body);
-  const result = await platformPlanEnrollmentsApi.update(userId, planId, enrollmentId, data);
-  const validated = updatePlanEnrollmentResponseSchema.parse(result);
-
-  return NextResponse.json(validated);
-});
-
-export const DELETE = withPlatformAuth(async (_, context, userId) => {
-  const { planId, enrollmentId } = deletePlanEnrollmentParamsSchema.parse(await context.params);
-
-  await platformPlanEnrollmentsApi.delete(userId, planId, enrollmentId);
-
-  return NextResponse.json({ success: true });
-});
+export const DELETE = withPlatformAuth(
+  createAuthDeleteHandler(
+    (userId, { planId, enrollmentId }) =>
+      platformPlanEnrollmentsApi.delete(userId, planId, enrollmentId),
+    deletePlanEnrollmentParamsSchema,
+  ),
+);
