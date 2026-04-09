@@ -1,5 +1,3 @@
-"use client";
-
 import { Stack, Typography } from "@mui/material";
 
 import { GENDER_LABELS } from "@repo/contracts/athlete-profile";

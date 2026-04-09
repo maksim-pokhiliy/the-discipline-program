@@ -95,8 +95,16 @@ const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
               <Controller
                 name="status"
                 control={control}
-                render={({ field }) => (
-                  <TextField {...field} select fullWidth size="small" disabled={isPending}>
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    size="small"
+                    disabled={isPending}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  >
                     {Object.values(ContactStatus).map((status) => (
                       <MenuItem key={status} value={status}>
                         {CONTACT_STATUS_CONFIG[status].label}

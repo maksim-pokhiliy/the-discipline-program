@@ -1,5 +1,3 @@
-"use client";
-
 import { Alert, type AlertColor, AlertTitle, Avatar, Stack } from "@mui/material";
 
 import { StatusChip, type StatusChipConfig } from "@repo/ui";

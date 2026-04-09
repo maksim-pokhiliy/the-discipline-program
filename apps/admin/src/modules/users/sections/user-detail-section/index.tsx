@@ -31,13 +31,15 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
                 <Controller
                   name="role"
                   control={control}
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <TextField
                       {...field}
                       select
                       size="small"
                       fullWidth={false}
                       disabled={isPending}
+                      error={!!fieldState.error}
+                      helperText={fieldState.error?.message}
                       sx={{ minWidth: (theme) => theme.spacing(20) }}
                     >
                       {Object.values(UserRole).map((role) => (
