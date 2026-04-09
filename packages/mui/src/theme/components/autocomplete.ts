@@ -4,7 +4,6 @@ export const MuiAutocomplete: Components<Theme>["MuiAutocomplete"] = {
   styleOverrides: {
     paper: ({ theme }) => ({
       marginTop: theme.spacing(1),
-      border: `1px solid ${theme.palette.divider}`,
     }),
 
     listbox: ({ theme }) => ({

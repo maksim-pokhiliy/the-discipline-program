@@ -1,7 +1,15 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
 export const MuiButton: Components<Theme>["MuiButton"] = {
+  defaultProps: {
+    disableElevation: true,
+  },
+
   styleOverrides: {
+    root: {
+      textTransform: "none" as const,
+    },
+
     sizeSmall: ({ theme }) => ({
       fontSize: theme.typography.body2.fontSize,
       fontWeight: 500,
