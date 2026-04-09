@@ -101,7 +101,7 @@ export const AthletesFiltersSection: React.FC<AthletesFiltersSectionProps> = ({ 
         }}
       />
 
-      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+      <Stack direction="row" spacing={1} flexWrap="wrap">
         <Chip
           label="Needs Attention"
           color={currentAttention ? "warning" : "default"}

@@ -1,5 +1,3 @@
-"use client";
-
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import { Stack, Typography } from "@mui/material";
 

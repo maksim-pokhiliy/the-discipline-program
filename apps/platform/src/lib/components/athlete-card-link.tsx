@@ -1,5 +1,3 @@
-"use client";
-
 import { Box, type BoxProps } from "@mui/material";
 import Link from "next/link";
 

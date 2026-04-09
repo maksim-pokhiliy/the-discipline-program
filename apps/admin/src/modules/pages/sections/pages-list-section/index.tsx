@@ -1,5 +1,3 @@
-"use client";
-
 import EditIcon from "@mui/icons-material/Edit";
 import { IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";

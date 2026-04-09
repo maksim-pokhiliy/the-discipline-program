@@ -19,7 +19,7 @@ export const SidebarUserMenu = ({ expanded, email, onSignOut }: SidebarUserMenuP
 
   if (!expanded) {
     return (
-      <Stack alignItems="center" sx={{ py: 1, gap: 0.5 }}>
+      <Stack alignItems="center" spacing={0.5} sx={{ py: 1 }}>
         <Tooltip title={email} placement="right">
           <IconButton>{avatar}</IconButton>
         </Tooltip>
@@ -34,7 +34,7 @@ export const SidebarUserMenu = ({ expanded, email, onSignOut }: SidebarUserMenuP
   }
 
   return (
-    <Stack direction="row" alignItems="center" sx={{ px: 2, py: 1.5, gap: 1.5 }}>
+    <Stack direction="row" alignItems="center" spacing={1.5} sx={{ px: 2, py: 1.5 }}>
       {avatar}
 
       <Typography variant="body2" noWrap sx={{ flexGrow: 1, minWidth: 0 }}>

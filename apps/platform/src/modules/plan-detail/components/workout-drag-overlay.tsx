@@ -1,5 +1,3 @@
-"use client";
-
 import { Paper, Typography } from "@mui/material";
 
 import type { Workout } from "@repo/contracts/workout";
