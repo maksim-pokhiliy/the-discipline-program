@@ -136,7 +136,7 @@ describe("missedWorkoutsMetadataSchema", () => {
 describe("newNoStartMetadataSchema", () => {
   it("accepts valid metadata", () => {
     const result = newNoStartMetadataSchema.safeParse({
-      enrollmentId: "enrollment-abc-123",
+      enrollmentId: "clx1234567890abcdefghij",
     });
 
     expect(result.success).toBe(true);
