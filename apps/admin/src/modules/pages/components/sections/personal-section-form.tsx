@@ -7,7 +7,7 @@ import { type z } from "zod";
 import { type aboutPagePersonalSchema } from "@repo/contracts/pages";
 import { FormCard, ImageUpload } from "@repo/ui";
 
-import { useUploadImage } from "@app/lib/hooks";
+import { useDeleteImage, useUploadImage } from "@app/lib/hooks";
 
 type PersonalSectionData = z.infer<typeof aboutPagePersonalSchema>;
 
@@ -19,6 +19,7 @@ export const PersonalSectionForm = () => {
     formState: { errors },
   } = useFormContext<PersonalSectionData>();
   const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
+  const deleteImage = useDeleteImage();
 
   return (
     <FormCard title="Personal Section Settings">
@@ -74,7 +75,15 @@ export const PersonalSectionForm = () => {
               },
             );
           }}
-          onRemove={() => setValue("image", "", { shouldDirty: true })}
+          onRemove={() => {
+            const currentUrl = watch("image");
+
+            if (currentUrl) {
+              deleteImage.mutate(currentUrl);
+            }
+
+            setValue("image", "", { shouldDirty: true });
+          }}
         />
       </Stack>
     </FormCard>

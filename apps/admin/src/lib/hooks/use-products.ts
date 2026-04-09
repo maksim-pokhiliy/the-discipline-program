@@ -45,3 +45,10 @@ export const useToggleProductStatus = createToggleHook({
   errorMessage: "Failed to update status",
   invalidateKeys: [adminKeys.products.page(), adminKeys.dashboard()],
 });
+
+export const useToggleProductFeatured = createToggleHook({
+  mutationFn: api.products.toggleFeatured,
+  successMessage: "Featured product updated",
+  errorMessage: "Failed to update featured product",
+  invalidateKeys: [adminKeys.products.page(), adminKeys.dashboard()],
+});

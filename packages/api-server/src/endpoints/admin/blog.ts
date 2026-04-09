@@ -1,6 +1,7 @@
 import { type Prisma } from "@prisma/client";
 
 import {
+  BLOG_CONSTANTS,
   type AdminBlogPageData,
   type BlogPost,
   type CreateBlogPostData,
@@ -16,8 +17,6 @@ import {
   toggleExclusiveFeatured,
 } from "../../utils";
 
-const WORDS_PER_MINUTE = 200;
-
 const calculateReadTime = (content: string): number => {
   const cleanContent = content.trim();
 
@@ -26,7 +25,7 @@ const calculateReadTime = (content: string): number => {
   }
 
   const wordCount = cleanContent.split(/\s+/).length;
-  const minutes = Math.ceil(wordCount / WORDS_PER_MINUTE);
+  const minutes = Math.ceil(wordCount / BLOG_CONSTANTS.WORDS_PER_MINUTE);
 
   return Math.max(1, minutes);
 };

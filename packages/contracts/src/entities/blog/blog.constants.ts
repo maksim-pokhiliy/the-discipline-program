@@ -1,5 +1,6 @@
 export const BLOG_CONSTANTS = {
   MIN_CONTENT_LENGTH: 100,
+  WORDS_PER_MINUTE: 200,
 } as const;
 
 export enum BlogCategory {

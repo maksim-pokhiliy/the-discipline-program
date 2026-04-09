@@ -15,8 +15,6 @@ import { createCrudHooks, useOptimisticMutation } from "@repo/query";
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
 
-const useNavigate = () => useRouter().push;
-
 const trainingPlanHooks = createCrudHooks<
   CoachPlansPageData,
   TrainingPlan,
@@ -33,7 +31,7 @@ const trainingPlanHooks = createCrudHooks<
     delete: api.trainingPlans.delete,
   },
   redirectTo: "/coach/plans",
-  useNavigate,
+  useNavigate: () => useRouter().push,
   additionalInvalidateKeys: [platformKeys.coachDashboard.data()],
 });
 

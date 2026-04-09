@@ -91,6 +91,8 @@ export const contactPageFormSchema = titleSubtitleSchema.extend({
   successMessage: z.string(),
   submitLabel: z.string(),
   sendAnotherLabel: z.string(),
+  sendingLabel: z.string(),
+  errorMessage: z.string(),
   fieldLabels: z.object({
     name: z.string(),
     contact: z.string(),
@@ -137,6 +139,7 @@ export const blogGridSchema = titleSubtitleSchema.extend({
   readMoreLabel: z.string(),
   minReadSuffix: z.string(),
   readArticleLabel: z.string(),
+  notPublishedLabel: z.string(),
 });
 
 export const blogRelatedSectionSchema = z.object({

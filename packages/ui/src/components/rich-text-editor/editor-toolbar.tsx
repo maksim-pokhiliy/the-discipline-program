@@ -191,8 +191,10 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
         maxWidth="xs"
         actions={
           <>
-            <Button onClick={closeLinkDialog}>Cancel</Button>
-            <Button variant="contained" onClick={submitLink}>
+            <Button size="small" onClick={closeLinkDialog}>
+              Cancel
+            </Button>
+            <Button size="small" variant="contained" onClick={submitLink}>
               Apply
             </Button>
           </>

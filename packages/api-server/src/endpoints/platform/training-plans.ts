@@ -19,6 +19,7 @@ import {
 } from "../../mappers/enum-maps";
 import { findOrThrow, handlePrismaError } from "../../utils";
 import {
+  DAYS_IN_WEEK,
   MS_PER_DAY,
   endOfWeekInTz,
   startOfTodayInTz,
@@ -93,10 +94,7 @@ const transitionPlanStatus = async (
 export const platformTrainingPlansApi = {
   getCalendarWeek: async (userId: string, weekStart: Date): Promise<CalendarWorkout[]> => {
     const coachId = await resolveCoachId(userId);
-
-    const weekEnd = new Date(weekStart);
-
-    weekEnd.setDate(weekEnd.getDate() + 7);
+    const weekEnd = new Date(weekStart.getTime() + DAYS_IN_WEEK * MS_PER_DAY);
 
     const workouts = await prisma.workout.findMany({
       where: {

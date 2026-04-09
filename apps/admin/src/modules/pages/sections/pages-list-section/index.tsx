@@ -5,7 +5,7 @@ import { IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
 import { type AdminPageListItem } from "@repo/contracts/pages";
-import { formatDate } from "@repo/shared";
+import { capitalize, formatDate } from "@repo/shared";
 import { DataTable, type Column } from "@repo/ui";
 
 const columns: Column<AdminPageListItem>[] = [
@@ -13,11 +13,7 @@ const columns: Column<AdminPageListItem>[] = [
     id: "id",
     label: "Page Name",
     width: "60%",
-    render: (page) => (
-      <Typography variant="subtitle2">
-        {page.slug.charAt(0).toUpperCase() + page.slug.slice(1)} Page
-      </Typography>
-    ),
+    render: (page) => <Typography variant="subtitle2">{capitalize(page.slug)} Page</Typography>,
   },
   {
     id: "updatedAt",

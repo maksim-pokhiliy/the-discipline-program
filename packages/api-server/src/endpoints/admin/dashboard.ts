@@ -147,11 +147,7 @@ const getRecentActivity = async (): Promise<ActivityItem[]> => {
       interval: PrismaPriceInterval;
     }[],
   ): string => {
-    if (prices.length === 0) {
-      return "No price set";
-    }
-
-    const p = prices[0];
+    const p = prices.at(0);
 
     if (!p) {
       return "No price set";

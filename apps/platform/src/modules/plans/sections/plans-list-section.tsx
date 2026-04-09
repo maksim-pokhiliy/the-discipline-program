@@ -2,15 +2,14 @@
 
 import { useCallback, useMemo } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
-import { Fab, Stack, Tabs, Typography } from "@mui/material";
+import { Stack, Tabs, Typography } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import type { TrainingPlanListItem } from "@repo/contracts/training-plan";
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
-import { LAYOUT } from "@repo/shared";
 import { ChipTab } from "@repo/ui";
 
+import { PlatformFab } from "@app/lib/components";
 import {
   useActivateTrainingPlan,
   useArchiveTrainingPlan,
@@ -28,8 +27,10 @@ type PlansListSectionProps = {
   onCreateClick: () => void;
 };
 
+const VALID_STATUS_VALUES = new Set<string>(Object.values(TrainingPlanStatus));
+
 const isValidTab = (value: string): value is TrainingPlanStatus | typeof ALL_TAB =>
-  value === ALL_TAB || Object.values(TrainingPlanStatus).includes(value as TrainingPlanStatus);
+  value === ALL_TAB || VALID_STATUS_VALUES.has(value);
 
 export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCreateClick }) => {
   const router = useRouter();
@@ -132,13 +133,7 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
         </Typography>
       )}
 
-      <Fab
-        color="primary"
-        onClick={onCreateClick}
-        sx={{ position: "fixed", bottom: LAYOUT.platformFabBottom, right: 2 }}
-      >
-        <AddIcon />
-      </Fab>
+      <PlatformFab onClick={onCreateClick} />
     </Stack>
   );
 };

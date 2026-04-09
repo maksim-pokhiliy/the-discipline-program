@@ -5,8 +5,8 @@ import {
   ActionItemType as PrismaActionItemType,
   ContactSubmissionStatus as PrismaContactSubmissionStatus,
   type Currency as PrismaCurrency,
-  type Gender as PrismaGender,
-  type HealthStatus as PrismaHealthStatus,
+  Gender as PrismaGender,
+  HealthStatus as PrismaHealthStatus,
   MarketingBlogCategory as PrismaMarketingBlogCategory,
   PlanEnrollmentStatus as PrismaPlanEnrollmentStatus,
   type PriceInterval as PrismaPriceInterval,
@@ -82,8 +82,8 @@ export const GENDER_MAP: Record<PrismaGender, Gender> = {
 };
 
 export const GENDER_TO_PRISMA_MAP: Record<Gender, PrismaGender> = {
-  [Gender.MALE]: "MALE",
-  [Gender.FEMALE]: "FEMALE",
+  [Gender.MALE]: PrismaGender.MALE,
+  [Gender.FEMALE]: PrismaGender.FEMALE,
 };
 
 export const HEALTH_STATUS_MAP: Record<PrismaHealthStatus, HealthStatus> = {
@@ -93,15 +93,16 @@ export const HEALTH_STATUS_MAP: Record<PrismaHealthStatus, HealthStatus> = {
 };
 
 export const HEALTH_STATUS_TO_PRISMA_MAP: Record<HealthStatus, PrismaHealthStatus> = {
-  [HealthStatus.HEALTHY]: "HEALTHY",
-  [HealthStatus.INJURED]: "INJURED",
-  [HealthStatus.RESTRICTED]: "RESTRICTED",
+  [HealthStatus.HEALTHY]: PrismaHealthStatus.HEALTHY,
+  [HealthStatus.INJURED]: PrismaHealthStatus.INJURED,
+  [HealthStatus.RESTRICTED]: PrismaHealthStatus.RESTRICTED,
 };
 
 export const PLAN_ENROLLMENT_STATUS_MAP: Record<PrismaPlanEnrollmentStatus, PlanEnrollmentStatus> =
   {
     ACTIVE: PlanEnrollmentStatus.ACTIVE,
     PAUSED: PlanEnrollmentStatus.PAUSED,
+    COMPLETED: PlanEnrollmentStatus.COMPLETED,
   };
 
 export const PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP: Record<
@@ -110,6 +111,7 @@ export const PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP: Record<
 > = {
   [PlanEnrollmentStatus.ACTIVE]: PrismaPlanEnrollmentStatus.ACTIVE,
   [PlanEnrollmentStatus.PAUSED]: PrismaPlanEnrollmentStatus.PAUSED,
+  [PlanEnrollmentStatus.COMPLETED]: PrismaPlanEnrollmentStatus.COMPLETED,
 };
 
 export const ACTION_ITEM_TYPE_MAP: Record<PrismaActionItemType, ActionItemType> = {

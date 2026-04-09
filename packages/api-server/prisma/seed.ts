@@ -685,6 +685,7 @@ const seedMarketingPages = async () => {
         readMoreLabel: "read more",
         minReadSuffix: "min read",
         readArticleLabel: "read article",
+        notPublishedLabel: "Not published",
       },
     },
     {
@@ -715,6 +716,8 @@ const seedMarketingPages = async () => {
         successMessage: "Thank you for reaching out. We'll get back to you shortly.",
         submitLabel: "Send Message",
         sendAnotherLabel: "Send Another",
+        sendingLabel: "Sending...",
+        errorMessage: "Something went wrong",
         fieldLabels: {
           name: "Name",
           contact: "Phone / Telegram / WhatsApp",

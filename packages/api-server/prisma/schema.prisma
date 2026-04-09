@@ -180,7 +180,7 @@ model Subscription {
   userId             String             @unique
   user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   priceId            String
-  price              Price              @relation(fields: [priceId], references: [id])
+  price              Price              @relation(fields: [priceId], references: [id], onDelete: Restrict)
   status             SubscriptionStatus
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
@@ -188,6 +188,7 @@ model Subscription {
   canceledAt         DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+  transactions       Transaction[]
 
   @@index([createdAt])
   @@index([status])
@@ -200,6 +201,7 @@ model Transaction {
   userId         String
   user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscriptionId String?
+  subscription   Subscription?     @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   amountCents    Int
   currency       Currency
   status         TransactionStatus
@@ -210,6 +212,7 @@ model Transaction {
 
   @@index([createdAt])
   @@index([userId, status])
+  @@index([subscriptionId])
   @@map("app_transactions")
 }
 
@@ -336,6 +339,7 @@ model CoachActionItem {
   updatedAt     DateTime                  @updatedAt
 
   @@index([coachId, status])
+  @@index([coachId, status, athleteId])
   @@index([coachId, status, resolvedAt])
   @@index([athleteId])
   @@index([createdAt])
@@ -368,6 +372,7 @@ model CoachNote {
 enum PlanEnrollmentStatus {
   ACTIVE
   PAUSED
+  COMPLETED
 }
 
 model PlanEnrollment {
@@ -408,7 +413,7 @@ model UserBenchmark {
   userId                String
   user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   benchmarkDefinitionId String
-  benchmarkDefinition   BenchmarkDefinition @relation(fields: [benchmarkDefinitionId], references: [id])
+  benchmarkDefinition   BenchmarkDefinition @relation(fields: [benchmarkDefinitionId], references: [id], onDelete: Restrict)
   value                 Decimal             @db.Decimal(10, 2)
   createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt

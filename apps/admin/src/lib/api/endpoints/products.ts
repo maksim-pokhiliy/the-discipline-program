@@ -26,4 +26,10 @@ export const createProductsAPI = (client: ApiClient) => ({
       `/api/admin/products/${id}/toggle?field=${ProductToggleField.IS_ACTIVE}`,
       "PATCH",
     ),
+
+  toggleFeatured: (id: string): Promise<Product> =>
+    client.request(
+      `/api/admin/products/${id}/toggle?field=${ProductToggleField.IS_FEATURED}`,
+      "PATCH",
+    ),
 });

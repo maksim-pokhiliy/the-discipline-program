@@ -1,4 +1,6 @@
 export { AthleteCardLink } from "./athlete-card-link";
+export { HealthStatusChip } from "./health-status-chip";
 export { PlatformBottomNav } from "./platform-bottom-nav";
+export { PlatformFab } from "./platform-fab";
 export { PlatformHeader } from "./platform-header";
 export { PlatformLayout } from "./platform-layout";

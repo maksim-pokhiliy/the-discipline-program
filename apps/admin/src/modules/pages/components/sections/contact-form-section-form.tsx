@@ -48,6 +48,22 @@ export const ContactFormSectionForm = () => {
         {...register("submitLabel")}
       />
 
+      <TextField
+        label="Sending Label"
+        fullWidth
+        error={!!errors.sendingLabel}
+        helperText={errors.sendingLabel?.message}
+        {...register("sendingLabel")}
+      />
+
+      <TextField
+        label="Error Message"
+        fullWidth
+        error={!!errors.errorMessage}
+        helperText={errors.errorMessage?.message}
+        {...register("errorMessage")}
+      />
+
       <FormCard title="Field Labels">
         <TextField
           label="Name Field Label"
