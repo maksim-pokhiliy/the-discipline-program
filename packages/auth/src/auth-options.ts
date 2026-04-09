@@ -5,6 +5,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 
 import { AUTH_CONSTANTS, type UserRole } from "@repo/contracts/auth";
 import { authEnv } from "@repo/env/auth";
+import { UnauthorizedError } from "@repo/errors";
 
 import { AUTH_ROUTES } from "./constants";
 
@@ -65,7 +66,7 @@ export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions 
       const dbUser = await service.getUserById(token.id);
 
       if (!dbUser) {
-        throw new Error("User no longer exists");
+        throw new UnauthorizedError("User no longer exists");
       }
 
       token.role = dbUser.role;

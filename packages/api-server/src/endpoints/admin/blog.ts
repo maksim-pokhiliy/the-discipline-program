@@ -44,14 +44,6 @@ const prepareCreateInput = (data: CreateBlogPostData): Prisma.MarketingBlogPostC
   };
 };
 
-type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
-
-const unfeatureOthers = (tx: TxClient, excludeId?: string): Promise<Prisma.BatchPayload> =>
-  tx.marketingBlogPost.updateMany({
-    where: { isFeatured: true, ...(excludeId ? { id: { not: excludeId } } : {}) },
-    data: { isFeatured: false },
-  });
-
 export const adminBlogApi = {
   getPosts: async (): Promise<BlogPost[]> => {
     const posts = await prisma.marketingBlogPost.findMany({
@@ -82,7 +74,10 @@ export const adminBlogApi = {
 
       return await prisma.$transaction(async (tx) => {
         if (dbInput.isFeatured) {
-          await unfeatureOthers(tx);
+          await tx.marketingBlogPost.updateMany({
+            where: { isFeatured: true },
+            data: { isFeatured: false },
+          });
         }
 
         const post = await tx.marketingBlogPost.create({
@@ -119,7 +114,10 @@ export const adminBlogApi = {
 
       return await prisma.$transaction(async (tx) => {
         if (data.isFeatured === true) {
-          await unfeatureOthers(tx, id);
+          await tx.marketingBlogPost.updateMany({
+            where: { isFeatured: true, id: { not: id } },
+            data: { isFeatured: false },
+          });
         }
 
         const post = await tx.marketingBlogPost.update({

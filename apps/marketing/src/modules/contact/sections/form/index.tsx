@@ -22,6 +22,22 @@ import { ContentSection } from "@repo/ui";
 
 import { useSubmitContact } from "@app/lib/hooks";
 
+const SEND_ANOTHER_LABEL = "Send Another";
+const SENDING_LABEL = "Sending...";
+const ERROR_FALLBACK = "Something went wrong";
+
+const FIELD_LABELS = {
+  name: "Name",
+  contact: "Phone / Telegram / WhatsApp",
+  program: "Program Interest",
+  message: "Your Message",
+} as const;
+
+const FIELD_PLACEHOLDERS = {
+  contact: "+380..., @username",
+  message: "Tell us about your goals...",
+} as const;
+
 type ContactFormSectionProps = {
   form: ContactPageData["form"];
   programOptions: ContactPageData["programOptions"];
@@ -56,15 +72,15 @@ export const ContactFormSection = ({ form, programOptions }: ContactFormSectionP
       {isSuccess ? (
         <Stack spacing={3} sx={{ alignItems: "center", textAlign: "center" }}>
           <Typography variant="display2" component="h2">
-            {form.successTitle ?? "Message Sent"}
+            {form.successTitle}
           </Typography>
 
           <Typography variant="h4" color="text.secondary">
-            {form.successMessage ?? "Thank you for reaching out. We'll get back to you soon."}
+            {form.successMessage}
           </Typography>
 
           <Button variant="contained" size="large" onClick={() => resetMutation()}>
-            Send Another
+            {SEND_ANOTHER_LABEL}
           </Button>
         </Stack>
       ) : (
@@ -72,7 +88,7 @@ export const ContactFormSection = ({ form, programOptions }: ContactFormSectionP
           {error && (
             <Alert severity="error">
               <Typography variant="body2">
-                {error instanceof Error ? error.message : "Something went wrong"}
+                {error instanceof Error ? error.message : ERROR_FALLBACK}
               </Typography>
             </Alert>
           )}
@@ -80,7 +96,7 @@ export const ContactFormSection = ({ form, programOptions }: ContactFormSectionP
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label="Name"
+                label={FIELD_LABELS.name}
                 required
                 fullWidth
                 disabled={isPending}
@@ -92,11 +108,11 @@ export const ContactFormSection = ({ form, programOptions }: ContactFormSectionP
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label="Phone / Telegram / WhatsApp"
+                label={FIELD_LABELS.contact}
                 required
                 fullWidth
                 disabled={isPending}
-                placeholder="+380..., @username"
+                placeholder={FIELD_PLACEHOLDERS.contact}
                 error={!!errors.contact}
                 helperText={errors.contact?.message}
                 {...register("contact")}
@@ -106,7 +122,7 @@ export const ContactFormSection = ({ form, programOptions }: ContactFormSectionP
 
           <TextField
             select
-            label="Program Interest"
+            label={FIELD_LABELS.program}
             fullWidth
             disabled={isPending}
             defaultValue=""
@@ -122,13 +138,13 @@ export const ContactFormSection = ({ form, programOptions }: ContactFormSectionP
           </TextField>
 
           <TextField
-            label="Your Message"
+            label={FIELD_LABELS.message}
             required
             multiline
             rows={4}
             fullWidth
             disabled={isPending}
-            placeholder="Tell us about your goals..."
+            placeholder={FIELD_PLACEHOLDERS.message}
             error={!!errors.message}
             helperText={errors.message?.message}
             {...register("message")}
@@ -142,7 +158,7 @@ export const ContactFormSection = ({ form, programOptions }: ContactFormSectionP
             disabled={!isValid || isPending}
             startIcon={isPending ? <CircularProgress size={20} color="inherit" /> : null}
           >
-            {isPending ? "Sending..." : "Send Message"}
+            {isPending ? SENDING_LABEL : form.submitLabel}
           </Button>
         </Stack>
       )}

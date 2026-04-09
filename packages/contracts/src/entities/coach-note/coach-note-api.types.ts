@@ -5,6 +5,7 @@ import {
   type createCoachNoteResponseSchema,
   type deleteCoachNoteParamsSchema,
   type getCoachNoteByIdParamsSchema,
+  type getCoachNoteByIdResponseSchema,
   type getCoachNotesResponseSchema,
   type updateCoachNoteParamsSchema,
   type updateCoachNoteRequestSchema,
@@ -13,6 +14,7 @@ import {
 
 export type GetCoachNotesResponse = z.infer<typeof getCoachNotesResponseSchema>;
 export type GetCoachNoteByIdParams = z.infer<typeof getCoachNoteByIdParamsSchema>;
+export type GetCoachNoteByIdResponse = z.infer<typeof getCoachNoteByIdResponseSchema>;
 export type CreateCoachNoteRequest = z.infer<typeof createCoachNoteRequestSchema>;
 export type CreateCoachNoteResponse = z.infer<typeof createCoachNoteResponseSchema>;
 export type UpdateCoachNoteParams = z.infer<typeof updateCoachNoteParamsSchema>;

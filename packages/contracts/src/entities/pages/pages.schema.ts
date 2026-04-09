@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-export { idParamSchema } from "../../common";
-
 const titleSubtitleSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
@@ -33,7 +31,10 @@ export const homePageWhyChooseSchema = z.object({
   features: z.array(whyChooseFeatureItemSchema),
 });
 
-export const homePageStorefrontProgramsSchema = titleSubtitleSchema;
+export const homePageStorefrontProgramsSchema = titleSubtitleSchema.extend({
+  buttonText: z.string(),
+  buttonHref: z.string(),
+});
 
 export const homePageReviewsSchema = titleSubtitleSchema;
 
@@ -82,8 +83,9 @@ export const aboutPageCtaSchema = ctaSectionSchema;
 export const contactPageHeroSchema = heroSectionSchema;
 
 export const contactPageFormSchema = titleSubtitleSchema.extend({
-  successTitle: z.string().optional(),
-  successMessage: z.string().optional(),
+  successTitle: z.string(),
+  successMessage: z.string(),
+  submitLabel: z.string(),
 });
 
 export const programOptionSchema = z.object({

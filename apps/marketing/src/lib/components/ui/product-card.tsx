@@ -16,6 +16,8 @@ import {
 import { type Product, PRICE_INTERVAL_LABELS } from "@repo/contracts/product";
 import { formatPrice } from "@repo/shared";
 
+const FREE_LABEL = "Free";
+
 type ProductCardProps = {
   product: Product;
   onAction: () => void;
@@ -53,7 +55,9 @@ export const ProductCard = ({
 
           <Stack direction="row" sx={{ alignItems: "baseline" }} spacing={0.5}>
             <Typography variant="display2" component="p">
-              {activePrice ? formatPrice(activePrice.amountCents, activePrice.currency) : "Free"}
+              {activePrice
+                ? formatPrice(activePrice.amountCents, activePrice.currency)
+                : FREE_LABEL}
             </Typography>
 
             {activePrice && (

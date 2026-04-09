@@ -13,6 +13,9 @@ import Link from "next/link";
 
 import { type BlogCategory, BLOG_CATEGORY_LABELS } from "@repo/contracts/blog";
 
+const MIN_READ_SUFFIX = "min read";
+const READ_MORE_LABEL = "Read More";
+
 type BlogPostCardProps = {
   slug: string;
   title: string;
@@ -75,11 +78,11 @@ export const BlogPostCard = ({
           sx={{ width: "100%" }}
         >
           <Typography variant="caption" color="text.secondary">
-            {readTime} min read
+            {readTime} {MIN_READ_SUFFIX}
           </Typography>
 
           <Button component={Link} href={`/blog/${slug}`} size="small">
-            Read More
+            {READ_MORE_LABEL}
           </Button>
         </Stack>
       </CardActions>

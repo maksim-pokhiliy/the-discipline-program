@@ -2,6 +2,8 @@ import { type Prisma, PrismaClient } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/auth";
 
+import { ROLE_TO_PRISMA_MAP } from "../mappers/enum-maps";
+
 const rawPrisma = new PrismaClient();
 
 export const createTestUser = async (
@@ -13,14 +15,14 @@ export const createTestUser = async (
     data: {
       email: `test-${id}@test.local`,
       name: `Test User ${id.slice(0, 8)}`,
-      role: UserRole.USER,
+      role: ROLE_TO_PRISMA_MAP[UserRole.USER],
       ...overrides,
     },
   });
 };
 
 export const createTestCoach = async () => {
-  const user = await createTestUser({ role: UserRole.COACH });
+  const user = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.COACH] });
   const profile = await rawPrisma.coachProfile.create({
     data: { userId: user.id },
   });

@@ -24,13 +24,15 @@ const NAV_ITEMS = [
   { label: "Profile", icon: <PersonIcon /> },
 ];
 
+const CONTAINER_SX = { width: 400 } as const;
+
 const BasicStory = () => {
   const [value, setValue] = useState(0);
 
   return (
     <StoryPage>
       <StorySection title="basic (with labels)" direction="column">
-        <Box sx={{ width: 400 }}>
+        <Box sx={CONTAINER_SX}>
           <BottomNavigation value={value} onChange={(_, v) => setValue(v)} showLabels>
             {NAV_ITEMS.map(({ label, icon }) => (
               <BottomNavigationAction key={label} label={label} icon={icon} />
@@ -52,7 +54,7 @@ const WithoutLabelsStory = () => {
   return (
     <StoryPage>
       <StorySection title="without labels (show on select)" direction="column">
-        <Box sx={{ width: 400 }}>
+        <Box sx={CONTAINER_SX}>
           <BottomNavigation value={value} onChange={(_, v) => setValue(v)}>
             {NAV_ITEMS.map(({ label, icon }) => (
               <BottomNavigationAction key={label} label={label} icon={icon} />
@@ -75,7 +77,7 @@ const ColorStory = () => {
   return (
     <StoryPage>
       <StorySection title="color=primary (default)" direction="column">
-        <Box sx={{ width: 400 }}>
+        <Box sx={CONTAINER_SX}>
           <BottomNavigation value={primary} onChange={(_, v) => setPrimary(v)} showLabels>
             {NAV_ITEMS.map(({ label, icon }) => (
               <BottomNavigationAction key={label} label={label} icon={icon} />
@@ -85,7 +87,7 @@ const ColorStory = () => {
       </StorySection>
 
       <StorySection title="color=secondary" direction="column">
-        <Box sx={{ width: 400 }}>
+        <Box sx={CONTAINER_SX}>
           <BottomNavigation value={secondary} onChange={(_, v) => setSecondary(v)} showLabels>
             {NAV_ITEMS.map(({ label, icon }) => (
               <BottomNavigationAction

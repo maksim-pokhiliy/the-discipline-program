@@ -4,6 +4,10 @@ import { BLOG_CATEGORY_LABELS, type PublicBlogPost } from "@repo/contracts/blog"
 
 import { FullscreenSection } from "@app/lib/components/ui";
 
+const NOT_PUBLISHED_LABEL = "Not published";
+const READ_ARTICLE_LABEL = "read article";
+const MIN_READ_SUFFIX = "min read";
+
 type BlogArticleHeroProps = {
   post: PublicBlogPost;
 };
@@ -15,7 +19,7 @@ export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
         month: "long",
         day: "numeric",
       })
-    : "Not published";
+    : NOT_PUBLISHED_LABEL;
 
   return (
     <FullscreenSection backgroundImage={post.coverImage ?? "/images/pages/home-hero.png"}>
@@ -45,11 +49,13 @@ export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
       >
         <Typography variant="body1">{post.authorName}</Typography>
         <Typography variant="body1">{publishedDate}</Typography>
-        <Typography variant="body1">{post.readTime} min read</Typography>
+        <Typography variant="body1">
+          {post.readTime} {MIN_READ_SUFFIX}
+        </Typography>
       </Stack>
 
       <Button size="large" variant="contained" href="#content" sx={{ mt: 4 }}>
-        read article
+        {READ_ARTICLE_LABEL}
       </Button>
     </FullscreenSection>
   );

@@ -1,3 +1,4 @@
+import { UserRole } from "@repo/contracts/auth";
 import type { UserSearchResult } from "@repo/contracts/user";
 
 import { prisma } from "../../db/client";
@@ -12,7 +13,7 @@ export const platformUsersApi = {
     const users = await prisma.user.findMany({
       where: {
         id: { not: userId },
-        role: ROLE_TO_PRISMA_MAP.USER,
+        role: ROLE_TO_PRISMA_MAP[UserRole.USER],
         OR: [
           { name: { contains: query, mode: "insensitive" } },
           { email: { contains: query, mode: "insensitive" } },

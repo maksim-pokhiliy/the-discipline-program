@@ -180,6 +180,7 @@ export const pagesApi = {
     return {
       post: publicPost,
       relatedPosts,
+      relatedSectionTitle: "Related Articles",
     };
   },
 };

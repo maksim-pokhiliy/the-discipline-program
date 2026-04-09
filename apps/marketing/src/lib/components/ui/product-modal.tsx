@@ -7,6 +7,10 @@ import { type Product, PRICE_INTERVAL_LABELS } from "@repo/contracts/product";
 import { formatPrice } from "@repo/shared";
 import { BaseModal } from "@repo/ui";
 
+const DISMISS_LABEL = "maybe later";
+const ACTION_LABEL = "get started";
+const FREE_LABEL = "Free";
+
 type ProductModalProps = {
   product: Product | null;
   open: boolean;
@@ -22,7 +26,7 @@ export const ProductModal = ({ product, open, onClose, onGetStarted }: ProductMo
   const activePrice = product.prices.find((p) => p.isActive);
   const displayPrice = activePrice
     ? formatPrice(activePrice.amountCents, activePrice.currency)
-    : "Free";
+    : FREE_LABEL;
   const displayInterval = activePrice ? PRICE_INTERVAL_LABELS[activePrice.interval] : null;
 
   return (
@@ -33,11 +37,11 @@ export const ProductModal = ({ product, open, onClose, onGetStarted }: ProductMo
       actions={
         <Stack direction="row" spacing={3} sx={{ alignItems: "center", width: "100%" }}>
           <Button variant="text" size="large" fullWidth onClick={onClose}>
-            maybe later
+            {DISMISS_LABEL}
           </Button>
 
           <Button variant="contained" size="large" fullWidth onClick={onGetStarted ?? onClose}>
-            get started
+            {ACTION_LABEL}
           </Button>
         </Stack>
       }

@@ -5,7 +5,8 @@
   "sideEffects": false,
   "exports": {
     "./base": "./src/base.ts",
-    "./auth": "./src/auth.ts"
+    "./auth": "./src/auth.ts",
+    "./blob": "./src/blob.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

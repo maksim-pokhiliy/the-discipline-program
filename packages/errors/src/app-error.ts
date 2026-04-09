@@ -22,6 +22,6 @@ export class AppError extends Error {
     this.details = options.details;
     this.timestamp = new Date().toISOString();
 
-    Error.captureStackTrace(this, this.constructor);
+    Error.captureStackTrace?.(this, this.constructor);
   }
 }
