@@ -1,3 +1,5 @@
+"use client";
+
 import { type ReactNode, type FormEvent, useId } from "react";
 
 import { Button, CircularProgress, Alert, Stack } from "@mui/material";

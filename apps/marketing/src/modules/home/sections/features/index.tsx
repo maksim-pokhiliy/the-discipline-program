@@ -24,11 +24,11 @@ const FEATURE_ICONS: Record<string, SvgIconComponent> = {
 
 const FALLBACK_ICON: SvgIconComponent = HelpOutlineIcon;
 
-type FeaturesSectionProps = {
+type HomeFeaturesSectionProps = {
   whyChoose: HomePageData["whyChoose"];
 };
 
-export const HomeFeaturesSection = ({ whyChoose }: FeaturesSectionProps) => {
+export const HomeFeaturesSection = ({ whyChoose }: HomeFeaturesSectionProps) => {
   return (
     <ContentSection id="why-choose" title={whyChoose.title} subtitle={whyChoose.subtitle}>
       <Grid container spacing={6}>

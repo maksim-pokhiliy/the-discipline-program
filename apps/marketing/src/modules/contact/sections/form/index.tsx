@@ -22,9 +22,6 @@ import { ContentSection } from "@repo/ui";
 
 import { useSubmitContact } from "@app/lib/hooks";
 
-const SENDING_LABEL = "Sending...";
-const ERROR_FALLBACK = "Something went wrong";
-
 type ContactFormSectionProps = {
   form: ContactPageData["form"];
   programOptions: ContactPageData["programOptions"];
@@ -78,7 +75,7 @@ export const ContactFormSection = ({
           {error && (
             <Alert severity="error">
               <Typography variant="body2">
-                {error instanceof Error ? error.message : ERROR_FALLBACK}
+                {error instanceof Error ? error.message : form.errorMessage}
               </Typography>
             </Alert>
           )}
@@ -148,7 +145,7 @@ export const ContactFormSection = ({
             disabled={!isValid || isPending}
             startIcon={isPending ? <CircularProgress size={20} color="inherit" /> : null}
           >
-            {isPending ? SENDING_LABEL : form.submitLabel}
+            {isPending ? form.sendingLabel : form.submitLabel}
           </Button>
         </Stack>
       )}

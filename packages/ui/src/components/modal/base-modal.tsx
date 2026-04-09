@@ -1,3 +1,5 @@
+"use client";
+
 import { type ReactNode } from "react";
 
 import CloseIcon from "@mui/icons-material/Close";
@@ -7,7 +9,6 @@ import {
   DialogTitle,
   DialogContent,
   IconButton,
-  Stack,
   type DialogProps,
 } from "@mui/material";
 
@@ -55,7 +56,7 @@ export const BaseModal = ({
       disableRestoreFocus={true}
       disableAutoFocus={false}
     >
-      <DialogTitle component={Stack} direction="row">
+      <DialogTitle>
         {title}
 
         <IconButton onClick={onClose}>

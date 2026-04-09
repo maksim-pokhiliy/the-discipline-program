@@ -68,6 +68,7 @@ export const blogLabelsSchema = z.object({
   readMoreLabel: z.string(),
   minReadSuffix: z.string(),
   readArticleLabel: z.string(),
+  notPublishedLabel: z.string(),
 });
 
 export const blogPostPageDataSchema = z.object({

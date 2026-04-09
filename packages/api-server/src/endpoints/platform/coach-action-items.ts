@@ -1,4 +1,5 @@
 import type { CoachActionItem as PrismaCoachActionItemRecord } from "@prisma/client";
+import { type JsonObject } from "@prisma/client/runtime/library";
 
 import { HEALTH_STATUS_LABELS, HealthStatus } from "@repo/contracts/athlete-profile";
 import {
@@ -21,8 +22,10 @@ import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-import { ACTION_ITEM_SEVERITY_MAP, HEALTH_STATUS_MAP, mapToCoachActionItem } from "../../mappers";
+import { mapToCoachActionItem } from "../../mappers";
 import {
+  ACTION_ITEM_SEVERITY_MAP,
+  HEALTH_STATUS_MAP,
   ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP,
   ACTION_ITEM_SEVERITY_TO_PRISMA_MAP,
   ACTION_ITEM_STATUS_MAP,
@@ -126,7 +129,7 @@ const computeConditions = (enrollments: EnrollmentWithData[], tz: string): Condi
 
 const conditionMatchesResolved = (
   condition: Condition,
-  resolvedMetadata: Record<string, unknown> | null,
+  resolvedMetadata: JsonObject | null,
 ): boolean => {
   if (!resolvedMetadata) {
     return false;
@@ -268,7 +271,12 @@ export const platformCoachActionItemsApi = {
         }
 
         for (const [key, item] of openByKey) {
-          const athleteId = key.split(":")[1] ?? "";
+          const athleteId = key.split(":")[1];
+
+          if (!athleteId) {
+            continue;
+          }
+
           const reason = activeAthleteIds.has(athleteId)
             ? ActionItemResolveReason.AUTO_CONDITION_CLEARED
             : ActionItemResolveReason.AUTO_ENROLLMENT_ENDED;

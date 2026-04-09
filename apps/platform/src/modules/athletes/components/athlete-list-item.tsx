@@ -2,11 +2,11 @@
 
 import { Chip, Stack, Typography } from "@mui/material";
 
-import { HealthStatus } from "@repo/contracts/athlete-profile";
 import type { CoachAthleteListItem } from "@repo/contracts/coach-athletes";
 import { PersonCard, StatusChip } from "@repo/ui";
 
-import { HEALTH_STATUS_CHIPS, PROCESS_STATUS_CHIPS } from "@app/lib/config";
+import { HealthStatusChip } from "@app/lib/components";
+import { PROCESS_STATUS_CHIPS } from "@app/lib/config";
 
 type AthleteListItemProps = {
   athlete: CoachAthleteListItem;
@@ -30,9 +30,7 @@ export const AthleteListItem: React.FC<AthleteListItemProps> = ({ athlete, onSel
           <Typography variant="subtitle2" noWrap sx={{ flex: 1 }}>
             {athlete.name ?? athlete.email}
           </Typography>
-          {athlete.healthStatus !== HealthStatus.HEALTHY && (
-            <StatusChip {...HEALTH_STATUS_CHIPS[athlete.healthStatus]} />
-          )}
+          <HealthStatusChip healthStatus={athlete.healthStatus} />
         </Stack>
 
         <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>

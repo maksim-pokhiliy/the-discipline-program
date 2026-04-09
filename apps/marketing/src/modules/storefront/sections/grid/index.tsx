@@ -8,12 +8,15 @@ import { ContentSection } from "@repo/ui";
 import { ProductCard, ProductModal } from "@app/lib/components/ui";
 import { useProductModal } from "@app/lib/hooks";
 
-type ProgramsGridSectionProps = {
+type StorefrontProgramsGridSectionProps = {
   grid: StorefrontProgramsPageData["grid"];
   productsList: StorefrontProgramsPageData["productsList"];
 };
 
-export const StorefrontProgramsGridSection = ({ grid, productsList }: ProgramsGridSectionProps) => {
+export const StorefrontProgramsGridSection = ({
+  grid,
+  productsList,
+}: StorefrontProgramsGridSectionProps) => {
   const modal = useProductModal({ products: productsList, basePath: "/storefront" });
 
   return (

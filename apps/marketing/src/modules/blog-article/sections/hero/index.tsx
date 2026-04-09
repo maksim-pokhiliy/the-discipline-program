@@ -20,7 +20,7 @@ export const BlogArticleHero = ({ post, labels }: BlogArticleHeroProps) => {
         month: "long",
         day: "numeric",
       })
-    : "Not published";
+    : labels.notPublishedLabel;
 
   return (
     <FullscreenSection backgroundImage={post.coverImage ?? "/images/pages/home-hero.png"}>

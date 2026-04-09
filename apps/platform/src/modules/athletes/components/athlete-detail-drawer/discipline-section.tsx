@@ -48,7 +48,7 @@ export const DisciplineSection: React.FC<DisciplineSectionProps> = ({ planDiscip
             <LinearProgress
               variant="determinate"
               value={progress}
-              sx={{ height: 6, borderRadius: 1, flex: 1 }}
+              sx={(theme) => ({ height: theme.spacing(0.75), borderRadius: 1, flex: 1 })}
             />
           </Tooltip>
           <Typography variant="subtitle2" sx={{ whiteSpace: "nowrap" }}>

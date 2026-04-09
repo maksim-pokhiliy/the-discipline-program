@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
 
 import { Stack } from "@mui/material";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { type AdminPageDetails, type UpdatePageSectionData } from "@repo/contracts/pages";
+import { capitalize } from "@repo/shared";
 import { ContentSection, QueryWrapper } from "@repo/ui";
 
 import { usePageDetails, useUpdatePageSection } from "@app/lib/hooks";
@@ -17,11 +19,23 @@ type PagesEditFormProps = {
 
 const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
   const { mutate: updateSection, isPending } = useUpdatePageSection();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const [expanded, setExpanded] = useState<string | false>(page.sections[0]?.section || false);
+  const defaultSection = page.sections[0]?.section ?? false;
+  const expanded: string | false = searchParams.get("section") ?? defaultSection;
 
   const handleToggle = (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
-    setExpanded(isExpanded ? panel : false);
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (isExpanded) {
+      params.set("section", panel);
+    } else {
+      params.delete("section");
+    }
+
+    router.replace(`${pathname}?${params.toString()}`);
   };
 
   const onSaveSection = (
@@ -41,7 +55,7 @@ const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
   return (
     <ContentSection
       title="Edit Marketing Page"
-      subtitle={page.slug.toUpperCase()}
+      subtitle={capitalize(page.slug)}
       backHref="/pages"
       backLabel="Back to Pages"
       maxWidth="xl"
@@ -73,7 +87,11 @@ export const PagesEditView: React.FC<PagesEditViewProps> = ({ slug }) => {
 
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage="Loading page...">
-      {(page) => <PagesEditForm page={page} />}
+      {(page) => (
+        <Suspense>
+          <PagesEditForm page={page} />
+        </Suspense>
+      )}
     </QueryWrapper>
   );
 };

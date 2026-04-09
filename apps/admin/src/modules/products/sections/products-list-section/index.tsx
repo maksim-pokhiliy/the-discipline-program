@@ -4,6 +4,7 @@ import { useMemo } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import StarIcon from "@mui/icons-material/Star";
 import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
@@ -19,7 +20,7 @@ import {
 } from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
-import { useDeleteProduct, useToggleProductStatus } from "@app/lib/hooks";
+import { useDeleteProduct, useToggleProductFeatured, useToggleProductStatus } from "@app/lib/hooks";
 
 const getDisplayPrice = (product: Product): string => {
   const activePrice = product.prices.find((p) => p.isActive);
@@ -41,6 +42,15 @@ const filters: DataTableFilter<Product>[] = [
     ],
     match: (item, value) => (value === "active" ? item.isActive : !item.isActive),
   },
+  {
+    id: "spotlight",
+    label: "Spotlight",
+    options: [
+      { label: "Featured", value: "featured" },
+      { label: "Standard", value: "standard" },
+    ],
+    match: (item, value) => (value === "featured" ? item.isFeatured : !item.isFeatured),
+  },
 ];
 
 type ProductsListSectionProps = {
@@ -50,6 +60,7 @@ type ProductsListSectionProps = {
 export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
   const { state, onStateChange } = useDataTableUrlState();
   const toggleStatusMutation = useToggleProductStatus();
+  const toggleFeaturedMutation = useToggleProductFeatured();
   const deleteMutation = useDeleteProduct();
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
@@ -101,6 +112,32 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
         ),
       },
       {
+        id: "featured",
+        label: "Spotlight",
+        width: "20%",
+        render: (product) => (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Switch
+              size="small"
+              checked={product.isFeatured}
+              disabled={
+                toggleFeaturedMutation.isPending && toggleFeaturedMutation.variables === product.id
+              }
+              onChange={() => toggleFeaturedMutation.mutate(product.id)}
+              color="warning"
+            />
+
+            <Chip
+              icon={product.isFeatured ? <StarIcon fontSize="small" /> : undefined}
+              label={product.isFeatured ? "Featured" : "Standard"}
+              color={product.isFeatured ? "warning" : "default"}
+              size="small"
+              variant="outlined"
+            />
+          </Stack>
+        ),
+      },
+      {
         id: "price",
         label: "Price",
         width: "15%",
@@ -136,7 +173,7 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
         ),
       },
     ],
-    [toggleStatusMutation, requestDelete],
+    [toggleStatusMutation, toggleFeaturedMutation, requestDelete],
   );
 
   return (

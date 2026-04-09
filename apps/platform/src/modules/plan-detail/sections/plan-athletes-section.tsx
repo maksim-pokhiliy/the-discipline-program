@@ -3,12 +3,12 @@
 import { useCallback, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Button, Fab, Grid, Stack, Typography } from "@mui/material";
+import { Button, Grid, Stack, Typography } from "@mui/material";
 
 import { type PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { LAYOUT } from "@repo/shared";
 import { QueryWrapper } from "@repo/ui";
 
+import { PlatformFab } from "@app/lib/components";
 import {
   useDeletePlanEnrollment,
   usePlanEnrollments,
@@ -81,13 +81,7 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
         }
       </QueryWrapper>
 
-      <Fab
-        color="primary"
-        onClick={() => setEnrollOpen(true)}
-        sx={{ position: "fixed", bottom: LAYOUT.platformFabBottom, right: 2 }}
-      >
-        <AddIcon />
-      </Fab>
+      <PlatformFab onClick={() => setEnrollOpen(true)} />
 
       <EnrollAthleteDialog
         open={enrollOpen}

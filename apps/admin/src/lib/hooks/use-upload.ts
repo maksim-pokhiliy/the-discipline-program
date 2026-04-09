@@ -16,3 +16,15 @@ export const useUploadImage = () => {
     },
   });
 };
+
+export const useDeleteImage = () => {
+  return useMutation({
+    mutationFn: (url: string) => api.upload.deleteImage(url),
+    onSuccess: () => {
+      toast.success("Image deleted");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete image");
+    },
+  });
+};

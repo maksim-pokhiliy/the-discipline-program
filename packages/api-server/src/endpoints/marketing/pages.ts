@@ -192,6 +192,7 @@ export const pagesApi = {
         readMoreLabel: gridSection.readMoreLabel,
         minReadSuffix: gridSection.minReadSuffix,
         readArticleLabel: gridSection.readArticleLabel,
+        notPublishedLabel: gridSection.notPublishedLabel,
       },
     };
   },
