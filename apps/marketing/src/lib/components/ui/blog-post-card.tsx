@@ -13,8 +13,7 @@ import Link from "next/link";
 
 import { type BlogCategory, BLOG_CATEGORY_LABELS } from "@repo/contracts/blog";
 
-const MIN_READ_SUFFIX = "min read";
-const READ_MORE_LABEL = "Read More";
+import { MIN_READ_SUFFIX, READ_MORE_LABEL } from "@app/lib/config";
 
 type BlogPostCardProps = {
   slug: string;

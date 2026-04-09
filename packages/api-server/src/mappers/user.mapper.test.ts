@@ -1,3 +1,4 @@
+import { Gender as PrismaGender, HealthStatus as PrismaHealthStatus, Role } from "@prisma/client";
 import { Decimal } from "@prisma/client/runtime/library";
 import { describe, expect, it } from "vitest";
 
@@ -17,10 +18,10 @@ const LATER = new Date("2025-06-15T12:00:00Z");
 const makeAthleteProfile = (overrides = {}) => ({
   id: "cls_ap_1",
   userId: "cls_user_1",
-  gender: "MALE" as const,
+  gender: PrismaGender.MALE,
   heightCm: 180,
   weightKg: new Decimal("82.50"),
-  healthStatus: "HEALTHY" as const,
+  healthStatus: PrismaHealthStatus.HEALTHY,
   healthNote: null,
   createdAt: NOW,
   updatedAt: LATER,
@@ -41,7 +42,7 @@ const makeUser = (overrides = {}) => ({
   id: "cls_user_1",
   email: "john@example.com",
   name: "John Doe",
-  role: "USER" as const,
+  role: Role.USER,
   image: "https://example.com/avatar.jpg",
   timezone: "Europe/Kyiv",
   emailVerified: NOW,
@@ -80,7 +81,7 @@ describe("mapToAthleteProfile", () => {
   });
 
   it("maps FEMALE gender", () => {
-    const input = makeAthleteProfile({ gender: "FEMALE" as const });
+    const input = makeAthleteProfile({ gender: PrismaGender.FEMALE });
     const result = mapToAthleteProfile(input);
 
     expect(result.gender).toBe(Gender.FEMALE);
@@ -102,14 +103,14 @@ describe("mapToAthleteProfile", () => {
   });
 
   it("maps INJURED healthStatus", () => {
-    const input = makeAthleteProfile({ healthStatus: "INJURED" as const });
+    const input = makeAthleteProfile({ healthStatus: PrismaHealthStatus.INJURED });
     const result = mapToAthleteProfile(input);
 
     expect(result.healthStatus).toBe(HealthStatus.INJURED);
   });
 
   it("maps RESTRICTED healthStatus", () => {
-    const input = makeAthleteProfile({ healthStatus: "RESTRICTED" as const });
+    const input = makeAthleteProfile({ healthStatus: PrismaHealthStatus.RESTRICTED });
     const result = mapToAthleteProfile(input);
 
     expect(result.healthStatus).toBe(HealthStatus.RESTRICTED);
@@ -221,14 +222,14 @@ describe("mapToAdminUser", () => {
   });
 
   it("maps COACH role", () => {
-    const input = makeUser({ role: "COACH" as const });
+    const input = makeUser({ role: Role.COACH });
     const result = mapToAdminUser(input);
 
     expect(result.role).toBe(UserRole.COACH);
   });
 
   it("maps ADMIN role", () => {
-    const input = makeUser({ role: "ADMIN" as const });
+    const input = makeUser({ role: Role.ADMIN });
     const result = mapToAdminUser(input);
 
     expect(result.role).toBe(UserRole.ADMIN);
@@ -275,14 +276,14 @@ describe("mapToAdminUserListItem", () => {
   });
 
   it("maps COACH role", () => {
-    const input = makeUser({ role: "COACH" as const });
+    const input = makeUser({ role: Role.COACH });
     const result = mapToAdminUserListItem(input);
 
     expect(result.role).toBe(UserRole.COACH);
   });
 
   it("maps ADMIN role", () => {
-    const input = makeUser({ role: "ADMIN" as const });
+    const input = makeUser({ role: Role.ADMIN });
     const result = mapToAdminUserListItem(input);
 
     expect(result.role).toBe(UserRole.ADMIN);

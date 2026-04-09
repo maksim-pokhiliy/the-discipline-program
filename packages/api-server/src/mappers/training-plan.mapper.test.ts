@@ -1,3 +1,4 @@
+import { TrainingPlanStatus as PrismaTrainingPlanStatus } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
 import { TrainingPlanStatus } from "@repo/contracts/training-plan";
@@ -12,7 +13,7 @@ const makePlan = (overrides = {}) => ({
   coachId: "cls_coach_1",
   name: "Strength Block A",
   description: "8-week hypertrophy focus",
-  status: "DRAFT" as const,
+  status: PrismaTrainingPlanStatus.DRAFT,
   createdAt: NOW,
   updatedAt: LATER,
   deletedAt: null,
@@ -36,14 +37,14 @@ describe("mapToTrainingPlan", () => {
   });
 
   it("maps ACTIVE status", () => {
-    const input = makePlan({ status: "ACTIVE" as const });
+    const input = makePlan({ status: PrismaTrainingPlanStatus.ACTIVE });
     const result = mapToTrainingPlan(input);
 
     expect(result.status).toBe(TrainingPlanStatus.ACTIVE);
   });
 
   it("maps ARCHIVED status", () => {
-    const input = makePlan({ status: "ARCHIVED" as const });
+    const input = makePlan({ status: PrismaTrainingPlanStatus.ARCHIVED });
     const result = mapToTrainingPlan(input);
 
     expect(result.status).toBe(TrainingPlanStatus.ARCHIVED);

@@ -3,10 +3,10 @@ import { Button, Chip, Stack, Typography } from "@mui/material";
 import { BLOG_CATEGORY_LABELS, type PublicBlogPost } from "@repo/contracts/blog";
 
 import { FullscreenSection } from "@app/lib/components/ui";
+import { MIN_READ_SUFFIX } from "@app/lib/config";
 
 const NOT_PUBLISHED_LABEL = "Not published";
 const READ_ARTICLE_LABEL = "read article";
-const MIN_READ_SUFFIX = "min read";
 
 type BlogArticleHeroProps = {
   post: PublicBlogPost;
