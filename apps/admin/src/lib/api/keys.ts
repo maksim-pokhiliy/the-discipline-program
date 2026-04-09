@@ -7,10 +7,7 @@ export const adminKeys = {
 
   dashboard: () => [...ROOT, "dashboard"] as const,
 
-  contacts: {
-    ...createEntityKeys(ROOT, "contacts"),
-    all: () => [...ROOT, "contacts"] as const,
-  },
+  contacts: createEntityKeys(ROOT, "contacts"),
 
   blog: createEntityKeys(ROOT, "blog"),
   products: createEntityKeys(ROOT, "products"),
@@ -22,7 +19,6 @@ export const adminKeys = {
   },
 
   pages: {
-    all: () => [...ROOT, "pages"] as const,
     list: () => [...ROOT, "pages", "list"] as const,
     bySlug: (slug: string) => [...ROOT, "pages", slug] as const,
   },

@@ -15,6 +15,8 @@ import { BLOG_CATEGORY_LABELS, type PublicBlogPost } from "@repo/contracts/blog"
 import { type BlogPageData } from "@repo/contracts/pages";
 import { ContentSection } from "@repo/ui";
 
+import { MIN_READ_SUFFIX, READ_MORE_LABEL } from "@app/lib/config";
+
 type BlogFeaturedSectionProps = {
   hero: BlogPageData["hero"];
   featuredPost: PublicBlogPost;
@@ -76,7 +78,7 @@ export const BlogFeaturedSection = ({ hero, featuredPost }: BlogFeaturedSectionP
               </Typography>
 
               <Typography variant="body1" color="text.secondary">
-                {featuredPost.readTime} min read
+                {featuredPost.readTime} {MIN_READ_SUFFIX}
               </Typography>
             </Stack>
 
@@ -86,7 +88,7 @@ export const BlogFeaturedSection = ({ hero, featuredPost }: BlogFeaturedSectionP
               variant="contained"
               size="medium"
             >
-              read more
+              {READ_MORE_LABEL}
             </Button>
           </Stack>
         </CardActions>

@@ -258,6 +258,7 @@ model Workout {
   deletedAt     DateTime?
 
   @@index([planId, scheduledDate])
+  @@index([planId, isArchived])
   @@index([planId])
   @@index([scheduledDate])
   @@index([createdAt])

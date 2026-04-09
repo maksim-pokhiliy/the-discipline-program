@@ -1,5 +1,3 @@
-import { createElement } from "react";
-
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import type { AlertColor } from "@mui/material";
 
@@ -33,7 +31,7 @@ export const getChip = (item: DashboardActionItem): StatusChipConfig | null => {
   }
 
   if (item.type === ActionItemType.NEW_NO_START) {
-    return { label: "New", color: "info", icon: createElement(PersonAddIcon) };
+    return { label: "New", color: "info", icon: <PersonAddIcon /> };
   }
 
   return null;
