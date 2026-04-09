@@ -17,7 +17,7 @@ export const missedWorkoutsMetadataSchema = z.object({
 });
 
 export const newNoStartMetadataSchema = z.object({
-  enrollmentId: z.string(),
+  enrollmentId: z.string().cuid(),
 });
 
 export const healthReportMetadataSchema = z.object({

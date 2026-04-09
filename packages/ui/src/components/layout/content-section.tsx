@@ -86,9 +86,9 @@ export const ContentSection = ({
               <MotionItem {...motionItemProps}>
                 <Stack
                   spacing={2}
+                  alignItems="center"
                   sx={{
                     textAlign,
-                    alignItems: "center",
                     width: "100%",
                   }}
                 >

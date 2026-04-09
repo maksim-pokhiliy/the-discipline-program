@@ -27,11 +27,11 @@ const ImageSlot: React.FC<ImageSlotProps> = ({ image, name }) =>
     />
   ) : (
     <Stack
+      alignItems="center"
+      justifyContent="center"
       sx={(theme) => ({
         width: theme.spacing(15),
         minHeight: theme.spacing(15),
-        alignItems: "center",
-        justifyContent: "center",
         bgcolor: "action.hover",
       })}
     >
