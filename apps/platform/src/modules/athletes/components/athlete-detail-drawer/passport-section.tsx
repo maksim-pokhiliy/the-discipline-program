@@ -1,5 +1,3 @@
-"use client";
-
 import { Avatar, Stack, Typography } from "@mui/material";
 
 import type { HealthStatus } from "@repo/contracts/athlete-profile";
@@ -67,7 +65,7 @@ export const PassportSection: React.FC<PassportSectionProps> = ({
         </Stack>
       </Stack>
 
-      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 0.5 }}>
+      <Stack direction="row" spacing={0.5} flexWrap="wrap">
         <StatusChip {...HEALTH_STATUS_CHIPS[healthStatus]} />
         <StatusChip {...PROCESS_STATUS_CHIPS[processStatus]} />
       </Stack>

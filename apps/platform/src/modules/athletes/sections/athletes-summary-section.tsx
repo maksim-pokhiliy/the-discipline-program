@@ -1,5 +1,3 @@
-"use client";
-
 import type { CoachAthletesSummary } from "@repo/contracts/coach-athletes";
 import { type PulseStatProps, PulseStatsCard } from "@repo/ui";
 

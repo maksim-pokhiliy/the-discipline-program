@@ -1,5 +1,3 @@
-"use client";
-
 import { Stack, Typography } from "@mui/material";
 
 import type { AthleteConsistency } from "@repo/contracts/coach-athletes";
