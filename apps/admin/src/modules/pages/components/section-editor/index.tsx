@@ -21,6 +21,7 @@ import {
 } from "@repo/contracts/pages";
 
 import { SECTION_FEATURES, type HeroSectionType } from "../../config/section-features";
+import { ContactFormSectionForm } from "../sections/contact-form-section-form";
 import { ContactSectionForm } from "../sections/contact-section-form";
 import { CredentialsSectionForm } from "../sections/credentials-section-form";
 import { FaqSectionForm } from "../sections/faq-section-form";
@@ -28,6 +29,7 @@ import { HeroSectionForm } from "../sections/hero-section-form";
 import { JourneySectionForm } from "../sections/journey-section-form";
 import { PersonalSectionForm } from "../sections/personal-section-form";
 import { ReviewsSectionForm } from "../sections/reviews-section-form";
+import { StorefrontProgramsSectionForm } from "../sections/storefront-programs-section-form";
 import { StorefrontSectionForm } from "../sections/storefront-section-form";
 import { WhyChooseSectionForm } from "../sections/why-choose-section-form";
 
@@ -107,11 +109,17 @@ export const SectionEditor = ({
         return <WhyChooseSectionForm />;
       }
 
-      case "storefront":
+      case "storefront": {
+        return <StorefrontProgramsSectionForm />;
+      }
+
       case "storefront:grid":
-      case "blog:grid":
-      case "contact:form": {
+      case "blog:grid": {
         return <StorefrontSectionForm />;
+      }
+
+      case "contact:form": {
+        return <ContactFormSectionForm />;
       }
 
       case "reviews": {

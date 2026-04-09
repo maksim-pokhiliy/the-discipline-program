@@ -536,9 +536,6 @@ importers:
       '@repo/mui':
         specifier: workspace:*
         version: link:../../packages/mui
-      '@repo/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       next:
         specifier: 'catalog:'
         version: 16.1.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -582,6 +579,9 @@ importers:
 
   packages/api-client:
     dependencies:
+      '@repo/auth':
+        specifier: workspace:*
+        version: link:../auth
       '@repo/env':
         specifier: workspace:*
         version: link:../env
@@ -717,6 +717,9 @@ importers:
       '@repo/env':
         specifier: workspace:*
         version: link:../env
+      '@repo/errors':
+        specifier: workspace:*
+        version: link:../errors
       next:
         specifier: 'catalog:'
         version: 16.1.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -948,9 +951,6 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 9.30.1(jiti@2.6.1)
-      next:
-        specifier: 'catalog:'
-        version: 16.1.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       prettier:
         specifier: 'catalog:'
         version: 3.5.3

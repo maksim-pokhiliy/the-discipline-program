@@ -11,6 +11,8 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const CONTAINER_SX = { maxWidth: 600 } as const;
+
 const ROWS = [
   { name: "Back Squat", category: "Strength", sets: 5, reps: 3 },
   { name: "Clean & Jerk", category: "Olympic Lifting", sets: 4, reps: 2 },
@@ -22,7 +24,7 @@ export const AllVariants: Story = {
   render: () => (
     <StoryPage>
       <StorySection title="default" direction="column">
-        <TableContainer sx={{ maxWidth: 600 }}>
+        <TableContainer sx={CONTAINER_SX}>
           <Table>
             <TableHead>
               <TableRow>
@@ -47,7 +49,7 @@ export const AllVariants: Story = {
       </StorySection>
 
       <StorySection title="hover rows" direction="column">
-        <TableContainer sx={{ maxWidth: 600 }}>
+        <TableContainer sx={CONTAINER_SX}>
           <Table>
             <TableHead>
               <TableRow>
@@ -70,7 +72,7 @@ export const AllVariants: Story = {
       </StorySection>
 
       <StorySection title="size=small" direction="column">
-        <TableContainer sx={{ maxWidth: 600 }}>
+        <TableContainer sx={CONTAINER_SX}>
           <Table size="small">
             <TableHead>
               <TableRow>
@@ -95,7 +97,7 @@ export const AllVariants: Story = {
       </StorySection>
 
       <StorySection title="stickyHeader" direction="column">
-        <TableContainer sx={{ maxWidth: 600, maxHeight: 160 }}>
+        <TableContainer sx={{ ...CONTAINER_SX, maxHeight: 160 }}>
           <Table stickyHeader>
             <TableHead>
               <TableRow>

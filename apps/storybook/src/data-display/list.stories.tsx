@@ -25,11 +25,13 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+const CONTAINER_SX = { width: 320 } as const;
+
 export const AllVariants: Story = {
   render: () => (
     <StoryPage>
       <StorySection title="basic" direction="column">
-        <List sx={{ width: 320 }}>
+        <List sx={CONTAINER_SX}>
           <ListItemButton>
             <ListItemText primary="Inbox" />
           </ListItemButton>
@@ -43,7 +45,7 @@ export const AllVariants: Story = {
       </StorySection>
 
       <StorySection title="with icons" direction="column">
-        <List sx={{ width: 320 }}>
+        <List sx={CONTAINER_SX}>
           <ListItemButton>
             <ListItemIcon>
               <InboxIcon />
@@ -66,7 +68,7 @@ export const AllVariants: Story = {
       </StorySection>
 
       <StorySection title="selected + disabled" direction="column">
-        <List sx={{ width: 320 }}>
+        <List sx={CONTAINER_SX}>
           <ListItemButton>
             <ListItemText primary="Default" />
           </ListItemButton>
@@ -80,7 +82,7 @@ export const AllVariants: Story = {
       </StorySection>
 
       <StorySection title="with secondary action" direction="column">
-        <List sx={{ width: 320 }}>
+        <List sx={CONTAINER_SX}>
           <ListItem
             secondaryAction={
               <IconButton edge="end">
@@ -115,7 +117,7 @@ export const AllVariants: Story = {
       </StorySection>
 
       <StorySection title="with subheader + divider" direction="column">
-        <List sx={{ width: 320 }} subheader={<ListSubheader>Navigation</ListSubheader>}>
+        <List sx={CONTAINER_SX} subheader={<ListSubheader>Navigation</ListSubheader>}>
           <ListItemButton>
             <ListItemText primary="Dashboard" />
           </ListItemButton>
@@ -130,7 +132,7 @@ export const AllVariants: Story = {
       </StorySection>
 
       <StorySection title="dense" direction="column">
-        <List sx={{ width: 320 }} dense>
+        <List sx={CONTAINER_SX} dense>
           <ListItemButton>
             <ListItemText primary="Dense item 1" />
           </ListItemButton>

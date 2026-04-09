@@ -4,13 +4,13 @@ import { type UseQueryResult } from "@tanstack/react-query";
 
 import { ContentSection, QueryWrapper } from "@repo/ui";
 
-interface AdminListViewProps<TData> {
+type AdminListViewProps<TData> = {
   queryResult: UseQueryResult<TData, Error>;
   loadingMessage: string;
   title?: string;
   subtitle?: string;
   children: (data: TData) => React.ReactNode;
-}
+};
 
 export const AdminListView = <TData,>({
   queryResult,

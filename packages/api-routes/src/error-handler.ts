@@ -1,3 +1,4 @@
+import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
@@ -5,6 +6,8 @@ import { baseEnv } from "@repo/env/base";
 import { AppError, ERROR_CODES, ValidationError } from "@repo/errors";
 
 export const handleApiError = (error: unknown): NextResponse => {
+  unstable_rethrow(error);
+
   console.error("API Error:", error);
 
   const isDev = baseEnv.NODE_ENV === "development";

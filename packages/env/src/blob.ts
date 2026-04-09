@@ -1,10 +1,9 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-export const authEnv = createEnv({
+export const blobEnv = createEnv({
   server: {
-    NEXTAUTH_SECRET: z.string().min(1),
-    NEXTAUTH_URL: z.string().url(),
+    BLOB_READ_WRITE_TOKEN: z.string().min(1),
   },
   client: {},
   experimental__runtimeEnv: {},

@@ -67,4 +67,5 @@ export const publicBlogPostPreviewSchema = publicBlogPostSchema.pick({
 export const blogPostPageDataSchema = z.object({
   post: publicBlogPostSchema,
   relatedPosts: z.array(publicBlogPostPreviewSchema),
+  relatedSectionTitle: z.string(),
 });

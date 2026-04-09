@@ -10,7 +10,7 @@ import { handleApiError } from "./error-handler";
 import type { AuthenticatedHandler, RouteHandler } from "./types";
 
 export const createAuthWrappers = (authOptions: NextAuthOptions) => ({
-  withAdminAuth: (handler: RouteHandler): RouteHandler => {
+  withAdminAuth: (handler: AuthenticatedHandler): RouteHandler => {
     return async (request, context) => {
       try {
         const session = await getServerSession(authOptions);
@@ -23,7 +23,7 @@ export const createAuthWrappers = (authOptions: NextAuthOptions) => ({
           throw new ForbiddenError();
         }
 
-        return await handler(request, context);
+        return await handler(request, context, session.user.id);
       } catch (error) {
         return handleApiError(error);
       }

@@ -41,8 +41,8 @@ export const HomeStorefrontProgramsPreview = ({
       </Grid>
 
       <Stack alignItems="center" sx={{ mt: 10 }}>
-        <Button component={Link} href="/storefront#programs" size="large">
-          View All Programs
+        <Button component={Link} href={programs.buttonHref} size="large">
+          {programs.buttonText}
         </Button>
       </Stack>
 

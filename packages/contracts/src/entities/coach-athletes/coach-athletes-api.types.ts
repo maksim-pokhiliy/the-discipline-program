@@ -2,6 +2,7 @@ import { type z } from "zod";
 
 import {
   type athleteActionItemSchema,
+  type coachAthleteDetailParamsSchema,
   type coachAthleteDetailSchema,
   type coachAthletesDataSchema,
   type consistencySchema,
@@ -10,6 +11,7 @@ import {
   type recentWorkoutSchema,
 } from "./coach-athletes-api.schema";
 
+export type CoachAthleteDetailParams = z.infer<typeof coachAthleteDetailParamsSchema>;
 export type CoachAthletesData = z.infer<typeof coachAthletesDataSchema>;
 export type PlanDiscipline = z.infer<typeof planDisciplineSchema>;
 export type RecentWorkout = z.infer<typeof recentWorkoutSchema>;

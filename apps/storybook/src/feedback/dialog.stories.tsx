@@ -28,17 +28,14 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const DialogDemo = ({
-  title,
-  maxWidth,
-  fullWidth,
-  content,
-}: {
+type DialogDemoProps = {
   title: string;
   maxWidth?: "xs" | "sm" | "md" | "lg";
   fullWidth?: boolean;
   content?: "text" | "form";
-}) => {
+};
+
+const DialogDemo = ({ title, maxWidth, fullWidth, content }: DialogDemoProps) => {
   const [open, setOpen] = useState(false);
 
   return (

@@ -41,7 +41,12 @@ export const BlogArticlePageClient = ({ slug, initialData }: BlogArticlePageClie
           <BlogArticleHero post={data.post} />
           <BlogArticleContent post={data.post} />
 
-          {data.relatedPosts.length > 0 && <BlogArticleRelated relatedPosts={data.relatedPosts} />}
+          {data.relatedPosts.length > 0 && (
+            <BlogArticleRelated
+              relatedPosts={data.relatedPosts}
+              sectionTitle={data.relatedSectionTitle}
+            />
+          )}
         </>
       )}
     </QueryWrapper>

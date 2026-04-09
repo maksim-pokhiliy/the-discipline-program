@@ -29,7 +29,7 @@ export const platformWorkoutsApi = {
     await verifyPlanOwnership(planId, coachId);
 
     const workouts = await prisma.workout.findMany({
-      where: { planId },
+      where: { planId, isArchived: false },
       orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
     });
 

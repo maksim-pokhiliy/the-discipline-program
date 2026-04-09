@@ -50,9 +50,10 @@ export const RichTextEditor = ({
     <Box sx={{ width: "100%" }}>
       {label && (
         <Typography
+          component="label"
           variant="caption"
           color={error ? "error" : "text.secondary"}
-          sx={{ mb: 0.5, ml: 1, display: "block" }}
+          sx={{ mb: 0.5, ml: 1 }}
         >
           {label}
         </Typography>

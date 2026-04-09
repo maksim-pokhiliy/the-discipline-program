@@ -4,13 +4,12 @@ import { type PublicBlogPostPreview } from "@repo/contracts/blog";
 
 import { BlogPostCard } from "@app/lib/components/ui";
 
-const RELATED_SECTION_TITLE = "Related Articles";
-
 type BlogArticleRelatedProps = {
   relatedPosts: PublicBlogPostPreview[];
+  sectionTitle: string;
 };
 
-export const BlogArticleRelated = ({ relatedPosts }: BlogArticleRelatedProps) => {
+export const BlogArticleRelated = ({ relatedPosts, sectionTitle }: BlogArticleRelatedProps) => {
   return (
     <Box
       sx={(theme) => ({
@@ -22,7 +21,7 @@ export const BlogArticleRelated = ({ relatedPosts }: BlogArticleRelatedProps) =>
       <Container maxWidth="lg">
         <Stack spacing={8}>
           <Typography variant="h3" component="h2" textAlign="center">
-            {RELATED_SECTION_TITLE}
+            {sectionTitle}
           </Typography>
 
           <Grid container spacing={4}>

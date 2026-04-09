@@ -19,6 +19,7 @@
   "dependencies": {
     "@repo/contracts": "workspace:*",
     "@repo/env": "workspace:*",
+    "@repo/errors": "workspace:*",
     "next-auth": "catalog:"
   },
   "peerDependencies": {
