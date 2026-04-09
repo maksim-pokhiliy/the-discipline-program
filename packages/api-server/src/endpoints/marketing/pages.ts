@@ -150,13 +150,18 @@ export const pagesApi = {
   },
 
   getBlogArticle: async (slug: string): Promise<BlogPostPageData> => {
-    const post = await prisma.marketingBlogPost.findFirst({
-      where: {
-        slug,
-        isPublished: true,
-        publishedAt: { not: null },
-      },
-    });
+    const [post, sections] = await Promise.all([
+      prisma.marketingBlogPost.findFirst({
+        where: {
+          slug,
+          isPublished: true,
+          publishedAt: { not: null },
+        },
+      }),
+      prisma.marketingPageSection.findMany({
+        where: { pageSlug: PageSlug.BLOG, isActive: true },
+      }),
+    ]);
 
     if (!post || !isPublishedPost(post)) {
       throw new NotFoundError(`Article not found: ${slug}`, { slug });
@@ -176,11 +181,12 @@ export const pagesApi = {
     });
 
     const relatedPosts = relatedPostsRaw.filter(isPublishedPost).map(mapToPublicBlogPost);
+    const relatedSection = extractSectionData(sections, PAGE_SECTIONS_MAP.blog.related);
 
     return {
       post: publicPost,
       relatedPosts,
-      relatedSectionTitle: "Related Articles",
+      relatedSectionTitle: relatedSection.title,
     };
   },
 };

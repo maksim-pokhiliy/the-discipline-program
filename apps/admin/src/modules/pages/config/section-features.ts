@@ -1,5 +1,5 @@
 export const SECTION_FEATURES = {
-  hero: { hasButton: true, hasBackground: true },
+  "home:hero": { hasButton: true, hasBackground: true },
   "about:hero": { hasButton: true, hasBackground: true },
   "contact:hero": { hasButton: true, hasBackground: true },
   "blog:hero": { hasButton: false, hasBackground: true },

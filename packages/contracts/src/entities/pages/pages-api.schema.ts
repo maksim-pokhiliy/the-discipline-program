@@ -26,6 +26,7 @@ import {
   faqPageCtaSchema,
   blogPageHeroSchema,
   blogGridSchema,
+  blogRelatedSectionSchema,
   programOptionSchema,
 } from "./pages.schema";
 
@@ -103,6 +104,7 @@ const SECTION_DEFINITIONS = [
   [PAGE_SECTIONS_MAP.about.cta, aboutPageCtaSchema],
   [PAGE_SECTIONS_MAP.blog.hero, blogPageHeroSchema],
   [PAGE_SECTIONS_MAP.blog.grid, blogGridSchema],
+  [PAGE_SECTIONS_MAP.blog.related, blogRelatedSectionSchema],
   [PAGE_SECTIONS_MAP.contact.hero, contactPageHeroSchema],
   [PAGE_SECTIONS_MAP.contact.form, contactPageFormSchema],
   [PAGE_SECTIONS_MAP.faq.hero, faqPageHeroSchema],

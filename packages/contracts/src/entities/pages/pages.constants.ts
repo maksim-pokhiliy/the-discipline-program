@@ -9,11 +9,11 @@ export enum PageSlug {
 
 export const PAGE_SECTIONS_MAP = {
   home: {
-    hero: "hero",
-    whyChoose: "whyChoose",
-    storefront: "storefront",
-    reviews: "reviews",
-    contact: "contact",
+    hero: "home:hero",
+    whyChoose: "home:whyChoose",
+    storefront: "home:storefront",
+    reviews: "home:reviews",
+    contact: "home:contact",
   },
   storefront: {
     hero: "storefront:hero",
@@ -22,14 +22,15 @@ export const PAGE_SECTIONS_MAP = {
   },
   about: {
     hero: "about:hero",
-    journey: "journey",
-    credentials: "credentials",
-    personal: "personal",
-    cta: "cta",
+    journey: "about:journey",
+    credentials: "about:credentials",
+    personal: "about:personal",
+    cta: "about:cta",
   },
   blog: {
     hero: "blog:hero",
     grid: "blog:grid",
+    related: "blog:related",
   },
   contact: {
     hero: "contact:hero",

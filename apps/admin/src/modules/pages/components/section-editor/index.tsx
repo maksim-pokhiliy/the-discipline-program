@@ -31,28 +31,30 @@ import { PersonalSectionForm } from "../sections/personal-section-form";
 import { ReviewsSectionForm } from "../sections/reviews-section-form";
 import { StorefrontProgramsSectionForm } from "../sections/storefront-programs-section-form";
 import { StorefrontSectionForm } from "../sections/storefront-section-form";
+import { TitleSectionForm } from "../sections/title-section-form";
 import { WhyChooseSectionForm } from "../sections/why-choose-section-form";
 
 const SECTION_LABELS: Record<SectionSchemaKey, string> = {
-  hero: "Hero",
+  "home:hero": "Home Hero",
   "about:hero": "About Hero",
   "contact:hero": "Contact Hero",
   "blog:hero": "Blog Hero",
   "storefront:hero": "Storefront Hero",
   "faq:hero": "FAQ Hero",
-  whyChoose: "Why Choose Us",
-  storefront: "Storefront",
+  "home:whyChoose": "Why Choose Us",
+  "home:storefront": "Storefront",
   "storefront:grid": "Storefront Grid",
   "storefront:cta": "Storefront CTA",
   "blog:grid": "Blog Grid",
+  "blog:related": "Blog Related",
   "contact:form": "Contact Form",
-  reviews: "Reviews",
-  contact: "Contact",
-  cta: "Call to Action",
+  "home:reviews": "Reviews",
+  "home:contact": "Contact",
+  "about:cta": "About CTA",
   "faq:cta": "FAQ CTA",
-  journey: "Journey",
-  credentials: "Credentials",
-  personal: "Personal",
+  "about:journey": "Journey",
+  "about:credentials": "Credentials",
+  "about:personal": "Personal",
   "faq:content": "FAQ Content",
 };
 
@@ -92,7 +94,7 @@ export const SectionEditor = ({
 
   const renderForm = () => {
     switch (section.section) {
-      case "hero":
+      case "home:hero":
       case "about:hero":
       case "contact:hero":
       case "blog:hero":
@@ -105,11 +107,11 @@ export const SectionEditor = ({
         return <HeroSectionForm sectionType={section.section} />;
       }
 
-      case "whyChoose": {
+      case "home:whyChoose": {
         return <WhyChooseSectionForm />;
       }
 
-      case "storefront": {
+      case "home:storefront": {
         return <StorefrontProgramsSectionForm />;
       }
 
@@ -118,30 +120,34 @@ export const SectionEditor = ({
         return <StorefrontSectionForm />;
       }
 
+      case "blog:related": {
+        return <TitleSectionForm cardTitle="Related Articles Settings" />;
+      }
+
       case "contact:form": {
         return <ContactFormSectionForm />;
       }
 
-      case "reviews": {
+      case "home:reviews": {
         return <ReviewsSectionForm />;
       }
 
-      case "contact":
+      case "home:contact":
       case "storefront:cta":
-      case "cta":
+      case "about:cta":
       case "faq:cta": {
         return <ContactSectionForm />;
       }
 
-      case "journey": {
+      case "about:journey": {
         return <JourneySectionForm />;
       }
 
-      case "credentials": {
+      case "about:credentials": {
         return <CredentialsSectionForm />;
       }
 
-      case "personal": {
+      case "about:personal": {
         return <PersonalSectionForm />;
       }
 
