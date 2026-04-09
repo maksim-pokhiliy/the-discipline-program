@@ -138,11 +138,6 @@ export const ContentSection = ({
                       color="inherit"
                       variant="text"
                       size="small"
-                      fullWidth
-                      sx={{
-                        width: { md: "auto" },
-                        justifyContent: { xs: "center", md: "flex-start" },
-                      }}
                     >
                       {backLabel}
                     </Button>
@@ -163,8 +158,6 @@ export const ContentSection = ({
                           component={action.href ? Link : "button"}
                           startIcon={action.startIcon}
                           size="small"
-                          fullWidth
-                          sx={{ width: { md: "auto" } }}
                         >
                           {action.label}
                         </Button>

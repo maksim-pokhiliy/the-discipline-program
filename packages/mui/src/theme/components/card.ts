@@ -28,7 +28,7 @@ export const MuiCardContent: Components<Theme>["MuiCardContent"] = {
   styleOverrides: {
     root: ({ theme }) => ({
       display: "flex",
-      flexDirection: "column" as const,
+      flexDirection: "column",
       flexGrow: 1,
       padding: theme.spacing(2),
 

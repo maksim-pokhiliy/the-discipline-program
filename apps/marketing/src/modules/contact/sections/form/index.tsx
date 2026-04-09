@@ -22,7 +22,6 @@ import { ContentSection } from "@repo/ui";
 
 import { useSubmitContact } from "@app/lib/hooks";
 
-const SEND_ANOTHER_LABEL = "Send Another";
 const SENDING_LABEL = "Sending...";
 const ERROR_FALLBACK = "Something went wrong";
 
@@ -71,7 +70,7 @@ export const ContactFormSection = ({
           </Typography>
 
           <Button variant="contained" size="large" onClick={() => resetMutation()}>
-            {SEND_ANOTHER_LABEL}
+            {form.sendAnotherLabel}
           </Button>
         </Stack>
       ) : (

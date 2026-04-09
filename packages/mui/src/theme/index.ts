@@ -5,7 +5,33 @@ import { layout } from "./layout";
 import { palette } from "./palette";
 import { typography } from "./typography";
 
-const shadows = Array(25).fill("none") as Shadows;
+const shadows: Shadows = [
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+  "none",
+];
 
 const baseTheme = createTheme({
   layout,

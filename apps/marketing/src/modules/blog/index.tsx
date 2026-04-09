@@ -19,7 +19,11 @@ export const BlogPageClient = ({ initialData }: BlogPageClientProps) => {
       {(data) => (
         <>
           {data.featuredPost && (
-            <BlogFeaturedSection hero={data.hero} featuredPost={data.featuredPost} />
+            <BlogFeaturedSection
+              hero={data.hero}
+              grid={data.grid}
+              featuredPost={data.featuredPost}
+            />
           )}
 
           <BlogPostsGrid grid={data.grid} posts={data.posts} />
