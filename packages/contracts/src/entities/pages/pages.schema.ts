@@ -125,3 +125,7 @@ export const blogPageHeroSchema = titleSubtitleSchema.extend({
 });
 
 export const blogGridSchema = titleSubtitleSchema;
+
+export const blogRelatedSectionSchema = z.object({
+  title: z.string(),
+});

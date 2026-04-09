@@ -426,7 +426,7 @@ const seedMarketingPages = async () => {
   const sections: { pageSlug: string; section: string; data: unknown }[] = [
     {
       pageSlug: "home",
-      section: "hero",
+      section: "home:hero",
       data: {
         title: "Your DISCIPLINE Dictates Your SUCCESS",
         subtitle:
@@ -438,7 +438,7 @@ const seedMarketingPages = async () => {
     },
     {
       pageSlug: "home",
-      section: "whyChoose",
+      section: "home:whyChoose",
       data: {
         title: "Why The Discipline Program?",
         subtitle: "Random workouts give random results. We build systems.",
@@ -487,7 +487,7 @@ const seedMarketingPages = async () => {
     },
     {
       pageSlug: "home",
-      section: "storefront",
+      section: "home:storefront",
       data: {
         title: "Choose Your Track",
         subtitle: "From Open preparation to daily GPP. Programming for every level.",
@@ -495,7 +495,7 @@ const seedMarketingPages = async () => {
     },
     {
       pageSlug: "home",
-      section: "reviews",
+      section: "home:reviews",
       data: {
         title: "Community Results",
         subtitle:
@@ -504,7 +504,7 @@ const seedMarketingPages = async () => {
     },
     {
       pageSlug: "home",
-      section: "contact",
+      section: "home:contact",
       data: {
         title: "Join The Community",
         subtitle: "Questions about programming? We are here to help.",
@@ -526,7 +526,7 @@ const seedMarketingPages = async () => {
     },
     {
       pageSlug: "about",
-      section: "journey",
+      section: "about:journey",
       data: {
         title: "The Road to Discipline",
         subtitle: "From a garage gym to a coaching platform",
@@ -564,7 +564,7 @@ const seedMarketingPages = async () => {
     },
     {
       pageSlug: "about",
-      section: "credentials",
+      section: "about:credentials",
       data: {
         title: "Certifications",
         subtitle:
@@ -605,7 +605,7 @@ const seedMarketingPages = async () => {
     },
     {
       pageSlug: "about",
-      section: "personal",
+      section: "about:personal",
       data: {
         title: "Outside The Box",
         subtitle: "The person behind the programming — beyond the whiteboard and the stopwatch.",
@@ -618,7 +618,7 @@ const seedMarketingPages = async () => {
     },
     {
       pageSlug: "about",
-      section: "cta",
+      section: "about:cta",
       data: {
         title: "3... 2... 1... GO!",
         subtitle: "The clock is ticking. Your training should not be random.",
@@ -673,6 +673,13 @@ const seedMarketingPages = async () => {
       data: {
         title: "All Articles",
         subtitle: "Training insights, recovery tips, and competition strategy.",
+      },
+    },
+    {
+      pageSlug: "blog",
+      section: "blog:related",
+      data: {
+        title: "Related Articles",
       },
     },
     {
@@ -769,7 +776,7 @@ const seedMarketingPages = async () => {
     });
   }
 
-  console.log("  Pages: 5 with 17 sections");
+  console.log("  Pages: 5 with 18 sections");
 };
 
 const seedProducts = async () => {
