@@ -9,7 +9,7 @@ type SwatchProps = {
 };
 
 const Swatch = ({ color, label }: SwatchProps) => (
-  <Stack spacing={0.5} sx={{ alignItems: "center" }}>
+  <Stack spacing={0.5} alignItems="center">
     <Box
       sx={{
         width: 64,

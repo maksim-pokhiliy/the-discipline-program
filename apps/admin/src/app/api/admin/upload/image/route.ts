@@ -1,6 +1,4 @@
-import { NextResponse } from "next/server";
-
-import { createDeleteWithBodyHandler } from "@repo/api-routes";
+import { createDeleteWithBodyHandler, createFormDataPostHandler } from "@repo/api-routes";
 import { adminUploadApi } from "@repo/api-server";
 import {
   deleteImageRequestSchema,
@@ -16,8 +14,7 @@ const isValidUploadContext = (value: unknown): value is UploadContext => {
   return typeof value === "string" && value in UPLOAD_CONFIG;
 };
 
-export const POST = withAdminAuth(async (request) => {
-  const formData = await request.formData();
+const processUpload = async (formData: FormData) => {
   const file = formData.get("file");
   const context = formData.get("context");
 
@@ -29,11 +26,12 @@ export const POST = withAdminAuth(async (request) => {
     throw new BadRequestError("Invalid or missing context");
   }
 
-  const result = await adminUploadApi.uploadImage(file, context);
-  const validated = uploadImageResponseSchema.parse(result);
+  return adminUploadApi.uploadImage(file, context);
+};
 
-  return NextResponse.json(validated);
-});
+export const POST = withAdminAuth(
+  createFormDataPostHandler(processUpload, uploadImageResponseSchema),
+);
 
 export const DELETE = withAdminAuth(
   createDeleteWithBodyHandler(

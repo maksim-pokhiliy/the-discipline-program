@@ -106,6 +106,19 @@ export const createPatchByParamHandler = <TParams, TRequest>(
   };
 };
 
+export const createFormDataPostHandler = <TResponse>(
+  apiFn: (formData: FormData) => Promise<TResponse>,
+  responseSchema?: ParseSchema<TResponse>,
+) => {
+  return async (request: Request) => {
+    const formData = await request.formData();
+    const result = await apiFn(formData);
+    const validated = responseSchema ? responseSchema.parse(result) : result;
+
+    return NextResponse.json(validated);
+  };
+};
+
 export const createDeleteWithBodyHandler = <TRequest>(
   apiFn: (data: TRequest) => Promise<void>,
   requestSchema: ParseSchema<TRequest>,

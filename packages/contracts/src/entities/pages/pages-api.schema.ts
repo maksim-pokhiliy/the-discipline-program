@@ -126,9 +126,14 @@ const toNonEmptyArray = <T>(arr: T[]): [T, ...T[]] => {
   return [first, ...rest];
 };
 
-export const updatePageSectionSchema = z
-  .discriminatedUnion("section", toNonEmptyArray(sectionVariants))
-  .and(z.object({ pageSlug: z.nativeEnum(PageSlug) }));
+export const updatePageSectionBodySchema = z.discriminatedUnion(
+  "section",
+  toNonEmptyArray(sectionVariants),
+);
+
+export const updatePageSectionSchema = updatePageSectionBodySchema.and(
+  z.object({ pageSlug: z.nativeEnum(PageSlug) }),
+);
 
 const adminSectionVariants = SECTION_DEFINITIONS.map(([key, schema]) =>
   z.object({

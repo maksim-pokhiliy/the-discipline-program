@@ -7,6 +7,7 @@ export {
   createPostHandler,
   createPutHandler,
   createPatchByParamHandler,
+  createFormDataPostHandler,
   createDeleteHandler,
   createDeleteWithBodyHandler,
   createToggleHandler,

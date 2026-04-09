@@ -5,6 +5,7 @@ import {
   type adminPageDetailsSchema,
   type getPageBySlugParamsSchema,
   type pageSlugRouteParamsSchema,
+  type updatePageSectionBodySchema,
   type updatePageSectionSchema,
   type getHomePageResponseSchema,
   type getStorefrontProgramsPageResponseSchema,
@@ -17,6 +18,7 @@ import {
 
 export type AdminPageListItem = z.infer<typeof adminPageListItemSchema>;
 export type AdminPageDetails = z.infer<typeof adminPageDetailsSchema>;
+export type UpdatePageSectionBody = z.infer<typeof updatePageSectionBodySchema>;
 export type UpdatePageSectionData = z.infer<typeof updatePageSectionSchema>;
 export type UpdatePageMetadataInput = z.infer<typeof updatePageMetadataSchema>;
 

@@ -16,7 +16,8 @@ export const StorySection = ({ title, children, direction = "row" }: StorySectio
     <Stack
       direction={direction}
       spacing={2}
-      sx={{ alignItems: direction === "row" ? "center" : "stretch", flexWrap: "wrap" }}
+      alignItems={direction === "row" ? "center" : "stretch"}
+      flexWrap="wrap"
     >
       {children}
     </Stack>
