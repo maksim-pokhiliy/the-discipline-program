@@ -182,11 +182,17 @@ export const pagesApi = {
 
     const relatedPosts = relatedPostsRaw.filter(isPublishedPost).map(mapToPublicBlogPost);
     const relatedSection = extractSectionData(sections, PAGE_SECTIONS_MAP.blog.related);
+    const gridSection = extractSectionData(sections, PAGE_SECTIONS_MAP.blog.grid);
 
     return {
       post: publicPost,
       relatedPosts,
       relatedSectionTitle: relatedSection.title,
+      labels: {
+        readMoreLabel: gridSection.readMoreLabel,
+        minReadSuffix: gridSection.minReadSuffix,
+        readArticleLabel: gridSection.readArticleLabel,
+      },
     };
   },
 };

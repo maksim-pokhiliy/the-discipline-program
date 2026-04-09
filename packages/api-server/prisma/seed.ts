@@ -491,6 +491,12 @@ const seedMarketingPages = async () => {
       data: {
         title: "Choose Your Track",
         subtitle: "From Open preparation to daily GPP. Programming for every level.",
+        buttonText: "View All Programs",
+        buttonHref: "/storefront",
+        freeLabel: "Free",
+        cardActionLabel: "Get Started",
+        modalDismissLabel: "maybe later",
+        modalActionLabel: "get started",
       },
     },
     {
@@ -645,6 +651,9 @@ const seedMarketingPages = async () => {
         title: "Find Your Track",
         subtitle:
           "Every program is built around a specific athlete profile. Pick the one that fits.",
+        freeLabel: "Free",
+        modalDismissLabel: "maybe later",
+        modalActionLabel: "get started",
       },
     },
     {
@@ -673,6 +682,9 @@ const seedMarketingPages = async () => {
       data: {
         title: "All Articles",
         subtitle: "Training insights, recovery tips, and competition strategy.",
+        readMoreLabel: "read more",
+        minReadSuffix: "min read",
+        readArticleLabel: "read article",
       },
     },
     {
@@ -702,6 +714,7 @@ const seedMarketingPages = async () => {
         successTitle: "Message Sent!",
         successMessage: "Thank you for reaching out. We'll get back to you shortly.",
         submitLabel: "Send Message",
+        sendAnotherLabel: "Send Another",
         fieldLabels: {
           name: "Name",
           contact: "Phone / Telegram / WhatsApp",

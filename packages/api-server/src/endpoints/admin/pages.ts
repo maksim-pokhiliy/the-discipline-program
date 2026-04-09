@@ -70,7 +70,7 @@ export const adminPagesApi = {
         .map((s) => ({
           id: s.id,
           section: s.section,
-          data: asJsonRecord(s.data) ?? {},
+          data: SECTION_SCHEMAS[s.section].parse(asJsonRecord(s.data) ?? {}),
           updatedAt: s.updatedAt,
         })),
     };

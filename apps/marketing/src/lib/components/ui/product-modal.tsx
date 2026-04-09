@@ -7,19 +7,25 @@ import { type Product, PRICE_INTERVAL_LABELS } from "@repo/contracts/product";
 import { formatPrice } from "@repo/shared";
 import { BaseModal } from "@repo/ui";
 
-import { FREE_LABEL } from "@app/lib/config";
-
-const DISMISS_LABEL = "maybe later";
-const ACTION_LABEL = "get started";
-
 type ProductModalProps = {
   product: Product | null;
+  freeLabel: string;
+  dismissLabel: string;
+  actionLabel: string;
   open: boolean;
   onClose: () => void;
   onGetStarted?: () => void;
 };
 
-export const ProductModal = ({ product, open, onClose, onGetStarted }: ProductModalProps) => {
+export const ProductModal = ({
+  product,
+  freeLabel,
+  dismissLabel,
+  actionLabel,
+  open,
+  onClose,
+  onGetStarted,
+}: ProductModalProps) => {
   if (!product) {
     return null;
   }
@@ -27,7 +33,7 @@ export const ProductModal = ({ product, open, onClose, onGetStarted }: ProductMo
   const activePrice = product.prices.find((p) => p.isActive);
   const displayPrice = activePrice
     ? formatPrice(activePrice.amountCents, activePrice.currency)
-    : FREE_LABEL;
+    : freeLabel;
   const displayInterval = activePrice ? PRICE_INTERVAL_LABELS[activePrice.interval] : null;
 
   return (
@@ -38,11 +44,11 @@ export const ProductModal = ({ product, open, onClose, onGetStarted }: ProductMo
       actions={
         <Stack direction="row" spacing={3} sx={{ alignItems: "center", width: "100%" }}>
           <Button variant="text" size="large" fullWidth onClick={onClose}>
-            {DISMISS_LABEL}
+            {dismissLabel}
           </Button>
 
           <Button variant="contained" size="large" fullWidth onClick={onGetStarted ?? onClose}>
-            {ACTION_LABEL}
+            {actionLabel}
           </Button>
         </Stack>
       }

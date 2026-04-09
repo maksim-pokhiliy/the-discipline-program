@@ -23,6 +23,7 @@ export const StorefrontProgramsGridSection = ({ grid, productsList }: ProgramsGr
           <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
             <ProductCard
               product={product}
+              freeLabel={grid.freeLabel}
               onAction={() => modal.open(product)}
               cardVariant="outlined"
             />
@@ -30,7 +31,14 @@ export const StorefrontProgramsGridSection = ({ grid, productsList }: ProgramsGr
         ))}
       </Grid>
 
-      <ProductModal product={modal.selectedProduct} open={modal.isOpen} onClose={modal.close} />
+      <ProductModal
+        product={modal.selectedProduct}
+        freeLabel={grid.freeLabel}
+        dismissLabel={grid.modalDismissLabel}
+        actionLabel={grid.modalActionLabel}
+        open={modal.isOpen}
+        onClose={modal.close}
+      />
     </ContentSection>
   );
 };

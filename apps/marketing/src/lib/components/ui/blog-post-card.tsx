@@ -13,8 +13,6 @@ import Link from "next/link";
 
 import { type BlogCategory, BLOG_CATEGORY_LABELS } from "@repo/contracts/blog";
 
-import { MIN_READ_SUFFIX, READ_MORE_LABEL } from "@app/lib/config";
-
 type BlogPostCardProps = {
   slug: string;
   title: string;
@@ -22,6 +20,8 @@ type BlogPostCardProps = {
   coverImage: string | null;
   readTime: number | null;
   category: BlogCategory;
+  readMoreLabel: string;
+  minReadSuffix: string;
   variant?: "default" | "featured";
   authorName?: string | null;
 };
@@ -33,6 +33,8 @@ export const BlogPostCard = ({
   coverImage,
   readTime,
   category,
+  readMoreLabel,
+  minReadSuffix,
   variant = "default",
   authorName,
 }: BlogPostCardProps) => {
@@ -100,7 +102,7 @@ export const BlogPostCard = ({
             )}
 
             <Typography variant={isFeatured ? "body1" : "caption"} color="text.secondary">
-              {readTime} {MIN_READ_SUFFIX}
+              {readTime} {minReadSuffix}
             </Typography>
           </Stack>
 
@@ -110,7 +112,7 @@ export const BlogPostCard = ({
             variant={isFeatured ? "contained" : "text"}
             size={isFeatured ? "medium" : "small"}
           >
-            {READ_MORE_LABEL}
+            {readMoreLabel}
           </Button>
         </Stack>
       </CardActions>

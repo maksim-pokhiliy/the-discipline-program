@@ -130,18 +130,18 @@ export const updatePageSectionSchema = z
   .discriminatedUnion("section", toNonEmptyArray(sectionVariants))
   .and(z.object({ pageSlug: z.nativeEnum(PageSlug) }));
 
-const sectionKeys = SECTION_DEFINITIONS.map(([key]) => key);
+const adminSectionVariants = SECTION_DEFINITIONS.map(([key, schema]) =>
+  z.object({
+    id: z.string().cuid(),
+    section: z.literal(key),
+    data: schema,
+    updatedAt: z.date(),
+  }),
+);
 
 export const adminPageDetailsSchema = z.object({
   slug: z.nativeEnum(PageSlug),
-  sections: z.array(
-    z.object({
-      id: z.string().cuid(),
-      section: z.enum(toNonEmptyArray(sectionKeys)),
-      data: z.record(z.string(), z.unknown()),
-      updatedAt: z.date(),
-    }),
-  ),
+  sections: z.array(z.discriminatedUnion("section", toNonEmptyArray(adminSectionVariants))),
 });
 
 export const getPageBySlugParamsSchema = z.object({

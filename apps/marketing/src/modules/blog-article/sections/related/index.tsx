@@ -1,6 +1,6 @@
 import { Box, Grid } from "@mui/material";
 
-import { type PublicBlogPostPreview } from "@repo/contracts/blog";
+import { type BlogPostPageData, type PublicBlogPostPreview } from "@repo/contracts/blog";
 import { ContentSection } from "@repo/ui";
 
 import { BlogPostCard } from "@app/lib/components/ui";
@@ -8,9 +8,14 @@ import { BlogPostCard } from "@app/lib/components/ui";
 type BlogArticleRelatedProps = {
   relatedPosts: PublicBlogPostPreview[];
   sectionTitle: string;
+  labels: BlogPostPageData["labels"];
 };
 
-export const BlogArticleRelated = ({ relatedPosts, sectionTitle }: BlogArticleRelatedProps) => {
+export const BlogArticleRelated = ({
+  relatedPosts,
+  sectionTitle,
+  labels,
+}: BlogArticleRelatedProps) => {
   return (
     <Box sx={(theme) => ({ borderTop: `1px solid ${theme.palette.divider}` })}>
       <ContentSection title={sectionTitle} surface="raised" animated={false}>
@@ -24,6 +29,8 @@ export const BlogArticleRelated = ({ relatedPosts, sectionTitle }: BlogArticleRe
                 coverImage={post.coverImage}
                 readTime={post.readTime}
                 category={post.category}
+                readMoreLabel={labels.readMoreLabel}
+                minReadSuffix={labels.minReadSuffix}
               />
             </Grid>
           ))}

@@ -38,13 +38,14 @@ export const BlogArticlePageClient = ({ slug, initialData }: BlogArticlePageClie
             }}
           />
 
-          <BlogArticleHero post={data.post} />
+          <BlogArticleHero post={data.post} labels={data.labels} />
           <BlogArticleContent post={data.post} />
 
           {data.relatedPosts.length > 0 && (
             <BlogArticleRelated
               relatedPosts={data.relatedPosts}
               sectionTitle={data.relatedSectionTitle}
+              labels={data.labels}
             />
           )}
         </>

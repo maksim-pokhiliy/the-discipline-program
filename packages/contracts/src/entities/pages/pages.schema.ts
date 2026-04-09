@@ -34,6 +34,10 @@ export const homePageWhyChooseSchema = z.object({
 export const homePageStorefrontProgramsSchema = titleSubtitleSchema.extend({
   buttonText: z.string(),
   buttonHref: z.string(),
+  freeLabel: z.string(),
+  cardActionLabel: z.string(),
+  modalDismissLabel: z.string(),
+  modalActionLabel: z.string(),
 });
 
 export const homePageReviewsSchema = titleSubtitleSchema;
@@ -86,6 +90,7 @@ export const contactPageFormSchema = titleSubtitleSchema.extend({
   successTitle: z.string(),
   successMessage: z.string(),
   submitLabel: z.string(),
+  sendAnotherLabel: z.string(),
   fieldLabels: z.object({
     name: z.string(),
     contact: z.string(),
@@ -114,7 +119,11 @@ export const faqContentSchema = z.object({
   items: z.array(faqItemSchema),
 });
 
-export const storefrontGridSchema = titleSubtitleSchema;
+export const storefrontGridSchema = titleSubtitleSchema.extend({
+  freeLabel: z.string(),
+  modalDismissLabel: z.string(),
+  modalActionLabel: z.string(),
+});
 
 export const faqPageHeroSchema = heroSectionSchema;
 
@@ -124,7 +133,11 @@ export const blogPageHeroSchema = titleSubtitleSchema.extend({
   backgroundImage: z.string().optional(),
 });
 
-export const blogGridSchema = titleSubtitleSchema;
+export const blogGridSchema = titleSubtitleSchema.extend({
+  readMoreLabel: z.string(),
+  minReadSuffix: z.string(),
+  readArticleLabel: z.string(),
+});
 
 export const blogRelatedSectionSchema = z.object({
   title: z.string(),

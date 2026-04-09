@@ -1,25 +1,26 @@
 import { Button, Chip, Stack, Typography } from "@mui/material";
 
-import { BLOG_CATEGORY_LABELS, type PublicBlogPost } from "@repo/contracts/blog";
+import {
+  BLOG_CATEGORY_LABELS,
+  type BlogPostPageData,
+  type PublicBlogPost,
+} from "@repo/contracts/blog";
 
 import { FullscreenSection } from "@app/lib/components/ui";
-import { MIN_READ_SUFFIX } from "@app/lib/config";
-
-const NOT_PUBLISHED_LABEL = "Not published";
-const READ_ARTICLE_LABEL = "read article";
 
 type BlogArticleHeroProps = {
   post: PublicBlogPost;
+  labels: BlogPostPageData["labels"];
 };
 
-export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
+export const BlogArticleHero = ({ post, labels }: BlogArticleHeroProps) => {
   const publishedDate = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
       })
-    : NOT_PUBLISHED_LABEL;
+    : "Not published";
 
   return (
     <FullscreenSection backgroundImage={post.coverImage ?? "/images/pages/home-hero.png"}>
@@ -50,12 +51,12 @@ export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
         <Typography variant="body1">{post.authorName}</Typography>
         <Typography variant="body1">{publishedDate}</Typography>
         <Typography variant="body1">
-          {post.readTime} {MIN_READ_SUFFIX}
+          {post.readTime} {labels.minReadSuffix}
         </Typography>
       </Stack>
 
       <Button size="large" variant="contained" href="#content" sx={{ mt: 4 }}>
-        {READ_ARTICLE_LABEL}
+        {labels.readArticleLabel}
       </Button>
     </FullscreenSection>
   );
