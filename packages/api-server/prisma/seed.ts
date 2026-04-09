@@ -692,6 +692,19 @@ const seedMarketingPages = async () => {
       data: {
         title: "Send Us a Message",
         subtitle: "Tell us about your goals and we'll craft the perfect plan",
+        successTitle: "Message Sent!",
+        successMessage: "Thank you for reaching out. We'll get back to you shortly.",
+        submitLabel: "Send Message",
+        fieldLabels: {
+          name: "Name",
+          contact: "Phone / Telegram / WhatsApp",
+          program: "Program Interest",
+          message: "Your Message",
+        },
+        fieldPlaceholders: {
+          contact: "+380..., @username",
+          message: "Tell us about your goals...",
+        },
       },
     },
     {

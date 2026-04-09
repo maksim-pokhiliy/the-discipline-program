@@ -26,24 +26,15 @@ const SEND_ANOTHER_LABEL = "Send Another";
 const SENDING_LABEL = "Sending...";
 const ERROR_FALLBACK = "Something went wrong";
 
-const FIELD_LABELS = {
-  name: "Name",
-  contact: "Phone / Telegram / WhatsApp",
-  program: "Program Interest",
-  message: "Your Message",
-} as const;
-
-const FIELD_PLACEHOLDERS = {
-  contact: "+380..., @username",
-  message: "Tell us about your goals...",
-} as const;
-
 type ContactFormSectionProps = {
   form: ContactPageData["form"];
   programOptions: ContactPageData["programOptions"];
 };
 
-export const ContactFormSection = ({ form, programOptions }: ContactFormSectionProps) => {
+export const ContactFormSection = ({
+  form: { fieldLabels, fieldPlaceholders, ...form },
+  programOptions,
+}: ContactFormSectionProps) => {
   const {
     register,
     handleSubmit,
@@ -96,7 +87,7 @@ export const ContactFormSection = ({ form, programOptions }: ContactFormSectionP
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label={FIELD_LABELS.name}
+                label={fieldLabels.name}
                 required
                 fullWidth
                 disabled={isPending}
@@ -108,11 +99,11 @@ export const ContactFormSection = ({ form, programOptions }: ContactFormSectionP
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label={FIELD_LABELS.contact}
+                label={fieldLabels.contact}
                 required
                 fullWidth
                 disabled={isPending}
-                placeholder={FIELD_PLACEHOLDERS.contact}
+                placeholder={fieldPlaceholders.contact}
                 error={!!errors.contact}
                 helperText={errors.contact?.message}
                 {...register("contact")}
@@ -122,7 +113,7 @@ export const ContactFormSection = ({ form, programOptions }: ContactFormSectionP
 
           <TextField
             select
-            label={FIELD_LABELS.program}
+            label={fieldLabels.program}
             fullWidth
             disabled={isPending}
             defaultValue=""
@@ -138,13 +129,13 @@ export const ContactFormSection = ({ form, programOptions }: ContactFormSectionP
           </TextField>
 
           <TextField
-            label={FIELD_LABELS.message}
+            label={fieldLabels.message}
             required
             multiline
             rows={4}
             fullWidth
             disabled={isPending}
-            placeholder={FIELD_PLACEHOLDERS.message}
+            placeholder={fieldPlaceholders.message}
             error={!!errors.message}
             helperText={errors.message?.message}
             {...register("message")}

@@ -1,6 +1,8 @@
 "use client";
 
-import { Alert, CircularProgress, Stack, Typography } from "@mui/material";
+import { Alert, Typography } from "@mui/material";
+
+import { LoadingState } from "./loading-state";
 
 type QueryWrapperProps<TData> = {
   isLoading: boolean;
@@ -22,18 +24,7 @@ export const QueryWrapper = <TData,>({
   noDataMessage = "No data available",
 }: QueryWrapperProps<TData>) => {
   if (isLoading) {
-    return (
-      <Stack
-        direction="row"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="20vh"
-        spacing={2}
-      >
-        <CircularProgress size={20} />
-        <Typography variant="body1">{loadingMessage}</Typography>
-      </Stack>
-    );
+    return <LoadingState message={loadingMessage} />;
   }
 
   if (error) {

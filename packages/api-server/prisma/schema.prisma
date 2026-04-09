@@ -138,6 +138,7 @@ model Product {
   deletedAt       DateTime?
 
   @@index([createdAt])
+  @@index([createdAt, title])
   @@index([deletedAt])
   @@index([isActive])
   @@map("app_products")
@@ -456,6 +457,7 @@ model MarketingBlogPost {
   deletedAt   DateTime?
 
   @@index([createdAt])
+  @@index([createdAt, title])
   @@index([deletedAt])
   @@index([isPublished, publishedAt])
   @@index([category])

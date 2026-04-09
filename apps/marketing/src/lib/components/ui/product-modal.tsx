@@ -7,9 +7,10 @@ import { type Product, PRICE_INTERVAL_LABELS } from "@repo/contracts/product";
 import { formatPrice } from "@repo/shared";
 import { BaseModal } from "@repo/ui";
 
+import { FREE_LABEL } from "@app/lib/config";
+
 const DISMISS_LABEL = "maybe later";
 const ACTION_LABEL = "get started";
-const FREE_LABEL = "Free";
 
 type ProductModalProps = {
   product: Product | null;

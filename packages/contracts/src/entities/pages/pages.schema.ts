@@ -86,6 +86,16 @@ export const contactPageFormSchema = titleSubtitleSchema.extend({
   successTitle: z.string(),
   successMessage: z.string(),
   submitLabel: z.string(),
+  fieldLabels: z.object({
+    name: z.string(),
+    contact: z.string(),
+    program: z.string(),
+    message: z.string(),
+  }),
+  fieldPlaceholders: z.object({
+    contact: z.string(),
+    message: z.string(),
+  }),
 });
 
 export const programOptionSchema = z.object({

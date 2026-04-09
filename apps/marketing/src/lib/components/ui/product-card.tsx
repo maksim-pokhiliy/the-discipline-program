@@ -16,7 +16,7 @@ import {
 import { type Product, PRICE_INTERVAL_LABELS } from "@repo/contracts/product";
 import { formatPrice } from "@repo/shared";
 
-const FREE_LABEL = "Free";
+import { FREE_LABEL } from "@app/lib/config";
 
 type ProductCardProps = {
   product: Product;
