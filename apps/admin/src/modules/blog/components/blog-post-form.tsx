@@ -21,7 +21,7 @@ import { BLOG_CATEGORY_LABELS, BlogCategory, type CreateBlogPostData } from "@re
 import { UPLOAD_CONFIG } from "@repo/contracts/upload";
 import { FormCard, ImageUpload, RichTextEditor, TagsInput } from "@repo/ui";
 
-import { useAutoSlug, useDeleteImage, useUploadImage } from "@app/lib/hooks";
+import { useAutoSlug, useUploadImage } from "@app/lib/hooks";
 
 type BlogPostFormProps = {
   isLoading?: boolean;
@@ -39,7 +39,6 @@ export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: Blo
   } = form;
 
   const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
-  const deleteImage = useDeleteImage();
 
   useAutoSlug({ disabled: disableAutoSlug, form });
 
@@ -202,12 +201,6 @@ export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: Blo
                   );
                 }}
                 onRemove={() => {
-                  const currentUrl = form.getValues("coverImage");
-
-                  if (currentUrl) {
-                    deleteImage.mutate(currentUrl);
-                  }
-
                   setValue("coverImage", "", { shouldDirty: true });
                 }}
               />
