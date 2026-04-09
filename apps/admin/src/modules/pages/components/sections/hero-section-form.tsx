@@ -7,7 +7,7 @@ import { type z } from "zod";
 import { type homePageHeroSchema } from "@repo/contracts/pages";
 import { FormCard, ImageUpload } from "@repo/ui";
 
-import { useDeleteImage, useUploadImage } from "@app/lib/hooks";
+import { useUploadImage } from "@app/lib/hooks";
 
 import { SECTION_FEATURES, type HeroSectionType } from "../../config/section-features";
 
@@ -25,7 +25,6 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
     formState: { errors },
   } = useFormContext<HeroSectionData>();
   const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
-  const deleteImage = useDeleteImage();
 
   const features = SECTION_FEATURES[sectionType];
 
@@ -83,12 +82,6 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
               );
             }}
             onRemove={() => {
-              const currentUrl = watch("backgroundImage");
-
-              if (currentUrl) {
-                deleteImage.mutate(currentUrl);
-              }
-
               setValue("backgroundImage", "", { shouldDirty: true });
             }}
           />
