@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { createDeleteWithBodyHandler } from "@repo/api-routes";
 import { adminUploadApi } from "@repo/api-server";
 import {
   deleteImageRequestSchema,
@@ -34,11 +35,9 @@ export const POST = withAdminAuth(async (request) => {
   return NextResponse.json(validated);
 });
 
-export const DELETE = withAdminAuth(async (request) => {
-  const body = await request.json();
-  const validated = deleteImageRequestSchema.parse(body);
-
-  await adminUploadApi.deleteImage(validated.url);
-
-  return NextResponse.json({ success: true });
-});
+export const DELETE = withAdminAuth(
+  createDeleteWithBodyHandler(
+    ({ url }) => adminUploadApi.deleteImage(url),
+    deleteImageRequestSchema,
+  ),
+);

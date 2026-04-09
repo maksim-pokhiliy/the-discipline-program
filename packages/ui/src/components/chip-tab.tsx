@@ -12,7 +12,7 @@ export const ChipTab: React.FC<ChipTabProps> = ({ label, count, chipColor, ...pr
   <Tab
     {...props}
     label={
-      <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
+      <Stack direction="row" spacing={0.75} alignItems="center">
         <Typography variant="body2" component="span">
           {label}
         </Typography>

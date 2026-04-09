@@ -13,7 +13,7 @@ export type PulseStatProps = {
 
 export const PulseStat: React.FC<PulseStatProps> = ({ value, label, tooltip, color }) => (
   <Tooltip title={tooltip} arrow placement="top">
-    <Stack spacing={1} sx={{ alignItems: "center" }}>
+    <Stack spacing={1} alignItems="center">
       <Typography
         variant="h4"
         sx={(theme) => ({

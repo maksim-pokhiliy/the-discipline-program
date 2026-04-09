@@ -43,21 +43,21 @@ export const StatsCard = ({
       <CardContent>
         <Stack
           spacing={config.spacing}
+          justifyContent="space-between"
           sx={{
-            justifyContent: "space-between",
             height: "100%",
           }}
         >
-          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Typography variant={config.titleVariant} sx={{ color: "text.secondary" }}>
               {title}
             </Typography>
 
             {icon && (
               <Stack
+                alignItems="center"
                 sx={(theme) => ({
                   color: theme.palette[color].main,
-                  alignItems: "center",
                 })}
               >
                 {icon}
@@ -83,13 +83,7 @@ export const StatsCard = ({
               )}
 
               {trend && (
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  sx={{
-                    alignItems: "center",
-                  }}
-                >
+                <Stack direction="row" spacing={1} alignItems="center">
                   <Typography
                     variant="caption"
                     sx={{
