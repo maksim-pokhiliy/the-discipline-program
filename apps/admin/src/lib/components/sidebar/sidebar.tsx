@@ -54,9 +54,9 @@ export const Sidebar = ({
       <Stack
         spacing={2}
         direction={isExpanded ? "row" : "column"}
+        alignItems="center"
+        justifyContent={isExpanded ? "space-between" : "center"}
         sx={{
-          alignItems: "center",
-          justifyContent: isExpanded ? "space-between" : "center",
           px: isExpanded ? 2 : 0,
           py: 2,
           minHeight: LAYOUT.adminHeaderHeight,

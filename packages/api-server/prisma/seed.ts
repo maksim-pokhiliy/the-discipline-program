@@ -1,4 +1,4 @@
-import { Gender, HealthStatus, PrismaClient, type Prisma, Role } from "@prisma/client";
+import { Gender, HealthStatus, PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -786,7 +786,7 @@ const seedMarketingPages = async () => {
       data: {
         pageSlug: s.pageSlug,
         section: s.section,
-        data: s.data as Prisma.InputJsonValue,
+        data: JSON.parse(JSON.stringify(s.data)),
         isActive: true,
       },
     });

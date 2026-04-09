@@ -156,6 +156,26 @@ type SectionEntry = (typeof SECTION_DEFINITIONS)[number];
 type SectionKey = SectionEntry[0];
 type SectionSchemaMap = { [K in SectionKey]: Extract<SectionEntry, readonly [K, unknown]>[1] };
 
-export const SECTION_SCHEMAS: SectionSchemaMap = Object.fromEntries(
-  SECTION_DEFINITIONS,
-) as SectionSchemaMap;
+export const SECTION_SCHEMAS: SectionSchemaMap = {
+  [PAGE_SECTIONS_MAP.home.hero]: homePageHeroSchema,
+  [PAGE_SECTIONS_MAP.home.whyChoose]: homePageWhyChooseSchema,
+  [PAGE_SECTIONS_MAP.home.storefront]: homePageStorefrontProgramsSchema,
+  [PAGE_SECTIONS_MAP.home.reviews]: homePageReviewsSchema,
+  [PAGE_SECTIONS_MAP.home.contact]: homePageContactSchema,
+  [PAGE_SECTIONS_MAP.storefront.hero]: storefrontProgramsPageHeroSchema,
+  [PAGE_SECTIONS_MAP.storefront.grid]: storefrontGridSchema,
+  [PAGE_SECTIONS_MAP.storefront.cta]: storefrontPageCtaSchema,
+  [PAGE_SECTIONS_MAP.about.hero]: aboutPageHeroSchema,
+  [PAGE_SECTIONS_MAP.about.journey]: aboutPageJourneySchema,
+  [PAGE_SECTIONS_MAP.about.credentials]: aboutPageCredentialsSchema,
+  [PAGE_SECTIONS_MAP.about.personal]: aboutPagePersonalSchema,
+  [PAGE_SECTIONS_MAP.about.cta]: aboutPageCtaSchema,
+  [PAGE_SECTIONS_MAP.blog.hero]: blogPageHeroSchema,
+  [PAGE_SECTIONS_MAP.blog.grid]: blogGridSchema,
+  [PAGE_SECTIONS_MAP.blog.related]: blogRelatedSectionSchema,
+  [PAGE_SECTIONS_MAP.contact.hero]: contactPageHeroSchema,
+  [PAGE_SECTIONS_MAP.contact.form]: contactPageFormSchema,
+  [PAGE_SECTIONS_MAP.faq.hero]: faqPageHeroSchema,
+  [PAGE_SECTIONS_MAP.faq.content]: faqContentSchema,
+  [PAGE_SECTIONS_MAP.faq.cta]: faqPageCtaSchema,
+};

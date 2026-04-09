@@ -44,21 +44,21 @@ export const WeekDayGroup: React.FC<WeekDayGroupProps> = ({
         "&:hover .day-action": { opacity: 1 },
       })}
     >
-      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
-        <Stack direction="row" sx={{ alignItems: "center", gap: 0.75 }}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack direction="row" alignItems="center" sx={{ gap: 0.75 }}>
           <Typography variant="overline" sx={{ color: "text.secondary" }}>
             {formatDayName(date)}
           </Typography>
 
           {isToday ? (
             <Stack
+              alignItems="center"
+              justifyContent="center"
               sx={(theme) => ({
                 width: theme.spacing(2.75),
                 height: theme.spacing(2.75),
                 borderRadius: "50%",
                 backgroundColor: "primary.main",
-                alignItems: "center",
-                justifyContent: "center",
               })}
             >
               <Typography variant="caption" sx={{ color: "primary.contrastText" }}>

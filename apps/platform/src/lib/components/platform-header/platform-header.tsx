@@ -34,14 +34,7 @@ export const PlatformHeader = ({
       }}
     >
       <Container maxWidth="lg">
-        <Stack
-          direction="row"
-          sx={{
-            alignItems: "center",
-            justifyContent: "space-between",
-            py: 2,
-          }}
-        >
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ py: 2 }}>
           <Logo href={logoHref} width={LAYOUT.platformLogoSize} height={LAYOUT.platformLogoSize} />
 
           <PlatformUserMenu

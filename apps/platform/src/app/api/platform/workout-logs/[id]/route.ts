@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { createAuthDeleteHandler, createAuthGetByParamHandler } from "@repo/api-routes";
 import { platformWorkoutLogsApi } from "@repo/api-server";
 import {
   deleteWorkoutLogParamsSchema,
@@ -9,18 +8,17 @@ import {
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (_, context, userId) => {
-  const { id } = getWorkoutLogByIdParamsSchema.parse(await context.params);
-  const data = await platformWorkoutLogsApi.getById(userId, id);
-  const validated = getWorkoutLogResponseSchema.parse(data);
+export const GET = withPlatformAuth(
+  createAuthGetByParamHandler(
+    (userId, { id }) => platformWorkoutLogsApi.getById(userId, id),
+    getWorkoutLogByIdParamsSchema,
+    getWorkoutLogResponseSchema,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
-
-export const DELETE = withPlatformAuth(async (_, context, userId) => {
-  const { id } = deleteWorkoutLogParamsSchema.parse(await context.params);
-
-  await platformWorkoutLogsApi.delete(userId, id);
-
-  return NextResponse.json({ success: true });
-});
+export const DELETE = withPlatformAuth(
+  createAuthDeleteHandler(
+    (userId, { id }) => platformWorkoutLogsApi.delete(userId, id),
+    deleteWorkoutLogParamsSchema,
+  ),
+);

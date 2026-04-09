@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { createAuthGetByParamHandler } from "@repo/api-routes";
 import { platformCoachAthletesApi } from "@repo/api-server";
 import {
   coachAthleteDetailParamsSchema,
@@ -8,10 +7,11 @@ import {
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (_, context, userId) => {
-  const { userId: athleteUserId } = coachAthleteDetailParamsSchema.parse(await context.params);
-  const data = await platformCoachAthletesApi.getAthleteDetail(userId, athleteUserId);
-  const validated = coachAthleteDetailSchema.parse(data);
-
-  return NextResponse.json(validated);
-});
+export const GET = withPlatformAuth(
+  createAuthGetByParamHandler(
+    (userId, { userId: athleteUserId }) =>
+      platformCoachAthletesApi.getAthleteDetail(userId, athleteUserId),
+    coachAthleteDetailParamsSchema,
+    coachAthleteDetailSchema,
+  ),
+);

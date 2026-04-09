@@ -13,7 +13,7 @@ export const AboutPersonalSection = ({ personal }: AboutPersonalSectionProps) =>
   return (
     <ContentSection id="personal" title={personal.title} subtitle={personal.subtitle}>
       <SplitSection backgroundImage={personal.image}>
-        <Stack spacing={4} sx={{ justifyContent: "center", height: "100%" }}>
+        <Stack spacing={4} justifyContent="center" sx={{ height: "100%" }}>
           <Typography variant="h3Italic">&quot;{personal.description}&quot;</Typography>
 
           <Box>

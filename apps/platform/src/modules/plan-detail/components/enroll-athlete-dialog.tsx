@@ -109,7 +109,7 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
                 component="li"
                 direction="row"
                 spacing={1}
-                sx={{ alignItems: "center" }}
+                alignItems="center"
                 {...props}
               >
                 <Checkbox checked={allSelected} indeterminate={someSelected && !allSelected} />
@@ -124,7 +124,7 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
               component="li"
               direction="row"
               spacing={1}
-              sx={{ alignItems: "center" }}
+              alignItems="center"
               {...props}
             >
               <Checkbox checked={isSelected} />

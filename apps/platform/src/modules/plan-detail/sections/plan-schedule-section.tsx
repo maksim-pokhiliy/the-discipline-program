@@ -333,7 +333,7 @@ export const PlanScheduleSection: React.FC<PlanScheduleSectionProps> = ({ planId
             </DndContext>
 
             {weekWorkoutCount > 0 && (
-              <Stack direction="row" sx={{ justifyContent: "center" }}>
+              <Stack direction="row" justifyContent="center">
                 <CopyWeekButton planId={planId} currentWeekStart={weekStart} />
               </Stack>
             )}

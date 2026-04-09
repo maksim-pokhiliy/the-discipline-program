@@ -26,14 +26,14 @@ export const AthleteListItem: React.FC<AthleteListItemProps> = ({ athlete, onSel
       onClick={() => onSelect(athlete.userId)}
     >
       <Stack spacing={0.75}>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+        <Stack direction="row" spacing={1} alignItems="center">
           <Typography variant="subtitle2" noWrap sx={{ flex: 1 }}>
             {athlete.name ?? athlete.email}
           </Typography>
           <HealthStatusChip healthStatus={athlete.healthStatus} />
         </Stack>
 
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+        <Stack direction="row" spacing={1} alignItems="center">
           <StatusChip {...PROCESS_STATUS_CHIPS[athlete.processStatus]} />
         </Stack>
 

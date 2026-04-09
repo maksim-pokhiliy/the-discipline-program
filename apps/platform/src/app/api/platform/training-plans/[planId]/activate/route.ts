@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { createAuthActionHandler } from "@repo/api-routes";
 import { platformTrainingPlansApi } from "@repo/api-server";
 import {
   getTrainingPlanByIdParamsSchema,
@@ -8,10 +7,10 @@ import {
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const POST = withPlatformAuth(async (_, context, userId) => {
-  const { planId } = getTrainingPlanByIdParamsSchema.parse(await context.params);
-  const result = await platformTrainingPlansApi.activate(userId, planId);
-  const validated = updateTrainingPlanResponseSchema.parse(result);
-
-  return NextResponse.json(validated);
-});
+export const POST = withPlatformAuth(
+  createAuthActionHandler(
+    (userId, { planId }) => platformTrainingPlansApi.activate(userId, planId),
+    getTrainingPlanByIdParamsSchema,
+    updateTrainingPlanResponseSchema,
+  ),
+);

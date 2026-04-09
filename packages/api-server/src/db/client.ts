@@ -29,15 +29,26 @@ type ModelDelegate = {
   updateMany: (args: Record<string, unknown>) => Promise<unknown>;
 };
 
+const isModelDelegate = (val: unknown): val is ModelDelegate =>
+  val !== null && typeof val === "object" && "findFirst" in val;
+
 const getDelegate = (client: PrismaClient, model: string): ModelDelegate | undefined => {
   const key = model.charAt(0).toLowerCase() + model.slice(1);
-  const delegate = (client as unknown as Record<string, unknown>)[key];
+  const candidate: unknown = Reflect.get(client, key);
 
-  if (delegate && typeof delegate === "object" && "findFirst" in delegate) {
-    return delegate as unknown as ModelDelegate;
+  return isModelDelegate(candidate) ? candidate : undefined;
+};
+
+const withDeletedAtFilter = (where: unknown): Record<string, unknown> => {
+  const record = Object.fromEntries(
+    Object.entries((typeof where === "object" && where !== null ? where : {}) satisfies object),
+  );
+
+  if (record.deletedAt === undefined) {
+    record.deletedAt = null;
   }
 
-  return undefined;
+  return record;
 };
 
 const createClient = () => {
@@ -51,13 +62,7 @@ const createClient = () => {
       $allModels: {
         async findMany({ model, args, query }) {
           if (SOFT_DELETE_MODELS.has(model)) {
-            const where = (args.where ?? {}) as Record<string, unknown>;
-
-            if (where.deletedAt === undefined) {
-              where.deletedAt = null;
-            }
-
-            args.where = where;
+            args.where = withDeletedAtFilter(args.where);
           }
 
           return query(args);
@@ -65,13 +70,7 @@ const createClient = () => {
 
         async findFirst({ model, args, query }) {
           if (SOFT_DELETE_MODELS.has(model)) {
-            const where = (args.where ?? {}) as Record<string, unknown>;
-
-            if (where.deletedAt === undefined) {
-              where.deletedAt = null;
-            }
-
-            args.where = where;
+            args.where = withDeletedAtFilter(args.where);
           }
 
           return query(args);
@@ -111,7 +110,7 @@ const createClient = () => {
           if (uniqueFields) {
             const select = Object.fromEntries(uniqueFields.map((f) => [f, true]));
             const current = await delegate.findUnique({
-              where: args.where as Record<string, unknown>,
+              where: Object.fromEntries(Object.entries(args.where ?? {})),
               select,
             });
 
@@ -171,14 +170,14 @@ const createClient = () => {
   });
 };
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: ReturnType<typeof createClient> | undefined;
-};
+declare global {
+  var prisma: ReturnType<typeof createClient> | undefined;
+}
 
-export const prisma = globalForPrisma.prisma ?? createClient();
+export const prisma = globalThis.prisma ?? createClient();
 
 if (baseEnv.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+  globalThis.prisma = prisma;
 }
 
 export type ExtendedPrismaClient = typeof prisma;

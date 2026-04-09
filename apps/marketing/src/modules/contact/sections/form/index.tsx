@@ -57,7 +57,7 @@ export const ContactFormSection = ({
       surface="raised"
     >
       {isSuccess ? (
-        <Stack spacing={3} sx={{ alignItems: "center", textAlign: "center" }}>
+        <Stack spacing={3} alignItems="center" sx={{ textAlign: "center" }}>
           <Typography variant="display2" component="h2">
             {form.successTitle}
           </Typography>

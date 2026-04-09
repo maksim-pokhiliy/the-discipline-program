@@ -1,13 +1,12 @@
-import { NextResponse } from "next/server";
-
+import { createAuthGetHandler } from "@repo/api-routes";
 import { platformCoachDashboardApi } from "@repo/api-server";
 import { coachDashboardDataSchema } from "@repo/contracts/coach-dashboard";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (_, _context, userId) => {
-  const data = await platformCoachDashboardApi.getDashboard(userId);
-  const validated = coachDashboardDataSchema.parse(data);
-
-  return NextResponse.json(validated);
-});
+export const GET = withPlatformAuth(
+  createAuthGetHandler(
+    (userId) => platformCoachDashboardApi.getDashboard(userId),
+    coachDashboardDataSchema,
+  ),
+);

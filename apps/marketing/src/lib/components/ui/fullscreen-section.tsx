@@ -56,12 +56,12 @@ export const FullscreenSection = ({
 }: FullscreenSectionProps) => {
   return (
     <Stack
+      alignItems={{ xs: "center", md: "flex-start" }}
+      justifyContent="center"
       sx={[
         (theme) => ({
           position: "relative",
           height: "100vh",
-          alignItems: { xs: "center", md: "flex-start" },
-          justifyContent: "center",
           backgroundImage: `${buildOverlay(theme)}, url(${backgroundImage})`,
           backgroundSize: "cover",
           backgroundPosition: "center",

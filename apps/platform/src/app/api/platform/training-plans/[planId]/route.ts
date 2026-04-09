@@ -1,5 +1,8 @@
-import { NextResponse } from "next/server";
-
+import {
+  createAuthDeleteHandler,
+  createAuthGetByParamHandler,
+  createAuthPutByParamHandler,
+} from "@repo/api-routes";
 import { platformTrainingPlansApi } from "@repo/api-server";
 import {
   deleteTrainingPlanParamsSchema,
@@ -12,28 +15,26 @@ import {
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (_, context, userId) => {
-  const { planId } = getTrainingPlanByIdParamsSchema.parse(await context.params);
-  const data = await platformTrainingPlansApi.getById(userId, planId);
-  const validated = getTrainingPlanResponseSchema.parse(data);
+export const GET = withPlatformAuth(
+  createAuthGetByParamHandler(
+    (userId, { planId }) => platformTrainingPlansApi.getById(userId, planId),
+    getTrainingPlanByIdParamsSchema,
+    getTrainingPlanResponseSchema,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
+export const PUT = withPlatformAuth(
+  createAuthPutByParamHandler(
+    (userId, { planId }, data) => platformTrainingPlansApi.update(userId, planId, data),
+    updateTrainingPlanParamsSchema,
+    updateTrainingPlanRequestSchema,
+    updateTrainingPlanResponseSchema,
+  ),
+);
 
-export const PUT = withPlatformAuth(async (request, context, userId) => {
-  const { planId } = updateTrainingPlanParamsSchema.parse(await context.params);
-  const body = await request.json();
-  const data = updateTrainingPlanRequestSchema.parse(body);
-  const result = await platformTrainingPlansApi.update(userId, planId, data);
-  const validated = updateTrainingPlanResponseSchema.parse(result);
-
-  return NextResponse.json(validated);
-});
-
-export const DELETE = withPlatformAuth(async (_, context, userId) => {
-  const { planId } = deleteTrainingPlanParamsSchema.parse(await context.params);
-
-  await platformTrainingPlansApi.delete(userId, planId);
-
-  return NextResponse.json({ success: true });
-});
+export const DELETE = withPlatformAuth(
+  createAuthDeleteHandler(
+    (userId, { planId }) => platformTrainingPlansApi.delete(userId, planId),
+    deleteTrainingPlanParamsSchema,
+  ),
+);

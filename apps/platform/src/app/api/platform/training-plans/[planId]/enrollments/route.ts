@@ -1,5 +1,4 @@
-import { NextResponse } from "next/server";
-
+import { createAuthGetByParamHandler, createAuthPostByParamHandler } from "@repo/api-routes";
 import { platformPlanEnrollmentsApi } from "@repo/api-server";
 import {
   createPlanEnrollmentParamsSchema,
@@ -11,20 +10,19 @@ import {
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (_, context, userId) => {
-  const { planId } = getPlanEnrollmentsParamsSchema.parse(await context.params);
-  const data = await platformPlanEnrollmentsApi.getAll(userId, planId);
-  const validated = getPlanEnrollmentsResponseSchema.parse(data);
+export const GET = withPlatformAuth(
+  createAuthGetByParamHandler(
+    (userId, { planId }) => platformPlanEnrollmentsApi.getAll(userId, planId),
+    getPlanEnrollmentsParamsSchema,
+    getPlanEnrollmentsResponseSchema,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
-
-export const POST = withPlatformAuth(async (request, context, userId) => {
-  const { planId } = createPlanEnrollmentParamsSchema.parse(await context.params);
-  const body = await request.json();
-  const data = createPlanEnrollmentRequestSchema.parse(body);
-  const result = await platformPlanEnrollmentsApi.create(userId, planId, data);
-  const validated = createPlanEnrollmentResponseSchema.parse(result);
-
-  return NextResponse.json(validated, { status: 201 });
-});
+export const POST = withPlatformAuth(
+  createAuthPostByParamHandler(
+    (userId, { planId }, data) => platformPlanEnrollmentsApi.create(userId, planId, data),
+    createPlanEnrollmentParamsSchema,
+    createPlanEnrollmentRequestSchema,
+    createPlanEnrollmentResponseSchema,
+  ),
+);
