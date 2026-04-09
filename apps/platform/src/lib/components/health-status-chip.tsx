@@ -1,5 +1,3 @@
-"use client";
-
 import { HealthStatus } from "@repo/contracts/athlete-profile";
 import { StatusChip } from "@repo/ui";
 

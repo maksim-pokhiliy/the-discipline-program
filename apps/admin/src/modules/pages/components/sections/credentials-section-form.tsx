@@ -48,6 +48,8 @@ export const CredentialsSectionForm = () => {
                 label="Title"
                 fullWidth
                 size="small"
+                error={!!errors.items?.[index]?.title}
+                helperText={errors.items?.[index]?.title?.message}
                 {...register(`items.${index}.title`)}
               />
 
@@ -55,6 +57,8 @@ export const CredentialsSectionForm = () => {
                 label="Description"
                 fullWidth
                 size="small"
+                error={!!errors.items?.[index]?.description}
+                helperText={errors.items?.[index]?.description?.message}
                 {...register(`items.${index}.description`)}
               />
             </DynamicListItem>

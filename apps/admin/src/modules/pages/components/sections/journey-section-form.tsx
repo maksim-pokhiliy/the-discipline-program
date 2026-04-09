@@ -62,6 +62,8 @@ export const JourneySectionForm = () => {
                     label="Year"
                     fullWidth
                     size="small"
+                    error={!!errors.timeline?.[index]?.year}
+                    helperText={errors.timeline?.[index]?.year?.message}
                     {...register(`timeline.${index}.year`)}
                   />
                 </Grid>
@@ -71,6 +73,8 @@ export const JourneySectionForm = () => {
                     label="Title"
                     fullWidth
                     size="small"
+                    error={!!errors.timeline?.[index]?.title}
+                    helperText={errors.timeline?.[index]?.title?.message}
                     {...register(`timeline.${index}.title`)}
                   />
                 </Grid>
@@ -82,6 +86,8 @@ export const JourneySectionForm = () => {
                 multiline
                 minRows={2}
                 size="small"
+                error={!!errors.timeline?.[index]?.description}
+                helperText={errors.timeline?.[index]?.description?.message}
                 {...register(`timeline.${index}.description`)}
               />
             </DynamicListItem>

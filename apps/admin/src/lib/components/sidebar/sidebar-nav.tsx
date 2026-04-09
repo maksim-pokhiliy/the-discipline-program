@@ -1,5 +1,3 @@
-"use client";
-
 import { Divider, List, Typography } from "@mui/material";
 
 import { type AdminNavGroup } from "@repo/shared";

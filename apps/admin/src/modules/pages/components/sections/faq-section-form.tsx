@@ -48,6 +48,8 @@ export const FaqSectionForm = () => {
                 label="Question"
                 fullWidth
                 size="small"
+                error={!!errors.items?.[index]?.question}
+                helperText={errors.items?.[index]?.question?.message}
                 {...register(`items.${index}.question`)}
               />
 
@@ -57,6 +59,8 @@ export const FaqSectionForm = () => {
                 size="small"
                 multiline
                 minRows={2}
+                error={!!errors.items?.[index]?.answer}
+                helperText={errors.items?.[index]?.answer?.message}
                 {...register(`items.${index}.answer`)}
               />
             </DynamicListItem>
