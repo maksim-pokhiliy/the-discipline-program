@@ -67,6 +67,7 @@ export const FaqSectionForm = () => {
           ))}
 
           <Button
+            variant="outlined"
             startIcon={<AddIcon />}
             onClick={() => append({ question: "", answer: "" })}
             sx={ADD_BUTTON_SX}

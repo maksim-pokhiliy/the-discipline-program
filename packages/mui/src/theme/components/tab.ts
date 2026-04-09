@@ -19,7 +19,7 @@ export const MuiTab: Components<Theme>["MuiTab"] = {
       borderRadius: theme.shape.borderRadius,
 
       "&:hover": {
-        backgroundColor: alpha(theme.palette.action.hover, theme.palette.action.hoverOpacity),
+        backgroundColor: theme.palette.action.hover,
       },
 
       "&.Mui-selected": {

@@ -1,13 +1,5 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiDialog: Components<Theme>["MuiDialog"] = {
-  styleOverrides: {
-    paper: ({ theme }) => ({
-      border: `1px solid ${theme.palette.divider}`,
-    }),
-  },
-};
-
 export const MuiDialogTitle: Components<Theme>["MuiDialogTitle"] = {
   styleOverrides: {
     root: ({ theme }) => ({

@@ -38,7 +38,10 @@ export const PlatformBottomNav = ({ navigation }: PlatformBottomNavProps) => {
   }, -1);
 
   return (
-    <BottomNavigation value={activeIndex}>
+    <BottomNavigation
+      value={activeIndex}
+      sx={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: "appBar" }}
+    >
       {navigation.items.map((item) => (
         <BottomNavigationAction
           key={item.href}
