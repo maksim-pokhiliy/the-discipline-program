@@ -1,5 +1,4 @@
 import { type ApiClient } from "@repo/api-client";
-import { type BlogPostPageData } from "@repo/contracts/cms/blog";
 import {
   type AboutPageData,
   type BlogPageData,
@@ -19,7 +18,4 @@ export const createPagesAPI = (client: ApiClient) => ({
   getBlog: (): Promise<BlogPageData> => client.request("/api/public/pages/blog"),
   getContact: (): Promise<ContactPageData> => client.request("/api/public/pages/contact"),
   getFaq: (): Promise<FaqPageData> => client.request("/api/public/pages/faq"),
-
-  getBlogArticle: (slug: string): Promise<BlogPostPageData> =>
-    client.request(`/api/public/blog/${slug}`),
 });

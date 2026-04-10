@@ -14,7 +14,7 @@ type UseBlogArticleOptions = {
 export const useBlogArticle = (slug: string, { initialData }: UseBlogArticleOptions = {}) =>
   useQuery({
     queryKey: marketingKeys.blog.article(slug),
-    queryFn: () => api.pages.getBlogArticle(slug),
+    queryFn: () => api.blog.getArticle(slug),
     initialData,
     enabled: !!slug,
   });
