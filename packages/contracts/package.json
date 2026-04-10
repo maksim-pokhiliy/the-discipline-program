@@ -7,7 +7,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./common": "./src/common.ts",
+    "./common": "./src/common/index.ts",
+    "./common/money": "./src/common/money.ts",
     "./cms/blog": "./src/entities/cms/blog/index.ts",
     "./cms/contact": "./src/entities/cms/contact/index.ts",
     "./cms/dashboard": "./src/entities/cms/dashboard/index.ts",
