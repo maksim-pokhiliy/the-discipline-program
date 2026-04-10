@@ -11,6 +11,7 @@
     "test:watch": "SKIP_ENV_VALIDATION=1 vitest",
     "check-types": "turbo run check-types",
     "dep:check": "depcruise --config .dependency-cruiser.cjs --no-progress --output-type err packages apps",
+    "dep:graph": "node scripts/dep-graph.mjs",
     "db:generate": "turbo run db:generate",
     "db:push": "turbo run db:push",
     "postinstall": "turbo run db:generate",
