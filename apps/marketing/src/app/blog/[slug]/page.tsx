@@ -8,7 +8,7 @@ import { serverApi } from "@app/lib/api/server";
 import { SEO_CONFIG } from "@app/lib/seo";
 import { BlogArticlePageClient } from "@app/modules/blog-article";
 
-const getBlogArticle = cache((slug: string) => serverApi.pages.getBlogArticle(slug));
+const getBlogArticle = cache((slug: string) => serverApi.blog.getArticle(slug));
 
 type BlogArticlePageProps = {
   params: Promise<{ slug: string }>;

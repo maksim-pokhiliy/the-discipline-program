@@ -1,2 +1,3 @@
-export { createPagesAPI } from "./pages";
+export { createBlogAPI } from "./blog";
 export { createContactAPI } from "./contact";
+export { createPagesAPI } from "./pages";
