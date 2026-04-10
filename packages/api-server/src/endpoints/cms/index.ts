@@ -1,4 +1,5 @@
 export * from "./blog/admin";
+export * from "./blog/public";
 export * from "./contact/admin";
 export * from "./contact/inbound";
 export * from "./dashboard/admin";

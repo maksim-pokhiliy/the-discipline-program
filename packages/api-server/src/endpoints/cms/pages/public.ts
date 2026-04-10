@@ -1,7 +1,6 @@
 import { type Prisma } from "@prisma/client";
 import { type z } from "zod";
 
-import { type BlogPostPageData } from "@repo/contracts/cms/blog";
 import {
   type HomePageData,
   type StorefrontProgramsPageData,
@@ -17,12 +16,8 @@ import {
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
-import {
-  isPublishedPost,
-  mapToPublicBlogPost,
-  mapToReview,
-  mapToProduct,
-} from "../../../mappers/cms";
+import { mapToReview, mapToProduct } from "../../../mappers/cms";
+import { cmsBlogPublicApi } from "../blog/public";
 
 const extractSectionData = <TKey extends SectionSchemaKey>(
   sections: { section: string; data: Prisma.JsonValue }[],
@@ -102,15 +97,10 @@ export const cmsPagesPublicApi = {
   },
 
   getBlogPage: async (): Promise<BlogPageData> => {
-    const [sections, posts] = await Promise.all([
+    const [sections, publicPosts] = await Promise.all([
       prisma.marketingPageSection.findMany({ where: { pageSlug: PageSlug.BLOG, isActive: true } }),
-      prisma.marketingBlogPost.findMany({
-        where: { isPublished: true, publishedAt: { not: null } },
-        orderBy: { publishedAt: "desc" },
-      }),
+      cmsBlogPublicApi.listPublished(),
     ]);
-
-    const publicPosts = posts.filter(isPublishedPost).map(mapToPublicBlogPost);
 
     return {
       hero: extractSectionData(sections, PAGE_SECTIONS_MAP.blog.hero),
@@ -151,54 +141,6 @@ export const cmsPagesPublicApi = {
       hero: extractSectionData(sections, map.hero),
       content: extractSectionData(sections, map.content),
       cta: extractSectionData(sections, map.cta),
-    };
-  },
-
-  getBlogArticle: async (slug: string): Promise<BlogPostPageData> => {
-    const [post, sections] = await Promise.all([
-      prisma.marketingBlogPost.findFirst({
-        where: {
-          slug,
-          isPublished: true,
-          publishedAt: { not: null },
-        },
-      }),
-      prisma.marketingPageSection.findMany({
-        where: { pageSlug: PageSlug.BLOG, isActive: true },
-      }),
-    ]);
-
-    if (!post || !isPublishedPost(post)) {
-      throw new NotFoundError(`Article not found: ${slug}`, { slug });
-    }
-
-    const publicPost = mapToPublicBlogPost(post);
-
-    const relatedPostsRaw = await prisma.marketingBlogPost.findMany({
-      where: {
-        isPublished: true,
-        category: post.category,
-        id: { not: post.id },
-        publishedAt: { not: null },
-      },
-      take: 3,
-      orderBy: { publishedAt: "desc" },
-    });
-
-    const relatedPosts = relatedPostsRaw.filter(isPublishedPost).map(mapToPublicBlogPost);
-    const relatedSection = extractSectionData(sections, PAGE_SECTIONS_MAP.blog.related);
-    const gridSection = extractSectionData(sections, PAGE_SECTIONS_MAP.blog.grid);
-
-    return {
-      post: publicPost,
-      relatedPosts,
-      relatedSectionTitle: relatedSection.title,
-      labels: {
-        readMoreLabel: gridSection.readMoreLabel,
-        minReadSuffix: gridSection.minReadSuffix,
-        readArticleLabel: gridSection.readArticleLabel,
-        notPublishedLabel: gridSection.notPublishedLabel,
-      },
     };
   },
 };
