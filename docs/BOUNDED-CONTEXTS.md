@@ -70,7 +70,7 @@ The rest of this document describes each context in detail: what it owns, which 
 
 `Account`, `Session`, and `VerificationToken` are NextAuth adapter tables. They are required by the adapter contract but not part of the current authentication flow. They stay in IAM because they describe **how identity is proved**, not anything about the domain.
 
-**Upload** (`iamUploadAdminApi` → `@vercel/blob`) is currently bolted onto IAM because (a) only admins can upload and (b) there is nowhere else for it to live. This is temporary. Section 1.4.A moves upload behind a storage port, and at that point "Storage" becomes its own supporting context rather than part of IAM. For now it stays here.
+**Upload** (`iamUploadAdminApi`) is currently bolted onto IAM because (a) only admins can upload and (b) there is nowhere else for it to live. Section 1.4.A inverted the vendor dependency behind a `StoragePort` (at `packages/api-server/src/infrastructure/storage/`); the endpoint now depends on the port, and `@vercel/blob` is isolated to a single adapter file. Section 1.4.D moves upload out of IAM into a dedicated Storage supporting context. Until 1.4.D lands, upload remains filed under IAM.
 
 ### Value objects
 
@@ -98,7 +98,7 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ### Target state
 
-Landed in 1.2.B (contracts) and 1.2.C (endpoints). `iam/` subdirectory exists in both `contracts/src/entities/` and `api-server/src/endpoints/`. `upload` will migrate to a dedicated storage port during 1.4.A and leave IAM at that point. `auth-service.ts` may move into a dedicated `services/` subfolder inside `iam/` if more IAM domain services appear.
+Landed in 1.2.B (contracts) and 1.2.C (endpoints). `iam/` subdirectory exists in both `contracts/src/entities/` and `api-server/src/endpoints/`. `upload` migrated behind a dedicated `StoragePort` in 1.4.A; the move out of IAM into a Storage supporting context is tracked as 1.4.D. `auth-service.ts` may move into a dedicated `services/` subfolder inside `iam/` if more IAM domain services appear.
 
 ---
 
