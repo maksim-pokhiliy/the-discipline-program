@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { type PlanRosterEntry } from "@repo/contracts/coaching/plan-roster";
 import type {
   CreatePlanEnrollmentData,
   PlanEnrollment,
@@ -80,7 +81,7 @@ export const useBulkEnrollAthletes = (planId: string) => {
 };
 
 export const useUpdatePlanEnrollment = (planId: string) =>
-  useOptimisticMutation<PlanEnrollment[], { id: string; data: UpdatePlanEnrollmentData }>({
+  useOptimisticMutation<PlanRosterEntry[], { id: string; data: UpdatePlanEnrollmentData }>({
     mutationFn: ({ id, data }) => api.planEnrollments.update(planId, id, data),
     queryKey: platformKeys.planEnrollments.byPlan(planId),
     transform: (prev, { id, data }) => prev.map((e) => (e.id === id ? { ...e, ...data } : e)),

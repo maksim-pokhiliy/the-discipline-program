@@ -4,8 +4,8 @@ import { type FormEvent, type SyntheticEvent, useState } from "react";
 
 import { Autocomplete, Avatar, Checkbox, Stack, TextField, Typography } from "@mui/material";
 
+import { type PlanRosterEntry } from "@repo/contracts/coaching/plan-roster";
 import type { UserSearchResult } from "@repo/contracts/iam/user";
-import type { PlanEnrollment } from "@repo/contracts/lms/plan-enrollment";
 import { FormModal } from "@repo/ui";
 
 import { useBulkEnrollAthletes, useSearchUsers } from "@app/lib/hooks";
@@ -22,7 +22,7 @@ type EnrollAthleteDialogProps = {
   open: boolean;
   onClose: () => void;
   planId: string;
-  enrollments: PlanEnrollment[];
+  enrollments: PlanRosterEntry[];
 };
 
 export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
@@ -36,7 +36,7 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
   const { data: users = [] } = useSearchUsers(query, open);
   const bulkEnroll = useBulkEnrollAthletes(planId);
 
-  const enrolledIds = new Set(enrollments.map((e: PlanEnrollment) => e.userId));
+  const enrolledIds = new Set(enrollments.map((e: PlanRosterEntry) => e.userId));
   const options = users.filter((u: UserSearchResult) => !enrolledIds.has(u.id));
   const selectedIds = new Set(selected.map((u) => u.id));
   const someSelected = options.some((o) => selectedIds.has(o.id));

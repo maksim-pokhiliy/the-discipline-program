@@ -2,7 +2,7 @@
 
 import { Chip, Stack, Typography } from "@mui/material";
 
-import type { PlanEnrollment } from "@repo/contracts/lms/plan-enrollment";
+import { type PlanRosterEntry } from "@repo/contracts/coaching/plan-roster";
 import {
   PLAN_ENROLLMENT_STATUS_LABELS,
   type PlanEnrollmentStatus,
@@ -16,7 +16,7 @@ import { ENROLLMENT_STATUS_COLORS } from "@app/lib/config";
 import { EnrollmentActionMenu } from "./enrollment-action-menu";
 
 type EnrollmentCardProps = {
-  enrollment: PlanEnrollment;
+  enrollment: PlanRosterEntry;
   onUpdate: (id: string, status: PlanEnrollmentStatus) => void;
   onDelete: (id: string) => void;
   isUpdating: boolean;

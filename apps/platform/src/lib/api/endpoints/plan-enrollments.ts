@@ -1,4 +1,5 @@
 import { type ApiClient } from "@repo/api-client";
+import { type PlanRosterEntry } from "@repo/contracts/coaching/plan-roster";
 import type {
   CreatePlanEnrollmentData,
   PlanEnrollment,
@@ -6,7 +7,7 @@ import type {
 } from "@repo/contracts/lms/plan-enrollment";
 
 export const createPlanEnrollmentsAPI = (client: ApiClient) => ({
-  getAll: (planId: string): Promise<PlanEnrollment[]> =>
+  getAll: (planId: string): Promise<PlanRosterEntry[]> =>
     client.request(`/api/platform/training-plans/${planId}/enrollments`),
 
   create: (planId: string, data: CreatePlanEnrollmentData): Promise<PlanEnrollment> =>

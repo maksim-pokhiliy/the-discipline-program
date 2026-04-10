@@ -3,11 +3,14 @@ import {
   createAuthGetByParamHandler,
   createAuthPutByParamHandler,
 } from "@repo/api-routes";
+import { coachingPlanRosterApi } from "@repo/api-server/coaching";
 import { lmsPlanEnrollmentApi } from "@repo/api-server/lms";
 import {
+  getPlanRosterEntryByIdParamsSchema,
+  getPlanRosterEntryResponseSchema,
+} from "@repo/contracts/coaching/plan-roster";
+import {
   deletePlanEnrollmentParamsSchema,
-  getPlanEnrollmentByIdParamsSchema,
-  getPlanEnrollmentResponseSchema,
   updatePlanEnrollmentParamsSchema,
   updatePlanEnrollmentRequestSchema,
   updatePlanEnrollmentResponseSchema,
@@ -18,9 +21,9 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 export const GET = withPlatformAuth(
   createAuthGetByParamHandler(
     (userId, { planId, enrollmentId }) =>
-      lmsPlanEnrollmentApi.getById(userId, planId, enrollmentId),
-    getPlanEnrollmentByIdParamsSchema,
-    getPlanEnrollmentResponseSchema,
+      coachingPlanRosterApi.getById(userId, planId, enrollmentId),
+    getPlanRosterEntryByIdParamsSchema,
+    getPlanRosterEntryResponseSchema,
   ),
 );
 
