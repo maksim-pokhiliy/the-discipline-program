@@ -89,16 +89,16 @@ The rest of this document describes each context in detail: what it owns, which 
 
 - **DB:** `User`, `Account`, `Session`, `VerificationToken`, and the role enum in `schema.prisma`.
 - **Contracts:** `packages/contracts/src/entities/iam/auth/`, `iam/user/`, `iam/upload/` (subpath exports `@repo/contracts/iam/*`).
-- **API — `api-server`:** `endpoints/admin/users.ts` (admin user management), `endpoints/admin/upload.ts` (media upload), `endpoints/platform/users.ts` (athlete search inside coach flow), plus the service `services/auth.ts` used by both NextAuth instances.
+- **API — `api-server`:** `endpoints/iam/users-admin.ts` (admin user management), `endpoints/iam/upload.ts` (media upload), `endpoints/iam/users-search.ts` (athlete search inside coach flow), and `endpoints/iam/auth-service.ts` (exports `authService` used by both NextAuth instances — previously `services/auth.ts`).
 - **Consumer apps:** all three. Each app has its own NextAuth route handler (`api/auth/[...nextauth]`) that proxies into `authService`.
 
 ### Dependencies
 
 **None.** IAM does not import anything from the other four contexts. Every other context depends on `userId: string` coming from IAM, but IAM itself is self-contained. This is the correct direction — identity is the foundation.
 
-### Target state (after 1.2)
+### Target state
 
-Move the three contract folders (`auth`, `user`, `upload`) and the three endpoint files (`admin/users`, `admin/upload`, `platform/users`) under a new `iam/` subdirectory in both `contracts/src/entities/` and `api-server/src/endpoints/`. `upload` will migrate to a dedicated storage port during 1.4.A and leave IAM at that point.
+Landed in 1.2.B (contracts) and 1.2.C (endpoints). `iam/` subdirectory exists in both `contracts/src/entities/` and `api-server/src/endpoints/`. `upload` will migrate to a dedicated storage port during 1.4.A and leave IAM at that point. `auth-service.ts` may move into a dedicated `services/` subfolder inside `iam/` if more IAM domain services appear.
 
 ---
 
@@ -139,10 +139,7 @@ The marketing facet of `Product` is the only cross-context entity in the repo to
 
 - **DB:** `MarketingPage`, `MarketingPageSection`, `MarketingBlogPost`, `MarketingReview`, `MarketingContactSubmission`, and the `Product` model (shared with Billing). Physical prefix is `marketing_*` except for `Product` (`app_products`).
 - **Contracts:** `packages/contracts/src/entities/cms/pages/`, `cms/blog/`, `cms/review/`, `cms/contact/`, `cms/product/`, `cms/dashboard/` (admin analytics read-model) — subpath exports `@repo/contracts/cms/*`.
-- **API — `api-server`:** this is where the duplication is most visible. CMS lives in two parallel folders:
-  - `endpoints/admin/blog.ts`, `contacts.ts`, `pages.ts`, `products.ts`, `reviews.ts` — admin CRUD side (authoring).
-  - `endpoints/marketing/pages.ts`, `products.ts`, `reviews.ts`, `contact.ts` — marketing read side + public form submission.
-  - Both folders read and write the same Prisma models. The only reason they are split is that they serve different HTTP consumers.
+- **API — `api-server`:** all CMS lives under `endpoints/cms/` after 1.2.C. Each entity is a subfolder with sibling admin-write and public-read files: `cms/blog/admin.ts`, `cms/contact/{admin,inbound}.ts`, `cms/dashboard/admin.ts`, `cms/pages/{admin,public,page-sections}.ts`, `cms/product/{admin,public}.ts`, `cms/review/{admin,public}.ts`. The `cms/toggle-exclusive-featured.ts` helper is shared between `blog/admin.ts` and `product/admin.ts` (moved here from `utils/`). Blog reads still live inside `cms/pages/public.ts` — 1.2.G will extract them into a dedicated `cms/blog/public.ts`.
 - **Consumer apps:** `apps/admin` (authoring, triage), `apps/marketing` (public rendering). `apps/platform` does not touch CMS.
 
 ### Dependencies
@@ -150,30 +147,36 @@ The marketing facet of `Product` is the only cross-context entity in the repo to
 - **CMS → IAM:** the admin authoring side requires an authenticated admin session. The dependency is enforced by `withAdminAuth` on every admin CMS route handler. Public CMS read endpoints (`/api/public/*`) do not require authentication and do not depend on IAM at runtime, only at the contract level (they do not use `User`).
 - **CMS → Billing:** CMS reads `Product` and `Price` to render the storefront and to populate the contact-form program dropdown. The read is restricted to the marketing facet of `Product` plus `Price.amountCents` / `currency` for display. This is the one cross-context read in the current codebase. See §6.
 
-### Target state (after 1.2)
+### Target state
 
-Collapse the `admin/` and `marketing/` parallel folders into a single `cms/` folder grouped by entity. Each entity gets its own subfolder with public-read, admin-write, and public-write handlers as siblings — not split across two directories. Example target shape:
+Landed in 1.2.C. The `admin/` and `marketing/` parallel folders collapsed into `endpoints/cms/` grouped by entity. Actual shape:
 
 ```
 api-server/src/endpoints/cms/
   blog/
     admin.ts        (create / update / delete / toggle featured)
-    public.ts       (marketing read)
+    admin.test.ts
+    # public.ts — pending 1.2.G (blog reads currently live in pages/public.ts)
   contact/
     admin.ts        (triage)
     inbound.ts      (public form submission)
+  dashboard/
+    admin.ts        (admin analytics read-model)
   pages/
+    admin.ts
+    public.ts
+    page-sections.ts  (CMS-only helper, moved from utils/)
+  product/
     admin.ts
     public.ts
   review/
     admin.ts
     public.ts
-  product-marketing/
-    admin.ts
-    public.ts
+  index.ts          (context barrel)
+  toggle-exclusive-featured.ts  (shared CMS admin helper, moved from utils/)
 ```
 
-The `Product` model itself keeps its current physical shape; only the contracts and endpoints are split along the CMS / Billing line. See §6 for the split rule.
+The `Product` model itself keeps its current physical shape; only the contracts and endpoints are split along the CMS / Billing line. See §6 for the split rule. The entity folder is named `product/` (not `product-marketing/`) for now — it will be renamed when the billing facet is added and a `billing/product-billing/` sibling appears.
 
 ---
 
@@ -215,30 +218,33 @@ The `Product` model itself keeps its current physical shape; only the contracts 
 
 - **DB:** `TrainingPlan`, `Workout`, `WorkoutLog`, `PlanEnrollment`, `BenchmarkDefinition`, `UserBenchmark`, plus `AthleteProfile` which is logically half-LMS half-Coaching (see §4).
 - **Contracts:** `packages/contracts/src/entities/lms/training-plan/`, `lms/workout/`, `lms/workout-log/`, `lms/plan-enrollment/`, `lms/benchmark-definition/`, `lms/user-benchmark/` (subpath exports `@repo/contracts/lms/*`).
-- **API — `api-server`:** entirely in `endpoints/platform/`: `training-plans.ts`, `workouts.ts`, `workout-logs.ts`, `plan-enrollments.ts`, `benchmark-definitions.ts`, `user-benchmarks.ts`.
+- **API — `api-server`:** entirely in `endpoints/lms/` after 1.2.C: `training-plan.ts`, `workout.ts`, `workout-log.ts`, `plan-enrollment.ts`, `benchmark-definition.ts`, `user-benchmark.ts` (all renamed to singular during the reorg). Ownership guards live in the top-level `packages/api-server/src/authz/guards.ts` and are imported by LMS endpoints via `../../authz/guards`.
 - **Consumer apps:** `apps/platform` exclusively. `apps/admin` does not currently read LMS state (the admin dashboard counts at the marketing level, not workout level).
 
 ### Dependencies
 
-- **LMS → IAM:** every LMS aggregate references `User.id`. Authorization for write paths routes through `resolveCoachId` / `verifyPlanOwnership` in `endpoints/platform/guards.ts`, which are themselves IAM queries.
+- **LMS → IAM:** every LMS aggregate references `User.id`. Authorization for write paths routes through `resolveCoachId` / `verifyPlanOwnership` in `packages/api-server/src/authz/guards.ts` (cross-cutting authz module, not owned by any single bounded context).
 - **LMS → Coaching:** one-way via `TrainingPlan.coachId → CoachProfile.id`. LMS does not know about action items or dashboards — that is Coaching's concern.
 - **LMS ⇄ Billing (planned):** `Product.trainingPlanId → TrainingPlan.id` creates an optional link from a billing product to the plan it unlocks. CLAUDE.md says "Purchase = Immediate Value": a product purchase auto-enrolls the athlete into the linked plan. This is a planned flow — the code does not yet implement it because Billing has no API. When Billing lands, the enrollment creation becomes a cross-context operation.
 
-### Target state (after 1.2)
+### Target state
 
-Move LMS endpoints into `endpoints/lms/` grouped by aggregate:
+Landed in 1.2.B (contracts) and 1.2.C (endpoints). LMS lives flat-per-entity (not in per-entity subfolders — LMS entities have a single responsibility each, no admin/public split):
 
 ```
 api-server/src/endpoints/lms/
-  training-plan/
-  workout/
-  workout-log/
-  plan-enrollment/
-  benchmark-definition/
-  user-benchmark/
+  benchmark-definition.ts
+  plan-enrollment.ts
+  training-plan.ts
+  training-plan.test.ts
+  user-benchmark.ts
+  workout.ts
+  workout.test.ts
+  workout-log.ts
+  index.ts
 ```
 
-Contracts move to `contracts/src/entities/lms/`. Subpath exports on `@repo/contracts` become `@repo/contracts/lms/training-plan` etc. `apps/platform` is the only legitimate consumer.
+Contracts live at `packages/contracts/src/entities/lms/<entity>/` with subpath exports `@repo/contracts/lms/<entity>`. `apps/platform` is the only legitimate consumer of LMS endpoints.
 
 ---
 
@@ -282,7 +288,7 @@ Contracts move to `contracts/src/entities/lms/`. Subpath exports on `@repo/contr
 
 - **DB:** `CoachProfile`, `AthleteProfile`, `CoachNote`, `CoachActionItem`. The action item type/status/severity/resolve-reason enums are defined here too.
 - **Contracts:** `packages/contracts/src/entities/coaching/coach-profile/`, `coaching/athlete-profile/`, `coaching/coach-note/`, `coaching/coach-action-item/`, `coaching/coach-dashboard/`, `coaching/coach-athletes/` (subpath exports `@repo/contracts/coaching/*`).
-- **API — `api-server`:** all under `endpoints/platform/`: `coach-profile.ts`, `athlete-profile.ts`, `coach-notes.ts`, `coach-action-items.ts`, `coach-dashboard.ts`, `coach-athletes.ts` (+ `coach-athlete-detail.ts`, `coach-athletes-list.ts` as file splits), plus the shared guards in `guards.ts`.
+- **API — `api-server`:** all under `endpoints/coaching/` after 1.2.C: `coach-profile.ts`, `athlete-profile.ts`, `coach-note.ts`, `coach-action-item.ts`, `coach-dashboard.ts`, and the aggregator subfolder `coach-athletes/{index,detail,list}.ts`. Context-specific helpers that used to live in `utils/` now live alongside the endpoints that consume them: `coaching/dashboard-computations.ts` (computes adherence windows, progress buckets) and `coaching/enrollment-query.ts` (builds the nested Prisma include for enrollment read-models). Shared authz guards live in top-level `authz/guards.ts` — imported as `../../authz/guards`.
 - **Consumer apps:** `apps/platform` (coach area + athlete self-service for `AthleteProfile`).
 
 ### Dependencies
@@ -292,22 +298,33 @@ Contracts move to `contracts/src/entities/lms/`. Subpath exports on `@repo/contr
 - **Coaching ↛ CMS:** no dependency. Coach dashboards do not show marketing content.
 - **Coaching ↛ Billing:** currently no dependency, but once Billing exists, subscription status will gate whether an athlete shows in a coach dashboard at all (via "Access = Subscription State" invariant).
 
-### Target state (after 1.2)
+### Target state
 
-Move Coaching endpoints to `endpoints/coaching/`:
+Landed in 1.2.B (contracts) and 1.2.C (endpoints). Coaching lives mostly flat-per-entity, with `coach-athletes/` as a subfolder because its aggregator was already split into three files:
 
 ```
 api-server/src/endpoints/coaching/
-  coach-profile/
-  athlete-profile/
-  coach-note/
-  coach-action-item/
-  coach-dashboard/
+  athlete-profile.ts
+  coach-action-item.ts
+  coach-action-item.test.ts
+  coach-action-item.test-helpers.ts
   coach-athletes/
-  guards.ts       (shared Coaching guards — stay here, they are policy for this context)
+    index.ts
+    detail.ts
+    list.ts
+  coach-dashboard.ts
+  coach-dashboard.test.ts
+  coach-note.ts
+  coach-profile.ts
+  dashboard-computations.ts       (Coaching-specific read computations, moved from utils/)
+  dashboard-computations.test.ts
+  dashboard-computations.test-helpers.ts
+  dashboard-progress.test.ts
+  enrollment-query.ts             (nested Prisma include for enriched enrollment reads)
+  index.ts
 ```
 
-The `enrollment-query.ts` helper that joins LMS data for the dashboard remains in `utils/` because it is a query-layer concern and crosses the LMS boundary deliberately.
+Shared authz guards (`resolveCoachId`, `verifyAthleteBelongsToCoach`, `verifyPlanOwnership`, `verifyWorkoutOwnership`) moved to the top-level `packages/api-server/src/authz/guards.ts` — they are cross-cutting policy that spans both LMS and Coaching concerns, not owned by either single context. Coaching endpoints import them as `../../authz/guards`.
 
 ---
 
@@ -481,7 +498,7 @@ It is easier to lock in correct behavior that already exists than to fix incorre
 Items flagged during the context-mapping pass that do not belong to any single bullet yet:
 
 - **`CoachActionItem` reconciliation has no scheduler.** Audit 1.5 and 7 flagged this. Reconciliation currently runs synchronously when a coach opens the dashboard — inefficient and means "missed workout" signals only appear when a coach looks, not when the miss happens. Needs a job queue.
-- **`enrollment-query.ts` is the cross-boundary read between Coaching and LMS.** It lives in `utils/` today. After the reorg it should move to `coaching/` (it is a Coaching read-model helper, not a generic util).
+- ~~**`enrollment-query.ts` is the cross-boundary read between Coaching and LMS.**~~ Closed in 1.2.C — the helper moved to `endpoints/coaching/enrollment-query.ts` alongside the endpoints that consume it.
 - **Coach access via `PlanEnrollmentStatus.ACTIVE` only is too narrow.** See `verifyAthleteBelongsToCoach`. A paused enrollment is still the coach's concern.
 - **Product split: when to split the Prisma model itself.** The current plan is to split contracts only, not the schema. If the two facets diverge further — separate lifecycles, separate audit logs, separate owners — a schema split may eventually be justified. Out of scope for 1.2.
 - **Where does the Stripe webhook live.** A webhook is an inbound, not an outbound; it is a Billing handler. But it also writes to LMS (enrollment). The handler file goes in `endpoints/billing/webhook/` and calls into an LMS-aware service. That service is the single place where the Billing → LMS write rule is exercised.

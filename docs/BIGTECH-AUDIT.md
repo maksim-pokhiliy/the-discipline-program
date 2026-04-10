@@ -29,7 +29,7 @@
 
 ## 1. Архитектура и границы
 
-**Статус:** В работе — 1.1 (ADR) + 1.2.A (BOUNDED-CONTEXTS.md) + 1.2.B (contracts reorg) завершены, 1.2.C–1.6 впереди
+**Статус:** В работе — 1.1 (ADR) + 1.2.A (BOUNDED-CONTEXTS.md) + 1.2.B (contracts reorg) + 1.2.C (endpoints reorg + authz split + context-util sweep) завершены, 1.2.D–1.6 впереди. Новые буллеты, поднятые в 1.2.C: 1.2.E (mappers reorg), 1.2.F (symbol rename), 1.2.G (blog read extraction).
 
 System, not code. Это фундамент — всё остальное стоит на нём, поэтому идёт первым. Неправильные решения на этом уровне отравляют все последующие.
 
@@ -47,30 +47,33 @@ System, not code. Это фундамент — всё остальное сто
 
 Подход C (гибрид): research секции — один раз, реализация — по bullet'у = по коммиту. Прогресс отмечается здесь по мере закрытия.
 
-| №     | Commit hash | Status  | Description                                                                                                                    |
-| ----- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| 1.1.A | `53b5ebe`   | ✅ Done | ADR framework: `docs/adr/README.md`, `_template.md`, meta-ADR 0001.                                                            |
-| 1.1.B | `ace64ca`   | ✅ Done | Backfill 13 ADRs (0002–0014) for existing implicit decisions.                                                                  |
-| 1.2.A | `f107e0a`   | ✅ Done | Create `docs/BOUNDED-CONTEXTS.md` documenting CMS, LMS, Coaching, IAM, Billing contexts.                                       |
-| 1.2.B | `11fd9cc`   | ✅ Done | Reorganize `packages/contracts/src/entities/` into context subdirectories (cms/lms/coaching/iam/billing) + subpath exports.    |
-| 1.2.C | —           | ⏳ Next | Reorganize `packages/api-server/src/endpoints/` by bounded context + consolidate CMS duplication (admin/marketing share code). |
-| 1.2.D | —           | Pending | Remove barrel export in `api-server/src/index.ts`; enforce subpath imports.                                                    |
-| 1.3.A | —           | Pending | Add `dependency-cruiser` with boundary rules (circular, marketing↛api-server/lms, contracts no-deps, ui no-prisma).            |
-| 1.3.B | —           | Pending | Add `.github/workflows/ci.yml` with dep-check + check-types + lint + test + build.                                             |
-| 1.3.C | —           | Pending | Generate and commit dep-graph artifact under `docs/`.                                                                          |
-| 1.4.A | —           | Pending | Storage port + vercel-blob adapter in `api-server/src/infrastructure/storage/`.                                                |
-| 1.4.B | —           | Pending | Move `centsToAmount` from `@repo/shared` to `@repo/contracts/common/money`.                                                    |
-| 1.4.C | —           | Pending | Scaffold empty port directories for email / payments / queue / cache with README placeholders.                                 |
-| 1.5.A | —           | Pending | Add `vercel.json` per app with security headers (CSP, HSTS, X-Frame-Options, etc.).                                            |
-| 1.5.B | —           | Pending | Add `/api/health`, `/api/ready`, `/api/version` endpoints to every app + handler factories.                                    |
-| 1.5.C | —           | Pending | Add `docs/DEPLOY.md` describing failure domains, rollback procedure, env layout.                                               |
-| 1.5.D | —           | Pending | Create `.env.example` at repo root documenting every required env var.                                                         |
-| 1.5.E | —           | Pending | Add `apps/admin/src/proxy.ts` with server-side ADMIN role check.                                                               |
-| 1.5.F | —           | Pending | Add role-based route protection to `apps/platform/src/proxy.ts`.                                                               |
-| 1.6.A | —           | Pending | Fix `@repo/auth` dual-instance risk: remove `next-auth` from `dependencies`, keep only in `peerDependencies`.                  |
-| 1.6.B | —           | Pending | Replace `@repo/ui` wildcard `exports` with controlled public API via `index.ts`.                                               |
-| 1.6.C | —           | Pending | Declare `@repo/contracts` dependency in `@repo/api-client`.                                                                    |
-| 1.6.D | —           | Pending | Minor package.json hygiene: version alignment, peer/dev duplication, next peer version pinning.                                |
+| №     | Commit hash | Status  | Description                                                                                                                                                                                         |
+| ----- | ----------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1.1.A | `53b5ebe`   | ✅ Done | ADR framework: `docs/adr/README.md`, `_template.md`, meta-ADR 0001.                                                                                                                                 |
+| 1.1.B | `ace64ca`   | ✅ Done | Backfill 13 ADRs (0002–0014) for existing implicit decisions.                                                                                                                                       |
+| 1.2.A | `f107e0a`   | ✅ Done | Create `docs/BOUNDED-CONTEXTS.md` documenting CMS, LMS, Coaching, IAM, Billing contexts.                                                                                                            |
+| 1.2.B | `11fd9cc`   | ✅ Done | Reorganize `packages/contracts/src/entities/` into context subdirectories (cms/lms/coaching/iam/billing) + subpath exports.                                                                         |
+| 1.2.C | _pending_   | ✅ Done | Reorganize `packages/api-server/src/endpoints/` by bounded context + consolidate CMS duplication (admin/marketing share code).                                                                      |
+| 1.2.D | —           | ⏳ Next | Remove barrel export in `api-server/src/index.ts`; enforce subpath imports (`@repo/api-server/cms`, `@repo/api-server/lms`, etc.).                                                                  |
+| 1.2.E | —           | Pending | Reorganize `packages/api-server/src/mappers/` by bounded context (`mappers/{cms,lms,coaching,iam}/`). New finding from 1.2.C research.                                                              |
+| 1.2.F | —           | Pending | Rename api-server public API symbols to context/role convention (`adminBlogApi → cmsBlogAdminApi`, etc.). 24 symbols, 56 consumer files. Sequenced after 1.2.D.                                     |
+| 1.2.G | —           | Pending | Extract blog reads from `cms/pages/public.ts` into new `cms/blog/public.ts` exposing `publicBlogApi`. Pages endpoint delegates instead of reading prisma directly. New finding from 1.2.C research. |
+| 1.3.A | —           | Pending | Add `dependency-cruiser` with boundary rules (circular, marketing↛api-server/lms, contracts no-deps, ui no-prisma).                                                                                 |
+| 1.3.B | —           | Pending | Add `.github/workflows/ci.yml` with dep-check + check-types + lint + test + build.                                                                                                                  |
+| 1.3.C | —           | Pending | Generate and commit dep-graph artifact under `docs/`.                                                                                                                                               |
+| 1.4.A | —           | Pending | Storage port + vercel-blob adapter in `api-server/src/infrastructure/storage/`.                                                                                                                     |
+| 1.4.B | —           | Pending | Move `centsToAmount` from `@repo/shared` to `@repo/contracts/common/money`.                                                                                                                         |
+| 1.4.C | —           | Pending | Scaffold empty port directories for email / payments / queue / cache with README placeholders.                                                                                                      |
+| 1.5.A | —           | Pending | Add `vercel.json` per app with security headers (CSP, HSTS, X-Frame-Options, etc.).                                                                                                                 |
+| 1.5.B | —           | Pending | Add `/api/health`, `/api/ready`, `/api/version` endpoints to every app + handler factories.                                                                                                         |
+| 1.5.C | —           | Pending | Add `docs/DEPLOY.md` describing failure domains, rollback procedure, env layout.                                                                                                                    |
+| 1.5.D | —           | Pending | Create `.env.example` at repo root documenting every required env var.                                                                                                                              |
+| 1.5.E | —           | Pending | Add `apps/admin/src/proxy.ts` with server-side ADMIN role check.                                                                                                                                    |
+| 1.5.F | —           | Pending | Add role-based route protection to `apps/platform/src/proxy.ts`.                                                                                                                                    |
+| 1.6.A | —           | Pending | Fix `@repo/auth` dual-instance risk: remove `next-auth` from `dependencies`, keep only in `peerDependencies`.                                                                                       |
+| 1.6.B | —           | Pending | Replace `@repo/ui` wildcard `exports` with controlled public API via `index.ts`.                                                                                                                    |
+| 1.6.C | —           | Pending | Declare `@repo/contracts` dependency in `@repo/api-client`.                                                                                                                                         |
+| 1.6.D | —           | Pending | Minor package.json hygiene: version alignment, peer/dev duplication, next peer version pinning.                                                                                                     |
 
 **Execution order** (derived from dependencies): 1.1 → 1.3.A (early so subsequent refactors trip dep-cruiser fast) → 1.2 → 1.4 → 1.5 → 1.6 → 1.3.B/C (CI gate last, when structure is stable).
 
@@ -84,8 +87,8 @@ System, not code. Это фундамент — всё остальное сто
 
 ### 1.2. Bounded contexts
 
-- [ ] **`packages/api-server/src/endpoints/` сгруппирован по consumer (`admin/`, `marketing/`, `platform/`), а не по domain.** Это создаёт физическое дублирование: `products.ts`, `pages.ts`, `reviews.ts`, `contact(s).ts` существуют и в `admin/`, и в `marketing/` как разные файлы — один домен, две реализации.
-- [ ] **В `admin/endpoints/` смешаны CMS-ресурсы (blog, contacts, pages, products, reviews) и admin analytics (dashboard, users, upload).** Нет явного места для «admin analytics» и «CMS» как отдельных контекстов.
+- [x] **~~`packages/api-server/src/endpoints/` сгруппирован по consumer (`admin/`, `marketing/`, `platform/`), а не по domain.~~** Закрыто в commit 1.2.C. Endpoint-слой реорганизован в 5 контекст-папок (`cms/`, `lms/`, `coaching/`, `iam/`, `billing/`). Дублирование CMS между `admin/` и `marketing/` устранено: теперь `cms/<entity>/admin.ts` + `cms/<entity>/public.ts` / `inbound.ts` живут рядом. Cross-cutting authz-guards вынесены в новый top-level `packages/api-server/src/authz/` (не внутри endpoints/), context-specific утилиты (`dashboard-computations`, `enrollment-query` → coaching; `page-sections`, `toggle-exclusive-featured` → cms) вынесены из `utils/` в свои контексты. `services/` каталог удалён — `auth.ts` переехал в `iam/auth-service.ts`.
+- [x] **~~В `admin/endpoints/` смешаны CMS-ресурсы (blog, contacts, pages, products, reviews) и admin analytics (dashboard, users, upload).~~** Закрыто в commit 1.2.C вместе с основной реорганизацией. Admin analytics (`dashboard.ts`) → `cms/dashboard/admin.ts` (4 из 5 data sources — CMS, поэтому живёт в CMS). Admin users → `iam/users-admin.ts`. Admin upload → `iam/upload.ts`. CMS-ресурсы разбиты по entity-папкам в `cms/`.
 - [x] **~~В `contracts/src/entities/` 21 сущность плоским списком.~~** Закрыто в commit 1.2.B. `packages/contracts/src/entities/` реорганизован в 5 контекст-папок (`cms/`, `lms/`, `coaching/`, `iam/`, `billing/`). `contracts/package.json` теперь имеет 21 contextful subpath export (`./cms/blog`, `./lms/training-plan`, и т.д.) + `.` + `./common`. Все ~246 import-сайтов в `apps/` и `packages/` обновлены. Billing-папка создана пустой с README-placeholder.
 - [ ] **Billing domain существует только в БД.** `schema.prisma` содержит `Product`, `Price`, `Subscription`, `Transaction`, но `packages/contracts/src/entities/` не имеет ни `subscription`, ни `transaction`, ни `price`. В `api-server/endpoints/` нет ни одного billing endpoint. В route handlers нет `/api/.../billing/*` и `/api/webhooks/stripe`. **Идеальное окно заложить billing bounded context правильно, пока кода нет.**
 - [ ] **`api-server` не имеет subpath exports.** `package.json` экспортирует только `.`, и `src/index.ts` делает `export * from "./endpoints"; export * from "./services"`. Любой app получает доступ ко всему domain layer. `marketing` импортирует только `pagesApi` и `contactApi` (конкретные файлы: `apps/marketing/src/app/api/public/pages/[pageSlug]/route.ts`, `apps/marketing/src/app/api/public/contact/route.ts`), но физически тянет весь `api-server`.
@@ -94,6 +97,9 @@ System, not code. Это фундамент — всё остальное сто
 - [ ] **CoachActionItem генерирует события `MISSED_WORKOUTS / NEW_NO_START / HEALTH_REPORT`** (см. `schema.prisma:308-323`), но нет background scheduler'а. Либо эти события создаются лениво при запросе dashboard'а, либо вообще не создаются. Сoaching context не отделён от LMS и не имеет явного event-boundary.
 - [ ] **LMS→Coaching leak: `lms/plan-enrollment/plan-enrollment.schema.ts` импортирует `HealthStatus` из `coaching/athlete-profile`.** Найдено в research для 1.2.B. Health-поле встраивается в enriched enrollment payload для coach dashboard. Это projection-leak, не domain-level зависимость. Правила `BOUNDED-CONTEXTS.md` §8 запрещают LMS→Coaching. **Должен быть починен до 1.3.A (dependency-cruiser)**, иначе CI-gate будет падать. Вариант фикса: вынести `HealthStatus` из `athlete-profile` в `common/` или разделить на pure `PlanEnrollment` schema (LMS) + enriched `PlanEnrollmentWithHealth` проекцию в Coaching.
 - [ ] **IAM→Coaching leak: `iam/user/user.schema.ts` импортирует `athleteProfileSchema` + `coachProfileSchema` из `coaching/`.** Найдено в research для 1.2.B. Используется в `adminUserSchema` / `adminUserListItemSchema` для вложенного admin-view с профилями. Правила `BOUNDED-CONTEXTS.md` §8 требуют IAM быть листом (leaf). **Должен быть починен до 1.3.A**. Вариант фикса: вынести `adminUserSchema` из `iam/user/` в projection-файл в CMS (admin view) или в отдельный `admin-views/` контекст. Альтернатива: расщепить `userSchema` (чистый IAM) и `adminUserSchema` (projection, живущая где-то выше по графу).
+- [ ] **`packages/api-server/src/mappers/` — 18 mapper-файлов плоским списком.** Найдено в research для 1.2.C. Контракты и endpoint'ы сгруппированы по bounded context (после 1.2.B и 1.2.C), а mappers — нет. Нужна реорганизация в `mappers/{cms,lms,coaching,iam}/` + обновление import'ов в endpoint-файлах. См. буллет 1.2.E в Implementation plan table.
+- [ ] **api-server public API symbols не соответствуют новой раскладке контекстов.** `adminBlogApi`, `marketingProductsApi`, `platformTrainingPlansApi` — имена из старой consumer-group раскладки. После 1.2.C endpoint-файлы живут в `cms/`, `lms/`, `coaching/`, `iam/`, но symbols всё ещё prefix'ят `admin*`, `marketing*`, `platform*`. Нужен rename в `cmsBlogAdminApi`, `cmsProductPublicApi`, `lmsTrainingPlanApi` и т.д. 24 symbols, 56 consumer-файлов. Заплани­рован как 1.2.F после 1.2.D (subpath exports), чтобы rename и subpath landed одним согласованным изменением в консьюмерах.
+- [ ] **`cms/pages/public.ts` читает `prisma.marketingBlogPost` напрямую вместо делегирования блог-API.** Метод `getBlogPage` собирает массив публичных постов прямо внутри pages endpoint'а, minuя CMS blog public API, который вообще не существует (`cms/blog/` содержит только `admin.ts`). Архитектурный долг: CMS entity должен иметь и admin-, и public-side, живущие рядом. Блог — единственный где public-side отсутствует. См. 1.2.G: выделить `cms/blog/public.ts` с `publicBlogApi.listPublished() / getArticle()`, pages endpoint делегирует туда.
 
 ### 1.3. Dependency direction и граф пакетов
 
