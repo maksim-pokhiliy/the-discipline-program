@@ -4,9 +4,9 @@ import {
   type User as PrismaUser,
 } from "@prisma/client";
 
-import { type AthleteProfile } from "@repo/contracts/athlete-profile";
-import { type CoachProfile } from "@repo/contracts/coach-profile";
-import { type AdminUser, type AdminUserListItem } from "@repo/contracts/user";
+import { type AthleteProfile } from "@repo/contracts/coaching/athlete-profile";
+import { type CoachProfile } from "@repo/contracts/coaching/coach-profile";
+import { type AdminUser, type AdminUserListItem } from "@repo/contracts/iam/user";
 
 import { GENDER_MAP, HEALTH_STATUS_MAP, ROLE_MAP } from "./enum-maps";
 

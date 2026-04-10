@@ -1,6 +1,6 @@
 "use client";
 
-import { type StorefrontProgramsPageData } from "@repo/contracts/pages";
+import { type StorefrontProgramsPageData } from "@repo/contracts/cms/pages";
 import { QueryWrapper, SuspenseWrapper } from "@repo/ui";
 
 import { StructuredData } from "@app/lib/components/seo";

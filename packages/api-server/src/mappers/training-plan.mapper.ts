@@ -1,6 +1,6 @@
 import { type TrainingPlan as PrismaTrainingPlan } from "@prisma/client";
 
-import { type TrainingPlan } from "@repo/contracts/training-plan";
+import { type TrainingPlan } from "@repo/contracts/lms/training-plan";
 
 import { TRAINING_PLAN_STATUS_MAP } from "./enum-maps";
 

@@ -8,7 +8,7 @@ import {
   missedWorkoutsMetadataSchema,
   newNoStartMetadataSchema,
   healthReportMetadataSchema,
-} from "@repo/contracts/coach-action-item";
+} from "@repo/contracts/coaching/coach-action-item";
 
 import {
   ACTION_ITEM_RESOLVE_REASON_MAP,

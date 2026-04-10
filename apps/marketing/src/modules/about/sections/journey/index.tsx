@@ -1,6 +1,6 @@
 import { Box, Grid, Stack, Typography } from "@mui/material";
 
-import { type AboutPageData } from "@repo/contracts/pages";
+import { type AboutPageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 type AboutJourneySectionProps = {

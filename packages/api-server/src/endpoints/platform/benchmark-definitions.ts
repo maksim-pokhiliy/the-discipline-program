@@ -2,7 +2,7 @@ import {
   type BenchmarkDefinition,
   type CreateBenchmarkDefinitionData,
   type UpdateBenchmarkDefinitionData,
-} from "@repo/contracts/benchmark-definition";
+} from "@repo/contracts/lms/benchmark-definition";
 import { ConflictError } from "@repo/errors";
 
 import { prisma } from "../../db/client";

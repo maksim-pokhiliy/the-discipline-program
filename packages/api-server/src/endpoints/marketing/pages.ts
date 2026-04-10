@@ -1,7 +1,7 @@
 import { type Prisma } from "@prisma/client";
 import { type z } from "zod";
 
-import { type BlogPostPageData } from "@repo/contracts/blog";
+import { type BlogPostPageData } from "@repo/contracts/cms/blog";
 import {
   type HomePageData,
   type StorefrontProgramsPageData,
@@ -13,7 +13,7 @@ import {
   PageSlug,
   PAGE_SECTIONS_MAP,
   SECTION_SCHEMAS,
-} from "@repo/contracts/pages";
+} from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";

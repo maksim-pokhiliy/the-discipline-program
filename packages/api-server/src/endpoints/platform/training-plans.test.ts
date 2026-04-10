@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import { cleanupRaw, createTestCoach } from "../../test/helpers";
 

@@ -1,6 +1,6 @@
 import { type WorkoutLog as PrismaWorkoutLog } from "@prisma/client";
 
-import { type WorkoutLog } from "@repo/contracts/workout-log";
+import { type WorkoutLog } from "@repo/contracts/lms/workout-log";
 
 export const mapToWorkoutLog = (log: PrismaWorkoutLog): WorkoutLog => ({
   id: log.id,

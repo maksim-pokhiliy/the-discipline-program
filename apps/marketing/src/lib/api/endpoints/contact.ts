@@ -2,7 +2,7 @@ import { type ApiClient } from "@repo/api-client";
 import {
   type CreateContactSubmissionRequest,
   type CreateContactSubmissionResponse,
-} from "@repo/contracts/contact";
+} from "@repo/contracts/cms/contact";
 
 export const createContactAPI = (client: ApiClient) => ({
   submit: (data: CreateContactSubmissionRequest): Promise<CreateContactSubmissionResponse> =>

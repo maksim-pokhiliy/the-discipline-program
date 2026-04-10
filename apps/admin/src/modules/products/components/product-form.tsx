@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { ProductCurrency, PriceInterval, PRICE_INTERVAL_LABELS } from "@repo/contracts/product";
+import { ProductCurrency, PriceInterval, PRICE_INTERVAL_LABELS } from "@repo/contracts/cms/product";
 import { FormCard, TagsInput } from "@repo/ui";
 
 import { useAutoSlug } from "@app/lib/hooks";

@@ -1,6 +1,10 @@
 "use client";
 
-import type { AdminUser, GetUsersPageDataResponse, UpdateUserRoleData } from "@repo/contracts/user";
+import type {
+  AdminUser,
+  GetUsersPageDataResponse,
+  UpdateUserRoleData,
+} from "@repo/contracts/iam/user";
 import { createCrudHooks } from "@repo/query";
 
 import { api } from "../api";

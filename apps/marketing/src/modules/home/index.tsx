@@ -1,6 +1,6 @@
 "use client";
 
-import { type HomePageData } from "@repo/contracts/pages";
+import { type HomePageData } from "@repo/contracts/cms/pages";
 import { QueryWrapper, SuspenseWrapper } from "@repo/ui";
 
 import { StructuredData } from "@app/lib/components/seo";

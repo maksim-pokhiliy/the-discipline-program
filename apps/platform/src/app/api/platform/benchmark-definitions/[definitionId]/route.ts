@@ -11,7 +11,7 @@ import {
   updateBenchmarkDefinitionParamsSchema,
   updateBenchmarkDefinitionRequestSchema,
   updateBenchmarkDefinitionResponseSchema,
-} from "@repo/contracts/benchmark-definition";
+} from "@repo/contracts/lms/benchmark-definition";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

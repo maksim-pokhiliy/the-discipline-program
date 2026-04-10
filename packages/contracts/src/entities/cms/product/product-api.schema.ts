@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { idParamSchema } from "../../common";
+import { idParamSchema } from "../../../common";
 
 import { ProductToggleField } from "./product.constants";
 import { createProductSchema, updateProductSchema, productSchema } from "./product.schema";

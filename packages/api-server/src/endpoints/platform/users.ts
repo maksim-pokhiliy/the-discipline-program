@@ -1,5 +1,5 @@
-import { UserRole } from "@repo/contracts/auth";
-import type { UserSearchResult } from "@repo/contracts/user";
+import { UserRole } from "@repo/contracts/iam/auth";
+import type { UserSearchResult } from "@repo/contracts/iam/user";
 
 import { prisma } from "../../db/client";
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/enum-maps";

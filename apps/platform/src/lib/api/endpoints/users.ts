@@ -1,5 +1,5 @@
 import { type ApiClient } from "@repo/api-client";
-import type { UserSearchResult } from "@repo/contracts/user";
+import type { UserSearchResult } from "@repo/contracts/iam/user";
 
 export const createUsersAPI = (client: ApiClient) => ({
   search: (query: string): Promise<UserSearchResult[]> =>

@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 
-import { DashboardActivityType, type ActivityItem } from "@repo/contracts/dashboard";
+import { DashboardActivityType, type ActivityItem } from "@repo/contracts/cms/dashboard";
 import { formatDate } from "@repo/shared";
 import { ContentSection } from "@repo/ui";
 

@@ -1,6 +1,6 @@
 import { createPatchByParamHandler } from "@repo/api-routes";
 import { adminPagesApi } from "@repo/api-server";
-import { pageSlugRouteParamsSchema, updatePageSectionBodySchema } from "@repo/contracts/pages";
+import { pageSlugRouteParamsSchema, updatePageSectionBodySchema } from "@repo/contracts/cms/pages";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

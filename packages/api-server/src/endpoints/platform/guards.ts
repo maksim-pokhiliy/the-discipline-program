@@ -1,4 +1,4 @@
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";

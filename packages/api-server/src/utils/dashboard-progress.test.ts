@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ProcessStatus } from "@repo/contracts/coach-dashboard";
+import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 
 import { computeProcessStatus, computeProgressBuckets } from "./dashboard-computations";
 import {

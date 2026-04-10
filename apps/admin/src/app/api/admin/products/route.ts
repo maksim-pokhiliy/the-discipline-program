@@ -1,6 +1,6 @@
 import { createGetHandler, createPostHandler } from "@repo/api-routes";
 import { adminProductsApi } from "@repo/api-server";
-import { createProductRequestSchema, getProductsResponseSchema } from "@repo/contracts/product";
+import { createProductRequestSchema, getProductsResponseSchema } from "@repo/contracts/cms/product";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

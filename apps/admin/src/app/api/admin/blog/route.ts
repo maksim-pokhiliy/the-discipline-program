@@ -1,6 +1,6 @@
 import { createGetHandler, createPostHandler } from "@repo/api-routes";
 import { adminBlogApi } from "@repo/api-server";
-import { createBlogPostRequestSchema, getBlogPostsResponseSchema } from "@repo/contracts/blog";
+import { createBlogPostRequestSchema, getBlogPostsResponseSchema } from "@repo/contracts/cms/blog";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

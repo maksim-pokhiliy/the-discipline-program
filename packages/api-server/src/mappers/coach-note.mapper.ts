@@ -1,6 +1,6 @@
 import { type CoachNote as PrismaCoachNote } from "@prisma/client";
 
-import { type CoachNote } from "@repo/contracts/coach-note";
+import { type CoachNote } from "@repo/contracts/coaching/coach-note";
 
 export const mapToCoachNote = (n: PrismaCoachNote): CoachNote => ({
   id: n.id,

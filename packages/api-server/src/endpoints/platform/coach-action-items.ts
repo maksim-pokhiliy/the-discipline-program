@@ -1,7 +1,7 @@
 import type { CoachActionItem as PrismaCoachActionItemRecord } from "@prisma/client";
 import { type JsonObject } from "@prisma/client/runtime/library";
 
-import { HEALTH_STATUS_LABELS, HealthStatus } from "@repo/contracts/athlete-profile";
+import { HEALTH_STATUS_LABELS, HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import {
   ActionItemResolveReason,
   ActionItemSeverity,
@@ -12,13 +12,13 @@ import {
   type MissedWorkoutsMetadata,
   type NewNoStartMetadata,
   type ReconcileResponse,
-} from "@repo/contracts/coach-action-item";
+} from "@repo/contracts/coaching/coach-action-item";
 import {
   MISSED_DAYS_CRITICAL,
   MISSED_DAYS_WARNING,
   NEW_ATHLETE_THRESHOLD_DAYS,
-} from "@repo/contracts/coach-dashboard";
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+} from "@repo/contracts/coaching/coach-dashboard";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";

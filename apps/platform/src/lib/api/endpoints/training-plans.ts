@@ -4,7 +4,7 @@ import type {
   CreateTrainingPlanData,
   TrainingPlan,
   UpdateTrainingPlanData,
-} from "@repo/contracts/training-plan";
+} from "@repo/contracts/lms/training-plan";
 
 export const createTrainingPlansAPI = (client: ApiClient) => ({
   getPageData: (): Promise<CoachPlansPageData> => client.request("/api/platform/training-plans"),

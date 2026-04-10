@@ -5,7 +5,7 @@ import { Button, Divider, Grid, Stack, TextField, Typography } from "@mui/materi
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { type z } from "zod";
 
-import { type aboutPageJourneySchema } from "@repo/contracts/pages";
+import { type aboutPageJourneySchema } from "@repo/contracts/cms/pages";
 import { DynamicListItem, FormCard } from "@repo/ui";
 
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./shared-styles";

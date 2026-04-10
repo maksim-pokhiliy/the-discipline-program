@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { ActionItemSeverity, ActionItemType } from "@repo/contracts/coach-action-item";
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+import { ActionItemSeverity, ActionItemType } from "@repo/contracts/coaching/coach-action-item";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import { cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
 import { startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";

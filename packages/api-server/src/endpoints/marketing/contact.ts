@@ -1,4 +1,7 @@
-import { type ContactSubmissionItem, type CreateContactSubmission } from "@repo/contracts/contact";
+import {
+  type ContactSubmissionItem,
+  type CreateContactSubmission,
+} from "@repo/contracts/cms/contact";
 
 import { prisma } from "../../db/client";
 import { mapToContact } from "../../mappers";

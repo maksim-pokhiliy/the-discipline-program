@@ -1,6 +1,6 @@
 import { type MarketingContactSubmission as PrismaContact } from "@prisma/client";
 
-import { type ContactSubmissionItem } from "@repo/contracts/contact";
+import { type ContactSubmissionItem } from "@repo/contracts/cms/contact";
 
 import { CONTACT_SUBMISSION_STATUS_MAP } from "./enum-maps";
 

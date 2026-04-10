@@ -2,7 +2,7 @@ import {
   type CreateWorkoutData,
   type UpdateWorkoutData,
   type Workout,
-} from "@repo/contracts/workout";
+} from "@repo/contracts/lms/workout";
 import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";

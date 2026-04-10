@@ -9,7 +9,7 @@ import type {
   CreateTrainingPlanData,
   TrainingPlan,
   UpdateTrainingPlanData,
-} from "@repo/contracts/training-plan";
+} from "@repo/contracts/lms/training-plan";
 import { createCrudHooks, useOptimisticMutation } from "@repo/query";
 
 import { api } from "../api";

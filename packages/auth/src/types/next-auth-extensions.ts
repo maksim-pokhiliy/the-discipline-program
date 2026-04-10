@@ -1,7 +1,7 @@
 import "next-auth";
 import "next-auth/jwt";
 
-import { type UserRole } from "@repo/contracts/auth";
+import { type UserRole } from "@repo/contracts/iam/auth";
 
 declare module "next-auth" {
   interface Session {

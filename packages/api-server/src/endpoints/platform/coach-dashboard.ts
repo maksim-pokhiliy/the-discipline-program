@@ -2,10 +2,13 @@ import {
   ActionItemStatus,
   SEVERITY_PRIORITY,
   TYPE_PRIORITY,
-} from "@repo/contracts/coach-action-item";
-import { type CoachDashboardData, type DashboardActionItem } from "@repo/contracts/coach-dashboard";
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+} from "@repo/contracts/coaching/coach-action-item";
+import {
+  type CoachDashboardData,
+  type DashboardActionItem,
+} from "@repo/contracts/coaching/coach-dashboard";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import { prisma } from "../../db/client";
 import {

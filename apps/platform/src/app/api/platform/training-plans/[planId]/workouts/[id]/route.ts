@@ -11,7 +11,7 @@ import {
   updateWorkoutParamsSchema,
   updateWorkoutRequestSchema,
   updateWorkoutResponseSchema,
-} from "@repo/contracts/workout";
+} from "@repo/contracts/lms/workout";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

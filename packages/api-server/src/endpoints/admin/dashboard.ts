@@ -3,15 +3,15 @@ import type {
   PriceInterval as PrismaPriceInterval,
 } from "@prisma/client";
 
-import { ContactStatus } from "@repo/contracts/contact";
+import { ContactStatus } from "@repo/contracts/cms/contact";
 import {
   DashboardActivityType,
   type ActivityItem,
   type ContentStats,
   type DashboardData,
   type UserStats,
-} from "@repo/contracts/dashboard";
-import { ProductCurrency } from "@repo/contracts/product";
+} from "@repo/contracts/cms/dashboard";
+import { ProductCurrency } from "@repo/contracts/cms/product";
 import { centsToAmount } from "@repo/shared";
 
 import { prisma } from "../../db/client";

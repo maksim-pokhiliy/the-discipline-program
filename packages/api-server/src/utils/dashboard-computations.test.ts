@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { HealthStatus } from "@repo/contracts/athlete-profile";
-import { TodayStatus } from "@repo/contracts/coach-dashboard";
+import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import { TodayStatus } from "@repo/contracts/coaching/coach-dashboard";
 
 import { computeAthletesSummary, computeTodayStatus } from "./dashboard-computations";
 import {

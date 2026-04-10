@@ -5,7 +5,7 @@ import { Suspense } from "react";
 import { Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { type AdminPageDetails, type UpdatePageSectionData } from "@repo/contracts/pages";
+import { type AdminPageDetails, type UpdatePageSectionData } from "@repo/contracts/cms/pages";
 import { capitalize } from "@repo/shared";
 import { ContentSection, QueryWrapper } from "@repo/ui";
 

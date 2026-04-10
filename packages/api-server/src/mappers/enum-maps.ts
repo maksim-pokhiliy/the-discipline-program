@@ -14,19 +14,19 @@ import {
   TrainingPlanStatus as PrismaTrainingPlanStatus,
 } from "@prisma/client";
 
-import { Gender, HealthStatus } from "@repo/contracts/athlete-profile";
-import { UserRole } from "@repo/contracts/auth";
-import { BlogCategory } from "@repo/contracts/blog";
+import { BlogCategory } from "@repo/contracts/cms/blog";
+import { ContactStatus } from "@repo/contracts/cms/contact";
+import { PriceInterval, ProductCurrency } from "@repo/contracts/cms/product";
+import { Gender, HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import {
   ActionItemResolveReason,
   ActionItemSeverity,
   ActionItemStatus,
   ActionItemType,
-} from "@repo/contracts/coach-action-item";
-import { ContactStatus } from "@repo/contracts/contact";
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { PriceInterval, ProductCurrency } from "@repo/contracts/product";
-import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+} from "@repo/contracts/coaching/coach-action-item";
+import { UserRole } from "@repo/contracts/iam/auth";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 export const TRAINING_PLAN_STATUS_MAP: Record<PrismaTrainingPlanStatus, TrainingPlanStatus> = {
   DRAFT: TrainingPlanStatus.DRAFT,

@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { type UpdatePageSectionData } from "@repo/contracts/pages";
+import { type UpdatePageSectionData } from "@repo/contracts/cms/pages";
 
 import { api } from "../api";
 import { adminKeys } from "../api/keys";

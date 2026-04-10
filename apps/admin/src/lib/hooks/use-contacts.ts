@@ -4,7 +4,7 @@ import {
   type AdminContactsPageData,
   type GetContactByIdResponse,
   type UpdateContactRequest,
-} from "@repo/contracts/contact";
+} from "@repo/contracts/cms/contact";
 import { createCrudHooks } from "@repo/query";
 
 import { api } from "../api";

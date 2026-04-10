@@ -5,7 +5,7 @@ import {
   type UpdatePageMetadataInput,
   PageSlug,
   SECTION_SCHEMAS,
-} from "@repo/contracts/pages";
+} from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";

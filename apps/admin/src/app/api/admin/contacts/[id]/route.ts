@@ -5,7 +5,7 @@ import {
   getContactByIdParamsSchema,
   updateContactParamsSchema,
   updateContactRequestSchema,
-} from "@repo/contracts/contact";
+} from "@repo/contracts/cms/contact";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

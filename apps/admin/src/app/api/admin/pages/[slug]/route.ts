@@ -4,7 +4,7 @@ import {
   adminPageDetailsSchema,
   pageSlugRouteParamsSchema,
   updatePageMetadataSchema,
-} from "@repo/contracts/pages";
+} from "@repo/contracts/cms/pages";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

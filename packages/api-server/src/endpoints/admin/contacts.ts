@@ -4,7 +4,7 @@ import {
   type AdminContactsPageData,
   type ContactSubmissionItem,
   type UpdateContactRequest,
-} from "@repo/contracts/contact";
+} from "@repo/contracts/cms/contact";
 
 import { prisma } from "../../db/client";
 import { mapToContact } from "../../mappers";

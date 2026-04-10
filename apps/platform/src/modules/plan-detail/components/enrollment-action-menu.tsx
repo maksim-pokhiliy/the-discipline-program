@@ -8,7 +8,7 @@ import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { ConfirmationModal } from "@repo/ui";
 
 type EnrollmentActionMenuProps = {

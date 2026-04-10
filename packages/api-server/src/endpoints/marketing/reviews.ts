@@ -1,4 +1,4 @@
-import { type Review } from "@repo/contracts/review";
+import { type Review } from "@repo/contracts/cms/review";
 
 import { prisma } from "../../db/client";
 import { mapToReview } from "../../mappers";

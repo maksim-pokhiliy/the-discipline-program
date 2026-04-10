@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import {

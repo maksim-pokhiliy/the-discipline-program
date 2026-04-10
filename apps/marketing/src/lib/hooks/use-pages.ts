@@ -9,7 +9,7 @@ import {
   type BlogPageData,
   type ContactPageData,
   type FaqPageData,
-} from "@repo/contracts/pages";
+} from "@repo/contracts/cms/pages";
 import { STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";

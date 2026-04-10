@@ -4,7 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { Button, Stack, TextField, Typography, Divider } from "@mui/material";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
-import { type HomePageWhyChooseData } from "@repo/contracts/pages";
+import { type HomePageWhyChooseData } from "@repo/contracts/cms/pages";
 import { FormCard } from "@repo/ui";
 
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./shared-styles";

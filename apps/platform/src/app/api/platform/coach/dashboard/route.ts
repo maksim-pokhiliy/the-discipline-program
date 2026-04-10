@@ -1,6 +1,6 @@
 import { createAuthGetHandler } from "@repo/api-routes";
 import { platformCoachDashboardApi } from "@repo/api-server";
-import { coachDashboardDataSchema } from "@repo/contracts/coach-dashboard";
+import { coachDashboardDataSchema } from "@repo/contracts/coaching/coach-dashboard";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

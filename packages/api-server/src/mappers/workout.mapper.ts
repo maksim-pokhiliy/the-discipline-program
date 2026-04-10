@@ -1,6 +1,6 @@
 import { type Workout as PrismaWorkout } from "@prisma/client";
 
-import { type Workout } from "@repo/contracts/workout";
+import { type Workout } from "@repo/contracts/lms/workout";
 
 export const mapToWorkout = (w: PrismaWorkout): Workout => ({
   id: w.id,

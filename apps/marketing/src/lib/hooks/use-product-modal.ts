@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { type Product } from "@repo/contracts/product";
+import { type Product } from "@repo/contracts/cms/product";
 
 type UseProductModalOptions = {
   products: Product[];

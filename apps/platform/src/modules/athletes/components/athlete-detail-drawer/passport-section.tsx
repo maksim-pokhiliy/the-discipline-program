@@ -1,8 +1,8 @@
 import { Avatar, Stack, Typography } from "@mui/material";
 
-import type { HealthStatus } from "@repo/contracts/athlete-profile";
-import type { NextWorkout } from "@repo/contracts/coach-athletes";
-import type { ProcessStatus } from "@repo/contracts/coach-dashboard";
+import type { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import type { NextWorkout } from "@repo/contracts/coaching/coach-athletes";
+import type { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 import { formatDate } from "@repo/shared";
 import { StatusChip } from "@repo/ui";
 

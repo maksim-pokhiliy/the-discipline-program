@@ -1,5 +1,5 @@
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { type CreateWorkoutLogData, type WorkoutLog } from "@repo/contracts/workout-log";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
+import { type CreateWorkoutLogData, type WorkoutLog } from "@repo/contracts/lms/workout-log";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";

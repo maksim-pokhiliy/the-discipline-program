@@ -1,6 +1,6 @@
 "use client";
 
-import { type ContactPageData } from "@repo/contracts/pages";
+import { type ContactPageData } from "@repo/contracts/cms/pages";
 import { QueryWrapper } from "@repo/ui";
 
 import { FullscreenSection } from "@app/lib/components/ui";

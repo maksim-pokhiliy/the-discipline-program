@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { idParamSchema } from "../../common";
+import { idParamSchema } from "../../../common";
 
 import { createReviewSchema, reviewSchema, updateReviewSchema } from "./review.schema";
 

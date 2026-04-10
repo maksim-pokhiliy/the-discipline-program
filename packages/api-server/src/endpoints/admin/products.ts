@@ -5,7 +5,7 @@ import {
   type UpdateProductData,
   ProductCurrency,
   PriceInterval,
-} from "@repo/contracts/product";
+} from "@repo/contracts/cms/product";
 
 import { prisma } from "../../db/client";
 import { mapToProduct } from "../../mappers";

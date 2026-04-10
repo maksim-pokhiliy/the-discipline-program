@@ -3,7 +3,7 @@
 import { Button, Grid, Stack } from "@mui/material";
 import Link from "next/link";
 
-import { type HomePageData } from "@repo/contracts/pages";
+import { type HomePageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 import { ProductCard, ProductModal } from "@app/lib/components/ui";

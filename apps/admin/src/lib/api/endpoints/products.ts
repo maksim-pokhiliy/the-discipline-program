@@ -5,7 +5,7 @@ import {
   type CreateProductData,
   ProductToggleField,
   type UpdateProductData,
-} from "@repo/contracts/product";
+} from "@repo/contracts/cms/product";
 
 export const createProductsAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminProductsPageData> =>

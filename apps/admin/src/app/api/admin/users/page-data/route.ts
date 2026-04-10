@@ -1,6 +1,6 @@
 import { createGetHandler } from "@repo/api-routes";
 import { adminUsersApi } from "@repo/api-server";
-import { getUsersPageDataResponseSchema } from "@repo/contracts/user";
+import { getUsersPageDataResponseSchema } from "@repo/contracts/iam/user";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

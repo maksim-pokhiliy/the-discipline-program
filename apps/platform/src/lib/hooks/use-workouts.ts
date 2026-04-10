@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import type { CreateWorkoutData, UpdateWorkoutData, Workout } from "@repo/contracts/workout";
+import type { CreateWorkoutData, UpdateWorkoutData, Workout } from "@repo/contracts/lms/workout";
 import { useOptimisticMutation } from "@repo/query";
 
 import { api } from "../api";

@@ -4,7 +4,7 @@ import {
   BlogToggleField,
   toggleBlogPostParamsSchema,
   toggleBlogPostQuerySchema,
-} from "@repo/contracts/blog";
+} from "@repo/contracts/cms/blog";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

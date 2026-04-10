@@ -18,7 +18,7 @@ import {
   type AdminPageDetails,
   type SectionSchemaKey,
   type UpdatePageSectionData,
-} from "@repo/contracts/pages";
+} from "@repo/contracts/cms/pages";
 
 import { SECTION_FEATURES, type HeroSectionType } from "../../config/section-features";
 import { ContactFormSectionForm } from "../sections/contact-form-section-form";

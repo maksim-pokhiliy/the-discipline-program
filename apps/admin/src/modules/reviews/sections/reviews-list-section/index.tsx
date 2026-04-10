@@ -17,7 +17,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 
-import { type Review } from "@repo/contracts/review";
+import { type Review } from "@repo/contracts/cms/review";
 import { TEXT_CLAMP_SX } from "@repo/mui";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";

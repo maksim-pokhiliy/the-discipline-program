@@ -7,8 +7,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import { Chip, IconButton, InputAdornment, Stack, TextField } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { HEALTH_STATUS_LABELS, HealthStatus } from "@repo/contracts/athlete-profile";
-import type { CoachAthletePlan } from "@repo/contracts/coach-athletes";
+import { HEALTH_STATUS_LABELS, HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import type { CoachAthletePlan } from "@repo/contracts/coaching/coach-athletes";
 
 type AthletesFiltersSectionProps = {
   plans: CoachAthletePlan[];

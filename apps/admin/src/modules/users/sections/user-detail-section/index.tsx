@@ -3,8 +3,8 @@
 import { Grid, MenuItem, Stack, TextField, useTheme } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { UserRole } from "@repo/contracts/auth";
-import { type AdminUser } from "@repo/contracts/user";
+import { UserRole } from "@repo/contracts/iam/auth";
+import { type AdminUser } from "@repo/contracts/iam/user";
 import { formatDate } from "@repo/shared";
 import { DetailField, FormCard } from "@repo/ui";
 

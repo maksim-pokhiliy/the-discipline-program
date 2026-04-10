@@ -4,7 +4,7 @@ import { TextField } from "@mui/material";
 import { type FieldError, useFormContext } from "react-hook-form";
 import { type z } from "zod";
 
-import { type contactPageFormSchema } from "@repo/contracts/pages";
+import { type contactPageFormSchema } from "@repo/contracts/cms/pages";
 import { FormCard } from "@repo/ui";
 
 import { TitleSubtitleSectionForm } from "./title-subtitle-section-form";

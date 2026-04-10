@@ -1,7 +1,7 @@
 import {
   type AthleteProfile,
   type UpdateAthleteProfileData,
-} from "@repo/contracts/athlete-profile";
+} from "@repo/contracts/coaching/athlete-profile";
 
 import { prisma } from "../../db/client";
 import { mapToAthleteProfile } from "../../mappers";

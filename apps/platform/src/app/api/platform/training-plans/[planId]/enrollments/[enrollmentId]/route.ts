@@ -11,7 +11,7 @@ import {
   updatePlanEnrollmentParamsSchema,
   updatePlanEnrollmentRequestSchema,
   updatePlanEnrollmentResponseSchema,
-} from "@repo/contracts/plan-enrollment";
+} from "@repo/contracts/lms/plan-enrollment";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

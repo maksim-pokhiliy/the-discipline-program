@@ -17,8 +17,12 @@ import {
 } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { BLOG_CATEGORY_LABELS, BlogCategory, type CreateBlogPostData } from "@repo/contracts/blog";
-import { UPLOAD_CONFIG } from "@repo/contracts/upload";
+import {
+  BLOG_CATEGORY_LABELS,
+  BlogCategory,
+  type CreateBlogPostData,
+} from "@repo/contracts/cms/blog";
+import { UPLOAD_CONFIG } from "@repo/contracts/iam/upload";
 import { FormCard, ImageUpload, RichTextEditor, TagsInput } from "@repo/ui";
 
 import { useAutoSlug, useUploadImage } from "@app/lib/hooks";

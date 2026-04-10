@@ -8,7 +8,7 @@ import ShuffleIcon from "@mui/icons-material/Shuffle";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import { Grid } from "@mui/material";
 
-import { type HomePageData } from "@repo/contracts/pages";
+import { type HomePageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 import { FeatureCard } from "@app/lib/components/ui";

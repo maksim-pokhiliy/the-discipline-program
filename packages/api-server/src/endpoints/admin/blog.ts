@@ -6,7 +6,7 @@ import {
   type BlogPost,
   type CreateBlogPostData,
   type UpdateBlogPostData,
-} from "@repo/contracts/blog";
+} from "@repo/contracts/cms/blog";
 
 import { prisma } from "../../db/client";
 import { mapToBlogPost } from "../../mappers";

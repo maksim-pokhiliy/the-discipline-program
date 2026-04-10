@@ -5,7 +5,7 @@ import {
   BlogToggleField,
   type CreateBlogPostData,
   type UpdateBlogPostData,
-} from "@repo/contracts/blog";
+} from "@repo/contracts/cms/blog";
 
 export const createBlogAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminBlogPageData> => client.request("/api/admin/blog/page-data"),

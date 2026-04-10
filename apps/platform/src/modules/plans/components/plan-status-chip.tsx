@@ -3,7 +3,7 @@ import { Chip } from "@mui/material";
 import {
   type TrainingPlanStatus,
   TRAINING_PLAN_STATUS_LABELS,
-} from "@repo/contracts/training-plan";
+} from "@repo/contracts/lms/training-plan";
 
 import { PLAN_STATUS_COLORS } from "@app/lib/config";
 

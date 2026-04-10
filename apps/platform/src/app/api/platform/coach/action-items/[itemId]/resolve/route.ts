@@ -3,7 +3,7 @@ import { platformCoachActionItemsApi } from "@repo/api-server";
 import {
   resolveActionItemParamsSchema,
   resolveActionItemResponseSchema,
-} from "@repo/contracts/coach-action-item";
+} from "@repo/contracts/coaching/coach-action-item";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

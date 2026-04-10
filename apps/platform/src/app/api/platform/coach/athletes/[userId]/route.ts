@@ -3,7 +3,7 @@ import { platformCoachAthletesApi } from "@repo/api-server";
 import {
   coachAthleteDetailParamsSchema,
   coachAthleteDetailSchema,
-} from "@repo/contracts/coach-athletes";
+} from "@repo/contracts/coaching/coach-athletes";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

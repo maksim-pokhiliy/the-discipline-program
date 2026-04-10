@@ -1,8 +1,8 @@
 import { z } from "zod";
 
-import { athleteProfileSchema } from "../athlete-profile";
+import { athleteProfileSchema } from "../../coaching/athlete-profile";
+import { coachProfileSchema } from "../../coaching/coach-profile";
 import { userRoleSchema } from "../auth";
-import { coachProfileSchema } from "../coach-profile";
 
 export const adminUserSchema = z.object({
   id: z.string().cuid(),

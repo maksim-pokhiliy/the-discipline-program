@@ -5,7 +5,7 @@ import { useCallback, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Grid, Stack, Typography } from "@mui/material";
 
-import { type PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+import { type PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { QueryWrapper } from "@repo/ui";
 
 import { PlatformFab } from "@app/lib/components";

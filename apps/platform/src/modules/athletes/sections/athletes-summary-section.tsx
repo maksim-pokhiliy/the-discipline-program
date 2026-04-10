@@ -1,4 +1,4 @@
-import type { CoachAthletesSummary } from "@repo/contracts/coach-athletes";
+import type { CoachAthletesSummary } from "@repo/contracts/coaching/coach-athletes";
 import { type PulseStatProps, PulseStatsCard } from "@repo/ui";
 
 type AthletesSummarySectionProps = {

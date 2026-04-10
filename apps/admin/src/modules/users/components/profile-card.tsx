@@ -1,8 +1,8 @@
 import { Stack, Typography } from "@mui/material";
 
-import { GENDER_LABELS } from "@repo/contracts/athlete-profile";
-import { UserRole } from "@repo/contracts/auth";
-import { type AdminUser } from "@repo/contracts/user";
+import { GENDER_LABELS } from "@repo/contracts/coaching/athlete-profile";
+import { UserRole } from "@repo/contracts/iam/auth";
+import { type AdminUser } from "@repo/contracts/iam/user";
 import { DetailField, FormCard } from "@repo/ui";
 
 type ProfileCardProps = {

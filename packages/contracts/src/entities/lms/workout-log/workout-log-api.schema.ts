@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { idParamSchema } from "../../common";
+import { idParamSchema } from "../../../common";
 
 import { createWorkoutLogSchema, workoutLogSchema } from "./workout-log.schema";
 

@@ -5,7 +5,7 @@ import type {
   Product,
   CreateProductData,
   UpdateProductData,
-} from "@repo/contracts/product";
+} from "@repo/contracts/cms/product";
 import { createCrudHooks, createToggleHook } from "@repo/query";
 
 import { api } from "../api";

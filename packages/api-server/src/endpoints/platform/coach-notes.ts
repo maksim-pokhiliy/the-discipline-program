@@ -2,7 +2,7 @@ import {
   type CoachNote,
   type CreateCoachNoteData,
   type UpdateCoachNoteData,
-} from "@repo/contracts/coach-note";
+} from "@repo/contracts/coaching/coach-note";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";

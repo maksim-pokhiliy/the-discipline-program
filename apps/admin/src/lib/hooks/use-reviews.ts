@@ -5,7 +5,7 @@ import {
   type Review,
   type CreateReviewData,
   type UpdateReviewData,
-} from "@repo/contracts/review";
+} from "@repo/contracts/cms/review";
 import { createCrudHooks, createToggleHook } from "@repo/query";
 
 import { api } from "../api";

@@ -5,8 +5,8 @@ import {
   ActionItemSeverity,
   ActionItemType,
   SEVERITY_PRIORITY,
-} from "@repo/contracts/coach-action-item";
-import type { DashboardActionItem } from "@repo/contracts/coach-dashboard";
+} from "@repo/contracts/coaching/coach-action-item";
+import type { DashboardActionItem } from "@repo/contracts/coaching/coach-dashboard";
 import type { StatusChipConfig } from "@repo/ui";
 
 import { getHealthChipFromMessage } from "@app/lib/config";

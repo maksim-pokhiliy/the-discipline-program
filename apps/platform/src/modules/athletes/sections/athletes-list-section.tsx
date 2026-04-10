@@ -5,8 +5,8 @@ import { useMemo } from "react";
 import { Grid, Typography } from "@mui/material";
 import { useSearchParams } from "next/navigation";
 
-import { HealthStatus } from "@repo/contracts/athlete-profile";
-import type { CoachAthleteListItem } from "@repo/contracts/coach-athletes";
+import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athletes";
 
 import {
   type AthleteFilters,

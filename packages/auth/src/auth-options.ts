@@ -3,7 +3,7 @@ import "./types/next-auth-extensions";
 import { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-import { AUTH_CONSTANTS, type UserRole } from "@repo/contracts/auth";
+import { AUTH_CONSTANTS, type UserRole } from "@repo/contracts/iam/auth";
 import { authEnv } from "@repo/env/auth";
 import { UnauthorizedError } from "@repo/errors";
 

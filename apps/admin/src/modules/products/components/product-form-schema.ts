@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { PriceInterval, ProductCurrency } from "@repo/contracts/product";
+import { PriceInterval, ProductCurrency } from "@repo/contracts/cms/product";
 
 const productFormPriceSchema = z.object({
   amount: z.number().min(0),

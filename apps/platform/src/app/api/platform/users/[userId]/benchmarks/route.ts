@@ -5,7 +5,7 @@ import {
   createUserBenchmarkResponseSchema,
   getUserBenchmarksParamsSchema,
   getUserBenchmarksResponseSchema,
-} from "@repo/contracts/user-benchmark";
+} from "@repo/contracts/lms/user-benchmark";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

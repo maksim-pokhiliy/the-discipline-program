@@ -6,7 +6,7 @@ import {
   createPlanEnrollmentResponseSchema,
   getPlanEnrollmentsParamsSchema,
   getPlanEnrollmentsResponseSchema,
-} from "@repo/contracts/plan-enrollment";
+} from "@repo/contracts/lms/plan-enrollment";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

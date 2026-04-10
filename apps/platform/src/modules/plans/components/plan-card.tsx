@@ -5,7 +5,7 @@ import GroupIcon from "@mui/icons-material/Group";
 import { Box, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
-import type { TrainingPlanListItem } from "@repo/contracts/training-plan";
+import type { TrainingPlanListItem } from "@repo/contracts/lms/training-plan";
 import { formatDate } from "@repo/shared";
 
 import { PlanActionMenu } from "./plan-action-menu";

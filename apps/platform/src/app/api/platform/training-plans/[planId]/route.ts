@@ -11,7 +11,7 @@ import {
   updateTrainingPlanParamsSchema,
   updateTrainingPlanRequestSchema,
   updateTrainingPlanResponseSchema,
-} from "@repo/contracts/training-plan";
+} from "@repo/contracts/lms/training-plan";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

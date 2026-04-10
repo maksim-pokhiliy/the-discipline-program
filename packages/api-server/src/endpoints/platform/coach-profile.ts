@@ -1,4 +1,7 @@
-import { type CoachProfile, type UpdateCoachProfileData } from "@repo/contracts/coach-profile";
+import {
+  type CoachProfile,
+  type UpdateCoachProfileData,
+} from "@repo/contracts/coaching/coach-profile";
 
 import { prisma } from "../../db/client";
 import { mapToCoachProfile } from "../../mappers";

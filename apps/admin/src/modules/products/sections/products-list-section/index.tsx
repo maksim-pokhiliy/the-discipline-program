@@ -8,7 +8,7 @@ import StarIcon from "@mui/icons-material/Star";
 import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
-import { type Product } from "@repo/contracts/product";
+import { type Product } from "@repo/contracts/cms/product";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatPrice } from "@repo/shared";
 import {

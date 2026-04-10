@@ -2,8 +2,8 @@ import { Gender as PrismaGender, HealthStatus as PrismaHealthStatus, Role } from
 import { Decimal } from "@prisma/client/runtime/library";
 import { describe, expect, it } from "vitest";
 
-import { Gender, HealthStatus } from "@repo/contracts/athlete-profile";
-import { UserRole } from "@repo/contracts/auth";
+import { Gender, HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import { UserRole } from "@repo/contracts/iam/auth";
 
 import {
   mapToAdminUser,

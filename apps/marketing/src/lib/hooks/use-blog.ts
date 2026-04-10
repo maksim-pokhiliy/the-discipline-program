@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { type BlogPostPageData } from "@repo/contracts/blog";
+import { type BlogPostPageData } from "@repo/contracts/cms/blog";
 
 import { api } from "../api";
 import { marketingKeys } from "../api/keys";
