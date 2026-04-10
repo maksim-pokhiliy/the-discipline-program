@@ -29,9 +29,19 @@
 
 ## 1. Архитектура и границы
 
-**Статус:** В работе — research завершается, ждёт утверждения плана
+**Статус:** Research завершён, ждёт утверждения плана реализации
 
 System, not code. Это фундамент — всё остальное стоит на нём, поэтому идёт первым. Неправильные решения на этом уровне отравляют все последующие.
+
+### Research summary — что УЖЕ хорошо
+
+- [x] **Циклов между пакетами нет** (подтверждено madge + ручной анализ 13 `package.json`).
+- [x] **Все 28 импортов `@prisma/client` — внутри `packages/api-server/`** → инвариант «api-server — единственный Prisma consumer» соблюдается.
+- [x] **Apps не импортируют друг друга** (grep verified).
+- [x] **Cross-bounded-context leaks отсутствуют de-facto:** marketing endpoints тянут только CMS contracts, admin — CMS + IAM + admin-dashboard, platform — LMS + Coaching + IAM. Нарушений нет, но enforcement отсутствует.
+- [x] **Route handlers используют factories корректно** — нет hand-rolled `NextResponse.json` в apps/_/api/_/route.ts.
+- [x] **`AuthServiceAdapter` в `packages/auth/src/auth-options.ts`** — рабочий пример port/adapter, можно использовать как reference.
+- [x] **`onlyBuiltDependencies` в `pnpm-workspace.yaml`** — security: явный allow-list postinstall scripts.
 
 ### 1.1. ADR-инфраструктура
 
