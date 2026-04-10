@@ -1,6 +1,6 @@
 import { type Price as PrismaPrice, type Product as PrismaProduct } from "@prisma/client";
 
-import { type Price, type Product } from "@repo/contracts/product";
+import { type Price, type Product } from "@repo/contracts/cms/product";
 
 import { CURRENCY_MAP, PRICE_INTERVAL_MAP } from "./enum-maps";
 

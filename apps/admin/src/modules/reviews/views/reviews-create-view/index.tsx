@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { createReviewSchema, type CreateReviewData } from "@repo/contracts/review";
+import { createReviewSchema, type CreateReviewData } from "@repo/contracts/cms/review";
 import { FormView } from "@repo/ui";
 
 import { useCreateReview } from "@app/lib/hooks";

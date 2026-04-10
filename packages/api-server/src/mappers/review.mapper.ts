@@ -1,6 +1,6 @@
 import { type MarketingReview } from "@prisma/client";
 
-import { type Review } from "@repo/contracts/review";
+import { type Review } from "@repo/contracts/cms/review";
 
 export const mapToReview = (r: MarketingReview): Review => ({
   id: r.id,

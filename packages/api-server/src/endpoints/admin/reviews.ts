@@ -3,7 +3,7 @@ import {
   type CreateReviewData,
   type Review,
   type UpdateReviewData,
-} from "@repo/contracts/review";
+} from "@repo/contracts/cms/review";
 
 import { prisma } from "../../db/client";
 import { mapToReview } from "../../mappers";

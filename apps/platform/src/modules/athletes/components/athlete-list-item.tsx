@@ -2,7 +2,7 @@
 
 import { Chip, Stack, Typography } from "@mui/material";
 
-import type { CoachAthleteListItem } from "@repo/contracts/coach-athletes";
+import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athletes";
 import { PersonCard, StatusChip } from "@repo/ui";
 
 import { HealthStatusChip } from "@app/lib/components";

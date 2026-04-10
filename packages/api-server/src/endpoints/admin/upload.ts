@@ -1,6 +1,6 @@
 import { put, del } from "@vercel/blob";
 
-import { UPLOAD_CONFIG, type UploadContext } from "@repo/contracts/upload";
+import { UPLOAD_CONFIG, type UploadContext } from "@repo/contracts/iam/upload";
 import { BadRequestError, ValidationError } from "@repo/errors";
 
 export const adminUploadApi = {

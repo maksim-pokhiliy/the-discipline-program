@@ -1,5 +1,5 @@
-import { type HealthStatus } from "@repo/contracts/athlete-profile";
-import type { CoachAthleteListItem } from "@repo/contracts/coach-athletes";
+import { type HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athletes";
 
 export type AthleteFilters = {
   search: string;

@@ -5,7 +5,7 @@ import {
   getProductByIdParamsSchema,
   updateProductParamsSchema,
   updateProductRequestSchema,
-} from "@repo/contracts/product";
+} from "@repo/contracts/cms/product";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

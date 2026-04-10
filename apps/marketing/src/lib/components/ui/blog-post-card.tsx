@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 
-import { type BlogCategory, BLOG_CATEGORY_LABELS } from "@repo/contracts/blog";
+import { type BlogCategory, BLOG_CATEGORY_LABELS } from "@repo/contracts/cms/blog";
 
 type BlogPostCardProps = {
   slug: string;

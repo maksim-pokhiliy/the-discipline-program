@@ -1,7 +1,7 @@
 import type { AlertColor, ChipProps } from "@mui/material";
 
-import type { AthleteDailySummary } from "@repo/contracts/coach-dashboard";
-import { TodayStatus } from "@repo/contracts/coach-dashboard";
+import type { AthleteDailySummary } from "@repo/contracts/coaching/coach-dashboard";
+import { TodayStatus } from "@repo/contracts/coaching/coach-dashboard";
 
 export type StatusGroupConfig = {
   status: TodayStatus;

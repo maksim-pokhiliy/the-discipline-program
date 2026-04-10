@@ -1,22 +1,30 @@
 export * from "./common";
-export * from "./entities/athlete-profile";
-export * from "./entities/auth";
-export * from "./entities/blog";
-export * from "./entities/coach-profile";
-export * from "./entities/contact";
-export * from "./entities/product";
-export * from "./entities/review";
-export * from "./entities/upload";
-export * from "./entities/pages";
-export * from "./entities/dashboard";
-export * from "./entities/training-plan";
-export * from "./entities/workout";
-export * from "./entities/workout-log";
-export * from "./entities/user";
-export * from "./entities/plan-enrollment";
-export * from "./entities/benchmark-definition";
-export * from "./entities/user-benchmark";
-export * from "./entities/coach-dashboard";
-export * from "./entities/coach-note";
-export * from "./entities/coach-action-item";
-export * from "./entities/coach-athletes";
+
+// CMS
+export * from "./entities/cms/blog";
+export * from "./entities/cms/contact";
+export * from "./entities/cms/dashboard";
+export * from "./entities/cms/pages";
+export * from "./entities/cms/product";
+export * from "./entities/cms/review";
+
+// LMS
+export * from "./entities/lms/benchmark-definition";
+export * from "./entities/lms/plan-enrollment";
+export * from "./entities/lms/training-plan";
+export * from "./entities/lms/user-benchmark";
+export * from "./entities/lms/workout";
+export * from "./entities/lms/workout-log";
+
+// Coaching
+export * from "./entities/coaching/athlete-profile";
+export * from "./entities/coaching/coach-action-item";
+export * from "./entities/coaching/coach-athletes";
+export * from "./entities/coaching/coach-dashboard";
+export * from "./entities/coaching/coach-note";
+export * from "./entities/coaching/coach-profile";
+
+// IAM
+export * from "./entities/iam/auth";
+export * from "./entities/iam/upload";
+export * from "./entities/iam/user";

@@ -1,6 +1,9 @@
 import { createAuthVoidPutByParamHandler } from "@repo/api-routes";
 import { platformWorkoutsApi } from "@repo/api-server";
-import { reorderWorkoutsParamsSchema, reorderWorkoutsRequestSchema } from "@repo/contracts/workout";
+import {
+  reorderWorkoutsParamsSchema,
+  reorderWorkoutsRequestSchema,
+} from "@repo/contracts/lms/workout";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

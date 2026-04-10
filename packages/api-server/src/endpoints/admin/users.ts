@@ -1,10 +1,10 @@
-import { UserRole } from "@repo/contracts/auth";
+import { UserRole } from "@repo/contracts/iam/auth";
 import {
   type AdminUser,
   type AdminUserListItem,
   type GetUsersPageDataResponse,
   type UpdateUserRoleData,
-} from "@repo/contracts/user";
+} from "@repo/contracts/iam/user";
 import { ConflictError } from "@repo/errors";
 
 import { prisma } from "../../db/client";

@@ -3,7 +3,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { createBlogPostSchema, type BlogPost, type CreateBlogPostData } from "@repo/contracts/blog";
+import {
+  createBlogPostSchema,
+  type BlogPost,
+  type CreateBlogPostData,
+} from "@repo/contracts/cms/blog";
 import { FormView, QueryWrapper } from "@repo/ui";
 
 import { useBlogPost, useUpdateBlogPost } from "@app/lib/hooks";

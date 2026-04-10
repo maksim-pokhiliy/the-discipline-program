@@ -29,7 +29,7 @@
 
 ## 1. Архитектура и границы
 
-**Статус:** В работе — 1.1 (ADR) + 1.2.A (BOUNDED-CONTEXTS.md) завершены, 1.2.B–1.6 впереди
+**Статус:** В работе — 1.1 (ADR) + 1.2.A (BOUNDED-CONTEXTS.md) + 1.2.B (contracts reorg) завершены, 1.2.C–1.6 впереди
 
 System, not code. Это фундамент — всё остальное стоит на нём, поэтому идёт первым. Неправильные решения на этом уровне отравляют все последующие.
 
@@ -52,8 +52,8 @@ System, not code. Это фундамент — всё остальное сто
 | 1.1.A | `53b5ebe`   | ✅ Done | ADR framework: `docs/adr/README.md`, `_template.md`, meta-ADR 0001.                                                            |
 | 1.1.B | `ace64ca`   | ✅ Done | Backfill 13 ADRs (0002–0014) for existing implicit decisions.                                                                  |
 | 1.2.A | `f107e0a`   | ✅ Done | Create `docs/BOUNDED-CONTEXTS.md` documenting CMS, LMS, Coaching, IAM, Billing contexts.                                       |
-| 1.2.B | —           | ⏳ Next | Reorganize `packages/contracts/src/entities/` into context subdirectories (cms/lms/coaching/iam/billing) + subpath exports.    |
-| 1.2.C | —           | Pending | Reorganize `packages/api-server/src/endpoints/` by bounded context + consolidate CMS duplication (admin/marketing share code). |
+| 1.2.B | _pending_   | ✅ Done | Reorganize `packages/contracts/src/entities/` into context subdirectories (cms/lms/coaching/iam/billing) + subpath exports.    |
+| 1.2.C | —           | ⏳ Next | Reorganize `packages/api-server/src/endpoints/` by bounded context + consolidate CMS duplication (admin/marketing share code). |
 | 1.2.D | —           | Pending | Remove barrel export in `api-server/src/index.ts`; enforce subpath imports.                                                    |
 | 1.3.A | —           | Pending | Add `dependency-cruiser` with boundary rules (circular, marketing↛api-server/lms, contracts no-deps, ui no-prisma).            |
 | 1.3.B | —           | Pending | Add `.github/workflows/ci.yml` with dep-check + check-types + lint + test + build.                                             |
@@ -86,12 +86,14 @@ System, not code. Это фундамент — всё остальное сто
 
 - [ ] **`packages/api-server/src/endpoints/` сгруппирован по consumer (`admin/`, `marketing/`, `platform/`), а не по domain.** Это создаёт физическое дублирование: `products.ts`, `pages.ts`, `reviews.ts`, `contact(s).ts` существуют и в `admin/`, и в `marketing/` как разные файлы — один домен, две реализации.
 - [ ] **В `admin/endpoints/` смешаны CMS-ресурсы (blog, contacts, pages, products, reviews) и admin analytics (dashboard, users, upload).** Нет явного места для «admin analytics» и «CMS» как отдельных контекстов.
-- [ ] **В `contracts/src/entities/` 21 сущность плоским списком.** Нет группировки по контекстам (`cms/`, `lms/`, `coaching/`, `iam/`, `billing/`). `contracts/package.json` имеет 22 flat subpath exports.
+- [x] **~~В `contracts/src/entities/` 21 сущность плоским списком.~~** Закрыто в commit 1.2.B. `packages/contracts/src/entities/` реорганизован в 5 контекст-папок (`cms/`, `lms/`, `coaching/`, `iam/`, `billing/`). `contracts/package.json` теперь имеет 21 contextful subpath export (`./cms/blog`, `./lms/training-plan`, и т.д.) + `.` + `./common`. Все ~246 import-сайтов в `apps/` и `packages/` обновлены. Billing-папка создана пустой с README-placeholder.
 - [ ] **Billing domain существует только в БД.** `schema.prisma` содержит `Product`, `Price`, `Subscription`, `Transaction`, но `packages/contracts/src/entities/` не имеет ни `subscription`, ни `transaction`, ни `price`. В `api-server/endpoints/` нет ни одного billing endpoint. В route handlers нет `/api/.../billing/*` и `/api/webhooks/stripe`. **Идеальное окно заложить billing bounded context правильно, пока кода нет.**
 - [ ] **`api-server` не имеет subpath exports.** `package.json` экспортирует только `.`, и `src/index.ts` делает `export * from "./endpoints"; export * from "./services"`. Любой app получает доступ ко всему domain layer. `marketing` импортирует только `pagesApi` и `contactApi` (конкретные файлы: `apps/marketing/src/app/api/public/pages/[pageSlug]/route.ts`, `apps/marketing/src/app/api/public/contact/route.ts`), но физически тянет весь `api-server`.
 - [ ] **Первая dependency rule, которую надо заэнфорсить:** `apps/marketing` не должен видеть `@repo/api-server` ничего, кроме CMS-контекста. Сейчас import-граф ничего не запрещает.
 - [x] **~~Нет документа, который декларирует bounded contexts~~** Создан в commit 1.2.A: `docs/BOUNDED-CONTEXTS.md`. Документирует CMS / LMS / Coaching / IAM / Billing с aggregates, value objects, invariants, dependencies, target-state файловой структуры, shared `Product` split rule, cross-context invariants таблицу, dependency-direction граф и де-факто non-leak verification.
 - [ ] **CoachActionItem генерирует события `MISSED_WORKOUTS / NEW_NO_START / HEALTH_REPORT`** (см. `schema.prisma:308-323`), но нет background scheduler'а. Либо эти события создаются лениво при запросе dashboard'а, либо вообще не создаются. Сoaching context не отделён от LMS и не имеет явного event-boundary.
+- [ ] **LMS→Coaching leak: `lms/plan-enrollment/plan-enrollment.schema.ts` импортирует `HealthStatus` из `coaching/athlete-profile`.** Найдено в research для 1.2.B. Health-поле встраивается в enriched enrollment payload для coach dashboard. Это projection-leak, не domain-level зависимость. Правила `BOUNDED-CONTEXTS.md` §8 запрещают LMS→Coaching. **Должен быть починен до 1.3.A (dependency-cruiser)**, иначе CI-gate будет падать. Вариант фикса: вынести `HealthStatus` из `athlete-profile` в `common/` или разделить на pure `PlanEnrollment` schema (LMS) + enriched `PlanEnrollmentWithHealth` проекцию в Coaching.
+- [ ] **IAM→Coaching leak: `iam/user/user.schema.ts` импортирует `athleteProfileSchema` + `coachProfileSchema` из `coaching/`.** Найдено в research для 1.2.B. Используется в `adminUserSchema` / `adminUserListItemSchema` для вложенного admin-view с профилями. Правила `BOUNDED-CONTEXTS.md` §8 требуют IAM быть листом (leaf). **Должен быть починен до 1.3.A**. Вариант фикса: вынести `adminUserSchema` из `iam/user/` в projection-файл в CMS (admin view) или в отдельный `admin-views/` контекст. Альтернатива: расщепить `userSchema` (чистый IAM) и `adminUserSchema` (projection, живущая где-то выше по графу).
 
 ### 1.3. Dependency direction и граф пакетов
 

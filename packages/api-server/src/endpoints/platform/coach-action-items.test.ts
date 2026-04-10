@@ -1,15 +1,18 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { HealthStatus } from "@repo/contracts/athlete-profile";
+import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import {
   ActionItemResolveReason,
   ActionItemSeverity,
   ActionItemStatus,
   ActionItemType,
-} from "@repo/contracts/coach-action-item";
-import { MISSED_DAYS_CRITICAL, MISSED_DAYS_WARNING } from "@repo/contracts/coach-dashboard";
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+} from "@repo/contracts/coaching/coach-action-item";
+import {
+  MISSED_DAYS_CRITICAL,
+  MISSED_DAYS_WARNING,
+} from "@repo/contracts/coaching/coach-dashboard";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { NotFoundError } from "@repo/errors";
 
 import {
@@ -266,9 +269,7 @@ describe("platformCoachActionItemsApi", () => {
         },
       });
 
-      const openHealth = healthItems.filter((i) => i.status === ActionItemStatus.OPEN);
-
-      expect(openHealth).toHaveLength(0);
+      expect(healthItems.filter((i) => i.status === ActionItemStatus.OPEN)).toHaveLength(0);
 
       await cleanupRaw.athleteProfile.update({
         where: { userId: athleteHealth.id },

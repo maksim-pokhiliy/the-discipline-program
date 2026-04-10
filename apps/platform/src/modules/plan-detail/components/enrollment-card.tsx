@@ -2,11 +2,11 @@
 
 import { Chip, Stack, Typography } from "@mui/material";
 
-import type { PlanEnrollment } from "@repo/contracts/plan-enrollment";
+import type { PlanEnrollment } from "@repo/contracts/lms/plan-enrollment";
 import {
   PLAN_ENROLLMENT_STATUS_LABELS,
   type PlanEnrollmentStatus,
-} from "@repo/contracts/plan-enrollment";
+} from "@repo/contracts/lms/plan-enrollment";
 import { formatDate } from "@repo/shared";
 import { PersonCard } from "@repo/ui";
 

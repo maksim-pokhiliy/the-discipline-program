@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Button, type ButtonProps, Chip, Stack } from "@mui/material";
 
-import { TRAINING_PLAN_STATUS_LABELS, TrainingPlanStatus } from "@repo/contracts/training-plan";
+import { TRAINING_PLAN_STATUS_LABELS, TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ConfirmationModal } from "@repo/ui";
 
 import { PLAN_STATUS_COLORS } from "@app/lib/config";

@@ -15,8 +15,8 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 
-import { UserRole } from "@repo/contracts/auth";
-import { type AdminUserListItem } from "@repo/contracts/user";
+import { UserRole } from "@repo/contracts/iam/auth";
+import { type AdminUserListItem } from "@repo/contracts/iam/user";
 import { formatDate } from "@repo/shared";
 import {
   ConfirmationModal,

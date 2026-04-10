@@ -1,4 +1,4 @@
-import type { DashboardOverview } from "@repo/contracts/coach-dashboard";
+import type { DashboardOverview } from "@repo/contracts/coaching/coach-dashboard";
 import { type PulseStatProps, PulseStatsCard } from "@repo/ui";
 
 type PulseSectionProps = {

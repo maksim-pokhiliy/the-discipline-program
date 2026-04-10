@@ -1,9 +1,9 @@
 import { z } from "zod";
 
+import { PlanEnrollmentStatus } from "../../lms/plan-enrollment";
 import { HealthStatus } from "../athlete-profile";
 import { ActionItemSeverity, ActionItemType } from "../coach-action-item";
 import { ProcessStatus } from "../coach-dashboard";
-import { PlanEnrollmentStatus } from "../plan-enrollment";
 
 import { coachAthleteListItemSchema, coachAthletesSummarySchema } from "./coach-athletes.schema";
 

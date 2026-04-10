@@ -3,7 +3,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { type UploadContext } from "@repo/contracts/upload";
+import { type UploadContext } from "@repo/contracts/iam/upload";
 
 import { api } from "../api";
 

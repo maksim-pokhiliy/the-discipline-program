@@ -1,6 +1,6 @@
 import { type ChipProps } from "@mui/material";
 
-import { ContactStatus } from "@repo/contracts/contact";
+import { ContactStatus } from "@repo/contracts/cms/contact";
 
 export const CONTACT_STATUS_CONFIG: Record<
   ContactStatus,

@@ -1,5 +1,5 @@
-import { HealthStatus } from "@repo/contracts/athlete-profile";
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 
 import type { EnrollmentWithData } from "./enrollment-query";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { type FaqPageData } from "@repo/contracts/pages";
+import { type FaqPageData } from "@repo/contracts/cms/pages";
 import { QueryWrapper } from "@repo/ui";
 
 import { StructuredData } from "@app/lib/components/seo";

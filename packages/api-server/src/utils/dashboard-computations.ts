@@ -1,4 +1,4 @@
-import { HealthStatus } from "@repo/contracts/athlete-profile";
+import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import {
   type AthleteDailySummary,
   type ProgressAthlete,
@@ -6,7 +6,7 @@ import {
   ADHERENCE_IMPROVING_THRESHOLD,
   ProcessStatus,
   TodayStatus,
-} from "@repo/contracts/coach-dashboard";
+} from "@repo/contracts/coaching/coach-dashboard";
 
 import { HEALTH_STATUS_MAP } from "../mappers/enum-maps";
 

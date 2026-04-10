@@ -1,6 +1,6 @@
 import { type BenchmarkDefinition as PrismaBenchmarkDefinition } from "@prisma/client";
 
-import { type BenchmarkDefinition } from "@repo/contracts/benchmark-definition";
+import { type BenchmarkDefinition } from "@repo/contracts/lms/benchmark-definition";
 
 export const mapToBenchmarkDefinition = (d: PrismaBenchmarkDefinition): BenchmarkDefinition => ({
   id: d.id,

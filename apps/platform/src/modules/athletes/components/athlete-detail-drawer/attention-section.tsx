@@ -3,8 +3,8 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { Box, Stack, Typography } from "@mui/material";
 
-import { ActionItemSeverity } from "@repo/contracts/coach-action-item";
-import type { AthleteActionItem } from "@repo/contracts/coach-athletes";
+import { ActionItemSeverity } from "@repo/contracts/coaching/coach-action-item";
+import type { AthleteActionItem } from "@repo/contracts/coaching/coach-athletes";
 import { formatDate } from "@repo/shared";
 
 import { SEVERITY_COLORS } from "./config";

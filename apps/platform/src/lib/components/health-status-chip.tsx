@@ -1,4 +1,4 @@
-import { HealthStatus } from "@repo/contracts/athlete-profile";
+import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { StatusChip } from "@repo/ui";
 
 import { HEALTH_STATUS_CHIPS } from "@app/lib/config";

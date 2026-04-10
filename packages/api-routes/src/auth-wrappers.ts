@@ -3,7 +3,7 @@ import "@repo/auth/types";
 import { type NextAuthOptions } from "next-auth";
 import { getServerSession } from "next-auth/next";
 
-import { UserRole } from "@repo/contracts/auth";
+import { UserRole } from "@repo/contracts/iam/auth";
 import { ForbiddenError, UnauthorizedError } from "@repo/errors";
 
 import { withErrorHandling } from "./route-helpers";

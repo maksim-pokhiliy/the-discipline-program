@@ -5,7 +5,7 @@ import { Button, Divider, Stack, TextField, Typography } from "@mui/material";
 import { useFieldArray, useFormContext } from "react-hook-form";
 import { type z } from "zod";
 
-import { type aboutPageCredentialsSchema } from "@repo/contracts/pages";
+import { type aboutPageCredentialsSchema } from "@repo/contracts/cms/pages";
 import { DynamicListItem, FormCard } from "@repo/ui";
 
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./shared-styles";

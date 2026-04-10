@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 
-import { BlogCategory } from "@repo/contracts/blog";
+import { BlogCategory } from "@repo/contracts/cms/blog";
 
 import { cleanupRaw } from "../../test/helpers";
 

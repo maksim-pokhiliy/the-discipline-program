@@ -1,4 +1,4 @@
-import { type Product } from "@repo/contracts/product";
+import { type Product } from "@repo/contracts/cms/product";
 
 import { prisma } from "../../db/client";
 import { mapToProduct } from "../../mappers";

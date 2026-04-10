@@ -2,7 +2,7 @@ import { cache } from "react";
 
 import { type Metadata } from "next";
 
-import { BLOG_CATEGORY_LABELS } from "@repo/contracts/blog";
+import { BLOG_CATEGORY_LABELS } from "@repo/contracts/cms/blog";
 
 import { serverApi } from "@app/lib/api/server";
 import { SEO_CONFIG } from "@app/lib/seo";

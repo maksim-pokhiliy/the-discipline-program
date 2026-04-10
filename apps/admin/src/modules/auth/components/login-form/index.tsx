@@ -7,7 +7,7 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { Button, IconButton, InputAdornment, Stack, TextField } from "@mui/material";
 import { useForm } from "react-hook-form";
 
-import { type LoginFormData, loginFormSchema } from "@repo/contracts/auth";
+import { type LoginFormData, loginFormSchema } from "@repo/contracts/iam/auth";
 
 type LoginFormProps = {
   onSubmit: (data: LoginFormData) => void;

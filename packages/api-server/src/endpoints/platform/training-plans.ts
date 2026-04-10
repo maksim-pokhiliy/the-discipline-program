@@ -1,4 +1,4 @@
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import {
   type CalendarWorkout,
   type CoachPlansPageData,
@@ -7,7 +7,7 @@ import {
   type TrainingPlanListItem,
   TrainingPlanStatus,
   type UpdateTrainingPlanData,
-} from "@repo/contracts/training-plan";
+} from "@repo/contracts/lms/training-plan";
 import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";

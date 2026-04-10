@@ -7,7 +7,7 @@ import type {
   CreatePlanEnrollmentData,
   PlanEnrollment,
   UpdatePlanEnrollmentData,
-} from "@repo/contracts/plan-enrollment";
+} from "@repo/contracts/lms/plan-enrollment";
 import { useOptimisticMutation } from "@repo/query";
 
 import { api } from "../api";

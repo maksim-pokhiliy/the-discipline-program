@@ -9,7 +9,7 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Collapse, Divider, IconButton, InputBase, Paper, Stack } from "@mui/material";
 
-import type { Workout } from "@repo/contracts/workout";
+import type { Workout } from "@repo/contracts/lms/workout";
 import { ConfirmationModal, RichTextEditor } from "@repo/ui";
 
 import { useDeleteWorkout, useUpdateWorkout } from "@app/lib/hooks";

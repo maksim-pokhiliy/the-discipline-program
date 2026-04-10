@@ -1,6 +1,6 @@
 import { Box, Grid } from "@mui/material";
 
-import { type BlogPostPageData, type PublicBlogPostPreview } from "@repo/contracts/blog";
+import { type BlogPostPageData, type PublicBlogPostPreview } from "@repo/contracts/cms/blog";
 import { ContentSection } from "@repo/ui";
 
 import { BlogPostCard } from "@app/lib/components/ui";

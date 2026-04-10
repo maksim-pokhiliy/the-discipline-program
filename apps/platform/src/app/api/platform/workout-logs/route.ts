@@ -4,7 +4,7 @@ import {
   createWorkoutLogRequestSchema,
   createWorkoutLogResponseSchema,
   getWorkoutLogsResponseSchema,
-} from "@repo/contracts/workout-log";
+} from "@repo/contracts/lms/workout-log";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

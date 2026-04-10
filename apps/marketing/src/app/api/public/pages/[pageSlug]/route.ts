@@ -10,7 +10,7 @@ import {
   getBlogPageResponseSchema,
   getContactPageResponseSchema,
   getFaqPageResponseSchema,
-} from "@repo/contracts/pages";
+} from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
 
 const PAGE_HANDLERS: Record<string, { fetch: () => Promise<unknown>; schema: ZodType }> = {

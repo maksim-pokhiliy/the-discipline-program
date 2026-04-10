@@ -1,6 +1,6 @@
 import { createToggleHandler } from "@repo/api-routes";
 import { adminReviewsApi } from "@repo/api-server";
-import { toggleReviewParamsSchema } from "@repo/contracts/review";
+import { toggleReviewParamsSchema } from "@repo/contracts/cms/review";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

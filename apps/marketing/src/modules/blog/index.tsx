@@ -1,6 +1,6 @@
 "use client";
 
-import { type BlogPageData } from "@repo/contracts/pages";
+import { type BlogPageData } from "@repo/contracts/cms/pages";
 import { QueryWrapper } from "@repo/ui";
 
 import { useBlogPage } from "@app/lib/hooks";

@@ -12,7 +12,7 @@ import RestoreIcon from "@mui/icons-material/Restore";
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import Link from "next/link";
 
-import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ConfirmationModal } from "@repo/ui";
 
 type PlanActionMenuProps = {

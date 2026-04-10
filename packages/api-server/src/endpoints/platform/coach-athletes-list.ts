@@ -1,7 +1,10 @@
-import { HealthStatus } from "@repo/contracts/athlete-profile";
-import { ActionItemStatus } from "@repo/contracts/coach-action-item";
-import type { CoachAthleteListItem, CoachAthletesData } from "@repo/contracts/coach-athletes";
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import { ActionItemStatus } from "@repo/contracts/coaching/coach-action-item";
+import type {
+  CoachAthleteListItem,
+  CoachAthletesData,
+} from "@repo/contracts/coaching/coach-athletes";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 
 import { prisma } from "../../db/client";
 import {

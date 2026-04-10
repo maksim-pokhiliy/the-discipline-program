@@ -4,7 +4,7 @@ import {
   getAthleteProfileResponseSchema,
   updateAthleteProfileRequestSchema,
   updateAthleteProfileResponseSchema,
-} from "@repo/contracts/athlete-profile";
+} from "@repo/contracts/coaching/athlete-profile";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

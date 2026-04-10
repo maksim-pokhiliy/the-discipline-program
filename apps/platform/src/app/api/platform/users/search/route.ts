@@ -1,6 +1,6 @@
 import { createAuthGetWithQueryHandler } from "@repo/api-routes";
 import { platformUsersApi } from "@repo/api-server";
-import { searchUsersQuerySchema, searchUsersResponseSchema } from "@repo/contracts/user";
+import { searchUsersQuerySchema, searchUsersResponseSchema } from "@repo/contracts/iam/user";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

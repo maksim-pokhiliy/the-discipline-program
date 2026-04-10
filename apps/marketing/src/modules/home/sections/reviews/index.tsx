@@ -1,6 +1,6 @@
 import { Avatar, Card, CardContent, Grid, Rating, Stack, Typography } from "@mui/material";
 
-import { type HomePageData } from "@repo/contracts/pages";
+import { type HomePageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 type HomeReviewsSectionProps = {

@@ -1,7 +1,7 @@
 import { TrainingPlanStatus as PrismaTrainingPlanStatus } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
-import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import { mapToTrainingPlan } from "./training-plan.mapper";
 

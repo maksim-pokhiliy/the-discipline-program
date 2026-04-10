@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { idParamSchema } from "../../common";
+import { idParamSchema } from "../../../common";
 
 import { BlogToggleField } from "./blog.constants";
 import { blogPostSchema, createBlogPostSchema, updateBlogPostSchema } from "./blog.schema";

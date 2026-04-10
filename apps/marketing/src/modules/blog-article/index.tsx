@@ -1,6 +1,6 @@
 "use client";
 
-import { type BlogPostPageData } from "@repo/contracts/blog";
+import { type BlogPostPageData } from "@repo/contracts/cms/blog";
 import { QueryWrapper } from "@repo/ui";
 
 import { StructuredData } from "@app/lib/components/seo";

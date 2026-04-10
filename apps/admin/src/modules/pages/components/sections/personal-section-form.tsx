@@ -4,7 +4,7 @@ import { Grid, Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 import { type z } from "zod";
 
-import { type aboutPagePersonalSchema } from "@repo/contracts/pages";
+import { type aboutPagePersonalSchema } from "@repo/contracts/cms/pages";
 import { FormCard, ImageUpload } from "@repo/ui";
 
 import { useDeleteImage, useUploadImage } from "@app/lib/hooks";

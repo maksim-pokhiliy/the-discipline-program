@@ -5,7 +5,7 @@ import {
   uploadImageResponseSchema,
   type UploadContext,
   UPLOAD_CONFIG,
-} from "@repo/contracts/upload";
+} from "@repo/contracts/iam/upload";
 import { BadRequestError } from "@repo/errors";
 
 import { withAdminAuth } from "@app/lib/server/auth";

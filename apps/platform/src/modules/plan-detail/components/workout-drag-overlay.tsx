@@ -1,6 +1,6 @@
 import { Paper, Typography } from "@mui/material";
 
-import type { Workout } from "@repo/contracts/workout";
+import type { Workout } from "@repo/contracts/lms/workout";
 
 export const WorkoutDragOverlay: React.FC<{ workout: Workout }> = ({ workout }) => (
   <Paper

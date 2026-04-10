@@ -2,7 +2,7 @@ import {
   type CreatePlanEnrollmentData,
   type PlanEnrollment,
   type UpdatePlanEnrollmentData,
-} from "@repo/contracts/plan-enrollment";
+} from "@repo/contracts/lms/plan-enrollment";
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";

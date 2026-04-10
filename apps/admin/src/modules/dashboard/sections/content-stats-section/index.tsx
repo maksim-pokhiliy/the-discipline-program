@@ -5,7 +5,7 @@ import RateReviewIcon from "@mui/icons-material/RateReview";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import { Grid } from "@mui/material";
 
-import { type ContentStats, type UserStats } from "@repo/contracts/dashboard";
+import { type ContentStats, type UserStats } from "@repo/contracts/cms/dashboard";
 import { ContentSection, StatsCard } from "@repo/ui";
 
 type ContentStatsSectionProps = {

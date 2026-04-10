@@ -3,7 +3,7 @@ import type {
   CreatePlanEnrollmentData,
   PlanEnrollment,
   UpdatePlanEnrollmentData,
-} from "@repo/contracts/plan-enrollment";
+} from "@repo/contracts/lms/plan-enrollment";
 
 export const createPlanEnrollmentsAPI = (client: ApiClient) => ({
   getAll: (planId: string): Promise<PlanEnrollment[]> =>

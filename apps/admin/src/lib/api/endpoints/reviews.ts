@@ -4,7 +4,7 @@ import {
   type AdminReviewsPageData,
   type CreateReviewData,
   type UpdateReviewData,
-} from "@repo/contracts/review";
+} from "@repo/contracts/cms/review";
 
 export const createReviewsAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminReviewsPageData> => client.request("/api/admin/reviews/page-data"),

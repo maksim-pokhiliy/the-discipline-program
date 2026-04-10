@@ -9,7 +9,7 @@ import {
   type GetContactByIdResponse,
   type UpdateContactRequest,
   updateContactRequestSchema,
-} from "@repo/contracts/contact";
+} from "@repo/contracts/cms/contact";
 import { formatDate } from "@repo/shared";
 import { DetailField, FormCard, FormView, QueryWrapper } from "@repo/ui";
 

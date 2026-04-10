@@ -1,4 +1,4 @@
-import { type PublicBlogPost } from "@repo/contracts/blog";
+import { type PublicBlogPost } from "@repo/contracts/cms/blog";
 import { ContentSection, RichTextViewer } from "@repo/ui";
 
 type BlogArticleContentProps = {

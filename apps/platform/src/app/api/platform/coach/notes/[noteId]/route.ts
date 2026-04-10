@@ -11,7 +11,7 @@ import {
   updateCoachNoteParamsSchema,
   updateCoachNoteRequestSchema,
   updateCoachNoteResponseSchema,
-} from "@repo/contracts/coach-note";
+} from "@repo/contracts/coaching/coach-note";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

@@ -16,8 +16,8 @@ import { useForm } from "react-hook-form";
 import {
   type CreateContactSubmissionRequest,
   createContactSubmissionSchema,
-} from "@repo/contracts/contact";
-import { type ContactPageData } from "@repo/contracts/pages";
+} from "@repo/contracts/cms/contact";
+import { type ContactPageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 import { useSubmitContact } from "@app/lib/hooks";

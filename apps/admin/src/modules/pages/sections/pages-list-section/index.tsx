@@ -2,7 +2,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
-import { type AdminPageListItem } from "@repo/contracts/pages";
+import { type AdminPageListItem } from "@repo/contracts/cms/pages";
 import { capitalize, formatDate } from "@repo/shared";
 import { DataTable, type Column } from "@repo/ui";
 

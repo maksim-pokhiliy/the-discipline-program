@@ -5,7 +5,7 @@ import {
   type BlogPost,
   type CreateBlogPostData,
   type UpdateBlogPostData,
-} from "@repo/contracts/blog";
+} from "@repo/contracts/cms/blog";
 import { createCrudHooks, createToggleHook } from "@repo/query";
 
 import { api } from "../api";

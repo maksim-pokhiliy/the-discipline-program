@@ -1,6 +1,6 @@
 import { createGetHandler, createPostHandler } from "@repo/api-routes";
 import { adminReviewsApi } from "@repo/api-server";
-import { createReviewRequestSchema, getReviewsResponseSchema } from "@repo/contracts/review";
+import { createReviewRequestSchema, getReviewsResponseSchema } from "@repo/contracts/cms/review";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

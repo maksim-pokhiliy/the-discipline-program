@@ -4,8 +4,8 @@ import { useMemo } from "react";
 
 import { Chip, LinearProgress, Stack, Tooltip, Typography } from "@mui/material";
 
-import type { PlanDiscipline } from "@repo/contracts/coach-athletes";
-import { PLAN_ENROLLMENT_STATUS_LABELS } from "@repo/contracts/plan-enrollment";
+import type { PlanDiscipline } from "@repo/contracts/coaching/coach-athletes";
+import { PLAN_ENROLLMENT_STATUS_LABELS } from "@repo/contracts/lms/plan-enrollment";
 import { rateToPercent } from "@repo/shared";
 
 import { ENROLLMENT_STATUS_COLORS } from "@app/lib/config";

@@ -1,6 +1,6 @@
 import type { ChipProps } from "@mui/material";
 
-import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 export const ALL_TAB = "ALL" as const;
 

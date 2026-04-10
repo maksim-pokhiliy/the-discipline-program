@@ -8,7 +8,7 @@ import {
   PROCESS_STATUS_LABELS,
   type ProgressBuckets,
   ProcessStatus,
-} from "@repo/contracts/coach-dashboard";
+} from "@repo/contracts/coaching/coach-dashboard";
 import { rateToPercent } from "@repo/shared";
 import { ChipTab } from "@repo/ui";
 

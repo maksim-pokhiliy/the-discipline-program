@@ -5,7 +5,7 @@ import {
   getUserByIdParamsSchema,
   updateUserRoleParamsSchema,
   updateUserRoleRequestSchema,
-} from "@repo/contracts/user";
+} from "@repo/contracts/iam/user";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

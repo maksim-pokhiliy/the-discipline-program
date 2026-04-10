@@ -19,8 +19,8 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import { Chip, Divider, Stack } from "@mui/material";
 
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import type { Workout } from "@repo/contracts/workout";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
+import type { Workout } from "@repo/contracts/lms/workout";
 import { getWeekDays, isSameDay } from "@repo/shared";
 import { QueryWrapper } from "@repo/ui";
 

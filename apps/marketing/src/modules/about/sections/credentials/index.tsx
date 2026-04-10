@@ -1,7 +1,7 @@
 import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
 import { Grid } from "@mui/material";
 
-import { type AboutPageData } from "@repo/contracts/pages";
+import { type AboutPageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 import { FeatureCard } from "@app/lib/components/ui";

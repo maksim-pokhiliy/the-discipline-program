@@ -1,7 +1,7 @@
 import { Grid } from "@mui/material";
 
-import { type PublicBlogPost } from "@repo/contracts/blog";
-import { type BlogPageData } from "@repo/contracts/pages";
+import { type PublicBlogPost } from "@repo/contracts/cms/blog";
+import { type BlogPageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 import { BlogPostCard } from "@app/lib/components/ui";

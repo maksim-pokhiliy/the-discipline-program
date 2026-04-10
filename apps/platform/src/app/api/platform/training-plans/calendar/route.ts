@@ -3,7 +3,7 @@ import { platformTrainingPlansApi } from "@repo/api-server";
 import {
   getCalendarWeekParamsSchema,
   getCalendarWeekResponseSchema,
-} from "@repo/contracts/training-plan";
+} from "@repo/contracts/lms/training-plan";
 
 import { withPlatformAuth } from "@app/lib/server/auth";
 

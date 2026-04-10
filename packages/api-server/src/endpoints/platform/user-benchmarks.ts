@@ -2,7 +2,7 @@ import {
   type CreateUserBenchmarkData,
   type UpdateUserBenchmarkData,
   type UserBenchmark,
-} from "@repo/contracts/user-benchmark";
+} from "@repo/contracts/lms/user-benchmark";
 
 import { prisma } from "../../db/client";
 import { mapToUserBenchmark } from "../../mappers";

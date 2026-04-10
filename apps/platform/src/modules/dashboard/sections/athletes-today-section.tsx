@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 
 import { Stack, Tabs, Typography } from "@mui/material";
 
-import { HealthStatus } from "@repo/contracts/athlete-profile";
-import { type AthleteDailySummary, TodayStatus } from "@repo/contracts/coach-dashboard";
+import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import { type AthleteDailySummary, TodayStatus } from "@repo/contracts/coaching/coach-dashboard";
 import { ChipTab } from "@repo/ui";
 
 import { AthleteCardLink } from "@app/lib/components";

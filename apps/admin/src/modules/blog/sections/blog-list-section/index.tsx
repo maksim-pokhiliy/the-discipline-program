@@ -9,7 +9,7 @@ import StarIcon from "@mui/icons-material/Star";
 import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
-import { type BlogPost } from "@repo/contracts/blog";
+import { type BlogPost } from "@repo/contracts/cms/blog";
 import { baseEnv } from "@repo/env/base";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";

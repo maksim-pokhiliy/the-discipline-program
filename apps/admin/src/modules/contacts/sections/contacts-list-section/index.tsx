@@ -7,7 +7,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { Box, Chip, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
-import { type GetContactByIdResponse, ContactStatus } from "@repo/contracts/contact";
+import { type GetContactByIdResponse, ContactStatus } from "@repo/contracts/cms/contact";
 import { TEXT_CLAMP_SX } from "@repo/mui";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";

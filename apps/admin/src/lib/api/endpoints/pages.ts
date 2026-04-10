@@ -3,7 +3,7 @@ import {
   type AdminPageListItem,
   type AdminPageDetails,
   type UpdatePageSectionData,
-} from "@repo/contracts/pages";
+} from "@repo/contracts/cms/pages";
 
 export const createPagesAPI = (client: ApiClient) => ({
   getPages: (): Promise<AdminPageListItem[]> => client.request("/api/admin/pages"),

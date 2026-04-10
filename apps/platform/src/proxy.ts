@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { AUTH_ROUTES, getToken, isPublicRoute } from "@repo/auth";
-import { UserRole } from "@repo/contracts/auth";
+import { UserRole } from "@repo/contracts/iam/auth";
 
 const getRoleHome = (role?: string | null): string =>
   role === UserRole.USER ? "/athlete" : "/coach";

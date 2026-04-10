@@ -5,7 +5,7 @@ import {
   getReviewByIdParamsSchema,
   updateReviewParamsSchema,
   updateReviewRequestSchema,
-} from "@repo/contracts/review";
+} from "@repo/contracts/cms/review";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

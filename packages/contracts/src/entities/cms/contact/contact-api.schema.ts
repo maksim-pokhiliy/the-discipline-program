@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { idParamSchema } from "../../common";
+import { idParamSchema } from "../../../common";
 
 import { CONTACT_CONSTANTS, ContactStatus } from "./contact.constants";
 import { contactSubmissionItemSchema, createContactSubmissionSchema } from "./contact.schema";

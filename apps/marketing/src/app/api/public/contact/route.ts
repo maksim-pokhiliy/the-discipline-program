@@ -3,7 +3,7 @@ import { contactApi } from "@repo/api-server";
 import {
   createContactSubmissionRequestSchema,
   createContactSubmissionResponseSchema,
-} from "@repo/contracts/contact";
+} from "@repo/contracts/cms/contact";
 
 export const POST = withPublicRoute(
   createPostHandler(async (data) => {

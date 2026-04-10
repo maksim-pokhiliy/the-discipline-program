@@ -5,8 +5,8 @@ import { useCallback, useMemo } from "react";
 import { Stack, Tabs, Typography } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import type { TrainingPlanListItem } from "@repo/contracts/training-plan";
-import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+import type { TrainingPlanListItem } from "@repo/contracts/lms/training-plan";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ChipTab } from "@repo/ui";
 
 import { PlatformFab } from "@app/lib/components";

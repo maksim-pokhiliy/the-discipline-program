@@ -4,7 +4,7 @@ import {
   BLOG_CATEGORY_LABELS,
   type BlogPostPageData,
   type PublicBlogPost,
-} from "@repo/contracts/blog";
+} from "@repo/contracts/cms/blog";
 
 import { FullscreenSection } from "@app/lib/components/ui";
 

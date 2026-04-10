@@ -1,6 +1,6 @@
 import { Stack, Typography } from "@mui/material";
 
-import type { AthleteConsistency } from "@repo/contracts/coach-athletes";
+import type { AthleteConsistency } from "@repo/contracts/coaching/coach-athletes";
 import { rateToPercent } from "@repo/shared";
 
 type ConsistencySectionProps = {

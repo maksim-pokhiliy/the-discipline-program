@@ -3,7 +3,7 @@ import {
   type AdminContactsPageData,
   type GetContactByIdResponse,
   type UpdateContactRequest,
-} from "@repo/contracts/contact";
+} from "@repo/contracts/cms/contact";
 
 export const createContactsAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminContactsPageData> =>

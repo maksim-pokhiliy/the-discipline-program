@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { signIn } from "@repo/auth/client";
-import { type LoginFormData } from "@repo/contracts/auth";
+import { type LoginFormData } from "@repo/contracts/iam/auth";
 import { Logo } from "@repo/ui";
 
 import { LoginForm } from "./components";

@@ -1,6 +1,6 @@
 "use client";
 
-import type { DashboardActionItem } from "@repo/contracts/coach-dashboard";
+import type { DashboardActionItem } from "@repo/contracts/coaching/coach-dashboard";
 import { CollapsibleList } from "@repo/ui";
 
 import { useResolveActionItem } from "@app/lib/hooks";

@@ -88,7 +88,7 @@ The rest of this document describes each context in detail: what it owns, which 
 ### Where it lives today
 
 - **DB:** `User`, `Account`, `Session`, `VerificationToken`, and the role enum in `schema.prisma`.
-- **Contracts:** `packages/contracts/src/entities/auth/`, `user/`, `upload/`.
+- **Contracts:** `packages/contracts/src/entities/iam/auth/`, `iam/user/`, `iam/upload/` (subpath exports `@repo/contracts/iam/*`).
 - **API — `api-server`:** `endpoints/admin/users.ts` (admin user management), `endpoints/admin/upload.ts` (media upload), `endpoints/platform/users.ts` (athlete search inside coach flow), plus the service `services/auth.ts` used by both NextAuth instances.
 - **Consumer apps:** all three. Each app has its own NextAuth route handler (`api/auth/[...nextauth]`) that proxies into `authService`.
 
@@ -138,7 +138,7 @@ The marketing facet of `Product` is the only cross-context entity in the repo to
 ### Where it lives today
 
 - **DB:** `MarketingPage`, `MarketingPageSection`, `MarketingBlogPost`, `MarketingReview`, `MarketingContactSubmission`, and the `Product` model (shared with Billing). Physical prefix is `marketing_*` except for `Product` (`app_products`).
-- **Contracts:** `packages/contracts/src/entities/pages/`, `blog/`, `review/`, `contact/`, `product/`.
+- **Contracts:** `packages/contracts/src/entities/cms/pages/`, `cms/blog/`, `cms/review/`, `cms/contact/`, `cms/product/`, `cms/dashboard/` (admin analytics read-model) — subpath exports `@repo/contracts/cms/*`.
 - **API — `api-server`:** this is where the duplication is most visible. CMS lives in two parallel folders:
   - `endpoints/admin/blog.ts`, `contacts.ts`, `pages.ts`, `products.ts`, `reviews.ts` — admin CRUD side (authoring).
   - `endpoints/marketing/pages.ts`, `products.ts`, `reviews.ts`, `contact.ts` — marketing read side + public form submission.
@@ -214,7 +214,7 @@ The `Product` model itself keeps its current physical shape; only the contracts 
 ### Where it lives today
 
 - **DB:** `TrainingPlan`, `Workout`, `WorkoutLog`, `PlanEnrollment`, `BenchmarkDefinition`, `UserBenchmark`, plus `AthleteProfile` which is logically half-LMS half-Coaching (see §4).
-- **Contracts:** `training-plan/`, `workout/`, `workout-log/`, `plan-enrollment/`, `benchmark-definition/`, `user-benchmark/`.
+- **Contracts:** `packages/contracts/src/entities/lms/training-plan/`, `lms/workout/`, `lms/workout-log/`, `lms/plan-enrollment/`, `lms/benchmark-definition/`, `lms/user-benchmark/` (subpath exports `@repo/contracts/lms/*`).
 - **API — `api-server`:** entirely in `endpoints/platform/`: `training-plans.ts`, `workouts.ts`, `workout-logs.ts`, `plan-enrollments.ts`, `benchmark-definitions.ts`, `user-benchmarks.ts`.
 - **Consumer apps:** `apps/platform` exclusively. `apps/admin` does not currently read LMS state (the admin dashboard counts at the marketing level, not workout level).
 
@@ -281,7 +281,7 @@ Contracts move to `contracts/src/entities/lms/`. Subpath exports on `@repo/contr
 ### Where it lives today
 
 - **DB:** `CoachProfile`, `AthleteProfile`, `CoachNote`, `CoachActionItem`. The action item type/status/severity/resolve-reason enums are defined here too.
-- **Contracts:** `coach-profile/`, `athlete-profile/`, `coach-note/`, `coach-action-item/`, `coach-dashboard/`, `coach-athletes/`.
+- **Contracts:** `packages/contracts/src/entities/coaching/coach-profile/`, `coaching/athlete-profile/`, `coaching/coach-note/`, `coaching/coach-action-item/`, `coaching/coach-dashboard/`, `coaching/coach-athletes/` (subpath exports `@repo/contracts/coaching/*`).
 - **API — `api-server`:** all under `endpoints/platform/`: `coach-profile.ts`, `athlete-profile.ts`, `coach-notes.ts`, `coach-action-items.ts`, `coach-dashboard.ts`, `coach-athletes.ts` (+ `coach-athlete-detail.ts`, `coach-athletes-list.ts` as file splits), plus the shared guards in `guards.ts`.
 - **Consumer apps:** `apps/platform` (coach area + athlete self-service for `AthleteProfile`).
 
@@ -346,7 +346,7 @@ The `enrollment-query.ts` helper that joins LMS data for the dashboard remains i
 ### Where it lives today
 
 - **DB:** `Product`, `Price`, `Subscription`, `Transaction`, plus the four supporting enums. All prefixed `app_*`.
-- **Contracts:** `packages/contracts/src/entities/product/` covers the marketing facet only. There is **no contract entity** for `Price`, `Subscription`, or `Transaction`. The billing facet of `Product` has no schemas either.
+- **Contracts:** `packages/contracts/src/entities/cms/product/` covers the marketing facet only (exposed as `@repo/contracts/cms/product`). `packages/contracts/src/entities/billing/` exists as a placeholder with a README but contains **no contract entity** for `Price`, `Subscription`, `Transaction`, or a billing facet of `Product`.
 - **API — `api-server`:** nothing. No Billing endpoints exist in any of the three endpoint folders. `@vercel/blob` is the only payment-adjacent integration, and that is storage, not payments.
 - **Route handlers:** no `/api/.../billing/*`, no `/api/webhooks/stripe`, no `/api/webhooks/*` at all.
 - **Consumer apps:** the marketing and platform apps have billing UI stubs. The admin app does not administer billing (no subscription management, no refund flow).
@@ -492,7 +492,7 @@ Items flagged during the context-mapping pass that do not belong to any single b
 ## 11. How to use this document
 
 - **When you add a new endpoint,** identify which context it belongs to first. If it does not fit any of the five contexts above, pause — you may be inventing a new context, and that is a conversation worth having.
-- **When you add a new contract entity,** put it in the target folder (`contracts/src/entities/<context>/<entity>/`) if 1.2.B has landed; otherwise put it in the flat list and tag it in your PR description with the intended context. This keeps the reorganization frictionless.
+- **When you add a new contract entity,** put it in the correct context folder (`contracts/src/entities/<context>/<entity>/`) and add its subpath export to `packages/contracts/package.json` (`"./<context>/<entity>": "./src/entities/<context>/<entity>/index.ts"`). The reorganization landed in 1.2.B — the flat layout is gone.
 - **When you find a cross-context import that is not explicitly allowed in §8,** treat it as a bug and file it against audit section 1.2 or 1.3. Do not rationalize it — the rules are finite and tight on purpose.
 - **When product decisions change** (e.g., multiple concurrent subscriptions per user become a requirement), update the affected section here **before** writing code. The document is the intent; the code is the proof.
 

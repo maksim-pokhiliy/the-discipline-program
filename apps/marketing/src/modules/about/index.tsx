@@ -1,6 +1,6 @@
 "use client";
 
-import { type AboutPageData } from "@repo/contracts/pages";
+import { type AboutPageData } from "@repo/contracts/cms/pages";
 import { QueryWrapper } from "@repo/ui";
 
 import { FullscreenSection, PageCTASection } from "@app/lib/components/ui";

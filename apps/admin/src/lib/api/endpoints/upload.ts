@@ -1,5 +1,5 @@
 import { type ApiClient } from "@repo/api-client";
-import { type UploadContext } from "@repo/contracts/upload";
+import { type UploadContext } from "@repo/contracts/iam/upload";
 
 export const createUploadAPI = (client: ApiClient) => ({
   uploadImage: (file: File, context: UploadContext) => {

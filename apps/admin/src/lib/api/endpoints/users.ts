@@ -1,5 +1,9 @@
 import { type ApiClient } from "@repo/api-client";
-import type { AdminUser, GetUsersPageDataResponse, UpdateUserRoleData } from "@repo/contracts/user";
+import type {
+  AdminUser,
+  GetUsersPageDataResponse,
+  UpdateUserRoleData,
+} from "@repo/contracts/iam/user";
 
 export const createUsersAPI = (client: ApiClient) => ({
   getPageData: (): Promise<GetUsersPageDataResponse> =>

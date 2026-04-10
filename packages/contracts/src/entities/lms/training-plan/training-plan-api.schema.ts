@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { planIdParamSchema } from "../../common";
+import { planIdParamSchema } from "../../../common";
 import { workoutSchema } from "../workout";
 
 import {

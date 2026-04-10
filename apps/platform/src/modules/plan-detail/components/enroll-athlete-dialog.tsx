@@ -4,8 +4,8 @@ import { type FormEvent, type SyntheticEvent, useState } from "react";
 
 import { Autocomplete, Avatar, Checkbox, Stack, TextField, Typography } from "@mui/material";
 
-import type { PlanEnrollment } from "@repo/contracts/plan-enrollment";
-import type { UserSearchResult } from "@repo/contracts/user";
+import type { UserSearchResult } from "@repo/contracts/iam/user";
+import type { PlanEnrollment } from "@repo/contracts/lms/plan-enrollment";
 import { FormModal } from "@repo/ui";
 
 import { useBulkEnrollAthletes, useSearchUsers } from "@app/lib/hooks";

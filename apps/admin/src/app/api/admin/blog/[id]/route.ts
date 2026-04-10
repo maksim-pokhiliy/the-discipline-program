@@ -5,7 +5,7 @@ import {
   getBlogPostByIdParamsSchema,
   updateBlogPostParamsSchema,
   updateBlogPostRequestSchema,
-} from "@repo/contracts/blog";
+} from "@repo/contracts/cms/blog";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

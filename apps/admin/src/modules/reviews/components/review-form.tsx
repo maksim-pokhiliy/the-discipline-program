@@ -11,8 +11,8 @@ import {
 } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { type CreateReviewData } from "@repo/contracts/review";
-import { UPLOAD_CONFIG } from "@repo/contracts/upload";
+import { type CreateReviewData } from "@repo/contracts/cms/review";
+import { UPLOAD_CONFIG } from "@repo/contracts/iam/upload";
 import { FormCard, ImageUpload } from "@repo/ui";
 
 import { useDeleteImage, useUploadImage } from "@app/lib/hooks";

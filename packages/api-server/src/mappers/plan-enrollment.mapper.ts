@@ -4,8 +4,8 @@ import {
   type User,
 } from "@prisma/client";
 
-import { HealthStatus } from "@repo/contracts/athlete-profile";
-import { type PlanEnrollment } from "@repo/contracts/plan-enrollment";
+import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import { type PlanEnrollment } from "@repo/contracts/lms/plan-enrollment";
 
 import { HEALTH_STATUS_MAP, PLAN_ENROLLMENT_STATUS_MAP } from "./enum-maps";
 

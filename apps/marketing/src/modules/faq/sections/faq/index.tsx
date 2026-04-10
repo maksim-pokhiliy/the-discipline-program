@@ -1,7 +1,7 @@
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { Accordion, AccordionDetails, AccordionSummary, Stack, Typography } from "@mui/material";
 
-import { type FaqPageData } from "@repo/contracts/pages";
+import { type FaqPageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 type FaqSectionProps = {

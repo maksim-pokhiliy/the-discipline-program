@@ -1,6 +1,6 @@
 import { type MarketingBlogPost } from "@prisma/client";
 
-import { type BlogPost, type PublicBlogPost } from "@repo/contracts/blog";
+import { type BlogPost, type PublicBlogPost } from "@repo/contracts/cms/blog";
 
 import { BLOG_CATEGORY_MAP } from "./enum-maps";
 

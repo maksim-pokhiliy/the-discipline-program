@@ -1,6 +1,6 @@
 import type { AlertColor, ChipProps } from "@mui/material";
 
-import { ProcessStatus, PROCESS_STATUS_LABELS } from "@repo/contracts/coach-dashboard";
+import { ProcessStatus, PROCESS_STATUS_LABELS } from "@repo/contracts/coaching/coach-dashboard";
 
 export type ProgressGroupConfig = {
   status: ProcessStatus;
