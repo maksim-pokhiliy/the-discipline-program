@@ -2,8 +2,8 @@
 
 import { useForm } from "react-hook-form";
 
+import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
 import { type UserRole } from "@repo/contracts/iam/auth";
-import { type AdminUser } from "@repo/contracts/iam/user";
 import { FormView, QueryWrapper } from "@repo/ui";
 
 import { useUpdateUserRole, useUser } from "@app/lib/hooks";
@@ -11,7 +11,7 @@ import { useUpdateUserRole, useUser } from "@app/lib/hooks";
 import { UserDetailSection } from "../../sections";
 
 type UserDetailFormProps = {
-  user: AdminUser;
+  user: AdminUserView;
 };
 
 const UserDetailForm: React.FC<UserDetailFormProps> = ({ user }) => {

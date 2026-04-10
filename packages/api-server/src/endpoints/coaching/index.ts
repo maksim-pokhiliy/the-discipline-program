@@ -1,3 +1,4 @@
+export * from "./admin-user-view";
 export * from "./athlete-profile";
 export * from "./coach-action-item";
 export * from "./coach-athletes";

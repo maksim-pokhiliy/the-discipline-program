@@ -1,25 +1,15 @@
 import { UserRole } from "@repo/contracts/iam/auth";
 import {
-  type AdminUser,
   type AdminUserListItem,
   type GetUsersPageDataResponse,
   type UpdateUserRoleData,
+  type User,
 } from "@repo/contracts/iam/user";
 import { ConflictError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-import {
-  mapToAdminUser,
-  mapToAdminUserListItem,
-  ROLE_MAP,
-  ROLE_TO_PRISMA_MAP,
-} from "../../mappers/iam";
+import { mapToAdminUserListItem, mapToUser, ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { findOrThrow, handlePrismaError } from "../../utils";
-
-const includeWithProfiles = {
-  athleteProfile: true,
-  coachProfile: true,
-} as const;
 
 export const iamUserAdminApi = {
   getAll: async (): Promise<AdminUserListItem[]> => {
@@ -30,22 +20,13 @@ export const iamUserAdminApi = {
     return users.map(mapToAdminUserListItem);
   },
 
-  getById: async (id: string): Promise<AdminUser> => {
-    const user = await findOrThrow(
-      prisma.user.findUnique({ where: { id }, include: includeWithProfiles }),
-      "User",
-    );
-
-    return mapToAdminUser(user);
-  },
-
   getPageData: async (): Promise<GetUsersPageDataResponse> => {
     const users = await iamUserAdminApi.getAll();
 
     return { users };
   },
 
-  updateRole: async (id: string, data: UpdateUserRoleData): Promise<AdminUser> => {
+  updateRole: async (id: string, data: UpdateUserRoleData): Promise<User> => {
     const existing = await findOrThrow(prisma.user.findUnique({ where: { id } }), "User");
 
     if (ROLE_MAP[existing.role] === UserRole.ADMIN && data.role !== UserRole.ADMIN) {
@@ -62,10 +43,9 @@ export const iamUserAdminApi = {
       const user = await prisma.user.update({
         where: { id },
         data: { role: ROLE_TO_PRISMA_MAP[data.role] },
-        include: includeWithProfiles,
       });
 
-      return mapToAdminUser(user);
+      return mapToUser(user);
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });
     }
