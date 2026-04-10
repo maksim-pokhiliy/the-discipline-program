@@ -23,17 +23,17 @@ import { NotFoundError } from "@repo/errors";
 
 import { resolveCoachId } from "../../authz/guards";
 import { prisma } from "../../db/client";
-import { mapToCoachActionItem } from "../../mappers";
 import {
-  ACTION_ITEM_SEVERITY_MAP,
-  HEALTH_STATUS_MAP,
   ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP,
+  ACTION_ITEM_SEVERITY_MAP,
   ACTION_ITEM_SEVERITY_TO_PRISMA_MAP,
   ACTION_ITEM_STATUS_MAP,
   ACTION_ITEM_STATUS_TO_PRISMA_MAP,
   ACTION_ITEM_TYPE_TO_PRISMA_MAP,
-  PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
-} from "../../mappers/enum-maps";
+  HEALTH_STATUS_MAP,
+  mapToCoachActionItem,
+} from "../../mappers/coaching";
+import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
 import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
 import { asJsonRecord } from "../../utils/json-record";

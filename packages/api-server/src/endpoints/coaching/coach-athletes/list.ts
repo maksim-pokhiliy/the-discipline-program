@@ -8,11 +8,8 @@ import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 
 import { resolveCoachId } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
-import {
-  ACTION_ITEM_STATUS_TO_PRISMA_MAP,
-  HEALTH_STATUS_MAP,
-  PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
-} from "../../../mappers/enum-maps";
+import { ACTION_ITEM_STATUS_TO_PRISMA_MAP, HEALTH_STATUS_MAP } from "../../../mappers/coaching";
+import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../../mappers/lms";
 import { findOrThrow } from "../../../utils";
 import {
   DAYS_IN_WEEK,

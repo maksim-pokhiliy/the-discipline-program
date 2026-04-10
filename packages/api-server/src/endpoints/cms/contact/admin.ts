@@ -7,8 +7,7 @@ import {
 } from "@repo/contracts/cms/contact";
 
 import { prisma } from "../../../db/client";
-import { mapToContact } from "../../../mappers";
-import { CONTACT_STATUS_TO_PRISMA_MAP } from "../../../mappers/enum-maps";
+import { CONTACT_STATUS_TO_PRISMA_MAP, mapToContact } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 
 export const cmsContactAdminApi = {

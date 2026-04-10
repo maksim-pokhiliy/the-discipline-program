@@ -11,9 +11,11 @@ import {
   ACTION_ITEM_STATUS_TO_PRISMA_MAP,
   ACTION_ITEM_TYPE_MAP,
   HEALTH_STATUS_MAP,
+} from "../../../mappers/coaching";
+import {
   PLAN_ENROLLMENT_STATUS_MAP,
   PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
-} from "../../../mappers/enum-maps";
+} from "../../../mappers/lms";
 import { findOrThrow } from "../../../utils";
 import {
   DAYS_IN_WEEK,

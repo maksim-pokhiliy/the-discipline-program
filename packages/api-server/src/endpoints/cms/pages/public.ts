@@ -17,7 +17,12 @@ import {
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
-import { isPublishedPost, mapToPublicBlogPost, mapToReview, mapToProduct } from "../../../mappers";
+import {
+  isPublishedPost,
+  mapToPublicBlogPost,
+  mapToReview,
+  mapToProduct,
+} from "../../../mappers/cms";
 
 const extractSectionData = <TKey extends SectionSchemaKey>(
   sections: { section: string; data: Prisma.JsonValue }[],

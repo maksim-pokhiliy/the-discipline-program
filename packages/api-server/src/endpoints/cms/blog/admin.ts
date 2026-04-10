@@ -9,7 +9,7 @@ import {
 } from "@repo/contracts/cms/blog";
 
 import { prisma } from "../../../db/client";
-import { mapToBlogPost } from "../../../mappers";
+import { mapToBlogPost } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 import { ensureExclusiveFeatured, toggleExclusiveFeatured } from "../toggle-exclusive-featured";
 

@@ -1,7 +1,7 @@
 import { type Product } from "@repo/contracts/cms/product";
 
 import { prisma } from "../../../db/client";
-import { mapToProduct } from "../../../mappers";
+import { mapToProduct } from "../../../mappers/cms";
 import { findOrThrow } from "../../../utils";
 
 export const cmsProductPublicApi = {

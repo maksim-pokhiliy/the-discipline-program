@@ -20,7 +20,7 @@ import {
   CONTACT_STATUS_TO_PRISMA_MAP,
   CURRENCY_MAP,
   PRICE_INTERVAL_MAP,
-} from "../../../mappers/enum-maps";
+} from "../../../mappers/cms";
 
 export const cmsDashboardAdminApi = {
   getDashboardData: async (): Promise<DashboardData> => {

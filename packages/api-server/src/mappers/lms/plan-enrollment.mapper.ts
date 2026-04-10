@@ -7,7 +7,9 @@ import {
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { type PlanEnrollment } from "@repo/contracts/lms/plan-enrollment";
 
-import { HEALTH_STATUS_MAP, PLAN_ENROLLMENT_STATUS_MAP } from "./enum-maps";
+import { HEALTH_STATUS_MAP } from "../coaching/enum-maps";
+
+import { PLAN_ENROLLMENT_STATUS_MAP } from "./enum-maps";
 
 type PlanEnrollmentWithData = PrismaPlanEnrollment & {
   user: Pick<User, "id" | "name" | "email" | "image"> & {

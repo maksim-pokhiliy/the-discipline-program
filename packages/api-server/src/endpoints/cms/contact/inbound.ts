@@ -4,7 +4,7 @@ import {
 } from "@repo/contracts/cms/contact";
 
 import { prisma } from "../../../db/client";
-import { mapToContact } from "../../../mappers";
+import { mapToContact } from "../../../mappers/cms";
 
 export const cmsContactInboundApi = {
   createSubmission: async (data: CreateContactSubmission): Promise<ContactSubmissionItem> => {

@@ -5,12 +5,10 @@ import { describe, expect, it } from "vitest";
 import { Gender, HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { UserRole } from "@repo/contracts/iam/auth";
 
-import {
-  mapToAdminUser,
-  mapToAdminUserListItem,
-  mapToAthleteProfile,
-  mapToCoachProfile,
-} from "./user.mapper";
+import { mapToAthleteProfile } from "../coaching/athlete-profile.mapper";
+import { mapToCoachProfile } from "../coaching/coach-profile.mapper";
+
+import { mapToAdminUser, mapToAdminUserListItem } from "./user.mapper";
 
 const NOW = new Date("2025-06-01T12:00:00Z");
 const LATER = new Date("2025-06-15T12:00:00Z");

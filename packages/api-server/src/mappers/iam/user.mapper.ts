@@ -4,31 +4,12 @@ import {
   type User as PrismaUser,
 } from "@prisma/client";
 
-import { type AthleteProfile } from "@repo/contracts/coaching/athlete-profile";
-import { type CoachProfile } from "@repo/contracts/coaching/coach-profile";
 import { type AdminUser, type AdminUserListItem } from "@repo/contracts/iam/user";
 
-import { GENDER_MAP, HEALTH_STATUS_MAP, ROLE_MAP } from "./enum-maps";
+import { mapToAthleteProfile } from "../coaching/athlete-profile.mapper";
+import { mapToCoachProfile } from "../coaching/coach-profile.mapper";
 
-export const mapToAthleteProfile = (p: PrismaAthleteProfile): AthleteProfile => ({
-  id: p.id,
-  userId: p.userId,
-  gender: p.gender ? GENDER_MAP[p.gender] : null,
-  heightCm: p.heightCm,
-  weightKg: p.weightKg ? Number(p.weightKg) : null,
-  healthStatus: HEALTH_STATUS_MAP[p.healthStatus],
-  healthNote: p.healthNote,
-  createdAt: p.createdAt,
-  updatedAt: p.updatedAt,
-});
-
-export const mapToCoachProfile = (p: PrismaCoachProfile): CoachProfile => ({
-  id: p.id,
-  userId: p.userId,
-  bio: p.bio,
-  createdAt: p.createdAt,
-  updatedAt: p.updatedAt,
-});
+import { ROLE_MAP } from "./enum-maps";
 
 type UserWithProfiles = PrismaUser & {
   athleteProfile: PrismaAthleteProfile | null;

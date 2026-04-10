@@ -7,7 +7,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { resolveCoachId, verifyAthleteBelongsToCoach } from "../../authz/guards";
 import { prisma } from "../../db/client";
-import { mapToCoachNote } from "../../mappers";
+import { mapToCoachNote } from "../../mappers/coaching";
 import { handlePrismaError } from "../../utils";
 
 export const coachingCoachNoteApi = {

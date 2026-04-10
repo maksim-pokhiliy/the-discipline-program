@@ -6,7 +6,7 @@ import {
 
 import { resolveCoachId, verifyAthleteBelongsToCoach } from "../../authz/guards";
 import { prisma } from "../../db/client";
-import { mapToUserBenchmark } from "../../mappers";
+import { mapToUserBenchmark } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
 const verifyAccessToUser = async (authUserId: string, targetUserId: string): Promise<void> => {

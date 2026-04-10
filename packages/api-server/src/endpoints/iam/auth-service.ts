@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 
 import { prisma } from "../../db/client";
-import { ROLE_MAP } from "../../mappers/enum-maps";
+import { ROLE_MAP } from "../../mappers/iam";
 
 export const iamAuthService = {
   hashPassword: async (password: string): Promise<string> => {

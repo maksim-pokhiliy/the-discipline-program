@@ -7,8 +7,7 @@ import { NotFoundError } from "@repo/errors";
 
 import { resolveCoachId, verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
-import { mapToPlanEnrollment } from "../../mappers";
-import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/enum-maps";
+import { mapToPlanEnrollment, PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
 import { handlePrismaError } from "../../utils";
 
 const includeEnriched = {

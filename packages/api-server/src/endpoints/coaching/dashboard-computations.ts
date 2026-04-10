@@ -8,7 +8,7 @@ import {
   TodayStatus,
 } from "@repo/contracts/coaching/coach-dashboard";
 
-import { HEALTH_STATUS_MAP } from "../../mappers/enum-maps";
+import { HEALTH_STATUS_MAP } from "../../mappers/coaching";
 import {
   DAYS_IN_WEEK,
   daysBetweenInTz,

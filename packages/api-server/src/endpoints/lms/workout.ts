@@ -7,7 +7,7 @@ import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { resolveCoachId, verifyPlanOwnership, verifyWorkoutOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
-import { mapToWorkout } from "../../mappers";
+import { mapToWorkout } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
 const toUTCMidnight = (date: Date): Date => {
