@@ -2,7 +2,7 @@ import { type Prisma, PrismaClient } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/iam/auth";
 
-import { ROLE_TO_PRISMA_MAP } from "../mappers/enum-maps";
+import { ROLE_TO_PRISMA_MAP } from "../mappers/iam";
 
 const rawPrisma = new PrismaClient();
 

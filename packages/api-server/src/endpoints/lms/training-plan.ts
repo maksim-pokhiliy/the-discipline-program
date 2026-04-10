@@ -12,12 +12,13 @@ import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { resolveCoachId, verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
-import { mapToTrainingPlan, mapToWorkout } from "../../mappers";
 import {
+  mapToTrainingPlan,
+  mapToWorkout,
   PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
   TRAINING_PLAN_STATUS_MAP,
   TRAINING_PLAN_STATUS_TO_PRISMA_MAP,
-} from "../../mappers/enum-maps";
+} from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
 import {
   DAYS_IN_WEEK,

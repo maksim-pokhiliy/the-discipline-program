@@ -3,7 +3,7 @@ import type { UserSearchResult } from "@repo/contracts/iam/user";
 
 import { resolveCoachId } from "../../authz/guards";
 import { prisma } from "../../db/client";
-import { ROLE_TO_PRISMA_MAP } from "../../mappers/enum-maps";
+import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 
 export const iamUserSearchApi = {
   search: async (userId: string, query: string): Promise<UserSearchResult[]> => {

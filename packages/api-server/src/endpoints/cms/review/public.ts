@@ -1,7 +1,7 @@
 import { type Review } from "@repo/contracts/cms/review";
 
 import { prisma } from "../../../db/client";
-import { mapToReview } from "../../../mappers";
+import { mapToReview } from "../../../mappers/cms";
 
 export const cmsReviewPublicApi = {
   getReviews: async (): Promise<Review[]> => {

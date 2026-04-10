@@ -4,8 +4,11 @@ import {
 } from "@repo/contracts/coaching/athlete-profile";
 
 import { prisma } from "../../db/client";
-import { mapToAthleteProfile } from "../../mappers";
-import { GENDER_TO_PRISMA_MAP, HEALTH_STATUS_TO_PRISMA_MAP } from "../../mappers/enum-maps";
+import {
+  GENDER_TO_PRISMA_MAP,
+  HEALTH_STATUS_TO_PRISMA_MAP,
+  mapToAthleteProfile,
+} from "../../mappers/coaching";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
 export const coachingAthleteProfileApi = {

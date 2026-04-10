@@ -2,7 +2,7 @@ import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../db/client";
-import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../mappers/enum-maps";
+import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../mappers/lms";
 
 export const resolveCoachId = async (userId: string): Promise<string> => {
   const profile = await prisma.coachProfile.findUnique({

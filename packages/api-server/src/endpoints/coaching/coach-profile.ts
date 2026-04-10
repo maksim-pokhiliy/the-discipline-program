@@ -4,7 +4,7 @@ import {
 } from "@repo/contracts/coaching/coach-profile";
 
 import { prisma } from "../../db/client";
-import { mapToCoachProfile } from "../../mappers";
+import { mapToCoachProfile } from "../../mappers/coaching";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
 export const coachingCoachProfileApi = {

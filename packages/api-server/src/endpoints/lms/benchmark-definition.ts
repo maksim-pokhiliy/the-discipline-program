@@ -7,7 +7,7 @@ import { ConflictError } from "@repo/errors";
 
 import { resolveCoachId } from "../../authz/guards";
 import { prisma } from "../../db/client";
-import { mapToBenchmarkDefinition } from "../../mappers";
+import { mapToBenchmarkDefinition } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
 export const lmsBenchmarkDefinitionApi = {

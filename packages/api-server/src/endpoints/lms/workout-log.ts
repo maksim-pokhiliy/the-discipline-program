@@ -3,8 +3,7 @@ import { type CreateWorkoutLogData, type WorkoutLog } from "@repo/contracts/lms/
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-import { mapToWorkoutLog } from "../../mappers";
-import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/enum-maps";
+import { mapToWorkoutLog, PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
 import { handlePrismaError } from "../../utils";
 
 export const lmsWorkoutLogApi = {

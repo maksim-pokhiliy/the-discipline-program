@@ -6,7 +6,7 @@ import {
 } from "@repo/contracts/cms/review";
 
 import { prisma } from "../../../db/client";
-import { mapToReview } from "../../../mappers";
+import { mapToReview } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 
 export const cmsReviewAdminApi = {

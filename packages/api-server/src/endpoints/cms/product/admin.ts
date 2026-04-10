@@ -8,7 +8,7 @@ import {
 } from "@repo/contracts/cms/product";
 
 import { prisma } from "../../../db/client";
-import { mapToProduct } from "../../../mappers";
+import { mapToProduct } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 import { toggleExclusiveFeatured } from "../toggle-exclusive-featured";
 

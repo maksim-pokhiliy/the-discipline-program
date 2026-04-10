@@ -8,8 +8,12 @@ import {
 import { ConflictError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
-import { mapToAdminUser, mapToAdminUserListItem } from "../../mappers";
-import { ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/enum-maps";
+import {
+  mapToAdminUser,
+  mapToAdminUserListItem,
+  ROLE_MAP,
+  ROLE_TO_PRISMA_MAP,
+} from "../../mappers/iam";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
 const includeWithProfiles = {
