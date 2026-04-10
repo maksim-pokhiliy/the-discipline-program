@@ -29,7 +29,7 @@
 
 ## 1. Архитектура и границы
 
-**Статус:** В работе — 1.1 (ADR) завершён, 1.2–1.6 впереди
+**Статус:** В работе — 1.1 (ADR) + 1.2.A (BOUNDED-CONTEXTS.md) завершены, 1.2.B–1.6 впереди
 
 System, not code. Это фундамент — всё остальное стоит на нём, поэтому идёт первым. Неправильные решения на этом уровне отравляют все последующие.
 
@@ -51,8 +51,8 @@ System, not code. Это фундамент — всё остальное сто
 | ----- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | 1.1.A | `53b5ebe`   | ✅ Done | ADR framework: `docs/adr/README.md`, `_template.md`, meta-ADR 0001.                                                            |
 | 1.1.B | `ace64ca`   | ✅ Done | Backfill 13 ADRs (0002–0014) for existing implicit decisions.                                                                  |
-| 1.2.A | —           | ⏳ Next | Create `docs/BOUNDED-CONTEXTS.md` documenting CMS, LMS, Coaching, IAM, Billing contexts.                                       |
-| 1.2.B | —           | Pending | Reorganize `packages/contracts/src/entities/` into context subdirectories (cms/lms/coaching/iam/billing) + subpath exports.    |
+| 1.2.A | _pending_   | ✅ Done | Create `docs/BOUNDED-CONTEXTS.md` documenting CMS, LMS, Coaching, IAM, Billing contexts.                                       |
+| 1.2.B | —           | ⏳ Next | Reorganize `packages/contracts/src/entities/` into context subdirectories (cms/lms/coaching/iam/billing) + subpath exports.    |
 | 1.2.C | —           | Pending | Reorganize `packages/api-server/src/endpoints/` by bounded context + consolidate CMS duplication (admin/marketing share code). |
 | 1.2.D | —           | Pending | Remove barrel export in `api-server/src/index.ts`; enforce subpath imports.                                                    |
 | 1.3.A | —           | Pending | Add `dependency-cruiser` with boundary rules (circular, marketing↛api-server/lms, contracts no-deps, ui no-prisma).            |
@@ -90,7 +90,7 @@ System, not code. Это фундамент — всё остальное сто
 - [ ] **Billing domain существует только в БД.** `schema.prisma` содержит `Product`, `Price`, `Subscription`, `Transaction`, но `packages/contracts/src/entities/` не имеет ни `subscription`, ни `transaction`, ни `price`. В `api-server/endpoints/` нет ни одного billing endpoint. В route handlers нет `/api/.../billing/*` и `/api/webhooks/stripe`. **Идеальное окно заложить billing bounded context правильно, пока кода нет.**
 - [ ] **`api-server` не имеет subpath exports.** `package.json` экспортирует только `.`, и `src/index.ts` делает `export * from "./endpoints"; export * from "./services"`. Любой app получает доступ ко всему domain layer. `marketing` импортирует только `pagesApi` и `contactApi` (конкретные файлы: `apps/marketing/src/app/api/public/pages/[pageSlug]/route.ts`, `apps/marketing/src/app/api/public/contact/route.ts`), но физически тянет весь `api-server`.
 - [ ] **Первая dependency rule, которую надо заэнфорсить:** `apps/marketing` не должен видеть `@repo/api-server` ничего, кроме CMS-контекста. Сейчас import-граф ничего не запрещает.
-- [ ] **Нет документа, который декларирует bounded contexts** (`docs/BOUNDED-CONTEXTS.md` или подобный). Первый черновик маппинга: CMS = {blog, contact, pages, product marketing view, review}; LMS = {training-plan, workout, workout-log, plan-enrollment, benchmark-definition, user-benchmark}; Coaching = {coach-action-item, coach-athletes, coach-dashboard, coach-note, coach-profile, athlete-profile}; IAM = {auth, user, upload}; Billing = {product billing view, price, subscription, transaction} (пусто в API).
+- [x] **~~Нет документа, который декларирует bounded contexts~~** Создан в commit 1.2.A: `docs/BOUNDED-CONTEXTS.md`. Документирует CMS / LMS / Coaching / IAM / Billing с aggregates, value objects, invariants, dependencies, target-state файловой структуры, shared `Product` split rule, cross-context invariants таблицу, dependency-direction граф и де-факто non-leak verification.
 - [ ] **CoachActionItem генерирует события `MISSED_WORKOUTS / NEW_NO_START / HEALTH_REPORT`** (см. `schema.prisma:308-323`), но нет background scheduler'а. Либо эти события создаются лениво при запросе dashboard'а, либо вообще не создаются. Сoaching context не отделён от LMS и не имеет явного event-boundary.
 
 ### 1.3. Dependency direction и граф пакетов
