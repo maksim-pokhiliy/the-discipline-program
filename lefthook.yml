@@ -20,6 +20,12 @@ pre-commit:
       run: pnpm test
       fail_text: "Tests failed - check the errors above"
 
+pre-push:
+  commands:
+    dep-check:
+      run: pnpm dep:check
+      fail_text: "Dependency-cruiser boundary rules violated — run `pnpm dep:check` locally for details"
+
 commit-msg:
   commands:
     commitlint:
