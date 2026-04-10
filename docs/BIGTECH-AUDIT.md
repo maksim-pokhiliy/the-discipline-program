@@ -43,6 +43,39 @@ System, not code. Это фундамент — всё остальное сто
 - [x] **`AuthServiceAdapter` в `packages/auth/src/auth-options.ts`** — рабочий пример port/adapter, можно использовать как reference.
 - [x] **`onlyBuiltDependencies` в `pnpm-workspace.yaml`** — security: явный allow-list postinstall scripts.
 
+### Implementation plan (section 1)
+
+Подход C (гибрид): research секции — один раз, реализация — по bullet'у = по коммиту. Прогресс отмечается здесь по мере закрытия.
+
+| №     | Commit hash | Status  | Description                                                                                                                    |
+| ----- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 1.1.A | `53b5ebe`   | ✅ Done | ADR framework: `docs/adr/README.md`, `_template.md`, meta-ADR 0001.                                                            |
+| 1.1.B | `ace64ca`   | ✅ Done | Backfill 13 ADRs (0002–0014) for existing implicit decisions.                                                                  |
+| 1.2.A | —           | ⏳ Next | Create `docs/BOUNDED-CONTEXTS.md` documenting CMS, LMS, Coaching, IAM, Billing contexts.                                       |
+| 1.2.B | —           | Pending | Reorganize `packages/contracts/src/entities/` into context subdirectories (cms/lms/coaching/iam/billing) + subpath exports.    |
+| 1.2.C | —           | Pending | Reorganize `packages/api-server/src/endpoints/` by bounded context + consolidate CMS duplication (admin/marketing share code). |
+| 1.2.D | —           | Pending | Remove barrel export in `api-server/src/index.ts`; enforce subpath imports.                                                    |
+| 1.3.A | —           | Pending | Add `dependency-cruiser` with boundary rules (circular, marketing↛api-server/lms, contracts no-deps, ui no-prisma).            |
+| 1.3.B | —           | Pending | Add `.github/workflows/ci.yml` with dep-check + check-types + lint + test + build.                                             |
+| 1.3.C | —           | Pending | Generate and commit dep-graph artifact under `docs/`.                                                                          |
+| 1.4.A | —           | Pending | Storage port + vercel-blob adapter in `api-server/src/infrastructure/storage/`.                                                |
+| 1.4.B | —           | Pending | Move `centsToAmount` from `@repo/shared` to `@repo/contracts/common/money`.                                                    |
+| 1.4.C | —           | Pending | Scaffold empty port directories for email / payments / queue / cache with README placeholders.                                 |
+| 1.5.A | —           | Pending | Add `vercel.json` per app with security headers (CSP, HSTS, X-Frame-Options, etc.).                                            |
+| 1.5.B | —           | Pending | Add `/api/health`, `/api/ready`, `/api/version` endpoints to every app + handler factories.                                    |
+| 1.5.C | —           | Pending | Add `docs/DEPLOY.md` describing failure domains, rollback procedure, env layout.                                               |
+| 1.5.D | —           | Pending | Create `.env.example` at repo root documenting every required env var.                                                         |
+| 1.5.E | —           | Pending | Add `apps/admin/src/proxy.ts` with server-side ADMIN role check.                                                               |
+| 1.5.F | —           | Pending | Add role-based route protection to `apps/platform/src/proxy.ts`.                                                               |
+| 1.6.A | —           | Pending | Fix `@repo/auth` dual-instance risk: remove `next-auth` from `dependencies`, keep only in `peerDependencies`.                  |
+| 1.6.B | —           | Pending | Replace `@repo/ui` wildcard `exports` with controlled public API via `index.ts`.                                               |
+| 1.6.C | —           | Pending | Declare `@repo/contracts` dependency in `@repo/api-client`.                                                                    |
+| 1.6.D | —           | Pending | Minor package.json hygiene: version alignment, peer/dev duplication, next peer version pinning.                                |
+
+**Execution order** (derived from dependencies): 1.1 → 1.3.A (early so subsequent refactors trip dep-cruiser fast) → 1.2 → 1.4 → 1.5 → 1.6 → 1.3.B/C (CI gate last, when structure is stable).
+
+**To resume work in a new session:** read this table, find the first row with status `⏳ Next` or `Pending`, implement it following the bullet descriptions in the relevant 1.x subsection below.
+
 ### 1.1. ADR-инфраструктура
 
 - [x] **~~Нет папки `docs/adr/` и ADR-процесса.~~** Создана в commit 1.1.A. `docs/adr/README.md` описывает Michael Nygard формат, lifecycle, numbering. `docs/adr/0001-use-adr-for-architecture-decisions.md` — meta-ADR про процесс, содержит Context-секцию со списком исторических implicit-решений для backfill.
