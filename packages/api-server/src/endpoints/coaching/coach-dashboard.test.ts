@@ -7,9 +7,9 @@ import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
 import { startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
 
-import { platformCoachDashboardApi } from "./coach-dashboard";
+import { coachingCoachDashboardApi } from "./coach-dashboard";
 
-describe("platformCoachDashboardApi", () => {
+describe("coachingCoachDashboardApi", () => {
   const TZ = "UTC";
 
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
@@ -159,14 +159,14 @@ describe("platformCoachDashboardApi", () => {
 
   describe("getDashboard", () => {
     it("returns correct overview stats", async () => {
-      const result = await platformCoachDashboardApi.getDashboard(coach.user.id);
+      const result = await coachingCoachDashboardApi.getDashboard(coach.user.id);
 
       expect(result.overview.totalActiveAthletes).toBe(2);
       expect(result.overview.activePlansCount).toBe(1);
     });
 
     it("counts workouts planned today and this week correctly", async () => {
-      const result = await platformCoachDashboardApi.getDashboard(coach.user.id);
+      const result = await coachingCoachDashboardApi.getDashboard(coach.user.id);
 
       expect(result.overview.workoutsPlannedToday).toBeGreaterThanOrEqual(2);
       expect(result.overview.workoutsPlannedThisWeek).toBeGreaterThanOrEqual(4);
@@ -174,7 +174,7 @@ describe("platformCoachDashboardApi", () => {
     });
 
     it("returns sorted action items by type+severity priority", async () => {
-      const result = await platformCoachDashboardApi.getDashboard(coach.user.id);
+      const result = await coachingCoachDashboardApi.getDashboard(coach.user.id);
 
       if (result.actionItems.length >= 2) {
         for (let i = 0; i < result.actionItems.length - 1; i++) {
@@ -219,7 +219,7 @@ describe("platformCoachDashboardApi", () => {
     });
 
     it("handles coach with no enrollments (empty state)", async () => {
-      const result = await platformCoachDashboardApi.getDashboard(emptyCoach.user.id);
+      const result = await coachingCoachDashboardApi.getDashboard(emptyCoach.user.id);
 
       expect(result.overview.totalActiveAthletes).toBe(0);
       expect(result.overview.activePlansCount).toBe(0);

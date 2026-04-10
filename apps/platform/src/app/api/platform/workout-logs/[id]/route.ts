@@ -1,5 +1,5 @@
 import { createAuthDeleteHandler, createAuthGetByParamHandler } from "@repo/api-routes";
-import { platformWorkoutLogsApi } from "@repo/api-server/lms";
+import { lmsWorkoutLogApi } from "@repo/api-server/lms";
 import {
   deleteWorkoutLogParamsSchema,
   getWorkoutLogByIdParamsSchema,
@@ -10,7 +10,7 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
   createAuthGetByParamHandler(
-    (userId, { id }) => platformWorkoutLogsApi.getById(userId, id),
+    (userId, { id }) => lmsWorkoutLogApi.getById(userId, id),
     getWorkoutLogByIdParamsSchema,
     getWorkoutLogResponseSchema,
   ),
@@ -18,7 +18,7 @@ export const GET = withPlatformAuth(
 
 export const DELETE = withPlatformAuth(
   createAuthDeleteHandler(
-    (userId, { id }) => platformWorkoutLogsApi.delete(userId, id),
+    (userId, { id }) => lmsWorkoutLogApi.delete(userId, id),
     deleteWorkoutLogParamsSchema,
   ),
 );

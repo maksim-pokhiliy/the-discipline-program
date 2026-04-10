@@ -23,7 +23,7 @@ const includeEnriched = {
   },
 } as const;
 
-export const platformPlanEnrollmentsApi = {
+export const lmsPlanEnrollmentApi = {
   getAll: async (userId: string, planId: string): Promise<PlanEnrollment[]> => {
     const coachId = await resolveCoachId(userId);
 

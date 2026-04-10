@@ -1,5 +1,5 @@
 import { createMultiToggleHandler } from "@repo/api-routes";
-import { adminBlogApi } from "@repo/api-server/cms";
+import { cmsBlogAdminApi } from "@repo/api-server/cms";
 import {
   BlogToggleField,
   toggleBlogPostParamsSchema,
@@ -11,8 +11,8 @@ import { withAdminAuth } from "@app/lib/server/auth";
 export const PATCH = withAdminAuth(
   createMultiToggleHandler(
     {
-      [BlogToggleField.IS_PUBLISHED]: adminBlogApi.toggleBlogPostStatus,
-      [BlogToggleField.IS_FEATURED]: adminBlogApi.toggleBlogPostFeatured,
+      [BlogToggleField.IS_PUBLISHED]: cmsBlogAdminApi.toggleBlogPostStatus,
+      [BlogToggleField.IS_FEATURED]: cmsBlogAdminApi.toggleBlogPostFeatured,
     },
     toggleBlogPostParamsSchema,
     toggleBlogPostQuerySchema,

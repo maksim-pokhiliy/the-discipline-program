@@ -22,7 +22,7 @@ import {
   PRICE_INTERVAL_MAP,
 } from "../../../mappers/enum-maps";
 
-export const adminDashboardApi = {
+export const cmsDashboardAdminApi = {
   getDashboardData: async (): Promise<DashboardData> => {
     const [contentStats, userStats, recentActivity] = await Promise.all([
       getContentStats(),

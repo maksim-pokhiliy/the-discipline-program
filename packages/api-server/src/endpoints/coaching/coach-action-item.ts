@@ -147,7 +147,7 @@ const conditionMatchesResolved = (
   }
 };
 
-export const platformCoachActionItemsApi = {
+export const coachingCoachActionItemApi = {
   reconcile: async (userId: string): Promise<ReconcileResponse & { coachId: string }> => {
     const coachId = await resolveCoachId(userId);
 

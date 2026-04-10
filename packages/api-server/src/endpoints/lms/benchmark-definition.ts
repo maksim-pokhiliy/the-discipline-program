@@ -10,7 +10,7 @@ import { prisma } from "../../db/client";
 import { mapToBenchmarkDefinition } from "../../mappers";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
-export const platformBenchmarkDefinitionsApi = {
+export const lmsBenchmarkDefinitionApi = {
   getAll: async (): Promise<BenchmarkDefinition[]> => {
     const definitions = await prisma.benchmarkDefinition.findMany({
       orderBy: { name: "asc" },

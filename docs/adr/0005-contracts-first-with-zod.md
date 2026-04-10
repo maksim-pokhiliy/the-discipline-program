@@ -39,7 +39,11 @@ Validation happens at the API boundary through the route handler factories in `@
 
 ```ts
 export const POST = withAdminAuth(
-  createPostHandler(adminBlogApi.createPost, createBlogPostRequestSchema, blogPostResponseSchema),
+  createPostHandler(
+    cmsBlogAdminApi.createPost,
+    createBlogPostRequestSchema,
+    blogPostResponseSchema,
+  ),
 );
 ```
 

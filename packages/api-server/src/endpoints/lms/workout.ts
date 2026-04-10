@@ -21,7 +21,7 @@ const toUTCMidnight = (date: Date): Date => {
   return base;
 };
 
-export const platformWorkoutsApi = {
+export const lmsWorkoutApi = {
   getAll: async (userId: string, planId: string): Promise<Workout[]> => {
     const coachId = await resolveCoachId(userId);
 

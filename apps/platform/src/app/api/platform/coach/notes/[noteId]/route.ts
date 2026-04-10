@@ -3,7 +3,7 @@ import {
   createAuthGetByParamHandler,
   createAuthPutByParamHandler,
 } from "@repo/api-routes";
-import { platformCoachNotesApi } from "@repo/api-server/coaching";
+import { coachingCoachNoteApi } from "@repo/api-server/coaching";
 import {
   deleteCoachNoteParamsSchema,
   getCoachNoteByIdParamsSchema,
@@ -17,7 +17,7 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
   createAuthGetByParamHandler(
-    (userId, { noteId }) => platformCoachNotesApi.getById(userId, noteId),
+    (userId, { noteId }) => coachingCoachNoteApi.getById(userId, noteId),
     getCoachNoteByIdParamsSchema,
     getCoachNoteByIdResponseSchema,
   ),
@@ -25,7 +25,7 @@ export const GET = withPlatformAuth(
 
 export const PUT = withPlatformAuth(
   createAuthPutByParamHandler(
-    (userId, { noteId }, data) => platformCoachNotesApi.update(userId, noteId, data),
+    (userId, { noteId }, data) => coachingCoachNoteApi.update(userId, noteId, data),
     updateCoachNoteParamsSchema,
     updateCoachNoteRequestSchema,
     updateCoachNoteResponseSchema,
@@ -34,7 +34,7 @@ export const PUT = withPlatformAuth(
 
 export const DELETE = withPlatformAuth(
   createAuthDeleteHandler(
-    (userId, { noteId }) => platformCoachNotesApi.delete(userId, noteId),
+    (userId, { noteId }) => coachingCoachNoteApi.delete(userId, noteId),
     deleteCoachNoteParamsSchema,
   ),
 );

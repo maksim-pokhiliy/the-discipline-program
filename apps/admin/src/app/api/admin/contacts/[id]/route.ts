@@ -1,5 +1,5 @@
 import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { adminContactsApi } from "@repo/api-server/cms";
+import { cmsContactAdminApi } from "@repo/api-server/cms";
 import {
   deleteContactParamsSchema,
   getContactByIdParamsSchema,
@@ -10,15 +10,15 @@ import {
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetByIdHandler(adminContactsApi.getContactById, getContactByIdParamsSchema),
+  createGetByIdHandler(cmsContactAdminApi.getContactById, getContactByIdParamsSchema),
 );
 export const PUT = withAdminAuth(
   createPutHandler(
-    adminContactsApi.updateContact,
+    cmsContactAdminApi.updateContact,
     updateContactParamsSchema,
     updateContactRequestSchema,
   ),
 );
 export const DELETE = withAdminAuth(
-  createDeleteHandler(adminContactsApi.deleteContact, deleteContactParamsSchema),
+  createDeleteHandler(cmsContactAdminApi.deleteContact, deleteContactParamsSchema),
 );

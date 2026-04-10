@@ -1,5 +1,5 @@
 import { createAuthGetByParamHandler, createAuthPostByParamHandler } from "@repo/api-routes";
-import { platformPlanEnrollmentsApi } from "@repo/api-server/lms";
+import { lmsPlanEnrollmentApi } from "@repo/api-server/lms";
 import {
   createPlanEnrollmentParamsSchema,
   createPlanEnrollmentRequestSchema,
@@ -12,7 +12,7 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
   createAuthGetByParamHandler(
-    (userId, { planId }) => platformPlanEnrollmentsApi.getAll(userId, planId),
+    (userId, { planId }) => lmsPlanEnrollmentApi.getAll(userId, planId),
     getPlanEnrollmentsParamsSchema,
     getPlanEnrollmentsResponseSchema,
   ),
@@ -20,7 +20,7 @@ export const GET = withPlatformAuth(
 
 export const POST = withPlatformAuth(
   createAuthPostByParamHandler(
-    (userId, { planId }, data) => platformPlanEnrollmentsApi.create(userId, planId, data),
+    (userId, { planId }, data) => lmsPlanEnrollmentApi.create(userId, planId, data),
     createPlanEnrollmentParamsSchema,
     createPlanEnrollmentRequestSchema,
     createPlanEnrollmentResponseSchema,

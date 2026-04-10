@@ -8,7 +8,7 @@ import { mapToAthleteProfile } from "../../mappers";
 import { GENDER_TO_PRISMA_MAP, HEALTH_STATUS_TO_PRISMA_MAP } from "../../mappers/enum-maps";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
-export const platformAthleteProfileApi = {
+export const coachingAthleteProfileApi = {
   get: async (userId: string): Promise<AthleteProfile> => {
     const profile = await findOrThrow(
       prisma.athleteProfile.findUnique({ where: { userId } }),

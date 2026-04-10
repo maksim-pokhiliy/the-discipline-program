@@ -7,7 +7,7 @@ import { mapToWorkoutLog } from "../../mappers";
 import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/enum-maps";
 import { handlePrismaError } from "../../utils";
 
-export const platformWorkoutLogsApi = {
+export const lmsWorkoutLogApi = {
   getAll: async (userId: string): Promise<WorkoutLog[]> => {
     const logs = await prisma.workoutLog.findMany({
       where: { userId },

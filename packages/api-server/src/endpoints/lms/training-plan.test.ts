@@ -5,9 +5,9 @@ import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import { cleanupRaw, createTestCoach } from "../../test/helpers";
 
-import { platformTrainingPlansApi } from "./training-plan";
+import { lmsTrainingPlanApi } from "./training-plan";
 
-describe("platformTrainingPlansApi", () => {
+describe("lmsTrainingPlanApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let coach2: Awaited<ReturnType<typeof createTestCoach>>;
 
@@ -105,7 +105,7 @@ describe("platformTrainingPlansApi", () => {
 
   describe("getPageData (indirectly tests getWeekBounds)", () => {
     it("returns workouts count for this week", async () => {
-      const result = await platformTrainingPlansApi.getPageData(coach.user.id);
+      const result = await lmsTrainingPlanApi.getPageData(coach.user.id);
 
       expect(result.plans.length).toBeGreaterThanOrEqual(1);
 
@@ -118,19 +118,19 @@ describe("platformTrainingPlansApi", () => {
 
   describe("duplicate", () => {
     it("creates a copy with 'Copy of' prefix", async () => {
-      const copy = await platformTrainingPlansApi.duplicate(coach.user.id, planId);
+      const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
 
       expect(copy.name).toBe("Copy of Original Plan");
     });
 
     it("new plan is DRAFT status regardless of source status", async () => {
-      const copy = await platformTrainingPlansApi.duplicate(coach.user.id, planId);
+      const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
 
       expect(copy.status).toBe(TrainingPlanStatus.DRAFT);
     });
 
     it("copies all workouts with same dates, title, and content", async () => {
-      const copy = await platformTrainingPlansApi.duplicate(coach.user.id, planId);
+      const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
 
       const copyWorkouts = await cleanupRaw.workout.findMany({
         where: { planId: copy.id, deletedAt: null },
@@ -150,7 +150,7 @@ describe("platformTrainingPlansApi", () => {
     });
 
     it("does NOT copy enrollments", async () => {
-      const copy = await platformTrainingPlansApi.duplicate(coach.user.id, planId);
+      const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
 
       const enrollments = await cleanupRaw.planEnrollment.findMany({
         where: { trainingPlanId: copy.id },
@@ -169,7 +169,7 @@ describe("platformTrainingPlansApi", () => {
         Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diffToMonday),
       );
 
-      const workouts = await platformTrainingPlansApi.getCalendarWeek(coach.user.id, weekStart);
+      const workouts = await lmsTrainingPlanApi.getCalendarWeek(coach.user.id, weekStart);
 
       expect(workouts.length).toBeGreaterThanOrEqual(1);
 
@@ -188,7 +188,7 @@ describe("platformTrainingPlansApi", () => {
         Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diffToMonday),
       );
 
-      const workouts = await platformTrainingPlansApi.getCalendarWeek(coach.user.id, weekStart);
+      const workouts = await lmsTrainingPlanApi.getCalendarWeek(coach.user.id, weekStart);
 
       const coach2WorkoutFound = workouts.find((w) => w.id === coach2WorkoutId);
 

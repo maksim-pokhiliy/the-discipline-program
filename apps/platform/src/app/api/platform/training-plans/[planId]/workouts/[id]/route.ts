@@ -3,7 +3,7 @@ import {
   createAuthGetByParamHandler,
   createAuthPutByParamHandler,
 } from "@repo/api-routes";
-import { platformWorkoutsApi } from "@repo/api-server/lms";
+import { lmsWorkoutApi } from "@repo/api-server/lms";
 import {
   deleteWorkoutParamsSchema,
   getWorkoutByIdParamsSchema,
@@ -17,7 +17,7 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
   createAuthGetByParamHandler(
-    (userId, { planId, id }) => platformWorkoutsApi.getById(userId, planId, id),
+    (userId, { planId, id }) => lmsWorkoutApi.getById(userId, planId, id),
     getWorkoutByIdParamsSchema,
     getWorkoutResponseSchema,
   ),
@@ -25,7 +25,7 @@ export const GET = withPlatformAuth(
 
 export const PUT = withPlatformAuth(
   createAuthPutByParamHandler(
-    (userId, { planId, id }, data) => platformWorkoutsApi.update(userId, planId, id, data),
+    (userId, { planId, id }, data) => lmsWorkoutApi.update(userId, planId, id, data),
     updateWorkoutParamsSchema,
     updateWorkoutRequestSchema,
     updateWorkoutResponseSchema,
@@ -34,7 +34,7 @@ export const PUT = withPlatformAuth(
 
 export const DELETE = withPlatformAuth(
   createAuthDeleteHandler(
-    (userId, { planId, id }) => platformWorkoutsApi.delete(userId, planId, id),
+    (userId, { planId, id }) => lmsWorkoutApi.delete(userId, planId, id),
     deleteWorkoutParamsSchema,
   ),
 );

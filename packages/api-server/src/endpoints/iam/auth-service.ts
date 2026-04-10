@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../../db/client";
 import { ROLE_MAP } from "../../mappers/enum-maps";
 
-export const authService = {
+export const iamAuthService = {
   hashPassword: async (password: string): Promise<string> => {
     return bcrypt.hash(password, 10);
   },
@@ -31,7 +31,7 @@ export const authService = {
       return null;
     }
 
-    const isValid = await authService.comparePassword(rawPassword, user.password);
+    const isValid = await iamAuthService.comparePassword(rawPassword, user.password);
 
     if (!isValid) {
       return null;

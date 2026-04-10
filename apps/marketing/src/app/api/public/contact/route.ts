@@ -1,5 +1,5 @@
 import { createPostHandler, withPublicRoute } from "@repo/api-routes";
-import { contactApi } from "@repo/api-server/cms";
+import { cmsContactInboundApi } from "@repo/api-server/cms";
 import {
   createContactSubmissionRequestSchema,
   createContactSubmissionResponseSchema,
@@ -7,7 +7,7 @@ import {
 
 export const POST = withPublicRoute(
   createPostHandler(async (data) => {
-    const result = await contactApi.createSubmission(data);
+    const result = await cmsContactInboundApi.createSubmission(data);
 
     return createContactSubmissionResponseSchema.parse(result);
   }, createContactSubmissionRequestSchema),

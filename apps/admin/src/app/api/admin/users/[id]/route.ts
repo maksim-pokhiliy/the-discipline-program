@@ -1,5 +1,5 @@
 import { createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { adminUsersApi } from "@repo/api-server/iam";
+import { iamUserAdminApi } from "@repo/api-server/iam";
 import {
   getAdminUserResponseSchema,
   getUserByIdParamsSchema,
@@ -10,11 +10,15 @@ import {
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetByIdHandler(adminUsersApi.getById, getUserByIdParamsSchema, getAdminUserResponseSchema),
+  createGetByIdHandler(
+    iamUserAdminApi.getById,
+    getUserByIdParamsSchema,
+    getAdminUserResponseSchema,
+  ),
 );
 export const PUT = withAdminAuth(
   createPutHandler(
-    adminUsersApi.updateRole,
+    iamUserAdminApi.updateRole,
     updateUserRoleParamsSchema,
     updateUserRoleRequestSchema,
   ),

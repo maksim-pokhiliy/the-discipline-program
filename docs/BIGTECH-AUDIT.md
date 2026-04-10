@@ -110,7 +110,7 @@ System, not code. Это фундамент — всё остальное сто
 
 ### 1.4. Dependency inversion (ports & adapters)
 
-- [ ] **`@vercel/blob` напрямую импортируется в `packages/api-server/src/endpoints/admin/upload.ts`.** Нет storage port. Заменить провайдера на S3/R2 = переписать endpoint и тесты. `adminUploadApi.uploadImage/deleteImage` напрямую вызывает `put/del` из `@vercel/blob`.
+- [ ] **`@vercel/blob` напрямую импортируется в `packages/api-server/src/endpoints/iam/upload.ts`.** Нет storage port. Заменить провайдера на S3/R2 = переписать endpoint и тесты. `iamUploadAdminApi.uploadImage/deleteImage` напрямую вызывает `put/del` из `@vercel/blob`.
 - [ ] **`centsToAmount` живёт в `@repo/shared`** (используется в `packages/api-server/src/endpoints/admin/dashboard.ts:15`) — domain-primitive Money в utility-помойке рядом с layout constants и date helpers. Должен быть в `contracts/common` или отдельном `@repo/money`.
 - [ ] **Нет портов под будущие интеграции** — email (Resend / Postmark), payments (Stripe), queue (BullMQ / Inngest), cache (Upstash / Redis). Когда они появятся, есть риск, что их тоже воткнут напрямую в endpoints, как `@vercel/blob`.
 - [ ] **Хороший пример уже есть:** `packages/auth/src/auth-options.ts:20 AuthServiceAdapter` — это настоящий port (`validateUser`, `getUserById` инжектятся извне, пакет не знает про Prisma). Использовать как reference при проектировании остальных портов.
@@ -194,8 +194,8 @@ DDD lens. Без правильной модели всё, что на ней п
 - [x] **`Transaction.idempotencyKey String? @unique` уже в БД** (`schema.prisma:209`) — **но Optional**. Схема позволяет создавать транзакции без ключа. Нужно сделать `NOT NULL` + написать middleware, который принимает `Idempotency-Key` header и применяет.
 - [x] **`Transaction.providerTxId String @unique`** (`schema.prisma:208`) — идемпотентность со стороны провайдера уже enforced на БД.
 - [ ] **Аудит.** Любое изменение денежных или доступных ресурсов должно оставлять append-only запись: кто, когда, что, IP, source. Compliance (GDPR, SOC2) без этого не пройдёшь.
-- [ ] **OWASP базово.** Rate limiting (где? на каком уровне? per user / per IP?), CSRF (NextAuth handles формы, но проверить), input sanitization для RichText (XSS-вектор в CMS), SSRF в загрузчиках изображений (`adminUploadApi`), file upload validation.
-- [ ] **`adminUploadApi.uploadImage`** использует `Date.now()` как часть filename (`upload.ts:26`) — при двух быстрых загрузках в одном ms возможна коллизия.
+- [ ] **OWASP базово.** Rate limiting (где? на каком уровне? per user / per IP?), CSRF (NextAuth handles формы, но проверить), input sanitization для RichText (XSS-вектор в CMS), SSRF в загрузчиках изображений (`iamUploadAdminApi`), file upload validation.
+- [ ] **`iamUploadAdminApi.uploadImage`** использует `Date.now()` как часть filename (`packages/api-server/src/endpoints/iam/upload.ts:26`) — при двух быстрых загрузках в одном ms возможна коллизия.
 - [ ] **Нет rate limiting в `withErrorHandling` / `createAuthWrappers`.** Ни одного вызова `rateLimit` или `@upstash/ratelimit` в коде.
 - [ ] **Нет CSRF protection для не-NextAuth endpoints.** Public form `/api/public/contact` принимает POST — нужен rate limit минимум и captcha максимум.
 - [ ] **PII классификация.** Какие поля — PII? Где шифруются? Сколько хранятся? У `AthleteProfile` есть `healthStatus`, `healthNote`, `weightKg`, `heightCm` — это потенциально медицинские данные (HIPAA-territory).
@@ -209,7 +209,7 @@ DDD lens. Без правильной модели всё, что на ней п
 - [ ] **Нет `MAX_PASSWORD_LENGTH`** — DoS на bcrypt через gigabyte password.
 - [ ] **Нет password complexity requirements** (uppercase, digits, special) — учитывая что могут быть медицинские данные athlete, expected.
 - [ ] **`SESSION_MAX_AGE = 30 * 24 * 60 * 60`** — 30 дней JWT без revocation. Утёкший токен валиден месяц. Должно быть access token short (15-60 мин) + refresh token длинный.
-- [ ] **`authService.validateUser` — timing attack на user enumeration** (`packages/api-server/src/services/auth.ts:15-32`). Если user не существует, `bcrypt.compare` НЕ вызывается → разное latency для existing vs non-existing user. Атакующий может через timing понять, какие email в системе.
+- [ ] **`iamAuthService.validateUser` — timing attack на user enumeration** (`packages/api-server/src/endpoints/iam/auth-service.ts:15-32`). Если user не существует, `bcrypt.compare` НЕ вызывается → разное latency для existing vs non-existing user. Атакующий может через timing понять, какие email в системе.
 - [ ] **`bcrypt.hash(password, 10)`** — salt rounds magic number 10. В 2026 рекомендуется 12-14.
 - [ ] **Email без нормализации** в `validateUser` — `where: { email }` as-is. User с `FOO@...` не сможет войти через `foo@...` (Postgres case-sensitive).
 - [ ] **Только CredentialsProvider** — нет OAuth, нет MFA/2FA, нет magic link.

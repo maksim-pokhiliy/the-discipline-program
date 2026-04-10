@@ -10,7 +10,7 @@ import { prisma } from "../../db/client";
 import { mapToCoachNote } from "../../mappers";
 import { handlePrismaError } from "../../utils";
 
-export const platformCoachNotesApi = {
+export const coachingCoachNoteApi = {
   getAll: async (userId: string): Promise<CoachNote[]> => {
     const coachId = await resolveCoachId(userId);
 

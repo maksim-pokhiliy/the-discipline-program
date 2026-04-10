@@ -9,7 +9,7 @@ import { prisma } from "../../../db/client";
 import { mapToReview } from "../../../mappers";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 
-export const adminReviewsApi = {
+export const cmsReviewAdminApi = {
   getReviews: async (): Promise<Review[]> => {
     const reviews = await prisma.marketingReview.findMany({
       orderBy: { createdAt: "desc" },
@@ -81,7 +81,7 @@ export const adminReviewsApi = {
   },
 
   getReviewsPageData: async (): Promise<AdminReviewsPageData> => {
-    const reviews = await adminReviewsApi.getReviews();
+    const reviews = await cmsReviewAdminApi.getReviews();
 
     return { reviews };
   },

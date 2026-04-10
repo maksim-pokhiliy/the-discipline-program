@@ -6,25 +6,25 @@
 
 ## Context
 
-`apps/admin` and `apps/platform` each have their own NextAuth route handler at `src/app/api/auth/[...nextauth]/route.ts`, each importing a per-app `authOptions` from `src/lib/server/auth.ts`, each calling `createAuthOptions(authService)` from `@repo/auth`. The two `auth.ts` files are almost byte-for-byte identical:
+`apps/admin` and `apps/platform` each have their own NextAuth route handler at `src/app/api/auth/[...nextauth]/route.ts`, each importing a per-app `authOptions` from `src/lib/server/auth.ts`, each calling `createAuthOptions(iamAuthService)` from `@repo/auth`. The two `auth.ts` files are almost byte-for-byte identical:
 
 ```ts
 // apps/admin/src/lib/server/auth.ts
 import { createAuthWrappers } from "@repo/api-routes/auth";
-import { authService } from "@repo/api-server/iam";
+import { iamAuthService } from "@repo/api-server/iam";
 import { createAuthOptions } from "@repo/auth/config";
 
-export const authOptions = createAuthOptions(authService);
+export const authOptions = createAuthOptions(iamAuthService);
 export const { withAdminAuth } = createAuthWrappers(authOptions);
 ```
 
 ```ts
 // apps/platform/src/lib/server/auth.ts
 import { createAuthWrappers } from "@repo/api-routes/auth";
-import { authService } from "@repo/api-server/iam";
+import { iamAuthService } from "@repo/api-server/iam";
 import { createAuthOptions } from "@repo/auth/config";
 
-export const authOptions = createAuthOptions(authService);
+export const authOptions = createAuthOptions(iamAuthService);
 export const { withPlatformAuth } = createAuthWrappers(authOptions);
 ```
 
@@ -39,7 +39,7 @@ Today the deploy topology is unclear (no `vercel.json` is checked in, see Big Te
 
 We **accept the duplication as tech debt** and document it here so that the debt is visible, not invisible. Specifically:
 
-- Each app continues to create its own `authOptions` via `createAuthOptions(authService)`.
+- Each app continues to create its own `authOptions` via `createAuthOptions(iamAuthService)`.
 - Each app continues to mount its own `/api/auth/[...nextauth]/route.ts`.
 - Each app continues to create its own auth wrappers (`withAdminAuth` in admin, `withPlatformAuth` in platform).
 
@@ -74,7 +74,7 @@ The reasons this is still tech debt:
 
 **Neutral:**
 
-- The factory pattern (`createAuthOptions(authService)`) is already in place and already handles most of the "keep it DRY" work. The per-app files are thin enough that consolidation would save a handful of lines, not a design pattern.
+- The factory pattern (`createAuthOptions(iamAuthService)`) is already in place and already handles most of the "keep it DRY" work. The per-app files are thin enough that consolidation would save a handful of lines, not a design pattern.
 - The `marketing` app intentionally has no NextAuth instance. If marketing ever gains a "sign up for a newsletter that requires auth" flow, this ADR will need to be revisited — marketing would need its own instance, and we would have three.
 
 ## Alternatives considered

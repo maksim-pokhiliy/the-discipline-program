@@ -1,5 +1,5 @@
 import { createAuthGetHandler, createAuthPostHandler } from "@repo/api-routes";
-import { platformCoachNotesApi } from "@repo/api-server/coaching";
+import { coachingCoachNoteApi } from "@repo/api-server/coaching";
 import {
   createCoachNoteRequestSchema,
   createCoachNoteResponseSchema,
@@ -10,14 +10,14 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
   createAuthGetHandler(
-    (userId) => platformCoachNotesApi.getAll(userId),
+    (userId) => coachingCoachNoteApi.getAll(userId),
     getCoachNotesResponseSchema,
   ),
 );
 
 export const POST = withPlatformAuth(
   createAuthPostHandler(
-    (userId, data) => platformCoachNotesApi.create(userId, data),
+    (userId, data) => coachingCoachNoteApi.create(userId, data),
     createCoachNoteRequestSchema,
     createCoachNoteResponseSchema,
   ),

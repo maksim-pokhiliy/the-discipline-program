@@ -1,5 +1,5 @@
 import { createAuthGetHandler, createAuthPostHandler } from "@repo/api-routes";
-import { platformTrainingPlansApi } from "@repo/api-server/lms";
+import { lmsTrainingPlanApi } from "@repo/api-server/lms";
 import {
   coachPlansPageDataSchema,
   createTrainingPlanRequestSchema,
@@ -10,14 +10,14 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
   createAuthGetHandler(
-    (userId) => platformTrainingPlansApi.getPageData(userId),
+    (userId) => lmsTrainingPlanApi.getPageData(userId),
     coachPlansPageDataSchema,
   ),
 );
 
 export const POST = withPlatformAuth(
   createAuthPostHandler(
-    (userId, data) => platformTrainingPlansApi.create(userId, data),
+    (userId, data) => lmsTrainingPlanApi.create(userId, data),
     createTrainingPlanRequestSchema,
     createTrainingPlanResponseSchema,
   ),

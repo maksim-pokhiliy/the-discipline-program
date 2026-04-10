@@ -1,5 +1,5 @@
 import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { adminBlogApi } from "@repo/api-server/cms";
+import { cmsBlogAdminApi } from "@repo/api-server/cms";
 import {
   deleteBlogPostParamsSchema,
   getBlogPostByIdParamsSchema,
@@ -10,15 +10,15 @@ import {
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetByIdHandler(adminBlogApi.getPostById, getBlogPostByIdParamsSchema),
+  createGetByIdHandler(cmsBlogAdminApi.getPostById, getBlogPostByIdParamsSchema),
 );
 export const PUT = withAdminAuth(
   createPutHandler(
-    adminBlogApi.updatePost,
+    cmsBlogAdminApi.updatePost,
     updateBlogPostParamsSchema,
     updateBlogPostRequestSchema,
   ),
 );
 export const DELETE = withAdminAuth(
-  createDeleteHandler(adminBlogApi.deletePost, deleteBlogPostParamsSchema),
+  createDeleteHandler(cmsBlogAdminApi.deletePost, deleteBlogPostParamsSchema),
 );

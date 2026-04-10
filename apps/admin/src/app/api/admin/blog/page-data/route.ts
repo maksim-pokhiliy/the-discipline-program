@@ -1,9 +1,9 @@
 import { createGetHandler } from "@repo/api-routes";
-import { adminBlogApi } from "@repo/api-server/cms";
+import { cmsBlogAdminApi } from "@repo/api-server/cms";
 import { getBlogPageDataResponseSchema } from "@repo/contracts/cms/blog";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetHandler(adminBlogApi.getBlogPageData, getBlogPageDataResponseSchema),
+  createGetHandler(cmsBlogAdminApi.getBlogPageData, getBlogPageDataResponseSchema),
 );

@@ -4,7 +4,7 @@ import { prisma } from "../../../db/client";
 import { mapToProduct } from "../../../mappers";
 import { findOrThrow } from "../../../utils";
 
-export const marketingProductsApi = {
+export const cmsProductPublicApi = {
   getAll: async (): Promise<Product[]> => {
     const products = await prisma.product.findMany({
       where: { isActive: true },

@@ -36,7 +36,7 @@ export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions 
 });
 ```
 
-The adapter is provided by `api-server`'s `authService` (which owns the Prisma access). Each app calls `createAuthOptions(authService)` in its own `src/lib/server/auth.ts` and wires it into the NextAuth route handler.
+The adapter is provided by `api-server`'s `iamAuthService` (which owns the Prisma access). Each app calls `createAuthOptions(iamAuthService)` in its own `src/lib/server/auth.ts` and wires it into the NextAuth route handler.
 
 Passwords are hashed with `bcryptjs` at salt rounds = 10. The JWT callback refreshes the user record from the adapter on every request (to invalidate sessions whose user was deleted), and the session callback copies token fields onto `session.user`.
 

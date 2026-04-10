@@ -1,12 +1,12 @@
 import { createGetHandler, createPostHandler } from "@repo/api-routes";
-import { adminBlogApi } from "@repo/api-server/cms";
+import { cmsBlogAdminApi } from "@repo/api-server/cms";
 import { createBlogPostRequestSchema, getBlogPostsResponseSchema } from "@repo/contracts/cms/blog";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetHandler(adminBlogApi.getPosts, getBlogPostsResponseSchema),
+  createGetHandler(cmsBlogAdminApi.getPosts, getBlogPostsResponseSchema),
 );
 export const POST = withAdminAuth(
-  createPostHandler(adminBlogApi.createPost, createBlogPostRequestSchema),
+  createPostHandler(cmsBlogAdminApi.createPost, createBlogPostRequestSchema),
 );
