@@ -1,5 +1,5 @@
 import { createAuthDeleteHandler, createAuthPutByParamHandler } from "@repo/api-routes";
-import { platformUserBenchmarksApi } from "@repo/api-server/lms";
+import { lmsUserBenchmarkApi } from "@repo/api-server/lms";
 import {
   deleteUserBenchmarkParamsSchema,
   updateUserBenchmarkParamsSchema,
@@ -11,7 +11,7 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const PUT = withPlatformAuth(
   createAuthPutByParamHandler(
-    (userId, { benchmarkId }, data) => platformUserBenchmarksApi.update(userId, benchmarkId, data),
+    (userId, { benchmarkId }, data) => lmsUserBenchmarkApi.update(userId, benchmarkId, data),
     updateUserBenchmarkParamsSchema,
     updateUserBenchmarkRequestSchema,
     updateUserBenchmarkResponseSchema,
@@ -20,7 +20,7 @@ export const PUT = withPlatformAuth(
 
 export const DELETE = withPlatformAuth(
   createAuthDeleteHandler(
-    (userId, { benchmarkId }) => platformUserBenchmarksApi.delete(userId, benchmarkId),
+    (userId, { benchmarkId }) => lmsUserBenchmarkApi.delete(userId, benchmarkId),
     deleteUserBenchmarkParamsSchema,
   ),
 );

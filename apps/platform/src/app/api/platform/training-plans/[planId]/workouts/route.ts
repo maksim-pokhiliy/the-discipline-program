@@ -1,5 +1,5 @@
 import { createAuthGetByParamHandler, createAuthPostByParamHandler } from "@repo/api-routes";
-import { platformWorkoutsApi } from "@repo/api-server/lms";
+import { lmsWorkoutApi } from "@repo/api-server/lms";
 import {
   createWorkoutParamsSchema,
   createWorkoutRequestSchema,
@@ -12,7 +12,7 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
   createAuthGetByParamHandler(
-    (userId, { planId }) => platformWorkoutsApi.getAll(userId, planId),
+    (userId, { planId }) => lmsWorkoutApi.getAll(userId, planId),
     getWorkoutsParamsSchema,
     getWorkoutsResponseSchema,
   ),
@@ -20,7 +20,7 @@ export const GET = withPlatformAuth(
 
 export const POST = withPlatformAuth(
   createAuthPostByParamHandler(
-    (userId, { planId }, data) => platformWorkoutsApi.create(userId, planId, data),
+    (userId, { planId }, data) => lmsWorkoutApi.create(userId, planId, data),
     createWorkoutParamsSchema,
     createWorkoutRequestSchema,
     createWorkoutResponseSchema,

@@ -1,5 +1,5 @@
 import { createAuthActionHandler } from "@repo/api-routes";
-import { platformTrainingPlansApi } from "@repo/api-server/lms";
+import { lmsTrainingPlanApi } from "@repo/api-server/lms";
 import {
   duplicateTrainingPlanParamsSchema,
   duplicateTrainingPlanResponseSchema,
@@ -9,7 +9,7 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const POST = withPlatformAuth(
   createAuthActionHandler(
-    (userId, { planId }) => platformTrainingPlansApi.duplicate(userId, planId),
+    (userId, { planId }) => lmsTrainingPlanApi.duplicate(userId, planId),
     duplicateTrainingPlanParamsSchema,
     duplicateTrainingPlanResponseSchema,
     201,

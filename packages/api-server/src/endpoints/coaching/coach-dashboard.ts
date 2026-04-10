@@ -26,13 +26,13 @@ import {
   startOfWeekInTz,
 } from "../../utils/date-helpers";
 
-import { platformCoachActionItemsApi } from "./coach-action-item";
+import { coachingCoachActionItemApi } from "./coach-action-item";
 import { computeAthletesSummary, computeProgressBuckets } from "./dashboard-computations";
 import { createEnrollmentInclude } from "./enrollment-query";
 
-export const platformCoachDashboardApi = {
+export const coachingCoachDashboardApi = {
   getDashboard: async (userId: string): Promise<CoachDashboardData> => {
-    const { coachId } = await platformCoachActionItemsApi.reconcile(userId);
+    const { coachId } = await coachingCoachActionItemApi.reconcile(userId);
 
     const user = await findOrThrow(
       prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } }),

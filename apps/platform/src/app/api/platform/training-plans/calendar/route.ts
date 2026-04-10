@@ -1,5 +1,5 @@
 import { createAuthGetWithQueryHandler } from "@repo/api-routes";
-import { platformTrainingPlansApi } from "@repo/api-server/lms";
+import { lmsTrainingPlanApi } from "@repo/api-server/lms";
 import {
   getCalendarWeekParamsSchema,
   getCalendarWeekResponseSchema,
@@ -9,7 +9,7 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
   createAuthGetWithQueryHandler(
-    (userId, { weekStart }) => platformTrainingPlansApi.getCalendarWeek(userId, weekStart),
+    (userId, { weekStart }) => lmsTrainingPlanApi.getCalendarWeek(userId, weekStart),
     getCalendarWeekParamsSchema,
     getCalendarWeekResponseSchema,
   ),

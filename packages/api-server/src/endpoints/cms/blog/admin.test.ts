@@ -4,7 +4,7 @@ import { BlogCategory } from "@repo/contracts/cms/blog";
 
 import { cleanupRaw } from "../../../test/helpers";
 
-import { adminBlogApi } from "./admin";
+import { cmsBlogAdminApi } from "./admin";
 
 const createSlug = () => `test-${crypto.randomUUID().slice(0, 12)}`;
 
@@ -24,7 +24,7 @@ const baseBlogData = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-describe("adminBlogApi", () => {
+describe("cmsBlogAdminApi", () => {
   const createdIds: string[] = [];
 
   afterAll(async () => {
@@ -35,7 +35,7 @@ describe("adminBlogApi", () => {
 
   describe("calculateReadTime (tested through createPost)", () => {
     it("empty content gives readTime 0", async () => {
-      const post = await adminBlogApi.createPost(baseBlogData({ content: "   " }));
+      const post = await cmsBlogAdminApi.createPost(baseBlogData({ content: "   " }));
 
       createdIds.push(post.id);
 
@@ -43,7 +43,7 @@ describe("adminBlogApi", () => {
     });
 
     it("short content gives readTime 1", async () => {
-      const post = await adminBlogApi.createPost(baseBlogData({ content: "Hello world" }));
+      const post = await cmsBlogAdminApi.createPost(baseBlogData({ content: "Hello world" }));
 
       createdIds.push(post.id);
 
@@ -52,7 +52,7 @@ describe("adminBlogApi", () => {
 
     it("200 words gives readTime 1", async () => {
       const content = Array.from({ length: 200 }, (_, i) => `word${i}`).join(" ");
-      const post = await adminBlogApi.createPost(baseBlogData({ content }));
+      const post = await cmsBlogAdminApi.createPost(baseBlogData({ content }));
 
       createdIds.push(post.id);
 
@@ -61,7 +61,7 @@ describe("adminBlogApi", () => {
 
     it("201 words gives readTime 2", async () => {
       const content = Array.from({ length: 201 }, (_, i) => `word${i}`).join(" ");
-      const post = await adminBlogApi.createPost(baseBlogData({ content }));
+      const post = await cmsBlogAdminApi.createPost(baseBlogData({ content }));
 
       createdIds.push(post.id);
 
@@ -70,7 +70,7 @@ describe("adminBlogApi", () => {
 
     it("400 words gives readTime 2", async () => {
       const content = Array.from({ length: 400 }, (_, i) => `word${i}`).join(" ");
-      const post = await adminBlogApi.createPost(baseBlogData({ content }));
+      const post = await cmsBlogAdminApi.createPost(baseBlogData({ content }));
 
       createdIds.push(post.id);
 
@@ -79,7 +79,7 @@ describe("adminBlogApi", () => {
 
     it("1000 words gives readTime 5", async () => {
       const content = Array.from({ length: 1000 }, (_, i) => `word${i}`).join(" ");
-      const post = await adminBlogApi.createPost(baseBlogData({ content }));
+      const post = await cmsBlogAdminApi.createPost(baseBlogData({ content }));
 
       createdIds.push(post.id);
 
@@ -90,7 +90,7 @@ describe("adminBlogApi", () => {
   describe("createPost", () => {
     it("sets publishedAt when isPublished is true", async () => {
       const before = new Date();
-      const post = await adminBlogApi.createPost(baseBlogData({ isPublished: true }));
+      const post = await cmsBlogAdminApi.createPost(baseBlogData({ isPublished: true }));
 
       createdIds.push(post.id);
 
@@ -104,7 +104,7 @@ describe("adminBlogApi", () => {
     });
 
     it("does NOT set publishedAt for draft", async () => {
-      const post = await adminBlogApi.createPost(baseBlogData({ isPublished: false }));
+      const post = await cmsBlogAdminApi.createPost(baseBlogData({ isPublished: false }));
 
       createdIds.push(post.id);
 
@@ -112,19 +112,19 @@ describe("adminBlogApi", () => {
     });
 
     it("unfeatures other posts when new post is featured", async () => {
-      const first = await adminBlogApi.createPost(
+      const first = await cmsBlogAdminApi.createPost(
         baseBlogData({ isFeatured: true, isPublished: true }),
       );
 
       createdIds.push(first.id);
 
-      const second = await adminBlogApi.createPost(
+      const second = await cmsBlogAdminApi.createPost(
         baseBlogData({ isFeatured: true, isPublished: true }),
       );
 
       createdIds.push(second.id);
 
-      const firstAfter = await adminBlogApi.getPostById(first.id);
+      const firstAfter = await cmsBlogAdminApi.getPostById(first.id);
 
       expect(firstAfter?.isFeatured).toBe(false);
       expect(second.isFeatured).toBe(true);
@@ -132,7 +132,7 @@ describe("adminBlogApi", () => {
 
     it("calculates readTime from content", async () => {
       const content = Array.from({ length: 600 }, (_, i) => `word${i}`).join(" ");
-      const post = await adminBlogApi.createPost(baseBlogData({ content }));
+      const post = await cmsBlogAdminApi.createPost(baseBlogData({ content }));
 
       createdIds.push(post.id);
 
@@ -142,25 +142,25 @@ describe("adminBlogApi", () => {
 
   describe("updatePost", () => {
     it("recalculates readTime when content changes", async () => {
-      const post = await adminBlogApi.createPost(baseBlogData({ content: "short" }));
+      const post = await cmsBlogAdminApi.createPost(baseBlogData({ content: "short" }));
 
       createdIds.push(post.id);
 
       const longContent = Array.from({ length: 800 }, (_, i) => `word${i}`).join(" ");
-      const updated = await adminBlogApi.updatePost(post.id, { content: longContent });
+      const updated = await cmsBlogAdminApi.updatePost(post.id, { content: longContent });
 
       expect(updated.readTime).toBe(4);
     });
 
     it("sets publishedAt on draft to published transition", async () => {
-      const post = await adminBlogApi.createPost(baseBlogData({ isPublished: false }));
+      const post = await cmsBlogAdminApi.createPost(baseBlogData({ isPublished: false }));
 
       createdIds.push(post.id);
 
       expect(post.publishedAt).toBeNull();
 
       const before = new Date();
-      const updated = await adminBlogApi.updatePost(post.id, { isPublished: true });
+      const updated = await cmsBlogAdminApi.updatePost(post.id, { isPublished: true });
 
       expect(updated.publishedAt).toBeInstanceOf(Date);
 
@@ -173,13 +173,13 @@ describe("adminBlogApi", () => {
 
     it("does NOT overwrite existing publishedAt", async () => {
       const originalDate = new Date("2024-01-01T00:00:00Z");
-      const post = await adminBlogApi.createPost(
+      const post = await cmsBlogAdminApi.createPost(
         baseBlogData({ isPublished: true, publishedAt: originalDate }),
       );
 
       createdIds.push(post.id);
 
-      const updated = await adminBlogApi.updatePost(post.id, {
+      const updated = await cmsBlogAdminApi.updatePost(post.id, {
         isPublished: true,
         title: "Updated title",
       });
@@ -188,19 +188,19 @@ describe("adminBlogApi", () => {
     });
 
     it("featured toggle with atomic deduplication", async () => {
-      const a = await adminBlogApi.createPost(baseBlogData({ isFeatured: true }));
+      const a = await cmsBlogAdminApi.createPost(baseBlogData({ isFeatured: true }));
 
       createdIds.push(a.id);
 
-      const b = await adminBlogApi.createPost(baseBlogData());
+      const b = await cmsBlogAdminApi.createPost(baseBlogData());
 
       createdIds.push(b.id);
 
-      const updated = await adminBlogApi.updatePost(b.id, { isFeatured: true });
+      const updated = await cmsBlogAdminApi.updatePost(b.id, { isFeatured: true });
 
       expect(updated.isFeatured).toBe(true);
 
-      const aAfter = await adminBlogApi.getPostById(a.id);
+      const aAfter = await cmsBlogAdminApi.getPostById(a.id);
 
       expect(aAfter?.isFeatured).toBe(false);
     });
@@ -208,37 +208,37 @@ describe("adminBlogApi", () => {
 
   describe("toggleBlogPostFeatured", () => {
     it("toggle ON unfeatures all others", async () => {
-      const existing = await adminBlogApi.createPost(baseBlogData({ isFeatured: true }));
+      const existing = await cmsBlogAdminApi.createPost(baseBlogData({ isFeatured: true }));
 
       createdIds.push(existing.id);
 
-      const target = await adminBlogApi.createPost(baseBlogData({ isFeatured: false }));
+      const target = await cmsBlogAdminApi.createPost(baseBlogData({ isFeatured: false }));
 
       createdIds.push(target.id);
 
-      const toggled = await adminBlogApi.toggleBlogPostFeatured(target.id);
+      const toggled = await cmsBlogAdminApi.toggleBlogPostFeatured(target.id);
 
       expect(toggled.isFeatured).toBe(true);
 
-      const existingAfter = await adminBlogApi.getPostById(existing.id);
+      const existingAfter = await cmsBlogAdminApi.getPostById(existing.id);
 
       expect(existingAfter?.isFeatured).toBe(false);
     });
 
     it("toggle OFF keeps others unchanged", async () => {
-      const other = await adminBlogApi.createPost(baseBlogData({ isFeatured: false }));
+      const other = await cmsBlogAdminApi.createPost(baseBlogData({ isFeatured: false }));
 
       createdIds.push(other.id);
 
-      const target = await adminBlogApi.createPost(baseBlogData({ isFeatured: true }));
+      const target = await cmsBlogAdminApi.createPost(baseBlogData({ isFeatured: true }));
 
       createdIds.push(target.id);
 
-      const toggled = await adminBlogApi.toggleBlogPostFeatured(target.id);
+      const toggled = await cmsBlogAdminApi.toggleBlogPostFeatured(target.id);
 
       expect(toggled.isFeatured).toBe(false);
 
-      const otherAfter = await adminBlogApi.getPostById(other.id);
+      const otherAfter = await cmsBlogAdminApi.getPostById(other.id);
 
       expect(otherAfter?.isFeatured).toBe(false);
     });

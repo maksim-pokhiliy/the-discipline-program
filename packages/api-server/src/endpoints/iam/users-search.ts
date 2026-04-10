@@ -5,7 +5,7 @@ import { resolveCoachId } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/enum-maps";
 
-export const platformUsersApi = {
+export const iamUserSearchApi = {
   search: async (userId: string, query: string): Promise<UserSearchResult[]> => {
     await resolveCoachId(userId);
 

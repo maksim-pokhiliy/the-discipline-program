@@ -44,7 +44,7 @@ const prepareCreateInput = (data: CreateBlogPostData): Prisma.MarketingBlogPostC
   };
 };
 
-export const adminBlogApi = {
+export const cmsBlogAdminApi = {
   getPosts: async (): Promise<BlogPost[]> => {
     const posts = await prisma.marketingBlogPost.findMany({
       orderBy: [{ createdAt: "desc" }, { title: "desc" }],
@@ -63,7 +63,7 @@ export const adminBlogApi = {
   },
 
   getBlogPageData: async (): Promise<AdminBlogPageData> => {
-    const posts = await adminBlogApi.getPosts();
+    const posts = await cmsBlogAdminApi.getPosts();
 
     return { posts };
   },

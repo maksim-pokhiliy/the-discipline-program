@@ -23,10 +23,10 @@ import {
   createTestUser,
 } from "../../test/helpers";
 
-import { platformCoachActionItemsApi } from "./coach-action-item";
+import { coachingCoachActionItemApi } from "./coach-action-item";
 import { daysAgo } from "./coach-action-item.test-helpers";
 
-describe("platformCoachActionItemsApi", () => {
+describe("coachingCoachActionItemApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let plan: Awaited<ReturnType<typeof createTestPlan>>;
 
@@ -141,7 +141,7 @@ describe("platformCoachActionItemsApi", () => {
 
   describe("reconcile", () => {
     it("creates action items for detected conditions", async () => {
-      const result = await platformCoachActionItemsApi.reconcile(coach.user.id);
+      const result = await coachingCoachActionItemApi.reconcile(coach.user.id);
 
       expect(result.created).toBeGreaterThanOrEqual(3);
 
@@ -201,7 +201,7 @@ describe("platformCoachActionItemsApi", () => {
     });
 
     it("does not create duplicates on second reconcile", async () => {
-      const result = await platformCoachActionItemsApi.reconcile(coach.user.id);
+      const result = await coachingCoachActionItemApi.reconcile(coach.user.id);
 
       expect(result.created).toBe(0);
     });
@@ -240,7 +240,7 @@ describe("platformCoachActionItemsApi", () => {
         data: { date: newDate },
       });
 
-      const result = await platformCoachActionItemsApi.reconcile(coach.user.id);
+      const result = await coachingCoachActionItemApi.reconcile(coach.user.id);
 
       expect(result.updated).toBeGreaterThanOrEqual(1);
 
@@ -257,7 +257,7 @@ describe("platformCoachActionItemsApi", () => {
         data: { healthStatus: HealthStatus.HEALTHY },
       });
 
-      const result = await platformCoachActionItemsApi.reconcile(coach.user.id);
+      const result = await coachingCoachActionItemApi.reconcile(coach.user.id);
 
       expect(result.resolved).toBeGreaterThanOrEqual(1);
 
@@ -293,7 +293,7 @@ describe("platformCoachActionItemsApi", () => {
       });
 
       if (existingResolved) {
-        const result = await platformCoachActionItemsApi.reconcile(coach.user.id);
+        const result = await coachingCoachActionItemApi.reconcile(coach.user.id);
         const newItems = await cleanupRaw.coachActionItem.findMany({
           where: {
             coachId: coach.profile.id,
@@ -309,7 +309,7 @@ describe("platformCoachActionItemsApi", () => {
     });
 
     it("returns correct counts structure", async () => {
-      const result = await platformCoachActionItemsApi.reconcile(coach.user.id);
+      const result = await coachingCoachActionItemApi.reconcile(coach.user.id);
 
       expect(result).toHaveProperty("created");
       expect(result).toHaveProperty("updated");
@@ -333,7 +333,7 @@ describe("platformCoachActionItemsApi", () => {
         },
       });
 
-      const resolved = await platformCoachActionItemsApi.resolve(coach.user.id, item.id);
+      const resolved = await coachingCoachActionItemApi.resolve(coach.user.id, item.id);
 
       expect(resolved.status).toBe(ActionItemStatus.RESOLVED);
       expect(resolved.resolveReason).toBe(ActionItemResolveReason.MANUAL_CONTACTED);
@@ -354,7 +354,7 @@ describe("platformCoachActionItemsApi", () => {
         },
       });
 
-      const result = await platformCoachActionItemsApi.resolve(coach.user.id, item.id);
+      const result = await coachingCoachActionItemApi.resolve(coach.user.id, item.id);
 
       expect(result.status).toBe(ActionItemStatus.RESOLVED);
       expect(result.resolveReason).toBe(ActionItemResolveReason.AUTO_CONDITION_CLEARED);
@@ -362,7 +362,7 @@ describe("platformCoachActionItemsApi", () => {
 
     it("throws NotFoundError for non-existent item", async () => {
       await expect(
-        platformCoachActionItemsApi.resolve(coach.user.id, "cl000000000000000000000000"),
+        coachingCoachActionItemApi.resolve(coach.user.id, "cl000000000000000000000000"),
       ).rejects.toThrow(NotFoundError);
     });
   });

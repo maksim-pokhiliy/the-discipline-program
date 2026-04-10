@@ -19,7 +19,7 @@ const verifyAccessToUser = async (authUserId: string, targetUserId: string): Pro
   await verifyAthleteBelongsToCoach(targetUserId, coachId);
 };
 
-export const platformUserBenchmarksApi = {
+export const lmsUserBenchmarkApi = {
   getByUser: async (authUserId: string, targetUserId: string): Promise<UserBenchmark[]> => {
     await verifyAccessToUser(authUserId, targetUserId);
 

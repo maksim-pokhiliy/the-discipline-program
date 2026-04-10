@@ -90,7 +90,7 @@ const transitionPlanStatus = async (
   }
 };
 
-export const platformTrainingPlansApi = {
+export const lmsTrainingPlanApi = {
   getCalendarWeek: async (userId: string, weekStart: Date): Promise<CalendarWorkout[]> => {
     const coachId = await resolveCoachId(userId);
     const weekEnd = new Date(weekStart.getTime() + DAYS_IN_WEEK * MS_PER_DAY);

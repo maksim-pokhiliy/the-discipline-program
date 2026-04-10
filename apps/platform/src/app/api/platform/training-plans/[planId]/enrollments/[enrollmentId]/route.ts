@@ -3,7 +3,7 @@ import {
   createAuthGetByParamHandler,
   createAuthPutByParamHandler,
 } from "@repo/api-routes";
-import { platformPlanEnrollmentsApi } from "@repo/api-server/lms";
+import { lmsPlanEnrollmentApi } from "@repo/api-server/lms";
 import {
   deletePlanEnrollmentParamsSchema,
   getPlanEnrollmentByIdParamsSchema,
@@ -18,7 +18,7 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 export const GET = withPlatformAuth(
   createAuthGetByParamHandler(
     (userId, { planId, enrollmentId }) =>
-      platformPlanEnrollmentsApi.getById(userId, planId, enrollmentId),
+      lmsPlanEnrollmentApi.getById(userId, planId, enrollmentId),
     getPlanEnrollmentByIdParamsSchema,
     getPlanEnrollmentResponseSchema,
   ),
@@ -27,7 +27,7 @@ export const GET = withPlatformAuth(
 export const PUT = withPlatformAuth(
   createAuthPutByParamHandler(
     (userId, { planId, enrollmentId }, data) =>
-      platformPlanEnrollmentsApi.update(userId, planId, enrollmentId, data),
+      lmsPlanEnrollmentApi.update(userId, planId, enrollmentId, data),
     updatePlanEnrollmentParamsSchema,
     updatePlanEnrollmentRequestSchema,
     updatePlanEnrollmentResponseSchema,
@@ -36,8 +36,7 @@ export const PUT = withPlatformAuth(
 
 export const DELETE = withPlatformAuth(
   createAuthDeleteHandler(
-    (userId, { planId, enrollmentId }) =>
-      platformPlanEnrollmentsApi.delete(userId, planId, enrollmentId),
+    (userId, { planId, enrollmentId }) => lmsPlanEnrollmentApi.delete(userId, planId, enrollmentId),
     deletePlanEnrollmentParamsSchema,
   ),
 );

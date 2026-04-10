@@ -1,7 +1,7 @@
 import { type ZodType } from "zod";
 
 import { createGetByParamHandler, withPublicRoute } from "@repo/api-routes";
-import { pagesApi } from "@repo/api-server/cms";
+import { cmsPagesPublicApi } from "@repo/api-server/cms";
 import {
   getPageBySlugParamsSchema,
   getHomePageResponseSchema,
@@ -14,15 +14,15 @@ import {
 import { NotFoundError } from "@repo/errors";
 
 const PAGE_HANDLERS: Record<string, { fetch: () => Promise<unknown>; schema: ZodType }> = {
-  home: { fetch: pagesApi.getHomePage, schema: getHomePageResponseSchema },
+  home: { fetch: cmsPagesPublicApi.getHomePage, schema: getHomePageResponseSchema },
   storefront: {
-    fetch: pagesApi.getStorefrontProgramsPage,
+    fetch: cmsPagesPublicApi.getStorefrontProgramsPage,
     schema: getStorefrontProgramsPageResponseSchema,
   },
-  about: { fetch: pagesApi.getAboutPage, schema: getAboutPageResponseSchema },
-  blog: { fetch: pagesApi.getBlogPage, schema: getBlogPageResponseSchema },
-  contact: { fetch: pagesApi.getContactPage, schema: getContactPageResponseSchema },
-  faq: { fetch: pagesApi.getFaqPage, schema: getFaqPageResponseSchema },
+  about: { fetch: cmsPagesPublicApi.getAboutPage, schema: getAboutPageResponseSchema },
+  blog: { fetch: cmsPagesPublicApi.getBlogPage, schema: getBlogPageResponseSchema },
+  contact: { fetch: cmsPagesPublicApi.getContactPage, schema: getContactPageResponseSchema },
+  faq: { fetch: cmsPagesPublicApi.getFaqPage, schema: getFaqPageResponseSchema },
 };
 
 const fetchPageBySlug = async ({ pageSlug }: { pageSlug: string }) => {

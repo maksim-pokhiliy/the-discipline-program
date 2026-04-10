@@ -7,7 +7,7 @@ import { prisma } from "../../db/client";
 import { mapToCoachProfile } from "../../mappers";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
-export const platformCoachProfileApi = {
+export const coachingCoachProfileApi = {
   get: async (userId: string): Promise<CoachProfile> => {
     const profile = await findOrThrow(
       prisma.coachProfile.findUnique({ where: { userId } }),

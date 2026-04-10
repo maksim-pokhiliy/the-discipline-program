@@ -1,9 +1,9 @@
 import { createToggleHandler } from "@repo/api-routes";
-import { adminReviewsApi } from "@repo/api-server/cms";
+import { cmsReviewAdminApi } from "@repo/api-server/cms";
 import { toggleReviewParamsSchema } from "@repo/contracts/cms/review";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const PATCH = withAdminAuth(
-  createToggleHandler(adminReviewsApi.toggleReviewStatus, toggleReviewParamsSchema),
+  createToggleHandler(cmsReviewAdminApi.toggleReviewStatus, toggleReviewParamsSchema),
 );

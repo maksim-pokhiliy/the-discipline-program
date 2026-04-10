@@ -17,7 +17,7 @@ const includeWithProfiles = {
   coachProfile: true,
 } as const;
 
-export const adminUsersApi = {
+export const iamUserAdminApi = {
   getAll: async (): Promise<AdminUserListItem[]> => {
     const users = await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
@@ -36,7 +36,7 @@ export const adminUsersApi = {
   },
 
   getPageData: async (): Promise<GetUsersPageDataResponse> => {
-    const users = await adminUsersApi.getAll();
+    const users = await iamUserAdminApi.getAll();
 
     return { users };
   },

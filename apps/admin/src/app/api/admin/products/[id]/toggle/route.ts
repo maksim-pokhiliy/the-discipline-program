@@ -1,5 +1,5 @@
 import { createMultiToggleHandler } from "@repo/api-routes";
-import { adminProductsApi } from "@repo/api-server/cms";
+import { cmsProductAdminApi } from "@repo/api-server/cms";
 import {
   ProductToggleField,
   toggleProductParamsSchema,
@@ -11,8 +11,8 @@ import { withAdminAuth } from "@app/lib/server/auth";
 export const PATCH = withAdminAuth(
   createMultiToggleHandler(
     {
-      [ProductToggleField.IS_ACTIVE]: adminProductsApi.toggleStatus,
-      [ProductToggleField.IS_FEATURED]: adminProductsApi.toggleFeatured,
+      [ProductToggleField.IS_ACTIVE]: cmsProductAdminApi.toggleStatus,
+      [ProductToggleField.IS_FEATURED]: cmsProductAdminApi.toggleFeatured,
     },
     toggleProductParamsSchema,
     toggleProductQuerySchema,

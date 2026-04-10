@@ -3,7 +3,7 @@ import {
   createAuthGetByParamHandler,
   createAuthPutByParamHandler,
 } from "@repo/api-routes";
-import { platformBenchmarkDefinitionsApi } from "@repo/api-server/lms";
+import { lmsBenchmarkDefinitionApi } from "@repo/api-server/lms";
 import {
   deleteBenchmarkDefinitionParamsSchema,
   getBenchmarkDefinitionByIdParamsSchema,
@@ -17,7 +17,7 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
   createAuthGetByParamHandler(
-    (_userId, { definitionId }) => platformBenchmarkDefinitionsApi.getById(definitionId),
+    (_userId, { definitionId }) => lmsBenchmarkDefinitionApi.getById(definitionId),
     getBenchmarkDefinitionByIdParamsSchema,
     getBenchmarkDefinitionResponseSchema,
   ),
@@ -26,7 +26,7 @@ export const GET = withPlatformAuth(
 export const PUT = withPlatformAuth(
   createAuthPutByParamHandler(
     (userId, { definitionId }, data) =>
-      platformBenchmarkDefinitionsApi.update(userId, definitionId, data),
+      lmsBenchmarkDefinitionApi.update(userId, definitionId, data),
     updateBenchmarkDefinitionParamsSchema,
     updateBenchmarkDefinitionRequestSchema,
     updateBenchmarkDefinitionResponseSchema,
@@ -35,7 +35,7 @@ export const PUT = withPlatformAuth(
 
 export const DELETE = withPlatformAuth(
   createAuthDeleteHandler(
-    (userId, { definitionId }) => platformBenchmarkDefinitionsApi.delete(userId, definitionId),
+    (userId, { definitionId }) => lmsBenchmarkDefinitionApi.delete(userId, definitionId),
     deleteBenchmarkDefinitionParamsSchema,
   ),
 );

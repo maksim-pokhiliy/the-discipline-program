@@ -6,7 +6,7 @@ import {
 import { prisma } from "../../../db/client";
 import { mapToContact } from "../../../mappers";
 
-export const contactApi = {
+export const cmsContactInboundApi = {
   createSubmission: async (data: CreateContactSubmission): Promise<ContactSubmissionItem> => {
     const submission = await prisma.marketingContactSubmission.create({
       data: {

@@ -3,7 +3,7 @@ import {
   createAuthGetByParamHandler,
   createAuthPutByParamHandler,
 } from "@repo/api-routes";
-import { platformTrainingPlansApi } from "@repo/api-server/lms";
+import { lmsTrainingPlanApi } from "@repo/api-server/lms";
 import {
   deleteTrainingPlanParamsSchema,
   getTrainingPlanByIdParamsSchema,
@@ -17,7 +17,7 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
   createAuthGetByParamHandler(
-    (userId, { planId }) => platformTrainingPlansApi.getById(userId, planId),
+    (userId, { planId }) => lmsTrainingPlanApi.getById(userId, planId),
     getTrainingPlanByIdParamsSchema,
     getTrainingPlanResponseSchema,
   ),
@@ -25,7 +25,7 @@ export const GET = withPlatformAuth(
 
 export const PUT = withPlatformAuth(
   createAuthPutByParamHandler(
-    (userId, { planId }, data) => platformTrainingPlansApi.update(userId, planId, data),
+    (userId, { planId }, data) => lmsTrainingPlanApi.update(userId, planId, data),
     updateTrainingPlanParamsSchema,
     updateTrainingPlanRequestSchema,
     updateTrainingPlanResponseSchema,
@@ -34,7 +34,7 @@ export const PUT = withPlatformAuth(
 
 export const DELETE = withPlatformAuth(
   createAuthDeleteHandler(
-    (userId, { planId }) => platformTrainingPlansApi.delete(userId, planId),
+    (userId, { planId }) => lmsTrainingPlanApi.delete(userId, planId),
     deleteTrainingPlanParamsSchema,
   ),
 );

@@ -70,7 +70,7 @@ The rest of this document describes each context in detail: what it owns, which 
 
 `Account`, `Session`, and `VerificationToken` are NextAuth adapter tables. They are required by the adapter contract but not part of the current authentication flow. They stay in IAM because they describe **how identity is proved**, not anything about the domain.
 
-**Upload** (`adminUploadApi` → `@vercel/blob`) is currently bolted onto IAM because (a) only admins can upload and (b) there is nowhere else for it to live. This is temporary. Section 1.4.A moves upload behind a storage port, and at that point "Storage" becomes its own supporting context rather than part of IAM. For now it stays here.
+**Upload** (`iamUploadAdminApi` → `@vercel/blob`) is currently bolted onto IAM because (a) only admins can upload and (b) there is nowhere else for it to live. This is temporary. Section 1.4.A moves upload behind a storage port, and at that point "Storage" becomes its own supporting context rather than part of IAM. For now it stays here.
 
 ### Value objects
 
@@ -83,14 +83,14 @@ The rest of this document describes each context in detail: what it owns, which 
 - **Email is unique.** `User.email @unique`.
 - **One user may have at most one `AthleteProfile` and at most one `CoachProfile`.** Enforced by `@unique` on `userId` in both profile tables. This is a cross-context invariant — the profiles themselves live in LMS (athlete) and Coaching (coach). IAM owns the uniqueness guarantee because the profiles key off `User.id`.
 - **Soft-deleted users should not authenticate.** Enforced by the soft-delete extension in `packages/api-server/src/db/client.ts` on `findUnique` / `findFirst`. Note: audit section 5 flagged that the extension does not cover `count` / `update`, so the guarantee is incomplete.
-- **Cannot remove the last admin.** Application-level check in `adminUsersApi.updateRole` — there is no DB constraint behind it. This is a rare case where the invariant cannot be expressed in SQL and must live in the service layer.
+- **Cannot remove the last admin.** Application-level check in `iamUserAdminApi.updateRole` — there is no DB constraint behind it. This is a rare case where the invariant cannot be expressed in SQL and must live in the service layer.
 
 ### Where it lives today
 
 - **DB:** `User`, `Account`, `Session`, `VerificationToken`, and the role enum in `schema.prisma`.
 - **Contracts:** `packages/contracts/src/entities/iam/auth/`, `iam/user/`, `iam/upload/` (subpath exports `@repo/contracts/iam/*`).
-- **API — `api-server`:** `endpoints/iam/users-admin.ts` (admin user management), `endpoints/iam/upload.ts` (media upload), `endpoints/iam/users-search.ts` (athlete search inside coach flow), and `endpoints/iam/auth-service.ts` (exports `authService` used by both NextAuth instances — previously `services/auth.ts`).
-- **Consumer apps:** all three. Each app has its own NextAuth route handler (`api/auth/[...nextauth]`) that proxies into `authService`.
+- **API — `api-server`:** `endpoints/iam/users-admin.ts` (admin user management), `endpoints/iam/upload.ts` (media upload), `endpoints/iam/users-search.ts` (athlete search inside coach flow), and `endpoints/iam/auth-service.ts` (exports `iamAuthService` used by both NextAuth instances — previously `services/auth.ts`).
+- **Consumer apps:** all three. Each app has its own NextAuth route handler (`api/auth/[...nextauth]`) that proxies into `iamAuthService`.
 
 ### Dependencies
 
@@ -130,7 +130,7 @@ The marketing facet of `Product` is the only cross-context entity in the repo to
 
 - **Unique slug per page.** `MarketingPage.slug @unique`, `MarketingBlogPost.slug @unique`, `Product.slug @unique`.
 - **One section of each kind per page.** `@@unique([pageSlug, section])` on `MarketingPageSection`. A page cannot have two "hero" sections.
-- **Section payload must match its Zod schema.** Enforced at read time in `pagesApi.extractSectionData` via `SECTION_SCHEMAS[key].parse(...)`. This is an invariant that lives in the contract layer, not the DB — the DB stores the payload as untyped JSON (noted in audit section 2: "section `data` as untyped JSON without discriminated union").
+- **Section payload must match its Zod schema.** Enforced at read time in `cmsPagesPublicApi.extractSectionData` via `SECTION_SCHEMAS[key].parse(...)`. This is an invariant that lives in the contract layer, not the DB — the DB stores the payload as untyped JSON (noted in audit section 2: "section `data` as untyped JSON without discriminated union").
 - **At most one featured blog post / featured product at a time.** Enforced by `ensureExclusiveFeatured` / `toggleExclusiveFeatured` utilities inside `$transaction`. This is a mutable-invariant — not a DB constraint, so in principle a concurrent writer could break it, but the `updateMany` inside the same transaction closes the race for single-node Postgres.
 - **Featured-post transition on publish.** A blog post being published for the first time gets `publishedAt = now()`. This is a `prepareCreateInput`/`updatePost` detail, not a DB default.
 - **Read-time is derived, not authoritative.** `MarketingBlogPost.readTime` is computed from `content` word count during create/update. A hand edit to the raw column would be stale. Treat it as a cache.
@@ -483,7 +483,7 @@ Every other cross-context interaction is a read. Reads are preferable to writes 
 
 A context map is only useful if it reflects reality. At the start of the audit, the following was verified by grep and by reading every endpoint file:
 
-- `apps/marketing` imports only `pagesApi` and `contactApi` from `@repo/api-server`. Both are CMS-only. No LMS, no Coaching, no Billing, no IAM writes.
+- `apps/marketing` imports only `cmsPagesPublicApi` and `cmsContactInboundApi` from `@repo/api-server`. Both are CMS-only. No LMS, no Coaching, no Billing, no IAM writes.
 - `apps/admin` imports admin CMS endpoints (`adminBlog`, `adminPages`, `adminContacts`, `adminProducts`, `adminReviews`), admin IAM (`adminUsers`, `adminUpload`), and the admin analytics dashboard (`adminDashboard`). No LMS, no Coaching. No Billing.
 - `apps/platform` imports platform LMS endpoints (`platformTrainingPlans`, `platformWorkouts`, `platformWorkoutLogs`, `platformPlanEnrollments`, `platformBenchmarkDefinitions`, `platformUserBenchmarks`), platform Coaching endpoints (`platformCoachProfile`, `platformAthleteProfile`, `platformCoachNotes`, `platformCoachActionItems`, `platformCoachDashboard`, `platformCoachAthletes`), and platform IAM (`platformUsers`). No CMS. No Billing.
 

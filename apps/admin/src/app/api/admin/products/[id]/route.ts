@@ -1,5 +1,5 @@
 import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { adminProductsApi } from "@repo/api-server/cms";
+import { cmsProductAdminApi } from "@repo/api-server/cms";
 import {
   deleteProductParamsSchema,
   getProductByIdParamsSchema,
@@ -10,11 +10,15 @@ import {
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetByIdHandler(adminProductsApi.getById, getProductByIdParamsSchema),
+  createGetByIdHandler(cmsProductAdminApi.getById, getProductByIdParamsSchema),
 );
 export const PUT = withAdminAuth(
-  createPutHandler(adminProductsApi.update, updateProductParamsSchema, updateProductRequestSchema),
+  createPutHandler(
+    cmsProductAdminApi.update,
+    updateProductParamsSchema,
+    updateProductRequestSchema,
+  ),
 );
 export const DELETE = withAdminAuth(
-  createDeleteHandler(adminProductsApi.delete, deleteProductParamsSchema),
+  createDeleteHandler(cmsProductAdminApi.delete, deleteProductParamsSchema),
 );

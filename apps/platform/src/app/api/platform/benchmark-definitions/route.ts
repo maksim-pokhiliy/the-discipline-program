@@ -1,5 +1,5 @@
 import { createAuthPostHandler, createGetHandler } from "@repo/api-routes";
-import { platformBenchmarkDefinitionsApi } from "@repo/api-server/lms";
+import { lmsBenchmarkDefinitionApi } from "@repo/api-server/lms";
 import {
   createBenchmarkDefinitionRequestSchema,
   createBenchmarkDefinitionResponseSchema,
@@ -9,15 +9,12 @@ import {
 import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
-  createGetHandler(
-    () => platformBenchmarkDefinitionsApi.getAll(),
-    getBenchmarkDefinitionsResponseSchema,
-  ),
+  createGetHandler(() => lmsBenchmarkDefinitionApi.getAll(), getBenchmarkDefinitionsResponseSchema),
 );
 
 export const POST = withPlatformAuth(
   createAuthPostHandler(
-    (userId, data) => platformBenchmarkDefinitionsApi.create(userId, data),
+    (userId, data) => lmsBenchmarkDefinitionApi.create(userId, data),
     createBenchmarkDefinitionRequestSchema,
     createBenchmarkDefinitionResponseSchema,
   ),

@@ -1,5 +1,5 @@
 import { createGetByParamHandler, createPatchByParamHandler } from "@repo/api-routes";
-import { adminPagesApi } from "@repo/api-server/cms";
+import { cmsPagesAdminApi } from "@repo/api-server/cms";
 import {
   adminPageDetailsSchema,
   pageSlugRouteParamsSchema,
@@ -10,7 +10,7 @@ import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
   createGetByParamHandler(
-    ({ slug }) => adminPagesApi.getPageBySlug(slug),
+    ({ slug }) => cmsPagesAdminApi.getPageBySlug(slug),
     pageSlugRouteParamsSchema,
     adminPageDetailsSchema,
   ),
@@ -18,7 +18,7 @@ export const GET = withAdminAuth(
 
 export const PATCH = withAdminAuth(
   createPatchByParamHandler(
-    ({ slug }, data) => adminPagesApi.updatePageMetadata(slug, data),
+    ({ slug }, data) => cmsPagesAdminApi.updatePageMetadata(slug, data),
     pageSlugRouteParamsSchema,
     updatePageMetadataSchema,
   ),

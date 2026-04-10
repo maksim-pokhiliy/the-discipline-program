@@ -11,7 +11,7 @@ import { mapToContact } from "../../../mappers";
 import { CONTACT_STATUS_TO_PRISMA_MAP } from "../../../mappers/enum-maps";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 
-export const adminContactsApi = {
+export const cmsContactAdminApi = {
   getContacts: async (): Promise<ContactSubmissionItem[]> => {
     const contacts = await prisma.marketingContactSubmission.findMany({
       orderBy: { createdAt: "desc" },
@@ -71,7 +71,7 @@ export const adminContactsApi = {
   },
 
   getContactsPageData: async (): Promise<AdminContactsPageData> => {
-    const contacts = await adminContactsApi.getContacts();
+    const contacts = await cmsContactAdminApi.getContacts();
 
     return { contacts };
   },

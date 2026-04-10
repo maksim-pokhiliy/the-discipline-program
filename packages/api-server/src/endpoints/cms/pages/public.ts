@@ -32,7 +32,7 @@ const extractSectionData = <TKey extends SectionSchemaKey>(
   return SECTION_SCHEMAS[sectionName].parse(section.data);
 };
 
-export const pagesApi = {
+export const cmsPagesPublicApi = {
   getHomePage: async (): Promise<HomePageData> => {
     const sections = await prisma.marketingPageSection.findMany({
       where: { pageSlug: PageSlug.HOME, isActive: true },

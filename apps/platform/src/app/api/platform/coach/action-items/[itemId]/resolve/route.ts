@@ -1,5 +1,5 @@
 import { createAuthActionHandler } from "@repo/api-routes";
-import { platformCoachActionItemsApi } from "@repo/api-server/coaching";
+import { coachingCoachActionItemApi } from "@repo/api-server/coaching";
 import {
   resolveActionItemParamsSchema,
   resolveActionItemResponseSchema,
@@ -9,7 +9,7 @@ import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const POST = withPlatformAuth(
   createAuthActionHandler(
-    (userId, { itemId }) => platformCoachActionItemsApi.resolve(userId, itemId),
+    (userId, { itemId }) => coachingCoachActionItemApi.resolve(userId, itemId),
     resolveActionItemParamsSchema,
     resolveActionItemResponseSchema,
   ),

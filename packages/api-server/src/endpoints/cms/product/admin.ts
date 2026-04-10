@@ -14,7 +14,7 @@ import { toggleExclusiveFeatured } from "../toggle-exclusive-featured";
 
 const includeWithPrices = { prices: { where: { isActive: true } } } as const;
 
-export const adminProductsApi = {
+export const cmsProductAdminApi = {
   getAll: async (): Promise<Product[]> => {
     const products = await prisma.product.findMany({
       include: includeWithPrices,
@@ -34,7 +34,7 @@ export const adminProductsApi = {
   },
 
   getPageData: async (): Promise<AdminProductsPageData> => {
-    const products = await adminProductsApi.getAll();
+    const products = await cmsProductAdminApi.getAll();
 
     return { products };
   },

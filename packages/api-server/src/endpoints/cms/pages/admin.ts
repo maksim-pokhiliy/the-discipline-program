@@ -22,7 +22,7 @@ type SectionKey = keyof typeof SECTION_SCHEMAS;
 const isValidPageSlug = (slug: string): slug is PageSlug => PAGE_SLUGS.has(slug);
 const isValidSectionKey = (key: string): key is SectionKey => SECTION_KEYS.has(key);
 
-export const adminPagesApi = {
+export const cmsPagesAdminApi = {
   getPages: async (): Promise<AdminPageListItem[]> => {
     const pages = await prisma.marketingPage.findMany({
       orderBy: { slug: "asc" },
