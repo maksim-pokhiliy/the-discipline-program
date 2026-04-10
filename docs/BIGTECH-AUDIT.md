@@ -69,10 +69,16 @@ System, not code. Это фундамент — всё остальное сто
 ### 1.5. Failure domains и deploy
 
 - [ ] **Deploy config не версионируется.** Нет `vercel.json`, `Dockerfile`, `netlify.toml`, `docker-compose.yml`. Всё живёт в Vercel UI. Нет audit trail, нет rollback через git, нет возможности воспроизвести окружение локально.
-- [ ] **`/api/auth/[...nextauth]/route.ts` физически дублируется** в `apps/admin/src/app/api/auth/[...nextauth]/route.ts` и `apps/platform/src/app/api/auth/[...nextauth]/route.ts`. Два разных NextAuth instance. Без ADR неясно: сознательная изоляция или тех-долг.
+- [ ] **`/api/auth/[...nextauth]/route.ts` физически дублируется** в `apps/admin/src/app/api/auth/[...nextauth]/route.ts` и `apps/platform/src/app/api/auth/[...nextauth]/route.ts`. Два разных NextAuth instance. Без ADR неясно: сознательная изоляция или тех-долг. Файлы `apps/admin/src/lib/server/auth.ts` и `apps/platform/src/lib/server/auth.ts` **практически идентичны** (6 строк каждый).
 - [ ] **Нет `/api/health`, `/api/ready`, `/api/version` endpoints ни в одном app.** Оркестратор / балансировщик не умеет отслеживать состояние.
 - [ ] **Нет `/api/webhooks/*` вообще.** Когда появится Stripe/Resend — некуда принимать callbacks, инфраструктуры для подписи webhook'а и идемпотентности тоже нет (хотя `Transaction.providerTxId @unique` уже заложен как инвариант).
 - [ ] **Нет документации, как три app'а (admin/marketing/platform) запущены в prod** — один Vercel project, три, monorepo deploy. Принципал не может ответить: «если упадёт marketing, упадёт ли platform?»
+- [ ] **Security headers отсутствуют во всех `next.config.ts`** (`CSP`, `HSTS`, `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`). Для production — критично.
+- [ ] **`apps/marketing/next.config.ts` разрешает `images.unsplash.com` и `scontent-iev1-1.cdninstagram.com`** — Instagram CDN hostnames обычно short-lived, проект завязан на external domain.
+- [ ] **`apps/platform/next.config.ts` пустой** — нет `remotePatterns`, значит `next/image` для external URLs (включая vercel blob) может сломаться.
+- [ ] **`apps/admin` не имеет middleware/proxy** для protection. `DashboardLayout` — client component с `SessionGuard`, который только проверяет `status === authenticated`, **не роль**. Authenticated athlete может посетить `/admin/blog` и **увидеть HTML** (SessionGuard срабатывает только после hydration). API endpoints защищены, но pages — нет. **Security hole.**
+- [ ] **`apps/platform/src/proxy.ts` не проверяет роль** — только наличие token. Athlete может посетить `/coach/*` — proxy пропустит.
+- [ ] **`apps/marketing/src/modules/home/index.tsx` (и все остальные marketing modules) — client components**, но `useState/useEffect` в marketing используется **только в 2 файлах** (`use-product-modal.ts`, `header/drawer.tsx`). Значит все marketing pages — **false client components**, их можно (и нужно) перевести в server components + ISR.
 
 ### 1.6. Monorepo hygiene (локальные проблемы package.json, относящиеся к архитектуре)
 
@@ -113,6 +119,12 @@ DDD lens. Без правильной модели всё, что на ней п
 - [ ] **`packages/api-server/src/endpoints/platform/training-plans.ts` — ровно 300 строк, на пределе ESLint `max-lines`**. На след. добавлении придётся или splitt'ить (хорошо), или отключать правило (плохо).
 - [ ] **CQRS-lite (команды vs запросы).** Read-models могут иметь другую форму, чем write-models. Сейчас одно и то же. `trainingPlanListItemSchema` добавляет `enrolledAthletesCount`, `workoutsToday`, `workoutsThisWeek` поверх `trainingPlanSchema` — это уже зачаток read-model, но сделанный ad-hoc.
 - [ ] **`Workout.content String? @db.Text`** — весь «блок / сет / упражнение» уровень живёт как **plain text**. В БД **нет `WorkoutBlock`, `PrescribedSet`, `SetLog`, `Exercise`, `ExerciseCategory`**. Последствия: нет аналитики по exercise-level, нет PR-tracking, нет substitution, `WorkoutLog.isRx Boolean` — единственный factual feedback.
+- [ ] **`MagicHTTP loopback для RSC** (`api-client/server.ts createNextServerClient`) — server-side компоненты делают HTTP-hop в собственный API вместо прямого вызова `apiFn`. Double serialization, HTTP overhead, loopback cost. Требует ADR либо рефакторинга на direct domain calls.
+- [ ] **Inconsistent транзакции.** Только 5 из ~18 endpoint-файлов используют `prisma.$transaction` (`admin/blog`, `admin/products`, `platform/training-plans`, `platform/workouts`, `platform/coach-action-items`). Остальные multi-write (coach-notes, plan-enrollments, user-benchmarks) делают sequential mutations без atomicity. `toggleExclusiveFeatured` в `utils/` **не использует транзакцию** (`find → unfeatureOthers → update`) — race condition на featured state.
+- [ ] **Marketing endpoints используют `extractSectionData` с throw `NotFoundError` при отсутствии секции** (`marketing/pages.ts:29`). Если admin забыл создать section в CMS — public page crash'ит 404. Должен быть fallback.
+- [ ] **Domain logic возвращает UI URLs:** `dashboard-computations.ts:295` — `href: '/coach/athletes?athlete=${userId}'`. Сервер строит frontend URL.
+- [ ] **Magic numbers в `dashboard-computations.ts`:** `0.7` adherence threshold hardcoded, в то время как `ADHERENCE_IMPROVING_THRESHOLD` вынесена в contracts. Непоследовательно.
+- [ ] **`marketing/pages.ts:getContactPage`** возвращает `programOptions: products.map(p => ({ value: p.slug, label: p.title }))` — UI-specific transformation в domain layer (form field options).
 
 ---
 
@@ -141,6 +153,22 @@ DDD lens. Без правильной модели всё, что на ней п
 - [ ] **`handleApiError` логирует `console.error("API Error:", error)`** (`packages/api-routes/src/error-handler.ts:11`) — unstructured log без redaction. Если error.details содержит password / token / email — попадёт в log as-is. Нужен redactor на уровне logger'а.
 - [ ] **Error response включает `details` в dev mode** — если AppError случайно содержит sensitive данные, они уйдут в dev response и в log.
 - [ ] **Secrets hygiene.** `@repo/env` с Zod — хорошо. Добавить: проверку «никогда не логировать env в prod», `.env.example` как канон, вращение секретов, отделение build-time vs runtime env.
+- [ ] **`NEXTAUTH_SECRET: z.string().min(1)`** (`packages/env/src/auth.ts:6`) — минимум **1 символ**! Должно быть `.min(32)` для HS256 JWT (256-bit minimum).
+- [ ] **`DATABASE_URL: z.string().url()`** (`packages/env/src/base.ts:6`) — любой URL проходит, не обязательно postgres.
+- [ ] **Нет `.env.example`** в репо — новый разработчик не знает, что настраивать. 5 отдельных `.env` файлов в root + api-server + admin + platform + marketing — duplicated secret management.
+- [ ] **`MIN_PASSWORD_LENGTH = 6`** (`packages/contracts/src/entities/auth/auth.constants.ts:2`) — слабо. NIST 800-63B рекомендует ≥ 8, OWASP ≥ 12.
+- [ ] **Нет `MAX_PASSWORD_LENGTH`** — DoS на bcrypt через gigabyte password.
+- [ ] **Нет password complexity requirements** (uppercase, digits, special) — учитывая что могут быть медицинские данные athlete, expected.
+- [ ] **`SESSION_MAX_AGE = 30 * 24 * 60 * 60`** — 30 дней JWT без revocation. Утёкший токен валиден месяц. Должно быть access token short (15-60 мин) + refresh token длинный.
+- [ ] **`authService.validateUser` — timing attack на user enumeration** (`packages/api-server/src/services/auth.ts:15-32`). Если user не существует, `bcrypt.compare` НЕ вызывается → разное latency для existing vs non-existing user. Атакующий может через timing понять, какие email в системе.
+- [ ] **`bcrypt.hash(password, 10)`** — salt rounds magic number 10. В 2026 рекомендуется 12-14.
+- [ ] **Email без нормализации** в `validateUser` — `where: { email }` as-is. User с `FOO@...` не сможет войти через `foo@...` (Postgres case-sensitive).
+- [ ] **Только CredentialsProvider** — нет OAuth, нет MFA/2FA, нет magic link.
+- [ ] **`SessionGuard` не проверяет role** (`packages/auth/src/providers/session-guard.tsx`) — только `required: true`. Значит athlete может посетить admin-only pages (HTML render'ится), SessionGuard пропустит.
+- [ ] **`apps/admin` нет middleware/proxy** — только platform имеет `proxy.ts`. Admin pages защищены только client-side (`SessionGuard`).
+- [ ] **`XSS через `image: z.string()`и`name: z.string()`** в `user.schema.ts` — не URL-validated, нет sanitization. `"javascript:alert(1)"` проходит.
+- [ ] **`timezone: z.string()`** в user schema — не IANA timezone validation.
+- [ ] **Seed `password123` для всех users** — weak dev credentials. Если seed случайно запустится в prod-adjacent env, установит backdoor passwords.
 
 ---
 
@@ -162,6 +190,9 @@ DDD lens. Без правильной модели всё, что на ней п
 - [ ] **Health / readiness endpoints.** Для каждого app. Ни `/api/health`, ни `/api/ready`, ни `/api/version` не существуют ни в admin, ни в marketing, ни в platform.
 - [ ] **Metrics.** Латенси p50 / p95 / p99 на эндпоинт, error rate, saturation. OpenTelemetry — стандарт. Ни одного OpenTelemetry импорта в проекте.
 - [ ] **Graceful degradation.** Если CMS отдаёт 500 — marketing должен показать stale cache, а не белый экран. Это архитектурное решение, не `if` в компоненте. `ApiClient` использует `cache: "no-store"` захардкоженно — нет возможности показать stale.
+- [ ] **Нет Error Boundary** в `apps/*/app/layout.tsx` — любая необработанная ошибка в Root layout → весь app падает без fallback UI.
+- [ ] **Prisma extension logging only error/warn даже в development** (`db/client.ts:56`). Нет `query` log → N+1 queries невидимы при dev.
+- [ ] **`handlePrismaError` обрабатывает только 2 Prisma error codes** (P2002, P2025) из 20+. `P2003` (foreign key), `P2034` (transaction deadlock), `P2011` (null constraint) и прочие → re-throw → generic 500.
 
 ---
 
@@ -189,6 +220,13 @@ DDD lens. Без правильной модели всё, что на ней п
 - [ ] **Test infra обходит soft-delete extension** — `packages/api-server/src/test/helpers.ts:7` делает `new PrismaClient()` напрямую, без extension. `cleanup()` функция делает hard delete через universal `(rawPrisma as unknown as Record<...>)` каст (нарушает правило "No as casts" из CLAUDE.md).
 - [ ] **Read replicas readiness.** Код не должен предполагать, что read идёт на primary. Разделение read / write — архитектурный выбор, который делают до того, как понадобится.
 - [ ] **`Subscription.id String @id` без `@default(cuid())`** (`schema.prisma:179`) — внешний ID как primary key (Stripe `sub_xxx`). Требует ADR.
+- [ ] **Директория `packages/api-server/prisma/migrations/` отсутствует.** Проект использует `db:push` исключительно — нет версионированных миграций вообще. Любое изменение схемы → drop+recreate, нельзя воспроизвести prod state на staging.
+- [ ] **`seed.ts` 1242 строк** — большой, сложно поддерживать, легко внести inconsistent state. Нет разбиения на modular seeders по контекстам.
+- [ ] **`seed.ts` использует `new PrismaClient()`**, обходя `db/client.ts` extension — данные seed'а не проходят через soft-delete handling.
+- [ ] **`training-plans.ts:getAll` делает `findMany({ where: { coachId } })` без pagination и без limit** — 1000 планов = 1000 результатов.
+- [ ] **`enrollment-query.ts` делает nested `workoutLogs` без limit** — athlete с тысячами логов вернёт их все.
+- [ ] **`enrollment-query.ts.workouts.select` не фильтрует archived** — `computeTodayStatus` и `computeProgressBuckets` учитывают archived workouts в статистике. Potential bug.
+- [ ] **Test helpers используют `new PrismaClient()`** (`test/helpers.ts:7`) — обходят extension. Значит тесты и прод различаются по поведению.
 
 ---
 
@@ -209,6 +247,28 @@ DDD lens. Без правильной модели всё, что на ней п
 - [ ] **`createFormDataPostHandler` без requestSchema** (`route-helpers.ts:109-119`) — form data не валидируется через Zod. Для file upload endpoints это дыра.
 - [ ] **Нет body size limit на любом handler.** Большой JSON = OOM.
 - [ ] **Нет `getByIdResponseSchema` отдельно от `getResponseSchema` для многих endpoints** — один и тот же `trainingPlanSchema` используется для list и detail. Если detail'у потом надо будет показывать больше полей — нельзя будет без breaking change.
+- [ ] **`z.date()` vs `z.coerce.date()` inconsistent** — 51 usage `z.date()` в 20 файлах, 9 usage `z.coerce.date()` в 5 файлах. `z.date()` в response schemas OK (Date object), но в request schemas (JSON body parsing) — всегда fail. Нужен audit какие API schemas содержат input dates.
+- [ ] **Zod schemas используют magic numbers вместо констант** (нарушение CLAUDE.md правила):
+  - `product.schema.ts:16,34`: `title.max(200)` (вместо `PRODUCT_CONSTANTS.MAX_TITLE_LENGTH`)
+  - `product.schema.ts:17,36`: `description.min(1)` без max
+  - `blog.schema.ts:7,11`: `title.max(200)`, `slug.max(200)`
+  - `blog.schema.ts:13`: `excerpt.max(500)`
+  - `coach-profile.schema.ts:12`: `bio.max(2000)`
+- [ ] **Zod schemas пропускают critical validation:**
+  - `product.schema.ts:19`: `trainingPlanId: z.string().nullable()` — без `.cuid()`
+  - `user.schema.ts`: `image: z.string().nullable()` без `.url()` → XSS via `javascript:...`
+  - `user.schema.ts`: `name: z.string().nullable()` без max length, без sanitization
+  - `user.schema.ts`: `timezone: z.string()` — любая строка, не IANA
+  - `product.schema.ts`: `features: z.array(z.string())` — без max items
+  - `product.schema.ts`: `prices: z.array(...)` — без min/max
+  - `publicBlogPostSchema.title: z.string()` — без min/max (inconsistent с admin view)
+  - `blog.schema.ts`: `tags: z.array(z.string())` — без limits
+- [ ] **Hardcoded English error messages в Zod schemas** (`auth`, `pages`, `blog`) — нарушают i18n, не переводятся.
+- [ ] **Route handler factories возвращают `{ success: true }` вместо `204 No Content`** (`route-helpers.ts:103-106,145`, `auth-factories.ts:125,138`). Anti-pattern.
+- [ ] **`createGetHandler` не принимает query params** — отдельный `createAuthGetWithQueryHandler` есть, но `createGetWithQueryHandler` (без auth) отсутствует. Public list endpoints с filters невозможно построить через factory.
+- [ ] **`createAuthGetWithQueryHandler` использует `Object.fromEntries(searchParams.entries())`** (`auth-factories.ts:26`) — array params (`?ids=1&ids=2`) теряются (последнее значение).
+- [ ] **`createFormDataPostHandler` без requestSchema** — form data не валидируется.
+- [ ] **Нет body size limit** на handler level.
 
 ---
 
@@ -226,6 +286,11 @@ Non-obvious стафф. Это то, что больнее всего ретро
 - [ ] **Internationalization от нулевой строки.** Даже если сейчас только RU — зашить в архитектуру места, где текст живёт (i18n keys), форматирование дат / валют (`Intl`), направление текста. Retrofitting i18n — 3 месяца ада.
 - [ ] **Hardcoded English strings в shared коде:** `packages/query/src/hooks/create-crud-hooks.ts:60-64` — `toast.success("${entityName} created successfully")`, `toast.error("Failed to ${action} ${entityName.toLowerCase()}")`. `.toLowerCase()` работает только для английского. Первый концентрированный pain point i18n retrofitting'а.
 - [ ] **Billing domain существует в БД, но не в API.** Это окно для правильного проектирования — пока кода нет. Stripe схема (`stripeProductId`, `stripePriceId`, `Subscription.id` как external PK) уже выбрана implicit, но без ADR.
+- [ ] **`PROCESS_STATUS_LABELS` в `coach-dashboard.constants.ts`** — hardcoded English ("On track", "Steady", "Falling behind"). Не приходит через CMS — противоречит `blogLabels` подходу. **Фрагментированный i18n**: часть text через CMS, часть hardcoded.
+- [ ] **`DEFAULT_LOCALE = "en-US"`** в `packages/shared/src/helpers/locale.ts` — `formatPrice` использует `en-US` для всех валют, игнорируя user locale. UAH, EUR будут отформатированы не по местным правилам.
+- [ ] **`formatPrice` с `minimumFractionDigits: 0, maximumFractionDigits: 0`** — округление до целого, потеря точности, $9.99 → "$10".
+- [ ] **CMS не управляет SEO** — `marketing/src/app/page.tsx` использует `PAGE_SEO.home.title` из config, а не из `MarketingPage.seoTitle` из CMS. Admin не может поменять title home page через CMS.
+- [ ] **`dayjs` есть в catalog + `dayjs/plugin/timezone` отсутствует.** `packages/api-server/src/utils/date-helpers.ts` (75 строк) re-implements TZ math через `Intl.DateTimeFormat` + `toLocaleString` hack вместо dayjs-timezone. Inconsistency: frontend использует dayjs, backend — custom TZ code.
 
 ---
 
@@ -247,6 +312,9 @@ Non-obvious стафф. Это то, что больнее всего ретро
 - [ ] **`turbo.json` не указывает dependsOn для `test`** — глобальный vitest в корневом `package.json`, не через turbo. Это значит turbo не orchestrate тесты. Задумайся — нужно ли?
 - [ ] **`pre-commit type-check` периодически висит в parallel mode** (наблюдалось в этой сессии). Либо конкуренция за ресурсы между параллельными шагами, либо specific задача зависает. Надо разобрать.
 - [ ] **ESLint `eslint-plugin-only-warn` конвертирует все errors → warnings**, затем `--max-warnings 0` возвращает их в блокирующий режим. Это работает в CI, но в IDE все проблемы показываются жёлтым (warning цвет) → визуально developer не чувствует severity. Спорное решение без ADR.
+- [ ] **`@repo/ui`: Storybook не тестирует shared компоненты.** `apps/storybook/src/` содержит 27 stories, но **все на MUI-компонентах напрямую** (`Chip`, `Avatar`, `Table`), а не на `@repo/ui` (`StatsCard`, `DataTable`, `FormCard`, `FormModal`). Storybook работает как MUI theme catalog, а не как документация `@repo/ui`. Shared компоненты не имеют visual reference.
+- [ ] **`AppRouterCacheProvider from "@mui/material-nextjs/v15-appRouter"`** (`packages/mui/src/providers/next-provider.tsx:5`) — path для Next.js **15**, проект на Next.js **16**. Либо MUI не обновил path для v16, либо забытый upgrade.
+- [ ] **`@repo/shared` — utility junk drawer.** Смешивает UI concerns (`constants/layout.ts` — layout constants, `types/navigation.ts`) с domain primitives (`helpers/money.ts`, `helpers/date-calendar.ts`) и pure utils (`helpers/capitalize.ts`, `slugify.ts`, `math.ts`). Разбить по доменам: `@repo/money`, `@repo/dates`, `@repo/ui-tokens`, `@repo/text-utils` — или переместить в соответствующие contract entities.
 
 ---
 
@@ -274,6 +342,10 @@ Non-obvious стафф. Это то, что больнее всего ретро
 - [ ] **Test ergonomics.** `pnpm test` в корне запускает `vitest run` один раз для всего workspace. Сейчас 219 тестов ≈ 11 секунд. Ок пока, но при росте потребуется `--shard` или parallel mode.
 - [ ] **Property-based tests** для money math, date math, доступа. fast-check — твой друг. Не установлен.
 - [ ] **Mutation testing** (Stryker) для критичного кода — показывает, реально ли тесты что-то ловят, или это coverage для вида. Не установлен.
+- [ ] **Contract tests отсутствуют.** `packages/api-client` не импортирует `@repo/contracts` (см. п. 1.6), значит runtime-проверка совместимости client ↔ server через общий контракт невозможна.
+- [ ] **`test/helpers.cleanup` silent failure** (`helpers.ts:59`) — `.catch(() => {})` проглатывает ошибки cleanup'а. Незавершённый cleanup → flaky следующий test run.
+- [ ] **`test/helpers` обходит `db/client.ts` extension** — поведение тестов и прода различается. Soft-delete не проверяется.
+- [ ] **Нет snapshot / visual regression тестов** для UI components.
 
 ---
 
@@ -292,6 +364,15 @@ Non-obvious стафф. Это то, что больнее всего ретро
 - [ ] **Image / Font strategy.** Next Image везде, `next/font` без исключений, preload для hero images.
 - [ ] **State management clarity.** URL state (правило есть) + React Query + form state. Ничего больше. Зафиксировать как принцип в ADR.
 - [ ] **`cache: "no-store"` захардкожено в `ApiClient`** — нет opt-in на HTTP caching для GET запросов. Потеря производительности.
+- [ ] **`apps/marketing` — ВСЕ pages имеют `export const dynamic = "force-dynamic"`** (`home`, `about`, `blog`, `blog/[slug]`, `contact`, `faq`, `storefront`, `sitemap.ts`). Marketing полностью SSR на каждый запрос, нет CDN caching, нет ISR, нет static generation. Архитектурная ошибка для публичного маркетинг-сайта.
+- [ ] **ВСЕ marketing modules — client components** (`home/index.tsx`, `about/index.tsx`, etc.). В сочетании с `force-dynamic`: server рендерит placeholder HTML, client hydrate'ит контент через React Query. SEO crawler видит пустой HTML.
+- [ ] **`useState/useEffect` в marketing используется только в 2 файлах** → все остальные client components — **false client** (не имеют client state). Могут (и должны) стать server components.
+- [ ] **`apps/admin/src/app/(auth)/layout.tsx` с `"use client"` без причины** — только markup с `sx`, нет hooks/handlers. Unnecessary client boundary.
+- [ ] **`121 file с `"use client"` в apps** — аудит на unnecessary client boundaries.
+- [ ] **Нет security headers в `next.config.ts`** ни в одном app (уже в 1.5, но повторяю тут для completeness пункта 10: они настраиваются в next config).
+- [ ] **Нет bundle analyzer** (`@next/bundle-analyzer` не установлен). Нельзя измерить bundle size / what's in it.
+- [ ] **Heavy deps в main bundle:** `framer-motion`, `@tiptap/*`, `@dnd-kit/*` в обычных `dependencies` потребителей. `isomorphic-dompurify` в `@repo/ui` — загружается в каждый app через shared ui.
+- [ ] **`lucide-react` vs `@mui/icons-material`** — две иконные либы в разных apps. Marketing использует lucide, admin/platform — MUI icons. Bundle bloat.
 
 ---
 
@@ -316,6 +397,16 @@ Non-obvious стафф. Это то, что больнее всего ретро
 - [ ] **`interface ApiClientConfig`** в `packages/api-client/src/client.ts:22` — нарушает правило CLAUDE.md «type, not interface».
 - [ ] **`throw new Error(...)` в `create-crud-hooks.ts:97, 123, 148`** — generic Error вместо AppError из `@repo/errors`. Нарушение error hierarchy.
 - [ ] **`route-helpers.ts` возвращает `{ success: true }`** — anti-pattern, должен быть `204 No Content` (дублирует пункт 6).
+- [ ] **`packages/errors/src/error-codes.ts` содержит только 6 кодов** (INTERNAL_SERVER_ERROR, UNAUTHORIZED, FORBIDDEN, VALIDATION_ERROR, INVALID_INPUT, NOT_FOUND, ALREADY_EXISTS). Нет domain-specific codes (SUBSCRIPTION_PAST_DUE, QUOTA_EXCEEDED, PAYMENT_FAILED, RATE_LIMITED, IDEMPOTENCY_KEY_REUSED). Клиент не различает «user not found» и «workout not found» — оба NOT_FOUND.
+- [ ] **`interface AppErrorOptions`** (`packages/errors/src/app-error.ts:3`) — нарушает правило «type, not interface».
+- [ ] **CLAUDE.md описывает иерархию `AppError → HttpError → Specific`**, но в коде только двухуровневая `AppError → Specific`. Документация и реальность не совпадают.
+- [ ] **`interface ApiClientConfig`** (`packages/api-client/src/client.ts:22`) — нарушает правило «type, not interface».
+- [ ] **`throw new Error(...)` в `create-crud-hooks.ts:97,123,148`** — generic Error вместо AppError из `@repo/errors`.
+- [ ] **`(rawPrisma as unknown as Record<...>)` каст** в `test/helpers.ts:49` — нарушает правило «No as casts» (допустимо для test utils, но всё равно повод вынести в правильный test harness API).
+- [ ] **`dashboard-computations.test-helpers.ts:62`** — `as unknown as EnrollmentWithData` каст.
+- [ ] **`tsconfig.base.json` не имеет:** `exactOptionalPropertyTypes`, `noFallthroughCasesInSwitch`, `noImplicitReturns`, `noPropertyAccessFromIndexSignature`.
+- [ ] **`userId: string` в `AuthenticatedHandler`** (`api-routes/src/types.ts:6`) — не branded type.
+- [ ] **`RouteContext.params: Promise<Record<string, string>>`** — params как generic record, не типобезопасно per-route.
 
 ---
 
@@ -333,6 +424,13 @@ Non-obvious стафф. Это то, что больнее всего ретро
 - [x] **Changelog автоматически** из conventional commits — `commitlint` настроен в lefthook. Фактически changelog-генератор не запускается, но фундамент есть.
 - [ ] **Deploy config не версионируется** (см. 1.5) — тоже DX-проблема: infrastructure as code отсутствует.
 - [ ] **Нет `CONTRIBUTING.md`, `ARCHITECTURE.md`** (старый удалён как устаревший) — новый документ нужен, но уже на основе кода, а не aspirational видения.
+- [ ] **CI в `.github/workflows/` содержит ТОЛЬКО 2 файла:** `claude.yml` и `claude-code-review.yml` — оба для Claude Code integration. **НЕТ build / test / type-check / lint в CI.** Pre-commit hooks — единственный gate. PR может быть смержен с broken TS/tests если кто-то обошёл pre-commit. **Это блокирующий gap, а не косметика.**
+- [ ] **Нет CODEOWNERS** — нет policy автоматического reviewer assignment.
+- [ ] **Нет `.github/pull_request_template.md`** — PR без template.
+- [ ] **Нет `.github/dependabot.yml` или Renovate** — нет автоматических dependency updates.
+- [ ] **Нет release pipeline** (changesets, semantic-release, etc.).
+- [ ] **Нет SAST/DAST/SCA** (CodeQL, Snyk, dependency scan).
+- [ ] **Pre-commit hook зависает на `type-check` в parallel mode** — наблюдалось в этой сессии, лечилось только `kill -TERM`. Надо разобрать причину (возможно конкуренция ресурсов между parallel шагами или specific file, который tsc зацикливает).
 
 ---
 
