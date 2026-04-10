@@ -358,7 +358,7 @@ Shared authz guards (`resolveCoachId`, `verifyAthleteBelongsToCoach`, `verifyPla
 - **Subscription references a specific price.** `Subscription.priceId → Price.id` with `onDelete: Restrict`. You cannot delete a price that an active subscription points at.
 - **Transaction → subscription is optional.** `Transaction.subscriptionId` is nullable (`onDelete: SetNull`). Preserves transaction history even if a subscription is removed, though subscription rows should never be hard-deleted in practice.
 - **Product ↔ TrainingPlan link.** `Product.trainingPlanId → TrainingPlan.id` (optional, `onDelete: SetNull`). Used for "Purchase = Immediate Value": a purchase triggers an `ACTIVE` `PlanEnrollment` on the linked plan. Not yet wired.
-- **Money is integer.** All monetary amounts are `Int` in cents/kopeks. Enforced schema-wide. Audit section 11 noted that `centsToAmount` is the only conversion helper and it currently lives in `@repo/shared`.
+- **Money is integer.** All monetary amounts are `Int` in cents/kopeks. Enforced schema-wide. The `centsToAmount` / `amountToCents` primitives live in `@repo/contracts/common/money` as of audit 1.4.B — domain primitives belong with the contracts, not the utility-package pile.
 
 ### Where it lives today
 
@@ -502,7 +502,7 @@ Items flagged during the context-mapping pass that do not belong to any single b
 - **Coach access via `PlanEnrollmentStatus.ACTIVE` only is too narrow.** See `verifyAthleteBelongsToCoach`. A paused enrollment is still the coach's concern.
 - **Product split: when to split the Prisma model itself.** The current plan is to split contracts only, not the schema. If the two facets diverge further — separate lifecycles, separate audit logs, separate owners — a schema split may eventually be justified. Out of scope for 1.2.
 - **Where does the Stripe webhook live.** A webhook is an inbound, not an outbound; it is a Billing handler. But it also writes to LMS (enrollment). The handler file goes in `endpoints/billing/webhook/` and calls into an LMS-aware service. That service is the single place where the Billing → LMS write rule is exercised.
-- **`@repo/shared` split.** `centsToAmount` is a Billing primitive that lives in `shared`. Audit 1.4.B moves it to `contracts/common/money`. Similar primitives will be pulled out of `shared` as their owning context is clarified. Tracked separately.
+- **`@repo/shared` split.** `centsToAmount` / `amountToCents` moved to `@repo/contracts/common/money` in audit 1.4.B. `formatPrice` (i18n currency formatting) stays in `@repo/shared` as a presentation helper — it now imports `centsToAmount` from contracts. Similar primitives will be pulled out of `shared` as their owning context is clarified. Tracked separately.
 
 ---
 
