@@ -1,5 +1,5 @@
 import { createAuthPutByParamHandler } from "@repo/api-routes";
-import { platformWorkoutsApi } from "@repo/api-server";
+import { platformWorkoutsApi } from "@repo/api-server/lms";
 import {
   moveWorkoutParamsSchema,
   moveWorkoutRequestSchema,

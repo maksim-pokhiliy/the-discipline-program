@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { createGetHandler } from "@repo/api-routes";
-import { adminPagesApi } from "@repo/api-server";
+import { adminPagesApi } from "@repo/api-server/cms";
 import { adminPageListItemSchema } from "@repo/contracts/cms/pages";
 
 import { withAdminAuth } from "@app/lib/server/auth";

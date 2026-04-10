@@ -1,5 +1,5 @@
 import { createAuthGetHandler, createAuthPutHandler } from "@repo/api-routes";
-import { platformCoachProfileApi } from "@repo/api-server";
+import { platformCoachProfileApi } from "@repo/api-server/coaching";
 import {
   getCoachProfileResponseSchema,
   updateCoachProfileRequestSchema,

@@ -3,7 +3,7 @@ import {
   createAuthGetByParamHandler,
   createAuthPutByParamHandler,
 } from "@repo/api-routes";
-import { platformWorkoutsApi } from "@repo/api-server";
+import { platformWorkoutsApi } from "@repo/api-server/lms";
 import {
   deleteWorkoutParamsSchema,
   getWorkoutByIdParamsSchema,

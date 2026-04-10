@@ -1,5 +1,5 @@
 import { createGetHandler } from "@repo/api-routes";
-import { adminBlogApi } from "@repo/api-server";
+import { adminBlogApi } from "@repo/api-server/cms";
 import { getBlogPageDataResponseSchema } from "@repo/contracts/cms/blog";
 
 import { withAdminAuth } from "@app/lib/server/auth";

@@ -1,5 +1,5 @@
 import { createAuthActionHandler } from "@repo/api-routes";
-import { platformCoachActionItemsApi } from "@repo/api-server";
+import { platformCoachActionItemsApi } from "@repo/api-server/coaching";
 import {
   resolveActionItemParamsSchema,
   resolveActionItemResponseSchema,

@@ -1,5 +1,5 @@
 import { createMultiToggleHandler } from "@repo/api-routes";
-import { adminProductsApi } from "@repo/api-server";
+import { adminProductsApi } from "@repo/api-server/cms";
 import {
   ProductToggleField,
   toggleProductParamsSchema,

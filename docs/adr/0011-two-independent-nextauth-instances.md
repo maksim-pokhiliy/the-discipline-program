@@ -11,7 +11,7 @@
 ```ts
 // apps/admin/src/lib/server/auth.ts
 import { createAuthWrappers } from "@repo/api-routes/auth";
-import { authService } from "@repo/api-server";
+import { authService } from "@repo/api-server/iam";
 import { createAuthOptions } from "@repo/auth/config";
 
 export const authOptions = createAuthOptions(authService);
@@ -21,7 +21,7 @@ export const { withAdminAuth } = createAuthWrappers(authOptions);
 ```ts
 // apps/platform/src/lib/server/auth.ts
 import { createAuthWrappers } from "@repo/api-routes/auth";
-import { authService } from "@repo/api-server";
+import { authService } from "@repo/api-server/iam";
 import { createAuthOptions } from "@repo/auth/config";
 
 export const authOptions = createAuthOptions(authService);

@@ -1,5 +1,5 @@
 import { createAuthGetByParamHandler, createAuthPostByParamHandler } from "@repo/api-routes";
-import { platformUserBenchmarksApi } from "@repo/api-server";
+import { platformUserBenchmarksApi } from "@repo/api-server/lms";
 import {
   createUserBenchmarkRequestSchema,
   createUserBenchmarkResponseSchema,

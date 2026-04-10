@@ -1,5 +1,5 @@
 import { createDeleteWithBodyHandler, createFormDataPostHandler } from "@repo/api-routes";
-import { adminUploadApi } from "@repo/api-server";
+import { adminUploadApi } from "@repo/api-server/iam";
 import {
   deleteImageRequestSchema,
   uploadImageResponseSchema,

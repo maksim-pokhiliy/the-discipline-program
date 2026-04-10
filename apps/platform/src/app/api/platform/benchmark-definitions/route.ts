@@ -1,5 +1,5 @@
 import { createAuthPostHandler, createGetHandler } from "@repo/api-routes";
-import { platformBenchmarkDefinitionsApi } from "@repo/api-server";
+import { platformBenchmarkDefinitionsApi } from "@repo/api-server/lms";
 import {
   createBenchmarkDefinitionRequestSchema,
   createBenchmarkDefinitionResponseSchema,

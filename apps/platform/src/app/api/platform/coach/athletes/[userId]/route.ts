@@ -1,5 +1,5 @@
 import { createAuthGetByParamHandler } from "@repo/api-routes";
-import { platformCoachAthletesApi } from "@repo/api-server";
+import { platformCoachAthletesApi } from "@repo/api-server/coaching";
 import {
   coachAthleteDetailParamsSchema,
   coachAthleteDetailSchema,

@@ -1,5 +1,5 @@
 import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { adminReviewsApi } from "@repo/api-server";
+import { adminReviewsApi } from "@repo/api-server/cms";
 import {
   deleteReviewParamsSchema,
   getReviewByIdParamsSchema,

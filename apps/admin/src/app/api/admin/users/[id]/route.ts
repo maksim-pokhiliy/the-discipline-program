@@ -1,5 +1,5 @@
 import { createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { adminUsersApi } from "@repo/api-server";
+import { adminUsersApi } from "@repo/api-server/iam";
 import {
   getAdminUserResponseSchema,
   getUserByIdParamsSchema,

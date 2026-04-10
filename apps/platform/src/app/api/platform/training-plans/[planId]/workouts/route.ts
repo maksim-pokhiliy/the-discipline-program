@@ -1,5 +1,5 @@
 import { createAuthGetByParamHandler, createAuthPostByParamHandler } from "@repo/api-routes";
-import { platformWorkoutsApi } from "@repo/api-server";
+import { platformWorkoutsApi } from "@repo/api-server/lms";
 import {
   createWorkoutParamsSchema,
   createWorkoutRequestSchema,

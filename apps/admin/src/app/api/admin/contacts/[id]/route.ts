@@ -1,5 +1,5 @@
 import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { adminContactsApi } from "@repo/api-server";
+import { adminContactsApi } from "@repo/api-server/cms";
 import {
   deleteContactParamsSchema,
   getContactByIdParamsSchema,

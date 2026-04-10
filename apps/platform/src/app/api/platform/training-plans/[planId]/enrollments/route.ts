@@ -1,5 +1,5 @@
 import { createAuthGetByParamHandler, createAuthPostByParamHandler } from "@repo/api-routes";
-import { platformPlanEnrollmentsApi } from "@repo/api-server";
+import { platformPlanEnrollmentsApi } from "@repo/api-server/lms";
 import {
   createPlanEnrollmentParamsSchema,
   createPlanEnrollmentRequestSchema,
