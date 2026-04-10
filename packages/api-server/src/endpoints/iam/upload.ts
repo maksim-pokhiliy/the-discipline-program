@@ -1,10 +1,15 @@
-import { put, del } from "@vercel/blob";
-
 import { UPLOAD_CONFIG, type UploadContext } from "@repo/contracts/iam/upload";
 import { BadRequestError, ValidationError } from "@repo/errors";
 
-export const iamUploadAdminApi = {
-  uploadImage: async (file: File, context: UploadContext): Promise<{ url: string }> => {
+import type { StoragePort } from "../../infrastructure/storage";
+
+export type IamUploadAdminApi = {
+  uploadImage(file: File, context: UploadContext): Promise<{ url: string }>;
+  deleteImage(url: string): Promise<void>;
+};
+
+export const createIamUploadAdminApi = (storage: StoragePort): IamUploadAdminApi => ({
+  uploadImage: async (file, context) => {
     const config = UPLOAD_CONFIG[context];
 
     if (!config.acceptedTypes.some((type) => type === file.type)) {
@@ -27,18 +32,16 @@ export const iamUploadAdminApi = {
     const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "-");
     const filename = `${config.storagePrefix}/${timestamp}-${safeName}`;
 
-    const blob = await put(filename, file, {
-      access: "public",
-    });
+    const result = await storage.put(filename, file, { access: "public" });
 
-    return { url: blob.url };
+    return { url: result.url };
   },
 
-  deleteImage: async (url: string): Promise<void> => {
+  deleteImage: async (url) => {
     if (!url) {
       throw new BadRequestError("No URL provided");
     }
 
-    await del(url);
+    await storage.delete(url);
   },
-};
+});
