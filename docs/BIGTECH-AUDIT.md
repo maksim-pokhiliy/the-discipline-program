@@ -51,7 +51,7 @@ System, not code. Это фундамент — всё остальное сто
 | ----- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | 1.1.A | `53b5ebe`   | ✅ Done | ADR framework: `docs/adr/README.md`, `_template.md`, meta-ADR 0001.                                                            |
 | 1.1.B | `ace64ca`   | ✅ Done | Backfill 13 ADRs (0002–0014) for existing implicit decisions.                                                                  |
-| 1.2.A | _pending_   | ✅ Done | Create `docs/BOUNDED-CONTEXTS.md` documenting CMS, LMS, Coaching, IAM, Billing contexts.                                       |
+| 1.2.A | `f107e0a`   | ✅ Done | Create `docs/BOUNDED-CONTEXTS.md` documenting CMS, LMS, Coaching, IAM, Billing contexts.                                       |
 | 1.2.B | —           | ⏳ Next | Reorganize `packages/contracts/src/entities/` into context subdirectories (cms/lms/coaching/iam/billing) + subpath exports.    |
 | 1.2.C | —           | Pending | Reorganize `packages/api-server/src/endpoints/` by bounded context + consolidate CMS duplication (admin/marketing share code). |
 | 1.2.D | —           | Pending | Remove barrel export in `api-server/src/index.ts`; enforce subpath imports.                                                    |
