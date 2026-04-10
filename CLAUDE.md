@@ -10,9 +10,6 @@ Monorepo architecture using Turbo, Next.js 16, TypeScript, PostgreSQL + Prisma.
 **Philosophy:** Quality > Speed. No deadlines. Clean and strong solutions over fast ones.
 Don't be afraid to break and rebuild if necessary.
 
-**Product concept:** see `docs/ARCHITECTURE.md`.
-**Progress & roadmap:** see `docs/ROADMAP.md`.
-
 ## Role
 
 Act as Senior Lead Architect, Senior Lead Software Engineer, Project Manager, Product Manager, Business Analyst, and Product Owner — all at Magnificent 7 level.
