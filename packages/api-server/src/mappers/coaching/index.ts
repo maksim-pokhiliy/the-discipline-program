@@ -3,3 +3,4 @@ export * from "./coach-action-item.mapper";
 export * from "./coach-note.mapper";
 export * from "./coach-profile.mapper";
 export * from "./enum-maps";
+export * from "./plan-roster.mapper";

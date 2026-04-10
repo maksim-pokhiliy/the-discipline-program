@@ -1,22 +1,11 @@
 import { z } from "zod";
 
-import { HealthStatus } from "../../coaching/athlete-profile";
-
 import { PlanEnrollmentStatus } from "./plan-enrollment.constants";
-
-export const enrollmentUserSchema = z.object({
-  id: z.string().cuid(),
-  name: z.string().nullable(),
-  email: z.string(),
-  image: z.string().nullable(),
-  healthStatus: z.nativeEnum(HealthStatus),
-});
 
 export const planEnrollmentSchema = z.object({
   id: z.string().cuid(),
   trainingPlanId: z.string().cuid(),
   userId: z.string().cuid(),
-  user: enrollmentUserSchema,
   startDate: z.date(),
   endDate: z.date().nullable(),
   status: z.nativeEnum(PlanEnrollmentStatus),

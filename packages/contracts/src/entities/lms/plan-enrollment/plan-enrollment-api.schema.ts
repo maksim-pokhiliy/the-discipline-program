@@ -12,14 +12,6 @@ const planIdWithEnrollmentIdParamSchema = planIdParamSchema.extend({
   enrollmentId: z.string().cuid(),
 });
 
-export const getPlanEnrollmentsParamsSchema = planIdParamSchema;
-
-export const getPlanEnrollmentsResponseSchema = z.array(planEnrollmentSchema);
-
-export const getPlanEnrollmentByIdParamsSchema = planIdWithEnrollmentIdParamSchema;
-
-export const getPlanEnrollmentResponseSchema = planEnrollmentSchema;
-
 export const createPlanEnrollmentParamsSchema = planIdParamSchema;
 
 export const createPlanEnrollmentRequestSchema = createPlanEnrollmentSchema;

@@ -10,54 +10,7 @@ import { prisma } from "../../db/client";
 import { mapToPlanEnrollment, PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
 import { handlePrismaError } from "../../utils";
 
-const includeEnriched = {
-  user: {
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      image: true,
-      athleteProfile: { select: { healthStatus: true } },
-    },
-  },
-} as const;
-
 export const lmsPlanEnrollmentApi = {
-  getAll: async (userId: string, planId: string): Promise<PlanEnrollment[]> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(planId, coachId);
-
-    const enrollments = await prisma.planEnrollment.findMany({
-      where: { trainingPlanId: planId },
-      include: includeEnriched,
-      orderBy: { createdAt: "desc" },
-    });
-
-    return enrollments.map(mapToPlanEnrollment);
-  },
-
-  getById: async (
-    userId: string,
-    planId: string,
-    enrollmentId: string,
-  ): Promise<PlanEnrollment> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(planId, coachId);
-
-    const enrollment = await prisma.planEnrollment.findUnique({
-      where: { id: enrollmentId },
-      include: includeEnriched,
-    });
-
-    if (!enrollment || enrollment.trainingPlanId !== planId) {
-      throw new NotFoundError("Enrollment not found", { enrollmentId, planId });
-    }
-
-    return mapToPlanEnrollment(enrollment);
-  },
-
   create: async (
     userId: string,
     planId: string,
@@ -79,7 +32,6 @@ export const lmsPlanEnrollmentApi = {
     try {
       const enrollment = await prisma.planEnrollment.create({
         data: { trainingPlanId: planId, ...data },
-        include: includeEnriched,
       });
 
       return mapToPlanEnrollment(enrollment);
@@ -114,7 +66,6 @@ export const lmsPlanEnrollmentApi = {
           ...data,
           ...(data.status && { status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[data.status] }),
         },
-        include: includeEnriched,
       });
 
       return mapToPlanEnrollment(enrollment);
