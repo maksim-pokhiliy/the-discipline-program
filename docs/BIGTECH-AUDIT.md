@@ -45,11 +45,9 @@ System, not code. Это фундамент — всё остальное сто
 
 ### 1.1. ADR-инфраструктура
 
-- [ ] **Нет папки `docs/adr/` и ADR-процесса.** Все архитектурные решения (Turbo, MUI, NextAuth, Prisma, Vercel Blob, Stripe как провайдер будущего, singleton Subscription, soft-delete extension, BFF-via-HTTP-loopback для RSC, два независимых NextAuth instance в admin/platform, JWT session strategy) не задокументированы. Через год никто не вспомнит, почему так.
-- [ ] **Некоторые решения уже «протекли» в код без ADR.** `Product.stripeProductId` / `Price.stripePriceId` в `schema.prisma` означают, что Stripe выбран как провайдер — но обоснование нигде не зафиксировано. Любой последующий developer увидит поле и примет факт, не понимая trade-offs.
-- [ ] **BFF via HTTP loopback** (`packages/api-client/src/server.ts:createNextServerClient` делает fetch на `NEXT_PUBLIC_APP_URL`) — архитектурный выбор, на который завязан весь server-side data fetching. Альтернатива — прямой вызов `apiFn` из `api-server` без HTTP-hop. Выбор без ADR.
-- [ ] **Два независимых NextAuth instance** (`apps/admin/src/lib/server/auth.ts` и `apps/platform/src/lib/server/auth.ts` почти идентичны, создают отдельные `authOptions`). Это либо сознательная изоляция, либо тех-долг. ADR требуется.
-- [ ] **Нет template для новых ADR.** Формат (context / decision / consequences / alternatives) — стандарт Michael Nygard — надо принять и оформить.
+- [x] **~~Нет папки `docs/adr/` и ADR-процесса.~~** Создана в commit 1.1.A. `docs/adr/README.md` описывает Michael Nygard формат, lifecycle, numbering. `docs/adr/0001-use-adr-for-architecture-decisions.md` — meta-ADR про процесс, содержит Context-секцию со списком исторических implicit-решений для backfill.
+- [ ] **Backfill ADR для уже принятых implicit решений** — commit 1.1.B: ADR 0002-0012 для Turbo, Prisma, NextAuth, MUI, contracts-first с Zod, Vercel Blob, singleton subscription, soft-delete extension, BFF loopback, два NextAuth instance, JWT strategy, Stripe provider.
+- [x] **~~Нет template для новых ADR.~~** Создан в 1.1.A: `docs/adr/_template.md`.
 
 ### 1.2. Bounded contexts
 
