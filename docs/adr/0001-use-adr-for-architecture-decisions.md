@@ -42,7 +42,7 @@ An ADR is **not** required for code style, formatting, version bumps, bug fixes,
 
 ADRs are numbered sequentially, never renumbered, and never deleted. A wrong decision is replaced with a new ADR that supersedes the old one; both remain in the tree.
 
-Existing implicit decisions — the ones listed in the Context section — are backfilled as ADRs 0002 through 0012 as a separate bulk commit, so that the historical record is complete before the project starts accumulating new decisions on top of an undocumented foundation.
+Existing implicit decisions — the ones listed in the Context section — are backfilled as ADRs 0002 through 0014 as a separate bulk commit, so that the historical record is complete before the project starts accumulating new decisions on top of an undocumented foundation.
 
 ## Consequences
 

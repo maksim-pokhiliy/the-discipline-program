@@ -29,7 +29,7 @@
 
 ## 1. Архитектура и границы
 
-**Статус:** Research завершён, ждёт утверждения плана реализации
+**Статус:** В работе — 1.1 (ADR) завершён, 1.2–1.6 впереди
 
 System, not code. Это фундамент — всё остальное стоит на нём, поэтому идёт первым. Неправильные решения на этом уровне отравляют все последующие.
 
@@ -46,7 +46,7 @@ System, not code. Это фундамент — всё остальное сто
 ### 1.1. ADR-инфраструктура
 
 - [x] **~~Нет папки `docs/adr/` и ADR-процесса.~~** Создана в commit 1.1.A. `docs/adr/README.md` описывает Michael Nygard формат, lifecycle, numbering. `docs/adr/0001-use-adr-for-architecture-decisions.md` — meta-ADR про процесс, содержит Context-секцию со списком исторических implicit-решений для backfill.
-- [ ] **Backfill ADR для уже принятых implicit решений** — commit 1.1.B: ADR 0002-0012 для Turbo, Prisma, NextAuth, MUI, contracts-first с Zod, Vercel Blob, singleton subscription, soft-delete extension, BFF loopback, два NextAuth instance, JWT strategy, Stripe provider.
+- [x] **~~Backfill ADR для уже принятых implicit решений.~~** Сделано в commit 1.1.B. ADR 0002-0014 покрывают: Turbo (0002), Prisma ORM (0003), NextAuth credentials (0004), contracts-first с Zod (0005), MUI design system (0006), Prisma isolation to api-server (0007), singleton subscription invariant (0008), soft-delete Prisma extension (0009), BFF via HTTP loopback (0010), two NextAuth instances (0011), JWT session strategy (0012), Vercel Blob storage (0013), Stripe as implicit payment provider (0014).
 - [x] **~~Нет template для новых ADR.~~** Создан в 1.1.A: `docs/adr/_template.md`.
 
 ### 1.2. Bounded contexts
