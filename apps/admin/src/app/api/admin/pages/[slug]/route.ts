@@ -1,5 +1,5 @@
 import { createGetByParamHandler, createPatchByParamHandler } from "@repo/api-routes";
-import { adminPagesApi } from "@repo/api-server";
+import { adminPagesApi } from "@repo/api-server/cms";
 import {
   adminPageDetailsSchema,
   pageSlugRouteParamsSchema,

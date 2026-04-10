@@ -1,5 +1,5 @@
 import { createAuthGetHandler, createAuthPostHandler } from "@repo/api-routes";
-import { platformTrainingPlansApi } from "@repo/api-server";
+import { platformTrainingPlansApi } from "@repo/api-server/lms";
 import {
   coachPlansPageDataSchema,
   createTrainingPlanRequestSchema,

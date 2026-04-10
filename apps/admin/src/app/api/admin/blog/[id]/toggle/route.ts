@@ -1,5 +1,5 @@
 import { createMultiToggleHandler } from "@repo/api-routes";
-import { adminBlogApi } from "@repo/api-server";
+import { adminBlogApi } from "@repo/api-server/cms";
 import {
   BlogToggleField,
   toggleBlogPostParamsSchema,

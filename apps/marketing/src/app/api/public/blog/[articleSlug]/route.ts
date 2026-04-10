@@ -1,5 +1,5 @@
 import { createGetByParamHandler, withPublicRoute } from "@repo/api-routes";
-import { pagesApi } from "@repo/api-server";
+import { pagesApi } from "@repo/api-server/cms";
 import { blogPostPageDataSchema, getBlogArticleBySlugParamsSchema } from "@repo/contracts/cms/blog";
 
 export const GET = withPublicRoute(

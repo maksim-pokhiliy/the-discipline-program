@@ -1,7 +1,7 @@
 import { type ZodType } from "zod";
 
 import { createGetByParamHandler, withPublicRoute } from "@repo/api-routes";
-import { pagesApi } from "@repo/api-server";
+import { pagesApi } from "@repo/api-server/cms";
 import {
   getPageBySlugParamsSchema,
   getHomePageResponseSchema,

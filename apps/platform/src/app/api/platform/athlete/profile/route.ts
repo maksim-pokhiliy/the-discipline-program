@@ -1,5 +1,5 @@
 import { createAuthGetHandler, createAuthPutHandler } from "@repo/api-routes";
-import { platformAthleteProfileApi } from "@repo/api-server";
+import { platformAthleteProfileApi } from "@repo/api-server/coaching";
 import {
   getAthleteProfileResponseSchema,
   updateAthleteProfileRequestSchema,

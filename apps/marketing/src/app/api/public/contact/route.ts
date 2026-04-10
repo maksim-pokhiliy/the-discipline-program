@@ -1,5 +1,5 @@
 import { createPostHandler, withPublicRoute } from "@repo/api-routes";
-import { contactApi } from "@repo/api-server";
+import { contactApi } from "@repo/api-server/cms";
 import {
   createContactSubmissionRequestSchema,
   createContactSubmissionResponseSchema,

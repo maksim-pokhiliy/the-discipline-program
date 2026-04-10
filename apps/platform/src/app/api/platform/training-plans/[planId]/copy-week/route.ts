@@ -1,5 +1,5 @@
 import { createAuthPostByParamHandler } from "@repo/api-routes";
-import { platformWorkoutsApi } from "@repo/api-server";
+import { platformWorkoutsApi } from "@repo/api-server/lms";
 import { copyWeekParamsSchema, copyWeekRequestSchema } from "@repo/contracts/lms/training-plan";
 import { getWorkoutsResponseSchema } from "@repo/contracts/lms/workout";
 

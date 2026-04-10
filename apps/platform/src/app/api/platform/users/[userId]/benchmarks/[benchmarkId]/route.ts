@@ -1,5 +1,5 @@
 import { createAuthDeleteHandler, createAuthPutByParamHandler } from "@repo/api-routes";
-import { platformUserBenchmarksApi } from "@repo/api-server";
+import { platformUserBenchmarksApi } from "@repo/api-server/lms";
 import {
   deleteUserBenchmarkParamsSchema,
   updateUserBenchmarkParamsSchema,

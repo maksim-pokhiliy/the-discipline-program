@@ -1,5 +1,5 @@
 import { createGetHandler } from "@repo/api-routes";
-import { adminDashboardApi } from "@repo/api-server";
+import { adminDashboardApi } from "@repo/api-server/cms";
 import { getDashboardDataResponseSchema } from "@repo/contracts/cms/dashboard";
 
 import { withAdminAuth } from "@app/lib/server/auth";

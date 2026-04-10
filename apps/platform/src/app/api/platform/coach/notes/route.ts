@@ -1,5 +1,5 @@
 import { createAuthGetHandler, createAuthPostHandler } from "@repo/api-routes";
-import { platformCoachNotesApi } from "@repo/api-server";
+import { platformCoachNotesApi } from "@repo/api-server/coaching";
 import {
   createCoachNoteRequestSchema,
   createCoachNoteResponseSchema,
