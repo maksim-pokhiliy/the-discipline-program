@@ -1,10 +1,8 @@
 import { z } from "zod";
 
-import { athleteProfileSchema } from "../../coaching/athlete-profile";
-import { coachProfileSchema } from "../../coaching/coach-profile";
 import { userRoleSchema } from "../auth";
 
-export const adminUserSchema = z.object({
+export const userSchema = z.object({
   id: z.string().cuid(),
   email: z.string().email(),
   name: z.string().nullable(),
@@ -14,8 +12,6 @@ export const adminUserSchema = z.object({
   emailVerified: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  athleteProfile: athleteProfileSchema.nullable(),
-  coachProfile: coachProfileSchema.nullable(),
 });
 
 export const adminUserListItemSchema = z.object({

@@ -8,7 +8,7 @@ import { UserRole } from "@repo/contracts/iam/auth";
 import { mapToAthleteProfile } from "../coaching/athlete-profile.mapper";
 import { mapToCoachProfile } from "../coaching/coach-profile.mapper";
 
-import { mapToAdminUser, mapToAdminUserListItem } from "./user.mapper";
+import { mapToAdminUserListItem, mapToUser } from "./user.mapper";
 
 const NOW = new Date("2025-06-01T12:00:00Z");
 const LATER = new Date("2025-06-15T12:00:00Z");
@@ -158,10 +158,10 @@ describe("mapToCoachProfile", () => {
   });
 });
 
-describe("mapToAdminUser", () => {
-  it("maps user without profiles", () => {
+describe("mapToUser", () => {
+  it("maps all fields from a Prisma user without profile includes", () => {
     const input = makeUser();
-    const result = mapToAdminUser(input);
+    const result = mapToUser(input);
 
     expect(result).toEqual({
       id: "cls_user_1",
@@ -173,87 +173,43 @@ describe("mapToAdminUser", () => {
       emailVerified: NOW,
       createdAt: NOW,
       updatedAt: LATER,
-      athleteProfile: null,
-      coachProfile: null,
     });
-  });
-
-  it("maps user with athlete profile", () => {
-    const input = makeUser({ athleteProfile: makeAthleteProfile() });
-    const result = mapToAdminUser(input);
-
-    expect(result.athleteProfile).toEqual({
-      id: "cls_ap_1",
-      userId: "cls_user_1",
-      gender: Gender.MALE,
-      heightCm: 180,
-      weightKg: 82.5,
-      healthStatus: HealthStatus.HEALTHY,
-      healthNote: null,
-      createdAt: NOW,
-      updatedAt: LATER,
-    });
-  });
-
-  it("maps user with coach profile", () => {
-    const input = makeUser({ coachProfile: makeCoachProfile() });
-    const result = mapToAdminUser(input);
-
-    expect(result.coachProfile).toEqual({
-      id: "cls_cp_1",
-      userId: "cls_user_2",
-      bio: "10 years coaching experience",
-      createdAt: NOW,
-      updatedAt: LATER,
-    });
-  });
-
-  it("maps user with both profiles", () => {
-    const input = makeUser({
-      athleteProfile: makeAthleteProfile(),
-      coachProfile: makeCoachProfile(),
-    });
-    const result = mapToAdminUser(input);
-
-    expect(result.athleteProfile).not.toBeNull();
-    expect(result.coachProfile).not.toBeNull();
   });
 
   it("maps COACH role", () => {
     const input = makeUser({ role: Role.COACH });
-    const result = mapToAdminUser(input);
+    const result = mapToUser(input);
 
     expect(result.role).toBe(UserRole.COACH);
   });
 
   it("maps ADMIN role", () => {
     const input = makeUser({ role: Role.ADMIN });
-    const result = mapToAdminUser(input);
+    const result = mapToUser(input);
 
     expect(result.role).toBe(UserRole.ADMIN);
   });
 
-  it("handles null name and image", () => {
-    const input = makeUser({ name: null, image: null });
-    const result = mapToAdminUser(input);
+  it("handles null name, image, and emailVerified", () => {
+    const input = makeUser({ name: null, image: null, emailVerified: null });
+    const result = mapToUser(input);
 
     expect(result.name).toBeNull();
     expect(result.image).toBeNull();
-  });
-
-  it("handles null emailVerified", () => {
-    const input = makeUser({ emailVerified: null });
-    const result = mapToAdminUser(input);
-
     expect(result.emailVerified).toBeNull();
   });
 
-  it("excludes password and deletedAt from output", () => {
-    const input = makeUser();
-    const result = mapToAdminUser(input);
+  it("excludes password, deletedAt, and profile relations from output", () => {
+    const input = makeUser({
+      athleteProfile: makeAthleteProfile(),
+      coachProfile: makeCoachProfile(),
+    });
+    const result = mapToUser(input);
 
     expect(result).not.toHaveProperty("password");
     expect(result).not.toHaveProperty("deletedAt");
+    expect(result).not.toHaveProperty("athleteProfile");
+    expect(result).not.toHaveProperty("coachProfile");
   });
 });
 

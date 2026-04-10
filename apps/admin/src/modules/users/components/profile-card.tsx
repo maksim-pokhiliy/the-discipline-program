@@ -1,12 +1,12 @@
 import { Stack, Typography } from "@mui/material";
 
+import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
 import { GENDER_LABELS } from "@repo/contracts/coaching/athlete-profile";
 import { UserRole } from "@repo/contracts/iam/auth";
-import { type AdminUser } from "@repo/contracts/iam/user";
 import { DetailField, FormCard } from "@repo/ui";
 
 type ProfileCardProps = {
-  user: AdminUser;
+  user: AdminUserView;
 };
 
 export const ProfileCard = ({ user }: ProfileCardProps) => {
