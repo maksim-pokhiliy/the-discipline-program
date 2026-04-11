@@ -1,14 +1,14 @@
-import { UPLOAD_CONFIG, type UploadContext } from "@repo/contracts/iam/upload";
+import { UPLOAD_CONFIG, type UploadContext } from "@repo/contracts/storage/upload";
 import { BadRequestError, ValidationError } from "@repo/errors";
 
 import type { StoragePort } from "../../infrastructure/storage";
 
-export type IamUploadAdminApi = {
+export type StorageUploadAdminApi = {
   uploadImage(file: File, context: UploadContext): Promise<{ url: string }>;
   deleteImage(url: string): Promise<void>;
 };
 
-export const createIamUploadAdminApi = (storage: StoragePort): IamUploadAdminApi => ({
+export const createStorageUploadAdminApi = (storage: StoragePort): StorageUploadAdminApi => ({
   uploadImage: async (file, context) => {
     const config = UPLOAD_CONFIG[context];
 

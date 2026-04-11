@@ -22,7 +22,7 @@ import {
   BlogCategory,
   type CreateBlogPostData,
 } from "@repo/contracts/cms/blog";
-import { UPLOAD_CONFIG } from "@repo/contracts/iam/upload";
+import { UPLOAD_CONFIG } from "@repo/contracts/storage/upload";
 import { FormCard, ImageUpload, RichTextEditor, TagsInput } from "@repo/ui";
 
 import { useAutoSlug, useUploadImage } from "@app/lib/hooks";

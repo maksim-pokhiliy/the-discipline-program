@@ -26,5 +26,7 @@ export * from "./entities/coaching/coach-profile";
 
 // IAM
 export * from "./entities/iam/auth";
-export * from "./entities/iam/upload";
 export * from "./entities/iam/user";
+
+// Storage (supporting)
+export * from "./entities/storage/upload";

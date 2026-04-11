@@ -23,7 +23,7 @@ Cache backends are commoditized: Redis, Upstash, Vercel KV, in-memory, Cloudflar
 | Redis Cloud   | Traditional Redis          | Fixed cost                 | Cheaper at sustained high volume; TCP-only; doesn't work on Vercel Edge           |
 | In-memory     | `Map` in process           | Free                       | Useful for tests and single-instance dev; cache is lost on every deploy / restart |
 
-Current lean: **Upstash Redis** for v1 — the HTTP-based connection model works on both Node and Edge, no connection pooling headaches on serverless, and it's a 1-line swap to Vercel KV if Vercel's billing proves more convenient. An in-memory adapter will also exist for tests (following the `vi.fn()` fake pattern from `endpoints/iam/upload.test.ts` — a real `InMemoryCacheAdapter` might be cleaner than a fake for testing cache-heavy endpoints).
+Current lean: **Upstash Redis** for v1 — the HTTP-based connection model works on both Node and Edge, no connection pooling headaches on serverless, and it's a 1-line swap to Vercel KV if Vercel's billing proves more convenient. An in-memory adapter will also exist for tests (following the `vi.fn()` fake pattern from `endpoints/storage/upload.test.ts` — a real `InMemoryCacheAdapter` might be cleaner than a fake for testing cache-heavy endpoints).
 
 ## Open questions (deferred until vendor is chosen)
 

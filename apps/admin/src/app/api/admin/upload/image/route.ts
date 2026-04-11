@@ -1,11 +1,11 @@
 import { createDeleteWithBodyHandler, createFormDataPostHandler } from "@repo/api-routes";
-import { iamUploadAdminApi } from "@repo/api-server/iam";
+import { storageUploadAdminApi } from "@repo/api-server/storage";
 import {
   deleteImageRequestSchema,
   uploadImageResponseSchema,
   type UploadContext,
   UPLOAD_CONFIG,
-} from "@repo/contracts/iam/upload";
+} from "@repo/contracts/storage/upload";
 import { BadRequestError } from "@repo/errors";
 
 import { withAdminAuth } from "@app/lib/server/auth";
@@ -26,7 +26,7 @@ const processUpload = async (formData: FormData) => {
     throw new BadRequestError("Invalid or missing context");
   }
 
-  return iamUploadAdminApi.uploadImage(file, context);
+  return storageUploadAdminApi.uploadImage(file, context);
 };
 
 export const POST = withAdminAuth(
@@ -35,7 +35,7 @@ export const POST = withAdminAuth(
 
 export const DELETE = withAdminAuth(
   createDeleteWithBodyHandler(
-    ({ url }) => iamUploadAdminApi.deleteImage(url),
+    ({ url }) => storageUploadAdminApi.deleteImage(url),
     deleteImageRequestSchema,
   ),
 );

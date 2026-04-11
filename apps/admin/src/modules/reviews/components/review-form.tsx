@@ -12,7 +12,7 @@ import {
 import { Controller, useFormContext } from "react-hook-form";
 
 import { type CreateReviewData } from "@repo/contracts/cms/review";
-import { UPLOAD_CONFIG } from "@repo/contracts/iam/upload";
+import { UPLOAD_CONFIG } from "@repo/contracts/storage/upload";
 import { FormCard, ImageUpload } from "@repo/ui";
 
 import { useDeleteImage, useUploadImage } from "@app/lib/hooks";

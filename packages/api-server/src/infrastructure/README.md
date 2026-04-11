@@ -4,9 +4,9 @@ This directory is the ports-and-adapters layer of api-server. Each subdirectory 
 
 ## Why this layer exists
 
-Before 1.4.A, `@vercel/blob` was imported directly in `endpoints/iam/upload.ts`. Any switch to S3 / R2 / Cloudflare R2 would have required edits in the endpoint layer, plus a reshape of tests, plus risk of leaking vendor details into contract shapes. The port-and-adapter pattern isolates vendor coupling to exactly one file per port: the adapter. Everything else depends on the `*Port` interface.
+Before 1.4.A, `@vercel/blob` was imported directly in the upload endpoint. Any switch to S3 / R2 / Cloudflare R2 would have required edits in the endpoint layer, plus a reshape of tests, plus risk of leaking vendor details into contract shapes. The port-and-adapter pattern isolates vendor coupling to exactly one file per port: the adapter. Everything else depends on the `*Port` interface. The upload endpoint itself was then relocated to its own supporting context (`endpoints/storage/upload.ts`) in 1.4.D — storage is cross-cutting, not a part of IAM.
 
-Port interfaces are owned by this directory, not by consumers. Consumers (`endpoints/*`) inject a port through a factory (the `createXxx(deps)` pattern — see `endpoints/iam/upload.ts` for the reference). Default instances live in the per-port `index.ts` barrel. Tests pass fakes (`vi.fn()`-based or in-memory) directly to the factory, bypassing `index.ts` entirely — which means the real adapter is never constructed at test import time, so vendor SDKs are never loaded in tests even if they eagerly validate env vars or open connections.
+Port interfaces are owned by this directory, not by consumers. Consumers (`endpoints/*`) inject a port through a factory (the `createXxx(deps)` pattern — see `endpoints/storage/upload.ts` for the reference). Default instances live in the per-port `index.ts` barrel. Tests pass fakes (`vi.fn()`-based or in-memory) directly to the factory, bypassing `index.ts` entirely — which means the real adapter is never constructed at test import time, so vendor SDKs are never loaded in tests even if they eagerly validate env vars or open connections.
 
 ## Dependency rules
 
@@ -50,7 +50,7 @@ New ports follow this shape. When adding one:
 2. A `<vendor>-adapter.ts` implementing `<Port>`.
 3. Env var registration in `packages/env/<port>.ts`.
 4. Update `index.ts` to construct `default<Port>` from the new adapter.
-5. Wire the default into the consumer's endpoint barrel (same pattern as `endpoints/iam/index.ts` wiring `defaultStorage` into `createIamUploadAdminApi`).
+5. Wire the default into the consumer's endpoint barrel (same pattern as `endpoints/storage/index.ts` wiring `defaultStorage` into `createStorageUploadAdminApi`).
 
 ## Non-goals for this layer
 

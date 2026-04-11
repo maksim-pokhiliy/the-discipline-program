@@ -77,6 +77,18 @@ module.exports = {
     },
 
     {
+      name: "contracts-storage-is-leaf",
+      severity: "error",
+      comment:
+        "BOUNDED-CONTEXTS.md §1: Storage is a supporting context — a leaf that provides " +
+        "file-upload shapes to any domain context that needs them. It must not depend on " +
+        "any domain context itself. If an upload shape needs to reference domain data, " +
+        "the reference belongs in the domain context (inverted dependency).",
+      from: { path: "^packages/contracts/src/entities/storage/" },
+      to: { path: "^packages/contracts/src/entities/(cms|lms|coaching|iam|billing)/" },
+    },
+
+    {
       name: "api-server-iam-is-leaf",
       severity: "error",
       comment:
@@ -110,6 +122,19 @@ module.exports = {
         "coaching. Marketing pages do not render training data or coach dashboards.",
       from: { path: "^packages/api-server/src/(endpoints|mappers)/cms/" },
       to: { path: "^packages/api-server/src/(endpoints|mappers)/(lms|coaching)/" },
+    },
+
+    {
+      name: "api-server-storage-is-leaf",
+      severity: "error",
+      comment:
+        "Storage is a supporting context — it provides upload functionality to any " +
+        "domain context that needs it (admin uploading blog cover, coach uploading " +
+        "athlete avatar, etc.). Storage endpoints and mappers must not depend on any " +
+        "domain context; the dependency direction is always domain → storage. Closes " +
+        "1.4.D — moved upload out of IAM into its own supporting context.",
+      from: { path: "^packages/api-server/src/(endpoints|mappers)/storage/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|lms|coaching|iam|billing)/" },
     },
 
     {

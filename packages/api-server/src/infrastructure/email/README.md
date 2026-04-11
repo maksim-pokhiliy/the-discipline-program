@@ -37,7 +37,7 @@ When vendor is chosen:
 1. `infrastructure/email/resend-adapter.ts` (or equivalent) — the ONLY file in the repo that imports the vendor SDK.
 2. Register env var in `packages/env/email.ts` if not present.
 3. Update `infrastructure/email/index.ts` to re-export the adapter factory and expose `defaultEmail = createResendAdapter()` as a module-level singleton, following the `storage/index.ts` pattern.
-4. Consumers inject via factory-DI: `createXxxAdminApi({ email })` — mirroring `createIamUploadAdminApi(storage)` from 1.4.A.
+4. Consumers inject via factory-DI: `createXxxAdminApi({ email })` — mirroring `createStorageUploadAdminApi(storage)` from 1.4.A / 1.4.D.
 
 ## Non-goals
 
