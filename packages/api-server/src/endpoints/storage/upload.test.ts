@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { UPLOAD_CONFIG, type UploadContext } from "@repo/contracts/iam/upload";
+import { UPLOAD_CONFIG, type UploadContext } from "@repo/contracts/storage/upload";
 import { BadRequestError, ValidationError } from "@repo/errors";
 
 import type { StoragePort } from "../../infrastructure/storage";
 
-import { createIamUploadAdminApi } from "./upload";
+import { createStorageUploadAdminApi } from "./upload";
 
 const makeFakeStorage = (): StoragePort & {
   put: ReturnType<typeof vi.fn>;
@@ -21,7 +21,7 @@ const makeImageFile = (name: string, type: string, sizeBytes: number): File => {
   return new File([content], name, { type });
 };
 
-describe("createIamUploadAdminApi", () => {
+describe("createStorageUploadAdminApi", () => {
   let storage: ReturnType<typeof makeFakeStorage>;
 
   beforeEach(() => {
@@ -30,7 +30,7 @@ describe("createIamUploadAdminApi", () => {
 
   describe("uploadImage", () => {
     it("uploads a valid image and returns the storage url", async () => {
-      const api = createIamUploadAdminApi(storage);
+      const api = createStorageUploadAdminApi(storage);
       const file = makeImageFile("cover.png", "image/png", 1024);
 
       const result = await api.uploadImage(file, "blog");
@@ -45,7 +45,7 @@ describe("createIamUploadAdminApi", () => {
     });
 
     it("sanitizes special characters in the filename", async () => {
-      const api = createIamUploadAdminApi(storage);
+      const api = createStorageUploadAdminApi(storage);
       const file = makeImageFile("my file (final)!.png", "image/png", 1024);
 
       await api.uploadImage(file, "blog");
@@ -63,7 +63,7 @@ describe("createIamUploadAdminApi", () => {
     ])(
       "uses the $expectedPrefix storage prefix for $context context",
       async ({ context, expectedPrefix }) => {
-        const api = createIamUploadAdminApi(storage);
+        const api = createStorageUploadAdminApi(storage);
         const file = makeImageFile("pic.jpg", "image/jpeg", 1024);
 
         await api.uploadImage(file, context);
@@ -76,7 +76,7 @@ describe("createIamUploadAdminApi", () => {
     );
 
     it("throws ValidationError for disallowed file types and does not call storage", async () => {
-      const api = createIamUploadAdminApi(storage);
+      const api = createStorageUploadAdminApi(storage);
       const file = makeImageFile("notes.txt", "text/plain", 1024);
 
       await expect(api.uploadImage(file, "blog")).rejects.toBeInstanceOf(ValidationError);
@@ -84,7 +84,7 @@ describe("createIamUploadAdminApi", () => {
     });
 
     it("throws ValidationError when file exceeds maxSize and does not call storage", async () => {
-      const api = createIamUploadAdminApi(storage);
+      const api = createStorageUploadAdminApi(storage);
       const oversize = UPLOAD_CONFIG.blog.maxSize + 1;
       const file = makeImageFile("huge.png", "image/png", oversize);
 
@@ -95,7 +95,7 @@ describe("createIamUploadAdminApi", () => {
 
   describe("deleteImage", () => {
     it("delegates to storage.delete with the given url", async () => {
-      const api = createIamUploadAdminApi(storage);
+      const api = createStorageUploadAdminApi(storage);
 
       await api.deleteImage("https://fake.storage/object");
 
@@ -104,7 +104,7 @@ describe("createIamUploadAdminApi", () => {
     });
 
     it("throws BadRequestError for an empty url and does not call storage", async () => {
-      const api = createIamUploadAdminApi(storage);
+      const api = createStorageUploadAdminApi(storage);
 
       await expect(api.deleteImage("")).rejects.toBeInstanceOf(BadRequestError);
       expect(storage.delete).not.toHaveBeenCalled();

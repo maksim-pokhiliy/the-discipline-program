@@ -55,9 +55,9 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ---
 
-## 1. IAM — Identity, Access, and Media
+## 1. IAM — Identity and Access
 
-**Responsibility:** Who the user is, how they prove it, and what media assets they can upload. IAM is the authentication + authorization + storage boundary. Every other context takes `userId: string` as a given and trusts that IAM already validated it.
+**Responsibility:** Who the user is, how they prove it, and what they are allowed to do. IAM is the authentication + authorization boundary. Every other context takes `userId: string` as a given and trusts that IAM already validated it. Media/file upload used to live here as an "everything admin-only lives under IAM" convenience; it was moved to its own Storage supporting context in 1.4.D — see §6.
 
 ### Aggregates and entities
 
@@ -69,8 +69,6 @@ The rest of this document describes each context in detail: what it owns, which 
 | `VerificationToken` | `VerificationToken` | NextAuth email verification scaffolding. Reserved.                                                |
 
 `Account`, `Session`, and `VerificationToken` are NextAuth adapter tables. They are required by the adapter contract but not part of the current authentication flow. They stay in IAM because they describe **how identity is proved**, not anything about the domain.
-
-**Upload** (`iamUploadAdminApi`) is currently bolted onto IAM because (a) only admins can upload and (b) there is nowhere else for it to live. Section 1.4.A inverted the vendor dependency behind a `StoragePort` (at `packages/api-server/src/infrastructure/storage/`); the endpoint now depends on the port, and `@vercel/blob` is isolated to a single adapter file. Section 1.4.D moves upload out of IAM into a dedicated Storage supporting context. Until 1.4.D lands, upload remains filed under IAM.
 
 ### Value objects
 
@@ -88,8 +86,8 @@ The rest of this document describes each context in detail: what it owns, which 
 ### Where it lives today
 
 - **DB:** `User`, `Account`, `Session`, `VerificationToken`, and the role enum in `schema.prisma`.
-- **Contracts:** `packages/contracts/src/entities/iam/auth/`, `iam/user/`, `iam/upload/` (subpath exports `@repo/contracts/iam/*`).
-- **API — `api-server`:** `endpoints/iam/users-admin.ts` (admin user management), `endpoints/iam/upload.ts` (media upload), `endpoints/iam/users-search.ts` (athlete search inside coach flow), and `endpoints/iam/auth-service.ts` (exports `iamAuthService` used by both NextAuth instances — previously `services/auth.ts`).
+- **Contracts:** `packages/contracts/src/entities/iam/auth/`, `iam/user/` (subpath exports `@repo/contracts/iam/*`). Upload shapes moved to `contracts/src/entities/storage/upload/` in 1.4.D.
+- **API — `api-server`:** `endpoints/iam/users-admin.ts` (admin user management), `endpoints/iam/users-search.ts` (athlete search inside coach flow), and `endpoints/iam/auth-service.ts` (exports `iamAuthService` used by both NextAuth instances — previously `services/auth.ts`). The upload endpoint moved to `endpoints/storage/upload.ts` in 1.4.D.
 - **Consumer apps:** all three. Each app has its own NextAuth route handler (`api/auth/[...nextauth]`) that proxies into `iamAuthService`.
 
 ### Dependencies
@@ -98,7 +96,7 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ### Target state
 
-Landed in 1.2.B (contracts) and 1.2.C (endpoints). `iam/` subdirectory exists in both `contracts/src/entities/` and `api-server/src/endpoints/`. `upload` migrated behind a dedicated `StoragePort` in 1.4.A; the move out of IAM into a Storage supporting context is tracked as 1.4.D. `auth-service.ts` may move into a dedicated `services/` subfolder inside `iam/` if more IAM domain services appear.
+Landed in 1.2.B (contracts) and 1.2.C (endpoints). `iam/` subdirectory exists in both `contracts/src/entities/` and `api-server/src/endpoints/`. `upload` migrated behind a dedicated `StoragePort` in 1.4.A and was then moved out of IAM entirely into a Storage supporting context in 1.4.D (see §6). `auth-service.ts` may move into a dedicated `services/` subfolder inside `iam/` if more IAM domain services appear.
 
 ---
 
@@ -115,7 +113,7 @@ Landed in 1.2.B (contracts) and 1.2.C (endpoints). `iam/` subdirectory exists in
 | `MarketingBlogPost` (root)      | `MarketingBlogPost`          | One blog article. Has publish/feature flags, category, tags, precomputed read time.                                              |
 | `MarketingReview` (root)        | `MarketingReview`            | A customer review shown on the home page and storefront.                                                                         |
 | `MarketingContactSubmission`    | `MarketingContactSubmission` | An inbound contact form submission. Append-only from public POST, triaged from admin.                                            |
-| **`Product` (marketing facet)** | `Product`                    | **Shared with Billing.** The marketing facet uses slug, title, description, features, cover image, isFeatured, isActive. See §6. |
+| **`Product` (marketing facet)** | `Product`                    | **Shared with Billing.** The marketing facet uses slug, title, description, features, cover image, isFeatured, isActive. See §7. |
 
 The marketing facet of `Product` is the only cross-context entity in the repo today. CMS reads `Product` to render the storefront grid and the contact form's program dropdown; it never writes the billing fields. Billing writes the billing fields; it never writes the marketing ones. This de-facto split is honored by the code but not enforced by the schema.
 
@@ -145,7 +143,7 @@ The marketing facet of `Product` is the only cross-context entity in the repo to
 ### Dependencies
 
 - **CMS → IAM:** the admin authoring side requires an authenticated admin session. The dependency is enforced by `withAdminAuth` on every admin CMS route handler. Public CMS read endpoints (`/api/public/*`) do not require authentication and do not depend on IAM at runtime, only at the contract level (they do not use `User`).
-- **CMS → Billing:** CMS reads `Product` and `Price` to render the storefront and to populate the contact-form program dropdown. The read is restricted to the marketing facet of `Product` plus `Price.amountCents` / `currency` for display. This is the one cross-context read in the current codebase. See §6.
+- **CMS → Billing:** CMS reads `Product` and `Price` to render the storefront and to populate the contact-form program dropdown. The read is restricted to the marketing facet of `Product` plus `Price.amountCents` / `currency` for display. This is the one cross-context read in the current codebase. See §7.
 
 ### Target state
 
@@ -176,7 +174,7 @@ api-server/src/endpoints/cms/
   toggle-exclusive-featured.ts  (shared CMS admin helper, moved from utils/)
 ```
 
-The `Product` model itself keeps its current physical shape; only the contracts and endpoints are split along the CMS / Billing line. See §6 for the split rule. The entity folder is named `product/` (not `product-marketing/`) for now — it will be renamed when the billing facet is added and a `billing/product-billing/` sibling appears.
+The `Product` model itself keeps its current physical shape; only the contracts and endpoints are split along the CMS / Billing line. See §7 for the split rule. The entity folder is named `product/` (not `product-marketing/`) for now — it will be renamed when the billing facet is added and a `billing/product-billing/` sibling appears.
 
 ---
 
@@ -389,7 +387,73 @@ Until steps 1–3 are done, `endpoints/billing/` stays empty and acts as a place
 
 ---
 
-## 6. Shared entities: the Product model
+## 6. Storage — supporting context (file upload)
+
+**Responsibility:** File upload and deletion for admin-authored media (blog cover images, marketing page hero backgrounds, product photos, review author avatars, profile pictures). Storage is a **supporting context**, not a domain context — it provides a capability any domain context can use, but it owns no business rules of its own.
+
+### Why it exists as a separate context
+
+Before 1.4.D, the upload endpoint lived in `endpoints/iam/upload.ts` because "only admins can upload, so file it under the admin-only context." That was a placement of convenience, not of meaning. Identity has nothing to do with file bytes. Putting upload inside IAM broke the "responsibility is what makes the context" test: IAM is about _who the user is_, upload is about _where bytes go_.
+
+Section 1.4.A (commit `6f9ca98`) inverted the vendor dependency by introducing `StoragePort` in `packages/api-server/src/infrastructure/storage/`. The endpoint was refactored to the factory-DI pattern `createIamUploadAdminApi(storage: StoragePort)`, but still physically lived under `endpoints/iam/`. Section 1.4.D (this bullet) completes the move: the endpoint, the contracts, and the symbol names all now live under `storage/`.
+
+### What it owns
+
+| Shape / symbol                     | Location                                                       | Role                                                                                     |
+| ---------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `UploadContext` (union)            | `contracts/src/entities/storage/upload/upload.types.ts`        | Names the kind of upload: `avatar`, `blog`, `marketing`.                                 |
+| `UPLOAD_CONFIG`                    | `contracts/src/entities/storage/upload/upload.constants.ts`    | Per-context max size, allowed MIME types, storage-key prefix.                            |
+| `uploadImageRequestSchema` + types | `contracts/src/entities/storage/upload/upload-api.schema.ts`   | Zod schema for the route-handler boundary.                                               |
+| `storageUploadAdminApi`            | `endpoints/storage/index.ts` (default via `defaultStorage` DI) | Admin-scoped upload/delete API. Built by `createStorageUploadAdminApi(storage)`.         |
+| `StoragePort`                      | `api-server/src/infrastructure/storage/port.ts`                | The interface — `put(key, file, options?)`, `delete(url)`. See §1 of this doc and 1.4.A. |
+| `createVercelBlobAdapter`          | `api-server/src/infrastructure/storage/vercel-blob-adapter.ts` | The only file in the repo that imports `@vercel/blob`.                                   |
+
+The port + adapter (`infrastructure/storage/`) is **separate** from the endpoint (`endpoints/storage/`). Infrastructure is ports-and-adapters machinery; endpoints is application-layer code that consumes a port. They happen to share the word "storage" because they describe the same concept at different layers.
+
+### Dependencies
+
+**None inbound from domain contexts that Storage would need to understand.** Storage doesn't know what a `TrainingPlan` is, what a `BlogPost` is, or what a `User` is. It takes a `File`, a `UploadContext` enum value, and writes bytes to a vendor-provided URL. It returns the URL as a string.
+
+**Outbound:** depends only on `StoragePort` from `infrastructure/storage/`, which in turn depends on a vendor SDK in exactly one adapter file. No domain dependencies.
+
+This is enforced mechanically by the dep-cruiser rule `api-server-storage-is-leaf` (1.4.D): `endpoints/storage/` + `mappers/storage/` cannot import from `endpoints/mappers of {cms,lms,coaching,iam,billing}/`. Similarly, `contracts-storage-is-leaf` forbids `contracts/src/entities/storage/` → `contracts/src/entities/(cms|lms|coaching|iam|billing)/`.
+
+### Who can import from Storage
+
+Any domain context that legitimately needs file upload. Storage is a leaf in the dependency graph from Storage's own perspective, but anyone can reach INTO Storage. The admin route handler `apps/admin/src/app/api/admin/upload/image/route.ts` is the current (and only) consumer; admin-scoped UI forms for blog and review import `UPLOAD_CONFIG` from `@repo/contracts/storage/upload`. When the coach platform grows a "change athlete avatar" flow, it'll reach into Storage the same way: import `storageUploadAdminApi` (or a `storageUploadPlatformApi` sibling if authorization shape diverges) from `@repo/api-server/storage`.
+
+### Invariants
+
+- **Vendor isolation.** Exactly one file in the repo imports the vendor SDK: the adapter. Everything else (port, endpoint, consumers) depends on the `StoragePort` interface. Enforced by convention; could be mechanized with a scoped dep-cruiser rule if drift appears.
+- **Upload config is contract-level.** `UPLOAD_CONFIG[context]` is the source of truth for file size limits and MIME allowlists. UI and backend both import from `@repo/contracts/storage/upload` — no duplication, no drift.
+- **`UploadContext` is a closed union.** Adding a new context (e.g. `"athlete-progress-photo"`) means adding a new entry to `UPLOAD_CONFIG`. The TypeScript compiler forces exhaustiveness; you cannot reach for the port with an unknown context.
+
+### Where it lives today (post-1.4.D)
+
+- **DB:** None. Storage has no Prisma models — it writes to a vendor-provided object store, and consumers persist the returned URL as a plain `String` in their own tables (`MarketingBlogPost.coverImage`, `MarketingReview.authorImage`, `Product.image`, etc.).
+- **Contracts:** `packages/contracts/src/entities/storage/upload/` — subpath export `@repo/contracts/storage/upload`.
+- **API — `api-server`:** `packages/api-server/src/endpoints/storage/upload.ts` + `upload.test.ts` + `index.ts` barrel. Subpath export `@repo/api-server/storage`. Infrastructure lives at `packages/api-server/src/infrastructure/storage/`.
+- **Consumer apps:** `apps/admin` — route handler + UI form components + mutation hooks. No other app consumes Storage today.
+
+### Target state
+
+Landed in 1.4.D (this commit). The supporting-context split is complete:
+
+- `contracts/iam/upload/` → `contracts/storage/upload/`
+- `endpoints/iam/upload.ts` → `endpoints/storage/upload.ts`
+- `iamUploadAdminApi` → `storageUploadAdminApi`
+- `createIamUploadAdminApi` → `createStorageUploadAdminApi`
+- `IamUploadAdminApi` → `StorageUploadAdminApi`
+- New subpath export `@repo/api-server/storage`
+- New subpath export `@repo/contracts/storage/upload`
+- New dep-cruiser rules `contracts-storage-is-leaf` and `api-server-storage-is-leaf`
+- ADR 0013 updated to reference new paths and symbol names
+
+Future work under this context (ports: email, cache, queue, payment from 1.4.C) would NOT live under Storage — those are their own supporting contexts once real adapters appear. Storage is specifically the "file bytes" supporting context; email/queue/etc. each get their own if/when they materialize.
+
+---
+
+## 7. Shared entities: the Product model
 
 `Product` is the only entity in the repo that lives in two contexts simultaneously. The table holds both marketing fields and billing fields, and both contexts legitimately read and write it.
 
@@ -431,7 +495,7 @@ The Prisma model does not split. The contracts and the API do. This keeps the sc
 
 ---
 
-## 7. Cross-context invariants
+## 8. Cross-context invariants
 
 A few invariants span contexts. They do not belong to any single context and are listed here explicitly.
 
@@ -449,7 +513,7 @@ These are the rules a newcomer needs to know within the first hour of reading th
 
 ---
 
-## 8. Dependency rules — what is allowed to import what
+## 9. Dependency rules — what is allowed to import what
 
 This is the authoritative direction graph. The next audit bullet (1.3.A) will encode these rules in `dependency-cruiser`.
 
@@ -459,7 +523,10 @@ LMS        →   IAM
 Coaching   →   IAM, LMS
 CMS        →   IAM, Billing   (read-only: storefront reads Product + Price)
 Billing    →   IAM, LMS       (reference: Product.trainingPlanId)
+Storage    →   (leaf supporting context — depends on nothing domain-side)
 ```
+
+Storage is a supporting context, not a domain context. Its arrow points at nothing (domain-wise); any domain context is free to import from Storage when it needs upload functionality. The dependency graph reads **domain → Storage**, never the reverse — Storage has no idea what a `BlogPost` or an `AthleteProfile` is.
 
 **Forbidden directions:**
 
@@ -470,6 +537,7 @@ Billing    →   IAM, LMS       (reference: Product.trainingPlanId)
 - `Coaching → CMS`, `Coaching → Billing`. Coaching does not render marketing content or manage subscriptions.
 - `CMS → LMS`, `CMS → Coaching`. Marketing surface does not read training data or dashboards.
 - `Billing → CMS`, `Billing → Coaching`. Commerce does not read marketing content or coach state.
+- `Storage → any domain`. Storage is a leaf supporting context. If an upload shape needs to reference a `User` or a `TrainingPlan`, the reference belongs in the domain context, not in Storage.
 
 **The only cross-context writes that are allowed:**
 
@@ -479,7 +547,7 @@ Every other cross-context interaction is a read. Reads are preferable to writes 
 
 ---
 
-## 9. De-facto non-leak: why this document can be written at all
+## 10. De-facto non-leak: why this document can be written at all
 
 A context map is only useful if it reflects reality. At the start of the audit, the following was verified by grep and by reading every endpoint file:
 
@@ -493,7 +561,7 @@ It is easier to lock in correct behavior that already exists than to fix incorre
 
 ---
 
-## 10. Open questions to resolve in later bullets
+## 11. Open questions to resolve in later bullets
 
 Items flagged during the context-mapping pass that do not belong to any single bullet yet:
 
@@ -506,11 +574,11 @@ Items flagged during the context-mapping pass that do not belong to any single b
 
 ---
 
-## 11. How to use this document
+## 12. How to use this document
 
 - **When you add a new endpoint,** identify which context it belongs to first. If it does not fit any of the five contexts above, pause — you may be inventing a new context, and that is a conversation worth having.
 - **When you add a new contract entity,** put it in the correct context folder (`contracts/src/entities/<context>/<entity>/`) and add its subpath export to `packages/contracts/package.json` (`"./<context>/<entity>": "./src/entities/<context>/<entity>/index.ts"`). The reorganization landed in 1.2.B — the flat layout is gone.
-- **When you find a cross-context import that is not explicitly allowed in §8,** treat it as a bug and file it against audit section 1.2 or 1.3. Do not rationalize it — the rules are finite and tight on purpose.
+- **When you find a cross-context import that is not explicitly allowed in §9,** treat it as a bug and file it against audit section 1.2 or 1.3. Do not rationalize it — the rules are finite and tight on purpose.
 - **When product decisions change** (e.g., multiple concurrent subscriptions per user become a requirement), update the affected section here **before** writing code. The document is the intent; the code is the proof.
 
 ## References
@@ -520,5 +588,5 @@ Items flagged during the context-mapping pass that do not belong to any single b
 - `docs/adr/0007-prisma-client-isolated-in-api-server.md` — the rule that puts all Prisma code in one package, which is what makes per-context endpoint reorganization possible.
 - `docs/adr/0008-singleton-subscription-invariant.md` — the canonical example of a context-owned invariant enforced at the DB.
 - `docs/adr/0010-bff-via-http-loopback-for-rsc.md` — the reason context-to-context reads go over HTTP today and why that might change.
-- `CLAUDE.md` section "Global Invariants" — the codified system laws referenced throughout §7.
+- `CLAUDE.md` section "Global Invariants" — the codified system laws referenced throughout §8.
 - `packages/api-server/prisma/schema.prisma` — the physical data reality every context projects from.

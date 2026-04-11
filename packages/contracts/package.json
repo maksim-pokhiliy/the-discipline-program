@@ -29,8 +29,8 @@
     "./coaching/coach-profile": "./src/entities/coaching/coach-profile/index.ts",
     "./coaching/plan-roster": "./src/entities/coaching/plan-roster/index.ts",
     "./iam/auth": "./src/entities/iam/auth/index.ts",
-    "./iam/upload": "./src/entities/iam/upload/index.ts",
-    "./iam/user": "./src/entities/iam/user/index.ts"
+    "./iam/user": "./src/entities/iam/user/index.ts",
+    "./storage/upload": "./src/entities/storage/upload/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

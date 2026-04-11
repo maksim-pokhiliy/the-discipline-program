@@ -7,7 +7,8 @@
     "./cms": "./src/endpoints/cms/index.ts",
     "./lms": "./src/endpoints/lms/index.ts",
     "./coaching": "./src/endpoints/coaching/index.ts",
-    "./iam": "./src/endpoints/iam/index.ts"
+    "./iam": "./src/endpoints/iam/index.ts",
+    "./storage": "./src/endpoints/storage/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
