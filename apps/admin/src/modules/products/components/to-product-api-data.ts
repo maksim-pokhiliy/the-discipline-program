@@ -1,4 +1,4 @@
-import { amountToCents } from "@repo/contracts/common/money";
+import { amountToCents } from "@repo/shared";
 
 import { type ProductFormData } from "./product-form-schema";
 

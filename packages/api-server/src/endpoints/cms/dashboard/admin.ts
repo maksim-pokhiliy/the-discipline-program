@@ -12,7 +12,7 @@ import {
   type UserStats,
 } from "@repo/contracts/cms/dashboard";
 import { ProductCurrency } from "@repo/contracts/cms/product";
-import { centsToAmount } from "@repo/contracts/common/money";
+import { centsToAmount } from "@repo/shared";
 
 import { prisma } from "../../../db/client";
 import {

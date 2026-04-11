@@ -965,10 +965,6 @@ importers:
         version: 5.7.2
 
   packages/shared:
-    dependencies:
-      '@repo/contracts':
-        specifier: workspace:*
-        version: link:../contracts
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
