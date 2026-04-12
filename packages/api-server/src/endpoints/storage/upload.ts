@@ -28,9 +28,8 @@ export const createStorageUploadAdminApi = (storage: StoragePort): StorageUpload
       });
     }
 
-    const timestamp = Date.now();
     const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "-");
-    const filename = `${config.storagePrefix}/${timestamp}-${safeName}`;
+    const filename = `${config.storagePrefix}/${crypto.randomUUID()}-${safeName}`;
 
     const result = await storage.put(filename, file, { access: "public" });
 
