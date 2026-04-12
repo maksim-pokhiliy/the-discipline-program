@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "../../db/client";
 import { ROLE_MAP } from "../../mappers/iam";
 
+const DUMMY_BCRYPT_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+
 export const iamAuthService = {
   hashPassword: async (password: string): Promise<string> => {
     return bcrypt.hash(password, 10);
@@ -28,6 +30,8 @@ export const iamAuthService = {
     });
 
     if (!user || !user.password) {
+      await bcrypt.compare(rawPassword, DUMMY_BCRYPT_HASH);
+
       return null;
     }
 
