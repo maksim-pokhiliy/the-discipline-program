@@ -509,7 +509,37 @@ A few invariants span contexts. They do not belong to any single context and are
 | **Money is Integer**            | Every monetary field is `Int @db.Integer`. No `Float` / `Decimal` on money.                    | Enforced schema-wide.                                                                                |
 | **Singleton Subscription**      | `Subscription.userId @unique`. ADR 0008.                                                       | Enforced at the DB.                                                                                  |
 
-These are the rules a newcomer needs to know within the first hour of reading the codebase. Audit bullet 2.5 will turn this table into a standalone `docs/INVARIANTS.md` once all invariants have been catalogued.
+### Per-aggregate DB-enforced invariants
+
+These invariants are guaranteed by database constraints (`@@unique`, `@unique`, `onDelete`). They do not require application-level guards.
+
+| Aggregate            | Invariant                                        | Constraint                                  | Location            |
+| -------------------- | ------------------------------------------------ | ------------------------------------------- | ------------------- |
+| User                 | One user per email                               | `email @unique`                             | `schema.prisma:12`  |
+| Subscription         | One subscription per user (singleton)            | `userId @unique`                            | `schema.prisma:180` |
+| WorkoutLog           | One log per user+workout pair                    | `@@unique([userId, workoutId])`             | `schema.prisma:288` |
+| PlanEnrollment       | One enrollment per plan+user pair                | `@@unique([trainingPlanId, userId])`        | `schema.prisma:390` |
+| UserBenchmark        | One benchmark per user+definition pair           | `@@unique([userId, benchmarkDefinitionId])` | `schema.prisma:421` |
+| MarketingPageSection | One section per page+section-name pair           | `@@unique([pageSlug, section])`             | `schema.prisma:449` |
+| Product              | One product per slug                             | `slug @unique`                              | `schema.prisma:129` |
+| Product              | One product per Stripe product ID                | `stripeProductId @unique`                   | `schema.prisma:135` |
+| Price                | One price per Stripe price ID                    | `stripePriceId @unique`                     | `schema.prisma:158` |
+| Transaction          | One transaction per provider TX ID               | `providerTxId @unique`                      | `schema.prisma:208` |
+| Transaction          | One transaction per idempotency key (if present) | `idempotencyKey @unique` (nullable)         | `schema.prisma:209` |
+| BenchmarkDefinition  | One definition per name                          | `name @unique`                              | `schema.prisma:400` |
+| MarketingBlogPost    | One post per slug                                | `slug @unique`                              | `schema.prisma:456` |
+| MarketingPage        | One page per slug                                | `slug @unique`                              | `schema.prisma:429` |
+
+### Application-level invariants (not DB-enforced)
+
+| Invariant                                             | Current enforcement                                                    | Risk                                                                                    |
+| ----------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Logs are immutable (create + delete only, no update)  | Application convention in endpoint code                                | No DB-level write guard; a new endpoint could accidentally add update logic             |
+| Money is integer (cents)                              | All monetary fields are `Int`; `centsToAmount`/`amountToCents` helpers | A developer could bypass helpers and do inline math                                     |
+| Coach owns plan (authorization)                       | `verifyPlanOwnership` guard in endpoint code                           | Forgotten guard = unauthorized access                                                   |
+| Coach-athlete relationship requires ACTIVE enrollment | `verifyAthleteBelongsToCoach` guard checks `status === ACTIVE`         | Business logic embedded in guard; may be too restrictive for historical coaching review |
+
+These are the rules a newcomer needs to know within the first hour of reading the codebase.
 
 ---
 
