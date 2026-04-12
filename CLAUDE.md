@@ -263,6 +263,7 @@ export default async function BlogPage() {
 - **Explicit return types on api-server endpoints.** Every function in `api-server/endpoints/` must have an explicit return type annotation using the contract type: `async (): Promise<AdminBlogPageData> => { ... }`. This enforces the contract at the source, not just at the route boundary.
 - **Zod validation limits → entity constants.** Never use magic numbers (`.max(5000)`, `.min(1)`) directly in Zod schemas. Extract to entity constants: `TRAINING_PLAN_CONSTANTS.MAX_NAME_LENGTH`, `WORKOUT_CONSTANTS.MAX_CONTENT_LENGTH`. Limits must be defined once, reusable in both schemas and UI.
 - **Export prop types from `@repo/ui` components.** Every shared component in `@repo/ui` must export its props type. Consumers need these types for composition, wrapping, and typing spread props. `export type StatsCardProps = { ... }`, not just the component.
+- **No behavior in `@repo/contracts`.** Contracts = Zod schemas + inferred types + constants. No utility functions, no formatting helpers, no conversion logic. If a function operates on a contract type, it belongs in the package that owns the behavior (`@repo/shared` for cross-cutting utils, domain-specific package for domain logic). Workarounds like inlining locale values to avoid circular deps are a sign the function is in the wrong package.
 
 ## Commit Convention
 
