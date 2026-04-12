@@ -5,11 +5,11 @@ import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 import { prisma } from "../../db/client";
 import { ROLE_MAP } from "../../mappers/iam";
 
-const DUMMY_BCRYPT_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+const DUMMY_BCRYPT_HASH = "$2a$12$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI/TRRjGi";
 
 export const iamAuthService = {
   hashPassword: async (password: string): Promise<string> => {
-    return bcrypt.hash(password, 10);
+    return bcrypt.hash(password, AUTH_CONSTANTS.BCRYPT_COST_FACTOR);
   },
 
   comparePassword: async (password: string, hash: string): Promise<boolean> => {
