@@ -15,8 +15,10 @@ export const iamAuthService = {
   },
 
   validateUser: async (email: string, rawPassword: string) => {
+    const normalizedEmail = email.toLowerCase().trim();
+
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email: normalizedEmail },
       select: {
         id: true,
         email: true,
