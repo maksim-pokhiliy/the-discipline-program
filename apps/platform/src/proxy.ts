@@ -15,7 +15,6 @@ export const proxy = async (req: NextRequest) => {
   const path = req.nextUrl.pathname;
   const token = await getToken({ req });
 
-  // Authenticated with valid role on login page → redirect to role home
   if (token && path === AUTH_ROUTES.LOGIN) {
     const home = getRoleHome(token.role);
 
@@ -24,12 +23,10 @@ export const proxy = async (req: NextRequest) => {
     }
   }
 
-  // Unauthenticated on protected route → redirect to login
   if (!token && !isPublicRoute(path)) {
     return NextResponse.redirect(new URL(AUTH_ROUTES.LOGIN, req.url));
   }
 
-  // Root → redirect to role home
   if (token && path === "/") {
     const home = getRoleHome(token.role);
 
@@ -40,7 +37,6 @@ export const proxy = async (req: NextRequest) => {
     return NextResponse.redirect(new URL(AUTH_ROUTES.LOGIN, req.url));
   }
 
-  // Role-based route protection: athlete can't visit /coach/*, coach can't visit /athlete/*
   if (token && !isPublicRoute(path)) {
     const home = getRoleHome(token.role);
 
