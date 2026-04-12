@@ -9,7 +9,7 @@ A long-running architectural audit and refactor is active on this repository. Th
 **Before doing anything on this project, read in this order:**
 
 1. `docs/BIGTECH-AUDIT.md` — the audit document, including the "Implementation plan (section 1)" table. The table lists every planned commit with status (`✅ Done`, `⏳ Next`, `Pending`) and commit hash. Find the first row that is not `✅ Done`.
-2. `~/.claude/projects/-home-maksim-projects-contrib-the-discipline-program/memory/project_audit_in_progress.md` — the handoff entry point. Contains full workflow rules, rule file references, resume instructions, and the cleanup trigger for when the audit eventually closes.
+2. `.handoff/` — the handoff system. Start with `.handoff/README.md`, then read `.handoff/audit-state.md` for full workflow rules, rule file references, resume instructions, and cleanup trigger.
 
 **Non-negotiable rules for audit work:**
 
