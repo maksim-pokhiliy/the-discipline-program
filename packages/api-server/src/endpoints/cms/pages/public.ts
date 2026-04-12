@@ -126,7 +126,7 @@ export const cmsPagesPublicApi = {
     return {
       hero: extractSectionData(sections, map.hero),
       form: extractSectionData(sections, map.form),
-      programOptions: products.map((p) => ({ value: p.slug, label: p.title })),
+      programOptions: products.map((p) => ({ slug: p.slug, title: p.title })),
     };
   },
 
