@@ -84,7 +84,10 @@ export const ProgressBucketsSection: React.FC<ProgressBucketsSectionProps> = ({ 
         {athletes.length > 0 ? (
           <Stack spacing={2}>
             {athletes.map((athlete) => (
-              <AthleteCardLink key={athlete.userId} href={athlete.href}>
+              <AthleteCardLink
+                key={athlete.userId}
+                href={`/coach/athletes?athlete=${athlete.userId}`}
+              >
                 <AthleteCard
                   name={athlete.name ?? "Unknown"}
                   image={athlete.image}

@@ -42,7 +42,7 @@ export const ActionItemsSection: React.FC<ActionItemsSectionProps> = ({ items })
         action={
           <ActionMenu
             itemId={item.id}
-            href={item.href}
+            href={`/coach/athletes?athlete=${item.athleteId}`}
             onResolve={resolveMutation.mutate}
             isResolving={isResolving}
           />
