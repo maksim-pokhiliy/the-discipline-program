@@ -22,6 +22,7 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 - **Research per section is done once**, in a single exhaustive pass through all relevant files. New findings during research are added as bullets in the file before implementation begins.
 - **Implementation is one bullet = one commit.** Never bundle multiple bullets. Never split one bullet across commits without a strong reason.
 - **Bullet completion ritual:** check the bullet off with `[x]`, update the Implementation plan table with the commit hash and `✅ Done`, commit. One atomic unit.
+- **After closing a bullet:** present a flat bullet list of what was done, then **stop and wait for the user's explicit "ok"** before starting the next bullet. Never proceed to research or implementation of the next bullet without confirmation.
 - **Stop condition for research:** "files for that section ran out", not "I have enough findings". The user is explicit about this.
 
 ## Drift check — mandatory on every session resume
@@ -35,48 +36,53 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-12 (section 1.5 in progress, 1.5.B done)
+## Current state — 2026-04-12 (sections 1+2 complete, next is §3 Безопасность)
 
-**Branch:** `refactor/design-system-typography-hero` (3 commits ahead of `origin/`, working tree clean)
-**Last commit:** `3170851 docs(audit): record 1.5.b commit hash in implementation plan`
-**Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (236/236), `pnpm dep:check` ✓ (0 violations / 806 modules / 1429 deps).
+**Branch:** `refactor/design-system-typography-hero` (146 commits ahead of `origin/`, working tree clean)
+**Last commit:** `52cb4f4 docs(audit): close section 2, record 2.6.a-d commit hashes`
+**Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (236/236).
 
-**Section 1.5 research completed on 2026-04-12.** All existing bullets validated against code. Findings:
+### Section 1 (Архитектура и границы) — CLOSED
 
-- NextAuth duplication bullet closed by ADR 0011 (marked `[x]` in doc)
-- 1.5.A scope expanded to include platform missing blob `remotePatterns` + marketing dead Instagram CDN hostname
-- 1.5.B scope expanded to include `VERCEL_GIT_COMMIT_SHA` wiring for `/api/version`
-- Unmapped bullets: webhooks → §3/§4, false client components → §10, `withPlatformAuth` no role check → §3
+All subsections 1.1–1.6 done. Key deliverables:
 
-**1.5.A done.** Commit `e9566aa`:
+- ADR framework (0001–0014) + backfill of 13 implicit decisions
+- Bounded contexts documented + contracts/api-server reorganized by context
+- Dependency-cruiser with 17+ boundary rules, CI pipeline, dep graph artifact
+- Infrastructure ports (storage live, email/cache/queue/payment scaffolded)
+- Security headers, health endpoints, deploy docs, `.env.example`
+- Admin proxy (ADMIN role check), platform proxy (role-based route protection)
+- Package.json hygiene (dual-instance fix, wildcard exports, version alignment)
 
-- `vercel.json` in all 3 apps with 7 security headers (HSTS 2yr+preload, X-Content-Type-Options nosniff, X-Frame-Options DENY, Referrer-Policy strict-origin-when-cross-origin, X-XSS-Protection 0, Permissions-Policy, baseline CSP)
-- CSP baseline: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: *.public.blob.vercel-storage.com; font-src 'self'; connect-src 'self'; frame-ancestors 'none'`. Marketing also allows `images.unsplash.com` (seed data). `'unsafe-inline'` for scripts is a Next.js hydration constraint — strict nonce-based CSP is a §10 concern.
-- Platform `next.config.ts`: added blob `remotePatterns` (was empty config)
-- Marketing `next.config.ts`: removed dead `scontent-iev1-1.cdninstagram.com` (not in code, not in seed)
+### Section 2 (Доменная модель) — CLOSED
 
-**Section 1.4 was closed prior session.** 1.4.A live, 1.4.B deferred to §2, 1.4.C live, 1.4.D live.
+Implementation plan: 2.1.A–2.6.D done (2.4.A deferred — no consumers). Key deliverables:
 
-**1.4.C scaffolding decisions (M7 filter):** Each port gets a **committed interface**, not an empty placeholder. The safe common denominators: `EmailPort.send` (Resend/Postmark/SES/Mailgun/Sendgrid shared shape), `CachePort.get<T>/set<T>/delete` (Upstash/Vercel KV/Redis universal K/V), `QueuePort.enqueue<T>` — **producer side only**, consumer registration deferred because Inngest/QStash/BullMQ diverge on worker lifecycle, `PaymentPort.createCheckout + verifyWebhook` — **only** the two operations every hosted-checkout vendor supports identically. Subscriptions, refunds, invoices, customer portals all deferred to narrower future ports. Each port dir has `port.ts` + `index.ts` (type re-exports only, no default singleton yet — adapter hasn't landed) + `README.md`. Top-level `infrastructure/README.md` codifies the convention (port dir layout, dep rules, how to add a new port, non-goals). Module count 789 → 797. **Rule that came out of 1.4.C execution:** if you can't point at a concrete consumer needing a method, don't add it to the port. `register()` / `subscribe()` / `getPortalUrl()` / `deleteByPrefix()` / `sendBatch()` — all deferred by this rule. Speculative port methods age into either vendor-shaped leaks or `NotImplementedError` stubs.
+- Domain invariants documented in BOUNDED-CONTEXTS.md §8 (14 DB + 4 app-level)
+- Ubiquitous language glossary (§12, 17 terms, "Program" banned as code term)
+- Money VO: `moneySchema` + `Money` type in contracts, utility functions in shared
+- Anti-pattern: "No behavior in `@repo/contracts`" added to CLAUDE.md
+- Magic number extracted (`ADHERENCE_ON_TRACK_THRESHOLD`)
+- UI concerns removed from domain (hrefs, form-field mapping)
+- ADRs 0015–0017: archived inconsistency, plain text workouts, anemic domain
 
-**1.4.D execution notes:**
+### Next up: Section 3 (Безопасность)
 
-- Git recognized contracts moves as 100% renames, endpoint moves as 87%/89% (after symbol renames inside the file). This means git blame is preserved — future readers can still run `git log --follow` through the rename.
-- **Two new dep-cruiser rules:** `contracts-storage-is-leaf` (contracts/storage can't import from domain contracts) and `api-server-storage-is-leaf` (endpoints/mappers of storage can't import from domain endpoints/mappers). First run: 0 violations on 798 modules. Storage is a leaf supporting context from its own perspective; any domain context can still reach INTO storage. Rule direction: `domain → Storage`, never reverse.
-- **BOUNDED-CONTEXTS.md major rewrite:** §1 IAM renamed "Identity, Access, and Media" → "Identity and Access" (media moved out). The "Upload is bolted on because nowhere else for it" paragraph removed. New §6 "Storage — supporting context (file upload)" written in full — responsibility, why it exists separately, what it owns, dependencies (none inbound from domain), who can import from it, invariants (vendor isolation, config contract-level, closed UploadContext union), where it lives, target state. Sections §7–§12 renumbered (old §6–§11). **Cross-refs updated:** §6→§7 × 3 (Product split rule), §8→§9 (dep rules), §7→§8 (invariants). §9 Dep rules table gained a Storage row + explicit `Storage → any domain` forbidden direction.
-- **ADR 0013** (Vercel Blob) updated to reference new paths (`endpoints/storage/upload.ts`, `infrastructure/storage/`, `contracts/storage/upload/`) and new symbol names (`createStorageUploadAdminApi`, `storageUploadAdminApi`). ADR status stays "Accepted (interim)" — the "interim" there is about vendor choice (Blob vs S3/R2/GCS), not about architectural placement, so M7 filter doesn't object.
-- **Infrastructure READMEs from 1.4.C updated retroactively.** `infrastructure/README.md` + `email/README.md` + `cache/README.md` had historical references to `endpoints/iam/upload.ts` / `createIamUploadAdminApi` / `endpoints/iam/index.ts`; these point at the new storage context paths now. READMEs describe current code state, not history — git log is for history.
-- **Dep graph regenerated but byte-identical.** `scripts/dep-graph.mjs` collapses to `^(packages|apps)/[^/]+`, so moving a file between subdirectories of the same package doesn't change the mermaid output. The commit doesn't re-stage the graph file.
-- **Test count stable at 236.** `upload.test.ts` got the same symbol rename (`createIamUploadAdminApi` → `createStorageUploadAdminApi` in the describe + `api = createXxx(storage)` bodies) but runtime behavior is byte-identical.
-- **5 admin consumer files** touched — route handler + UI hooks + 2 form components + 1 api client endpoint. Platform and marketing apps untouched — upload is admin-only today, and the `admin-no-lms` / `platform-no-cms-billing` / etc. rules don't change because Storage is a supporting context and sits outside those scopes.
+Status in audit doc: "Не начато". ~25 bullets already written from initial research. Several cross-referenced from §1 work (SessionGuard role check done in 1.5.E/F, `.env.example` done in 1.5.D). Research pass needed to validate existing bullets against current code and find new issues.
 
-**1.4.A survives the M7 filter unchanged.** It is a decomposition with visible documented intermediate state — 1.4.D explicitly landed as the supporting-context move. No "interim" closure language in 1.4.A.
+**Cross-refs already closed by prior sections:**
 
-**Sections 1.2 and 1.3 are unaffected** by 1.4 work. They are context-reorganization and boundary-enforcement work — classic staff+ output.
+- `SessionGuard` not checking role → fixed in 1.5.E (admin proxy) + 1.5.F (platform proxy)
+- `apps/admin` no middleware/proxy → fixed in 1.5.E
+- No `.env.example` → created in 1.5.D
 
-`.github/workflows/ci.yml` still hasn't run on GitHub — branch is now 48 commits ahead of origin, unpushed. First CI run will happen whenever the branch is finally pushed.
+### Operational notes
 
-**Known flaky test — local only:** On lefthook pre-commit (local), the test suite occasionally fails with `PrismaClientInitializationError: Can't reach database server at ep-royal-wind-a2xmokcb-pooler.eu-central-1.aws.neon.tech` — this is Neon serverless cold-start timing out mid-run. Happens maybe 1 in 4 commits. **Always retry the commit once** before investigating. 1.3.B eliminated this in CI by spinning up a local `postgres:16-alpine` service container per run (fresh DB, no Neon dependency) — but local lefthook still talks to Neon dev because that's what `.env` points at. File as a section-9 (Testing) audit bullet when that section begins: local test runner should either also use a containerized DB or have retry logic baked in.
+- `.github/workflows/ci.yml` hasn't run on GitHub yet — branch unpushed.
+- **Known flaky test (local only):** Neon cold-start timeout ~1 in 4 commits. Always retry once. CI uses local postgres container (no Neon dep). File as §9 bullet.
+- **Next.js 16 uses `proxy.ts` not `middleware.ts`** — both admin and platform already have correct `proxy.ts` files.
+- `dep-graph.mjs` fixed for Windows (`execSync` with quoted collapse pattern instead of `execFileSync` which fails on cmd.exe special chars).
+- `taskfile.dist.yml` updated with `dep:check` and `dep:graph` tasks.
 
 **Section 1 (Архитектура и границы):** in progress.
 
