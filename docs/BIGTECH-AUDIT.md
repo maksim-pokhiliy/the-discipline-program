@@ -205,45 +205,73 @@ DDD lens. Без правильной модели всё, что на ней п
 
 ## 3. Безопасность
 
-**Статус:** Не начато
+**Статус:** Research done, implementation pending
 
 То, на чём валят code review в больших компаниях. Критично закладывать до того, как появятся реальные пользователи и реальные деньги.
 
+### AuthZ
+
 - [ ] **AuthZ > AuthN.** AuthN есть (NextAuth + wrappers). AuthZ — тоньше. Сейчас есть `verifyAthleteBelongsToCoach()`, но это ручная проверка в каждом хэндлере. Big Tech-подход: policy layer (CASL, oso, opa) — декларативные правила доступа, а не `if`'ы по всему коду.
-- [ ] **`withPlatformAuth` не проверяет роль вообще** (`packages/api-routes/src/auth-wrappers.ts:28-37`) — только наличие session. Любой authenticated user (coach / athlete / admin) может вызвать ЛЮБОЙ platform endpoint. Разграничение полностью лежит на ручных guards внутри endpoint'а. Забыл вызвать guard = утечка.
-- [ ] **`withAdminAuth` проверяет только `role === ADMIN`** — нет проверки «этот admin авторизован для ЭТОГО resource». Один ADMIN может всё.
-- [ ] **AuthZ guards в `packages/api-server/src/endpoints/platform/guards.ts` делают по 1-2 DB query КАЖДЫЙ перед основной операцией.** Для `updateWorkout(userId, workoutId, data)`: `resolveCoachId` (1 query) + `verifyWorkoutOwnership` (1 query, включая plan join) + сама мутация (1 query) = 3 sequential queries на одно действие. Policy layer с single projection решил бы это одним query.
+- [ ] **`withPlatformAuth` не проверяет роль вообще** (`packages/api-routes/src/auth-wrappers.ts:28-37`) — только наличие session. Proxy.ts защищает UI-маршруты (§1.5.E/F), но API endpoints остаются открытыми для любого authenticated user. Забыл вызвать guard в endpoint'е = утечка данных.
+- [ ] **`withAdminAuth` проверяет только `role === ADMIN`** — нет проверки «этот admin авторизован для ЭТОГО resource». Один ADMIN может всё. Низкий приоритет при single-admin setup, но архитектурный долг.
+- [ ] **AuthZ guards в `packages/api-server/src/authz/guards.ts` делают по 1-2 DB query КАЖДЫЙ перед основной операцией.** Для `updateWorkout(userId, workoutId, data)`: `resolveCoachId` (1 query) + `verifyWorkoutOwnership` (1 query, включая plan join) + сама мутация (1 query) = 3 sequential queries на одно действие. Policy layer с single projection решил бы это одним query.
 - [ ] **`resolveCoachId(userId)` не кэшируется** между вызовами одного request'а. Если endpoint делает 3 auth-protected действия — 3 одинаковых DB lookup'а.
-- [ ] **Row-level security.** Для multi-tenant (coach видит своих athletes) — либо Postgres RLS, либо централизованный query guard. Никаких `where: { coachId }` по всему коду: один забытый `where` — и утечка. Сейчас `getCalendarWeek` использует inline `plan: { coachId }`, но другие методы делают отдельный `verifyPlanOwnership` — непоследовательно.
-- [ ] **`verifyAthleteBelongsToCoach` требует `status === ACTIVE`** (`guards.ts:63`). PAUSED / COMPLETED enrollment не даёт coach'у доступ к логам athlete'а — может быть legitimately нужно для coaching review.
+- [ ] **Row-level security inconsistency.** Для multi-tenant (coach видит своих athletes) — `getCalendarWeek` использует inline `plan: { coachId }`, другие методы — отдельный `verifyPlanOwnership`. Нет единой стратегии: либо Postgres RLS, либо централизованный query guard.
+- [ ] **`verifyAthleteBelongsToCoach` требует `status === ACTIVE`** (`authz/guards.ts:63`). PAUSED / COMPLETED enrollment не даёт coach'у доступ к логам athlete'а — может быть legitimately нужно для coaching review.
+
+### Credentials & session
+
+- [ ] **`iamAuthService.validateUser` — timing attack на user enumeration** (`packages/api-server/src/endpoints/iam/auth-service.ts:30-32`). Если user не существует, `bcrypt.compare` НЕ вызывается → ранний return ~1ms vs ~100-300ms с bcrypt. Атакующий может через timing определить, какие email зарегистрированы.
+- [ ] **Email без нормализации** в `validateUser` — `where: { email }` as-is. User зарегистрированный как `FOO@example.com` не сможет войти через `foo@example.com` (Postgres case-sensitive).
+- [ ] **`MIN_PASSWORD_LENGTH = 6`** (`packages/contracts/src/entities/iam/auth/auth.constants.ts:2`) — слабо. NIST 800-63B рекомендует ≥ 8, OWASP ≥ 12.
+- [ ] **Нет `MAX_PASSWORD_LENGTH`** — DoS на bcrypt через gigabyte password. bcrypt truncates at 72 bytes, но парсинг + хеширование огромной строки = resource exhaustion.
+- [ ] **`bcrypt` cost inconsistency** — `auth-service.ts:8` использует cost 10, `seed.ts:1214` использует cost 12. Должно быть единое значение из `AUTH_CONSTANTS`.
+- [ ] **`SESSION_MAX_AGE = 30 * 24 * 60 * 60`** — 30 дней JWT без revocation. Утёкший токен валиден месяц. Нет механизма blacklist/revocation — logout удаляет cookie, но сам JWT остаётся валидным.
+- [ ] **Только CredentialsProvider** — нет OAuth, нет MFA/2FA, нет magic link. Design decision, но стоит зафиксировать ADR.
+
+### Environment & secrets
+
+- [ ] **`NEXTAUTH_SECRET: z.string().min(1)`** (`packages/env/src/auth.ts:6`) — минимум **1 символ**. Должно быть `.min(32)` для HS256 JWT (256-bit minimum).
+- [ ] **`BLOB_READ_WRITE_TOKEN: z.string().min(1)`** (`packages/env/src/blob.ts:6`) — аналогично, слабая валидация API-токена.
+- [ ] **`DATABASE_URL: z.string().url()`** (`packages/env/src/base.ts:6`) — любой URL проходит, не обязательно postgres. `.startsWith("postgres")` было бы точнее.
+- [ ] **Seed `password123` без prod guard** (`prisma/seed.ts`). `clearAll()` удаляет ВСЕ данные без проверки `NODE_ENV`. Нет `if (NODE_ENV === "production") throw`. Credentials выводятся в console plaintext (строки 1229-1231).
+
+### Input validation
+
+- [ ] **`image: z.string()` без `.url()` validation** — 9 мест в контрактах (`user.schema.ts`, `plan-roster.schema.ts`, `coach-athletes.schema.ts`, `coach-dashboard-api.schema.ts`, `pages.schema.ts`). `"javascript:alert(1)"` проходит Zod и рендерится как `<img src>` или `<a href>` = stored XSS.
+- [ ] **`timezone: z.string()`** в `user.schema.ts` — не IANA timezone validation. Любая строка проходит, может сломать scheduling logic.
+- [ ] **Upload MIME type — client-trusting** (`packages/api-server/src/endpoints/storage/upload.ts:15`). Проверяет `file.type` из клиентского запроса, нет server-side magic byte verification. Можно отправить EXE с `Content-Type: image/jpeg`.
+- [ ] **Upload filename collision** (`storage/upload.ts:31`). `Date.now()` — при двух загрузках в одном ms возможна коллизия. Нужен UUID или crypto.randomBytes.
+
+### Infrastructure
+
+- [ ] **Нет rate limiting нигде.** Ни `rateLimit`, ни `@upstash/ratelimit` в коде. Ни на auth endpoints, ни на public contact form.
+- [ ] **Contact form POST без защиты** (`/api/public/contact`) — единственный публичный POST endpoint, полностью открыт для спама. Минимум rate limit, идеально captcha.
+- [ ] **CSP `script-src 'unsafe-inline'`** (`apps/*/vercel.json`) — позволяет inline scripts, значительно ослабляет Content-Security-Policy. Нужен nonce-based CSP или hash.
+
+### Logging & errors
+
+- [ ] **`handleApiError` логирует `console.error("API Error:", error)`** (`packages/api-routes/src/error-handler.ts:11`) — unstructured log без redaction. Если error.details содержит password / token / email — попадёт в log as-is.
+- [ ] **Error response включает `details` в dev mode** — если AppError случайно содержит sensitive данные, они уйдут в dev response.
+
+### Data protection
+
+- [ ] **PII классификация не задокументирована.** `AthleteProfile` содержит `healthStatus`, `healthNote`, `weightKg`, `heightCm` — потенциально медицинские данные (HIPAA-territory). Нет encryption-at-rest, нет retention policy, нет access audit log.
+- [ ] **StructuredData XSS** (`apps/marketing/src/lib/components/seo/structured-data.tsx:14-16`). `JSON.stringify(structuredData)` в `dangerouslySetInnerHTML` для `<script type="application/ld+json">`. Если `structuredData` содержит user input с `</script>`, это XSS. `JSON.stringify` не экранирует `</script>`.
+
+### Billing (deferred)
+
 - [ ] **Идемпотентность платёжных мутаций.** Любая платёжная мутация должна принимать `Idempotency-Key`. Не опция — обязательное требование Stripe / PayPal.
-- [x] **`Transaction.idempotencyKey String? @unique` уже в БД** (`schema.prisma:209`) — **но Optional**. Схема позволяет создавать транзакции без ключа. Нужно сделать `NOT NULL` + написать middleware, который принимает `Idempotency-Key` header и применяет.
+- [x] **`Transaction.idempotencyKey String? @unique` уже в БД** (`schema.prisma:209`) — **но Optional**. Схема позволяет создавать транзакции без ключа.
 - [x] **`Transaction.providerTxId String @unique`** (`schema.prisma:208`) — идемпотентность со стороны провайдера уже enforced на БД.
-- [ ] **Аудит.** Любое изменение денежных или доступных ресурсов должно оставлять append-only запись: кто, когда, что, IP, source. Compliance (GDPR, SOC2) без этого не пройдёшь.
-- [ ] **OWASP базово.** Rate limiting (где? на каком уровне? per user / per IP?), CSRF (NextAuth handles формы, но проверить), input sanitization для RichText (XSS-вектор в CMS), SSRF в загрузчиках изображений (`iamUploadAdminApi`), file upload validation.
-- [ ] **`iamUploadAdminApi.uploadImage`** использует `Date.now()` как часть filename (`packages/api-server/src/endpoints/iam/upload.ts:26`) — при двух быстрых загрузках в одном ms возможна коллизия.
-- [ ] **Нет rate limiting в `withErrorHandling` / `createAuthWrappers`.** Ни одного вызова `rateLimit` или `@upstash/ratelimit` в коде.
-- [ ] **Нет CSRF protection для не-NextAuth endpoints.** Public form `/api/public/contact` принимает POST — нужен rate limit минимум и captcha максимум.
-- [ ] **PII классификация.** Какие поля — PII? Где шифруются? Сколько хранятся? У `AthleteProfile` есть `healthStatus`, `healthNote`, `weightKg`, `heightCm` — это потенциально медицинские данные (HIPAA-territory).
-- [ ] **`handleApiError` логирует `console.error("API Error:", error)`** (`packages/api-routes/src/error-handler.ts:11`) — unstructured log без redaction. Если error.details содержит password / token / email — попадёт в log as-is. Нужен redactor на уровне logger'а.
-- [ ] **Error response включает `details` в dev mode** — если AppError случайно содержит sensitive данные, они уйдут в dev response и в log.
-- [ ] **Secrets hygiene.** `@repo/env` с Zod — хорошо. Добавить: проверку «никогда не логировать env в prod», `.env.example` как канон, вращение секретов, отделение build-time vs runtime env.
-- [ ] **`NEXTAUTH_SECRET: z.string().min(1)`** (`packages/env/src/auth.ts:6`) — минимум **1 символ**! Должно быть `.min(32)` для HS256 JWT (256-bit minimum).
-- [ ] **`DATABASE_URL: z.string().url()`** (`packages/env/src/base.ts:6`) — любой URL проходит, не обязательно postgres.
-- [ ] **Нет `.env.example`** в репо — новый разработчик не знает, что настраивать. 5 отдельных `.env` файлов в root + api-server + admin + platform + marketing — duplicated secret management.
-- [ ] **`MIN_PASSWORD_LENGTH = 6`** (`packages/contracts/src/entities/auth/auth.constants.ts:2`) — слабо. NIST 800-63B рекомендует ≥ 8, OWASP ≥ 12.
-- [ ] **Нет `MAX_PASSWORD_LENGTH`** — DoS на bcrypt через gigabyte password.
-- [ ] **Нет password complexity requirements** (uppercase, digits, special) — учитывая что могут быть медицинские данные athlete, expected.
-- [ ] **`SESSION_MAX_AGE = 30 * 24 * 60 * 60`** — 30 дней JWT без revocation. Утёкший токен валиден месяц. Должно быть access token short (15-60 мин) + refresh token длинный.
-- [ ] **`iamAuthService.validateUser` — timing attack на user enumeration** (`packages/api-server/src/endpoints/iam/auth-service.ts:15-32`). Если user не существует, `bcrypt.compare` НЕ вызывается → разное latency для existing vs non-existing user. Атакующий может через timing понять, какие email в системе.
-- [ ] **`bcrypt.hash(password, 10)`** — salt rounds magic number 10. В 2026 рекомендуется 12-14.
-- [ ] **Email без нормализации** в `validateUser` — `where: { email }` as-is. User с `FOO@...` не сможет войти через `foo@...` (Postgres case-sensitive).
-- [ ] **Только CredentialsProvider** — нет OAuth, нет MFA/2FA, нет magic link.
-- [ ] **`SessionGuard` не проверяет role** (`packages/auth/src/providers/session-guard.tsx`) — только `required: true`. Значит athlete может посетить admin-only pages (HTML render'ится), SessionGuard пропустит.
-- [ ] **`apps/admin` нет middleware/proxy** — только platform имеет `proxy.ts`. Admin pages защищены только client-side (`SessionGuard`).
-- [ ] **`XSS через `image: z.string()`и`name: z.string()`** в `user.schema.ts` — не URL-validated, нет sanitization. `"javascript:alert(1)"` проходит.
-- [ ] **`timezone: z.string()`** в user schema — не IANA timezone validation.
-- [ ] **Seed `password123` для всех users** — weak dev credentials. Если seed случайно запустится в prod-adjacent env, установит backdoor passwords.
+- [ ] **Аудит лог.** Любое изменение денежных или доступных ресурсов должно оставлять append-only запись: кто, когда, что, IP, source. Compliance (GDPR, SOC2) без этого не пройдёшь.
+
+### Closed by prior sections
+
+- [x] **`SessionGuard` не проверяет role** — закрыто в §1.5.E (admin `proxy.ts` с `role === ADMIN` check) + §1.5.F (platform `proxy.ts` с role-based route protection). `SessionGuard` остаётся client-side fallback, но proxy обеспечивает server-side enforcement.
+- [x] **`apps/admin` нет middleware/proxy** — закрыто в §1.5.E. Admin теперь имеет `proxy.ts` с проверкой `UserRole.ADMIN`.
+- [x] **Нет `.env.example`** — закрыто в §1.5.D.
+- [x] **OWASP базово (частично)** — RichText XSS закрыт: `RichTextViewer` использует `DOMPurify.sanitize()` (`packages/ui/src/components/rich-text-viewer.tsx:74`). Security headers добавлены в §1.5.A (`vercel.json` с HSTS, X-Content-Type-Options, X-Frame-Options, Referrer-Policy, Permissions-Policy, CSP). Rate limiting и CSRF остаются открытыми (см. выше).
 
 ---
 
