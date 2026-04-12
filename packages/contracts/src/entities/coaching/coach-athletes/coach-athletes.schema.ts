@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { imageUrlSchema } from "../../../common/image";
 import { HealthStatus } from "../athlete-profile";
 import { ProcessStatus } from "../coach-dashboard";
 
@@ -12,7 +13,7 @@ export const coachAthleteListItemSchema = z.object({
   userId: z.string().cuid(),
   name: z.string().nullable(),
   email: z.string(),
-  image: z.string().nullable(),
+  image: imageUrlSchema,
   healthStatus: z.nativeEnum(HealthStatus),
   activePlans: z.array(coachAthletePlanSchema),
   processStatus: z.nativeEnum(ProcessStatus),

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { imageUrlSchema } from "../../../common/image";
 import { HealthStatus } from "../athlete-profile";
 import { ActionItemSeverity, ActionItemType } from "../coach-action-item";
 
@@ -24,7 +25,7 @@ export const dashboardActionItemSchema = z.object({
   severity: z.nativeEnum(ActionItemSeverity),
   athleteId: z.string().cuid(),
   athleteName: z.string().nullable(),
-  athleteImage: z.string().nullable(),
+  athleteImage: imageUrlSchema,
   message: z.string(),
   createdAt: z.date(),
 });
@@ -33,7 +34,7 @@ export const athleteDailySummarySchema = z.object({
   userId: z.string().cuid(),
   name: z.string().nullable(),
   email: z.string(),
-  image: z.string().nullable(),
+  image: imageUrlSchema,
   planId: z.string().cuid().nullable(),
   planName: z.string().nullable(),
   todayStatus: todayStatusSchema,
@@ -47,7 +48,7 @@ export const athleteDailySummarySchema = z.object({
 export const progressAthleteSchema = z.object({
   userId: z.string().cuid(),
   name: z.string().nullable(),
-  image: z.string().nullable(),
+  image: imageUrlSchema,
   processStatus: z.nativeEnum(ProcessStatus),
 });
 
