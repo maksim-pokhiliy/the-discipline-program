@@ -21,7 +21,7 @@
     "@repo/errors": "workspace:*"
   },
   "peerDependencies": {
-    "next": "*"
+    "next": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

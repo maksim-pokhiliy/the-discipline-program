@@ -19,7 +19,6 @@
     "@types/react": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "sonner": "catalog:",
     "typescript": "catalog:"
   },
   "peerDependencies": {
