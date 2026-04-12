@@ -4,6 +4,7 @@ import {
   type ProgressAthlete,
   type ProgressBuckets,
   ADHERENCE_IMPROVING_THRESHOLD,
+  ADHERENCE_ON_TRACK_THRESHOLD,
   ProcessStatus,
   TodayStatus,
 } from "@repo/contracts/coaching/coach-dashboard";
@@ -229,7 +230,9 @@ export const computeProcessStatus = (
     return ProcessStatus.FALLING_BEHIND;
   }
 
-  return currentAdherence >= 0.7 ? ProcessStatus.ON_TRACK : ProcessStatus.STEADY;
+  return currentAdherence >= ADHERENCE_ON_TRACK_THRESHOLD
+    ? ProcessStatus.ON_TRACK
+    : ProcessStatus.STEADY;
 };
 
 export const computeProgressBuckets = (enrollments: EnrollmentWithData[]): ProgressBuckets => {
