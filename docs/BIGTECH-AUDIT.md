@@ -12,7 +12,7 @@
 
 ## Прогресс
 
-- [ ] 1. Архитектура и границы
+- [x] 1. Архитектура и границы
 - [ ] 2. Доменная модель
 - [ ] 3. Безопасность
 - [ ] 4. Надёжность и операционка
@@ -29,7 +29,7 @@
 
 ## 1. Архитектура и границы
 
-**Статус:** В работе — 1.1 (ADR) + 1.2.A–K (все) + 1.3 (все — .A/.B/.C) завершены. **Section 1.3 полностью закрыта**: dep-cruiser boundary rules (1.3.A), GitHub Actions CI (1.3.B), committed dep-graph artifact (1.3.C). 1.4–1.6 впереди. Первая волна section 1.3 закрыла gap между "работа 1.2 сделана" и "работа 1.2 защищена от regression".
+**Статус: Завершена.** Все подсекции (1.1–1.6) закрыты. 29 коммитов (1.1.A–1.6.D, включая deferred 1.4.B → §2).
 
 System, not code. Это фундамент — всё остальное стоит на нём, поэтому идёт первым. Неправильные решения на этом уровне отравляют все последующие.
 
@@ -78,7 +78,7 @@ System, not code. Это фундамент — всё остальное сто
 | 1.6.A | `23f805d`   | ✅ Done        | Fix `@repo/auth` dual-instance risk: remove `next-auth` from `dependencies`, keep only in `peerDependencies`. Consumer apps (admin, platform) already have `next-auth` in their own dependencies. Lockfile updated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | 1.6.B | `b38d6e1`   | ✅ Done        | Replace `@repo/ui` wildcard `exports` with controlled public API via `index.ts`. Removed `"./*": "./src/*.tsx"` wildcard — zero consumers used it (all import from root `@repo/ui`). Public API now exclusively through `src/index.ts` barrel.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | 1.6.C | `8622e39`   | ✅ Done        | Declare `@repo/contracts` dependency in `@repo/api-client`. Client code doesn't import contracts yet (raw generic `request<T>`), but the dependency declaration makes the graph honest. Actual response validation is a §6 concern.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| 1.6.D | `COMMIT`    | ✅ Done        | Minor package.json hygiene: `@repo/api-client` peer `next: "*"` → `catalog:` (pinned to 16.1.1), `@repo/query` removed `sonner` from `devDependencies` (already in `peerDependencies`), `@repo/env` version `0.0.0` → `0.1.0` (aligned with other packages).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 1.6.D | `689593e`   | ✅ Done        | Minor package.json hygiene: `@repo/api-client` peer `next: "*"` → `catalog:` (pinned to 16.1.1), `@repo/query` removed `sonner` from `devDependencies` (already in `peerDependencies`), `@repo/env` version `0.0.0` → `0.1.0` (aligned with other packages).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 **Execution order** (derived from dependencies): 1.1 → 1.3.A (early so subsequent refactors trip dep-cruiser fast) → 1.2 → 1.4 → 1.5 → 1.6 → 1.3.B/C (CI gate last, when structure is stable).
 
