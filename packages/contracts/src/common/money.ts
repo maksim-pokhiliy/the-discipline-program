@@ -1,0 +1,22 @@
+import { z } from "zod";
+
+export const CENTS_PER_UNIT = 100;
+
+export const centsToAmount = (cents: number): number => cents / CENTS_PER_UNIT;
+
+export const amountToCents = (amount: number): number => Math.round(amount * CENTS_PER_UNIT);
+
+export const formatPrice = (amountCents: number, currency: string): string =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(centsToAmount(amountCents));
+
+export const moneySchema = z.object({
+  amountCents: z.number().int(),
+  currency: z.string().min(3).max(3),
+});
+
+export type Money = z.infer<typeof moneySchema>;
