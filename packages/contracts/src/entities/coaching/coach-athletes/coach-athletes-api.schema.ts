@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { imageUrlSchema } from "../../../common/image";
 import { PlanEnrollmentStatus } from "../../lms/plan-enrollment";
 import { HealthStatus } from "../athlete-profile";
 import { ActionItemSeverity, ActionItemType } from "../coach-action-item";
@@ -57,7 +58,7 @@ export const coachAthleteDetailSchema = z.object({
   userId: z.string().cuid(),
   name: z.string().nullable(),
   email: z.string(),
-  image: z.string().nullable(),
+  image: imageUrlSchema,
   healthStatus: z.nativeEnum(HealthStatus),
   processStatus: z.nativeEnum(ProcessStatus),
   planDiscipline: z.array(planDisciplineSchema),

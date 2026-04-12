@@ -77,7 +77,7 @@ export const aboutPagePersonalSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
   description: z.string(),
-  image: z.string(),
+  image: z.string().url(),
   name: z.string(),
   role: z.string(),
 });
