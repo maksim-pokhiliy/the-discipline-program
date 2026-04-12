@@ -4,7 +4,7 @@ import CheckIcon from "@mui/icons-material/Check";
 import { Button, Grid, Stack, Typography } from "@mui/material";
 
 import { type Product, PRICE_INTERVAL_LABELS } from "@repo/contracts/cms/product";
-import { formatPrice } from "@repo/shared";
+import { formatPrice } from "@repo/contracts/common";
 import { BaseModal } from "@repo/ui";
 
 type ProductModalProps = {
