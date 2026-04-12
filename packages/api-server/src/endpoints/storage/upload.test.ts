@@ -38,7 +38,7 @@ describe("createStorageUploadAdminApi", () => {
       expect(storage.put).toHaveBeenCalledTimes(1);
       const [key, receivedFile, options] = storage.put.mock.calls[0] ?? [];
 
-      expect(key).toMatch(/^blog\/\d+-cover\.png$/);
+      expect(key).toMatch(/^blog\/[0-9a-f-]{36}-cover\.png$/);
       expect(receivedFile).toBe(file);
       expect(options).toEqual({ access: "public" });
       expect(result).toEqual({ url: "https://fake.storage/object" });
@@ -52,7 +52,7 @@ describe("createStorageUploadAdminApi", () => {
 
       const [key] = storage.put.mock.calls[0] ?? [];
 
-      expect(key).toMatch(/^blog\/\d+-my-file--final--\.png$/);
+      expect(key).toMatch(/^blog\/[0-9a-f-]{36}-my-file--final--\.png$/);
       expect(key).not.toMatch(/[() !]/);
     });
 
@@ -70,7 +70,7 @@ describe("createStorageUploadAdminApi", () => {
 
         const [key] = storage.put.mock.calls[0] ?? [];
 
-        expect(key).toMatch(new RegExp(`^${expectedPrefix}/\\d+-pic\\.jpg$`));
+        expect(key).toMatch(new RegExp(`^${expectedPrefix}/[0-9a-f-]{36}-pic\\.jpg$`));
         expect(UPLOAD_CONFIG[context].storagePrefix).toBe(expectedPrefix);
       },
     );
