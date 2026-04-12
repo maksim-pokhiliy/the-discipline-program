@@ -26,7 +26,6 @@ export const dashboardActionItemSchema = z.object({
   athleteName: z.string().nullable(),
   athleteImage: z.string().nullable(),
   message: z.string(),
-  href: z.string(),
   createdAt: z.date(),
 });
 
@@ -50,7 +49,6 @@ export const progressAthleteSchema = z.object({
   name: z.string().nullable(),
   image: z.string().nullable(),
   processStatus: z.nativeEnum(ProcessStatus),
-  href: z.string(),
 });
 
 export const progressBucketsSchema = z.object({

@@ -135,7 +135,6 @@ export const coachingCoachDashboardApi = {
         athleteName: item.athlete.name,
         athleteImage: item.athlete.image,
         message: item.message,
-        href: `/coach/athletes?athlete=${item.athleteId}`,
         createdAt: item.createdAt,
       }))
       .sort(

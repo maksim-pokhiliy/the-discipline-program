@@ -146,6 +146,6 @@ describe("computeProgressBuckets", () => {
       throw new Error("expected athlete in buckets");
     }
 
-    expect(athlete.href).toBe("/coach/athletes?athlete=u-abc-123");
+    expect(athlete.userId).toBe("u-abc-123");
   });
 });
