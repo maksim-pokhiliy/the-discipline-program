@@ -13,6 +13,7 @@ export {
   createToggleHandler,
   createMultiToggleHandler,
 } from "./route-helpers";
+export { createHealthHandler, createReadyHandler, createVersionHandler } from "./health-handlers";
 export {
   createAuthGetHandler,
   createAuthGetWithQueryHandler,

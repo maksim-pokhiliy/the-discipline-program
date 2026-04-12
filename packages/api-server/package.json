@@ -8,7 +8,8 @@
     "./lms": "./src/endpoints/lms/index.ts",
     "./coaching": "./src/endpoints/coaching/index.ts",
     "./iam": "./src/endpoints/iam/index.ts",
-    "./storage": "./src/endpoints/storage/index.ts"
+    "./storage": "./src/endpoints/storage/index.ts",
+    "./ops": "./src/endpoints/ops/index.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
@@ -24,22 +25,22 @@
   "dependencies": {
     "@prisma/client": "catalog:",
     "@repo/contracts": "workspace:*",
+    "@repo/env": "workspace:*",
     "@repo/errors": "workspace:*",
     "@repo/shared": "workspace:*",
     "@vercel/blob": "catalog:",
     "bcryptjs": "catalog:",
-    "@repo/env": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/bcryptjs": "catalog:",
+    "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "prisma": "catalog:",
-    "@types/node": "catalog:",
-    "typescript": "catalog:",
-    "tsx": "catalog:"
+    "tsx": "catalog:",
+    "typescript": "catalog:"
   }
 }

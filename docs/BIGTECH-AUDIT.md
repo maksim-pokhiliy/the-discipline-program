@@ -128,7 +128,7 @@ System, not code. Это фундамент — всё остальное сто
 
 - [x] **~~Deploy config не версионируется.~~** `vercel.json` добавлен в каждый app (admin/marketing/platform) с security headers. Частичное закрытие — `vercel.json` версионирует headers; полная deploy config документация в 1.5.C.
 - [x] **~~`/api/auth/[...nextauth]/route.ts` физически дублируется.~~** Закрыто ADR 0011 — документирует дублирование как intentional tech debt с обоснованием (separate deploy topology, different auth wrappers, blast radius isolation).
-- [ ] **Нет `/api/health`, `/api/ready`, `/api/version` endpoints ни в одном app.** Оркестратор / балансировщик не умеет отслеживать состояние.
+- [x] **~~Нет `/api/health`, `/api/ready`, `/api/version` endpoints ни в одном app.~~** Добавлены во все 3 app'а. Handler factories в `@repo/api-routes` (`createHealthHandler`, `createReadyHandler`, `createVersionHandler`). Readiness probe через `checkDatabase` из `@repo/api-server/ops` (`SELECT 1`). Version отдаёт `VERCEL_GIT_COMMIT_SHA` (auto-injected by Vercel). `turbo.json` `globalEnv` расширен на `VERCEL_GIT_COMMIT_SHA`.
 - [ ] **Нет `/api/webhooks/*` вообще.** Когда появится Stripe/Resend — некуда принимать callbacks, инфраструктуры для подписи webhook'а и идемпотентности тоже нет (хотя `Transaction.providerTxId @unique` уже заложен как инвариант).
 - [ ] **Нет документации, как три app'а (admin/marketing/platform) запущены в prod** — один Vercel project, три, monorepo deploy. Принципал не может ответить: «если упадёт marketing, упадёт ли platform?»
 - [x] **~~Security headers отсутствуют.~~** Добавлены в `vercel.json` каждого app: HSTS, X-Content-Type-Options, X-Frame-Options (DENY), Referrer-Policy, X-XSS-Protection (0, superseded by CSP), Permissions-Policy, CSP (baseline с `'unsafe-inline'` для Next.js hydration scripts; strict nonce-based CSP — отдельная задача §10).
@@ -245,7 +245,7 @@ DDD lens. Без правильной модели всё, что на ней п
 - [ ] **`ApiClient.HTTP_STATUS_ERROR_MAP` неполный** — нет 429 (rate limit), 503, 502, 504. Все non-mapped ошибки → InternalServerError.
 - [ ] **Timeouts и deadlines везде.** `ApiClient.request` делает `fetch` без AbortController → может висеть бесконечно. Любой upstream call без таймаута = потенциальный hang всего пула соединений.
 - [ ] **Retry + backoff + jitter.** `ApiClient` не ретраит. Одна сетевая ошибка = fail.
-- [ ] **Health / readiness endpoints.** Для каждого app. Ни `/api/health`, ни `/api/ready`, ни `/api/version` не существуют ни в admin, ни в marketing, ни в platform.
+- [x] **~~Health / readiness endpoints.~~** Закрыто в §1.5.B. `/api/health`, `/api/ready`, `/api/version` добавлены во все 3 app'а.
 - [ ] **Metrics.** Латенси p50 / p95 / p99 на эндпоинт, error rate, saturation. OpenTelemetry — стандарт. Ни одного OpenTelemetry импорта в проекте.
 - [ ] **Graceful degradation.** Если CMS отдаёт 500 — marketing должен показать stale cache, а не белый экран. Это архитектурное решение, не `if` в компоненте. `ApiClient` использует `cache: "no-store"` захардкоженно — нет возможности показать stale.
 - [ ] **Нет Error Boundary** в `apps/*/app/layout.tsx` — любая необработанная ошибка в Root layout → весь app падает без fallback UI.
