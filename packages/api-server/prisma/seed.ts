@@ -1209,6 +1209,10 @@ const seedContactSubmissions = async () => {
 };
 
 const main = async () => {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("seed must not run in production");
+  }
+
   console.log("Starting seed...\n");
 
   await clearAll();
@@ -1228,9 +1232,6 @@ const main = async () => {
   await seedContactSubmissions();
 
   console.log("\nSeed completed!");
-  console.log("  Admin:   admin@example.com / password12345");
-  console.log("  Coach:   coach@thedisciplineprogram.com / password12345");
-  console.log("  Athlete: sarah.mitchell@email.com / password12345");
 };
 
 main()
