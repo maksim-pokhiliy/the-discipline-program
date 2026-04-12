@@ -1,6 +1,8 @@
 import { Gender, HealthStatus, PrismaClient, Role } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
+
 const prisma = new PrismaClient();
 
 const daysAgo = (days: number): Date => {
@@ -1211,7 +1213,7 @@ const main = async () => {
 
   await clearAll();
 
-  const passwordHash = await bcrypt.hash("password12345", 12);
+  const passwordHash = await bcrypt.hash("password12345", AUTH_CONSTANTS.BCRYPT_COST_FACTOR);
 
   const users = await seedUsers(passwordHash);
   const { coachProfile } = await seedProfiles(users);
