@@ -118,8 +118,8 @@ export const ContactFormSection = ({
             {...register("program")}
           >
             {programOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
+              <MenuItem key={option.slug} value={option.slug}>
+                {option.title}
               </MenuItem>
             ))}
           </TextField>

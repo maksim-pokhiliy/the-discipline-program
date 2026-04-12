@@ -106,8 +106,8 @@ export const contactPageFormSchema = titleSubtitleSchema.extend({
 });
 
 export const programOptionSchema = z.object({
-  value: z.string(),
-  label: z.string(),
+  slug: z.string(),
+  title: z.string(),
 });
 
 export const faqItemSchema = z.object({
