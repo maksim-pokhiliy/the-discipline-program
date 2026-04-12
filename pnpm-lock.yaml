@@ -588,6 +588,9 @@ importers:
       '@repo/auth':
         specifier: workspace:*
         version: link:../auth
+      '@repo/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@repo/env':
         specifier: workspace:*
         version: link:../env
