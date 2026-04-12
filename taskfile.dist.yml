@@ -63,6 +63,16 @@ tasks:
     cmds:
       - pnpm test:watch
 
+  dep:check:
+    desc: "Validate dependency boundaries (bounded-context rules)"
+    cmds:
+      - pnpm dep:check
+
+  dep:graph:
+    desc: "Regenerate dependency graph (docs/DEPENDENCY-GRAPH.md)"
+    cmds:
+      - pnpm dep:graph
+
   clean-start:
     desc: "Clean project, install dependencies, start dev server"
     cmds:
