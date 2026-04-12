@@ -1,5 +1,7 @@
 import bcrypt from "bcryptjs";
 
+import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
+
 import { prisma } from "../../db/client";
 import { ROLE_MAP } from "../../mappers/iam";
 
@@ -15,6 +17,10 @@ export const iamAuthService = {
   },
 
   validateUser: async (email: string, rawPassword: string) => {
+    if (rawPassword.length > AUTH_CONSTANTS.MAX_PASSWORD_LENGTH) {
+      return null;
+    }
+
     const normalizedEmail = email.toLowerCase().trim();
 
     const user = await prisma.user.findUnique({

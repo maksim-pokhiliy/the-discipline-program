@@ -1211,7 +1211,7 @@ const main = async () => {
 
   await clearAll();
 
-  const passwordHash = await bcrypt.hash("password123", 12);
+  const passwordHash = await bcrypt.hash("password12345", 12);
 
   const users = await seedUsers(passwordHash);
   const { coachProfile } = await seedProfiles(users);
@@ -1226,9 +1226,9 @@ const main = async () => {
   await seedContactSubmissions();
 
   console.log("\nSeed completed!");
-  console.log("  Admin:   admin@example.com / password123");
-  console.log("  Coach:   coach@thedisciplineprogram.com / password123");
-  console.log("  Athlete: sarah.mitchell@email.com / password123");
+  console.log("  Admin:   admin@example.com / password12345");
+  console.log("  Coach:   coach@thedisciplineprogram.com / password12345");
+  console.log("  Athlete: sarah.mitchell@email.com / password12345");
 };
 
 main()
