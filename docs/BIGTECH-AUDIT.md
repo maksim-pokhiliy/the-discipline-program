@@ -222,7 +222,7 @@ DDD lens. Без правильной модели всё, что на ней п
 | 3.3.C | `da7cd7b`   | ✅ Done | Upload filename collision: `Date.now()` → `crypto.randomUUID()` in `storage/upload.ts`. Updated 5 test assertions from `\d+` to uuid pattern.                                                                                                            |
 | 3.4.A | `7499824`   | ✅ Done | StructuredData XSS fix: `.replaceAll("</", "<\\/")` on `JSON.stringify` output before `dangerouslySetInnerHTML`. Prevents `</script>` injection in ld+json blocks.                                                                                       |
 | 3.4.B | `19c04fb`   | ✅ Done | Error log redaction: `redactSensitiveFields()` strips password/token/secret/authorization/cookie/creditcard/ssn from error details before `console.error`. Structured output instead of raw error dump.                                                  |
-| 3.5.A | —           | Pending | ADR for design decisions deferred from §3: credentials-only auth strategy, session duration policy, rate limiting strategy, CSP nonce strategy. Single ADR documenting current state + future triggers.                                                  |
+| 3.5.A | `6ed68ce`   | ✅ Done | ADR 0018: security deferred decisions. Documents 6 design decisions (credentials-only auth, session/revocation, rate limiting, CSP nonce, authz policy layer, PII classification) with concrete triggers for each.                                       |
 
 **Deferred bullets** (no implementation now, documented as known debt):
 
