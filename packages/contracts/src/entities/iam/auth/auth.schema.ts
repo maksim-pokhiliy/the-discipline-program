@@ -11,5 +11,9 @@ export const loginFormSchema = z.object({
     .min(
       AUTH_CONSTANTS.MIN_PASSWORD_LENGTH,
       `Password must be at least ${AUTH_CONSTANTS.MIN_PASSWORD_LENGTH} characters`,
+    )
+    .max(
+      AUTH_CONSTANTS.MAX_PASSWORD_LENGTH,
+      `Password must be at most ${AUTH_CONSTANTS.MAX_PASSWORD_LENGTH} characters`,
     ),
 });
