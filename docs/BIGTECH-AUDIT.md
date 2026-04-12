@@ -13,7 +13,7 @@
 ## Прогресс
 
 - [x] 1. Архитектура и границы
-- [ ] 2. Доменная модель
+- [x] 2. Доменная модель
 - [ ] 3. Безопасность
 - [ ] 4. Надёжность и операционка
 - [ ] 5. База данных и миграции
@@ -153,7 +153,7 @@ _(Эти пункты частично пересекаются с секцие�
 
 ## 2. Доменная модель
 
-**Статус:** В работе — research done, implementation plan ready.
+**Статус: Завершена.** Implementation plan: 2.1.A–2.6.D done (1 deferred). 3 ADRs (0015–0017), 1 anti-pattern, 1 glossary, 1 invariants doc, Money VO, 3 code fixes.
 
 ### Implementation plan (section 2)
 
@@ -167,10 +167,10 @@ _(Эти пункты частично пересекаются с секцие�
 | 2.5.A | `edb1f47`   | ✅ Done  | Extract magic number: `0.7` → `ADHERENCE_ON_TRACK_THRESHOLD` in `coach-dashboard.constants.ts`, imported in `dashboard-computations.ts`. Joins existing `ADHERENCE_IMPROVING_THRESHOLD`, `MISSED_DAYS_WARNING`, etc.                                                                                               |
 | 2.5.B | `fd3e9c2`   | ✅ Done  | Remove UI URLs from domain logic: removed `href` from `dashboardActionItemSchema` + `progressAthleteSchema` contracts and both api-server endpoints. UI consumers (`action-items-section`, `progress-buckets-section`) now construct URL from `athleteId`/`userId`.                                                |
 | 2.5.C | `cdfa020`   | ✅ Done  | Remove UI transformation from domain layer: `programOptionSchema` fields renamed `value/label` → `slug/title` (domain-native). Server returns raw product data, UI maps to MenuItem props.                                                                                                                         |
-| 2.6.A | `COMMIT`    | ✅ Done  | ADR 0015: archived inconsistency is intentional. Plan has lifecycle (enum), workout has visibility toggle (boolean). Different domain semantics, different mechanisms.                                                                                                                                             |
-| 2.6.B | `COMMIT`    | ✅ Done  | ADR 0016: workout content as plain text is intentional interim. Structured workouts (blocks/sets/exercises) deferred to Phase 3+. Migration path documented.                                                                                                                                                       |
-| 2.6.C | `COMMIT`    | ✅ Done  | ADR 0017: anemic domain model acceptable pre-product. Documents 4 extraction triggers for future service layer.                                                                                                                                                                                                    |
-| 2.6.D | `COMMIT`    | ✅ Done  | HTTP loopback already documented in ADR 0010. No new ADR needed — existing one covers trade-offs, alternatives, and review status.                                                                                                                                                                                 |
+| 2.6.A | `87f5596`   | ✅ Done  | ADR 0015: archived inconsistency is intentional. Plan has lifecycle (enum), workout has visibility toggle (boolean). Different domain semantics, different mechanisms.                                                                                                                                             |
+| 2.6.B | `87f5596`   | ✅ Done  | ADR 0016: workout content as plain text is intentional interim. Structured workouts (blocks/sets/exercises) deferred to Phase 3+. Migration path documented.                                                                                                                                                       |
+| 2.6.C | `87f5596`   | ✅ Done  | ADR 0017: anemic domain model acceptable pre-product. Documents 4 extraction triggers for future service layer.                                                                                                                                                                                                    |
+| 2.6.D | `87f5596`   | ✅ Done  | HTTP loopback already documented in ADR 0010. No new ADR needed — existing one covers trade-offs, alternatives, and review status.                                                                                                                                                                                 |
 
 DDD lens. Без правильной модели всё, что на ней построено — кривое. Это второй слой фундамента после архитектурных границ.
 
