@@ -36,11 +36,11 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-12 (sections 1+2 complete, next is §3 Безопасность)
+## Current state — 2026-04-12 (sections 1–3 complete, next is §4 Надёжность и операционка)
 
-**Branch:** `refactor/design-system-typography-hero` (146 commits ahead of `origin/`, working tree clean)
-**Last commit:** `52cb4f4 docs(audit): close section 2, record 2.6.a-d commit hashes`
-**Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (236/236).
+**Branch:** `refactor/design-system-typography-hero` (161 commits ahead of `origin/`, working tree clean)
+**Last commit:** `a042910 docs(audit): close section 3, record all commit hashes in implementation plan`
+**Gates at hand-off time:** `pnpm check-types` ✓ (14/14), `pnpm lint` ✓ (14/14), `pnpm test` ✓ (236/236).
 
 ### Section 1 (Архитектура и границы) — CLOSED
 
@@ -66,15 +66,28 @@ Implementation plan: 2.1.A–2.6.D done (2.4.A deferred — no consumers). Key d
 - UI concerns removed from domain (hrefs, form-field mapping)
 - ADRs 0015–0017: archived inconsistency, plain text workouts, anemic domain
 
-### Next up: Section 3 (Безопасность)
+### Section 3 (Безопасность) — CLOSED
 
-Status in audit doc: "Не начато". ~25 bullets already written from initial research. Several cross-referenced from §1 work (SessionGuard role check done in 1.5.E/F, `.env.example` done in 1.5.D). Research pass needed to validate existing bullets against current code and find new issues.
+Implementation plan: 3.1.A–3.5.A done (12 commits). Key deliverables:
 
-**Cross-refs already closed by prior sections:**
+- Timing attack fix: dummy bcrypt compare on nonexistent user
+- Email normalization (`.toLowerCase().trim()`) in login
+- Password policy: MIN 12, MAX 128, bcrypt cost unified to 12
+- Env secret validation: `NEXTAUTH_SECRET` / `BLOB_READ_WRITE_TOKEN` → `.min(32)`, `DATABASE_URL` → postgres-only
+- Seed prod guard (`NODE_ENV === "production"` throws) + plaintext credentials removed
+- Image URL validation: shared `imageUrlSchema = z.string().url().nullable()` across 9 fields in 6 schema files
+- Timezone IANA validation via `Intl.supportedValuesOf("timeZone")`
+- Upload filename collision fix: `Date.now()` → `crypto.randomUUID()`
+- StructuredData XSS fix: `</script>` escaping in ld+json
+- Error log redaction: `redactSensitiveFields()` strips password/token/secret/authorization/cookie from logs
+- ADR 0018: 6 deferred security decisions with concrete triggers (auth strategy, session/revocation, rate limiting, CSP nonce, authz policy layer, PII classification)
+- Stale comments removed from proxy files + contracts barrel
 
-- `SessionGuard` not checking role → fixed in 1.5.E (admin proxy) + 1.5.F (platform proxy)
-- `apps/admin` no middleware/proxy → fixed in 1.5.E
-- No `.env.example` → created in 1.5.D
+**Known issue from §3:** `contracts/src/common.ts` and `contracts/src/common/` directory coexist (file shadows directory for bare `../../../common` imports). `common.ts` contains `idParamSchema` + `planIdParamSchema` duplicated in `common/params.ts`. Needs cleanup — delete `common.ts`, update imports from `../../../common` to `../../../common/params`. Low priority, no runtime impact.
+
+### Next up: Section 4 (Надёжность и операционка)
+
+Status in audit doc: "Не начато". ~17 bullets already written from initial research. Several cross-referenced from §1 work (health endpoints done in 1.5.B). Research pass needed to validate existing bullets against current code and find new issues.
 
 ### Operational notes
 
