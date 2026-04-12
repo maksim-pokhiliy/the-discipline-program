@@ -12,7 +12,7 @@ export const StructuredData = ({ type, data }: StructuredDataProps) => {
     <script
       type="application/ld+json"
       dangerouslySetInnerHTML={{
-        __html: JSON.stringify(structuredData),
+        __html: JSON.stringify(structuredData).replaceAll("</", "<\\/"),
       }}
     />
   );
