@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { imageUrlSchema } from "../../../common/image";
+import { timezoneSchema } from "../../../common/timezone";
 import { userRoleSchema } from "../auth";
 
 export const userSchema = z.object({
@@ -9,7 +10,7 @@ export const userSchema = z.object({
   name: z.string().nullable(),
   role: userRoleSchema,
   image: imageUrlSchema,
-  timezone: z.string(),
+  timezone: timezoneSchema,
   emailVerified: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -21,7 +22,7 @@ export const adminUserListItemSchema = z.object({
   name: z.string().nullable(),
   role: userRoleSchema,
   image: imageUrlSchema,
-  timezone: z.string(),
+  timezone: timezoneSchema,
   createdAt: z.date(),
 });
 
