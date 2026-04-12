@@ -153,7 +153,23 @@ _(Эти пункты частично пересекаются с секцие�
 
 ## 2. Доменная модель
 
-**Статус:** Не начато
+**Статус:** В работе — research done, implementation plan ready.
+
+### Implementation plan (section 2)
+
+| №     | Commit hash | Status  | Description                                                                                                                                                                                                                       |
+| ----- | ----------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2.1.A | —           | Pending | Add domain invariants section to `BOUNDED-CONTEXTS.md` documenting all `@@unique` / business rules with their enforcement location.                                                                                               |
+| 2.2.A | —           | Pending | Ubiquitous language: add glossary section to `BOUNDED-CONTEXTS.md` defining TrainingPlan, Workout, Program, Enrollment, etc.                                                                                                      |
+| 2.3.A | —           | Pending | Money value object: create `@repo/contracts/common/money` with `moneySchema`, `Money` type, move `centsToAmount`/`amountToCents`/`formatPrice`/`CENTS_PER_UNIT` from `@repo/shared`. Update all consumers. Closes deferred 1.4.B. |
+| 2.4.A | —           | Pending | Domain primitives: add `paginationSchema`, `sortOrderSchema`, `dateRangeSchema`, `listRequestSchema<T>` to `@repo/contracts/common`.                                                                                              |
+| 2.5.A | —           | Pending | Extract magic numbers: move `0.7` adherence threshold in `dashboard-computations.ts` to contracts constants alongside existing `ADHERENCE_IMPROVING_THRESHOLD`.                                                                   |
+| 2.5.B | —           | Pending | Remove UI URLs from domain logic: `dashboard-computations.ts` should return data IDs, not frontend hrefs. Move URL construction to UI layer.                                                                                      |
+| 2.5.C | —           | Pending | Remove UI transformation from domain layer: `marketing/pages.ts:getContactPage` `programOptions` → return raw products, let UI map to form options.                                                                               |
+| 2.6.A | —           | Pending | ADR: archived inconsistency (`TrainingPlanStatus.ARCHIVED` enum vs `Workout.isArchived` boolean) — document as intentional (workout has no status machine).                                                                       |
+| 2.6.B | —           | Pending | ADR: workout content as plain text — document current state, structured data (WorkoutBlock/Set/Exercise) is Phase 3+ scope.                                                                                                       |
+| 2.6.C | —           | Pending | ADR: anemic domain model — document as acceptable pre-product, service layer extraction criteria for future.                                                                                                                      |
+| 2.6.D | —           | Pending | ADR: HTTP loopback for RSC data fetching — document trade-offs vs direct domain calls.                                                                                                                                            |
 
 DDD lens. Без правильной модели всё, что на ней построено — кривое. Это второй слой фундамента после архитектурных границ.
 
