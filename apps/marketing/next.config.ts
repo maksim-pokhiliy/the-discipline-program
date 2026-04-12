@@ -14,11 +14,6 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
         port: "",
       },
-      {
-        protocol: "https",
-        hostname: "scontent-iev1-1.cdninstagram.com",
-        port: "",
-      },
     ],
   },
 };
