@@ -207,6 +207,38 @@ DDD lens. Без правильной модели всё, что на ней п
 
 **Статус:** Research done, implementation pending
 
+### Implementation plan (section 3)
+
+| №     | Commit hash | Status  | Description                                                                                                                                                                                                                                              |
+| ----- | ----------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 3.1.A | `6c385f3`   | ✅ Done | Timing attack fix: dummy bcrypt compare on nonexistent user in `auth-service.ts`. Add `DUMMY_BCRYPT_HASH` constant, call `bcrypt.compare` against it when user not found to equalize latency.                                                            |
+| 3.1.B | `c89de4b`   | ✅ Done | Email normalization: `.toLowerCase().trim()` in `validateUser` before DB lookup. No registration flow exists beyond seed (all lowercase already).                                                                                                        |
+| 3.1.C | `2b63d13`   | ✅ Done | Password policy: `MIN_PASSWORD_LENGTH` → 12, add `MAX_PASSWORD_LENGTH = 128` in `AUTH_CONSTANTS`. Updated `loginFormSchema` with `.max()`, `auth-service.ts` rejects oversized passwords before bcrypt. Seed password updated to 13 chars.               |
+| 3.1.D | `c9fd75a`   | ✅ Done | Bcrypt cost unification: add `BCRYPT_COST_FACTOR = 12` to `AUTH_CONSTANTS`. Used in `auth-service.ts` and `seed.ts`. Dummy hash regenerated with cost 12 for timing parity.                                                                              |
+| 3.2.A | `d14630d`   | ✅ Done | Env secret validation: `NEXTAUTH_SECRET` → `.min(32)`, `BLOB_READ_WRITE_TOKEN` → `.min(32)`. `DATABASE_URL` → `.refine(url => url.startsWith("postgres"))`.                                                                                              |
+| 3.2.B | `ff82128`   | ✅ Done | Seed prod guard: `NODE_ENV === "production"` throws at top of `main()`. Plaintext credentials removed from console output.                                                                                                                               |
+| 3.3.A | `77c6d48`   | ✅ Done | Image URL validation: `imageUrlSchema = z.string().url().nullable()` in `contracts/common/image.ts`. Replaced 8 nullable + 1 non-nullable `image` fields across 6 schema files. `z.url()` top-level not available in Zod 3.25 — used `z.string().url()`. |
+| 3.3.B | `4a66a93`   | ✅ Done | Timezone validation: `timezoneSchema` with `Intl.supportedValuesOf("timeZone")` refine in `contracts/common/timezone.ts`. Replaced bare `z.string()` in user schema.                                                                                     |
+| 3.3.C | `da7cd7b`   | ✅ Done | Upload filename collision: `Date.now()` → `crypto.randomUUID()` in `storage/upload.ts`. Updated 5 test assertions from `\d+` to uuid pattern.                                                                                                            |
+| 3.4.A | `7499824`   | ✅ Done | StructuredData XSS fix: `.replaceAll("</", "<\\/")` on `JSON.stringify` output before `dangerouslySetInnerHTML`. Prevents `</script>` injection in ld+json blocks.                                                                                       |
+| 3.4.B | `19c04fb`   | ✅ Done | Error log redaction: `redactSensitiveFields()` strips password/token/secret/authorization/cookie/creditcard/ssn from error details before `console.error`. Structured output instead of raw error dump.                                                  |
+| 3.5.A | —           | Pending | ADR for design decisions deferred from §3: credentials-only auth strategy, session duration policy, rate limiting strategy, CSP nonce strategy. Single ADR documenting current state + future triggers.                                                  |
+
+**Deferred bullets** (no implementation now, documented as known debt):
+
+- AuthZ policy layer (CASL/oso) — design decision, no concrete pain point yet with current guard pattern
+- Row-level security strategy — design decision
+- `verifyAthleteBelongsToCoach` ACTIVE-only — business decision (escalate when coaching review feature is built)
+- Session duration / revocation — design decision (captured in 3.5.A ADR)
+- PII classification / encryption-at-rest — compliance scope TBD
+- Rate limiting — infra decision (captured in 3.5.A ADR)
+- CSP nonce — infra decision (captured in 3.5.A ADR)
+- `withAdminAuth` resource-level check — single admin, no ROI
+- `resolveCoachId` caching — perf optimization, not security-critical
+- MIME magic byte verification — low risk behind CDN + type whitelist
+- Contact form captcha — no traffic yet
+- Billing-section bullets (idempotency, audit log) — billing not implemented
+
 То, на чём валят code review в больших компаниях. Критично закладывать до того, как появятся реальные пользователи и реальные деньги.
 
 ### AuthZ
