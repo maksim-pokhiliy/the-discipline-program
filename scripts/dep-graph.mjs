@@ -12,7 +12,7 @@
  * dep graph changes.
  */
 
-import { execFileSync } from "node:child_process";
+import { execSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -22,21 +22,8 @@ const OUTPUT = resolve(REPO_ROOT, "docs/DEPENDENCY-GRAPH.md");
 
 const COLLAPSE_PATTERN = "^(packages|apps)/[^/]+";
 
-const mermaid = execFileSync(
-  "pnpm",
-  [
-    "exec",
-    "depcruise",
-    "--config",
-    ".dependency-cruiser.cjs",
-    "--output-type",
-    "mermaid",
-    "--collapse",
-    COLLAPSE_PATTERN,
-    "--no-progress",
-    "packages",
-    "apps",
-  ],
+const mermaid = execSync(
+  `pnpm exec depcruise --config .dependency-cruiser.cjs --output-type mermaid --collapse "${COLLAPSE_PATTERN}" --no-progress packages apps`,
   { cwd: REPO_ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "inherit"] },
 ).trim();
 
