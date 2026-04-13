@@ -608,11 +608,11 @@ Non-obvious стафф. Это то, что больнее всего ретро
 | 10.3.C | `eb5a386`   | ✅ Done | Remove dead deps: `@mui/x-date-pickers` from NextProvider + phantom `lucide-react` / `react-markdown` from package.json |
 | 10.6.A | `a913247`   | ✅ Done | Remove useless `export const dynamic = "force-dynamic"` from `platform/coach/plans/[planId]/page.tsx`                   |
 | 10.1.A | `1dd7b08`   | ✅ Done | Marketing SEO: add `robots.ts` + fix sitemap `lastModified: new Date()` → real dates                                    |
-| 10.2.A |             | ⏳ Next | Remove false `"use client"` from 14 components (2 admin, 1 marketing, 1 platform, 10 @repo/ui)                          |
-| 10.1.B |             | Pending | Marketing: convert 7 page modules to server components (remove `"use client"` + `useQuery` wrapper)                     |
-| 10.1.C |             | Pending | Marketing: remove `force-dynamic` from all pages, switch to ISR (`export const revalidate`)                             |
-| 10.4.A |             | Pending | `BlogPostCard`: replace `CardMedia component="img"` with `next/image`                                                   |
-| 10.4.B |             | Pending | Marketing hero images: CSS `background-image` in `fullscreen-section` / `split-section` → `next/image` fill mode        |
+| 10.2.A | `307236e`   | ✅ Done | Remove false `"use client"` from 3 components (14→3 after deeper RSC serialization analysis)                            |
+| 10.1.B | `d4319e3`   | ✅ Done | Marketing: convert 7 page modules to server components (remove `"use client"` + `useQuery` wrapper)                     |
+| 10.1.C | `9138c90`   | ✅ Done | Marketing: remove `force-dynamic` from all pages, switch to ISR (`export const revalidate`)                             |
+| 10.4.A | `ab6af34`   | ✅ Done | `BlogPostCard`: replace `CardMedia component="img"` with `next/image`                                                   |
+| 10.4.B |             | ⏳ Next | Marketing hero images: CSS `background-image` in `fullscreen-section` / `split-section` → `next/image` fill mode        |
 | 10.5.A |             | Pending | Extract `error.tsx` / `global-error.tsx` shared components to `@repo/ui`, deduplicate across 3 apps                     |
 | 10.3.D |             | Pending | Dynamic imports (`next/dynamic`) for tiptap (admin), framer-motion (marketing + @repo/ui), dnd-kit (platform)           |
 | 10.3.E |             | Pending | Install `@next/bundle-analyzer`, add `pnpm analyze` script per app                                                      |
