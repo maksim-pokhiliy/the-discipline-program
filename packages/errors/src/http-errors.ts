@@ -61,6 +61,16 @@ export class BadRequestError extends AppError {
   }
 }
 
+export class TimeoutError extends AppError {
+  constructor(message = "Request timed out", details?: Record<string, unknown>) {
+    super(message, {
+      code: ERROR_CODES.TIMEOUT,
+      statusCode: 504,
+      details,
+    });
+  }
+}
+
 export class InternalServerError extends AppError {
   constructor(message = "Internal server error", details?: Record<string, unknown>) {
     super(message, {
