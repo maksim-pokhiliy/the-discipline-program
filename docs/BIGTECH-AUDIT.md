@@ -14,8 +14,8 @@
 
 - [x] 1. Архитектура и границы
 - [x] 2. Доменная модель
-- [ ] 3. Безопасность
-- [ ] 4. Надёжность и операционка
+- [x] 3. Безопасность
+- [x] 4. Надёжность и операционка
 - [x] 5. База данных и миграции
 - [x] 6. API Design
 - [x] 7. Архитектурные риски на 6 месяцев вперёд
@@ -205,7 +205,7 @@ DDD lens. Без правильной модели всё, что на ней п
 
 ## 3. Безопасность
 
-**Статус:** Research done, implementation pending
+**Статус: Завершена.** 12 коммитов (3.1.A–3.5.A).
 
 ### Implementation plan (section 3)
 
@@ -309,7 +309,7 @@ DDD lens. Без правильной модели всё, что на ней п
 
 ## 4. Надёжность и операционка
 
-**Статус:** В работе (10/18 done, 4 removed, 7 remaining, 1 deferred)
+**Статус: Завершена.** 15 коммитов, 4 пшика удалены, 1 deferred (OpenTelemetry).
 
 Блокирует выход в прод. Без observability ты слепой, без timeouts — упираешься в пул соединений.
 
@@ -421,7 +421,7 @@ DDD lens. Без правильной модели всё, что на ней п
 
 ## 6. API Design
 
-**Статус:** В работе
+**Статус: Завершена.** 6 коммитов (6.1.A–6.6.A).
 
 Блокирует заморозку контрактов. Чем позже фиксируешь правила — тем больше breaking changes, когда появятся внешние потребители (мобильное приложение, партнёры).
 
@@ -582,28 +582,84 @@ Non-obvious стафф. Это то, что больнее всего ретро
 
 ## 10. Фронт и Next.js 16
 
-**Статус:** Не начато
+**Статус:** Research завершён. 14 bullets, execution order определён.
 
 Частично ретрофитится, но чем раньше — тем дешевле. Bundle budgets и RSC-дисциплина — пока бандл маленький.
 
-- [ ] **Bundle budgets как hard gate.** `next build` должен падать в CI, если бандл превысил лимит. Не «посмотрим потом». Никакого `@next/bundle-analyzer`, `next-bundle-stats` в deps.
-- [ ] **RSC discipline.** Правило «No unnecessary `use client`» — правильное. Нужен способ автоматически это проверять: ESLint-правило, которое матерится, когда `use client` не нужен.
-- [ ] **Code splitting вручную.** Heavy deps (`@tiptap/*`, `framer-motion`, `@dnd-kit/*`) — dynamic imports, не в основном бандле. Сейчас все они в обычных `dependencies` потребителей.
-- [ ] **`@repo/ui` грузит `framer-motion`, `@tiptap/*` в main dep-tree** — любой app, который импортирует `@repo/ui`, получает их в main bundle. Должно быть через dynamic imports или split packages.
-- [ ] **Core Web Vitals budget.** LCP < 2.5s, CLS < 0.1, INP < 200 ms. Измерять в CI через Lighthouse CI. Не настроен.
-- [ ] **Suspense boundaries** как архитектурное решение: где loading state, где error boundary. Не «забыли поставить».
-- [ ] **Image / Font strategy.** Next Image везде, `next/font` без исключений, preload для hero images.
-- [ ] **State management clarity.** URL state (правило есть) + React Query + form state. Ничего больше. Зафиксировать как принцип в ADR.
-- [ ] **`cache: "no-store"` захардкожено в `ApiClient`** — нет opt-in на HTTP caching для GET запросов. Потеря производительности.
-- [ ] **`apps/marketing` — ВСЕ pages имеют `export const dynamic = "force-dynamic"`** (`home`, `about`, `blog`, `blog/[slug]`, `contact`, `faq`, `storefront`, `sitemap.ts`). Marketing полностью SSR на каждый запрос, нет CDN caching, нет ISR, нет static generation. Архитектурная ошибка для публичного маркетинг-сайта.
-- [ ] **ВСЕ marketing modules — client components** (`home/index.tsx`, `about/index.tsx`, etc.). В сочетании с `force-dynamic`: server рендерит placeholder HTML, client hydrate'ит контент через React Query. SEO crawler видит пустой HTML.
-- [ ] **`useState/useEffect` в marketing используется только в 2 файлах** → все остальные client components — **false client** (не имеют client state). Могут (и должны) стать server components.
-- [ ] **`apps/admin/src/app/(auth)/layout.tsx` с `"use client"` без причины** — только markup с `sx`, нет hooks/handlers. Unnecessary client boundary.
-- [ ] **`121 file с `"use client"` в apps** — аудит на unnecessary client boundaries.
-- [ ] **Нет security headers в `next.config.ts`** ни в одном app (уже в 1.5, но повторяю тут для completeness пункта 10: они настраиваются в next config).
-- [ ] **Нет bundle analyzer** (`@next/bundle-analyzer` не установлен). Нельзя измерить bundle size / what's in it.
-- [ ] **Heavy deps в main bundle:** `framer-motion`, `@tiptap/*`, `@dnd-kit/*` в обычных `dependencies` потребителей. `isomorphic-dompurify` в `@repo/ui` — загружается в каждый app через shared ui.
-- [ ] **`lucide-react` vs `@mui/icons-material`** — две иконные либы в разных apps. Marketing использует lucide, admin/platform — MUI icons. Bundle bloat.
+### Research summary — что УЖЕ хорошо
+
+- [x] **Font strategy отличная.** `next/font/google` с Barlow + Barlow Condensed, CSS variables `--font-base` / `--font-display`, `display: "swap"`. Zero CSS `@import`/`@font-face`/link tags. `global-error.tsx` корректно хардкодит `fontFamily` (next/font CSS variables недоступны при замене root layout).
+- [x] **State management чистый.** URL state + React Query + react-hook-form. Zero третьесторонних стейт-либ (no Redux/Zustand/Jotai). `createContext`/`useContext` не используются в application code.
+- [x] **Zero `next/router` (legacy Pages Router).** Чистая миграция на App Router. Все 17 файлов с `next/navigation` корректны.
+- [x] **Suspense boundaries корректны.** `SuspenseWrapper` из `@repo/ui` оборачивает все `useSearchParams` callers. Проверено: ноль missing boundaries. Raw `<Suspense>` без fallback в 1 месте (`PagesEditView`) — косметика.
+- [x] **Все `useFormContext` типизированы** с generic parameter. Все `useForm` с валидацией используют `zodResolver`.
+- [x] **Marketing section-компоненты корректно split.** Только 3 из 14 sections имеют `"use client"` (contact form, storefront grid, home storefront preview). Остальные 11 — server components.
+- [x] **Structured data (JSON-LD) покрытие.** WebSite, Organization, Person, FAQPage, Article, ItemList, AggregateRating. Blog article `generateMetadata` использует `react.cache()` deduplication.
+- [x] **Module structure consistent.** views/, sections/, components/ per module. 8 модулей в admin, 5 в platform. Query keys scoped per app (`["admin"]` / `["platform"]`).
+- [x] **Zero direct `fetch()` в компонентах.** Все API-вызовы через типизированный API client.
+- [x] **Admin/platform data flow корректен.** Чистые SPA: page.tsx — thin shell, данные через React Query client-side. `serverApiClient` только в marketing (SSR для SEO). Осознанное архитектурное решение, не баг.
+
+### Implementation plan (section 10)
+
+| №      | Commit hash | Status  | Description                                                                                                             |
+| ------ | ----------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 10.3.A |             | ⏳ Next | Add `optimizePackageImports` to all 3 `next.config.ts` — auto tree-shaking for `@mui/icons-material`, `@tiptap/*`, etc. |
+| 10.3.B |             | Pending | Fix 5 runtime barrel imports `@mui/icons-material` → canonical deep path per ADR 0006                                   |
+| 10.3.C |             | Pending | Remove dead deps: `@mui/x-date-pickers` from NextProvider + phantom `lucide-react` / `react-markdown` from package.json |
+| 10.6.A |             | Pending | Remove useless `export const dynamic = "force-dynamic"` from `platform/coach/plans/[planId]/page.tsx`                   |
+| 10.1.A |             | Pending | Marketing SEO: add `robots.ts` + fix sitemap `lastModified: new Date()` → real dates                                    |
+| 10.2.A |             | Pending | Remove false `"use client"` from 14 components (2 admin, 1 marketing, 1 platform, 10 @repo/ui)                          |
+| 10.1.B |             | Pending | Marketing: convert 7 page modules to server components (remove `"use client"` + `useQuery` wrapper)                     |
+| 10.1.C |             | Pending | Marketing: remove `force-dynamic` from all pages, switch to ISR (`export const revalidate`)                             |
+| 10.4.A |             | Pending | `BlogPostCard`: replace `CardMedia component="img"` with `next/image`                                                   |
+| 10.4.B |             | Pending | Marketing hero images: CSS `background-image` in `fullscreen-section` / `split-section` → `next/image` fill mode        |
+| 10.5.A |             | Pending | Extract `error.tsx` / `global-error.tsx` shared components to `@repo/ui`, deduplicate across 3 apps                     |
+| 10.3.D |             | Pending | Dynamic imports (`next/dynamic`) for tiptap (admin), framer-motion (marketing + @repo/ui), dnd-kit (platform)           |
+| 10.3.E |             | Pending | Install `@next/bundle-analyzer`, add `pnpm analyze` script per app                                                      |
+| 10.6.B |             | Pending | ADR: deferred frontend decisions (bundle CI gates, Core Web Vitals / Lighthouse CI, `@repo/ui` package splitting)       |
+
+**Execution order** (derived from dependencies): 10.3.A → 10.3.B → 10.3.C → 10.6.A → 10.1.A → 10.2.A → 10.1.B → 10.1.C → 10.4.A → 10.4.B → 10.5.A → 10.3.D → 10.3.E → 10.6.B
+
+Rationale: config optimizations first (tree-shaking unblocks bundle wins) → mechanical cleanup (dead deps, useless directives) → SEO quick wins → "use client" discipline (unblocks marketing RSC conversion) → marketing rendering overhaul (server components, then ISR) → image optimization → DRY extraction → dynamic imports (after all other bundle work) → analyzer (first measurement post-optimization) → ADR last.
+
+**To resume work in a new session:** read this table, find the first row with status `⏳ Next` or `Pending`, implement it following the bullet descriptions in the relevant 10.x subsection below.
+
+#### 10.1. Marketing rendering strategy
+
+- [ ] **Marketing: все 7 pages — `force-dynamic`.** Home, about, blog, blog/[slug], contact, faq, storefront — SSR на каждый запрос. Это CMS-контент, меняется раз в неделю. Кандидаты для ISR (`revalidate`) или static generation. `force-dynamic` = выше TTFB, больше серверной нагрузки, нет edge caching HTML. Route handlers уже имеют `Cache-Control: s-maxage=300` (§6), но page-level рендеринг повторяется на каждый запрос.
+- [ ] **Marketing: все 7 page-modules — `"use client"` только ради React Query.** Единственная причина — `useQuery({ initialData })`. Data уже fetched server-side через `serverApi`, передаётся как `initialData`. Если рендерить данные напрямую в server component (или `HydrationBoundary` + `dehydrate`), 7 модулей и их component trees станут server components → меньше bundle, быстрее initial load. Уточнение: SEO НЕ страдает — `initialData` рендерится синхронно на сервере, HTML содержит контент. Но client boundary увеличивает JS bundle без причины.
+- [ ] **Marketing: нет `robots.txt`.** Отсутствует `robots.ts` / `robots.txt`. Базовый SEO-файл не контролируется явно.
+- [ ] **Marketing: sitemap `lastModified: new Date()`.** Статические страницы получают новую дату на каждый crawl → ложный сигнал свежести для поисковиков. Должно быть: фиксированная дата или actual content modification timestamp.
+
+#### 10.2. `"use client"` discipline
+
+- [ ] **14 false `"use client"` компонентов.** Файлы с директивой, которые не используют hooks, event handlers, browser APIs, Context. **apps/admin (2):** `(auth)/layout.tsx`, `admin-list-view/index.tsx`. **apps/marketing (1):** `loading.tsx`. **apps/platform (1):** `platform-header/platform-header.tsx`. **packages/ui (10):** `status-chip.tsx`, `stats-card.tsx`, `rich-text-viewer.tsx`, `query-wrapper.tsx`, `pulse-stats-card.tsx`, `pulse-stat.tsx`, `page-header.tsx`, `logo.tsx`, `form-card.tsx`, `chip-tab.tsx`. Проверено 157 файлов с `"use client"` в apps + packages/ui.
+
+#### 10.3. Bundle и heavy deps
+
+- [ ] **ZERO dynamic imports (`next/dynamic` / `React.lazy`) во всём codebase.** Tiptap (~200KB gzipped), framer-motion (~115KB), @dnd-kit (~45KB) грузятся eager static imports. Rich text editor нужен только на нескольких CMS-страницах admin, но попадает в main bundle.
+- [ ] **`@repo/ui` — bundle sink.** Tiptap, framer-motion, isomorphic-dompurify в зависимостях shared пакета. Любой app, импортирующий компонент из `@repo/ui`, рискует затянуть весь dep graph если tree-shaking не отсечёт barrel re-exports через `src/index.ts`. Три тяжёлые группы: ContentSection (framer-motion), RichTextEditor (tiptap × 6 пакетов), RichTextViewer (dompurify).
+- [ ] **5 runtime barrel imports `@mui/icons-material` нарушают ADR 0006.** ADR явно говорит: `import { Foo } from "@mui/icons-material"` бандлит всю иконную библиотеку (~7MB); каноническая форма — `import Foo from "@mui/icons-material/Foo"`. Нарушители: `packages/ui/.../editor-toolbar.tsx`, `apps/admin/.../login-form/index.tsx`, `apps/platform/.../login-form/index.tsx`, `apps/platform/.../platform-user-menu.tsx`, `apps/platform/.../platform-bottom-nav.tsx`. ~60 импортов в проекте делают правильно. Ещё 2 barrel import в marketing — type-only, runtime не затрагивают.
+- [ ] **`@mui/x-date-pickers` загружен глобально, но не используется.** `NextProvider` в `@repo/mui` рендерит `LocalizationProvider` + `AdapterDayjs`. Zero picker-компонентов (`DatePicker`, `TimePicker`) в codebase. ~100KB gzipped мёртвого веса в каждом app.
+- [ ] **Phantom dependencies.** `lucide-react` в marketing `package.json` — zero импортов в source files (ранее считалось дупликацией с MUI icons, но это phantom dep). `react-markdown` в каталоге — zero импортов. Объявлены, но нигде не используются.
+- [ ] **`next.config.ts` bare.** Все 3 конфига содержат только `images.remotePatterns`. Нет `optimizePackageImports` (Next.js 13.5+ авто-tree-shaking для heavy packages типа `@mui/icons-material`, `lucide-react`, `@tiptap/*`), нет bundle analyzer, нет `transpilePackages`, нет `experimental` features.
+- [ ] **Bundle budgets не настроены.** `next build` не падает при превышении лимитов. `@next/bundle-analyzer` не установлен. Нельзя измерить bundle size и состав. Должен быть hard gate в CI.
+
+#### 10.4. Image strategy
+
+- [ ] **Hero images в marketing — CSS `background-image`.** `fullscreen-section.tsx` и `split-section.tsx` используют `backgroundImage: url(...)` для hero-секций. CMS-изображения из Vercel Blob / Unsplash без Next.js оптимизации: нет WebP/AVIF, нет responsive srcset, нет lazy loading, нет preload для above-fold. Главный удар по LCP marketing-сайта.
+- [ ] **`BlogPostCard` — `CardMedia component="img"`.** Обложки блог-постов из CMS рендерятся как raw `<img>` без next/image оптимизации (нет srcset, нет lazy loading, нет format conversion).
+
+#### 10.5. DRY и shared patterns
+
+- [ ] **`error.tsx` copy-paste × 3 apps.** Все 3 файла почти идентичны (отличие: текст кнопки "Go to dashboard" vs "Go home"). `global-error.tsx` идентичен во всех 3 apps на 100%. DRY violation — `error.tsx` можно вынести в shared (принимает homeUrl как prop). `global-error.tsx` — raw HTML без MUI, тоже можно вынести.
+
+#### 10.6. Misc
+
+- [ ] **Platform: `force-dynamic` на `coach/plans/[planId]/page.tsx` без server-side fetch.** Страница не делает серверных запросов — только `await params` и передача `planId` в client component. Директива бесполезна.
+- [ ] **Core Web Vitals budget не настроен.** LCP < 2.5s, CLS < 0.1, INP < 200ms — нет измерений. Lighthouse CI не настроен.
+- [x] ~~**`cache: "no-store"` захардкожено в `ApiClient`.**~~ Закрыто в §4 (4.2.D) — ApiClient cache стал конфигурируемым.
+- [x] ~~**Нет security headers в `next.config.ts`.**~~ Закрыто в §1 (1.5.A) — security headers в `vercel.json`.
 
 ---
 
