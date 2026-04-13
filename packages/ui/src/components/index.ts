@@ -2,6 +2,7 @@ export * from "./chip-tab";
 export * from "./collapsible-list";
 export * from "./data-table";
 export * from "./detail-field";
+export * from "./error-pages";
 export * from "./drawer";
 export * from "./dynamic-list-item";
 export * from "./form-card";
