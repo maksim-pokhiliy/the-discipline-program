@@ -1,3 +1,7 @@
+export const PRODUCT_CONSTANTS = {
+  MAX_TITLE_LENGTH: 200,
+} as const;
+
 export enum ProductCurrency {
   USD = "USD",
   EUR = "EUR",
