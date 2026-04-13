@@ -51,9 +51,28 @@ const withDeletedAtFilter = (where: unknown): Record<string, unknown> => {
   return record;
 };
 
+const QUERY_TIMEOUT_MS = 30_000;
+const CONNECT_TIMEOUT_S = 10;
+
+const withTimeoutParams = (url: string): string => {
+  const separator = url.includes("?") ? "&" : "?";
+  const params: string[] = [];
+
+  if (!url.includes("statement_timeout")) {
+    params.push(`statement_timeout=${QUERY_TIMEOUT_MS}`);
+  }
+
+  if (!url.includes("connect_timeout")) {
+    params.push(`connect_timeout=${CONNECT_TIMEOUT_S}`);
+  }
+
+  return params.length > 0 ? `${url}${separator}${params.join("&")}` : url;
+};
+
 const createClient = () => {
   const client = new PrismaClient({
     log: baseEnv.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    datasourceUrl: withTimeoutParams(baseEnv.DATABASE_URL),
   });
 
   return client.$extends({
