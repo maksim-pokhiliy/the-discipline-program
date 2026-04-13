@@ -44,7 +44,7 @@ const redactSensitiveFields = (obj: unknown, visited = new WeakSet<object>()): u
   return result;
 };
 
-export const handleApiError = (error: unknown): NextResponse => {
+export const handleApiError = (error: unknown, requestId?: string): NextResponse => {
   unstable_rethrow(error);
 
   const safeError =
@@ -54,9 +54,10 @@ export const handleApiError = (error: unknown): NextResponse => {
         ? { message: error.message }
         : { message: String(error) };
 
-  logger.error("API Error", safeError);
+  logger.error("API Error", { ...safeError, ...(requestId && { requestId }) });
 
   const isDev = baseEnv.NODE_ENV === "development";
+  const headers = requestId ? { "x-request-id": requestId } : undefined;
 
   if (error instanceof AppError) {
     return NextResponse.json(
@@ -68,7 +69,7 @@ export const handleApiError = (error: unknown): NextResponse => {
           ...(isDev && { stack: error.stack }),
         },
       },
-      { status: error.statusCode },
+      { status: error.statusCode, headers },
     );
   }
 
@@ -88,7 +89,7 @@ export const handleApiError = (error: unknown): NextResponse => {
           ...(isDev && validationError.details && { details: validationError.details }),
         },
       },
-      { status: 400 },
+      { status: 400, headers },
     );
   }
 
@@ -102,6 +103,6 @@ export const handleApiError = (error: unknown): NextResponse => {
         ...(isDev && { stack }),
       },
     },
-    { status: 500 },
+    { status: 500, headers },
   );
 };
