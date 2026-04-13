@@ -4,6 +4,9 @@ import "@repo/env/auth";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: ["@mui/icons-material", "@mui/material"],
+  },
   images: {
     remotePatterns: [
       {
