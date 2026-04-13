@@ -5,7 +5,11 @@ import {
   getAdminUserViewParamsSchema,
   getAdminUserViewResponseSchema,
 } from "@repo/contracts/coaching/admin-user-view";
-import { updateUserRoleParamsSchema, updateUserRoleRequestSchema } from "@repo/contracts/iam/user";
+import {
+  updateUserRoleParamsSchema,
+  updateUserRoleRequestSchema,
+  updateUserRoleResponseSchema,
+} from "@repo/contracts/iam/user";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 
@@ -21,5 +25,6 @@ export const PUT = withAdminAuth(
     iamUserAdminApi.updateRole,
     updateUserRoleParamsSchema,
     updateUserRoleRequestSchema,
+    updateUserRoleResponseSchema,
   ),
 );

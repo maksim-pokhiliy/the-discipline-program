@@ -2,6 +2,7 @@ import { createMultiToggleHandler } from "@repo/api-routes";
 import { cmsProductAdminApi } from "@repo/api-server/cms";
 import {
   ProductToggleField,
+  productSchema,
   toggleProductParamsSchema,
   toggleProductQuerySchema,
 } from "@repo/contracts/cms/product";
@@ -16,5 +17,6 @@ export const PATCH = withAdminAuth(
     },
     toggleProductParamsSchema,
     toggleProductQuerySchema,
+    productSchema,
   ),
 );
