@@ -620,6 +620,7 @@ Non-obvious стафф. Это то, что больнее всего ретро
 - [ ] **Нет release pipeline** (changesets, semantic-release, etc.).
 - [ ] **Нет SAST/DAST/SCA** (CodeQL, Snyk, dependency scan).
 - [ ] **Pre-commit hook зависает на `type-check` в parallel mode** — наблюдалось в этой сессии, лечилось только `kill -TERM`. Надо разобрать причину (возможно конкуренция ресурсов между parallel шагами или specific file, который tsc зацикливает).
+- [ ] **Root `db:*` scripts неконсистентны.** `db:generate` и `db:push` идут через `turbo run`, а `db:seed` — через `pnpm --filter @repo/api-server`. Все три target'ят один package. Унифицировать: все через `pnpm --filter` (turbo overhead не нужен для single-package tasks).
 
 ---
 
