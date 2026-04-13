@@ -36,10 +36,10 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-13 (sections 1–7 complete, §8 next)
+## Current state — 2026-04-13 (sections 1–8 complete, §9 next)
 
-**Branch:** `refactor/design-system-typography-hero` (204 commits ahead of `origin/`, working tree clean)
-**Last commit:** `e52a07a refactor(shared): accept locale param in formatting functions`
+**Branch:** `refactor/design-system-typography-hero` (208 commits ahead of `origin/`, working tree clean)
+**Last commit:** `9f02f4a chore: monorepo config hygiene — test filtering, lint caching, env module type`
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 
@@ -190,7 +190,17 @@ All 3 bullets implemented (3 commits). Key deliverables:
 - formatPrice precision restored (removed FractionDigits: 0 that rounded $9.99 to "$10")
 - Locale param added to formatPrice, formatDate, formatDayHeader, formatDayName, formatWeekRange — minimal i18n readiness
 
-**Sections 8–12:** research not yet started. Research begins at the top of each section and must complete before any bullet in that section is implemented.
+### Section 8 (Monorepo дисциплина) — CLOSED
+
+All 2 bullets implemented (2 commits). 19 findings total: 4 already done in §1, 2 пшики, 10 intentional design choices, 3 concrete config fixes. Key deliverables:
+
+- ADR 0022: monorepo discipline decisions (пшики, deferred items, intentional choices)
+- lefthook test filtered via turbo `--filter="...[HEAD]"` (was running all 240 tests on every commit)
+- Per-package test scripts in api-server and contracts, turbo test task added
+- turbo lint caching enabled (was inconsistently `cache: false`)
+- @repo/env `"type": "module"` consistency fix
+
+**Sections 9–12:** research not yet started. Research begins at the top of each section and must complete before any bullet in that section is implemented.
 
 ## Repo structure snapshot after 1.3.C — orient fast
 
