@@ -485,23 +485,27 @@ DDD lens. Без правильной модели всё, что на ней п
 
 ## 7. Архитектурные риски на 6 месяцев вперёд
 
-**Статус:** Не начато
+**Статус:** Исследование завершено, реализация в процессе
 
 Non-obvious стафф. Это то, что больнее всего ретрофитить — не из-за сложности кода, а из-за того, что к моменту, когда «пригорит», зависимостей уже слишком много. Решения принимаются сейчас.
 
-- [ ] **Job queue.** Любая работа >100 ms, которую можно отложить, должна быть в очереди (BullMQ, Inngest, Trigger.dev). Синхронное выполнение в request / response упирается в стенку. Это архитектурное решение, не фича. **`CoachActionItem` генерирует события с `AUTO_*` резолюцией** → требует scheduled jobs, но их нет. Либо работает синхронно на запрос coach dashboard, либо вообще не работает.
-- [ ] **Emails и notifications как first-class citizen.** Не `Resend.send()` в handler. Отдельный notification service с темплейтами, локалью, очередью, failure handling. Сейчас **ни одного email-провайдера нет в catalog**, `MarketingContactSubmission` в БД есть, но нет подтверждений отправителю.
-- [ ] **Платформа vs продукт.** В голове должно быть разделение: «ядро платформы» (auth, billing, storage, notifications) vs «продуктовые фичи». Сейчас перемешано. Через год захочется второй продукт на той же платформе — и не выделится.
-- [ ] **CMS governance.** Сейчас любой админ может поменять всё в admin CMS. Нужно: draft / publish workflow, версионирование контента, preview-режим, revision history, rollback. Не «feature» — фундамент. `MarketingPage` / `MarketingBlogPost` не имеют `isPublished` workflow (только `isFeatured`, `isActive`).
-- [ ] **`MarketingBlogPost.isPublished` есть**, но нет версионности контента / preview mode.
-- [ ] **Internationalization от нулевой строки.** Даже если сейчас только RU — зашить в архитектуру места, где текст живёт (i18n keys), форматирование дат / валют (`Intl`), направление текста. Retrofitting i18n — 3 месяца ада.
-- [ ] **Hardcoded English strings в shared коде:** `packages/query/src/hooks/create-crud-hooks.ts:60-64` — `toast.success("${entityName} created successfully")`, `toast.error("Failed to ${action} ${entityName.toLowerCase()}")`. `.toLowerCase()` работает только для английского. Первый концентрированный pain point i18n retrofitting'а.
-- [ ] **Billing domain существует в БД, но не в API.** Это окно для правильного проектирования — пока кода нет. Stripe схема (`stripeProductId`, `stripePriceId`, `Subscription.id` как external PK) уже выбрана implicit, но без ADR.
-- [ ] **`PROCESS_STATUS_LABELS` в `coach-dashboard.constants.ts`** — hardcoded English ("On track", "Steady", "Falling behind"). Не приходит через CMS — противоречит `blogLabels` подходу. **Фрагментированный i18n**: часть text через CMS, часть hardcoded.
-- [ ] **`DEFAULT_LOCALE = "en-US"`** в `packages/shared/src/helpers/locale.ts` — `formatPrice` использует `en-US` для всех валют, игнорируя user locale. UAH, EUR будут отформатированы не по местным правилам.
-- [ ] **`formatPrice` с `minimumFractionDigits: 0, maximumFractionDigits: 0`** — округление до целого, потеря точности, $9.99 → "$10".
-- [ ] **CMS не управляет SEO** — `marketing/src/app/page.tsx` использует `PAGE_SEO.home.title` из config, а не из `MarketingPage.seoTitle` из CMS. Admin не может поменять title home page через CMS.
-- [ ] **`dayjs` есть в catalog + `dayjs/plugin/timezone` отсутствует.** `packages/api-server/src/utils/date-helpers.ts` (75 строк) re-implements TZ math через `Intl.DateTimeFormat` + `toLocaleString` hack вместо dayjs-timezone. Inconsistency: frontend использует dayjs, backend — custom TZ code.
+- [x] **Job queue.** Любая работа >100 ms, которую можно отложить, должна быть в очереди (BullMQ, Inngest, Trigger.dev). Синхронное выполнение в request / response упирается в стенку. `CoachActionItem` генерирует события с `AUTO_*` резолюцией → требует scheduled jobs. **Documented in ADR 0021 (Tier 1).**
+- [x] **Emails и notifications как first-class citizen.** Email port есть, 0 vendor implementations. `MarketingContactSubmission` без подтверждений отправителю. **Documented in ADR 0021 (Tier 1).**
+- [x] **Платформа vs продукт.** Разделение уже заложено bounded contexts из §1: Platform = IAM + Storage + Billing, Products = CMS + LMS + Coaching. Enforcement через dependency-cruiser. **Documented in ADR 0021 (Tier 3) — monitor for trigger.**
+- [x] **CMS governance.** `MarketingBlogPost` имеет `isPublished` toggle, но нет draft/publish workflow, версионности, preview mode. **Documented in ADR 0021 (Tier 2).**
+- [x] **Internationalization от нулевой строки.** Hardcoded English: toast messages в `create-crud-hooks.ts`, `PROCESS_STATUS_LABELS`, `DEFAULT_LOCALE`, platform hooks. **Documented in ADR 0021 (Tier 2). Phase 1 fix in bullet 7.2.B.**
+- [x] **Billing domain существует в БД, но не в API.** Stripe schema implicit, `Transaction.idempotencyKey` nullable. **Documented in ADR 0021 (Tier 1).**
+- [x] **`formatPrice` precision loss.** `minimumFractionDigits: 0` → $9.99 → "$10". **Fixed in bullet 7.2.A.**
+- [x] **CMS не управляет SEO.** `PAGE_SEO` hardcoded, CMS `seoTitle`/`seoDesc` не используются. **Documented in ADR 0021 (Tier 2).**
+- ~~**`dayjs` inconsistency.**~~ **Пшик.** dayjs отсутствует в репо. `date-helpers.ts` использует native `Intl.DateTimeFormat` — правильный modern approach, не хак. Нет vendor lock-in, нет нужды в абстракции.
+
+### Implementation plan (section 7)
+
+| Bullet | Commit hash | Status  | Description                                                                                           |
+| ------ | ----------- | ------- | ----------------------------------------------------------------------------------------------------- |
+| 7.1.A  | —           | ⏳ Next | ADR 0021: architectural risks — six-month horizon. Remove dayjs bullet as пшик.                       |
+| 7.2.A  | —           | Pending | Fix `formatPrice` precision: remove `FractionDigits: 0`, show $9.99 correctly.                        |
+| 7.2.B  | —           | Pending | `formatPrice`/`formatDate` accept locale param, `DEFAULT_LOCALE` as fallback. Minimal i18n readiness. |
 
 ---
 
