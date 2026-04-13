@@ -31,6 +31,10 @@ const DEFAULT_MAX_RETRIES = 2;
 const BASE_RETRY_DELAY_MS = 1_000;
 const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
 
+type RequestOptions = {
+  cache?: RequestCache;
+};
+
 interface ApiClientConfig {
   baseUrl: string;
   getHeaders?: () => Record<string, string> | Promise<Record<string, string>>;
@@ -38,6 +42,7 @@ interface ApiClientConfig {
   onUnauthorized?: () => never;
   timeoutMs?: number;
   maxRetries?: number;
+  cache?: RequestCache;
 }
 
 export class ApiClient {
@@ -47,6 +52,7 @@ export class ApiClient {
   private onUnauthorized?: () => never;
   private timeoutMs: number;
   private maxRetries: number;
+  private cache: RequestCache;
 
   constructor({
     baseUrl,
@@ -55,6 +61,7 @@ export class ApiClient {
     onUnauthorized,
     timeoutMs,
     maxRetries,
+    cache,
   }: ApiClientConfig) {
     this.baseUrl = baseUrl;
     this.getHeadersFn = getHeaders;
@@ -62,6 +69,7 @@ export class ApiClient {
     this.onUnauthorized = onUnauthorized;
     this.timeoutMs = timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.maxRetries = maxRetries ?? DEFAULT_MAX_RETRIES;
+    this.cache = cache ?? "no-store";
   }
 
   async request<T>(
@@ -69,6 +77,7 @@ export class ApiClient {
     method: "GET" | "POST" | "PUT" | "DELETE" | "PATCH" = "GET",
     body?: unknown,
     queryParams?: Record<string, string>,
+    options?: RequestOptions,
   ): Promise<T> {
     const isFormData = body instanceof FormData;
     const dynamicHeaders = this.getHeadersFn ? await this.getHeadersFn() : {};
@@ -108,7 +117,7 @@ export class ApiClient {
           method,
           headers,
           body: isFormData ? body : body ? JSON.stringify(body) : undefined,
-          cache: "no-store",
+          cache: options?.cache ?? this.cache,
           credentials: this.credentials,
           signal: controller.signal,
         });
