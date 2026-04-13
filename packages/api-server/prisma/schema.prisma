@@ -33,7 +33,6 @@ model User {
 
   @@index([createdAt])
   @@index([deletedAt])
-  @@index([role])
   @@index([name])
   @@index([email])
   @@index([role, deletedAt])
