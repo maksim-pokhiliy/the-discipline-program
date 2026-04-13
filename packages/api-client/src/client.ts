@@ -4,7 +4,9 @@ import {
   ForbiddenError,
   InternalServerError,
   NotFoundError,
+  ServiceUnavailableError,
   TimeoutError,
+  TooManyRequestsError,
   UnauthorizedError,
   ValidationError,
 } from "@repo/errors";
@@ -18,9 +20,16 @@ const HTTP_STATUS_ERROR_MAP: Partial<Record<number, AppErrorConstructor>> = {
   404: NotFoundError,
   409: ConflictError,
   422: ValidationError,
+  429: TooManyRequestsError,
+  502: ServiceUnavailableError,
+  503: ServiceUnavailableError,
+  504: ServiceUnavailableError,
 };
 
 const DEFAULT_TIMEOUT_MS = 30_000;
+const DEFAULT_MAX_RETRIES = 2;
+const BASE_RETRY_DELAY_MS = 1_000;
+const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
 
 interface ApiClientConfig {
   baseUrl: string;
@@ -28,6 +37,7 @@ interface ApiClientConfig {
   credentials?: RequestCredentials;
   onUnauthorized?: () => never;
   timeoutMs?: number;
+  maxRetries?: number;
 }
 
 export class ApiClient {
@@ -36,13 +46,22 @@ export class ApiClient {
   private credentials?: RequestCredentials;
   private onUnauthorized?: () => never;
   private timeoutMs: number;
+  private maxRetries: number;
 
-  constructor({ baseUrl, getHeaders, credentials, onUnauthorized, timeoutMs }: ApiClientConfig) {
+  constructor({
+    baseUrl,
+    getHeaders,
+    credentials,
+    onUnauthorized,
+    timeoutMs,
+    maxRetries,
+  }: ApiClientConfig) {
     this.baseUrl = baseUrl;
     this.getHeadersFn = getHeaders;
     this.credentials = credentials;
     this.onUnauthorized = onUnauthorized;
     this.timeoutMs = timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    this.maxRetries = maxRetries ?? DEFAULT_MAX_RETRIES;
   }
 
   async request<T>(
@@ -69,55 +88,83 @@ export class ApiClient {
       }
     }
 
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+    let lastError: unknown;
 
-    let response: Response;
+    for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      if (attempt > 0) {
+        const delay =
+          BASE_RETRY_DELAY_MS * 2 ** (attempt - 1) + Math.random() * BASE_RETRY_DELAY_MS;
 
-    try {
-      response = await fetch(fullUrl, {
-        method,
-        headers,
-        body: isFormData ? body : body ? JSON.stringify(body) : undefined,
-        cache: "no-store",
-        credentials: this.credentials,
-        signal: controller.signal,
-      });
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new TimeoutError(`Request timed out after ${this.timeoutMs}ms`, {
-          url: fullUrl,
-          timeoutMs: this.timeoutMs,
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+
+      let response: Response;
+
+      try {
+        response = await fetch(fullUrl, {
+          method,
+          headers,
+          body: isFormData ? body : body ? JSON.stringify(body) : undefined,
+          cache: "no-store",
+          credentials: this.credentials,
+          signal: controller.signal,
         });
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") {
+          lastError = new TimeoutError(`Request timed out after ${this.timeoutMs}ms`, {
+            url: fullUrl,
+            timeoutMs: this.timeoutMs,
+          });
+
+          if (attempt < this.maxRetries) {
+            continue;
+          }
+
+          throw lastError;
+        }
+
+        if (error instanceof TypeError && attempt < this.maxRetries) {
+          lastError = error;
+          continue;
+        }
+
+        throw error;
+      } finally {
+        clearTimeout(timeoutId);
       }
 
-      throw error;
-    } finally {
-      clearTimeout(timeoutId);
-    }
+      if (!response.ok) {
+        if (response.status === 401 && this.onUnauthorized) {
+          this.onUnauthorized();
+        }
 
-    if (!response.ok) {
-      if (response.status === 401 && this.onUnauthorized) {
-        this.onUnauthorized();
+        if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < this.maxRetries) {
+          continue;
+        }
+
+        const errBody = await response
+          .json()
+          .catch(() => ({ error: { message: `Request failed: ${response.status}` } }));
+
+        const message = errBody.error?.message || "API request failed";
+        const details = { status: response.status, url: fullUrl, ...errBody.error?.details };
+
+        const ErrorClass = HTTP_STATUS_ERROR_MAP[response.status] ?? InternalServerError;
+
+        throw new ErrorClass(message, details);
       }
 
-      const body = await response
-        .json()
-        .catch(() => ({ error: { message: `Request failed: ${response.status}` } }));
-
-      const message = body.error?.message || "API request failed";
-      const details = { status: response.status, url: fullUrl, ...body.error?.details };
-
-      const ErrorClass = HTTP_STATUS_ERROR_MAP[response.status] ?? InternalServerError;
-
-      throw new ErrorClass(message, details);
-    }
-
-    return response.json().catch(() => {
-      throw new InternalServerError("Failed to parse API response", {
-        status: response.status,
-        url: fullUrl,
+      return response.json().catch(() => {
+        throw new InternalServerError("Failed to parse API response", {
+          status: response.status,
+          url: fullUrl,
+        });
       });
-    });
+    }
+
+    throw lastError;
   }
 }
