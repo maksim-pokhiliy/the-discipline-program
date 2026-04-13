@@ -45,21 +45,24 @@ export const parseDateParam = (param: string): Date => {
   return new Date(parts[0] ?? 0, (parts[1] ?? 1) - 1, parts[2] ?? 1);
 };
 
-const DAY_FORMAT = new Intl.DateTimeFormat(DEFAULT_LOCALE, { weekday: "short" });
-const DATE_FORMAT = new Intl.DateTimeFormat(DEFAULT_LOCALE, { month: "short", day: "numeric" });
-const RANGE_FORMAT = new Intl.DateTimeFormat(DEFAULT_LOCALE, {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
+export const formatDayHeader = (date: Date, locale: string = DEFAULT_LOCALE): string => {
+  const day = new Intl.DateTimeFormat(locale, { weekday: "short" });
+  const dateF = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" });
 
-export const formatDayHeader = (date: Date): string =>
-  `${DAY_FORMAT.format(date)}, ${DATE_FORMAT.format(date)}`;
+  return `${day.format(date)}, ${dateF.format(date)}`;
+};
 
-export const formatDayName = (date: Date): string => DAY_FORMAT.format(date);
+export const formatDayName = (date: Date, locale: string = DEFAULT_LOCALE): string =>
+  new Intl.DateTimeFormat(locale, { weekday: "short" }).format(date);
 
-export const formatWeekRange = (monday: Date): string => {
+export const formatWeekRange = (monday: Date, locale: string = DEFAULT_LOCALE): string => {
   const sunday = addDays(monday, 6);
+  const dateF = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" });
+  const rangeF = new Intl.DateTimeFormat(locale, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 
-  return `${DATE_FORMAT.format(monday)} – ${RANGE_FORMAT.format(sunday)}`;
+  return `${dateF.format(monday)} – ${rangeF.format(sunday)}`;
 };
