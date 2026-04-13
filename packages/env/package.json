@@ -2,6 +2,7 @@
   "name": "@repo/env",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "sideEffects": false,
   "exports": {
     "./base": "./src/base.ts",
