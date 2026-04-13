@@ -1,5 +1,3 @@
-"use client";
-
 import { Card, CardContent, Grid, type GridSize } from "@mui/material";
 
 import { PulseStat, type PulseStatProps } from "./pulse-stat";

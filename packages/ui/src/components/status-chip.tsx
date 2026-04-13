@@ -1,5 +1,3 @@
-"use client";
-
 import { Chip, type ChipProps, Tooltip } from "@mui/material";
 
 export type StatusChipConfig = {
