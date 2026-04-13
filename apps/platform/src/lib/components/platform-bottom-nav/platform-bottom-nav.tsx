@@ -2,7 +2,10 @@
 
 import { type ReactNode } from "react";
 
-import { EventNoteRounded, GroupRounded, HomeRounded, PersonRounded } from "@mui/icons-material";
+import EventNoteRounded from "@mui/icons-material/EventNoteRounded";
+import GroupRounded from "@mui/icons-material/GroupRounded";
+import HomeRounded from "@mui/icons-material/HomeRounded";
+import PersonRounded from "@mui/icons-material/PersonRounded";
 import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

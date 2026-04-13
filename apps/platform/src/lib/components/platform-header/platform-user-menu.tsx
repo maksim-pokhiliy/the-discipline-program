@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 
-import { LogoutRounded, SettingsRounded } from "@mui/icons-material";
+import LogoutRounded from "@mui/icons-material/LogoutRounded";
+import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import Link from "next/link";
 

@@ -3,7 +3,8 @@
 import { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { Button, IconButton, InputAdornment, Stack, TextField } from "@mui/material";
 import { useForm } from "react-hook-form";
 
