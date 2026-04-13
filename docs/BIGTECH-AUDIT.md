@@ -19,7 +19,7 @@
 - [x] 5. База данных и миграции
 - [x] 6. API Design
 - [x] 7. Архитектурные риски на 6 месяцев вперёд
-- [ ] 8. Monorepo дисциплина
+- [x] 8. Monorepo дисциплина
 - [ ] 9. Тестирование
 - [ ] 10. Фронт и Next.js 16
 - [ ] 11. Качество кода
@@ -511,7 +511,7 @@ Non-obvious стафф. Это то, что больнее всего ретро
 
 ## 8. Monorepo дисциплина
 
-**Статус:** Исследование завершено, реализация в процессе
+**Статус:** ✅ Завершено
 
 Усиливает все границы сверху. Без автоматического enforcement любая конвенция разваливается через месяц.
 
@@ -539,8 +539,8 @@ Non-obvious стафф. Это то, что больнее всего ретро
 
 | Bullet | Commit hash | Status  | Description                                                                                 |
 | ------ | ----------- | ------- | ------------------------------------------------------------------------------------------- |
-| 8.1.A  | —           | ⏳ Next | ADR 0022: monorepo discipline decisions. Пшики, deferred items, intentional choices.        |
-| 8.2.A  | —           | Pending | lefthook test filter + @repo/env type:module + turbo lint caching. Monorepo config hygiene. |
+| 8.1.A  | `0977673`   | ✅ Done | ADR 0022: monorepo discipline decisions. Пшики, deferred items, intentional choices.        |
+| 8.2.A  | `9f02f4a`   | ✅ Done | lefthook test filter + @repo/env type:module + turbo lint caching. Monorepo config hygiene. |
 
 ---
 
