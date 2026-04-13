@@ -23,7 +23,7 @@ export const BlogArticleHero = ({ post, labels }: BlogArticleHeroProps) => {
     : labels.notPublishedLabel;
 
   return (
-    <FullscreenSection backgroundImage={post.coverImage ?? "/images/pages/home-hero.png"}>
+    <FullscreenSection backgroundImage={post.coverImage ?? "/images/pages/home-hero.png"} priority>
       <Chip label={BLOG_CATEGORY_LABELS[post.category]} color="primary" />
 
       <Typography variant="display1" component="h1" textAlign="center">

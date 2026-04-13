@@ -1,8 +1,9 @@
 import { type ReactNode } from "react";
 
 import { Box, Grid } from "@mui/material";
+import Image from "next/image";
 
-import { buildOverlay } from "@repo/mui";
+import { ImageOverlay } from "./image-overlay";
 
 type SplitSectionProps = {
   backgroundImage: string;
@@ -26,18 +27,24 @@ export const SplitSection = ({
         size={{ xs: 12, md: 6 }}
         sx={(theme) => ({
           position: "relative",
-          backgroundImage: `${buildOverlay(theme)}, url(${backgroundImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
+          overflow: "hidden",
           color: theme.palette.common.white,
           minHeight: { xs: theme.spacing(37.5), md: "auto" },
         })}
       >
+        <Image
+          src={backgroundImage}
+          alt=""
+          fill
+          sizes="(max-width: 900px) 100vw, 50vw"
+          style={{ objectFit: "cover" }}
+        />
+        <ImageOverlay />
         {imageContent && (
           <Box
             sx={{
               position: "relative",
+              zIndex: 1,
               height: "100%",
               p: 4,
             }}

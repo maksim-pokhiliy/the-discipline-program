@@ -13,9 +13,10 @@ import {
   Typography,
 } from "@mui/material";
 import { type Variants, motion } from "framer-motion";
+import Image from "next/image";
 import Link from "next/link";
 
-import { buildOverlay } from "@repo/mui";
+import { ImageOverlay } from "./image-overlay";
 
 const MotionBox = motion.create(Box);
 
@@ -33,6 +34,7 @@ const fadeSlideUp: Variants = {
 
 type FullscreenSectionProps = {
   backgroundImage: string;
+  priority?: boolean;
   sx?: SxProps<Theme>;
 } & (
   | { children: ReactNode; title?: never; subtitle?: never; buttonText?: never; buttonHref?: never }
@@ -47,6 +49,7 @@ type FullscreenSectionProps = {
 
 export const FullscreenSection = ({
   backgroundImage,
+  priority,
   sx: sxOverride,
   children,
   title,
@@ -61,18 +64,24 @@ export const FullscreenSection = ({
       sx={[
         (theme) => ({
           position: "relative",
+          overflow: "hidden",
           height: "100vh",
-          backgroundImage: `${buildOverlay(theme)}, url(${backgroundImage})`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          backgroundRepeat: "no-repeat",
           color: theme.palette.common.white,
           textAlign: { xs: "center", md: "left" },
         }),
         ...(Array.isArray(sxOverride) ? sxOverride : sxOverride ? [sxOverride] : []),
       ]}
     >
-      <Container maxWidth="lg">
+      <Image
+        src={backgroundImage}
+        alt=""
+        fill
+        priority={priority}
+        sizes="100vw"
+        style={{ objectFit: "cover" }}
+      />
+      <ImageOverlay />
+      <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
         <MotionBox
           variants={staggerContainer}
           initial="hidden"
