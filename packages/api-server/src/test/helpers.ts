@@ -1,6 +1,7 @@
 import { type Prisma, PrismaClient } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/iam/auth";
+import { logger } from "@repo/shared";
 
 import { ROLE_TO_PRISMA_MAP } from "../mappers/iam";
 
@@ -56,7 +57,15 @@ export const cleanup = async (...ids: { table: string; id: string }[]) => {
       continue;
     }
 
-    await delegate.delete({ where: { id } }).catch(() => {});
+    await delegate.delete({ where: { id } }).catch((error: unknown) => {
+      const code = (error as { code?: string }).code;
+
+      if (code === "P2025") {
+        return;
+      }
+
+      logger.error(`[test cleanup] failed to delete ${table}/${id}`, { error });
+    });
   }
 };
 
