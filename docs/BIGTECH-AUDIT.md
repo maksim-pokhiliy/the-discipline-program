@@ -603,12 +603,12 @@ Non-obvious стафф. Это то, что больнее всего ретро
 
 | №      | Commit hash | Status  | Description                                                                                                             |
 | ------ | ----------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
-| 10.3.A |             | ⏳ Next | Add `optimizePackageImports` to all 3 `next.config.ts` — auto tree-shaking for `@mui/icons-material`, `@tiptap/*`, etc. |
-| 10.3.B |             | Pending | Fix 5 runtime barrel imports `@mui/icons-material` → canonical deep path per ADR 0006                                   |
-| 10.3.C |             | Pending | Remove dead deps: `@mui/x-date-pickers` from NextProvider + phantom `lucide-react` / `react-markdown` from package.json |
-| 10.6.A |             | Pending | Remove useless `export const dynamic = "force-dynamic"` from `platform/coach/plans/[planId]/page.tsx`                   |
-| 10.1.A |             | Pending | Marketing SEO: add `robots.ts` + fix sitemap `lastModified: new Date()` → real dates                                    |
-| 10.2.A |             | Pending | Remove false `"use client"` from 14 components (2 admin, 1 marketing, 1 platform, 10 @repo/ui)                          |
+| 10.3.A | `c2b7cb0`   | ✅ Done | Add `optimizePackageImports` to all 3 `next.config.ts` — auto tree-shaking for `@mui/icons-material`, `@tiptap/*`, etc. |
+| 10.3.B | `ea2ebe4`   | ✅ Done | Fix 5 runtime barrel imports `@mui/icons-material` → canonical deep path per ADR 0006                                   |
+| 10.3.C | `eb5a386`   | ✅ Done | Remove dead deps: `@mui/x-date-pickers` from NextProvider + phantom `lucide-react` / `react-markdown` from package.json |
+| 10.6.A | `a913247`   | ✅ Done | Remove useless `export const dynamic = "force-dynamic"` from `platform/coach/plans/[planId]/page.tsx`                   |
+| 10.1.A | `1dd7b08`   | ✅ Done | Marketing SEO: add `robots.ts` + fix sitemap `lastModified: new Date()` → real dates                                    |
+| 10.2.A |             | ⏳ Next | Remove false `"use client"` from 14 components (2 admin, 1 marketing, 1 platform, 10 @repo/ui)                          |
 | 10.1.B |             | Pending | Marketing: convert 7 page modules to server components (remove `"use client"` + `useQuery` wrapper)                     |
 | 10.1.C |             | Pending | Marketing: remove `force-dynamic` from all pages, switch to ISR (`export const revalidate`)                             |
 | 10.4.A |             | Pending | `BlogPostCard`: replace `CardMedia component="img"` with `next/image`                                                   |
@@ -633,7 +633,7 @@ Rationale: config optimizations first (tree-shaking unblocks bundle wins) → me
 
 #### 10.2. `"use client"` discipline
 
-- [ ] **14 false `"use client"` компонентов.** Файлы с директивой, которые не используют hooks, event handlers, browser APIs, Context. **apps/admin (2):** `(auth)/layout.tsx`, `admin-list-view/index.tsx`. **apps/marketing (1):** `loading.tsx`. **apps/platform (1):** `platform-header/platform-header.tsx`. **packages/ui (10):** `status-chip.tsx`, `stats-card.tsx`, `rich-text-viewer.tsx`, `query-wrapper.tsx`, `pulse-stats-card.tsx`, `pulse-stat.tsx`, `page-header.tsx`, `logo.tsx`, `form-card.tsx`, `chip-tab.tsx`. Проверено 157 файлов с `"use client"` в apps + packages/ui.
+- [ ] **False `"use client"` — 3 удалены, 11 оказались justified.** Из 14 кандидатов при deeper analysis только 3 оказались genuinely removable: `logo.tsx`, `status-chip.tsx`, `pulse-stats-card.tsx` (zero sx theme callbacks, zero function props, serializable data only). Остальные 11 требуют client context: 4 используют `sx={(theme) => ...}` (theme callback — function, не сериализуется через RSC boundary), 3 принимают function props (`children: (data) => ReactNode`, `onSignOut`), 2 spread generic MUI props (могут содержать theme callbacks), 2 зависят от client parent context (Tab→Tabs, component reference prop). Проверено 157 файлов с `"use client"` в apps + packages/ui.
 
 #### 10.3. Bundle и heavy deps
 
