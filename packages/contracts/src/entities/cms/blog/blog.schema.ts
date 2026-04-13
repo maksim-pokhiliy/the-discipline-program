@@ -45,7 +45,7 @@ export const publicBlogPostSchema = z.object({
   content: z.string(),
   coverImage: z.string().nullable(),
   publishedAt: z.coerce.date(),
-  readTime: z.number().nullable(),
+  readTime: z.number().int().nonnegative().nullable(),
   isFeatured: z.boolean(),
   authorName: z.string(),
   category: z.nativeEnum(BlogCategory),

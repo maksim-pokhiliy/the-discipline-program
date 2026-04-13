@@ -9,7 +9,7 @@ export const workoutSchema = z.object({
   title: z.string().max(WORKOUT_CONSTANTS.MAX_TITLE_LENGTH),
   description: z.string().nullable(),
   content: z.string().nullable(),
-  sortOrder: z.number().int(),
+  sortOrder: z.number().int().nonnegative(),
   isArchived: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),

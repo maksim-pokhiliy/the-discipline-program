@@ -22,9 +22,9 @@ export const planDisciplineSchema = z.object({
   planName: z.string(),
   enrollmentStatus: z.nativeEnum(PlanEnrollmentStatus),
   enrolledDate: z.date(),
-  completed: z.number().int(),
-  available: z.number().int(),
-  planned: z.number().int(),
+  completed: z.number().int().nonnegative(),
+  available: z.number().int().nonnegative(),
+  planned: z.number().int().nonnegative(),
 });
 
 export const recentWorkoutSchema = z.object({
@@ -49,9 +49,9 @@ export const nextWorkoutSchema = z.object({
 });
 
 export const consistencySchema = z.object({
-  adherenceRate4w: z.number(),
-  currentStreak: z.number().int(),
-  missedThisWeek: z.number().int(),
+  adherenceRate4w: z.number().finite().min(0).max(1),
+  currentStreak: z.number().int().nonnegative(),
+  missedThisWeek: z.number().int().nonnegative(),
 });
 
 export const coachAthleteDetailSchema = z.object({
@@ -68,5 +68,5 @@ export const coachAthleteDetailSchema = z.object({
   consistency: consistencySchema,
   enrolledSince: z.date(),
   lastActivityDate: z.date().nullable(),
-  daysSinceLastActivity: z.number().int().nullable(),
+  daysSinceLastActivity: z.number().int().nonnegative().nullable(),
 });

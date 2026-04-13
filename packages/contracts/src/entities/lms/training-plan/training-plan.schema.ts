@@ -25,7 +25,7 @@ export const updateTrainingPlanSchema = z.object({
 });
 
 export const trainingPlanListItemSchema = trainingPlanSchema.extend({
-  enrolledAthletesCount: z.number().int(),
-  workoutsToday: z.number().int(),
-  workoutsThisWeek: z.number().int(),
+  enrolledAthletesCount: z.number().int().nonnegative(),
+  workoutsToday: z.number().int().nonnegative(),
+  workoutsThisWeek: z.number().int().nonnegative(),
 });

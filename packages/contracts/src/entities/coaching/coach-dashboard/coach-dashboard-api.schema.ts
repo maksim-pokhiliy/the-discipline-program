@@ -9,14 +9,14 @@ import { ProcessStatus, TodayStatus } from "./coach-dashboard.constants";
 export const todayStatusSchema = z.nativeEnum(TodayStatus);
 
 export const dashboardOverviewSchema = z.object({
-  totalActiveAthletes: z.number().int(),
-  activePlansCount: z.number().int(),
-  workoutsPlannedToday: z.number().int(),
-  workoutsCompletedToday: z.number().int(),
-  workoutsPlannedThisWeek: z.number().int(),
-  workoutsCompletedThisWeek: z.number().int(),
-  openActionItemsCount: z.number().int(),
-  newAthletesCount: z.number().int(),
+  totalActiveAthletes: z.number().int().nonnegative(),
+  activePlansCount: z.number().int().nonnegative(),
+  workoutsPlannedToday: z.number().int().nonnegative(),
+  workoutsCompletedToday: z.number().int().nonnegative(),
+  workoutsPlannedThisWeek: z.number().int().nonnegative(),
+  workoutsCompletedThisWeek: z.number().int().nonnegative(),
+  openActionItemsCount: z.number().int().nonnegative(),
+  newAthletesCount: z.number().int().nonnegative(),
 });
 
 export const dashboardActionItemSchema = z.object({
@@ -38,10 +38,10 @@ export const athleteDailySummarySchema = z.object({
   planId: z.string().cuid().nullable(),
   planName: z.string().nullable(),
   todayStatus: todayStatusSchema,
-  missedCount: z.number().int(),
+  missedCount: z.number().int().nonnegative(),
   todayWorkoutTitle: z.string().nullable(),
   lastActivityDate: z.date().nullable(),
-  daysSinceLastActivity: z.number().int().nullable(),
+  daysSinceLastActivity: z.number().int().nonnegative().nullable(),
   healthStatus: z.nativeEnum(HealthStatus),
 });
 
@@ -56,7 +56,7 @@ export const progressBucketsSchema = z.object({
   onTrack: z.array(progressAthleteSchema),
   steady: z.array(progressAthleteSchema),
   fallingBehind: z.array(progressAthleteSchema),
-  avgEngagementRate: z.number(),
+  avgEngagementRate: z.number().finite().min(0).max(1),
 });
 
 export const coachDashboardDataSchema = z.object({

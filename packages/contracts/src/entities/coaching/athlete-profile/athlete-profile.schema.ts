@@ -8,8 +8,8 @@ export const athleteProfileSchema = z.object({
   id: z.string().cuid(),
   userId: z.string().cuid(),
   gender: z.nativeEnum(Gender).nullable(),
-  heightCm: z.number().int().nullable(),
-  weightKg: z.number().nullable(),
+  heightCm: z.number().int().positive().max(ATHLETE_PROFILE_CONSTANTS.MAX_HEIGHT_CM).nullable(),
+  weightKg: z.number().finite().positive().max(ATHLETE_PROFILE_CONSTANTS.MAX_WEIGHT_KG).nullable(),
   healthStatus: healthStatusSchema,
   healthNote: z.string().nullable(),
   createdAt: z.date(),
@@ -18,8 +18,8 @@ export const athleteProfileSchema = z.object({
 
 export const updateAthleteProfileSchema = z.object({
   gender: z.nativeEnum(Gender).optional(),
-  heightCm: z.number().int().positive().optional(),
-  weightKg: z.number().positive().optional(),
+  heightCm: z.number().int().positive().max(ATHLETE_PROFILE_CONSTANTS.MAX_HEIGHT_CM).optional(),
+  weightKg: z.number().finite().positive().max(ATHLETE_PROFILE_CONSTANTS.MAX_WEIGHT_KG).optional(),
   healthStatus: healthStatusSchema.optional(),
   healthNote: z
     .string()
