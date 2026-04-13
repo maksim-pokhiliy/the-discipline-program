@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { COACH_PROFILE_CONSTANTS } from "./coach-profile.constants";
+
 export const coachProfileSchema = z.object({
   id: z.string().cuid(),
   userId: z.string().cuid(),
@@ -9,5 +11,5 @@ export const coachProfileSchema = z.object({
 });
 
 export const updateCoachProfileSchema = z.object({
-  bio: z.string().max(2000).optional(),
+  bio: z.string().max(COACH_PROFILE_CONSTANTS.MAX_BIO_LENGTH).optional(),
 });

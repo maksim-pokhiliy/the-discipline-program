@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { PriceInterval, ProductCurrency } from "./product.constants";
+import { PRODUCT_CONSTANTS, PriceInterval, ProductCurrency } from "./product.constants";
 
 export const priceSchema = z.object({
   id: z.string().cuid(),
@@ -13,7 +13,7 @@ export const priceSchema = z.object({
 export const productSchema = z.object({
   id: z.string().cuid(),
   slug: z.string().regex(/^[a-z0-9-]+$/),
-  title: z.string().min(1).max(200),
+  title: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_TITLE_LENGTH),
   description: z.string().min(1),
   features: z.array(z.string()),
   trainingPlanId: z.string().nullable(),
@@ -31,7 +31,7 @@ export const createProductPriceSchema = z.object({
 });
 
 export const createProductSchema = z.object({
-  title: z.string().min(1).max(200),
+  title: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_TITLE_LENGTH),
   slug: z.string().regex(/^[a-z0-9-]+$/),
   description: z.string().min(1),
   features: z.array(z.string()),

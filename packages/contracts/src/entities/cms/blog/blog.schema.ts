@@ -4,13 +4,13 @@ import { BlogCategory, BLOG_CONSTANTS } from "./blog.constants";
 
 export const blogPostSchema = z.object({
   id: z.string().cuid(),
-  title: z.string().min(1).max(200),
+  title: z.string().min(1).max(BLOG_CONSTANTS.MAX_TITLE_LENGTH),
   slug: z
     .string()
     .min(1)
-    .max(200)
+    .max(BLOG_CONSTANTS.MAX_SLUG_LENGTH)
     .regex(/^[a-z0-9-]+$/),
-  excerpt: z.string().max(500).nullable(),
+  excerpt: z.string().max(BLOG_CONSTANTS.MAX_EXCERPT_LENGTH).nullable(),
   content: z.string().min(BLOG_CONSTANTS.MIN_CONTENT_LENGTH),
   coverImage: z.string().nullable(),
   publishedAt: z.coerce.date().nullable(),
