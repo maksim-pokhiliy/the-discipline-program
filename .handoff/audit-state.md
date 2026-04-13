@@ -36,10 +36,10 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-13 (sections 1–3 complete, §4 in progress — 13/18 done)
+## Current state — 2026-04-13 (sections 1–3 complete, §4 in progress — 14/18 done)
 
-**Branch:** `refactor/design-system-typography-hero` (179 commits ahead of `origin/`, working tree clean)
-**Last commit:** `f4eb8b2 fix(admin,platform): add try/catch and structured logging to proxy auth`
+**Branch:** `refactor/design-system-typography-hero` (181 commits ahead of `origin/`, working tree clean)
+**Last commit:** `53f0229 feat(apps): add error.tsx, global-error.tsx, not-found.tsx for all apps`
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 
 ### Section 1 (Архитектура и границы) — CLOSED
@@ -87,7 +87,7 @@ Implementation plan: 3.1.A–3.5.A done (12 commits). Key deliverables:
 
 ### Section 4 (Надёжность и операционка) — IN PROGRESS
 
-Research complete, implementation plan in `docs/BIGTECH-AUDIT.md`. 21 bullets total (7 closed before this session, 4 removed as пшики during implementation). 13 commits done, 4 remaining + 1 deferred (OpenTelemetry).
+Research complete, implementation plan in `docs/BIGTECH-AUDIT.md`. 21 bullets total (7 closed before this session, 4 removed as пшики during implementation). 14 commits done, 3 remaining + 1 deferred (OpenTelemetry).
 
 **Done (11 commits):**
 
@@ -104,6 +104,7 @@ Research complete, implementation plan in `docs/BIGTECH-AUDIT.md`. 21 bullets to
 - 4.3.B `992da37` — Correlation ID: `withErrorHandling` reads `x-request-id` from incoming headers or generates via `crypto.randomUUID()`. Sets header on all responses (success + error). `handleApiError` accepts `requestId`, includes in structured log and error response headers. `withErrorHandling` signature tightened from generic `<TArgs>` to `RouteHandler → RouteHandler`
 - 4.3.C `833ff0d` — Prisma dev query logging: `{ emit: "event", level: "query" }` in dev log config, `$on("query")` routes to `logger.info` with query text + duration. `QueryEventHandler` type alias for targeted `$on` cast (Prisma's typing can't narrow conditional log config)
 - 4.3.D `f4eb8b2` — Proxy auth error logging: `getToken()` wrapped in try/catch in both `admin/proxy.ts` and `platform/proxy.ts`. On failure: log via `logger.error` with path + error message, treat as no token (graceful degradation to login redirect)
+- 4.4.A `53f0229` — Next.js error files: 9 files (3 apps × 3). `error.tsx` — MUI Stack/Typography/Button, shows error digest, "Try again" reset + "Go home/dashboard". `global-error.tsx` — raw HTML with inline styles (MUI unavailable, replaces root layout), dark theme colors (#191919 bg, #E07B35 accent). `not-found.tsx` — server component, MUI, display2 "404" + link home
 
 **Removed bullets (пшики identified during implementation):**
 
@@ -114,7 +115,7 @@ Research complete, implementation plan in `docs/BIGTECH-AUDIT.md`. 21 bullets to
 
 **Remaining (6 commits):**
 
-- 4.4.A ⏳ Next — Next.js error files: `error.tsx`, `global-error.tsx`, `not-found.tsx` for all 3 apps
+- 4.5.A ⏳ Next — Readiness endpoint: add Blob storage check in admin's `/api/ready`
 - 4.5.A — Readiness endpoint: add Blob storage check in admin's `/api/ready`
 
 **Deferred (1):**
