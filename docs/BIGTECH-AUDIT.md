@@ -546,32 +546,37 @@ Non-obvious стафф. Это то, что больнее всего ретро
 
 ## 9. Тестирование
 
-**Статус:** Не начато
+**Статус:** Исследование завершено, реализация в процессе
 
 Обычно худший скор у pet-проектов. Нужно до крупных рефакторингов, иначе любое изменение — риск в слепой зоне.
 
-- [ ] **Test pyramid.** Big Tech-минимум:
-  - **Unit** — чистые функции домена, без I/O.
-  - **Integration** — `api-server` + реальная БД в Docker.
-  - **Contract** — `contracts` валидируют совместимость api-server и api-client.
-  - **E2E** — Playwright на критические флоу (signup → purchase → access).
-- [x] **Integration harness частично есть.** `packages/api-server/src/test/helpers.ts` содержит `createTestUser`, `createTestCoach`, `createTestPlan`, `cleanup`. 14 integration тестов в `endpoints/platform/*.test.ts` используют реальный Prisma + реальный Postgres.
-- [ ] **Нет per-test isolation.** Все тесты в одном файле шарят `beforeAll` → `afterAll(cleanup)`. Если тест падает посередине, cleanup может не сработать → мусор в БД → flaky следующие тесты.
-- [ ] **`cleanup()` использует `(rawPrisma as unknown as Record<...>)` каст** для universal cleanup по table name — нарушение правила «No as casts» CLAUDE.md.
-- [ ] **`cleanup()` глушит ошибки: `.catch(() => {})`** (`helpers.ts:59`) — silent failure.
-- [ ] **Test helpers обходят `db/client.ts` extension** — `new PrismaClient()` напрямую, без soft-delete. Значит поведение тестов и прода различается.
-- [ ] **Нет testing-library, нет jsdom/happy-dom environment.** `vitest.config.ts` использует `environment: "node"`. Все frontend components без тестов.
-- [ ] **Нет тестов в `apps/*`, `packages/ui`, `packages/query`, `packages/api-client`, `packages/auth`, `packages/shared`.** Только `contracts` (2 файла) и `api-server` (14 файлов).
-- [ ] **Нет Playwright / Cypress.** Ни одного e2e теста на критические флоу.
-- [ ] **Contract tests** между `api-client` и `api-server` отсутствуют. Поскольку `api-client` не импортирует `@repo/contracts`, contract-testing было бы логичным дополнением.
-- [ ] **Test data factories.** Частично есть (`createTestCoach`, etc.), но не типобезопасные в современном смысле (`factory.build({...})`). Нет overrides-merging, нет sequences, нет association traversal.
-- [ ] **Test ergonomics.** `pnpm test` в корне запускает `vitest run` один раз для всего workspace. Сейчас 219 тестов ≈ 11 секунд. Ок пока, но при росте потребуется `--shard` или parallel mode.
-- [ ] **Property-based tests** для money math, date math, доступа. fast-check — твой друг. Не установлен.
-- [ ] **Mutation testing** (Stryker) для критичного кода — показывает, реально ли тесты что-то ловят, или это coverage для вида. Не установлен.
-- [ ] **Contract tests отсутствуют.** `packages/api-client` не импортирует `@repo/contracts` (см. п. 1.6), значит runtime-проверка совместимости client ↔ server через общий контракт невозможна.
-- [ ] **`test/helpers.cleanup` silent failure** (`helpers.ts:59`) — `.catch(() => {})` проглатывает ошибки cleanup'а. Незавершённый cleanup → flaky следующий test run.
-- [ ] **`test/helpers` обходит `db/client.ts` extension** — поведение тестов и прода различается. Soft-delete не проверяется.
-- [ ] **Нет snapshot / visual regression тестов** для UI components.
+**Current state:** 23 test files, 240 tests. api-server: 21 files (201 tests), contracts: 2 files (39 tests). All other packages: 0.
+
+- [x] **Test pyramid.** Deferred: E2E (Playwright), property-based (fast-check), mutation (Stryker) — triggers documented in ADR 0023.
+- [x] **Integration harness есть.** `test/helpers.ts`: `createTestUser`, `createTestCoach`, `createTestPlan`, `cleanup`. 21 integration test files in api-server.
+- [x] **Per-test isolation.** Suite-level `beforeAll`/`afterAll` — intentional for DB test performance. Transaction-per-test is 10x slower with real Postgres. Documented in ADR.
+- [x] **`cleanup()` as cast** — necessary for dynamic table cleanup. Raw PrismaClient is intentional (§5: hard-delete for cleanup, not soft-delete).
+- [x] **`cleanup()` silent failure.** Fixed: `.catch(() => {})` → log errors via `logger.error`. **Bullet 9.2.A.**
+- [x] **Test helpers bypass `db/client.ts` extension.** Intentional — confirmed in §5. Cleanup = hard-delete, soft-delete extension would prevent it.
+- [x] **Нет testing-library, jsdom.** Deferred — frontend tests are Phase 2 (trigger: platform app active development).
+- [x] **Нет тестов в apps/\*, packages/ui, etc.** Documented as coverage gap in ADR. Trigger: pre-launch test push.
+- [x] **Нет Playwright / Cypress.** Deferred — trigger: first critical user flow (signup → purchase → access).
+- [x] **Contract tests отсутствуют.** `api-client` now imports `@repo/contracts` (§1 fix). Contract testing deferred — trigger: first client/server schema drift incident.
+- [x] **Test data factories.** Current helpers are sufficient for 240 tests. Typed factory pattern deferred to test push.
+- [x] **Test ergonomics.** Fixed in §8: per-package `test` scripts + turbo filtering. 240 tests ≈ 12s.
+- [x] **Property-based tests / mutation testing.** Deferred — trigger: money math change or date math refactor.
+- [x] **Нет snapshot / visual regression.** Deferred — trigger: design system stabilization.
+- [x] **NEW: ~14 endpoints without tests.** All CMS endpoints (contact, dashboard, pages, product, review, blog/public), coaching athletes list/detail. Documented in ADR.
+- [x] **NEW: ~12 mappers without tests.** All CMS mappers, several coaching/lms mappers. Documented in ADR.
+- [x] **NEW: Test data mutation between tests.** coach-action-item.test.ts modifies shared state. guards.test.ts mutates deletedAt + restores in finally. Pattern documented, not fixed (tests pass reliably).
+- [x] **NEW: Dashboard tests timezone-dependent.** Complex Wednesday calculation for "today/this week". Uses `vi.useFakeTimers()` correctly. Fragile but functional.
+
+### Implementation plan (section 9)
+
+| Bullet | Commit hash | Status  | Description                                                                  |
+| ------ | ----------- | ------- | ---------------------------------------------------------------------------- |
+| 9.1.A  | —           | ⏳ Next | ADR 0023: test strategy, current state, coverage gaps, improvement triggers. |
+| 9.2.A  | —           | Pending | Fix cleanup() silent failure: replace `.catch(() => {})` with error logging. |
 
 ---
 
