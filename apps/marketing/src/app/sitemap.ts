@@ -3,44 +3,44 @@ import { type MetadataRoute } from "next";
 import { serverApi } from "@app/lib/api/server";
 import { SEO_CONFIG } from "@app/lib/seo";
 
-export const dynamic = "force-dynamic";
-
 const baseUrl = SEO_CONFIG.siteUrl;
+
+const SITE_LAUNCH_DATE = new Date("2025-01-01");
 
 const staticPages: MetadataRoute.Sitemap = [
   {
     url: baseUrl,
-    lastModified: new Date(),
+    lastModified: SITE_LAUNCH_DATE,
     changeFrequency: "weekly",
     priority: 1,
   },
   {
     url: `${baseUrl}/storefront`,
-    lastModified: new Date(),
+    lastModified: SITE_LAUNCH_DATE,
     changeFrequency: "monthly",
     priority: 0.9,
   },
   {
     url: `${baseUrl}/about`,
-    lastModified: new Date(),
+    lastModified: SITE_LAUNCH_DATE,
     changeFrequency: "monthly",
     priority: 0.8,
   },
   {
     url: `${baseUrl}/blog`,
-    lastModified: new Date(),
+    lastModified: SITE_LAUNCH_DATE,
     changeFrequency: "weekly",
     priority: 0.8,
   },
   {
     url: `${baseUrl}/contact`,
-    lastModified: new Date(),
+    lastModified: SITE_LAUNCH_DATE,
     changeFrequency: "monthly",
     priority: 0.7,
   },
   {
     url: `${baseUrl}/faq`,
-    lastModified: new Date(),
+    lastModified: SITE_LAUNCH_DATE,
     changeFrequency: "monthly",
     priority: 0.6,
   },
