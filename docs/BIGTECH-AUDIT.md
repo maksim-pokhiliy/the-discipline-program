@@ -511,25 +511,36 @@ Non-obvious стафф. Это то, что больнее всего ретро
 
 ## 8. Monorepo дисциплина
 
-**Статус:** Не начато
+**Статус:** Исследование завершено, реализация в процессе
 
 Усиливает все границы сверху. Без автоматического enforcement любая конвенция разваливается через месяц.
 
-- [ ] **Enforced boundaries.** ESLint `import/no-restricted-paths` или `dependency-cruiser` — чтобы `apps/marketing` физически не мог импортировать из `apps/admin` или из LMS-контекста `api-server`. Конвенция без enforcement = не конвенция. **Хорошая новость:** `eslint-plugin-import` уже установлен → `no-restricted-paths` можно включить без новых deps.
-- [ ] **Package API surface.** У каждого пакета явный `index.ts` с публичным API. Всё остальное — private. `exports` в `package.json` есть в большинстве пакетов — проверить, что нет обхода через deep imports.
-- [ ] **`@repo/ui` имеет wildcard `exports: { "./*": "./src/*.tsx" }`** — любой .tsx доступен снаружи. **Breaking change**: сделать явный `index.ts` с контролируемым списком.
-- [ ] **`api-server` не имеет subpath exports** — любой app получает всё. Добавить `"./cms"`, `"./lms"`, `"./iam"`, `"./billing"`, `"./coaching"` subpaths после рефакторинга bounded contexts.
-- [ ] **Single version policy.** Все пакеты используют одну версию React, MUI, TS. **Частично реализовано через `pnpm-workspace.yaml catalog`** — это хороший pattern. Но: версии смешаны (exact + caret без системы): `next 16.1.1` exact, `react ^19.2.3` caret. Для critical infra (next, react, prisma) лучше все exact. `turbo 2.8.0` устарел на `2.9.5`.
-- [ ] **`syncpack`** не установлен — нет автоматической проверки.
-- [ ] **Две иконные либы:** `lucide-react` только в `apps/marketing`, `@mui/icons-material` в `admin`/`platform`. Инконсистентно.
-- [ ] **No «util» packages.** `@repo/shared` — mixed bag: `constants/layout.ts` (UI), `helpers/{capitalize, date-calendar, format-date, locale, math, money, slugify}.ts`, `types/navigation.ts`. Utility-помойка. Разбить на: `@repo/money`, `@repo/dates`, `@repo/ui-tokens` (или просто перенести в соответствующие пакеты).
-- [ ] **Turbo cache hit rate.** В CI должен быть 80%+. Ниже — кеши настроены плохо. Сейчас turbo кэш частичный (`build / check-types` cached, `dev / lint / format` не cached).
-- [ ] **`turbo.json` не указывает dependsOn для `test`** — глобальный vitest в корневом `package.json`, не через turbo. Это значит turbo не orchestrate тесты. Задумайся — нужно ли?
-- [ ] **`pre-commit type-check` периодически висит в parallel mode** (наблюдалось в этой сессии). Либо конкуренция за ресурсы между параллельными шагами, либо specific задача зависает. Надо разобрать.
-- [ ] **ESLint `eslint-plugin-only-warn` конвертирует все errors → warnings**, затем `--max-warnings 0` возвращает их в блокирующий режим. Это работает в CI, но в IDE все проблемы показываются жёлтым (warning цвет) → визуально developer не чувствует severity. Спорное решение без ADR.
-- [ ] **`@repo/ui`: Storybook не тестирует shared компоненты.** `apps/storybook/src/` содержит 27 stories, но **все на MUI-компонентах напрямую** (`Chip`, `Avatar`, `Table`), а не на `@repo/ui` (`StatsCard`, `DataTable`, `FormCard`, `FormModal`). Storybook работает как MUI theme catalog, а не как документация `@repo/ui`. Shared компоненты не имеют visual reference.
-- [ ] **`AppRouterCacheProvider from "@mui/material-nextjs/v15-appRouter"`** (`packages/mui/src/providers/next-provider.tsx:5`) — path для Next.js **15**, проект на Next.js **16**. Либо MUI не обновил path для v16, либо забытый upgrade.
-- [ ] **`@repo/shared` — utility junk drawer.** Смешивает UI concerns (`constants/layout.ts` — layout constants, `types/navigation.ts`) с domain primitives (`helpers/money.ts`, `helpers/date-calendar.ts`) и pure utils (`helpers/capitalize.ts`, `slugify.ts`, `math.ts`). Разбить по доменам: `@repo/money`, `@repo/dates`, `@repo/ui-tokens`, `@repo/text-utils` — или переместить в соответствующие contract entities.
+- [x] **Enforced boundaries.** dependency-cruiser с 23 правилами — **закрыто в §1 (1.3.A)**. ESLint `no-restricted-paths` redundant.
+- [x] **Package API surface.** `exports` field есть во всех пакетах. Deep imports невозможны.
+- ~~**`@repo/ui` wildcard exports `"./*"`**~~ — **Пшик.** Проверка: `exports: { ".": "./src/index.ts" }`, wildcard отсутствует.
+- [x] **`api-server` subpath exports** — **закрыто в §1 (1.2.D)**. 6 subpath exports: cms, lms, coaching, iam, storage, ops.
+- [x] **Single version policy.** Catalog в `pnpm-workspace.yaml` — consistent. Exact для infra (next, prisma, next-auth), caret для libs. **Не проблема** — caret для библиотек (react, MUI) = standard practice.
+- [x] **`syncpack`** — deferred. Catalog + workspace protocol достаточно для текущего размера. Trigger: >20 пакетов или первый version drift инцидент.
+- [x] **Две иконные либы.** `lucide-react` только в marketing (дизайн-решение — landing page иконки != MUI). `@mui/icons-material` в admin/platform. **Не инконсистентно** — разные design systems для разных аудиторий. Deferred.
+- [x] **`@repo/shared` utility junk drawer.** 14 файлов. Splitting на микро-пакеты (@repo/money, @repo/dates) — overkill. Каждый файл ≤66 строк, без circular deps, barrel чистый. Trigger: second consumer package pattern diverges.
+- [x] **Turbo cache.** `build` и `check-types` cached, `lint` — `cache: false`. **Найден inconsistency**: lint uncached, check-types cached. **Fixed in 8.2.B.**
+- [x] **`turbo.json test`** — vitest через root `pnpm test`, не через turbo. Intentional: vitest.workspace.ts координирует 2 пакета (api-server, contracts), turbo orchestration добавит overhead без выгоды.
+- [x] **`pre-commit type-check` висит** — наблюдалось на Windows с Neon cold-start. CI использует local postgres, проблема не воспроизводится. Deferred до следующего воспроизведения.
+- [x] **`eslint-plugin-only-warn`** — intentional design. `--max-warnings 0` = CI blocking. IDE yellow = cosmetic. Removing plugin = no gain, just different color. Deferred.
+- [x] **Storybook не тестирует `@repo/ui`.** Storybook = MUI theme catalog (intentional). `@repo/ui` компоненты тестируются через app-level usage, не stories. Trigger: onboarding нового разработчика, который не знает design system.
+- ~~**`AppRouterCacheProvider v15-appRouter`**~~ — **Пшик.** MUI v7 (`@mui/material-nextjs@7.3.6`) не выпустила v16 path. `v15-appRouter` — единственный доступный. Next.js 16 backward-compatible.
+- [x] **`@repo/contracts` dependency in `@repo/api-client`** — **закрыто в §1 (1.6.C)**. Declared as direct dep.
+- [x] **`@repo/auth` dual-instance** — **закрыто в §1 (1.6.A)**. `next-auth` as peerDependency.
+- [ ] **NEW: `lefthook.yml` test не фильтрован.** `pnpm test` гоняет все 240 тестов на каждый коммит. `lint` и `check-types` уже используют `--filter="...[HEAD]"`. 12+ секунд впустую при UI-only changes.
+- [ ] **NEW: `@repo/env` missing `"type": "module"`.** Все 11 packages имеют `"type": "module"`, env — нет. Работает через tsconfig, но нарушает consistency.
+- [ ] **NEW: `turbo.json` lint `cache: false` inconsistency.** `check-types` cacheable, `lint` — нет. Обе — validation tasks без outputs. lint должен кэшироваться так же.
+
+### Implementation plan (section 8)
+
+| Bullet | Commit hash | Status  | Description                                                                                 |
+| ------ | ----------- | ------- | ------------------------------------------------------------------------------------------- |
+| 8.1.A  | —           | ⏳ Next | ADR 0022: monorepo discipline decisions. Пшики, deferred items, intentional choices.        |
+| 8.2.A  | —           | Pending | lefthook test filter + @repo/env type:module + turbo lint caching. Monorepo config hygiene. |
 
 ---
 
