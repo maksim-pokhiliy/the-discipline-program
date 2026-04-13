@@ -366,7 +366,7 @@ DDD lens. Без правильной модели всё, что на ней п
 
 ## 5. База данных и миграции
 
-**Статус:** Не начато
+**Статус:** В работе (research done, implementation in progress)
 
 Блокирует появление реальных данных. Чем позже чинишь — тем дороже, потому что параллельно копится прод-нагрузка.
 
@@ -395,6 +395,27 @@ DDD lens. Без правильной модели всё, что на ней п
 - [ ] **`enrollment-query.ts` делает nested `workoutLogs` без limit** — athlete с тысячами логов вернёт их все.
 - [ ] **`enrollment-query.ts.workouts.select` не фильтрует archived** — `computeTodayStatus` и `computeProgressBuckets` учитывают archived workouts в статистике. Potential bug.
 - [ ] **Test helpers используют `new PrismaClient()`** (`test/helpers.ts:7`) — обходят extension. Значит тесты и прод различаются по поведению.
+- [ ] **Unbounded `findMany` в 5+ admin endpoints помимо training-plans.** `users-admin.ts`, `review/admin.ts`, `contact/admin.ts`, `blog/admin.ts`, `product/admin.ts` — все без `take`/pagination. При росте данных → деградация.
+- [ ] **Public pages грузят ALL products + ALL reviews** (`cms/pages/public.ts`) — unbounded `findMany` на двух таблицах параллельно. При масштабировании каталога → медленная витрина.
+- [ ] **`workout.ts` aggregate() на soft-deletable модели** — `tx.workout.aggregate({ where: { planId, scheduledDate }, _max: { sortOrder: true } })` не фильтрует `deletedAt`. Может вернуть sortOrder от soft-deleted workout'а.
+
+### Implementation plan (section 5)
+
+| ID    | Commit hash | Status  | Description                                                                                                                                                                                                |
+| ----- | ----------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 5.1.A | —           | ⏳ Next | ADR 0019: database strategy deferred decisions (db:push→migrate trigger, Subscription.id external key, soft-delete write ops unfiltered, test helpers bypass, CHECK constraints, unbounded queries → §10). |
+| 5.2.A | —           | Pending | Soft-delete extension: add `count`, `aggregate`, `findFirstOrThrow`, `findUniqueOrThrow` handlers with `deletedAt` filtering. Fixes dashboard count leak + workout aggregate leak.                         |
+| 5.2.B | —           | Pending | Remove duplicate `@@index([role])` on User (covered by composite `@@index([role, deletedAt])`).                                                                                                            |
+| 5.3.A | —           | Pending | Seed file: switch to extended client from `db/client.ts`, verify `db:push && db:seed` runs cleanly.                                                                                                        |
+
+**Deferred bullets** (documented in ADR 0019, explicit triggers):
+
+- `prisma migrate` adoption — trigger: first production deployment with real data
+- CHECK constraints (rating range) — trigger: same as above
+- Unbounded admin queries — tracked as §10 (Frontend) pagination items
+- Soft-delete scope expansion (AthleteProfile, CoachNote, Price, MarketingPage) — design decisions, not bugs. Current scope is intentional.
+- Retention policy — business decision, needs product input
+- Read replicas — future architecture, no current need
 
 ---
 
