@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { AUTH_ROUTES, getToken, isPublicRoute } from "@repo/auth";
 import { UserRole } from "@repo/contracts/iam/auth";
+import { logger } from "@repo/shared";
 
 const ROLE_HOMES: Record<string, string> = {
   [UserRole.USER]: "/athlete",
@@ -13,7 +14,17 @@ const getRoleHome = (role?: string | null): string | null =>
 
 export const proxy = async (req: NextRequest) => {
   const path = req.nextUrl.pathname;
-  const token = await getToken({ req });
+
+  let token: Awaited<ReturnType<typeof getToken>> = null;
+
+  try {
+    token = await getToken({ req });
+  } catch (error) {
+    logger.error("Proxy auth failed", {
+      path,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   if (token && path === AUTH_ROUTES.LOGIN) {
     const home = getRoleHome(token.role);
