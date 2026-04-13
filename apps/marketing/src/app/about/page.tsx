@@ -2,7 +2,7 @@ import { type Metadata } from "next";
 
 import { serverApi } from "@app/lib/api/server";
 import { PAGE_SEO, SEO_CONFIG } from "@app/lib/seo";
-import { AboutPageClient } from "@app/modules/about";
+import { AboutPageContent } from "@app/modules/about";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.about.title,
@@ -18,9 +18,9 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const AboutPage = async () => {
-  const initialData = await serverApi.pages.getAbout();
+  const data = await serverApi.pages.getAbout();
 
-  return <AboutPageClient initialData={initialData} />;
+  return <AboutPageContent data={data} />;
 };
 
 export default AboutPage;

@@ -1,55 +1,38 @@
-"use client";
-
 import { type BlogPostPageData } from "@repo/contracts/cms/blog";
-import { QueryWrapper } from "@repo/ui";
 
 import { StructuredData } from "@app/lib/components/seo";
-import { useBlogArticle } from "@app/lib/hooks";
 import { SEO_CONFIG } from "@app/lib/seo";
 
 import { BlogArticleContent, BlogArticleHero, BlogArticleRelated } from "./sections";
 
-type BlogArticlePageClientProps = {
+type BlogArticlePageContentProps = {
   slug: string;
-  initialData: BlogPostPageData;
+  data: BlogPostPageData;
 };
 
-export const BlogArticlePageClient = ({ slug, initialData }: BlogArticlePageClientProps) => {
-  const { data, isLoading, error } = useBlogArticle(slug, { initialData });
+export const BlogArticlePageContent = ({ slug, data }: BlogArticlePageContentProps) => (
+  <>
+    <StructuredData
+      type="article"
+      data={{
+        title: data.post.title,
+        description: data.post.excerpt ?? "",
+        image: data.post.coverImage ?? "",
+        author: data.post.authorName,
+        publishedTime: data.post.publishedAt.toISOString(),
+        url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
+      }}
+    />
 
-  return (
-    <QueryWrapper
-      isLoading={isLoading}
-      error={error}
-      data={data}
-      loadingMessage="Loading article..."
-    >
-      {(data) => (
-        <>
-          <StructuredData
-            type="article"
-            data={{
-              title: data.post.title,
-              description: data.post.excerpt ?? "",
-              image: data.post.coverImage ?? "",
-              author: data.post.authorName,
-              publishedTime: data.post.publishedAt.toISOString(),
-              url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
-            }}
-          />
+    <BlogArticleHero post={data.post} labels={data.labels} />
+    <BlogArticleContent post={data.post} />
 
-          <BlogArticleHero post={data.post} labels={data.labels} />
-          <BlogArticleContent post={data.post} />
-
-          {data.relatedPosts.length > 0 && (
-            <BlogArticleRelated
-              relatedPosts={data.relatedPosts}
-              sectionTitle={data.relatedSectionTitle}
-              labels={data.labels}
-            />
-          )}
-        </>
-      )}
-    </QueryWrapper>
-  );
-};
+    {data.relatedPosts.length > 0 && (
+      <BlogArticleRelated
+        relatedPosts={data.relatedPosts}
+        sectionTitle={data.relatedSectionTitle}
+        labels={data.labels}
+      />
+    )}
+  </>
+);

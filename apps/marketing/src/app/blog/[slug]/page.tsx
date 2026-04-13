@@ -6,7 +6,7 @@ import { BLOG_CATEGORY_LABELS } from "@repo/contracts/cms/blog";
 
 import { serverApi } from "@app/lib/api/server";
 import { SEO_CONFIG } from "@app/lib/seo";
-import { BlogArticlePageClient } from "@app/modules/blog-article";
+import { BlogArticlePageContent } from "@app/modules/blog-article";
 
 const getBlogArticle = cache((slug: string) => serverApi.blog.getArticle(slug));
 
@@ -56,9 +56,9 @@ export const dynamic = "force-dynamic";
 
 const BlogArticlePage = async ({ params }: BlogArticlePageProps) => {
   const { slug } = await params;
-  const initialData = await getBlogArticle(slug);
+  const data = await getBlogArticle(slug);
 
-  return <BlogArticlePageClient slug={slug} initialData={initialData} />;
+  return <BlogArticlePageContent slug={slug} data={data} />;
 };
 
 export default BlogArticlePage;
