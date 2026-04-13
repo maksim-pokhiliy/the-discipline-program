@@ -36,10 +36,10 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-13 (sections 1–4 complete, §5 next)
+## Current state — 2026-04-13 (sections 1–5 complete, §6 next)
 
-**Branch:** `refactor/design-system-typography-hero` (183 commits ahead of `origin/`, working tree clean)
-**Last commit:** `4847237 feat(api-server,admin): add blob storage check to readiness endpoint`
+**Branch:** `refactor/design-system-typography-hero` (190 commits ahead of `origin/`, working tree clean)
+**Last commit:** `e28af63 chore: add root-level db:seed script, verify seed runs cleanly`
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 
 ### Section 1 (Архитектура и границы) — CLOSED
@@ -88,6 +88,17 @@ Implementation plan: 3.1.A–3.5.A done (12 commits). Key deliverables:
 ### Section 4 (Надёжность и операционка) — CLOSED
 
 All actionable bullets done (15 commits total, 4 removed as пшики). 1 deferred (OpenTelemetry — needs telemetry backend, ADR trigger: first production deployment).
+
+### Section 5 (База данных и миграции) — CLOSED
+
+Research done, 4 bullets implemented (ADR 0019 + 3 code changes). Key deliverables:
+
+- ADR 0019: 6 deferred database decisions with explicit triggers (db:push→migrate, Subscription.id, soft-delete write ops, test helpers, CHECK constraints, unbounded queries)
+- Soft-delete extension: added `count`, `aggregate`, `groupBy`, `findFirstOrThrow`, `findUniqueOrThrow` handlers — fixes dashboard count leak and workout aggregate leak
+- Removed duplicate User `@@index([role])` (covered by composite `@@index([role, deletedAt])`)
+- Seed verification: raw `PrismaClient` confirmed correct (clearAll needs hard-delete), root `pnpm db:seed` script added, `db:push && db:seed` verified clean
+- 3 new findings added to audit: unbounded admin endpoints, public pages unbounded queries, workout aggregate soft-delete leak
+- 1 пшик: seed's raw PrismaClient is intentional (creates don't go through extension, cleanup needs hard-delete)
 
 **Done (11 commits):**
 
@@ -159,7 +170,7 @@ During this session, a full пшик review was done across sections 1-3. Key fi
 - ⏸ 1.6.C — declare `@repo/contracts` dependency in `@repo/api-client`.
 - ⏸ 1.6.D — minor `package.json` hygiene.
 
-**Sections 5–12:** research not yet started. Research begins at the top of each section and must complete before any bullet in that section is implemented.
+**Sections 6–12:** research not yet started. Research begins at the top of each section and must complete before any bullet in that section is implemented.
 
 ## Repo structure snapshot after 1.3.C — orient fast
 

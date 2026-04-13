@@ -366,7 +366,7 @@ DDD lens. Без правильной модели всё, что на ней п
 
 ## 5. База данных и миграции
 
-**Статус:** В работе (research done, implementation in progress)
+**Статус:** Закрыта
 
 Блокирует появление реальных данных. Чем позже чинишь — тем дороже, потому что параллельно копится прод-нагрузка.
 
@@ -403,10 +403,10 @@ DDD lens. Без правильной модели всё, что на ней п
 
 | ID    | Commit hash | Status  | Description                                                                                                                                                                                                |
 | ----- | ----------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 5.1.A | —           | ⏳ Next | ADR 0019: database strategy deferred decisions (db:push→migrate trigger, Subscription.id external key, soft-delete write ops unfiltered, test helpers bypass, CHECK constraints, unbounded queries → §10). |
-| 5.2.A | —           | Pending | Soft-delete extension: add `count`, `aggregate`, `findFirstOrThrow`, `findUniqueOrThrow` handlers with `deletedAt` filtering. Fixes dashboard count leak + workout aggregate leak.                         |
-| 5.2.B | —           | Pending | Remove duplicate `@@index([role])` on User (covered by composite `@@index([role, deletedAt])`).                                                                                                            |
-| 5.3.A | —           | Pending | Seed file: switch to extended client from `db/client.ts`, verify `db:push && db:seed` runs cleanly.                                                                                                        |
+| 5.1.A | `9fbb73c`   | ✅ Done | ADR 0019: database strategy deferred decisions (db:push→migrate trigger, Subscription.id external key, soft-delete write ops unfiltered, test helpers bypass, CHECK constraints, unbounded queries → §10). |
+| 5.2.A | `23d2d17`   | ✅ Done | Soft-delete extension: add `count`, `aggregate`, `groupBy`, `findFirstOrThrow`, `findUniqueOrThrow` handlers with `deletedAt` filtering. Fixes dashboard count leak + workout aggregate leak.              |
+| 5.2.B | `04fc267`   | ✅ Done | Remove duplicate `@@index([role])` on User (covered by composite `@@index([role, deletedAt])`).                                                                                                            |
+| 5.3.A | `e28af63`   | ✅ Done | Seed verification: raw `PrismaClient` in seed is correct (clearAll needs hard-delete). Added root `pnpm db:seed` script. Verified `db:push && db:seed` runs cleanly.                                       |
 
 **Deferred bullets** (documented in ADR 0019, explicit triggers):
 
