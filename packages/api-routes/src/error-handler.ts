@@ -5,6 +5,8 @@ import { ZodError } from "zod";
 import { baseEnv } from "@repo/env/base";
 import { AppError, ERROR_CODES, ValidationError } from "@repo/errors";
 
+import { logger } from "./logger";
+
 const REDACTED_KEYS = new Set([
   "password",
   "token",
@@ -53,7 +55,7 @@ export const handleApiError = (error: unknown): NextResponse => {
         ? { message: error.message }
         : { message: String(error) };
 
-  console.error("API Error:", safeError);
+  logger.error("API Error", safeError);
 
   const isDev = baseEnv.NODE_ENV === "development";
 
