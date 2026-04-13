@@ -2,7 +2,7 @@ import { type Metadata } from "next";
 
 import { serverApi } from "@app/lib/api/server";
 import { PAGE_SEO, SEO_CONFIG } from "@app/lib/seo";
-import { FaqPageClient } from "@app/modules/faq";
+import { FaqPageContent } from "@app/modules/faq";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.faq.title,
@@ -18,9 +18,9 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const FaqPage = async () => {
-  const initialData = await serverApi.pages.getFaq();
+  const data = await serverApi.pages.getFaq();
 
-  return <FaqPageClient initialData={initialData} />;
+  return <FaqPageContent data={data} />;
 };
 
 export default FaqPage;

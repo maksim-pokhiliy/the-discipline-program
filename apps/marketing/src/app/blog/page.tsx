@@ -2,7 +2,7 @@ import { type Metadata } from "next";
 
 import { serverApi } from "@app/lib/api/server";
 import { PAGE_SEO, SEO_CONFIG } from "@app/lib/seo";
-import { BlogPageClient } from "@app/modules/blog";
+import { BlogPageContent } from "@app/modules/blog";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.blog.title,
@@ -18,9 +18,9 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const BlogPage = async () => {
-  const initialData = await serverApi.pages.getBlog();
+  const data = await serverApi.pages.getBlog();
 
-  return <BlogPageClient initialData={initialData} />;
+  return <BlogPageContent data={data} />;
 };
 
 export default BlogPage;

@@ -2,7 +2,7 @@ import { type Metadata } from "next";
 
 import { serverApi } from "@app/lib/api/server";
 import { PAGE_SEO, SEO_CONFIG } from "@app/lib/seo";
-import { HomePageClient } from "@app/modules/home";
+import { HomePageContent } from "@app/modules/home";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.home.title,
@@ -18,9 +18,9 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 const HomePage = async () => {
-  const initialData = await serverApi.pages.getHome();
+  const data = await serverApi.pages.getHome();
 
-  return <HomePageClient initialData={initialData} />;
+  return <HomePageContent data={data} />;
 };
 
 export default HomePage;
