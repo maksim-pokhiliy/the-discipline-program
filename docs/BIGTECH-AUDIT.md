@@ -20,7 +20,7 @@
 - [x] 6. API Design
 - [x] 7. Архитектурные риски на 6 месяцев вперёд
 - [x] 8. Monorepo дисциплина
-- [ ] 9. Тестирование
+- [x] 9. Тестирование
 - [ ] 10. Фронт и Next.js 16
 - [ ] 11. Качество кода
 - [ ] 12. DX и процесс
@@ -546,7 +546,7 @@ Non-obvious стафф. Это то, что больнее всего ретро
 
 ## 9. Тестирование
 
-**Статус:** Исследование завершено, реализация в процессе
+**Статус:** ✅ Завершено
 
 Обычно худший скор у pet-проектов. Нужно до крупных рефакторингов, иначе любое изменение — риск в слепой зоне.
 
@@ -575,8 +575,8 @@ Non-obvious стафф. Это то, что больнее всего ретро
 
 | Bullet | Commit hash | Status  | Description                                                                  |
 | ------ | ----------- | ------- | ---------------------------------------------------------------------------- |
-| 9.1.A  | —           | ⏳ Next | ADR 0023: test strategy, current state, coverage gaps, improvement triggers. |
-| 9.2.A  | —           | Pending | Fix cleanup() silent failure: replace `.catch(() => {})` with error logging. |
+| 9.1.A  | `fa5b4ae`   | ✅ Done | ADR 0023: test strategy, current state, coverage gaps, improvement triggers. |
+| 9.2.A  | `c2af61f`   | ✅ Done | Fix cleanup() silent failure: replace `.catch(() => {})` with error logging. |
 
 ---
 
