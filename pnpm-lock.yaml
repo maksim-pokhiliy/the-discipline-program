@@ -634,6 +634,9 @@ importers:
       '@repo/errors':
         specifier: workspace:*
         version: link:../errors
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../shared
       next:
         specifier: 'catalog:'
         version: 16.1.1(react-dom@19.2.3(react@19.2.3))(react@19.2.3)

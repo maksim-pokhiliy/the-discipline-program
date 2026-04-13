@@ -26,4 +26,3 @@ export {
   createAuthDeleteHandler,
   createAuthActionHandler,
 } from "./auth-factories";
-export { logger } from "./logger";

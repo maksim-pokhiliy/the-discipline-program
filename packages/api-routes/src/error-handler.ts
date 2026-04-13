@@ -4,8 +4,7 @@ import { ZodError } from "zod";
 
 import { baseEnv } from "@repo/env/base";
 import { AppError, ERROR_CODES, ValidationError } from "@repo/errors";
-
-import { logger } from "./logger";
+import { logger } from "@repo/shared";
 
 const REDACTED_KEYS = new Set([
   "password",
