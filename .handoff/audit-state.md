@@ -36,10 +36,10 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-13 (sections 1–5 complete, §6 in progress — 2/6 done)
+## Current state — 2026-04-13 (sections 1–5 complete, §6 in progress — 3/6 done)
 
-**Branch:** `refactor/design-system-typography-hero` (198 commits ahead of `origin/`, working tree clean)
-**Last commit:** `04a0c3d refactor(api-routes): make response schema required in all route handler factories`
+**Branch:** `refactor/design-system-typography-hero` (193 commits ahead of `origin/`, working tree clean)
+**Last commit:** `1f0ea9c refactor(api-routes): use semantically correct status codes in route handler factories`
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 
@@ -173,17 +173,17 @@ During this session, a full пшик review was done across sections 1-3. Key fi
 
 ### Section 6 (API Design) — IN PROGRESS
 
-Research complete, implementation plan in `docs/BIGTECH-AUDIT.md`. 6 bullets total, 2 done, 4 remaining.
+Research complete, implementation plan in `docs/BIGTECH-AUDIT.md`. 6 bullets total, 3 done, 3 remaining.
 
-**Done (2 commits):**
+**Done (3 commits):**
 
 - 6.1.A `fcd61e0` — ADR 0020: API design decisions (versioning URL-prefix strategy, body size Vercel 4.5MB rationale, Cache-Control strategy for public endpoints, responseSchema mandatory, consistent HTTP status codes)
 - 6.2.A `04a0c3d` — `responseSchema` required in all route handler factories. `apiFn` return type stays `Promise<TResponse>` (schema and return type MUST match — don't loosen factory types). 16 files updated: 2 factory files + 12 admin routes + 1 marketing contact + 1 marketing pages (polymorphic — uses `withPublicRoute` directly instead of factory). CLAUDE.md anti-pattern added: "responseSchema is required / don't loosen factory types"
+- 6.2.B `1f0ea9c` — Semantically correct status codes. POST factories (`createPostHandler`, `createFormDataPostHandler`) → 201 Created. DELETE factories (`createDeleteHandler`, `createDeleteWithBodyHandler`, `createAuthDeleteHandler`) → 204 No Content (empty body, no `{ success: true }`). Void handlers (`createPatchByParamHandler`, `createAuthVoidPutByParamHandler`) → 204 No Content. `ApiClient.request()` handles 204 by returning `undefined` without JSON parsing. Admin `upload.ts` `deleteImage` retyped to `Promise<void>`. 4 files changed
 
-**Remaining (4 commits):**
+**Remaining (3 commits):**
 
-- 6.2.B ⏳ Next — Delete/void handlers → 204 No Content. `createPostHandler` → 201 Created
-- 6.2.C — Public marketing endpoints: Cache-Control headers
+- 6.2.C ⏳ Next — Public marketing endpoints: Cache-Control headers
 - 6.3.A — Zod magic numbers → entity constants
 - 6.3.B — Zod validation hardening: `.cuid()`, `.url()`, `.finite()`, `amountCents.max()`, missing bounds
 
