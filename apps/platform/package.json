@@ -17,7 +17,6 @@
     "@hookform/resolvers": "catalog:",
     "@mui/icons-material": "catalog:",
     "@mui/material": "catalog:",
-    "@mui/x-date-pickers": "catalog:",
     "@repo/api-client": "workspace:*",
     "@repo/api-routes": "workspace:*",
     "@repo/api-server": "workspace:*",

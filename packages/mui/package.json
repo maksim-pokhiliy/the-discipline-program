@@ -21,9 +21,7 @@
     "@mui/icons-material": "catalog:",
     "@mui/material": "catalog:",
     "@mui/material-nextjs": "catalog:",
-    "@mui/x-date-pickers": "catalog:",
-    "@repo/shared": "workspace:*",
-    "dayjs": "catalog:"
+    "@repo/shared": "workspace:*"
   },
   "peerDependencies": {
     "react": "catalog:",
