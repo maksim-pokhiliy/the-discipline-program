@@ -2,6 +2,7 @@ import { createMultiToggleHandler } from "@repo/api-routes";
 import { cmsBlogAdminApi } from "@repo/api-server/cms";
 import {
   BlogToggleField,
+  blogPostSchema,
   toggleBlogPostParamsSchema,
   toggleBlogPostQuerySchema,
 } from "@repo/contracts/cms/blog";
@@ -16,5 +17,6 @@ export const PATCH = withAdminAuth(
     },
     toggleBlogPostParamsSchema,
     toggleBlogPostQuerySchema,
+    blogPostSchema,
   ),
 );

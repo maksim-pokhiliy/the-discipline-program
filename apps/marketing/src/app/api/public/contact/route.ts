@@ -1,14 +1,19 @@
 import { createPostHandler, withPublicRoute } from "@repo/api-routes";
 import { cmsContactInboundApi } from "@repo/api-server/cms";
 import {
+  type CreateContactSubmissionResponse,
   createContactSubmissionRequestSchema,
   createContactSubmissionResponseSchema,
 } from "@repo/contracts/cms/contact";
 
 export const POST = withPublicRoute(
-  createPostHandler(async (data) => {
-    const result = await cmsContactInboundApi.createSubmission(data);
+  createPostHandler(
+    async (data): Promise<CreateContactSubmissionResponse> => {
+      await cmsContactInboundApi.createSubmission(data);
 
-    return createContactSubmissionResponseSchema.parse(result);
-  }, createContactSubmissionRequestSchema),
+      return { success: true, message: "Contact submission received" };
+    },
+    createContactSubmissionRequestSchema,
+    createContactSubmissionResponseSchema,
+  ),
 );

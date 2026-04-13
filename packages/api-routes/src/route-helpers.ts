@@ -36,11 +36,11 @@ export const withPublicRoute = (handler: RouteHandler): RouteHandler => withErro
 
 export const createGetHandler = <TResponse>(
   apiFn: () => Promise<TResponse>,
-  responseSchema?: ParseSchema<TResponse>,
+  responseSchema: ParseSchema<TResponse>,
 ) => {
   return async () => {
     const data = await apiFn();
-    const validated = responseSchema ? responseSchema.parse(data) : data;
+    const validated = responseSchema.parse(data);
 
     return NextResponse.json(validated);
   };
@@ -49,12 +49,12 @@ export const createGetHandler = <TResponse>(
 export const createGetByIdHandler = <TResponse>(
   apiFn: (id: string) => Promise<TResponse>,
   paramsSchema: ParseSchema<{ id: string }>,
-  responseSchema?: ParseSchema<TResponse>,
+  responseSchema: ParseSchema<TResponse>,
 ) => {
   return async (_: Request, context: RouteContext) => {
     const { id } = paramsSchema.parse(await context.params);
     const data = await apiFn(id);
-    const validated = responseSchema ? responseSchema.parse(data) : data;
+    const validated = responseSchema.parse(data);
 
     return NextResponse.json(validated);
   };
@@ -63,13 +63,13 @@ export const createGetByIdHandler = <TResponse>(
 export const createPostHandler = <TRequest, TResponse>(
   apiFn: (data: TRequest) => Promise<TResponse>,
   requestSchema: ParseSchema<TRequest>,
-  responseSchema?: ParseSchema<TResponse>,
+  responseSchema: ParseSchema<TResponse>,
 ) => {
   return async (request: Request) => {
     const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
     const result = await apiFn(data);
-    const validated = responseSchema ? responseSchema.parse(result) : result;
+    const validated = responseSchema.parse(result);
 
     return NextResponse.json(validated);
   };
@@ -79,14 +79,14 @@ export const createPutHandler = <TRequest, TResponse>(
   apiFn: (id: string, data: TRequest) => Promise<TResponse>,
   paramsSchema: ParseSchema<{ id: string }>,
   requestSchema: ParseSchema<TRequest>,
-  responseSchema?: ParseSchema<TResponse>,
+  responseSchema: ParseSchema<TResponse>,
 ) => {
   return async (request: Request, context: RouteContext) => {
     const { id } = paramsSchema.parse(await context.params);
     const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
     const result = await apiFn(id, data);
-    const validated = responseSchema ? responseSchema.parse(result) : result;
+    const validated = responseSchema.parse(result);
 
     return NextResponse.json(validated);
   };
@@ -95,12 +95,12 @@ export const createPutHandler = <TRequest, TResponse>(
 export const createGetByParamHandler = <TParams, TResponse>(
   apiFn: (params: TParams) => Promise<TResponse>,
   paramsSchema: ParseSchema<TParams>,
-  responseSchema?: ParseSchema<TResponse>,
+  responseSchema: ParseSchema<TResponse>,
 ) => {
   return async (_: Request, context: RouteContext) => {
     const params = paramsSchema.parse(await context.params);
     const data = await apiFn(params);
-    const validated = responseSchema ? responseSchema.parse(data) : data;
+    const validated = responseSchema.parse(data);
 
     return NextResponse.json(validated);
   };
@@ -124,12 +124,12 @@ export const createPatchByParamHandler = <TParams, TRequest>(
 
 export const createFormDataPostHandler = <TResponse>(
   apiFn: (formData: FormData) => Promise<TResponse>,
-  responseSchema?: ParseSchema<TResponse>,
+  responseSchema: ParseSchema<TResponse>,
 ) => {
   return async (request: Request) => {
     const formData = await request.formData();
     const result = await apiFn(formData);
-    const validated = responseSchema ? responseSchema.parse(result) : result;
+    const validated = responseSchema.parse(result);
 
     return NextResponse.json(validated);
   };
@@ -165,12 +165,12 @@ export const createDeleteHandler = (
 export const createToggleHandler = <TResponse>(
   apiFn: (id: string) => Promise<TResponse>,
   paramsSchema: ParseSchema<{ id: string }>,
-  responseSchema?: ParseSchema<TResponse>,
+  responseSchema: ParseSchema<TResponse>,
 ) => {
   return async (_: Request, context: RouteContext) => {
     const { id } = paramsSchema.parse(await context.params);
     const result = await apiFn(id);
-    const validated = responseSchema ? responseSchema.parse(result) : result;
+    const validated = responseSchema.parse(result);
 
     return NextResponse.json(validated);
   };
@@ -180,7 +180,7 @@ export const createMultiToggleHandler = <TField extends string, TResponse>(
   handlers: Record<TField, (id: string) => Promise<TResponse>>,
   paramsSchema: ParseSchema<{ id: string }>,
   querySchema: ParseSchema<{ field: TField }>,
-  responseSchema?: ParseSchema<TResponse>,
+  responseSchema: ParseSchema<TResponse>,
 ) => {
   return async (request: Request, context: RouteContext) => {
     const { id } = paramsSchema.parse(await context.params);
@@ -188,7 +188,7 @@ export const createMultiToggleHandler = <TField extends string, TResponse>(
       field: new URL(request.url).searchParams.get("field"),
     });
     const result = await handlers[field](id);
-    const validated = responseSchema ? responseSchema.parse(result) : result;
+    const validated = responseSchema.parse(result);
 
     return NextResponse.json(validated);
   };
