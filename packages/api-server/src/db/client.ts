@@ -1,6 +1,7 @@
-import { PrismaClient } from "@prisma/client";
+import { type Prisma, PrismaClient } from "@prisma/client";
 
 import { baseEnv } from "@repo/env/base";
+import { logger } from "@repo/shared";
 
 const SOFT_DELETE_MODELS = new Set([
   "User",
@@ -69,11 +70,27 @@ const withTimeoutParams = (url: string): string => {
   return params.length > 0 ? `${url}${separator}${params.join("&")}` : url;
 };
 
+const isDev = baseEnv.NODE_ENV === "development";
+
+type QueryEventHandler = (event: "query", listener: (e: Prisma.QueryEvent) => void) => void;
+
 const createClient = () => {
   const client = new PrismaClient({
-    log: baseEnv.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    log: isDev
+      ? [
+          { emit: "event", level: "query" },
+          { emit: "stdout", level: "error" },
+          { emit: "stdout", level: "warn" },
+        ]
+      : [{ emit: "stdout", level: "error" }],
     datasourceUrl: withTimeoutParams(baseEnv.DATABASE_URL),
   });
+
+  if (isDev) {
+    (client.$on as QueryEventHandler)("query", (e) => {
+      logger.info("Prisma query", { query: e.query, duration: `${e.duration}ms` });
+    });
+  }
 
   return client.$extends({
     name: "soft-delete",
