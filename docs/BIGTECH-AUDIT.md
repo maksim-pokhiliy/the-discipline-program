@@ -469,8 +469,8 @@ DDD lens. Без правильной модели всё, что на ней п
 | 6.1.A | `fcd61e0`   | ✅ Done | ADR 0020: API design decisions (versioning strategy, body size rationale, deferred items with triggers). |
 | 6.2.A | `04a0c3d`   | ✅ Done | Make `responseSchema` required in all route handler factories. Fix all call sites (16 files).            |
 | 6.2.B | `1f0ea9c`   | ✅ Done | Delete/void handlers → 204 No Content. `createPostHandler` → 201 Created.                                |
-| 6.2.C | —           | ⏳ Next | Public marketing endpoints: add `Cache-Control` headers for cacheable responses.                         |
-| 6.3.A | —           | Pending | Zod magic numbers → entity constants across all schema files.                                            |
+| 6.2.C | `768030e`   | ✅ Done | Public marketing endpoints: add `Cache-Control` headers for cacheable responses.                         |
+| 6.3.A | —           | ⏳ Next | Zod magic numbers → entity constants across all schema files.                                            |
 | 6.3.B | —           | Pending | Zod validation hardening: `.cuid()`, `.url()`, `.finite()`, `amountCents.max()`, missing bounds.         |
 
 **Deferred bullets** (documented in ADR 0020):
