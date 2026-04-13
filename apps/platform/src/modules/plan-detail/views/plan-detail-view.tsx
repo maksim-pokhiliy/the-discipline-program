@@ -4,15 +4,22 @@ import { useCallback, useEffect, useState } from "react";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton, InputBase, Stack, Tab, Tabs } from "@mui/material";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { QueryWrapper } from "@repo/ui";
+import { LoadingState, QueryWrapper } from "@repo/ui";
 
 import { useTrainingPlan, useUpdateTrainingPlan } from "@app/lib/hooks";
 
 import { PlanStatusSelect } from "../components";
-import { PlanAthletesSection, PlanScheduleSection } from "../sections";
+import { PlanAthletesSection } from "../sections";
+
+const PlanScheduleSection = dynamic(
+  () =>
+    import("../sections/plan-schedule-section").then((m) => ({ default: m.PlanScheduleSection })),
+  { ssr: false, loading: () => <LoadingState message="Loading schedule..." /> },
+);
 
 type PlanDetailViewProps = {
   planId: string;

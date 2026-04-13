@@ -15,6 +15,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import dynamic from "next/dynamic";
 import { Controller, useFormContext } from "react-hook-form";
 
 import {
@@ -23,7 +24,12 @@ import {
   type CreateBlogPostData,
 } from "@repo/contracts/cms/blog";
 import { UPLOAD_CONFIG } from "@repo/contracts/storage/upload";
-import { FormCard, ImageUpload, RichTextEditor, TagsInput } from "@repo/ui";
+import { FormCard, ImageUpload, TagsInput } from "@repo/ui";
+
+const RichTextEditor = dynamic(
+  () => import("@repo/ui").then((m) => ({ default: m.RichTextEditor })),
+  { ssr: false },
+);
 
 import { useAutoSlug, useUploadImage } from "@app/lib/hooks";
 
