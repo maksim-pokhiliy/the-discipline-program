@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
-import { ConflictError, NotFoundError } from "@repo/errors";
+import { BadRequestError, ConflictError, InternalServerError, NotFoundError } from "@repo/errors";
 
 import { handlePrismaError } from "./prisma-error-handler";
 
@@ -63,12 +63,56 @@ describe("handlePrismaError", () => {
     }
   });
 
+  it("P2003 throws BadRequestError for FK constraint violation", () => {
+    const error = makePrismaError("P2003", { field_name: "planId" });
+
+    expect(() => handlePrismaError(error, { entity: "Enrollment" })).toThrow(BadRequestError);
+
+    try {
+      handlePrismaError(error, { entity: "Enrollment" });
+    } catch (e) {
+      expect((e as BadRequestError).message).toBe("Referenced Enrollment does not exist");
+    }
+  });
+
+  it("P2011 throws BadRequestError for null constraint violation", () => {
+    const error = makePrismaError("P2011", { constraint: ["title"] });
+
+    expect(() => handlePrismaError(error, { entity: "Product" })).toThrow(BadRequestError);
+
+    try {
+      handlePrismaError(error, { entity: "Product" });
+    } catch (e) {
+      expect((e as BadRequestError).message).toBe("Required field is missing for Product");
+    }
+  });
+
+  it("P2034 throws ConflictError for write conflict", () => {
+    const error = makePrismaError("P2034");
+
+    expect(() => handlePrismaError(error, { entity: "Workout" })).toThrow(ConflictError);
+
+    try {
+      handlePrismaError(error, { entity: "Workout" });
+    } catch (e) {
+      expect((e as ConflictError).message).toBe("Workout was modified concurrently, please retry");
+    }
+  });
+
   it("unknown Prisma error code is rethrown as-is", () => {
-    const error = makePrismaError("P2003");
+    const error = makePrismaError("P9999");
 
     expect(() => handlePrismaError(error, { entity: "X" })).toThrow(
       Prisma.PrismaClientKnownRequestError,
     );
+  });
+
+  it("PrismaClientUnknownRequestError throws InternalServerError", () => {
+    const error = new Prisma.PrismaClientUnknownRequestError("Unknown error", {
+      clientVersion: "5.0.0",
+    });
+
+    expect(() => handlePrismaError(error, { entity: "User" })).toThrow(InternalServerError);
   });
 
   it("non-Prisma error is rethrown as-is", () => {
