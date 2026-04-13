@@ -15,13 +15,19 @@ const REDACTED_KEYS = new Set([
   "ssn",
 ]);
 
-const redactSensitiveFields = (obj: unknown): unknown => {
+const redactSensitiveFields = (obj: unknown, visited = new WeakSet<object>()): unknown => {
   if (obj === null || obj === undefined || typeof obj !== "object") {
     return obj;
   }
 
+  if (visited.has(obj)) {
+    return "[Circular]";
+  }
+
+  visited.add(obj);
+
   if (Array.isArray(obj)) {
-    return obj.map(redactSensitiveFields);
+    return obj.map((item) => redactSensitiveFields(item, visited));
   }
 
   const result: Record<string, unknown> = {};
@@ -30,7 +36,7 @@ const redactSensitiveFields = (obj: unknown): unknown => {
     if (REDACTED_KEYS.has(key.toLowerCase())) {
       result[key] = "[REDACTED]";
     } else {
-      result[key] = redactSensitiveFields(value);
+      result[key] = redactSensitiveFields(value, visited);
     }
   }
 
