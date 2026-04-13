@@ -1,10 +1,20 @@
 import { NextResponse } from "next/server";
 import { type ZodType, type ZodTypeDef } from "zod";
 
+import { BadRequestError } from "@repo/errors";
+
 import { handleApiError } from "./error-handler";
 import { type RouteContext, type RouteHandler } from "./types";
 
 type ParseSchema<T> = ZodType<T, ZodTypeDef, unknown>;
+
+export const parseJsonBody = async (request: Request): Promise<unknown> => {
+  try {
+    return await request.json();
+  } catch {
+    throw new BadRequestError("Invalid JSON in request body");
+  }
+};
 
 export const withErrorHandling =
   <TArgs extends unknown[]>(fn: (...args: TArgs) => Promise<Response>) =>
@@ -50,7 +60,7 @@ export const createPostHandler = <TRequest, TResponse>(
   responseSchema?: ParseSchema<TResponse>,
 ) => {
   return async (request: Request) => {
-    const body = await request.json();
+    const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
     const result = await apiFn(data);
     const validated = responseSchema ? responseSchema.parse(result) : result;
@@ -67,7 +77,7 @@ export const createPutHandler = <TRequest, TResponse>(
 ) => {
   return async (request: Request, context: RouteContext) => {
     const { id } = paramsSchema.parse(await context.params);
-    const body = await request.json();
+    const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
     const result = await apiFn(id, data);
     const validated = responseSchema ? responseSchema.parse(result) : result;
@@ -97,7 +107,7 @@ export const createPatchByParamHandler = <TParams, TRequest>(
 ) => {
   return async (request: Request, context: RouteContext) => {
     const params = paramsSchema.parse(await context.params);
-    const body = await request.json();
+    const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
 
     await apiFn(params, data);
@@ -124,7 +134,7 @@ export const createDeleteWithBodyHandler = <TRequest>(
   requestSchema: ParseSchema<TRequest>,
 ) => {
   return async (request: Request) => {
-    const body = await request.json();
+    const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
 
     await apiFn(data);

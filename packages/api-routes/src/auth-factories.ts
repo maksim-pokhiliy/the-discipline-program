@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { type ZodType, type ZodTypeDef } from "zod";
 
+import { parseJsonBody } from "./route-helpers";
 import type { AuthenticatedHandler } from "./types";
 
 type ParseSchema<T> = ZodType<T, ZodTypeDef, unknown>;
@@ -52,7 +53,7 @@ export const createAuthPostHandler = <TRequest, TResponse>(
   responseSchema?: ParseSchema<TResponse>,
 ): AuthenticatedHandler => {
   return async (request, _context, userId) => {
-    const body = await request.json();
+    const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
     const result = await apiFn(userId, data);
     const validated = responseSchema ? responseSchema.parse(result) : result;
@@ -69,7 +70,7 @@ export const createAuthPostByParamHandler = <TParams, TRequest, TResponse>(
 ): AuthenticatedHandler => {
   return async (request, context, userId) => {
     const params = paramsSchema.parse(await context.params);
-    const body = await request.json();
+    const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
     const result = await apiFn(userId, params, data);
     const validated = responseSchema ? responseSchema.parse(result) : result;
@@ -84,7 +85,7 @@ export const createAuthPutHandler = <TRequest, TResponse>(
   responseSchema?: ParseSchema<TResponse>,
 ): AuthenticatedHandler => {
   return async (request, _context, userId) => {
-    const body = await request.json();
+    const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
     const result = await apiFn(userId, data);
     const validated = responseSchema ? responseSchema.parse(result) : result;
@@ -101,7 +102,7 @@ export const createAuthPutByParamHandler = <TParams, TRequest, TResponse>(
 ): AuthenticatedHandler => {
   return async (request, context, userId) => {
     const params = paramsSchema.parse(await context.params);
-    const body = await request.json();
+    const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
     const result = await apiFn(userId, params, data);
     const validated = responseSchema ? responseSchema.parse(result) : result;
@@ -117,7 +118,7 @@ export const createAuthVoidPutByParamHandler = <TParams, TRequest>(
 ): AuthenticatedHandler => {
   return async (request, context, userId) => {
     const params = paramsSchema.parse(await context.params);
-    const body = await request.json();
+    const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
 
     await apiFn(userId, params, data);
