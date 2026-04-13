@@ -4,6 +4,7 @@ import {
   ForbiddenError,
   InternalServerError,
   NotFoundError,
+  TimeoutError,
   UnauthorizedError,
   ValidationError,
 } from "@repo/errors";
@@ -19,11 +20,14 @@ const HTTP_STATUS_ERROR_MAP: Partial<Record<number, AppErrorConstructor>> = {
   422: ValidationError,
 };
 
+const DEFAULT_TIMEOUT_MS = 30_000;
+
 interface ApiClientConfig {
   baseUrl: string;
   getHeaders?: () => Record<string, string> | Promise<Record<string, string>>;
   credentials?: RequestCredentials;
   onUnauthorized?: () => never;
+  timeoutMs?: number;
 }
 
 export class ApiClient {
@@ -31,12 +35,14 @@ export class ApiClient {
   private getHeadersFn?: ApiClientConfig["getHeaders"];
   private credentials?: RequestCredentials;
   private onUnauthorized?: () => never;
+  private timeoutMs: number;
 
-  constructor({ baseUrl, getHeaders, credentials, onUnauthorized }: ApiClientConfig) {
+  constructor({ baseUrl, getHeaders, credentials, onUnauthorized, timeoutMs }: ApiClientConfig) {
     this.baseUrl = baseUrl;
     this.getHeadersFn = getHeaders;
     this.credentials = credentials;
     this.onUnauthorized = onUnauthorized;
+    this.timeoutMs = timeoutMs ?? DEFAULT_TIMEOUT_MS;
   }
 
   async request<T>(
@@ -63,13 +69,32 @@ export class ApiClient {
       }
     }
 
-    const response = await fetch(fullUrl, {
-      method,
-      headers,
-      body: isFormData ? body : body ? JSON.stringify(body) : undefined,
-      cache: "no-store",
-      credentials: this.credentials,
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+
+    let response: Response;
+
+    try {
+      response = await fetch(fullUrl, {
+        method,
+        headers,
+        body: isFormData ? body : body ? JSON.stringify(body) : undefined,
+        cache: "no-store",
+        credentials: this.credentials,
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new TimeoutError(`Request timed out after ${this.timeoutMs}ms`, {
+          url: fullUrl,
+          timeoutMs: this.timeoutMs,
+        });
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (!response.ok) {
       if (response.status === 401 && this.onUnauthorized) {
