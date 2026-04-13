@@ -1,6 +1,7 @@
 import { type Prisma, PrismaClient } from "@prisma/client";
 
 import { baseEnv } from "@repo/env/base";
+import { NotFoundError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 const SOFT_DELETE_MODELS = new Set([
@@ -112,6 +113,38 @@ const createClient = () => {
           return query(args);
         },
 
+        async findFirstOrThrow({ model, args, query }) {
+          if (SOFT_DELETE_MODELS.has(model)) {
+            args.where = withDeletedAtFilter(args.where);
+          }
+
+          return query(args);
+        },
+
+        async count({ model, args, query }) {
+          if (SOFT_DELETE_MODELS.has(model)) {
+            args.where = withDeletedAtFilter(args.where);
+          }
+
+          return query(args);
+        },
+
+        async aggregate({ model, args, query }) {
+          if (SOFT_DELETE_MODELS.has(model)) {
+            args.where = withDeletedAtFilter(args.where);
+          }
+
+          return query(args);
+        },
+
+        async groupBy({ model, args, query }) {
+          if (SOFT_DELETE_MODELS.has(model)) {
+            args.where = withDeletedAtFilter(args.where);
+          }
+
+          return query(args);
+        },
+
         async findUnique({ model, args, query }) {
           if (!SOFT_DELETE_MODELS.has(model)) {
             return query(args);
@@ -127,6 +160,29 @@ const createClient = () => {
             ...args,
             where: { ...args.where, deletedAt: null },
           });
+        },
+
+        async findUniqueOrThrow({ model, args, query }) {
+          if (!SOFT_DELETE_MODELS.has(model)) {
+            return query(args);
+          }
+
+          const delegate = getDelegate(client, model);
+
+          if (!delegate) {
+            return query(args);
+          }
+
+          const result = await delegate.findFirst({
+            ...args,
+            where: { ...args.where, deletedAt: null },
+          });
+
+          if (!result) {
+            throw new NotFoundError(`${model} not found`);
+          }
+
+          return result;
         },
 
         async delete({ model, args, query }) {
