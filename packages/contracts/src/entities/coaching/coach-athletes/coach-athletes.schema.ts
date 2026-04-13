@@ -18,16 +18,16 @@ export const coachAthleteListItemSchema = z.object({
   activePlans: z.array(coachAthletePlanSchema),
   processStatus: z.nativeEnum(ProcessStatus),
   lastActivityDate: z.date().nullable(),
-  daysSinceLastActivity: z.number().int().nullable(),
-  openActionItemsCount: z.number().int(),
+  daysSinceLastActivity: z.number().int().nonnegative().nullable(),
+  openActionItemsCount: z.number().int().nonnegative(),
   needsAttention: z.boolean(),
   enrolledSince: z.date(),
 });
 
 export const coachAthletesSummarySchema = z.object({
-  total: z.number().int(),
-  active: z.number().int(),
-  needsAttention: z.number().int(),
-  injured: z.number().int(),
-  restricted: z.number().int(),
+  total: z.number().int().nonnegative(),
+  active: z.number().int().nonnegative(),
+  needsAttention: z.number().int().nonnegative(),
+  injured: z.number().int().nonnegative(),
+  restricted: z.number().int().nonnegative(),
 });

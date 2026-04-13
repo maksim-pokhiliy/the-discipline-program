@@ -1,5 +1,7 @@
 export const ATHLETE_PROFILE_CONSTANTS = {
   MAX_HEALTH_NOTE_LENGTH: 2000,
+  MAX_HEIGHT_CM: 300,
+  MAX_WEIGHT_KG: 500,
 } as const;
 
 export enum Gender {
