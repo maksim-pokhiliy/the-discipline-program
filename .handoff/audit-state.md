@@ -36,11 +36,11 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-12 (sections 1–3 complete, next is §4 Надёжность и операционка)
+## Current state — 2026-04-13 (sections 1–3 complete, §4 in progress — 10/18 done)
 
-**Branch:** `refactor/design-system-typography-hero` (161 commits ahead of `origin/`, working tree clean)
-**Last commit:** `a042910 docs(audit): close section 3, record all commit hashes in implementation plan`
-**Gates at hand-off time:** `pnpm check-types` ✓ (14/14), `pnpm lint` ✓ (14/14), `pnpm test` ✓ (236/236).
+**Branch:** `refactor/design-system-typography-hero` (172 commits ahead of `origin/`, working tree clean)
+**Last commit:** `0123c89 refactor(shared): move logger to shared package, enforce no-console eslint rule`
+**Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 
 ### Section 1 (Архитектура и границы) — CLOSED
 
@@ -83,11 +83,47 @@ Implementation plan: 3.1.A–3.5.A done (12 commits). Key deliverables:
 - ADR 0018: 6 deferred security decisions with concrete triggers (auth strategy, session/revocation, rate limiting, CSP nonce, authz policy layer, PII classification)
 - Stale comments removed from proxy files + contracts barrel
 
-**Known issue from §3:** `contracts/src/common.ts` and `contracts/src/common/` directory coexist (file shadows directory for bare `../../../common` imports). `common.ts` contains `idParamSchema` + `planIdParamSchema` duplicated in `common/params.ts`. Needs cleanup — delete `common.ts`, update imports from `../../../common` to `../../../common/params`. Low priority, no runtime impact.
+**Known issue from §3 (still open):** `contracts/src/common.ts` and `contracts/src/common/` directory coexist (file shadows directory for bare `../../../common` imports). `common.ts` contains `idParamSchema` + `planIdParamSchema` duplicated in `common/params.ts`. Needs cleanup — delete `common.ts`, update imports from `../../../common` to `../../../common/params`. Low priority, no runtime impact.
 
-### Next up: Section 4 (Надёжность и операционка)
+### Section 4 (Надёжность и операционка) — IN PROGRESS
 
-Status in audit doc: "Не начато". ~17 bullets already written from initial research. Several cross-referenced from §1 work (health endpoints done in 1.5.B). Research pass needed to validate existing bullets against current code and find new issues.
+Research complete, implementation plan in `docs/BIGTECH-AUDIT.md`. 21 bullets total (7 closed before this session, 4 removed as пшики during implementation). 10 commits done this session, 7 remaining + 1 deferred (OpenTelemetry).
+
+**Done this session (10 commits):**
+
+- 4.1.A `c2f0857` — Error response format: `{ error: { code, message, details? } }`, removed statusCode/timestamp duplication + ApiClient parsing updated
+- 4.1.B `57c7159` — `parseJsonBody` helper: malformed JSON → 400 instead of 500, 9 call sites updated
+- 4.1.C `64306be` — `redactSensitiveFields` circular ref protection via WeakSet
+- 4.1.E `d8f2887` — `handlePrismaError` expanded: P2003→BadRequest, P2011→BadRequest, P2034→Conflict, PrismaClientUnknownRequestError→InternalServer. 4 new tests (240 total)
+- 4.2.A `5da27ab` — ApiClient timeout: AbortController + configurable `timeoutMs` (30s default). `TimeoutError` + `TIMEOUT` error code added to `@repo/errors`
+- 4.2.B `b2ed4bd` — Prisma timeout: `statement_timeout=30s` + `connect_timeout=10s` appended to DATABASE_URL via `datasourceUrl`
+- 4.2.C `36a7e7e` — ApiClient retry: exponential backoff + jitter, max 2 retries. `TooManyRequestsError` (429) + `ServiceUnavailableError` (503) added. HTTP_STATUS_ERROR_MAP expanded with 429/502/503/504
+- 4.2.D `8357053` — ApiClient cache configurable: `cache` as client-level default + per-request override via `RequestOptions`. Removed hardcoded `no-store`
+- 4.3.A `a9bd115` — Structured JSON logger in `@repo/api-routes`, replaced `console.error` in error handler
+- 4.3.A+ `0123c89` — Logger moved to `@repo/shared` (accessible from api-server/api-routes/apps). `no-console: "error"` ESLint rule enforced globally (exceptions: logger.ts, seed.ts)
+
+**Removed bullets (пшики identified during implementation):**
+
+- 4.1.D — ZodError details redaction: details are dev-only, `redactSensitiveFields` operates on keys not values
+- 4.1.F — ApiClient preserve error code: no domain-specific codes exist, server/client use identical generic codes
+- 4.1.G — HTTP_STATUS_ERROR_MAP: merged into 4.2.C (status map only useful with retry)
+- 4.1.H — ApiClient.onUnauthorized fix: `redirect()` returns `never`, code is unreachable, type is correct
+
+**Remaining (7 commits):**
+
+- 4.3.B ⏳ Next — Correlation ID: generate `x-request-id` in `withErrorHandling`, inject into logger context, return in error response headers
+- 4.3.C — Prisma dev query logging: add `"query"` to log levels in development
+- 4.3.D — Proxy auth error logging: wrap `getToken()` in try/catch in admin/platform proxy.ts
+- 4.4.A — Next.js error files: `error.tsx`, `global-error.tsx`, `not-found.tsx` for all 3 apps
+- 4.5.A — Readiness endpoint: add Blob storage check in admin's `/api/ready`
+
+**Deferred (1):**
+
+- OpenTelemetry / metrics — needs telemetry backend infrastructure. ADR trigger: first production deployment with real traffic
+
+**Retrospective пшик analysis (sections 1-3):**
+
+During this session, a full пшик review was done across sections 1-3. Key finding: 1.4.C (scaffold 4 empty ports with zero consumers) was the only clear пшик in past work. Pattern to avoid: speculative infrastructure without consumers.
 
 ### Operational notes
 
