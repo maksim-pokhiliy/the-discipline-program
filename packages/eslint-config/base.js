@@ -72,6 +72,7 @@ export const config = [
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
       "max-lines": ["error", { max: 300, skipBlankLines: true, skipComments: true }],
       "@typescript-eslint/no-non-null-assertion": "error",
+      "no-console": "error",
     },
   },
   {
@@ -80,10 +81,17 @@ export const config = [
     },
   },
   {
+    files: ["**/logger.ts"],
+    rules: {
+      "no-console": "off",
+    },
+  },
+  {
     files: ["**/prisma/seed.ts"],
     rules: {
       "@typescript-eslint/no-non-null-assertion": "off",
       "max-lines": "off",
+      "no-console": "off",
     },
   },
   {

@@ -18,6 +18,7 @@
     "@repo/contracts": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/errors": "workspace:*",
+    "@repo/shared": "workspace:*",
     "next-auth": "catalog:",
     "zod": "catalog:"
   },
