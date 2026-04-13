@@ -4,11 +4,11 @@ import {
   Card,
   CardActions,
   CardContent,
-  CardMedia,
   Chip,
   Stack,
   Typography,
 } from "@mui/material";
+import Image from "next/image";
 import Link from "next/link";
 
 import { type BlogCategory, BLOG_CATEGORY_LABELS } from "@repo/contracts/cms/blog";
@@ -44,12 +44,21 @@ export const BlogPostCard = ({
     <Card>
       <Box sx={{ position: "relative" }}>
         {coverImage && (
-          <CardMedia
-            component="img"
-            image={coverImage}
-            alt={title}
-            sx={{ height: (theme) => theme.spacing(isFeatured ? 50 : 25) }}
-          />
+          <Box
+            sx={{
+              position: "relative",
+              height: (theme) => theme.spacing(isFeatured ? 50 : 25),
+              overflow: "hidden",
+            }}
+          >
+            <Image
+              src={coverImage}
+              alt={title}
+              fill
+              sizes="(max-width: 600px) 100vw, (max-width: 900px) 50vw, 33vw"
+              style={{ objectFit: "cover" }}
+            />
+          </Box>
         )}
 
         <Box
