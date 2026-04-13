@@ -17,7 +17,9 @@ pre-commit:
       fail_text: "TypeScript compilation failed"
 
     test:
-      run: pnpm test
+      env:
+        SKIP_ENV_VALIDATION: "1"
+      run: pnpm turbo run test --filter="...[HEAD]"
       fail_text: "Tests failed - check the errors above"
 
 pre-push:

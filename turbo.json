@@ -35,8 +35,10 @@
       "dependsOn": ["^format"]
     },
     "lint": {
-      "cache": false,
       "dependsOn": ["^lint"]
+    },
+    "test": {
+      "cache": false
     }
   }
 }
