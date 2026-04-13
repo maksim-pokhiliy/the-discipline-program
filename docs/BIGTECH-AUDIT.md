@@ -612,10 +612,10 @@ Non-obvious стафф. Это то, что больнее всего ретро
 | 10.1.B | `d4319e3`   | ✅ Done | Marketing: convert 7 page modules to server components (remove `"use client"` + `useQuery` wrapper)                     |
 | 10.1.C | `9138c90`   | ✅ Done | Marketing: remove `force-dynamic` from all pages, switch to ISR (`export const revalidate`)                             |
 | 10.4.A | `ab6af34`   | ✅ Done | `BlogPostCard`: replace `CardMedia component="img"` with `next/image`                                                   |
-| 10.4.B |             | ⏳ Next | Marketing hero images: CSS `background-image` in `fullscreen-section` / `split-section` → `next/image` fill mode        |
-| 10.5.A |             | Pending | Extract `error.tsx` / `global-error.tsx` shared components to `@repo/ui`, deduplicate across 3 apps                     |
-| 10.3.D |             | Pending | Dynamic imports (`next/dynamic`) for tiptap (admin), framer-motion (marketing + @repo/ui), dnd-kit (platform)           |
-| 10.3.E |             | Pending | Install `@next/bundle-analyzer`, add `pnpm analyze` script per app                                                      |
+| 10.4.B | `7d515f8`   | ✅ Done | Marketing hero images: CSS `background-image` in `fullscreen-section` / `split-section` → `next/image` fill mode        |
+| 10.5.A | `03b738b`   | ✅ Done | Extract `error.tsx` / `global-error.tsx` / `not-found.tsx` shared components to `@repo/ui`, deduplicate across 3 apps   |
+| 10.3.D | `0a3b31f`   | ✅ Done | Dynamic imports (`next/dynamic`) for tiptap (admin) and dnd-kit (platform). framer-motion deferred to 10.6.B            |
+| 10.3.E |             | ⏳ Next | Install `@next/bundle-analyzer`, add `pnpm analyze` script per app                                                      |
 | 10.6.B |             | Pending | ADR: deferred frontend decisions (bundle CI gates, Core Web Vitals / Lighthouse CI, `@repo/ui` package splitting)       |
 
 **Execution order** (derived from dependencies): 10.3.A → 10.3.B → 10.3.C → 10.6.A → 10.1.A → 10.2.A → 10.1.B → 10.1.C → 10.4.A → 10.4.B → 10.5.A → 10.3.D → 10.3.E → 10.6.B
@@ -637,7 +637,7 @@ Rationale: config optimizations first (tree-shaking unblocks bundle wins) → me
 
 #### 10.3. Bundle и heavy deps
 
-- [ ] **ZERO dynamic imports (`next/dynamic` / `React.lazy`) во всём codebase.** Tiptap (~200KB gzipped), framer-motion (~115KB), @dnd-kit (~45KB) грузятся eager static imports. Rich text editor нужен только на нескольких CMS-страницах admin, но попадает в main bundle.
+- [x] **~~ZERO dynamic imports (`next/dynamic` / `React.lazy`) во всём codebase.~~** Закрыто в 10.3.D. tiptap dynamic-imported в admin blog-post-form (`ssr: false`), dnd-kit + tiptap dynamic-imported через PlanScheduleSection в platform plan-detail-view (`ssr: false`). framer-motion deferred: ContentSection/FullscreenSection — layout компоненты на каждой странице, `next/dynamic` не подходит (задержка гидрации без выигрыша). Реальный fix — splitting `@repo/ui` → 10.6.B ADR.
 - [ ] **`@repo/ui` — bundle sink.** Tiptap, framer-motion, isomorphic-dompurify в зависимостях shared пакета. Любой app, импортирующий компонент из `@repo/ui`, рискует затянуть весь dep graph если tree-shaking не отсечёт barrel re-exports через `src/index.ts`. Три тяжёлые группы: ContentSection (framer-motion), RichTextEditor (tiptap × 6 пакетов), RichTextViewer (dompurify).
 - [ ] **5 runtime barrel imports `@mui/icons-material` нарушают ADR 0006.** ADR явно говорит: `import { Foo } from "@mui/icons-material"` бандлит всю иконную библиотеку (~7MB); каноническая форма — `import Foo from "@mui/icons-material/Foo"`. Нарушители: `packages/ui/.../editor-toolbar.tsx`, `apps/admin/.../login-form/index.tsx`, `apps/platform/.../login-form/index.tsx`, `apps/platform/.../platform-user-menu.tsx`, `apps/platform/.../platform-bottom-nav.tsx`. ~60 импортов в проекте делают правильно. Ещё 2 barrel import в marketing — type-only, runtime не затрагивают.
 - [ ] **`@mui/x-date-pickers` загружен глобально, но не используется.** `NextProvider` в `@repo/mui` рендерит `LocalizationProvider` + `AdapterDayjs`. Zero picker-компонентов (`DatePicker`, `TimePicker`) в codebase. ~100KB gzipped мёртвого веса в каждом app.
@@ -647,12 +647,12 @@ Rationale: config optimizations first (tree-shaking unblocks bundle wins) → me
 
 #### 10.4. Image strategy
 
-- [ ] **Hero images в marketing — CSS `background-image`.** `fullscreen-section.tsx` и `split-section.tsx` используют `backgroundImage: url(...)` для hero-секций. CMS-изображения из Vercel Blob / Unsplash без Next.js оптимизации: нет WebP/AVIF, нет responsive srcset, нет lazy loading, нет preload для above-fold. Главный удар по LCP marketing-сайта.
-- [ ] **`BlogPostCard` — `CardMedia component="img"`.** Обложки блог-постов из CMS рендерятся как raw `<img>` без next/image оптимизации (нет srcset, нет lazy loading, нет format conversion).
+- [x] **~~Hero images в marketing — CSS `background-image`.~~** Закрыто в 10.4.B. `fullscreen-section.tsx` и `split-section.tsx` переведены на `next/image` fill mode. Overlay gradient вынесен в `ImageOverlay` компонент. Все hero-секции получили `priority` для LCP preload. `sizes` адаптивные: 100vw для fullscreen, `(max-width: 900px) 100vw, 50vw` для split.
+- [x] **~~`BlogPostCard` — `CardMedia component="img"`.~~** Закрыто в 10.4.A.
 
 #### 10.5. DRY и shared patterns
 
-- [ ] **`error.tsx` copy-paste × 3 apps.** Все 3 файла почти идентичны (отличие: текст кнопки "Go to dashboard" vs "Go home"). `global-error.tsx` идентичен во всех 3 apps на 100%. DRY violation — `error.tsx` можно вынести в shared (принимает homeUrl как prop). `global-error.tsx` — raw HTML без MUI, тоже можно вынести.
+- [x] **~~`error.tsx` copy-paste × 3 apps.~~** Закрыто в 10.5.A. 3 shared компонента в `@repo/ui/error-pages/`: `ErrorPageContent` (MUI, client), `GlobalErrorPageContent` (raw HTML, client), `NotFoundPageContent` (MUI, server). 9 app файлов → тонкие обёртки. Admin передаёт `homeLabel="Go to dashboard"`, остальные используют default. `not-found.tsx` включён в скоуп (та же дупликация).
 
 #### 10.6. Misc
 

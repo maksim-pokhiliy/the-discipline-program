@@ -36,10 +36,10 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-13 (sections 1–9 complete, §10 in progress: 9/14 done)
+## Current state — 2026-04-13 (sections 1–9 complete, §10 in progress: 12/14 done)
 
-**Branch:** `refactor/design-system-typography-hero` (219 commits ahead of `origin/`, working tree clean)
-**Last commit:** `ab6af34 perf(marketing): replace cardmedia raw img with next/image in blog cards`
+**Branch:** `refactor/design-system-typography-hero` (223 commits ahead of `origin/`, working tree clean)
+**Last commit:** `0a3b31f perf: dynamic imports for tiptap and dnd-kit heavy dependencies`
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 
 ### Section 1 (Архитектура и границы) — CLOSED
@@ -206,11 +206,11 @@ All 2 bullets implemented (2 commits). 240 tests, 23 files, 2 packages. Key deli
 - ADR 0023: test strategy with coverage gaps (~14 endpoints, ~12 mappers, ~110 schemas untested) and 8 deferred improvements with triggers
 - cleanup() silent failure fixed: P2025 silenced (expected), all other errors logged via logger.error
 
-### Section 10 (Фронт и Next.js 16) — IN PROGRESS (9/14 done)
+### Section 10 (Фронт и Next.js 16) — IN PROGRESS (12/14 done)
 
 Research completed with 5 parallel agents (use client audit, heavy deps, marketing SSR, suspense/images/fonts, admin/platform patterns). 10 positives documented, 17 active bullets organized into 6 subsections, 2 marked as already done in prior sections.
 
-**Done (9 commits):**
+**Done (12 commits):**
 
 - 10.3.A `c2b7cb0` — `optimizePackageImports` with `@mui/icons-material` + `@mui/material` in all 3 next.config.ts
 - 10.3.B `ea2ebe4` — 5 runtime barrel imports `@mui/icons-material` → deep path per ADR 0006 (20 icons across 5 files, ~60 already correct)
@@ -221,20 +221,21 @@ Research completed with 5 parallel agents (use client audit, heavy deps, marketi
 - 10.1.B `d4319e3` — **Big one.** 7 marketing page modules → server components. Removed "use client" + useQuery + QueryWrapper from all modules. SuspenseWrapper narrowed to interactive sections only. Dead hooks deleted (use-pages.ts, use-blog.ts). 17 files, -366/+170 lines
 - 10.1.C `9138c90` — All 7 marketing pages: `force-dynamic` → `revalidate = 300` (ISR, 5 min cache)
 - 10.4.A `ab6af34` — BlogPostCard: `CardMedia component="img"` → `next/image` fill mode with sizes/objectFit
+- 10.4.B `7d515f8` — FullscreenSection + SplitSection: CSS `backgroundImage` → `next/image` fill. Overlay gradient extracted into `ImageOverlay` component. All 6 hero consumers get `priority` for LCP. `sizes` responsive per component.
+- 10.5.A `03b738b` — 3 shared error page components in `@repo/ui/error-pages/`: `ErrorPageContent`, `GlobalErrorPageContent`, `NotFoundPageContent`. 9 app files → thin wrappers. Admin gets `homeLabel="Go to dashboard"`, others default.
+- 10.3.D `0a3b31f` — `next/dynamic` for tiptap (admin blog-post-form, `ssr: false`) and dnd-kit+tiptap (platform PlanScheduleSection, `ssr: false` + LoadingState fallback). framer-motion deferred — ContentSection/FullscreenSection are layout components on every page, `next/dynamic` causes hydration delay without meaningful bundle gains. Real fix is @repo/ui splitting → 10.6.B ADR.
 
-**Remaining (5 bullets):**
+**Remaining (2 bullets):**
 
-- 10.4.B — Marketing hero images: CSS `background-image` in `fullscreen-section` / `split-section` → `next/image` fill. Architectural — need overlay-on-image pattern redesign
-- 10.5.A — Extract `error.tsx` / `global-error.tsx` to @repo/ui shared components
-- 10.3.D — Dynamic imports (`next/dynamic`) for tiptap (admin), framer-motion (marketing + @repo/ui), dnd-kit (platform)
 - 10.3.E — Install `@next/bundle-analyzer`, add `pnpm analyze` script
-- 10.6.B — ADR: deferred frontend decisions (bundle CI gates, Core Web Vitals, @repo/ui splitting)
+- 10.6.B — ADR: deferred frontend decisions (bundle CI gates, Core Web Vitals, @repo/ui splitting, framer-motion code splitting)
 
-**Key design decisions made during this session:**
+**Key design decisions made across §10 sessions:**
 
 - "use client" removal: deeper RSC serialization analysis reduced 14 candidates to 3. The sx theme callback `(theme) => ...` pattern is a function prop that can't cross the server-client boundary. Documented in audit bullet 10.2.A.
 - Marketing rendering: modules became pure server components receiving `data` prop directly. No React Query in the render path. SuspenseWrapper only wraps interactive client sections (product modals using useSearchParams). StructuredData now renders in server scope (better SEO).
 - ISR 300s chosen to match route handler `Cache-Control: s-maxage=300` from §6.
+- framer-motion dynamic import analysis: ContentSection (18 consumers) and FullscreenSection (6 consumers, above-fold hero) are layout-level components. Server-rendered HTML is correct without JS; animations are progressive enhancement. `next/dynamic` would delay hydration without meaningful bundle savings since Next.js RSC already code-splits client components. Real optimization is splitting `@repo/ui` so non-animated consumers don't pull framer-motion.
 
 **Sections 11–12:** research not yet started. Research begins at the top of each section and must complete before any bullet in that section is implemented.
 
