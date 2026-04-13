@@ -2,18 +2,16 @@
 
 import { useCallback, useState } from "react";
 
-import {
-  FormatBold,
-  FormatItalic,
-  FormatListBulleted,
-  FormatListNumbered,
-  FormatQuote,
-  FormatUnderlined,
-  Link as LinkIcon,
-  LinkOff,
-  Redo,
-  Undo,
-} from "@mui/icons-material";
+import FormatBold from "@mui/icons-material/FormatBold";
+import FormatItalic from "@mui/icons-material/FormatItalic";
+import FormatListBulleted from "@mui/icons-material/FormatListBulleted";
+import FormatListNumbered from "@mui/icons-material/FormatListNumbered";
+import FormatQuote from "@mui/icons-material/FormatQuote";
+import FormatUnderlined from "@mui/icons-material/FormatUnderlined";
+import LinkIcon from "@mui/icons-material/Link";
+import LinkOff from "@mui/icons-material/LinkOff";
+import Redo from "@mui/icons-material/Redo";
+import Undo from "@mui/icons-material/Undo";
 import {
   Box,
   Button,
