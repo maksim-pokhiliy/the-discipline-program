@@ -333,7 +333,7 @@ DDD lens. Без правильной модели всё, что на ней п
 - [x] **Proxy auth failures silent.** `admin/proxy.ts` и `platform/proxy.ts`: `getToken()` может упасть, но ошибка нигде не логируется. Мисконфигурация auth в проде → молча редиректит всех на логин без следа в логах.
 - [x] **`redactSensitiveFields` не защищён от circular references.** `error-handler.ts:26-38`: рекурсивный обход объекта без cycle detection. `error.details` с циклической ссылкой → stack overflow в самом error handler.
 - [x] **Prisma: нет connection/query timeout.** `db/client.ts` создаёт PrismaClient без таймаутов. Медленный запрос висит бесконечно, занимая слот из пула соединений. В комбинации с отсутствием таймаутов на `ApiClient.fetch` — двойная проблема.
-- [ ] **Readiness endpoint проверяет только DB.** `/api/ready` делает `SELECT 1`, но не проверяет Blob storage. Admin без Blob = нерабочий upload. Readiness probe не видит эту деградацию.
+- [x] **Readiness endpoint проверяет только DB.** `/api/ready` делает `SELECT 1`, но не проверяет Blob storage. Admin без Blob = нерабочий upload. Readiness probe не видит эту деградацию.
 
 ### Implementation plan (section 4)
 
@@ -356,7 +356,7 @@ DDD lens. Без правильной модели всё, что на ней п
 | 4.3.C | `833ff0d`   | ✅ Done | Prisma dev query logging: add `"query"` to log levels in development mode in `db/client.ts`. Log query text + duration via structured logger.                                                                                       |
 | 4.3.D | `f4eb8b2`   | ✅ Done | Proxy auth error logging: wrap `getToken()` in try/catch in `admin/proxy.ts` and `platform/proxy.ts`. Log failures with structured logger instead of silent redirect.                                                               |
 | 4.4.A | `53f0229`   | ✅ Done | Next.js error files: create `error.tsx`, `global-error.tsx`, `not-found.tsx` for all 3 apps (admin, marketing, platform). Branded UI with recovery actions.                                                                         |
-| 4.5.A | —           | ⏳ Next | Readiness endpoint: add Blob storage connectivity check in admin's `/api/ready`. Return 503 if Blob is unreachable.                                                                                                                 |
+| 4.5.A | `4847237`   | ✅ Done | Readiness endpoint: add Blob storage connectivity check in admin's `/api/ready`. Return 503 if Blob is unreachable.                                                                                                                 |
 
 **Deferred bullets** (no implementation now, documented as known debt):
 
