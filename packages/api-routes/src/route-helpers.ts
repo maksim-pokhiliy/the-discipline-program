@@ -71,7 +71,7 @@ export const createPostHandler = <TRequest, TResponse>(
     const result = await apiFn(data);
     const validated = responseSchema.parse(result);
 
-    return NextResponse.json(validated);
+    return NextResponse.json(validated, { status: 201 });
   };
 };
 
@@ -118,7 +118,7 @@ export const createPatchByParamHandler = <TParams, TRequest>(
 
     await apiFn(params, data);
 
-    return NextResponse.json({ success: true });
+    return new NextResponse(null, { status: 204 });
   };
 };
 
@@ -131,7 +131,7 @@ export const createFormDataPostHandler = <TResponse>(
     const result = await apiFn(formData);
     const validated = responseSchema.parse(result);
 
-    return NextResponse.json(validated);
+    return NextResponse.json(validated, { status: 201 });
   };
 };
 
@@ -145,7 +145,7 @@ export const createDeleteWithBodyHandler = <TRequest>(
 
     await apiFn(data);
 
-    return NextResponse.json({ success: true });
+    return new NextResponse(null, { status: 204 });
   };
 };
 
@@ -158,7 +158,7 @@ export const createDeleteHandler = (
 
     await apiFn(id);
 
-    return NextResponse.json({ success: true });
+    return new NextResponse(null, { status: 204 });
   };
 };
 

@@ -123,7 +123,7 @@ export const createAuthVoidPutByParamHandler = <TParams, TRequest>(
 
     await apiFn(userId, params, data);
 
-    return NextResponse.json({ success: true });
+    return new NextResponse(null, { status: 204 });
   };
 };
 
@@ -136,7 +136,7 @@ export const createAuthDeleteHandler = <TParams>(
 
     await apiFn(userId, params);
 
-    return NextResponse.json({ success: true });
+    return new NextResponse(null, { status: 204 });
   };
 };
 
