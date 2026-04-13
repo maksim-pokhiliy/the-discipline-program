@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-type CheckDatabase = () => Promise<void>;
+type HealthCheck = () => Promise<void>;
 
 export const createHealthHandler = () => {
   return async () => {
@@ -8,10 +8,10 @@ export const createHealthHandler = () => {
   };
 };
 
-export const createReadyHandler = (checkDatabase: CheckDatabase) => {
+export const createReadyHandler = (...checks: HealthCheck[]) => {
   return async () => {
     try {
-      await checkDatabase();
+      await Promise.all(checks.map((check) => check()));
 
       return NextResponse.json({ status: "ready" });
     } catch {

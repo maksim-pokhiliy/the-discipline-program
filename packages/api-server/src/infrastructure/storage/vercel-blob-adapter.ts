@@ -1,4 +1,4 @@
-import { put, del } from "@vercel/blob";
+import { del, list, put } from "@vercel/blob";
 
 import { blobEnv } from "@repo/env/blob";
 
@@ -19,4 +19,8 @@ export const createVercelBlobAdapter = (): StoragePort => {
       await del(url);
     },
   };
+};
+
+export const checkBlobStorage = async (): Promise<void> => {
+  await list({ limit: 1 });
 };
