@@ -16,9 +16,9 @@
 - [x] 2. Доменная модель
 - [ ] 3. Безопасность
 - [ ] 4. Надёжность и операционка
-- [ ] 5. База данных и миграции
-- [ ] 6. API Design
-- [ ] 7. Архитектурные риски на 6 месяцев вперёд
+- [x] 5. База данных и миграции
+- [x] 6. API Design
+- [x] 7. Архитектурные риски на 6 месяцев вперёд
 - [ ] 8. Monorepo дисциплина
 - [ ] 9. Тестирование
 - [ ] 10. Фронт и Next.js 16
@@ -485,7 +485,7 @@ DDD lens. Без правильной модели всё, что на ней п
 
 ## 7. Архитектурные риски на 6 месяцев вперёд
 
-**Статус:** Исследование завершено, реализация в процессе
+**Статус:** ✅ Завершено
 
 Non-obvious стафф. Это то, что больнее всего ретрофитить — не из-за сложности кода, а из-за того, что к моменту, когда «пригорит», зависимостей уже слишком много. Решения принимаются сейчас.
 
@@ -503,9 +503,9 @@ Non-obvious стафф. Это то, что больнее всего ретро
 
 | Bullet | Commit hash | Status  | Description                                                                                           |
 | ------ | ----------- | ------- | ----------------------------------------------------------------------------------------------------- |
-| 7.1.A  | —           | ⏳ Next | ADR 0021: architectural risks — six-month horizon. Remove dayjs bullet as пшик.                       |
-| 7.2.A  | —           | Pending | Fix `formatPrice` precision: remove `FractionDigits: 0`, show $9.99 correctly.                        |
-| 7.2.B  | —           | Pending | `formatPrice`/`formatDate` accept locale param, `DEFAULT_LOCALE` as fallback. Minimal i18n readiness. |
+| 7.1.A  | `9217cb3`   | ✅ Done | ADR 0021: architectural risks — six-month horizon. Remove dayjs bullet as пшик.                       |
+| 7.2.A  | `ec83537`   | ✅ Done | Fix `formatPrice` precision: remove `FractionDigits: 0`, show $9.99 correctly.                        |
+| 7.2.B  | `e52a07a`   | ✅ Done | `formatPrice`/`formatDate` accept locale param, `DEFAULT_LOCALE` as fallback. Minimal i18n readiness. |
 
 ---
 
