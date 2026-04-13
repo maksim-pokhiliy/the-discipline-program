@@ -17,12 +17,18 @@ export const parseJsonBody = async (request: Request): Promise<unknown> => {
 };
 
 export const withErrorHandling =
-  <TArgs extends unknown[]>(fn: (...args: TArgs) => Promise<Response>) =>
-  async (...args: TArgs): Promise<Response> => {
+  (fn: RouteHandler): RouteHandler =>
+  async (request, context) => {
+    const requestId = request.headers.get("x-request-id") || crypto.randomUUID();
+
     try {
-      return await fn(...args);
+      const response = await fn(request, context);
+
+      response.headers.set("x-request-id", requestId);
+
+      return response;
     } catch (error) {
-      return handleApiError(error);
+      return handleApiError(error, requestId);
     }
   };
 
