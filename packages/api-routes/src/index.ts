@@ -14,6 +14,7 @@ export {
   createMultiToggleHandler,
 } from "./route-helpers";
 export { createHealthHandler, createReadyHandler, createVersionHandler } from "./health-handlers";
+export { CACHE_POLICY, withCacheControl } from "./cache-control";
 export {
   createAuthGetHandler,
   createAuthGetWithQueryHandler,

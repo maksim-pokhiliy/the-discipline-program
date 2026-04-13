@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { type ZodType } from "zod";
 
-import { withPublicRoute } from "@repo/api-routes";
+import { CACHE_POLICY, withCacheControl, withPublicRoute } from "@repo/api-routes";
 import type { RouteContext } from "@repo/api-routes";
 import { cmsPagesPublicApi } from "@repo/api-server/cms";
 import {
@@ -27,15 +27,17 @@ const PAGE_HANDLERS: Record<string, { fetch: () => Promise<unknown>; schema: Zod
   faq: { fetch: cmsPagesPublicApi.getFaqPage, schema: getFaqPageResponseSchema },
 };
 
-export const GET = withPublicRoute(async (_request: Request, context: RouteContext) => {
+const handler = async (_request: Request, context: RouteContext) => {
   const { pageSlug } = getPageBySlugParamsSchema.parse(await context.params);
-  const handler = PAGE_HANDLERS[pageSlug];
+  const config = PAGE_HANDLERS[pageSlug];
 
-  if (!handler) {
+  if (!config) {
     throw new NotFoundError("Page not found", { pageSlug });
   }
 
-  const data = await handler.fetch();
+  const data = await config.fetch();
 
-  return NextResponse.json(handler.schema.parse(data));
-});
+  return NextResponse.json(config.schema.parse(data));
+};
+
+export const GET = withPublicRoute(withCacheControl(handler, CACHE_POLICY.STATIC));
