@@ -36,10 +36,10 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-13 (sections 1–3 complete, §4 in progress — 11/18 done)
+## Current state — 2026-04-13 (sections 1–3 complete, §4 in progress — 12/18 done)
 
-**Branch:** `refactor/design-system-typography-hero` (175 commits ahead of `origin/`, working tree clean)
-**Last commit:** `992da37 feat(api-routes): add x-request-id correlation to all route handlers`
+**Branch:** `refactor/design-system-typography-hero` (177 commits ahead of `origin/`, working tree clean)
+**Last commit:** `833ff0d feat(api-server): add prisma dev query logging via structured logger`
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 
 ### Section 1 (Архитектура и границы) — CLOSED
@@ -87,7 +87,7 @@ Implementation plan: 3.1.A–3.5.A done (12 commits). Key deliverables:
 
 ### Section 4 (Надёжность и операционка) — IN PROGRESS
 
-Research complete, implementation plan in `docs/BIGTECH-AUDIT.md`. 21 bullets total (7 closed before this session, 4 removed as пшики during implementation). 11 commits done, 6 remaining + 1 deferred (OpenTelemetry).
+Research complete, implementation plan in `docs/BIGTECH-AUDIT.md`. 21 bullets total (7 closed before this session, 4 removed as пшики during implementation). 12 commits done, 5 remaining + 1 deferred (OpenTelemetry).
 
 **Done (11 commits):**
 
@@ -102,6 +102,7 @@ Research complete, implementation plan in `docs/BIGTECH-AUDIT.md`. 21 bullets to
 - 4.3.A `a9bd115` — Structured JSON logger in `@repo/api-routes`, replaced `console.error` in error handler
 - 4.3.A+ `0123c89` — Logger moved to `@repo/shared` (accessible from api-server/api-routes/apps). `no-console: "error"` ESLint rule enforced globally (exceptions: logger.ts, seed.ts)
 - 4.3.B `992da37` — Correlation ID: `withErrorHandling` reads `x-request-id` from incoming headers or generates via `crypto.randomUUID()`. Sets header on all responses (success + error). `handleApiError` accepts `requestId`, includes in structured log and error response headers. `withErrorHandling` signature tightened from generic `<TArgs>` to `RouteHandler → RouteHandler`
+- 4.3.C `833ff0d` — Prisma dev query logging: `{ emit: "event", level: "query" }` in dev log config, `$on("query")` routes to `logger.info` with query text + duration. `QueryEventHandler` type alias for targeted `$on` cast (Prisma's typing can't narrow conditional log config)
 
 **Removed bullets (пшики identified during implementation):**
 
@@ -112,8 +113,7 @@ Research complete, implementation plan in `docs/BIGTECH-AUDIT.md`. 21 bullets to
 
 **Remaining (6 commits):**
 
-- 4.3.C ⏳ Next — Prisma dev query logging: add `"query"` to log levels in development
-- 4.3.D — Proxy auth error logging: wrap `getToken()` in try/catch in admin/platform proxy.ts
+- 4.3.D ⏳ Next — Proxy auth error logging: wrap `getToken()` in try/catch in admin/platform proxy.ts
 - 4.4.A — Next.js error files: `error.tsx`, `global-error.tsx`, `not-found.tsx` for all 3 apps
 - 4.5.A — Readiness endpoint: add Blob storage check in admin's `/api/ready`
 
