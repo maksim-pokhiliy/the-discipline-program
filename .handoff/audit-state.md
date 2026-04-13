@@ -38,9 +38,8 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 ## Current state — 2026-04-13 (sections 1–9 complete, §10 next)
 
-**Branch:** `refactor/design-system-typography-hero` (213 commits ahead of `origin/`, working tree clean)
-**Last commit:** `c2af61f fix(api-server): log cleanup errors instead of silently swallowing them`
-**Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
+**Branch:** `refactor/design-system-typography-hero` (209 commits ahead of `origin/`, working tree clean)
+**Last commit:** `573b4a8 docs: close section 9, all bullets done`
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 
 ### Section 1 (Архитектура и границы) — CLOSED
