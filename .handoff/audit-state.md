@@ -36,10 +36,10 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-13 (sections 1–9 complete, §10 next)
+## Current state — 2026-04-13 (sections 1–9 complete, §10 in progress: 9/14 done)
 
-**Branch:** `refactor/design-system-typography-hero` (209 commits ahead of `origin/`, working tree clean)
-**Last commit:** `573b4a8 docs: close section 9, all bullets done`
+**Branch:** `refactor/design-system-typography-hero` (219 commits ahead of `origin/`, working tree clean)
+**Last commit:** `ab6af34 perf(marketing): replace cardmedia raw img with next/image in blog cards`
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 
 ### Section 1 (Архитектура и границы) — CLOSED
@@ -206,7 +206,37 @@ All 2 bullets implemented (2 commits). 240 tests, 23 files, 2 packages. Key deli
 - ADR 0023: test strategy with coverage gaps (~14 endpoints, ~12 mappers, ~110 schemas untested) and 8 deferred improvements with triggers
 - cleanup() silent failure fixed: P2025 silenced (expected), all other errors logged via logger.error
 
-**Sections 10–12:** research not yet started. Research begins at the top of each section and must complete before any bullet in that section is implemented.
+### Section 10 (Фронт и Next.js 16) — IN PROGRESS (9/14 done)
+
+Research completed with 5 parallel agents (use client audit, heavy deps, marketing SSR, suspense/images/fonts, admin/platform patterns). 10 positives documented, 17 active bullets organized into 6 subsections, 2 marked as already done in prior sections.
+
+**Done (9 commits):**
+
+- 10.3.A `c2b7cb0` — `optimizePackageImports` with `@mui/icons-material` + `@mui/material` in all 3 next.config.ts
+- 10.3.B `ea2ebe4` — 5 runtime barrel imports `@mui/icons-material` → deep path per ADR 0006 (20 icons across 5 files, ~60 already correct)
+- 10.3.C `eb5a386` — Dead deps: `@mui/x-date-pickers` removed from NextProvider + @repo/mui + platform (~100KB), `dayjs` from @repo/mui, phantom `lucide-react` from marketing, phantom `react-markdown` from catalog. Lockfile regenerated
+- 10.6.A `a913247` — Removed useless `force-dynamic` from platform plan detail page (no server-side fetch)
+- 10.1.A `1dd7b08` — Marketing SEO: `robots.ts` added, sitemap `lastModified: new Date()` → fixed `SITE_LAUNCH_DATE`, `force-dynamic` removed from sitemap
+- 10.2.A `307236e` — False "use client": 3 removed (logo, status-chip, pulse-stats-card). 11 of 14 candidates turned out justified (sx theme callbacks = non-serializable functions, function props, MUI prop spreads)
+- 10.1.B `d4319e3` — **Big one.** 7 marketing page modules → server components. Removed "use client" + useQuery + QueryWrapper from all modules. SuspenseWrapper narrowed to interactive sections only. Dead hooks deleted (use-pages.ts, use-blog.ts). 17 files, -366/+170 lines
+- 10.1.C `9138c90` — All 7 marketing pages: `force-dynamic` → `revalidate = 300` (ISR, 5 min cache)
+- 10.4.A `ab6af34` — BlogPostCard: `CardMedia component="img"` → `next/image` fill mode with sizes/objectFit
+
+**Remaining (5 bullets):**
+
+- 10.4.B — Marketing hero images: CSS `background-image` in `fullscreen-section` / `split-section` → `next/image` fill. Architectural — need overlay-on-image pattern redesign
+- 10.5.A — Extract `error.tsx` / `global-error.tsx` to @repo/ui shared components
+- 10.3.D — Dynamic imports (`next/dynamic`) for tiptap (admin), framer-motion (marketing + @repo/ui), dnd-kit (platform)
+- 10.3.E — Install `@next/bundle-analyzer`, add `pnpm analyze` script
+- 10.6.B — ADR: deferred frontend decisions (bundle CI gates, Core Web Vitals, @repo/ui splitting)
+
+**Key design decisions made during this session:**
+
+- "use client" removal: deeper RSC serialization analysis reduced 14 candidates to 3. The sx theme callback `(theme) => ...` pattern is a function prop that can't cross the server-client boundary. Documented in audit bullet 10.2.A.
+- Marketing rendering: modules became pure server components receiving `data` prop directly. No React Query in the render path. SuspenseWrapper only wraps interactive client sections (product modals using useSearchParams). StructuredData now renders in server scope (better SEO).
+- ISR 300s chosen to match route handler `Cache-Control: s-maxage=300` from §6.
+
+**Sections 11–12:** research not yet started. Research begins at the top of each section and must complete before any bullet in that section is implemented.
 
 ## Repo structure snapshot after 1.3.C — orient fast
 
