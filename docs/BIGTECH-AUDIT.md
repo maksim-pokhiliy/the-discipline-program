@@ -421,7 +421,7 @@ DDD lens. Без правильной модели всё, что на ней п
 
 ## 6. API Design
 
-**Статус:** Не начато
+**Статус:** В работе
 
 Блокирует заморозку контрактов. Чем позже фиксируешь правила — тем больше breaking changes, когда появятся внешние потребители (мобильное приложение, партнёры).
 
@@ -458,6 +458,28 @@ DDD lens. Без правильной модели всё, что на ней п
 - [ ] **`createAuthGetWithQueryHandler` использует `Object.fromEntries(searchParams.entries())`** (`auth-factories.ts:26`) — array params (`?ids=1&ids=2`) теряются (последнее значение).
 - [ ] **`createFormDataPostHandler` без requestSchema** — form data не валидируется.
 - [ ] **Нет body size limit** на handler level.
+- [ ] **`z.number()` без `.finite()` на процентных полях** — `coach-dashboard-api.schema.ts:59` (`avgEngagementRate`), `coach-athletes-api.schema.ts:52` (`adherenceRate4w`). Позволяют `Infinity`/`NaN` пройти через Zod validation.
+- [ ] **`amountCents` без `.max()`** — `product.schema.ts:7`: `z.number().int().min(0)` без upper bound. Стоит добавить разумный потолок для money values.
+- [ ] **HTTP 201 inconsistency** — auth POST factories (`auth-factories.ts:61,78`) возвращают 201, public `createPostHandler` (`route-helpers.ts:68`) возвращает 200. Одна и та же операция создания — разный status code.
+
+### Implementation plan (section 6)
+
+| ID    | Commit hash | Status  | Description                                                                                              |
+| ----- | ----------- | ------- | -------------------------------------------------------------------------------------------------------- |
+| 6.1.A | —           | ⏳ Next | ADR 0020: API design decisions (versioning strategy, body size rationale, deferred items with triggers). |
+| 6.2.A | —           | Pending | Make `responseSchema` required in all route handler factories. Fix all call sites.                       |
+| 6.2.B | —           | Pending | Delete/void handlers → 204 No Content. `createPostHandler` → 201 Created.                                |
+| 6.2.C | —           | Pending | Public marketing endpoints: add `Cache-Control` headers for cacheable responses.                         |
+| 6.3.A | —           | Pending | Zod magic numbers → entity constants across all schema files.                                            |
+| 6.3.B | —           | Pending | Zod validation hardening: `.cuid()`, `.url()`, `.finite()`, `amountCents.max()`, missing bounds.         |
+
+**Deferred bullets** (documented in ADR 0020):
+
+- API versioning implementation — trigger: first external consumer (mobile app, partner API)
+- Rate limiting — already tracked in ADR 0018 with trigger
+- Application-level body size limit — Vercel 4.5MB platform limit sufficient, app-level adds value after rate limiting
+- Pagination — tracked as §10 (Frontend) joint concern
+- i18n error messages — tracked as §7 (Architectural risks)
 
 ---
 
