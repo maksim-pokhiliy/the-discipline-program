@@ -52,7 +52,7 @@ export const generateMetadata = async ({ params }: BlogArticlePageProps): Promis
   }
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const BlogArticlePage = async ({ params }: BlogArticlePageProps) => {
   const { slug } = await params;
