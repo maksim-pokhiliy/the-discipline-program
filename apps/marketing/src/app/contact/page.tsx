@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const ContactPage = async () => {
   const data = await serverApi.pages.getContact();
