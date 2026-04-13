@@ -36,10 +36,10 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-13 (sections 1–8 complete, §9 next)
+## Current state — 2026-04-13 (sections 1–9 complete, §10 next)
 
-**Branch:** `refactor/design-system-typography-hero` (208 commits ahead of `origin/`, working tree clean)
-**Last commit:** `9f02f4a chore: monorepo config hygiene — test filtering, lint caching, env module type`
+**Branch:** `refactor/design-system-typography-hero` (213 commits ahead of `origin/`, working tree clean)
+**Last commit:** `c2af61f fix(api-server): log cleanup errors instead of silently swallowing them`
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 
@@ -200,7 +200,14 @@ All 2 bullets implemented (2 commits). 19 findings total: 4 already done in §1,
 - turbo lint caching enabled (was inconsistently `cache: false`)
 - @repo/env `"type": "module"` consistency fix
 
-**Sections 9–12:** research not yet started. Research begins at the top of each section and must complete before any bullet in that section is implemented.
+### Section 9 (Тестирование) — CLOSED
+
+All 2 bullets implemented (2 commits). 240 tests, 23 files, 2 packages. Key deliverables:
+
+- ADR 0023: test strategy with coverage gaps (~14 endpoints, ~12 mappers, ~110 schemas untested) and 8 deferred improvements with triggers
+- cleanup() silent failure fixed: P2025 silenced (expected), all other errors logged via logger.error
+
+**Sections 10–12:** research not yet started. Research begins at the top of each section and must complete before any bullet in that section is implemented.
 
 ## Repo structure snapshot after 1.3.C — orient fast
 
