@@ -54,12 +54,12 @@ export const handleApiError = (error: unknown): NextResponse => {
   if (error instanceof AppError) {
     return NextResponse.json(
       {
-        error: error.message,
-        code: error.code,
-        statusCode: error.statusCode,
-        ...(isDev && { details: error.details }),
-        timestamp: error.timestamp,
-        ...(isDev && { stack: error.stack }),
+        error: {
+          code: error.code,
+          message: error.message,
+          ...(isDev && error.details && { details: error.details }),
+          ...(isDev && { stack: error.stack }),
+        },
       },
       { status: error.statusCode },
     );
@@ -75,11 +75,11 @@ export const handleApiError = (error: unknown): NextResponse => {
 
     return NextResponse.json(
       {
-        error: validationError.message,
-        code: validationError.code,
-        statusCode: validationError.statusCode,
-        ...(isDev && { details: validationError.details }),
-        timestamp: validationError.timestamp,
+        error: {
+          code: validationError.code,
+          message: validationError.message,
+          ...(isDev && validationError.details && { details: validationError.details }),
+        },
       },
       { status: 400 },
     );
@@ -89,11 +89,11 @@ export const handleApiError = (error: unknown): NextResponse => {
 
   return NextResponse.json(
     {
-      error: "Internal server error",
-      code: ERROR_CODES.INTERNAL_SERVER_ERROR,
-      statusCode: 500,
-      timestamp: new Date().toISOString(),
-      ...(isDev && { stack }),
+      error: {
+        code: ERROR_CODES.INTERNAL_SERVER_ERROR,
+        message: "Internal server error",
+        ...(isDev && { stack }),
+      },
     },
     { status: 500 },
   );

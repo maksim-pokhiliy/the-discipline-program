@@ -76,12 +76,12 @@ export class ApiClient {
         this.onUnauthorized();
       }
 
-      const error = await response
+      const body = await response
         .json()
-        .catch(() => ({ error: `Request failed: ${response.status}` }));
+        .catch(() => ({ error: { message: `Request failed: ${response.status}` } }));
 
-      const message = error.error || "API request failed";
-      const details = { status: response.status, url: fullUrl, ...error.details };
+      const message = body.error?.message || "API request failed";
+      const details = { status: response.status, url: fullUrl, ...body.error?.details };
 
       const ErrorClass = HTTP_STATUS_ERROR_MAP[response.status] ?? InternalServerError;
 
