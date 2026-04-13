@@ -309,25 +309,58 @@ DDD lens. Без правильной модели всё, что на ней п
 
 ## 4. Надёжность и операционка
 
-**Статус:** Не начато
+**Статус:** В работе (10/18 done, 4 removed, 7 remaining, 1 deferred)
 
 Блокирует выход в прод. Без observability ты слепой, без timeouts — упираешься в пул соединений.
 
-- [ ] **Observability-first.** Структурированный логгер (pino / winston) + correlation ID через весь запрос. Сейчас этого нет. Единственный logging в `@repo/api-routes/error-handler.ts:11` — `console.error("API Error:", error)` без структуры и метаданных.
+- [x] **Observability-first.** Структурированный логгер (pino / winston) + correlation ID через весь запрос. Сейчас этого нет. Единственный logging в `@repo/api-routes/error-handler.ts:11` — `console.error("API Error:", error)` без структуры и метаданных.
 - [ ] **Prisma client логирует только `error / warn` даже в dev** (`db/client.ts:56`) — нет `query` log. N+1 сыск затруднён.
 - [ ] **Нет correlation ID injection в route handler factories** (`packages/api-routes/src/route-helpers.ts`). Ни одного `crypto.randomUUID()`, ни `headers().get('x-request-id')`. Любой лог не коррелируется с запросом.
 - [x] **Error taxonomy частично существует.** `@repo/errors` экспортирует `AppError / HttpError / UnauthorizedError / ForbiddenError / NotFoundError / ConflictError / ValidationError / InternalServerError / BadRequestError`. `ERROR_CODES.INTERNAL_SERVER_ERROR` и подобные константы тоже есть. Нужно: задокументировать полный список, сделать stable machine-readable codes в response, добавить domain-specific коды (`AUTH_EXPIRED`, `QUOTA_EXCEEDED`, `SUBSCRIPTION_PAST_DUE`).
-- [ ] **Error response format неидиоматичен:** `{ error: message, code, statusCode, timestamp, details?, stack? }` (`error-handler.ts:16-24`). `statusCode` дублирует HTTP status. Ideal — RFC 7807 Problem Details или `{ error: { code, message, details } }`.
-- [ ] **`ApiClient` теряет server error code** (`packages/api-client/src/client.ts:79-89`) — сервер отдаёт стабильный `code: "USER_NOT_FOUND"`, а клиент создаёт generic `NotFoundError(message, details)` и теряет код. Клиент не может программно отличить ошибки.
-- [ ] **`ApiClient.HTTP_STATUS_ERROR_MAP` неполный** — нет 429 (rate limit), 503, 502, 504. Все non-mapped ошибки → InternalServerError.
-- [ ] **Timeouts и deadlines везде.** `ApiClient.request` делает `fetch` без AbortController → может висеть бесконечно. Любой upstream call без таймаута = потенциальный hang всего пула соединений.
-- [ ] **Retry + backoff + jitter.** `ApiClient` не ретраит. Одна сетевая ошибка = fail.
+- [x] **Error response format неидиоматичен:** `{ error: message, code, statusCode, timestamp, details?, stack? }` (`error-handler.ts:16-24`). `statusCode` дублирует HTTP status. Ideal — RFC 7807 Problem Details или `{ error: { code, message, details } }`.
+- [x] ~~**`ApiClient` теряет server error code.**~~ Removed: no domain-specific codes exist. Server and client use identical generic codes. Revisit when domain codes are added.
+- [x] ~~**`ApiClient.HTTP_STATUS_ERROR_MAP` неполный.**~~ Merged into retry bullet (4.2.C) — status map is only useful with retry logic acting on it.
+- [x] **Timeouts и deadlines везде.** `ApiClient.request` делает `fetch` без AbortController → может висеть бесконечно. Любой upstream call без таймаута = потенциальный hang всего пула соединений.
+- [x] **Retry + backoff + jitter.** `ApiClient` не ретраит. Одна сетевая ошибка = fail.
 - [x] **~~Health / readiness endpoints.~~** Закрыто в §1.5.B. `/api/health`, `/api/ready`, `/api/version` добавлены во все 3 app'а.
 - [ ] **Metrics.** Латенси p50 / p95 / p99 на эндпоинт, error rate, saturation. OpenTelemetry — стандарт. Ни одного OpenTelemetry импорта в проекте.
-- [ ] **Graceful degradation.** Если CMS отдаёт 500 — marketing должен показать stale cache, а не белый экран. Это архитектурное решение, не `if` в компоненте. `ApiClient` использует `cache: "no-store"` захардкоженно — нет возможности показать stale.
-- [ ] **Нет Error Boundary** в `apps/*/app/layout.tsx` — любая необработанная ошибка в Root layout → весь app падает без fallback UI.
-- [ ] **Prisma extension logging only error/warn даже в development** (`db/client.ts:56`). Нет `query` log → N+1 queries невидимы при dev.
-- [ ] **`handlePrismaError` обрабатывает только 2 Prisma error codes** (P2002, P2025) из 20+. `P2003` (foreign key), `P2034` (transaction deadlock), `P2011` (null constraint) и прочие → re-throw → generic 500.
+- [x] **Graceful degradation.** Если CMS отдаёт 500 — marketing должен показать stale cache, а не белый экран. Это архитектурное решение, не `if` в компоненте. `ApiClient` использует `cache: "no-store"` захардкоженно — нет возможности показать stale.
+- [ ] **Нет Next.js error files ни в одном app.** Ноль `error.tsx` (segment-level error boundary), ноль `global-error.tsx` (root layout crash → белый экран без recovery UI), ноль `not-found.tsx` (404 = дефолтный Next.js, не брендированный). Единственный `loading.tsx` — только в marketing root. Любая ошибка на любом уровне → полный crash без fallback.
+- [x] **`handlePrismaError` обрабатывает только 2 Prisma error codes** (P2002, P2025) из 20+. `P2003` (foreign key), `P2034` (transaction deadlock), `P2011` (null constraint) и прочие → re-throw → generic 500.
+- [x] **`request.json()` ошибки парсинга → 500 вместо 400.** Все фабрики в `route-helpers.ts` и `auth-factories.ts` делают `await request.json()` без try/catch. Невалидный JSON → generic Error → `handleApiError` → 500 Internal Server Error. Клиент получает "server error" за свой невалидный запрос.
+- [x] ~~**ZodError details не проходят redaction.**~~ Removed: details are dev-only, and `redactSensitiveFields` operates on keys — wouldn't catch path values like `"password"` anyway.
+- [x] ~~**`ApiClient.onUnauthorized` control flow bug.**~~ Removed: `redirect()` from Next.js returns `never` (always throws NEXT_REDIRECT). Code after the call is unreachable. Type is correct.
+- [ ] **Proxy auth failures silent.** `admin/proxy.ts` и `platform/proxy.ts`: `getToken()` может упасть, но ошибка нигде не логируется. Мисконфигурация auth в проде → молча редиректит всех на логин без следа в логах.
+- [x] **`redactSensitiveFields` не защищён от circular references.** `error-handler.ts:26-38`: рекурсивный обход объекта без cycle detection. `error.details` с циклической ссылкой → stack overflow в самом error handler.
+- [x] **Prisma: нет connection/query timeout.** `db/client.ts` создаёт PrismaClient без таймаутов. Медленный запрос висит бесконечно, занимая слот из пула соединений. В комбинации с отсутствием таймаутов на `ApiClient.fetch` — двойная проблема.
+- [ ] **Readiness endpoint проверяет только DB.** `/api/ready` делает `SELECT 1`, но не проверяет Blob storage. Admin без Blob = нерабочий upload. Readiness probe не видит эту деградацию.
+
+### Implementation plan (section 4)
+
+| №     | Commit hash | Status  | Description                                                                                                                                                                                                                         |
+| ----- | ----------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 4.1.A | `c2f0857`   | ✅ Done | Error response format: remove `statusCode` duplication, adopt `{ error: { code, message, details? } }` shape. Update `error-handler.ts` response serialization + `ApiClient` parsing.                                               |
+| 4.1.B | `57c7159`   | ✅ Done | `request.json()` parsing errors → 400 Bad Request. Wrap JSON parsing in try/catch in `route-helpers.ts` and `auth-factories.ts`, throw `BadRequestError` on `SyntaxError`.                                                          |
+| 4.1.C | `64306be`   | ✅ Done | `redactSensitiveFields` circular reference protection. Add `WeakSet` visited tracking to prevent stack overflow on cyclic `error.details`.                                                                                          |
+| 4.1.D | —           | Removed | ~~ZodError details redaction.~~ Not needed: details are dev-only (`isDev` check), and `redactSensitiveFields` operates on keys, not values — wouldn't redact `path: "password"` anyway.                                             |
+| 4.1.E | `d8f2887`   | ✅ Done | `handlePrismaError` expand coverage. Add P2003 (FK constraint), P2011 (null constraint), P2034 (transaction deadlock/write conflict), P2028 (transaction API error). Map to appropriate domain errors.                              |
+| 4.1.F | —           | Removed | ~~`ApiClient` preserve server error code.~~ Not needed: no domain-specific error codes exist. Server and client use identical generic codes (`NOT_FOUND`, `ALREADY_EXISTS`, etc.). Revisit when domain codes are added.             |
+| 4.1.G | —           | Removed | ~~`ApiClient.HTTP_STATUS_ERROR_MAP`.~~ Merged into 4.2.C — status map is only useful with retry logic acting on it.                                                                                                                 |
+| 4.1.H | —           | Removed | ~~`ApiClient.onUnauthorized` control flow fix.~~ Not a bug: `onUnauthorized` calls `redirect()` which returns `never`. Code after the call is unreachable. Type is correct.                                                         |
+| 4.2.A | `5da27ab`   | ✅ Done | `ApiClient` timeout via `AbortController`. Add configurable `timeoutMs` (default 30s) to request options. Abort fetch on timeout, throw `TimeoutError`.                                                                             |
+| 4.2.B | `b2ed4bd`   | ✅ Done | Prisma connection/query timeout. Add `statement_timeout` and `connect_timeout` params to `DATABASE_URL` handling, or configure via Prisma client options.                                                                           |
+| 4.2.C | `36a7e7e`   | ✅ Done | `ApiClient` retry with exponential backoff + jitter. Add 429/502/503/504 to `HTTP_STATUS_ERROR_MAP` with `ServiceUnavailableError`/`TooManyRequestsError` error classes. Retry on transient failures, max 3 attempts, configurable. |
+| 4.2.D | `8357053`   | ✅ Done | `ApiClient` cache option configurable. Remove hardcoded `cache: "no-store"`, accept `cache`/`next` options per request. Default `no-store` for mutations, configurable for GETs.                                                    |
+| 4.3.A | `a9bd115`   | ✅ Done | Structured logger: install `pino`, create shared logger module in `@repo/api-routes`. Replace `console.error` in `error-handler.ts` with structured JSON log.                                                                       |
+| 4.3.B | —           | ⏳ Next | Correlation ID: generate `x-request-id` (or read from incoming header) in `withErrorHandling`, inject into logger context, return in error response headers.                                                                        |
+| 4.3.C | —           | Pending | Prisma dev query logging: add `"query"` to log levels in development mode in `db/client.ts`. Log query text + duration via structured logger.                                                                                       |
+| 4.3.D | —           | Pending | Proxy auth error logging: wrap `getToken()` in try/catch in `admin/proxy.ts` and `platform/proxy.ts`. Log failures with structured logger instead of silent redirect.                                                               |
+| 4.4.A | —           | Pending | Next.js error files: create `error.tsx`, `global-error.tsx`, `not-found.tsx` for all 3 apps (admin, marketing, platform). Branded UI with recovery actions.                                                                         |
+| 4.5.A | —           | Pending | Readiness endpoint: add Blob storage connectivity check in admin's `/api/ready`. Return 503 if Blob is unreachable.                                                                                                                 |
+
+**Deferred bullets** (no implementation now, documented as known debt):
+
+- OpenTelemetry / metrics foundation — requires telemetry backend infrastructure (Jaeger, Honeycomb, Datadog). ADR needed before implementation. Tracked as operational debt; trigger: first production deployment with real traffic.
 
 ---
 
