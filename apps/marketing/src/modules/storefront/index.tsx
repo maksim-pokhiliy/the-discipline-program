@@ -19,6 +19,7 @@ export const StorefrontProgramsPageContent = ({ data }: StorefrontProgramsPageCo
       subtitle={data.hero.subtitle}
       buttonText={data.hero.buttonText}
       buttonHref={data.hero.buttonHref}
+      priority
     />
     <SuspenseWrapper>
       <StorefrontProgramsGridSection grid={data.grid} productsList={data.productsList} />

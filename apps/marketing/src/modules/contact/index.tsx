@@ -16,6 +16,7 @@ export const ContactPageContent = ({ data }: ContactPageContentProps) => (
       subtitle={data.hero.subtitle}
       buttonText={data.hero.buttonText}
       buttonHref={data.hero.buttonHref}
+      priority
     />
     <ContactFormSection form={data.form} programOptions={data.programOptions} />
   </>

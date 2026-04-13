@@ -22,6 +22,7 @@ export const HomePageContent = ({ data }: HomePageContentProps) => (
       subtitle={data.hero.subtitle}
       buttonText={data.hero.buttonText}
       buttonHref={data.hero.buttonHref}
+      priority
     />
     <HomeFeaturesSection whyChoose={data.whyChoose} />
 

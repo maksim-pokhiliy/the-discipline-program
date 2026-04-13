@@ -16,6 +16,7 @@ export const AboutPageContent = ({ data }: AboutPageContentProps) => (
       subtitle={data.hero.subtitle}
       buttonText={data.hero.buttonText}
       buttonHref={data.hero.buttonHref}
+      priority
     />
     <AboutJourneySection journey={data.journey} />
     <AboutCredentialsSection credentials={data.credentials} />
