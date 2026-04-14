@@ -30,12 +30,7 @@ export const BlogArticleHero = ({ post, labels }: BlogArticleHeroProps) => {
         {post.title}
       </Typography>
 
-      <Typography
-        variant="h5"
-        sx={(theme) => ({
-          color: theme.palette.text.secondary,
-        })}
-      >
+      <Typography variant="h5" sx={{ color: "text.secondary" }}>
         {post.excerpt}
       </Typography>
 
@@ -43,9 +38,7 @@ export const BlogArticleHero = ({ post, labels }: BlogArticleHeroProps) => {
         direction="row"
         spacing={3}
         alignItems="center"
-        sx={(theme) => ({
-          color: theme.palette.text.secondary,
-        })}
+        sx={{ color: "text.secondary" }}
         divider={<Typography variant="body1">•</Typography>}
       >
         <Typography variant="body1">{post.authorName}</Typography>

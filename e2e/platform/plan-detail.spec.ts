@@ -6,7 +6,7 @@ test.describe("Coach Plan Detail", () => {
     await expect(page.getByRole("heading", { name: "Training Plans" })).toBeVisible({
       timeout: 15_000,
     });
-    await page.locator("[class*='MuiPaper-outlined']").first().click();
+    await page.locator("a[href*='/coach/plans/']").first().click();
     await expect(page).toHaveURL(/\/coach\/plans\/.+/);
   };
 

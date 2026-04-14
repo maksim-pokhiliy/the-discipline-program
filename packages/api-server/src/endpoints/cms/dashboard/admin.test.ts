@@ -101,6 +101,7 @@ describe("cmsDashboardAdminApi", () => {
     let productId: string;
     let reviewId: string;
     let contactId: string;
+    let data: Awaited<ReturnType<typeof cmsDashboardAdminApi.getDashboardData>>;
 
     beforeAll(async () => {
       const product = await createTestProduct();
@@ -117,10 +118,11 @@ describe("cmsDashboardAdminApi", () => {
 
       toCleanup.push({ table: "marketingContactSubmission", id: contact.id });
       contactId = contact.id;
+
+      data = await cmsDashboardAdminApi.getDashboardData();
     });
 
-    it("includes newly created items in activity feed", async () => {
-      const data = await cmsDashboardAdminApi.getDashboardData();
+    it("includes newly created items in activity feed", () => {
       const activityIds = data.recentActivity.map((a) => a.id);
 
       expect(activityIds).toContain(productId);
@@ -128,9 +130,7 @@ describe("cmsDashboardAdminApi", () => {
       expect(activityIds).toContain(contactId);
     });
 
-    it("activity items have correct types", async () => {
-      const data = await cmsDashboardAdminApi.getDashboardData();
-
+    it("activity items have correct types", () => {
       const productActivity = data.recentActivity.find((a) => a.id === productId);
 
       expect(productActivity?.type).toBe(DashboardActivityType.PROGRAM);
@@ -144,9 +144,7 @@ describe("cmsDashboardAdminApi", () => {
       expect(contactActivity?.type).toBe(DashboardActivityType.CONTACT);
     });
 
-    it("activity items are sorted by date descending", async () => {
-      const data = await cmsDashboardAdminApi.getDashboardData();
-
+    it("activity items are sorted by date descending", () => {
       for (let i = 1; i < data.recentActivity.length; i++) {
         const prev = data.recentActivity[i - 1];
         const curr = data.recentActivity[i];
@@ -159,9 +157,7 @@ describe("cmsDashboardAdminApi", () => {
       }
     });
 
-    it("each activity item has required fields", async () => {
-      const data = await cmsDashboardAdminApi.getDashboardData();
-
+    it("each activity item has required fields", () => {
       for (const item of data.recentActivity) {
         expect(item.id).toBeDefined();
         expect(item.type).toBeDefined();

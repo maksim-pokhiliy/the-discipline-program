@@ -22,7 +22,7 @@ const RootLayout = ({ children }: RootLayoutProps) => (
       <NextProvider>
         <QueryProvider>
           <AuthProvider>
-            <Box component="main" sx={{ minHeight: "100vh" }}>
+            <Box sx={{ minHeight: "100vh" }}>
               {children}
 
               <Toaster />

@@ -17,7 +17,7 @@ export const BlogArticleRelated = ({
   labels,
 }: BlogArticleRelatedProps) => {
   return (
-    <Box sx={(theme) => ({ borderTop: `1px solid ${theme.palette.divider}` })}>
+    <Box sx={{ borderTop: 1, borderColor: "divider" }}>
       <ContentSection title={sectionTitle} surface="raised" animated={false}>
         <Grid container spacing={4}>
           {relatedPosts.map((post) => (
