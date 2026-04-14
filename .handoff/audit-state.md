@@ -36,10 +36,10 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-14 (sections 1–10 complete, §11 next)
+## Current state — 2026-04-14 (sections 1–11 complete, §12 next)
 
-**Branch:** `refactor/design-system-typography-hero` (227 commits ahead of `origin/`, working tree clean)
-**Last commit:** `8eea646 docs: deferred frontend performance decisions (adr 0024)`
+**Branch:** `refactor/design-system-typography-hero` (235 commits ahead of `origin/`, working tree clean)
+**Last commit:** `af1ade2 docs: deferred code quality decisions (adr 0025)`
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 
 ### Section 1 (Архитектура и границы) — CLOSED
@@ -219,7 +219,18 @@ All 2 bullets implemented (2 commits). 240 tests, 23 files, 2 packages. Key deli
 - `@next/bundle-analyzer` installed with per-app `pnpm analyze` scripts
 - ADR 0024: deferred frontend performance decisions (bundle CI gates, CWV/Lighthouse CI, @repo/ui splitting)
 
-**Sections 11–12:** research not yet started. Research begins at the top of each section and must complete before any bullet in that section is implemented.
+### Section 11 (Качество кода) — CLOSED
+
+5 bullets, 5 commits (11.1.A–11.4.A). Key deliverables:
+
+- `interface → type` for `ApiClientConfig` and `AppErrorOptions` (last 2 violations in codebase)
+- CLAUDE.md fix: `HttpError` → actual error hierarchy description
+- tsconfig strict flags: `noFallthroughCasesInSwitch` + `noImplicitReturns` enabled. `exactOptionalPropertyTypes` (12 violations) + `noPropertyAccessFromIndexSignature` (5 violations) investigated — ceremony > value, deferred
+- `eslint-plugin-only-warn` removed — IDE gets proper error severity, CLI unchanged
+- ADR 0025: deferred code quality decisions (branded types, discriminated unions, immutability, sonarjs, knip, domain error codes)
+- Research cleaned 25 original bullets → 5 actionable (3 already done, 10 new positives, 6 duplicates, 2 пшики)
+
+**Section 12:** research not yet started. Research begins at the top of the section and must complete before any bullet is implemented.
 
 ## Repo structure snapshot after 1.3.C — orient fast
 
