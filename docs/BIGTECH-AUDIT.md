@@ -22,7 +22,7 @@
 - [x] 8. Monorepo дисциплина
 - [x] 9. Тестирование
 - [x] 10. Фронт и Next.js 16
-- [ ] 11. Качество кода
+- [x] 11. Качество кода
 - [ ] 12. DX и процесс
 
 ---
@@ -665,7 +665,7 @@ Rationale: config optimizations first (tree-shaking unblocks bundle wins) → me
 
 ## 11. Качество кода
 
-**Статус:** Research завершён. 5 bullets, execution order определён.
+**Статус: Завершена.** 5 bullets, 5 коммитов (11.1.A–11.4.A).
 
 То, на что смотрят микроскопом. У тебя с этим уже неплохо (см. anti-patterns в `CLAUDE.md`) — это полировка поверх уже хорошего фундамента.
 
@@ -690,7 +690,7 @@ Rationale: config optimizations first (tree-shaking unblocks bundle wins) → me
 | 11.1.B | `1a2b410`   | ✅ Done | Fix CLAUDE.md: `(AppError, HttpError)` → actual hierarchy (HttpError class doesn't exist)                                                                                          |
 | 11.2.A | `b01de77`   | ✅ Done | tsconfig: enable `noFallthroughCasesInSwitch` + `noImplicitReturns`. `exactOptionalPropertyTypes` + `noPropertyAccessFromIndexSignature` investigated — ceremony > value, deferred |
 | 11.3.A | `0e1423d`   | ✅ Done | Remove `eslint-plugin-only-warn` — IDE gets proper error severity, CLI behavior unchanged (`--max-warnings 0`)                                                                     |
-| 11.4.A |             | ⏳ Next | ADR 0025: deferred code quality decisions (branded types, discriminated unions, immutability, sonarjs, knip)                                                                       |
+| 11.4.A | `af1ade2`   | ✅ Done | ADR 0025: deferred code quality decisions (branded types, discriminated unions, immutability, sonarjs, knip)                                                                       |
 
 **Execution order:** 11.1.A → 11.1.B → 11.2.A → 11.3.A → 11.4.A
 
