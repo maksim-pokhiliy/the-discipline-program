@@ -1,4 +1,11 @@
-import { Gender, HealthStatus, PrismaClient, Role } from "@prisma/client";
+import {
+  Gender,
+  HealthStatus,
+  PlanEnrollmentStatus,
+  PrismaClient,
+  Role,
+  TrainingPlanStatus,
+} from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
@@ -446,39 +453,39 @@ const seedMarketingPages = async () => {
         subtitle: "Random workouts give random results. We build systems.",
         features: [
           {
-            id: "f1",
+            id: "cmnyjvhkvfb9f44b453da",
             title: "Constantly Varied",
             description: "Periodized programming across all 10 fitness domains. No guesswork.",
             iconName: "Shuffle",
           },
           {
-            id: "f2",
+            id: "cmnyjvhkw565b1829a94c",
             title: "High Intensity",
             description: "Maximize power output with smart programming. Every rep has a purpose.",
             iconName: "Bolt",
           },
           {
-            id: "f3",
+            id: "cmnyjvhkwe6695bf030c5",
             title: "Functional Movement",
             description: "Movements that carry over to sport and life. Squat, press, pull, hinge.",
             iconName: "FitnessCenter",
           },
           {
-            id: "f4",
+            id: "cmnyjvhkwf2b4d3d4560c",
             title: "Expert Coaching",
             description:
               "Every session designed by CF-L2 certified coach with competition experience.",
             iconName: "School",
           },
           {
-            id: "f5",
+            id: "cmnyjvhkw4b6909538501",
             title: "Progress Tracking",
             description:
               "Built-in benchmarks, PR logs, and periodic testing to measure real gains over time.",
             iconName: "TrendingUp",
           },
           {
-            id: "f6",
+            id: "cmnyjvhkw6394691b0811",
             title: "Community Driven",
             description:
               "Train alongside athletes worldwide. Shared leaderboards, weekly challenges, and accountability.",
@@ -1208,6 +1215,287 @@ const seedContactSubmissions = async () => {
   console.log("  Contacts: 10 (3 NEW, 2 IN_PROGRESS, 2 REPLIED, 3 CLOSED)");
 };
 
+const today = () => {
+  const d = new Date();
+
+  d.setHours(0, 0, 0, 0);
+
+  return d;
+};
+
+const addDays = (base: Date, days: number): Date => {
+  const d = new Date(base);
+
+  d.setDate(d.getDate() + days);
+
+  return d;
+};
+
+const seedTrainingPlans = async (
+  coachProfileId: string,
+  users: Awaited<ReturnType<typeof seedUsers>>,
+) => {
+  const activePlan = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "The Competitor",
+      description:
+        "12-week periodized program targeting CrossFit Open qualification. Strength, gymnastics, and conditioning.",
+      status: TrainingPlanStatus.ACTIVE,
+      createdAt: daysAgo(30),
+    },
+  });
+
+  const gppPlan = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "Foundations GPP",
+      description:
+        "General physical preparedness for athletes new to structured programming. Build a broad base.",
+      status: TrainingPlanStatus.ACTIVE,
+      createdAt: daysAgo(21),
+    },
+  });
+
+  const draftPlan = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "Olympic Lifting Focus",
+      description: "6-week snatch and clean & jerk peaking cycle.",
+      status: TrainingPlanStatus.DRAFT,
+      createdAt: daysAgo(3),
+    },
+  });
+
+  await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "2025 Open Prep",
+      description: "Archived program from last year's Open preparation cycle.",
+      status: TrainingPlanStatus.ARCHIVED,
+      createdAt: daysAgo(120),
+    },
+  });
+
+  const base = today();
+
+  const workouts = await Promise.all(
+    [
+      {
+        planId: activePlan.id,
+        scheduledDate: addDays(base, -1),
+        title: "Back Squat + Metcon",
+        sortOrder: 0,
+      },
+      { planId: activePlan.id, scheduledDate: base, title: "Snatch Complex + AMRAP", sortOrder: 0 },
+      {
+        planId: activePlan.id,
+        scheduledDate: addDays(base, 1),
+        title: "Gymnastics + Endurance",
+        sortOrder: 0,
+      },
+      {
+        planId: activePlan.id,
+        scheduledDate: addDays(base, 2),
+        title: "Clean & Jerk + Chipper",
+        sortOrder: 0,
+      },
+      {
+        planId: activePlan.id,
+        scheduledDate: addDays(base, -2),
+        title: "Front Squat + Row Intervals",
+        sortOrder: 0,
+      },
+      {
+        planId: activePlan.id,
+        scheduledDate: addDays(base, -3),
+        title: "Deadlift + Burpee Ladder",
+        sortOrder: 0,
+      },
+      { planId: gppPlan.id, scheduledDate: base, title: "Push/Pull Foundations", sortOrder: 0 },
+      {
+        planId: gppPlan.id,
+        scheduledDate: addDays(base, 1),
+        title: "Squat Mechanics + Core",
+        sortOrder: 0,
+      },
+      {
+        planId: gppPlan.id,
+        scheduledDate: addDays(base, -1),
+        title: "Hinge Pattern + Conditioning",
+        sortOrder: 0,
+      },
+      {
+        planId: draftPlan.id,
+        scheduledDate: null,
+        title: "Week 1 Day 1: Snatch Pulls",
+        sortOrder: 0,
+      },
+      {
+        planId: draftPlan.id,
+        scheduledDate: null,
+        title: "Week 1 Day 2: Clean Pulls",
+        sortOrder: 1,
+      },
+    ].map((w) => prisma.workout.create({ data: w })),
+  );
+
+  const competitorWorkouts = workouts.filter((w) => w.planId === activePlan.id);
+  const gppWorkouts = workouts.filter((w) => w.planId === gppPlan.id);
+
+  await prisma.planEnrollment.createMany({
+    data: [
+      {
+        trainingPlanId: activePlan.id,
+        userId: users.sarah.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(28),
+      },
+      {
+        trainingPlanId: activePlan.id,
+        userId: users.mike.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(25),
+      },
+      {
+        trainingPlanId: activePlan.id,
+        userId: users.jenny.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(20),
+      },
+      {
+        trainingPlanId: activePlan.id,
+        userId: users.alex.id,
+        status: PlanEnrollmentStatus.PAUSED,
+        startDate: daysAgo(15),
+      },
+      {
+        trainingPlanId: activePlan.id,
+        userId: users.nina.id,
+        status: PlanEnrollmentStatus.COMPLETED,
+        startDate: daysAgo(30),
+        endDate: daysAgo(2),
+      },
+      {
+        trainingPlanId: gppPlan.id,
+        userId: users.david.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(18),
+      },
+      {
+        trainingPlanId: gppPlan.id,
+        userId: users.lisa.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(14),
+      },
+      {
+        trainingPlanId: gppPlan.id,
+        userId: users.tom.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(7),
+      },
+      {
+        trainingPlanId: gppPlan.id,
+        userId: users.chris.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(5),
+      },
+      {
+        trainingPlanId: gppPlan.id,
+        userId: users.maria.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(3),
+      },
+    ],
+  });
+
+  const yesterdayWorkout = competitorWorkouts.find(
+    (w) => w.scheduledDate && w.scheduledDate.getTime() === addDays(base, -1).getTime(),
+  );
+  const twoDaysAgoWorkout = competitorWorkouts.find(
+    (w) => w.scheduledDate && w.scheduledDate.getTime() === addDays(base, -2).getTime(),
+  );
+  const gppYesterdayWorkout = gppWorkouts.find(
+    (w) => w.scheduledDate && w.scheduledDate.getTime() === addDays(base, -1).getTime(),
+  );
+
+  const logData: { userId: string; workoutId: string; date: Date; notes: string; isRx: boolean }[] =
+    [];
+
+  if (yesterdayWorkout) {
+    logData.push(
+      {
+        userId: users.sarah.id,
+        workoutId: yesterdayWorkout.id,
+        date: daysAgo(1),
+        notes: "Felt strong. PR on back squat.",
+        isRx: true,
+      },
+      {
+        userId: users.mike.id,
+        workoutId: yesterdayWorkout.id,
+        date: daysAgo(1),
+        notes: "Good session overall.",
+        isRx: true,
+      },
+      {
+        userId: users.jenny.id,
+        workoutId: yesterdayWorkout.id,
+        date: daysAgo(1),
+        notes: "Scaled the weight.",
+        isRx: false,
+      },
+    );
+  }
+
+  if (twoDaysAgoWorkout) {
+    logData.push(
+      {
+        userId: users.sarah.id,
+        workoutId: twoDaysAgoWorkout.id,
+        date: daysAgo(2),
+        notes: "Solid row splits.",
+        isRx: true,
+      },
+      {
+        userId: users.mike.id,
+        workoutId: twoDaysAgoWorkout.id,
+        date: daysAgo(2),
+        notes: "",
+        isRx: true,
+      },
+    );
+  }
+
+  if (gppYesterdayWorkout) {
+    logData.push(
+      {
+        userId: users.david.id,
+        workoutId: gppYesterdayWorkout.id,
+        date: daysAgo(1),
+        notes: "First hinge session.",
+        isRx: false,
+      },
+      {
+        userId: users.tom.id,
+        workoutId: gppYesterdayWorkout.id,
+        date: daysAgo(1),
+        notes: "",
+        isRx: true,
+      },
+    );
+  }
+
+  if (logData.length > 0) {
+    await prisma.workoutLog.createMany({ data: logData });
+  }
+
+  console.log(`  Training plans: 4 (2 active, 1 draft, 1 archived)`);
+  console.log(`  Workouts: ${workouts.length}`);
+  console.log(`  Enrollments: 10 (7 active, 1 paused, 1 completed, 1 active in GPP)`);
+  console.log(`  Workout logs: ${logData.length}`);
+};
+
 const main = async () => {
   if (process.env.NODE_ENV === "production") {
     throw new Error("seed must not run in production");
@@ -1224,6 +1512,7 @@ const main = async () => {
 
   await seedCoachNotes(coachProfile.id, users);
   await seedBenchmarks(users);
+  await seedTrainingPlans(coachProfile.id, users);
 
   await seedMarketingPages();
   await seedProducts();

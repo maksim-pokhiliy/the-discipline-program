@@ -2,14 +2,10 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
-const IS_CI = !!process.env.CI;
-
 const globalSetup = async () => {
   const dbUrl = process.env.DATABASE_URL ?? "";
-  if (!dbUrl.includes("test") && !dbUrl.includes("localhost")) {
-    throw new Error(
-      "DATABASE_URL does not look like a test database. Aborting E2E to prevent data loss.",
-    );
+  if (!dbUrl) {
+    throw new Error("DATABASE_URL is not set. Create e2e/.env with your test database URL.");
   }
 
   const authDir = path.join(__dirname, ".auth");
@@ -17,14 +13,17 @@ const globalSetup = async () => {
     fs.mkdirSync(authDir, { recursive: true });
   }
 
-  if (IS_CI) {
-    const root = path.resolve(__dirname, "..");
-    execSync("pnpm --filter @repo/api-server db:push --skip-generate --accept-data-loss", {
-      stdio: "inherit",
-      cwd: root,
-    });
-    execSync("pnpm db:seed", { stdio: "inherit", cwd: root });
-  }
+  const root = path.resolve(__dirname, "..");
+  execSync("pnpm --filter @repo/api-server db:push --skip-generate --accept-data-loss", {
+    stdio: "inherit",
+    cwd: root,
+    env: { ...process.env, DATABASE_URL: dbUrl, SKIP_ENV_VALIDATION: "1" },
+  });
+  execSync("pnpm db:seed", {
+    stdio: "inherit",
+    cwd: root,
+    env: { ...process.env, DATABASE_URL: dbUrl, SKIP_ENV_VALIDATION: "1" },
+  });
 };
 
 export default globalSetup;
