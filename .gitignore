@@ -39,6 +39,9 @@ yarn-error.log*
 # Feature dev artifacts
 .feature-dev/
 
+# Audit artifacts
+.audit/
+
 # Misc
 .DS_Store
 *.pem

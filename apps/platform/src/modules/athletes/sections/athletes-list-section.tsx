@@ -72,7 +72,7 @@ export const AthletesListSection: React.FC<AthletesListSectionProps> = ({
   return (
     <Grid container spacing={2}>
       {displayedAthletes.map((athlete) => (
-        <Grid key={athlete.userId} size={{ xs: 12, md: 6, lg: 4 }}>
+        <Grid key={athlete.userId} size={{ xs: 12, md: 6 }}>
           <AthleteListItem athlete={athlete} onSelect={onSelectAthlete} />
         </Grid>
       ))}

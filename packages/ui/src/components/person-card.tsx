@@ -23,15 +23,15 @@ const ImageSlot: React.FC<ImageSlotProps> = ({ image, name }) =>
       component="img"
       image={image}
       alt={name}
-      sx={(theme) => ({ width: theme.spacing(15), objectFit: "cover" })}
+      sx={(theme) => ({ width: theme.spacing(18), objectFit: "cover" })}
     />
   ) : (
     <Stack
       alignItems="center"
       justifyContent="center"
       sx={(theme) => ({
-        width: theme.spacing(15),
-        minHeight: theme.spacing(15),
+        width: theme.spacing(18),
+        minHeight: theme.spacing(18),
         bgcolor: "action.hover",
       })}
     >
@@ -48,7 +48,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
   action,
 }) => {
   const content = (
-    <Stack direction="row">
+    <Stack direction="row" sx={(theme) => ({ minHeight: theme.spacing(18) })}>
       <ImageSlot image={image} name={name} />
       <CardContent sx={{ flex: 1, "&:last-child": { pb: 2 } }}>{children}</CardContent>
     </Stack>
@@ -58,7 +58,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
 
   return (
     <Card variant="outlined">
-      <Stack direction="row">
+      <Stack direction="row" sx={{ height: "100%" }}>
         {interactive ? (
           <CardActionArea {...(href ? { component: Link, href } : { onClick })} sx={{ flex: 1 }}>
             {content}
