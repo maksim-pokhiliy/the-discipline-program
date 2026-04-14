@@ -735,7 +735,7 @@ Rationale: mechanical fixes first (safe, fast) → docs accuracy → compiler st
 | ------ | ----------- | ------- | ------------------------------------------------------------------------------------------------------- |
 | 12.1.A | `60e4d46`   | ✅ Done | Create `.github/pull_request_template.md`                                                               |
 | 12.1.B | `fb4903e`   | ✅ Done | Unify `db:*` root scripts: `turbo run` → `pnpm --filter` for single-package tasks                       |
-| 12.2.A | `PENDING`   | ⏳ Next | ADR 0026: deferred DX decisions (docker/onboarding, feature flags, CONTRIBUTING, dependabot, SAST, etc) |
+| 12.2.A | `a626b1c`   | ✅ Done | ADR 0026: deferred DX decisions (docker/onboarding, feature flags, CONTRIBUTING, dependabot, SAST, etc) |
 
 **Execution order:** 12.1.A → 12.1.B → 12.2.A
 
