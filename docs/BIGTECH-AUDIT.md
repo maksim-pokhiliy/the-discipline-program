@@ -615,8 +615,8 @@ Non-obvious стафф. Это то, что больнее всего ретро
 | 10.4.B | `7d515f8`   | ✅ Done | Marketing hero images: CSS `background-image` in `fullscreen-section` / `split-section` → `next/image` fill mode        |
 | 10.5.A | `03b738b`   | ✅ Done | Extract `error.tsx` / `global-error.tsx` / `not-found.tsx` shared components to `@repo/ui`, deduplicate across 3 apps   |
 | 10.3.D | `0a3b31f`   | ✅ Done | Dynamic imports (`next/dynamic`) for tiptap (admin) and dnd-kit (platform). framer-motion deferred to 10.6.B            |
-| 10.3.E |             | ⏳ Next | Install `@next/bundle-analyzer`, add `pnpm analyze` script per app                                                      |
-| 10.6.B |             | Pending | ADR: deferred frontend decisions (bundle CI gates, Core Web Vitals / Lighthouse CI, `@repo/ui` package splitting)       |
+| 10.3.E | `d14c97d`   | ✅ Done | Install `@next/bundle-analyzer`, add `pnpm analyze` script per app                                                      |
+| 10.6.B | `PENDING`   | ⏳ Next | ADR: deferred frontend decisions (bundle CI gates, Core Web Vitals / Lighthouse CI, `@repo/ui` package splitting)       |
 
 **Execution order** (derived from dependencies): 10.3.A → 10.3.B → 10.3.C → 10.6.A → 10.1.A → 10.2.A → 10.1.B → 10.1.C → 10.4.A → 10.4.B → 10.5.A → 10.3.D → 10.3.E → 10.6.B
 
@@ -638,12 +638,12 @@ Rationale: config optimizations first (tree-shaking unblocks bundle wins) → me
 #### 10.3. Bundle и heavy deps
 
 - [x] **~~ZERO dynamic imports (`next/dynamic` / `React.lazy`) во всём codebase.~~** Закрыто в 10.3.D. tiptap dynamic-imported в admin blog-post-form (`ssr: false`), dnd-kit + tiptap dynamic-imported через PlanScheduleSection в platform plan-detail-view (`ssr: false`). framer-motion deferred: ContentSection/FullscreenSection — layout компоненты на каждой странице, `next/dynamic` не подходит (задержка гидрации без выигрыша). Реальный fix — splitting `@repo/ui` → 10.6.B ADR.
-- [ ] **`@repo/ui` — bundle sink.** Tiptap, framer-motion, isomorphic-dompurify в зависимостях shared пакета. Любой app, импортирующий компонент из `@repo/ui`, рискует затянуть весь dep graph если tree-shaking не отсечёт barrel re-exports через `src/index.ts`. Три тяжёлые группы: ContentSection (framer-motion), RichTextEditor (tiptap × 6 пакетов), RichTextViewer (dompurify).
+- [x] **~~`@repo/ui` — bundle sink.~~** Partially mitigated by dynamic imports (10.3.D). Package splitting deferred to ADR 0024. Trigger: analyzer shows cross-app leakage or dep count exceeds 20.
 - [ ] **5 runtime barrel imports `@mui/icons-material` нарушают ADR 0006.** ADR явно говорит: `import { Foo } from "@mui/icons-material"` бандлит всю иконную библиотеку (~7MB); каноническая форма — `import Foo from "@mui/icons-material/Foo"`. Нарушители: `packages/ui/.../editor-toolbar.tsx`, `apps/admin/.../login-form/index.tsx`, `apps/platform/.../login-form/index.tsx`, `apps/platform/.../platform-user-menu.tsx`, `apps/platform/.../platform-bottom-nav.tsx`. ~60 импортов в проекте делают правильно. Ещё 2 barrel import в marketing — type-only, runtime не затрагивают.
 - [ ] **`@mui/x-date-pickers` загружен глобально, но не используется.** `NextProvider` в `@repo/mui` рендерит `LocalizationProvider` + `AdapterDayjs`. Zero picker-компонентов (`DatePicker`, `TimePicker`) в codebase. ~100KB gzipped мёртвого веса в каждом app.
 - [ ] **Phantom dependencies.** `lucide-react` в marketing `package.json` — zero импортов в source files (ранее считалось дупликацией с MUI icons, но это phantom dep). `react-markdown` в каталоге — zero импортов. Объявлены, но нигде не используются.
-- [ ] **`next.config.ts` bare.** Все 3 конфига содержат только `images.remotePatterns`. Нет `optimizePackageImports` (Next.js 13.5+ авто-tree-shaking для heavy packages типа `@mui/icons-material`, `lucide-react`, `@tiptap/*`), нет bundle analyzer, нет `transpilePackages`, нет `experimental` features.
-- [ ] **Bundle budgets не настроены.** `next build` не падает при превышении лимитов. `@next/bundle-analyzer` не установлен. Нельзя измерить bundle size и состав. Должен быть hard gate в CI.
+- [x] **~~`next.config.ts` bare.~~** `optimizePackageImports` added in 10.3.A, `@next/bundle-analyzer` added in 10.3.E.
+- [x] **~~Bundle budgets не настроены.~~** `@next/bundle-analyzer` installed in 10.3.E. CI gate deferred to ADR 0024. Trigger: first production deployment.
 
 #### 10.4. Image strategy
 
@@ -657,7 +657,7 @@ Rationale: config optimizations first (tree-shaking unblocks bundle wins) → me
 #### 10.6. Misc
 
 - [ ] **Platform: `force-dynamic` на `coach/plans/[planId]/page.tsx` без server-side fetch.** Страница не делает серверных запросов — только `await params` и передача `planId` в client component. Директива бесполезна.
-- [ ] **Core Web Vitals budget не настроен.** LCP < 2.5s, CLS < 0.1, INP < 200ms — нет измерений. Lighthouse CI не настроен.
+- [x] **~~Core Web Vitals budget не настроен.~~** Deferred to ADR 0024. Trigger: first production deployment with real user traffic.
 - [x] ~~**`cache: "no-store"` захардкожено в `ApiClient`.**~~ Закрыто в §4 (4.2.D) — ApiClient cache стал конфигурируемым.
 - [x] ~~**Нет security headers в `next.config.ts`.**~~ Закрыто в §1 (1.5.A) — security headers в `vercel.json`.
 
