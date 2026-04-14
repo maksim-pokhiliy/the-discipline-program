@@ -21,7 +21,7 @@
 - [x] 7. Архитектурные риски на 6 месяцев вперёд
 - [x] 8. Monorepo дисциплина
 - [x] 9. Тестирование
-- [ ] 10. Фронт и Next.js 16
+- [x] 10. Фронт и Next.js 16
 - [ ] 11. Качество кода
 - [ ] 12. DX и процесс
 
@@ -582,7 +582,7 @@ Non-obvious стафф. Это то, что больнее всего ретро
 
 ## 10. Фронт и Next.js 16
 
-**Статус:** Research завершён. 14 bullets, execution order определён.
+**Статус: Завершена.** 14 bullets, 14 коммитов (10.3.A–10.6.B).
 
 Частично ретрофитится, но чем раньше — тем дешевле. Bundle budgets и RSC-дисциплина — пока бандл маленький.
 
@@ -616,7 +616,7 @@ Non-obvious стафф. Это то, что больнее всего ретро
 | 10.5.A | `03b738b`   | ✅ Done | Extract `error.tsx` / `global-error.tsx` / `not-found.tsx` shared components to `@repo/ui`, deduplicate across 3 apps   |
 | 10.3.D | `0a3b31f`   | ✅ Done | Dynamic imports (`next/dynamic`) for tiptap (admin) and dnd-kit (platform). framer-motion deferred to 10.6.B            |
 | 10.3.E | `d14c97d`   | ✅ Done | Install `@next/bundle-analyzer`, add `pnpm analyze` script per app                                                      |
-| 10.6.B | `PENDING`   | ⏳ Next | ADR: deferred frontend decisions (bundle CI gates, Core Web Vitals / Lighthouse CI, `@repo/ui` package splitting)       |
+| 10.6.B | `8eea646`   | ✅ Done | ADR: deferred frontend decisions (bundle CI gates, Core Web Vitals / Lighthouse CI, `@repo/ui` package splitting)       |
 
 **Execution order** (derived from dependencies): 10.3.A → 10.3.B → 10.3.C → 10.6.A → 10.1.A → 10.2.A → 10.1.B → 10.1.C → 10.4.A → 10.4.B → 10.5.A → 10.3.D → 10.3.E → 10.6.B
 
