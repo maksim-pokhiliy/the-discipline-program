@@ -718,26 +718,41 @@ Rationale: mechanical fixes first (safe, fast) → docs accuracy → compiler st
 
 ## 12. DX и процесс
 
-**Статус:** Не начато
+**Статус:** Research завершён. 3 bullets, execution order определён.
 
 Процессная зрелость. Отличает senior-проект от junior.
 
-- [ ] **Onboarding в один день.** Новый разработчик клонирует → `pnpm install` → `pnpm dev` → работает. Если нет — это баг инфраструктуры. Требует полноценного локального Postgres в Docker compose.
-- [ ] **CI < 10 минут.** Дольше — люди перестают дожидаться, мержат «и так сойдёт». Сейчас CI не настроен явно (нет `.github/workflows` в видимых местах — проверить).
-- [ ] **Pre-commit быстрый.** Lefthook есть. В этой сессии наблюдалось **зависание pre-commit hook на check-types в parallel mode**, лечащееся только `kill`. Нужно разобрать.
-- [ ] **Feature flags как архитектура**, а не как `if`. LaunchDarkly / GrowthBook / OpenFeature. Деплой ≠ релиз. Не установлено.
-- [ ] **PR template.** Обязательные секции: what, why, screenshots, how tested, rollback plan. Не существует.
-- [x] **Changelog автоматически** из conventional commits — `commitlint` настроен в lefthook. Фактически changelog-генератор не запускается, но фундамент есть.
-- [ ] **Deploy config не версионируется** (см. 1.5) — тоже DX-проблема: infrastructure as code отсутствует.
-- [ ] **Нет `CONTRIBUTING.md`, `ARCHITECTURE.md`** (старый удалён как устаревший) — новый документ нужен, но уже на основе кода, а не aspirational видения.
-- [ ] **CI в `.github/workflows/` содержит ТОЛЬКО 2 файла:** `claude.yml` и `claude-code-review.yml` — оба для Claude Code integration. **НЕТ build / test / type-check / lint в CI.** Pre-commit hooks — единственный gate. PR может быть смержен с broken TS/tests если кто-то обошёл pre-commit. **Это блокирующий gap, а не косметика.**
-- [ ] **Нет CODEOWNERS** — нет policy автоматического reviewer assignment.
-- [ ] **Нет `.github/pull_request_template.md`** — PR без template.
-- [ ] **Нет `.github/dependabot.yml` или Renovate** — нет автоматических dependency updates.
-- [ ] **Нет release pipeline** (changesets, semantic-release, etc.).
-- [ ] **Нет SAST/DAST/SCA** (CodeQL, Snyk, dependency scan).
-- [ ] **Pre-commit hook зависает на `type-check` в parallel mode** — наблюдалось в этой сессии, лечилось только `kill -TERM`. Надо разобрать причину (возможно конкуренция ресурсов между parallel шагами или specific file, который tsc зацикливает).
+### Research summary — что УЖЕ хорошо
+
+- [x] **Changelog автоматически** из conventional commits — `commitlint` настроен в lefthook.
+- [x] **CI pipeline полноценный.** `.github/workflows/ci.yml` добавлен в §1.3.B: 5 parallel lanes (check-types, lint, dep-check, test, build) с postgres service container. PR не может быть смержен с broken gates.
+- [x] **Deploy config версионируется.** `vercel.json` с security headers в каждом app — добавлен в §1.5.A.
+- [x] **Pre-commit быстрый.** Lefthook с `parallel: true` и turbo `--filter="...[HEAD]"` (§8 optimization). Зависание, наблюдавшееся в ранних сессиях, не воспроизводилось после §8 (turbo filtering драматически уменьшил scope каждого hook).
+
+### Implementation plan (section 12)
+
+| №      | Commit hash | Status  | Description                                                                                             |
+| ------ | ----------- | ------- | ------------------------------------------------------------------------------------------------------- |
+| 12.1.A |             | ⏳ Next | Create `.github/pull_request_template.md`                                                               |
+| 12.1.B |             | Pending | Unify `db:*` root scripts: `turbo run` → `pnpm --filter` for single-package tasks                       |
+| 12.2.A |             | Pending | ADR 0026: deferred DX decisions (docker/onboarding, feature flags, CONTRIBUTING, dependabot, SAST, etc) |
+
+**Execution order:** 12.1.A → 12.1.B → 12.2.A
+
+#### 12.1. Concrete fixes
+
+- [ ] **PR template.** `.github/pull_request_template.md` с секциями: Summary, Changes, Test plan.
 - [ ] **Root `db:*` scripts неконсистентны.** `db:generate` и `db:push` идут через `turbo run`, а `db:seed` — через `pnpm --filter @repo/api-server`. Все три target'ят один package. Унифицировать: все через `pnpm --filter` (turbo overhead не нужен для single-package tasks).
+
+#### 12.2. Deferred
+
+- [ ] **Onboarding / Docker compose.** `pnpm install → pnpm dev` requires external Neon DB + env vars. Docker compose с local Postgres premature для solo pre-production project. **Trigger:** second developer onboards.
+- [ ] **Feature flags.** LaunchDarkly / GrowthBook / OpenFeature. Деплой ≠ релиз. **Trigger:** first feature that needs gradual rollout or A/B testing.
+- [ ] **CONTRIBUTING.md.** Нужен для onboarding, but solo project currently. `CLAUDE.md` + `docs/` cover most of it. **Trigger:** second contributor.
+- [ ] **CODEOWNERS.** Solo project — no reviewer assignment needed. **Trigger:** second contributor with distinct area ownership.
+- [ ] **Dependabot / Renovate.** Automated dependency updates. **Trigger:** first production deployment (security patches become urgent).
+- [ ] **Release pipeline** (changesets, semantic-release). **Trigger:** first production release or first external consumer of packages.
+- [ ] **SAST/DAST/SCA** (CodeQL, Snyk). **Trigger:** first production deployment or first security audit requirement.
 
 ---
 
