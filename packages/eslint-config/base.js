@@ -2,7 +2,7 @@ import js from "@eslint/js";
 import eslintConfigPrettier from "eslint-config-prettier";
 import turboPlugin from "eslint-plugin-turbo";
 import tseslint from "typescript-eslint";
-import onlyWarn from "eslint-plugin-only-warn";
+
 import importPlugin from "eslint-plugin-import";
 
 export const config = [
@@ -73,11 +73,6 @@ export const config = [
       "max-lines": ["error", { max: 300, skipBlankLines: true, skipComments: true }],
       "@typescript-eslint/no-non-null-assertion": "error",
       "no-console": "error",
-    },
-  },
-  {
-    plugins: {
-      onlyWarn,
     },
   },
   {
