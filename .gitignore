@@ -33,6 +33,9 @@ yarn-error.log*
 # Claude Code
 .claude/
 
+# Feature dev artifacts
+.feature-dev/
+
 # Misc
 .DS_Store
 *.pem
