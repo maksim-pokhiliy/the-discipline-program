@@ -442,7 +442,7 @@ const seedMarketingPages = async () => {
           "Structured CrossFit programming from Ukraine. For athletes who train with purpose, not randomness.",
         buttonText: "Start Training",
         buttonHref: "/storefront",
-        backgroundImage: "/images/coach-hero.jpg",
+        backgroundImage: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=80",
       },
     },
     {
@@ -536,7 +536,7 @@ const seedMarketingPages = async () => {
           "Wingate Institute graduate. CrossFit, Weightlifting & Adaptive CrossFit specialist.",
         buttonText: "Read My Story",
         buttonHref: "#journey",
-        backgroundImage: "/images/coach-hero.jpg",
+        backgroundImage: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1920&q=80",
       },
     },
     {
@@ -626,7 +626,7 @@ const seedMarketingPages = async () => {
         subtitle: "The person behind the programming — beyond the whiteboard and the stopwatch.",
         description:
           "When I am not writing training cycles or reviewing athlete videos, you will find me on a trail somewhere in the Carpathian mountains. Long runs above the treeline are my version of active recovery — and honestly, where most of my best programming ideas come from. I am a lifelong student of movement, a relentless meat griller, and a self-taught software engineer who built this entire platform from scratch. I believe coaching is a craft that gets better with obsession, not just experience. Every system in The Discipline Program exists because I was not satisfied with what was already out there.",
-        image: "/images/coach-hero.jpg",
+        image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
         name: "Denys Linetskyi",
         role: "Head Coach & Founder",
       },

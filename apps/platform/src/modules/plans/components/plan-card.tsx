@@ -35,18 +35,17 @@ export const PlanCard: React.FC<PlanCardProps> = ({
     sx={(theme) => ({
       position: "relative",
       transition: theme.transitions.create("border-color"),
+      p: 2,
+      px: 2,
       "&:hover": { borderColor: theme.palette.primary.main },
     })}
   >
-    <Box
+    <Stack
       component={Link}
       href={`/coach/plans/${plan.id}`}
       sx={(theme) => ({
         textDecoration: "none",
         color: "inherit",
-        p: 2,
-        pr: 6,
-        borderRadius: 1,
         transition: theme.transitions.create("opacity"),
         "&:hover": { opacity: 0.85 },
       })}
@@ -102,7 +101,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
           </Tooltip>
         </Stack>
       </Stack>
-    </Box>
+    </Stack>
 
     <Box sx={(theme) => ({ position: "absolute", top: theme.spacing(1), right: theme.spacing(1) })}>
       <PlanActionMenu
