@@ -1,6 +1,19 @@
+import dotenv from "dotenv";
+import path from "path";
 import { defineConfig, devices } from "@playwright/test";
 
+dotenv.config({ path: path.resolve(__dirname, ".env") });
+
 const IS_CI = !!process.env.CI;
+
+const serverEnv = {
+  DATABASE_URL: process.env.DATABASE_URL!,
+  NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET!,
+  NEXTAUTH_URL: process.env.NEXTAUTH_URL!,
+  NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL!,
+  NEXT_PUBLIC_MARKETING_URL: process.env.NEXT_PUBLIC_MARKETING_URL!,
+  SKIP_ENV_VALIDATION: "1",
+};
 
 export default defineConfig({
   testDir: ".",
@@ -79,18 +92,21 @@ export default defineConfig({
       url: "http://localhost:3000",
       reuseExistingServer: !IS_CI,
       timeout: 120_000,
+      env: serverEnv,
     },
     {
       command: "pnpm --filter admin dev",
       url: "http://localhost:3002",
       reuseExistingServer: !IS_CI,
       timeout: 120_000,
+      env: serverEnv,
     },
     {
       command: "pnpm --filter platform dev",
       url: "http://localhost:3001",
       reuseExistingServer: !IS_CI,
       timeout: 120_000,
+      env: serverEnv,
     },
   ],
 });
