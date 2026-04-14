@@ -34,7 +34,7 @@ jobs:
 
       - name: Install dependencies
         # --frozen-lockfile fails the build if pnpm-lock.yaml is stale.
-        # postinstall runs `turbo run db:generate` which invokes
+        # postinstall runs `pnpm --filter @repo/api-server db:generate` which invokes
         # `prisma generate` — it does NOT connect to the DB, it only reads
         # schema.prisma and emits types into node_modules/.prisma/client.
         run: pnpm install --frozen-lockfile
