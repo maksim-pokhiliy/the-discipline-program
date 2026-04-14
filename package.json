@@ -7,8 +7,8 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
-    "test": "cross-env SKIP_ENV_VALIDATION=1 vitest run",
-    "test:watch": "cross-env SKIP_ENV_VALIDATION=1 vitest",
+    "test": "cross-env SKIP_ENV_VALIDATION=1 vitest run --exclude 'e2e/**'",
+    "test:watch": "cross-env SKIP_ENV_VALIDATION=1 vitest --exclude 'e2e/**'",
     "check-types": "turbo run check-types",
     "analyze:admin": "cross-env ANALYZE=true pnpm --filter admin build",
     "analyze:marketing": "cross-env ANALYZE=true pnpm --filter marketing build",
@@ -19,11 +19,15 @@
     "db:push": "pnpm --filter @repo/api-server db:push",
     "db:seed": "pnpm --filter @repo/api-server db:seed",
     "postinstall": "pnpm --filter @repo/api-server db:generate",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
+    "e2e:headed": "playwright test --config e2e/playwright.config.ts --headed"
   },
   "devDependencies": {
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
+    "@playwright/test": "^1.59.1",
     "cross-env": "^10.1.0",
     "dependency-cruiser": "^16.10.0",
     "dotenv": "catalog:",
