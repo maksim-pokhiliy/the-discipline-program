@@ -73,6 +73,21 @@ tasks:
     cmds:
       - pnpm dep:graph
 
+  analyze:admin:
+    desc: "Bundle analysis for admin app"
+    cmds:
+      - pnpm analyze:admin
+
+  analyze:marketing:
+    desc: "Bundle analysis for marketing app"
+    cmds:
+      - pnpm analyze:marketing
+
+  analyze:platform:
+    desc: "Bundle analysis for platform app"
+    cmds:
+      - pnpm analyze:platform
+
   clean-start:
     desc: "Clean project, install dependencies, start dev server"
     cmds:
