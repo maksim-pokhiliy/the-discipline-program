@@ -684,13 +684,13 @@ Rationale: config optimizations first (tree-shaking unblocks bundle wins) → me
 
 ### Implementation plan (section 11)
 
-| №      | Commit hash | Status  | Description                                                                                                    |
-| ------ | ----------- | ------- | -------------------------------------------------------------------------------------------------------------- |
-| 11.1.A |             | ⏳ Next | `interface → type` for `ApiClientConfig` (api-client:38) + `AppErrorOptions` (errors/app-error.ts:3)           |
-| 11.1.B |             | Pending | Fix CLAUDE.md: `(AppError, HttpError)` → actual hierarchy (HttpError class doesn't exist)                      |
-| 11.2.A |             | Pending | tsconfig: enable `noFallthroughCasesInSwitch` + `noImplicitReturns`, investigate remaining 2 strict flags      |
-| 11.3.A |             | Pending | Remove `eslint-plugin-only-warn` — IDE gets proper error severity, CLI behavior unchanged (`--max-warnings 0`) |
-| 11.4.A |             | Pending | ADR 0025: deferred code quality decisions (branded types, discriminated unions, immutability, sonarjs, knip)   |
+| №      | Commit hash | Status  | Description                                                                                                                                                                        |
+| ------ | ----------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 11.1.A | `b75bcec`   | ✅ Done | `interface → type` for `ApiClientConfig` (api-client:38) + `AppErrorOptions` (errors/app-error.ts:3)                                                                               |
+| 11.1.B | `1a2b410`   | ✅ Done | Fix CLAUDE.md: `(AppError, HttpError)` → actual hierarchy (HttpError class doesn't exist)                                                                                          |
+| 11.2.A | `b01de77`   | ✅ Done | tsconfig: enable `noFallthroughCasesInSwitch` + `noImplicitReturns`. `exactOptionalPropertyTypes` + `noPropertyAccessFromIndexSignature` investigated — ceremony > value, deferred |
+| 11.3.A | `0e1423d`   | ✅ Done | Remove `eslint-plugin-only-warn` — IDE gets proper error severity, CLI behavior unchanged (`--max-warnings 0`)                                                                     |
+| 11.4.A |             | ⏳ Next | ADR 0025: deferred code quality decisions (branded types, discriminated unions, immutability, sonarjs, knip)                                                                       |
 
 **Execution order:** 11.1.A → 11.1.B → 11.2.A → 11.3.A → 11.4.A
 
