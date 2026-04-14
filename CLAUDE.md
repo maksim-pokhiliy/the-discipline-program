@@ -77,7 +77,7 @@ packages/
   contracts/    # Zod schemas + TypeScript types. The Law. NO Prisma types allowed.
   api-client/   # HTTP client for API consumption
   auth/         # NextAuth configuration
-  errors/       # Error hierarchy (AppError, HttpError)
+  errors/       # Error hierarchy (AppError → NotFoundError, ValidationError, etc.)
   ui/           # Shared React components (Sidebar, DataTable, FormView, FormCard, etc.)
   query/        # React Query setup: QueryProvider, query keys, CRUD hooks factory
   shared/       # Navigation configs, types, SEO constants, layout constants
