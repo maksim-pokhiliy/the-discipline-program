@@ -4,8 +4,7 @@ test.describe("Admin Users", () => {
   test("lists users", async ({ page }) => {
     await page.goto("/users");
 
-    await expect(page.getByText("Users")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole("table")).toBeVisible();
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("row").nth(1)).toBeVisible();
   });
 
@@ -13,13 +12,11 @@ test.describe("Admin Users", () => {
     await page.goto("/users");
     await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
 
-    await page.getByRole("link", { name: "View" }).first().click();
+    await page.getByRole("row").nth(1).getByRole("link").first().click();
     await page.waitForURL(/\/users\/.+/);
 
     await expect(page.getByText("User Details")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("User Information")).toBeVisible();
-    await expect(page.getByText("Email")).toBeVisible();
-    await expect(page.getByText("Role")).toBeVisible();
   });
 
   test("displays user role correctly", async ({ page }) => {

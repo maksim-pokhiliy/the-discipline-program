@@ -13,8 +13,8 @@ test.describe("Admin Dashboard", () => {
     await expect(page.getByText("Overview")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Total Users")).toBeVisible();
     await expect(page.getByText("Contact Submissions")).toBeVisible();
-    await expect(page.getByText("Reviews")).toBeVisible();
-    await expect(page.getByText("Products")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Reviews" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Products" })).toBeVisible();
     await expect(page.getByText("Blog Posts")).toBeVisible();
   });
 
@@ -22,6 +22,6 @@ test.describe("Admin Dashboard", () => {
     await page.goto("/");
 
     await expect(page.getByText("Recent Activity")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole("list")).toBeVisible();
+    await expect(page.getByRole("list").last()).toBeVisible();
   });
 });

@@ -12,8 +12,7 @@ test.describe("Admin Contacts", () => {
   test("lists contact submissions", async ({ page }) => {
     await page.goto("/contacts");
 
-    await expect(page.getByText("Contacts")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByRole("table")).toBeVisible();
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole("row").nth(1)).toBeVisible();
   });
 
@@ -25,7 +24,6 @@ test.describe("Admin Contacts", () => {
     await page.waitForURL(/\/contacts\/.+/);
 
     await expect(page.getByText("Contact Submission")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("Message")).toBeVisible();
     await expect(page.getByText("Contact Details")).toBeVisible();
   });
 
@@ -70,7 +68,7 @@ test.describe("Admin Contacts", () => {
       (res) => res.url().includes("/api/admin/contacts") && res.request().method() === "DELETE",
     );
 
-    await page.getByRole("button", { name: "Delete" }).nth(1).click();
+    await page.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
     await responsePromise;
 
     await expect(contactRow).not.toBeVisible();

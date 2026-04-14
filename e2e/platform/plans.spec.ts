@@ -42,15 +42,15 @@ test.describe("Coach Training Plans", () => {
       (res) =>
         res.url().includes("/api/platform/training-plans") &&
         res.request().method() === "POST" &&
-        res.status() === 200,
+        res.status() === 201,
     );
 
     await page.getByRole("button", { name: "Create" }).last().click();
     const response = await responsePromise;
     const body = await response.json();
 
-    if (body.data?.id) {
-      createdPlanIds.push(body.data.id);
+    if (body?.id) {
+      createdPlanIds.push(body.id);
     }
 
     await expect(page.getByText(planName)).toBeVisible();
@@ -62,7 +62,7 @@ test.describe("Coach Training Plans", () => {
       timeout: 15_000,
     });
 
-    await page.locator("[class*='MuiPaper-outlined']").first().click();
+    await page.locator("a[href*='/coach/plans/']").first().click();
     await expect(page).toHaveURL(/\/coach\/plans\/.+/);
   });
 

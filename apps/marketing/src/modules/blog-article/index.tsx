@@ -19,7 +19,7 @@ export const BlogArticlePageContent = ({ slug, data }: BlogArticlePageContentPro
         description: data.post.excerpt ?? "",
         image: data.post.coverImage ?? "",
         author: data.post.authorName,
-        publishedTime: data.post.publishedAt.toISOString(),
+        publishedTime: new Date(data.post.publishedAt).toISOString(),
         url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
       }}
     />

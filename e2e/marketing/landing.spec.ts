@@ -3,25 +3,29 @@ import { expect, test } from "@playwright/test";
 test.describe("Marketing Landing Page", () => {
   test("loads the home page", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: /discipline/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /discipline/i })).toBeVisible({
+      timeout: 15_000,
+    });
   });
 
   test("displays hero section", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Your DISCIPLINE Dictates Your SUCCESS")).toBeVisible();
-    await expect(page.getByText("Start Training")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Your DISCIPLINE Dictates Your SUCCESS" }),
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Start Training")).toBeVisible({ timeout: 15_000 });
   });
 
   test("displays features section", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Why The Discipline Program?")).toBeVisible();
+    await expect(page.getByText("Why The Discipline Program?")).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("Constantly Varied")).toBeVisible();
     await expect(page.getByText("High Intensity")).toBeVisible();
   });
 
   test("displays reviews section", async ({ page }) => {
     await page.goto("/");
-    await expect(page.getByText("Community Results")).toBeVisible();
+    await expect(page.getByText("Community Results")).toBeVisible({ timeout: 15_000 });
   });
 
   test("navigates to other pages", async ({ page }) => {

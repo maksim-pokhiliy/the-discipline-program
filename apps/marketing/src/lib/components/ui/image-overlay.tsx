@@ -1,3 +1,5 @@
+"use client";
+
 import { Box } from "@mui/material";
 
 import { buildOverlay } from "@repo/mui";

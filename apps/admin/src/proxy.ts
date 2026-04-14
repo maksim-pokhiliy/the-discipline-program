@@ -23,7 +23,11 @@ export const proxy = async (req: NextRequest) => {
   }
 
   if (!token && !isPublicRoute(path)) {
-    return NextResponse.redirect(new URL(AUTH_ROUTES.LOGIN, req.url));
+    const loginUrl = new URL(AUTH_ROUTES.LOGIN, req.url);
+
+    loginUrl.searchParams.set("callbackUrl", path);
+
+    return NextResponse.redirect(loginUrl);
   }
 
   if (token && token.role !== UserRole.ADMIN && !isPublicRoute(path)) {

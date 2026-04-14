@@ -42,6 +42,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:3000",
+        reducedMotion: "reduce",
       },
     },
     {
@@ -61,7 +62,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:3002",
-        storageState: ".auth/admin.json",
+        storageState: "e2e/.auth/admin.json",
       },
     },
     {
@@ -81,7 +82,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:3001",
-        storageState: ".auth/platform-coach.json",
+        storageState: "e2e/.auth/platform-coach.json",
       },
     },
   ],

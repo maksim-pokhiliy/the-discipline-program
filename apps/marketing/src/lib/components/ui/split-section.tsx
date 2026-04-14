@@ -19,18 +19,15 @@ export const SplitSection = ({
   children,
 }: SplitSectionProps) => {
   return (
-    <Grid
-      container
-      sx={(theme) => ({ borderRadius: theme.shape.borderRadius, overflow: "hidden" })}
-    >
+    <Grid container sx={{ borderRadius: 1, overflow: "hidden" }}>
       <Grid
         size={{ xs: 12, md: 6 }}
-        sx={(theme) => ({
+        sx={{
           position: "relative",
           overflow: "hidden",
-          color: theme.palette.common.white,
-          minHeight: { xs: theme.spacing(37.5), md: "auto" },
-        })}
+          color: "common.white",
+          minHeight: { xs: 300, md: "auto" },
+        }}
       >
         <Image
           src={backgroundImage}
@@ -56,13 +53,10 @@ export const SplitSection = ({
 
       <Grid
         size={{ xs: 12, md: 6 }}
-        sx={(theme) => ({
-          backgroundColor:
-            surface === "raised"
-              ? theme.palette.background.paper
-              : theme.palette.background.default,
+        sx={{
+          backgroundColor: surface === "raised" ? "background.paper" : "background.default",
           p: { xs: 4, md: 6 },
-        })}
+        }}
       >
         {children}
       </Grid>

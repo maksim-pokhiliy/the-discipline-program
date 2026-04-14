@@ -11,11 +11,13 @@ const getPrisma = () => {
 
 export const seedTestBlogPost = async () => {
   const prisma = getPrisma();
+  const ts = Date.now();
   return prisma.marketingBlogPost.create({
     data: {
-      slug: `e2e-test-${Date.now()}`,
-      title: "E2E Test Post",
-      content: "Created by E2E test",
+      slug: `e2e-test-${ts}`,
+      title: `E2E Test Post ${ts}`,
+      content:
+        "Created by E2E test. This content needs to be at least 100 characters long to pass the blog post content validation schema. Adding some extra text to reach the minimum.",
       authorName: "E2E",
     },
   });

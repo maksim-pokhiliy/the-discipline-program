@@ -37,7 +37,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         <Stack sx={{ flexGrow: 1, minWidth: 0 }}>
           <AdminHeader onMenuClick={handleMobileToggle} navigation={ADMIN_NAVIGATION} />
-          <Stack sx={{ flexGrow: 1, overflow: "auto" }}>{children}</Stack>
+          <Stack component="main" sx={{ flexGrow: 1, overflow: "auto" }}>
+            {children}
+          </Stack>
         </Stack>
       </Stack>
     </SessionGuard>
