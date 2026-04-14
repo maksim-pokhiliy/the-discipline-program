@@ -1,11 +1,11 @@
 import { type ErrorCode, ERROR_CODES } from "./error-codes";
 
-interface AppErrorOptions {
+type AppErrorOptions = {
   code?: ErrorCode;
   statusCode?: number;
   details?: Record<string, unknown>;
   cause?: Error;
-}
+};
 
 export class AppError extends Error {
   public readonly code: ErrorCode;
