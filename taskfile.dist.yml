@@ -2,15 +2,9 @@ version: "3"
 
 tasks:
   clean:
-    desc: "Remove node_modules, .turbo, .next"
+    desc: "Remove node_modules, .turbo, .next, dist"
     cmds:
-      - rm -rf node_modules
-      - rm -rf .turbo
-      - find . -name "node_modules" -type d -prune -exec rm -rf '{}' +
-      - find . -name "dist" -type d -prune -exec rm -rf '{}' +
-      - find . -name ".next" -type d -prune -exec rm -rf '{}' +
-      - find . -name ".turbo" -type d -prune -exec rm -rf '{}' +
-      - pnpm store prune
+      - node scripts/clean.mjs
 
   install:
     desc: "Install all dependencies"
