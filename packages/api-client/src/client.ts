@@ -35,7 +35,7 @@ type RequestOptions = {
   cache?: RequestCache;
 };
 
-interface ApiClientConfig {
+type ApiClientConfig = {
   baseUrl: string;
   getHeaders?: () => Record<string, string> | Promise<Record<string, string>>;
   credentials?: RequestCredentials;
@@ -43,7 +43,7 @@ interface ApiClientConfig {
   timeoutMs?: number;
   maxRetries?: number;
   cache?: RequestCache;
-}
+};
 
 export class ApiClient {
   private baseUrl: string;
