@@ -665,35 +665,54 @@ Rationale: config optimizations first (tree-shaking unblocks bundle wins) → me
 
 ## 11. Качество кода
 
-**Статус:** Не начато
+**Статус:** Research завершён. 5 bullets, execution order определён.
 
 То, на что смотрят микроскопом. У тебя с этим уже неплохо (см. anti-patterns в `CLAUDE.md`) — это полировка поверх уже хорошего фундамента.
 
-- [ ] **Branded types.** `type UserId = string & { __brand: 'UserId' }` — `CoachId` и `AthleteId` не смешиваются, даже если оба `string`. `AuthenticatedHandler` принимает `userId: string` — любая строка.
-- [ ] **Discriminated unions вместо if-цепочек.** `type Status = { kind: 'loading' } | { kind: 'success'; data: T } | { kind: 'error'; error: E }` — exhaustiveness checking бесплатно.
-- [ ] **Immutability by default.** `readonly` на props, `ReadonlyArray`, `as const`. Объект, который никто не мутирует, но тип разрешает — бомба с часовым механизмом.
-- [x] **`@typescript-eslint/no-non-null-assertion: "error"`** уже в `eslint-config/base.js` → соответствует правилу CLAUDE.md.
-- [x] **`max-lines: 300`** уже в `eslint-config/base.js` → соответствует правилу CLAUDE.md. С override для `prisma/seed.ts`.
+### Research summary — что УЖЕ хорошо
+
+- [x] **`@typescript-eslint/no-non-null-assertion: "error"`** уже в `eslint-config/base.js:74` → соответствует правилу CLAUDE.md.
+- [x] **`max-lines: 300`** уже в `eslint-config/base.js:73` с `skipBlankLines: true, skipComments: true`. Override для `prisma/seed.ts`. 6 файлов с 300+ total lines (coach-action-item.ts 331, plan-schedule-section.tsx 345, и др.) — все проходят ESLint после вычета blank lines.
 - [x] **`@typescript-eslint/consistent-type-imports`** c `inline-type-imports` уже настроен.
-- [ ] **Cognitive complexity, не cyclomatic.** SonarQube / `eslint-plugin-sonarjs`. Функция с 15 if'ами — красная лампа. **Не установлен.**
-- [ ] **Dead code.** `ts-prune` / `knip`. Не установлен. `packages/api-server/src/endpoints/platform/index.ts` НЕ экспортирует `coach-athlete-detail.ts` / `coach-athletes-list.ts`, но они вовлечены в `coach-athletes.ts` как агрегатор — не dead, но непрозрачная структура.
-- [ ] **Файлы >300 строк, функции >50 строк** — уже ESLint-правило, но `training-plans.ts` = ровно 300 строк, на пределе.
-- [ ] **TODO policy.** `// TODO` без ссылки на issue = нетрекаемый долг = не существует = никогда не будет сделан. ESLint должен ловить.
-- [ ] **`tsconfig.base.json` не имеет:** `exactOptionalPropertyTypes`, `noFallthroughCasesInSwitch`, `noImplicitReturns`, `noPropertyAccessFromIndexSignature`. Включить для более строгой проверки.
-- [ ] **`eslint-plugin-only-warn`** — критическое UX-ухудшение в IDE (см. пункт 8). Желательно заменить на нативные `error` severity + fast CI.
-- [ ] **`interface ApiClientConfig`** в `packages/api-client/src/client.ts:22` — нарушает правило CLAUDE.md «type, not interface».
-- [ ] **`throw new Error(...)` в `create-crud-hooks.ts:97, 123, 148`** — generic Error вместо AppError из `@repo/errors`. Нарушение error hierarchy.
-- [ ] **`route-helpers.ts` возвращает `{ success: true }`** — anti-pattern, должен быть `204 No Content` (дублирует пункт 6).
-- [ ] **`packages/errors/src/error-codes.ts` содержит только 6 кодов** (INTERNAL_SERVER_ERROR, UNAUTHORIZED, FORBIDDEN, VALIDATION_ERROR, INVALID_INPUT, NOT_FOUND, ALREADY_EXISTS). Нет domain-specific codes (SUBSCRIPTION_PAST_DUE, QUOTA_EXCEEDED, PAYMENT_FAILED, RATE_LIMITED, IDEMPOTENCY_KEY_REUSED). Клиент не различает «user not found» и «workout not found» — оба NOT_FOUND.
-- [ ] **`interface AppErrorOptions`** (`packages/errors/src/app-error.ts:3`) — нарушает правило «type, not interface».
-- [ ] **CLAUDE.md описывает иерархию `AppError → HttpError → Specific`**, но в коде только двухуровневая `AppError → Specific`. Документация и реальность не совпадают.
-- [ ] **`interface ApiClientConfig`** (`packages/api-client/src/client.ts:22`) — нарушает правило «type, not interface».
-- [ ] **`throw new Error(...)` в `create-crud-hooks.ts:97,123,148`** — generic Error вместо AppError из `@repo/errors`.
-- [ ] **`(rawPrisma as unknown as Record<...>)` каст** в `test/helpers.ts:49` — нарушает правило «No as casts» (допустимо для test utils, но всё равно повод вынести в правильный test harness API).
-- [ ] **`dashboard-computations.test-helpers.ts:62`** — `as unknown as EnrollmentWithData` каст.
-- [ ] **`tsconfig.base.json` не имеет:** `exactOptionalPropertyTypes`, `noFallthroughCasesInSwitch`, `noImplicitReturns`, `noPropertyAccessFromIndexSignature`.
-- [ ] **`userId: string` в `AuthenticatedHandler`** (`api-routes/src/types.ts:6`) — не branded type.
-- [ ] **`RouteContext.params: Promise<Record<string, string>>`** — params как generic record, не типобезопасно per-route.
+- [x] **Zero TODO/FIXME/HACK/XXX** в source code. Кодобаза чистая.
+- [x] **Zero `throw new Error` в application code** (за исключением 3 guard-чеков в `@repo/query/create-crud-hooks.ts` — это developer-facing invariant violations в client-side пакете, который не зависит и не должен зависеть от `@repo/errors`).
+- [x] **`route-helpers.ts`** уже использует `204 No Content` вместо `{ success: true }` — исправлено в §6.
+- [x] **Error codes полные** — 10 кодов (INTERNAL_SERVER_ERROR, UNAUTHORIZED, FORBIDDEN, VALIDATION_ERROR, INVALID_INPUT, NOT_FOUND, ALREADY_EXISTS, TIMEOUT, TOO_MANY_REQUESTS, SERVICE_UNAVAILABLE). Domain-specific (SUBSCRIPTION_PAST_DUE и т.д.) преждевременны — billing не реализован.
+- [x] **Dead code: `platform/index.ts` concern** — стал нерелевантным после §1.2 reorganization. `coach-athletes/` корректно экспортируется через `coaching/coach-athletes/index.ts` → `coaching/index.ts`.
+- [x] **`as` casts в тестах** — 4 каста в test helpers (`rawPrisma as unknown as Record`, `as unknown as EnrollmentWithData`, `error as { code?: string }`) и 7 в test assertions (`e as ConflictError`). Все в тестовой инфраструктуре, не в production code. Допустимо.
+- [x] **`return undefined as T` в `api-client/client.ts:170`** — generic cast для 204 response. `request<T>` не знает at compile time будет ли 204. Fix требует overloaded generics, что добавит complexity без proportional value. Допустимо.
+
+### Implementation plan (section 11)
+
+| №      | Commit hash | Status  | Description                                                                                                    |
+| ------ | ----------- | ------- | -------------------------------------------------------------------------------------------------------------- |
+| 11.1.A |             | ⏳ Next | `interface → type` for `ApiClientConfig` (api-client:38) + `AppErrorOptions` (errors/app-error.ts:3)           |
+| 11.1.B |             | Pending | Fix CLAUDE.md: `(AppError, HttpError)` → actual hierarchy (HttpError class doesn't exist)                      |
+| 11.2.A |             | Pending | tsconfig: enable `noFallthroughCasesInSwitch` + `noImplicitReturns`, investigate remaining 2 strict flags      |
+| 11.3.A |             | Pending | Remove `eslint-plugin-only-warn` — IDE gets proper error severity, CLI behavior unchanged (`--max-warnings 0`) |
+| 11.4.A |             | Pending | ADR 0025: deferred code quality decisions (branded types, discriminated unions, immutability, sonarjs, knip)   |
+
+**Execution order:** 11.1.A → 11.1.B → 11.2.A → 11.3.A → 11.4.A
+
+Rationale: mechanical fixes first (safe, fast) → docs accuracy → compiler strictness (may surface issues that inform later bullets) → ESLint restructure → ADR last.
+
+#### 11.1. Type system correctness
+
+- [ ] **`interface ApiClientConfig`** (`api-client/src/client.ts:38`) + **`interface AppErrorOptions`** (`errors/src/app-error.ts:3`) — нарушают правило «type, not interface». Единственные 2 нарушения в кодобазе (5 `interface` в `@repo/mui` — легитимные MUI module augmentations).
+- [ ] **CLAUDE.md описывает `(AppError, HttpError)`** в описании `packages/errors/`, но `HttpError` класс не существует. Реальная иерархия: `AppError` → 10 specialized HTTP errors (`NotFoundError`, `ValidationError`, etc.) напрямую. Документация и реальность не совпадают.
+- [ ] **`tsconfig.base.json` не имеет 4 strict flags:** `noFallthroughCasesInSwitch` (safe to enable), `noImplicitReturns` (safe to enable), `exactOptionalPropertyTypes` (может сломать существующий код — needs investigation), `noPropertyAccessFromIndexSignature` (может сломать Record access patterns — needs investigation).
+
+#### 11.2. ESLint
+
+- [ ] **`eslint-plugin-only-warn`** в `eslint-config/base.js:80` — глобально конвертирует все `error` severity в `warn`. CLI-поведение идентично (lint script uses `--max-warnings 0`), но IDE показывает жёлтые squiggles вместо красных → developer не видит ошибок как ошибки. Удаление плагина: правила уже declared as `error`, поведение не меняется, IDE experience улучшается.
+
+#### 11.3. Deferred patterns
+
+- [ ] **Branded types.** `type UserId = string & { __brand: 'UserId' }` — `CoachId` и `AthleteId` не смешиваются. `AuthenticatedHandler` принимает `userId: string` — любая строка. `RouteContext.params: Promise<Record<string, string>>` — generic record, не per-route typed. Premature without real misuse incidents.
+- [ ] **Discriminated unions вместо if-цепочек.** Exhaustiveness checking бесплатно, но нет if-цепочек, которые бы от этого выиграли прямо сейчас.
+- [ ] **Immutability by default.** `readonly` на props, `ReadonlyArray`, `as const`. Premature — no mutation bugs reported.
+- [ ] **Cognitive complexity.** `eslint-plugin-sonarjs` не установлен. 6 файлов с 300+ total lines — потенциальные кандидаты. Требует threshold calibration.
+- [ ] **Dead code detection.** `knip` не установлен. Нет known dead code, но отсутствие инструмента = нет visibility.
 
 ---
 
