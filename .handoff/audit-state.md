@@ -36,10 +36,10 @@ The living document is `docs/BIGTECH-AUDIT.md` (Russian, in the project repo). I
 
 **Why:** Sessions start cold. The handoff is written by the previous session's model, which may have made assumptions that didn't survive (revert, interactive rebase, manual edits between sessions). Catching drift early is cheap; building on a wrong assumption wastes a full bullet cycle.
 
-## Current state — 2026-04-14 (sections 1–11 complete, §12 next)
+## Current state — 2026-04-14 (ALL 12 SECTIONS COMPLETE — AUDIT CLOSED)
 
-**Branch:** `refactor/design-system-typography-hero` (235 commits ahead of `origin/`, working tree clean)
-**Last commit:** `af1ade2 docs: deferred code quality decisions (adr 0025)`
+**Branch:** `refactor/design-system-typography-hero` (241 commits ahead of `origin/`, working tree clean)
+**Last commit:** `a626b1c docs: deferred dx decisions (adr 0026), close section 12 and full audit`
 **Gates at hand-off time:** `pnpm check-types` ✓ (15/15), `pnpm lint` ✓ (15/15), `pnpm test` ✓ (240/240).
 
 ### Section 1 (Архитектура и границы) — CLOSED
@@ -230,7 +230,19 @@ All 2 bullets implemented (2 commits). 240 tests, 23 files, 2 packages. Key deli
 - ADR 0025: deferred code quality decisions (branded types, discriminated unions, immutability, sonarjs, knip, domain error codes)
 - Research cleaned 25 original bullets → 5 actionable (3 already done, 10 new positives, 6 duplicates, 2 пшики)
 
-**Section 12:** research not yet started. Research begins at the top of the section and must complete before any bullet is implemented.
+### Section 12 (DX и процесс) — CLOSED
+
+3 bullets, 3 commits (12.1.A–12.2.A). Key deliverables:
+
+- PR template (`.github/pull_request_template.md`)
+- db:\* scripts unified to `pnpm --filter` (removed turbo overhead for single-package tasks)
+- ADR 0026: deferred DX decisions (docker/onboarding, feature flags, CONTRIBUTING, dependabot, SAST, CODEOWNERS, release pipeline)
+
+---
+
+## AUDIT COMPLETE
+
+All 12 sections closed. Cleanup performed: `⚠ BIG TECH AUDIT` block removed from `CLAUDE.md`.
 
 ## Repo structure snapshot after 1.3.C — orient fast
 

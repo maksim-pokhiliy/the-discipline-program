@@ -2,25 +2,6 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## ⚠ BIG TECH AUDIT IN PROGRESS — READ BEFORE ANY WORK
-
-A long-running architectural audit and refactor is active on this repository. The audit is structured as a living document with bullet-per-commit implementation across 12 sections.
-
-**Before doing anything on this project, read in this order:**
-
-1. `docs/BIGTECH-AUDIT.md` — the audit document, including the "Implementation plan (section 1)" table. The table lists every planned commit with status (`✅ Done`, `⏳ Next`, `Pending`) and commit hash. Find the first row that is not `✅ Done`.
-2. `.handoff/` — the handoff system. Start with `.handoff/README.md`, then read `.handoff/audit-state.md` for full workflow rules, rule file references, resume instructions, and cleanup trigger.
-
-**Non-negotiable rules for audit work:**
-
-- One bullet from the audit = one commit. Never bundle, never split without strong reason.
-- Research for a section is exhaustive — the stop condition is "files for that section ran out", not "I have enough findings".
-- Audit bullets are never deleted for "low impact" / "minor" / "cosmetic" reasons. The only legitimate removal reason is code-level proof that the concern is not real.
-- New findings discovered during research are added to `docs/BIGTECH-AUDIT.md` as bullets before implementation starts — never kept only in chat.
-- Technical decisions (commit granularity, file layout, refactor order) are made solo at FAANG staff+ level. Business decisions are escalated with a concrete recommendation.
-
-**When the audit closes** (all 12 sections marked complete in the progress tracker), remove this block from `CLAUDE.md`, remove the `⚠ ACTIVE WORK` entry from `MEMORY.md`, and delete `project_audit_in_progress.md` from memory. The cleanup ritual is part of the audit's own definition of done — do not skip it.
-
 ## Project Overview
 
 **The Discipline Program** — High-Performance Coaching Platform (LMS + Billing) with Marketing CMS.
