@@ -35,11 +35,15 @@ pre-commit:
 pre-push:
   commands:
     dep-check:
+      env:
+        FORCE_COLOR: "1"
       run: pnpm dep:check
       fail_text: "Dependency-cruiser boundary rules violated — run `pnpm dep:check` locally for details"
 
 commit-msg:
   commands:
     commitlint:
+      env:
+        FORCE_COLOR: "1"
       run: pnpm dlx commitlint --edit {1}
       fail_text: "Commit message format is invalid"
