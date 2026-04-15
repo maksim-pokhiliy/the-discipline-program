@@ -4,6 +4,12 @@ export const MuiAppBar: Components<Theme>["MuiAppBar"] = {
   defaultProps: {
     elevation: 0,
   },
+
+  styleOverrides: {
+    root: {
+      border: "none",
+    },
+  },
 };
 
 export const MuiToolbar: Components<Theme>["MuiToolbar"] = {
