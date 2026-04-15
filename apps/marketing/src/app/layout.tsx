@@ -45,9 +45,31 @@ const RootLayout = ({ children }: RootLayoutProps) => (
     <body id="body-dom-anchor" className={fontVariables}>
       <NextProvider>
         <QueryProvider>
+          <Box
+            component="a"
+            href="#main-content"
+            sx={{
+              position: "absolute",
+              left: "-9999px",
+              top: "auto",
+              width: "1px",
+              height: "1px",
+              overflow: "hidden",
+              "&:focus": {
+                position: "static",
+                width: "auto",
+                height: "auto",
+                overflow: "visible",
+                p: 2,
+              },
+            }}
+          >
+            Skip to content
+          </Box>
+
           <MarketingHeader />
 
-          <Box component="main" sx={{ minHeight: "100vh" }}>
+          <Box component="main" id="main-content" sx={{ minHeight: "100vh" }}>
             {children}
           </Box>
 

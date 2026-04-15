@@ -22,6 +22,27 @@ const RootLayout = ({ children }: RootLayoutProps) => (
       <NextProvider>
         <QueryProvider>
           <AuthProvider>
+            <Box
+              component="a"
+              href="#main-content"
+              sx={{
+                position: "absolute",
+                left: "-9999px",
+                top: "auto",
+                width: "1px",
+                height: "1px",
+                overflow: "hidden",
+                "&:focus": {
+                  position: "static",
+                  width: "auto",
+                  height: "auto",
+                  overflow: "visible",
+                  p: 2,
+                },
+              }}
+            >
+              Skip to content
+            </Box>
             <Box sx={{ minHeight: "100vh" }}>
               {children}
 

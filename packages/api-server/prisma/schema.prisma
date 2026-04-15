@@ -205,7 +205,7 @@ model Transaction {
   currency       Currency
   status         TransactionStatus
   providerTxId   String            @unique
-  idempotencyKey String?           @unique
+  idempotencyKey String            @unique
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 

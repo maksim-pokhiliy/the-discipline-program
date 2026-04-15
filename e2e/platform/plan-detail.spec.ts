@@ -53,17 +53,10 @@ test.describe("Coach Plan Detail", () => {
     await page.getByRole("tab", { name: "Athletes" }).click();
     await expect(page).toHaveURL(/tab=athletes/);
 
-    const hasAthletes = await page
-      .getByText("Enrolled")
-      .first()
-      .isVisible()
-      .catch(() => false);
-    const hasEmptyState = await page
-      .getByText("No athletes enrolled yet")
-      .isVisible()
-      .catch(() => false);
+    const enrolledText = page.getByText("Enrolled").first();
+    const emptyState = page.getByText("No athletes enrolled yet");
 
-    expect(hasAthletes || hasEmptyState).toBeTruthy();
+    await expect(enrolledText.or(emptyState)).toBeVisible();
   });
 
   test("enroll athlete dialog opens", async ({ page }) => {
@@ -73,37 +66,23 @@ test.describe("Coach Plan Detail", () => {
     await page.getByRole("tab", { name: "Athletes" }).click();
     await expect(page).toHaveURL(/tab=athletes/);
 
-    const enrollButton = page.getByRole("button", { name: /enroll/i }).first();
-    const fabButton = page.locator("button[class*='Fab']").first();
-    const hasEnroll = await enrollButton.isVisible().catch(() => false);
-    const hasFab = await fabButton.isVisible().catch(() => false);
+    const fabButton = page.locator("button[class*='Fab']");
+    await expect(fabButton).toBeVisible();
+    await fabButton.click();
 
-    if (hasEnroll) {
-      await enrollButton.click();
-    } else if (hasFab) {
-      await fabButton.click();
-    }
-
-    if (hasEnroll || hasFab) {
-      await expect(page.getByText("Enroll Athletes")).toBeVisible();
-    }
+    await expect(page.getByText("Enroll Athletes")).toBeVisible();
   });
 
-  test("enrollment status chips visible", async ({ page }) => {
+  test("athletes tab shows enrollments or empty state", async ({ page }) => {
     await navigateToPlanDetail(page);
     await expect(page.getByRole("tab", { name: "Athletes" })).toBeVisible({ timeout: 15_000 });
 
     await page.getByRole("tab", { name: "Athletes" }).click();
     await expect(page).toHaveURL(/tab=athletes/);
 
-    const hasEnrolledAthletes = await page
-      .locator("[class*='MuiChip']")
-      .first()
-      .isVisible()
-      .catch(() => false);
+    const enrollmentChip = page.locator("[class*='MuiChip']").first();
+    const emptyState = page.getByText("No athletes enrolled yet");
 
-    if (hasEnrolledAthletes) {
-      await expect(page.locator("[class*='MuiChip']").first()).toBeVisible();
-    }
+    await expect(enrollmentChip.or(emptyState)).toBeVisible();
   });
 });

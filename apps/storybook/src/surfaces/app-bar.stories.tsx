@@ -22,13 +22,13 @@ export const AllVariants: Story = {
       <StorySection title="default" direction="column">
         <AppBar position="static">
           <Toolbar>
-            <IconButton edge="start" color="inherit" sx={{ mr: 2 }}>
+            <IconButton edge="start" color="inherit" aria-label="Menu" sx={{ mr: 2 }}>
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" sx={{ flexGrow: 1 }}>
               App Title
             </Typography>
-            <IconButton color="inherit">
+            <IconButton color="inherit" aria-label="Search">
               <SearchIcon />
             </IconButton>
           </Toolbar>
@@ -54,7 +54,7 @@ export const AllVariants: Story = {
       <StorySection title="dense toolbar" direction="column">
         <AppBar position="static">
           <Toolbar variant="dense">
-            <IconButton edge="start" color="inherit" size="small">
+            <IconButton edge="start" color="inherit" size="small" aria-label="Menu">
               <MenuIcon />
             </IconButton>
             <Typography variant="h6" sx={{ flexGrow: 1, textAlign: "right" }}>

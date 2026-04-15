@@ -137,7 +137,7 @@ export const Adornments: Story = {
             input: {
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton edge="end" size="small">
+                  <IconButton edge="end" size="small" aria-label="Toggle password visibility">
                     <VisibilityIcon />
                   </IconButton>
                 </InputAdornment>

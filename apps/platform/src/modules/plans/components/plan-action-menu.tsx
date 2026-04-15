@@ -60,6 +60,7 @@ export const PlanActionMenu: React.FC<PlanActionMenuProps> = ({
           setMenuOpen(true);
         }}
         disabled={isPending}
+        aria-label="Plan actions"
       >
         <MoreVertIcon fontSize="small" />
       </IconButton>

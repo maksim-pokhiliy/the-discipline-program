@@ -21,3 +21,4 @@ export * from "./css-baseline";
 export * from "./icon-button";
 export * from "./paper";
 export * from "./table-pagination";
+export * from "./typography";

@@ -45,12 +45,12 @@ export const AllVariants: Story = {
 
       <StorySection title="on icon button">
         <Tooltip title="Delete" placement="top">
-          <IconButton>
+          <IconButton aria-label="Delete">
             <DeleteIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Delete" placement="top" arrow>
-          <IconButton>
+          <IconButton aria-label="Delete">
             <DeleteIcon />
           </IconButton>
         </Tooltip>

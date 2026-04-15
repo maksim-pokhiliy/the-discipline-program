@@ -26,7 +26,7 @@ export const SizeByColor: Story = {
       {SIZES.map((size) => (
         <StorySection key={size} title={size}>
           {COLORS.map((color) => (
-            <IconButton key={color} size={size} color={color}>
+            <IconButton key={color} size={size} color={color} aria-label="Settings">
               <SettingsIcon />
             </IconButton>
           ))}
@@ -40,22 +40,22 @@ export const Icons: Story = {
   render: () => (
     <StoryPage>
       <StorySection title="various icons">
-        <IconButton>
+        <IconButton aria-label="Add">
           <AddIcon />
         </IconButton>
-        <IconButton>
+        <IconButton aria-label="Edit">
           <EditIcon />
         </IconButton>
-        <IconButton>
+        <IconButton aria-label="Delete">
           <DeleteIcon />
         </IconButton>
-        <IconButton>
+        <IconButton aria-label="Favorite">
           <FavoriteIcon />
         </IconButton>
-        <IconButton>
+        <IconButton aria-label="More options">
           <MoreVertIcon />
         </IconButton>
-        <IconButton>
+        <IconButton aria-label="Settings">
           <SettingsIcon />
         </IconButton>
       </StorySection>
@@ -67,19 +67,19 @@ export const States: Story = {
   render: () => (
     <StoryPage>
       <StorySection title="default">
-        <IconButton>
+        <IconButton aria-label="Settings">
           <SettingsIcon />
         </IconButton>
       </StorySection>
 
       <StorySection title="disabled">
-        <IconButton disabled>
+        <IconButton disabled aria-label="Settings">
           <SettingsIcon />
         </IconButton>
       </StorySection>
 
       <StorySection title="color=primary disabled">
-        <IconButton color="primary" disabled>
+        <IconButton color="primary" disabled aria-label="Settings">
           <SettingsIcon />
         </IconButton>
       </StorySection>
@@ -91,19 +91,19 @@ export const Edge: Story = {
   render: () => (
     <StoryPage>
       <StorySection title="edge=false (default)">
-        <IconButton>
+        <IconButton aria-label="Settings">
           <SettingsIcon />
         </IconButton>
       </StorySection>
 
       <StorySection title='edge="start"'>
-        <IconButton edge="start">
+        <IconButton edge="start" aria-label="Settings">
           <SettingsIcon />
         </IconButton>
       </StorySection>
 
       <StorySection title='edge="end"'>
-        <IconButton edge="end">
+        <IconButton edge="end" aria-label="Settings">
           <SettingsIcon />
         </IconButton>
       </StorySection>

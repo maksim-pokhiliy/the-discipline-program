@@ -15,7 +15,7 @@ export type PageHeaderProps = {
 export const PageHeader: React.FC<PageHeaderProps> = ({ title, backHref, actions }) => (
   <Stack direction="row" spacing={1} alignItems="center">
     {backHref && (
-      <IconButton component={Link} href={backHref}>
+      <IconButton component={Link} href={backHref} aria-label="Go back">
         <ArrowBackIcon />
       </IconButton>
     )}

@@ -114,6 +114,7 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
           <IconButton
             className={expanded ? undefined : "workout-action"}
             onClick={() => setExpanded((prev) => !prev)}
+            aria-label={expanded ? "Collapse workout" : "Expand workout"}
             sx={{ color: "text.disabled" }}
           >
             <ExpandMoreIcon
@@ -128,6 +129,7 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
           <IconButton
             className="workout-action"
             onClick={() => setConfirmOpen(true)}
+            aria-label="Delete workout"
             sx={{ mr: 0.5 }}
             color="error"
           >

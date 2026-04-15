@@ -15,7 +15,7 @@ export const Drawer = () => {
 
   return (
     <>
-      <IconButton size="medium" color="primary" onClick={toggleDrawer}>
+      <IconButton size="medium" color="primary" onClick={toggleDrawer} aria-label="Open menu">
         <MenuIcon color="primary" />
       </IconButton>
 
@@ -30,6 +30,7 @@ export const Drawer = () => {
           size="medium"
           color="primary"
           onClick={toggleDrawer}
+          aria-label="Close menu"
           sx={{ alignSelf: "flex-end", m: 1 }}
         >
           <ChevronLeftIcon color="primary" />

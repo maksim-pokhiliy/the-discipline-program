@@ -28,7 +28,12 @@ const columns: Column<AdminPageListItem>[] = [
     render: (page) => (
       <Stack direction="row" spacing={1} justifyContent="flex-end">
         <Tooltip title="Edit Content">
-          <IconButton component={Link} href={`/pages/${page.slug}`} color="primary">
+          <IconButton
+            component={Link}
+            href={`/pages/${page.slug}`}
+            color="primary"
+            aria-label="Edit content"
+          >
             <EditIcon fontSize="small" />
           </IconButton>
         </Tooltip>

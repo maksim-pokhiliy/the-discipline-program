@@ -49,7 +49,14 @@ export const AdminHeader = ({ onMenuClick, navigation }: AdminHeaderProps) => {
       }}
     >
       <Toolbar>
-        <IconButton size="medium" color="inherit" edge="start" onClick={onMenuClick} sx={{ mr: 1 }}>
+        <IconButton
+          size="medium"
+          color="inherit"
+          edge="start"
+          onClick={onMenuClick}
+          aria-label="Open menu"
+          sx={{ mr: 1 }}
+        >
           <MenuIcon />
         </IconButton>
 
