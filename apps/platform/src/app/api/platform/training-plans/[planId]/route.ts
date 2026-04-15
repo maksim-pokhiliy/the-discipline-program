@@ -15,9 +15,9 @@ import {
   updateTrainingPlanResponseSchema,
 } from "@repo/contracts/lms/training-plan";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(
+export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetByParamHandler(
       (userId, { planId }) => lmsTrainingPlanApi.getById(userId, planId),
@@ -28,7 +28,7 @@ export const GET = withPlatformAuth(
   ),
 );
 
-export const PUT = withPlatformAuth(
+export const PUT = withCoachAuth(
   withAuthRateLimit(
     createAuthPutByParamHandler(
       (userId, { planId }, data) => lmsTrainingPlanApi.update(userId, planId, data),
@@ -40,7 +40,7 @@ export const PUT = withPlatformAuth(
   ),
 );
 
-export const DELETE = withPlatformAuth(
+export const DELETE = withCoachAuth(
   withAuthRateLimit(
     createAuthDeleteHandler(
       (userId, { planId }) => lmsTrainingPlanApi.delete(userId, planId),

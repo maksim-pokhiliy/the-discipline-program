@@ -18,9 +18,9 @@ import {
   updatePlanEnrollmentResponseSchema,
 } from "@repo/contracts/lms/plan-enrollment";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(
+export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetByParamHandler(
       (userId, { planId, enrollmentId }) =>
@@ -32,7 +32,7 @@ export const GET = withPlatformAuth(
   ),
 );
 
-export const PUT = withPlatformAuth(
+export const PUT = withCoachAuth(
   withAuthRateLimit(
     createAuthPutByParamHandler(
       (userId, { planId, enrollmentId }, data) =>
@@ -45,7 +45,7 @@ export const PUT = withPlatformAuth(
   ),
 );
 
-export const DELETE = withPlatformAuth(
+export const DELETE = withCoachAuth(
   withAuthRateLimit(
     createAuthDeleteHandler(
       (userId, { planId, enrollmentId }) =>

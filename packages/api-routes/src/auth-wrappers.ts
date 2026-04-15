@@ -35,4 +35,19 @@ export const createAuthWrappers = (authOptions: NextAuthOptions) => ({
 
       return await handler(request, context, session.user.id);
     }),
+
+  withCoachAuth: (handler: AuthenticatedHandler): RouteHandler =>
+    withErrorHandling(async (request, context) => {
+      const session = await getServerSession(authOptions);
+
+      if (!session?.user?.id) {
+        throw new UnauthorizedError();
+      }
+
+      if (session.user.role !== UserRole.COACH && session.user.role !== UserRole.ADMIN) {
+        throw new ForbiddenError();
+      }
+
+      return await handler(request, context, session.user.id);
+    }),
 });

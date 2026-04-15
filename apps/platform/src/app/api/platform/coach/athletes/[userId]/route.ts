@@ -5,9 +5,9 @@ import {
   coachAthleteDetailSchema,
 } from "@repo/contracts/coaching/coach-athletes";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(
+export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetByParamHandler(
       (userId, { userId: athleteUserId }) =>

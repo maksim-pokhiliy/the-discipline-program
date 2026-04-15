@@ -6,9 +6,9 @@ import {
   moveWorkoutResponseSchema,
 } from "@repo/contracts/lms/workout";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const PUT = withPlatformAuth(
+export const PUT = withCoachAuth(
   withAuthRateLimit(
     createAuthPutByParamHandler(
       (userId, { workoutId }, { scheduledDate, targetDayOrderedIds }) =>

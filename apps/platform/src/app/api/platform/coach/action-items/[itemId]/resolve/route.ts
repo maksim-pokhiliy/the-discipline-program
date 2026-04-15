@@ -5,9 +5,9 @@ import {
   resolveActionItemResponseSchema,
 } from "@repo/contracts/coaching/coach-action-item";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const POST = withPlatformAuth(
+export const POST = withCoachAuth(
   withAuthRateLimit(
     createAuthActionHandler(
       (userId, { itemId }) => coachingCoachActionItemApi.resolve(userId, itemId),

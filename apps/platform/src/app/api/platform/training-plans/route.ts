@@ -11,9 +11,9 @@ import {
   createTrainingPlanResponseSchema,
 } from "@repo/contracts/lms/training-plan";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(
+export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetHandler(
       (userId) => lmsTrainingPlanApi.getPageData(userId),
@@ -23,7 +23,7 @@ export const GET = withPlatformAuth(
   ),
 );
 
-export const POST = withPlatformAuth(
+export const POST = withCoachAuth(
   withAuthRateLimit(
     createAuthPostHandler(
       (userId, data) => lmsTrainingPlanApi.create(userId, data),

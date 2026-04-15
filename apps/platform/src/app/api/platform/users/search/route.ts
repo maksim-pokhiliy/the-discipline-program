@@ -6,9 +6,9 @@ import {
 import { iamUserSearchApi } from "@repo/api-server/iam";
 import { searchUsersQuerySchema, searchUsersResponseSchema } from "@repo/contracts/iam/user";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(
+export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetWithQueryHandler(
       (userId, { q }) => iamUserSearchApi.search(userId, q),

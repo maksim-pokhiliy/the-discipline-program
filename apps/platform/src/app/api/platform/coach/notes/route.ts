@@ -11,9 +11,9 @@ import {
   getCoachNotesResponseSchema,
 } from "@repo/contracts/coaching/coach-note";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(
+export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetHandler(
       (userId) => coachingCoachNoteApi.getAll(userId),
@@ -23,7 +23,7 @@ export const GET = withPlatformAuth(
   ),
 );
 
-export const POST = withPlatformAuth(
+export const POST = withCoachAuth(
   withAuthRateLimit(
     createAuthPostHandler(
       (userId, data) => coachingCoachNoteApi.create(userId, data),

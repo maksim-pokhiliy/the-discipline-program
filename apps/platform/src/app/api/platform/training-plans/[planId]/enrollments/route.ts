@@ -16,9 +16,9 @@ import {
   createPlanEnrollmentResponseSchema,
 } from "@repo/contracts/lms/plan-enrollment";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(
+export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetByParamHandler(
       (userId, { planId }) => coachingPlanRosterApi.list(userId, planId),
@@ -29,7 +29,7 @@ export const GET = withPlatformAuth(
   ),
 );
 
-export const POST = withPlatformAuth(
+export const POST = withCoachAuth(
   withAuthRateLimit(
     createAuthPostByParamHandler(
       (userId, { planId }, data) => lmsPlanEnrollmentApi.create(userId, planId, data),
