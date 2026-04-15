@@ -68,11 +68,11 @@ packages/
 
 ### App Status
 
-| App       | Status                                                                                                                                       |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Marketing | Working. Billing flow excluded (pages exist as stubs). Routes: `/api/public/*`                                                               |
-| Admin     | Working. CMS (blog, pages, reviews, products, contacts) + Platform section (exercises, categories, users, dashboard). Routes: `/api/admin/*` |
-| Platform  | Scaffolded (Phase 2). Auth, routing, base layout exist. UI screens — Phase 3+. Routes: `/api/platform/*`                                     |
+| App       | Status                                                                                                                |
+| --------- | --------------------------------------------------------------------------------------------------------------------- |
+| Marketing | Working. Billing flow excluded (pages exist as stubs). Routes: `/api/public/*`                                        |
+| Admin     | Working. CMS (blog, pages, reviews, products, contacts) + Platform section (users, dashboard). Routes: `/api/admin/*` |
+| Platform  | Working. Auth, routing, coach UI, athlete UI, training plans, workout management. Routes: `/api/platform/*`           |
 
 ### Source of Truth
 
