@@ -2,6 +2,8 @@ import {
   createAuthDeleteHandler,
   createAuthGetByParamHandler,
   createAuthPutByParamHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
 } from "@repo/api-routes";
 import { coachingPlanRosterApi } from "@repo/api-server/coaching";
 import { lmsPlanEnrollmentApi } from "@repo/api-server/lms";
@@ -19,27 +21,37 @@ import {
 import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
-  createAuthGetByParamHandler(
-    (userId, { planId, enrollmentId }) =>
-      coachingPlanRosterApi.getById(userId, planId, enrollmentId),
-    getPlanRosterEntryByIdParamsSchema,
-    getPlanRosterEntryResponseSchema,
+  withAuthRateLimit(
+    createAuthGetByParamHandler(
+      (userId, { planId, enrollmentId }) =>
+        coachingPlanRosterApi.getById(userId, planId, enrollmentId),
+      getPlanRosterEntryByIdParamsSchema,
+      getPlanRosterEntryResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 
 export const PUT = withPlatformAuth(
-  createAuthPutByParamHandler(
-    (userId, { planId, enrollmentId }, data) =>
-      lmsPlanEnrollmentApi.update(userId, planId, enrollmentId, data),
-    updatePlanEnrollmentParamsSchema,
-    updatePlanEnrollmentRequestSchema,
-    updatePlanEnrollmentResponseSchema,
+  withAuthRateLimit(
+    createAuthPutByParamHandler(
+      (userId, { planId, enrollmentId }, data) =>
+        lmsPlanEnrollmentApi.update(userId, planId, enrollmentId, data),
+      updatePlanEnrollmentParamsSchema,
+      updatePlanEnrollmentRequestSchema,
+      updatePlanEnrollmentResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 
 export const DELETE = withPlatformAuth(
-  createAuthDeleteHandler(
-    (userId, { planId, enrollmentId }) => lmsPlanEnrollmentApi.delete(userId, planId, enrollmentId),
-    deletePlanEnrollmentParamsSchema,
+  withAuthRateLimit(
+    createAuthDeleteHandler(
+      (userId, { planId, enrollmentId }) =>
+        lmsPlanEnrollmentApi.delete(userId, planId, enrollmentId),
+      deletePlanEnrollmentParamsSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );

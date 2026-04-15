@@ -1,4 +1,9 @@
-import { createAuthGetHandler, createAuthPutHandler } from "@repo/api-routes";
+import {
+  createAuthGetHandler,
+  createAuthPutHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
 import { coachingCoachProfileApi } from "@repo/api-server/coaching";
 import {
   getCoachProfileResponseSchema,
@@ -9,16 +14,22 @@ import {
 import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
-  createAuthGetHandler(
-    (userId) => coachingCoachProfileApi.get(userId),
-    getCoachProfileResponseSchema,
+  withAuthRateLimit(
+    createAuthGetHandler(
+      (userId) => coachingCoachProfileApi.get(userId),
+      getCoachProfileResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 
 export const PUT = withPlatformAuth(
-  createAuthPutHandler(
-    (userId, data) => coachingCoachProfileApi.upsert(userId, data),
-    updateCoachProfileRequestSchema,
-    updateCoachProfileResponseSchema,
+  withAuthRateLimit(
+    createAuthPutHandler(
+      (userId, data) => coachingCoachProfileApi.upsert(userId, data),
+      updateCoachProfileRequestSchema,
+      updateCoachProfileResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );

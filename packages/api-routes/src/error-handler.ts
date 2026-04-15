@@ -72,6 +72,12 @@ export const handleApiError = (error: unknown, requestId?: string): NextResponse
   const headers = requestId ? { "x-request-id": requestId } : undefined;
 
   if (error instanceof AppError) {
+    const appErrorHeaders = new Headers(headers);
+
+    if (error.statusCode === 429 && typeof error.details?.retryAfter === "number") {
+      appErrorHeaders.set("Retry-After", String(error.details.retryAfter));
+    }
+
     return NextResponse.json(
       {
         error: {
@@ -81,7 +87,7 @@ export const handleApiError = (error: unknown, requestId?: string): NextResponse
           ...(isDev && { stack: error.stack }),
         },
       },
-      { status: error.statusCode, headers },
+      { status: error.statusCode, headers: appErrorHeaders },
     );
   }
 

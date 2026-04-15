@@ -1,4 +1,8 @@
-import { createAuthVoidPutByParamHandler } from "@repo/api-routes";
+import {
+  createAuthVoidPutByParamHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
 import { lmsWorkoutApi } from "@repo/api-server/lms";
 import {
   reorderWorkoutsParamsSchema,
@@ -8,9 +12,12 @@ import {
 import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const PUT = withPlatformAuth(
-  createAuthVoidPutByParamHandler(
-    (userId, { planId }, { orderedIds }) => lmsWorkoutApi.reorder(userId, planId, orderedIds),
-    reorderWorkoutsParamsSchema,
-    reorderWorkoutsRequestSchema,
+  withAuthRateLimit(
+    createAuthVoidPutByParamHandler(
+      (userId, { planId }, { orderedIds }) => lmsWorkoutApi.reorder(userId, planId, orderedIds),
+      reorderWorkoutsParamsSchema,
+      reorderWorkoutsRequestSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );

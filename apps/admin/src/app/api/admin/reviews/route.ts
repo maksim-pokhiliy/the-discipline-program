@@ -1,4 +1,9 @@
-import { createGetHandler, createPostHandler } from "@repo/api-routes";
+import {
+  createGetHandler,
+  createPostHandler,
+  RATE_LIMIT_TIER,
+  withAuthRateLimit,
+} from "@repo/api-routes";
 import { cmsReviewAdminApi } from "@repo/api-server/cms";
 import {
   createReviewRequestSchema,
@@ -9,8 +14,14 @@ import {
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetHandler(cmsReviewAdminApi.getReviews, getReviewsResponseSchema),
+  withAuthRateLimit(
+    createGetHandler(cmsReviewAdminApi.getReviews, getReviewsResponseSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );
 export const POST = withAdminAuth(
-  createPostHandler(cmsReviewAdminApi.createReview, createReviewRequestSchema, reviewSchema),
+  withAuthRateLimit(
+    createPostHandler(cmsReviewAdminApi.createReview, createReviewRequestSchema, reviewSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );

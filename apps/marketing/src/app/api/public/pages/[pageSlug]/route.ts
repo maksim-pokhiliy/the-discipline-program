@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { type ZodType } from "zod";
 
-import { CACHE_POLICY, withCacheControl, withPublicRoute } from "@repo/api-routes";
+import {
+  CACHE_POLICY,
+  withCacheControl,
+  withPublicRoute,
+  withRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
 import type { RouteContext } from "@repo/api-routes";
 import { cmsPagesPublicApi } from "@repo/api-server/cms";
 import {
@@ -40,4 +46,6 @@ const handler = async (_request: Request, context: RouteContext) => {
   return NextResponse.json(config.schema.parse(data));
 };
 
-export const GET = withPublicRoute(withCacheControl(handler, CACHE_POLICY.STATIC));
+export const GET = withPublicRoute(
+  withRateLimit(withCacheControl(handler, CACHE_POLICY.STATIC), RATE_LIMIT_TIER.PUBLIC),
+);

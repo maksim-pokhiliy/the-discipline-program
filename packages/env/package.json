@@ -8,6 +8,7 @@
     "./base": "./src/base.ts",
     "./auth": "./src/auth.ts",
     "./blob": "./src/blob.ts",
+    "./rate-limit": "./src/rate-limit.ts",
     "./sentry": "./src/sentry.ts"
   },
   "scripts": {

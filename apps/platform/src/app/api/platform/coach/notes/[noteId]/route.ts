@@ -2,6 +2,8 @@ import {
   createAuthDeleteHandler,
   createAuthGetByParamHandler,
   createAuthPutByParamHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
 } from "@repo/api-routes";
 import { coachingCoachNoteApi } from "@repo/api-server/coaching";
 import {
@@ -16,25 +18,34 @@ import {
 import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
-  createAuthGetByParamHandler(
-    (userId, { noteId }) => coachingCoachNoteApi.getById(userId, noteId),
-    getCoachNoteByIdParamsSchema,
-    getCoachNoteByIdResponseSchema,
+  withAuthRateLimit(
+    createAuthGetByParamHandler(
+      (userId, { noteId }) => coachingCoachNoteApi.getById(userId, noteId),
+      getCoachNoteByIdParamsSchema,
+      getCoachNoteByIdResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 
 export const PUT = withPlatformAuth(
-  createAuthPutByParamHandler(
-    (userId, { noteId }, data) => coachingCoachNoteApi.update(userId, noteId, data),
-    updateCoachNoteParamsSchema,
-    updateCoachNoteRequestSchema,
-    updateCoachNoteResponseSchema,
+  withAuthRateLimit(
+    createAuthPutByParamHandler(
+      (userId, { noteId }, data) => coachingCoachNoteApi.update(userId, noteId, data),
+      updateCoachNoteParamsSchema,
+      updateCoachNoteRequestSchema,
+      updateCoachNoteResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 
 export const DELETE = withPlatformAuth(
-  createAuthDeleteHandler(
-    (userId, { noteId }) => coachingCoachNoteApi.delete(userId, noteId),
-    deleteCoachNoteParamsSchema,
+  withAuthRateLimit(
+    createAuthDeleteHandler(
+      (userId, { noteId }) => coachingCoachNoteApi.delete(userId, noteId),
+      deleteCoachNoteParamsSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );

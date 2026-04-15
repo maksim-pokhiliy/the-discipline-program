@@ -16,7 +16,9 @@
     "SENTRY_ORG",
     "SENTRY_PROJECT",
     "NEXT_RUNTIME",
-    "CI"
+    "CI",
+    "UPSTASH_REDIS_REST_URL",
+    "UPSTASH_REDIS_REST_TOKEN"
   ],
   "tasks": {
     "build": {

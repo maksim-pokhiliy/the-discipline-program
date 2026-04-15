@@ -1,4 +1,9 @@
-import { createAuthGetHandler, createAuthPostHandler } from "@repo/api-routes";
+import {
+  createAuthGetHandler,
+  createAuthPostHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
 import { lmsWorkoutLogApi } from "@repo/api-server/lms";
 import {
   createWorkoutLogRequestSchema,
@@ -9,13 +14,19 @@ import {
 import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
-  createAuthGetHandler((userId) => lmsWorkoutLogApi.getAll(userId), getWorkoutLogsResponseSchema),
+  withAuthRateLimit(
+    createAuthGetHandler((userId) => lmsWorkoutLogApi.getAll(userId), getWorkoutLogsResponseSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );
 
 export const POST = withPlatformAuth(
-  createAuthPostHandler(
-    (userId, data) => lmsWorkoutLogApi.create(userId, data),
-    createWorkoutLogRequestSchema,
-    createWorkoutLogResponseSchema,
+  withAuthRateLimit(
+    createAuthPostHandler(
+      (userId, data) => lmsWorkoutLogApi.create(userId, data),
+      createWorkoutLogRequestSchema,
+      createWorkoutLogResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
