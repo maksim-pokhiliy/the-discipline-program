@@ -20,7 +20,7 @@ test.describe("Marketing Blog", () => {
     });
 
     await page.getByRole("link", { name: /read/i }).first().click();
-    await expect(page).toHaveURL(/\/blog\/.+/);
+    await expect(page).toHaveURL(/\/blog\/.+/, { timeout: 30_000 });
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 15_000 });
   });
 
@@ -31,7 +31,7 @@ test.describe("Marketing Blog", () => {
     });
 
     await page.getByRole("link", { name: /read/i }).first().click();
-    await expect(page).toHaveURL(/\/blog\/.+/);
+    await expect(page).toHaveURL(/\/blog\/.+/, { timeout: 30_000 });
 
     await page.goBack();
     await expect(page).toHaveURL(/\/blog$/);

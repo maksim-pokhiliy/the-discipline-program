@@ -80,7 +80,8 @@ test.describe("Coach Plan Detail", () => {
     await page.getByRole("tab", { name: "Athletes" }).click();
     await expect(page).toHaveURL(/tab=athletes/);
 
-    const enrollmentChip = page.locator("[class*='MuiChip']").first();
+    const tabPanel = page.getByRole("tabpanel");
+    const enrollmentChip = tabPanel.locator("[class*='MuiChip']").first();
     const emptyState = page.getByText("No athletes enrolled yet");
 
     await expect(enrollmentChip.or(emptyState)).toBeVisible();
