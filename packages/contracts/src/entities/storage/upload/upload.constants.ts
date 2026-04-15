@@ -1,3 +1,5 @@
+export const BLOB_STORAGE_DOMAIN = ".public.blob.vercel-storage.com";
+
 export const UPLOAD_CONFIG = {
   avatar: {
     maxSize: 2 * 1024 * 1024,

@@ -4,15 +4,11 @@ declare module "@mui/material/styles" {
   interface TypographyVariants {
     display1: React.CSSProperties;
     display2: React.CSSProperties;
-    h3Italic: React.CSSProperties;
-    body1Italic: React.CSSProperties;
   }
 
   interface TypographyVariantsOptions {
     display1?: React.CSSProperties;
     display2?: React.CSSProperties;
-    h3Italic?: React.CSSProperties;
-    body1Italic?: React.CSSProperties;
   }
 }
 
@@ -20,8 +16,6 @@ declare module "@mui/material/Typography" {
   interface TypographyPropsVariantOverrides {
     display1: true;
     display2: true;
-    h3Italic: true;
-    body1Italic: true;
   }
 }
 
@@ -109,11 +103,6 @@ export const typography = (baseTheme: Theme): ThemeOptions["typography"] => {
 
     h3,
 
-    h3Italic: {
-      ...h3,
-      fontStyle: "italic" as const,
-    },
-
     h4: {
       fontSize: baseTheme.typography.pxToRem(20),
 
@@ -137,11 +126,6 @@ export const typography = (baseTheme: Theme): ThemeOptions["typography"] => {
     body2: {
       fontSize: baseTheme.typography.pxToRem(13),
       lineHeight: 1.6,
-    },
-
-    body1Italic: {
-      ...body1,
-      fontStyle: "italic" as const,
     },
 
     subtitle1: {

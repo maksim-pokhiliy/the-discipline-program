@@ -35,7 +35,7 @@ export const DetailDrawer = ({
         {title}
       </Typography>
 
-      <IconButton onClick={onClose} edge="end">
+      <IconButton onClick={onClose} edge="end" aria-label="Close">
         <CloseIcon />
       </IconButton>
     </Stack>

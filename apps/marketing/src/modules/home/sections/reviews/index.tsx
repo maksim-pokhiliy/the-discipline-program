@@ -21,8 +21,9 @@ export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionP
                     <Rating value={review.rating} readOnly size="small" />
 
                     <Typography
-                      variant="body1Italic"
+                      variant="body1"
                       sx={{
+                        fontStyle: "italic",
                         flexGrow: 1,
                       }}
                     >

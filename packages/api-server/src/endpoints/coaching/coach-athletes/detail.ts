@@ -1,6 +1,13 @@
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { ActionItemStatus } from "@repo/contracts/coaching/coach-action-item";
-import type { CoachAthleteDetail } from "@repo/contracts/coaching/coach-athletes";
+import type {
+  AthleteConsistency,
+  CoachAthleteDetail,
+  NextWorkout,
+  PlanDiscipline,
+  RecentWorkout,
+} from "@repo/contracts/coaching/coach-athletes";
+import { type ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { NotFoundError } from "@repo/errors";
 
@@ -28,69 +35,20 @@ import {
   TWO_WEEKS,
 } from "../../../utils/date-helpers";
 import { computeAdherenceWindow, computeProcessStatus } from "../dashboard-computations";
+import type { EnrollmentWithData } from "../enrollment-query";
 import { createEnrollmentInclude } from "../enrollment-query";
 
-export const getAthleteDetail = async (
-  coachUserId: string,
-  athleteUserId: string,
-): Promise<CoachAthleteDetail> => {
-  const coachId = await resolveCoachId(coachUserId);
+type PlanDisciplineResult = {
+  planDiscipline: PlanDiscipline[];
+  processStatus: ProcessStatus;
+  earliestEnrollment: Date;
+  lastActivityDate: Date | null;
+};
 
-  await verifyAthleteBelongsToCoach(athleteUserId, coachId);
-
-  const { timezone: tz } = await findOrThrow(
-    prisma.user.findUnique({ where: { id: coachUserId }, select: { timezone: true } }),
-    "User",
-  );
-
-  const [athlete, enrollments, actionItems] = await Promise.all([
-    findOrThrow(
-      prisma.user.findUnique({
-        where: { id: athleteUserId },
-        select: {
-          name: true,
-          email: true,
-          image: true,
-          athleteProfile: { select: { healthStatus: true } },
-        },
-      }),
-      "Athlete",
-    ),
-
-    prisma.planEnrollment.findMany({
-      where: {
-        userId: athleteUserId,
-        status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
-        trainingPlan: { coachId },
-      },
-      include: createEnrollmentInclude(coachId),
-      orderBy: { startDate: "asc" },
-    }),
-
-    prisma.coachActionItem.findMany({
-      where: {
-        coachId,
-        athleteId: athleteUserId,
-        status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN],
-      },
-      select: { id: true, type: true, severity: true, message: true, createdAt: true },
-      orderBy: { createdAt: "desc" },
-    }),
-  ]);
-
-  const mapActionItems = () =>
-    actionItems.map((item) => ({
-      id: item.id,
-      type: ACTION_ITEM_TYPE_MAP[item.type],
-      severity: ACTION_ITEM_SEVERITY_MAP[item.severity],
-      message: item.message,
-      createdAt: item.createdAt,
-    }));
-
-  if (enrollments.length === 0) {
-    throw new NotFoundError("No active enrollments found for this athlete", { athleteUserId });
-  }
-
+const computePlanDiscipline = (
+  enrollments: EnrollmentWithData[],
+  tz: string,
+): PlanDisciplineResult => {
   const now = new Date();
   const today = startOfTodayInTz(tz);
   const weekStart = startOfWeekInTz(today, tz);
@@ -169,11 +127,16 @@ export const getAthleteDetail = async (
     rollingPrevious.available > 0 ? rollingPrevious.completed / rollingPrevious.available : 0;
   const processStatus = computeProcessStatus(curRate, prevRate);
 
+  return { planDiscipline, processStatus, earliestEnrollment, lastActivityDate };
+};
+
+const findNextWorkout = (enrollments: EnrollmentWithData[]): NextWorkout | null => {
+  const now = new Date();
   const allLoggedIds = new Set(
     enrollments.flatMap((e) => e.user.workoutLogs.map((l) => l.workoutId)),
   );
 
-  let nextWorkout: { title: string; date: Date; planName: string } | null = null;
+  let result: NextWorkout | null = null;
 
   for (const e of enrollments) {
     for (const w of e.trainingPlan.workouts) {
@@ -185,11 +148,24 @@ export const getAthleteDetail = async (
         continue;
       }
 
-      if (!nextWorkout || w.scheduledDate.getTime() < nextWorkout.date.getTime()) {
-        nextWorkout = { title: w.title, date: w.scheduledDate, planName: e.trainingPlan.name };
+      if (!result || w.scheduledDate.getTime() < result.date.getTime()) {
+        result = { title: w.title, date: w.scheduledDate, planName: e.trainingPlan.name };
       }
     }
   }
+
+  return result;
+};
+
+const computeConsistencyMetrics = (
+  enrollments: EnrollmentWithData[],
+  planDiscipline: PlanDiscipline[],
+  tz: string,
+): AthleteConsistency => {
+  const now = new Date();
+  const allLoggedIds = new Set(
+    enrollments.flatMap((e) => e.user.workoutLogs.map((l) => l.workoutId)),
+  );
 
   const rolling28Start = new Date(now.getTime() - FOUR_WEEKS * MS_PER_DAY);
   const window28 = enrollments.reduce(
@@ -245,6 +221,10 @@ export const getAthleteDetail = async (
   );
   const missedThisWeek = weekAggregate.available - weekAggregate.completed;
 
+  return { adherenceRate4w, currentStreak, missedThisWeek };
+};
+
+const computeRecentWorkouts = (enrollments: EnrollmentWithData[]): RecentWorkout[] => {
   const allLogs = enrollments.flatMap((e) => {
     const planWorkoutMap = new Map(e.trainingPlan.workouts.map((w) => [w.id, w]));
 
@@ -263,7 +243,8 @@ export const getAthleteDetail = async (
   });
 
   const seenLogIds = new Set<string>();
-  const recentWorkouts = allLogs
+
+  return allLogs
     .sort((a, b) => b.date.getTime() - a.date.getTime())
     .filter((l) => {
       if (seenLogIds.has(l.id)) {
@@ -275,11 +256,72 @@ export const getAthleteDetail = async (
       return true;
     })
     .slice(0, 7);
+};
+
+export const getAthleteDetail = async (
+  coachUserId: string,
+  athleteUserId: string,
+): Promise<CoachAthleteDetail> => {
+  const coachId = await resolveCoachId(coachUserId);
+
+  await verifyAthleteBelongsToCoach(athleteUserId, coachId);
+
+  const { timezone: tz } = await findOrThrow(
+    prisma.user.findUnique({ where: { id: coachUserId }, select: { timezone: true } }),
+    "User",
+  );
+
+  const [athlete, enrollments, actionItems] = await Promise.all([
+    findOrThrow(
+      prisma.user.findUnique({
+        where: { id: athleteUserId },
+        select: {
+          name: true,
+          email: true,
+          image: true,
+          athleteProfile: { select: { healthStatus: true } },
+        },
+      }),
+      "Athlete",
+    ),
+
+    prisma.planEnrollment.findMany({
+      where: {
+        userId: athleteUserId,
+        status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
+        trainingPlan: { coachId },
+      },
+      include: createEnrollmentInclude(coachId),
+      orderBy: { startDate: "asc" },
+    }),
+
+    prisma.coachActionItem.findMany({
+      where: {
+        coachId,
+        athleteId: athleteUserId,
+        status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN],
+      },
+      select: { id: true, type: true, severity: true, message: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
+  if (enrollments.length === 0) {
+    throw new NotFoundError("No active enrollments found for this athlete", { athleteUserId });
+  }
+
+  const { planDiscipline, processStatus, earliestEnrollment, lastActivityDate } =
+    computePlanDiscipline(enrollments, tz);
+
+  const nextWorkout = findNextWorkout(enrollments);
+  const consistency = computeConsistencyMetrics(enrollments, planDiscipline, tz);
+  const recentWorkouts = computeRecentWorkouts(enrollments);
 
   const healthStatus = athlete.athleteProfile
     ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
     : HealthStatus.HEALTHY;
 
+  const today = startOfTodayInTz(tz);
   const daysSinceLastActivity = lastActivityDate
     ? daysBetweenInTz(new Date(lastActivityDate), today, tz)
     : null;
@@ -293,9 +335,15 @@ export const getAthleteDetail = async (
     processStatus,
     planDiscipline,
     recentWorkouts,
-    actionItems: mapActionItems(),
+    actionItems: actionItems.map((item) => ({
+      id: item.id,
+      type: ACTION_ITEM_TYPE_MAP[item.type],
+      severity: ACTION_ITEM_SEVERITY_MAP[item.severity],
+      message: item.message,
+      createdAt: item.createdAt,
+    })),
     nextWorkout,
-    consistency: { adherenceRate4w, currentStreak, missedThisWeek },
+    consistency,
     enrolledSince: earliestEnrollment,
     lastActivityDate,
     daysSinceLastActivity,

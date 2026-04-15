@@ -139,12 +139,17 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
         render: (item) => (
           <Stack direction="row" spacing={1} justifyContent="flex-end">
             <Tooltip title="Edit">
-              <IconButton component={Link} href={`/contacts/${item.id}`} color="primary">
+              <IconButton
+                component={Link}
+                href={`/contacts/${item.id}`}
+                color="primary"
+                aria-label="Edit"
+              >
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Delete">
-              <IconButton onClick={() => requestDelete(item.id)} color="error">
+              <IconButton onClick={() => requestDelete(item.id)} color="error" aria-label="Delete">
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </Tooltip>

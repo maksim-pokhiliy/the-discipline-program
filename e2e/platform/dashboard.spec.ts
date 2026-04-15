@@ -36,15 +36,22 @@ test.describe("Coach Dashboard", () => {
     await expect(page.getByText("Athletes Today")).toBeVisible();
   });
 
-  test("action item navigation", async ({ page }) => {
+  test("action item menu contains athlete link", async ({ page }) => {
     await page.goto("/coach");
     await expect(page.getByText("Athletes").first()).toBeVisible({ timeout: 15_000 });
 
-    const viewAthleteLink = page.getByText("View Athlete").first();
-    const hasViewAthlete = await viewAthleteLink.isVisible().catch(() => false);
+    const needsAttention = page.getByText("Needs Attention");
+    await expect(needsAttention).toBeVisible();
 
-    if (hasViewAthlete) {
-      await expect(viewAthleteLink).toHaveAttribute("href", /\/coach\/athletes\?athlete=/);
-    }
+    const actionButton = page
+      .locator("button")
+      .filter({ has: page.locator("[data-testid='MoreVertIcon']") })
+      .first();
+    await expect(actionButton).toBeVisible();
+    await actionButton.click();
+
+    const viewAthleteItem = page.getByRole("menuitem", { name: "View Athlete" });
+    await expect(viewAthleteItem).toBeVisible();
+    await expect(viewAthleteItem).toHaveAttribute("href", /\/coach\/athletes\?athlete=/);
   });
 });

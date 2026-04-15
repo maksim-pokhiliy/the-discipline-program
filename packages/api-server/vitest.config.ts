@@ -12,5 +12,16 @@ export default defineConfig({
       NEXT_PUBLIC_APP_URL: "http://localhost:3000",
       NEXT_PUBLIC_MARKETING_URL: "http://localhost:3001",
     },
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.ts"],
+      exclude: ["src/test/**", "src/**/*.test.ts"],
+      thresholds: {
+        lines: 60,
+        functions: 60,
+        branches: 50,
+        statements: 60,
+      },
+    },
   },
 });

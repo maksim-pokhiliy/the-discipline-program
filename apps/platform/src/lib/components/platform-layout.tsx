@@ -32,6 +32,28 @@ export const PlatformLayout = ({
   return (
     <SessionGuard>
       <Stack sx={{ minHeight: "100dvh" }}>
+        <Box
+          component="a"
+          href="#main-content"
+          sx={{
+            position: "absolute",
+            left: "-9999px",
+            top: "auto",
+            width: "1px",
+            height: "1px",
+            overflow: "hidden",
+            "&:focus": {
+              position: "static",
+              width: "auto",
+              height: "auto",
+              overflow: "visible",
+              p: 2,
+            },
+          }}
+        >
+          Skip to content
+        </Box>
+
         <PlatformHeader
           logoHref={logoHref}
           profileHref={profileHref}
@@ -41,7 +63,7 @@ export const PlatformLayout = ({
           onSignOut={handleSignOut}
         />
 
-        <Container component="main" maxWidth="lg" sx={{ flex: 1, pt: 4, pb: 16 }}>
+        <Container component="main" id="main-content" maxWidth="lg" sx={{ flex: 1, pt: 4, pb: 16 }}>
           <Box component="section">{children}</Box>
         </Container>
 

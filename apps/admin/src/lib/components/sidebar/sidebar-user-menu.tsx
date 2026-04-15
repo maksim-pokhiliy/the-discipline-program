@@ -21,11 +21,11 @@ export const SidebarUserMenu = ({ expanded, email, onSignOut }: SidebarUserMenuP
     return (
       <Stack alignItems="center" spacing={0.5} sx={{ py: 1 }}>
         <Tooltip title={email} placement="right">
-          <IconButton>{avatar}</IconButton>
+          <IconButton aria-label="User profile">{avatar}</IconButton>
         </Tooltip>
 
         <Tooltip title="Logout" placement="right">
-          <IconButton size="medium" onClick={onSignOut}>
+          <IconButton size="medium" onClick={onSignOut} aria-label="Logout">
             <LogoutIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -41,7 +41,7 @@ export const SidebarUserMenu = ({ expanded, email, onSignOut }: SidebarUserMenuP
         {email}
       </Typography>
 
-      <IconButton onClick={onSignOut} edge="end">
+      <IconButton onClick={onSignOut} edge="end" aria-label="Logout">
         <LogoutIcon fontSize="small" />
       </IconButton>
     </Stack>

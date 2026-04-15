@@ -149,7 +149,12 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         render: (user) => (
           <Stack direction="row" spacing={0} justifyContent="flex-end">
             <Tooltip title="View">
-              <IconButton component={Link} href={`/users/${user.id}`} color="primary">
+              <IconButton
+                component={Link}
+                href={`/users/${user.id}`}
+                color="primary"
+                aria-label="View"
+              >
                 <VisibilityIcon fontSize="small" />
               </IconButton>
             </Tooltip>

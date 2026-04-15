@@ -59,6 +59,7 @@ export const LoginForm = ({ onSubmit, isLoading = false }: LoginFormProps) => {
                   onClick={() => setShowPassword(!showPassword)}
                   edge="end"
                   disabled={isLoading}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <VisibilityOff /> : <Visibility />}
                 </IconButton>

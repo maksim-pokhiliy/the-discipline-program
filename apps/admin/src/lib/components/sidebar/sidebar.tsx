@@ -68,7 +68,7 @@ export const Sidebar = ({
           height={isExpanded ? LAYOUT.sidebarLogoExpanded : LAYOUT.sidebarLogoCollapsed}
         />
 
-        <IconButton onClick={isDesktop ? onToggle : onMobileClose}>
+        <IconButton onClick={isDesktop ? onToggle : onMobileClose} aria-label="Toggle sidebar">
           {isExpanded ? <ChevronLeftIcon /> : <ChevronRightIcon />}
         </IconButton>
       </Stack>

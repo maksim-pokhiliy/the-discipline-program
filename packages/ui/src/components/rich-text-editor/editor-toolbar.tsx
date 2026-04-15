@@ -169,6 +169,7 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
           <IconButton
             onClick={() => editor.chain().focus().undo().run()}
             disabled={!editor.can().chain().focus().undo().run()}
+            aria-label="Undo"
           >
             <Undo fontSize="small" />
           </IconButton>
@@ -176,6 +177,7 @@ export const EditorToolbar = ({ editor }: EditorToolbarProps) => {
           <IconButton
             onClick={() => editor.chain().focus().redo().run()}
             disabled={!editor.can().chain().focus().redo().run()}
+            aria-label="Redo"
           >
             <Redo fontSize="small" />
           </IconButton>

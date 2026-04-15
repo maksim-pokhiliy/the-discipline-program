@@ -59,7 +59,7 @@ export const BaseModal = ({
       <DialogTitle>
         {title}
 
-        <IconButton onClick={onClose}>
+        <IconButton onClick={onClose} aria-label="Close">
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>

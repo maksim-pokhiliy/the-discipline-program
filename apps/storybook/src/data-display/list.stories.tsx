@@ -85,7 +85,7 @@ export const AllVariants: Story = {
         <List sx={CONTAINER_SX}>
           <ListItem
             secondaryAction={
-              <IconButton edge="end">
+              <IconButton edge="end" aria-label="Delete">
                 <DeleteIcon />
               </IconButton>
             }
@@ -100,7 +100,7 @@ export const AllVariants: Story = {
           </ListItem>
           <ListItem
             secondaryAction={
-              <IconButton edge="end">
+              <IconButton edge="end" aria-label="Delete">
                 <DeleteIcon />
               </IconButton>
             }

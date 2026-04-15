@@ -26,6 +26,7 @@ export const ActionMenu: React.FC<ActionMenuProps> = ({ itemId, href, onResolve,
         color="inherit"
         onClick={() => setMenuOpen(true)}
         disabled={isResolving}
+        aria-label="Actions"
       >
         <MoreVertIcon fontSize="small" />
       </IconButton>

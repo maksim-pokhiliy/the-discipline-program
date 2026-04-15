@@ -92,7 +92,11 @@ export const AthletesFiltersSection: React.FC<AthletesFiltersSectionProps> = ({ 
             ),
             endAdornment: searchInput ? (
               <InputAdornment position="end">
-                <IconButton size="small" onClick={() => setSearchInput("")}>
+                <IconButton
+                  size="small"
+                  onClick={() => setSearchInput("")}
+                  aria-label="Clear search"
+                >
                   <ClearIcon fontSize="small" />
                 </IconButton>
               </InputAdornment>

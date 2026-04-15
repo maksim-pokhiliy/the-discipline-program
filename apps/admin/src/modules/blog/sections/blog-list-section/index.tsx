@@ -150,6 +150,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
                   component={Link}
                   href={`${baseEnv.NEXT_PUBLIC_MARKETING_URL}/blog/${post.slug}`}
                   target="_blank"
+                  aria-label="View public page"
                 >
                   <OpenInNewIcon fontSize="small" />
                 </IconButton>
@@ -157,13 +158,18 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
             )}
 
             <Tooltip title="Edit">
-              <IconButton component={Link} href={`/blog/${post.id}`} color="primary">
+              <IconButton
+                component={Link}
+                href={`/blog/${post.id}`}
+                color="primary"
+                aria-label="Edit"
+              >
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
 
             <Tooltip title="Delete">
-              <IconButton color="error" onClick={() => requestDelete(post.id)}>
+              <IconButton color="error" onClick={() => requestDelete(post.id)} aria-label="Delete">
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </Tooltip>

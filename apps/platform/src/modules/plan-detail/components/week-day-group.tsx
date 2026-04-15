@@ -75,6 +75,7 @@ export const WeekDayGroup: React.FC<WeekDayGroupProps> = ({
         <IconButton
           className="day-action"
           onClick={() => onAddWorkout(date)}
+          aria-label="Add workout"
           sx={(theme) => ({ opacity: 0, transition: theme.transitions.create("opacity") })}
         >
           <AddIcon fontSize="small" />
