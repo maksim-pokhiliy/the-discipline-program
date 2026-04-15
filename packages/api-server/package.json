@@ -9,7 +9,8 @@
     "./coaching": "./src/endpoints/coaching/index.ts",
     "./iam": "./src/endpoints/iam/index.ts",
     "./storage": "./src/endpoints/storage/index.ts",
-    "./ops": "./src/endpoints/ops/index.ts"
+    "./ops": "./src/endpoints/ops/index.ts",
+    "./infrastructure/monitoring": "./src/infrastructure/monitoring/index.ts"
   },
   "scripts": {
     "test": "vitest run",
@@ -25,6 +26,7 @@
   },
   "dependencies": {
     "@prisma/client": "catalog:",
+    "@sentry/nextjs": "catalog:",
     "@repo/contracts": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/errors": "workspace:*",

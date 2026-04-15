@@ -7,7 +7,8 @@
   "exports": {
     "./base": "./src/base.ts",
     "./auth": "./src/auth.ts",
-    "./blob": "./src/blob.ts"
+    "./blob": "./src/blob.ts",
+    "./sentry": "./src/sentry.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",

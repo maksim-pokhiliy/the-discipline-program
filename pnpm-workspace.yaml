@@ -11,12 +11,16 @@ catalog:
   "@emotion/cache": ^11.14.0
   "@emotion/react": ^11.14.0
   "@emotion/styled": ^11.14.0
+  "@eslint/js": ^9.17.0
   "@hookform/resolvers": ^3.9.1
-  "@next/bundle-analyzer": 16.1.1
   "@mui/icons-material": ^7.3.6
   "@mui/material": ^7.3.6
   "@mui/material-nextjs": ^7.3.6
+  "@next/bundle-analyzer": 16.1.1
+  "@next/eslint-plugin-next": 16.1.1
   "@prisma/client": 6.1.0
+  "@sentry/nextjs": ^9.0.0
+  "@storybook/nextjs-vite": ^10.3.3
   "@t3-oss/env-nextjs": 0.13.10
   "@tanstack/react-query": ^5.62.8
   "@tiptap/extension-link": ^3.15.3
@@ -29,11 +33,12 @@ catalog:
   "@types/node": ^22.10.5
   "@types/react": ^19.0.2
   "@types/react-dom": ^19.0.2
+  "@vercel/analytics": ^1.5.0
   "@vercel/blob": ^0.27.0
+  "@vercel/speed-insights": ^1.2.0
+  "@vitest/coverage-v8": ^4.1.0
   bcryptjs: ^2.4.3
   dayjs: ^1.11.13
-  "@eslint/js": ^9.17.0
-  "@next/eslint-plugin-next": 16.1.1
   dotenv: ^17.3.1
   eslint: ^9.17.0
   eslint-config-next: 16.1.1
@@ -57,17 +62,14 @@ catalog:
   react-dom: ^19.2.3
   react-hook-form: ^7.54.2
   sonner: 2.0.7
-  turbo: 2.8.0
-  tsx: ^4.21.0
-  typescript-eslint: ^8.18.2
-  "@storybook/nextjs-vite": ^10.3.3
   storybook: ^10.3.3
+  tsx: ^4.21.0
+  turbo: 2.8.0
   typescript: 5.7.2
-  "@vitest/coverage-v8": ^4.1.0
-  vitest: ^4.1.0
+  typescript-eslint: ^8.18.2
   vite: ^8.0.1
+  vitest: ^4.1.0
   zod: ^3.24.1
-
 onlyBuiltDependencies:
   - "@prisma/client"
   - "@prisma/engines"
@@ -75,4 +77,5 @@ onlyBuiltDependencies:
   - lefthook
   - prisma
   - sharp
+  - "@sentry/cli"
   - unrs-resolver

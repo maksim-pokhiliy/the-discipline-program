@@ -13,6 +13,9 @@
   },
   "dependencies": {
     "@hookform/resolvers": "catalog:",
+    "@sentry/nextjs": "catalog:",
+    "@vercel/analytics": "catalog:",
+    "@vercel/speed-insights": "catalog:",
     "@repo/api-client": "workspace:*",
     "@repo/api-routes": "workspace:*",
     "@repo/api-server": "workspace:*",
