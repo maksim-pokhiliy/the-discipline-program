@@ -1,4 +1,4 @@
-import { Box, Grid, Stack, Typography } from "@mui/material";
+import { Box, Divider, Grid, Stack, Typography } from "@mui/material";
 
 import { type AboutPageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
@@ -11,14 +11,14 @@ export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
   return (
     <ContentSection id="journey" title={journey.title} subtitle={journey.subtitle}>
       <Box sx={{ position: "relative" }}>
-        <Box
+        <Divider
           sx={{
             position: "absolute",
             left: { xs: 2.5, md: "50%" },
             top: 0,
             bottom: 0,
-            width: 0.5,
-            backgroundColor: "primary.main",
+            borderColor: "primary.main",
+            borderWidth: 2,
             transform: { md: "translateX(-50%)" },
           }}
         />

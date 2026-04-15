@@ -40,7 +40,7 @@ export const ProductCard = ({
 
   return (
     <Card variant={cardVariant}>
-      <Stack sx={{ width: "100%" }}>
+      <Stack sx={{ width: "100%", height: "100%" }}>
         <Stack
           spacing={1}
           alignItems="center"

@@ -6,9 +6,7 @@ export const MuiButton: Components<Theme>["MuiButton"] = {
   },
 
   styleOverrides: {
-    root: {
-      textTransform: "none" as const,
-    },
+    root: {},
 
     sizeSmall: ({ theme }) => ({
       fontSize: theme.typography.body2.fontSize,

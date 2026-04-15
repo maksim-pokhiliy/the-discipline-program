@@ -4,6 +4,7 @@ export * from "./bottom-navigation";
 export * from "./button";
 export * from "./button-base";
 export * from "./app-bar";
+export * from "./accordion";
 export * from "./avatar";
 export * from "./badge";
 export * from "./card";

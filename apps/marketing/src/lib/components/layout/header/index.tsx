@@ -28,7 +28,6 @@ export const MarketingHeader = () => {
               backgroundColor: alpha(theme.palette.background.default, 0.4),
               backdropFilter: "saturate(180%) blur(10px)",
               borderRadius: theme.shape.borderRadius,
-              border: `1px solid ${alpha(theme.palette.common.white, 0.08)}`,
               overflow: "hidden",
             })}
           >
