@@ -15,11 +15,12 @@ type AuthUser = {
   name: string | null;
   image: string | null;
   role: UserRole;
+  tokenVersion: number;
 };
 
 export type AuthServiceAdapter = {
   validateUser: (email: string, password: string) => Promise<AuthUser | null>;
-  getUserById: (id: string) => Promise<{ role: UserRole } | null>;
+  getUserById: (id: string) => Promise<{ role: UserRole; tokenVersion: number } | null>;
 };
 
 export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions => ({
@@ -47,6 +48,7 @@ export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions 
           name: user.name,
           image: user.image,
           role: user.role,
+          tokenVersion: user.tokenVersion,
         };
       },
     }),
@@ -59,6 +61,7 @@ export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions 
         token.name = user.name;
         token.image = user.image;
         token.role = user.role;
+        token.tokenVersion = user.tokenVersion;
 
         return token;
       }
@@ -69,7 +72,14 @@ export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions 
         throw new UnauthorizedError("User no longer exists");
       }
 
+      const jwtVersion = token.tokenVersion ?? 0;
+
+      if (jwtVersion !== dbUser.tokenVersion) {
+        throw new UnauthorizedError("Session invalidated");
+      }
+
       token.role = dbUser.role;
+      token.tokenVersion = dbUser.tokenVersion;
 
       return token;
     },

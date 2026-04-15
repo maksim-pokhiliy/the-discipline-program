@@ -42,7 +42,7 @@ export const iamUserAdminApi = {
     try {
       const user = await prisma.user.update({
         where: { id },
-        data: { role: ROLE_TO_PRISMA_MAP[data.role] },
+        data: { role: ROLE_TO_PRISMA_MAP[data.role], tokenVersion: { increment: 1 } },
       });
 
       return mapToUser(user);
