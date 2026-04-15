@@ -55,8 +55,8 @@ catalogs:
       specifier: ^1.59.1
       version: 1.59.1
     '@prisma/client':
-      specifier: 6.1.0
-      version: 6.1.0
+      specifier: 7.7.0
+      version: 7.7.0
     '@sentry/nextjs':
       specifier: ^9.0.0
       version: 9.47.1
@@ -745,7 +745,7 @@ importers:
     dependencies:
       '@prisma/client':
         specifier: 'catalog:'
-        version: 6.1.0(prisma@6.1.0)
+        version: 7.7.0(prisma@6.1.0)(typescript@5.7.2)
       '@repo/contracts':
         specifier: workspace:*
         version: link:../contracts
@@ -2249,13 +2249,19 @@ packages:
   '@popperjs/core@2.11.8':
     resolution: {integrity: sha512-P1st0aksCrn9sGZhp8GMYwBnQsbvAWsZAX44oXNNvLHGqAOcoVxmjZiohstwQ7SqKnbR47akdNi+uleWD8+g6A==}
 
-  '@prisma/client@6.1.0':
-    resolution: {integrity: sha512-AbQYc5+EJKm1Ydfq3KxwcGiy7wIbm4/QbjCKWWoNROtvy7d6a3gmAGkKjK0iUCzh+rHV8xDhD5Cge8ke/kiy5Q==}
-    engines: {node: '>=18.18'}
+  '@prisma/client-runtime-utils@7.7.0':
+    resolution: {integrity: sha512-BLyd0UpFYOtyJFTHm7jS9vesHW7P83abibodQMiIofqjBKzDHQ1VAsQkdfvXyYDkPlONPfOTz7/rv3x/+CQqvQ==}
+
+  '@prisma/client@7.7.0':
+    resolution: {integrity: sha512-5Ar4OsZpJ54s21sy5oDNNW9gQtd4NuxCaiM7+JDTOU07D6VvlpLjYzAVCMB1+JzokN+08dAVomlx+b7bhJd3ww==}
+    engines: {node: ^20.19 || ^22.12 || >=24.0}
     peerDependencies:
       prisma: '*'
+      typescript: '>=5.4.0'
     peerDependenciesMeta:
       prisma:
+        optional: true
+      typescript:
         optional: true
 
   '@prisma/debug@6.1.0':
@@ -7390,9 +7396,14 @@ snapshots:
 
   '@popperjs/core@2.11.8': {}
 
-  '@prisma/client@6.1.0(prisma@6.1.0)':
+  '@prisma/client-runtime-utils@7.7.0': {}
+
+  '@prisma/client@7.7.0(prisma@6.1.0)(typescript@5.7.2)':
+    dependencies:
+      '@prisma/client-runtime-utils': 7.7.0
     optionalDependencies:
       prisma: 6.1.0
+      typescript: 5.7.2
 
   '@prisma/debug@6.1.0': {}
 
