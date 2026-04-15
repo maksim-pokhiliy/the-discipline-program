@@ -90,9 +90,23 @@ describe("cmsPagesPublicApi", () => {
       seeded = await seedPage(PageSlug.HOME, {
         [map.hero]: HERO("Home"),
         [map.whyChoose]: { title: "Why choose", subtitle: "Subtitle", features: [] },
-        [map.storefront]: { title: "Programs", subtitle: "Subtitle" },
+        [map.storefront]: {
+          title: "Programs",
+          subtitle: "Subtitle",
+          buttonText: "View",
+          buttonHref: "/programs",
+          freeLabel: "Free",
+          cardActionLabel: "Details",
+          modalDismissLabel: "Cancel",
+          modalActionLabel: "Sign up",
+        },
         [map.reviews]: { title: "Reviews", subtitle: "Subtitle" },
-        [map.contact]: { title: "Contact", subtitle: "Subtitle" },
+        [map.contact]: {
+          title: "Contact",
+          subtitle: "Subtitle",
+          buttonText: "Reach out",
+          buttonHref: "/contact",
+        },
       });
     });
 
@@ -123,7 +137,13 @@ describe("cmsPagesPublicApi", () => {
 
       seeded = await seedPage(PageSlug.STOREFRONT, {
         [map.hero]: HERO("Storefront"),
-        [map.grid]: { title: "Programs", subtitle: "Subtitle" },
+        [map.grid]: {
+          title: "Programs",
+          subtitle: "Subtitle",
+          freeLabel: "Free",
+          modalDismissLabel: "Cancel",
+          modalActionLabel: "Sign up",
+        },
         [map.cta]: CTA,
       });
     });
@@ -152,9 +172,16 @@ describe("cmsPagesPublicApi", () => {
 
       seeded = await seedPage(PageSlug.ABOUT, {
         [map.hero]: HERO("About"),
-        [map.journey]: { title: "Journey", subtitle: "Subtitle", milestones: [] },
-        [map.credentials]: { title: "Credentials", subtitle: "Subtitle", credentials: [] },
-        [map.personal]: { title: "Personal", subtitle: "Subtitle" },
+        [map.journey]: { title: "Journey", subtitle: "Subtitle", timeline: [] },
+        [map.credentials]: { title: "Credentials", subtitle: "Subtitle", items: [] },
+        [map.personal]: {
+          title: "Personal",
+          subtitle: "Subtitle",
+          description: "Bio text",
+          image: "https://example.com/photo.jpg",
+          name: "Coach",
+          role: "Head Coach",
+        },
         [map.cta]: CTA,
       });
     });
@@ -219,7 +246,18 @@ describe("cmsPagesPublicApi", () => {
 
       seeded = await seedPage(PageSlug.CONTACT, {
         [map.hero]: HERO("Contact"),
-        [map.form]: { title: "Form", subtitle: "Subtitle", submitButtonText: "Send", fields: [] },
+        [map.form]: {
+          title: "Form",
+          subtitle: "Subtitle",
+          successTitle: "Sent",
+          successMessage: "We will get back to you",
+          submitLabel: "Send",
+          sendAnotherLabel: "Send another",
+          sendingLabel: "Sending...",
+          errorMessage: "Something went wrong",
+          fieldLabels: { name: "Name", contact: "Contact", program: "Program", message: "Message" },
+          fieldPlaceholders: { contact: "Email or phone", message: "Your message" },
+        },
       });
     });
 
