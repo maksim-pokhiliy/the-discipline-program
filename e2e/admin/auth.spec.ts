@@ -8,7 +8,7 @@ test.describe("Admin Auth", () => {
     await page.goto("/login");
 
     await page.getByLabel("Email").fill(ADMIN_CREDENTIALS.email);
-    await page.getByLabel("Password").fill(ADMIN_CREDENTIALS.password);
+    await page.getByLabel("Password", { exact: true }).fill(ADMIN_CREDENTIALS.password);
     await page.getByRole("button", { name: "Sign In" }).click();
 
     await page.waitForURL("/");
@@ -20,7 +20,7 @@ test.describe("Admin Auth", () => {
     await page.goto("/login");
 
     await page.getByLabel("Email").fill(ADMIN_CREDENTIALS.email);
-    await page.getByLabel("Password").fill("wrong-password-123");
+    await page.getByLabel("Password", { exact: true }).fill("wrong-password-123");
     await page.getByRole("button", { name: "Sign In" }).click();
 
     await expect(page.getByRole("alert")).toBeVisible();

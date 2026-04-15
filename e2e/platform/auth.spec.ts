@@ -15,7 +15,7 @@ test.describe("Platform Authentication", () => {
   test("shows error for invalid credentials", async ({ page }) => {
     await page.goto("/login");
     await page.getByLabel("Email").fill(COACH_CREDENTIALS.email);
-    await page.getByLabel("Password").fill("wrong-password-123");
+    await page.getByLabel("Password", { exact: true }).fill("wrong-password-123");
     await page.getByRole("button", { name: "Sign In" }).click();
 
     await expect(page.getByRole("alert")).toBeVisible();

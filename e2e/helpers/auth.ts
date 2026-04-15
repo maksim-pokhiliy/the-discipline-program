@@ -13,7 +13,7 @@ const COACH_CREDENTIALS = {
 export const loginAsAdmin = async (page: Page) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill(ADMIN_CREDENTIALS.email);
-  await page.getByLabel("Password").fill(ADMIN_CREDENTIALS.password);
+  await page.getByLabel("Password", { exact: true }).fill(ADMIN_CREDENTIALS.password);
   await page.getByRole("button", { name: "Sign In" }).click();
   await page.waitForURL("/");
 };
@@ -21,7 +21,7 @@ export const loginAsAdmin = async (page: Page) => {
 export const loginAsCoach = async (page: Page) => {
   await page.goto("/login");
   await page.getByLabel("Email").fill(COACH_CREDENTIALS.email);
-  await page.getByLabel("Password").fill(COACH_CREDENTIALS.password);
+  await page.getByLabel("Password", { exact: true }).fill(COACH_CREDENTIALS.password);
   await page.getByRole("button", { name: "Sign In" }).click();
   await page.waitForURL(/\/coach/);
 };
