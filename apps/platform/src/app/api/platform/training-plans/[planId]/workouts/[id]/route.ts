@@ -15,9 +15,9 @@ import {
   updateWorkoutResponseSchema,
 } from "@repo/contracts/lms/workout";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(
+export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetByParamHandler(
       (userId, { planId, id }) => lmsWorkoutApi.getById(userId, planId, id),
@@ -28,7 +28,7 @@ export const GET = withPlatformAuth(
   ),
 );
 
-export const PUT = withPlatformAuth(
+export const PUT = withCoachAuth(
   withAuthRateLimit(
     createAuthPutByParamHandler(
       (userId, { planId, id }, data) => lmsWorkoutApi.update(userId, planId, id, data),
@@ -40,7 +40,7 @@ export const PUT = withPlatformAuth(
   ),
 );
 
-export const DELETE = withPlatformAuth(
+export const DELETE = withCoachAuth(
   withAuthRateLimit(
     createAuthDeleteHandler(
       (userId, { planId, id }) => lmsWorkoutApi.delete(userId, planId, id),

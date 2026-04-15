@@ -5,9 +5,9 @@ import {
   duplicateTrainingPlanResponseSchema,
 } from "@repo/contracts/lms/training-plan";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const POST = withPlatformAuth(
+export const POST = withCoachAuth(
   withAuthRateLimit(
     createAuthActionHandler(
       (userId, { planId }) => lmsTrainingPlanApi.duplicate(userId, planId),

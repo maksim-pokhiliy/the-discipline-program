@@ -9,9 +9,9 @@ import {
   getCalendarWeekResponseSchema,
 } from "@repo/contracts/lms/training-plan";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(
+export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetWithQueryHandler(
       (userId, { weekStart }) => lmsTrainingPlanApi.getCalendarWeek(userId, weekStart),

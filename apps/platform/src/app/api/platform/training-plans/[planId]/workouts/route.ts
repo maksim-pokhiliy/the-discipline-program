@@ -13,9 +13,9 @@ import {
   getWorkoutsResponseSchema,
 } from "@repo/contracts/lms/workout";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(
+export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetByParamHandler(
       (userId, { planId }) => lmsWorkoutApi.getAll(userId, planId),
@@ -26,7 +26,7 @@ export const GET = withPlatformAuth(
   ),
 );
 
-export const POST = withPlatformAuth(
+export const POST = withCoachAuth(
   withAuthRateLimit(
     createAuthPostByParamHandler(
       (userId, { planId }, data) => lmsWorkoutApi.create(userId, planId, data),

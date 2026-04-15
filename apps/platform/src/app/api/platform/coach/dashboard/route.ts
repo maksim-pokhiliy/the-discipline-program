@@ -2,9 +2,9 @@ import { createAuthGetHandler, withAuthRateLimit, RATE_LIMIT_TIER } from "@repo/
 import { coachingCoachDashboardApi } from "@repo/api-server/coaching";
 import { coachDashboardDataSchema } from "@repo/contracts/coaching/coach-dashboard";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(
+export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetHandler(
       (userId) => coachingCoachDashboardApi.getDashboard(userId),
