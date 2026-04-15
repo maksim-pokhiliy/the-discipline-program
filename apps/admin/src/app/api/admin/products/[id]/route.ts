@@ -1,19 +1,41 @@
-import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
-import { adminProductsApi } from "@repo/api-server";
+import {
+  createDeleteHandler,
+  createGetByIdHandler,
+  createPutHandler,
+  RATE_LIMIT_TIER,
+  withAuthRateLimit,
+} from "@repo/api-routes";
+import { cmsProductAdminApi } from "@repo/api-server/cms";
 import {
   deleteProductParamsSchema,
   getProductByIdParamsSchema,
+  productSchema,
   updateProductParamsSchema,
   updateProductRequestSchema,
-} from "@repo/contracts/product";
+} from "@repo/contracts/cms/product";
+
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetByIdHandler(adminProductsApi.getById, getProductByIdParamsSchema),
+  withAuthRateLimit(
+    createGetByIdHandler(cmsProductAdminApi.getById, getProductByIdParamsSchema, productSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );
 export const PUT = withAdminAuth(
-  createPutHandler(adminProductsApi.update, updateProductParamsSchema, updateProductRequestSchema),
+  withAuthRateLimit(
+    createPutHandler(
+      cmsProductAdminApi.update,
+      updateProductParamsSchema,
+      updateProductRequestSchema,
+      productSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
 );
 export const DELETE = withAdminAuth(
-  createDeleteHandler(adminProductsApi.delete, deleteProductParamsSchema),
+  withAuthRateLimit(
+    createDeleteHandler(cmsProductAdminApi.delete, deleteProductParamsSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );

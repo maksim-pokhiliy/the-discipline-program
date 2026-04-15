@@ -1,4 +1,3 @@
-export { createPagesAPI } from "./pages";
-export { createProductsAPI } from "./products";
-export { createReviewsAPI } from "./reviews";
+export { createBlogAPI } from "./blog";
 export { createContactAPI } from "./contact";
+export { createPagesAPI } from "./pages";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
 import {
   Checkbox,
@@ -15,40 +15,45 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import dynamic from "next/dynamic";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { BlogCategory, type CreateBlogPostData } from "@repo/contracts/blog";
-import { UPLOAD_CONFIG } from "@repo/contracts/upload";
-import { slugify } from "@repo/shared";
-import { FormCard, ImageUpload, RichTextEditor, TagsInput } from "@repo/ui";
+import {
+  BLOG_CATEGORY_LABELS,
+  BlogCategory,
+  type CreateBlogPostData,
+} from "@repo/contracts/cms/blog";
+import { UPLOAD_CONFIG } from "@repo/contracts/storage/upload";
+import { FormCard, ImageUpload, TagsInput } from "@repo/ui";
 
-import { useUploadImage } from "@app/lib/hooks";
+const RichTextEditor = dynamic(
+  () => import("@repo/ui").then((m) => ({ default: m.RichTextEditor })),
+  { ssr: false },
+);
 
-interface BlogPostFormProps {
+import { useAutoSlug, useUploadImage } from "@app/lib/hooks";
+
+type BlogPostFormProps = {
   isLoading?: boolean;
   disableAutoSlug?: boolean;
-}
+};
 
 export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: BlogPostFormProps) => {
+  const form = useFormContext<CreateBlogPostData>();
   const {
     register,
     watch,
     setValue,
     control,
-    formState: { errors, dirtyFields },
-  } = useFormContext<CreateBlogPostData>();
+    formState: { errors },
+  } = form;
 
   const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
 
-  const title = watch("title");
+  useAutoSlug({ disabled: disableAutoSlug, form });
+
   const content = watch("content");
   const excerpt = watch("excerpt");
-
-  useEffect(() => {
-    if (!disableAutoSlug && title && !dirtyFields.slug) {
-      setValue("slug", slugify(title), { shouldValidate: true });
-    }
-  }, [title, dirtyFields.slug, setValue, disableAutoSlug]);
 
   const wordCount = useMemo(() => {
     if (!content) {
@@ -147,15 +152,13 @@ export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: Blo
 
                 <Select
                   label="Category"
-                  defaultValue="Uncategorized"
+                  defaultValue={BlogCategory.UNCATEGORIZED}
                   {...register("category")}
                   disabled={isLoading}
                 >
-                  <MenuItem value="Uncategorized">Uncategorized</MenuItem>
-
                   {Object.values(BlogCategory).map((cat) => (
                     <MenuItem key={cat} value={cat}>
-                      {cat}
+                      {BLOG_CATEGORY_LABELS[cat]}
                     </MenuItem>
                   ))}
                 </Select>
@@ -207,7 +210,9 @@ export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: Blo
                     },
                   );
                 }}
-                onRemove={() => setValue("coverImage", "", { shouldDirty: true })}
+                onRemove={() => {
+                  setValue("coverImage", "", { shouldDirty: true });
+                }}
               />
             </Stack>
           </FormCard>

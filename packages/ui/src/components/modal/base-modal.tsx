@@ -1,26 +1,28 @@
+"use client";
+
 import { type ReactNode } from "react";
 
 import CloseIcon from "@mui/icons-material/Close";
 import {
   Dialog,
+  DialogActions,
   DialogTitle,
   DialogContent,
   IconButton,
-  Typography,
-  Stack,
   type DialogProps,
 } from "@mui/material";
 
-export interface BaseModalProps {
+export type BaseModalProps = {
   open: boolean;
   onClose: () => void;
   title: string;
   maxWidth?: DialogProps["maxWidth"];
   fullWidth?: boolean;
   children: ReactNode;
+  actions?: ReactNode;
   disableBackdropClick?: boolean;
   disableEscapeKeyDown?: boolean;
-}
+};
 
 export const BaseModal = ({
   open,
@@ -29,6 +31,7 @@ export const BaseModal = ({
   maxWidth = "sm",
   fullWidth = true,
   children,
+  actions,
   disableBackdropClick = false,
   disableEscapeKeyDown = false,
 }: BaseModalProps) => {
@@ -52,30 +55,18 @@ export const BaseModal = ({
       fullWidth={fullWidth}
       disableRestoreFocus={true}
       disableAutoFocus={false}
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: 2,
-            overflow: "hidden",
-          },
-        },
-      }}
     >
-      <DialogTitle component={Stack} direction="row">
-        <Typography variant="body2">{title}</Typography>
+      <DialogTitle>
+        {title}
 
-        <IconButton
-          onClick={onClose}
-          size="small"
-          sx={{
-            color: "text.secondary",
-          }}
-        >
+        <IconButton onClick={onClose} aria-label="Close">
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
 
       <DialogContent>{children}</DialogContent>
+
+      {actions && <DialogActions>{actions}</DialogActions>}
     </Dialog>
   );
 };

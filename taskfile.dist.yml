@@ -2,15 +2,9 @@ version: "3"
 
 tasks:
   clean:
-    desc: "Remove node_modules, .turbo, .next"
+    desc: "Remove node_modules, .turbo, .next, dist"
     cmds:
-      - rm -rf node_modules
-      - rm -rf .turbo
-      - find . -name "node_modules" -type d -prune -exec rm -rf '{}' +
-      - find . -name "dist" -type d -prune -exec rm -rf '{}' +
-      - find . -name ".next" -type d -prune -exec rm -rf '{}' +
-      - find . -name ".turbo" -type d -prune -exec rm -rf '{}' +
-      - pnpm store prune
+      - node scripts/clean.mjs
 
   install:
     desc: "Install all dependencies"
@@ -54,14 +48,60 @@ tasks:
       - pnpm check-types
 
   test:
-    desc: "Run all tests"
+    desc: "Run unit/integration tests (Vitest)"
     cmds:
       - pnpm test
 
   test:watch:
-    desc: "Run tests in watch mode"
+    desc: "Run unit/integration tests in watch mode"
     cmds:
       - pnpm test:watch
+
+  e2e:
+    desc: "Run E2E browser tests (Playwright, headless)"
+    cmds:
+      - pnpm e2e
+
+  e2e:ui:
+    desc: "Run E2E tests with interactive Playwright UI"
+    cmds:
+      - pnpm e2e:ui
+
+  e2e:headed:
+    desc: "Run E2E tests with visible browser"
+    cmds:
+      - pnpm e2e:headed
+
+  test:all:
+    desc: "Run all tests (Vitest + Playwright E2E)"
+    cmds:
+      - task: test
+      - task: e2e
+
+  dep:check:
+    desc: "Validate dependency boundaries (bounded-context rules)"
+    cmds:
+      - pnpm dep:check
+
+  dep:graph:
+    desc: "Regenerate dependency graph (docs/DEPENDENCY-GRAPH.md)"
+    cmds:
+      - pnpm dep:graph
+
+  analyze:admin:
+    desc: "Bundle analysis for admin app"
+    cmds:
+      - pnpm analyze:admin
+
+  analyze:marketing:
+    desc: "Bundle analysis for marketing app"
+    cmds:
+      - pnpm analyze:marketing
+
+  analyze:platform:
+    desc: "Bundle analysis for platform app"
+    cmds:
+      - pnpm analyze:platform
 
   clean-start:
     desc: "Clean project, install dependencies, start dev server"

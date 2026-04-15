@@ -3,14 +3,16 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { type PlanRosterEntry } from "@repo/contracts/coaching/plan-roster";
 import type {
   CreatePlanEnrollmentData,
   PlanEnrollment,
   UpdatePlanEnrollmentData,
-} from "@repo/contracts/plan-enrollment";
-import { platformKeys } from "@repo/query";
+} from "@repo/contracts/lms/plan-enrollment";
+import { useOptimisticMutation } from "@repo/query";
 
 import { api } from "../api";
+import { platformKeys } from "../api/keys";
 
 export const usePlanEnrollments = (planId: string) =>
   useQuery({
@@ -42,66 +44,50 @@ export const useBulkEnrollAthletes = (planId: string) => {
 
   return useMutation({
     mutationFn: async (userIds: string[]) => {
-      const results: Awaited<ReturnType<typeof api.planEnrollments.create>>[] = [];
+      const results = await Promise.allSettled(
+        userIds.map((id) => api.planEnrollments.create(planId, { userId: id })),
+      );
 
-      for (const id of userIds) {
-        results.push(await api.planEnrollments.create(planId, { userId: id }));
+      const fulfilled = results.filter(
+        (r): r is PromiseFulfilledResult<PlanEnrollment> => r.status === "fulfilled",
+      );
+      const rejected = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+
+      if (rejected.length > 0 && fulfilled.length === 0) {
+        throw new Error("Failed to enroll athletes");
       }
 
-      return results;
+      return { fulfilled, rejected };
     },
-    onSuccess: (results) => {
+    onSuccess: ({ fulfilled, rejected }) => {
       queryClient.invalidateQueries({
         queryKey: platformKeys.planEnrollments.byPlan(planId),
       });
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-      toast.success(`${results.length} athlete${results.length === 1 ? "" : "s"} enrolled`);
+
+      if (rejected.length > 0) {
+        toast.warning(`${fulfilled.length} enrolled, ${rejected.length} failed`);
+      } else {
+        toast.success(`${fulfilled.length} athlete${fulfilled.length === 1 ? "" : "s"} enrolled`);
+      }
     },
-    onError: (error: Error) => {
+    onError: () => {
       queryClient.invalidateQueries({
         queryKey: platformKeys.planEnrollments.byPlan(planId),
       });
-      toast.error(error.message || "Failed to enroll athletes");
+      toast.error("Failed to enroll athletes");
     },
   });
 };
 
-export const useUpdatePlanEnrollment = (planId: string) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdatePlanEnrollmentData }) =>
-      api.planEnrollments.update(planId, id, data),
-    onMutate: async ({ id, data }) => {
-      const key = platformKeys.planEnrollments.byPlan(planId);
-
-      await queryClient.cancelQueries({ queryKey: key });
-
-      const previous = queryClient.getQueryData<PlanEnrollment[]>(key);
-
-      if (previous) {
-        queryClient.setQueryData(
-          key,
-          previous.map((e) => (e.id === id ? { ...e, ...data } : e)),
-        );
-      }
-
-      return { previous };
-    },
-    onError: (_error, _vars, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(platformKeys.planEnrollments.byPlan(planId), context.previous);
-      }
-
-      toast.error("Failed to update enrollment");
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: platformKeys.planEnrollments.byPlan(planId),
-      });
-    },
+export const useUpdatePlanEnrollment = (planId: string) =>
+  useOptimisticMutation<PlanRosterEntry[], { id: string; data: UpdatePlanEnrollmentData }>({
+    mutationFn: ({ id, data }) => api.planEnrollments.update(planId, id, data),
+    queryKey: platformKeys.planEnrollments.byPlan(planId),
+    transform: (prev, { id, data }) => prev.map((e) => (e.id === id ? { ...e, ...data } : e)),
+    invalidateKeys: [platformKeys.planEnrollments.byPlan(planId)],
+    errorMessage: "Failed to update enrollment",
   });
-};
 
 export const useDeletePlanEnrollment = (planId: string) => {
   const queryClient = useQueryClient();

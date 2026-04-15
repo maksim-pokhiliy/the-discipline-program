@@ -1,7 +1,11 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformBenchmarkDefinitionsApi } from "@repo/api-server";
+import {
+  createAuthDeleteHandler,
+  createAuthGetByParamHandler,
+  createAuthPutByParamHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { lmsBenchmarkDefinitionApi } from "@repo/api-server/lms";
 import {
   deleteBenchmarkDefinitionParamsSchema,
   getBenchmarkDefinitionByIdParamsSchema,
@@ -9,30 +13,40 @@ import {
   updateBenchmarkDefinitionParamsSchema,
   updateBenchmarkDefinitionRequestSchema,
   updateBenchmarkDefinitionResponseSchema,
-} from "@repo/contracts/benchmark-definition";
+} from "@repo/contracts/lms/benchmark-definition";
 
-export const GET = withPlatformAuth(async (_, context) => {
-  const { definitionId } = getBenchmarkDefinitionByIdParamsSchema.parse(await context.params);
-  const data = await platformBenchmarkDefinitionsApi.getById(definitionId);
-  const validated = getBenchmarkDefinitionResponseSchema.parse(data);
+import { withPlatformAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(validated);
-});
+export const GET = withPlatformAuth(
+  withAuthRateLimit(
+    createAuthGetByParamHandler(
+      (_userId, { definitionId }) => lmsBenchmarkDefinitionApi.getById(definitionId),
+      getBenchmarkDefinitionByIdParamsSchema,
+      getBenchmarkDefinitionResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-export const PUT = withPlatformAuth(async (request, context) => {
-  const { definitionId } = updateBenchmarkDefinitionParamsSchema.parse(await context.params);
-  const body = await request.json();
-  const data = updateBenchmarkDefinitionRequestSchema.parse(body);
-  const result = await platformBenchmarkDefinitionsApi.update(definitionId, data);
-  const validated = updateBenchmarkDefinitionResponseSchema.parse(result);
+export const PUT = withPlatformAuth(
+  withAuthRateLimit(
+    createAuthPutByParamHandler(
+      (userId, { definitionId }, data) =>
+        lmsBenchmarkDefinitionApi.update(userId, definitionId, data),
+      updateBenchmarkDefinitionParamsSchema,
+      updateBenchmarkDefinitionRequestSchema,
+      updateBenchmarkDefinitionResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
-
-export const DELETE = withPlatformAuth(async (_, context) => {
-  const { definitionId } = deleteBenchmarkDefinitionParamsSchema.parse(await context.params);
-
-  await platformBenchmarkDefinitionsApi.delete(definitionId);
-
-  return NextResponse.json({ success: true });
-});
+export const DELETE = withPlatformAuth(
+  withAuthRateLimit(
+    createAuthDeleteHandler(
+      (userId, { definitionId }) => lmsBenchmarkDefinitionApi.delete(userId, definitionId),
+      deleteBenchmarkDefinitionParamsSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

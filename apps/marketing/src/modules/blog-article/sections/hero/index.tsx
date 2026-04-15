@@ -1,112 +1,56 @@
-import { alpha, Box, Chip, Container, Stack, Typography } from "@mui/material";
-import Image from "next/image";
+import { Button, Chip, Stack, Typography } from "@mui/material";
 
-import { type PublicBlogPost } from "@repo/contracts/blog";
+import {
+  BLOG_CATEGORY_LABELS,
+  type BlogPostPageData,
+  type PublicBlogPost,
+} from "@repo/contracts/cms/blog";
 
-interface BlogArticleHeroProps {
+import { FullscreenSection } from "@app/lib/components/ui";
+
+type BlogArticleHeroProps = {
   post: PublicBlogPost;
-}
+  labels: BlogPostPageData["labels"];
+};
 
-export const BlogArticleHero = ({ post }: BlogArticleHeroProps) => {
+export const BlogArticleHero = ({ post, labels }: BlogArticleHeroProps) => {
   const publishedDate = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
       })
-    : "Not published";
+    : labels.notPublishedLabel;
 
   return (
-    <Box sx={{ position: "relative", overflow: "hidden" }}>
-      <Box
-        sx={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 0,
-        }}
+    <FullscreenSection backgroundImage={post.coverImage ?? "/images/pages/home-hero.png"} priority>
+      <Chip label={BLOG_CATEGORY_LABELS[post.category]} color="primary" />
+
+      <Typography variant="display1" component="h1" textAlign="center">
+        {post.title}
+      </Typography>
+
+      <Typography variant="h5" sx={{ color: "text.secondary" }}>
+        {post.excerpt}
+      </Typography>
+
+      <Stack
+        direction="row"
+        spacing={3}
+        alignItems="center"
+        sx={{ color: "text.secondary" }}
+        divider={<Typography variant="body1">•</Typography>}
       >
-        {post.coverImage && (
-          <Image
-            src={post.coverImage}
-            alt={post.title}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            fill
-            priority
-            style={{
-              objectFit: "cover",
-              objectPosition: "center",
-            }}
-          />
-        )}
+        <Typography variant="body1">{post.authorName}</Typography>
+        <Typography variant="body1">{publishedDate}</Typography>
+        <Typography variant="body1">
+          {post.readTime} {labels.minReadSuffix}
+        </Typography>
+      </Stack>
 
-        <Box
-          sx={(theme) => ({
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: alpha(theme.palette.common.black, 0.6),
-          })}
-        />
-      </Box>
-
-      <Box
-        sx={{
-          position: "relative",
-          zIndex: 1,
-          py: { xs: 8, md: 12 },
-          color: "white",
-        }}
-      >
-        <Container maxWidth="md">
-          <Stack spacing={4} alignItems="center" textAlign="center">
-            <Chip label={post.category} color="primary" sx={{ fontWeight: 600 }} />
-
-            <Typography
-              variant="h1"
-              component="h1"
-              sx={(theme) => ({
-                textShadow: `0 2px 4px ${alpha(theme.palette.common.black, 0.8)}`,
-                color: "white",
-              })}
-            >
-              {post.title}
-            </Typography>
-
-            <Typography
-              variant="h5"
-              sx={(theme) => ({
-                maxWidth: "800px",
-                lineHeight: 1.6,
-                textShadow: `0 1px 2px ${alpha(theme.palette.common.black, 0.8)}`,
-                color: alpha(theme.palette.common.white, 0.8),
-              })}
-            >
-              {post.excerpt}
-            </Typography>
-
-            <Stack
-              direction="row"
-              spacing={3}
-              alignItems="center"
-              sx={(theme) => ({
-                color: alpha(theme.palette.common.white, 0.8),
-                fontSize: "0.875rem",
-              })}
-            >
-              <Typography variant="body2">{post.authorName}</Typography>
-              <Typography variant="body2">•</Typography>
-              <Typography variant="body2">{publishedDate}</Typography>
-              <Typography variant="body2">•</Typography>
-              <Typography variant="body2">{post.readTime} min read</Typography>
-            </Stack>
-          </Stack>
-        </Container>
-      </Box>
-    </Box>
+      <Button size="large" variant="contained" href="#content" sx={{ mt: 4 }}>
+        {labels.readArticleLabel}
+      </Button>
+    </FullscreenSection>
   );
 };

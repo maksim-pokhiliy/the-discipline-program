@@ -3,9 +3,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { createReviewSchema, type CreateReviewData, type Review } from "@repo/contracts/review";
-import { QueryWrapper } from "@repo/query";
-import { FormView } from "@repo/ui";
+import { createReviewSchema, type CreateReviewData, type Review } from "@repo/contracts/cms/review";
+import { FormView, QueryWrapper } from "@repo/ui";
 
 import { useReview, useUpdateReview } from "@app/lib/hooks";
 

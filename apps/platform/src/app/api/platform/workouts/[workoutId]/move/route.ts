@@ -1,24 +1,22 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformWorkoutsApi } from "@repo/api-server";
+import { createAuthPutByParamHandler, withAuthRateLimit, RATE_LIMIT_TIER } from "@repo/api-routes";
+import { lmsWorkoutApi } from "@repo/api-server/lms";
 import {
   moveWorkoutParamsSchema,
   moveWorkoutRequestSchema,
   moveWorkoutResponseSchema,
-} from "@repo/contracts/workout";
+} from "@repo/contracts/lms/workout";
 
-export const PUT = withPlatformAuth(async (request, context, userId) => {
-  const { workoutId } = moveWorkoutParamsSchema.parse(await context.params);
-  const body = await request.json();
-  const { scheduledDate, targetDayOrderedIds } = moveWorkoutRequestSchema.parse(body);
-  const result = await platformWorkoutsApi.move(
-    userId,
-    workoutId,
-    scheduledDate,
-    targetDayOrderedIds,
-  );
-  const validated = moveWorkoutResponseSchema.parse(result);
+import { withCoachAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(validated);
-});
+export const PUT = withCoachAuth(
+  withAuthRateLimit(
+    createAuthPutByParamHandler(
+      (userId, { workoutId }, { scheduledDate, targetDayOrderedIds }) =>
+        lmsWorkoutApi.move(userId, workoutId, scheduledDate, targetDayOrderedIds),
+      moveWorkoutParamsSchema,
+      moveWorkoutRequestSchema,
+      moveWorkoutResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

@@ -18,30 +18,59 @@ import {
   type AdminPageDetails,
   type SectionSchemaKey,
   type UpdatePageSectionData,
-  type HeroSectionType,
-} from "@repo/contracts/pages";
+} from "@repo/contracts/cms/pages";
 
+import { SECTION_FEATURES, type HeroSectionType } from "../../config/section-features";
 import { ContactFormSectionForm } from "../sections/contact-form-section-form";
 import { ContactSectionForm } from "../sections/contact-section-form";
 import { CredentialsSectionForm } from "../sections/credentials-section-form";
-import { DirectContactSectionForm } from "../sections/direct-contact-section-form";
 import { FaqSectionForm } from "../sections/faq-section-form";
 import { HeroSectionForm } from "../sections/hero-section-form";
 import { JourneySectionForm } from "../sections/journey-section-form";
 import { PersonalSectionForm } from "../sections/personal-section-form";
 import { ReviewsSectionForm } from "../sections/reviews-section-form";
+import { StorefrontProgramsSectionForm } from "../sections/storefront-programs-section-form";
 import { StorefrontSectionForm } from "../sections/storefront-section-form";
+import { TitleSectionForm } from "../sections/title-section-form";
 import { WhyChooseSectionForm } from "../sections/why-choose-section-form";
+
+const SECTION_LABELS: Record<SectionSchemaKey, string> = {
+  "home:hero": "Home Hero",
+  "about:hero": "About Hero",
+  "contact:hero": "Contact Hero",
+  "blog:hero": "Blog Hero",
+  "storefront:hero": "Storefront Hero",
+  "faq:hero": "FAQ Hero",
+  "home:whyChoose": "Why Choose Us",
+  "home:storefront": "Storefront",
+  "storefront:grid": "Storefront Grid",
+  "storefront:cta": "Storefront CTA",
+  "blog:grid": "Blog Grid",
+  "blog:related": "Blog Related",
+  "contact:form": "Contact Form",
+  "home:reviews": "Reviews",
+  "home:contact": "Contact",
+  "about:cta": "About CTA",
+  "faq:cta": "FAQ CTA",
+  "about:journey": "Journey",
+  "about:credentials": "Credentials",
+  "about:personal": "Personal",
+  "faq:content": "FAQ Content",
+};
+
+const isSectionSchemaKey = (key: string): key is SectionSchemaKey => key in SECTION_SCHEMAS;
+
+const isHeroSectionType = (key: string): key is HeroSectionType => key in SECTION_FEATURES;
 
 type SectionData = AdminPageDetails["sections"][number];
 
-interface SectionEditorProps {
+type SectionEditorProps = {
   section: SectionData;
   isExpanded: boolean;
   onToggle: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   onSave: (data: UpdatePageSectionData["data"]) => void;
   isLoading: boolean;
-}
+};
 
 export const SectionEditor = ({
   section,
@@ -50,63 +79,79 @@ export const SectionEditor = ({
   onSave,
   isLoading,
 }: SectionEditorProps) => {
-  const currentSchema = SECTION_SCHEMAS[section.section as SectionSchemaKey];
+  const currentSchema = isSectionSchemaKey(section.section)
+    ? SECTION_SCHEMAS[section.section]
+    : undefined;
+
+  const parsedData = currentSchema?.safeParse(section.data);
+  const safeDefaultValues = parsedData?.success ? parsedData.data : {};
 
   const methods = useForm<UpdatePageSectionData["data"]>({
-    defaultValues: section.data as UpdatePageSectionData["data"],
+    defaultValues: safeDefaultValues,
     resolver: currentSchema ? zodResolver(currentSchema) : undefined,
     mode: "onChange",
   });
 
   const renderForm = () => {
     switch (section.section) {
-      case "hero":
+      case "home:hero":
       case "about:hero":
       case "contact:hero":
       case "blog:hero":
-      case "storefront:hero": {
-        return <HeroSectionForm sectionType={section.section as HeroSectionType} />;
+      case "storefront:hero":
+      case "faq:hero": {
+        if (!isHeroSectionType(section.section)) {
+          return null;
+        }
+
+        return <HeroSectionForm sectionType={section.section} />;
       }
 
-      case "whyChoose": {
+      case "home:whyChoose": {
         return <WhyChooseSectionForm />;
       }
 
-      case "storefront": {
+      case "home:storefront": {
+        return <StorefrontProgramsSectionForm />;
+      }
+
+      case "storefront:grid":
+      case "blog:grid": {
         return <StorefrontSectionForm />;
       }
 
-      case "reviews": {
-        return <ReviewsSectionForm />;
+      case "blog:related": {
+        return <TitleSectionForm cardTitle="Related Articles Settings" />;
       }
 
-      case "contact":
-      case "storefront:cta":
-      case "cta": {
-        return <ContactSectionForm />;
-      }
-
-      case "journey": {
-        return <JourneySectionForm />;
-      }
-
-      case "credentials": {
-        return <CredentialsSectionForm />;
-      }
-
-      case "personal": {
-        return <PersonalSectionForm />;
-      }
-
-      case "form": {
+      case "contact:form": {
         return <ContactFormSectionForm />;
       }
 
-      case "directContact": {
-        return <DirectContactSectionForm />;
+      case "home:reviews": {
+        return <ReviewsSectionForm />;
       }
 
-      case "faq": {
+      case "home:contact":
+      case "storefront:cta":
+      case "about:cta":
+      case "faq:cta": {
+        return <ContactSectionForm />;
+      }
+
+      case "about:journey": {
+        return <JourneySectionForm />;
+      }
+
+      case "about:credentials": {
+        return <CredentialsSectionForm />;
+      }
+
+      case "about:personal": {
+        return <PersonalSectionForm />;
+      }
+
+      case "faq:content": {
         return <FaqSectionForm />;
       }
 
@@ -125,8 +170,8 @@ export const SectionEditor = ({
   return (
     <Accordion expanded={isExpanded} onChange={onToggle}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-          {section.section.toUpperCase()}
+        <Typography variant="subtitle1">
+          {isSectionSchemaKey(section.section) ? SECTION_LABELS[section.section] : section.section}
         </Typography>
       </AccordionSummary>
 

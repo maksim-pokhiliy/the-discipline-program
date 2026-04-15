@@ -1,23 +1,14 @@
-import { Box, Container } from "@mui/material";
+import { type PublicBlogPost } from "@repo/contracts/cms/blog";
+import { ContentSection, RichTextViewer } from "@repo/ui";
 
-import { type PublicBlogPost } from "@repo/contracts/blog";
-import { RichTextViewer } from "@repo/ui";
-
-interface BlogArticleContentProps {
+type BlogArticleContentProps = {
   post: PublicBlogPost;
-}
+};
 
 export const BlogArticleContent = ({ post }: BlogArticleContentProps) => {
   return (
-    <Box
-      sx={(theme) => ({
-        py: 8,
-        backgroundColor: theme.palette.background.default,
-      })}
-    >
-      <Container maxWidth="md">
-        <RichTextViewer content={post.content} />
-      </Container>
-    </Box>
+    <ContentSection id="content" maxWidth="md" animated={false}>
+      <RichTextViewer content={post.content} />
+    </ContentSection>
   );
 };

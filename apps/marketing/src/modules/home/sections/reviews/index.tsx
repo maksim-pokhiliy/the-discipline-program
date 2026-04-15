@@ -1,21 +1,21 @@
 import { Avatar, Card, CardContent, Grid, Rating, Stack, Typography } from "@mui/material";
 
-import { type HomePageData } from "@repo/contracts/pages";
+import { type HomePageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
-interface HomeReviewsSectionProps {
+type HomeReviewsSectionProps = {
   reviews: HomePageData["reviews"];
   reviewsList: HomePageData["reviewsList"];
-}
+};
 
 export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionProps) => {
   return (
-    <ContentSection title={reviews.title} subtitle={reviews.subtitle} backgroundColor="dark">
+    <ContentSection id="reviews" title={reviews.title} subtitle={reviews.subtitle}>
       <Grid container spacing={4}>
         {reviewsList.map((review) => (
           <Grid key={review.id} size={{ xs: 12, md: 4 }}>
-            <Card sx={{ height: "100%", display: "flex" }}>
-              <CardContent sx={{ display: "flex", flexDirection: "column", width: "100%" }}>
+            <Card>
+              <CardContent>
                 <Stack spacing={4} sx={{ height: "100%" }}>
                   <Stack spacing={2} sx={{ height: "100%" }}>
                     <Rating value={review.rating} readOnly size="small" />
@@ -23,26 +23,19 @@ export const HomeReviewsSection = ({ reviews, reviewsList }: HomeReviewsSectionP
                     <Typography
                       variant="body1"
                       sx={{
-                        flexGrow: 1,
                         fontStyle: "italic",
-                        lineHeight: 1.6,
+                        flexGrow: 1,
                       }}
                     >
                       &quot;{review.text}&quot;
                     </Typography>
                   </Stack>
 
-                  <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-                    <Avatar
-                      src={review.authorAvatar ?? ""}
-                      alt={review.authorName}
-                      sx={{ width: 50, height: 50 }}
-                    />
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Avatar src={review.authorAvatar ?? ""} alt={review.authorName} />
 
                     <Stack spacing={0.5}>
-                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                        {review.authorName}
-                      </Typography>
+                      <Typography variant="body2">{review.authorName}</Typography>
 
                       <Typography variant="caption" color="text.secondary">
                         {review.authorRole}

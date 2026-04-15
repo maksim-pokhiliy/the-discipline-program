@@ -1,24 +1,29 @@
+import { cache } from "react";
+
 import { type Metadata } from "next";
 
-import { SEO_CONFIG } from "@repo/shared";
+import { BLOG_CATEGORY_LABELS } from "@repo/contracts/cms/blog";
 
 import { serverApi } from "@app/lib/api/server";
-import { BlogArticlePageClient } from "@app/modules/blog-article";
+import { SEO_CONFIG } from "@app/lib/seo";
+import { BlogArticlePageContent } from "@app/modules/blog-article";
 
-interface BlogArticlePageProps {
+const getBlogArticle = cache((slug: string) => serverApi.blog.getArticle(slug));
+
+type BlogArticlePageProps = {
   params: Promise<{ slug: string }>;
-}
+};
 
-export async function generateMetadata({ params }: BlogArticlePageProps): Promise<Metadata> {
+export const generateMetadata = async ({ params }: BlogArticlePageProps): Promise<Metadata> => {
   const { slug } = await params;
 
   try {
-    const { post } = await serverApi.pages.getBlogArticle(slug);
+    const { post } = await getBlogArticle(slug);
 
     const images = post.coverImage ? [post.coverImage] : [];
 
     return {
-      title: `${post.title} | The Discipline Program`,
+      title: `${post.title} | ${SEO_CONFIG.siteName}`,
       description: post.excerpt ?? undefined,
       keywords: post.tags.join(", "),
       openGraph: {
@@ -29,7 +34,7 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
         url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
         publishedTime: post.publishedAt.toISOString(),
         authors: [post.authorName],
-        section: post.category,
+        section: BLOG_CATEGORY_LABELS[post.category],
         tags: post.tags,
       },
       twitter: {
@@ -41,17 +46,19 @@ export async function generateMetadata({ params }: BlogArticlePageProps): Promis
     };
   } catch {
     return {
-      title: "Article Not Found | The Discipline Program",
+      title: `Article Not Found | ${SEO_CONFIG.siteName}`,
       description: "The requested article could not be found.",
     };
   }
-}
+};
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
-export default async function BlogArticlePage({ params }: BlogArticlePageProps) {
+const BlogArticlePage = async ({ params }: BlogArticlePageProps) => {
   const { slug } = await params;
-  const initialData = await serverApi.pages.getBlogArticle(slug);
+  const data = await getBlogArticle(slug);
 
-  return <BlogArticlePageClient slug={slug} initialData={initialData} />;
-}
+  return <BlogArticlePageContent slug={slug} data={data} />;
+};
+
+export default BlogArticlePage;

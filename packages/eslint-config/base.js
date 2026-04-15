@@ -2,7 +2,7 @@ import js from "@eslint/js";
 import eslintConfigPrettier from "eslint-config-prettier";
 import turboPlugin from "eslint-plugin-turbo";
 import tseslint from "typescript-eslint";
-import onlyWarn from "eslint-plugin-only-warn";
+
 import importPlugin from "eslint-plugin-import";
 
 export const config = [
@@ -70,18 +70,23 @@ export const config = [
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "max-lines": ["error", { max: 300, skipBlankLines: true, skipComments: true }],
       "@typescript-eslint/no-non-null-assertion": "error",
+      "no-console": "error",
     },
   },
   {
-    plugins: {
-      onlyWarn,
+    files: ["**/logger.ts"],
+    rules: {
+      "no-console": "off",
     },
   },
   {
     files: ["**/prisma/seed.ts"],
     rules: {
       "@typescript-eslint/no-non-null-assertion": "off",
+      "max-lines": "off",
+      "no-console": "off",
     },
   },
   {

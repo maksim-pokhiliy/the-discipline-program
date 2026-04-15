@@ -1,18 +1,25 @@
 "use client";
 
-import { type KeyboardEvent, useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton, InputBase, Stack, Tab, Tabs } from "@mui/material";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { QueryWrapper } from "@repo/query";
+import { LoadingState, QueryWrapper } from "@repo/ui";
 
 import { useTrainingPlan, useUpdateTrainingPlan } from "@app/lib/hooks";
 
 import { PlanStatusSelect } from "../components";
-import { PlanAthletesSection, PlanScheduleSection } from "../sections";
+import { PlanAthletesSection } from "../sections";
+
+const PlanScheduleSection = dynamic(
+  () =>
+    import("../sections/plan-schedule-section").then((m) => ({ default: m.PlanScheduleSection })),
+  { ssr: false, loading: () => <LoadingState message="Loading schedule..." /> },
+);
 
 type PlanDetailViewProps = {
   planId: string;
@@ -27,17 +34,19 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [nameValue, setNameValue] = useState("");
-  const [descValue, setDescValue] = useState("");
-  const [initialized, setInitialized] = useState(false);
+  const planName = plan?.name ?? "";
+  const planDescription = plan?.description ?? "";
+  const planDataId = plan?.id;
+  const [nameValue, setNameValue] = useState(planName);
+  const [descValue, setDescValue] = useState(planDescription);
 
-  if (plan && !initialized) {
-    setNameValue(plan.name);
-    setDescValue(plan.description ?? "");
-    setInitialized(true);
-  }
+  useEffect(() => {
+    setNameValue(planName);
+    setDescValue(planDescription);
+  }, [planDataId, planName, planDescription]);
 
-  const activeTab = (searchParams.get("tab") as TabValue) ?? "schedule";
+  const rawTab = searchParams.get("tab");
+  const activeTab: TabValue = rawTab === "athletes" ? "athletes" : "schedule";
 
   const handleTabChange = useCallback(
     (_: React.SyntheticEvent, value: TabValue) => {
@@ -77,19 +86,13 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
     }
   }, [descValue, plan, planId, updatePlan]);
 
-  const handleNameKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      (e.target as HTMLInputElement).blur();
-    }
-  };
-
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={plan} loadingMessage="Loading plan...">
       {(data) => (
-        <Stack spacing={2}>
+        <Stack spacing={4}>
           <Stack spacing={0.5}>
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-              <IconButton component={Link} href="/coach/plans" size="small">
+            <Stack direction="row" spacing={1} alignItems="center">
+              <IconButton component={Link} href="/coach/plans" aria-label="Back to plans">
                 <ArrowBackIcon />
               </IconButton>
 
@@ -97,12 +100,10 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
                 value={nameValue}
                 onChange={(e) => setNameValue(e.target.value)}
                 onBlur={commitName}
-                onKeyDown={handleNameKeyDown}
-                sx={{ flex: 1, typography: "h5", "& input": { p: 0 } }}
-                slotProps={{ input: { maxLength: 200 } }}
+                sx={{ flex: 1, typography: "h4", "& input": { p: 0 } }}
               />
 
-              <PlanStatusSelect planId={data.id} status={data.status} />
+              <PlanStatusSelect planId={data.id} planName={data.name} status={data.status} />
             </Stack>
 
             <InputBase
@@ -111,8 +112,7 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
               onBlur={commitDescription}
               placeholder="Add description..."
               multiline
-              sx={{ typography: "body2", color: "text.secondary", pl: 5.5, "& textarea": { p: 0 } }}
-              slotProps={{ input: { maxLength: 2000 } }}
+              sx={{ typography: "body1", color: "text.secondary", "& textarea": { p: 0 } }}
             />
           </Stack>
 

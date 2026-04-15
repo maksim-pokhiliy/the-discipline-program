@@ -2,17 +2,16 @@
 
 import { useForm } from "react-hook-form";
 
-import { type UserRole } from "@repo/contracts/auth";
-import { type AdminUser } from "@repo/contracts/user";
-import { QueryWrapper } from "@repo/query";
-import { FormView } from "@repo/ui";
+import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
+import { type UserRole } from "@repo/contracts/iam/auth";
+import { FormView, QueryWrapper } from "@repo/ui";
 
 import { useUpdateUserRole, useUser } from "@app/lib/hooks";
 
 import { UserDetailSection } from "../../sections";
 
 type UserDetailFormProps = {
-  user: AdminUser;
+  user: AdminUserView;
 };
 
 const UserDetailForm: React.FC<UserDetailFormProps> = ({ user }) => {
@@ -33,7 +32,6 @@ const UserDetailForm: React.FC<UserDetailFormProps> = ({ user }) => {
       subtitle={user.email}
       backHref="/users"
       backLabel="Back to Users"
-      backgroundColor="dark"
     >
       <UserDetailSection user={user} isPending={isPending} />
     </FormView>

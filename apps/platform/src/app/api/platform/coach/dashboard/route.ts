@@ -1,12 +1,15 @@
-import { NextResponse } from "next/server";
+import { createAuthGetHandler, withAuthRateLimit, RATE_LIMIT_TIER } from "@repo/api-routes";
+import { coachingCoachDashboardApi } from "@repo/api-server/coaching";
+import { coachDashboardDataSchema } from "@repo/contracts/coaching/coach-dashboard";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformCoachDashboardApi } from "@repo/api-server";
-import { coachDashboardDataSchema } from "@repo/contracts/coach-dashboard";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (_, _context, userId) => {
-  const data = await platformCoachDashboardApi.getDashboard(userId);
-  const validated = coachDashboardDataSchema.parse(data);
-
-  return NextResponse.json(validated);
-});
+export const GET = withCoachAuth(
+  withAuthRateLimit(
+    createAuthGetHandler(
+      (userId) => coachingCoachDashboardApi.getDashboard(userId),
+      coachDashboardDataSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

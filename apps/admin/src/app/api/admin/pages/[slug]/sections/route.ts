@@ -1,19 +1,16 @@
-import { NextResponse } from "next/server";
+import { createPatchByParamHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@repo/api-routes";
+import { cmsPagesAdminApi } from "@repo/api-server/cms";
+import { pageSlugRouteParamsSchema, updatePageSectionBodySchema } from "@repo/contracts/cms/pages";
 
-import { withAdminAuth } from "@repo/api-routes/auth";
-import { adminPagesApi } from "@repo/api-server";
-import { pageSlugRouteParamsSchema, updatePageSectionSchema } from "@repo/contracts/pages";
+import { withAdminAuth } from "@app/lib/server/auth";
 
-export const PATCH = withAdminAuth(async (request, { params }) => {
-  const { slug } = pageSlugRouteParamsSchema.parse(await params);
-  const body = await request.json();
-
-  const validatedData = updatePageSectionSchema.parse({
-    ...body,
-    pageSlug: slug,
-  });
-
-  await adminPagesApi.updateSection(validatedData);
-
-  return NextResponse.json({ success: true });
-});
+export const PATCH = withAdminAuth(
+  withAuthRateLimit(
+    createPatchByParamHandler(
+      ({ slug }, body) => cmsPagesAdminApi.updateSection({ ...body, pageSlug: slug }),
+      pageSlugRouteParamsSchema,
+      updatePageSectionBodySchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

@@ -1,49 +1,51 @@
 import { NextResponse } from "next/server";
+import { type ZodType } from "zod";
 
-import { handleApiError } from "@repo/api-routes";
-import { pagesApi } from "@repo/api-server";
-import { getPageBySlugParamsSchema } from "@repo/contracts/pages";
+import {
+  CACHE_POLICY,
+  withCacheControl,
+  withPublicRoute,
+  withRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import type { RouteContext } from "@repo/api-routes";
+import { cmsPagesPublicApi } from "@repo/api-server/cms";
+import {
+  getPageBySlugParamsSchema,
+  getHomePageResponseSchema,
+  getStorefrontProgramsPageResponseSchema,
+  getAboutPageResponseSchema,
+  getBlogPageResponseSchema,
+  getContactPageResponseSchema,
+  getFaqPageResponseSchema,
+} from "@repo/contracts/cms/pages";
 import { NotFoundError } from "@repo/errors";
 
-export async function GET(_: Request, { params }: { params: Promise<{ pageSlug: string }> }) {
-  try {
-    const { pageSlug } = getPageBySlugParamsSchema.parse(await params);
+const PAGE_HANDLERS: Record<string, { fetch: () => Promise<unknown>; schema: ZodType }> = {
+  home: { fetch: cmsPagesPublicApi.getHomePage, schema: getHomePageResponseSchema },
+  storefront: {
+    fetch: cmsPagesPublicApi.getStorefrontProgramsPage,
+    schema: getStorefrontProgramsPageResponseSchema,
+  },
+  about: { fetch: cmsPagesPublicApi.getAboutPage, schema: getAboutPageResponseSchema },
+  blog: { fetch: cmsPagesPublicApi.getBlogPage, schema: getBlogPageResponseSchema },
+  contact: { fetch: cmsPagesPublicApi.getContactPage, schema: getContactPageResponseSchema },
+  faq: { fetch: cmsPagesPublicApi.getFaqPage, schema: getFaqPageResponseSchema },
+};
 
-    let pageData;
+const handler = async (_request: Request, context: RouteContext) => {
+  const { pageSlug } = getPageBySlugParamsSchema.parse(await context.params);
+  const config = PAGE_HANDLERS[pageSlug];
 
-    switch (pageSlug) {
-      case "home": {
-        pageData = await pagesApi.getHomePage();
-        break;
-      }
-
-      case "storefront": {
-        pageData = await pagesApi.getStorefrontProgramsPage();
-        break;
-      }
-
-      case "about": {
-        pageData = await pagesApi.getAboutPage();
-        break;
-      }
-
-      case "blog": {
-        pageData = await pagesApi.getBlogPage();
-        break;
-      }
-
-      case "contact": {
-        pageData = await pagesApi.getContactPage();
-        break;
-      }
-
-      default: {
-        throw new NotFoundError("Page not found", { pageSlug });
-      }
-    }
-
-    return NextResponse.json(pageData);
-  } catch (error) {
-    return handleApiError(error);
+  if (!config) {
+    throw new NotFoundError("Page not found", { pageSlug });
   }
-}
+
+  const data = await config.fetch();
+
+  return NextResponse.json(config.schema.parse(data));
+};
+
+export const GET = withPublicRoute(
+  withRateLimit(withCacheControl(handler, CACHE_POLICY.STATIC), RATE_LIMIT_TIER.PUBLIC),
+);

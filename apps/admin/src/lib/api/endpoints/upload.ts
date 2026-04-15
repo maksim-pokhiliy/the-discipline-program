@@ -1,5 +1,5 @@
 import { type ApiClient } from "@repo/api-client";
-import { type UploadContext } from "@repo/contracts/upload";
+import { type UploadContext } from "@repo/contracts/storage/upload";
 
 export const createUploadAPI = (client: ApiClient) => ({
   uploadImage: (file: File, context: UploadContext) => {
@@ -11,5 +11,5 @@ export const createUploadAPI = (client: ApiClient) => ({
     return client.request<{ url: string }>("/api/admin/upload/image", "POST", formData);
   },
 
-  deleteImage: (url: string) => client.request("/api/admin/upload/image", "DELETE", { url }),
+  deleteImage: (url: string) => client.request<void>("/api/admin/upload/image", "DELETE", { url }),
 });

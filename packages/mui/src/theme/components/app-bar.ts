@@ -6,9 +6,17 @@ export const MuiAppBar: Components<Theme>["MuiAppBar"] = {
   },
 
   styleOverrides: {
+    root: {
+      border: "none",
+    },
+  },
+};
+
+export const MuiToolbar: Components<Theme>["MuiToolbar"] = {
+  styleOverrides: {
     root: ({ theme }) => ({
-      backgroundColor: theme.palette.appBar.main,
-      position: "sticky",
+      padding: theme.spacing(2),
+      height: "unset",
     }),
   },
 };

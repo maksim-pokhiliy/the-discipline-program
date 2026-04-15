@@ -3,13 +3,12 @@
 import { useRef, useState } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
-import DoneIcon from "@mui/icons-material/Done";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 
-import { PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
+import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { ConfirmationModal } from "@repo/ui";
 
 type EnrollmentActionMenuProps = {
@@ -18,7 +17,8 @@ type EnrollmentActionMenuProps = {
   athleteName: string;
   onUpdate: (id: string, status: PlanEnrollmentStatus) => void;
   onDelete: (id: string) => void;
-  isPending: boolean;
+  isUpdating: boolean;
+  isDeleting: boolean;
 };
 
 export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
@@ -27,8 +27,10 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
   athleteName,
   onUpdate,
   onDelete,
-  isPending,
+  isUpdating,
+  isDeleting,
 }) => {
+  const isPending = isUpdating || isDeleting;
   const [menuOpen, setMenuOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
@@ -44,9 +46,9 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
     <>
       <IconButton
         ref={anchorRef}
-        size="small"
         onClick={() => setMenuOpen(true)}
         disabled={isPending}
+        aria-label="Enrollment actions"
       >
         <MoreVertIcon fontSize="small" />
       </IconButton>
@@ -76,18 +78,6 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
           </MenuItem>
         )}
 
-        {status !== PlanEnrollmentStatus.COMPLETED && (
-          <MenuItem
-            onClick={handle(() => onUpdate(enrollmentId, PlanEnrollmentStatus.COMPLETED))}
-            disabled={isPending}
-          >
-            <ListItemIcon>
-              <DoneIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText primary="Complete" secondary="Mark program as finished" />
-          </MenuItem>
-        )}
-
         <MenuItem
           onClick={() => {
             close();
@@ -110,7 +100,7 @@ export const EnrollmentActionMenu: React.FC<EnrollmentActionMenuProps> = ({
         type="danger"
         message={`Remove ${athleteName} from this plan?`}
         details="The athlete will lose access to this plan's workouts."
-        isConfirming={isPending}
+        isConfirming={isDeleting}
         onConfirm={() => onDelete(enrollmentId)}
       />
     </>

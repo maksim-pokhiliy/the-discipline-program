@@ -1,36 +1,37 @@
-export interface NavLink {
+export type NavLink = {
   text: string;
   href: string;
-  icon?: string;
-}
+};
 
-export interface AdminNavLink {
+export type AdminNavLink = {
   text: string;
   href: string;
   icon: string;
-}
+};
 
-export interface AdminNavGroup {
+export type AdminNavGroup = {
   label: string;
   links: AdminNavLink[];
-}
+};
 
-export interface AdminNavigationConfig {
+export type AdminNavigationConfig = {
   dashboard: AdminNavLink;
   groups: AdminNavGroup[];
-}
+};
 
-export interface MarketingNavigationConfig {
+export type MarketingNavigationConfig = {
   headerLinks: NavLink[];
   footerLinks: NavLink[];
-}
+};
 
-export interface PlatformNavItem {
+export type PlatformIconName = "home" | "plans" | "athletes" | "profile";
+
+export type PlatformNavItem = {
   label: string;
   href: string;
-  icon: string;
-}
+  icon: PlatformIconName;
+};
 
-export interface PlatformNavigationConfig {
+export type PlatformNavigationConfig = {
   items: PlatformNavItem[];
-}
+};

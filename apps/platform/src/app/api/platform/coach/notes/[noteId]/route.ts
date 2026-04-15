@@ -1,36 +1,51 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformCoachNotesApi } from "@repo/api-server";
 import {
+  createAuthDeleteHandler,
+  createAuthGetByParamHandler,
+  createAuthPutByParamHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { coachingCoachNoteApi } from "@repo/api-server/coaching";
+import {
+  deleteCoachNoteParamsSchema,
   getCoachNoteByIdParamsSchema,
+  getCoachNoteByIdResponseSchema,
   updateCoachNoteParamsSchema,
   updateCoachNoteRequestSchema,
   updateCoachNoteResponseSchema,
-  deleteCoachNoteParamsSchema,
-} from "@repo/contracts/coach-note";
+} from "@repo/contracts/coaching/coach-note";
 
-export const GET = withPlatformAuth(async (_, context, userId) => {
-  const { noteId } = getCoachNoteByIdParamsSchema.parse(await context.params);
-  const data = await platformCoachNotesApi.getById(userId, noteId);
+import { withCoachAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(data);
-});
+export const GET = withCoachAuth(
+  withAuthRateLimit(
+    createAuthGetByParamHandler(
+      (userId, { noteId }) => coachingCoachNoteApi.getById(userId, noteId),
+      getCoachNoteByIdParamsSchema,
+      getCoachNoteByIdResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-export const PUT = withPlatformAuth(async (request, context, userId) => {
-  const { noteId } = updateCoachNoteParamsSchema.parse(await context.params);
-  const body = await request.json();
-  const data = updateCoachNoteRequestSchema.parse(body);
-  const result = await platformCoachNotesApi.update(userId, noteId, data);
-  const validated = updateCoachNoteResponseSchema.parse(result);
+export const PUT = withCoachAuth(
+  withAuthRateLimit(
+    createAuthPutByParamHandler(
+      (userId, { noteId }, data) => coachingCoachNoteApi.update(userId, noteId, data),
+      updateCoachNoteParamsSchema,
+      updateCoachNoteRequestSchema,
+      updateCoachNoteResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
-
-export const DELETE = withPlatformAuth(async (_, context, userId) => {
-  const { noteId } = deleteCoachNoteParamsSchema.parse(await context.params);
-
-  await platformCoachNotesApi.delete(userId, noteId);
-
-  return NextResponse.json({ success: true });
-});
+export const DELETE = withCoachAuth(
+  withAuthRateLimit(
+    createAuthDeleteHandler(
+      (userId, { noteId }) => coachingCoachNoteApi.delete(userId, noteId),
+      deleteCoachNoteParamsSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

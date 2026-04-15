@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -7,17 +9,20 @@ import StarIcon from "@mui/icons-material/Star";
 import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
-import { type BlogPost } from "@repo/contracts/blog";
+import { type BlogPost } from "@repo/contracts/cms/blog";
 import { baseEnv } from "@repo/env/base";
 import { useDeleteConfirmation } from "@repo/query";
-import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
+import { formatDate } from "@repo/shared";
+import {
+  ConfirmationModal,
+  DataTable,
+  useDataTableUrlState,
+  type Column,
+  type DataTableFilter,
+} from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
-import {
-  useDeleteBlogPost,
-  useToggleBlogFeatured,
-  useToggleBlogPost,
-} from "@app/lib/hooks/use-blog";
+import { useDeleteBlogPost, useToggleBlogFeatured, useToggleBlogPost } from "@app/lib/hooks";
 
 const filters: DataTableFilter<BlogPost>[] = [
   {
@@ -40,145 +45,153 @@ const filters: DataTableFilter<BlogPost>[] = [
   },
 ];
 
-interface BlogListSectionProps {
+type BlogListSectionProps = {
   posts: BlogPost[];
-}
+};
 
 export const BlogListSection = ({ posts }: BlogListSectionProps) => {
+  const { state, onStateChange } = useDataTableUrlState();
   const toggleStatusMutation = useToggleBlogPost();
   const toggleFeaturedMutation = useToggleBlogFeatured();
   const deleteMutation = useDeleteBlogPost();
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
 
-  const columns: Column<BlogPost>[] = [
-    {
-      id: "title",
-      label: "Title & Slug",
-      width: "30%",
-      sortable: true,
-      sortValue: (post) => post.title,
-      searchValue: (post) => post.title,
-      render: (post) => (
-        <Stack spacing={0.5}>
-          <Typography variant="subtitle2" component="span" fontWeight={600}>
-            {post.title}
-          </Typography>
+  const columns: Column<BlogPost>[] = useMemo(
+    () => [
+      {
+        id: "title",
+        label: "Title & Slug",
+        width: "30%",
+        sortable: true,
+        sortValue: (post) => post.title,
+        searchValue: (post) => post.title,
+        render: (post) => (
+          <Stack spacing={0.5}>
+            <Typography variant="subtitle2" component="span">
+              {post.title}
+            </Typography>
 
-          <Typography variant="caption" color="text.secondary">
-            /{post.slug}
-          </Typography>
-        </Stack>
-      ),
-    },
-    {
-      id: "status",
-      label: "Status",
-      width: "20%",
-      render: (post) => (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Switch
-            size="small"
-            checked={post.isPublished}
-            disabled={toggleStatusMutation.isPending && toggleStatusMutation.variables === post.id}
-            onChange={() => toggleStatusMutation.mutate(post.id)}
-            color="success"
-          />
+            <Typography variant="caption" color="text.secondary">
+              /{post.slug}
+            </Typography>
+          </Stack>
+        ),
+      },
+      {
+        id: "status",
+        label: "Status",
+        width: "20%",
+        render: (post) => (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Switch
+              size="small"
+              checked={post.isPublished}
+              disabled={
+                toggleStatusMutation.isPending && toggleStatusMutation.variables === post.id
+              }
+              onChange={() => toggleStatusMutation.mutate(post.id)}
+              color="success"
+            />
 
-          <Chip
-            label={post.isPublished ? "Published" : "Draft"}
-            color={post.isPublished ? "success" : "default"}
-            size="small"
-            variant="outlined"
-            sx={{ minWidth: 85, justifyContent: "center" }}
-          />
-        </Stack>
-      ),
-    },
-    {
-      id: "featured",
-      label: "Spotlight",
-      width: "20%",
-      render: (post) => (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Switch
-            size="small"
-            checked={post.isFeatured}
-            disabled={
-              toggleFeaturedMutation.isPending && toggleFeaturedMutation.variables === post.id
-            }
-            onChange={() => toggleFeaturedMutation.mutate(post.id)}
-            color="warning"
-          />
+            <Chip
+              label={post.isPublished ? "Published" : "Draft"}
+              color={post.isPublished ? "success" : "default"}
+              size="small"
+              variant="outlined"
+            />
+          </Stack>
+        ),
+      },
+      {
+        id: "featured",
+        label: "Spotlight",
+        width: "20%",
+        render: (post) => (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Switch
+              size="small"
+              checked={post.isFeatured}
+              disabled={
+                toggleFeaturedMutation.isPending && toggleFeaturedMutation.variables === post.id
+              }
+              onChange={() => toggleFeaturedMutation.mutate(post.id)}
+              color="warning"
+            />
 
-          <Chip
-            icon={post.isFeatured ? <StarIcon fontSize="small" /> : undefined}
-            label={post.isFeatured ? "Featured" : "Standard"}
-            color={post.isFeatured ? "warning" : "default"}
-            size="small"
-            variant="outlined"
-            sx={{ minWidth: 105, justifyContent: "center" }}
-          />
-        </Stack>
-      ),
-    },
-    {
-      id: "date",
-      label: "Created",
-      width: "15%",
-      sortable: true,
-      sortValue: (post) => new Date(post.createdAt).getTime(),
-      render: (post) => (
-        <Typography variant="body2">{new Date(post.createdAt).toLocaleDateString()}</Typography>
-      ),
-    },
-    {
-      id: "actions",
-      label: "Actions",
-      align: "right",
-      width: "15%",
-      render: (post) => (
-        <Stack direction="row" spacing={0} justifyContent="flex-end">
-          {post.isPublished && (
-            <Tooltip title="View Public Page">
+            <Chip
+              icon={post.isFeatured ? <StarIcon fontSize="small" /> : undefined}
+              label={post.isFeatured ? "Featured" : "Standard"}
+              color={post.isFeatured ? "warning" : "default"}
+              size="small"
+              variant="outlined"
+            />
+          </Stack>
+        ),
+      },
+      {
+        id: "date",
+        label: "Created",
+        width: "15%",
+        sortable: true,
+        sortValue: (post) => new Date(post.createdAt).getTime(),
+        render: (post) => <Typography variant="body2">{formatDate(post.createdAt)}</Typography>,
+      },
+      {
+        id: "actions",
+        label: "Actions",
+        align: "right",
+        width: "15%",
+        render: (post) => (
+          <Stack direction="row" spacing={0} justifyContent="flex-end">
+            {post.isPublished && (
+              <Tooltip title="View Public Page">
+                <IconButton
+                  component={Link}
+                  href={`${baseEnv.NEXT_PUBLIC_MARKETING_URL}/blog/${post.slug}`}
+                  target="_blank"
+                  aria-label="View public page"
+                >
+                  <OpenInNewIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            )}
+
+            <Tooltip title="Edit">
               <IconButton
                 component={Link}
-                href={`${baseEnv.NEXT_PUBLIC_MARKETING_URL}/blog/${post.slug}`}
-                target="_blank"
-                size="small"
+                href={`/blog/${post.id}`}
+                color="primary"
+                aria-label="Edit"
               >
-                <OpenInNewIcon fontSize="small" />
+                <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-          )}
 
-          <Tooltip title="Edit">
-            <IconButton component={Link} href={`/blog/${post.id}`} size="small" color="primary">
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-
-          <Tooltip title="Delete">
-            <IconButton size="small" color="error" onClick={() => requestDelete(post.id)}>
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      ),
-    },
-  ];
+            <Tooltip title="Delete">
+              <IconButton color="error" onClick={() => requestDelete(post.id)} aria-label="Delete">
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        ),
+      },
+    ],
+    [toggleStatusMutation, toggleFeaturedMutation, requestDelete],
+  );
 
   return (
     <>
       <DataTable
         data={posts}
         columns={columns}
-        title="Posts"
         searchPlaceholder="Search posts..."
         filters={filters}
         action={<CreateButton href="/blog/create">Create Post</CreateButton>}
         paginated
         emptyMessage="No blog posts yet. Create the first one!"
+        state={state}
+        onStateChange={onStateChange}
       />
 
       <ConfirmationModal

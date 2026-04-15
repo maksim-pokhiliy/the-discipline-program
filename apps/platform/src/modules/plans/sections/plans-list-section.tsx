@@ -1,13 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
-import { Chip, Fab, Stack, Tab, Tabs, Typography } from "@mui/material";
+import { Stack, Tabs, Typography } from "@mui/material";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import type { TrainingPlanListItem } from "@repo/contracts/training-plan";
-import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+import type { TrainingPlanListItem } from "@repo/contracts/lms/training-plan";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
+import { ChipTab } from "@repo/ui";
 
+import { PlatformFab } from "@app/lib/components";
 import {
   useActivateTrainingPlan,
   useArchiveTrainingPlan,
@@ -18,15 +20,42 @@ import {
 
 import { PlanCard } from "../components";
 
-import { STATUS_TABS } from "./plans-list-config";
+import { ALL_TAB, STATUS_TABS } from "./plans-list-config";
 
 type PlansListSectionProps = {
   plans: TrainingPlanListItem[];
   onCreateClick: () => void;
 };
 
+const VALID_STATUS_VALUES = new Set<string>(Object.values(TrainingPlanStatus));
+
+const isValidTab = (value: string): value is TrainingPlanStatus | typeof ALL_TAB =>
+  value === ALL_TAB || VALID_STATUS_VALUES.has(value);
+
 export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCreateClick }) => {
-  const [activeTab, setActiveTab] = useState<TrainingPlanStatus | "ALL">("ALL");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const statusParam = searchParams.get("status") ?? ALL_TAB;
+  const activeTab = isValidTab(statusParam) ? statusParam : ALL_TAB;
+
+  const setActiveTab = useCallback(
+    (value: TrainingPlanStatus | typeof ALL_TAB) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (value === ALL_TAB) {
+        params.delete("status");
+      } else {
+        params.set("status", value);
+      }
+
+      const qs = params.toString();
+
+      router.push(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [searchParams, router, pathname],
+  );
 
   const activate = useActivateTrainingPlan();
   const archive = useArchiveTrainingPlan();
@@ -34,52 +63,51 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
   const duplicate = useDuplicateTrainingPlan();
   const deletePlan = useDeleteTrainingPlan();
 
-  const isPlanPending = (planId: string) =>
-    (activate.isPending && activate.variables === planId) ||
-    (archive.isPending && archive.variables === planId) ||
-    (restore.isPending && restore.variables === planId) ||
-    (duplicate.isPending && duplicate.variables === planId) ||
-    (deletePlan.isPending && deletePlan.variables === planId);
+  const isPlanPending = useCallback(
+    (planId: string) =>
+      (activate.isPending && activate.variables === planId) ||
+      (archive.isPending && archive.variables === planId) ||
+      (restore.isPending && restore.variables === planId) ||
+      (duplicate.isPending && duplicate.variables === planId) ||
+      (deletePlan.isPending && deletePlan.variables === planId),
+    [activate, archive, restore, duplicate, deletePlan],
+  );
 
   const counts = useMemo(() => {
-    const map: Record<string, number> = { ALL: plans.length };
-
-    for (const status of Object.values(TrainingPlanStatus)) {
-      map[status] = 0;
-    }
+    const map: Record<TrainingPlanStatus | typeof ALL_TAB, number> = {
+      [ALL_TAB]: plans.length,
+      [TrainingPlanStatus.ACTIVE]: 0,
+      [TrainingPlanStatus.DRAFT]: 0,
+      [TrainingPlanStatus.ARCHIVED]: 0,
+    };
 
     for (const plan of plans) {
-      map[plan.status] = (map[plan.status] ?? 0) + 1;
+      map[plan.status] = map[plan.status] + 1;
     }
 
     return map;
   }, [plans]);
 
   const filteredPlans = useMemo(
-    () => (activeTab === "ALL" ? plans : plans.filter((p) => p.status === activeTab)),
+    () => (activeTab === ALL_TAB ? plans : plans.filter((p) => p.status === activeTab)),
     [plans, activeTab],
   );
 
   return (
-    <Stack spacing={2}>
+    <Stack spacing={4}>
       <Tabs
         value={activeTab}
-        onChange={(_, value: TrainingPlanStatus | "ALL") => setActiveTab(value)}
+        onChange={(_, value: TrainingPlanStatus | typeof ALL_TAB) => setActiveTab(value)}
         variant="scrollable"
         scrollButtons="auto"
       >
         {STATUS_TABS.map((tab) => (
-          <Tab
+          <ChipTab
             key={tab.value}
             value={tab.value}
-            label={
-              <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
-                <Typography variant="body2" component="span">
-                  {tab.label}
-                </Typography>
-                <Chip size="small" label={counts[tab.value] ?? 0} color={tab.chipColor} />
-              </Stack>
-            }
+            label={tab.label}
+            count={counts[tab.value]}
+            chipColor={tab.chipColor}
           />
         ))}
       </Tabs>
@@ -100,18 +128,12 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
           ))}
         </Stack>
       ) : (
-        <Typography variant="body2" sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
+        <Typography variant="body1" sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
           No plans in this category
         </Typography>
       )}
 
-      <Fab
-        color="primary"
-        onClick={onCreateClick}
-        sx={{ position: "fixed", bottom: 100, right: 16 }}
-      >
-        <AddIcon />
-      </Fab>
+      <PlatformFab onClick={onCreateClick} />
     </Stack>
   );
 };

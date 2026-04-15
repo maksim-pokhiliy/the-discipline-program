@@ -1,5 +1,14 @@
-import { Gender, PrismaClient, type Prisma, Role } from "@prisma/client";
+import {
+  Gender,
+  HealthStatus,
+  PlanEnrollmentStatus,
+  PrismaClient,
+  Role,
+  TrainingPlanStatus,
+} from "@prisma/client";
 import bcrypt from "bcryptjs";
+
+import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
 const prisma = new PrismaClient();
 
@@ -52,7 +61,7 @@ const seedUsers = async (passwordHash: string) => {
         name: "Admin",
         role: Role.ADMIN,
         password: passwordHash,
-        timezone: "Europe/Kyiv",
+        timezone: "Europe/Kiev",
         createdAt: daysAgo(90),
       },
     }),
@@ -62,7 +71,7 @@ const seedUsers = async (passwordHash: string) => {
         name: "Denys Linetskyi",
         role: Role.COACH,
         password: passwordHash,
-        timezone: "Europe/Kyiv",
+        timezone: "Europe/Kiev",
         createdAt: daysAgo(60),
       },
     }),
@@ -70,9 +79,11 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "sarah.mitchell@email.com",
         name: "Sarah Mitchell",
+        image:
+          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face",
         role: Role.USER,
         password: passwordHash,
-        timezone: "Europe/Kyiv",
+        timezone: "Europe/Kiev",
         createdAt: daysAgo(55),
       },
     }),
@@ -80,9 +91,11 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "mike.thompson@email.com",
         name: "Mike Thompson",
+        image:
+          "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
         role: Role.USER,
         password: passwordHash,
-        timezone: "Europe/Kyiv",
+        timezone: "Europe/Kiev",
         createdAt: daysAgo(48),
       },
     }),
@@ -90,9 +103,11 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "jenny.park@email.com",
         name: "Jenny Park",
+        image:
+          "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",
         role: Role.USER,
         password: passwordHash,
-        timezone: "Europe/Kyiv",
+        timezone: "Europe/Kiev",
         createdAt: daysAgo(34),
       },
     }),
@@ -100,9 +115,11 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "david.rodriguez@email.com",
         name: "David Rodriguez",
+        image:
+          "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face",
         role: Role.USER,
         password: passwordHash,
-        timezone: "Europe/Kyiv",
+        timezone: "Europe/Kiev",
         createdAt: daysAgo(4),
       },
     }),
@@ -110,9 +127,11 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "lisa.anderson@email.com",
         name: "Lisa Anderson",
+        image:
+          "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face",
         role: Role.USER,
         password: passwordHash,
-        timezone: "Europe/Kyiv",
+        timezone: "Europe/Kiev",
         createdAt: daysAgo(30),
       },
     }),
@@ -122,7 +141,7 @@ const seedUsers = async (passwordHash: string) => {
         name: "Tom Bradley",
         role: Role.USER,
         password: passwordHash,
-        timezone: "Europe/Kyiv",
+        timezone: "Europe/Kiev",
         createdAt: daysAgo(2),
       },
     }),
@@ -130,9 +149,11 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "alex.kovac@email.com",
         name: "Alex Kovac",
+        image:
+          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
         role: Role.USER,
         password: passwordHash,
-        timezone: "Europe/Kyiv",
+        timezone: "Europe/Kiev",
         createdAt: daysAgo(40),
       },
     }),
@@ -142,7 +163,7 @@ const seedUsers = async (passwordHash: string) => {
         name: "Nina Reyes",
         role: Role.USER,
         password: passwordHash,
-        timezone: "Europe/Kyiv",
+        timezone: "Europe/Kiev",
         createdAt: daysAgo(30),
       },
     }),
@@ -152,7 +173,7 @@ const seedUsers = async (passwordHash: string) => {
         name: "Chris Walker",
         role: Role.USER,
         password: passwordHash,
-        timezone: "Europe/Kyiv",
+        timezone: "Europe/Kiev",
         createdAt: daysAgo(1),
       },
     }),
@@ -162,7 +183,7 @@ const seedUsers = async (passwordHash: string) => {
         name: "Maria Santos",
         role: Role.USER,
         password: passwordHash,
-        timezone: "Europe/Kyiv",
+        timezone: "Europe/Kiev",
         createdAt: daysAgo(20),
       },
     }),
@@ -206,7 +227,7 @@ const seedProfiles = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
         gender: Gender.FEMALE,
         heightCm: 172,
         weightKg: 67,
-        healthStatus: "RESTRICTED",
+        healthStatus: HealthStatus.RESTRICTED,
       },
       { userId: users.tom.id, gender: Gender.MALE, heightCm: 175, weightKg: 78 },
       {
@@ -214,7 +235,7 @@ const seedProfiles = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
         gender: Gender.MALE,
         heightCm: 190,
         weightKg: 95,
-        healthStatus: "INJURED",
+        healthStatus: HealthStatus.INJURED,
       },
       { userId: users.nina.id, gender: Gender.FEMALE, heightCm: 165, weightKg: 58 },
       { userId: users.chris.id, gender: Gender.MALE, heightCm: 180, weightKg: 85 },
@@ -399,6 +420,12 @@ const seedMarketingPages = async () => {
       seoTitle: "Contact — The Discipline Program",
       seoDesc: "Questions about programming? Reach out via Telegram or email.",
     },
+    {
+      slug: "faq",
+      title: "FAQ",
+      seoTitle: "FAQ — The Discipline Program",
+      seoDesc: "Frequently asked questions about training programs, trials, and coaching.",
+    },
   ];
 
   for (const page of pages) {
@@ -408,62 +435,82 @@ const seedMarketingPages = async () => {
   const sections: { pageSlug: string; section: string; data: unknown }[] = [
     {
       pageSlug: "home",
-      section: "hero",
+      section: "home:hero",
       data: {
         title: "Your DISCIPLINE Dictates Your SUCCESS",
         subtitle:
           "Structured CrossFit programming from Ukraine. For athletes who train with purpose, not randomness.",
         buttonText: "Start Training",
         buttonHref: "/storefront",
-        backgroundImage: "/images/coach-hero.jpg",
+        backgroundImage: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=80",
       },
     },
     {
       pageSlug: "home",
-      section: "whyChoose",
+      section: "home:whyChoose",
       data: {
         title: "Why The Discipline Program?",
         subtitle: "Random workouts give random results. We build systems.",
         features: [
           {
-            id: "f1",
+            id: "cmnyjvhkvfb9f44b453da",
             title: "Constantly Varied",
             description: "Periodized programming across all 10 fitness domains. No guesswork.",
             iconName: "Shuffle",
           },
           {
-            id: "f2",
+            id: "cmnyjvhkw565b1829a94c",
             title: "High Intensity",
             description: "Maximize power output with smart programming. Every rep has a purpose.",
             iconName: "Bolt",
           },
           {
-            id: "f3",
+            id: "cmnyjvhkwe6695bf030c5",
             title: "Functional Movement",
             description: "Movements that carry over to sport and life. Squat, press, pull, hinge.",
             iconName: "FitnessCenter",
           },
           {
-            id: "f4",
+            id: "cmnyjvhkwf2b4d3d4560c",
             title: "Expert Coaching",
             description:
               "Every session designed by CF-L2 certified coach with competition experience.",
             iconName: "School",
+          },
+          {
+            id: "cmnyjvhkw4b6909538501",
+            title: "Progress Tracking",
+            description:
+              "Built-in benchmarks, PR logs, and periodic testing to measure real gains over time.",
+            iconName: "TrendingUp",
+          },
+          {
+            id: "cmnyjvhkw6394691b0811",
+            title: "Community Driven",
+            description:
+              "Train alongside athletes worldwide. Shared leaderboards, weekly challenges, and accountability.",
+            iconName: "Groups",
           },
         ],
       },
     },
     {
       pageSlug: "home",
-      section: "storefront",
+      section: "home:storefront",
       data: {
         title: "Choose Your Track",
         subtitle: "From Open preparation to daily GPP. Programming for every level.",
+        buttonText: "View All Programs",
+        buttonHref: "/storefront",
+        freeLabel: "Free",
+        cardActionLabel: "Get Started",
+        modalDismissLabel: "maybe later",
+        modalActionLabel: "get started",
       },
     },
     {
       pageSlug: "home",
-      section: "reviews",
+      section: "home:reviews",
       data: {
         title: "Community Results",
         subtitle:
@@ -472,7 +519,7 @@ const seedMarketingPages = async () => {
     },
     {
       pageSlug: "home",
-      section: "contact",
+      section: "home:contact",
       data: {
         title: "Join The Community",
         subtitle: "Questions about programming? We are here to help.",
@@ -489,12 +536,12 @@ const seedMarketingPages = async () => {
           "Wingate Institute graduate. CrossFit, Weightlifting & Adaptive CrossFit specialist.",
         buttonText: "Read My Story",
         buttonHref: "#journey",
-        backgroundImage: "/images/coach-hero.jpg",
+        backgroundImage: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1920&q=80",
       },
     },
     {
       pageSlug: "about",
-      section: "journey",
+      section: "about:journey",
       data: {
         title: "The Road to Discipline",
         subtitle: "From a garage gym to a coaching platform",
@@ -532,43 +579,61 @@ const seedMarketingPages = async () => {
     },
     {
       pageSlug: "about",
-      section: "credentials",
+      section: "about:credentials",
       data: {
         title: "Certifications",
+        subtitle:
+          "Internationally recognized qualifications in sport coaching, CrossFit methodology, and adaptive training.",
         items: [
           {
             title: "Wingate Sport Institute",
-            description: "Diploma in Sport Coaching and Training (Israel).",
+            description:
+              "Diploma in Sport Coaching and Training from Israel's premier sports science institution. Covers exercise physiology, biomechanics, and periodization.",
           },
           {
-            title: "CrossFit Coach",
-            description: "CrossFit training methodology and programming.",
+            title: "CrossFit Level 2 Coach",
+            description:
+              "Advanced coaching certification focused on programming design, movement correction, and athlete development across all skill levels.",
           },
           {
-            title: "Weightlifting Instructor",
-            description: "Olympic lifting technique and coaching.",
+            title: "Olympic Weightlifting Instructor",
+            description:
+              "Specialized credential in snatch, clean & jerk technique, and progressive coaching methods for competitive and recreational lifters.",
           },
           {
             title: "Adaptive CrossFit Specialist",
-            description: "Inclusive programming for athletes with disabilities.",
+            description:
+              "Certified to design inclusive programming for athletes with physical and cognitive disabilities. Scaling, equipment modification, and safety protocols.",
+          },
+          {
+            title: "Sports Nutrition Coach",
+            description:
+              "Evidence-based nutrition planning for performance athletes. Macro programming, competition fueling strategies, and body composition management.",
+          },
+          {
+            title: "Functional Movement Screen",
+            description:
+              "FMS certified for injury risk assessment and corrective exercise prescription. Integrated into every athlete onboarding and quarterly reassessment.",
           },
         ],
       },
     },
     {
       pageSlug: "about",
-      section: "personal",
+      section: "about:personal",
       data: {
         title: "Outside The Box",
-        description: "Trail running in the Carpathians, grilling meat, and building software.",
-        image: "/images/coach-hero.jpg",
+        subtitle: "The person behind the programming — beyond the whiteboard and the stopwatch.",
+        description:
+          "When I am not writing training cycles or reviewing athlete videos, you will find me on a trail somewhere in the Carpathian mountains. Long runs above the treeline are my version of active recovery — and honestly, where most of my best programming ideas come from. I am a lifelong student of movement, a relentless meat griller, and a self-taught software engineer who built this entire platform from scratch. I believe coaching is a craft that gets better with obsession, not just experience. Every system in The Discipline Program exists because I was not satisfied with what was already out there.",
+        image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
         name: "Denys Linetskyi",
         role: "Head Coach & Founder",
       },
     },
     {
       pageSlug: "about",
-      section: "cta",
+      section: "about:cta",
       data: {
         title: "3... 2... 1... GO!",
         subtitle: "The clock is ticking. Your training should not be random.",
@@ -582,8 +647,22 @@ const seedMarketingPages = async () => {
       data: {
         title: "Programming Tracks",
         subtitle: "Structured paths for every level of CrossFit athlete.",
+        buttonText: "Browse Programs",
+        buttonHref: "#programs",
         backgroundImage:
           "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=2000&q=80",
+      },
+    },
+    {
+      pageSlug: "storefront",
+      section: "storefront:grid",
+      data: {
+        title: "Find Your Track",
+        subtitle:
+          "Every program is built around a specific athlete profile. Pick the one that fits.",
+        freeLabel: "Free",
+        modalDismissLabel: "maybe later",
+        modalActionLabel: "get started",
       },
     },
     {
@@ -607,42 +686,76 @@ const seedMarketingPages = async () => {
       },
     },
     {
-      pageSlug: "contact",
-      section: "contact:hero",
-      data: { title: "Drop Us A Line", subtitle: "We love talking training." },
-    },
-    {
-      pageSlug: "contact",
-      section: "form",
-      data: { title: "Get in Touch", subtitle: "Let us know how we can help with your training." },
-    },
-    {
-      pageSlug: "contact",
-      section: "directContact",
+      pageSlug: "blog",
+      section: "blog:grid",
       data: {
-        title: "Contact Info",
-        contacts: [
-          {
-            type: "email",
-            label: "Email",
-            value: "coach@thedisciplineprogram.com",
-            href: "mailto:coach@thedisciplineprogram.com",
-          },
-          {
-            type: "telegram",
-            label: "Telegram",
-            value: "@thedisciplineprogram",
-            href: "https://t.me/thedisciplineprogram",
-          },
-        ],
-        workingHours: "Mon-Fri: 8:00 - 20:00 (Kyiv time)\nSat: 9:00 - 14:00\nSun: Rest Day",
+        title: "All Articles",
+        subtitle: "Training insights, recovery tips, and competition strategy.",
+        readMoreLabel: "read more",
+        minReadSuffix: "min read",
+        readArticleLabel: "read article",
+        notPublishedLabel: "Not published",
+      },
+    },
+    {
+      pageSlug: "blog",
+      section: "blog:related",
+      data: {
+        title: "Related Articles",
       },
     },
     {
       pageSlug: "contact",
-      section: "faq",
+      section: "contact:hero",
+      data: {
+        title: "Drop Us A Line",
+        subtitle: "We love talking training.",
+        buttonText: "Get In Touch",
+        buttonHref: "#contact-form",
+        backgroundImage: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=80",
+      },
+    },
+    {
+      pageSlug: "contact",
+      section: "contact:form",
+      data: {
+        title: "Send Us a Message",
+        subtitle: "Tell us about your goals and we'll craft the perfect plan",
+        successTitle: "Message Sent!",
+        successMessage: "Thank you for reaching out. We'll get back to you shortly.",
+        submitLabel: "Send Message",
+        sendAnotherLabel: "Send Another",
+        sendingLabel: "Sending...",
+        errorMessage: "Something went wrong",
+        fieldLabels: {
+          name: "Name",
+          contact: "Phone / Telegram / WhatsApp",
+          program: "Program Interest",
+          message: "Your Message",
+        },
+        fieldPlaceholders: {
+          contact: "+380..., @username",
+          message: "Tell us about your goals...",
+        },
+      },
+    },
+    {
+      pageSlug: "faq",
+      section: "faq:hero",
+      data: {
+        title: "Got Questions?",
+        subtitle: "We've got answers.",
+        buttonText: "Find Answers",
+        buttonHref: "#faq-content",
+        backgroundImage: "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=1920&q=80",
+      },
+    },
+    {
+      pageSlug: "faq",
+      section: "faq:content",
       data: {
         title: "FAQ",
+        subtitle: "Everything you need to know before you start.",
         items: [
           {
             question: "Do I need a gym membership?",
@@ -665,6 +778,16 @@ const seedMarketingPages = async () => {
         ],
       },
     },
+    {
+      pageSlug: "faq",
+      section: "faq:cta",
+      data: {
+        title: "Still Have Questions?",
+        subtitle: "Reach out and we'll help you find the right track.",
+        buttonText: "Get In Touch",
+        buttonHref: "/contact",
+      },
+    },
   ];
 
   for (const s of sections) {
@@ -672,13 +795,13 @@ const seedMarketingPages = async () => {
       data: {
         pageSlug: s.pageSlug,
         section: s.section,
-        data: s.data as Prisma.InputJsonValue,
+        data: JSON.parse(JSON.stringify(s.data)),
         isActive: true,
       },
     });
   }
 
-  console.log("  Pages: 5 with 17 sections");
+  console.log("  Pages: 5 with 18 sections");
 };
 
 const seedProducts = async () => {
@@ -696,6 +819,7 @@ const seedProducts = async () => {
         "Video Analysis",
         "Monthly Testing",
       ],
+      isFeatured: true,
       isActive: true,
       createdAt: daysAgo(58),
       amountCents: 9900,
@@ -766,7 +890,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Training",
+        category: "TRAINING",
         tags: ["gymnastics", "technique", "progressions"],
         readTime: 4,
         isPublished: true,
@@ -783,7 +907,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Nutrition",
+        category: "NUTRITION",
         tags: ["nutrition", "performance", "meal-timing"],
         readTime: 4,
         isPublished: true,
@@ -800,7 +924,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Mindset",
+        category: "MINDSET",
         tags: ["mental-toughness", "pacing", "amrap"],
         readTime: 4,
         isPublished: true,
@@ -818,7 +942,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Fitness",
+        category: "FITNESS",
         tags: ["recovery", "programming", "rest-days"],
         readTime: 4,
         isPublished: true,
@@ -836,7 +960,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Recovery",
+        category: "RECOVERY",
         tags: ["mobility", "flexibility", "injury-prevention"],
         readTime: 5,
         isPublished: true,
@@ -853,7 +977,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Training",
+        category: "TRAINING",
         tags: ["olympic-lifting", "technique", "coaching-cues"],
         readTime: 4,
         isPublished: true,
@@ -869,7 +993,7 @@ const seedBlogPosts = async () => {
           "## The Framework\n\nPeaking for the Open requires periodized programming. You cannot go hard 52 weeks a year.\n\n## Phase 1: Volume (Weeks 12-9)\nBuild work capacity. High volume, moderate intensity.\n\n## Phase 2: Intensity (Weeks 8-5)\nReduce volume, increase intensity. Test benchmark WODs.\n\n## Phase 3: Taper (Weeks 4-1)\nSharp, short workouts. Practice Open-style formats.\n\n[Full program details coming soon]",
         coverImage: null,
         authorName: "Coach Denys",
-        category: "Training",
+        category: "TRAINING",
         tags: ["open", "competition", "periodization"],
         readTime: null,
         isPublished: false,
@@ -886,7 +1010,7 @@ const seedBlogPosts = async () => {
         coverImage:
           "https://images.unsplash.com/photo-1432139555190-58524dae6a55?auto=format&fit=crop&w=1200&q=80",
         authorName: "Coach Denys",
-        category: "Nutrition",
+        category: "NUTRITION",
         tags: ["protein", "nutrition", "macros"],
         readTime: 5,
         isPublished: true,
@@ -960,6 +1084,22 @@ const seedReviews = async () => {
         createdAt: daysAgo(8),
       },
       {
+        authorName: "Rachel Kim",
+        authorRole: "Box Owner",
+        text: "I use The Discipline Program for my gym's competition team. The periodization is solid, the volume is right, and my athletes are peaking when it matters. Saved me hours of programming every week.",
+        rating: 5,
+        isActive: true,
+        createdAt: daysAgo(5),
+      },
+      {
+        authorName: "James O'Brien",
+        authorRole: "Military Athlete",
+        text: "Need to stay combat-ready and this delivers. The GPP base building is exactly what tactical athletes need. Ruck performance is up, recovery time is down.",
+        rating: 5,
+        isActive: true,
+        createdAt: daysAgo(3),
+      },
+      {
         authorName: "Anonymous",
         authorRole: null,
         text: "Decent programming but pacing was too slow for my level. Switched after 2 months.",
@@ -970,7 +1110,7 @@ const seedReviews = async () => {
     ],
   });
 
-  console.log("  Reviews: 8 (7 active, 1 inactive)");
+  console.log("  Reviews: 10 (9 active, 1 inactive)");
 };
 
 const seedContactSubmissions = async () => {
@@ -978,7 +1118,7 @@ const seedContactSubmissions = async () => {
     data: [
       {
         name: "Oleksandr Shevchenko",
-        email: "oleksandr.s@email.com",
+        contact: "@oleksandr_shev",
         program: "The Competitor",
         message:
           "Training for the Open. How does The Competitor track compare to competitive affiliate programming?",
@@ -987,7 +1127,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Rachel Martinez",
-        email: "rachel.m@email.com",
+        contact: "+1 555-234-5678",
         program: "Foundations GPP",
         message:
           "I have a garage gym with barbell, plates, pull-up bar, and rings. Will Foundations work for my setup?",
@@ -996,7 +1136,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Iryna Bondarenko",
-        email: "iryna.b@email.com",
+        contact: "@iryna_bond",
         program: "Masters 40+",
         message:
           "I am 52. When is the Masters 40+ program coming back? My knees need the joint-friendly approach.",
@@ -1005,7 +1145,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Mark Sullivan",
-        email: "mark.sullivan@email.com",
+        contact: "+1 555-876-5432",
         message:
           "Do you offer annual discounts? Looking to commit for a full year of Performance RX.",
         status: "IN_PROGRESS",
@@ -1014,7 +1154,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Sophie Williams",
-        email: "sophie.w@email.com",
+        contact: "@sophie_fit",
         program: "Performance RX",
         message: "Signed up yesterday but the training section shows no WODs. Is this normal?",
         status: "IN_PROGRESS",
@@ -1023,7 +1163,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Dmytro Koval",
-        email: "dmytro.k@email.com",
+        contact: "+380 67 123 4567",
         program: "Foundations GPP",
         message:
           "6 weeks into Foundations. When should I move up to Performance RX? I can do 10 pull-ups and my Fran is under 6 minutes.",
@@ -1033,7 +1173,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Christina Lee",
-        email: "christina.lee@email.com",
+        contact: "@christina_lee",
         program: "Performance RX",
         message:
           "Dealing with rotator cuff tendinitis. Are there built-in substitutions for overhead work?",
@@ -1043,7 +1183,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Jason Miller",
-        email: "jason.m@email.com",
+        contact: "+1 555-999-0000",
         program: "The Competitor",
         message:
           "Hit a 20 lb PR on back squat and qualified for Quarterfinals. Just wanted to say thanks!",
@@ -1053,7 +1193,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Andrii Lysenko",
-        email: "andrii@crossfitlviv.com",
+        contact: "@andrii_lviv",
         message:
           "I run a CrossFit affiliate in Lviv. Interested in bulk licensing for our members.",
         status: "CLOSED",
@@ -1062,7 +1202,7 @@ const seedContactSubmissions = async () => {
       },
       {
         name: "Nicole Anderson",
-        email: "nicole.a@email.com",
+        contact: "@nicole_anderson",
         program: "Foundations GPP",
         message: "Do you have a mobile app? I train at a gym without good WiFi.",
         status: "CLOSED",
@@ -1075,18 +1215,304 @@ const seedContactSubmissions = async () => {
   console.log("  Contacts: 10 (3 NEW, 2 IN_PROGRESS, 2 REPLIED, 3 CLOSED)");
 };
 
+const today = () => {
+  const d = new Date();
+
+  d.setHours(0, 0, 0, 0);
+
+  return d;
+};
+
+const addDays = (base: Date, days: number): Date => {
+  const d = new Date(base);
+
+  d.setDate(d.getDate() + days);
+
+  return d;
+};
+
+const seedTrainingPlans = async (
+  coachProfileId: string,
+  users: Awaited<ReturnType<typeof seedUsers>>,
+) => {
+  const activePlan = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "The Competitor",
+      description:
+        "12-week periodized program targeting CrossFit Open qualification. Strength, gymnastics, and conditioning.",
+      status: TrainingPlanStatus.ACTIVE,
+      createdAt: daysAgo(30),
+    },
+  });
+
+  const gppPlan = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "Foundations GPP",
+      description:
+        "General physical preparedness for athletes new to structured programming. Build a broad base.",
+      status: TrainingPlanStatus.ACTIVE,
+      createdAt: daysAgo(21),
+    },
+  });
+
+  const draftPlan = await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "Olympic Lifting Focus",
+      description: "6-week snatch and clean & jerk peaking cycle.",
+      status: TrainingPlanStatus.DRAFT,
+      createdAt: daysAgo(3),
+    },
+  });
+
+  await prisma.trainingPlan.create({
+    data: {
+      coachId: coachProfileId,
+      name: "2025 Open Prep",
+      description: "Archived program from last year's Open preparation cycle.",
+      status: TrainingPlanStatus.ARCHIVED,
+      createdAt: daysAgo(120),
+    },
+  });
+
+  const base = today();
+
+  const workouts = await Promise.all(
+    [
+      {
+        planId: activePlan.id,
+        scheduledDate: addDays(base, -1),
+        title: "Back Squat + Metcon",
+        sortOrder: 0,
+      },
+      { planId: activePlan.id, scheduledDate: base, title: "Snatch Complex + AMRAP", sortOrder: 0 },
+      {
+        planId: activePlan.id,
+        scheduledDate: addDays(base, 1),
+        title: "Gymnastics + Endurance",
+        sortOrder: 0,
+      },
+      {
+        planId: activePlan.id,
+        scheduledDate: addDays(base, 2),
+        title: "Clean & Jerk + Chipper",
+        sortOrder: 0,
+      },
+      {
+        planId: activePlan.id,
+        scheduledDate: addDays(base, -2),
+        title: "Front Squat + Row Intervals",
+        sortOrder: 0,
+      },
+      {
+        planId: activePlan.id,
+        scheduledDate: addDays(base, -3),
+        title: "Deadlift + Burpee Ladder",
+        sortOrder: 0,
+      },
+      { planId: gppPlan.id, scheduledDate: base, title: "Push/Pull Foundations", sortOrder: 0 },
+      {
+        planId: gppPlan.id,
+        scheduledDate: addDays(base, 1),
+        title: "Squat Mechanics + Core",
+        sortOrder: 0,
+      },
+      {
+        planId: gppPlan.id,
+        scheduledDate: addDays(base, -1),
+        title: "Hinge Pattern + Conditioning",
+        sortOrder: 0,
+      },
+      {
+        planId: draftPlan.id,
+        scheduledDate: null,
+        title: "Week 1 Day 1: Snatch Pulls",
+        sortOrder: 0,
+      },
+      {
+        planId: draftPlan.id,
+        scheduledDate: null,
+        title: "Week 1 Day 2: Clean Pulls",
+        sortOrder: 1,
+      },
+    ].map((w) => prisma.workout.create({ data: w })),
+  );
+
+  const competitorWorkouts = workouts.filter((w) => w.planId === activePlan.id);
+  const gppWorkouts = workouts.filter((w) => w.planId === gppPlan.id);
+
+  await prisma.planEnrollment.createMany({
+    data: [
+      {
+        trainingPlanId: activePlan.id,
+        userId: users.sarah.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(28),
+      },
+      {
+        trainingPlanId: activePlan.id,
+        userId: users.mike.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(25),
+      },
+      {
+        trainingPlanId: activePlan.id,
+        userId: users.jenny.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(20),
+      },
+      {
+        trainingPlanId: activePlan.id,
+        userId: users.alex.id,
+        status: PlanEnrollmentStatus.PAUSED,
+        startDate: daysAgo(15),
+      },
+      {
+        trainingPlanId: activePlan.id,
+        userId: users.nina.id,
+        status: PlanEnrollmentStatus.COMPLETED,
+        startDate: daysAgo(30),
+        endDate: daysAgo(2),
+      },
+      {
+        trainingPlanId: gppPlan.id,
+        userId: users.david.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(18),
+      },
+      {
+        trainingPlanId: gppPlan.id,
+        userId: users.lisa.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(14),
+      },
+      {
+        trainingPlanId: gppPlan.id,
+        userId: users.tom.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(7),
+      },
+      {
+        trainingPlanId: gppPlan.id,
+        userId: users.chris.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(5),
+      },
+      {
+        trainingPlanId: gppPlan.id,
+        userId: users.maria.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: daysAgo(3),
+      },
+    ],
+  });
+
+  const yesterdayWorkout = competitorWorkouts.find(
+    (w) => w.scheduledDate && w.scheduledDate.getTime() === addDays(base, -1).getTime(),
+  );
+  const twoDaysAgoWorkout = competitorWorkouts.find(
+    (w) => w.scheduledDate && w.scheduledDate.getTime() === addDays(base, -2).getTime(),
+  );
+  const gppYesterdayWorkout = gppWorkouts.find(
+    (w) => w.scheduledDate && w.scheduledDate.getTime() === addDays(base, -1).getTime(),
+  );
+
+  const logData: { userId: string; workoutId: string; date: Date; notes: string; isRx: boolean }[] =
+    [];
+
+  if (yesterdayWorkout) {
+    logData.push(
+      {
+        userId: users.sarah.id,
+        workoutId: yesterdayWorkout.id,
+        date: daysAgo(1),
+        notes: "Felt strong. PR on back squat.",
+        isRx: true,
+      },
+      {
+        userId: users.mike.id,
+        workoutId: yesterdayWorkout.id,
+        date: daysAgo(1),
+        notes: "Good session overall.",
+        isRx: true,
+      },
+      {
+        userId: users.jenny.id,
+        workoutId: yesterdayWorkout.id,
+        date: daysAgo(1),
+        notes: "Scaled the weight.",
+        isRx: false,
+      },
+    );
+  }
+
+  if (twoDaysAgoWorkout) {
+    logData.push(
+      {
+        userId: users.sarah.id,
+        workoutId: twoDaysAgoWorkout.id,
+        date: daysAgo(2),
+        notes: "Solid row splits.",
+        isRx: true,
+      },
+      {
+        userId: users.mike.id,
+        workoutId: twoDaysAgoWorkout.id,
+        date: daysAgo(2),
+        notes: "",
+        isRx: true,
+      },
+    );
+  }
+
+  if (gppYesterdayWorkout) {
+    logData.push(
+      {
+        userId: users.david.id,
+        workoutId: gppYesterdayWorkout.id,
+        date: daysAgo(1),
+        notes: "First hinge session.",
+        isRx: false,
+      },
+      {
+        userId: users.tom.id,
+        workoutId: gppYesterdayWorkout.id,
+        date: daysAgo(1),
+        notes: "",
+        isRx: true,
+      },
+    );
+  }
+
+  if (logData.length > 0) {
+    await prisma.workoutLog.createMany({ data: logData });
+  }
+
+  console.log(`  Training plans: 4 (2 active, 1 draft, 1 archived)`);
+  console.log(`  Workouts: ${workouts.length}`);
+  console.log(`  Enrollments: 10 (7 active, 1 paused, 1 completed, 1 active in GPP)`);
+  console.log(`  Workout logs: ${logData.length}`);
+};
+
 const main = async () => {
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("seed must not run in production");
+  }
+
   console.log("Starting seed...\n");
 
   await clearAll();
 
-  const passwordHash = await bcrypt.hash("password123", 12);
+  const passwordHash = await bcrypt.hash("password12345", AUTH_CONSTANTS.BCRYPT_COST_FACTOR);
 
   const users = await seedUsers(passwordHash);
   const { coachProfile } = await seedProfiles(users);
 
   await seedCoachNotes(coachProfile.id, users);
   await seedBenchmarks(users);
+  await seedTrainingPlans(coachProfile.id, users);
 
   await seedMarketingPages();
   await seedProducts();
@@ -1095,9 +1521,6 @@ const main = async () => {
   await seedContactSubmissions();
 
   console.log("\nSeed completed!");
-  console.log("  Admin:   admin@example.com / password123");
-  console.log("  Coach:   coach@thedisciplineprogram.com / password123");
-  console.log("  Athlete: sarah.mitchell@email.com / password123");
 };
 
 main()

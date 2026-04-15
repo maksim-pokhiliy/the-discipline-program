@@ -3,23 +3,28 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { createProductSchema, type CreateProductData } from "@repo/contracts/product";
 import { FormView } from "@repo/ui";
 
-import { useCreateProduct } from "@app/lib/hooks/use-products";
+import { useCreateProduct } from "@app/lib/hooks";
 
-import { ProductForm } from "../../components";
+import {
+  ProductForm,
+  productFormSchema,
+  toProductApiData,
+  type ProductFormData,
+} from "../../components";
 
 export const ProductCreateView = () => {
   const { mutate: createProduct, isPending } = useCreateProduct();
 
-  const methods = useForm<CreateProductData>({
-    resolver: zodResolver(createProductSchema),
+  const methods = useForm<ProductFormData>({
+    resolver: zodResolver(productFormSchema),
     defaultValues: {
       title: "",
       slug: "",
       description: "",
       features: [],
+      isFeatured: false,
       isActive: true,
     },
   });
@@ -27,11 +32,10 @@ export const ProductCreateView = () => {
   return (
     <FormView
       methods={methods}
-      onSubmit={(data) => createProduct(data)}
+      onSubmit={(data) => createProduct(toProductApiData(data))}
       isPending={isPending}
       title="Create Product"
       subtitle="New product"
-      backgroundColor="dark"
       backHref="/products"
       backLabel="Back to List"
       submitLabel="Create Product"

@@ -1,32 +1,17 @@
-"use client";
+import { type BlogPageData } from "@repo/contracts/cms/pages";
 
-import { Stack } from "@mui/material";
+import { BlogFeaturedSection, BlogPostsGrid } from "./sections";
 
-import { type BlogPageData } from "@repo/contracts/pages";
-import { QueryWrapper } from "@repo/query";
-
-import { useBlogPage } from "@app/lib/hooks";
-
-import { BlogFeaturedSection, BlogHeroSection, BlogPostsGrid } from "./sections";
-
-interface BlogPageClientProps {
-  initialData: BlogPageData;
-}
-
-export const BlogPageClient = ({ initialData }: BlogPageClientProps) => {
-  const { data, isLoading, error } = useBlogPage({ initialData });
-
-  return (
-    <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage="Loading blog...">
-      {(data) => (
-        <Stack spacing={0}>
-          <BlogHeroSection hero={data.hero} />
-
-          {data.featuredPost && <BlogFeaturedSection featuredPost={data.featuredPost} />}
-
-          <BlogPostsGrid posts={data.posts} />
-        </Stack>
-      )}
-    </QueryWrapper>
-  );
+type BlogPageContentProps = {
+  data: BlogPageData;
 };
+
+export const BlogPageContent = ({ data }: BlogPageContentProps) => (
+  <>
+    {data.featuredPost && (
+      <BlogFeaturedSection hero={data.hero} grid={data.grid} featuredPost={data.featuredPost} />
+    )}
+
+    <BlogPostsGrid grid={data.grid} posts={data.posts} />
+  </>
+);

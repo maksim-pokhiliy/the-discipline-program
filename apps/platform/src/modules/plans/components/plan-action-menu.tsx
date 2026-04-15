@@ -12,7 +12,7 @@ import RestoreIcon from "@mui/icons-material/Restore";
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import Link from "next/link";
 
-import { TrainingPlanStatus } from "@repo/contracts/training-plan";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ConfirmationModal } from "@repo/ui";
 
 type PlanActionMenuProps = {
@@ -39,6 +39,7 @@ export const PlanActionMenu: React.FC<PlanActionMenuProps> = ({
   isPending,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
 
@@ -53,13 +54,13 @@ export const PlanActionMenu: React.FC<PlanActionMenuProps> = ({
     <>
       <IconButton
         ref={anchorRef}
-        size="small"
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           setMenuOpen(true);
         }}
         disabled={isPending}
+        aria-label="Plan actions"
       >
         <MoreVertIcon fontSize="small" />
       </IconButton>
@@ -89,7 +90,13 @@ export const PlanActionMenu: React.FC<PlanActionMenuProps> = ({
         )}
 
         {status === TrainingPlanStatus.ACTIVE && (
-          <MenuItem onClick={handle(onArchive)} disabled={isPending}>
+          <MenuItem
+            onClick={() => {
+              close();
+              setArchiveOpen(true);
+            }}
+            disabled={isPending}
+          >
             <ListItemIcon>
               <ArchiveIcon fontSize="small" />
             </ListItemIcon>
@@ -120,6 +127,17 @@ export const PlanActionMenu: React.FC<PlanActionMenuProps> = ({
           <ListItemText>Delete</ListItemText>
         </MenuItem>
       </Menu>
+
+      <ConfirmationModal
+        open={archiveOpen}
+        onClose={() => setArchiveOpen(false)}
+        title="Archive Training Plan"
+        type="danger"
+        message={`Are you sure you want to archive "${planName}"?`}
+        details="Archived plans are no longer visible to athletes. You can restore it later."
+        isConfirming={isPending}
+        onConfirm={onArchive}
+      />
 
       <ConfirmationModal
         open={deleteOpen}

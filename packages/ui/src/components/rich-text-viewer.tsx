@@ -3,34 +3,32 @@
 import { Box, type BoxProps, type SxProps, type Theme } from "@mui/material";
 import DOMPurify from "isomorphic-dompurify";
 
-interface RichTextViewerProps extends BoxProps {
+export type RichTextViewerProps = BoxProps & {
   content: string;
-}
+};
 
 const defaultStyles: SxProps<Theme> = {
-  "& h1": { typography: "h3", mt: 4, mb: 2, fontWeight: 700 },
-  "& h2": { typography: "h4", mt: 4, mb: 2, fontWeight: 600 },
-  "& h3": { typography: "h5", mt: 3, mb: 2, fontWeight: 600 },
-  "& h4": { typography: "h6", mt: 3, mb: 2, fontWeight: 600 },
+  "& h1": { typography: "h3", mt: 4, mb: 2 },
+  "& h2": { typography: "h4", mt: 4, mb: 2 },
+  "& h3": { typography: "h5", mt: 3, mb: 2 },
+  "& h4": { typography: "h6", mt: 3, mb: 2 },
 
   "& p": {
     typography: "body1",
     mb: 2,
-    lineHeight: 1.8,
     color: "text.primary",
   },
 
   "& a": {
     color: "primary.main",
     textDecoration: "underline",
-    fontWeight: 500,
+
     cursor: "pointer",
     "&:hover": {
       color: "primary.dark",
     },
   },
 
-  "& strong": { fontWeight: 600 },
   "& em": { fontStyle: "italic" },
   "& u": { textDecoration: "underline" },
 
@@ -77,7 +75,7 @@ export const RichTextViewer = ({ content, sx, ...props }: RichTextViewerProps) =
 
   return (
     <Box
-      sx={[defaultStyles, ...(Array.isArray(sx) ? sx : [sx])]}
+      sx={[defaultStyles, ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
       dangerouslySetInnerHTML={{ __html: sanitizedContent }}
       {...props}
     />

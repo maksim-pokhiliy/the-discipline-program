@@ -1,0 +1,36 @@
+import HealingIcon from "@mui/icons-material/Healing";
+import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+
+import { HEALTH_STATUS_LABELS, HealthStatus } from "@repo/contracts/coaching/athlete-profile";
+import type { StatusChipConfig } from "@repo/ui";
+
+export const HEALTH_STATUS_CHIPS: Record<HealthStatus, StatusChipConfig> = {
+  [HealthStatus.HEALTHY]: {
+    label: HEALTH_STATUS_LABELS[HealthStatus.HEALTHY],
+    color: "success",
+    icon: <HealthAndSafetyIcon fontSize="small" />,
+  },
+  [HealthStatus.INJURED]: {
+    label: HEALTH_STATUS_LABELS[HealthStatus.INJURED],
+    color: "error",
+    icon: <LocalHospitalIcon fontSize="small" />,
+  },
+  [HealthStatus.RESTRICTED]: {
+    label: HEALTH_STATUS_LABELS[HealthStatus.RESTRICTED],
+    color: "warning",
+    icon: <HealingIcon fontSize="small" />,
+  },
+};
+
+export const getHealthChipFromMessage = (message: string): StatusChipConfig | null => {
+  const lower = message.toLowerCase();
+
+  for (const [status, chip] of Object.entries(HEALTH_STATUS_CHIPS)) {
+    if (lower.includes(status.toLowerCase())) {
+      return chip;
+    }
+  }
+
+  return null;
+};

@@ -1,12 +1,12 @@
-import { NextResponse } from "next/server";
+import { createGetHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@repo/api-routes";
+import { cmsDashboardAdminApi } from "@repo/api-server/cms";
+import { getDashboardDataResponseSchema } from "@repo/contracts/cms/dashboard";
 
-import { withAdminAuth } from "@repo/api-routes/auth";
-import { adminDashboardApi } from "@repo/api-server";
-import { getDashboardDataResponseSchema } from "@repo/contracts/dashboard";
+import { withAdminAuth } from "@app/lib/server/auth";
 
-export const GET = withAdminAuth(async () => {
-  const data = await adminDashboardApi.getDashboardData();
-  const validated = getDashboardDataResponseSchema.parse(data);
-
-  return NextResponse.json(validated);
-});
+export const GET = withAdminAuth(
+  withAuthRateLimit(
+    createGetHandler(cmsDashboardAdminApi.getDashboardData, getDashboardDataResponseSchema),
+    RATE_LIMIT_TIER.API,
+  ),
+);

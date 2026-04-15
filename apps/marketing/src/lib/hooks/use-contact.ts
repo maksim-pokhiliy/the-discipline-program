@@ -1,6 +1,8 @@
+"use client";
+
 import { useMutation } from "@tanstack/react-query";
 
-import { type CreateContactSubmissionRequest } from "@repo/contracts/contact";
+import { type CreateContactSubmissionRequest } from "@repo/contracts/cms/contact";
 
 import { api } from "../api";
 

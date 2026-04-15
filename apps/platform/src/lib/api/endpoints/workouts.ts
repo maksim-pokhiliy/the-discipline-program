@@ -1,12 +1,9 @@
 import { type ApiClient } from "@repo/api-client";
-import type { CreateWorkoutData, UpdateWorkoutData, Workout } from "@repo/contracts/workout";
+import type { CreateWorkoutData, UpdateWorkoutData, Workout } from "@repo/contracts/lms/workout";
 
 export const createWorkoutsAPI = (client: ApiClient) => ({
   getAll: (planId: string): Promise<Workout[]> =>
     client.request(`/api/platform/training-plans/${planId}/workouts`),
-
-  getById: (planId: string, id: string): Promise<Workout> =>
-    client.request(`/api/platform/training-plans/${planId}/workouts/${id}`),
 
   create: (planId: string, data: CreateWorkoutData): Promise<Workout> =>
     client.request(`/api/platform/training-plans/${planId}/workouts`, "POST", data),

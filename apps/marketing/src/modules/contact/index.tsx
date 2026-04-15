@@ -1,41 +1,23 @@
-"use client";
+import { type ContactPageData } from "@repo/contracts/cms/pages";
 
-import { Stack } from "@mui/material";
+import { FullscreenSection } from "@app/lib/components/ui";
 
-import { type ContactPageData } from "@repo/contracts/pages";
-import { QueryWrapper } from "@repo/query";
+import { ContactFormSection } from "./sections";
 
-import { useContactPage } from "@app/lib/hooks";
-import { StructuredData } from "@app/shared/components/seo";
-
-import { ContactDirectInfo, ContactFAQ, ContactForm, ContactHero } from "./sections";
-
-interface ContactPageClientProps {
-  initialData: ContactPageData;
-}
-
-export const ContactPageClient = ({ initialData }: ContactPageClientProps) => {
-  const { data, isLoading, error } = useContactPage({ initialData });
-
-  return (
-    <QueryWrapper
-      isLoading={isLoading}
-      error={error}
-      data={data}
-      loadingMessage="Loading contact page..."
-    >
-      {(data) => (
-        <>
-          <StructuredData type="faq" data={{ faqItems: data.faq.items }} />
-
-          <Stack spacing={0}>
-            <ContactHero hero={data.hero} />
-            <ContactForm form={data.form} programOptions={data.programOptions} />
-            <ContactDirectInfo directContact={data.directContact} />
-            <ContactFAQ faq={data.faq} />
-          </Stack>
-        </>
-      )}
-    </QueryWrapper>
-  );
+type ContactPageContentProps = {
+  data: ContactPageData;
 };
+
+export const ContactPageContent = ({ data }: ContactPageContentProps) => (
+  <>
+    <FullscreenSection
+      backgroundImage={data.hero.backgroundImage}
+      title={data.hero.title}
+      subtitle={data.hero.subtitle}
+      buttonText={data.hero.buttonText}
+      buttonHref={data.hero.buttonHref}
+      priority
+    />
+    <ContactFormSection form={data.form} programOptions={data.programOptions} />
+  </>
+);

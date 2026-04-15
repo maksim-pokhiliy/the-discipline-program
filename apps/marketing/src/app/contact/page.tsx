@@ -1,9 +1,8 @@
 import { type Metadata } from "next";
 
-import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
-
 import { serverApi } from "@app/lib/api/server";
-import { ContactPageClient } from "@app/modules/contact";
+import { PAGE_SEO, SEO_CONFIG } from "@app/lib/seo";
+import { ContactPageContent } from "@app/modules/contact";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.contact.title,
@@ -16,10 +15,12 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
-export default async function ContactPage() {
-  const initialData = await serverApi.pages.getContact();
+const ContactPage = async () => {
+  const data = await serverApi.pages.getContact();
 
-  return <ContactPageClient initialData={initialData} />;
-}
+  return <ContactPageContent data={data} />;
+};
+
+export default ContactPage;

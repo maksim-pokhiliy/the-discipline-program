@@ -1,11 +1,27 @@
-import { createGetHandler, createPostHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
-import { adminProductsApi } from "@repo/api-server";
-import { createProductRequestSchema, getProductsResponseSchema } from "@repo/contracts/product";
+import {
+  createGetHandler,
+  createPostHandler,
+  RATE_LIMIT_TIER,
+  withAuthRateLimit,
+} from "@repo/api-routes";
+import { cmsProductAdminApi } from "@repo/api-server/cms";
+import {
+  createProductRequestSchema,
+  getProductsResponseSchema,
+  productSchema,
+} from "@repo/contracts/cms/product";
+
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetHandler(adminProductsApi.getAll, getProductsResponseSchema),
+  withAuthRateLimit(
+    createGetHandler(cmsProductAdminApi.getAll, getProductsResponseSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );
 export const POST = withAdminAuth(
-  createPostHandler(adminProductsApi.create, createProductRequestSchema),
+  withAuthRateLimit(
+    createPostHandler(cmsProductAdminApi.create, createProductRequestSchema, productSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );

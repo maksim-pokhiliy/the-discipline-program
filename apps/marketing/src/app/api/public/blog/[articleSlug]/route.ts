@@ -1,16 +1,24 @@
-import { NextResponse } from "next/server";
+import {
+  CACHE_POLICY,
+  createGetByParamHandler,
+  withCacheControl,
+  withPublicRoute,
+  withRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { cmsBlogPublicApi } from "@repo/api-server/cms";
+import { blogPostPageDataSchema, getBlogArticleBySlugParamsSchema } from "@repo/contracts/cms/blog";
 
-import { handleApiError } from "@repo/api-routes";
-import { pagesApi } from "@repo/api-server";
-import { getBlogArticleBySlugParamsSchema } from "@repo/contracts/blog";
-
-export async function GET(_: Request, { params }: { params: Promise<{ articleSlug: string }> }) {
-  try {
-    const { articleSlug } = getBlogArticleBySlugParamsSchema.parse(await params);
-    const article = await pagesApi.getBlogArticle(articleSlug);
-
-    return NextResponse.json(article);
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
+export const GET = withPublicRoute(
+  withRateLimit(
+    withCacheControl(
+      createGetByParamHandler(
+        ({ articleSlug }) => cmsBlogPublicApi.getArticle(articleSlug),
+        getBlogArticleBySlugParamsSchema,
+        blogPostPageDataSchema,
+      ),
+      CACHE_POLICY.STATIC,
+    ),
+    RATE_LIMIT_TIER.PUBLIC,
+  ),
+);

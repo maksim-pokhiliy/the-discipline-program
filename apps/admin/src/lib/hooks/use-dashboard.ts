@@ -2,9 +2,8 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { adminKeys } from "@repo/query";
-
 import { api } from "../api";
+import { adminKeys } from "../api/keys";
 
 export const useDashboardData = () =>
   useQuery({

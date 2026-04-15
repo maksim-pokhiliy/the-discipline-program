@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import {
@@ -15,12 +15,18 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 
-import { UserRole } from "@repo/contracts/auth";
-import { type AdminUserListItem } from "@repo/contracts/user";
+import { UserRole } from "@repo/contracts/iam/auth";
+import { type AdminUserListItem } from "@repo/contracts/iam/user";
 import { formatDate } from "@repo/shared";
-import { ConfirmationModal, DataTable, type Column, type DataTableFilter } from "@repo/ui";
+import {
+  ConfirmationModal,
+  DataTable,
+  useDataTableUrlState,
+  type Column,
+  type DataTableFilter,
+} from "@repo/ui";
 
-import { useUpdateUserRole } from "@app/lib/hooks";
+import { useChipMenu, useUpdateUserRole } from "@app/lib/hooks";
 
 import { ROLE_CONFIG } from "../../constants";
 
@@ -36,153 +42,152 @@ const filters: DataTableFilter<AdminUserListItem>[] = [
   },
 ];
 
-interface UsersListSectionProps {
+type UsersListSectionProps = {
   users: AdminUserListItem[];
-}
+};
 
 export const UsersListSection = ({ users }: UsersListSectionProps) => {
+  const { state, onStateChange } = useDataTableUrlState({
+    defaultSort: { columnId: "createdAt", direction: "desc" },
+  });
   const { mutate: updateRole, isPending } = useUpdateUserRole();
-
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-  const [menuUserId, setMenuUserId] = useState<string | null>(null);
+  const { anchorEl, menuItemId, openMenu, closeMenu } = useChipMenu();
   const [pendingChange, setPendingChange] = useState<{
     userId: string;
     currentRole: UserRole;
     newRole: UserRole;
   } | null>(null);
 
-  const handleChipClick = (event: React.MouseEvent<HTMLElement>, userId: string) => {
-    event.stopPropagation();
-    setMenuAnchor(event.currentTarget);
-    setMenuUserId(userId);
-  };
+  const handleRoleSelect = useCallback(
+    (newRole: UserRole) => {
+      const currentUser = users.find((u) => u.id === menuItemId);
 
-  const handleMenuClose = () => {
-    setMenuAnchor(null);
-    setMenuUserId(null);
-  };
+      closeMenu();
 
-  const handleRoleSelect = (newRole: UserRole) => {
-    const currentUser = users.find((u) => u.id === menuUserId);
+      if (!currentUser || currentUser.role === newRole) {
+        return;
+      }
 
-    handleMenuClose();
+      setPendingChange({
+        userId: currentUser.id,
+        currentRole: currentUser.role,
+        newRole,
+      });
+    },
+    [users, menuItemId, closeMenu],
+  );
 
-    if (!currentUser || currentUser.role === newRole) {
-      return;
-    }
+  const menuUser = useMemo(() => users.find((u) => u.id === menuItemId), [users, menuItemId]);
 
-    setPendingChange({
-      userId: currentUser.id,
-      currentRole: currentUser.role,
-      newRole,
-    });
-  };
-
-  const handleConfirm = () => {
+  const handleConfirm = useCallback(() => {
     if (pendingChange) {
       updateRole(
         { id: pendingChange.userId, data: { role: pendingChange.newRole } },
         { onSettled: () => setPendingChange(null) },
       );
     }
-  };
+  }, [pendingChange, updateRole]);
 
-  const columns: Column<AdminUserListItem>[] = [
-    {
-      id: "email",
-      label: "Email",
-      width: "45%",
-      sortable: true,
-      sortValue: (user) => user.email,
-      searchValue: (user) => user.email,
-      render: (user) => (
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Avatar src={user.image || undefined} sx={{ width: 32, height: 32, fontSize: 14 }}>
-            {user.email.charAt(0).toUpperCase()}
-          </Avatar>
-          <Typography variant="subtitle2" fontWeight={600}>
-            {user.email}
-          </Typography>
-        </Stack>
-      ),
-    },
-    {
-      id: "role",
-      label: "Role",
-      width: "20%",
-      sortable: true,
-      sortValue: (user) => user.role,
-      render: (user) => {
-        const config = ROLE_CONFIG[user.role];
-
-        return (
-          <Chip
-            label={config.label}
-            color={config.color}
-            size="small"
-            variant="outlined"
-            onClick={(e) => handleChipClick(e, user.id)}
-            sx={{ cursor: "pointer" }}
-          />
-        );
+  const columns: Column<AdminUserListItem>[] = useMemo(
+    () => [
+      {
+        id: "email",
+        label: "Email",
+        width: "45%",
+        sortable: true,
+        sortValue: (user) => user.email,
+        searchValue: (user) => user.email,
+        render: (user) => (
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Avatar
+              src={user.image || undefined}
+              sx={(theme) => ({ width: theme.spacing(4), height: theme.spacing(4) })}
+            >
+              {user.email.charAt(0).toUpperCase()}
+            </Avatar>
+            <Typography variant="subtitle2">{user.email}</Typography>
+          </Stack>
+        ),
       },
-    },
-    {
-      id: "createdAt",
-      label: "Registered",
-      width: "20%",
-      sortable: true,
-      sortValue: (user) => new Date(user.createdAt).getTime(),
-      render: (user) => (
-        <Typography variant="body2" color="text.secondary">
-          {formatDate(user.createdAt)}
-        </Typography>
-      ),
-    },
-    {
-      id: "actions",
-      label: "Actions",
-      align: "right",
-      width: "15%",
-      render: (user) => (
-        <Stack direction="row" spacing={0} justifyContent="flex-end">
-          <Tooltip title="View">
-            <IconButton component={Link} href={`/users/${user.id}`} size="small" color="primary">
-              <VisibilityIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </Stack>
-      ),
-    },
-  ];
+      {
+        id: "role",
+        label: "Role",
+        width: "20%",
+        sortable: true,
+        sortValue: (user) => user.role,
+        render: (user) => {
+          const config = ROLE_CONFIG[user.role];
+
+          return (
+            <Chip
+              label={config.label}
+              color={config.color}
+              size="small"
+              variant="outlined"
+              onClick={(e) => openMenu(e, user.id)}
+            />
+          );
+        },
+      },
+      {
+        id: "createdAt",
+        label: "Registered",
+        width: "20%",
+        sortable: true,
+        sortValue: (user) => new Date(user.createdAt).getTime(),
+        render: (user) => (
+          <Typography variant="body2" color="text.secondary">
+            {formatDate(user.createdAt)}
+          </Typography>
+        ),
+      },
+      {
+        id: "actions",
+        label: "Actions",
+        align: "right",
+        width: "15%",
+        render: (user) => (
+          <Stack direction="row" spacing={0} justifyContent="flex-end">
+            <Tooltip title="View">
+              <IconButton
+                component={Link}
+                href={`/users/${user.id}`}
+                color="primary"
+                aria-label="View"
+              >
+                <VisibilityIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        ),
+      },
+    ],
+    [openMenu],
+  );
 
   return (
     <>
       <DataTable
         data={users}
         columns={columns}
-        title="Users"
         searchPlaceholder="Search by email..."
         filters={filters}
         paginated
-        defaultSort={{ columnId: "createdAt", direction: "desc" }}
         emptyMessage="No users found."
+        state={state}
+        onStateChange={onStateChange}
       />
 
-      <Menu anchorEl={menuAnchor} open={!!menuAnchor} onClose={handleMenuClose}>
-        {Object.values(UserRole).map((role) => {
-          const currentUser = users.find((u) => u.id === menuUserId);
-
-          return (
-            <MenuItem
-              key={role}
-              onClick={() => handleRoleSelect(role)}
-              selected={currentUser?.role === role}
-            >
-              {ROLE_CONFIG[role].label}
-            </MenuItem>
-          );
-        })}
+      <Menu anchorEl={anchorEl} open={!!anchorEl} onClose={closeMenu}>
+        {Object.values(UserRole).map((role) => (
+          <MenuItem
+            key={role}
+            onClick={() => handleRoleSelect(role)}
+            selected={menuUser?.role === role}
+          >
+            {ROLE_CONFIG[role].label}
+          </MenuItem>
+        ))}
       </Menu>
 
       <ConfirmationModal

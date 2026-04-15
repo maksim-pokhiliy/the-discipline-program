@@ -4,8 +4,10 @@ import AddIcon from "@mui/icons-material/Add";
 import { Button, Stack, TextField, Typography, Divider } from "@mui/material";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
+import { type HomePageWhyChooseData } from "@repo/contracts/cms/pages";
 import { FormCard } from "@repo/ui";
 
+import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./shared-styles";
 import { WhyChooseFeatureCard } from "./why-choose-feature-card";
 
 export const WhyChooseSectionForm = () => {
@@ -13,7 +15,7 @@ export const WhyChooseSectionForm = () => {
     register,
     control,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<HomePageWhyChooseData>();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -28,7 +30,7 @@ export const WhyChooseSectionForm = () => {
             label="Section Title"
             fullWidth
             error={!!errors.title}
-            helperText={errors.title?.message?.toString()}
+            helperText={errors.title?.message}
             {...register("title")}
           />
 
@@ -38,7 +40,7 @@ export const WhyChooseSectionForm = () => {
             multiline
             minRows={2}
             error={!!errors.subtitle}
-            helperText={errors.subtitle?.message?.toString()}
+            helperText={errors.subtitle?.message}
             {...register("subtitle")}
           />
         </Stack>
@@ -49,13 +51,7 @@ export const WhyChooseSectionForm = () => {
           </Typography>
         </Divider>
 
-        <Stack
-          spacing={3}
-          sx={{
-            width: "100%",
-            alignItems: "start",
-          }}
-        >
+        <Stack spacing={3} sx={ITEMS_STACK_SX}>
           {fields.map((field, index) => (
             <WhyChooseFeatureCard key={field.id} index={index} onRemove={() => remove(index)} />
           ))}
@@ -71,7 +67,7 @@ export const WhyChooseSectionForm = () => {
                 iconName: "",
               })
             }
-            sx={{ borderStyle: "dashed", borderWidth: 2, px: 4 }}
+            sx={ADD_BUTTON_SX}
           >
             Add New Card
           </Button>

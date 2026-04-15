@@ -3,13 +3,11 @@ import {
   type AdminContactsPageData,
   type GetContactByIdResponse,
   type UpdateContactRequest,
-} from "@repo/contracts/contact";
+} from "@repo/contracts/cms/contact";
 
 export const createContactsAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminContactsPageData> =>
     client.request("/api/admin/contacts/page-data"),
-
-  getAll: (): Promise<GetContactByIdResponse[]> => client.request("/api/admin/contacts"),
 
   getById: (id: string): Promise<GetContactByIdResponse> =>
     client.request(`/api/admin/contacts/${id}`),

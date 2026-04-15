@@ -1,84 +1,156 @@
 import { type Theme, type ThemeOptions } from "@mui/material";
 
-import { poppins } from "../assets/fonts/poppins";
+declare module "@mui/material/styles" {
+  interface TypographyVariants {
+    display1: React.CSSProperties;
+    display2: React.CSSProperties;
+  }
 
-export const typography = (baseTheme: Theme): ThemeOptions["typography"] => ({
-  ...poppins.style,
-  h1: {
-    fontSize: baseTheme.typography.pxToRem(80),
-    fontWeight: baseTheme.typography.fontWeightBold,
-    lineHeight: 1.1,
+  interface TypographyVariantsOptions {
+    display1?: React.CSSProperties;
+    display2?: React.CSSProperties;
+  }
+}
 
-    [baseTheme.breakpoints.down("lg")]: {
-      fontSize: baseTheme.typography.pxToRem(64),
-    },
+declare module "@mui/material/Typography" {
+  interface TypographyPropsVariantOverrides {
+    display1: true;
+    display2: true;
+  }
+}
 
-    [baseTheme.breakpoints.down("md")]: {
-      fontSize: baseTheme.typography.pxToRem(48),
-    },
-  },
+const FONT_BASE = 'var(--font-base), "Barlow", sans-serif';
+const FONT_DISPLAY = 'var(--font-display), "Barlow Condensed", sans-serif';
 
-  h2: {
-    fontSize: baseTheme.typography.pxToRem(64),
-    fontWeight: baseTheme.typography.fontWeightBold,
-    lineHeight: 1.2,
-
-    [baseTheme.breakpoints.down("lg")]: {
-      fontSize: baseTheme.typography.pxToRem(56),
-    },
-
-    [baseTheme.breakpoints.down("md")]: {
-      fontSize: baseTheme.typography.pxToRem(40),
-    },
-  },
-
-  h3: {
-    fontSize: baseTheme.typography.pxToRem(48),
-    fontWeight: baseTheme.typography.fontWeightBold,
-    lineHeight: 1.2,
-
-    [baseTheme.breakpoints.down("lg")]: {
-      fontSize: baseTheme.typography.pxToRem(40),
-    },
-
-    [baseTheme.breakpoints.down("md")]: {
-      fontSize: baseTheme.typography.pxToRem(32),
-    },
-  },
-
-  h4: {
-    fontSize: baseTheme.typography.pxToRem(36),
-    fontWeight: baseTheme.typography.fontWeightRegular,
-    lineHeight: 1.3,
-
-    [baseTheme.breakpoints.down("md")]: {
-      fontSize: baseTheme.typography.pxToRem(28),
-    },
-  },
-
-  h5: {
+export const typography = (baseTheme: Theme): ThemeOptions["typography"] => {
+  const h3 = {
     fontSize: baseTheme.typography.pxToRem(24),
-    fontWeight: baseTheme.typography.fontWeightRegular,
+
     lineHeight: 1.4,
 
     [baseTheme.breakpoints.down("md")]: {
-      fontSize: baseTheme.typography.pxToRem(20),
+      fontSize: baseTheme.typography.pxToRem(22),
     },
-  },
+  };
 
-  h6: {
-    fontSize: baseTheme.typography.pxToRem(20),
-    fontWeight: baseTheme.typography.fontWeightRegular,
-    lineHeight: 1.4,
-
-    [baseTheme.breakpoints.down("md")]: {
-      fontSize: baseTheme.typography.pxToRem(18),
-    },
-  },
-
-  body1: {
-    fontSize: baseTheme.typography.pxToRem(16),
+  const body1 = {
+    fontSize: baseTheme.typography.pxToRem(14),
     lineHeight: 1.6,
-    fontWeight: baseTheme.typography.fontWeightRegular,
-  },
-});
+  };
+
+  return {
+    fontFamily: FONT_BASE,
+
+    display1: {
+      fontFamily: FONT_DISPLAY,
+      fontWeight: 700,
+      fontSize: baseTheme.typography.pxToRem(72),
+
+      lineHeight: 1.15,
+      letterSpacing: "-0.02em",
+      textTransform: "uppercase" as const,
+
+      [baseTheme.breakpoints.up("xl")]: {
+        fontSize: baseTheme.typography.pxToRem(80),
+      },
+
+      [baseTheme.breakpoints.down("lg")]: {
+        fontSize: baseTheme.typography.pxToRem(56),
+      },
+
+      [baseTheme.breakpoints.down("md")]: {
+        fontSize: baseTheme.typography.pxToRem(40),
+      },
+    },
+
+    display2: {
+      fontFamily: FONT_DISPLAY,
+      fontWeight: 700,
+      fontSize: baseTheme.typography.pxToRem(52),
+
+      lineHeight: 1.1,
+      letterSpacing: "-0.01em",
+      textTransform: "uppercase" as const,
+
+      [baseTheme.breakpoints.down("lg")]: {
+        fontSize: baseTheme.typography.pxToRem(42),
+      },
+
+      [baseTheme.breakpoints.down("md")]: {
+        fontSize: baseTheme.typography.pxToRem(32),
+      },
+    },
+
+    h1: {
+      fontSize: baseTheme.typography.pxToRem(40),
+
+      lineHeight: 1.3,
+
+      [baseTheme.breakpoints.down("md")]: {
+        fontSize: baseTheme.typography.pxToRem(32),
+      },
+    },
+
+    h2: {
+      fontSize: baseTheme.typography.pxToRem(30),
+
+      lineHeight: 1.35,
+
+      [baseTheme.breakpoints.down("md")]: {
+        fontSize: baseTheme.typography.pxToRem(26),
+      },
+    },
+
+    h3,
+
+    h4: {
+      fontSize: baseTheme.typography.pxToRem(20),
+
+      lineHeight: 1.4,
+    },
+
+    h5: {
+      fontSize: baseTheme.typography.pxToRem(16),
+
+      lineHeight: 1.5,
+    },
+
+    h6: {
+      fontSize: baseTheme.typography.pxToRem(14),
+
+      lineHeight: 1.5,
+    },
+
+    body1,
+
+    body2: {
+      fontSize: baseTheme.typography.pxToRem(13),
+      lineHeight: 1.6,
+    },
+
+    subtitle1: {
+      fontSize: baseTheme.typography.pxToRem(14),
+      fontWeight: 600,
+      lineHeight: 1.5,
+    },
+
+    subtitle2: {
+      fontSize: baseTheme.typography.pxToRem(13),
+      fontWeight: 600,
+      lineHeight: 1.5,
+    },
+
+    caption: {
+      fontSize: baseTheme.typography.pxToRem(12),
+      lineHeight: 1.5,
+    },
+
+    overline: {
+      fontSize: baseTheme.typography.pxToRem(11),
+      fontWeight: 600,
+      lineHeight: 1.5,
+      letterSpacing: "0.06em",
+      textTransform: "uppercase" as const,
+    },
+  };
+};

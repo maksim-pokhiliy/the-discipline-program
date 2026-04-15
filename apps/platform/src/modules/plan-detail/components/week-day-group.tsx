@@ -5,9 +5,9 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import AddIcon from "@mui/icons-material/Add";
 import { IconButton, Stack, Typography } from "@mui/material";
 
-import type { Workout } from "@repo/contracts/workout";
+import type { Workout } from "@repo/contracts/lms/workout";
+import { formatDayName, isSameDay } from "@repo/shared";
 
-import { formatDayName, isSameDay } from "./week-helpers";
 import { WeekWorkoutCard } from "./week-workout-card";
 
 type WeekDayGroupProps = {
@@ -44,40 +44,29 @@ export const WeekDayGroup: React.FC<WeekDayGroupProps> = ({
         "&:hover .day-action": { opacity: 1 },
       })}
     >
-      <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
-        <Stack direction="row" sx={{ alignItems: "center", gap: 0.75 }}>
-          <Typography
-            variant="caption"
-            sx={{
-              fontWeight: 500,
-              color: "text.secondary",
-              textTransform: "uppercase",
-              letterSpacing: 0.5,
-            }}
-          >
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack direction="row" alignItems="center" spacing={0.75}>
+          <Typography variant="overline" sx={{ color: "text.secondary" }}>
             {formatDayName(date)}
           </Typography>
 
           {isToday ? (
             <Stack
-              sx={{
-                width: 22,
-                height: 22,
+              alignItems="center"
+              justifyContent="center"
+              sx={(theme) => ({
+                width: theme.spacing(2.75),
+                height: theme.spacing(2.75),
                 borderRadius: "50%",
                 backgroundColor: "primary.main",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+              })}
             >
-              <Typography
-                variant="caption"
-                sx={{ fontWeight: 700, color: "primary.contrastText", lineHeight: 1 }}
-              >
+              <Typography variant="caption" sx={{ color: "primary.contrastText" }}>
                 {date.getUTCDate()}
               </Typography>
             </Stack>
           ) : (
-            <Typography variant="caption" sx={{ fontWeight: 500, color: "text.secondary" }}>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
               {date.getUTCDate()}
             </Typography>
           )}
@@ -85,8 +74,8 @@ export const WeekDayGroup: React.FC<WeekDayGroupProps> = ({
 
         <IconButton
           className="day-action"
-          size="small"
           onClick={() => onAddWorkout(date)}
+          aria-label="Add workout"
           sx={(theme) => ({ opacity: 0, transition: theme.transitions.create("opacity") })}
         >
           <AddIcon fontSize="small" />

@@ -1,29 +1,42 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformPlanEnrollmentsApi } from "@repo/api-server";
+import {
+  createAuthGetByParamHandler,
+  createAuthPostByParamHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { coachingPlanRosterApi } from "@repo/api-server/coaching";
+import { lmsPlanEnrollmentApi } from "@repo/api-server/lms";
+import {
+  getPlanRosterParamsSchema,
+  getPlanRosterResponseSchema,
+} from "@repo/contracts/coaching/plan-roster";
 import {
   createPlanEnrollmentParamsSchema,
   createPlanEnrollmentRequestSchema,
   createPlanEnrollmentResponseSchema,
-  getPlanEnrollmentsParamsSchema,
-  getPlanEnrollmentsResponseSchema,
-} from "@repo/contracts/plan-enrollment";
+} from "@repo/contracts/lms/plan-enrollment";
 
-export const GET = withPlatformAuth(async (_, context, userId) => {
-  const { planId } = getPlanEnrollmentsParamsSchema.parse(await context.params);
-  const data = await platformPlanEnrollmentsApi.getAll(userId, planId);
-  const validated = getPlanEnrollmentsResponseSchema.parse(data);
+import { withCoachAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(validated);
-});
+export const GET = withCoachAuth(
+  withAuthRateLimit(
+    createAuthGetByParamHandler(
+      (userId, { planId }) => coachingPlanRosterApi.list(userId, planId),
+      getPlanRosterParamsSchema,
+      getPlanRosterResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-export const POST = withPlatformAuth(async (request, context, userId) => {
-  const { planId } = createPlanEnrollmentParamsSchema.parse(await context.params);
-  const body = await request.json();
-  const data = createPlanEnrollmentRequestSchema.parse(body);
-  const result = await platformPlanEnrollmentsApi.create(userId, planId, data);
-  const validated = createPlanEnrollmentResponseSchema.parse(result);
-
-  return NextResponse.json(validated, { status: 201 });
-});
+export const POST = withCoachAuth(
+  withAuthRateLimit(
+    createAuthPostByParamHandler(
+      (userId, { planId }, data) => lmsPlanEnrollmentApi.create(userId, planId, data),
+      createPlanEnrollmentParamsSchema,
+      createPlanEnrollmentRequestSchema,
+      createPlanEnrollmentResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

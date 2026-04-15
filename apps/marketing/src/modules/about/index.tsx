@@ -1,43 +1,32 @@
-"use client";
+import { type AboutPageData } from "@repo/contracts/cms/pages";
 
-import { Stack } from "@mui/material";
+import { FullscreenSection, PageCTASection } from "@app/lib/components/ui";
 
-import { type AboutPageData } from "@repo/contracts/pages";
-import { QueryWrapper } from "@repo/query";
+import { AboutCredentialsSection, AboutJourneySection, AboutPersonalSection } from "./sections";
 
-import { useAboutPage } from "@app/lib/hooks";
-
-import {
-  AboutCredentialsSection,
-  AboutCTASection,
-  AboutHeroSection,
-  AboutJourneySection,
-  AboutPersonalSection,
-} from "./sections";
-
-interface AboutPageClientProps {
-  initialData: AboutPageData;
-}
-
-export const AboutPageClient = ({ initialData }: AboutPageClientProps) => {
-  const { data, isLoading, error } = useAboutPage({ initialData });
-
-  return (
-    <QueryWrapper
-      isLoading={isLoading}
-      error={error}
-      data={data}
-      loadingMessage="Loading about page..."
-    >
-      {(data) => (
-        <Stack spacing={0}>
-          <AboutHeroSection hero={data.hero} />
-          <AboutJourneySection journey={data.journey} />
-          <AboutCredentialsSection credentials={data.credentials} />
-          <AboutPersonalSection personal={data.personal} />
-          <AboutCTASection cta={data.cta} />
-        </Stack>
-      )}
-    </QueryWrapper>
-  );
+type AboutPageContentProps = {
+  data: AboutPageData;
 };
+
+export const AboutPageContent = ({ data }: AboutPageContentProps) => (
+  <>
+    <FullscreenSection
+      backgroundImage={data.hero.backgroundImage}
+      title={data.hero.title}
+      subtitle={data.hero.subtitle}
+      buttonText={data.hero.buttonText}
+      buttonHref={data.hero.buttonHref}
+      priority
+    />
+    <AboutJourneySection journey={data.journey} />
+    <AboutCredentialsSection credentials={data.credentials} />
+    <AboutPersonalSection personal={data.personal} />
+    <PageCTASection
+      id="about-cta"
+      title={data.cta.title}
+      subtitle={data.cta.subtitle}
+      buttonText={data.cta.buttonText}
+      buttonHref={data.cta.buttonHref}
+    />
+  </>
+);

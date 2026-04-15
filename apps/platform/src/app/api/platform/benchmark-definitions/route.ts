@@ -1,25 +1,35 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformBenchmarkDefinitionsApi } from "@repo/api-server";
+import {
+  createAuthPostHandler,
+  createGetHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { lmsBenchmarkDefinitionApi } from "@repo/api-server/lms";
 import {
   createBenchmarkDefinitionRequestSchema,
   createBenchmarkDefinitionResponseSchema,
   getBenchmarkDefinitionsResponseSchema,
-} from "@repo/contracts/benchmark-definition";
+} from "@repo/contracts/lms/benchmark-definition";
 
-export const GET = withPlatformAuth(async () => {
-  const data = await platformBenchmarkDefinitionsApi.getAll();
-  const validated = getBenchmarkDefinitionsResponseSchema.parse(data);
+import { withPlatformAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(validated);
-});
+export const GET = withPlatformAuth(
+  withAuthRateLimit(
+    createGetHandler(
+      () => lmsBenchmarkDefinitionApi.getAll(),
+      getBenchmarkDefinitionsResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-export const POST = withPlatformAuth(async (request) => {
-  const body = await request.json();
-  const data = createBenchmarkDefinitionRequestSchema.parse(body);
-  const result = await platformBenchmarkDefinitionsApi.create(data);
-  const validated = createBenchmarkDefinitionResponseSchema.parse(result);
-
-  return NextResponse.json(validated, { status: 201 });
-});
+export const POST = withPlatformAuth(
+  withAuthRateLimit(
+    createAuthPostHandler(
+      (userId, data) => lmsBenchmarkDefinitionApi.create(userId, data),
+      createBenchmarkDefinitionRequestSchema,
+      createBenchmarkDefinitionResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

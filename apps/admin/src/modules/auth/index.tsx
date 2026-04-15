@@ -1,14 +1,12 @@
 "use client";
 
-import { useState } from "react";
-
-import { Alert, Container, Divider, Stack, Typography } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { Alert, Divider, Stack, Typography } from "@mui/material";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-import { signIn } from "@repo/auth";
-import { type LoginFormData } from "@repo/contracts/auth";
+import { signIn } from "@repo/auth/client";
+import { type LoginFormData } from "@repo/contracts/iam/auth";
 import { Logo } from "@repo/ui";
 
 import { LoginForm } from "./components";
@@ -16,16 +14,10 @@ import { LoginForm } from "./components";
 export const LoginPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
-  const handleSubmit = async (data: LoginFormData) => {
-    setIsLoading(true);
-
-    try {
+  const loginMutation = useMutation({
+    mutationFn: async (data: LoginFormData) => {
       const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
@@ -33,65 +25,51 @@ export const LoginPage = () => {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
-      } else if (result?.ok) {
-        toast.success("Welcome back");
-        router.replace(callbackUrl);
-        router.refresh();
+        throw new Error("Invalid email or password");
       }
-    } catch {
-      setError("An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
+      return result;
+    },
+    onSuccess: () => {
+      toast.success("Welcome back");
+      router.refresh();
+      router.replace(callbackUrl);
+    },
+  });
 
   return (
-    <Stack
-      sx={{
-        minHeight: "100vh",
-        justifyContent: "center",
-        background: (theme) =>
-          `radial-gradient(ellipse at 50% 20%, ${alpha(theme.palette.primary.main, 0.08)}, transparent 70%)`,
-      }}
-    >
-      <Container maxWidth="xs">
-        <Stack spacing={5} alignItems="center">
-          <Stack spacing={3} alignItems="center">
-            <Logo />
+    <Stack spacing={5} alignItems="center">
+      <Stack spacing={3} alignItems="center">
+        <Logo />
 
-            <Typography
-              variant="h3"
-              component="h1"
-              textAlign="center"
-              sx={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
-            >
-              The Discipline Program
-            </Typography>
+        <Typography variant="display2" component="h1" textAlign="center">
+          The Discipline Program
+        </Typography>
 
-            <Typography variant="body2" color="text.secondary" textAlign="center">
-              Admin Panel
-            </Typography>
+        <Typography variant="h4" color="text.secondary" textAlign="center">
+          Admin Panel
+        </Typography>
 
-            <Divider
-              sx={{
-                width: (theme) => theme.spacing(8),
-                borderColor: "primary.main",
-              }}
-            />
-          </Stack>
+        <Divider
+          sx={{
+            width: (theme) => theme.spacing(8),
+            borderColor: "primary.main",
+          }}
+        />
+      </Stack>
 
-          <Stack spacing={3} sx={{ width: "100%" }}>
-            {error && (
-              <Alert severity="error" onClose={() => setError(null)}>
-                {error}
-              </Alert>
-            )}
+      <Stack spacing={3} sx={{ width: "100%" }}>
+        {loginMutation.error && (
+          <Alert severity="error" onClose={() => loginMutation.reset()}>
+            {loginMutation.error.message}
+          </Alert>
+        )}
 
-            <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
-          </Stack>
-        </Stack>
-      </Container>
+        <LoginForm
+          onSubmit={(data) => loginMutation.mutate(data)}
+          isLoading={loginMutation.isPending}
+        />
+      </Stack>
     </Stack>
   );
 };

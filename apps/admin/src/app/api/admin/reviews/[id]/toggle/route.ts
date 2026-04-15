@@ -1,8 +1,16 @@
-import { createToggleHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
-import { adminReviewsApi } from "@repo/api-server";
-import { toggleReviewParamsSchema } from "@repo/contracts/review";
+import { createToggleHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@repo/api-routes";
+import { cmsReviewAdminApi } from "@repo/api-server/cms";
+import { reviewSchema, toggleReviewParamsSchema } from "@repo/contracts/cms/review";
+
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const PATCH = withAdminAuth(
-  createToggleHandler(adminReviewsApi.toggleReviewStatus, toggleReviewParamsSchema),
+  withAuthRateLimit(
+    createToggleHandler(
+      cmsReviewAdminApi.toggleReviewStatus,
+      toggleReviewParamsSchema,
+      reviewSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
 );

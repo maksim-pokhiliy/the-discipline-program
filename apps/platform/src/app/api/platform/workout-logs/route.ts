@@ -1,25 +1,32 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformWorkoutLogsApi } from "@repo/api-server";
+import {
+  createAuthGetHandler,
+  createAuthPostHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { lmsWorkoutLogApi } from "@repo/api-server/lms";
 import {
   createWorkoutLogRequestSchema,
   createWorkoutLogResponseSchema,
   getWorkoutLogsResponseSchema,
-} from "@repo/contracts/workout-log";
+} from "@repo/contracts/lms/workout-log";
 
-export const GET = withPlatformAuth(async (_, _context, userId) => {
-  const data = await platformWorkoutLogsApi.getAll(userId);
-  const validated = getWorkoutLogsResponseSchema.parse(data);
+import { withPlatformAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(validated);
-});
+export const GET = withPlatformAuth(
+  withAuthRateLimit(
+    createAuthGetHandler((userId) => lmsWorkoutLogApi.getAll(userId), getWorkoutLogsResponseSchema),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-export const POST = withPlatformAuth(async (request, _context, userId) => {
-  const body = await request.json();
-  const data = createWorkoutLogRequestSchema.parse(body);
-  const result = await platformWorkoutLogsApi.create(userId, data);
-  const validated = createWorkoutLogResponseSchema.parse(result);
-
-  return NextResponse.json(validated, { status: 201 });
-});
+export const POST = withPlatformAuth(
+  withAuthRateLimit(
+    createAuthPostHandler(
+      (userId, data) => lmsWorkoutLogApi.create(userId, data),
+      createWorkoutLogRequestSchema,
+      createWorkoutLogResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

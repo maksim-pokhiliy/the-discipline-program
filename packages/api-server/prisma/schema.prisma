@@ -15,6 +15,7 @@ model User {
   image           String?
   password        String?
   role            Role            @default(USER)
+  tokenVersion    Int             @default(0)
   timezone        String          @default("UTC")
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -33,6 +34,9 @@ model User {
 
   @@index([createdAt])
   @@index([deletedAt])
+  @@index([name])
+  @@index([email])
+  @@index([role, deletedAt])
   @@map("users")
 }
 
@@ -127,16 +131,20 @@ model Product {
   description     String
   features        String[]
   trainingPlanId  String?
-  trainingPlan    TrainingPlan? @relation(fields: [trainingPlanId], references: [id])
+  trainingPlan    TrainingPlan? @relation(fields: [trainingPlanId], references: [id], onDelete: SetNull)
   stripeProductId String?      @unique
+  isFeatured      Boolean   @default(false)
   isActive        Boolean   @default(true)
   prices          Price[]
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   deletedAt       DateTime?
 
-  @@index([createdAt])
+  @@index([createdAt, title])
   @@index([deletedAt])
+  @@index([isActive])
+  @@index([trainingPlanId])
+  @@index([isFeatured])
   @@map("app_products")
 }
 
@@ -151,7 +159,7 @@ model Price {
   isActive      Boolean        @default(true)
   subscriptions Subscription[]
 
-  @@index([productId])
+  @@index([productId, isActive])
   @@map("app_prices")
 }
 
@@ -170,9 +178,9 @@ enum PriceInterval {
 model Subscription {
   id                 String             @id
   userId             String             @unique
-  user               User               @relation(fields: [userId], references: [id])
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   priceId            String
-  price              Price              @relation(fields: [priceId], references: [id])
+  price              Price              @relation(fields: [priceId], references: [id], onDelete: Restrict)
   status             SubscriptionStatus
   currentPeriodStart DateTime
   currentPeriodEnd   DateTime
@@ -180,27 +188,31 @@ model Subscription {
   canceledAt         DateTime?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
+  transactions       Transaction[]
 
   @@index([createdAt])
   @@index([status])
+  @@index([priceId])
   @@map("app_subscriptions")
 }
 
 model Transaction {
   id             String            @id @default(cuid())
   userId         String
-  user           User              @relation(fields: [userId], references: [id])
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscriptionId String?
+  subscription   Subscription?     @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
   amountCents    Int
   currency       Currency
   status         TransactionStatus
   providerTxId   String            @unique
-  idempotencyKey String?           @unique
+  idempotencyKey String            @unique
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
   @@index([createdAt])
   @@index([userId, status])
+  @@index([subscriptionId])
   @@map("app_transactions")
 }
 
@@ -220,7 +232,7 @@ enum TransactionStatus {
 model TrainingPlan {
   id          String             @id @default(cuid())
   coachId     String
-  coach       CoachProfile       @relation(fields: [coachId], references: [id])
+  coach       CoachProfile       @relation(fields: [coachId], references: [id], onDelete: Cascade)
   name        String
   description String?
   status      TrainingPlanStatus @default(DRAFT)
@@ -231,6 +243,7 @@ model TrainingPlan {
   updatedAt   DateTime           @updatedAt
   deletedAt   DateTime?
 
+  @@index([coachId])
   @@index([createdAt])
   @@index([deletedAt])
   @@index([status])
@@ -240,7 +253,7 @@ model TrainingPlan {
 model Workout {
   id            String         @id @default(cuid())
   planId        String
-  plan          TrainingPlan   @relation(fields: [planId], references: [id])
+  plan          TrainingPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
   scheduledDate DateTime? @db.Date
   title         String         @default("")
   description   String?
@@ -252,7 +265,8 @@ model Workout {
   updatedAt     DateTime       @updatedAt
   deletedAt     DateTime?
 
-  @@index([planId])
+  @@index([planId, scheduledDate])
+  @@index([planId, isArchived])
   @@index([scheduledDate])
   @@index([createdAt])
   @@index([deletedAt])
@@ -262,16 +276,20 @@ model Workout {
 model WorkoutLog {
   id          String       @id @default(cuid())
   userId      String
-  user        User         @relation(fields: [userId], references: [id])
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   workoutId   String
-  workout     Workout      @relation(fields: [workoutId], references: [id])
+  workout     Workout      @relation(fields: [workoutId], references: [id], onDelete: Cascade)
   date        DateTime     @default(now())
   notes       String?
   isRx        Boolean      @default(true)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
+  @@unique([userId, workoutId])
   @@index([createdAt])
+  @@index([userId])
+  @@index([userId, date])
+  @@index([workoutId])
   @@map("app_workout_logs")
 }
 
@@ -321,6 +339,8 @@ model CoachActionItem {
   updatedAt     DateTime                  @updatedAt
 
   @@index([coachId, status])
+  @@index([coachId, status, athleteId])
+  @@index([coachId, status, resolvedAt])
   @@index([athleteId])
   @@index([createdAt])
   @@map("app_coach_action_items")
@@ -343,6 +363,8 @@ model CoachNote {
   updatedAt DateTime     @updatedAt
 
   @@index([coachId, athleteId])
+  @@index([coachId, createdAt])
+  @@index([athleteId])
   @@index([createdAt])
   @@map("app_coach_notes")
 }
@@ -356,17 +378,20 @@ enum PlanEnrollmentStatus {
 model PlanEnrollment {
   id             String               @id @default(cuid())
   trainingPlanId String
-  trainingPlan   TrainingPlan         @relation(fields: [trainingPlanId], references: [id])
+  trainingPlan   TrainingPlan         @relation(fields: [trainingPlanId], references: [id], onDelete: Cascade)
   userId         String
-  user           User                 @relation(fields: [userId], references: [id])
+  user           User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   startDate      DateTime             @default(now())
   endDate        DateTime?
   status         PlanEnrollmentStatus @default(ACTIVE)
   createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   @@unique([trainingPlanId, userId])
   @@index([userId])
-  @@index([status])
+  @@index([trainingPlanId])
+  @@index([status, trainingPlanId])
+  @@index([userId, status, trainingPlanId])
   @@map("app_plan_enrollments")
 }
 
@@ -379,19 +404,22 @@ model BenchmarkDefinition {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
 
+  @@index([category])
   @@map("app_benchmark_definitions")
 }
 
 model UserBenchmark {
   id                    String              @id @default(cuid())
   userId                String
-  user                  User                @relation(fields: [userId], references: [id])
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   benchmarkDefinitionId String
-  benchmarkDefinition   BenchmarkDefinition @relation(fields: [benchmarkDefinitionId], references: [id])
+  benchmarkDefinition   BenchmarkDefinition @relation(fields: [benchmarkDefinitionId], references: [id], onDelete: Restrict)
   value                 Decimal             @db.Decimal(10, 2)
+  createdAt             DateTime            @default(now())
   updatedAt             DateTime            @updatedAt
 
   @@unique([userId, benchmarkDefinitionId])
+  @@index([userId])
   @@index([benchmarkDefinitionId])
   @@map("app_user_benchmarks")
 }
@@ -419,6 +447,7 @@ model MarketingPageSection {
   updatedAt DateTime      @updatedAt
 
   @@unique([pageSlug, section])
+  @@index([pageSlug, isActive])
   @@map("marketing_page_sections")
 }
 
@@ -430,7 +459,7 @@ model MarketingBlogPost {
   content     String    @db.Text
   coverImage  String?
   authorName  String
-  category    String    @default("Uncategorized")
+  category    MarketingBlogCategory @default(UNCATEGORIZED)
   tags        String[]
   readTime    Int?
   publishedAt DateTime?
@@ -440,11 +469,24 @@ model MarketingBlogPost {
   updatedAt   DateTime  @updatedAt
   deletedAt   DateTime?
 
-  @@index([createdAt])
+  @@index([createdAt, title])
   @@index([deletedAt])
+  @@index([isPublished, publishedAt])
+  @@index([isPublished, category, publishedAt])
+  @@index([category])
+  @@index([isFeatured])
   @@map("marketing_blog_posts")
 }
 
+
+enum MarketingBlogCategory {
+  UNCATEGORIZED
+  FITNESS
+  NUTRITION
+  MINDSET
+  TRAINING
+  RECOVERY
+}
 
 model MarketingReview {
   id           String    @id @default(cuid())
@@ -460,22 +502,31 @@ model MarketingReview {
 
   @@index([createdAt])
   @@index([deletedAt])
+  @@index([isActive])
   @@map("marketing_reviews")
 }
 
+enum ContactSubmissionStatus {
+  NEW
+  IN_PROGRESS
+  REPLIED
+  CLOSED
+}
+
 model MarketingContactSubmission {
-  id        String    @id @default(cuid())
+  id        String                  @id @default(cuid())
   name      String?
-  email     String?
+  contact   String?
   program   String?
-  message   String    @db.Text
-  status    String    @default("NEW")
-  notes     String?   @db.Text
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  message   String                  @db.Text
+  status    ContactSubmissionStatus @default(NEW)
+  notes     String?                 @db.Text
+  createdAt DateTime                @default(now())
+  updatedAt DateTime                @updatedAt
   deletedAt DateTime?
 
   @@index([createdAt])
   @@index([deletedAt])
+  @@index([status])
   @@map("marketing_contact_submissions")
 }

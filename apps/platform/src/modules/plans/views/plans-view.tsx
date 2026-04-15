@@ -5,9 +5,8 @@ import { useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Stack } from "@mui/material";
 
-import { QueryWrapper } from "@repo/query";
+import { PageHeader, QueryWrapper } from "@repo/ui";
 
-import { PlatformPageHeader } from "@app/lib/components";
 import { useTrainingPlansPageData } from "@app/lib/hooks";
 
 import { CreatePlanDialog } from "../components";
@@ -19,13 +18,12 @@ export const PlansView = () => {
 
   return (
     <>
-      <Stack spacing={2}>
-        <PlatformPageHeader
+      <Stack spacing={4}>
+        <PageHeader
           title="Training Plans"
           actions={
             <Button
               endIcon={<AddIcon />}
-              variant="outlined"
               size="small"
               color="primary"
               onClick={() => setCreateOpen(true)}

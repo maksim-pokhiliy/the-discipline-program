@@ -8,13 +8,13 @@ import Underline from "@tiptap/extension-underline";
 import { useEditor as useTiptapEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 
-interface UseEditorProps {
+type UseEditorProps = {
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
   placeholder: string;
   disabled: boolean;
-}
+};
 
 export const useEditor = ({ value, onChange, onBlur, placeholder, disabled }: UseEditorProps) => {
   const editor = useTiptapEditor({
@@ -33,25 +33,14 @@ export const useEditor = ({ value, onChange, onBlur, placeholder, disabled }: Us
     ],
     content: value,
     editable: !disabled,
-    editorProps: {
-      attributes: {
-        class: "prose prose-sm focus:outline-none max-w-none",
-      },
-    },
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
     },
   });
 
   useEffect(() => {
-    if (editor && value !== editor.getHTML()) {
-      if (editor.getText() === "" && value === "") {
-        return;
-      }
-
-      if (value === "") {
-        editor.commands.setContent(value);
-      }
+    if (editor && editor.getHTML() !== value) {
+      editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [value, editor]);
 

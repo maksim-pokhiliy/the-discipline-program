@@ -1,23 +1,21 @@
-"use client";
-
 import ArticleIcon from "@mui/icons-material/Article";
 import ContactMailIcon from "@mui/icons-material/ContactMail";
 import GroupIcon from "@mui/icons-material/Group";
-import SportsIcon from "@mui/icons-material/Person";
 import RateReviewIcon from "@mui/icons-material/RateReview";
+import StorefrontIcon from "@mui/icons-material/Storefront";
 import { Grid } from "@mui/material";
 
-import { type ContentStats, type UserStats } from "@repo/contracts/dashboard";
+import { type ContentStats, type UserStats } from "@repo/contracts/cms/dashboard";
 import { ContentSection, StatsCard } from "@repo/ui";
 
-interface ContentStatsSectionProps {
+type ContentStatsSectionProps = {
   contentStats: ContentStats;
   userStats: UserStats;
-}
+};
 
 export const ContentStatsSection = ({ contentStats, userStats }: ContentStatsSectionProps) => {
   return (
-    <ContentSection backgroundColor="dark" title="Overview">
+    <ContentSection title="Overview" maxWidth="xl" animated={false}>
       <Grid container spacing={3}>
         <Grid size={{ xs: 12, sm: 6, md: 4 }}>
           <StatsCard
@@ -54,7 +52,7 @@ export const ContentStatsSection = ({ contentStats, userStats }: ContentStatsSec
             title="Products"
             value={contentStats.products.total}
             subtitle={`${contentStats.products.active} active`}
-            icon={<SportsIcon fontSize="large" />}
+            icon={<StorefrontIcon fontSize="large" />}
             color="secondary"
           />
         </Grid>

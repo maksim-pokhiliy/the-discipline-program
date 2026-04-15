@@ -1,81 +1,30 @@
-import { Box, Button, Card, CardContent, Chip, Stack, Typography } from "@mui/material";
-import Image from "next/image";
-import Link from "next/link";
-
-import { type PublicBlogPost } from "@repo/contracts/blog";
+import { type PublicBlogPost } from "@repo/contracts/cms/blog";
+import { type BlogPageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
-interface BlogFeaturedSectionProps {
+import { BlogPostCard } from "@app/lib/components/ui";
+
+type BlogFeaturedSectionProps = {
+  hero: BlogPageData["hero"];
+  grid: BlogPageData["grid"];
   featuredPost: PublicBlogPost;
-}
+};
 
-export const BlogFeaturedSection = ({ featuredPost }: BlogFeaturedSectionProps) => {
+export const BlogFeaturedSection = ({ hero, grid, featuredPost }: BlogFeaturedSectionProps) => {
   return (
-    <ContentSection title="Featured Article">
-      <Card sx={{ overflow: "hidden" }}>
-        <Box sx={{ position: "relative", height: 300 }}>
-          {featuredPost.coverImage && (
-            <Image
-              src={featuredPost.coverImage}
-              alt={featuredPost.title}
-              priority
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              style={{ objectFit: "cover" }}
-            />
-          )}
-
-          <Box
-            sx={{
-              position: "absolute",
-              top: 16,
-              left: 16,
-              zIndex: 1,
-            }}
-          >
-            <Chip label={featuredPost.category} color="primary" sx={{ fontWeight: 600 }} />
-          </Box>
-        </Box>
-
-        <CardContent sx={{ p: 4 }}>
-          <Stack spacing={4}>
-            <Stack spacing={2}>
-              <Typography variant="h3" component="h2">
-                {featuredPost.title}
-              </Typography>
-
-              <Typography variant="body1" color="text.secondary">
-                {featuredPost.excerpt}
-              </Typography>
-            </Stack>
-
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Typography variant="body2" color="text.secondary">
-                  {featuredPost.authorName}
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary">
-                  •
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary">
-                  {featuredPost.readTime} min read
-                </Typography>
-              </Stack>
-
-              <Button
-                component={Link}
-                href={`/blog/${featuredPost.slug}`}
-                variant="contained"
-                size="small"
-              >
-                Read Article
-              </Button>
-            </Stack>
-          </Stack>
-        </CardContent>
-      </Card>
+    <ContentSection id="featured" title={hero.title} subtitle={hero.subtitle} offset={1}>
+      <BlogPostCard
+        slug={featuredPost.slug}
+        title={featuredPost.title}
+        excerpt={featuredPost.excerpt}
+        coverImage={featuredPost.coverImage}
+        readTime={featuredPost.readTime}
+        category={featuredPost.category}
+        authorName={featuredPost.authorName}
+        readMoreLabel={grid.readMoreLabel}
+        minReadSuffix={grid.minReadSuffix}
+        variant="featured"
+      />
     </ContentSection>
   );
 };

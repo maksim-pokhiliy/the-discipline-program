@@ -1,18 +1,23 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-
-import type { AdminProductsPageData, Product } from "@repo/contracts/product";
-import { adminKeys, createCrudHooks } from "@repo/query";
+import type {
+  AdminProductsPageData,
+  Product,
+  CreateProductData,
+  UpdateProductData,
+} from "@repo/contracts/cms/product";
+import { createCrudHooks, createToggleHook } from "@repo/query";
 
 import { api } from "../api";
+import { adminKeys } from "../api/keys";
+
+import { useNavigate } from "./use-navigate";
 
 const productHooks = createCrudHooks<
   AdminProductsPageData,
   Product,
-  Partial<Product>,
-  Partial<Product>
+  CreateProductData,
+  UpdateProductData
 >({
   entityName: "Product",
   keys: adminKeys.products,
@@ -24,6 +29,7 @@ const productHooks = createCrudHooks<
     delete: api.products.delete,
   },
   redirectTo: "/products",
+  useNavigate,
   additionalInvalidateKeys: [adminKeys.dashboard()],
 });
 
@@ -33,18 +39,16 @@ export const useCreateProduct = productHooks.useCreate;
 export const useUpdateProduct = productHooks.useUpdate;
 export const useDeleteProduct = productHooks.useDelete;
 
-export const useToggleProductStatus = () => {
-  const queryClient = useQueryClient();
+export const useToggleProductStatus = createToggleHook({
+  mutationFn: api.products.toggleStatus,
+  successMessage: "Product status updated",
+  errorMessage: "Failed to update status",
+  invalidateKeys: [adminKeys.products.page(), adminKeys.dashboard()],
+});
 
-  return useMutation({
-    mutationFn: api.products.toggleStatus,
-    onSuccess: () => {
-      toast.success("Product status updated");
-      queryClient.invalidateQueries({ queryKey: adminKeys.products.page() });
-      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update status");
-    },
-  });
-};
+export const useToggleProductFeatured = createToggleHook({
+  mutationFn: api.products.toggleFeatured,
+  successMessage: "Featured product updated",
+  errorMessage: "Failed to update featured product",
+  invalidateKeys: [adminKeys.products.page(), adminKeys.dashboard()],
+});

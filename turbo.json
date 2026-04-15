@@ -6,34 +6,46 @@
     "NEXT_PUBLIC_MARKETING_URL",
     "SKIP_ENV_VALIDATION",
     "DATABASE_URL",
-    "NEXTAUTH_SECRET"
+    "NEXTAUTH_SECRET",
+    "NEXTAUTH_URL",
+    "BLOB_READ_WRITE_TOKEN",
+    "VERCEL_GIT_COMMIT_SHA",
+    "ANALYZE",
+    "NEXT_PUBLIC_SENTRY_DSN",
+    "SENTRY_AUTH_TOKEN",
+    "SENTRY_ORG",
+    "SENTRY_PROJECT",
+    "NEXT_RUNTIME",
+    "CI",
+    "UPSTASH_REDIS_REST_URL",
+    "UPSTASH_REDIS_REST_TOKEN"
   ],
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**", "storybook-static/**"]
     },
     "check-types": {
       "dependsOn": ["^check-types"]
     },
-    "db:generate": {
-      "cache": false
-    },
-    "db:push": {
-      "cache": false
-    },
     "dev": {
       "cache": false,
       "persistent": true
+    },
+    "e2e": {
+      "cache": false,
+      "persistent": false
     },
     "format": {
       "cache": false,
       "dependsOn": ["^format"]
     },
     "lint": {
-      "cache": false,
       "dependsOn": ["^lint"]
+    },
+    "test": {
+      "cache": false
     }
   }
 }

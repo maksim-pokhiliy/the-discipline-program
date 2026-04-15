@@ -1,23 +1,41 @@
-import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
-import { adminReviewsApi } from "@repo/api-server";
+import {
+  createDeleteHandler,
+  createGetByIdHandler,
+  createPutHandler,
+  RATE_LIMIT_TIER,
+  withAuthRateLimit,
+} from "@repo/api-routes";
+import { cmsReviewAdminApi } from "@repo/api-server/cms";
 import {
   deleteReviewParamsSchema,
   getReviewByIdParamsSchema,
+  reviewSchema,
   updateReviewParamsSchema,
   updateReviewRequestSchema,
-} from "@repo/contracts/review";
+} from "@repo/contracts/cms/review";
+
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetByIdHandler(adminReviewsApi.getReviewById, getReviewByIdParamsSchema),
+  withAuthRateLimit(
+    createGetByIdHandler(cmsReviewAdminApi.getReviewById, getReviewByIdParamsSchema, reviewSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );
 export const PUT = withAdminAuth(
-  createPutHandler(
-    adminReviewsApi.updateReview,
-    updateReviewParamsSchema,
-    updateReviewRequestSchema,
+  withAuthRateLimit(
+    createPutHandler(
+      cmsReviewAdminApi.updateReview,
+      updateReviewParamsSchema,
+      updateReviewRequestSchema,
+      reviewSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 export const DELETE = withAdminAuth(
-  createDeleteHandler(adminReviewsApi.deleteReview, deleteReviewParamsSchema),
+  withAuthRateLimit(
+    createDeleteHandler(cmsReviewAdminApi.deleteReview, deleteReviewParamsSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );

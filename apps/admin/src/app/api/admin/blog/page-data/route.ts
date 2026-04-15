@@ -1,8 +1,12 @@
-import { createGetHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
-import { adminBlogApi } from "@repo/api-server";
-import { getBlogPageDataResponseSchema } from "@repo/contracts/blog";
+import { createGetHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@repo/api-routes";
+import { cmsBlogAdminApi } from "@repo/api-server/cms";
+import { getBlogPageDataResponseSchema } from "@repo/contracts/cms/blog";
+
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetHandler(adminBlogApi.getBlogPageData, getBlogPageDataResponseSchema),
+  withAuthRateLimit(
+    createGetHandler(cmsBlogAdminApi.getBlogPageData, getBlogPageDataResponseSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );

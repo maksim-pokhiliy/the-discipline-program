@@ -7,7 +7,9 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./config": "./src/auth-options.ts"
+    "./client": "./src/client.ts",
+    "./config": "./src/auth-options.ts",
+    "./types": "./src/types/next-auth-extensions.ts"
   },
   "scripts": {
     "check-types": "tsc --noEmit",
@@ -15,10 +17,9 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
   },
   "dependencies": {
-    "@repo/api-server": "workspace:*",
     "@repo/contracts": "workspace:*",
     "@repo/env": "workspace:*",
-    "next-auth": "catalog:"
+    "@repo/errors": "workspace:*"
   },
   "peerDependencies": {
     "next": "catalog:",

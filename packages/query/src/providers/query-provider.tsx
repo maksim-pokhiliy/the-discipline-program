@@ -4,9 +4,11 @@ import { useState } from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-interface QueryProviderProps {
+import { GC_TIMES, STALE_TIMES } from "../hooks/constants";
+
+type QueryProviderProps = {
   children: React.ReactNode;
-}
+};
 
 export const QueryProvider = ({ children }: QueryProviderProps) => {
   const [queryClient] = useState(
@@ -14,8 +16,8 @@ export const QueryProvider = ({ children }: QueryProviderProps) => {
       new QueryClient({
         defaultOptions: {
           queries: {
-            gcTime: 10 * 60 * 1000,
-            staleTime: 30 * 1000,
+            gcTime: GC_TIMES.DEFAULT,
+            staleTime: STALE_TIMES.THIRTY_SECONDS,
           },
         },
       }),

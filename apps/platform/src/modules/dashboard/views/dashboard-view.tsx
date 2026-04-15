@@ -2,7 +2,7 @@
 
 import { Stack } from "@mui/material";
 
-import { QueryWrapper } from "@repo/query";
+import { QueryWrapper } from "@repo/ui";
 
 import { useCoachDashboard } from "@app/lib/hooks";
 

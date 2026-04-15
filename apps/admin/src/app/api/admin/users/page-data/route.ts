@@ -1,8 +1,12 @@
-import { createGetHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
-import { adminUsersApi } from "@repo/api-server";
-import { getUsersPageDataResponseSchema } from "@repo/contracts/user";
+import { createGetHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@repo/api-routes";
+import { iamUserAdminApi } from "@repo/api-server/iam";
+import { getUsersPageDataResponseSchema } from "@repo/contracts/iam/user";
+
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetHandler(adminUsersApi.getPageData, getUsersPageDataResponseSchema),
+  withAuthRateLimit(
+    createGetHandler(iamUserAdminApi.getPageData, getUsersPageDataResponseSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );

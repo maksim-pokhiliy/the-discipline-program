@@ -1,16 +1,19 @@
-import { NextResponse } from "next/server";
+import { createAuthPostByParamHandler, withAuthRateLimit, RATE_LIMIT_TIER } from "@repo/api-routes";
+import { lmsWorkoutApi } from "@repo/api-server/lms";
+import { copyWeekParamsSchema, copyWeekRequestSchema } from "@repo/contracts/lms/training-plan";
+import { getWorkoutsResponseSchema } from "@repo/contracts/lms/workout";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformWorkoutsApi } from "@repo/api-server";
-import { copyWeekParamsSchema, copyWeekRequestSchema } from "@repo/contracts/training-plan";
-import { getWorkoutsResponseSchema } from "@repo/contracts/workout";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const POST = withPlatformAuth(async (request, context, userId) => {
-  const { planId } = copyWeekParamsSchema.parse(await context.params);
-  const body = await request.json();
-  const { sourceDate, targetDate } = copyWeekRequestSchema.parse(body);
-  const result = await platformWorkoutsApi.copyWeek(userId, planId, sourceDate, targetDate);
-  const validated = getWorkoutsResponseSchema.parse(result);
-
-  return NextResponse.json(validated, { status: 201 });
-});
+export const POST = withCoachAuth(
+  withAuthRateLimit(
+    createAuthPostByParamHandler(
+      (userId, { planId }, { sourceDate, targetDate }) =>
+        lmsWorkoutApi.copyWeek(userId, planId, sourceDate, targetDate),
+      copyWeekParamsSchema,
+      copyWeekRequestSchema,
+      getWorkoutsResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

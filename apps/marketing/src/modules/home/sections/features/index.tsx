@@ -1,49 +1,46 @@
-import * as MuiIcons from "@mui/icons-material";
-import { Card, CardContent, Grid, Stack, Typography } from "@mui/material";
+import { type SvgIconComponent } from "@mui/icons-material";
+import BoltIcon from "@mui/icons-material/Bolt";
+import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import GroupsIcon from "@mui/icons-material/Groups";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import SchoolIcon from "@mui/icons-material/School";
+import ShuffleIcon from "@mui/icons-material/Shuffle";
+import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import { Grid } from "@mui/material";
 
-import { type HomePageData } from "@repo/contracts/pages";
+import { type HomePageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
-interface FeaturesSectionProps {
+import { FeatureCard } from "@app/lib/components/ui";
+
+const FEATURE_ICONS: Record<string, SvgIconComponent> = {
+  Shuffle: ShuffleIcon,
+  Bolt: BoltIcon,
+  FitnessCenter: FitnessCenterIcon,
+  School: SchoolIcon,
+  TrendingUp: TrendingUpIcon,
+  Groups: GroupsIcon,
+};
+
+const FALLBACK_ICON: SvgIconComponent = HelpOutlineIcon;
+
+type HomeFeaturesSectionProps = {
   whyChoose: HomePageData["whyChoose"];
-}
+};
 
-export const HomeFeaturesSection = ({ whyChoose }: FeaturesSectionProps) => {
+export const HomeFeaturesSection = ({ whyChoose }: HomeFeaturesSectionProps) => {
   return (
-    <ContentSection title={whyChoose.title} subtitle={whyChoose.subtitle} backgroundColor="dark">
-      <Grid container spacing={4}>
-        {whyChoose.features.map((feature) => {
-          const IconComponent = MuiIcons[feature.iconName as keyof typeof MuiIcons];
-
-          return (
-            <Grid key={feature.id} size={{ xs: 12, md: 4 }}>
-              <Card sx={{ height: "100%" }}>
-                <CardContent>
-                  <Stack spacing={4} textAlign="center" alignItems="center">
-                    {IconComponent && (
-                      <IconComponent
-                        sx={(theme) => ({
-                          fontSize: theme.typography.pxToRem(48),
-                          color: theme.palette.primary.main,
-                        })}
-                      />
-                    )}
-
-                    <Stack spacing={2}>
-                      <Typography variant="h4" component="h3">
-                        {feature.title}
-                      </Typography>
-
-                      <Typography variant="body1" color="text.secondary">
-                        {feature.description}
-                      </Typography>
-                    </Stack>
-                  </Stack>
-                </CardContent>
-              </Card>
-            </Grid>
-          );
-        })}
+    <ContentSection id="why-choose" title={whyChoose.title} subtitle={whyChoose.subtitle}>
+      <Grid container spacing={6}>
+        {whyChoose.features.map((feature) => (
+          <Grid key={feature.id} size={{ xs: 12, sm: 6, md: 4 }}>
+            <FeatureCard
+              icon={FEATURE_ICONS[feature.iconName] ?? FALLBACK_ICON}
+              title={feature.title}
+              description={feature.description}
+            />
+          </Grid>
+        ))}
       </Grid>
     </ContentSection>
   );
