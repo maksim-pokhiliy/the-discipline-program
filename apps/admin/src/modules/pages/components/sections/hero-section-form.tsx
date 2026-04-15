@@ -2,15 +2,20 @@
 
 import { Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
+import { type z } from "zod";
 
-import { SECTION_FEATURES, type HeroSectionType } from "@repo/contracts/pages";
+import { type homePageHeroSchema } from "@repo/contracts/cms/pages";
 import { FormCard, ImageUpload } from "@repo/ui";
 
 import { useUploadImage } from "@app/lib/hooks";
 
-interface HeroSectionFormProps {
+import { SECTION_FEATURES, type HeroSectionType } from "../../config/section-features";
+
+type HeroSectionData = z.infer<typeof homePageHeroSchema>;
+
+type HeroSectionFormProps = {
   sectionType: HeroSectionType;
-}
+};
 
 export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
   const {
@@ -18,7 +23,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
     watch,
     setValue,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<HeroSectionData>();
   const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
 
   const features = SECTION_FEATURES[sectionType];
@@ -30,7 +35,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
           label="Title"
           fullWidth
           error={!!errors.title}
-          helperText={errors.title?.message?.toString()}
+          helperText={errors.title?.message}
           {...register("title")}
         />
 
@@ -40,7 +45,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
           multiline
           minRows={3}
           error={!!errors.subtitle}
-          helperText={errors.subtitle?.message?.toString()}
+          helperText={errors.subtitle?.message}
           {...register("subtitle")}
         />
 
@@ -50,7 +55,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
               label="Button Text"
               fullWidth
               error={!!errors.buttonText}
-              helperText={errors.buttonText?.message?.toString()}
+              helperText={errors.buttonText?.message}
               {...register("buttonText")}
             />
 
@@ -58,7 +63,7 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
               label="Button Link"
               fullWidth
               error={!!errors.buttonHref}
-              helperText={errors.buttonHref?.message?.toString()}
+              helperText={errors.buttonHref?.message}
               {...register("buttonHref")}
             />
           </>
@@ -76,7 +81,9 @@ export const HeroSectionForm = ({ sectionType }: HeroSectionFormProps) => {
                 },
               );
             }}
-            onRemove={() => setValue("backgroundImage", "", { shouldDirty: true })}
+            onRemove={() => {
+              setValue("backgroundImage", "", { shouldDirty: true });
+            }}
           />
         )}
       </Stack>

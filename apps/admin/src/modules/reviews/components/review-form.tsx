@@ -11,15 +11,15 @@ import {
 } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { type CreateReviewData } from "@repo/contracts/review";
-import { UPLOAD_CONFIG } from "@repo/contracts/upload";
+import { type CreateReviewData } from "@repo/contracts/cms/review";
+import { UPLOAD_CONFIG } from "@repo/contracts/storage/upload";
 import { FormCard, ImageUpload } from "@repo/ui";
 
-import { useUploadImage } from "@app/lib/hooks";
+import { useDeleteImage, useUploadImage } from "@app/lib/hooks";
 
-interface ReviewFormProps {
+type ReviewFormProps = {
   isLoading?: boolean;
-}
+};
 
 export const ReviewForm = ({ isLoading = false }: ReviewFormProps) => {
   const {
@@ -31,6 +31,7 @@ export const ReviewForm = ({ isLoading = false }: ReviewFormProps) => {
   } = useFormContext<CreateReviewData>();
 
   const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
+  const deleteImage = useDeleteImage();
 
   return (
     <Grid container spacing={3}>
@@ -145,7 +146,15 @@ export const ReviewForm = ({ isLoading = false }: ReviewFormProps) => {
                     },
                   );
                 }}
-                onRemove={() => setValue("authorAvatar", null, { shouldDirty: true })}
+                onRemove={() => {
+                  const currentUrl = watch("authorAvatar");
+
+                  if (currentUrl) {
+                    deleteImage.mutate(currentUrl);
+                  }
+
+                  setValue("authorAvatar", null, { shouldDirty: true });
+                }}
               />
               <Typography variant="caption" color="text.secondary">
                 Upload a square image for best results.

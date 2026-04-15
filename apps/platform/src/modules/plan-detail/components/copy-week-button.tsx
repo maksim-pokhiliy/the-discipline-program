@@ -5,11 +5,10 @@ import { useState } from "react";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { Button } from "@mui/material";
 
+import { addDays } from "@repo/shared";
 import { ConfirmationModal } from "@repo/ui";
 
 import { useCopyWeek, useWorkouts } from "@app/lib/hooks";
-
-import { addDays } from "./week-helpers";
 
 type CopyWeekButtonProps = {
   planId: string;
@@ -50,7 +49,6 @@ export const CopyWeekButton: React.FC<CopyWeekButtonProps> = ({ planId, currentW
   return (
     <>
       <Button
-        variant="outlined"
         size="small"
         startIcon={<ContentCopyIcon />}
         onClick={handleCopy}

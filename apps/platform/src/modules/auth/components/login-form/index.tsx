@@ -3,11 +3,12 @@
 import { useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { Button, IconButton, InputAdornment, Stack, TextField } from "@mui/material";
 import { useForm } from "react-hook-form";
 
-import { type LoginFormData, loginFormSchema } from "@repo/contracts/auth";
+import { type LoginFormData, loginFormSchema } from "@repo/contracts/iam/auth";
 
 type LoginFormProps = {
   onSubmit: (data: LoginFormData) => void;
@@ -54,9 +55,11 @@ export const LoginForm = ({ onSubmit, isLoading = false }: LoginFormProps) => {
             endAdornment: (
               <InputAdornment position="end">
                 <IconButton
+                  size="medium"
                   onClick={() => setShowPassword(!showPassword)}
                   edge="end"
                   disabled={isLoading}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <VisibilityOff /> : <Visibility />}
                 </IconButton>

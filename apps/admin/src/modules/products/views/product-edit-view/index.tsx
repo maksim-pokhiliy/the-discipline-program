@@ -3,14 +3,18 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import { createProductSchema, type CreateProductData, type Product } from "@repo/contracts/product";
-import { QueryWrapper } from "@repo/query";
+import { type Product } from "@repo/contracts/cms/product";
 import { centsToAmount } from "@repo/shared";
-import { FormView } from "@repo/ui";
+import { FormView, QueryWrapper } from "@repo/ui";
 
-import { useProduct, useUpdateProduct } from "@app/lib/hooks/use-products";
+import { useProduct, useUpdateProduct } from "@app/lib/hooks";
 
-import { ProductForm } from "../../components/product-form";
+import {
+  ProductForm,
+  productFormSchema,
+  toProductApiData,
+  type ProductFormData,
+} from "../../components";
 
 type ProductEditFormProps = {
   product: Product;
@@ -21,17 +25,18 @@ const ProductEditForm: React.FC<ProductEditFormProps> = ({ product }) => {
 
   const activePrice = product.prices.find((p) => p.isActive);
 
-  const methods = useForm<CreateProductData>({
-    resolver: zodResolver(createProductSchema),
+  const methods = useForm<ProductFormData>({
+    resolver: zodResolver(productFormSchema),
     defaultValues: {
       title: product.title,
       slug: product.slug,
       description: product.description || "",
       features: product.features,
+      isFeatured: product.isFeatured,
       isActive: product.isActive,
       price: activePrice
         ? {
-            amountCents: centsToAmount(activePrice.amountCents),
+            amount: centsToAmount(activePrice.amountCents),
             currency: activePrice.currency,
             interval: activePrice.interval,
           }
@@ -42,11 +47,10 @@ const ProductEditForm: React.FC<ProductEditFormProps> = ({ product }) => {
   return (
     <FormView
       methods={methods}
-      onSubmit={(data) => updateProduct({ id: product.id, data })}
+      onSubmit={(data) => updateProduct({ id: product.id, data: toProductApiData(data) })}
       isPending={isPending}
       title="Edit Product"
       subtitle={product.title}
-      backgroundColor="dark"
       backHref="/products"
       backLabel="Back to List"
     >

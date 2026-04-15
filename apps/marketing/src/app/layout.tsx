@@ -1,13 +1,15 @@
 import { Box } from "@mui/material";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { type Metadata } from "next";
 
 import { NextProvider } from "@repo/mui";
+import { fontVariables } from "@repo/mui/fonts";
 import { QueryProvider } from "@repo/query";
-import { DOM_ANCHORS, SEO_CONFIG } from "@repo/shared";
-import { MarketingHeader } from "@repo/ui";
 
-import { Footer } from "@app/shared/components/layout";
-import { StructuredData } from "@app/shared/components/seo";
+import { Footer, MarketingHeader } from "@app/lib/components/layout";
+import { StructuredData } from "@app/lib/components/seo";
+import { SEO_CONFIG } from "@app/lib/seo";
 
 export const metadata: Metadata = {
   title: SEO_CONFIG.defaultTitle,
@@ -35,27 +37,51 @@ type RootLayoutProps = Readonly<{
   children: React.ReactNode;
 }>;
 
-export default function RootLayout({ children }: RootLayoutProps) {
-  return (
-    <html lang="en">
-      <head>
-        <StructuredData type="website" />
-        <StructuredData type="organization" />
-      </head>
+const RootLayout = ({ children }: RootLayoutProps) => (
+  <html lang="en">
+    <head>
+      <StructuredData type="website" />
+      <StructuredData type="organization" />
+    </head>
 
-      <body id={DOM_ANCHORS.BODY}>
-        <NextProvider>
-          <QueryProvider>
-            <MarketingHeader />
+    <body id="body-dom-anchor" className={fontVariables}>
+      <NextProvider>
+        <QueryProvider>
+          <Box
+            component="a"
+            href="#main-content"
+            sx={{
+              position: "absolute",
+              left: "-9999px",
+              top: "auto",
+              width: "1px",
+              height: "1px",
+              overflow: "hidden",
+              "&:focus": {
+                position: "static",
+                width: "auto",
+                height: "auto",
+                overflow: "visible",
+                p: 2,
+              },
+            }}
+          >
+            Skip to content
+          </Box>
 
-            <Box component="main" sx={{ minHeight: "100vh" }}>
-              {children}
-            </Box>
+          <MarketingHeader />
 
-            <Footer />
-          </QueryProvider>
-        </NextProvider>
-      </body>
-    </html>
-  );
-}
+          <Box component="main" id="main-content" sx={{ minHeight: "100vh" }}>
+            {children}
+          </Box>
+
+          <Footer />
+          <Analytics />
+          <SpeedInsights />
+        </QueryProvider>
+      </NextProvider>
+    </body>
+  </html>
+);
+
+export default RootLayout;

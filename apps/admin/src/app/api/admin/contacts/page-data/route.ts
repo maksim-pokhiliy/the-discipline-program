@@ -1,8 +1,12 @@
-import { createGetHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
-import { adminContactsApi } from "@repo/api-server";
-import { getContactsPageDataResponseSchema } from "@repo/contracts/contact";
+import { createGetHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@repo/api-routes";
+import { cmsContactAdminApi } from "@repo/api-server/cms";
+import { getContactsPageDataResponseSchema } from "@repo/contracts/cms/contact";
+
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetHandler(adminContactsApi.getContactsPageData, getContactsPageDataResponseSchema),
+  withAuthRateLimit(
+    createGetHandler(cmsContactAdminApi.getContactsPageData, getContactsPageDataResponseSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );

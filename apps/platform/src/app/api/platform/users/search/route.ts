@@ -1,12 +1,20 @@
-import { NextResponse } from "next/server";
+import {
+  createAuthGetWithQueryHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { iamUserSearchApi } from "@repo/api-server/iam";
+import { searchUsersQuerySchema, searchUsersResponseSchema } from "@repo/contracts/iam/user";
 
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformUsersApi } from "@repo/api-server";
+import { withCoachAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(async (request, _context, userId) => {
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q") ?? "";
-  const data = await platformUsersApi.search(userId, query);
-
-  return NextResponse.json(data);
-});
+export const GET = withCoachAuth(
+  withAuthRateLimit(
+    createAuthGetWithQueryHandler(
+      (userId, { q }) => iamUserSearchApi.search(userId, q),
+      searchUsersQuerySchema,
+      searchUsersResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

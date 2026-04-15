@@ -1,11 +1,15 @@
 "use client";
 
-import { Stack, TextField } from "@mui/material";
+import { Grid, Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
+import { type z } from "zod";
 
+import { type aboutPagePersonalSchema } from "@repo/contracts/cms/pages";
 import { FormCard, ImageUpload } from "@repo/ui";
 
-import { useUploadImage } from "@app/lib/hooks";
+import { useDeleteImage, useUploadImage } from "@app/lib/hooks";
+
+type PersonalSectionData = z.infer<typeof aboutPagePersonalSchema>;
 
 export const PersonalSectionForm = () => {
   const {
@@ -13,8 +17,9 @@ export const PersonalSectionForm = () => {
     watch,
     setValue,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<PersonalSectionData>();
   const { mutate: uploadImage, isPending: isUploading } = useUploadImage();
+  const deleteImage = useDeleteImage();
 
   return (
     <FormCard title="Personal Section Settings">
@@ -23,7 +28,7 @@ export const PersonalSectionForm = () => {
           label="Section Title"
           fullWidth
           error={!!errors.title}
-          helperText={errors.title?.message?.toString()}
+          helperText={errors.title?.message}
           {...register("title")}
         />
 
@@ -33,27 +38,31 @@ export const PersonalSectionForm = () => {
           multiline
           minRows={3}
           error={!!errors.description}
-          helperText={errors.description?.message?.toString()}
+          helperText={errors.description?.message}
           {...register("description")}
         />
 
-        <Stack direction="row" spacing={3}>
-          <TextField
-            label="Name"
-            sx={{ flex: 1 }}
-            error={!!errors.name}
-            helperText={errors.name?.message?.toString()}
-            {...register("name")}
-          />
+        <Grid container spacing={3}>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Name"
+              fullWidth
+              error={!!errors.name}
+              helperText={errors.name?.message}
+              {...register("name")}
+            />
+          </Grid>
 
-          <TextField
-            label="Role"
-            sx={{ flex: 1 }}
-            error={!!errors.role}
-            helperText={errors.role?.message?.toString()}
-            {...register("role")}
-          />
-        </Stack>
+          <Grid size={{ xs: 12, sm: 6 }}>
+            <TextField
+              label="Role"
+              fullWidth
+              error={!!errors.role}
+              helperText={errors.role?.message}
+              {...register("role")}
+            />
+          </Grid>
+        </Grid>
 
         <ImageUpload
           previewUrl={watch("image") || ""}
@@ -66,7 +75,15 @@ export const PersonalSectionForm = () => {
               },
             );
           }}
-          onRemove={() => setValue("image", "", { shouldDirty: true })}
+          onRemove={() => {
+            const currentUrl = watch("image");
+
+            if (currentUrl) {
+              deleteImage.mutate(currentUrl);
+            }
+
+            setValue("image", "", { shouldDirty: true });
+          }}
         />
       </Stack>
     </FormCard>

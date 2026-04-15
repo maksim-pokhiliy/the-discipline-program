@@ -61,6 +61,36 @@ export class BadRequestError extends AppError {
   }
 }
 
+export class TooManyRequestsError extends AppError {
+  constructor(message = "Too many requests", details?: Record<string, unknown>) {
+    super(message, {
+      code: ERROR_CODES.TOO_MANY_REQUESTS,
+      statusCode: 429,
+      details,
+    });
+  }
+}
+
+export class TimeoutError extends AppError {
+  constructor(message = "Request timed out", details?: Record<string, unknown>) {
+    super(message, {
+      code: ERROR_CODES.TIMEOUT,
+      statusCode: 504,
+      details,
+    });
+  }
+}
+
+export class ServiceUnavailableError extends AppError {
+  constructor(message = "Service unavailable", details?: Record<string, unknown>) {
+    super(message, {
+      code: ERROR_CODES.SERVICE_UNAVAILABLE,
+      statusCode: 503,
+      details,
+    });
+  }
+}
+
 export class InternalServerError extends AppError {
   constructor(message = "Internal server error", details?: Record<string, unknown>) {
     super(message, {

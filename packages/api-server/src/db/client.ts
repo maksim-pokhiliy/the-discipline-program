@@ -1,6 +1,8 @@
-import { PrismaClient } from "@prisma/client";
+import { type Prisma, PrismaClient } from "@prisma/client";
 
 import { baseEnv } from "@repo/env/base";
+import { NotFoundError } from "@repo/errors";
+import { logger } from "@repo/shared";
 
 const SOFT_DELETE_MODELS = new Set([
   "User",
@@ -15,6 +17,7 @@ const SOFT_DELETE_MODELS = new Set([
 
 const SOFT_DELETE_UNIQUE_FIELDS: Record<string, string[]> = {
   Product: ["slug"],
+  MarketingBlogPost: ["slug"],
 };
 
 type ModelDelegate = {
@@ -28,21 +31,67 @@ type ModelDelegate = {
   updateMany: (args: Record<string, unknown>) => Promise<unknown>;
 };
 
+const isModelDelegate = (val: unknown): val is ModelDelegate =>
+  val !== null && typeof val === "object" && "findFirst" in val;
+
 const getDelegate = (client: PrismaClient, model: string): ModelDelegate | undefined => {
   const key = model.charAt(0).toLowerCase() + model.slice(1);
-  const delegate = (client as unknown as Record<string, unknown>)[key];
+  const candidate: unknown = Reflect.get(client, key);
 
-  if (delegate && typeof delegate === "object" && "findFirst" in delegate) {
-    return delegate as unknown as ModelDelegate;
+  return isModelDelegate(candidate) ? candidate : undefined;
+};
+
+const withDeletedAtFilter = (where: unknown): Record<string, unknown> => {
+  const record = Object.fromEntries(
+    Object.entries((typeof where === "object" && where !== null ? where : {}) satisfies object),
+  );
+
+  if (record.deletedAt === undefined) {
+    record.deletedAt = null;
   }
 
-  return undefined;
+  return record;
 };
+
+const QUERY_TIMEOUT_MS = 30_000;
+const CONNECT_TIMEOUT_S = 10;
+
+const withTimeoutParams = (url: string): string => {
+  const separator = url.includes("?") ? "&" : "?";
+  const params: string[] = [];
+
+  if (!url.includes("statement_timeout")) {
+    params.push(`statement_timeout=${QUERY_TIMEOUT_MS}`);
+  }
+
+  if (!url.includes("connect_timeout")) {
+    params.push(`connect_timeout=${CONNECT_TIMEOUT_S}`);
+  }
+
+  return params.length > 0 ? `${url}${separator}${params.join("&")}` : url;
+};
+
+const isDev = baseEnv.NODE_ENV === "development";
+
+type QueryEventHandler = (event: "query", listener: (e: Prisma.QueryEvent) => void) => void;
 
 const createClient = () => {
   const client = new PrismaClient({
-    log: baseEnv.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
+    log: isDev
+      ? [
+          { emit: "event", level: "query" },
+          { emit: "stdout", level: "error" },
+          { emit: "stdout", level: "warn" },
+        ]
+      : [{ emit: "stdout", level: "error" }],
+    datasourceUrl: withTimeoutParams(baseEnv.DATABASE_URL),
   });
+
+  if (isDev) {
+    (client.$on as QueryEventHandler)("query", (e) => {
+      logger.info("Prisma query", { query: e.query, duration: `${e.duration}ms` });
+    });
+  }
 
   return client.$extends({
     name: "soft-delete",
@@ -50,13 +99,7 @@ const createClient = () => {
       $allModels: {
         async findMany({ model, args, query }) {
           if (SOFT_DELETE_MODELS.has(model)) {
-            const where = (args.where ?? {}) as Record<string, unknown>;
-
-            if (where.deletedAt === undefined) {
-              where.deletedAt = null;
-            }
-
-            args.where = where;
+            args.where = withDeletedAtFilter(args.where);
           }
 
           return query(args);
@@ -64,13 +107,39 @@ const createClient = () => {
 
         async findFirst({ model, args, query }) {
           if (SOFT_DELETE_MODELS.has(model)) {
-            const where = (args.where ?? {}) as Record<string, unknown>;
+            args.where = withDeletedAtFilter(args.where);
+          }
 
-            if (where.deletedAt === undefined) {
-              where.deletedAt = null;
-            }
+          return query(args);
+        },
 
-            args.where = where;
+        async findFirstOrThrow({ model, args, query }) {
+          if (SOFT_DELETE_MODELS.has(model)) {
+            args.where = withDeletedAtFilter(args.where);
+          }
+
+          return query(args);
+        },
+
+        async count({ model, args, query }) {
+          if (SOFT_DELETE_MODELS.has(model)) {
+            args.where = withDeletedAtFilter(args.where);
+          }
+
+          return query(args);
+        },
+
+        async aggregate({ model, args, query }) {
+          if (SOFT_DELETE_MODELS.has(model)) {
+            args.where = withDeletedAtFilter(args.where);
+          }
+
+          return query(args);
+        },
+
+        async groupBy({ model, args, query }) {
+          if (SOFT_DELETE_MODELS.has(model)) {
+            args.where = withDeletedAtFilter(args.where);
           }
 
           return query(args);
@@ -93,6 +162,29 @@ const createClient = () => {
           });
         },
 
+        async findUniqueOrThrow({ model, args, query }) {
+          if (!SOFT_DELETE_MODELS.has(model)) {
+            return query(args);
+          }
+
+          const delegate = getDelegate(client, model);
+
+          if (!delegate) {
+            return query(args);
+          }
+
+          const result = await delegate.findFirst({
+            ...args,
+            where: { ...args.where, deletedAt: null },
+          });
+
+          if (!result) {
+            throw new NotFoundError(`${model} not found`);
+          }
+
+          return result;
+        },
+
         async delete({ model, args, query }) {
           if (!SOFT_DELETE_MODELS.has(model)) {
             return query(args);
@@ -110,7 +202,7 @@ const createClient = () => {
           if (uniqueFields) {
             const select = Object.fromEntries(uniqueFields.map((f) => [f, true]));
             const current = await delegate.findUnique({
-              where: args.where as Record<string, unknown>,
+              where: Object.fromEntries(Object.entries(args.where ?? {})),
               select,
             });
 
@@ -170,14 +262,14 @@ const createClient = () => {
   });
 };
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: ReturnType<typeof createClient> | undefined;
-};
+declare global {
+  var prisma: ReturnType<typeof createClient> | undefined;
+}
 
-export const prisma = globalForPrisma.prisma ?? createClient();
+export const prisma = globalThis.prisma ?? createClient();
 
 if (baseEnv.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+  globalThis.prisma = prisma;
 }
 
 export type ExtendedPrismaClient = typeof prisma;

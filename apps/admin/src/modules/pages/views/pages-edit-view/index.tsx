@@ -1,16 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense } from "react";
 
 import { Stack } from "@mui/material";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import {
-  type AdminPageDetails,
-  updatePageSectionSchema,
-  type UpdatePageSectionData,
-} from "@repo/contracts/pages";
-import { QueryWrapper } from "@repo/query";
-import { ContentSection } from "@repo/ui";
+import { type AdminPageDetails, type UpdatePageSectionData } from "@repo/contracts/cms/pages";
+import { capitalize } from "@repo/shared";
+import { ContentSection, QueryWrapper } from "@repo/ui";
 
 import { usePageDetails, useUpdatePageSection } from "@app/lib/hooks";
 
@@ -22,11 +19,23 @@ type PagesEditFormProps = {
 
 const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
   const { mutate: updateSection, isPending } = useUpdatePageSection();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
 
-  const [expanded, setExpanded] = useState<string | false>(page.sections[0]?.section || false);
+  const defaultSection = page.sections[0]?.section ?? false;
+  const expanded: string | false = searchParams.get("section") ?? defaultSection;
 
   const handleToggle = (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
-    setExpanded(isExpanded ? panel : false);
+    const params = new URLSearchParams(searchParams.toString());
+
+    if (isExpanded) {
+      params.set("section", panel);
+    } else {
+      params.delete("section");
+    }
+
+    router.replace(`${pathname}?${params.toString()}`);
   };
 
   const onSaveSection = (
@@ -34,17 +43,11 @@ const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
     sectionName: UpdatePageSectionData["section"],
     data: UpdatePageSectionData["data"],
   ) => {
-    const validated = updatePageSectionSchema.parse({
-      pageSlug,
-      section: sectionName,
-      data,
-    });
-
     updateSection({
       slug: pageSlug,
       data: {
-        section: validated.section,
-        data: validated.data,
+        section: sectionName,
+        data,
       },
     });
   };
@@ -52,10 +55,12 @@ const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
   return (
     <ContentSection
       title="Edit Marketing Page"
-      subtitle={page.slug.toUpperCase()}
+      subtitle={capitalize(page.slug)}
       backHref="/pages"
       backLabel="Back to Pages"
-      backgroundColor="dark"
+      maxWidth="xl"
+      textAlign="left"
+      animated={false}
     >
       <Stack spacing={2}>
         {page.sections.map((section) => (
@@ -64,13 +69,7 @@ const PagesEditForm: React.FC<PagesEditFormProps> = ({ page }) => {
             section={section}
             isExpanded={expanded === section.section}
             onToggle={handleToggle(section.section)}
-            onSave={(formData) =>
-              onSaveSection(
-                page.slug,
-                section.section as UpdatePageSectionData["section"],
-                formData as UpdatePageSectionData["data"],
-              )
-            }
+            onSave={(formData) => onSaveSection(page.slug, section.section, formData)}
             isLoading={isPending}
           />
         ))}
@@ -88,7 +87,11 @@ export const PagesEditView: React.FC<PagesEditViewProps> = ({ slug }) => {
 
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={data} loadingMessage="Loading page...">
-      {(page) => <PagesEditForm page={page} />}
+      {(page) => (
+        <Suspense>
+          <PagesEditForm page={page} />
+        </Suspense>
+      )}
     </QueryWrapper>
   );
 };

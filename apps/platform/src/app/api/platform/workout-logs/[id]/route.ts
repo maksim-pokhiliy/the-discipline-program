@@ -1,25 +1,35 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformWorkoutLogsApi } from "@repo/api-server";
+import {
+  createAuthDeleteHandler,
+  createAuthGetByParamHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { lmsWorkoutLogApi } from "@repo/api-server/lms";
 import {
   deleteWorkoutLogParamsSchema,
   getWorkoutLogByIdParamsSchema,
   getWorkoutLogResponseSchema,
-} from "@repo/contracts/workout-log";
+} from "@repo/contracts/lms/workout-log";
 
-export const GET = withPlatformAuth(async (_, context, userId) => {
-  const { id } = getWorkoutLogByIdParamsSchema.parse(await context.params);
-  const data = await platformWorkoutLogsApi.getById(userId, id);
-  const validated = getWorkoutLogResponseSchema.parse(data);
+import { withPlatformAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(validated);
-});
+export const GET = withPlatformAuth(
+  withAuthRateLimit(
+    createAuthGetByParamHandler(
+      (userId, { id }) => lmsWorkoutLogApi.getById(userId, id),
+      getWorkoutLogByIdParamsSchema,
+      getWorkoutLogResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-export const DELETE = withPlatformAuth(async (_, context, userId) => {
-  const { id } = deleteWorkoutLogParamsSchema.parse(await context.params);
-
-  await platformWorkoutLogsApi.delete(userId, id);
-
-  return NextResponse.json({ success: true });
-});
+export const DELETE = withPlatformAuth(
+  withAuthRateLimit(
+    createAuthDeleteHandler(
+      (userId, { id }) => lmsWorkoutLogApi.delete(userId, id),
+      deleteWorkoutLogParamsSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

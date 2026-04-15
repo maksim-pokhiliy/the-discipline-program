@@ -1,25 +1,35 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformAthleteProfileApi } from "@repo/api-server";
+import {
+  createAuthGetHandler,
+  createAuthPutHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { coachingAthleteProfileApi } from "@repo/api-server/coaching";
 import {
   getAthleteProfileResponseSchema,
   updateAthleteProfileRequestSchema,
   updateAthleteProfileResponseSchema,
-} from "@repo/contracts/athlete-profile";
+} from "@repo/contracts/coaching/athlete-profile";
 
-export const GET = withPlatformAuth(async (_, _context, userId) => {
-  const data = await platformAthleteProfileApi.get(userId);
-  const validated = getAthleteProfileResponseSchema.parse(data);
+import { withPlatformAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(validated);
-});
+export const GET = withPlatformAuth(
+  withAuthRateLimit(
+    createAuthGetHandler(
+      (userId) => coachingAthleteProfileApi.get(userId),
+      getAthleteProfileResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-export const PUT = withPlatformAuth(async (request, _context, userId) => {
-  const body = await request.json();
-  const data = updateAthleteProfileRequestSchema.parse(body);
-  const result = await platformAthleteProfileApi.upsert(userId, data);
-  const validated = updateAthleteProfileResponseSchema.parse(result);
-
-  return NextResponse.json(validated);
-});
+export const PUT = withPlatformAuth(
+  withAuthRateLimit(
+    createAuthPutHandler(
+      (userId, data) => coachingAthleteProfileApi.upsert(userId, data),
+      updateAthleteProfileRequestSchema,
+      updateAthleteProfileResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

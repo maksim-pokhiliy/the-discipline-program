@@ -1,19 +1,18 @@
-"use client";
-
 import { Stack, Typography } from "@mui/material";
 
-import { GENDER_LABELS } from "@repo/contracts/athlete-profile";
-import { type AdminUser } from "@repo/contracts/user";
+import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
+import { GENDER_LABELS } from "@repo/contracts/coaching/athlete-profile";
+import { UserRole } from "@repo/contracts/iam/auth";
 import { DetailField, FormCard } from "@repo/ui";
 
-interface ProfileCardProps {
-  user: AdminUser;
-}
+type ProfileCardProps = {
+  user: AdminUserView;
+};
 
 export const ProfileCard = ({ user }: ProfileCardProps) => {
   const { role, athleteProfile, coachProfile } = user;
 
-  if (role === "USER") {
+  if (role === UserRole.USER) {
     if (!athleteProfile) {
       return (
         <FormCard title="Athlete Profile">
@@ -45,7 +44,7 @@ export const ProfileCard = ({ user }: ProfileCardProps) => {
     );
   }
 
-  if (role === "COACH") {
+  if (role === UserRole.COACH) {
     if (!coachProfile) {
       return (
         <FormCard title="Coach Profile">

@@ -1,0 +1,45 @@
+import { type z } from "zod";
+
+import {
+  type archiveTrainingPlanParamsSchema,
+  type calendarWorkoutSchema,
+  type coachPlansPageDataSchema,
+  type copyWeekParamsSchema,
+  type copyWeekRequestSchema,
+  type copyWeekResponseSchema,
+  type createTrainingPlanRequestSchema,
+  type createTrainingPlanResponseSchema,
+  type deleteTrainingPlanParamsSchema,
+  type duplicateTrainingPlanParamsSchema,
+  type duplicateTrainingPlanResponseSchema,
+  type getCalendarWeekParamsSchema,
+  type getCalendarWeekResponseSchema,
+  type getTrainingPlanByIdParamsSchema,
+  type getTrainingPlanResponseSchema,
+  type getTrainingPlansResponseSchema,
+  type restoreTrainingPlanParamsSchema,
+  type updateTrainingPlanParamsSchema,
+  type updateTrainingPlanRequestSchema,
+  type updateTrainingPlanResponseSchema,
+} from "./training-plan-api.schema";
+
+export type GetTrainingPlansResponse = z.infer<typeof getTrainingPlansResponseSchema>;
+export type CoachPlansPageData = z.infer<typeof coachPlansPageDataSchema>;
+export type GetTrainingPlanByIdParams = z.infer<typeof getTrainingPlanByIdParamsSchema>;
+export type GetTrainingPlanResponse = z.infer<typeof getTrainingPlanResponseSchema>;
+export type CreateTrainingPlanRequest = z.infer<typeof createTrainingPlanRequestSchema>;
+export type CreateTrainingPlanResponse = z.infer<typeof createTrainingPlanResponseSchema>;
+export type UpdateTrainingPlanParams = z.infer<typeof updateTrainingPlanParamsSchema>;
+export type UpdateTrainingPlanRequest = z.infer<typeof updateTrainingPlanRequestSchema>;
+export type UpdateTrainingPlanResponse = z.infer<typeof updateTrainingPlanResponseSchema>;
+export type DeleteTrainingPlanParams = z.infer<typeof deleteTrainingPlanParamsSchema>;
+export type DuplicateTrainingPlanParams = z.infer<typeof duplicateTrainingPlanParamsSchema>;
+export type DuplicateTrainingPlanResponse = z.infer<typeof duplicateTrainingPlanResponseSchema>;
+export type ArchiveTrainingPlanParams = z.infer<typeof archiveTrainingPlanParamsSchema>;
+export type RestoreTrainingPlanParams = z.infer<typeof restoreTrainingPlanParamsSchema>;
+export type CalendarWorkout = z.infer<typeof calendarWorkoutSchema>;
+export type GetCalendarWeekParams = z.infer<typeof getCalendarWeekParamsSchema>;
+export type GetCalendarWeekResponse = z.infer<typeof getCalendarWeekResponseSchema>;
+export type CopyWeekParams = z.infer<typeof copyWeekParamsSchema>;
+export type CopyWeekRequest = z.infer<typeof copyWeekRequestSchema>;
+export type CopyWeekResponse = z.infer<typeof copyWeekResponseSchema>;

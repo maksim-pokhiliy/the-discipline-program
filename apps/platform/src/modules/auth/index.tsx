@@ -4,11 +4,12 @@ import { useState } from "react";
 
 import { Alert, Container, Divider, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-import { signIn } from "@repo/auth";
-import { type LoginFormData } from "@repo/contracts/auth";
+import { signIn } from "@repo/auth/client";
+import { type LoginFormData } from "@repo/contracts/iam/auth";
 import { Logo } from "@repo/ui";
 
 import { LoginForm } from "./components";
@@ -16,22 +17,18 @@ import { LoginForm } from "./components";
 export const PlatformLoginPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
-  const handleSubmit = async (data: LoginFormData) => {
-    setIsLoading(true);
-
-    try {
-      const result = await signIn("credentials", {
+  const loginMutation = useMutation({
+    mutationFn: (data: LoginFormData) =>
+      signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
-      });
-
+      }),
+    onSuccess: (result) => {
       if (result?.error) {
         setError("Invalid email or password");
       } else if (result?.ok) {
@@ -39,37 +36,31 @@ export const PlatformLoginPage = () => {
         router.replace(callbackUrl);
         router.refresh();
       }
-    } catch {
+    },
+    onError: () => {
       setError("An unexpected error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+  });
 
   return (
     <Stack
+      justifyContent="center"
       sx={{
-        minHeight: "100vh",
-        justifyContent: "center",
+        minHeight: "100dvh",
         background: (theme) =>
           `radial-gradient(ellipse at 50% 20%, ${alpha(theme.palette.primary.main, 0.08)}, transparent 70%)`,
       }}
     >
-      <Container maxWidth="xs">
+      <Container maxWidth="sm">
         <Stack spacing={5} alignItems="center">
           <Stack spacing={3} alignItems="center">
             <Logo />
 
-            <Typography
-              variant="h3"
-              component="h1"
-              textAlign="center"
-              sx={{ textTransform: "uppercase", letterSpacing: "0.05em" }}
-            >
+            <Typography variant="display2" component="h1" textAlign="center">
               The Discipline Program
             </Typography>
 
-            <Typography variant="body2" color="text.secondary" textAlign="center">
+            <Typography variant="h4" color="text.secondary" textAlign="center">
               Your Discipline dictates your success.
             </Typography>
 
@@ -88,7 +79,10 @@ export const PlatformLoginPage = () => {
               </Alert>
             )}
 
-            <LoginForm onSubmit={handleSubmit} isLoading={isLoading} />
+            <LoginForm
+              onSubmit={(data) => loginMutation.mutate(data)}
+              isLoading={loginMutation.isPending}
+            />
           </Stack>
         </Stack>
       </Container>

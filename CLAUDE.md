@@ -10,9 +10,6 @@ Monorepo architecture using Turbo, Next.js 16, TypeScript, PostgreSQL + Prisma.
 **Philosophy:** Quality > Speed. No deadlines. Clean and strong solutions over fast ones.
 Don't be afraid to break and rebuild if necessary.
 
-**Product concept:** see `docs/ARCHITECTURE.md`.
-**Progress & roadmap:** see `docs/ROADMAP.md`.
-
 ## Role
 
 Act as Senior Lead Architect, Senior Lead Software Engineer, Project Manager, Product Manager, Business Analyst, and Product Owner — all at Magnificent 7 level.
@@ -61,7 +58,7 @@ packages/
   contracts/    # Zod schemas + TypeScript types. The Law. NO Prisma types allowed.
   api-client/   # HTTP client for API consumption
   auth/         # NextAuth configuration
-  errors/       # Error hierarchy (AppError, HttpError)
+  errors/       # Error hierarchy (AppError → NotFoundError, ValidationError, etc.)
   ui/           # Shared React components (Sidebar, DataTable, FormView, FormCard, etc.)
   query/        # React Query setup: QueryProvider, query keys, CRUD hooks factory
   shared/       # Navigation configs, types, SEO constants, layout constants
@@ -71,11 +68,11 @@ packages/
 
 ### App Status
 
-| App       | Status                                                                                                                                       |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| Marketing | Working. Billing flow excluded (pages exist as stubs). Routes: `/api/public/*`                                                               |
-| Admin     | Working. CMS (blog, pages, reviews, products, contacts) + Platform section (exercises, categories, users, dashboard). Routes: `/api/admin/*` |
-| Platform  | Scaffolded (Phase 2). Auth, routing, base layout exist. UI screens — Phase 3+. Routes: `/api/platform/*`                                     |
+| App       | Status                                                                                                                |
+| --------- | --------------------------------------------------------------------------------------------------------------------- |
+| Marketing | Working. Billing flow excluded (pages exist as stubs). Routes: `/api/public/*`                                        |
+| Admin     | Working. CMS (blog, pages, reviews, products, contacts) + Platform section (users, dashboard). Routes: `/api/admin/*` |
+| Platform  | Working. Auth, routing, coach UI, athlete UI, training plans, workout management. Routes: `/api/platform/*`           |
 
 ### Source of Truth
 
@@ -208,7 +205,7 @@ export default async function BlogPage() {
 - **No manual loading state for mutations.** Don't use `useState` to track mutation loading (`loadingId`, `updatingId`). Use React Query's built-in `mutation.isPending` + `mutation.variables` for per-item disabled state.
 - **Static data outside components.** Arrays and objects that don't depend on props/state (`filters`, config maps, pure helper functions) must be defined at module level, not inside component bodies.
 - **No inline money math.** Never write `/ 100`, `* 100` for cents↔amount conversion. Use `centsToAmount()` / `amountToCents()` from `@repo/shared`. Magic number 100 must exist in exactly one place.
-- **MUI-consistent sizing and spacing.** Never use raw pixel strings (`"24px"`, `"0.75rem"`) for spacing, sizes, or dimensions in `sx` props. Use `theme.spacing()` or MUI's numeric spacing shorthand (`p: 2`, `mr: 1`). For widths/heights, use theme spacing units or responsive breakpoints. For font sizes, use MUI Typography variants, not custom sizes. Exception: one-off decorative values (border-radius, letter-spacing) where no MUI token exists.
+- **MUI-consistent sizing and spacing.** Never use raw pixel strings (`"24px"`, `"0.75rem"`) for spacing, sizes, or dimensions in `sx` props. Use `theme.spacing()` or MUI's numeric spacing shorthand (`p: 2`, `mr: 1`). For widths/heights, use theme spacing units or responsive breakpoints. For font sizes, use MUI Typography variants, not custom sizes. Exception: one-off decorative values (border-radius) where no MUI token exists. `letter-spacing` and `textTransform` must live in theme typography variants, not inline.
 - **No unprotected API routes.** Every route handler must use `withAdminAuth` or `withPlatformAuth` wrapper from `@repo/api-routes`. Public routes (`/api/public/*`) are the only exception. Never export a raw handler without an auth wrapper.
 - **No custom UI when MUI has a native component.** Use MUI components as-is (e.g. `Alert` for alerts, `Chip` for tags). Customize appearance through the global MUI theme, not per-instance `sx` overrides or custom wrappers. Never reinvent what the design system already provides.
 - **No raw color values in components.** Never use `rgba(...)`, `#hex`, `rgb(...)` in `sx` props or inline styles. Always use MUI theme tokens: `"background.paper"`, `theme.palette.error.main`, `alpha()` from `@mui/material/styles`, etc.
@@ -223,7 +220,32 @@ export default async function BlogPage() {
 - **No optimistic updates for confirmed destructive actions.** Mutations behind a `ConfirmationModal` must NOT use optimistic cache updates. The optimistic removal unmounts the component → the modal disappears before the request completes. Use `onSuccess` → invalidate instead, so the modal shows loading → request completes → modal closes → UI updates.
 - **No `as` casts for Prisma→Contract enum conversion.** Never cast Prisma enum types to contract types with `as`. Use the type-safe mapping Records from `mappers/enum-maps.ts` (e.g., `UNIT_MAP[prismaValue]`). If TypeScript can't verify the mapping, add a new entry to enum-maps — don't bypass the compiler.
 - **Soft-delete through the Prisma extension only.** Never manually set `deletedAt = new Date()` or check `deletedAt` in queries. The soft-delete extension in `db/client.ts` handles filtering and deletion for all registered models. Use `prisma.model.delete()` — the extension intercepts it. To add a new soft-delete model, add it to `SOFT_DELETE_MODELS` in client.ts and add unique fields to `SOFT_DELETE_UNIQUE_FIELDS` if needed.
+- **No inline sizing overrides on MUI components.** Never override `fontSize`, `padding`, `minHeight` via `sx` to make a component bigger/smaller — use MUI's `size` prop. Per-instance sizing kills consistency and creates N different "large" buttons across the app.
+- **No custom MUI size/variant extensions.** Don't add custom sizes (`xlarge`) or variants via module augmentation when MUI already provides standard options (small/medium/large). Override the existing sizes in the theme to match the design system. Custom extensions add complexity and diverge from MUI conventions.
+- **No per-instance button styling.** Never override `backgroundColor`, `color`, `fontSize`, `padding`, or hover styles on MUI `Button` via `sx`. All button appearance must come from the theme (`variant`, `color`, `size` props). If the design needs a new look — add or adjust a theme-level variant/color, don't style individual buttons.
 - **Always verify resource access in API endpoints.** Every endpoint that accepts a user/resource ID from URL params must validate the authenticated user has access. For own-user resources: compare with auth userId. For coach-athlete resources: use `verifyAthleteBelongsToCoach()`. Never trust IDs from URL params without authorization check.
+- **No raw CSS grid in sx.** Use MUI `Grid` component instead of `display: "grid"` / `gridTemplateColumns` in `sx` props. Same principle as Stack vs `display: "flex"`.
+- **No `boxShadow` in components.** All shadows are disabled at theme level (`shadows: Array(25).fill("none")`). Never add `boxShadow` in `sx` or inline styles. For focus rings, use `outline` properties instead.
+- **No hardcoded copy in CMS-managed pages.** Marketing section titles, subtitles, and body text must come from the backend via page contracts, not be written as string literals in components. If a section needs text that doesn't exist in the contract — extend the contract and seed data first, then consume it in UI. Follow the data flow: DB → Contracts → API → UI.
+- **`type` not `interface` for data shapes.** Use `type` keyword for component props, API types, and all data shapes. `interface` is only for class contracts and explicit declaration merging (e.g. MUI module augmentation). `type` is composable (`&`, `Pick`, `Omit`), `interface` is not.
+- **Use route handler factories.** Never hand-write `NextResponse.json()` in route handlers. Use `createGetHandler`, `createGetByIdHandler`, `createPostHandler`, `createPutHandler`, `createDeleteHandler`, `createToggleHandler` from `@repo/api-routes`. Factories handle response formatting, error wrapping, and Zod validation consistently. If a route doesn't fit any factory (e.g. polymorphic endpoints) — use `withPublicRoute`/`withAdminAuth` directly with manual `NextResponse.json()`.
+- **`responseSchema` is required in all factories.** Never skip the response schema argument. The schema is the contract — it validates and strips data before leaving the server. If `apiFn` return type doesn't match the schema, fix the function, don't loosen the factory types.
+- **Use `createCrudHooks` for CRUD entities.** Never hand-write `useMutation`/`useQuery` for standard CRUD operations (list, getById, create, update, delete). Use `createCrudHooks` from `@repo/query`. For toggle operations, use `createToggleHandler` on the route side. Hand-rolled hooks drift in error handling, toast messages, and cache invalidation.
+- **Validate API responses with Zod.** Every route handler must `.parse()` the response through its Zod schema before returning. Never return raw data from `api-server` — always validate the contract. This catches mapper bugs and schema drift at the API boundary, not in the client.
+- **MUI `slotProps` not deprecated prop APIs.** Use `slotProps={{ paper: {...}, backdrop: {...} }}` — never the deprecated `PaperProps`, `ModalProps`, `BackdropProps`, `InputProps`, `InputLabelProps`. MUI deprecated the old capitalized prop pattern. `slotProps` is the forward-compatible API.
+- **Stack layout props as component props.** `alignItems`, `justifyContent`, `spacing`/`gap`, `direction` are first-class Stack props. Never put them inside `sx`. Only non-layout CSS (`backgroundColor`, `borderRadius`, `py`, `px`) belongs in `sx`. Same for `flexWrap` — it's a Stack prop. Use Typography `noWrap` prop instead of manual `overflow: hidden; textOverflow: ellipsis; whiteSpace: nowrap` in sx.
+- **App-specific code stays in the app.** Shared packages (`@repo/ui`, `@repo/shared`, `@repo/query`) must only contain code used by 2+ apps. App-specific components, navigation configs, query keys, and layout components belong in the app's `src/lib/`. If only one app imports it — it's not shared.
+- **`findOrThrow` for database lookups.** Never write manual `findUnique` + null-check + `throw new NotFoundError`. Use `findOrThrow()` from `api-server/utils` — it encapsulates the pattern. Same for `findFirst`.
+- **Wrap Prisma mutations in `handlePrismaError`.** Every Prisma `create`/`update`/`delete` call must be wrapped with `try { ... } catch (error) { return handlePrismaError(error, { entity }); }`. This converts Prisma-specific errors (unique constraint, not found) into domain errors (`ConflictError`, `NotFoundError`).
+- **No unnecessary `"use client"`.** Only add the directive when the component uses hooks, event handlers, browser APIs, or Context. If a component only renders MUI components with static props — it's a server component. Unnecessary `"use client"` breaks server-side rendering and increases bundle size.
+- **Typed `useFormContext<T>()`.** Never call `useFormContext()` without a type parameter. Always pass the Zod-inferred form type: `useFormContext<CredentialsSectionData>()`. Untyped form context loses all field name and value type safety.
+- **`Record<EnumType>` not `Record<string>` for enum-keyed maps.** Config maps, color maps, label maps keyed by enum values must use the actual enum/union type as key: `Record<TrainingPlanStatus, ChipProps["color"]>`, not `Record<string, ...>`. TypeScript catches missing keys only with the real type.
+- **`z.string().cuid()` for ID fields in Zod schemas.** Every `id` field in contracts must use `z.string().cuid()`, not bare `z.string()`. Validates actual format at the boundary, catches garbage IDs before they hit the database. Same for `userId`, `planId`, etc.
+- **Form fields must show validation errors.** Every `TextField` and `Controller` in forms must have `error={!!fieldError}` and `helperText={fieldError?.message}`. A form field that silently swallows validation is worse than no validation at all.
+- **Explicit return types on api-server endpoints.** Every function in `api-server/endpoints/` must have an explicit return type annotation using the contract type: `async (): Promise<AdminBlogPageData> => { ... }`. This enforces the contract at the source, not just at the route boundary.
+- **Zod validation limits → entity constants.** Never use magic numbers (`.max(5000)`, `.min(1)`) directly in Zod schemas. Extract to entity constants: `TRAINING_PLAN_CONSTANTS.MAX_NAME_LENGTH`, `WORKOUT_CONSTANTS.MAX_CONTENT_LENGTH`. Limits must be defined once, reusable in both schemas and UI.
+- **Export prop types from `@repo/ui` components.** Every shared component in `@repo/ui` must export its props type. Consumers need these types for composition, wrapping, and typing spread props. `export type StatsCardProps = { ... }`, not just the component.
+- **No behavior in `@repo/contracts`.** Contracts = Zod schemas + inferred types + constants. No utility functions, no formatting helpers, no conversion logic. If a function operates on a contract type, it belongs in the package that owns the behavior (`@repo/shared` for cross-cutting utils, domain-specific package for domain logic). Workarounds like inlining locale values to avoid circular deps are a sign the function is in the wrong package.
 
 ## Commit Convention
 

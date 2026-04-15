@@ -1,58 +1,31 @@
-import { Box, Card, CardContent, Grid, Stack, Typography } from "@mui/material";
+import VerifiedOutlinedIcon from "@mui/icons-material/VerifiedOutlined";
+import { Grid } from "@mui/material";
 
-import { type AboutPageData } from "@repo/contracts/pages";
+import { type AboutPageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
-interface AboutCredentialsSectionProps {
+import { FeatureCard } from "@app/lib/components/ui";
+
+type AboutCredentialsSectionProps = {
   credentials: AboutPageData["credentials"];
-}
+};
 
 export const AboutCredentialsSection = ({ credentials }: AboutCredentialsSectionProps) => {
   return (
-    <ContentSection title={credentials.title}>
-      <Grid container spacing={4}>
-        {credentials.items.map((item, index) => (
-          <Grid key={index} size={{ xs: 12, sm: 6, lg: 4 }}>
-            <Card
-              sx={{
-                height: "100%",
-              }}
-            >
-              <CardContent sx={{ p: 4 }}>
-                <Stack spacing={2} alignItems="center" textAlign="center">
-                  <Box
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      borderRadius: "50%",
-                      backgroundColor: "primary.main",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Typography variant="h4" color="white" fontWeight="bold">
-                      {index + 1}
-                    </Typography>
-                  </Box>
-
-                  <Stack spacing={1}>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 600,
-                      }}
-                    >
-                      {item.title}
-                    </Typography>
-
-                    <Typography variant="body2" color="text.secondary">
-                      {item.description}
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
+    <ContentSection
+      id="credentials"
+      title={credentials.title}
+      subtitle={credentials.subtitle}
+      surface="raised"
+    >
+      <Grid container spacing={6}>
+        {credentials.items.map((item) => (
+          <Grid key={item.title} size={{ xs: 12, sm: 6, md: 4 }}>
+            <FeatureCard
+              icon={VerifiedOutlinedIcon}
+              title={item.title}
+              description={item.description}
+            />
           </Grid>
         ))}
       </Grid>

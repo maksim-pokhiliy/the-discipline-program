@@ -1,8 +1,6 @@
-export { createCalendarAPI } from "./calendar";
+export { createCoachAthletesAPI } from "./coach-athletes";
 export { createCoachActionItemsAPI } from "./coach-action-items";
 export { createCoachDashboardAPI } from "./coach-dashboard";
-export { createCoachNotesAPI } from "./coach-notes";
-export { createCoachProfileAPI } from "./coach-profile";
 export { createPlanEnrollmentsAPI } from "./plan-enrollments";
 export { createTrainingPlansAPI } from "./training-plans";
 export { createUsersAPI } from "./users";

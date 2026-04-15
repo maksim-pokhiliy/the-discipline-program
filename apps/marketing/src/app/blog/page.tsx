@@ -1,9 +1,8 @@
 import { type Metadata } from "next";
 
-import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
-
 import { serverApi } from "@app/lib/api/server";
-import { BlogPageClient } from "@app/modules/blog";
+import { PAGE_SEO, SEO_CONFIG } from "@app/lib/seo";
+import { BlogPageContent } from "@app/modules/blog";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.blog.title,
@@ -16,10 +15,12 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
-export default async function BlogPage() {
-  const initialData = await serverApi.pages.getBlog();
+const BlogPage = async () => {
+  const data = await serverApi.pages.getBlog();
 
-  return <BlogPageClient initialData={initialData} />;
-}
+  return <BlogPageContent data={data} />;
+};
+
+export default BlogPage;

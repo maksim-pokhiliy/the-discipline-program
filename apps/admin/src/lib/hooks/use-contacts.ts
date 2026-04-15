@@ -1,52 +1,37 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
-
 import {
   type AdminContactsPageData,
   type GetContactByIdResponse,
   type UpdateContactRequest,
-} from "@repo/contracts/contact";
-import { adminKeys, createCrudHooks } from "@repo/query";
+} from "@repo/contracts/cms/contact";
+import { createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
+import { adminKeys } from "../api/keys";
 
-const contactHooks = createCrudHooks<AdminContactsPageData, GetContactByIdResponse>({
+import { useNavigate } from "./use-navigate";
+
+const contactHooks = createCrudHooks<
+  AdminContactsPageData,
+  GetContactByIdResponse,
+  never,
+  UpdateContactRequest
+>({
   entityName: "Contact",
   keys: adminKeys.contacts,
   api: {
     getPageData: api.contacts.getPageData,
     getById: api.contacts.getById,
+    update: api.contacts.update,
     delete: api.contacts.delete,
   },
   redirectTo: "/contacts",
+  useNavigate,
   additionalInvalidateKeys: [adminKeys.dashboard()],
 });
 
 export const useContactsPageData = contactHooks.usePageData;
 export const useContact = contactHooks.useById;
+export const useUpdateContact = contactHooks.useUpdate;
 export const useDeleteContact = contactHooks.useDelete;
-
-interface UseUpdateContactOptions {
-  onSuccess?: (data: GetContactByIdResponse) => void;
-}
-
-export const useUpdateContact = ({ onSuccess }: UseUpdateContactOptions = {}) => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateContactRequest }) =>
-      api.contacts.update(id, data),
-    onSuccess: (data) => {
-      toast.success("Contact updated");
-      queryClient.invalidateQueries({ queryKey: adminKeys.contacts.page() });
-      queryClient.invalidateQueries({ queryKey: adminKeys.contacts.byId(data.id) });
-      queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
-      onSuccess?.(data);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to update contact");
-    },
-  });
-};

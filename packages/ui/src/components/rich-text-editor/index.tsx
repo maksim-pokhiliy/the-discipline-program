@@ -1,14 +1,16 @@
 "use client";
 
-import { Box, FormHelperText, Typography, useTheme } from "@mui/material";
+import { Box, FormHelperText, Stack, Typography, useTheme } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
 
 import { EditorToolbar } from "./editor-toolbar";
 import { useEditor } from "./use-editor";
 
+const EDITOR_LINE_HEIGHT_SPACING = 2.5;
+
 type RichTextEditorVariant = "default" | "inline";
 
-interface RichTextEditorProps {
+export type RichTextEditorProps = {
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
@@ -19,7 +21,7 @@ interface RichTextEditorProps {
   disabled?: boolean;
   minRows?: number;
   variant?: RichTextEditorVariant;
-}
+};
 
 export const RichTextEditor = ({
   value,
@@ -48,19 +50,18 @@ export const RichTextEditor = ({
     <Box sx={{ width: "100%" }}>
       {label && (
         <Typography
+          component="label"
           variant="caption"
           color={error ? "error" : "text.secondary"}
-          sx={{ mb: 0.5, ml: 1, display: "block" }}
+          sx={{ mb: 0.5, ml: 1 }}
         >
           {label}
         </Typography>
       )}
 
-      <Box
+      <Stack
         sx={{
           overflow: "hidden",
-          display: "flex",
-          flexDirection: "column",
           opacity: disabled ? 0.6 : 1,
           pointerEvents: disabled ? "none" : "auto",
           ...(isInline
@@ -73,22 +74,22 @@ export const RichTextEditor = ({
                 transition: theme.transitions.create("border-color"),
                 "&:focus-within": {
                   borderColor: error ? "error.main" : "primary.main",
-                  boxShadow: error ? "none" : `0 0 0 1px ${theme.palette.primary.main}`,
+                  outlineWidth: error ? 0 : 1,
+                  outlineStyle: "solid",
+                  outlineColor: theme.palette.primary.main,
                 },
               }),
         }}
       >
         <EditorToolbar editor={editor} />
 
-        <Box
+        <Stack
           onClick={handleContainerClick}
           sx={{
             p: isInline ? 1.5 : 2,
-            minHeight: resolvedMinRows * 20,
+            minHeight: theme.spacing(resolvedMinRows * EDITOR_LINE_HEIGHT_SPACING),
             cursor: "text",
             flexGrow: 1,
-            display: "flex",
-            flexDirection: "column",
             "& .ProseMirror": {
               outline: "none",
               flexGrow: 1,
@@ -104,7 +105,9 @@ export const RichTextEditor = ({
             "& ul": { pl: 3 },
             "& ol": { pl: 3 },
             "& blockquote": {
-              borderLeft: `3px solid ${theme.palette.divider}`,
+              borderLeft: 3,
+              borderLeftStyle: "solid",
+              borderLeftColor: "divider",
               pl: 2,
               color: "text.secondary",
             },
@@ -116,8 +119,8 @@ export const RichTextEditor = ({
           }}
         >
           <EditorContent editor={editor} style={{ flexGrow: 1 }} />
-        </Box>
-      </Box>
+        </Stack>
+      </Stack>
 
       {helperText && (
         <FormHelperText error={error} sx={{ ml: 1 }}>

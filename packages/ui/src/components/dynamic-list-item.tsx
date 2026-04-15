@@ -5,10 +5,10 @@ import { type ReactNode } from "react";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { IconButton, Stack, Paper, alpha } from "@mui/material";
 
-interface DynamicListItemProps {
+export type DynamicListItemProps = {
   children: ReactNode;
   onRemove: () => void;
-}
+};
 
 export const DynamicListItem = ({ children, onRemove }: DynamicListItemProps) => {
   return (
@@ -32,7 +32,13 @@ export const DynamicListItem = ({ children, onRemove }: DynamicListItemProps) =>
           {children}
         </Stack>
 
-        <IconButton color="error" onClick={onRemove} sx={{ mt: 0.5 }}>
+        <IconButton
+          size="medium"
+          color="error"
+          onClick={onRemove}
+          aria-label="Remove item"
+          sx={{ mt: 0.5 }}
+        >
           <DeleteIcon />
         </IconButton>
       </Stack>

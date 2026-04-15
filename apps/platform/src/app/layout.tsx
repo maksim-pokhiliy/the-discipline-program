@@ -1,7 +1,10 @@
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { type Metadata } from "next";
 
 import { AuthProvider } from "@repo/auth";
 import { NextProvider } from "@repo/mui";
+import { fontVariables } from "@repo/mui/fonts";
 import { QueryProvider } from "@repo/query";
 import { Toaster } from "@repo/ui";
 
@@ -15,12 +18,15 @@ export const metadata: Metadata = {
 const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <html lang="en">
-      <body>
+      <body className={fontVariables}>
         <NextProvider>
           <QueryProvider>
             <AuthProvider>
               {children}
+
               <Toaster />
+              <Analytics />
+              <SpeedInsights />
             </AuthProvider>
           </QueryProvider>
         </NextProvider>

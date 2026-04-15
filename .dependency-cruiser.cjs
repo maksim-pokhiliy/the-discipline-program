@@ -1,0 +1,279 @@
+/**
+ * Boundary rules that enforce docs/BOUNDED-CONTEXTS.md §8 at the file-import
+ * level. Closes audit bullet 1.3.A. Run via `pnpm dep:check`.
+ *
+ * Rule naming convention: `<scope>-<constraint>`. Each rule encodes one
+ * dependency-direction invariant. Legitimate cross-context imports (listed
+ * in the plan file for 1.3.A) are allowed by direction — the rules forbid
+ * only the wrong direction.
+ */
+
+/** @type {import('dependency-cruiser').IConfiguration} */
+module.exports = {
+  forbidden: [
+    {
+      name: "no-circular",
+      severity: "error",
+      comment:
+        "Circular dependencies make the codebase hard to reason about, break tree-shaking, " +
+        "and are usually a sign of a missing abstraction. Fix the circular dep rather than " +
+        "silencing this rule.",
+      from: {},
+      to: { circular: true },
+    },
+
+    {
+      name: "contracts-no-prisma",
+      severity: "error",
+      comment:
+        "@repo/contracts is a pure Zod schema package. It must not import Prisma types — " +
+        "contracts is the API contract, Prisma is the DB reality, and they can drift. " +
+        "Use the mapper layer in @repo/api-server to bridge.",
+      from: { path: "^packages/contracts/" },
+      to: { path: "@prisma/client" },
+    },
+
+    {
+      name: "contracts-iam-is-leaf",
+      severity: "error",
+      comment:
+        "BOUNDED-CONTEXTS.md §8: IAM is a leaf. It must not depend on any other bounded " +
+        "context. If you need an admin user view that includes coaching profiles, put the " +
+        "projection in coaching/admin-user-view/ (see 1.2.J).",
+      from: { path: "^packages/contracts/src/entities/iam/" },
+      to: { path: "^packages/contracts/src/entities/(cms|lms|coaching|billing)/" },
+    },
+
+    {
+      name: "contracts-lms-no-coaching",
+      severity: "error",
+      comment:
+        "BOUNDED-CONTEXTS.md §8: LMS → Coaching is forbidden. LMS must not know about " +
+        "coach dashboards, health status, or action items. If a schema needs to project " +
+        "LMS + coaching data together, it belongs in coaching/ (see 1.2.I plan-roster).",
+      from: { path: "^packages/contracts/src/entities/lms/" },
+      to: { path: "^packages/contracts/src/entities/coaching/" },
+    },
+
+    {
+      name: "contracts-cms-no-lms-coaching-billing",
+      severity: "error",
+      comment:
+        "BOUNDED-CONTEXTS.md §8: CMS (marketing surface) must not read training data, " +
+        "coach dashboards, or commerce state. CMS depends only on IAM.",
+      from: { path: "^packages/contracts/src/entities/cms/" },
+      to: { path: "^packages/contracts/src/entities/(lms|coaching|billing)/" },
+    },
+
+    {
+      name: "contracts-billing-no-cms-coaching",
+      severity: "error",
+      comment:
+        "BOUNDED-CONTEXTS.md §8: Billing depends on IAM and LMS (via the Purchase = " +
+        "Immediate Value invariant on TrainingPlan). Billing must not read marketing " +
+        "content or coaching state.",
+      from: { path: "^packages/contracts/src/entities/billing/" },
+      to: { path: "^packages/contracts/src/entities/(cms|coaching)/" },
+    },
+
+    {
+      name: "contracts-storage-is-leaf",
+      severity: "error",
+      comment:
+        "BOUNDED-CONTEXTS.md §1: Storage is a supporting context — a leaf that provides " +
+        "file-upload shapes to any domain context that needs them. It must not depend on " +
+        "any domain context itself. If an upload shape needs to reference domain data, " +
+        "the reference belongs in the domain context (inverted dependency).",
+      from: { path: "^packages/contracts/src/entities/storage/" },
+      to: { path: "^packages/contracts/src/entities/(cms|lms|coaching|iam|billing)/" },
+    },
+
+    {
+      name: "api-server-iam-is-leaf",
+      severity: "error",
+      comment:
+        "IAM endpoints and mappers must not reach into other bounded contexts. User CRUD " +
+        "is pure IAM; admin user views with coaching profiles live in " +
+        "endpoints/coaching/admin-user-view.ts and mappers/coaching/admin-user-view.mapper.ts " +
+        "(see 1.2.J). The authz/ directory is intentionally excluded from this rule because " +
+        "it is cross-cutting policy, not a bounded context.",
+      from: { path: "^packages/api-server/src/(endpoints|mappers)/iam/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|lms|coaching|billing)/" },
+    },
+
+    {
+      name: "api-server-lms-no-coaching",
+      severity: "error",
+      comment:
+        "Closes the LMS → Coaching leak fixed in 1.2.I. LMS endpoints and mappers own pure " +
+        "PlanEnrollment; the enriched PlanRosterEntry with athlete health status lives in " +
+        "coaching/plan-roster (Coaching → LMS, allowed). The authz/ directory is " +
+        "intentionally excluded — it is cross-cutting policy that aggregates LMS + coaching " +
+        "enum maps for ownership checks.",
+      from: { path: "^packages/api-server/src/(endpoints|mappers)/lms/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/coaching/" },
+    },
+
+    {
+      name: "api-server-cms-no-lms-coaching",
+      severity: "error",
+      comment:
+        "BOUNDED-CONTEXTS.md §8: CMS endpoints and mappers must not reach into LMS or " +
+        "coaching. Marketing pages do not render training data or coach dashboards.",
+      from: { path: "^packages/api-server/src/(endpoints|mappers)/cms/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/(lms|coaching)/" },
+    },
+
+    {
+      name: "api-server-storage-is-leaf",
+      severity: "error",
+      comment:
+        "Storage is a supporting context — it provides upload functionality to any " +
+        "domain context that needs it (admin uploading blog cover, coach uploading " +
+        "athlete avatar, etc.). Storage endpoints and mappers must not depend on any " +
+        "domain context; the dependency direction is always domain → storage. Closes " +
+        "1.4.D — moved upload out of IAM into its own supporting context.",
+      from: { path: "^packages/api-server/src/(endpoints|mappers)/storage/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|lms|coaching|iam|billing)/" },
+    },
+
+    {
+      name: "prisma-only-in-api-server",
+      severity: "error",
+      comment:
+        "@prisma/client is the DB reality and must be isolated to the api-server package. " +
+        "Any other package that needs DB-shaped data should go through a contracts type + " +
+        "mapper. This is the non-negotiable boundary between the public API and the DB schema.",
+      from: { pathNot: "^packages/api-server/" },
+      to: { path: "^@prisma/client" },
+    },
+
+    {
+      name: "ui-no-backend",
+      severity: "error",
+      comment:
+        "@repo/ui is a presentation-layer package. It must not import api-server or Prisma. " +
+        "UI components receive data as props from consumers, not by reaching into the backend.",
+      from: { path: "^packages/ui/" },
+      to: { path: "^packages/api-server/|^@prisma/client" },
+    },
+
+    {
+      name: "api-routes-no-api-server",
+      severity: "error",
+      comment:
+        "@repo/api-routes is a generic wrapper layer (auth middleware, error handling, CRUD " +
+        "factories). It must not import business logic from api-server. Route handlers in " +
+        "apps/* compose api-routes + api-server, but api-routes itself stays generic.",
+      from: { path: "^packages/api-routes/" },
+      to: { path: "^packages/api-server/" },
+    },
+
+    {
+      name: "shared-packages-no-prisma",
+      severity: "error",
+      comment:
+        "Cross-cutting packages (shared, mui, query, auth, errors, env, api-client) are " +
+        "consumed by apps and must stay Prisma-free. Any data-shape dependency goes through " +
+        "@repo/contracts instead.",
+      from: {
+        path: "^packages/(shared|mui|query|auth|errors|env|api-client)/",
+      },
+      to: { path: "^@prisma/client" },
+    },
+
+    {
+      name: "marketing-only-cms-backend",
+      severity: "error",
+      comment:
+        "apps/marketing is the public landing site. It must only reach CMS endpoints + " +
+        "mappers. No LMS (training data), no coaching (dashboards), no IAM admin endpoints, " +
+        "no billing. This rule encodes the 'apps/marketing should only see CMS' invariant " +
+        "mentioned as the first dep-rule to enforce in docs/BIGTECH-AUDIT.md §1.2.",
+      from: { path: "^apps/marketing/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/(lms|coaching|iam|billing)/" },
+    },
+
+    {
+      name: "admin-no-lms",
+      severity: "error",
+      comment:
+        "apps/admin serves CMS management + admin user/dashboard. It does not need direct " +
+        "access to LMS endpoints — training plans, workouts, and enrollments are platform " +
+        "(coach) concerns, not admin panel concerns.",
+      from: { path: "^apps/admin/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/lms/" },
+    },
+
+    {
+      name: "admin-coaching-only-via-user-detail-route",
+      severity: "error",
+      comment:
+        "apps/admin can only reach coaching through the single admin-user-view route " +
+        "(apps/admin/src/app/api/admin/users/[id]/route.ts). If another admin file needs " +
+        "coaching, that is architecturally significant and requires an audit bullet, not a " +
+        "silent rule weakening. File-precise carve-out established in 1.2.J + 1.3.A.",
+      from: {
+        path: "^apps/admin/",
+        pathNot: "^apps/admin/src/app/api/admin/users/\\[id\\]/route\\.ts$",
+      },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/coaching/" },
+    },
+
+    {
+      name: "platform-no-cms-billing",
+      severity: "error",
+      comment:
+        "apps/platform is the coach + athlete product surface. It does not render CMS " +
+        "content or process billing. Its allowed backend surface is LMS + Coaching + IAM.",
+      from: { path: "^apps/platform/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/" },
+    },
+  ],
+
+  options: {
+    /*
+     * pnpm workspace + subpath exports: dep-cruiser must honor the `exports`
+     * field in package.json so @repo/api-server/cms resolves to
+     * packages/api-server/src/endpoints/cms/index.ts (via the exports map),
+     * and @repo/contracts/coaching/plan-roster resolves similarly.
+     *
+     * No root tsConfig is passed — there's no root tsconfig.json in the
+     * repo. Boundary rules work on raw file paths, not on alias resolution,
+     * so we don't need dep-cruiser to resolve @app/* path aliases.
+     */
+    enhancedResolveOptions: {
+      exportsFields: ["exports"],
+      conditionNames: ["import", "require", "default", "types"],
+      mainFields: ["main", "types"],
+    },
+
+    /*
+     * Don't walk into build artifacts or dependency trees.
+     */
+    doNotFollow: {
+      path: "node_modules|dist|\\.next|\\.turbo|storybook-static",
+    },
+
+    /*
+     * Exclude build outputs entirely from analysis. storybook-static
+     * contains bundled JS with naturally circular imports that are an
+     * artifact of bundling, not real source-code cycles.
+     */
+    exclude: {
+      path: "node_modules|dist|\\.next|\\.turbo|storybook-static",
+    },
+
+    /*
+     * Only analyze repo source (apps + packages). Skip docs, scripts,
+     * top-level config files.
+     */
+    includeOnly: "^(apps|packages)/",
+
+    reporterOptions: {
+      text: {
+        highlightFocused: true,
+      },
+    },
+  },
+};

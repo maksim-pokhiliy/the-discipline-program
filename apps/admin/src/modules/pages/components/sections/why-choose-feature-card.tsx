@@ -3,13 +3,13 @@
 import { Grid, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 
-import { type HomePageWhyChooseData } from "@repo/contracts/pages";
+import { type HomePageWhyChooseData } from "@repo/contracts/cms/pages";
 import { DynamicListItem } from "@repo/ui";
 
-interface WhyChooseFeatureCardProps {
+type WhyChooseFeatureCardProps = {
   index: number;
   onRemove: () => void;
-}
+};
 
 export const WhyChooseFeatureCard = ({ index, onRemove }: WhyChooseFeatureCardProps) => {
   const {

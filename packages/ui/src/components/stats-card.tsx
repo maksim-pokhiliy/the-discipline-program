@@ -3,18 +3,15 @@
 import { type ReactNode } from "react";
 
 import { Card, CardContent, Typography, Stack, Tooltip } from "@mui/material";
-import { type Palette, type PaletteColor } from "@mui/material/styles";
 
-type PaletteColorKey = {
-  [K in keyof Palette]: Palette[K] extends PaletteColor ? K : never;
-}[keyof Palette];
+import { type PaletteColorKey } from "@repo/mui";
 
 const sizeConfig = {
-  small: { titleVariant: "body2", valueVariant: "h5", spacing: 3, iconSize: "medium" },
-  medium: { titleVariant: "h6", valueVariant: "h3", spacing: 4, iconSize: "large" },
+  small: { titleVariant: "body2", valueVariant: "h5", spacing: 3 },
+  medium: { titleVariant: "h3", valueVariant: "display2", spacing: 4 },
 } as const;
 
-type StatsCardProps = {
+export type StatsCardProps = {
   title: string;
   value: string | number;
   size?: "small" | "medium";
@@ -42,25 +39,25 @@ export const StatsCard = ({
   const config = sizeConfig[size];
 
   const card = (
-    <Card sx={{ height: "100%" }} variant="elevation">
+    <Card sx={{ height: "100%" }} variant="outlined">
       <CardContent>
         <Stack
           spacing={config.spacing}
+          justifyContent="space-between"
           sx={{
-            justifyContent: "space-between",
             height: "100%",
           }}
         >
-          <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between" }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Typography variant={config.titleVariant} sx={{ color: "text.secondary" }}>
               {title}
             </Typography>
 
             {icon && (
               <Stack
+                alignItems="center"
                 sx={(theme) => ({
                   color: theme.palette[color].main,
-                  alignItems: "center",
                 })}
               >
                 {icon}
@@ -72,7 +69,6 @@ export const StatsCard = ({
             <Typography
               variant={config.valueVariant}
               sx={(theme) => ({
-                fontWeight: 700,
                 color: theme.palette[color].main,
               })}
             >
@@ -81,24 +77,17 @@ export const StatsCard = ({
 
             <Stack spacing={1}>
               {subtitle && (
-                <Typography variant="body2" sx={{ color: "text.secondary" }}>
+                <Typography variant="h5" sx={{ color: "text.secondary" }}>
                   {subtitle}
                 </Typography>
               )}
 
               {trend && (
-                <Stack
-                  direction="row"
-                  spacing={1}
-                  sx={{
-                    alignItems: "center",
-                  }}
-                >
+                <Stack direction="row" spacing={1} alignItems="center">
                   <Typography
                     variant="caption"
                     sx={{
                       color: trend.isPositive ? "success.main" : "error.main",
-                      fontWeight: 600,
                     }}
                   >
                     {trend.isPositive ? "+" : ""}

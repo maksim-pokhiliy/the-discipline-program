@@ -3,12 +3,27 @@ import "./types/next-auth-extensions";
 import { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-import { authService } from "@repo/api-server";
+import { AUTH_CONSTANTS, type UserRole } from "@repo/contracts/iam/auth";
 import { authEnv } from "@repo/env/auth";
+import { UnauthorizedError } from "@repo/errors";
 
 import { AUTH_ROUTES } from "./constants";
 
-export const authOptions: NextAuthOptions = {
+type AuthUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  image: string | null;
+  role: UserRole;
+  tokenVersion: number;
+};
+
+export type AuthServiceAdapter = {
+  validateUser: (email: string, password: string) => Promise<AuthUser | null>;
+  getUserById: (id: string) => Promise<{ role: UserRole; tokenVersion: number } | null>;
+};
+
+export const createAuthOptions = (service: AuthServiceAdapter): NextAuthOptions => ({
   providers: [
     CredentialsProvider({
       name: "credentials",
@@ -16,12 +31,12 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      authorize: async (credentials) => {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
-        const user = await authService.validateUser(credentials.email, credentials.password);
+        const user = await service.validateUser(credentials.email, credentials.password);
 
         if (!user) {
           return null;
@@ -33,46 +48,47 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           image: user.image,
           role: user.role,
+          tokenVersion: user.tokenVersion,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    jwt: async ({ token, user }) => {
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
         token.image = user.image;
         token.role = user.role;
+        token.tokenVersion = user.tokenVersion;
 
         return token;
       }
 
-      const dbUser = await authService.getUserById(token.id);
+      const dbUser = await service.getUserById(token.id);
 
       if (!dbUser) {
-        throw new Error("User no longer exists");
+        throw new UnauthorizedError("User no longer exists");
+      }
+
+      const jwtVersion = token.tokenVersion ?? 0;
+
+      if (jwtVersion !== dbUser.tokenVersion) {
+        throw new UnauthorizedError("Session invalidated");
       }
 
       token.role = dbUser.role;
+      token.tokenVersion = dbUser.tokenVersion;
 
       return token;
     },
-    async session({ session, token }) {
-      const dbUser = await authService.getUserById(token.id);
-
-      if (!dbUser) {
-        session.user = { id: "", email: null, name: null, image: null, role: null };
-
-        return session;
-      }
-
+    session: ({ session, token }) => {
       session.user.id = token.id;
-      session.user.email = token.email;
-      session.user.name = token.name;
-      session.user.image = token.image;
-      session.user.role = dbUser.role;
+      session.user.email = token.email ?? null;
+      session.user.name = token.name ?? null;
+      session.user.image = token.image ?? null;
+      session.user.role = token.role ?? null;
 
       return session;
     },
@@ -83,7 +99,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: AUTH_CONSTANTS.SESSION_MAX_AGE,
   },
   secret: authEnv.NEXTAUTH_SECRET,
-};
+});

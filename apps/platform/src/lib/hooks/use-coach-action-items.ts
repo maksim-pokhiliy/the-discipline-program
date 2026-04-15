@@ -3,9 +3,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { platformKeys } from "@repo/query";
-
 import { api } from "../api";
+import { platformKeys } from "../api/keys";
 
 export const useResolveActionItem = () => {
   const queryClient = useQueryClient();

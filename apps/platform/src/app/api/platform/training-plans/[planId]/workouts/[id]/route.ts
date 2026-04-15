@@ -1,7 +1,11 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformWorkoutsApi } from "@repo/api-server";
+import {
+  createAuthDeleteHandler,
+  createAuthGetByParamHandler,
+  createAuthPutByParamHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { lmsWorkoutApi } from "@repo/api-server/lms";
 import {
   deleteWorkoutParamsSchema,
   getWorkoutByIdParamsSchema,
@@ -9,30 +13,39 @@ import {
   updateWorkoutParamsSchema,
   updateWorkoutRequestSchema,
   updateWorkoutResponseSchema,
-} from "@repo/contracts/workout";
+} from "@repo/contracts/lms/workout";
 
-export const GET = withPlatformAuth(async (_, context, userId) => {
-  const { planId, id } = getWorkoutByIdParamsSchema.parse(await context.params);
-  const data = await platformWorkoutsApi.getById(userId, planId, id);
-  const validated = getWorkoutResponseSchema.parse(data);
+import { withCoachAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(validated);
-});
+export const GET = withCoachAuth(
+  withAuthRateLimit(
+    createAuthGetByParamHandler(
+      (userId, { planId, id }) => lmsWorkoutApi.getById(userId, planId, id),
+      getWorkoutByIdParamsSchema,
+      getWorkoutResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-export const PUT = withPlatformAuth(async (request, context, userId) => {
-  const { planId, id } = updateWorkoutParamsSchema.parse(await context.params);
-  const body = await request.json();
-  const data = updateWorkoutRequestSchema.parse(body);
-  const result = await platformWorkoutsApi.update(userId, planId, id, data);
-  const validated = updateWorkoutResponseSchema.parse(result);
+export const PUT = withCoachAuth(
+  withAuthRateLimit(
+    createAuthPutByParamHandler(
+      (userId, { planId, id }, data) => lmsWorkoutApi.update(userId, planId, id, data),
+      updateWorkoutParamsSchema,
+      updateWorkoutRequestSchema,
+      updateWorkoutResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
-
-export const DELETE = withPlatformAuth(async (_, context, userId) => {
-  const { planId, id } = deleteWorkoutParamsSchema.parse(await context.params);
-
-  await platformWorkoutsApi.delete(userId, planId, id);
-
-  return NextResponse.json({ success: true });
-});
+export const DELETE = withCoachAuth(
+  withAuthRateLimit(
+    createAuthDeleteHandler(
+      (userId, { planId, id }) => lmsWorkoutApi.delete(userId, planId, id),
+      deleteWorkoutParamsSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

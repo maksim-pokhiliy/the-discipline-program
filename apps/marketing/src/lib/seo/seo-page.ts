@@ -1,0 +1,43 @@
+export const PAGE_SEO = {
+  home: {
+    title: "The Discipline Program — Home",
+    description:
+      "Structured training and coaching program that helps you build consistency, strength, and endurance through discipline.",
+    keywords: ["fitness", "discipline", "training program", "workout", "online coaching"],
+  },
+
+  storefront: {
+    title: "Storefront — The Discipline Program",
+    description:
+      "Explore training programs tailored to your goals: strength, conditioning, fat loss, and performance.",
+    keywords: ["fitness programs", "strength training", "conditioning", "workout plans"],
+  },
+
+  about: {
+    title: "About — The Discipline Program",
+    description:
+      "Learn the story, principles, and coaching philosophy behind The Discipline Program.",
+    keywords: ["about coach", "training philosophy", "fitness coach"],
+  },
+
+  blog: {
+    title: "Blog — The Discipline Program",
+    description:
+      "Articles on training, recovery, mindset, and discipline to improve your performance.",
+    keywords: ["fitness blog", "training tips", "workout articles"],
+  },
+
+  contact: {
+    title: "Contact — The Discipline Program",
+    description:
+      "Have questions about programs or coaching? Reach out and get a personalized answer.",
+    keywords: ["contact coach", "fitness contact", "program questions"],
+  },
+
+  faq: {
+    title: "FAQ — The Discipline Program",
+    description:
+      "Frequently asked questions about training programs, trials, equipment, and coaching.",
+    keywords: ["faq", "training questions", "program faq", "coaching faq"],
+  },
+};

@@ -1,23 +1,25 @@
-import { NextResponse } from "next/server";
-
-import { withAdminAuth } from "@repo/api-routes/auth";
-import { adminBlogApi } from "@repo/api-server";
+import { createMultiToggleHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@repo/api-routes";
+import { cmsBlogAdminApi } from "@repo/api-server/cms";
 import {
   BlogToggleField,
+  blogPostSchema,
   toggleBlogPostParamsSchema,
   toggleBlogPostQuerySchema,
-} from "@repo/contracts/blog";
+} from "@repo/contracts/cms/blog";
 
-const toggleHandlers: Record<BlogToggleField, (id: string) => Promise<unknown>> = {
-  [BlogToggleField.IS_PUBLISHED]: adminBlogApi.toggleBlogPostStatus,
-  [BlogToggleField.IS_FEATURED]: adminBlogApi.toggleBlogPostFeatured,
-};
+import { withAdminAuth } from "@app/lib/server/auth";
 
-export const PATCH = withAdminAuth(async (request, { params }) => {
-  const { id } = toggleBlogPostParamsSchema.parse(await params);
-  const { field } = toggleBlogPostQuerySchema.parse({
-    field: new URL(request.url).searchParams.get("field"),
-  });
-
-  return NextResponse.json(await toggleHandlers[field](id));
-});
+export const PATCH = withAdminAuth(
+  withAuthRateLimit(
+    createMultiToggleHandler(
+      {
+        [BlogToggleField.IS_PUBLISHED]: cmsBlogAdminApi.toggleBlogPostStatus,
+        [BlogToggleField.IS_FEATURED]: cmsBlogAdminApi.toggleBlogPostFeatured,
+      },
+      toggleBlogPostParamsSchema,
+      toggleBlogPostQuerySchema,
+      blogPostSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

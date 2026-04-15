@@ -1,23 +1,93 @@
+import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { baseEnv } from "@repo/env/base";
 import { AppError, ERROR_CODES, ValidationError } from "@repo/errors";
+import { logger } from "@repo/shared";
 
-export function handleApiError(error: unknown): NextResponse {
-  console.error("API Error:", error);
+import { getMonitoring } from "./monitoring";
+
+const REDACTED_KEYS = new Set([
+  "password",
+  "token",
+  "secret",
+  "authorization",
+  "cookie",
+  "creditcard",
+  "ssn",
+]);
+
+const redactSensitiveFields = (obj: unknown, visited = new WeakSet<object>()): unknown => {
+  if (obj === null || obj === undefined || typeof obj !== "object") {
+    return obj;
+  }
+
+  if (visited.has(obj)) {
+    return "[Circular]";
+  }
+
+  visited.add(obj);
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => redactSensitiveFields(item, visited));
+  }
+
+  const result: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(obj)) {
+    if (REDACTED_KEYS.has(key.toLowerCase())) {
+      result[key] = "[REDACTED]";
+    } else {
+      result[key] = redactSensitiveFields(value, visited);
+    }
+  }
+
+  return result;
+};
+
+export const handleApiError = (error: unknown, requestId?: string): NextResponse => {
+  unstable_rethrow(error);
+
+  const safeError =
+    error instanceof AppError
+      ? { message: error.message, code: error.code, details: redactSensitiveFields(error.details) }
+      : error instanceof Error
+        ? { message: error.message }
+        : { message: String(error) };
+
+  logger.error("API Error", { ...safeError, ...(requestId && { requestId }) });
+
+  const monitoring = getMonitoring();
+
+  if (monitoring) {
+    monitoring.captureException(error, {
+      tags: { requestId: requestId ?? "unknown" },
+      extra: safeError as Record<string, unknown>,
+      level: error instanceof AppError && error.statusCode < 500 ? "warning" : "error",
+    });
+  }
+
+  const isDev = baseEnv.NODE_ENV === "development";
+  const headers = requestId ? { "x-request-id": requestId } : undefined;
 
   if (error instanceof AppError) {
+    const appErrorHeaders = new Headers(headers);
+
+    if (error.statusCode === 429 && typeof error.details?.retryAfter === "number") {
+      appErrorHeaders.set("Retry-After", String(error.details.retryAfter));
+    }
+
     return NextResponse.json(
       {
-        error: error.message,
-        code: error.code,
-        statusCode: error.statusCode,
-        details: error.details,
-        timestamp: error.timestamp,
-        ...(baseEnv.NODE_ENV === "development" && { stack: error.stack }),
+        error: {
+          code: error.code,
+          message: error.message,
+          ...(isDev && error.details && { details: error.details }),
+          ...(isDev && { stack: error.stack }),
+        },
       },
-      { status: error.statusCode },
+      { status: error.statusCode, headers: appErrorHeaders },
     );
   }
 
@@ -31,70 +101,26 @@ export function handleApiError(error: unknown): NextResponse {
 
     return NextResponse.json(
       {
-        error: validationError.message,
-        code: validationError.code,
-        statusCode: validationError.statusCode,
-        details: validationError.details,
-        timestamp: validationError.timestamp,
+        error: {
+          code: validationError.code,
+          message: validationError.message,
+          ...(isDev && validationError.details && { details: validationError.details }),
+        },
       },
-      { status: 400 },
+      { status: 400, headers },
     );
   }
 
-  if (error && typeof error === "object" && "code" in error) {
-    const prismaError = error as { code: string; meta?: Record<string, unknown> };
-
-    if (prismaError.code === "P2002") {
-      return NextResponse.json(
-        {
-          error: "Resource already exists",
-          code: ERROR_CODES.DUPLICATE_ENTRY,
-          statusCode: 409,
-          details: prismaError.meta,
-          timestamp: new Date().toISOString(),
-        },
-        { status: 409 },
-      );
-    }
-
-    if (prismaError.code === "P2003") {
-      return NextResponse.json(
-        {
-          error: "Invalid reference",
-          code: ERROR_CODES.FOREIGN_KEY_CONSTRAINT_VIOLATION,
-          statusCode: 400,
-          details: prismaError.meta,
-          timestamp: new Date().toISOString(),
-        },
-        { status: 400 },
-      );
-    }
-
-    if (prismaError.code === "P2025") {
-      return NextResponse.json(
-        {
-          error: "Resource not found",
-          code: ERROR_CODES.NOT_FOUND,
-          statusCode: 404,
-          details: prismaError.meta,
-          timestamp: new Date().toISOString(),
-        },
-        { status: 404 },
-      );
-    }
-  }
-
-  const message = error instanceof Error ? error.message : "Internal server error";
   const stack = error instanceof Error ? error.stack : undefined;
 
   return NextResponse.json(
     {
-      error: message,
-      code: ERROR_CODES.INTERNAL_SERVER_ERROR,
-      statusCode: 500,
-      timestamp: new Date().toISOString(),
-      ...(baseEnv.NODE_ENV === "development" && { stack }),
+      error: {
+        code: ERROR_CODES.INTERNAL_SERVER_ERROR,
+        message: "Internal server error",
+        ...(isDev && { stack }),
+      },
     },
-    { status: 500 },
+    { status: 500, headers },
   );
-}
+};

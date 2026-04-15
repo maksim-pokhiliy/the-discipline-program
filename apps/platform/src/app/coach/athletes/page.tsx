@@ -1,13 +1,11 @@
-import { Stack } from "@mui/material";
+import { SuspenseWrapper } from "@repo/ui";
 
-import { PlatformPageHeader } from "@app/lib/components";
+import { AthletesView } from "@app/modules/athletes";
 
-const AthletesPage = () => {
-  return (
-    <Stack>
-      <PlatformPageHeader title="Athletes" />
-    </Stack>
-  );
-};
+const AthletesPage = () => (
+  <SuspenseWrapper>
+    <AthletesView />
+  </SuspenseWrapper>
+);
 
 export default AthletesPage;

@@ -1,0 +1,42 @@
+"use client";
+
+import { useState } from "react";
+
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import MenuIcon from "@mui/icons-material/Menu";
+import { IconButton, Drawer as MuiDrawer } from "@mui/material";
+
+import { Navigation } from "./navigation";
+
+export const Drawer = () => {
+  const [open, setOpen] = useState(false);
+
+  const toggleDrawer = () => setOpen((prev) => !prev);
+
+  return (
+    <>
+      <IconButton size="medium" color="primary" onClick={toggleDrawer} aria-label="Open menu">
+        <MenuIcon color="primary" />
+      </IconButton>
+
+      <MuiDrawer
+        open={open}
+        onClose={toggleDrawer}
+        slotProps={{
+          paper: { sx: (theme) => ({ width: "100vw", maxWidth: theme.spacing(37.5) }) },
+        }}
+      >
+        <IconButton
+          size="medium"
+          color="primary"
+          onClick={toggleDrawer}
+          aria-label="Close menu"
+          sx={{ alignSelf: "flex-end", m: 1 }}
+        >
+          <ChevronLeftIcon color="primary" />
+        </IconButton>
+        <Navigation />
+      </MuiDrawer>
+    </>
+  );
+};

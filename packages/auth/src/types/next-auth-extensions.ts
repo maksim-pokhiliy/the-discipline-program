@@ -1,6 +1,8 @@
 import "next-auth";
 import "next-auth/jwt";
 
+import { type UserRole } from "@repo/contracts/iam/auth";
+
 declare module "next-auth" {
   interface Session {
     user: {
@@ -8,7 +10,7 @@ declare module "next-auth" {
       email?: string | null;
       name?: string | null;
       image?: string | null;
-      role?: string | null;
+      role: UserRole | null;
     };
   }
 
@@ -17,7 +19,8 @@ declare module "next-auth" {
     email?: string | null;
     name?: string | null;
     image?: string | null;
-    role?: string | null;
+    role: UserRole | null;
+    tokenVersion?: number;
   }
 }
 
@@ -27,6 +30,7 @@ declare module "next-auth/jwt" {
     email?: string | null;
     name?: string | null;
     image?: string | null;
-    role?: string | null;
+    role: UserRole | null;
+    tokenVersion?: number;
   }
 }

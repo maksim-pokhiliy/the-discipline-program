@@ -1,8 +1,11 @@
 import { Box } from "@mui/material";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { type Metadata } from "next";
 
 import { AuthProvider } from "@repo/auth";
 import { NextProvider } from "@repo/mui";
+import { fontVariables } from "@repo/mui/fonts";
 import { QueryProvider } from "@repo/query";
 import { Toaster } from "@repo/ui";
 
@@ -15,22 +18,45 @@ type RootLayoutProps = Readonly<{
   children: React.ReactNode;
 }>;
 
-export default function RootLayout({ children }: RootLayoutProps) {
-  return (
-    <html lang="en">
-      <body>
-        <NextProvider>
-          <QueryProvider>
-            <AuthProvider>
-              <Box component="main" sx={{ minHeight: "100vh" }}>
-                {children}
+const RootLayout = ({ children }: RootLayoutProps) => (
+  <html lang="en">
+    <body className={fontVariables}>
+      <NextProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <Box
+              component="a"
+              href="#main-content"
+              sx={{
+                position: "absolute",
+                left: "-9999px",
+                top: "auto",
+                width: "1px",
+                height: "1px",
+                overflow: "hidden",
+                "&:focus": {
+                  position: "static",
+                  width: "auto",
+                  height: "auto",
+                  overflow: "visible",
+                  p: 2,
+                },
+              }}
+            >
+              Skip to content
+            </Box>
+            <Box sx={{ minHeight: "100vh" }}>
+              {children}
 
-                <Toaster />
-              </Box>
-            </AuthProvider>
-          </QueryProvider>
-        </NextProvider>
-      </body>
-    </html>
-  );
-}
+              <Toaster />
+              <Analytics />
+              <SpeedInsights />
+            </Box>
+          </AuthProvider>
+        </QueryProvider>
+      </NextProvider>
+    </body>
+  </html>
+);
+
+export default RootLayout;

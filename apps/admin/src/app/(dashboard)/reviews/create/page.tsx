@@ -1,5 +1,5 @@
 import { ReviewsCreateView } from "@app/modules/reviews";
 
-export default function ReviewsCreatePage() {
-  return <ReviewsCreateView />;
-}
+const ReviewsCreatePage = () => <ReviewsCreateView />;
+
+export default ReviewsCreatePage;

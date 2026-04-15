@@ -1,47 +1,52 @@
 import { type MetadataRoute } from "next";
 
-import { SEO_CONFIG } from "@repo/shared";
-
 import { serverApi } from "@app/lib/api/server";
+import { SEO_CONFIG } from "@app/lib/seo";
 
-export const dynamic = "force-dynamic";
+const baseUrl = SEO_CONFIG.siteUrl;
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = SEO_CONFIG.siteUrl;
+const SITE_LAUNCH_DATE = new Date("2025-01-01");
 
-  const staticPages = [
-    {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 1,
-    },
-    {
-      url: `${baseUrl}/storefront`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/about`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/blog`,
-      lastModified: new Date(),
-      changeFrequency: "weekly" as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/contact`,
-      lastModified: new Date(),
-      changeFrequency: "monthly" as const,
-      priority: 0.7,
-    },
-  ];
+const staticPages: MetadataRoute.Sitemap = [
+  {
+    url: baseUrl,
+    lastModified: SITE_LAUNCH_DATE,
+    changeFrequency: "weekly",
+    priority: 1,
+  },
+  {
+    url: `${baseUrl}/storefront`,
+    lastModified: SITE_LAUNCH_DATE,
+    changeFrequency: "monthly",
+    priority: 0.9,
+  },
+  {
+    url: `${baseUrl}/about`,
+    lastModified: SITE_LAUNCH_DATE,
+    changeFrequency: "monthly",
+    priority: 0.8,
+  },
+  {
+    url: `${baseUrl}/blog`,
+    lastModified: SITE_LAUNCH_DATE,
+    changeFrequency: "weekly",
+    priority: 0.8,
+  },
+  {
+    url: `${baseUrl}/contact`,
+    lastModified: SITE_LAUNCH_DATE,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  },
+  {
+    url: `${baseUrl}/faq`,
+    lastModified: SITE_LAUNCH_DATE,
+    changeFrequency: "monthly",
+    priority: 0.6,
+  },
+];
 
+const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
   try {
     const blogData = await serverApi.pages.getBlog();
 
@@ -56,4 +61,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   } catch {
     return staticPages;
   }
-}
+};
+
+export default sitemap;

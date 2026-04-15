@@ -1,38 +1,57 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformPlanEnrollmentsApi } from "@repo/api-server";
+import {
+  createAuthDeleteHandler,
+  createAuthGetByParamHandler,
+  createAuthPutByParamHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { coachingPlanRosterApi } from "@repo/api-server/coaching";
+import { lmsPlanEnrollmentApi } from "@repo/api-server/lms";
+import {
+  getPlanRosterEntryByIdParamsSchema,
+  getPlanRosterEntryResponseSchema,
+} from "@repo/contracts/coaching/plan-roster";
 import {
   deletePlanEnrollmentParamsSchema,
-  getPlanEnrollmentByIdParamsSchema,
-  getPlanEnrollmentResponseSchema,
   updatePlanEnrollmentParamsSchema,
   updatePlanEnrollmentRequestSchema,
   updatePlanEnrollmentResponseSchema,
-} from "@repo/contracts/plan-enrollment";
+} from "@repo/contracts/lms/plan-enrollment";
 
-export const GET = withPlatformAuth(async (_, context, userId) => {
-  const { planId, enrollmentId } = getPlanEnrollmentByIdParamsSchema.parse(await context.params);
-  const data = await platformPlanEnrollmentsApi.getById(userId, planId, enrollmentId);
-  const validated = getPlanEnrollmentResponseSchema.parse(data);
+import { withCoachAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(validated);
-});
+export const GET = withCoachAuth(
+  withAuthRateLimit(
+    createAuthGetByParamHandler(
+      (userId, { planId, enrollmentId }) =>
+        coachingPlanRosterApi.getById(userId, planId, enrollmentId),
+      getPlanRosterEntryByIdParamsSchema,
+      getPlanRosterEntryResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-export const PUT = withPlatformAuth(async (request, context, userId) => {
-  const { planId, enrollmentId } = updatePlanEnrollmentParamsSchema.parse(await context.params);
-  const body = await request.json();
-  const data = updatePlanEnrollmentRequestSchema.parse(body);
-  const result = await platformPlanEnrollmentsApi.update(userId, planId, enrollmentId, data);
-  const validated = updatePlanEnrollmentResponseSchema.parse(result);
+export const PUT = withCoachAuth(
+  withAuthRateLimit(
+    createAuthPutByParamHandler(
+      (userId, { planId, enrollmentId }, data) =>
+        lmsPlanEnrollmentApi.update(userId, planId, enrollmentId, data),
+      updatePlanEnrollmentParamsSchema,
+      updatePlanEnrollmentRequestSchema,
+      updatePlanEnrollmentResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-  return NextResponse.json(validated);
-});
-
-export const DELETE = withPlatformAuth(async (_, context, userId) => {
-  const { planId, enrollmentId } = deletePlanEnrollmentParamsSchema.parse(await context.params);
-
-  await platformPlanEnrollmentsApi.delete(userId, planId, enrollmentId);
-
-  return NextResponse.json({ success: true });
-});
+export const DELETE = withCoachAuth(
+  withAuthRateLimit(
+    createAuthDeleteHandler(
+      (userId, { planId, enrollmentId }) =>
+        lmsPlanEnrollmentApi.delete(userId, planId, enrollmentId),
+      deletePlanEnrollmentParamsSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

@@ -1,18 +1,27 @@
-import { NextResponse } from "next/server";
+import {
+  createPostHandler,
+  withPublicRoute,
+  withRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { cmsContactInboundApi } from "@repo/api-server/cms";
+import {
+  type CreateContactSubmissionResponse,
+  createContactSubmissionRequestSchema,
+  createContactSubmissionResponseSchema,
+} from "@repo/contracts/cms/contact";
 
-import { handleApiError } from "@repo/api-routes";
-import { contactApi } from "@repo/api-server";
-import { createContactSubmissionRequestSchema } from "@repo/contracts/contact";
+export const POST = withPublicRoute(
+  withRateLimit(
+    createPostHandler(
+      async (data): Promise<CreateContactSubmissionResponse> => {
+        await cmsContactInboundApi.createSubmission(data);
 
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const data = createContactSubmissionRequestSchema.parse(body);
-
-    const submission = await contactApi.createSubmission(data);
-
-    return NextResponse.json(submission);
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
+        return { success: true, message: "Contact submission received" };
+      },
+      createContactSubmissionRequestSchema,
+      createContactSubmissionResponseSchema,
+    ),
+    RATE_LIMIT_TIER.PUBLIC,
+  ),
+);

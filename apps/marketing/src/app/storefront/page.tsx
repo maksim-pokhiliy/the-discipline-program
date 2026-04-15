@@ -1,9 +1,8 @@
 import { type Metadata } from "next";
 
-import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
-
 import { serverApi } from "@app/lib/api/server";
-import { StorefrontProgramsPageClient } from "@app/modules/storefront";
+import { PAGE_SEO, SEO_CONFIG } from "@app/lib/seo";
+import { StorefrontProgramsPageContent } from "@app/modules/storefront";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.storefront.title,
@@ -16,10 +15,12 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
-export default async function StorefrontProgramsPage() {
-  const initialData = await serverApi.pages.getStorefrontPrograms();
+const StorefrontProgramsPage = async () => {
+  const data = await serverApi.pages.getStorefrontPrograms();
 
-  return <StorefrontProgramsPageClient initialData={initialData} />;
-}
+  return <StorefrontProgramsPageContent data={data} />;
+};
+
+export default StorefrontProgramsPage;

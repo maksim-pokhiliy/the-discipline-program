@@ -6,7 +6,15 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Box, Button, CircularProgress, Stack, Typography, alpha, useTheme } from "@mui/material";
 
-export interface ImageUploadProps {
+const formatSize = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(0)}MB`;
+
+const formatTypes = (types: string[]) =>
+  types
+    .map((t) => t.split("/")[1]?.toUpperCase())
+    .filter(Boolean)
+    .join(", ");
+
+export type ImageUploadProps = {
   previewUrl?: string | null;
   onFileSelect: (file: File) => void;
   onRemove?: () => void;
@@ -15,7 +23,7 @@ export interface ImageUploadProps {
   label?: string;
   maxSizeBytes?: number;
   acceptedTypes?: string[];
-}
+};
 
 export const ImageUpload = ({
   previewUrl,
@@ -45,26 +53,22 @@ export const ImageUpload = ({
 
   const acceptAttribute = acceptedTypes.join(",");
 
-  const formatSize = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(0)}MB`;
-
-  const formatTypes = (types: string[]) =>
-    types
-      .map((t) => t.split("/")[1]?.toUpperCase())
-      .filter(Boolean)
-      .join(", ");
-
   return (
     <Stack spacing={2} width="100%">
       {label && <Typography variant="subtitle2">{label}</Typography>}
 
       <Box
         sx={{
-          border: `1px dashed ${theme.palette.divider}`,
+          border: 1,
+          borderStyle: "dashed",
+          borderColor: "divider",
           borderRadius: 1,
           p: 2,
           textAlign: "center",
           bgcolor: alpha(theme.palette.primary.main, 0.02),
-          transition: "all 0.2s",
+          transition: theme.transitions.create(["background-color", "border-color"], {
+            duration: theme.transitions.duration.short,
+          }),
 
           "&:hover": {
             bgcolor: alpha(theme.palette.primary.main, 0.05),
@@ -95,23 +99,22 @@ export const ImageUpload = ({
               component="img"
               src={previewUrl}
               alt="Preview"
-              sx={{
+              sx={(theme) => ({
                 maxWidth: "100%",
-                maxHeight: 300,
+                maxHeight: theme.spacing(37.5),
                 borderRadius: 1,
                 objectFit: "contain",
-              }}
+              })}
             />
 
             <Stack direction="row" spacing={2}>
-              <Button size="small" variant="outlined" onClick={triggerSelect} disabled={disabled}>
+              <Button size="small" onClick={triggerSelect} disabled={disabled}>
                 Change
               </Button>
 
               {onRemove && (
                 <Button
                   size="small"
-                  variant="outlined"
                   color="error"
                   startIcon={<DeleteIcon />}
                   onClick={onRemove}
@@ -131,12 +134,10 @@ export const ImageUpload = ({
             sx={{ cursor: "pointer" }}
             onClick={triggerSelect}
           >
-            <CloudUploadIcon color="primary" sx={{ fontSize: 40, opacity: 0.5 }} />
+            <CloudUploadIcon color="primary" fontSize="large" sx={{ opacity: 0.5 }} />
 
             <Box>
-              <Typography variant="body2" fontWeight={500}>
-                Click to upload
-              </Typography>
+              <Typography variant="body2">Click to upload</Typography>
 
               <Typography variant="caption" color="text.secondary">
                 {formatTypes(acceptedTypes)} (max {formatSize(maxSizeBytes)})

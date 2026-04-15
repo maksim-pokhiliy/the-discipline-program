@@ -1,23 +1,41 @@
-import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
-import { withAdminAuth } from "@repo/api-routes/auth";
-import { adminBlogApi } from "@repo/api-server";
 import {
+  createDeleteHandler,
+  createGetByIdHandler,
+  createPutHandler,
+  RATE_LIMIT_TIER,
+  withAuthRateLimit,
+} from "@repo/api-routes";
+import { cmsBlogAdminApi } from "@repo/api-server/cms";
+import {
+  blogPostSchema,
   deleteBlogPostParamsSchema,
   getBlogPostByIdParamsSchema,
   updateBlogPostParamsSchema,
   updateBlogPostRequestSchema,
-} from "@repo/contracts/blog";
+} from "@repo/contracts/cms/blog";
+
+import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetByIdHandler(adminBlogApi.getPostById, getBlogPostByIdParamsSchema),
+  withAuthRateLimit(
+    createGetByIdHandler(cmsBlogAdminApi.getPostById, getBlogPostByIdParamsSchema, blogPostSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );
 export const PUT = withAdminAuth(
-  createPutHandler(
-    adminBlogApi.updatePost,
-    updateBlogPostParamsSchema,
-    updateBlogPostRequestSchema,
+  withAuthRateLimit(
+    createPutHandler(
+      cmsBlogAdminApi.updatePost,
+      updateBlogPostParamsSchema,
+      updateBlogPostRequestSchema,
+      blogPostSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 export const DELETE = withAdminAuth(
-  createDeleteHandler(adminBlogApi.deletePost, deleteBlogPostParamsSchema),
+  withAuthRateLimit(
+    createDeleteHandler(cmsBlogAdminApi.deletePost, deleteBlogPostParamsSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );

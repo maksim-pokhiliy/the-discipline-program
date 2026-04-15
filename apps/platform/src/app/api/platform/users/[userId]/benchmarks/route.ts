@@ -1,28 +1,38 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformUserBenchmarksApi } from "@repo/api-server";
+import {
+  createAuthGetByParamHandler,
+  createAuthPostByParamHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
+import { lmsUserBenchmarkApi } from "@repo/api-server/lms";
 import {
   createUserBenchmarkRequestSchema,
   createUserBenchmarkResponseSchema,
   getUserBenchmarksParamsSchema,
   getUserBenchmarksResponseSchema,
-} from "@repo/contracts/user-benchmark";
+} from "@repo/contracts/lms/user-benchmark";
 
-export const GET = withPlatformAuth(async (_, context, authUserId) => {
-  const { userId } = getUserBenchmarksParamsSchema.parse(await context.params);
-  const data = await platformUserBenchmarksApi.getByUser(authUserId, userId);
-  const validated = getUserBenchmarksResponseSchema.parse(data);
+import { withPlatformAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(validated);
-});
+export const GET = withPlatformAuth(
+  withAuthRateLimit(
+    createAuthGetByParamHandler(
+      (authUserId, { userId }) => lmsUserBenchmarkApi.getByUser(authUserId, userId),
+      getUserBenchmarksParamsSchema,
+      getUserBenchmarksResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
 
-export const POST = withPlatformAuth(async (request, context, authUserId) => {
-  const { userId } = getUserBenchmarksParamsSchema.parse(await context.params);
-  const body = await request.json();
-  const data = createUserBenchmarkRequestSchema.parse(body);
-  const result = await platformUserBenchmarksApi.create(authUserId, userId, data);
-  const validated = createUserBenchmarkResponseSchema.parse(result);
-
-  return NextResponse.json(validated, { status: 201 });
-});
+export const POST = withPlatformAuth(
+  withAuthRateLimit(
+    createAuthPostByParamHandler(
+      (authUserId, { userId }, data) => lmsUserBenchmarkApi.create(authUserId, userId, data),
+      getUserBenchmarksParamsSchema,
+      createUserBenchmarkRequestSchema,
+      createUserBenchmarkResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

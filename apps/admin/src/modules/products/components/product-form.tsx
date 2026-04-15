@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-
 import {
   Checkbox,
   FormControlLabel,
@@ -13,36 +11,27 @@ import {
 } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import {
-  type CreateProductData,
-  ProductCurrency,
-  PriceInterval,
-  PRICE_INTERVAL_LABELS,
-} from "@repo/contracts/product";
-import { amountToCents, slugify } from "@repo/shared";
+import { ProductCurrency, PriceInterval, PRICE_INTERVAL_LABELS } from "@repo/contracts/cms/product";
 import { FormCard, TagsInput } from "@repo/ui";
 
-interface ProductFormProps {
+import { useAutoSlug } from "@app/lib/hooks";
+
+import { type ProductFormData } from "./product-form-schema";
+
+type ProductFormProps = {
   isLoading?: boolean;
   disableAutoSlug?: boolean;
-}
+};
 
 export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: ProductFormProps) => {
+  const form = useFormContext<ProductFormData>();
   const {
     register,
-    watch,
-    setValue,
     control,
-    formState: { errors, dirtyFields },
-  } = useFormContext<CreateProductData>();
+    formState: { errors },
+  } = form;
 
-  const title = watch("title");
-
-  useEffect(() => {
-    if (!disableAutoSlug && title && !dirtyFields.slug) {
-      setValue("slug", slugify(title), { shouldValidate: true });
-    }
-  }, [title, dirtyFields.slug, setValue, disableAutoSlug]);
+  useAutoSlug({ disabled: disableAutoSlug, form });
 
   return (
     <Grid container spacing={3}>
@@ -53,7 +42,6 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
               <TextField
                 label="Product Title"
                 placeholder="e.g. Strength Mastery 1.0"
-                size="small"
                 variant="outlined"
                 fullWidth
                 disabled={isLoading}
@@ -89,6 +77,7 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                     value={field.value || []}
                     onChange={field.onChange}
                     error={!!fieldState.error}
+                    size="medium"
                     helperText={
                       fieldState.error?.message || "Add bullet points for the marketing card"
                     }
@@ -104,57 +93,77 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
       <Grid size={{ xs: 12, lg: 4 }}>
         <Stack spacing={3}>
           <FormCard title="Visibility">
-            <FormControlLabel
-              control={
-                <Controller
-                  name="isActive"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      disabled={isLoading}
-                    />
-                  )}
-                />
-              }
-              label="Active (Visible in Store)"
-            />
+            <Stack spacing={1}>
+              <FormControlLabel
+                control={
+                  <Controller
+                    name="isActive"
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        disabled={isLoading}
+                      />
+                    )}
+                  />
+                }
+                label="Active (Visible in Store)"
+              />
+              <FormControlLabel
+                control={
+                  <Controller
+                    name="isFeatured"
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        checked={field.value}
+                        onChange={(e) => field.onChange(e.target.checked)}
+                        disabled={isLoading}
+                      />
+                    )}
+                  />
+                }
+                label="Featured Product"
+              />
+            </Stack>
           </FormCard>
 
           <FormCard title="Pricing">
-            <Stack spacing={2}>
+            <Stack spacing={3}>
               <TextField
                 label="Price"
                 type="number"
                 placeholder="0"
                 variant="outlined"
                 fullWidth
-                size="small"
                 disabled={isLoading}
+                error={!!errors.price?.amount}
+                helperText={errors.price?.amount?.message}
                 slotProps={{
                   input: {
                     startAdornment: <InputAdornment position="start">$</InputAdornment>,
                   },
                 }}
-                {...register("price.amountCents", {
-                  setValueAs: (v: string) => (v === "" ? undefined : amountToCents(Number(v))),
+                {...register("price.amount", {
+                  valueAsNumber: true,
                 })}
               />
 
               <Controller
                 name="price.currency"
                 control={control}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <TextField
                     {...field}
                     select
                     label="Currency"
                     variant="outlined"
                     fullWidth
-                    size="small"
                     disabled={isLoading}
-                    value={field.value || "USD"}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                    value={field.value || ProductCurrency.USD}
                   >
                     {Object.values(ProductCurrency).map((currency) => (
                       <MenuItem key={currency} value={currency}>
@@ -168,16 +177,17 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
               <Controller
                 name="price.interval"
                 control={control}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <TextField
                     {...field}
                     select
                     label="Billing Interval"
                     variant="outlined"
                     fullWidth
-                    size="small"
                     disabled={isLoading}
-                    value={field.value || "MONTHLY"}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                    value={field.value || PriceInterval.MONTHLY}
                   >
                     {Object.values(PriceInterval).map((interval) => (
                       <MenuItem key={interval} value={interval}>
@@ -200,7 +210,6 @@ export const ProductForm = ({ isLoading = false, disableAutoSlug = false }: Prod
                   label="URL Slug"
                   variant="outlined"
                   fullWidth
-                  size="small"
                   disabled={isLoading}
                   error={!!fieldState.error}
                   helperText={fieldState.error?.message || "Unique identifier for the link"}

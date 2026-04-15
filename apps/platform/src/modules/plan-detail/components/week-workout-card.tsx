@@ -7,9 +7,9 @@ import { CSS } from "@dnd-kit/utilities";
 import CloseIcon from "@mui/icons-material/Close";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Collapse, Divider, IconButton, InputBase, Paper, Stack, Typography } from "@mui/material";
+import { Collapse, Divider, IconButton, InputBase, Paper, Stack } from "@mui/material";
 
-import type { Workout } from "@repo/contracts/workout";
+import type { Workout } from "@repo/contracts/lms/workout";
 import { ConfirmationModal, RichTextEditor } from "@repo/ui";
 
 import { useDeleteWorkout, useUpdateWorkout } from "@app/lib/hooks";
@@ -83,14 +83,14 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
           "&:hover .workout-action": { opacity: 1 },
         })}
       >
-        <Stack direction="row" sx={{ alignItems: "center" }}>
+        <Stack direction="row" alignItems="center">
           <Stack
             className="workout-action"
             {...listeners}
             tabIndex={-1}
+            alignItems="center"
+            justifyContent="center"
             sx={{
-              alignItems: "center",
-              justifyContent: "center",
               px: 0.5,
               py: 1.5,
               cursor: "grab",
@@ -107,14 +107,14 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
             onBlur={commitTitle}
             autoFocus={autoFocus}
             placeholder="Workout title..."
-            sx={{ flex: 1, typography: "body2", "& input": { p: 0, py: 1, fontWeight: 500 } }}
+            sx={{ flex: 1, typography: "body2", "& input": { p: 0, py: 1 } }}
             slotProps={{ input: { maxLength: 200 } }}
           />
 
           <IconButton
             className={expanded ? undefined : "workout-action"}
-            size="small"
             onClick={() => setExpanded((prev) => !prev)}
+            aria-label={expanded ? "Collapse workout" : "Expand workout"}
             sx={{ color: "text.disabled" }}
           >
             <ExpandMoreIcon
@@ -128,9 +128,10 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
 
           <IconButton
             className="workout-action"
-            size="small"
             onClick={() => setConfirmOpen(true)}
-            sx={{ mr: 0.5, color: "text.disabled", "&:hover": { color: "error.main" } }}
+            aria-label="Delete workout"
+            sx={{ mr: 0.5 }}
+            color="error"
           >
             <CloseIcon fontSize="small" />
           </IconButton>
@@ -162,18 +163,3 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
     </>
   );
 };
-
-export const WorkoutDragOverlay: React.FC<{ workout: Workout }> = ({ workout }) => (
-  <Paper
-    variant="outlined"
-    sx={(theme) => ({
-      p: 1.5,
-      borderColor: theme.palette.primary.main,
-      boxShadow: theme.shadows[4],
-    })}
-  >
-    <Typography variant="body2" sx={{ fontWeight: 500 }}>
-      {workout.title || "Untitled workout"}
-    </Typography>
-  </Paper>
-);

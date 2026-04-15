@@ -1,22 +1,23 @@
 "use client";
 
-import { Grid, MenuItem, Stack, TextField } from "@mui/material";
+import { Grid, MenuItem, Stack, TextField, useTheme } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { UserRole } from "@repo/contracts/auth";
-import { type AdminUser } from "@repo/contracts/user";
+import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
+import { UserRole } from "@repo/contracts/iam/auth";
 import { formatDate } from "@repo/shared";
 import { DetailField, FormCard } from "@repo/ui";
 
-import { ProfileCard } from "../../components/profile-card";
+import { ProfileCard } from "../../components";
 import { ROLE_CONFIG } from "../../constants";
 
-interface UserDetailSectionProps {
-  user: AdminUser;
+type UserDetailSectionProps = {
+  user: AdminUserView;
   isPending: boolean;
-}
+};
 
 export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) => {
+  const theme = useTheme();
   const { control } = useFormContext<{ role: UserRole }>();
 
   return (
@@ -30,13 +31,16 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
                 <Controller
                   name="role"
                   control={control}
-                  render={({ field }) => (
+                  render={({ field, fieldState }) => (
                     <TextField
                       {...field}
                       select
                       size="small"
+                      fullWidth={false}
                       disabled={isPending}
-                      sx={{ minWidth: 160 }}
+                      error={!!fieldState.error}
+                      helperText={fieldState.error?.message}
+                      sx={{ minWidth: (theme) => theme.spacing(20) }}
                     >
                       {Object.values(UserRole).map((role) => (
                         <MenuItem key={role} value={role}>
@@ -64,8 +68,12 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
         <Stack spacing={3}>
           <FormCard title="Account">
             <Stack spacing={2}>
-              <DetailField label="ID" labelWidth={80} value={user.id} />
-              <DetailField label="Image" labelWidth={80} value={user.image || "No image"} />
+              <DetailField label="ID" labelWidth={theme.spacing(10)} value={user.id} />
+              <DetailField
+                label="Image"
+                labelWidth={theme.spacing(10)}
+                value={user.image || "No image"}
+              />
             </Stack>
           </FormCard>
         </Stack>

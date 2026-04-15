@@ -3,11 +3,12 @@
 import { type ReactNode } from "react";
 
 import SaveIcon from "@mui/icons-material/Save";
+import { Stack } from "@mui/material";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
 
 import { ContentSection } from "./layout";
 
-interface FormViewProps<T extends FieldValues> {
+export type FormViewProps<T extends FieldValues> = {
   methods: UseFormReturn<T>;
   onSubmit: (data: T) => void;
   isPending: boolean;
@@ -16,9 +17,8 @@ interface FormViewProps<T extends FieldValues> {
   backHref: string;
   backLabel: string;
   submitLabel?: string;
-  backgroundColor?: "light" | "dark";
   children: ReactNode;
-}
+};
 
 export const FormView = <T extends FieldValues>({
   methods,
@@ -29,18 +29,18 @@ export const FormView = <T extends FieldValues>({
   backHref,
   backLabel,
   submitLabel = "Save Changes",
-  backgroundColor,
   children,
 }: FormViewProps<T>) => (
   <FormProvider {...methods}>
-    <form onSubmit={methods.handleSubmit(onSubmit)} noValidate>
+    <Stack component="form" onSubmit={methods.handleSubmit(onSubmit)} noValidate>
       <ContentSection
         title={title}
         subtitle={subtitle}
         backHref={backHref}
         backLabel={backLabel}
-        backgroundColor={backgroundColor}
-        stickyToolbar
+        maxWidth="xl"
+        textAlign="left"
+        animated={false}
         actions={[
           {
             label: submitLabel,
@@ -52,6 +52,6 @@ export const FormView = <T extends FieldValues>({
       >
         {children}
       </ContentSection>
-    </form>
+    </Stack>
   </FormProvider>
 );

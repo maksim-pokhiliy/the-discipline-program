@@ -1,6 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import type {
@@ -8,10 +9,11 @@ import type {
   CreateTrainingPlanData,
   TrainingPlan,
   UpdateTrainingPlanData,
-} from "@repo/contracts/training-plan";
-import { createCrudHooks, platformKeys } from "@repo/query";
+} from "@repo/contracts/lms/training-plan";
+import { createCrudHooks, useOptimisticMutation } from "@repo/query";
 
 import { api } from "../api";
+import { platformKeys } from "../api/keys";
 
 const trainingPlanHooks = createCrudHooks<
   CoachPlansPageData,
@@ -29,6 +31,8 @@ const trainingPlanHooks = createCrudHooks<
     delete: api.trainingPlans.delete,
   },
   redirectTo: "/coach/plans",
+  useNavigate: () => useRouter().push,
+  additionalInvalidateKeys: [platformKeys.coachDashboard.data()],
 });
 
 export const useTrainingPlansPageData = trainingPlanHooks.usePageData;
@@ -36,36 +40,18 @@ export const useTrainingPlan = trainingPlanHooks.useById;
 export const useCreateTrainingPlan = trainingPlanHooks.useCreate;
 export const useDeleteTrainingPlan = trainingPlanHooks.useDelete;
 
-export const useUpdateTrainingPlan = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateTrainingPlanData }) =>
-      api.trainingPlans.update(id, data),
-    onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: platformKeys.trainingPlans.byId(id) });
-
-      const previous = queryClient.getQueryData<TrainingPlan>(platformKeys.trainingPlans.byId(id));
-
-      if (previous) {
-        queryClient.setQueryData(platformKeys.trainingPlans.byId(id), { ...previous, ...data });
-      }
-
-      return { previous };
-    },
-    onError: (_error, { id }, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(platformKeys.trainingPlans.byId(id), context.previous);
-      }
-
-      toast.error("Failed to update training plan");
-    },
-    onSettled: (_data, _error, { id }) => {
-      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.byId(id) });
-      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-    },
+export const useUpdateTrainingPlan = () =>
+  useOptimisticMutation<TrainingPlan, { id: string; data: UpdateTrainingPlanData }>({
+    mutationFn: ({ id, data }) => api.trainingPlans.update(id, data),
+    queryKey: ({ id }) => platformKeys.trainingPlans.byId(id),
+    transform: (prev, { data }) => ({ ...prev, ...data }),
+    invalidateKeys: ({ id }) => [
+      platformKeys.trainingPlans.byId(id),
+      platformKeys.trainingPlans.page(),
+      platformKeys.coachDashboard.data(),
+    ],
+    errorMessage: "Failed to update training plan",
   });
-};
 
 export const useDuplicateTrainingPlan = () => {
   const queryClient = useQueryClient();
@@ -74,6 +60,7 @@ export const useDuplicateTrainingPlan = () => {
     mutationFn: (id: string) => api.trainingPlans.duplicate(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      queryClient.invalidateQueries({ queryKey: platformKeys.coachDashboard.data() });
       toast.success("Training plan duplicated");
     },
     onError: (error: Error) => {
@@ -82,50 +69,48 @@ export const useDuplicateTrainingPlan = () => {
   });
 };
 
-export const useArchiveTrainingPlan = () => {
+const useStatusMutation = ({
+  mutationFn,
+  successMessage,
+  errorMessage,
+}: {
+  mutationFn: (id: string) => Promise<TrainingPlan>;
+  successMessage: string;
+  errorMessage: string;
+}) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: string) => api.trainingPlans.archive(id),
+    mutationFn,
     onSuccess: (plan) => {
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      queryClient.invalidateQueries({ queryKey: platformKeys.coachDashboard.data() });
       queryClient.setQueryData(platformKeys.trainingPlans.byId(plan.id), plan);
-      toast.success("Training plan archived");
+      toast.success(successMessage);
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to archive training plan");
+      toast.error(error.message || errorMessage);
     },
   });
 };
 
-export const useRestoreTrainingPlan = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => api.trainingPlans.restore(id),
-    onSuccess: (plan) => {
-      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-      queryClient.setQueryData(platformKeys.trainingPlans.byId(plan.id), plan);
-      toast.success("Training plan restored");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to restore training plan");
-    },
+export const useArchiveTrainingPlan = () =>
+  useStatusMutation({
+    mutationFn: (id) => api.trainingPlans.archive(id),
+    successMessage: "Training plan archived",
+    errorMessage: "Failed to archive training plan",
   });
-};
 
-export const useActivateTrainingPlan = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => api.trainingPlans.activate(id),
-    onSuccess: (plan) => {
-      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-      queryClient.setQueryData(platformKeys.trainingPlans.byId(plan.id), plan);
-      toast.success("Training plan activated");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || "Failed to activate training plan");
-    },
+export const useRestoreTrainingPlan = () =>
+  useStatusMutation({
+    mutationFn: (id) => api.trainingPlans.restore(id),
+    successMessage: "Training plan restored",
+    errorMessage: "Failed to restore training plan",
   });
-};
+
+export const useActivateTrainingPlan = () =>
+  useStatusMutation({
+    mutationFn: (id) => api.trainingPlans.activate(id),
+    successMessage: "Training plan activated",
+    errorMessage: "Failed to activate training plan",
+  });

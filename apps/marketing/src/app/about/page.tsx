@@ -1,9 +1,8 @@
 import { type Metadata } from "next";
 
-import { PAGE_SEO, SEO_CONFIG } from "@repo/shared";
-
 import { serverApi } from "@app/lib/api/server";
-import { AboutPageClient } from "@app/modules/about";
+import { PAGE_SEO, SEO_CONFIG } from "@app/lib/seo";
+import { AboutPageContent } from "@app/modules/about";
 
 export const metadata: Metadata = {
   title: PAGE_SEO.about.title,
@@ -16,10 +15,12 @@ export const metadata: Metadata = {
   },
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
-export default async function AboutPage() {
-  const initialData = await serverApi.pages.getAbout();
+const AboutPage = async () => {
+  const data = await serverApi.pages.getAbout();
 
-  return <AboutPageClient initialData={initialData} />;
-}
+  return <AboutPageContent data={data} />;
+};
+
+export default AboutPage;

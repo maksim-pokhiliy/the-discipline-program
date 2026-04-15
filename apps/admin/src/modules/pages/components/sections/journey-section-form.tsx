@@ -3,15 +3,21 @@
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Divider, Grid, Stack, TextField, Typography } from "@mui/material";
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { type z } from "zod";
 
+import { type aboutPageJourneySchema } from "@repo/contracts/cms/pages";
 import { DynamicListItem, FormCard } from "@repo/ui";
+
+import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./shared-styles";
+
+type JourneySectionData = z.infer<typeof aboutPageJourneySchema>;
 
 export const JourneySectionForm = () => {
   const {
     register,
     control,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<JourneySectionData>();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -26,7 +32,7 @@ export const JourneySectionForm = () => {
             label="Section Title"
             fullWidth
             error={!!errors.title}
-            helperText={errors.title?.message?.toString()}
+            helperText={errors.title?.message}
             {...register("title")}
           />
 
@@ -36,7 +42,7 @@ export const JourneySectionForm = () => {
             multiline
             minRows={2}
             error={!!errors.subtitle}
-            helperText={errors.subtitle?.message?.toString()}
+            helperText={errors.subtitle?.message}
             {...register("subtitle")}
           />
         </Stack>
@@ -47,7 +53,7 @@ export const JourneySectionForm = () => {
           </Typography>
         </Divider>
 
-        <Stack spacing={3} sx={{ width: "100%", alignItems: "start" }}>
+        <Stack spacing={3} sx={ITEMS_STACK_SX}>
           {fields.map((field, index) => (
             <DynamicListItem key={field.id} onRemove={() => remove(index)}>
               <Grid container spacing={2}>
@@ -56,6 +62,8 @@ export const JourneySectionForm = () => {
                     label="Year"
                     fullWidth
                     size="small"
+                    error={!!errors.timeline?.[index]?.year}
+                    helperText={errors.timeline?.[index]?.year?.message}
                     {...register(`timeline.${index}.year`)}
                   />
                 </Grid>
@@ -65,6 +73,8 @@ export const JourneySectionForm = () => {
                     label="Title"
                     fullWidth
                     size="small"
+                    error={!!errors.timeline?.[index]?.title}
+                    helperText={errors.timeline?.[index]?.title?.message}
                     {...register(`timeline.${index}.title`)}
                   />
                 </Grid>
@@ -76,6 +86,8 @@ export const JourneySectionForm = () => {
                 multiline
                 minRows={2}
                 size="small"
+                error={!!errors.timeline?.[index]?.description}
+                helperText={errors.timeline?.[index]?.description?.message}
                 {...register(`timeline.${index}.description`)}
               />
             </DynamicListItem>
@@ -85,7 +97,7 @@ export const JourneySectionForm = () => {
             variant="outlined"
             startIcon={<AddIcon />}
             onClick={() => append({ year: "", title: "", description: "" })}
-            sx={{ borderStyle: "dashed", borderWidth: 2, px: 4 }}
+            sx={ADD_BUTTON_SX}
           >
             Add Timeline Item
           </Button>

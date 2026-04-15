@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -14,18 +14,9 @@ import {
   formatWeekRange,
   getISOWeekNumber,
   getMonday,
-  parseDateParam,
-} from "./week-helpers";
+} from "@repo/shared";
 
-export const useWeekStart = (): Date => {
-  const searchParams = useSearchParams();
-  const weekParam = searchParams.get("week");
-
-  return useMemo(
-    () => (weekParam ? getMonday(parseDateParam(weekParam)) : getMonday(new Date())),
-    [weekParam],
-  );
-};
+import { useWeekStart } from "@app/lib/hooks";
 
 export const WeekNavigator = () => {
   const router = useRouter();
@@ -47,30 +38,29 @@ export const WeekNavigator = () => {
   const isCurrentWeek = formatDateParam(weekStart) === formatDateParam(getMonday(new Date()));
 
   return (
-    <Stack direction="row" sx={{ alignItems: "center", position: "relative" }}>
-      <Stack direction="row" sx={{ flex: 1, justifyContent: "flex-start" }}>
-        <IconButton onClick={() => navigate(addDays(weekStart, -7))} size="small">
+    <Stack direction="row" alignItems="center" sx={{ position: "relative" }}>
+      <Stack direction="row" justifyContent="flex-start" sx={{ flex: 1 }}>
+        <IconButton onClick={() => navigate(addDays(weekStart, -7))} aria-label="Previous week">
           <ChevronLeftIcon />
         </IconButton>
       </Stack>
 
-      <Stack sx={{ alignItems: "center" }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-          Week {weekNumber}
-        </Typography>
+      <Stack alignItems="center">
+        <Typography variant="subtitle2">Week {weekNumber}</Typography>
         <Typography variant="caption" sx={{ color: "text.secondary" }}>
           {formatWeekRange(weekStart)}
         </Typography>
       </Stack>
 
-      <Stack direction="row" sx={{ flex: 1, justifyContent: "flex-end" }}>
-        <IconButton onClick={() => navigate(addDays(weekStart, 7))} size="small">
+      <Stack direction="row" justifyContent="flex-end" sx={{ flex: 1 }}>
+        <IconButton onClick={() => navigate(addDays(weekStart, 7))} aria-label="Next week">
           <ChevronRightIcon />
         </IconButton>
       </Stack>
 
       {!isCurrentWeek && (
         <Button
+          variant="text"
           size="small"
           startIcon={<TodayIcon />}
           onClick={() => navigate(getMonday(new Date()))}

@@ -1,16 +1,19 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformTrainingPlansApi } from "@repo/api-server";
+import { createAuthActionHandler, withAuthRateLimit, RATE_LIMIT_TIER } from "@repo/api-routes";
+import { lmsTrainingPlanApi } from "@repo/api-server/lms";
 import {
   restoreTrainingPlanParamsSchema,
   updateTrainingPlanResponseSchema,
-} from "@repo/contracts/training-plan";
+} from "@repo/contracts/lms/training-plan";
 
-export const POST = withPlatformAuth(async (_, context, userId) => {
-  const { planId } = restoreTrainingPlanParamsSchema.parse(await context.params);
-  const result = await platformTrainingPlansApi.restore(userId, planId);
-  const validated = updateTrainingPlanResponseSchema.parse(result);
+import { withCoachAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(validated);
-});
+export const POST = withCoachAuth(
+  withAuthRateLimit(
+    createAuthActionHandler(
+      (userId, { planId }) => lmsTrainingPlanApi.restore(userId, planId),
+      restoreTrainingPlanParamsSchema,
+      updateTrainingPlanResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

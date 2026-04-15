@@ -1,16 +1,20 @@
-import { NextResponse } from "next/server";
-
-import { withPlatformAuth } from "@repo/api-routes/auth";
-import { platformTrainingPlansApi } from "@repo/api-server";
+import { createAuthActionHandler, withAuthRateLimit, RATE_LIMIT_TIER } from "@repo/api-routes";
+import { lmsTrainingPlanApi } from "@repo/api-server/lms";
 import {
   duplicateTrainingPlanParamsSchema,
   duplicateTrainingPlanResponseSchema,
-} from "@repo/contracts/training-plan";
+} from "@repo/contracts/lms/training-plan";
 
-export const POST = withPlatformAuth(async (_, context, userId) => {
-  const { planId } = duplicateTrainingPlanParamsSchema.parse(await context.params);
-  const result = await platformTrainingPlansApi.duplicate(userId, planId);
-  const validated = duplicateTrainingPlanResponseSchema.parse(result);
+import { withCoachAuth } from "@app/lib/server/auth";
 
-  return NextResponse.json(validated, { status: 201 });
-});
+export const POST = withCoachAuth(
+  withAuthRateLimit(
+    createAuthActionHandler(
+      (userId, { planId }) => lmsTrainingPlanApi.duplicate(userId, planId),
+      duplicateTrainingPlanParamsSchema,
+      duplicateTrainingPlanResponseSchema,
+      201,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);

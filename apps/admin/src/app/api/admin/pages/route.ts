@@ -1,15 +1,14 @@
-import { NextResponse } from "next/server";
 import { z } from "zod";
 
-import { withAdminAuth } from "@repo/api-routes/auth";
-import { adminPagesApi } from "@repo/api-server";
-import { adminPageListItemSchema } from "@repo/contracts/pages";
+import { createGetHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@repo/api-routes";
+import { cmsPagesAdminApi } from "@repo/api-server/cms";
+import { adminPageListItemSchema } from "@repo/contracts/cms/pages";
 
-export const dynamic = "force-dynamic";
+import { withAdminAuth } from "@app/lib/server/auth";
 
-export const GET = withAdminAuth(async () => {
-  const pages = await adminPagesApi.getPages();
-  const validated = z.array(adminPageListItemSchema).parse(pages);
-
-  return NextResponse.json(validated);
-});
+export const GET = withAdminAuth(
+  withAuthRateLimit(
+    createGetHandler(cmsPagesAdminApi.getPages, z.array(adminPageListItemSchema)),
+    RATE_LIMIT_TIER.API,
+  ),
+);

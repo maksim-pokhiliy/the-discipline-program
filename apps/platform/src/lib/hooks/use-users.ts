@@ -2,13 +2,12 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { platformKeys } from "@repo/query";
-
 import { api } from "../api";
+import { platformKeys } from "../api/keys";
 
 export const useSearchUsers = (query: string, enabled = true) =>
   useQuery({
-    queryKey: [...platformKeys.root, "users", "search", query],
+    queryKey: platformKeys.users.search(query),
     queryFn: () => api.users.search(query),
     enabled,
   });

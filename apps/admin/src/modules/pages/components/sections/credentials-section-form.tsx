@@ -3,15 +3,21 @@
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Divider, Stack, TextField, Typography } from "@mui/material";
 import { useFieldArray, useFormContext } from "react-hook-form";
+import { type z } from "zod";
 
+import { type aboutPageCredentialsSchema } from "@repo/contracts/cms/pages";
 import { DynamicListItem, FormCard } from "@repo/ui";
+
+import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./shared-styles";
+
+type CredentialsSectionData = z.infer<typeof aboutPageCredentialsSchema>;
 
 export const CredentialsSectionForm = () => {
   const {
     register,
     control,
     formState: { errors },
-  } = useFormContext();
+  } = useFormContext<CredentialsSectionData>();
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -25,7 +31,7 @@ export const CredentialsSectionForm = () => {
           label="Section Title"
           fullWidth
           error={!!errors.title}
-          helperText={errors.title?.message?.toString()}
+          helperText={errors.title?.message}
           {...register("title")}
         />
 
@@ -35,13 +41,15 @@ export const CredentialsSectionForm = () => {
           </Typography>
         </Divider>
 
-        <Stack spacing={3} sx={{ width: "100%", alignItems: "start" }}>
+        <Stack spacing={3} sx={ITEMS_STACK_SX}>
           {fields.map((field, index) => (
             <DynamicListItem key={field.id} onRemove={() => remove(index)}>
               <TextField
                 label="Title"
                 fullWidth
                 size="small"
+                error={!!errors.items?.[index]?.title}
+                helperText={errors.items?.[index]?.title?.message}
                 {...register(`items.${index}.title`)}
               />
 
@@ -49,6 +57,8 @@ export const CredentialsSectionForm = () => {
                 label="Description"
                 fullWidth
                 size="small"
+                error={!!errors.items?.[index]?.description}
+                helperText={errors.items?.[index]?.description?.message}
                 {...register(`items.${index}.description`)}
               />
             </DynamicListItem>
@@ -58,7 +68,7 @@ export const CredentialsSectionForm = () => {
             variant="outlined"
             startIcon={<AddIcon />}
             onClick={() => append({ title: "", description: "" })}
-            sx={{ borderStyle: "dashed", borderWidth: 2, px: 4 }}
+            sx={ADD_BUTTON_SX}
           >
             Add Credential
           </Button>

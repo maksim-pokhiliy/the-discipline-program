@@ -1,55 +1,38 @@
-"use client";
+import { type BlogPostPageData } from "@repo/contracts/cms/blog";
 
-import { Stack } from "@mui/material";
-
-import { type BlogPostPageData } from "@repo/contracts/blog";
-import { QueryWrapper } from "@repo/query";
-import { SEO_CONFIG } from "@repo/shared";
-
-import { useBlogArticle } from "@app/lib/hooks";
-import { StructuredData } from "@app/shared/components/seo";
+import { StructuredData } from "@app/lib/components/seo";
+import { SEO_CONFIG } from "@app/lib/seo";
 
 import { BlogArticleContent, BlogArticleHero, BlogArticleRelated } from "./sections";
 
-interface BlogArticlePageClientProps {
+type BlogArticlePageContentProps = {
   slug: string;
-  initialData: BlogPostPageData;
-}
-
-export const BlogArticlePageClient = ({ slug, initialData }: BlogArticlePageClientProps) => {
-  const { data, isLoading, error } = useBlogArticle(slug, { initialData });
-
-  return (
-    <QueryWrapper
-      isLoading={isLoading}
-      error={error}
-      data={data}
-      loadingMessage="Loading article..."
-    >
-      {(data) => (
-        <>
-          <StructuredData
-            type="article"
-            data={{
-              title: data.post.title,
-              description: data.post.excerpt ?? "",
-              image: data.post.coverImage ?? "",
-              author: data.post.authorName,
-              publishedTime: `${data.post.publishedAt}`,
-              url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
-            }}
-          />
-
-          <Stack spacing={0}>
-            <BlogArticleHero post={data.post} />
-            <BlogArticleContent post={data.post} />
-
-            {data.relatedPosts.length > 0 && (
-              <BlogArticleRelated relatedPosts={data.relatedPosts} />
-            )}
-          </Stack>
-        </>
-      )}
-    </QueryWrapper>
-  );
+  data: BlogPostPageData;
 };
+
+export const BlogArticlePageContent = ({ slug, data }: BlogArticlePageContentProps) => (
+  <>
+    <StructuredData
+      type="article"
+      data={{
+        title: data.post.title,
+        description: data.post.excerpt ?? "",
+        image: data.post.coverImage ?? "",
+        author: data.post.authorName,
+        publishedTime: new Date(data.post.publishedAt).toISOString(),
+        url: `${SEO_CONFIG.siteUrl}/blog/${slug}`,
+      }}
+    />
+
+    <BlogArticleHero post={data.post} labels={data.labels} />
+    <BlogArticleContent post={data.post} />
+
+    {data.relatedPosts.length > 0 && (
+      <BlogArticleRelated
+        relatedPosts={data.relatedPosts}
+        sectionTitle={data.relatedSectionTitle}
+        labels={data.labels}
+      />
+    )}
+  </>
+);

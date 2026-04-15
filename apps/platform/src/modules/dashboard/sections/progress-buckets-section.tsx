@@ -2,117 +2,107 @@
 
 import { useMemo, useState } from "react";
 
-import { Box, Chip, Stack, Tab, Tabs, Typography } from "@mui/material";
-import Link from "next/link";
+import { Stack, Tabs, Typography } from "@mui/material";
 
-import { type ProgressBuckets, ProgressTrend } from "@repo/contracts/coach-dashboard";
+import {
+  PROCESS_STATUS_LABELS,
+  type ProgressBuckets,
+  ProcessStatus,
+} from "@repo/contracts/coaching/coach-dashboard";
+import { rateToPercent } from "@repo/shared";
+import { ChipTab } from "@repo/ui";
+
+import { AthleteCardLink } from "@app/lib/components";
 
 import { AthleteCard, DashboardSection } from "../components";
 
-import {
-  PROGRESS_GROUPS,
-  formatCompletionRate,
-  getDefaultProgressTab,
-} from "./progress-buckets-config";
+import { PROGRESS_GROUPS, getDefaultProgressTab } from "./progress-buckets-config";
 
 type ProgressBucketsSectionProps = {
   buckets: ProgressBuckets;
 };
 
-const TREND_TO_BUCKET_KEY: Record<ProgressTrend, keyof Omit<ProgressBuckets, "avgEngagementRate">> =
-  {
-    [ProgressTrend.UP]: "improving",
-    [ProgressTrend.STABLE]: "stagnating",
-    [ProgressTrend.DOWN]: "declining",
-  };
+const STATUS_TO_BUCKET_KEY: Record<
+  ProcessStatus,
+  keyof Omit<ProgressBuckets, "avgEngagementRate">
+> = {
+  [ProcessStatus.ON_TRACK]: "onTrack",
+  [ProcessStatus.STEADY]: "steady",
+  [ProcessStatus.FALLING_BEHIND]: "fallingBehind",
+};
 
 export const ProgressBucketsSection: React.FC<ProgressBucketsSectionProps> = ({ buckets }) => {
   const counts = useMemo(
     () =>
-      new Map<ProgressTrend, number>([
-        [ProgressTrend.UP, buckets.improving.length],
-        [ProgressTrend.STABLE, buckets.stagnating.length],
-        [ProgressTrend.DOWN, buckets.declining.length],
+      new Map<ProcessStatus, number>([
+        [ProcessStatus.ON_TRACK, buckets.onTrack.length],
+        [ProcessStatus.STEADY, buckets.steady.length],
+        [ProcessStatus.FALLING_BEHIND, buckets.fallingBehind.length],
       ]),
     [buckets],
   );
 
   const totalAthletes =
-    buckets.improving.length + buckets.stagnating.length + buckets.declining.length;
+    buckets.onTrack.length + buckets.steady.length + buckets.fallingBehind.length;
 
-  const [activeTab, setActiveTab] = useState<ProgressTrend>(() => getDefaultProgressTab(counts));
+  const [activeTab, setActiveTab] = useState<ProcessStatus>(() => getDefaultProgressTab(counts));
 
   if (totalAthletes === 0) {
     return null;
   }
 
-  const bucketKey = TREND_TO_BUCKET_KEY[activeTab];
+  const bucketKey = STATUS_TO_BUCKET_KEY[activeTab];
   const athletes = buckets[bucketKey];
-  const activeConfig = PROGRESS_GROUPS.find((g) => g.trend === activeTab);
+  const activeConfig = PROGRESS_GROUPS.find((g) => g.status === activeTab);
 
   return (
     <DashboardSection
       title="Progress"
       badge={{
-        label: `${Math.round(buckets.avgEngagementRate * 100)}% engaged`,
+        label: `${rateToPercent(buckets.avgEngagementRate)}% engaged`,
         color: "info",
       }}
     >
-      <Tabs
-        value={activeTab}
-        onChange={(_, value: ProgressTrend) => setActiveTab(value)}
-        variant="scrollable"
-        scrollButtons="auto"
-      >
-        {PROGRESS_GROUPS.map((group) => {
-          const count = counts.get(group.trend) ?? 0;
-
-          return (
-            <Tab
-              key={group.trend}
-              value={group.trend}
-              label={
-                <Stack direction="row" spacing={0.75} sx={{ alignItems: "center" }}>
-                  <Typography variant="body2" component="span">
-                    {group.title}
-                  </Typography>
-                  <Chip size="small" label={count} color={group.chipColor} />
-                </Stack>
-              }
+      <Stack spacing={2}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, value: ProcessStatus) => setActiveTab(value)}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          {PROGRESS_GROUPS.map((group) => (
+            <ChipTab
+              key={group.status}
+              value={group.status}
+              label={group.title}
+              count={counts.get(group.status) ?? 0}
+              chipColor={group.chipColor}
             />
-          );
-        })}
-      </Tabs>
-
-      {athletes.length > 0 ? (
-        <Stack spacing={2}>
-          {athletes.map((athlete) => (
-            <Box
-              key={athlete.userId}
-              component={Link}
-              href={athlete.href}
-              sx={(theme) => ({
-                display: "block",
-                textDecoration: "none",
-                borderRadius: 1,
-                transition: theme.transitions.create("opacity"),
-                "&:hover": { opacity: 0.85 },
-              })}
-            >
-              <AthleteCard
-                name={athlete.name ?? "Unknown"}
-                image={athlete.image}
-                severity={activeConfig?.severity ?? "info"}
-                message={formatCompletionRate(athlete.completionRate)}
-              />
-            </Box>
           ))}
-        </Stack>
-      ) : (
-        <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>
-          {activeConfig?.emptyMessage}
-        </Typography>
-      )}
+        </Tabs>
+
+        {athletes.length > 0 ? (
+          <Stack spacing={2}>
+            {athletes.map((athlete) => (
+              <AthleteCardLink
+                key={athlete.userId}
+                href={`/coach/athletes?athlete=${athlete.userId}`}
+              >
+                <AthleteCard
+                  name={athlete.name ?? "Unknown"}
+                  image={athlete.image}
+                  severity={activeConfig?.severity ?? "info"}
+                  message={PROCESS_STATUS_LABELS[athlete.processStatus]}
+                />
+              </AthleteCardLink>
+            ))}
+          </Stack>
+        ) : (
+          <Typography variant="body2" sx={{ color: "text.secondary", py: 2 }}>
+            {activeConfig?.emptyMessage}
+          </Typography>
+        )}
+      </Stack>
     </DashboardSection>
   );
 };

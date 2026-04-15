@@ -1,8 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Grid, MenuItem, Stack, TextField, Typography } from "@mui/material";
-import { useRouter } from "next/navigation";
+import { Grid, MenuItem, Stack, TextField, Typography, useTheme } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 
 import {
@@ -10,34 +9,26 @@ import {
   type GetContactByIdResponse,
   type UpdateContactRequest,
   updateContactRequestSchema,
-} from "@repo/contracts/contact";
-import { QueryWrapper } from "@repo/query";
+} from "@repo/contracts/cms/contact";
 import { formatDate } from "@repo/shared";
-import { DetailField, FormCard, FormView } from "@repo/ui";
+import { DetailField, FormCard, FormView, QueryWrapper } from "@repo/ui";
 
 import { useContact, useUpdateContact } from "@app/lib/hooks";
 
-const STATUS_LABELS: Record<string, string> = {
-  NEW: "New",
-  IN_PROGRESS: "In Progress",
-  REPLIED: "Replied",
-  CLOSED: "Closed",
-};
+import { CONTACT_STATUS_CONFIG } from "../../constants";
 
 type ContactsDetailFormProps = {
   contact: GetContactByIdResponse;
 };
 
 const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
-  const router = useRouter();
-  const { mutate: updateContact, isPending } = useUpdateContact({
-    onSuccess: () => router.push("/contacts"),
-  });
+  const theme = useTheme();
+  const { mutate: updateContact, isPending } = useUpdateContact();
 
   const methods = useForm<UpdateContactRequest>({
     resolver: zodResolver(updateContactRequestSchema),
     defaultValues: {
-      status: contact.status as UpdateContactRequest["status"],
+      status: contact.status,
       notes: contact.notes ?? null,
     },
   });
@@ -58,7 +49,7 @@ const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
       }
       isPending={isPending}
       title="Contact Submission"
-      subtitle={contact.name || contact.email || "Anonymous"}
+      subtitle={contact.name || contact.contact || "Anonymous"}
       backHref="/contacts"
       backLabel="Back to List"
     >
@@ -73,12 +64,24 @@ const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
 
             <FormCard title="Contact Details">
               <Stack spacing={2}>
-                <DetailField label="Name" labelWidth={80} value={contact.name || "—"} />
-                <DetailField label="Email" labelWidth={80} value={contact.email || "—"} />
-                <DetailField label="Program" labelWidth={80} value={contact.program || "—"} />
+                <DetailField
+                  label="Name"
+                  labelWidth={theme.spacing(10)}
+                  value={contact.name || "—"}
+                />
+                <DetailField
+                  label="Contact"
+                  labelWidth={theme.spacing(10)}
+                  value={contact.contact || "—"}
+                />
+                <DetailField
+                  label="Program"
+                  labelWidth={theme.spacing(10)}
+                  value={contact.program || "—"}
+                />
                 <DetailField
                   label="Date"
-                  labelWidth={80}
+                  labelWidth={theme.spacing(10)}
                   value={formatDate(contact.createdAt, "long")}
                 />
               </Stack>
@@ -92,11 +95,19 @@ const ContactsDetailForm: React.FC<ContactsDetailFormProps> = ({ contact }) => {
               <Controller
                 name="status"
                 control={control}
-                render={({ field }) => (
-                  <TextField {...field} select fullWidth size="small" disabled={isPending}>
+                render={({ field, fieldState }) => (
+                  <TextField
+                    {...field}
+                    select
+                    fullWidth
+                    size="small"
+                    disabled={isPending}
+                    error={!!fieldState.error}
+                    helperText={fieldState.error?.message}
+                  >
                     {Object.values(ContactStatus).map((status) => (
                       <MenuItem key={status} value={status}>
-                        {STATUS_LABELS[status]}
+                        {CONTACT_STATUS_CONFIG[status].label}
                       </MenuItem>
                     ))}
                   </TextField>

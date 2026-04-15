@@ -1,13 +1,19 @@
-import { PlanDetailView } from "@app/modules/plan-detail";
+import { SuspenseWrapper } from "@repo/ui";
 
-export const dynamic = "force-dynamic";
+import { PlanDetailView } from "@app/modules/plan-detail";
 
 type PlanDetailPageProps = {
   params: Promise<{ planId: string }>;
 };
 
-export default async function PlanDetailPage({ params }: PlanDetailPageProps) {
+const PlanDetailPage = async ({ params }: PlanDetailPageProps) => {
   const { planId } = await params;
 
-  return <PlanDetailView planId={planId} />;
-}
+  return (
+    <SuspenseWrapper>
+      <PlanDetailView planId={planId} />
+    </SuspenseWrapper>
+  );
+};
+
+export default PlanDetailPage;

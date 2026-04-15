@@ -1,11 +1,13 @@
 import { BlogEditView } from "@app/modules/blog";
 
-interface PageProps {
+type PageProps = {
   params: Promise<{ id: string }>;
-}
+};
 
-export default async function BlogEditPage({ params }: PageProps) {
+const BlogEditPage = async ({ params }: PageProps) => {
   const { id } = await params;
 
   return <BlogEditView id={id} />;
-}
+};
+
+export default BlogEditPage;

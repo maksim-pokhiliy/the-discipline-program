@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Button, Fab, Stack, Typography } from "@mui/material";
+import { Button, Grid, Stack, Typography } from "@mui/material";
 
-import { type PlanEnrollmentStatus } from "@repo/contracts/plan-enrollment";
-import { QueryWrapper } from "@repo/query";
+import { type PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
+import { QueryWrapper } from "@repo/ui";
 
+import { PlatformFab } from "@app/lib/components";
 import {
   useDeletePlanEnrollment,
   usePlanEnrollments,
@@ -26,13 +27,22 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
   const deleteEnrollment = useDeletePlanEnrollment(planId);
   const [enrollOpen, setEnrollOpen] = useState(false);
 
-  const isEnrollmentPending = (id: string) =>
-    (updateEnrollment.isPending && updateEnrollment.variables?.id === id) ||
-    (deleteEnrollment.isPending && deleteEnrollment.variables === id);
+  const isUpdating = useCallback(
+    (id: string) => updateEnrollment.isPending && updateEnrollment.variables?.id === id,
+    [updateEnrollment],
+  );
 
-  const handleUpdate = (id: string, status: PlanEnrollmentStatus) => {
-    updateEnrollment.mutate({ id, data: { status } });
-  };
+  const isDeleting = useCallback(
+    (id: string) => deleteEnrollment.isPending && deleteEnrollment.variables === id,
+    [deleteEnrollment],
+  );
+
+  const handleUpdate = useCallback(
+    (id: string, status: PlanEnrollmentStatus) => {
+      updateEnrollment.mutate({ id, data: { status } });
+    },
+    [updateEnrollment],
+  );
 
   return (
     <Stack spacing={2}>
@@ -44,27 +54,26 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
       >
         {(data) =>
           data.length > 0 ? (
-            <Stack spacing={1}>
+            <Grid container spacing={2}>
               {data.map((enrollment) => (
-                <EnrollmentCard
-                  key={enrollment.id}
-                  enrollment={enrollment}
-                  onUpdate={handleUpdate}
-                  onDelete={(id) => deleteEnrollment.mutate(id)}
-                  isPending={isEnrollmentPending(enrollment.id)}
-                />
+                <Grid key={enrollment.id} size={{ xs: 12, md: 6, lg: 4 }}>
+                  <EnrollmentCard
+                    enrollment={enrollment}
+                    onUpdate={handleUpdate}
+                    onDelete={(id) => deleteEnrollment.mutate(id)}
+                    isUpdating={isUpdating(enrollment.id)}
+                    isDeleting={isDeleting(enrollment.id)}
+                  />
+                </Grid>
               ))}
-            </Stack>
+            </Grid>
           ) : (
-            <Stack spacing={2} sx={{ alignItems: "center", py: 4 }}>
+            <Stack spacing={2} alignItems="center" sx={{ py: 4 }}>
               <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 No athletes enrolled yet
               </Typography>
-              <Button
-                variant="outlined"
-                startIcon={<AddIcon />}
-                onClick={() => setEnrollOpen(true)}
-              >
+
+              <Button startIcon={<AddIcon />} onClick={() => setEnrollOpen(true)}>
                 Enroll Athlete
               </Button>
             </Stack>
@@ -72,13 +81,7 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
         }
       </QueryWrapper>
 
-      <Fab
-        color="primary"
-        onClick={() => setEnrollOpen(true)}
-        sx={{ position: "fixed", bottom: 100, right: 16 }}
-      >
-        <AddIcon />
-      </Fab>
+      <PlatformFab onClick={() => setEnrollOpen(true)} />
 
       <EnrollAthleteDialog
         open={enrollOpen}

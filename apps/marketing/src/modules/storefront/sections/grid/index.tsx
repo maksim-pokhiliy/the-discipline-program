@@ -1,62 +1,52 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { Grid } from "@mui/material";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
-import { type Product, type StorefrontProgramsPageData } from "@repo/contracts";
+import { type StorefrontProgramsPageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
-import { StorefrontProgramCard } from "../card";
-import { StorefrontProgramModal } from "../modal";
+import { ProductCard, ProductModal } from "@app/lib/components/ui";
+import { useProductModal } from "@app/lib/hooks";
 
-interface ProgramsGridSectionProps {
+type StorefrontProgramsGridSectionProps = {
+  grid: StorefrontProgramsPageData["grid"];
   productsList: StorefrontProgramsPageData["productsList"];
-}
+};
 
-export const StorefrontProgramsGridSection = ({ productsList }: ProgramsGridSectionProps) => {
+export const StorefrontProgramsGridSection = ({
+  grid,
+  productsList,
+}: StorefrontProgramsGridSectionProps) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-
-  useEffect(() => {
-    const programSlug = searchParams.get("program");
-
-    if (programSlug) {
-      const product = productsList.find((p) => p.slug === programSlug);
-
-      if (product) {
-        setSelectedProduct(product);
-      }
-    }
-  }, [searchParams, productsList]);
-
-  const handleOpenModal = (product: Product) => {
-    setSelectedProduct(product);
-    router.push(`/storefront?program=${product.slug}`, { scroll: false });
-  };
-
-  const handleCloseModal = () => {
-    setSelectedProduct(null);
-    router.push("/storefront", { scroll: false });
-  };
+  const modal = useProductModal({ products: productsList, basePath: "/storefront" });
 
   return (
-    <ContentSection>
+    <ContentSection id="programs" title={grid.title} subtitle={grid.subtitle}>
       <Grid container spacing={4}>
         {productsList.map((product) => (
           <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
-            <StorefrontProgramCard product={product} onLearnMore={() => handleOpenModal(product)} />
+            <ProductCard
+              product={product}
+              freeLabel={grid.freeLabel}
+              onAction={() => modal.open(product)}
+              cardVariant="outlined"
+            />
           </Grid>
         ))}
       </Grid>
 
-      <StorefrontProgramModal
-        product={selectedProduct}
-        open={selectedProduct !== null}
-        onClose={handleCloseModal}
+      <ProductModal
+        product={modal.selectedProduct}
+        freeLabel={grid.freeLabel}
+        dismissLabel={grid.modalDismissLabel}
+        actionLabel={grid.modalActionLabel}
+        open={modal.isOpen}
+        onClose={modal.close}
+        onGetStarted={() => {
+          modal.close();
+          router.push(`/contact?program=${modal.selectedProduct?.slug ?? ""}`);
+        }}
       />
     </ContentSection>
   );
