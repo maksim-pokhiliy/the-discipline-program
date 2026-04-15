@@ -15,7 +15,7 @@ catalog:
   "@hookform/resolvers": ^3.9.1
   "@mui/icons-material": ^7.3.6
   "@mui/material": ^7.3.6
-  "@mui/material-nextjs": ^7.3.6
+  "@mui/material-nextjs": ^9.0.0
   "@playwright/test": ^1.59.1
   "@next/bundle-analyzer": 16.1.1
   "@upstash/ratelimit": ^2.0.5
