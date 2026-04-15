@@ -7,7 +7,7 @@ import type { MonitoringPort } from "../../monitoring";
 import type { AuthenticatedHandler, RouteContext, RouteHandler } from "../../types";
 import type { RateLimiterPort, RateLimitResult } from "../rate-limiter-port";
 
-vi.mock("../index", () => ({
+vi.mock("../rate-limiter-registry", () => ({
   getRateLimiter: vi.fn(() => undefined),
 }));
 
@@ -15,7 +15,7 @@ vi.mock("../../monitoring", () => ({
   getMonitoring: vi.fn(() => undefined),
 }));
 
-const { getRateLimiter } = await import("../index");
+const { getRateLimiter } = await import("../rate-limiter-registry");
 const { getMonitoring } = await import("../../monitoring");
 const { withRateLimit, withAuthRateLimit } = await import("../with-rate-limit");
 
