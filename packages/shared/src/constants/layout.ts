@@ -10,4 +10,5 @@ export const LAYOUT = {
   platformHeaderHeight: 56,
   platformBottomNavHeight: 80,
   platformFabBottom: 100,
+  platformFabRight: 20,
 } as const;

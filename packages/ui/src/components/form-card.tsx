@@ -2,7 +2,7 @@
 
 import { type ReactNode } from "react";
 
-import { Card, CardContent, CardHeader, type CardProps } from "@mui/material";
+import { Card, CardContent, CardHeader, Stack, type CardProps } from "@mui/material";
 
 export type FormCardProps = Omit<CardProps, "content"> & {
   title: string;
@@ -16,7 +16,9 @@ export const FormCard = ({ title, subtitle, action, children, ...props }: FormCa
     <Card {...props}>
       <CardHeader title={title} subheader={subtitle} action={action} />
 
-      <CardContent>{children}</CardContent>
+      <CardContent>
+        <Stack spacing={4}>{children}</Stack>
+      </CardContent>
     </Card>
   );
 };

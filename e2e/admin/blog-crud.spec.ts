@@ -114,13 +114,17 @@ test.describe("Admin Blog CRUD", () => {
     await featuredSwitch.click();
     await responsePromise;
 
-    await featuredSwitch.click();
-    await page.waitForResponse(
+    await expect(featuredSwitch).toBeVisible({ timeout: 5_000 });
+
+    const secondResponsePromise = page.waitForResponse(
       (res) =>
         res.url().includes("/api/admin/blog") &&
         res.url().includes("toggle") &&
         res.request().method() === "PATCH",
     );
+
+    await featuredSwitch.click();
+    await secondResponsePromise;
   });
 
   test("deletes a blog post", async ({ page }) => {

@@ -13,6 +13,11 @@ test.describe("Marketing Blog", () => {
     });
   });
 
+  test("loads blog article page", async ({ page }) => {
+    await page.goto("/blog/mastering-bar-muscle-up");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible({ timeout: 30_000 });
+  });
+
   test("navigates to blog article", async ({ page }) => {
     await page.goto("/blog");
     await expect(page.getByRole("link", { name: /read/i }).first()).toBeVisible({
