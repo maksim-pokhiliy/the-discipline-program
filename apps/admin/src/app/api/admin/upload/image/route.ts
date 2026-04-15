@@ -1,4 +1,9 @@
-import { createDeleteWithBodyHandler, createFormDataPostHandler } from "@repo/api-routes";
+import {
+  createDeleteWithBodyHandler,
+  createFormDataPostHandler,
+  RATE_LIMIT_TIER,
+  withAuthRateLimit,
+} from "@repo/api-routes";
 import { storageUploadAdminApi } from "@repo/api-server/storage";
 import {
   deleteImageRequestSchema,
@@ -30,12 +35,18 @@ const processUpload = async (formData: FormData) => {
 };
 
 export const POST = withAdminAuth(
-  createFormDataPostHandler(processUpload, uploadImageResponseSchema),
+  withAuthRateLimit(
+    createFormDataPostHandler(processUpload, uploadImageResponseSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );
 
 export const DELETE = withAdminAuth(
-  createDeleteWithBodyHandler(
-    ({ url }) => storageUploadAdminApi.deleteImage(url),
-    deleteImageRequestSchema,
+  withAuthRateLimit(
+    createDeleteWithBodyHandler(
+      ({ url }) => storageUploadAdminApi.deleteImage(url),
+      deleteImageRequestSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );

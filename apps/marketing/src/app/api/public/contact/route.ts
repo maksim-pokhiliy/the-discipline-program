@@ -1,4 +1,9 @@
-import { createPostHandler, withPublicRoute } from "@repo/api-routes";
+import {
+  createPostHandler,
+  withPublicRoute,
+  withRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
 import { cmsContactInboundApi } from "@repo/api-server/cms";
 import {
   type CreateContactSubmissionResponse,
@@ -7,13 +12,16 @@ import {
 } from "@repo/contracts/cms/contact";
 
 export const POST = withPublicRoute(
-  createPostHandler(
-    async (data): Promise<CreateContactSubmissionResponse> => {
-      await cmsContactInboundApi.createSubmission(data);
+  withRateLimit(
+    createPostHandler(
+      async (data): Promise<CreateContactSubmissionResponse> => {
+        await cmsContactInboundApi.createSubmission(data);
 
-      return { success: true, message: "Contact submission received" };
-    },
-    createContactSubmissionRequestSchema,
-    createContactSubmissionResponseSchema,
+        return { success: true, message: "Contact submission received" };
+      },
+      createContactSubmissionRequestSchema,
+      createContactSubmissionResponseSchema,
+    ),
+    RATE_LIMIT_TIER.PUBLIC,
   ),
 );

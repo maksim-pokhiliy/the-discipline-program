@@ -1,4 +1,9 @@
-import { createGetByIdHandler, createPutHandler } from "@repo/api-routes";
+import {
+  createGetByIdHandler,
+  createPutHandler,
+  RATE_LIMIT_TIER,
+  withAuthRateLimit,
+} from "@repo/api-routes";
 import { coachingAdminUserViewApi } from "@repo/api-server/coaching";
 import { iamUserAdminApi } from "@repo/api-server/iam";
 import {
@@ -14,17 +19,23 @@ import {
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetByIdHandler(
-    coachingAdminUserViewApi.getById,
-    getAdminUserViewParamsSchema,
-    getAdminUserViewResponseSchema,
+  withAuthRateLimit(
+    createGetByIdHandler(
+      coachingAdminUserViewApi.getById,
+      getAdminUserViewParamsSchema,
+      getAdminUserViewResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 export const PUT = withAdminAuth(
-  createPutHandler(
-    iamUserAdminApi.updateRole,
-    updateUserRoleParamsSchema,
-    updateUserRoleRequestSchema,
-    updateUserRoleResponseSchema,
+  withAuthRateLimit(
+    createPutHandler(
+      iamUserAdminApi.updateRole,
+      updateUserRoleParamsSchema,
+      updateUserRoleRequestSchema,
+      updateUserRoleResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );

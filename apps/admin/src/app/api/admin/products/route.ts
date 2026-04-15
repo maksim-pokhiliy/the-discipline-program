@@ -1,4 +1,9 @@
-import { createGetHandler, createPostHandler } from "@repo/api-routes";
+import {
+  createGetHandler,
+  createPostHandler,
+  RATE_LIMIT_TIER,
+  withAuthRateLimit,
+} from "@repo/api-routes";
 import { cmsProductAdminApi } from "@repo/api-server/cms";
 import {
   createProductRequestSchema,
@@ -9,8 +14,14 @@ import {
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetHandler(cmsProductAdminApi.getAll, getProductsResponseSchema),
+  withAuthRateLimit(
+    createGetHandler(cmsProductAdminApi.getAll, getProductsResponseSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );
 export const POST = withAdminAuth(
-  createPostHandler(cmsProductAdminApi.create, createProductRequestSchema, productSchema),
+  withAuthRateLimit(
+    createPostHandler(cmsProductAdminApi.create, createProductRequestSchema, productSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );

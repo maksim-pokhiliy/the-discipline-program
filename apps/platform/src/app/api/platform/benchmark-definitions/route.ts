@@ -1,4 +1,9 @@
-import { createAuthPostHandler, createGetHandler } from "@repo/api-routes";
+import {
+  createAuthPostHandler,
+  createGetHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
+} from "@repo/api-routes";
 import { lmsBenchmarkDefinitionApi } from "@repo/api-server/lms";
 import {
   createBenchmarkDefinitionRequestSchema,
@@ -9,13 +14,22 @@ import {
 import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
-  createGetHandler(() => lmsBenchmarkDefinitionApi.getAll(), getBenchmarkDefinitionsResponseSchema),
+  withAuthRateLimit(
+    createGetHandler(
+      () => lmsBenchmarkDefinitionApi.getAll(),
+      getBenchmarkDefinitionsResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
 );
 
 export const POST = withPlatformAuth(
-  createAuthPostHandler(
-    (userId, data) => lmsBenchmarkDefinitionApi.create(userId, data),
-    createBenchmarkDefinitionRequestSchema,
-    createBenchmarkDefinitionResponseSchema,
+  withAuthRateLimit(
+    createAuthPostHandler(
+      (userId, data) => lmsBenchmarkDefinitionApi.create(userId, data),
+      createBenchmarkDefinitionRequestSchema,
+      createBenchmarkDefinitionResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );

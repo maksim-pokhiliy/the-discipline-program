@@ -1,4 +1,9 @@
-import { createGetHandler, createPostHandler } from "@repo/api-routes";
+import {
+  createGetHandler,
+  createPostHandler,
+  RATE_LIMIT_TIER,
+  withAuthRateLimit,
+} from "@repo/api-routes";
 import { cmsBlogAdminApi } from "@repo/api-server/cms";
 import {
   blogPostSchema,
@@ -9,8 +14,14 @@ import {
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetHandler(cmsBlogAdminApi.getPosts, getBlogPostsResponseSchema),
+  withAuthRateLimit(
+    createGetHandler(cmsBlogAdminApi.getPosts, getBlogPostsResponseSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );
 export const POST = withAdminAuth(
-  createPostHandler(cmsBlogAdminApi.createPost, createBlogPostRequestSchema, blogPostSchema),
+  withAuthRateLimit(
+    createPostHandler(cmsBlogAdminApi.createPost, createBlogPostRequestSchema, blogPostSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );

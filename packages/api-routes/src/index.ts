@@ -29,3 +29,17 @@ export {
   createAuthDeleteHandler,
   createAuthActionHandler,
 } from "./auth-factories";
+export {
+  withRateLimit,
+  withAuthRateLimit,
+  setRateLimiter,
+  getRateLimiter,
+  defaultRateLimiter,
+  RATE_LIMIT_TIER,
+} from "./rate-limit";
+export type {
+  RateLimiterPort,
+  RateLimitResult,
+  RateLimitTier,
+  RateLimitTierValue,
+} from "./rate-limit";

@@ -1,3 +1,8 @@
 import { defineWorkspace } from "vitest/config";
 
-export default defineWorkspace(["packages/api-server", "packages/contracts", "packages/shared"]);
+export default defineWorkspace([
+  "packages/api-server",
+  "packages/api-routes",
+  "packages/contracts",
+  "packages/shared",
+]);

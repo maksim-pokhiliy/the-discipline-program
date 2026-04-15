@@ -13,6 +13,10 @@ export const register = async () => {
     const { defaultMonitoring } = await import("@repo/api-server/infrastructure/monitoring");
 
     setMonitoring(defaultMonitoring);
+
+    const { setRateLimiter, defaultRateLimiter } = await import("@repo/api-routes");
+
+    setRateLimiter(defaultRateLimiter);
   }
 
   if (process.env.NEXT_RUNTIME === "edge") {

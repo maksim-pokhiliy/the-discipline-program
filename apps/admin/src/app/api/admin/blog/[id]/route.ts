@@ -1,4 +1,10 @@
-import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
+import {
+  createDeleteHandler,
+  createGetByIdHandler,
+  createPutHandler,
+  RATE_LIMIT_TIER,
+  withAuthRateLimit,
+} from "@repo/api-routes";
 import { cmsBlogAdminApi } from "@repo/api-server/cms";
 import {
   blogPostSchema,
@@ -11,16 +17,25 @@ import {
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetByIdHandler(cmsBlogAdminApi.getPostById, getBlogPostByIdParamsSchema, blogPostSchema),
+  withAuthRateLimit(
+    createGetByIdHandler(cmsBlogAdminApi.getPostById, getBlogPostByIdParamsSchema, blogPostSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );
 export const PUT = withAdminAuth(
-  createPutHandler(
-    cmsBlogAdminApi.updatePost,
-    updateBlogPostParamsSchema,
-    updateBlogPostRequestSchema,
-    blogPostSchema,
+  withAuthRateLimit(
+    createPutHandler(
+      cmsBlogAdminApi.updatePost,
+      updateBlogPostParamsSchema,
+      updateBlogPostRequestSchema,
+      blogPostSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 export const DELETE = withAdminAuth(
-  createDeleteHandler(cmsBlogAdminApi.deletePost, deleteBlogPostParamsSchema),
+  withAuthRateLimit(
+    createDeleteHandler(cmsBlogAdminApi.deletePost, deleteBlogPostParamsSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );

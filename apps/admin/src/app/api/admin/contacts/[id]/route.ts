@@ -1,4 +1,10 @@
-import { createDeleteHandler, createGetByIdHandler, createPutHandler } from "@repo/api-routes";
+import {
+  createDeleteHandler,
+  createGetByIdHandler,
+  createPutHandler,
+  RATE_LIMIT_TIER,
+  withAuthRateLimit,
+} from "@repo/api-routes";
 import { cmsContactAdminApi } from "@repo/api-server/cms";
 import {
   contactSubmissionItemSchema,
@@ -11,20 +17,29 @@ import {
 import { withAdminAuth } from "@app/lib/server/auth";
 
 export const GET = withAdminAuth(
-  createGetByIdHandler(
-    cmsContactAdminApi.getContactById,
-    getContactByIdParamsSchema,
-    contactSubmissionItemSchema,
+  withAuthRateLimit(
+    createGetByIdHandler(
+      cmsContactAdminApi.getContactById,
+      getContactByIdParamsSchema,
+      contactSubmissionItemSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 export const PUT = withAdminAuth(
-  createPutHandler(
-    cmsContactAdminApi.updateContact,
-    updateContactParamsSchema,
-    updateContactRequestSchema,
-    contactSubmissionItemSchema,
+  withAuthRateLimit(
+    createPutHandler(
+      cmsContactAdminApi.updateContact,
+      updateContactParamsSchema,
+      updateContactRequestSchema,
+      contactSubmissionItemSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 export const DELETE = withAdminAuth(
-  createDeleteHandler(cmsContactAdminApi.deleteContact, deleteContactParamsSchema),
+  withAuthRateLimit(
+    createDeleteHandler(cmsContactAdminApi.deleteContact, deleteContactParamsSchema),
+    RATE_LIMIT_TIER.API,
+  ),
 );

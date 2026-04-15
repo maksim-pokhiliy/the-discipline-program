@@ -2,6 +2,8 @@ import {
   createAuthDeleteHandler,
   createAuthGetByParamHandler,
   createAuthPutByParamHandler,
+  withAuthRateLimit,
+  RATE_LIMIT_TIER,
 } from "@repo/api-routes";
 import { lmsTrainingPlanApi } from "@repo/api-server/lms";
 import {
@@ -16,25 +18,34 @@ import {
 import { withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
-  createAuthGetByParamHandler(
-    (userId, { planId }) => lmsTrainingPlanApi.getById(userId, planId),
-    getTrainingPlanByIdParamsSchema,
-    getTrainingPlanResponseSchema,
+  withAuthRateLimit(
+    createAuthGetByParamHandler(
+      (userId, { planId }) => lmsTrainingPlanApi.getById(userId, planId),
+      getTrainingPlanByIdParamsSchema,
+      getTrainingPlanResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 
 export const PUT = withPlatformAuth(
-  createAuthPutByParamHandler(
-    (userId, { planId }, data) => lmsTrainingPlanApi.update(userId, planId, data),
-    updateTrainingPlanParamsSchema,
-    updateTrainingPlanRequestSchema,
-    updateTrainingPlanResponseSchema,
+  withAuthRateLimit(
+    createAuthPutByParamHandler(
+      (userId, { planId }, data) => lmsTrainingPlanApi.update(userId, planId, data),
+      updateTrainingPlanParamsSchema,
+      updateTrainingPlanRequestSchema,
+      updateTrainingPlanResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
 
 export const DELETE = withPlatformAuth(
-  createAuthDeleteHandler(
-    (userId, { planId }) => lmsTrainingPlanApi.delete(userId, planId),
-    deleteTrainingPlanParamsSchema,
+  withAuthRateLimit(
+    createAuthDeleteHandler(
+      (userId, { planId }) => lmsTrainingPlanApi.delete(userId, planId),
+      deleteTrainingPlanParamsSchema,
+    ),
+    RATE_LIMIT_TIER.API,
   ),
 );
