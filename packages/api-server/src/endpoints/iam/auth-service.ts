@@ -1,11 +1,31 @@
 import bcrypt from "bcryptjs";
 
-import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
+import { AUTH_CONSTANTS, type UserRole } from "@repo/contracts/iam/auth";
 
 import { prisma } from "../../db/client";
 import { ROLE_MAP } from "../../mappers/iam";
 
 const DUMMY_BCRYPT_HASH = "$2a$12$S36pNti6wcybeTTi3sB46ek1KmB7Vk0U0gXqTEJRx3D8xI/TRRjGi";
+
+type ValidatedUser = {
+  id: string;
+  email: string;
+  name: string | null;
+  image: string | null;
+  role: UserRole;
+  tokenVersion: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+type UserById = {
+  id: string;
+  email: string;
+  role: UserRole;
+  tokenVersion: number;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 export const iamAuthService = {
   hashPassword: async (password: string): Promise<string> => {
@@ -16,7 +36,7 @@ export const iamAuthService = {
     return bcrypt.compare(password, hash);
   },
 
-  validateUser: async (email: string, rawPassword: string) => {
+  validateUser: async (email: string, rawPassword: string): Promise<ValidatedUser | null> => {
     if (rawPassword.length > AUTH_CONSTANTS.MAX_PASSWORD_LENGTH) {
       return null;
     }
@@ -32,6 +52,7 @@ export const iamAuthService = {
         image: true,
         role: true,
         password: true,
+        tokenVersion: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -55,18 +76,20 @@ export const iamAuthService = {
       name: user.name,
       image: user.image,
       role: ROLE_MAP[user.role],
+      tokenVersion: user.tokenVersion,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
   },
 
-  getUserById: async (id: string) => {
+  getUserById: async (id: string): Promise<UserById | null> => {
     const user = await prisma.user.findUnique({
       where: { id },
       select: {
         id: true,
         email: true,
         role: true,
+        tokenVersion: true,
         createdAt: true,
         updatedAt: true,
       },

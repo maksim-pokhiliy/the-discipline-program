@@ -44,6 +44,7 @@ const makeUser = (overrides = {}) => ({
   password: "hashed_password",
   createdAt: NOW,
   updatedAt: LATER,
+  tokenVersion: 0,
   deletedAt: null,
   athleteProfile: null,
   coachProfile: null,
