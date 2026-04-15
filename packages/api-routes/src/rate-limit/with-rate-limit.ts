@@ -6,8 +6,7 @@ import type { AuthenticatedHandler, RouteHandler } from "../types";
 import { getClientIp } from "./ip-utils";
 import type { RateLimitTierValue } from "./rate-limit-tiers";
 import type { RateLimitResult } from "./rate-limiter-port";
-
-import { getRateLimiter } from "./index";
+import { getRateLimiter } from "./rate-limiter-registry";
 
 const setRateLimitHeaders = (response: Response, result: RateLimitResult): void => {
   response.headers.set("X-RateLimit-Limit", String(result.limit));
