@@ -1,0 +1,2 @@
+npx lint-staged
+SKIP_ENV_VALIDATION=1 pnpm turbo run check-types test --filter="...[HEAD]"
