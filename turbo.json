@@ -10,7 +10,13 @@
     "NEXTAUTH_URL",
     "BLOB_READ_WRITE_TOKEN",
     "VERCEL_GIT_COMMIT_SHA",
-    "ANALYZE"
+    "ANALYZE",
+    "NEXT_PUBLIC_SENTRY_DSN",
+    "SENTRY_AUTH_TOKEN",
+    "SENTRY_ORG",
+    "SENTRY_PROJECT",
+    "NEXT_RUNTIME",
+    "CI"
   ],
   "tasks": {
     "build": {

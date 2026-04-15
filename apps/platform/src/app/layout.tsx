@@ -1,3 +1,5 @@
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { type Metadata } from "next";
 
 import { AuthProvider } from "@repo/auth";
@@ -23,6 +25,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
               {children}
 
               <Toaster />
+              <Analytics />
+              <SpeedInsights />
             </AuthProvider>
           </QueryProvider>
         </NextProvider>

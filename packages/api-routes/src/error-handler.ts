@@ -6,6 +6,8 @@ import { baseEnv } from "@repo/env/base";
 import { AppError, ERROR_CODES, ValidationError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
+import { getMonitoring } from "./monitoring";
+
 const REDACTED_KEYS = new Set([
   "password",
   "token",
@@ -55,6 +57,16 @@ export const handleApiError = (error: unknown, requestId?: string): NextResponse
         : { message: String(error) };
 
   logger.error("API Error", { ...safeError, ...(requestId && { requestId }) });
+
+  const monitoring = getMonitoring();
+
+  if (monitoring) {
+    monitoring.captureException(error, {
+      tags: { requestId: requestId ?? "unknown" },
+      extra: safeError as Record<string, unknown>,
+      level: error instanceof AppError && error.statusCode < 500 ? "warning" : "error",
+    });
+  }
 
   const isDev = baseEnv.NODE_ENV === "development";
   const headers = requestId ? { "x-request-id": requestId } : undefined;
