@@ -13,23 +13,32 @@ type StorefrontProgramsPageContentProps = {
 export const StorefrontProgramsPageContent = ({ data }: StorefrontProgramsPageContentProps) => (
   <>
     <StructuredData type="storefront" data={{ products: data.productsList }} />
-    <FullscreenSection
-      backgroundImage={data.hero.backgroundImage}
-      title={data.hero.title}
-      subtitle={data.hero.subtitle}
-      buttonText={data.hero.buttonText}
-      buttonHref={data.hero.buttonHref}
-      priority
-    />
-    <SuspenseWrapper>
-      <StorefrontProgramsGridSection grid={data.grid} productsList={data.productsList} />
-    </SuspenseWrapper>
-    <PageCTASection
-      id="storefront-cta"
-      title={data.cta.title}
-      subtitle={data.cta.subtitle}
-      buttonText={data.cta.buttonText}
-      buttonHref={data.cta.buttonHref}
-    />
+
+    {data.hero && (
+      <FullscreenSection
+        backgroundImage={data.hero.backgroundImage}
+        title={data.hero.title}
+        subtitle={data.hero.subtitle}
+        buttonText={data.hero.buttonText}
+        buttonHref={data.hero.buttonHref}
+        priority
+      />
+    )}
+
+    {data.grid && (
+      <SuspenseWrapper>
+        <StorefrontProgramsGridSection grid={data.grid} productsList={data.productsList} />
+      </SuspenseWrapper>
+    )}
+
+    {data.cta && (
+      <PageCTASection
+        id="storefront-cta"
+        title={data.cta.title}
+        subtitle={data.cta.subtitle}
+        buttonText={data.cta.buttonText}
+        buttonHref={data.cta.buttonHref}
+      />
+    )}
   </>
 );

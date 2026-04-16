@@ -5,8 +5,8 @@ import { ContentSection } from "@repo/ui";
 import { BlogPostCard } from "@app/lib/components/ui";
 
 type BlogFeaturedSectionProps = {
-  hero: BlogPageData["hero"];
-  grid: BlogPageData["grid"];
+  hero: NonNullable<BlogPageData["hero"]>;
+  grid: NonNullable<BlogPageData["grid"]>;
   featuredPost: PublicBlogPost;
 };
 

@@ -23,7 +23,7 @@ import { ContentSection } from "@repo/ui";
 import { useSubmitContact } from "@app/lib/hooks";
 
 type ContactFormSectionProps = {
-  form: ContactPageData["form"];
+  form: NonNullable<ContactPageData["form"]>;
   programOptions: ContactPageData["programOptions"];
 };
 

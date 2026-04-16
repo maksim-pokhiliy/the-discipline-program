@@ -10,23 +10,29 @@ type AboutPageContentProps = {
 
 export const AboutPageContent = ({ data }: AboutPageContentProps) => (
   <>
-    <FullscreenSection
-      backgroundImage={data.hero.backgroundImage}
-      title={data.hero.title}
-      subtitle={data.hero.subtitle}
-      buttonText={data.hero.buttonText}
-      buttonHref={data.hero.buttonHref}
-      priority
-    />
-    <AboutJourneySection journey={data.journey} />
-    <AboutCredentialsSection credentials={data.credentials} />
-    <AboutPersonalSection personal={data.personal} />
-    <PageCTASection
-      id="about-cta"
-      title={data.cta.title}
-      subtitle={data.cta.subtitle}
-      buttonText={data.cta.buttonText}
-      buttonHref={data.cta.buttonHref}
-    />
+    {data.hero && (
+      <FullscreenSection
+        backgroundImage={data.hero.backgroundImage}
+        title={data.hero.title}
+        subtitle={data.hero.subtitle}
+        buttonText={data.hero.buttonText}
+        buttonHref={data.hero.buttonHref}
+        priority
+      />
+    )}
+
+    {data.journey && <AboutJourneySection journey={data.journey} />}
+    {data.credentials && <AboutCredentialsSection credentials={data.credentials} />}
+    {data.personal && <AboutPersonalSection personal={data.personal} />}
+
+    {data.cta && (
+      <PageCTASection
+        id="about-cta"
+        title={data.cta.title}
+        subtitle={data.cta.subtitle}
+        buttonText={data.cta.buttonText}
+        buttonHref={data.cta.buttonHref}
+      />
+    )}
   </>
 );

@@ -4,7 +4,7 @@ import { type HomePageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 type HomeReviewsSectionProps = {
-  reviews: HomePageData["reviews"];
+  reviews: NonNullable<HomePageData["reviews"]>;
   reviewsList: HomePageData["reviewsList"];
 };
 

@@ -31,48 +31,48 @@ import {
 } from "./pages.schema";
 
 export const getHomePageResponseSchema = z.object({
-  hero: homePageHeroSchema,
-  whyChoose: homePageWhyChooseSchema,
-  storefront: homePageStorefrontProgramsSchema,
-  reviews: homePageReviewsSchema,
-  contact: homePageContactSchema,
+  hero: homePageHeroSchema.nullable(),
+  whyChoose: homePageWhyChooseSchema.nullable(),
+  storefront: homePageStorefrontProgramsSchema.nullable(),
+  reviews: homePageReviewsSchema.nullable(),
+  contact: homePageContactSchema.nullable(),
   productsList: z.array(productSchema),
   reviewsList: z.array(reviewSchema),
 });
 
 export const getStorefrontProgramsPageResponseSchema = z.object({
-  hero: storefrontProgramsPageHeroSchema,
-  grid: storefrontGridSchema,
-  cta: storefrontPageCtaSchema,
+  hero: storefrontProgramsPageHeroSchema.nullable(),
+  grid: storefrontGridSchema.nullable(),
+  cta: storefrontPageCtaSchema.nullable(),
   productsList: z.array(productSchema),
 });
 
 export const getAboutPageResponseSchema = z.object({
-  hero: aboutPageHeroSchema,
-  journey: aboutPageJourneySchema,
-  credentials: aboutPageCredentialsSchema,
-  personal: aboutPagePersonalSchema,
-  cta: aboutPageCtaSchema,
+  hero: aboutPageHeroSchema.nullable(),
+  journey: aboutPageJourneySchema.nullable(),
+  credentials: aboutPageCredentialsSchema.nullable(),
+  personal: aboutPagePersonalSchema.nullable(),
+  cta: aboutPageCtaSchema.nullable(),
 });
 
 export const getBlogPageResponseSchema = z.object({
-  hero: blogPageHeroSchema,
-  grid: blogGridSchema,
+  hero: blogPageHeroSchema.nullable(),
+  grid: blogGridSchema.nullable(),
   featuredPost: publicBlogPostSchema.optional(),
   posts: z.array(publicBlogPostSchema),
   categories: z.array(z.string()),
 });
 
 export const getContactPageResponseSchema = z.object({
-  hero: contactPageHeroSchema,
-  form: contactPageFormSchema,
+  hero: contactPageHeroSchema.nullable(),
+  form: contactPageFormSchema.nullable(),
   programOptions: z.array(programOptionSchema),
 });
 
 export const getFaqPageResponseSchema = z.object({
-  hero: faqPageHeroSchema,
-  content: faqContentSchema,
-  cta: faqPageCtaSchema,
+  hero: faqPageHeroSchema.nullable(),
+  content: faqContentSchema.nullable(),
+  cta: faqPageCtaSchema.nullable(),
 });
 
 export const adminPageListItemSchema = z.object({
