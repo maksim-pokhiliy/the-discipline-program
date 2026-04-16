@@ -24,18 +24,19 @@ export const useDataTableUrlState = (
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const params = searchParams ?? new URLSearchParams();
 
   const state: DataTableState = {
-    search: searchParams.get(PARAM_SEARCH) ?? "",
-    sortColumn: searchParams.get(PARAM_SORT) ?? options.defaultSort?.columnId ?? null,
+    search: params.get(PARAM_SEARCH) ?? "",
+    sortColumn: params.get(PARAM_SORT) ?? options.defaultSort?.columnId ?? null,
     sortDirection:
-      (searchParams.get(PARAM_SORT_DIR) === "desc" ? "desc" : undefined) ??
+      (params.get(PARAM_SORT_DIR) === "desc" ? "desc" : undefined) ??
       options.defaultSort?.direction ??
       "asc",
-    page: Number(searchParams.get(PARAM_PAGE)) || 0,
-    rowsPerPage: Number(searchParams.get(PARAM_PER_PAGE)) || options.defaultRowsPerPage || 10,
+    page: Number(params.get(PARAM_PAGE)) || 0,
+    rowsPerPage: Number(params.get(PARAM_PER_PAGE)) || options.defaultRowsPerPage || 10,
     filters: Object.fromEntries(
-      Array.from(searchParams.entries())
+      Array.from(params.entries())
         .filter(([key]) => key.startsWith(PARAM_FILTER_PREFIX))
         .map(([key, value]) => [key.slice(PARAM_FILTER_PREFIX.length), value]),
     ),
@@ -73,7 +74,7 @@ export const useDataTableUrlState = (
 
       const qs = params.toString();
 
-      router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+      router.replace(`${pathname ?? ""}${qs ? `?${qs}` : ""}`, { scroll: false });
     },
     [router, pathname, options.defaultSort, options.defaultRowsPerPage],
   );

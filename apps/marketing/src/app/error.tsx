@@ -1,6 +1,6 @@
 "use client";
 
-import { ErrorPageContent } from "@repo/ui";
+import { ErrorPageContent } from "@repo/ui/error-pages";
 
 type ErrorPageProps = {
   error: Error & { digest?: string };
