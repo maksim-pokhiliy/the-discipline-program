@@ -8,10 +8,13 @@ updates:
       day: monday
     open-pull-requests-limit: 10
     groups:
-      minor-and-patch:
-        update-types:
-          - minor
-          - patch
+      tiptap:
+        patterns:
+          - "@tiptap/*"
+      mui:
+        patterns:
+          - "@mui/*"
+          - "@emotion/*"
 
   - package-ecosystem: github-actions
     directory: /
