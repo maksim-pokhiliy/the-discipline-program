@@ -9,6 +9,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "test": "cross-env SKIP_ENV_VALIDATION=1 vitest run --exclude 'e2e/**'",
     "test:watch": "cross-env SKIP_ENV_VALIDATION=1 vitest --exclude 'e2e/**'",
+    "test:coverage": "cross-env SKIP_ENV_VALIDATION=1 vitest run --exclude 'e2e/**' --coverage",
     "check-types": "turbo run check-types",
     "analyze:admin": "cross-env ANALYZE=true pnpm --filter admin build",
     "analyze:marketing": "cross-env ANALYZE=true pnpm --filter marketing build",
