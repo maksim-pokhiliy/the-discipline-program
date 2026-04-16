@@ -89,6 +89,76 @@ export default defineConfig({
         storageState: "e2e/.auth/platform-coach.json",
       },
     },
+    {
+      name: "empty-admin-setup",
+      testDir: "./empty-db/admin",
+      testMatch: "auth.setup.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:3002",
+      },
+    },
+    {
+      name: "empty-admin",
+      testDir: "./empty-db/admin",
+      testMatch: /.*\.empty\.spec\.ts$/,
+      dependencies: ["empty-admin-setup"],
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:3002",
+        storageState: "e2e/.auth/admin-empty.json",
+      },
+    },
+    {
+      name: "empty-platform-coach-setup",
+      testDir: "./empty-db/platform",
+      testMatch: "auth.coach.setup.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:3001",
+      },
+    },
+    {
+      name: "empty-platform-coach",
+      testDir: "./empty-db/platform",
+      testMatch: /.*\.coach\.empty\.spec\.ts$/,
+      dependencies: ["empty-platform-coach-setup"],
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:3001",
+        storageState: "e2e/.auth/coach-empty.json",
+      },
+    },
+    {
+      name: "empty-platform-athlete-setup",
+      testDir: "./empty-db/platform",
+      testMatch: "auth.athlete.setup.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:3001",
+      },
+    },
+    {
+      name: "empty-platform-athlete",
+      testDir: "./empty-db/platform",
+      testMatch: /.*\.athlete\.empty\.spec\.ts$/,
+      dependencies: ["empty-platform-athlete-setup"],
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:3001",
+        storageState: "e2e/.auth/athlete-empty.json",
+      },
+    },
+    {
+      name: "empty-marketing",
+      testDir: "./empty-db/marketing",
+      testMatch: /.*\.empty\.spec\.ts$/,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:3000",
+        reducedMotion: "reduce",
+      },
+    },
   ],
 
   webServer: [

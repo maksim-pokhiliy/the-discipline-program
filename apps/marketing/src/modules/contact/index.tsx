@@ -10,14 +10,17 @@ type ContactPageContentProps = {
 
 export const ContactPageContent = ({ data }: ContactPageContentProps) => (
   <>
-    <FullscreenSection
-      backgroundImage={data.hero.backgroundImage}
-      title={data.hero.title}
-      subtitle={data.hero.subtitle}
-      buttonText={data.hero.buttonText}
-      buttonHref={data.hero.buttonHref}
-      priority
-    />
-    <ContactFormSection form={data.form} programOptions={data.programOptions} />
+    {data.hero && (
+      <FullscreenSection
+        backgroundImage={data.hero.backgroundImage}
+        title={data.hero.title}
+        subtitle={data.hero.subtitle}
+        buttonText={data.hero.buttonText}
+        buttonHref={data.hero.buttonHref}
+        priority
+      />
+    )}
+
+    {data.form && <ContactFormSection form={data.form} programOptions={data.programOptions} />}
   </>
 );

@@ -10,7 +10,7 @@ import { ProductCard, ProductModal } from "@app/lib/components/ui";
 import { useProductModal } from "@app/lib/hooks";
 
 type StorefrontProgramsGridSectionProps = {
-  grid: StorefrontProgramsPageData["grid"];
+  grid: NonNullable<StorefrontProgramsPageData["grid"]>;
   productsList: StorefrontProgramsPageData["productsList"];
 };
 

@@ -57,10 +57,25 @@ tasks:
     cmds:
       - pnpm test:watch
 
+  test:coverage:
+    desc: "Run unit/integration tests with coverage report (text + html in ./coverage)"
+    cmds:
+      - pnpm test:coverage
+
   e2e:
-    desc: "Run E2E browser tests (Playwright, headless)"
+    desc: "Run all E2E browser tests (empty DB + seeded DB, Playwright headless)"
     cmds:
       - pnpm e2e
+
+  e2e:empty:
+    desc: "Run E2E tests against an empty database"
+    cmds:
+      - pnpm e2e:empty
+
+  e2e:seeded:
+    desc: "Run E2E tests against the seeded database"
+    cmds:
+      - pnpm e2e:seeded
 
   e2e:ui:
     desc: "Run E2E tests with interactive Playwright UI"
@@ -77,6 +92,21 @@ tasks:
     cmds:
       - task: test
       - task: e2e
+
+  db:generate:
+    desc: "Generate Prisma client (run after schema changes)"
+    cmds:
+      - pnpm db:generate
+
+  db:push:
+    desc: "Push Prisma schema to the database"
+    cmds:
+      - pnpm db:push
+
+  db:seed:
+    desc: "Seed the database with baseline data"
+    cmds:
+      - pnpm db:seed
 
   dep:check:
     desc: "Validate dependency boundaries (bounded-context rules)"

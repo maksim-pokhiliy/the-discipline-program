@@ -16,27 +16,38 @@ export const HomePageContent = ({ data }: HomePageContentProps) => (
     <StructuredData type="storefront" data={{ products: data.productsList }} />
     <StructuredData type="reviews" data={{ reviews: data.reviewsList }} />
 
-    <FullscreenSection
-      backgroundImage={data.hero.backgroundImage}
-      title={data.hero.title}
-      subtitle={data.hero.subtitle}
-      buttonText={data.hero.buttonText}
-      buttonHref={data.hero.buttonHref}
-      priority
-    />
-    <HomeFeaturesSection whyChoose={data.whyChoose} />
+    {data.hero && (
+      <FullscreenSection
+        backgroundImage={data.hero.backgroundImage}
+        title={data.hero.title}
+        subtitle={data.hero.subtitle}
+        buttonText={data.hero.buttonText}
+        buttonHref={data.hero.buttonHref}
+        priority
+      />
+    )}
 
-    <SuspenseWrapper>
-      <HomeStorefrontProgramsPreview programs={data.storefront} productsList={data.productsList} />
-    </SuspenseWrapper>
+    {data.whyChoose && <HomeFeaturesSection whyChoose={data.whyChoose} />}
 
-    <HomeReviewsSection reviews={data.reviews} reviewsList={data.reviewsList} />
-    <PageCTASection
-      id="home-cta"
-      title={data.contact.title}
-      subtitle={data.contact.subtitle}
-      buttonText={data.contact.buttonText}
-      buttonHref={data.contact.buttonHref}
-    />
+    {data.storefront && (
+      <SuspenseWrapper>
+        <HomeStorefrontProgramsPreview
+          programs={data.storefront}
+          productsList={data.productsList}
+        />
+      </SuspenseWrapper>
+    )}
+
+    {data.reviews && <HomeReviewsSection reviews={data.reviews} reviewsList={data.reviewsList} />}
+
+    {data.contact && (
+      <PageCTASection
+        id="home-cta"
+        title={data.contact.title}
+        subtitle={data.contact.subtitle}
+        buttonText={data.contact.buttonText}
+        buttonHref={data.contact.buttonHref}
+      />
+    )}
   </>
 );
