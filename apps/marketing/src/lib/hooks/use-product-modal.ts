@@ -20,7 +20,7 @@ export const useProductModal = ({ products, basePath }: UseProductModalOptions) 
   productsRef.current = products;
 
   useEffect(() => {
-    const programSlug = searchParams.get("program");
+    const programSlug = searchParams?.get("program");
 
     if (!programSlug) {
       setSelectedProduct(null);
