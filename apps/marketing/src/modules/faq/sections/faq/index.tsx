@@ -5,7 +5,7 @@ import { type FaqPageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 type FaqSectionProps = {
-  content: FaqPageData["content"];
+  content: NonNullable<FaqPageData["content"]>;
 };
 
 export const FaqSection = ({ content }: FaqSectionProps) => {

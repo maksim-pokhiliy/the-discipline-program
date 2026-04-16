@@ -7,7 +7,7 @@ import { ContentSection } from "@repo/ui";
 import { BlogPostCard } from "@app/lib/components/ui";
 
 type BlogPostsGridProps = {
-  grid: BlogPageData["grid"];
+  grid: NonNullable<BlogPageData["grid"]>;
   posts: PublicBlogPost[];
 };
 

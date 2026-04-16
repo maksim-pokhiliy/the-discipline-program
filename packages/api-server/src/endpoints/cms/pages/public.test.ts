@@ -2,7 +2,6 @@ import { type Prisma } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { PageSlug, PAGE_SECTIONS_MAP } from "@repo/contracts/cms/pages";
-import { NotFoundError } from "@repo/errors";
 
 import { cleanupRaw } from "../../../test/helpers";
 
@@ -111,12 +110,6 @@ describe("cmsPagesPublicApi", () => {
     });
 
     it("returns home page data with expected shape", async () => {
-      if (!seeded) {
-        await expect(cmsPagesPublicApi.getHomePage()).rejects.toThrow(NotFoundError);
-
-        return;
-      }
-
       const data = await cmsPagesPublicApi.getHomePage();
 
       expect(data).toHaveProperty("hero");
@@ -126,6 +119,10 @@ describe("cmsPagesPublicApi", () => {
       expect(data).toHaveProperty("contact");
       expect(Array.isArray(data.productsList)).toBe(true);
       expect(Array.isArray(data.reviewsList)).toBe(true);
+
+      if (seeded) {
+        expect(data.hero).not.toBeNull();
+      }
     });
   });
 
@@ -149,18 +146,16 @@ describe("cmsPagesPublicApi", () => {
     });
 
     it("returns storefront page data with expected shape", async () => {
-      if (!seeded) {
-        await expect(cmsPagesPublicApi.getStorefrontProgramsPage()).rejects.toThrow(NotFoundError);
-
-        return;
-      }
-
       const data = await cmsPagesPublicApi.getStorefrontProgramsPage();
 
       expect(data).toHaveProperty("hero");
       expect(data).toHaveProperty("grid");
       expect(data).toHaveProperty("cta");
       expect(Array.isArray(data.productsList)).toBe(true);
+
+      if (seeded) {
+        expect(data.hero).not.toBeNull();
+      }
     });
   });
 
@@ -187,12 +182,6 @@ describe("cmsPagesPublicApi", () => {
     });
 
     it("returns about page data with expected shape", async () => {
-      if (!seeded) {
-        await expect(cmsPagesPublicApi.getAboutPage()).rejects.toThrow(NotFoundError);
-
-        return;
-      }
-
       const data = await cmsPagesPublicApi.getAboutPage();
 
       expect(data).toHaveProperty("hero");
@@ -200,6 +189,10 @@ describe("cmsPagesPublicApi", () => {
       expect(data).toHaveProperty("credentials");
       expect(data).toHaveProperty("personal");
       expect(data).toHaveProperty("cta");
+
+      if (seeded) {
+        expect(data.hero).not.toBeNull();
+      }
     });
   });
 
@@ -223,18 +216,16 @@ describe("cmsPagesPublicApi", () => {
     });
 
     it("returns blog page data with expected shape", async () => {
-      if (!seeded) {
-        await expect(cmsPagesPublicApi.getBlogPage()).rejects.toThrow(NotFoundError);
-
-        return;
-      }
-
       const data = await cmsPagesPublicApi.getBlogPage();
 
       expect(data).toHaveProperty("hero");
       expect(data).toHaveProperty("grid");
       expect(Array.isArray(data.posts)).toBe(true);
       expect(Array.isArray(data.categories)).toBe(true);
+
+      if (seeded) {
+        expect(data.hero).not.toBeNull();
+      }
     });
   });
 
@@ -262,17 +253,15 @@ describe("cmsPagesPublicApi", () => {
     });
 
     it("returns contact page data with expected shape", async () => {
-      if (!seeded) {
-        await expect(cmsPagesPublicApi.getContactPage()).rejects.toThrow(NotFoundError);
-
-        return;
-      }
-
       const data = await cmsPagesPublicApi.getContactPage();
 
       expect(data).toHaveProperty("hero");
       expect(data).toHaveProperty("form");
       expect(Array.isArray(data.programOptions)).toBe(true);
+
+      if (seeded) {
+        expect(data.hero).not.toBeNull();
+      }
     });
   });
 
@@ -290,17 +279,15 @@ describe("cmsPagesPublicApi", () => {
     });
 
     it("returns faq page data with expected shape", async () => {
-      if (!seeded) {
-        await expect(cmsPagesPublicApi.getFaqPage()).rejects.toThrow(NotFoundError);
-
-        return;
-      }
-
       const data = await cmsPagesPublicApi.getFaqPage();
 
       expect(data).toHaveProperty("hero");
       expect(data).toHaveProperty("content");
       expect(data).toHaveProperty("cta");
+
+      if (seeded) {
+        expect(data.hero).not.toBeNull();
+      }
     });
   });
 });

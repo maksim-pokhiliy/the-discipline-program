@@ -13,20 +13,19 @@ import {
   PAGE_SECTIONS_MAP,
   SECTION_SCHEMAS,
 } from "@repo/contracts/cms/pages";
-import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
 import { mapToReview, mapToProduct } from "../../../mappers/cms";
 import { cmsBlogPublicApi } from "../blog/public";
 
-const extractSectionData = <TKey extends SectionSchemaKey>(
+const extractSectionDataOrNull = <TKey extends SectionSchemaKey>(
   sections: { section: string; data: Prisma.JsonValue }[],
   sectionName: TKey,
-): z.infer<(typeof SECTION_SCHEMAS)[TKey]> => {
+): z.infer<(typeof SECTION_SCHEMAS)[TKey]> | null => {
   const section = sections.find((s) => s.section === sectionName);
 
   if (!section) {
-    throw new NotFoundError(`Required section '${sectionName}' missing in database`);
+    return null;
   }
 
   return SECTION_SCHEMAS[sectionName].parse(section.data);
@@ -49,11 +48,11 @@ export const cmsPagesPublicApi = {
     const map = PAGE_SECTIONS_MAP.home;
 
     return {
-      hero: extractSectionData(sections, map.hero),
-      whyChoose: extractSectionData(sections, map.whyChoose),
-      storefront: extractSectionData(sections, map.storefront),
-      reviews: extractSectionData(sections, map.reviews),
-      contact: extractSectionData(sections, map.contact),
+      hero: extractSectionDataOrNull(sections, map.hero),
+      whyChoose: extractSectionDataOrNull(sections, map.whyChoose),
+      storefront: extractSectionDataOrNull(sections, map.storefront),
+      reviews: extractSectionDataOrNull(sections, map.reviews),
+      contact: extractSectionDataOrNull(sections, map.contact),
       productsList: products.map(mapToProduct),
       reviewsList: reviews.map(mapToReview),
     };
@@ -73,9 +72,9 @@ export const cmsPagesPublicApi = {
     const map = PAGE_SECTIONS_MAP.storefront;
 
     return {
-      hero: extractSectionData(sections, map.hero),
-      grid: extractSectionData(sections, map.grid),
-      cta: extractSectionData(sections, map.cta),
+      hero: extractSectionDataOrNull(sections, map.hero),
+      grid: extractSectionDataOrNull(sections, map.grid),
+      cta: extractSectionDataOrNull(sections, map.cta),
       productsList: products.map(mapToProduct),
     };
   },
@@ -88,11 +87,11 @@ export const cmsPagesPublicApi = {
     const map = PAGE_SECTIONS_MAP.about;
 
     return {
-      hero: extractSectionData(sections, map.hero),
-      journey: extractSectionData(sections, map.journey),
-      credentials: extractSectionData(sections, map.credentials),
-      personal: extractSectionData(sections, map.personal),
-      cta: extractSectionData(sections, map.cta),
+      hero: extractSectionDataOrNull(sections, map.hero),
+      journey: extractSectionDataOrNull(sections, map.journey),
+      credentials: extractSectionDataOrNull(sections, map.credentials),
+      personal: extractSectionDataOrNull(sections, map.personal),
+      cta: extractSectionDataOrNull(sections, map.cta),
     };
   },
 
@@ -103,8 +102,8 @@ export const cmsPagesPublicApi = {
     ]);
 
     return {
-      hero: extractSectionData(sections, PAGE_SECTIONS_MAP.blog.hero),
-      grid: extractSectionData(sections, PAGE_SECTIONS_MAP.blog.grid),
+      hero: extractSectionDataOrNull(sections, PAGE_SECTIONS_MAP.blog.hero),
+      grid: extractSectionDataOrNull(sections, PAGE_SECTIONS_MAP.blog.grid),
       featuredPost: publicPosts.find((p) => p.isFeatured) || publicPosts[0],
       posts: publicPosts,
       categories: [...new Set(publicPosts.map((p) => p.category))],
@@ -124,8 +123,8 @@ export const cmsPagesPublicApi = {
     const map = PAGE_SECTIONS_MAP.contact;
 
     return {
-      hero: extractSectionData(sections, map.hero),
-      form: extractSectionData(sections, map.form),
+      hero: extractSectionDataOrNull(sections, map.hero),
+      form: extractSectionDataOrNull(sections, map.form),
       programOptions: products.map((p) => ({ slug: p.slug, title: p.title })),
     };
   },
@@ -138,9 +137,9 @@ export const cmsPagesPublicApi = {
     const map = PAGE_SECTIONS_MAP.faq;
 
     return {
-      hero: extractSectionData(sections, map.hero),
-      content: extractSectionData(sections, map.content),
-      cta: extractSectionData(sections, map.cta),
+      hero: extractSectionDataOrNull(sections, map.hero),
+      content: extractSectionDataOrNull(sections, map.content),
+      cta: extractSectionDataOrNull(sections, map.cta),
     };
   },
 };
