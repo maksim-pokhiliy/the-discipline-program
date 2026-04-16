@@ -1,6 +1,6 @@
 "use client";
 
-import { GlobalErrorPageContent } from "@repo/ui";
+import { GlobalErrorPageContent } from "@repo/ui/error-pages";
 
 type GlobalErrorPageProps = {
   error: Error & { digest?: string };
