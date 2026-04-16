@@ -7,7 +7,7 @@ import { ContentSection } from "@repo/ui";
 import { FeatureCard } from "@app/lib/components/ui";
 
 type AboutCredentialsSectionProps = {
-  credentials: AboutPageData["credentials"];
+  credentials: NonNullable<AboutPageData["credentials"]>;
 };
 
 export const AboutCredentialsSection = ({ credentials }: AboutCredentialsSectionProps) => {

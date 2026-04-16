@@ -2,6 +2,8 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
+import { createEmptyDbAuthUsers } from "./empty-db/helpers/seed-auth";
+
 const globalSetup = async () => {
   const dbUrl = process.env.DATABASE_URL ?? "";
   if (!dbUrl) {
@@ -19,11 +21,16 @@ const globalSetup = async () => {
     cwd: root,
     env: { ...process.env, DATABASE_URL: dbUrl, SKIP_ENV_VALIDATION: "1" },
   });
-  execSync("pnpm db:seed", {
-    stdio: "inherit",
-    cwd: root,
-    env: { ...process.env, DATABASE_URL: dbUrl, SKIP_ENV_VALIDATION: "1" },
-  });
+
+  if (process.env.EMPTY_DB === "1") {
+    await createEmptyDbAuthUsers(dbUrl);
+  } else {
+    execSync("pnpm db:seed", {
+      stdio: "inherit",
+      cwd: root,
+      env: { ...process.env, DATABASE_URL: dbUrl, SKIP_ENV_VALIDATION: "1" },
+    });
+  }
 };
 
 export default globalSetup;

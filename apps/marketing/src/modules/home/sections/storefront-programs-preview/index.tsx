@@ -10,7 +10,7 @@ import { ProductCard, ProductModal } from "@app/lib/components/ui";
 import { useProductModal } from "@app/lib/hooks";
 
 type HomeProgramsPreviewProps = {
-  programs: HomePageData["storefront"];
+  programs: NonNullable<HomePageData["storefront"]>;
   productsList: HomePageData["productsList"];
 };
 

@@ -4,7 +4,7 @@ import { type AboutPageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 type AboutJourneySectionProps = {
-  journey: AboutPageData["journey"];
+  journey: NonNullable<AboutPageData["journey"]>;
 };
 
 export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {

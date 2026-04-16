@@ -8,10 +8,10 @@ type BlogPageContentProps = {
 
 export const BlogPageContent = ({ data }: BlogPageContentProps) => (
   <>
-    {data.featuredPost && (
+    {data.featuredPost && data.hero && data.grid && (
       <BlogFeaturedSection hero={data.hero} grid={data.grid} featuredPost={data.featuredPost} />
     )}
 
-    <BlogPostsGrid grid={data.grid} posts={data.posts} />
+    {data.grid && <BlogPostsGrid grid={data.grid} posts={data.posts} />}
   </>
 );

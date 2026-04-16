@@ -25,7 +25,7 @@ const FEATURE_ICONS: Record<string, SvgIconComponent> = {
 const FALLBACK_ICON: SvgIconComponent = HelpOutlineIcon;
 
 type HomeFeaturesSectionProps = {
-  whyChoose: HomePageData["whyChoose"];
+  whyChoose: NonNullable<HomePageData["whyChoose"]>;
 };
 
 export const HomeFeaturesSection = ({ whyChoose }: HomeFeaturesSectionProps) => {

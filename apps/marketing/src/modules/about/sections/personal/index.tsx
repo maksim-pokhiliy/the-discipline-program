@@ -6,7 +6,7 @@ import { ContentSection } from "@repo/ui";
 import { SplitSection } from "@app/lib/components/ui";
 
 type AboutPersonalSectionProps = {
-  personal: AboutPageData["personal"];
+  personal: NonNullable<AboutPageData["personal"]>;
 };
 
 export const AboutPersonalSection = ({ personal }: AboutPersonalSectionProps) => {
