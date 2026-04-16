@@ -32,7 +32,7 @@ catalog:
   "@tiptap/pm": ^3.15.3
   "@tiptap/react": ^3.15.3
   "@tiptap/starter-kit": ^3.15.3
-  "@types/bcryptjs": ^2.4.6
+  "@types/bcryptjs": ^3.0.0
   "@types/node": ^22.10.5
   "@types/react": ^19.0.2
   "@types/react-dom": ^19.0.2
@@ -40,7 +40,7 @@ catalog:
   "@vercel/blob": ^0.27.0
   "@vercel/speed-insights": ^1.2.0
   "@vitest/coverage-v8": ^4.1.0
-  bcryptjs: ^2.4.3
+  bcryptjs: ^3.0.3
   cross-env: ^10.1.0
   dayjs: ^1.11.13
   dependency-cruiser: ^16.10.0
