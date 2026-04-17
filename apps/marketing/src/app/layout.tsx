@@ -6,6 +6,7 @@ import { type Metadata } from "next";
 import { NextProvider } from "@repo/mui";
 import { fontVariables } from "@repo/mui/fonts";
 import { QueryProvider } from "@repo/query";
+import { SkipToContent } from "@repo/ui";
 
 import { Footer, MarketingHeader } from "@app/lib/components/layout";
 import { StructuredData } from "@app/lib/components/seo";
@@ -47,27 +48,7 @@ const RootLayout = ({ children }: RootLayoutProps) => (
     <body id="body-dom-anchor" className={fontVariables}>
       <NextProvider>
         <QueryProvider>
-          <Box
-            component="a"
-            href="#main-content"
-            sx={{
-              position: "absolute",
-              left: "-9999px",
-              top: "auto",
-              width: "1px",
-              height: "1px",
-              overflow: "hidden",
-              "&:focus": {
-                position: "static",
-                width: "auto",
-                height: "auto",
-                overflow: "visible",
-                p: 2,
-              },
-            }}
-          >
-            Skip to content
-          </Box>
+          <SkipToContent />
 
           <MarketingHeader />
 

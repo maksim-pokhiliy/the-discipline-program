@@ -84,6 +84,16 @@ const HomePage = async () => {
 - The loopback pattern looks exactly like the browser pattern to developers writing new endpoints. That is the point. The trade-off is that developers who want the "direct call" escape hatch for performance reasons do not have one — they have to either accept the cost or write a new ADR.
 - Because every endpoint is called the same way, there is no direct-call path that can bypass auth by accident. Considered a security benefit, not just consistency.
 
+## Re-evaluation trigger
+
+The "under review" status is resolved when any of the following concrete conditions is met; at that point, open a follow-up ADR that either confirms this decision with new data or supersedes it:
+
+- Marketing `revalidate = 300` loopback p95 response time exceeds **100 ms** in Vercel Analytics for two consecutive weeks.
+- A second app (admin or platform) adopts the loopback pattern — shared loopback infra (caching, error semantics, session propagation) deserves its own design pass before duplication.
+- Next.js 17 lands with first-class RSC loopback or server-action read semantics that subsume this pattern.
+
+Until one of these triggers fires, this ADR remains the canonical answer and direct-domain-call escape hatches are not permitted.
+
 ## Alternatives considered
 
 **Direct domain calls from server components.** `import { cmsPagesPublicApi } from "@repo/api-server"` in a server component file, call `cmsPagesPublicApi.getHomePage()` directly. Faster (no HTTP hop, no serialization). Two problems. First, session propagation: the server component would need to reach into `next-auth/next` to read the session cookie, construct a fake "user context" object, and pass it down to the domain function. That is the same machinery the route handler does, but now it lives in two places. Second, the route handler and the server component become independent call sites for the same domain function, which means their validation and auth drift over time. Rejected at this stage on consistency grounds; revisit if SSR latency becomes a user-visible problem.

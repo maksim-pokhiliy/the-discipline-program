@@ -2,7 +2,6 @@ import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
-import { baseEnv } from "@repo/env/base";
 import { AppError, ERROR_CODES, ValidationError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
@@ -68,7 +67,6 @@ export const handleApiError = (error: unknown, requestId?: string): NextResponse
     });
   }
 
-  const isDev = baseEnv.NODE_ENV === "development";
   const headers = requestId ? { "x-request-id": requestId } : undefined;
 
   if (error instanceof AppError) {
@@ -83,8 +81,6 @@ export const handleApiError = (error: unknown, requestId?: string): NextResponse
         error: {
           code: error.code,
           message: error.message,
-          ...(isDev && error.details && { details: error.details }),
-          ...(isDev && { stack: error.stack }),
         },
       },
       { status: error.statusCode, headers: appErrorHeaders },
@@ -104,21 +100,17 @@ export const handleApiError = (error: unknown, requestId?: string): NextResponse
         error: {
           code: validationError.code,
           message: validationError.message,
-          ...(isDev && validationError.details && { details: validationError.details }),
         },
       },
       { status: 400, headers },
     );
   }
 
-  const stack = error instanceof Error ? error.stack : undefined;
-
   return NextResponse.json(
     {
       error: {
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
         message: "Internal server error",
-        ...(isDev && { stack }),
       },
     },
     { status: 500, headers },

@@ -7,7 +7,7 @@ import { AuthProvider } from "@repo/auth";
 import { NextProvider } from "@repo/mui";
 import { fontVariables } from "@repo/mui/fonts";
 import { QueryProvider } from "@repo/query";
-import { Toaster } from "@repo/ui";
+import { SkipToContent, Toaster } from "@repo/ui";
 
 export const metadata: Metadata = {
   title: "The Discipline Program - Admin",
@@ -24,27 +24,7 @@ const RootLayout = ({ children }: RootLayoutProps) => (
       <NextProvider>
         <QueryProvider>
           <AuthProvider>
-            <Box
-              component="a"
-              href="#main-content"
-              sx={{
-                position: "absolute",
-                left: "-9999px",
-                top: "auto",
-                width: "1px",
-                height: "1px",
-                overflow: "hidden",
-                "&:focus": {
-                  position: "static",
-                  width: "auto",
-                  height: "auto",
-                  overflow: "visible",
-                  p: 2,
-                },
-              }}
-            >
-              Skip to content
-            </Box>
+            <SkipToContent />
             <Box sx={{ minHeight: "100vh" }}>
               {children}
 

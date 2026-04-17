@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { type z } from "zod";
 
 import {
   createBlogPostSchema,
@@ -14,6 +15,8 @@ import { useBlogPost, useUpdateBlogPost } from "@app/lib/hooks";
 
 import { BlogPostForm } from "../../components";
 
+type CreateBlogPostInput = z.input<typeof createBlogPostSchema>;
+
 type BlogEditFormProps = {
   post: BlogPost;
 };
@@ -21,7 +24,7 @@ type BlogEditFormProps = {
 const BlogEditForm: React.FC<BlogEditFormProps> = ({ post }) => {
   const { mutate: updatePost, isPending } = useUpdateBlogPost();
 
-  const methods = useForm<CreateBlogPostData>({
+  const methods = useForm<CreateBlogPostInput, unknown, CreateBlogPostData>({
     resolver: zodResolver(createBlogPostSchema),
     defaultValues: {
       title: post.title,

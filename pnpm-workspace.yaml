@@ -12,7 +12,7 @@ catalog:
   "@emotion/react": ^11.14.0
   "@emotion/styled": ^11.14.0
   "@eslint/js": ^9.17.0
-  "@hookform/resolvers": ^3.9.1
+  "@hookform/resolvers": ^5.2.2
   "@mui/icons-material": ^7.3.6
   "@mui/material": ^7.3.6
   "@mui/material-nextjs": ^9.0.0
@@ -41,7 +41,7 @@ catalog:
   "@vercel/blob": ^2.3.3
   "@vercel/speed-insights": ^1.2.0
   "@vitejs/plugin-react": ^5.0.5
-  "@vitest/coverage-v8": ^4.1.0
+  "@vitest/coverage-v8": ^4.1.4
   bcryptjs: ^3.0.3
   cross-env: ^10.1.0
   dependency-cruiser: ^16.10.0
@@ -75,7 +75,7 @@ catalog:
   typescript: 5.7.2
   typescript-eslint: ^8.18.2
   vite: ^8.0.1
-  vitest: ^4.1.0
+  vitest: ^4.1.4
   zod: ^3.24.1
 onlyBuiltDependencies:
   - "@prisma/client"

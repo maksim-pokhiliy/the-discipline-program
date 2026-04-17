@@ -242,20 +242,7 @@ const computeRecentWorkouts = (enrollments: EnrollmentWithData[]): RecentWorkout
       });
   });
 
-  const seenLogIds = new Set<string>();
-
-  return allLogs
-    .sort((a, b) => b.date.getTime() - a.date.getTime())
-    .filter((l) => {
-      if (seenLogIds.has(l.id)) {
-        return false;
-      }
-
-      seenLogIds.add(l.id);
-
-      return true;
-    })
-    .slice(0, 7);
+  return allLogs.sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 7);
 };
 
 export const getAthleteDetail = async (

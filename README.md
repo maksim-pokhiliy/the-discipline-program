@@ -23,7 +23,7 @@ git clone <repo-url> && cd the-discipline-program
 pnpm install
 ```
 
-Copy environment files:
+Copy `.env.example` to the locations below and fill in the values -- see [Environment Variables](#environment-variables) for the complete per-variable reference:
 
 - `apps/admin/.env.local`, `apps/marketing/.env.local`, `apps/platform/.env.local` -- app URLs, auth secrets
 - `packages/api-server/.env` -- `DATABASE_URL` (Neon PostgreSQL)
@@ -100,3 +100,30 @@ DB Schema -> Contracts (Zod) -> API Server -> API Routes -> Client UI
 ```
 
 All changes follow this order. Contracts are the single source of truth for API shapes.
+
+## Environment Variables
+
+Validated at boot by `@repo/env` (Zod). `SKIP_ENV_VALIDATION=1` bypasses validation (used by CI + local build). See [docs/DEPLOY.md](docs/DEPLOY.md) for per-app usage details.
+
+### Required
+
+| Variable                    | Where                                 | Purpose                                                  |
+| --------------------------- | ------------------------------------- | -------------------------------------------------------- |
+| `DATABASE_URL`              | all apps + `packages/api-server/.env` | PostgreSQL connection string (Neon or local).            |
+| `NEXTAUTH_SECRET`           | admin + platform                      | JWT signing secret. Generate: `openssl rand -base64 32`. |
+| `NEXTAUTH_URL`              | admin + platform                      | Canonical app URL for NextAuth callbacks.                |
+| `NEXT_PUBLIC_APP_URL`       | all apps                              | Base URL for HTTP loopback + cross-app links.            |
+| `NEXT_PUBLIC_MARKETING_URL` | all apps                              | Base URL for the marketing app.                          |
+| `BLOB_READ_WRITE_TOKEN`     | admin (file uploads)                  | Vercel Blob read/write token.                            |
+
+### Optional
+
+| Variable                   | Purpose                                                             |
+| -------------------------- | ------------------------------------------------------------------- |
+| `UPSTASH_REDIS_REST_URL`   | Upstash Redis REST URL for rate limiting (no-op when unset).        |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token.                                           |
+| `NEXT_PUBLIC_SENTRY_DSN`   | Sentry DSN. Monitoring is no-op when unset.                         |
+| `SENTRY_AUTH_TOKEN`        | Sentry auth token for source-map upload at build time.              |
+| `SENTRY_ORG`               | Sentry org slug (source-map upload).                                |
+| `SENTRY_PROJECT`           | Sentry project slug (source-map upload).                            |
+| `SKIP_ENV_VALIDATION`      | Set to `1` to bypass Zod env validation. Used by CI + local builds. |
