@@ -41,7 +41,9 @@ export const WeekDayGroup: React.FC<WeekDayGroupProps> = ({
         minHeight: theme.spacing(10),
         transition: theme.transitions.create("background-color"),
         backgroundColor: isHighlighted ? "action.hover" : "transparent",
-        "&:hover .day-action": { opacity: 1 },
+        [theme.breakpoints.up("md")]: {
+          "&:hover .day-action": { opacity: 1 },
+        },
       })}
     >
       <Stack direction="row" alignItems="center" justifyContent="space-between">
@@ -76,7 +78,10 @@ export const WeekDayGroup: React.FC<WeekDayGroupProps> = ({
           className="day-action"
           onClick={() => onAddWorkout(date)}
           aria-label="Add workout"
-          sx={(theme) => ({ opacity: 0, transition: theme.transitions.create("opacity") })}
+          sx={(theme) => ({
+            opacity: { xs: 1, md: 0 },
+            transition: theme.transitions.create("opacity"),
+          })}
         >
           <AddIcon fontSize="small" />
         </IconButton>
