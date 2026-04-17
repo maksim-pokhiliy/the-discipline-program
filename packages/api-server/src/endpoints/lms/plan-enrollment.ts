@@ -8,7 +8,7 @@ import { NotFoundError } from "@repo/errors";
 import { resolveCoachId, verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { mapToPlanEnrollment, PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
-import { handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError } from "../../utils";
 
 export const lmsPlanEnrollmentApi = {
   create: async (
@@ -20,14 +20,13 @@ export const lmsPlanEnrollmentApi = {
 
     await verifyPlanOwnership(planId, coachId);
 
-    const targetUser = await prisma.user.findUnique({
-      where: { id: data.userId },
-      select: { id: true },
-    });
-
-    if (!targetUser) {
-      throw new NotFoundError("User not found", { userId: data.userId });
-    }
+    await findOrThrow(
+      prisma.user.findUnique({
+        where: { id: data.userId },
+        select: { id: true },
+      }),
+      "User",
+    );
 
     try {
       const enrollment = await prisma.planEnrollment.create({

@@ -11,11 +11,10 @@ import {
 
 import { HEALTH_STATUS_MAP } from "../../mappers/coaching";
 import {
+  createStartOfDayCache,
   DAYS_IN_WEEK,
   daysBetweenInTz,
   MS_PER_DAY,
-  startOfDayInTz,
-  startOfTodayInTz,
   startOfWeekInTz,
   TWO_WEEKS,
 } from "../../utils/date-helpers";
@@ -38,11 +37,27 @@ const hasScheduledDate = (w: {
   title: string;
 }): w is ScheduledWorkout => w.scheduledDate !== null;
 
+export type TodayStatusContext = {
+  tz: string;
+  today: Date;
+  weekStart: Date;
+  startOfDay: (date: Date) => Date;
+};
+
+export const createTodayStatusContext = (tz: string): TodayStatusContext => {
+  const startOfDay = createStartOfDayCache(tz);
+  const today = startOfDay(new Date());
+  const weekStart = startOfWeekInTz(today, tz);
+
+  return { tz, today, weekStart, startOfDay };
+};
+
 export const computeTodayStatus = (
   workouts: { id: string; scheduledDate: Date | null; createdAt: Date; title: string }[],
   logs: { workoutId: string; date: Date }[],
-  tz: string,
+  ctxOrTz: TodayStatusContext | string,
 ): TodayStatusResult => {
+  const ctx = typeof ctxOrTz === "string" ? createTodayStatusContext(ctxOrTz) : ctxOrTz;
   const lastLog =
     logs.length > 0 ? logs.reduce((latest, l) => (l.date > latest.date ? l : latest)) : null;
   const lastActivityDate = lastLog?.date ?? null;
@@ -60,24 +75,20 @@ export const computeTodayStatus = (
     };
   }
 
-  const today = startOfTodayInTz(tz);
-  const weekStart = startOfWeekInTz(today, tz);
+  const { today, weekStart, startOfDay } = ctx;
   const loggedWorkoutIds = new Set(logs.map((l) => l.workoutId));
 
   const todayWorkouts = scheduledWorkouts.filter(
-    (w) => startOfDayInTz(w.scheduledDate, tz).getTime() === today.getTime(),
+    (w) => startOfDay(w.scheduledDate).getTime() === today.getTime(),
   );
 
   const pastWorkoutsThisWeek = scheduledWorkouts
     .filter((w) => {
-      const d = startOfDayInTz(w.scheduledDate, tz);
+      const d = startOfDay(w.scheduledDate);
 
       return d.getTime() >= weekStart.getTime() && d.getTime() < today.getTime();
     })
-    .filter(
-      (w) =>
-        startOfDayInTz(w.createdAt, tz).getTime() <= startOfDayInTz(w.scheduledDate, tz).getTime(),
-    )
+    .filter((w) => startOfDay(w.createdAt).getTime() <= startOfDay(w.scheduledDate).getTime())
     .sort((a, b) => b.scheduledDate.getTime() - a.scheduledDate.getTime());
 
   let missedCount = 0;
@@ -143,18 +154,18 @@ export const computeAthletesSummary = (
   tz: string,
 ): AthleteDailySummary[] => {
   const athleteMap = new Map<string, AthleteDailySummary>();
-  const today = startOfTodayInTz(tz);
+  const ctx = createTodayStatusContext(tz);
 
   for (const e of enrollments) {
     const user = e.user;
     const { status, missedCount, currentWorkoutTitle, lastActivityDate } = computeTodayStatus(
       e.trainingPlan.workouts,
       user.workoutLogs,
-      tz,
+      ctx,
     );
 
     const daysSinceLastActivity = lastActivityDate
-      ? daysBetweenInTz(new Date(lastActivityDate), today, tz)
+      ? daysBetweenInTz(new Date(lastActivityDate), ctx.today, tz)
       : null;
 
     const existing = athleteMap.get(user.id);

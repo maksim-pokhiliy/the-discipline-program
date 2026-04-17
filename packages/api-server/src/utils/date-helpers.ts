@@ -50,6 +50,25 @@ export const startOfDayInTz = (date: Date, tz: string): Date => {
   return new Date(fakeUtcMidnight.getTime() - offset);
 };
 
+export const createStartOfDayCache = (tz: string): ((date: Date) => Date) => {
+  const cache = new Map<number, Date>();
+
+  return (date) => {
+    const key = date.getTime();
+    const cached = cache.get(key);
+
+    if (cached) {
+      return cached;
+    }
+
+    const value = startOfDayInTz(date, tz);
+
+    cache.set(key, value);
+
+    return value;
+  };
+};
+
 export const startOfTodayInTz = (tz: string): Date => startOfDayInTz(new Date(), tz);
 
 export const startOfWeekInTz = (date: Date, tz: string): Date => {

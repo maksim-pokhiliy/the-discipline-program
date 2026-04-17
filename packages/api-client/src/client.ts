@@ -26,8 +26,8 @@ const HTTP_STATUS_ERROR_MAP: Partial<Record<number, AppErrorConstructor>> = {
   504: ServiceUnavailableError,
 };
 
-const DEFAULT_TIMEOUT_MS = 30_000;
-const DEFAULT_MAX_RETRIES = 2;
+const DEFAULT_TIMEOUT_MS = 10_000;
+const DEFAULT_MAX_RETRIES = 1;
 const BASE_RETRY_DELAY_MS = 1_000;
 const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
 
