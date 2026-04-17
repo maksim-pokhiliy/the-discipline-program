@@ -74,7 +74,7 @@ catalog:
   turbo: 2.8.0
   typescript: 5.7.2
   typescript-eslint: ^8.18.2
-  vite: ^8.0.1
+  vite: ^8.0.8
   vitest: ^4.1.4
   zod: ^3.24.1
 onlyBuiltDependencies:
