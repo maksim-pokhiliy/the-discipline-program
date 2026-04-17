@@ -2,6 +2,7 @@ import {
   Gender,
   HealthStatus,
   PlanEnrollmentStatus,
+  type Prisma,
   PrismaClient,
   Role,
   TrainingPlanStatus,
@@ -432,7 +433,7 @@ const seedMarketingPages = async () => {
     await prisma.marketingPage.create({ data: page });
   }
 
-  const sections: { pageSlug: string; section: string; data: unknown }[] = [
+  const sections: { pageSlug: string; section: string; data: Prisma.InputJsonObject }[] = [
     {
       pageSlug: "home",
       section: "home:hero",
@@ -795,7 +796,7 @@ const seedMarketingPages = async () => {
       data: {
         pageSlug: s.pageSlug,
         section: s.section,
-        data: JSON.parse(JSON.stringify(s.data)),
+        data: structuredClone(s.data),
         isActive: true,
       },
     });

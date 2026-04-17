@@ -20,6 +20,7 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import {
   BLOG_CATEGORY_LABELS,
+  BLOG_CONSTANTS,
   BlogCategory,
   type CreateBlogPostData,
 } from "@repo/contracts/cms/blog";
@@ -235,7 +236,7 @@ export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: Blo
                   </Typography>
 
                   <Typography variant="caption" component="span">
-                    {excerpt?.length || 0}/500
+                    {excerpt?.length || 0}/{BLOG_CONSTANTS.MAX_EXCERPT_LENGTH}
                   </Typography>
                 </Stack>
               }

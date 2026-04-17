@@ -1,4 +1,5 @@
-import { type Product, type Review } from "@repo/contracts";
+import { type Product } from "@repo/contracts/cms/product";
+import { type Review } from "@repo/contracts/cms/review";
 
 import { SEO_CONFIG } from "@app/lib/seo";
 
