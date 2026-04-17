@@ -63,7 +63,18 @@ export const PlatformLayout = ({
           onSignOut={handleSignOut}
         />
 
-        <Container component="main" id="main-content" maxWidth="lg" sx={{ flex: 1, pt: 4, pb: 16 }}>
+        <Container
+          component="main"
+          id="main-content"
+          maxWidth="lg"
+          sx={(theme) => ({
+            flex: 1,
+            pt: 4,
+            pb: `calc(${theme.spacing(16)} + env(safe-area-inset-bottom))`,
+            pl: `calc(${theme.spacing(3)} + env(safe-area-inset-left))`,
+            pr: `calc(${theme.spacing(3)} + env(safe-area-inset-right))`,
+          })}
+        >
           <Box component="section">{children}</Box>
         </Container>
 

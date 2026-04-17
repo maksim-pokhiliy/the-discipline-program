@@ -11,7 +11,11 @@ export const PlatformFab = ({ onClick }: PlatformFabProps) => (
   <Fab
     color="primary"
     onClick={onClick}
-    sx={{ position: "fixed", bottom: LAYOUT.platformFabBottom, right: LAYOUT.platformFabRight }}
+    sx={{
+      position: "fixed",
+      bottom: `calc(${LAYOUT.platformFabBottom}px + env(safe-area-inset-bottom))`,
+      right: `calc(${LAYOUT.platformFabRight}px + env(safe-area-inset-right))`,
+    }}
   >
     <AddIcon />
   </Fab>
