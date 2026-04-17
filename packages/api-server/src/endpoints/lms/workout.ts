@@ -251,34 +251,31 @@ export const lmsWorkoutApi = {
     const dayShiftMs = normalizedTarget.getTime() - normalizedSource.getTime();
 
     try {
-      const created = await prisma.$transaction(async (tx) => {
-        const existingIds = (
-          await tx.workout.findMany({
-            where: { planId },
-            select: { id: true },
-          })
-        ).map((w) => w.id);
-
-        await tx.workout.createMany({
-          data: sourceWorkouts.map((workout) => ({
-            planId,
-            scheduledDate: workout.scheduledDate
-              ? toUTCMidnight(new Date(workout.scheduledDate.getTime() + dayShiftMs))
-              : null,
-            title: workout.title,
-            description: workout.description,
-            content: workout.content,
-            sortOrder: workout.sortOrder,
-          })),
-        });
-
-        return tx.workout.findMany({
-          where: { planId, id: { notIn: existingIds } },
-          orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }],
-        });
+      const created = await prisma.workout.createManyAndReturn({
+        data: sourceWorkouts.map((workout) => ({
+          planId,
+          scheduledDate: workout.scheduledDate
+            ? toUTCMidnight(new Date(workout.scheduledDate.getTime() + dayShiftMs))
+            : null,
+          title: workout.title,
+          description: workout.description,
+          content: workout.content,
+          sortOrder: workout.sortOrder,
+        })),
       });
 
-      return created.map(mapToWorkout);
+      return created
+        .sort((a, b) => {
+          const aDate = a.scheduledDate?.getTime() ?? Number.POSITIVE_INFINITY;
+          const bDate = b.scheduledDate?.getTime() ?? Number.POSITIVE_INFINITY;
+
+          if (aDate !== bDate) {
+            return aDate - bDate;
+          }
+
+          return a.sortOrder - b.sortOrder;
+        })
+        .map(mapToWorkout);
     } catch (error) {
       return handlePrismaError(error, { entity: "Workout" });
     }

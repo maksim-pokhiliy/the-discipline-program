@@ -28,7 +28,6 @@
     "@tiptap/react": "catalog:",
     "@tiptap/starter-kit": "catalog:",
     "framer-motion": "catalog:",
-    "isomorphic-dompurify": "catalog:",
     "react-hook-form": "catalog:",
     "sonner": "catalog:"
   },

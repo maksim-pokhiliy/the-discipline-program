@@ -4,17 +4,17 @@ High-performance coaching platform (LMS + Billing) with a Marketing CMS. Turbo m
 
 ## Tech Stack
 
-| Category   | Technology                       |
-| ---------- | -------------------------------- |
-| Language   | TypeScript 5.7 (strict)          |
-| Framework  | Next.js 16 (App Router)          |
-| Database   | PostgreSQL (Neon) + Prisma 6     |
-| UI         | MUI 7, React 19                  |
-| State      | React Query 5, React Hook Form 7 |
-| Validation | Zod                              |
-| Auth       | NextAuth.js 5 (dual instance)    |
-| Tests      | Vitest, Playwright               |
-| Monorepo   | Turborepo, pnpm                  |
+| Category   | Technology                                                                                               |
+| ---------- | -------------------------------------------------------------------------------------------------------- |
+| Language   | TypeScript 5.7 (strict)                                                                                  |
+| Framework  | Next.js 16 (App Router)                                                                                  |
+| Database   | PostgreSQL (Neon) + Prisma 6                                                                             |
+| UI         | MUI 7, React 19                                                                                          |
+| State      | React Query 5, React Hook Form 7                                                                         |
+| Validation | Zod                                                                                                      |
+| Auth       | NextAuth.js v4.24.x (dual instance, see [ADR 0004](docs/adr/0004-nextauth-with-credentials-provider.md)) |
+| Tests      | Vitest, Playwright                                                                                       |
+| Monorepo   | Turborepo, pnpm                                                                                          |
 
 ## Quick Start
 
@@ -34,7 +34,7 @@ pnpm db:push
 pnpm dev
 ```
 
-Apps start on ports 3000 (admin), 3001 (marketing), 3002 (platform).
+Apps start on ports 3000 (marketing), 3001 (platform), 3002 (admin).
 
 ## Project Structure
 
