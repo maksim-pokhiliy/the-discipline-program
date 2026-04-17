@@ -8,6 +8,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
+import { validateCallbackUrl } from "@repo/auth";
 import { signIn } from "@repo/auth/client";
 import { type LoginFormData } from "@repo/contracts/iam/auth";
 import { Logo } from "@repo/ui";
@@ -19,7 +20,7 @@ export const PlatformLoginPage = () => {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
 
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = validateCallbackUrl(searchParams.get("callbackUrl")) ?? "/";
 
   const loginMutation = useMutation({
     mutationFn: (data: LoginFormData) =>

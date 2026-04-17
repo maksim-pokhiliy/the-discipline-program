@@ -1,7 +1,4 @@
-"use client";
-
 import { Box, type BoxProps, type SxProps, type Theme } from "@mui/material";
-import DOMPurify from "isomorphic-dompurify";
 
 export type RichTextViewerProps = BoxProps & {
   content: string;
@@ -70,14 +67,10 @@ const defaultStyles: SxProps<Theme> = {
   },
 };
 
-export const RichTextViewer = ({ content, sx, ...props }: RichTextViewerProps) => {
-  const sanitizedContent = DOMPurify.sanitize(content, { USE_PROFILES: { html: true } });
-
-  return (
-    <Box
-      sx={[defaultStyles, ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
-      dangerouslySetInnerHTML={{ __html: sanitizedContent }}
-      {...props}
-    />
-  );
-};
+export const RichTextViewer = ({ content, sx, ...props }: RichTextViewerProps) => (
+  <Box
+    sx={[defaultStyles, ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
+    dangerouslySetInnerHTML={{ __html: content }}
+    {...props}
+  />
+);
