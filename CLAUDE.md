@@ -68,11 +68,11 @@ packages/
 
 ### App Status
 
-| App       | Status                                                                                                                |
-| --------- | --------------------------------------------------------------------------------------------------------------------- |
-| Marketing | Working. Billing flow excluded (pages exist as stubs). Routes: `/api/public/*`                                        |
-| Admin     | Working. CMS (blog, pages, reviews, products, contacts) + Platform section (users, dashboard). Routes: `/api/admin/*` |
-| Platform  | Working. Auth, routing, coach UI, athlete UI, training plans, workout management. Routes: `/api/platform/*`           |
+| App       | Status                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Marketing | Working. Billing flow excluded (pages exist as stubs). Routes: `/api/public/*`                                                                                                                                                                                                                                                                                                                  |
+| Admin     | Working. CMS (blog, pages, reviews, products, contacts) + Platform section (users, dashboard). Routes: `/api/admin/*`                                                                                                                                                                                                                                                                           |
+| Platform  | Coach UI working (authoring, athlete list, plan assignment, workout management, coach dashboard). Athlete UI is a "Coming soon" stub at `/athlete` and `/athlete/profile` — endpoints wired (workout-logs, athlete-profile, user-benchmarks) but no frontend callers. Billing pipeline not wired (no self-registration, no Stripe, no webhook, no subscription gate). Routes: `/api/platform/*` |
 
 ### Source of Truth
 

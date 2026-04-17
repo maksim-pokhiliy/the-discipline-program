@@ -104,7 +104,7 @@ export const cmsPagesAdminApi = {
       await prisma.marketingPageSection.update({
         where: { id: existing.id },
         data: {
-          data: JSON.parse(JSON.stringify(payload.data)),
+          data: structuredClone(payload.data),
         },
       });
     } catch (error) {
