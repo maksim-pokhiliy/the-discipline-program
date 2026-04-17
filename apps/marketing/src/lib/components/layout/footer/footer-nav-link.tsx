@@ -17,16 +17,18 @@ type FooterNavLinkProps = {
 
 export const FooterNavLink = ({ text, href }: FooterNavLinkProps) => {
   const pathname = usePathname();
+  const isActive = pathname === href;
 
   return (
     <Typography
       component={Link}
       href={href}
       variant="body2"
+      aria-current={isActive ? "page" : undefined}
       sx={[
         {
           textDecoration: "none",
-          color: pathname === href ? "text.primary" : "text.secondary",
+          color: isActive ? "text.primary" : "text.secondary",
         },
         hoverSx,
       ]}

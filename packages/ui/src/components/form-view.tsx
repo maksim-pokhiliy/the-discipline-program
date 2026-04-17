@@ -8,9 +8,9 @@ import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-f
 
 import { ContentSection } from "./layout";
 
-export type FormViewProps<T extends FieldValues> = {
-  methods: UseFormReturn<T>;
-  onSubmit: (data: T) => void;
+export type FormViewProps<TFieldValues extends FieldValues, TTransformedValues = TFieldValues> = {
+  methods: UseFormReturn<TFieldValues, unknown, TTransformedValues>;
+  onSubmit: (data: TTransformedValues) => void;
   isPending: boolean;
   title: string;
   subtitle: string;
@@ -20,7 +20,7 @@ export type FormViewProps<T extends FieldValues> = {
   children: ReactNode;
 };
 
-export const FormView = <T extends FieldValues>({
+export const FormView = <TFieldValues extends FieldValues, TTransformedValues = TFieldValues>({
   methods,
   onSubmit,
   isPending,
@@ -30,7 +30,7 @@ export const FormView = <T extends FieldValues>({
   backLabel,
   submitLabel = "Save Changes",
   children,
-}: FormViewProps<T>) => (
+}: FormViewProps<TFieldValues, TTransformedValues>) => (
   <FormProvider {...methods}>
     <Stack component="form" onSubmit={methods.handleSubmit(onSubmit)} noValidate>
       <ContentSection
