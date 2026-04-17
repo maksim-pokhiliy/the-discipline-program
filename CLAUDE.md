@@ -255,4 +255,4 @@ Conventional commits enforced via commitlint:
 feat|fix|docs|style|refactor|test|chore|revert|perf: subject in lowercase
 ```
 
-Pre-commit hooks (lefthook): format → lint → check-types → commitlint. Pre-push runs build.
+Pre-commit hooks (husky): lint-staged (eslint --fix + prettier --write on staged files) → `SKIP_ENV_VALIDATION=1 pnpm turbo run check-types test --filter="...[HEAD]"`. Commit-msg runs commitlint. Pre-push runs `pnpm dep:check`.

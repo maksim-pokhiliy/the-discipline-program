@@ -1,6 +1,2 @@
-import { AUTH_ROUTES, PUBLIC_ROUTES } from "../constants";
-
-export const isPublicRoute = (pathname: string): boolean =>
-  PUBLIC_ROUTES.some((route) => pathname === route) ||
-  pathname === AUTH_ROUTES.API_PREFIX ||
-  pathname.startsWith(AUTH_ROUTES.API_PREFIX + "/");
+export * from "./is-public-route";
+export * from "./validate-callback-url";

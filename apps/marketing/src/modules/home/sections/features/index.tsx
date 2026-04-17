@@ -1,4 +1,5 @@
-import { type SvgIconComponent } from "@mui/icons-material";
+import { type ComponentType } from "react";
+
 import BoltIcon from "@mui/icons-material/Bolt";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import GroupsIcon from "@mui/icons-material/Groups";
@@ -6,14 +7,16 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import SchoolIcon from "@mui/icons-material/School";
 import ShuffleIcon from "@mui/icons-material/Shuffle";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import { Grid } from "@mui/material";
+import { Grid, type SvgIconProps } from "@mui/material";
 
 import { type HomePageData } from "@repo/contracts/cms/pages";
 import { ContentSection } from "@repo/ui";
 
 import { FeatureCard } from "@app/lib/components/ui";
 
-const FEATURE_ICONS: Record<string, SvgIconComponent> = {
+type IconComponent = ComponentType<SvgIconProps>;
+
+const FEATURE_ICONS: Record<string, IconComponent> = {
   Shuffle: ShuffleIcon,
   Bolt: BoltIcon,
   FitnessCenter: FitnessCenterIcon,
@@ -22,7 +25,7 @@ const FEATURE_ICONS: Record<string, SvgIconComponent> = {
   Groups: GroupsIcon,
 };
 
-const FALLBACK_ICON: SvgIconComponent = HelpOutlineIcon;
+const FALLBACK_ICON: IconComponent = HelpOutlineIcon;
 
 type HomeFeaturesSectionProps = {
   whyChoose: NonNullable<HomePageData["whyChoose"]>;

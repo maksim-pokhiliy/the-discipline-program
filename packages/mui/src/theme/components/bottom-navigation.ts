@@ -3,10 +3,13 @@ import { alpha, type Components, type Theme } from "@mui/material/styles";
 export const MuiBottomNavigation: Components<Theme>["MuiBottomNavigation"] = {
   styleOverrides: {
     root: ({ theme }) => ({
-      height: theme.layout.platformBottomNavHeight,
+      height: `calc(${theme.layout.platformBottomNavHeight}px + env(safe-area-inset-bottom))`,
       borderTop: `1px solid ${theme.palette.divider}`,
       backgroundColor: theme.palette.background.default,
-      padding: theme.spacing(1.5),
+      paddingTop: theme.spacing(1.5),
+      paddingRight: `calc(${theme.spacing(1.5)} + env(safe-area-inset-right))`,
+      paddingBottom: `calc(${theme.spacing(1.5)} + env(safe-area-inset-bottom))`,
+      paddingLeft: `calc(${theme.spacing(1.5)} + env(safe-area-inset-left))`,
       gap: theme.spacing(1.5),
     }),
   },
