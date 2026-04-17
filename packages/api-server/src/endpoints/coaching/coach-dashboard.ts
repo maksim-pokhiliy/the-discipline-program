@@ -22,8 +22,8 @@ import {
 } from "../../mappers/lms";
 import { findOrThrow } from "../../utils";
 import {
+  createStartOfDayCache,
   endOfWeekInTz,
-  startOfDayInTz,
   startOfTodayInTz,
   startOfWeekInTz,
 } from "../../utils/date-helpers";
@@ -45,6 +45,7 @@ export const coachingCoachDashboardApi = {
     const today = startOfTodayInTz(tz);
     const weekStart = startOfWeekInTz(today, tz);
     const weekEnd = endOfWeekInTz(today, tz);
+    const startOfDay = createStartOfDayCache(tz);
 
     const [enrollments, openActionItems, activePlansCount] = await Promise.all([
       prisma.planEnrollment.findMany({
@@ -100,7 +101,7 @@ export const coachingCoachDashboardApi = {
 
         seen.add(key);
 
-        const d = startOfDayInTz(w.scheduledDate, tz);
+        const d = startOfDay(w.scheduledDate);
         const isThisWeek = d.getTime() >= weekStart.getTime() && d.getTime() <= weekEnd.getTime();
 
         if (!isThisWeek) {

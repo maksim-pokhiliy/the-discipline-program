@@ -7,22 +7,31 @@ const createRequest = (headers: Record<string, string> = {}): Request => {
 };
 
 describe("getClientIp", () => {
-  it("extracts the first IP from x-forwarded-for", () => {
-    const request = createRequest({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" });
+  it("prefers x-real-ip over x-forwarded-for", () => {
+    const request = createRequest({
+      "x-real-ip": "10.0.0.1",
+      "x-forwarded-for": "1.2.3.4, 5.6.7.8",
+    });
 
-    expect(getClientIp(request)).toBe("1.2.3.4");
+    expect(getClientIp(request)).toBe("10.0.0.1");
   });
 
-  it("trims whitespace from x-forwarded-for", () => {
-    const request = createRequest({ "x-forwarded-for": "  1.2.3.4 , 5.6.7.8" });
-
-    expect(getClientIp(request)).toBe("1.2.3.4");
-  });
-
-  it("falls back to x-real-ip when x-forwarded-for is absent", () => {
+  it("uses x-real-ip when it is the only header present", () => {
     const request = createRequest({ "x-real-ip": "10.0.0.1" });
 
     expect(getClientIp(request)).toBe("10.0.0.1");
+  });
+
+  it("extracts the rightmost IP from x-forwarded-for when x-real-ip is absent", () => {
+    const request = createRequest({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" });
+
+    expect(getClientIp(request)).toBe("5.6.7.8");
+  });
+
+  it("trims whitespace from the rightmost entry of x-forwarded-for", () => {
+    const request = createRequest({ "x-forwarded-for": "1.2.3.4 , 5.6.7.8  " });
+
+    expect(getClientIp(request)).toBe("5.6.7.8");
   });
 
   it("returns 'unknown' when no IP headers are present", () => {
