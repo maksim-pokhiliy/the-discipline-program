@@ -79,8 +79,13 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
         variant="outlined"
         style={style}
         sx={(theme) => ({
-          "& .workout-action": { opacity: 0, transition: theme.transitions.create("opacity") },
-          "&:hover .workout-action": { opacity: 1 },
+          "& .workout-action": {
+            opacity: { xs: 1, md: 0 },
+            transition: theme.transitions.create("opacity"),
+          },
+          [theme.breakpoints.up("md")]: {
+            "&:hover .workout-action": { opacity: 1 },
+          },
         })}
       >
         <Stack direction="row" alignItems="center">
