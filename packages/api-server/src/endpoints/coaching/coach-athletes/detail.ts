@@ -25,11 +25,11 @@ import {
 } from "../../../mappers/lms";
 import { findOrThrow } from "../../../utils";
 import {
+  createStartOfDayCache,
   DAYS_IN_WEEK,
   daysBetweenInTz,
   FOUR_WEEKS,
   MS_PER_DAY,
-  startOfDayInTz,
   startOfTodayInTz,
   startOfWeekInTz,
   TWO_WEEKS,
@@ -183,6 +183,7 @@ const computeConsistencyMetrics = (
   const adherenceRate4w = window28.available > 0 ? window28.completed / window28.available : 0;
 
   const scheduledByDay = new Map<string, { id: string; logged: boolean }[]>();
+  const startOfDay = createStartOfDayCache(tz);
 
   for (const e of enrollments) {
     for (const w of e.trainingPlan.workouts) {
@@ -190,7 +191,7 @@ const computeConsistencyMetrics = (
         continue;
       }
 
-      const dayKey = startOfDayInTz(w.scheduledDate, tz).toISOString();
+      const dayKey = startOfDay(w.scheduledDate).toISOString();
       const dayList = scheduledByDay.get(dayKey) ?? [];
 
       dayList.push({ id: w.id, logged: allLoggedIds.has(w.id) });
