@@ -157,12 +157,16 @@ export const cmsBlogAdminApi = {
       updateData.publishedAt = new Date();
     }
 
-    const updated = await prisma.marketingBlogPost.update({
-      where: { id },
-      data: updateData,
-    });
+    try {
+      const updated = await prisma.marketingBlogPost.update({
+        where: { id },
+        data: updateData,
+      });
 
-    return mapToBlogPost(updated);
+      return mapToBlogPost(updated);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Blog post" });
+    }
   },
 
   toggleBlogPostFeatured: async (id: string): Promise<BlogPost> =>
