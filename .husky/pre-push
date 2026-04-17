@@ -1,1 +1,2 @@
 pnpm dep:check
+pnpm test:coverage
