@@ -41,7 +41,7 @@ export const LoginPage = () => {
   return (
     <Stack spacing={5} alignItems="center">
       <Stack spacing={3} alignItems="center">
-        <Logo />
+        <Logo priority />
 
         <Typography variant="display2" component="h1" textAlign="center">
           The Discipline Program

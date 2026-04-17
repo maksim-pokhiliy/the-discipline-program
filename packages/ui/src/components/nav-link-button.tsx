@@ -25,6 +25,7 @@ export const NavLinkButton = ({ href, exact = false, sx, ...props }: NavLinkButt
       href={href}
       variant="text"
       color={color}
+      aria-current={isActive ? "page" : undefined}
       sx={[navLinkSx, ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
       {...props}
     />

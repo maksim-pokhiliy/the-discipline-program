@@ -27,6 +27,7 @@ export const SidebarLink = ({ text, href, icon, expanded }: SidebarLinkProps) =>
       component={Link}
       href={href}
       selected={isActive}
+      aria-current={isActive ? "page" : undefined}
       sx={{
         px: 2.5,
         justifyContent: expanded ? "initial" : "center",

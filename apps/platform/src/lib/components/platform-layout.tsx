@@ -7,6 +7,7 @@ import { Box, Container, Stack } from "@mui/material";
 import { SessionGuard } from "@repo/auth";
 import { signOut, useSession } from "@repo/auth/client";
 import { type PlatformNavigationConfig } from "@repo/shared";
+import { SkipToContent } from "@repo/ui";
 
 import { PlatformBottomNav } from "@app/lib/components/platform-bottom-nav";
 import { PlatformHeader } from "@app/lib/components/platform-header";
@@ -32,27 +33,7 @@ export const PlatformLayout = ({
   return (
     <SessionGuard>
       <Stack sx={{ minHeight: "100dvh" }}>
-        <Box
-          component="a"
-          href="#main-content"
-          sx={{
-            position: "absolute",
-            left: "-9999px",
-            top: "auto",
-            width: "1px",
-            height: "1px",
-            overflow: "hidden",
-            "&:focus": {
-              position: "static",
-              width: "auto",
-              height: "auto",
-              overflow: "visible",
-              p: 2,
-            },
-          }}
-        >
-          Skip to content
-        </Box>
+        <SkipToContent />
 
         <PlatformHeader
           logoHref={logoHref}
