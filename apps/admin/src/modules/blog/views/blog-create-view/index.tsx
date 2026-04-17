@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { type z } from "zod";
 
 import {
   BlogCategory,
@@ -14,10 +15,12 @@ import { useCreateBlogPost } from "@app/lib/hooks";
 
 import { BlogPostForm } from "../../components";
 
+type CreateBlogPostInput = z.input<typeof createBlogPostSchema>;
+
 export const BlogCreateView = () => {
   const { mutate: createPost, isPending } = useCreateBlogPost();
 
-  const methods = useForm<CreateBlogPostData>({
+  const methods = useForm<CreateBlogPostInput, unknown, CreateBlogPostData>({
     resolver: zodResolver(createBlogPostSchema),
     defaultValues: {
       title: "",

@@ -19,6 +19,7 @@ export type StatsCardProps = {
   tooltip?: string;
   icon?: ReactNode;
   color?: PaletteColorKey;
+  ariaLabel?: string;
   trend?: {
     value: number;
     isPositive: boolean;
@@ -34,12 +35,16 @@ export const StatsCard = ({
   tooltip,
   icon,
   color = "primary",
+  ariaLabel,
   trend,
 }: StatsCardProps) => {
   const config = sizeConfig[size];
 
+  const formattedValue = typeof value === "number" ? value.toLocaleString() : value;
+  const computedAriaLabel = ariaLabel ?? `${title}: ${formattedValue}`;
+
   const card = (
-    <Card sx={{ height: "100%" }} variant="outlined">
+    <Card sx={{ height: "100%" }} variant="outlined" role="group" aria-label={computedAriaLabel}>
       <CardContent>
         <Stack
           spacing={config.spacing}
@@ -72,7 +77,7 @@ export const StatsCard = ({
                 color: theme.palette[color].main,
               })}
             >
-              {typeof value === "number" ? value.toLocaleString() : value}
+              {formattedValue}
             </Typography>
 
             <Stack spacing={1}>

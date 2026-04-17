@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { type z } from "zod";
 
 import { FormView } from "@repo/ui";
 
@@ -14,10 +15,12 @@ import {
   type ProductFormData,
 } from "../../components";
 
+type ProductFormInput = z.input<typeof productFormSchema>;
+
 export const ProductCreateView = () => {
   const { mutate: createProduct, isPending } = useCreateProduct();
 
-  const methods = useForm<ProductFormData>({
+  const methods = useForm<ProductFormInput, unknown, ProductFormData>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       title: "",

@@ -45,13 +45,14 @@ export const PlatformBottomNav = ({ navigation }: PlatformBottomNavProps) => {
       value={activeIndex}
       sx={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: "appBar" }}
     >
-      {navigation.items.map((item) => (
+      {navigation.items.map((item, index) => (
         <BottomNavigationAction
           key={item.href}
           component={Link}
           href={item.href}
           label={item.label}
           icon={ICON_MAP[item.icon]}
+          aria-current={index === activeIndex ? "page" : undefined}
         />
       ))}
     </BottomNavigation>
