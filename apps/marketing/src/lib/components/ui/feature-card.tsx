@@ -1,8 +1,9 @@
-import { type SvgIconComponent } from "@mui/icons-material";
-import { Stack, Typography } from "@mui/material";
+import { type ComponentType } from "react";
+
+import { Stack, type SvgIconProps, Typography } from "@mui/material";
 
 type FeatureCardProps = {
-  icon: SvgIconComponent;
+  icon: ComponentType<SvgIconProps>;
   title: string;
   description: string;
 };
