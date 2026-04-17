@@ -21,7 +21,8 @@
     "@mui/icons-material": "catalog:",
     "@mui/material": "catalog:",
     "@mui/material-nextjs": "catalog:",
-    "@repo/shared": "workspace:*"
+    "@repo/shared": "workspace:*",
+    "framer-motion": "catalog:"
   },
   "peerDependencies": {
     "react": "catalog:",

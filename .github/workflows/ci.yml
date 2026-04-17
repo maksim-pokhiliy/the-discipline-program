@@ -135,7 +135,7 @@ jobs:
         run: pnpm --filter @repo/api-server db:push --skip-generate --accept-data-loss
 
       - name: Run tests
-        run: pnpm test
+        run: pnpm test:coverage
 
   build:
     name: Build
