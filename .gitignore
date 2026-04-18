@@ -39,6 +39,9 @@ yarn-error.log*
 # Audit artifacts
 .audit/
 
+# Claude Code runtime
+.claude/scheduled_tasks.lock
+
 # Misc
 .DS_Store
 *.pem
