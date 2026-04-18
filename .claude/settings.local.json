@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__plugin_vercel_vercel__list_teams",
+      "mcp__plugin_vercel_vercel__list_projects",
+      "mcp__plugin_vercel_vercel__get_project",
+      "Bash(rm -rf e2e/.auth e2e/.env e2e/global-setup.ts e2e/global-teardown.ts e2e/playwright.config.ts)",
+      "Bash(rm -rf e2e/helpers e2e/admin e2e/marketing e2e/platform e2e/empty-db)",
+      "Bash(find packages *)",
+      "PowerShell(Get-Process node, pnpm, next -ErrorAction SilentlyContinue | Select-Object Id, ProcessName, CPU, @{N='WorkingSetMB';E={[math]::Round\\($_.WorkingSet64/1MB,1\\)}} | Format-Table -AutoSize)",
+      "PowerShell(Stop-Process *)"
+    ]
+  }
+}
