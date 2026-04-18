@@ -3,6 +3,5 @@ node_modules
 build
 dist
 out
-coverage
 .pnpm-store
 *.lock

@@ -9,7 +9,6 @@
     "./types": "./src/types.ts"
   },
   "scripts": {
-    "test": "cross-env SKIP_ENV_VALIDATION=1 vitest run",
     "check-types": "tsc --noEmit",
     "lint": "eslint . --fix --max-warnings 0",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
