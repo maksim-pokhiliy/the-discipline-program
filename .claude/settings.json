@@ -17,12 +17,6 @@
       "Bash(task *)"
     ],
     "defaultMode": "default",
-    "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(./secrets/**)",
-      "Read(./**/id_rsa*)",
-      "Read(./**/*.pem)"
-    ]
+    "deny": ["Read(./secrets/**)", "Read(./**/id_rsa*)", "Read(./**/*.pem)"]
   }
 }

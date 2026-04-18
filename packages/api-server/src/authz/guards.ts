@@ -1,8 +1,22 @@
+import { UserRole } from "@repo/contracts/iam/auth";
 import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../db/client";
+import { ROLE_MAP } from "../mappers/iam";
 import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../mappers/lms";
+import { findOrThrow } from "../utils";
+
+export const requireAdmin = async (userId: string): Promise<void> => {
+  const user = await findOrThrow(
+    prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
+    "User",
+  );
+
+  if (ROLE_MAP[user.role] !== UserRole.ADMIN) {
+    throw new ForbiddenError("Admin role required");
+  }
+};
 
 export const resolveCoachId = async (userId: string): Promise<string> => {
   const profile = await prisma.coachProfile.findUnique({

@@ -16,7 +16,6 @@ catalog:
   "@mui/icons-material": ^7.3.6
   "@mui/material": ^7.3.6
   "@mui/material-nextjs": ^9.0.0
-  "@next/bundle-analyzer": 16.2.4
   "@upstash/ratelimit": ^2.0.5
   "@upstash/redis": ^1.34.3
   "@next/eslint-plugin-next": 16.2.4

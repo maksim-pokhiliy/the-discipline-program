@@ -11,7 +11,7 @@ import {
   getBenchmarkDefinitionsResponseSchema,
 } from "@repo/contracts/lms/benchmark-definition";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withAdminAuth, withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
   withAuthRateLimit(
@@ -23,7 +23,7 @@ export const GET = withPlatformAuth(
   ),
 );
 
-export const POST = withPlatformAuth(
+export const POST = withAdminAuth(
   withAuthRateLimit(
     createAuthPostHandler(
       (userId, data) => lmsBenchmarkDefinitionApi.create(userId, data),

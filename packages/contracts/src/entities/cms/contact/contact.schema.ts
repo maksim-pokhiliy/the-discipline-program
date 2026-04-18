@@ -10,7 +10,10 @@ const isControlChar = (code: number): boolean =>
   code === 127;
 
 const stripHtmlAndControlChars = (value: string): string => {
-  const withoutTags = value.replace(/<[^>]*>/g, "");
+  const withoutScripts = value
+    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
+  const withoutTags = withoutScripts.replace(/<[^>]*>/g, "");
   let result = "";
 
   for (const char of withoutTags) {

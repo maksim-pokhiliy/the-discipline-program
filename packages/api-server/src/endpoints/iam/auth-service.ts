@@ -82,6 +82,13 @@ export const iamAuthService = {
     };
   },
 
+  incrementTokenVersion: async (userId: string): Promise<void> => {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { tokenVersion: { increment: 1 } },
+    });
+  },
+
   getUserById: async (id: string): Promise<UserById | null> => {
     const user = await prisma.user.findUnique({
       where: { id },

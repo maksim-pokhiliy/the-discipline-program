@@ -15,7 +15,7 @@ import {
   updateBenchmarkDefinitionResponseSchema,
 } from "@repo/contracts/lms/benchmark-definition";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withAdminAuth, withPlatformAuth } from "@app/lib/server/auth";
 
 export const GET = withPlatformAuth(
   withAuthRateLimit(
@@ -28,7 +28,7 @@ export const GET = withPlatformAuth(
   ),
 );
 
-export const PUT = withPlatformAuth(
+export const PUT = withAdminAuth(
   withAuthRateLimit(
     createAuthPutByParamHandler(
       (userId, { definitionId }, data) =>
@@ -41,7 +41,7 @@ export const PUT = withPlatformAuth(
   ),
 );
 
-export const DELETE = withPlatformAuth(
+export const DELETE = withAdminAuth(
   withAuthRateLimit(
     createAuthDeleteHandler(
       (userId, { definitionId }) => lmsBenchmarkDefinitionApi.delete(userId, definitionId),
