@@ -9,7 +9,7 @@
     "lint": "eslint . --fix --max-warnings 0",
     "check-types": "tsc --noEmit",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
-    "analyze": "cross-env ANALYZE=true next build"
+    "analyze": "next experimental-analyze"
   },
   "dependencies": {
     "@sentry/nextjs": "catalog:",
@@ -37,7 +37,6 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@next/bundle-analyzer": "catalog:",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",

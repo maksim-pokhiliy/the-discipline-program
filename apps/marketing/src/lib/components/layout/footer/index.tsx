@@ -21,7 +21,7 @@ export const Footer = ({
       <Divider />
 
       <Toolbar component="footer" sx={{ height: "auto" }}>
-        <Stack divider={<Divider />} sx={{ width: "100%", py: 4 }} spacing={4}>
+        <Stack sx={{ width: "100%", py: 4 }} spacing={4}>
           <Stack direction={{ md: "row" }} justifyContent="space-between" rowGap={2} columnGap={2}>
             <Stack
               direction={{ sm: "column", md: "row" }}
@@ -42,6 +42,8 @@ export const Footer = ({
               ))}
             </Stack>
           </Stack>
+
+          <Divider />
 
           <Stack
             direction={{ md: "row" }}

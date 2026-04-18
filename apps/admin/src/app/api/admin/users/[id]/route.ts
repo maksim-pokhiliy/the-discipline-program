@@ -1,6 +1,6 @@
 import {
+  createAuthPutByParamHandler,
   createGetByIdHandler,
-  createPutHandler,
   RATE_LIMIT_TIER,
   withAuthRateLimit,
 } from "@repo/api-routes";
@@ -30,8 +30,8 @@ export const GET = withAdminAuth(
 );
 export const PUT = withAdminAuth(
   withAuthRateLimit(
-    createPutHandler(
-      iamUserAdminApi.updateRole,
+    createAuthPutByParamHandler(
+      (actorId, { id }, data) => iamUserAdminApi.updateRole(actorId, id, data),
       updateUserRoleParamsSchema,
       updateUserRoleRequestSchema,
       updateUserRoleResponseSchema,

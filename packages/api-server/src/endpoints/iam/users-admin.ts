@@ -5,7 +5,7 @@ import {
   type UpdateUserRoleData,
   type User,
 } from "@repo/contracts/iam/user";
-import { ConflictError } from "@repo/errors";
+import { ConflictError, ForbiddenError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToAdminUserListItem, mapToUser, ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
@@ -26,10 +26,17 @@ export const iamUserAdminApi = {
     return { users };
   },
 
-  updateRole: async (id: string, data: UpdateUserRoleData): Promise<User> => {
+  updateRole: async (actorId: string, id: string, data: UpdateUserRoleData): Promise<User> => {
     const existing = await findOrThrow(prisma.user.findUnique({ where: { id } }), "User");
 
-    if (ROLE_MAP[existing.role] === UserRole.ADMIN && data.role !== UserRole.ADMIN) {
+    const isDemotionFromAdmin =
+      ROLE_MAP[existing.role] === UserRole.ADMIN && data.role !== UserRole.ADMIN;
+
+    if (isDemotionFromAdmin && actorId === id) {
+      throw new ForbiddenError("Cannot demote yourself from admin");
+    }
+
+    if (isDemotionFromAdmin) {
       const adminCount = await prisma.user.count({
         where: { role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] },
       });

@@ -1,12 +1,14 @@
+import { UserRole } from "@repo/contracts/iam/auth";
 import {
   type CreatePlanEnrollmentData,
   type PlanEnrollment,
   type UpdatePlanEnrollmentData,
 } from "@repo/contracts/lms/plan-enrollment";
-import { NotFoundError } from "@repo/errors";
+import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { resolveCoachId, verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
+import { ROLE_MAP } from "../../mappers/iam";
 import { mapToPlanEnrollment, PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
@@ -20,13 +22,17 @@ export const lmsPlanEnrollmentApi = {
 
     await verifyPlanOwnership(planId, coachId);
 
-    await findOrThrow(
+    const athlete = await findOrThrow(
       prisma.user.findUnique({
         where: { id: data.userId },
-        select: { id: true },
+        select: { id: true, role: true },
       }),
       "User",
     );
+
+    if (ROLE_MAP[athlete.role] !== UserRole.USER) {
+      throw new ForbiddenError("Only USER role can be enrolled as athlete");
+    }
 
     try {
       const enrollment = await prisma.planEnrollment.create({

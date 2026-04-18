@@ -1,9 +1,8 @@
 import js from "@eslint/js";
 import eslintConfigPrettier from "eslint-config-prettier";
+import importPlugin from "eslint-plugin-import";
 import turboPlugin from "eslint-plugin-turbo";
 import tseslint from "typescript-eslint";
-
-import importPlugin from "eslint-plugin-import";
 
 export const config = [
   js.configs.recommended,
@@ -90,6 +89,6 @@ export const config = [
     },
   },
   {
-    ignores: ["dist/**", "node_modules/**", ".next/**", ".turbo/**"],
+    ignores: ["dist/**", "node_modules/**", ".next/**", ".turbo/**", "coverage/**"],
   },
 ];

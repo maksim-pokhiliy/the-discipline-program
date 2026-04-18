@@ -5,7 +5,7 @@ import {
 } from "@repo/contracts/lms/benchmark-definition";
 import { ConflictError } from "@repo/errors";
 
-import { resolveCoachId } from "../../authz/guards";
+import { requireAdmin } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { mapToBenchmarkDefinition } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
@@ -32,7 +32,7 @@ export const lmsBenchmarkDefinitionApi = {
     userId: string,
     data: CreateBenchmarkDefinitionData,
   ): Promise<BenchmarkDefinition> => {
-    await resolveCoachId(userId);
+    await requireAdmin(userId);
 
     try {
       const definition = await prisma.benchmarkDefinition.create({ data });
@@ -48,7 +48,7 @@ export const lmsBenchmarkDefinitionApi = {
     definitionId: string,
     data: UpdateBenchmarkDefinitionData,
   ): Promise<BenchmarkDefinition> => {
-    await resolveCoachId(userId);
+    await requireAdmin(userId);
 
     await findOrThrow(
       prisma.benchmarkDefinition.findUnique({ where: { id: definitionId } }),
@@ -68,7 +68,7 @@ export const lmsBenchmarkDefinitionApi = {
   },
 
   delete: async (userId: string, definitionId: string): Promise<void> => {
-    await resolveCoachId(userId);
+    await requireAdmin(userId);
 
     await findOrThrow(
       prisma.benchmarkDefinition.findUnique({ where: { id: definitionId } }),
