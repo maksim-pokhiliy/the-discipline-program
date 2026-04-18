@@ -7,6 +7,9 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "test": "cross-env SKIP_ENV_VALIDATION=1 vitest run --exclude 'e2e/**'",
+    "test:watch": "cross-env SKIP_ENV_VALIDATION=1 vitest --exclude 'e2e/**'",
+    "test:coverage": "cross-env SKIP_ENV_VALIDATION=1 vitest run --exclude 'e2e/**' --coverage",
     "check-types": "turbo run check-types",
     "analyze:admin": "pnpm --filter admin analyze",
     "analyze:marketing": "pnpm --filter marketing analyze",
@@ -17,21 +20,31 @@
     "db:push": "pnpm --filter @repo/api-server db:push",
     "db:seed": "pnpm --filter @repo/api-server db:seed",
     "postinstall": "pnpm --filter @repo/api-server db:generate",
-    "prepare": "husky"
+    "prepare": "husky",
+    "e2e": "pnpm e2e:empty && pnpm e2e:seeded",
+    "e2e:empty": "cross-env EMPTY_DB=1 playwright test --config e2e/playwright.config.ts --project=empty-admin-setup --project=empty-admin --project=empty-platform-coach-setup --project=empty-platform-coach --project=empty-platform-athlete-setup --project=empty-platform-athlete --project=empty-marketing",
+    "e2e:seeded": "playwright test --config e2e/playwright.config.ts --project=admin-setup --project=admin --project=platform-setup --project=platform --project=marketing",
+    "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
+    "e2e:headed": "playwright test --config e2e/playwright.config.ts --headed"
   },
   "devDependencies": {
     "@commitlint/cli": "catalog:",
     "@commitlint/config-conventional": "catalog:",
+    "@playwright/test": "catalog:",
     "@repo/eslint-config": "workspace:*",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "cross-env": "catalog:",
     "dependency-cruiser": "catalog:",
+    "dotenv": "catalog:",
     "eslint": "catalog:",
     "husky": "catalog:",
     "lint-staged": "catalog:",
     "prettier": "catalog:",
     "prettier-plugin-sort-json": "catalog:",
     "turbo": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=20.0.0"

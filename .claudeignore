@@ -29,6 +29,11 @@ next-env.d.ts
 .turbo/
 .vercel/
 dist/
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+e2e/.auth/
 public/assets/
 public/images/
 public/videos/
@@ -40,8 +45,10 @@ apps/*/.next/
 apps/*/.turbo/
 apps/*/dist/
 apps/*/build/
+apps/*/coverage/
 apps/*/storybook-static/
 packages/*/dist/
 packages/*/.turbo/
+packages/*/coverage/
 docs/
 storybook-static/

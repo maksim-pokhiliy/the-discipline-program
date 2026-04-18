@@ -159,144 +159,141 @@ export const coachingCoachActionItemApi = {
     const tz = user.timezone;
 
     try {
-      return prisma.$transaction(
-        async (tx) => {
-          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`reconcile:${coachId}`}))`;
+      return prisma.$transaction(async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`reconcile:${coachId}`}))`;
 
-          const [enrollments, openItems, latestResolved] = await Promise.all([
-            tx.planEnrollment.findMany({
-              where: {
-                status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
-                trainingPlan: { coachId },
-              },
-              include: createEnrollmentInclude(coachId),
-            }),
-            tx.coachActionItem.findMany({
-              where: { coachId, status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN] },
-            }),
-            tx.coachActionItem.findMany({
-              where: {
-                coachId,
-                status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
-              },
-              orderBy: { resolvedAt: "desc" },
-              distinct: ["athleteId", "type"],
-            }),
-          ]);
+        const [enrollments, openItems, latestResolved] = await Promise.all([
+          tx.planEnrollment.findMany({
+            where: {
+              status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
+              trainingPlan: { coachId },
+            },
+            include: createEnrollmentInclude(coachId),
+          }),
+          tx.coachActionItem.findMany({
+            where: { coachId, status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN] },
+          }),
+          tx.coachActionItem.findMany({
+            where: {
+              coachId,
+              status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
+            },
+            orderBy: { resolvedAt: "desc" },
+            distinct: ["athleteId", "type"],
+          }),
+        ]);
 
-          const conditions = computeConditions(enrollments, tz);
+        const conditions = computeConditions(enrollments, tz);
 
-          const openByKey = new Map<string, PrismaCoachActionItemRecord>();
-          const duplicates: PrismaCoachActionItemRecord[] = [];
+        const openByKey = new Map<string, PrismaCoachActionItemRecord>();
+        const duplicates: PrismaCoachActionItemRecord[] = [];
 
-          for (const item of openItems) {
-            const key = `${item.type}:${item.athleteId}`;
+        for (const item of openItems) {
+          const key = `${item.type}:${item.athleteId}`;
 
-            if (openByKey.has(key)) {
-              duplicates.push(item);
-            } else {
-              openByKey.set(key, item);
-            }
+          if (openByKey.has(key)) {
+            duplicates.push(item);
+          } else {
+            openByKey.set(key, item);
           }
+        }
 
-          const resolvedByKey = new Map(
-            latestResolved.map((item) => [`${item.type}:${item.athleteId}`, item]),
-          );
+        const resolvedByKey = new Map(
+          latestResolved.map((item) => [`${item.type}:${item.athleteId}`, item]),
+        );
 
-          const activeAthleteIds = new Set(enrollments.map((e) => e.user.id));
+        const activeAthleteIds = new Set(enrollments.map((e) => e.user.id));
 
-          let created = 0;
-          let updated = 0;
-          let resolved = 0;
+        let created = 0;
+        let updated = 0;
+        let resolved = 0;
 
-          for (const item of duplicates) {
-            await tx.coachActionItem.update({
-              where: { id: item.id },
-              data: {
-                status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
-                resolvedAt: new Date(),
-                resolveReason:
-                  ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[
-                    ActionItemResolveReason.AUTO_CONDITION_CLEARED
-                  ],
-              },
-            });
-            resolved++;
-          }
+        for (const item of duplicates) {
+          await tx.coachActionItem.update({
+            where: { id: item.id },
+            data: {
+              status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
+              resolvedAt: new Date(),
+              resolveReason:
+                ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[
+                  ActionItemResolveReason.AUTO_CONDITION_CLEARED
+                ],
+            },
+          });
+          resolved++;
+        }
 
-          for (const condition of conditions) {
-            const key = `${condition.type}:${condition.athleteId}`;
-            const existingOpen = openByKey.get(key);
+        for (const condition of conditions) {
+          const key = `${condition.type}:${condition.athleteId}`;
+          const existingOpen = openByKey.get(key);
 
-            if (existingOpen) {
-              const needsUpdate =
-                existingOpen.message !== condition.message ||
-                ACTION_ITEM_SEVERITY_MAP[existingOpen.severity] !== condition.severity;
+          if (existingOpen) {
+            const needsUpdate =
+              existingOpen.message !== condition.message ||
+              ACTION_ITEM_SEVERITY_MAP[existingOpen.severity] !== condition.severity;
 
-              if (needsUpdate) {
-                await tx.coachActionItem.update({
-                  where: { id: existingOpen.id },
-                  data: {
-                    message: condition.message,
-                    severity: ACTION_ITEM_SEVERITY_TO_PRISMA_MAP[condition.severity],
-                    metadata: condition.metadata,
-                  },
-                });
-                updated++;
-              }
-
-              openByKey.delete(key);
-              continue;
+            if (needsUpdate) {
+              await tx.coachActionItem.update({
+                where: { id: existingOpen.id },
+                data: {
+                  message: condition.message,
+                  severity: ACTION_ITEM_SEVERITY_TO_PRISMA_MAP[condition.severity],
+                  metadata: condition.metadata,
+                },
+              });
+              updated++;
             }
 
-            const latestResolvedItem = resolvedByKey.get(key);
-
-            if (
-              latestResolvedItem &&
-              conditionMatchesResolved(condition, asJsonRecord(latestResolvedItem.metadata))
-            ) {
-              continue;
-            }
-
-            await tx.coachActionItem.create({
-              data: {
-                coachId,
-                athleteId: condition.athleteId,
-                type: ACTION_ITEM_TYPE_TO_PRISMA_MAP[condition.type],
-                severity: ACTION_ITEM_SEVERITY_TO_PRISMA_MAP[condition.severity],
-                message: condition.message,
-                metadata: condition.metadata,
-              },
-            });
-            created++;
+            openByKey.delete(key);
+            continue;
           }
 
-          for (const [key, item] of openByKey) {
-            const athleteId = key.split(":")[1];
+          const latestResolvedItem = resolvedByKey.get(key);
 
-            if (!athleteId) {
-              continue;
-            }
-
-            const reason = activeAthleteIds.has(athleteId)
-              ? ActionItemResolveReason.AUTO_CONDITION_CLEARED
-              : ActionItemResolveReason.AUTO_ENROLLMENT_ENDED;
-
-            await tx.coachActionItem.update({
-              where: { id: item.id },
-              data: {
-                status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
-                resolvedAt: new Date(),
-                resolveReason: ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[reason],
-              },
-            });
-            resolved++;
+          if (
+            latestResolvedItem &&
+            conditionMatchesResolved(condition, asJsonRecord(latestResolvedItem.metadata))
+          ) {
+            continue;
           }
 
-          return { created, updated, resolved, coachId };
-        },
-        { timeout: 15_000, maxWait: 10_000 },
-      );
+          await tx.coachActionItem.create({
+            data: {
+              coachId,
+              athleteId: condition.athleteId,
+              type: ACTION_ITEM_TYPE_TO_PRISMA_MAP[condition.type],
+              severity: ACTION_ITEM_SEVERITY_TO_PRISMA_MAP[condition.severity],
+              message: condition.message,
+              metadata: condition.metadata,
+            },
+          });
+          created++;
+        }
+
+        for (const [key, item] of openByKey) {
+          const athleteId = key.split(":")[1];
+
+          if (!athleteId) {
+            continue;
+          }
+
+          const reason = activeAthleteIds.has(athleteId)
+            ? ActionItemResolveReason.AUTO_CONDITION_CLEARED
+            : ActionItemResolveReason.AUTO_ENROLLMENT_ENDED;
+
+          await tx.coachActionItem.update({
+            where: { id: item.id },
+            data: {
+              status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
+              resolvedAt: new Date(),
+              resolveReason: ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[reason],
+            },
+          });
+          resolved++;
+        }
+
+        return { created, updated, resolved, coachId };
+      });
     } catch (error) {
       return handlePrismaError(error, { entity: "Action item" });
     }

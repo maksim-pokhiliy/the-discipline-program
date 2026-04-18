@@ -33,12 +33,19 @@
       "cache": false,
       "persistent": true
     },
+    "e2e": {
+      "cache": false,
+      "persistent": false
+    },
     "format": {
       "cache": false,
       "dependsOn": ["^format"]
     },
     "lint": {
       "dependsOn": ["^lint"]
+    },
+    "test": {
+      "cache": false
     }
   }
 }

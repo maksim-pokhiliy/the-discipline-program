@@ -47,6 +47,52 @@ tasks:
     cmds:
       - pnpm check-types
 
+  test:
+    desc: "Run unit/integration tests (Vitest)"
+    cmds:
+      - pnpm test
+
+  test:watch:
+    desc: "Run unit/integration tests in watch mode"
+    cmds:
+      - pnpm test:watch
+
+  test:coverage:
+    desc: "Run unit/integration tests with coverage report (text + html in ./coverage)"
+    cmds:
+      - pnpm test:coverage
+
+  e2e:
+    desc: "Run all E2E browser tests (empty DB + seeded DB, Playwright headless)"
+    cmds:
+      - pnpm e2e
+
+  e2e:empty:
+    desc: "Run E2E tests against an empty database"
+    cmds:
+      - pnpm e2e:empty
+
+  e2e:seeded:
+    desc: "Run E2E tests against the seeded database"
+    cmds:
+      - pnpm e2e:seeded
+
+  e2e:ui:
+    desc: "Run E2E tests with interactive Playwright UI"
+    cmds:
+      - pnpm e2e:ui
+
+  e2e:headed:
+    desc: "Run E2E tests with visible browser"
+    cmds:
+      - pnpm e2e:headed
+
+  test:all:
+    desc: "Run all tests (Vitest + Playwright E2E)"
+    cmds:
+      - task: test
+      - task: e2e
+
   db:generate:
     desc: "Generate Prisma client (run after schema changes)"
     cmds:

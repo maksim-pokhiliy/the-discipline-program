@@ -3,6 +3,8 @@
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
     "Prisma.prisma",
+    "vitest.explorer",
+    "ms-playwright.playwright",
     "EditorConfig.EditorConfig",
     "YoavBls.pretty-ts-errors"
   ]

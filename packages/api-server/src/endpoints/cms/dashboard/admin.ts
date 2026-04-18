@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import type {
   Currency as PrismaCurrency,
   PriceInterval as PrismaPriceInterval,
@@ -104,15 +103,12 @@ const getUserStats = async (): Promise<UserStats> => {
   const now = new Date();
   const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [total, newThisMonth] = await prisma.$transaction(
-    [
-      prisma.user.count(),
-      prisma.user.count({
-        where: { createdAt: { gte: firstDayOfMonth } },
-      }),
-    ],
-    { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
-  );
+  const [total, newThisMonth] = await prisma.$transaction([
+    prisma.user.count(),
+    prisma.user.count({
+      where: { createdAt: { gte: firstDayOfMonth } },
+    }),
+  ]);
 
   return { total, newThisMonth };
 };
