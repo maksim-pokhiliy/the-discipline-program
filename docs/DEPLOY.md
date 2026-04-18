@@ -71,20 +71,23 @@ All env vars are validated at boot time by `@repo/env` (Zod via `@t3-oss/env-nex
 - **Admin** imports `@repo/env/base` + `@repo/env/auth` + `@repo/env/blob` (in upload endpoint).
 - **Platform** imports `@repo/env/base` + `@repo/env/auth`.
 
-Each app has its own `.env.local` for local development. The `packages/api-server` directory has its own `.env` for Prisma CLI commands.
+Each app has its own `.env.local` for local development. The `packages/api-server` directory has its own `.env` for Prisma CLI commands and tests.
 
 ## CI pipeline
 
-GitHub Actions CI (`.github/workflows/ci.yml`) runs 4 parallel jobs on every PR and push to `main`:
+GitHub Actions CI (`.github/workflows/ci.yml`) runs 5 parallel jobs on every PR and push to `main`:
 
 | Job           | What it does                                                                             |
 | ------------- | ---------------------------------------------------------------------------------------- |
 | `check-types` | `pnpm check-types` — TypeScript across all packages                                      |
 | `lint`        | `pnpm lint` — ESLint across all packages                                                 |
 | `dep-check`   | `pnpm dep:check` — dependency-cruiser boundary rules (enforces `BOUNDED-CONTEXTS.md` §8) |
+| `test`        | `pnpm test` — Vitest with a fresh `postgres:16-alpine` service container                 |
 | `build`       | `pnpm build` — full production build with dummy env vars                                 |
 
 Concurrency: newer pushes to the same ref cancel in-flight runs.
+
+The test job uses a local Postgres container (not the Neon dev database) for isolation and determinism.
 
 ## Rollback procedure
 

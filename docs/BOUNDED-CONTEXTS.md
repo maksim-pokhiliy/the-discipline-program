@@ -153,6 +153,7 @@ Landed in 1.2.C. The `admin/` and `marketing/` parallel folders collapsed into `
 api-server/src/endpoints/cms/
   blog/
     admin.ts        (create / update / delete / toggle featured)
+    admin.test.ts
     # public.ts — pending 1.2.G (blog reads currently live in pages/public.ts)
   contact/
     admin.ts        (triage)
@@ -233,8 +234,10 @@ api-server/src/endpoints/lms/
   benchmark-definition.ts
   plan-enrollment.ts
   training-plan.ts
+  training-plan.test.ts
   user-benchmark.ts
   workout.ts
+  workout.test.ts
   workout-log.ts
   index.ts
 ```
@@ -301,14 +304,20 @@ Landed in 1.2.B (contracts) and 1.2.C (endpoints). Coaching lives mostly flat-pe
 api-server/src/endpoints/coaching/
   athlete-profile.ts
   coach-action-item.ts
+  coach-action-item.test.ts
+  coach-action-item.test-helpers.ts
   coach-athletes/
     index.ts
     detail.ts
     list.ts
   coach-dashboard.ts
+  coach-dashboard.test.ts
   coach-note.ts
   coach-profile.ts
   dashboard-computations.ts       (Coaching-specific read computations, moved from utils/)
+  dashboard-computations.test.ts
+  dashboard-computations.test-helpers.ts
+  dashboard-progress.test.ts
   enrollment-query.ts             (nested Prisma include for enriched enrollment reads)
   index.ts
 ```
@@ -423,7 +432,7 @@ Any domain context that legitimately needs file upload. Storage is a leaf in the
 
 - **DB:** None. Storage has no Prisma models — it writes to a vendor-provided object store, and consumers persist the returned URL as a plain `String` in their own tables (`MarketingBlogPost.coverImage`, `MarketingReview.authorImage`, `Product.image`, etc.).
 - **Contracts:** `packages/contracts/src/entities/storage/upload/` — subpath export `@repo/contracts/storage/upload`.
-- **API — `api-server`:** `packages/api-server/src/endpoints/storage/upload.ts` + `index.ts` barrel. Subpath export `@repo/api-server/storage`. Infrastructure lives at `packages/api-server/src/infrastructure/storage/`.
+- **API — `api-server`:** `packages/api-server/src/endpoints/storage/upload.ts` + `upload.test.ts` + `index.ts` barrel. Subpath export `@repo/api-server/storage`. Infrastructure lives at `packages/api-server/src/infrastructure/storage/`.
 - **Consumer apps:** `apps/admin` — route handler + UI form components + mutation hooks. No other app consumes Storage today.
 
 ### Target state

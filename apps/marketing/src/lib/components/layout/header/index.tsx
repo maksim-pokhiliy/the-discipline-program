@@ -8,7 +8,7 @@ import { Drawer } from "./drawer";
 import { Navigation } from "./navigation";
 
 export const MarketingHeader = () => {
-  const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"), { noSsr: true });
+  const isMobile = useMediaQuery((theme) => theme.breakpoints.down("md"));
 
   return (
     <AppBar
