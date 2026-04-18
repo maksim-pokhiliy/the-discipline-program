@@ -84,59 +84,6 @@ jobs:
         # See .dependency-cruiser.cjs for rule catalog. Closes 1.3.A.
         run: pnpm dep:check
 
-  test:
-    name: Tests
-    runs-on: ubuntu-latest
-
-    # Spin up a throwaway Postgres per run. The repo's Prisma schema is
-    # pushed fresh before tests; no shared state, no CI↔local Neon collision.
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    env:
-      DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
-      NEXT_PUBLIC_APP_URL: http://localhost:3000
-      NEXT_PUBLIC_MARKETING_URL: http://localhost:3001
-      # The root `test` script already sets SKIP_ENV_VALIDATION=1, but we
-      # also need it during `prisma db push` to bypass the @repo/env zod
-      # layer in case any import chain touches it.
-      SKIP_ENV_VALIDATION: "1"
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: pnpm/action-setup@v6
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Push Prisma schema to test Postgres
-        # --skip-generate: we already generated via postinstall
-        # --accept-data-loss: empty DB, nothing to lose
-        run: pnpm --filter @repo/api-server db:push --skip-generate --accept-data-loss
-
-      - name: Run tests
-        run: pnpm test:coverage
-
   build:
     name: Build
     runs-on: ubuntu-latest

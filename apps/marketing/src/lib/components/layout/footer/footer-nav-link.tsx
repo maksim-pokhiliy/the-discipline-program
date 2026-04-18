@@ -17,7 +17,7 @@ type FooterNavLinkProps = {
 
 export const FooterNavLink = ({ text, href }: FooterNavLinkProps) => {
   const pathname = usePathname();
-  const isActive = pathname === href;
+  const isActive = pathname !== null && pathname === href;
 
   return (
     <Typography
