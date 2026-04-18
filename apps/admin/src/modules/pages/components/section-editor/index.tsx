@@ -88,7 +88,7 @@ export const SectionEditor = ({
 
   const methods = useForm<UpdatePageSectionData["data"]>({
     defaultValues: safeDefaultValues,
-    resolver: currentSchema ? zodResolver(currentSchema) : undefined,
+    resolver: currentSchema ? zodResolver(currentSchema.partial()) : undefined,
     mode: "onChange",
   });
 

@@ -69,7 +69,7 @@ export const cmsPagesAdminApi = {
         .map((s) => ({
           id: s.id,
           section: s.section,
-          data: SECTION_SCHEMAS[s.section].parse(asJsonRecord(s.data) ?? {}),
+          data: SECTION_SCHEMAS[s.section].partial().parse(asJsonRecord(s.data) ?? {}),
           updatedAt: s.updatedAt,
         })),
     };

@@ -19,7 +19,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "db:seed:pages": "tsx prisma/seed-pages.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

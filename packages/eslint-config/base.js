@@ -81,7 +81,7 @@ export const config = [
     },
   },
   {
-    files: ["**/prisma/seed.ts"],
+    files: ["**/prisma/seed.ts", "**/prisma/seed-*.ts"],
     rules: {
       "@typescript-eslint/no-non-null-assertion": "off",
       "max-lines": "off",

@@ -8,6 +8,7 @@ import {
   getFaqPageResponseSchema,
   getHomePageResponseSchema,
   getStorefrontProgramsPageResponseSchema,
+  updatePageSectionBodySchema,
 } from "./pages-api.schema";
 import { PageSlug } from "./pages.constants";
 
@@ -225,5 +226,30 @@ describe("pages-api schema empty collections", () => {
     const result = adminPageDetailsSchema.safeParse({ slug: PageSlug.HOME });
 
     expect(result.success).toBe(false);
+  });
+
+  it("adminPageDetailsSchema accepts section with empty data (bootstrap state)", () => {
+    const result = adminPageDetailsSchema.safeParse({
+      slug: PageSlug.HOME,
+      sections: [
+        {
+          id: "clxxxxxxxxxxxxxxxxxxx",
+          section: "home:hero",
+          data: {},
+          updatedAt: new Date(),
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("updatePageSectionBodySchema accepts partial section data", () => {
+    const result = updatePageSectionBodySchema.safeParse({
+      section: "home:hero",
+      data: {},
+    });
+
+    expect(result.success).toBe(true);
   });
 });

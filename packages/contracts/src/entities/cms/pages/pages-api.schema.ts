@@ -113,7 +113,7 @@ const SECTION_DEFINITIONS = [
 ] as const;
 
 const sectionVariants = SECTION_DEFINITIONS.map(([key, schema]) =>
-  z.object({ section: z.literal(key), data: schema }),
+  z.object({ section: z.literal(key), data: schema.partial() }),
 );
 
 const toNonEmptyArray = <T>(arr: T[]): [T, ...T[]] => {
@@ -139,7 +139,7 @@ const adminSectionVariants = SECTION_DEFINITIONS.map(([key, schema]) =>
   z.object({
     id: z.string().cuid(),
     section: z.literal(key),
-    data: schema,
+    data: schema.partial(),
     updatedAt: z.date(),
   }),
 );
