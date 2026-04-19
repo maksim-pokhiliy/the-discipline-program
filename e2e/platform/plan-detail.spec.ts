@@ -6,6 +6,7 @@ test.describe("Coach Plan Detail", () => {
     await expect(page.getByRole("heading", { name: "Training Plans" })).toBeVisible({
       timeout: 15_000,
     });
+    await expect(page.getByText("Loading plans...")).toBeHidden({ timeout: 15_000 });
     await page.locator("a[href*='/coach/plans/']").first().click();
     await expect(page).toHaveURL(/\/coach\/plans\/.+/);
   };

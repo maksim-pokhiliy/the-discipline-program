@@ -34,15 +34,11 @@ export const BlogArticleHero = ({ post, labels }: BlogArticleHeroProps) => {
         {post.excerpt}
       </Typography>
 
-      <Stack
-        direction="row"
-        spacing={3}
-        alignItems="center"
-        sx={{ color: "text.secondary" }}
-        divider={<Typography variant="body1">•</Typography>}
-      >
+      <Stack direction="row" spacing={3} alignItems="center" sx={{ color: "text.secondary" }}>
         <Typography variant="body1">{post.authorName}</Typography>
+        <Typography variant="body1">•</Typography>
         <Typography variant="body1">{publishedDate}</Typography>
+        <Typography variant="body1">•</Typography>
         <Typography variant="body1">
           {post.readTime} {labels.minReadSuffix}
         </Typography>
