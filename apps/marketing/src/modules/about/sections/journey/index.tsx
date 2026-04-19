@@ -24,7 +24,7 @@ export const AboutJourneySection = ({ journey }: AboutJourneySectionProps) => {
         />
 
         <Stack spacing={6}>
-          {journey.timeline.map((item, index) => (
+          {(journey.timeline ?? []).map((item, index) => (
             <Grid container key={item.year} alignItems="center">
               <Grid size={{ xs: 12, md: 6 }} order={{ xs: 2, md: index % 2 === 0 ? 1 : 2 }}>
                 <Box

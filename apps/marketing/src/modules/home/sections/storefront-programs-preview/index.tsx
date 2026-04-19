@@ -33,7 +33,7 @@ export const HomeStorefrontProgramsPreview = ({
           <Grid key={product.id} size={{ xs: 12, md: 4 }}>
             <ProductCard
               product={product}
-              freeLabel={programs.freeLabel}
+              freeLabel={programs.freeLabel ?? ""}
               onAction={() => modal.open(product)}
               actionLabel={programs.cardActionLabel}
             />
@@ -49,9 +49,9 @@ export const HomeStorefrontProgramsPreview = ({
 
       <ProductModal
         product={modal.selectedProduct}
-        freeLabel={programs.freeLabel}
-        dismissLabel={programs.modalDismissLabel}
-        actionLabel={programs.modalActionLabel}
+        freeLabel={programs.freeLabel ?? ""}
+        dismissLabel={programs.modalDismissLabel ?? ""}
+        actionLabel={programs.modalActionLabel ?? ""}
         open={modal.isOpen}
         onClose={modal.close}
       />

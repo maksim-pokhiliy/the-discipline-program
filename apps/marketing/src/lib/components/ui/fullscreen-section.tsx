@@ -33,15 +33,15 @@ const fadeSlideUp: Variants = {
 };
 
 type FullscreenSectionProps = {
-  backgroundImage: string;
+  backgroundImage?: string;
   priority?: boolean;
   sx?: SxProps<Theme>;
 } & (
   | { children: ReactNode; title?: never; subtitle?: never; buttonText?: never; buttonHref?: never }
   | {
       children?: never;
-      title: string;
-      subtitle: string;
+      title?: string;
+      subtitle?: string;
       buttonText?: string;
       buttonHref?: string;
     }
@@ -72,14 +72,16 @@ export const FullscreenSection = ({
         ...(Array.isArray(sxOverride) ? sxOverride : sxOverride ? [sxOverride] : []),
       ]}
     >
-      <Image
-        src={backgroundImage}
-        alt=""
-        fill
-        priority={priority}
-        sizes="100vw"
-        style={{ objectFit: "cover" }}
-      />
+      {backgroundImage && (
+        <Image
+          src={backgroundImage}
+          alt=""
+          fill
+          priority={priority}
+          sizes="100vw"
+          style={{ objectFit: "cover" }}
+        />
+      )}
       <ImageOverlay />
       <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
         <MotionBox

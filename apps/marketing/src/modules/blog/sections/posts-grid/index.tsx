@@ -24,8 +24,8 @@ export const BlogPostsGrid = ({ grid, posts }: BlogPostsGridProps) => {
               coverImage={post.coverImage}
               readTime={post.readTime}
               category={post.category}
-              readMoreLabel={grid.readMoreLabel}
-              minReadSuffix={grid.minReadSuffix}
+              readMoreLabel={grid.readMoreLabel ?? ""}
+              minReadSuffix={grid.minReadSuffix ?? ""}
             />
           </Grid>
         ))}

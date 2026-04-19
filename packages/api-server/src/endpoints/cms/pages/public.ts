@@ -22,14 +22,14 @@ import { cmsBlogPublicApi } from "../blog/public";
 const extractSectionDataOrNull = <TKey extends SectionSchemaKey>(
   sections: { section: string; data: Prisma.JsonValue }[],
   sectionName: TKey,
-): z.infer<(typeof SECTION_SCHEMAS)[TKey]> | null => {
+): Partial<z.infer<(typeof SECTION_SCHEMAS)[TKey]>> | null => {
   const section = sections.find((s) => s.section === sectionName);
 
   if (!section) {
     return null;
   }
 
-  const result = SECTION_SCHEMAS[sectionName].safeParse(section.data);
+  const result = SECTION_SCHEMAS[sectionName].partial().safeParse(section.data);
 
   if (!result.success) {
     defaultMonitoring.captureException(result.error, {
@@ -41,7 +41,13 @@ const extractSectionDataOrNull = <TKey extends SectionSchemaKey>(
     return null;
   }
 
-  return result.data;
+  const parsed = result.data as Partial<z.infer<(typeof SECTION_SCHEMAS)[TKey]>>;
+
+  if (Object.keys(parsed).length === 0) {
+    return null;
+  }
+
+  return parsed;
 };
 
 export const cmsPagesPublicApi = {

@@ -35,7 +35,7 @@ export const HomeFeaturesSection = ({ whyChoose }: HomeFeaturesSectionProps) => 
   return (
     <ContentSection id="why-choose" title={whyChoose.title} subtitle={whyChoose.subtitle}>
       <Grid container spacing={6}>
-        {whyChoose.features.map((feature) => (
+        {(whyChoose.features ?? []).map((feature) => (
           <Grid key={feature.id} size={{ xs: 12, sm: 6, md: 4 }}>
             <FeatureCard
               icon={FEATURE_ICONS[feature.iconName] ?? FALLBACK_ICON}

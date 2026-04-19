@@ -74,6 +74,6 @@ export const blogLabelsSchema = z.object({
 export const blogPostPageDataSchema = z.object({
   post: publicBlogPostSchema,
   relatedPosts: z.array(publicBlogPostPreviewSchema),
-  relatedSectionTitle: z.string(),
-  labels: blogLabelsSchema,
+  relatedSectionTitle: z.string().optional(),
+  labels: blogLabelsSchema.partial(),
 });

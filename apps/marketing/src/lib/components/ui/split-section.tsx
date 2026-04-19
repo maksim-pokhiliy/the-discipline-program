@@ -6,7 +6,7 @@ import Image from "next/image";
 import { ImageOverlay } from "./image-overlay";
 
 type SplitSectionProps = {
-  backgroundImage: string;
+  backgroundImage?: string;
   imageContent?: ReactNode;
   surface?: "base" | "raised";
   children: ReactNode;
@@ -29,13 +29,15 @@ export const SplitSection = ({
           minHeight: { xs: 300, md: "auto" },
         }}
       >
-        <Image
-          src={backgroundImage}
-          alt=""
-          fill
-          sizes="(max-width: 900px) 100vw, 50vw"
-          style={{ objectFit: "cover" }}
-        />
+        {backgroundImage && (
+          <Image
+            src={backgroundImage}
+            alt=""
+            fill
+            sizes="(max-width: 900px) 100vw, 50vw"
+            style={{ objectFit: "cover" }}
+          />
+        )}
         <ImageOverlay />
         {imageContent && (
           <Box

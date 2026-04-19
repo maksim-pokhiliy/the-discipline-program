@@ -17,14 +17,14 @@ import { isPublishedPost, mapToPublicBlogPost } from "../../../mappers/cms";
 const extractSectionData = <TKey extends SectionSchemaKey>(
   sections: { section: string; data: Prisma.JsonValue }[],
   sectionName: TKey,
-): z.infer<(typeof SECTION_SCHEMAS)[TKey]> => {
+): Partial<z.infer<(typeof SECTION_SCHEMAS)[TKey]>> => {
   const section = sections.find((s) => s.section === sectionName);
 
   if (!section) {
     throw new NotFoundError(`Required section '${sectionName}' missing in database`);
   }
 
-  const result = SECTION_SCHEMAS[sectionName].safeParse(section.data);
+  const result = SECTION_SCHEMAS[sectionName].partial().safeParse(section.data);
 
   if (!result.success) {
     defaultMonitoring.captureException(result.error, {
@@ -35,7 +35,7 @@ const extractSectionData = <TKey extends SectionSchemaKey>(
     throw new NotFoundError(`Required section '${sectionName}' has invalid data`);
   }
 
-  return result.data;
+  return result.data as Partial<z.infer<(typeof SECTION_SCHEMAS)[TKey]>>;
 };
 
 export const cmsBlogPublicApi = {

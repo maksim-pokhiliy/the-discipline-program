@@ -31,48 +31,48 @@ import {
 } from "./pages.schema";
 
 export const getHomePageResponseSchema = z.object({
-  hero: homePageHeroSchema.nullable(),
-  whyChoose: homePageWhyChooseSchema.nullable(),
-  storefront: homePageStorefrontProgramsSchema.nullable(),
-  reviews: homePageReviewsSchema.nullable(),
-  contact: homePageContactSchema.nullable(),
+  hero: homePageHeroSchema.partial().nullable(),
+  whyChoose: homePageWhyChooseSchema.partial().nullable(),
+  storefront: homePageStorefrontProgramsSchema.partial().nullable(),
+  reviews: homePageReviewsSchema.partial().nullable(),
+  contact: homePageContactSchema.partial().nullable(),
   productsList: z.array(productSchema),
   reviewsList: z.array(reviewSchema),
 });
 
 export const getStorefrontProgramsPageResponseSchema = z.object({
-  hero: storefrontProgramsPageHeroSchema.nullable(),
-  grid: storefrontGridSchema.nullable(),
-  cta: storefrontPageCtaSchema.nullable(),
+  hero: storefrontProgramsPageHeroSchema.partial().nullable(),
+  grid: storefrontGridSchema.partial().nullable(),
+  cta: storefrontPageCtaSchema.partial().nullable(),
   productsList: z.array(productSchema),
 });
 
 export const getAboutPageResponseSchema = z.object({
-  hero: aboutPageHeroSchema.nullable(),
-  journey: aboutPageJourneySchema.nullable(),
-  credentials: aboutPageCredentialsSchema.nullable(),
-  personal: aboutPagePersonalSchema.nullable(),
-  cta: aboutPageCtaSchema.nullable(),
+  hero: aboutPageHeroSchema.partial().nullable(),
+  journey: aboutPageJourneySchema.partial().nullable(),
+  credentials: aboutPageCredentialsSchema.partial().nullable(),
+  personal: aboutPagePersonalSchema.partial().nullable(),
+  cta: aboutPageCtaSchema.partial().nullable(),
 });
 
 export const getBlogPageResponseSchema = z.object({
-  hero: blogPageHeroSchema.nullable(),
-  grid: blogGridSchema.nullable(),
+  hero: blogPageHeroSchema.partial().nullable(),
+  grid: blogGridSchema.partial().nullable(),
   featuredPost: publicBlogPostSchema.optional(),
   posts: z.array(publicBlogPostSchema),
   categories: z.array(z.string()),
 });
 
 export const getContactPageResponseSchema = z.object({
-  hero: contactPageHeroSchema.nullable(),
-  form: contactPageFormSchema.nullable(),
+  hero: contactPageHeroSchema.partial().nullable(),
+  form: contactPageFormSchema.partial().nullable(),
   programOptions: z.array(programOptionSchema),
 });
 
 export const getFaqPageResponseSchema = z.object({
-  hero: faqPageHeroSchema.nullable(),
-  content: faqContentSchema.nullable(),
-  cta: faqPageCtaSchema.nullable(),
+  hero: faqPageHeroSchema.partial().nullable(),
+  content: faqContentSchema.partial().nullable(),
+  cta: faqPageCtaSchema.partial().nullable(),
 });
 
 export const adminPageListItemSchema = z.object({
