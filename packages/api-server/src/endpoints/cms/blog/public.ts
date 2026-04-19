@@ -11,6 +11,7 @@ import {
 import { NotFoundError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
+import { defaultMonitoring } from "../../../infrastructure/monitoring";
 import { isPublishedPost, mapToPublicBlogPost } from "../../../mappers/cms";
 
 const extractSectionData = <TKey extends SectionSchemaKey>(
@@ -23,7 +24,18 @@ const extractSectionData = <TKey extends SectionSchemaKey>(
     throw new NotFoundError(`Required section '${sectionName}' missing in database`);
   }
 
-  return SECTION_SCHEMAS[sectionName].parse(section.data);
+  const result = SECTION_SCHEMAS[sectionName].safeParse(section.data);
+
+  if (!result.success) {
+    defaultMonitoring.captureException(result.error, {
+      level: "warning",
+      tags: { area: "cms.blog.public", section: sectionName },
+      extra: { rawData: section.data },
+    });
+    throw new NotFoundError(`Required section '${sectionName}' has invalid data`);
+  }
+
+  return result.data;
 };
 
 export const cmsBlogPublicApi = {

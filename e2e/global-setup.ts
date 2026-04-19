@@ -24,6 +24,13 @@ const globalSetup = async () => {
 
   if (process.env.EMPTY_DB === "1") {
     await createEmptyDbAuthUsers(dbUrl);
+  } else if (process.env.BOOTSTRAP_DB === "1") {
+    await createEmptyDbAuthUsers(dbUrl);
+    execSync("pnpm --filter @repo/api-server db:seed:pages", {
+      stdio: "inherit",
+      cwd: root,
+      env: { ...process.env, DATABASE_URL: dbUrl, SKIP_ENV_VALIDATION: "1" },
+    });
   } else {
     execSync("pnpm db:seed", {
       stdio: "inherit",

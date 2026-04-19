@@ -159,6 +159,16 @@ export default defineConfig({
         reducedMotion: "reduce",
       },
     },
+    {
+      name: "bootstrapped-marketing",
+      testDir: "./bootstrapped-db/marketing",
+      testMatch: /.*\.bootstrap\.spec\.ts$/,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:3000",
+        reducedMotion: "reduce",
+      },
+    },
   ],
 
   webServer: [
