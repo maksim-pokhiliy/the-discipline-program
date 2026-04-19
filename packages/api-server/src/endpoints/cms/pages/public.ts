@@ -15,6 +15,7 @@ import {
 } from "@repo/contracts/cms/pages";
 
 import { prisma } from "../../../db/client";
+import { defaultMonitoring } from "../../../infrastructure/monitoring";
 import { mapToReview, mapToProduct } from "../../../mappers/cms";
 import { cmsBlogPublicApi } from "../blog/public";
 
@@ -28,7 +29,19 @@ const extractSectionDataOrNull = <TKey extends SectionSchemaKey>(
     return null;
   }
 
-  return SECTION_SCHEMAS[sectionName].parse(section.data);
+  const result = SECTION_SCHEMAS[sectionName].safeParse(section.data);
+
+  if (!result.success) {
+    defaultMonitoring.captureException(result.error, {
+      level: "warning",
+      tags: { area: "cms.pages.public", section: sectionName },
+      extra: { rawData: section.data },
+    });
+
+    return null;
+  }
+
+  return result.data;
 };
 
 export const cmsPagesPublicApi = {
