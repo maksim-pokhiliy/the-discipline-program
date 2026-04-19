@@ -4,10 +4,10 @@ import { alpha, Button, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 
 type CtaSectionProps = {
-  title: string;
+  title?: string;
   subtitle?: string;
-  buttonText: string;
-  buttonHref: string;
+  buttonText?: string;
+  buttonHref?: string;
 };
 
 export const CTASection = ({ title, subtitle, buttonText, buttonHref }: CtaSectionProps) => {
@@ -39,9 +39,17 @@ export const CTASection = ({ title, subtitle, buttonText, buttonHref }: CtaSecti
         </Typography>
       </Stack>
 
-      <Button component={Link} href={buttonHref} variant="contained" color="secondary" size="large">
-        {buttonText}
-      </Button>
+      {buttonText && buttonHref && (
+        <Button
+          component={Link}
+          href={buttonHref}
+          variant="contained"
+          color="secondary"
+          size="large"
+        >
+          {buttonText}
+        </Button>
+      )}
     </Stack>
   );
 };

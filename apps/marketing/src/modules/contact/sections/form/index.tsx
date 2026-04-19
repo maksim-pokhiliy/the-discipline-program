@@ -83,7 +83,7 @@ export const ContactFormSection = ({
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label={fieldLabels.name}
+                label={fieldLabels?.name}
                 required
                 fullWidth
                 disabled={isPending}
@@ -95,11 +95,11 @@ export const ContactFormSection = ({
 
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
-                label={fieldLabels.contact}
+                label={fieldLabels?.contact}
                 required
                 fullWidth
                 disabled={isPending}
-                placeholder={fieldPlaceholders.contact}
+                placeholder={fieldPlaceholders?.contact}
                 error={!!errors.contact}
                 helperText={errors.contact?.message}
                 {...register("contact")}
@@ -109,7 +109,7 @@ export const ContactFormSection = ({
 
           <TextField
             select
-            label={fieldLabels.program}
+            label={fieldLabels?.program}
             fullWidth
             disabled={isPending}
             defaultValue=""
@@ -125,13 +125,13 @@ export const ContactFormSection = ({
           </TextField>
 
           <TextField
-            label={fieldLabels.message}
+            label={fieldLabels?.message}
             required
             multiline
             rows={4}
             fullWidth
             disabled={isPending}
-            placeholder={fieldPlaceholders.message}
+            placeholder={fieldPlaceholders?.message}
             error={!!errors.message}
             helperText={errors.message?.message}
             {...register("message")}

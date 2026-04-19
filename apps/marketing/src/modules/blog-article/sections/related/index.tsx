@@ -7,7 +7,7 @@ import { BlogPostCard } from "@app/lib/components/ui";
 
 type BlogArticleRelatedProps = {
   relatedPosts: PublicBlogPostPreview[];
-  sectionTitle: string;
+  sectionTitle?: string;
   labels: BlogPostPageData["labels"];
 };
 
@@ -29,8 +29,8 @@ export const BlogArticleRelated = ({
                 coverImage={post.coverImage}
                 readTime={post.readTime}
                 category={post.category}
-                readMoreLabel={labels.readMoreLabel}
-                minReadSuffix={labels.minReadSuffix}
+                readMoreLabel={labels.readMoreLabel ?? ""}
+                minReadSuffix={labels.minReadSuffix ?? ""}
               />
             </Grid>
           ))}

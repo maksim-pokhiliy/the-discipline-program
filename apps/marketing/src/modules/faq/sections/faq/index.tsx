@@ -12,7 +12,7 @@ export const FaqSection = ({ content }: FaqSectionProps) => {
   return (
     <ContentSection id="faq-content" title={content.title} subtitle={content.subtitle}>
       <Stack>
-        {content.items.map((item) => (
+        {(content.items ?? []).map((item) => (
           <Accordion key={item.question} variant="outlined">
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Typography variant="h3">{item.question}</Typography>
