@@ -21,7 +21,7 @@ const UserDetailForm: React.FC<UserDetailFormProps> = ({ user }) => {
   const methods = useForm<UpdateUserData>({
     resolver: zodResolver(updateUserSchema),
     defaultValues: {
-      name: user.name,
+      name: user.name ?? "",
       role: user.role,
       timezone: user.timezone,
     },

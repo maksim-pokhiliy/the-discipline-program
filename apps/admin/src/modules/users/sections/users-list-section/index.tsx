@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+import EditIcon from "@mui/icons-material/Edit";
 import {
   Avatar,
   Chip,
@@ -153,15 +153,15 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         align: "right",
         width: "15%",
         render: (user) => (
-          <Stack direction="row" spacing={0} justifyContent="flex-end">
-            <Tooltip title="View">
+          <Stack direction="row" spacing={1} justifyContent="flex-end">
+            <Tooltip title="Edit">
               <IconButton
                 component={Link}
                 href={`/users/${user.id}`}
                 color="primary"
-                aria-label="View"
+                aria-label="Edit"
               >
-                <VisibilityIcon fontSize="small" />
+                <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Delete">

@@ -1,13 +1,15 @@
 "use client";
 
 import { Grid, MenuItem, Stack, TextField } from "@mui/material";
-import { useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 
 import { UserRole } from "@repo/contracts/iam/auth";
 import { type CreateUserData, type UpdateUserData } from "@repo/contracts/iam/user";
 import { FormCard } from "@repo/ui";
 
 import { ROLE_CONFIG } from "../constants";
+
+import { TimezoneAutocomplete } from "./timezone-autocomplete";
 
 type UserFormProps = {
   isEdit?: boolean;
@@ -20,6 +22,7 @@ const CREATE_ROLE_OPTIONS: readonly UserRole[] = [UserRole.USER, UserRole.COACH]
 
 export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) => {
   const {
+    control,
     register,
     formState: { errors },
   } = useFormContext<UserFormValues>();
@@ -53,7 +56,17 @@ export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) =
                 disabled={isLoading}
                 error={!!errors.name}
                 helperText={errors.name?.message}
-                {...register("name")}
+                {...register("name", {
+                  setValueAs: (value: unknown) => {
+                    if (typeof value !== "string") {
+                      return value;
+                    }
+
+                    const trimmed = value.trim();
+
+                    return trimmed === "" ? null : trimmed;
+                  },
+                })}
               />
             </Stack>
           </FormCard>
@@ -64,33 +77,45 @@ export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) =
         <Stack spacing={3}>
           <FormCard title="Access">
             <Stack spacing={3}>
-              <TextField
-                label="Role"
-                select
-                variant="outlined"
-                fullWidth
-                disabled={isLoading}
-                error={!!errors.role}
-                helperText={errors.role?.message}
-                {...register("role")}
-              >
-                {roleOptions.map((role) => (
-                  <MenuItem key={role} value={role}>
-                    {ROLE_CONFIG[role].label}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <TextField
-                label="Timezone"
-                placeholder="e.g. UTC or Europe/Berlin"
-                variant="outlined"
-                fullWidth
-                disabled={isLoading}
-                error={!!errors.timezone}
-                helperText={errors.timezone?.message}
-                {...register("timezone")}
+              <Controller
+                name="role"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Role"
+                    select
+                    variant="outlined"
+                    fullWidth
+                    disabled={isLoading}
+                    error={!!errors.role}
+                    helperText={errors.role?.message}
+                  >
+                    {roleOptions.map((role) => (
+                      <MenuItem key={role} value={role}>
+                        {ROLE_CONFIG[role].label}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                )}
               />
+
+              {isEdit && (
+                <Controller
+                  name="timezone"
+                  control={control}
+                  render={({ field }) => (
+                    <TimezoneAutocomplete
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      disabled={isLoading}
+                      error={!!errors.timezone}
+                      helperText={errors.timezone?.message}
+                    />
+                  )}
+                />
+              )}
             </Stack>
           </FormCard>
         </Stack>

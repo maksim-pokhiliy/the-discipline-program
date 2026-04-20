@@ -22,7 +22,7 @@ export const UsersCreateView = () => {
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       email: "",
-      name: null,
+      name: "",
       role: UserRole.USER,
       timezone: "UTC",
     },

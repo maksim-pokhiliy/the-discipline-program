@@ -17,7 +17,8 @@ export const ProfileCard = ({ user }: ProfileCardProps) => {
       return (
         <FormCard title="Athlete Profile">
           <Typography variant="body2" color="text.secondary">
-            Profile not created yet.
+            No athlete profile yet — filled when the user completes onboarding or their coach
+            enrolls them in a plan.
           </Typography>
         </FormCard>
       );
@@ -49,7 +50,8 @@ export const ProfileCard = ({ user }: ProfileCardProps) => {
       return (
         <FormCard title="Coach Profile">
           <Typography variant="body2" color="text.secondary">
-            Profile not created yet.
+            No coach profile yet — the user becomes a coach by completing their coach onboarding on
+            the platform.
           </Typography>
         </FormCard>
       );
