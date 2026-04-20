@@ -3,16 +3,41 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import type { UpdateUserRoleData } from "@repo/contracts/iam/user";
+import { type ResendInviteResponse } from "@repo/contracts/iam/invite-token";
+import type {
+  CreateUserData,
+  GetUsersPageDataResponse,
+  UpdateUserData,
+  UpdateUserRoleData,
+  User,
+} from "@repo/contracts/iam/user";
+import { createCrudHooks } from "@repo/query";
+import { formatDate } from "@repo/shared";
 
 import { api } from "../api";
 import { adminKeys } from "../api/keys";
 
-export const useUsersPageData = () =>
-  useQuery({
-    queryKey: adminKeys.users.page(),
-    queryFn: api.users.getPageData,
-  });
+import { useNavigate } from "./use-navigate";
+
+const userHooks = createCrudHooks<GetUsersPageDataResponse, User, CreateUserData, UpdateUserData>({
+  entityName: "User",
+  keys: adminKeys.users,
+  api: {
+    getPageData: api.users.getPageData,
+    getById: api.users.getById,
+    create: api.users.create,
+    update: api.users.update,
+    delete: api.users.delete,
+  },
+  redirectTo: "/users",
+  useNavigate,
+  additionalInvalidateKeys: [adminKeys.dashboard()],
+});
+
+export const useUsersPageData = userHooks.usePageData;
+export const useCreateUser = userHooks.useCreate;
+export const useUpdateUser = userHooks.useUpdate;
+export const useDeleteUser = userHooks.useDelete;
 
 export const useUser = (id: string) =>
   useQuery({
@@ -35,6 +60,25 @@ export const useUpdateUserRole = () => {
     },
     onError: (error: Error) => {
       toast.error(error.message || "Failed to update user");
+    },
+  });
+};
+
+export const useResendInvite = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<ResendInviteResponse, Error, string>({
+    mutationFn: (id) => api.users.resendInvite(id),
+    onSuccess: (result, id) => {
+      const expiresAt =
+        result.expiresAt instanceof Date ? result.expiresAt : new Date(result.expiresAt);
+
+      toast.success(`Invite resent — expires at ${formatDate(expiresAt, "medium")}`);
+      queryClient.invalidateQueries({ queryKey: adminKeys.users.byId(id) });
+      queryClient.invalidateQueries({ queryKey: adminKeys.users.page() });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to resend invite");
     },
   });
 };

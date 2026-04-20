@@ -1,4 +1,5 @@
 import {
+  createAuthDeleteHandler,
   createAuthPutByParamHandler,
   createGetByIdHandler,
   RATE_LIMIT_TIER,
@@ -11,9 +12,10 @@ import {
   getAdminUserViewResponseSchema,
 } from "@repo/contracts/coaching/admin-user-view";
 import {
-  updateUserRoleParamsSchema,
-  updateUserRoleRequestSchema,
-  updateUserRoleResponseSchema,
+  deleteUserParamsSchema,
+  updateUserParamsSchema,
+  updateUserRequestSchema,
+  updateUserResponseSchema,
 } from "@repo/contracts/iam/user";
 
 import { withAdminAuth } from "@app/lib/server/auth";
@@ -31,10 +33,19 @@ export const GET = withAdminAuth(
 export const PUT = withAdminAuth(
   withAuthRateLimit(
     createAuthPutByParamHandler(
-      (actorId, { id }, data) => iamUserAdminApi.updateRole(actorId, id, data),
-      updateUserRoleParamsSchema,
-      updateUserRoleRequestSchema,
-      updateUserRoleResponseSchema,
+      (actorId, { id }, data) => iamUserAdminApi.updateUser(actorId, id, data),
+      updateUserParamsSchema,
+      updateUserRequestSchema,
+      updateUserResponseSchema,
+    ),
+    RATE_LIMIT_TIER.API,
+  ),
+);
+export const DELETE = withAdminAuth(
+  withAuthRateLimit(
+    createAuthDeleteHandler(
+      (actorId, { id }) => iamUserAdminApi.deleteUser(actorId, id),
+      deleteUserParamsSchema,
     ),
     RATE_LIMIT_TIER.API,
   ),

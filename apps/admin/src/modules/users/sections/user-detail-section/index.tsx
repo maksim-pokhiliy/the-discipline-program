@@ -1,15 +1,16 @@
 "use client";
 
-import { Grid, MenuItem, Stack, TextField, useTheme } from "@mui/material";
-import { Controller, useFormContext } from "react-hook-form";
+import SendIcon from "@mui/icons-material/Send";
+import { Avatar, Button, Grid, Stack, Typography, useTheme } from "@mui/material";
 
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
-import { UserRole } from "@repo/contracts/iam/auth";
+import { baseEnv } from "@repo/env/base";
 import { formatDate } from "@repo/shared";
 import { DetailField, FormCard } from "@repo/ui";
 
-import { ProfileCard } from "../../components";
-import { ROLE_CONFIG } from "../../constants";
+import { useResendInvite } from "@app/lib/hooks";
+
+import { ProfileCard, UserForm } from "../../components";
 
 type UserDetailSectionProps = {
   user: AdminUserView;
@@ -18,66 +19,76 @@ type UserDetailSectionProps = {
 
 export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) => {
   const theme = useTheme();
-  const { control } = useFormContext<{ role: UserRole }>();
+  const { mutate: resendInvite, isPending: isResending } = useResendInvite();
+  const displayLabel = user.name ?? user.email;
+  const initial = displayLabel.slice(0, 1).toUpperCase();
+  const canResendInvite = baseEnv.NEXT_PUBLIC_FEATURE_USER_INVITE_ENABLED && !user.hasPassword;
 
   return (
-    <Grid container spacing={3}>
-      <Grid size={{ xs: 12, lg: 8 }}>
-        <Stack spacing={3}>
-          <FormCard title="User Information">
-            <Stack spacing={2}>
-              <DetailField label="Email" value={user.email} />
-              <DetailField label="Role">
-                <Controller
-                  name="role"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      select
-                      size="small"
-                      fullWidth={false}
-                      disabled={isPending}
-                      error={!!fieldState.error}
-                      helperText={fieldState.error?.message}
-                      sx={{ minWidth: (theme) => theme.spacing(20) }}
-                    >
-                      {Object.values(UserRole).map((role) => (
-                        <MenuItem key={role} value={role}>
-                          {ROLE_CONFIG[role].label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
+    <Stack spacing={3}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        justifyContent="space-between"
+      >
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Avatar src={user.image ?? undefined} alt={displayLabel} sx={{ width: 56, height: 56 }}>
+            {initial}
+          </Avatar>
+          <Stack spacing={0.25}>
+            {user.name && <Typography variant="subtitle1">{user.name}</Typography>}
+            <Typography variant="body2" color="text.secondary">
+              {user.email}
+            </Typography>
+          </Stack>
+        </Stack>
+        {canResendInvite && (
+          <Button
+            type="button"
+            variant="outlined"
+            color="primary"
+            startIcon={<SendIcon />}
+            disabled={isResending}
+            onClick={() => resendInvite(user.id)}
+          >
+            {isResending ? "Resending..." : "Resend invite"}
+          </Button>
+        )}
+      </Stack>
+
+      <UserForm isEdit isLoading={isPending} />
+
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Stack spacing={3}>
+            <FormCard title="Metadata">
+              <Stack spacing={2}>
+                <DetailField
+                  label="Email Verified"
+                  value={
+                    user.emailVerified ? formatDate(user.emailVerified, "long") : "Not verified"
+                  }
                 />
-              </DetailField>
-              <DetailField
-                label="Email Verified"
-                value={user.emailVerified ? formatDate(user.emailVerified, "long") : "Not verified"}
-              />
-              <DetailField label="Registered" value={formatDate(user.createdAt, "long")} />
-              <DetailField label="Updated" value={formatDate(user.updatedAt, "long")} />
-            </Stack>
-          </FormCard>
+                <DetailField label="Registered" value={formatDate(user.createdAt, "long")} />
+                <DetailField label="Updated" value={formatDate(user.updatedAt, "long")} />
+              </Stack>
+            </FormCard>
 
-          <ProfileCard user={user} />
-        </Stack>
-      </Grid>
+            <ProfileCard user={user} />
+          </Stack>
+        </Grid>
 
-      <Grid size={{ xs: 12, lg: 4 }}>
-        <Stack spacing={3}>
-          <FormCard title="Account">
-            <Stack spacing={2}>
-              <DetailField label="ID" labelWidth={theme.spacing(10)} value={user.id} />
-              <DetailField
-                label="Image"
-                labelWidth={theme.spacing(10)}
-                value={user.image || "No image"}
-              />
-            </Stack>
-          </FormCard>
-        </Stack>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Stack spacing={3}>
+            <FormCard title="Account">
+              <Stack spacing={2}>
+                <DetailField label="ID" labelWidth={theme.spacing(10)} value={user.id} />
+              </Stack>
+            </FormCard>
+          </Stack>
+        </Grid>
       </Grid>
-    </Grid>
+    </Stack>
   );
 };
