@@ -51,6 +51,16 @@ export class ConflictError extends AppError {
   }
 }
 
+export class GoneError extends AppError {
+  constructor(message = "Resource no longer available", details?: Record<string, unknown>) {
+    super(message, {
+      code: ERROR_CODES.GONE,
+      statusCode: 410,
+      details,
+    });
+  }
+}
+
 export class BadRequestError extends AppError {
   constructor(message = "Bad request", details?: Record<string, unknown>) {
     super(message, {
