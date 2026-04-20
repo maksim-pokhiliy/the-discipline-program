@@ -1,12 +1,13 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
-import { type UserRole } from "@repo/contracts/iam/auth";
+import { updateUserSchema, type UpdateUserData } from "@repo/contracts/iam/user";
 import { FormView, QueryWrapper } from "@repo/ui";
 
-import { useUpdateUserRole, useUser } from "@app/lib/hooks";
+import { useUpdateUser, useUser } from "@app/lib/hooks";
 
 import { UserDetailSection } from "../../sections";
 
@@ -15,18 +16,21 @@ type UserDetailFormProps = {
 };
 
 const UserDetailForm: React.FC<UserDetailFormProps> = ({ user }) => {
-  const { mutate: updateRole, isPending } = useUpdateUserRole();
+  const { mutate: updateUser, isPending } = useUpdateUser();
 
-  const methods = useForm<{ role: UserRole }>({
+  const methods = useForm<UpdateUserData>({
+    resolver: zodResolver(updateUserSchema),
     defaultValues: {
+      name: user.name,
       role: user.role,
+      timezone: user.timezone,
     },
   });
 
   return (
     <FormView
       methods={methods}
-      onSubmit={(data) => updateRole({ id: user.id, data: { role: data.role } })}
+      onSubmit={(data) => updateUser({ id: user.id, data })}
       isPending={isPending}
       title="User Details"
       subtitle={user.email}

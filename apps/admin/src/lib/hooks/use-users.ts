@@ -3,16 +3,39 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import type { UpdateUserRoleData } from "@repo/contracts/iam/user";
+import type {
+  CreateUserData,
+  GetUsersPageDataResponse,
+  UpdateUserData,
+  UpdateUserRoleData,
+  User,
+} from "@repo/contracts/iam/user";
+import { createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
 import { adminKeys } from "../api/keys";
 
-export const useUsersPageData = () =>
-  useQuery({
-    queryKey: adminKeys.users.page(),
-    queryFn: api.users.getPageData,
-  });
+import { useNavigate } from "./use-navigate";
+
+const userHooks = createCrudHooks<GetUsersPageDataResponse, User, CreateUserData, UpdateUserData>({
+  entityName: "User",
+  keys: adminKeys.users,
+  api: {
+    getPageData: api.users.getPageData,
+    getById: api.users.getById,
+    create: api.users.create,
+    update: api.users.update,
+    delete: api.users.delete,
+  },
+  redirectTo: "/users",
+  useNavigate,
+  additionalInvalidateKeys: [adminKeys.dashboard()],
+});
+
+export const useUsersPageData = userHooks.usePageData;
+export const useCreateUser = userHooks.useCreate;
+export const useUpdateUser = userHooks.useUpdate;
+export const useDeleteUser = userHooks.useDelete;
 
 export const useUser = (id: string) =>
   useQuery({

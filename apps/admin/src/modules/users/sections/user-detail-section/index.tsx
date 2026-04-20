@@ -1,15 +1,12 @@
 "use client";
 
-import { Grid, MenuItem, Stack, TextField, useTheme } from "@mui/material";
-import { Controller, useFormContext } from "react-hook-form";
+import { Grid, Stack, useTheme } from "@mui/material";
 
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
-import { UserRole } from "@repo/contracts/iam/auth";
 import { formatDate } from "@repo/shared";
 import { DetailField, FormCard } from "@repo/ui";
 
-import { ProfileCard } from "../../components";
-import { ROLE_CONFIG } from "../../constants";
+import { ProfileCard, UserForm } from "../../components";
 
 type UserDetailSectionProps = {
   user: AdminUserView;
@@ -18,66 +15,46 @@ type UserDetailSectionProps = {
 
 export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) => {
   const theme = useTheme();
-  const { control } = useFormContext<{ role: UserRole }>();
 
   return (
-    <Grid container spacing={3}>
-      <Grid size={{ xs: 12, lg: 8 }}>
-        <Stack spacing={3}>
-          <FormCard title="User Information">
-            <Stack spacing={2}>
-              <DetailField label="Email" value={user.email} />
-              <DetailField label="Role">
-                <Controller
-                  name="role"
-                  control={control}
-                  render={({ field, fieldState }) => (
-                    <TextField
-                      {...field}
-                      select
-                      size="small"
-                      fullWidth={false}
-                      disabled={isPending}
-                      error={!!fieldState.error}
-                      helperText={fieldState.error?.message}
-                      sx={{ minWidth: (theme) => theme.spacing(20) }}
-                    >
-                      {Object.values(UserRole).map((role) => (
-                        <MenuItem key={role} value={role}>
-                          {ROLE_CONFIG[role].label}
-                        </MenuItem>
-                      ))}
-                    </TextField>
-                  )}
+    <Stack spacing={3}>
+      <UserForm isEdit isLoading={isPending} />
+
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, lg: 8 }}>
+          <Stack spacing={3}>
+            <FormCard title="Metadata">
+              <Stack spacing={2}>
+                <DetailField
+                  label="Email Verified"
+                  value={
+                    user.emailVerified ? formatDate(user.emailVerified, "long") : "Not verified"
+                  }
                 />
-              </DetailField>
-              <DetailField
-                label="Email Verified"
-                value={user.emailVerified ? formatDate(user.emailVerified, "long") : "Not verified"}
-              />
-              <DetailField label="Registered" value={formatDate(user.createdAt, "long")} />
-              <DetailField label="Updated" value={formatDate(user.updatedAt, "long")} />
-            </Stack>
-          </FormCard>
+                <DetailField label="Registered" value={formatDate(user.createdAt, "long")} />
+                <DetailField label="Updated" value={formatDate(user.updatedAt, "long")} />
+              </Stack>
+            </FormCard>
 
-          <ProfileCard user={user} />
-        </Stack>
-      </Grid>
+            <ProfileCard user={user} />
+          </Stack>
+        </Grid>
 
-      <Grid size={{ xs: 12, lg: 4 }}>
-        <Stack spacing={3}>
-          <FormCard title="Account">
-            <Stack spacing={2}>
-              <DetailField label="ID" labelWidth={theme.spacing(10)} value={user.id} />
-              <DetailField
-                label="Image"
-                labelWidth={theme.spacing(10)}
-                value={user.image || "No image"}
-              />
-            </Stack>
-          </FormCard>
-        </Stack>
+        <Grid size={{ xs: 12, lg: 4 }}>
+          <Stack spacing={3}>
+            <FormCard title="Account">
+              <Stack spacing={2}>
+                <DetailField label="ID" labelWidth={theme.spacing(10)} value={user.id} />
+                <DetailField
+                  label="Image"
+                  labelWidth={theme.spacing(10)}
+                  value={user.image || "No image"}
+                />
+              </Stack>
+            </FormCard>
+          </Stack>
+        </Grid>
       </Grid>
-    </Grid>
+    </Stack>
   );
 };
