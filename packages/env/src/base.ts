@@ -8,6 +8,7 @@ export const baseEnv = createEnv({
       .url()
       .refine((url) => url.startsWith("postgres"), "must be a postgres URL"),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    REVALIDATE_SECRET: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
