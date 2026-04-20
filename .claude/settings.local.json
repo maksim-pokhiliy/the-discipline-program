@@ -44,7 +44,8 @@
       "Bash(npm view *)",
       "Bash(npm pack *)",
       "Bash(npx vitest *)",
-      "Bash(NEXT_PUBLIC_PLATFORM_URL=\"http://localhost:3001\" npx vitest run src/mappers/iam/user.mapper.test.ts)"
+      "Bash(NEXT_PUBLIC_PLATFORM_URL=\"http://localhost:3001\" npx vitest run src/mappers/iam/user.mapper.test.ts)",
+      "Bash(gh pr *)"
     ]
   }
 }
