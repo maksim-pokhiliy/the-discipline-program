@@ -7,6 +7,15 @@ export enum PageSlug {
   FAQ = "faq",
 }
 
+export const PAGE_SLUG_PATH_MAP: Record<PageSlug, string> = {
+  [PageSlug.HOME]: "/",
+  [PageSlug.STOREFRONT]: "/storefront",
+  [PageSlug.ABOUT]: "/about",
+  [PageSlug.BLOG]: "/blog",
+  [PageSlug.CONTACT]: "/contact",
+  [PageSlug.FAQ]: "/faq",
+};
+
 export const PAGE_SECTIONS_MAP = {
   home: {
     hero: "home:hero",
