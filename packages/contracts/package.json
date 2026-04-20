@@ -29,6 +29,7 @@
     "./coaching/coach-profile": "./src/entities/coaching/coach-profile/index.ts",
     "./coaching/plan-roster": "./src/entities/coaching/plan-roster/index.ts",
     "./iam/auth": "./src/entities/iam/auth/index.ts",
+    "./iam/invite-token": "./src/entities/iam/invite-token/index.ts",
     "./iam/user": "./src/entities/iam/user/index.ts",
     "./storage/upload": "./src/entities/storage/upload/index.ts"
   },
