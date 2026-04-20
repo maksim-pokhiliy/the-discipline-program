@@ -34,7 +34,11 @@
       "Bash(DATABASE_URL=\"postgresql://neondb_owner:REDACTED_NEON_PASSWORD@ep-royal-wind-a2xmokcb-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require\" pnpm --filter @repo/api-server exec prisma migrate diff --from-url \"postgresql://neondb_owner:REDACTED_NEON_PASSWORD@ep-royal-wind-a2xmokcb-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require\" --to-schema-datamodel prisma/schema.prisma --script)",
       "Bash(git *)",
       "Bash(cross-env SKIP_ENV_VALIDATION=1 pnpm --filter @repo/api-server exec vitest run --reporter=verbose src/endpoints/cms/pages/public.bootstrap.test.ts)",
-      "Bash(SKIP_ENV_VALIDATION=1 pnpm *)"
+      "Bash(SKIP_ENV_VALIDATION=1 pnpm *)",
+      "Bash(vercel --version)",
+      "Bash(node *)",
+      "Bash(gh run *)",
+      "mcp__plugin_vercel_vercel__list_deployments"
     ]
   }
 }
