@@ -14,15 +14,36 @@ async function triggerMarketingRevalidation(slug: string): Promise<void> {
   const secret = baseEnv.REVALIDATE_SECRET;
   const path = PAGE_SLUG_PATH_MAP[slug as keyof typeof PAGE_SLUG_PATH_MAP];
 
-  if (!secret || !path) {
+  if (!secret) {
+    logger.warn("marketing revalidation skipped: REVALIDATE_SECRET not set", { slug });
+
+    return;
+  }
+
+  if (!path) {
+    logger.warn("marketing revalidation skipped: slug not in PAGE_SLUG_PATH_MAP", { slug });
+
     return;
   }
 
   const url = `${baseEnv.NEXT_PUBLIC_MARKETING_URL}/api/revalidate?secret=${encodeURIComponent(secret)}&path=${encodeURIComponent(path)}`;
 
-  await fetch(url, { cache: "no-store" }).catch((err: unknown) => {
+  try {
+    const response = await fetch(url, { cache: "no-store" });
+
+    if (!response.ok) {
+      const body = await response.text().catch(() => "");
+
+      logger.error("marketing revalidation returned non-2xx", {
+        slug,
+        path,
+        status: response.status,
+        body: body.slice(0, 200),
+      });
+    }
+  } catch (err) {
     logger.error("failed to revalidate marketing page", { slug, path, err });
-  });
+  }
 }
 
 export const PATCH = withAdminAuth(
