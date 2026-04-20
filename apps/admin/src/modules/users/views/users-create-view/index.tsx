@@ -14,8 +14,8 @@ import { useCreateUser } from "@app/lib/hooks";
 
 import { UserForm } from "../../components";
 
-const INVITE_ENABLED_MESSAGE = "An invite email will be sent to this address.";
-const INVITE_DISABLED_MESSAGE = "Email delivery will activate in Phase 1b.";
+const INVITE_DISABLED_MESSAGE =
+  "Email delivery is disabled. The user will be created without an invite email.";
 
 type CreateUserInput = z.input<typeof createUserSchema>;
 
@@ -45,9 +45,7 @@ export const UsersCreateView = () => {
       submitLabel="Create User"
     >
       <Stack spacing={3}>
-        <Alert severity={isInviteEnabled ? "success" : "info"}>
-          {isInviteEnabled ? INVITE_ENABLED_MESSAGE : INVITE_DISABLED_MESSAGE}
-        </Alert>
+        {!isInviteEnabled && <Alert severity="info">{INVITE_DISABLED_MESSAGE}</Alert>}
         <UserForm isLoading={isPending} />
       </Stack>
     </FormView>
