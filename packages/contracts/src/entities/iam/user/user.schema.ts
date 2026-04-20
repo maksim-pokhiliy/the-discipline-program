@@ -24,6 +24,7 @@ export const adminUserListItemSchema = z.object({
   image: imageUrlSchema,
   timezone: timezoneSchema,
   createdAt: z.date(),
+  hasPassword: z.boolean(),
 });
 
 export const userSearchResultSchema = z.object({
