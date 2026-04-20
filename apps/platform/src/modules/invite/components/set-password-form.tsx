@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import Visibility from "@mui/icons-material/Visibility";
@@ -12,14 +12,18 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { signIn } from "@repo/auth/client";
+import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 import {
   type ConsumeInviteResponse,
-  consumeInviteRequestSchema,
   consumeInviteResponseSchema,
 } from "@repo/contracts/iam/invite-token";
 
-const setPasswordFormSchema = consumeInviteRequestSchema
-  .extend({
+const setPasswordFormSchema = z
+  .object({
+    password: z
+      .string()
+      .min(AUTH_CONSTANTS.MIN_PASSWORD_LENGTH)
+      .max(AUTH_CONSTANTS.MAX_PASSWORD_LENGTH),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -34,6 +38,20 @@ type SetPasswordFormProps = {
   email: string;
 };
 
+const detectBrowserTimezone = (): string | null => {
+  if (typeof Intl === "undefined") {
+    return null;
+  }
+
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    return typeof tz === "string" && tz.length > 0 ? tz : null;
+  } catch {
+    return null;
+  }
+};
+
 const parseConsumeResponse = async (response: Response): Promise<ConsumeInviteResponse> => {
   const payload: unknown = await response.json();
 
@@ -45,6 +63,11 @@ export const SetPasswordForm = ({ token, email }: SetPasswordFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [timezone, setTimezone] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTimezone(detectBrowserTimezone());
+  }, []);
 
   const {
     register,
@@ -62,10 +85,18 @@ export const SetPasswordForm = ({ token, email }: SetPasswordFormProps) => {
     setIsSubmitting(true);
 
     try {
+      const requestBody: { password: string; timezone?: string } = {
+        password: data.password,
+      };
+
+      if (timezone !== null) {
+        requestBody.timezone = timezone;
+      }
+
       const response = await fetch(`/api/invite/${token}/consume`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: data.password }),
+        body: JSON.stringify(requestBody),
       });
 
       if (response.status === 410) {
@@ -107,9 +138,20 @@ export const SetPasswordForm = ({ token, email }: SetPasswordFormProps) => {
     }
   };
 
+  const timezoneHelper = timezone
+    ? `Timezone: ${timezone} — you can change it later in settings`
+    : undefined;
+
   return (
     <Stack component="form" onSubmit={handleSubmit(onSubmit)} spacing={3}>
-      <TextField label="Email" value={email} fullWidth disabled type="email" />
+      <TextField
+        label="Email"
+        value={email}
+        fullWidth
+        disabled
+        type="email"
+        helperText={timezoneHelper}
+      />
 
       <TextField
         label="Password"

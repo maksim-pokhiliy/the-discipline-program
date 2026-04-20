@@ -190,11 +190,17 @@ export const iamUserAdminApi = {
       await assertNotLastAdminDemotion();
     }
 
+    const deletedAt = new Date();
+    const suffixedEmail = `${existing.email}_deleted_${deletedAt.getTime()}`;
+
     try {
-      await prisma.user.delete({ where: { id } });
       await prisma.user.update({
         where: { id },
-        data: { tokenVersion: { increment: 1 } },
+        data: {
+          deletedAt,
+          email: suffixedEmail,
+          tokenVersion: { increment: 1 },
+        },
       });
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });

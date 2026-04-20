@@ -54,18 +54,18 @@ type SendInvitationEmailInput = {
 };
 
 export const sendInvitationEmail = async (input: SendInvitationEmailInput): Promise<void> => {
+  const config = resolveInviteEmailConfig();
+  const inviteUrl = `${baseEnv.NEXT_PUBLIC_PLATFORM_URL}/invite/${input.plainToken}`;
+
+  const { html, text } = await renderInvitationEmail({
+    inviteUrl,
+    recipientName: input.recipientName,
+    expiresInHours: input.expiresInHours,
+  });
+
+  const service = getEmailService(config);
+
   try {
-    const config = resolveInviteEmailConfig();
-    const inviteUrl = `${baseEnv.NEXT_PUBLIC_PLATFORM_URL}/invite/${input.plainToken}`;
-
-    const { html, text } = await renderInvitationEmail({
-      inviteUrl,
-      recipientName: input.recipientName,
-      expiresInHours: input.expiresInHours,
-    });
-
-    const service = getEmailService(config);
-
     await service.send({
       from: config.from,
       to: { email: input.recipientEmail },

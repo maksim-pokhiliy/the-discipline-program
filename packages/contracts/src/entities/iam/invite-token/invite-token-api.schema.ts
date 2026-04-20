@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { idParamSchema } from "../../../common";
+import { timezoneSchema } from "../../../common/timezone";
 import { AUTH_CONSTANTS } from "../auth";
 
 import { INVITE_TOKEN_CONSTANTS } from "./invite-token.constants";
@@ -24,11 +25,12 @@ export const consumeInviteRequestSchema = z.object({
     .string()
     .min(AUTH_CONSTANTS.MIN_PASSWORD_LENGTH)
     .max(AUTH_CONSTANTS.MAX_PASSWORD_LENGTH),
+  timezone: timezoneSchema.optional(),
 });
 
 export const consumeInviteResponseSchema = z.object({
-  userId: z.string().cuid(),
-  redirectTo: z.string().startsWith("/").default("/dashboard"),
+  email: z.string().email(),
+  redirectTo: z.string().startsWith("/"),
 });
 
 export const resendInviteParamsSchema = idParamSchema;

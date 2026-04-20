@@ -10,3 +10,11 @@ export enum UserRole {
   COACH = "COACH",
   ADMIN = "ADMIN",
 }
+
+export const ROLE_HOMES: Record<UserRole, string> = {
+  [UserRole.USER]: "/athlete",
+  [UserRole.COACH]: "/coach",
+  [UserRole.ADMIN]: "/admin",
+};
+
+export const FALLBACK_ROLE_HOME = "/login";
