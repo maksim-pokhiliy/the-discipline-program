@@ -19,12 +19,12 @@ export const AboutCredentialsSection = ({ credentials }: AboutCredentialsSection
       surface="raised"
     >
       <Grid container spacing={6}>
-        {(credentials.items ?? []).map((item) => (
-          <Grid key={item.title} size={{ xs: 12, sm: 6, md: 4 }}>
+        {(credentials.items ?? []).map((item, index) => (
+          <Grid key={item.title ?? index} size={{ xs: 12, sm: 6, md: 4 }}>
             <FeatureCard
               icon={VerifiedOutlinedIcon}
-              title={item.title}
-              description={item.description}
+              title={item.title ?? ""}
+              description={item.description ?? ""}
             />
           </Grid>
         ))}
