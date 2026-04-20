@@ -2,7 +2,7 @@ import { unstable_rethrow } from "next/navigation";
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
-import { AppError, ERROR_CODES, ValidationError } from "@repo/errors";
+import { AppError, ERROR_CODES } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 import { getMonitoring } from "./monitoring";
@@ -51,9 +51,19 @@ export const handleApiError = (error: unknown, requestId?: string): NextResponse
   const safeError =
     error instanceof AppError
       ? { message: error.message, code: error.code, details: redactSensitiveFields(error.details) }
-      : error instanceof Error
-        ? { message: error.message }
-        : { message: String(error) };
+      : error instanceof ZodError
+        ? {
+            message: "Validation failed",
+            code: ERROR_CODES.VALIDATION_ERROR,
+            issues: error.errors.map((e) => ({
+              path: e.path.join("."),
+              message: e.message,
+              code: e.code,
+            })),
+          }
+        : error instanceof Error
+          ? { message: error.message }
+          : { message: String(error) };
 
   logger.error("API Error", { ...safeError, ...(requestId && { requestId }) });
 
@@ -76,11 +86,17 @@ export const handleApiError = (error: unknown, requestId?: string): NextResponse
       appErrorHeaders.set("Retry-After", String(error.details.retryAfter));
     }
 
+    const redactedDetails = error.details
+      ? (redactSensitiveFields(error.details) as Record<string, unknown>)
+      : undefined;
+
     return NextResponse.json(
       {
         error: {
           code: error.code,
           message: error.message,
+          ...(redactedDetails &&
+            Object.keys(redactedDetails).length > 0 && { details: redactedDetails }),
         },
       },
       { status: error.statusCode, headers: appErrorHeaders },
@@ -88,18 +104,18 @@ export const handleApiError = (error: unknown, requestId?: string): NextResponse
   }
 
   if (error instanceof ZodError) {
-    const validationError = new ValidationError("Validation failed", {
-      issues: error.errors.map((err) => ({
-        path: err.path.join("."),
-        message: err.message,
-      })),
-    });
+    const issues = error.errors.map((e) => ({
+      path: e.path.join("."),
+      message: e.message,
+      code: e.code,
+    }));
 
     return NextResponse.json(
       {
         error: {
-          code: validationError.code,
-          message: validationError.message,
+          code: ERROR_CODES.VALIDATION_ERROR,
+          message: "Validation failed",
+          issues,
         },
       },
       { status: 400, headers },
