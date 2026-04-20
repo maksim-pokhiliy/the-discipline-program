@@ -755,6 +755,9 @@ importers:
       '@repo/contracts':
         specifier: workspace:*
         version: link:../contracts
+      '@repo/email':
+        specifier: workspace:*
+        version: link:../email
       '@repo/env':
         specifier: workspace:*
         version: link:../env

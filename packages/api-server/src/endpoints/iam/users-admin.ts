@@ -7,11 +7,18 @@ import {
   type UpdateUserRoleData,
   type User,
 } from "@repo/contracts/iam/user";
-import { ConflictError, ForbiddenError } from "@repo/errors";
+import { baseEnv } from "@repo/env/base";
+import { BadRequestError, ConflictError, ForbiddenError, TooManyRequestsError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToAdminUserListItem, mapToUser, ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { findOrThrow, handlePrismaError } from "../../utils";
+
+import { iamInviteTokenApi } from "./invite-token";
+import { resolveInviteEmailConfig, sendInvitationEmail } from "./send-invitation-email";
+
+const MS_PER_HOUR = 3_600_000;
+const MAX_RESENDS_PER_DAY = 3;
 
 const assertNotLastAdminDemotion = async (): Promise<void> => {
   const adminCount = await prisma.user.count({
@@ -21,6 +28,28 @@ const assertNotLastAdminDemotion = async (): Promise<void> => {
   if (adminCount <= 1) {
     throw new ConflictError("Cannot remove the last admin");
   }
+};
+
+const issueInviteAndSendEmail = async (
+  actorId: string,
+  recipient: { id: string; email: string; name: string | null },
+): Promise<{ expiresAt: Date }> => {
+  const { plainToken, expiresAt } = await iamInviteTokenApi.issue({
+    userId: recipient.id,
+    createdByAdminId: actorId,
+  });
+
+  const expiresInHours = Math.max(1, Math.round((expiresAt.getTime() - Date.now()) / MS_PER_HOUR));
+
+  await sendInvitationEmail({
+    userId: recipient.id,
+    recipientEmail: recipient.email,
+    recipientName: recipient.name,
+    plainToken,
+    expiresInHours,
+  });
+
+  return { expiresAt };
 };
 
 export const iamUserAdminApi = {
@@ -38,9 +67,15 @@ export const iamUserAdminApi = {
     return { users };
   },
 
-  createUser: async (_actorId: string, data: CreateUserData): Promise<User> => {
+  createUser: async (actorId: string, data: CreateUserData): Promise<User> => {
+    if (baseEnv.FEATURE_USER_INVITE_ENABLED) {
+      resolveInviteEmailConfig();
+    }
+
+    let user: User;
+
     try {
-      const user = await prisma.user.create({
+      const row = await prisma.user.create({
         data: {
           email: data.email,
           name: data.name,
@@ -51,10 +86,20 @@ export const iamUserAdminApi = {
         },
       });
 
-      return mapToUser(user);
+      user = mapToUser(row);
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });
     }
+
+    if (baseEnv.FEATURE_USER_INVITE_ENABLED) {
+      await issueInviteAndSendEmail(actorId, {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      });
+    }
+
+    return user;
   },
 
   updateUser: async (actorId: string, id: string, data: UpdateUserData): Promise<User> => {
@@ -154,5 +199,34 @@ export const iamUserAdminApi = {
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });
     }
+  },
+
+  resendInvite: async (actorId: string, userId: string): Promise<{ expiresAt: Date }> => {
+    if (!baseEnv.FEATURE_USER_INVITE_ENABLED) {
+      throw new BadRequestError("Invite flow is disabled");
+    }
+
+    const user = await findOrThrow(prisma.user.findUnique({ where: { id: userId } }), "User");
+
+    if (user.password !== null) {
+      throw new ConflictError("User has already set a password — invite cannot be resent");
+    }
+
+    resolveInviteEmailConfig();
+
+    const since = new Date(Date.now() - 24 * MS_PER_HOUR);
+    const recentTokenCount = await prisma.userInviteToken.count({
+      where: { userId, createdAt: { gte: since } },
+    });
+
+    if (recentTokenCount >= MAX_RESENDS_PER_DAY) {
+      throw new TooManyRequestsError("Too many resends in 24 hours");
+    }
+
+    return issueInviteAndSendEmail(actorId, {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    });
   },
 };
