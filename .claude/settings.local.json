@@ -45,7 +45,15 @@
       "Bash(npm pack *)",
       "Bash(npx vitest *)",
       "Bash(NEXT_PUBLIC_PLATFORM_URL=\"http://localhost:3001\" npx vitest run src/mappers/iam/user.mapper.test.ts)",
-      "Bash(gh pr *)"
+      "Bash(gh pr *)",
+      "mcp__plugin_vercel_vercel__get_deployment_build_logs",
+      "Read(//tmp/**)",
+      "Read(//c/Users/maksi/AppData/Local/Temp/**)",
+      "Bash(npm i *)",
+      "Bash(vercel env *)",
+      "Bash(vercel redeploy *)",
+      "mcp__plugin_vercel_vercel__get_deployment",
+      "Bash(gh api *)"
     ]
   }
 }
