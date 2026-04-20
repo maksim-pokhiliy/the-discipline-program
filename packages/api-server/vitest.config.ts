@@ -12,6 +12,9 @@ export default defineConfig({
     env: {
       NEXT_PUBLIC_APP_URL: "http://localhost:3000",
       NEXT_PUBLIC_MARKETING_URL: "http://localhost:3001",
+      NEXT_PUBLIC_PLATFORM_URL: "http://localhost:3002",
+      INVITE_TOKEN_TTL_HOURS: "72",
+      FEATURE_USER_INVITE_ENABLED: "false",
     },
     coverage: {
       provider: "v8",
