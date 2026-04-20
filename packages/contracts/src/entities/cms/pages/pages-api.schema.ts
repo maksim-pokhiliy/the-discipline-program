@@ -31,48 +31,48 @@ import {
 } from "./pages.schema";
 
 export const getHomePageResponseSchema = z.object({
-  hero: homePageHeroSchema.partial().nullable(),
-  whyChoose: homePageWhyChooseSchema.partial().nullable(),
-  storefront: homePageStorefrontProgramsSchema.partial().nullable(),
-  reviews: homePageReviewsSchema.partial().nullable(),
-  contact: homePageContactSchema.partial().nullable(),
+  hero: homePageHeroSchema.deepPartial().nullable(),
+  whyChoose: homePageWhyChooseSchema.deepPartial().nullable(),
+  storefront: homePageStorefrontProgramsSchema.deepPartial().nullable(),
+  reviews: homePageReviewsSchema.deepPartial().nullable(),
+  contact: homePageContactSchema.deepPartial().nullable(),
   productsList: z.array(productSchema),
   reviewsList: z.array(reviewSchema),
 });
 
 export const getStorefrontProgramsPageResponseSchema = z.object({
-  hero: storefrontProgramsPageHeroSchema.partial().nullable(),
-  grid: storefrontGridSchema.partial().nullable(),
-  cta: storefrontPageCtaSchema.partial().nullable(),
+  hero: storefrontProgramsPageHeroSchema.deepPartial().nullable(),
+  grid: storefrontGridSchema.deepPartial().nullable(),
+  cta: storefrontPageCtaSchema.deepPartial().nullable(),
   productsList: z.array(productSchema),
 });
 
 export const getAboutPageResponseSchema = z.object({
-  hero: aboutPageHeroSchema.partial().nullable(),
-  journey: aboutPageJourneySchema.partial().nullable(),
-  credentials: aboutPageCredentialsSchema.partial().nullable(),
-  personal: aboutPagePersonalSchema.partial().nullable(),
-  cta: aboutPageCtaSchema.partial().nullable(),
+  hero: aboutPageHeroSchema.deepPartial().nullable(),
+  journey: aboutPageJourneySchema.deepPartial().nullable(),
+  credentials: aboutPageCredentialsSchema.deepPartial().nullable(),
+  personal: aboutPagePersonalSchema.deepPartial().nullable(),
+  cta: aboutPageCtaSchema.deepPartial().nullable(),
 });
 
 export const getBlogPageResponseSchema = z.object({
-  hero: blogPageHeroSchema.partial().nullable(),
-  grid: blogGridSchema.partial().nullable(),
+  hero: blogPageHeroSchema.deepPartial().nullable(),
+  grid: blogGridSchema.deepPartial().nullable(),
   featuredPost: publicBlogPostSchema.optional(),
   posts: z.array(publicBlogPostSchema),
   categories: z.array(z.string()),
 });
 
 export const getContactPageResponseSchema = z.object({
-  hero: contactPageHeroSchema.partial().nullable(),
-  form: contactPageFormSchema.partial().nullable(),
+  hero: contactPageHeroSchema.deepPartial().nullable(),
+  form: contactPageFormSchema.deepPartial().nullable(),
   programOptions: z.array(programOptionSchema),
 });
 
 export const getFaqPageResponseSchema = z.object({
-  hero: faqPageHeroSchema.partial().nullable(),
-  content: faqContentSchema.partial().nullable(),
-  cta: faqPageCtaSchema.partial().nullable(),
+  hero: faqPageHeroSchema.deepPartial().nullable(),
+  content: faqContentSchema.deepPartial().nullable(),
+  cta: faqPageCtaSchema.deepPartial().nullable(),
 });
 
 export const adminPageListItemSchema = z.object({
@@ -113,7 +113,7 @@ const SECTION_DEFINITIONS = [
 ] as const;
 
 const sectionVariants = SECTION_DEFINITIONS.map(([key, schema]) =>
-  z.object({ section: z.literal(key), data: schema.partial() }),
+  z.object({ section: z.literal(key), data: schema.deepPartial() }),
 );
 
 const toNonEmptyArray = <T>(arr: T[]): [T, ...T[]] => {
@@ -139,7 +139,7 @@ const adminSectionVariants = SECTION_DEFINITIONS.map(([key, schema]) =>
   z.object({
     id: z.string().cuid(),
     section: z.literal(key),
-    data: schema.partial(),
+    data: schema.deepPartial(),
     updatedAt: z.date(),
   }),
 );

@@ -252,4 +252,35 @@ describe("pages-api schema empty collections", () => {
 
     expect(result.success).toBe(true);
   });
+
+  it("updatePageSectionBodySchema accepts whyChoose with empty feature items", () => {
+    const result = updatePageSectionBodySchema.safeParse({
+      section: "home:whyChoose",
+      data: {
+        features: [
+          { id: "550e8400-e29b-41d4-a716-446655440000", title: "", description: "", iconName: "" },
+        ],
+      },
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("updatePageSectionBodySchema accepts personal section with empty image string", () => {
+    const result = updatePageSectionBodySchema.safeParse({
+      section: "about:personal",
+      data: { title: "Me", image: "" },
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("updatePageSectionBodySchema accepts contact form with partial fieldLabels", () => {
+    const result = updatePageSectionBodySchema.safeParse({
+      section: "contact:form",
+      data: { fieldLabels: { name: "Name" } },
+    });
+
+    expect(result.success).toBe(true);
+  });
 });

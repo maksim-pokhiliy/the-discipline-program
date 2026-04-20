@@ -83,12 +83,12 @@ export const SectionEditor = ({
     ? SECTION_SCHEMAS[section.section]
     : undefined;
 
-  const parsedData = currentSchema?.safeParse(section.data);
+  const parsedData = currentSchema?.deepPartial().safeParse(section.data);
   const safeDefaultValues = parsedData?.success ? parsedData.data : {};
 
   const methods = useForm<UpdatePageSectionData["data"]>({
     defaultValues: safeDefaultValues,
-    resolver: currentSchema ? zodResolver(currentSchema.partial()) : undefined,
+    resolver: currentSchema ? zodResolver(currentSchema.deepPartial()) : undefined,
     mode: "onChange",
   });
 

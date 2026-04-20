@@ -19,15 +19,15 @@ const ctaSectionSchema = titleSubtitleSchema.extend({
 export const homePageHeroSchema = heroSectionSchema;
 
 export const whyChooseFeatureItemSchema = z.object({
-  id: z.string().cuid(),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().min(1, "Description is required"),
-  iconName: z.string().min(1, "Icon name is required"),
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  iconName: z.string(),
 });
 
 export const homePageWhyChooseSchema = z.object({
-  title: z.string().min(1, "Section title is required"),
-  subtitle: z.string().min(1, "Section subtitle is required"),
+  title: z.string(),
+  subtitle: z.string(),
   features: z.array(whyChooseFeatureItemSchema),
 });
 
@@ -77,7 +77,7 @@ export const aboutPagePersonalSchema = z.object({
   title: z.string(),
   subtitle: z.string(),
   description: z.string(),
-  image: z.string().url(),
+  image: z.string(),
   name: z.string(),
   role: z.string(),
 });

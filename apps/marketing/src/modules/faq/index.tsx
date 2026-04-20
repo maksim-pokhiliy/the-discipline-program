@@ -11,7 +11,17 @@ type FaqPageContentProps = {
 
 export const FaqPageContent = ({ data }: FaqPageContentProps) => (
   <>
-    {data.content && <StructuredData type="faq" data={{ faqItems: data.content.items }} />}
+    {data.content && (
+      <StructuredData
+        type="faq"
+        data={{
+          faqItems: data.content.items?.map((item) => ({
+            question: item.question ?? "",
+            answer: item.answer ?? "",
+          })),
+        }}
+      />
+    )}
 
     {data.hero && (
       <FullscreenSection
