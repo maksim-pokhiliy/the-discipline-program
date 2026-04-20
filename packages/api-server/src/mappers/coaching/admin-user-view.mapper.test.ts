@@ -66,6 +66,7 @@ describe("mapToAdminUserView", () => {
       emailVerified: NOW,
       createdAt: NOW,
       updatedAt: LATER,
+      hasPassword: true,
       athleteProfile: null,
       coachProfile: null,
     });
@@ -147,5 +148,19 @@ describe("mapToAdminUserView", () => {
 
     expect(result).not.toHaveProperty("password");
     expect(result).not.toHaveProperty("deletedAt");
+  });
+
+  it("reports hasPassword false when password is null", () => {
+    const input = makeUser({ password: null });
+    const result = mapToAdminUserView(input);
+
+    expect(result.hasPassword).toBe(false);
+  });
+
+  it("reports hasPassword true when password is set", () => {
+    const input = makeUser({ password: "hashed" });
+    const result = mapToAdminUserView(input);
+
+    expect(result.hasPassword).toBe(true);
   });
 });
