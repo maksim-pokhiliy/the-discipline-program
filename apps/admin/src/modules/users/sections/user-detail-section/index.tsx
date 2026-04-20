@@ -1,6 +1,6 @@
 "use client";
 
-import { Grid, Stack, useTheme } from "@mui/material";
+import { Avatar, Grid, Stack, Typography, useTheme } from "@mui/material";
 
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
 import { formatDate } from "@repo/shared";
@@ -15,9 +15,23 @@ type UserDetailSectionProps = {
 
 export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) => {
   const theme = useTheme();
+  const displayLabel = user.name ?? user.email;
+  const initial = displayLabel.slice(0, 1).toUpperCase();
 
   return (
     <Stack spacing={3}>
+      <Stack direction="row" spacing={2} alignItems="center">
+        <Avatar src={user.image ?? undefined} alt={displayLabel} sx={{ width: 56, height: 56 }}>
+          {initial}
+        </Avatar>
+        <Stack spacing={0.25}>
+          {user.name && <Typography variant="subtitle1">{user.name}</Typography>}
+          <Typography variant="body2" color="text.secondary">
+            {user.email}
+          </Typography>
+        </Stack>
+      </Stack>
+
       <UserForm isEdit isLoading={isPending} />
 
       <Grid container spacing={3}>
@@ -45,11 +59,6 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
             <FormCard title="Account">
               <Stack spacing={2}>
                 <DetailField label="ID" labelWidth={theme.spacing(10)} value={user.id} />
-                <DetailField
-                  label="Image"
-                  labelWidth={theme.spacing(10)}
-                  value={user.image || "No image"}
-                />
               </Stack>
             </FormCard>
           </Stack>
