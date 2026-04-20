@@ -43,6 +43,7 @@ const parseConsumeResponse = async (response: Response): Promise<ConsumeInviteRe
 export const SetPasswordForm = ({ token, email }: SetPasswordFormProps) => {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -140,13 +141,30 @@ export const SetPasswordForm = ({ token, email }: SetPasswordFormProps) => {
 
       <TextField
         label="Confirm password"
-        type={showPassword ? "text" : "password"}
+        type={showConfirmPassword ? "text" : "password"}
         fullWidth
         autoComplete="new-password"
         disabled={isSubmitting}
         error={!!errors.confirmPassword}
         helperText={errors.confirmPassword?.message}
         {...register("confirmPassword")}
+        slotProps={{
+          input: {
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  size="medium"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  edge="end"
+                  disabled={isSubmitting}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          },
+        }}
       />
 
       <Button type="submit" variant="contained" size="large" fullWidth disabled={isSubmitting}>
