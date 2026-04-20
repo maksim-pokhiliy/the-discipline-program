@@ -30,6 +30,7 @@
     "@prisma/client": "catalog:",
     "@sentry/nextjs": "catalog:",
     "@repo/contracts": "workspace:*",
+    "@repo/email": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/errors": "workspace:*",
     "@repo/shared": "workspace:*",
