@@ -56,7 +56,7 @@ type SendInvitationEmailInput = {
 export const sendInvitationEmail = async (input: SendInvitationEmailInput): Promise<void> => {
   try {
     const config = resolveInviteEmailConfig();
-    const inviteUrl = `${baseEnv.NEXT_PUBLIC_APP_URL}/invite/${input.plainToken}`;
+    const inviteUrl = `${baseEnv.NEXT_PUBLIC_PLATFORM_URL}/invite/${input.plainToken}`;
 
     const { html, text } = await renderInvitationEmail({
       inviteUrl,
