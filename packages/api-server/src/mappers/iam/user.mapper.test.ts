@@ -87,7 +87,15 @@ describe("mapToAdminUserListItem", () => {
       image: "https://example.com/avatar.jpg",
       timezone: "Europe/Kyiv",
       createdAt: NOW,
+      hasPassword: true,
     });
+  });
+
+  it("reflects hasPassword=false for users without a password", () => {
+    const input = makeUser({ password: null });
+    const result = mapToAdminUserListItem(input);
+
+    expect(result.hasPassword).toBe(false);
   });
 
   it("maps COACH role", () => {

@@ -122,6 +122,10 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         sortable: true,
         sortValue: (user) => user.role,
         render: (user) => {
+          if (!user.hasPassword) {
+            return <Chip label="Pending" color="warning" size="small" variant="outlined" />;
+          }
+
           const config = ROLE_CONFIG[user.role];
 
           return (
