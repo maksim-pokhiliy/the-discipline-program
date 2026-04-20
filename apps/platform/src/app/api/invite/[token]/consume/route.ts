@@ -25,8 +25,8 @@ const parseRequestBody = async (request: Request): Promise<unknown> => {
 const consumeInviteHandler = async (request: Request, context: RouteContext): Promise<Response> => {
   const { token } = consumeInviteParamsSchema.parse(await context.params);
   const body = await parseRequestBody(request);
-  const { password } = consumeInviteRequestSchema.parse(body);
-  const result = await iamInviteTokenApi.consume(token, password);
+  const input = consumeInviteRequestSchema.parse(body);
+  const result = await iamInviteTokenApi.consume(token, input);
   const validated = consumeInviteResponseSchema.parse(result);
 
   return NextResponse.json(validated);
