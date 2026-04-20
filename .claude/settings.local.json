@@ -53,7 +53,8 @@
       "Bash(vercel env *)",
       "Bash(vercel redeploy *)",
       "mcp__plugin_vercel_vercel__get_deployment",
-      "Bash(gh api *)"
+      "Bash(gh api *)",
+      "Bash(awk '{print $1, $4}')"
     ]
   }
 }
