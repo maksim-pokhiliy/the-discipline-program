@@ -1,10 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { ConflictError, NotFoundError } from "@repo/errors";
+import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
-import { cleanup, createTestUser } from "../../test/helpers";
+import { cleanup, cleanupRaw, createTestUser } from "../../test/helpers";
 
 import { iamUserAdminApi } from "./users-admin";
 
@@ -134,6 +134,144 @@ describe("iamUserAdminApi", () => {
         await iamUserAdminApi.updateRole(secondAdmin.id, adminUser.id, { role: UserRole.ADMIN });
         await cleanup({ table: "user", id: secondAdmin.id });
       }
+    });
+  });
+
+  describe("updateUser", () => {
+    it("updates name and timezone without bumping tokenVersion when role is unchanged", async () => {
+      const target = await createTestUser({ timezone: "UTC" });
+      const before = await cleanupRaw.user.findUnique({ where: { id: target.id } });
+
+      try {
+        const updated = await iamUserAdminApi.updateUser(adminUser.id, target.id, {
+          name: "Changed Name",
+          timezone: "Europe/Kiev",
+        });
+
+        expect(updated.name).toBe("Changed Name");
+        expect(updated.timezone).toBe("Europe/Kiev");
+
+        const after = await cleanupRaw.user.findUnique({ where: { id: target.id } });
+
+        expect(after?.tokenVersion).toBe(before?.tokenVersion);
+      } finally {
+        await cleanup({ table: "user", id: target.id });
+      }
+    });
+
+    it("bumps tokenVersion when role changes", async () => {
+      const target = await createTestUser();
+      const before = await cleanupRaw.user.findUnique({ where: { id: target.id } });
+
+      try {
+        await iamUserAdminApi.updateUser(adminUser.id, target.id, {
+          role: UserRole.COACH,
+        });
+
+        const after = await cleanupRaw.user.findUnique({ where: { id: target.id } });
+
+        expect(after?.tokenVersion).toBe((before?.tokenVersion ?? 0) + 1);
+      } finally {
+        await cleanup({ table: "user", id: target.id });
+      }
+    });
+
+    it("throws ForbiddenError when an admin self-demotes", async () => {
+      const selfAdmin = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
+
+      try {
+        await expect(
+          iamUserAdminApi.updateUser(selfAdmin.id, selfAdmin.id, { role: UserRole.USER }),
+        ).rejects.toThrow(ForbiddenError);
+      } finally {
+        await cleanup({ table: "user", id: selfAdmin.id });
+      }
+    });
+
+    it("throws ConflictError when demoting the last admin (acting as a different actor)", async () => {
+      const soloAdmin = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
+
+      const allAdmins = (await iamUserAdminApi.getAll()).filter(
+        (u) => u.role === UserRole.ADMIN && u.id !== soloAdmin.id,
+      );
+
+      for (const other of allAdmins) {
+        await iamUserAdminApi.updateRole(soloAdmin.id, other.id, { role: UserRole.USER });
+      }
+
+      try {
+        await expect(
+          iamUserAdminApi.updateUser(adminUser.id, soloAdmin.id, { role: UserRole.USER }),
+        ).rejects.toThrow(ConflictError);
+      } finally {
+        for (const other of allAdmins) {
+          await iamUserAdminApi.updateRole(soloAdmin.id, other.id, { role: UserRole.ADMIN });
+        }
+
+        await cleanup({ table: "user", id: soloAdmin.id });
+      }
+    });
+
+    it("throws NotFoundError for a non-existent id", async () => {
+      await expect(
+        iamUserAdminApi.updateUser(adminUser.id, crypto.randomUUID(), { name: "x" }),
+      ).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  describe("deleteUser", () => {
+    it("soft-deletes the user: deletedAt, email suffix, tokenVersion increment — all in one update", async () => {
+      const target = await createTestUser();
+      const before = await cleanupRaw.user.findUnique({ where: { id: target.id } });
+      const originalEmail = target.email;
+
+      await iamUserAdminApi.deleteUser(adminUser.id, target.id);
+
+      const after = await cleanupRaw.user.findUnique({ where: { id: target.id } });
+
+      expect(after?.deletedAt).not.toBeNull();
+      expect(after?.email).not.toBe(originalEmail);
+      expect(after?.email).toContain(originalEmail);
+      expect(after?.email).toContain("_deleted_");
+      expect(after?.tokenVersion).toBe((before?.tokenVersion ?? 0) + 1);
+
+      await cleanupRaw.user.delete({ where: { id: target.id } });
+    });
+
+    it("throws ForbiddenError when actor attempts to delete themselves", async () => {
+      await expect(iamUserAdminApi.deleteUser(adminUser.id, adminUser.id)).rejects.toThrow(
+        ForbiddenError,
+      );
+    });
+
+    it("throws ConflictError when deleting the last admin", async () => {
+      const soloAdmin = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
+
+      const allAdmins = (await iamUserAdminApi.getAll()).filter(
+        (u) => u.role === UserRole.ADMIN && u.id !== soloAdmin.id,
+      );
+
+      for (const other of allAdmins) {
+        await iamUserAdminApi.updateRole(soloAdmin.id, other.id, { role: UserRole.USER });
+      }
+
+      try {
+        await expect(iamUserAdminApi.deleteUser(adminUser.id, soloAdmin.id)).rejects.toThrow(
+          ConflictError,
+        );
+      } finally {
+        for (const other of allAdmins) {
+          await iamUserAdminApi.updateRole(soloAdmin.id, other.id, { role: UserRole.ADMIN });
+        }
+
+        await cleanup({ table: "user", id: soloAdmin.id });
+      }
+    });
+
+    it("throws NotFoundError for a non-existent id", async () => {
+      await expect(iamUserAdminApi.deleteUser(adminUser.id, crypto.randomUUID())).rejects.toThrow(
+        NotFoundError,
+      );
     });
   });
 });
