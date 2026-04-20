@@ -1,5 +1,6 @@
 import { type ApiClient } from "@repo/api-client";
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
+import { type ResendInviteResponse } from "@repo/contracts/iam/invite-token";
 import type {
   CreateUserData,
   GetUsersPageDataResponse,
@@ -23,4 +24,7 @@ export const createUsersAPI = (client: ApiClient) => ({
     client.request(`/api/admin/users/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> => client.request(`/api/admin/users/${id}`, "DELETE"),
+
+  resendInvite: (id: string): Promise<ResendInviteResponse> =>
+    client.request(`/api/admin/users/${id}/invite/resend`, "POST"),
 });
