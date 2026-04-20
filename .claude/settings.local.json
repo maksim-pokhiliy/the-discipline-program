@@ -38,7 +38,9 @@
       "Bash(vercel --version)",
       "Bash(node *)",
       "Bash(gh run *)",
-      "mcp__plugin_vercel_vercel__list_deployments"
+      "mcp__plugin_vercel_vercel__list_deployments",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebSearch"
     ]
   }
 }

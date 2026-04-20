@@ -60,8 +60,28 @@ export const createCrudHooks = <
     toast.success(`${entityName} ${action} successfully`);
   };
 
+  const getIssues = (error: Error): { path: string; message: string }[] | undefined => {
+    const details = (error as { details?: unknown }).details;
+
+    if (!details || typeof details !== "object") {
+      return undefined;
+    }
+
+    const issues = (details as Record<string, unknown>).issues;
+
+    return Array.isArray(issues) ? (issues as { path: string; message: string }[]) : undefined;
+  };
+
   const notifyError = (action: string, error: Error) => {
-    toast.error(error.message || `Failed to ${action} ${entityName.toLowerCase()}`);
+    const issues = getIssues(error);
+
+    if (issues && issues.length > 0) {
+      const text = issues.map((i) => (i.path ? `${i.path}: ${i.message}` : i.message)).join(", ");
+
+      toast.error(text);
+    } else {
+      toast.error(error.message || `Failed to ${action} ${entityName.toLowerCase()}`);
+    }
   };
 
   const invalidateRelated = (

@@ -1,6 +1,8 @@
 import {
   type AppError,
+  BadRequestError,
   ConflictError,
+  ERROR_CODES,
   ForbiddenError,
   InternalServerError,
   NotFoundError,
@@ -24,6 +26,19 @@ const HTTP_STATUS_ERROR_MAP: Partial<Record<number, AppErrorConstructor>> = {
   502: ServiceUnavailableError,
   503: ServiceUnavailableError,
   504: ServiceUnavailableError,
+};
+
+const ERROR_CODE_TO_CLASS: Partial<Record<string, AppErrorConstructor>> = {
+  [ERROR_CODES.VALIDATION_ERROR]: ValidationError,
+  [ERROR_CODES.INVALID_INPUT]: BadRequestError,
+  [ERROR_CODES.NOT_FOUND]: NotFoundError,
+  [ERROR_CODES.UNAUTHORIZED]: UnauthorizedError,
+  [ERROR_CODES.FORBIDDEN]: ForbiddenError,
+  [ERROR_CODES.ALREADY_EXISTS]: ConflictError,
+  [ERROR_CODES.TOO_MANY_REQUESTS]: TooManyRequestsError,
+  [ERROR_CODES.TIMEOUT]: TimeoutError,
+  [ERROR_CODES.SERVICE_UNAVAILABLE]: ServiceUnavailableError,
+  [ERROR_CODES.INTERNAL_SERVER_ERROR]: InternalServerError,
 };
 
 const DEFAULT_TIMEOUT_MS = 10_000;
@@ -158,10 +173,27 @@ export class ApiClient {
           .json()
           .catch(() => ({ error: { message: `Request failed: ${response.status}` } }));
 
-        const message = errBody.error?.message || "API request failed";
-        const details = { status: response.status, url: fullUrl, ...errBody.error?.details };
+        const errorData = errBody.error ?? {};
+        const message =
+          typeof errorData.message === "string" ? errorData.message : "API request failed";
+        const code = typeof errorData.code === "string" ? errorData.code : undefined;
+        const issues = Array.isArray(errorData.issues) ? errorData.issues : undefined;
+        const serverDetails =
+          typeof errorData.details === "object" && errorData.details !== null
+            ? (errorData.details as Record<string, unknown>)
+            : {};
+        const details = {
+          status: response.status,
+          url: fullUrl,
+          ...(code && { code }),
+          ...(issues && { issues }),
+          ...serverDetails,
+        };
 
-        const ErrorClass = HTTP_STATUS_ERROR_MAP[response.status] ?? InternalServerError;
+        const ErrorClass =
+          (code && ERROR_CODE_TO_CLASS[code]) ??
+          HTTP_STATUS_ERROR_MAP[response.status] ??
+          InternalServerError;
 
         throw new ErrorClass(message, details);
       }

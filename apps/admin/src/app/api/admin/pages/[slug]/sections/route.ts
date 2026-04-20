@@ -14,7 +14,9 @@ async function triggerMarketingRevalidation(slug: string): Promise<void> {
   const secret = baseEnv.REVALIDATE_SECRET;
   const path = PAGE_SLUG_PATH_MAP[slug as keyof typeof PAGE_SLUG_PATH_MAP];
 
-  if (!secret || !path) {return;}
+  if (!secret || !path) {
+    return;
+  }
 
   const url = `${baseEnv.NEXT_PUBLIC_MARKETING_URL}/api/revalidate?secret=${encodeURIComponent(secret)}&path=${encodeURIComponent(path)}`;
 
