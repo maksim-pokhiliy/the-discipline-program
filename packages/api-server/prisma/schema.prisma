@@ -8,29 +8,31 @@ datasource db {
 }
 
 model User {
-  id              String          @id @default(cuid())
-  email           String          @unique
-  emailVerified   DateTime?
-  name            String?
-  image           String?
-  password        String?
-  role            Role            @default(USER)
-  tokenVersion    Int             @default(0)
-  timezone        String          @default("UTC")
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  deletedAt       DateTime?
-  athleteProfile  AthleteProfile?
-  coachProfile    CoachProfile?
-  subscription    Subscription?
-  transactions    Transaction[]
-  workoutLogs     WorkoutLog[]
-  planEnrollments PlanEnrollment[]
-  userBenchmarks  UserBenchmark[]
-  coachNotes      CoachNote[]
-  actionItems     CoachActionItem[] @relation("ActionItemAthlete")
-  accounts        Account[]
-  sessions        Session[]
+  id                   String            @id @default(cuid())
+  email                String            @unique
+  emailVerified        DateTime?
+  name                 String?
+  image                String?
+  password             String?
+  role                 Role              @default(USER)
+  tokenVersion         Int               @default(0)
+  timezone             String            @default("UTC")
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  deletedAt            DateTime?
+  athleteProfile       AthleteProfile?
+  coachProfile         CoachProfile?
+  subscription         Subscription?
+  transactions         Transaction[]
+  workoutLogs          WorkoutLog[]
+  planEnrollments      PlanEnrollment[]
+  userBenchmarks       UserBenchmark[]
+  coachNotes           CoachNote[]
+  actionItems          CoachActionItem[] @relation("ActionItemAthlete")
+  inviteTokensReceived UserInviteToken[] @relation("UserInviteTokens")
+  inviteTokensIssued   UserInviteToken[] @relation("UserInviteTokensCreatedBy")
+  accounts             Account[]
+  sessions             Session[]
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -97,16 +99,16 @@ model AthleteProfile {
 }
 
 model CoachProfile {
-  id           String         @id @default(cuid())
-  userId       String         @unique
-  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bio          String?
-  plans        TrainingPlan[]
-  coachNotes   CoachNote[]
-  actionItems  CoachActionItem[]
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime       @updatedAt
-  deletedAt    DateTime?
+  id          String            @id @default(cuid())
+  userId      String            @unique
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio         String?
+  plans       TrainingPlan[]
+  coachNotes  CoachNote[]
+  actionItems CoachActionItem[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  deletedAt   DateTime?
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -125,19 +127,19 @@ enum Gender {
 }
 
 model Product {
-  id              String    @id @default(cuid())
-  slug            String    @unique
+  id              String        @id @default(cuid())
+  slug            String        @unique
   title           String
   description     String
   features        String[]
   trainingPlanId  String?
   trainingPlan    TrainingPlan? @relation(fields: [trainingPlanId], references: [id], onDelete: SetNull)
-  stripeProductId String?      @unique
-  isFeatured      Boolean   @default(false)
-  isActive        Boolean   @default(true)
+  stripeProductId String?       @unique
+  isFeatured      Boolean       @default(false)
+  isActive        Boolean       @default(true)
   prices          Price[]
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   deletedAt       DateTime?
 
   @@index([createdAt, title])
@@ -251,18 +253,18 @@ model TrainingPlan {
 }
 
 model Workout {
-  id            String         @id @default(cuid())
+  id            String       @id @default(cuid())
   planId        String
-  plan          TrainingPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
-  scheduledDate DateTime? @db.Date
-  title         String         @default("")
+  plan          TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  scheduledDate DateTime?    @db.Date
+  title         String       @default("")
   description   String?
-  content       String?        @db.Text
-  sortOrder     Int            @default(0)
-  isArchived    Boolean        @default(false)
+  content       String?      @db.Text
+  sortOrder     Int          @default(0)
+  isArchived    Boolean      @default(false)
   logs          WorkoutLog[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   deletedAt     DateTime?
 
   @@index([planId, scheduledDate])
@@ -274,16 +276,16 @@ model Workout {
 }
 
 model WorkoutLog {
-  id          String       @id @default(cuid())
-  userId      String
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  workoutId   String
-  workout     Workout      @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-  date        DateTime     @default(now())
-  notes       String?
-  isRx        Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workoutId String
+  workout   Workout  @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  date      DateTime @default(now())
+  notes     String?
+  isRx      Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, workoutId])
   @@index([createdAt])
@@ -323,20 +325,20 @@ enum ActionItemResolveReason {
 }
 
 model CoachActionItem {
-  id            String                    @id @default(cuid())
+  id            String                   @id @default(cuid())
   coachId       String
-  coach         CoachProfile              @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  coach         CoachProfile             @relation(fields: [coachId], references: [id], onDelete: Cascade)
   athleteId     String
-  athlete       User                      @relation("ActionItemAthlete", fields: [athleteId], references: [id], onDelete: Cascade)
+  athlete       User                     @relation("ActionItemAthlete", fields: [athleteId], references: [id], onDelete: Cascade)
   type          ActionItemType
   severity      ActionItemSeverity
-  status        ActionItemStatus          @default(OPEN)
+  status        ActionItemStatus         @default(OPEN)
   message       String
   metadata      Json?
   resolvedAt    DateTime?
   resolveReason ActionItemResolveReason?
-  createdAt     DateTime                  @default(now())
-  updatedAt     DateTime                  @updatedAt
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
 
   @@index([coachId, status])
   @@index([coachId, status, athleteId])
@@ -452,21 +454,21 @@ model MarketingPageSection {
 }
 
 model MarketingBlogPost {
-  id          String    @id @default(cuid())
-  slug        String    @unique
+  id          String                @id @default(cuid())
+  slug        String                @unique
   title       String
   excerpt     String?
-  content     String    @db.Text
+  content     String                @db.Text
   coverImage  String?
   authorName  String
   category    MarketingBlogCategory @default(UNCATEGORIZED)
   tags        String[]
   readTime    Int?
   publishedAt DateTime?
-  isPublished Boolean   @default(false)
-  isFeatured  Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isPublished Boolean               @default(false)
+  isFeatured  Boolean               @default(false)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
   deletedAt   DateTime?
 
   @@index([createdAt, title])
@@ -477,7 +479,6 @@ model MarketingBlogPost {
   @@index([isFeatured])
   @@map("marketing_blog_posts")
 }
-
 
 enum MarketingBlogCategory {
   UNCATEGORIZED
@@ -529,4 +530,20 @@ model MarketingContactSubmission {
   @@index([deletedAt])
   @@index([status])
   @@map("marketing_contact_submissions")
+}
+
+model UserInviteToken {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation("UserInviteTokens", fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash        String    @unique
+  expiresAt        DateTime
+  consumedAt       DateTime?
+  createdByAdminId String
+  createdBy        User      @relation("UserInviteTokensCreatedBy", fields: [createdByAdminId], references: [id], onDelete: Restrict)
+  createdAt        DateTime  @default(now())
+
+  @@index([userId, consumedAt])
+  @@index([expiresAt])
+  @@map("app_user_invite_tokens")
 }

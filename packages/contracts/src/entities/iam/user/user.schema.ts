@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { imageUrlSchema } from "../../../common/image";
 import { timezoneSchema } from "../../../common/timezone";
-import { userRoleSchema } from "../auth";
+import { UserRole, userRoleSchema } from "../auth";
 
 export const userSchema = z.object({
   id: z.string().cuid(),
@@ -24,6 +24,7 @@ export const adminUserListItemSchema = z.object({
   image: imageUrlSchema,
   timezone: timezoneSchema,
   createdAt: z.date(),
+  hasPassword: z.boolean(),
 });
 
 export const userSearchResultSchema = z.object({
@@ -35,4 +36,20 @@ export const userSearchResultSchema = z.object({
 
 export const updateUserRoleSchema = z.object({
   role: userRoleSchema,
+});
+
+export const createUserSchema = z.object({
+  email: z
+    .string()
+    .transform((value) => value.trim().toLowerCase())
+    .pipe(z.string().email().max(320)),
+  name: z.string().min(1).max(120).nullable().default(null),
+  role: z.enum([UserRole.USER, UserRole.COACH]),
+  timezone: timezoneSchema.default("UTC"),
+});
+
+export const updateUserSchema = z.object({
+  name: z.string().min(1).max(120).nullable().optional(),
+  role: userRoleSchema.optional(),
+  timezone: timezoneSchema.optional(),
 });

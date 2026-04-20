@@ -173,11 +173,11 @@ module.exports = {
       name: "shared-packages-no-prisma",
       severity: "error",
       comment:
-        "Cross-cutting packages (shared, mui, query, auth, errors, env, api-client) are " +
+        "Cross-cutting packages (shared, mui, query, auth, errors, env, api-client, email) are " +
         "consumed by apps and must stay Prisma-free. Any data-shape dependency goes through " +
         "@repo/contracts instead.",
       from: {
-        path: "^packages/(shared|mui|query|auth|errors|env|api-client)/",
+        path: "^packages/(shared|mui|query|auth|errors|env|api-client|email)/",
       },
       to: { path: "^@prisma/client" },
     },

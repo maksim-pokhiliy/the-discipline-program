@@ -4,7 +4,9 @@ import { idParamSchema } from "../../../common";
 
 import {
   adminUserListItemSchema,
+  createUserSchema,
   updateUserRoleSchema,
+  updateUserSchema,
   userSchema,
   userSearchResultSchema,
 } from "./user.schema";
@@ -26,3 +28,15 @@ export const searchUsersQuerySchema = z.object({
 });
 
 export const searchUsersResponseSchema = z.array(userSearchResultSchema);
+
+export const createUserRequestSchema = createUserSchema;
+
+export const createUserResponseSchema = userSchema;
+
+export const updateUserParamsSchema = idParamSchema;
+
+export const updateUserRequestSchema = updateUserSchema;
+
+export const updateUserResponseSchema = userSchema;
+
+export const deleteUserParamsSchema = idParamSchema;

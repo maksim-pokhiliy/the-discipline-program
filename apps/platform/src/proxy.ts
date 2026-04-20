@@ -1,16 +1,16 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import { AUTH_ROUTES, getToken, hasSessionCookie, isPublicRoute } from "@repo/auth";
-import { UserRole } from "@repo/contracts/iam/auth";
+import { ROLE_HOMES, UserRole } from "@repo/contracts/iam/auth";
 import { logger } from "@repo/shared";
 
-const ROLE_HOMES: Record<string, string> = {
-  [UserRole.USER]: "/athlete",
-  [UserRole.COACH]: "/coach",
+const PLATFORM_ROLE_HOMES: Record<string, string> = {
+  [UserRole.USER]: ROLE_HOMES[UserRole.USER],
+  [UserRole.COACH]: ROLE_HOMES[UserRole.COACH],
 };
 
 const getRoleHome = (role?: string | null): string | null =>
-  role ? (ROLE_HOMES[role] ?? null) : null;
+  role ? (PLATFORM_ROLE_HOMES[role] ?? null) : null;
 
 export const proxy = async (req: NextRequest) => {
   const path = req.nextUrl.pathname;

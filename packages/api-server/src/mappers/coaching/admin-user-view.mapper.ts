@@ -18,6 +18,7 @@ export type AdminUserViewRow = PrismaUser & {
 
 export const mapToAdminUserView = (u: AdminUserViewRow): AdminUserView => ({
   ...mapToUser(u),
+  hasPassword: u.password !== null,
   athleteProfile: u.athleteProfile ? mapToAthleteProfile(u.athleteProfile) : null,
   coachProfile: u.coachProfile ? mapToCoachProfile(u.coachProfile) : null,
 });

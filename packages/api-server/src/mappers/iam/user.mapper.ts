@@ -24,4 +24,5 @@ export const mapToAdminUserListItem = (u: PrismaUser): AdminUserListItem => ({
   image: u.image,
   timezone: u.timezone,
   createdAt: u.createdAt,
+  hasPassword: u.password !== null,
 });

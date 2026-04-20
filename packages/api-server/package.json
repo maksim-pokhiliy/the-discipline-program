@@ -19,6 +19,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:reset": "prisma db push --force-reset",
     "db:seed": "prisma db seed",
     "db:seed:pages": "tsx prisma/seed-pages.ts"
   },
@@ -29,6 +30,7 @@
     "@prisma/client": "catalog:",
     "@sentry/nextjs": "catalog:",
     "@repo/contracts": "workspace:*",
+    "@repo/email": "workspace:*",
     "@repo/env": "workspace:*",
     "@repo/errors": "workspace:*",
     "@repo/shared": "workspace:*",
