@@ -267,5 +267,82 @@ describe("iamUserAdminApi — assignment logic", () => {
         await cleanup({ table: "user", id: athlete.id });
       }
     });
+
+    it("soft-deletes CoachProfile and drops coach-side assignments when COACH -> ATHLETE", async () => {
+      const demoted = await createTestCoach();
+      const athlete = await createAthleteWithCoaches([demoted.profile.id]);
+
+      try {
+        await iamUserAdminApi.updateUser(adminUser.id, demoted.user.id, {
+          role: UserRole.ATHLETE,
+        });
+
+        const profile = await cleanupRaw.coachProfile.findUnique({
+          where: { id: demoted.profile.id },
+        });
+        const coachSideAssignments = await cleanupRaw.coachAthleteAssignment.count({
+          where: { coachId: demoted.profile.id },
+        });
+
+        expect(profile?.deletedAt).toBeInstanceOf(Date);
+        expect(coachSideAssignments).toBe(0);
+      } finally {
+        await cleanupRaw.coachAthleteAssignment
+          .deleteMany({ where: { athleteId: athlete.id } })
+          .catch(() => {});
+        await cleanupRaw.athleteProfile
+          .delete({ where: { userId: demoted.user.id } })
+          .catch(() => {});
+        await cleanupRaw.coachProfile.delete({ where: { id: demoted.profile.id } }).catch(() => {});
+        await cleanup({ table: "user", id: athlete.id });
+        await cleanup({ table: "user", id: demoted.user.id });
+      }
+    });
+
+    it("soft-deletes CoachProfile and drops coach-side assignments when COACH -> ADMIN", async () => {
+      const demoted = await createTestCoach();
+      const athlete = await createAthleteWithCoaches([demoted.profile.id]);
+
+      try {
+        await iamUserAdminApi.updateUser(adminUser.id, demoted.user.id, {
+          role: UserRole.ADMIN,
+        });
+
+        const profile = await cleanupRaw.coachProfile.findUnique({
+          where: { id: demoted.profile.id },
+        });
+        const coachSideAssignments = await cleanupRaw.coachAthleteAssignment.count({
+          where: { coachId: demoted.profile.id },
+        });
+
+        expect(profile?.deletedAt).toBeInstanceOf(Date);
+        expect(coachSideAssignments).toBe(0);
+      } finally {
+        await cleanupRaw.coachProfile.delete({ where: { id: demoted.profile.id } }).catch(() => {});
+        await cleanup({ table: "user", id: athlete.id });
+        await cleanup({ table: "user", id: demoted.user.id });
+      }
+    });
+
+    it("leaves CoachProfile intact when a COACH is updated with role unchanged", async () => {
+      const coachTarget = await createTestCoach();
+
+      try {
+        await iamUserAdminApi.updateUser(adminUser.id, coachTarget.user.id, {
+          name: "Renamed Coach",
+        });
+
+        const profile = await cleanupRaw.coachProfile.findUnique({
+          where: { id: coachTarget.profile.id },
+        });
+
+        expect(profile?.deletedAt).toBeNull();
+      } finally {
+        await cleanupRaw.coachProfile
+          .delete({ where: { id: coachTarget.profile.id } })
+          .catch(() => {});
+        await cleanup({ table: "user", id: coachTarget.user.id });
+      }
+    });
   });
 });
