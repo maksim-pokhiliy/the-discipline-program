@@ -126,13 +126,13 @@ describe("platform guards", () => {
   });
 
   describe("verifyAthleteBelongsToCoach", () => {
-    it("does not throw for enrolled athlete", async () => {
+    it("does not throw for assigned athlete", async () => {
       await expect(
         verifyAthleteBelongsToCoach(athleteUser.id, coach.profile.id),
       ).resolves.toBeUndefined();
     });
 
-    it("throws ForbiddenError for non-enrolled athlete", async () => {
+    it("throws ForbiddenError for non-assigned athlete", async () => {
       await expect(
         verifyAthleteBelongsToCoach(nonEnrolledUser.id, coach.profile.id),
       ).rejects.toThrow(ForbiddenError);

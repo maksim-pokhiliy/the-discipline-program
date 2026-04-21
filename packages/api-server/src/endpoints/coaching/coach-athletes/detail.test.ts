@@ -130,7 +130,7 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
     ).rejects.toThrow(ForbiddenError);
   });
 
-  it("throws ForbiddenError for athlete not enrolled with coach", async () => {
+  it("throws ForbiddenError for athlete not assigned to coach", async () => {
     const randomUser = await createTestUser();
 
     await expect(

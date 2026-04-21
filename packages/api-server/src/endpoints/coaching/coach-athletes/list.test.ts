@@ -51,7 +51,7 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
     );
   });
 
-  it("returns athletes enrolled in coach's plans", async () => {
+  it("returns athletes assigned to the coach", async () => {
     const result = await coachingCoachAthletesApi.getAthletes(scenario.coach.user.id);
 
     expect(result.athletes.length).toBe(scenario.athletes.length);

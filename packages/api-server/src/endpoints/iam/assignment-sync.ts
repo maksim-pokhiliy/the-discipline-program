@@ -29,21 +29,6 @@ export const assertCoachesExist = async (tx: TxClient, ids: string[]): Promise<v
   throw new NotFoundError("Coach not found", { missing });
 };
 
-const closeOrphanActionItems = async (
-  tx: TxClient,
-  coachId: string,
-  athleteId: string,
-): Promise<void> => {
-  await tx.coachActionItem.updateMany({
-    where: { coachId, athleteId, status: PrismaActionItemStatus.OPEN },
-    data: {
-      status: PrismaActionItemStatus.RESOLVED,
-      resolvedAt: new Date(),
-      resolveReason: PrismaActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
-    },
-  });
-};
-
 export const syncAthleteAssignments = async (
   tx: TxClient,
   athleteId: string,
@@ -58,8 +43,19 @@ export const syncAthleteAssignments = async (
     where: { athleteId, coachId: { notIn: desiredCoachIds } },
   });
 
-  for (const { coachId } of toRemove) {
-    await closeOrphanActionItems(tx, coachId, athleteId);
+  if (toRemove.length > 0) {
+    await tx.coachActionItem.updateMany({
+      where: {
+        athleteId,
+        coachId: { in: toRemove.map((r) => r.coachId) },
+        status: PrismaActionItemStatus.OPEN,
+      },
+      data: {
+        status: PrismaActionItemStatus.RESOLVED,
+        resolvedAt: new Date(),
+        resolveReason: PrismaActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
+      },
+    });
   }
 
   if (desiredCoachIds.length > 0) {
@@ -88,8 +84,17 @@ export const closeCoachActionItemsBulk = async (
   tx: TxClient,
   coachUserId: string,
 ): Promise<void> => {
+  const profile = await tx.coachProfile.findFirst({
+    where: { userId: coachUserId, deletedAt: null },
+    select: { id: true },
+  });
+
+  if (!profile) {
+    return;
+  }
+
   await tx.coachActionItem.updateMany({
-    where: { coach: { userId: coachUserId }, status: PrismaActionItemStatus.OPEN },
+    where: { coachId: profile.id, status: PrismaActionItemStatus.OPEN },
     data: {
       status: PrismaActionItemStatus.RESOLVED,
       resolvedAt: new Date(),
