@@ -8,17 +8,17 @@ datasource db {
 }
 
 model User {
-  id                   String            @id @default(cuid())
-  email                String            @unique
+  id                   String                   @id @default(cuid())
+  email                String                   @unique
   emailVerified        DateTime?
   name                 String?
   image                String?
   password             String?
-  role                 Role              @default(USER)
-  tokenVersion         Int               @default(0)
-  timezone             String            @default("UTC")
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
+  role                 Role                     @default(ATHLETE)
+  tokenVersion         Int                      @default(0)
+  timezone             String                   @default("UTC")
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
   deletedAt            DateTime?
   athleteProfile       AthleteProfile?
   coachProfile         CoachProfile?
@@ -28,9 +28,10 @@ model User {
   planEnrollments      PlanEnrollment[]
   userBenchmarks       UserBenchmark[]
   coachNotes           CoachNote[]
-  actionItems          CoachActionItem[] @relation("ActionItemAthlete")
-  inviteTokensReceived UserInviteToken[] @relation("UserInviteTokens")
-  inviteTokensIssued   UserInviteToken[] @relation("UserInviteTokensCreatedBy")
+  actionItems          CoachActionItem[]        @relation("ActionItemAthlete")
+  inviteTokensReceived UserInviteToken[]        @relation("UserInviteTokens")
+  inviteTokensIssued   UserInviteToken[]        @relation("UserInviteTokensCreatedBy")
+  athleteAssignments   CoachAthleteAssignment[] @relation("AthleteAssignments")
   accounts             Account[]
   sessions             Session[]
 
@@ -99,24 +100,40 @@ model AthleteProfile {
 }
 
 model CoachProfile {
-  id          String            @id @default(cuid())
-  userId      String            @unique
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  bio         String?
-  plans       TrainingPlan[]
-  coachNotes  CoachNote[]
-  actionItems CoachActionItem[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
-  deletedAt   DateTime?
+  id                      String                   @id @default(cuid())
+  userId                  String                   @unique
+  user                    User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bio                     String?
+  plans                   TrainingPlan[]
+  coachNotes              CoachNote[]
+  actionItems             CoachActionItem[]
+  coachAthleteAssignments CoachAthleteAssignment[]
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  deletedAt               DateTime?
 
   @@index([createdAt])
   @@index([deletedAt])
   @@map("app_coach_profiles")
 }
 
+model CoachAthleteAssignment {
+  id        String       @id @default(cuid())
+  coachId   String
+  coach     CoachProfile @relation(fields: [coachId], references: [id], onDelete: Cascade)
+  athleteId String
+  athlete   User         @relation("AthleteAssignments", fields: [athleteId], references: [id], onDelete: Cascade)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([coachId, athleteId])
+  @@index([coachId])
+  @@index([athleteId])
+  @@map("app_coach_athlete_assignments")
+}
+
 enum Role {
-  USER
+  ATHLETE
   COACH
   ADMIN
 }

@@ -5,7 +5,7 @@ import { ROLE_HOMES, UserRole } from "@repo/contracts/iam/auth";
 import { logger } from "@repo/shared";
 
 const PLATFORM_ROLE_HOMES: Record<string, string> = {
-  [UserRole.USER]: ROLE_HOMES[UserRole.USER],
+  [UserRole.ATHLETE]: ROLE_HOMES[UserRole.ATHLETE],
   [UserRole.COACH]: ROLE_HOMES[UserRole.COACH],
 };
 

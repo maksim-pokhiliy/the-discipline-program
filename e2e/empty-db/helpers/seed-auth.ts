@@ -43,11 +43,11 @@ const upsertAuthUsers = async (prisma: PrismaClient): Promise<void> => {
 
   await prisma.user.upsert({
     where: { email: ATHLETE_EMAIL },
-    update: { password: passwordHash, role: Role.USER },
+    update: { password: passwordHash, role: Role.ATHLETE },
     create: {
       email: ATHLETE_EMAIL,
       name: "Athlete",
-      role: Role.USER,
+      role: Role.ATHLETE,
       password: passwordHash,
       timezone: "Europe/Kiev",
     },

@@ -12,7 +12,7 @@ export const iamUserSearchApi = {
     const users = await prisma.user.findMany({
       where: {
         id: { not: userId },
-        role: ROLE_TO_PRISMA_MAP[UserRole.USER],
+        role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE],
         OR: [
           { name: { contains: query, mode: "insensitive" } },
           { email: { contains: query, mode: "insensitive" } },

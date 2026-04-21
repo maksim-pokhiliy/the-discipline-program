@@ -30,8 +30,8 @@ export const lmsPlanEnrollmentApi = {
       "User",
     );
 
-    if (ROLE_MAP[athlete.role] !== UserRole.USER) {
-      throw new ForbiddenError("Only USER role can be enrolled as athlete");
+    if (ROLE_MAP[athlete.role] !== UserRole.ATHLETE) {
+      throw new ForbiddenError("Only ATHLETE role can be enrolled");
     }
 
     try {

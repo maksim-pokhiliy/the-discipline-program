@@ -40,6 +40,7 @@ const clearAll = async () => {
   await prisma.coachActionItem.deleteMany();
   await prisma.planEnrollment.deleteMany();
   await prisma.trainingPlan.deleteMany();
+  await prisma.coachAthleteAssignment.deleteMany();
   await prisma.athleteProfile.deleteMany();
   await prisma.coachProfile.deleteMany();
   await prisma.marketingContactSubmission.deleteMany();
@@ -82,7 +83,7 @@ const seedUsers = async (passwordHash: string) => {
         name: "Sarah Mitchell",
         image:
           "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&h=200&fit=crop&crop=face",
-        role: Role.USER,
+        role: Role.ATHLETE,
         password: passwordHash,
         timezone: "UTC",
         createdAt: daysAgo(55),
@@ -94,7 +95,7 @@ const seedUsers = async (passwordHash: string) => {
         name: "Mike Thompson",
         image:
           "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
-        role: Role.USER,
+        role: Role.ATHLETE,
         password: passwordHash,
         timezone: "UTC",
         createdAt: daysAgo(48),
@@ -106,7 +107,7 @@ const seedUsers = async (passwordHash: string) => {
         name: "Jenny Park",
         image:
           "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",
-        role: Role.USER,
+        role: Role.ATHLETE,
         password: passwordHash,
         timezone: "UTC",
         createdAt: daysAgo(34),
@@ -118,7 +119,7 @@ const seedUsers = async (passwordHash: string) => {
         name: "David Rodriguez",
         image:
           "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face",
-        role: Role.USER,
+        role: Role.ATHLETE,
         password: passwordHash,
         timezone: "UTC",
         createdAt: daysAgo(4),
@@ -130,7 +131,7 @@ const seedUsers = async (passwordHash: string) => {
         name: "Lisa Anderson",
         image:
           "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face",
-        role: Role.USER,
+        role: Role.ATHLETE,
         password: passwordHash,
         timezone: "UTC",
         createdAt: daysAgo(30),
@@ -140,7 +141,7 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "tom.bradley@email.com",
         name: "Tom Bradley",
-        role: Role.USER,
+        role: Role.ATHLETE,
         password: passwordHash,
         timezone: "UTC",
         createdAt: daysAgo(2),
@@ -152,7 +153,7 @@ const seedUsers = async (passwordHash: string) => {
         name: "Alex Kovac",
         image:
           "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
-        role: Role.USER,
+        role: Role.ATHLETE,
         password: passwordHash,
         timezone: "UTC",
         createdAt: daysAgo(40),
@@ -162,7 +163,7 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "nina.reyes@email.com",
         name: "Nina Reyes",
-        role: Role.USER,
+        role: Role.ATHLETE,
         password: passwordHash,
         timezone: "UTC",
         createdAt: daysAgo(30),
@@ -172,7 +173,7 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "chris.walker@email.com",
         name: "Chris Walker",
-        role: Role.USER,
+        role: Role.ATHLETE,
         password: passwordHash,
         timezone: "UTC",
         createdAt: daysAgo(1),
@@ -182,7 +183,7 @@ const seedUsers = async (passwordHash: string) => {
       data: {
         email: "maria.santos@email.com",
         name: "Maria Santos",
-        role: Role.USER,
+        role: Role.ATHLETE,
         password: passwordHash,
         timezone: "UTC",
         createdAt: daysAgo(20),
@@ -244,7 +245,25 @@ const seedProfiles = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
     ],
   });
 
+  const athleteIds = [
+    users.sarah.id,
+    users.mike.id,
+    users.jenny.id,
+    users.david.id,
+    users.lisa.id,
+    users.tom.id,
+    users.alex.id,
+    users.nina.id,
+    users.chris.id,
+    users.maria.id,
+  ];
+
+  await prisma.coachAthleteAssignment.createMany({
+    data: athleteIds.map((athleteId) => ({ coachId: coachProfile.id, athleteId })),
+  });
+
   console.log("  Profiles: 1 coach, 10 athletes (1 INJURED, 1 RESTRICTED, 8 HEALTHY)");
+  console.log("  Coach-athlete assignments: 10");
 
   return { coachProfile };
 };
