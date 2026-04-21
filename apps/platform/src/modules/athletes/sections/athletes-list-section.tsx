@@ -56,7 +56,7 @@ export const AthletesListSection: React.FC<AthletesListSectionProps> = ({
   if (athletes.length === 0) {
     return (
       <Typography variant="body1" sx={{ color: "text.secondary", textAlign: "center", py: 6 }}>
-        No athletes yet — enroll athletes in your plans to see them here
+        No athletes yet — ask an admin to assign athletes to you
       </Typography>
     );
   }

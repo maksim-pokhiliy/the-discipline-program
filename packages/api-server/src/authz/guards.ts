@@ -1,10 +1,8 @@
 import { UserRole } from "@repo/contracts/iam/auth";
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../db/client";
 import { ROLE_MAP } from "../mappers/iam";
-import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../mappers/lms";
 import { findOrThrow } from "../utils";
 
 export const requireAdmin = async (userId: string): Promise<void> => {
@@ -19,8 +17,8 @@ export const requireAdmin = async (userId: string): Promise<void> => {
 };
 
 export const resolveCoachId = async (userId: string): Promise<string> => {
-  const profile = await prisma.coachProfile.findUnique({
-    where: { userId },
+  const profile = await prisma.coachProfile.findFirst({
+    where: { userId, deletedAt: null },
     select: { id: true },
   });
 
@@ -70,16 +68,12 @@ export const verifyAthleteBelongsToCoach = async (
   athleteUserId: string,
   coachId: string,
 ): Promise<void> => {
-  const enrollment = await prisma.planEnrollment.findFirst({
-    where: {
-      userId: athleteUserId,
-      trainingPlan: { coachId },
-      status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
-    },
+  const assignment = await prisma.coachAthleteAssignment.findUnique({
+    where: { coachId_athleteId: { coachId, athleteId: athleteUserId } },
     select: { id: true },
   });
 
-  if (!enrollment) {
+  if (!assignment) {
     throw new ForbiddenError("Athlete does not belong to this coach");
   }
 };

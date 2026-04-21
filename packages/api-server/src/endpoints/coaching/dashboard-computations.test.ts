@@ -6,7 +6,7 @@ import { TodayStatus } from "@repo/contracts/coaching/coach-dashboard";
 import { computeAthletesSummary, computeTodayStatus } from "./dashboard-computations";
 import {
   FAKE_NOW,
-  makeEnrollment,
+  makeAssignedAthlete,
   makeLog,
   makeWorkout,
 } from "./dashboard-computations.test-helpers";
@@ -171,7 +171,7 @@ describe("computeTodayStatus", () => {
 
 describe("computeAthletesSummary", () => {
   it("returns summary for a single enrollment", () => {
-    const enrollment = makeEnrollment({
+    const assignment = makeAssignedAthlete({
       userId: "u1",
       userName: "Alice",
       userEmail: "alice@test.com",
@@ -181,7 +181,7 @@ describe("computeAthletesSummary", () => {
       logs: [],
     });
 
-    const result = computeAthletesSummary([enrollment], TZ);
+    const result = computeAthletesSummary([assignment], TZ);
 
     expect(result).toHaveLength(1);
     const athlete = result[0];
@@ -201,22 +201,16 @@ describe("computeAthletesSummary", () => {
   });
 
   it("picks highest priority status when athlete has multiple enrollments", () => {
-    const enrollment1 = makeEnrollment({
+    const assignment = makeAssignedAthlete({
       userId: "u1",
-      planId: "p1",
-      workouts: [makeWorkout("w1", "2025-06-25T10:00:00Z")],
+      enrollments: [
+        { planId: "p1", workouts: [makeWorkout("w1", "2025-06-25T10:00:00Z")] },
+        { planId: "p2", planName: "Plan 2", workouts: [makeWorkout("w2", "2025-06-17T10:00:00Z")] },
+      ],
       logs: [],
     });
 
-    const enrollment2 = makeEnrollment({
-      userId: "u1",
-      planId: "p2",
-      planName: "Plan 2",
-      workouts: [makeWorkout("w2", "2025-06-17T10:00:00Z")],
-      logs: [],
-    });
-
-    const result = computeAthletesSummary([enrollment1, enrollment2], TZ);
+    const result = computeAthletesSummary([assignment], TZ);
 
     expect(result).toHaveLength(1);
     const athlete = result[0];
@@ -230,25 +224,23 @@ describe("computeAthletesSummary", () => {
   });
 
   it("aggregates missedCount — keeps higher count even from lower priority enrollment", () => {
-    const enrollment1 = makeEnrollment({
+    const assignment = makeAssignedAthlete({
       userId: "u1",
-      planId: "p1",
-      workouts: [makeWorkout("w1", "2025-06-17T10:00:00Z")],
-      logs: [],
-    });
-
-    const enrollment2 = makeEnrollment({
-      userId: "u1",
-      planId: "p2",
-      workouts: [
-        makeWorkout("w2", "2025-06-16T10:00:00Z"),
-        makeWorkout("w3", "2025-06-17T10:00:00Z"),
-        makeWorkout("w4", "2025-06-18T10:00:00Z", "Today"),
+      enrollments: [
+        { planId: "p1", workouts: [makeWorkout("w1", "2025-06-17T10:00:00Z")] },
+        {
+          planId: "p2",
+          workouts: [
+            makeWorkout("w2", "2025-06-16T10:00:00Z"),
+            makeWorkout("w3", "2025-06-17T10:00:00Z"),
+            makeWorkout("w4", "2025-06-18T10:00:00Z", "Today"),
+          ],
+        },
       ],
       logs: [],
     });
 
-    const result = computeAthletesSummary([enrollment1, enrollment2], TZ);
+    const result = computeAthletesSummary([assignment], TZ);
 
     expect(result).toHaveLength(1);
     const athlete = result[0];
@@ -261,12 +253,12 @@ describe("computeAthletesSummary", () => {
   });
 
   it("maps healthStatus from athleteProfile", () => {
-    const enrollment = makeEnrollment({
+    const assignment = makeAssignedAthlete({
       healthStatus: HealthStatus.INJURED,
       workouts: [],
     });
 
-    const result = computeAthletesSummary([enrollment], TZ);
+    const result = computeAthletesSummary([assignment], TZ);
     const athlete = result[0];
 
     if (!athlete) {
@@ -277,12 +269,12 @@ describe("computeAthletesSummary", () => {
   });
 
   it("defaults to HEALTHY when athleteProfile is null", () => {
-    const enrollment = makeEnrollment({
+    const assignment = makeAssignedAthlete({
       hasProfile: false,
       workouts: [],
     });
 
-    const result = computeAthletesSummary([enrollment], TZ);
+    const result = computeAthletesSummary([assignment], TZ);
     const athlete = result[0];
 
     if (!athlete) {
@@ -293,12 +285,12 @@ describe("computeAthletesSummary", () => {
   });
 
   it("computes daysSinceLastActivity", () => {
-    const enrollment = makeEnrollment({
+    const assignment = makeAssignedAthlete({
       workouts: [makeWorkout("w1", "2025-06-18T10:00:00Z")],
       logs: [makeLog("w-old", "2025-06-15T10:00:00Z")],
     });
 
-    const result = computeAthletesSummary([enrollment], TZ);
+    const result = computeAthletesSummary([assignment], TZ);
     const athlete = result[0];
 
     if (!athlete) {
@@ -309,12 +301,12 @@ describe("computeAthletesSummary", () => {
   });
 
   it("returns null daysSinceLastActivity when no logs", () => {
-    const enrollment = makeEnrollment({
+    const assignment = makeAssignedAthlete({
       workouts: [makeWorkout("w1", "2025-06-18T10:00:00Z")],
       logs: [],
     });
 
-    const result = computeAthletesSummary([enrollment], TZ);
+    const result = computeAthletesSummary([assignment], TZ);
     const athlete = result[0];
 
     if (!athlete) {

@@ -22,6 +22,8 @@ describe("coachingCoachNoteApi", () => {
   let planB: Awaited<ReturnType<typeof createTestPlan>>;
   let enrollmentAId: string;
   let enrollmentBId: string;
+  let assignmentAId: string;
+  let assignmentBId: string;
 
   beforeAll(async () => {
     coachA = await createTestCoach();
@@ -51,6 +53,18 @@ describe("coachingCoachNoteApi", () => {
     });
 
     enrollmentBId = enrollmentB.id;
+
+    const assignmentA = await cleanupRaw.coachAthleteAssignment.create({
+      data: { coachId: coachA.profile.id, athleteId: athlete.id },
+    });
+
+    assignmentAId = assignmentA.id;
+
+    const assignmentB = await cleanupRaw.coachAthleteAssignment.create({
+      data: { coachId: coachB.profile.id, athleteId: athlete.id },
+    });
+
+    assignmentBId = assignmentB.id;
   });
 
   afterAll(async () => {
@@ -59,6 +73,8 @@ describe("coachingCoachNoteApi", () => {
       .catch(() => {});
 
     await cleanup(
+      { table: "coachAthleteAssignment", id: assignmentAId },
+      { table: "coachAthleteAssignment", id: assignmentBId },
       { table: "planEnrollment", id: enrollmentAId },
       { table: "planEnrollment", id: enrollmentBId },
       { table: "trainingPlan", id: planA.id },
