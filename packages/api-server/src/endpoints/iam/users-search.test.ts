@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { ForbiddenError } from "@repo/errors";
 
-import { cleanup, createTestCoach, createTestUser } from "../../test/helpers";
+import { cleanup, createTestAssignment, createTestCoach, createTestUser } from "../../test/helpers";
 
 import { iamUserSearchApi } from "./users-search";
 
@@ -10,6 +10,7 @@ describe("iamUserSearchApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let regularUser: Awaited<ReturnType<typeof createTestUser>>;
   let searchableUser: Awaited<ReturnType<typeof createTestUser>>;
+  let assignmentId: string;
 
   const uniqueMarker = crypto.randomUUID().slice(0, 8);
   const searchableName = `Searchable ${uniqueMarker}`;
@@ -22,10 +23,15 @@ describe("iamUserSearchApi", () => {
       name: searchableName,
       email: searchableEmail,
     });
+
+    const assignment = await createTestAssignment(coach.profile.id, searchableUser.id);
+
+    assignmentId = assignment.id;
   });
 
   afterAll(async () => {
     await cleanup(
+      { table: "coachAthleteAssignment", id: assignmentId },
       { table: "coachProfile", id: coach.profile.id },
       { table: "user", id: coach.user.id },
       { table: "user", id: regularUser.id },
@@ -81,6 +87,22 @@ describe("iamUserSearchApi", () => {
       );
 
       expect(results).toEqual([]);
+    });
+
+    it("excludes athletes not assigned to the calling coach", async () => {
+      const unassignedUser = await createTestUser({
+        name: `Unassigned ${uniqueMarker}`,
+        email: `unassigned-${uniqueMarker}@test.local`,
+      });
+
+      try {
+        const results = await iamUserSearchApi.search(coach.user.id, uniqueMarker);
+
+        expect(results.some((u) => u.id === unassignedUser.id)).toBe(false);
+        expect(results.some((u) => u.id === searchableUser.id)).toBe(true);
+      } finally {
+        await cleanup({ table: "user", id: unassignedUser.id });
+      }
     });
   });
 });
