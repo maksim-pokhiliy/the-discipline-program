@@ -63,18 +63,36 @@ const applyRoleEnter = async (
   role: UserRole,
   coachIds: string[] | undefined,
 ): Promise<void> => {
-  if (role !== UserRole.ATHLETE) {
-    return;
-  }
+  switch (role) {
+    case UserRole.ATHLETE: {
+      await tx.athleteProfile.upsert({
+        where: { userId },
+        create: { userId },
+        update: {},
+      });
 
-  await tx.athleteProfile.upsert({
-    where: { userId },
-    create: { userId },
-    update: {},
-  });
+      if (coachIds !== undefined) {
+        await syncAthleteAssignments(tx, userId, dedupe(coachIds));
+      }
 
-  if (coachIds !== undefined) {
-    await syncAthleteAssignments(tx, userId, dedupe(coachIds));
+      return;
+    }
+    case UserRole.COACH: {
+      await tx.coachProfile.upsert({
+        where: { userId },
+        create: { userId },
+        update: { deletedAt: null },
+      });
+
+      return;
+    }
+    case UserRole.ADMIN:
+      return;
+    default: {
+      const exhaustive: never = role;
+
+      return exhaustive;
+    }
   }
 };
 

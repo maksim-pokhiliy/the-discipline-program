@@ -85,6 +85,51 @@ describe("iamUserAdminApi", () => {
       expect(updated.role).toBe(UserRole.COACH);
       expect(updated.id).toBe(regularUser.id);
 
+      const profile = await cleanupRaw.coachProfile.findUnique({
+        where: { userId: regularUser.id },
+        select: { id: true, deletedAt: true },
+      });
+
+      expect(profile).not.toBeNull();
+      expect(profile?.deletedAt).toBeNull();
+
+      await iamUserAdminApi.updateRole(adminUser.id, regularUser.id, { role: UserRole.ATHLETE });
+    });
+
+    it("restores soft-deleted coachProfile when re-entering COACH role", async () => {
+      await iamUserAdminApi.updateRole(adminUser.id, regularUser.id, { role: UserRole.COACH });
+
+      const created = await cleanupRaw.coachProfile.findUnique({
+        where: { userId: regularUser.id },
+        select: { id: true, deletedAt: true },
+      });
+
+      if (!created) {
+        throw new Error("expected coach profile to be created on first COACH entry");
+      }
+
+      expect(created.deletedAt).toBeNull();
+      const originalProfileId = created.id;
+
+      await iamUserAdminApi.updateRole(adminUser.id, regularUser.id, { role: UserRole.ATHLETE });
+
+      const softDeleted = await cleanupRaw.coachProfile.findUnique({
+        where: { userId: regularUser.id },
+        select: { deletedAt: true },
+      });
+
+      expect(softDeleted?.deletedAt).not.toBeNull();
+
+      await iamUserAdminApi.updateRole(adminUser.id, regularUser.id, { role: UserRole.COACH });
+
+      const restored = await cleanupRaw.coachProfile.findUnique({
+        where: { userId: regularUser.id },
+        select: { id: true, deletedAt: true },
+      });
+
+      expect(restored?.id).toBe(originalProfileId);
+      expect(restored?.deletedAt).toBeNull();
+
       await iamUserAdminApi.updateRole(adminUser.id, regularUser.id, { role: UserRole.ATHLETE });
     });
 
