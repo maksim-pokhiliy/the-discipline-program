@@ -158,7 +158,7 @@ export const MultiSelect = <TOption,>(props: MultiSelectProps<TOption>) => {
       isOptionEqualToValue={(a, b) => getOptionKey(a) === getOptionKey(b)}
       getOptionLabel={getLabel}
       noOptionsText={emptyLabel ?? "No options"}
-      disabled={disabled || isLoading}
+      disabled={disabled}
       {...(isControlledInput
         ? {
             inputValue,

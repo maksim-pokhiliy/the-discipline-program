@@ -40,7 +40,7 @@ export const ProfileCard = ({ user }: ProfileCardProps) => {
             label="Weight"
             value={athleteProfile.weightKg ? `${athleteProfile.weightKg} kg` : "—"}
           />
-          <DetailField label="Assigned Coaches">
+          <DetailField label="Assigned Coaches" alignItems="flex-start">
             {athleteProfile.assignedCoaches.length > 0 ? (
               <Stack direction="row" spacing={1} flexWrap="wrap">
                 {athleteProfile.assignedCoaches.map((coach) => (
