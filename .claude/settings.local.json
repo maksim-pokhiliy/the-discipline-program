@@ -62,7 +62,9 @@
       "Bash(tail *)",
       "Bash(awk 'NR<=276 || NR>=685' packages/api-server/src/endpoints/iam/users-admin.test.ts)",
       "Bash(awk 'NR<=184 || NR>=429' packages/api-server/src/endpoints/iam/users-admin-assignments.test.ts)",
-      "Bash(awk 'NR<=9 || \\(NR>=11 && NR<=20\\) || \\(NR>=186 && NR<=429\\)' packages/api-server/src/endpoints/iam/users-admin-assignments.test.ts)"
+      "Bash(awk 'NR<=9 || \\(NR>=11 && NR<=20\\) || \\(NR>=186 && NR<=429\\)' packages/api-server/src/endpoints/iam/users-admin-assignments.test.ts)",
+      "Bash(xargs -I {} basename {})",
+      "Bash(echo \"EXIT=$?\")"
     ]
   }
 }
