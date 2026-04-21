@@ -1,8 +1,12 @@
 import type { Prisma } from "@prisma/client";
 
 import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
-import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
+import {
+  PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
+  TRAINING_PLAN_STATUS_TO_PRISMA_MAP,
+} from "../../mappers/lms";
 
 const baseAssignedAthleteInclude = {
   athlete: {
@@ -57,7 +61,10 @@ export const buildAssignedAthleteInclude = (coachId: string) =>
           ...baseAssignedAthleteInclude.athlete.select.planEnrollments,
           where: {
             status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
-            trainingPlan: { coachId },
+            trainingPlan: {
+              coachId,
+              status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[TrainingPlanStatus.ACTIVE],
+            },
           },
         },
       },
