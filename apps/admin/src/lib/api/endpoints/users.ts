@@ -2,6 +2,7 @@ import { type ApiClient } from "@repo/api-client";
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
 import { type ResendInviteResponse } from "@repo/contracts/iam/invite-token";
 import type {
+  CoachListItem,
   CreateUserData,
   GetUsersPageDataResponse,
   UpdateUserData,
@@ -14,6 +15,8 @@ export const createUsersAPI = (client: ApiClient) => ({
     client.request("/api/admin/users/page-data"),
 
   getById: (id: string): Promise<AdminUserView> => client.request(`/api/admin/users/${id}`),
+
+  getCoaches: (): Promise<CoachListItem[]> => client.request("/api/admin/users/coaches"),
 
   updateRole: (id: string, data: UpdateUserRoleData): Promise<void> =>
     client.request(`/api/admin/users/${id}`, "PUT", data),

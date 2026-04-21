@@ -1,4 +1,4 @@
-import { Stack, Typography } from "@mui/material";
+import { Chip, Stack, Typography } from "@mui/material";
 
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
 import { GENDER_LABELS } from "@repo/contracts/coaching/athlete-profile";
@@ -17,8 +17,8 @@ export const ProfileCard = ({ user }: ProfileCardProps) => {
       return (
         <FormCard title="Athlete Profile">
           <Typography variant="body2" color="text.secondary">
-            No athlete profile yet — filled when the user completes onboarding or their coach
-            enrolls them in a plan.
+            No athlete profile yet — it is created automatically when an admin creates an athlete
+            from this console.
           </Typography>
         </FormCard>
       );
@@ -40,6 +40,19 @@ export const ProfileCard = ({ user }: ProfileCardProps) => {
             label="Weight"
             value={athleteProfile.weightKg ? `${athleteProfile.weightKg} kg` : "—"}
           />
+          <DetailField label="Assigned Coaches">
+            {athleteProfile.assignedCoaches.length > 0 ? (
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                {athleteProfile.assignedCoaches.map((coach) => (
+                  <Chip key={coach.id} label={coach.name ?? coach.email} size="small" />
+                ))}
+              </Stack>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Not assigned to any coach.
+              </Typography>
+            )}
+          </DetailField>
         </Stack>
       </FormCard>
     );
