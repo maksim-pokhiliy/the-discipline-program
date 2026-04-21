@@ -68,13 +68,14 @@ describe("iamUserAdminApi — createUser / resendInvite flag-gated surface", () 
       const user = await iamUserAdminApi.createUser(adminUser.id, {
         email,
         name: "Test Create",
-        role: UserRole.USER,
+        role: UserRole.ATHLETE,
         timezone: "UTC",
+        coachIds: [],
       });
 
       try {
         expect(user.email).toBe(email);
-        expect(user.role).toBe(UserRole.USER);
+        expect(user.role).toBe(UserRole.ATHLETE);
         expect(sendSpy).not.toHaveBeenCalled();
 
         const row = await cleanupRaw.user.findUnique({ where: { id: user.id } });
@@ -95,8 +96,9 @@ describe("iamUserAdminApi — createUser / resendInvite flag-gated surface", () 
         iamUserAdminApi.createUser(adminUser.id, {
           email: regularUser.email,
           name: "Duplicate",
-          role: UserRole.USER,
+          role: UserRole.ATHLETE,
           timezone: "UTC",
+          coachIds: [],
         }),
       ).rejects.toThrow(ConflictError);
     });
@@ -112,8 +114,9 @@ describe("iamUserAdminApi — createUser / resendInvite flag-gated surface", () 
       const user = await iamUserAdminApi.createUser(adminUser.id, {
         email,
         name: "Invite Target",
-        role: UserRole.USER,
+        role: UserRole.ATHLETE,
         timezone: "UTC",
+        coachIds: [],
       });
 
       try {
@@ -142,8 +145,9 @@ describe("iamUserAdminApi — createUser / resendInvite flag-gated surface", () 
         iamUserAdminApi.createUser(adminUser.id, {
           email,
           name: null,
-          role: UserRole.USER,
+          role: UserRole.ATHLETE,
           timezone: "UTC",
+          coachIds: [],
         }),
       ).rejects.toThrow(InternalServerError);
 

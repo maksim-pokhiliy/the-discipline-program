@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { idParamSchema } from "../../../common";
 
+import { coachListItemSchema } from "./coach-list.schema";
 import {
   adminUserListItemSchema,
   createUserSchema,
@@ -12,6 +13,8 @@ import {
 } from "./user.schema";
 
 export const getUsersResponseSchema = z.array(adminUserListItemSchema);
+
+export const getCoachesListResponseSchema = z.array(coachListItemSchema);
 
 export const updateUserRoleParamsSchema = idParamSchema;
 

@@ -12,7 +12,7 @@ type ProfileCardProps = {
 export const ProfileCard = ({ user }: ProfileCardProps) => {
   const { role, athleteProfile, coachProfile } = user;
 
-  if (role === UserRole.USER) {
+  if (role === UserRole.ATHLETE) {
     if (!athleteProfile) {
       return (
         <FormCard title="Athlete Profile">

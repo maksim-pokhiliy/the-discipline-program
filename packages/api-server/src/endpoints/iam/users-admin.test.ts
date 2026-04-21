@@ -42,7 +42,7 @@ describe("iamUserAdminApi", () => {
 
       expect(admin?.role).toBe(UserRole.ADMIN);
       expect(coach?.role).toBe(UserRole.COACH);
-      expect(regular?.role).toBe(UserRole.USER);
+      expect(regular?.role).toBe(UserRole.ATHLETE);
     });
 
     it("returns users ordered by createdAt desc", async () => {
@@ -77,7 +77,7 @@ describe("iamUserAdminApi", () => {
   });
 
   describe("updateRole", () => {
-    it("changes user role from USER to COACH", async () => {
+    it("changes user role from ATHLETE to COACH", async () => {
       const updated = await iamUserAdminApi.updateRole(adminUser.id, regularUser.id, {
         role: UserRole.COACH,
       });
@@ -85,7 +85,7 @@ describe("iamUserAdminApi", () => {
       expect(updated.role).toBe(UserRole.COACH);
       expect(updated.id).toBe(regularUser.id);
 
-      await iamUserAdminApi.updateRole(adminUser.id, regularUser.id, { role: UserRole.USER });
+      await iamUserAdminApi.updateRole(adminUser.id, regularUser.id, { role: UserRole.ATHLETE });
     });
 
     it("throws NotFoundError for non-existent user", async () => {
@@ -105,12 +105,12 @@ describe("iamUserAdminApi", () => {
       const otherAdminIds = admins.filter((a) => a.id !== soloAdmin.id).map((a) => a.id);
 
       for (const id of otherAdminIds) {
-        await iamUserAdminApi.updateRole(soloAdmin.id, id, { role: UserRole.USER });
+        await iamUserAdminApi.updateRole(soloAdmin.id, id, { role: UserRole.ATHLETE });
       }
 
       try {
         await expect(
-          iamUserAdminApi.updateRole(adminUser.id, soloAdmin.id, { role: UserRole.USER }),
+          iamUserAdminApi.updateRole(adminUser.id, soloAdmin.id, { role: UserRole.ATHLETE }),
         ).rejects.toThrow(ConflictError);
       } finally {
         for (const id of otherAdminIds) {
@@ -126,10 +126,10 @@ describe("iamUserAdminApi", () => {
 
       try {
         const updated = await iamUserAdminApi.updateRole(secondAdmin.id, adminUser.id, {
-          role: UserRole.USER,
+          role: UserRole.ATHLETE,
         });
 
-        expect(updated.role).toBe(UserRole.USER);
+        expect(updated.role).toBe(UserRole.ATHLETE);
       } finally {
         await iamUserAdminApi.updateRole(secondAdmin.id, adminUser.id, { role: UserRole.ADMIN });
         await cleanup({ table: "user", id: secondAdmin.id });
@@ -181,7 +181,7 @@ describe("iamUserAdminApi", () => {
 
       try {
         await expect(
-          iamUserAdminApi.updateUser(selfAdmin.id, selfAdmin.id, { role: UserRole.USER }),
+          iamUserAdminApi.updateUser(selfAdmin.id, selfAdmin.id, { role: UserRole.ATHLETE }),
         ).rejects.toThrow(ForbiddenError);
       } finally {
         await cleanup({ table: "user", id: selfAdmin.id });
@@ -196,12 +196,12 @@ describe("iamUserAdminApi", () => {
       );
 
       for (const other of allAdmins) {
-        await iamUserAdminApi.updateRole(soloAdmin.id, other.id, { role: UserRole.USER });
+        await iamUserAdminApi.updateRole(soloAdmin.id, other.id, { role: UserRole.ATHLETE });
       }
 
       try {
         await expect(
-          iamUserAdminApi.updateUser(adminUser.id, soloAdmin.id, { role: UserRole.USER }),
+          iamUserAdminApi.updateUser(adminUser.id, soloAdmin.id, { role: UserRole.ATHLETE }),
         ).rejects.toThrow(ConflictError);
       } finally {
         for (const other of allAdmins) {
@@ -252,7 +252,7 @@ describe("iamUserAdminApi", () => {
       );
 
       for (const other of allAdmins) {
-        await iamUserAdminApi.updateRole(soloAdmin.id, other.id, { role: UserRole.USER });
+        await iamUserAdminApi.updateRole(soloAdmin.id, other.id, { role: UserRole.ATHLETE });
       }
 
       try {

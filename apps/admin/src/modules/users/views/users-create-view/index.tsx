@@ -28,7 +28,7 @@ export const UsersCreateView = () => {
     defaultValues: {
       email: "",
       name: "",
-      role: UserRole.USER,
+      role: UserRole.ATHLETE,
       timezone: "UTC",
     },
   });

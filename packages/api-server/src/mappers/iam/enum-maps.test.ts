@@ -16,7 +16,7 @@ describe("ROLE_MAP", () => {
   });
 
   it("maps to correct contract values", () => {
-    expect(ROLE_MAP.USER).toBe(UserRole.USER);
+    expect(ROLE_MAP.ATHLETE).toBe(UserRole.ATHLETE);
     expect(ROLE_MAP.COACH).toBe(UserRole.COACH);
     expect(ROLE_MAP.ADMIN).toBe(UserRole.ADMIN);
   });

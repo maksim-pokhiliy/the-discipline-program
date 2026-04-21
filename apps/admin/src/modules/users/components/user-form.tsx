@@ -18,7 +18,7 @@ type UserFormProps = {
 
 type UserFormValues = CreateUserData & UpdateUserData;
 
-const CREATE_ROLE_OPTIONS: readonly UserRole[] = [UserRole.USER, UserRole.COACH];
+const CREATE_ROLE_OPTIONS: readonly UserRole[] = [UserRole.ATHLETE, UserRole.COACH];
 
 export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) => {
   const {

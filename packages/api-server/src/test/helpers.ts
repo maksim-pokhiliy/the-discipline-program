@@ -26,7 +26,7 @@ export const createTestUser = async (
     data: {
       email: `test-${id}@test.local`,
       name: `Test User ${id.slice(0, 8)}`,
-      role: ROLE_TO_PRISMA_MAP[UserRole.USER],
+      role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE],
       ...overrides,
     },
   });
