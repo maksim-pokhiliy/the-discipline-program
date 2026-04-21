@@ -1,3 +1,5 @@
+import { type Prisma } from "@prisma/client";
+
 import { UserRole } from "@repo/contracts/iam/auth";
 import {
   type AdminUserListItem,
@@ -8,7 +10,13 @@ import {
   type User,
 } from "@repo/contracts/iam/user";
 import { baseEnv } from "@repo/env/base";
-import { BadRequestError, ConflictError, ForbiddenError, TooManyRequestsError } from "@repo/errors";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  TooManyRequestsError,
+} from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToAdminUserListItem, mapToUser, ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
@@ -19,6 +27,31 @@ import { resolveInviteEmailConfig, sendInvitationEmail } from "./send-invitation
 
 const MS_PER_HOUR = 3_600_000;
 const MAX_RESENDS_PER_DAY = 3;
+
+const dedupe = <T>(xs: T[]): T[] => Array.from(new Set(xs));
+
+const assertCoachesExist = async (
+  client: Prisma.TransactionClient | typeof prisma,
+  ids: string[],
+): Promise<void> => {
+  if (ids.length === 0) {
+    return;
+  }
+
+  const existing = await client.coachProfile.findMany({
+    where: { id: { in: ids }, deletedAt: null },
+    select: { id: true },
+  });
+
+  if (existing.length === ids.length) {
+    return;
+  }
+
+  const foundSet = new Set(existing.map((c) => c.id));
+  const missing = ids.filter((id) => !foundSet.has(id));
+
+  throw new NotFoundError("Coach not found", { missing });
+};
 
 const assertNotLastAdminDemotion = async (): Promise<void> => {
   const adminCount = await prisma.user.count({
@@ -72,21 +105,41 @@ export const iamUserAdminApi = {
       resolveInviteEmailConfig();
     }
 
+    if (data.coachIds.length > 0 && data.role !== UserRole.ATHLETE) {
+      throw new BadRequestError("coach assignments are valid only for ATHLETE role");
+    }
+
+    const coachIds = dedupe(data.coachIds);
+
+    await assertCoachesExist(prisma, coachIds);
+
     let user: User;
 
     try {
-      const row = await prisma.user.create({
-        data: {
-          email: data.email,
-          name: data.name,
-          role: ROLE_TO_PRISMA_MAP[data.role],
-          timezone: data.timezone,
-          password: null,
-          emailVerified: null,
-        },
-      });
+      user = await prisma.$transaction(async (tx) => {
+        const row = await tx.user.create({
+          data: {
+            email: data.email,
+            name: data.name,
+            role: ROLE_TO_PRISMA_MAP[data.role],
+            timezone: data.timezone,
+            password: null,
+            emailVerified: null,
+          },
+        });
 
-      user = mapToUser(row);
+        if (data.role === UserRole.ATHLETE) {
+          await tx.athleteProfile.create({ data: { userId: row.id } });
+
+          if (coachIds.length > 0) {
+            await tx.coachAthleteAssignment.createMany({
+              data: coachIds.map((coachId) => ({ coachId, athleteId: row.id })),
+            });
+          }
+        }
+
+        return mapToUser(row);
+      });
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });
     }
@@ -118,6 +171,16 @@ export const iamUserAdminApi = {
       await assertNotLastAdminDemotion();
     }
 
+    const newRole: UserRole = data.role ?? currentRole;
+
+    if (data.coachIds !== undefined && data.coachIds.length > 0 && newRole !== UserRole.ATHLETE) {
+      throw new BadRequestError("coach assignments are valid only for ATHLETE role");
+    }
+
+    if (data.coachIds !== undefined && data.coachIds.length > 0) {
+      await assertCoachesExist(prisma, dedupe(data.coachIds));
+    }
+
     const updateData: {
       name?: string | null;
       role?: (typeof ROLE_TO_PRISMA_MAP)[UserRole];
@@ -142,12 +205,37 @@ export const iamUserAdminApi = {
     }
 
     try {
-      const user = await prisma.user.update({
-        where: { id },
-        data: updateData,
-      });
+      return await prisma.$transaction(async (tx) => {
+        const updatedRow = await tx.user.update({
+          where: { id },
+          data: updateData,
+        });
 
-      return mapToUser(user);
+        if (currentRole === UserRole.ATHLETE && newRole !== UserRole.ATHLETE) {
+          await tx.coachAthleteAssignment.deleteMany({ where: { athleteId: id } });
+        } else if (data.coachIds !== undefined && newRole === UserRole.ATHLETE) {
+          await tx.athleteProfile.upsert({
+            where: { userId: id },
+            create: { userId: id },
+            update: {},
+          });
+
+          const desiredIds = dedupe(data.coachIds);
+
+          await tx.coachAthleteAssignment.deleteMany({
+            where: { athleteId: id, coachId: { notIn: desiredIds } },
+          });
+
+          if (desiredIds.length > 0) {
+            await tx.coachAthleteAssignment.createMany({
+              data: desiredIds.map((coachId) => ({ coachId, athleteId: id })),
+              skipDuplicates: true,
+            });
+          }
+        }
+
+        return mapToUser(updatedRow);
+      });
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });
     }
