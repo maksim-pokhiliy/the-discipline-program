@@ -111,6 +111,33 @@ describe("coachingCoachNoteApi", () => {
         }),
       ).rejects.toThrow(ForbiddenError);
     });
+
+    it("creates a note for an assigned athlete with zero active enrollments", async () => {
+      const planlessAthlete = await createTestUser();
+      const assignment = await cleanupRaw.coachAthleteAssignment.create({
+        data: { coachId: coachA.profile.id, athleteId: planlessAthlete.id },
+      });
+
+      try {
+        const note = await coachingCoachNoteApi.create(coachA.user.id, {
+          athleteId: planlessAthlete.id,
+          content: "Assignment-only note",
+        });
+
+        expect(note.id).toBeDefined();
+        expect(note.coachId).toBe(coachA.profile.id);
+        expect(note.athleteId).toBe(planlessAthlete.id);
+        expect(note.content).toBe("Assignment-only note");
+      } finally {
+        await cleanupRaw.coachNote
+          .deleteMany({ where: { coachId: coachA.profile.id, athleteId: planlessAthlete.id } })
+          .catch(() => {});
+        await cleanup(
+          { table: "coachAthleteAssignment", id: assignment.id },
+          { table: "user", id: planlessAthlete.id },
+        );
+      }
+    });
   });
 
   describe("getAll", () => {

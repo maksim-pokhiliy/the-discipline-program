@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ForbiddenError } from "@repo/errors";
@@ -161,5 +162,89 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
       { table: "planEnrollment", id: secondEnrollment.id },
       { table: "trainingPlan", id: secondPlan.id },
     );
+  });
+
+  it("includes assigned athletes with zero active enrollments", async () => {
+    const assignedOnlyUser = await createTestUser();
+    const assignment = await cleanupRaw.coachAthleteAssignment.create({
+      data: { coachId: scenario.coach.profile.id, athleteId: assignedOnlyUser.id },
+    });
+
+    try {
+      const result = await coachingCoachAthletesApi.getAthletes(scenario.coach.user.id);
+
+      const entry = result.athletes.find((a) => a.userId === assignedOnlyUser.id);
+
+      expect(entry).toBeDefined();
+      expect(entry?.activePlans).toEqual([]);
+      expect(entry?.processStatus).toBe(ProcessStatus.STEADY);
+      expect(entry?.lastActivityDate).toBeNull();
+      expect(entry?.openActionItemsCount).toBe(0);
+      expect(entry?.enrolledSince.getTime()).toBe(assignment.createdAt.getTime());
+    } finally {
+      await cleanup(
+        { table: "coachAthleteAssignment", id: assignment.id },
+        { table: "user", id: assignedOnlyUser.id },
+      );
+    }
+  });
+
+  it("does not include enrolled-but-not-assigned athletes", async () => {
+    const unassignedScenario = await createTestScenario({
+      planOverrides: { status: TrainingPlanStatus.ACTIVE },
+      workoutCount: 0,
+      athleteCount: 1,
+      withAssignments: false,
+    });
+
+    await cleanupRaw.user.update({
+      where: { id: unassignedScenario.coach.user.id },
+      data: { timezone: "UTC" },
+    });
+
+    try {
+      const result = await coachingCoachAthletesApi.getAthletes(unassignedScenario.coach.user.id);
+
+      expect(result.athletes).toHaveLength(0);
+      expect(result.summary.total).toBe(0);
+      expect(result.summary.active).toBe(0);
+    } finally {
+      await cleanup(...unassignedScenario.toCleanup);
+    }
+  });
+
+  it("does not include athletes enrolled only in DRAFT plans", async () => {
+    const draftPlan = await createTestPlan(scenario.coach.profile.id, {
+      status: TrainingPlanStatus.DRAFT,
+    });
+    const draftAthlete = await createTestUser();
+
+    const draftEnrollment = await cleanupRaw.planEnrollment.create({
+      data: {
+        trainingPlanId: draftPlan.id,
+        userId: draftAthlete.id,
+        status: PlanEnrollmentStatus.ACTIVE,
+      },
+    });
+
+    const assignment = await cleanupRaw.coachAthleteAssignment.create({
+      data: { coachId: scenario.coach.profile.id, athleteId: draftAthlete.id },
+    });
+
+    try {
+      const result = await coachingCoachAthletesApi.getAthletes(scenario.coach.user.id);
+
+      const entry = result.athletes.find((a) => a.userId === draftAthlete.id);
+
+      expect(entry).toBeDefined();
+      expect(entry?.activePlans).toEqual([]);
+    } finally {
+      await cleanup(
+        { table: "coachAthleteAssignment", id: assignment.id },
+        { table: "planEnrollment", id: draftEnrollment.id },
+        { table: "trainingPlan", id: draftPlan.id },
+        { table: "user", id: draftAthlete.id },
+      );
+    }
   });
 });

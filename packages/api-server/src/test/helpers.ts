@@ -198,7 +198,7 @@ export type TestScenario = {
   athletes: {
     user: User;
     enrollment: PlanEnrollment;
-    assignment: CoachAthleteAssignment;
+    assignment: CoachAthleteAssignment | null;
     profile?: AthleteProfile;
     logs?: WorkoutLog[];
   }[];
@@ -211,6 +211,7 @@ export const createTestScenario = async (options?: {
   athleteCount?: number;
   withAthleteProfiles?: boolean;
   withWorkoutLogs?: boolean;
+  withAssignments?: boolean;
 }): Promise<TestScenario> => {
   const {
     planOverrides = {},
@@ -218,6 +219,7 @@ export const createTestScenario = async (options?: {
     athleteCount = 2,
     withAthleteProfiles = false,
     withWorkoutLogs = false,
+    withAssignments = true,
   } = options ?? {};
 
   const toCleanup: { table: string; id: string }[] = [];
@@ -253,9 +255,12 @@ export const createTestScenario = async (options?: {
 
     toCleanup.push({ table: "planEnrollment", id: enrollment.id });
 
-    const assignment = await createTestAssignment(coach.profile.id, user.id);
+    let assignment: CoachAthleteAssignment | null = null;
 
-    toCleanup.push({ table: "coachAthleteAssignment", id: assignment.id });
+    if (withAssignments) {
+      assignment = await createTestAssignment(coach.profile.id, user.id);
+      toCleanup.push({ table: "coachAthleteAssignment", id: assignment.id });
+    }
 
     let profile: AthleteProfile | undefined;
 

@@ -64,7 +64,15 @@
       "Bash(awk 'NR<=184 || NR>=429' packages/api-server/src/endpoints/iam/users-admin-assignments.test.ts)",
       "Bash(awk 'NR<=9 || \\(NR>=11 && NR<=20\\) || \\(NR>=186 && NR<=429\\)' packages/api-server/src/endpoints/iam/users-admin-assignments.test.ts)",
       "Bash(xargs -I {} basename {})",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(pnpm test *)",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(tee /tmp/test-output2.log)",
+      "Bash(tee /tmp/test-output3.log)",
+      "Bash(tee /tmp/test-output4.log)",
+      "Bash(tee /tmp/test-verbose.log)",
+      "Bash(tee /tmp/test-new.log)",
+      "Bash(tee /tmp/test-verbose-final.log)"
     ]
   }
 }
