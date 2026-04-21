@@ -47,6 +47,7 @@ const AthleteCoachPicker = ({
     <Controller
       name="coachIds"
       control={control}
+      shouldUnregister
       render={({ field }) => (
         <MultiSelect<CoachListItem>
           options={coaches}
