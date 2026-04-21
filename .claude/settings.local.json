@@ -54,7 +54,15 @@
       "Bash(vercel redeploy *)",
       "mcp__plugin_vercel_vercel__get_deployment",
       "Bash(gh api *)",
-      "Bash(awk '{print $1, $4}')"
+      "Bash(awk '{print $1, $4}')",
+      "Bash(vercel project *)",
+      "Bash(rm /d/projects/contrib/the-discipline-program/apps/__TRACKED_VAR__/.vercel/env.production.tmp)",
+      "Bash(vercel ls *)",
+      "Bash(xargs wc *)",
+      "Bash(tail *)",
+      "Bash(awk 'NR<=276 || NR>=685' packages/api-server/src/endpoints/iam/users-admin.test.ts)",
+      "Bash(awk 'NR<=184 || NR>=429' packages/api-server/src/endpoints/iam/users-admin-assignments.test.ts)",
+      "Bash(awk 'NR<=9 || \\(NR>=11 && NR<=20\\) || \\(NR>=186 && NR<=429\\)' packages/api-server/src/endpoints/iam/users-admin-assignments.test.ts)"
     ]
   }
 }

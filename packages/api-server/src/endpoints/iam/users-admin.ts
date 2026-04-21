@@ -50,6 +50,68 @@ const assertCoachesExist = async (client: TxClient, ids: string[]): Promise<void
   throw new NotFoundError("Coach not found", { missing });
 };
 
+const syncAthleteAssignments = async (
+  tx: TxClient,
+  athleteId: string,
+  desiredCoachIds: string[],
+): Promise<void> => {
+  await tx.coachAthleteAssignment.deleteMany({
+    where: { athleteId, coachId: { notIn: desiredCoachIds } },
+  });
+
+  if (desiredCoachIds.length > 0) {
+    await tx.coachAthleteAssignment.createMany({
+      data: desiredCoachIds.map((coachId) => ({ coachId, athleteId })),
+      skipDuplicates: true,
+    });
+  }
+};
+
+const applyRoleExit = async (tx: TxClient, userId: string, role: UserRole): Promise<void> => {
+  switch (role) {
+    case UserRole.ATHLETE:
+      await tx.coachAthleteAssignment.deleteMany({ where: { athleteId: userId } });
+
+      return;
+    case UserRole.COACH:
+      await tx.coachProfile.updateMany({
+        where: { userId, deletedAt: null },
+        data: { deletedAt: new Date() },
+      });
+      await tx.coachAthleteAssignment.deleteMany({ where: { coach: { userId } } });
+
+      return;
+    case UserRole.ADMIN:
+      return;
+    default: {
+      const exhaustive: never = role;
+
+      return exhaustive;
+    }
+  }
+};
+
+const applyRoleEnter = async (
+  tx: TxClient,
+  userId: string,
+  role: UserRole,
+  coachIds: string[] | undefined,
+): Promise<void> => {
+  if (role !== UserRole.ATHLETE) {
+    return;
+  }
+
+  await tx.athleteProfile.upsert({
+    where: { userId },
+    create: { userId },
+    update: {},
+  });
+
+  if (coachIds !== undefined) {
+    await syncAthleteAssignments(tx, userId, dedupe(coachIds));
+  }
+};
+
 const assertNotLastAdminDemotion = async (): Promise<void> => {
   const adminCount = await prisma.user.count({
     where: { role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] },
@@ -127,15 +189,7 @@ export const iamUserAdminApi = {
           },
         });
 
-        if (data.role === UserRole.ATHLETE) {
-          await tx.athleteProfile.create({ data: { userId: row.id } });
-
-          if (coachIds.length > 0) {
-            await tx.coachAthleteAssignment.createMany({
-              data: coachIds.map((coachId) => ({ coachId, athleteId: row.id })),
-            });
-          }
-        }
+        await applyRoleEnter(tx, row.id, data.role, coachIds);
 
         return mapToUser(row);
       });
@@ -210,30 +264,11 @@ export const iamUserAdminApi = {
           data: updateData,
         });
 
-        if (currentRole === UserRole.ATHLETE && newRole !== UserRole.ATHLETE) {
-          await tx.coachAthleteAssignment.deleteMany({ where: { athleteId: id } });
-        } else if (newRole === UserRole.ATHLETE) {
-          await tx.athleteProfile.upsert({
-            where: { userId: id },
-            create: { userId: id },
-            update: {},
-          });
-
-          if (data.coachIds !== undefined) {
-            const desiredIds = dedupe(data.coachIds);
-
-            await tx.coachAthleteAssignment.deleteMany({
-              where: { athleteId: id, coachId: { notIn: desiredIds } },
-            });
-
-            if (desiredIds.length > 0) {
-              await tx.coachAthleteAssignment.createMany({
-                data: desiredIds.map((coachId) => ({ coachId, athleteId: id })),
-                skipDuplicates: true,
-              });
-            }
-          }
+        if (roleChanged) {
+          await applyRoleExit(tx, id, currentRole);
         }
+
+        await applyRoleEnter(tx, id, newRole, data.coachIds);
 
         return mapToUser(updatedRow);
       });
@@ -245,8 +280,11 @@ export const iamUserAdminApi = {
   updateRole: async (actorId: string, id: string, data: UpdateUserRoleData): Promise<User> => {
     const existing = await findOrThrow(prisma.user.findUnique({ where: { id } }), "User");
 
-    const isDemotionFromAdmin =
-      ROLE_MAP[existing.role] === UserRole.ADMIN && data.role !== UserRole.ADMIN;
+    const currentRole = ROLE_MAP[existing.role];
+    const newRole = data.role;
+    const roleChanged = currentRole !== newRole;
+
+    const isDemotionFromAdmin = currentRole === UserRole.ADMIN && newRole !== UserRole.ADMIN;
 
     if (isDemotionFromAdmin && actorId === id) {
       throw new ForbiddenError("Cannot demote yourself from admin");
@@ -257,12 +295,19 @@ export const iamUserAdminApi = {
     }
 
     try {
-      const user = await prisma.user.update({
-        where: { id },
-        data: { role: ROLE_TO_PRISMA_MAP[data.role], tokenVersion: { increment: 1 } },
-      });
+      return await prisma.$transaction(async (tx) => {
+        const updated = await tx.user.update({
+          where: { id },
+          data: { role: ROLE_TO_PRISMA_MAP[newRole], tokenVersion: { increment: 1 } },
+        });
 
-      return mapToUser(user);
+        if (roleChanged) {
+          await applyRoleExit(tx, id, currentRole);
+          await applyRoleEnter(tx, id, newRole, undefined);
+        }
+
+        return mapToUser(updated);
+      });
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });
     }
