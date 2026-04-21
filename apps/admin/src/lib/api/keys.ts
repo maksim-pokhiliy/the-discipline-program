@@ -14,7 +14,7 @@ export const adminKeys = {
   reviews: createEntityKeys(ROOT, "reviews"),
   users: {
     ...createEntityKeys(ROOT, "users"),
-    coaches: () => [...ROOT, "users", "coaches"] as const,
+    coaches: () => [...ROOT, "users-coaches"] as const,
   },
 
   pages: {

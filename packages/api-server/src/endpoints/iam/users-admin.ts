@@ -1,5 +1,3 @@
-import { type Prisma } from "@prisma/client";
-
 import { UserRole } from "@repo/contracts/iam/auth";
 import {
   type AdminUserListItem,
@@ -30,10 +28,9 @@ const MAX_RESENDS_PER_DAY = 3;
 
 const dedupe = <T>(xs: T[]): T[] => Array.from(new Set(xs));
 
-const assertCoachesExist = async (
-  client: Prisma.TransactionClient | typeof prisma,
-  ids: string[],
-): Promise<void> => {
+type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+const assertCoachesExist = async (client: TxClient, ids: string[]): Promise<void> => {
   if (ids.length === 0) {
     return;
   }
@@ -111,12 +108,14 @@ export const iamUserAdminApi = {
 
     const coachIds = dedupe(data.coachIds);
 
-    await assertCoachesExist(prisma, coachIds);
-
     let user: User;
 
     try {
       user = await prisma.$transaction(async (tx) => {
+        if (coachIds.length > 0) {
+          await assertCoachesExist(tx, coachIds);
+        }
+
         const row = await tx.user.create({
           data: {
             email: data.email,
@@ -177,10 +176,6 @@ export const iamUserAdminApi = {
       throw new BadRequestError("coach assignments are valid only for ATHLETE role");
     }
 
-    if (data.coachIds !== undefined && data.coachIds.length > 0) {
-      await assertCoachesExist(prisma, dedupe(data.coachIds));
-    }
-
     const updateData: {
       name?: string | null;
       role?: (typeof ROLE_TO_PRISMA_MAP)[UserRole];
@@ -206,6 +201,10 @@ export const iamUserAdminApi = {
 
     try {
       return await prisma.$transaction(async (tx) => {
+        if (data.coachIds !== undefined && data.coachIds.length > 0) {
+          await assertCoachesExist(tx, dedupe(data.coachIds));
+        }
+
         const updatedRow = await tx.user.update({
           where: { id },
           data: updateData,
@@ -213,24 +212,26 @@ export const iamUserAdminApi = {
 
         if (currentRole === UserRole.ATHLETE && newRole !== UserRole.ATHLETE) {
           await tx.coachAthleteAssignment.deleteMany({ where: { athleteId: id } });
-        } else if (data.coachIds !== undefined && newRole === UserRole.ATHLETE) {
+        } else if (newRole === UserRole.ATHLETE) {
           await tx.athleteProfile.upsert({
             where: { userId: id },
             create: { userId: id },
             update: {},
           });
 
-          const desiredIds = dedupe(data.coachIds);
+          if (data.coachIds !== undefined) {
+            const desiredIds = dedupe(data.coachIds);
 
-          await tx.coachAthleteAssignment.deleteMany({
-            where: { athleteId: id, coachId: { notIn: desiredIds } },
-          });
-
-          if (desiredIds.length > 0) {
-            await tx.coachAthleteAssignment.createMany({
-              data: desiredIds.map((coachId) => ({ coachId, athleteId: id })),
-              skipDuplicates: true,
+            await tx.coachAthleteAssignment.deleteMany({
+              where: { athleteId: id, coachId: { notIn: desiredIds } },
             });
+
+            if (desiredIds.length > 0) {
+              await tx.coachAthleteAssignment.createMany({
+                data: desiredIds.map((coachId) => ({ coachId, athleteId: id })),
+                skipDuplicates: true,
+              });
+            }
           }
         }
 
