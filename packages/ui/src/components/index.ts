@@ -12,6 +12,7 @@ export * from "./layout";
 export * from "./loading-state";
 export * from "./logo";
 export * from "./modal";
+export * from "./multi-select";
 export * from "./nav-link-button";
 export * from "./page-header";
 export * from "./person-card";
