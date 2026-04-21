@@ -111,7 +111,7 @@ describe("computeProgressBuckets", () => {
     expect(result.fallingBehind).toHaveLength(0);
   });
 
-  it("aggregates workouts across multiple enrollments for the same athlete", () => {
+  it("aggregates workouts across multiple plan enrollments under one assignment", () => {
     const assignment = makeAssignedAthlete({
       userId: "u1",
       enrollments: [

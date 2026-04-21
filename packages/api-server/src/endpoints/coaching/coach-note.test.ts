@@ -89,7 +89,7 @@ describe("coachingCoachNoteApi", () => {
   });
 
   describe("create", () => {
-    it("creates a note for an enrolled athlete", async () => {
+    it("creates a note for an assigned athlete", async () => {
       const note = await coachingCoachNoteApi.create(coachA.user.id, {
         athleteId: athlete.id,
         content: "Great progress this week",
