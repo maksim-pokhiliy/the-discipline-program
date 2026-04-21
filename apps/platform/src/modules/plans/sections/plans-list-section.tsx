@@ -2,7 +2,8 @@
 
 import { useCallback, useMemo } from "react";
 
-import { Stack, Tabs, Typography } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { Button, Stack, Tabs, Typography } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import type { TrainingPlanListItem } from "@repo/contracts/lms/training-plan";
@@ -128,9 +129,15 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
           ))}
         </Stack>
       ) : (
-        <Typography variant="body1" sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
-          No plans in this category
-        </Typography>
+        <Stack spacing={2} alignItems="center" sx={{ py: 4 }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
+            No plans in this category
+          </Typography>
+
+          <Button startIcon={<AddIcon />} onClick={onCreateClick}>
+            Create Plan
+          </Button>
+        </Stack>
       )}
 
       <PlatformFab onClick={onCreateClick} />
