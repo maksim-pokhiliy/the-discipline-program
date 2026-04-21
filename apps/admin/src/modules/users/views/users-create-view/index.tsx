@@ -30,6 +30,7 @@ export const UsersCreateView = () => {
       name: "",
       role: UserRole.ATHLETE,
       timezone: "UTC",
+      coachIds: [],
     },
   });
 

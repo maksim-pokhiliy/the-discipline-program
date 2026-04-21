@@ -1,11 +1,17 @@
 "use client";
 
 import { Grid, MenuItem, Stack, TextField } from "@mui/material";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { type CreateUserData, type UpdateUserData } from "@repo/contracts/iam/user";
-import { FormCard } from "@repo/ui";
+import {
+  type CoachListItem,
+  type CreateUserData,
+  type UpdateUserData,
+} from "@repo/contracts/iam/user";
+import { FormCard, MultiSelect } from "@repo/ui";
+
+import { useCoachesList } from "@app/lib/hooks";
 
 import { ROLE_CONFIG } from "../constants";
 
@@ -26,6 +32,8 @@ export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) =
     register,
     formState: { errors },
   } = useFormContext<UserFormValues>();
+  const currentRole = useWatch({ control, name: "role" });
+  const { data: coaches = [], isLoading: isCoachesLoading } = useCoachesList();
 
   const roleOptions = isEdit ? (Object.values(UserRole) as UserRole[]) : CREATE_ROLE_OPTIONS;
 
@@ -112,6 +120,29 @@ export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) =
                       disabled={isLoading}
                       error={!!errors.timezone}
                       helperText={errors.timezone?.message}
+                    />
+                  )}
+                />
+              )}
+
+              {currentRole === UserRole.ATHLETE && (
+                <Controller
+                  name="coachIds"
+                  control={control}
+                  render={({ field }) => (
+                    <MultiSelect<CoachListItem>
+                      options={coaches}
+                      value={field.value ?? []}
+                      onChange={field.onChange}
+                      getOptionId={(c) => c.id}
+                      getOptionLabel={(c) => c.name ?? c.email}
+                      getOptionSubLabel={(c) => (c.name ? c.email : null)}
+                      label="Coaches"
+                      placeholder="Select coaches"
+                      emptyLabel="No coaches available"
+                      isLoading={isCoachesLoading}
+                      disabled={isLoading}
+                      errorText={errors.coachIds?.message}
                     />
                   )}
                 />
