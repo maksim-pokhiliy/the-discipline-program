@@ -60,7 +60,7 @@ export const PassportSection: React.FC<PassportSectionProps> = ({
             {displayName}
           </Typography>
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Enrolled since {formatDate(enrolledSince, "day")}
+            Assigned since {formatDate(enrolledSince, "day")}
           </Typography>
         </Stack>
       </Stack>

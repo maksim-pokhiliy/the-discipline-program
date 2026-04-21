@@ -1,7 +1,7 @@
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 
-import type { EnrollmentWithData } from "./enrollment-query";
+import type { AssignedAthleteWithData } from "./assigned-athlete-query";
 
 export const FAKE_NOW = new Date("2025-06-18T12:00:00Z");
 
@@ -23,7 +23,14 @@ export const makeLog = (workoutId: string, date: string) => ({
   date: new Date(date),
 });
 
-export const makeEnrollment = (overrides: {
+export type PlanEnrollmentOverride = {
+  planId: string;
+  planName?: string;
+  workouts?: ReturnType<typeof makeWorkout>[];
+  startDate?: Date;
+};
+
+export const makeAssignedAthlete = (overrides: {
   userId?: string;
   userName?: string | null;
   userEmail?: string;
@@ -33,18 +40,46 @@ export const makeEnrollment = (overrides: {
   planId?: string;
   planName?: string;
   workouts?: ReturnType<typeof makeWorkout>[];
+  enrollments?: PlanEnrollmentOverride[];
   logs?: ReturnType<typeof makeLog>[];
-}): EnrollmentWithData =>
-  ({
-    id: `enrollment-${overrides.userId ?? "u1"}-${overrides.planId ?? "p1"}`,
-    trainingPlanId: overrides.planId ?? "p1",
-    userId: overrides.userId ?? "u1",
-    startDate: new Date("2025-06-01T00:00:00Z"),
-    endDate: null,
-    status: PlanEnrollmentStatus.ACTIVE,
-    createdAt: new Date("2025-06-01T00:00:00Z"),
-    user: {
-      id: overrides.userId ?? "u1",
+  enrolled?: boolean;
+  assignmentCreatedAt?: Date;
+  assignmentUpdatedAt?: Date;
+  coachId?: string;
+}): AssignedAthleteWithData => {
+  const userId = overrides.userId ?? "u1";
+  const coachId = overrides.coachId ?? "c1";
+  const planId = overrides.planId ?? "p1";
+  const enrolled = overrides.enrolled ?? true;
+  const assignmentCreatedAt = overrides.assignmentCreatedAt ?? new Date("2025-06-01T00:00:00Z");
+  const assignmentUpdatedAt = overrides.assignmentUpdatedAt ?? assignmentCreatedAt;
+
+  const resolvedEnrollments: PlanEnrollmentOverride[] = overrides.enrollments ?? [
+    { planId, planName: overrides.planName, workouts: overrides.workouts },
+  ];
+
+  const planEnrollments = enrolled
+    ? resolvedEnrollments.map((e) => ({
+        id: `enrollment-${userId}-${e.planId}`,
+        status: PlanEnrollmentStatus.ACTIVE,
+        startDate: e.startDate ?? new Date("2025-06-01T00:00:00Z"),
+        trainingPlan: {
+          id: e.planId,
+          name: e.planName ?? "Test Plan",
+          coachId,
+          workouts: e.workouts ?? [],
+        },
+      }))
+    : [];
+
+  return {
+    id: `assignment-${coachId}-${userId}`,
+    coachId,
+    athleteId: userId,
+    createdAt: assignmentCreatedAt,
+    updatedAt: assignmentUpdatedAt,
+    athlete: {
+      id: userId,
       name: overrides.userName ?? "Test User",
       email: overrides.userEmail ?? "test@example.com",
       image: overrides.userImage ?? null,
@@ -53,10 +88,7 @@ export const makeEnrollment = (overrides: {
         overrides.hasProfile === false
           ? null
           : { healthStatus: overrides.healthStatus ?? HealthStatus.HEALTHY },
+      planEnrollments,
     },
-    trainingPlan: {
-      id: overrides.planId ?? "p1",
-      name: overrides.planName ?? "Test Plan",
-      workouts: overrides.workouts ?? [],
-    },
-  }) as unknown as EnrollmentWithData;
+  } as unknown as AssignedAthleteWithData;
+};

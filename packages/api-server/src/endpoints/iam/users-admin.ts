@@ -8,18 +8,19 @@ import {
   type User,
 } from "@repo/contracts/iam/user";
 import { baseEnv } from "@repo/env/base";
-import {
-  BadRequestError,
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  TooManyRequestsError,
-} from "@repo/errors";
+import { BadRequestError, ConflictError, ForbiddenError, TooManyRequestsError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
 import { mapToAdminUserListItem, mapToUser, ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
+import {
+  assertCoachesExist,
+  closeAthleteActionItemsBulk,
+  closeCoachActionItemsBulk,
+  syncAthleteAssignments,
+  type TxClient,
+} from "./assignment-sync";
 import { iamInviteTokenApi } from "./invite-token";
 import { resolveInviteEmailConfig, sendInvitationEmail } from "./send-invitation-email";
 
@@ -28,52 +29,16 @@ const MAX_RESENDS_PER_DAY = 3;
 
 const dedupe = <T>(xs: T[]): T[] => Array.from(new Set(xs));
 
-type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
-
-const assertCoachesExist = async (client: TxClient, ids: string[]): Promise<void> => {
-  if (ids.length === 0) {
-    return;
-  }
-
-  const existing = await client.coachProfile.findMany({
-    where: { id: { in: ids }, deletedAt: null },
-    select: { id: true },
-  });
-
-  if (existing.length === ids.length) {
-    return;
-  }
-
-  const foundSet = new Set(existing.map((c) => c.id));
-  const missing = ids.filter((id) => !foundSet.has(id));
-
-  throw new NotFoundError("Coach not found", { missing });
-};
-
-const syncAthleteAssignments = async (
-  tx: TxClient,
-  athleteId: string,
-  desiredCoachIds: string[],
-): Promise<void> => {
-  await tx.coachAthleteAssignment.deleteMany({
-    where: { athleteId, coachId: { notIn: desiredCoachIds } },
-  });
-
-  if (desiredCoachIds.length > 0) {
-    await tx.coachAthleteAssignment.createMany({
-      data: desiredCoachIds.map((coachId) => ({ coachId, athleteId })),
-      skipDuplicates: true,
-    });
-  }
-};
-
 const applyRoleExit = async (tx: TxClient, userId: string, role: UserRole): Promise<void> => {
   switch (role) {
-    case UserRole.ATHLETE:
+    case UserRole.ATHLETE: {
+      await closeAthleteActionItemsBulk(tx, userId);
       await tx.coachAthleteAssignment.deleteMany({ where: { athleteId: userId } });
 
       return;
-    case UserRole.COACH:
+    }
+    case UserRole.COACH: {
+      await closeCoachActionItemsBulk(tx, userId);
       await tx.coachProfile.updateMany({
         where: { userId, deletedAt: null },
         data: { deletedAt: new Date() },
@@ -81,6 +46,7 @@ const applyRoleExit = async (tx: TxClient, userId: string, role: UserRole): Prom
       await tx.coachAthleteAssignment.deleteMany({ where: { coach: { userId } } });
 
       return;
+    }
     case UserRole.ADMIN:
       return;
     default: {

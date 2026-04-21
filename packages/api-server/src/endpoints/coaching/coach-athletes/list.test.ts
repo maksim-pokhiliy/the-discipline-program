@@ -106,6 +106,10 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
       },
     });
 
+    const assignmentForB = await cleanupRaw.coachAthleteAssignment.create({
+      data: { coachId: coachB.profile.id, athleteId: athleteForB.id },
+    });
+
     await cleanupRaw.user.update({
       where: { id: coachB.user.id },
       data: { timezone: "UTC" },
@@ -118,6 +122,7 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
     expect(resultB.athletes.some((a) => a.userId === athleteForB.id)).toBe(true);
 
     await cleanup(
+      { table: "coachAthleteAssignment", id: assignmentForB.id },
       { table: "planEnrollment", id: enrollment.id },
       { table: "user", id: athleteForB.id },
     );

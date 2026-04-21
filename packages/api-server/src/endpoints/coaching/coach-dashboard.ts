@@ -7,7 +7,6 @@ import {
   type CoachDashboardData,
   type DashboardActionItem,
 } from "@repo/contracts/coaching/coach-dashboard";
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import { prisma } from "../../db/client";
@@ -16,10 +15,7 @@ import {
   ACTION_ITEM_STATUS_TO_PRISMA_MAP,
   ACTION_ITEM_TYPE_MAP,
 } from "../../mappers/coaching";
-import {
-  PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
-  TRAINING_PLAN_STATUS_TO_PRISMA_MAP,
-} from "../../mappers/lms";
+import { TRAINING_PLAN_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
 import { findOrThrow } from "../../utils";
 import {
   createStartOfDayCache,
@@ -28,9 +24,9 @@ import {
   startOfWeekInTz,
 } from "../../utils/date-helpers";
 
+import { buildAssignedAthleteInclude } from "./assigned-athlete-query";
 import { coachingCoachActionItemApi } from "./coach-action-item";
 import { computeAthletesSummary, computeProgressBuckets } from "./dashboard-computations";
-import { createEnrollmentInclude } from "./enrollment-query";
 
 export const coachingCoachDashboardApi = {
   getDashboard: async (userId: string): Promise<CoachDashboardData> => {
@@ -47,13 +43,10 @@ export const coachingCoachDashboardApi = {
     const weekEnd = endOfWeekInTz(today, tz);
     const startOfDay = createStartOfDayCache(tz);
 
-    const [enrollments, openActionItems, activePlansCount] = await Promise.all([
-      prisma.planEnrollment.findMany({
-        where: {
-          status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
-          trainingPlan: { coachId },
-        },
-        include: createEnrollmentInclude(coachId),
+    const [assignments, openActionItems, activePlansCount] = await Promise.all([
+      prisma.coachAthleteAssignment.findMany({
+        where: { coachId },
+        include: buildAssignedAthleteInclude(coachId),
       }),
 
       prisma.coachActionItem.findMany({
@@ -69,59 +62,60 @@ export const coachingCoachDashboardApi = {
       }),
     ]);
 
-    const athletesSummary = computeAthletesSummary(enrollments, tz);
-    const progressBuckets = computeProgressBuckets(enrollments);
+    const athletesSummary = computeAthletesSummary(assignments, tz);
+    const progressBuckets = computeProgressBuckets(assignments);
 
-    const uniqueAthletes = new Set(enrollments.map((e) => e.user.id));
     const recentAthletes = new Set<string>();
-
     const seen = new Set<string>();
     let plannedToday = 0;
     let completedToday = 0;
     let plannedThisWeek = 0;
     let completedThisWeek = 0;
 
-    for (const e of enrollments) {
-      const loggedIds = new Set(e.user.workoutLogs.map((l) => l.workoutId));
+    for (const a of assignments) {
+      const athlete = a.athlete;
+      const loggedIds = new Set(athlete.workoutLogs.map((l) => l.workoutId));
 
-      if (e.startDate && e.startDate >= weekStart) {
-        recentAthletes.add(e.user.id);
+      if (a.createdAt >= weekStart) {
+        recentAthletes.add(athlete.id);
       }
 
-      for (const w of e.trainingPlan.workouts) {
-        if (!w.scheduledDate) {
-          continue;
-        }
+      for (const e of athlete.planEnrollments) {
+        for (const w of e.trainingPlan.workouts) {
+          if (!w.scheduledDate) {
+            continue;
+          }
 
-        const key = `${e.user.id}:${w.id}`;
+          const key = `${athlete.id}:${w.id}`;
 
-        if (seen.has(key)) {
-          continue;
-        }
+          if (seen.has(key)) {
+            continue;
+          }
 
-        seen.add(key);
+          seen.add(key);
 
-        const d = startOfDay(w.scheduledDate);
-        const isThisWeek = d.getTime() >= weekStart.getTime() && d.getTime() <= weekEnd.getTime();
+          const d = startOfDay(w.scheduledDate);
+          const isThisWeek = d.getTime() >= weekStart.getTime() && d.getTime() <= weekEnd.getTime();
 
-        if (!isThisWeek) {
-          continue;
-        }
+          if (!isThisWeek) {
+            continue;
+          }
 
-        const isToday = d.getTime() === today.getTime();
-        const isLogged = loggedIds.has(w.id);
+          const isToday = d.getTime() === today.getTime();
+          const isLogged = loggedIds.has(w.id);
 
-        plannedThisWeek++;
-
-        if (isLogged) {
-          completedThisWeek++;
-        }
-
-        if (isToday) {
-          plannedToday++;
+          plannedThisWeek++;
 
           if (isLogged) {
-            completedToday++;
+            completedThisWeek++;
+          }
+
+          if (isToday) {
+            plannedToday++;
+
+            if (isLogged) {
+              completedToday++;
+            }
           }
         }
       }
@@ -146,7 +140,7 @@ export const coachingCoachDashboardApi = {
 
     return {
       overview: {
-        totalActiveAthletes: uniqueAthletes.size,
+        totalActiveAthletes: assignments.length,
         activePlansCount,
         workoutsPlannedToday: plannedToday,
         workoutsCompletedToday: completedToday,
