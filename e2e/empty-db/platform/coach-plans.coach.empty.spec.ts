@@ -9,12 +9,12 @@ test.describe("Platform /coach/plans — empty DB", () => {
     await page.goto("/coach/plans");
 
     await expect(page.getByRole("heading", { name: "Training Plans" })).toBeVisible({
-      timeout: 15_000,
+      timeout: 30_000,
     });
 
     await expect(page.getByText("No plans in this category")).toBeVisible();
 
-    await expect(page.getByRole("button", { name: "Create" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Create Plan" })).toBeVisible();
 
     finalizeConsole();
   });

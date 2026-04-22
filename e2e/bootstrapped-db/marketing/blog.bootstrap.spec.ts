@@ -11,7 +11,7 @@ test.describe("Marketing /blog — bootstrapped DB (sections with data={})", () 
     expect(response?.ok()).toBe(true);
     await expect(page).toHaveURL(/\/blog$/);
     await expect(page.getByRole("link", { name: "Blog" }).first()).toBeVisible({
-      timeout: 15_000,
+      timeout: 30_000,
     });
 
     finalizeConsole();

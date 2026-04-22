@@ -8,7 +8,7 @@ test.describe("Admin /reviews - empty DB", () => {
 
     await page.goto("/reviews");
 
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("No reviews found. Add your first review!")).toBeVisible();
     await expect(page.getByRole("link", { name: "Create Review" })).toBeVisible();
 

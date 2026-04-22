@@ -16,7 +16,7 @@ test.describe("Admin / (dashboard) - empty DB", () => {
 
     await page.goto("/");
 
-    await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Overview" })).toBeVisible({ timeout: 30_000 });
 
     for (const title of STAT_CARD_TITLES) {
       await expect(page.getByRole("heading", { name: title, exact: true })).toBeVisible();

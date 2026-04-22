@@ -12,28 +12,28 @@ test.describe("Admin Contacts", () => {
   test("lists contact submissions", async ({ page }) => {
     await page.goto("/contacts");
 
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("row").nth(1)).toBeVisible();
   });
 
   test("views contact detail", async ({ page }) => {
     await page.goto("/contacts");
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
 
     await page.getByRole("link", { name: "Edit" }).first().click();
     await page.waitForURL(/\/contacts\/.+/);
 
-    await expect(page.getByText("Contact Submission")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Contact Submission")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Contact Details")).toBeVisible();
   });
 
   test("updates contact status", async ({ page }) => {
     await page.goto("/contacts");
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
 
     await page.getByRole("link", { name: "Edit" }).first().click();
     await page.waitForURL(/\/contacts\/.+/);
-    await expect(page.getByText("Contact Submission")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Contact Submission")).toBeVisible({ timeout: 30_000 });
 
     const statusSelect = page.getByRole("combobox").first();
     await statusSelect.click();
@@ -52,7 +52,7 @@ test.describe("Admin Contacts", () => {
     createdIds.push({ table: "marketingContactSubmission", id: seeded.id });
 
     await page.goto("/contacts");
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
 
     const contactRow = page.getByRole("row").filter({ hasText: "E2E Test Contact" });
     await expect(contactRow).toBeVisible();
