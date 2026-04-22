@@ -73,6 +73,31 @@ describe("iamUserAdminApi — createUser / resendInvite", () => {
       }
     });
 
+    it("creates a coach user and its CoachProfile in the same transaction", async () => {
+      const email = `coach-create-${crypto.randomUUID()}@test.local`;
+      const user = await iamUserAdminApi.createUser(adminUser.id, {
+        email,
+        name: "New Coach",
+        role: UserRole.COACH,
+        timezone: "UTC",
+        coachIds: [],
+      });
+
+      try {
+        const profile = await cleanupRaw.coachProfile.findUnique({
+          where: { userId: user.id },
+        });
+
+        expect(profile).not.toBeNull();
+        expect(profile?.deletedAt).toBeNull();
+        expect(sendSpy).toHaveBeenCalledTimes(1);
+      } finally {
+        await cleanupRaw.userInviteToken.deleteMany({ where: { userId: user.id } });
+        await cleanupRaw.coachProfile.deleteMany({ where: { userId: user.id } });
+        await cleanup({ table: "user", id: user.id });
+      }
+    });
+
     it("throws ConflictError on duplicate email", async () => {
       await expect(
         iamUserAdminApi.createUser(adminUser.id, {

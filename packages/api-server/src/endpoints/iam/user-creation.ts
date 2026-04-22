@@ -29,12 +29,30 @@ export const iamUserCreationApi = {
       },
     });
 
-    if (data.role === UserRole.ATHLETE) {
-      await tx.athleteProfile.upsert({
-        where: { userId: row.id },
-        create: { userId: row.id },
-        update: {},
-      });
+    switch (data.role) {
+      case UserRole.ATHLETE: {
+        await tx.athleteProfile.upsert({
+          where: { userId: row.id },
+          create: { userId: row.id },
+          update: {},
+        });
+        break;
+      }
+      case UserRole.COACH: {
+        await tx.coachProfile.upsert({
+          where: { userId: row.id },
+          create: { userId: row.id },
+          update: { deletedAt: null },
+        });
+        break;
+      }
+      case UserRole.ADMIN:
+        break;
+      default: {
+        const exhaustive: never = data.role;
+
+        return exhaustive;
+      }
     }
 
     return mapToUser(row);

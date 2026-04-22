@@ -74,7 +74,12 @@
       "Bash(tee /tmp/test-new.log)",
       "Bash(tee /tmp/test-verbose-final.log)",
       "Bash(tasklist)",
-      "Bash(wait)"
+      "Bash(wait)",
+      "Bash(cygpath -w /tmp/pr165-new-body.md)",
+      "Bash(taskkill /F /IM turbo.exe /T)",
+      "Bash(taskkill /F /IM node.exe /T)",
+      "Bash(taskkill //F //IM turbo.exe //T)",
+      "Bash(taskkill //F //IM node.exe //T)"
     ]
   }
 }
