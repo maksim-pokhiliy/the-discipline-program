@@ -7,3 +7,4 @@ export {
   sortByAttentionPriority,
 } from "./athlete-list-item-config";
 export { InviteAthleteDialog } from "./invite-athlete-dialog";
+export * from "./resend-invite-action";

@@ -8,6 +8,8 @@ import { PersonCard, StatusChip } from "@repo/ui";
 import { HealthStatusChip } from "@app/lib/components";
 import { PROCESS_STATUS_CHIPS } from "@app/lib/config";
 
+import { ResendInviteAction } from "./resend-invite-action";
+
 type AthleteListItemProps = {
   athlete: CoachAthleteListItem;
   onSelect: (userId: string) => void;
@@ -24,6 +26,7 @@ export const AthleteListItem: React.FC<AthleteListItemProps> = ({ athlete, onSel
       image={athlete.image}
       name={athlete.name ?? athlete.email}
       onClick={() => onSelect(athlete.userId)}
+      action={athlete.isPending ? <ResendInviteAction userId={athlete.userId} /> : undefined}
     >
       <Stack spacing={0.75}>
         <Stack direction="row" spacing={1} alignItems="center">
