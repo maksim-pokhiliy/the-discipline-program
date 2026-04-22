@@ -79,7 +79,8 @@
       "Bash(taskkill /F /IM turbo.exe /T)",
       "Bash(taskkill /F /IM node.exe /T)",
       "Bash(taskkill //F //IM turbo.exe //T)",
-      "Bash(taskkill //F //IM node.exe //T)"
+      "Bash(taskkill //F //IM node.exe //T)",
+      "Bash(echo \"exit=$?\")"
     ]
   }
 }
