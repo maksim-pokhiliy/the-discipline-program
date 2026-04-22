@@ -12,9 +12,9 @@ test.describe("Platform /coach/athletes — empty DB", () => {
       timeout: 30_000,
     });
 
-    await expect(
-      page.getByText("No athletes yet — ask an admin to assign athletes to you"),
-    ).toBeVisible();
+    await expect(page.getByText("No athletes yet — invite your first athlete")).toBeVisible();
+
+    await expect(page.getByRole("button", { name: /Invite athlete/i })).toBeVisible();
 
     finalizeConsole();
   });

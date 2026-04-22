@@ -3,12 +3,12 @@
 import { useCallback, useMemo } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Button, Stack, Tabs, Typography } from "@mui/material";
+import { Stack, Tabs } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import type { TrainingPlanListItem } from "@repo/contracts/lms/training-plan";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
-import { ChipTab } from "@repo/ui";
+import { ChipTab, EmptyState } from "@repo/ui";
 
 import { PlatformFab } from "@app/lib/components";
 import {
@@ -129,15 +129,14 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
           ))}
         </Stack>
       ) : (
-        <Stack spacing={2} alignItems="center" sx={{ py: 4 }}>
-          <Typography variant="body2" sx={{ color: "text.secondary" }}>
-            No plans in this category
-          </Typography>
-
-          <Button startIcon={<AddIcon />} onClick={onCreateClick}>
-            Create Plan
-          </Button>
-        </Stack>
+        <EmptyState
+          message="No plans in this category"
+          action={{
+            label: "Create Plan",
+            icon: <AddIcon />,
+            onClick: onCreateClick,
+          }}
+        />
       )}
 
       <PlatformFab onClick={onCreateClick} />

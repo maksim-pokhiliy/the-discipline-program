@@ -69,7 +69,11 @@ export const AthletesView = () => {
             <Stack spacing={{ xs: 2, md: 3 }}>
               <AthletesSummarySection summary={data.summary} />
               <AthletesFiltersSection plans={uniquePlans} />
-              <AthletesListSection athletes={data.athletes} onSelectAthlete={handleSelectAthlete} />
+              <AthletesListSection
+                athletes={data.athletes}
+                onSelectAthlete={handleSelectAthlete}
+                onInviteClick={() => setInviteOpen(true)}
+              />
             </Stack>
           );
         }}

@@ -6,7 +6,7 @@ import { Stack, Tabs, Typography } from "@mui/material";
 
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { type AthleteDailySummary, TodayStatus } from "@repo/contracts/coaching/coach-dashboard";
-import { ChipTab } from "@repo/ui";
+import { ChipTab, EmptyState } from "@repo/ui";
 
 import { AthleteCardLink } from "@app/lib/components";
 import { HEALTH_STATUS_CHIPS } from "@app/lib/config";
@@ -43,11 +43,7 @@ export const AthletesTodaySection: React.FC<AthletesTodaySectionProps> = ({ athl
   const [activeTab, setActiveTab] = useState<TodayStatus>(() => getDefaultTab(grouped));
 
   if (athletes.length === 0) {
-    return (
-      <Typography variant="body1" sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
-        No athletes enrolled
-      </Typography>
-    );
+    return <EmptyState message="No athletes enrolled" />;
   }
 
   const activeAthletes = sortAthletes(grouped.get(activeTab) ?? [], activeTab);
