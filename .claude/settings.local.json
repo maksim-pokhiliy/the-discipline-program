@@ -73,7 +73,8 @@
       "Bash(tee /tmp/test-verbose.log)",
       "Bash(tee /tmp/test-new.log)",
       "Bash(tee /tmp/test-verbose-final.log)",
-      "Bash(tasklist)"
+      "Bash(tasklist)",
+      "Bash(wait)"
     ]
   }
 }
