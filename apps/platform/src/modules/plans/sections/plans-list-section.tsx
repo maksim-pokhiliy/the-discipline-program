@@ -120,10 +120,10 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
               key={plan.id}
               plan={plan}
               onActivate={(id) => activate.mutate(id)}
-              onArchive={(id) => archive.mutate(id)}
+              onArchive={(id) => archive.mutateAsync(id).then(() => undefined)}
               onRestore={(id) => restore.mutate(id)}
               onDuplicate={(id) => duplicate.mutate(id)}
-              onDelete={(id) => deletePlan.mutate(id)}
+              onDelete={(id) => deletePlan.mutateAsync(id).then(() => undefined)}
               isPending={isPlanPending(plan.id)}
             />
           ))}
