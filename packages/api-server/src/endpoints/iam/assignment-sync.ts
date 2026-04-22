@@ -5,9 +5,9 @@ import {
 
 import { NotFoundError } from "@repo/errors";
 
-import { type prisma } from "../../db/client";
+import { type TxClient } from "../../db/tx";
 
-export type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+export { type TxClient };
 
 export const assertCoachesExist = async (tx: TxClient, ids: string[]): Promise<void> => {
   if (ids.length === 0) {

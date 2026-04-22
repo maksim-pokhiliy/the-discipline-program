@@ -11,6 +11,7 @@ import { baseEnv } from "@repo/env/base";
 import { BadRequestError, ConflictError, ForbiddenError, TooManyRequestsError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
+import { type TxClient } from "../../db/tx";
 import { mapToAdminUserListItem, mapToUser, ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
@@ -19,10 +20,9 @@ import {
   closeAthleteActionItemsBulk,
   closeCoachActionItemsBulk,
   syncAthleteAssignments,
-  type TxClient,
 } from "./assignment-sync";
-import { iamInviteTokenApi } from "./invite-token";
-import { resolveInviteEmailConfig, sendInvitationEmail } from "./send-invitation-email";
+import { resolveInviteEmailConfig } from "./send-invitation-email";
+import { iamUserCreationApi } from "./user-creation";
 
 const MS_PER_HOUR = 3_600_000;
 const MAX_RESENDS_PER_DAY = 3;
@@ -106,28 +106,6 @@ const assertNotLastAdminDemotion = async (): Promise<void> => {
   }
 };
 
-const issueInviteAndSendEmail = async (
-  actorId: string,
-  recipient: { id: string; email: string; name: string | null },
-): Promise<{ expiresAt: Date }> => {
-  const { plainToken, expiresAt } = await iamInviteTokenApi.issue({
-    userId: recipient.id,
-    createdByAdminId: actorId,
-  });
-
-  const expiresInHours = Math.max(1, Math.round((expiresAt.getTime() - Date.now()) / MS_PER_HOUR));
-
-  await sendInvitationEmail({
-    userId: recipient.id,
-    recipientEmail: recipient.email,
-    recipientName: recipient.name,
-    plainToken,
-    expiresInHours,
-  });
-
-  return { expiresAt };
-};
-
 export const iamUserAdminApi = {
   getAll: async (): Promise<AdminUserListItem[]> => {
     const users = await prisma.user.findMany({
@@ -162,27 +140,25 @@ export const iamUserAdminApi = {
           await assertCoachesExist(tx, coachIds);
         }
 
-        const row = await tx.user.create({
-          data: {
-            email: data.email,
-            name: data.name,
-            role: ROLE_TO_PRISMA_MAP[data.role],
-            timezone: data.timezone,
-            password: null,
-            emailVerified: null,
-          },
+        const created = await iamUserCreationApi.createPendingUser(tx, {
+          email: data.email,
+          name: data.name,
+          role: data.role,
+          timezone: data.timezone,
         });
 
-        await applyRoleEnter(tx, row.id, data.role, coachIds);
+        if (data.role === UserRole.ATHLETE && coachIds.length > 0) {
+          await syncAthleteAssignments(tx, created.id, coachIds);
+        }
 
-        return mapToUser(row);
+        return created;
       });
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });
     }
 
     if (baseEnv.FEATURE_USER_INVITE_ENABLED) {
-      await issueInviteAndSendEmail(actorId, {
+      await iamUserCreationApi.issueInviteAndSendEmail(actorId, {
         id: user.id,
         email: user.email,
         name: user.name,
@@ -347,7 +323,7 @@ export const iamUserAdminApi = {
       throw new TooManyRequestsError("Too many resends in 24 hours");
     }
 
-    return issueInviteAndSendEmail(actorId, {
+    return iamUserCreationApi.issueInviteAndSendEmail(actorId, {
       id: user.id,
       email: user.email,
       name: user.name,
