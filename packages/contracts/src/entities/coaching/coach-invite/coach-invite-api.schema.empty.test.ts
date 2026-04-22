@@ -5,6 +5,8 @@ import { UserRole } from "../../iam/auth";
 import {
   createCoachInviteRequestSchema,
   createCoachInviteResponseSchema,
+  resendCoachInviteParamsSchema,
+  resendCoachInviteResponseSchema,
 } from "./coach-invite-api.schema";
 
 describe("coach-invite-api schema empty payloads", () => {
@@ -80,5 +82,55 @@ describe("coach-invite-api schema empty payloads", () => {
     });
 
     expect(result.success).toBe(true);
+  });
+});
+
+describe("resend coach-invite schemas", () => {
+  it("resendCoachInviteParamsSchema rejects empty object", () => {
+    const result = resendCoachInviteParamsSchema.safeParse({});
+
+    expect(result.success).toBe(false);
+  });
+
+  it("resendCoachInviteParamsSchema rejects non-cuid id", () => {
+    const result = resendCoachInviteParamsSchema.safeParse({ id: "not-a-cuid" });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("resendCoachInviteParamsSchema accepts a valid cuid id", () => {
+    const result = resendCoachInviteParamsSchema.safeParse({
+      id: "clx000000000000000000000",
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.id).toBe("clx000000000000000000000");
+    }
+  });
+
+  it("resendCoachInviteResponseSchema accepts a Date expiresAt", () => {
+    const result = resendCoachInviteResponseSchema.safeParse({ expiresAt: new Date() });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("resendCoachInviteResponseSchema rejects a string expiresAt", () => {
+    const result = resendCoachInviteResponseSchema.safeParse({ expiresAt: "2025-01-01" });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("resendCoachInviteResponseSchema rejects empty object", () => {
+    const result = resendCoachInviteResponseSchema.safeParse({});
+
+    expect(result.success).toBe(false);
+  });
+
+  it("resendCoachInviteResponseSchema rejects null expiresAt", () => {
+    const result = resendCoachInviteResponseSchema.safeParse({ expiresAt: null });
+
+    expect(result.success).toBe(false);
   });
 });
