@@ -21,6 +21,7 @@ export const coachAthleteListItemSchema = z.object({
   daysSinceLastActivity: z.number().int().nonnegative().nullable(),
   openActionItemsCount: z.number().int().nonnegative(),
   needsAttention: z.boolean(),
+  isPending: z.boolean(),
   enrolledSince: z.date(),
 });
 

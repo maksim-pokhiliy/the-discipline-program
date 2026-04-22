@@ -115,6 +115,7 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
       daysSinceLastActivity,
       openActionItemsCount,
       needsAttention,
+      isPending: athlete.password === null,
       enrolledSince: earliestStart,
     });
   }

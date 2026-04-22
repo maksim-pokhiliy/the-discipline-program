@@ -15,6 +15,7 @@ const baseAssignedAthleteInclude = {
       name: true,
       email: true,
       image: true,
+      password: true,
       athleteProfile: { select: { healthStatus: true } },
       workoutLogs: {
         select: { id: true, workoutId: true, date: true },
