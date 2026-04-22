@@ -80,7 +80,9 @@
       "Bash(taskkill /F /IM node.exe /T)",
       "Bash(taskkill //F //IM turbo.exe //T)",
       "Bash(taskkill //F //IM node.exe //T)",
-      "Bash(echo \"exit=$?\")"
+      "Bash(echo \"exit=$?\")",
+      "Bash(awk 'NF' packages/api-server/src/endpoints/coaching/coach-invite/create.test.ts)",
+      "Bash(awk 'NF' packages/api-server/src/endpoints/coaching/coach-invite/resend.test.ts)"
     ]
   }
 }
