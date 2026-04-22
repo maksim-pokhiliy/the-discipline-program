@@ -52,8 +52,8 @@ export const InvitationEmail = ({
           <Section>
             <Text>{greeting}</Text>
             <Text>
-              An administrator has invited you to join The Discipline Program. Click the link below
-              to set your password and activate your account.
+              You&apos;ve been invited to join The Discipline Program. Click the link below to set
+              your password and activate your account.
             </Text>
             <Text>
               <Link href={inviteUrl} style={linkStyle}>
