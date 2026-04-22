@@ -7,8 +7,6 @@ import { NotFoundError } from "@repo/errors";
 
 import { type TxClient } from "../../db/tx";
 
-export { type TxClient };
-
 export const assertCoachesExist = async (tx: TxClient, ids: string[]): Promise<void> => {
   if (ids.length === 0) {
     return;

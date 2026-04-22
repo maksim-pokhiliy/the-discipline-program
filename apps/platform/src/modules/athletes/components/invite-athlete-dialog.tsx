@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
 
 import { TextField } from "@mui/material";
 
@@ -19,13 +19,16 @@ export const InviteAthleteDialog: React.FC<InviteAthleteDialogProps> = ({ open, 
   const invite = useInviteAthlete();
 
   const handleClose = () => {
+    if (invite.isPending) {
+      return;
+    }
+
     setEmail("");
     setName("");
     onClose();
   };
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = () => {
     const trimmedEmail = email.trim();
 
     if (!trimmedEmail) {

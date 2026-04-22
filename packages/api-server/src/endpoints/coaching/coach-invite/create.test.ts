@@ -221,9 +221,7 @@ describe("coachingCoachInviteApi.create", () => {
 
     it("throws InternalServerError and does not create user when Resend config is missing", async () => {
       configSpy.mockImplementation(() => {
-        throw new InternalServerError(
-          "Invite flow enabled but RESEND_API_KEY or EMAIL_FROM missing",
-        );
+        throw new InternalServerError("RESEND_API_KEY or EMAIL_FROM missing");
       });
 
       const email = `config-fail-${crypto.randomUUID()}@test.local`;
