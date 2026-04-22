@@ -3,10 +3,10 @@
 import { useCallback, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import { Button, Grid, Stack, Typography } from "@mui/material";
+import { Grid, Stack } from "@mui/material";
 
 import { type PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
-import { QueryWrapper } from "@repo/ui";
+import { EmptyState, QueryWrapper } from "@repo/ui";
 
 import { PlatformFab } from "@app/lib/components";
 import {
@@ -68,15 +68,14 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
               ))}
             </Grid>
           ) : (
-            <Stack spacing={2} alignItems="center" sx={{ py: 4 }}>
-              <Typography variant="body2" sx={{ color: "text.secondary" }}>
-                No athletes enrolled yet
-              </Typography>
-
-              <Button startIcon={<AddIcon />} onClick={() => setEnrollOpen(true)}>
-                Enroll Athlete
-              </Button>
-            </Stack>
+            <EmptyState
+              message="No athletes enrolled yet"
+              action={{
+                label: "Enroll Athlete",
+                icon: <AddIcon />,
+                onClick: () => setEnrollOpen(true),
+              }}
+            />
           )
         }
       </QueryWrapper>
