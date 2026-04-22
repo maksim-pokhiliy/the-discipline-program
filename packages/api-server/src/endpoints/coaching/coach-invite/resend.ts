@@ -1,5 +1,5 @@
 import { UserRole } from "@repo/contracts/iam/auth";
-import { BadRequestError, ConflictError, NotFoundError, TooManyRequestsError } from "@repo/errors";
+import { BadRequestError, ConflictError, TooManyRequestsError } from "@repo/errors";
 
 import { resolveCoachId, verifyAthleteBelongsToCoach } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
@@ -17,26 +17,21 @@ export const resend = async (
 ): Promise<{ expiresAt: Date }> => {
   const coachId = await resolveCoachId(userId);
 
+  await verifyAthleteBelongsToCoach(inviteeUserId, coachId);
+
   const invitee = await findOrThrow(
     prisma.user.findUnique({
-      where: { id: inviteeUserId },
+      where: { id: inviteeUserId, deletedAt: null },
       select: {
         id: true,
         email: true,
         name: true,
         role: true,
         password: true,
-        deletedAt: true,
       },
     }),
     "User",
   );
-
-  if (invitee.deletedAt !== null) {
-    throw new NotFoundError("User");
-  }
-
-  await verifyAthleteBelongsToCoach(invitee.id, coachId);
 
   if (ROLE_MAP[invitee.role] !== UserRole.ATHLETE) {
     throw new BadRequestError("User is not an athlete");
