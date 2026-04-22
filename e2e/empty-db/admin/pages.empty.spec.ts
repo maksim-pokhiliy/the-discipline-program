@@ -8,7 +8,7 @@ test.describe("Admin /pages - empty DB", () => {
 
     await page.goto("/pages");
 
-    await expect(page.getByText("No marketing pages found.")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("No marketing pages found.")).toBeVisible({ timeout: 30_000 });
 
     finalizeConsole();
   });

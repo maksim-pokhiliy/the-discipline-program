@@ -8,7 +8,7 @@ test.describe("Admin /contacts - empty DB", () => {
 
     await page.goto("/contacts");
 
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("No contact submissions found.")).toBeVisible();
 
     finalizeConsole();

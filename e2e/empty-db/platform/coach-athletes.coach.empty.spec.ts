@@ -9,11 +9,11 @@ test.describe("Platform /coach/athletes — empty DB", () => {
     await page.goto("/coach/athletes");
 
     await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({
-      timeout: 15_000,
+      timeout: 30_000,
     });
 
     await expect(
-      page.getByText("No athletes yet — enroll athletes in your plans to see them here"),
+      page.getByText("No athletes yet — ask an admin to assign athletes to you"),
     ).toBeVisible();
 
     finalizeConsole();

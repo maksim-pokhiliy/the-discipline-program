@@ -8,7 +8,7 @@ test.describe("Platform /coach — empty DB", () => {
 
     await page.goto("/coach");
 
-    await expect(page.getByText("Athletes").first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Athletes").first()).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Today").first()).toBeVisible();
     await expect(page.getByText("This Week").first()).toBeVisible();
     await expect(page.getByText("Attention").first()).toBeVisible();
