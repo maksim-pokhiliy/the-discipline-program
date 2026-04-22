@@ -1,28 +1,35 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { baseEnv } from "@repo/env/base";
 import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { cleanup, cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
 
+import * as sendModule from "./send-invitation-email";
 import { iamUserAdminApi } from "./users-admin";
-
-type MutableBaseEnv = { FEATURE_USER_INVITE_ENABLED: boolean };
-const mutableEnv = baseEnv as unknown as MutableBaseEnv;
 
 describe("iamUserAdminApi — assignment logic", () => {
   let adminUser: Awaited<ReturnType<typeof createTestUser>>;
+  const sendSpy = vi
+    .spyOn(sendModule, "sendInvitationEmail")
+    .mockImplementation(async () => undefined);
+  const configSpy = vi.spyOn(sendModule, "resolveInviteEmailConfig").mockImplementation(() => ({
+    apiKey: "test-key",
+    from: { email: "test@example.com" },
+  }));
 
   beforeAll(async () => {
-    mutableEnv.FEATURE_USER_INVITE_ENABLED = false;
     adminUser = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
   });
 
   afterAll(async () => {
+    await cleanupRaw.userInviteToken
+      .deleteMany({ where: { createdByAdminId: adminUser.id } })
+      .catch(() => undefined);
     await cleanup({ table: "user", id: adminUser.id });
-    mutableEnv.FEATURE_USER_INVITE_ENABLED = false;
+    sendSpy.mockRestore();
+    configSpy.mockRestore();
   });
 
   describe("createUser", () => {
@@ -73,6 +80,7 @@ describe("iamUserAdminApi — assignment logic", () => {
 
         expect(profile).not.toBeNull();
       } finally {
+        await cleanupRaw.userInviteToken.deleteMany({ where: { userId: created.id } });
         await cleanup({ table: "user", id: created.id });
       }
     });
@@ -97,6 +105,7 @@ describe("iamUserAdminApi — assignment logic", () => {
         expect(rows[0]?.coachId).toBe(coachA.profile.id);
         expect(rows[0]?.athleteId).toBe(created.id);
       } finally {
+        await cleanupRaw.userInviteToken.deleteMany({ where: { userId: created.id } });
         await cleanup({ table: "user", id: created.id });
       }
     });
@@ -122,6 +131,7 @@ describe("iamUserAdminApi — assignment logic", () => {
           [coachA.profile.id, coachB.profile.id].sort(),
         );
       } finally {
+        await cleanupRaw.userInviteToken.deleteMany({ where: { userId: created.id } });
         await cleanup({ table: "user", id: created.id });
       }
     });

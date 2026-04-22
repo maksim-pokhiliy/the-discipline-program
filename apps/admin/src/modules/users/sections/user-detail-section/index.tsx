@@ -4,7 +4,6 @@ import SendIcon from "@mui/icons-material/Send";
 import { Avatar, Button, Grid, Stack, Typography, useTheme } from "@mui/material";
 
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
-import { baseEnv } from "@repo/env/base";
 import { formatDate } from "@repo/shared";
 import { DetailField, FormCard } from "@repo/ui";
 
@@ -22,7 +21,7 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
   const { mutate: resendInvite, isPending: isResending } = useResendInvite();
   const displayLabel = user.name ?? user.email;
   const initial = displayLabel.slice(0, 1).toUpperCase();
-  const canResendInvite = baseEnv.NEXT_PUBLIC_FEATURE_USER_INVITE_ENABLED && !user.hasPassword;
+  const canResendInvite = !user.hasPassword;
 
   return (
     <Stack spacing={3}>

@@ -1,28 +1,35 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { baseEnv } from "@repo/env/base";
 import { NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { cleanup, cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
 
+import * as sendModule from "./send-invitation-email";
 import { iamUserAdminApi } from "./users-admin";
-
-type MutableBaseEnv = { FEATURE_USER_INVITE_ENABLED: boolean };
-const mutableEnv = baseEnv as unknown as MutableBaseEnv;
 
 describe("iamUserAdminApi — assignment logic", () => {
   let adminUser: Awaited<ReturnType<typeof createTestUser>>;
+  const sendSpy = vi
+    .spyOn(sendModule, "sendInvitationEmail")
+    .mockImplementation(async () => undefined);
+  const configSpy = vi.spyOn(sendModule, "resolveInviteEmailConfig").mockImplementation(() => ({
+    apiKey: "test-key",
+    from: { email: "test@example.com" },
+  }));
 
   beforeAll(async () => {
-    mutableEnv.FEATURE_USER_INVITE_ENABLED = false;
     adminUser = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
   });
 
   afterAll(async () => {
+    await cleanupRaw.userInviteToken
+      .deleteMany({ where: { createdByAdminId: adminUser.id } })
+      .catch(() => undefined);
     await cleanup({ table: "user", id: adminUser.id });
-    mutableEnv.FEATURE_USER_INVITE_ENABLED = false;
+    sendSpy.mockRestore();
+    configSpy.mockRestore();
   });
 
   describe("updateUser", () => {
@@ -56,6 +63,11 @@ describe("iamUserAdminApi — assignment logic", () => {
       });
     };
 
+    const cleanupAthlete = async (athleteId: string) => {
+      await cleanupRaw.userInviteToken.deleteMany({ where: { userId: athleteId } }).catch(() => {});
+      await cleanup({ table: "user", id: athleteId });
+    };
+
     it("leaves assignments untouched when coachIds is undefined", async () => {
       const athlete = await createAthleteWithCoaches([coachA.profile.id, coachB.profile.id]);
 
@@ -72,7 +84,7 @@ describe("iamUserAdminApi — assignment logic", () => {
 
         expect(after).toBe(before);
       } finally {
-        await cleanup({ table: "user", id: athlete.id });
+        await cleanupAthlete(athlete.id);
       }
     });
 
@@ -88,7 +100,7 @@ describe("iamUserAdminApi — assignment logic", () => {
 
         expect(count).toBe(0);
       } finally {
-        await cleanup({ table: "user", id: athlete.id });
+        await cleanupAthlete(athlete.id);
       }
     });
 
@@ -108,7 +120,7 @@ describe("iamUserAdminApi — assignment logic", () => {
           [coachA.profile.id, coachB.profile.id].sort(),
         );
       } finally {
-        await cleanup({ table: "user", id: athlete.id });
+        await cleanupAthlete(athlete.id);
       }
     });
 
@@ -127,7 +139,7 @@ describe("iamUserAdminApi — assignment logic", () => {
         expect(rows).toHaveLength(1);
         expect(rows[0]?.coachId).toBe(coachA.profile.id);
       } finally {
-        await cleanup({ table: "user", id: athlete.id });
+        await cleanupAthlete(athlete.id);
       }
     });
 
@@ -147,7 +159,7 @@ describe("iamUserAdminApi — assignment logic", () => {
           [coachB.profile.id, coachC.profile.id].sort(),
         );
       } finally {
-        await cleanup({ table: "user", id: athlete.id });
+        await cleanupAthlete(athlete.id);
       }
     });
 
@@ -163,7 +175,7 @@ describe("iamUserAdminApi — assignment logic", () => {
 
         expect(count).toBe(0);
       } finally {
-        await cleanup({ table: "user", id: athlete.id });
+        await cleanupAthlete(athlete.id);
       }
     });
 
@@ -245,7 +257,7 @@ describe("iamUserAdminApi — assignment logic", () => {
 
         expect(rows.map((r) => r.coachId)).toEqual([coachA.profile.id]);
       } finally {
-        await cleanup({ table: "user", id: athlete.id });
+        await cleanupAthlete(athlete.id);
       }
     });
 
@@ -264,7 +276,7 @@ describe("iamUserAdminApi — assignment logic", () => {
         expect(rows).toHaveLength(1);
         expect(rows[0]?.coachId).toBe(coachA.profile.id);
       } finally {
-        await cleanup({ table: "user", id: athlete.id });
+        await cleanupAthlete(athlete.id);
       }
     });
 
@@ -294,7 +306,7 @@ describe("iamUserAdminApi — assignment logic", () => {
           .delete({ where: { userId: demoted.user.id } })
           .catch(() => {});
         await cleanupRaw.coachProfile.delete({ where: { id: demoted.profile.id } }).catch(() => {});
-        await cleanup({ table: "user", id: athlete.id });
+        await cleanupAthlete(athlete.id);
         await cleanup({ table: "user", id: demoted.user.id });
       }
     });
@@ -319,7 +331,7 @@ describe("iamUserAdminApi — assignment logic", () => {
         expect(coachSideAssignments).toBe(0);
       } finally {
         await cleanupRaw.coachProfile.delete({ where: { id: demoted.profile.id } }).catch(() => {});
-        await cleanup({ table: "user", id: athlete.id });
+        await cleanupAthlete(athlete.id);
         await cleanup({ table: "user", id: demoted.user.id });
       }
     });
