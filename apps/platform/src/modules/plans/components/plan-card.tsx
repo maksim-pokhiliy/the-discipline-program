@@ -14,10 +14,10 @@ import { PlanStatusChip } from "./plan-status-chip";
 type PlanCardProps = {
   plan: TrainingPlanListItem;
   onActivate: (id: string) => void;
-  onArchive: (id: string) => void;
+  onArchive: (id: string) => Promise<void>;
   onRestore: (id: string) => void;
   onDuplicate: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
   isPending: boolean;
 };
 

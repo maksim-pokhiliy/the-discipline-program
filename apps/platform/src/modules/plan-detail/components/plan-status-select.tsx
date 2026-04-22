@@ -86,8 +86,14 @@ export const PlanStatusSelect: React.FC<PlanStatusSelectProps> = ({ planId, plan
         type="danger"
         message={`Are you sure you want to archive "${planName}"?`}
         details="Archived plans are no longer visible to athletes. You can restore it later."
+        confirmText="Archive"
         isConfirming={archive.isPending}
-        onConfirm={() => archive.mutate(planId)}
+        onConfirm={() =>
+          archive.mutateAsync(planId).then(
+            () => setArchiveOpen(false),
+            () => undefined,
+          )
+        }
       />
     </>
   );
