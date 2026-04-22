@@ -25,6 +25,7 @@
     "./coaching/coach-action-item": "./src/entities/coaching/coach-action-item/index.ts",
     "./coaching/coach-athletes": "./src/entities/coaching/coach-athletes/index.ts",
     "./coaching/coach-dashboard": "./src/entities/coaching/coach-dashboard/index.ts",
+    "./coaching/coach-invite": "./src/entities/coaching/coach-invite/index.ts",
     "./coaching/coach-note": "./src/entities/coaching/coach-note/index.ts",
     "./coaching/coach-profile": "./src/entities/coaching/coach-profile/index.ts",
     "./coaching/plan-roster": "./src/entities/coaching/plan-roster/index.ts",
