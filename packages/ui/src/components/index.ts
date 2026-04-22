@@ -5,6 +5,7 @@ export * from "./detail-field";
 export * from "./error-pages";
 export * from "./drawer";
 export * from "./dynamic-list-item";
+export * from "./empty-state";
 export * from "./form-card";
 export * from "./form-view";
 export * from "./image-upload";
