@@ -1,15 +1,16 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
-import { Stack } from "@mui/material";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { Button, Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { PageHeader, QueryWrapper } from "@repo/ui";
 
 import { useCoachAthletes } from "@app/lib/hooks";
 
-import { AthleteDetailDrawer, extractUniquePlans } from "../components";
+import { AthleteDetailDrawer, InviteAthleteDialog, extractUniquePlans } from "../components";
 import { AthletesFiltersSection, AthletesListSection, AthletesSummarySection } from "../sections";
 
 export const AthletesView = () => {
@@ -17,6 +18,7 @@ export const AthletesView = () => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const selectedAthleteId = searchParams.get("athlete");
 
@@ -41,7 +43,18 @@ export const AthletesView = () => {
 
   return (
     <Stack spacing={4}>
-      <PageHeader title="Athletes" />
+      <PageHeader
+        title="Athletes"
+        actions={
+          <Button
+            variant="contained"
+            startIcon={<PersonAddIcon />}
+            onClick={() => setInviteOpen(true)}
+          >
+            Invite athlete
+          </Button>
+        }
+      />
 
       <QueryWrapper
         isLoading={isLoading}
@@ -63,6 +76,7 @@ export const AthletesView = () => {
       </QueryWrapper>
 
       <AthleteDetailDrawer athleteId={selectedAthleteId} onClose={handleCloseDrawer} />
+      <InviteAthleteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </Stack>
   );
 };

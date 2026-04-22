@@ -6,3 +6,4 @@ export {
   filterAthletes,
   sortByAttentionPriority,
 } from "./athlete-list-item-config";
+export { InviteAthleteDialog } from "./invite-athlete-dialog";
