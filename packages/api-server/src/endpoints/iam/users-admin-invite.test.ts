@@ -1,13 +1,7 @@
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { baseEnv } from "@repo/env/base";
-import {
-  BadRequestError,
-  ConflictError,
-  InternalServerError,
-  TooManyRequestsError,
-} from "@repo/errors";
+import { ConflictError, InternalServerError, TooManyRequestsError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { cleanup, cleanupRaw, createTestUser } from "../../test/helpers";
@@ -15,10 +9,7 @@ import { cleanup, cleanupRaw, createTestUser } from "../../test/helpers";
 import * as sendModule from "./send-invitation-email";
 import { iamUserAdminApi } from "./users-admin";
 
-type MutableBaseEnv = { FEATURE_USER_INVITE_ENABLED: boolean };
-const mutableEnv = baseEnv as unknown as MutableBaseEnv;
-
-describe("iamUserAdminApi — createUser / resendInvite flag-gated surface", () => {
+describe("iamUserAdminApi — createUser / resendInvite", () => {
   let adminUser: Awaited<ReturnType<typeof createTestUser>>;
   let regularUser: Awaited<ReturnType<typeof createTestUser>>;
   const sendSpy = vi
@@ -42,7 +33,6 @@ describe("iamUserAdminApi — createUser / resendInvite flag-gated surface", () 
 
     sendSpy.mockRestore();
     configSpy.mockRestore();
-    mutableEnv.FEATURE_USER_INVITE_ENABLED = false;
   });
 
   beforeEach(() => {
@@ -54,61 +44,7 @@ describe("iamUserAdminApi — createUser / resendInvite flag-gated surface", () 
     }));
   });
 
-  afterEach(async () => {
-    mutableEnv.FEATURE_USER_INVITE_ENABLED = false;
-  });
-
-  describe("createUser with flag off", () => {
-    beforeEach(() => {
-      mutableEnv.FEATURE_USER_INVITE_ENABLED = false;
-    });
-
-    it("creates a user with password=null, emailVerified=null, and no invite/email", async () => {
-      const email = `create-off-${crypto.randomUUID()}@test.local`;
-      const user = await iamUserAdminApi.createUser(adminUser.id, {
-        email,
-        name: "Test Create",
-        role: UserRole.ATHLETE,
-        timezone: "UTC",
-        coachIds: [],
-      });
-
-      try {
-        expect(user.email).toBe(email);
-        expect(user.role).toBe(UserRole.ATHLETE);
-        expect(sendSpy).not.toHaveBeenCalled();
-
-        const row = await cleanupRaw.user.findUnique({ where: { id: user.id } });
-
-        expect(row?.password).toBeNull();
-        expect(row?.emailVerified).toBeNull();
-
-        const tokens = await cleanupRaw.userInviteToken.findMany({ where: { userId: user.id } });
-
-        expect(tokens).toHaveLength(0);
-      } finally {
-        await cleanup({ table: "user", id: user.id });
-      }
-    });
-
-    it("throws ConflictError on duplicate email", async () => {
-      await expect(
-        iamUserAdminApi.createUser(adminUser.id, {
-          email: regularUser.email,
-          name: "Duplicate",
-          role: UserRole.ATHLETE,
-          timezone: "UTC",
-          coachIds: [],
-        }),
-      ).rejects.toThrow(ConflictError);
-    });
-  });
-
-  describe("createUser with flag on", () => {
-    beforeEach(() => {
-      mutableEnv.FEATURE_USER_INVITE_ENABLED = true;
-    });
-
+  describe("createUser", () => {
     it("issues a token and sends invitation email after user creation", async () => {
       const email = `invite-${crypto.randomUUID()}@test.local`;
       const user = await iamUserAdminApi.createUser(adminUser.id, {
@@ -126,10 +62,27 @@ describe("iamUserAdminApi — createUser / resendInvite flag-gated surface", () 
 
         expect(tokens).toHaveLength(1);
         expect(tokens[0]?.consumedAt).toBeNull();
+
+        const row = await cleanupRaw.user.findUnique({ where: { id: user.id } });
+
+        expect(row?.password).toBeNull();
+        expect(row?.emailVerified).toBeNull();
       } finally {
         await cleanupRaw.userInviteToken.deleteMany({ where: { userId: user.id } });
         await cleanup({ table: "user", id: user.id });
       }
+    });
+
+    it("throws ConflictError on duplicate email", async () => {
+      await expect(
+        iamUserAdminApi.createUser(adminUser.id, {
+          email: regularUser.email,
+          name: "Duplicate",
+          role: UserRole.ATHLETE,
+          timezone: "UTC",
+          coachIds: [],
+        }),
+      ).rejects.toThrow(ConflictError);
     });
 
     it("throws InternalServerError and does not create user when Resend config is missing", async () => {
@@ -158,23 +111,7 @@ describe("iamUserAdminApi — createUser / resendInvite flag-gated surface", () 
     });
   });
 
-  describe("resendInvite with flag off", () => {
-    beforeEach(() => {
-      mutableEnv.FEATURE_USER_INVITE_ENABLED = false;
-    });
-
-    it("throws BadRequestError when FEATURE_USER_INVITE_ENABLED is false", async () => {
-      await expect(iamUserAdminApi.resendInvite(adminUser.id, regularUser.id)).rejects.toThrow(
-        BadRequestError,
-      );
-    });
-  });
-
-  describe("resendInvite with flag on", () => {
-    beforeEach(() => {
-      mutableEnv.FEATURE_USER_INVITE_ENABLED = true;
-    });
-
+  describe("resendInvite", () => {
     it("issues a new token, marks prior unconsumed as consumed, and sends an email", async () => {
       const target = await createTestUser();
 

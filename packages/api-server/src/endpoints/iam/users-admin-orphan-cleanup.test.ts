@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import {
   ActionItemResolveReason,
@@ -7,35 +7,42 @@ import {
   ActionItemType,
 } from "@repo/contracts/coaching/coach-action-item";
 import { UserRole } from "@repo/contracts/iam/auth";
-import { baseEnv } from "@repo/env/base";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { cleanup, cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
 
+import * as sendModule from "./send-invitation-email";
 import { iamUserAdminApi } from "./users-admin";
-
-type MutableBaseEnv = { FEATURE_USER_INVITE_ENABLED: boolean };
-const mutableEnv = baseEnv as unknown as MutableBaseEnv;
 
 describe("iamUserAdminApi — orphan action-item cleanup", () => {
   let adminUser: Awaited<ReturnType<typeof createTestUser>>;
   let coachA: Awaited<ReturnType<typeof createTestCoach>>;
   let coachB: Awaited<ReturnType<typeof createTestCoach>>;
+  const sendSpy = vi
+    .spyOn(sendModule, "sendInvitationEmail")
+    .mockImplementation(async () => undefined);
+  const configSpy = vi.spyOn(sendModule, "resolveInviteEmailConfig").mockImplementation(() => ({
+    apiKey: "test-key",
+    from: { email: "test@example.com" },
+  }));
 
   beforeAll(async () => {
-    mutableEnv.FEATURE_USER_INVITE_ENABLED = false;
     adminUser = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
     coachA = await createTestCoach();
     coachB = await createTestCoach();
   });
 
   afterAll(async () => {
+    await cleanupRaw.userInviteToken
+      .deleteMany({ where: { createdByAdminId: adminUser.id } })
+      .catch(() => undefined);
     await cleanup(
       { table: "user", id: adminUser.id },
       { table: "user", id: coachA.user.id },
       { table: "user", id: coachB.user.id },
     );
-    mutableEnv.FEATURE_USER_INVITE_ENABLED = false;
+    sendSpy.mockRestore();
+    configSpy.mockRestore();
   });
 
   it("closes orphan action items inline when a coach assignment is removed", async () => {
@@ -91,6 +98,9 @@ describe("iamUserAdminApi — orphan action-item cleanup", () => {
     } finally {
       await cleanupRaw.coachActionItem
         .deleteMany({ where: { athleteId: athlete.id } })
+        .catch(() => {});
+      await cleanupRaw.userInviteToken
+        .deleteMany({ where: { userId: athlete.id } })
         .catch(() => {});
       await cleanup({ table: "user", id: athlete.id });
     }

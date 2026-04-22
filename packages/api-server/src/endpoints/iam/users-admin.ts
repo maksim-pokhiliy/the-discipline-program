@@ -7,7 +7,6 @@ import {
   type UpdateUserRoleData,
   type User,
 } from "@repo/contracts/iam/user";
-import { baseEnv } from "@repo/env/base";
 import { BadRequestError, ConflictError, ForbiddenError, TooManyRequestsError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
@@ -122,9 +121,7 @@ export const iamUserAdminApi = {
   },
 
   createUser: async (actorId: string, data: CreateUserData): Promise<User> => {
-    if (baseEnv.FEATURE_USER_INVITE_ENABLED) {
-      resolveInviteEmailConfig();
-    }
+    resolveInviteEmailConfig();
 
     if (data.coachIds.length > 0 && data.role !== UserRole.ATHLETE) {
       throw new BadRequestError("coach assignments are valid only for ATHLETE role");
@@ -157,13 +154,11 @@ export const iamUserAdminApi = {
       return handlePrismaError(error, { entity: "User" });
     }
 
-    if (baseEnv.FEATURE_USER_INVITE_ENABLED) {
-      await iamUserCreationApi.issueInviteAndSendEmail(actorId, {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      });
-    }
+    await iamUserCreationApi.issueInviteAndSendEmail(actorId, {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    });
 
     return user;
   },
@@ -302,10 +297,6 @@ export const iamUserAdminApi = {
   },
 
   resendInvite: async (actorId: string, userId: string): Promise<{ expiresAt: Date }> => {
-    if (!baseEnv.FEATURE_USER_INVITE_ENABLED) {
-      throw new BadRequestError("Invite flow is disabled");
-    }
-
     const user = await findOrThrow(prisma.user.findUnique({ where: { id: userId } }), "User");
 
     if (user.password !== null) {
