@@ -48,6 +48,7 @@ export const AthletesView = () => {
         actions={
           <Button
             variant="contained"
+            size="small"
             startIcon={<PersonAddIcon />}
             onClick={() => setInviteOpen(true)}
           >
