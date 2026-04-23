@@ -283,13 +283,16 @@ export const iamUserAdminApi = {
     const suffixedEmail = `${existing.email}_deleted_${deletedAt.getTime()}`;
 
     try {
-      await prisma.user.update({
-        where: { id },
-        data: {
-          deletedAt,
-          email: suffixedEmail,
-          tokenVersion: { increment: 1 },
-        },
+      await prisma.$transaction(async (tx) => {
+        await applyRoleExit(tx, id, ROLE_MAP[existing.role]);
+        await tx.user.update({
+          where: { id },
+          data: {
+            deletedAt,
+            email: suffixedEmail,
+            tokenVersion: { increment: 1 },
+          },
+        });
       });
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });
