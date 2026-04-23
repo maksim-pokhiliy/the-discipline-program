@@ -1,24 +1,61 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import CloseIcon from "@mui/icons-material/Close";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { Collapse, Divider, IconButton, InputBase, Paper, Stack } from "@mui/material";
+import {
+  Box,
+  Collapse,
+  Divider,
+  IconButton,
+  InputBase,
+  Paper,
+  Skeleton,
+  Stack,
+} from "@mui/material";
+import dynamic from "next/dynamic";
 
+import type { TiptapDoc } from "@repo/contracts/common/tiptap-doc";
+import type { CreateExerciseData, ExerciseListItem } from "@repo/contracts/library/exercise";
 import type { Workout } from "@repo/contracts/lms/workout";
-import { ConfirmationModal, RichTextEditor } from "@repo/ui";
+import { ConfirmationModal } from "@repo/ui";
 
+import { api } from "@app/lib/api";
 import { useDeleteWorkout, useUpdateWorkout } from "@app/lib/hooks";
+
+const WorkoutEditor = dynamic(
+  () => import("@repo/ui").then((mod) => ({ default: mod.WorkoutEditor })),
+  {
+    ssr: false,
+    loading: () => <Skeleton variant="rectangular" height={200} />,
+  },
+);
 
 type WeekWorkoutCardProps = {
   workout: Workout;
   planId: string;
   autoFocus?: boolean;
 };
+
+const searchExercises = async (query: string): Promise<ExerciseListItem[]> => {
+  const response = await api.libraryExercises.list({
+    search: query,
+    includeOwnDrafts: true,
+  });
+
+  return response.items;
+};
+
+const createExercise = (data: CreateExerciseData): Promise<ExerciseListItem> =>
+  api.libraryExercises.create(data).then((exercise) => ({ ...exercise, usageCount: 0 }));
+
+const listSchemes = () => api.librarySchemes.list();
+
+const listBlockTypes = () => api.libraryBlockTypes.list();
 
 export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planId, autoFocus }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -30,15 +67,7 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editValue, setEditValue] = useState(workout.title);
   const [expanded, setExpanded] = useState(false);
-  const [contentValue, setContentValue] = useState(workout.content ?? "");
-  const contentRef = useRef(contentValue);
-
-  useEffect(() => {
-    const next = workout.content ?? "";
-
-    setContentValue(next);
-    contentRef.current = next;
-  }, [workout.content]);
+  const contentDocRef = useRef<TiptapDoc | null>(workout.contentDoc);
 
   const commitTitle = useCallback(() => {
     const trimmed = editValue.trim();
@@ -50,19 +79,15 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
     }
   }, [editValue, workout.id, workout.title, updateWorkout]);
 
-  const commitContent = useCallback(() => {
-    const current = contentRef.current;
-    const original = workout.content ?? "";
-
-    if (current !== original) {
-      updateWorkout.mutate({ id: workout.id, data: { content: current || null } });
-    }
-  }, [workout.id, workout.content, updateWorkout]);
-
-  const handleContentChange = useCallback((val: string) => {
-    setContentValue(val);
-    contentRef.current = val;
+  const handleEditorChange = useCallback((doc: TiptapDoc | null) => {
+    contentDocRef.current = doc;
   }, []);
+
+  const commitContent = useCallback(() => {
+    const current = contentDocRef.current;
+
+    updateWorkout.mutate({ id: workout.id, data: { contentDoc: current } });
+  }, [updateWorkout, workout.id]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -142,15 +167,20 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
           </IconButton>
         </Stack>
 
-        <Collapse in={expanded} unmountOnExit onExited={commitContent}>
+        <Collapse in={expanded} unmountOnExit>
           <Divider />
-          <RichTextEditor
-            value={contentValue}
-            onChange={handleContentChange}
-            onBlur={commitContent}
-            placeholder="Workout content..."
-            variant="inline"
-          />
+          <Box sx={{ px: 2, py: 2 }}>
+            <WorkoutEditor
+              value={workout.contentDoc}
+              onChange={handleEditorChange}
+              onBlur={commitContent}
+              searchExercises={searchExercises}
+              createExercise={createExercise}
+              listSchemes={listSchemes}
+              listBlockTypes={listBlockTypes}
+              placeholder="Type / to insert a block, @ to reference an exercise"
+            />
+          </Box>
         </Collapse>
       </Paper>
 

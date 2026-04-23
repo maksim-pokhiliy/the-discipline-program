@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { BadRequestError } from "@repo/errors";
 
-import { cleanup, createTestCoach, createTestPlan } from "../../test/helpers";
+import { cleanup, cleanupRaw, createTestCoach, createTestPlan } from "../../test/helpers";
 
 import { lmsWorkoutApi } from "./workout";
 
@@ -169,13 +169,22 @@ describe("lmsWorkoutApi", () => {
       expect(copied[0]?.title).toBe("Source workout");
     });
 
-    it("copies workout content field", async () => {
+    it("copies workout contentDoc field", async () => {
       const srcDate = new Date("2025-11-03T00:00:00Z");
 
-      const srcWorkout = await lmsWorkoutApi.create(coach.user.id, plan.id, {
-        scheduledDate: srcDate,
-        title: "With content",
-        content: "A. Back Squat\n5x5 @ 185lb",
+      const sampleDoc = {
+        type: "doc" as const,
+        content: [{ type: "notes", attrs: { text: "A. Back Squat 5x5 @ 185lb" } }],
+      };
+
+      const srcWorkout = await cleanupRaw.workout.create({
+        data: {
+          planId: plan.id,
+          scheduledDate: srcDate,
+          title: "With content",
+          contentDoc: sampleDoc,
+          sortOrder: 0,
+        },
       });
 
       toCleanup.push({ table: "workout", id: srcWorkout.id });
@@ -189,7 +198,7 @@ describe("lmsWorkoutApi", () => {
       }
 
       expect(copied).toHaveLength(1);
-      expect(copied[0]?.content).toBe("A. Back Squat\n5x5 @ 185lb");
+      expect(copied[0]?.contentDoc).toEqual(sampleDoc);
     });
 
     it("returns empty array for empty source week", async () => {

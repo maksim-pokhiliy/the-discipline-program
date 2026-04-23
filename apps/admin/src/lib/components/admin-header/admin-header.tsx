@@ -12,14 +12,28 @@ type AdminHeaderProps = {
   navigation: AdminNavigationConfig;
 };
 
+const collectHrefs = (config: AdminNavigationConfig): string[] => {
+  const hrefs: string[] = [config.dashboard.href];
+
+  for (const group of config.groups) {
+    for (const link of group.links) {
+      hrefs.push(link.href);
+    }
+  }
+
+  return hrefs;
+};
+
 const getPageTitle = (pathname: string, config: AdminNavigationConfig): string => {
   if (pathname === config.dashboard.href) {
     return config.dashboard.text;
   }
 
+  const siblingHrefs = collectHrefs(config);
+
   for (const group of config.groups) {
     for (const link of group.links) {
-      if (isActiveHref(link.href, pathname)) {
+      if (isActiveHref(link.href, pathname, { siblingHrefs })) {
         return link.text;
       }
     }

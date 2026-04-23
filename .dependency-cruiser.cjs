@@ -138,6 +138,30 @@ module.exports = {
     },
 
     {
+      name: "api-server-library-is-leaf",
+      severity: "error",
+      comment:
+        "Library is a platform catalog context (Exercise, Scheme, BlockType). It provides " +
+        "taxonomies to LMS (workout blocks reference library rows) and to admin/platform apps, " +
+        "but must never reach back into any domain context. Dependency direction is always " +
+        "domain → library. Keeps the wiki-style catalog independent of training data and " +
+        "prevents circular coupling with lms.",
+      from: { path: "^packages/api-server/src/(endpoints|mappers)/library/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|lms|coaching|iam|billing)/" },
+    },
+
+    {
+      name: "contracts-library-is-leaf",
+      severity: "error",
+      comment:
+        "Library contracts (Exercise, Scheme, BlockType) are platform catalogs and must not " +
+        "depend on any other bounded context. LMS contracts import library (workout-block " +
+        "references SchemeKind); library never imports LMS or any other domain.",
+      from: { path: "^packages/contracts/src/entities/library/" },
+      to: { path: "^packages/contracts/src/entities/(cms|lms|coaching|iam|billing)/" },
+    },
+
+    {
       name: "prisma-only-in-api-server",
       severity: "error",
       comment:

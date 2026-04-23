@@ -3,6 +3,7 @@
 import { type ReactNode } from "react";
 
 import EventNoteRounded from "@mui/icons-material/EventNoteRounded";
+import FitnessCenterRounded from "@mui/icons-material/FitnessCenterRounded";
 import GroupRounded from "@mui/icons-material/GroupRounded";
 import HomeRounded from "@mui/icons-material/HomeRounded";
 import PersonRounded from "@mui/icons-material/PersonRounded";
@@ -16,6 +17,7 @@ const ICON_MAP: Record<PlatformIconName, ReactNode> = {
   home: <HomeRounded />,
   plans: <EventNoteRounded />,
   athletes: <GroupRounded />,
+  library: <FitnessCenterRounded />,
   profile: <PersonRounded />,
 };
 

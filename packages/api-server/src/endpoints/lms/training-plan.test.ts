@@ -46,7 +46,10 @@ describe("lmsTrainingPlanApi", () => {
         title: "Workout A",
         scheduledDate: monday,
         sortOrder: 0,
-        content: "A. Back Squat\n5x5 @ 185lb",
+        contentDoc: {
+          type: "doc",
+          content: [{ type: "notes", attrs: { text: "A. Back Squat 5x5 @ 185lb" } }],
+        },
       },
     });
 
@@ -129,7 +132,7 @@ describe("lmsTrainingPlanApi", () => {
       expect(copy.status).toBe(TrainingPlanStatus.DRAFT);
     });
 
-    it("copies all workouts with same dates, title, and content", async () => {
+    it("copies all workouts with same dates, title, and contentDoc", async () => {
       const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
 
       const copyWorkouts = await cleanupRaw.workout.findMany({
@@ -145,7 +148,10 @@ describe("lmsTrainingPlanApi", () => {
       }
 
       expect(copiedWorkout.title).toBe("Workout A");
-      expect(copiedWorkout.content).toBe("A. Back Squat\n5x5 @ 185lb");
+      expect(copiedWorkout.contentDoc).toEqual({
+        type: "doc",
+        content: [{ type: "notes", attrs: { text: "A. Back Squat 5x5 @ 185lb" } }],
+      });
       expect(copiedWorkout.id).not.toBe(workoutId);
     });
 

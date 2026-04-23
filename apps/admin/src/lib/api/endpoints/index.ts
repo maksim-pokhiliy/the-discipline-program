@@ -1,6 +1,9 @@
 export { createBlogAPI } from "./blog";
 export { createContactsAPI } from "./contacts";
 export { createDashboardAPI } from "./dashboard";
+export { createLibraryBlockTypesAPI } from "./library-block-types";
+export { createLibraryExercisesAPI } from "./library-exercises";
+export { createLibrarySchemesAPI } from "./library-schemes";
 export { createPagesAPI } from "./pages";
 export { createProductsAPI } from "./products";
 export { createReviewsAPI } from "./reviews";

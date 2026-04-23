@@ -34,7 +34,7 @@ export const useCreateWorkout = (planId: string) => {
         scheduledDate: data.scheduledDate ?? null,
         title: data.title ?? "",
         description: data.description ?? null,
-        content: data.content ?? null,
+        contentDoc: data.contentDoc ?? null,
         sortOrder: -1,
         isArchived: false,
         createdAt: new Date(),

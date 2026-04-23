@@ -7,9 +7,10 @@ import { SidebarLink } from "./sidebar-link";
 type SidebarNavProps = {
   groups: AdminNavGroup[];
   expanded: boolean;
+  siblingHrefs?: readonly string[];
 };
 
-export const SidebarNav = ({ groups, expanded }: SidebarNavProps) => {
+export const SidebarNav = ({ groups, expanded, siblingHrefs }: SidebarNavProps) => {
   return (
     <>
       {groups.map((group, index) => (
@@ -38,6 +39,7 @@ export const SidebarNav = ({ groups, expanded }: SidebarNavProps) => {
               href={link.href}
               icon={link.icon}
               expanded={expanded}
+              siblingHrefs={siblingHrefs}
             />
           ))}
         </List>

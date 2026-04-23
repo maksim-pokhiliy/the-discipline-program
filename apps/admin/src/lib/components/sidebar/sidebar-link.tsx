@@ -13,12 +13,13 @@ type SidebarLinkProps = {
   href: string;
   icon: string;
   expanded: boolean;
+  siblingHrefs?: readonly string[];
 };
 
-export const SidebarLink = ({ text, href, icon, expanded }: SidebarLinkProps) => {
+export const SidebarLink = ({ text, href, icon, expanded, siblingHrefs }: SidebarLinkProps) => {
   const pathname = usePathname();
 
-  const isActive = isActiveHref(href, pathname);
+  const isActive = isActiveHref(href, pathname, { siblingHrefs });
 
   const Icon = getNavIcon(icon);
 

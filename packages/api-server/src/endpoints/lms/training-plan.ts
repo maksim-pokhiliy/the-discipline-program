@@ -28,6 +28,8 @@ import {
   startOfWeekInTz,
 } from "../../utils/date-helpers";
 
+import { duplicateTrainingPlan } from "./training-plan/duplicate";
+
 type PlanWithStats = Parameters<typeof mapToTrainingPlan>[0] & {
   _count: { enrollments: number };
   workouts: { scheduledDate: Date | null }[];
@@ -228,48 +230,7 @@ export const lmsTrainingPlanApi = {
     }
   },
 
-  duplicate: async (userId: string, id: string): Promise<TrainingPlan> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(id, coachId);
-
-    const source = await findOrThrow(
-      prisma.trainingPlan.findUnique({ where: { id }, include: { workouts: true } }),
-      "Training plan",
-    );
-
-    try {
-      const newPlan = await prisma.$transaction(async (tx) => {
-        const plan = await tx.trainingPlan.create({
-          data: {
-            coachId,
-            name: `Copy of ${source.name}`,
-            description: source.description,
-            status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[TrainingPlanStatus.DRAFT],
-          },
-        });
-
-        if (source.workouts.length > 0) {
-          await tx.workout.createMany({
-            data: source.workouts.map((workout) => ({
-              planId: plan.id,
-              scheduledDate: workout.scheduledDate,
-              title: workout.title,
-              description: workout.description,
-              content: workout.content,
-              sortOrder: workout.sortOrder,
-            })),
-          });
-        }
-
-        return plan;
-      });
-
-      return mapToTrainingPlan(newPlan);
-    } catch (error) {
-      return handlePrismaError(error, { entity: "Training plan", field: "name" });
-    }
-  },
+  duplicate: duplicateTrainingPlan,
 
   archive: async (userId: string, id: string): Promise<TrainingPlan> =>
     transitionPlanStatus(

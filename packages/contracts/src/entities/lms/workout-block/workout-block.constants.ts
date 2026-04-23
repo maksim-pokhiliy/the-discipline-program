@@ -1,0 +1,29 @@
+export const WORKOUT_DOC_LIMITS = {
+  MAX_ROOT_BLOCKS: 100,
+  MAX_NODES_PER_DOC: 5_000,
+  MAX_DOC_BYTES: 500_000,
+} as const;
+
+export const WORKOUT_BLOCK_CONSTANTS = {
+  MAX_NOTE_LENGTH: 500,
+  MAX_PACE_LENGTH: 100,
+  MAX_REP_VALUES: 50,
+  MAX_COMPLEX_GROUP_LENGTH: 4,
+  MIN_EFFORT_PCT: 0,
+  MAX_EFFORT_PCT: 100,
+} as const;
+
+export enum WorkoutRepScheme {
+  STRAIGHT = "STRAIGHT",
+  LADDER = "LADDER",
+  PYRAMID = "PYRAMID",
+  REVERSE_LADDER = "REVERSE_LADDER",
+  CUSTOM = "CUSTOM",
+}
+
+export enum PrescriptionKind {
+  PERCENT_OF_1RM = "PERCENT_OF_1RM",
+  KG = "KG",
+  RPE = "RPE",
+  NONE = "NONE",
+}

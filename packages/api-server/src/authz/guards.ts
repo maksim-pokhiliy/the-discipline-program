@@ -77,3 +77,21 @@ export const verifyAthleteBelongsToCoach = async (
     throw new ForbiddenError("Athlete does not belong to this coach");
   }
 };
+
+export const verifyExerciseOwnership = async (
+  userId: string,
+  exerciseId: string,
+): Promise<void> => {
+  const exercise = await prisma.exercise.findUnique({
+    where: { id: exerciseId },
+    select: { createdByUserId: true },
+  });
+
+  if (!exercise) {
+    throw new NotFoundError("Exercise not found", { exerciseId });
+  }
+
+  if (exercise.createdByUserId !== userId) {
+    throw new ForbiddenError("Exercise does not belong to this user");
+  }
+};

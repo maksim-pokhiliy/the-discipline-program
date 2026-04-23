@@ -82,7 +82,11 @@
       "Bash(taskkill //F //IM node.exe //T)",
       "Bash(echo \"exit=$?\")",
       "Bash(awk 'NF' packages/api-server/src/endpoints/coaching/coach-invite/create.test.ts)",
-      "Bash(awk 'NF' packages/api-server/src/endpoints/coaching/coach-invite/resend.test.ts)"
+      "Bash(awk 'NF' packages/api-server/src/endpoints/coaching/coach-invite/resend.test.ts)",
+      "Bash(npx dotenv-cli *)",
+      "Bash(npx prisma *)",
+      "Bash([ -s \"C:\\\\\\\\Users\\\\\\\\maksi\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\D--projects-contrib-the-discipline-program\\\\\\\\16f8c395-2e8f-4d64-8f92-851ef27d2b93\\\\\\\\tasks\\\\\\\\bblyho8sc.output\" ])",
+      "Bash(tee /tmp/test-output.log)"
     ]
   }
 }

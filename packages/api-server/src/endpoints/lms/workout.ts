@@ -1,3 +1,6 @@
+import { Prisma } from "@prisma/client";
+
+import { type TiptapDoc } from "@repo/contracts/common/tiptap-doc";
 import {
   type CreateWorkoutData,
   type UpdateWorkoutData,
@@ -7,8 +10,28 @@ import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import { resolveCoachId, verifyPlanOwnership, verifyWorkoutOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
+import { type TxClient } from "../../db/tx";
 import { mapToWorkout } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
+
+import { copyWorkoutWeek } from "./workout/copy-week";
+import { loadLibraryLookup } from "./workout/library-lookup";
+import { parseTiptapDoc } from "./workout/parser";
+import { persistWorkoutTree } from "./workout/persist-tree";
+
+const toPrismaContentDoc = (
+  value: CreateWorkoutData["contentDoc"] | UpdateWorkoutData["contentDoc"],
+): Prisma.InputJsonValue | typeof Prisma.JsonNull | undefined => {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === null) {
+    return Prisma.JsonNull;
+  }
+
+  return value as Prisma.InputJsonValue;
+};
 
 const toUTCMidnight = (date: Date): Date => {
   const hours = date.getUTCHours();
@@ -19,6 +42,26 @@ const toUTCMidnight = (date: Date): Date => {
   }
 
   return base;
+};
+
+const writeWorkoutDocAndBlocks = async (params: {
+  tx: TxClient;
+  workoutId: string;
+  contentDoc: TiptapDoc | null;
+  savingCoachUserId: string;
+}): Promise<void> => {
+  const { tx, workoutId, contentDoc, savingCoachUserId } = params;
+
+  if (contentDoc === null) {
+    await tx.workoutBlock.deleteMany({ where: { workoutId } });
+
+    return;
+  }
+
+  const lookup = await loadLibraryLookup(contentDoc);
+  const tree = parseTiptapDoc(contentDoc, lookup, { savingCoachUserId });
+
+  await persistWorkoutTree({ workoutId, tree, tx });
 };
 
 export const lmsWorkoutApi = {
@@ -57,19 +100,43 @@ export const lmsWorkoutApi = {
     await verifyPlanOwnership(planId, coachId);
 
     const scheduledDate = data.scheduledDate ? toUTCMidnight(data.scheduledDate) : null;
+    const { contentDoc, ...rest } = data;
 
     try {
-      await prisma.workout.updateMany({
-        where: { planId, scheduledDate },
-        data: { sortOrder: { increment: 1 } },
-      });
+      const workout = await prisma.$transaction(async (tx) => {
+        await tx.workout.updateMany({
+          where: { planId, scheduledDate },
+          data: { sortOrder: { increment: 1 } },
+        });
 
-      const workout = await prisma.workout.create({
-        data: { ...data, planId, scheduledDate, sortOrder: 0 },
+        const created = await tx.workout.create({
+          data: {
+            ...rest,
+            planId,
+            scheduledDate,
+            sortOrder: 0,
+            ...(contentDoc !== undefined ? { contentDoc: toPrismaContentDoc(contentDoc) } : {}),
+          },
+        });
+
+        if (contentDoc !== undefined) {
+          await writeWorkoutDocAndBlocks({
+            tx,
+            workoutId: created.id,
+            contentDoc: contentDoc ?? null,
+            savingCoachUserId: userId,
+          });
+        }
+
+        return created;
       });
 
       return mapToWorkout(workout);
     } catch (error) {
+      if (error instanceof BadRequestError) {
+        throw error;
+      }
+
       return handlePrismaError(error, { entity: "Workout" });
     }
   },
@@ -93,16 +160,39 @@ export const lmsWorkoutApi = {
       throw new NotFoundError("Workout not found", { id, planId });
     }
 
+    const { contentDoc, scheduledDate, ...rest } = data;
+
     try {
-      const workout = await prisma.workout.update({
-        where: { id },
-        data: data.scheduledDate
-          ? { ...data, scheduledDate: toUTCMidnight(data.scheduledDate) }
-          : data,
+      const workout = await prisma.$transaction(async (tx) => {
+        const updated = await tx.workout.update({
+          where: { id },
+          data: {
+            ...rest,
+            ...(scheduledDate !== undefined
+              ? { scheduledDate: scheduledDate ? toUTCMidnight(scheduledDate) : null }
+              : {}),
+            ...(contentDoc !== undefined ? { contentDoc: toPrismaContentDoc(contentDoc) } : {}),
+          },
+        });
+
+        if (contentDoc !== undefined) {
+          await writeWorkoutDocAndBlocks({
+            tx,
+            workoutId: id,
+            contentDoc: contentDoc ?? null,
+            savingCoachUserId: userId,
+          });
+        }
+
+        return updated;
       });
 
       return mapToWorkout(workout);
     } catch (error) {
+      if (error instanceof BadRequestError) {
+        throw error;
+      }
+
       return handlePrismaError(error, { entity: "Workout" });
     }
   },
@@ -219,65 +309,5 @@ export const lmsWorkoutApi = {
     }
   },
 
-  copyWeek: async (
-    userId: string,
-    planId: string,
-    sourceDate: Date,
-    targetDate: Date,
-  ): Promise<Workout[]> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(planId, coachId);
-
-    const normalizedSource = toUTCMidnight(sourceDate);
-    const normalizedTarget = toUTCMidnight(targetDate);
-
-    const sourceEnd = new Date(normalizedSource);
-
-    sourceEnd.setUTCDate(sourceEnd.getUTCDate() + 7);
-
-    const sourceWorkouts = await prisma.workout.findMany({
-      where: {
-        planId,
-        scheduledDate: { gte: normalizedSource, lt: sourceEnd },
-      },
-      orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
-    });
-
-    if (sourceWorkouts.length === 0) {
-      return [];
-    }
-
-    const dayShiftMs = normalizedTarget.getTime() - normalizedSource.getTime();
-
-    try {
-      const created = await prisma.workout.createManyAndReturn({
-        data: sourceWorkouts.map((workout) => ({
-          planId,
-          scheduledDate: workout.scheduledDate
-            ? toUTCMidnight(new Date(workout.scheduledDate.getTime() + dayShiftMs))
-            : null,
-          title: workout.title,
-          description: workout.description,
-          content: workout.content,
-          sortOrder: workout.sortOrder,
-        })),
-      });
-
-      return created
-        .sort((a, b) => {
-          const aDate = a.scheduledDate?.getTime() ?? Number.POSITIVE_INFINITY;
-          const bDate = b.scheduledDate?.getTime() ?? Number.POSITIVE_INFINITY;
-
-          if (aDate !== bDate) {
-            return aDate - bDate;
-          }
-
-          return a.sortOrder - b.sortOrder;
-        })
-        .map(mapToWorkout);
-    } catch (error) {
-      return handlePrismaError(error, { entity: "Workout" });
-    }
-  },
+  copyWeek: copyWorkoutWeek,
 };

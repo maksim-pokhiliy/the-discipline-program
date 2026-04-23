@@ -14,6 +14,15 @@ export const ADMIN_NAVIGATION: AdminNavigationConfig = {
       ],
     },
     {
+      label: "Library",
+      links: [
+        { text: "Exercises", href: "/library/exercises", icon: "library-exercises" },
+        { text: "Review queue", href: "/library/exercises/review", icon: "library-review" },
+        { text: "Schemes", href: "/library/schemes", icon: "library-schemes" },
+        { text: "Block types", href: "/library/block-types", icon: "library-block-types" },
+      ],
+    },
+    {
       label: "Platform",
       links: [{ text: "Users", href: "/users", icon: "users" }],
     },

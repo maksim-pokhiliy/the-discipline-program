@@ -32,6 +32,8 @@ model User {
   inviteTokensReceived UserInviteToken[]        @relation("UserInviteTokens")
   inviteTokensIssued   UserInviteToken[]        @relation("UserInviteTokensCreatedBy")
   athleteAssignments   CoachAthleteAssignment[] @relation("AthleteAssignments")
+  exercisesAuthored    Exercise[]               @relation("ExerciseAuthor")
+  exercisesReviewed    Exercise[]               @relation("ExerciseReviewer")
   accounts             Account[]
   sessions             Session[]
 
@@ -270,18 +272,19 @@ model TrainingPlan {
 }
 
 model Workout {
-  id            String       @id @default(cuid())
+  id            String         @id @default(cuid())
   planId        String
-  plan          TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  scheduledDate DateTime?    @db.Date
-  title         String       @default("")
+  plan          TrainingPlan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+  scheduledDate DateTime?      @db.Date
+  title         String         @default("")
   description   String?
-  content       String?      @db.Text
-  sortOrder     Int          @default(0)
-  isArchived    Boolean      @default(false)
+  contentDoc    Json?
+  sortOrder     Int            @default(0)
+  isArchived    Boolean        @default(false)
+  blocks        WorkoutBlock[]
   logs          WorkoutLog[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   deletedAt     DateTime?
 
   @@index([planId, scheduledDate])
@@ -563,4 +566,177 @@ model UserInviteToken {
   @@index([userId, consumedAt])
   @@index([expiresAt])
   @@map("app_user_invite_tokens")
+}
+
+enum ExerciseStatus {
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  MERGED
+}
+
+enum SchemeKind {
+  STRAIGHT_SETS
+  FOR_TIME
+  AMRAP
+  EMOM
+  EVERY_X_MIN
+  INTERVALS
+  TIME_BLOCKS
+}
+
+enum WorkoutRepScheme {
+  STRAIGHT
+  LADDER
+  PYRAMID
+  REVERSE_LADDER
+  CUSTOM
+}
+
+enum PrescriptionKind {
+  PERCENT_OF_1RM
+  KG
+  RPE
+  NONE
+}
+
+enum MeasurementUnit {
+  REPS
+  TIME_SEC
+  DISTANCE_M
+  CALORIES
+}
+
+model Exercise {
+  id               String                 @id @default(cuid())
+  canonicalName    String                 @db.VarChar(200)
+  normalizedName   String                 @db.VarChar(200)
+  aliases          String[]
+  description      String?                @db.Text
+  videoUrl         String?
+  measurementUnits MeasurementUnit[]
+  hasLoad          Boolean                @default(false)
+  status           ExerciseStatus         @default(PENDING_REVIEW)
+  mergedIntoId     String?
+  mergedInto       Exercise?              @relation("ExerciseMerges", fields: [mergedIntoId], references: [id], onDelete: SetNull)
+  merges           Exercise[]             @relation("ExerciseMerges")
+  createdByUserId  String
+  createdBy        User                   @relation("ExerciseAuthor", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  reviewedByUserId String?
+  reviewedBy       User?                  @relation("ExerciseReviewer", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  reviewedAt       DateTime?
+  reviewNotes      String?                @db.Text
+  workoutRefs      WorkoutBlockExercise[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  deletedAt        DateTime?
+
+  @@unique([normalizedName, status], map: "uniq_exercise_active_name")
+  @@index([status, canonicalName])
+  @@index([createdByUserId])
+  @@index([deletedAt])
+  @@map("lib_exercises")
+}
+
+model Scheme {
+  id             String         @id @default(cuid())
+  slug           String         @unique @db.VarChar(100)
+  name           String         @db.VarChar(100)
+  kind           SchemeKind
+  description    String?        @db.Text
+  requiredParams String[]
+  paramDefaults  Json
+  active         Boolean        @default(true)
+  sortOrder      Int            @default(0)
+  workoutRefs    WorkoutBlock[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([kind])
+  @@index([active, sortOrder])
+  @@map("lib_schemes")
+}
+
+model BlockType {
+  id          String         @id @default(cuid())
+  slug        String         @unique @db.VarChar(100)
+  name        String         @db.VarChar(100)
+  description String?        @db.Text
+  iconKey     String?
+  colorKey    String?
+  sortOrder   Int            @default(0)
+  active      Boolean        @default(true)
+  workoutRefs WorkoutBlock[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([active, sortOrder])
+  @@map("lib_block_types")
+}
+
+model WorkoutBlock {
+  id           String                 @id @default(cuid())
+  workoutId    String
+  workout      Workout                @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  blockTypeId  String
+  blockType    BlockType              @relation(fields: [blockTypeId], references: [id], onDelete: Restrict)
+  schemeId     String?
+  scheme       Scheme?                @relation(fields: [schemeId], references: [id], onDelete: Restrict)
+  schemeKind   SchemeKind?
+  schemeConfig Json?
+  effortPct    Int?
+  pace         String?
+  note         String?                @db.Text
+  sortOrder    Int                    @default(0)
+  exercises    WorkoutBlockExercise[]
+  emomSlots    EmomSlot[]
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@index([workoutId, sortOrder])
+  @@index([blockTypeId])
+  @@index([schemeId])
+  @@map("app_workout_blocks")
+}
+
+model WorkoutBlockExercise {
+  id           String           @id @default(cuid())
+  blockId      String?
+  block        WorkoutBlock?    @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  emomSlotId   String?
+  emomSlot     EmomSlot?        @relation(fields: [emomSlotId], references: [id], onDelete: Cascade)
+  exerciseId   String
+  exercise     Exercise         @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  repScheme    WorkoutRepScheme @default(STRAIGHT)
+  repValues    Int[]
+  sets         Int?
+  prescription Json?
+  restSec      Int?
+  note         String?          @db.Text
+  complexGroup String?
+  complexOrder Int?
+  sortOrder    Int              @default(0)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([blockId, sortOrder])
+  @@index([emomSlotId, sortOrder])
+  @@index([exerciseId])
+  @@map("app_workout_block_exercises")
+}
+
+model EmomSlot {
+  id            String                 @id @default(cuid())
+  blockId       String
+  block         WorkoutBlock           @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  minuteInRound Int
+  sortOrder     Int                    @default(0)
+  note          String?                @db.Text
+  exercises     WorkoutBlockExercise[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  @@unique([blockId, minuteInRound])
+  @@index([blockId, sortOrder])
+  @@map("app_emom_slots")
 }

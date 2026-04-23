@@ -20,6 +20,18 @@ import { SidebarLink } from "./sidebar-link";
 import { SidebarNav } from "./sidebar-nav";
 import { SidebarUserMenu } from "./sidebar-user-menu";
 
+const collectNavHrefs = (config: AdminNavigationConfig): string[] => {
+  const hrefs: string[] = [config.dashboard.href];
+
+  for (const group of config.groups) {
+    for (const link of group.links) {
+      hrefs.push(link.href);
+    }
+  }
+
+  return hrefs;
+};
+
 type SidebarProps = {
   config: AdminNavigationConfig;
   expanded: boolean;
@@ -48,6 +60,7 @@ export const Sidebar = ({
   const isDesktop = useMediaQuery<Theme>((theme) => theme.breakpoints.up("md"));
   const isExpanded = isDesktop ? expanded : true;
   const width = expanded ? LAYOUT.drawerWidth : LAYOUT.drawerCollapsedWidth;
+  const siblingHrefs = collectNavHrefs(config);
 
   const content = (
     <Stack sx={{ height: "100%" }}>
@@ -81,10 +94,11 @@ export const Sidebar = ({
           href={config.dashboard.href}
           icon={config.dashboard.icon}
           expanded={isExpanded}
+          siblingHrefs={siblingHrefs}
         />
       </List>
 
-      <SidebarNav groups={config.groups} expanded={isExpanded} />
+      <SidebarNav groups={config.groups} expanded={isExpanded} siblingHrefs={siblingHrefs} />
 
       <Box sx={{ flexGrow: 1 }} />
 
