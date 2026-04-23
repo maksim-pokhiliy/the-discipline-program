@@ -19,7 +19,7 @@ import {
   TWO_WEEKS,
 } from "../../utils/date-helpers";
 
-import type { EnrollmentWithData } from "./enrollment-query";
+import type { AssignedAthleteWithData } from "./assigned-athlete-query";
 
 type TodayStatusResult = {
   status: TodayStatus;
@@ -150,34 +150,59 @@ const STATUS_PRIORITY: Record<TodayStatus, number> = {
 };
 
 export const computeAthletesSummary = (
-  enrollments: EnrollmentWithData[],
+  assignments: AssignedAthleteWithData[],
   tz: string,
 ): AthleteDailySummary[] => {
-  const athleteMap = new Map<string, AthleteDailySummary>();
   const ctx = createTodayStatusContext(tz);
+  const summaries: AthleteDailySummary[] = [];
 
-  for (const e of enrollments) {
-    const user = e.user;
-    const { status, missedCount, currentWorkoutTitle, lastActivityDate } = computeTodayStatus(
-      e.trainingPlan.workouts,
-      user.workoutLogs,
-      ctx,
-    );
+  for (const a of assignments) {
+    const athlete = a.athlete;
+    const healthStatus = athlete.athleteProfile
+      ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
+      : HealthStatus.HEALTHY;
 
-    const daysSinceLastActivity = lastActivityDate
-      ? daysBetweenInTz(new Date(lastActivityDate), ctx.today, tz)
-      : null;
+    if (athlete.planEnrollments.length === 0) {
+      summaries.push({
+        userId: athlete.id,
+        name: athlete.name,
+        email: athlete.email,
+        image: athlete.image,
+        planId: null,
+        planName: null,
+        todayStatus: TodayStatus.NO_SCHEDULE,
+        missedCount: 0,
+        todayWorkoutTitle: null,
+        lastActivityDate: null,
+        daysSinceLastActivity: null,
+        healthStatus,
+      });
+      continue;
+    }
 
-    const existing = athleteMap.get(user.id);
-    const isHigherPriority =
-      !existing || STATUS_PRIORITY[status] < STATUS_PRIORITY[existing.todayStatus];
+    let best: AthleteDailySummary | null = null;
+    let highestMissed = 0;
 
-    if (isHigherPriority) {
-      athleteMap.set(user.id, {
-        userId: user.id,
-        name: user.name,
-        email: user.email,
-        image: user.image,
+    for (const e of athlete.planEnrollments) {
+      const { status, missedCount, currentWorkoutTitle, lastActivityDate } = computeTodayStatus(
+        e.trainingPlan.workouts,
+        athlete.workoutLogs,
+        ctx,
+      );
+
+      if (missedCount > highestMissed) {
+        highestMissed = missedCount;
+      }
+
+      const daysSinceLastActivity = lastActivityDate
+        ? daysBetweenInTz(new Date(lastActivityDate), ctx.today, tz)
+        : null;
+
+      const candidate: AthleteDailySummary = {
+        userId: athlete.id,
+        name: athlete.name,
+        email: athlete.email,
+        image: athlete.image,
         planId: e.trainingPlan.id,
         planName: e.trainingPlan.name,
         todayStatus: status,
@@ -185,16 +210,26 @@ export const computeAthletesSummary = (
         todayWorkoutTitle: currentWorkoutTitle,
         lastActivityDate,
         daysSinceLastActivity,
-        healthStatus: user.athleteProfile
-          ? HEALTH_STATUS_MAP[user.athleteProfile.healthStatus]
-          : HealthStatus.HEALTHY,
-      });
-    } else if (existing && missedCount > existing.missedCount) {
-      existing.missedCount = missedCount;
+        healthStatus,
+      };
+
+      if (!best || STATUS_PRIORITY[candidate.todayStatus] < STATUS_PRIORITY[best.todayStatus]) {
+        best = candidate;
+      }
     }
+
+    if (!best) {
+      continue;
+    }
+
+    if (highestMissed > best.missedCount) {
+      best.missedCount = highestMissed;
+    }
+
+    summaries.push(best);
   }
 
-  return Array.from(athleteMap.values());
+  return summaries;
 };
 
 export type AdherenceWindow = { completed: number; available: number };
@@ -246,65 +281,35 @@ export const computeProcessStatus = (
     : ProcessStatus.STEADY;
 };
 
-export const computeProgressBuckets = (enrollments: EnrollmentWithData[]): ProgressBuckets => {
+export const computeProgressBuckets = (assignments: AssignedAthleteWithData[]): ProgressBuckets => {
   const now = new Date();
   const currentEnd = now;
   const currentStart = new Date(now.getTime() - DAYS_IN_WEEK * MS_PER_DAY);
   const previousStart = new Date(now.getTime() - TWO_WEEKS * MS_PER_DAY);
 
-  const athleteData = new Map<
-    string,
-    {
-      name: string | null;
-      image: string | null;
-      current: AdherenceWindow;
-      previous: AdherenceWindow;
-      hasLogs: boolean;
-    }
-  >();
-
-  for (const e of enrollments) {
-    const user = e.user;
-    const loggedIds = new Set(user.workoutLogs.map((l) => l.workoutId));
-    const workouts = e.trainingPlan.workouts;
-
-    const curWindow = computeAdherenceWindow(workouts, loggedIds, currentStart, currentEnd);
-    const prevWindow = computeAdherenceWindow(workouts, loggedIds, previousStart, currentStart);
-
-    const existing = athleteData.get(user.id);
-
-    if (existing) {
-      existing.current.completed += curWindow.completed;
-      existing.current.available += curWindow.available;
-      existing.previous.completed += prevWindow.completed;
-      existing.previous.available += prevWindow.available;
-      existing.hasLogs = existing.hasLogs || user.workoutLogs.length > 0;
-    } else {
-      athleteData.set(user.id, {
-        name: user.name,
-        image: user.image,
-        current: { ...curWindow },
-        previous: { ...prevWindow },
-        hasLogs: user.workoutLogs.length > 0,
-      });
-    }
-  }
-
   const onTrack: ProgressAthlete[] = [];
   const steady: ProgressAthlete[] = [];
   const fallingBehind: ProgressAthlete[] = [];
 
-  for (const [userId, data] of athleteData) {
-    const curRate =
-      data.current.available > 0 ? data.current.completed / data.current.available : 0;
-    const prevRate =
-      data.previous.available > 0 ? data.previous.completed / data.previous.available : 0;
+  let totalAthletes = 0;
+  let activeAthletes = 0;
+
+  for (const a of assignments) {
+    const athlete = a.athlete;
+    const loggedIds = new Set(athlete.workoutLogs.map((l) => l.workoutId));
+    const workouts = athlete.planEnrollments.flatMap((e) => e.trainingPlan.workouts);
+
+    const curWindow = computeAdherenceWindow(workouts, loggedIds, currentStart, currentEnd);
+    const prevWindow = computeAdherenceWindow(workouts, loggedIds, previousStart, currentStart);
+
+    const curRate = curWindow.available > 0 ? curWindow.completed / curWindow.available : 0;
+    const prevRate = prevWindow.available > 0 ? prevWindow.completed / prevWindow.available : 0;
 
     const status = computeProcessStatus(curRate, prevRate);
     const entry: ProgressAthlete = {
-      userId,
-      name: data.name,
-      image: data.image,
+      userId: athlete.id,
+      name: athlete.name,
+      image: athlete.image,
       processStatus: status,
     };
 
@@ -315,10 +320,13 @@ export const computeProgressBuckets = (enrollments: EnrollmentWithData[]): Progr
     } else {
       steady.push(entry);
     }
-  }
 
-  const totalAthletes = athleteData.size;
-  const activeAthletes = Array.from(athleteData.values()).filter((d) => d.hasLogs).length;
+    totalAthletes++;
+
+    if (athlete.workoutLogs.length > 0) {
+      activeAthletes++;
+    }
+  }
 
   return {
     onTrack,

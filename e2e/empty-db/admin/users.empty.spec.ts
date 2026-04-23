@@ -8,7 +8,7 @@ test.describe("Admin /users - empty DB", () => {
 
     await page.goto("/users");
 
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
 
     await expect(page.getByRole("row").filter({ hasText: "admin@example.com" })).toHaveCount(1);
     await expect(

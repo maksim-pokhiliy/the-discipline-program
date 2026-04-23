@@ -31,7 +31,7 @@ const userHooks = createCrudHooks<GetUsersPageDataResponse, User, CreateUserData
   },
   redirectTo: "/users",
   useNavigate,
-  additionalInvalidateKeys: [adminKeys.dashboard()],
+  additionalInvalidateKeys: [adminKeys.dashboard(), adminKeys.users.coaches()],
 });
 
 export const useUsersPageData = userHooks.usePageData;
@@ -46,6 +46,13 @@ export const useUser = (id: string) =>
     enabled: !!id,
   });
 
+export const useCoachesList = () =>
+  useQuery({
+    queryKey: adminKeys.users.coaches(),
+    queryFn: api.users.getCoaches,
+    staleTime: 5 * 60_000,
+  });
+
 export const useUpdateUserRole = () => {
   const queryClient = useQueryClient();
 
@@ -56,6 +63,7 @@ export const useUpdateUserRole = () => {
       toast.success("User updated successfully");
       queryClient.invalidateQueries({ queryKey: adminKeys.users.page() });
       queryClient.invalidateQueries({ queryKey: adminKeys.users.byId(id) });
+      queryClient.invalidateQueries({ queryKey: adminKeys.users.coaches() });
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
     },
     onError: (error: Error) => {

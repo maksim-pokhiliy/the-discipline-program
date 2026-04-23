@@ -99,6 +99,7 @@ export const useDeletePlanEnrollment = (planId: string) => {
         queryKey: platformKeys.planEnrollments.byPlan(planId),
       });
       queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
+      toast.success("Athlete removed from plan");
     },
     onError: () => {
       toast.error("Failed to remove enrollment");

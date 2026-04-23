@@ -286,13 +286,13 @@ Contracts live at `packages/contracts/src/entities/lms/<entity>/` with subpath e
 
 - **DB:** `CoachProfile`, `AthleteProfile`, `CoachNote`, `CoachActionItem`. The action item type/status/severity/resolve-reason enums are defined here too.
 - **Contracts:** `packages/contracts/src/entities/coaching/coach-profile/`, `coaching/athlete-profile/`, `coaching/coach-note/`, `coaching/coach-action-item/`, `coaching/coach-dashboard/`, `coaching/coach-athletes/` (subpath exports `@repo/contracts/coaching/*`).
-- **API — `api-server`:** all under `endpoints/coaching/` after 1.2.C: `coach-profile.ts`, `athlete-profile.ts`, `coach-note.ts`, `coach-action-item.ts`, `coach-dashboard.ts`, and the aggregator subfolder `coach-athletes/{index,detail,list}.ts`. Context-specific helpers that used to live in `utils/` now live alongside the endpoints that consume them: `coaching/dashboard-computations.ts` (computes adherence windows, progress buckets) and `coaching/enrollment-query.ts` (builds the nested Prisma include for enrollment read-models). Shared authz guards live in top-level `authz/guards.ts` — imported as `../../authz/guards`.
+- **API — `api-server`:** all under `endpoints/coaching/` after 1.2.C: `coach-profile.ts`, `athlete-profile.ts`, `coach-note.ts`, `coach-action-item.ts`, `coach-dashboard.ts`, and the aggregator subfolder `coach-athletes/{index,detail,list}.ts`. Context-specific helpers that used to live in `utils/` now live alongside the endpoints that consume them: `coaching/dashboard-computations.ts` (computes adherence windows, progress buckets) and `coaching/assigned-athlete-query.ts` (builds the nested Prisma include for assignment-scoped athlete read-models — replaces the former enrollment-based shape). Shared authz guards live in top-level `authz/guards.ts` — imported as `../../authz/guards`.
 - **Consumer apps:** `apps/platform` (coach area + athlete self-service for `AthleteProfile`).
 
 ### Dependencies
 
 - **Coaching → IAM:** every coach/athlete is a `User`. Role `COACH` gates coach-area access (currently only per-endpoint, not in middleware — flagged in audit section 1.5).
-- **Coaching → LMS:** heavy read dependency. The dashboard query pulls `PlanEnrollment`, `Workout`, `WorkoutLog` via a nested include (`enrollment-query.ts`). Action item reconciliation reads `Workout.scheduledDate` and `WorkoutLog.createdAt`. This is the primary cross-context data flow in the repo today.
+- **Coaching → LMS:** heavy read dependency. The dashboard query pulls `PlanEnrollment`, `Workout`, `WorkoutLog` via a nested include on `CoachAthleteAssignment` (`assigned-athlete-query.ts`). Action item reconciliation reads `Workout.scheduledDate` and `WorkoutLog.createdAt`. This is the primary cross-context data flow in the repo today.
 - **Coaching ↛ CMS:** no dependency. Coach dashboards do not show marketing content.
 - **Coaching ↛ Billing:** currently no dependency, but once Billing exists, subscription status will gate whether an athlete shows in a coach dashboard at all (via "Access = Subscription State" invariant).
 
@@ -318,7 +318,7 @@ api-server/src/endpoints/coaching/
   dashboard-computations.test.ts
   dashboard-computations.test-helpers.ts
   dashboard-progress.test.ts
-  enrollment-query.ts             (nested Prisma include for enriched enrollment reads)
+  assigned-athlete-query.ts       (nested Prisma include for assignment-scoped athlete reads)
   index.ts
 ```
 
@@ -596,8 +596,8 @@ It is easier to lock in correct behavior that already exists than to fix incorre
 Items flagged during the context-mapping pass that do not belong to any single bullet yet:
 
 - **`CoachActionItem` reconciliation has no scheduler.** Audit 1.5 and 7 flagged this. Reconciliation currently runs synchronously when a coach opens the dashboard — inefficient and means "missed workout" signals only appear when a coach looks, not when the miss happens. Needs a job queue.
-- ~~**`enrollment-query.ts` is the cross-boundary read between Coaching and LMS.**~~ Closed in 1.2.C — the helper moved to `endpoints/coaching/enrollment-query.ts` alongside the endpoints that consume it.
-- **Coach access via `PlanEnrollmentStatus.ACTIVE` only is too narrow.** See `verifyAthleteBelongsToCoach`. A paused enrollment is still the coach's concern.
+- ~~**`enrollment-query.ts` is the cross-boundary read between Coaching and LMS.**~~ Closed in 1.2.C — the helper moved to `endpoints/coaching/enrollment-query.ts` alongside the endpoints that consume it. Superseded by `assigned-athlete-query.ts` in Follow-up #1 after the `CoachAthleteAssignment` model landed.
+- ~~**Coach access via `PlanEnrollmentStatus.ACTIVE` only is too narrow.**~~ Closed in Follow-up #1 — `verifyAthleteBelongsToCoach` and every coach-facing read now resolve athletes via `CoachAthleteAssignment`, independent of enrollment state.
 - **Product split: when to split the Prisma model itself.** The current plan is to split contracts only, not the schema. If the two facets diverge further — separate lifecycles, separate audit logs, separate owners — a schema split may eventually be justified. Out of scope for 1.2.
 - **Where does the Stripe webhook live.** A webhook is an inbound, not an outbound; it is a Billing handler. But it also writes to LMS (enrollment). The handler file goes in `endpoints/billing/webhook/` and calls into an LMS-aware service. That service is the single place where the Billing → LMS write rule is exercised.
 - **`@repo/shared` split.** `centsToAmount` is a Billing primitive that lives in `shared`. Audit 1.4.B moves it to `contracts/common/money`. Similar primitives will be pulled out of `shared` as their owning context is clarified. Tracked separately.

@@ -1,28 +1,21 @@
 "use client";
 
-import { type FormEvent, type SyntheticEvent, useState } from "react";
+import { type FormEvent, useMemo, useState } from "react";
 
-import { Autocomplete, Avatar, Checkbox, Stack, TextField, Typography } from "@mui/material";
+import { Avatar, Button } from "@mui/material";
 
 import { type PlanRosterEntry } from "@repo/contracts/coaching/plan-roster";
 import type { UserSearchResult } from "@repo/contracts/iam/user";
-import { FormModal } from "@repo/ui";
+import { FormModal, MultiSelect } from "@repo/ui";
 
 import { useBulkEnrollAthletes, useSearchUsers } from "@app/lib/hooks";
-
-const SELECT_ALL_ID = "__select_all__";
-const SELECT_ALL_OPTION: UserSearchResult = {
-  id: SELECT_ALL_ID,
-  name: "Select All",
-  email: "",
-  image: null,
-};
 
 type EnrollAthleteDialogProps = {
   open: boolean;
   onClose: () => void;
   planId: string;
   enrollments: PlanRosterEntry[];
+  onInviteClick?: () => void;
 };
 
 export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
@@ -30,30 +23,33 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
   onClose,
   planId,
   enrollments,
+  onInviteClick,
 }) => {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<UserSearchResult[]>([]);
-  const { data: users = [] } = useSearchUsers(query, open);
+  const { data: users = [], isFetching } = useSearchUsers(query, open);
   const bulkEnroll = useBulkEnrollAthletes(planId);
 
-  const enrolledIds = new Set(enrollments.map((e: PlanRosterEntry) => e.userId));
-  const options = users.filter((u: UserSearchResult) => !enrolledIds.has(u.id));
-  const selectedIds = new Set(selected.map((u) => u.id));
-  const someSelected = options.some((o) => selectedIds.has(o.id));
-  const allSelected = options.length > 0 && options.every((o) => selectedIds.has(o.id));
+  const options = useMemo(() => {
+    const enrolledIds = new Set(enrollments.map((e) => e.userId));
+    const available = users.filter((u) => !enrolledIds.has(u.id));
+    const seen = new Set(available.map((u) => u.id));
+    const merged: UserSearchResult[] = [...available];
 
-  const handleChange = (_: SyntheticEvent, value: UserSearchResult[]) => {
-    if (value.some((v) => v.id === SELECT_ALL_ID)) {
-      if (allSelected) {
-        setSelected(selected.filter((s) => !options.some((o) => o.id === s.id)));
-      } else {
-        const newOptions = options.filter((o) => !selectedIds.has(o.id));
-
-        setSelected([...selected, ...newOptions]);
+    for (const user of selected) {
+      if (!seen.has(user.id) && !enrolledIds.has(user.id)) {
+        merged.push(user);
+        seen.add(user.id);
       }
-    } else {
-      setSelected(value);
     }
+
+    return merged;
+  }, [users, enrollments, selected]);
+
+  const handleChange = (nextIds: string[]) => {
+    const byId = new Map(options.map((o) => [o.id, o]));
+
+    setSelected(nextIds.map((id) => byId.get(id)).filter((u): u is UserSearchResult => Boolean(u)));
   };
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -85,72 +81,39 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
       submitText={selected.length > 1 ? `Enroll ${selected.length} Athletes` : "Enroll"}
       submitDisabled={selected.length === 0}
     >
-      <Autocomplete
-        multiple
+      <MultiSelect<UserSearchResult>
         options={options}
-        getOptionLabel={(o) => o.name ?? o.email}
-        getOptionKey={(o) => o.id}
-        isOptionEqualToValue={(option, value) => option.id === value.id}
-        value={selected}
+        value={selected.map((u) => u.id)}
         onChange={handleChange}
-        inputValue={query}
-        onInputChange={(_, value) => setQuery(value)}
-        filterOptions={(opts) => (opts.length > 0 ? [SELECT_ALL_OPTION, ...opts] : opts)}
-        disableCloseOnSelect
-        noOptionsText="No athletes found"
-        disabled={bulkEnroll.isPending}
-        renderOption={({ key, ...props }, option, { selected: isSelected }) => {
-          const isSelectAll = option.id === SELECT_ALL_ID;
-
-          if (isSelectAll) {
-            return (
-              <Stack
-                key={key}
-                component="li"
-                direction="row"
-                spacing={1}
-                alignItems="center"
-                {...props}
-              >
-                <Checkbox checked={allSelected} indeterminate={someSelected && !allSelected} />
-                <Typography variant="subtitle2">Select All</Typography>
-              </Stack>
-            );
-          }
-
-          return (
-            <Stack
-              key={key}
-              component="li"
-              direction="row"
-              spacing={1}
-              alignItems="center"
-              {...props}
-            >
-              <Checkbox checked={isSelected} />
-              <Avatar
-                src={option.image ?? undefined}
-                sx={(theme) => ({
-                  width: theme.spacing(3.5),
-                  height: theme.spacing(3.5),
-                  fontSize: theme.typography.caption.fontSize,
-                })}
-              >
-                {(option.name ?? option.email).charAt(0).toUpperCase()}
-              </Avatar>
-              <Stack>
-                {option.name && <Typography variant="body2">{option.name}</Typography>}
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  {option.email}
-                </Typography>
-              </Stack>
-            </Stack>
-          );
-        }}
-        renderInput={(params) => (
-          <TextField {...params} label="Search athletes" placeholder="Name or email" autoFocus />
+        getOptionId={(u) => u.id}
+        getOptionLabel={(u) => u.name ?? u.email}
+        getOptionSubLabel={(u) => (u.name ? u.email : null)}
+        renderOptionIcon={(u) => (
+          <Avatar
+            src={u.image ?? undefined}
+            sx={(theme) => ({
+              width: theme.spacing(3.5),
+              height: theme.spacing(3.5),
+              fontSize: theme.typography.caption.fontSize,
+            })}
+          >
+            {(u.name ?? u.email).charAt(0).toUpperCase()}
+          </Avatar>
         )}
+        label="Search athletes"
+        placeholder="Name or email"
+        emptyLabel="No athletes found"
+        inputValue={query}
+        onInputChange={setQuery}
+        disabled={bulkEnroll.isPending}
+        isLoading={isFetching}
+        disableSelectAll
       />
+      {onInviteClick && options.length === 0 && !isFetching && query.trim().length > 0 && (
+        <Button variant="text" size="small" onClick={onInviteClick}>
+          Don&apos;t see them? Invite athlete
+        </Button>
+      )}
     </FormModal>
   );
 };

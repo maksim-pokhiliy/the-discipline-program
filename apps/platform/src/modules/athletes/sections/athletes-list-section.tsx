@@ -2,11 +2,13 @@
 
 import { useMemo } from "react";
 
-import { Grid, Typography } from "@mui/material";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { Grid } from "@mui/material";
 import { useSearchParams } from "next/navigation";
 
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athletes";
+import { EmptyState } from "@repo/ui";
 
 import {
   type AthleteFilters,
@@ -18,6 +20,7 @@ import {
 type AthletesListSectionProps = {
   athletes: CoachAthleteListItem[];
   onSelectAthlete: (userId: string) => void;
+  onInviteClick: () => void;
 };
 
 const HEALTH_STATUS_VALUES: Set<string> = new Set(Object.values(HealthStatus));
@@ -35,6 +38,7 @@ const parseHealthStatus = (value: string | null): HealthStatus | null => {
 export const AthletesListSection: React.FC<AthletesListSectionProps> = ({
   athletes,
   onSelectAthlete,
+  onInviteClick,
 }) => {
   const searchParams = useSearchParams();
 
@@ -55,18 +59,19 @@ export const AthletesListSection: React.FC<AthletesListSectionProps> = ({
 
   if (athletes.length === 0) {
     return (
-      <Typography variant="body1" sx={{ color: "text.secondary", textAlign: "center", py: 6 }}>
-        No athletes yet — enroll athletes in your plans to see them here
-      </Typography>
+      <EmptyState
+        message="No athletes yet — invite your first athlete"
+        action={{
+          label: "Invite athlete",
+          icon: <PersonAddIcon />,
+          onClick: onInviteClick,
+        }}
+      />
     );
   }
 
   if (displayedAthletes.length === 0) {
-    return (
-      <Typography variant="body1" sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
-        No athletes match your filters
-      </Typography>
-    );
+    return <EmptyState message="No athletes match your filters" />;
   }
 
   return (

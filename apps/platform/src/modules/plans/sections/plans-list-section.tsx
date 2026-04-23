@@ -2,12 +2,13 @@
 
 import { useCallback, useMemo } from "react";
 
-import { Stack, Tabs, Typography } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { Stack, Tabs } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import type { TrainingPlanListItem } from "@repo/contracts/lms/training-plan";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
-import { ChipTab } from "@repo/ui";
+import { ChipTab, EmptyState } from "@repo/ui";
 
 import { PlatformFab } from "@app/lib/components";
 import {
@@ -119,18 +120,23 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
               key={plan.id}
               plan={plan}
               onActivate={(id) => activate.mutate(id)}
-              onArchive={(id) => archive.mutate(id)}
+              onArchive={(id) => archive.mutateAsync(id).then(() => undefined)}
               onRestore={(id) => restore.mutate(id)}
               onDuplicate={(id) => duplicate.mutate(id)}
-              onDelete={(id) => deletePlan.mutate(id)}
+              onDelete={(id) => deletePlan.mutateAsync(id).then(() => undefined)}
               isPending={isPlanPending(plan.id)}
             />
           ))}
         </Stack>
       ) : (
-        <Typography variant="body1" sx={{ color: "text.secondary", textAlign: "center", py: 4 }}>
-          No plans in this category
-        </Typography>
+        <EmptyState
+          message="No plans in this category"
+          action={{
+            label: "Create Plan",
+            icon: <AddIcon />,
+            onClick: onCreateClick,
+          }}
+        />
       )}
 
       <PlatformFab onClick={onCreateClick} />

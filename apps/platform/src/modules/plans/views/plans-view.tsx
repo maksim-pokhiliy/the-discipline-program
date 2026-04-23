@@ -23,12 +23,13 @@ export const PlansView = () => {
           title="Training Plans"
           actions={
             <Button
-              endIcon={<AddIcon />}
+              startIcon={<AddIcon />}
               size="small"
               color="primary"
+              variant="contained"
               onClick={() => setCreateOpen(true)}
             >
-              Create
+              Create Plan
             </Button>
           }
         />

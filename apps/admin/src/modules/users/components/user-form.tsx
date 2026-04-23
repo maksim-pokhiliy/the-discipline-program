@@ -1,11 +1,23 @@
 "use client";
 
 import { Grid, MenuItem, Stack, TextField } from "@mui/material";
-import { Controller, useFormContext } from "react-hook-form";
+import {
+  Controller,
+  useFormContext,
+  useWatch,
+  type Control,
+  type FieldErrors,
+} from "react-hook-form";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { type CreateUserData, type UpdateUserData } from "@repo/contracts/iam/user";
-import { FormCard } from "@repo/ui";
+import {
+  type CoachListItem,
+  type CreateUserData,
+  type UpdateUserData,
+} from "@repo/contracts/iam/user";
+import { FormCard, MultiSelect } from "@repo/ui";
+
+import { useCoachesList } from "@app/lib/hooks";
 
 import { ROLE_CONFIG } from "../constants";
 
@@ -18,7 +30,43 @@ type UserFormProps = {
 
 type UserFormValues = CreateUserData & UpdateUserData;
 
-const CREATE_ROLE_OPTIONS: readonly UserRole[] = [UserRole.USER, UserRole.COACH];
+const CREATE_ROLE_OPTIONS: readonly UserRole[] = [UserRole.ATHLETE, UserRole.COACH];
+
+const AthleteCoachPicker = ({
+  control,
+  errors,
+  isFormLoading,
+}: {
+  control: Control<UserFormValues>;
+  errors: FieldErrors<UserFormValues>;
+  isFormLoading: boolean;
+}) => {
+  const { data: coaches = [], isLoading: isCoachesLoading } = useCoachesList();
+
+  return (
+    <Controller
+      name="coachIds"
+      control={control}
+      shouldUnregister
+      render={({ field }) => (
+        <MultiSelect<CoachListItem>
+          options={coaches}
+          value={field.value ?? []}
+          onChange={field.onChange}
+          getOptionId={(c) => c.id}
+          getOptionLabel={(c) => c.name ?? c.email}
+          getOptionSubLabel={(c) => (c.name ? c.email : null)}
+          label="Coaches"
+          placeholder="Select coaches"
+          emptyLabel="No coaches available"
+          isLoading={isCoachesLoading}
+          disabled={isFormLoading}
+          errorText={errors.coachIds?.message}
+        />
+      )}
+    />
+  );
+};
 
 export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) => {
   const {
@@ -26,8 +74,9 @@ export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) =
     register,
     formState: { errors },
   } = useFormContext<UserFormValues>();
+  const currentRole = useWatch({ control, name: "role" });
 
-  const roleOptions = isEdit ? (Object.values(UserRole) as UserRole[]) : CREATE_ROLE_OPTIONS;
+  const roleOptions = isEdit ? Object.values(UserRole) : CREATE_ROLE_OPTIONS;
 
   return (
     <Grid container spacing={3}>
@@ -115,6 +164,10 @@ export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) =
                     />
                   )}
                 />
+              )}
+
+              {currentRole === UserRole.ATHLETE && (
+                <AthleteCoachPicker control={control} errors={errors} isFormLoading={isLoading} />
               )}
             </Stack>
           </FormCard>

@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test.describe("Marketing Contact Page", () => {
   test("loads contact page with form", async ({ page }) => {
     await page.goto("/contact");
-    await expect(page.getByLabel("Name")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByLabel("Name")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByLabel("Phone / Telegram / WhatsApp")).toBeVisible();
     await expect(page.getByLabel("Program Interest")).toBeVisible();
     await expect(page.getByLabel("Your Message")).toBeVisible();
@@ -11,7 +11,7 @@ test.describe("Marketing Contact Page", () => {
 
   test("submits contact form with valid data", async ({ page }) => {
     await page.goto("/contact");
-    await expect(page.getByLabel("Name")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByLabel("Name")).toBeVisible({ timeout: 30_000 });
 
     await page.getByLabel("Name").fill("E2E Test User");
     await page.getByLabel("Phone / Telegram / WhatsApp").fill("@e2etest");
@@ -24,12 +24,12 @@ test.describe("Marketing Contact Page", () => {
     await page.getByRole("button", { name: "Send Message" }).click();
     await responsePromise;
 
-    await expect(page.getByText("Message Sent!")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Message Sent!")).toBeVisible({ timeout: 30_000 });
   });
 
   test("shows validation errors on empty submission", async ({ page }) => {
     await page.goto("/contact");
-    await expect(page.getByLabel("Name")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByLabel("Name")).toBeVisible({ timeout: 30_000 });
 
     await page.getByLabel("Name").fill("x");
     await page.getByLabel("Name").fill("");

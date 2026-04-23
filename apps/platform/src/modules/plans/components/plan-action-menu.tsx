@@ -20,10 +20,10 @@ type PlanActionMenuProps = {
   planName: string;
   status: TrainingPlanStatus;
   onActivate: () => void;
-  onArchive: () => void;
+  onArchive: () => Promise<void>;
   onRestore: () => void;
   onDuplicate: () => void;
-  onDelete: () => void;
+  onDelete: () => Promise<void>;
   isPending: boolean;
 };
 
@@ -135,8 +135,14 @@ export const PlanActionMenu: React.FC<PlanActionMenuProps> = ({
         type="danger"
         message={`Are you sure you want to archive "${planName}"?`}
         details="Archived plans are no longer visible to athletes. You can restore it later."
+        confirmText="Archive"
         isConfirming={isPending}
-        onConfirm={onArchive}
+        onConfirm={() =>
+          onArchive().then(
+            () => setArchiveOpen(false),
+            () => undefined,
+          )
+        }
       />
 
       <ConfirmationModal
@@ -147,7 +153,12 @@ export const PlanActionMenu: React.FC<PlanActionMenuProps> = ({
         message={`Are you sure you want to delete "${planName}"?`}
         details="This action cannot be undone. All workouts, blocks, and prescribed sets in this plan will be permanently removed."
         isConfirming={isPending}
-        onConfirm={onDelete}
+        onConfirm={() =>
+          onDelete().then(
+            () => setDeleteOpen(false),
+            () => undefined,
+          )
+        }
       />
     </>
   );

@@ -120,6 +120,13 @@ describe("coachingCoachDashboardApi", () => {
 
     enrollmentIds.push(enrollment2.id);
 
+    await cleanupRaw.coachAthleteAssignment.createMany({
+      data: [
+        { coachId: coach.profile.id, athleteId: athlete1.id },
+        { coachId: coach.profile.id, athleteId: athlete2.id },
+      ],
+    });
+
     const log = await cleanupRaw.workoutLog.create({
       data: {
         userId: athlete1.id,
@@ -139,6 +146,9 @@ describe("coachingCoachDashboardApi", () => {
     });
     await cleanupRaw.coachActionItem.deleteMany({
       where: { coachId: emptyCoach.profile.id },
+    });
+    await cleanupRaw.coachAthleteAssignment.deleteMany({
+      where: { coachId: coach.profile.id },
     });
 
     for (const eid of enrollmentIds) {

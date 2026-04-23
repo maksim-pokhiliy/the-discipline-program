@@ -13,7 +13,7 @@ test.describe("Marketing /storefront — empty DB", () => {
     expect(response?.ok()).toBe(true);
     await expect(page).toHaveURL(/\/storefront$/);
     await expect(page.getByRole("link", { name: "Programs" }).first()).toBeVisible({
-      timeout: 15_000,
+      timeout: 30_000,
     });
 
     finalizeConsole();

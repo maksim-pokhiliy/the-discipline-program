@@ -20,6 +20,7 @@ describe("platform guards", () => {
   let athleteUser: Awaited<ReturnType<typeof createTestUser>>;
   let nonEnrolledUser: Awaited<ReturnType<typeof createTestUser>>;
   let enrollmentId: string;
+  let assignmentId: string;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherPlan: Awaited<ReturnType<typeof createTestPlan>>;
 
@@ -42,10 +43,17 @@ describe("platform guards", () => {
     });
 
     enrollmentId = enrollment.id;
+
+    const assignment = await cleanupRaw.coachAthleteAssignment.create({
+      data: { coachId: coach.profile.id, athleteId: athleteUser.id },
+    });
+
+    assignmentId = assignment.id;
   });
 
   afterAll(async () => {
     await cleanup(
+      { table: "coachAthleteAssignment", id: assignmentId },
       { table: "planEnrollment", id: enrollmentId },
       { table: "trainingPlan", id: plan.id },
       { table: "trainingPlan", id: otherPlan.id },
@@ -118,13 +126,13 @@ describe("platform guards", () => {
   });
 
   describe("verifyAthleteBelongsToCoach", () => {
-    it("does not throw for enrolled athlete", async () => {
+    it("does not throw for assigned athlete", async () => {
       await expect(
         verifyAthleteBelongsToCoach(athleteUser.id, coach.profile.id),
       ).resolves.toBeUndefined();
     });
 
-    it("throws ForbiddenError for non-enrolled athlete", async () => {
+    it("throws ForbiddenError for non-assigned athlete", async () => {
       await expect(
         verifyAthleteBelongsToCoach(nonEnrolledUser.id, coach.profile.id),
       ).rejects.toThrow(ForbiddenError);

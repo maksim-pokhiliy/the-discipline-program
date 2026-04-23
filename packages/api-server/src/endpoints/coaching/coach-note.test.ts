@@ -22,6 +22,8 @@ describe("coachingCoachNoteApi", () => {
   let planB: Awaited<ReturnType<typeof createTestPlan>>;
   let enrollmentAId: string;
   let enrollmentBId: string;
+  let assignmentAId: string;
+  let assignmentBId: string;
 
   beforeAll(async () => {
     coachA = await createTestCoach();
@@ -51,6 +53,18 @@ describe("coachingCoachNoteApi", () => {
     });
 
     enrollmentBId = enrollmentB.id;
+
+    const assignmentA = await cleanupRaw.coachAthleteAssignment.create({
+      data: { coachId: coachA.profile.id, athleteId: athlete.id },
+    });
+
+    assignmentAId = assignmentA.id;
+
+    const assignmentB = await cleanupRaw.coachAthleteAssignment.create({
+      data: { coachId: coachB.profile.id, athleteId: athlete.id },
+    });
+
+    assignmentBId = assignmentB.id;
   });
 
   afterAll(async () => {
@@ -59,6 +73,8 @@ describe("coachingCoachNoteApi", () => {
       .catch(() => {});
 
     await cleanup(
+      { table: "coachAthleteAssignment", id: assignmentAId },
+      { table: "coachAthleteAssignment", id: assignmentBId },
       { table: "planEnrollment", id: enrollmentAId },
       { table: "planEnrollment", id: enrollmentBId },
       { table: "trainingPlan", id: planA.id },
@@ -73,7 +89,7 @@ describe("coachingCoachNoteApi", () => {
   });
 
   describe("create", () => {
-    it("creates a note for an enrolled athlete", async () => {
+    it("creates a note for an assigned athlete", async () => {
       const note = await coachingCoachNoteApi.create(coachA.user.id, {
         athleteId: athlete.id,
         content: "Great progress this week",
@@ -94,6 +110,33 @@ describe("coachingCoachNoteApi", () => {
           content: "Should fail",
         }),
       ).rejects.toThrow(ForbiddenError);
+    });
+
+    it("creates a note for an assigned athlete with zero active enrollments", async () => {
+      const planlessAthlete = await createTestUser();
+      const assignment = await cleanupRaw.coachAthleteAssignment.create({
+        data: { coachId: coachA.profile.id, athleteId: planlessAthlete.id },
+      });
+
+      try {
+        const note = await coachingCoachNoteApi.create(coachA.user.id, {
+          athleteId: planlessAthlete.id,
+          content: "Assignment-only note",
+        });
+
+        expect(note.id).toBeDefined();
+        expect(note.coachId).toBe(coachA.profile.id);
+        expect(note.athleteId).toBe(planlessAthlete.id);
+        expect(note.content).toBe("Assignment-only note");
+      } finally {
+        await cleanupRaw.coachNote
+          .deleteMany({ where: { coachId: coachA.profile.id, athleteId: planlessAthlete.id } })
+          .catch(() => {});
+        await cleanup(
+          { table: "coachAthleteAssignment", id: assignment.id },
+          { table: "user", id: planlessAthlete.id },
+        );
+      }
     });
   });
 

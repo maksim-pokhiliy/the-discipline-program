@@ -61,17 +61,6 @@ describe("coachingCoachActionItemApi", () => {
 
     trackCleanup("workout", workout.id);
 
-    const enr1 = await cleanupRaw.planEnrollment.create({
-      data: {
-        trainingPlanId: plan.id,
-        userId: athleteMissed.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startDate: daysAgo(30),
-      },
-    });
-
-    trackCleanup("planEnrollment", enr1.id);
-
     const log = await cleanupRaw.workoutLog.create({
       data: {
         userId: athleteMissed.id,
@@ -82,49 +71,40 @@ describe("coachingCoachActionItemApi", () => {
 
     trackCleanup("workoutLog", log.id);
 
-    const enr2 = await cleanupRaw.planEnrollment.create({
-      data: {
-        trainingPlanId: plan.id,
-        userId: athleteNew.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startDate: daysAgo(1),
-      },
-    });
-
-    trackCleanup("planEnrollment", enr2.id);
-
-    const enr3 = await cleanupRaw.planEnrollment.create({
-      data: {
-        trainingPlanId: plan.id,
-        userId: athleteHealth.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startDate: daysAgo(5),
-      },
-    });
-
-    trackCleanup("planEnrollment", enr3.id);
-
     const profile = await cleanupRaw.athleteProfile.create({
       data: { userId: athleteHealth.id, healthStatus: HealthStatus.INJURED },
     });
 
     trackCleanup("athleteProfile", profile.id);
 
-    const enr4 = await cleanupRaw.planEnrollment.create({
-      data: {
+    const athleteIds = [athleteMissed.id, athleteNew.id, athleteHealth.id, athleteResolve.id];
+    const startAges = [30, 1, 5, 1];
+
+    await cleanupRaw.planEnrollment.createMany({
+      data: athleteIds.map((userId, i) => ({
         trainingPlanId: plan.id,
-        userId: athleteResolve.id,
+        userId,
         status: PlanEnrollmentStatus.ACTIVE,
-        startDate: daysAgo(1),
-      },
+        startDate: daysAgo(startAges[i] ?? 1),
+      })),
     });
 
-    trackCleanup("planEnrollment", enr4.id);
+    await cleanupRaw.coachAthleteAssignment.createMany({
+      data: athleteIds.map((athleteId) => ({ coachId: coach.profile.id, athleteId })),
+    });
   });
 
   afterAll(async () => {
     await cleanupRaw.coachActionItem
       .deleteMany({ where: { coachId: coach.profile.id } })
+      .catch(() => {});
+
+    await cleanupRaw.coachAthleteAssignment
+      .deleteMany({ where: { coachId: coach.profile.id } })
+      .catch(() => {});
+
+    await cleanupRaw.planEnrollment
+      .deleteMany({ where: { trainingPlanId: plan.id } })
       .catch(() => {});
 
     await cleanup(

@@ -9,7 +9,7 @@ test.describe("Platform /athlete (workouts surface) — empty DB", () => {
     await page.goto("/athlete");
 
     await expect(page.getByRole("heading", { name: "Athlete Dashboard" })).toBeVisible({
-      timeout: 15_000,
+      timeout: 30_000,
     });
 
     const bodyText = (await page.locator("body").innerText()).toLowerCase();

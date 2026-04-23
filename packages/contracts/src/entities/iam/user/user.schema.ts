@@ -44,12 +44,14 @@ export const createUserSchema = z.object({
     .transform((value) => value.trim().toLowerCase())
     .pipe(z.string().email().max(320)),
   name: z.string().min(1).max(120).nullable().default(null),
-  role: z.enum([UserRole.USER, UserRole.COACH]),
+  role: z.enum([UserRole.ATHLETE, UserRole.COACH]),
   timezone: timezoneSchema.default("UTC"),
+  coachIds: z.array(z.string().cuid()).default([]),
 });
 
 export const updateUserSchema = z.object({
   name: z.string().min(1).max(120).nullable().optional(),
   role: userRoleSchema.optional(),
   timezone: timezoneSchema.optional(),
+  coachIds: z.array(z.string().cuid()).optional(),
 });
