@@ -4,6 +4,7 @@ import {
   type createUserRequestSchema,
   type createUserResponseSchema,
   type deleteUserParamsSchema,
+  type getCoachesListResponseSchema,
   type getUsersPageDataResponseSchema,
   type getUsersResponseSchema,
   type searchUsersQuerySchema,
@@ -17,6 +18,7 @@ import {
 } from "./user-api.schema";
 
 export type GetUsersResponse = z.infer<typeof getUsersResponseSchema>;
+export type GetCoachesListResponse = z.infer<typeof getCoachesListResponseSchema>;
 export type UpdateUserRoleParams = z.infer<typeof updateUserRoleParamsSchema>;
 export type UpdateUserRoleRequest = z.infer<typeof updateUserRoleRequestSchema>;
 export type UpdateUserRoleResponse = z.infer<typeof updateUserRoleResponseSchema>;

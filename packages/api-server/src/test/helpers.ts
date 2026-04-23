@@ -1,5 +1,6 @@
 import {
   type AthleteProfile,
+  type CoachAthleteAssignment,
   type CoachProfile,
   type PlanEnrollment,
   type Prisma,
@@ -26,7 +27,7 @@ export const createTestUser = async (
     data: {
       email: `test-${id}@test.local`,
       name: `Test User ${id.slice(0, 8)}`,
-      role: ROLE_TO_PRISMA_MAP[UserRole.USER],
+      role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE],
       ...overrides,
     },
   });
@@ -81,6 +82,12 @@ export const createTestEnrollment = async (
       userId,
       ...overrides,
     },
+  });
+};
+
+export const createTestAssignment = async (coachProfileId: string, athleteUserId: string) => {
+  return rawPrisma.coachAthleteAssignment.create({
+    data: { coachId: coachProfileId, athleteId: athleteUserId },
   });
 };
 
@@ -191,6 +198,7 @@ export type TestScenario = {
   athletes: {
     user: User;
     enrollment: PlanEnrollment;
+    assignment: CoachAthleteAssignment | null;
     profile?: AthleteProfile;
     logs?: WorkoutLog[];
   }[];
@@ -203,6 +211,7 @@ export const createTestScenario = async (options?: {
   athleteCount?: number;
   withAthleteProfiles?: boolean;
   withWorkoutLogs?: boolean;
+  withAssignments?: boolean;
 }): Promise<TestScenario> => {
   const {
     planOverrides = {},
@@ -210,6 +219,7 @@ export const createTestScenario = async (options?: {
     athleteCount = 2,
     withAthleteProfiles = false,
     withWorkoutLogs = false,
+    withAssignments = true,
   } = options ?? {};
 
   const toCleanup: { table: string; id: string }[] = [];
@@ -245,6 +255,13 @@ export const createTestScenario = async (options?: {
 
     toCleanup.push({ table: "planEnrollment", id: enrollment.id });
 
+    let assignment: CoachAthleteAssignment | null = null;
+
+    if (withAssignments) {
+      assignment = await createTestAssignment(coach.profile.id, user.id);
+      toCleanup.push({ table: "coachAthleteAssignment", id: assignment.id });
+    }
+
     let profile: AthleteProfile | undefined;
 
     if (withAthleteProfiles) {
@@ -265,7 +282,7 @@ export const createTestScenario = async (options?: {
       }
     }
 
-    athletes.push({ user, enrollment, profile, logs });
+    athletes.push({ user, enrollment, assignment, profile, logs });
   }
 
   return { coach, plan, workouts, athletes, toCleanup };

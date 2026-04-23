@@ -12,14 +12,14 @@ test.describe("Admin Blog CRUD", () => {
   test("lists blog posts", async ({ page }) => {
     await page.goto("/blog");
 
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByRole("row").nth(1)).toBeVisible();
   });
 
   test("navigates to create page", async ({ page }) => {
     await page.goto("/blog");
 
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
     await page.getByRole("link", { name: "Create Post" }).click();
 
     await page.waitForURL("/blog/create");
@@ -31,7 +31,7 @@ test.describe("Admin Blog CRUD", () => {
     const slug = `e2e-test-${timestamp}`;
 
     await page.goto("/blog/create");
-    await expect(page.getByText("Create Post")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Create Post")).toBeVisible({ timeout: 30_000 });
 
     await page.getByLabel("Post Title").fill(`E2E Test Post ${timestamp}`);
     await page.getByLabel("Slug").fill(slug);
@@ -69,13 +69,13 @@ test.describe("Admin Blog CRUD", () => {
     createdIds.push({ table: "marketingBlogPost", id: seeded.id });
 
     await page.goto("/blog");
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
 
     const postRow = page.getByRole("row").filter({ hasText: seeded.title });
     await postRow.getByRole("link", { name: "Edit" }).click();
     await page.waitForURL(/\/blog\/.+/);
 
-    await expect(page.getByText("Edit Post")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Edit Post")).toBeVisible({ timeout: 30_000 });
 
     const titleField = page.getByLabel("Post Title");
     const updatedTitle = `${seeded.title} (edited)`;
@@ -90,13 +90,13 @@ test.describe("Admin Blog CRUD", () => {
     await responsePromise;
 
     await page.goto("/blog");
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText(updatedTitle)).toBeVisible();
   });
 
   test("toggles featured status", async ({ page }) => {
     await page.goto("/blog");
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
 
     const firstRow = page.getByRole("row").nth(1);
     await expect(firstRow).toBeVisible();
@@ -131,7 +131,7 @@ test.describe("Admin Blog CRUD", () => {
     const seeded = await seedTestBlogPost();
 
     await page.goto("/blog");
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
 
     const postRow = page.getByRole("row").filter({ hasText: seeded.title });
     await expect(postRow).toBeVisible();

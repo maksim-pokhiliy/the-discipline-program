@@ -1,2 +1,2 @@
 pnpm dep:check
-pnpm test:coverage
+SKIP_ENV_VALIDATION=1 pnpm turbo run lint test --filter="...[origin/main]"

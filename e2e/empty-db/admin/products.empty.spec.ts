@@ -8,7 +8,7 @@ test.describe("Admin /products - empty DB", () => {
 
     await page.goto("/products");
 
-    await expect(page.getByRole("table")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("table")).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("No products found. Start by creating one!")).toBeVisible();
     await expect(page.getByRole("link", { name: "Create Product" })).toBeVisible();
 

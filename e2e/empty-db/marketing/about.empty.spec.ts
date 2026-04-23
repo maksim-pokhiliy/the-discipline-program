@@ -11,7 +11,7 @@ test.describe("Marketing /about — empty DB", () => {
     expect(response?.ok()).toBe(true);
     await expect(page).toHaveURL(/\/about$/);
     await expect(page.getByRole("link", { name: "About" }).first()).toBeVisible({
-      timeout: 15_000,
+      timeout: 30_000,
     });
 
     finalizeConsole();

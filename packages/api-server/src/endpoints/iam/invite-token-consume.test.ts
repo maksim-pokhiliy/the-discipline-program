@@ -73,7 +73,7 @@ describe("iamInviteTokenApi.consume", () => {
     const result = await iamInviteTokenApi.consume(plainToken, { password: testPassword });
 
     expect(result.email).toBe(targetUser.email);
-    expect(result.redirectTo).toBe(ROLE_HOMES[UserRole.USER]);
+    expect(result.redirectTo).toBe(ROLE_HOMES[UserRole.ATHLETE]);
 
     const after = await cleanupRaw.user.findUnique({ where: { id: targetUser.id } });
     const tokenAfter = await cleanupRaw.userInviteToken.findUnique({

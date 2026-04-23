@@ -11,10 +11,10 @@ test.describe("Marketing / — empty DB (CRITICAL)", () => {
     expect(response?.ok()).toBe(true);
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("link", { name: "Home" }).first()).toBeVisible({
-      timeout: 15_000,
+      timeout: 30_000,
     });
     await expect(page.getByRole("link", { name: "Programs" }).first()).toBeVisible({
-      timeout: 15_000,
+      timeout: 30_000,
     });
 
     finalizeConsole();

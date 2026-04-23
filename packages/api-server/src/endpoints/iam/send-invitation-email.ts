@@ -15,7 +15,7 @@ export const resolveInviteEmailConfig = (): InviteEmailConfig => {
   const fromAddress = emailEnv.EMAIL_FROM;
 
   if (!apiKey || !fromAddress) {
-    throw new InternalServerError("Invite flow enabled but RESEND_API_KEY or EMAIL_FROM missing");
+    throw new InternalServerError("RESEND_API_KEY or EMAIL_FROM missing");
   }
 
   const replyToAddress = emailEnv.EMAIL_REPLY_TO;

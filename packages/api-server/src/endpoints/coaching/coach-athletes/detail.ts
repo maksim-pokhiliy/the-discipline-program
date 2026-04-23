@@ -8,8 +8,7 @@ import type {
   RecentWorkout,
 } from "@repo/contracts/coaching/coach-athletes";
 import { type ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
-import { NotFoundError } from "@repo/errors";
+import { ForbiddenError } from "@repo/errors";
 
 import { resolveCoachId, verifyAthleteBelongsToCoach } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
@@ -19,10 +18,7 @@ import {
   ACTION_ITEM_TYPE_MAP,
   HEALTH_STATUS_MAP,
 } from "../../../mappers/coaching";
-import {
-  PLAN_ENROLLMENT_STATUS_MAP,
-  PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
-} from "../../../mappers/lms";
+import { PLAN_ENROLLMENT_STATUS_MAP } from "../../../mappers/lms";
 import { findOrThrow } from "../../../utils";
 import {
   createStartOfDayCache,
@@ -34,9 +30,15 @@ import {
   startOfWeekInTz,
   TWO_WEEKS,
 } from "../../../utils/date-helpers";
+import {
+  type AssignedAthleteWithData,
+  buildAssignedAthleteInclude,
+} from "../assigned-athlete-query";
 import { computeAdherenceWindow, computeProcessStatus } from "../dashboard-computations";
-import type { EnrollmentWithData } from "../enrollment-query";
-import { createEnrollmentInclude } from "../enrollment-query";
+
+type AthletePayload = AssignedAthleteWithData["athlete"];
+type Enrollments = AthletePayload["planEnrollments"];
+type Logs = AthletePayload["workoutLogs"];
 
 type PlanDisciplineResult = {
   planDiscipline: PlanDiscipline[];
@@ -46,7 +48,8 @@ type PlanDisciplineResult = {
 };
 
 const computePlanDiscipline = (
-  enrollments: EnrollmentWithData[],
+  enrollments: Enrollments,
+  logs: Logs,
   tz: string,
 ): PlanDisciplineResult => {
   const now = new Date();
@@ -56,13 +59,15 @@ const computePlanDiscipline = (
   const rolling7Start = new Date(now.getTime() - DAYS_IN_WEEK * MS_PER_DAY);
   const rolling14Start = new Date(now.getTime() - TWO_WEEKS * MS_PER_DAY);
 
-  let earliestEnrollment = enrollments[0]?.startDate ?? new Date();
-  let lastActivityDate: Date | null = null;
+  const firstEnrollment = enrollments[0];
+
+  let earliestEnrollment = firstEnrollment ? firstEnrollment.startDate : new Date();
   const rollingCurrent = { completed: 0, available: 0 };
   const rollingPrevious = { completed: 0, available: 0 };
 
+  const loggedIds = new Set(logs.map((l) => l.workoutId));
+
   const planDiscipline = enrollments.map((e) => {
-    const loggedIds = new Set(e.user.workoutLogs.map((l) => l.workoutId));
     const workouts = e.trainingPlan.workouts;
 
     let completed = 0;
@@ -101,15 +106,6 @@ const computePlanDiscipline = (
       earliestEnrollment = e.startDate;
     }
 
-    const userLastLog =
-      e.user.workoutLogs.length > 0
-        ? e.user.workoutLogs.reduce((latest, l) => (l.date > latest.date ? l : latest))
-        : null;
-
-    if (userLastLog && (!lastActivityDate || userLastLog.date > lastActivityDate)) {
-      lastActivityDate = userLastLog.date;
-    }
-
     return {
       planId: e.trainingPlan.id,
       planName: e.trainingPlan.name,
@@ -121,6 +117,9 @@ const computePlanDiscipline = (
     };
   });
 
+  const lastLog = logs[0] ?? null;
+  const lastActivityDate = lastLog?.date ?? null;
+
   const curRate =
     rollingCurrent.available > 0 ? rollingCurrent.completed / rollingCurrent.available : 0;
   const prevRate =
@@ -130,11 +129,9 @@ const computePlanDiscipline = (
   return { planDiscipline, processStatus, earliestEnrollment, lastActivityDate };
 };
 
-const findNextWorkout = (enrollments: EnrollmentWithData[]): NextWorkout | null => {
+const findNextWorkout = (enrollments: Enrollments, logs: Logs): NextWorkout | null => {
   const now = new Date();
-  const allLoggedIds = new Set(
-    enrollments.flatMap((e) => e.user.workoutLogs.map((l) => l.workoutId)),
-  );
+  const loggedIds = new Set(logs.map((l) => l.workoutId));
 
   let result: NextWorkout | null = null;
 
@@ -144,7 +141,7 @@ const findNextWorkout = (enrollments: EnrollmentWithData[]): NextWorkout | null 
         continue;
       }
 
-      if (allLoggedIds.has(w.id)) {
+      if (loggedIds.has(w.id)) {
         continue;
       }
 
@@ -158,19 +155,17 @@ const findNextWorkout = (enrollments: EnrollmentWithData[]): NextWorkout | null 
 };
 
 const computeConsistencyMetrics = (
-  enrollments: EnrollmentWithData[],
+  enrollments: Enrollments,
+  logs: Logs,
   planDiscipline: PlanDiscipline[],
   tz: string,
 ): AthleteConsistency => {
   const now = new Date();
-  const allLoggedIds = new Set(
-    enrollments.flatMap((e) => e.user.workoutLogs.map((l) => l.workoutId)),
-  );
+  const loggedIds = new Set(logs.map((l) => l.workoutId));
 
   const rolling28Start = new Date(now.getTime() - FOUR_WEEKS * MS_PER_DAY);
   const window28 = enrollments.reduce(
     (acc, e) => {
-      const loggedIds = new Set(e.user.workoutLogs.map((l) => l.workoutId));
       const w = computeAdherenceWindow(e.trainingPlan.workouts, loggedIds, rolling28Start, now);
 
       acc.completed += w.completed;
@@ -194,7 +189,7 @@ const computeConsistencyMetrics = (
       const dayKey = startOfDay(w.scheduledDate).toISOString();
       const dayList = scheduledByDay.get(dayKey) ?? [];
 
-      dayList.push({ id: w.id, logged: allLoggedIds.has(w.id) });
+      dayList.push({ id: w.id, logged: loggedIds.has(w.id) });
       scheduledByDay.set(dayKey, dayList);
     }
   }
@@ -225,25 +220,33 @@ const computeConsistencyMetrics = (
   return { adherenceRate4w, currentStreak, missedThisWeek };
 };
 
-const computeRecentWorkouts = (enrollments: EnrollmentWithData[]): RecentWorkout[] => {
-  const allLogs = enrollments.flatMap((e) => {
-    const planWorkoutMap = new Map(e.trainingPlan.workouts.map((w) => [w.id, w]));
+const computeRecentWorkouts = (enrollments: Enrollments, logs: Logs): RecentWorkout[] => {
+  const planWorkoutIndex = new Map<string, { title: string; planName: string }>();
 
-    return e.user.workoutLogs
-      .filter((l) => planWorkoutMap.has(l.workoutId))
-      .map((l) => {
-        const workout = planWorkoutMap.get(l.workoutId);
+  for (const e of enrollments) {
+    for (const w of e.trainingPlan.workouts) {
+      planWorkoutIndex.set(w.id, { title: w.title, planName: e.trainingPlan.name });
+    }
+  }
 
-        return {
-          id: l.id,
-          title: workout?.title ?? "Workout",
-          date: l.date,
-          planName: e.trainingPlan.name,
-        };
-      });
-  });
+  const recent: RecentWorkout[] = [];
 
-  return allLogs.sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 7);
+  for (const l of logs) {
+    const meta = planWorkoutIndex.get(l.workoutId);
+
+    if (!meta) {
+      continue;
+    }
+
+    recent.push({
+      id: l.id,
+      title: meta.title,
+      date: l.date,
+      planName: meta.planName,
+    });
+  }
+
+  return recent.sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 7);
 };
 
 export const getAthleteDetail = async (
@@ -259,28 +262,10 @@ export const getAthleteDetail = async (
     "User",
   );
 
-  const [athlete, enrollments, actionItems] = await Promise.all([
-    findOrThrow(
-      prisma.user.findUnique({
-        where: { id: athleteUserId },
-        select: {
-          name: true,
-          email: true,
-          image: true,
-          athleteProfile: { select: { healthStatus: true } },
-        },
-      }),
-      "Athlete",
-    ),
-
-    prisma.planEnrollment.findMany({
-      where: {
-        userId: athleteUserId,
-        status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
-        trainingPlan: { coachId },
-      },
-      include: createEnrollmentInclude(coachId),
-      orderBy: { startDate: "asc" },
+  const [assignment, actionItems] = await Promise.all([
+    prisma.coachAthleteAssignment.findUnique({
+      where: { coachId_athleteId: { coachId, athleteId: athleteUserId } },
+      include: buildAssignedAthleteInclude(coachId),
     }),
 
     prisma.coachActionItem.findMany({
@@ -294,22 +279,54 @@ export const getAthleteDetail = async (
     }),
   ]);
 
-  if (enrollments.length === 0) {
-    throw new NotFoundError("No active enrollments found for this athlete", { athleteUserId });
+  if (!assignment) {
+    throw new ForbiddenError("Athlete does not belong to this coach");
   }
 
-  const { planDiscipline, processStatus, earliestEnrollment, lastActivityDate } =
-    computePlanDiscipline(enrollments, tz);
-
-  const nextWorkout = findNextWorkout(enrollments);
-  const consistency = computeConsistencyMetrics(enrollments, planDiscipline, tz);
-  const recentWorkouts = computeRecentWorkouts(enrollments);
+  const athlete = assignment.athlete;
+  const enrollments = athlete.planEnrollments;
+  const logs = athlete.workoutLogs;
 
   const healthStatus = athlete.athleteProfile
     ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
     : HealthStatus.HEALTHY;
 
   const today = startOfTodayInTz(tz);
+
+  const mappedActionItems = actionItems.map((item) => ({
+    id: item.id,
+    type: ACTION_ITEM_TYPE_MAP[item.type],
+    severity: ACTION_ITEM_SEVERITY_MAP[item.severity],
+    message: item.message,
+    createdAt: item.createdAt,
+  }));
+
+  if (enrollments.length === 0) {
+    return {
+      userId: athleteUserId,
+      name: athlete.name,
+      email: athlete.email,
+      image: athlete.image,
+      healthStatus,
+      processStatus: computeProcessStatus(0, 0),
+      planDiscipline: [],
+      recentWorkouts: [],
+      actionItems: mappedActionItems,
+      nextWorkout: null,
+      consistency: { adherenceRate4w: 0, currentStreak: 0, missedThisWeek: 0 },
+      enrolledSince: assignment.createdAt,
+      lastActivityDate: null,
+      daysSinceLastActivity: null,
+    };
+  }
+
+  const { planDiscipline, processStatus, earliestEnrollment, lastActivityDate } =
+    computePlanDiscipline(enrollments, logs, tz);
+
+  const nextWorkout = findNextWorkout(enrollments, logs);
+  const consistency = computeConsistencyMetrics(enrollments, logs, planDiscipline, tz);
+  const recentWorkouts = computeRecentWorkouts(enrollments, logs);
+
   const daysSinceLastActivity = lastActivityDate
     ? daysBetweenInTz(new Date(lastActivityDate), today, tz)
     : null;
@@ -323,13 +340,7 @@ export const getAthleteDetail = async (
     processStatus,
     planDiscipline,
     recentWorkouts,
-    actionItems: actionItems.map((item) => ({
-      id: item.id,
-      type: ACTION_ITEM_TYPE_MAP[item.type],
-      severity: ACTION_ITEM_SEVERITY_MAP[item.severity],
-      message: item.message,
-      createdAt: item.createdAt,
-    })),
+    actionItems: mappedActionItems,
     nextWorkout,
     consistency,
     enrolledSince: earliestEnrollment,

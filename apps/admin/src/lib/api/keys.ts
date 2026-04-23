@@ -12,7 +12,10 @@ export const adminKeys = {
   blog: createEntityKeys(ROOT, "blog"),
   products: createEntityKeys(ROOT, "products"),
   reviews: createEntityKeys(ROOT, "reviews"),
-  users: createEntityKeys(ROOT, "users"),
+  users: {
+    ...createEntityKeys(ROOT, "users"),
+    coaches: () => [...ROOT, "users-coaches"] as const,
+  },
 
   pages: {
     list: () => [...ROOT, "pages", "list"] as const,

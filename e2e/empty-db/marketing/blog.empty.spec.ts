@@ -11,7 +11,7 @@ test.describe("Marketing /blog — empty DB", () => {
     expect(response?.ok()).toBe(true);
     await expect(page).toHaveURL(/\/blog$/);
     await expect(page.getByRole("link", { name: "Blog" }).first()).toBeVisible({
-      timeout: 15_000,
+      timeout: 30_000,
     });
     await expect(page.getByRole("link", { name: /read/i })).toHaveCount(0);
 

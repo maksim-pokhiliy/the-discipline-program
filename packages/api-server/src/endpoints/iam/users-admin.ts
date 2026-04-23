@@ -7,18 +7,93 @@ import {
   type UpdateUserRoleData,
   type User,
 } from "@repo/contracts/iam/user";
-import { baseEnv } from "@repo/env/base";
 import { BadRequestError, ConflictError, ForbiddenError, TooManyRequestsError } from "@repo/errors";
 
 import { prisma } from "../../db/client";
+import { type TxClient } from "../../db/tx";
 import { mapToAdminUserListItem, mapToUser, ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
-import { iamInviteTokenApi } from "./invite-token";
-import { resolveInviteEmailConfig, sendInvitationEmail } from "./send-invitation-email";
+import {
+  assertCoachesExist,
+  closeAthleteActionItemsBulk,
+  closeCoachActionItemsBulk,
+  syncAthleteAssignments,
+} from "./assignment-sync";
+import { resolveInviteEmailConfig } from "./send-invitation-email";
+import { iamUserCreationApi } from "./user-creation";
 
 const MS_PER_HOUR = 3_600_000;
 const MAX_RESENDS_PER_DAY = 3;
+
+const dedupe = <T>(xs: T[]): T[] => Array.from(new Set(xs));
+
+const applyRoleExit = async (tx: TxClient, userId: string, role: UserRole): Promise<void> => {
+  switch (role) {
+    case UserRole.ATHLETE: {
+      await closeAthleteActionItemsBulk(tx, userId);
+      await tx.coachAthleteAssignment.deleteMany({ where: { athleteId: userId } });
+
+      return;
+    }
+    case UserRole.COACH: {
+      await closeCoachActionItemsBulk(tx, userId);
+      await tx.coachProfile.updateMany({
+        where: { userId, deletedAt: null },
+        data: { deletedAt: new Date() },
+      });
+      await tx.coachAthleteAssignment.deleteMany({ where: { coach: { userId } } });
+
+      return;
+    }
+    case UserRole.ADMIN:
+      return;
+    default: {
+      const exhaustive: never = role;
+
+      return exhaustive;
+    }
+  }
+};
+
+const applyRoleEnter = async (
+  tx: TxClient,
+  userId: string,
+  role: UserRole,
+  coachIds: string[] | undefined,
+): Promise<void> => {
+  switch (role) {
+    case UserRole.ATHLETE: {
+      await tx.athleteProfile.upsert({
+        where: { userId },
+        create: { userId },
+        update: {},
+      });
+
+      if (coachIds !== undefined) {
+        await syncAthleteAssignments(tx, userId, dedupe(coachIds));
+      }
+
+      return;
+    }
+    case UserRole.COACH: {
+      await tx.coachProfile.upsert({
+        where: { userId },
+        create: { userId },
+        update: { deletedAt: null },
+      });
+
+      return;
+    }
+    case UserRole.ADMIN:
+      return;
+    default: {
+      const exhaustive: never = role;
+
+      return exhaustive;
+    }
+  }
+};
 
 const assertNotLastAdminDemotion = async (): Promise<void> => {
   const adminCount = await prisma.user.count({
@@ -28,28 +103,6 @@ const assertNotLastAdminDemotion = async (): Promise<void> => {
   if (adminCount <= 1) {
     throw new ConflictError("Cannot remove the last admin");
   }
-};
-
-const issueInviteAndSendEmail = async (
-  actorId: string,
-  recipient: { id: string; email: string; name: string | null },
-): Promise<{ expiresAt: Date }> => {
-  const { plainToken, expiresAt } = await iamInviteTokenApi.issue({
-    userId: recipient.id,
-    createdByAdminId: actorId,
-  });
-
-  const expiresInHours = Math.max(1, Math.round((expiresAt.getTime() - Date.now()) / MS_PER_HOUR));
-
-  await sendInvitationEmail({
-    userId: recipient.id,
-    recipientEmail: recipient.email,
-    recipientName: recipient.name,
-    plainToken,
-    expiresInHours,
-  });
-
-  return { expiresAt };
 };
 
 export const iamUserAdminApi = {
@@ -68,36 +121,44 @@ export const iamUserAdminApi = {
   },
 
   createUser: async (actorId: string, data: CreateUserData): Promise<User> => {
-    if (baseEnv.FEATURE_USER_INVITE_ENABLED) {
-      resolveInviteEmailConfig();
+    resolveInviteEmailConfig();
+
+    if (data.coachIds.length > 0 && data.role !== UserRole.ATHLETE) {
+      throw new BadRequestError("coach assignments are valid only for ATHLETE role");
     }
+
+    const coachIds = dedupe(data.coachIds);
 
     let user: User;
 
     try {
-      const row = await prisma.user.create({
-        data: {
+      user = await prisma.$transaction(async (tx) => {
+        if (coachIds.length > 0) {
+          await assertCoachesExist(tx, coachIds);
+        }
+
+        const created = await iamUserCreationApi.createPendingUser(tx, {
           email: data.email,
           name: data.name,
-          role: ROLE_TO_PRISMA_MAP[data.role],
+          role: data.role,
           timezone: data.timezone,
-          password: null,
-          emailVerified: null,
-        },
-      });
+        });
 
-      user = mapToUser(row);
+        if (data.role === UserRole.ATHLETE && coachIds.length > 0) {
+          await syncAthleteAssignments(tx, created.id, coachIds);
+        }
+
+        return created;
+      });
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });
     }
 
-    if (baseEnv.FEATURE_USER_INVITE_ENABLED) {
-      await issueInviteAndSendEmail(actorId, {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      });
-    }
+    await iamUserCreationApi.issueInviteAndSendEmail(actorId, {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    });
 
     return user;
   },
@@ -116,6 +177,12 @@ export const iamUserAdminApi = {
 
     if (isDemotionFromAdmin) {
       await assertNotLastAdminDemotion();
+    }
+
+    const newRole: UserRole = data.role ?? currentRole;
+
+    if (data.coachIds !== undefined && data.coachIds.length > 0 && newRole !== UserRole.ATHLETE) {
+      throw new BadRequestError("coach assignments are valid only for ATHLETE role");
     }
 
     const updateData: {
@@ -142,12 +209,24 @@ export const iamUserAdminApi = {
     }
 
     try {
-      const user = await prisma.user.update({
-        where: { id },
-        data: updateData,
-      });
+      return await prisma.$transaction(async (tx) => {
+        if (data.coachIds !== undefined && data.coachIds.length > 0) {
+          await assertCoachesExist(tx, dedupe(data.coachIds));
+        }
 
-      return mapToUser(user);
+        const updatedRow = await tx.user.update({
+          where: { id },
+          data: updateData,
+        });
+
+        if (roleChanged) {
+          await applyRoleExit(tx, id, currentRole);
+        }
+
+        await applyRoleEnter(tx, id, newRole, data.coachIds);
+
+        return mapToUser(updatedRow);
+      });
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });
     }
@@ -156,8 +235,11 @@ export const iamUserAdminApi = {
   updateRole: async (actorId: string, id: string, data: UpdateUserRoleData): Promise<User> => {
     const existing = await findOrThrow(prisma.user.findUnique({ where: { id } }), "User");
 
-    const isDemotionFromAdmin =
-      ROLE_MAP[existing.role] === UserRole.ADMIN && data.role !== UserRole.ADMIN;
+    const currentRole = ROLE_MAP[existing.role];
+    const newRole = data.role;
+    const roleChanged = currentRole !== newRole;
+
+    const isDemotionFromAdmin = currentRole === UserRole.ADMIN && newRole !== UserRole.ADMIN;
 
     if (isDemotionFromAdmin && actorId === id) {
       throw new ForbiddenError("Cannot demote yourself from admin");
@@ -168,12 +250,19 @@ export const iamUserAdminApi = {
     }
 
     try {
-      const user = await prisma.user.update({
-        where: { id },
-        data: { role: ROLE_TO_PRISMA_MAP[data.role], tokenVersion: { increment: 1 } },
-      });
+      return await prisma.$transaction(async (tx) => {
+        const updated = await tx.user.update({
+          where: { id },
+          data: { role: ROLE_TO_PRISMA_MAP[newRole], tokenVersion: { increment: 1 } },
+        });
 
-      return mapToUser(user);
+        if (roleChanged) {
+          await applyRoleExit(tx, id, currentRole);
+          await applyRoleEnter(tx, id, newRole, undefined);
+        }
+
+        return mapToUser(updated);
+      });
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });
     }
@@ -194,13 +283,16 @@ export const iamUserAdminApi = {
     const suffixedEmail = `${existing.email}_deleted_${deletedAt.getTime()}`;
 
     try {
-      await prisma.user.update({
-        where: { id },
-        data: {
-          deletedAt,
-          email: suffixedEmail,
-          tokenVersion: { increment: 1 },
-        },
+      await prisma.$transaction(async (tx) => {
+        await applyRoleExit(tx, id, ROLE_MAP[existing.role]);
+        await tx.user.update({
+          where: { id },
+          data: {
+            deletedAt,
+            email: suffixedEmail,
+            tokenVersion: { increment: 1 },
+          },
+        });
       });
     } catch (error) {
       return handlePrismaError(error, { entity: "User" });
@@ -208,10 +300,6 @@ export const iamUserAdminApi = {
   },
 
   resendInvite: async (actorId: string, userId: string): Promise<{ expiresAt: Date }> => {
-    if (!baseEnv.FEATURE_USER_INVITE_ENABLED) {
-      throw new BadRequestError("Invite flow is disabled");
-    }
-
     const user = await findOrThrow(prisma.user.findUnique({ where: { id: userId } }), "User");
 
     if (user.password !== null) {
@@ -229,7 +317,7 @@ export const iamUserAdminApi = {
       throw new TooManyRequestsError("Too many resends in 24 hours");
     }
 
-    return issueInviteAndSendEmail(actorId, {
+    return iamUserCreationApi.issueInviteAndSendEmail(actorId, {
       id: user.id,
       email: user.email,
       name: user.name,

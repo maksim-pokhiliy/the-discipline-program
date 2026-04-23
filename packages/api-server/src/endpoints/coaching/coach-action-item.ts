@@ -18,7 +18,6 @@ import {
   MISSED_DAYS_WARNING,
   NEW_ATHLETE_THRESHOLD_DAYS,
 } from "@repo/contracts/coaching/coach-dashboard";
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { NotFoundError } from "@repo/errors";
 
 import { resolveCoachId } from "../../authz/guards";
@@ -33,12 +32,14 @@ import {
   HEALTH_STATUS_MAP,
   mapToCoachActionItem,
 } from "../../mappers/coaching";
-import { PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
 import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
 import { asJsonRecord } from "../../utils/json-record";
 
-import { type EnrollmentWithData, createEnrollmentInclude } from "./enrollment-query";
+import {
+  type AssignedAthleteWithData,
+  buildAssignedAthleteInclude,
+} from "./assigned-athlete-query";
 
 type ConditionBase = {
   athleteId: string;
@@ -51,23 +52,16 @@ type Condition =
   | (ConditionBase & { type: ActionItemType.NEW_NO_START; metadata: NewNoStartMetadata })
   | (ConditionBase & { type: ActionItemType.HEALTH_REPORT; metadata: HealthReportMetadata });
 
-const computeConditions = (enrollments: EnrollmentWithData[], tz: string): Condition[] => {
+const computeConditions = (assignments: AssignedAthleteWithData[], tz: string): Condition[] => {
   const conditions: Condition[] = [];
   const today = startOfTodayInTz(tz);
-  const processedAthletes = new Set<string>();
 
-  for (const e of enrollments) {
-    const user = e.user;
-
-    if (processedAthletes.has(user.id)) {
-      continue;
-    }
-
-    processedAthletes.add(user.id);
+  for (const a of assignments) {
+    const athlete = a.athlete;
 
     const lastLog =
-      user.workoutLogs.length > 0
-        ? user.workoutLogs.reduce((latest, l) => (l.date > latest.date ? l : latest))
+      athlete.workoutLogs.length > 0
+        ? athlete.workoutLogs.reduce((latest, l) => (l.date > latest.date ? l : latest))
         : null;
 
     if (lastLog) {
@@ -75,7 +69,7 @@ const computeConditions = (enrollments: EnrollmentWithData[], tz: string): Condi
 
       if (daysSince >= MISSED_DAYS_WARNING) {
         conditions.push({
-          athleteId: user.id,
+          athleteId: athlete.id,
           type: ActionItemType.MISSED_WORKOUTS,
           severity:
             daysSince >= MISSED_DAYS_CRITICAL
@@ -87,32 +81,39 @@ const computeConditions = (enrollments: EnrollmentWithData[], tz: string): Condi
       }
     }
 
-    const enrolledDays = daysBetweenInTz(e.startDate, today, tz);
+    const earliestEnrollment =
+      athlete.planEnrollments.length > 0
+        ? athlete.planEnrollments.reduce((min, e) => (e.startDate < min.startDate ? e : min))
+        : null;
 
-    if (enrolledDays <= NEW_ATHLETE_THRESHOLD_DAYS && user.workoutLogs.length === 0) {
-      const enrolledText =
-        enrolledDays === 0
-          ? "Enrolled today"
-          : enrolledDays === 1
-            ? "Enrolled yesterday"
-            : `Enrolled ${enrolledDays} days ago`;
+    if (earliestEnrollment) {
+      const enrolledDays = daysBetweenInTz(earliestEnrollment.startDate, today, tz);
 
-      conditions.push({
-        athleteId: user.id,
-        type: ActionItemType.NEW_NO_START,
-        severity: ActionItemSeverity.INFO,
-        message: `${enrolledText}, no workouts started`,
-        metadata: { enrollmentId: e.id },
-      });
+      if (enrolledDays <= NEW_ATHLETE_THRESHOLD_DAYS && athlete.workoutLogs.length === 0) {
+        const enrolledText =
+          enrolledDays === 0
+            ? "Enrolled today"
+            : enrolledDays === 1
+              ? "Enrolled yesterday"
+              : `Enrolled ${enrolledDays} days ago`;
+
+        conditions.push({
+          athleteId: athlete.id,
+          type: ActionItemType.NEW_NO_START,
+          severity: ActionItemSeverity.INFO,
+          message: `${enrolledText}, no workouts started`,
+          metadata: { enrollmentId: earliestEnrollment.id },
+        });
+      }
     }
 
-    const healthStatus = user.athleteProfile
-      ? HEALTH_STATUS_MAP[user.athleteProfile.healthStatus]
+    const healthStatus = athlete.athleteProfile
+      ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
       : HealthStatus.HEALTHY;
 
     if (healthStatus !== HealthStatus.HEALTHY) {
       conditions.push({
-        athleteId: user.id,
+        athleteId: athlete.id,
         type: ActionItemType.HEALTH_REPORT,
         severity:
           healthStatus === HealthStatus.INJURED
@@ -162,13 +163,10 @@ export const coachingCoachActionItemApi = {
       return prisma.$transaction(async (tx) => {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`reconcile:${coachId}`}))`;
 
-        const [enrollments, openItems, latestResolved] = await Promise.all([
-          tx.planEnrollment.findMany({
-            where: {
-              status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
-              trainingPlan: { coachId },
-            },
-            include: createEnrollmentInclude(coachId),
+        const [assignments, openItems, latestResolved] = await Promise.all([
+          tx.coachAthleteAssignment.findMany({
+            where: { coachId },
+            include: buildAssignedAthleteInclude(coachId),
           }),
           tx.coachActionItem.findMany({
             where: { coachId, status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN] },
@@ -183,7 +181,7 @@ export const coachingCoachActionItemApi = {
           }),
         ]);
 
-        const conditions = computeConditions(enrollments, tz);
+        const conditions = computeConditions(assignments, tz);
 
         const openByKey = new Map<string, PrismaCoachActionItemRecord>();
         const duplicates: PrismaCoachActionItemRecord[] = [];
@@ -202,7 +200,7 @@ export const coachingCoachActionItemApi = {
           latestResolved.map((item) => [`${item.type}:${item.athleteId}`, item]),
         );
 
-        const activeAthleteIds = new Set(enrollments.map((e) => e.user.id));
+        const activeAthleteIds = new Set(assignments.map((a) => a.athleteId));
 
         let created = 0;
         let updated = 0;

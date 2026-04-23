@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
+import { UserRole } from "@repo/contracts/iam/auth";
 import { updateUserSchema, type UpdateUserData } from "@repo/contracts/iam/user";
 import { FormView, QueryWrapper } from "@repo/ui";
 
@@ -24,13 +25,23 @@ const UserDetailForm: React.FC<UserDetailFormProps> = ({ user }) => {
       name: user.name ?? "",
       role: user.role,
       timezone: user.timezone,
+      coachIds: user.athleteProfile?.assignedCoaches.map((c) => c.id) ?? [],
     },
   });
+
+  const onSubmit = (data: UpdateUserData) => {
+    const payload: UpdateUserData =
+      data.role !== undefined && data.role !== UserRole.ATHLETE
+        ? { ...data, coachIds: undefined }
+        : data;
+
+    updateUser({ id: user.id, data: payload });
+  };
 
   return (
     <FormView
       methods={methods}
-      onSubmit={(data) => updateUser({ id: user.id, data })}
+      onSubmit={onSubmit}
       isPending={isPending}
       title="User Details"
       subtitle={user.email}

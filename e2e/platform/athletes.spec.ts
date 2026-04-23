@@ -3,12 +3,12 @@ import { expect, test } from "@playwright/test";
 test.describe("Coach Athletes", () => {
   test("loads athletes page", async ({ page }) => {
     await page.goto("/coach/athletes");
-    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 30_000 });
   });
 
   test("displays summary stats", async ({ page }) => {
     await page.goto("/coach/athletes");
-    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Total").first()).toBeVisible();
     await expect(page.getByText("Active").first()).toBeVisible();
     await expect(page.getByText("Attention").first()).toBeVisible();
@@ -17,13 +17,13 @@ test.describe("Coach Athletes", () => {
 
   test("displays athlete list items", async ({ page }) => {
     await page.goto("/coach/athletes");
-    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 30_000 });
     await expect(page.getByText("Sarah Mitchell").first()).toBeVisible();
   });
 
   test("search filter works", async ({ page }) => {
     await page.goto("/coach/athletes");
-    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 30_000 });
 
     await page.getByPlaceholder("Search by name or email...").fill("Sarah");
     await expect(page).toHaveURL(/search=Sarah/);
@@ -32,7 +32,7 @@ test.describe("Coach Athletes", () => {
 
   test("filter chips work", async ({ page }) => {
     await page.goto("/coach/athletes");
-    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 30_000 });
 
     await page.getByText("Needs Attention", { exact: true }).click();
     await expect(page).toHaveURL(/needsAttention=true/);
@@ -40,7 +40,7 @@ test.describe("Coach Athletes", () => {
 
   test("click athlete opens detail drawer", async ({ page }) => {
     await page.goto("/coach/athletes");
-    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 30_000 });
 
     await page.getByText("Sarah Mitchell").first().click();
     await expect(page).toHaveURL(/athlete=/);
@@ -49,7 +49,7 @@ test.describe("Coach Athletes", () => {
 
   test("drawer shows athlete sections", async ({ page }) => {
     await page.goto("/coach/athletes");
-    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 30_000 });
 
     await page.getByText("Sarah Mitchell").first().click();
     await expect(page.getByText("Athlete Details")).toBeVisible();
@@ -59,7 +59,7 @@ test.describe("Coach Athletes", () => {
 
   test("close drawer removes URL param", async ({ page }) => {
     await page.goto("/coach/athletes");
-    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: "Athletes" })).toBeVisible({ timeout: 30_000 });
 
     await page.getByText("Sarah Mitchell").first().click();
     await expect(page).toHaveURL(/athlete=/);

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ForbiddenError } from "@repo/errors";
@@ -130,7 +131,7 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
     ).rejects.toThrow(ForbiddenError);
   });
 
-  it("throws ForbiddenError for athlete not enrolled with coach", async () => {
+  it("throws ForbiddenError for athlete not assigned to coach", async () => {
     const randomUser = await createTestUser();
 
     await expect(
@@ -154,5 +155,36 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
 
     expect(detail.healthStatus).toBeDefined();
     expect(detail.processStatus).toBeDefined();
+  });
+
+  it("returns detail for an assigned athlete with zero active enrollments", async () => {
+    const assignedOnlyUser = await createTestUser();
+    const assignment = await cleanupRaw.coachAthleteAssignment.create({
+      data: { coachId: scenario.coach.profile.id, athleteId: assignedOnlyUser.id },
+    });
+
+    try {
+      const detail = await coachingCoachAthletesApi.getAthleteDetail(
+        scenario.coach.user.id,
+        assignedOnlyUser.id,
+      );
+
+      expect(detail.userId).toBe(assignedOnlyUser.id);
+      expect(detail.planDiscipline).toEqual([]);
+      expect(detail.processStatus).toBe(ProcessStatus.STEADY);
+      expect(detail.recentWorkouts).toEqual([]);
+      expect(detail.nextWorkout).toBeNull();
+      expect(detail.consistency.adherenceRate4w).toBe(0);
+      expect(detail.consistency.currentStreak).toBe(0);
+      expect(detail.consistency.missedThisWeek).toBe(0);
+      expect(detail.enrolledSince.getTime()).toBe(assignment.createdAt.getTime());
+      expect(detail.lastActivityDate).toBeNull();
+      expect(detail.daysSinceLastActivity).toBeNull();
+    } finally {
+      await cleanup(
+        { table: "coachAthleteAssignment", id: assignment.id },
+        { table: "user", id: assignedOnlyUser.id },
+      );
+    }
   });
 });

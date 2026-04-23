@@ -37,7 +37,7 @@ const makeUser = (overrides = {}) => ({
   id: "cls_user_1",
   email: "john@example.com",
   name: "John Doe",
-  role: Role.USER,
+  role: Role.ATHLETE,
   image: "https://example.com/avatar.jpg",
   timezone: "Europe/Kyiv",
   emailVerified: NOW,
@@ -60,7 +60,7 @@ describe("mapToAdminUserView", () => {
       id: "cls_user_1",
       email: "john@example.com",
       name: "John Doe",
-      role: UserRole.USER,
+      role: UserRole.ATHLETE,
       image: "https://example.com/avatar.jpg",
       timezone: "Europe/Kyiv",
       emailVerified: NOW,
@@ -86,7 +86,41 @@ describe("mapToAdminUserView", () => {
       healthNote: null,
       createdAt: NOW,
       updatedAt: LATER,
+      assignedCoaches: [],
     });
+  });
+
+  it("maps assigned coaches when athleteAssignments are provided", () => {
+    const input = makeUser({
+      athleteProfile: makeAthleteProfile(),
+      athleteAssignments: [
+        {
+          id: "cls_caa_1",
+          coachId: "cls_cp_1",
+          athleteId: "cls_user_1",
+          createdAt: NOW,
+          updatedAt: LATER,
+          coach: {
+            ...makeCoachProfile(),
+            user: {
+              id: "cls_user_2",
+              name: "Coach Jane",
+              email: "jane@example.com",
+            },
+          },
+        },
+      ],
+    });
+    const result = mapToAdminUserView(input);
+
+    expect(result.athleteProfile?.assignedCoaches).toEqual([
+      {
+        id: "cls_cp_1",
+        userId: "cls_user_2",
+        name: "Coach Jane",
+        email: "jane@example.com",
+      },
+    ]);
   });
 
   it("maps user with coach profile", () => {
@@ -162,5 +196,108 @@ describe("mapToAdminUserView", () => {
     const result = mapToAdminUserView(input);
 
     expect(result.hasPassword).toBe(true);
+  });
+
+  it("maps an athlete with exactly one assigned coach", () => {
+    const input = makeUser({
+      athleteProfile: makeAthleteProfile(),
+      athleteAssignments: [
+        {
+          id: "cls_caa_1",
+          coachId: "cls_cp_1",
+          athleteId: "cls_user_1",
+          createdAt: NOW,
+          updatedAt: LATER,
+          coach: {
+            ...makeCoachProfile(),
+            user: {
+              id: "cls_user_2",
+              name: "Coach Jane",
+              email: "jane@example.com",
+            },
+          },
+        },
+      ],
+    });
+    const result = mapToAdminUserView(input);
+
+    expect(result.athleteProfile?.assignedCoaches).toHaveLength(1);
+    expect(result.athleteProfile?.assignedCoaches[0]).toEqual({
+      id: "cls_cp_1",
+      userId: "cls_user_2",
+      name: "Coach Jane",
+      email: "jane@example.com",
+    });
+  });
+
+  it("preserves the input order of assignedCoaches (mapper does not sort)", () => {
+    const input = makeUser({
+      athleteProfile: makeAthleteProfile(),
+      athleteAssignments: [
+        {
+          id: "cls_caa_z",
+          coachId: "cls_cp_z",
+          athleteId: "cls_user_1",
+          createdAt: NOW,
+          updatedAt: LATER,
+          coach: {
+            ...makeCoachProfile({ id: "cls_cp_z" }),
+            user: { id: "cls_user_z", name: "Zara", email: "zara@example.com" },
+          },
+        },
+        {
+          id: "cls_caa_a",
+          coachId: "cls_cp_a",
+          athleteId: "cls_user_1",
+          createdAt: NOW,
+          updatedAt: LATER,
+          coach: {
+            ...makeCoachProfile({ id: "cls_cp_a" }),
+            user: { id: "cls_user_a", name: "Adam", email: "adam@example.com" },
+          },
+        },
+        {
+          id: "cls_caa_m",
+          coachId: "cls_cp_m",
+          athleteId: "cls_user_1",
+          createdAt: NOW,
+          updatedAt: LATER,
+          coach: {
+            ...makeCoachProfile({ id: "cls_cp_m" }),
+            user: { id: "cls_user_m", name: "Mia", email: "mia@example.com" },
+          },
+        },
+      ],
+    });
+    const result = mapToAdminUserView(input);
+
+    expect(result.athleteProfile?.assignedCoaches.map((c) => c.name)).toEqual([
+      "Zara",
+      "Adam",
+      "Mia",
+    ]);
+  });
+
+  it("keeps athleteProfile null when input has no profile and does not leak assignedCoaches", () => {
+    const input = makeUser({
+      athleteProfile: null,
+      athleteAssignments: [
+        {
+          id: "cls_caa_orphan",
+          coachId: "cls_cp_orphan",
+          athleteId: "cls_user_1",
+          createdAt: NOW,
+          updatedAt: LATER,
+          coach: {
+            ...makeCoachProfile(),
+            user: { id: "cls_user_2", name: "Coach Jane", email: "jane@example.com" },
+          },
+        },
+      ],
+    });
+    const result = mapToAdminUserView(input);
+
+    expect(result.athleteProfile).toBeNull();
+    expect(result).not.toHaveProperty("assignedCoaches");
   });
 });
