@@ -14,6 +14,7 @@ import {
   usePlanEnrollments,
   useUpdatePlanEnrollment,
 } from "@app/lib/hooks";
+import { InviteAthleteDialog } from "@app/modules/athletes/components";
 
 import { EnrollAthleteDialog, EnrollmentCard } from "../components";
 
@@ -26,6 +27,7 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
   const updateEnrollment = useUpdatePlanEnrollment(planId);
   const deleteEnrollment = useDeletePlanEnrollment(planId);
   const [enrollOpen, setEnrollOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const isUpdating = useCallback(
     (id: string) => updateEnrollment.isPending && updateEnrollment.variables?.id === id,
@@ -87,7 +89,13 @@ export const PlanAthletesSection: React.FC<PlanAthletesSectionProps> = ({ planId
         onClose={() => setEnrollOpen(false)}
         planId={planId}
         enrollments={enrollments ?? []}
+        onInviteClick={() => {
+          setEnrollOpen(false);
+          setInviteOpen(true);
+        }}
       />
+
+      <InviteAthleteDialog open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </Stack>
   );
 };
