@@ -31,7 +31,7 @@ const userHooks = createCrudHooks<GetUsersPageDataResponse, User, CreateUserData
   },
   redirectTo: "/users",
   useNavigate,
-  additionalInvalidateKeys: [adminKeys.dashboard()],
+  additionalInvalidateKeys: [adminKeys.dashboard(), adminKeys.users.coaches()],
 });
 
 export const useUsersPageData = userHooks.usePageData;
