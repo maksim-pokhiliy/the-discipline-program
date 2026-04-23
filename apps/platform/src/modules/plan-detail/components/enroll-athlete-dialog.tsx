@@ -2,7 +2,7 @@
 
 import { type FormEvent, useMemo, useState } from "react";
 
-import { Avatar } from "@mui/material";
+import { Avatar, Button } from "@mui/material";
 
 import { type PlanRosterEntry } from "@repo/contracts/coaching/plan-roster";
 import type { UserSearchResult } from "@repo/contracts/iam/user";
@@ -15,6 +15,7 @@ type EnrollAthleteDialogProps = {
   onClose: () => void;
   planId: string;
   enrollments: PlanRosterEntry[];
+  onInviteClick?: () => void;
 };
 
 export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
@@ -22,6 +23,7 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
   onClose,
   planId,
   enrollments,
+  onInviteClick,
 }) => {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<UserSearchResult[]>([]);
@@ -105,7 +107,13 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
         onInputChange={setQuery}
         disabled={bulkEnroll.isPending}
         isLoading={isFetching}
+        disableSelectAll
       />
+      {onInviteClick && options.length === 0 && !isFetching && query.trim().length > 0 && (
+        <Button variant="text" size="small" onClick={onInviteClick}>
+          Don&apos;t see them? Invite athlete
+        </Button>
+      )}
     </FormModal>
   );
 };
