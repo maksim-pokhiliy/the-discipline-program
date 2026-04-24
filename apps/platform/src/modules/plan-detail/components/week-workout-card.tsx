@@ -58,7 +58,7 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
   const updateWorkout = useUpdateWorkout(planId);
   const { data: blockTypesData } = useLibraryBlockTypes();
   const blockTypes = useMemo(() => blockTypesData ?? [], [blockTypesData]);
-  const { data: exerciseListData } = useLibraryExercises({ includeOwnDrafts: true, limit: 100 });
+  const { data: exerciseListData } = useLibraryExercises({ includeOwnDrafts: true, limit: 500 });
   const exercises = useMemo(() => exerciseListData?.items ?? [], [exerciseListData]);
   const createExerciseMutation = useCreateLibraryExercise();
   const createExercise = useCallback(
