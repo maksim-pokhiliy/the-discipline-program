@@ -58,4 +58,5 @@ export type WorkoutTreeInput = {
 
 export type ParseWorkoutDocOptions = {
   savingCoachUserId: string;
+  strict?: boolean;
 };

@@ -75,7 +75,7 @@ describe("parseTiptapDoc EMOM", () => {
     expect(() => parseTiptapDoc(doc, buildLookup(), parserOpts)).toThrow(BadRequestError);
   });
 
-  it("rejects an emomSlot with zero exercise mentions", () => {
+  it("rejects an emomSlot with zero exercise mentions in strict mode", () => {
     const doc = buildEmomDoc([
       {
         type: "emomSlot",
@@ -85,7 +85,7 @@ describe("parseTiptapDoc EMOM", () => {
     ]);
 
     try {
-      parseTiptapDoc(doc, buildLookup(), parserOpts);
+      parseTiptapDoc(doc, buildLookup(), { ...parserOpts, strict: true });
       expect.fail("expected parseTiptapDoc to throw");
     } catch (error) {
       expect(error).toBeInstanceOf(BadRequestError);
@@ -96,11 +96,27 @@ describe("parseTiptapDoc EMOM", () => {
     }
   });
 
-  it("rejects an emom block with zero slots", () => {
+  it("accepts an emomSlot with zero exercise mentions when strict is not set", () => {
+    const doc = buildEmomDoc([
+      {
+        type: "emomSlot",
+        attrs: { minuteInRound: 0 },
+        content: [{ type: "paragraph" }],
+      },
+    ]);
+
+    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0]?.emomSlots).toHaveLength(1);
+    expect(result.blocks[0]?.emomSlots[0]?.exercises).toHaveLength(0);
+  });
+
+  it("rejects an emom block with zero slots in strict mode", () => {
     const doc = buildEmomDoc([]);
 
     try {
-      parseTiptapDoc(doc, buildLookup(), parserOpts);
+      parseTiptapDoc(doc, buildLookup(), { ...parserOpts, strict: true });
       expect.fail("expected parseTiptapDoc to throw");
     } catch (error) {
       expect(error).toBeInstanceOf(BadRequestError);
@@ -109,6 +125,15 @@ describe("parseTiptapDoc EMOM", () => {
         expect(error.details?.code).toBe("workout.emom.empty");
       }
     }
+  });
+
+  it("accepts an emom block with zero slots when strict is not set", () => {
+    const doc = buildEmomDoc([]);
+
+    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0]?.emomSlots).toHaveLength(0);
   });
 });
 

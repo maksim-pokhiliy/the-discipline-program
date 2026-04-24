@@ -156,7 +156,7 @@ const parseEmomSlotNode = (
 
   const exercises = collectExerciseMentions(node.content, lookup, opts, path);
 
-  if (exercises.length === 0) {
+  if (exercises.length === 0 && opts.strict === true) {
     throw new BadRequestError("emomSlot must contain at least one exerciseMention", {
       code: "workout.emomSlot.empty",
       path,
@@ -282,7 +282,7 @@ const parseBlockNode = (
       emomSlots.push(parseEmomSlotNode(child, lookup, opts, childPath, idx));
     });
 
-    if (emomSlots.length === 0) {
+    if (emomSlots.length === 0 && opts.strict === true) {
       throw new BadRequestError("emom block must contain at least one emomSlot", {
         code: "workout.emom.empty",
         path,
@@ -291,7 +291,7 @@ const parseBlockNode = (
   } else {
     const blockExercises = collectExerciseMentions(node.content, lookup, opts, path);
 
-    if (blockExercises.length === 0) {
+    if (blockExercises.length === 0 && opts.strict === true) {
       throw new BadRequestError("Scheme block must contain at least one exerciseMention", {
         code: "workout.block.empty",
         path,

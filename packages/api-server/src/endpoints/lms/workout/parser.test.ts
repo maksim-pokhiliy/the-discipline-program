@@ -282,14 +282,14 @@ describe("parseTiptapDoc doc limits", () => {
 });
 
 describe("parseTiptapDoc empty-block guards", () => {
-  it("rejects a scheme block with zero exercise mentions", () => {
+  it("rejects a scheme block with zero exercise mentions in strict mode", () => {
     const doc: TiptapDoc = {
       type: "doc",
       content: [straightSetsBlock([])],
     };
 
     try {
-      parseTiptapDoc(doc, buildLookup(), parserOpts);
+      parseTiptapDoc(doc, buildLookup(), { ...parserOpts, strict: true });
       expect.fail("expected parseTiptapDoc to throw");
     } catch (error) {
       expect(error).toBeInstanceOf(BadRequestError);
@@ -299,6 +299,19 @@ describe("parseTiptapDoc empty-block guards", () => {
         expect(error.details?.nodeType).toBe("straightSets");
       }
     }
+  });
+
+  it("accepts a scheme block with zero exercise mentions when strict is not set", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [straightSetsBlock([])],
+    };
+
+    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0]?.exercises).toHaveLength(0);
+    expect(result.blocks[0]?.blockTypeId).toBeDefined();
   });
 
   it("still parses a schemeless notes block with no content", () => {
