@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Chip, MenuItem, Select, Stack, Typography } from "@mui/material";
-import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
+import { NodeViewContent, NodeViewWrapper, useEditorState } from "@tiptap/react";
 
 import { readBlockTypes } from "../extensions/block-types";
 
@@ -25,7 +25,10 @@ const BLOCK_KIND_META: Record<string, BlockKindMeta> = {
 export const BlockNodeView = ({ editor, node, selected, updateAttributes }: BlockNodeViewProps) => {
   const meta = BLOCK_KIND_META[node.type.name] ?? { label: node.type.name, color: "primary" };
   const { blockTypeId, effortPct, note } = readBlockAttrs(node.attrs);
-  const blockTypes = readBlockTypes(editor);
+  const blockTypes = useEditorState({
+    editor,
+    selector: ({ editor: ctxEditor }) => readBlockTypes(ctxEditor),
+  });
 
   return (
     <NodeViewWrapper as="section">

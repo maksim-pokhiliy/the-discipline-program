@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Chip, MenuItem, Select, Stack } from "@mui/material";
-import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
+import { NodeViewContent, NodeViewWrapper, useEditorState } from "@tiptap/react";
 
 import { readBlockTypes } from "../extensions/block-types";
 
@@ -33,7 +33,10 @@ export const TextCalloutView = ({
   const { tone } = readTextCalloutAttrs(node.attrs);
   const { blockTypeId } = readBlockAttrs(node.attrs);
   const color = toneColor(tone);
-  const blockTypes = readBlockTypes(editor);
+  const blockTypes = useEditorState({
+    editor,
+    selector: ({ editor: ctxEditor }) => readBlockTypes(ctxEditor),
+  });
 
   return (
     <NodeViewWrapper as="section">

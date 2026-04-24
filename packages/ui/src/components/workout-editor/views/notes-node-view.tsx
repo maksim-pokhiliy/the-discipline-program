@@ -2,7 +2,7 @@
 
 import NotesIcon from "@mui/icons-material/StickyNote2";
 import { Box, Chip, MenuItem, Select, Stack } from "@mui/material";
-import { NodeViewContent, NodeViewWrapper } from "@tiptap/react";
+import { NodeViewContent, NodeViewWrapper, useEditorState } from "@tiptap/react";
 
 import { readBlockTypes } from "../extensions/block-types";
 
@@ -10,7 +10,10 @@ import { readBlockAttrs, type NotesNodeViewProps } from "./node-view-types";
 
 export const NotesNodeView = ({ editor, node, selected, updateAttributes }: NotesNodeViewProps) => {
   const { blockTypeId } = readBlockAttrs(node.attrs);
-  const blockTypes = readBlockTypes(editor);
+  const blockTypes = useEditorState({
+    editor,
+    selector: ({ editor: ctxEditor }) => readBlockTypes(ctxEditor),
+  });
 
   return (
     <NodeViewWrapper as="section">

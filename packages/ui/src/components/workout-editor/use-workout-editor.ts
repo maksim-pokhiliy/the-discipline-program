@@ -12,7 +12,7 @@ import type { ExerciseListItem } from "@repo/contracts/library/exercise";
 
 import { WORKOUT_EDITOR_UPDATE_THROTTLE_MS } from "./constants";
 import { ExerciseMentionExtension, SlashCommandExtension } from "./extensions";
-import { BlockTypesExtension } from "./extensions/block-types";
+import { BlockTypesExtension, writeBlockTypes } from "./extensions/block-types";
 import { coreWorkoutExtensions } from "./registered-nodes";
 import {
   buildMentionItems,
@@ -132,7 +132,7 @@ export const useWorkoutEditor = ({
       ...coreWorkoutExtensions,
       UndoRedo,
       Placeholder.configure({ placeholder }),
-      BlockTypesExtension.configure({ blockTypes }),
+      BlockTypesExtension,
       SlashCommandExtension.configure({
         items: ({ query }) => slashItemsFactoryRef.current(query),
         render: () => slashHandlers,
@@ -156,7 +156,7 @@ export const useWorkoutEditor = ({
         render: () => mentionHandlers,
       }),
     ];
-  }, [placeholder, blockTypes]);
+  }, [placeholder]);
 
   const editor = useTiptapEditor({
     immediatelyRender: false,
@@ -209,6 +209,15 @@ export const useWorkoutEditor = ({
       editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [editor, value]);
+
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+
+    writeBlockTypes(editor, blockTypes);
+    editor.view.dispatch(editor.state.tr.setMeta("blockTypesSync", true));
+  }, [editor, blockTypes]);
 
   useEffect(
     () => () => {

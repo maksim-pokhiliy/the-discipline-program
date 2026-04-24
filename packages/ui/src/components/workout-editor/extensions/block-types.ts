@@ -2,21 +2,37 @@ import { Extension, type Editor } from "@tiptap/core";
 
 import type { BlockType } from "@repo/contracts/library/block-type";
 
-export type BlockTypesExtensionOptions = {
+export type BlockTypesExtensionStorage = {
   blockTypes: ReadonlyArray<BlockType>;
 };
 
-export const BlockTypesExtension = Extension.create<BlockTypesExtensionOptions>({
-  name: "workoutBlockTypes",
+declare module "@tiptap/core" {
+  interface Storage {
+    workoutBlockTypes: BlockTypesExtensionStorage;
+  }
+}
 
-  addOptions() {
-    return { blockTypes: [] };
+export const BlockTypesExtension = Extension.create({
+  name: "workoutBlockTypes",
+  addStorage() {
+    const storage: BlockTypesExtensionStorage = { blockTypes: [] };
+
+    return storage;
   },
 });
 
 export const readBlockTypes = (editor: Editor): ReadonlyArray<BlockType> => {
-  const ext = editor.extensionManager.extensions.find((e) => e.name === "workoutBlockTypes");
-  const opts = ext?.options as BlockTypesExtensionOptions | undefined;
+  const storage = editor.storage.workoutBlockTypes;
 
-  return opts?.blockTypes ?? [];
+  return storage?.blockTypes ?? [];
+};
+
+export const writeBlockTypes = (editor: Editor, blockTypes: ReadonlyArray<BlockType>): void => {
+  const storage = editor.storage.workoutBlockTypes;
+
+  if (!storage) {
+    return;
+  }
+
+  storage.blockTypes = blockTypes;
 };
