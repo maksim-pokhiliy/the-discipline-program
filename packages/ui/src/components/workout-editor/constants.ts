@@ -7,7 +7,7 @@ export const WORKOUT_EDITOR_MAX_DOC_BYTES = 500_000;
 export const MENTION_TRIGGER_CHAR = "@";
 export const SLASH_TRIGGER_CHAR = "/";
 
-export const MIN_MENTION_QUERY_LENGTH_FOR_CREATE = 2;
+export const MIN_MENTION_QUERY_LENGTH_FOR_CREATE = 3;
 
 export const BLOCK_NODE_NAMES = BLOCK_NODE_TYPES;
 

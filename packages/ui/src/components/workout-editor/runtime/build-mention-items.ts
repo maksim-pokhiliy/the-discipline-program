@@ -10,16 +10,20 @@ export const buildMentionItems = (
   const trimmed = query.trim();
   const lowered = trimmed.toLowerCase();
 
-  const matched =
-    trimmed.length === 0
-      ? []
-      : exercises.filter((ex) => {
-          if (ex.canonicalName.toLowerCase().includes(lowered)) {
-            return true;
-          }
+  if (trimmed.length === 0) {
+    return exercises.slice(0, 10).map((exercise) => ({
+      kind: "existing" as const,
+      exercise,
+    }));
+  }
 
-          return ex.aliases.some((alias) => alias.toLowerCase().includes(lowered));
-        });
+  const matched = exercises.filter((ex) => {
+    if (ex.canonicalName.toLowerCase().includes(lowered)) {
+      return true;
+    }
+
+    return ex.aliases.some((alias) => alias.toLowerCase().includes(lowered));
+  });
 
   const items: ExerciseSuggestionItem[] = matched.map((exercise) => ({
     kind: "existing" as const,
