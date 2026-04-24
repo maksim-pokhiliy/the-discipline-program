@@ -152,6 +152,7 @@ describe("parseTiptapDoc schemeless blocks", () => {
     expect(result.blocks).toHaveLength(1);
     expect(result.blocks[0]?.note).toBe("Good luck");
     expect(result.blocks[0]?.schemeKind).toBeNull();
+    expect(result.blocks[0]?.blockTypeId).toBe(BLOCK_TYPE_ID);
   });
 
   it("parses textCallout block", () => {
@@ -170,6 +171,7 @@ describe("parseTiptapDoc schemeless blocks", () => {
     expect(result.blocks).toHaveLength(1);
     expect(result.blocks[0]?.note).toBe("Warning");
     expect(result.blocks[0]?.schemeKind).toBeNull();
+    expect(result.blocks[0]?.blockTypeId).toBe(BLOCK_TYPE_ID);
   });
 });
 
