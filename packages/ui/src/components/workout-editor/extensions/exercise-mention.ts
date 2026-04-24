@@ -45,14 +45,14 @@ export type ExerciseMentionRenderer = {
 };
 
 export type ExerciseMentionOptions = {
-  items: (props: { query: string; editor: Editor }) => Promise<ExerciseSuggestionItem[]>;
+  items: (props: { query: string; editor: Editor }) => ExerciseSuggestionItem[];
   onPickExisting: (exercise: ExerciseSuggestion, editor: Editor, range: Range) => void;
   onRequestCreate: (query: string, editor: Editor, range: Range) => void;
   render: () => ExerciseMentionRenderer;
 };
 
 const defaultOptions: ExerciseMentionOptions = {
-  items: async () => [],
+  items: () => [],
   onPickExisting: () => undefined,
   onRequestCreate: () => undefined,
   render: () => ({

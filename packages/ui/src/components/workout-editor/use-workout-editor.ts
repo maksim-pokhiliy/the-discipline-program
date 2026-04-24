@@ -8,6 +8,7 @@ import { useEditor as useTiptapEditor, type AnyExtension } from "@tiptap/react";
 
 import { tiptapDocSchema, type TiptapDoc } from "@repo/contracts/common/tiptap-doc";
 import type { BlockType } from "@repo/contracts/library/block-type";
+import type { ExerciseListItem } from "@repo/contracts/library/exercise";
 
 import { WORKOUT_EDITOR_UPDATE_THROTTLE_MS } from "./constants";
 import { ExerciseMentionExtension, SlashCommandExtension } from "./extensions";
@@ -21,18 +22,13 @@ import {
   type MentionRendererBundle,
   type SlashRendererBundle,
 } from "./runtime";
-import type {
-  CreateExerciseFn,
-  ExerciseSuggestion,
-  SearchExercisesFn,
-  SlashCommandItem,
-} from "./types";
+import type { CreateExerciseFn, ExerciseSuggestion, SlashCommandItem } from "./types";
 
 type UseWorkoutEditorProps = {
   value: TiptapDoc | null;
   onChange: (doc: TiptapDoc | null) => void;
   onBlur?: () => void;
-  searchExercises: SearchExercisesFn;
+  exercises: ReadonlyArray<ExerciseListItem>;
   createExercise: CreateExerciseFn;
   blockTypes: ReadonlyArray<BlockType>;
   placeholder: string;
@@ -49,7 +45,7 @@ export const useWorkoutEditor = ({
   value,
   onChange,
   onBlur,
-  searchExercises,
+  exercises,
   createExercise,
   blockTypes,
   placeholder,
@@ -63,7 +59,7 @@ export const useWorkoutEditor = ({
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const slashBundleRef = useRef<SlashRendererBundle | null>(null);
   const mentionBundleRef = useRef<MentionRendererBundle | null>(null);
-  const searchExercisesRef = useRef(searchExercises);
+  const exercisesRef = useRef(exercises);
   const slashItemsFactoryRef = useRef(slashItemsFactory);
   const inlineCreateRef = useRef(onRequestInlineCreate);
   const createExerciseRef = useRef(createExercise);
@@ -78,8 +74,8 @@ export const useWorkoutEditor = ({
   }, [onBlur]);
 
   useEffect(() => {
-    searchExercisesRef.current = searchExercises;
-  }, [searchExercises]);
+    exercisesRef.current = exercises;
+  }, [exercises]);
 
   useEffect(() => {
     slashItemsFactoryRef.current = slashItemsFactory;
@@ -142,7 +138,7 @@ export const useWorkoutEditor = ({
         render: () => slashHandlers,
       }),
       ExerciseMentionExtension.configure({
-        items: ({ query }) => buildMentionItems(query, searchExercisesRef.current),
+        items: ({ query }) => buildMentionItems(query, exercisesRef.current),
         onPickExisting: (exercise, editor, range) => {
           runInsertExerciseMention(editor, range, exercise);
         },

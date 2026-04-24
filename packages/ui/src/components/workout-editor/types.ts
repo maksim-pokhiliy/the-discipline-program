@@ -17,8 +17,6 @@ export type SchemeSuggestion = Scheme;
 
 export type BlockTypeSuggestion = BlockType;
 
-export type SearchExercisesFn = (query: string) => Promise<ExerciseSuggestion[]>;
-
 export type CreateExerciseFn = (data: CreateExerciseData) => Promise<ExerciseSuggestion>;
 
 export type ListSchemesFn = () => Promise<SchemeSuggestion[]>;
@@ -113,7 +111,7 @@ export type WorkoutEditorProps = {
   value: TiptapDoc | null;
   onChange: (doc: TiptapDoc | null) => void;
   onBlur?: () => void;
-  searchExercises: SearchExercisesFn;
+  exercises: ReadonlyArray<ExerciseListItem>;
   createExercise: CreateExerciseFn;
   listSchemes: ListSchemesFn;
   listBlockTypes: ListBlockTypesFn;

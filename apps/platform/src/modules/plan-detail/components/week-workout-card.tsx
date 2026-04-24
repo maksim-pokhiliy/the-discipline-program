@@ -25,7 +25,13 @@ import type { Workout } from "@repo/contracts/lms/workout";
 import { ConfirmationModal } from "@repo/ui";
 
 import { api } from "@app/lib/api";
-import { useDeleteWorkout, useLibraryBlockTypes, useUpdateWorkout } from "@app/lib/hooks";
+import {
+  useCreateLibraryExercise,
+  useDeleteWorkout,
+  useLibraryBlockTypes,
+  useLibraryExercises,
+  useUpdateWorkout,
+} from "@app/lib/hooks";
 
 const WorkoutEditor = dynamic(
   () => import("@repo/ui").then((mod) => ({ default: mod.WorkoutEditor })),
@@ -41,18 +47,6 @@ type WeekWorkoutCardProps = {
   autoFocus?: boolean;
 };
 
-const searchExercises = async (query: string): Promise<ExerciseListItem[]> => {
-  const response = await api.libraryExercises.list({
-    search: query,
-    includeOwnDrafts: true,
-  });
-
-  return response.items;
-};
-
-const createExercise = (data: CreateExerciseData): Promise<ExerciseListItem> =>
-  api.libraryExercises.create(data).then((exercise) => ({ ...exercise, usageCount: 0 }));
-
 const listSchemes = () => api.librarySchemes.list();
 
 const listBlockTypes = () => api.libraryBlockTypes.list();
@@ -66,6 +60,17 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
   const updateWorkout = useUpdateWorkout(planId);
   const { data: blockTypesData } = useLibraryBlockTypes();
   const blockTypes = blockTypesData ?? [];
+  const { data: exerciseListData } = useLibraryExercises({ includeOwnDrafts: true, limit: 100 });
+  const exercises = exerciseListData?.items ?? [];
+  const createExerciseMutation = useCreateLibraryExercise();
+  const createExercise = useCallback(
+    async (data: CreateExerciseData): Promise<ExerciseListItem> => {
+      const exercise = await createExerciseMutation.mutateAsync(data);
+
+      return { ...exercise, usageCount: 0 };
+    },
+    [createExerciseMutation],
+  );
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editValue, setEditValue] = useState(workout.title);
   const [expanded, setExpanded] = useState(false);
@@ -176,7 +181,7 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
               value={workout.contentDoc}
               onChange={handleEditorChange}
               onBlur={commitContent}
-              searchExercises={searchExercises}
+              exercises={exercises}
               createExercise={createExercise}
               listSchemes={listSchemes}
               listBlockTypes={listBlockTypes}

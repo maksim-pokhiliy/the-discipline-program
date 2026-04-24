@@ -1,22 +1,33 @@
+import type { ExerciseListItem } from "@repo/contracts/library/exercise";
+
 import { MIN_MENTION_QUERY_LENGTH_FOR_CREATE } from "../constants";
 import type { ExerciseSuggestionItem } from "../extensions";
-import type { SearchExercisesFn } from "../types";
 
-export const buildMentionItems = async (
+export const buildMentionItems = (
   query: string,
-  searchExercises: SearchExercisesFn,
-): Promise<ExerciseSuggestionItem[]> => {
+  exercises: ReadonlyArray<ExerciseListItem>,
+): ExerciseSuggestionItem[] => {
   const trimmed = query.trim();
-  const exercises = trimmed.length === 0 ? [] : await searchExercises(trimmed);
+  const lowered = trimmed.toLowerCase();
 
-  const items: ExerciseSuggestionItem[] = exercises.map((exercise) => ({
+  const matched =
+    trimmed.length === 0
+      ? []
+      : exercises.filter((ex) => {
+          if (ex.canonicalName.toLowerCase().includes(lowered)) {
+            return true;
+          }
+
+          return ex.aliases.some((alias) => alias.toLowerCase().includes(lowered));
+        });
+
+  const items: ExerciseSuggestionItem[] = matched.map((exercise) => ({
     kind: "existing" as const,
     exercise,
   }));
 
   if (trimmed.length >= MIN_MENTION_QUERY_LENGTH_FOR_CREATE) {
-    const lowered = trimmed.toLowerCase();
-    const exact = exercises.find((ex) => ex.canonicalName.toLowerCase() === lowered);
+    const exact = matched.find((ex) => ex.canonicalName.toLowerCase() === lowered);
 
     if (!exact) {
       items.push({ kind: "create", query: trimmed });
