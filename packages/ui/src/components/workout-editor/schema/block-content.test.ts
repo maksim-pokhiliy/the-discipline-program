@@ -1,5 +1,5 @@
-import { getSchema } from "@tiptap/core";
-import { describe, expect, it } from "vitest";
+import { Editor, getSchema } from "@tiptap/core";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { coreWorkoutExtensions } from "../registered-nodes";
 
@@ -187,6 +187,75 @@ describe("workout-editor block node schemas", () => {
       const slot = slotType.create({ minuteInRound: 0, note: null, sortOrder: 0 });
 
       expect(slot.childCount).toBe(0);
+    });
+  });
+
+  describe("schemeless blockTypeId round-trip", () => {
+    let editor: Editor | null = null;
+
+    afterEach(() => {
+      editor?.destroy();
+      editor = null;
+    });
+
+    it("preserves blockTypeId on notes nodes through insert and getJSON", () => {
+      const element = document.createElement("div");
+
+      document.body.appendChild(element);
+
+      editor = new Editor({
+        element,
+        extensions: coreWorkoutExtensions,
+        content: undefined,
+      });
+
+      editor
+        .chain()
+        .insertContent({
+          type: "notes",
+          attrs: { blockTypeId: "test-block-type-id", note: null, sortOrder: 0 },
+          content: [{ type: "paragraph" }],
+        })
+        .run();
+
+      const json = editor.getJSON();
+      const notesNode = json.content?.find((node) => node.type === "notes");
+
+      expect(notesNode).toBeDefined();
+      expect(notesNode?.attrs?.blockTypeId).toBe("test-block-type-id");
+    });
+
+    it("preserves blockTypeId on textCallout nodes through insert and getJSON", () => {
+      const element = document.createElement("div");
+
+      document.body.appendChild(element);
+
+      editor = new Editor({
+        element,
+        extensions: coreWorkoutExtensions,
+        content: undefined,
+      });
+
+      editor
+        .chain()
+        .insertContent({
+          type: "textCallout",
+          attrs: {
+            blockTypeId: "test-block-type-id",
+            tone: "info",
+            note: null,
+            sortOrder: 0,
+          },
+          content: [{ type: "paragraph" }],
+        })
+        .run();
+
+      const json = editor.getJSON();
+      const calloutNode = json.content?.find((node) => node.type === "textCallout");
+
+      expect(calloutNode).toBeDefined();
+      expect(calloutNode?.attrs?.blockTypeId).toBe("test-block-type-id");
+      expect(calloutNode?.attrs?.tone).toBe("info");
     });
   });
 });
