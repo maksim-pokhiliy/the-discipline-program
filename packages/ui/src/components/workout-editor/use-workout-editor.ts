@@ -7,9 +7,11 @@ import { UndoRedo } from "@tiptap/extensions";
 import { useEditor as useTiptapEditor, type AnyExtension } from "@tiptap/react";
 
 import { tiptapDocSchema, type TiptapDoc } from "@repo/contracts/common/tiptap-doc";
+import type { BlockType } from "@repo/contracts/library/block-type";
 
 import { WORKOUT_EDITOR_UPDATE_THROTTLE_MS } from "./constants";
 import { ExerciseMentionExtension, SlashCommandExtension } from "./extensions";
+import { BlockTypesExtension } from "./extensions/block-types";
 import { coreWorkoutExtensions } from "./registered-nodes";
 import {
   buildMentionItems,
@@ -32,6 +34,7 @@ type UseWorkoutEditorProps = {
   onBlur?: () => void;
   searchExercises: SearchExercisesFn;
   createExercise: CreateExerciseFn;
+  blockTypes: ReadonlyArray<BlockType>;
   placeholder: string;
   disabled: boolean;
   slashItemsFactory: (query: string) => SlashCommandItem[];
@@ -48,6 +51,7 @@ export const useWorkoutEditor = ({
   onBlur,
   searchExercises,
   createExercise,
+  blockTypes,
   placeholder,
   disabled,
   slashItemsFactory,
@@ -132,6 +136,7 @@ export const useWorkoutEditor = ({
       ...coreWorkoutExtensions,
       UndoRedo,
       Placeholder.configure({ placeholder }),
+      BlockTypesExtension.configure({ blockTypes }),
       SlashCommandExtension.configure({
         items: ({ query }) => slashItemsFactoryRef.current(query),
         render: () => slashHandlers,
@@ -155,7 +160,7 @@ export const useWorkoutEditor = ({
         render: () => mentionHandlers,
       }),
     ];
-  }, [placeholder]);
+  }, [placeholder, blockTypes]);
 
   const editor = useTiptapEditor({
     immediatelyRender: false,

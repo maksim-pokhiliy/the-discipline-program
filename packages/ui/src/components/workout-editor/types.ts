@@ -117,6 +117,7 @@ export type WorkoutEditorProps = {
   createExercise: CreateExerciseFn;
   listSchemes: ListSchemesFn;
   listBlockTypes: ListBlockTypesFn;
+  blockTypes: ReadonlyArray<BlockType>;
   savedBlockTemplates?: BlockTemplateSuggestion[];
   savedWorkoutTemplates?: WorkoutTemplateSuggestion[];
   disabled?: boolean;

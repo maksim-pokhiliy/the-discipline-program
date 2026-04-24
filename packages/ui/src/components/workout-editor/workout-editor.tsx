@@ -5,9 +5,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Box, Stack, Typography, useTheme } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
 
+import type { BlockType } from "@repo/contracts/library/block-type";
+
 import { BLOCK_COMMAND_DESCRIPTIONS, BLOCK_COMMAND_LABELS } from "./constants";
 import type {
-  BlockTypeSuggestion,
   ExerciseSuggestion,
   InlineExerciseDraft,
   SchemeSuggestion,
@@ -18,8 +19,26 @@ import { useWorkoutEditor } from "./use-workout-editor";
 import { InlineCreateExerciseDialog } from "./views";
 
 type SlashContext = {
-  blockTypes: BlockTypeSuggestion[];
+  blockTypes: ReadonlyArray<BlockType>;
   schemes: SchemeSuggestion[];
+};
+
+const NOTES_SLUG = "notes";
+const TEXT_CALLOUT_SLUG = "text-callout";
+
+const pickDefaultBlockTypeId = (
+  blockName: string,
+  blockTypes: ReadonlyArray<BlockType>,
+): string | null => {
+  if (blockName === "notes") {
+    return blockTypes.find((bt) => bt.slug === NOTES_SLUG)?.id ?? null;
+  }
+
+  if (blockName === "textCallout") {
+    return blockTypes.find((bt) => bt.slug === TEXT_CALLOUT_SLUG)?.id ?? null;
+  }
+
+  return blockTypes[0]?.id ?? null;
 };
 
 const buildSlashItems = (
@@ -42,9 +61,7 @@ const buildSlashItems = (
       return;
     }
 
-    const matchingBlockType = blockTypes.find((type) =>
-      type.slug.toLowerCase().includes(blockName.toLowerCase()),
-    );
+    const defaultBlockTypeId = pickDefaultBlockTypeId(blockName, blockTypes);
 
     const matchingScheme = schemes.find((scheme) => {
       if (blockName === "straightSets") {
@@ -84,7 +101,7 @@ const buildSlashItems = (
       label,
       description,
       blockNodeName: blockName,
-      blockTypeId: matchingBlockType?.id,
+      blockTypeId: defaultBlockTypeId ?? undefined,
       schemeId: matchingScheme?.id ?? null,
       schemeKind: matchingScheme?.kind ?? null,
       schemeConfig: matchingScheme?.paramDefaults ?? {},
@@ -151,12 +168,11 @@ export const WorkoutEditor = (props: WorkoutEditorProps) => {
     searchExercises,
     createExercise,
     listSchemes,
-    listBlockTypes,
+    blockTypes,
     placeholder = "Type / to insert a block, @ to reference an exercise",
     disabled = false,
   } = props;
 
-  const [blockTypes, setBlockTypes] = useState<BlockTypeSuggestion[]>([]);
   const [schemes, setSchemes] = useState<SchemeSuggestion[]>([]);
   const [inlineCreate, setInlineCreate] = useState<InlineCreateState>(INITIAL_INLINE_CREATE);
   const propsRef = useRef(props);
@@ -168,12 +184,6 @@ export const WorkoutEditor = (props: WorkoutEditorProps) => {
   useEffect(() => {
     let cancelled = false;
 
-    listBlockTypes().then((types) => {
-      if (!cancelled) {
-        setBlockTypes(types);
-      }
-    });
-
     listSchemes().then((list) => {
       if (!cancelled) {
         setSchemes(list);
@@ -183,7 +193,7 @@ export const WorkoutEditor = (props: WorkoutEditorProps) => {
     return () => {
       cancelled = true;
     };
-  }, [listBlockTypes, listSchemes]);
+  }, [listSchemes]);
 
   const slashItemsFactory = useCallback(
     (query: string): SlashCommandItem[] =>
@@ -247,6 +257,7 @@ export const WorkoutEditor = (props: WorkoutEditorProps) => {
     onBlur,
     searchExercises,
     createExercise,
+    blockTypes,
     placeholder,
     disabled,
     slashItemsFactory,

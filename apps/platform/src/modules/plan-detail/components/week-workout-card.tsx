@@ -25,7 +25,7 @@ import type { Workout } from "@repo/contracts/lms/workout";
 import { ConfirmationModal } from "@repo/ui";
 
 import { api } from "@app/lib/api";
-import { useDeleteWorkout, useUpdateWorkout } from "@app/lib/hooks";
+import { useDeleteWorkout, useLibraryBlockTypes, useUpdateWorkout } from "@app/lib/hooks";
 
 const WorkoutEditor = dynamic(
   () => import("@repo/ui").then((mod) => ({ default: mod.WorkoutEditor })),
@@ -64,6 +64,8 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
   });
   const deleteWorkout = useDeleteWorkout(planId);
   const updateWorkout = useUpdateWorkout(planId);
+  const { data: blockTypesData } = useLibraryBlockTypes();
+  const blockTypes = blockTypesData ?? [];
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editValue, setEditValue] = useState(workout.title);
   const [expanded, setExpanded] = useState(false);
@@ -178,6 +180,7 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
               createExercise={createExercise}
               listSchemes={listSchemes}
               listBlockTypes={listBlockTypes}
+              blockTypes={blockTypes}
               placeholder="Type / to insert a block, @ to reference an exercise"
             />
           </Box>
