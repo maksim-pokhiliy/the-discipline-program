@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -57,9 +57,9 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
   const deleteWorkout = useDeleteWorkout(planId);
   const updateWorkout = useUpdateWorkout(planId);
   const { data: blockTypesData } = useLibraryBlockTypes();
-  const blockTypes = blockTypesData ?? [];
+  const blockTypes = useMemo(() => blockTypesData ?? [], [blockTypesData]);
   const { data: exerciseListData } = useLibraryExercises({ includeOwnDrafts: true, limit: 100 });
-  const exercises = exerciseListData?.items ?? [];
+  const exercises = useMemo(() => exerciseListData?.items ?? [], [exerciseListData]);
   const createExerciseMutation = useCreateLibraryExercise();
   const createExercise = useCallback(
     async (data: CreateExerciseData): Promise<ExerciseListItem> => {
