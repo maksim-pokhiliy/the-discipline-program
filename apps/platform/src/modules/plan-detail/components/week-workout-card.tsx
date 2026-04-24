@@ -49,8 +49,6 @@ type WeekWorkoutCardProps = {
 
 const listSchemes = () => api.librarySchemes.list();
 
-const listBlockTypes = () => api.libraryBlockTypes.list();
-
 export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planId, autoFocus }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: workout.id,
@@ -184,7 +182,6 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
               exercises={exercises}
               createExercise={createExercise}
               listSchemes={listSchemes}
-              listBlockTypes={listBlockTypes}
               blockTypes={blockTypes}
               placeholder="Type / to insert a block, @ to reference an exercise"
             />

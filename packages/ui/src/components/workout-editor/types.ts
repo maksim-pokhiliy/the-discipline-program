@@ -21,8 +21,6 @@ export type CreateExerciseFn = (data: CreateExerciseData) => Promise<ExerciseSug
 
 export type ListSchemesFn = () => Promise<SchemeSuggestion[]>;
 
-export type ListBlockTypesFn = () => Promise<BlockTypeSuggestion[]>;
-
 export type BlockTemplateSuggestion = {
   id: string;
   label: string;
@@ -114,7 +112,6 @@ export type WorkoutEditorProps = {
   exercises: ReadonlyArray<ExerciseListItem>;
   createExercise: CreateExerciseFn;
   listSchemes: ListSchemesFn;
-  listBlockTypes: ListBlockTypesFn;
   blockTypes: ReadonlyArray<BlockType>;
   savedBlockTemplates?: BlockTemplateSuggestion[];
   savedWorkoutTemplates?: WorkoutTemplateSuggestion[];

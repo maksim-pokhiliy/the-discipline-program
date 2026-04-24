@@ -69,9 +69,9 @@ export const TextCalloutView = ({
             onChange={(event) => updateAttributes({ blockTypeId: event.target.value })}
             displayEmpty
             renderValue={(value) => {
-              const selected = blockTypes.find((bt) => bt.id === value);
+              const selectedBlockType = blockTypes.find((bt) => bt.id === value);
 
-              return selected ? selected.name : "Select type";
+              return selectedBlockType ? selectedBlockType.name : "Select type";
             }}
             sx={{ minWidth: 140, "& .MuiSelect-select": { py: 0.5 } }}
             onMouseDown={(event) => event.stopPropagation()}
