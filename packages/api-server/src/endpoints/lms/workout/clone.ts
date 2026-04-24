@@ -1,6 +1,7 @@
 import { Prisma } from "@prisma/client";
 
 import { type TiptapDoc, type TiptapNode } from "@repo/contracts/common/tiptap-doc";
+import { InternalServerError } from "@repo/errors";
 
 import { type TxClient } from "../../../db/tx";
 
@@ -70,7 +71,10 @@ export const cloneWorkoutTree = async (params: {
         const targetBlockId = blockIdMap.get(slot.blockId);
 
         if (!targetBlockId) {
-          throw new Error("cloneWorkoutTree: missing target block id for emom slot");
+          throw new InternalServerError("cloneWorkoutTree: missing target block id for emom slot", {
+            sourceSlotId: slot.id,
+            sourceBlockId: slot.blockId,
+          });
         }
 
         return {

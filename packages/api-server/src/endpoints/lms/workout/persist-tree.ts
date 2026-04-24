@@ -1,5 +1,7 @@
 import { Prisma } from "@prisma/client";
 
+import { InternalServerError } from "@repo/errors";
+
 import { type TxClient } from "../../../db/tx";
 import { SCHEME_KIND_TO_PRISMA_MAP } from "../../../mappers/library";
 import { WORKOUT_REP_SCHEME_TO_PRISMA_MAP } from "../../../mappers/lms";
@@ -86,7 +88,9 @@ export const persistWorkoutTree = async (params: {
             const targetBlock = createdBlocks[blockIndex];
 
             if (!targetBlock) {
-              throw new Error("persistWorkoutTree: missing block for emom slot");
+              throw new InternalServerError("persistWorkoutTree: missing block for emom slot", {
+                blockIndex,
+              });
             }
 
             return {
