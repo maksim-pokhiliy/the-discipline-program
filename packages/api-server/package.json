@@ -19,8 +19,9 @@
     "lint": "eslint . --fix --max-warnings 0",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:reset": "prisma db push --force-reset",
+    "db:push": "prisma db push && pnpm db:apply-constraints",
+    "db:reset": "prisma db push --force-reset && pnpm db:apply-constraints",
+    "db:apply-constraints": "prisma db execute --file prisma/sql/workout_block_exercise_xor.sql --schema prisma/schema.prisma",
     "db:seed": "prisma db seed",
     "db:seed:pages": "tsx prisma/seed-pages.ts"
   },
