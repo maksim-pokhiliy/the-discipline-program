@@ -5,6 +5,7 @@ import {
   type Prisma,
   PrismaClient,
   Role,
+  SchemeKind,
   TrainingPlanStatus,
 } from "@prisma/client";
 import bcrypt from "bcryptjs";
@@ -1516,6 +1517,162 @@ const seedTrainingPlans = async (
   console.log(`  Workout logs: ${logData.length}`);
 };
 
+const seedLibrary = async () => {
+  const blockTypes: {
+    slug: string;
+    name: string;
+    sortOrder: number;
+    iconKey: string;
+    colorKey: string;
+  }[] = [
+    { slug: "warm-up", name: "Warm-up", sortOrder: 10, iconKey: "warmup", colorKey: "info" },
+    { slug: "skill", name: "Skill", sortOrder: 20, iconKey: "skill", colorKey: "secondary" },
+    {
+      slug: "strength",
+      name: "Strength",
+      sortOrder: 30,
+      iconKey: "dumbbell",
+      colorKey: "primary",
+    },
+    {
+      slug: "accessory",
+      name: "Accessory",
+      sortOrder: 40,
+      iconKey: "kettlebell",
+      colorKey: "primary",
+    },
+    {
+      slug: "conditioning",
+      name: "Conditioning",
+      sortOrder: 50,
+      iconKey: "heart",
+      colorKey: "warning",
+    },
+    { slug: "main", name: "Main", sortOrder: 60, iconKey: "flame", colorKey: "error" },
+    { slug: "cooldown", name: "Cooldown", sortOrder: 70, iconKey: "snow", colorKey: "success" },
+    { slug: "notes", name: "Notes", sortOrder: 80, iconKey: "note", colorKey: "info" },
+    {
+      slug: "text-callout",
+      name: "Callout",
+      sortOrder: 90,
+      iconKey: "megaphone",
+      colorKey: "warning",
+    },
+  ];
+
+  for (const row of blockTypes) {
+    await prisma.blockType.upsert({
+      where: { slug: row.slug },
+      update: {
+        name: row.name,
+        sortOrder: row.sortOrder,
+        iconKey: row.iconKey,
+        colorKey: row.colorKey,
+        active: true,
+      },
+      create: {
+        slug: row.slug,
+        name: row.name,
+        sortOrder: row.sortOrder,
+        iconKey: row.iconKey,
+        colorKey: row.colorKey,
+        active: true,
+      },
+    });
+  }
+
+  const schemes: {
+    slug: string;
+    name: string;
+    kind: SchemeKind;
+    requiredParams: string[];
+    paramDefaults: Prisma.InputJsonValue;
+    sortOrder: number;
+  }[] = [
+    {
+      slug: "straight-sets",
+      name: "Straight Sets",
+      kind: SchemeKind.STRAIGHT_SETS,
+      requiredParams: [],
+      paramDefaults: {},
+      sortOrder: 10,
+    },
+    {
+      slug: "for-time",
+      name: "For Time",
+      kind: SchemeKind.FOR_TIME,
+      requiredParams: ["capTime"],
+      paramDefaults: { capTime: 1200 },
+      sortOrder: 20,
+    },
+    {
+      slug: "amrap",
+      name: "AMRAP",
+      kind: SchemeKind.AMRAP,
+      requiredParams: ["duration"],
+      paramDefaults: { duration: 1200 },
+      sortOrder: 30,
+    },
+    {
+      slug: "emom",
+      name: "EMOM",
+      kind: SchemeKind.EMOM,
+      requiredParams: ["interval", "rounds"],
+      paramDefaults: { interval: 60, rounds: 10 },
+      sortOrder: 40,
+    },
+    {
+      slug: "every-x-min",
+      name: "Every X Min",
+      kind: SchemeKind.EVERY_X_MIN,
+      requiredParams: ["interval", "rounds"],
+      paramDefaults: { interval: 180, rounds: 5 },
+      sortOrder: 50,
+    },
+    {
+      slug: "intervals",
+      name: "Intervals",
+      kind: SchemeKind.INTERVALS,
+      requiredParams: ["work", "rest", "rounds"],
+      paramDefaults: { work: 60, rest: 60, rounds: 8 },
+      sortOrder: 60,
+    },
+    {
+      slug: "time-blocks",
+      name: "Time Blocks",
+      kind: SchemeKind.TIME_BLOCKS,
+      requiredParams: ["duration"],
+      paramDefaults: { duration: 600 },
+      sortOrder: 70,
+    },
+  ];
+
+  for (const row of schemes) {
+    await prisma.scheme.upsert({
+      where: { slug: row.slug },
+      update: {
+        name: row.name,
+        kind: row.kind,
+        requiredParams: row.requiredParams,
+        paramDefaults: row.paramDefaults,
+        sortOrder: row.sortOrder,
+        active: true,
+      },
+      create: {
+        slug: row.slug,
+        name: row.name,
+        kind: row.kind,
+        requiredParams: row.requiredParams,
+        paramDefaults: row.paramDefaults,
+        sortOrder: row.sortOrder,
+        active: true,
+      },
+    });
+  }
+
+  console.log(`  Library: ${blockTypes.length} block types, ${schemes.length} schemes (upsert)`);
+};
+
 const main = async () => {
   if (process.env.NODE_ENV === "production") {
     throw new Error("seed must not run in production");
@@ -1539,6 +1696,7 @@ const main = async () => {
   await seedBlogPosts();
   await seedReviews();
   await seedContactSubmissions();
+  await seedLibrary();
 
   console.log("\nSeed completed!");
 };
