@@ -106,6 +106,40 @@ export const copyWorkoutWeek = async (
         }
       }
 
+      const targetStart = normalizedTarget;
+      const targetEnd = new Date(normalizedTarget);
+
+      targetEnd.setUTCDate(targetEnd.getUTCDate() + 7);
+
+      const targetWorkouts = await tx.workout.findMany({
+        where: {
+          planId,
+          scheduledDate: { gte: targetStart, lt: targetEnd },
+        },
+        orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
+      });
+
+      let currentDateKey = "";
+      let currentIndex = 0;
+
+      for (const target of targetWorkouts) {
+        const dateKey = target.scheduledDate?.toISOString() ?? "null";
+
+        if (dateKey !== currentDateKey) {
+          currentDateKey = dateKey;
+          currentIndex = 0;
+        }
+
+        if (target.sortOrder !== currentIndex) {
+          await tx.workout.update({
+            where: { id: target.id },
+            data: { sortOrder: currentIndex },
+          });
+        }
+
+        currentIndex += 1;
+      }
+
       return rows;
     });
 
