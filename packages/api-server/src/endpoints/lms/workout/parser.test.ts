@@ -227,6 +227,58 @@ describe("parseTiptapDoc doc limits", () => {
     expect(JSON.stringify(doc).length).toBeLessThan(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES);
     expect(result.blocks).toHaveLength(1);
   });
+
+  it("accepts a doc whose serialized length equals MAX_DOC_BYTES exactly", () => {
+    const buildDocWithNoteOfLength = (paddingLength: number): TiptapDoc => ({
+      type: "doc",
+      content: [
+        {
+          type: "notes",
+          attrs: { blockTypeId: BLOCK_TYPE_ID, note: "x".repeat(paddingLength) },
+        },
+      ],
+    });
+
+    const baseOverhead = JSON.stringify(buildDocWithNoteOfLength(0)).length;
+    const paddingLength = WORKOUT_DOC_LIMITS.MAX_DOC_BYTES - baseOverhead;
+    const doc = buildDocWithNoteOfLength(paddingLength);
+
+    expect(JSON.stringify(doc).length).toBe(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES);
+
+    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+
+    expect(result.blocks).toHaveLength(1);
+  });
+
+  it("rejects a doc whose serialized length equals MAX_DOC_BYTES + 1", () => {
+    const buildDocWithNoteOfLength = (paddingLength: number): TiptapDoc => ({
+      type: "doc",
+      content: [
+        {
+          type: "notes",
+          attrs: { blockTypeId: BLOCK_TYPE_ID, note: "x".repeat(paddingLength) },
+        },
+      ],
+    });
+
+    const baseOverhead = JSON.stringify(buildDocWithNoteOfLength(0)).length;
+    const paddingLength = WORKOUT_DOC_LIMITS.MAX_DOC_BYTES - baseOverhead + 1;
+    const doc = buildDocWithNoteOfLength(paddingLength);
+
+    expect(JSON.stringify(doc).length).toBe(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES + 1);
+
+    try {
+      parseTiptapDoc(doc, buildLookup(), parserOpts);
+      expect.fail("expected parseTiptapDoc to throw");
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestError);
+
+      if (error instanceof BadRequestError) {
+        expect(error.details?.code).toBe("workout.doc.too_large");
+        expect(error.details?.limit).toBe(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES);
+      }
+    }
+  });
 });
 
 describe("parseTiptapDoc empty-block guards", () => {
