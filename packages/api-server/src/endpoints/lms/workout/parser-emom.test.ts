@@ -74,6 +74,42 @@ describe("parseTiptapDoc EMOM", () => {
 
     expect(() => parseTiptapDoc(doc, buildLookup(), parserOpts)).toThrow(BadRequestError);
   });
+
+  it("rejects an emomSlot with zero exercise mentions", () => {
+    const doc = buildEmomDoc([
+      {
+        type: "emomSlot",
+        attrs: { minuteInRound: 0 },
+        content: [{ type: "paragraph" }],
+      },
+    ]);
+
+    try {
+      parseTiptapDoc(doc, buildLookup(), parserOpts);
+      expect.fail("expected parseTiptapDoc to throw");
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestError);
+
+      if (error instanceof BadRequestError) {
+        expect(error.details?.code).toBe("workout.emomSlot.empty");
+      }
+    }
+  });
+
+  it("rejects an emom block with zero slots", () => {
+    const doc = buildEmomDoc([]);
+
+    try {
+      parseTiptapDoc(doc, buildLookup(), parserOpts);
+      expect.fail("expected parseTiptapDoc to throw");
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestError);
+
+      if (error instanceof BadRequestError) {
+        expect(error.details?.code).toBe("workout.emom.empty");
+      }
+    }
+  });
 });
 
 describe("parseTiptapDoc complex grouping", () => {

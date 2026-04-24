@@ -228,3 +228,60 @@ describe("parseTiptapDoc doc limits", () => {
     expect(result.blocks).toHaveLength(1);
   });
 });
+
+describe("parseTiptapDoc empty-block guards", () => {
+  it("rejects a scheme block with zero exercise mentions", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [straightSetsBlock([])],
+    };
+
+    try {
+      parseTiptapDoc(doc, buildLookup(), parserOpts);
+      expect.fail("expected parseTiptapDoc to throw");
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestError);
+
+      if (error instanceof BadRequestError) {
+        expect(error.details?.code).toBe("workout.block.empty");
+        expect(error.details?.nodeType).toBe("straightSets");
+      }
+    }
+  });
+
+  it("still parses a schemeless notes block with no content", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [
+        {
+          type: "notes",
+          attrs: { blockTypeId: BLOCK_TYPE_ID },
+        },
+      ],
+    };
+
+    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0]?.schemeKind).toBeNull();
+    expect(result.blocks[0]?.exercises).toHaveLength(0);
+  });
+
+  it("still parses a schemeless textCallout block with an empty paragraph", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [
+        {
+          type: "textCallout",
+          attrs: { blockTypeId: BLOCK_TYPE_ID },
+          content: [{ type: "paragraph" }],
+        },
+      ],
+    };
+
+    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0]?.schemeKind).toBeNull();
+  });
+});

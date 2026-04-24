@@ -154,11 +154,20 @@ const parseEmomSlotNode = (
     throw new BadRequestError("Invalid emomSlot attrs", { path, issues: parsed.error.issues });
   }
 
+  const exercises = collectExerciseMentions(node.content, lookup, opts, path);
+
+  if (exercises.length === 0) {
+    throw new BadRequestError("emomSlot must contain at least one exerciseMention", {
+      code: "workout.emomSlot.empty",
+      path,
+    });
+  }
+
   return {
     minuteInRound: parsed.data.minuteInRound,
     sortOrder,
     note: parsed.data.note ?? null,
-    exercises: collectExerciseMentions(node.content, lookup, opts, path),
+    exercises,
   };
 };
 
@@ -272,8 +281,25 @@ const parseBlockNode = (
 
       emomSlots.push(parseEmomSlotNode(child, lookup, opts, childPath, idx));
     });
+
+    if (emomSlots.length === 0) {
+      throw new BadRequestError("emom block must contain at least one emomSlot", {
+        code: "workout.emom.empty",
+        path,
+      });
+    }
   } else {
-    exercises.push(...collectExerciseMentions(node.content, lookup, opts, path));
+    const blockExercises = collectExerciseMentions(node.content, lookup, opts, path);
+
+    if (blockExercises.length === 0) {
+      throw new BadRequestError("Scheme block must contain at least one exerciseMention", {
+        code: "workout.block.empty",
+        path,
+        nodeType: node.type,
+      });
+    }
+
+    exercises.push(...blockExercises);
   }
 
   return {
