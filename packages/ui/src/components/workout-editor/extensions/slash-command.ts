@@ -94,6 +94,7 @@ export const runSlashCommand = (editor: Editor, range: Range, item: SlashCommand
   const content = buildBlockContent(blockName);
   const attrs: Record<string, unknown> = SCHEMELESS_BLOCK_NAMES.has(blockName)
     ? {
+        blockTypeId: item.blockTypeId ?? null,
         note: null,
         sortOrder: 0,
       }

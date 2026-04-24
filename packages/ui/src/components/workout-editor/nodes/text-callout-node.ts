@@ -2,9 +2,9 @@ import { Node, type Attribute } from "@tiptap/core";
 
 import { BLOCK_NODE_GROUP } from "../constants";
 
+import { buildSchemelessBlockAttributes } from "./block-node-attrs";
+
 const toneAttr: Attribute = { default: "info" };
-const noteAttr: Attribute = { default: null };
-const sortAttr: Attribute = { default: 0 };
 
 export const TextCalloutNode = Node.create({
   name: "textCallout",
@@ -13,11 +13,7 @@ export const TextCalloutNode = Node.create({
   defining: true,
   isolating: true,
   selectable: true,
-  addAttributes: () => ({
-    tone: toneAttr,
-    note: noteAttr,
-    sortOrder: sortAttr,
-  }),
+  addAttributes: () => ({ tone: toneAttr, ...buildSchemelessBlockAttributes() }),
   parseHTML: () => [{ tag: 'section[data-block-kind="textCallout"]' }],
   renderHTML: ({ HTMLAttributes }) => [
     "section",

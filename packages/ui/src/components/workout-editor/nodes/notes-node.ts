@@ -1,9 +1,8 @@
-import { Node, type Attribute } from "@tiptap/core";
+import { Node } from "@tiptap/core";
 
 import { BLOCK_NODE_GROUP } from "../constants";
 
-const noteAttr: Attribute = { default: null };
-const sortAttr: Attribute = { default: 0 };
+import { buildSchemelessBlockAttributes } from "./block-node-attrs";
 
 export const NotesNode = Node.create({
   name: "notes",
@@ -12,10 +11,7 @@ export const NotesNode = Node.create({
   defining: true,
   isolating: true,
   selectable: true,
-  addAttributes: () => ({
-    note: noteAttr,
-    sortOrder: sortAttr,
-  }),
+  addAttributes: () => ({ ...buildSchemelessBlockAttributes() }),
   parseHTML: () => [{ tag: 'section[data-block-kind="notes"]' }],
   renderHTML: ({ HTMLAttributes }) => [
     "section",

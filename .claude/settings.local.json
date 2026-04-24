@@ -86,7 +86,8 @@
       "Bash(npx dotenv-cli *)",
       "Bash(npx prisma *)",
       "Bash([ -s \"C:\\\\\\\\Users\\\\\\\\maksi\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\D--projects-contrib-the-discipline-program\\\\\\\\16f8c395-2e8f-4d64-8f92-851ef27d2b93\\\\\\\\tasks\\\\\\\\bblyho8sc.output\" ])",
-      "Bash(tee /tmp/test-output.log)"
+      "Bash(tee /tmp/test-output.log)",
+      "Bash(find node_modules/.pnpm/@tiptap+react* -name \"NodeView*.d.ts\")"
     ]
   }
 }
