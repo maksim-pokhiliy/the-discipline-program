@@ -5,7 +5,7 @@ import { BLOCK_GROUP_VALUE, buildFullBlockAttributes } from "./block-node-attrs"
 export const IntervalsNode = Node.create({
   name: "intervals",
   group: BLOCK_GROUP_VALUE,
-  content: "exerciseMention*",
+  content: "(text | inlineMention)*",
   defining: true,
   isolating: true,
   selectable: true,

@@ -7,7 +7,7 @@ const sortAttr: Attribute = { default: 0 };
 export const EmomSlotNode = Node.create({
   name: "emomSlot",
   group: "emomSlot",
-  content: "exerciseMention*",
+  content: "(text | inlineMention)*",
   defining: true,
   isolating: true,
   selectable: true,
