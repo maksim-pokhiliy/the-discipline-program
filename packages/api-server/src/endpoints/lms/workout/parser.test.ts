@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { type TiptapDoc } from "@repo/contracts/common/tiptap-doc";
+import { type TiptapDoc, type TiptapNode } from "@repo/contracts/common/tiptap-doc";
 import { ExerciseStatus } from "@repo/contracts/library/exercise";
 import { SchemeKind } from "@repo/contracts/library/scheme";
-import { WorkoutRepScheme } from "@repo/contracts/lms/workout-block";
+import { WORKOUT_DOC_LIMITS, WorkoutRepScheme } from "@repo/contracts/lms/workout-block";
 import { BadRequestError } from "@repo/errors";
 
 import { parseTiptapDoc } from "./parser";
@@ -157,5 +157,74 @@ describe("parseTiptapDoc core scenarios", () => {
 
     expect(result.blocks).toHaveLength(1);
     expect(result.blocks[0]?.exercises).toHaveLength(1);
+  });
+});
+
+describe("parseTiptapDoc doc limits", () => {
+  it("rejects a doc whose serialized byte size exceeds MAX_DOC_BYTES", () => {
+    const hugeNote = "x".repeat(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES + 1);
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [
+        {
+          type: "notes",
+          attrs: { blockTypeId: BLOCK_TYPE_ID, note: hugeNote },
+        },
+      ],
+    };
+
+    try {
+      parseTiptapDoc(doc, buildLookup(), parserOpts);
+      expect.fail("expected parseTiptapDoc to throw");
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestError);
+
+      if (error instanceof BadRequestError) {
+        expect(error.details?.code).toBe("workout.doc.too_large");
+        expect(error.details?.limit).toBe(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES);
+      }
+    }
+  });
+
+  it("rejects a doc whose recursive node count exceeds MAX_NODES_PER_DOC", () => {
+    const paragraphs: TiptapNode[] = Array.from(
+      { length: WORKOUT_DOC_LIMITS.MAX_NODES_PER_DOC + 1 },
+      () => ({ type: "paragraph" }),
+    );
+
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [
+        {
+          type: "notes",
+          attrs: { blockTypeId: BLOCK_TYPE_ID },
+          content: paragraphs,
+        },
+      ],
+    };
+
+    try {
+      parseTiptapDoc(doc, buildLookup(), parserOpts);
+      expect.fail("expected parseTiptapDoc to throw");
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestError);
+
+      if (error instanceof BadRequestError) {
+        expect(error.details?.code).toBe("workout.doc.too_many_nodes");
+        expect(error.details?.limit).toBe(WORKOUT_DOC_LIMITS.MAX_NODES_PER_DOC);
+      }
+    }
+  });
+
+  it("accepts a small valid doc well below both limits", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [straightSetsBlock([mentionNode(EXERCISE_ID_A)])],
+    };
+
+    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+
+    expect(JSON.stringify(doc).length).toBeLessThan(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES);
+    expect(result.blocks).toHaveLength(1);
   });
 });

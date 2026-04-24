@@ -6,6 +6,7 @@ import {
 import {
   type SchemeConfig,
   schemeConfigSchema,
+  WORKOUT_DOC_LIMITS,
   WorkoutRepScheme,
 } from "@repo/contracts/lms/workout-block";
 import { BadRequestError } from "@repo/errors";
@@ -294,6 +295,34 @@ export const parseTiptapDoc = (
   lookup: LibraryLookup,
   opts: ParseWorkoutDocOptions,
 ): WorkoutTreeInput => {
+  const serialized = JSON.stringify(doc);
+
+  if (serialized.length > WORKOUT_DOC_LIMITS.MAX_DOC_BYTES) {
+    throw new BadRequestError("Workout doc exceeds maximum byte size", {
+      code: "workout.doc.too_large",
+      limit: WORKOUT_DOC_LIMITS.MAX_DOC_BYTES,
+      actual: serialized.length,
+    });
+  }
+
+  let nodeCount = 0;
+
+  const countNodes = (node: TiptapNode): void => {
+    nodeCount += 1;
+
+    if (nodeCount > WORKOUT_DOC_LIMITS.MAX_NODES_PER_DOC) {
+      throw new BadRequestError("Workout doc exceeds maximum node count", {
+        code: "workout.doc.too_many_nodes",
+        limit: WORKOUT_DOC_LIMITS.MAX_NODES_PER_DOC,
+        actual: nodeCount,
+      });
+    }
+
+    node.content?.forEach(countNodes);
+  };
+
+  doc.content.forEach(countNodes);
+
   const blocks: WorkoutBlockInput[] = doc.content.map((node, idx) =>
     parseBlockNode(node, lookup, opts, toNodePath("content", idx), idx),
   );
