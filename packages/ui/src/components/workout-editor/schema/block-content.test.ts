@@ -38,6 +38,27 @@ describe("workout-editor block node schemas", () => {
 
       expect(() => doc.check()).toThrow();
     });
+
+    it("accepts a fully empty doc without auto-filling a block", () => {
+      const element = document.createElement("div");
+
+      document.body.appendChild(element);
+
+      const editor = new Editor({
+        element,
+        extensions: coreWorkoutExtensions,
+        content: { type: "doc", content: [] },
+      });
+
+      try {
+        const json = editor.getJSON();
+
+        expect(json.type).toBe("doc");
+        expect(json.content ?? []).toHaveLength(0);
+      } finally {
+        editor.destroy();
+      }
+    });
   });
 
   describe.each([
