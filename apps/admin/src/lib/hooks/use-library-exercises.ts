@@ -12,7 +12,6 @@ import type {
   RejectExerciseData,
   UpdateExerciseData,
 } from "@repo/contracts/library/exercise";
-import { ExerciseStatus } from "@repo/contracts/library/exercise";
 import { createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
@@ -40,7 +39,6 @@ const libraryExerciseHooks = createCrudHooks<
   },
   redirectTo: "/library/exercises",
   useNavigate,
-  additionalInvalidateKeys: [adminKeys.libraryExercises.reviewQueue()],
 });
 
 export const useLibraryExercise = libraryExerciseHooks.useById;
@@ -52,12 +50,6 @@ export const useLibraryExercises = (query: GetExercisesQuery = {}) =>
   useQuery({
     queryKey: adminKeys.libraryExercises.list(query),
     queryFn: () => api.libraryExercises.list(query),
-  });
-
-export const useLibraryExercisesReviewQueue = () =>
-  useQuery({
-    queryKey: adminKeys.libraryExercises.reviewQueue(),
-    queryFn: () => api.libraryExercises.list({ status: ExerciseStatus.PENDING_REVIEW }),
   });
 
 const invalidateLibraryExerciseLists = (queryClient: ReturnType<typeof useQueryClient>) => {
@@ -73,7 +65,6 @@ export const useApproveLibraryExercise = () => {
       toast.success("Exercise approved");
       invalidateLibraryExerciseLists(queryClient);
       queryClient.invalidateQueries({ queryKey: adminKeys.libraryExercises.byId(result.id) });
-      queryClient.invalidateQueries({ queryKey: adminKeys.libraryExercises.reviewQueue() });
     },
     onError: (error) => {
       toast.error(error.message || "Failed to approve exercise");
@@ -90,7 +81,6 @@ export const useRejectLibraryExercise = () => {
       toast.success("Exercise rejected");
       invalidateLibraryExerciseLists(queryClient);
       queryClient.invalidateQueries({ queryKey: adminKeys.libraryExercises.byId(result.id) });
-      queryClient.invalidateQueries({ queryKey: adminKeys.libraryExercises.reviewQueue() });
     },
     onError: (error) => {
       toast.error(error.message || "Failed to reject exercise");
@@ -110,7 +100,6 @@ export const useMergeLibraryExercise = () => {
       queryClient.invalidateQueries({
         queryKey: adminKeys.libraryExercises.byId(variables.data.targetExerciseId),
       });
-      queryClient.invalidateQueries({ queryKey: adminKeys.libraryExercises.reviewQueue() });
     },
     onError: (error) => {
       toast.error(error.message || "Failed to merge exercise");

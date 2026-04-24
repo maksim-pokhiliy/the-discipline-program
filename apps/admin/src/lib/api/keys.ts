@@ -22,7 +22,6 @@ export const adminKeys = {
     ...createEntityKeys(ROOT, "library-exercises"),
     all: () => [...ROOT, "library-exercises"] as const,
     list: (query: GetExercisesQuery = {}) => [...ROOT, "library-exercises", "list", query] as const,
-    reviewQueue: () => [...ROOT, "library-exercises", "review-queue"] as const,
     search: (query: string) => [...ROOT, "library-exercises", "search", query] as const,
   },
 
