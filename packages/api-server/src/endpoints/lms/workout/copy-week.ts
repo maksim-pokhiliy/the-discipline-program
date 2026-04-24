@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 
 import { type TiptapDoc, tiptapDocSchema } from "@repo/contracts/common/tiptap-doc";
 import { type Workout } from "@repo/contracts/lms/workout";
+import { AppError } from "@repo/errors";
 
 import { resolveCoachId, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
@@ -160,6 +161,10 @@ export const copyWorkoutWeek = async (
       })
       .map(mapToWorkout);
   } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
     return handlePrismaError(error, { entity: "Workout" });
   }
 };

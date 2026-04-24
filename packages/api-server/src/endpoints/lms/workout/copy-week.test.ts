@@ -171,4 +171,67 @@ describe("copyWorkoutWeek sortOrder re-sequence (integration)", () => {
     expect(targetWorkouts).toHaveLength(2);
     expect(targetWorkouts.map((w) => w.sortOrder)).toEqual([0, 1]);
   });
+
+  it("re-sequences when target week has pre-existing multi-row same-date", async () => {
+    const localSourceStart = new Date(Date.UTC(2026, 3, 6));
+    const localTargetStart = new Date(Date.UTC(2026, 3, 13));
+
+    const preExistingA = await createTestWorkout(plan.id, {
+      scheduledDate: localTargetStart,
+      title: "Pre-existing A",
+      sortOrder: 0,
+    });
+    const preExistingB = await createTestWorkout(plan.id, {
+      scheduledDate: localTargetStart,
+      title: "Pre-existing B",
+      sortOrder: 1,
+    });
+    const sourceA = await createTestWorkout(plan.id, {
+      scheduledDate: localSourceStart,
+      title: "Source A",
+      sortOrder: 0,
+    });
+    const sourceB = await createTestWorkout(plan.id, {
+      scheduledDate: localSourceStart,
+      title: "Source B",
+      sortOrder: 1,
+    });
+
+    toCleanup.push({ table: "workout", id: preExistingA.id });
+    toCleanup.push({ table: "workout", id: preExistingB.id });
+    toCleanup.push({ table: "workout", id: sourceA.id });
+    toCleanup.push({ table: "workout", id: sourceB.id });
+
+    const copied = await copyWorkoutWeek(
+      coach.user.id,
+      plan.id,
+      localSourceStart,
+      localTargetStart,
+    );
+
+    for (const w of copied) {
+      toCleanup.push({ table: "workout", id: w.id });
+    }
+
+    const targetEnd = new Date(localTargetStart);
+
+    targetEnd.setUTCDate(targetEnd.getUTCDate() + 7);
+
+    const targetWorkouts = await cleanupRaw.workout.findMany({
+      where: {
+        planId: plan.id,
+        scheduledDate: { gte: localTargetStart, lt: targetEnd },
+      },
+      orderBy: [{ scheduledDate: "asc" }, { sortOrder: "asc" }, { createdAt: "asc" }],
+    });
+
+    expect(targetWorkouts).toHaveLength(4);
+    expect(targetWorkouts.map((w) => w.sortOrder)).toEqual([0, 1, 2, 3]);
+
+    const ids = targetWorkouts.map((w) => w.id);
+
+    expect(ids).toContain(preExistingA.id);
+    expect(ids).toContain(preExistingB.id);
+    expect(ids.indexOf(preExistingA.id)).toBeLessThan(ids.indexOf(preExistingB.id));
+  });
 });
