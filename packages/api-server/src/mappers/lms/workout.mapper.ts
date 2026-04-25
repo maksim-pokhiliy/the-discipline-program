@@ -1,5 +1,6 @@
 import {
   type EmomSlot as PrismaEmomSlot,
+  type SchemeSection as PrismaSchemeSection,
   type Workout as PrismaWorkout,
   type WorkoutBlock as PrismaWorkoutBlock,
   type WorkoutBlockExercise as PrismaWorkoutBlockExercise,
@@ -12,9 +13,13 @@ import { toWorkoutBlockDto } from "./workout-block.mapper";
 
 type WorkoutRow = PrismaWorkout;
 
-type WorkoutBlockWithRelationsRow = PrismaWorkoutBlock & {
+type SchemeSectionWithRelationsRow = PrismaSchemeSection & {
   exercises?: PrismaWorkoutBlockExercise[];
   emomSlots?: (PrismaEmomSlot & { exercises?: PrismaWorkoutBlockExercise[] })[];
+};
+
+type WorkoutBlockWithRelationsRow = PrismaWorkoutBlock & {
+  sections?: SchemeSectionWithRelationsRow[];
 };
 
 type WorkoutWithBlocksRow = WorkoutRow & {

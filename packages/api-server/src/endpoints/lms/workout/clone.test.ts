@@ -9,9 +9,11 @@ import {
   createTestWorkout,
 } from "../../../test/helpers";
 import {
+  type BlockSpec,
   createTestBlockType,
   createTestExercise,
   createTestScheme,
+  createTestWorkoutWithBlocks,
 } from "../../../test/library-helpers";
 
 import { cloneWorkoutTree } from "./clone";
@@ -21,6 +23,7 @@ describe("cloneWorkoutTree (integration)", () => {
   let plan: Awaited<ReturnType<typeof createTestPlan>>;
   let blockTypeId: string;
   let schemeId: string;
+  let emomSchemeId: string;
   let exerciseAId: string;
   let exerciseBId: string;
 
@@ -38,6 +41,10 @@ describe("cloneWorkoutTree (integration)", () => {
 
     schemeId = scheme.id;
 
+    const emomScheme = await createTestScheme({ kind: "EMOM" });
+
+    emomSchemeId = emomScheme.id;
+
     const exerciseA = await createTestExercise(coach.user.id);
 
     exerciseAId = exerciseA.id;
@@ -48,6 +55,7 @@ describe("cloneWorkoutTree (integration)", () => {
 
     toCleanup.push({ table: "exercise", id: exerciseAId });
     toCleanup.push({ table: "exercise", id: exerciseBId });
+    toCleanup.push({ table: "scheme", id: emomSchemeId });
     toCleanup.push({ table: "scheme", id: schemeId });
     toCleanup.push({ table: "blockType", id: blockTypeId });
   });
@@ -77,6 +85,7 @@ describe("cloneWorkoutTree (integration)", () => {
     });
 
     expect(result.blockIdMap.size).toBe(0);
+    expect(result.sectionIdMap.size).toBe(0);
     expect(result.slotIdMap.size).toBe(0);
 
     const targetBlocks = await cleanupRaw.workoutBlock.findMany({
@@ -86,196 +95,211 @@ describe("cloneWorkoutTree (integration)", () => {
     expect(targetBlocks).toHaveLength(0);
   });
 
-  it("clones 2 blocks x 2 exercises each into target with new IDs", async () => {
-    const source = await createTestWorkout(plan.id, { title: "Multi-block source" });
+  it("clones 2 blocks x 2 sections x N exercises into target with new IDs", async () => {
+    const blockSpecs: BlockSpec[] = [
+      {
+        blockTypeId,
+        sections: [
+          {
+            schemeId,
+            schemeKind: "STRAIGHT_SETS",
+            exercises: [
+              { exerciseId: exerciseAId, repValues: [5, 5, 5], sets: 3 },
+              { exerciseId: exerciseBId, repValues: [5, 5, 5], sets: 3 },
+            ],
+          },
+          {
+            schemeId,
+            schemeKind: "AMRAP",
+            exercises: [{ exerciseId: exerciseAId, repValues: [10] }],
+          },
+        ],
+      },
+      {
+        blockTypeId,
+        sections: [
+          {
+            schemeId,
+            schemeKind: "STRAIGHT_SETS",
+            exercises: [{ exerciseId: exerciseBId, repValues: [10] }],
+          },
+        ],
+      },
+    ];
+
+    const sourceFixture = await createTestWorkoutWithBlocks({
+      planId: plan.id,
+      blocks: blockSpecs,
+    });
+
+    toCleanup.push(...sourceFixture.toCleanup);
+
     const target = await createTestWorkout(plan.id, { title: "Multi-block target" });
 
     toCleanup.push({ table: "workout", id: target.id });
-    toCleanup.push({ table: "workout", id: source.id });
-
-    const sourceBlock1 = await cleanupRaw.workoutBlock.create({
-      data: {
-        workoutId: source.id,
-        blockTypeId,
-        schemeId,
-        schemeKind: "STRAIGHT_SETS",
-        schemeConfig: {},
-        sortOrder: 0,
-      },
-    });
-    const sourceBlock2 = await cleanupRaw.workoutBlock.create({
-      data: {
-        workoutId: source.id,
-        blockTypeId,
-        schemeId,
-        schemeKind: "STRAIGHT_SETS",
-        schemeConfig: {},
-        sortOrder: 1,
-      },
-    });
-
-    await cleanupRaw.workoutBlockExercise.createMany({
-      data: [
-        {
-          blockId: sourceBlock1.id,
-          exerciseId: exerciseAId,
-          repScheme: "STRAIGHT",
-          repValues: [5, 5, 5],
-          sets: 3,
-          sortOrder: 0,
-        },
-        {
-          blockId: sourceBlock1.id,
-          exerciseId: exerciseBId,
-          repScheme: "STRAIGHT",
-          repValues: [5, 5, 5],
-          sets: 3,
-          sortOrder: 1,
-        },
-        {
-          blockId: sourceBlock2.id,
-          exerciseId: exerciseAId,
-          repScheme: "STRAIGHT",
-          repValues: [10],
-          sets: 1,
-          sortOrder: 0,
-        },
-        {
-          blockId: sourceBlock2.id,
-          exerciseId: exerciseBId,
-          repScheme: "STRAIGHT",
-          repValues: [10],
-          sets: 1,
-          sortOrder: 1,
-        },
-      ],
-    });
 
     const result = await prisma.$transaction(async (tx) => {
       return cloneWorkoutTree({
-        sourceWorkoutId: source.id,
+        sourceWorkoutId: sourceFixture.workout.id,
         targetWorkoutId: target.id,
         tx,
       });
     });
 
     expect(result.blockIdMap.size).toBe(2);
-    expect(result.blockIdMap.has(sourceBlock1.id)).toBe(true);
-    expect(result.blockIdMap.has(sourceBlock2.id)).toBe(true);
+    expect(result.sectionIdMap.size).toBe(3);
+    expect(result.slotIdMap.size).toBe(0);
 
     for (const [srcId, tgtId] of result.blockIdMap.entries()) {
+      expect(srcId).not.toBe(tgtId);
+    }
+
+    for (const [srcId, tgtId] of result.sectionIdMap.entries()) {
       expect(srcId).not.toBe(tgtId);
     }
 
     const targetBlocks = await cleanupRaw.workoutBlock.findMany({
       where: { workoutId: target.id },
       orderBy: { sortOrder: "asc" },
-      include: { exercises: { orderBy: { sortOrder: "asc" } } },
-    });
-
-    expect(targetBlocks).toHaveLength(2);
-    expect(targetBlocks[0]?.sortOrder).toBe(0);
-    expect(targetBlocks[0]?.exercises).toHaveLength(2);
-    expect(targetBlocks[0]?.exercises[0]?.exerciseId).toBe(exerciseAId);
-    expect(targetBlocks[0]?.exercises[1]?.exerciseId).toBe(exerciseBId);
-    expect(targetBlocks[1]?.exercises).toHaveLength(2);
-  });
-
-  it("clones an EMOM block with slots and slot exercises", async () => {
-    const source = await createTestWorkout(plan.id, { title: "EMOM source" });
-    const target = await createTestWorkout(plan.id, { title: "EMOM target" });
-
-    toCleanup.push({ table: "workout", id: target.id });
-    toCleanup.push({ table: "workout", id: source.id });
-
-    const sourceBlock = await cleanupRaw.workoutBlock.create({
-      data: {
-        workoutId: source.id,
-        blockTypeId,
-        schemeId,
-        schemeKind: "EMOM",
-        schemeConfig: {},
-        sortOrder: 0,
-      },
-    });
-
-    const slotA = await cleanupRaw.emomSlot.create({
-      data: { blockId: sourceBlock.id, minuteInRound: 0, sortOrder: 0 },
-    });
-    const slotB = await cleanupRaw.emomSlot.create({
-      data: { blockId: sourceBlock.id, minuteInRound: 1, sortOrder: 1 },
-    });
-
-    await cleanupRaw.workoutBlockExercise.createMany({
-      data: [
-        {
-          emomSlotId: slotA.id,
-          exerciseId: exerciseAId,
-          repScheme: "STRAIGHT",
-          repValues: [8],
-          sets: 1,
-          sortOrder: 0,
-        },
-        {
-          emomSlotId: slotA.id,
-          exerciseId: exerciseBId,
-          repScheme: "STRAIGHT",
-          repValues: [8],
-          sets: 1,
-          sortOrder: 1,
-        },
-        {
-          emomSlotId: slotB.id,
-          exerciseId: exerciseAId,
-          repScheme: "STRAIGHT",
-          repValues: [12],
-          sets: 1,
-          sortOrder: 0,
-        },
-        {
-          emomSlotId: slotB.id,
-          exerciseId: exerciseBId,
-          repScheme: "STRAIGHT",
-          repValues: [12],
-          sets: 1,
-          sortOrder: 1,
-        },
-      ],
-    });
-
-    const result = await prisma.$transaction(async (tx) => {
-      return cloneWorkoutTree({
-        sourceWorkoutId: source.id,
-        targetWorkoutId: target.id,
-        tx,
-      });
-    });
-
-    expect(result.blockIdMap.size).toBe(1);
-    expect(result.slotIdMap.size).toBe(2);
-    expect(result.slotIdMap.has(slotA.id)).toBe(true);
-    expect(result.slotIdMap.has(slotB.id)).toBe(true);
-
-    const targetBlocks = await cleanupRaw.workoutBlock.findMany({
-      where: { workoutId: target.id },
       include: {
-        emomSlots: {
+        sections: {
           orderBy: { sortOrder: "asc" },
           include: { exercises: { orderBy: { sortOrder: "asc" } } },
         },
       },
     });
 
-    expect(targetBlocks).toHaveLength(1);
-    expect(targetBlocks[0]?.schemeKind).toBe("EMOM");
-    expect(targetBlocks[0]?.emomSlots).toHaveLength(2);
-    expect(targetBlocks[0]?.emomSlots[0]?.exercises).toHaveLength(2);
-    expect(targetBlocks[0]?.emomSlots[1]?.exercises).toHaveLength(2);
-    expect(targetBlocks[0]?.emomSlots[0]?.exercises[0]?.exerciseId).toBe(exerciseAId);
-    expect(targetBlocks[0]?.emomSlots[0]?.exercises[1]?.exerciseId).toBe(exerciseBId);
+    expect(targetBlocks).toHaveLength(2);
+    expect(targetBlocks[0]?.sections).toHaveLength(2);
+    expect(targetBlocks[0]?.sections[0]?.exercises).toHaveLength(2);
+    expect(targetBlocks[0]?.sections[1]?.exercises).toHaveLength(1);
+    expect(targetBlocks[1]?.sections).toHaveLength(1);
+    expect(targetBlocks[1]?.sections[0]?.exercises).toHaveLength(1);
+  });
+
+  it("clones an EMOM section with slots and slot exercises", async () => {
+    const blockSpecs: BlockSpec[] = [
+      {
+        blockTypeId,
+        sections: [
+          {
+            schemeId: emomSchemeId,
+            schemeKind: "EMOM",
+            emomSlots: [
+              {
+                minuteInRound: 0,
+                exercises: [
+                  { exerciseId: exerciseAId, repValues: [8] },
+                  { exerciseId: exerciseBId, repValues: [8] },
+                ],
+              },
+              {
+                minuteInRound: 1,
+                exercises: [
+                  { exerciseId: exerciseAId, repValues: [12] },
+                  { exerciseId: exerciseBId, repValues: [12] },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const sourceFixture = await createTestWorkoutWithBlocks({
+      planId: plan.id,
+      blocks: blockSpecs,
+    });
+
+    toCleanup.push(...sourceFixture.toCleanup);
+
+    const target = await createTestWorkout(plan.id, { title: "EMOM target" });
+
+    toCleanup.push({ table: "workout", id: target.id });
+
+    const result = await prisma.$transaction(async (tx) => {
+      return cloneWorkoutTree({
+        sourceWorkoutId: sourceFixture.workout.id,
+        targetWorkoutId: target.id,
+        tx,
+      });
+    });
+
+    expect(result.blockIdMap.size).toBe(1);
+    expect(result.sectionIdMap.size).toBe(1);
+    expect(result.slotIdMap.size).toBe(2);
 
     for (const [srcId, tgtId] of result.slotIdMap.entries()) {
       expect(srcId).not.toBe(tgtId);
     }
+
+    const targetBlocks = await cleanupRaw.workoutBlock.findMany({
+      where: { workoutId: target.id },
+      include: {
+        sections: {
+          include: {
+            emomSlots: {
+              orderBy: { sortOrder: "asc" },
+              include: { exercises: { orderBy: { sortOrder: "asc" } } },
+            },
+          },
+        },
+      },
+    });
+
+    expect(targetBlocks).toHaveLength(1);
+    expect(targetBlocks[0]?.sections[0]?.schemeKind).toBe("EMOM");
+    expect(targetBlocks[0]?.sections[0]?.emomSlots).toHaveLength(2);
+    expect(targetBlocks[0]?.sections[0]?.emomSlots[0]?.exercises).toHaveLength(2);
+    expect(targetBlocks[0]?.sections[0]?.emomSlots[1]?.exercises).toHaveLength(2);
+  });
+
+  it("does not mutate source rows", async () => {
+    const blockSpecs: BlockSpec[] = [
+      {
+        blockTypeId,
+        sections: [
+          {
+            schemeId,
+            schemeKind: "STRAIGHT_SETS",
+            exercises: [{ exerciseId: exerciseAId, repValues: [5] }],
+          },
+        ],
+      },
+    ];
+
+    const sourceFixture = await createTestWorkoutWithBlocks({
+      planId: plan.id,
+      blocks: blockSpecs,
+    });
+
+    toCleanup.push(...sourceFixture.toCleanup);
+
+    const target = await createTestWorkout(plan.id, { title: "Idempotence target" });
+
+    toCleanup.push({ table: "workout", id: target.id });
+
+    const sourceBlocksBefore = await cleanupRaw.workoutBlock.findMany({
+      where: { workoutId: sourceFixture.workout.id },
+      include: { sections: { include: { exercises: true } } },
+    });
+
+    await prisma.$transaction(async (tx) => {
+      return cloneWorkoutTree({
+        sourceWorkoutId: sourceFixture.workout.id,
+        targetWorkoutId: target.id,
+        tx,
+      });
+    });
+
+    const sourceBlocksAfter = await cleanupRaw.workoutBlock.findMany({
+      where: { workoutId: sourceFixture.workout.id },
+      include: { sections: { include: { exercises: true } } },
+    });
+
+    expect(sourceBlocksAfter.map((b) => b.id)).toEqual(sourceBlocksBefore.map((b) => b.id));
+    expect(sourceBlocksAfter[0]?.sections.map((s) => s.id)).toEqual(
+      sourceBlocksBefore[0]?.sections.map((s) => s.id),
+    );
   });
 });

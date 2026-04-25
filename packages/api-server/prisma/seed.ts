@@ -53,6 +53,7 @@ const clearAll = async () => {
   await prisma.marketingReview.deleteMany();
   await prisma.session.deleteMany();
   await prisma.account.deleteMany();
+  await prisma.exercise.deleteMany();
   await prisma.user.deleteMany();
 };
 
@@ -1252,6 +1253,106 @@ const addDays = (base: Date, days: number): Date => {
   return d;
 };
 
+const seedSampleWorkoutContentDoc = async (
+  coachUserId: string,
+): Promise<Prisma.InputJsonValue | null> => {
+  const warmupBlockType = await prisma.blockType.findFirst({ where: { slug: "warm-up" } });
+  const emomScheme = await prisma.scheme.findFirst({ where: { slug: "emom" } });
+  const straightSetsScheme = await prisma.scheme.findFirst({ where: { slug: "straight-sets" } });
+
+  if (!warmupBlockType || !emomScheme || !straightSetsScheme) {
+    return null;
+  }
+
+  const ensureExercise = async (canonicalName: string): Promise<string> => {
+    const normalized = canonicalName.toLowerCase().trim().replace(/\s+/g, " ");
+
+    const existing = await prisma.exercise.findFirst({
+      where: { normalizedName: normalized, status: "APPROVED" },
+    });
+
+    if (existing) {
+      return existing.id;
+    }
+
+    const created = await prisma.exercise.create({
+      data: {
+        canonicalName,
+        normalizedName: normalized,
+        aliases: [],
+        measurementUnits: ["REPS"],
+        hasLoad: false,
+        status: "APPROVED",
+        createdByUserId: coachUserId,
+      },
+    });
+
+    return created.id;
+  };
+
+  const airSquatId = await ensureExercise("Air Squat");
+  const pushUpId = await ensureExercise("Push Up");
+
+  const sampleContentDoc = {
+    type: "doc",
+    content: [
+      {
+        type: "block",
+        attrs: { blockTypeId: warmupBlockType.id, title: "Warmup", sortOrder: 0 },
+        content: [
+          {
+            type: "schemeSection",
+            attrs: {
+              schemeId: emomScheme.id,
+              schemeKind: "EMOM",
+              schemeConfig: { interval: 60, rounds: 10 },
+              effortPct: null,
+              pace: null,
+              note: null,
+              sortOrder: 0,
+            },
+            content: [
+              {
+                type: "emomSlot",
+                attrs: { minuteInRound: 0, sortOrder: 0 },
+                content: [
+                  { type: "exerciseMention", attrs: { exerciseId: airSquatId, repValues: [10] } },
+                ],
+              },
+            ],
+          },
+          {
+            type: "schemeSection",
+            attrs: {
+              schemeId: straightSetsScheme.id,
+              schemeKind: "STRAIGHT_SETS",
+              schemeConfig: {},
+              effortPct: null,
+              pace: null,
+              note: null,
+              sortOrder: 1,
+            },
+            content: [
+              {
+                type: "exerciseLine",
+                attrs: { sortOrder: 0 },
+                content: [
+                  {
+                    type: "exerciseMention",
+                    attrs: { exerciseId: pushUpId, repValues: [10, 10, 10], sets: 3 },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+
+  return sampleContentDoc as Prisma.InputJsonValue;
+};
+
 const seedTrainingPlans = async (
   coachProfileId: string,
   users: Awaited<ReturnType<typeof seedUsers>>,
@@ -1300,6 +1401,8 @@ const seedTrainingPlans = async (
 
   const base = today();
 
+  const sampleContentDoc = await seedSampleWorkoutContentDoc(users.coach.id);
+
   const workouts = await Promise.all(
     [
       {
@@ -1307,6 +1410,7 @@ const seedTrainingPlans = async (
         scheduledDate: addDays(base, -1),
         title: "Back Squat + Metcon",
         sortOrder: 0,
+        ...(sampleContentDoc !== null ? { contentDoc: sampleContentDoc } : {}),
       },
       { planId: activePlan.id, scheduledDate: base, title: "Snatch Complex + AMRAP", sortOrder: 0 },
       {
@@ -1689,6 +1793,7 @@ const main = async () => {
 
   await seedCoachNotes(coachProfile.id, users);
   await seedBenchmarks(users);
+  await seedLibrary();
   await seedTrainingPlans(coachProfile.id, users);
 
   await seedMarketingPages();
@@ -1696,7 +1801,6 @@ const main = async () => {
   await seedBlogPosts();
   await seedReviews();
   await seedContactSubmissions();
-  await seedLibrary();
 
   console.log("\nSeed completed!");
 };

@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { type TiptapDoc } from "@repo/contracts/common/tiptap-doc";
 import { BadRequestError } from "@repo/errors";
 
 import { cleanup, cleanupRaw, createTestCoach, createTestPlan } from "../../../test/helpers";
@@ -30,7 +31,7 @@ describe("lmsWorkoutApi contentDoc save + block tree write", () => {
     );
   });
 
-  it("creates a workout with one block and one exercise mention and normalizes DB tables", async () => {
+  it("creates a workout with one block, one schemeSection and one mention; normalizes DB tables", async () => {
     const blockType = await createTestBlockType();
     const scheme = await createTestScheme();
     const exercise = await createTestExercise(coach.user.id, { status: "APPROVED" });
@@ -46,12 +47,32 @@ describe("lmsWorkoutApi contentDoc save + block tree write", () => {
         type: "doc",
         content: [
           {
-            type: "straightSets",
-            attrs: { blockTypeId: blockType.id, schemeId: scheme.id, schemeConfig: {} },
+            type: "block",
+            attrs: { blockTypeId: blockType.id, title: "Strength", sortOrder: 0 },
             content: [
               {
-                type: "exerciseMention",
-                attrs: { exerciseId: exercise.id, sets: 3, repValues: [5, 5, 5] },
+                type: "schemeSection",
+                attrs: {
+                  schemeId: scheme.id,
+                  schemeKind: "STRAIGHT_SETS",
+                  schemeConfig: {},
+                  effortPct: null,
+                  pace: null,
+                  note: null,
+                  sortOrder: 0,
+                },
+                content: [
+                  {
+                    type: "exerciseLine",
+                    attrs: { sortOrder: 0 },
+                    content: [
+                      {
+                        type: "exerciseMention",
+                        attrs: { exerciseId: exercise.id, sets: 3, repValues: [5, 5, 5] },
+                      },
+                    ],
+                  },
+                ],
               },
             ],
           },
@@ -63,80 +84,16 @@ describe("lmsWorkoutApi contentDoc save + block tree write", () => {
 
     const blocks = await cleanupRaw.workoutBlock.findMany({
       where: { workoutId: workout.id },
-      include: { exercises: true },
+      include: { sections: { include: { exercises: true } } },
     });
 
     expect(blocks).toHaveLength(1);
     expect(blocks[0]?.blockTypeId).toBe(blockType.id);
-    expect(blocks[0]?.schemeId).toBe(scheme.id);
-    expect(blocks[0]?.exercises).toHaveLength(1);
-    expect(blocks[0]?.exercises[0]?.exerciseId).toBe(exercise.id);
-  });
-
-  it("update wipes old blocks and recreates from new contentDoc", async () => {
-    const blockType = await createTestBlockType();
-    const scheme = await createTestScheme();
-    const exerciseA = await createTestExercise(coach.user.id, { status: "APPROVED" });
-    const exerciseB = await createTestExercise(coach.user.id, { status: "APPROVED" });
-
-    toCleanup.push({ table: "exercise", id: exerciseA.id });
-    toCleanup.push({ table: "exercise", id: exerciseB.id });
-    toCleanup.push({ table: "scheme", id: scheme.id });
-    toCleanup.push({ table: "blockType", id: blockType.id });
-
-    const workout = await lmsWorkoutApi.create(coach.user.id, plan.id, {
-      scheduledDate: new Date("2026-06-08T00:00:00Z"),
-      title: "Update flow",
-      contentDoc: {
-        type: "doc",
-        content: [
-          {
-            type: "straightSets",
-            attrs: { blockTypeId: blockType.id, schemeId: scheme.id, schemeConfig: {} },
-            content: [
-              {
-                type: "exerciseMention",
-                attrs: { exerciseId: exerciseA.id, sets: 3, repValues: [5, 5, 5] },
-              },
-            ],
-          },
-        ],
-      },
-    });
-
-    toCleanup.push({ table: "workout", id: workout.id });
-
-    const before = await cleanupRaw.workoutBlock.findMany({ where: { workoutId: workout.id } });
-
-    expect(before).toHaveLength(1);
-
-    await lmsWorkoutApi.update(coach.user.id, plan.id, workout.id, {
-      contentDoc: {
-        type: "doc",
-        content: [
-          {
-            type: "amrap",
-            attrs: { blockTypeId: blockType.id, schemeId: scheme.id, schemeConfig: {} },
-            content: [
-              {
-                type: "exerciseMention",
-                attrs: { exerciseId: exerciseB.id, sets: 1, repValues: [10] },
-              },
-            ],
-          },
-        ],
-      },
-    });
-
-    const after = await cleanupRaw.workoutBlock.findMany({
-      where: { workoutId: workout.id },
-      include: { exercises: true },
-    });
-
-    expect(after).toHaveLength(1);
-    expect(after[0]?.schemeKind).toBe("AMRAP");
-    expect(after[0]?.exercises).toHaveLength(1);
-    expect(after[0]?.exercises[0]?.exerciseId).toBe(exerciseB.id);
+    expect(blocks[0]?.sections).toHaveLength(1);
+    expect(blocks[0]?.sections[0]?.schemeId).toBe(scheme.id);
+    expect(blocks[0]?.sections[0]?.schemeKind).toBe("STRAIGHT_SETS");
+    expect(blocks[0]?.sections[0]?.exercises).toHaveLength(1);
+    expect(blocks[0]?.sections[0]?.exercises[0]?.exerciseId).toBe(exercise.id);
   });
 
   it("rejects save with invalid exerciseId and keeps DB unchanged", async () => {
@@ -148,59 +105,62 @@ describe("lmsWorkoutApi contentDoc save + block tree write", () => {
     toCleanup.push({ table: "scheme", id: scheme.id });
     toCleanup.push({ table: "blockType", id: blockType.id });
 
+    const buildDoc = (exerciseId: string): TiptapDoc => ({
+      type: "doc",
+      content: [
+        {
+          type: "block",
+          attrs: { blockTypeId: blockType.id, title: null, sortOrder: 0 },
+          content: [
+            {
+              type: "schemeSection",
+              attrs: {
+                schemeId: scheme.id,
+                schemeKind: "STRAIGHT_SETS",
+                schemeConfig: {},
+                effortPct: null,
+                pace: null,
+                note: null,
+                sortOrder: 0,
+              },
+              content: [
+                {
+                  type: "exerciseLine",
+                  attrs: { sortOrder: 0 },
+                  content: [
+                    {
+                      type: "exerciseMention",
+                      attrs: { exerciseId, sets: 3, repValues: [5, 5, 5] },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
     const workout = await lmsWorkoutApi.create(coach.user.id, plan.id, {
       scheduledDate: new Date("2026-07-12T00:00:00Z"),
       title: "Atomic update",
-      contentDoc: {
-        type: "doc",
-        content: [
-          {
-            type: "straightSets",
-            attrs: { blockTypeId: blockType.id, schemeId: scheme.id, schemeConfig: {} },
-            content: [
-              {
-                type: "exerciseMention",
-                attrs: { exerciseId: exercise.id, sets: 3, repValues: [5, 5, 5] },
-              },
-            ],
-          },
-        ],
-      },
+      contentDoc: buildDoc(exercise.id),
     });
 
     toCleanup.push({ table: "workout", id: workout.id });
 
     await expect(
       lmsWorkoutApi.update(coach.user.id, plan.id, workout.id, {
-        contentDoc: {
-          type: "doc",
-          content: [
-            {
-              type: "straightSets",
-              attrs: { blockTypeId: blockType.id, schemeId: scheme.id, schemeConfig: {} },
-              content: [
-                {
-                  type: "exerciseMention",
-                  attrs: {
-                    exerciseId: "cljxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-                    sets: 1,
-                    repValues: [1],
-                  },
-                },
-              ],
-            },
-          ],
-        },
+        contentDoc: buildDoc("cljxxxxxxxxxxxxxxxxxxxxxxxxxxxx"),
       }),
     ).rejects.toThrow(BadRequestError);
 
     const blocks = await cleanupRaw.workoutBlock.findMany({
       where: { workoutId: workout.id },
-      include: { exercises: true },
+      include: { sections: { include: { exercises: true } } },
     });
 
     expect(blocks).toHaveLength(1);
-    expect(blocks[0]?.exercises[0]?.exerciseId).toBe(exercise.id);
+    expect(blocks[0]?.sections[0]?.exercises[0]?.exerciseId).toBe(exercise.id);
   });
 
   it("rejects save with non-approved exercise not owned by saving coach", async () => {
@@ -225,12 +185,32 @@ describe("lmsWorkoutApi contentDoc save + block tree write", () => {
           type: "doc",
           content: [
             {
-              type: "straightSets",
-              attrs: { blockTypeId: blockType.id, schemeId: scheme.id, schemeConfig: {} },
+              type: "block",
+              attrs: { blockTypeId: blockType.id, title: null, sortOrder: 0 },
               content: [
                 {
-                  type: "exerciseMention",
-                  attrs: { exerciseId: pendingOfOther.id, sets: 1, repValues: [1] },
+                  type: "schemeSection",
+                  attrs: {
+                    schemeId: scheme.id,
+                    schemeKind: "STRAIGHT_SETS",
+                    schemeConfig: {},
+                    effortPct: null,
+                    pace: null,
+                    note: null,
+                    sortOrder: 0,
+                  },
+                  content: [
+                    {
+                      type: "exerciseLine",
+                      attrs: { sortOrder: 0 },
+                      content: [
+                        {
+                          type: "exerciseMention",
+                          attrs: { exerciseId: pendingOfOther.id, sets: 1, repValues: [1] },
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
             },

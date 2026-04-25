@@ -1,40 +1,72 @@
 import { z } from "zod";
 
-import { SchemeKind } from "@repo/contracts/library/scheme";
-import { prescriptionSchema, WorkoutRepScheme } from "@repo/contracts/lms/workout-block";
+import {
+  prescriptionSchema,
+  schemeConfigSchema,
+  schemeKindSchema,
+  WORKOUT_BLOCK_CONSTANTS,
+  WorkoutRepScheme,
+} from "@repo/contracts/lms/workout-block";
 
-export const EMOM_NODE_TYPE = "emom" as const;
+export const BLOCK_WRAPPER_NODE_TYPE = "block" as const;
+
+export const SCHEME_SECTION_NODE_TYPE = "schemeSection" as const;
+
+export const NOTES_SECTION_NODE_TYPE = "notesSection" as const;
+
+export const TEXT_CALLOUT_SECTION_NODE_TYPE = "textCalloutSection" as const;
+
+export const EXERCISE_LINE_NODE_TYPE = "exerciseLine" as const;
 
 export const EMOM_SLOT_NODE_TYPE = "emomSlot" as const;
 
 export const EXERCISE_MENTION_NODE_TYPE = "exerciseMention" as const;
 
-export const SCHEMELESS_BLOCK_NODE_TYPES = new Set<string>(["notes", "textCallout"]);
+export const SECTION_NODE_TYPES = [
+  SCHEME_SECTION_NODE_TYPE,
+  NOTES_SECTION_NODE_TYPE,
+  TEXT_CALLOUT_SECTION_NODE_TYPE,
+] as const;
 
-export const BLOCK_KIND_TO_SCHEME_KIND: Record<string, SchemeKind | null> = {
-  straightSets: SchemeKind.STRAIGHT_SETS,
-  forTime: SchemeKind.FOR_TIME,
-  amrap: SchemeKind.AMRAP,
-  emom: SchemeKind.EMOM,
-  everyXMin: SchemeKind.EVERY_X_MIN,
-  intervals: SchemeKind.INTERVALS,
-  timeBlocks: SchemeKind.TIME_BLOCKS,
-  notes: null,
-  textCallout: null,
-};
+const MAX_TITLE_LENGTH = 120;
 
-export const blockAttrsSchema = z.object({
-  blockTypeId: z.string().min(1),
-  schemeId: z.string().min(1).optional().nullable(),
-  schemeConfig: z.record(z.string(), z.number()).optional().nullable(),
-  effortPct: z.number().int().min(0).max(100).optional().nullable(),
-  pace: z.string().optional().nullable(),
-  note: z.string().optional().nullable(),
+const MAX_TONE_LENGTH = 32;
+
+export const blockWrapperAttrsSchema = z.object({
+  blockTypeId: z.string().cuid(),
+  title: z.string().max(MAX_TITLE_LENGTH).nullable().optional(),
+  sortOrder: z.number().int().nonnegative().optional(),
 });
 
-export const schemelessBlockAttrsSchema = z.object({
-  blockTypeId: z.string().min(1),
-  note: z.string().optional().nullable(),
+export const schemeSectionAttrsSchema = z.object({
+  schemeId: z.string().cuid().nullable().optional(),
+  schemeKind: schemeKindSchema.nullable().optional(),
+  schemeConfig: schemeConfigSchema.nullable().optional(),
+  effortPct: z
+    .number()
+    .int()
+    .min(WORKOUT_BLOCK_CONSTANTS.MIN_EFFORT_PCT)
+    .max(WORKOUT_BLOCK_CONSTANTS.MAX_EFFORT_PCT)
+    .nullable()
+    .optional(),
+  pace: z.string().max(WORKOUT_BLOCK_CONSTANTS.MAX_PACE_LENGTH).nullable().optional(),
+  note: z.string().max(WORKOUT_BLOCK_CONSTANTS.MAX_NOTE_LENGTH).nullable().optional(),
+  sortOrder: z.number().int().nonnegative().optional(),
+});
+
+export const notesSectionAttrsSchema = z.object({
+  note: z.string().max(WORKOUT_BLOCK_CONSTANTS.MAX_NOTE_LENGTH).nullable().optional(),
+  sortOrder: z.number().int().nonnegative().optional(),
+});
+
+export const textCalloutSectionAttrsSchema = z.object({
+  tone: z.string().max(MAX_TONE_LENGTH).optional(),
+  note: z.string().max(WORKOUT_BLOCK_CONSTANTS.MAX_NOTE_LENGTH).nullable().optional(),
+  sortOrder: z.number().int().nonnegative().optional(),
+});
+
+export const exerciseLineAttrsSchema = z.object({
+  sortOrder: z.number().int().nonnegative().optional(),
 });
 
 export const exerciseMentionAttrsSchema = z.object({

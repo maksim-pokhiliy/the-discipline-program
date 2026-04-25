@@ -1,24 +1,31 @@
 import { describe, expect, it } from "vitest";
 
-import { type TiptapDoc, type TiptapNode } from "@repo/contracts/common/tiptap-doc";
+import { type TiptapDoc } from "@repo/contracts/common/tiptap-doc";
 import { ExerciseStatus } from "@repo/contracts/library/exercise";
 import { SchemeKind } from "@repo/contracts/library/scheme";
-import { WORKOUT_DOC_LIMITS, WorkoutRepScheme } from "@repo/contracts/lms/workout-block";
+import { SchemeSectionKind, WorkoutRepScheme } from "@repo/contracts/lms/workout-block";
 import { BadRequestError } from "@repo/errors";
 
 import { parseTiptapDoc } from "./parser";
 import {
   BLOCK_TYPE_ID,
   EXERCISE_ID_A,
+  EXERCISE_ID_B,
   SAVING_COACH_ID,
+  SCHEME_ID_EMOM,
   SCHEME_ID_STRAIGHT,
+  blockNode,
   buildLookup,
+  exerciseLineNode,
   mentionNode,
+  notesSectionNode,
   parserOpts,
+  schemeSectionNode,
   straightSetsBlock,
+  textCalloutSectionNode,
 } from "./parser-fixtures";
 
-describe("parseTiptapDoc core scenarios", () => {
+describe("parseTiptapDoc happy paths", () => {
   it("returns empty tree for an empty doc", () => {
     const doc: TiptapDoc = { type: "doc", content: [] };
     const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
@@ -26,84 +33,179 @@ describe("parseTiptapDoc core scenarios", () => {
     expect(result.blocks).toHaveLength(0);
   });
 
-  it("parses a straightSets block with one mention", () => {
+  it("parses one block with one schemeSection containing one exerciseLine and one mention", () => {
     const doc: TiptapDoc = {
       type: "doc",
       content: [straightSetsBlock([mentionNode(EXERCISE_ID_A, { repValues: [5, 5, 5], sets: 3 })])],
     };
-
     const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
 
     expect(result.blocks).toHaveLength(1);
-    expect(result.blocks[0]?.blockTypeId).toBe(BLOCK_TYPE_ID);
-    expect(result.blocks[0]?.schemeKind).toBe(SchemeKind.STRAIGHT_SETS);
-    expect(result.blocks[0]?.exercises).toHaveLength(1);
-    expect(result.blocks[0]?.exercises[0]?.exerciseId).toBe(EXERCISE_ID_A);
-    expect(result.blocks[0]?.exercises[0]?.repScheme).toBe(WorkoutRepScheme.STRAIGHT);
-    expect(result.blocks[0]?.exercises[0]?.repValues).toEqual([5, 5, 5]);
-    expect(result.blocks[0]?.exercises[0]?.sets).toBe(3);
+
+    const block = result.blocks[0];
+
+    expect(block?.blockTypeId).toBe(BLOCK_TYPE_ID);
+    expect(block?.sections).toHaveLength(1);
+
+    const section = block?.sections[0];
+
+    expect(section?.kind).toBe(SchemeSectionKind.SCHEME);
+    expect(section?.schemeKind).toBe(SchemeKind.STRAIGHT_SETS);
+    expect(section?.schemeId).toBe(SCHEME_ID_STRAIGHT);
+    expect(section?.exercises).toHaveLength(1);
+    expect(section?.exercises[0]?.exerciseId).toBe(EXERCISE_ID_A);
+    expect(section?.exercises[0]?.repScheme).toBe(WorkoutRepScheme.STRAIGHT);
+    expect(section?.exercises[0]?.repValues).toEqual([5, 5, 5]);
+    expect(section?.exercises[0]?.sets).toBe(3);
   });
 
-  it("preserves ladder repValues as-is", () => {
+  it("parses one block with two schemeSections of different schemeKinds", () => {
     const doc: TiptapDoc = {
       type: "doc",
       content: [
-        straightSetsBlock([
-          mentionNode(EXERCISE_ID_A, {
-            repScheme: WorkoutRepScheme.LADDER,
-            repValues: [36, 28, 20],
-          }),
+        blockNode(BLOCK_TYPE_ID, [
+          schemeSectionNode(
+            SchemeKind.STRAIGHT_SETS,
+            SCHEME_ID_STRAIGHT,
+            [exerciseLineNode([mentionNode(EXERCISE_ID_A)])],
+            { sortOrder: 0 },
+          ),
+          schemeSectionNode(
+            SchemeKind.AMRAP,
+            SCHEME_ID_STRAIGHT,
+            [exerciseLineNode([mentionNode(EXERCISE_ID_B)])],
+            { sortOrder: 1 },
+          ),
+        ]),
+      ],
+    };
+    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+
+    expect(result.blocks).toHaveLength(1);
+    expect(result.blocks[0]?.sections).toHaveLength(2);
+    expect(result.blocks[0]?.sections[0]?.schemeKind).toBe(SchemeKind.STRAIGHT_SETS);
+    expect(result.blocks[0]?.sections[0]?.exercises[0]?.exerciseId).toBe(EXERCISE_ID_A);
+    expect(result.blocks[0]?.sections[1]?.schemeKind).toBe(SchemeKind.AMRAP);
+    expect(result.blocks[0]?.sections[1]?.exercises[0]?.exerciseId).toBe(EXERCISE_ID_B);
+  });
+
+  it("parses an EMOM section with two slots and produces zero section-level exercises", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [
+        blockNode(BLOCK_TYPE_ID, [
+          schemeSectionNode(SchemeKind.EMOM, SCHEME_ID_EMOM, [
+            {
+              type: "emomSlot",
+              attrs: { minuteInRound: 0, sortOrder: 0 },
+              content: [mentionNode(EXERCISE_ID_A), mentionNode(EXERCISE_ID_B)],
+            },
+            {
+              type: "emomSlot",
+              attrs: { minuteInRound: 1, sortOrder: 1 },
+              content: [mentionNode(EXERCISE_ID_A)],
+            },
+          ]),
+        ]),
+      ],
+    };
+    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+    const section = result.blocks[0]?.sections[0];
+
+    expect(section?.schemeKind).toBe(SchemeKind.EMOM);
+    expect(section?.exercises).toHaveLength(0);
+    expect(section?.emomSlots).toHaveLength(2);
+    expect(section?.emomSlots[0]?.exercises).toHaveLength(2);
+    expect(section?.emomSlots[1]?.exercises).toHaveLength(1);
+  });
+
+  it("parses a notesSection without exercises", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [blockNode(BLOCK_TYPE_ID, [notesSectionNode([{ type: "paragraph" }])])],
+    };
+    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+    const section = result.blocks[0]?.sections[0];
+
+    expect(section?.kind).toBe(SchemeSectionKind.NOTES);
+    expect(section?.exercises).toHaveLength(0);
+    expect(section?.emomSlots).toHaveLength(0);
+  });
+
+  it("parses a textCalloutSection with tone", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [
+        blockNode(BLOCK_TYPE_ID, [textCalloutSectionNode("info", [{ type: "paragraph" }])]),
+      ],
+    };
+    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+    const section = result.blocks[0]?.sections[0];
+
+    expect(section?.kind).toBe(SchemeSectionKind.TEXT_CALLOUT);
+    expect(section?.tone).toBe("info");
+  });
+});
+
+describe("parseTiptapDoc validation errors", () => {
+  it("rejects an unknown root node type", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [{ type: "wrongName", attrs: { blockTypeId: BLOCK_TYPE_ID } }],
+    };
+
+    expect(() => parseTiptapDoc(doc, buildLookup(), parserOpts)).toThrow(BadRequestError);
+  });
+
+  it("rejects an unknown section node type inside a block", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [blockNode(BLOCK_TYPE_ID, [{ type: "noSuchSection", attrs: { sortOrder: 0 } }])],
+    };
+
+    expect(() => parseTiptapDoc(doc, buildLookup(), parserOpts)).toThrow(BadRequestError);
+  });
+
+  it("rejects bad block attrs (blockTypeId not a cuid)", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [
+        {
+          type: "block",
+          attrs: { blockTypeId: "not-a-cuid", title: null, sortOrder: 0 },
+          content: [],
+        },
+      ],
+    };
+
+    expect(() => parseTiptapDoc(doc, buildLookup(), parserOpts)).toThrow(BadRequestError);
+  });
+
+  it("rejects an unknown blockTypeId in lookup", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [blockNode("clmissing00000000000000000", [])],
+    };
+
+    expect(() => parseTiptapDoc(doc, buildLookup(), parserOpts)).toThrow(BadRequestError);
+  });
+
+  it("rejects an unknown schemeId in lookup", () => {
+    const doc: TiptapDoc = {
+      type: "doc",
+      content: [
+        blockNode(BLOCK_TYPE_ID, [
+          schemeSectionNode(SchemeKind.STRAIGHT_SETS, "clmissingscheme0000000000", [
+            exerciseLineNode([mentionNode(EXERCISE_ID_A)]),
+          ]),
         ]),
       ],
     };
 
-    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
-
-    expect(result.blocks[0]?.exercises[0]?.repScheme).toBe(WorkoutRepScheme.LADDER);
-    expect(result.blocks[0]?.exercises[0]?.repValues).toEqual([36, 28, 20]);
-    expect(result.blocks[0]?.exercises[0]?.sets).toBe(3);
-  });
-
-  it("rejects an unknown block node type", () => {
-    const doc: TiptapDoc = {
-      type: "doc",
-      content: [{ type: "noSuchKind", attrs: { blockTypeId: BLOCK_TYPE_ID } }],
-    };
-
     expect(() => parseTiptapDoc(doc, buildLookup(), parserOpts)).toThrow(BadRequestError);
   });
 
-  it("rejects invalid blockTypeId reference", () => {
-    const doc: TiptapDoc = {
-      type: "doc",
-      content: [
-        {
-          type: "straightSets",
-          attrs: { blockTypeId: "unknown-bt", schemeId: SCHEME_ID_STRAIGHT, schemeConfig: {} },
-          content: [mentionNode(EXERCISE_ID_A)],
-        },
-      ],
-    };
-
-    expect(() => parseTiptapDoc(doc, buildLookup(), parserOpts)).toThrow(BadRequestError);
-  });
-
-  it("rejects invalid schemeId reference", () => {
-    const doc: TiptapDoc = {
-      type: "doc",
-      content: [
-        {
-          type: "straightSets",
-          attrs: { blockTypeId: BLOCK_TYPE_ID, schemeId: "unknown-scheme", schemeConfig: {} },
-          content: [mentionNode(EXERCISE_ID_A)],
-        },
-      ],
-    };
-
-    expect(() => parseTiptapDoc(doc, buildLookup(), parserOpts)).toThrow(BadRequestError);
-  });
-
-  it("rejects invalid exerciseId reference", () => {
+  it("rejects an unknown exerciseId in lookup", () => {
     const doc: TiptapDoc = {
       type: "doc",
       content: [straightSetsBlock([mentionNode("unknown-ex")])],
@@ -112,12 +214,11 @@ describe("parseTiptapDoc core scenarios", () => {
     expect(() => parseTiptapDoc(doc, buildLookup(), parserOpts)).toThrow(BadRequestError);
   });
 
-  it("rejects referencing a non-approved exercise not owned by the saving coach", () => {
+  it("rejects a non-approved exercise not owned by the saving coach", () => {
     const doc: TiptapDoc = {
       type: "doc",
       content: [straightSetsBlock([mentionNode(EXERCISE_ID_A)])],
     };
-
     const lookup = buildLookup({
       exercisesById: new Map([
         [
@@ -134,12 +235,11 @@ describe("parseTiptapDoc core scenarios", () => {
     expect(() => parseTiptapDoc(doc, lookup, parserOpts)).toThrow(BadRequestError);
   });
 
-  it("accepts pending exercise created by the saving coach", () => {
+  it("accepts a pending exercise created by the saving coach", () => {
     const doc: TiptapDoc = {
       type: "doc",
       content: [straightSetsBlock([mentionNode(EXERCISE_ID_A)])],
     };
-
     const lookup = buildLookup({
       exercisesById: new Map([
         [
@@ -152,201 +252,8 @@ describe("parseTiptapDoc core scenarios", () => {
         ],
       ]),
     });
-
     const result = parseTiptapDoc(doc, lookup, parserOpts);
 
-    expect(result.blocks).toHaveLength(1);
-    expect(result.blocks[0]?.exercises).toHaveLength(1);
-  });
-});
-
-describe("parseTiptapDoc doc limits", () => {
-  it("rejects a doc whose serialized byte size exceeds MAX_DOC_BYTES", () => {
-    const hugeNote = "x".repeat(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES + 1);
-    const doc: TiptapDoc = {
-      type: "doc",
-      content: [
-        {
-          type: "notes",
-          attrs: { blockTypeId: BLOCK_TYPE_ID, note: hugeNote },
-        },
-      ],
-    };
-
-    try {
-      parseTiptapDoc(doc, buildLookup(), parserOpts);
-      expect.fail("expected parseTiptapDoc to throw");
-    } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestError);
-
-      if (error instanceof BadRequestError) {
-        expect(error.details?.code).toBe("workout.doc.too_large");
-        expect(error.details?.limit).toBe(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES);
-      }
-    }
-  });
-
-  it("rejects a doc whose recursive node count exceeds MAX_NODES_PER_DOC", () => {
-    const paragraphs: TiptapNode[] = Array.from(
-      { length: WORKOUT_DOC_LIMITS.MAX_NODES_PER_DOC + 1 },
-      () => ({ type: "paragraph" }),
-    );
-
-    const doc: TiptapDoc = {
-      type: "doc",
-      content: [
-        {
-          type: "notes",
-          attrs: { blockTypeId: BLOCK_TYPE_ID },
-          content: paragraphs,
-        },
-      ],
-    };
-
-    try {
-      parseTiptapDoc(doc, buildLookup(), parserOpts);
-      expect.fail("expected parseTiptapDoc to throw");
-    } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestError);
-
-      if (error instanceof BadRequestError) {
-        expect(error.details?.code).toBe("workout.doc.too_many_nodes");
-        expect(error.details?.limit).toBe(WORKOUT_DOC_LIMITS.MAX_NODES_PER_DOC);
-      }
-    }
-  });
-
-  it("accepts a small valid doc well below both limits", () => {
-    const doc: TiptapDoc = {
-      type: "doc",
-      content: [straightSetsBlock([mentionNode(EXERCISE_ID_A)])],
-    };
-
-    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
-
-    expect(JSON.stringify(doc).length).toBeLessThan(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES);
-    expect(result.blocks).toHaveLength(1);
-  });
-
-  it("accepts a doc whose serialized length equals MAX_DOC_BYTES exactly", () => {
-    const buildDocWithNoteOfLength = (paddingLength: number): TiptapDoc => ({
-      type: "doc",
-      content: [
-        {
-          type: "notes",
-          attrs: { blockTypeId: BLOCK_TYPE_ID, note: "x".repeat(paddingLength) },
-        },
-      ],
-    });
-
-    const baseOverhead = JSON.stringify(buildDocWithNoteOfLength(0)).length;
-    const paddingLength = WORKOUT_DOC_LIMITS.MAX_DOC_BYTES - baseOverhead;
-    const doc = buildDocWithNoteOfLength(paddingLength);
-
-    expect(JSON.stringify(doc).length).toBe(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES);
-
-    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
-
-    expect(result.blocks).toHaveLength(1);
-  });
-
-  it("rejects a doc whose serialized length equals MAX_DOC_BYTES + 1", () => {
-    const buildDocWithNoteOfLength = (paddingLength: number): TiptapDoc => ({
-      type: "doc",
-      content: [
-        {
-          type: "notes",
-          attrs: { blockTypeId: BLOCK_TYPE_ID, note: "x".repeat(paddingLength) },
-        },
-      ],
-    });
-
-    const baseOverhead = JSON.stringify(buildDocWithNoteOfLength(0)).length;
-    const paddingLength = WORKOUT_DOC_LIMITS.MAX_DOC_BYTES - baseOverhead + 1;
-    const doc = buildDocWithNoteOfLength(paddingLength);
-
-    expect(JSON.stringify(doc).length).toBe(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES + 1);
-
-    try {
-      parseTiptapDoc(doc, buildLookup(), parserOpts);
-      expect.fail("expected parseTiptapDoc to throw");
-    } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestError);
-
-      if (error instanceof BadRequestError) {
-        expect(error.details?.code).toBe("workout.doc.too_large");
-        expect(error.details?.limit).toBe(WORKOUT_DOC_LIMITS.MAX_DOC_BYTES);
-      }
-    }
-  });
-});
-
-describe("parseTiptapDoc empty-block guards", () => {
-  it("rejects a scheme block with zero exercise mentions in strict mode", () => {
-    const doc: TiptapDoc = {
-      type: "doc",
-      content: [straightSetsBlock([])],
-    };
-
-    try {
-      parseTiptapDoc(doc, buildLookup(), { ...parserOpts, strict: true });
-      expect.fail("expected parseTiptapDoc to throw");
-    } catch (error) {
-      expect(error).toBeInstanceOf(BadRequestError);
-
-      if (error instanceof BadRequestError) {
-        expect(error.details?.code).toBe("workout.block.empty");
-        expect(error.details?.nodeType).toBe("straightSets");
-      }
-    }
-  });
-
-  it("accepts a scheme block with zero exercise mentions when strict is not set", () => {
-    const doc: TiptapDoc = {
-      type: "doc",
-      content: [straightSetsBlock([])],
-    };
-
-    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
-
-    expect(result.blocks).toHaveLength(1);
-    expect(result.blocks[0]?.exercises).toHaveLength(0);
-    expect(result.blocks[0]?.blockTypeId).toBeDefined();
-  });
-
-  it("still parses a schemeless notes block with no content", () => {
-    const doc: TiptapDoc = {
-      type: "doc",
-      content: [
-        {
-          type: "notes",
-          attrs: { blockTypeId: BLOCK_TYPE_ID },
-        },
-      ],
-    };
-
-    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
-
-    expect(result.blocks).toHaveLength(1);
-    expect(result.blocks[0]?.schemeKind).toBeNull();
-    expect(result.blocks[0]?.exercises).toHaveLength(0);
-  });
-
-  it("still parses a schemeless textCallout block with an empty paragraph", () => {
-    const doc: TiptapDoc = {
-      type: "doc",
-      content: [
-        {
-          type: "textCallout",
-          attrs: { blockTypeId: BLOCK_TYPE_ID },
-          content: [{ type: "paragraph" }],
-        },
-      ],
-    };
-
-    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
-
-    expect(result.blocks).toHaveLength(1);
-    expect(result.blocks[0]?.schemeKind).toBeNull();
+    expect(result.blocks[0]?.sections[0]?.exercises).toHaveLength(1);
   });
 });

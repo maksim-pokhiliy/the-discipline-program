@@ -15,8 +15,7 @@ describe("WorkoutBlockExercise XOR check (DB constraint)", () => {
   let blockTypeId: string;
   let exerciseId: string;
   let workoutId: string;
-  let blockId: string;
-  let emomBlockId: string;
+  let sectionId: string;
   let emomSlotId: string;
 
   const toCleanup: { table: string; id: string }[] = [];
@@ -40,34 +39,27 @@ describe("WorkoutBlockExercise XOR check (DB constraint)", () => {
     workoutId = workout.id;
     toCleanup.push({ table: "workout", id: workoutId });
 
-    const scheduleBlock = await cleanupRaw.workoutBlock.create({
-      data: {
-        workoutId,
-        blockTypeId,
-        schemeKind: "STRAIGHT_SETS",
-        schemeConfig: {},
-        sortOrder: 0,
-      },
+    const block = await cleanupRaw.workoutBlock.create({
+      data: { workoutId, blockTypeId, sortOrder: 0 },
     });
 
-    blockId = scheduleBlock.id;
-    toCleanup.push({ table: "workoutBlock", id: blockId });
+    toCleanup.push({ table: "workoutBlock", id: block.id });
 
-    const emomBlock = await cleanupRaw.workoutBlock.create({
-      data: {
-        workoutId,
-        blockTypeId,
-        schemeKind: "EMOM",
-        schemeConfig: {},
-        sortOrder: 1,
-      },
+    const schemeSection = await cleanupRaw.schemeSection.create({
+      data: { blockId: block.id, kind: "SCHEME", schemeKind: "STRAIGHT_SETS", sortOrder: 0 },
     });
 
-    emomBlockId = emomBlock.id;
-    toCleanup.push({ table: "workoutBlock", id: emomBlockId });
+    sectionId = schemeSection.id;
+    toCleanup.push({ table: "schemeSection", id: sectionId });
+
+    const emomSection = await cleanupRaw.schemeSection.create({
+      data: { blockId: block.id, kind: "SCHEME", schemeKind: "EMOM", sortOrder: 1 },
+    });
+
+    toCleanup.push({ table: "schemeSection", id: emomSection.id });
 
     const slot = await cleanupRaw.emomSlot.create({
-      data: { blockId: emomBlockId, minuteInRound: 0, sortOrder: 0 },
+      data: { sectionId: emomSection.id, minuteInRound: 0, sortOrder: 0 },
     });
 
     emomSlotId = slot.id;
@@ -83,40 +75,36 @@ describe("WorkoutBlockExercise XOR check (DB constraint)", () => {
     );
   });
 
-  it("rejects a row with both blockId and emomSlotId null", async () => {
+  it("rejects a row with both sectionId and emomSlotId null", async () => {
     await expect(
-      cleanupRaw.workoutBlockExercise.create({
-        data: {
-          blockId: null,
-          emomSlotId: null,
-          exerciseId,
-          repScheme: "STRAIGHT",
-          repValues: [5],
-          sortOrder: 0,
-        },
-      }),
+      cleanupRaw.$executeRawUnsafe(
+        `INSERT INTO "app_workout_block_exercises"
+          ("id", "sectionId", "emomSlotId", "exerciseId", "repScheme", "repValues", "sortOrder", "createdAt", "updatedAt")
+         VALUES ($1, NULL, NULL, $2, 'STRAIGHT', ARRAY[5]::int[], 0, NOW(), NOW())`,
+        crypto.randomUUID(),
+        exerciseId,
+      ),
     ).rejects.toThrow(/workout_block_exercise_xor/i);
   });
 
-  it("rejects a row with both blockId and emomSlotId set", async () => {
+  it("rejects a row with both sectionId and emomSlotId set", async () => {
     await expect(
-      cleanupRaw.workoutBlockExercise.create({
-        data: {
-          blockId,
-          emomSlotId,
-          exerciseId,
-          repScheme: "STRAIGHT",
-          repValues: [5],
-          sortOrder: 0,
-        },
-      }),
+      cleanupRaw.$executeRawUnsafe(
+        `INSERT INTO "app_workout_block_exercises"
+          ("id", "sectionId", "emomSlotId", "exerciseId", "repScheme", "repValues", "sortOrder", "createdAt", "updatedAt")
+         VALUES ($1, $2, $3, $4, 'STRAIGHT', ARRAY[5]::int[], 0, NOW(), NOW())`,
+        crypto.randomUUID(),
+        sectionId,
+        emomSlotId,
+        exerciseId,
+      ),
     ).rejects.toThrow(/workout_block_exercise_xor/i);
   });
 
-  it("accepts a row with only blockId set", async () => {
+  it("accepts a row with only sectionId set", async () => {
     const row = await cleanupRaw.workoutBlockExercise.create({
       data: {
-        blockId,
+        sectionId,
         emomSlotId: null,
         exerciseId,
         repScheme: "STRAIGHT",
@@ -127,14 +115,14 @@ describe("WorkoutBlockExercise XOR check (DB constraint)", () => {
 
     toCleanup.push({ table: "workoutBlockExercise", id: row.id });
 
-    expect(row.blockId).toBe(blockId);
+    expect(row.sectionId).toBe(sectionId);
     expect(row.emomSlotId).toBeNull();
   });
 
   it("accepts a row with only emomSlotId set", async () => {
     const row = await cleanupRaw.workoutBlockExercise.create({
       data: {
-        blockId: null,
+        sectionId: null,
         emomSlotId,
         exerciseId,
         repScheme: "STRAIGHT",
@@ -145,7 +133,7 @@ describe("WorkoutBlockExercise XOR check (DB constraint)", () => {
 
     toCleanup.push({ table: "workoutBlockExercise", id: row.id });
 
-    expect(row.blockId).toBeNull();
+    expect(row.sectionId).toBeNull();
     expect(row.emomSlotId).toBe(emomSlotId);
   });
 });

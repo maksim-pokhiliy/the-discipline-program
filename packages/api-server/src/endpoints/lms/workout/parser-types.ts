@@ -3,6 +3,7 @@ import { type SchemeKind } from "@repo/contracts/library/scheme";
 import {
   type Prescription,
   type SchemeConfig,
+  type SchemeSectionKind,
   type WorkoutRepScheme,
 } from "@repo/contracts/lms/workout-block";
 
@@ -39,17 +40,25 @@ export type EmomSlotInput = {
   exercises: WorkoutBlockExerciseInput[];
 };
 
-export type WorkoutBlockInput = {
-  blockTypeId: string;
+export type SchemeSectionInput = {
+  kind: SchemeSectionKind;
   schemeId: string | null;
   schemeKind: SchemeKind | null;
   schemeConfig: SchemeConfig | null;
   effortPct: number | null;
   pace: string | null;
   note: string | null;
+  tone: string | null;
   sortOrder: number;
   exercises: WorkoutBlockExerciseInput[];
   emomSlots: EmomSlotInput[];
+};
+
+export type WorkoutBlockInput = {
+  blockTypeId: string;
+  title: string | null;
+  sortOrder: number;
+  sections: SchemeSectionInput[];
 };
 
 export type WorkoutTreeInput = {

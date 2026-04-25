@@ -89,7 +89,7 @@ export const copyWorkoutWeek = async (
           continue;
         }
 
-        const { blockIdMap, slotIdMap } = await cloneWorkoutTree({
+        const { blockIdMap, sectionIdMap, slotIdMap } = await cloneWorkoutTree({
           sourceWorkoutId: source.id,
           targetWorkoutId: target.id,
           tx,
@@ -97,8 +97,11 @@ export const copyWorkoutWeek = async (
 
         const sourceDoc = parseStoredContentDoc(source.contentDoc);
 
-        if (sourceDoc !== null && (blockIdMap.size > 0 || slotIdMap.size > 0)) {
-          const remapped = remapMentionNodeIds(sourceDoc, blockIdMap, slotIdMap);
+        if (
+          sourceDoc !== null &&
+          (blockIdMap.size > 0 || sectionIdMap.size > 0 || slotIdMap.size > 0)
+        ) {
+          const remapped = remapMentionNodeIds(sourceDoc, blockIdMap, sectionIdMap, slotIdMap);
 
           await tx.workout.update({
             where: { id: target.id },

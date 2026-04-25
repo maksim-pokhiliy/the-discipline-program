@@ -126,10 +126,10 @@ export const librarySchemeAdminApi = {
   delete: async (id: string): Promise<void> => {
     await findOrThrow(prisma.scheme.findUnique({ where: { id } }), "Scheme");
 
-    const usage = await prisma.workoutBlock.count({ where: { schemeId: id } });
+    const usage = await prisma.schemeSection.count({ where: { schemeId: id } });
 
     if (usage > 0) {
-      throw new ConflictError("Scheme is referenced by existing workout blocks", {
+      throw new ConflictError("Scheme is referenced by existing scheme sections", {
         id,
         referenceCount: usage,
       });

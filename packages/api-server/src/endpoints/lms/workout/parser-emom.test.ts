@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { type TiptapDoc, type TiptapNode } from "@repo/contracts/common/tiptap-doc";
+import { SchemeKind } from "@repo/contracts/library/scheme";
 import { BadRequestError } from "@repo/errors";
 
 import { parseTiptapDoc } from "./parser";
@@ -9,67 +10,64 @@ import {
   EXERCISE_ID_A,
   EXERCISE_ID_B,
   SCHEME_ID_EMOM,
+  blockNode,
   buildLookup,
   mentionNode,
   parserOpts,
+  schemeSectionNode,
   straightSetsBlock,
 } from "./parser-fixtures";
 
 const buildEmomDoc = (slots: TiptapNode[]): TiptapDoc => ({
   type: "doc",
-  content: [
-    {
-      type: "emom",
-      attrs: { blockTypeId: BLOCK_TYPE_ID, schemeId: SCHEME_ID_EMOM, schemeConfig: {} },
-      content: slots,
-    },
-  ],
+  content: [blockNode(BLOCK_TYPE_ID, [schemeSectionNode(SchemeKind.EMOM, SCHEME_ID_EMOM, slots)])],
 });
 
-describe("parseTiptapDoc EMOM", () => {
-  it("maps one slot with two mentions to two slotExercises on the slot", () => {
+describe("parseTiptapDoc EMOM section structure", () => {
+  it("maps one slot with two mentions to two slot exercises and zero section exercises", () => {
     const doc = buildEmomDoc([
       {
         type: "emomSlot",
-        attrs: { minuteInRound: 0 },
+        attrs: { minuteInRound: 0, sortOrder: 0 },
         content: [mentionNode(EXERCISE_ID_A), mentionNode(EXERCISE_ID_B)],
       },
     ]);
 
     const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+    const section = result.blocks[0]?.sections[0];
 
-    expect(result.blocks).toHaveLength(1);
-    expect(result.blocks[0]?.emomSlots).toHaveLength(1);
-    expect(result.blocks[0]?.emomSlots[0]?.exercises).toHaveLength(2);
-    expect(result.blocks[0]?.emomSlots[0]?.exercises[0]?.exerciseId).toBe(EXERCISE_ID_A);
-    expect(result.blocks[0]?.emomSlots[0]?.exercises[1]?.exerciseId).toBe(EXERCISE_ID_B);
-    expect(result.blocks[0]?.exercises).toHaveLength(0);
+    expect(section?.emomSlots).toHaveLength(1);
+    expect(section?.emomSlots[0]?.exercises).toHaveLength(2);
+    expect(section?.emomSlots[0]?.exercises[0]?.exerciseId).toBe(EXERCISE_ID_A);
+    expect(section?.emomSlots[0]?.exercises[1]?.exerciseId).toBe(EXERCISE_ID_B);
+    expect(section?.exercises).toHaveLength(0);
   });
 
   it("maps multiple slots with correct minuteInRound and sortOrder", () => {
     const doc = buildEmomDoc([
       {
         type: "emomSlot",
-        attrs: { minuteInRound: 0 },
+        attrs: { minuteInRound: 0, sortOrder: 0 },
         content: [mentionNode(EXERCISE_ID_A)],
       },
       {
         type: "emomSlot",
-        attrs: { minuteInRound: 1 },
+        attrs: { minuteInRound: 1, sortOrder: 1 },
         content: [mentionNode(EXERCISE_ID_B)],
       },
     ]);
 
     const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
+    const section = result.blocks[0]?.sections[0];
 
-    expect(result.blocks[0]?.emomSlots).toHaveLength(2);
-    expect(result.blocks[0]?.emomSlots[0]?.minuteInRound).toBe(0);
-    expect(result.blocks[0]?.emomSlots[0]?.sortOrder).toBe(0);
-    expect(result.blocks[0]?.emomSlots[1]?.minuteInRound).toBe(1);
-    expect(result.blocks[0]?.emomSlots[1]?.sortOrder).toBe(1);
+    expect(section?.emomSlots).toHaveLength(2);
+    expect(section?.emomSlots[0]?.minuteInRound).toBe(0);
+    expect(section?.emomSlots[0]?.sortOrder).toBe(0);
+    expect(section?.emomSlots[1]?.minuteInRound).toBe(1);
+    expect(section?.emomSlots[1]?.sortOrder).toBe(1);
   });
 
-  it("rejects an EMOM node that contains non-slot child", () => {
+  it("rejects an EMOM section that contains a non-slot child", () => {
     const doc = buildEmomDoc([mentionNode(EXERCISE_ID_A)]);
 
     expect(() => parseTiptapDoc(doc, buildLookup(), parserOpts)).toThrow(BadRequestError);
@@ -79,8 +77,8 @@ describe("parseTiptapDoc EMOM", () => {
     const doc = buildEmomDoc([
       {
         type: "emomSlot",
-        attrs: { minuteInRound: 0 },
-        content: [{ type: "paragraph" }],
+        attrs: { minuteInRound: 0, sortOrder: 0 },
+        content: [],
       },
     ]);
 
@@ -100,19 +98,18 @@ describe("parseTiptapDoc EMOM", () => {
     const doc = buildEmomDoc([
       {
         type: "emomSlot",
-        attrs: { minuteInRound: 0 },
-        content: [{ type: "paragraph" }],
+        attrs: { minuteInRound: 0, sortOrder: 0 },
+        content: [],
       },
     ]);
 
     const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
 
-    expect(result.blocks).toHaveLength(1);
-    expect(result.blocks[0]?.emomSlots).toHaveLength(1);
-    expect(result.blocks[0]?.emomSlots[0]?.exercises).toHaveLength(0);
+    expect(result.blocks[0]?.sections[0]?.emomSlots).toHaveLength(1);
+    expect(result.blocks[0]?.sections[0]?.emomSlots[0]?.exercises).toHaveLength(0);
   });
 
-  it("rejects an emom block with zero slots in strict mode", () => {
+  it("rejects an EMOM section with zero slots in strict mode", () => {
     const doc = buildEmomDoc([]);
 
     try {
@@ -122,22 +119,21 @@ describe("parseTiptapDoc EMOM", () => {
       expect(error).toBeInstanceOf(BadRequestError);
 
       if (error instanceof BadRequestError) {
-        expect(error.details?.code).toBe("workout.emom.empty");
+        expect(error.details?.code).toBe("workout.section.emom.empty");
       }
     }
   });
 
-  it("accepts an emom block with zero slots when strict is not set", () => {
+  it("accepts an EMOM section with zero slots when strict is not set", () => {
     const doc = buildEmomDoc([]);
 
     const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
 
-    expect(result.blocks).toHaveLength(1);
-    expect(result.blocks[0]?.emomSlots).toHaveLength(0);
+    expect(result.blocks[0]?.sections[0]?.emomSlots).toHaveLength(0);
   });
 });
 
-describe("parseTiptapDoc complex grouping", () => {
+describe("parseTiptapDoc complex grouping in scheme section", () => {
   it("carries the same complexGroup string across two mentions", () => {
     const doc: TiptapDoc = {
       type: "doc",
@@ -150,7 +146,7 @@ describe("parseTiptapDoc complex grouping", () => {
     };
 
     const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
-    const exercises = result.blocks[0]?.exercises ?? [];
+    const exercises = result.blocks[0]?.sections[0]?.exercises ?? [];
 
     expect(exercises).toHaveLength(2);
     expect(exercises[0]?.complexGroup).toBe("A");
@@ -160,48 +156,8 @@ describe("parseTiptapDoc complex grouping", () => {
   });
 });
 
-describe("parseTiptapDoc schemeless blocks", () => {
-  it("parses notes block with note attribute", () => {
-    const doc: TiptapDoc = {
-      type: "doc",
-      content: [
-        {
-          type: "notes",
-          attrs: { blockTypeId: BLOCK_TYPE_ID, note: "Good luck" },
-        },
-      ],
-    };
-
-    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
-
-    expect(result.blocks).toHaveLength(1);
-    expect(result.blocks[0]?.note).toBe("Good luck");
-    expect(result.blocks[0]?.schemeKind).toBeNull();
-    expect(result.blocks[0]?.blockTypeId).toBe(BLOCK_TYPE_ID);
-  });
-
-  it("parses textCallout block", () => {
-    const doc: TiptapDoc = {
-      type: "doc",
-      content: [
-        {
-          type: "textCallout",
-          attrs: { blockTypeId: BLOCK_TYPE_ID, note: "Warning" },
-        },
-      ],
-    };
-
-    const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
-
-    expect(result.blocks).toHaveLength(1);
-    expect(result.blocks[0]?.note).toBe("Warning");
-    expect(result.blocks[0]?.schemeKind).toBeNull();
-    expect(result.blocks[0]?.blockTypeId).toBe(BLOCK_TYPE_ID);
-  });
-});
-
 describe("parseTiptapDoc sortOrder normalization", () => {
-  it("normalizes sortOrder within a block based on document order", () => {
+  it("normalizes exercise sortOrder within a section based on document order", () => {
     const doc: TiptapDoc = {
       type: "doc",
       content: [
@@ -213,7 +169,7 @@ describe("parseTiptapDoc sortOrder normalization", () => {
     };
 
     const result = parseTiptapDoc(doc, buildLookup(), parserOpts);
-    const exercises = result.blocks[0]?.exercises ?? [];
+    const exercises = result.blocks[0]?.sections[0]?.exercises ?? [];
 
     expect(exercises[0]?.sortOrder).toBe(0);
     expect(exercises[1]?.sortOrder).toBe(1);

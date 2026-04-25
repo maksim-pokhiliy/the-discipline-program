@@ -152,15 +152,21 @@ describe("libraryExerciseAdminApi", () => {
         data: {
           workoutId: workout.id,
           blockTypeId: blockType.id,
+          sortOrder: 0,
+        },
+      });
+      const section = await cleanupRaw.schemeSection.create({
+        data: {
+          blockId: block.id,
+          kind: "SCHEME",
           schemeId: scheme.id,
           schemeKind: "STRAIGHT_SETS",
-          schemeConfig: {},
           sortOrder: 0,
         },
       });
       const blockExercise = await cleanupRaw.workoutBlockExercise.create({
         data: {
-          blockId: block.id,
+          sectionId: section.id,
           exerciseId: source.id,
           repScheme: "STRAIGHT",
           repValues: [5, 5, 5],
@@ -170,6 +176,7 @@ describe("libraryExerciseAdminApi", () => {
       });
 
       toCleanup.push({ table: "workoutBlockExercise", id: blockExercise.id });
+      toCleanup.push({ table: "schemeSection", id: section.id });
       toCleanup.push({ table: "workoutBlock", id: block.id });
 
       const merged = await libraryExerciseAdminApi.merge({

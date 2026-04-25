@@ -174,7 +174,13 @@ describe("lmsWorkoutApi", () => {
 
       const sampleDoc = {
         type: "doc" as const,
-        content: [{ type: "notes", attrs: { text: "A. Back Squat 5x5 @ 185lb" } }],
+        content: [
+          {
+            type: "block",
+            attrs: { blockTypeId: "cl000000000000000000bt001", title: "Strength", sortOrder: 0 },
+            content: [],
+          },
+        ],
       };
 
       const srcWorkout = await cleanupRaw.workout.create({

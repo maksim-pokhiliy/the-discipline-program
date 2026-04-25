@@ -5,6 +5,8 @@ import {
   type Prisma,
   PrismaClient,
   type Scheme,
+  type SchemeKind,
+  type SchemeSection,
   type Workout,
   type WorkoutBlock,
   type WorkoutBlockExercise,
@@ -67,39 +69,110 @@ export const createTestBlockType = async (
   });
 };
 
+export type ExerciseRowSpec = {
+  exerciseId: string;
+  repScheme?: Prisma.WorkoutBlockExerciseUncheckedCreateInput["repScheme"];
+  repValues?: number[];
+  sets?: number | null;
+  sortOrder?: number;
+  prescription?: Prisma.InputJsonValue | null;
+  restSec?: number | null;
+  note?: string | null;
+  complexGroup?: string | null;
+  complexOrder?: number | null;
+};
+
+export type EmomSlotSpec = {
+  minuteInRound: number;
+  sortOrder?: number;
+  note?: string | null;
+  exercises?: ExerciseRowSpec[];
+};
+
+export type SectionSpec = {
+  kind?: "SCHEME" | "NOTES" | "TEXT_CALLOUT";
+  schemeId?: string | null;
+  schemeKind?: SchemeKind | null;
+  schemeConfig?: Prisma.InputJsonValue | null;
+  effortPct?: number | null;
+  pace?: string | null;
+  note?: string | null;
+  tone?: string | null;
+  sortOrder?: number;
+  exercises?: ExerciseRowSpec[];
+  emomSlots?: EmomSlotSpec[];
+};
+
+export type BlockSpec = {
+  blockTypeId: string;
+  title?: string | null;
+  sortOrder?: number;
+  sections: SectionSpec[];
+};
+
+export type CreatedSection = SchemeSection & {
+  exercises: WorkoutBlockExercise[];
+  emomSlots: (EmomSlot & { exercises: WorkoutBlockExercise[] })[];
+};
+
+export type CreatedBlock = WorkoutBlock & {
+  sections: CreatedSection[];
+};
+
 export type TestWorkoutWithBlocks = {
   workout: Workout;
-  blocks: (WorkoutBlock & {
-    exercises: WorkoutBlockExercise[];
-    emomSlots: (EmomSlot & { exercises: WorkoutBlockExercise[] })[];
-  })[];
+  blocks: CreatedBlock[];
   toCleanup: { table: string; id: string }[];
+};
+
+const toExerciseCreateInput = (
+  spec: ExerciseRowSpec,
+  parent: { sectionId: string | null; emomSlotId: string | null },
+  fallbackSortOrder: number,
+): Prisma.WorkoutBlockExerciseUncheckedCreateInput => {
+  const data: Prisma.WorkoutBlockExerciseUncheckedCreateInput = {
+    sectionId: parent.sectionId,
+    emomSlotId: parent.emomSlotId,
+    exerciseId: spec.exerciseId,
+    repScheme: spec.repScheme ?? "STRAIGHT",
+    repValues: spec.repValues ?? [],
+    sortOrder: spec.sortOrder ?? fallbackSortOrder,
+  };
+
+  if (spec.sets !== undefined) {
+    data.sets = spec.sets;
+  }
+
+  if (spec.prescription !== undefined && spec.prescription !== null) {
+    data.prescription = spec.prescription;
+  }
+
+  if (spec.restSec !== undefined) {
+    data.restSec = spec.restSec;
+  }
+
+  if (spec.note !== undefined) {
+    data.note = spec.note;
+  }
+
+  if (spec.complexGroup !== undefined) {
+    data.complexGroup = spec.complexGroup;
+  }
+
+  if (spec.complexOrder !== undefined) {
+    data.complexOrder = spec.complexOrder;
+  }
+
+  return data;
 };
 
 export const createTestWorkoutWithBlocks = async (params: {
   planId: string;
-  blockTypeId: string;
-  schemeId?: string | null;
-  exerciseIds: string[];
+  blocks: BlockSpec[];
   scheduledDate?: Date;
-  blockCount?: number;
-  exercisesPerBlock?: number;
   workoutOverrides?: Partial<Prisma.WorkoutUncheckedCreateInput>;
 }): Promise<TestWorkoutWithBlocks> => {
-  const {
-    planId,
-    blockTypeId,
-    schemeId = null,
-    exerciseIds,
-    scheduledDate,
-    blockCount = 1,
-    exercisesPerBlock = 1,
-    workoutOverrides = {},
-  } = params;
-
-  if (exerciseIds.length === 0) {
-    throw new Error("createTestWorkoutWithBlocks: exerciseIds must be non-empty");
-  }
+  const { planId, blocks: blockSpecs, scheduledDate, workoutOverrides = {} } = params;
 
   const toCleanup: { table: string; id: string }[] = [];
 
@@ -110,47 +183,130 @@ export const createTestWorkoutWithBlocks = async (params: {
 
   toCleanup.push({ table: "workout", id: workout.id });
 
-  const blocks: TestWorkoutWithBlocks["blocks"] = [];
+  const blocks: CreatedBlock[] = [];
 
-  for (let b = 0; b < blockCount; b += 1) {
+  for (let blockIndex = 0; blockIndex < blockSpecs.length; blockIndex += 1) {
+    const blockSpec = blockSpecs[blockIndex];
+
+    if (!blockSpec) {
+      continue;
+    }
+
     const block = await rawPrisma.workoutBlock.create({
       data: {
         workoutId: workout.id,
-        blockTypeId,
-        schemeId,
-        schemeKind: "STRAIGHT_SETS",
-        schemeConfig: {},
-        sortOrder: b,
+        blockTypeId: blockSpec.blockTypeId,
+        title: blockSpec.title ?? null,
+        sortOrder: blockSpec.sortOrder ?? blockIndex,
       },
     });
 
     toCleanup.push({ table: "workoutBlock", id: block.id });
 
-    const exercises: WorkoutBlockExercise[] = [];
+    const sections: CreatedSection[] = [];
 
-    for (let e = 0; e < exercisesPerBlock; e += 1) {
-      const exerciseId = exerciseIds[e % exerciseIds.length];
+    for (let sectionIndex = 0; sectionIndex < blockSpec.sections.length; sectionIndex += 1) {
+      const sectionSpec = blockSpec.sections[sectionIndex];
 
-      if (!exerciseId) {
+      if (!sectionSpec) {
         continue;
       }
 
-      const blockExercise = await rawPrisma.workoutBlockExercise.create({
+      const section = await rawPrisma.schemeSection.create({
         data: {
           blockId: block.id,
-          exerciseId,
-          repScheme: "STRAIGHT",
-          repValues: [5, 5, 5],
-          sets: 3,
-          sortOrder: e,
+          kind: sectionSpec.kind ?? "SCHEME",
+          schemeId: sectionSpec.schemeId ?? null,
+          schemeKind: sectionSpec.schemeKind ?? null,
+          schemeConfig:
+            sectionSpec.schemeConfig === undefined || sectionSpec.schemeConfig === null
+              ? undefined
+              : sectionSpec.schemeConfig,
+          effortPct: sectionSpec.effortPct ?? null,
+          pace: sectionSpec.pace ?? null,
+          note: sectionSpec.note ?? null,
+          tone: sectionSpec.tone ?? null,
+          sortOrder: sectionSpec.sortOrder ?? sectionIndex,
         },
       });
 
-      toCleanup.push({ table: "workoutBlockExercise", id: blockExercise.id });
-      exercises.push(blockExercise);
+      toCleanup.push({ table: "schemeSection", id: section.id });
+
+      const sectionExercises: WorkoutBlockExercise[] = [];
+
+      if (sectionSpec.exercises) {
+        for (let i = 0; i < sectionSpec.exercises.length; i += 1) {
+          const exerciseSpec = sectionSpec.exercises[i];
+
+          if (!exerciseSpec) {
+            continue;
+          }
+
+          const exercise = await rawPrisma.workoutBlockExercise.create({
+            data: toExerciseCreateInput(
+              exerciseSpec,
+              { sectionId: section.id, emomSlotId: null },
+              i,
+            ),
+          });
+
+          toCleanup.push({ table: "workoutBlockExercise", id: exercise.id });
+          sectionExercises.push(exercise);
+        }
+      }
+
+      const slots: (EmomSlot & { exercises: WorkoutBlockExercise[] })[] = [];
+
+      if (sectionSpec.emomSlots) {
+        for (let slotIndex = 0; slotIndex < sectionSpec.emomSlots.length; slotIndex += 1) {
+          const slotSpec = sectionSpec.emomSlots[slotIndex];
+
+          if (!slotSpec) {
+            continue;
+          }
+
+          const slot = await rawPrisma.emomSlot.create({
+            data: {
+              sectionId: section.id,
+              minuteInRound: slotSpec.minuteInRound,
+              sortOrder: slotSpec.sortOrder ?? slotIndex,
+              note: slotSpec.note ?? null,
+            },
+          });
+
+          toCleanup.push({ table: "emomSlot", id: slot.id });
+
+          const slotExercises: WorkoutBlockExercise[] = [];
+
+          if (slotSpec.exercises) {
+            for (let i = 0; i < slotSpec.exercises.length; i += 1) {
+              const exerciseSpec = slotSpec.exercises[i];
+
+              if (!exerciseSpec) {
+                continue;
+              }
+
+              const exercise = await rawPrisma.workoutBlockExercise.create({
+                data: toExerciseCreateInput(
+                  exerciseSpec,
+                  { sectionId: null, emomSlotId: slot.id },
+                  i,
+                ),
+              });
+
+              toCleanup.push({ table: "workoutBlockExercise", id: exercise.id });
+              slotExercises.push(exercise);
+            }
+          }
+
+          slots.push({ ...slot, exercises: slotExercises });
+        }
+      }
+
+      sections.push({ ...section, exercises: sectionExercises, emomSlots: slots });
     }
 
-    blocks.push({ ...block, exercises, emomSlots: [] });
+    blocks.push({ ...block, sections });
   }
 
   return { workout, blocks, toCleanup };
