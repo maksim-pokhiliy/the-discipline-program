@@ -9,10 +9,13 @@ import { useEditor as useTiptapEditor, type AnyExtension } from "@tiptap/react";
 import { tiptapDocSchema, type TiptapDoc } from "@repo/contracts/common/tiptap-doc";
 import type { BlockType } from "@repo/contracts/library/block-type";
 import type { ExerciseListItem } from "@repo/contracts/library/exercise";
+import type { Scheme } from "@repo/contracts/library/scheme";
 
 import { WORKOUT_EDITOR_UPDATE_THROTTLE_MS } from "./constants";
 import { ExerciseMentionExtension, SlashCommandExtension } from "./extensions";
+import { BlockDragHandleExtension } from "./extensions/block-drag-handle";
 import { BlockTypesExtension, writeBlockTypes } from "./extensions/block-types";
+import { SchemesExtension, writeSchemes } from "./extensions/schemes";
 import { coreWorkoutExtensions } from "./registered-nodes";
 import {
   buildMentionItems,
@@ -22,7 +25,7 @@ import {
   type MentionRendererBundle,
   type SlashRendererBundle,
 } from "./runtime";
-import type { CreateExerciseFn, ExerciseSuggestion, SlashCommandItem } from "./types";
+import type { CreateExerciseFn, ExerciseSuggestion } from "./types";
 
 type UseWorkoutEditorProps = {
   value: TiptapDoc | null;
@@ -31,9 +34,9 @@ type UseWorkoutEditorProps = {
   exercises: ReadonlyArray<ExerciseListItem>;
   createExercise: CreateExerciseFn;
   blockTypes: ReadonlyArray<BlockType>;
+  schemes: ReadonlyArray<Scheme>;
   placeholder: string;
   disabled: boolean;
-  slashItemsFactory: (query: string) => SlashCommandItem[];
   onRequestInlineCreate: (query: string) => Promise<ExerciseSuggestion | null>;
 };
 
@@ -48,9 +51,9 @@ export const useWorkoutEditor = ({
   exercises,
   createExercise,
   blockTypes,
+  schemes,
   placeholder,
   disabled,
-  slashItemsFactory,
   onRequestInlineCreate,
 }: UseWorkoutEditorProps) => {
   const onChangeRef = useRef(onChange);
@@ -60,7 +63,6 @@ export const useWorkoutEditor = ({
   const slashBundleRef = useRef<SlashRendererBundle | null>(null);
   const mentionBundleRef = useRef<MentionRendererBundle | null>(null);
   const exercisesRef = useRef(exercises);
-  const slashItemsFactoryRef = useRef(slashItemsFactory);
   const inlineCreateRef = useRef(onRequestInlineCreate);
   const createExerciseRef = useRef(createExercise);
   const [overlay, setOverlay] = useState<OverlayState>(null);
@@ -76,10 +78,6 @@ export const useWorkoutEditor = ({
   useEffect(() => {
     exercisesRef.current = exercises;
   }, [exercises]);
-
-  useEffect(() => {
-    slashItemsFactoryRef.current = slashItemsFactory;
-  }, [slashItemsFactory]);
 
   useEffect(() => {
     inlineCreateRef.current = onRequestInlineCreate;
@@ -133,8 +131,9 @@ export const useWorkoutEditor = ({
       UndoRedo,
       Placeholder.configure({ placeholder }),
       BlockTypesExtension,
+      SchemesExtension,
+      BlockDragHandleExtension,
       SlashCommandExtension.configure({
-        items: ({ query }) => slashItemsFactoryRef.current(query),
         render: () => slashHandlers,
       }),
       ExerciseMentionExtension.configure({
@@ -216,8 +215,11 @@ export const useWorkoutEditor = ({
     }
 
     writeBlockTypes(editor, blockTypes);
-    editor.view.dispatch(editor.state.tr.setMeta("blockTypesSync", true));
-  }, [editor, blockTypes]);
+    writeSchemes(editor, schemes);
+    editor.view.dispatch(
+      editor.state.tr.setMeta("libraryStateSync", true).setMeta("addToHistory", false),
+    );
+  }, [editor, blockTypes, schemes]);
 
   useEffect(
     () => () => {

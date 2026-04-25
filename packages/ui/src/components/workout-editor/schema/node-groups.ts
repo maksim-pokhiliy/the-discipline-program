@@ -1,27 +1,13 @@
-import {
-  BLOCK_CONTENT_GROUP,
-  BLOCK_NODE_GROUP,
-  BLOCK_NODE_NAMES,
-  EMOM_SLOT_NODE_NAME,
-  EXERCISE_MENTION_NODE_NAME,
-  INLINE_MENTION_GROUP,
-  PRESCRIPTION_CHIP_NODE_NAME,
-  SCHEME_MENTION_NODE_NAME,
-  type BlockNodeName,
-} from "../constants";
+export const BLOCK_NODE_GROUP = "block" as const;
+export const SECTION_NODE_GROUP = "section" as const;
+export const INLINE_MENTION_GROUP = "inlineMention" as const;
+export const BLOCK_CONTENT_GROUP = "blockContent" as const;
+export const EMOM_CHILD_GROUP = "emomSlot" as const;
 
-export const ROOT_BLOCK_NAMES: readonly BlockNodeName[] = BLOCK_NODE_NAMES;
+export const BLOCK_WRAPPER_NODE_NAME = "block" as const;
 
-export const INLINE_MENTION_NAMES = [
-  EXERCISE_MENTION_NODE_NAME,
-  SCHEME_MENTION_NODE_NAME,
-  PRESCRIPTION_CHIP_NODE_NAME,
-] as const;
+export const SECTION_NODE_NAMES = ["schemeSection", "notesSection", "textCalloutSection"] as const;
+export type SectionNodeName = (typeof SECTION_NODE_NAMES)[number];
 
-export const EMOM_CHILD_NODE = EMOM_SLOT_NODE_NAME;
-
-export const NODE_GROUPS = {
-  block: BLOCK_NODE_GROUP,
-  inlineMention: INLINE_MENTION_GROUP,
-  blockContent: BLOCK_CONTENT_GROUP,
-} as const;
+export const INLINE_MENTION_NAMES = ["exerciseMention", "prescriptionChip"] as const;
+export type InlineMentionName = (typeof INLINE_MENTION_NAMES)[number];

@@ -3,8 +3,9 @@
 import { ReactRenderer } from "@tiptap/react";
 import type { SuggestionProps } from "@tiptap/suggestion";
 
-import type { SlashCommandItem } from "../types";
 import { SlashMenu, type SlashMenuHandle } from "../views";
+
+import type { SlashCommandItem } from "./slash-items-types";
 
 export type SlashRendererBundle = {
   renderer: ReactRenderer<

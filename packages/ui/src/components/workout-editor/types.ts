@@ -7,9 +7,23 @@ import type {
 } from "@repo/contracts/library/exercise";
 import type { Scheme, SchemeKind } from "@repo/contracts/library/scheme";
 
-export type { SchemeKind };
+import type { BlockWrapperAttrs } from "./nodes/block-wrapper-node";
+import type { ExerciseLineAttrs } from "./nodes/exercise-line-node";
+import type { NotesSectionAttrs } from "./nodes/notes-section-node";
+import type { SchemeSectionAttrs } from "./nodes/scheme-section-node";
+import type { TextCalloutSectionAttrs } from "./nodes/text-callout-section-node";
+import type { SlashCommandItem } from "./runtime/slash-items-types";
 
-import type { BlockNodeName } from "./constants";
+export type {
+  BlockWrapperAttrs,
+  ExerciseLineAttrs,
+  NotesSectionAttrs,
+  SchemeSectionAttrs,
+  SlashCommandItem,
+  TextCalloutSectionAttrs,
+};
+
+export type { SchemeKind };
 
 export type ExerciseSuggestion = ExerciseListItem;
 
@@ -18,8 +32,6 @@ export type SchemeSuggestion = Scheme;
 export type BlockTypeSuggestion = BlockType;
 
 export type CreateExerciseFn = (data: CreateExerciseData) => Promise<ExerciseSuggestion>;
-
-export type ListSchemesFn = () => Promise<SchemeSuggestion[]>;
 
 export type BlockTemplateSuggestion = {
   id: string;
@@ -33,21 +45,6 @@ export type WorkoutTemplateSuggestion = {
   label: string;
   description?: string;
   doc: TiptapDoc;
-};
-
-export type SlashCommandKind = BlockNodeName | "blockTemplate" | "workoutTemplate";
-
-export type SlashCommandItem = {
-  id: string;
-  kind: SlashCommandKind;
-  label: string;
-  description?: string;
-  blockNodeName?: BlockNodeName;
-  blockTypeId?: string;
-  schemeId?: string | null;
-  schemeKind?: SchemeKind | null;
-  schemeConfig?: Record<string, number>;
-  templateDoc?: TiptapDoc;
 };
 
 export type ExerciseMentionAttrs = {
@@ -65,30 +62,12 @@ export type ExerciseMentionAttrs = {
   emomSlotId: string | null;
 };
 
-export type SchemeMentionAttrs = {
-  schemeId: string | null;
-  schemeKind: SchemeKind | null;
-  schemeConfig: Record<string, number>;
-  label: string | null;
-};
-
 export type PrescriptionChipAttrs = {
   kind: string;
   value: number | null;
   unit: string | null;
   ofExerciseId: string | null;
   label: string | null;
-};
-
-export type BlockNodeAttrs = {
-  blockTypeId: string | null;
-  schemeId: string | null;
-  schemeKind: SchemeKind | null;
-  schemeConfig: Record<string, number>;
-  effortPct: number | null;
-  pace: string | null;
-  note: string | null;
-  sortOrder: number;
 };
 
 export type EmomSlotAttrs = {
@@ -111,7 +90,7 @@ export type WorkoutEditorProps = {
   onBlur?: () => void;
   exercises: ReadonlyArray<ExerciseListItem>;
   createExercise: CreateExerciseFn;
-  listSchemes: ListSchemesFn;
+  schemes: ReadonlyArray<Scheme>;
   blockTypes: ReadonlyArray<BlockType>;
   savedBlockTemplates?: BlockTemplateSuggestion[];
   savedWorkoutTemplates?: WorkoutTemplateSuggestion[];

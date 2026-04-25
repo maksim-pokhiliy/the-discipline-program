@@ -17,6 +17,9 @@
     "test": "cross-env SKIP_ENV_VALIDATION=1 vitest run"
   },
   "dependencies": {
+    "@dnd-kit/core": "catalog:",
+    "@dnd-kit/sortable": "catalog:",
+    "@dnd-kit/utilities": "catalog:",
     "@mui/icons-material": "catalog:",
     "@mui/material": "catalog:",
     "@repo/contracts": "workspace:*",

@@ -37,89 +37,56 @@ describe("canInsertExerciseMentionAt", () => {
     expect(canInsertExerciseMentionAt(editor, 0)).toBe(false);
   });
 
-  it("returns false between two blocks (root level gap)", () => {
+  it("returns false at the doc root with empty blocks", () => {
     const editor = buildEditor({
       type: "doc",
       content: [
         {
-          type: "straightSets",
-          attrs: {
-            blockTypeId: "bt-1",
-            schemeId: null,
-            schemeKind: null,
-            schemeConfig: {},
-            effortPct: null,
-            pace: null,
-            note: null,
-            sortOrder: 0,
-          },
+          type: "block",
+          attrs: { blockTypeId: "bt-1", title: null, sortOrder: 0 },
+          content: [],
         },
         {
-          type: "straightSets",
-          attrs: {
-            blockTypeId: "bt-1",
-            schemeId: null,
-            schemeKind: null,
-            schemeConfig: {},
-            effortPct: null,
-            pace: null,
-            note: null,
-            sortOrder: 1,
-          },
+          type: "block",
+          attrs: { blockTypeId: "bt-2", title: null, sortOrder: 1 },
+          content: [],
         },
       ],
     });
 
     activeEditor = editor;
 
-    expect(canInsertExerciseMentionAt(editor, 2)).toBe(false);
+    const firstBlock = editor.state.doc.firstChild;
+
+    expect(firstBlock).not.toBeNull();
+
+    if (firstBlock === null) {
+      return;
+    }
+
+    expect(canInsertExerciseMentionAt(editor, firstBlock.nodeSize)).toBe(false);
   });
 
-  it("returns true inside a straightSets block", () => {
+  it("returns false directly inside a block (above any section)", () => {
     const editor = buildEditor({
       type: "doc",
       content: [
         {
-          type: "straightSets",
-          attrs: {
-            blockTypeId: "bt-1",
-            schemeId: null,
-            schemeKind: null,
-            schemeConfig: {},
-            effortPct: null,
-            pace: null,
-            note: null,
-            sortOrder: 0,
-          },
-        },
-      ],
-    });
-
-    activeEditor = editor;
-
-    expect(canInsertExerciseMentionAt(editor, 1)).toBe(true);
-  });
-
-  it("returns true inside an emomSlot", () => {
-    const editor = buildEditor({
-      type: "doc",
-      content: [
-        {
-          type: "emom",
-          attrs: {
-            blockTypeId: "bt-1",
-            schemeId: null,
-            schemeKind: null,
-            schemeConfig: {},
-            effortPct: null,
-            pace: null,
-            note: null,
-            sortOrder: 0,
-          },
+          type: "block",
+          attrs: { blockTypeId: "bt-1", title: null, sortOrder: 0 },
           content: [
             {
-              type: "emomSlot",
-              attrs: { minuteInRound: 0, note: null, sortOrder: 0 },
+              type: "schemeSection",
+              attrs: {
+                schemeId: null,
+                schemeKind: null,
+                schemeConfig: {},
+                effortPct: null,
+                pace: null,
+                note: null,
+                sortOrder: 0,
+              },
+              content: [{ type: "exerciseLine", content: [] }],
             },
           ],
         },
@@ -128,23 +95,132 @@ describe("canInsertExerciseMentionAt", () => {
 
     activeEditor = editor;
 
-    expect(canInsertExerciseMentionAt(editor, 2)).toBe(true);
+    expect(canInsertExerciseMentionAt(editor, 1)).toBe(false);
   });
 
-  it("returns false inside notes block (paragraph only accepts inline text, not mentions)", () => {
+  it("returns true inside an exerciseLine", () => {
     const editor = buildEditor({
       type: "doc",
       content: [
         {
-          type: "notes",
-          attrs: { note: null, sortOrder: 0 },
-          content: [{ type: "paragraph" }],
+          type: "block",
+          attrs: { blockTypeId: "bt-1", title: null, sortOrder: 0 },
+          content: [
+            {
+              type: "schemeSection",
+              attrs: {
+                schemeId: null,
+                schemeKind: null,
+                schemeConfig: {},
+                effortPct: null,
+                pace: null,
+                note: null,
+                sortOrder: 0,
+              },
+              content: [{ type: "exerciseLine", content: [] }],
+            },
+          ],
         },
       ],
     });
 
     activeEditor = editor;
 
-    expect(canInsertExerciseMentionAt(editor, 2)).toBe(false);
+    expect(canInsertExerciseMentionAt(editor, 3)).toBe(true);
+  });
+
+  it("returns true inside an emomSlot (mention insertable from EMOM section line)", () => {
+    const editor = buildEditor({
+      type: "doc",
+      content: [
+        {
+          type: "block",
+          attrs: { blockTypeId: "bt-1", title: null, sortOrder: 0 },
+          content: [
+            {
+              type: "schemeSection",
+              attrs: {
+                schemeId: null,
+                schemeKind: "EMOM",
+                schemeConfig: {},
+                effortPct: null,
+                pace: null,
+                note: null,
+                sortOrder: 0,
+              },
+              content: [
+                { type: "emomSlot", attrs: { minuteInRound: 0, note: null, sortOrder: 0 } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    activeEditor = editor;
+
+    expect(canInsertExerciseMentionAt(editor, 3)).toBe(true);
+  });
+
+  it("returns false at the boundary between two sections inside a block", () => {
+    const editor = buildEditor({
+      type: "doc",
+      content: [
+        {
+          type: "block",
+          attrs: { blockTypeId: "bt-1", title: null, sortOrder: 0 },
+          content: [
+            {
+              type: "schemeSection",
+              attrs: {
+                schemeId: null,
+                schemeKind: null,
+                schemeConfig: {},
+                effortPct: null,
+                pace: null,
+                note: null,
+                sortOrder: 0,
+              },
+              content: [{ type: "exerciseLine", content: [] }],
+            },
+            {
+              type: "schemeSection",
+              attrs: {
+                schemeId: null,
+                schemeKind: null,
+                schemeConfig: {},
+                effortPct: null,
+                pace: null,
+                note: null,
+                sortOrder: 1,
+              },
+              content: [{ type: "exerciseLine", content: [] }],
+            },
+          ],
+        },
+      ],
+    });
+
+    activeEditor = editor;
+
+    const block = editor.state.doc.firstChild;
+
+    expect(block).not.toBeNull();
+
+    if (block === null) {
+      return;
+    }
+
+    const firstSection = block.firstChild;
+
+    expect(firstSection).not.toBeNull();
+
+    if (firstSection === null) {
+      return;
+    }
+
+    const between = 1 + firstSection.nodeSize;
+
+    expect(canInsertExerciseMentionAt(editor, between)).toBe(false);
   });
 });

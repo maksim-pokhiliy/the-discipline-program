@@ -1,79 +1,97 @@
 import { ReactNodeViewRenderer } from "@tiptap/react";
 
 import {
-  AmrapNode,
-  EmomNode,
+  BlockWrapperNode,
   EmomSlotNode,
-  EveryXMinNode,
+  ExerciseLineNode,
   ExerciseMentionNode,
-  ForTimeNode,
-  IntervalsNode,
-  NotesNode,
+  NotesSectionNode,
   PrescriptionChipNode,
-  SchemeMentionNode,
-  StraightSetsNode,
-  TextCalloutNode,
-  TimeBlocksNode,
+  SchemeSectionNode,
+  TextCalloutSectionNode,
 } from "./nodes";
 import { WorkoutParagraphNode } from "./nodes/paragraph-node";
 import { WorkoutTextNode } from "./nodes/text-node";
+import {
+  handleBlockEnter,
+  handleExerciseLineBackspace,
+  handleExerciseLineEnter,
+  handleSectionBackspace,
+  handleSectionEnter,
+} from "./runtime/keymap-handlers";
 import { WorkoutDocNode } from "./schema/doc-node";
 import {
   BlockNodeView,
   EmomSlotView,
   ExerciseMentionView,
-  NotesNodeView,
+  NotesSectionView,
   PrescriptionChipView,
-  SchemeMentionView,
-  TextCalloutView,
+  SchemeSectionView,
+  TextCalloutSectionView,
 } from "./views";
 
-export const WorkoutStraightSetsNode = StraightSetsNode.extend({
+const SCHEME_SECTION = "schemeSection";
+const NOTES_SECTION = "notesSection";
+const TEXT_CALLOUT_SECTION = "textCalloutSection";
+
+export const WorkoutBlockWrapperNode = BlockWrapperNode.extend({
+  addKeyboardShortcuts() {
+    return {
+      Enter: ({ editor }) => handleBlockEnter(editor),
+    };
+  },
+}).extend({
   addNodeView: () => ReactNodeViewRenderer(BlockNodeView),
 });
 
-export const WorkoutForTimeNode = ForTimeNode.extend({
-  addNodeView: () => ReactNodeViewRenderer(BlockNodeView),
+export const WorkoutSchemeSectionNode = SchemeSectionNode.extend({
+  addKeyboardShortcuts() {
+    return {
+      Enter: ({ editor }) => handleSectionEnter(editor, SCHEME_SECTION),
+      Backspace: ({ editor }) => handleSectionBackspace(editor, SCHEME_SECTION),
+    };
+  },
+}).extend({
+  addNodeView: () => ReactNodeViewRenderer(SchemeSectionView),
 });
 
-export const WorkoutAmrapNode = AmrapNode.extend({
-  addNodeView: () => ReactNodeViewRenderer(BlockNodeView),
+export const WorkoutNotesSectionNode = NotesSectionNode.extend({
+  addKeyboardShortcuts() {
+    return {
+      Enter: ({ editor }) => handleSectionEnter(editor, NOTES_SECTION),
+      Backspace: ({ editor }) => handleSectionBackspace(editor, NOTES_SECTION),
+    };
+  },
+}).extend({
+  addNodeView: () => ReactNodeViewRenderer(NotesSectionView),
 });
 
-export const WorkoutEmomNode = EmomNode.extend({
-  addNodeView: () => ReactNodeViewRenderer(BlockNodeView),
+export const WorkoutTextCalloutSectionNode = TextCalloutSectionNode.extend({
+  addKeyboardShortcuts() {
+    return {
+      Enter: ({ editor }) => handleSectionEnter(editor, TEXT_CALLOUT_SECTION),
+      Backspace: ({ editor }) => handleSectionBackspace(editor, TEXT_CALLOUT_SECTION),
+    };
+  },
+}).extend({
+  addNodeView: () => ReactNodeViewRenderer(TextCalloutSectionView),
+});
+
+export const WorkoutExerciseLineNode = ExerciseLineNode.extend({
+  addKeyboardShortcuts() {
+    return {
+      Enter: ({ editor }) => handleExerciseLineEnter(editor),
+      Backspace: ({ editor }) => handleExerciseLineBackspace(editor),
+    };
+  },
 });
 
 export const WorkoutEmomSlotNode = EmomSlotNode.extend({
   addNodeView: () => ReactNodeViewRenderer(EmomSlotView),
 });
 
-export const WorkoutEveryXMinNode = EveryXMinNode.extend({
-  addNodeView: () => ReactNodeViewRenderer(BlockNodeView),
-});
-
-export const WorkoutIntervalsNode = IntervalsNode.extend({
-  addNodeView: () => ReactNodeViewRenderer(BlockNodeView),
-});
-
-export const WorkoutTimeBlocksNode = TimeBlocksNode.extend({
-  addNodeView: () => ReactNodeViewRenderer(BlockNodeView),
-});
-
-export const WorkoutNotesNode = NotesNode.extend({
-  addNodeView: () => ReactNodeViewRenderer(NotesNodeView),
-});
-
-export const WorkoutTextCalloutNode = TextCalloutNode.extend({
-  addNodeView: () => ReactNodeViewRenderer(TextCalloutView),
-});
-
 export const WorkoutExerciseMentionNode = ExerciseMentionNode.extend({
   addNodeView: () => ReactNodeViewRenderer(ExerciseMentionView),
-});
-
-export const WorkoutSchemeMentionNode = SchemeMentionNode.extend({
-  addNodeView: () => ReactNodeViewRenderer(SchemeMentionView),
 });
 
 export const WorkoutPrescriptionChipNode = PrescriptionChipNode.extend({
@@ -86,17 +104,12 @@ export const coreWorkoutExtensions = [
   WorkoutDocNode,
   WorkoutTextNode,
   WorkoutParagraphNode,
-  WorkoutStraightSetsNode,
-  WorkoutForTimeNode,
-  WorkoutAmrapNode,
-  WorkoutEmomNode,
+  WorkoutBlockWrapperNode,
+  WorkoutSchemeSectionNode,
+  WorkoutNotesSectionNode,
+  WorkoutTextCalloutSectionNode,
+  WorkoutExerciseLineNode,
   WorkoutEmomSlotNode,
-  WorkoutEveryXMinNode,
-  WorkoutIntervalsNode,
-  WorkoutTimeBlocksNode,
-  WorkoutNotesNode,
-  WorkoutTextCalloutNode,
   WorkoutExerciseMentionNode,
-  WorkoutSchemeMentionNode,
   WorkoutPrescriptionChipNode,
 ];

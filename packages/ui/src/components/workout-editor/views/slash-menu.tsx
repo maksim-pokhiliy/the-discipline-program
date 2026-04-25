@@ -4,7 +4,7 @@ import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
 
 import { Box, List, ListItemButton, ListItemText, Paper, Typography } from "@mui/material";
 
-import type { SlashCommandItem } from "../types";
+import type { SlashCommandItem } from "../runtime/slash-items-types";
 
 export type SlashMenuHandle = {
   onKeyDown: (event: KeyboardEvent) => boolean;
