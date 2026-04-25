@@ -10,6 +10,7 @@ import {
 } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
+import { tiptapDocSchema } from "@repo/contracts/common/tiptap-doc";
 import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
 const prisma = new PrismaClient();
@@ -1350,7 +1351,9 @@ const seedSampleWorkoutContentDoc = async (
     ],
   };
 
-  return sampleContentDoc as Prisma.InputJsonValue;
+  const parsed = tiptapDocSchema.parse(sampleContentDoc);
+
+  return parsed as Prisma.InputJsonValue;
 };
 
 const seedTrainingPlans = async (

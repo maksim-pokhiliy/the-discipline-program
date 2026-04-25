@@ -15,6 +15,7 @@ import {
   Stack,
   type SelectChangeEvent,
 } from "@mui/material";
+import type { Editor } from "@tiptap/core";
 import {
   NodeViewContent,
   NodeViewWrapper,
@@ -23,9 +24,14 @@ import {
 } from "@tiptap/react";
 
 import { SCHEME_KIND_LABELS } from "@repo/contracts/library/scheme";
+import { schemeConfigSchema } from "@repo/contracts/lms/workout-block";
+
+import { readSchemes } from "../extensions/schemes";
 
 import { readSchemeSectionAttrs } from "./node-view-types";
 import { useSectionSortableId } from "./use-section-sortable-id";
+
+const schemesSelector = ({ editor }: { editor: Editor }) => readSchemes(editor);
 
 const formatSchemeConfigSummary = (config: Record<string, number>): string | null => {
   const entries = Object.entries(config);
@@ -46,10 +52,7 @@ const SchemeSectionViewImpl = ({
   updateAttributes,
 }: NodeViewProps) => {
   const attrs = readSchemeSectionAttrs(node.attrs);
-  const schemes = useEditorState({
-    editor,
-    selector: ({ editor: ctxEditor }) => ctxEditor.storage.workoutSchemes?.schemes ?? [],
-  });
+  const schemes = useEditorState({ editor, selector: schemesSelector });
   const sortableId = useSectionSortableId(editor, getPos);
 
   const {
@@ -71,11 +74,12 @@ const SchemeSectionViewImpl = ({
     (event: SelectChangeEvent) => {
       const nextId = event.target.value;
       const next = schemes.find((scheme) => scheme.id === nextId) ?? null;
+      const parsedConfig = schemeConfigSchema.safeParse(next?.paramDefaults ?? {});
 
       updateAttributes({
         schemeId: next?.id ?? null,
         schemeKind: next?.kind ?? null,
-        schemeConfig: next?.paramDefaults ?? {},
+        schemeConfig: parsedConfig.success ? parsedConfig.data : {},
       });
     },
     [schemes, updateAttributes],

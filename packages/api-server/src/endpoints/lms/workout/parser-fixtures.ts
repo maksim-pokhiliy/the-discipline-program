@@ -87,7 +87,23 @@ export const exerciseLineNode = (children: TiptapNode[]): TiptapNode => ({
   content: children,
 });
 
-export const straightSetsBlock = (children: TiptapNode[] = []): TiptapNode =>
-  blockNode(BLOCK_TYPE_ID, [
-    schemeSectionNode(SchemeKind.STRAIGHT_SETS, SCHEME_ID_STRAIGHT, [exerciseLineNode(children)]),
-  ]);
+export const straightSetsBlock = (
+  children: TiptapNode[] = [],
+  {
+    blockTypeId = BLOCK_TYPE_ID,
+    sortOrder = 0,
+    schemeId = SCHEME_ID_STRAIGHT,
+    extras,
+  }: {
+    blockTypeId?: string;
+    sortOrder?: number;
+    schemeId?: string | null;
+    extras?: Record<string, unknown>;
+  } = {},
+): TiptapNode => ({
+  type: "block",
+  attrs: { blockTypeId, title: null, sortOrder },
+  content: [
+    schemeSectionNode(SchemeKind.STRAIGHT_SETS, schemeId, [exerciseLineNode(children)], extras),
+  ],
+});

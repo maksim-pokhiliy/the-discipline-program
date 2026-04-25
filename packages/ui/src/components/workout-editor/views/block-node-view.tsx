@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useCallback, useMemo, useState, type CSSProperties } from "react";
+import { memo, useCallback, useId, useMemo, useState, type CSSProperties } from "react";
 
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -18,6 +18,7 @@ import {
   Typography,
   type SelectChangeEvent,
 } from "@mui/material";
+import type { Editor } from "@tiptap/core";
 import {
   NodeViewContent,
   NodeViewWrapper,
@@ -25,72 +26,17 @@ import {
   type NodeViewProps,
 } from "@tiptap/react";
 
-import { type Scheme, SCHEME_KIND_LABELS } from "@repo/contracts/library/scheme";
-
 import { readBlockTypes } from "../extensions/block-types";
+import { readSchemes } from "../extensions/schemes";
 import { runAddSection } from "../runtime/add-section-command";
+import { buildSlashItemsBlock } from "../runtime/build-slash-items-block";
 import { synthesizeBlockId, synthesizeSectionId } from "../runtime/node-id-utils";
 import type { SlashCommandItem } from "../runtime/slash-items-types";
 
 import { readBlockWrapperAttrs } from "./node-view-types";
 
-type AddSectionItem =
-  | { id: string; kind: "add-scheme-section"; label: string; scheme: Scheme }
-  | { id: "add-notes"; kind: "add-notes-section"; label: "Notes" }
-  | { id: "add-text-callout"; kind: "add-text-callout-section"; label: "Text callout" };
-
-const buildAddSectionItems = (schemes: ReadonlyArray<Scheme>): AddSectionItem[] => {
-  const items: AddSectionItem[] = [];
-
-  for (const scheme of schemes) {
-    items.push({
-      id: `add-scheme-${scheme.id}`,
-      kind: "add-scheme-section",
-      label: SCHEME_KIND_LABELS[scheme.kind] ?? scheme.name,
-      scheme,
-    });
-  }
-
-  items.push({ id: "add-notes", kind: "add-notes-section", label: "Notes" });
-  items.push({ id: "add-text-callout", kind: "add-text-callout-section", label: "Text callout" });
-
-  return items;
-};
-
-const toSchemeConfig = (paramDefaults: unknown): Record<string, number> => {
-  if (paramDefaults === null || typeof paramDefaults !== "object") {
-    return {};
-  }
-
-  const result: Record<string, number> = {};
-
-  for (const [key, value] of Object.entries(paramDefaults)) {
-    if (typeof value === "number" && Number.isFinite(value)) {
-      result[key] = value;
-    }
-  }
-
-  return result;
-};
-
-const toSlashItem = (item: AddSectionItem): SlashCommandItem => {
-  if (item.kind === "add-scheme-section") {
-    return {
-      kind: "add-scheme-section",
-      id: item.id,
-      label: item.label,
-      schemeId: item.scheme.id,
-      schemeKind: item.scheme.kind,
-      schemeConfig: toSchemeConfig(item.scheme.paramDefaults),
-    };
-  }
-
-  if (item.kind === "add-notes-section") {
-    return { kind: "add-notes-section", id: item.id, label: item.label };
-  }
-
-  return { kind: "add-text-callout-section", id: item.id, label: item.label };
-};
+const blockTypesSelector = ({ editor }: { editor: Editor }) => readBlockTypes(editor);
+const schemesSelector = ({ editor }: { editor: Editor }) => readSchemes(editor);
 
 const BlockNodeViewImpl = ({
   editor,
@@ -101,17 +47,10 @@ const BlockNodeViewImpl = ({
   updateAttributes,
 }: NodeViewProps) => {
   const attrs = readBlockWrapperAttrs(node.attrs);
-  const blockTypes = useEditorState({
-    editor,
-    selector: ({ editor: ctxEditor }) => readBlockTypes(ctxEditor),
-  });
-  const schemes = useEditorState({
-    editor,
-    selector: ({ editor: ctxEditor }) => ctxEditor.storage.workoutSchemes?.schemes ?? [],
-  });
-  const blockIndex = useEditorState({
-    editor,
-    selector: ({ editor: ctxEditor }) => {
+  const blockTypes = useEditorState({ editor, selector: blockTypesSelector });
+  const schemes = useEditorState({ editor, selector: schemesSelector });
+  const blockIndexSelector = useCallback(
+    ({ editor: ctxEditor }: { editor: Editor }) => {
       const pos = typeof getPos === "function" ? getPos() : undefined;
 
       if (pos === undefined) {
@@ -124,13 +63,14 @@ const BlockNodeViewImpl = ({
         return null;
       }
     },
-  });
+    [getPos],
+  );
+  const blockIndex = useEditorState({ editor, selector: blockIndexSelector });
+  const fallbackId = useId();
   const [addAnchor, setAddAnchor] = useState<HTMLElement | null>(null);
 
   const sortableId =
-    blockIndex !== null
-      ? synthesizeBlockId(blockIndex)
-      : `block:invalid:${node.attrs.blockTypeId ?? "unknown"}`;
+    blockIndex !== null ? synthesizeBlockId(blockIndex) : `block:invalid:${fallbackId}`;
   const {
     setNodeRef,
     attributes: dndAttributes,
@@ -176,20 +116,20 @@ const BlockNodeViewImpl = ({
   }, []);
 
   const handlePickSection = useCallback(
-    (item: AddSectionItem) => {
+    (item: SlashCommandItem) => {
       const blockPos = typeof getPos === "function" ? getPos() : undefined;
 
       if (blockPos === undefined) {
         return;
       }
 
-      runAddSection(editor, blockPos, toSlashItem(item));
+      runAddSection(editor, blockPos, item);
       setAddAnchor(null);
     },
     [editor, getPos],
   );
 
-  const addSectionItems = buildAddSectionItems(schemes);
+  const addSectionItems = useMemo(() => buildSlashItemsBlock("", schemes), [schemes]);
 
   return (
     <NodeViewWrapper as="section" ref={setNodeRef} style={wrapperStyle} {...dndAttributes}>
