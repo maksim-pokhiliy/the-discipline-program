@@ -24,12 +24,12 @@ import type { CreateExerciseData, ExerciseListItem } from "@repo/contracts/libra
 import type { Workout } from "@repo/contracts/lms/workout";
 import { ConfirmationModal } from "@repo/ui";
 
-import { api } from "@app/lib/api";
 import {
   useCreateLibraryExercise,
   useDeleteWorkout,
   useLibraryBlockTypes,
   useLibraryExercises,
+  useLibrarySchemes,
   useUpdateWorkout,
 } from "@app/lib/hooks";
 
@@ -47,8 +47,6 @@ type WeekWorkoutCardProps = {
   autoFocus?: boolean;
 };
 
-const listSchemes = () => api.librarySchemes.list();
-
 export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planId, autoFocus }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: workout.id,
@@ -58,6 +56,8 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
   const updateWorkout = useUpdateWorkout(planId);
   const { data: blockTypesData } = useLibraryBlockTypes();
   const blockTypes = useMemo(() => blockTypesData ?? [], [blockTypesData]);
+  const { data: schemesData } = useLibrarySchemes();
+  const schemes = useMemo(() => schemesData ?? [], [schemesData]);
   const { data: exerciseListData } = useLibraryExercises({ includeOwnDrafts: true, limit: 500 });
   const exercises = useMemo(() => exerciseListData?.items ?? [], [exerciseListData]);
   const createExerciseMutation = useCreateLibraryExercise();
@@ -181,7 +181,7 @@ export const WeekWorkoutCard: React.FC<WeekWorkoutCardProps> = ({ workout, planI
               onBlur={commitContent}
               exercises={exercises}
               createExercise={createExercise}
-              listSchemes={listSchemes}
+              schemes={schemes}
               blockTypes={blockTypes}
               placeholder="Type / to insert a block, @ to reference an exercise"
             />
