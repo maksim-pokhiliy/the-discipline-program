@@ -1,18 +1,14 @@
 import { z } from "zod";
 
-export const BLOCK_NODE_TYPES = [
-  "straightSets",
-  "forTime",
-  "amrap",
-  "emom",
-  "everyXMin",
-  "intervals",
-  "timeBlocks",
-  "notes",
-  "textCallout",
-] as const;
+export const BLOCK_WRAPPER_NODE_TYPE = "block" as const;
+export const SECTION_NODE_TYPES = ["schemeSection", "notesSection", "textCalloutSection"] as const;
+export const EXERCISE_LINE_NODE_TYPE = "exerciseLine" as const;
+export const EMOM_SLOT_NODE_TYPE = "emomSlot" as const;
+export const EXERCISE_MENTION_NODE_TYPE = "exerciseMention" as const;
+export const PRESCRIPTION_CHIP_NODE_TYPE = "prescriptionChip" as const;
 
-export type BlockNodeType = (typeof BLOCK_NODE_TYPES)[number];
+export type BlockWrapperNodeType = typeof BLOCK_WRAPPER_NODE_TYPE;
+export type SectionNodeType = (typeof SECTION_NODE_TYPES)[number];
 
 const tiptapAttrsSchema = z.record(z.string(), z.unknown());
 
@@ -46,16 +42,13 @@ export const tiptapNodeSchema: z.ZodType<TiptapNode> = z.lazy(() =>
   }),
 );
 
-const isBlockNodeType = (type: string): type is BlockNodeType =>
-  (BLOCK_NODE_TYPES as readonly string[]).includes(type);
-
 export const tiptapDocSchema = z.object({
   type: z.literal("doc"),
   content: z
     .array(tiptapNodeSchema)
     .max(100)
-    .refine((nodes) => nodes.every((n) => isBlockNodeType(n.type)), {
-      message: "Doc root accepts only block-kind nodes",
+    .refine((nodes) => nodes.every((n) => n.type === BLOCK_WRAPPER_NODE_TYPE), {
+      message: "Doc root accepts only block wrapper nodes",
     }),
 });
 

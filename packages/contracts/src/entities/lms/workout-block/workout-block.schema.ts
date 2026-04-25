@@ -4,6 +4,7 @@ import { SchemeKind } from "../../library/scheme/scheme.constants";
 
 import {
   PrescriptionKind,
+  SchemeSectionKind,
   WORKOUT_BLOCK_CONSTANTS,
   WorkoutRepScheme,
 } from "./workout-block.constants";
@@ -13,6 +14,8 @@ export const workoutRepSchemeSchema = z.nativeEnum(WorkoutRepScheme);
 export const prescriptionKindSchema = z.nativeEnum(PrescriptionKind);
 
 export const schemeKindSchema = z.nativeEnum(SchemeKind);
+
+export const schemeSectionKindSchema = z.nativeEnum(SchemeSectionKind);
 
 export const prescriptionSchema = z.discriminatedUnion("kind", [
   z.object({
@@ -38,7 +41,7 @@ export const schemeConfigSchema = z.record(z.string(), z.number());
 export const workoutBlockExerciseSchema = z
   .object({
     id: z.string().cuid(),
-    blockId: z.string().cuid().nullable(),
+    sectionId: z.string().cuid().nullable(),
     emomSlotId: z.string().cuid().nullable(),
     exerciseId: z.string().cuid(),
     repScheme: workoutRepSchemeSchema,
@@ -53,14 +56,14 @@ export const workoutBlockExerciseSchema = z
     createdAt: z.date(),
     updatedAt: z.date(),
   })
-  .refine((v) => (v.blockId === null) !== (v.emomSlotId === null), {
-    message: "Exactly one of blockId or emomSlotId must be set",
-    path: ["blockId"],
+  .refine((v) => (v.sectionId === null) !== (v.emomSlotId === null), {
+    message: "Exactly one of sectionId or emomSlotId must be set",
+    path: ["sectionId"],
   });
 
 export const emomSlotSchema = z.object({
   id: z.string().cuid(),
-  blockId: z.string().cuid(),
+  sectionId: z.string().cuid(),
   minuteInRound: z.number().int().nonnegative(),
   sortOrder: z.number().int().nonnegative(),
   note: z.string().max(WORKOUT_BLOCK_CONSTANTS.MAX_NOTE_LENGTH).nullable(),
@@ -69,10 +72,10 @@ export const emomSlotSchema = z.object({
   updatedAt: z.date(),
 });
 
-export const workoutBlockSchema = z.object({
+export const schemeSectionSchema = z.object({
   id: z.string().cuid(),
-  workoutId: z.string().cuid(),
-  blockTypeId: z.string().cuid(),
+  blockId: z.string().cuid(),
+  kind: schemeSectionKindSchema,
   schemeId: z.string().cuid().nullable(),
   schemeKind: schemeKindSchema.nullable(),
   schemeConfig: schemeConfigSchema.nullable(),
@@ -84,6 +87,7 @@ export const workoutBlockSchema = z.object({
     .nullable(),
   pace: z.string().max(WORKOUT_BLOCK_CONSTANTS.MAX_PACE_LENGTH).nullable(),
   note: z.string().max(WORKOUT_BLOCK_CONSTANTS.MAX_NOTE_LENGTH).nullable(),
+  tone: z.string().max(32).nullable(),
   sortOrder: z.number().int().nonnegative(),
   exercises: z.array(workoutBlockExerciseSchema).optional(),
   emomSlots: z.array(emomSlotSchema).optional(),
@@ -91,8 +95,21 @@ export const workoutBlockSchema = z.object({
   updatedAt: z.date(),
 });
 
+export const workoutBlockSchema = z.object({
+  id: z.string().cuid(),
+  workoutId: z.string().cuid(),
+  blockTypeId: z.string().cuid(),
+  title: z.string().max(120).nullable(),
+  sortOrder: z.number().int().nonnegative(),
+  sections: z.array(schemeSectionSchema).optional(),
+  createdAt: z.date(),
+  updatedAt: z.date(),
+});
+
 export const createWorkoutBlockExerciseSchema = workoutBlockExerciseSchema;
 
 export const createEmomSlotSchema = emomSlotSchema;
+
+export const createSchemeSectionSchema = schemeSectionSchema;
 
 export const createWorkoutBlockSchema = workoutBlockSchema;

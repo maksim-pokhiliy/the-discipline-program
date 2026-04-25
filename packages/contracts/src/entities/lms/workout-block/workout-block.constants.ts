@@ -27,3 +27,9 @@ export enum PrescriptionKind {
   RPE = "RPE",
   NONE = "NONE",
 }
+
+export enum SchemeSectionKind {
+  SCHEME = "SCHEME",
+  NOTES = "NOTES",
+  TEXT_CALLOUT = "TEXT_CALLOUT",
+}
