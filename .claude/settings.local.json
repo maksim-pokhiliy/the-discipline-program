@@ -88,7 +88,24 @@
       "Bash([ -s \"C:\\\\\\\\Users\\\\\\\\maksi\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\D--projects-contrib-the-discipline-program\\\\\\\\16f8c395-2e8f-4d64-8f92-851ef27d2b93\\\\\\\\tasks\\\\\\\\bblyho8sc.output\" ])",
       "Bash(tee /tmp/test-output.log)",
       "Bash(find node_modules/.pnpm/@tiptap+react* -name \"NodeView*.d.ts\")",
-      "Bash(kill -9 bjxfc2r16)"
+      "Bash(kill -9 bjxfc2r16)",
+      "Bash(echo \"---check-types exit: $?\")",
+      "Bash(echo \"---lint exit: $?\")",
+      "Bash(echo \"---test exit: $?\")",
+      "Bash(awk -F'\\(' '{print $1}')",
+      "Bash(pkill -f vitest)",
+      "Bash(pkill -f \"filter @repo/api-server test\")",
+      "Bash(awk -F':' '{print $1}')",
+      "Bash(find D:/projects/contrib/the-discipline-program/node_modules/.pnpm/@tiptap+core* -name \"Extension.d.ts\")",
+      "Bash(pnpm --filter @repo/ui check-types)",
+      "Bash(echo \"ui-ct: $?\")",
+      "Bash(pnpm --filter @repo/ui lint)",
+      "Bash(echo \"ui-lint: $?\")",
+      "Bash(pnpm --filter platform check-types)",
+      "Bash(cat)",
+      "Bash(npx tsx *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"===EXIT=$?===\")"
     ]
   }
 }

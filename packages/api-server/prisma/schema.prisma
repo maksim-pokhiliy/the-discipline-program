@@ -585,6 +585,12 @@ enum SchemeKind {
   TIME_BLOCKS
 }
 
+enum SchemeSectionKind {
+  SCHEME
+  NOTES
+  TEXT_CALLOUT
+}
+
 enum WorkoutRepScheme {
   STRAIGHT
   LADDER
@@ -639,18 +645,18 @@ model Exercise {
 }
 
 model Scheme {
-  id             String         @id @default(cuid())
-  slug           String         @unique @db.VarChar(100)
-  name           String         @db.VarChar(100)
+  id             String          @id @default(cuid())
+  slug           String          @unique @db.VarChar(100)
+  name           String          @db.VarChar(100)
   kind           SchemeKind
-  description    String?        @db.Text
+  description    String?         @db.Text
   requiredParams String[]
   paramDefaults  Json
-  active         Boolean        @default(true)
-  sortOrder      Int            @default(0)
-  workoutRefs    WorkoutBlock[]
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  active         Boolean         @default(true)
+  sortOrder      Int             @default(0)
+  workoutRefs    SchemeSection[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   @@index([kind])
   @@index([active, sortOrder])
@@ -675,11 +681,27 @@ model BlockType {
 }
 
 model WorkoutBlock {
+  id          String          @id @default(cuid())
+  workoutId   String
+  workout     Workout         @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  blockTypeId String
+  blockType   BlockType       @relation(fields: [blockTypeId], references: [id], onDelete: Restrict)
+  title       String?
+  sortOrder   Int             @default(0)
+  sections    SchemeSection[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@index([workoutId, sortOrder])
+  @@index([blockTypeId])
+  @@map("app_workout_blocks")
+}
+
+model SchemeSection {
   id           String                 @id @default(cuid())
-  workoutId    String
-  workout      Workout                @relation(fields: [workoutId], references: [id], onDelete: Cascade)
-  blockTypeId  String
-  blockType    BlockType              @relation(fields: [blockTypeId], references: [id], onDelete: Restrict)
+  blockId      String
+  block        WorkoutBlock           @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  kind         SchemeSectionKind      @default(SCHEME)
   schemeId     String?
   scheme       Scheme?                @relation(fields: [schemeId], references: [id], onDelete: Restrict)
   schemeKind   SchemeKind?
@@ -687,22 +709,22 @@ model WorkoutBlock {
   effortPct    Int?
   pace         String?
   note         String?                @db.Text
+  tone         String?
   sortOrder    Int                    @default(0)
   exercises    WorkoutBlockExercise[]
   emomSlots    EmomSlot[]
   createdAt    DateTime               @default(now())
   updatedAt    DateTime               @updatedAt
 
-  @@index([workoutId, sortOrder])
-  @@index([blockTypeId])
+  @@index([blockId, sortOrder])
   @@index([schemeId])
-  @@map("app_workout_blocks")
+  @@map("app_scheme_sections")
 }
 
 model WorkoutBlockExercise {
   id           String           @id @default(cuid())
-  blockId      String?
-  block        WorkoutBlock?    @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  sectionId    String?
+  section      SchemeSection?   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   emomSlotId   String?
   emomSlot     EmomSlot?        @relation(fields: [emomSlotId], references: [id], onDelete: Cascade)
   exerciseId   String
@@ -719,7 +741,7 @@ model WorkoutBlockExercise {
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
 
-  @@index([blockId, sortOrder])
+  @@index([sectionId, sortOrder])
   @@index([emomSlotId, sortOrder])
   @@index([exerciseId])
   @@map("app_workout_block_exercises")
@@ -727,8 +749,8 @@ model WorkoutBlockExercise {
 
 model EmomSlot {
   id            String                 @id @default(cuid())
-  blockId       String
-  block         WorkoutBlock           @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  sectionId     String
+  section       SchemeSection          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
   minuteInRound Int
   sortOrder     Int                    @default(0)
   note          String?                @db.Text
@@ -736,7 +758,7 @@ model EmomSlot {
   createdAt     DateTime               @default(now())
   updatedAt     DateTime               @updatedAt
 
-  @@unique([blockId, minuteInRound])
-  @@index([blockId, sortOrder])
+  @@unique([sectionId, minuteInRound])
+  @@index([sectionId, sortOrder])
   @@map("app_emom_slots")
 }

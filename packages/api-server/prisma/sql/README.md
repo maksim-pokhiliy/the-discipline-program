@@ -11,4 +11,4 @@ Do NOT run `npx prisma db push` directly — it skips the wrapper and silently d
 
 Files:
 
-- `workout_block_exercise_xor.sql` — enforces `(blockId IS NULL) <> (emomSlotId IS NULL)` on `app_workout_block_exercises`.
+- `workout_block_exercise_xor.sql` — enforces `(sectionId IS NULL) <> (emomSlotId IS NULL)` on `app_workout_block_exercises`.
