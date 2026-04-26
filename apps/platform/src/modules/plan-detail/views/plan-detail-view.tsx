@@ -11,7 +11,7 @@ import { EditSessionAwareLink, QueryWrapper } from "@repo/ui";
 import { useTrainingPlan, useUpdateTrainingPlan } from "@app/lib/hooks";
 
 import { PlanStatusSelect } from "../components";
-import { PlanAthletesSection } from "../sections";
+import { PlanAthletesSection, PlanCoachAssignmentsSection } from "../sections";
 
 type PlanDetailViewProps = {
   planId: string;
@@ -112,7 +112,12 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
             <Tab value="athletes" label="Athletes" />
           </Tabs>
 
-          {activeTab === "athletes" && <PlanAthletesSection planId={planId} />}
+          {activeTab === "athletes" && (
+            <Stack spacing={4}>
+              <PlanAthletesSection planId={planId} />
+              <PlanCoachAssignmentsSection planId={planId} planCreatorId={data.creatorId} />
+            </Stack>
+          )}
         </Stack>
       )}
     </QueryWrapper>

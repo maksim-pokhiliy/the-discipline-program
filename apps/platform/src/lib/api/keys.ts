@@ -10,10 +10,14 @@ export const platformKeys = {
     structure: (planId: string, fromWeek: number | undefined, toWeek: number | undefined) =>
       [...ROOT, "training-plans", "structure", planId, fromWeek ?? null, toWeek ?? null] as const,
     structureByPlan: (planId: string) => [...ROOT, "training-plans", "structure", planId] as const,
+    coaches: (planId: string) => [...ROOT, "training-plans", "coaches", planId] as const,
   },
   planEnrollments: {
     ...createEntityKeys(ROOT, "plan-enrollments"),
     byPlan: (planId: string) => [...ROOT, "plan-enrollments", "plan", planId] as const,
+  },
+  platformCoaches: {
+    all: () => [...ROOT, "platform-coaches"] as const,
   },
   users: {
     search: (query: string) => [...ROOT, "users", "search", query] as const,

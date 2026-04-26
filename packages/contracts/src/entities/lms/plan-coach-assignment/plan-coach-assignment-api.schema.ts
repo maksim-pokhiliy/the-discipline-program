@@ -25,3 +25,11 @@ export const listPlanCoachAssignmentsResponseSchema = z.object({
 export const getPlanCoachAssignmentResponseSchema = planCoachAssignmentSchema;
 export const createPlanCoachAssignmentResponseSchema = planCoachAssignmentSchema;
 export const updatePlanCoachAssignmentResponseSchema = planCoachAssignmentSchema;
+
+export const listPlanCoachAssignmentsParamsSchema = planIdParamSchema;
+
+export const createPlanCoachAssignmentParamsSchema = planIdParamSchema;
+
+export const createPlanCoachAssignmentRequestSchema = createPlanCoachAssignmentInputSchema;
+
+export const deletePlanCoachAssignmentParamsSchema = planCoachAssignmentIdParamSchema;

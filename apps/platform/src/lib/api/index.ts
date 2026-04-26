@@ -14,8 +14,10 @@ export const createApi = (client: ApiClient) => ({
     schemeTemplates: endpoints.createLibrarySchemeTemplatesAPI(client),
   },
   planBulkPatch: endpoints.createPlanBulkPatchAPI(client),
+  planCoachAssignments: endpoints.createPlanCoachAssignmentsAPI(client),
   planEnrollments: endpoints.createPlanEnrollmentsAPI(client),
   planStructure: endpoints.createPlanStructureAPI(client),
+  platformCoaches: endpoints.createPlatformCoachesAPI(client),
   trainingPlans: endpoints.createTrainingPlansAPI(client),
   users: endpoints.createUsersAPI(client),
 });
