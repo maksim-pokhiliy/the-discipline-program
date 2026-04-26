@@ -82,7 +82,11 @@
       "Bash(taskkill //F //IM node.exe //T)",
       "Bash(echo \"exit=$?\")",
       "Bash(awk 'NF' packages/api-server/src/endpoints/coaching/coach-invite/create.test.ts)",
-      "Bash(awk 'NF' packages/api-server/src/endpoints/coaching/coach-invite/resend.test.ts)"
+      "Bash(awk 'NF' packages/api-server/src/endpoints/coaching/coach-invite/resend.test.ts)",
+      "Bash(rm *)",
+      "Bash(where pdftotext *)",
+      "Bash(powershell -NoProfile -Command \"Get-Command pdftotext, pdftoppm -ErrorAction SilentlyContinue | Format-Table Name, Source\")",
+      "Bash(pdftotext -layout \"C:\\\\Users\\\\maksi\\\\OneDrive\\\\Desktop\\\\Maks Pooh [ The DISCIPLINE program ].pdf\" \"C:\\\\Users\\\\maksi\\\\OneDrive\\\\Desktop\\\\discipline_dump.txt\")"
     ]
   }
 }
