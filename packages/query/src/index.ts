@@ -3,5 +3,6 @@ export * from "./hooks/create-toggle-hook";
 export * from "./hooks/constants";
 export * from "./hooks/use-delete-confirmation";
 export * from "./hooks/use-optimistic-mutation";
+export * from "./hooks/use-scoped-mutation";
 export * from "./keys";
 export * from "./providers";
