@@ -416,6 +416,8 @@ A new orchestrator picking this up should know about:
 SCOPE M1 (точно из roadmap §14 дизайн-документа):
 
 MUST:
+0. SCHEMA PATCH (M1.1 first task — before anything else):
+   Add `version Int @default(1)` to Block, BlockSegment, ExerciseEntry per design doc §3.3 + §7.14 + ADR 0035. БД пустая, ALTER TABLE тривиальный. Это разблокирует editor optimistic concurrency. Ссылка: handoff §3 "Schema follow-ups".
 1. apps/admin — три раздела sidebar: Exercise / BlockKind / SchemeTemplate. Full CRUD + promote/demote (раскрыть 501 stubs из M0).
 2. apps/platform/library — три раздела для тренера: own + SYSTEM (read-only). CRUD только на own.
 3. apps/platform/coach/plans/[id] — three-pane editor (Library / Plan canvas / Inspector + athlete preview).
@@ -428,15 +430,24 @@ MUST:
 10. BlockSegmentEditor.
 11. Bulk-patch endpoint POST /training-plans/:planId/patch (atomic batched ops; см. §10.4 design doc).
 12. Plan-coach assignment endpoints + UI.
-13. MarketingPdf MarkdownEditor (renamed RichTextEditor).
-14. E2E test: HEAD_COACH создаёт SYSTEM exercise → COACH использует в plan → атлет (через mock) залогировал → PR появился.
+13. MarkdownEditor (renamed RichTextEditor).
+14. **Edit session model (ADR 0035 / §7.14):** useReducer-based draft state per editable card, NO blur-autosave для Block/BlockSegment/ExerciseEntry/SetGroup, persist on explicit Save / collapse / 8s idle (if valid) / Cmd+S / route change. Full-entity PUT, не partial PATCH. TanStack Query mutations с `scope: { id: entityId }`. Save indicator UX (idle/dirty/saving/saved/conflict). Beforeunload guard. E2E tests на acceptance из §7.14.
+
+   **Допустимо blur-autosave** на plan-level metadata (TrainingPlan name/description в plan-detail-view.tsx) — это не editable structure, это metadata, ADR 0035 их не покрывает. Editor edit session model применяется только к Block/BlockSegment/ExerciseEntry/SetGroup.
+15. E2E test: HEAD_COACH создаёт SYSTEM exercise → COACH использует в plan → атлет (через mock) залогировал → PR появился.
 
 NICE-TO-HAVE:
 - Block/Session/Week templates.
 - Saved searches in library.
 - Promote suggestion от тренера (PromotionSuggestion).
 
-ИЗ-ЗА ОБЪЁМА: разбей на под-фазы M1.1-M1.X с green-gate checkpoints. Прочитай handoff §8 (Gotchas) — там нюансы про Apps/platform broken UI, Session vs LmsSession, CHECK constraints.
+NOT M1 SCOPE (don't touch):
+- Coaching dashboard analytics (coach-dashboard.ts, dashboard-computations.ts, coach-athletes/list.ts, coach-athletes/detail.ts) — zeroed values intentional, M2 reimplements via WorkoutSession after athlete-side lands.
+- Athlete endpoints (workout-session, block-session, exercise-log, set-log) — M3 scope.
+- PlanOverride.payload typing refine — M2 scope.
+- Import parser (program-parser/) — M2 scope.
+
+ИЗ-ЗА ОБЪЁМА: разбей на под-фазы M1.0-M1.X с green-gate checkpoints. Прочитай handoff §8 (Gotchas) и §3 Known follow-ups — там file:line ссылки на TODO, M1 решает что чинить, что defer на M2.
 
 ПРАВИЛА:
 - Никаких комментариев в коде.
@@ -451,20 +462,21 @@ NICE-TO-HAVE:
 - Один branch на всю фичу (не per-phase).
 
 СУБ-ФАЗЫ M1 (предложение, можешь скорректировать):
+- M1.0 — Schema patch: `version Int @default(1)` на Block/BlockSegment/ExerciseEntry + db:reset + contracts/mappers update.
 - M1.1 — Bulk-patch endpoint + promote/demote impls (раскрыть 501 stubs).
 - M1.2 — apps/admin Exercise CRUD UI (full + promote).
 - M1.3 — apps/admin BlockKind + SchemeTemplate CRUD UI.
 - M1.4 — apps/platform Library panel (tabs, search, /, @ pickers).
 - M1.5 — Plan canvas (week navigator, day cards, sessions, blocks tree, DnD).
-- M1.6 — Inspector pane + 6 SchemeForms.
-- M1.7 — Cmd+K palette + autosave + undo/redo.
+- M1.6 — Inspector pane + 6 SchemeForms + edit session model (ADR 0035).
+- M1.7 — Cmd+K palette + undo/redo (NB: autosave-on-blur только для plan metadata, не для editable cards).
 - M1.8 — Plan-coach assignments UI.
 - M1.9 — MarkdownEditor rename + cleanup.
-- M1.10 — E2E test seed-to-PR + Storybook stories.
+- M1.10 — E2E test seed-to-PR + edit session E2E (§7.14 acceptance) + Storybook stories.
 
 Старт:
 1. Прочитай docs/design/workout-redesign-handoff.md (особенно §3 follow-ups, §6 endpoints inventory, §8 gotchas).
-2. Прочитай docs/design/workout-redesign.md §7 (UX редактора) и §10.4 (bulk-patch).
+2. Прочитай docs/design/workout-redesign.md §7 (UX редактора, особенно §7.14 edit session model) и §10.4 (bulk-patch).
 3. Сделай Plan по под-фазам, верни на approval.
 4. После approval — implement по checkpoint'ам.
 5. После всех под-фаз и моего финального approval — создай docs/design/workout-redesign-m1-handoff.md для бесшовного запуска M2.
