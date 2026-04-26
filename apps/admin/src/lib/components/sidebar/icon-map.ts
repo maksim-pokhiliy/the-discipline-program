@@ -2,6 +2,7 @@ import ArticleOutlined from "@mui/icons-material/ArticleOutlined";
 import ContactMailOutlined from "@mui/icons-material/ContactMailOutlined";
 import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
 import Inventory2Outlined from "@mui/icons-material/Inventory2Outlined";
+import LibraryBooksOutlined from "@mui/icons-material/LibraryBooksOutlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import StarBorderOutlined from "@mui/icons-material/StarBorderOutlined";
 import WebOutlined from "@mui/icons-material/WebOutlined";
@@ -14,6 +15,7 @@ const icons = {
   pages: WebOutlined,
   contacts: ContactMailOutlined,
   users: PeopleOutlined,
+  library: LibraryBooksOutlined,
 } as const;
 
 type NavIconName = keyof typeof icons;

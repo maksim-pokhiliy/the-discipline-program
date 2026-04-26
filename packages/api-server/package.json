@@ -6,6 +6,9 @@
   "exports": {
     "./cms": "./src/endpoints/cms/index.ts",
     "./lms": "./src/endpoints/lms/index.ts",
+    "./lms/exercise-library-item": "./src/endpoints/lms/exercise-library-item.ts",
+    "./lms/block-kind": "./src/endpoints/lms/block-kind.ts",
+    "./lms/scheme-template": "./src/endpoints/lms/scheme-template.ts",
     "./coaching": "./src/endpoints/coaching/index.ts",
     "./iam": "./src/endpoints/iam/index.ts",
     "./storage": "./src/endpoints/storage/index.ts",
