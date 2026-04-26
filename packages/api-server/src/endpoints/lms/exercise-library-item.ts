@@ -3,13 +3,16 @@ import { type Prisma } from "@prisma/client";
 import { UserRole } from "@repo/contracts/iam/auth";
 import {
   type CreateExerciseLibraryItemInput,
+  type DemoteExerciseLibraryItemInput,
   type ListExerciseLibraryItemsQuery,
   type UpdateExerciseLibraryItemInput,
 } from "@repo/contracts/lms/exercise-library-item";
-import { ForbiddenError, NotFoundError } from "@repo/errors";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
+import { logger } from "@repo/shared";
 
-import { requireCoachLikeRole } from "../../authz/guards";
+import { requireAdmin, requireCoachLikeRole } from "../../authz/guards";
 import { prisma } from "../../db/client";
+import { ROLE_MAP } from "../../mappers/iam";
 import {
   BODY_PART_TO_PRISMA_MAP,
   LIBRARY_SCOPE_TO_PRISMA_MAP,
@@ -18,7 +21,13 @@ import {
   MOVEMENT_PATTERN_TO_PRISMA_MAP,
   SKILL_LEVEL_TO_PRISMA_MAP,
 } from "../../mappers/lms";
-import { findOrThrow, handlePrismaError, notImplemented } from "../../utils";
+import { findOrThrow, handlePrismaError } from "../../utils";
+
+const ADMIN_OR_COACH_LIKE: ReadonlySet<UserRole> = new Set([
+  UserRole.COACH,
+  UserRole.HEAD_COACH,
+  UserRole.ADMIN,
+]);
 
 const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
@@ -223,15 +232,116 @@ export const lmsExerciseLibraryItemApi = {
     }
   },
 
-  promote: async (_userId: string, _exerciseLibraryItemId: string): Promise<void> => {
-    notImplemented("lmsExerciseLibraryItemApi.promote");
+  promote: async (userId: string, exerciseLibraryItemId: string) => {
+    await requireAdmin(userId);
+
+    const existing = await findOrThrow(
+      prisma.exerciseLibraryItem.findUnique({ where: { id: exerciseLibraryItemId } }),
+      "Exercise library item",
+    );
+
+    if (existing.scope === "SYSTEM") {
+      throw new ConflictError("Exercise library item is already SYSTEM-scoped", {
+        exerciseLibraryItemId,
+      });
+    }
+
+    const collision = await prisma.exerciseLibraryItem.findFirst({
+      where: { scope: "SYSTEM", name: existing.name, id: { not: exerciseLibraryItemId } },
+      select: { id: true, name: true },
+    });
+
+    if (collision) {
+      throw new BadRequestError("SYSTEM library already contains an item with this name", {
+        existingId: collision.id,
+        candidateName: existing.name,
+      });
+    }
+
+    try {
+      const promoted = await prisma.exerciseLibraryItem.update({
+        where: { id: exerciseLibraryItemId },
+        data: { scope: "SYSTEM", ownerId: null },
+      });
+
+      logger.info("lms.library.exercise.promoted", {
+        exerciseLibraryItemId,
+        fromScope: existing.scope,
+        toScope: "SYSTEM",
+      });
+
+      return mapToExerciseLibraryItem(promoted);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Exercise library item", field: "name" });
+    }
   },
 
   demote: async (
-    _userId: string,
-    _exerciseLibraryItemId: string,
-    _newOwnerId: string,
-  ): Promise<void> => {
-    notImplemented("lmsExerciseLibraryItemApi.demote");
+    userId: string,
+    exerciseLibraryItemId: string,
+    data: DemoteExerciseLibraryItemInput,
+  ) => {
+    await requireAdmin(userId);
+
+    const existing = await findOrThrow(
+      prisma.exerciseLibraryItem.findUnique({ where: { id: exerciseLibraryItemId } }),
+      "Exercise library item",
+    );
+
+    if (existing.scope === "COACH") {
+      throw new ConflictError("Exercise library item is already COACH-scoped", {
+        exerciseLibraryItemId,
+      });
+    }
+
+    const newOwner = await prisma.user.findUnique({
+      where: { id: data.newOwnerId },
+      select: { role: true },
+    });
+
+    if (!newOwner) {
+      throw new NotFoundError("New owner user not found", { newOwnerId: data.newOwnerId });
+    }
+
+    if (!ADMIN_OR_COACH_LIKE.has(ROLE_MAP[newOwner.role])) {
+      throw new BadRequestError("New owner must be a coach-like user", {
+        newOwnerId: data.newOwnerId,
+      });
+    }
+
+    const collision = await prisma.exerciseLibraryItem.findFirst({
+      where: {
+        scope: "COACH",
+        ownerId: data.newOwnerId,
+        name: existing.name,
+        id: { not: exerciseLibraryItemId },
+      },
+      select: { id: true, name: true },
+    });
+
+    if (collision) {
+      throw new BadRequestError("New owner already has an exercise with this name", {
+        existingId: collision.id,
+        candidateName: existing.name,
+      });
+    }
+
+    try {
+      const demoted = await prisma.exerciseLibraryItem.update({
+        where: { id: exerciseLibraryItemId },
+        data: { scope: "COACH", ownerId: data.newOwnerId },
+      });
+
+      logger.info("lms.library.exercise.demoted", {
+        exerciseLibraryItemId,
+        fromScope: existing.scope,
+        toScope: "COACH",
+        newOwnerId: data.newOwnerId,
+      });
+
+      return mapToExerciseLibraryItem(demoted);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Exercise library item", field: "name" });
+    }
   },
 };

@@ -44,3 +44,7 @@ export const listSchemeTemplatesResponseSchema = z.object({
 export const getSchemeTemplateResponseSchema = schemeTemplateSchema;
 export const createSchemeTemplateResponseSchema = schemeTemplateSchema;
 export const updateSchemeTemplateResponseSchema = schemeTemplateSchema;
+
+export const promoteSchemeTemplateResponseSchema = schemeTemplateSchema;
+export const demoteSchemeTemplateInputSchema = z.object({ newOwnerId: z.string().cuid() });
+export const demoteSchemeTemplateResponseSchema = schemeTemplateSchema;

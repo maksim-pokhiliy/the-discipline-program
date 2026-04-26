@@ -3,19 +3,28 @@ import { type Prisma } from "@prisma/client";
 import { UserRole } from "@repo/contracts/iam/auth";
 import {
   type CreateSchemeTemplateInput,
+  type DemoteSchemeTemplateInput,
   type ListSchemeTemplatesQuery,
   type UpdateSchemeTemplateInput,
 } from "@repo/contracts/lms/scheme-template";
-import { ForbiddenError, NotFoundError } from "@repo/errors";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
+import { logger } from "@repo/shared";
 
-import { requireCoachLikeRole } from "../../authz/guards";
+import { requireAdmin, requireCoachLikeRole } from "../../authz/guards";
 import { prisma } from "../../db/client";
+import { ROLE_MAP } from "../../mappers/iam";
 import {
   LIBRARY_SCOPE_TO_PRISMA_MAP,
   mapToSchemeTemplate,
   SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP,
 } from "../../mappers/lms";
-import { findOrThrow, handlePrismaError, notImplemented } from "../../utils";
+import { findOrThrow, handlePrismaError } from "../../utils";
+
+const ADMIN_OR_COACH_LIKE: ReadonlySet<UserRole> = new Set([
+  UserRole.COACH,
+  UserRole.HEAD_COACH,
+  UserRole.ADMIN,
+]);
 
 const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
@@ -173,15 +182,111 @@ export const lmsSchemeTemplateApi = {
     }
   },
 
-  promote: async (_userId: string, _schemeTemplateId: string): Promise<void> => {
-    notImplemented("lmsSchemeTemplateApi.promote");
+  promote: async (userId: string, schemeTemplateId: string) => {
+    await requireAdmin(userId);
+
+    const existing = await findOrThrow(
+      prisma.schemeTemplate.findUnique({ where: { id: schemeTemplateId } }),
+      "Scheme template",
+    );
+
+    if (existing.scope === "SYSTEM") {
+      throw new ConflictError("Scheme template is already SYSTEM-scoped", { schemeTemplateId });
+    }
+
+    const collision = await prisma.schemeTemplate.findFirst({
+      where: { scope: "SYSTEM", name: existing.name, id: { not: schemeTemplateId } },
+      select: { id: true, name: true },
+    });
+
+    if (collision) {
+      throw new BadRequestError(
+        "SYSTEM library already contains a scheme template with this name",
+        {
+          existingId: collision.id,
+          candidateName: existing.name,
+        },
+      );
+    }
+
+    try {
+      const promoted = await prisma.schemeTemplate.update({
+        where: { id: schemeTemplateId },
+        data: { scope: "SYSTEM", ownerId: null },
+      });
+
+      logger.info("lms.library.scheme_template.promoted", {
+        schemeTemplateId,
+        fromScope: existing.scope,
+        toScope: "SYSTEM",
+      });
+
+      return mapToSchemeTemplate(promoted);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Scheme template", field: "name" });
+    }
   },
 
-  demote: async (
-    _userId: string,
-    _schemeTemplateId: string,
-    _newOwnerId: string,
-  ): Promise<void> => {
-    notImplemented("lmsSchemeTemplateApi.demote");
+  demote: async (userId: string, schemeTemplateId: string, data: DemoteSchemeTemplateInput) => {
+    await requireAdmin(userId);
+
+    const existing = await findOrThrow(
+      prisma.schemeTemplate.findUnique({ where: { id: schemeTemplateId } }),
+      "Scheme template",
+    );
+
+    if (existing.scope === "COACH") {
+      throw new ConflictError("Scheme template is already COACH-scoped", { schemeTemplateId });
+    }
+
+    const newOwner = await prisma.user.findUnique({
+      where: { id: data.newOwnerId },
+      select: { role: true },
+    });
+
+    if (!newOwner) {
+      throw new NotFoundError("New owner user not found", { newOwnerId: data.newOwnerId });
+    }
+
+    if (!ADMIN_OR_COACH_LIKE.has(ROLE_MAP[newOwner.role])) {
+      throw new BadRequestError("New owner must be a coach-like user", {
+        newOwnerId: data.newOwnerId,
+      });
+    }
+
+    const collision = await prisma.schemeTemplate.findFirst({
+      where: {
+        scope: "COACH",
+        ownerId: data.newOwnerId,
+        name: existing.name,
+        id: { not: schemeTemplateId },
+      },
+      select: { id: true, name: true },
+    });
+
+    if (collision) {
+      throw new BadRequestError("New owner already has a scheme template with this name", {
+        existingId: collision.id,
+        candidateName: existing.name,
+      });
+    }
+
+    try {
+      const demoted = await prisma.schemeTemplate.update({
+        where: { id: schemeTemplateId },
+        data: { scope: "COACH", ownerId: data.newOwnerId },
+      });
+
+      logger.info("lms.library.scheme_template.demoted", {
+        schemeTemplateId,
+        fromScope: existing.scope,
+        toScope: "COACH",
+        newOwnerId: data.newOwnerId,
+      });
+
+      return mapToSchemeTemplate(demoted);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Scheme template", field: "name" });
+    }
   },
 };

@@ -14,5 +14,6 @@ export * from "./plan-structure";
 export * from "./scheme-template";
 export * from "./set-group";
 export * from "./training-plan";
+export * from "./training-plan-patch";
 export * from "./week";
 export * from "./weekly-volume";

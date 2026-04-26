@@ -3,10 +3,13 @@ import { type z } from "zod";
 import {
   type createExerciseLibraryItemInputSchema,
   type createExerciseLibraryItemResponseSchema,
+  type demoteExerciseLibraryItemInputSchema,
+  type demoteExerciseLibraryItemResponseSchema,
   type exerciseLibraryItemIdParamSchema,
   type getExerciseLibraryItemResponseSchema,
   type listExerciseLibraryItemsQuerySchema,
   type listExerciseLibraryItemsResponseSchema,
+  type promoteExerciseLibraryItemResponseSchema,
   type updateExerciseLibraryItemInputSchema,
   type updateExerciseLibraryItemResponseSchema,
 } from "./exercise-library-item-api.schema";
@@ -24,4 +27,11 @@ export type CreateExerciseLibraryItemResponse = z.infer<
 >;
 export type UpdateExerciseLibraryItemResponse = z.infer<
   typeof updateExerciseLibraryItemResponseSchema
+>;
+export type PromoteExerciseLibraryItemResponse = z.infer<
+  typeof promoteExerciseLibraryItemResponseSchema
+>;
+export type DemoteExerciseLibraryItemInput = z.infer<typeof demoteExerciseLibraryItemInputSchema>;
+export type DemoteExerciseLibraryItemResponse = z.infer<
+  typeof demoteExerciseLibraryItemResponseSchema
 >;

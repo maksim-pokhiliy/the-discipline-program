@@ -39,3 +39,7 @@ export const listBlockKindsResponseSchema = z.object({
 export const getBlockKindResponseSchema = blockKindSchema;
 export const createBlockKindResponseSchema = blockKindSchema;
 export const updateBlockKindResponseSchema = blockKindSchema;
+
+export const promoteBlockKindResponseSchema = blockKindSchema;
+export const demoteBlockKindInputSchema = z.object({ newOwnerId: z.string().cuid() });
+export const demoteBlockKindResponseSchema = blockKindSchema;

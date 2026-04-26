@@ -71,3 +71,9 @@ export const listExerciseLibraryItemsResponseSchema = z.object({
 export const getExerciseLibraryItemResponseSchema = exerciseLibraryItemSchema;
 export const createExerciseLibraryItemResponseSchema = exerciseLibraryItemSchema;
 export const updateExerciseLibraryItemResponseSchema = exerciseLibraryItemSchema;
+
+export const promoteExerciseLibraryItemResponseSchema = exerciseLibraryItemSchema;
+export const demoteExerciseLibraryItemInputSchema = z.object({
+  newOwnerId: z.string().cuid(),
+});
+export const demoteExerciseLibraryItemResponseSchema = exerciseLibraryItemSchema;
