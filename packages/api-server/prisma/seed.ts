@@ -11,6 +11,8 @@ import bcrypt from "bcryptjs";
 
 import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
+import { seedLms } from "./seed/lms";
+
 const prisma = new PrismaClient();
 
 const daysAgo = (days: number): Date => {
@@ -364,10 +366,6 @@ const seedCoachNotes = async (
   });
 
   console.log("  Coach notes: 10");
-};
-
-const seedLms = async () => {
-  console.log("  LMS seed: stub (filled in M0.6)");
 };
 
 const seedMarketingPages = async () => {
@@ -1360,7 +1358,13 @@ const main = async () => {
   const { coachProfile } = await seedProfiles(users);
 
   await seedCoachNotes(coachProfile.id, users);
-  await seedLms();
+
+  const lmsCounts = await seedLms({ db: prisma });
+
+  console.log(
+    `  LMS: ${lmsCounts.blockKinds} block kinds, ${lmsCounts.schemeTemplates} scheme templates, ${lmsCounts.exercises} exercises`,
+  );
+
   await seedTrainingPlans(users.coach.id, users);
 
   await seedMarketingPages();
