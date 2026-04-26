@@ -1,0 +1,23 @@
+import { type z } from "zod";
+
+import {
+  type schemeArchetypeKindSchema,
+  type schemeParamsCountDownSchema,
+  type schemeParamsCountUpSchema,
+  type schemeParamsEmomLoopSchema,
+  type schemeParamsIntervalLoopSchema,
+  type schemeParamsNoneSchema,
+  type schemeParamsSchema,
+  type schemeParamsTimeBoxedSchema,
+} from "./scheme-archetype.schema";
+
+export type SchemeArchetypeKind = z.infer<typeof schemeArchetypeKindSchema>;
+
+export type SchemeParams = z.infer<typeof schemeParamsSchema>;
+
+export type SchemeParamsNone = z.infer<typeof schemeParamsNoneSchema>;
+export type SchemeParamsCountUp = z.infer<typeof schemeParamsCountUpSchema>;
+export type SchemeParamsCountDown = z.infer<typeof schemeParamsCountDownSchema>;
+export type SchemeParamsIntervalLoop = z.infer<typeof schemeParamsIntervalLoopSchema>;
+export type SchemeParamsEmomLoop = z.infer<typeof schemeParamsEmomLoopSchema>;
+export type SchemeParamsTimeBoxed = z.infer<typeof schemeParamsTimeBoxedSchema>;
