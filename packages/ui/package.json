@@ -19,6 +19,7 @@
   "dependencies": {
     "@mui/icons-material": "catalog:",
     "@mui/material": "catalog:",
+    "@repo/contracts": "workspace:*",
     "@repo/errors": "workspace:*",
     "@repo/mui": "workspace:*",
     "@repo/query": "workspace:*",

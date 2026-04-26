@@ -1,11 +1,120 @@
 "use client";
 
-import { Stack, Typography } from "@mui/material";
+import { useMemo, useState } from "react";
+
+import { Alert, Stack, Tab, Tabs, Typography } from "@mui/material";
 import { useSearchParams } from "next/navigation";
 
-export const InspectorPanel = () => {
+import { useBlockKindsPageData, usePlanStructure } from "@app/lib/hooks";
+
+import { parsePlanSelection } from "../plan-canvas/selection";
+
+import { AthletePreview } from "./athlete-preview";
+import { BlockInspector } from "./block-inspector";
+import { EntryInspector } from "./entry-inspector";
+import { SegmentInspector } from "./segment-inspector";
+import { useSelectedBlock, useSelectedEntry, useSelectedSegment } from "./use-selected-entities";
+
+type InspectorTab = "edit" | "preview";
+
+export type InspectorPanelProps = {
+  planId: string;
+};
+
+const EmptyState = ({ message }: { message: string }) => (
+  <Typography variant="body2" color="text.secondary">
+    {message}
+  </Typography>
+);
+
+export const InspectorPanel = ({ planId }: InspectorPanelProps) => {
   const searchParams = useSearchParams();
-  const selected = searchParams.get("selected");
+  const fromParam = searchParams.get("fromWeek");
+  const toParam = searchParams.get("toWeek");
+  const fromWeek = fromParam !== null ? Number(fromParam) : undefined;
+  const toWeek = toParam !== null ? Number(toParam) : undefined;
+
+  const planStructure = usePlanStructure(planId, { fromWeek, toWeek });
+  const blockKinds = useBlockKindsPageData({ scope: "ALL", take: 200 });
+
+  const selection = useMemo(() => parsePlanSelection(searchParams.get("selected")), [searchParams]);
+
+  const selectedBlock = useSelectedBlock(
+    planStructure.data,
+    selection?.kind === "block" ? selection.id : "",
+  );
+  const selectedSegment = useSelectedSegment(
+    planStructure.data,
+    selection?.kind === "segment" ? selection.id : "",
+  );
+  const selectedEntry = useSelectedEntry(
+    planStructure.data,
+    selection?.kind === "entry" ? selection.id : "",
+  );
+
+  const previewBlock = useMemo(() => {
+    if (selection?.kind === "block") {
+      return selectedBlock;
+    }
+
+    if (selection?.kind === "segment") {
+      return selectedSegment?.block ?? null;
+    }
+
+    if (selection?.kind === "entry") {
+      return selectedEntry?.block ?? null;
+    }
+
+    return null;
+  }, [selectedBlock, selectedEntry, selectedSegment, selection]);
+
+  const [tab, setTab] = useState<InspectorTab>("edit");
+
+  const renderEditor = () => {
+    if (!selection) {
+      return <EmptyState message="Select a node to inspect" />;
+    }
+
+    if (planStructure.error) {
+      return <Alert severity="error">{planStructure.error.message}</Alert>;
+    }
+
+    if (!planStructure.data) {
+      return <EmptyState message="Loading plan..." />;
+    }
+
+    if (selection.kind === "block") {
+      if (!selectedBlock) {
+        return <EmptyState message="Block not found" />;
+      }
+
+      return (
+        <BlockInspector planId={planId} block={selectedBlock} blockKinds={blockKinds.data?.items} />
+      );
+    }
+
+    if (selection.kind === "segment") {
+      if (!selectedSegment) {
+        return <EmptyState message="Segment not found" />;
+      }
+
+      return <SegmentInspector planId={planId} segment={selectedSegment.segment} />;
+    }
+
+    if (!selectedEntry) {
+      return <EmptyState message="Entry not found" />;
+    }
+
+    return <EntryInspector planId={planId} entry={selectedEntry.entry} />;
+  };
+
+  const renderPreview = () => {
+    if (!previewBlock) {
+      return <EmptyState message="Select a block (or any of its children) to preview" />;
+    }
+
+    return <AthletePreview block={previewBlock} />;
+  };
 
   return (
     <Stack
@@ -16,19 +125,21 @@ export const InspectorPanel = () => {
         bgcolor: "background.paper",
         borderLeft: 1,
         borderColor: "divider",
+        overflowY: "auto",
       }}
     >
-      <Typography variant="h6">Inspector</Typography>
+      <Stack direction="row" alignItems="center" spacing={1}>
+        <Typography variant="h6" sx={{ flex: 1 }}>
+          Inspector
+        </Typography>
+      </Stack>
 
-      {selected ? (
-        <Typography variant="body2" color="text.secondary">
-          Selected: {selected}
-        </Typography>
-      ) : (
-        <Typography variant="body2" color="text.secondary">
-          Select a node to inspect
-        </Typography>
-      )}
+      <Tabs value={tab} onChange={(_event, next: InspectorTab) => setTab(next)} variant="fullWidth">
+        <Tab value="edit" label="Edit" />
+        <Tab value="preview" label="Preview as athlete" />
+      </Tabs>
+
+      {tab === "edit" ? renderEditor() : renderPreview()}
     </Stack>
   );
 };

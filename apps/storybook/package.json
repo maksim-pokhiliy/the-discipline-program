@@ -10,6 +10,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,json}\""
   },
   "dependencies": {
+    "@repo/contracts": "workspace:*",
     "@repo/mui": "workspace:*",
     "@repo/ui": "workspace:*",
     "@mui/material": "catalog:",

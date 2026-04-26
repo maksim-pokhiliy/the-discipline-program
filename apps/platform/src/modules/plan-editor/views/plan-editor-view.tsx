@@ -34,7 +34,7 @@ const PlanEditorChrome = ({ planId }: { planId: string }) => {
       </Box>
 
       <Box sx={{ width: INSPECTOR_WIDTH, flexShrink: 0 }}>
-        <InspectorPanel />
+        <InspectorPanel planId={planId} />
       </Box>
     </Stack>
   );
