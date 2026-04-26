@@ -4,14 +4,14 @@ import { useEffect, useState } from "react";
 
 import { Button, CircularProgress, Stack, Typography } from "@mui/material";
 
-import { type ExerciseLibraryItem } from "@repo/contracts/lms/exercise-library-item";
+import { type BlockKind } from "@repo/contracts/lms/block-kind";
 import { BaseModal, ConfirmationModal } from "@repo/ui";
 
 import { CoachOwnerAutocomplete } from "@app/lib/components/coach-owner-autocomplete";
-import { useDemoteExercise, usePromoteExercise } from "@app/lib/hooks";
+import { useDemoteBlockKind, usePromoteBlockKind } from "@app/lib/hooks";
 
-type PromoteState = { exercise: ExerciseLibraryItem } | null;
-type DemoteState = { exercise: ExerciseLibraryItem } | null;
+type PromoteState = { blockKind: BlockKind } | null;
+type DemoteState = { blockKind: BlockKind } | null;
 
 type PromoteDemoteSectionProps = {
   promoteTarget: PromoteState;
@@ -24,8 +24,8 @@ export const PromoteDemoteSection = ({
   demoteTarget,
   onClose,
 }: PromoteDemoteSectionProps) => {
-  const promoteMutation = usePromoteExercise();
-  const demoteMutation = useDemoteExercise();
+  const promoteMutation = usePromoteBlockKind();
+  const demoteMutation = useDemoteBlockKind();
   const [newOwnerId, setNewOwnerId] = useState<string | null>(null);
   const [demoteSubmitted, setDemoteSubmitted] = useState(false);
 
@@ -41,7 +41,7 @@ export const PromoteDemoteSection = ({
       return;
     }
 
-    promoteMutation.mutate(promoteTarget.exercise.id, { onSuccess: onClose });
+    promoteMutation.mutate(promoteTarget.blockKind.id, { onSuccess: onClose });
   };
 
   const handleDemote = () => {
@@ -52,7 +52,7 @@ export const PromoteDemoteSection = ({
     }
 
     demoteMutation.mutate(
-      { id: demoteTarget.exercise.id, data: { newOwnerId } },
+      { id: demoteTarget.blockKind.id, data: { newOwnerId } },
       { onSuccess: onClose },
     );
   };
@@ -64,7 +64,7 @@ export const PromoteDemoteSection = ({
       <ConfirmationModal
         open={!!promoteTarget}
         title="Promote to SYSTEM"
-        message={promoteTarget ? `Promote '${promoteTarget.exercise.name}' to SYSTEM?` : ""}
+        message={promoteTarget ? `Promote '${promoteTarget.blockKind.name}' to SYSTEM?` : ""}
         details="It will become visible to all coaches and remain referenced in any current plans."
         confirmText="Promote"
         type="warning"
@@ -102,12 +102,12 @@ export const PromoteDemoteSection = ({
         <Stack spacing={2}>
           <Typography variant="body1">
             {demoteTarget
-              ? `Demote '${demoteTarget.exercise.name}' to a coach-owned exercise?`
+              ? `Demote '${demoteTarget.blockKind.name}' to a coach-owned block kind?`
               : ""}
           </Typography>
 
           <Typography variant="body2" color="text.secondary">
-            The exercise will be reassigned to the selected coach and removed from the SYSTEM
+            The block kind will be reassigned to the selected coach and removed from the SYSTEM
             library.
           </Typography>
 

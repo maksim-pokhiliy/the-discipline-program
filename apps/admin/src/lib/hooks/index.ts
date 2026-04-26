@@ -1,6 +1,7 @@
 export * from "./use-auto-slug";
 export * from "./use-chip-menu";
 export * from "./use-navigate";
+export * from "./use-block-kind-library";
 export * from "./use-blog";
 export * from "./use-contacts";
 export * from "./use-dashboard";
@@ -8,5 +9,6 @@ export * from "./use-exercise-library";
 export * from "./use-pages";
 export * from "./use-products";
 export * from "./use-reviews";
+export * from "./use-scheme-template-library";
 export * from "./use-upload";
 export * from "./use-users";
