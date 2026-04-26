@@ -25,13 +25,12 @@ describe("coachingPlanRosterApi", () => {
   beforeAll(async () => {
     scenario = await createTestScenario({
       planOverrides: { status: TrainingPlanStatus.ACTIVE },
-      workoutCount: 1,
       athleteCount: 3,
       withAthleteProfiles: true,
     });
 
     coachB = await createTestCoach();
-    planB = await createTestPlan(coachB.profile.id, { status: TrainingPlanStatus.ACTIVE });
+    planB = await createTestPlan(coachB.user.id, { status: TrainingPlanStatus.ACTIVE });
     unrelatedUser = await createTestUser();
   });
 
@@ -53,7 +52,7 @@ describe("coachingPlanRosterApi", () => {
 
       for (const entry of entries) {
         expect(entry.id).toBeDefined();
-        expect(entry.trainingPlanId).toBe(scenario.plan.id);
+        expect(entry.planId).toBe(scenario.plan.id);
         expect(entry.user).toBeDefined();
         expect(entry.user.id).toBeDefined();
         expect(entry.user.email).toBeDefined();
@@ -62,7 +61,7 @@ describe("coachingPlanRosterApi", () => {
     });
 
     it("returns empty list for plan with no enrollments", async () => {
-      const emptyPlan = await createTestPlan(scenario.coach.profile.id, {
+      const emptyPlan = await createTestPlan(scenario.coach.user.id, {
         status: TrainingPlanStatus.ACTIVE,
       });
 
@@ -75,12 +74,6 @@ describe("coachingPlanRosterApi", () => {
 
     it("throws ForbiddenError when coach tries to list roster for another coach's plan", async () => {
       await expect(coachingPlanRosterApi.list(scenario.coach.user.id, planB.id)).rejects.toThrow(
-        ForbiddenError,
-      );
-    });
-
-    it("throws ForbiddenError for user without coach profile", async () => {
-      await expect(coachingPlanRosterApi.list(unrelatedUser.id, scenario.plan.id)).rejects.toThrow(
         ForbiddenError,
       );
     });
@@ -107,11 +100,11 @@ describe("coachingPlanRosterApi", () => {
       );
 
       expect(entry.id).toBe(firstAthlete.enrollment.id);
-      expect(entry.trainingPlanId).toBe(scenario.plan.id);
+      expect(entry.planId).toBe(scenario.plan.id);
       expect(entry.userId).toBe(firstAthlete.user.id);
       expect(entry.user.id).toBe(firstAthlete.user.id);
       expect(entry.user.email).toBe(firstAthlete.user.email);
-      expect(entry.startDate).toBeInstanceOf(Date);
+      expect(entry.startedOnDate).toBeInstanceOf(Date);
     });
 
     it("throws ForbiddenError when coach tries to access roster entry of another coach's plan", async () => {
@@ -119,9 +112,11 @@ describe("coachingPlanRosterApi", () => {
 
       const enrollmentB = await cleanupRaw.planEnrollment.create({
         data: {
-          trainingPlanId: planB.id,
+          planId: planB.id,
           userId: athleteForB.id,
           status: PlanEnrollmentStatus.ACTIVE,
+          startedAtWeekIndex: 0,
+          startedOnDate: new Date(),
         },
       });
 
@@ -146,16 +141,18 @@ describe("coachingPlanRosterApi", () => {
     });
 
     it("throws NotFoundError when enrollment belongs to a different plan", async () => {
-      const otherPlan = await createTestPlan(scenario.coach.profile.id, {
+      const otherPlan = await createTestPlan(scenario.coach.user.id, {
         status: TrainingPlanStatus.ACTIVE,
       });
       const otherUser = await createTestUser();
 
       const otherEnrollment = await cleanupRaw.planEnrollment.create({
         data: {
-          trainingPlanId: otherPlan.id,
+          planId: otherPlan.id,
           userId: otherUser.id,
           status: PlanEnrollmentStatus.ACTIVE,
+          startedAtWeekIndex: 0,
+          startedOnDate: new Date(),
         },
       });
 
@@ -168,22 +165,6 @@ describe("coachingPlanRosterApi", () => {
         { table: "trainingPlan", id: otherPlan.id },
         { table: "user", id: otherUser.id },
       );
-    });
-
-    it("throws ForbiddenError for user without coach profile", async () => {
-      const firstAthlete = scenario.athletes[0];
-
-      if (!firstAthlete) {
-        throw new Error("Expected at least one athlete in scenario");
-      }
-
-      await expect(
-        coachingPlanRosterApi.getById(
-          unrelatedUser.id,
-          scenario.plan.id,
-          firstAthlete.enrollment.id,
-        ),
-      ).rejects.toThrow(ForbiddenError);
     });
   });
 });

@@ -17,29 +17,16 @@ const baseAssignedAthleteInclude = {
       image: true,
       password: true,
       athleteProfile: { select: { healthStatus: true } },
-      workoutLogs: {
-        select: { id: true, workoutId: true, date: true },
-        orderBy: { date: "desc" as const },
-      },
       planEnrollments: {
         select: {
           id: true,
           status: true,
-          startDate: true,
-          trainingPlan: {
+          startedOnDate: true,
+          plan: {
             select: {
               id: true,
               name: true,
-              coachId: true,
-              workouts: {
-                select: {
-                  id: true,
-                  scheduledDate: true,
-                  createdAt: true,
-                  title: true,
-                },
-                orderBy: [{ scheduledDate: "asc" as const }, { createdAt: "asc" as const }],
-              },
+              creatorId: true,
             },
           },
         },
@@ -48,22 +35,21 @@ const baseAssignedAthleteInclude = {
   },
 } satisfies Prisma.CoachAthleteAssignmentInclude;
 
-export const buildAssignedAthleteInclude = (coachId: string) =>
+export const buildAssignedAthleteInclude = (coachUserId: string) =>
   ({
     ...baseAssignedAthleteInclude,
     athlete: {
       select: {
         ...baseAssignedAthleteInclude.athlete.select,
-        workoutLogs: {
-          ...baseAssignedAthleteInclude.athlete.select.workoutLogs,
-          where: { workout: { plan: { coachId } } },
-        },
         planEnrollments: {
           ...baseAssignedAthleteInclude.athlete.select.planEnrollments,
           where: {
             status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
-            trainingPlan: {
-              coachId,
+            plan: {
+              OR: [
+                { creatorId: coachUserId },
+                { coachAssignments: { some: { coachId: coachUserId } } },
+              ],
               status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[TrainingPlanStatus.ACTIVE],
             },
           },

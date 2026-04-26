@@ -1,3 +1,6 @@
+import { type Prisma } from "@prisma/client";
+
+import { UserRole } from "@repo/contracts/iam/auth";
 import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import {
   type CoachPlansPageData,
@@ -9,8 +12,9 @@ import {
 } from "@repo/contracts/lms/training-plan";
 import { ConflictError, NotFoundError } from "@repo/errors";
 
-import { resolveCoachId, verifyPlanOwnership } from "../../authz/guards";
+import { verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
+import { ROLE_MAP } from "../../mappers/iam";
 import {
   mapToTrainingPlan,
   PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
@@ -18,41 +22,33 @@ import {
   TRAINING_PLAN_STATUS_TO_PRISMA_MAP,
 } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
-import {
-  MS_PER_DAY,
-  endOfWeekInTz,
-  startOfTodayInTz,
-  startOfWeekInTz,
-} from "../../utils/date-helpers";
 
 type PlanWithStats = Parameters<typeof mapToTrainingPlan>[0] & {
   _count: { enrollments: number };
-  workouts: { scheduledDate: Date | null }[];
 };
 
-const getWeekBounds = (tz: string) => {
-  const todayStart = startOfTodayInTz(tz);
-  const todayEnd = new Date(todayStart.getTime() + MS_PER_DAY);
-  const weekStart = startOfWeekInTz(todayStart, tz);
-  const weekEnd = new Date(endOfWeekInTz(todayStart, tz).getTime() + MS_PER_DAY);
+const mapToListItem = (p: PlanWithStats): TrainingPlanListItem => ({
+  ...mapToTrainingPlan(p),
+  enrolledAthletesCount: p._count.enrollments,
+});
 
-  return { weekStart, weekEnd, todayStart, todayEnd };
-};
+const buildPlanFilter = async (userId: string): Promise<Prisma.TrainingPlanWhereInput> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
 
-const mapToListItem = (
-  p: PlanWithStats,
-  todayStart: Date,
-  todayEnd: Date,
-): TrainingPlanListItem => {
-  const todayWorkouts = p.workouts.filter(
-    (w) => w.scheduledDate && w.scheduledDate >= todayStart && w.scheduledDate < todayEnd,
-  );
+  if (user) {
+    const role = ROLE_MAP[user.role];
+
+    if (role === UserRole.ADMIN || role === UserRole.HEAD_COACH) {
+      return { deletedAt: null };
+    }
+  }
 
   return {
-    ...mapToTrainingPlan(p),
-    enrolledAthletesCount: p._count.enrollments,
-    workoutsToday: todayWorkouts.length,
-    workoutsThisWeek: p.workouts.length,
+    deletedAt: null,
+    OR: [{ creatorId: userId }, { coachAssignments: { some: { coachId: userId } } }],
   };
 };
 
@@ -63,9 +59,7 @@ const transitionPlanStatus = async (
   targetStatus: TrainingPlanStatus,
   errorMessage: string,
 ): Promise<TrainingPlan> => {
-  const coachId = await resolveCoachId(userId);
-
-  await verifyPlanOwnership(id, coachId);
+  await verifyPlanOwnership(id, userId);
 
   const plan = await findOrThrow(
     prisma.trainingPlan.findUnique({ where: { id }, select: { status: true } }),
@@ -90,10 +84,10 @@ const transitionPlanStatus = async (
 
 export const lmsTrainingPlanApi = {
   getAll: async (userId: string): Promise<TrainingPlan[]> => {
-    const coachId = await resolveCoachId(userId);
+    const where = await buildPlanFilter(userId);
 
     const plans = await prisma.trainingPlan.findMany({
-      where: { coachId },
+      where,
       orderBy: { createdAt: "desc" },
     });
 
@@ -101,15 +95,10 @@ export const lmsTrainingPlanApi = {
   },
 
   getPageData: async (userId: string): Promise<CoachPlansPageData> => {
-    const coachId = await resolveCoachId(userId);
-    const { timezone: tz } = await findOrThrow(
-      prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } }),
-      "User",
-    );
-    const { weekStart, weekEnd, todayStart, todayEnd } = getWeekBounds(tz);
+    const where = await buildPlanFilter(userId);
 
     const plans = await prisma.trainingPlan.findMany({
-      where: { coachId },
+      where,
       orderBy: { createdAt: "desc" },
       include: {
         _count: {
@@ -121,22 +110,14 @@ export const lmsTrainingPlanApi = {
             },
           },
         },
-        workouts: {
-          where: {
-            scheduledDate: { gte: weekStart, lt: weekEnd },
-          },
-          select: { scheduledDate: true },
-        },
       },
     });
 
-    return { plans: plans.map((p) => mapToListItem(p, todayStart, todayEnd)) };
+    return { plans: plans.map(mapToListItem) };
   },
 
   getById: async (userId: string, id: string): Promise<TrainingPlan> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(id, coachId);
+    await verifyPlanOwnership(id, userId);
 
     const plan = await prisma.trainingPlan.findUnique({
       where: { id },
@@ -150,11 +131,9 @@ export const lmsTrainingPlanApi = {
   },
 
   create: async (userId: string, data: CreateTrainingPlanData): Promise<TrainingPlan> => {
-    const coachId = await resolveCoachId(userId);
-
     try {
       const plan = await prisma.trainingPlan.create({
-        data: { coachId, ...data },
+        data: { creatorId: userId, ...data },
       });
 
       return mapToTrainingPlan(plan);
@@ -168,9 +147,7 @@ export const lmsTrainingPlanApi = {
     id: string,
     data: UpdateTrainingPlanData,
   ): Promise<TrainingPlan> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(id, coachId);
+    await verifyPlanOwnership(id, userId);
 
     try {
       const plan = await prisma.trainingPlan.update({
@@ -185,13 +162,11 @@ export const lmsTrainingPlanApi = {
   },
 
   delete: async (userId: string, id: string): Promise<void> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(id, coachId);
+    await verifyPlanOwnership(id, userId);
 
     try {
       await prisma.$transaction(async (tx) => {
-        await tx.planEnrollment.deleteMany({ where: { trainingPlanId: id } });
+        await tx.planEnrollment.deleteMany({ where: { planId: id } });
         await tx.product.updateMany({
           where: { trainingPlanId: id },
           data: { trainingPlanId: null },
@@ -204,43 +179,25 @@ export const lmsTrainingPlanApi = {
   },
 
   duplicate: async (userId: string, id: string): Promise<TrainingPlan> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(id, coachId);
+    await verifyPlanOwnership(id, userId);
 
     const source = await findOrThrow(
-      prisma.trainingPlan.findUnique({ where: { id }, include: { workouts: true } }),
+      prisma.trainingPlan.findUnique({ where: { id } }),
       "Training plan",
     );
 
     try {
-      const newPlan = await prisma.$transaction(async (tx) => {
-        const plan = await tx.trainingPlan.create({
-          data: {
-            coachId,
-            name: `Copy of ${source.name}`,
-            description: source.description,
-            status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[TrainingPlanStatus.DRAFT],
-          },
-        });
-
-        if (source.workouts.length > 0) {
-          await tx.workout.createMany({
-            data: source.workouts.map((workout) => ({
-              planId: plan.id,
-              scheduledDate: workout.scheduledDate,
-              title: workout.title,
-              description: workout.description,
-              content: workout.content,
-              sortOrder: workout.sortOrder,
-            })),
-          });
-        }
-
-        return plan;
+      const plan = await prisma.trainingPlan.create({
+        data: {
+          creatorId: userId,
+          name: `Copy of ${source.name}`,
+          description: source.description,
+          status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[TrainingPlanStatus.DRAFT],
+          originalPlanId: source.id,
+        },
       });
 
-      return mapToTrainingPlan(newPlan);
+      return mapToTrainingPlan(plan);
     } catch (error) {
       return handlePrismaError(error, { entity: "Training plan", field: "name" });
     }

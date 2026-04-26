@@ -31,14 +31,16 @@ describe("coachingCoachNoteApi", () => {
     athlete = await createTestUser();
     unrelatedUser = await createTestUser();
 
-    planA = await createTestPlan(coachA.profile.id);
-    planB = await createTestPlan(coachB.profile.id);
+    planA = await createTestPlan(coachA.user.id);
+    planB = await createTestPlan(coachB.user.id);
 
     const enrollmentA = await cleanupRaw.planEnrollment.create({
       data: {
-        trainingPlanId: planA.id,
+        planId: planA.id,
         userId: athlete.id,
         status: PlanEnrollmentStatus.ACTIVE,
+        startedAtWeekIndex: 0,
+        startedOnDate: new Date(),
       },
     });
 
@@ -46,9 +48,11 @@ describe("coachingCoachNoteApi", () => {
 
     const enrollmentB = await cleanupRaw.planEnrollment.create({
       data: {
-        trainingPlanId: planB.id,
+        planId: planB.id,
         userId: athlete.id,
         status: PlanEnrollmentStatus.ACTIVE,
+        startedAtWeekIndex: 0,
+        startedOnDate: new Date(),
       },
     });
 

@@ -4,7 +4,6 @@ import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import { cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
-import { startOfTodayInTz } from "../../utils/date-helpers";
 
 import { coachingCoachDashboardApi } from "./coach-dashboard";
 
@@ -36,9 +35,9 @@ describe("coachingCoachDashboardApi — assignment-keyed counts", () => {
     return user;
   };
 
-  const trackPlan = async (coachProfileId: string, status: TrainingPlanStatus, name: string) => {
+  const trackPlan = async (creatorUserId: string, status: TrainingPlanStatus, name: string) => {
     const plan = await cleanupRaw.trainingPlan.create({
-      data: { coachId: coachProfileId, name, status },
+      data: { creatorId: creatorUserId, name, status },
     });
 
     createdPlanIds.push(plan.id);
@@ -54,9 +53,6 @@ describe("coachingCoachDashboardApi — assignment-keyed counts", () => {
       .deleteMany({ where: { coachId: { in: createdCoachProfileIds } } })
       .catch(() => {});
     await cleanupRaw.planEnrollment
-      .deleteMany({ where: { trainingPlanId: { in: createdPlanIds } } })
-      .catch(() => {});
-    await cleanupRaw.workout
       .deleteMany({ where: { planId: { in: createdPlanIds } } })
       .catch(() => {});
     await cleanupRaw.trainingPlan
@@ -78,13 +74,15 @@ describe("coachingCoachDashboardApi — assignment-keyed counts", () => {
     const a2 = await trackUser();
     const a3 = await trackUser();
 
-    const plan = await trackPlan(coach.profile.id, TrainingPlanStatus.ACTIVE, "Assigned Plan");
+    const plan = await trackPlan(coach.user.id, TrainingPlanStatus.ACTIVE, "Assigned Plan");
 
     await cleanupRaw.planEnrollment.create({
       data: {
-        trainingPlanId: plan.id,
+        planId: plan.id,
         userId: a1.id,
         status: PlanEnrollmentStatus.ACTIVE,
+        startedAtWeekIndex: 0,
+        startedOnDate: new Date(),
       },
     });
 
@@ -102,27 +100,19 @@ describe("coachingCoachDashboardApi — assignment-keyed counts", () => {
     expect(result.athletesSummary).toHaveLength(3);
   });
 
-  it("does not count workouts from DRAFT plans in workoutsPlannedToday/ThisWeek", async () => {
+  it("activePlansCount excludes DRAFT plans", async () => {
     const coach = await trackCoach();
     const athlete = await trackUser();
-    const today = startOfTodayInTz(TZ);
 
-    const draftPlan = await trackPlan(coach.profile.id, TrainingPlanStatus.DRAFT, "Draft Plan");
-
-    await cleanupRaw.workout.create({
-      data: {
-        planId: draftPlan.id,
-        title: "Draft Today Workout",
-        scheduledDate: today,
-        sortOrder: 0,
-      },
-    });
+    const draftPlan = await trackPlan(coach.user.id, TrainingPlanStatus.DRAFT, "Draft Plan");
 
     await cleanupRaw.planEnrollment.create({
       data: {
-        trainingPlanId: draftPlan.id,
+        planId: draftPlan.id,
         userId: athlete.id,
         status: PlanEnrollmentStatus.ACTIVE,
+        startedAtWeekIndex: 0,
+        startedOnDate: new Date(),
       },
     });
 
@@ -132,32 +122,22 @@ describe("coachingCoachDashboardApi — assignment-keyed counts", () => {
 
     const result = await coachingCoachDashboardApi.getDashboard(coach.user.id);
 
-    expect(result.overview.workoutsPlannedToday).toBe(0);
-    expect(result.overview.workoutsPlannedThisWeek).toBe(0);
     expect(result.overview.activePlansCount).toBe(0);
   });
 
-  it("counts workouts only from ACTIVE plans", async () => {
+  it("counts ACTIVE plans only", async () => {
     const coach = await trackCoach();
     const athlete = await trackUser();
-    const today = startOfTodayInTz(TZ);
 
-    const activePlan = await trackPlan(coach.profile.id, TrainingPlanStatus.ACTIVE, "Active Plan");
-
-    await cleanupRaw.workout.create({
-      data: {
-        planId: activePlan.id,
-        title: "Active Today Workout",
-        scheduledDate: today,
-        sortOrder: 0,
-      },
-    });
+    const activePlan = await trackPlan(coach.user.id, TrainingPlanStatus.ACTIVE, "Active Plan");
 
     await cleanupRaw.planEnrollment.create({
       data: {
-        trainingPlanId: activePlan.id,
+        planId: activePlan.id,
         userId: athlete.id,
         status: PlanEnrollmentStatus.ACTIVE,
+        startedAtWeekIndex: 0,
+        startedOnDate: new Date(),
       },
     });
 
@@ -167,8 +147,6 @@ describe("coachingCoachDashboardApi — assignment-keyed counts", () => {
 
     const result = await coachingCoachDashboardApi.getDashboard(coach.user.id);
 
-    expect(result.overview.workoutsPlannedToday).toBeGreaterThanOrEqual(1);
-    expect(result.overview.workoutsPlannedThisWeek).toBeGreaterThanOrEqual(1);
     expect(result.overview.activePlansCount).toBe(1);
   });
 });

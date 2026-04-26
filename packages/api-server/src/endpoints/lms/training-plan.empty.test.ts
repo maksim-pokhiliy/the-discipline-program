@@ -38,7 +38,7 @@ describe("lmsTrainingPlanApi — empty DB", () => {
     });
   });
 
-  describe("getPageData — coach with a plan that has no workouts or enrollments", () => {
+  describe("getPageData — coach with a plan that has no enrollments", () => {
     let coach: Awaited<ReturnType<typeof createTestCoach>>;
     let plan: Awaited<ReturnType<typeof createTestPlan>>;
 
@@ -50,7 +50,7 @@ describe("lmsTrainingPlanApi — empty DB", () => {
         data: { timezone: "UTC" },
       });
 
-      plan = await createTestPlan(coach.profile.id);
+      plan = await createTestPlan(coach.user.id);
     });
 
     afterAll(async () => {
@@ -61,7 +61,7 @@ describe("lmsTrainingPlanApi — empty DB", () => {
       );
     });
 
-    it("returns plan with zeroed counters and no nested workouts or enrollments", async () => {
+    it("returns plan with zeroed enrollment counter", async () => {
       const result = await lmsTrainingPlanApi.getPageData(coach.user.id);
       const ourPlan = result.plans.find((p) => p.id === plan.id);
 
@@ -70,8 +70,6 @@ describe("lmsTrainingPlanApi — empty DB", () => {
       }
 
       expect(ourPlan.enrolledAthletesCount).toBe(0);
-      expect(ourPlan.workoutsToday).toBe(0);
-      expect(ourPlan.workoutsThisWeek).toBe(0);
     });
 
     it("page data validates against response schema", async () => {
@@ -85,7 +83,7 @@ describe("lmsTrainingPlanApi — empty DB", () => {
       const result = await lmsTrainingPlanApi.getById(coach.user.id, plan.id);
 
       expect(result.id).toBe(plan.id);
-      expect(result.coachId).toBe(coach.profile.id);
+      expect(result.creatorId).toBe(coach.user.id);
     });
   });
 });

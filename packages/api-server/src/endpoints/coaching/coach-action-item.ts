@@ -9,15 +9,10 @@ import {
   ActionItemType,
   type CoachActionItem,
   type HealthReportMetadata,
-  type MissedWorkoutsMetadata,
   type NewNoStartMetadata,
   type ReconcileResponse,
 } from "@repo/contracts/coaching/coach-action-item";
-import {
-  MISSED_DAYS_CRITICAL,
-  MISSED_DAYS_WARNING,
-  NEW_ATHLETE_THRESHOLD_DAYS,
-} from "@repo/contracts/coaching/coach-dashboard";
+import { NEW_ATHLETE_THRESHOLD_DAYS } from "@repo/contracts/coaching/coach-dashboard";
 import { NotFoundError } from "@repo/errors";
 
 import { resolveCoachId } from "../../authz/guards";
@@ -48,7 +43,6 @@ type ConditionBase = {
 };
 
 type Condition =
-  | (ConditionBase & { type: ActionItemType.MISSED_WORKOUTS; metadata: MissedWorkoutsMetadata })
   | (ConditionBase & { type: ActionItemType.NEW_NO_START; metadata: NewNoStartMetadata })
   | (ConditionBase & { type: ActionItemType.HEALTH_REPORT; metadata: HealthReportMetadata });
 
@@ -59,37 +53,17 @@ const computeConditions = (assignments: AssignedAthleteWithData[], tz: string): 
   for (const a of assignments) {
     const athlete = a.athlete;
 
-    const lastLog =
-      athlete.workoutLogs.length > 0
-        ? athlete.workoutLogs.reduce((latest, l) => (l.date > latest.date ? l : latest))
-        : null;
-
-    if (lastLog) {
-      const daysSince = daysBetweenInTz(new Date(lastLog.date), today, tz);
-
-      if (daysSince >= MISSED_DAYS_WARNING) {
-        conditions.push({
-          athleteId: athlete.id,
-          type: ActionItemType.MISSED_WORKOUTS,
-          severity:
-            daysSince >= MISSED_DAYS_CRITICAL
-              ? ActionItemSeverity.CRITICAL
-              : ActionItemSeverity.WARNING,
-          message: `${daysSince} days without activity`,
-          metadata: { lastActivityDate: lastLog.date.toISOString() },
-        });
-      }
-    }
-
     const earliestEnrollment =
       athlete.planEnrollments.length > 0
-        ? athlete.planEnrollments.reduce((min, e) => (e.startDate < min.startDate ? e : min))
+        ? athlete.planEnrollments.reduce((min, e) =>
+            e.startedOnDate < min.startedOnDate ? e : min,
+          )
         : null;
 
     if (earliestEnrollment) {
-      const enrolledDays = daysBetweenInTz(earliestEnrollment.startDate, today, tz);
+      const enrolledDays = daysBetweenInTz(earliestEnrollment.startedOnDate, today, tz);
 
-      if (enrolledDays <= NEW_ATHLETE_THRESHOLD_DAYS && athlete.workoutLogs.length === 0) {
+      if (enrolledDays <= NEW_ATHLETE_THRESHOLD_DAYS) {
         const enrolledText =
           enrolledDays === 0
             ? "Enrolled today"
@@ -137,8 +111,6 @@ const conditionMatchesResolved = (
   }
 
   switch (condition.type) {
-    case ActionItemType.MISSED_WORKOUTS:
-      return condition.metadata.lastActivityDate === resolvedMetadata.lastActivityDate;
     case ActionItemType.NEW_NO_START:
       return condition.metadata.enrollmentId === resolvedMetadata.enrollmentId;
     case ActionItemType.HEALTH_REPORT:
@@ -166,7 +138,7 @@ export const coachingCoachActionItemApi = {
         const [assignments, openItems, latestResolved] = await Promise.all([
           tx.coachAthleteAssignment.findMany({
             where: { coachId },
-            include: buildAssignedAthleteInclude(coachId),
+            include: buildAssignedAthleteInclude(userId),
           }),
           tx.coachActionItem.findMany({
             where: { coachId, status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN] },

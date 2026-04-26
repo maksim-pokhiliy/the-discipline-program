@@ -10,10 +10,12 @@ const LATER = new Date("2025-06-15T12:00:00Z");
 
 const makePlan = (overrides = {}) => ({
   id: "cls_plan_1",
-  coachId: "cls_coach_1",
+  creatorId: "cls_creator_1",
   name: "Strength Block A",
   description: "8-week hypertrophy focus",
   status: PrismaTrainingPlanStatus.DRAFT,
+  licensable: false,
+  originalPlanId: null,
   createdAt: NOW,
   updatedAt: LATER,
   deletedAt: null,
@@ -27,10 +29,12 @@ describe("mapToTrainingPlan", () => {
 
     expect(result).toEqual({
       id: "cls_plan_1",
-      coachId: "cls_coach_1",
+      creatorId: "cls_creator_1",
       name: "Strength Block A",
       description: "8-week hypertrophy focus",
       status: TrainingPlanStatus.DRAFT,
+      licensable: false,
+      originalPlanId: null,
       createdAt: NOW,
       updatedAt: LATER,
     });
@@ -63,6 +67,14 @@ describe("mapToTrainingPlan", () => {
     const result = mapToTrainingPlan(input);
 
     expect(result.description).toBeNull();
+  });
+
+  it("handles licensable plans with originalPlanId", () => {
+    const input = makePlan({ licensable: true, originalPlanId: "cls_origin_1" });
+    const result = mapToTrainingPlan(input);
+
+    expect(result.licensable).toBe(true);
+    expect(result.originalPlanId).toBe("cls_origin_1");
   });
 
   it("excludes deletedAt from output", () => {

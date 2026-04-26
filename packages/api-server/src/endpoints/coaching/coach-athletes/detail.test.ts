@@ -28,10 +28,8 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
   beforeAll(async () => {
     scenario = await createTestScenario({
       planOverrides: { status: TrainingPlanStatus.ACTIVE },
-      workoutCount: 3,
       athleteCount: 2,
       withAthleteProfiles: true,
-      withWorkoutLogs: true,
     });
 
     await cleanupRaw.user.update({
@@ -40,14 +38,16 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
     });
 
     coachB = await createTestCoach();
-    planB = await createTestPlan(coachB.profile.id, { status: TrainingPlanStatus.ACTIVE });
+    planB = await createTestPlan(coachB.user.id, { status: TrainingPlanStatus.ACTIVE });
 
     athleteForB = await createTestUser();
     const enrollmentB = await cleanupRaw.planEnrollment.create({
       data: {
-        trainingPlanId: planB.id,
+        planId: planB.id,
         userId: athleteForB.id,
         status: PlanEnrollmentStatus.ACTIVE,
+        startedAtWeekIndex: 0,
+        startedOnDate: new Date(),
       },
     });
 
@@ -107,9 +107,9 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
       expect(plan.planName).toBeDefined();
       expect(plan.enrollmentStatus).toBeDefined();
       expect(plan.enrolledDate).toBeInstanceOf(Date);
-      expect(typeof plan.completed).toBe("number");
-      expect(typeof plan.available).toBe("number");
-      expect(typeof plan.planned).toBe("number");
+      expect(plan.completed).toBe(0);
+      expect(plan.available).toBe(0);
+      expect(plan.planned).toBe(0);
     }
   });
 

@@ -38,7 +38,8 @@ export const iamUserCreationApi = {
         });
         break;
       }
-      case UserRole.COACH: {
+      case UserRole.COACH:
+      case UserRole.HEAD_COACH: {
         await tx.coachProfile.upsert({
           where: { userId: row.id },
           create: { userId: row.id },

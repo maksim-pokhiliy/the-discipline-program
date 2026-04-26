@@ -1,7 +1,7 @@
 import { type PlanRosterEntry } from "@repo/contracts/coaching/plan-roster";
 import { NotFoundError } from "@repo/errors";
 
-import { resolveCoachId, verifyPlanOwnership } from "../../authz/guards";
+import { verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { mapToPlanRosterEntry } from "../../mappers/coaching";
 
@@ -19,12 +19,10 @@ const includeRosterUser = {
 
 export const coachingPlanRosterApi = {
   list: async (userId: string, planId: string): Promise<PlanRosterEntry[]> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(planId, coachId);
+    await verifyPlanOwnership(planId, userId);
 
     const enrollments = await prisma.planEnrollment.findMany({
-      where: { trainingPlanId: planId },
+      where: { planId },
       include: includeRosterUser,
       orderBy: { createdAt: "desc" },
     });
@@ -37,16 +35,14 @@ export const coachingPlanRosterApi = {
     planId: string,
     enrollmentId: string,
   ): Promise<PlanRosterEntry> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(planId, coachId);
+    await verifyPlanOwnership(planId, userId);
 
     const enrollment = await prisma.planEnrollment.findUnique({
       where: { id: enrollmentId },
       include: includeRosterUser,
     });
 
-    if (!enrollment || enrollment.trainingPlanId !== planId) {
+    if (!enrollment || enrollment.planId !== planId) {
       throw new NotFoundError("Enrollment not found", { enrollmentId, planId });
     }
 

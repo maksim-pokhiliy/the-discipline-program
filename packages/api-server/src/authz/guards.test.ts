@@ -1,8 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
+import { UserRole } from "@repo/contracts/iam/auth";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
+import { ROLE_TO_PRISMA_MAP } from "../mappers/iam";
 import {
   cleanup,
   cleanupRaw,
@@ -19,7 +20,7 @@ describe("platform guards", () => {
   let plan: Awaited<ReturnType<typeof createTestPlan>>;
   let athleteUser: Awaited<ReturnType<typeof createTestUser>>;
   let nonEnrolledUser: Awaited<ReturnType<typeof createTestUser>>;
-  let enrollmentId: string;
+  let headCoachUser: Awaited<ReturnType<typeof createTestUser>>;
   let assignmentId: string;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherPlan: Awaited<ReturnType<typeof createTestPlan>>;
@@ -30,19 +31,10 @@ describe("platform guards", () => {
     regularUser = await createTestUser();
     athleteUser = await createTestUser();
     nonEnrolledUser = await createTestUser();
+    headCoachUser = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
 
-    plan = await createTestPlan(coach.profile.id);
-    otherPlan = await createTestPlan(otherCoach.profile.id);
-
-    const enrollment = await cleanupRaw.planEnrollment.create({
-      data: {
-        trainingPlanId: plan.id,
-        userId: athleteUser.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-      },
-    });
-
-    enrollmentId = enrollment.id;
+    plan = await createTestPlan(coach.user.id);
+    otherPlan = await createTestPlan(otherCoach.user.id);
 
     const assignment = await cleanupRaw.coachAthleteAssignment.create({
       data: { coachId: coach.profile.id, athleteId: athleteUser.id },
@@ -54,7 +46,6 @@ describe("platform guards", () => {
   afterAll(async () => {
     await cleanup(
       { table: "coachAthleteAssignment", id: assignmentId },
-      { table: "planEnrollment", id: enrollmentId },
       { table: "trainingPlan", id: plan.id },
       { table: "trainingPlan", id: otherPlan.id },
       { table: "coachProfile", id: coach.profile.id },
@@ -64,6 +55,7 @@ describe("platform guards", () => {
       { table: "user", id: regularUser.id },
       { table: "user", id: athleteUser.id },
       { table: "user", id: nonEnrolledUser.id },
+      { table: "user", id: headCoachUser.id },
     );
   });
 
@@ -96,24 +88,44 @@ describe("platform guards", () => {
   });
 
   describe("verifyPlanOwnership", () => {
-    it("does not throw when plan belongs to coach", async () => {
-      await expect(verifyPlanOwnership(plan.id, coach.profile.id)).resolves.toBeUndefined();
+    it("does not throw when plan was created by user", async () => {
+      await expect(verifyPlanOwnership(plan.id, coach.user.id)).resolves.toBeUndefined();
     });
 
     it("throws ForbiddenError when plan belongs to another coach", async () => {
-      await expect(verifyPlanOwnership(plan.id, otherCoach.profile.id)).rejects.toThrow(
+      await expect(verifyPlanOwnership(plan.id, otherCoach.user.id)).rejects.toThrow(
         ForbiddenError,
       );
     });
 
-    it("throws NotFoundError for deleted plan", async () => {
+    it("does not throw when user has plan-coach-assignment", async () => {
+      const assignment = await cleanupRaw.planCoachAssignment.create({
+        data: {
+          planId: plan.id,
+          coachId: otherCoach.user.id,
+          grantedBy: coach.user.id,
+        },
+      });
+
+      try {
+        await expect(verifyPlanOwnership(plan.id, otherCoach.user.id)).resolves.toBeUndefined();
+      } finally {
+        await cleanupRaw.planCoachAssignment.delete({ where: { id: assignment.id } });
+      }
+    });
+
+    it("does not throw for HEAD_COACH user (bypasses ownership)", async () => {
+      await expect(verifyPlanOwnership(plan.id, headCoachUser.id)).resolves.toBeUndefined();
+    });
+
+    it("throws NotFoundError for soft-deleted plan", async () => {
       await cleanupRaw.trainingPlan.update({
         where: { id: otherPlan.id },
         data: { deletedAt: new Date() },
       });
 
       try {
-        await expect(verifyPlanOwnership(otherPlan.id, otherCoach.profile.id)).rejects.toThrow(
+        await expect(verifyPlanOwnership(otherPlan.id, otherCoach.user.id)).rejects.toThrow(
           NotFoundError,
         );
       } finally {

@@ -6,10 +6,12 @@ import { PLAN_ENROLLMENT_STATUS_MAP } from "./enum-maps";
 
 export const mapToPlanEnrollment = (e: PrismaPlanEnrollment): PlanEnrollment => ({
   id: e.id,
-  trainingPlanId: e.trainingPlanId,
+  planId: e.planId,
   userId: e.userId,
-  startDate: e.startDate,
-  endDate: e.endDate,
+  startedAtWeekIndex: e.startedAtWeekIndex,
+  startedOnDate: e.startedOnDate,
   status: PLAN_ENROLLMENT_STATUS_MAP[e.status],
+  endedOnDate: e.endedOnDate,
   createdAt: e.createdAt,
+  updatedAt: e.updatedAt,
 });

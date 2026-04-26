@@ -7,8 +7,6 @@ import {
   PrismaClient,
   type TrainingPlan,
   type User,
-  type Workout,
-  type WorkoutLog,
 } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/iam/auth";
@@ -43,29 +41,13 @@ export const createTestCoach = async () => {
 };
 
 export const createTestPlan = async (
-  coachProfileId: string,
+  creatorUserId: string,
   overrides: Partial<Prisma.TrainingPlanUncheckedCreateInput> = {},
 ) => {
   return rawPrisma.trainingPlan.create({
     data: {
-      coachId: coachProfileId,
+      creatorId: creatorUserId,
       name: `Test Plan ${crypto.randomUUID().slice(0, 8)}`,
-      ...overrides,
-    },
-  });
-};
-
-export const createTestWorkout = async (
-  planId: string,
-  overrides: Partial<Prisma.WorkoutUncheckedCreateInput> = {},
-) => {
-  const id = crypto.randomUUID();
-
-  return rawPrisma.workout.create({
-    data: {
-      planId,
-      title: `Test Workout ${id.slice(0, 8)}`,
-      sortOrder: 0,
       ...overrides,
     },
   });
@@ -78,8 +60,10 @@ export const createTestEnrollment = async (
 ) => {
   return rawPrisma.planEnrollment.create({
     data: {
-      trainingPlanId: planId,
+      planId,
       userId,
+      startedAtWeekIndex: 0,
+      startedOnDate: new Date(),
       ...overrides,
     },
   });
@@ -88,20 +72,6 @@ export const createTestEnrollment = async (
 export const createTestAssignment = async (coachProfileId: string, athleteUserId: string) => {
   return rawPrisma.coachAthleteAssignment.create({
     data: { coachId: coachProfileId, athleteId: athleteUserId },
-  });
-};
-
-export const createTestWorkoutLog = async (
-  userId: string,
-  workoutId: string,
-  overrides: Partial<Prisma.WorkoutLogUncheckedCreateInput> = {},
-) => {
-  return rawPrisma.workoutLog.create({
-    data: {
-      userId,
-      workoutId,
-      ...overrides,
-    },
   });
 };
 
@@ -165,20 +135,6 @@ export const createTestContactSubmission = async (
   });
 };
 
-export const createTestBenchmarkDefinition = async (
-  overrides: Partial<Prisma.BenchmarkDefinitionUncheckedCreateInput> = {},
-) => {
-  const id = crypto.randomUUID();
-
-  return rawPrisma.benchmarkDefinition.create({
-    data: {
-      name: `Test Benchmark ${id.slice(0, 8)}`,
-      unit: "kg",
-      ...overrides,
-    },
-  });
-};
-
 export const createTestAthleteProfile = async (
   userId: string,
   overrides: Partial<Prisma.AthleteProfileUncheckedCreateInput> = {},
@@ -194,31 +150,25 @@ export const createTestAthleteProfile = async (
 export type TestScenario = {
   coach: { user: User; profile: CoachProfile };
   plan: TrainingPlan;
-  workouts: Workout[];
   athletes: {
     user: User;
     enrollment: PlanEnrollment;
     assignment: CoachAthleteAssignment | null;
     profile?: AthleteProfile;
-    logs?: WorkoutLog[];
   }[];
   toCleanup: { table: string; id: string }[];
 };
 
 export const createTestScenario = async (options?: {
   planOverrides?: Partial<Prisma.TrainingPlanUncheckedCreateInput>;
-  workoutCount?: number;
   athleteCount?: number;
   withAthleteProfiles?: boolean;
-  withWorkoutLogs?: boolean;
   withAssignments?: boolean;
 }): Promise<TestScenario> => {
   const {
     planOverrides = {},
-    workoutCount = 2,
     athleteCount = 2,
     withAthleteProfiles = false,
-    withWorkoutLogs = false,
     withAssignments = true,
   } = options ?? {};
 
@@ -231,18 +181,9 @@ export const createTestScenario = async (options?: {
     { table: "user", id: coach.user.id },
   );
 
-  const plan = await createTestPlan(coach.profile.id, planOverrides);
+  const plan = await createTestPlan(coach.user.id, planOverrides);
 
   toCleanup.push({ table: "trainingPlan", id: plan.id });
-
-  const workouts: Workout[] = [];
-
-  for (let i = 0; i < workoutCount; i++) {
-    const workout = await createTestWorkout(plan.id, { sortOrder: i });
-
-    toCleanup.push({ table: "workout", id: workout.id });
-    workouts.push(workout);
-  }
 
   const athletes: TestScenario["athletes"] = [];
 
@@ -269,23 +210,10 @@ export const createTestScenario = async (options?: {
       toCleanup.push({ table: "athleteProfile", id: profile.id });
     }
 
-    let logs: WorkoutLog[] | undefined;
-
-    if (withWorkoutLogs && workouts.length > 0) {
-      logs = [];
-
-      for (const workout of workouts) {
-        const log = await createTestWorkoutLog(user.id, workout.id);
-
-        toCleanup.push({ table: "workoutLog", id: log.id });
-        logs.push(log);
-      }
-    }
-
-    athletes.push({ user, enrollment, assignment, profile, logs });
+    athletes.push({ user, enrollment, assignment, profile });
   }
 
-  return { coach, plan, workouts, athletes, toCleanup };
+  return { coach, plan, athletes, toCleanup };
 };
 
 export const cleanup = async (...ids: { table: string; id: string }[]) => {

@@ -31,7 +31,9 @@ export const proxy = async (req: NextRequest) => {
     });
   }
 
-  if (token && token.role === UserRole.ADMIN && path === AUTH_ROUTES.LOGIN) {
+  const isAdminRole = token?.role === UserRole.ADMIN || token?.role === UserRole.HEAD_COACH;
+
+  if (token && isAdminRole && path === AUTH_ROUTES.LOGIN) {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
@@ -43,7 +45,7 @@ export const proxy = async (req: NextRequest) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (token && token.role !== UserRole.ADMIN && !publicPath) {
+  if (token && !isAdminRole && !publicPath) {
     return NextResponse.redirect(new URL(AUTH_ROUTES.LOGIN, req.url));
   }
 

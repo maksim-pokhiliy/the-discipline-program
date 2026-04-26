@@ -8,12 +8,14 @@ export const AUTH_CONSTANTS = {
 export enum UserRole {
   ATHLETE = "ATHLETE",
   COACH = "COACH",
+  HEAD_COACH = "HEAD_COACH",
   ADMIN = "ADMIN",
 }
 
 export const ROLE_HOMES: Record<UserRole, string> = {
   [UserRole.ATHLETE]: "/athlete",
   [UserRole.COACH]: "/coach",
+  [UserRole.HEAD_COACH]: "/coach",
   [UserRole.ADMIN]: "/admin",
 };
 

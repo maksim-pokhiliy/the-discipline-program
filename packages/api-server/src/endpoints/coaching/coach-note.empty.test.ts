@@ -22,13 +22,15 @@ describe("coachingCoachNoteApi.getAll — empty DB", () => {
   beforeAll(async () => {
     coach = await createTestCoach();
     athlete = await createTestUser();
-    plan = await createTestPlan(coach.profile.id, { status: TrainingPlanStatus.ACTIVE });
+    plan = await createTestPlan(coach.user.id, { status: TrainingPlanStatus.ACTIVE });
 
     const enrollment = await cleanupRaw.planEnrollment.create({
       data: {
-        trainingPlanId: plan.id,
+        planId: plan.id,
         userId: athlete.id,
         status: PlanEnrollmentStatus.ACTIVE,
+        startedAtWeekIndex: 0,
+        startedOnDate: new Date(),
       },
     });
 

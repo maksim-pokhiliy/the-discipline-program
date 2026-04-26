@@ -65,7 +65,7 @@ export const EnrollmentCard: React.FC<EnrollmentCardProps> = ({
             color={ENROLLMENT_STATUS_COLORS[enrollment.status]}
           />
           <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            Enrolled {formatDate(enrollment.startDate, "day")}
+            Enrolled {formatDate(enrollment.startedOnDate, "day")}
           </Typography>
         </Stack>
       </Stack>

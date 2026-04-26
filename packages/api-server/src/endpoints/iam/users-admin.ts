@@ -36,7 +36,8 @@ const applyRoleExit = async (tx: TxClient, userId: string, role: UserRole): Prom
 
       return;
     }
-    case UserRole.COACH: {
+    case UserRole.COACH:
+    case UserRole.HEAD_COACH: {
       await closeCoachActionItemsBulk(tx, userId);
       await tx.coachProfile.updateMany({
         where: { userId, deletedAt: null },
@@ -76,7 +77,8 @@ const applyRoleEnter = async (
 
       return;
     }
-    case UserRole.COACH: {
+    case UserRole.COACH:
+    case UserRole.HEAD_COACH: {
       await tx.coachProfile.upsert({
         where: { userId },
         create: { userId },

@@ -6,11 +6,19 @@ import {
 } from "@repo/contracts/lms/plan-enrollment";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
-import { resolveCoachId, verifyPlanOwnership } from "../../authz/guards";
+import { verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { ROLE_MAP } from "../../mappers/iam";
 import { mapToPlanEnrollment, PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
+
+const toDateOnly = (date: Date): Date => {
+  const d = new Date(date);
+
+  d.setUTCHours(0, 0, 0, 0);
+
+  return d;
+};
 
 export const lmsPlanEnrollmentApi = {
   create: async (
@@ -18,9 +26,7 @@ export const lmsPlanEnrollmentApi = {
     planId: string,
     data: CreatePlanEnrollmentData,
   ): Promise<PlanEnrollment> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(planId, coachId);
+    await verifyPlanOwnership(planId, userId);
 
     const athlete = await findOrThrow(
       prisma.user.findUnique({
@@ -36,7 +42,12 @@ export const lmsPlanEnrollmentApi = {
 
     try {
       const enrollment = await prisma.planEnrollment.create({
-        data: { trainingPlanId: planId, ...data },
+        data: {
+          planId,
+          userId: data.userId,
+          startedAtWeekIndex: data.startedAtWeekIndex ?? 0,
+          startedOnDate: toDateOnly(data.startedOnDate ?? new Date()),
+        },
       });
 
       return mapToPlanEnrollment(enrollment);
@@ -51,16 +62,14 @@ export const lmsPlanEnrollmentApi = {
     enrollmentId: string,
     data: UpdatePlanEnrollmentData,
   ): Promise<PlanEnrollment> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(planId, coachId);
+    await verifyPlanOwnership(planId, userId);
 
     const existing = await prisma.planEnrollment.findUnique({
       where: { id: enrollmentId },
-      select: { trainingPlanId: true },
+      select: { planId: true },
     });
 
-    if (!existing || existing.trainingPlanId !== planId) {
+    if (!existing || existing.planId !== planId) {
       throw new NotFoundError("Enrollment not found", { enrollmentId, planId });
     }
 
@@ -68,7 +77,9 @@ export const lmsPlanEnrollmentApi = {
       const enrollment = await prisma.planEnrollment.update({
         where: { id: enrollmentId },
         data: {
-          ...data,
+          ...(data.endedOnDate !== undefined && {
+            endedOnDate: data.endedOnDate ? toDateOnly(data.endedOnDate) : null,
+          }),
           ...(data.status && { status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[data.status] }),
         },
       });
@@ -80,16 +91,14 @@ export const lmsPlanEnrollmentApi = {
   },
 
   delete: async (userId: string, planId: string, enrollmentId: string): Promise<void> => {
-    const coachId = await resolveCoachId(userId);
-
-    await verifyPlanOwnership(planId, coachId);
+    await verifyPlanOwnership(planId, userId);
 
     const existing = await prisma.planEnrollment.findUnique({
       where: { id: enrollmentId },
-      select: { trainingPlanId: true },
+      select: { planId: true },
     });
 
-    if (!existing || existing.trainingPlanId !== planId) {
+    if (!existing || existing.planId !== planId) {
       throw new NotFoundError("Enrollment not found", { enrollmentId, planId });
     }
 

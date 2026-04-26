@@ -1,6 +1,5 @@
 "use client";
 
-import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import GroupIcon from "@mui/icons-material/Group";
 import { Box, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
@@ -81,15 +80,6 @@ export const PlanCard: React.FC<PlanCardProps> = ({
               <Typography variant="caption">
                 {plan.enrolledAthletesCount}{" "}
                 {plan.enrolledAthletesCount === 1 ? "athlete" : "athletes"}
-              </Typography>
-            </Stack>
-          </Tooltip>
-
-          <Tooltip title="Scheduled workouts" arrow placement="top">
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <FitnessCenterIcon fontSize="small" />
-              <Typography variant="caption">
-                {plan.workoutsToday} today · {plan.workoutsThisWeek} this week
               </Typography>
             </Stack>
           </Tooltip>
