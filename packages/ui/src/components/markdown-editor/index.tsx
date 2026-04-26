@@ -8,9 +8,9 @@ import { useEditor } from "./use-editor";
 
 const EDITOR_LINE_HEIGHT_SPACING = 2.5;
 
-type RichTextEditorVariant = "default" | "inline";
+type MarkdownEditorVariant = "default" | "inline";
 
-export type RichTextEditorProps = {
+export type MarkdownEditorProps = {
   value: string;
   onChange: (value: string) => void;
   onBlur?: () => void;
@@ -20,10 +20,10 @@ export type RichTextEditorProps = {
   helperText?: string;
   disabled?: boolean;
   minRows?: number;
-  variant?: RichTextEditorVariant;
+  variant?: MarkdownEditorVariant;
 };
 
-export const RichTextEditor = ({
+export const MarkdownEditor = ({
   value,
   onChange,
   onBlur,
@@ -34,7 +34,7 @@ export const RichTextEditor = ({
   disabled = false,
   minRows,
   variant = "default",
-}: RichTextEditorProps) => {
+}: MarkdownEditorProps) => {
   const theme = useTheme();
   const editor = useEditor({ value, onChange, onBlur, placeholder, disabled });
   const isInline = variant === "inline";

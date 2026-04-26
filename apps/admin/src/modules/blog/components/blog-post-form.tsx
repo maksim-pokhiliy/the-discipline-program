@@ -27,8 +27,8 @@ import {
 import { UPLOAD_CONFIG } from "@repo/contracts/storage/upload";
 import { FormCard, ImageUpload, TagsInput } from "@repo/ui";
 
-const RichTextEditor = dynamic(
-  () => import("@repo/ui").then((m) => ({ default: m.RichTextEditor })),
+const MarkdownEditor = dynamic(
+  () => import("@repo/ui").then((m) => ({ default: m.MarkdownEditor })),
   { ssr: false },
 );
 
@@ -88,7 +88,7 @@ export const BlogPostForm = ({ isLoading = false, disableAutoSlug = false }: Blo
                 name="content"
                 control={control}
                 render={({ field, fieldState }) => (
-                  <RichTextEditor
+                  <MarkdownEditor
                     label="Content"
                     value={field.value}
                     onChange={field.onChange}

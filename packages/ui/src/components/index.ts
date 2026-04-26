@@ -20,7 +20,7 @@ export * from "./person-card";
 export * from "./pulse-stat";
 export * from "./pulse-stats-card";
 export * from "./query-wrapper";
-export * from "./rich-text-editor";
+export * from "./markdown-editor";
 export * from "./rich-text-viewer";
 export * from "./skip-to-content";
 export * from "./status-chip";

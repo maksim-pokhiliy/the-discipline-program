@@ -11,8 +11,8 @@ import {
 } from "@repo/contracts/lms/exercise-library-item";
 import { FormCard, TagsInput } from "@repo/ui";
 
-const RichTextEditor = dynamic(
-  () => import("@repo/ui").then((m) => ({ default: m.RichTextEditor })),
+const MarkdownEditor = dynamic(
+  () => import("@repo/ui").then((m) => ({ default: m.MarkdownEditor })),
   { ssr: false },
 );
 
@@ -65,7 +65,7 @@ export const IdentityCard = ({ isLoading }: IdentityCardProps) => {
           name="description"
           control={control}
           render={({ field, fieldState }) => (
-            <RichTextEditor
+            <MarkdownEditor
               label="Description"
               value={field.value ?? ""}
               onChange={field.onChange}
