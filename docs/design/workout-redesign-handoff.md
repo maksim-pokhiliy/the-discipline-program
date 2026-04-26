@@ -1,9 +1,10 @@
 # Workout redesign — M0 handoff
 
-> **Branch:** `feat/workout-redesign-m0` (not yet pushed; user reviews before push)
-> **Base:** `main` at `65d15f5` > **Tip:** `c03acb7` > **Date:** 2026-04-26
+> **Branch:** `feat/workout-redesign` (single long-lived branch for the entire redesign through M3; not yet pushed; user reviews before push)
+> **Base:** `main` at `65d15f5` > **Tip:** `b416787` > **Date:** 2026-04-26
 > **Scope completed:** Roadmap M0 from `docs/design/workout-redesign.md` §14
-> **Pipeline:** 9 commits, +12,038 / −5,929 lines, 359 files touched
+> **Pipeline (M0):** 12 commits, +12,569 / −5,929 lines, 359 files touched
+> **Working model:** the entire workout redesign (M0 → M1 → M2 → M3) lives on this one branch. Sub-phases are commits, not branches. M1 starts on this same branch from the M0 tip; no `feat/workout-redesign-m1` branch is created.
 
 This document is the single source of truth for restarting work on the workout redesign in a fresh Claude Code session. It is self-contained — a new orchestrator can read this plus the design doc and resume at M1 without any prior conversation context.
 
