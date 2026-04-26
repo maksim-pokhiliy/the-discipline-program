@@ -411,7 +411,7 @@ A new orchestrator picking this up should know about:
 - Schema final: packages/api-server/prisma/schema.prisma. НЕ менять без сильных оснований.
 - Contracts ready: packages/contracts/src/entities/lms/ (21 entity + _domain/). НЕ переписывать.
 - Endpoints: packages/api-server/src/endpoints/lms/ (basic CRUD есть; bulk-patch нет, athlete-side нет).
-- Branch state: feat/workout-redesign-m0 (9 commits, не запушена). Старт M1 — новая ветка `feat/workout-redesign-m1` от tip ветки M0.
+- Branch state: `feat/workout-redesign` — единая long-lived ветка на весь редизайн (M0→M3). M0 = 11 commits на этой же ветке, не запушена. M1 продолжает на ЭТОЙ ЖЕ ветке — не создавай `feat/workout-redesign-m1`. Sub-phases = commits, не branches.
 
 SCOPE M1 (точно из roadmap §14 дизайн-документа):
 
