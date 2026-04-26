@@ -1,4 +1,4 @@
-import { type Prisma } from "@prisma/client";
+import { type Prisma, type TrainingPlan as PrismaTrainingPlan } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/iam/auth";
 import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
@@ -23,7 +23,9 @@ import {
 } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
-type PlanWithStats = Parameters<typeof mapToTrainingPlan>[0] & {
+import { cloneWeeksIntoPlan } from "./plan-clone";
+
+type PlanWithStats = PrismaTrainingPlan & {
   _count: { enrollments: number };
 };
 
@@ -182,19 +184,59 @@ export const lmsTrainingPlanApi = {
     await verifyPlanOwnership(id, userId);
 
     const source = await findOrThrow(
-      prisma.trainingPlan.findUnique({ where: { id } }),
+      prisma.trainingPlan.findUnique({
+        where: { id },
+        include: {
+          weeks: {
+            orderBy: { index: "asc" },
+            include: {
+              days: {
+                orderBy: { dayOfWeek: "asc" },
+                include: {
+                  sessions: {
+                    orderBy: { order: "asc" },
+                    include: {
+                      blocks: {
+                        orderBy: { order: "asc" },
+                        include: {
+                          segments: {
+                            orderBy: { order: "asc" },
+                            include: {
+                              setGroups: {
+                                orderBy: { order: "asc" },
+                                include: { entries: { orderBy: { order: "asc" } } },
+                              },
+                            },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      }),
       "Training plan",
     );
 
     try {
-      const plan = await prisma.trainingPlan.create({
-        data: {
-          creatorId: userId,
-          name: `Copy of ${source.name}`,
-          description: source.description,
-          status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[TrainingPlanStatus.DRAFT],
-          originalPlanId: source.id,
-        },
+      const plan = await prisma.$transaction(async (tx) => {
+        const created = await tx.trainingPlan.create({
+          data: {
+            creatorId: userId,
+            name: `Copy of ${source.name}`,
+            description: source.description,
+            status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[TrainingPlanStatus.DRAFT],
+            originalPlanId: source.id,
+            licensable: source.licensable,
+          },
+        });
+
+        await cloneWeeksIntoPlan(tx, created.id, source.weeks);
+
+        return created;
       });
 
       return mapToTrainingPlan(plan);

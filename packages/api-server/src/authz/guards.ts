@@ -7,6 +7,12 @@ import { findOrThrow } from "../utils";
 
 const ADMIN_OR_HEAD_COACH: ReadonlySet<UserRole> = new Set([UserRole.ADMIN, UserRole.HEAD_COACH]);
 
+const COACH_LIKE_ROLES: ReadonlySet<UserRole> = new Set([
+  UserRole.COACH,
+  UserRole.HEAD_COACH,
+  UserRole.ADMIN,
+]);
+
 const isAdminOrHeadCoach = (role: UserRole): boolean => ADMIN_OR_HEAD_COACH.has(role);
 
 export const requireAdmin = async (userId: string): Promise<void> => {
@@ -29,6 +35,21 @@ export const requireAdminStrict = async (userId: string): Promise<void> => {
   if (ROLE_MAP[user.role] !== UserRole.ADMIN) {
     throw new ForbiddenError("Admin role required");
   }
+};
+
+export const requireCoachLikeRole = async (userId: string): Promise<UserRole> => {
+  const user = await findOrThrow(
+    prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
+    "User",
+  );
+
+  const role = ROLE_MAP[user.role];
+
+  if (!COACH_LIKE_ROLES.has(role)) {
+    throw new ForbiddenError("Coach role required");
+  }
+
+  return role;
 };
 
 export const resolveCoachId = async (userId: string): Promise<string> => {
