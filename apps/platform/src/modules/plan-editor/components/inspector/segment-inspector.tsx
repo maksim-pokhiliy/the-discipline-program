@@ -13,6 +13,8 @@ import { BlockSegmentEditor, SaveIndicator, useEditSession } from "@repo/ui";
 
 import { platformKeys } from "@app/lib/api/keys";
 
+import { SlashPicker, type SlashPickerSelection, useInlineTrigger } from "../inline-picker";
+
 import { useSegmentBulkPatchUpdate } from "./use-bulk-patch-update";
 
 const SESSION_NS = "segment";
@@ -85,6 +87,30 @@ export const SegmentInspector = ({ planId, segment }: SegmentInspectorProps) => 
     [segment, session],
   );
 
+  const slashTrigger = useInlineTrigger({ triggers: ["/"] });
+
+  const handleSlashSelect = useCallback(
+    (selection: SlashPickerSelection) => {
+      if (selection.kind === "scheme-template") {
+        session.dispatch((prev) => ({
+          ...prev,
+          archetypeKind: selection.template.archetypeKind,
+          schemeParams: selection.template.defaultParams,
+          schemeTemplateId: selection.template.id,
+          label: prev.label ?? selection.template.name,
+        }));
+      } else {
+        session.dispatch((prev) => ({
+          ...prev,
+          label: selection.blockKind.name,
+        }));
+      }
+
+      slashTrigger.close();
+    },
+    [session, slashTrigger],
+  );
+
   const handleReload = useCallback(() => {
     void queryClient.invalidateQueries({
       queryKey: platformKeys.trainingPlans.structureByPlan(planId),
@@ -120,6 +146,15 @@ export const SegmentInspector = ({ planId, segment }: SegmentInspectorProps) => 
         onChange={handleChange}
         status={session.status}
         disabled={session.status === "saving"}
+        labelSlotProps={slashTrigger.inputProps}
+      />
+
+      <SlashPicker
+        open={slashTrigger.state?.kind === "/"}
+        anchorEl={slashTrigger.state?.anchorEl ?? null}
+        query={slashTrigger.state?.query ?? ""}
+        onSelect={handleSlashSelect}
+        onClose={slashTrigger.close}
       />
 
       <Box>

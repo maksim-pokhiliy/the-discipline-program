@@ -19,6 +19,7 @@ export const BlockBuilder = ({
   blockKinds = [],
   onChange,
   disabled = false,
+  notesSlotProps,
 }: BlockBuilderProps) => {
   const handleTitleChange = (raw: string) => {
     const title = raw.trim() === "" ? null : raw;
@@ -121,11 +122,18 @@ export const BlockBuilder = ({
         multiline
         minRows={3}
         value={block.notes ?? ""}
-        onChange={(event) => handleNotesChange(event.target.value)}
+        onChange={(event) => {
+          notesSlotProps?.onChange?.(event);
+          handleNotesChange(event.target.value);
+        }}
+        onKeyDown={notesSlotProps?.onKeyDown}
+        onBlur={notesSlotProps?.onBlur}
+        inputRef={notesSlotProps?.inputRef}
         disabled={disabled}
+        helperText="Type / for templates and block kinds"
       />
     </Stack>
   );
 };
 
-export type { BlockBuilderProps } from "./block-builder.types";
+export type { BlockBuilderNotesSlotProps, BlockBuilderProps } from "./block-builder.types";

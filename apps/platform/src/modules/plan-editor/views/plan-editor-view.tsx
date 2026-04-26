@@ -4,6 +4,11 @@ import { Box, Stack } from "@mui/material";
 
 import { EditSessionProvider, useBeforeunloadGuard } from "@repo/ui";
 
+import {
+  CommandPalette,
+  CommandPaletteProvider,
+  PlanCommandRegistry,
+} from "../components/command-palette";
 import { InspectorPanel } from "../components/inspector";
 import { LibraryPanel } from "../components/library-panel";
 import { PlanCanvas } from "../components/plan-canvas";
@@ -47,7 +52,11 @@ export type PlanEditorViewProps = {
 export const PlanEditorView = ({ planId }: PlanEditorViewProps) => {
   return (
     <EditSessionProvider>
-      <PlanEditorChrome planId={planId} />
+      <CommandPaletteProvider>
+        <PlanCommandRegistry planId={planId} />
+        <CommandPalette />
+        <PlanEditorChrome planId={planId} />
+      </CommandPaletteProvider>
     </EditSessionProvider>
   );
 };

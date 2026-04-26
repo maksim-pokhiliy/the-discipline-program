@@ -19,6 +19,7 @@ export const BlockSegmentEditor = ({
   segment,
   onChange,
   disabled = false,
+  labelSlotProps,
 }: BlockSegmentEditorProps) => {
   const archetypeLabelId = useId();
 
@@ -61,9 +62,15 @@ export const BlockSegmentEditor = ({
         label="Label"
         size="small"
         value={segment.label ?? ""}
-        onChange={(event) => handleLabelChange(event.target.value)}
+        onChange={(event) => {
+          labelSlotProps?.onChange?.(event);
+          handleLabelChange(event.target.value);
+        }}
+        onKeyDown={labelSlotProps?.onKeyDown}
+        onBlur={labelSlotProps?.onBlur}
+        inputRef={labelSlotProps?.inputRef}
         disabled={disabled}
-        helperText="Optional segment label"
+        helperText="Optional segment label · type / for templates"
       />
 
       <TextField
@@ -107,4 +114,7 @@ export const BlockSegmentEditor = ({
   );
 };
 
-export type { BlockSegmentEditorProps } from "./block-segment-editor.types";
+export type {
+  BlockSegmentEditorLabelSlotProps,
+  BlockSegmentEditorProps,
+} from "./block-segment-editor.types";

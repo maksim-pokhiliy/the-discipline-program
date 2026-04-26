@@ -11,6 +11,8 @@ import { BlockBuilder, SaveIndicator, useEditSession } from "@repo/ui";
 
 import { platformKeys } from "@app/lib/api/keys";
 
+import { SlashPicker, type SlashPickerSelection, useInlineTrigger } from "../inline-picker";
+
 import { useBlockBulkPatchUpdate } from "./use-bulk-patch-update";
 
 const SESSION_NS = "block";
@@ -81,6 +83,19 @@ export const BlockInspector = ({ planId, block, blockKinds }: BlockInspectorProp
     [block, session],
   );
 
+  const slashTrigger = useInlineTrigger({ triggers: ["/"] });
+
+  const handleSlashSelect = useCallback(
+    (selection: SlashPickerSelection) => {
+      if (selection.kind === "block-kind") {
+        session.dispatch((prev) => ({ ...prev, kindId: selection.blockKind.id }));
+      }
+
+      slashTrigger.close();
+    },
+    [session, slashTrigger],
+  );
+
   const handleReload = useCallback(() => {
     void queryClient.invalidateQueries({
       queryKey: platformKeys.trainingPlans.structureByPlan(planId),
@@ -114,6 +129,15 @@ export const BlockInspector = ({ planId, block, blockKinds }: BlockInspectorProp
         onChange={handleChange}
         status={session.status}
         disabled={session.status === "saving"}
+        notesSlotProps={slashTrigger.inputProps}
+      />
+
+      <SlashPicker
+        open={slashTrigger.state?.kind === "/"}
+        anchorEl={slashTrigger.state?.anchorEl ?? null}
+        query={slashTrigger.state?.query ?? ""}
+        onSelect={handleSlashSelect}
+        onClose={slashTrigger.close}
       />
 
       <Box>

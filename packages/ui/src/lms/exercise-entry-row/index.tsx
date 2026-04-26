@@ -89,6 +89,7 @@ export const ExerciseEntryRow = ({
   onChange,
   onPrescriptionChange,
   disabled = false,
+  notesSlotProps,
 }: ExerciseEntryRowProps) => {
   const handlePrescriptionPatch = (patch: Partial<Prescription>) => {
     onChange((prev) => {
@@ -256,8 +257,15 @@ export const ExerciseEntryRow = ({
         multiline
         minRows={2}
         value={entry.notes ?? ""}
-        onChange={(event) => handleNotesChange(event.target.value)}
+        onChange={(event) => {
+          notesSlotProps?.onChange?.(event);
+          handleNotesChange(event.target.value);
+        }}
+        onKeyDown={notesSlotProps?.onKeyDown}
+        onBlur={notesSlotProps?.onBlur}
+        inputRef={notesSlotProps?.inputRef}
         disabled={disabled}
+        helperText="Type @ to insert exercises from the library"
       />
 
       <Stack direction="row" spacing={1} flexWrap="wrap">
@@ -269,4 +277,7 @@ export const ExerciseEntryRow = ({
   );
 };
 
-export type { ExerciseEntryRowProps } from "./exercise-entry-row.types";
+export type {
+  ExerciseEntryRowNotesSlotProps,
+  ExerciseEntryRowProps,
+} from "./exercise-entry-row.types";

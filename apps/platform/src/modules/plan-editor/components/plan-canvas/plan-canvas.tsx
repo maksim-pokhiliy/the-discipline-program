@@ -10,6 +10,8 @@ import { type GetPlanStructureResponse } from "@repo/contracts/lms/training-plan
 
 import { usePlanStructure } from "@app/lib/hooks";
 
+import { useHistoryKeybindings, usePlanHistory } from "../undo-redo";
+
 import { DayCard } from "./day-card";
 import { formatPlanSelection, parsePlanSelection, type PlanSelection } from "./selection";
 import { usePlanCanvasDnd } from "./use-plan-canvas-dnd";
@@ -72,7 +74,10 @@ export const PlanCanvas = ({ planId }: PlanCanvasProps) => {
     [pathname, router, searchParams],
   );
 
-  const dnd = usePlanCanvasDnd(planId, data);
+  const history = usePlanHistory(planId);
+  const dnd = usePlanCanvasDnd(planId, data, history);
+
+  useHistoryKeybindings({ history });
 
   if (error) {
     return (

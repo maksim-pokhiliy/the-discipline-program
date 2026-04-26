@@ -5,16 +5,31 @@ import { useCallback, useMemo } from "react";
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 
+import { type ExerciseSnapshot } from "@repo/contracts/lms/_domain";
 import {
   type ExerciseEntry,
   updateExerciseEntryInputSchema,
 } from "@repo/contracts/lms/exercise-entry";
+import { type ExerciseLibraryItem } from "@repo/contracts/lms/exercise-library-item";
 import { ExerciseEntryRow, SaveIndicator, useEditSession } from "@repo/ui";
 
 import { platformKeys } from "@app/lib/api/keys";
 import { useExercisesPageData } from "@app/lib/hooks";
 
+import { AtPicker, type AtPickerSelection, useInlineTrigger } from "../inline-picker";
+
 import { useEntryBulkPatchUpdate } from "./use-bulk-patch-update";
+
+const buildExerciseSnapshot = (item: ExerciseLibraryItem): ExerciseSnapshot => ({
+  id: item.id,
+  name: item.name,
+  primaryMovement: item.primaryMovement,
+  modality: item.modality,
+  primaryBodyParts: item.primaryBodyParts,
+  defaultMetrics: item.defaultMetrics,
+  demoVideoUrl: item.demoVideoUrl,
+  demoImageUrl: item.demoImageUrl,
+});
 
 const SESSION_NS = "entry";
 
@@ -86,6 +101,20 @@ export const EntryInspector = ({ planId, entry }: EntryInspectorProps) => {
     [entry, session],
   );
 
+  const atTrigger = useInlineTrigger({ triggers: ["@"] });
+
+  const handleAtSelect = useCallback(
+    (selection: AtPickerSelection) => {
+      session.dispatch((prev) => ({
+        ...prev,
+        exerciseId: selection.exercise.id,
+        exerciseSnapshot: buildExerciseSnapshot(selection.exercise),
+      }));
+      atTrigger.close();
+    },
+    [atTrigger, session],
+  );
+
   const handleReload = useCallback(() => {
     void queryClient.invalidateQueries({
       queryKey: platformKeys.trainingPlans.structureByPlan(planId),
@@ -120,6 +149,15 @@ export const EntryInspector = ({ planId, entry }: EntryInspectorProps) => {
         onChange={handleChange}
         status={session.status}
         disabled={session.status === "saving"}
+        notesSlotProps={atTrigger.inputProps}
+      />
+
+      <AtPicker
+        open={atTrigger.state?.kind === "@"}
+        anchorEl={atTrigger.state?.anchorEl ?? null}
+        query={atTrigger.state?.query ?? ""}
+        onSelect={handleAtSelect}
+        onClose={atTrigger.close}
       />
 
       <Box>

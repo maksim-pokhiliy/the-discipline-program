@@ -1,3 +1,5 @@
+import { type ChangeEvent, type KeyboardEvent, type RefCallback } from "react";
+
 import { type z } from "zod";
 
 import { type Prescription } from "@repo/contracts/lms/_domain";
@@ -10,6 +12,13 @@ export type ExerciseEntryRowMode = "edit" | "read";
 
 export type ExerciseEntryRowErrors = z.ZodError | null;
 
+export type ExerciseEntryRowNotesSlotProps = {
+  onKeyDown?: (event: KeyboardEvent<HTMLElement>) => void;
+  onChange?: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  onBlur?: () => void;
+  inputRef?: RefCallback<HTMLInputElement | HTMLTextAreaElement>;
+};
+
 export type ExerciseEntryRowProps = {
   entry: ExerciseEntry;
   mode?: ExerciseEntryRowMode;
@@ -19,4 +28,5 @@ export type ExerciseEntryRowProps = {
   errors?: ExerciseEntryRowErrors;
   status?: EditSessionStatus;
   disabled?: boolean;
+  notesSlotProps?: ExerciseEntryRowNotesSlotProps;
 };

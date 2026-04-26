@@ -16,9 +16,63 @@ import { type BulkPatchOp, type GetPlanStructureResponse } from "@repo/contracts
 
 import { usePlanBulkPatch } from "@app/lib/hooks";
 
+import { type UsePlanHistoryApi } from "../undo-redo";
+
 import { buildDndLookups, resolveContainerForOver } from "./dnd-lookups";
 import { buildOptimisticMover } from "./dnd-optimistic";
 import { type DraggableInfo } from "./dnd-types";
+
+const buildHistoryEntry = (
+  active: DraggableInfo,
+  forward: BulkPatchOp,
+): { forward: BulkPatchOp[]; inverse: BulkPatchOp[] } | null => {
+  if (active.kind === "block" && forward.kind === "move-block") {
+    return {
+      forward: [forward],
+      inverse: [
+        {
+          kind: "move-block",
+          blockId: active.blockId,
+          expectedVersion: active.expectedVersion + 1,
+          targetSessionId: active.sourceSessionId,
+          targetOrder: active.sourceIndex,
+        },
+      ],
+    };
+  }
+
+  if (active.kind === "segment" && forward.kind === "move-segment") {
+    return {
+      forward: [forward],
+      inverse: [
+        {
+          kind: "move-segment",
+          segmentId: active.segmentId,
+          expectedVersion: active.expectedVersion + 1,
+          targetBlockId: active.sourceBlockId,
+          targetOrder: active.sourceIndex,
+        },
+      ],
+    };
+  }
+
+  if (active.kind === "entry" && forward.kind === "move-entry") {
+    return {
+      forward: [forward],
+      inverse: [
+        {
+          kind: "move-entry",
+          entryId: active.entryId,
+          expectedVersion: active.expectedVersion + 1,
+          targetSetGroupId: active.sourceSetGroupId,
+          targetOrder: active.sourceIndex,
+        },
+      ],
+    };
+  }
+
+  return null;
+};
 
 const buildOp = (
   active: DraggableInfo,
@@ -75,11 +129,14 @@ export type UsePlanCanvasDndApi = {
 export const usePlanCanvasDnd = (
   planId: string,
   data: GetPlanStructureResponse | undefined,
+  history?: UsePlanHistoryApi,
 ): UsePlanCanvasDndApi => {
   const lookups = useMemo(() => buildDndLookups(data), [data]);
   const lookupsRef = useRef(lookups);
+  const historyRef = useRef(history);
 
   lookupsRef.current = lookups;
+  historyRef.current = history;
 
   const bulkPatch = usePlanBulkPatch(planId);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -133,6 +190,18 @@ export const usePlanCanvasDnd = (
       const optimisticPatch = buildOptimisticMover(active, target.containerId, target.targetIndex);
 
       bulkPatch.mutate({ ops: [op], optimisticPatch });
+
+      const entry = buildHistoryEntry(active, op);
+
+      if (entry && historyRef.current) {
+        historyRef.current.push({
+          id: `${active.kind}-${activeKey}-${Date.now().toString()}`,
+          forward: entry.forward,
+          inverse: entry.inverse,
+          label: `Move ${active.kind}`,
+        });
+      }
+
       setAnnouncement(`Moved ${active.kind}`);
     },
     [bulkPatch],
