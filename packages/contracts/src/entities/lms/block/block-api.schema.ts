@@ -21,17 +21,13 @@ export const createBlockInputSchema = z.object({
 });
 
 export const updateBlockInputSchema = z.object({
-  order: z.number().int().nonnegative().optional(),
-  kindId: z.string().cuid().optional(),
-  title: z.string().max(BLOCK_CONSTANTS.MAX_TITLE_LENGTH).nullable().optional(),
-  status: blockStatusSchema.optional(),
-  weight: z
-    .number()
-    .int()
-    .min(BLOCK_CONSTANTS.MIN_WEIGHT)
-    .max(BLOCK_CONSTANTS.MAX_WEIGHT)
-    .optional(),
-  notes: z.string().max(BLOCK_CONSTANTS.MAX_NOTES_LENGTH).nullable().optional(),
+  expectedVersion: z.number().int().nonnegative(),
+  order: z.number().int().nonnegative(),
+  kindId: z.string().cuid(),
+  title: z.string().max(BLOCK_CONSTANTS.MAX_TITLE_LENGTH).nullable(),
+  status: blockStatusSchema,
+  weight: z.number().int().min(BLOCK_CONSTANTS.MIN_WEIGHT).max(BLOCK_CONSTANTS.MAX_WEIGHT),
+  notes: z.string().max(BLOCK_CONSTANTS.MAX_NOTES_LENGTH).nullable(),
 });
 
 export const moveBlockInputSchema = z.object({

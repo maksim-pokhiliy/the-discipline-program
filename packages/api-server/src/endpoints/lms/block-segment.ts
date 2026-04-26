@@ -4,6 +4,7 @@ import {
   type CreateBlockSegmentInput,
   type UpdateBlockSegmentInput,
 } from "@repo/contracts/lms/block-segment";
+import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
@@ -59,31 +60,47 @@ export const lmsBlockSegmentApi = {
     await verifyPlanOwnership(planId, userId);
 
     try {
-      const segment = await prisma.blockSegment.update({
-        where: { id: segmentId },
+      const result = await prisma.blockSegment.updateMany({
+        where: { id: segmentId, version: data.expectedVersion },
         data: {
-          ...(data.order !== undefined ? { order: data.order } : {}),
-          ...(data.label !== undefined ? { label: data.label } : {}),
-          ...(data.archetypeKind
-            ? { archetypeKind: SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP[data.archetypeKind] }
-            : {}),
-          ...(data.schemeParams !== undefined
-            ? { schemeParams: toJsonInput(data.schemeParams) }
-            : {}),
-          ...(data.schemeTemplateId !== undefined
-            ? { schemeTemplateId: data.schemeTemplateId }
-            : {}),
-          ...(data.restConfig !== undefined
-            ? {
-                restConfig:
-                  data.restConfig === null ? Prisma.JsonNull : toJsonInput(data.restConfig),
-              }
-            : {}),
+          order: data.order,
+          label: data.label,
+          archetypeKind: SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP[data.archetypeKind],
+          schemeParams: toJsonInput(data.schemeParams),
+          schemeTemplateId: data.schemeTemplateId,
+          restConfig: data.restConfig === null ? Prisma.JsonNull : toJsonInput(data.restConfig),
+          version: { increment: 1 },
         },
       });
 
+      if (result.count === 0) {
+        const current = await prisma.blockSegment.findUnique({
+          where: { id: segmentId },
+          select: { version: true },
+        });
+
+        if (!current) {
+          throw new NotFoundError("Block segment not found", { segmentId });
+        }
+
+        throw new ConflictError("Block segment version conflict", {
+          segmentId,
+          currentVersion: current.version,
+          expectedVersion: data.expectedVersion,
+        });
+      }
+
+      const segment = await findOrThrow(
+        prisma.blockSegment.findUnique({ where: { id: segmentId } }),
+        "Block segment",
+      );
+
       return mapToBlockSegment(segment);
     } catch (error) {
+      if (error instanceof ConflictError || error instanceof NotFoundError) {
+        throw error;
+      }
+
       return handlePrismaError(error, { entity: "Block segment" });
     }
   },

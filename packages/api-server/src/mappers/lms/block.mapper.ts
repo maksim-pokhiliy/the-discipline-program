@@ -33,6 +33,7 @@ export const mapToBlock = (b: PrismaBlock): Block => ({
   status: BLOCK_STATUS_MAP[b.status],
   weight: b.weight,
   notes: b.notes,
+  version: b.version,
 });
 
 export const mapToBlockWithSegments = (b: BlockWithSegmentsRow): BlockWithSegments => ({

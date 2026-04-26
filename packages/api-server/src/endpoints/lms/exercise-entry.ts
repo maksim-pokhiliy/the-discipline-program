@@ -1,18 +1,43 @@
 import { type Prisma } from "@prisma/client";
 
+import { type ExerciseSnapshot } from "@repo/contracts/lms/_domain";
 import {
   type CreateExerciseEntryInput,
   type UpdateExerciseEntryInput,
 } from "@repo/contracts/lms/exercise-entry";
+import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
-import { mapToExerciseEntry } from "../../mappers/lms";
+import {
+  BODY_PART_MAP,
+  mapToExerciseEntry,
+  MODALITY_MAP,
+  MOVEMENT_PATTERN_MAP,
+} from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
 import { resolvePlanIdForExerciseEntry, resolvePlanIdForSetGroup } from "./plan-tree-helpers";
 
 const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
+
+const deriveExerciseSnapshot = async (exerciseId: string): Promise<ExerciseSnapshot> => {
+  const exercise = await findOrThrow(
+    prisma.exerciseLibraryItem.findUnique({ where: { id: exerciseId } }),
+    "Exercise library item",
+  );
+
+  return {
+    id: exercise.id,
+    name: exercise.name,
+    primaryMovement: MOVEMENT_PATTERN_MAP[exercise.primaryMovement],
+    modality: MODALITY_MAP[exercise.modality],
+    primaryBodyParts: exercise.primaryBodyParts.map((bp) => BODY_PART_MAP[bp]),
+    defaultMetrics: exercise.defaultMetrics,
+    demoVideoUrl: exercise.demoVideoUrl,
+    demoImageUrl: exercise.demoImageUrl,
+  };
+};
 
 export const lmsExerciseEntryApi = {
   getById: async (userId: string, entryId: string) => {
@@ -58,28 +83,51 @@ export const lmsExerciseEntryApi = {
 
     await verifyPlanOwnership(planId, userId);
 
+    const serverSnapshot = await deriveExerciseSnapshot(data.exerciseId);
+
     try {
-      const entry = await prisma.exerciseEntry.update({
-        where: { id: entryId },
+      const result = await prisma.exerciseEntry.updateMany({
+        where: { id: entryId, version: data.expectedVersion },
         data: {
-          ...(data.order !== undefined ? { order: data.order } : {}),
-          ...(data.exerciseId ? { exerciseId: data.exerciseId } : {}),
-          ...(data.exerciseSnapshot !== undefined
-            ? { exerciseSnapshot: toJsonInput(data.exerciseSnapshot) }
-            : {}),
-          ...(data.prescription !== undefined
-            ? { prescription: toJsonInput(data.prescription) }
-            : {}),
-          ...(data.alternatives !== undefined
-            ? { alternatives: toJsonInput(data.alternatives) }
-            : {}),
-          ...(data.externalUrl !== undefined ? { externalUrl: data.externalUrl } : {}),
-          ...(data.notes !== undefined ? { notes: data.notes } : {}),
+          order: data.order,
+          exerciseId: data.exerciseId,
+          exerciseSnapshot: toJsonInput(serverSnapshot),
+          prescription: toJsonInput(data.prescription),
+          alternatives: toJsonInput(data.alternatives),
+          externalUrl: data.externalUrl,
+          notes: data.notes,
+          version: { increment: 1 },
         },
       });
 
+      if (result.count === 0) {
+        const current = await prisma.exerciseEntry.findUnique({
+          where: { id: entryId },
+          select: { version: true },
+        });
+
+        if (!current) {
+          throw new NotFoundError("Exercise entry not found", { entryId });
+        }
+
+        throw new ConflictError("Exercise entry version conflict", {
+          entryId,
+          currentVersion: current.version,
+          expectedVersion: data.expectedVersion,
+        });
+      }
+
+      const entry = await findOrThrow(
+        prisma.exerciseEntry.findUnique({ where: { id: entryId } }),
+        "Exercise entry",
+      );
+
       return mapToExerciseEntry(entry);
     } catch (error) {
+      if (error instanceof ConflictError || error instanceof NotFoundError) {
+        throw error;
+      }
+
       return handlePrismaError(error, { entity: "Exercise entry" });
     }
   },

@@ -14,4 +14,5 @@ export const blockSegmentSchema = z.object({
   schemeParams: schemeParamsSchema,
   schemeTemplateId: z.string().cuid().nullable(),
   restConfig: restSpecSchema.nullable(),
+  version: z.number().int().min(1),
 });

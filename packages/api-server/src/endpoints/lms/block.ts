@@ -3,6 +3,7 @@ import {
   type MoveBlockInput,
   type UpdateBlockInput,
 } from "@repo/contracts/lms/block";
+import { ConflictError, NotFoundError } from "@repo/errors";
 
 import { verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
@@ -52,20 +53,44 @@ export const lmsBlockApi = {
     await verifyPlanOwnership(planId, userId);
 
     try {
-      const block = await prisma.block.update({
-        where: { id: blockId },
+      const result = await prisma.block.updateMany({
+        where: { id: blockId, version: data.expectedVersion },
         data: {
-          ...(data.order !== undefined ? { order: data.order } : {}),
-          ...(data.kindId ? { kindId: data.kindId } : {}),
-          ...(data.title !== undefined ? { title: data.title } : {}),
-          ...(data.status ? { status: BLOCK_STATUS_TO_PRISMA_MAP[data.status] } : {}),
-          ...(data.weight !== undefined ? { weight: data.weight } : {}),
-          ...(data.notes !== undefined ? { notes: data.notes } : {}),
+          order: data.order,
+          kindId: data.kindId,
+          title: data.title,
+          status: BLOCK_STATUS_TO_PRISMA_MAP[data.status],
+          weight: data.weight,
+          notes: data.notes,
+          version: { increment: 1 },
         },
       });
 
+      if (result.count === 0) {
+        const current = await prisma.block.findUnique({
+          where: { id: blockId },
+          select: { version: true },
+        });
+
+        if (!current) {
+          throw new NotFoundError("Block not found", { blockId });
+        }
+
+        throw new ConflictError("Block version conflict", {
+          blockId,
+          currentVersion: current.version,
+          expectedVersion: data.expectedVersion,
+        });
+      }
+
+      const block = await findOrThrow(prisma.block.findUnique({ where: { id: blockId } }), "Block");
+
       return mapToBlock(block);
     } catch (error) {
+      if (error instanceof ConflictError || error instanceof NotFoundError) {
+        throw error;
+      }
+
       return handlePrismaError(error, { entity: "Block" });
     }
   },

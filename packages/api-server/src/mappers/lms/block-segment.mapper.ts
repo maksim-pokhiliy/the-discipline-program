@@ -31,6 +31,7 @@ export const mapToBlockSegment = (s: PrismaBlockSegment): BlockSegment => ({
   schemeParams: schemeParamsSchema.parse(s.schemeParams),
   schemeTemplateId: s.schemeTemplateId,
   restConfig: s.restConfig === null ? null : restSpecSchema.parse(s.restConfig),
+  version: s.version,
 });
 
 export const mapToBlockSegmentWithSetGroups = (

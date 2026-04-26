@@ -21,16 +21,16 @@ export const createExerciseEntryInputSchema = z.object({
 });
 
 export const updateExerciseEntryInputSchema = z.object({
-  order: z.number().int().nonnegative().optional(),
-  exerciseId: z.string().cuid().optional(),
-  exerciseSnapshot: exerciseSnapshotSchema.optional(),
-  prescription: prescriptionSchema.optional(),
+  expectedVersion: z.number().int().nonnegative(),
+  order: z.number().int().nonnegative(),
+  exerciseId: z.string().cuid(),
+  exerciseSnapshot: exerciseSnapshotSchema,
+  prescription: prescriptionSchema,
   alternatives: z
     .array(exerciseEntryAlternativeSchema)
-    .max(EXERCISE_ENTRY_CONSTANTS.MAX_ALTERNATIVES)
-    .optional(),
-  externalUrl: z.string().url().nullable().optional(),
-  notes: z.string().max(EXERCISE_ENTRY_CONSTANTS.MAX_NOTES_LENGTH).nullable().optional(),
+    .max(EXERCISE_ENTRY_CONSTANTS.MAX_ALTERNATIVES),
+  externalUrl: z.string().url().nullable(),
+  notes: z.string().max(EXERCISE_ENTRY_CONSTANTS.MAX_NOTES_LENGTH).nullable(),
 });
 
 export const exerciseEntryIdParamSchema = z.object({ entryId: z.string().cuid() });

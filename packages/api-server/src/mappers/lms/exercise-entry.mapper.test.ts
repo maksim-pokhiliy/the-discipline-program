@@ -30,6 +30,7 @@ const makeRow = (overrides: Partial<PrismaExerciseEntry> = {}): PrismaExerciseEn
   alternatives: [],
   externalUrl: null,
   notes: null,
+  version: 1,
   ...overrides,
 });
 
@@ -64,5 +65,11 @@ describe("mapToExerciseEntry", () => {
     const result = mapToExerciseEntry(row);
 
     expect(result.prescription.composition).toHaveLength(1);
+  });
+
+  it("exposes version on output", () => {
+    const result = mapToExerciseEntry(makeRow({ version: 4 }));
+
+    expect(result.version).toBe(4);
   });
 });

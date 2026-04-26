@@ -13,4 +13,5 @@ export const blockSchema = z.object({
   status: blockStatusSchema,
   weight: z.number().int().min(BLOCK_CONSTANTS.MIN_WEIGHT).max(BLOCK_CONSTANTS.MAX_WEIGHT),
   notes: z.string().max(BLOCK_CONSTANTS.MAX_NOTES_LENGTH).nullable(),
+  version: z.number().int().min(1),
 });

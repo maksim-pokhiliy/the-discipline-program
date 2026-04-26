@@ -73,6 +73,7 @@ export const cloneWeeksIntoPlan = async (
               status: block.status,
               weight: block.weight,
               notes: block.notes,
+              version: 1,
             },
           });
 
@@ -92,6 +93,7 @@ export const cloneWeeksIntoPlan = async (
                   segment.restConfig === null
                     ? undefined
                     : (segment.restConfig as Prisma.InputJsonValue),
+                version: 1,
               },
             });
 
@@ -128,6 +130,7 @@ export const cloneWeeksIntoPlan = async (
                         : (entry.alternatives as Prisma.InputJsonValue),
                     externalUrl: entry.externalUrl,
                     notes: entry.notes,
+                    version: 1,
                   },
                 });
               }

@@ -87,6 +87,7 @@ describe("lmsBlockSegmentApi (integration)", () => {
 
     expect(segment.archetypeKind).toBe("COUNT_DOWN");
     expect(segment.schemeParams).toEqual({ kind: "COUNT_DOWN", durationSec: 600 });
+    expect(segment.version).toBe(1);
   });
 
   it("DB CHECK rejects schemeParams whose kind does not match archetypeKind", async () => {
@@ -100,5 +101,65 @@ describe("lmsBlockSegmentApi (integration)", () => {
         },
       }),
     ).rejects.toThrow();
+  });
+
+  it("update returns full entity with version incremented", async () => {
+    const segment = await lmsBlockSegmentApi.create(coach.user.id, {
+      blockId,
+      order: 10,
+      archetypeKind: "COUNT_UP",
+      schemeParams: { kind: "COUNT_UP", cap: 300 },
+    });
+
+    expect(segment.version).toBe(1);
+
+    const updated = await lmsBlockSegmentApi.update(coach.user.id, segment.id, {
+      expectedVersion: 1,
+      order: 11,
+      label: "Updated label",
+      archetypeKind: "COUNT_UP",
+      schemeParams: { kind: "COUNT_UP", cap: 600 },
+      schemeTemplateId: null,
+      restConfig: null,
+    });
+
+    expect(updated.version).toBe(2);
+    expect(updated.order).toBe(11);
+    expect(updated.label).toBe("Updated label");
+    expect(updated.schemeParams).toEqual({ kind: "COUNT_UP", cap: 600 });
+  });
+
+  it("update throws ConflictError on stale expectedVersion", async () => {
+    const segment = await lmsBlockSegmentApi.create(coach.user.id, {
+      blockId,
+      order: 20,
+      archetypeKind: "COUNT_DOWN",
+      schemeParams: { kind: "COUNT_DOWN", durationSec: 120 },
+    });
+
+    await lmsBlockSegmentApi.update(coach.user.id, segment.id, {
+      expectedVersion: 1,
+      order: 20,
+      label: null,
+      archetypeKind: "COUNT_DOWN",
+      schemeParams: { kind: "COUNT_DOWN", durationSec: 180 },
+      schemeTemplateId: null,
+      restConfig: null,
+    });
+
+    await expect(
+      lmsBlockSegmentApi.update(coach.user.id, segment.id, {
+        expectedVersion: 1,
+        order: 20,
+        label: null,
+        archetypeKind: "COUNT_DOWN",
+        schemeParams: { kind: "COUNT_DOWN", durationSec: 240 },
+        schemeTemplateId: null,
+        restConfig: null,
+      }),
+    ).rejects.toMatchObject({
+      statusCode: 409,
+      details: { currentVersion: 2, expectedVersion: 1 },
+    });
   });
 });

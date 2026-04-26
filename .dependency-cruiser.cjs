@@ -198,11 +198,16 @@ module.exports = {
       name: "admin-no-lms",
       severity: "error",
       comment:
-        "apps/admin serves CMS management + admin user/dashboard. It does not need direct " +
-        "access to LMS endpoints — training plans, workouts, and enrollments are platform " +
-        "(coach) concerns, not admin panel concerns.",
+        "apps/admin serves CMS management + admin user/dashboard + admin LMS libraries " +
+        "(M1.2/M1.3). It does not need direct access to LMS plan/block/segment endpoints — " +
+        "those are platform (coach) concerns. The library endpoints (Exercise / BlockKind / " +
+        "SchemeTemplate CRUD + promote/demote) are explicitly allowed via the carve-out.",
       from: { path: "^apps/admin/" },
-      to: { path: "^packages/api-server/src/(endpoints|mappers)/lms/" },
+      to: {
+        path: "^packages/api-server/src/(endpoints|mappers)/lms/",
+        pathNot:
+          "^packages/api-server/src/(endpoints|mappers)/lms/(exercise-library-item|block-kind|scheme-template)\\.(ts|mapper\\.ts)$",
+      },
     },
 
     {

@@ -18,7 +18,7 @@ export const createAuthWrappers = (authOptions: NextAuthOptions) => ({
         throw new UnauthorizedError();
       }
 
-      if (session.user.role !== UserRole.ADMIN) {
+      if (session.user.role !== UserRole.ADMIN && session.user.role !== UserRole.HEAD_COACH) {
         throw new ForbiddenError();
       }
 
@@ -44,7 +44,11 @@ export const createAuthWrappers = (authOptions: NextAuthOptions) => ({
         throw new UnauthorizedError();
       }
 
-      if (session.user.role !== UserRole.COACH && session.user.role !== UserRole.ADMIN) {
+      if (
+        session.user.role !== UserRole.COACH &&
+        session.user.role !== UserRole.ADMIN &&
+        session.user.role !== UserRole.HEAD_COACH
+      ) {
         throw new ForbiddenError();
       }
 

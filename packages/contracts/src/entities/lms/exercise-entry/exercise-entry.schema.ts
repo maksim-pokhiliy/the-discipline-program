@@ -24,4 +24,5 @@ export const exerciseEntrySchema = z.object({
     .max(EXERCISE_ENTRY_CONSTANTS.MAX_ALTERNATIVES),
   externalUrl: z.string().url().nullable(),
   notes: z.string().max(EXERCISE_ENTRY_CONSTANTS.MAX_NOTES_LENGTH).nullable(),
+  version: z.number().int().min(1),
 });

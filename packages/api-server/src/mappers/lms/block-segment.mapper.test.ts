@@ -15,6 +15,7 @@ const makeRow = (overrides: Partial<PrismaBlockSegment> = {}): PrismaBlockSegmen
   schemeParams: { kind: "COUNT_DOWN", durationSec: 600 },
   schemeTemplateId: null,
   restConfig: null,
+  version: 1,
   ...overrides,
 });
 
@@ -31,6 +32,7 @@ describe("mapToBlockSegment", () => {
       schemeParams: { kind: "COUNT_DOWN", durationSec: 600 },
       schemeTemplateId: null,
       restConfig: null,
+      version: 1,
     });
   });
 
@@ -38,6 +40,12 @@ describe("mapToBlockSegment", () => {
     const result = mapToBlockSegment(makeRow({ restConfig: { kind: "FIXED", seconds: 90 } }));
 
     expect(result.restConfig).toEqual({ kind: "FIXED", seconds: 90 });
+  });
+
+  it("exposes version on output", () => {
+    const result = mapToBlockSegment(makeRow({ version: 7 }));
+
+    expect(result.version).toBe(7);
   });
 
   it("rejects schemeParams with unknown kind", () => {

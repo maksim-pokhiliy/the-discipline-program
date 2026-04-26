@@ -486,6 +486,7 @@ model Block {
   status        BlockStatus    @default(ACTIVE)
   weight        Int            @default(1)
   notes         String?
+  version       Int            @default(1)
   segments      BlockSegment[]
   blockSessions BlockSession[]
 
@@ -504,6 +505,7 @@ model BlockSegment {
   schemeTemplateId String?
   schemeTemplate   SchemeTemplate?     @relation(fields: [schemeTemplateId], references: [id], onDelete: SetNull)
   restConfig       Json?
+  version          Int                 @default(1)
   setGroups        SetGroup[]
 
   @@index([blockId, order])
@@ -535,6 +537,7 @@ model ExerciseEntry {
   alternatives     Json                @default("[]")
   externalUrl      String?
   notes            String?
+  version          Int                 @default(1)
 
   @@index([setGroupId, order])
   @@index([exerciseId])

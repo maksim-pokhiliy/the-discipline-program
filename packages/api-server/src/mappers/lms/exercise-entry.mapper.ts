@@ -22,4 +22,5 @@ export const mapToExerciseEntry = (e: PrismaExerciseEntry): ExerciseEntry => ({
   alternatives: alternativesSchema.parse(e.alternatives),
   externalUrl: e.externalUrl,
   notes: e.notes,
+  version: e.version,
 });
