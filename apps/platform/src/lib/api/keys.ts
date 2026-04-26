@@ -5,7 +5,12 @@ const ROOT = ["platform"] as const;
 export const platformKeys = {
   root: ROOT,
 
-  trainingPlans: createEntityKeys(ROOT, "training-plans"),
+  trainingPlans: {
+    ...createEntityKeys(ROOT, "training-plans"),
+    structure: (planId: string, fromWeek: number | undefined, toWeek: number | undefined) =>
+      [...ROOT, "training-plans", "structure", planId, fromWeek ?? null, toWeek ?? null] as const,
+    structureByPlan: (planId: string) => [...ROOT, "training-plans", "structure", planId] as const,
+  },
   planEnrollments: {
     ...createEntityKeys(ROOT, "plan-enrollments"),
     byPlan: (planId: string) => [...ROOT, "plan-enrollments", "plan", planId] as const,

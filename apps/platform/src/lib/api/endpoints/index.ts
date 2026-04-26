@@ -5,6 +5,8 @@ export { createCoachInviteAPI } from "./coach-invite";
 export { createLibraryBlockKindsAPI } from "./library-block-kinds";
 export { createLibraryExercisesAPI } from "./library-exercises";
 export { createLibrarySchemeTemplatesAPI } from "./library-scheme-templates";
+export { createPlanBulkPatchAPI } from "./plan-bulk-patch";
 export { createPlanEnrollmentsAPI } from "./plan-enrollments";
+export { createPlanStructureAPI } from "./plan-structure";
 export { createTrainingPlansAPI } from "./training-plans";
 export { createUsersAPI } from "./users";

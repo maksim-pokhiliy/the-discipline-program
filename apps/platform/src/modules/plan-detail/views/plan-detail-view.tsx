@@ -4,10 +4,9 @@ import { useCallback, useEffect, useState } from "react";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton, InputBase, Stack, Tab, Tabs } from "@mui/material";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { QueryWrapper } from "@repo/ui";
+import { EditSessionAwareLink, QueryWrapper } from "@repo/ui";
 
 import { useTrainingPlan, useUpdateTrainingPlan } from "@app/lib/hooks";
 
@@ -81,7 +80,11 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
         <Stack spacing={4}>
           <Stack spacing={0.5}>
             <Stack direction="row" spacing={1} alignItems="center">
-              <IconButton component={Link} href="/coach/plans" aria-label="Back to plans">
+              <IconButton
+                component={EditSessionAwareLink}
+                href="/coach/plans"
+                aria-label="Back to plans"
+              >
                 <ArrowBackIcon />
               </IconButton>
 

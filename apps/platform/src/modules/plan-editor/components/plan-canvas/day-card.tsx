@@ -1,0 +1,56 @@
+"use client";
+
+import { Card, CardContent, Stack, Typography } from "@mui/material";
+
+import { type PlanStructureDay } from "@repo/contracts/lms/training-plan";
+
+import { type PlanSelection } from "./selection";
+import { SessionList } from "./session-list";
+
+const DAY_LABEL: Record<PlanStructureDay["dayOfWeek"], string> = {
+  MON: "Mon",
+  TUE: "Tue",
+  WED: "Wed",
+  THU: "Thu",
+  FRI: "Fri",
+  SAT: "Sat",
+  SUN: "Sun",
+};
+
+export type DayCardProps = {
+  day: PlanStructureDay;
+  selection: PlanSelection | null;
+  onSelect: (selection: PlanSelection) => void;
+};
+
+export const DayCard = ({ day, selection, onSelect }: DayCardProps) => {
+  return (
+    <Card variant="outlined" sx={{ minWidth: 260, flex: "1 1 260px" }}>
+      <CardContent>
+        <Stack spacing={1.5}>
+          <Stack direction="row" alignItems="baseline" spacing={1}>
+            <Typography variant="subtitle1">{DAY_LABEL[day.dayOfWeek]}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              {day.kind === "REST" ? "Rest" : "Workout"}
+            </Typography>
+          </Stack>
+
+          {day.sessions.length === 0 ? (
+            <Typography variant="caption" color="text.disabled">
+              No sessions
+            </Typography>
+          ) : (
+            day.sessions.map((session) => (
+              <SessionList
+                key={session.id}
+                session={session}
+                selection={selection}
+                onSelect={onSelect}
+              />
+            ))
+          )}
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+};

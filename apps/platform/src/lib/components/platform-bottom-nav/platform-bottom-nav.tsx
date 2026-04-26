@@ -8,10 +8,10 @@ import HomeRounded from "@mui/icons-material/HomeRounded";
 import LibraryBooksRounded from "@mui/icons-material/LibraryBooksRounded";
 import PersonRounded from "@mui/icons-material/PersonRounded";
 import { BottomNavigation, BottomNavigationAction } from "@mui/material";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { type PlatformIconName, type PlatformNavigationConfig } from "@repo/shared";
+import { EditSessionAwareLink } from "@repo/ui";
 
 const ICON_MAP: Record<PlatformIconName, ReactNode> = {
   home: <HomeRounded />,
@@ -50,7 +50,7 @@ export const PlatformBottomNav = ({ navigation }: PlatformBottomNavProps) => {
       {navigation.items.map((item, index) => (
         <BottomNavigationAction
           key={item.href}
-          component={Link}
+          component={EditSessionAwareLink}
           href={item.href}
           label={item.label}
           icon={ICON_MAP[item.icon]}
