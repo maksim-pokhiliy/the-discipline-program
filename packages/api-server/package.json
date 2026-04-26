@@ -18,10 +18,13 @@
     "lint": "eslint . --fix --max-warnings 0",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:reset": "prisma db push --force-reset",
+    "db:push:prisma": "prisma db push",
+    "db:push": "prisma db push && tsx scripts/apply-sql-checks.ts",
+    "db:reset:prisma": "prisma db push --force-reset",
+    "db:reset": "prisma db push --force-reset && tsx scripts/apply-sql-checks.ts",
     "db:seed": "prisma db seed",
-    "db:seed:pages": "tsx prisma/seed-pages.ts"
+    "db:seed:pages": "tsx prisma/seed-pages.ts",
+    "db:apply-checks": "tsx scripts/apply-sql-checks.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

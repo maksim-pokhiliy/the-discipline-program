@@ -89,6 +89,12 @@ export const config = [
     },
   },
   {
+    files: ["**/scripts/**/*.ts", "**/scripts/**/*.mts"],
+    rules: {
+      "no-console": "off",
+    },
+  },
+  {
     ignores: ["dist/**", "node_modules/**", ".next/**", ".turbo/**", "coverage/**"],
   },
 ];
