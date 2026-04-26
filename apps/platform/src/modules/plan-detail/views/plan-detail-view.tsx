@@ -4,28 +4,21 @@ import { useCallback, useEffect, useState } from "react";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton, InputBase, Stack, Tab, Tabs } from "@mui/material";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { LoadingState, QueryWrapper } from "@repo/ui";
+import { QueryWrapper } from "@repo/ui";
 
 import { useTrainingPlan, useUpdateTrainingPlan } from "@app/lib/hooks";
 
 import { PlanStatusSelect } from "../components";
 import { PlanAthletesSection } from "../sections";
 
-const PlanScheduleSection = dynamic(
-  () =>
-    import("../sections/plan-schedule-section").then((m) => ({ default: m.PlanScheduleSection })),
-  { ssr: false, loading: () => <LoadingState message="Loading schedule..." /> },
-);
-
 type PlanDetailViewProps = {
   planId: string;
 };
 
-type TabValue = "schedule" | "athletes";
+type TabValue = "athletes";
 
 export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
   const { data: plan, isLoading, error } = useTrainingPlan(planId);
@@ -45,18 +38,14 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
     setDescValue(planDescription);
   }, [planDataId, planName, planDescription]);
 
-  const rawTab = searchParams.get("tab");
-  const activeTab: TabValue = rawTab === "athletes" ? "athletes" : "schedule";
+  const activeTab: TabValue = "athletes";
 
   const handleTabChange = useCallback(
     (_: React.SyntheticEvent, value: TabValue) => {
       const params = new URLSearchParams(searchParams.toString());
 
       params.set("tab", value);
-
-      if (value !== "schedule") {
-        params.delete("week");
-      }
+      params.delete("week");
 
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     },
@@ -117,11 +106,9 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
           </Stack>
 
           <Tabs value={activeTab} onChange={handleTabChange}>
-            <Tab value="schedule" label="Schedule" />
             <Tab value="athletes" label="Athletes" />
           </Tabs>
 
-          {activeTab === "schedule" && <PlanScheduleSection planId={planId} />}
           {activeTab === "athletes" && <PlanAthletesSection planId={planId} />}
         </Stack>
       )}

@@ -1,6 +1,5 @@
 import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import {
-  type CalendarWorkout,
   type CoachPlansPageData,
   type CreateTrainingPlanData,
   type TrainingPlan,
@@ -14,14 +13,12 @@ import { resolveCoachId, verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import {
   mapToTrainingPlan,
-  mapToWorkout,
   PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
   TRAINING_PLAN_STATUS_MAP,
   TRAINING_PLAN_STATUS_TO_PRISMA_MAP,
 } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
 import {
-  DAYS_IN_WEEK,
   MS_PER_DAY,
   endOfWeekInTz,
   startOfTodayInTz,
@@ -92,28 +89,6 @@ const transitionPlanStatus = async (
 };
 
 export const lmsTrainingPlanApi = {
-  getCalendarWeek: async (userId: string, weekStart: Date): Promise<CalendarWorkout[]> => {
-    const coachId = await resolveCoachId(userId);
-    const weekEnd = new Date(weekStart.getTime() + DAYS_IN_WEEK * MS_PER_DAY);
-
-    const workouts = await prisma.workout.findMany({
-      where: {
-        scheduledDate: { gte: weekStart, lt: weekEnd },
-        plan: { coachId },
-      },
-      include: {
-        plan: { select: { id: true, name: true, status: true } },
-      },
-      orderBy: [{ scheduledDate: "asc" }, { createdAt: "asc" }],
-    });
-
-    return workouts.map((w) => ({
-      ...mapToWorkout(w),
-      planName: w.plan.name,
-      planStatus: TRAINING_PLAN_STATUS_MAP[w.plan.status],
-    }));
-  },
-
   getAll: async (userId: string): Promise<TrainingPlan[]> => {
     const coachId = await resolveCoachId(userId);
 

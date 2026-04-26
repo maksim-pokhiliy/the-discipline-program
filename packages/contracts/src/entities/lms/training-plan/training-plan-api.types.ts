@@ -2,18 +2,12 @@ import { type z } from "zod";
 
 import {
   type archiveTrainingPlanParamsSchema,
-  type calendarWorkoutSchema,
   type coachPlansPageDataSchema,
-  type copyWeekParamsSchema,
-  type copyWeekRequestSchema,
-  type copyWeekResponseSchema,
   type createTrainingPlanRequestSchema,
   type createTrainingPlanResponseSchema,
   type deleteTrainingPlanParamsSchema,
   type duplicateTrainingPlanParamsSchema,
   type duplicateTrainingPlanResponseSchema,
-  type getCalendarWeekParamsSchema,
-  type getCalendarWeekResponseSchema,
   type getTrainingPlanByIdParamsSchema,
   type getTrainingPlanResponseSchema,
   type getTrainingPlansResponseSchema,
@@ -37,9 +31,3 @@ export type DuplicateTrainingPlanParams = z.infer<typeof duplicateTrainingPlanPa
 export type DuplicateTrainingPlanResponse = z.infer<typeof duplicateTrainingPlanResponseSchema>;
 export type ArchiveTrainingPlanParams = z.infer<typeof archiveTrainingPlanParamsSchema>;
 export type RestoreTrainingPlanParams = z.infer<typeof restoreTrainingPlanParamsSchema>;
-export type CalendarWorkout = z.infer<typeof calendarWorkoutSchema>;
-export type GetCalendarWeekParams = z.infer<typeof getCalendarWeekParamsSchema>;
-export type GetCalendarWeekResponse = z.infer<typeof getCalendarWeekResponseSchema>;
-export type CopyWeekParams = z.infer<typeof copyWeekParamsSchema>;
-export type CopyWeekRequest = z.infer<typeof copyWeekRequestSchema>;
-export type CopyWeekResponse = z.infer<typeof copyWeekResponseSchema>;

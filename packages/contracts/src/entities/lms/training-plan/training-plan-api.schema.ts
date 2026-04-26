@@ -1,13 +1,11 @@
 import { z } from "zod";
 
 import { planIdParamSchema } from "../../../common";
-import { workoutSchema } from "../workout";
 
 import {
   createTrainingPlanSchema,
   trainingPlanListItemSchema,
   trainingPlanSchema,
-  trainingPlanStatusSchema,
   updateTrainingPlanSchema,
 } from "./training-plan.schema";
 
@@ -40,23 +38,3 @@ export const duplicateTrainingPlanResponseSchema = trainingPlanSchema;
 export const archiveTrainingPlanParamsSchema = planIdParamSchema;
 
 export const restoreTrainingPlanParamsSchema = planIdParamSchema;
-
-export const calendarWorkoutSchema = workoutSchema.extend({
-  planName: z.string(),
-  planStatus: trainingPlanStatusSchema,
-});
-
-export const getCalendarWeekParamsSchema = z.object({
-  weekStart: z.coerce.date(),
-});
-
-export const getCalendarWeekResponseSchema = z.array(calendarWorkoutSchema);
-
-export const copyWeekParamsSchema = planIdParamSchema;
-
-export const copyWeekRequestSchema = z.object({
-  sourceDate: z.coerce.date(),
-  targetDate: z.coerce.date(),
-});
-
-export const copyWeekResponseSchema = z.array(workoutSchema);

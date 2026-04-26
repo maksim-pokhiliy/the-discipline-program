@@ -15,7 +15,6 @@ describe("lmsTrainingPlanApi", () => {
   let workoutId: string;
 
   let coach2PlanId: string;
-  let coach2WorkoutId: string;
 
   beforeAll(async () => {
     coach = await createTestCoach();
@@ -69,7 +68,7 @@ describe("lmsTrainingPlanApi", () => {
 
     coach2PlanId = coach2Plan.id;
 
-    const coach2Workout = await cleanupRaw.workout.create({
+    await cleanupRaw.workout.create({
       data: {
         planId: coach2Plan.id,
         title: "Coach2 Workout",
@@ -77,8 +76,6 @@ describe("lmsTrainingPlanApi", () => {
         sortOrder: 0,
       },
     });
-
-    coach2WorkoutId = coach2Workout.id;
   });
 
   afterAll(async () => {
@@ -157,42 +154,6 @@ describe("lmsTrainingPlanApi", () => {
       });
 
       expect(enrollments).toHaveLength(0);
-    });
-  });
-
-  describe("getCalendarWeek", () => {
-    it("returns workouts within the given week range", async () => {
-      const now = new Date();
-      const day = now.getUTCDay();
-      const diffToMonday = day === 0 ? -6 : 1 - day;
-      const weekStart = new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diffToMonday),
-      );
-
-      const workouts = await lmsTrainingPlanApi.getCalendarWeek(coach.user.id, weekStart);
-
-      expect(workouts.length).toBeGreaterThanOrEqual(1);
-
-      const found = workouts.find((w) => w.id === workoutId);
-
-      expect(found).toBeDefined();
-      expect(found?.planName).toBe("Original Plan");
-      expect(found?.planStatus).toBe(TrainingPlanStatus.ACTIVE);
-    });
-
-    it("excludes workouts from other coaches", async () => {
-      const now = new Date();
-      const day = now.getUTCDay();
-      const diffToMonday = day === 0 ? -6 : 1 - day;
-      const weekStart = new Date(
-        Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + diffToMonday),
-      );
-
-      const workouts = await lmsTrainingPlanApi.getCalendarWeek(coach.user.id, weekStart);
-
-      const coach2WorkoutFound = workouts.find((w) => w.id === coach2WorkoutId);
-
-      expect(coach2WorkoutFound).toBeUndefined();
     });
   });
 });

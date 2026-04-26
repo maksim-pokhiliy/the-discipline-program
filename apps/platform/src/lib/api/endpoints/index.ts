@@ -5,4 +5,3 @@ export { createCoachInviteAPI } from "./coach-invite";
 export { createPlanEnrollmentsAPI } from "./plan-enrollments";
 export { createTrainingPlansAPI } from "./training-plans";
 export { createUsersAPI } from "./users";
-export { createWorkoutsAPI } from "./workouts";
