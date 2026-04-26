@@ -46,12 +46,14 @@ export const lmsBlockKindApi = {
       ...visibility,
       ...(query.scope ? { scope: LIBRARY_SCOPE_TO_PRISMA_MAP[query.scope] } : {}),
       ...(query.ownerId ? { ownerId: query.ownerId } : {}),
+      ...(query.search ? { name: { contains: query.search, mode: "insensitive" } } : {}),
       ...(query.includeDeleted ? {} : { deletedAt: null }),
     };
 
     const items = await prisma.blockKind.findMany({
       where,
       orderBy: { name: "asc" },
+      take: query.take,
     });
 
     return { items: items.map(mapToBlockKind), total: items.length };

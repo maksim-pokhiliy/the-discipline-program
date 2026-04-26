@@ -28,7 +28,9 @@ export const blockKindIdParamSchema = z.object({ blockKindId: z.string().cuid() 
 export const listBlockKindsQuerySchema = z.object({
   scope: libraryScopeSchema.optional(),
   ownerId: z.string().cuid().optional(),
+  search: z.string().min(1).max(100).optional(),
   includeDeleted: z.boolean().optional(),
+  take: z.coerce.number().int().min(1).max(500).optional(),
 });
 
 export const listBlockKindsResponseSchema = z.object({

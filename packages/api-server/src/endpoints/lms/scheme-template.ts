@@ -51,12 +51,14 @@ export const lmsSchemeTemplateApi = {
       ...(query.archetypeKind
         ? { archetypeKind: SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP[query.archetypeKind] }
         : {}),
+      ...(query.search ? { name: { contains: query.search, mode: "insensitive" } } : {}),
       ...(query.includeDeleted ? {} : { deletedAt: null }),
     };
 
     const items = await prisma.schemeTemplate.findMany({
       where,
       orderBy: { name: "asc" },
+      take: query.take,
     });
 
     return { items: items.map(mapToSchemeTemplate), total: items.length };

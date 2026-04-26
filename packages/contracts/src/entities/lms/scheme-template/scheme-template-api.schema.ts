@@ -33,7 +33,9 @@ export const listSchemeTemplatesQuerySchema = z.object({
   scope: libraryScopeSchema.optional(),
   ownerId: z.string().cuid().optional(),
   archetypeKind: schemeArchetypeKindSchema.optional(),
+  search: z.string().min(1).max(100).optional(),
   includeDeleted: z.boolean().optional(),
+  take: z.coerce.number().int().min(1).max(500).optional(),
 });
 
 export const listSchemeTemplatesResponseSchema = z.object({

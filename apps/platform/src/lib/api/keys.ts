@@ -20,4 +20,18 @@ export const platformKeys = {
   coachActionItems: {
     all: () => [...ROOT, "coach-action-items"] as const,
   },
+  library: {
+    exercises: {
+      ...createEntityKeys(ROOT, "library-exercises"),
+      bySearch: (query: string) => [...ROOT, "library-exercises", "search", query] as const,
+    },
+    blockKinds: {
+      ...createEntityKeys(ROOT, "library-block-kinds"),
+      bySearch: (query: string) => [...ROOT, "library-block-kinds", "search", query] as const,
+    },
+    schemeTemplates: {
+      ...createEntityKeys(ROOT, "library-scheme-templates"),
+      bySearch: (query: string) => [...ROOT, "library-scheme-templates", "search", query] as const,
+    },
+  },
 } as const;
