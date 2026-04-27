@@ -841,7 +841,7 @@ ExerciseEntry/SetGroup/SetLog — реляционная аналитическ�
 3. **Edit чужой COACH-записи в admin.** ADMIN/HEAD_COACH могут править. `updatedBy: userId, updatedAt` обязателен — для аудит-trail.
 4. **Уникальность name.** `@@unique([scope, ownerId, name])`. SYSTEM имеет ownerId=NULL → один canonical name. COACH с разными owner'ами могут иметь одно имя.
 5. **Promote-конфликт.** При promote из COACH в SYSTEM, если name уже существует в SYSTEM, admin должен либо переименовать coach-запись, либо merge (объединить ссылки) — отдельный resolve-flow в admin.
-6. **Suggest for promotion (M2 nice-to-have).** Тренер в платформе кнопкой «Suggest for promotion» создаёт `PromotionSuggestion`. HEAD_COACH/ADMIN видит очередь в admin → одобряет/отклоняет.
+6. **Promote flow.** HEAD_COACH/ADMIN видит чужие COACH-записи в admin app и нажимает promote напрямую. Без отдельной очереди suggestions — single-team setup, formal approval workflow не оправдан.
 
 ---
 
@@ -942,10 +942,7 @@ Threshold'ы — настраиваемые в admin (`SystemSettings.compliance
 
 ### 6.4 WeeklyVolume
 
-Двухслойная стратегия:
-
-- **On-write incremental:** при `WorkoutSession.complete` сервис `weekly-volume-aggregator` вычисляет delta и делает UPSERT в `WeeklyVolume`.
-- **Scheduled recompute (nightly):** cron-job пересчитывает последние 8 недель.
+**On-write incremental.** При `WorkoutSession.complete` сервис `weekly-volume-aggregator` вычисляет delta по всем `ExerciseLog → SetLog` и делает UPSERT в `WeeklyVolume`. Никакого scheduled recompute — нет production-traffic, нет пути дрифта; если когда-нибудь понадобится backfill, он триггерится вручную.
 
 `tonnageByPattern` Json:
 
@@ -1055,13 +1052,7 @@ Templates трёх уровней (M2): SchemeTemplate (segment-level), BlockTem
 
 ### 7.6 Per-athlete overrides — M2
 
-UI: header switcher "Editing for: [All athletes ▼]". Когда не All — все edits создают `PlanOverride`, не модифицируют base. Diff-подсветка зелёным.
-
-### 7.7 Free-text / PDF parser — M2 first-class
-
-Header кнопка `[+ Import program]` → upload PDF / paste text → parser возвращает `ParsedPlanDraft` → side-by-side review UI с confidence highlights → coach fixup → Apply создаёт DRAFT plan.
-
-Parser алгоритм — см. §10.
+UI: header switcher "Editing for: [All athletes ▼ | Athlete X]". Когда выбран конкретный atom — все edits создают `PlanOverride` row, не модифицируют base plan. Diff-подсветка зелёным для REPLACE/APPEND. Override = explicit branch на base plan, не overwrite базовых полей.
 
 ### 7.8 Rich-text — только в notes
 
@@ -1200,45 +1191,9 @@ Detailed athlete UX-spec — будет отдельным дизайн-доку
 
 ---
 
-## 9. Импорт PDF / free-text — M2
+## 9. Импорт PDF / free-text — REMOVED FROM SCOPE
 
-### 9.1 Pipeline
-
-```
-PDF/text input
-  → [1] Extract text (pdf-parse / pdfjs)
-  → [2] Tokenize lines, detect column boundaries
-  → [3] Detect Week boundaries
-  → [4] Detect Day columns + session markers
-  → [5] Detect Block boundaries
-  → [6] Detect Scheme inside block (regex bank)
-  → [7] Extract exercise lines
-  → [8] Match exercises to library (fuzzy)
-  → [9] Build ParsedPlanDraft с confidence
-  → [10] UI fixup (side-by-side)
-  → [11] Apply → DRAFT plan
-```
-
-### 9.2 Confidence
-
-Каждый element: `HIGH | MEDIUM | LOW`. UI side-by-side highlights LOW-confidence красным/жёлтым.
-
-### 9.3 Архитектура
-
-`packages/api-server/src/services/lms/program-parser/`:
-
-- `tokenizer.ts`, `week-detector.ts`, `day-detector.ts`, `session-detector.ts`, `block-detector.ts`, `scheme-detector.ts`, `exercise-extractor.ts`, `library-matcher.ts`, `confidence-scorer.ts`, `index.ts`.
-
-Endpoints:
-
-- `POST /api/platform/training-plans/import-parse` (file/text → ParsedPlanDraft)
-- `POST /api/platform/training-plans/import-apply` (draft → DRAFT plan)
-
-### 9.4 Цели
-
-- ≥80% accuracy structure on Discipline-style PDF.
-- ≥85% exercise match rate (после первого fixup).
-- Coach fixup ≤15 min на 4-week dump.
+Функция вычеркнута из roadmap. Тренер пишет планы через editor — это primary и единственный input flow. Если у coach есть legacy program в PDF, он переносит её через editor вручную (one-off onboarding cost). Никакого parser pipeline, detectors, confidence scoring, side-by-side review UI или import endpoints не реализуется. Если когда-нибудь появится 50+ coaches с legacy material — пересмотрим.
 
 ---
 
@@ -1249,7 +1204,7 @@ Endpoints:
 | Пакет                          | Действие                                                                                                                                                                                                                                                                                                                                                                      |
 | ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `packages/contracts/lms/`      | **переписать.** Новые папки: `_domain/` (shared zod primitives), `training-plan`, `week`, `day`, `session`, `block`, `block-segment`, `set-group`, `exercise-entry`, `exercise-library`, `block-kind`, `scheme-template`, `workout-session`, `block-session`, `exercise-log`, `set-log`, `personal-record`, `weekly-volume`, `benchmark`, `plan-enrollment`, `plan-override`. |
-| `packages/api-server/`         | **переписать lms-часть.** Schema, endpoints, mappers, seed (exercise-library + block-kinds + scheme-templates). New: `services/lms/` (pr-evaluator, weekly-volume-aggregator, plan-snapshot-creator, program-parser, library-search).                                                                                                                                         |
+| `packages/api-server/`         | **переписать lms-часть.** Schema, endpoints, mappers, seed (exercise-library + block-kinds + scheme-templates). New: `services/lms/` (pr-evaluator, weekly-volume-aggregator, plan-snapshot-creator, plan-override-resolver, library-search).                                                                                                                                 |
 | `packages/api-routes/`         | минимально (helpers). Возможно новые with-auth для роли HEAD_COACH.                                                                                                                                                                                                                                                                                                           |
 | `packages/api-client/`         | переписать lms (новые TS bindings).                                                                                                                                                                                                                                                                                                                                           |
 | `packages/query/`              | переписать lms (новые TanStack hooks).                                                                                                                                                                                                                                                                                                                                        |
@@ -1366,10 +1321,6 @@ GET    /api/platform/athlete/exercises/:id/history
 
 # Coach analytics
 GET    /api/platform/coach/athletes/:id/progress
-
-# Import parser (M2)
-POST   /api/platform/training-plans/import-parse
-POST   /api/platform/training-plans/import-apply
 
 # Benchmarks
 GET    /api/platform/athletes/:id/benchmarks
@@ -1548,10 +1499,10 @@ Service Worker + IndexedDB:
 
 Триггеры из 0017 нарушены:
 
-- `pr-evaluator` — вызывается из 2+ источников
-- `weekly-volume-aggregator` — endpoints + cron
+- `pr-evaluator` — вызывается из 2+ источников (write-path триггер + read-path для recompute)
+- `weekly-volume-aggregator` — вызывается на `WorkoutSession.complete`; ре-используется в test helpers
 - `plan-snapshot-creator` — transaction-spanning logic
-- `program-parser` — multi-pass
+- `plan-override-resolver` — composes overrides + base plan, вызывается из read endpoints
 
 Service layer для LMS — necessary. Создаём `packages/api-server/src/services/lms/`.
 
@@ -1584,7 +1535,6 @@ PWA на M0–M3. Native только если pull-trigger (background timer pr
 | ID  | Критерий                                         | Target                                                                   |
 | --- | ------------------------------------------------ | ------------------------------------------------------------------------ |
 | C1  | Тренер строит новую неделю с нуля                | ≤5 min                                                                   |
-| C2  | Тренер импортирует 4-week PDF (M2)               | ≤15 min total (включая fixup)                                            |
 | C3  | Изменение упражнения в библиотеке не ломает логи | 0 corrupted rows                                                         |
 | C4  | Drop block из library → видно в UI               | ≤50ms (optimistic)                                                       |
 | C5  | Plan structure (4w view) opens                   | TTI < 1500ms p95                                                         |
@@ -1629,16 +1579,6 @@ PWA на M0–M3. Native только если pull-trigger (background timer pr
 | L4  | Inline `/` picker для scheme/block                           | <100ms response   |
 | L5  | Inline `@` picker для exercise                               | <100ms response   |
 
-### 13.5 Import parser (M2)
-
-| ID  | Критерий                       | Target                          |
-| --- | ------------------------------ | ------------------------------- |
-| I1  | Discipline-style PDF parsing   | ≥80% structure / ≥85% exercises |
-| I2  | Coach fixup time on 4w dump    | ≤15 min                         |
-| I3  | Generic CrossFit-style parsing | ≥70% accuracy                   |
-
----
-
 ## 14. Roadmap
 
 > Задачами, не неделями. Зависимости важнее времени.
@@ -1667,7 +1607,6 @@ PWA на M0–M3. Native только если pull-trigger (background timer pr
 **Nice-to-have:**
 
 - Storybook stories skeleton for new components.
-- `services/lms/program-parser/` skeleton.
 
 **DoD:** new schema deploys via `db:push`. All endpoints type-safe (response schemas required). Tests for schema validation.
 
@@ -1701,28 +1640,34 @@ PWA на M0–M3. Native только если pull-trigger (background timer pr
 
 - Templates (block/session/week-level).
 - Saved searches in library.
-- Promote suggestion от тренера в платформе (creates PromotionSuggestion).
 
-### M2 — Analytics + Import + Mobile coach + Overrides
+### M2 — Analytics + Mobile coach + Overrides + Templates + Bulk ops
 
-**Цель:** dashboards, import parser GA, mobile coach editing, per-athlete overrides.
+**Цель:** real coach dashboard analytics, per-athlete plan overrides, плановые reusable templates, bulk-операции, mobile-responsive editor. M2 не вводит новой инфраструктуры (нет cron, нет очередей, нет parser).
 
-**MUST:**
+**Sub-phases (commits на feat/workout-redesign):**
 
-- Coach dashboard: cohort view (10 athletes overview, weekly volumes).
-- Per-athlete progress view (для тренера).
-- Import parser GA (≥80% accuracy on Discipline corpus).
-- Side-by-side fixup UI с confidence highlights.
-- Mobile coach editing (limited DnD on mobile).
-- PlanOverride: REPLACE / APPEND / SUSPEND / NOTE на DAY/SESSION/BLOCK/SEGMENT/ENTRY.
-- BlockTemplate / SessionTemplate / WeekTemplate.
-- PromotionSuggestion review queue в admin.
-- Bulk operations (copy week, shift calendar, bulk replace).
+- **M2.0 — Pre-work.** Carryover из M1 follow-ups: admin `update` strip `scope` from payload (privilege-escalation guard), HEAD_COACH single-occupancy partial-unique index + endpoint guard, admin URL form debounce/onBlur валидация, bulk-patch op-dispatcher unit tests (per op: move-block, add-segment, delete-entry, ...), `SaveIndicator` retry wired to `flushSession(sessionId)` + Storybook story.
+- **M2.1 — WeeklyVolume aggregator (on-write incremental).** `services/lms/weekly-volume-aggregator.ts` real implementation: `aggregateWeeklyVolume({db, userId, weekStartDate})` сканирует `WorkoutSession + BlockSession + ExerciseLog + SetLog` и UPSERT'ит в `WeeklyVolume`. `tonnageByPattern` через `ExerciseLibraryItem.primaryMovement`. Триггерится из write-path сервиса при `WorkoutSession.complete` (M3 athlete API подключит). Тестируется через test helpers + direct service call. Никакого cron / scheduled recompute.
+- **M2.2 — PR Evaluator extended PrKinds.** Текущий `pr-evaluator.ts` поддерживает только `MAX_LOAD_FOR_REPS`. Добавить 7 kinds: `ONE_REP_MAX`, `N_REP_MAX`, `MAX_REPS_UNBROKEN`, `MAX_REPS_TOTAL`, `BEST_TIME_FOR_X`, `MAX_DISTANCE_IN_T`, `MAX_CALORIES_IN_T`. Discriminator-based upsert. Unit-test per kind с fixture.
+- **M2.3 — Coaching dashboard analytics реализация.** Заменить zeroed values в `endpoints/coaching/coach-dashboard.ts:101-114`, всех функциях `dashboard-computations.ts` (`computeAdherenceWindow`, `computeProgressBuckets`, `computeAthletesSummary`, `computeTodayStatus`), `coach-action-item.ts:43` (`MISSED_WORKOUTS` branch), `coach-athletes/list.ts` (`processStatus`, `lastActivityDate`), `coach-athletes/detail.ts` (`recentWorkouts`, `nextWorkout`, `consistency`, `planDiscipline`) на реальные queries через `WorkoutSession + PlanEnrollment` join. Test helpers создают fixture `WorkoutSession`s.
+- **M2.4 — PlanOverride: schema + API + resolver.** Discriminated payload (4 shapes по `kind`): `REPLACE { snapshot }`, `APPEND { entries }`, `SUSPEND {}`, `NOTE { markdown }`. Endpoints: `POST /api/platform/enrollments/:id/overrides`, `DELETE /api/platform/overrides/:id`, list/get. `services/lms/plan-override-resolver.ts` — читает overrides + base plan структуру → возвращает effective plan для `(enrollmentId, weekIndex)`. Unit tests на каждый kind + resolver.
+- **M2.5 — PlanOverride: editor UI.** Header switcher "Editing for: [All ▼ | Athlete X]" в plan editor. Когда selected ≠ All — все edits создают `PlanOverride` row, не трогают base. Diff-подсветка зелёным для REPLACE/APPEND. Override CRUD UI (просмотр текущих overrides атлета, удалить override). Consume `useEditSession` (ADR 0035 invariant) — никаких новых blur-autosave.
+- **M2.6 — Templates: BlockTemplate / SessionTemplate / WeekTemplate.** Аддитивная schema migration (3 модели + 3 enum extensions если нужно). CRUD endpoints (admin SYSTEM scope; coach COACH scope, mirror `ExerciseLibraryItem` permissions). Library panel расширяется новыми табами. Drag template → instantiate в plan canvas. Cmd+Shift+S сохраняет selected block/session/week as template. Promote/demote support (admin only).
+- **M2.7 — Bulk operations.** Copy week (если M1 не покрыл — verify), repeat week pattern (copy weeks N-M as N+K-M+K), shift weeks (sequential reorder), bulk replace (preview-list + confirm UI), clone day across week (MON → TUE/WED/THU). Все через bulk-patch endpoint с per-op `expectedVersion`.
+- **M2.8 — Mobile coach editing.** Plan editor responsive layout: single-pane на narrow viewport (<768px), Library/Canvas/Inspector toggleable через bottom-tabs / drawer. `@dnd-kit` `TouchSensor` для long-press grab + tap-to-place (полный free-form drag только на desktop). Touch targets ≥44px (WCAG 2.5.5).
+- **M2.9 — Storybook stories + E2E sweep.** Pure-prop где возможно; data-coupled — TanStack hand-mock decorator (как в M1). E2E specs: coach dashboard analytics после populated WorkoutSession test data; per-athlete override flow (create → atom видит modified plan); bulk replace flow; mobile editor (<768px viewport, touch DnD); template apply (drag → instantiate).
 
-**Nice-to-have:**
+**Removed from M2 scope (HARD CUT — не отложено, не переоформлено):**
 
-- Saved searches.
-- RPE / mood tracking + correlations (надо athlete-side).
+- ~~Import parser GA~~ — coach пишет план в editor, PDF onboarding bridge не оправдан.
+- ~~Nightly recompute cron / Vercel Cron route~~ — нет production traffic, drift отсутствует, on-write incremental достаточно.
+- ~~PromotionSuggestion review queue~~ — single-team setup, HEAD_COACH ходит в admin app и promote'ит напрямую.
+
+**Nice-to-have (M2):**
+
+- Saved searches in library (filter presets).
+- RPE / mood tracking + correlations (нужен athlete-side, defer на M3).
 - Print/PDF export.
 - Public share-link.
 
@@ -1811,7 +1756,7 @@ ADR 0016 deferred structured modeling. Domain analysis показывает, ч�
 - pr-evaluator.ts
 - weekly-volume-aggregator.ts
 - plan-snapshot-creator.ts
-- program-parser/
+- plan-override-resolver.ts
 - library-search.ts
 
 Endpoints вызывают сервисы. Сервисы не имеют DI-фреймворка — простые функции с инжектируемым prisma client'ом.
@@ -1821,9 +1766,9 @@ Endpoints вызывают сервисы. Сервисы не имеют DI-ф�
 Триггеры из 0017 нарушены:
 
 - pr-evaluator — 2+ источников вызова.
-- weekly-volume — endpoints + cron.
+- weekly-volume — write-path триггер + test helper invocations.
 - plan-snapshot-creator — transaction-spanning.
-- program-parser — multi-pass, не CRUD.
+- plan-override-resolver — composes overrides + base plan, не CRUD.
 ```
 
 #### ADR 0029 — Drop @@unique([userId, workoutId])
@@ -2008,7 +1953,7 @@ TanStack Query mutations с `scope: { id: entityId }` для per-entity serializ
 3. Три библиотеки: Exercise, BlockKind, SchemeTemplate. Scopes SYSTEM/COACH. CRUD в admin полный + promote, в platform — только own.
 4. SchemeArchetype = 6 hardcoded execution primitives + zod-валидированные params на BlockSegment.
 5. 4-уровневое логирование, drop unique constraint, gradient compliance с weighted blocks.
-6. PersonalRecord + WeeklyVolume — denormalized, on-write incremental + nightly recompute.
+6. PersonalRecord + WeeklyVolume — denormalized, on-write incremental (без scheduled recompute).
 7. Editor: three-pane, Notion-style inline `/` (scheme/block) + `@` (exercise) + Cmd+K palette.
 8. Athlete UX defer на M3.
 9. 1 новый пакет (`@repo/workout-engine`); domain primitives в `contracts/lms/_domain/`.
@@ -2025,4 +1970,4 @@ TanStack Query mutations с `scope: { id: entityId }` для per-entity serializ
 ---
 
 **Файл:** `docs/design/workout-redesign.md`
-**Связанные:** ADR 0016, 0017 (supersedes); 0027–0035 (new); 0009 (soft-delete); 0021 (queue/cron port для cron jobs).
+**Связанные:** ADR 0016, 0017 (supersedes); 0027–0035 (new); 0009 (soft-delete); 0021 (queue port — interface preserved, no adapter в M2).
