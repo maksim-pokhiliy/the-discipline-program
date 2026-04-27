@@ -210,6 +210,16 @@ export const iamUserAdminApi = {
       updateData.tokenVersion = { increment: 1 };
     }
 
+    if (newRole === UserRole.HEAD_COACH) {
+      const existingHC = await prisma.user.findFirst({
+        where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
+      });
+
+      if (existingHC && existingHC.id !== id) {
+        throw new ConflictError("A HEAD_COACH already exists", { existingId: existingHC.id });
+      }
+    }
+
     try {
       return await prisma.$transaction(async (tx) => {
         if (data.coachIds !== undefined && data.coachIds.length > 0) {
@@ -249,6 +259,16 @@ export const iamUserAdminApi = {
 
     if (isDemotionFromAdmin) {
       await assertNotLastAdminDemotion();
+    }
+
+    if (newRole === UserRole.HEAD_COACH) {
+      const existingHC = await prisma.user.findFirst({
+        where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
+      });
+
+      if (existingHC && existingHC.id !== id) {
+        throw new ConflictError("A HEAD_COACH already exists", { existingId: existingHC.id });
+      }
     }
 
     try {

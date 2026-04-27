@@ -2,6 +2,7 @@ import { type Prisma } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
+import { type UpdateExerciseLibraryItemInput } from "@repo/contracts/lms/exercise-library-item";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { cleanup, cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
@@ -303,5 +304,49 @@ describe("lmsExerciseLibraryItemApi promote/demote (integration)", () => {
       statusCode: 400,
       details: { existingId: coachOwn.id, candidateName: sharedName },
     });
+  });
+});
+
+describe("lmsExerciseLibraryItemApi update scope guard (integration)", () => {
+  let coachA: Awaited<ReturnType<typeof createTestCoach>>;
+
+  const toCleanup: { table: string; id: string }[] = [];
+
+  beforeAll(async () => {
+    coachA = await createTestCoach();
+  });
+
+  afterAll(async () => {
+    await cleanup(...toCleanup);
+    await cleanupRaw.coachProfile.delete({ where: { id: coachA.profile.id } }).catch(() => {});
+    await cleanupRaw.user.delete({ where: { id: coachA.user.id } }).catch(() => {});
+  });
+
+  it("update rejects scope in payload with 403 and leaves DB row unchanged", async () => {
+    const item = await cleanupRaw.exerciseLibraryItem.create({
+      data: {
+        scope: "COACH",
+        ownerId: coachA.user.id,
+        name: `Ex ScopeGuard ${crypto.randomUUID().slice(0, 8)}`,
+        primaryMovement: "SQUAT",
+        modality: "BARBELL",
+        primaryBodyParts: ["QUADS"],
+        defaultMetrics: DEFAULT_METRICS,
+      },
+    });
+
+    toCleanup.push({ table: "exerciseLibraryItem", id: item.id });
+
+    const payloadWithScope = {
+      scope: "SYSTEM",
+    } as unknown as UpdateExerciseLibraryItemInput;
+
+    await expect(
+      lmsExerciseLibraryItemApi.update(coachA.user.id, item.id, payloadWithScope),
+    ).rejects.toMatchObject({ statusCode: 403 });
+
+    const unchanged = await cleanupRaw.exerciseLibraryItem.findUnique({ where: { id: item.id } });
+
+    expect(unchanged?.scope).toBe("COACH");
   });
 });

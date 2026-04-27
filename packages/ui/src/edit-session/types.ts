@@ -66,5 +66,6 @@ export type EditSessionContextValue = {
   unregister: (sessionId: string) => void;
   getDirtySessions: () => EditSessionRegistration[];
   flushAll: () => Promise<FlushAllResult>;
+  flushSession: (sessionId: string) => Promise<void>;
   requestRouteChangeFlush: () => Promise<RouteChangeFlushResult>;
 };

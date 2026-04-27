@@ -143,6 +143,10 @@ export const lmsExerciseLibraryItemApi = {
     exerciseLibraryItemId: string,
     data: UpdateExerciseLibraryItemInput,
   ) => {
+    if ((data as Record<string, unknown>)["scope"] !== undefined) {
+      throw new ForbiddenError("scope cannot be changed via update; use promote or demote");
+    }
+
     const role = await requireCoachLikeRole(userId);
 
     const existing = await findOrThrow(

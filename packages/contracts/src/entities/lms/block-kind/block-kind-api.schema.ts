@@ -21,7 +21,9 @@ export const createBlockKindInputSchema = z.object({
   analyticsCategory: z.string().max(BLOCK_KIND_CONSTANTS.MAX_ANALYTICS_CATEGORY_LENGTH).optional(),
 });
 
-export const updateBlockKindInputSchema = createBlockKindInputSchema.partial();
+export const updateBlockKindInputSchema = createBlockKindInputSchema
+  .omit({ scope: true })
+  .partial();
 
 export const blockKindIdParamSchema = z.object({ blockKindId: z.string().cuid() });
 

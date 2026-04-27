@@ -25,3 +25,10 @@ DO $$ BEGIN
       CHECK ("completionRatio" IS NULL OR ("completionRatio" >= 0 AND "completionRatio" <= 1));
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
+
+DO $$ BEGIN
+  CREATE UNIQUE INDEX IF NOT EXISTS idx_single_head_coach
+    ON "users" (role)
+    WHERE role = 'HEAD_COACH';
+EXCEPTION WHEN others THEN NULL;
+END $$;

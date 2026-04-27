@@ -24,7 +24,6 @@ const ExerciseDetailForm: React.FC<ExerciseDetailFormProps> = ({ exercise }) => 
   const methods = useForm<UpdateExerciseLibraryItemInput>({
     resolver: zodResolver(updateExerciseLibraryItemInputSchema),
     defaultValues: {
-      scope: exercise.scope,
       name: exercise.name,
       nameAliases: exercise.nameAliases,
       description: exercise.description ?? undefined,

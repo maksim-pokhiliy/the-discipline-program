@@ -95,6 +95,20 @@ export const EditSessionProvider = ({
     return dirty;
   }, []);
 
+  const flushSession = useCallback(async (sessionId: string): Promise<void> => {
+    const session = sessionsRef.current.get(sessionId);
+
+    if (!session) {
+      return;
+    }
+
+    if (session.status !== "error" && session.status !== "dirty") {
+      return;
+    }
+
+    await session.save();
+  }, []);
+
   const flushAll = useCallback(async (): Promise<FlushAllResult> => {
     const dirty = getDirtySessions();
     const flushed: string[] = [];
@@ -245,9 +259,10 @@ export const EditSessionProvider = ({
       unregister,
       getDirtySessions,
       flushAll,
+      flushSession,
       requestRouteChangeFlush,
     }),
-    [flushAll, getDirtySessions, register, requestRouteChangeFlush, unregister],
+    [flushAll, flushSession, getDirtySessions, register, requestRouteChangeFlush, unregister],
   );
 
   return (

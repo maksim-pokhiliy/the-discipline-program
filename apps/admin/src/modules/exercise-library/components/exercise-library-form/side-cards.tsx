@@ -93,36 +93,57 @@ const DefaultMetricsCard = ({ isLoading }: { isLoading: boolean }) => {
 };
 
 const MediaCard = ({ isLoading }: { isLoading: boolean }) => {
-  const {
-    register,
-    formState: { errors },
-  } = useFormContext<FormValues>();
+  const { control, trigger } = useFormContext<FormValues>();
 
   return (
     <FormCard title="Media">
       <Stack spacing={2}>
-        <TextField
-          label="Demo video URL"
-          placeholder="https://..."
-          variant="outlined"
-          fullWidth
-          size="small"
-          disabled={isLoading}
-          error={!!errors.demoVideoUrl}
-          helperText={errors.demoVideoUrl?.message}
-          {...register("demoVideoUrl")}
+        <Controller
+          name="demoVideoUrl"
+          control={control}
+          render={({ field, fieldState }) => (
+            <TextField
+              label="Demo video URL"
+              placeholder="https://..."
+              variant="outlined"
+              fullWidth
+              size="small"
+              disabled={isLoading}
+              error={!!fieldState.error}
+              helperText={fieldState.error?.message}
+              value={field.value ?? ""}
+              onChange={(e) => field.onChange(e.target.value || undefined)}
+              onBlur={() => {
+                field.onBlur();
+                void trigger("demoVideoUrl");
+              }}
+              inputRef={field.ref}
+            />
+          )}
         />
 
-        <TextField
-          label="Demo image URL"
-          placeholder="https://..."
-          variant="outlined"
-          fullWidth
-          size="small"
-          disabled={isLoading}
-          error={!!errors.demoImageUrl}
-          helperText={errors.demoImageUrl?.message}
-          {...register("demoImageUrl")}
+        <Controller
+          name="demoImageUrl"
+          control={control}
+          render={({ field, fieldState }) => (
+            <TextField
+              label="Demo image URL"
+              placeholder="https://..."
+              variant="outlined"
+              fullWidth
+              size="small"
+              disabled={isLoading}
+              error={!!fieldState.error}
+              helperText={fieldState.error?.message}
+              value={field.value ?? ""}
+              onChange={(e) => field.onChange(e.target.value || undefined)}
+              onBlur={() => {
+                field.onBlur();
+                void trigger("demoImageUrl");
+              }}
+              inputRef={field.ref}
+            />
+          )}
         />
       </Stack>
     </FormCard>

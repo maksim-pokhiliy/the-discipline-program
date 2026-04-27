@@ -7,7 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { type Block, updateBlockInputSchema } from "@repo/contracts/lms/block";
 import { type BlockKind } from "@repo/contracts/lms/block-kind";
-import { BlockBuilder, SaveIndicator, useEditSession } from "@repo/ui";
+import { BlockBuilder, SaveIndicator, useEditSession, useEditSessionOrchestrator } from "@repo/ui";
 
 import { platformKeys } from "@app/lib/api/keys";
 
@@ -43,6 +43,7 @@ const fromDraft = (block: Block, draft: BlockDraft): Block => ({
 
 export const BlockInspector = ({ planId, block, blockKinds }: BlockInspectorProps) => {
   const queryClient = useQueryClient();
+  const orchestrator = useEditSessionOrchestrator();
   const initial = useMemo(() => toDraft(block), [block]);
   const mutationKey = useMemo(() => [SESSION_NS, planId, block.id] as const, [block.id, planId]);
   const sessionId = useMemo(() => `${SESSION_NS}-${block.id}`, [block.id]);
@@ -117,7 +118,7 @@ export const BlockInspector = ({ planId, block, blockKinds }: BlockInspectorProp
           conflict={session.conflict}
           errorMessage={session.error?.message}
           onRetry={() => {
-            void session.save();
+            void orchestrator?.flushSession(sessionId);
           }}
           onReload={handleReload}
         />

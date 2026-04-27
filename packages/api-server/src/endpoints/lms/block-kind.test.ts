@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
+import { type UpdateBlockKindInput } from "@repo/contracts/lms/block-kind";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { cleanup, cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
@@ -187,5 +188,46 @@ describe("lmsBlockKindApi promote/demote (integration)", () => {
       statusCode: 400,
       details: { existingId: coachOwn.id, candidateName: sharedName },
     });
+  });
+});
+
+describe("lmsBlockKindApi update scope guard (integration)", () => {
+  let coachA: Awaited<ReturnType<typeof createTestCoach>>;
+
+  const toCleanup: { table: string; id: string }[] = [];
+
+  beforeAll(async () => {
+    coachA = await createTestCoach();
+  });
+
+  afterAll(async () => {
+    await cleanup(...toCleanup);
+    await cleanupRaw.coachProfile.delete({ where: { id: coachA.profile.id } }).catch(() => {});
+    await cleanupRaw.user.delete({ where: { id: coachA.user.id } }).catch(() => {});
+  });
+
+  it("update rejects scope in payload with 403 and leaves DB row unchanged", async () => {
+    const item = await cleanupRaw.blockKind.create({
+      data: {
+        scope: "COACH",
+        ownerId: coachA.user.id,
+        name: `Kind ScopeGuard ${crypto.randomUUID().slice(0, 8)}`,
+        defaultWeight: 1,
+      },
+    });
+
+    toCleanup.push({ table: "blockKind", id: item.id });
+
+    const payloadWithScope = {
+      scope: "SYSTEM",
+    } as unknown as UpdateBlockKindInput;
+
+    await expect(
+      lmsBlockKindApi.update(coachA.user.id, item.id, payloadWithScope),
+    ).rejects.toMatchObject({ statusCode: 403 });
+
+    const unchanged = await cleanupRaw.blockKind.findUnique({ where: { id: item.id } });
+
+    expect(unchanged?.scope).toBe("COACH");
   });
 });

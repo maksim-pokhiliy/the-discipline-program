@@ -85,7 +85,7 @@ export const useEditSession = <TDraft>(
   const performSave = useCallback(async (): Promise<void> => {
     const current = stateRef.current;
 
-    if (current.status !== "dirty" || !current.isValid) {
+    if ((current.status !== "dirty" && current.status !== "error") || !current.isValid) {
       return;
     }
 

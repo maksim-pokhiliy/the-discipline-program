@@ -11,7 +11,12 @@ import {
   updateExerciseEntryInputSchema,
 } from "@repo/contracts/lms/exercise-entry";
 import { type ExerciseLibraryItem } from "@repo/contracts/lms/exercise-library-item";
-import { ExerciseEntryRow, SaveIndicator, useEditSession } from "@repo/ui";
+import {
+  ExerciseEntryRow,
+  SaveIndicator,
+  useEditSession,
+  useEditSessionOrchestrator,
+} from "@repo/ui";
 
 import { platformKeys } from "@app/lib/api/keys";
 import { useExercisesPageData } from "@app/lib/hooks";
@@ -59,6 +64,7 @@ const fromDraft = (entry: ExerciseEntry, draft: EntryDraft): ExerciseEntry => ({
 
 export const EntryInspector = ({ planId, entry }: EntryInspectorProps) => {
   const queryClient = useQueryClient();
+  const orchestrator = useEditSessionOrchestrator();
   const initial = useMemo(() => toDraft(entry), [entry]);
   const mutationKey = useMemo(() => [SESSION_NS, planId, entry.id] as const, [entry.id, planId]);
   const sessionId = useMemo(() => `${SESSION_NS}-${entry.id}`, [entry.id]);
@@ -136,7 +142,7 @@ export const EntryInspector = ({ planId, entry }: EntryInspectorProps) => {
           conflict={session.conflict}
           errorMessage={session.error?.message}
           onRetry={() => {
-            void session.save();
+            void orchestrator?.flushSession(sessionId);
           }}
           onReload={handleReload}
         />

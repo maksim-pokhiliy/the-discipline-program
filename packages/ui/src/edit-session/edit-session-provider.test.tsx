@@ -118,6 +118,79 @@ describe("EditSessionProvider — sessions and Cmd+S", () => {
     expect(fnB).not.toHaveBeenCalled();
   });
 
+  it("flushSession resolves without error for an unregistered session id", async () => {
+    const queryClient = new QueryClient();
+    let captured: EditSessionContextValue | null = null;
+    const Wrapper = buildOrchestratorWrapper(queryClient);
+
+    render(
+      <Wrapper>
+        <OrchestratorProbe
+          onReady={(orchestrator) => {
+            captured = orchestrator;
+          }}
+        />
+      </Wrapper>,
+    );
+
+    expect(captured).not.toBeNull();
+    const orchestrator = captured as unknown as EditSessionContextValue;
+
+    await act(async () => {
+      await orchestrator.flushSession("does-not-exist");
+    });
+  });
+
+  it("flushSession triggers save when session is in error state", async () => {
+    const queryClient = new QueryClient();
+    let captured: EditSessionContextValue | null = null;
+    const Wrapper = buildOrchestratorWrapper(queryClient);
+    const mutationFn = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("network failure"))
+      .mockResolvedValue({ value: "alpha-2", version: 2 });
+
+    render(
+      <Wrapper>
+        <TestCard
+          sessionId="error-card"
+          initial={{ value: "alpha" }}
+          mutationFn={mutationFn}
+          dispatchValue="alpha-2"
+          shouldDispatch
+        />
+        <OrchestratorProbe
+          onReady={(orchestrator) => {
+            captured = orchestrator;
+          }}
+        />
+      </Wrapper>,
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(captured).not.toBeNull();
+    const orchestrator = captured as unknown as EditSessionContextValue;
+
+    await act(async () => {
+      await orchestrator.flushAll();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId("status-error-card")).toHaveTextContent("error");
+    });
+
+    await act(async () => {
+      await orchestrator.flushSession("error-card");
+    });
+
+    await waitFor(() => {
+      expect(mutationFn).toHaveBeenCalledTimes(2);
+    });
+  });
+
   it("requestRouteChangeFlush resolves 'proceed' when no draft is dirty", async () => {
     const queryClient = new QueryClient();
     let captured: EditSessionContextValue | null = null;

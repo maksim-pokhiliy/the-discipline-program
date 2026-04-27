@@ -89,7 +89,7 @@ export const editSessionReducer = <TDraft>(
         conflict: null,
       };
     case "save-start":
-      if (state.status !== "dirty") {
+      if (state.status !== "dirty" && state.status !== "error") {
         return state;
       }
 

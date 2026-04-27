@@ -9,7 +9,12 @@ import {
   type BlockSegment,
   updateBlockSegmentInputSchema,
 } from "@repo/contracts/lms/block-segment";
-import { BlockSegmentEditor, SaveIndicator, useEditSession } from "@repo/ui";
+import {
+  BlockSegmentEditor,
+  SaveIndicator,
+  useEditSession,
+  useEditSessionOrchestrator,
+} from "@repo/ui";
 
 import { platformKeys } from "@app/lib/api/keys";
 
@@ -44,6 +49,7 @@ const fromDraft = (segment: BlockSegment, draft: SegmentDraft): BlockSegment => 
 
 export const SegmentInspector = ({ planId, segment }: SegmentInspectorProps) => {
   const queryClient = useQueryClient();
+  const orchestrator = useEditSessionOrchestrator();
   const initial = useMemo(() => toDraft(segment), [segment]);
   const mutationKey = useMemo(
     () => [SESSION_NS, planId, segment.id] as const,
@@ -135,7 +141,7 @@ export const SegmentInspector = ({ planId, segment }: SegmentInspectorProps) => 
           conflict={session.conflict}
           errorMessage={session.error?.message}
           onRetry={() => {
-            void session.save();
+            void orchestrator?.flushSession(sessionId);
           }}
           onReload={handleReload}
         />

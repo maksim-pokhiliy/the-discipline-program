@@ -113,6 +113,10 @@ export const lmsBlockKindApi = {
   },
 
   update: async (userId: string, blockKindId: string, data: UpdateBlockKindInput) => {
+    if ((data as Record<string, unknown>)["scope"] !== undefined) {
+      throw new ForbiddenError("scope cannot be changed via update; use promote or demote");
+    }
+
     const role = await requireCoachLikeRole(userId);
 
     const existing = await findOrThrow(
@@ -136,7 +140,6 @@ export const lmsBlockKindApi = {
       const item = await prisma.blockKind.update({
         where: { id: blockKindId },
         data: {
-          ...(data.scope ? { scope: LIBRARY_SCOPE_TO_PRISMA_MAP[data.scope] } : {}),
           ...(data.name ? { name: data.name } : {}),
           ...(data.description !== undefined ? { description: data.description } : {}),
           ...(data.iconKey !== undefined ? { iconKey: data.iconKey } : {}),

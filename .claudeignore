@@ -52,3 +52,9 @@ packages/*/.turbo/
 packages/*/coverage/
 docs/
 storybook-static/
+
+# /feature artifacts
+.feature-dev/
+.audit/
+.cache/
+*.tsbuildinfo

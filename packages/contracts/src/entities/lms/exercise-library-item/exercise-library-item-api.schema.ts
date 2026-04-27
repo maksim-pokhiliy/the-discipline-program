@@ -43,6 +43,7 @@ export const createExerciseLibraryItemInputSchema = z.object({
 });
 
 export const updateExerciseLibraryItemInputSchema = createExerciseLibraryItemInputSchema
+  .omit({ scope: true })
   .partial()
   .extend({
     isDeprecated: z.boolean().optional(),

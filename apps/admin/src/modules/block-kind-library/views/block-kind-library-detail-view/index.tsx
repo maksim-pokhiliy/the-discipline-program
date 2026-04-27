@@ -24,7 +24,6 @@ const BlockKindDetailForm: React.FC<BlockKindDetailFormProps> = ({ blockKind }) 
   const methods = useForm<UpdateBlockKindInput>({
     resolver: zodResolver(updateBlockKindInputSchema),
     defaultValues: {
-      scope: blockKind.scope,
       name: blockKind.name,
       description: blockKind.description ?? undefined,
       iconKey: blockKind.iconKey ?? undefined,
