@@ -83,7 +83,7 @@ export default defineConfig({
       name: "admin-head-coach",
       testDir: "./admin",
       testMatch: /library-create-and-use\.spec\.ts$/,
-      dependencies: ["admin-head-coach-setup"],
+      dependencies: ["admin-head-coach-setup", "platform-setup"],
       use: {
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:3002",

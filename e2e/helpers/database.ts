@@ -82,6 +82,7 @@ export type SeedCoachPlanInput = {
   creatorId: string;
   name?: string;
   description?: string;
+  withEntryFor?: { exerciseId: string };
 };
 
 export type SeedCoachPlanResult = {
@@ -160,6 +161,40 @@ export const seedCoachPlan = async (input: SeedCoachPlanInput): Promise<SeedCoac
     data: { segmentId: segment.id, order: 0, label: "Working sets" },
   });
 
+  let entryId: string | null = null;
+
+  if (input.withEntryFor) {
+    const seedExercise = await prisma.exerciseLibraryItem.findUniqueOrThrow({
+      where: { id: input.withEntryFor.exerciseId },
+    });
+
+    const entry = await prisma.exerciseEntry.create({
+      data: {
+        setGroupId: setGroup.id,
+        order: 0,
+        exerciseId: seedExercise.id,
+        exerciseSnapshot: {
+          id: seedExercise.id,
+          name: seedExercise.name,
+          primaryMovement: seedExercise.primaryMovement,
+          modality: seedExercise.modality,
+          primaryBodyParts: seedExercise.primaryBodyParts,
+          defaultMetrics: seedExercise.defaultMetrics,
+          demoVideoUrl: seedExercise.demoVideoUrl,
+          demoImageUrl: seedExercise.demoImageUrl,
+        } as Prisma.InputJsonValue,
+        prescription: {
+          reps: { kind: "FIXED", value: 5 },
+          sideMode: "BILATERAL",
+          modifiers: [],
+        } as Prisma.InputJsonValue,
+        alternatives: [],
+      },
+    });
+
+    entryId = entry.id;
+  }
+
   return {
     plan,
     weekId: week.id,
@@ -168,7 +203,7 @@ export const seedCoachPlan = async (input: SeedCoachPlanInput): Promise<SeedCoac
     blockId: block.id,
     segmentId: segment.id,
     setGroupId: setGroup.id,
-    entryId: null,
+    entryId,
   };
 };
 

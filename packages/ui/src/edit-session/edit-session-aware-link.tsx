@@ -1,5 +1,7 @@
 "use client";
 
+import { type UrlObject } from "url";
+
 import { type MouseEvent, type Ref, forwardRef } from "react";
 
 import Link, { type LinkProps } from "next/link";
@@ -19,6 +21,49 @@ export type EditSessionAwareLinkProps = LinkProps &
 
 const isModifierClick = (event: MouseEvent<HTMLAnchorElement>): boolean =>
   event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
+
+const stringifyQuery = (query: UrlObject["query"]): string => {
+  if (!query) {
+    return "";
+  }
+
+  if (typeof query === "string") {
+    return query;
+  }
+
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(query)) {
+    if (value === undefined || value === null) {
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        params.append(key, String(item));
+      }
+
+      continue;
+    }
+
+    params.append(key, String(value));
+  }
+
+  return params.toString();
+};
+
+const formatHref = (href: LinkProps["href"]): string => {
+  if (typeof href === "string") {
+    return href;
+  }
+
+  const pathname = href.pathname ?? "";
+  const search =
+    href.search ?? (stringifyQuery(href.query) ? `?${stringifyQuery(href.query)}` : "");
+  const hash = href.hash ?? "";
+
+  return `${pathname}${search}${hash}`;
+};
 
 export const EditSessionAwareLink = forwardRef<HTMLAnchorElement, EditSessionAwareLinkProps>(
   function EditSessionAwareLink({ onClick, href, ...rest }, ref: Ref<HTMLAnchorElement>) {
@@ -40,14 +85,12 @@ export const EditSessionAwareLink = forwardRef<HTMLAnchorElement, EditSessionAwa
         return;
       }
 
-      if (typeof href !== "string") {
-        return;
-      }
+      const navHref = formatHref(href);
 
       event.preventDefault();
       void orchestrator.requestRouteChangeFlush().then((result) => {
         if (result === "proceed") {
-          router.push(href);
+          router.push(navHref);
         }
       });
     };

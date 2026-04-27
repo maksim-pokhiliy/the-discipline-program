@@ -93,7 +93,8 @@
       "Bash(DATABASE_URL='postgresql://neondb_owner:REDACTED_NEON_PASSWORD@ep-autumn-brook-a2010v21-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require' SKIP_ENV_VALIDATION=1 npx prisma db push --force-reset --skip-generate --accept-data-loss)",
       "Bash(taskkill //F //IM node.exe)",
       "Bash(DATABASE_URL='postgresql://neondb_owner:REDACTED_NEON_PASSWORD@ep-autumn-brook-a2010v21-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require' SKIP_ENV_VALIDATION=1 NEXTAUTH_URL=http://localhost:3001 NEXT_PUBLIC_APP_URL=http://localhost:3001 NEXTAUTH_SECRET=REDACTED_NEXTAUTH_SECRET= NEXT_PUBLIC_MARKETING_URL=http://localhost:3000 pnpm --filter platform dev)",
-      "Bash(DATABASE_URL='postgresql://neondb_owner:REDACTED_NEON_PASSWORD@ep-autumn-brook-a2010v21-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require' SKIP_ENV_VALIDATION=1 NEXTAUTH_URL=http://localhost:3002 NEXT_PUBLIC_APP_URL=http://localhost:3002 NEXTAUTH_SECRET=REDACTED_NEXTAUTH_SECRET= NEXT_PUBLIC_MARKETING_URL=http://localhost:3000 pnpm --filter admin dev)"
+      "Bash(DATABASE_URL='postgresql://neondb_owner:REDACTED_NEON_PASSWORD@ep-autumn-brook-a2010v21-pooler.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require' SKIP_ENV_VALIDATION=1 NEXTAUTH_URL=http://localhost:3002 NEXT_PUBLIC_APP_URL=http://localhost:3002 NEXTAUTH_SECRET=REDACTED_NEXTAUTH_SECRET= NEXT_PUBLIC_MARKETING_URL=http://localhost:3000 pnpm --filter admin dev)",
+      "Bash(cross-env CI=1 npx playwright test --config e2e/playwright.config.ts --project=admin-head-coach --project=admin-head-coach-setup --project=platform-setup)"
     ]
   }
 }

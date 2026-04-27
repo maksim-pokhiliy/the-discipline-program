@@ -123,6 +123,48 @@ test.describe("Edit session — coach inspector (production UI)", () => {
     expect(requests).toHaveLength(0);
   });
 
+  test("single-card route-change confirm in real UI", async ({ page, context }) => {
+    test.setTimeout(120_000);
+    const seed = await seedSegmentForCoach("route-change");
+    const { requests } = collectPatchRequests(context, seed.planId);
+
+    await openSegmentInspector(page, seed.planId, seed.segmentId);
+
+    const labelField = page.getByLabel("Label");
+
+    await labelField.fill("Edited before navigation");
+    await expect(page.getByText(/Unsaved changes/i)).toBeVisible({ timeout: 5_000 });
+
+    const planUrl = `/coach/plans/${seed.planId}`;
+
+    await page.getByRole("link", { name: "Library" }).click();
+
+    const modal = page.getByRole("dialog", { name: /Unsaved changes/i });
+
+    await expect(modal).toBeVisible({ timeout: 10_000 });
+    await expect(modal.getByText(/You have 1 unsaved draft/i)).toBeVisible();
+
+    await modal.getByRole("button", { name: /Cancel/i }).click();
+    await expect(modal).toBeHidden({ timeout: 5_000 });
+    expect(page.url()).toContain(planUrl);
+    expect(requests).toHaveLength(0);
+
+    const patchPromise = page.waitForResponse(
+      (res) =>
+        res.url().includes(`/api/platform/training-plans/${seed.planId}/patch`) &&
+        res.request().method() === "POST",
+      { timeout: 15_000 },
+    );
+
+    await page.getByRole("link", { name: "Library" }).click();
+    await expect(modal).toBeVisible({ timeout: 10_000 });
+    await modal.getByRole("button", { name: /Save all/i }).click();
+
+    await patchPromise;
+    await expect(modal).toBeHidden({ timeout: 10_000 });
+    await page.waitForURL("**/coach/library", { timeout: 15_000 });
+  });
+
   test("concurrent-tab edit raises 409 conflict in second tab", async ({ browser }) => {
     test.setTimeout(180_000);
     const seed = await seedSegmentForCoach("concurrent");
