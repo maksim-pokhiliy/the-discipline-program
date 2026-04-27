@@ -1,5 +1,5 @@
 import type { CoachActionItem as PrismaCoachActionItemRecord } from "@prisma/client";
-import { type JsonObject } from "@prisma/client/runtime/library";
+import type { JsonObject } from "@prisma/client/runtime/library";
 
 import { HEALTH_STATUS_LABELS, HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import {
@@ -9,6 +9,7 @@ import {
   ActionItemType,
   type CoachActionItem,
   type HealthReportMetadata,
+  type MissedWorkoutsMetadata,
   type NewNoStartMetadata,
   type ReconcileResponse,
 } from "@repo/contracts/coaching/coach-action-item";
@@ -28,7 +29,7 @@ import {
   mapToCoachActionItem,
 } from "../../mappers/coaching";
 import { findOrThrow, handlePrismaError } from "../../utils";
-import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
+import { daysBetweenInTz, MS_PER_DAY, startOfTodayInTz } from "../../utils/date-helpers";
 import { asJsonRecord } from "../../utils/json-record";
 
 import {
@@ -44,9 +45,10 @@ type ConditionBase = {
 
 type Condition =
   | (ConditionBase & { type: ActionItemType.NEW_NO_START; metadata: NewNoStartMetadata })
-  | (ConditionBase & { type: ActionItemType.HEALTH_REPORT; metadata: HealthReportMetadata });
+  | (ConditionBase & { type: ActionItemType.HEALTH_REPORT; metadata: HealthReportMetadata })
+  | (ConditionBase & { type: ActionItemType.MISSED_WORKOUTS; metadata: MissedWorkoutsMetadata });
 
-const computeConditions = (assignments: AssignedAthleteWithData[], tz: string): Condition[] => {
+const computeBaseConditions = (assignments: AssignedAthleteWithData[], tz: string): Condition[] => {
   const conditions: Condition[] = [];
   const today = startOfTodayInTz(tz);
 
@@ -102,6 +104,49 @@ const computeConditions = (assignments: AssignedAthleteWithData[], tz: string): 
   return conditions;
 };
 
+const computeMissedWorkoutsConditions = async (
+  assignments: AssignedAthleteWithData[],
+): Promise<Condition[]> => {
+  const conditions: Condition[] = [];
+  const sevenDaysAgo = new Date(Date.now() - 7 * MS_PER_DAY);
+
+  await Promise.all(
+    assignments.map(async (a) => {
+      const athlete = a.athlete;
+
+      const missedCount = await prisma.workoutSession.count({
+        where: {
+          userId: athlete.id,
+          completionRatio: { lt: 0.3 },
+          startedAt: { gte: sevenDaysAgo },
+        },
+      });
+
+      if (missedCount === 0) {
+        return;
+      }
+
+      const latestSession = await prisma.workoutSession.findFirst({
+        where: { userId: athlete.id },
+        orderBy: { startedAt: "desc" },
+        select: { startedAt: true },
+      });
+
+      const lastActivityDate = latestSession?.startedAt.toISOString() ?? new Date(0).toISOString();
+
+      conditions.push({
+        athleteId: athlete.id,
+        type: ActionItemType.MISSED_WORKOUTS,
+        severity: ActionItemSeverity.WARNING,
+        message: `${missedCount} missed workout${missedCount === 1 ? "" : "s"} in the last 7 days`,
+        metadata: { lastActivityDate },
+      });
+    }),
+  );
+
+  return conditions;
+};
+
 const conditionMatchesResolved = (
   condition: Condition,
   resolvedMetadata: JsonObject | null,
@@ -115,6 +160,8 @@ const conditionMatchesResolved = (
       return condition.metadata.enrollmentId === resolvedMetadata.enrollmentId;
     case ActionItemType.HEALTH_REPORT:
       return condition.metadata.healthStatus === resolvedMetadata.healthStatus;
+    case ActionItemType.MISSED_WORKOUTS:
+      return false;
     default:
       return false;
   }
@@ -153,7 +200,9 @@ export const coachingCoachActionItemApi = {
           }),
         ]);
 
-        const conditions = computeConditions(assignments, tz);
+        const baseConditions = computeBaseConditions(assignments, tz);
+        const missedConditions = await computeMissedWorkoutsConditions(assignments);
+        const conditions = [...baseConditions, ...missedConditions];
 
         const openByKey = new Map<string, PrismaCoachActionItemRecord>();
         const duplicates: PrismaCoachActionItemRecord[] = [];

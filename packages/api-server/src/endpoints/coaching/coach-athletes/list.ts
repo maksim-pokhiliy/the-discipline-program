@@ -7,9 +7,10 @@ import {
 import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 
 import { resolveCoachId } from "../../../authz/guards";
-import { prisma } from "../../../db/client";
+import { prisma, prismaAsCore } from "../../../db/client";
 import { ACTION_ITEM_STATUS_TO_PRISMA_MAP, HEALTH_STATUS_MAP } from "../../../mappers/coaching";
 import { buildAssignedAthleteInclude } from "../assigned-athlete-query";
+import { computeAthletesSummary, computeProgressBuckets } from "../dashboard-computations";
 
 export const getAthletes = async (userId: string): Promise<CoachAthletesData> => {
   const coachId = await resolveCoachId(userId);
@@ -25,6 +26,19 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
       where: { coachId, status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN] },
       _count: { id: true },
     }),
+  ]);
+
+  const [athletesSummary, progressBuckets] = await Promise.all([
+    computeAthletesSummary({ db: prismaAsCore, assignments }),
+    computeProgressBuckets({ db: prismaAsCore, assignments }),
+  ]);
+
+  const lastActivityMap = new Map(athletesSummary.map((s) => [s.userId, s.lastActivityDate]));
+
+  const processStatusMap = new Map<string, ProcessStatus>([
+    ...progressBuckets.onTrack.map((a) => [a.userId, ProcessStatus.ON_TRACK] as const),
+    ...progressBuckets.steady.map((a) => [a.userId, ProcessStatus.STEADY] as const),
+    ...progressBuckets.fallingBehind.map((a) => [a.userId, ProcessStatus.FALLING_BEHIND] as const),
   ]);
 
   const actionItemsMap = new Map(actionItemCounts.map((item) => [item.athleteId, item._count.id]));
@@ -69,6 +83,9 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
       restrictedCount++;
     }
 
+    const lastActivityDate = lastActivityMap.get(athlete.id) ?? null;
+    const processStatus = processStatusMap.get(athlete.id) ?? ProcessStatus.FALLING_BEHIND;
+
     athletes.push({
       userId: athlete.id,
       name: athlete.name,
@@ -76,8 +93,8 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
       image: athlete.image,
       healthStatus,
       activePlans,
-      processStatus: ProcessStatus.STEADY,
-      lastActivityDate: null,
+      processStatus,
+      lastActivityDate,
       daysSinceLastActivity: null,
       openActionItemsCount,
       needsAttention,

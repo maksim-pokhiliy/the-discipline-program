@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 
+import { prismaAsCore } from "../../db/client";
+
 import { computeProcessStatus, computeProgressBuckets } from "./dashboard-computations";
 
 describe("computeProcessStatus", () => {
@@ -27,8 +29,8 @@ describe("computeProcessStatus", () => {
 });
 
 describe("computeProgressBuckets", () => {
-  it("returns empty buckets when there are no enrollments", () => {
-    const result = computeProgressBuckets([]);
+  it("returns empty buckets when there are no enrollments", async () => {
+    const result = await computeProgressBuckets({ db: prismaAsCore, assignments: [] });
 
     expect(result.avgEngagementRate).toBe(0);
     expect(result.onTrack).toHaveLength(0);

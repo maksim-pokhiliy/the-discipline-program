@@ -14,6 +14,7 @@ import {
   createTestUser,
   type TestScenario,
 } from "../../../test/helpers";
+import { createCoachWithAthleteSessions } from "../dashboard-computations.test-helpers";
 
 import { coachingCoachAthletesApi } from "./index";
 
@@ -179,7 +180,7 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
 
       expect(entry).toBeDefined();
       expect(entry?.activePlans).toEqual([]);
-      expect(entry?.processStatus).toBe(ProcessStatus.STEADY);
+      expect(entry?.processStatus).toBe(ProcessStatus.FALLING_BEHIND);
       expect(entry?.lastActivityDate).toBeNull();
       expect(entry?.openActionItemsCount).toBe(0);
       expect(entry?.enrolledSince.getTime()).toBe(assignment.createdAt.getTime());
@@ -248,6 +249,25 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
         { table: "trainingPlan", id: draftPlan.id },
         { table: "user", id: draftAthlete.id },
       );
+    }
+  });
+
+  it("returns real processStatus and lastActivityDate from session data", async () => {
+    const { coachId, athlete, toCleanup } = await createCoachWithAthleteSessions({
+      sessionsCount: 5,
+      completionRatios: [1, 1, 1, 1, 1],
+    });
+
+    try {
+      const result = await coachingCoachAthletesApi.getAthletes(coachId);
+
+      const entry = result.athletes.find((a) => a.userId === athlete.athleteId);
+
+      expect(entry).toBeDefined();
+      expect(entry?.processStatus).toBe(ProcessStatus.ON_TRACK);
+      expect(entry?.lastActivityDate).toBeInstanceOf(Date);
+    } finally {
+      await cleanup(...toCleanup);
     }
   });
 });

@@ -10,7 +10,7 @@ import {
 import { UserRole } from "@repo/contracts/iam/auth";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
-import { prisma } from "../../db/client";
+import { prisma, prismaAsCore } from "../../db/client";
 import {
   ACTION_ITEM_SEVERITY_MAP,
   ACTION_ITEM_STATUS_TO_PRISMA_MAP,
@@ -19,11 +19,16 @@ import {
 import { ROLE_MAP } from "../../mappers/iam";
 import { TRAINING_PLAN_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
 import { findOrThrow } from "../../utils";
-import { endOfWeekInTz, startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
+import { startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
 
 import { buildAssignedAthleteInclude } from "./assigned-athlete-query";
 import { coachingCoachActionItemApi } from "./coach-action-item";
-import { computeAthletesSummary, computeProgressBuckets } from "./dashboard-computations";
+import {
+  computeAthletesSummary,
+  computeProgressBuckets,
+  computeTodayStatus,
+  computeWeekStatus,
+} from "./dashboard-computations";
 
 export const coachingCoachDashboardApi = {
   getDashboard: async (userId: string): Promise<CoachDashboardData> => {
@@ -34,11 +39,8 @@ export const coachingCoachDashboardApi = {
       "User",
     );
 
-    const tz = user.timezone;
-    const today = startOfTodayInTz(tz);
-    const weekStart = startOfWeekInTz(today, tz);
-
-    void endOfWeekInTz(today, tz);
+    const tz = user.timezone ?? "UTC";
+    const weekStart = startOfWeekInTz(startOfTodayInTz(tz), tz);
 
     const role = ROLE_MAP[user.role];
     const isAdminLike = role === UserRole.ADMIN || role === UserRole.HEAD_COACH;
@@ -72,8 +74,12 @@ export const coachingCoachDashboardApi = {
       }),
     ]);
 
-    const athletesSummary = computeAthletesSummary(assignments);
-    const progressBuckets = computeProgressBuckets(assignments);
+    const [athletesSummary, progressBuckets, todayStatus, weekStatus] = await Promise.all([
+      computeAthletesSummary({ db: prismaAsCore, assignments }),
+      computeProgressBuckets({ db: prismaAsCore, assignments }),
+      computeTodayStatus({ db: prismaAsCore, userId, timezone: tz }),
+      computeWeekStatus({ db: prismaAsCore, userId, timezone: tz }),
+    ]);
 
     const recentAthletes = new Set<string>();
 
@@ -104,10 +110,10 @@ export const coachingCoachDashboardApi = {
       overview: {
         totalActiveAthletes: assignments.length,
         activePlansCount,
-        workoutsPlannedToday: 0,
-        workoutsCompletedToday: 0,
-        workoutsPlannedThisWeek: 0,
-        workoutsCompletedThisWeek: 0,
+        workoutsPlannedToday: todayStatus.workoutsPlannedToday,
+        workoutsCompletedToday: todayStatus.workoutsCompletedToday,
+        workoutsPlannedThisWeek: weekStatus.workoutsPlannedThisWeek,
+        workoutsCompletedThisWeek: weekStatus.workoutsCompletedThisWeek,
         openActionItemsCount: openActionItems.length,
         newAthletesCount: recentAthletes.size,
       },

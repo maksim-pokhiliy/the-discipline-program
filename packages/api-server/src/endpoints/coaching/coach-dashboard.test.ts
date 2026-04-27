@@ -4,7 +4,12 @@ import { ActionItemSeverity, ActionItemType } from "@repo/contracts/coaching/coa
 import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
-import { cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
+import {
+  cleanupRaw,
+  createTestCoach,
+  createTestUser,
+  createTestWorkoutSession,
+} from "../../test/helpers";
 
 import { coachingCoachDashboardApi } from "./coach-dashboard";
 
@@ -16,6 +21,7 @@ describe("coachingCoachDashboardApi", () => {
 
   let activePlanId: string;
   let draftPlanId: string;
+  let sessionId: string;
 
   const enrollmentIds: string[] = [];
 
@@ -75,9 +81,22 @@ describe("coachingCoachDashboardApi", () => {
         { coachId: coach.profile.id, athleteId: athlete2.id },
       ],
     });
+
+    await cleanupRaw.user.update({
+      where: { id: coach.user.id },
+      data: { timezone: "UTC" },
+    });
+
+    const session = await createTestWorkoutSession({
+      userId: coach.user.id,
+      overrides: { startedAt: new Date(), completedAt: new Date(), completionRatio: 1.0 },
+    });
+
+    sessionId = session.id;
   });
 
   afterAll(async () => {
+    await cleanupRaw.workoutSession.delete({ where: { id: sessionId } }).catch(() => {});
     await cleanupRaw.coachActionItem.deleteMany({
       where: { coachId: coach.profile.id },
     });
@@ -110,13 +129,13 @@ describe("coachingCoachDashboardApi", () => {
       expect(result.overview.activePlansCount).toBe(1);
     });
 
-    it("workout counters return zero (workout logging removed in M0)", async () => {
+    it("workout counters reflect real session data", async () => {
       const result = await coachingCoachDashboardApi.getDashboard(coach.user.id);
 
-      expect(result.overview.workoutsPlannedToday).toBe(0);
-      expect(result.overview.workoutsPlannedThisWeek).toBe(0);
-      expect(result.overview.workoutsCompletedToday).toBe(0);
-      expect(result.overview.workoutsCompletedThisWeek).toBe(0);
+      expect(result.overview.workoutsPlannedToday).toBeGreaterThan(0);
+      expect(result.overview.workoutsCompletedToday).toBeGreaterThan(0);
+      expect(result.overview.workoutsPlannedThisWeek).toBeGreaterThan(0);
+      expect(result.overview.workoutsCompletedThisWeek).toBeGreaterThan(0);
     });
 
     it("returns sorted action items by type+severity priority", async () => {
