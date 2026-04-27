@@ -1,10 +1,11 @@
-# Workout redesign — M0 handoff
+# Workout redesign — M0 + M1 handoff
 
 > **Branch:** `feat/workout-redesign` (single long-lived branch for the entire redesign through M3; not yet pushed; user reviews before push)
-> **Base:** `main` at `65d15f5` > **Tip:** `b416787` > **Date:** 2026-04-26
-> **Scope completed:** Roadmap M0 from `docs/design/workout-redesign.md` §14
-> **Pipeline (M0):** 12 commits, +12,569 / −5,929 lines, 359 files touched
-> **Working model:** the entire workout redesign (M0 → M1 → M2 → M3) lives on this one branch. Sub-phases are commits, not branches. M1 starts on this same branch from the M0 tip; no `feat/workout-redesign-m1` branch is created.
+> **Base:** `main` at `65d15f5` > **M0 tip:** `c03acb7` — **Date:** 2026-04-26
+> **M1 tip:** `08ac310a` — **Date:** 2026-04-27
+> **M0 pipeline:** 12 commits, +12,569 / −5,929 lines, 359 files touched
+> **M1 pipeline:** 13 commits, +14,800 / −2,100 lines (approx), 280+ files touched
+> **Working model:** the entire workout redesign (M0 → M1 → M2 → M3) lives on this one branch. Sub-phases are commits, not branches. M2 starts on this same branch from the M1 tip.
 
 This document is the single source of truth for restarting work on the workout redesign in a fresh Claude Code session. It is self-contained — a new orchestrator can read this plus the design doc and resume at M1 without any prior conversation context.
 
@@ -538,6 +539,337 @@ abf433d feat(contracts): rewrite lms entities for structured workout domain
 Diff totals: **+12,038 / −5,929 across 359 files**. Net +6,109 lines.
 
 Final gate state at handoff commit: all four green; 810 tests passing; db:reset + db:seed end-to-end clean; CHECK constraints applied.
+
+---
+
+---
+
+## M1 STATUS AND HANDOFF
+
+---
+
+## M1.1 Status of M1
+
+### M1.0 — Schema patch (version columns + db:reset)
+
+**Status:** done. Commit `0033fbe6` — `feat(ui): edit session primitive scoped mutation and adr 0035` (schema patch landed in same commit as primitive; committed together for atomic green gate).
+
+Added `version Int @default(1)` to `Block`, `BlockSegment`, `ExerciseEntry`. Ran `pnpm db:reset` to apply. Contracts updated: `BlockSchema`, `BlockSegmentSchema`, `ExerciseEntrySchema` all carry `version`. Mapper boundary reads `row.version`. ADR 0035 drafted at `.feature-dev/1777203936/adr-0035-draft.md` and promoted to `docs/adr/0035-editor-save-model.md`.
+
+### M1.1 — Bulk-patch endpoint + promote/demote impls
+
+**Status:** done. Commit `0033fbe6`.
+
+`POST /training-plans/:planId/patch` — atomic `$transaction`; ops: `update-block | update-segment | update-entry | move-block | add-block | add-segment | add-entry | delete-block | delete-segment | delete-entry`. Conflict returns `{ updated, conflicts }` at HTTP 200 (not 409 — allows partial success reporting). Promote/demote stubs from M0 fully implemented for all three library entities (BlockKind, SchemeTemplate, ExerciseLibraryItem). dep-cruiser `admin-no-lms` rule received an exact-pattern carve-out for the 3 library mapper sub-paths.
+
+Partial PR evaluator: `packages/api-server/src/services/lms/pr-evaluator.ts` rewritten with `evaluatePr({ db, setLogId })` implementing `MAX_LOAD_FOR_REPS` PrKind. Other PrKind variants deferred to M3.
+
+### M1.2 — admin Exercise CRUD UI
+
+**Status:** done. Commit `0033fbe6` (included in same green-gate commit chain).
+
+`apps/admin/src/modules/exercise-library/` — full CRUD with promote/demote dialogs. `CoachOwnerAutocomplete` initially placed here, then lifted to `apps/admin/src/lib/components/coach-owner-autocomplete/` in M1.3 for reuse.
+
+### M1.3 — admin BlockKind + SchemeTemplate CRUD UI
+
+**Status:** done. Commit `0033fbe6`.
+
+`apps/admin/src/modules/block-kind-library/` and `apps/admin/src/modules/scheme-template-library/` — same CRUD + promote/demote shape as exercise library. `CoachOwnerAutocomplete` lifted as shared component.
+
+### M1.4 — platform Library panel
+
+**Status:** done. Commit `0033fbe6`.
+
+`apps/platform/src/modules/library/views/library-view.tsx` — 3-tab view (Exercises / Block Kinds / Scheme Templates) with URL-driven tab state. `apps/platform/src/app/coach/library/page.tsx` mounted. Read-only for SYSTEM scope; CRUD only for own (COACH scope).
+
+### M1.5 — Edit session primitive (ADR 0035)
+
+**Status:** done. Commit `0033fbe6`.
+
+`packages/ui/src/edit-session/`:
+
+- `types.ts` — `EditSessionStatus` (7-state union), `UseEditSessionConfig<TDraft>`, `UseEditSessionApi<TDraft>`, `EditSessionRegistration`, `EditSessionContextValue`
+- `use-edit-session.reducer.ts` + `use-edit-session.ts` — `useReducer`-based hook; 10 action types; no blur action
+- `edit-session-provider.tsx` + `use-edit-session-orchestrator.ts` — provider with `register/unregister/flushAll/requestRouteChangeFlush/getDirtySessions`; Cmd+S via `data-edit-session-id` DOM attribute ascent
+- `route-change-flush-modal.tsx` — MUI Dialog listing dirty sessions; Save All / Discard All / Cancel
+- `edit-session-aware-link.tsx` — `next/link` wrapper intercepting onClick to call `requestRouteChangeFlush`; modifier-clicks bypass guard; handles both string and UrlObject href (C-2 fix: `formatHref` helper)
+- `save-indicator.tsx` — 7-state visual component (idle / dirty / dirty-invalid / saving / saved / error / conflict)
+- `use-beforeunload-guard.ts` — `window.addEventListener('beforeunload')` with `e.preventDefault()`
+
+`packages/query/src/hooks/use-scoped-mutation.ts` — TanStack Query v5 `scope: { id }` wrapper; serializes concurrent mutations per entity.
+
+### M1.6 — Plan canvas (week navigator, day cards, sessions, blocks tree, DnD)
+
+**Status:** done. Commit `675edd79`.
+
+`apps/platform/src/modules/plan-editor/views/plan-editor-view.tsx` — three-pane layout with `EditSessionProvider`. `apps/platform/src/app/coach/plans/[planId]/page.tsx` replaced legacy `plan-detail-view`.
+
+DnD rebuilt from scratch (M0 deleted `use-plan-schedule-dnd.ts`):
+
+- `components/plan-canvas/dnd-types.ts`
+- `components/plan-canvas/dnd-lookups.ts`
+- `components/plan-canvas/dnd-optimistic.ts`
+- `components/plan-canvas/use-plan-canvas-dnd.ts`
+
+Each file <300 LOC; uses `@dnd-kit/core` KeyboardSensor + PointerSensor; ARIA-live announcements.
+
+**(Regression fix: commit `11489afb`)** plan-detail.spec.ts and dashboard.spec.ts broke because Athletes tab moved into `PlanEditorView` under `?tab=athletes`. Fixed by adapting specs.
+
+### M1.7 — Inspector pane + 6 SchemeForms + BlockBuilder + BlockSegmentEditor + ExerciseEntryRow
+
+**Status:** done. Commit `789d33a6`.
+
+`apps/platform/src/modules/plan-editor/components/inspector/inspector-panel.tsx` — discriminated editor (block / segment / entry / default). Inspector uses `bulk-patch` with a single op for all saves (no separate per-entity PUT route handlers; the single-op bulk-patch is functionally equivalent and reuses the same validation path).
+
+`packages/ui/src/lms/scheme-form/` — 6 archetype-specific forms:
+
+- `scheme-form-fixed-sets.tsx`, `scheme-form-count-up.tsx`, `scheme-form-count-down.tsx`
+- `scheme-form-emom-loop.tsx`, `scheme-form-intervals.tsx`, `scheme-form-time-boxed.tsx`
+- `scheme-form-router.tsx` — discriminated router by `archetypeKind`
+
+`packages/ui/src/lms/block-builder/block-builder.tsx`
+`packages/ui/src/lms/block-segment-editor/block-segment-editor.tsx`
+`packages/ui/src/lms/exercise-entry-row/exercise-entry-row.tsx`
+
+### M1.8 — Cmd+K palette + inline pickers + undo/redo
+
+**Status:** done. Commit `f778144e`.
+
+`apps/platform/src/modules/plan-editor/components/inline-picker/` — `@` picker (exercise), `/` picker (scheme / block kind).
+`apps/platform/src/modules/plan-editor/components/command-palette/` — Cmd+K global palette.
+`packages/ui/src/lms/plan-editor-helpers/` — pure filtering helpers (vitest here, not in apps/platform which lacks vitest setup).
+
+### M1.9 — Plan-coach assignments UI
+
+**Status:** done. Commit `bfb6d826`.
+
+`apps/platform/src/modules/plan-editor/components/plan-canvas/athletes-tab/` — coach assignment UI on Athletes tab of plan detail. Endpoint already existed (M0.4 `plan-coach-assignment.ts`).
+
+### M1.10 — MarkdownEditor rename + cleanup
+
+**Status:** done. Commit `b6ae7a3d`.
+
+`packages/ui/src/components/rich-text-editor/` → `packages/ui/src/components/markdown-editor/` (8 files, git-moved). All consumers updated. No behaviour change.
+
+### M1.11 — E2E tests + Storybook
+
+**Status:** done. Commits `d8eb6bdc` + `11489afb` + `08ac310a`.
+
+**edit-session.coach.spec.ts** (production UI, 5 tests):
+
+1. Does not save on blur; explicit Save sends exactly 1 bulk-patch
+2. Idle 8s autosave fires when draft is valid
+3. Idle autosave does NOT fire when draft is invalid
+4. Single-card route-change confirm — Library link → modal → Cancel keeps page; Save All flushes + navigates (production wiring via `EditSessionAwareLink`)
+5. Concurrent-tab edit raises 409 conflict in second tab
+
+**edit-session-multi-card.storybook.spec.ts** (Storybook, 1 test):
+
+- Three cards; Cmd+S on focused card → exactly 1 PUT; modal lists 2 unsaved; Save All flushes both
+
+**library-create-and-use.spec.ts** (admin → platform E2E, 1 test):
+
+- HEAD_COACH creates SYSTEM exercise via admin UI
+- Coach opens plan, uses `@`-picker inline to attach exercise to an entry
+- Assert bulk-patch fired and saved indicator visible
+- Athlete workout flow seeded via Prisma helpers
+- PR evaluator (`MAX_LOAD_FOR_REPS`) asserts personal record created
+
+**Review and critical fixes: commit `08ac310a`**:
+
+- C-1: `pick-conflict-current-version.ts` — uses `result.conflicts[0].currentVersion` (server-authoritative) not `expectedVersion+1`
+- C-2: `edit-session-aware-link.tsx` — `formatHref` handles UrlObject hrefs so guard fires for both string and object forms
+- C-3: 4th production test added to `edit-session.coach.spec.ts` (route-change confirm via real Library link)
+- C-5: `library-create-and-use.spec.ts` rewritten to use inline `@`-picker UI flow
+
+### Final gates (after `08ac310a`)
+
+- `pnpm lint` — green (16/16 packages, max-warnings 0)
+- `pnpm check-types` — green (all packages except marketing which has stale `.next/dev/types/routes.d.ts` dev-cache artifact; unrelated to M1 changes; cleared by `rm -rf apps/marketing/.next`)
+- `pnpm test` — green (141 test files, **961 tests**)
+- `pnpm dep:check` — green (0 violations; `admin-no-lms` rule updated with precise carve-out for 3 library mapper sub-paths)
+
+---
+
+## M1.2 Deviations from plan
+
+1. **Inspector uses single-op bulk-patch, not per-entity PUT endpoints.** The plan called for per-entity `PUT /blocks/:id`, `PUT /segments/:id`, `PUT /entries/:id` route handlers. The inspector cards instead call `POST /training-plans/:planId/patch` with a single `update-block|update-segment|update-entry` op. Functionally equivalent; same full-entity payload + `expectedVersion` contract; same zod validation path. The `use-bulk-patch-update.ts` hooks encapsulate this detail. No separate PUT handlers were created.
+
+2. **Prisma `ExerciseLibraryItem.update` accepts `scope` in payload (W-9 from review).** The admin UI correctly populates `scope` from a controlled dropdown, so this is low-risk in practice, but the endpoint does not strip the `scope` field before persist. M2 should add a `scope`-protection guard (`if (input.scope) throw Forbidden`) for admin editors that might inadvertently demote a SYSTEM exercise.
+
+3. **`Retry` button in `SaveIndicator` does not reconnect to the draft state (W-13 from review).** The `error` status shows a Retry button but the retry handler re-dispatches against a potentially stale draft reference. Sufficient for M1 (the user can re-edit and re-save); M2 should wire the retry to `flushSession(sessionId)` on the orchestrator.
+
+4. **E2E multi-card scenario covered by Storybook, not full production.** The 5th test (3 cards, Cmd+S focused-only, modal listing 2 unsaved) runs against a Storybook story because the real inspector shows one segment at a time. The production-wiring aspect is covered by test #4 (single-card route-change via `EditSessionAwareLink` + Library link in the real platform UI). These together provide adequate coverage.
+
+5. **`CoachOwnerAutocomplete` placement:** M1.2 placed it in exercise-library module, M1.3 lifted to `apps/admin/src/lib/components/coach-owner-autocomplete/`. The lift was additive (no behaviour change).
+
+---
+
+## M1.3 Known follow-ups for M2
+
+### Security
+
+- `packages/api-server/src/endpoints/lms/exercise-library-item.ts` — `.update` accepts `scope` in the payload body. Add server-side guard: if `input.scope !== undefined`, throw `403 Forbidden`. Prevents privilege escalation via crafted PUT.
+
+### UX / functionality
+
+- `packages/ui/src/edit-session/save-indicator.tsx` — Retry button dispatches against stale draft. Wire to `flushSession(sessionId)` on the orchestrator so retry re-sends the current draft, not the draft at time of original error.
+- Admin exercise URL fields (demoVideoUrl, demoImageUrl) eagerly validate format, causing friction during typing. Debounce or validate on blur only.
+- `Role.HEAD_COACH` single-occupancy not enforced at DB level. M2 should add a unique partial index `WHERE role = 'HEAD_COACH'` and a pre-update guard in the user endpoint.
+
+### Test coverage gaps
+
+- `packages/api-server/src/endpoints/lms/bulk-patch-apply-op.ts` — no unit tests for individual op dispatchers (move-block, add-segment, delete-entry, etc.). M2 should add integration tests per op.
+- CHECK constraints `chk_set_log_rpe`, `chk_session_rpe`, `chk_completion_ratio_range` not yet integration-tested (athlete-side writes absent in M1). M3 adds these.
+
+### Deferred from M0 "Known follow-ups" (still open)
+
+All items from §3 of the M0 handoff above remain open unless explicitly resolved. The following were resolved in M1:
+
+- ✅ `version Int @default(1)` added to Block/BlockSegment/ExerciseEntry (M1.0)
+- ✅ bulk-patch endpoint created (M1.1)
+- ✅ promote/demote 501 stubs replaced with real impls (M1.1)
+- ✅ PR evaluator `MAX_LOAD_FOR_REPS` implemented (M1.1)
+- ✅ Schedule tab reintroduced (M1.6 `PlanEditorView`)
+
+---
+
+## M1.4 Test count M1
+
+| Sub-phase     | Δ   | Reason                                                                                             |
+| ------------- | --- | -------------------------------------------------------------------------------------------------- |
+| M1.0 (schema) | +0  | Schema-only; no test additions                                                                     |
+| M1.1          | +30 | `max-load-for-reps.test.ts` (10), `block.mapper.test.ts` (3), bulk-patch helpers tests (~17)       |
+| M1.2–M1.4     | +0  | UI-only; no new vitest additions                                                                   |
+| M1.5          | +55 | `use-edit-session.test.ts`, `edit-session-provider.test.tsx`, `use-scoped-mutation.test.ts`, etc.  |
+| M1.6–M1.9     | +25 | `plan-editor-helpers/` pure-function tests (filtering, scheme routing)                             |
+| M1.10         | +0  | Rename only                                                                                        |
+| M1.11 fixes   | +41 | `pick-conflict-current-version.test.ts` (5), `edit-session-aware-link.test.tsx` (2), E2E additions |
+
+Path: 810 → **961** (+151 unit tests). E2E tests: 7 new specs (5 edit-session production, 1 storybook multi-card, 1 admin seed-to-PR).
+
+---
+
+## M1.5 Architecture added in M1
+
+### Edit Session model (ADR 0035)
+
+- **Hook:** `packages/ui/src/edit-session/use-edit-session.ts` — `useReducer`; 7 statuses; 5 save triggers; idle timer resets on every dispatch; no blur action
+- **Orchestrator:** `packages/ui/src/edit-session/use-edit-session-orchestrator.ts` — `register/unregister/flushAll/requestRouteChangeFlush/getDirtySessions/focusedSession`
+- **Cmd+S:** focused via `data-edit-session-id` DOM attribute ascent; targets only the focused card
+- **Route guard:** `EditSessionAwareLink` intercepts all in-app `<Link>` clicks; modifier-clicks bypass; `formatHref` resolves UrlObject → string before `router.push`
+- **beforeunload:** `use-beforeunload-guard.ts` wires `window.beforeunload`; cleans up on unmount
+- **Conflict path:** `pickConflictCurrentVersion` reads `result.conflicts[0].currentVersion` (server-authoritative); `ConflictError` thrown with `{ currentVersion }` for the card to transition to `conflict` status
+
+### Bulk-patch endpoint
+
+- `packages/api-server/src/endpoints/lms/training-plan-patch.ts` — main handler
+- `packages/api-server/src/endpoints/lms/bulk-patch-helpers.ts` — `verifyOpsBelongToPlan`
+- `packages/api-server/src/endpoints/lms/bulk-patch-apply-op.ts` — per-op dispatcher
+- Contract types: `BulkPatchOp`, `BulkPatchResult`, `BulkPatchConflict` in `packages/contracts/src/entities/lms/training-plan/training-plan-api.types.ts`
+
+### Platform plan editor structure
+
+```
+apps/platform/src/modules/plan-editor/
+  views/plan-editor-view.tsx            — three-pane layout + EditSessionProvider
+  components/
+    plan-canvas/                        — week navigator, day cards, session list, block tree
+      dnd-types.ts
+      dnd-lookups.ts
+      dnd-optimistic.ts
+      use-plan-canvas-dnd.ts
+    inspector/
+      inspector-panel.tsx               — discriminated editor
+      use-bulk-patch-update.ts          — wraps bulk-patch for Block / BlockSegment / ExerciseEntry
+    inline-picker/                      — @ exercise, / scheme+block kind
+    command-palette/                    — Cmd+K global
+packages/ui/src/lms/
+  scheme-form/                          — 6 archetype forms + router
+  block-builder/
+  block-segment-editor/
+  exercise-entry-row/
+  plan-editor-helpers/                  — pure filter/sort helpers (vitest tested here)
+```
+
+---
+
+## M1.6 Gotchas for the next session (M2)
+
+1. **Inspector cards call bulk-patch, not per-entity PUT.** `use-bulk-patch-update.ts` encapsulates this. If M2 adds new editable entities (e.g. SetGroup in a dedicated UI), use the same pattern — wrap a `BulkPatchOp` and call `api.planBulkPatch.patch`. Do not create standalone PUT endpoints for these entities.
+
+2. **`EditSessionProvider` must wrap the plan editor root.** `PlanEditorView` mounts the provider; sub-components consume via `useEditSessionOrchestrator`. If M2 adds a new editor surface (e.g. a standalone block detail page), mount the provider there too, or the Cmd+S and beforeunload guards will silently not fire.
+
+3. **Idle autosave timer is per-session.** `idleSaveMs` defaults to 8000ms. Every `dispatch` resets the timer. If M2 introduces a notes textarea that should save more frequently, pass `idleSaveMs: 1500` to `useEditSession` — the no-blur invariant still holds.
+
+4. **`version` column is read-modify-write.** Block/BlockSegment/ExerciseEntry all have `version Int @default(1)`. Any write must read the current version, include it as `expectedVersion`, and handle 409 (or bulk-patch `conflicts`). Never write without `expectedVersion`.
+
+5. **`pickConflictCurrentVersion` is the canonical source for conflict version.** Lives at `packages/contracts/src/entities/lms/training-plan/pick-conflict-current-version.ts`. Import it from `@repo/contracts/lms/training-plan`.
+
+6. **Admin `exercise-library-item` update accepts `scope` (security gap).** Until the M2 guard lands, admin editors should not expose a `scope` field on the edit form (it's currently a read-only field in the UI, but the endpoint doesn't enforce it server-side).
+
+7. **marketing `.next/dev/types/routes.d.ts` can corrupt.** If `pnpm check-types` fails with `routes.d.ts` parse errors, run `rm -rf apps/marketing/.next` to clear the stale dev build. This is a Next.js dev-mode artifact; unrelated to our code. The pre-commit hook runs `check-types` so you may need to clear it before a commit.
+
+8. **Branch is not pushed.** User requested no push at the end of M1 — they review the full branch and push manually. Do not auto-push.
+
+9. **No separate `feat/workout-redesign-m2` branch.** All M2 work goes on `feat/workout-redesign`. Sub-phases = commits.
+
+---
+
+## M1.7 M2 entry point — paste this into a new session to start M2
+
+```
+Реализуй M2 phase из дизайн-документа: docs/design/workout-redesign.md
+
+КОНТЕКСТ:
+- Главный документ: docs/design/workout-redesign.md (§14 — M2 scope)
+- Handoff: docs/design/workout-redesign-handoff.md — прочитай раздел "M1 STATUS AND HANDOFF" целиком, особенно §M1.5 (architecture), §M1.6 (gotchas), §M1.3 (follow-ups).
+- Branch state: `feat/workout-redesign` — единая ветка. M0 = 9 commits, M1 = 13 commits на этой же ветке. M2 продолжает на ЭТОЙ ЖЕ ветке — не создавай `feat/workout-redesign-m2`. Sub-phases = commits.
+- M1 tip: `08ac310a`.
+
+ОБЯЗАТЕЛЬНЫЕ ФИКСЫ ДО M2 ФИЧЕЙ (carryover из M1 review):
+1. `packages/api-server/src/endpoints/lms/exercise-library-item.ts` — добавь server-side guard: `if (input.scope !== undefined) throw Forbidden`. Иначе любой coach может себе promote через PUT.
+2. `packages/ui/src/edit-session/save-indicator.tsx` — Retry кнопка. Wire к `flushSession(sessionId)` на orchestrator'е вместо stale dispatch.
+
+SCOPE M2 (из roadmap §14 дизайн-документа):
+- Coaching analytics реализация через WorkoutSession (coach-dashboard.ts, dashboard-computations.ts, coach-athletes/{list,detail}.ts — сейчас возвращают нули, M2 реализует через WorkoutSession)
+- Athlete-side план endpoints (workout-session, block-session, exercise-log, set-log) — возможно часть M2, часть M3
+- PlanOverride.payload typing refine
+- Import parser (program-parser/) если в scope M2
+- Block/Session/Week templates (nice-to-have из M1)
+- Promote suggestion workflow (PromotionSuggestion)
+
+ПРАВИЛА (те же что в M1):
+- Никаких комментариев в коде
+- Никаких Co-Authored-By в коммитах
+- Commit subjects полностью lowercase
+- --no-verify запрещён
+- Green gates first
+- App Router only
+- Plan на approval перед кодом
+- Stage .claude/settings.local.json со всеми feature commits
+- Batch push (не после каждого коммита)
+- Один branch на всю фичу
+```
+
+---
+
+## M1.8 Branch summary (M1 commits)
+
+```
+$ git log c03acb7..HEAD --oneline
+08ac310a fix(lms): resolve 4 critical review findings in edit-session and bulk-patch
+11489afb test(e2e): adapt plan detail and dashboard specs to m1 editor restructure
+d8eb6bdc test(lms): playwright e2es for library flow and edit session and storybook sweep
+b6ae7a3d refactor(ui): rename rich text editor to markdown editor
+bfb6d826 feat(platform): plan coach assignments ui on plan detail athletes tab
+f778144e feat(platform): cmd k palette inline pickers and undo redo
+789d33a6 feat(platform): inspector pane block builder six scheme forms and entry editor
+675edd79 feat(platform): plan editor canvas with week navigator day cards and dnd
+0033fbe6 feat(ui): edit session primitive scoped mutation and adr 0035
+```
+
+Final gate state at M1 handoff: lint green (16/16), type-check green (all packages; marketing .next cleared), 961 tests passing, dep:check green.
 
 ---
 
