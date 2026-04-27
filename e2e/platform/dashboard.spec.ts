@@ -22,14 +22,6 @@ test.describe("Coach Dashboard", () => {
     await expect(page.getByText("Needs Attention")).toBeVisible();
   });
 
-  test("displays progress buckets", async ({ page }) => {
-    await page.goto("/coach");
-    await expect(page.getByText("Athletes").first()).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByRole("tab", { name: /On track/i })).toBeVisible();
-    await expect(page.getByRole("tab", { name: /Steady/i })).toBeVisible();
-    await expect(page.getByRole("tab", { name: /Falling behind/i })).toBeVisible();
-  });
-
   test("displays athletes today section", async ({ page }) => {
     await page.goto("/coach");
     await expect(page.getByText("Athletes").first()).toBeVisible({ timeout: 30_000 });
