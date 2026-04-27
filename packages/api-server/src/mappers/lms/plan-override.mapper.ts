@@ -4,8 +4,9 @@ import {
   type PlanOverride,
   PlanOverrideKind,
   PlanOverrideScope,
+  planOverridePayloadSchema,
 } from "@repo/contracts/lms/plan-override";
-import { ValidationError } from "@repo/errors";
+import { InternalServerError, ValidationError } from "@repo/errors";
 
 const isPlanOverrideScope = (value: string): value is PlanOverrideScope =>
   (Object.values(PlanOverrideScope) as string[]).includes(value);
@@ -28,13 +29,22 @@ export const mapToPlanOverride = (o: PrismaPlanOverride): PlanOverride => {
     });
   }
 
+  const parsed = planOverridePayloadSchema.safeParse(o.payload);
+
+  if (!parsed.success) {
+    throw new InternalServerError("PlanOverride payload parse failure", {
+      id: o.id,
+      error: parsed.error.message,
+    });
+  }
+
   return {
     id: o.id,
     enrollmentId: o.enrollmentId,
     scope: o.scope,
     scopeId: o.scopeId,
     kind: o.kind,
-    payload: o.payload,
+    payload: parsed.data,
     startsOnWeekIndex: o.startsOnWeekIndex,
     endsOnWeekIndex: o.endsOnWeekIndex,
     createdAt: o.createdAt,

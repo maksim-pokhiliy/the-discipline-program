@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export enum PlanOverrideScope {
   DAY = "DAY",
   SESSION = "SESSION",
@@ -27,3 +29,9 @@ export const PLAN_OVERRIDE_KINDS: readonly PlanOverrideKind[] = [
   PlanOverrideKind.SUSPEND,
   PlanOverrideKind.NOTE,
 ] as const;
+
+export const PlanOverrideScopeEnum = z.enum(["DAY", "SESSION", "BLOCK", "BLOCK_SEGMENT", "ENTRY"]);
+export type PlanOverrideScopeEnum = z.infer<typeof PlanOverrideScopeEnum>;
+
+export const PlanOverrideKindEnum = z.enum(["REPLACE", "APPEND", "SUSPEND", "NOTE"]);
+export type PlanOverrideKindEnum = z.infer<typeof PlanOverrideKindEnum>;
