@@ -25,7 +25,7 @@
     "e2e": "pnpm e2e:empty && pnpm e2e:bootstrap && pnpm e2e:seeded",
     "e2e:empty": "cross-env EMPTY_DB=1 playwright test --config e2e/playwright.config.ts --project=empty-admin-setup --project=empty-admin --project=empty-platform-coach-setup --project=empty-platform-coach --project=empty-platform-athlete-setup --project=empty-platform-athlete --project=empty-marketing",
     "e2e:bootstrap": "cross-env BOOTSTRAP_DB=1 playwright test --config e2e/playwright.config.ts --project=bootstrapped-marketing",
-    "e2e:seeded": "playwright test --config e2e/playwright.config.ts --project=admin-setup --project=admin --project=platform-setup --project=platform --project=marketing",
+    "e2e:seeded": "playwright test --config e2e/playwright.config.ts --project=admin-setup --project=admin --project=admin-head-coach-setup --project=admin-head-coach --project=platform-setup --project=platform --project=storybook --project=marketing",
     "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
     "e2e:headed": "playwright test --config e2e/playwright.config.ts --headed"
   },

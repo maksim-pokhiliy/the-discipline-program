@@ -97,6 +97,16 @@ const seedUsers = async (passwordHash: string) => {
     }),
     prisma.user.create({
       data: {
+        email: "head-coach@thedisciplineprogram.com",
+        name: "Anna Holovna",
+        role: Role.HEAD_COACH,
+        password: passwordHash,
+        timezone: "UTC",
+        createdAt: daysAgo(75),
+      },
+    }),
+    prisma.user.create({
+      data: {
         email: "sarah.mitchell@email.com",
         name: "Sarah Mitchell",
         image:
@@ -209,21 +219,22 @@ const seedUsers = async (passwordHash: string) => {
     }),
   ]);
 
-  console.log("  Users: 12 (1 admin, 1 coach, 10 athletes)");
+  console.log("  Users: 13 (1 admin, 1 coach, 1 head coach, 10 athletes)");
 
   return {
     admin: at(users, 0),
     coach: at(users, 1),
-    sarah: at(users, 2),
-    mike: at(users, 3),
-    jenny: at(users, 4),
-    david: at(users, 5),
-    lisa: at(users, 6),
-    tom: at(users, 7),
-    alex: at(users, 8),
-    nina: at(users, 9),
-    chris: at(users, 10),
-    maria: at(users, 11),
+    headCoach: at(users, 2),
+    sarah: at(users, 3),
+    mike: at(users, 4),
+    jenny: at(users, 5),
+    david: at(users, 6),
+    lisa: at(users, 7),
+    tom: at(users, 8),
+    alex: at(users, 9),
+    nina: at(users, 10),
+    chris: at(users, 11),
+    maria: at(users, 12),
   };
 };
 

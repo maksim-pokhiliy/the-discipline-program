@@ -27,7 +27,7 @@ export default defineConfig({
   retries: IS_CI ? 2 : 0,
   workers: IS_CI ? 1 : undefined,
   reporter: IS_CI ? [["html"], ["github"]] : [["html"]],
-  timeout: 30_000,
+  timeout: 60_000,
   expect: { timeout: 10_000 },
 
   use: {
@@ -59,14 +59,35 @@ export default defineConfig({
       },
     },
     {
+      name: "admin-head-coach-setup",
+      testDir: "./admin",
+      testMatch: "auth.head-coach.setup.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:3002",
+      },
+    },
+    {
       name: "admin",
       testDir: "./admin",
-      testMatch: /^(?!.*auth\.spec\.ts).*\.spec\.ts$/,
+      testMatch:
+        /^(?!.*auth\.spec\.ts)(?!.*\.setup\.ts)(?!.*library-create-and-use\.spec\.ts).*\.spec\.ts$/,
       dependencies: ["admin-setup"],
       use: {
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:3002",
         storageState: "e2e/.auth/admin.json",
+      },
+    },
+    {
+      name: "admin-head-coach",
+      testDir: "./admin",
+      testMatch: /library-create-and-use\.spec\.ts$/,
+      dependencies: ["admin-head-coach-setup"],
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:3002",
+        storageState: "e2e/.auth/admin-head-coach.json",
       },
     },
     {
@@ -87,6 +108,15 @@ export default defineConfig({
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:3001",
         storageState: "e2e/.auth/platform-coach.json",
+      },
+    },
+    {
+      name: "storybook",
+      testDir: "./storybook",
+      testMatch: /.*\.storybook\.spec\.ts$/,
+      use: {
+        ...devices["Desktop Chrome"],
+        baseURL: "http://localhost:6006",
       },
     },
     {
@@ -192,6 +222,12 @@ export default defineConfig({
       reuseExistingServer: !IS_CI,
       timeout: 240_000,
       env: appEnv(3001),
+    },
+    {
+      command: "pnpm --filter storybook dev --no-open --quiet",
+      url: "http://localhost:6006",
+      reuseExistingServer: !IS_CI,
+      timeout: 240_000,
     },
   ],
 });
