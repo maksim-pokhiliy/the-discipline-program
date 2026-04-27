@@ -1,23 +1,49 @@
 import {
   type PersonalRecord as PrismaPersonalRecord,
+  type Prisma,
   type PrismaClient,
   PrKind,
 } from "@prisma/client";
 
+import { type ExerciseDefaultMetrics } from "@repo/contracts/lms/exercise-library-item";
 import { logger } from "@repo/shared";
 
-import { detectMaxLoadForReps } from "./max-load-for-reps";
+import { dispatchDetector, upsertPersonalRecord } from "./_dispatch";
 
 export interface EvaluatePrInput {
-  db: PrismaClient;
+  db: PrismaClient | Prisma.TransactionClient;
   setLogId: string;
 }
 
 export interface EvaluatePrResult {
-  created: PrismaPersonalRecord | null;
+  created: PrismaPersonalRecord[];
 }
 
-const PR_KIND_FOR_LOAD = PrKind.MAX_LOAD_FOR_REPS;
+const resolveKinds = (metrics: ExerciseDefaultMetrics): PrKind[] => {
+  const kinds: PrKind[] = [];
+
+  if (metrics.canMeasureLoad && metrics.canMeasureReps) {
+    kinds.push(PrKind.MAX_LOAD_FOR_REPS, PrKind.ONE_REP_MAX, PrKind.N_REP_MAX);
+  }
+
+  if (metrics.canMeasureReps) {
+    kinds.push(PrKind.MAX_REPS_UNBROKEN, PrKind.MAX_REPS_TOTAL);
+  }
+
+  if (metrics.canMeasureDuration) {
+    kinds.push(PrKind.BEST_TIME_FOR_X);
+  }
+
+  if (metrics.canMeasureDistance) {
+    kinds.push(PrKind.MAX_DISTANCE_IN_T);
+  }
+
+  if (metrics.canMeasureCalories) {
+    kinds.push(PrKind.MAX_CALORIES_IN_T);
+  }
+
+  return kinds;
+};
 
 export const evaluatePr = async ({ db, setLogId }: EvaluatePrInput): Promise<EvaluatePrResult> => {
   const setLog = await db.setLog.findUnique({
@@ -26,79 +52,75 @@ export const evaluatePr = async ({ db, setLogId }: EvaluatePrInput): Promise<Eva
       exerciseLog: {
         include: {
           blockSession: { include: { workoutSession: { select: { userId: true } } } },
+          exercise: { select: { defaultMetrics: true } },
         },
       },
     },
   });
 
   if (!setLog) {
-    return { created: null };
+    return { created: [] };
   }
 
   const userId = setLog.exerciseLog.blockSession.workoutSession.userId;
   const exerciseId = setLog.exerciseLog.exerciseId;
+  const metrics = setLog.exerciseLog.exercise.defaultMetrics as ExerciseDefaultMetrics;
+  const kinds = resolveKinds(metrics);
 
-  const existing = await db.personalRecord.findUnique({
-    where: {
-      userId_exerciseId_kind: {
-        userId,
-        exerciseId,
-        kind: PR_KIND_FOR_LOAD,
-      },
-    },
-  });
-
-  const decision = detectMaxLoadForReps(setLog, existing);
-
-  if (decision.kind === "none") {
-    logger.info("lms.pr_evaluator.evaluated", {
+  if (kinds.length === 0) {
+    logger.info("lms.pr_evaluator.dispatched", {
       setLogId,
       userId,
       exerciseId,
-      kind: PR_KIND_FOR_LOAD,
-      result: "none",
+      kindsEvaluated: [],
+      kindsAchieved: [],
     });
 
-    return { created: null };
+    return { created: [] };
   }
 
-  const achievedAt = setLog.completedAt ?? new Date();
+  const needsSiblings =
+    kinds.includes(PrKind.MAX_REPS_TOTAL) || kinds.includes(PrKind.MAX_REPS_UNBROKEN);
 
-  const upserted = await db.personalRecord.upsert({
-    where: {
-      userId_exerciseId_kind: {
-        userId,
-        exerciseId,
-        kind: PR_KIND_FOR_LOAD,
-      },
-    },
-    create: {
+  const siblings = needsSiblings
+    ? await db.setLog.findMany({ where: { exerciseLogId: setLog.exerciseLogId } })
+    : null;
+
+  const achievedAt = setLog.completedAt ?? new Date();
+  const kindsAchieved: PrKind[] = [];
+  const createdPrs: PrismaPersonalRecord[] = [];
+
+  for (const prKind of kinds) {
+    const existing = await db.personalRecord.findUnique({
+      where: { userId_exerciseId_kind: { userId, exerciseId, kind: prKind } },
+    });
+
+    const output = dispatchDetector({ prKind, setLog, siblings, existing });
+
+    if (output === null) {
+      continue;
+    }
+
+    const pr = await upsertPersonalRecord(db, {
       userId,
       exerciseId,
-      kind: PR_KIND_FOR_LOAD,
-      value: decision.value,
-      unit: "kg",
-      context: { fixedReps: decision.context.fixedReps },
+      prKind,
+      setLogId,
       achievedAt,
-      sourceSetLogId: setLogId,
-    },
-    update: {
-      value: decision.value,
-      unit: "kg",
-      context: { fixedReps: decision.context.fixedReps },
-      achievedAt,
-      sourceSetLogId: setLogId,
-    },
-  });
+      output,
+    });
 
-  logger.info("lms.athlete.pr_achieved", {
+    kindsAchieved.push(prKind);
+    createdPrs.push(pr);
+  }
+
+  logger.info("lms.pr_evaluator.dispatched", {
     setLogId,
     userId,
     exerciseId,
-    kind: PR_KIND_FOR_LOAD,
-    value: upserted.value.toString(),
-    fixedReps: decision.context.fixedReps,
+    kindsEvaluated: kinds,
+    kindsAchieved,
   });
 
-  return { created: upserted };
+  return { created: createdPrs };
 };

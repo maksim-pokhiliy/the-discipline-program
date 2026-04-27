@@ -1,6 +1,6 @@
 import { Prisma, type PersonalRecord, type SetLog } from "@prisma/client";
 
-import { type LoadSpec } from "@repo/contracts/lms/_domain";
+import { extractLoadKg, parseActual } from "./_set-log-actual";
 
 export interface MaxLoadForRepsContext {
   fixedReps: number;
@@ -10,39 +10,6 @@ export type MaxLoadForRepsDecision =
   | { kind: "create"; value: Prisma.Decimal; context: MaxLoadForRepsContext }
   | { kind: "update"; value: Prisma.Decimal; context: MaxLoadForRepsContext }
   | { kind: "none" };
-
-interface SetLogActual {
-  load?: LoadSpec;
-  reps?: number;
-}
-
-const extractLoadKg = (load: LoadSpec | undefined): number | null => {
-  if (!load) {
-    return null;
-  }
-
-  switch (load.kind) {
-    case "SINGLE_DB":
-    case "KB":
-    case "BARBELL": {
-      return load.kg;
-    }
-    case "DOUBLE_DB": {
-      return load.kgEach;
-    }
-    default: {
-      return null;
-    }
-  }
-};
-
-const parseActual = (actual: SetLog["actual"]): SetLogActual | null => {
-  if (typeof actual !== "object" || actual === null || Array.isArray(actual)) {
-    return null;
-  }
-
-  return actual as unknown as SetLogActual;
-};
 
 export const detectMaxLoadForReps = (
   setLog: SetLog,
