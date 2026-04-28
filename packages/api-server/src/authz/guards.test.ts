@@ -31,6 +31,19 @@ describe("platform guards", () => {
     regularUser = await createTestUser();
     athleteUser = await createTestUser();
     nonEnrolledUser = await createTestUser();
+
+    const preexisting = await cleanupRaw.user.findMany({
+      where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
+      select: { id: true },
+    });
+
+    for (const hc of preexisting) {
+      await cleanupRaw.user.update({
+        where: { id: hc.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      });
+    }
+
     headCoachUser = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
 
     plan = await createTestPlan(coach.user.id);

@@ -20,6 +20,18 @@ describe("iamUserAdminApi — HEAD_COACH single-occupancy", () => {
   });
 
   it("throws ConflictError when setting HEAD_COACH if another HEAD_COACH already exists", async () => {
+    const preexisting = await cleanupRaw.user.findMany({
+      where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
+      select: { id: true },
+    });
+
+    for (const hc of preexisting) {
+      await cleanupRaw.user.update({
+        where: { id: hc.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      });
+    }
+
     const headCoachA = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
     const userB = await createTestUser();
 
