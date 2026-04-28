@@ -104,7 +104,10 @@
       "mcp__serena__get_symbols_overview",
       "mcp__serena__write_memory",
       "Bash(mkdir -p \"D:/projects/contrib/the-discipline-program/apps/platform/src/app/api/platform/enrollments/[enrollmentId]/overrides\")",
-      "Bash(mkdir -p \"D:/projects/contrib/the-discipline-program/apps/platform/src/app/api/platform/overrides/[overrideId]\")"
+      "Bash(mkdir -p \"D:/projects/contrib/the-discipline-program/apps/platform/src/app/api/platform/overrides/[overrideId]\")",
+      "mcp__serena__list_memories",
+      "mcp__serena__read_memory",
+      "mcp__serena__find_symbol"
     ]
   }
 }

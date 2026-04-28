@@ -27,3 +27,4 @@ export * from "./status-chip";
 export * from "./tags-input";
 export * from "./stats-card";
 export * from "./toast";
+export * from "./user-chip";

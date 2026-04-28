@@ -1,0 +1,86 @@
+"use client";
+
+import { useState } from "react";
+
+import SearchIcon from "@mui/icons-material/Search";
+import { Box, InputAdornment, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
+
+import { useSession } from "@repo/auth/client";
+
+import { BlockKindList } from "./block-kind-list";
+import { ExerciseList } from "./exercise-list";
+import { SchemeTemplateList } from "./scheme-template-list";
+
+const TAB_VALUES = ["exercises", "block-kinds", "scheme-templates"] as const;
+
+type TabValue = (typeof TAB_VALUES)[number];
+
+const TAB_LABELS: Record<TabValue, string> = {
+  exercises: "Exercises",
+  "block-kinds": "Blocks",
+  "scheme-templates": "Schemes",
+};
+
+export const LibraryPanel = () => {
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
+  const [tab, setTab] = useState<TabValue>("exercises");
+  const [search, setSearch] = useState("");
+
+  if (!currentUserId) {
+    return null;
+  }
+
+  return (
+    <Stack
+      spacing={2}
+      sx={{
+        height: "100%",
+        p: 2,
+        bgcolor: "background.paper",
+        borderRight: 1,
+        borderColor: "divider",
+        overflowY: "auto",
+      }}
+    >
+      <Typography variant="h6">Library</Typography>
+
+      <Tabs
+        value={tab}
+        onChange={(_, value: TabValue) => setTab(value)}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
+        sx={{ minHeight: 36 }}
+      >
+        {TAB_VALUES.map((value) => (
+          <Tab key={value} value={value} label={TAB_LABELS[value]} sx={{ minHeight: 36 }} />
+        ))}
+      </Tabs>
+
+      <TextField
+        size="small"
+        placeholder="Search..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          },
+        }}
+      />
+
+      <Box sx={{ flex: 1, overflowY: "auto" }}>
+        {tab === "exercises" && <ExerciseList search={search} currentUserId={currentUserId} />}
+        {tab === "block-kinds" && <BlockKindList search={search} currentUserId={currentUserId} />}
+        {tab === "scheme-templates" && (
+          <SchemeTemplateList search={search} currentUserId={currentUserId} />
+        )}
+      </Box>
+    </Stack>
+  );
+};

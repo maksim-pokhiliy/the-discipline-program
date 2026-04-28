@@ -14,11 +14,12 @@ import {
   Typography,
 } from "@mui/material";
 
-import { useCommandPalette } from "./command-palette.context";
+import { useCommandPaletteActions, useCommandPaletteState } from "./command-palette.context";
 import { useFilteredCommands } from "./use-command-palette";
 
 export const CommandPalette = () => {
-  const { open, setOpen } = useCommandPalette();
+  const { open } = useCommandPaletteState();
+  const { setOpen } = useCommandPaletteActions();
   const [query, setQuery] = useState("");
   const [activeIndex, setActiveIndex] = useState(0);
   const filtered = useFilteredCommands(query);

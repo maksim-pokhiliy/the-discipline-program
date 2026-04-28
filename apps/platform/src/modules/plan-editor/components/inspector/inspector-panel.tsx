@@ -12,6 +12,7 @@ import { parsePlanSelection } from "../plan-canvas/selection";
 import { AthletePreview } from "./athlete-preview";
 import { BlockInspector } from "./block-inspector";
 import { EntryInspector } from "./entry-inspector";
+import { InspectorEmptyState } from "./inspector-empty-state";
 import { SegmentInspector } from "./segment-inspector";
 import { useSelectedBlock, useSelectedEntry, useSelectedSegment } from "./use-selected-entities";
 
@@ -20,12 +21,6 @@ type InspectorTab = "edit" | "preview";
 export type InspectorPanelProps = {
   planId: string;
 };
-
-const EmptyState = ({ message }: { message: string }) => (
-  <Typography variant="body2" color="text.secondary">
-    {message}
-  </Typography>
-);
 
 export const InspectorPanel = ({ planId }: InspectorPanelProps) => {
   const searchParams = useSearchParams();
@@ -72,7 +67,7 @@ export const InspectorPanel = ({ planId }: InspectorPanelProps) => {
 
   const renderEditor = () => {
     if (!selection) {
-      return <EmptyState message="Select a node to inspect" />;
+      return <InspectorEmptyState message="Select a node to inspect" />;
     }
 
     if (planStructure.error) {
@@ -80,12 +75,12 @@ export const InspectorPanel = ({ planId }: InspectorPanelProps) => {
     }
 
     if (!planStructure.data) {
-      return <EmptyState message="Loading plan..." />;
+      return <InspectorEmptyState message="Loading plan..." />;
     }
 
     if (selection.kind === "block") {
       if (!selectedBlock) {
-        return <EmptyState message="Block not found" />;
+        return <InspectorEmptyState message="Block not found" />;
       }
 
       return (
@@ -95,14 +90,14 @@ export const InspectorPanel = ({ planId }: InspectorPanelProps) => {
 
     if (selection.kind === "segment") {
       if (!selectedSegment) {
-        return <EmptyState message="Segment not found" />;
+        return <InspectorEmptyState message="Segment not found" />;
       }
 
       return <SegmentInspector planId={planId} segment={selectedSegment.segment} />;
     }
 
     if (!selectedEntry) {
-      return <EmptyState message="Entry not found" />;
+      return <InspectorEmptyState message="Entry not found" />;
     }
 
     return <EntryInspector planId={planId} entry={selectedEntry.entry} />;
@@ -110,7 +105,7 @@ export const InspectorPanel = ({ planId }: InspectorPanelProps) => {
 
   const renderPreview = () => {
     if (!previewBlock) {
-      return <EmptyState message="Select a block (or any of its children) to preview" />;
+      return <InspectorEmptyState message="Select a block (or any of its children) to preview" />;
     }
 
     return <AthletePreview block={previewBlock} />;

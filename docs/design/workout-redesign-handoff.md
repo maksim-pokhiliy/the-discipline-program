@@ -873,4 +873,103 @@ Final gate state at M1 handoff: lint green (16/16), type-check green (all packag
 
 ---
 
+## M2 PARTIAL STATUS (backend done, UI pending)
+
+> Status: 5 of 10 sub-phases complete. Branch `feat/workout-redesign` not pushed. Working tree clean. Tip: `70ff4847`.
+
+### M2.0 Status of M2
+
+#### M2.0.1 Status
+
+| Sub-phase    | Status                | Commit     | What                                                                                                                                                                                                                                                                                             |
+| ------------ | --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| docs cleanup | done                  | `076930ac` | removed import parser / nightly cron / promotion queue from design doc                                                                                                                                                                                                                           |
+| M2.0         | done                  | `871241f7` | scope strip guards on `UpdateExerciseLibraryItemInput`, HEAD_COACH partial unique index, `flushSession(sessionId)` in `EditSessionContextValue`, 41 bulk-patch op unit tests, admin URL field debounce                                                                                           |
+| M2.1         | done                  | `ccd5fb97` | weekly-volume aggregator on-write incremental + 8 integration scenarios + session-helpers test fixtures (NO cron — explicitly removed from scope)                                                                                                                                                |
+| M2.2         | done                  | `59d25cf4` | 7 new PR detectors + 8-branch exhaustive dispatcher + 72 unit tests (Epley `ONE_REP_MAX`, `N_REP_MAX`, `MAX_REPS_UNBROKEN`, `MAX_REPS_TOTAL`, `BEST_TIME_FOR_X`, `MAX_DISTANCE_IN_T`, `MAX_CALORIES_IN_T`)                                                                                       |
+| M2.3         | done                  | `1a6025b8` | coaching dashboard analytics — real WorkoutSession queries (`computeAdherenceWindow`, `computeProgressBuckets`, `computeAthletesSummary`, `computeTodayStatus`, `MISSED_WORKOUTS` branch in `coach-action-item`, `coach-athletes/list/detail`) + 8 integration tests + `prismaAsCore` workaround |
+| M2.4         | done                  | `70ff4847` | PlanOverride backend — discriminated payload (REPLACE/APPEND/SUSPEND/NOTE), CRUD endpoints with auth + scope/kind semantic validation (`validateScopeKindCombo`), `plan-override-resolver` service, 13 tests                                                                                     |
+| M2.5–M2.9    | pending (new session) | —          | UI layer + bulk ops + mobile + e2e/storybook                                                                                                                                                                                                                                                     |
+
+Final gates at M2 partial: check-types 16/16, lint 16/16, dep:check 1450 modules / 0 violations, api-server 802/802 tests, ui 91/91 tests, contracts 158/158 tests. No regressions.
+
+#### M2.0.2 BUGFIX SUB-PHASE REQUIRED BEFORE M2.5
+
+User-facing review of M0–M2.4 surfaced pattern violations + critical regression that must be fixed before M2.5 starts. Bugfix prompt is saved separately by user (copy out of last assistant message in M2 backend session). The bugfix runs as **plain prompt, not via `/feature` skill** — scope is fix-only, no new architecture.
+
+**Blockers (must fix before M2.5):**
+
+- Command palette infinite loop in `apps/platform/src/modules/plan-editor/components/command-palette/command-palette.context.tsx:51` (`registerCommand` `useEffect` cleanup `setVersion` without proper deps) — page `/coach/plans/[id]` does not open.
+- Layout regression on `/coach/plans/[id]` — content under header; Library panel tabs overflow drawer width without scroll.
+- `/coach/library/` pattern violations: `Stack spacing={3}` (must be `={4}`), divider under tabs (forbidden), All/System/Mine tabs (must be admin-style scope filter), search/filter reinvented (must extract admin primitives to `@repo/ui/lms/library-table/`), empty actions column.
+- `react/no-multi-comp` violations across `apps/platform/**/*.tsx` and `apps/admin/**/*.tsx`.
+
+**Admin UI fixes (in same bugfix sub-phase):**
+
+- Remove Promote/Demote **buttons** from Edit drawers in all three library types — kept ONLY in row action menu.
+- Add `<Select>` "Scope" field in Edit drawer with conditional required `<Select>` "Owner" (single-owner; multi-coach ownership deferred to M3+ if real use case appears).
+- **Bifurcate update endpoint:** platform path strips scope/ownerId (server hardcodes COACH/self.id); admin path accepts scope/ownerId in payload (admin role validated). M2.0's blanket scope-strip needs revisiting.
+- Replace `demoImageUrl` URL input with image upload via existing Vercel Blob flow (ADR 0013); video stays URL.
+- Three different sidebar icons for Exercise / BlockKind / SchemeTemplate (currently same).
+- Owner column → name + avatar chip pattern from `users-admin` (currently raw cuid).
+- Benchmark in separate column (not inline).
+- `isDeprecated` → inline table `<Switch>` + chip column "Deprecated" + form Switch field; toggle endpoint wired.
+- UI tooltip / form section header — `ownerId` = "Owner (creator)", `parentId` = "Variant of (parent exercise)".
+- SchemeTemplate `defaultParams` JSON textarea → schema-driven typed form per archetypeKind. Extract M1.7 SchemeForm components into `@repo/ui/lms/scheme-forms/` and reuse.
+- `/coach/library` benchmark chip in own column too.
+
+**Memory (already added) for bugfix and all M2.5+ implementers:**
+
+- `feedback_pattern_compliance.md` — new UI must reuse `<Stack spacing={4}>` / `ChipTab` / admin filter primitives.
+- `feedback_promote_demote_row_only.md` — library edit forms have only Save Changes; scope changes via form Select (not buttons); promote/demote buttons only in row action menu; single-owner.
+- `feedback_image_upload_existing_flow.md` — image fields use Vercel Blob upload; videos stay URL.
+- `feedback_one_component_per_file.md` — each `.tsx` exports exactly one React component.
+- `feedback_owner_column_avatar.md` — owner columns show name + avatar chip.
+- `feedback_no_json_editor_in_ui.md` — discriminated payload fields use schema-driven typed forms per discriminator; no raw JSON textarea.
+
+#### M2.0.3 Architectural decisions to remember in M2.5+
+
+1. **`prismaAsCore` cast** lives in `packages/api-server/src/db/client.ts` as a single concentrated cast `ExtendedPrismaClient → PrismaClient`. All coaching service callers use it. The alternative was either pervasive `as unknown as` casts or "Excessive stack depth" Prisma extension typing failures. M2.5+ services should follow the same pattern when they need access to base Prisma types.
+
+2. **Services accept `db: PrismaClient | Prisma.TransactionClient`** — every M2 service (`weekly-volume-aggregator`, `pr-evaluator`, `plan-override-resolver`) is transaction-friendly. M2.5+ services follow the same shape. M3 athlete write paths will compose multiple services in a single transaction — that's the design assumption.
+
+3. **PlanOverride payload — `z.discriminatedUnion("kind", [...])`** with 4 shapes by `kind` (REPLACE / APPEND / SUSPEND / NOTE), NOT cross-product `4×5=20` by `(scope, kind)`. Semantic `(scope, kind)` validation lives at service layer through `validateScopeKindCombo` (e.g., `SUSPEND` on `NOTE` scope is rejected with `BadRequestError`).
+
+4. **ADR 0035 invariant fully enforced.** No blur-autosave was introduced anywhere in M2 backend. M2.5 PlanOverride editor cards MUST consume `useEditSession` like base `BlockSegmentEditor`. The invariant lives in `docs/adr/0035-editor-save-model.md` and applies to all editable structural cards.
+
+5. **Removed-from-scope items** — three permanent cuts (NOT deferred):
+
+   - Import parser (no PDF / free-text parsing pipeline; `pdfjs-dist` / `pdf-parse` not installed; coach writes plans in editor).
+   - Nightly cron / scheduled WeeklyVolume recompute (no Vercel Cron, no `CRON_SECRET`, no `vercel.json` cron config; on-write incremental sufficient).
+   - PromotionSuggestion review queue (no `PromotionSuggestion` model, no queue UI; HEAD_COACH promotes directly via row action in admin).
+     These three must NOT reappear in M2.5+ implementation. Future trigger to add any of them requires a new ADR and product decision.
+
+6. **`HEAD_COACH` single-occupancy is now DB-enforced** via partial unique index `idx_single_head_coach ON "User" (role) WHERE role = 'HEAD_COACH'` (M2.0). Any attempt to set a second user to HEAD_COACH returns `409 ConflictError`.
+
+7. **Scope strip behaviour from M2.0 will be revisited in bugfix.** Currently `UpdateExerciseLibraryItemInput` strips `scope`. After bugfix, the strip applies only to platform path; admin path accepts scope+ownerId in payload.
+
+#### M2.0.4 Remaining sub-phases (M2.5–M2.9, 33 tasks)
+
+| Sub-phase                            | Tasks | Plan reference                                     |
+| ------------------------------------ | ----- | -------------------------------------------------- |
+| M2.5 PlanOverride editor UI          | 6     | `.feature-dev/1777283454/plan.md` TASK-028 onwards |
+| M2.6 Templates (Block/Session/Week)  | 11    | `.feature-dev/1777283454/plan.md` TASK-034 onwards |
+| M2.7 Bulk operations                 | 8     | `.feature-dev/1777283454/plan.md` TASK-045 onwards |
+| M2.8 Mobile responsive + TouchSensor | 4     | `.feature-dev/1777283454/plan.md` TASK-053 onwards |
+| M2.9 E2E + Storybook sweep           | 7     | `.feature-dev/1777283454/plan.md` TASK-057 onwards |
+
+#### M2.0.5 M2.5 entry point (after bugfix lands)
+
+1. Read this entire handoff (M0 + M1 + M2 partial sections).
+2. Read `.feature-dev/1777283454/plan.md` from TASK-028 onwards.
+3. Read `.feature-dev/1777283454/design.md` §5.4 for component design specs.
+4. Read `docs/adr/0035-editor-save-model.md` BEFORE starting M2.5 — invariant must be in fresh memory before override editor work.
+5. Read all 6 new memory files in `C:\Users\maksi\.claude\projects\D--projects-contrib-the-discipline-program\memory\feedback_*.md` (the auto-loaded MEMORY.md index lists them).
+6. Submit a Plan covering remaining sub-phases for approval before writing code.
+7. After M2.9 final green gate — update this handoff with full M2 status section (replacing this PARTIAL block).
+
+Branch state: `feat/workout-redesign`, single long-lived (NOT push to main; M3 continues here too). Tip after M2.4 = `70ff4847`. Bugfix sub-phase will land 1–2 commits on top before M2.5 starts.
+
+---
+
 **End of handoff.**

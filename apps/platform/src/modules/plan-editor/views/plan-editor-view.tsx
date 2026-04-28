@@ -1,49 +1,19 @@
 "use client";
 
-import { Box, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
-import { EditSessionProvider, useBeforeunloadGuard } from "@repo/ui";
+import { LAYOUT } from "@repo/shared";
+import { EditSessionProvider } from "@repo/ui";
 
 import {
   CommandPalette,
   CommandPaletteProvider,
   PlanCommandRegistry,
 } from "../components/command-palette";
-import { InspectorPanel } from "../components/inspector";
-import { LibraryPanel } from "../components/library-panel";
-import { PlanCanvas } from "../components/plan-canvas";
+import { PlanEditorChrome } from "../components/plan-editor-chrome";
+import { PlanEditorHeader } from "../components/plan-editor-header";
 
-const LIBRARY_WIDTH = 280;
-const INSPECTOR_WIDTH = 360;
-
-const PlanEditorChrome = ({ planId }: { planId: string }) => {
-  useBeforeunloadGuard();
-
-  return (
-    <Stack
-      direction="row"
-      sx={{
-        position: "fixed",
-        inset: 0,
-        top: 64,
-        bottom: 56,
-        bgcolor: "background.default",
-      }}
-    >
-      <Box sx={{ width: LIBRARY_WIDTH, flexShrink: 0 }}>
-        <LibraryPanel />
-      </Box>
-
-      <Box sx={{ flex: 1, minWidth: 0, position: "relative", display: "flex" }}>
-        <PlanCanvas planId={planId} />
-      </Box>
-
-      <Box sx={{ width: INSPECTOR_WIDTH, flexShrink: 0 }}>
-        <InspectorPanel planId={planId} />
-      </Box>
-    </Stack>
-  );
-};
+const CONTAINER_VERTICAL_PADDING = 64;
 
 export type PlanEditorViewProps = {
   planId: string;
@@ -55,7 +25,16 @@ export const PlanEditorView = ({ planId }: PlanEditorViewProps) => {
       <CommandPaletteProvider>
         <PlanCommandRegistry planId={planId} />
         <CommandPalette />
-        <PlanEditorChrome planId={planId} />
+        <Stack
+          spacing={3}
+          sx={{
+            height: `calc(100dvh - ${LAYOUT.platformHeaderHeight}px - ${LAYOUT.platformBottomNavHeight}px - ${CONTAINER_VERTICAL_PADDING}px)`,
+            minHeight: 0,
+          }}
+        >
+          <PlanEditorHeader planId={planId} activeTab="schedule" />
+          <PlanEditorChrome planId={planId} />
+        </Stack>
       </CommandPaletteProvider>
     </EditSessionProvider>
   );

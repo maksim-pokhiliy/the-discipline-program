@@ -2,7 +2,6 @@
 
 import {
   createContext,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -20,14 +19,18 @@ export type CommandPaletteCommand = {
   perform: () => void | Promise<void>;
 };
 
-export type CommandPaletteContextValue = {
-  commands: readonly CommandPaletteCommand[];
-  open: boolean;
-  setOpen: (next: boolean) => void;
+export type CommandPaletteActions = {
   registerCommand: (command: CommandPaletteCommand) => () => void;
+  setOpen: (next: boolean) => void;
 };
 
-const CommandPaletteContext = createContext<CommandPaletteContextValue | null>(null);
+export type CommandPaletteState = {
+  commands: readonly CommandPaletteCommand[];
+  open: boolean;
+};
+
+const CommandPaletteActionsContext = createContext<CommandPaletteActions | null>(null);
+const CommandPaletteStateContext = createContext<CommandPaletteState | null>(null);
 
 export type CommandPaletteProviderProps = {
   children: ReactNode;
@@ -36,20 +39,23 @@ export type CommandPaletteProviderProps = {
 export const CommandPaletteProvider = ({ children }: CommandPaletteProviderProps) => {
   const commandsRef = useRef<Map<string, CommandPaletteCommand>>(new Map());
   const [version, setVersion] = useState(0);
-  const [open, setOpenState] = useState(false);
+  const [open, setOpen] = useState(false);
 
-  const setOpen = useCallback((next: boolean) => {
-    setOpenState(next);
-  }, []);
+  const actions = useMemo<CommandPaletteActions>(() => {
+    const registerCommand = (command: CommandPaletteCommand): (() => void) => {
+      commandsRef.current.set(command.id, command);
+      setVersion((tick) => tick + 1);
 
-  const registerCommand = useCallback((command: CommandPaletteCommand) => {
-    commandsRef.current.set(command.id, command);
-    setVersion((tick) => tick + 1);
+      return () => {
+        if (commandsRef.current.delete(command.id)) {
+          setVersion((tick) => tick + 1);
+        }
+      };
+    };
 
-    return () => {
-      if (commandsRef.current.delete(command.id)) {
-        setVersion((tick) => tick + 1);
-      }
+    return {
+      registerCommand,
+      setOpen,
     };
   }, []);
 
@@ -59,10 +65,7 @@ export const CommandPaletteProvider = ({ children }: CommandPaletteProviderProps
     return Array.from(commandsRef.current.values());
   }, [version]);
 
-  const value = useMemo<CommandPaletteContextValue>(
-    () => ({ commands, open, setOpen, registerCommand }),
-    [commands, open, setOpen, registerCommand],
-  );
+  const state = useMemo<CommandPaletteState>(() => ({ commands, open }), [commands, open]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -77,7 +80,7 @@ export const CommandPaletteProvider = ({ children }: CommandPaletteProviderProps
       }
 
       event.preventDefault();
-      setOpenState((prev) => !prev);
+      setOpen((prev) => !prev);
     };
 
     window.addEventListener("keydown", handler);
@@ -87,27 +90,43 @@ export const CommandPaletteProvider = ({ children }: CommandPaletteProviderProps
     };
   }, []);
 
-  return <CommandPaletteContext.Provider value={value}>{children}</CommandPaletteContext.Provider>;
+  return (
+    <CommandPaletteActionsContext.Provider value={actions}>
+      <CommandPaletteStateContext.Provider value={state}>
+        {children}
+      </CommandPaletteStateContext.Provider>
+    </CommandPaletteActionsContext.Provider>
+  );
 };
 
-export const useCommandPalette = (): CommandPaletteContextValue => {
-  const ctx = useContext(CommandPaletteContext);
+export const useCommandPaletteActions = (): CommandPaletteActions => {
+  const ctx = useContext(CommandPaletteActionsContext);
 
   if (!ctx) {
-    throw new Error("useCommandPalette must be used inside <CommandPaletteProvider>");
+    throw new Error("useCommandPaletteActions must be used inside <CommandPaletteProvider>");
+  }
+
+  return ctx;
+};
+
+export const useCommandPaletteState = (): CommandPaletteState => {
+  const ctx = useContext(CommandPaletteStateContext);
+
+  if (!ctx) {
+    throw new Error("useCommandPaletteState must be used inside <CommandPaletteProvider>");
   }
 
   return ctx;
 };
 
 export const usePaletteCommand = (command: CommandPaletteCommand | null): void => {
-  const ctx = useContext(CommandPaletteContext);
+  const actions = useContext(CommandPaletteActionsContext);
 
   useEffect(() => {
-    if (!ctx || !command) {
+    if (!actions || !command) {
       return;
     }
 
-    return ctx.registerCommand(command);
-  }, [command, ctx]);
+    return actions.registerCommand(command);
+  }, [actions, command]);
 };

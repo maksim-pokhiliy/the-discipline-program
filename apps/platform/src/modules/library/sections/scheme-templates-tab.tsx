@@ -3,45 +3,74 @@
 import { useCallback, useMemo, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import { Alert, Button, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Alert, Button, ButtonBase, Chip, Stack, Typography } from "@mui/material";
 
 import { type SchemeTemplate } from "@repo/contracts/lms/scheme-template";
-import { useDeleteConfirmation } from "@repo/query";
-import { ConfirmationModal, DataTable, type Column, useDataTableUrlState } from "@repo/ui";
+import {
+  type Column,
+  DataTable,
+  type DataTableFilter,
+  UserChip,
+  useDataTableUrlState,
+} from "@repo/ui";
 
-import { useDeleteSchemeTemplate, useSchemeTemplatesPageData } from "@app/lib/hooks";
+import { usePlatformCoaches, useSchemeTemplatesPageData } from "@app/lib/hooks";
 
-import { LibrarySearch, SchemeTemplateFormModal } from "../components";
-import { formatToken, SCOPE_CHIP_COLOR, type ScopeFilterValue } from "../constants";
+import { SchemeTemplateFormModal } from "../components";
+import { formatToken, SCOPE_CHIP_COLOR } from "../constants";
 
 type SchemeTemplatesTabProps = {
   currentUserId: string;
 };
 
+const SCOPE_FILTER_OPTIONS = [
+  { value: "SYSTEM", label: "System" },
+  { value: "COACH", label: "Coach (any)" },
+  { value: "OWN", label: "Mine" },
+];
+
 export const SchemeTemplatesTab = ({ currentUserId }: SchemeTemplatesTabProps) => {
-  const [search, setSearch] = useState("");
-  const [scope, setScope] = useState<ScopeFilterValue>("ALL");
-  const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<SchemeTemplate | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
-  const { data, isLoading, error } = useSchemeTemplatesPageData(
-    { search: search.length > 0 ? search : undefined, scope },
-    currentUserId,
-  );
-
-  const deleteMutation = useDeleteSchemeTemplate();
-  const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
-    useDeleteConfirmation({ deleteMutation });
+  const { data, isLoading, error } = useSchemeTemplatesPageData({}, currentUserId);
+  const { data: coaches } = usePlatformCoaches();
 
   const { state, onStateChange } = useDataTableUrlState({
     defaultSort: { columnId: "name", direction: "asc" },
   });
 
+  const ownerByUserId = useMemo(() => {
+    const map = new Map<string, { id: string; name: string | null; email: string }>();
+
+    coaches?.forEach((coach) => {
+      map.set(coach.userId, { id: coach.userId, name: coach.name, email: coach.email });
+    });
+
+    return map;
+  }, [coaches]);
+
   const isOwn = useCallback(
     (item: SchemeTemplate) => item.scope === "COACH" && item.ownerId === currentUserId,
     [currentUserId],
+  );
+
+  const filters: DataTableFilter<SchemeTemplate>[] = useMemo(
+    () => [
+      {
+        id: "scope",
+        label: "Scope",
+        options: SCOPE_FILTER_OPTIONS,
+        match: (item, value) => {
+          if (value === "OWN") {
+            return isOwn(item);
+          }
+
+          return item.scope === value;
+        },
+      },
+    ],
+    [isOwn],
   );
 
   const columns: Column<SchemeTemplate>[] = useMemo(
@@ -52,7 +81,20 @@ export const SchemeTemplatesTab = ({ currentUserId }: SchemeTemplatesTabProps) =
         width: "30%",
         sortable: true,
         sortValue: (item) => item.name.toLowerCase(),
-        render: (item) => <Typography variant="subtitle2">{item.name}</Typography>,
+        searchValue: (item) => item.name,
+        render: (item) =>
+          isOwn(item) ? (
+            <ButtonBase
+              onClick={() => setEditTarget(item)}
+              sx={{ textAlign: "left", justifyContent: "flex-start", width: "100%" }}
+            >
+              <Typography variant="subtitle2" sx={{ color: "primary.main" }}>
+                {item.name}
+              </Typography>
+            </ButtonBase>
+          ) : (
+            <Typography variant="subtitle2">{item.name}</Typography>
+          ),
       },
       {
         id: "scope",
@@ -70,77 +112,36 @@ export const SchemeTemplatesTab = ({ currentUserId }: SchemeTemplatesTabProps) =
         ),
       },
       {
+        id: "owner",
+        label: "Owner",
+        width: "22%",
+        render: (item) => <UserChip user={item.ownerId ? ownerByUserId.get(item.ownerId) : null} />,
+      },
+      {
         id: "archetypeKind",
         label: "Archetype",
-        width: "22%",
+        width: "30%",
         sortable: true,
         sortValue: (item) => item.archetypeKind,
         render: (item) => (
           <Typography variant="body2">{formatToken(item.archetypeKind)}</Typography>
         ),
       },
-      {
-        id: "actions",
-        label: "Actions",
-        align: "right",
-        width: "20%",
-        render: (item) => {
-          if (!isOwn(item)) {
-            return (
-              <Typography variant="caption" color="text.secondary">
-                Read-only
-              </Typography>
-            );
-          }
-
-          return (
-            <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-              <Tooltip title="Edit">
-                <IconButton
-                  onClick={() => setEditTarget(item)}
-                  color="primary"
-                  aria-label="Edit"
-                  size="small"
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="Delete">
-                <IconButton
-                  onClick={() => requestDelete(item.id)}
-                  color="error"
-                  aria-label="Delete"
-                  size="small"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          );
-        },
-      },
     ],
-    [isOwn, requestDelete],
+    [isOwn, ownerByUserId],
   );
 
   const items = data?.items ?? [];
 
   return (
     <Stack spacing={2}>
-      <LibrarySearch
-        searchValue={search}
-        onSearchChange={setSearch}
-        scope={scope}
-        onScopeChange={setScope}
-        placeholder="Search scheme templates..."
-      />
-
       {error && <Alert severity="error">{error.message}</Alert>}
 
       <DataTable
         data={items}
         columns={columns}
+        filters={filters}
+        searchPlaceholder="Search scheme templates..."
         paginated
         emptyMessage={
           isLoading ? "Loading scheme templates..." : "No scheme templates match your filters."
@@ -165,18 +166,6 @@ export const SchemeTemplatesTab = ({ currentUserId }: SchemeTemplatesTabProps) =
         open={!!editTarget}
         initial={editTarget ?? undefined}
         onClose={() => setEditTarget(null)}
-      />
-
-      <ConfirmationModal
-        open={!!deleteId}
-        title="Delete scheme template"
-        message="Are you sure you want to delete this scheme template?"
-        details="This will soft-delete the row. Plans referencing it keep their snapshot."
-        confirmText="Delete"
-        type="danger"
-        isConfirming={isDeleting}
-        onConfirm={confirmDelete}
-        onClose={cancelDelete}
       />
     </Stack>
   );

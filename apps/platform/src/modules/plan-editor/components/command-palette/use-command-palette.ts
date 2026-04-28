@@ -4,7 +4,7 @@ import { useMemo } from "react";
 
 import { filterCommandList } from "@repo/ui";
 
-import { type CommandPaletteCommand, useCommandPalette } from "./command-palette.context";
+import { type CommandPaletteCommand, useCommandPaletteState } from "./command-palette.context";
 
 export const filterCommands = (
   commands: readonly CommandPaletteCommand[],
@@ -12,7 +12,7 @@ export const filterCommands = (
 ): CommandPaletteCommand[] => filterCommandList(commands, query);
 
 export const useFilteredCommands = (query: string): CommandPaletteCommand[] => {
-  const { commands } = useCommandPalette();
+  const { commands } = useCommandPaletteState();
 
   return useMemo(() => filterCommands(commands, query), [commands, query]);
 };

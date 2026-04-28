@@ -3,45 +3,74 @@
 import { useCallback, useMemo, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import { Alert, Button, Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Alert, Button, ButtonBase, Chip, Stack, Typography } from "@mui/material";
 
 import { type BlockKind } from "@repo/contracts/lms/block-kind";
-import { useDeleteConfirmation } from "@repo/query";
-import { ConfirmationModal, DataTable, type Column, useDataTableUrlState } from "@repo/ui";
+import {
+  type Column,
+  DataTable,
+  type DataTableFilter,
+  UserChip,
+  useDataTableUrlState,
+} from "@repo/ui";
 
-import { useBlockKindsPageData, useDeleteBlockKind } from "@app/lib/hooks";
+import { useBlockKindsPageData, usePlatformCoaches } from "@app/lib/hooks";
 
-import { BlockKindFormModal, LibrarySearch } from "../components";
-import { formatToken, SCOPE_CHIP_COLOR, type ScopeFilterValue } from "../constants";
+import { BlockKindFormModal } from "../components";
+import { formatToken, SCOPE_CHIP_COLOR } from "../constants";
 
 type BlockKindsTabProps = {
   currentUserId: string;
 };
 
+const SCOPE_FILTER_OPTIONS = [
+  { value: "SYSTEM", label: "System" },
+  { value: "COACH", label: "Coach (any)" },
+  { value: "OWN", label: "Mine" },
+];
+
 export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
-  const [search, setSearch] = useState("");
-  const [scope, setScope] = useState<ScopeFilterValue>("ALL");
-  const [createOpen, setCreateOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<BlockKind | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
 
-  const { data, isLoading, error } = useBlockKindsPageData(
-    { search: search.length > 0 ? search : undefined, scope },
-    currentUserId,
-  );
-
-  const deleteMutation = useDeleteBlockKind();
-  const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
-    useDeleteConfirmation({ deleteMutation });
+  const { data, isLoading, error } = useBlockKindsPageData({}, currentUserId);
+  const { data: coaches } = usePlatformCoaches();
 
   const { state, onStateChange } = useDataTableUrlState({
     defaultSort: { columnId: "name", direction: "asc" },
   });
 
+  const ownerByUserId = useMemo(() => {
+    const map = new Map<string, { id: string; name: string | null; email: string }>();
+
+    coaches?.forEach((coach) => {
+      map.set(coach.userId, { id: coach.userId, name: coach.name, email: coach.email });
+    });
+
+    return map;
+  }, [coaches]);
+
   const isOwn = useCallback(
     (item: BlockKind) => item.scope === "COACH" && item.ownerId === currentUserId,
     [currentUserId],
+  );
+
+  const filters: DataTableFilter<BlockKind>[] = useMemo(
+    () => [
+      {
+        id: "scope",
+        label: "Scope",
+        options: SCOPE_FILTER_OPTIONS,
+        match: (item, value) => {
+          if (value === "OWN") {
+            return isOwn(item);
+          }
+
+          return item.scope === value;
+        },
+      },
+    ],
+    [isOwn],
   );
 
   const columns: Column<BlockKind>[] = useMemo(
@@ -52,7 +81,20 @@ export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
         width: "30%",
         sortable: true,
         sortValue: (item) => item.name.toLowerCase(),
-        render: (item) => <Typography variant="subtitle2">{item.name}</Typography>,
+        searchValue: (item) => item.name,
+        render: (item) =>
+          isOwn(item) ? (
+            <ButtonBase
+              onClick={() => setEditTarget(item)}
+              sx={{ textAlign: "left", justifyContent: "flex-start", width: "100%" }}
+            >
+              <Typography variant="subtitle2" sx={{ color: "primary.main" }}>
+                {item.name}
+              </Typography>
+            </ButtonBase>
+          ) : (
+            <Typography variant="subtitle2">{item.name}</Typography>
+          ),
       },
       {
         id: "scope",
@@ -70,6 +112,12 @@ export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
         ),
       },
       {
+        id: "owner",
+        label: "Owner",
+        width: "20%",
+        render: (item) => <UserChip user={item.ownerId ? ownerByUserId.get(item.ownerId) : null} />,
+      },
+      {
         id: "defaultWeight",
         label: "Weight",
         width: "10%",
@@ -80,7 +128,7 @@ export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
       {
         id: "defaultArchetypeKind",
         label: "Default archetype",
-        width: "20%",
+        width: "22%",
         sortable: true,
         sortValue: (item) => item.defaultArchetypeKind ?? "",
         render: (item) => (
@@ -89,68 +137,21 @@ export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
           </Typography>
         ),
       },
-      {
-        id: "actions",
-        label: "Actions",
-        align: "right",
-        width: "16%",
-        render: (item) => {
-          if (!isOwn(item)) {
-            return (
-              <Typography variant="caption" color="text.secondary">
-                Read-only
-              </Typography>
-            );
-          }
-
-          return (
-            <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-              <Tooltip title="Edit">
-                <IconButton
-                  onClick={() => setEditTarget(item)}
-                  color="primary"
-                  aria-label="Edit"
-                  size="small"
-                >
-                  <EditIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-
-              <Tooltip title="Delete">
-                <IconButton
-                  onClick={() => requestDelete(item.id)}
-                  color="error"
-                  aria-label="Delete"
-                  size="small"
-                >
-                  <DeleteIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Stack>
-          );
-        },
-      },
     ],
-    [isOwn, requestDelete],
+    [isOwn, ownerByUserId],
   );
 
   const items = data?.items ?? [];
 
   return (
     <Stack spacing={2}>
-      <LibrarySearch
-        searchValue={search}
-        onSearchChange={setSearch}
-        scope={scope}
-        onScopeChange={setScope}
-        placeholder="Search block kinds..."
-      />
-
       {error && <Alert severity="error">{error.message}</Alert>}
 
       <DataTable
         data={items}
         columns={columns}
+        filters={filters}
+        searchPlaceholder="Search block kinds..."
         paginated
         emptyMessage={isLoading ? "Loading block kinds..." : "No block kinds match your filters."}
         action={
@@ -173,18 +174,6 @@ export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
         open={!!editTarget}
         initial={editTarget ?? undefined}
         onClose={() => setEditTarget(null)}
-      />
-
-      <ConfirmationModal
-        open={!!deleteId}
-        title="Delete block kind"
-        message="Are you sure you want to delete this block kind?"
-        details="This will soft-delete the row. Plans referencing it keep their snapshot."
-        confirmText="Delete"
-        type="danger"
-        isConfirming={isDeleting}
-        onConfirm={confirmDelete}
-        onClose={cancelDelete}
       />
     </Stack>
   );

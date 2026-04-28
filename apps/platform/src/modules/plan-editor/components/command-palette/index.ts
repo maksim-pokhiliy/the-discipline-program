@@ -2,11 +2,13 @@ export { CommandPalette } from "./command-palette";
 export { PlanCommandRegistry, type PlanCommandRegistryProps } from "./plan-command-registry";
 export {
   CommandPaletteProvider,
-  useCommandPalette,
+  useCommandPaletteActions,
+  useCommandPaletteState,
   usePaletteCommand,
+  type CommandPaletteActions,
   type CommandPaletteCommand,
-  type CommandPaletteContextValue,
   type CommandPaletteProviderProps,
+  type CommandPaletteState,
 } from "./command-palette.context";
 export { filterCommands, useFilteredCommands } from "./use-command-palette";
 export { createCreateWeekCommand } from "./commands/create-week";
