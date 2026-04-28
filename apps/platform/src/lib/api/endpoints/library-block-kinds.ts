@@ -2,9 +2,12 @@ import { type ApiClient } from "@repo/api-client";
 import {
   type CreateBlockKindInput,
   type CreateBlockKindResponse,
+  type DemoteBlockKindInput,
+  type DemoteBlockKindResponse,
   type GetBlockKindResponse,
   type ListBlockKindsQuery,
   type ListBlockKindsResponse,
+  type PromoteBlockKindResponse,
   type UpdateBlockKindInput,
   type UpdateBlockKindResponse,
 } from "@repo/contracts/lms/block-kind";
@@ -54,4 +57,10 @@ export const createLibraryBlockKindsAPI = (client: ApiClient) => ({
 
   delete: (id: string): Promise<void> =>
     client.request(`/api/platform/library/block-kinds/${id}`, "DELETE"),
+
+  promote: (id: string): Promise<PromoteBlockKindResponse> =>
+    client.request(`/api/platform/library/block-kinds/${id}/promote`, "POST"),
+
+  demote: (id: string, data: DemoteBlockKindInput): Promise<DemoteBlockKindResponse> =>
+    client.request(`/api/platform/library/block-kinds/${id}/demote`, "POST", data),
 });

@@ -2,9 +2,12 @@ import { type ApiClient } from "@repo/api-client";
 import {
   type CreateExerciseLibraryItemInput,
   type CreateExerciseLibraryItemResponse,
+  type DemoteExerciseLibraryItemInput,
+  type DemoteExerciseLibraryItemResponse,
   type GetExerciseLibraryItemResponse,
   type ListExerciseLibraryItemsQuery,
   type ListExerciseLibraryItemsResponse,
+  type PromoteExerciseLibraryItemResponse,
   type UpdateExerciseLibraryItemInput,
   type UpdateExerciseLibraryItemResponse,
 } from "@repo/contracts/lms/exercise-library-item";
@@ -69,4 +72,13 @@ export const createLibraryExercisesAPI = (client: ApiClient) => ({
 
   delete: (id: string): Promise<void> =>
     client.request(`/api/platform/library/exercises/${id}`, "DELETE"),
+
+  promote: (id: string): Promise<PromoteExerciseLibraryItemResponse> =>
+    client.request(`/api/platform/library/exercises/${id}/promote`, "POST"),
+
+  demote: (
+    id: string,
+    data: DemoteExerciseLibraryItemInput,
+  ): Promise<DemoteExerciseLibraryItemResponse> =>
+    client.request(`/api/platform/library/exercises/${id}/demote`, "POST", data),
 });

@@ -102,3 +102,34 @@ export const useDeleteSchemeTemplate = () => {
     },
   });
 };
+
+export const usePromoteSchemeTemplate = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.library.schemeTemplates.promote(id),
+    onSuccess: () => {
+      toast.success("Scheme template promoted to SYSTEM");
+      queryClient.invalidateQueries({ queryKey: platformKeys.library.schemeTemplates.page() });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to promote scheme template");
+    },
+  });
+};
+
+export const useDemoteSchemeTemplate = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, newOwnerId }: { id: string; newOwnerId: string }) =>
+      api.library.schemeTemplates.demote(id, { newOwnerId }),
+    onSuccess: () => {
+      toast.success("Scheme template demoted to COACH");
+      queryClient.invalidateQueries({ queryKey: platformKeys.library.schemeTemplates.page() });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to demote scheme template");
+    },
+  });
+};

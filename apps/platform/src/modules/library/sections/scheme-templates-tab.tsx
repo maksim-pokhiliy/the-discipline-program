@@ -5,18 +5,28 @@ import { useCallback, useMemo, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import { Alert, Button, ButtonBase, Chip, Stack, Typography } from "@mui/material";
 
+import { UserRole } from "@repo/contracts/iam/auth";
 import { type SchemeTemplate } from "@repo/contracts/lms/scheme-template";
+import { useDeleteConfirmation } from "@repo/query";
 import {
   type Column,
+  ConfirmationModal,
   DataTable,
   type DataTableFilter,
   UserChip,
   useDataTableUrlState,
 } from "@repo/ui";
 
-import { usePlatformCoaches, useSchemeTemplatesPageData } from "@app/lib/hooks";
+import {
+  useCurrentUserRole,
+  useDeleteSchemeTemplate,
+  useDemoteSchemeTemplate,
+  usePlatformCoaches,
+  usePromoteSchemeTemplate,
+  useSchemeTemplatesPageData,
+} from "@app/lib/hooks";
 
-import { SchemeTemplateFormModal } from "../components";
+import { DemoteDialog, LibraryRowActions, SchemeTemplateFormModal } from "../components";
 import { formatToken, SCOPE_CHIP_COLOR } from "../constants";
 
 type SchemeTemplatesTabProps = {
@@ -30,11 +40,22 @@ const SCOPE_FILTER_OPTIONS = [
 ];
 
 export const SchemeTemplatesTab = ({ currentUserId }: SchemeTemplatesTabProps) => {
+  const role = useCurrentUserRole();
+  const isPrivileged = role === UserRole.HEAD_COACH || role === UserRole.ADMIN;
+
   const [editTarget, setEditTarget] = useState<SchemeTemplate | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [demoteTarget, setDemoteTarget] = useState<SchemeTemplate | null>(null);
 
   const { data, isLoading, error } = useSchemeTemplatesPageData({}, currentUserId);
-  const { data: coaches } = usePlatformCoaches();
+  const { data: coaches } = usePlatformCoaches(isPrivileged);
+
+  const deleteMutation = useDeleteSchemeTemplate();
+  const promoteMutation = usePromoteSchemeTemplate();
+  const demoteMutation = useDemoteSchemeTemplate();
+
+  const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
+    useDeleteConfirmation({ deleteMutation });
 
   const { state, onStateChange } = useDataTableUrlState({
     defaultSort: { columnId: "name", direction: "asc" },
@@ -73,17 +94,37 @@ export const SchemeTemplatesTab = ({ currentUserId }: SchemeTemplatesTabProps) =
     [isOwn],
   );
 
+  const handleDemoteConfirm = useCallback(
+    (newOwnerId: string) => {
+      if (!demoteTarget) {
+        return;
+      }
+
+      demoteMutation.mutate(
+        { id: demoteTarget.id, newOwnerId },
+        { onSettled: () => setDemoteTarget(null) },
+      );
+    },
+    [demoteMutation, demoteTarget],
+  );
+
   const columns: Column<SchemeTemplate>[] = useMemo(
     () => [
       {
         id: "name",
         label: "Name",
-        width: "30%",
+        width: "26%",
         sortable: true,
         sortValue: (item) => item.name.toLowerCase(),
         searchValue: (item) => item.name,
-        render: (item) =>
-          isOwn(item) ? (
+        render: (item) => {
+          const canEdit = isPrivileged || isOwn(item);
+
+          if (!canEdit) {
+            return <Typography variant="subtitle2">{item.name}</Typography>;
+          }
+
+          return (
             <ButtonBase
               onClick={() => setEditTarget(item)}
               sx={{ textAlign: "left", justifyContent: "flex-start", width: "100%" }}
@@ -92,9 +133,8 @@ export const SchemeTemplatesTab = ({ currentUserId }: SchemeTemplatesTabProps) =
                 {item.name}
               </Typography>
             </ButtonBase>
-          ) : (
-            <Typography variant="subtitle2">{item.name}</Typography>
-          ),
+          );
+        },
       },
       {
         id: "scope",
@@ -114,21 +154,38 @@ export const SchemeTemplatesTab = ({ currentUserId }: SchemeTemplatesTabProps) =
       {
         id: "owner",
         label: "Owner",
-        width: "22%",
+        width: "20%",
         render: (item) => <UserChip user={item.ownerId ? ownerByUserId.get(item.ownerId) : null} />,
       },
       {
         id: "archetypeKind",
         label: "Archetype",
-        width: "30%",
+        width: "26%",
         sortable: true,
         sortValue: (item) => item.archetypeKind,
         render: (item) => (
           <Typography variant="body2">{formatToken(item.archetypeKind)}</Typography>
         ),
       },
+      {
+        id: "actions",
+        label: "",
+        align: "right",
+        width: "8%",
+        render: (item) => (
+          <LibraryRowActions
+            role={role}
+            isOwn={isOwn(item)}
+            scope={item.scope}
+            onEdit={() => setEditTarget(item)}
+            onDelete={() => requestDelete(item.id)}
+            onPromote={() => promoteMutation.mutate(item.id)}
+            onDemote={() => setDemoteTarget(item)}
+          />
+        ),
+      },
     ],
-    [isOwn, ownerByUserId],
+    [isOwn, isPrivileged, ownerByUserId, promoteMutation, requestDelete, role],
   );
 
   const items = data?.items ?? [];
@@ -166,6 +223,27 @@ export const SchemeTemplatesTab = ({ currentUserId }: SchemeTemplatesTabProps) =
         open={!!editTarget}
         initial={editTarget ?? undefined}
         onClose={() => setEditTarget(null)}
+      />
+
+      <ConfirmationModal
+        open={!!deleteId}
+        title="Delete scheme template"
+        message="Are you sure you want to delete this scheme template?"
+        details="This will soft-delete the row. Plans referencing it keep their snapshot. This may affect existing plans."
+        confirmText="Delete"
+        type="danger"
+        isConfirming={isDeleting}
+        onConfirm={confirmDelete}
+        onClose={cancelDelete}
+      />
+
+      <DemoteDialog
+        open={!!demoteTarget}
+        itemName={demoteTarget?.name ?? ""}
+        coaches={coaches ?? []}
+        isPending={demoteMutation.isPending}
+        onClose={() => setDemoteTarget(null)}
+        onConfirm={handleDemoteConfirm}
       />
     </Stack>
   );

@@ -23,6 +23,8 @@ export const updateSchemeTemplateInputSchema = z.object({
     .optional(),
   archetypeKind: schemeArchetypeKindSchema.optional(),
   defaultParams: schemeParamsSchema.optional(),
+  scope: libraryScopeSchema.optional(),
+  ownerId: z.string().cuid().nullable().optional(),
 });
 
 export const schemeTemplateIdParamSchema = z.object({

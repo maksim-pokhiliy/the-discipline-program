@@ -100,3 +100,34 @@ export const useDeleteBlockKind = () => {
     },
   });
 };
+
+export const usePromoteBlockKind = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.library.blockKinds.promote(id),
+    onSuccess: () => {
+      toast.success("Block kind promoted to SYSTEM");
+      queryClient.invalidateQueries({ queryKey: platformKeys.library.blockKinds.page() });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to promote block kind");
+    },
+  });
+};
+
+export const useDemoteBlockKind = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, newOwnerId }: { id: string; newOwnerId: string }) =>
+      api.library.blockKinds.demote(id, { newOwnerId }),
+    onSuccess: () => {
+      toast.success("Block kind demoted to COACH");
+      queryClient.invalidateQueries({ queryKey: platformKeys.library.blockKinds.page() });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to demote block kind");
+    },
+  });
+};

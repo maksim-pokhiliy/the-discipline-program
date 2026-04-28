@@ -104,3 +104,34 @@ export const useDeleteExercise = () => {
     },
   });
 };
+
+export const usePromoteExercise = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => api.library.exercises.promote(id),
+    onSuccess: () => {
+      toast.success("Exercise promoted to SYSTEM");
+      queryClient.invalidateQueries({ queryKey: platformKeys.library.exercises.page() });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to promote exercise");
+    },
+  });
+};
+
+export const useDemoteExercise = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, newOwnerId }: { id: string; newOwnerId: string }) =>
+      api.library.exercises.demote(id, { newOwnerId }),
+    onSuccess: () => {
+      toast.success("Exercise demoted to COACH");
+      queryClient.invalidateQueries({ queryKey: platformKeys.library.exercises.page() });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to demote exercise");
+    },
+  });
+};

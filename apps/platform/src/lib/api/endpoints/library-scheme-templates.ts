@@ -2,9 +2,12 @@ import { type ApiClient } from "@repo/api-client";
 import {
   type CreateSchemeTemplateInput,
   type CreateSchemeTemplateResponse,
+  type DemoteSchemeTemplateInput,
+  type DemoteSchemeTemplateResponse,
   type GetSchemeTemplateResponse,
   type ListSchemeTemplatesQuery,
   type ListSchemeTemplatesResponse,
+  type PromoteSchemeTemplateResponse,
   type UpdateSchemeTemplateInput,
   type UpdateSchemeTemplateResponse,
 } from "@repo/contracts/lms/scheme-template";
@@ -58,4 +61,10 @@ export const createLibrarySchemeTemplatesAPI = (client: ApiClient) => ({
 
   delete: (id: string): Promise<void> =>
     client.request(`/api/platform/library/scheme-templates/${id}`, "DELETE"),
+
+  promote: (id: string): Promise<PromoteSchemeTemplateResponse> =>
+    client.request(`/api/platform/library/scheme-templates/${id}/promote`, "POST"),
+
+  demote: (id: string, data: DemoteSchemeTemplateInput): Promise<DemoteSchemeTemplateResponse> =>
+    client.request(`/api/platform/library/scheme-templates/${id}/demote`, "POST", data),
 });

@@ -5,7 +5,6 @@ import {
   type CreateExerciseLibraryItemInput,
   type DemoteExerciseLibraryItemInput,
   type ListExerciseLibraryItemsQuery,
-  type UpdateExerciseLibraryItemInput,
 } from "@repo/contracts/lms/exercise-library-item";
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 import { logger } from "@repo/shared";
@@ -22,6 +21,8 @@ import {
   SKILL_LEVEL_TO_PRISMA_MAP,
 } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
+
+import { updateExerciseLibraryItemImpl } from "./exercise-library-item-update";
 
 const ADMIN_OR_COACH_LIKE: ReadonlySet<UserRole> = new Set([
   UserRole.COACH,
@@ -138,74 +139,7 @@ export const lmsExerciseLibraryItemApi = {
     }
   },
 
-  update: async (
-    userId: string,
-    exerciseLibraryItemId: string,
-    data: UpdateExerciseLibraryItemInput,
-  ) => {
-    if ((data as Record<string, unknown>)["scope"] !== undefined) {
-      throw new ForbiddenError("scope cannot be changed via update; use promote or demote");
-    }
-
-    const role = await requireCoachLikeRole(userId);
-
-    const existing = await findOrThrow(
-      prisma.exerciseLibraryItem.findUnique({ where: { id: exerciseLibraryItemId } }),
-      "Exercise library item",
-    );
-
-    const isAdminPath = role === UserRole.ADMIN || role === UserRole.HEAD_COACH;
-
-    if (!isAdminPath) {
-      if (existing.scope === "SYSTEM") {
-        throw new ForbiddenError("SYSTEM exercise items are read-only for coaches");
-      }
-
-      if (existing.ownerId !== userId) {
-        throw new ForbiddenError("Exercise library item belongs to another coach");
-      }
-    }
-
-    try {
-      const item = await prisma.exerciseLibraryItem.update({
-        where: { id: exerciseLibraryItemId },
-        data: {
-          ...(data.name ? { name: data.name } : {}),
-          ...(data.nameAliases ? { nameAliases: data.nameAliases } : {}),
-          ...(data.description !== undefined ? { description: data.description } : {}),
-          ...(data.primaryMovement
-            ? { primaryMovement: MOVEMENT_PATTERN_TO_PRISMA_MAP[data.primaryMovement] }
-            : {}),
-          ...(data.modality ? { modality: MODALITY_TO_PRISMA_MAP[data.modality] } : {}),
-          ...(data.equipment ? { equipment: data.equipment } : {}),
-          ...(data.primaryBodyParts
-            ? { primaryBodyParts: data.primaryBodyParts.map((bp) => BODY_PART_TO_PRISMA_MAP[bp]) }
-            : {}),
-          ...(data.secondaryBodyParts
-            ? {
-                secondaryBodyParts: data.secondaryBodyParts.map(
-                  (bp) => BODY_PART_TO_PRISMA_MAP[bp],
-                ),
-              }
-            : {}),
-          ...(data.skillLevel ? { skillLevel: SKILL_LEVEL_TO_PRISMA_MAP[data.skillLevel] } : {}),
-          ...(data.defaultMetrics !== undefined
-            ? { defaultMetrics: toJsonInput(data.defaultMetrics) }
-            : {}),
-          ...(data.demoVideoUrl !== undefined ? { demoVideoUrl: data.demoVideoUrl } : {}),
-          ...(data.demoImageUrl !== undefined ? { demoImageUrl: data.demoImageUrl } : {}),
-          ...(data.parentId !== undefined ? { parentId: data.parentId } : {}),
-          ...(data.isBenchmark !== undefined ? { isBenchmark: data.isBenchmark } : {}),
-          ...(data.isDeprecated !== undefined ? { isDeprecated: data.isDeprecated } : {}),
-          ...(data.supersedesId !== undefined ? { supersedesId: data.supersedesId } : {}),
-        },
-      });
-
-      return mapToExerciseLibraryItem(item);
-    } catch (error) {
-      return handlePrismaError(error, { entity: "Exercise library item", field: "name" });
-    }
-  },
+  update: updateExerciseLibraryItemImpl,
 
   delete: async (userId: string, exerciseLibraryItemId: string): Promise<void> => {
     const role = await requireCoachLikeRole(userId);

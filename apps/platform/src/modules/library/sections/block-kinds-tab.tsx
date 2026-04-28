@@ -5,18 +5,28 @@ import { useCallback, useMemo, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import { Alert, Button, ButtonBase, Chip, Stack, Typography } from "@mui/material";
 
+import { UserRole } from "@repo/contracts/iam/auth";
 import { type BlockKind } from "@repo/contracts/lms/block-kind";
+import { useDeleteConfirmation } from "@repo/query";
 import {
   type Column,
+  ConfirmationModal,
   DataTable,
   type DataTableFilter,
   UserChip,
   useDataTableUrlState,
 } from "@repo/ui";
 
-import { useBlockKindsPageData, usePlatformCoaches } from "@app/lib/hooks";
+import {
+  useBlockKindsPageData,
+  useCurrentUserRole,
+  useDeleteBlockKind,
+  useDemoteBlockKind,
+  usePlatformCoaches,
+  usePromoteBlockKind,
+} from "@app/lib/hooks";
 
-import { BlockKindFormModal } from "../components";
+import { BlockKindFormModal, DemoteDialog, LibraryRowActions } from "../components";
 import { formatToken, SCOPE_CHIP_COLOR } from "../constants";
 
 type BlockKindsTabProps = {
@@ -30,11 +40,22 @@ const SCOPE_FILTER_OPTIONS = [
 ];
 
 export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
+  const role = useCurrentUserRole();
+  const isPrivileged = role === UserRole.HEAD_COACH || role === UserRole.ADMIN;
+
   const [editTarget, setEditTarget] = useState<BlockKind | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [demoteTarget, setDemoteTarget] = useState<BlockKind | null>(null);
 
   const { data, isLoading, error } = useBlockKindsPageData({}, currentUserId);
-  const { data: coaches } = usePlatformCoaches();
+  const { data: coaches } = usePlatformCoaches(isPrivileged);
+
+  const deleteMutation = useDeleteBlockKind();
+  const promoteMutation = usePromoteBlockKind();
+  const demoteMutation = useDemoteBlockKind();
+
+  const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
+    useDeleteConfirmation({ deleteMutation });
 
   const { state, onStateChange } = useDataTableUrlState({
     defaultSort: { columnId: "name", direction: "asc" },
@@ -73,17 +94,37 @@ export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
     [isOwn],
   );
 
+  const handleDemoteConfirm = useCallback(
+    (newOwnerId: string) => {
+      if (!demoteTarget) {
+        return;
+      }
+
+      demoteMutation.mutate(
+        { id: demoteTarget.id, newOwnerId },
+        { onSettled: () => setDemoteTarget(null) },
+      );
+    },
+    [demoteMutation, demoteTarget],
+  );
+
   const columns: Column<BlockKind>[] = useMemo(
     () => [
       {
         id: "name",
         label: "Name",
-        width: "30%",
+        width: "26%",
         sortable: true,
         sortValue: (item) => item.name.toLowerCase(),
         searchValue: (item) => item.name,
-        render: (item) =>
-          isOwn(item) ? (
+        render: (item) => {
+          const canEdit = isPrivileged || isOwn(item);
+
+          if (!canEdit) {
+            return <Typography variant="subtitle2">{item.name}</Typography>;
+          }
+
+          return (
             <ButtonBase
               onClick={() => setEditTarget(item)}
               sx={{ textAlign: "left", justifyContent: "flex-start", width: "100%" }}
@@ -92,9 +133,8 @@ export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
                 {item.name}
               </Typography>
             </ButtonBase>
-          ) : (
-            <Typography variant="subtitle2">{item.name}</Typography>
-          ),
+          );
+        },
       },
       {
         id: "scope",
@@ -114,7 +154,7 @@ export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
       {
         id: "owner",
         label: "Owner",
-        width: "20%",
+        width: "18%",
         render: (item) => <UserChip user={item.ownerId ? ownerByUserId.get(item.ownerId) : null} />,
       },
       {
@@ -128,7 +168,7 @@ export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
       {
         id: "defaultArchetypeKind",
         label: "Default archetype",
-        width: "22%",
+        width: "20%",
         sortable: true,
         sortValue: (item) => item.defaultArchetypeKind ?? "",
         render: (item) => (
@@ -137,8 +177,25 @@ export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
           </Typography>
         ),
       },
+      {
+        id: "actions",
+        label: "",
+        align: "right",
+        width: "8%",
+        render: (item) => (
+          <LibraryRowActions
+            role={role}
+            isOwn={isOwn(item)}
+            scope={item.scope}
+            onEdit={() => setEditTarget(item)}
+            onDelete={() => requestDelete(item.id)}
+            onPromote={() => promoteMutation.mutate(item.id)}
+            onDemote={() => setDemoteTarget(item)}
+          />
+        ),
+      },
     ],
-    [isOwn, ownerByUserId],
+    [isOwn, isPrivileged, ownerByUserId, promoteMutation, requestDelete, role],
   );
 
   const items = data?.items ?? [];
@@ -174,6 +231,27 @@ export const BlockKindsTab = ({ currentUserId }: BlockKindsTabProps) => {
         open={!!editTarget}
         initial={editTarget ?? undefined}
         onClose={() => setEditTarget(null)}
+      />
+
+      <ConfirmationModal
+        open={!!deleteId}
+        title="Delete block kind"
+        message="Are you sure you want to delete this block kind?"
+        details="This will soft-delete the row. Plans referencing it keep their snapshot. This may affect existing plans."
+        confirmText="Delete"
+        type="danger"
+        isConfirming={isDeleting}
+        onConfirm={confirmDelete}
+        onClose={cancelDelete}
+      />
+
+      <DemoteDialog
+        open={!!demoteTarget}
+        itemName={demoteTarget?.name ?? ""}
+        coaches={coaches ?? []}
+        isPending={demoteMutation.isPending}
+        onClose={() => setDemoteTarget(null)}
+        onConfirm={handleDemoteConfirm}
       />
     </Stack>
   );

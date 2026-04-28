@@ -5,18 +5,28 @@ import { useCallback, useMemo, useState } from "react";
 import AddIcon from "@mui/icons-material/Add";
 import { Alert, Button, ButtonBase, Chip, Stack, Typography } from "@mui/material";
 
+import { UserRole } from "@repo/contracts/iam/auth";
 import { type ExerciseLibraryItem } from "@repo/contracts/lms/exercise-library-item";
+import { useDeleteConfirmation } from "@repo/query";
 import {
   type Column,
+  ConfirmationModal,
   DataTable,
   type DataTableFilter,
   UserChip,
   useDataTableUrlState,
 } from "@repo/ui";
 
-import { useExercisesPageData, usePlatformCoaches } from "@app/lib/hooks";
+import {
+  useCurrentUserRole,
+  useDeleteExercise,
+  useDemoteExercise,
+  useExercisesPageData,
+  usePlatformCoaches,
+  usePromoteExercise,
+} from "@app/lib/hooks";
 
-import { ExerciseFormModal } from "../components";
+import { DemoteDialog, ExerciseFormModal, LibraryRowActions } from "../components";
 import {
   formatToken,
   MODALITY_OPTIONS,
@@ -35,11 +45,22 @@ const SCOPE_FILTER_OPTIONS = [
 ];
 
 export const ExercisesTab = ({ currentUserId }: ExercisesTabProps) => {
+  const role = useCurrentUserRole();
+  const isPrivileged = role === UserRole.HEAD_COACH || role === UserRole.ADMIN;
+
   const [editTarget, setEditTarget] = useState<ExerciseLibraryItem | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [demoteTarget, setDemoteTarget] = useState<ExerciseLibraryItem | null>(null);
 
   const { data, isLoading, error } = useExercisesPageData({}, currentUserId);
-  const { data: coaches } = usePlatformCoaches();
+  const { data: coaches } = usePlatformCoaches(isPrivileged);
+
+  const deleteMutation = useDeleteExercise();
+  const promoteMutation = usePromoteExercise();
+  const demoteMutation = useDemoteExercise();
+
+  const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
+    useDeleteConfirmation({ deleteMutation });
 
   const { state, onStateChange } = useDataTableUrlState({
     defaultSort: { columnId: "name", direction: "asc" },
@@ -90,17 +111,37 @@ export const ExercisesTab = ({ currentUserId }: ExercisesTabProps) => {
     [isOwn],
   );
 
+  const handleDemoteConfirm = useCallback(
+    (newOwnerId: string) => {
+      if (!demoteTarget) {
+        return;
+      }
+
+      demoteMutation.mutate(
+        { id: demoteTarget.id, newOwnerId },
+        { onSettled: () => setDemoteTarget(null) },
+      );
+    },
+    [demoteMutation, demoteTarget],
+  );
+
   const columns: Column<ExerciseLibraryItem>[] = useMemo(
     () => [
       {
         id: "name",
         label: "Name",
-        width: "26%",
+        width: "24%",
         sortable: true,
         sortValue: (item) => item.name.toLowerCase(),
         searchValue: (item) => `${item.name} ${item.nameAliases.join(" ")}`,
-        render: (item) =>
-          isOwn(item) ? (
+        render: (item) => {
+          const canEdit = isPrivileged || isOwn(item);
+
+          if (!canEdit) {
+            return <Typography variant="subtitle2">{item.name}</Typography>;
+          }
+
+          return (
             <ButtonBase
               onClick={() => setEditTarget(item)}
               sx={{ textAlign: "left", justifyContent: "flex-start", width: "100%" }}
@@ -109,9 +150,8 @@ export const ExercisesTab = ({ currentUserId }: ExercisesTabProps) => {
                 {item.name}
               </Typography>
             </ButtonBase>
-          ) : (
-            <Typography variant="subtitle2">{item.name}</Typography>
-          ),
+          );
+        },
       },
       {
         id: "scope",
@@ -131,7 +171,7 @@ export const ExercisesTab = ({ currentUserId }: ExercisesTabProps) => {
       {
         id: "owner",
         label: "Owner",
-        width: "16%",
+        width: "14%",
         render: (item) => <UserChip user={item.ownerId ? ownerByUserId.get(item.ownerId) : null} />,
       },
       {
@@ -148,7 +188,7 @@ export const ExercisesTab = ({ currentUserId }: ExercisesTabProps) => {
       {
         id: "primaryMovement",
         label: "Movement",
-        width: "14%",
+        width: "12%",
         sortable: true,
         sortValue: (item) => item.primaryMovement,
         render: (item) => (
@@ -158,7 +198,7 @@ export const ExercisesTab = ({ currentUserId }: ExercisesTabProps) => {
       {
         id: "modality",
         label: "Modality",
-        width: "12%",
+        width: "10%",
         sortable: true,
         sortValue: (item) => item.modality,
         render: (item) => <Typography variant="body2">{formatToken(item.modality)}</Typography>,
@@ -166,13 +206,30 @@ export const ExercisesTab = ({ currentUserId }: ExercisesTabProps) => {
       {
         id: "skillLevel",
         label: "Level",
-        width: "12%",
+        width: "10%",
         sortable: true,
         sortValue: (item) => item.skillLevel,
         render: (item) => <Typography variant="body2">{formatToken(item.skillLevel)}</Typography>,
       },
+      {
+        id: "actions",
+        label: "",
+        align: "right",
+        width: "10%",
+        render: (item) => (
+          <LibraryRowActions
+            role={role}
+            isOwn={isOwn(item)}
+            scope={item.scope}
+            onEdit={() => setEditTarget(item)}
+            onDelete={() => requestDelete(item.id)}
+            onPromote={() => promoteMutation.mutate(item.id)}
+            onDemote={() => setDemoteTarget(item)}
+          />
+        ),
+      },
     ],
-    [isOwn, ownerByUserId],
+    [isOwn, isPrivileged, ownerByUserId, promoteMutation, requestDelete, role],
   );
 
   const items = data?.items ?? [];
@@ -208,6 +265,27 @@ export const ExercisesTab = ({ currentUserId }: ExercisesTabProps) => {
         open={!!editTarget}
         initial={editTarget ?? undefined}
         onClose={() => setEditTarget(null)}
+      />
+
+      <ConfirmationModal
+        open={!!deleteId}
+        title="Delete exercise"
+        message="Are you sure you want to delete this exercise?"
+        details="This will soft-delete the row. Plans referencing it keep their snapshot, but new plans cannot reference it. This may affect existing plans."
+        confirmText="Delete"
+        type="danger"
+        isConfirming={isDeleting}
+        onConfirm={confirmDelete}
+        onClose={cancelDelete}
+      />
+
+      <DemoteDialog
+        open={!!demoteTarget}
+        itemName={demoteTarget?.name ?? ""}
+        coaches={coaches ?? []}
+        isPending={demoteMutation.isPending}
+        onClose={() => setDemoteTarget(null)}
+        onConfirm={handleDemoteConfirm}
       />
     </Stack>
   );
