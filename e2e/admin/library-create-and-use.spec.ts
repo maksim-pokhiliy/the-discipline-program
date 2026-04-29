@@ -51,7 +51,6 @@ test.describe("Library create-and-use seed-to-PR", () => {
     await page.getByLabel("Reps", { exact: true }).check();
 
     await page.getByLabel("Demo video URL").fill("https://example.com/demo.mp4");
-    await page.getByLabel("Demo image URL").fill("https://example.com/demo.png");
 
     await page.getByRole("button", { name: "Create exercise" }).click();
 
@@ -169,7 +168,7 @@ test.describe("Library create-and-use seed-to-PR", () => {
           })
           .toBeGreaterThanOrEqual(1);
 
-        const successPatches = patchResponses.filter((r) => r.status === 200);
+        const successPatches = patchResponses.filter((r) => r.status >= 200 && r.status < 300);
 
         expect(
           successPatches.length,

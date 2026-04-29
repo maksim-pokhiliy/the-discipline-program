@@ -17,14 +17,6 @@ const globalSetup = async () => {
 
   const root = path.resolve(__dirname, "..");
 
-  if (process.env.E2E_PROD === "1") {
-    execSync("pnpm --filter admin --filter platform --filter marketing build", {
-      stdio: "inherit",
-      cwd: root,
-      env: { ...process.env, DATABASE_URL: dbUrl, SKIP_ENV_VALIDATION: "1" },
-    });
-  }
-
   execSync("pnpm --filter @repo/api-server db:push --skip-generate --accept-data-loss", {
     stdio: "inherit",
     cwd: root,
@@ -33,13 +25,6 @@ const globalSetup = async () => {
 
   if (process.env.EMPTY_DB === "1") {
     await createEmptyDbAuthUsers(dbUrl);
-  } else if (process.env.BOOTSTRAP_DB === "1") {
-    await createEmptyDbAuthUsers(dbUrl);
-    execSync("pnpm --filter @repo/api-server db:seed:pages", {
-      stdio: "inherit",
-      cwd: root,
-      env: { ...process.env, DATABASE_URL: dbUrl, SKIP_ENV_VALIDATION: "1" },
-    });
   } else {
     execSync("pnpm db:seed", {
       stdio: "inherit",

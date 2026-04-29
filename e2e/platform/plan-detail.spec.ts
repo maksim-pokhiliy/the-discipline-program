@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+const SEEDED_PLAN_NAME = "Foundations GPP";
+
 const navigateToPlanDetail = async (page: Page, tab?: "athletes" | "schedule") => {
   await page.goto("/coach/plans");
   await expect(page.getByRole("heading", { name: "Training Plans" })).toBeVisible({
@@ -7,11 +9,11 @@ const navigateToPlanDetail = async (page: Page, tab?: "athletes" | "schedule") =
   });
   await expect(page.getByText("Loading plans...")).toBeHidden({ timeout: 30_000 });
 
-  const planLink = page.locator("a[href*='/coach/plans/']").first();
-  const href = await planLink.getAttribute("href");
+  const planLink = page.locator("a[href*='/coach/plans/']").filter({ hasText: SEEDED_PLAN_NAME });
+  const href = await planLink.first().getAttribute("href");
 
   if (!href) {
-    throw new Error("Expected at least one plan link on /coach/plans");
+    throw new Error(`Expected a plan link for "${SEEDED_PLAN_NAME}" on /coach/plans`);
   }
 
   const target = tab ? `${href}?tab=${tab}` : href;

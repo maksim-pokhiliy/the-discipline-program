@@ -4,11 +4,11 @@ import { SEQUENTIAL_TEST_FILES } from "./vitest.sequential-files";
 
 export default defineConfig({
   test: {
-    name: "api-server",
+    name: "api-server-sequential",
     globals: true,
     environment: "node",
-    include: ["src/**/*.test.ts"],
-    exclude: ["**/node_modules/**", "**/dist/**", ...SEQUENTIAL_TEST_FILES],
+    include: SEQUENTIAL_TEST_FILES,
+    fileParallelism: false,
     testTimeout: 15_000,
     setupFiles: ["./src/test/setup.ts"],
     env: {
@@ -16,17 +16,6 @@ export default defineConfig({
       NEXT_PUBLIC_MARKETING_URL: "http://localhost:3001",
       NEXT_PUBLIC_PLATFORM_URL: "http://localhost:3002",
       INVITE_TOKEN_TTL_HOURS: "72",
-    },
-    coverage: {
-      provider: "v8",
-      include: ["src/**/*.ts"],
-      exclude: ["src/test/**", "src/**/*.test.ts"],
-      thresholds: {
-        lines: 60,
-        functions: 60,
-        branches: 50,
-        statements: 60,
-      },
     },
   },
 });

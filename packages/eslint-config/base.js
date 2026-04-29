@@ -95,6 +95,12 @@ export const config = [
     },
   },
   {
+    files: ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts", "**/*.spec.tsx"],
+    rules: {
+      "max-lines": "off",
+    },
+  },
+  {
     ignores: ["dist/**", "node_modules/**", ".next/**", ".turbo/**", "coverage/**"],
   },
 ];

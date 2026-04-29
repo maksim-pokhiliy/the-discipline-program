@@ -73,11 +73,7 @@ test.describe("Coach Training Plans", () => {
       timeout: 30_000,
     });
 
-    await page
-      .locator("button")
-      .filter({ has: page.locator("[data-testid='MoreVertIcon']") })
-      .first()
-      .click();
+    await page.getByRole("button", { name: "Plan actions" }).first().click();
 
     await expect(page.getByRole("menuitem", { name: "Open" })).toBeVisible();
     await expect(page.getByRole("menuitem", { name: "Duplicate" })).toBeVisible();

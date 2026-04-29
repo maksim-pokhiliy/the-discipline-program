@@ -1007,7 +1007,7 @@ Final non-e2e gate: vitest 1151/1151 (1125 + 26 new). check-types 16/16, lint 16
 Playwright webServer now supports two cold-start modes selected by `E2E_PROD` env var:
 
 - **Default (dev mode)** — `pnpm e2e` — Each Next.js app runs `next dev`. Playwright `timeout: 240_000` per webServer because cold compile of admin/platform/marketing on first request can take 5-10 minutes on WSL2 / dev hardware. End-to-end startup before first spec lands: ~15-25 min.
-- **Production build** — `pnpm e2e:prod` (or `E2E_PROD=1 pnpm e2e`) — `globalSetup` first runs `pnpm --filter admin --filter platform --filter marketing build` (turbo-cached, ~3-5 min cold, ~10s warm), then each webServer runs `next start -p PORT`. Server boot is ~5 sec per app. Playwright `timeout` reduced to `60_000`. End-to-end startup before first spec: ~3-7 min cold.
+- **Production build** — `pnpm e2e:prod` — script first runs `turbo run build --filter=admin --filter=marketing --filter=platform` (turbo-cached, ~3-5 min cold, ~10s warm) BEFORE invoking playwright, then each webServer runs `next start -p PORT`. Server boot is ~5 sec per app. Playwright `timeout` reduced to `60_000`. End-to-end startup before first spec: ~3-7 min cold. Note: `cross-env E2E_PROD=1 pnpm e2e` (without going through `e2e:prod` script) bypasses the build step and will fail — Playwright launches webServers before `globalSetup` runs, so the build cannot live there. Also: `reuseExistingServer` is forced `false` when `E2E_PROD=1` so any leftover `pnpm dev` instance on the same port causes a loud port-conflict instead of silently running prod tests against a dev server (cold compile would stall on `Loading…` past test timeouts).
 
 Storybook stays on `storybook dev` in both modes (it's lightweight enough).
 

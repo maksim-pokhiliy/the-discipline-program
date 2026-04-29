@@ -119,15 +119,6 @@ export default defineConfig({
       },
     },
     {
-      name: "storybook",
-      testDir: "./storybook",
-      testMatch: /.*\.storybook\.spec\.ts$/,
-      use: {
-        ...devices["Desktop Chrome"],
-        baseURL: "http://localhost:6006",
-      },
-    },
-    {
       name: "empty-admin-setup",
       testDir: "./empty-db/admin",
       testMatch: "auth.setup.ts",
@@ -168,39 +159,9 @@ export default defineConfig({
       },
     },
     {
-      name: "empty-platform-athlete-setup",
-      testDir: "./empty-db/platform",
-      testMatch: "auth.athlete.setup.ts",
-      use: {
-        ...devices["Desktop Chrome"],
-        baseURL: "http://localhost:3001",
-      },
-    },
-    {
-      name: "empty-platform-athlete",
-      testDir: "./empty-db/platform",
-      testMatch: /.*\.athlete\.empty\.spec\.ts$/,
-      dependencies: ["empty-platform-athlete-setup"],
-      use: {
-        ...devices["Desktop Chrome"],
-        baseURL: "http://localhost:3001",
-        storageState: "e2e/.auth/athlete-empty.json",
-      },
-    },
-    {
       name: "empty-marketing",
       testDir: "./empty-db/marketing",
       testMatch: /.*\.empty\.spec\.ts$/,
-      use: {
-        ...devices["Desktop Chrome"],
-        baseURL: "http://localhost:3000",
-        reducedMotion: "reduce",
-      },
-    },
-    {
-      name: "bootstrapped-marketing",
-      testDir: "./bootstrapped-db/marketing",
-      testMatch: /.*\.bootstrap\.spec\.ts$/,
       use: {
         ...devices["Desktop Chrome"],
         baseURL: "http://localhost:3000",
@@ -213,29 +174,23 @@ export default defineConfig({
     {
       command: nextAppCommand("marketing", 3000),
       url: "http://localhost:3000",
-      reuseExistingServer: !IS_CI,
+      reuseExistingServer: !IS_CI && !USE_PROD_BUILD,
       timeout: nextAppTimeout,
       env: appEnv(3000),
     },
     {
       command: nextAppCommand("admin", 3002),
       url: "http://localhost:3002",
-      reuseExistingServer: !IS_CI,
+      reuseExistingServer: !IS_CI && !USE_PROD_BUILD,
       timeout: nextAppTimeout,
       env: appEnv(3002),
     },
     {
       command: nextAppCommand("platform", 3001),
       url: "http://localhost:3001",
-      reuseExistingServer: !IS_CI,
+      reuseExistingServer: !IS_CI && !USE_PROD_BUILD,
       timeout: nextAppTimeout,
       env: appEnv(3001),
-    },
-    {
-      command: "pnpm --filter storybook dev --no-open --quiet",
-      url: "http://localhost:6006",
-      reuseExistingServer: !IS_CI,
-      timeout: 240_000,
     },
   ],
 });

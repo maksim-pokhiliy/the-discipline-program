@@ -65,10 +65,7 @@ test.describe("Coach Athletes", () => {
     await expect(page).toHaveURL(/athlete=/);
     await expect(page.getByText("Athlete Details")).toBeVisible();
 
-    await page
-      .locator("button")
-      .filter({ has: page.locator("[data-testid='CloseIcon']") })
-      .click();
+    await page.getByRole("button", { name: "Close" }).click();
     await expect(page).not.toHaveURL(/athlete=/);
   });
 });

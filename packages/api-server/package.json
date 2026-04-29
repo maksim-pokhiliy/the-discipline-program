@@ -17,7 +17,9 @@
     "./infrastructure/monitoring": "./src/infrastructure/monitoring/index.ts"
   },
   "scripts": {
-    "test": "vitest run",
+    "test": "vitest run && vitest run --config vitest.sequential.config.ts",
+    "test:parallel": "vitest run",
+    "test:sequential": "vitest run --config vitest.sequential.config.ts",
     "check-types": "tsc --noEmit",
     "lint": "eslint . --fix --max-warnings 0",
     "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
