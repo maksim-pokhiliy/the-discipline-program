@@ -48,7 +48,6 @@
 
 ## Rules for Claude
 
-- Default model: opusplan (set in .claude/settings.json). Don't switch to opus manually unless asked.
 - Don't read files listed in .claudeignore.
 - Before multi-file / cross-package changes — output a plan first, wait for approval.
 - Respect workspace boundaries: don't add deps to the wrong package; use `catalog:` versions.

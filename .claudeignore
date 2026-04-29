@@ -58,4 +58,3 @@ storybook-static/
 .audit/
 .cache/
 *.tsbuildinfo
-.serena/
