@@ -3,7 +3,6 @@
 import { Stack } from "@mui/material";
 
 import { LAYOUT } from "@repo/shared";
-import { EditSessionProvider } from "@repo/ui";
 
 import {
   CommandPalette,
@@ -21,21 +20,19 @@ export type PlanEditorViewProps = {
 
 export const PlanEditorView = ({ planId }: PlanEditorViewProps) => {
   return (
-    <EditSessionProvider>
-      <CommandPaletteProvider>
-        <PlanCommandRegistry planId={planId} />
-        <CommandPalette />
-        <Stack
-          spacing={3}
-          sx={{
-            height: `calc(100dvh - ${LAYOUT.platformHeaderHeight}px - ${LAYOUT.platformBottomNavHeight}px - ${CONTAINER_VERTICAL_PADDING}px)`,
-            minHeight: 0,
-          }}
-        >
-          <PlanEditorHeader planId={planId} activeTab="schedule" />
-          <PlanEditorChrome planId={planId} />
-        </Stack>
-      </CommandPaletteProvider>
-    </EditSessionProvider>
+    <CommandPaletteProvider>
+      <PlanCommandRegistry planId={planId} />
+      <CommandPalette />
+      <Stack
+        spacing={3}
+        sx={{
+          height: `calc(100dvh - ${LAYOUT.platformHeaderHeight}px - ${LAYOUT.platformBottomNavHeight}px - ${CONTAINER_VERTICAL_PADDING}px)`,
+          minHeight: 0,
+        }}
+      >
+        <PlanEditorHeader planId={planId} activeTab="schedule" />
+        <PlanEditorChrome planId={planId} />
+      </Stack>
+    </CommandPaletteProvider>
   );
 };
