@@ -1002,7 +1002,7 @@ Each `*-create.test.ts` is a separate file (not extending the main `*.test.ts`) 
 
 Final non-e2e gate: vitest 1151/1151 (1125 + 26 new). check-types 16/16, lint 16/16, dep:check 0 violations.
 
-#### M2.0.8 E2E webServer modes (added in `<b.5 commit>`)
+#### M2.0.8 E2E webServer modes (added in `e40dd472`)
 
 Playwright webServer now supports two cold-start modes selected by `E2E_PROD` env var:
 
