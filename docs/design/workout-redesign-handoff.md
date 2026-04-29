@@ -989,6 +989,30 @@ Bugfix continuation after b.1 (`24250517`). Addresses every remaining item from 
 - `packages/ui/src/lms/scheme-form/scheme-form-inner.tsx`
 - `packages/contracts/src/entities/storage/upload/upload.constants.ts` updated with `exercise` context (5MB cap, JPEG/PNG/WEBP, prefix `exercises`).
 
+#### M2.0.7 Test coverage from b.4
+
+26 new tests added in `d3b32e71` to cover b.2/b.3 logic that wasn't exercised by existing suites:
+
+- `packages/api-server/src/endpoints/lms/exercise-library-item-create.test.ts` — 6 admin-create scenarios (no ownerId → 400, valid coach owner → success, missing owner → 404, athlete owner → 400, coach with payload owner → 403, SYSTEM-scope ignores supplied ownerId).
+- `packages/api-server/src/endpoints/lms/block-kind-create.test.ts` — same 6 scenarios for block kinds.
+- `packages/api-server/src/endpoints/lms/scheme-template-create.test.ts` — same 6 scenarios for scheme templates.
+- `packages/ui/src/lms/scheme-form/scheme-form-inner.test.tsx` — 8 dispatcher scenarios (renders all 5 inner kinds; coercion fallback when raw is unparseable or kind mismatches; onChange invokes with typed value).
+
+Each `*-create.test.ts` is a separate file (not extending the main `*.test.ts`) to stay under `max-lines:300`.
+
+Final non-e2e gate: vitest 1151/1151 (1125 + 26 new). check-types 16/16, lint 16/16, dep:check 0 violations.
+
+#### M2.0.8 E2E webServer modes (added in `<b.5 commit>`)
+
+Playwright webServer now supports two cold-start modes selected by `E2E_PROD` env var:
+
+- **Default (dev mode)** — `pnpm e2e` — Each Next.js app runs `next dev`. Playwright `timeout: 240_000` per webServer because cold compile of admin/platform/marketing on first request can take 5-10 minutes on WSL2 / dev hardware. End-to-end startup before first spec lands: ~15-25 min.
+- **Production build** — `pnpm e2e:prod` (or `E2E_PROD=1 pnpm e2e`) — `globalSetup` first runs `pnpm --filter admin --filter platform --filter marketing build` (turbo-cached, ~3-5 min cold, ~10s warm), then each webServer runs `next start -p PORT`. Server boot is ~5 sec per app. Playwright `timeout` reduced to `60_000`. End-to-end startup before first spec: ~3-7 min cold.
+
+Storybook stays on `storybook dev` in both modes (it's lightweight enough).
+
+When in doubt about cold timeouts during e2e debugging, prefer `pnpm e2e:prod`. Note that `next build` may exercise SSG/ISR queries against the test DB; if a build phase fails on empty DB, seed first or wrap the page in dynamic rendering.
+
 #### M2.0.5 M2.5 entry point (after bugfix lands)
 
 1. Read this entire handoff (M0 + M1 + M2 partial sections).

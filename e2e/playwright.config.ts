@@ -5,6 +5,7 @@ import { defineConfig, devices } from "@playwright/test";
 dotenv.config({ path: path.resolve(__dirname, ".env") });
 
 const IS_CI = !!process.env.CI;
+const USE_PROD_BUILD = process.env.E2E_PROD === "1";
 
 const sharedEnv = {
   DATABASE_URL: process.env.DATABASE_URL!,
@@ -18,6 +19,13 @@ const appEnv = (port: number) => ({
   NEXT_PUBLIC_APP_URL: `http://localhost:${port}`,
   NEXTAUTH_URL: `http://localhost:${port}`,
 });
+
+const nextAppCommand = (filter: string, port: number): string =>
+  USE_PROD_BUILD
+    ? `pnpm --filter ${filter} exec next start -p ${String(port)}`
+    : `pnpm --filter ${filter} dev`;
+
+const nextAppTimeout = USE_PROD_BUILD ? 60_000 : 240_000;
 
 export default defineConfig({
   testDir: ".",
@@ -203,24 +211,24 @@ export default defineConfig({
 
   webServer: [
     {
-      command: "pnpm --filter marketing dev",
+      command: nextAppCommand("marketing", 3000),
       url: "http://localhost:3000",
       reuseExistingServer: !IS_CI,
-      timeout: 240_000,
+      timeout: nextAppTimeout,
       env: appEnv(3000),
     },
     {
-      command: "pnpm --filter admin dev",
+      command: nextAppCommand("admin", 3002),
       url: "http://localhost:3002",
       reuseExistingServer: !IS_CI,
-      timeout: 240_000,
+      timeout: nextAppTimeout,
       env: appEnv(3002),
     },
     {
-      command: "pnpm --filter platform dev",
+      command: nextAppCommand("platform", 3001),
       url: "http://localhost:3001",
       reuseExistingServer: !IS_CI,
-      timeout: 240_000,
+      timeout: nextAppTimeout,
       env: appEnv(3001),
     },
     {
