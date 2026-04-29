@@ -9,18 +9,20 @@ import EditIcon from "@mui/icons-material/Edit";
 import { Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
+import { type CoachListItem } from "@repo/contracts/iam/user";
 import { type SchemeTemplate } from "@repo/contracts/lms/scheme-template";
 import { useDeleteConfirmation } from "@repo/query";
 import {
   ConfirmationModal,
   DataTable,
+  UserChip,
   useDataTableUrlState,
   type Column,
   type DataTableFilter,
 } from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
-import { useDeleteSchemeTemplate } from "@app/lib/hooks";
+import { useCoachesList, useDeleteSchemeTemplate } from "@app/lib/hooks";
 
 import {
   formatToken,
@@ -63,6 +65,17 @@ export const SchemeTemplateLibraryListSection = ({
     useDeleteConfirmation({ deleteMutation });
   const [promoteTarget, setPromoteTarget] = useState<PromoteState>(null);
   const [demoteTarget, setDemoteTarget] = useState<DemoteState>(null);
+  const { data: coaches } = useCoachesList();
+
+  const coachById = useMemo(() => {
+    const map = new Map<string, CoachListItem>();
+
+    for (const coach of coaches ?? []) {
+      map.set(coach.userId, coach);
+    }
+
+    return map;
+  }, [coaches]);
 
   const handlePromoteRequest = useCallback((schemeTemplate: SchemeTemplate) => {
     setPromoteTarget({ schemeTemplate });
@@ -117,11 +130,27 @@ export const SchemeTemplateLibraryListSection = ({
         id: "owner",
         label: "Owner",
         width: "18%",
-        render: (item) => (
-          <Typography variant="body2" color="text.secondary">
-            {item.ownerId ?? "—"}
-          </Typography>
-        ),
+        render: (item) => {
+          if (!item.ownerId) {
+            return (
+              <Typography variant="body2" color="text.secondary">
+                —
+              </Typography>
+            );
+          }
+
+          const coach = coachById.get(item.ownerId);
+
+          return (
+            <UserChip
+              user={
+                coach
+                  ? { id: coach.userId, name: coach.name, email: coach.email }
+                  : { id: item.ownerId }
+              }
+            />
+          );
+        },
       },
       {
         id: "actions",
@@ -180,7 +209,7 @@ export const SchemeTemplateLibraryListSection = ({
         ),
       },
     ],
-    [handleDemoteRequest, handlePromoteRequest, requestDelete],
+    [coachById, handleDemoteRequest, handlePromoteRequest, requestDelete],
   );
 
   return (

@@ -8,13 +8,13 @@ import { Button, IconButton, MenuItem, Stack, TextField, Tooltip, Typography } f
 
 import { type SchemeParamsTimeBoxed } from "@repo/contracts/lms/_domain";
 
+import { SCHEME_PARAMS_DEFAULTS } from "./scheme-form-defaults";
+import { SchemeFormInner, type SchemeFormInnerKind } from "./scheme-form-inner";
 import { type SchemeFormTimeBoxedProps } from "./scheme-form.types";
 
 type TimeBoxedSegment = SchemeParamsTimeBoxed["segments"][number];
 
-type InnerKind = TimeBoxedSegment["innerArchetypeKind"];
-
-const INNER_KINDS: readonly InnerKind[] = [
+const INNER_KINDS: readonly SchemeFormInnerKind[] = [
   "NONE",
   "COUNT_UP",
   "COUNT_DOWN",
@@ -49,24 +49,6 @@ const parsePositiveInt = (raw: string, fallback: number): number => {
   return parsed;
 };
 
-const stringifyInnerParams = (innerParams: unknown): string => {
-  try {
-    return JSON.stringify(innerParams ?? {}, null, 2);
-  } catch {
-    return "{}";
-  }
-};
-
-const parseInnerParams = (raw: string): { ok: true; value: unknown } | { ok: false } => {
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-
-    return { ok: true, value: parsed };
-  } catch {
-    return { ok: false };
-  }
-};
-
 export const SchemeFormTimeBoxed = ({
   value,
   onChange,
@@ -82,16 +64,11 @@ export const SchemeFormTimeBoxed = ({
     onChange({ ...value, segments });
   };
 
-  const handleInnerParamsChange = (segmentIndex: number, raw: string) => {
-    const parsed = parseInnerParams(raw);
-
-    if (!parsed.ok) {
-      handleSegmentChange(segmentIndex, { innerParams: { __invalid: raw } });
-
-      return;
-    }
-
-    handleSegmentChange(segmentIndex, { innerParams: parsed.value });
+  const handleInnerKindChange = (segmentIndex: number, nextKind: SchemeFormInnerKind) => {
+    handleSegmentChange(segmentIndex, {
+      innerArchetypeKind: nextKind,
+      innerParams: SCHEME_PARAMS_DEFAULTS[nextKind],
+    });
   };
 
   const handleAddSegment = () => {
@@ -177,9 +154,7 @@ export const SchemeFormTimeBoxed = ({
             size="small"
             value={segment.innerArchetypeKind}
             onChange={(event) =>
-              handleSegmentChange(segmentIndex, {
-                innerArchetypeKind: event.target.value as InnerKind,
-              })
+              handleInnerKindChange(segmentIndex, event.target.value as SchemeFormInnerKind)
             }
             disabled={disabled}
           >
@@ -190,15 +165,11 @@ export const SchemeFormTimeBoxed = ({
             ))}
           </TextField>
 
-          <TextField
-            label="Inner params (JSON)"
-            multiline
-            minRows={3}
-            size="small"
-            value={stringifyInnerParams(segment.innerParams)}
-            onChange={(event) => handleInnerParamsChange(segmentIndex, event.target.value)}
+          <SchemeFormInner
+            archetypeKind={segment.innerArchetypeKind}
+            innerParams={segment.innerParams}
+            onChange={(next) => handleSegmentChange(segmentIndex, { innerParams: next })}
             disabled={disabled}
-            helperText="Free-form for M1; full nested editor lands in M3"
           />
         </Stack>
       ))}

@@ -7,14 +7,10 @@ import { ParamsCard } from "./params-card";
 import { SideCards } from "./side-cards";
 
 type BlockKindLibraryFormProps = {
-  isEdit?: boolean;
   isLoading?: boolean;
 };
 
-export const BlockKindLibraryForm = ({
-  isEdit = false,
-  isLoading = false,
-}: BlockKindLibraryFormProps) => (
+export const BlockKindLibraryForm = ({ isLoading = false }: BlockKindLibraryFormProps) => (
   <Grid container spacing={3}>
     <Grid size={{ xs: 12, lg: 8 }}>
       <Stack spacing={3}>
@@ -24,7 +20,7 @@ export const BlockKindLibraryForm = ({
     </Grid>
 
     <Grid size={{ xs: 12, lg: 4 }}>
-      <SideCards isEdit={isEdit} isLoading={isLoading} />
+      <SideCards isLoading={isLoading} />
     </Grid>
   </Grid>
 );

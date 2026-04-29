@@ -14,6 +14,7 @@ import {
 
 export const createExerciseLibraryItemInputSchema = z.object({
   scope: libraryScopeSchema.default("COACH"),
+  ownerId: z.string().cuid().nullable().optional(),
   name: z.string().min(1).max(EXERCISE_LIBRARY_ITEM_CONSTANTS.MAX_NAME_LENGTH),
   nameAliases: z
     .array(z.string().min(1).max(EXERCISE_LIBRARY_ITEM_CONSTANTS.MAX_ALIAS_LENGTH))

@@ -14,7 +14,7 @@ type SideCardsProps = {
 
 export const SideCards = ({ isEdit, isLoading }: SideCardsProps) => (
   <Stack spacing={3}>
-    <ScopeCard isEdit={isEdit} isLoading={isLoading} />
+    <ScopeCard isLoading={isLoading} />
     <DefaultMetricsCard isLoading={isLoading} />
     <MediaCard isLoading={isLoading} />
     <FlagsCard isEdit={isEdit} isLoading={isLoading} />

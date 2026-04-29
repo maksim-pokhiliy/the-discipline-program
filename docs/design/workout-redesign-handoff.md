@@ -958,6 +958,37 @@ User-facing review of M0–M2.4 surfaced pattern violations + critical regressio
 | M2.8 Mobile responsive + TouchSensor | 4     | `.feature-dev/1777283454/plan.md` TASK-053 onwards |
 | M2.9 E2E + Storybook sweep           | 7     | `.feature-dev/1777283454/plan.md` TASK-057 onwards |
 
+#### M2.0.6 M2 bugfix b.2 — completion status
+
+Bugfix continuation after b.1 (`24250517`). Addresses every remaining item from user-facing review (admin polish, scope/owner fields, scheme forms, image upload). Lands after b.1.
+
+**Done:**
+
+- Admin `ScopeCard` rebuilt (3 entities: exercise / block-kind / scheme-template) — scope `<Select>` enabled in edit/create + conditional `<Autocomplete>` Owner picker when scope=COACH (single-owner via `useCoachesList`); scope→SYSTEM auto-clears ownerId; "Use Promote/Demote" helper text removed; SideCards/form props no longer carry `isEdit` (except exercise FlagsCard which keeps the flag for the Deprecated switch).
+- Contracts extended: `Create{Exercise,BlockKind,SchemeTemplate}Input` accept optional nullable `ownerId` (admin create path).
+- Backend create handlers extended in `exercise-library-item-create.ts`, `block-kind-create.ts`, `scheme-template-create.ts` (extracted from main endpoint files): admin/HEAD_COACH path requires explicit `ownerId` for COACH scope (validated against User table + role); regular COACH path rejects `ownerId` (privilege guard) and uses `userId`. Tests in api-server cover both branches.
+- Backend update handlers also extracted to `block-kind-update.ts`, `scheme-template-update.ts` (mirroring existing `exercise-library-item-update.ts`); main endpoint files dropped to ~220 lines each (max-lines 300 enforced).
+- Promote/Demote header buttons + `<PromoteDemoteSection />` mount removed from all 3 admin detail sections; promote/demote remains accessible only via row action menu in list tables. `promote-demote-section.tsx` files retained — they back row actions.
+- Admin detail Metadata sections: Owner now renders via `UserChip` (resolved through `useCoachesList` lookup; falls back to bare avatar with cuid initial when coach record not loaded). Same for all 3 entities.
+- Admin list section Owner columns: same `UserChip` upgrade, lookup map memoized per render.
+- Admin exercise list: `Benchmark` and `Deprecated` are now standalone columns. Benchmark chip removed from Name column. Deprecated column has inline `<Switch>` (calls `useUpdateExercise` mutation, busy state per-row via `mutation.variables.id`) plus a `Chip` next to it when true.
+- `media-card.tsx` (Exercise form): `demoImageUrl` URL TextField replaced with `<ImageUpload>` from `@repo/ui` wired to `useUploadImage` (new `exercise` `UploadContext` added in `@repo/contracts/storage/upload`). `demoVideoUrl` stays a URL field (YouTube embed). On remove, blob is deleted via `useDeleteImage` to avoid orphaning.
+- `params-card.tsx` (SchemeTemplate form): JSON `<TextField multiline>` + `as unknown as` cast removed. Replaced with `<SchemeForm>` dispatcher from `@repo/ui/lms/scheme-form` (already present from M1.7). Defaults now imported from `@repo/ui` `SCHEME_PARAMS_DEFAULTS` (typed `{ [K in SchemeArchetypeKind]: Extract<SchemeParams, { kind: K }> }`); admin `DEFAULT_PARAMS_TEMPLATES` aliased to that shared map.
+- `scheme-form-time-boxed.tsx` (TimeBoxed inner segments): `JSON.parse(raw) as unknown` and `{ __invalid: raw }` fallback removed. Inner params now render via new `SchemeFormInner` dispatcher (5 sub-forms — TIME_BOXED excluded to prevent infinite nesting). Inner kind change auto-resets innerParams to typed default. The "Free-form for M1; full nested editor lands in M3" tech-debt note is gone.
+
+**Type hacks status:** zero remaining `as any` / `as unknown` / `@ts-ignore` in new production code in `apps/admin/src/modules/{exercise,block-kind,scheme-template}-library/`, `packages/ui/src/lms/scheme-form/`, `packages/ui/src/edit-session/`. The single remaining `as Prisma.InputJsonValue` casts in service files are legitimate Prisma JSON column writes.
+
+**Files added:**
+
+- `packages/api-server/src/endpoints/lms/exercise-library-item-create.ts`
+- `packages/api-server/src/endpoints/lms/block-kind-create.ts`
+- `packages/api-server/src/endpoints/lms/block-kind-update.ts`
+- `packages/api-server/src/endpoints/lms/scheme-template-create.ts`
+- `packages/api-server/src/endpoints/lms/scheme-template-update.ts`
+- `packages/ui/src/lms/scheme-form/scheme-form-defaults.ts`
+- `packages/ui/src/lms/scheme-form/scheme-form-inner.tsx`
+- `packages/contracts/src/entities/storage/upload/upload.constants.ts` updated with `exercise` context (5MB cap, JPEG/PNG/WEBP, prefix `exercises`).
+
 #### M2.0.5 M2.5 entry point (after bugfix lands)
 
 1. Read this entire handoff (M0 + M1 + M2 partial sections).

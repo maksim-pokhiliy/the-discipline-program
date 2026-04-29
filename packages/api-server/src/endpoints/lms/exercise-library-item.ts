@@ -2,7 +2,6 @@ import { type Prisma } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/iam/auth";
 import {
-  type CreateExerciseLibraryItemInput,
   type DemoteExerciseLibraryItemInput,
   type ListExerciseLibraryItemsQuery,
 } from "@repo/contracts/lms/exercise-library-item";
@@ -13,15 +12,14 @@ import { requireAdmin, requireCoachLikeRole } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { ROLE_MAP } from "../../mappers/iam";
 import {
-  BODY_PART_TO_PRISMA_MAP,
   LIBRARY_SCOPE_TO_PRISMA_MAP,
   mapToExerciseLibraryItem,
   MODALITY_TO_PRISMA_MAP,
   MOVEMENT_PATTERN_TO_PRISMA_MAP,
-  SKILL_LEVEL_TO_PRISMA_MAP,
 } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
+import { createExerciseLibraryItemImpl } from "./exercise-library-item-create";
 import { updateExerciseLibraryItemImpl } from "./exercise-library-item-update";
 
 const ADMIN_OR_COACH_LIKE: ReadonlySet<UserRole> = new Set([
@@ -29,8 +27,6 @@ const ADMIN_OR_COACH_LIKE: ReadonlySet<UserRole> = new Set([
   UserRole.HEAD_COACH,
   UserRole.ADMIN,
 ]);
-
-const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
 const buildVisibilityFilter = (
   role: UserRole,
@@ -100,44 +96,7 @@ export const lmsExerciseLibraryItemApi = {
     return mapToExerciseLibraryItem(item);
   },
 
-  create: async (userId: string, data: CreateExerciseLibraryItemInput) => {
-    const role = await requireCoachLikeRole(userId);
-
-    const isAdminPath = role === UserRole.ADMIN || role === UserRole.HEAD_COACH;
-    const scope = data.scope;
-    const ownerId = scope === "SYSTEM" ? null : userId;
-
-    if (scope === "SYSTEM" && !isAdminPath) {
-      throw new ForbiddenError("Only admin or head_coach can create SYSTEM exercise items");
-    }
-
-    try {
-      const item = await prisma.exerciseLibraryItem.create({
-        data: {
-          scope: LIBRARY_SCOPE_TO_PRISMA_MAP[scope],
-          ownerId,
-          name: data.name,
-          nameAliases: data.nameAliases,
-          description: data.description ?? null,
-          primaryMovement: MOVEMENT_PATTERN_TO_PRISMA_MAP[data.primaryMovement],
-          modality: MODALITY_TO_PRISMA_MAP[data.modality],
-          equipment: data.equipment,
-          primaryBodyParts: data.primaryBodyParts.map((bp) => BODY_PART_TO_PRISMA_MAP[bp]),
-          secondaryBodyParts: data.secondaryBodyParts.map((bp) => BODY_PART_TO_PRISMA_MAP[bp]),
-          skillLevel: SKILL_LEVEL_TO_PRISMA_MAP[data.skillLevel],
-          defaultMetrics: toJsonInput(data.defaultMetrics),
-          demoVideoUrl: data.demoVideoUrl ?? null,
-          demoImageUrl: data.demoImageUrl ?? null,
-          parentId: data.parentId ?? null,
-          isBenchmark: data.isBenchmark,
-        },
-      });
-
-      return mapToExerciseLibraryItem(item);
-    } catch (error) {
-      return handlePrismaError(error, { entity: "Exercise library item", field: "name" });
-    }
-  },
+  create: createExerciseLibraryItemImpl,
 
   update: updateExerciseLibraryItemImpl,
 

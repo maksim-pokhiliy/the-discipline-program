@@ -7,12 +7,10 @@ import { ParamsCard } from "./params-card";
 import { SideCards } from "./side-cards";
 
 type SchemeTemplateLibraryFormProps = {
-  isEdit?: boolean;
   isLoading?: boolean;
 };
 
 export const SchemeTemplateLibraryForm = ({
-  isEdit = false,
   isLoading = false,
 }: SchemeTemplateLibraryFormProps) => (
   <Grid container spacing={3}>
@@ -24,7 +22,7 @@ export const SchemeTemplateLibraryForm = ({
     </Grid>
 
     <Grid size={{ xs: 12, lg: 4 }}>
-      <SideCards isEdit={isEdit} isLoading={isLoading} />
+      <SideCards isLoading={isLoading} />
     </Grid>
   </Grid>
 );

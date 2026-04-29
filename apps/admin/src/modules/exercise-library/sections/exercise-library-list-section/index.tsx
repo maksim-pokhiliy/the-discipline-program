@@ -6,21 +6,23 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import { Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
+import { Chip, IconButton, Stack, Switch, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
+import { type CoachListItem } from "@repo/contracts/iam/user";
 import { type ExerciseLibraryItem } from "@repo/contracts/lms/exercise-library-item";
 import { useDeleteConfirmation } from "@repo/query";
 import {
   ConfirmationModal,
   DataTable,
+  UserChip,
   useDataTableUrlState,
   type Column,
   type DataTableFilter,
 } from "@repo/ui";
 
 import { CreateButton } from "@app/lib/components/create-button";
-import { useDeleteExercise } from "@app/lib/hooks";
+import { useCoachesList, useDeleteExercise, useUpdateExercise } from "@app/lib/hooks";
 
 import {
   formatToken,
@@ -64,10 +66,22 @@ export const ExerciseLibraryListSection = ({ items }: ExerciseLibraryListSection
     defaultSort: { columnId: "name", direction: "asc" },
   });
   const deleteMutation = useDeleteExercise();
+  const updateMutation = useUpdateExercise();
   const { deleteId, requestDelete, cancelDelete, confirmDelete, isDeleting } =
     useDeleteConfirmation({ deleteMutation });
   const [promoteTarget, setPromoteTarget] = useState<PromoteState>(null);
   const [demoteTarget, setDemoteTarget] = useState<DemoteState>(null);
+  const { data: coaches } = useCoachesList();
+
+  const coachById = useMemo(() => {
+    const map = new Map<string, CoachListItem>();
+
+    for (const coach of coaches ?? []) {
+      map.set(coach.userId, coach);
+    }
+
+    return map;
+  }, [coaches]);
 
   const handlePromoteRequest = useCallback((exercise: ExerciseLibraryItem) => {
     setPromoteTarget({ exercise });
@@ -82,28 +96,31 @@ export const ExerciseLibraryListSection = ({ items }: ExerciseLibraryListSection
     setDemoteTarget(null);
   }, []);
 
+  const handleDeprecatedToggle = useCallback(
+    (exercise: ExerciseLibraryItem) => {
+      updateMutation.mutate({
+        id: exercise.id,
+        data: { isDeprecated: !exercise.isDeprecated },
+      });
+    },
+    [updateMutation],
+  );
+
   const columns: Column<ExerciseLibraryItem>[] = useMemo(
     () => [
       {
         id: "name",
         label: "Name",
-        width: "30%",
+        width: "25%",
         sortable: true,
         sortValue: (item) => item.name.toLowerCase(),
         searchValue: (item) => `${item.name} ${item.nameAliases.join(" ")}`,
-        render: (item) => (
-          <Stack spacing={0.25}>
-            <Typography variant="subtitle2">{item.name}</Typography>
-            {item.isBenchmark && (
-              <Chip label="Benchmark" color="success" size="small" variant="outlined" />
-            )}
-          </Stack>
-        ),
+        render: (item) => <Typography variant="subtitle2">{item.name}</Typography>,
       },
       {
         id: "scope",
         label: "Scope",
-        width: "12%",
+        width: "10%",
         sortable: true,
         sortValue: (item) => item.scope,
         render: (item) => (
@@ -119,16 +136,32 @@ export const ExerciseLibraryListSection = ({ items }: ExerciseLibraryListSection
         id: "owner",
         label: "Owner",
         width: "18%",
-        render: (item) => (
-          <Typography variant="body2" color="text.secondary">
-            {item.ownerId ?? "—"}
-          </Typography>
-        ),
+        render: (item) => {
+          if (!item.ownerId) {
+            return (
+              <Typography variant="body2" color="text.secondary">
+                —
+              </Typography>
+            );
+          }
+
+          const coach = coachById.get(item.ownerId);
+
+          return (
+            <UserChip
+              user={
+                coach
+                  ? { id: coach.userId, name: coach.name, email: coach.email }
+                  : { id: item.ownerId }
+              }
+            />
+          );
+        },
       },
       {
         id: "primaryMovement",
         label: "Movement",
-        width: "15%",
+        width: "12%",
         sortable: true,
         sortValue: (item) => item.primaryMovement,
         render: (item) => (
@@ -138,16 +171,56 @@ export const ExerciseLibraryListSection = ({ items }: ExerciseLibraryListSection
       {
         id: "modality",
         label: "Modality",
-        width: "10%",
+        width: "8%",
         sortable: true,
         sortValue: (item) => item.modality,
         render: (item) => <Typography variant="body2">{formatToken(item.modality)}</Typography>,
       },
       {
+        id: "benchmark",
+        label: "Benchmark",
+        width: "8%",
+        sortable: true,
+        sortValue: (item) => (item.isBenchmark ? 1 : 0),
+        render: (item) =>
+          item.isBenchmark ? (
+            <Chip label="Benchmark" color="success" size="small" variant="outlined" />
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              —
+            </Typography>
+          ),
+      },
+      {
+        id: "deprecated",
+        label: "Deprecated",
+        width: "10%",
+        sortable: true,
+        sortValue: (item) => (item.isDeprecated ? 1 : 0),
+        render: (item) => {
+          const isToggling = updateMutation.isPending && updateMutation.variables?.id === item.id;
+
+          return (
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Switch
+                size="small"
+                checked={item.isDeprecated}
+                disabled={isToggling}
+                onChange={() => handleDeprecatedToggle(item)}
+                color="warning"
+              />
+              {item.isDeprecated && (
+                <Chip label="Deprecated" color="default" size="small" variant="outlined" />
+              )}
+            </Stack>
+          );
+        },
+      },
+      {
         id: "actions",
         label: "Actions",
         align: "right",
-        width: "15%",
+        width: "9%",
         render: (item) => (
           <Stack direction="row" spacing={0.5} justifyContent="flex-end">
             {item.scope === "COACH" ? (
@@ -200,7 +273,15 @@ export const ExerciseLibraryListSection = ({ items }: ExerciseLibraryListSection
         ),
       },
     ],
-    [handleDemoteRequest, handlePromoteRequest, requestDelete],
+    [
+      coachById,
+      handleDemoteRequest,
+      handleDeprecatedToggle,
+      handlePromoteRequest,
+      requestDelete,
+      updateMutation.isPending,
+      updateMutation.variables?.id,
+    ],
   );
 
   return (

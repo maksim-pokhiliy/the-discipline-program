@@ -8,6 +8,7 @@ import { blockKindSchema } from "./block-kind.schema";
 
 export const createBlockKindInputSchema = z.object({
   scope: libraryScopeSchema.default("COACH"),
+  ownerId: z.string().cuid().nullable().optional(),
   name: z.string().min(1).max(BLOCK_KIND_CONSTANTS.MAX_NAME_LENGTH),
   description: z.string().max(BLOCK_KIND_CONSTANTS.MAX_DESCRIPTION_LENGTH).optional(),
   iconKey: z.string().max(BLOCK_KIND_CONSTANTS.MAX_ICON_KEY_LENGTH).optional(),

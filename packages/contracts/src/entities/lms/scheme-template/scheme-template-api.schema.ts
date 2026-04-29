@@ -8,6 +8,7 @@ import { schemeTemplateSchema } from "./scheme-template.schema";
 
 export const createSchemeTemplateInputSchema = z.object({
   scope: libraryScopeSchema.default("COACH"),
+  ownerId: z.string().cuid().nullable().optional(),
   name: z.string().min(1).max(SCHEME_TEMPLATE_CONSTANTS.MAX_NAME_LENGTH),
   description: z.string().max(SCHEME_TEMPLATE_CONSTANTS.MAX_DESCRIPTION_LENGTH).optional(),
   archetypeKind: schemeArchetypeKindSchema,

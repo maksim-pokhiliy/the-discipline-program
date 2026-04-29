@@ -97,6 +97,13 @@ export { SchemeFormEmomLoop } from "./scheme-form-emom-loop";
 export { SchemeFormIntervalLoop } from "./scheme-form-interval-loop";
 export { SchemeFormNone } from "./scheme-form-none";
 export { SchemeFormTimeBoxed } from "./scheme-form-time-boxed";
+export {
+  SchemeFormInner,
+  type SchemeFormInnerKind,
+  type SchemeFormInnerProps,
+  type SchemeFormInnerValue,
+} from "./scheme-form-inner";
+export { SCHEME_PARAMS_DEFAULTS } from "./scheme-form-defaults";
 export type {
   SchemeFormCountDownProps,
   SchemeFormCountUpProps,

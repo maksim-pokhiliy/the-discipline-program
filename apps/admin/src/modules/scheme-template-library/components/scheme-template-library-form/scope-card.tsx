@@ -1,7 +1,9 @@
 "use client";
 
-import { MenuItem, TextField } from "@mui/material";
-import { Controller, useFormContext } from "react-hook-form";
+import { useEffect } from "react";
+
+import { Autocomplete, MenuItem, Stack, TextField } from "@mui/material";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import {
   type CreateSchemeTemplateInput,
@@ -9,46 +11,90 @@ import {
 } from "@repo/contracts/lms/scheme-template";
 import { FormCard } from "@repo/ui";
 
+import { useCoachesList } from "@app/lib/hooks";
+
 import { LIBRARY_SCOPE_OPTIONS } from "../../constants";
 
 type FormValues = CreateSchemeTemplateInput & UpdateSchemeTemplateInput;
 
 type ScopeCardProps = {
-  isEdit: boolean;
   isLoading: boolean;
 };
 
-export const ScopeCard = ({ isEdit, isLoading }: ScopeCardProps) => {
-  const { control } = useFormContext<FormValues>();
+export const ScopeCard = ({ isLoading }: ScopeCardProps) => {
+  const { control, setValue } = useFormContext<FormValues>();
+  const scope = useWatch({ control, name: "scope" });
+  const ownerId = useWatch({ control, name: "ownerId" });
+  const { data: coaches } = useCoachesList();
+
+  useEffect(() => {
+    if (scope === "SYSTEM" && ownerId) {
+      setValue("ownerId", null, { shouldDirty: true, shouldValidate: true });
+    }
+  }, [scope, ownerId, setValue]);
+
+  const selectedCoach = coaches?.find((c) => c.userId === ownerId) ?? null;
 
   return (
     <FormCard title="Scope">
-      <Controller
-        name="scope"
-        control={control}
-        render={({ field, fieldState }) => (
-          <TextField
-            {...field}
-            label="Visibility"
-            select
-            variant="outlined"
-            fullWidth
-            disabled={isLoading || isEdit}
-            error={!!fieldState.error}
-            helperText={
-              isEdit
-                ? "Use Promote/Demote to change scope"
-                : (fieldState.error?.message ?? "SYSTEM is global, COACH is owner-scoped")
-            }
-          >
-            {LIBRARY_SCOPE_OPTIONS.map((opt) => (
-              <MenuItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </MenuItem>
-            ))}
-          </TextField>
+      <Stack spacing={2}>
+        <Controller
+          name="scope"
+          control={control}
+          render={({ field, fieldState }) => (
+            <TextField
+              {...field}
+              label="Visibility"
+              select
+              variant="outlined"
+              fullWidth
+              disabled={isLoading}
+              error={!!fieldState.error}
+              helperText={
+                fieldState.error?.message ??
+                "SYSTEM is global and read-only for coaches; COACH is owned by a single coach"
+              }
+            >
+              {LIBRARY_SCOPE_OPTIONS.map((opt) => (
+                <MenuItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+        />
+
+        {scope === "COACH" && (
+          <Controller
+            name="ownerId"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Autocomplete
+                options={coaches ?? []}
+                value={selectedCoach}
+                onChange={(_, value) => field.onChange(value?.userId ?? null)}
+                getOptionLabel={(option) => option.name ?? option.email}
+                isOptionEqualToValue={(a, b) => a.userId === b.userId}
+                disabled={isLoading}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Owner (creator)"
+                    variant="outlined"
+                    error={Boolean(fieldState.error) || !ownerId}
+                    helperText={
+                      fieldState.error?.message ??
+                      (ownerId
+                        ? "Coach who owns this item"
+                        : "Required: pick a coach to own this item")
+                    }
+                  />
+                )}
+              />
+            )}
+          />
         )}
-      />
+      </Stack>
     </FormCard>
   );
 };
