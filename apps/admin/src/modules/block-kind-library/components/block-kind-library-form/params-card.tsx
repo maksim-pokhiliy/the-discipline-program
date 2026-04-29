@@ -86,7 +86,10 @@ export const ParamsCard = ({ isLoading }: ParamsCardProps) => {
               fullWidth
               disabled={isLoading}
               error={!!fieldState.error}
-              helperText={fieldState.error?.message ?? "Default scheme archetype for new segments"}
+              helperText={
+                fieldState.error?.message ??
+                "One archetype per block kind — picks the timer FSM (NONE, EMOM, intervals, etc.) suggested when this block is dropped. Need a different timer? Create another block kind."
+              }
               value={field.value ?? NONE_VALUE}
               onChange={(event) => {
                 const next = event.target.value;
@@ -108,12 +111,15 @@ export const ParamsCard = ({ isLoading }: ParamsCardProps) => {
 
         <TextField
           label="Analytics category"
-          placeholder="e.g. strength, conditioning"
+          placeholder="e.g. strength, conditioning, accessory"
           variant="outlined"
           fullWidth
           disabled={isLoading}
           error={!!errors.analyticsCategory}
-          helperText={errors.analyticsCategory?.message}
+          helperText={
+            errors.analyticsCategory?.message ??
+            "Free-text label that groups blocks of this kind in coach analytics dashboards. Optional."
+          }
           inputProps={{ maxLength: BLOCK_KIND_CONSTANTS.MAX_ANALYTICS_CATEGORY_LENGTH }}
           {...register("analyticsCategory")}
         />
