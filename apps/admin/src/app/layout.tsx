@@ -18,6 +18,8 @@ type RootLayoutProps = Readonly<{
   children: React.ReactNode;
 }>;
 
+const isVercelDeployment = !!process.env.VERCEL_ENV;
+
 const RootLayout = ({ children }: RootLayoutProps) => (
   <html lang="en">
     <body className={fontVariables}>
@@ -29,8 +31,8 @@ const RootLayout = ({ children }: RootLayoutProps) => (
               {children}
 
               <Toaster />
-              <Analytics />
-              <SpeedInsights />
+              {isVercelDeployment && <Analytics />}
+              {isVercelDeployment && <SpeedInsights />}
             </Box>
           </AuthProvider>
         </QueryProvider>

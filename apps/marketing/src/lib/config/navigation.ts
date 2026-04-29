@@ -10,8 +10,5 @@ export const MARKETING_NAVIGATION: MarketingNavigationConfig = {
     { text: "Contact", href: "/contact" },
   ],
 
-  footerLinks: [
-    { text: "Privacy Policy", href: "/privacy" },
-    { text: "Terms of Service", href: "/terms" },
-  ],
+  footerLinks: [],
 };
