@@ -11,6 +11,7 @@ import {
 } from "../components/command-palette";
 import { PlanEditorChrome } from "../components/plan-editor-chrome";
 import { PlanEditorHeader } from "../components/plan-editor-header";
+import { EditingTargetProvider } from "../lib/editing-target";
 
 const CONTAINER_VERTICAL_PADDING = 64;
 
@@ -20,19 +21,21 @@ export type PlanEditorViewProps = {
 
 export const PlanEditorView = ({ planId }: PlanEditorViewProps) => {
   return (
-    <CommandPaletteProvider>
-      <PlanCommandRegistry planId={planId} />
-      <CommandPalette />
-      <Stack
-        spacing={3}
-        sx={{
-          height: `calc(100dvh - ${LAYOUT.platformHeaderHeight}px - ${LAYOUT.platformBottomNavHeight}px - ${CONTAINER_VERTICAL_PADDING}px)`,
-          minHeight: 0,
-        }}
-      >
-        <PlanEditorHeader planId={planId} activeTab="schedule" />
-        <PlanEditorChrome planId={planId} />
-      </Stack>
-    </CommandPaletteProvider>
+    <EditingTargetProvider>
+      <CommandPaletteProvider>
+        <PlanCommandRegistry planId={planId} />
+        <CommandPalette />
+        <Stack
+          spacing={3}
+          sx={{
+            height: `calc(100dvh - ${LAYOUT.platformHeaderHeight}px - ${LAYOUT.platformBottomNavHeight}px - ${CONTAINER_VERTICAL_PADDING}px)`,
+            minHeight: 0,
+          }}
+        >
+          <PlanEditorHeader planId={planId} activeTab="schedule" />
+          <PlanEditorChrome planId={planId} />
+        </Stack>
+      </CommandPaletteProvider>
+    </EditingTargetProvider>
   );
 };

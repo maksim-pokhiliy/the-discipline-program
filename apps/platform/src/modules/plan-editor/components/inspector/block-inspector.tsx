@@ -11,9 +11,13 @@ import { BlockBuilder, SaveIndicator, useEditSession, useEditSessionOrchestrator
 
 import { platformKeys } from "@app/lib/api/keys";
 
+import { useEditingTarget } from "../../lib/editing-target";
 import { SlashPicker, type SlashPickerSelection, useInlineTrigger } from "../inline-picker";
 
+import { OverrideModeChip } from "./override-mode-chip";
+import { useAthleteLabel } from "./use-athlete-label";
 import { useBlockBulkPatchUpdate } from "./use-bulk-patch-update";
+import { useBlockOverrideUpdate } from "./use-override-update";
 
 const SESSION_NS = "block";
 
@@ -45,14 +49,32 @@ export const BlockInspector = ({ planId, block, blockKinds }: BlockInspectorProp
   const queryClient = useQueryClient();
   const orchestrator = useEditSessionOrchestrator();
   const initial = useMemo(() => toDraft(block), [block]);
-  const mutationKey = useMemo(() => [SESSION_NS, planId, block.id] as const, [block.id, planId]);
-  const sessionId = useMemo(() => `${SESSION_NS}-${block.id}`, [block.id]);
+  const { target } = useEditingTarget();
+  const enrollmentId = target.kind === "athlete" ? target.enrollmentId : null;
+  const athleteLabel = useAthleteLabel(planId, enrollmentId ?? "");
+  const mutationKey = useMemo(
+    () => [SESSION_NS, planId, block.id, enrollmentId ?? "all"] as const,
+    [block.id, enrollmentId, planId],
+  );
+  const sessionId = useMemo(
+    () => `${SESSION_NS}-${block.id}-${enrollmentId ?? "all"}`,
+    [block.id, enrollmentId],
+  );
 
-  const performUpdate = useBlockBulkPatchUpdate(planId, block.id);
+  const performBaseUpdate = useBlockBulkPatchUpdate(planId, block.id);
+  const performOverrideUpdate = useBlockOverrideUpdate(enrollmentId ?? "", block.id);
 
   const mutationFn = useCallback(
     async (draft: BlockDraft, expectedVersion: number): Promise<BlockDraft> => {
-      const next = await performUpdate(fromDraft(block, draft), expectedVersion);
+      const composed = fromDraft(block, draft);
+
+      if (enrollmentId) {
+        await performOverrideUpdate(composed, expectedVersion);
+
+        return draft;
+      }
+
+      const next = await performBaseUpdate(composed, expectedVersion);
 
       void queryClient.invalidateQueries({
         queryKey: platformKeys.trainingPlans.structureByPlan(planId),
@@ -60,7 +82,7 @@ export const BlockInspector = ({ planId, block, blockKinds }: BlockInspectorProp
 
       return toDraft(next);
     },
-    [block, performUpdate, planId, queryClient],
+    [block, enrollmentId, performBaseUpdate, performOverrideUpdate, planId, queryClient],
   );
 
   const session = useEditSession<BlockDraft>({
@@ -112,6 +134,7 @@ export const BlockInspector = ({ planId, block, blockKinds }: BlockInspectorProp
         <Typography variant="subtitle1" sx={{ flex: 1 }}>
           Block
         </Typography>
+        {enrollmentId && <OverrideModeChip athleteLabel={athleteLabel} />}
         <SaveIndicator
           status={session.status}
           lastSavedAt={session.lastSavedAt}

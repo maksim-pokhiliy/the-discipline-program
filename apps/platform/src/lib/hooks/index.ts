@@ -9,6 +9,7 @@ export * from "./use-library-scheme-templates";
 export * from "./use-plan-bulk-patch";
 export * from "./use-plan-coach-assignments";
 export * from "./use-plan-enrollments";
+export * from "./use-plan-overrides";
 export * from "./use-plan-structure";
 export * from "./use-platform-coaches";
 export * from "./use-training-plans";

@@ -12,6 +12,8 @@ import { useTrainingPlan, useUpdateTrainingPlan } from "@app/lib/hooks";
 
 import { PlanStatusSelect } from "../../plan-detail/components";
 
+import { TargetSwitcher } from "./target-switcher";
+
 type PlanEditorHeaderTab = "schedule" | "athletes";
 
 type PlanEditorHeaderProps = {
@@ -92,6 +94,8 @@ export const PlanEditorHeader = ({ planId, activeTab }: PlanEditorHeaderProps) =
           onBlur={commitName}
           sx={{ flex: 1, typography: "h5", "& input": { p: 0 } }}
         />
+
+        <TargetSwitcher planId={planId} />
 
         {plan && <PlanStatusSelect planId={plan.id} planName={plan.name} status={plan.status} />}
       </Stack>

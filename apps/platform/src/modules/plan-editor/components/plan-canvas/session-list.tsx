@@ -7,6 +7,9 @@ import { Box, Stack, Typography } from "@mui/material";
 import { type PlanStructureSession } from "@repo/contracts/lms/training-plan";
 
 import { BlockTree } from "./block-tree";
+import { DecorationBadge } from "./decoration-badge";
+import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-context";
+import { getDecorationStyles } from "./get-decoration-styles";
 import { type PlanSelection } from "./selection";
 
 export type SessionListProps = {
@@ -21,21 +24,29 @@ export const SessionList = ({ session, selection, onSelect }: SessionListProps) 
     id: `session:${session.id}`,
     data: { kind: "session", sessionId: session.id },
   });
+  const decoration = useEffectivePlanDecorationContext().getDecoration(session.id);
+  const decorationStyles = getDecorationStyles(decoration);
 
   return (
     <Stack spacing={1}>
-      <Typography variant="caption" color="text.secondary">
-        {session.label ?? "Session"}
-      </Typography>
+      <Stack direction="row" alignItems="center" spacing={0.5}>
+        <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
+          {session.label ?? "Session"}
+        </Typography>
+        <DecorationBadge styles={decorationStyles} />
+      </Stack>
 
       <Box
         ref={droppable.setNodeRef}
-        sx={{
-          minHeight: 32,
-          borderRadius: 1,
-          bgcolor: droppable.isOver ? "action.hover" : "transparent",
-          transition: "background-color 0.15s",
-        }}
+        sx={[
+          {
+            minHeight: 32,
+            borderRadius: 1,
+            bgcolor: droppable.isOver ? "action.hover" : "transparent",
+            transition: "background-color 0.15s",
+          },
+          ...(Array.isArray(decorationStyles.sx) ? decorationStyles.sx : [decorationStyles.sx]),
+        ]}
       >
         <SortableContext items={blockIds} strategy={verticalListSortingStrategy}>
           <Stack spacing={1}>

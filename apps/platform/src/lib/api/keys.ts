@@ -16,6 +16,15 @@ export const platformKeys = {
     ...createEntityKeys(ROOT, "plan-enrollments"),
     byPlan: (planId: string) => [...ROOT, "plan-enrollments", "plan", planId] as const,
   },
+  planOverrides: {
+    byEnrollment: (enrollmentId: string) =>
+      [...ROOT, "plan-overrides", "enrollment", enrollmentId] as const,
+    byId: (overrideId: string) => [...ROOT, "plan-overrides", "id", overrideId] as const,
+    effectivePlan: (enrollmentId: string, weekIndex: number) =>
+      [...ROOT, "plan-overrides", "effective-plan", enrollmentId, weekIndex] as const,
+    effectivePlanByEnrollment: (enrollmentId: string) =>
+      [...ROOT, "plan-overrides", "effective-plan", enrollmentId] as const,
+  },
   platformCoaches: {
     all: () => [...ROOT, "platform-coaches"] as const,
   },

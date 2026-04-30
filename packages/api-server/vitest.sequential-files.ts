@@ -5,4 +5,5 @@ export const SEQUENTIAL_TEST_FILES = [
   "src/endpoints/iam/admin-coach-list.test.ts",
   "src/endpoints/iam/admin-coach-list.empty.test.ts",
   "src/endpoints/iam/users-admin.test.ts",
+  "src/endpoints/iam/users-admin.empty.test.ts",
 ];

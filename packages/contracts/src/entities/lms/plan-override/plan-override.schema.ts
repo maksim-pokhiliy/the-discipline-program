@@ -14,7 +14,13 @@ export const planOverrideKindSchema = z.nativeEnum(PlanOverrideKind);
 export const planOverridePayloadSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("REPLACE"),
-    snapshot: z.union([daySchema, lmsSessionSchema, blockSchema, blockSegmentSchema]),
+    snapshot: z.union([
+      daySchema,
+      lmsSessionSchema,
+      blockSchema,
+      blockSegmentSchema,
+      exerciseEntrySchema,
+    ]),
   }),
   z.object({
     kind: z.literal("APPEND"),

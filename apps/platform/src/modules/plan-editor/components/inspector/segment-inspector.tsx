@@ -18,9 +18,13 @@ import {
 
 import { platformKeys } from "@app/lib/api/keys";
 
+import { useEditingTarget } from "../../lib/editing-target";
 import { SlashPicker, type SlashPickerSelection, useInlineTrigger } from "../inline-picker";
 
+import { OverrideModeChip } from "./override-mode-chip";
+import { useAthleteLabel } from "./use-athlete-label";
 import { useSegmentBulkPatchUpdate } from "./use-bulk-patch-update";
+import { useSegmentOverrideUpdate } from "./use-override-update";
 
 const SESSION_NS = "segment";
 
@@ -30,6 +34,9 @@ export type SegmentInspectorProps = {
   planId: string;
   segment: BlockSegment;
 };
+
+const buildSessionId = (segmentId: string, enrollmentId: string | null) =>
+  `${SESSION_NS}-${segmentId}-${enrollmentId ?? "all"}`;
 
 const toDraft = (segment: BlockSegment) => ({
   order: segment.order,
@@ -51,17 +58,32 @@ export const SegmentInspector = ({ planId, segment }: SegmentInspectorProps) => 
   const queryClient = useQueryClient();
   const orchestrator = useEditSessionOrchestrator();
   const initial = useMemo(() => toDraft(segment), [segment]);
+  const { target } = useEditingTarget();
+  const enrollmentId = target.kind === "athlete" ? target.enrollmentId : null;
+  const athleteLabel = useAthleteLabel(planId, enrollmentId ?? "");
   const mutationKey = useMemo(
-    () => [SESSION_NS, planId, segment.id] as const,
-    [planId, segment.id],
+    () => [SESSION_NS, planId, segment.id, enrollmentId ?? "all"] as const,
+    [enrollmentId, planId, segment.id],
   );
-  const sessionId = useMemo(() => `${SESSION_NS}-${segment.id}`, [segment.id]);
+  const sessionId = useMemo(
+    () => buildSessionId(segment.id, enrollmentId),
+    [enrollmentId, segment.id],
+  );
 
-  const performUpdate = useSegmentBulkPatchUpdate(planId, segment.id);
+  const performBaseUpdate = useSegmentBulkPatchUpdate(planId, segment.id);
+  const performOverrideUpdate = useSegmentOverrideUpdate(enrollmentId ?? "", segment.id);
 
   const mutationFn = useCallback(
     async (draft: SegmentDraft, expectedVersion: number): Promise<SegmentDraft> => {
-      const next = await performUpdate(fromDraft(segment, draft), expectedVersion);
+      const composed = fromDraft(segment, draft);
+
+      if (enrollmentId) {
+        await performOverrideUpdate(composed, expectedVersion);
+
+        return draft;
+      }
+
+      const next = await performBaseUpdate(composed, expectedVersion);
 
       void queryClient.invalidateQueries({
         queryKey: platformKeys.trainingPlans.structureByPlan(planId),
@@ -69,7 +91,7 @@ export const SegmentInspector = ({ planId, segment }: SegmentInspectorProps) => 
 
       return toDraft(next);
     },
-    [performUpdate, planId, queryClient, segment],
+    [enrollmentId, performBaseUpdate, performOverrideUpdate, planId, queryClient, segment],
   );
 
   const session = useEditSession<SegmentDraft>({
@@ -135,6 +157,7 @@ export const SegmentInspector = ({ planId, segment }: SegmentInspectorProps) => 
         <Typography variant="subtitle1" sx={{ flex: 1 }}>
           Segment
         </Typography>
+        {enrollmentId && <OverrideModeChip athleteLabel={athleteLabel} />}
         <SaveIndicator
           status={session.status}
           lastSavedAt={session.lastSavedAt}

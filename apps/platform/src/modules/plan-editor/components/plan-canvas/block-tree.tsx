@@ -9,6 +9,9 @@ import { Box, Chip, Paper, Stack, Typography } from "@mui/material";
 
 import { type PlanStructureBlock } from "@repo/contracts/lms/training-plan";
 
+import { DecorationBadge } from "./decoration-badge";
+import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-context";
+import { getDecorationStyles } from "./get-decoration-styles";
 import { SegmentList } from "./segment-list";
 import { type PlanSelection } from "./selection";
 
@@ -29,6 +32,8 @@ export const BlockTree = ({ block, selection, onSelect }: BlockTreeProps) => {
   };
   const isSelected = selection?.kind === "block" && selection.id === block.id;
   const segmentIds = block.segments.map((s) => `segment:${s.id}`);
+  const decoration = useEffectivePlanDecorationContext().getDecoration(block.id);
+  const decorationStyles = getDecorationStyles(decoration);
 
   const handleHeaderClick = useCallback(
     () => onSelect({ kind: "block", id: block.id }),
@@ -40,10 +45,13 @@ export const BlockTree = ({ block, selection, onSelect }: BlockTreeProps) => {
       ref={sortable.setNodeRef}
       style={style}
       variant="outlined"
-      sx={{
-        p: 1,
-        bgcolor: isSelected ? "action.selected" : "background.paper",
-      }}
+      sx={[
+        {
+          p: 1,
+          bgcolor: isSelected ? "action.selected" : "background.paper",
+        },
+        ...(Array.isArray(decorationStyles.sx) ? decorationStyles.sx : [decorationStyles.sx]),
+      ]}
     >
       <Stack spacing={1}>
         <Stack direction="row" alignItems="center" spacing={0.5} onClick={handleHeaderClick}>
@@ -58,6 +66,7 @@ export const BlockTree = ({ block, selection, onSelect }: BlockTreeProps) => {
           <Typography variant="subtitle2" sx={{ flex: 1, cursor: "pointer" }}>
             {block.title ?? "Block"}
           </Typography>
+          <DecorationBadge styles={decorationStyles} />
           <Chip label={block.status} size="small" variant="outlined" />
         </Stack>
 

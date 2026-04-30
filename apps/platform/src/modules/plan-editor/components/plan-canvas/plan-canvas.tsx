@@ -10,9 +10,11 @@ import { type GetPlanStructureResponse } from "@repo/contracts/lms/training-plan
 
 import { usePlanStructure } from "@app/lib/hooks";
 
+import { useEditingTarget } from "../../lib/editing-target";
 import { useHistoryKeybindings, usePlanHistory } from "../undo-redo";
 
 import { DayCard } from "./day-card";
+import { EffectivePlanDecorationProvider } from "./effective-plan-decoration-context";
 import { formatPlanSelection, parsePlanSelection, type PlanSelection } from "./selection";
 import { usePlanCanvasDnd } from "./use-plan-canvas-dnd";
 import { WeekNavigator } from "./week-navigator";
@@ -62,6 +64,9 @@ export const PlanCanvas = ({ planId }: PlanCanvasProps) => {
 
   const { data, isLoading, error } = usePlanStructure(planId, { fromWeek, toWeek });
 
+  const { target } = useEditingTarget();
+  const decorationEnrollmentId = target.kind === "athlete" ? target.enrollmentId : null;
+
   const selection = useMemo(() => parsePlanSelection(searchParams.get("selected")), [searchParams]);
 
   const handleSelect = useCallback(
@@ -102,35 +107,39 @@ export const PlanCanvas = ({ planId }: PlanCanvasProps) => {
   const effectiveFrom = fromWeek ?? w.fromWeek;
   const effectiveTo = toWeek ?? w.toWeek;
   const fallback = computeDefaultRange(w.maxIndex, w.toWeek);
+  const decorationFrom = effectiveFrom ?? fallback.fromWeek;
+  const decorationTo = effectiveTo ?? fallback.toWeek;
 
   return (
-    <DndContext
-      sensors={dnd.sensors}
-      collisionDetection={closestCenter}
-      onDragStart={dnd.onDragStart}
-      onDragEnd={dnd.onDragEnd}
+    <EffectivePlanDecorationProvider
+      enrollmentId={decorationEnrollmentId}
+      fromWeek={decorationFrom}
+      toWeek={decorationTo}
     >
-      <Stack sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
-        <WeekNavigator
-          fromWeek={effectiveFrom ?? fallback.fromWeek}
-          toWeek={effectiveTo ?? fallback.toWeek}
-          maxIndex={w.maxIndex}
-        />
+      <DndContext
+        sensors={dnd.sensors}
+        collisionDetection={closestCenter}
+        onDragStart={dnd.onDragStart}
+        onDragEnd={dnd.onDragEnd}
+      >
+        <Stack sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+          <WeekNavigator fromWeek={decorationFrom} toWeek={decorationTo} maxIndex={w.maxIndex} />
 
-        <Box
-          aria-live="polite"
-          aria-atomic="true"
-          sx={{ position: "absolute", left: -10000, top: "auto", width: 1, height: 1 }}
-        >
-          {dnd.announcement}
-        </Box>
+          <Box
+            aria-live="polite"
+            aria-atomic="true"
+            sx={{ position: "absolute", left: -10000, top: "auto", width: 1, height: 1 }}
+          >
+            {dnd.announcement}
+          </Box>
 
-        <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
-          <Stack spacing={3}>{renderWeeks(data, selection, handleSelect)}</Stack>
-        </Box>
-      </Stack>
+          <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+            <Stack spacing={3}>{renderWeeks(data, selection, handleSelect)}</Stack>
+          </Box>
+        </Stack>
 
-      <DragOverlay />
-    </DndContext>
+        <DragOverlay />
+      </DndContext>
+    </EffectivePlanDecorationProvider>
   );
 };

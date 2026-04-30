@@ -4,6 +4,9 @@ import { Card, CardContent, Stack, Typography } from "@mui/material";
 
 import { type PlanStructureDay } from "@repo/contracts/lms/training-plan";
 
+import { DecorationBadge } from "./decoration-badge";
+import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-context";
+import { getDecorationStyles } from "./get-decoration-styles";
 import { type PlanSelection } from "./selection";
 import { SessionList } from "./session-list";
 
@@ -24,15 +27,25 @@ export type DayCardProps = {
 };
 
 export const DayCard = ({ day, selection, onSelect }: DayCardProps) => {
+  const decoration = useEffectivePlanDecorationContext().getDecoration(day.id);
+  const decorationStyles = getDecorationStyles(decoration);
+
   return (
-    <Card variant="outlined" sx={{ minWidth: 260, flex: "1 1 260px" }}>
+    <Card
+      variant="outlined"
+      sx={[
+        { minWidth: 260, flex: "1 1 260px" },
+        ...(Array.isArray(decorationStyles.sx) ? decorationStyles.sx : [decorationStyles.sx]),
+      ]}
+    >
       <CardContent>
         <Stack spacing={1.5}>
           <Stack direction="row" alignItems="baseline" spacing={1}>
             <Typography variant="subtitle1">{DAY_LABEL[day.dayOfWeek]}</Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
               {day.kind === "REST" ? "Rest" : "Workout"}
             </Typography>
+            <DecorationBadge styles={decorationStyles} />
           </Stack>
 
           {day.sessions.length === 0 ? (

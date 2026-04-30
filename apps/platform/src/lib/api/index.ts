@@ -16,6 +16,7 @@ export const createApi = (client: ApiClient) => ({
   planBulkPatch: endpoints.createPlanBulkPatchAPI(client),
   planCoachAssignments: endpoints.createPlanCoachAssignmentsAPI(client),
   planEnrollments: endpoints.createPlanEnrollmentsAPI(client),
+  planOverrides: endpoints.createPlanOverridesAPI(client),
   planStructure: endpoints.createPlanStructureAPI(client),
   platformCoaches: endpoints.createPlatformCoachesAPI(client),
   trainingPlans: endpoints.createTrainingPlansAPI(client),

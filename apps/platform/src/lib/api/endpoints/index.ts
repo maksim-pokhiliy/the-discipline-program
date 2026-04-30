@@ -8,6 +8,7 @@ export { createLibrarySchemeTemplatesAPI } from "./library-scheme-templates";
 export { createPlanBulkPatchAPI } from "./plan-bulk-patch";
 export { createPlanCoachAssignmentsAPI } from "./plan-coach-assignments";
 export { createPlanEnrollmentsAPI } from "./plan-enrollments";
+export { createPlanOverridesAPI } from "./plan-overrides";
 export { createPlanStructureAPI } from "./plan-structure";
 export { createPlatformCoachesAPI } from "./platform-coaches";
 export { createTrainingPlansAPI } from "./training-plans";

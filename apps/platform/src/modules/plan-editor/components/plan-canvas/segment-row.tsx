@@ -7,6 +7,9 @@ import { Box, Chip, Stack, Typography } from "@mui/material";
 
 import { type PlanStructureSegment } from "@repo/contracts/lms/training-plan";
 
+import { DecorationBadge } from "./decoration-badge";
+import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-context";
+import { getDecorationStyles } from "./get-decoration-styles";
 import { type PlanSelection } from "./selection";
 import { SetGroupGroup } from "./set-group-group";
 
@@ -27,18 +30,23 @@ export const SegmentRow = ({ segment, selection, onSelect }: SegmentRowProps) =>
   };
   const isSelected = selection?.kind === "segment" && selection.id === segment.id;
   const totalEntries = segment.setGroups.reduce((acc, sg) => acc + sg.entries.length, 0);
+  const decoration = useEffectivePlanDecorationContext().getDecoration(segment.id);
+  const decorationStyles = getDecorationStyles(decoration);
 
   return (
     <Stack
       ref={sortable.setNodeRef}
       style={style}
       spacing={0.5}
-      sx={{
-        py: 0.5,
-        pl: 1,
-        borderRadius: 1,
-        bgcolor: isSelected ? "action.selected" : "transparent",
-      }}
+      sx={[
+        {
+          py: 0.5,
+          pl: 1,
+          borderRadius: 1,
+          bgcolor: isSelected ? "action.selected" : "transparent",
+        },
+        ...(Array.isArray(decorationStyles.sx) ? decorationStyles.sx : [decorationStyles.sx]),
+      ]}
     >
       <Stack
         direction="row"
@@ -58,6 +66,7 @@ export const SegmentRow = ({ segment, selection, onSelect }: SegmentRowProps) =>
         <Typography variant="body2" sx={{ flex: 1 }}>
           {segment.label ?? "Segment"}
         </Typography>
+        <DecorationBadge styles={decorationStyles} />
         <Chip label={`${totalEntries} entries`} size="small" variant="outlined" />
       </Stack>
 

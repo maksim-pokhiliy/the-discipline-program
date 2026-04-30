@@ -7,12 +7,14 @@ import { useSearchParams } from "next/navigation";
 
 import { useBlockKindsPageData, usePlanStructure } from "@app/lib/hooks";
 
+import { useEditingTarget } from "../../lib/editing-target";
 import { parsePlanSelection } from "../plan-canvas/selection";
 
 import { AthletePreview } from "./athlete-preview";
 import { BlockInspector } from "./block-inspector";
 import { EntryInspector } from "./entry-inspector";
 import { InspectorEmptyState } from "./inspector-empty-state";
+import { OverrideListSection } from "./override-list-section";
 import { SegmentInspector } from "./segment-inspector";
 import { useSelectedBlock, useSelectedEntry, useSelectedSegment } from "./use-selected-entities";
 
@@ -31,6 +33,7 @@ export const InspectorPanel = ({ planId }: InspectorPanelProps) => {
 
   const planStructure = usePlanStructure(planId, { fromWeek, toWeek });
   const blockKinds = useBlockKindsPageData({ scope: "ALL", take: 200 });
+  const { target } = useEditingTarget();
 
   const selection = useMemo(() => parsePlanSelection(searchParams.get("selected")), [searchParams]);
 
@@ -67,6 +70,10 @@ export const InspectorPanel = ({ planId }: InspectorPanelProps) => {
 
   const renderEditor = () => {
     if (!selection) {
+      if (target.kind === "athlete") {
+        return <OverrideListSection enrollmentId={target.enrollmentId} />;
+      }
+
       return <InspectorEmptyState message="Select a node to inspect" />;
     }
 

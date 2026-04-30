@@ -21,9 +21,13 @@ import {
 import { platformKeys } from "@app/lib/api/keys";
 import { useExercisesPageData } from "@app/lib/hooks";
 
+import { useEditingTarget } from "../../lib/editing-target";
 import { AtPicker, type AtPickerSelection, useInlineTrigger } from "../inline-picker";
 
+import { OverrideModeChip } from "./override-mode-chip";
+import { useAthleteLabel } from "./use-athlete-label";
 import { useEntryBulkPatchUpdate } from "./use-bulk-patch-update";
+import { useEntryOverrideUpdate } from "./use-override-update";
 
 const buildExerciseSnapshot = (item: ExerciseLibraryItem): ExerciseSnapshot => ({
   id: item.id,
@@ -66,16 +70,34 @@ export const EntryInspector = ({ planId, entry }: EntryInspectorProps) => {
   const queryClient = useQueryClient();
   const orchestrator = useEditSessionOrchestrator();
   const initial = useMemo(() => toDraft(entry), [entry]);
-  const mutationKey = useMemo(() => [SESSION_NS, planId, entry.id] as const, [entry.id, planId]);
-  const sessionId = useMemo(() => `${SESSION_NS}-${entry.id}`, [entry.id]);
+  const { target } = useEditingTarget();
+  const enrollmentId = target.kind === "athlete" ? target.enrollmentId : null;
+  const athleteLabel = useAthleteLabel(planId, enrollmentId ?? "");
+  const mutationKey = useMemo(
+    () => [SESSION_NS, planId, entry.id, enrollmentId ?? "all"] as const,
+    [enrollmentId, entry.id, planId],
+  );
+  const sessionId = useMemo(
+    () => `${SESSION_NS}-${entry.id}-${enrollmentId ?? "all"}`,
+    [enrollmentId, entry.id],
+  );
 
-  const performUpdate = useEntryBulkPatchUpdate(planId, entry.id);
+  const performBaseUpdate = useEntryBulkPatchUpdate(planId, entry.id);
+  const performOverrideUpdate = useEntryOverrideUpdate(enrollmentId ?? "", entry.id);
   const exercisesQuery = useExercisesPageData({ scope: "ALL", take: 200 });
   const exerciseLibrary = useMemo(() => exercisesQuery.data?.items ?? [], [exercisesQuery.data]);
 
   const mutationFn = useCallback(
     async (draft: EntryDraft, expectedVersion: number): Promise<EntryDraft> => {
-      const next = await performUpdate(fromDraft(entry, draft), expectedVersion);
+      const composed = fromDraft(entry, draft);
+
+      if (enrollmentId) {
+        await performOverrideUpdate(composed, expectedVersion);
+
+        return draft;
+      }
+
+      const next = await performBaseUpdate(composed, expectedVersion);
 
       void queryClient.invalidateQueries({
         queryKey: platformKeys.trainingPlans.structureByPlan(planId),
@@ -83,7 +105,7 @@ export const EntryInspector = ({ planId, entry }: EntryInspectorProps) => {
 
       return toDraft(next);
     },
-    [entry, performUpdate, planId, queryClient],
+    [enrollmentId, entry, performBaseUpdate, performOverrideUpdate, planId, queryClient],
   );
 
   const session = useEditSession<EntryDraft>({
@@ -136,6 +158,7 @@ export const EntryInspector = ({ planId, entry }: EntryInspectorProps) => {
         <Typography variant="subtitle1" sx={{ flex: 1 }}>
           Exercise entry
         </Typography>
+        {enrollmentId && <OverrideModeChip athleteLabel={athleteLabel} />}
         <SaveIndicator
           status={session.status}
           lastSavedAt={session.lastSavedAt}

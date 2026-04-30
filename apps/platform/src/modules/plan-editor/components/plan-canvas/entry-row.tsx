@@ -5,6 +5,9 @@ import { CSS } from "@dnd-kit/utilities";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { Box, Stack, Typography } from "@mui/material";
 
+import { DecorationBadge } from "./decoration-badge";
+import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-context";
+import { getDecorationStyles } from "./get-decoration-styles";
 import { type PlanSelection } from "./selection";
 
 export type EntryRowProps = {
@@ -22,6 +25,8 @@ export const EntryRow = ({ entryId, exerciseName, selection, onSelect }: EntryRo
     transition: sortable.transition,
   };
   const isSelected = selection?.kind === "entry" && selection.id === entryId;
+  const decoration = useEffectivePlanDecorationContext().getDecoration(entryId);
+  const decorationStyles = getDecorationStyles(decoration);
 
   return (
     <Stack
@@ -31,14 +36,17 @@ export const EntryRow = ({ entryId, exerciseName, selection, onSelect }: EntryRo
       alignItems="center"
       spacing={0.5}
       onClick={() => onSelect({ kind: "entry", id: entryId })}
-      sx={{
-        py: 0.5,
-        pl: 1,
-        borderRadius: 1,
-        cursor: "pointer",
-        bgcolor: isSelected ? "action.selected" : "transparent",
-        "&:hover": { bgcolor: "action.hover" },
-      }}
+      sx={[
+        {
+          py: 0.5,
+          pl: 1,
+          borderRadius: 1,
+          cursor: "pointer",
+          bgcolor: isSelected ? "action.selected" : "transparent",
+          "&:hover": { bgcolor: "action.hover" },
+        },
+        ...(Array.isArray(decorationStyles.sx) ? decorationStyles.sx : [decorationStyles.sx]),
+      ]}
     >
       <Box
         {...sortable.attributes}
@@ -48,7 +56,10 @@ export const EntryRow = ({ entryId, exerciseName, selection, onSelect }: EntryRo
       >
         <DragIndicatorIcon fontSize="inherit" />
       </Box>
-      <Typography variant="caption">{exerciseName}</Typography>
+      <Typography variant="caption" sx={{ flex: 1 }}>
+        {exerciseName}
+      </Typography>
+      <DecorationBadge styles={decorationStyles} />
     </Stack>
   );
 };
