@@ -1,15 +1,14 @@
 import { defineConfig } from "vitest/config";
 
-import { SEQUENTIAL_TEST_FILES } from "./vitest.sequential-files";
-
 export default defineConfig({
   test: {
     name: "api-server",
     globals: true,
     environment: "node",
     include: ["src/**/*.test.ts"],
-    exclude: ["**/node_modules/**", "**/dist/**", ...SEQUENTIAL_TEST_FILES],
+    exclude: ["**/node_modules/**", "**/dist/**"],
     testTimeout: 15_000,
+    fileParallelism: false,
     setupFiles: ["./src/test/setup.ts"],
     env: {
       NEXT_PUBLIC_APP_URL: "http://localhost:3000",
