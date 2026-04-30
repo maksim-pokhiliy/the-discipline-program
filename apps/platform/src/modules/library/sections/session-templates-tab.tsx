@@ -25,7 +25,7 @@ import {
   useSessionTemplatesPageData,
 } from "@app/lib/hooks";
 
-import { DemoteDialog, LibraryRowActions } from "../components";
+import { DemoteDialog, LibraryRowActions, TemplateEditDialog } from "../components";
 import { SCOPE_CHIP_COLOR } from "../constants";
 
 type SessionTemplatesTabProps = {
@@ -43,6 +43,7 @@ export const SessionTemplatesTab = ({ currentUserId }: SessionTemplatesTabProps)
   const isPrivileged = role === UserRole.HEAD_COACH || role === UserRole.ADMIN;
 
   const [demoteTarget, setDemoteTarget] = useState<SessionTemplate | null>(null);
+  const [editTarget, setEditTarget] = useState<SessionTemplate | null>(null);
 
   const { data, isLoading, error } = useSessionTemplatesPageData({}, currentUserId);
   const { data: coaches } = usePlatformCoaches(isPrivileged);
@@ -157,7 +158,7 @@ export const SessionTemplatesTab = ({ currentUserId }: SessionTemplatesTabProps)
             role={role}
             isOwn={isOwn(item)}
             scope={item.scope}
-            onEdit={undefined}
+            onEdit={() => setEditTarget(item)}
             onDelete={() => requestDelete(item.id)}
             onPromote={() => promoteMutation.mutate(item.id)}
             onDemote={() => setDemoteTarget(item)}
@@ -185,6 +186,13 @@ export const SessionTemplatesTab = ({ currentUserId }: SessionTemplatesTabProps)
         }
         state={state}
         onStateChange={onStateChange}
+      />
+
+      <TemplateEditDialog
+        open={!!editTarget}
+        kind="session"
+        template={editTarget}
+        onClose={() => setEditTarget(null)}
       />
 
       <ConfirmationModal

@@ -25,7 +25,7 @@ import {
   useWeekTemplatesPageData,
 } from "@app/lib/hooks";
 
-import { DemoteDialog, LibraryRowActions } from "../components";
+import { DemoteDialog, LibraryRowActions, TemplateEditDialog } from "../components";
 import { SCOPE_CHIP_COLOR } from "../constants";
 
 type WeekTemplatesTabProps = {
@@ -43,6 +43,7 @@ export const WeekTemplatesTab = ({ currentUserId }: WeekTemplatesTabProps) => {
   const isPrivileged = role === UserRole.HEAD_COACH || role === UserRole.ADMIN;
 
   const [demoteTarget, setDemoteTarget] = useState<WeekTemplate | null>(null);
+  const [editTarget, setEditTarget] = useState<WeekTemplate | null>(null);
 
   const { data, isLoading, error } = useWeekTemplatesPageData({}, currentUserId);
   const { data: coaches } = usePlatformCoaches(isPrivileged);
@@ -157,7 +158,7 @@ export const WeekTemplatesTab = ({ currentUserId }: WeekTemplatesTabProps) => {
             role={role}
             isOwn={isOwn(item)}
             scope={item.scope}
-            onEdit={undefined}
+            onEdit={() => setEditTarget(item)}
             onDelete={() => requestDelete(item.id)}
             onPromote={() => promoteMutation.mutate(item.id)}
             onDemote={() => setDemoteTarget(item)}
@@ -185,6 +186,13 @@ export const WeekTemplatesTab = ({ currentUserId }: WeekTemplatesTabProps) => {
         }
         state={state}
         onStateChange={onStateChange}
+      />
+
+      <TemplateEditDialog
+        open={!!editTarget}
+        kind="week"
+        template={editTarget}
+        onClose={() => setEditTarget(null)}
       />
 
       <ConfirmationModal
