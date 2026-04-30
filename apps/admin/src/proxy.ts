@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { applyCspHeaders, createCspResponse } from "@repo/api-routes";
 import { AUTH_ROUTES, getToken, hasSessionCookie, isPublicRoute } from "@repo/auth";
 import { UserRole } from "@repo/contracts/iam/auth";
 import { logger } from "@repo/shared";
@@ -10,14 +11,14 @@ export const proxy = async (req: NextRequest) => {
 
   if (!hasSessionCookie(req)) {
     if (publicPath) {
-      return NextResponse.next();
+      return createCspResponse(req);
     }
 
     const loginUrl = new URL(AUTH_ROUTES.LOGIN, req.url);
 
     loginUrl.searchParams.set("callbackUrl", path);
 
-    return NextResponse.redirect(loginUrl);
+    return applyCspHeaders(req, NextResponse.redirect(loginUrl));
   }
 
   let token: Awaited<ReturnType<typeof getToken>> = null;
@@ -34,7 +35,7 @@ export const proxy = async (req: NextRequest) => {
   const isAdminRole = token?.role === UserRole.ADMIN || token?.role === UserRole.HEAD_COACH;
 
   if (token && isAdminRole && path === AUTH_ROUTES.LOGIN) {
-    return NextResponse.redirect(new URL("/", req.url));
+    return applyCspHeaders(req, NextResponse.redirect(new URL("/", req.url)));
   }
 
   if (!token && !publicPath) {
@@ -42,14 +43,14 @@ export const proxy = async (req: NextRequest) => {
 
     loginUrl.searchParams.set("callbackUrl", path);
 
-    return NextResponse.redirect(loginUrl);
+    return applyCspHeaders(req, NextResponse.redirect(loginUrl));
   }
 
   if (token && !isAdminRole && !publicPath) {
-    return NextResponse.redirect(new URL(AUTH_ROUTES.LOGIN, req.url));
+    return applyCspHeaders(req, NextResponse.redirect(new URL(AUTH_ROUTES.LOGIN, req.url)));
   }
 
-  return NextResponse.next();
+  return createCspResponse(req);
 };
 
 export const config = {

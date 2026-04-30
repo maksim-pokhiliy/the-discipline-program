@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
+import { applyCspHeaders, createCspResponse } from "@repo/api-routes";
 import { AUTH_ROUTES, getToken, hasSessionCookie, isPublicRoute } from "@repo/auth";
 import { ROLE_HOMES, UserRole } from "@repo/contracts/iam/auth";
 import { logger } from "@repo/shared";
@@ -19,14 +20,14 @@ export const proxy = async (req: NextRequest) => {
 
   if (!hasSessionCookie(req)) {
     if (publicPath) {
-      return NextResponse.next();
+      return createCspResponse(req);
     }
 
     const loginUrl = new URL(AUTH_ROUTES.LOGIN, req.url);
 
     loginUrl.searchParams.set("callbackUrl", path);
 
-    return NextResponse.redirect(loginUrl);
+    return applyCspHeaders(req, NextResponse.redirect(loginUrl));
   }
 
   let token: Awaited<ReturnType<typeof getToken>> = null;
@@ -44,7 +45,7 @@ export const proxy = async (req: NextRequest) => {
     const home = getRoleHome(token.role);
 
     if (home) {
-      return NextResponse.redirect(new URL(home, req.url));
+      return applyCspHeaders(req, NextResponse.redirect(new URL(home, req.url)));
     }
   }
 
@@ -53,32 +54,32 @@ export const proxy = async (req: NextRequest) => {
 
     loginUrl.searchParams.set("callbackUrl", path);
 
-    return NextResponse.redirect(loginUrl);
+    return applyCspHeaders(req, NextResponse.redirect(loginUrl));
   }
 
   if (token && path === "/") {
     const home = getRoleHome(token.role);
 
     if (home) {
-      return NextResponse.redirect(new URL(home, req.url));
+      return applyCspHeaders(req, NextResponse.redirect(new URL(home, req.url)));
     }
 
-    return NextResponse.redirect(new URL(AUTH_ROUTES.LOGIN, req.url));
+    return applyCspHeaders(req, NextResponse.redirect(new URL(AUTH_ROUTES.LOGIN, req.url)));
   }
 
   if (token && !publicPath) {
     const home = getRoleHome(token.role);
 
     if (!home) {
-      return NextResponse.redirect(new URL(AUTH_ROUTES.LOGIN, req.url));
+      return applyCspHeaders(req, NextResponse.redirect(new URL(AUTH_ROUTES.LOGIN, req.url)));
     }
 
     if (!path.startsWith(home)) {
-      return NextResponse.redirect(new URL(home, req.url));
+      return applyCspHeaders(req, NextResponse.redirect(new URL(home, req.url)));
     }
   }
 
-  return NextResponse.next();
+  return createCspResponse(req);
 };
 
 export const config = {
