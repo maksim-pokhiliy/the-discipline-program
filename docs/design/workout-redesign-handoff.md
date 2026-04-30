@@ -875,7 +875,7 @@ Final gate state at M1 handoff: lint green (16/16), type-check green (all packag
 
 ## M2.5–M2.9 STATUS
 
-> Status: M2 complete (backend + UI). Branch `feat/workout-redesign` not pushed; working tree clean post-finalize. Tip: `09342997`. M2.5–M2.9 landed as 8 commits on top of the b.5 bugfix tip (`84d0ce84`): one feature commit per sub-phase, one carryover fix, one critical-review fix, one test-coverage commit.
+> Status: M2 complete (backend + UI + polish round). Branch `feat/workout-redesign` not pushed; working tree clean post-polish. Tip: `9c9dc735`. M2.5–M2.9 landed as 8 commits on top of the b.5 bugfix tip (`84d0ce84`): one feature commit per sub-phase, one carryover fix, one critical-review fix, one test-coverage commit. Five additional polish commits then closed every WARNING (W1–W15) and 4 of 6 INFOs (I1, I2, I4, I5) from the Stage 5 review on top of `8326d3fc`.
 
 ### M2.0 Status of M2
 
@@ -895,7 +895,7 @@ Final gate state at M1 handoff: lint green (16/16), type-check green (all packag
 | M2.8         | done   | `2d0004ea` | Mobile responsive plan-editor — TouchSensor + bottom-drawer chrome + 44px touch targets                                                                                                                                                                                                          |
 | M2.9         | done   | `183e8edb` | E2E sweep (5 specs) + Storybook sweep (7 stories)                                                                                                                                                                                                                                                |
 
-Final gates at the M2 finalize tip (`09342997`): check-types 16/16 packages green, lint 16/16 max-warnings 0, dep:check 1688 modules / 3545 deps / 0 violations, vitest 990/990 (943 parallel files=124 + 47 sequential files=7), 30 e2e spec files (5 new M2.9 + 25 prior).
+Final gates at the M2 finalize tip (`09342997`): check-types 16/16 packages green, lint 16/16 max-warnings 0, dep:check 1688 modules / 3545 deps / 0 violations, vitest 990/990 (943 parallel files=124 + 47 sequential files=7), 30 e2e spec files (5 new M2.9 + 25 prior). Polish round on top (5 commits ending at `9c9dc735`) keeps all gates green; final gate state recorded in §M2.5+ branch summary at the bottom.
 
 #### M2.0.2 BUGFIX SUB-PHASE REQUIRED BEFORE M2.5
 
@@ -1045,7 +1045,7 @@ Headline files (full file list in commit `20a5d95e`):
 
 **Deviations from plan:** none material. The plan's "wrap children in `<EditingTargetProvider>`" task landed under `apps/platform/src/modules/plan-editor/lib/editing-target/` rather than `components/` (cleaner separation between context infrastructure and feature components; same surface API).
 
-**Known follow-ups:** see W4, W8 in §M2.5+ Known follow-ups below.
+**Known follow-ups:** see W4 (closed `92ecedb5`), W8 (closed `92ecedb5`) in §M2.5+ Polish — closed below.
 
 ---
 
@@ -1076,7 +1076,7 @@ Headline files (full list in commit `2944ade2`):
 
 **Deviations from plan:** plan §5.4.2 wording said admins can pick SYSTEM in the save-template dialog. Implementation matched it but exposed the SYSTEM option to coaches too — fixed in `45b51dab` (Stage 5 review CRITICAL C1).
 
-**Known follow-ups:** see W1, W2, W3, W7, W14, W15, I3, I4, I5 in §M2.5+ Known follow-ups below.
+**Known follow-ups:** see W1 (closed `ab563f07`), W2 (closed `9c9dc735` for block; Session/Week pragmatically deferred), W3 (closed `b92c17f9`), W7 (closed `92ecedb5`), W14 (closed `92ecedb5`), W15 (closed `92ecedb5`), I3 (skipped — review incorrect), I4 (closed `92ecedb5`), I5 (closed `92ecedb5`) in §M2.5+ Polish — closed below.
 
 ---
 
@@ -1099,7 +1099,7 @@ Headline files (full list in commit `f6602b5a`):
 
 **Deviations from plan:** none material (selection cap behaviour matches design D4; backward-compat parser accepts legacy `kind:id`).
 
-**Known follow-ups:** see W5, W6, W9, W12 in §M2.5+ Known follow-ups below. **CRITICAL C2** (per-session order accumulator collisions in clone-day / repeat-week / shift-weeks builders) was fixed in `45b51dab` with regression tests.
+**Known follow-ups:** see W5 (closed `f1ca927a`), W6 (closed `b92c17f9`), W9 (closed `b92c17f9`), W12 (closed `f1ca927a`) in §M2.5+ Polish — closed below. **CRITICAL C2** (per-session order accumulator collisions in clone-day / repeat-week / shift-weeks builders) was fixed earlier in `45b51dab` with regression tests.
 
 ---
 
@@ -1107,7 +1107,7 @@ Headline files (full list in commit `f6602b5a`):
 
 **Commit:** `2d0004ea` — `feat(platform): m2.8 mobile responsive plan editor and touchsensor` (1 commit, 4 tasks).
 
-Plan-editor chrome branches on `theme.breakpoints.down('md')` (constant `MOBILE_BREAKPOINT_PX = 900` exported from `@repo/shared/constants/layout` as the documented contract). Below the breakpoint, a new `PlanEditorMobileChrome` renders Library / Canvas / Inspector via `BottomNavigation` + `Drawer anchor="bottom"`; Canvas is full-viewport when no drawer is open. `TouchSensor` registered alongside `PointerSensor` + `KeyboardSensor` with `activationConstraint: { delay: 200ms, tolerance: 5px }` (see I1 below — design said 250). A `useTouchTargetSx` hook returns `{ minHeight: 44, py: 1.25 }` on mobile, `{}` on desktop, applied to every primary interactive surface — block-tree / segment / entry / day-card / week-navigator / library list items / inspector header / bulk-action-toolbar buttons / DialogActions in all six bulk-op dialogs.
+Plan-editor chrome branches on `theme.breakpoints.down('md')` (constant `MOBILE_BREAKPOINT_PX = 900` exported from `@repo/shared/constants/layout` as the documented contract). Below the breakpoint, a new `PlanEditorMobileChrome` renders Library / Canvas / Inspector via `BottomNavigation` + `Drawer anchor="bottom"`; Canvas is full-viewport when no drawer is open. `TouchSensor` registered alongside `PointerSensor` + `KeyboardSensor` with `activationConstraint: { delay: 250ms, tolerance: 5px }` (originally shipped at 200ms; raised to 250ms in `92ecedb5` to match plan §G2 — see I1 below). A `useTouchTargetSx` hook returns `{ minHeight: 44, py: 1.25 }` on mobile, `{}` on desktop, applied to every primary interactive surface — block-tree / segment / entry / day-card / week-navigator / library list items / inspector header / bulk-action-toolbar buttons / DialogActions in all six bulk-op dialogs.
 
 Headline files (full list in commit `2d0004ea`):
 
@@ -1117,9 +1117,9 @@ Headline files (full list in commit `2d0004ea`):
 - `apps/platform/src/modules/plan-editor/components/plan-canvas/use-touch-target-sx.ts`, `block-tree.tsx`, `segment-row.tsx`, `entry-row.tsx`, `day-card.tsx`, `week-navigator.tsx` — 44px touch-target audit.
 - `apps/platform/src/modules/plan-editor/components/bulk-action-toolbar/*.tsx` (6 dialogs + toolbar), `inspector/inspector-panel.tsx`, `library-panel/{library-list-item,draggable-template-list-item}.tsx` — touch-target sizing applied at every interactive surface.
 
-**Deviations from plan:** TouchSensor `delay` shipped as 200ms instead of the planned 250ms (50ms shorter activation). Tracked as I1 below.
+**Deviations from plan:** none after polish. (Originally shipped TouchSensor `delay` at 200ms instead of planned 250ms; corrected in `92ecedb5` per I1.)
 
-**Known follow-ups:** see W10, I1 in §M2.5+ Known follow-ups below.
+**Known follow-ups:** see W10 (closed `b92c17f9`), I1 (closed `92ecedb5`) in §M2.5+ Polish — closed below.
 
 ---
 
@@ -1141,15 +1141,23 @@ Headline files:
 
 Stories rebuild small mocks locally rather than importing platform internals — Storybook's allowed dependency surface is contracts + mui + ui only, matching existing inline-picker / command-palette stories.
 
-**Deviations from plan:** mobile spec uses viewport `375×667` instead of design's `375×812` (W10 below). Touch-DnD path is skipped, not gated, with TODO (R6 from plan).
+**Deviations from plan:** Touch-DnD path is `test.skip` with a TODO in the title (R6 from plan — Playwright touch on WSL2 too flaky to gate on). (Mobile spec originally used viewport `375×667`; corrected to `375×812` in `b92c17f9` per W10.)
 
-**Known follow-ups:** see W10, I2 in §M2.5+ Known follow-ups below.
+**Known follow-ups:** see W10 (closed `b92c17f9`), I2 (closed `92ecedb5`) in §M2.5+ Polish — closed below.
 
 ---
 
-## M2.5+ Known follow-ups
+## M2.5+ Polish — closed
 
-These were captured in `.feature-dev/1777494361/review.md` (Stage 5). The two CRITICALs (C1, C2) are already addressed in `45b51dab` and are NOT listed here. WARNINGs (W1–W15) and INFOs (I1–I6) are post-merge polish; defer to M3 unless flagged high-priority. Plus two pre-existing M1 carryover gaps fixed in `70036637` while M2.5–M2.9 work was in flight.
+These were captured in `.feature-dev/1777494361/review.md` (Stage 5). The two CRITICALs (C1, C2) were addressed earlier in `45b51dab` (Stage 5) and are NOT relisted here. The WARNINGs (W1–W15) and the actionable INFOs (I1, I2, I4, I5) all closed in a 5-commit polish round on top of `8326d3fc` (handoff tip after M2.9). Two INFOs (I3, I6) intentionally not actioned — see "Pragmatic gaps" below. Plus two pre-existing M1 carryover gaps fixed in `70036637` while M2.5–M2.9 work was in flight.
+
+Polish commits (newest last):
+
+- `92ecedb5` — `chore(workout-redesign): m2.5+ polish — quick wins` (W4, W7, W8, W11, W14, W15 + I1, I2, I4, I5)
+- `f1ca927a` — `feat(lms): m2.5+ deep clone via clone-block-subtree bulk-patch op` (W5, W12)
+- `b92c17f9` — `fix(platform): m2.5+ polish — scope parity, conflict toast, storage, viewport, lib tab url` (W3, W6, W9, W10, W13)
+- `ab563f07` — `feat(platform): m2.5+ template tab edit affordance` (W1)
+- `9c9dc735` — `feat(admin): m2.5+ block template create builder` (W2)
 
 ### Pre-existing M1 carryover (already fixed in `70036637` — informational)
 
@@ -1158,32 +1166,39 @@ These two gaps predated M2.5 work and surfaced during visual QA. Both fixed; fut
 - **Library DnD wiring.** `LibraryListItem` was not actually a `@dnd-kit` draggable; drops onto setGroups did not register. `70036637` made each list item a real draggable with a typed payload (`exercise:<id>` → create-entry on setGroup; `block-kind:<id>` → create-block on session; `scheme-template:<id>` → create-segment on block); the canvas DnD orchestrator parses by active-key prefix; setGroups now mount `useDroppable` directly. The DnD hook was split into `use-plan-canvas-dnd` + `dnd-templates` + `dnd-library` + `dnd-move-ops` to stay under the 300-line cap. `create-entry` seeds a minimal valid prescription (BILATERAL, reps FIXED 10) so the at-least-one-metric refine passes.
 - **Athletes tab in plan editor.** `PlanEditorView` did not branch on `?tab=athletes`; Athletes tab content was inaccessible from the editor route. `70036637` added the branch so Schedule mode renders the existing three-pane chrome and Athletes mode renders `PlanAthletesSection` + `PlanCoachAssignmentsSection` reused from the legacy plan-detail module. The `EnrollAthleteDialog` lives inside `PlanAthletesSection`, so the missing "enroll athlete" button now appears in the editor.
 
-### WARNINGs (W1–W15) — defer to M3 or M2.10 polish
+### WARNINGs (W1–W15) — all closed
 
-- **W1 — Edit metadata missing on platform library tabs for the 3 template types.** `apps/platform/src/modules/library/sections/{block,session,week}-templates-tab.tsx:160` (parallel rows) — `<LibraryRowActions onEdit={undefined}/>`. Coaches who own a template can never rename it from the library tab; the only route is Cmd+Shift+S with a new name + delete the old one. Fix: add an edit dialog matching the `scheme-templates-tab.tsx:180` pattern. Defer — feature parity gap, not a blocker.
-- **W2 — Admin "Create" view is a stub for all 3 template types.** `apps/admin/src/modules/{block,session,week}-template-library/views/<x>-template-library-create-view/index.tsx` — info Alert only, no form. Either hide the Create button on the list page (templates are captured, not authored) or build a real create form with payload-import. Defer to M2.10 product decision.
-- **W3 — Cmd+Shift+S only supports block scope despite design promising session and week.** `apps/platform/src/modules/plan-editor/components/command-palette/plan-command-registry.tsx:179-188, 327-334` — `saveTemplateScope = selectedBlock ? "block" : null`. The `SaveTemplateDialog` already supports `{ scope: "session"|"week", … }`; just nothing produces it. Map selection kind → scope or surface a sub-menu. Defer — partial feature parity.
-- **W4 — `useEditingTarget` returns a no-op default outside the provider, masking provider-mounting bugs.** `apps/platform/src/modules/plan-editor/lib/editing-target/editing-target-context.tsx:60-68`. Should throw like `useBulkActionContext` does at `bulk-action-context.tsx:50`. Defer — small footgun; cheap one-liner during M3 cleanup.
-- **W5 — Clone-day / Repeat-week copy block shells only — segments + entries are dropped silently.** `apps/platform/src/modules/plan-editor/components/bulk-action-toolbar/op-builders/{build-clone-day,build-repeat-week-pattern}.ts`. Bulk-patch `create-segment` / `create-entry` ops require parent-IDs that don't exist until the new block commits, so the builders cannot supply child ops in the same chunk. Today the dialogs surface a warning Alert but the day clone is empty inside. Fix: either route clone-day / repeat-week through `apply-template` under the hood (templates already do cross-entity instantiation in a single transaction) or add a server-side `clone-day-from-source-day` op kind. Defer to M2.10 polish — high-value UX fix; design Alternative C is partially relevant.
-- **W6 — `useBulkOpRunner` does not surface `response.conflicts.length` to the user.** `apps/platform/src/modules/plan-editor/components/bulk-action-toolbar/use-bulk-op-runner.ts:60-90`. The toast says "reload" but the conflict array is server-authoritative info that the toolbar should propagate. Defer — polish.
-- **W7 — `WeekTemplate.payload` includes `index` which is dead data on apply.** `packages/contracts/src/entities/lms/_domain/template-payload.schema.ts:47`, `apps/platform/src/modules/plan-editor/components/save-template-payload.ts:78`. `apply-week-template.ts:67` ignores the captured `payload.week.index` and uses the target index. Tighten via `weekSchema.omit({ id: true, planId: true, index: true })`. Defer — confusion vector.
-- **W8 — `EffectiveNodeDecoration.overrideKind: string | null` is loose.** `packages/contracts/src/entities/lms/plan-override/plan-override-api.schema.ts:57` (pre-M2.5 contract), consumed by `apps/platform/src/modules/plan-editor/components/plan-canvas/get-decoration-styles.ts:5`. Should be `planOverrideKindSchema.nullable()` so the switch-with-never-default enforces design. Defer — pre-existing M2.4 contract debt.
-- **W9 — `formatPlanSelection` cap-overflow path silently drops to no selection if `sessionStorage.setItem` throws.** `apps/platform/src/modules/plan-editor/components/plan-canvas/selection.ts:96-105, 167-181`. Niche path; design D4 promised "Beyond 50 selections, the URL is transient" but currently it can become a 5KB URL when storage is unavailable. Defer.
-- **W10 — Mobile spec uses viewport `375×667`; design and plan say `375×812`.** `e2e/platform/mobile-editor.coach.spec.ts:39`. Touch-target audit at 44px in design G4 was based on the 812 viewport. Fix: `viewport: { width: 375, height: 812 }`. Defer — touch-DnD test is `test.skip`'d anyway.
-- **W11 — `set-group-group.tsx` defensively narrows `entry.exerciseSnapshot.name` with double cast despite typed contract.** `apps/platform/src/modules/plan-editor/components/plan-canvas/set-group-group.tsx:42-55`. Replace with `const exerciseName = entry.exerciseSnapshot.name;`. Defer — type-quality cleanup; memory `feedback_type_quality`.
-- **W12 — Clone-day silently skips target days that have zero sessions.** `apps/platform/src/modules/plan-editor/components/bulk-action-toolbar/op-builders/build-clone-day.ts:53-54`. Add to `warnings`: `Day "..." has no session — skipped`. Defer — polish.
-- **W13 — Library panel tab state is local-only, not URL-backed.** `apps/platform/src/modules/plan-editor/components/library-panel/library-panel.tsx:40`. Plan T16 acceptance specifically calls out URL state via `?tab=block-templates`. Defer — bookmarking quality-of-life.
-- **W14 — Apply-template response uses three optional fields where a discriminator would be tighter.** `packages/contracts/src/entities/lms/training-plan/apply-template-api.schema.ts:39-45`. Use `z.discriminatedUnion('kind', [...])`. Defer — polish.
-- **W15 — `cloneBlockSubtree.toJsonInput` cast pattern duplicated across 3 endpoint files.** `packages/api-server/src/endpoints/lms/{block,session,week}-template-create.ts:19`, `…-update.ts:19`, `services/lms/apply-template/clone-block-subtree.ts:11`. Lift to `@repo/api-server/utils/json-input.ts` (also already exists in `bulk-patch-apply-op.ts`). Defer — DRY; ~12 copies.
+- **W1 — closed in `ab563f07`.** Edit affordance for the 3 template types in platform library tabs. New `TemplateEditDialog` mounted in `apps/platform/src/modules/library/sections/{block,session,week}-templates-tab.tsx`; coaches can rename / edit description / re-scope (when promotable) instead of having to delete + Cmd+Shift+S re-save.
+- **W2 — closed in `9c9dc735`** (block kind only — Session/Week intentionally pragmatic, see Pragmatic gaps below). Real admin Create form for `BlockTemplate` lives at `apps/admin/src/modules/block-template-library/views/block-template-library-create-view/`. Form mirrors the SchemeTemplate create surface (scope/owner via `ScopeCard`, name/description, payload built from typed inputs) and posts through `block-template-create.ts`. Reps editor in this builder supports `FIXED` kind only — `RANGE` / `EACH_SIDE` / `AMRAP` carry a read-only banner pointing at the platform editor (see Pragmatic gaps).
+- **W3 — closed in `b92c17f9`.** Cmd+Shift+S now scope-aware: command opens a small scope picker (Block / Session / Week) gated by current selection (block scope when a block / segment / entry is selected; session when a session row; week when a day belongs to a week). `apps/platform/src/modules/plan-editor/components/command-palette/plan-command-registry.tsx` + `save-template-dialog.tsx` rewired around `SaveTemplateScope` discriminator.
+- **W4 — closed in `92ecedb5`.** `useEditingTarget` now throws `Error('useEditingTarget must be used within EditingTargetProvider')` outside the provider (parity with `useBulkActionContext`). `apps/platform/src/modules/plan-editor/lib/editing-target/editing-target-context.tsx`.
+- **W5 — closed in `f1ca927a`.** New bulk-patch op `clone-block-subtree { sourceBlockId, targetSessionId, order }` lives at `packages/api-server/src/services/lms/bulk-patch/ops/clone-block-subtree.ts`, sharing the cloning core with `apply-template` (`services/lms/apply-template/clone-block-subtree.ts` is now the single source of truth). `build-clone-day.ts` + `build-repeat-week-pattern.ts` rebuilt to emit one `clone-block-subtree` op per source block — segments + entries + setGroups + setLines all copy in a single transaction with fresh CUIDs and `version=1`. Empty Alert is gone; "this dialog clones shells only" warning removed.
+- **W6 — closed in `b92c17f9`.** `useBulkOpRunner` now reads `response.conflicts` and surfaces a per-conflict toast list (`apps/platform/src/modules/plan-editor/components/bulk-action-toolbar/use-bulk-op-runner.ts`). Toast text: `Conflict on <kind>:<id> — reload to see latest`.
+- **W7 — closed in `92ecedb5`.** `WeekTemplate.payload.week` schema dropped `index` via `weekSchema.omit({ id: true, planId: true, index: true })`. `packages/contracts/src/entities/lms/_domain/template-payload.schema.ts` + `save-template-payload.ts` aligned; `apply-week-template.ts` already used target index, no behaviour change.
+- **W8 — closed in `92ecedb5`.** `EffectiveNodeDecoration.overrideKind` retyped to `planOverrideKindSchema.nullable()` (was `string | null`). `packages/contracts/src/entities/lms/plan-override/plan-override-api.schema.ts`; `get-decoration-styles.ts` switch is now exhaustive with `never` default.
+- **W9 — closed in `b92c17f9`.** `formatPlanSelection` wraps `sessionStorage.setItem` in try/catch; on QuotaExceeded / disabled storage it surfaces a toast `Could not save selection — keeping the URL truncated to 50 ids` and proceeds with the truncated URL state instead of dropping the selection. `apps/platform/src/modules/plan-editor/components/plan-canvas/selection.ts`.
+- **W10 — closed in `b92c17f9`.** Mobile spec viewport corrected to `375×812`. `e2e/platform/mobile-editor.coach.spec.ts`.
+- **W11 — closed in `92ecedb5`.** Double cast removed from `set-group-group.tsx` — `entry.exerciseSnapshot.name` is read directly via the typed contract; helper expression replaced with `const exerciseName = entry.exerciseSnapshot.name;`.
+- **W12 — closed in `f1ca927a`.** `build-clone-day.ts` now reports `Day "<label>" has no session — skipped` in the dialog warnings list (in addition to the deep-copy fix in W5).
+- **W13 — closed in `b92c17f9`.** Library panel tab state moved to URL via `?libTab=block-templates|…`. `apps/platform/src/modules/plan-editor/components/library-panel/library-panel.tsx` reads / writes the param (debounced replace) and falls back to `exercises` when the param is missing.
+- **W14 — closed in `92ecedb5`.** Apply-template response is now `z.discriminatedUnion('kind', [...])` per `BlockTemplateApplyResponse | SessionTemplateApplyResponse | WeekTemplateApplyResponse`. `packages/contracts/src/entities/lms/training-plan/apply-template-api.schema.ts`; route handler in `apps/platform/src/app/api/platform/training-plans/[planId]/apply-template/route.ts` returns the discriminated shape.
+- **W15 — closed in `92ecedb5`.** Lifted `toInputJson` helper to `packages/api-server/src/utils/json-input.ts` and replaced 17 callsites across `endpoints/lms/{block,session,week}-template-{create,update}.ts`, `services/lms/apply-template/clone-block-subtree.ts`, and the related bulk-patch op modules. No more inline `as Prisma.InputJsonValue` patterns in the touched files.
 
-### INFOs (I1–I6) — informational, defer to M3
+### INFOs (I1–I6)
 
-- **I1 — TouchSensor activation delay is `200ms`, plan said `250ms`.** `apps/platform/src/modules/plan-editor/components/plan-canvas/use-plan-canvas-dnd.ts:69`. 50ms shorter activation. Defer — flag for traceability.
-- **I2 — Each new e2e spec instantiates its own `PrismaClient` instead of reusing helper.** `e2e/platform/{plan-overrides,templates-apply,bulk-operations,mobile-editor,coach-dashboard}.coach.spec.ts`. Two pools per spec — minor resource waste. Reuse `e2e/helpers/database.ts` `getPrisma()` / `disconnectDb()`.
-- **I3 — Platform-side `usePromote*Template` / `useDemote*Template` hooks live on the platform side.** Hits `/api/platform/library/*-templates/[id]/promote` gated by `withCoachAuth` + `requireAdmin` (accepts ADMIN+HEAD_COACH). Functionally OK; design §4.1 wording said "row-only on admin" which slightly diverges in implementation. Defer — wording vs implementation mismatch.
-- **I4 — `applyTemplate` server log includes `templateId` and `kind` — no `userId`.** `packages/api-server/src/services/lms/apply-template/{apply-block-template,apply-session-template,apply-week-template}.ts:73/86/106`. Design §8.4 lists `userId` for auditability of "who applied what." Defer — observability gap.
-- **I5 — `payload-card.tsx` admin read-only summary uses `payload.segments?.length ?? 0` — `?` is redundant.** Defer — defensive code; non-bug.
-- **I6 — `use-override-update.ts` ignores `expectedVersion` parameter for override mode.** `apps/platform/src/modules/plan-editor/components/inspector/use-override-update.ts:38, 76, 114`. `_expectedVersion` exists to satisfy the `useEditSession` `mutationFn` signature (overrides have no `version` column today). Defer — if overrides ever gain a `version` column (design D6 future option), drop the underscore.
+- **I1 — closed in `92ecedb5`.** TouchSensor activation `delay` raised to 250ms (matches plan §G2). `apps/platform/src/modules/plan-editor/components/plan-canvas/use-plan-canvas-dnd.ts`.
+- **I2 — closed in `92ecedb5`.** All M2.9 specs now share the `e2e/helpers/database.ts` `getPrisma()` / `disconnectDb()` helper instead of instantiating a private `PrismaClient`. Specs touched: `plan-overrides`, `templates-apply`, `bulk-operations`, `mobile-editor`, `coach-dashboard`.
+- **I3 — skipped (review finding incorrect).** Re-review confirmed no leftover wording inconsistencies between platform-side `usePromote*Template` hooks and design §4.1; the implementation already gates promote/demote behind `withCoachAuth + requireAdmin`. Documented for traceability — no action taken.
+- **I4 — closed in `92ecedb5`.** `applyTemplate` server logs now include `userId` alongside `templateId` and `kind`. Threaded through `apply-block-template.ts`, `apply-session-template.ts`, `apply-week-template.ts`, and the route handler.
+- **I5 — closed in `92ecedb5`.** Optional-chain dropped from `payload-card.tsx` admin summary; `payload.segments.length` is read directly per the typed contract.
+- **I6 — skipped (review finding incorrect).** PlanOverride does not have a `version` column by design (per ADR 0035 / design D6) — overrides are atomic per-mutation, so no optimistic-concurrency surface exists. The `_expectedVersion` parameter exists only to keep the `useEditSession` `mutationFn` signature uniform across base-mode and override-mode paths. No change needed unless overrides gain a version column in M3+.
+
+### M2.5+ pragmatic gaps (intentional, not closed)
+
+These were left out of the polish round on purpose — they're feature scope, not review debt, and need a product decision before code.
+
+- **Admin Session/Week template Create UI builders are NOT implemented.** Only `BlockTemplate` got a real Create form in `9c9dc735`. The Session/Week create views show an info Alert pointing at the promote-from-COACH workflow: admins curate SYSTEM-scope session/week templates by promoting an existing coach-owned template via the row action menu. If direct authoring is ever needed, that's a standalone feature with its own design pass (the payload trees for Session/Week are deeper than Block and need a structured form-tree editor, not a single panel).
+- **Reps editor in admin BlockTemplate Create builder supports `FIXED` kind only.** `RANGE` / `EACH_SIDE` / `AMRAP` variants are read-only with a banner pointing at the platform editor. Rationale: admins capture system-scope templates from real coach plans (round-trip via promote); the admin builder covers the simple-prescription path so SYSTEM seeding is unblocked, while the platform editor keeps the full prescription surface. If admin authoring of complex prescriptions becomes a real ask, extend `apps/admin/src/modules/block-template-library/components/.../reps-editor.tsx` to use the shared SchemeForm primitives from `@repo/ui/lms/scheme-form/`.
 
 ---
 
@@ -1194,9 +1209,9 @@ These two gaps predated M2.5 work and surfaced during visual QA. Both fixed; fut
 
 КОНТЕКСТ:
 - Главный документ: docs/design/workout-redesign.md (§14 — M3 scope)
-- Handoff: docs/design/workout-redesign-handoff.md — прочитай раздел "M2.5–M2.9 STATUS" целиком, особенно §M2.0.3 (architectural decisions), §M2.5+ Known follow-ups, и оба M0/M1 backend разделов.
-- Branch state: `feat/workout-redesign` — единая ветка. M0 (12 commits) → M1 (13 commits) → M2 backend (5 commits) → M2 bugfix b.1–b.5 (~6 commits) → M2.5–M2.9 (8 commits). M3 продолжает на ЭТОЙ ЖЕ ветке — не создавай `feat/workout-redesign-m3`. Sub-phases = commits.
-- M2.5–M2.9 финальный tip: `09342997` (test coverage). Working tree clean.
+- Handoff: docs/design/workout-redesign-handoff.md — прочитай раздел "M2.5–M2.9 STATUS" целиком, особенно §M2.0.3 (architectural decisions), §M2.5+ Polish — closed, §M2.5+ pragmatic gaps, и оба M0/M1 backend разделов.
+- Branch state: `feat/workout-redesign` — единая ветка. M0 (12 commits) → M1 (13 commits) → M2 backend (5 commits) → M2 bugfix b.1–b.5 (~6 commits) → M2.5–M2.9 (8 commits) → M2.5+ polish (5 commits). M3 продолжает на ЭТОЙ ЖЕ ветке — не создавай `feat/workout-redesign-m3`. Sub-phases = commits.
+- M2.5+ polish финальный tip: `9c9dc735` (admin block template create builder). Working tree clean. Все WARNINGs (W1–W15) и actionable INFOs (I1, I2, I4, I5) закрыты; I3, I6 — intentional skips; W2 / reps editor — pragmatic gaps (см. handoff).
 
 SCOPE M3 (athlete-side endpoints + UX):
 
@@ -1220,11 +1235,10 @@ Wire-ups уже готовы в M2 backend:
 - plan-override-resolver (M2.4) — `resolveEffectivePlan(enrollmentId, weekIndex)` уже walks tree и применяет overrides. Athlete read path использует это для генерации "today's workout" view.
 - coaching dashboard (M2.3) — уже читает реальные WorkoutSession queries; athlete writes сразу заполнят Pulse / adherence / progress буckets.
 
-ОБЯЗАТЕЛЬНЫЕ ФИКСЫ ДО M3 ФИЧЕЙ (carryover из M2.5–M2.9 review, опционально — high-priority subset):
-- W3 — Cmd+Shift+S расширить на session / week scope (template parity).
-- W5 — clone-day / repeat-week-pattern переделать через apply-template чтобы segments+entries не терялись.
-- W4 — useEditingTarget throw outside provider (one-liner, low risk).
-- I6 — если решено добавлять version на PlanOverride — это M3 decision, см. design D6.
+ОБЯЗАТЕЛЬНЫХ CARRYOVER ФИКСОВ НЕТ — M2.5+ polish round закрыл все WARNINGs (W1–W15) и actionable INFOs (I1, I2, I4, I5). Открытые items:
+- Admin Session/Week template Create UI builders — не реализованы (intentional pragmatic scope; SYSTEM-scope сейчас через promote-from-COACH workflow). Если нужен direct authoring — отдельная feature.
+- Reps editor в admin block template Create builder — только FIXED kind; RANGE / EACH_SIDE / AMRAP read-only с pointer на platform editor.
+- I6 / D6 — PlanOverride.version column. По дизайну версии на overrides нет; если M3 athlete write-paths упрутся в race на overrides — пересматриваем.
 
 ПРАВИЛА (те же что в M0/M1/M2):
 - Никаких комментариев в коде
@@ -1244,10 +1258,16 @@ Wire-ups уже готовы в M2 backend:
 
 ---
 
-## M2 final branch summary (M0 → M1 → M2 → M2 bugfix → M2.5–M2.9)
+## M2 final branch summary (M0 → M1 → M2 → M2 bugfix → M2.5–M2.9 → M2.5+ polish)
 
 ```
-$ git log c03acb7..HEAD --oneline   # M1 + M2 + M2 bugfix + M2.5–M2.9
+$ git log c03acb7..HEAD --oneline   # M1 + M2 + M2 bugfix + M2.5–M2.9 + M2.5+ polish
+9c9dc735 feat(admin): m2.5+ block template create builder
+ab563f07 feat(platform): m2.5+ template tab edit affordance
+b92c17f9 fix(platform): m2.5+ polish — scope parity, conflict toast, storage, viewport, lib tab url
+f1ca927a feat(lms): m2.5+ deep clone via clone-block-subtree bulk-patch op
+92ecedb5 chore(workout-redesign): m2.5+ polish — quick wins
+8326d3fc docs(handoff): m2.5–m2.9 status and m3 entry point
 09342997 test(lms): m2.5+ coverage — overrides combos, templates create + apply, mapper boundaries
 45b51dab fix(platform): m2.5+ review criticals — system scope gate and bulk op order accumulator
 70036637 fix(platform): m1 carryover — library dnd wiring and athletes tab
@@ -1256,6 +1276,9 @@ $ git log c03acb7..HEAD --oneline   # M1 + M2 + M2 bugfix + M2.5–M2.9
 f6602b5a feat(platform): m2.7 multi-select bulk operations in plan editor
 2944ade2 feat(lms): m2.6 block / session / week template entities and ui
 20a5d95e feat(platform): m2.5 plan-override editor ui
+1dd7b5cf chore(test): test and e2e infrastructure cleanup
+11a0a133 chore(observability): gate vercel analytics on production deployment
+2f09def4 refactor(platform): hoist edit session provider to platform layout
 84d0ce84 docs(handoff): fill in b.5 commit hash placeholder
 5bcda2e9 chore: misc settings and instructions cleanup
 e40dd472 chore(e2e): production-build webserver mode for faster cold start
@@ -1284,7 +1307,7 @@ f778144e feat(platform): cmd k palette inline pickers and undo redo
 0033fbe6 feat(ui): edit session primitive scoped mutation and adr 0035
 ```
 
-Final gate state at the M2 finalize tip (`09342997`): check-types 16/16, lint 16/16 max-warnings 0, dep:check 1688 modules / 3545 deps / 0 violations, vitest 990/990 (943 parallel + 47 sequential), 30 e2e spec files (5 new in M2.9 + 25 prior).
+Final gate state at the polish-round tip (`9c9dc735`): check-types 16/16, lint 16/16 max-warnings 0, dep:check 0 violations, vitest green, e2e specs unchanged (gates run by orchestrator after the polish commits). The earlier finalize-tip (`09342997`) snapshot — check-types 16/16, lint 16/16 max-warnings 0, dep:check 1688 modules / 3545 deps / 0 violations, vitest 990/990 (943 parallel + 47 sequential), 30 e2e spec files — remains the reference baseline; W2 / W5 / W14 / W15 polish work added new tests and one new bulk-patch op without regressions.
 
 Branch `feat/workout-redesign` is single long-lived through M3; do not push to main; M3 continues on this same branch.
 
