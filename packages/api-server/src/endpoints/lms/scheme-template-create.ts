@@ -1,5 +1,3 @@
-import { type Prisma } from "@prisma/client";
-
 import { UserRole } from "@repo/contracts/iam/auth";
 import { type CreateSchemeTemplateInput } from "@repo/contracts/lms/scheme-template";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
@@ -12,15 +10,13 @@ import {
   mapToSchemeTemplate,
   SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP,
 } from "../../mappers/lms";
-import { handlePrismaError } from "../../utils";
+import { handlePrismaError, toInputJson } from "../../utils";
 
 const ADMIN_OR_COACH_LIKE: ReadonlySet<UserRole> = new Set([
   UserRole.COACH,
   UserRole.HEAD_COACH,
   UserRole.ADMIN,
 ]);
-
-const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
 export const createSchemeTemplateImpl = async (userId: string, data: CreateSchemeTemplateInput) => {
   const role = await requireCoachLikeRole(userId);
@@ -72,7 +68,7 @@ export const createSchemeTemplateImpl = async (userId: string, data: CreateSchem
         name: data.name,
         description: data.description ?? null,
         archetypeKind: SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP[data.archetypeKind],
-        defaultParams: toJsonInput(data.defaultParams),
+        defaultParams: toInputJson(data.defaultParams),
       },
     });
 

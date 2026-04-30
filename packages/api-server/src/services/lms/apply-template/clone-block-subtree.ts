@@ -7,8 +7,7 @@ import {
   BLOCK_STATUS_TO_PRISMA_MAP,
   SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP,
 } from "../../../mappers/lms";
-
-const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
+import { toInputJson } from "../../../utils";
 
 export const cloneBlockSubtree = async (
   tx: TxClient,
@@ -35,9 +34,9 @@ export const cloneBlockSubtree = async (
         order: segment.order,
         label: segment.label,
         archetypeKind: SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP[segment.archetypeKind],
-        schemeParams: toJsonInput(segment.schemeParams),
+        schemeParams: toInputJson(segment.schemeParams),
         schemeTemplateId: segment.schemeTemplateId,
-        restConfig: segment.restConfig === null ? Prisma.JsonNull : toJsonInput(segment.restConfig),
+        restConfig: segment.restConfig === null ? Prisma.JsonNull : toInputJson(segment.restConfig),
         version: 1,
       },
     });
@@ -49,7 +48,7 @@ export const cloneBlockSubtree = async (
           order: setGroup.order,
           label: setGroup.label,
           restConfig:
-            setGroup.restConfig === null ? Prisma.JsonNull : toJsonInput(setGroup.restConfig),
+            setGroup.restConfig === null ? Prisma.JsonNull : toInputJson(setGroup.restConfig),
         },
       });
 
@@ -61,9 +60,9 @@ export const cloneBlockSubtree = async (
             setGroupId: newSetGroup.id,
             order: entry.order,
             exerciseId: entry.exerciseId,
-            exerciseSnapshot: toJsonInput(snapshot),
-            prescription: toJsonInput(entry.prescription),
-            alternatives: toJsonInput(entry.alternatives),
+            exerciseSnapshot: toInputJson(snapshot),
+            prescription: toInputJson(entry.prescription),
+            alternatives: toInputJson(entry.alternatives),
             externalUrl: entry.externalUrl,
             notes: entry.notes,
             version: 1,

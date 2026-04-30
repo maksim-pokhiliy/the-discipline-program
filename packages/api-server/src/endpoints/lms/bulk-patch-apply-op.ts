@@ -16,11 +16,9 @@ import {
   MOVEMENT_PATTERN_MAP,
   SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP,
 } from "../../mappers/lms";
-import { findOrThrow } from "../../utils";
+import { findOrThrow, toInputJson } from "../../utils";
 
 export type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
-
-const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
 export type ApplyOutcome =
   | {
@@ -111,12 +109,12 @@ export const applyOpInTx = async (tx: TxClient, op: BulkPatchOp): Promise<ApplyO
           order: op.fullEntity.order,
           label: op.fullEntity.label,
           archetypeKind: SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP[op.fullEntity.archetypeKind],
-          schemeParams: toJsonInput(op.fullEntity.schemeParams),
+          schemeParams: toInputJson(op.fullEntity.schemeParams),
           schemeTemplateId: op.fullEntity.schemeTemplateId,
           restConfig:
             op.fullEntity.restConfig === null
               ? Prisma.JsonNull
-              : toJsonInput(op.fullEntity.restConfig),
+              : toInputJson(op.fullEntity.restConfig),
           version: { increment: 1 },
         },
       });
@@ -141,9 +139,9 @@ export const applyOpInTx = async (tx: TxClient, op: BulkPatchOp): Promise<ApplyO
         data: {
           order: op.fullEntity.order,
           exerciseId: op.fullEntity.exerciseId,
-          exerciseSnapshot: toJsonInput(serverSnapshot),
-          prescription: toJsonInput(op.fullEntity.prescription),
-          alternatives: toJsonInput(op.fullEntity.alternatives),
+          exerciseSnapshot: toInputJson(serverSnapshot),
+          prescription: toInputJson(op.fullEntity.prescription),
+          alternatives: toInputJson(op.fullEntity.alternatives),
           externalUrl: op.fullEntity.externalUrl,
           notes: op.fullEntity.notes,
           version: { increment: 1 },
@@ -248,12 +246,12 @@ export const applyOpInTx = async (tx: TxClient, op: BulkPatchOp): Promise<ApplyO
           order: op.payload.order,
           label: op.payload.label ?? null,
           archetypeKind: SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP[op.payload.archetypeKind],
-          schemeParams: toJsonInput(op.payload.schemeParams),
+          schemeParams: toInputJson(op.payload.schemeParams),
           schemeTemplateId: op.payload.schemeTemplateId ?? null,
           restConfig:
             op.payload.restConfig === undefined
               ? Prisma.JsonNull
-              : toJsonInput(op.payload.restConfig),
+              : toInputJson(op.payload.restConfig),
         },
       });
 
@@ -268,9 +266,9 @@ export const applyOpInTx = async (tx: TxClient, op: BulkPatchOp): Promise<ApplyO
           setGroupId: op.setGroupId,
           order: op.payload.order,
           exerciseId: op.payload.exerciseId,
-          exerciseSnapshot: toJsonInput(serverSnapshot),
-          prescription: toJsonInput(op.payload.prescription),
-          alternatives: toJsonInput(op.payload.alternatives),
+          exerciseSnapshot: toInputJson(serverSnapshot),
+          prescription: toInputJson(op.payload.prescription),
+          alternatives: toInputJson(op.payload.alternatives),
           externalUrl: op.payload.externalUrl ?? null,
           notes: op.payload.notes ?? null,
         },

@@ -1,9 +1,9 @@
 import { type Page, expect, test } from "@playwright/test";
-import { PrismaClient } from "@prisma/client";
 
 import {
   cleanupByIds,
   disconnectDb,
+  getPrisma,
   seedAthleteEnrollment,
   seedCoachPlan,
   seedSystemExercise,
@@ -19,20 +19,12 @@ type OverridesSeed = {
 };
 
 const cleanups: { table: string; id: string }[] = [];
-let prisma: PrismaClient | null = null;
-
-const prismaClient = (): PrismaClient => {
-  if (!prisma) {
-    prisma = new PrismaClient();
-  }
-  return prisma;
-};
 
 const seedOverridesScenario = async (suffix: string): Promise<OverridesSeed> => {
-  const coach = await prismaClient().user.findUniqueOrThrow({
+  const coach = await getPrisma().user.findUniqueOrThrow({
     where: { email: "coach@thedisciplineprogram.com" },
   });
-  const athlete = await prismaClient().user.findUniqueOrThrow({
+  const athlete = await getPrisma().user.findUniqueOrThrow({
     where: { email: "tom.bradley@email.com" },
   });
 
@@ -82,10 +74,6 @@ test.afterAll(async () => {
     await cleanupByIds(cleanups);
   }
   await disconnectDb();
-  if (prisma) {
-    await prisma.$disconnect();
-    prisma = null;
-  }
 });
 
 test.describe("Plan overrides — coach editing per athlete", () => {
@@ -136,7 +124,7 @@ test.describe("Plan overrides — coach editing per athlete", () => {
 
     await expect(page.getByText(/Saved/i).first()).toBeVisible({ timeout: 10_000 });
 
-    const dbOverrides = await prismaClient().planOverride.findMany({
+    const dbOverrides = await getPrisma().planOverride.findMany({
       where: {
         enrollmentId: seed.enrollmentId,
         scope: "BLOCK_SEGMENT",
@@ -175,7 +163,7 @@ test.describe("Plan overrides — coach editing per athlete", () => {
 
     const seed = await seedOverridesScenario("delete");
 
-    const override = await prismaClient().planOverride.create({
+    const override = await getPrisma().planOverride.create({
       data: {
         enrollmentId: seed.enrollmentId,
         scope: "BLOCK_SEGMENT",
@@ -189,11 +177,11 @@ test.describe("Plan overrides — coach editing per athlete", () => {
 
     await openSegmentInspector(page, seed.planId, seed.segmentId, seed.enrollmentId);
 
-    await prismaClient().planOverride.delete({ where: { id: override.id } });
+    await getPrisma().planOverride.delete({ where: { id: override.id } });
 
     await page.reload();
 
-    const remaining = await prismaClient().planOverride.findMany({
+    const remaining = await getPrisma().planOverride.findMany({
       where: { enrollmentId: seed.enrollmentId, scopeId: seed.segmentId },
     });
 

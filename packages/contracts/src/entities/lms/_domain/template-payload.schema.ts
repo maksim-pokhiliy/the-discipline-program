@@ -44,7 +44,7 @@ const weekTemplateDaySchema = daySchema
   .omit({ id: true, weekId: true })
   .extend({ sessions: z.array(sessionTemplatePayloadSchema) });
 
-const weekTemplateWeekSchema = weekSchema.omit({ id: true, planId: true });
+const weekTemplateWeekSchema = weekSchema.omit({ id: true, planId: true, index: true });
 
 export const weekTemplatePayloadSchema = z.object({
   week: weekTemplateWeekSchema,

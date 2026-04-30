@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { PlanOverrideKind } from "@repo/contracts/lms/plan-override";
+
 import { getDecorationStyles } from "./get-decoration-styles";
 
 describe("getDecorationStyles", () => {
@@ -24,7 +26,7 @@ describe("getDecorationStyles", () => {
   it("renders SUSPEND with warning color and line-through", () => {
     const result = getDecorationStyles({
       isOverridden: true,
-      overrideKind: "SUSPEND",
+      overrideKind: PlanOverrideKind.SUSPEND,
       notes: [],
       suspended: true,
     });
@@ -36,7 +38,7 @@ describe("getDecorationStyles", () => {
   it("renders REPLACE with success color", () => {
     const result = getDecorationStyles({
       isOverridden: true,
-      overrideKind: "REPLACE",
+      overrideKind: PlanOverrideKind.REPLACE,
       notes: [],
       suspended: false,
     });
@@ -48,7 +50,7 @@ describe("getDecorationStyles", () => {
   it("renders APPEND with info color", () => {
     const result = getDecorationStyles({
       isOverridden: true,
-      overrideKind: "APPEND",
+      overrideKind: PlanOverrideKind.APPEND,
       notes: [],
       suspended: false,
     });
@@ -60,7 +62,7 @@ describe("getDecorationStyles", () => {
   it("renders NOTE with info color and dashed outline", () => {
     const result = getDecorationStyles({
       isOverridden: true,
-      overrideKind: "NOTE",
+      overrideKind: PlanOverrideKind.NOTE,
       notes: ["test note"],
       suspended: false,
     });
@@ -72,7 +74,7 @@ describe("getDecorationStyles", () => {
   it("joins multi-line notes into tooltip", () => {
     const result = getDecorationStyles({
       isOverridden: true,
-      overrideKind: "NOTE",
+      overrideKind: PlanOverrideKind.NOTE,
       notes: ["line one", "line two"],
       suspended: false,
     });

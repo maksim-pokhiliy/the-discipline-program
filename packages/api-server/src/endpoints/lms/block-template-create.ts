@@ -1,5 +1,3 @@
-import { type Prisma } from "@prisma/client";
-
 import { UserRole } from "@repo/contracts/iam/auth";
 import { type CreateBlockTemplateInput } from "@repo/contracts/lms/block-template";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
@@ -8,15 +6,13 @@ import { requireCoachLikeRole } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { ROLE_MAP } from "../../mappers/iam";
 import { LIBRARY_SCOPE_TO_PRISMA_MAP, mapToBlockTemplate } from "../../mappers/lms";
-import { handlePrismaError } from "../../utils";
+import { handlePrismaError, toInputJson } from "../../utils";
 
 const ADMIN_OR_COACH_LIKE: ReadonlySet<UserRole> = new Set([
   UserRole.COACH,
   UserRole.HEAD_COACH,
   UserRole.ADMIN,
 ]);
-
-const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
 export const createBlockTemplateImpl = async (userId: string, data: CreateBlockTemplateInput) => {
   const role = await requireCoachLikeRole(userId);
@@ -67,7 +63,7 @@ export const createBlockTemplateImpl = async (userId: string, data: CreateBlockT
         ownerId,
         name: data.name,
         description: data.description ?? null,
-        payload: toJsonInput(data.payload),
+        payload: toInputJson(data.payload),
       },
     });
 

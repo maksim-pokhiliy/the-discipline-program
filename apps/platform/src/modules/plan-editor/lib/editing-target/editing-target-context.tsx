@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useMemo, type ReactNode } from 
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { ALL_TARGET, editingTargetEquals, formatEditingTarget, parseEditingTarget } from "./parse";
+import { editingTargetEquals, formatEditingTarget, parseEditingTarget } from "./parse";
 import { type EditingTarget, type EditingTargetContextValue } from "./types";
 
 const EditingTargetContext = createContext<EditingTargetContextValue | null>(null);
@@ -61,7 +61,7 @@ export const useEditingTarget = (): EditingTargetContextValue => {
   const value = useContext(EditingTargetContext);
 
   if (!value) {
-    return { target: ALL_TARGET, setTarget: () => undefined };
+    throw new Error("useEditingTarget must be used within EditingTargetProvider");
   }
 
   return value;

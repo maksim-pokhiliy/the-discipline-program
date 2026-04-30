@@ -38,33 +38,16 @@ export const SetGroupGroup = ({ setGroup, selection, onSelect }: SetGroupGroupPr
         }}
       >
         <SortableContext items={entryIds} strategy={verticalListSortingStrategy}>
-          {setGroup.entries.map((entry) => {
-            const exerciseName = (() => {
-              const snapshot = entry.exerciseSnapshot;
-
-              if (
-                snapshot &&
-                typeof snapshot === "object" &&
-                "name" in snapshot &&
-                typeof (snapshot as { name?: unknown }).name === "string"
-              ) {
-                return (snapshot as { name: string }).name;
-              }
-
-              return "Exercise";
-            })();
-
-            return (
-              <EntryRow
-                key={entry.id}
-                setGroupId={setGroup.id}
-                entryId={entry.id}
-                exerciseName={exerciseName}
-                selection={selection}
-                onSelect={onSelect}
-              />
-            );
-          })}
+          {setGroup.entries.map((entry) => (
+            <EntryRow
+              key={entry.id}
+              setGroupId={setGroup.id}
+              entryId={entry.id}
+              exerciseName={entry.exerciseSnapshot.name}
+              selection={selection}
+              onSelect={onSelect}
+            />
+          ))}
         </SortableContext>
       </Box>
     </Stack>

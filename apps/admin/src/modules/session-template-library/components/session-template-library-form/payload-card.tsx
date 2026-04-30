@@ -25,30 +25,20 @@ export const PayloadCard = () => {
     );
   }
 
-  const blocksCount = payload.blocks?.length ?? 0;
-  const segmentsCount = (payload.blocks ?? []).reduce(
-    (acc, block) => acc + (block.segments?.length ?? 0),
+  const blocksCount = payload.blocks.length;
+  const segmentsCount = payload.blocks.reduce((acc, block) => acc + block.segments.length, 0);
+  const setGroupsCount = payload.blocks.reduce(
+    (acc, block) =>
+      acc + block.segments.reduce((segAcc, segment) => segAcc + segment.setGroups.length, 0),
     0,
   );
-  const setGroupsCount = (payload.blocks ?? []).reduce(
+  const entriesCount = payload.blocks.reduce(
     (acc, block) =>
       acc +
-      (block.segments ?? []).reduce(
-        (segAcc, segment) => segAcc + (segment.setGroups?.length ?? 0),
-        0,
-      ),
-    0,
-  );
-  const entriesCount = (payload.blocks ?? []).reduce(
-    (acc, block) =>
-      acc +
-      (block.segments ?? []).reduce(
+      block.segments.reduce(
         (segAcc, segment) =>
           segAcc +
-          (segment.setGroups ?? []).reduce(
-            (groupAcc, group) => groupAcc + (group.entries?.length ?? 0),
-            0,
-          ),
+          segment.setGroups.reduce((groupAcc, group) => groupAcc + group.entries.length, 0),
         0,
       ),
     0,

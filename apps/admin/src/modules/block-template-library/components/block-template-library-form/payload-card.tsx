@@ -25,18 +25,14 @@ export const PayloadCard = () => {
     );
   }
 
-  const segmentsCount = payload.segments?.length ?? 0;
-  const setGroupsCount = (payload.segments ?? []).reduce(
-    (acc, segment) => acc + (segment.setGroups?.length ?? 0),
+  const segmentsCount = payload.segments.length;
+  const setGroupsCount = payload.segments.reduce(
+    (acc, segment) => acc + segment.setGroups.length,
     0,
   );
-  const entriesCount = (payload.segments ?? []).reduce(
+  const entriesCount = payload.segments.reduce(
     (acc, segment) =>
-      acc +
-      (segment.setGroups ?? []).reduce(
-        (groupAcc, group) => groupAcc + (group.entries?.length ?? 0),
-        0,
-      ),
+      acc + segment.setGroups.reduce((groupAcc, group) => groupAcc + group.entries.length, 0),
     0,
   );
 

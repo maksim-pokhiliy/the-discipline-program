@@ -1,18 +1,15 @@
 import { type Page, expect, test } from "@playwright/test";
-import { type Prisma, PrismaClient } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
 
-import { cleanupByIds, disconnectDb, seedCoachPlan, seedSystemExercise } from "../helpers/database";
+import {
+  cleanupByIds,
+  disconnectDb,
+  getPrisma,
+  seedCoachPlan,
+  seedSystemExercise,
+} from "../helpers/database";
 
 const cleanups: { table: string; id: string }[] = [];
-
-let prisma: PrismaClient | null = null;
-
-const prismaClient = (): PrismaClient => {
-  if (!prisma) {
-    prisma = new PrismaClient();
-  }
-  return prisma;
-};
 
 type ApplyScenario = {
   planId: string;
@@ -48,7 +45,7 @@ const buildBlockTemplatePayload = (kindId: string): Prisma.InputJsonValue => ({
 });
 
 const seedTemplateScenario = async (suffix: string): Promise<ApplyScenario> => {
-  const coach = await prismaClient().user.findUniqueOrThrow({
+  const coach = await getPrisma().user.findUniqueOrThrow({
     where: { email: "coach@thedisciplineprogram.com" },
   });
 
@@ -65,11 +62,11 @@ const seedTemplateScenario = async (suffix: string): Promise<ApplyScenario> => {
 
   cleanups.unshift({ table: "trainingPlan", id: planSeed.plan.id });
 
-  const blockKind = await prismaClient().blockKind.findFirstOrThrow({
+  const blockKind = await getPrisma().blockKind.findFirstOrThrow({
     where: { scope: "SYSTEM", ownerId: null, name: "E2E Strength" },
   });
 
-  const template = await prismaClient().blockTemplate.create({
+  const template = await getPrisma().blockTemplate.create({
     data: {
       scope: "COACH",
       ownerId: coach.id,
@@ -104,10 +101,6 @@ test.afterAll(async () => {
     await cleanupByIds(cleanups);
   }
   await disconnectDb();
-  if (prisma) {
-    await prisma.$disconnect();
-    prisma = null;
-  }
 });
 
 test.describe("Templates apply — coach library to plan", () => {
@@ -133,7 +126,7 @@ test.describe("Templates apply — coach library to plan", () => {
     await openSchedule(page, seed.planId);
     await switchToTab(page, "Block tpl");
 
-    const template = await prismaClient().blockTemplate.findUniqueOrThrow({
+    const template = await getPrisma().blockTemplate.findUniqueOrThrow({
       where: { id: seed.templateId },
     });
 
@@ -149,7 +142,7 @@ test.describe("Templates apply — coach library to plan", () => {
 
     await openSchedule(page, seed.planId);
 
-    const beforeCount = await prismaClient().block.count({
+    const beforeCount = await getPrisma().block.count({
       where: { sessionId: seed.sessionId },
     });
 
@@ -167,7 +160,7 @@ test.describe("Templates apply — coach library to plan", () => {
     expect(response.status()).toBeGreaterThanOrEqual(200);
     expect(response.status()).toBeLessThan(300);
 
-    const afterCount = await prismaClient().block.count({
+    const afterCount = await getPrisma().block.count({
       where: { sessionId: seed.sessionId },
     });
 

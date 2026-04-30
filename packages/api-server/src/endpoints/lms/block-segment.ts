@@ -9,11 +9,9 @@ import { ConflictError, NotFoundError } from "@repo/errors";
 import { verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { mapToBlockSegment, SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP } from "../../mappers/lms";
-import { findOrThrow, handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError, toInputJson } from "../../utils";
 
 import { resolvePlanIdForBlock, resolvePlanIdForBlockSegment } from "./plan-tree-helpers";
-
-const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
 export const lmsBlockSegmentApi = {
   getById: async (userId: string, segmentId: string) => {
@@ -41,10 +39,10 @@ export const lmsBlockSegmentApi = {
           order: data.order,
           label: data.label ?? null,
           archetypeKind: SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP[data.archetypeKind],
-          schemeParams: toJsonInput(data.schemeParams),
+          schemeParams: toInputJson(data.schemeParams),
           schemeTemplateId: data.schemeTemplateId ?? null,
           restConfig:
-            data.restConfig === undefined ? Prisma.JsonNull : toJsonInput(data.restConfig),
+            data.restConfig === undefined ? Prisma.JsonNull : toInputJson(data.restConfig),
         },
       });
 
@@ -66,9 +64,9 @@ export const lmsBlockSegmentApi = {
           order: data.order,
           label: data.label,
           archetypeKind: SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP[data.archetypeKind],
-          schemeParams: toJsonInput(data.schemeParams),
+          schemeParams: toInputJson(data.schemeParams),
           schemeTemplateId: data.schemeTemplateId,
-          restConfig: data.restConfig === null ? Prisma.JsonNull : toJsonInput(data.restConfig),
+          restConfig: data.restConfig === null ? Prisma.JsonNull : toInputJson(data.restConfig),
           version: { increment: 1 },
         },
       });

@@ -10,7 +10,7 @@ import {
 
 let prismaInstance: PrismaClient | null = null;
 
-const getPrisma = () => {
+export const getPrisma = (): PrismaClient => {
   if (!prismaInstance) {
     prismaInstance = new PrismaClient();
   }

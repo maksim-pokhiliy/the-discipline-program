@@ -1,7 +1,11 @@
 import { z } from "zod";
 
 import { PlanOverrideKindEnum, PlanOverrideScopeEnum } from "./plan-override.constants";
-import { planOverridePayloadSchema, planOverrideSchema } from "./plan-override.schema";
+import {
+  planOverrideKindSchema,
+  planOverridePayloadSchema,
+  planOverrideSchema,
+} from "./plan-override.schema";
 
 export const enrollmentOverrideParamSchema = z.object({ enrollmentId: z.string().cuid() });
 export const overrideIdParamSchema = z.object({ overrideId: z.string().cuid() });
@@ -54,7 +58,7 @@ export const listEnrollmentOverridesResponseSchema = z.array(planOverrideSchema)
 
 const effectivePlanNodeBaseSchema = z.object({
   isOverridden: z.boolean(),
-  overrideKind: z.string().nullable(),
+  overrideKind: planOverrideKindSchema.nullable(),
   notes: z.array(z.string()),
   suspended: z.boolean(),
 });

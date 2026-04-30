@@ -1,5 +1,3 @@
-import { type Prisma } from "@prisma/client";
-
 import {
   type CreatePlanOverrideBody,
   type CreatePlanOverrideInput,
@@ -15,9 +13,7 @@ import { verifyPlanOwnership } from "../../authz/guards";
 import { prisma, prismaAsCore } from "../../db/client";
 import { mapToPlanOverride } from "../../mappers/lms";
 import { resolveEffectivePlan } from "../../services/lms/plan-override-resolver";
-import { findOrThrow, handlePrismaError } from "../../utils";
-
-const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
+import { findOrThrow, handlePrismaError, toInputJson } from "../../utils";
 
 const verifyEnrollmentBelongsToCoach = async (
   enrollmentId: string,
@@ -85,7 +81,7 @@ export const lmsPlanOverrideApi = {
           scope: data.scope,
           scopeId: data.scopeId,
           kind: data.kind,
-          payload: toJsonInput(data.payload ?? null),
+          payload: toInputJson(data.payload ?? null),
           startsOnWeekIndex: data.startsOnWeekIndex ?? null,
           endsOnWeekIndex: data.endsOnWeekIndex ?? null,
         },
@@ -113,7 +109,7 @@ export const lmsPlanOverrideApi = {
           scope: data.scope,
           scopeId: data.scopeId,
           kind: data.kind,
-          payload: toJsonInput(data.payload),
+          payload: toInputJson(data.payload),
           startsOnWeekIndex: data.startsOnWeekIndex ?? null,
           endsOnWeekIndex: data.endsOnWeekIndex ?? null,
         },
@@ -173,7 +169,7 @@ export const lmsPlanOverrideApi = {
           ...(data.scope ? { scope: data.scope } : {}),
           ...(data.scopeId ? { scopeId: data.scopeId } : {}),
           ...(data.kind ? { kind: data.kind } : {}),
-          ...(data.payload !== undefined ? { payload: toJsonInput(data.payload) } : {}),
+          ...(data.payload !== undefined ? { payload: toInputJson(data.payload) } : {}),
           ...(data.startsOnWeekIndex !== undefined
             ? { startsOnWeekIndex: data.startsOnWeekIndex }
             : {}),

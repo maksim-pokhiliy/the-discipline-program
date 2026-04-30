@@ -1,8 +1,10 @@
 import { type SxProps, type Theme } from "@mui/material";
 
+import { type PlanOverrideKind } from "@repo/contracts/lms/plan-override";
+
 export type EffectiveNodeDecoration = {
   isOverridden: boolean;
-  overrideKind: string | null;
+  overrideKind: PlanOverrideKind | null;
   notes: string[];
   suspended: boolean;
 };

@@ -160,7 +160,6 @@ export const makeSessionPayload = (
 
 export const makeWeekPayload = (blockKindId: string, exerciseId: string): WeekTemplatePayload => ({
   week: {
-    index: 0,
     label: "Sample Week",
     notes: null,
   },

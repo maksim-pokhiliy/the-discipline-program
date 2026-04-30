@@ -37,9 +37,9 @@ export const applyTemplateInputSchema = z.discriminatedUnion("kind", [
 export const applyTemplateParamsSchema = planIdParamSchema;
 
 export const applyTemplateResponseSchema = z.object({
-  created: z.object({
-    blockId: z.string().cuid().optional(),
-    sessionId: z.string().cuid().optional(),
-    weekId: z.string().cuid().optional(),
-  }),
+  created: z.discriminatedUnion("kind", [
+    z.object({ kind: z.literal("block"), blockId: z.string().cuid() }),
+    z.object({ kind: z.literal("session"), sessionId: z.string().cuid() }),
+    z.object({ kind: z.literal("week"), weekId: z.string().cuid() }),
+  ]),
 });

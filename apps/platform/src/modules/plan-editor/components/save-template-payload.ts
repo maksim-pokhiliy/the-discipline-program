@@ -75,7 +75,6 @@ const buildDaySnapshot = (day: PlanStructureDay) => ({
 
 export const buildWeekTemplatePayload = (week: PlanStructureWeek): WeekTemplatePayload => ({
   week: {
-    index: week.index,
     label: week.label,
     notes: week.notes,
   },

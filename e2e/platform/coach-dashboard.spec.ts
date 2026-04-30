@@ -1,9 +1,9 @@
 import { expect, test } from "@playwright/test";
-import { PrismaClient } from "@prisma/client";
 
 import {
   cleanupByIds,
   disconnectDb,
+  getPrisma,
   insertWorkoutFlow,
   seedAthleteEnrollment,
   seedCoachPlan,
@@ -11,24 +11,12 @@ import {
 } from "../helpers/database";
 
 const cleanups: { table: string; id: string }[] = [];
-let prisma: PrismaClient | null = null;
-
-const prismaClient = (): PrismaClient => {
-  if (!prisma) {
-    prisma = new PrismaClient();
-  }
-  return prisma;
-};
 
 test.afterAll(async () => {
   if (cleanups.length > 0) {
     await cleanupByIds(cleanups);
   }
   await disconnectDb();
-  if (prisma) {
-    await prisma.$disconnect();
-    prisma = null;
-  }
 });
 
 test.describe("Coach dashboard analytics", () => {
@@ -56,10 +44,10 @@ test.describe("Coach dashboard analytics", () => {
   test("Pulse stats reflect non-zero athlete and plan counts after seeding", async ({ page }) => {
     test.setTimeout(180_000);
 
-    const coach = await prismaClient().user.findUniqueOrThrow({
+    const coach = await getPrisma().user.findUniqueOrThrow({
       where: { email: "coach@thedisciplineprogram.com" },
     });
-    const athlete = await prismaClient().user.findUniqueOrThrow({
+    const athlete = await getPrisma().user.findUniqueOrThrow({
       where: { email: "tom.bradley@email.com" },
     });
 
@@ -77,7 +65,7 @@ test.describe("Coach dashboard analytics", () => {
 
     cleanups.unshift({ table: "trainingPlan", id: seed.plan.id });
 
-    await prismaClient().trainingPlan.update({
+    await getPrisma().trainingPlan.update({
       where: { id: seed.plan.id },
       data: { status: "ACTIVE" },
     });

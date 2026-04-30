@@ -25,24 +25,19 @@ export const PayloadCard = () => {
     );
   }
 
-  const days = payload.days ?? [];
-  const sessionsCount = days.reduce((acc, day) => acc + (day.sessions?.length ?? 0), 0);
+  const days = payload.days;
+  const sessionsCount = days.reduce((acc, day) => acc + day.sessions.length, 0);
   const blocksCount = days.reduce(
     (acc, day) =>
-      acc +
-      (day.sessions ?? []).reduce((sessAcc, session) => sessAcc + (session.blocks?.length ?? 0), 0),
+      acc + day.sessions.reduce((sessAcc, session) => sessAcc + session.blocks.length, 0),
     0,
   );
   const segmentsCount = days.reduce(
     (acc, day) =>
       acc +
-      (day.sessions ?? []).reduce(
+      day.sessions.reduce(
         (sessAcc, session) =>
-          sessAcc +
-          (session.blocks ?? []).reduce(
-            (blockAcc, block) => blockAcc + (block.segments?.length ?? 0),
-            0,
-          ),
+          sessAcc + session.blocks.reduce((blockAcc, block) => blockAcc + block.segments.length, 0),
         0,
       ),
     0,

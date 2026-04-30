@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { mapToWeekTemplate } from "./week-template.mapper";
 
 const validPayload = {
-  week: { index: 0, label: null, notes: null },
+  week: { label: null, notes: null },
   days: [
     {
       dayOfWeek: "MON",
@@ -37,7 +37,7 @@ describe("mapToWeekTemplate", () => {
   it("maps a valid row with parsed payload (week + days)", () => {
     const result = mapToWeekTemplate(makeRow());
 
-    expect(result.payload.week.index).toBe(0);
+    expect(result.payload.week.label).toBeNull();
     expect(result.payload.days).toHaveLength(1);
     expect(result.payload.days[0]?.dayOfWeek).toBe("MON");
     expect(result.payload.days[0]?.kind).toBe("TRAINING");
@@ -45,7 +45,7 @@ describe("mapToWeekTemplate", () => {
 
   it("rejects payload with invalid dayOfWeek enum", () => {
     const broken = {
-      week: { index: 0, label: null, notes: null },
+      week: { label: null, notes: null },
       days: [{ dayOfWeek: "MONDAY", kind: "TRAINING", notes: null, sessions: [] }],
     };
 
@@ -53,12 +53,8 @@ describe("mapToWeekTemplate", () => {
   });
 
   it("rejects payload missing days array", () => {
-    expect(() =>
-      mapToWeekTemplate(
-        makeRow({
-          payload: { week: { index: 0, label: null, notes: null } } as unknown as object,
-        }),
-      ),
-    ).toThrow();
+    const missingDays = { week: { label: null, notes: null } };
+
+    expect(() => mapToWeekTemplate(makeRow({ payload: missingDays }))).toThrow();
   });
 });

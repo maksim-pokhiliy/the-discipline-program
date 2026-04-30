@@ -1,5 +1,3 @@
-import { type Prisma } from "@prisma/client";
-
 import { UserRole } from "@repo/contracts/iam/auth";
 import { type UpdateExerciseLibraryItemInput } from "@repo/contracts/lms/exercise-library-item";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
@@ -15,15 +13,13 @@ import {
   MOVEMENT_PATTERN_TO_PRISMA_MAP,
   SKILL_LEVEL_TO_PRISMA_MAP,
 } from "../../mappers/lms";
-import { findOrThrow, handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError, toInputJson } from "../../utils";
 
 const ADMIN_OR_COACH_LIKE: ReadonlySet<UserRole> = new Set([
   UserRole.ADMIN,
   UserRole.HEAD_COACH,
   UserRole.COACH,
 ]);
-
-const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
 export const updateExerciseLibraryItemImpl = async (
   userId: string,
@@ -131,7 +127,7 @@ export const updateExerciseLibraryItemImpl = async (
           : {}),
         ...(data.skillLevel ? { skillLevel: SKILL_LEVEL_TO_PRISMA_MAP[data.skillLevel] } : {}),
         ...(data.defaultMetrics !== undefined
-          ? { defaultMetrics: toJsonInput(data.defaultMetrics) }
+          ? { defaultMetrics: toInputJson(data.defaultMetrics) }
           : {}),
         ...(data.demoVideoUrl !== undefined ? { demoVideoUrl: data.demoVideoUrl } : {}),
         ...(data.demoImageUrl !== undefined ? { demoImageUrl: data.demoImageUrl } : {}),

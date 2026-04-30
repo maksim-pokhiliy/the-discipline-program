@@ -1,12 +1,13 @@
-import { type ApplyTemplateInput } from "@repo/contracts/lms/training-plan";
+import {
+  type ApplyTemplateInput,
+  type ApplyTemplateResponse,
+} from "@repo/contracts/lms/training-plan";
 
 import { applyBlockTemplate } from "./apply-block-template";
 import { applySessionTemplate } from "./apply-session-template";
 import { applyWeekTemplate } from "./apply-week-template";
 
-export type ApplyTemplateResult = {
-  created: { blockId?: string; sessionId?: string; weekId?: string };
-};
+export type ApplyTemplateResult = ApplyTemplateResponse;
 
 export const applyTemplate = async (
   userId: string,
@@ -17,17 +18,17 @@ export const applyTemplate = async (
     case "block": {
       const result = await applyBlockTemplate(userId, planId, data);
 
-      return { created: { blockId: result.blockId } };
+      return { created: { kind: "block", blockId: result.blockId } };
     }
     case "session": {
       const result = await applySessionTemplate(userId, planId, data);
 
-      return { created: { sessionId: result.sessionId } };
+      return { created: { kind: "session", sessionId: result.sessionId } };
     }
     case "week": {
       const result = await applyWeekTemplate(userId, planId, data);
 
-      return { created: { weekId: result.weekId } };
+      return { created: { kind: "week", weekId: result.weekId } };
     }
   }
 };

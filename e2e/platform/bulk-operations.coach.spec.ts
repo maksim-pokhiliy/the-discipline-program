@@ -1,17 +1,15 @@
 import { type Page, expect, test } from "@playwright/test";
-import { type Prisma, PrismaClient } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
 
-import { cleanupByIds, disconnectDb, seedCoachPlan, seedSystemExercise } from "../helpers/database";
+import {
+  cleanupByIds,
+  disconnectDb,
+  getPrisma,
+  seedCoachPlan,
+  seedSystemExercise,
+} from "../helpers/database";
 
 const cleanups: { table: string; id: string }[] = [];
-let prisma: PrismaClient | null = null;
-
-const prismaClient = (): PrismaClient => {
-  if (!prisma) {
-    prisma = new PrismaClient();
-  }
-  return prisma;
-};
 
 type BulkScenarioSeed = {
   planId: string;
@@ -56,7 +54,7 @@ const buildEntryData = (
 });
 
 const seedBulkScenario = async (suffix: string, entryCount: number): Promise<BulkScenarioSeed> => {
-  const coach = await prismaClient().user.findUniqueOrThrow({
+  const coach = await getPrisma().user.findUniqueOrThrow({
     where: { email: "coach@thedisciplineprogram.com" },
   });
 
@@ -76,7 +74,7 @@ const seedBulkScenario = async (suffix: string, entryCount: number): Promise<Bul
   const entryIds: string[] = [];
 
   for (let i = 0; i < entryCount; i += 1) {
-    const created = await prismaClient().exerciseEntry.create({
+    const created = await getPrisma().exerciseEntry.create({
       data: buildEntryData(seed.setGroupId, exercise, i),
     });
 
@@ -103,10 +101,6 @@ test.afterAll(async () => {
     await cleanupByIds(cleanups);
   }
   await disconnectDb();
-  if (prisma) {
-    await prisma.$disconnect();
-    prisma = null;
-  }
 });
 
 test.describe("Bulk operations — multi-select on canvas", () => {
@@ -155,7 +149,7 @@ test.describe("Bulk operations — multi-select on canvas", () => {
     await expect
       .poll(
         async () =>
-          prismaClient().exerciseEntry.count({
+          getPrisma().exerciseEntry.count({
             where: { id: { in: seed.entryIds } },
           }),
         { timeout: 15_000 },

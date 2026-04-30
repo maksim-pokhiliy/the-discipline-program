@@ -5,11 +5,9 @@ import { type CreateSetGroupInput, type UpdateSetGroupInput } from "@repo/contra
 import { verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { mapToSetGroup } from "../../mappers/lms";
-import { findOrThrow, handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError, toInputJson } from "../../utils";
 
 import { resolvePlanIdForBlockSegment, resolvePlanIdForSetGroup } from "./plan-tree-helpers";
-
-const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
 export const lmsSetGroupApi = {
   getById: async (userId: string, setGroupId: string) => {
@@ -37,7 +35,7 @@ export const lmsSetGroupApi = {
           order: data.order,
           label: data.label ?? null,
           restConfig:
-            data.restConfig === undefined ? Prisma.JsonNull : toJsonInput(data.restConfig),
+            data.restConfig === undefined ? Prisma.JsonNull : toInputJson(data.restConfig),
         },
       });
 
@@ -61,7 +59,7 @@ export const lmsSetGroupApi = {
           ...(data.restConfig !== undefined
             ? {
                 restConfig:
-                  data.restConfig === null ? Prisma.JsonNull : toJsonInput(data.restConfig),
+                  data.restConfig === null ? Prisma.JsonNull : toInputJson(data.restConfig),
               }
             : {}),
         },

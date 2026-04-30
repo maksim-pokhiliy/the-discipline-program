@@ -70,6 +70,7 @@ export const applyBlockTemplate = async (
     });
 
     logger.info("lms.editor.template_applied", {
+      userId,
       planId,
       templateId: data.templateId,
       kind: "block",

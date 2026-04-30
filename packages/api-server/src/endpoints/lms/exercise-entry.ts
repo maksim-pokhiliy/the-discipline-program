@@ -1,5 +1,3 @@
-import { type Prisma } from "@prisma/client";
-
 import { type ExerciseSnapshot } from "@repo/contracts/lms/_domain";
 import {
   type CreateExerciseEntryInput,
@@ -15,11 +13,9 @@ import {
   MODALITY_MAP,
   MOVEMENT_PATTERN_MAP,
 } from "../../mappers/lms";
-import { findOrThrow, handlePrismaError } from "../../utils";
+import { findOrThrow, handlePrismaError, toInputJson } from "../../utils";
 
 import { resolvePlanIdForExerciseEntry, resolvePlanIdForSetGroup } from "./plan-tree-helpers";
-
-const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
 const deriveExerciseSnapshot = async (exerciseId: string): Promise<ExerciseSnapshot> => {
   const exercise = await findOrThrow(
@@ -64,9 +60,9 @@ export const lmsExerciseEntryApi = {
           setGroupId: data.setGroupId,
           order: data.order,
           exerciseId: data.exerciseId,
-          exerciseSnapshot: toJsonInput(data.exerciseSnapshot),
-          prescription: toJsonInput(data.prescription),
-          alternatives: toJsonInput(data.alternatives),
+          exerciseSnapshot: toInputJson(data.exerciseSnapshot),
+          prescription: toInputJson(data.prescription),
+          alternatives: toInputJson(data.alternatives),
           externalUrl: data.externalUrl ?? null,
           notes: data.notes ?? null,
         },
@@ -91,9 +87,9 @@ export const lmsExerciseEntryApi = {
         data: {
           order: data.order,
           exerciseId: data.exerciseId,
-          exerciseSnapshot: toJsonInput(serverSnapshot),
-          prescription: toJsonInput(data.prescription),
-          alternatives: toJsonInput(data.alternatives),
+          exerciseSnapshot: toInputJson(serverSnapshot),
+          prescription: toInputJson(data.prescription),
+          alternatives: toInputJson(data.alternatives),
           externalUrl: data.externalUrl,
           notes: data.notes,
           version: { increment: 1 },

@@ -1,6 +1,6 @@
 import { type Prisma, type PrismaClient } from "@prisma/client";
 
-import { planOverridePayloadSchema } from "@repo/contracts/lms/plan-override";
+import { planOverridePayloadSchema, PlanOverrideKind } from "@repo/contracts/lms/plan-override";
 import type { EffectivePlanWeek } from "@repo/contracts/lms/plan-override";
 import { NotFoundError } from "@repo/errors";
 import { logger } from "@repo/shared";
@@ -22,7 +22,7 @@ export interface ResolveEffectivePlanInput {
 
 type EffectiveNode = {
   isOverridden: boolean;
-  overrideKind: string | null;
+  overrideKind: PlanOverrideKind | null;
   notes: string[];
   suspended: boolean;
 };
@@ -122,26 +122,26 @@ export const resolveEffectivePlan = async ({
     switch (data.kind) {
       case "REPLACE": {
         node.isOverridden = true;
-        node.overrideKind = "REPLACE";
+        node.overrideKind = PlanOverrideKind.REPLACE;
         countByKind["REPLACE"] = (countByKind["REPLACE"] ?? 0) + 1;
         break;
       }
       case "APPEND": {
         node.isOverridden = true;
-        node.overrideKind = "APPEND";
+        node.overrideKind = PlanOverrideKind.APPEND;
         countByKind["APPEND"] = (countByKind["APPEND"] ?? 0) + 1;
         break;
       }
       case "SUSPEND": {
         node.isOverridden = true;
-        node.overrideKind = "SUSPEND";
+        node.overrideKind = PlanOverrideKind.SUSPEND;
         node.suspended = true;
         countByKind["SUSPEND"] = (countByKind["SUSPEND"] ?? 0) + 1;
         break;
       }
       case "NOTE": {
         node.isOverridden = true;
-        node.overrideKind = "NOTE";
+        node.overrideKind = PlanOverrideKind.NOTE;
         node.notes = [...node.notes, data.markdown];
         countByKind["NOTE"] = (countByKind["NOTE"] ?? 0) + 1;
         break;
