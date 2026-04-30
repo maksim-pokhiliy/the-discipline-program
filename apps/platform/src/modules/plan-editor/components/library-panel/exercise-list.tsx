@@ -38,7 +38,26 @@ export const ExerciseList = ({ search, currentUserId }: ExerciseListProps) => {
   return (
     <Stack spacing={0.5}>
       {items.map((item) => (
-        <LibraryListItem key={item.id} name={item.name} scope={item.scope} />
+        <LibraryListItem
+          key={item.id}
+          draggableId={`exercise:${item.id}`}
+          payload={{
+            kind: "exercise",
+            exerciseId: item.id,
+            snapshot: {
+              id: item.id,
+              name: item.name,
+              primaryMovement: item.primaryMovement,
+              modality: item.modality,
+              primaryBodyParts: item.primaryBodyParts,
+              defaultMetrics: item.defaultMetrics,
+              demoVideoUrl: item.demoVideoUrl,
+              demoImageUrl: item.demoImageUrl,
+            },
+          }}
+          name={item.name}
+          scope={item.scope}
+        />
       ))}
     </Stack>
   );

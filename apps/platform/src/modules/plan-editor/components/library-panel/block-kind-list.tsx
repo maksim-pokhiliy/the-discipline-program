@@ -38,7 +38,17 @@ export const BlockKindList = ({ search, currentUserId }: BlockKindListProps) => 
   return (
     <Stack spacing={0.5}>
       {items.map((item) => (
-        <LibraryListItem key={item.id} name={item.name} scope={item.scope} />
+        <LibraryListItem
+          key={item.id}
+          draggableId={`block-kind:${item.id}`}
+          payload={{
+            kind: "block-kind",
+            blockKindId: item.id,
+            defaultWeight: item.defaultWeight,
+          }}
+          name={item.name}
+          scope={item.scope}
+        />
       ))}
     </Stack>
   );
