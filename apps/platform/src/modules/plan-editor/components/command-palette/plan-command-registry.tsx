@@ -178,14 +178,10 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
 
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
 
-  const saveTemplateScope = selectedBlock ? "block" : null;
+  const saveTemplateScope: "block" | "session" | "week" | null = selectedBlock ? "block" : null;
   const triggerSaveTemplate = useCallback(() => {
-    if (!selectedBlock) {
-      return;
-    }
-
     setSaveTemplateOpen(true);
-  }, [selectedBlock]);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -247,7 +243,6 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
   const saveAsTemplateCommand = useMemo(
     () =>
       createSaveAsTemplateCommand({
-        enabled: saveTemplateScope !== null,
         scope: saveTemplateScope,
         onTrigger: triggerSaveTemplate,
       }),
@@ -328,8 +323,9 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
   return (
     <SaveTemplateDialog
       open={saveTemplateOpen}
-      source={selectedBlock ? { scope: "block", block: selectedBlock } : null}
       onClose={() => setSaveTemplateOpen(false)}
+      planStructure={planStructure.data}
+      selectedBlock={selectedBlock}
     />
   );
 };

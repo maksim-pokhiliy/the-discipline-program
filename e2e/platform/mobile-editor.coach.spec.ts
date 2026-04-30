@@ -36,7 +36,7 @@ const openMobileSchedule = async (page: Page, planId: string): Promise<void> => 
   });
 };
 
-test.use({ viewport: { width: 375, height: 667 } });
+test.use({ viewport: { width: 375, height: 812 } });
 
 test.afterAll(async () => {
   if (cleanups.length > 0) {
@@ -49,7 +49,7 @@ test.afterAll(async () => {
   }
 });
 
-test.describe("Mobile editor — bottom navigation + drawers (viewport 375x667)", () => {
+test.describe("Mobile editor — bottom navigation + drawers (viewport 375x812)", () => {
   test("renders bottom navigation with Library, Canvas, Inspector tabs", async ({ page }) => {
     test.setTimeout(120_000);
     const seed = await seedScenario("nav");

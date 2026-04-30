@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-
 import {
   Alert,
   Button,
@@ -12,178 +10,202 @@ import {
   DialogTitle,
   MenuItem,
   Stack,
+  Tab,
+  Tabs,
   TextField,
 } from "@mui/material";
 
-import { UserRole } from "@repo/contracts/iam/auth";
 import {
+  type GetPlanStructureResponse,
   type PlanStructureBlock,
-  type PlanStructureDay,
-  type PlanStructureSession,
 } from "@repo/contracts/lms/training-plan";
 
 import {
-  useCreateBlockTemplate,
-  useCreateSessionTemplate,
-  useCreateWeekTemplate,
-  useCurrentUserRole,
-} from "@app/lib/hooks";
+  SCOPE_TABS,
+  type SaveTemplateScope,
+  type SessionOption,
+  type WeekOption,
+  titleByScope,
+} from "./save-template-dialog-helpers";
+import { useSaveTemplateDialog } from "./use-save-template-dialog";
 
-import {
-  buildBlockTemplatePayload,
-  buildSessionTemplatePayload,
-  buildWeekTemplatePayload,
-  type WeekSnapshotForTemplate,
-} from "./save-template-payload";
-
-export type SaveTemplateScope = "block" | "session" | "week";
-
-type SaveTemplateSource =
-  | { scope: "block"; block: PlanStructureBlock }
-  | { scope: "session"; session: PlanStructureSession }
-  | { scope: "week"; week: WeekSnapshotForTemplate; day: PlanStructureDay };
+export type { SaveTemplateScope } from "./save-template-dialog-helpers";
 
 export type SaveTemplateDialogProps = {
   open: boolean;
-  source: SaveTemplateSource | null;
   onClose: () => void;
+  planStructure: GetPlanStructureResponse | undefined;
+  selectedBlock: PlanStructureBlock | null;
+  initialScope?: SaveTemplateScope;
 };
 
-const SCOPE_OPTIONS = [
-  { value: "COACH", label: "Coach (mine)" },
-  { value: "SYSTEM", label: "System (global)" },
-] as const;
-
-export const SaveTemplateDialog = ({ open, source, onClose }: SaveTemplateDialogProps) => {
-  const role = useCurrentUserRole();
-  const isPrivileged = role === UserRole.ADMIN || role === UserRole.HEAD_COACH;
-
-  const scopeOptions = useMemo(
-    () => (isPrivileged ? SCOPE_OPTIONS : SCOPE_OPTIONS.filter((o) => o.value === "COACH")),
-    [isPrivileged],
-  );
-
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [scope, setScope] = useState<"COACH" | "SYSTEM">("COACH");
-  const [submitted, setSubmitted] = useState(false);
-
-  const createBlockTemplate = useCreateBlockTemplate();
-  const createSessionTemplate = useCreateSessionTemplate();
-  const createWeekTemplate = useCreateWeekTemplate();
-
-  useEffect(() => {
-    if (!open) {
-      setName("");
-      setDescription("");
-      setScope("COACH");
-      setSubmitted(false);
-    }
-  }, [open]);
-
-  useEffect(() => {
-    if (!isPrivileged && scope === "SYSTEM") {
-      setScope("COACH");
-    }
-  }, [isPrivileged, scope]);
-
-  if (!source) {
-    return null;
+const renderSessionField = (
+  options: ReadonlyArray<SessionOption>,
+  value: string,
+  onChange: (next: string) => void,
+  disabled: boolean,
+  inferred: boolean,
+) => {
+  if (options.length === 0) {
+    return (
+      <Alert severity="warning">No sessions available in this plan. Create a session first.</Alert>
+    );
   }
 
-  const isPending =
-    createBlockTemplate.isPending ||
-    createSessionTemplate.isPending ||
-    createWeekTemplate.isPending;
+  return (
+    <TextField
+      label="Session"
+      select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      fullWidth
+      disabled={disabled}
+      helperText={
+        inferred
+          ? "Auto-detected from the selected block. Pick another session if needed."
+          : "Pick the session to capture as a template."
+      }
+    >
+      {options.map((opt) => (
+        <MenuItem key={opt.id} value={opt.id}>
+          {opt.label}
+        </MenuItem>
+      ))}
+    </TextField>
+  );
+};
 
-  const handleSubmit = () => {
-    setSubmitted(true);
-
-    if (name.trim().length === 0) {
-      return;
-    }
-
-    const baseInput = {
-      name: name.trim(),
-      description: description.trim().length > 0 ? description.trim() : undefined,
-      scope,
-    };
-
-    if (source.scope === "block") {
-      createBlockTemplate.mutate(
-        { ...baseInput, payload: buildBlockTemplatePayload(source.block) },
-        { onSuccess: onClose },
-      );
-
-      return;
-    }
-
-    if (source.scope === "session") {
-      createSessionTemplate.mutate(
-        { ...baseInput, payload: buildSessionTemplatePayload(source.session) },
-        { onSuccess: onClose },
-      );
-
-      return;
-    }
-
-    createWeekTemplate.mutate(
-      { ...baseInput, payload: buildWeekTemplatePayload(source.week) },
-      { onSuccess: onClose },
-    );
-  };
-
-  const titleByScope: Record<SaveTemplateScope, string> = {
-    block: "Save block as template",
-    session: "Save session as template",
-    week: "Save week as template",
-  };
+const renderWeekField = (
+  options: ReadonlyArray<WeekOption>,
+  value: string,
+  onChange: (next: string) => void,
+  disabled: boolean,
+  inferred: boolean,
+) => {
+  if (options.length === 0) {
+    return <Alert severity="warning">No weeks available in this plan. Create a week first.</Alert>;
+  }
 
   return (
-    <Dialog open={open} onClose={isPending ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>{titleByScope[source.scope]}</DialogTitle>
+    <TextField
+      label="Week"
+      select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      fullWidth
+      disabled={disabled}
+      helperText={
+        inferred
+          ? "Auto-detected from the selected block. Pick another week if needed."
+          : "Pick the week to capture as a template."
+      }
+    >
+      {options.map((opt) => (
+        <MenuItem key={opt.id} value={opt.id}>
+          {opt.label}
+        </MenuItem>
+      ))}
+    </TextField>
+  );
+};
+
+export const SaveTemplateDialog = ({
+  open,
+  onClose,
+  planStructure,
+  selectedBlock,
+  initialScope,
+}: SaveTemplateDialogProps) => {
+  const ctl = useSaveTemplateDialog({
+    open,
+    onClose,
+    planStructure,
+    selectedBlock,
+    initialScope,
+  });
+
+  return (
+    <Dialog open={open} onClose={ctl.isPending ? undefined : onClose} fullWidth maxWidth="sm">
+      <DialogTitle>{titleByScope[ctl.scopeTab]}</DialogTitle>
       <DialogContent>
         <Stack spacing={3} sx={{ pt: 1 }}>
+          <Tabs
+            value={ctl.scopeTab}
+            onChange={(_, value: SaveTemplateScope) => ctl.setScopeTab(value)}
+            variant="fullWidth"
+          >
+            {SCOPE_TABS.map((tab) => (
+              <Tab key={tab.value} value={tab.value} label={tab.label} disabled={ctl.isPending} />
+            ))}
+          </Tabs>
+
           <Alert severity="info">
-            The current {source.scope} tree will be captured as a snapshot. Future edits to the
+            The current {ctl.scopeTab} tree will be captured as a snapshot. Future edits to the
             source plan will not propagate to the template.
           </Alert>
 
+          {ctl.scopeTab === "block" && ctl.blockMissing && (
+            <Alert severity="warning">
+              Select a block (or a segment inside a block) on the canvas before saving as a block
+              template.
+            </Alert>
+          )}
+
+          {ctl.scopeTab === "session" &&
+            renderSessionField(
+              ctl.sessionOptions,
+              ctl.sessionId,
+              ctl.setSessionId,
+              ctl.isPending,
+              ctl.inferredSession,
+            )}
+
+          {ctl.scopeTab === "week" &&
+            renderWeekField(
+              ctl.weekOptions,
+              ctl.weekId,
+              ctl.setWeekId,
+              ctl.isPending,
+              ctl.inferredWeek,
+            )}
+
           <TextField
             label="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={ctl.name}
+            onChange={(e) => ctl.setName(e.target.value)}
             fullWidth
             required
-            disabled={isPending}
-            error={submitted && name.trim().length === 0}
-            helperText={submitted && name.trim().length === 0 ? "Name is required" : undefined}
+            disabled={ctl.isPending}
+            error={ctl.submitted && ctl.name.trim().length === 0}
+            helperText={
+              ctl.submitted && ctl.name.trim().length === 0 ? "Name is required" : undefined
+            }
           />
 
           <TextField
             label="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={ctl.description}
+            onChange={(e) => ctl.setDescription(e.target.value)}
             fullWidth
             multiline
             minRows={3}
-            disabled={isPending}
+            disabled={ctl.isPending}
           />
 
           <TextField
             label="Visibility"
             select
-            value={scope}
-            onChange={(e) => setScope(e.target.value === "SYSTEM" ? "SYSTEM" : "COACH")}
+            value={ctl.scope}
+            onChange={(e) => ctl.setScope(e.target.value === "SYSTEM" ? "SYSTEM" : "COACH")}
             fullWidth
-            disabled={isPending || !isPrivileged}
+            disabled={ctl.isPending || !ctl.isPrivileged}
             helperText={
-              isPrivileged
+              ctl.isPrivileged
                 ? "COACH templates are private to you. SYSTEM is global (admin-only)."
                 : "Coaches can save templates as COACH (private). SYSTEM scope is admin-only."
             }
           >
-            {scopeOptions.map((opt) => (
+            {ctl.scopeOptions.map((opt) => (
               <MenuItem key={opt.value} value={opt.value}>
                 {opt.label}
               </MenuItem>
@@ -192,16 +214,16 @@ export const SaveTemplateDialog = ({ open, source, onClose }: SaveTemplateDialog
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={isPending}>
+        <Button onClick={onClose} disabled={ctl.isPending}>
           Cancel
         </Button>
         <Button
           variant="contained"
-          onClick={handleSubmit}
-          disabled={isPending}
-          startIcon={isPending ? <CircularProgress size={16} /> : null}
+          onClick={ctl.submit}
+          disabled={ctl.isPending || ctl.blockMissing || ctl.sessionMissing || ctl.weekMissing}
+          startIcon={ctl.isPending ? <CircularProgress size={16} /> : null}
         >
-          {isPending ? "Saving..." : "Save template"}
+          {ctl.isPending ? "Saving..." : "Save template"}
         </Button>
       </DialogActions>
     </Dialog>

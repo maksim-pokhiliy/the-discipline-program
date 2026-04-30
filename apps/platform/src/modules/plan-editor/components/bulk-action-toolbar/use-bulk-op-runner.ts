@@ -56,14 +56,16 @@ export const useBulkOpRunner = ({
       setState({ running: true, completedChunks: 0, totalChunks: chunks.length });
 
       let completed = 0;
+      let totalConflicts = 0;
 
       try {
         for (const chunk of chunks) {
           const response = await mutateAsync({ ops: [...chunk] });
 
           if (response.conflicts && response.conflicts.length > 0) {
-            toast.error(
-              `Bulk action stopped after ${completed.toString()} of ${chunks.length.toString()} chunks — reload to retry.`,
+            totalConflicts += response.conflicts.length;
+            toast.warning(
+              `${response.conflicts.length.toString()} entries had conflicts. Refresh to see latest.`,
             );
             setState((prev) => ({ ...prev, running: false }));
 
@@ -75,7 +77,10 @@ export const useBulkOpRunner = ({
         }
 
         if (successMessage) {
-          toast.success(successMessage);
+          const suffix =
+            totalConflicts > 0 ? ` (${totalConflicts.toString()} conflicts skipped)` : "";
+
+          toast.success(`${successMessage}${suffix}`);
         }
 
         setState({ running: false, completedChunks: completed, totalChunks: chunks.length });

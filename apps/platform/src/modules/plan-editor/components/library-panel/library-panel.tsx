@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import SearchIcon from "@mui/icons-material/Search";
 import { Box, InputAdornment, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { useSession } from "@repo/auth/client";
 
@@ -34,10 +35,39 @@ const TAB_LABELS: Record<TabValue, string> = {
   "week-templates": "Week tpl",
 };
 
+const LIBRARY_TAB_PARAM = "lib-tab";
+const DEFAULT_TAB: TabValue = "exercises";
+
+const isTabValue = (value: string | null): value is TabValue =>
+  value !== null && (TAB_VALUES as readonly string[]).includes(value);
+
 export const LibraryPanel = () => {
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
-  const [tab, setTab] = useState<TabValue>("exercises");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const tabParam = searchParams.get(LIBRARY_TAB_PARAM);
+  const tab: TabValue = isTabValue(tabParam) ? tabParam : DEFAULT_TAB;
+
+  const setTab = useCallback(
+    (next: TabValue) => {
+      const params = new URLSearchParams(searchParams.toString());
+
+      if (next === DEFAULT_TAB) {
+        params.delete(LIBRARY_TAB_PARAM);
+      } else {
+        params.set(LIBRARY_TAB_PARAM, next);
+      }
+
+      const query = params.toString();
+
+      router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
   const [search, setSearch] = useState("");
 
   if (!currentUserId) {

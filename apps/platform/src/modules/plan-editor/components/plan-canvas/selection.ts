@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { z } from "zod";
 
 export type PlanSelectionKind = "block" | "segment" | "entry";
@@ -175,6 +176,8 @@ export const formatPlanSelection = (selection: PlanSelection): string => {
     if (key) {
       return `${SESSION_STORE_PREFIX}${key}`;
     }
+
+    toast.error("Selection too large; saved partial state in URL");
   }
 
   return `${selection.kind}:${selection.ids.join(",")}`;
