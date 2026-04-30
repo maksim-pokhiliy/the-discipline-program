@@ -1,6 +1,6 @@
 # Billing endpoints — placeholder
 
-This directory is part of the bounded-context endpoint layout established in `docs/BOUNDED-CONTEXTS.md` (section 5) and implemented by audit bullet 1.2.C. The Billing context exists in `packages/api-server/prisma/schema.prisma` (`Product`, `Price`, `Subscription`, `Transaction`) but **no billing endpoints have been written yet**.
+This directory is part of the bounded-context endpoint layout established in `docs/BOUNDED-CONTEXTS.md` (section 5). The Billing context exists in `packages/api-server/prisma/schema.prisma` (`Product`, `Price`, `Subscription`, `Transaction`) but **no billing endpoints have been written yet**.
 
 The folder is kept empty so that:
 
@@ -18,7 +18,7 @@ Per BOUNDED-CONTEXTS.md §5 and §10, the target endpoints are:
 
 ## Pre-conditions before writing billing code
 
-Logged in `docs/BIGTECH-AUDIT.md` sections 3 and 5:
+Tracked in ADR 0018 (security deferrals) and ADR 0019 (database strategy):
 
 - `Transaction.idempotencyKey` must be `NOT NULL` (it is currently nullable).
 - Webhook signature verification and rate limiting must exist as infrastructure.

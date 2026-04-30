@@ -9,6 +9,7 @@ import {
   type ListExerciseLibraryItemsResponse,
   type UpdateExerciseLibraryItemInput,
 } from "@repo/contracts/lms/exercise-library-item";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -64,7 +65,7 @@ export const useCreateExercise = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.exercises.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create exercise");
+      notifyError(error, "Failed to create exercise");
     },
   });
 };
@@ -85,7 +86,7 @@ export const useUpdateExercise = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.exercises.byId(result.id) });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update exercise");
+      notifyError(error, "Failed to update exercise");
     },
   });
 };
@@ -100,7 +101,7 @@ export const useDeleteExercise = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.exercises.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete exercise");
+      notifyError(error, "Failed to delete exercise");
     },
   });
 };
@@ -115,7 +116,7 @@ export const usePromoteExercise = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.exercises.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to promote exercise");
+      notifyError(error, "Failed to promote exercise");
     },
   });
 };
@@ -131,7 +132,7 @@ export const useDemoteExercise = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.exercises.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to demote exercise");
+      notifyError(error, "Failed to demote exercise");
     },
   });
 };

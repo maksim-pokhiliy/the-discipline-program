@@ -9,6 +9,7 @@ import {
   type SessionTemplate,
   type UpdateSessionTemplateInput,
 } from "@repo/contracts/lms/session-template";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -60,7 +61,7 @@ export const useCreateSessionTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.sessionTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create session template");
+      notifyError(error, "Failed to create session template");
     },
   });
 };
@@ -83,7 +84,7 @@ export const useUpdateSessionTemplate = () => {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update session template");
+      notifyError(error, "Failed to update session template");
     },
   });
 };
@@ -98,7 +99,7 @@ export const useDeleteSessionTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.sessionTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete session template");
+      notifyError(error, "Failed to delete session template");
     },
   });
 };
@@ -113,7 +114,7 @@ export const usePromoteSessionTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.sessionTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to promote session template");
+      notifyError(error, "Failed to promote session template");
     },
   });
 };
@@ -129,7 +130,7 @@ export const useDemoteSessionTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.sessionTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to demote session template");
+      notifyError(error, "Failed to demote session template");
     },
   });
 };

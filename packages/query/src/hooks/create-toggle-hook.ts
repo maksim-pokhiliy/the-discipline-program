@@ -3,6 +3,8 @@
 import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { notifyError } from "./notify-error";
+
 type ToggleHookConfig<TResponse> = {
   mutationFn: (id: string) => Promise<TResponse>;
   successMessage: string;
@@ -23,7 +25,7 @@ export const createToggleHook = <TResponse>(config: ToggleHookConfig<TResponse>)
         }
       },
       onError: (error: Error) => {
-        toast.error(error.message || config.errorMessage);
+        notifyError(error, config.errorMessage);
       },
     });
   };

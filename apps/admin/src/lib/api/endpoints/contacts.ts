@@ -15,5 +15,6 @@ export const createContactsAPI = (client: ApiClient) => ({
   update: (id: string, data: UpdateContactRequest): Promise<GetContactByIdResponse> =>
     client.request(`/api/admin/contacts/${id}`, "PUT", data),
 
-  delete: (id: string): Promise<void> => client.request(`/api/admin/contacts/${id}`, "DELETE"),
+  delete: (id: string): Promise<void> =>
+    client.requestNoContent(`/api/admin/contacts/${id}`, "DELETE"),
 });

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQueryClient, type QueryKey } from "@tanstack/react-query";
-import { toast } from "sonner";
+
+import { notifyError } from "./notify-error";
 
 type ResolveFromVars<T, TVars> = T | ((vars: TVars) => T);
 
@@ -39,12 +40,12 @@ export const useOptimisticMutation = <TData, TVars, TResult = unknown>(
 
       return { previous, queryKey };
     },
-    onError: (_error, _vars, context) => {
+    onError: (error, _vars, context) => {
       if (context?.previous !== undefined) {
         queryClient.setQueryData(context.queryKey, context.previous);
       }
 
-      toast.error(config.errorMessage);
+      notifyError(error, config.errorMessage);
     },
     onSettled: (_data, _error, vars) => {
       const keys = resolve(config.invalidateKeys, vars);

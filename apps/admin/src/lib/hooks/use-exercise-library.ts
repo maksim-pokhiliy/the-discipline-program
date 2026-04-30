@@ -10,7 +10,7 @@ import {
   type ListExerciseLibraryItemsResponse,
   type UpdateExerciseLibraryItemInput,
 } from "@repo/contracts/lms/exercise-library-item";
-import { createCrudHooks } from "@repo/query";
+import { createCrudHooks, notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { adminKeys } from "../api/keys";
@@ -59,7 +59,7 @@ export const usePromoteExercise = () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.library.exercises.byId(result.id) });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to promote exercise");
+      notifyError(error, "Failed to promote exercise");
     },
   });
 };
@@ -80,7 +80,7 @@ export const useDemoteExercise = () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.library.exercises.byId(result.id) });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to demote exercise");
+      notifyError(error, "Failed to demote exercise");
     },
   });
 };

@@ -19,14 +19,15 @@ export const createUsersAPI = (client: ApiClient) => ({
   getCoaches: (): Promise<CoachListItem[]> => client.request("/api/admin/users/coaches"),
 
   updateRole: (id: string, data: UpdateUserRoleData): Promise<void> =>
-    client.request(`/api/admin/users/${id}`, "PUT", data),
+    client.requestNoContent(`/api/admin/users/${id}`, "PUT", data),
 
   create: (data: CreateUserData): Promise<User> => client.request("/api/admin/users", "POST", data),
 
   update: (id: string, data: UpdateUserData): Promise<User> =>
     client.request(`/api/admin/users/${id}`, "PUT", data),
 
-  delete: (id: string): Promise<void> => client.request(`/api/admin/users/${id}`, "DELETE"),
+  delete: (id: string): Promise<void> =>
+    client.requestNoContent(`/api/admin/users/${id}`, "DELETE"),
 
   resendInvite: (id: string): Promise<ResendInviteResponse> =>
     client.request(`/api/admin/users/${id}/invite/resend`, "POST"),

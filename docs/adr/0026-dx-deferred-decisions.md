@@ -7,7 +7,7 @@
 
 ## Context
 
-The §12 DX audit assessed process maturity. Several items from the original audit were already resolved in prior sections: CI pipeline (§1.3.B), deploy config versioning (§1.5.A), pre-commit performance (§8 turbo filtering). The remaining items are process infrastructure that becomes valuable at team scale but is premature for a solo pre-production project.
+A DX audit assessed process maturity. Several items from the original audit were already resolved in prior sections: CI pipeline, deploy config versioning, pre-commit performance (turbo filtering). The remaining items are process infrastructure that becomes valuable at team scale but is premature for a solo pre-production project.
 
 ## Decision
 
@@ -35,7 +35,6 @@ The following DX improvements are deferred. Each has a **trigger**.
 
 ## References
 
-- `docs/BIGTECH-AUDIT.md` §12 research summary and deferred bullets
-- `.github/workflows/ci.yml` — CI pipeline (§1.3.B)
-- `docs/DEPLOY.md` — deployment documentation (§1.5.C)
-- `.github/pull_request_template.md` — PR template (§12.1.A)
+- `.github/workflows/ci.yml` — CI pipeline
+- `docs/DEPLOY.md` — deployment documentation
+- `.github/pull_request_template.md` — PR template

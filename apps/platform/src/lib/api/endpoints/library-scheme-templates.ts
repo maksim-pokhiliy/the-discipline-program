@@ -60,7 +60,7 @@ export const createLibrarySchemeTemplatesAPI = (client: ApiClient) => ({
     client.request(`/api/platform/library/scheme-templates/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> =>
-    client.request(`/api/platform/library/scheme-templates/${id}`, "DELETE"),
+    client.requestNoContent(`/api/platform/library/scheme-templates/${id}`, "DELETE"),
 
   promote: (id: string): Promise<PromoteSchemeTemplateResponse> =>
     client.request(`/api/platform/library/scheme-templates/${id}/promote`, "POST"),

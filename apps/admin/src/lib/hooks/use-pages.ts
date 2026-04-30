@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { type UpdatePageSectionData } from "@repo/contracts/cms/pages";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { adminKeys } from "../api/keys";
@@ -32,7 +33,7 @@ export const useUpdatePageSection = () => {
       toast.success("Section updated successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to update section");
+      notifyError(error, "Failed to update section");
     },
   });
 };

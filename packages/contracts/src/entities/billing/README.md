@@ -18,8 +18,8 @@ Per BOUNDED-CONTEXTS.md §5, the target entities are:
 
 ## Related work
 
-- `docs/BIGTECH-AUDIT.md` section 1.2 tracks the reorganization that put this folder here.
-- Follow-up audit bullets in sections 3 and 5 flag pre-conditions that must be met before Billing code is written: `Transaction.idempotencyKey` should become `NOT NULL`, webhook signature verification must exist, rate limiting on public endpoints, idempotency middleware on every payment mutation.
+- `docs/BOUNDED-CONTEXTS.md` (section 5) is the canonical record of the bounded-context layout that places this folder here.
+- Pre-conditions before Billing code lands are tracked in ADR 0018 (security deferrals) and ADR 0019 (database strategy): `Transaction.idempotencyKey` should become `NOT NULL`, webhook signature verification must exist, rate limiting on public endpoints, idempotency middleware on every payment mutation.
 - ADRs 0008 (singleton subscription), 0013 (Vercel Blob for storage — unrelated but part of the same backfill), and 0014 (Stripe as implicit provider) set the current product decisions.
 
 **Do not put non-Billing contracts here.** If you have a CMS product contract, it lives in `cms/product/`. If you have a user contract, it lives in `iam/user/`. Billing is exclusively payment-adjacent domain data.

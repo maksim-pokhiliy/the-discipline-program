@@ -3,6 +3,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { notifyError } from "@repo/query";
+
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
 
@@ -16,7 +18,7 @@ export const useResolveActionItem = () => {
       toast.success("Marked as contacted");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to resolve action item");
+      notifyError(error, "Failed to resolve action item");
     },
   });
 };

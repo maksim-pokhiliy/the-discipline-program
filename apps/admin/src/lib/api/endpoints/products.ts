@@ -19,7 +19,8 @@ export const createProductsAPI = (client: ApiClient) => ({
   update: (id: string, data: UpdateProductData): Promise<Product> =>
     client.request(`/api/admin/products/${id}`, "PUT", data),
 
-  delete: (id: string): Promise<void> => client.request(`/api/admin/products/${id}`, "DELETE"),
+  delete: (id: string): Promise<void> =>
+    client.requestNoContent(`/api/admin/products/${id}`, "DELETE"),
 
   toggleStatus: (id: string): Promise<Product> =>
     client.request(

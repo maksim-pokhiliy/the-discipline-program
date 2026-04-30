@@ -21,7 +21,7 @@ export const createTrainingPlansAPI = (client: ApiClient) => ({
     client.request(`/api/platform/training-plans/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> =>
-    client.request(`/api/platform/training-plans/${id}`, "DELETE"),
+    client.requestNoContent(`/api/platform/training-plans/${id}`, "DELETE"),
 
   duplicate: (id: string): Promise<TrainingPlan> =>
     client.request(`/api/platform/training-plans/${id}/duplicate`, "POST"),

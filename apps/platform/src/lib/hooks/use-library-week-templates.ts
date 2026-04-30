@@ -9,6 +9,7 @@ import {
   type UpdateWeekTemplateInput,
   type WeekTemplate,
 } from "@repo/contracts/lms/week-template";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -60,7 +61,7 @@ export const useCreateWeekTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.weekTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create week template");
+      notifyError(error, "Failed to create week template");
     },
   });
 };
@@ -83,7 +84,7 @@ export const useUpdateWeekTemplate = () => {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update week template");
+      notifyError(error, "Failed to update week template");
     },
   });
 };
@@ -98,7 +99,7 @@ export const useDeleteWeekTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.weekTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete week template");
+      notifyError(error, "Failed to delete week template");
     },
   });
 };
@@ -113,7 +114,7 @@ export const usePromoteWeekTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.weekTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to promote week template");
+      notifyError(error, "Failed to promote week template");
     },
   });
 };
@@ -129,7 +130,7 @@ export const useDemoteWeekTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.weekTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to demote week template");
+      notifyError(error, "Failed to demote week template");
     },
   });
 };

@@ -16,5 +16,8 @@ export const createPlanCoachAssignmentsAPI = (client: ApiClient) => ({
     client.request(`/api/platform/training-plans/${planId}/coaches`, "POST", data),
 
   delete: (planId: string, assignmentId: string): Promise<void> =>
-    client.request(`/api/platform/training-plans/${planId}/coaches/${assignmentId}`, "DELETE"),
+    client.requestNoContent(
+      `/api/platform/training-plans/${planId}/coaches/${assignmentId}`,
+      "DELETE",
+    ),
 });

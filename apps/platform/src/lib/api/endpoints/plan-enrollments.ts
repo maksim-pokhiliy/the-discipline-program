@@ -17,5 +17,5 @@ export const createPlanEnrollmentsAPI = (client: ApiClient) => ({
     client.request(`/api/platform/training-plans/${planId}/enrollments/${id}`, "PUT", data),
 
   delete: (planId: string, id: string): Promise<void> =>
-    client.request(`/api/platform/training-plans/${planId}/enrollments/${id}`, "DELETE"),
+    client.requestNoContent(`/api/platform/training-plans/${planId}/enrollments/${id}`, "DELETE"),
 });

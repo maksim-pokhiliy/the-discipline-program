@@ -10,7 +10,7 @@ import {
   type SchemeTemplate,
   type UpdateSchemeTemplateInput,
 } from "@repo/contracts/lms/scheme-template";
-import { createCrudHooks } from "@repo/query";
+import { createCrudHooks, notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { adminKeys } from "../api/keys";
@@ -61,7 +61,7 @@ export const usePromoteSchemeTemplate = () => {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to promote scheme template");
+      notifyError(error, "Failed to promote scheme template");
     },
   });
 };
@@ -84,7 +84,7 @@ export const useDemoteSchemeTemplate = () => {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to demote scheme template");
+      notifyError(error, "Failed to demote scheme template");
     },
   });
 };

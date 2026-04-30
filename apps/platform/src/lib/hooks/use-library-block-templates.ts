@@ -9,6 +9,7 @@ import {
   type ListBlockTemplatesResponse,
   type UpdateBlockTemplateInput,
 } from "@repo/contracts/lms/block-template";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -60,7 +61,7 @@ export const useCreateBlockTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.blockTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create block template");
+      notifyError(error, "Failed to create block template");
     },
   });
 };
@@ -83,7 +84,7 @@ export const useUpdateBlockTemplate = () => {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update block template");
+      notifyError(error, "Failed to update block template");
     },
   });
 };
@@ -98,7 +99,7 @@ export const useDeleteBlockTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.blockTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete block template");
+      notifyError(error, "Failed to delete block template");
     },
   });
 };
@@ -113,7 +114,7 @@ export const usePromoteBlockTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.blockTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to promote block template");
+      notifyError(error, "Failed to promote block template");
     },
   });
 };
@@ -129,7 +130,7 @@ export const useDemoteBlockTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.blockTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to demote block template");
+      notifyError(error, "Failed to demote block template");
     },
   });
 };

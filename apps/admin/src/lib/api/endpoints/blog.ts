@@ -17,7 +17,7 @@ export const createBlogAPI = (client: ApiClient) => ({
   update: (id: string, data: UpdateBlogPostData): Promise<BlogPost> =>
     client.request(`/api/admin/blog/${id}`, "PUT", data),
 
-  delete: (id: string): Promise<void> => client.request(`/api/admin/blog/${id}`, "DELETE"),
+  delete: (id: string): Promise<void> => client.requestNoContent(`/api/admin/blog/${id}`, "DELETE"),
 
   togglePublished: (id: string): Promise<BlogPost> =>
     client.request(`/api/admin/blog/${id}/toggle?field=${BlogToggleField.IS_PUBLISHED}`, "PATCH"),

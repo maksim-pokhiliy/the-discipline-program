@@ -12,5 +12,5 @@ export const createPagesAPI = (client: ApiClient) => ({
     client.request(`/api/admin/pages/${slug}`),
 
   updateSection: (slug: string, data: Omit<UpdatePageSectionData, "pageSlug">): Promise<void> =>
-    client.request(`/api/admin/pages/${slug}/sections`, "PATCH", data),
+    client.requestNoContent(`/api/admin/pages/${slug}/sections`, "PATCH", data),
 });

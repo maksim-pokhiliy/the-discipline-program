@@ -71,7 +71,7 @@ export const createLibraryExercisesAPI = (client: ApiClient) => ({
     client.request(`/api/platform/library/exercises/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> =>
-    client.request(`/api/platform/library/exercises/${id}`, "DELETE"),
+    client.requestNoContent(`/api/platform/library/exercises/${id}`, "DELETE"),
 
   promote: (id: string): Promise<PromoteExerciseLibraryItemResponse> =>
     client.request(`/api/platform/library/exercises/${id}/promote`, "POST"),

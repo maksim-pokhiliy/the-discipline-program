@@ -7,7 +7,7 @@
 
 ## Context
 
-Section 6 of the Big Tech audit surfaced ~35 API design findings. Several require architectural decisions that affect the entire API surface. This ADR captures the strategy for API versioning, body size limits, and defers items with explicit triggers.
+An API design audit surfaced ~35 findings. Several require architectural decisions that affect the entire API surface. This ADR captures the strategy for API versioning, body size limits, and defers items with explicit triggers.
 
 The project has three API namespaces: `/api/admin/*` (auth-protected), `/api/platform/*` (auth-protected), `/api/public/*` (open). No external consumers exist yet — all API calls are server-to-server (Next.js server components → route handlers) or browser-to-same-origin.
 
@@ -76,5 +76,4 @@ Implemented in bullet 6.2.B.
 
 - ADR 0018: Security deferred decisions (rate limiting trigger)
 - ADR 0019: Database strategy (pagination deferred to §10)
-- `docs/BIGTECH-AUDIT.md` §6 findings
 - Vercel docs: [Request body size limits](https://vercel.com/docs/functions/runtimes#request-body-size)

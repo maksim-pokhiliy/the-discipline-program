@@ -8,6 +8,7 @@ export const baseEnv = createEnv({
       .url()
       .refine((url) => url.startsWith("postgres"), "must be a postgres URL"),
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
     REVALIDATE_SECRET: z.string().optional(),
     INVITE_TOKEN_TTL_HOURS: z.coerce.number().int().positive().default(72),
   },

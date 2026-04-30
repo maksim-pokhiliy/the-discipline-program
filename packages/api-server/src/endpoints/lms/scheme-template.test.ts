@@ -212,4 +212,95 @@ describe("lmsSchemeTemplateApi promote/demote (integration)", () => {
       details: { existingId: coachOwn.id, candidateName: sharedName },
     });
   });
+
+  describe("soft-delete extension coverage", () => {
+    it("getById returns 404 for soft-deleted scheme template", async () => {
+      const created = await cleanupRaw.schemeTemplate.create({
+        data: {
+          scope: "COACH",
+          ownerId: coachA.user.id,
+          name: `Tpl SoftDeleted ${crypto.randomUUID().slice(0, 8)}`,
+          archetypeKind: "COUNT_DOWN",
+          defaultParams: COUNT_DOWN_PARAMS,
+          deletedAt: new Date(),
+        },
+      });
+
+      toCleanup.push({ table: "schemeTemplate", id: created.id });
+
+      await expect(lmsSchemeTemplateApi.getById(admin.id, created.id)).rejects.toMatchObject({
+        statusCode: 404,
+      });
+    });
+
+    it("promote rejects soft-deleted scheme template with 404", async () => {
+      const created = await cleanupRaw.schemeTemplate.create({
+        data: {
+          scope: "COACH",
+          ownerId: coachA.user.id,
+          name: `Tpl PromoteSoftDel ${crypto.randomUUID().slice(0, 8)}`,
+          archetypeKind: "COUNT_DOWN",
+          defaultParams: COUNT_DOWN_PARAMS,
+          deletedAt: new Date(),
+        },
+      });
+
+      toCleanup.push({ table: "schemeTemplate", id: created.id });
+
+      await expect(lmsSchemeTemplateApi.promote(admin.id, created.id)).rejects.toMatchObject({
+        statusCode: 404,
+      });
+    });
+
+    it("demote rejects soft-deleted scheme template with 404", async () => {
+      const created = await cleanupRaw.schemeTemplate.create({
+        data: {
+          scope: "SYSTEM",
+          name: `Tpl DemoteSoftDel ${crypto.randomUUID().slice(0, 8)}`,
+          archetypeKind: "COUNT_DOWN",
+          defaultParams: COUNT_DOWN_PARAMS,
+          deletedAt: new Date(),
+        },
+      });
+
+      toCleanup.push({ table: "schemeTemplate", id: created.id });
+
+      await expect(
+        lmsSchemeTemplateApi.demote(admin.id, created.id, { newOwnerId: coachA.user.id }),
+      ).rejects.toMatchObject({ statusCode: 404 });
+    });
+
+    it("list excludes soft-deleted rows by default", async () => {
+      const live = await cleanupRaw.schemeTemplate.create({
+        data: {
+          scope: "COACH",
+          ownerId: coachA.user.id,
+          name: `Tpl ListLive ${crypto.randomUUID().slice(0, 8)}`,
+          archetypeKind: "COUNT_DOWN",
+          defaultParams: COUNT_DOWN_PARAMS,
+        },
+      });
+
+      toCleanup.push({ table: "schemeTemplate", id: live.id });
+
+      const deleted = await cleanupRaw.schemeTemplate.create({
+        data: {
+          scope: "COACH",
+          ownerId: coachA.user.id,
+          name: `Tpl ListSoftDel ${crypto.randomUUID().slice(0, 8)}`,
+          archetypeKind: "COUNT_DOWN",
+          defaultParams: COUNT_DOWN_PARAMS,
+          deletedAt: new Date(),
+        },
+      });
+
+      toCleanup.push({ table: "schemeTemplate", id: deleted.id });
+
+      const result = await lmsSchemeTemplateApi.list(coachA.user.id, { ownerId: coachA.user.id });
+      const ids = result.items.map((item) => item.id);
+
+      expect(ids).toContain(live.id);
+      expect(ids).not.toContain(deleted.id);
+    });
+  });
 });

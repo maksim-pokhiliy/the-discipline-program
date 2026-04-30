@@ -9,6 +9,7 @@ import { ApiClient } from "./client";
 export const createNextServerClient = () =>
   new ApiClient({
     baseUrl: baseEnv.NEXT_PUBLIC_APP_URL,
+    cache: "no-store",
     getHeaders: async () => {
       const cookieStore = await cookies();
 

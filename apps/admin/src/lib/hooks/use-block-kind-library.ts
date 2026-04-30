@@ -10,7 +10,7 @@ import {
   type ListBlockKindsResponse,
   type UpdateBlockKindInput,
 } from "@repo/contracts/lms/block-kind";
-import { createCrudHooks } from "@repo/query";
+import { createCrudHooks, notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { adminKeys } from "../api/keys";
@@ -59,7 +59,7 @@ export const usePromoteBlockKind = () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.library.blockKinds.byId(result.id) });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to promote block kind");
+      notifyError(error, "Failed to promote block kind");
     },
   });
 };
@@ -80,7 +80,7 @@ export const useDemoteBlockKind = () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.library.blockKinds.byId(result.id) });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to demote block kind");
+      notifyError(error, "Failed to demote block kind");
     },
   });
 };

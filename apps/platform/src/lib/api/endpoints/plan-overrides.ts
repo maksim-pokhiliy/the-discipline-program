@@ -29,7 +29,7 @@ export const createPlanOverridesAPI = (client: ApiClient) => ({
     client.request(`/api/platform/overrides/${overrideId}`, "PUT", data),
 
   delete: (overrideId: string): Promise<void> =>
-    client.request(`/api/platform/overrides/${overrideId}`, "DELETE"),
+    client.requestNoContent(`/api/platform/overrides/${overrideId}`, "DELETE"),
 
   getEffectivePlan: (enrollmentId: string, weekIndex: number): Promise<EffectivePlanWeek> =>
     client.request(`/api/platform/enrollments/${enrollmentId}/effective-plan`, "GET", undefined, {

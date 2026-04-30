@@ -10,6 +10,8 @@ import {
 } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { notifyError } from "./notify-error";
+
 type NavigateHook = () => (path: string) => void;
 
 const noopNavigateHook: NavigateHook = () => () => {};
@@ -60,28 +62,8 @@ export const createCrudHooks = <
     toast.success(`${entityName} ${action} successfully`);
   };
 
-  const getIssues = (error: Error): { path: string; message: string }[] | undefined => {
-    const details = (error as { details?: unknown }).details;
-
-    if (!details || typeof details !== "object") {
-      return undefined;
-    }
-
-    const issues = (details as Record<string, unknown>).issues;
-
-    return Array.isArray(issues) ? (issues as { path: string; message: string }[]) : undefined;
-  };
-
-  const notifyError = (action: string, error: Error) => {
-    const issues = getIssues(error);
-
-    if (issues && issues.length > 0) {
-      const text = issues.map((i) => (i.path ? `${i.path}: ${i.message}` : i.message)).join(", ");
-
-      toast.error(text);
-    } else {
-      toast.error(error.message || `Failed to ${action} ${entityName.toLowerCase()}`);
-    }
+  const notifyMutationError = (action: string, error: unknown) => {
+    notifyError(error, `Failed to ${action} ${entityName.toLowerCase()}`);
   };
 
   const invalidateRelated = (
@@ -128,7 +110,7 @@ export const createCrudHooks = <
         }
       },
       onError: (error: Error) => {
-        notifyError("create", error);
+        notifyMutationError("create", error);
       },
     });
   };
@@ -154,7 +136,7 @@ export const createCrudHooks = <
         }
       },
       onError: (error: Error) => {
-        notifyError("update", error);
+        notifyMutationError("update", error);
       },
     });
   };
@@ -175,7 +157,7 @@ export const createCrudHooks = <
         invalidateRelated(queryClient);
       },
       onError: (error: Error) => {
-        notifyError("delete", error);
+        notifyMutationError("delete", error);
       },
     });
   };

@@ -49,7 +49,7 @@ Existing implicit decisions — the ones listed in the Context section — are b
 **Positive:**
 
 - New contributors can answer "why is it this way?" without interrupting senior engineers.
-- Future architectural reviews (including the Big Tech audit this repository is currently undergoing) have a concrete artifact to reference, not a reconstruction from code.
+- Future architectural reviews have a concrete artifact to reference, not a reconstruction from code.
 - Decisions that turn out to be wrong are visible as wrong, not invisible as drift.
 - The act of writing an ADR forces the author to articulate the alternatives they considered, which catches sloppy reasoning before it lands.
 - Long-lived constraints (for example, "no direct Prisma imports outside `api-server`") have a home that explains why they exist, so dependency-cruiser rules and ESLint checks are not opaque.
@@ -85,4 +85,3 @@ Existing implicit decisions — the ones listed in the Context section — are b
 - Michael Nygard, "Documenting Architecture Decisions" (2011) — the original format.
 - `docs/adr/README.md` — lifecycle, numbering, and authoring guidance for this repository.
 - `docs/adr/_template.md` — the skeleton to copy when writing a new ADR.
-- `docs/BIGTECH-AUDIT.md` — the audit that triggered this ADR framework.

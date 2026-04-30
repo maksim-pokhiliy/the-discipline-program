@@ -10,7 +10,7 @@ import {
   type UpdateWeekTemplateInput,
   type WeekTemplate,
 } from "@repo/contracts/lms/week-template";
-import { createCrudHooks } from "@repo/query";
+import { createCrudHooks, notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { adminKeys } from "../api/keys";
@@ -61,7 +61,7 @@ export const usePromoteWeekTemplate = () => {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to promote week template");
+      notifyError(error, "Failed to promote week template");
     },
   });
 };
@@ -84,7 +84,7 @@ export const useDemoteWeekTemplate = () => {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to demote week template");
+      notifyError(error, "Failed to demote week template");
     },
   });
 };

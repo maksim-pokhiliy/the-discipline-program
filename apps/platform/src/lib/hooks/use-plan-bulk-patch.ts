@@ -11,6 +11,7 @@ import {
   type PlanStructureSegment,
   type PlanStructureSetGroup,
 } from "@repo/contracts/lms/training-plan";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -145,7 +146,7 @@ export const usePlanBulkPatch = (planId: string) => {
     },
     onError: (error, _vars, context) => {
       context?.rollback?.();
-      toast.error(error.message || "Failed to apply plan changes");
+      notifyError(error, "Failed to apply plan changes");
     },
   });
 };

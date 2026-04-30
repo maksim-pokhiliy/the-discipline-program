@@ -17,7 +17,8 @@ export const createReviewsAPI = (client: ApiClient) => ({
   update: (id: string, data: UpdateReviewData): Promise<Review> =>
     client.request(`/api/admin/reviews/${id}`, "PUT", data),
 
-  delete: (id: string): Promise<void> => client.request(`/api/admin/reviews/${id}`, "DELETE"),
+  delete: (id: string): Promise<void> =>
+    client.requestNoContent(`/api/admin/reviews/${id}`, "DELETE"),
 
   toggleActive: (id: string): Promise<Review> =>
     client.request(`/api/admin/reviews/${id}/toggle`, "PATCH"),
