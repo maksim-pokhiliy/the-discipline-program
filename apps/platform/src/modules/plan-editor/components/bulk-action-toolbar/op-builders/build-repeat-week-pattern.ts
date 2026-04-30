@@ -23,7 +23,16 @@ export const buildRepeatWeekPatternOps = ({
     return { chunks: [], warnings: ["Pick a source range and a destination range to repeat."] };
   }
 
+  const orderBySession = new Map<string, number>();
   let entriesSkipped = false;
+
+  const nextOrder = (sessionId: string, initial: number): number => {
+    const current = orderBySession.get(sessionId) ?? initial;
+
+    orderBySession.set(sessionId, current + 1);
+
+    return current;
+  };
 
   for (let i = 0; i < destinationWeeks.length; i += 1) {
     const destination = destinationWeeks[i];
@@ -51,7 +60,7 @@ export const buildRepeatWeekPatternOps = ({
         continue;
       }
 
-      const baseOrder = targetSession.blocks.reduce(
+      const initialOrder = targetSession.blocks.reduce(
         (max, block) => Math.max(max, block.order + 1),
         0,
       );
@@ -62,7 +71,7 @@ export const buildRepeatWeekPatternOps = ({
             kind: "create-block",
             sessionId: targetSession.id,
             payload: {
-              order: baseOrder + sourceBlock.order,
+              order: nextOrder(targetSession.id, initialOrder),
               kindId: sourceBlock.kindId,
               title: sourceBlock.title ?? undefined,
               status: sourceBlock.status,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   Alert,
@@ -15,6 +15,7 @@ import {
   TextField,
 } from "@mui/material";
 
+import { UserRole } from "@repo/contracts/iam/auth";
 import {
   type PlanStructureBlock,
   type PlanStructureDay,
@@ -25,6 +26,7 @@ import {
   useCreateBlockTemplate,
   useCreateSessionTemplate,
   useCreateWeekTemplate,
+  useCurrentUserRole,
 } from "@app/lib/hooks";
 
 import {
@@ -53,6 +55,14 @@ const SCOPE_OPTIONS = [
 ] as const;
 
 export const SaveTemplateDialog = ({ open, source, onClose }: SaveTemplateDialogProps) => {
+  const role = useCurrentUserRole();
+  const isPrivileged = role === UserRole.ADMIN || role === UserRole.HEAD_COACH;
+
+  const scopeOptions = useMemo(
+    () => (isPrivileged ? SCOPE_OPTIONS : SCOPE_OPTIONS.filter((o) => o.value === "COACH")),
+    [isPrivileged],
+  );
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [scope, setScope] = useState<"COACH" | "SYSTEM">("COACH");
@@ -70,6 +80,12 @@ export const SaveTemplateDialog = ({ open, source, onClose }: SaveTemplateDialog
       setSubmitted(false);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!isPrivileged && scope === "SYSTEM") {
+      setScope("COACH");
+    }
+  }, [isPrivileged, scope]);
 
   if (!source) {
     return null;
@@ -160,10 +176,14 @@ export const SaveTemplateDialog = ({ open, source, onClose }: SaveTemplateDialog
             value={scope}
             onChange={(e) => setScope(e.target.value === "SYSTEM" ? "SYSTEM" : "COACH")}
             fullWidth
-            disabled={isPending}
-            helperText="COACH templates are private to you. SYSTEM is global (admin-only)."
+            disabled={isPending || !isPrivileged}
+            helperText={
+              isPrivileged
+                ? "COACH templates are private to you. SYSTEM is global (admin-only)."
+                : "Coaches can save templates as COACH (private). SYSTEM scope is admin-only."
+            }
           >
-            {SCOPE_OPTIONS.map((opt) => (
+            {scopeOptions.map((opt) => (
               <MenuItem key={opt.value} value={opt.value}>
                 {opt.label}
               </MenuItem>

@@ -33,6 +33,16 @@ export const buildShiftWeeksOps = ({
     destinationWeeks.map((week) => [week.index, week] as const),
   );
 
+  const orderBySession = new Map<string, number>();
+
+  const nextOrder = (sessionId: string, initial: number): number => {
+    const current = orderBySession.get(sessionId) ?? initial;
+
+    orderBySession.set(sessionId, current + 1);
+
+    return current;
+  };
+
   for (const sourceWeek of weeks) {
     const destinationWeek = destinationByIndex.get(sourceWeek.index + delta);
 
@@ -58,7 +68,7 @@ export const buildShiftWeeksOps = ({
         continue;
       }
 
-      const baseOrder = targetSession.blocks.reduce(
+      const initialOrder = targetSession.blocks.reduce(
         (max, block) => Math.max(max, block.order + 1),
         0,
       );
@@ -70,7 +80,7 @@ export const buildShiftWeeksOps = ({
             blockId: sourceBlock.id,
             expectedVersion: sourceBlock.version,
             targetSessionId: targetSession.id,
-            targetOrder: baseOrder + sourceBlock.order,
+            targetOrder: nextOrder(targetSession.id, initialOrder),
           });
         }
       }

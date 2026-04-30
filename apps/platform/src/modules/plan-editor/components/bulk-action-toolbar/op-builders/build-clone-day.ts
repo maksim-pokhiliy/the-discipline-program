@@ -26,12 +26,12 @@ export type CloneDayOpsResult = {
 const buildCreateBlockOp = (
   sourceBlock: PlanStructureBlock,
   targetSessionId: string,
-  baseOrder: number,
+  targetOrder: number,
 ): BulkPatchOp => ({
   kind: "create-block",
   sessionId: targetSessionId,
   payload: {
-    order: baseOrder + sourceBlock.order,
+    order: targetOrder,
     kindId: sourceBlock.kindId,
     title: sourceBlock.title ?? undefined,
     status: sourceBlock.status,
@@ -47,7 +47,16 @@ const collectEntryWarnings = (segment: PlanStructureSegment): boolean => {
 export const buildCloneDayOps = ({ source, targets }: CloneDayInput): CloneDayOpsResult => {
   const ops: BulkPatchOp[] = [];
   const warnings: string[] = [];
+  const orderBySession = new Map<string, number>();
   let entriesSkipped = false;
+
+  const nextOrder = (sessionId: string, initial: number): number => {
+    const current = orderBySession.get(sessionId) ?? initial;
+
+    orderBySession.set(sessionId, current + 1);
+
+    return current;
+  };
 
   for (const target of targets) {
     const targetSession = target.sessions[0];
@@ -56,14 +65,20 @@ export const buildCloneDayOps = ({ source, targets }: CloneDayInput): CloneDayOp
       continue;
     }
 
-    const baseOrder = targetSession.blocks.reduce(
+    const initialOrder = targetSession.blocks.reduce(
       (max, block) => Math.max(max, block.order + 1),
       0,
     );
 
     for (const sourceSession of source.sessions) {
       for (const sourceBlock of sourceSession.blocks) {
-        ops.push(buildCreateBlockOp(sourceBlock, targetSession.id, baseOrder));
+        ops.push(
+          buildCreateBlockOp(
+            sourceBlock,
+            targetSession.id,
+            nextOrder(targetSession.id, initialOrder),
+          ),
+        );
 
         for (const segment of sourceBlock.segments) {
           if (collectEntryWarnings(segment)) {
