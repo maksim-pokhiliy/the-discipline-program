@@ -38,6 +38,7 @@ yarn-error.log*
 
 # Claude Code runtime
 .claude/scheduled_tasks.lock
+.claude/settings.local.json
 
 # Misc
 .DS_Store
