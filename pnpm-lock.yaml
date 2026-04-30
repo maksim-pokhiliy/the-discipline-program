@@ -48,9 +48,6 @@ catalogs:
     '@next/eslint-plugin-next':
       specifier: 16.2.4
       version: 16.2.4
-    '@playwright/test':
-      specifier: ^1.59.1
-      version: 1.59.1
     '@prisma/client':
       specifier: 6.1.0
       version: 6.1.0
@@ -251,9 +248,6 @@ importers:
       '@commitlint/config-conventional':
         specifier: 'catalog:'
         version: 20.3.0
-      '@playwright/test':
-        specifier: 'catalog:'
-        version: 1.59.1
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:packages/eslint-config
@@ -8368,6 +8362,7 @@ snapshots:
   '@playwright/test@1.59.1':
     dependencies:
       playwright: 1.59.1
+    optional: true
 
   '@popperjs/core@2.11.8': {}
 
@@ -11898,13 +11893,15 @@ snapshots:
 
   picomatch@4.0.3: {}
 
-  playwright-core@1.59.1: {}
+  playwright-core@1.59.1:
+    optional: true
 
   playwright@1.59.1:
     dependencies:
       playwright-core: 1.59.1
     optionalDependencies:
       fsevents: 2.3.2
+    optional: true
 
   possible-typed-array-names@1.1.0: {}
 

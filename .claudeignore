@@ -31,9 +31,6 @@ next-env.d.ts
 dist/
 coverage/
 .nyc_output/
-playwright-report/
-test-results/
-e2e/.auth/
 public/assets/
 public/images/
 public/videos/
