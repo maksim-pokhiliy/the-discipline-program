@@ -36,7 +36,8 @@ const applyRoleExit = async (tx: TxClient, userId: string, role: UserRole): Prom
 
       return;
     }
-    case UserRole.COACH: {
+    case UserRole.COACH:
+    case UserRole.HEAD_COACH: {
       await closeCoachActionItemsBulk(tx, userId);
       await tx.coachProfile.updateMany({
         where: { userId, deletedAt: null },
@@ -76,7 +77,8 @@ const applyRoleEnter = async (
 
       return;
     }
-    case UserRole.COACH: {
+    case UserRole.COACH:
+    case UserRole.HEAD_COACH: {
       await tx.coachProfile.upsert({
         where: { userId },
         create: { userId },
@@ -208,6 +210,16 @@ export const iamUserAdminApi = {
       updateData.tokenVersion = { increment: 1 };
     }
 
+    if (newRole === UserRole.HEAD_COACH) {
+      const existingHC = await prisma.user.findFirst({
+        where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
+      });
+
+      if (existingHC && existingHC.id !== id) {
+        throw new ConflictError("A HEAD_COACH already exists", { existingId: existingHC.id });
+      }
+    }
+
     try {
       return await prisma.$transaction(async (tx) => {
         if (data.coachIds !== undefined && data.coachIds.length > 0) {
@@ -247,6 +259,16 @@ export const iamUserAdminApi = {
 
     if (isDemotionFromAdmin) {
       await assertNotLastAdminDemotion();
+    }
+
+    if (newRole === UserRole.HEAD_COACH) {
+      const existingHC = await prisma.user.findFirst({
+        where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
+      });
+
+      if (existingHC && existingHC.id !== id) {
+        throw new ConflictError("A HEAD_COACH already exists", { existingId: existingHC.id });
+      }
     }
 
     try {

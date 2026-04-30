@@ -13,7 +13,7 @@ High-performance coaching platform (LMS + Billing) with a Marketing CMS. Turbo m
 | State      | React Query 5, React Hook Form 7                                                                         |
 | Validation | Zod                                                                                                      |
 | Auth       | NextAuth.js v4.24.x (dual instance, see [ADR 0004](docs/adr/0004-nextauth-with-credentials-provider.md)) |
-| Tests      | Vitest, Playwright                                                                                       |
+| Tests      | Vitest                                                                                                   |
 | Monorepo   | Turborepo, pnpm                                                                                          |
 
 ## Quick Start
@@ -58,7 +58,6 @@ packages/
   mui/            MUI theme + providers
   env/            Environment variable validation
 
-e2e/              Playwright test suites
 docs/adr/         Architecture Decision Records (26)
 ```
 
@@ -73,7 +72,6 @@ docs/adr/         Architecture Decision Records (26)
 | Lint           | `pnpm lint`               |
 | Format         | `pnpm format`             |
 | Unit tests     | `pnpm test`               |
-| E2E tests      | `pnpm e2e`                |
 | DB generate    | `pnpm db:generate`        |
 | DB push        | `pnpm db:push`            |
 

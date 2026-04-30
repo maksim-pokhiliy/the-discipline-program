@@ -7,6 +7,7 @@ import { logger } from "@repo/shared";
 const PLATFORM_ROLE_HOMES: Record<string, string> = {
   [UserRole.ATHLETE]: ROLE_HOMES[UserRole.ATHLETE],
   [UserRole.COACH]: ROLE_HOMES[UserRole.COACH],
+  [UserRole.HEAD_COACH]: ROLE_HOMES[UserRole.HEAD_COACH],
 };
 
 const getRoleHome = (role?: string | null): string | null =>

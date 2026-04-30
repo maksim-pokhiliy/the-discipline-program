@@ -11,6 +11,8 @@ import bcrypt from "bcryptjs";
 
 import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
+import { seedLms } from "./seed/lms";
+
 const prisma = new PrismaClient();
 
 const daysAgo = (days: number): Date => {
@@ -32,13 +34,28 @@ const at = <T>(arr: T[], index: number): T => {
 };
 
 const clearAll = async () => {
-  await prisma.workoutLog.deleteMany();
-  await prisma.workout.deleteMany();
-  await prisma.userBenchmark.deleteMany();
-  await prisma.benchmarkDefinition.deleteMany();
+  await prisma.setLog.deleteMany();
+  await prisma.exerciseLog.deleteMany();
+  await prisma.blockSession.deleteMany();
+  await prisma.workoutSession.deleteMany();
+  await prisma.benchmark.deleteMany();
+  await prisma.personalRecord.deleteMany();
+  await prisma.weeklyVolume.deleteMany();
+  await prisma.planOverride.deleteMany();
+  await prisma.exerciseEntry.deleteMany();
+  await prisma.setGroup.deleteMany();
+  await prisma.blockSegment.deleteMany();
+  await prisma.block.deleteMany();
+  await prisma.lmsSession.deleteMany();
+  await prisma.day.deleteMany();
+  await prisma.week.deleteMany();
+  await prisma.exerciseLibraryItem.deleteMany();
+  await prisma.schemeTemplate.deleteMany();
+  await prisma.blockKind.deleteMany();
   await prisma.coachNote.deleteMany();
   await prisma.coachActionItem.deleteMany();
   await prisma.planEnrollment.deleteMany();
+  await prisma.planCoachAssignment.deleteMany();
   await prisma.trainingPlan.deleteMany();
   await prisma.coachAthleteAssignment.deleteMany();
   await prisma.athleteProfile.deleteMany();
@@ -50,6 +67,7 @@ const clearAll = async () => {
   await prisma.product.deleteMany();
   await prisma.marketingBlogPost.deleteMany();
   await prisma.marketingReview.deleteMany();
+  await prisma.userInviteToken.deleteMany();
   await prisma.session.deleteMany();
   await prisma.account.deleteMany();
   await prisma.user.deleteMany();
@@ -75,6 +93,16 @@ const seedUsers = async (passwordHash: string) => {
         password: passwordHash,
         timezone: "UTC",
         createdAt: daysAgo(60),
+      },
+    }),
+    prisma.user.create({
+      data: {
+        email: "head-coach@thedisciplineprogram.com",
+        name: "Anna Holovna",
+        role: Role.HEAD_COACH,
+        password: passwordHash,
+        timezone: "UTC",
+        createdAt: daysAgo(75),
       },
     }),
     prisma.user.create({
@@ -191,21 +219,22 @@ const seedUsers = async (passwordHash: string) => {
     }),
   ]);
 
-  console.log("  Users: 12 (1 admin, 1 coach, 10 athletes)");
+  console.log("  Users: 13 (1 admin, 1 coach, 1 head coach, 10 athletes)");
 
   return {
     admin: at(users, 0),
     coach: at(users, 1),
-    sarah: at(users, 2),
-    mike: at(users, 3),
-    jenny: at(users, 4),
-    david: at(users, 5),
-    lisa: at(users, 6),
-    tom: at(users, 7),
-    alex: at(users, 8),
-    nina: at(users, 9),
-    chris: at(users, 10),
-    maria: at(users, 11),
+    headCoach: at(users, 2),
+    sarah: at(users, 3),
+    mike: at(users, 4),
+    jenny: at(users, 5),
+    david: at(users, 6),
+    lisa: at(users, 7),
+    tom: at(users, 8),
+    alex: at(users, 9),
+    nina: at(users, 10),
+    chris: at(users, 11),
+    maria: at(users, 12),
   };
 };
 
@@ -348,60 +377,6 @@ const seedCoachNotes = async (
   });
 
   console.log("  Coach notes: 10");
-};
-
-const seedBenchmarks = async (users: Awaited<ReturnType<typeof seedUsers>>) => {
-  const defs = await Promise.all([
-    prisma.benchmarkDefinition.create({
-      data: { name: "Back Squat 1RM", unit: "lb", category: "Strength" },
-    }),
-    prisma.benchmarkDefinition.create({
-      data: { name: "Deadlift 1RM", unit: "lb", category: "Strength" },
-    }),
-    prisma.benchmarkDefinition.create({
-      data: { name: "Clean & Jerk 1RM", unit: "lb", category: "Strength" },
-    }),
-    prisma.benchmarkDefinition.create({
-      data: { name: "Snatch 1RM", unit: "lb", category: "Strength" },
-    }),
-    prisma.benchmarkDefinition.create({
-      data: { name: "Fran", unit: "seconds", category: "Benchmark WOD" },
-    }),
-    prisma.benchmarkDefinition.create({
-      data: { name: "2000m Row", unit: "seconds", category: "Cardio" },
-    }),
-    prisma.benchmarkDefinition.create({
-      data: { name: "Max Pull-Ups", unit: "reps", category: "Gymnastics" },
-    }),
-  ]);
-
-  await prisma.userBenchmark.createMany({
-    data: [
-      { userId: users.sarah.id, benchmarkDefinitionId: at(defs, 0).id, value: 225 },
-      { userId: users.sarah.id, benchmarkDefinitionId: at(defs, 1).id, value: 285 },
-      { userId: users.sarah.id, benchmarkDefinitionId: at(defs, 2).id, value: 185 },
-      { userId: users.sarah.id, benchmarkDefinitionId: at(defs, 3).id, value: 145 },
-      { userId: users.sarah.id, benchmarkDefinitionId: at(defs, 4).id, value: 195 },
-      { userId: users.sarah.id, benchmarkDefinitionId: at(defs, 6).id, value: 22 },
-
-      { userId: users.mike.id, benchmarkDefinitionId: at(defs, 0).id, value: 315 },
-      { userId: users.mike.id, benchmarkDefinitionId: at(defs, 1).id, value: 405 },
-      { userId: users.mike.id, benchmarkDefinitionId: at(defs, 2).id, value: 245 },
-      { userId: users.mike.id, benchmarkDefinitionId: at(defs, 5).id, value: 420 },
-      { userId: users.mike.id, benchmarkDefinitionId: at(defs, 6).id, value: 30 },
-
-      { userId: users.jenny.id, benchmarkDefinitionId: at(defs, 0).id, value: 175 },
-      { userId: users.jenny.id, benchmarkDefinitionId: at(defs, 1).id, value: 225 },
-      { userId: users.jenny.id, benchmarkDefinitionId: at(defs, 4).id, value: 240 },
-      { userId: users.jenny.id, benchmarkDefinitionId: at(defs, 6).id, value: 15 },
-
-      { userId: users.lisa.id, benchmarkDefinitionId: at(defs, 0).id, value: 185 },
-      { userId: users.lisa.id, benchmarkDefinitionId: at(defs, 1).id, value: 245 },
-      { userId: users.lisa.id, benchmarkDefinitionId: at(defs, 5).id, value: 480 },
-    ],
-  });
-
-  console.log("  Benchmarks: 7 definitions, 18 athlete records");
 };
 
 const seedMarketingPages = async () => {
@@ -1243,21 +1218,13 @@ const today = () => {
   return d;
 };
 
-const addDays = (base: Date, days: number): Date => {
-  const d = new Date(base);
-
-  d.setDate(d.getDate() + days);
-
-  return d;
-};
-
 const seedTrainingPlans = async (
-  coachProfileId: string,
+  coachUserId: string,
   users: Awaited<ReturnType<typeof seedUsers>>,
 ) => {
   const activePlan = await prisma.trainingPlan.create({
     data: {
-      coachId: coachProfileId,
+      creatorId: coachUserId,
       name: "The Competitor",
       description:
         "12-week periodized program targeting CrossFit Open qualification. Strength, gymnastics, and conditioning.",
@@ -1268,7 +1235,7 @@ const seedTrainingPlans = async (
 
   const gppPlan = await prisma.trainingPlan.create({
     data: {
-      coachId: coachProfileId,
+      creatorId: coachUserId,
       name: "Foundations GPP",
       description:
         "General physical preparedness for athletes new to structured programming. Build a broad base.",
@@ -1277,9 +1244,9 @@ const seedTrainingPlans = async (
     },
   });
 
-  const draftPlan = await prisma.trainingPlan.create({
+  await prisma.trainingPlan.create({
     data: {
-      coachId: coachProfileId,
+      creatorId: coachUserId,
       name: "Olympic Lifting Focus",
       description: "6-week snatch and clean & jerk peaking cycle.",
       status: TrainingPlanStatus.DRAFT,
@@ -1289,7 +1256,7 @@ const seedTrainingPlans = async (
 
   await prisma.trainingPlan.create({
     data: {
-      coachId: coachProfileId,
+      creatorId: coachUserId,
       name: "2025 Open Prep",
       description: "Archived program from last year's Open preparation cycle.",
       status: TrainingPlanStatus.ARCHIVED,
@@ -1298,222 +1265,93 @@ const seedTrainingPlans = async (
   });
 
   const base = today();
+  const dateOnly = (date: Date): Date => {
+    const d = new Date(date);
 
-  const workouts = await Promise.all(
-    [
-      {
-        planId: activePlan.id,
-        scheduledDate: addDays(base, -1),
-        title: "Back Squat + Metcon",
-        sortOrder: 0,
-      },
-      { planId: activePlan.id, scheduledDate: base, title: "Snatch Complex + AMRAP", sortOrder: 0 },
-      {
-        planId: activePlan.id,
-        scheduledDate: addDays(base, 1),
-        title: "Gymnastics + Endurance",
-        sortOrder: 0,
-      },
-      {
-        planId: activePlan.id,
-        scheduledDate: addDays(base, 2),
-        title: "Clean & Jerk + Chipper",
-        sortOrder: 0,
-      },
-      {
-        planId: activePlan.id,
-        scheduledDate: addDays(base, -2),
-        title: "Front Squat + Row Intervals",
-        sortOrder: 0,
-      },
-      {
-        planId: activePlan.id,
-        scheduledDate: addDays(base, -3),
-        title: "Deadlift + Burpee Ladder",
-        sortOrder: 0,
-      },
-      { planId: gppPlan.id, scheduledDate: base, title: "Push/Pull Foundations", sortOrder: 0 },
-      {
-        planId: gppPlan.id,
-        scheduledDate: addDays(base, 1),
-        title: "Squat Mechanics + Core",
-        sortOrder: 0,
-      },
-      {
-        planId: gppPlan.id,
-        scheduledDate: addDays(base, -1),
-        title: "Hinge Pattern + Conditioning",
-        sortOrder: 0,
-      },
-      {
-        planId: draftPlan.id,
-        scheduledDate: null,
-        title: "Week 1 Day 1: Snatch Pulls",
-        sortOrder: 0,
-      },
-      {
-        planId: draftPlan.id,
-        scheduledDate: null,
-        title: "Week 1 Day 2: Clean Pulls",
-        sortOrder: 1,
-      },
-    ].map((w) => prisma.workout.create({ data: w })),
-  );
+    d.setUTCHours(0, 0, 0, 0);
 
-  const competitorWorkouts = workouts.filter((w) => w.planId === activePlan.id);
-  const gppWorkouts = workouts.filter((w) => w.planId === gppPlan.id);
+    return d;
+  };
 
   await prisma.planEnrollment.createMany({
     data: [
       {
-        trainingPlanId: activePlan.id,
+        planId: activePlan.id,
         userId: users.sarah.id,
         status: PlanEnrollmentStatus.ACTIVE,
-        startDate: daysAgo(28),
+        startedAtWeekIndex: 0,
+        startedOnDate: dateOnly(daysAgo(28)),
       },
       {
-        trainingPlanId: activePlan.id,
+        planId: activePlan.id,
         userId: users.mike.id,
         status: PlanEnrollmentStatus.ACTIVE,
-        startDate: daysAgo(25),
+        startedAtWeekIndex: 0,
+        startedOnDate: dateOnly(daysAgo(25)),
       },
       {
-        trainingPlanId: activePlan.id,
+        planId: activePlan.id,
         userId: users.jenny.id,
         status: PlanEnrollmentStatus.ACTIVE,
-        startDate: daysAgo(20),
+        startedAtWeekIndex: 0,
+        startedOnDate: dateOnly(daysAgo(20)),
       },
       {
-        trainingPlanId: activePlan.id,
+        planId: activePlan.id,
         userId: users.alex.id,
         status: PlanEnrollmentStatus.PAUSED,
-        startDate: daysAgo(15),
+        startedAtWeekIndex: 0,
+        startedOnDate: dateOnly(daysAgo(15)),
       },
       {
-        trainingPlanId: activePlan.id,
+        planId: activePlan.id,
         userId: users.nina.id,
         status: PlanEnrollmentStatus.COMPLETED,
-        startDate: daysAgo(30),
-        endDate: daysAgo(2),
+        startedAtWeekIndex: 0,
+        startedOnDate: dateOnly(daysAgo(30)),
+        endedOnDate: dateOnly(daysAgo(2)),
       },
       {
-        trainingPlanId: gppPlan.id,
+        planId: gppPlan.id,
         userId: users.david.id,
         status: PlanEnrollmentStatus.ACTIVE,
-        startDate: daysAgo(18),
+        startedAtWeekIndex: 0,
+        startedOnDate: dateOnly(daysAgo(18)),
       },
       {
-        trainingPlanId: gppPlan.id,
+        planId: gppPlan.id,
         userId: users.lisa.id,
         status: PlanEnrollmentStatus.ACTIVE,
-        startDate: daysAgo(14),
+        startedAtWeekIndex: 0,
+        startedOnDate: dateOnly(daysAgo(14)),
       },
       {
-        trainingPlanId: gppPlan.id,
+        planId: gppPlan.id,
         userId: users.tom.id,
         status: PlanEnrollmentStatus.ACTIVE,
-        startDate: daysAgo(7),
+        startedAtWeekIndex: 0,
+        startedOnDate: dateOnly(daysAgo(7)),
       },
       {
-        trainingPlanId: gppPlan.id,
+        planId: gppPlan.id,
         userId: users.chris.id,
         status: PlanEnrollmentStatus.ACTIVE,
-        startDate: daysAgo(5),
+        startedAtWeekIndex: 0,
+        startedOnDate: dateOnly(daysAgo(5)),
       },
       {
-        trainingPlanId: gppPlan.id,
+        planId: gppPlan.id,
         userId: users.maria.id,
         status: PlanEnrollmentStatus.ACTIVE,
-        startDate: daysAgo(3),
+        startedAtWeekIndex: 0,
+        startedOnDate: dateOnly(daysAgo(3)),
       },
     ],
   });
 
-  const yesterdayWorkout = competitorWorkouts.find(
-    (w) => w.scheduledDate && w.scheduledDate.getTime() === addDays(base, -1).getTime(),
-  );
-  const twoDaysAgoWorkout = competitorWorkouts.find(
-    (w) => w.scheduledDate && w.scheduledDate.getTime() === addDays(base, -2).getTime(),
-  );
-  const gppYesterdayWorkout = gppWorkouts.find(
-    (w) => w.scheduledDate && w.scheduledDate.getTime() === addDays(base, -1).getTime(),
-  );
-
-  const logData: { userId: string; workoutId: string; date: Date; notes: string; isRx: boolean }[] =
-    [];
-
-  if (yesterdayWorkout) {
-    logData.push(
-      {
-        userId: users.sarah.id,
-        workoutId: yesterdayWorkout.id,
-        date: daysAgo(1),
-        notes: "Felt strong. PR on back squat.",
-        isRx: true,
-      },
-      {
-        userId: users.mike.id,
-        workoutId: yesterdayWorkout.id,
-        date: daysAgo(1),
-        notes: "Good session overall.",
-        isRx: true,
-      },
-      {
-        userId: users.jenny.id,
-        workoutId: yesterdayWorkout.id,
-        date: daysAgo(1),
-        notes: "Scaled the weight.",
-        isRx: false,
-      },
-    );
-  }
-
-  if (twoDaysAgoWorkout) {
-    logData.push(
-      {
-        userId: users.sarah.id,
-        workoutId: twoDaysAgoWorkout.id,
-        date: daysAgo(2),
-        notes: "Solid row splits.",
-        isRx: true,
-      },
-      {
-        userId: users.mike.id,
-        workoutId: twoDaysAgoWorkout.id,
-        date: daysAgo(2),
-        notes: "",
-        isRx: true,
-      },
-    );
-  }
-
-  if (gppYesterdayWorkout) {
-    logData.push(
-      {
-        userId: users.david.id,
-        workoutId: gppYesterdayWorkout.id,
-        date: daysAgo(1),
-        notes: "First hinge session.",
-        isRx: false,
-      },
-      {
-        userId: users.tom.id,
-        workoutId: gppYesterdayWorkout.id,
-        date: daysAgo(1),
-        notes: "",
-        isRx: true,
-      },
-    );
-  }
-
-  if (logData.length > 0) {
-    await prisma.workoutLog.createMany({ data: logData });
-  }
-
+  void base;
   console.log(`  Training plans: 4 (2 active, 1 draft, 1 archived)`);
-  console.log(`  Workouts: ${workouts.length}`);
   console.log(`  Enrollments: 10 (7 active, 1 paused, 1 completed, 1 active in GPP)`);
-  console.log(`  Workout logs: ${logData.length}`);
 };
 
 const main = async () => {
@@ -1531,8 +1369,14 @@ const main = async () => {
   const { coachProfile } = await seedProfiles(users);
 
   await seedCoachNotes(coachProfile.id, users);
-  await seedBenchmarks(users);
-  await seedTrainingPlans(coachProfile.id, users);
+
+  const lmsCounts = await seedLms({ db: prisma });
+
+  console.log(
+    `  LMS: ${lmsCounts.blockKinds} block kinds, ${lmsCounts.schemeTemplates} scheme templates, ${lmsCounts.exercises} exercises`,
+  );
+
+  await seedTrainingPlans(users.coach.id, users);
 
   await seedMarketingPages();
   await seedProducts();

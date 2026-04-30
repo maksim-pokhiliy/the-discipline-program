@@ -8,7 +8,8 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "lint": "eslint . --fix --max-warnings 0",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "test": "cross-env SKIP_ENV_VALIDATION=1 vitest run"
   },
   "dependencies": {
     "@tanstack/react-query": "catalog:"
@@ -16,10 +17,19 @@
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@testing-library/react": "catalog:",
     "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "@vitejs/plugin-react": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
+    "cross-env": "catalog:",
     "eslint": "catalog:",
+    "jsdom": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "peerDependencies": {
     "react": "catalog:",

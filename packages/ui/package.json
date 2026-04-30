@@ -19,8 +19,12 @@
   "dependencies": {
     "@mui/icons-material": "catalog:",
     "@mui/material": "catalog:",
+    "@repo/contracts": "workspace:*",
+    "@repo/errors": "workspace:*",
     "@repo/mui": "workspace:*",
+    "@repo/query": "workspace:*",
     "@repo/shared": "workspace:*",
+    "@tanstack/react-query": "catalog:",
     "@tiptap/extension-link": "catalog:",
     "@tiptap/extension-placeholder": "catalog:",
     "@tiptap/extension-underline": "catalog:",
@@ -29,7 +33,8 @@
     "@tiptap/starter-kit": "catalog:",
     "framer-motion": "catalog:",
     "react-hook-form": "catalog:",
-    "sonner": "catalog:"
+    "sonner": "catalog:",
+    "zod": "catalog:"
   },
   "peerDependencies": {
     "next": "catalog:",

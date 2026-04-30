@@ -1,0 +1,4 @@
+export const LMS_SESSION_CONSTANTS = {
+  MAX_LABEL_LENGTH: 100,
+  MAX_NOTES_LENGTH: 2000,
+} as const;

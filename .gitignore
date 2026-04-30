@@ -11,9 +11,6 @@ node_modules
 
 # Testing
 coverage
-e2e/.auth/
-playwright-report/
-test-results/
 
 # Turbo
 .turbo
@@ -37,7 +34,7 @@ yarn-error.log*
 .audit/
 
 # Claude Code runtime
-.claude/scheduled_tasks.lock
+.claude/
 
 # Misc
 .DS_Store
@@ -47,3 +44,4 @@ the-discipline-program-codebase-dump.txt
 
 *storybook.log
 storybook-static
+.serena/

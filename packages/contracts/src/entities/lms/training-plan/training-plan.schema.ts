@@ -6,10 +6,12 @@ export const trainingPlanStatusSchema = z.nativeEnum(TrainingPlanStatus);
 
 export const trainingPlanSchema = z.object({
   id: z.string().cuid(),
-  coachId: z.string().cuid(),
+  creatorId: z.string().cuid(),
   name: z.string().min(1).max(TRAINING_PLAN_CONSTANTS.MAX_NAME_LENGTH),
   description: z.string().nullable(),
   status: trainingPlanStatusSchema,
+  licensable: z.boolean(),
+  originalPlanId: z.string().cuid().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -26,6 +28,4 @@ export const updateTrainingPlanSchema = z.object({
 
 export const trainingPlanListItemSchema = trainingPlanSchema.extend({
   enrolledAthletesCount: z.number().int().nonnegative(),
-  workoutsToday: z.number().int().nonnegative(),
-  workoutsThisWeek: z.number().int().nonnegative(),
 });

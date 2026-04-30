@@ -19,6 +19,8 @@ export const viewport: Viewport = {
   viewportFit: "cover",
 };
 
+const isVercelDeployment = !!process.env.VERCEL_ENV;
+
 const RootLayout = ({ children }: RootLayoutProps) => {
   return (
     <html lang="en">
@@ -29,8 +31,8 @@ const RootLayout = ({ children }: RootLayoutProps) => {
               {children}
 
               <Toaster />
-              <Analytics />
-              <SpeedInsights />
+              {isVercelDeployment && <Analytics />}
+              {isVercelDeployment && <SpeedInsights />}
             </AuthProvider>
           </QueryProvider>
         </NextProvider>

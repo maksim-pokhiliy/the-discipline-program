@@ -16,6 +16,14 @@ export const adminKeys = {
     ...createEntityKeys(ROOT, "users"),
     coaches: () => [...ROOT, "users-coaches"] as const,
   },
+  library: {
+    blockKinds: createEntityKeys(ROOT, "library-block-kinds"),
+    blockTemplates: createEntityKeys(ROOT, "library-block-templates"),
+    exercises: createEntityKeys(ROOT, "library-exercises"),
+    schemeTemplates: createEntityKeys(ROOT, "library-scheme-templates"),
+    sessionTemplates: createEntityKeys(ROOT, "library-session-templates"),
+    weekTemplates: createEntityKeys(ROOT, "library-week-templates"),
+  },
 
   pages: {
     list: () => [...ROOT, "pages", "list"] as const,

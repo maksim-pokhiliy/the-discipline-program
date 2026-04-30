@@ -4,28 +4,20 @@ import { useCallback, useEffect, useState } from "react";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { IconButton, InputBase, Stack, Tab, Tabs } from "@mui/material";
-import dynamic from "next/dynamic";
-import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { LoadingState, QueryWrapper } from "@repo/ui";
+import { EditSessionAwareLink, QueryWrapper } from "@repo/ui";
 
 import { useTrainingPlan, useUpdateTrainingPlan } from "@app/lib/hooks";
 
 import { PlanStatusSelect } from "../components";
-import { PlanAthletesSection } from "../sections";
-
-const PlanScheduleSection = dynamic(
-  () =>
-    import("../sections/plan-schedule-section").then((m) => ({ default: m.PlanScheduleSection })),
-  { ssr: false, loading: () => <LoadingState message="Loading schedule..." /> },
-);
+import { PlanAthletesSection, PlanCoachAssignmentsSection } from "../sections";
 
 type PlanDetailViewProps = {
   planId: string;
 };
 
-type TabValue = "schedule" | "athletes";
+type TabValue = "athletes";
 
 export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
   const { data: plan, isLoading, error } = useTrainingPlan(planId);
@@ -45,18 +37,14 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
     setDescValue(planDescription);
   }, [planDataId, planName, planDescription]);
 
-  const rawTab = searchParams.get("tab");
-  const activeTab: TabValue = rawTab === "athletes" ? "athletes" : "schedule";
+  const activeTab: TabValue = "athletes";
 
   const handleTabChange = useCallback(
     (_: React.SyntheticEvent, value: TabValue) => {
       const params = new URLSearchParams(searchParams.toString());
 
       params.set("tab", value);
-
-      if (value !== "schedule") {
-        params.delete("week");
-      }
+      params.delete("week");
 
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     },
@@ -92,7 +80,11 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
         <Stack spacing={4}>
           <Stack spacing={0.5}>
             <Stack direction="row" spacing={1} alignItems="center">
-              <IconButton component={Link} href="/coach/plans" aria-label="Back to plans">
+              <IconButton
+                component={EditSessionAwareLink}
+                href="/coach/plans"
+                aria-label="Back to plans"
+              >
                 <ArrowBackIcon />
               </IconButton>
 
@@ -117,12 +109,15 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
           </Stack>
 
           <Tabs value={activeTab} onChange={handleTabChange}>
-            <Tab value="schedule" label="Schedule" />
             <Tab value="athletes" label="Athletes" />
           </Tabs>
 
-          {activeTab === "schedule" && <PlanScheduleSection planId={planId} />}
-          {activeTab === "athletes" && <PlanAthletesSection planId={planId} />}
+          {activeTab === "athletes" && (
+            <Stack spacing={4}>
+              <PlanAthletesSection planId={planId} />
+              <PlanCoachAssignmentsSection planId={planId} planCreatorId={data.creatorId} />
+            </Stack>
+          )}
         </Stack>
       )}
     </QueryWrapper>

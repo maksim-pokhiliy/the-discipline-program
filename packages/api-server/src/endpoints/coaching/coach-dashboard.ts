@@ -7,46 +7,55 @@ import {
   type CoachDashboardData,
   type DashboardActionItem,
 } from "@repo/contracts/coaching/coach-dashboard";
+import { UserRole } from "@repo/contracts/iam/auth";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
-import { prisma } from "../../db/client";
+import { prisma, prismaAsCore } from "../../db/client";
 import {
   ACTION_ITEM_SEVERITY_MAP,
   ACTION_ITEM_STATUS_TO_PRISMA_MAP,
   ACTION_ITEM_TYPE_MAP,
 } from "../../mappers/coaching";
+import { ROLE_MAP } from "../../mappers/iam";
 import { TRAINING_PLAN_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
 import { findOrThrow } from "../../utils";
-import {
-  createStartOfDayCache,
-  endOfWeekInTz,
-  startOfTodayInTz,
-  startOfWeekInTz,
-} from "../../utils/date-helpers";
+import { startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
 
 import { buildAssignedAthleteInclude } from "./assigned-athlete-query";
 import { coachingCoachActionItemApi } from "./coach-action-item";
-import { computeAthletesSummary, computeProgressBuckets } from "./dashboard-computations";
+import {
+  computeAthletesSummary,
+  computeProgressBuckets,
+  computeTodayStatus,
+  computeWeekStatus,
+} from "./dashboard-computations";
 
 export const coachingCoachDashboardApi = {
   getDashboard: async (userId: string): Promise<CoachDashboardData> => {
     const { coachId } = await coachingCoachActionItemApi.reconcile(userId);
 
     const user = await findOrThrow(
-      prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { timezone: true, role: true } }),
       "User",
     );
 
-    const tz = user.timezone;
-    const today = startOfTodayInTz(tz);
-    const weekStart = startOfWeekInTz(today, tz);
-    const weekEnd = endOfWeekInTz(today, tz);
-    const startOfDay = createStartOfDayCache(tz);
+    const tz = user.timezone ?? "UTC";
+    const weekStart = startOfWeekInTz(startOfTodayInTz(tz), tz);
+
+    const role = ROLE_MAP[user.role];
+    const isAdminLike = role === UserRole.ADMIN || role === UserRole.HEAD_COACH;
+
+    const planFilter = isAdminLike
+      ? { deletedAt: null }
+      : {
+          deletedAt: null,
+          OR: [{ creatorId: userId }, { coachAssignments: { some: { coachId: userId } } }],
+        };
 
     const [assignments, openActionItems, activePlansCount] = await Promise.all([
       prisma.coachAthleteAssignment.findMany({
         where: { coachId },
-        include: buildAssignedAthleteInclude(coachId),
+        include: buildAssignedAthleteInclude(userId),
       }),
 
       prisma.coachActionItem.findMany({
@@ -58,66 +67,25 @@ export const coachingCoachDashboardApi = {
       }),
 
       prisma.trainingPlan.count({
-        where: { coachId, status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[TrainingPlanStatus.ACTIVE] },
+        where: {
+          ...planFilter,
+          status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[TrainingPlanStatus.ACTIVE],
+        },
       }),
     ]);
 
-    const athletesSummary = computeAthletesSummary(assignments, tz);
-    const progressBuckets = computeProgressBuckets(assignments);
+    const [athletesSummary, progressBuckets, todayStatus, weekStatus] = await Promise.all([
+      computeAthletesSummary({ db: prismaAsCore, assignments }),
+      computeProgressBuckets({ db: prismaAsCore, assignments }),
+      computeTodayStatus({ db: prismaAsCore, userId, timezone: tz }),
+      computeWeekStatus({ db: prismaAsCore, userId, timezone: tz }),
+    ]);
 
     const recentAthletes = new Set<string>();
-    const seen = new Set<string>();
-    let plannedToday = 0;
-    let completedToday = 0;
-    let plannedThisWeek = 0;
-    let completedThisWeek = 0;
 
     for (const a of assignments) {
-      const athlete = a.athlete;
-      const loggedIds = new Set(athlete.workoutLogs.map((l) => l.workoutId));
-
       if (a.createdAt >= weekStart) {
-        recentAthletes.add(athlete.id);
-      }
-
-      for (const e of athlete.planEnrollments) {
-        for (const w of e.trainingPlan.workouts) {
-          if (!w.scheduledDate) {
-            continue;
-          }
-
-          const key = `${athlete.id}:${w.id}`;
-
-          if (seen.has(key)) {
-            continue;
-          }
-
-          seen.add(key);
-
-          const d = startOfDay(w.scheduledDate);
-          const isThisWeek = d.getTime() >= weekStart.getTime() && d.getTime() <= weekEnd.getTime();
-
-          if (!isThisWeek) {
-            continue;
-          }
-
-          const isToday = d.getTime() === today.getTime();
-          const isLogged = loggedIds.has(w.id);
-
-          plannedThisWeek++;
-
-          if (isLogged) {
-            completedThisWeek++;
-          }
-
-          if (isToday) {
-            plannedToday++;
-
-            if (isLogged) {
-              completedToday++;
-            }
-          }
-        }
+        recentAthletes.add(a.athlete.id);
       }
     }
 
@@ -142,10 +110,10 @@ export const coachingCoachDashboardApi = {
       overview: {
         totalActiveAthletes: assignments.length,
         activePlansCount,
-        workoutsPlannedToday: plannedToday,
-        workoutsCompletedToday: completedToday,
-        workoutsPlannedThisWeek: plannedThisWeek,
-        workoutsCompletedThisWeek: completedThisWeek,
+        workoutsPlannedToday: todayStatus.workoutsPlannedToday,
+        workoutsCompletedToday: todayStatus.workoutsCompletedToday,
+        workoutsPlannedThisWeek: weekStatus.workoutsPlannedThisWeek,
+        workoutsCompletedThisWeek: weekStatus.workoutsCompletedThisWeek,
         openActionItemsCount: openActionItems.length,
         newAthletesCount: recentAthletes.size,
       },

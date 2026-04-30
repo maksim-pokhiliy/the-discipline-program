@@ -1,5 +1,7 @@
 import { type ApiClient } from "@repo/api-client";
 import type {
+  ApplyTemplateInput,
+  ApplyTemplateResponse,
   CoachPlansPageData,
   CreateTrainingPlanData,
   TrainingPlan,
@@ -32,4 +34,7 @@ export const createTrainingPlansAPI = (client: ApiClient) => ({
 
   activate: (id: string): Promise<TrainingPlan> =>
     client.request(`/api/platform/training-plans/${id}/activate`, "POST"),
+
+  applyTemplate: (planId: string, data: ApplyTemplateInput): Promise<ApplyTemplateResponse> =>
+    client.request(`/api/platform/training-plans/${planId}/apply-template`, "POST", data),
 });

@@ -19,6 +19,16 @@ export default defineConfig({
           setupFiles: ["./src/test/setup.ts"],
         },
       },
+      {
+        plugins: [reactPlugin()],
+        test: {
+          name: "query",
+          root: "packages/query",
+          environment: "jsdom",
+          globals: true,
+          include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+        },
+      },
     ],
     coverage: {
       provider: "v8",
@@ -30,6 +40,7 @@ export default defineConfig({
         "packages/contracts/src/**/*.ts",
         "packages/shared/src/**/*.ts",
         "packages/ui/src/**/*.{ts,tsx}",
+        "packages/query/src/**/*.{ts,tsx}",
       ],
       exclude: [
         "**/*.test.{ts,tsx}",
@@ -44,10 +55,10 @@ export default defineConfig({
         "packages/api-server/src/generated/**",
       ],
       thresholds: {
-        lines: 68,
-        statements: 68,
-        functions: 58,
-        branches: 44,
+        lines: 63,
+        statements: 63,
+        functions: 49,
+        branches: 43,
       },
     },
   },

@@ -9,9 +9,11 @@ import {
   cleanup,
   cleanupRaw,
   createTestCoach,
+  createTestEnrollment,
   createTestPlan,
   createTestScenario,
   createTestUser,
+  createTestWorkoutSession,
   type TestScenario,
 } from "../../../test/helpers";
 
@@ -28,10 +30,8 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
   beforeAll(async () => {
     scenario = await createTestScenario({
       planOverrides: { status: TrainingPlanStatus.ACTIVE },
-      workoutCount: 3,
       athleteCount: 2,
       withAthleteProfiles: true,
-      withWorkoutLogs: true,
     });
 
     await cleanupRaw.user.update({
@@ -40,14 +40,16 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
     });
 
     coachB = await createTestCoach();
-    planB = await createTestPlan(coachB.profile.id, { status: TrainingPlanStatus.ACTIVE });
+    planB = await createTestPlan(coachB.user.id, { status: TrainingPlanStatus.ACTIVE });
 
     athleteForB = await createTestUser();
     const enrollmentB = await cleanupRaw.planEnrollment.create({
       data: {
-        trainingPlanId: planB.id,
+        planId: planB.id,
         userId: athleteForB.id,
         status: PlanEnrollmentStatus.ACTIVE,
+        startedAtWeekIndex: 0,
+        startedOnDate: new Date(),
       },
     });
 
@@ -107,9 +109,9 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
       expect(plan.planName).toBeDefined();
       expect(plan.enrollmentStatus).toBeDefined();
       expect(plan.enrolledDate).toBeInstanceOf(Date);
-      expect(typeof plan.completed).toBe("number");
-      expect(typeof plan.available).toBe("number");
-      expect(typeof plan.planned).toBe("number");
+      expect(plan.completed).toBe(0);
+      expect(plan.available).toBe(0);
+      expect(plan.planned).toBe(0);
     }
   });
 
@@ -139,6 +141,51 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
     ).rejects.toThrow(ForbiddenError);
 
     await cleanup({ table: "user", id: randomUser.id });
+  });
+
+  it("returns populated recentWorkouts and non-zero adherenceRate4w when sessions exist", async () => {
+    const athleteUser = await createTestUser();
+    const assignment = await cleanupRaw.coachAthleteAssignment.create({
+      data: { coachId: scenario.coach.profile.id, athleteId: athleteUser.id },
+    });
+    const plan = await createTestPlan(scenario.coach.user.id);
+    const enrollment = await createTestEnrollment(plan.id, athleteUser.id);
+
+    const sessionIds: string[] = [];
+
+    for (let i = 0; i < 3; i++) {
+      const s = await createTestWorkoutSession({
+        userId: athleteUser.id,
+        enrollmentId: enrollment.id,
+        overrides: {
+          startedAt: new Date(Date.now() - i * 86_400_000),
+          completedAt: new Date(Date.now() - i * 86_400_000),
+          completionRatio: 1.0,
+        },
+      });
+
+      sessionIds.push(s.id);
+    }
+
+    try {
+      const detail = await coachingCoachAthletesApi.getAthleteDetail(
+        scenario.coach.user.id,
+        athleteUser.id,
+      );
+
+      expect(detail.recentWorkouts.length).toBeGreaterThan(0);
+      expect(detail.consistency.adherenceRate4w).toBeGreaterThan(0);
+    } finally {
+      for (const id of sessionIds) {
+        await cleanup({ table: "workoutSession", id });
+      }
+      await cleanup(
+        { table: "planEnrollment", id: enrollment.id },
+        { table: "trainingPlan", id: plan.id },
+        { table: "coachAthleteAssignment", id: assignment.id },
+        { table: "user", id: athleteUser.id },
+      );
+    }
   });
 
   it("returns healthStatus and processStatus fields", async () => {

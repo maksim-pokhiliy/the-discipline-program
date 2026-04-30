@@ -10,12 +10,16 @@
     "format": "prettier --write \"**/*.{ts,tsx,json}\""
   },
   "dependencies": {
+    "@repo/contracts": "workspace:*",
     "@repo/mui": "workspace:*",
+    "@repo/ui": "workspace:*",
     "@mui/material": "catalog:",
     "@mui/icons-material": "catalog:",
+    "@tanstack/react-query": "catalog:",
     "next": "catalog:",
     "react": "catalog:",
-    "react-dom": "catalog:"
+    "react-dom": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

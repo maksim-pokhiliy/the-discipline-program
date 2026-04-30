@@ -6,8 +6,9 @@ export default defineConfig({
     globals: true,
     environment: "node",
     include: ["src/**/*.test.ts"],
-    fileParallelism: false,
+    exclude: ["**/node_modules/**", "**/dist/**"],
     testTimeout: 15_000,
+    fileParallelism: false,
     setupFiles: ["./src/test/setup.ts"],
     env: {
       NEXT_PUBLIC_APP_URL: "http://localhost:3000",

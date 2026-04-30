@@ -2,9 +2,10 @@
 
 import type { ReactNode } from "react";
 
-import PersonIcon from "@mui/icons-material/Person";
-import { Card, CardActionArea, CardContent, CardMedia, Stack } from "@mui/material";
+import { Card, CardActionArea, CardContent, Stack } from "@mui/material";
 import Link from "next/link";
+
+import { PersonCardImageSlot } from "./person-card-image-slot";
 
 export type PersonCardProps = {
   image: string | null;
@@ -14,30 +15,6 @@ export type PersonCardProps = {
   children: ReactNode;
   action?: ReactNode;
 };
-
-type ImageSlotProps = { image: string | null; name: string };
-
-const ImageSlot: React.FC<ImageSlotProps> = ({ image, name }) =>
-  image ? (
-    <CardMedia
-      component="img"
-      image={image}
-      alt={name}
-      sx={(theme) => ({ width: theme.spacing(18), objectFit: "cover" })}
-    />
-  ) : (
-    <Stack
-      alignItems="center"
-      justifyContent="center"
-      sx={(theme) => ({
-        width: theme.spacing(18),
-        minHeight: theme.spacing(18),
-        bgcolor: "action.hover",
-      })}
-    >
-      <PersonIcon fontSize="large" sx={{ color: "text.disabled" }} />
-    </Stack>
-  );
 
 export const PersonCard: React.FC<PersonCardProps> = ({
   image,
@@ -49,7 +26,7 @@ export const PersonCard: React.FC<PersonCardProps> = ({
 }) => {
   const content = (
     <Stack direction="row" sx={(theme) => ({ minHeight: theme.spacing(18) })}>
-      <ImageSlot image={image} name={name} />
+      <PersonCardImageSlot image={image} name={name} />
       <CardContent sx={{ flex: 1, "&:last-child": { pb: 2 } }}>{children}</CardContent>
     </Stack>
   );

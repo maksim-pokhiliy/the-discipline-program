@@ -1,36 +1,24 @@
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import { ActionItemStatus } from "@repo/contracts/coaching/coach-action-item";
-import type {
-  CoachAthleteListItem,
-  CoachAthletesData,
+import {
+  type CoachAthleteListItem,
+  type CoachAthletesData,
 } from "@repo/contracts/coaching/coach-athletes";
+import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 
 import { resolveCoachId } from "../../../authz/guards";
-import { prisma } from "../../../db/client";
+import { prisma, prismaAsCore } from "../../../db/client";
 import { ACTION_ITEM_STATUS_TO_PRISMA_MAP, HEALTH_STATUS_MAP } from "../../../mappers/coaching";
-import { findOrThrow } from "../../../utils";
-import {
-  DAYS_IN_WEEK,
-  daysBetweenInTz,
-  MS_PER_DAY,
-  startOfTodayInTz,
-  TWO_WEEKS,
-} from "../../../utils/date-helpers";
 import { buildAssignedAthleteInclude } from "../assigned-athlete-query";
-import { computeAdherenceWindow, computeProcessStatus } from "../dashboard-computations";
+import { computeAthletesSummary, computeProgressBuckets } from "../dashboard-computations";
 
 export const getAthletes = async (userId: string): Promise<CoachAthletesData> => {
   const coachId = await resolveCoachId(userId);
 
-  const { timezone: tz } = await findOrThrow(
-    prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } }),
-    "User",
-  );
-
   const [assignments, actionItemCounts] = await Promise.all([
     prisma.coachAthleteAssignment.findMany({
       where: { coachId, athlete: { deletedAt: null } },
-      include: buildAssignedAthleteInclude(coachId),
+      include: buildAssignedAthleteInclude(userId),
       orderBy: [{ athlete: { name: "asc" } }, { athlete: { email: "asc" } }],
     }),
     prisma.coachActionItem.groupBy({
@@ -40,12 +28,20 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
     }),
   ]);
 
-  const actionItemsMap = new Map(actionItemCounts.map((item) => [item.athleteId, item._count.id]));
+  const [athletesSummary, progressBuckets] = await Promise.all([
+    computeAthletesSummary({ db: prismaAsCore, assignments }),
+    computeProgressBuckets({ db: prismaAsCore, assignments }),
+  ]);
 
-  const now = new Date();
-  const today = startOfTodayInTz(tz);
-  const currentStart = new Date(now.getTime() - DAYS_IN_WEEK * MS_PER_DAY);
-  const previousStart = new Date(now.getTime() - TWO_WEEKS * MS_PER_DAY);
+  const lastActivityMap = new Map(athletesSummary.map((s) => [s.userId, s.lastActivityDate]));
+
+  const processStatusMap = new Map<string, ProcessStatus>([
+    ...progressBuckets.onTrack.map((a) => [a.userId, ProcessStatus.ON_TRACK] as const),
+    ...progressBuckets.steady.map((a) => [a.userId, ProcessStatus.STEADY] as const),
+    ...progressBuckets.fallingBehind.map((a) => [a.userId, ProcessStatus.FALLING_BEHIND] as const),
+  ]);
+
+  const actionItemsMap = new Map(actionItemCounts.map((item) => [item.athleteId, item._count.id]));
 
   const athletes: CoachAthleteListItem[] = [];
   let needsAttentionCount = 0;
@@ -54,35 +50,19 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
 
   for (const a of assignments) {
     const athlete = a.athlete;
-    const loggedIds = new Set(athlete.workoutLogs.map((l) => l.workoutId));
-    const allWorkouts = athlete.planEnrollments.flatMap((e) => e.trainingPlan.workouts);
-
-    const curWindow = computeAdherenceWindow(allWorkouts, loggedIds, currentStart, now);
-    const prevWindow = computeAdherenceWindow(allWorkouts, loggedIds, previousStart, currentStart);
-
-    const curRate = curWindow.available > 0 ? curWindow.completed / curWindow.available : 0;
-    const prevRate = prevWindow.available > 0 ? prevWindow.completed / prevWindow.available : 0;
-    const processStatus = computeProcessStatus(curRate, prevRate);
 
     const activePlans = athlete.planEnrollments.map((e) => ({
-      id: e.trainingPlan.id,
-      name: e.trainingPlan.name,
+      id: e.plan.id,
+      name: e.plan.name,
     }));
 
     const firstEnrollment = athlete.planEnrollments[0];
     const earliestStart = firstEnrollment
       ? athlete.planEnrollments.reduce(
-          (min, e) => (e.startDate < min ? e.startDate : min),
-          firstEnrollment.startDate,
+          (min, e) => (e.startedOnDate < min ? e.startedOnDate : min),
+          firstEnrollment.startedOnDate,
         )
       : a.createdAt;
-
-    const lastLog = athlete.workoutLogs[0] ?? null;
-    const lastActivityDate = lastLog?.date ?? null;
-
-    const daysSinceLastActivity = lastActivityDate
-      ? daysBetweenInTz(new Date(lastActivityDate), today, tz)
-      : null;
 
     const healthStatus = athlete.athleteProfile
       ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
@@ -103,6 +83,9 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
       restrictedCount++;
     }
 
+    const lastActivityDate = lastActivityMap.get(athlete.id) ?? null;
+    const processStatus = processStatusMap.get(athlete.id) ?? ProcessStatus.FALLING_BEHIND;
+
     athletes.push({
       userId: athlete.id,
       name: athlete.name,
@@ -112,7 +95,7 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
       activePlans,
       processStatus,
       lastActivityDate,
-      daysSinceLastActivity,
+      daysSinceLastActivity: null,
       openActionItemsCount,
       needsAttention,
       isPending: athlete.password === null,

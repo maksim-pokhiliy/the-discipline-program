@@ -8,10 +8,22 @@ export const createApi = (client: ApiClient) => ({
   coachActionItems: endpoints.createCoachActionItemsAPI(client),
   coachDashboard: endpoints.createCoachDashboardAPI(client),
   coachInvite: endpoints.createCoachInviteAPI(client),
+  library: {
+    blockKinds: endpoints.createLibraryBlockKindsAPI(client),
+    blockTemplates: endpoints.createLibraryBlockTemplatesAPI(client),
+    exercises: endpoints.createLibraryExercisesAPI(client),
+    schemeTemplates: endpoints.createLibrarySchemeTemplatesAPI(client),
+    sessionTemplates: endpoints.createLibrarySessionTemplatesAPI(client),
+    weekTemplates: endpoints.createLibraryWeekTemplatesAPI(client),
+  },
+  planBulkPatch: endpoints.createPlanBulkPatchAPI(client),
+  planCoachAssignments: endpoints.createPlanCoachAssignmentsAPI(client),
   planEnrollments: endpoints.createPlanEnrollmentsAPI(client),
+  planOverrides: endpoints.createPlanOverridesAPI(client),
+  planStructure: endpoints.createPlanStructureAPI(client),
+  platformCoaches: endpoints.createPlatformCoachesAPI(client),
   trainingPlans: endpoints.createTrainingPlansAPI(client),
   users: endpoints.createUsersAPI(client),
-  workouts: endpoints.createWorkoutsAPI(client),
 });
 
 export const api = createApi(browserApiClient);

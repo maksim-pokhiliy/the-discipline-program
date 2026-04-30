@@ -20,7 +20,7 @@ describe("lmsPlanEnrollmentApi", () => {
   beforeAll(async () => {
     coach = await createTestCoach();
     coach2 = await createTestCoach();
-    plan = await createTestPlan(coach.profile.id);
+    plan = await createTestPlan(coach.user.id);
     athlete = await createTestUser();
     athlete2 = await createTestUser();
     regularUser = await createTestUser();
@@ -49,28 +49,22 @@ describe("lmsPlanEnrollmentApi", () => {
       toCleanup.push({ table: "planEnrollment", id: enrollment.id });
 
       expect(enrollment.id).toBeDefined();
-      expect(enrollment.trainingPlanId).toBe(plan.id);
+      expect(enrollment.planId).toBe(plan.id);
       expect(enrollment.userId).toBe(athlete.id);
       expect(enrollment.status).toBe(PlanEnrollmentStatus.ACTIVE);
     });
 
-    it("creates enrollment with optional startDate", async () => {
-      const startDate = new Date("2025-06-01T00:00:00Z");
+    it("creates enrollment with optional startedOnDate", async () => {
+      const startedOnDate = new Date("2025-06-01T00:00:00Z");
 
       const enrollment = await lmsPlanEnrollmentApi.create(coach.user.id, plan.id, {
         userId: athlete2.id,
-        startDate,
+        startedOnDate,
       });
 
       toCleanup.push({ table: "planEnrollment", id: enrollment.id });
 
-      expect(enrollment.startDate).toEqual(startDate);
-    });
-
-    it("throws ForbiddenError when user has no coach profile", async () => {
-      await expect(
-        lmsPlanEnrollmentApi.create(regularUser.id, plan.id, { userId: athlete.id }),
-      ).rejects.toThrow(ForbiddenError);
+      expect(enrollment.startedOnDate.toISOString()).toBe(startedOnDate.toISOString());
     });
 
     it("throws ForbiddenError when coach does not own the plan", async () => {

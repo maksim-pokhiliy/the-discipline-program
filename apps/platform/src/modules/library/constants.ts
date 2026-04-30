@@ -1,0 +1,86 @@
+import {
+  BODY_PARTS,
+  MODALITIES,
+  MOVEMENT_PATTERNS,
+  schemeArchetypeKindSchema,
+  SKILL_LEVELS,
+  type LibraryScope,
+} from "@repo/contracts/lms/_domain";
+
+const formatToken = (value: string): string =>
+  value
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+
+export const MOVEMENT_PATTERN_OPTIONS = MOVEMENT_PATTERNS.map((value) => ({
+  value,
+  label: formatToken(value),
+}));
+
+export const MODALITY_OPTIONS = MODALITIES.map((value) => ({
+  value,
+  label: formatToken(value),
+}));
+
+export const SKILL_LEVEL_OPTIONS = SKILL_LEVELS.map((value) => ({
+  value,
+  label: formatToken(value),
+}));
+
+export const BODY_PART_OPTIONS = BODY_PARTS.map((value) => ({
+  value,
+  label: formatToken(value),
+}));
+
+export const SCHEME_ARCHETYPE_KIND_OPTIONS = schemeArchetypeKindSchema.options.map((value) => ({
+  value,
+  label: formatToken(value),
+}));
+
+export const SCOPE_CHIP_COLOR: Record<LibraryScope, "primary" | "default"> = {
+  SYSTEM: "primary",
+  COACH: "default",
+};
+
+export const SCOPE_FILTER_VALUES = ["ALL", "SYSTEM", "OWN"] as const;
+export type ScopeFilterValue = (typeof SCOPE_FILTER_VALUES)[number];
+
+export const SCOPE_FILTER_LABELS: Record<ScopeFilterValue, string> = {
+  ALL: "All",
+  SYSTEM: "System",
+  OWN: "Mine",
+};
+
+export const DEFAULT_PARAMS_TEMPLATES: Record<string, unknown> = {
+  NONE: { kind: "NONE" },
+  COUNT_UP: { kind: "COUNT_UP" },
+  COUNT_DOWN: { kind: "COUNT_DOWN", durationSec: 600 },
+  INTERVAL_LOOP: {
+    kind: "INTERVAL_LOOP",
+    sets: 5,
+    slots: [
+      { durationSec: 30, action: "WORK" },
+      { durationSec: 30, action: "REST" },
+    ],
+  },
+  EMOM_LOOP: {
+    kind: "EMOM_LOOP",
+    totalMinutes: 10,
+    slots: [{ minutes: [0], action: { kind: "ENTRY", entryRefIndex: 0 } }],
+  },
+  TIME_BOXED: {
+    kind: "TIME_BOXED",
+    segments: [
+      {
+        startSec: 0,
+        endSec: 600,
+        innerArchetypeKind: "NONE",
+        innerParams: { kind: "NONE" },
+      },
+    ],
+  },
+};
+
+export { formatToken };

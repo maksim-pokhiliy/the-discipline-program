@@ -1,0 +1,4 @@
+export const TEMPLATE_LIMITS = {
+  MAX_NAME_LENGTH: 100,
+  MAX_DESCRIPTION_LENGTH: 500,
+} as const;

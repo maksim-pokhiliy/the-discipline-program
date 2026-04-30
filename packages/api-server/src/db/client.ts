@@ -274,3 +274,5 @@ if (baseEnv.NODE_ENV !== "production") {
 }
 
 export type ExtendedPrismaClient = typeof prisma;
+
+export const prismaAsCore = prisma as unknown as PrismaClient;

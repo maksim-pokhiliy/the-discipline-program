@@ -14,6 +14,7 @@ import {
   createTestUser,
   type TestScenario,
 } from "../../../test/helpers";
+import { createCoachWithAthleteSessions } from "../dashboard-computations.test-helpers";
 
 import { coachingCoachAthletesApi } from "./index";
 
@@ -26,10 +27,8 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
   beforeAll(async () => {
     scenario = await createTestScenario({
       planOverrides: { status: TrainingPlanStatus.ACTIVE },
-      workoutCount: 2,
       athleteCount: 2,
       withAthleteProfiles: true,
-      withWorkoutLogs: true,
     });
 
     await cleanupRaw.user.update({
@@ -38,7 +37,7 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
     });
 
     coachB = await createTestCoach();
-    planB = await createTestPlan(coachB.profile.id, { status: TrainingPlanStatus.ACTIVE });
+    planB = await createTestPlan(coachB.user.id, { status: TrainingPlanStatus.ACTIVE });
     unrelatedUser = await createTestUser();
   });
 
@@ -101,9 +100,11 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
 
     const enrollment = await cleanupRaw.planEnrollment.create({
       data: {
-        trainingPlanId: planB.id,
+        planId: planB.id,
         userId: athleteForB.id,
         status: PlanEnrollmentStatus.ACTIVE,
+        startedAtWeekIndex: 0,
+        startedOnDate: new Date(),
       },
     });
 
@@ -130,7 +131,7 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
   });
 
   it("aggregates plans when athlete is enrolled in multiple plans of the same coach", async () => {
-    const secondPlan = await createTestPlan(scenario.coach.profile.id, {
+    const secondPlan = await createTestPlan(scenario.coach.user.id, {
       status: TrainingPlanStatus.ACTIVE,
     });
 
@@ -142,9 +143,11 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
 
     const secondEnrollment = await cleanupRaw.planEnrollment.create({
       data: {
-        trainingPlanId: secondPlan.id,
+        planId: secondPlan.id,
         userId: firstAthlete.user.id,
         status: PlanEnrollmentStatus.ACTIVE,
+        startedAtWeekIndex: 0,
+        startedOnDate: new Date(),
       },
     });
 
@@ -177,7 +180,7 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
 
       expect(entry).toBeDefined();
       expect(entry?.activePlans).toEqual([]);
-      expect(entry?.processStatus).toBe(ProcessStatus.STEADY);
+      expect(entry?.processStatus).toBe(ProcessStatus.FALLING_BEHIND);
       expect(entry?.lastActivityDate).toBeNull();
       expect(entry?.openActionItemsCount).toBe(0);
       expect(entry?.enrolledSince.getTime()).toBe(assignment.createdAt.getTime());
@@ -192,7 +195,6 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
   it("does not include enrolled-but-not-assigned athletes", async () => {
     const unassignedScenario = await createTestScenario({
       planOverrides: { status: TrainingPlanStatus.ACTIVE },
-      workoutCount: 0,
       athleteCount: 1,
       withAssignments: false,
     });
@@ -213,17 +215,19 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
     }
   });
 
-  it("does not include athletes enrolled only in DRAFT plans", async () => {
-    const draftPlan = await createTestPlan(scenario.coach.profile.id, {
+  it("does not include active plans from DRAFT plans", async () => {
+    const draftPlan = await createTestPlan(scenario.coach.user.id, {
       status: TrainingPlanStatus.DRAFT,
     });
     const draftAthlete = await createTestUser();
 
     const draftEnrollment = await cleanupRaw.planEnrollment.create({
       data: {
-        trainingPlanId: draftPlan.id,
+        planId: draftPlan.id,
         userId: draftAthlete.id,
         status: PlanEnrollmentStatus.ACTIVE,
+        startedAtWeekIndex: 0,
+        startedOnDate: new Date(),
       },
     });
 
@@ -245,6 +249,25 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
         { table: "trainingPlan", id: draftPlan.id },
         { table: "user", id: draftAthlete.id },
       );
+    }
+  });
+
+  it("returns real processStatus and lastActivityDate from session data", async () => {
+    const { coachId, athlete, toCleanup } = await createCoachWithAthleteSessions({
+      sessionsCount: 5,
+      completionRatios: [1, 1, 1, 1, 1],
+    });
+
+    try {
+      const result = await coachingCoachAthletesApi.getAthletes(coachId);
+
+      const entry = result.athletes.find((a) => a.userId === athlete.athleteId);
+
+      expect(entry).toBeDefined();
+      expect(entry?.processStatus).toBe(ProcessStatus.ON_TRACK);
+      expect(entry?.lastActivityDate).toBeInstanceOf(Date);
+    } finally {
+      await cleanup(...toCleanup);
     }
   });
 });

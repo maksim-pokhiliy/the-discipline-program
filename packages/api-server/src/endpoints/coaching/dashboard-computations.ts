@@ -1,7 +1,8 @@
+import type { Prisma, PrismaClient } from "@prisma/client";
+
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import {
   type AthleteDailySummary,
-  type ProgressAthlete,
   type ProgressBuckets,
   ADHERENCE_IMPROVING_THRESHOLD,
   ADHERENCE_ON_TRACK_THRESHOLD,
@@ -10,256 +11,45 @@ import {
 } from "@repo/contracts/coaching/coach-dashboard";
 
 import { HEALTH_STATUS_MAP } from "../../mappers/coaching";
-import {
-  createStartOfDayCache,
-  DAYS_IN_WEEK,
-  daysBetweenInTz,
-  MS_PER_DAY,
-  startOfWeekInTz,
-  TWO_WEEKS,
-} from "../../utils/date-helpers";
+import { MS_PER_DAY, startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
 
 import type { AssignedAthleteWithData } from "./assigned-athlete-query";
 
-type TodayStatusResult = {
-  status: TodayStatus;
-  missedCount: number;
-  currentWorkoutTitle: string | null;
-  lastActivityDate: Date | null;
+type Db = PrismaClient | Prisma.TransactionClient;
+
+export type AdherenceWindow = {
+  plannedCount: number;
+  completedCount: number;
+  adherenceRate: number;
 };
 
-type ScheduledWorkout = { id: string; scheduledDate: Date; createdAt: Date; title: string };
+export const computeAdherenceWindow = async ({
+  db,
+  userId,
+  windowDays,
+}: {
+  db: Db;
+  userId: string;
+  windowDays: number;
+}): Promise<AdherenceWindow> => {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - windowDays * MS_PER_DAY);
 
-const hasScheduledDate = (w: {
-  id: string;
-  scheduledDate: Date | null;
-  createdAt: Date;
-  title: string;
-}): w is ScheduledWorkout => w.scheduledDate !== null;
+  const sessions = await db.workoutSession.findMany({
+    where: { userId, startedAt: { gte: windowStart, lte: now } },
+    select: { completionRatio: true },
+  });
 
-export type TodayStatusContext = {
-  tz: string;
-  today: Date;
-  weekStart: Date;
-  startOfDay: (date: Date) => Date;
-};
-
-export const createTodayStatusContext = (tz: string): TodayStatusContext => {
-  const startOfDay = createStartOfDayCache(tz);
-  const today = startOfDay(new Date());
-  const weekStart = startOfWeekInTz(today, tz);
-
-  return { tz, today, weekStart, startOfDay };
-};
-
-export const computeTodayStatus = (
-  workouts: { id: string; scheduledDate: Date | null; createdAt: Date; title: string }[],
-  logs: { workoutId: string; date: Date }[],
-  ctxOrTz: TodayStatusContext | string,
-): TodayStatusResult => {
-  const ctx = typeof ctxOrTz === "string" ? createTodayStatusContext(ctxOrTz) : ctxOrTz;
-  const lastLog =
-    logs.length > 0 ? logs.reduce((latest, l) => (l.date > latest.date ? l : latest)) : null;
-  const lastActivityDate = lastLog?.date ?? null;
-
-  const scheduledWorkouts = workouts
-    .filter(hasScheduledDate)
-    .sort((a, b) => a.scheduledDate.getTime() - b.scheduledDate.getTime());
-
-  if (scheduledWorkouts.length === 0) {
-    return {
-      status: TodayStatus.NO_SCHEDULE,
-      missedCount: 0,
-      currentWorkoutTitle: null,
-      lastActivityDate,
-    };
-  }
-
-  const { today, weekStart, startOfDay } = ctx;
-  const loggedWorkoutIds = new Set(logs.map((l) => l.workoutId));
-
-  const todayWorkouts = scheduledWorkouts.filter(
-    (w) => startOfDay(w.scheduledDate).getTime() === today.getTime(),
-  );
-
-  const pastWorkoutsThisWeek = scheduledWorkouts
-    .filter((w) => {
-      const d = startOfDay(w.scheduledDate);
-
-      return d.getTime() >= weekStart.getTime() && d.getTime() < today.getTime();
-    })
-    .filter((w) => startOfDay(w.createdAt).getTime() <= startOfDay(w.scheduledDate).getTime())
-    .sort((a, b) => b.scheduledDate.getTime() - a.scheduledDate.getTime());
-
-  let missedCount = 0;
-
-  for (const w of pastWorkoutsThisWeek) {
-    if (loggedWorkoutIds.has(w.id)) {
-      break;
-    }
-
-    missedCount++;
-  }
-
-  const todayAllDone =
-    todayWorkouts.length > 0 && todayWorkouts.every((w) => loggedWorkoutIds.has(w.id));
-
-  if (todayAllDone) {
-    return {
-      status: TodayStatus.COMPLETED,
-      missedCount,
-      currentWorkoutTitle: null,
-      lastActivityDate,
-    };
-  }
-
-  const currentTodayWorkout = todayWorkouts.find((w) => !loggedWorkoutIds.has(w.id));
-
-  if (todayWorkouts.length > 0) {
-    return {
-      status: TodayStatus.PENDING,
-      missedCount,
-      currentWorkoutTitle: currentTodayWorkout?.title ?? null,
-      lastActivityDate,
-    };
-  }
-
-  if (missedCount > 0) {
-    return {
-      status: TodayStatus.MISSED,
-      missedCount,
-      currentWorkoutTitle: null,
-      lastActivityDate,
-    };
-  }
+  const plannedCount = sessions.length;
+  const completedCount = sessions.filter(
+    (s) => s.completionRatio !== null && Number(s.completionRatio) >= 0.9,
+  ).length;
 
   return {
-    status: TodayStatus.REST_DAY,
-    missedCount: 0,
-    currentWorkoutTitle: null,
-    lastActivityDate,
+    plannedCount,
+    completedCount,
+    adherenceRate: plannedCount === 0 ? 0 : completedCount / plannedCount,
   };
-};
-
-const STATUS_PRIORITY: Record<TodayStatus, number> = {
-  [TodayStatus.MISSED]: 0,
-  [TodayStatus.PENDING]: 1,
-  [TodayStatus.COMPLETED]: 2,
-  [TodayStatus.REST_DAY]: 3,
-  [TodayStatus.NO_SCHEDULE]: 4,
-};
-
-export const computeAthletesSummary = (
-  assignments: AssignedAthleteWithData[],
-  tz: string,
-): AthleteDailySummary[] => {
-  const ctx = createTodayStatusContext(tz);
-  const summaries: AthleteDailySummary[] = [];
-
-  for (const a of assignments) {
-    const athlete = a.athlete;
-    const healthStatus = athlete.athleteProfile
-      ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
-      : HealthStatus.HEALTHY;
-
-    if (athlete.planEnrollments.length === 0) {
-      summaries.push({
-        userId: athlete.id,
-        name: athlete.name,
-        email: athlete.email,
-        image: athlete.image,
-        planId: null,
-        planName: null,
-        todayStatus: TodayStatus.NO_SCHEDULE,
-        missedCount: 0,
-        todayWorkoutTitle: null,
-        lastActivityDate: null,
-        daysSinceLastActivity: null,
-        healthStatus,
-      });
-      continue;
-    }
-
-    let best: AthleteDailySummary | null = null;
-    let highestMissed = 0;
-
-    for (const e of athlete.planEnrollments) {
-      const { status, missedCount, currentWorkoutTitle, lastActivityDate } = computeTodayStatus(
-        e.trainingPlan.workouts,
-        athlete.workoutLogs,
-        ctx,
-      );
-
-      if (missedCount > highestMissed) {
-        highestMissed = missedCount;
-      }
-
-      const daysSinceLastActivity = lastActivityDate
-        ? daysBetweenInTz(new Date(lastActivityDate), ctx.today, tz)
-        : null;
-
-      const candidate: AthleteDailySummary = {
-        userId: athlete.id,
-        name: athlete.name,
-        email: athlete.email,
-        image: athlete.image,
-        planId: e.trainingPlan.id,
-        planName: e.trainingPlan.name,
-        todayStatus: status,
-        missedCount,
-        todayWorkoutTitle: currentWorkoutTitle,
-        lastActivityDate,
-        daysSinceLastActivity,
-        healthStatus,
-      };
-
-      if (!best || STATUS_PRIORITY[candidate.todayStatus] < STATUS_PRIORITY[best.todayStatus]) {
-        best = candidate;
-      }
-    }
-
-    if (!best) {
-      continue;
-    }
-
-    if (highestMissed > best.missedCount) {
-      best.missedCount = highestMissed;
-    }
-
-    summaries.push(best);
-  }
-
-  return summaries;
-};
-
-export type AdherenceWindow = { completed: number; available: number };
-
-export const computeAdherenceWindow = (
-  scheduledWorkouts: { id: string; scheduledDate: Date | null }[],
-  loggedWorkoutIds: Set<string>,
-  windowStart: Date,
-  windowEnd: Date,
-): AdherenceWindow => {
-  let available = 0;
-  let completed = 0;
-
-  for (const w of scheduledWorkouts) {
-    if (!w.scheduledDate) {
-      continue;
-    }
-
-    const t = w.scheduledDate.getTime();
-
-    if (t >= windowStart.getTime() && t < windowEnd.getTime()) {
-      available++;
-
-      if (loggedWorkoutIds.has(w.id)) {
-        completed++;
-      }
-    }
-  }
-
-  return { completed, available };
 };
 
 export const computeProcessStatus = (
@@ -281,50 +71,58 @@ export const computeProcessStatus = (
     : ProcessStatus.STEADY;
 };
 
-export const computeProgressBuckets = (assignments: AssignedAthleteWithData[]): ProgressBuckets => {
-  const now = new Date();
-  const currentEnd = now;
-  const currentStart = new Date(now.getTime() - DAYS_IN_WEEK * MS_PER_DAY);
-  const previousStart = new Date(now.getTime() - TWO_WEEKS * MS_PER_DAY);
+export const computeProgressBuckets = async ({
+  db,
+  assignments,
+}: {
+  db: Db;
+  assignments: AssignedAthleteWithData[];
+}): Promise<ProgressBuckets> => {
+  if (assignments.length === 0) {
+    return { onTrack: [], steady: [], fallingBehind: [], avgEngagementRate: 0 };
+  }
 
-  const onTrack: ProgressAthlete[] = [];
-  const steady: ProgressAthlete[] = [];
-  const fallingBehind: ProgressAthlete[] = [];
+  const results = await Promise.all(
+    assignments.map(async (a) => {
+      const athlete = a.athlete;
 
-  let totalAthletes = 0;
-  let activeAthletes = 0;
+      const adherence = await computeAdherenceWindow({
+        db,
+        userId: athlete.id,
+        windowDays: 30,
+      });
 
-  for (const a of assignments) {
-    const athlete = a.athlete;
-    const loggedIds = new Set(athlete.workoutLogs.map((l) => l.workoutId));
-    const workouts = athlete.planEnrollments.flatMap((e) => e.trainingPlan.workouts);
+      return { athlete, adherenceRate: adherence.adherenceRate };
+    }),
+  );
 
-    const curWindow = computeAdherenceWindow(workouts, loggedIds, currentStart, currentEnd);
-    const prevWindow = computeAdherenceWindow(workouts, loggedIds, previousStart, currentStart);
+  const onTrack: ProgressBuckets["onTrack"] = [];
+  const steady: ProgressBuckets["steady"] = [];
+  const fallingBehind: ProgressBuckets["fallingBehind"] = [];
 
-    const curRate = curWindow.available > 0 ? curWindow.completed / curWindow.available : 0;
-    const prevRate = prevWindow.available > 0 ? prevWindow.completed / prevWindow.available : 0;
+  let totalRate = 0;
 
-    const status = computeProcessStatus(curRate, prevRate);
-    const entry: ProgressAthlete = {
+  for (const { athlete, adherenceRate } of results) {
+    totalRate += adherenceRate;
+
+    const entry = {
       userId: athlete.id,
       name: athlete.name,
       image: athlete.image,
-      processStatus: status,
+      processStatus:
+        adherenceRate >= 0.8
+          ? ProcessStatus.ON_TRACK
+          : adherenceRate >= 0.5
+            ? ProcessStatus.STEADY
+            : ProcessStatus.FALLING_BEHIND,
     };
 
-    if (status === ProcessStatus.ON_TRACK) {
+    if (adherenceRate >= 0.8) {
       onTrack.push(entry);
-    } else if (status === ProcessStatus.FALLING_BEHIND) {
-      fallingBehind.push(entry);
-    } else {
+    } else if (adherenceRate >= 0.5) {
       steady.push(entry);
-    }
-
-    totalAthletes++;
-
-    if (athlete.workoutLogs.length > 0) {
-      activeAthletes++;
+    } else {
+      fallingBehind.push(entry);
     }
   }
 
@@ -332,6 +130,124 @@ export const computeProgressBuckets = (assignments: AssignedAthleteWithData[]): 
     onTrack,
     steady,
     fallingBehind,
-    avgEngagementRate: totalAthletes > 0 ? activeAthletes / totalAthletes : 0,
+    avgEngagementRate: totalRate / results.length,
+  };
+};
+
+export const computeAthletesSummary = async ({
+  db,
+  assignments,
+}: {
+  db: Db;
+  assignments: AssignedAthleteWithData[];
+}): Promise<AthleteDailySummary[]> => {
+  const summaries: AthleteDailySummary[] = [];
+
+  for (const a of assignments) {
+    const athlete = a.athlete;
+
+    const healthStatus = athlete.athleteProfile
+      ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
+      : HealthStatus.HEALTHY;
+
+    const latestSession = await db.workoutSession.findFirst({
+      where: { userId: athlete.id },
+      orderBy: { completedAt: "desc" },
+      select: { completedAt: true },
+    });
+
+    const lastActivityDate = latestSession?.completedAt ?? null;
+
+    if (athlete.planEnrollments.length === 0) {
+      summaries.push({
+        userId: athlete.id,
+        name: athlete.name,
+        email: athlete.email,
+        image: athlete.image,
+        planId: null,
+        planName: null,
+        todayStatus: TodayStatus.NO_SCHEDULE,
+        missedCount: 0,
+        todayWorkoutTitle: null,
+        lastActivityDate,
+        daysSinceLastActivity: null,
+        healthStatus,
+      });
+      continue;
+    }
+
+    const firstEnrollment = athlete.planEnrollments[0];
+
+    if (!firstEnrollment) {
+      continue;
+    }
+
+    summaries.push({
+      userId: athlete.id,
+      name: athlete.name,
+      email: athlete.email,
+      image: athlete.image,
+      planId: firstEnrollment.plan.id,
+      planName: firstEnrollment.plan.name,
+      todayStatus: TodayStatus.NO_SCHEDULE,
+      missedCount: 0,
+      todayWorkoutTitle: null,
+      lastActivityDate,
+      daysSinceLastActivity: null,
+      healthStatus,
+    });
+  }
+
+  return summaries;
+};
+
+export const computeTodayStatus = async ({
+  db,
+  userId,
+  timezone,
+}: {
+  db: Db;
+  userId: string;
+  timezone: string;
+}): Promise<{ workoutsPlannedToday: number; workoutsCompletedToday: number }> => {
+  const todayStart = startOfTodayInTz(timezone);
+  const todayEnd = new Date(todayStart.getTime() + MS_PER_DAY);
+
+  const sessions = await db.workoutSession.findMany({
+    where: { userId, startedAt: { gte: todayStart, lt: todayEnd } },
+    select: { completionRatio: true },
+  });
+
+  return {
+    workoutsPlannedToday: sessions.length,
+    workoutsCompletedToday: sessions.filter(
+      (s) => s.completionRatio !== null && Number(s.completionRatio) >= 0.9,
+    ).length,
+  };
+};
+
+export const computeWeekStatus = async ({
+  db,
+  userId,
+  timezone,
+}: {
+  db: Db;
+  userId: string;
+  timezone: string;
+}): Promise<{ workoutsPlannedThisWeek: number; workoutsCompletedThisWeek: number }> => {
+  const today = startOfTodayInTz(timezone);
+  const weekStart = startOfWeekInTz(today, timezone);
+  const weekEnd = new Date(weekStart.getTime() + 7 * MS_PER_DAY);
+
+  const sessions = await db.workoutSession.findMany({
+    where: { userId, startedAt: { gte: weekStart, lt: weekEnd } },
+    select: { completionRatio: true },
+  });
+
+  return {
+    workoutsPlannedThisWeek: sessions.length,
+    workoutsCompletedThisWeek: sessions.filter(
+      (s) => s.completionRatio !== null && Number(s.completionRatio) >= 0.9,
+    ).length,
   };
 };

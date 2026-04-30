@@ -1,26 +1,15 @@
 "use client";
 
 import { Grid, MenuItem, Stack, TextField } from "@mui/material";
-import {
-  Controller,
-  useFormContext,
-  useWatch,
-  type Control,
-  type FieldErrors,
-} from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import {
-  type CoachListItem,
-  type CreateUserData,
-  type UpdateUserData,
-} from "@repo/contracts/iam/user";
-import { FormCard, MultiSelect } from "@repo/ui";
-
-import { useCoachesList } from "@app/lib/hooks";
+import { type CreateUserData, type UpdateUserData } from "@repo/contracts/iam/user";
+import { FormCard } from "@repo/ui";
 
 import { ROLE_CONFIG } from "../constants";
 
+import { AthleteCoachPicker } from "./athlete-coach-picker";
 import { TimezoneAutocomplete } from "./timezone-autocomplete";
 
 type UserFormProps = {
@@ -31,42 +20,6 @@ type UserFormProps = {
 type UserFormValues = CreateUserData & UpdateUserData;
 
 const CREATE_ROLE_OPTIONS: readonly UserRole[] = [UserRole.ATHLETE, UserRole.COACH];
-
-const AthleteCoachPicker = ({
-  control,
-  errors,
-  isFormLoading,
-}: {
-  control: Control<UserFormValues>;
-  errors: FieldErrors<UserFormValues>;
-  isFormLoading: boolean;
-}) => {
-  const { data: coaches = [], isLoading: isCoachesLoading } = useCoachesList();
-
-  return (
-    <Controller
-      name="coachIds"
-      control={control}
-      shouldUnregister
-      render={({ field }) => (
-        <MultiSelect<CoachListItem>
-          options={coaches}
-          value={field.value ?? []}
-          onChange={field.onChange}
-          getOptionId={(c) => c.id}
-          getOptionLabel={(c) => c.name ?? c.email}
-          getOptionSubLabel={(c) => (c.name ? c.email : null)}
-          label="Coaches"
-          placeholder="Select coaches"
-          emptyLabel="No coaches available"
-          isLoading={isCoachesLoading}
-          disabled={isFormLoading}
-          errorText={errors.coachIds?.message}
-        />
-      )}
-    />
-  );
-};
 
 export const UserForm = ({ isEdit = false, isLoading = false }: UserFormProps) => {
   const {

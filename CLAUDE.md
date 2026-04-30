@@ -29,7 +29,6 @@
 - Lint: `pnpm lint` / `task lint`
 - Type-check: `pnpm check-types` / `task check-types`
 - Unit tests (Vitest): `pnpm test` / `pnpm test:coverage` / `task test`
-- E2E (Playwright, seeded+empty): `pnpm e2e` / `task e2e`
 - Prisma: `pnpm db:generate` | `db:push` | `db:seed`
 - Bundle analyze: `pnpm analyze:{admin,marketing,platform}`
 - Dep boundaries: `pnpm dep:check` (dependency-cruiser)
@@ -41,14 +40,13 @@
 ## Stack notes
 
 - pnpm catalog в `pnpm-workspace.yaml` для единых версий.
-- Turbo pipelines кэшируют `build/check-types/lint`; `dev/e2e/test` некэшируемые (см. `turbo.json`).
+- Turbo pipelines кэшируют `build/check-types/lint`; `dev/test` некэшируемые (см. `turbo.json`).
 - Pre-commit: husky + lint-staged + commitlint.
 - Taskfile (`taskfile.dist.yml`) обёртка над pnpm — `task *`.
 - Sentry (`@sentry/nextjs`) + Vercel Analytics/Speed Insights + Upstash ratelimit/redis.
 
 ## Rules for Claude
 
-- Default model: opusplan (set in .claude/settings.json). Don't switch to opus manually unless asked.
 - Don't read files listed in .claudeignore.
 - Before multi-file / cross-package changes — output a plan first, wait for approval.
 - Respect workspace boundaries: don't add deps to the wrong package; use `catalog:` versions.

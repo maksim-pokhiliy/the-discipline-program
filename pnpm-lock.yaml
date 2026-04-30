@@ -48,9 +48,6 @@ catalogs:
     '@next/eslint-plugin-next':
       specifier: 16.2.4
       version: 16.2.4
-    '@playwright/test':
-      specifier: ^1.59.1
-      version: 1.59.1
     '@prisma/client':
       specifier: 6.1.0
       version: 6.1.0
@@ -204,6 +201,9 @@ catalogs:
     react-hook-form:
       specifier: ^7.54.2
       version: 7.60.0
+    react-virtuoso:
+      specifier: ^4.18.6
+      version: 4.18.6
     resend:
       specifier: ^6.12.0
       version: 6.12.0
@@ -248,9 +248,6 @@ importers:
       '@commitlint/config-conventional':
         specifier: 'catalog:'
         version: 20.3.0
-      '@playwright/test':
-        specifier: 'catalog:'
-        version: 1.59.1
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:packages/eslint-config
@@ -352,7 +349,7 @@ importers:
         version: 1.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       next:
         specifier: 'catalog:'
-        version: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-auth:
         specifier: 'catalog:'
         version: 4.24.14(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -455,7 +452,7 @@ importers:
         version: 12.38.0(@emotion/is-prop-valid@1.3.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next:
         specifier: 'catalog:'
-        version: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react:
         specifier: 'catalog:'
         version: 19.2.3
@@ -561,7 +558,7 @@ importers:
         version: 1.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)
       next:
         specifier: 'catalog:'
-        version: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-auth:
         specifier: 'catalog:'
         version: 4.24.14(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -574,6 +571,9 @@ importers:
       react-hook-form:
         specifier: 'catalog:'
         version: 7.60.0(react@19.2.3)
+      react-virtuoso:
+        specifier: 'catalog:'
+        version: 4.18.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       sonner:
         specifier: 'catalog:'
         version: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -614,18 +614,30 @@ importers:
       '@mui/material':
         specifier: 'catalog:'
         version: 7.3.6(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@repo/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@repo/mui':
         specifier: workspace:*
         version: link:../../packages/mui
+      '@repo/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.80.2(react@19.2.3)
       next:
         specifier: 'catalog:'
-        version: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react:
         specifier: 'catalog:'
         version: 19.2.3
       react-dom:
         specifier: 'catalog:'
         version: 19.2.3(react@19.2.3)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -674,7 +686,7 @@ importers:
         version: link:../errors
       next:
         specifier: 'catalog:'
-        version: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -720,7 +732,7 @@ importers:
         version: 1.37.0
       next:
         specifier: 'catalog:'
-        version: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-auth:
         specifier: 'catalog:'
         version: 4.24.14(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -818,7 +830,7 @@ importers:
         version: link:../errors
       next:
         specifier: 'catalog:'
-        version: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next-auth:
         specifier: 'catalog:'
         version: 4.24.14(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1033,7 +1045,7 @@ importers:
         version: 12.38.0(@emotion/is-prop-valid@1.3.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next:
         specifier: 'catalog:'
-        version: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react:
         specifier: 'catalog:'
         version: 19.2.3
@@ -1065,9 +1077,6 @@ importers:
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.80.2(react@19.2.3)
-      react:
-        specifier: 'catalog:'
-        version: 19.2.3
       sonner:
         specifier: 'catalog:'
         version: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1078,18 +1087,45 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../typescript-config
+      '@testing-library/react':
+        specifier: 'catalog:'
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.1.5(@types/react@19.1.6))(@types/react@19.1.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@types/react':
         specifier: 'catalog:'
         version: 19.1.6
+      '@types/react-dom':
+        specifier: 'catalog:'
+        version: 19.1.5(@types/react@19.1.6)
+      '@vitejs/plugin-react':
+        specifier: 'catalog:'
+        version: 5.2.0(vite@8.0.1(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@vitest/coverage-v8':
+        specifier: 'catalog:'
+        version: 4.1.4(vitest@4.1.4)
+      cross-env:
+        specifier: 'catalog:'
+        version: 10.1.0
       eslint:
         specifier: 'catalog:'
         version: 9.30.1(jiti@2.6.1)
+      jsdom:
+        specifier: 'catalog:'
+        version: 26.1.0
       prettier:
         specifier: 'catalog:'
         version: 3.5.3
+      react:
+        specifier: 'catalog:'
+        version: 19.2.3
+      react-dom:
+        specifier: 'catalog:'
+        version: 19.2.3(react@19.2.3)
       typescript:
         specifier: 'catalog:'
         version: 5.7.2
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.6.0)(@vitest/coverage-v8@4.1.4)(jsdom@26.1.0)(vite@8.0.1(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   packages/shared:
     devDependencies:
@@ -1129,12 +1165,24 @@ importers:
       '@mui/material':
         specifier: 'catalog:'
         version: 7.3.6(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      '@repo/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@repo/errors':
+        specifier: workspace:*
+        version: link:../errors
       '@repo/mui':
         specifier: workspace:*
         version: link:../mui
+      '@repo/query':
+        specifier: workspace:*
+        version: link:../query
       '@repo/shared':
         specifier: workspace:*
         version: link:../shared
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.80.2(react@19.2.3)
       '@tiptap/extension-link':
         specifier: 'catalog:'
         version: 3.22.3(@tiptap/core@3.22.3(@tiptap/pm@3.22.3))(@tiptap/pm@3.22.3)
@@ -1162,6 +1210,9 @@ importers:
       sonner:
         specifier: 'catalog:'
         version: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -1201,7 +1252,7 @@ importers:
         version: 26.1.0
       next:
         specifier: 'catalog:'
-        version: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       prettier:
         specifier: 'catalog:'
         version: 3.5.3
@@ -6095,6 +6146,12 @@ packages:
       react: '>=16.6.0'
       react-dom: '>=16.6.0'
 
+  react-virtuoso@4.18.6:
+    resolution: {integrity: sha512-CrT3P6HyjJMHZVWSste2bG2q5aWGlHfW2QuySZjiFwB2Qok/xsvgy+k8Z2jeDP8PP5KsBip7zNrl/F0QoxeyKw==}
+    peerDependencies:
+      react: '>=16 || >=17 || >= 18 || >= 19'
+      react-dom: '>=16 || >=17 || >= 18 || >=19'
+
   react@19.2.3:
     resolution: {integrity: sha512-Ku/hhYbVjOQnXDZFv2+RibmLFGwFdeeKHFcOTlrt7xplBnya5OGn/hIRDsqDiSUcfORsDC7MPxwork8jBwsIWA==}
     engines: {node: '>=0.10.0'}
@@ -7905,7 +7962,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.29.2
       '@emotion/react': 11.14.0(@types/react@19.1.6)(react@19.2.3)
-      next: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      next: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
     optionalDependencies:
       '@emotion/cache': 11.14.0
@@ -8305,6 +8362,7 @@ snapshots:
   '@playwright/test@1.59.1':
     dependencies:
       playwright: 1.59.1
+    optional: true
 
   '@popperjs/core@2.11.8': {}
 
@@ -8726,7 +8784,7 @@ snapshots:
       '@sentry/react': 10.49.0(react@19.2.3)
       '@sentry/vercel-edge': 10.49.0
       '@sentry/webpack-plugin': 5.2.0(webpack@5.106.1(esbuild@0.27.4))
-      next: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      next: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       rollup: 4.60.1
       stacktrace-parser: 0.1.11
     transitivePeerDependencies:
@@ -8857,11 +8915,11 @@ snapshots:
       '@storybook/builder-vite': 10.3.3(esbuild@0.27.4)(rollup@4.60.1)(storybook@10.3.3(@testing-library/dom@10.4.1)(prettier@3.5.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(vite@8.0.1(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(webpack@5.106.1(esbuild@0.27.4))
       '@storybook/react': 10.3.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(storybook@10.3.3(@testing-library/dom@10.4.1)(prettier@3.5.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.7.2)
       '@storybook/react-vite': 10.3.3(esbuild@0.27.4)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(rollup@4.60.1)(storybook@10.3.3(@testing-library/dom@10.4.1)(prettier@3.5.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.7.2)(vite@8.0.1(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))(webpack@5.106.1(esbuild@0.27.4))
-      next: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      next: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       storybook: 10.3.3(@testing-library/dom@10.4.1)(prettier@3.5.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      styled-jsx: 5.1.6(@babel/core@7.29.0)(react@19.2.3)
+      styled-jsx: 5.1.6(react@19.2.3)
       vite: 8.0.1(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
       vite-plugin-storybook-nextjs: 3.2.4(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(storybook@10.3.3(@testing-library/dom@10.4.1)(prettier@3.5.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(typescript@5.7.2)(vite@8.0.1(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
     optionalDependencies:
@@ -9443,7 +9501,7 @@ snapshots:
 
   '@vercel/analytics@1.6.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)':
     optionalDependencies:
-      next: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      next: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
 
   '@vercel/blob@2.3.3':
@@ -9456,7 +9514,7 @@ snapshots:
 
   '@vercel/speed-insights@1.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react@19.2.3)':
     optionalDependencies:
-      next: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      next: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
 
   '@vitejs/plugin-react@5.2.0(vite@8.0.1(@types/node@22.19.3)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))':
@@ -9495,7 +9553,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.0.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@22.19.3)(@vitest/coverage-v8@4.1.4)(jsdom@29.0.2)(vite@8.0.1(@types/node@22.19.3)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.6.0)(@vitest/coverage-v8@4.1.4)(jsdom@26.1.0)(vite@8.0.1(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   '@vitest/expect@3.2.4':
     dependencies:
@@ -11607,7 +11665,7 @@ snapshots:
       '@panva/hkdf': 1.2.1
       cookie: 0.7.2
       jose: 4.15.9
-      next: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      next: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       oauth: 0.9.15
       openid-client: 5.7.1
       preact: 10.27.1
@@ -11616,7 +11674,7 @@ snapshots:
       react-dom: 19.2.3(react@19.2.3)
       uuid: 8.3.2
 
-  next@16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+  next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
     dependencies:
       '@next/env': 16.2.4
       '@swc/helpers': 0.5.15
@@ -11625,7 +11683,7 @@ snapshots:
       postcss: 8.4.31
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
-      styled-jsx: 5.1.6(@babel/core@7.29.0)(react@19.2.3)
+      styled-jsx: 5.1.6(react@19.2.3)
     optionalDependencies:
       '@next/swc-darwin-arm64': 16.2.4
       '@next/swc-darwin-x64': 16.2.4
@@ -11835,13 +11893,15 @@ snapshots:
 
   picomatch@4.0.3: {}
 
-  playwright-core@1.59.1: {}
+  playwright-core@1.59.1:
+    optional: true
 
   playwright@1.59.1:
     dependencies:
       playwright-core: 1.59.1
     optionalDependencies:
       fsevents: 2.3.2
+    optional: true
 
   possible-typed-array-names@1.1.0: {}
 
@@ -12090,6 +12150,11 @@ snapshots:
       dom-helpers: 5.2.1
       loose-envify: 1.4.0
       prop-types: 15.8.1
+      react: 19.2.3
+      react-dom: 19.2.3(react@19.2.3)
+
+  react-virtuoso@4.18.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3):
+    dependencies:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
@@ -12583,12 +12648,10 @@ snapshots:
 
   stubborn-utils@1.0.2: {}
 
-  styled-jsx@5.1.6(@babel/core@7.29.0)(react@19.2.3):
+  styled-jsx@5.1.6(react@19.2.3):
     dependencies:
       client-only: 0.0.1
       react: 19.2.3
-    optionalDependencies:
-      '@babel/core': 7.29.0
 
   stylis@4.2.0: {}
 
@@ -12898,7 +12961,7 @@ snapshots:
       image-size: 2.0.2
       magic-string: 0.30.21
       module-alias: 2.3.4
-      next: 16.2.4(@babel/core@7.29.0)(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+      next: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       storybook: 10.3.3(@testing-library/dom@10.4.1)(prettier@3.5.3)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       ts-dedent: 2.2.0
       vite: 8.0.1(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
@@ -13007,6 +13070,36 @@ snapshots:
       '@types/node': 22.19.3
       '@vitest/coverage-v8': 4.1.4(vitest@4.1.4)
       jsdom: 29.0.2
+    transitivePeerDependencies:
+      - msw
+
+  vitest@4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.6.0)(@vitest/coverage-v8@4.1.4)(jsdom@26.1.0)(vite@8.0.1(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)):
+    dependencies:
+      '@vitest/expect': 4.1.4
+      '@vitest/mocker': 4.1.4(vite@8.0.1(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      '@vitest/pretty-format': 4.1.4
+      '@vitest/runner': 4.1.4
+      '@vitest/snapshot': 4.1.4
+      '@vitest/spy': 4.1.4
+      '@vitest/utils': 4.1.4
+      es-module-lexer: 2.0.0
+      expect-type: 1.3.0
+      magic-string: 0.30.21
+      obug: 2.1.1
+      pathe: 2.0.3
+      picomatch: 4.0.3
+      std-env: 4.0.0
+      tinybench: 2.9.0
+      tinyexec: 1.1.1
+      tinyglobby: 0.2.15
+      tinyrainbow: 3.1.0
+      vite: 8.0.1(@types/node@25.6.0)(esbuild@0.27.4)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3)
+      why-is-node-running: 2.3.0
+    optionalDependencies:
+      '@opentelemetry/api': 1.9.1
+      '@types/node': 25.6.0
+      '@vitest/coverage-v8': 4.1.4(vitest@4.1.4)
+      jsdom: 26.1.0
     transitivePeerDependencies:
       - msw
 

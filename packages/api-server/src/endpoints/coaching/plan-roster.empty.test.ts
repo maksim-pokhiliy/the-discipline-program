@@ -12,7 +12,7 @@ describe("coachingPlanRosterApi.list — empty DB", () => {
 
   beforeAll(async () => {
     coach = await createTestCoach();
-    plan = await createTestPlan(coach.profile.id, { status: TrainingPlanStatus.ACTIVE });
+    plan = await createTestPlan(coach.user.id, { status: TrainingPlanStatus.ACTIVE });
   });
 
   afterAll(async () => {

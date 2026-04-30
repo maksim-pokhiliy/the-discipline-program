@@ -1,318 +1,226 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
-import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
-import { TodayStatus } from "@repo/contracts/coaching/coach-dashboard";
+import { ActionItemType } from "@repo/contracts/coaching/coach-action-item";
+import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 
-import { computeAthletesSummary, computeTodayStatus } from "./dashboard-computations";
-import {
-  FAKE_NOW,
-  makeAssignedAthlete,
-  makeLog,
-  makeWorkout,
-} from "./dashboard-computations.test-helpers";
+import { prisma, prismaAsCore } from "../../db/client";
+import { cleanupRaw } from "../../test/helpers";
 
-const TZ = "UTC";
+import { buildAssignedAthleteInclude } from "./assigned-athlete-query";
+import { computeProgressBuckets } from "./dashboard-computations";
+import { cleanup, createCoachWithAthleteSessions } from "./dashboard-computations.test-helpers";
 
-beforeEach(() => {
-  vi.useFakeTimers();
-  vi.setSystemTime(FAKE_NOW);
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
-
-describe("computeTodayStatus", () => {
-  describe("NO_SCHEDULE", () => {
-    it("returns NO_SCHEDULE when there are no workouts", () => {
-      const result = computeTodayStatus([], [], TZ);
-
-      expect(result.status).toBe(TodayStatus.NO_SCHEDULE);
-      expect(result.missedCount).toBe(0);
-      expect(result.currentWorkoutTitle).toBeNull();
-      expect(result.lastActivityDate).toBeNull();
-    });
-
-    it("returns NO_SCHEDULE when all workouts have null scheduledDate", () => {
-      const workouts = [makeWorkout("w1", null), makeWorkout("w2", null)];
-      const result = computeTodayStatus(workouts, [], TZ);
-
-      expect(result.status).toBe(TodayStatus.NO_SCHEDULE);
-    });
+const loadAssignments = (coachProfileId: string, coachUserId: string) =>
+  prisma.coachAthleteAssignment.findMany({
+    where: { coachId: coachProfileId },
+    include: buildAssignedAthleteInclude(coachUserId),
   });
 
-  describe("COMPLETED", () => {
-    it("returns COMPLETED when all today's workouts are logged", () => {
-      const workouts = [makeWorkout("w1", "2025-06-18T10:00:00Z", "Morning Session")];
-      const logs = [makeLog("w1", "2025-06-18T11:00:00Z")];
-      const result = computeTodayStatus(workouts, logs, TZ);
+describe("computeProgressBuckets", () => {
+  const toCleanup: { table: string; id: string }[] = [];
 
-      expect(result.status).toBe(TodayStatus.COMPLETED);
-      expect(result.currentWorkoutTitle).toBeNull();
-    });
-
-    it("returns COMPLETED when multiple today workouts are all logged", () => {
-      const workouts = [
-        makeWorkout("w1", "2025-06-18T08:00:00Z", "AM"),
-        makeWorkout("w2", "2025-06-18T16:00:00Z", "PM"),
-      ];
-      const logs = [makeLog("w1", "2025-06-18T09:00:00Z"), makeLog("w2", "2025-06-18T17:00:00Z")];
-      const result = computeTodayStatus(workouts, logs, TZ);
-
-      expect(result.status).toBe(TodayStatus.COMPLETED);
-    });
+  afterEach(async () => {
+    await cleanup(...toCleanup.splice(0));
   });
 
-  describe("PENDING", () => {
-    it("returns PENDING when today has workouts but not all logged", () => {
-      const workouts = [makeWorkout("w1", "2025-06-18T10:00:00Z", "Leg Day")];
-      const result = computeTodayStatus(workouts, [], TZ);
-
-      expect(result.status).toBe(TodayStatus.PENDING);
-      expect(result.currentWorkoutTitle).toBe("Leg Day");
+  it("puts athlete with 3 fully-completed sessions into onTrack bucket", async () => {
+    const {
+      coachId,
+      coachProfileId,
+      athlete,
+      toCleanup: c,
+    } = await createCoachWithAthleteSessions({
+      sessionsCount: 3,
+      completionRatios: [1.0, 1.0, 1.0],
     });
 
-    it("returns the first unlogged workout title as currentWorkoutTitle", () => {
-      const workouts = [
-        makeWorkout("w1", "2025-06-18T08:00:00Z", "Morning"),
-        makeWorkout("w2", "2025-06-18T14:00:00Z", "Afternoon"),
-      ];
-      const logs = [makeLog("w1", "2025-06-18T09:00:00Z")];
-      const result = computeTodayStatus(workouts, logs, TZ);
+    toCleanup.push(...c);
 
-      expect(result.status).toBe(TodayStatus.PENDING);
-      expect(result.currentWorkoutTitle).toBe("Afternoon");
-    });
+    const assignments = await loadAssignments(coachProfileId, coachId);
+    const result = await computeProgressBuckets({ db: prismaAsCore, assignments });
+
+    const ids = result.onTrack.map((a) => a.userId);
+
+    expect(ids).toContain(athlete.athleteId);
+    expect(result.steady.map((a) => a.userId)).not.toContain(athlete.athleteId);
+    expect(result.fallingBehind.map((a) => a.userId)).not.toContain(athlete.athleteId);
   });
 
-  describe("MISSED", () => {
-    it("returns MISSED when no today workouts but past workouts this week are unlogged", () => {
-      const workouts = [makeWorkout("w1", "2025-06-17T10:00:00Z", "Yesterday Workout")];
-      const result = computeTodayStatus(workouts, [], TZ);
-
-      expect(result.status).toBe(TodayStatus.MISSED);
-      expect(result.missedCount).toBe(1);
+  it("puts athlete with 50% adherence into steady bucket", async () => {
+    const {
+      coachId,
+      coachProfileId,
+      athlete,
+      toCleanup: c,
+    } = await createCoachWithAthleteSessions({
+      sessionsCount: 4,
+      completionRatios: [1.0, 1.0, 0.0, 0.0],
     });
+
+    toCleanup.push(...c);
+
+    const assignments = await loadAssignments(coachProfileId, coachId);
+    const result = await computeProgressBuckets({ db: prismaAsCore, assignments });
+
+    const steadyIds = result.steady.map((a) => a.userId);
+
+    expect(steadyIds).toContain(athlete.athleteId);
+    expect(result.onTrack.map((a) => a.userId)).not.toContain(athlete.athleteId);
+    expect(result.fallingBehind.map((a) => a.userId)).not.toContain(athlete.athleteId);
   });
 
-  describe("REST_DAY", () => {
-    it("returns REST_DAY when no today workouts and no missed this week", () => {
-      const workouts = [makeWorkout("w1", "2025-06-25T10:00:00Z", "Next Week")];
-      const result = computeTodayStatus(workouts, [], TZ);
-
-      expect(result.status).toBe(TodayStatus.REST_DAY);
-      expect(result.missedCount).toBe(0);
+  it("puts athlete with all missed sessions into fallingBehind bucket", async () => {
+    const {
+      coachId,
+      coachProfileId,
+      athlete,
+      toCleanup: c,
+    } = await createCoachWithAthleteSessions({
+      sessionsCount: 3,
+      completionRatios: [0.0, 0.1, 0.2],
     });
 
-    it("returns REST_DAY when past workouts this week are all logged", () => {
-      const workouts = [makeWorkout("w1", "2025-06-17T10:00:00Z", "Done Yesterday")];
-      const logs = [makeLog("w1", "2025-06-17T15:00:00Z")];
-      const result = computeTodayStatus(workouts, logs, TZ);
+    toCleanup.push(...c);
 
-      expect(result.status).toBe(TodayStatus.REST_DAY);
-      expect(result.missedCount).toBe(0);
-    });
+    const assignments = await loadAssignments(coachProfileId, coachId);
+    const result = await computeProgressBuckets({ db: prismaAsCore, assignments });
+
+    const fallingIds = result.fallingBehind.map((a) => a.userId);
+
+    expect(fallingIds).toContain(athlete.athleteId);
+    expect(result.onTrack.map((a) => a.userId)).not.toContain(athlete.athleteId);
+    expect(result.steady.map((a) => a.userId)).not.toContain(athlete.athleteId);
   });
 
-  describe("missedCount", () => {
-    it("counts consecutive missed workouts from most recent backwards", () => {
-      const workouts = [
-        makeWorkout("w1", "2025-06-16T10:00:00Z"),
-        makeWorkout("w2", "2025-06-17T10:00:00Z"),
-      ];
-      const result = computeTodayStatus(workouts, [], TZ);
+  it("returns all empty buckets and zero engagement for empty assignments list", async () => {
+    const result = await computeProgressBuckets({ db: prismaAsCore, assignments: [] });
 
-      expect(result.missedCount).toBe(2);
-    });
-
-    it("stops counting at the first logged workout", () => {
-      const workouts = [
-        makeWorkout("w1", "2025-06-16T10:00:00Z"),
-        makeWorkout("w2", "2025-06-17T10:00:00Z"),
-      ];
-      const logs = [makeLog("w2", "2025-06-17T15:00:00Z")];
-      const result = computeTodayStatus(workouts, logs, TZ);
-
-      expect(result.missedCount).toBe(0);
-    });
-
-    it("only counts workouts created on or before their scheduled date", () => {
-      const workouts = [
-        makeWorkout("w1", "2025-06-16T10:00:00Z", "Normal", "2025-06-15T00:00:00Z"),
-        makeWorkout("w2", "2025-06-17T10:00:00Z", "Backdated", "2025-06-18T00:00:00Z"),
-      ];
-      const result = computeTodayStatus(workouts, [], TZ);
-
-      expect(result.missedCount).toBe(1);
-    });
+    expect(result.onTrack).toHaveLength(0);
+    expect(result.steady).toHaveLength(0);
+    expect(result.fallingBehind).toHaveLength(0);
+    expect(result.avgEngagementRate).toBe(0);
   });
 
-  describe("lastActivityDate", () => {
-    it("returns null when there are no logs", () => {
-      const workouts = [makeWorkout("w1", "2025-06-18T10:00:00Z")];
-      const result = computeTodayStatus(workouts, [], TZ);
-
-      expect(result.lastActivityDate).toBeNull();
+  it("processStatus on entry matches bucket placement", async () => {
+    const {
+      coachId,
+      coachProfileId,
+      athlete,
+      toCleanup: c,
+    } = await createCoachWithAthleteSessions({
+      sessionsCount: 3,
+      completionRatios: [1.0, 1.0, 1.0],
     });
 
-    it("returns the most recent log date", () => {
-      const workouts = [makeWorkout("w1", "2025-06-18T10:00:00Z")];
-      const logs = [
-        makeLog("w1", "2025-06-15T10:00:00Z"),
-        makeLog("w2", "2025-06-17T10:00:00Z"),
-        makeLog("w3", "2025-06-10T10:00:00Z"),
-      ];
-      const result = computeTodayStatus(workouts, logs, TZ);
+    toCleanup.push(...c);
 
-      expect(result.lastActivityDate).toEqual(new Date("2025-06-17T10:00:00Z"));
-    });
+    const assignments = await loadAssignments(coachProfileId, coachId);
+    const result = await computeProgressBuckets({ db: prismaAsCore, assignments });
+
+    const entry = result.onTrack.find((a) => a.userId === athlete.athleteId);
+
+    expect(entry).toBeDefined();
+    expect(entry?.processStatus).toBe(ProcessStatus.ON_TRACK);
   });
 });
 
-describe("computeAthletesSummary", () => {
-  it("returns summary for a single enrollment", () => {
-    const assignment = makeAssignedAthlete({
-      userId: "u1",
-      userName: "Alice",
-      userEmail: "alice@test.com",
-      planId: "p1",
-      planName: "Strength Program",
-      workouts: [makeWorkout("w1", "2025-06-18T10:00:00Z", "Squats")],
-      logs: [],
-    });
+describe("MISSED_WORKOUTS action items via reconcile", () => {
+  const toCleanup: { table: string; id: string }[] = [];
 
-    const result = computeAthletesSummary([assignment], TZ);
-
-    expect(result).toHaveLength(1);
-    const athlete = result[0];
-
-    if (!athlete) {
-      throw new Error("expected athlete");
-    }
-
-    expect(athlete.userId).toBe("u1");
-    expect(athlete.name).toBe("Alice");
-    expect(athlete.email).toBe("alice@test.com");
-    expect(athlete.planId).toBe("p1");
-    expect(athlete.planName).toBe("Strength Program");
-    expect(athlete.todayStatus).toBe(TodayStatus.PENDING);
-    expect(athlete.todayWorkoutTitle).toBe("Squats");
-    expect(athlete.healthStatus).toBe(HealthStatus.HEALTHY);
+  afterEach(async () => {
+    await cleanup(...toCleanup.splice(0));
   });
 
-  it("picks highest priority status when athlete has multiple enrollments", () => {
-    const assignment = makeAssignedAthlete({
-      userId: "u1",
-      enrollments: [
-        { planId: "p1", workouts: [makeWorkout("w1", "2025-06-25T10:00:00Z")] },
-        { planId: "p2", planName: "Plan 2", workouts: [makeWorkout("w2", "2025-06-17T10:00:00Z")] },
-      ],
-      logs: [],
+  it("creates MISSED_WORKOUTS action item for athlete with poor adherence", async () => {
+    const {
+      coachId,
+      coachProfileId,
+      athlete,
+      toCleanup: c,
+    } = await createCoachWithAthleteSessions({
+      sessionsCount: 3,
+      completionRatios: [0.1, 0.0, 0.2],
     });
 
-    const result = computeAthletesSummary([assignment], TZ);
+    toCleanup.push(...c);
 
-    expect(result).toHaveLength(1);
-    const athlete = result[0];
+    const { coachingCoachActionItemApi } = await import("./coach-action-item");
 
-    if (!athlete) {
-      throw new Error("expected athlete");
-    }
+    await coachingCoachActionItemApi.reconcile(coachId);
 
-    expect(athlete.todayStatus).toBe(TodayStatus.MISSED);
-    expect(athlete.planId).toBe("p2");
+    const items = await cleanupRaw.coachActionItem.findMany({
+      where: {
+        coachId: coachProfileId,
+        athleteId: athlete.athleteId,
+        type: ActionItemType.MISSED_WORKOUTS,
+      },
+    });
+
+    expect(items.length).toBeGreaterThanOrEqual(1);
+    expect(items[0]?.status).toBe("OPEN");
+
+    await cleanupRaw.coachActionItem.deleteMany({ where: { coachId: coachProfileId } });
   });
 
-  it("aggregates missedCount — keeps higher count even from lower priority enrollment", () => {
-    const assignment = makeAssignedAthlete({
-      userId: "u1",
-      enrollments: [
-        { planId: "p1", workouts: [makeWorkout("w1", "2025-06-17T10:00:00Z")] },
-        {
-          planId: "p2",
-          workouts: [
-            makeWorkout("w2", "2025-06-16T10:00:00Z"),
-            makeWorkout("w3", "2025-06-17T10:00:00Z"),
-            makeWorkout("w4", "2025-06-18T10:00:00Z", "Today"),
-          ],
-        },
-      ],
-      logs: [],
+  it("does not create MISSED_WORKOUTS for athlete with good adherence", async () => {
+    const {
+      coachId,
+      coachProfileId,
+      athlete,
+      toCleanup: c,
+    } = await createCoachWithAthleteSessions({
+      sessionsCount: 3,
+      completionRatios: [1.0, 1.0, 1.0],
     });
 
-    const result = computeAthletesSummary([assignment], TZ);
+    toCleanup.push(...c);
 
-    expect(result).toHaveLength(1);
-    const athlete = result[0];
+    const { coachingCoachActionItemApi } = await import("./coach-action-item");
 
-    if (!athlete) {
-      throw new Error("expected athlete");
-    }
+    await coachingCoachActionItemApi.reconcile(coachId);
 
-    expect(athlete.missedCount).toBe(2);
+    const items = await cleanupRaw.coachActionItem.findMany({
+      where: {
+        coachId: coachProfileId,
+        athleteId: athlete.athleteId,
+        type: ActionItemType.MISSED_WORKOUTS,
+      },
+    });
+
+    expect(items).toHaveLength(0);
+
+    await cleanupRaw.coachActionItem.deleteMany({ where: { coachId: coachProfileId } });
   });
 
-  it("maps healthStatus from athleteProfile", () => {
-    const assignment = makeAssignedAthlete({
-      healthStatus: HealthStatus.INJURED,
-      workouts: [],
+  it("is idempotent — running reconcile twice creates only one MISSED_WORKOUTS item", async () => {
+    const {
+      coachId,
+      coachProfileId,
+      athlete,
+      toCleanup: c,
+    } = await createCoachWithAthleteSessions({
+      sessionsCount: 2,
+      completionRatios: [0.0, 0.1],
     });
 
-    const result = computeAthletesSummary([assignment], TZ);
-    const athlete = result[0];
+    toCleanup.push(...c);
 
-    if (!athlete) {
-      throw new Error("expected athlete");
-    }
+    const { coachingCoachActionItemApi } = await import("./coach-action-item");
 
-    expect(athlete.healthStatus).toBe(HealthStatus.INJURED);
-  });
+    await coachingCoachActionItemApi.reconcile(coachId);
+    await coachingCoachActionItemApi.reconcile(coachId);
 
-  it("defaults to HEALTHY when athleteProfile is null", () => {
-    const assignment = makeAssignedAthlete({
-      hasProfile: false,
-      workouts: [],
+    const items = await cleanupRaw.coachActionItem.findMany({
+      where: {
+        coachId: coachProfileId,
+        athleteId: athlete.athleteId,
+        type: ActionItemType.MISSED_WORKOUTS,
+        status: "OPEN",
+      },
     });
 
-    const result = computeAthletesSummary([assignment], TZ);
-    const athlete = result[0];
+    expect(items).toHaveLength(1);
 
-    if (!athlete) {
-      throw new Error("expected athlete");
-    }
-
-    expect(athlete.healthStatus).toBe(HealthStatus.HEALTHY);
-  });
-
-  it("computes daysSinceLastActivity", () => {
-    const assignment = makeAssignedAthlete({
-      workouts: [makeWorkout("w1", "2025-06-18T10:00:00Z")],
-      logs: [makeLog("w-old", "2025-06-15T10:00:00Z")],
-    });
-
-    const result = computeAthletesSummary([assignment], TZ);
-    const athlete = result[0];
-
-    if (!athlete) {
-      throw new Error("expected athlete");
-    }
-
-    expect(athlete.daysSinceLastActivity).toBe(3);
-  });
-
-  it("returns null daysSinceLastActivity when no logs", () => {
-    const assignment = makeAssignedAthlete({
-      workouts: [makeWorkout("w1", "2025-06-18T10:00:00Z")],
-      logs: [],
-    });
-
-    const result = computeAthletesSummary([assignment], TZ);
-    const athlete = result[0];
-
-    if (!athlete) {
-      throw new Error("expected athlete");
-    }
-
-    expect(athlete.daysSinceLastActivity).toBeNull();
+    await cleanupRaw.coachActionItem.deleteMany({ where: { coachId: coachProfileId } });
   });
 });

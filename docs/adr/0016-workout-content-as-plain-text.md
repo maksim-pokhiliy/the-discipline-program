@@ -1,6 +1,6 @@
 # 16. Workout content as plain text
 
-- **Status:** Accepted (interim)
+- **Status:** Superseded by ADR-0027
 - **Date:** 2026-04-12
 - **Context:** Audit section 2 flagged that `Workout.content` is a free-text field (`String? @db.Text`) with no structured data model. There is no `WorkoutBlock`, `PrescribedSet`, `SetLog`, or exercise-level tracking. This limits analytics, PR tracking, exercise substitution, and per-set logging.
 

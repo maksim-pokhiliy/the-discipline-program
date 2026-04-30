@@ -1,5 +1,5 @@
 import type { CoachActionItem as PrismaCoachActionItemRecord } from "@prisma/client";
-import { type JsonObject } from "@prisma/client/runtime/library";
+import type { JsonObject } from "@prisma/client/runtime/library";
 
 import { HEALTH_STATUS_LABELS, HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import {
@@ -13,11 +13,7 @@ import {
   type NewNoStartMetadata,
   type ReconcileResponse,
 } from "@repo/contracts/coaching/coach-action-item";
-import {
-  MISSED_DAYS_CRITICAL,
-  MISSED_DAYS_WARNING,
-  NEW_ATHLETE_THRESHOLD_DAYS,
-} from "@repo/contracts/coaching/coach-dashboard";
+import { NEW_ATHLETE_THRESHOLD_DAYS } from "@repo/contracts/coaching/coach-dashboard";
 import { NotFoundError } from "@repo/errors";
 
 import { resolveCoachId } from "../../authz/guards";
@@ -33,7 +29,7 @@ import {
   mapToCoachActionItem,
 } from "../../mappers/coaching";
 import { findOrThrow, handlePrismaError } from "../../utils";
-import { daysBetweenInTz, startOfTodayInTz } from "../../utils/date-helpers";
+import { daysBetweenInTz, MS_PER_DAY, startOfTodayInTz } from "../../utils/date-helpers";
 import { asJsonRecord } from "../../utils/json-record";
 
 import {
@@ -48,48 +44,28 @@ type ConditionBase = {
 };
 
 type Condition =
-  | (ConditionBase & { type: ActionItemType.MISSED_WORKOUTS; metadata: MissedWorkoutsMetadata })
   | (ConditionBase & { type: ActionItemType.NEW_NO_START; metadata: NewNoStartMetadata })
-  | (ConditionBase & { type: ActionItemType.HEALTH_REPORT; metadata: HealthReportMetadata });
+  | (ConditionBase & { type: ActionItemType.HEALTH_REPORT; metadata: HealthReportMetadata })
+  | (ConditionBase & { type: ActionItemType.MISSED_WORKOUTS; metadata: MissedWorkoutsMetadata });
 
-const computeConditions = (assignments: AssignedAthleteWithData[], tz: string): Condition[] => {
+const computeBaseConditions = (assignments: AssignedAthleteWithData[], tz: string): Condition[] => {
   const conditions: Condition[] = [];
   const today = startOfTodayInTz(tz);
 
   for (const a of assignments) {
     const athlete = a.athlete;
 
-    const lastLog =
-      athlete.workoutLogs.length > 0
-        ? athlete.workoutLogs.reduce((latest, l) => (l.date > latest.date ? l : latest))
-        : null;
-
-    if (lastLog) {
-      const daysSince = daysBetweenInTz(new Date(lastLog.date), today, tz);
-
-      if (daysSince >= MISSED_DAYS_WARNING) {
-        conditions.push({
-          athleteId: athlete.id,
-          type: ActionItemType.MISSED_WORKOUTS,
-          severity:
-            daysSince >= MISSED_DAYS_CRITICAL
-              ? ActionItemSeverity.CRITICAL
-              : ActionItemSeverity.WARNING,
-          message: `${daysSince} days without activity`,
-          metadata: { lastActivityDate: lastLog.date.toISOString() },
-        });
-      }
-    }
-
     const earliestEnrollment =
       athlete.planEnrollments.length > 0
-        ? athlete.planEnrollments.reduce((min, e) => (e.startDate < min.startDate ? e : min))
+        ? athlete.planEnrollments.reduce((min, e) =>
+            e.startedOnDate < min.startedOnDate ? e : min,
+          )
         : null;
 
     if (earliestEnrollment) {
-      const enrolledDays = daysBetweenInTz(earliestEnrollment.startDate, today, tz);
+      const enrolledDays = daysBetweenInTz(earliestEnrollment.startedOnDate, today, tz);
 
-      if (enrolledDays <= NEW_ATHLETE_THRESHOLD_DAYS && athlete.workoutLogs.length === 0) {
+      if (enrolledDays <= NEW_ATHLETE_THRESHOLD_DAYS) {
         const enrolledText =
           enrolledDays === 0
             ? "Enrolled today"
@@ -128,6 +104,49 @@ const computeConditions = (assignments: AssignedAthleteWithData[], tz: string): 
   return conditions;
 };
 
+const computeMissedWorkoutsConditions = async (
+  assignments: AssignedAthleteWithData[],
+): Promise<Condition[]> => {
+  const conditions: Condition[] = [];
+  const sevenDaysAgo = new Date(Date.now() - 7 * MS_PER_DAY);
+
+  await Promise.all(
+    assignments.map(async (a) => {
+      const athlete = a.athlete;
+
+      const missedCount = await prisma.workoutSession.count({
+        where: {
+          userId: athlete.id,
+          completionRatio: { lt: 0.3 },
+          startedAt: { gte: sevenDaysAgo },
+        },
+      });
+
+      if (missedCount === 0) {
+        return;
+      }
+
+      const latestSession = await prisma.workoutSession.findFirst({
+        where: { userId: athlete.id },
+        orderBy: { startedAt: "desc" },
+        select: { startedAt: true },
+      });
+
+      const lastActivityDate = latestSession?.startedAt.toISOString() ?? new Date(0).toISOString();
+
+      conditions.push({
+        athleteId: athlete.id,
+        type: ActionItemType.MISSED_WORKOUTS,
+        severity: ActionItemSeverity.WARNING,
+        message: `${missedCount} missed workout${missedCount === 1 ? "" : "s"} in the last 7 days`,
+        metadata: { lastActivityDate },
+      });
+    }),
+  );
+
+  return conditions;
+};
+
 const conditionMatchesResolved = (
   condition: Condition,
   resolvedMetadata: JsonObject | null,
@@ -137,12 +156,12 @@ const conditionMatchesResolved = (
   }
 
   switch (condition.type) {
-    case ActionItemType.MISSED_WORKOUTS:
-      return condition.metadata.lastActivityDate === resolvedMetadata.lastActivityDate;
     case ActionItemType.NEW_NO_START:
       return condition.metadata.enrollmentId === resolvedMetadata.enrollmentId;
     case ActionItemType.HEALTH_REPORT:
       return condition.metadata.healthStatus === resolvedMetadata.healthStatus;
+    case ActionItemType.MISSED_WORKOUTS:
+      return false;
     default:
       return false;
   }
@@ -166,7 +185,7 @@ export const coachingCoachActionItemApi = {
         const [assignments, openItems, latestResolved] = await Promise.all([
           tx.coachAthleteAssignment.findMany({
             where: { coachId },
-            include: buildAssignedAthleteInclude(coachId),
+            include: buildAssignedAthleteInclude(userId),
           }),
           tx.coachActionItem.findMany({
             where: { coachId, status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN] },
@@ -181,7 +200,9 @@ export const coachingCoachActionItemApi = {
           }),
         ]);
 
-        const conditions = computeConditions(assignments, tz);
+        const baseConditions = computeBaseConditions(assignments, tz);
+        const missedConditions = await computeMissedWorkoutsConditions(assignments);
+        const conditions = [...baseConditions, ...missedConditions];
 
         const openByKey = new Map<string, PrismaCoachActionItemRecord>();
         const duplicates: PrismaCoachActionItemRecord[] = [];
