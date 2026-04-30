@@ -108,8 +108,8 @@ export const RepeatWeekPatternDialog = ({
       <DialogContent dividers>
         <Stack spacing={2}>
           <Alert severity="info">
-            Copies blocks from the source week range into the destination range. Source loops if the
-            destination is longer. Only block shells are cloned (see clone-day for details).
+            Copies blocks from the source week range into the destination range with their full tree
+            (segments, set groups and entries). Source loops if the destination is longer.
           </Alert>
 
           <TextField

@@ -56,6 +56,11 @@ const collectIds = (ops: BulkPatchOp[]) => {
         setGroupIds.add(op.setGroupId);
         break;
       }
+      case "clone-block-subtree": {
+        blockIds.add(op.sourceBlockId);
+        sessionIds.add(op.targetSessionId);
+        break;
+      }
     }
   }
 

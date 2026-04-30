@@ -51,8 +51,8 @@ const makeDay = (id: string, sessions: PlanStructureSession[]): PlanStructureDay
   sessions,
 });
 
-describe("buildCloneDayOps — per-target order accumulator", () => {
-  it("emits sequential orders starting from initial when source has 3 blocks and target has 2", () => {
+describe("buildCloneDayOps — clone-block-subtree ops with per-target order accumulator", () => {
+  it("emits clone-block-subtree ops referencing source block ids and sequential target orders", () => {
     const sourceBlocks = [
       makeBlock("ckxw5p7gp0000q1mnzv5cu100", VALID_CUID_SOURCE_SESSION_A, 0),
       makeBlock("ckxw5p7gp0000q1mnzv5cu101", VALID_CUID_SOURCE_SESSION_A, 1),
@@ -65,11 +65,26 @@ describe("buildCloneDayOps — per-target order accumulator", () => {
       makeBlock("ckxw5p7gp0000q1mnzv5cu200", VALID_CUID_TARGET_SESSION, 0),
       makeBlock("ckxw5p7gp0000q1mnzv5cu201", VALID_CUID_TARGET_SESSION, 1),
     ]);
-    const target: CloneDayTarget = { dayId: VALID_CUID_TARGET_DAY, sessions: [targetSession] };
+    const target: CloneDayTarget = {
+      dayId: VALID_CUID_TARGET_DAY,
+      label: "Week 2 · TUE",
+      sessions: [targetSession],
+    };
 
     const result = buildCloneDayOps({ source, targets: [target] });
     const ops = result.chunks.flat();
-    const orders = ops.map((op) => (op.kind === "create-block" ? op.payload.order : -1));
+
+    expect(ops).toHaveLength(3);
+    for (const op of ops) {
+      expect(op.kind).toBe("clone-block-subtree");
+    }
+    const sourceIds = ops.map((op) =>
+      op.kind === "clone-block-subtree" ? op.sourceBlockId : null,
+    );
+
+    expect(sourceIds).toEqual(sourceBlocks.map((b) => b.id));
+
+    const orders = ops.map((op) => (op.kind === "clone-block-subtree" ? op.targetOrder : -1));
 
     expect(orders).toEqual([2, 3, 4]);
   });
@@ -89,11 +104,15 @@ describe("buildCloneDayOps — per-target order accumulator", () => {
       makeBlock("ckxw5p7gp0000q1mnzv5cu500", VALID_CUID_TARGET_SESSION, 0),
       makeBlock("ckxw5p7gp0000q1mnzv5cu501", VALID_CUID_TARGET_SESSION, 1),
     ]);
-    const target: CloneDayTarget = { dayId: VALID_CUID_TARGET_DAY, sessions: [targetSession] };
+    const target: CloneDayTarget = {
+      dayId: VALID_CUID_TARGET_DAY,
+      label: "Week 2 · TUE",
+      sessions: [targetSession],
+    };
 
     const result = buildCloneDayOps({ source, targets: [target] });
     const ops = result.chunks.flat();
-    const orders = ops.map((op) => (op.kind === "create-block" ? op.payload.order : -1));
+    const orders = ops.map((op) => (op.kind === "clone-block-subtree" ? op.targetOrder : -1));
 
     expect(orders).toEqual([2, 3, 4, 5, 6]);
     expect(new Set(orders).size).toBe(orders.length);
@@ -116,25 +135,61 @@ describe("buildCloneDayOps — per-target order accumulator", () => {
     const result = buildCloneDayOps({
       source,
       targets: [
-        { dayId: VALID_CUID_TARGET_DAY, sessions: [targetSessionA] },
-        { dayId: otherTargetDayId, sessions: [targetSessionB] },
+        {
+          dayId: VALID_CUID_TARGET_DAY,
+          label: "Week 2 · TUE",
+          sessions: [targetSessionA],
+        },
+        {
+          dayId: otherTargetDayId,
+          label: "Week 2 · WED",
+          sessions: [targetSessionB],
+        },
       ],
     });
     const ops = result.chunks.flat();
     const ordersBySession = new Map<string, number[]>();
 
     for (const op of ops) {
-      if (op.kind !== "create-block") {
+      if (op.kind !== "clone-block-subtree") {
         continue;
       }
 
-      const list = ordersBySession.get(op.sessionId) ?? [];
+      const list = ordersBySession.get(op.targetSessionId) ?? [];
 
-      list.push(op.payload.order);
-      ordersBySession.set(op.sessionId, list);
+      list.push(op.targetOrder);
+      ordersBySession.set(op.targetSessionId, list);
     }
 
     expect(ordersBySession.get(VALID_CUID_TARGET_SESSION)).toEqual([1, 2]);
     expect(ordersBySession.get(otherTargetSessionId)).toEqual([0, 1]);
+  });
+
+  it("emits a warning and skips the target when the day has no session (W12)", () => {
+    const source = makeDay(VALID_CUID_SOURCE_DAY, [
+      makeSession(VALID_CUID_SOURCE_SESSION_A, VALID_CUID_SOURCE_DAY, [
+        makeBlock("ckxw5p7gp0000q1mnzv5cu900", VALID_CUID_SOURCE_SESSION_A, 0),
+      ]),
+    ]);
+
+    const goodTargetSession = makeSession(VALID_CUID_TARGET_SESSION, VALID_CUID_TARGET_DAY, []);
+    const emptyTargetDayId = "ckxw5p7gp0000q1mnzv5cuempt";
+
+    const result = buildCloneDayOps({
+      source,
+      targets: [
+        {
+          dayId: VALID_CUID_TARGET_DAY,
+          label: "Week 2 · TUE",
+          sessions: [goodTargetSession],
+        },
+        { dayId: emptyTargetDayId, label: "Week 2 · WED", sessions: [] },
+      ],
+    });
+
+    const ops = result.chunks.flat();
+
+    expect(ops).toHaveLength(1);
+    expect(result.warnings).toEqual([`Day "Week 2 · WED" has no session — skipped.`]);
   });
 });

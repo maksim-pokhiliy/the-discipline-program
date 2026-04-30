@@ -93,7 +93,7 @@ export const CloneDayDialog = ({ open, onClose, planId, planData }: CloneDayDial
   const targets: CloneDayTarget[] = useMemo(() => {
     return days
       .filter((day) => targetIds.includes(day.id))
-      .map((day) => ({ dayId: day.id, sessions: day.day.sessions }));
+      .map((day) => ({ dayId: day.id, label: day.label, sessions: day.day.sessions }));
   }, [days, targetIds]);
 
   const result = useMemo(() => {
@@ -130,9 +130,8 @@ export const CloneDayDialog = ({ open, onClose, planId, planData }: CloneDayDial
       <DialogContent dividers>
         <Stack spacing={2}>
           <Alert severity="info">
-            Clones the selected source day into target days. Only block shells are copied —
-            segments, set groups and entries cannot be created via the bulk-patch API. Use templates
-            to instantiate full sessions.
+            Clones the selected source day into target days. Each block is duplicated with its full
+            tree (segments, set groups and entries). New ids are generated server-side.
           </Alert>
 
           <FormControl fullWidth size="small">

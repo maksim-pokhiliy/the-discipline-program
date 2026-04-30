@@ -5,20 +5,16 @@ import {
   Prisma,
 } from "@prisma/client";
 
-import { type ExerciseSnapshot } from "@repo/contracts/lms/_domain";
 import { type BulkPatchOp } from "@repo/contracts/lms/training-plan";
 
-import { type prisma } from "../../db/client";
-import {
-  BLOCK_STATUS_TO_PRISMA_MAP,
-  BODY_PART_MAP,
-  MODALITY_MAP,
-  MOVEMENT_PATTERN_MAP,
-  SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP,
-} from "../../mappers/lms";
+import { type TxClient } from "../../db/tx";
+import { BLOCK_STATUS_TO_PRISMA_MAP, SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP } from "../../mappers/lms";
+import { cloneExistingBlockSubtree } from "../../services/lms/apply-template/clone-existing-block-subtree";
+import { deriveExerciseSnapshot } from "../../services/lms/derive-exercise-snapshot";
 import { findOrThrow, toInputJson } from "../../utils";
 
-export type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+export { deriveExerciseSnapshot };
+export type { TxClient };
 
 export type ApplyOutcome =
   | {
@@ -28,27 +24,6 @@ export type ApplyOutcome =
       entry?: PrismaExerciseEntry;
     }
   | { kind: "conflict"; currentVersion: number };
-
-export const deriveExerciseSnapshot = async (
-  tx: TxClient,
-  exerciseId: string,
-): Promise<ExerciseSnapshot> => {
-  const exercise = await findOrThrow(
-    tx.exerciseLibraryItem.findUnique({ where: { id: exerciseId } }),
-    "Exercise library item",
-  );
-
-  return {
-    id: exercise.id,
-    name: exercise.name,
-    primaryMovement: MOVEMENT_PATTERN_MAP[exercise.primaryMovement],
-    modality: MODALITY_MAP[exercise.modality],
-    primaryBodyParts: exercise.primaryBodyParts.map((bp) => BODY_PART_MAP[bp]),
-    defaultMetrics: exercise.defaultMetrics,
-    demoVideoUrl: exercise.demoVideoUrl,
-    demoImageUrl: exercise.demoImageUrl,
-  };
-};
 
 const readBlockVersion = async (tx: TxClient, blockId: string): Promise<number> => {
   const row = await findOrThrow(
@@ -311,6 +286,17 @@ export const applyOpInTx = async (tx: TxClient, op: BulkPatchOp): Promise<ApplyO
       }
 
       return { kind: "ok" };
+    }
+
+    case "clone-block-subtree": {
+      const { blockId } = await cloneExistingBlockSubtree(tx, op.sourceBlockId, {
+        sessionId: op.targetSessionId,
+        order: op.targetOrder,
+      });
+
+      const block = await findOrThrow(tx.block.findUnique({ where: { id: blockId } }), "Block");
+
+      return { kind: "ok", block };
     }
   }
 };

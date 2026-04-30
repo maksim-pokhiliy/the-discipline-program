@@ -24,7 +24,6 @@ export const buildRepeatWeekPatternOps = ({
   }
 
   const orderBySession = new Map<string, number>();
-  let entriesSkipped = false;
 
   const nextOrder = (sessionId: string, initial: number): number => {
     const current = orderBySession.get(sessionId) ?? initial;
@@ -51,12 +50,18 @@ export const buildRepeatWeekPatternOps = ({
       const destinationDay = destination.days.find((day) => day.dayOfWeek === sourceDay.dayOfWeek);
 
       if (!destinationDay) {
+        warnings.push(
+          `Week ${(destination.index + 1).toString()} has no ${sourceDay.dayOfWeek} day — skipped.`,
+        );
         continue;
       }
 
       const targetSession = destinationDay.sessions[0];
 
       if (!targetSession) {
+        warnings.push(
+          `Week ${(destination.index + 1).toString()} ${sourceDay.dayOfWeek} has no session — skipped.`,
+        );
         continue;
       }
 
@@ -68,32 +73,14 @@ export const buildRepeatWeekPatternOps = ({
       for (const sourceSession of sourceDay.sessions) {
         for (const sourceBlock of sourceSession.blocks) {
           ops.push({
-            kind: "create-block",
-            sessionId: targetSession.id,
-            payload: {
-              order: nextOrder(targetSession.id, initialOrder),
-              kindId: sourceBlock.kindId,
-              title: sourceBlock.title ?? undefined,
-              status: sourceBlock.status,
-              weight: sourceBlock.weight,
-              notes: sourceBlock.notes ?? undefined,
-            },
+            kind: "clone-block-subtree",
+            sourceBlockId: sourceBlock.id,
+            targetSessionId: targetSession.id,
+            targetOrder: nextOrder(targetSession.id, initialOrder),
           });
-
-          for (const segment of sourceBlock.segments) {
-            if (segment.setGroups.some((sg) => sg.entries.length > 0)) {
-              entriesSkipped = true;
-            }
-          }
         }
       }
     }
-  }
-
-  if (entriesSkipped) {
-    warnings.push(
-      "Repeat copies blocks only — segments, set groups and entries cannot be cloned via the bulk-patch API. Add segments manually or apply a template after the blocks appear.",
-    );
   }
 
   return { chunks: chunkBulkOps(ops), warnings };

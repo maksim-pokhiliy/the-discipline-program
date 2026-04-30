@@ -122,6 +122,12 @@ export const bulkPatchOpSchema = z.discriminatedUnion("kind", [
     entryId: z.string().cuid(),
     expectedVersion: z.number().int().nonnegative(),
   }),
+  z.object({
+    kind: z.literal("clone-block-subtree"),
+    sourceBlockId: z.string().cuid(),
+    targetSessionId: z.string().cuid(),
+    targetOrder: z.number().int().nonnegative(),
+  }),
 ]);
 
 export const bulkPatchPlanInputSchema = z.object({

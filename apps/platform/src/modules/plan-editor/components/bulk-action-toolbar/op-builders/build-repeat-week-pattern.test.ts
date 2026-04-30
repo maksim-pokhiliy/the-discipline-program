@@ -60,8 +60,8 @@ const makeWeek = (id: string, index: number, days: PlanStructureDay[]): PlanStru
   days,
 });
 
-describe("buildRepeatWeekPatternOps — per-destination-session order accumulator", () => {
-  it("emits sequential orders without collisions when source week has multiple sessions on same day", () => {
+describe("buildRepeatWeekPatternOps — clone-block-subtree ops with per-destination-session accumulator", () => {
+  it("emits clone-block-subtree ops with sequential orders without collisions", () => {
     const sourceWeekId = "ckxw5p7gp0000q1mnzv5cusw1";
     const sourceDayId = "ckxw5p7gp0000q1mnzv5cusd1";
     const sourceSessionAId = "ckxw5p7gp0000q1mnzv5cusa1";
@@ -98,7 +98,12 @@ describe("buildRepeatWeekPatternOps — per-destination-session order accumulato
       destinationWeeks: [destinationWeek],
     });
     const ops = result.chunks.flat();
-    const orders = ops.map((op) => (op.kind === "create-block" ? op.payload.order : -1));
+
+    for (const op of ops) {
+      expect(op.kind).toBe("clone-block-subtree");
+    }
+
+    const orders = ops.map((op) => (op.kind === "clone-block-subtree" ? op.targetOrder : -1));
 
     expect(orders).toEqual([2, 3, 4, 5, 6]);
     expect(new Set(orders).size).toBe(orders.length);
@@ -139,17 +144,43 @@ describe("buildRepeatWeekPatternOps — per-destination-session order accumulato
     const ordersBySession = new Map<string, number[]>();
 
     for (const op of ops) {
-      if (op.kind !== "create-block") {
+      if (op.kind !== "clone-block-subtree") {
         continue;
       }
 
-      const list = ordersBySession.get(op.sessionId) ?? [];
+      const list = ordersBySession.get(op.targetSessionId) ?? [];
 
-      list.push(op.payload.order);
-      ordersBySession.set(op.sessionId, list);
+      list.push(op.targetOrder);
+      ordersBySession.set(op.targetSessionId, list);
     }
 
     expect(ordersBySession.get(destSession1Id)).toEqual([0, 1]);
     expect(ordersBySession.get(destSession2Id)).toEqual([0, 1]);
+  });
+
+  it("emits a warning when the destination day has no session", () => {
+    const sourceWeekId = "ckxw5p7gp0000q1mnzv5cusww1";
+    const sourceDayId = "ckxw5p7gp0000q1mnzv5cusdd1";
+    const sourceSessionId = "ckxw5p7gp0000q1mnzv5cusss1";
+
+    const sourceWeek = makeWeek(sourceWeekId, 0, [
+      makeDay(sourceDayId, sourceWeekId, [
+        makeSession(sourceSessionId, sourceDayId, [
+          makeBlock("ckxw5p7gp0000q1mnzv5cusbb1", sourceSessionId, 0),
+        ]),
+      ]),
+    ]);
+
+    const destWeekId = "ckxw5p7gp0000q1mnzv5cudww1";
+    const destDayId = "ckxw5p7gp0000q1mnzv5cuddd1";
+    const destinationWeek = makeWeek(destWeekId, 1, [makeDay(destDayId, destWeekId, [])]);
+
+    const result = buildRepeatWeekPatternOps({
+      sourceWeeks: [sourceWeek],
+      destinationWeeks: [destinationWeek],
+    });
+
+    expect(result.chunks.flat()).toHaveLength(0);
+    expect(result.warnings).toEqual(["Week 2 MON has no session — skipped."]);
   });
 });
