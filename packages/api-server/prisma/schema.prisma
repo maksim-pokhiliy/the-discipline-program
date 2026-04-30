@@ -34,6 +34,9 @@ model User {
   exerciseLibraryItems ExerciseLibraryItem[]    @relation("ExerciseOwner")
   ownedBlockKinds      BlockKind[]              @relation("BlockKindOwner")
   ownedSchemeTemplates SchemeTemplate[]         @relation("SchemeTemplateOwner")
+  ownedBlockTemplates  BlockTemplate[]          @relation("BlockTemplateOwner")
+  ownedSessionTemplates SessionTemplate[]       @relation("SessionTemplateOwner")
+  ownedWeekTemplates   WeekTemplate[]           @relation("WeekTemplateOwner")
   coachNotes           CoachNote[]
   actionItems          CoachActionItem[]        @relation("ActionItemAthlete")
   inviteTokensReceived UserInviteToken[]        @relation("UserInviteTokens")
@@ -582,6 +585,57 @@ model SchemeTemplate {
   @@unique([scope, ownerId, name])
   @@index([scope, ownerId])
   @@map("lms_scheme_templates")
+}
+
+model BlockTemplate {
+  id          String       @id @default(cuid())
+  scope       LibraryScope @default(SYSTEM)
+  ownerId     String?
+  owner       User?        @relation("BlockTemplateOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  payload     Json
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([scope, ownerId, name])
+  @@index([scope, ownerId])
+  @@map("lms_block_templates")
+}
+
+model SessionTemplate {
+  id          String       @id @default(cuid())
+  scope       LibraryScope @default(SYSTEM)
+  ownerId     String?
+  owner       User?        @relation("SessionTemplateOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  payload     Json
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([scope, ownerId, name])
+  @@index([scope, ownerId])
+  @@map("lms_session_templates")
+}
+
+model WeekTemplate {
+  id          String       @id @default(cuid())
+  scope       LibraryScope @default(SYSTEM)
+  ownerId     String?
+  owner       User?        @relation("WeekTemplateOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  payload     Json
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  deletedAt   DateTime?
+
+  @@unique([scope, ownerId, name])
+  @@index([scope, ownerId])
+  @@map("lms_week_templates")
 }
 
 model ExerciseLibraryItem {

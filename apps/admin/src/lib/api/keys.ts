@@ -18,8 +18,11 @@ export const adminKeys = {
   },
   library: {
     blockKinds: createEntityKeys(ROOT, "library-block-kinds"),
+    blockTemplates: createEntityKeys(ROOT, "library-block-templates"),
     exercises: createEntityKeys(ROOT, "library-exercises"),
     schemeTemplates: createEntityKeys(ROOT, "library-scheme-templates"),
+    sessionTemplates: createEntityKeys(ROOT, "library-session-templates"),
+    weekTemplates: createEntityKeys(ROOT, "library-week-templates"),
   },
 
   pages: {

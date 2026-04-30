@@ -39,5 +39,8 @@ export * from "./skill-level.schema";
 export * from "./skill-level.types";
 export * from "./tempo-spec.schema";
 export * from "./tempo-spec.types";
+export * from "./template-limits.constants";
+export * from "./template-payload.schema";
+export * from "./template-payload.types";
 export * from "./workout-session-status.schema";
 export * from "./workout-session-status.types";

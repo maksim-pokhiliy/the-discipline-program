@@ -18,7 +18,7 @@ import {
 } from "../../mappers/lms";
 import { findOrThrow } from "../../utils";
 
-type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+export type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
 const toJsonInput = (value: unknown): Prisma.InputJsonValue => value as Prisma.InputJsonValue;
 
@@ -31,7 +31,7 @@ export type ApplyOutcome =
     }
   | { kind: "conflict"; currentVersion: number };
 
-const deriveExerciseSnapshot = async (
+export const deriveExerciseSnapshot = async (
   tx: TxClient,
   exerciseId: string,
 ): Promise<ExerciseSnapshot> => {

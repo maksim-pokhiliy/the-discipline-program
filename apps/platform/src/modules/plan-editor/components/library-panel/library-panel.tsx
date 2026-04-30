@@ -8,10 +8,20 @@ import { Box, InputAdornment, Stack, Tab, Tabs, TextField, Typography } from "@m
 import { useSession } from "@repo/auth/client";
 
 import { BlockKindList } from "./block-kind-list";
+import { BlockTemplateList } from "./block-template-list";
 import { ExerciseList } from "./exercise-list";
 import { SchemeTemplateList } from "./scheme-template-list";
+import { SessionTemplateList } from "./session-template-list";
+import { WeekTemplateList } from "./week-template-list";
 
-const TAB_VALUES = ["exercises", "block-kinds", "scheme-templates"] as const;
+const TAB_VALUES = [
+  "exercises",
+  "block-kinds",
+  "scheme-templates",
+  "block-templates",
+  "session-templates",
+  "week-templates",
+] as const;
 
 type TabValue = (typeof TAB_VALUES)[number];
 
@@ -19,6 +29,9 @@ const TAB_LABELS: Record<TabValue, string> = {
   exercises: "Exercises",
   "block-kinds": "Blocks",
   "scheme-templates": "Schemes",
+  "block-templates": "Block tpl",
+  "session-templates": "Session tpl",
+  "week-templates": "Week tpl",
 };
 
 export const LibraryPanel = () => {
@@ -79,6 +92,15 @@ export const LibraryPanel = () => {
         {tab === "block-kinds" && <BlockKindList search={search} currentUserId={currentUserId} />}
         {tab === "scheme-templates" && (
           <SchemeTemplateList search={search} currentUserId={currentUserId} />
+        )}
+        {tab === "block-templates" && (
+          <BlockTemplateList search={search} currentUserId={currentUserId} />
+        )}
+        {tab === "session-templates" && (
+          <SessionTemplateList search={search} currentUserId={currentUserId} />
+        )}
+        {tab === "week-templates" && (
+          <WeekTemplateList search={search} currentUserId={currentUserId} />
         )}
       </Box>
     </Stack>

@@ -27,6 +27,21 @@ export const ADMIN_NAVIGATION: AdminNavigationConfig = {
           href: "/library/scheme-templates",
           icon: "library-scheme-templates",
         },
+        {
+          text: "Block templates",
+          href: "/library/block-templates",
+          icon: "library-block-templates",
+        },
+        {
+          text: "Session templates",
+          href: "/library/session-templates",
+          icon: "library-session-templates",
+        },
+        {
+          text: "Week templates",
+          href: "/library/week-templates",
+          icon: "library-week-templates",
+        },
       ],
     },
   ],

@@ -10,8 +10,11 @@ export const createApi = (client: ApiClient) => ({
   coachInvite: endpoints.createCoachInviteAPI(client),
   library: {
     blockKinds: endpoints.createLibraryBlockKindsAPI(client),
+    blockTemplates: endpoints.createLibraryBlockTemplatesAPI(client),
     exercises: endpoints.createLibraryExercisesAPI(client),
     schemeTemplates: endpoints.createLibrarySchemeTemplatesAPI(client),
+    sessionTemplates: endpoints.createLibrarySessionTemplatesAPI(client),
+    weekTemplates: endpoints.createLibraryWeekTemplatesAPI(client),
   },
   planBulkPatch: endpoints.createPlanBulkPatchAPI(client),
   planCoachAssignments: endpoints.createPlanCoachAssignmentsAPI(client),

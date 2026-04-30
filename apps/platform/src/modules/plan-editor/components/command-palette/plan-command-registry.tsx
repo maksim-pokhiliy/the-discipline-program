@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
@@ -21,6 +21,7 @@ import {
 
 import { findBlockById, findSegmentById } from "../inspector/use-selected-entities";
 import { formatPlanSelection, parsePlanSelection } from "../plan-canvas/selection";
+import { SaveTemplateDialog } from "../save-template-dialog";
 
 import { usePaletteCommand } from "./command-palette.context";
 import { createApplyTemplateCommand, promptForTemplateFromWindow } from "./commands/apply-template";
@@ -31,6 +32,7 @@ import {
 import { createCreateWeekCommand } from "./commands/create-week";
 import { createDuplicateWeekCommand } from "./commands/duplicate-week";
 import { createJumpToWeekCommand } from "./commands/jump-to-week";
+import { createSaveAsTemplateCommand } from "./commands/save-as-template";
 import { createSearchPlanCommand } from "./commands/search-plan";
 
 export type PlanCommandRegistryProps = {
@@ -95,6 +97,12 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
       return findBlockById(planStructure.data, selection.id);
     }
 
+    if (selection?.kind === "segment") {
+      const found = findSegmentById(planStructure.data, selection.id);
+
+      return found ? found.block : null;
+    }
+
     return null;
   }, [planStructure.data, selection]);
 
@@ -148,6 +156,41 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
   const maxIndex = planStructure.data?.window.maxIndex ?? 0;
   const currentWeekIndex = findCurrentWeekIndex(planStructure.data);
 
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+
+  const saveTemplateScope = selectedBlock ? "block" : null;
+  const triggerSaveTemplate = useCallback(() => {
+    if (!selectedBlock) {
+      return;
+    }
+
+    setSaveTemplateOpen(true);
+  }, [selectedBlock]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handler = (event: KeyboardEvent) => {
+      const isShortcut =
+        (event.metaKey || event.ctrlKey) && event.shiftKey && event.key.toLowerCase() === "s";
+
+      if (!isShortcut) {
+        return;
+      }
+
+      event.preventDefault();
+      triggerSaveTemplate();
+    };
+
+    window.addEventListener("keydown", handler);
+
+    return () => {
+      window.removeEventListener("keydown", handler);
+    };
+  }, [triggerSaveTemplate]);
+
   const createCommand = useMemo(() => createCreateWeekCommand(planId), [planId]);
   const duplicateCommand = useMemo(
     () => createDuplicateWeekCommand({ planId, currentWeekIndex }),
@@ -181,6 +224,15 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
       }),
     [applyTemplate, selectedSegment, templatesQuery.data],
   );
+  const saveAsTemplateCommand = useMemo(
+    () =>
+      createSaveAsTemplateCommand({
+        enabled: saveTemplateScope !== null,
+        scope: saveTemplateScope,
+        onTrigger: triggerSaveTemplate,
+      }),
+    [saveTemplateScope, triggerSaveTemplate],
+  );
 
   usePaletteCommand(createCommand);
   usePaletteCommand(duplicateCommand);
@@ -188,6 +240,13 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
   usePaletteCommand(searchCommand);
   usePaletteCommand(changeKindCommand);
   usePaletteCommand(applyTemplateCommand);
+  usePaletteCommand(saveAsTemplateCommand);
 
-  return null;
+  return (
+    <SaveTemplateDialog
+      open={saveTemplateOpen}
+      source={selectedBlock ? { scope: "block", block: selectedBlock } : null}
+      onClose={() => setSaveTemplateOpen(false)}
+    />
+  );
 };

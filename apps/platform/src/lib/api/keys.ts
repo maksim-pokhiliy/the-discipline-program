@@ -51,5 +51,17 @@ export const platformKeys = {
       ...createEntityKeys(ROOT, "library-scheme-templates"),
       bySearch: (query: string) => [...ROOT, "library-scheme-templates", "search", query] as const,
     },
+    blockTemplates: {
+      ...createEntityKeys(ROOT, "library-block-templates"),
+      bySearch: (query: string) => [...ROOT, "library-block-templates", "search", query] as const,
+    },
+    sessionTemplates: {
+      ...createEntityKeys(ROOT, "library-session-templates"),
+      bySearch: (query: string) => [...ROOT, "library-session-templates", "search", query] as const,
+    },
+    weekTemplates: {
+      ...createEntityKeys(ROOT, "library-week-templates"),
+      bySearch: (query: string) => [...ROOT, "library-week-templates", "search", query] as const,
+    },
   },
 } as const;
