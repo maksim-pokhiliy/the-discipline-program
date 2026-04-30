@@ -6,12 +6,13 @@ import { Stack, Typography } from "@mui/material";
 import { type PlanStructureSetGroup } from "@repo/contracts/lms/training-plan";
 
 import { EntryRow } from "./entry-row";
+import { type PlanCanvasSelectArgs } from "./plan-canvas";
 import { type PlanSelection } from "./selection";
 
 export type SetGroupGroupProps = {
   setGroup: PlanStructureSetGroup;
   selection: PlanSelection | null;
-  onSelect: (selection: PlanSelection) => void;
+  onSelect: (args: PlanCanvasSelectArgs) => void;
 };
 
 export const SetGroupGroup = ({ setGroup, selection, onSelect }: SetGroupGroupProps) => {

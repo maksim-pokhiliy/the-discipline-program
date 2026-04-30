@@ -8,7 +8,7 @@ import { useSearchParams } from "next/navigation";
 import { useBlockKindsPageData, usePlanStructure } from "@app/lib/hooks";
 
 import { useEditingTarget } from "../../lib/editing-target";
-import { parsePlanSelection } from "../plan-canvas/selection";
+import { parseSinglePlanSelection } from "../plan-canvas/selection";
 
 import { AthletePreview } from "./athlete-preview";
 import { BlockInspector } from "./block-inspector";
@@ -35,7 +35,10 @@ export const InspectorPanel = ({ planId }: InspectorPanelProps) => {
   const blockKinds = useBlockKindsPageData({ scope: "ALL", take: 200 });
   const { target } = useEditingTarget();
 
-  const selection = useMemo(() => parsePlanSelection(searchParams.get("selected")), [searchParams]);
+  const selection = useMemo(
+    () => parseSinglePlanSelection(searchParams.get("selected")),
+    [searchParams],
+  );
 
   const selectedBlock = useSelectedBlock(
     planStructure.data,

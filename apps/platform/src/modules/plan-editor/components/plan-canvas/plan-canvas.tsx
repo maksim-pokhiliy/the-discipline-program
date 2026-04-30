@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback } from "react";
 
 import { DndContext, closestCenter, DragOverlay } from "@dnd-kit/core";
 import { Alert, Box, Stack, Typography } from "@mui/material";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 import { type GetPlanStructureResponse } from "@repo/contracts/lms/training-plan";
 
@@ -15,8 +15,9 @@ import { useHistoryKeybindings, usePlanHistory } from "../undo-redo";
 
 import { DayCard } from "./day-card";
 import { EffectivePlanDecorationProvider } from "./effective-plan-decoration-context";
-import { formatPlanSelection, parsePlanSelection, type PlanSelection } from "./selection";
+import { type PlanSelection, type PlanSelectionKind } from "./selection";
 import { usePlanCanvasDnd } from "./use-plan-canvas-dnd";
+import { usePlanCanvasSelection } from "./use-plan-canvas-selection";
 import { WeekNavigator } from "./week-navigator";
 
 const DEFAULT_WINDOW = 5;
@@ -33,10 +34,16 @@ export type PlanCanvasProps = {
   planId: string;
 };
 
+export type PlanCanvasSelectArgs = {
+  kind: PlanSelectionKind;
+  id: string;
+  additive: boolean;
+};
+
 const renderWeeks = (
   data: GetPlanStructureResponse,
   selection: PlanSelection | null,
-  onSelect: (selection: PlanSelection) => void,
+  onSelect: (args: PlanCanvasSelectArgs) => void,
 ) =>
   data.plan.weeks.map((week) => (
     <Stack key={week.id} spacing={1.5}>
@@ -53,8 +60,6 @@ const renderWeeks = (
   ));
 
 export const PlanCanvas = ({ planId }: PlanCanvasProps) => {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const fromParam = searchParams.get("fromWeek");
@@ -67,16 +72,13 @@ export const PlanCanvas = ({ planId }: PlanCanvasProps) => {
   const { target } = useEditingTarget();
   const decorationEnrollmentId = target.kind === "athlete" ? target.enrollmentId : null;
 
-  const selection = useMemo(() => parsePlanSelection(searchParams.get("selected")), [searchParams]);
+  const { selection, toggleSelection } = usePlanCanvasSelection();
 
   const handleSelect = useCallback(
-    (next: PlanSelection) => {
-      const params = new URLSearchParams(searchParams.toString());
-
-      params.set("selected", formatPlanSelection(next));
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    ({ kind, id, additive }: PlanCanvasSelectArgs) => {
+      toggleSelection(kind, id, additive);
     },
-    [pathname, router, searchParams],
+    [toggleSelection],
   );
 
   const history = usePlanHistory(planId);

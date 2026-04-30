@@ -19,21 +19,32 @@ import {
   useSchemeTemplatesPageData,
 } from "@app/lib/hooks";
 
+import { useBulkActionContext } from "../bulk-action-toolbar";
 import { findBlockById, findSegmentById } from "../inspector/use-selected-entities";
-import { formatPlanSelection, parsePlanSelection } from "../plan-canvas/selection";
+import {
+  formatSinglePlanSelection,
+  parsePlanSelection,
+  parseSinglePlanSelection,
+} from "../plan-canvas/selection";
 import { SaveTemplateDialog } from "../save-template-dialog";
 
 import { usePaletteCommand } from "./command-palette.context";
 import { createApplyTemplateCommand, promptForTemplateFromWindow } from "./commands/apply-template";
+import { createBulkDeleteCommand } from "./commands/bulk-delete";
+import { createBulkReplaceCommand } from "./commands/bulk-replace";
+import { createBulkSuspendCommand } from "./commands/bulk-suspend";
 import {
   createChangeBlockKindCommand,
   promptForBlockKindFromWindow,
 } from "./commands/change-block-kind";
+import { createCloneDayCommand } from "./commands/clone-day";
 import { createCreateWeekCommand } from "./commands/create-week";
 import { createDuplicateWeekCommand } from "./commands/duplicate-week";
 import { createJumpToWeekCommand } from "./commands/jump-to-week";
+import { createRepeatWeeksCommand } from "./commands/repeat-weeks";
 import { createSaveAsTemplateCommand } from "./commands/save-as-template";
 import { createSearchPlanCommand } from "./commands/search-plan";
+import { createShiftWeeksCommand } from "./commands/shift-weeks";
 
 export type PlanCommandRegistryProps = {
   planId: string;
@@ -90,7 +101,16 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
   const templatesQuery = useSchemeTemplatesPageData({ scope: "ALL", take: 200 });
   const bulkPatch = usePlanBulkPatch(planId);
 
-  const selection = useMemo(() => parsePlanSelection(searchParams.get("selected")), [searchParams]);
+  const selection = useMemo(
+    () => parseSinglePlanSelection(searchParams.get("selected")),
+    [searchParams],
+  );
+  const multiSelection = useMemo(
+    () => parsePlanSelection(searchParams.get("selected")),
+    [searchParams],
+  );
+
+  const bulkActions = useBulkActionContext();
 
   const selectedBlock = useMemo<PlanStructureBlock | null>(() => {
     if (selection?.kind === "block") {
@@ -133,7 +153,7 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
 
       params.set("fromWeek", String(result.weekIndex));
       params.set("toWeek", String(result.weekIndex));
-      params.set("selected", formatPlanSelection({ kind: "block", id: result.blockId }));
+      params.set("selected", formatSinglePlanSelection({ kind: "block", id: result.blockId }));
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     },
     [pathname, router, searchParams],
@@ -234,6 +254,63 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
     [saveTemplateScope, triggerSaveTemplate],
   );
 
+  const bulkCount = multiSelection?.ids.length ?? 0;
+  const bulkKind = multiSelection?.kind ?? null;
+  const isMultiSelection = bulkCount >= 2;
+  const bulkNoun =
+    bulkKind === "block"
+      ? bulkCount === 1
+        ? "block"
+        : "blocks"
+      : bulkKind === "segment"
+        ? bulkCount === 1
+          ? "segment"
+          : "segments"
+        : bulkCount === 1
+          ? "entry"
+          : "entries";
+
+  const bulkReplaceCommand = useMemo(
+    () =>
+      createBulkReplaceCommand({
+        enabled: isMultiSelection && bulkKind === "entry",
+        count: bulkCount,
+        onTrigger: () => bulkActions.openDialog("replace"),
+      }),
+    [bulkActions, bulkCount, bulkKind, isMultiSelection],
+  );
+  const bulkSuspendCommand = useMemo(
+    () =>
+      createBulkSuspendCommand({
+        enabled: isMultiSelection && bulkKind === "block",
+        count: bulkCount,
+        onTrigger: () => bulkActions.openDialog("suspend"),
+      }),
+    [bulkActions, bulkCount, bulkKind, isMultiSelection],
+  );
+  const bulkDeleteCommand = useMemo(
+    () =>
+      createBulkDeleteCommand({
+        enabled: isMultiSelection,
+        count: bulkCount,
+        noun: bulkNoun,
+        onTrigger: () => bulkActions.openDialog("delete"),
+      }),
+    [bulkActions, bulkCount, bulkNoun, isMultiSelection],
+  );
+  const cloneDayCommand = useMemo(
+    () => createCloneDayCommand({ onTrigger: () => bulkActions.openDialog("clone-day") }),
+    [bulkActions],
+  );
+  const repeatWeeksCommand = useMemo(
+    () => createRepeatWeeksCommand({ onTrigger: () => bulkActions.openDialog("repeat-weeks") }),
+    [bulkActions],
+  );
+  const shiftWeeksCommand = useMemo(
+    () => createShiftWeeksCommand({ onTrigger: () => bulkActions.openDialog("shift-weeks") }),
+    [bulkActions],
+  );
+
   usePaletteCommand(createCommand);
   usePaletteCommand(duplicateCommand);
   usePaletteCommand(jumpCommand);
@@ -241,6 +318,12 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
   usePaletteCommand(changeKindCommand);
   usePaletteCommand(applyTemplateCommand);
   usePaletteCommand(saveAsTemplateCommand);
+  usePaletteCommand(bulkReplaceCommand);
+  usePaletteCommand(bulkSuspendCommand);
+  usePaletteCommand(bulkDeleteCommand);
+  usePaletteCommand(cloneDayCommand);
+  usePaletteCommand(repeatWeeksCommand);
+  usePaletteCommand(shiftWeeksCommand);
 
   return (
     <SaveTemplateDialog

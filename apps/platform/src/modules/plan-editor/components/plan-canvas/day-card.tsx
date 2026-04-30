@@ -7,6 +7,7 @@ import { type PlanStructureDay } from "@repo/contracts/lms/training-plan";
 import { DecorationBadge } from "./decoration-badge";
 import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-context";
 import { getDecorationStyles } from "./get-decoration-styles";
+import { type PlanCanvasSelectArgs } from "./plan-canvas";
 import { type PlanSelection } from "./selection";
 import { SessionList } from "./session-list";
 
@@ -23,7 +24,7 @@ const DAY_LABEL: Record<PlanStructureDay["dayOfWeek"], string> = {
 export type DayCardProps = {
   day: PlanStructureDay;
   selection: PlanSelection | null;
-  onSelect: (selection: PlanSelection) => void;
+  onSelect: (args: PlanCanvasSelectArgs) => void;
 };
 
 export const DayCard = ({ day, selection, onSelect }: DayCardProps) => {

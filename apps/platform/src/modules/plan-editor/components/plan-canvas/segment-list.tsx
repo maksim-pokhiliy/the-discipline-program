@@ -5,6 +5,7 @@ import { Virtuoso } from "react-virtuoso";
 
 import { type PlanStructureSegment } from "@repo/contracts/lms/training-plan";
 
+import { type PlanCanvasSelectArgs } from "./plan-canvas";
 import { SegmentRow } from "./segment-row";
 import { type PlanSelection } from "./selection";
 
@@ -13,7 +14,7 @@ const VIRTUALIZE_THRESHOLD = 20;
 type SegmentListProps = {
   segments: PlanStructureSegment[];
   selection: PlanSelection | null;
-  onSelect: (selection: PlanSelection) => void;
+  onSelect: (args: PlanCanvasSelectArgs) => void;
 };
 
 export const SegmentList = ({ segments, selection, onSelect }: SegmentListProps) => {

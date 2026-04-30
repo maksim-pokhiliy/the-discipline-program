@@ -10,12 +10,13 @@ import { BlockTree } from "./block-tree";
 import { DecorationBadge } from "./decoration-badge";
 import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-context";
 import { getDecorationStyles } from "./get-decoration-styles";
+import { type PlanCanvasSelectArgs } from "./plan-canvas";
 import { type PlanSelection } from "./selection";
 
 export type SessionListProps = {
   session: PlanStructureSession;
   selection: PlanSelection | null;
-  onSelect: (selection: PlanSelection) => void;
+  onSelect: (args: PlanCanvasSelectArgs) => void;
 };
 
 export const SessionList = ({ session, selection, onSelect }: SessionListProps) => {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, type MouseEvent } from "react";
 
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -12,14 +12,17 @@ import { type PlanStructureBlock } from "@repo/contracts/lms/training-plan";
 import { DecorationBadge } from "./decoration-badge";
 import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-context";
 import { getDecorationStyles } from "./get-decoration-styles";
+import { type PlanCanvasSelectArgs } from "./plan-canvas";
 import { SegmentList } from "./segment-list";
-import { type PlanSelection } from "./selection";
+import { planSelectionContains, type PlanSelection } from "./selection";
 
 export type BlockTreeProps = {
   block: PlanStructureBlock;
   selection: PlanSelection | null;
-  onSelect: (selection: PlanSelection) => void;
+  onSelect: (args: PlanCanvasSelectArgs) => void;
 };
+
+const isAdditive = (event: MouseEvent): boolean => event.shiftKey || event.metaKey || event.ctrlKey;
 
 export const BlockTree = ({ block, selection, onSelect }: BlockTreeProps) => {
   const sortable = useSortable({
@@ -30,13 +33,13 @@ export const BlockTree = ({ block, selection, onSelect }: BlockTreeProps) => {
     transform: CSS.Translate.toString(sortable.transform),
     transition: sortable.transition,
   };
-  const isSelected = selection?.kind === "block" && selection.id === block.id;
+  const isSelected = planSelectionContains(selection, "block", block.id);
   const segmentIds = block.segments.map((s) => `segment:${s.id}`);
   const decoration = useEffectivePlanDecorationContext().getDecoration(block.id);
   const decorationStyles = getDecorationStyles(decoration);
 
   const handleHeaderClick = useCallback(
-    () => onSelect({ kind: "block", id: block.id }),
+    (event: MouseEvent) => onSelect({ kind: "block", id: block.id, additive: isAdditive(event) }),
     [block.id, onSelect],
   );
 
@@ -49,6 +52,9 @@ export const BlockTree = ({ block, selection, onSelect }: BlockTreeProps) => {
         {
           p: 1,
           bgcolor: isSelected ? "action.selected" : "background.paper",
+          outline: isSelected ? "2px solid" : "none",
+          outlineColor: "primary.main",
+          outlineOffset: "-2px",
         },
         ...(Array.isArray(decorationStyles.sx) ? decorationStyles.sx : [decorationStyles.sx]),
       ]}
