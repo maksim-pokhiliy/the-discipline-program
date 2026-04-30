@@ -1,27 +1,41 @@
 "use client";
 
-import { Alert, Button, Stack, Typography } from "@mui/material";
-import Link from "next/link";
+import { Alert, CircularProgress, Stack } from "@mui/material";
 
-export const BlockTemplateLibraryCreateView = () => (
-  <Stack spacing={3}>
-    <Stack spacing={1}>
-      <Typography variant="h5">Create block template</Typography>
-      <Typography variant="body2" color="text.secondary">
-        Block templates capture a snapshot of an existing block (segments + set groups + entries).
-      </Typography>
-    </Stack>
+import { type BlockKind } from "@repo/contracts/lms/block-kind";
 
-    <Alert severity="info">
-      Block templates are authored from the platform plan editor. Select a block on the canvas and
-      press <strong>Cmd+Shift+S</strong> to save it as a template. Admins manage existing templates
-      from this list (edit metadata, promote / demote, delete).
-    </Alert>
+import { useBlockKindsPageData } from "@app/lib/hooks";
 
-    <Stack direction="row" spacing={2}>
-      <Button component={Link} href="/library/block-templates" variant="outlined">
-        Back to Block templates
-      </Button>
-    </Stack>
-  </Stack>
-);
+import { BlockTemplateCreateForm } from "./block-template-create-form";
+
+export const BlockTemplateLibraryCreateView = () => {
+  const { data: blockKindsResponse, isLoading, isError } = useBlockKindsPageData();
+
+  if (isLoading) {
+    return (
+      <Stack alignItems="center" sx={{ py: 8 }}>
+        <CircularProgress />
+      </Stack>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Alert severity="error">Failed to load block kinds. Refresh the page to try again.</Alert>
+    );
+  }
+
+  const blockKinds: BlockKind[] = blockKindsResponse?.items ?? [];
+  const firstKind = blockKinds[0];
+
+  if (!firstKind) {
+    return (
+      <Alert severity="warning">
+        No block kinds found in the library. Create at least one block kind before authoring a
+        template.
+      </Alert>
+    );
+  }
+
+  return <BlockTemplateCreateForm initialKindId={firstKind.id} />;
+};
