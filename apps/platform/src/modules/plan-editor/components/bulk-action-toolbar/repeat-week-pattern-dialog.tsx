@@ -17,6 +17,8 @@ import { type GetPlanStructureResponse } from "@repo/contracts/lms/training-plan
 
 import { usePlanBulkPatch } from "@app/lib/hooks";
 
+import { useTouchTargetSx } from "../plan-canvas/use-touch-target-sx";
+
 import { buildRepeatWeekPatternOps } from "./op-builders";
 import { useBulkOpRunner } from "./use-bulk-op-runner";
 
@@ -56,6 +58,7 @@ export const RepeatWeekPatternDialog = ({
     mutateAsync: bulkPatch.mutateAsync,
     successMessage: "Pattern repeated",
   });
+  const touchTargetSx = useTouchTargetSx();
 
   const [sourceText, setSourceText] = useState("");
   const [destinationText, setDestinationText] = useState("");
@@ -134,7 +137,9 @@ export const RepeatWeekPatternDialog = ({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} sx={touchTargetSx}>
+          Cancel
+        </Button>
         <Button
           variant="contained"
           onClick={() => {
@@ -143,6 +148,7 @@ export const RepeatWeekPatternDialog = ({
           disabled={
             runner.state.running || result.chunks.length === 0 || !sourceRange || !destinationRange
           }
+          sx={touchTargetSx}
         >
           {runner.state.running
             ? `Saving (${runner.state.completedChunks.toString()}/${runner.state.totalChunks.toString()})`

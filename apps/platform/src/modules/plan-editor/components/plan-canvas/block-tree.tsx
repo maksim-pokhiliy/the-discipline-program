@@ -15,6 +15,7 @@ import { getDecorationStyles } from "./get-decoration-styles";
 import { type PlanCanvasSelectArgs } from "./plan-canvas";
 import { SegmentList } from "./segment-list";
 import { planSelectionContains, type PlanSelection } from "./selection";
+import { useTouchTargetSx } from "./use-touch-target-sx";
 
 export type BlockTreeProps = {
   block: PlanStructureBlock;
@@ -37,6 +38,7 @@ export const BlockTree = ({ block, selection, onSelect }: BlockTreeProps) => {
   const segmentIds = block.segments.map((s) => `segment:${s.id}`);
   const decoration = useEffectivePlanDecorationContext().getDecoration(block.id);
   const decorationStyles = getDecorationStyles(decoration);
+  const touchTargetSx = useTouchTargetSx();
 
   const handleHeaderClick = useCallback(
     (event: MouseEvent) => onSelect({ kind: "block", id: block.id, additive: isAdditive(event) }),
@@ -60,7 +62,13 @@ export const BlockTree = ({ block, selection, onSelect }: BlockTreeProps) => {
       ]}
     >
       <Stack spacing={1}>
-        <Stack direction="row" alignItems="center" spacing={0.5} onClick={handleHeaderClick}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={0.5}
+          onClick={handleHeaderClick}
+          sx={touchTargetSx}
+        >
           <Box
             {...sortable.attributes}
             {...sortable.listeners}

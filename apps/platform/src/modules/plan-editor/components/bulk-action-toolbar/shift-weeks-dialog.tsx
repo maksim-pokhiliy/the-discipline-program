@@ -17,6 +17,8 @@ import { type GetPlanStructureResponse } from "@repo/contracts/lms/training-plan
 
 import { usePlanBulkPatch } from "@app/lib/hooks";
 
+import { useTouchTargetSx } from "../plan-canvas/use-touch-target-sx";
+
 import { buildShiftWeeksOps } from "./op-builders";
 import { useBulkOpRunner } from "./use-bulk-op-runner";
 
@@ -51,6 +53,7 @@ export const ShiftWeeksDialog = ({ open, onClose, planId, planData }: ShiftWeeks
     mutateAsync: bulkPatch.mutateAsync,
     successMessage: "Weeks shifted",
   });
+  const touchTargetSx = useTouchTargetSx();
 
   const [rangeText, setRangeText] = useState("");
   const [deltaText, setDeltaText] = useState("");
@@ -141,13 +144,16 @@ export const ShiftWeeksDialog = ({ open, onClose, planId, planData }: ShiftWeeks
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} sx={touchTargetSx}>
+          Cancel
+        </Button>
         <Button
           variant="contained"
           onClick={() => {
             void handleConfirm();
           }}
           disabled={runner.state.running || result.chunks.length === 0 || !range || delta === null}
+          sx={touchTargetSx}
         >
           {runner.state.running
             ? `Saving (${runner.state.completedChunks.toString()}/${runner.state.totalChunks.toString()})`

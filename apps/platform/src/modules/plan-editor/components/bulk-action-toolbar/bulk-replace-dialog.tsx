@@ -24,6 +24,7 @@ import { type GetPlanStructureResponse } from "@repo/contracts/lms/training-plan
 import { usePlanBulkPatch, useExercisesPageData } from "@app/lib/hooks";
 
 import { type PlanSelection } from "../plan-canvas";
+import { useTouchTargetSx } from "../plan-canvas/use-touch-target-sx";
 
 import { buildBulkReplaceOps, collectReplaceTargets, countOps } from "./op-builders";
 import { useBulkOpRunner } from "./use-bulk-op-runner";
@@ -50,6 +51,7 @@ export const BulkReplaceDialog = ({
     mutateAsync: bulkPatch.mutateAsync,
     successMessage: "Entries replaced",
   });
+  const touchTargetSx = useTouchTargetSx();
 
   const targets = useMemo(() => {
     if (selection.kind !== "entry") {
@@ -127,13 +129,16 @@ export const BulkReplaceDialog = ({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} sx={touchTargetSx}>
+          Cancel
+        </Button>
         <Button
           variant="contained"
           onClick={() => {
             void handleConfirm();
           }}
           disabled={!replacement || runner.state.running || previewItems.length === 0}
+          sx={touchTargetSx}
         >
           {runner.state.running
             ? `Saving (${runner.state.completedChunks.toString()}/${runner.state.totalChunks.toString()})`

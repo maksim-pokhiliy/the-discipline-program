@@ -12,3 +12,5 @@ export const LAYOUT = {
   platformFabBottom: 100,
   platformFabRight: 20,
 } as const;
+
+export const MOBILE_BREAKPOINT_PX = 900;

@@ -29,6 +29,8 @@ import {
 
 import { usePlanBulkPatch } from "@app/lib/hooks";
 
+import { useTouchTargetSx } from "../plan-canvas/use-touch-target-sx";
+
 import { buildCloneDayOps, type CloneDayTarget } from "./op-builders";
 import { useBulkOpRunner } from "./use-bulk-op-runner";
 
@@ -73,6 +75,7 @@ export const CloneDayDialog = ({ open, onClose, planId, planData }: CloneDayDial
     mutateAsync: bulkPatch.mutateAsync,
     successMessage: "Day cloned",
   });
+  const touchTargetSx = useTouchTargetSx();
 
   const days = useMemo(() => collectDays(planData), [planData]);
   const [sourceId, setSourceId] = useState<string>("");
@@ -176,7 +179,9 @@ export const CloneDayDialog = ({ open, onClose, planId, planData }: CloneDayDial
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} sx={touchTargetSx}>
+          Cancel
+        </Button>
         <Button
           variant="contained"
           onClick={() => {
@@ -185,6 +190,7 @@ export const CloneDayDialog = ({ open, onClose, planId, planData }: CloneDayDial
           disabled={
             runner.state.running || !source || targets.length === 0 || result.chunks.length === 0
           }
+          sx={touchTargetSx}
         >
           {runner.state.running
             ? `Cloning (${runner.state.completedChunks.toString()}/${runner.state.totalChunks.toString()})`

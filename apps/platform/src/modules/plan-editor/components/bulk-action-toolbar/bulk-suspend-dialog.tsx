@@ -22,6 +22,7 @@ import { usePlanBulkPatch } from "@app/lib/hooks";
 
 import { findBlockById } from "../inspector/use-selected-entities";
 import { type PlanSelection } from "../plan-canvas";
+import { useTouchTargetSx } from "../plan-canvas/use-touch-target-sx";
 
 import { buildBulkSuspendOps } from "./op-builders";
 import { useBulkOpRunner } from "./use-bulk-op-runner";
@@ -49,6 +50,7 @@ export const BulkSuspendDialog = ({
     mutateAsync: bulkPatch.mutateAsync,
     successMessage: suspended ? "Blocks suspended" : "Blocks reactivated",
   });
+  const touchTargetSx = useTouchTargetSx();
 
   const blocks = useMemo(() => {
     if (selection.kind !== "block") {
@@ -104,7 +106,9 @@ export const BulkSuspendDialog = ({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} sx={touchTargetSx}>
+          Cancel
+        </Button>
         <Button
           variant="contained"
           color={suspended ? "warning" : "primary"}
@@ -112,6 +116,7 @@ export const BulkSuspendDialog = ({
             void handleConfirm();
           }}
           disabled={runner.state.running || blocks.length === 0}
+          sx={touchTargetSx}
         >
           {runner.state.running
             ? `Saving (${runner.state.completedChunks.toString()}/${runner.state.totalChunks.toString()})`

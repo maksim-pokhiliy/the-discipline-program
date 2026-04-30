@@ -7,6 +7,8 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { IconButton, MenuItem, Stack, TextField, Typography } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { useTouchTargetSx } from "./use-touch-target-sx";
+
 export type WeekNavigatorProps = {
   fromWeek: number;
   toWeek: number;
@@ -19,6 +21,7 @@ export const WeekNavigator = ({ fromWeek, toWeek, maxIndex }: WeekNavigatorProps
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const touchTargetSx = useTouchTargetSx();
 
   const setRange = useCallback(
     (next: { fromWeek: number; toWeek: number }) => {
@@ -80,6 +83,7 @@ export const WeekNavigator = ({ fromWeek, toWeek, maxIndex }: WeekNavigatorProps
         disabled={fromWeek <= 0}
         size="small"
         aria-label="Previous weeks"
+        sx={touchTargetSx}
       >
         <ChevronLeftIcon />
       </IconButton>
@@ -93,7 +97,7 @@ export const WeekNavigator = ({ fromWeek, toWeek, maxIndex }: WeekNavigatorProps
         size="small"
         value={Math.min(Math.max(fromWeek, 0), maxIndex)}
         onChange={(event) => handleSelect(Number(event.target.value))}
-        sx={{ minWidth: 120 }}
+        sx={[{ minWidth: 120 }, touchTargetSx]}
         aria-label="Jump to week"
       >
         {weeks.map((index) => (
@@ -108,6 +112,7 @@ export const WeekNavigator = ({ fromWeek, toWeek, maxIndex }: WeekNavigatorProps
         disabled={toWeek >= maxIndex}
         size="small"
         aria-label="Next weeks"
+        sx={touchTargetSx}
       >
         <ChevronRightIcon />
       </IconButton>

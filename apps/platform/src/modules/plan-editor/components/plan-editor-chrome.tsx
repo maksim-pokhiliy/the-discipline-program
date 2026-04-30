@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Stack } from "@mui/material";
+import { Box, Stack, useMediaQuery, useTheme } from "@mui/material";
 
 import { useBeforeunloadGuard } from "@repo/ui";
 
@@ -8,6 +8,7 @@ import { BulkActionToolbar } from "./bulk-action-toolbar";
 import { InspectorPanel } from "./inspector";
 import { LibraryPanel } from "./library-panel";
 import { PlanCanvas } from "./plan-canvas";
+import { PlanEditorMobileChrome } from "./plan-editor-mobile-chrome";
 
 const LIBRARY_WIDTH = 280;
 const INSPECTOR_WIDTH = 360;
@@ -18,8 +19,12 @@ type PlanEditorChromeProps = {
 
 export const PlanEditorChrome = ({ planId }: PlanEditorChromeProps) => {
   useBeforeunloadGuard();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  return (
+  return isMobile ? (
+    <PlanEditorMobileChrome planId={planId} />
+  ) : (
     <Stack
       direction="row"
       sx={{

@@ -12,6 +12,7 @@ import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-c
 import { getDecorationStyles } from "./get-decoration-styles";
 import { type PlanCanvasSelectArgs } from "./plan-canvas";
 import { planSelectionContains, type PlanSelection } from "./selection";
+import { useTouchTargetSx } from "./use-touch-target-sx";
 
 export type EntryRowProps = {
   setGroupId: string;
@@ -32,6 +33,7 @@ export const EntryRow = ({ entryId, exerciseName, selection, onSelect }: EntryRo
   const isSelected = planSelectionContains(selection, "entry", entryId);
   const decoration = useEffectivePlanDecorationContext().getDecoration(entryId);
   const decorationStyles = getDecorationStyles(decoration);
+  const touchTargetSx = useTouchTargetSx();
 
   return (
     <Stack
@@ -53,6 +55,7 @@ export const EntryRow = ({ entryId, exerciseName, selection, onSelect }: EntryRo
           outlineOffset: "-2px",
           "&:hover": { bgcolor: "action.hover" },
         },
+        touchTargetSx,
         ...(Array.isArray(decorationStyles.sx) ? decorationStyles.sx : [decorationStyles.sx]),
       ]}
     >

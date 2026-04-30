@@ -5,6 +5,8 @@ import { Box, Stack, Typography } from "@mui/material";
 
 import { type LibraryScope } from "@repo/contracts/lms/_domain";
 
+import { useTouchTargetSx } from "../plan-canvas/use-touch-target-sx";
+
 export type TemplateKind = "block" | "session" | "week";
 
 type DraggableTemplateListItemProps = {
@@ -27,20 +29,24 @@ export const DraggableTemplateListItem = ({
     id: draggableId,
     data: { kind: `template-${kind}`, templateId },
   });
+  const touchTargetSx = useTouchTargetSx();
 
   return (
     <Box
       ref={setNodeRef}
       {...attributes}
       {...listeners}
-      sx={{
-        px: 1,
-        py: 0.75,
-        borderRadius: 1,
-        cursor: isDragging ? "grabbing" : "grab",
-        opacity: isDragging ? 0.5 : 1,
-        "&:hover": { bgcolor: "action.hover" },
-      }}
+      sx={[
+        {
+          px: 1,
+          py: 0.75,
+          borderRadius: 1,
+          cursor: isDragging ? "grabbing" : "grab",
+          opacity: isDragging ? 0.5 : 1,
+          "&:hover": { bgcolor: "action.hover" },
+        },
+        touchTargetSx,
+      ]}
     >
       <Stack spacing={0.25}>
         <Typography variant="body2" noWrap>

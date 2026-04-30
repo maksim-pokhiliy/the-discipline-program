@@ -9,6 +9,7 @@ import { useBlockKindsPageData, usePlanStructure } from "@app/lib/hooks";
 
 import { useEditingTarget } from "../../lib/editing-target";
 import { parseSinglePlanSelection } from "../plan-canvas/selection";
+import { useTouchTargetSx } from "../plan-canvas/use-touch-target-sx";
 
 import { AthletePreview } from "./athlete-preview";
 import { BlockInspector } from "./block-inspector";
@@ -34,6 +35,7 @@ export const InspectorPanel = ({ planId }: InspectorPanelProps) => {
   const planStructure = usePlanStructure(planId, { fromWeek, toWeek });
   const blockKinds = useBlockKindsPageData({ scope: "ALL", take: 200 });
   const { target } = useEditingTarget();
+  const touchTargetSx = useTouchTargetSx();
 
   const selection = useMemo(
     () => parseSinglePlanSelection(searchParams.get("selected")),
@@ -133,7 +135,7 @@ export const InspectorPanel = ({ planId }: InspectorPanelProps) => {
         overflowY: "auto",
       }}
     >
-      <Stack direction="row" alignItems="center" spacing={1}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={touchTargetSx}>
         <Typography variant="h6" sx={{ flex: 1 }}>
           Inspector
         </Typography>

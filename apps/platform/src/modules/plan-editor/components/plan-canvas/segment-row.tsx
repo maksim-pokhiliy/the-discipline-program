@@ -15,6 +15,7 @@ import { getDecorationStyles } from "./get-decoration-styles";
 import { type PlanCanvasSelectArgs } from "./plan-canvas";
 import { planSelectionContains, type PlanSelection } from "./selection";
 import { SetGroupGroup } from "./set-group-group";
+import { useTouchTargetSx } from "./use-touch-target-sx";
 
 export type SegmentRowProps = {
   segment: PlanStructureSegment;
@@ -37,6 +38,7 @@ export const SegmentRow = ({ segment, selection, onSelect }: SegmentRowProps) =>
   const totalEntries = segment.setGroups.reduce((acc, sg) => acc + sg.entries.length, 0);
   const decoration = useEffectivePlanDecorationContext().getDecoration(segment.id);
   const decorationStyles = getDecorationStyles(decoration);
+  const touchTargetSx = useTouchTargetSx();
 
   return (
     <Stack
@@ -63,7 +65,7 @@ export const SegmentRow = ({ segment, selection, onSelect }: SegmentRowProps) =>
         onClick={(event) =>
           onSelect({ kind: "segment", id: segment.id, additive: isAdditive(event) })
         }
-        sx={{ cursor: "pointer" }}
+        sx={[{ cursor: "pointer" }, touchTargetSx]}
       >
         <Box
           {...sortable.attributes}

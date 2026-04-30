@@ -7,6 +7,7 @@ import { Box, Button, Chip, Stack, Typography } from "@mui/material";
 import { usePlanStructure } from "@app/lib/hooks";
 
 import { type PlanSelection, usePlanCanvasSelection } from "../plan-canvas";
+import { useTouchTargetSx } from "../plan-canvas/use-touch-target-sx";
 
 import { useBulkActionContext } from "./bulk-action-context";
 import { BulkDeleteDialog } from "./bulk-delete-dialog";
@@ -32,6 +33,7 @@ export const BulkActionToolbar = ({ planId }: BulkActionToolbarProps) => {
   const { selection, clearSelection } = usePlanCanvasSelection();
   const planStructure = usePlanStructure(planId);
   const { dialog, openDialog, closeDialog } = useBulkActionContext();
+  const touchTargetSx = useTouchTargetSx();
 
   const visible = useMemo(() => Boolean(selection && selection.ids.length >= 2), [selection]);
 
@@ -60,17 +62,32 @@ export const BulkActionToolbar = ({ planId }: BulkActionToolbarProps) => {
 
             <Stack direction="row" spacing={1} sx={{ flex: 1, flexWrap: "wrap" }} useFlexGap>
               {isEntries && (
-                <Button variant="contained" size="small" onClick={() => openDialog("replace")}>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={() => openDialog("replace")}
+                  sx={touchTargetSx}
+                >
                   Replace exercise
                 </Button>
               )}
               {isBlocks && (
-                <Button variant="outlined" size="small" onClick={() => openDialog("suspend")}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => openDialog("suspend")}
+                  sx={touchTargetSx}
+                >
                   Suspend blocks
                 </Button>
               )}
               {isBlocks && (
-                <Button variant="outlined" size="small" onClick={() => openDialog("unsuspend")}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => openDialog("unsuspend")}
+                  sx={touchTargetSx}
+                >
                   Reactivate blocks
                 </Button>
               )}
@@ -79,21 +96,37 @@ export const BulkActionToolbar = ({ planId }: BulkActionToolbarProps) => {
                 color="error"
                 size="small"
                 onClick={() => openDialog("delete")}
+                sx={touchTargetSx}
               >
                 Delete {isEntries ? "entries" : isSegments ? "segments" : "blocks"}
               </Button>
-              <Button variant="text" size="small" onClick={() => openDialog("clone-day")}>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => openDialog("clone-day")}
+                sx={touchTargetSx}
+              >
                 Clone day
               </Button>
-              <Button variant="text" size="small" onClick={() => openDialog("repeat-weeks")}>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => openDialog("repeat-weeks")}
+                sx={touchTargetSx}
+              >
                 Repeat weeks
               </Button>
-              <Button variant="text" size="small" onClick={() => openDialog("shift-weeks")}>
+              <Button
+                variant="text"
+                size="small"
+                onClick={() => openDialog("shift-weeks")}
+                sx={touchTargetSx}
+              >
                 Shift weeks
               </Button>
             </Stack>
 
-            <Button size="small" onClick={clearSelection}>
+            <Button size="small" onClick={clearSelection} sx={touchTargetSx}>
               Clear
             </Button>
             <Typography variant="caption" color="text.secondary">

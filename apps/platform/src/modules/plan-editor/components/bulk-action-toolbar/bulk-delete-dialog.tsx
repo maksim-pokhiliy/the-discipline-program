@@ -22,6 +22,7 @@ import { usePlanBulkPatch } from "@app/lib/hooks";
 
 import { findBlockById, findEntryById, findSegmentById } from "../inspector/use-selected-entities";
 import { type PlanSelection } from "../plan-canvas";
+import { useTouchTargetSx } from "../plan-canvas/use-touch-target-sx";
 
 import {
   buildBulkDeleteBlockOps,
@@ -136,6 +137,7 @@ export const BulkDeleteDialog = ({
     mutateAsync: bulkPatch.mutateAsync,
     successMessage: "Selection deleted",
   });
+  const touchTargetSx = useTouchTargetSx();
 
   const items = useMemo(() => buildPreview(selection, planData), [planData, selection]);
   const noun =
@@ -190,7 +192,9 @@ export const BulkDeleteDialog = ({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose} sx={touchTargetSx}>
+          Cancel
+        </Button>
         <Button
           variant="contained"
           color="error"
@@ -198,6 +202,7 @@ export const BulkDeleteDialog = ({
             void handleConfirm();
           }}
           disabled={runner.state.running || items.length === 0}
+          sx={touchTargetSx}
         >
           {runner.state.running
             ? `Deleting (${runner.state.completedChunks.toString()}/${runner.state.totalChunks.toString()})`

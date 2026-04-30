@@ -10,6 +10,7 @@ import { getDecorationStyles } from "./get-decoration-styles";
 import { type PlanCanvasSelectArgs } from "./plan-canvas";
 import { type PlanSelection } from "./selection";
 import { SessionList } from "./session-list";
+import { useTouchTargetSx } from "./use-touch-target-sx";
 
 const DAY_LABEL: Record<PlanStructureDay["dayOfWeek"], string> = {
   MON: "Mon",
@@ -30,6 +31,7 @@ export type DayCardProps = {
 export const DayCard = ({ day, selection, onSelect }: DayCardProps) => {
   const decoration = useEffectivePlanDecorationContext().getDecoration(day.id);
   const decorationStyles = getDecorationStyles(decoration);
+  const touchTargetSx = useTouchTargetSx();
 
   return (
     <Card
@@ -41,7 +43,7 @@ export const DayCard = ({ day, selection, onSelect }: DayCardProps) => {
     >
       <CardContent>
         <Stack spacing={1.5}>
-          <Stack direction="row" alignItems="baseline" spacing={1}>
+          <Stack direction="row" alignItems="baseline" spacing={1} sx={touchTargetSx}>
             <Typography variant="subtitle1">{DAY_LABEL[day.dayOfWeek]}</Typography>
             <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
               {day.kind === "REST" ? "Rest" : "Workout"}
