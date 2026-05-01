@@ -8,16 +8,16 @@ import {
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
-import { requireAdmin, requireCoachLikeRole } from "../../authz/guards";
-import { prisma } from "../../db/client";
-import { ROLE_MAP } from "../../mappers/iam";
+import { requireAdmin, requireCoachLikeRole } from "../../../authz/guards";
+import { prisma } from "../../../db/client";
+import { ROLE_MAP } from "../../../mappers/iam";
 import {
   LIBRARY_SCOPE_TO_PRISMA_MAP,
   mapToExerciseLibraryItem,
   MODALITY_TO_PRISMA_MAP,
   MOVEMENT_PATTERN_TO_PRISMA_MAP,
-} from "../../mappers/lms";
-import { findOrThrow, handlePrismaError } from "../../utils";
+} from "../../../mappers/lms";
+import { findOrThrow, handlePrismaError } from "../../../utils";
 
 import { createExerciseLibraryItemImpl } from "./exercise-library-item-create";
 import { updateExerciseLibraryItemImpl } from "./exercise-library-item-update";

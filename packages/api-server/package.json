@@ -6,7 +6,7 @@
   "exports": {
     "./cms": "./src/endpoints/cms/index.ts",
     "./lms": "./src/endpoints/lms/index.ts",
-    "./lms/exercise-library-item": "./src/endpoints/lms/exercise-library-item.ts",
+    "./lms/exercise-library-item": "./src/endpoints/lms/exercise-library-item/index.ts",
     "./lms/block-kind": "./src/endpoints/lms/block-kind/index.ts",
     "./lms/scheme-template": "./src/endpoints/lms/scheme-template.ts",
     "./lms/block-template": "./src/endpoints/lms/block-template/index.ts",

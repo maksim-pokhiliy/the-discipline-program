@@ -2,8 +2,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
 
-import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
-import { cleanup, cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
+import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
+import { cleanup, cleanupRaw, createTestCoach, createTestUser } from "../../../test/helpers";
 
 import { lmsExerciseLibraryItemApi } from "./exercise-library-item";
 

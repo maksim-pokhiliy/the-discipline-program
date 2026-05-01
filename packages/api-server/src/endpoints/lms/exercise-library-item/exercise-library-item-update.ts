@@ -2,18 +2,18 @@ import { UserRole } from "@repo/contracts/iam/auth";
 import { type UpdateExerciseLibraryItemInput } from "@repo/contracts/lms/exercise-library-item";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
-import { requireCoachLikeRole } from "../../authz/guards";
-import { prisma } from "../../db/client";
-import { ROLE_MAP } from "../../mappers/iam";
-import { mapToExerciseLibraryItem } from "../../mappers/lms";
+import { requireCoachLikeRole } from "../../../authz/guards";
+import { prisma } from "../../../db/client";
+import { ROLE_MAP } from "../../../mappers/iam";
+import { mapToExerciseLibraryItem } from "../../../mappers/lms";
 import {
   BODY_PART_TO_PRISMA_MAP,
   LIBRARY_SCOPE_TO_PRISMA_MAP,
   MODALITY_TO_PRISMA_MAP,
   MOVEMENT_PATTERN_TO_PRISMA_MAP,
   SKILL_LEVEL_TO_PRISMA_MAP,
-} from "../../mappers/lms";
-import { findOrThrow, handlePrismaError, toInputJson } from "../../utils";
+} from "../../../mappers/lms";
+import { findOrThrow, handlePrismaError, toInputJson } from "../../../utils";
 
 const ADMIN_OR_COACH_LIKE: ReadonlySet<UserRole> = new Set([
   UserRole.ADMIN,
