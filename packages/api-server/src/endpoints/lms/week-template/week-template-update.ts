@@ -2,11 +2,11 @@ import { UserRole } from "@repo/contracts/iam/auth";
 import { type UpdateWeekTemplateInput } from "@repo/contracts/lms/week-template";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
-import { requireCoachLikeRole } from "../../authz/guards";
-import { prisma } from "../../db/client";
-import { ROLE_MAP } from "../../mappers/iam";
-import { LIBRARY_SCOPE_TO_PRISMA_MAP, mapToWeekTemplate } from "../../mappers/lms";
-import { findOrThrow, handlePrismaError, toInputJson } from "../../utils";
+import { requireCoachLikeRole } from "../../../authz/guards";
+import { prisma } from "../../../db/client";
+import { ROLE_MAP } from "../../../mappers/iam";
+import { LIBRARY_SCOPE_TO_PRISMA_MAP, mapToWeekTemplate } from "../../../mappers/lms";
+import { findOrThrow, handlePrismaError, toInputJson } from "../../../utils";
 
 const ADMIN_OR_COACH_LIKE: ReadonlySet<UserRole> = new Set([
   UserRole.COACH,

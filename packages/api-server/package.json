@@ -11,7 +11,7 @@
     "./lms/scheme-template": "./src/endpoints/lms/scheme-template/index.ts",
     "./lms/block-template": "./src/endpoints/lms/block-template/index.ts",
     "./lms/session-template": "./src/endpoints/lms/session-template/index.ts",
-    "./lms/week-template": "./src/endpoints/lms/week-template.ts",
+    "./lms/week-template": "./src/endpoints/lms/week-template/index.ts",
     "./lms/apply-template": "./src/services/lms/apply-template/index.ts",
     "./lms/pr-evaluator": "./src/services/lms/pr-evaluator/index.ts",
     "./coaching": "./src/endpoints/coaching/index.ts",
