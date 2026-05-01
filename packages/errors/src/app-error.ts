@@ -3,14 +3,14 @@ import { type ErrorCode, ERROR_CODES } from "./error-codes";
 type AppErrorOptions = {
   code?: ErrorCode;
   statusCode?: number;
-  details?: Record<string, unknown>;
+  details?: Record<string, unknown> | undefined;
   cause?: Error;
 };
 
 export class AppError extends Error {
   public readonly code: ErrorCode;
   public readonly statusCode: number;
-  public readonly details?: Record<string, unknown>;
+  public readonly details?: Record<string, unknown> | undefined;
   public readonly timestamp: string;
 
   constructor(message: string, options: AppErrorOptions = {}) {
