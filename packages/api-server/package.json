@@ -8,7 +8,7 @@
     "./lms": "./src/endpoints/lms/index.ts",
     "./lms/exercise-library-item": "./src/endpoints/lms/exercise-library-item/index.ts",
     "./lms/block-kind": "./src/endpoints/lms/block-kind/index.ts",
-    "./lms/scheme-template": "./src/endpoints/lms/scheme-template.ts",
+    "./lms/scheme-template": "./src/endpoints/lms/scheme-template/index.ts",
     "./lms/block-template": "./src/endpoints/lms/block-template/index.ts",
     "./lms/session-template": "./src/endpoints/lms/session-template.ts",
     "./lms/week-template": "./src/endpoints/lms/week-template.ts",
