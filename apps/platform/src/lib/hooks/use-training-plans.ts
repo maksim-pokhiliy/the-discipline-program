@@ -45,7 +45,7 @@ export const applyTrainingPlanUpdate = (
   data: UpdateTrainingPlanData,
 ): TrainingPlan => ({
   ...plan,
-  ...(data.name !== undefined && { name: data.name }),
+  ...(data.name != null && { name: data.name }),
   ...(data.description !== undefined && { description: data.description }),
 });
 

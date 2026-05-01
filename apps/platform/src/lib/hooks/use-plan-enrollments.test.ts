@@ -73,4 +73,11 @@ describe("applyEnrollmentUpdate", () => {
     expect(next).not.toBe(baseEntry);
     expect(baseEntry.status).toBe(PlanEnrollmentStatus.ACTIVE);
   });
+
+  it("rejects a stray null status (status is non-nullable)", () => {
+    const payload = { status: null } as unknown as Parameters<typeof applyEnrollmentUpdate>[1];
+    const next = applyEnrollmentUpdate(baseEntry, payload);
+
+    expect(next.status).toBe(PlanEnrollmentStatus.ACTIVE);
+  });
 });

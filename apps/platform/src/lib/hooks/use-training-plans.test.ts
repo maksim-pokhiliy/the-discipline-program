@@ -61,4 +61,11 @@ describe("applyTrainingPlanUpdate", () => {
     expect(next).not.toBe(basePlan);
     expect(basePlan.name).toBe("Strength Block");
   });
+
+  it("rejects a stray null name (name is non-nullable)", () => {
+    const payload = { name: null } as unknown as Parameters<typeof applyTrainingPlanUpdate>[1];
+    const next = applyTrainingPlanUpdate(basePlan, payload);
+
+    expect(next.name).toBe("Strength Block");
+  });
 });

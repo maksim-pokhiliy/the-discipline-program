@@ -85,7 +85,7 @@ export const applyEnrollmentUpdate = (
   data: UpdatePlanEnrollmentData,
 ): PlanRosterEntry => ({
   ...entry,
-  ...(data.status !== undefined && { status: data.status }),
+  ...(data.status != null && { status: data.status }),
   ...(data.endedOnDate !== undefined && { endedOnDate: data.endedOnDate }),
 });
 
