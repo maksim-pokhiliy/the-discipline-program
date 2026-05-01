@@ -1,9 +1,13 @@
 "use client";
 
 import { useTheme } from "@mui/material/styles";
-import { Toaster as Sonner } from "sonner";
+import { Toaster as Sonner, type ToasterProps } from "sonner";
 
-export const Toaster = () => {
+export type ToasterComponentProps = {
+  position?: ToasterProps["position"];
+};
+
+export const Toaster = ({ position = "bottom-right" }: ToasterComponentProps) => {
   const theme = useTheme();
 
   const style = {
@@ -31,5 +35,5 @@ export const Toaster = () => {
     "--info-text": theme.palette.info.contrastText,
   };
 
-  return <Sonner richColors position="bottom-right" style={style} />;
+  return <Sonner richColors position={position} style={style} />;
 };

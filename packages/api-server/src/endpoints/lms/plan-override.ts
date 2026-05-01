@@ -116,6 +116,7 @@ export const lmsPlanOverrideApi = {
       });
 
       logger.info("lms.coach.override_created", {
+        actingUserId: userId,
         enrollmentId,
         overrideId: created.id,
         scope: created.scope,

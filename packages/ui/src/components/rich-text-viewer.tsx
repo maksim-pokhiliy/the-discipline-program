@@ -1,7 +1,34 @@
 import { Box, type BoxProps, type SxProps, type Theme } from "@mui/material";
+import DOMPurify from "isomorphic-dompurify";
 
 export type RichTextViewerProps = BoxProps & {
   content: string;
+};
+
+const SANITIZER_CONFIG = {
+  ALLOWED_TAGS: [
+    "p",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "strong",
+    "em",
+    "u",
+    "ul",
+    "ol",
+    "li",
+    "blockquote",
+    "code",
+    "pre",
+    "br",
+    "a",
+    "img",
+  ],
+  ALLOWED_ATTR: ["href", "title", "target", "rel", "src", "alt"],
+  ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
 };
 
 const defaultStyles: SxProps<Theme> = {
@@ -67,10 +94,14 @@ const defaultStyles: SxProps<Theme> = {
   },
 };
 
-export const RichTextViewer = ({ content, sx, ...props }: RichTextViewerProps) => (
-  <Box
-    sx={[defaultStyles, ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
-    dangerouslySetInnerHTML={{ __html: content }}
-    {...props}
-  />
-);
+export const RichTextViewer = ({ content, sx, ...props }: RichTextViewerProps) => {
+  const sanitized = DOMPurify.sanitize(content, SANITIZER_CONFIG);
+
+  return (
+    <Box
+      sx={[defaultStyles, ...(Array.isArray(sx) ? sx : sx ? [sx] : [])]}
+      dangerouslySetInnerHTML={{ __html: sanitized }}
+      {...props}
+    />
+  );
+};

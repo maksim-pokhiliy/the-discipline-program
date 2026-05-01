@@ -10,7 +10,7 @@ import {
   type SessionTemplate,
   type UpdateSessionTemplateInput,
 } from "@repo/contracts/lms/session-template";
-import { createCrudHooks } from "@repo/query";
+import { createCrudHooks, notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { adminKeys } from "../api/keys";
@@ -61,7 +61,7 @@ export const usePromoteSessionTemplate = () => {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to promote session template");
+      notifyError(error, "Failed to promote session template");
     },
   });
 };
@@ -84,7 +84,7 @@ export const useDemoteSessionTemplate = () => {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to demote session template");
+      notifyError(error, "Failed to demote session template");
     },
   });
 };

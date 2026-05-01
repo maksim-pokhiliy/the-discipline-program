@@ -52,7 +52,7 @@ export const SessionList = ({ session, selection, onSelect }: SessionListProps) 
         <SortableContext items={blockIds} strategy={verticalListSortingStrategy}>
           <Stack spacing={1}>
             {session.blocks.length === 0 ? (
-              <Typography variant="caption" color="text.disabled" sx={{ p: 1 }}>
+              <Typography variant="caption" color="text.muted" sx={{ p: 1 }}>
                 Drop blocks here
               </Typography>
             ) : (

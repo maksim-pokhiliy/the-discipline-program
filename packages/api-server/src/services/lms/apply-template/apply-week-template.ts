@@ -6,6 +6,7 @@ import { logger } from "@repo/shared";
 
 import { requireCoachLikeRole, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
+import { TX_BUDGET_LONG } from "../../../db/transaction-config";
 import { DAY_KIND_TO_PRISMA_MAP, DAY_OF_WEEK_TO_PRISMA_MAP } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 
@@ -45,22 +46,22 @@ export const applyWeekTemplate = async (
     });
   }
 
-  const existingWeek = await prisma.week.findFirst({
-    where: { planId, index: data.target.index },
-    select: { id: true },
-  });
-
-  if (existingWeek) {
-    throw new ConflictError("Week with this index already exists in plan", {
-      planId,
-      weekIndex: data.target.index,
-    });
-  }
-
   const startedAtMs = Date.now();
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      const existingWeek = await tx.week.findFirst({
+        where: { planId, index: data.target.index },
+        select: { id: true },
+      });
+
+      if (existingWeek) {
+        throw new ConflictError("Week with this index already exists in plan", {
+          planId,
+          weekIndex: data.target.index,
+        });
+      }
+
       const newWeek = await tx.week.create({
         data: {
           planId,
@@ -100,7 +101,7 @@ export const applyWeekTemplate = async (
       }
 
       return { weekId: newWeek.id };
-    });
+    }, TX_BUDGET_LONG);
 
     logger.info("lms.editor.template_applied", {
       userId,

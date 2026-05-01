@@ -11,6 +11,7 @@ import {
 import { prisma } from "../../../db/client";
 import { mapToBlogPost } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
+import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 import { ensureExclusiveFeatured, toggleExclusiveFeatured } from "../toggle-exclusive-featured";
 
 const calculateReadTime = (content: string): number => {
@@ -48,6 +49,7 @@ export const cmsBlogAdminApi = {
   getPosts: async (): Promise<BlogPost[]> => {
     const posts = await prisma.marketingBlogPost.findMany({
       orderBy: [{ createdAt: "desc" }, { title: "desc" }],
+      take: DEFAULT_LIST_LIMIT,
     });
 
     return posts.map(mapToBlogPost);

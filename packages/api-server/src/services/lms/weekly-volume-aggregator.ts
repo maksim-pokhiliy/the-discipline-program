@@ -1,28 +1,28 @@
-import { type Prisma, type PrismaClient, type WeeklyVolume } from "@prisma/client";
+import { type Prisma, type PrismaClient, type SetLog, type WeeklyVolume } from "@prisma/client";
 
 import { type LoadSpec } from "@repo/contracts/lms/_domain";
+import { type SetActualResult, setActualResultSchema } from "@repo/contracts/lms/set-log";
 import { logger } from "@repo/shared";
+
+import { addDaysInTz, DAYS_IN_WEEK, MS_PER_DAY } from "../../utils/date-helpers";
 
 export interface AggregateWeeklyVolumeInput {
   db: PrismaClient | Prisma.TransactionClient;
   userId: string;
   weekStartDate: Date;
+  timezone?: string;
 }
 
 const FULLY_COMPLETED_THRESHOLD = 0.9;
 const PARTIALLY_COMPLETED_THRESHOLD = 0.3;
+const WEEK_DURATION_MS = DAYS_IN_WEEK * MS_PER_DAY - 1;
 
-interface SetLogActual {
-  load?: LoadSpec;
-  reps?: number;
-}
+type SetLogActual = SetActualResult;
 
 const parseActual = (actual: Prisma.JsonValue): SetLogActual | null => {
-  if (typeof actual !== "object" || actual === null || Array.isArray(actual)) {
-    return null;
-  }
+  const result = setActualResultSchema.safeParse(actual);
 
-  return actual as unknown as SetLogActual;
+  return result.success ? result.data : null;
 };
 
 const extractLoadKg = (load: LoadSpec | undefined): number | null => {
@@ -45,13 +45,71 @@ const extractLoadKg = (load: LoadSpec | undefined): number | null => {
   }
 };
 
+const extractTonnageFromSetLog = (
+  setLog: SetLog,
+  primaryMovement: string | null,
+): { tonnage: number; pattern: string | null } | null => {
+  const parsed = parseActual(setLog.actual);
+
+  if (!parsed) {
+    return null;
+  }
+
+  const loadKg = extractLoadKg(parsed.load);
+  const reps = parsed.reps;
+
+  if (typeof reps !== "number" || reps <= 0 || loadKg === null || loadKg <= 0) {
+    return null;
+  }
+
+  return {
+    tonnage: loadKg * reps,
+    pattern: primaryMovement,
+  };
+};
+
+type SessionCounters = {
+  workoutsFullyCompleted: number;
+  workoutsPartiallyCompleted: number;
+  workoutsMissed: number;
+  workoutsRx: number;
+  workoutsScaled: number;
+  totalDurationSec: number;
+  totalTonnageKg: number;
+  tonnageByPattern: Record<string, number>;
+};
+
+const accumulateRatio = (counters: SessionCounters, ratio: number): void => {
+  if (ratio >= FULLY_COMPLETED_THRESHOLD) {
+    counters.workoutsFullyCompleted++;
+  } else if (ratio >= PARTIALLY_COMPLETED_THRESHOLD) {
+    counters.workoutsPartiallyCompleted++;
+  } else {
+    counters.workoutsMissed++;
+  }
+};
+
+const accumulateTonnage = (
+  counters: SessionCounters,
+  contribution: { tonnage: number; pattern: string | null },
+): void => {
+  counters.totalTonnageKg += contribution.tonnage;
+
+  if (contribution.pattern !== null) {
+    counters.tonnageByPattern[contribution.pattern] =
+      (counters.tonnageByPattern[contribution.pattern] ?? 0) + contribution.tonnage;
+  }
+};
+
 export async function aggregateWeeklyVolume(
   input: AggregateWeeklyVolumeInput,
 ): Promise<WeeklyVolume> {
-  const { db, userId, weekStartDate } = input;
+  const { db, userId, weekStartDate, timezone } = input;
 
   try {
-    const weekEnd = new Date(weekStartDate.getTime() + 7 * 24 * 60 * 60 * 1000 - 1);
+    const weekEnd = timezone
+      ? new Date(addDaysInTz(weekStartDate, DAYS_IN_WEEK, timezone).getTime() - 1)
+      : new Date(weekStartDate.getTime() + WEEK_DURATION_MS);
 
     const sessions = await db.workoutSession.findMany({
       where: {
@@ -72,62 +130,39 @@ export async function aggregateWeeklyVolume(
       },
     });
 
-    let totalTonnageKg = 0;
-    const tonnageByPattern: Record<string, number> = {};
-
-    let workoutsFullyCompleted = 0;
-    let workoutsPartiallyCompleted = 0;
-    let workoutsMissed = 0;
-
-    let workoutsRx = 0;
-    let workoutsScaled = 0;
-
-    let totalDurationSec = 0;
+    const counters: SessionCounters = {
+      workoutsFullyCompleted: 0,
+      workoutsPartiallyCompleted: 0,
+      workoutsMissed: 0,
+      workoutsRx: 0,
+      workoutsScaled: 0,
+      totalDurationSec: 0,
+      totalTonnageKg: 0,
+      tonnageByPattern: {},
+    };
 
     for (const session of sessions) {
       const ratio = session.completionRatio !== null ? Number(session.completionRatio) : 0;
 
-      if (ratio >= FULLY_COMPLETED_THRESHOLD) {
-        workoutsFullyCompleted++;
-      } else if (ratio >= PARTIALLY_COMPLETED_THRESHOLD) {
-        workoutsPartiallyCompleted++;
-      } else {
-        workoutsMissed++;
-      }
-
-      totalDurationSec += session.durationSec ?? 0;
+      accumulateRatio(counters, ratio);
+      counters.totalDurationSec += session.durationSec ?? 0;
 
       for (const blockSession of session.blockSessions) {
         if (blockSession.rxStatus === "RX") {
-          workoutsRx++;
+          counters.workoutsRx++;
         } else if (blockSession.rxStatus === "SCALED") {
-          workoutsScaled++;
+          counters.workoutsScaled++;
         }
 
         for (const exerciseLog of blockSession.exerciseLogs) {
-          const primaryMovement = exerciseLog.exercise.primaryMovement;
-
           for (const setLog of exerciseLog.setLogs) {
-            const parsed = parseActual(setLog.actual);
+            const contribution = extractTonnageFromSetLog(
+              setLog,
+              exerciseLog.exercise.primaryMovement,
+            );
 
-            if (!parsed) {
-              continue;
-            }
-
-            const loadKg = extractLoadKg(parsed.load);
-            const reps = parsed.reps;
-
-            if (typeof reps !== "number" || reps <= 0 || loadKg === null || loadKg <= 0) {
-              continue;
-            }
-
-            const tonnage = loadKg * reps;
-
-            totalTonnageKg += tonnage;
-
-            if (primaryMovement !== null && primaryMovement !== undefined) {
-              tonnageByPattern[primaryMovement] =
-                (tonnageByPattern[primaryMovement] ?? 0) + tonnage;
+            if (contribution !== null) {
+              accumulateTonnage(counters, contribution);
             }
           }
         }
@@ -142,27 +177,27 @@ export async function aggregateWeeklyVolume(
       create: {
         userId,
         weekStartDate,
-        totalTonnageKg,
-        tonnageByPattern: tonnageByPattern as Prisma.InputJsonValue,
+        totalTonnageKg: counters.totalTonnageKg,
+        tonnageByPattern: counters.tonnageByPattern as Prisma.InputJsonValue,
         workoutsScheduled,
-        workoutsFullyCompleted,
-        workoutsPartiallyCompleted,
-        workoutsMissed,
-        workoutsRx,
-        workoutsScaled,
-        totalDurationSec,
+        workoutsFullyCompleted: counters.workoutsFullyCompleted,
+        workoutsPartiallyCompleted: counters.workoutsPartiallyCompleted,
+        workoutsMissed: counters.workoutsMissed,
+        workoutsRx: counters.workoutsRx,
+        workoutsScaled: counters.workoutsScaled,
+        totalDurationSec: counters.totalDurationSec,
         recomputedAt,
       },
       update: {
-        totalTonnageKg,
-        tonnageByPattern: tonnageByPattern as Prisma.InputJsonValue,
+        totalTonnageKg: counters.totalTonnageKg,
+        tonnageByPattern: counters.tonnageByPattern as Prisma.InputJsonValue,
         workoutsScheduled,
-        workoutsFullyCompleted,
-        workoutsPartiallyCompleted,
-        workoutsMissed,
-        workoutsRx,
-        workoutsScaled,
-        totalDurationSec,
+        workoutsFullyCompleted: counters.workoutsFullyCompleted,
+        workoutsPartiallyCompleted: counters.workoutsPartiallyCompleted,
+        workoutsMissed: counters.workoutsMissed,
+        workoutsRx: counters.workoutsRx,
+        workoutsScaled: counters.workoutsScaled,
+        totalDurationSec: counters.totalDurationSec,
         recomputedAt,
       },
     });
@@ -170,7 +205,7 @@ export async function aggregateWeeklyVolume(
     logger.info("lms.weekly_volume.aggregated", {
       userId,
       weekStartDate,
-      totalTonnageKg,
+      totalTonnageKg: counters.totalTonnageKg,
     });
 
     return result;

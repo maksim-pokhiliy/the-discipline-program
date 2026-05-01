@@ -1,21 +1,14 @@
 import { type SetLog } from "@prisma/client";
 
 import { type LoadSpec } from "@repo/contracts/lms/_domain";
+import { type SetActualResult, setActualResultSchema } from "@repo/contracts/lms/set-log";
 
-export interface SetLogActual {
-  load?: LoadSpec;
-  reps?: number;
-  durationSec?: number;
-  distanceM?: number;
-  calories?: number;
-}
+export type SetLogActual = SetActualResult;
 
 export const parseActual = (actual: SetLog["actual"]): SetLogActual | null => {
-  if (typeof actual !== "object" || actual === null || Array.isArray(actual)) {
-    return null;
-  }
+  const result = setActualResultSchema.safeParse(actual);
 
-  return actual as unknown as SetLogActual;
+  return result.success ? result.data : null;
 };
 
 export const extractLoadKg = (load: LoadSpec | undefined): number | null => {

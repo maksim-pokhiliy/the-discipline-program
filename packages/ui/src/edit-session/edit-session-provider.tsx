@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
+import { logger } from "@repo/shared";
+
 import { EditSessionContext } from "./edit-session-context";
 import { RouteChangeFlushModal } from "./route-change-flush-modal";
 import {
@@ -126,7 +128,11 @@ export const EditSessionProvider = ({
         try {
           await session.save();
           flushed.push(session.sessionId);
-        } catch {
+        } catch (error) {
+          logger.warn("edit-session.flush_all.session_failed", {
+            sessionId: session.sessionId,
+            error: error instanceof Error ? error.message : String(error),
+          });
           blocked.push(session.sessionId);
         }
       }),

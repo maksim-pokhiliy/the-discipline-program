@@ -50,7 +50,7 @@ export const Sidebar = ({
   const width = expanded ? LAYOUT.drawerWidth : LAYOUT.drawerCollapsedWidth;
 
   const content = (
-    <Stack sx={{ height: "100%" }}>
+    <Stack component="nav" aria-label="Admin" sx={{ height: "100%" }}>
       <Stack
         spacing={2}
         direction={isExpanded ? "row" : "column"}

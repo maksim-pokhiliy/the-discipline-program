@@ -17,7 +17,7 @@ export const createBlockSegmentInputSchema = z.object({
 });
 
 export const updateBlockSegmentInputSchema = z.object({
-  expectedVersion: z.number().int().nonnegative(),
+  expectedVersion: z.number().int().nonnegative().max(2_147_483_647),
   order: z.number().int().nonnegative(),
   label: z.string().max(BLOCK_SEGMENT_CONSTANTS.MAX_LABEL_LENGTH).nullable(),
   archetypeKind: schemeArchetypeKindSchema,

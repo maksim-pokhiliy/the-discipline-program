@@ -33,7 +33,7 @@ export const AthletePreview = ({ block }: AthletePreviewProps) => (
 
       <Stack spacing={1}>
         {block.segments.length === 0 ? (
-          <Typography variant="caption" color="text.disabled">
+          <Typography variant="caption" color="text.muted">
             No segments
           </Typography>
         ) : (
@@ -41,7 +41,7 @@ export const AthletePreview = ({ block }: AthletePreviewProps) => (
         )}
       </Stack>
 
-      <Typography variant="caption" color="text.disabled">
+      <Typography variant="caption" color="text.muted">
         Read-only preview — full athlete UX lands in M3
       </Typography>
     </Stack>

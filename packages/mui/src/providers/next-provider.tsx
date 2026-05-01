@@ -3,7 +3,6 @@
 import { CssBaseline } from "@mui/material";
 import { ThemeProvider } from "@mui/material/styles";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
-import { MotionConfig } from "framer-motion";
 
 import { theme } from "../theme";
 
@@ -16,7 +15,7 @@ export const NextProvider = ({ children }: MuiProviderProps) => {
     <AppRouterCacheProvider options={{ enableCssLayer: true }}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <MotionConfig reducedMotion="user">{children}</MotionConfig>
+        {children}
       </ThemeProvider>
     </AppRouterCacheProvider>
   );

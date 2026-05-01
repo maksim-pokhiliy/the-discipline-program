@@ -18,6 +18,14 @@ High-performance coaching platform (LMS + Billing) with a Marketing CMS. Turbo m
 
 ## Quick Start
 
+### Prerequisites
+
+- **Node.js 20+** -- pinned via `.nvmrc` and `engines.node`. Recommended: `nvm use` or `volta install node@20`.
+- **pnpm 10.33.2** -- pinned via `package.json#packageManager`. Easiest path: enable Corepack (`corepack enable`); falls back to `npm install -g pnpm@10.33.2`.
+- **PostgreSQL 16** -- either a Neon connection string or a local container: `docker run -d --name dev-pg -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16-alpine` (then set `DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres`).
+
+### Setup
+
 ```bash
 git clone <repo-url> && cd the-discipline-program
 pnpm install
@@ -26,15 +34,16 @@ pnpm install
 Copy `.env.example` to the locations below and fill in the values -- see [Environment Variables](#environment-variables) for the complete per-variable reference:
 
 - `apps/admin/.env.local`, `apps/marketing/.env.local`, `apps/platform/.env.local` -- app URLs, auth secrets
-- `packages/api-server/.env` -- `DATABASE_URL` (Neon PostgreSQL)
+- `packages/api-server/.env` -- `DATABASE_URL` (Neon PostgreSQL or local Docker)
 
 ```bash
-pnpm db:generate
-pnpm db:push
-pnpm dev
+pnpm db:generate    # generate Prisma client
+pnpm db:push        # apply schema + CHECK constraints
+pnpm db:seed        # seed marketing CMS pages + default coach/athlete (skip = empty UI)
+pnpm dev            # all four apps in parallel
 ```
 
-Apps start on ports 3000 (marketing), 3001 (platform), 3002 (admin).
+Apps start on ports 3000 (marketing), 3001 (platform), 3002 (admin), 6006 (storybook).
 
 ## Project Structure
 
@@ -58,22 +67,29 @@ packages/
   mui/            MUI theme + providers
   env/            Environment variable validation
 
-docs/adr/         Architecture Decision Records (26)
+docs/adr/         Architecture Decision Records (37)
 ```
 
 ## Commands
 
-| Task           | Command                   |
-| -------------- | ------------------------- |
-| Dev (all apps) | `pnpm dev`                |
-| Dev (single)   | `pnpm --filter admin dev` |
-| Build          | `pnpm build`              |
-| Type check     | `pnpm check-types`        |
-| Lint           | `pnpm lint`               |
-| Format         | `pnpm format`             |
-| Unit tests     | `pnpm test`               |
-| DB generate    | `pnpm db:generate`        |
-| DB push        | `pnpm db:push`            |
+| Task            | Command                                             |
+| --------------- | --------------------------------------------------- |
+| Setup           | `pnpm setup` -- install + db:generate + push + seed |
+| Dev (all apps)  | `pnpm dev`                                          |
+| Dev (admin)     | `pnpm dev:admin`                                    |
+| Dev (platform)  | `pnpm dev:platform`                                 |
+| Dev (marketing) | `pnpm dev:marketing`                                |
+| Dev (storybook) | `pnpm dev:storybook`                                |
+| Build           | `pnpm build`                                        |
+| Type check      | `pnpm check-types`                                  |
+| Lint            | `pnpm lint`                                         |
+| Format          | `pnpm format`                                       |
+| Format check    | `pnpm format:check`                                 |
+| Unit tests      | `pnpm test`                                         |
+| Clean           | `pnpm clean`                                        |
+| DB generate     | `pnpm db:generate`                                  |
+| DB push         | `pnpm db:push`                                      |
+| DB seed         | `pnpm db:seed`                                      |
 
 ## App Status
 
@@ -81,7 +97,7 @@ docs/adr/         Architecture Decision Records (26)
 | --------- | ---------------------------------------------------------------------- |
 | Admin     | Production-ready. CMS + platform management.                           |
 | Marketing | Production-ready. Billing flow stubbed.                                |
-| Platform  | Active development (Phase 2). Auth, routing, 34 API routes, 5 modules. |
+| Platform  | Active development (Phase 2). Auth, routing, 59 API routes, 8 modules. |
 
 ## Documentation
 
@@ -89,7 +105,7 @@ docs/adr/         Architecture Decision Records (26)
 - [docs/DEPLOY.md](docs/DEPLOY.md) -- deployment guide
 - [docs/DEPENDENCY-GRAPH.md](docs/DEPENDENCY-GRAPH.md) -- package dependency map
 - [docs/BOUNDED-CONTEXTS.md](docs/BOUNDED-CONTEXTS.md) -- domain boundaries
-- [docs/adr/](docs/adr/) -- 26 Architecture Decision Records
+- [docs/adr/](docs/adr/) -- 37 Architecture Decision Records
 
 ## Data Flow
 

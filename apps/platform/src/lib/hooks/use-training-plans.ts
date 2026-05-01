@@ -10,7 +10,7 @@ import type {
   TrainingPlan,
   UpdateTrainingPlanData,
 } from "@repo/contracts/lms/training-plan";
-import { createCrudHooks, useOptimisticMutation } from "@repo/query";
+import { createCrudHooks, notifyError, useOptimisticMutation } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -64,7 +64,7 @@ export const useDuplicateTrainingPlan = () => {
       toast.success("Training plan duplicated");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to duplicate training plan");
+      notifyError(error, "Failed to duplicate training plan");
     },
   });
 };
@@ -89,7 +89,7 @@ const useStatusMutation = ({
       toast.success(successMessage);
     },
     onError: (error: Error) => {
-      toast.error(error.message || errorMessage);
+      notifyError(error, errorMessage);
     },
   });
 };

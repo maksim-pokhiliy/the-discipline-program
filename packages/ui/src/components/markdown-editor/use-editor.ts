@@ -16,9 +16,17 @@ type UseEditorProps = {
   onBlur?: () => void;
   placeholder: string;
   disabled: boolean;
+  editorId?: string;
 };
 
-export const useEditor = ({ value, onChange, onBlur, placeholder, disabled }: UseEditorProps) => {
+export const useEditor = ({
+  value,
+  onChange,
+  onBlur,
+  placeholder,
+  disabled,
+  editorId,
+}: UseEditorProps) => {
   const onChangeRef = useRef(onChange);
   const onBlurRef = useRef(onBlur);
   const pendingValueRef = useRef<string | null>(null);
@@ -63,6 +71,13 @@ export const useEditor = ({ value, onChange, onBlur, placeholder, disabled }: Us
         placeholder,
       }),
     ],
+    editorProps: editorId
+      ? {
+          attributes: {
+            id: editorId,
+          },
+        }
+      : undefined,
     content: value,
     editable: !disabled,
     onUpdate: ({ editor }) => {

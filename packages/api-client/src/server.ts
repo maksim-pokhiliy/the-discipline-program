@@ -9,10 +9,11 @@ import { ApiClient } from "./client";
 export const createNextServerClient = () =>
   new ApiClient({
     baseUrl: baseEnv.NEXT_PUBLIC_APP_URL,
+    cache: "no-store",
     getHeaders: async () => {
       const cookieStore = await cookies();
 
       return { Cookie: cookieStore.toString() };
     },
-    onUnauthorized: () => redirect(AUTH_ROUTES.LOGOUT),
+    onUnauthorized: () => redirect(AUTH_ROUTES.LOGIN),
   });

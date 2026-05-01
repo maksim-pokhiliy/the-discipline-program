@@ -1,6 +1,6 @@
 import { SuspenseWrapper } from "@repo/ui";
 
-import { PlanEditorView } from "@app/modules/plan-editor";
+import { PlanEditorLoader } from "./plan-editor-loader";
 
 type PlanDetailPageProps = {
   params: Promise<{ planId: string }>;
@@ -11,7 +11,7 @@ const PlanDetailPage = async ({ params }: PlanDetailPageProps) => {
 
   return (
     <SuspenseWrapper>
-      <PlanEditorView planId={planId} />
+      <PlanEditorLoader planId={planId} />
     </SuspenseWrapper>
   );
 };

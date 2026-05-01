@@ -25,7 +25,7 @@ export const createLibraryWeekTemplatesAPI = (client: ApiClient) => ({
     client.request(`/api/admin/library/week-templates/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> =>
-    client.request(`/api/admin/library/week-templates/${id}`, "DELETE"),
+    client.requestNoContent(`/api/admin/library/week-templates/${id}`, "DELETE"),
 
   promote: (id: string): Promise<PromoteWeekTemplateResponse> =>
     client.request(`/api/admin/library/week-templates/${id}/promote`, "POST"),

@@ -11,9 +11,9 @@ import {
   updateAthleteProfileResponseSchema,
 } from "@repo/contracts/coaching/athlete-profile";
 
-import { withPlatformAuth } from "@app/lib/server/auth";
+import { withAthleteAuth } from "@app/lib/server/auth";
 
-export const GET = withPlatformAuth(
+export const GET = withAthleteAuth(
   withAuthRateLimit(
     createAuthGetHandler(
       (userId) => coachingAthleteProfileApi.get(userId),
@@ -23,7 +23,7 @@ export const GET = withPlatformAuth(
   ),
 );
 
-export const PUT = withPlatformAuth(
+export const PUT = withAthleteAuth(
   withAuthRateLimit(
     createAuthPutHandler(
       (userId, data) => coachingAthleteProfileApi.upsert(userId, data),

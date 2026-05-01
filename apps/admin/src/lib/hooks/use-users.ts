@@ -11,7 +11,7 @@ import type {
   UpdateUserRoleData,
   User,
 } from "@repo/contracts/iam/user";
-import { createCrudHooks } from "@repo/query";
+import { createCrudHooks, notifyError, STALE_TIMES } from "@repo/query";
 import { formatDate } from "@repo/shared";
 
 import { api } from "../api";
@@ -50,7 +50,7 @@ export const useCoachesList = () =>
   useQuery({
     queryKey: adminKeys.users.coaches(),
     queryFn: api.users.getCoaches,
-    staleTime: 5 * 60_000,
+    staleTime: STALE_TIMES.FIVE_MINUTES,
   });
 
 export const useUpdateUserRole = () => {
@@ -67,7 +67,7 @@ export const useUpdateUserRole = () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.dashboard() });
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to update user");
+      notifyError(error, "Failed to update user");
     },
   });
 };
@@ -86,7 +86,7 @@ export const useResendInvite = () => {
       queryClient.invalidateQueries({ queryKey: adminKeys.users.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to resend invite");
+      notifyError(error, "Failed to resend invite");
     },
   });
 };

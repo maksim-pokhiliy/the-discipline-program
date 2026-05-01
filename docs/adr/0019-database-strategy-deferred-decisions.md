@@ -7,7 +7,7 @@
 
 ## Context
 
-Section 5 of the Big Tech audit surfaced multiple database-level concerns. The project has no production data — the database is empty, recreatable via `db:push` + `db:seed`. Several decisions make sense to defer until a concrete trigger (first production deployment with real traffic, first external consumer, etc.) rather than pay for now.
+A database strategy audit surfaced multiple database-level concerns. The project has no production data — the database is empty, recreatable via `db:push` + `db:seed`. Several decisions make sense to defer until a concrete trigger (first production deployment with real traffic, first external consumer, etc.) rather than pay for now.
 
 This ADR captures 6 deferred decisions with explicit triggers, so they are tracked and not forgotten.
 
@@ -66,5 +66,4 @@ Multiple admin endpoints (`findMany` without `take`) return all records. With se
 ## References
 
 - ADR 0018: Security deferred decisions (same pattern of trigger-based deferral)
-- `docs/BIGTECH-AUDIT.md` §5 findings
 - Prisma docs: [db push vs migrate](https://www.prisma.io/docs/orm/prisma-migrate/understanding-prisma-migrate/mental-model#the-difference-between-db-push-and-prisma-migrate)

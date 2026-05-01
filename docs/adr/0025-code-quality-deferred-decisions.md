@@ -7,7 +7,7 @@
 
 ## Context
 
-The §11 code quality audit assessed type system strictness, ESLint configuration, and advanced TypeScript patterns. The actionable items were implemented: `interface → type` fixes (2 violations), CLAUDE.md accuracy fix, tsconfig strict flags (`noFallthroughCasesInSwitch`, `noImplicitReturns`), and `eslint-plugin-only-warn` removal. What remains are design patterns and tooling that require either active development to justify or calibration effort disproportionate to pre-production value.
+A code quality audit assessed type system strictness, ESLint configuration, and advanced TypeScript patterns. The actionable items were implemented: `interface → type` fixes (2 violations), CLAUDE.md accuracy fix, tsconfig strict flags (`noFallthroughCasesInSwitch`, `noImplicitReturns`), and `eslint-plugin-only-warn` removal. What remains are design patterns and tooling that require either active development to justify or calibration effort disproportionate to pre-production value.
 
 ## Decision
 
@@ -35,6 +35,5 @@ The following code quality improvements are deferred. Each has a **trigger**.
 
 ## References
 
-- `docs/BIGTECH-AUDIT.md` §11 research summary and deferred bullets
 - ADR 0022 (monorepo discipline — `eslint-plugin-only-warn` first flagged there)
 - `packages/typescript-config/base.json` — current strict flags

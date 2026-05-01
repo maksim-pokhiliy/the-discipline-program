@@ -21,7 +21,7 @@ export const createBlockInputSchema = z.object({
 });
 
 export const updateBlockInputSchema = z.object({
-  expectedVersion: z.number().int().nonnegative(),
+  expectedVersion: z.number().int().nonnegative().max(2_147_483_647),
   order: z.number().int().nonnegative(),
   kindId: z.string().cuid(),
   title: z.string().max(BLOCK_CONSTANTS.MAX_TITLE_LENGTH).nullable(),

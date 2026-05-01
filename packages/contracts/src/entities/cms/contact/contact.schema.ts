@@ -9,17 +9,40 @@ const isControlChar = (code: number): boolean =>
   (code >= 14 && code <= 31) ||
   code === 127;
 
+const UNICODE_FORMATTING_RANGES: ReadonlyArray<readonly [number, number]> = [
+  [0x200b, 0x200f],
+  [0x202a, 0x202e],
+  [0x2060, 0x2064],
+  [0x2066, 0x2069],
+  [0xfeff, 0xfeff],
+];
+
+const isUnicodeFormattingChar = (code: number): boolean => {
+  for (const [start, end] of UNICODE_FORMATTING_RANGES) {
+    if (code >= start && code <= end) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
 const stripHtmlAndControlChars = (value: string): string => {
-  const withoutScripts = value
+  const normalized = value.normalize("NFKC");
+  const withoutScripts = normalized
     .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "");
   const withoutTags = withoutScripts.replace(/<[^>]*>/g, "");
   let result = "";
 
   for (const char of withoutTags) {
-    if (!isControlChar(char.charCodeAt(0))) {
-      result += char;
+    const code = char.charCodeAt(0);
+
+    if (isControlChar(code) || isUnicodeFormattingChar(code)) {
+      continue;
     }
+
+    result += char;
   }
 
   return result;

@@ -2,6 +2,7 @@
 
 - **Status:** Accepted (with known gaps — see Consequences)
 - **Date:** 2026-04-10
+- **Last revised:** 2026-04-30 (Consequences section updated to match current implementation; see Revision history)
 - **Tags:** `database`, `prisma`, `soft-delete`, `known-gaps`
 
 ## Context
@@ -13,16 +14,18 @@ Several models in the schema need **soft delete** semantics: a deleted record mu
 - Compliance (future GDPR flows) can distinguish "deleted for the user" from "actually purged from storage".
 - Admin and support tools can inspect deleted records during investigations.
 
-The models that require soft delete today:
+The models that require soft delete today (every model with a `deletedAt DateTime?` column in `schema.prisma`):
 
-- `User`, `Product`, `TrainingPlan`, `Workout`, `CoachProfile`, `MarketingBlogPost`, `MarketingReview`, `MarketingContactSubmission`.
+- `User`, `Product`, `TrainingPlan`, `CoachProfile`.
+- LMS library entities: `BlockKind`, `SchemeTemplate`, `BlockTemplate`, `SessionTemplate`, `WeekTemplate`, `ExerciseLibraryItem`.
+- Marketing CMS: `MarketingBlogPost`, `MarketingReview`, `MarketingContactSubmission`.
 
 The models that are intentionally hard-deleted (cascade from parent, or domain does not require recovery):
 
-- `WorkoutLog`, `SetLog` (logs are immutable and deleted as a whole — see CLAUDE.md invariants).
-- `PlanEnrollment`, `Workout` block/set tables (cascade from their parent).
+- `WorkoutSession`, `BlockSession`, `ExerciseLog`, `SetLog` (training history; cascades from `User` / parent session).
+- `PlanEnrollment`, `Week`, `Day`, `LmsSession`, `Block`, `BlockSegment`, `SetGroup`, `ExerciseEntry` (cascade from their parent).
 - `AthleteProfile`, `Account`, `Session` (cascade from `User`).
-- Marketing pages and sections (cascade from the page).
+- `MarketingPage` and `MarketingPageSection` (cascade from the page).
 
 The implementation requirement is that soft delete must be **transparent at the call site**. A developer writing `prisma.user.findMany({ where: { email: "foo" } })` should not have to remember to add `deletedAt: null`. If they forget, deleted users will silently appear in the result.
 
@@ -35,19 +38,33 @@ const SOFT_DELETE_MODELS = new Set([
   "User",
   "Product",
   "TrainingPlan",
-  "Workout",
   "CoachProfile",
+  "BlockKind",
+  "SchemeTemplate",
+  "BlockTemplate",
+  "SessionTemplate",
+  "WeekTemplate",
+  "ExerciseLibraryItem",
   "MarketingBlogPost",
   "MarketingReview",
   "MarketingContactSubmission",
 ]);
 ```
 
-For these models, the extension:
+For these models, the extension rewrites the following read operations to implicitly filter `WHERE deletedAt IS NULL`:
 
-- Rewrites `findMany`, `findFirst`, and `findUnique` queries to implicitly filter `WHERE deletedAt IS NULL`.
-- Converts `delete` into `update({ data: { deletedAt: new Date() } })`.
-- Converts `deleteMany` into `updateMany({ data: { deletedAt: new Date() } })`.
+- `findMany`, `findFirst`, `findFirstOrThrow`.
+- `findUnique`, `findUniqueOrThrow` (rewritten internally to `findFirst` so the `WHERE deletedAt IS NULL` predicate composes with the unique selector — `findUniqueOrThrow` then re-applies the throw on missing).
+- `count`, `aggregate`, `groupBy`.
+
+It also rewrites destructive operations:
+
+- `delete` → `update({ data: { deletedAt: new Date() } })`.
+- `deleteMany` → `updateMany({ data: { deletedAt: new Date() } })`.
+
+Operations the extension does **not** filter or rewrite (intentional — see the Consequences section):
+
+- `update`, `updateMany`, `upsert`.
 
 For a subset of models (`Product`, `MarketingBlogPost`) with unique fields like `slug`, the extension also rewrites the unique column on delete, appending a `_deleted_<timestamp>` suffix. This is so a user can re-create a post with the same slug after deleting the previous one, without hitting the unique constraint on the soft-deleted row.
 
@@ -61,22 +78,18 @@ The extended client is exported as `prisma` from `packages/api-server/src/db/cli
 - A centralized place to evolve the logic: adding a new soft-deleted model is (supposed to be) a one-line change to `SOFT_DELETE_MODELS`.
 - The `_deleted_<timestamp>` suffix on unique fields lets users recreate slugs after deletion without the data shuffling that an archive-then-reuse pattern would require.
 - Soft delete and hard delete use the same Prisma API (`prisma.user.delete(...)`). Consumers do not need to know which is which — the extension dispatches.
-- `findUniqueOrThrow` would have been a nicer baseline operation, but the extension implementation predates our use of it and we rely on the custom `findOrThrow` utility in `packages/api-server/src/utils/find-or-throw.ts`.
+- All read paths that aggregate or count rows (`count`, `aggregate`, `groupBy`) participate in the filter, so dashboard metrics computed via `prisma.user.count()` or `prisma.product.aggregate({ _sum })` exclude soft-deleted rows automatically.
 
-**Negative (these are the known gaps tracked in the Big Tech audit, section 5):**
+**Negative — the remaining known gaps:**
 
-- **The extension covers only `findMany`, `findFirst`, `findUnique`, `delete`, `deleteMany`.** It does NOT cover:
+- **`update` / `updateMany` / `upsert` are not filtered.**
 
-  - `count` — deleted rows are counted. Dashboard metrics that do `prisma.user.count()` include soft-deleted users.
-  - `aggregate` — deleted rows contribute to sums, averages, etc.
-  - `groupBy` — deleted rows appear in groups.
-  - `findUniqueOrThrow`, `findFirstOrThrow` — no `deletedAt` filter is applied.
-  - `update`, `updateMany` — you can update a soft-deleted row without an error.
-  - `upsert` — no filter, so upsert may re-activate a soft-deleted row silently.
+  - `update` and `updateMany` are intentionally unfiltered: they are the restoration path. To revive a soft-deleted user the call site writes `prisma.user.update({ where: { id }, data: { deletedAt: null, email: original } })`. Symmetric counterpart to the suffix-on-delete trick — the consumer must un-suffix the unique field manually. There is no `restore`/`undelete` helper anywhere in the codebase yet; if one lands, it must live next to the extension and reverse both `deletedAt` and the suffix in one step.
+  - `upsert` is unfiltered: an `upsert` against a soft-deleted unique row may re-activate it. The suffix-on-delete trick partially protects this (the live row's email is now `original_deleted_<ts>`, so a new signup with `original` does not collide and a fresh row is created instead of accidentally touching the deleted one). Audit any new `upsert` introduction in soft-deleted models — the protection is structural, not enforced by the extension.
 
-  Every consumer that calls any of these operations must manually add `where: { deletedAt: null }` or risk including deleted data. Today, consumers do not — this is a bug class that has not yet bitten us because the dashboards are new.
+  Every consumer that wants to update or upsert against a soft-deleted model and explicitly skip deleted rows must add `where: { deletedAt: null }` manually. The reads side does not need this.
 
-- **`SOFT_DELETE_MODELS` is hand-maintained.** If a new model is added with a `deletedAt` column but the developer forgets to add it to the set, the extension silently does nothing. Prisma does not cross-check.
+- **`SOFT_DELETE_MODELS` is hand-maintained.** If a new model is added with a `deletedAt` column but the developer forgets to add it to the set, the extension silently does nothing. Prisma does not cross-check. Verify on schema changes by reading every `model X { ... deletedAt DateTime? ... }` block and confirming the model name is in the set.
 
 - **Soft delete is not transitive across relations.** `Product` is in the set, but `Price` is not. A soft-deleted product still has active prices from the database's point of view. A checkout that walks `Product → Price` can return a `Price` whose parent product has been soft-deleted, because the `Price` query does not apply the `Product` filter.
 
@@ -107,7 +120,11 @@ The extended client is exported as `prisma` from `packages/api-server/src/db/cli
 ## References
 
 - `packages/api-server/src/db/client.ts` — the extension implementation.
-- Big Tech audit, section 5 — the detailed list of gaps this ADR acknowledges.
 - `CLAUDE.md` — the "Soft-delete through the Prisma extension only" anti-pattern that says manual `deletedAt` filters are forbidden in call sites.
 - ADR 0003 — Prisma as the ORM.
 - ADR 0007 — Prisma client isolation to `api-server`.
+
+## Revision history
+
+- **2026-04-30** — synced ADR with current implementation. The extension's read coverage was extended over time to include `findFirstOrThrow`, `findUniqueOrThrow`, `count`, `aggregate`, and `groupBy`; the original ADR text listed those as gaps. Removed the stale `"Workout"` entry from `SOFT_DELETE_MODELS` (the model was replaced by `Block`/`BlockSegment`/`SetGroup`/`ExerciseEntry`/`WorkoutSession` per ADR 0027) and added the six LMS library models that already carry `deletedAt` columns (`BlockKind`, `SchemeTemplate`, `BlockTemplate`, `SessionTemplate`, `WeekTemplate`, `ExerciseLibraryItem`). Remaining gaps narrowed to `update` / `updateMany` / `upsert`, all intentional.
+- **2026-04-10** — original draft.

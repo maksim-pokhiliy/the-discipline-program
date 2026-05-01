@@ -92,3 +92,11 @@ export const daysBetweenInTz = (a: Date, b: Date, tz: string): number => {
 
   return Math.floor((bDay.getTime() - aDay.getTime()) / MS_PER_DAY);
 };
+
+export const addDaysInTz = (date: Date, days: number, tz: string): Date => {
+  const { year, month, day } = getDatePartsInTz(date, tz);
+  const fakeUtcMidnight = new Date(Date.UTC(year, month - 1, day + days, 0, 0, 0, 0));
+  const offset = getOffsetMs(fakeUtcMidnight, tz);
+
+  return new Date(fakeUtcMidnight.getTime() - offset);
+};

@@ -8,6 +8,7 @@ import {
   type getSchemeTemplateResponseSchema,
   type listSchemeTemplatesQuerySchema,
   type listSchemeTemplatesResponseSchema,
+  type promoteSchemeTemplateInputSchema,
   type promoteSchemeTemplateResponseSchema,
   type schemeTemplateIdParamSchema,
   type updateSchemeTemplateInputSchema,
@@ -22,6 +23,7 @@ export type ListSchemeTemplatesResponse = z.infer<typeof listSchemeTemplatesResp
 export type GetSchemeTemplateResponse = z.infer<typeof getSchemeTemplateResponseSchema>;
 export type CreateSchemeTemplateResponse = z.infer<typeof createSchemeTemplateResponseSchema>;
 export type UpdateSchemeTemplateResponse = z.infer<typeof updateSchemeTemplateResponseSchema>;
+export type PromoteSchemeTemplateInput = z.infer<typeof promoteSchemeTemplateInputSchema>;
 export type PromoteSchemeTemplateResponse = z.infer<typeof promoteSchemeTemplateResponseSchema>;
 export type DemoteSchemeTemplateInput = z.infer<typeof demoteSchemeTemplateInputSchema>;
 export type DemoteSchemeTemplateResponse = z.infer<typeof demoteSchemeTemplateResponseSchema>;

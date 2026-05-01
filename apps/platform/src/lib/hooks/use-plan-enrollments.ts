@@ -9,7 +9,7 @@ import type {
   PlanEnrollment,
   UpdatePlanEnrollmentData,
 } from "@repo/contracts/lms/plan-enrollment";
-import { useOptimisticMutation } from "@repo/query";
+import { notifyError, useOptimisticMutation } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -34,7 +34,7 @@ export const useCreatePlanEnrollment = (planId: string) => {
       toast.success("Athlete enrolled");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to enroll athlete");
+      notifyError(error, "Failed to enroll athlete");
     },
   });
 };

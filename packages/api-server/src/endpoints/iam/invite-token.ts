@@ -9,6 +9,7 @@ import { GoneError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 import { prisma } from "../../db/client";
+import { type TxClient } from "../../db/tx";
 import { mapToInviteToken, ROLE_MAP } from "../../mappers/iam";
 
 import { iamAuthService } from "./auth-service";
@@ -66,31 +67,37 @@ const throwGenericGone = (reason: InvalidationReason, context: Record<string, un
 
 const resolveRedirectTo = (role: UserRole): string => ROLE_HOMES[role];
 
+const issueInTx = async (
+  tx: TxClient,
+  input: IssueInviteTokenInput,
+): Promise<IssueInviteTokenResult> => {
+  const plainToken = generatePlainToken();
+  const tokenHash = hashToken(plainToken);
+  const ttlHours = resolveTtlHours(input.ttlHours);
+  const expiresAt = new Date(Date.now() + ttlHours * MS_PER_HOUR);
+
+  await tx.userInviteToken.updateMany({
+    where: { userId: input.userId, consumedAt: null },
+    data: { consumedAt: new Date() },
+  });
+
+  await tx.userInviteToken.create({
+    data: {
+      userId: input.userId,
+      tokenHash,
+      expiresAt,
+      createdByAdminId: input.createdByAdminId,
+    },
+  });
+
+  return { plainToken, expiresAt };
+};
+
 export const iamInviteTokenApi = {
-  issue: async (input: IssueInviteTokenInput): Promise<IssueInviteTokenResult> => {
-    const plainToken = generatePlainToken();
-    const tokenHash = hashToken(plainToken);
-    const ttlHours = resolveTtlHours(input.ttlHours);
-    const expiresAt = new Date(Date.now() + ttlHours * MS_PER_HOUR);
+  issue: async (input: IssueInviteTokenInput): Promise<IssueInviteTokenResult> =>
+    prisma.$transaction((tx) => issueInTx(tx, input)),
 
-    await prisma.$transaction(async (tx) => {
-      await tx.userInviteToken.updateMany({
-        where: { userId: input.userId, consumedAt: null },
-        data: { consumedAt: new Date() },
-      });
-
-      await tx.userInviteToken.create({
-        data: {
-          userId: input.userId,
-          tokenHash,
-          expiresAt,
-          createdByAdminId: input.createdByAdminId,
-        },
-      });
-    });
-
-    return { plainToken, expiresAt };
-  },
+  issueInTx,
 
   validate: async (plainToken: string): Promise<InviteToken> => {
     const tokenHash = hashToken(plainToken);

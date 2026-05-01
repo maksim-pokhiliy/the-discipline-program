@@ -1,6 +1,7 @@
 import { Box } from "@mui/material";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { MotionConfig } from "framer-motion";
 import { type Metadata } from "next";
 
 import { NextProvider } from "@repo/mui";
@@ -49,19 +50,21 @@ const RootLayout = ({ children }: RootLayoutProps) => (
 
     <body id="body-dom-anchor" className={fontVariables}>
       <NextProvider>
-        <QueryProvider>
-          <SkipToContent />
+        <MotionConfig reducedMotion="user">
+          <QueryProvider>
+            <SkipToContent />
 
-          <MarketingHeader />
+            <MarketingHeader />
 
-          <Box component="main" id="main-content" sx={{ minHeight: "100vh" }}>
-            {children}
-          </Box>
+            <Box component="main" id="main-content" sx={{ minHeight: "100vh" }}>
+              {children}
+            </Box>
 
-          <Footer />
-          {isVercelDeployment && <Analytics />}
-          {isVercelDeployment && <SpeedInsights />}
-        </QueryProvider>
+            <Footer />
+            {isVercelDeployment && <Analytics />}
+            {isVercelDeployment && <SpeedInsights />}
+          </QueryProvider>
+        </MotionConfig>
       </NextProvider>
     </body>
   </html>

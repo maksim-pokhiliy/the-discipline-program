@@ -21,7 +21,7 @@ export const createExerciseEntryInputSchema = z.object({
 });
 
 export const updateExerciseEntryInputSchema = z.object({
-  expectedVersion: z.number().int().nonnegative(),
+  expectedVersion: z.number().int().nonnegative().max(2_147_483_647),
   order: z.number().int().nonnegative(),
   exerciseId: z.string().cuid(),
   exerciseSnapshot: exerciseSnapshotSchema,

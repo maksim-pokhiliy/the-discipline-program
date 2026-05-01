@@ -18,7 +18,7 @@ export const RecentWorkoutsSection: React.FC<RecentWorkoutsSectionProps> = ({ wo
       <Typography variant="subtitle2">Recent Workouts</Typography>
       {workouts.map((workout) => (
         <Stack key={workout.id} direction="row" spacing={1} alignItems="center">
-          <FitnessCenterIcon fontSize="small" sx={{ color: "text.disabled" }} />
+          <FitnessCenterIcon fontSize="small" sx={{ color: "text.muted" }} />
           <Stack sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="body2" noWrap>
               {workout.title}

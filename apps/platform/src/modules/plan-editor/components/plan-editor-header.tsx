@@ -92,6 +92,7 @@ export const PlanEditorHeader = ({ planId, activeTab }: PlanEditorHeaderProps) =
           value={nameValue}
           onChange={(e) => setNameValue(e.target.value)}
           onBlur={commitName}
+          inputProps={{ "aria-label": "Plan name" }}
           sx={{ flex: 1, typography: "h5", "& input": { p: 0 } }}
         />
 
@@ -106,6 +107,7 @@ export const PlanEditorHeader = ({ planId, activeTab }: PlanEditorHeaderProps) =
         onBlur={commitDescription}
         placeholder="Add description..."
         multiline
+        inputProps={{ "aria-label": "Plan description" }}
         sx={{ typography: "body2", color: "text.secondary", "& textarea": { p: 0 } }}
       />
 

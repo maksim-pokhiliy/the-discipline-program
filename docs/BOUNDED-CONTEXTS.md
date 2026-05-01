@@ -14,7 +14,7 @@ The project already has a de-facto domain boundary — `schema.prisma` groups mo
 - "Where should the Stripe webhook handler live when we add it?"
 - "Can `apps/marketing` safely import from `@repo/api-server`, and if so, from which part?"
 
-This file answers those questions. It is the reference point for the context-first reorganization tracked by section 1.2 of `docs/BIGTECH-AUDIT.md`. The intended reader uses this document to decide, for any new feature or refactor, which context a piece of code belongs to and which other contexts it is allowed to depend on.
+This file answers those questions. It is the canonical record of the context-first organization that landed across `packages/contracts/src/entities/` and `packages/api-server/src/endpoints/`. The intended reader uses this document to decide, for any new feature or refactor, which context a piece of code belongs to and which other contexts it is allowed to depend on.
 
 ## The five contexts at a glance
 
@@ -633,13 +633,12 @@ These are the agreed-upon terms used in the codebase. When writing code, docs, o
 ## 13. How to use this document
 
 - **When you add a new endpoint,** identify which context it belongs to first. If it does not fit any of the five contexts above, pause — you may be inventing a new context, and that is a conversation worth having.
-- **When you add a new contract entity,** put it in the correct context folder (`contracts/src/entities/<context>/<entity>/`) and add its subpath export to `packages/contracts/package.json` (`"./<context>/<entity>": "./src/entities/<context>/<entity>/index.ts"`). The reorganization landed in 1.2.B — the flat layout is gone.
-- **When you find a cross-context import that is not explicitly allowed in §9,** treat it as a bug and file it against audit section 1.2 or 1.3. Do not rationalize it — the rules are finite and tight on purpose.
+- **When you add a new contract entity,** put it in the correct context folder (`contracts/src/entities/<context>/<entity>/`) and add its subpath export to `packages/contracts/package.json` (`"./<context>/<entity>": "./src/entities/<context>/<entity>/index.ts"`). The flat layout is gone — every entity sits inside its bounded context.
+- **When you find a cross-context import that is not explicitly allowed in §9,** treat it as a bug — the rules in §8 are finite and tight on purpose, and `.dependency-cruiser.cjs` enforces them in CI. Do not rationalize it; raise a finding instead.
 - **When product decisions change** (e.g., multiple concurrent subscriptions per user become a requirement), update the affected section here **before** writing code. The document is the intent; the code is the proof.
 
 ## References
 
-- `docs/BIGTECH-AUDIT.md` — section 1.2 tracks the context reorganization work.
 - `docs/adr/0005-contracts-first-with-zod.md` — the contract-first discipline this context map reinforces.
 - `docs/adr/0007-prisma-client-isolated-in-api-server.md` — the rule that puts all Prisma code in one package, which is what makes per-context endpoint reorganization possible.
 - `docs/adr/0008-singleton-subscription-invariant.md` — the canonical example of a context-owned invariant enforced at the DB.

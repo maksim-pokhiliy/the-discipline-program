@@ -77,6 +77,24 @@ jobs:
         # See .dependency-cruiser.cjs for rule catalog. Closes 1.3.A.
         run: pnpm dep:check
 
+  format-check:
+    name: Format check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - run: pnpm format:check
+
   test:
     name: Tests
     runs-on: ubuntu-latest

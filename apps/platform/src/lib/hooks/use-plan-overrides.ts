@@ -10,6 +10,7 @@ import {
   type PlanOverride,
   type UpdatePlanOverrideInput,
 } from "@repo/contracts/lms/plan-override";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -67,7 +68,7 @@ export const useCreateOverride = (enrollmentId: string) => {
       toast.success("Override created");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create override");
+      notifyError(error, "Failed to create override");
     },
   });
 };
@@ -88,7 +89,7 @@ export const useUpdateOverride = () => {
       queryClient.setQueryData(platformKeys.planOverrides.byId(result.id), result);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update override");
+      notifyError(error, "Failed to update override");
     },
   });
 };
@@ -108,7 +109,7 @@ export const useDeleteOverride = () => {
       toast.success("Override removed");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to remove override");
+      notifyError(error, "Failed to remove override");
     },
   });
 };

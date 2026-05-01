@@ -5,13 +5,22 @@ import {
   type AthleteDailySummary,
   type ProgressBuckets,
   ADHERENCE_IMPROVING_THRESHOLD,
+  ADHERENCE_ON_TRACK_BUCKET,
   ADHERENCE_ON_TRACK_THRESHOLD,
+  ADHERENCE_STEADY_BUCKET,
+  ADHERENCE_WINDOW_DAYS,
   ProcessStatus,
   TodayStatus,
+  WORKOUT_FULLY_COMPLETED_RATIO,
 } from "@repo/contracts/coaching/coach-dashboard";
 
 import { HEALTH_STATUS_MAP } from "../../mappers/coaching";
-import { MS_PER_DAY, startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
+import {
+  addDaysInTz,
+  MS_PER_DAY,
+  startOfTodayInTz,
+  startOfWeekInTz,
+} from "../../utils/date-helpers";
 
 import type { AssignedAthleteWithData } from "./assigned-athlete-query";
 
@@ -42,7 +51,7 @@ export const computeAdherenceWindow = async ({
 
   const plannedCount = sessions.length;
   const completedCount = sessions.filter(
-    (s) => s.completionRatio !== null && Number(s.completionRatio) >= 0.9,
+    (s) => s.completionRatio !== null && Number(s.completionRatio) >= WORKOUT_FULLY_COMPLETED_RATIO,
   ).length;
 
   return {
@@ -71,6 +80,46 @@ export const computeProcessStatus = (
     : ProcessStatus.STEADY;
 };
 
+const buildAdherenceMap = async (
+  db: Db,
+  athleteIds: string[],
+  windowDays: number,
+): Promise<Map<string, number>> => {
+  if (athleteIds.length === 0) {
+    return new Map();
+  }
+
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - windowDays * MS_PER_DAY);
+
+  const sessions = await db.workoutSession.findMany({
+    where: { userId: { in: athleteIds }, startedAt: { gte: windowStart, lte: now } },
+    select: { userId: true, completionRatio: true },
+  });
+
+  const planned = new Map<string, number>();
+  const completed = new Map<string, number>();
+
+  for (const s of sessions) {
+    planned.set(s.userId, (planned.get(s.userId) ?? 0) + 1);
+
+    if (s.completionRatio !== null && Number(s.completionRatio) >= WORKOUT_FULLY_COMPLETED_RATIO) {
+      completed.set(s.userId, (completed.get(s.userId) ?? 0) + 1);
+    }
+  }
+
+  const result = new Map<string, number>();
+
+  for (const id of athleteIds) {
+    const total = planned.get(id) ?? 0;
+    const done = completed.get(id) ?? 0;
+
+    result.set(id, total === 0 ? 0 : done / total);
+  }
+
+  return result;
+};
+
 export const computeProgressBuckets = async ({
   db,
   assignments,
@@ -82,19 +131,8 @@ export const computeProgressBuckets = async ({
     return { onTrack: [], steady: [], fallingBehind: [], avgEngagementRate: 0 };
   }
 
-  const results = await Promise.all(
-    assignments.map(async (a) => {
-      const athlete = a.athlete;
-
-      const adherence = await computeAdherenceWindow({
-        db,
-        userId: athlete.id,
-        windowDays: 30,
-      });
-
-      return { athlete, adherenceRate: adherence.adherenceRate };
-    }),
-  );
+  const athleteIds = assignments.map((a) => a.athlete.id);
+  const adherenceByAthleteId = await buildAdherenceMap(db, athleteIds, ADHERENCE_WINDOW_DAYS);
 
   const onTrack: ProgressBuckets["onTrack"] = [];
   const steady: ProgressBuckets["steady"] = [];
@@ -102,7 +140,10 @@ export const computeProgressBuckets = async ({
 
   let totalRate = 0;
 
-  for (const { athlete, adherenceRate } of results) {
+  for (const a of assignments) {
+    const athlete = a.athlete;
+    const adherenceRate = adherenceByAthleteId.get(athlete.id) ?? 0;
+
     totalRate += adherenceRate;
 
     const entry = {
@@ -110,16 +151,16 @@ export const computeProgressBuckets = async ({
       name: athlete.name,
       image: athlete.image,
       processStatus:
-        adherenceRate >= 0.8
+        adherenceRate >= ADHERENCE_ON_TRACK_BUCKET
           ? ProcessStatus.ON_TRACK
-          : adherenceRate >= 0.5
+          : adherenceRate >= ADHERENCE_STEADY_BUCKET
             ? ProcessStatus.STEADY
             : ProcessStatus.FALLING_BEHIND,
     };
 
-    if (adherenceRate >= 0.8) {
+    if (adherenceRate >= ADHERENCE_ON_TRACK_BUCKET) {
       onTrack.push(entry);
-    } else if (adherenceRate >= 0.5) {
+    } else if (adherenceRate >= ADHERENCE_STEADY_BUCKET) {
       steady.push(entry);
     } else {
       fallingBehind.push(entry);
@@ -130,8 +171,36 @@ export const computeProgressBuckets = async ({
     onTrack,
     steady,
     fallingBehind,
-    avgEngagementRate: totalRate / results.length,
+    avgEngagementRate: totalRate / assignments.length,
   };
+};
+
+const buildLatestSessionMap = async (
+  db: Db,
+  athleteIds: string[],
+): Promise<Map<string, Date | null>> => {
+  if (athleteIds.length === 0) {
+    return new Map();
+  }
+
+  const rows = await db.workoutSession.findMany({
+    where: { userId: { in: athleteIds }, completedAt: { not: null } },
+    distinct: ["userId"],
+    orderBy: [{ userId: "asc" }, { completedAt: "desc" }],
+    select: { userId: true, completedAt: true },
+  });
+
+  const result = new Map<string, Date | null>();
+
+  for (const id of athleteIds) {
+    result.set(id, null);
+  }
+
+  for (const r of rows) {
+    result.set(r.userId, r.completedAt);
+  }
+
+  return result;
 };
 
 export const computeAthletesSummary = async ({
@@ -141,6 +210,9 @@ export const computeAthletesSummary = async ({
   db: Db;
   assignments: AssignedAthleteWithData[];
 }): Promise<AthleteDailySummary[]> => {
+  const athleteIds = assignments.map((a) => a.athlete.id);
+  const latestByAthleteId = await buildLatestSessionMap(db, athleteIds);
+
   const summaries: AthleteDailySummary[] = [];
 
   for (const a of assignments) {
@@ -150,13 +222,7 @@ export const computeAthletesSummary = async ({
       ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
       : HealthStatus.HEALTHY;
 
-    const latestSession = await db.workoutSession.findFirst({
-      where: { userId: athlete.id },
-      orderBy: { completedAt: "desc" },
-      select: { completedAt: true },
-    });
-
-    const lastActivityDate = latestSession?.completedAt ?? null;
+    const lastActivityDate = latestByAthleteId.get(athlete.id) ?? null;
 
     if (athlete.planEnrollments.length === 0) {
       summaries.push({
@@ -221,7 +287,8 @@ export const computeTodayStatus = async ({
   return {
     workoutsPlannedToday: sessions.length,
     workoutsCompletedToday: sessions.filter(
-      (s) => s.completionRatio !== null && Number(s.completionRatio) >= 0.9,
+      (s) =>
+        s.completionRatio !== null && Number(s.completionRatio) >= WORKOUT_FULLY_COMPLETED_RATIO,
     ).length,
   };
 };
@@ -237,7 +304,7 @@ export const computeWeekStatus = async ({
 }): Promise<{ workoutsPlannedThisWeek: number; workoutsCompletedThisWeek: number }> => {
   const today = startOfTodayInTz(timezone);
   const weekStart = startOfWeekInTz(today, timezone);
-  const weekEnd = new Date(weekStart.getTime() + 7 * MS_PER_DAY);
+  const weekEnd = addDaysInTz(weekStart, 7, timezone);
 
   const sessions = await db.workoutSession.findMany({
     where: { userId, startedAt: { gte: weekStart, lt: weekEnd } },
@@ -247,7 +314,8 @@ export const computeWeekStatus = async ({
   return {
     workoutsPlannedThisWeek: sessions.length,
     workoutsCompletedThisWeek: sessions.filter(
-      (s) => s.completionRatio !== null && Number(s.completionRatio) >= 0.9,
+      (s) =>
+        s.completionRatio !== null && Number(s.completionRatio) >= WORKOUT_FULLY_COMPLETED_RATIO,
     ).length,
   };
 };

@@ -13,7 +13,8 @@ import {
   HEALTH_STATUS_MAP,
 } from "../../../mappers/coaching";
 import { PLAN_ENROLLMENT_STATUS_MAP } from "../../../mappers/lms";
-import { MS_PER_DAY } from "../../../utils/date-helpers";
+import { findOrThrow } from "../../../utils";
+import { addDaysInTz } from "../../../utils/date-helpers";
 import { buildAssignedAthleteInclude } from "../assigned-athlete-query";
 
 export const getAthleteDetail = async (
@@ -24,9 +25,15 @@ export const getAthleteDetail = async (
 
   await verifyAthleteBelongsToCoach(athleteUserId, coachId);
 
+  const coach = await findOrThrow(
+    prisma.user.findUnique({ where: { id: coachUserId }, select: { timezone: true } }),
+    "User",
+  );
+  const tz = coach.timezone;
+
   const now = new Date();
-  const window28Start = new Date(now.getTime() - 28 * MS_PER_DAY);
-  const week7Start = new Date(now.getTime() - 7 * MS_PER_DAY);
+  const window28Start = addDaysInTz(now, -28, tz);
+  const week7Start = addDaysInTz(now, -7, tz);
 
   const [assignment, actionItems, rawRecentWorkouts, adherenceSessions, weekSessions] =
     await Promise.all([

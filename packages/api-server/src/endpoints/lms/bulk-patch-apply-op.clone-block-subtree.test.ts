@@ -111,7 +111,7 @@ const makeTx = (): TxClient =>
     blockSegment: { create: vi.fn() },
     setGroup: { create: vi.fn() },
     exerciseEntry: { create: vi.fn() },
-    exerciseLibraryItem: { findUnique: vi.fn() },
+    exerciseLibraryItem: { findUnique: vi.fn(), findMany: vi.fn().mockResolvedValue([]) },
   }) as unknown as TxClient;
 
 const buildSourceTree = (overrides?: Partial<SourceTree>): SourceTree => ({
@@ -171,6 +171,7 @@ describe("bulk-patch-apply-op / clone-block-subtree", () => {
     vi.mocked(tx.blockSegment.create).mockResolvedValue(mockSegment({ id: "cloned-seg" }));
     vi.mocked(tx.setGroup.create).mockResolvedValue(mockSetGroup({ id: "cloned-sg" }));
     vi.mocked(tx.exerciseLibraryItem.findUnique).mockResolvedValue(mockExerciseLibraryItem());
+    vi.mocked(tx.exerciseLibraryItem.findMany).mockResolvedValue([mockExerciseLibraryItem()]);
     vi.mocked(tx.exerciseEntry.create).mockResolvedValue(mockEntry({ id: "cloned-entry" }));
 
     const result = await applyOpInTx(tx, {
@@ -192,9 +193,16 @@ describe("bulk-patch-apply-op / clone-block-subtree", () => {
       }),
     );
 
-    expect(tx.blockSegment.create).toHaveBeenCalledTimes(2);
-    expect(tx.setGroup.create).toHaveBeenCalledTimes(6);
-    expect(tx.exerciseEntry.create).toHaveBeenCalledTimes(5);
+    const blockCreateData = vi.mocked(tx.block.create).mock.calls[0]?.[0]?.data as {
+      segments: { create: { setGroups: { create: { entries: { create: unknown[] } }[] } }[] };
+    };
+    const segmentCreates = blockCreateData.segments.create;
+    const setGroupCreates = segmentCreates.flatMap((seg) => seg.setGroups.create);
+    const entryCreates = setGroupCreates.flatMap((sg) => sg.entries.create);
+
+    expect(segmentCreates).toHaveLength(2);
+    expect(setGroupCreates).toHaveLength(6);
+    expect(entryCreates).toHaveLength(5);
 
     expect(result.kind).toBe("ok");
 
@@ -225,6 +233,7 @@ describe("bulk-patch-apply-op / clone-block-subtree", () => {
     vi.mocked(tx.blockSegment.create).mockResolvedValue(mockSegment({ id: "cloned-seg" }));
     vi.mocked(tx.setGroup.create).mockResolvedValue(mockSetGroup({ id: "cloned-sg" }));
     vi.mocked(tx.exerciseLibraryItem.findUnique).mockResolvedValue(mockExerciseLibraryItem());
+    vi.mocked(tx.exerciseLibraryItem.findMany).mockResolvedValue([mockExerciseLibraryItem()]);
     vi.mocked(tx.exerciseEntry.create).mockResolvedValue(mockEntry({ id: "cloned-entry" }));
 
     await applyOpInTx(tx, {
@@ -234,14 +243,21 @@ describe("bulk-patch-apply-op / clone-block-subtree", () => {
       targetOrder: 0,
     });
 
-    const entryCall = vi.mocked(tx.exerciseEntry.create).mock.calls[0]?.[0] as {
-      data: Record<string, unknown>;
+    const blockCreateData = vi.mocked(tx.block.create).mock.calls[0]?.[0]?.data as {
+      segments: {
+        create: {
+          setGroups: {
+            create: { entries: { create: { exerciseSnapshot: Record<string, unknown> }[] } }[];
+          };
+        }[];
+      };
     };
-    const snapshot = entryCall.data.exerciseSnapshot as Record<string, unknown>;
+    const firstEntry = blockCreateData.segments.create[0]?.setGroups.create[0]?.entries.create[0];
+    const snapshot = firstEntry?.exerciseSnapshot;
 
-    expect(snapshot.id).toBe("exercise-1");
-    expect(snapshot.name).toBe("Back Squat");
-    expect(snapshot.primaryMovement).toBe("SQUAT");
+    expect(snapshot?.id).toBe("exercise-1");
+    expect(snapshot?.name).toBe("Back Squat");
+    expect(snapshot?.primaryMovement).toBe("SQUAT");
   });
 
   it("not-found: throws NotFoundError when source block is missing", async () => {

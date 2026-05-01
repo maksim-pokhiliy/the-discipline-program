@@ -8,6 +8,7 @@ import type {
   ResendCoachInviteResponse,
 } from "@repo/contracts/coaching/coach-invite";
 import type { User } from "@repo/contracts/iam/user";
+import { notifyError } from "@repo/query";
 import { formatDate } from "@repo/shared";
 
 import { api } from "../api";
@@ -23,7 +24,7 @@ export const useInviteAthlete = () => {
       toast.success(`Invite sent to ${user.email}`);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to send invite");
+      notifyError(error, "Failed to send invite");
     },
   });
 };
@@ -42,7 +43,7 @@ export const useResendCoachInvite = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.athletes.byId(inviteeUserId) });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to resend invite");
+      notifyError(error, "Failed to resend invite");
     },
   });
 };

@@ -38,6 +38,8 @@ type SetPasswordFormProps = {
   email: string;
 };
 
+const CONSUME_TIMEOUT_MS = 10_000;
+
 const detectBrowserTimezone = (): string | null => {
   if (typeof Intl === "undefined") {
     return null;
@@ -93,11 +95,21 @@ export const SetPasswordForm = ({ token, email }: SetPasswordFormProps) => {
         requestBody.timezone = timezone;
       }
 
-      const response = await fetch(`/api/invite/${token}/consume`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestBody),
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), CONSUME_TIMEOUT_MS);
+
+      let response: Response;
+
+      try {
+        response = await fetch(`/api/invite/${token}/consume`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (response.status === 410) {
         toast.error("This invite link is no longer valid");
@@ -160,7 +172,9 @@ export const SetPasswordForm = ({ token, email }: SetPasswordFormProps) => {
         autoComplete="new-password"
         disabled={isSubmitting}
         error={!!errors.password}
-        helperText={errors.password?.message ?? "At least 12 characters"}
+        helperText={
+          errors.password?.message ?? `At least ${AUTH_CONSTANTS.MIN_PASSWORD_LENGTH} characters`
+        }
         {...register("password")}
         slotProps={{
           input: {

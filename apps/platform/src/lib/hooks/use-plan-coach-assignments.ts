@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import type { CreatePlanCoachAssignmentInput } from "@repo/contracts/lms/plan-coach-assignment";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -28,7 +29,7 @@ export const useAddPlanCoach = (planId: string) => {
       toast.success("Coach added");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to add coach");
+      notifyError(error, "Failed to add coach");
     },
   });
 };
@@ -45,7 +46,7 @@ export const useRemovePlanCoach = (planId: string) => {
       toast.success("Coach removed");
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Failed to remove coach");
+      notifyError(error, "Failed to remove coach");
     },
   });
 };

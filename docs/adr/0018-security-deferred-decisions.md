@@ -7,7 +7,7 @@
 
 ## Context
 
-The §3 security audit identified several architectural decisions that require either infrastructure setup, business stakeholder input, or both. These are not bugs — they are design choices that the current pre-launch, single-admin, zero-traffic state does not yet force. Implementing them now would be speculative infrastructure. This ADR documents what was consciously deferred and the triggers that make each decision urgent.
+A security audit identified several architectural decisions that require either infrastructure setup, business stakeholder input, or both. These are not bugs — they are design choices that the current pre-launch, single-admin, zero-traffic state does not yet force. Implementing them now would be speculative infrastructure. This ADR documents what was consciously deferred and the triggers that make each decision urgent.
 
 ## Decision
 
@@ -33,5 +33,4 @@ The following security-related decisions are deferred. Each has a **trigger** �
 
 ## References
 
-- `docs/BIGTECH-AUDIT.md` §3 deferred bullets
 - ADR 0004 (NextAuth with credentials provider)

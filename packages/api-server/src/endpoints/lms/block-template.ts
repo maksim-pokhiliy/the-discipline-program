@@ -135,12 +135,24 @@ export const lmsBlockTemplateApi = {
     }
 
     try {
-      const promoted = await prisma.blockTemplate.update({
-        where: { id: blockTemplateId },
-        data: { scope: "SYSTEM", ownerId: null },
+      const updateResult = await prisma.blockTemplate.updateMany({
+        where: { id: blockTemplateId, version: existing.version },
+        data: { scope: "SYSTEM", ownerId: null, version: { increment: 1 } },
       });
 
+      if (updateResult.count === 0) {
+        throw new ConflictError("Promotion state changed; refresh and try again", {
+          blockTemplateId,
+        });
+      }
+
+      const promoted = await findOrThrow(
+        prisma.blockTemplate.findUnique({ where: { id: blockTemplateId } }),
+        "Block template",
+      );
+
       logger.info("lms.library.block_template.promoted", {
+        actingUserId: userId,
         blockTemplateId,
         fromScope: existing.scope,
         toScope: "SYSTEM",
@@ -197,12 +209,24 @@ export const lmsBlockTemplateApi = {
     }
 
     try {
-      const demoted = await prisma.blockTemplate.update({
-        where: { id: blockTemplateId },
-        data: { scope: "COACH", ownerId: data.newOwnerId },
+      const updateResult = await prisma.blockTemplate.updateMany({
+        where: { id: blockTemplateId, version: existing.version },
+        data: { scope: "COACH", ownerId: data.newOwnerId, version: { increment: 1 } },
       });
 
+      if (updateResult.count === 0) {
+        throw new ConflictError("Promotion state changed; refresh and try again", {
+          blockTemplateId,
+        });
+      }
+
+      const demoted = await findOrThrow(
+        prisma.blockTemplate.findUnique({ where: { id: blockTemplateId } }),
+        "Block template",
+      );
+
       logger.info("lms.library.block_template.demoted", {
+        actingUserId: userId,
         blockTemplateId,
         fromScope: existing.scope,
         toScope: "COACH",

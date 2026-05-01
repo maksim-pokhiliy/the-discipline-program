@@ -24,7 +24,7 @@ export const createLibraryBlockKindsAPI = (client: ApiClient) => ({
     client.request(`/api/admin/library/block-kinds/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> =>
-    client.request(`/api/admin/library/block-kinds/${id}`, "DELETE"),
+    client.requestNoContent(`/api/admin/library/block-kinds/${id}`, "DELETE"),
 
   promote: (id: string): Promise<PromoteBlockKindResponse> =>
     client.request(`/api/admin/library/block-kinds/${id}/promote`, "POST"),

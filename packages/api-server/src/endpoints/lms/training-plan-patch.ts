@@ -13,6 +13,7 @@ import { logger } from "@repo/shared";
 
 import { verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
+import { TX_BUDGET_BULK } from "../../db/transaction-config";
 import { mapToBlock, mapToBlockSegment, mapToExerciseEntry } from "../../mappers/lms";
 import { handlePrismaError } from "../../utils";
 
@@ -74,7 +75,7 @@ export const lmsTrainingPlanPatchApi = {
         }
 
         return { updatedBlocks, updatedSegments, updatedEntries };
-      });
+      }, TX_BUDGET_BULK);
 
       logger.info("lms.editor.bulk_patch_applied", {
         planId,

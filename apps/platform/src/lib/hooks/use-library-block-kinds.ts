@@ -9,6 +9,7 @@ import {
   type ListBlockKindsResponse,
   type UpdateBlockKindInput,
 } from "@repo/contracts/lms/block-kind";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -60,7 +61,7 @@ export const useCreateBlockKind = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.blockKinds.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create block kind");
+      notifyError(error, "Failed to create block kind");
     },
   });
 };
@@ -81,7 +82,7 @@ export const useUpdateBlockKind = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.blockKinds.byId(result.id) });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update block kind");
+      notifyError(error, "Failed to update block kind");
     },
   });
 };
@@ -96,7 +97,7 @@ export const useDeleteBlockKind = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.blockKinds.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete block kind");
+      notifyError(error, "Failed to delete block kind");
     },
   });
 };
@@ -111,7 +112,7 @@ export const usePromoteBlockKind = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.blockKinds.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to promote block kind");
+      notifyError(error, "Failed to promote block kind");
     },
   });
 };
@@ -127,7 +128,7 @@ export const useDemoteBlockKind = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.blockKinds.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to demote block kind");
+      notifyError(error, "Failed to demote block kind");
     },
   });
 };

@@ -9,6 +9,7 @@ import {
   type ApplyTemplateResponse,
   type ApplyWeekTemplateInput,
 } from "@repo/contracts/lms/training-plan";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -34,7 +35,7 @@ export const useApplyBlockTemplate = (planId: string) => {
       invalidatePlanStructure(queryClient, planId);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to apply block template");
+      notifyError(error, "Failed to apply block template");
     },
   });
 };
@@ -49,7 +50,7 @@ export const useApplySessionTemplate = (planId: string) => {
       invalidatePlanStructure(queryClient, planId);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to apply session template");
+      notifyError(error, "Failed to apply session template");
     },
   });
 };
@@ -64,7 +65,7 @@ export const useApplyWeekTemplate = (planId: string) => {
       invalidatePlanStructure(queryClient, planId);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to apply week template");
+      notifyError(error, "Failed to apply week template");
     },
   });
 };

@@ -6,6 +6,7 @@ import { logger } from "@repo/shared";
 
 import { requireCoachLikeRole, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
+import { TX_BUDGET_LONG } from "../../../db/transaction-config";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 
 import { cloneBlockSubtree } from "./clone-block-subtree";
@@ -80,7 +81,7 @@ export const applySessionTemplate = async (
       }
 
       return { sessionId: newSession.id };
-    });
+    }, TX_BUDGET_LONG);
 
     logger.info("lms.editor.template_applied", {
       userId,

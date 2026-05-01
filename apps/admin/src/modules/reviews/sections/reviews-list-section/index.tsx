@@ -4,17 +4,7 @@ import { useMemo } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import {
-  Avatar,
-  Box,
-  Chip,
-  IconButton,
-  Rating,
-  Stack,
-  Switch,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Chip, IconButton, Rating, Stack, Switch, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
 import { type Review } from "@repo/contracts/cms/review";
@@ -24,6 +14,7 @@ import { formatDate } from "@repo/shared";
 import {
   ConfirmationModal,
   DataTable,
+  UserChip,
   useDataTableUrlState,
   type Column,
   type DataTableFilter,
@@ -65,19 +56,17 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
         sortValue: (review) => review.authorName,
         searchValue: (review) => review.authorName,
         render: (review) => (
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar src={review.authorAvatar || undefined} alt={review.authorName}>
-              {review.authorName.charAt(0)}
-            </Avatar>
-            <Box>
-              <Typography variant="subtitle2">{review.authorName}</Typography>
-              {review.authorRole && (
-                <Typography variant="caption" color="text.secondary">
+          <UserChip
+            user={{ id: review.id, name: review.authorName, image: review.authorAvatar }}
+            size="medium"
+            secondary={
+              review.authorRole ? (
+                <Typography variant="caption" color="text.secondary" noWrap>
                   {review.authorRole}
                 </Typography>
-              )}
-            </Box>
-          </Stack>
+              ) : undefined
+            }
+          />
         ),
       },
       {

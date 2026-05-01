@@ -66,9 +66,14 @@ export const ContentSection = ({
   const MotionItem = animated ? MotionBox : Box;
   const motionItemProps = animated ? { variants: fadeSlideUp } : {};
 
+  const titleId = id ? `${id}-title` : undefined;
+  const sectionAriaLabelledBy = title && titleId ? titleId : undefined;
+
   return (
     <Box
-      id={id}
+      component="section"
+      id={id || undefined}
+      aria-labelledby={sectionAriaLabelledBy}
       sx={(theme) => ({
         py: 8,
         bgcolor:
@@ -94,6 +99,7 @@ export const ContentSection = ({
                 >
                   {title && (
                     <Typography
+                      id={titleId}
                       variant="display2"
                       sx={(theme) => ({
                         width: "100%",

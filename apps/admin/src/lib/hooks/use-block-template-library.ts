@@ -10,7 +10,7 @@ import {
   type ListBlockTemplatesResponse,
   type UpdateBlockTemplateInput,
 } from "@repo/contracts/lms/block-template";
-import { createCrudHooks } from "@repo/query";
+import { createCrudHooks, notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { adminKeys } from "../api/keys";
@@ -61,7 +61,7 @@ export const usePromoteBlockTemplate = () => {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to promote block template");
+      notifyError(error, "Failed to promote block template");
     },
   });
 };
@@ -84,7 +84,7 @@ export const useDemoteBlockTemplate = () => {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to demote block template");
+      notifyError(error, "Failed to demote block template");
     },
   });
 };

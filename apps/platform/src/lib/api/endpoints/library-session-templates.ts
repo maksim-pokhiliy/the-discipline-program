@@ -56,7 +56,7 @@ export const createLibrarySessionTemplatesAPI = (client: ApiClient) => ({
     client.request(`/api/platform/library/session-templates/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> =>
-    client.request(`/api/platform/library/session-templates/${id}`, "DELETE"),
+    client.requestNoContent(`/api/platform/library/session-templates/${id}`, "DELETE"),
 
   promote: (id: string): Promise<PromoteSessionTemplateResponse> =>
     client.request(`/api/platform/library/session-templates/${id}/promote`, "POST"),

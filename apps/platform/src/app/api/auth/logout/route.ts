@@ -12,6 +12,6 @@ const logoutHandler = createLogoutHandler({
   incrementTokenVersion: iamAuthService.incrementTokenVersion,
 });
 
-export const GET = withPublicRoute(
+export const POST = withPublicRoute(
   withRateLimit(logoutHandler as unknown as RouteHandler, RATE_LIMIT_TIER.AUTH),
 );

@@ -82,37 +82,43 @@ export const evaluatePr = async ({ db, setLogId }: EvaluatePrInput): Promise<Eva
   const needsSiblings =
     kinds.includes(PrKind.MAX_REPS_TOTAL) || kinds.includes(PrKind.MAX_REPS_UNBROKEN);
 
-  const siblings = needsSiblings
-    ? await db.setLog.findMany({ where: { exerciseLogId: setLog.exerciseLogId } })
-    : null;
+  const [siblings, existingRecords] = await Promise.all([
+    needsSiblings
+      ? db.setLog.findMany({ where: { exerciseLogId: setLog.exerciseLogId } })
+      : Promise.resolve(null),
+    db.personalRecord.findMany({
+      where: { userId, exerciseId, kind: { in: kinds } },
+    }),
+  ]);
+
+  const existingByKind = new Map(existingRecords.map((pr) => [pr.kind, pr]));
 
   const achievedAt = setLog.completedAt ?? new Date();
+  const upserts: Promise<PrismaPersonalRecord>[] = [];
   const kindsAchieved: PrKind[] = [];
-  const createdPrs: PrismaPersonalRecord[] = [];
 
   for (const prKind of kinds) {
-    const existing = await db.personalRecord.findUnique({
-      where: { userId_exerciseId_kind: { userId, exerciseId, kind: prKind } },
-    });
-
+    const existing = existingByKind.get(prKind) ?? null;
     const output = dispatchDetector({ prKind, setLog, siblings, existing });
 
     if (output === null) {
       continue;
     }
 
-    const pr = await upsertPersonalRecord(db, {
-      userId,
-      exerciseId,
-      prKind,
-      setLogId,
-      achievedAt,
-      output,
-    });
-
+    upserts.push(
+      upsertPersonalRecord(db, {
+        userId,
+        exerciseId,
+        prKind,
+        setLogId,
+        achievedAt,
+        output,
+      }),
+    );
     kindsAchieved.push(prKind);
-    createdPrs.push(pr);
   }
+
+  const createdPrs = await Promise.all(upserts);
 
   logger.info("lms.pr_evaluator.dispatched", {
     setLogId,

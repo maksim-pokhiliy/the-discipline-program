@@ -1,5 +1,13 @@
 export type { RouteContext, RouteHandler, AuthenticatedHandler } from "./types";
 export {
+  runWithContext,
+  getContext,
+  getRequestId,
+  getUserId,
+  updateContext,
+} from "./request-context";
+export type { RequestContext } from "./request-context";
+export {
   withPublicRoute,
   createGetHandler,
   createGetByIdHandler,
@@ -15,8 +23,10 @@ export {
 } from "./route-helpers";
 export { createHealthHandler, createReadyHandler, createVersionHandler } from "./health-handlers";
 export { CACHE_POLICY, withCacheControl } from "./cache-control";
-export { setMonitoring } from "./monitoring";
-export type { MonitoringPort } from "./monitoring";
+export { applyCspHeaders, createCspResponse, generateNonce } from "./csp";
+export type { CspOptions } from "./csp";
+export { setMonitoring, getMonitoring } from "./monitoring";
+export type { MonitoringPort, CaptureContext, SeverityLevel } from "./monitoring";
 export {
   createAuthGetHandler,
   createAuthGetWithQueryHandler,

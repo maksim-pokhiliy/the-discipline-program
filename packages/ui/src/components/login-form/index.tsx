@@ -10,7 +10,7 @@ import { useForm } from "react-hook-form";
 
 import { type LoginFormData, loginFormSchema } from "@repo/contracts/iam/auth";
 
-type LoginFormProps = {
+export type LoginFormProps = {
   onSubmit: (data: LoginFormData) => void;
   isLoading?: boolean;
 };

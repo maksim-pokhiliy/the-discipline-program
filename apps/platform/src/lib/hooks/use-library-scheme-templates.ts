@@ -9,6 +9,7 @@ import {
   type SchemeTemplate,
   type UpdateSchemeTemplateInput,
 } from "@repo/contracts/lms/scheme-template";
+import { notifyError } from "@repo/query";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
@@ -60,7 +61,7 @@ export const useCreateSchemeTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.schemeTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to create scheme template");
+      notifyError(error, "Failed to create scheme template");
     },
   });
 };
@@ -83,7 +84,7 @@ export const useUpdateSchemeTemplate = () => {
       });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update scheme template");
+      notifyError(error, "Failed to update scheme template");
     },
   });
 };
@@ -98,7 +99,7 @@ export const useDeleteSchemeTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.schemeTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete scheme template");
+      notifyError(error, "Failed to delete scheme template");
     },
   });
 };
@@ -113,7 +114,7 @@ export const usePromoteSchemeTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.schemeTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to promote scheme template");
+      notifyError(error, "Failed to promote scheme template");
     },
   });
 };
@@ -129,7 +130,7 @@ export const useDemoteSchemeTemplate = () => {
       queryClient.invalidateQueries({ queryKey: platformKeys.library.schemeTemplates.page() });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to demote scheme template");
+      notifyError(error, "Failed to demote scheme template");
     },
   });
 };

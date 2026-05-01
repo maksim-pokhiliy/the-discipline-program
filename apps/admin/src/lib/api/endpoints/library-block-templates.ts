@@ -25,7 +25,7 @@ export const createLibraryBlockTemplatesAPI = (client: ApiClient) => ({
     client.request(`/api/admin/library/block-templates/${id}`, "PUT", data),
 
   delete: (id: string): Promise<void> =>
-    client.request(`/api/admin/library/block-templates/${id}`, "DELETE"),
+    client.requestNoContent(`/api/admin/library/block-templates/${id}`, "DELETE"),
 
   promote: (id: string): Promise<PromoteBlockTemplateResponse> =>
     client.request(`/api/admin/library/block-templates/${id}/promote`, "POST"),

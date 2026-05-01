@@ -157,12 +157,24 @@ export const lmsExerciseLibraryItemApi = {
     }
 
     try {
-      const promoted = await prisma.exerciseLibraryItem.update({
-        where: { id: exerciseLibraryItemId },
-        data: { scope: "SYSTEM", ownerId: null },
+      const updateResult = await prisma.exerciseLibraryItem.updateMany({
+        where: { id: exerciseLibraryItemId, version: existing.version },
+        data: { scope: "SYSTEM", ownerId: null, version: { increment: 1 } },
       });
 
+      if (updateResult.count === 0) {
+        throw new ConflictError("Promotion state changed; refresh and try again", {
+          exerciseLibraryItemId,
+        });
+      }
+
+      const promoted = await findOrThrow(
+        prisma.exerciseLibraryItem.findUnique({ where: { id: exerciseLibraryItemId } }),
+        "Exercise library item",
+      );
+
       logger.info("lms.library.exercise.promoted", {
+        actingUserId: userId,
         exerciseLibraryItemId,
         fromScope: existing.scope,
         toScope: "SYSTEM",
@@ -225,12 +237,24 @@ export const lmsExerciseLibraryItemApi = {
     }
 
     try {
-      const demoted = await prisma.exerciseLibraryItem.update({
-        where: { id: exerciseLibraryItemId },
-        data: { scope: "COACH", ownerId: data.newOwnerId },
+      const updateResult = await prisma.exerciseLibraryItem.updateMany({
+        where: { id: exerciseLibraryItemId, version: existing.version },
+        data: { scope: "COACH", ownerId: data.newOwnerId, version: { increment: 1 } },
       });
 
+      if (updateResult.count === 0) {
+        throw new ConflictError("Promotion state changed; refresh and try again", {
+          exerciseLibraryItemId,
+        });
+      }
+
+      const demoted = await findOrThrow(
+        prisma.exerciseLibraryItem.findUnique({ where: { id: exerciseLibraryItemId } }),
+        "Exercise library item",
+      );
+
       logger.info("lms.library.exercise.demoted", {
+        actingUserId: userId,
         exerciseLibraryItemId,
         fromScope: existing.scope,
         toScope: "COACH",

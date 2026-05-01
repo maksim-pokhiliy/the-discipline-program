@@ -26,6 +26,6 @@ export const PersonCardImageSlot: React.FC<PersonCardImageSlotProps> = ({ image,
         bgcolor: "action.hover",
       })}
     >
-      <PersonIcon fontSize="large" sx={{ color: "text.disabled" }} />
+      <PersonIcon fontSize="large" sx={{ color: "text.muted" }} />
     </Stack>
   );

@@ -7,7 +7,7 @@
 
 ## Context
 
-The §10 frontend audit optimized what could be optimized without infrastructure changes: tree-shaking config (`optimizePackageImports`), dead dependency removal, RSC conversion for marketing, ISR, `next/image` migration, dynamic imports for heavy editor/DnD deps, and bundle analyzer setup. What remains are decisions that require either production traffic data, CI pipeline investment, or structural package changes that affect the entire monorepo.
+A frontend performance audit optimized what could be optimized without infrastructure changes: tree-shaking config (`optimizePackageImports`), dead dependency removal, RSC conversion for marketing, ISR, `next/image` migration, dynamic imports for heavy editor/DnD deps, and bundle analyzer setup. What remains are decisions that require either production traffic data, CI pipeline investment, or structural package changes that affect the entire monorepo.
 
 ## Decision
 
@@ -27,6 +27,5 @@ The following frontend performance decisions are deferred. Each has a **trigger*
 
 ## References
 
-- `docs/BIGTECH-AUDIT.md` §10 bullets: bundle budgets, Core Web Vitals, `@repo/ui` bundle sink
 - ADR 0006 (MUI as design system — `optimizePackageImports` convention)
 - ADR 0021 (architectural risks — `@repo/ui` splitting mentioned as 6-month risk)

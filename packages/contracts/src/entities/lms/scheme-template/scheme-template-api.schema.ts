@@ -50,6 +50,14 @@ export const getSchemeTemplateResponseSchema = schemeTemplateSchema;
 export const createSchemeTemplateResponseSchema = schemeTemplateSchema;
 export const updateSchemeTemplateResponseSchema = schemeTemplateSchema;
 
+export const promoteSchemeTemplateInputSchema = z
+  .object({
+    expectedVersion: z.number().int().nonnegative().max(2_147_483_647).optional(),
+  })
+  .optional();
 export const promoteSchemeTemplateResponseSchema = schemeTemplateSchema;
-export const demoteSchemeTemplateInputSchema = z.object({ newOwnerId: z.string().cuid() });
+export const demoteSchemeTemplateInputSchema = z.object({
+  newOwnerId: z.string().cuid(),
+  expectedVersion: z.number().int().nonnegative().max(2_147_483_647).optional(),
+});
 export const demoteSchemeTemplateResponseSchema = schemeTemplateSchema;

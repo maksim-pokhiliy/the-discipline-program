@@ -70,7 +70,7 @@ export const SegmentRow = ({ segment, selection, onSelect }: SegmentRowProps) =>
         <Box
           {...sortable.attributes}
           {...sortable.listeners}
-          sx={{ cursor: "grab", display: "flex", color: "text.disabled" }}
+          sx={{ cursor: "grab", display: "flex", color: "text.muted" }}
           aria-label="Drag segment"
         >
           <DragIndicatorIcon fontSize="small" />

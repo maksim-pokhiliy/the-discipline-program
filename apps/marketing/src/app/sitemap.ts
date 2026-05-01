@@ -1,5 +1,7 @@
 import { type MetadataRoute } from "next";
 
+import { logger } from "@repo/shared";
+
 import { serverApi } from "@app/lib/api/server";
 import { SEO_CONFIG } from "@app/lib/seo";
 
@@ -58,7 +60,11 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     }));
 
     return [...staticPages, ...blogPages];
-  } catch {
+  } catch (error) {
+    logger.warn("marketing.sitemap.blog_fetch_failed", {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
     return staticPages;
   }
 };

@@ -72,7 +72,7 @@ export const BlockTree = ({ block, selection, onSelect }: BlockTreeProps) => {
           <Box
             {...sortable.attributes}
             {...sortable.listeners}
-            sx={{ cursor: "grab", display: "flex", color: "text.disabled" }}
+            sx={{ cursor: "grab", display: "flex", color: "text.muted" }}
             aria-label="Drag block"
           >
             <DragIndicatorIcon fontSize="small" />
