@@ -24,8 +24,8 @@ const isRoleAllowed = (role: UserRole | null | undefined, allowed: AllowedRoles)
 };
 
 const bindIdentity = (userId: string, role?: string): void => {
-  updateContext({ userId, role });
-  getMonitoring()?.setUser({ id: userId, role });
+  updateContext({ userId, ...(role && { role }) });
+  getMonitoring()?.setUser({ id: userId, ...(role && { role }) });
 };
 
 const releaseIdentity = (): void => {
