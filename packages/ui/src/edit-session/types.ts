@@ -46,7 +46,7 @@ export type UseEditSessionApi<TDraft> = {
 
 export type EditSessionRegistration = {
   sessionId: string;
-  label?: string;
+  label?: string | undefined;
   status: EditSessionStatus;
   isDirty: boolean;
   isValid: boolean;

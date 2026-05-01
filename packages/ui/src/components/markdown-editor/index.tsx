@@ -15,14 +15,14 @@ type MarkdownEditorVariant = "default" | "inline";
 export type MarkdownEditorProps = {
   value: string;
   onChange: (value: string) => void;
-  onBlur?: () => void;
-  placeholder?: string;
-  label?: string;
-  error?: boolean;
-  helperText?: string;
-  disabled?: boolean;
-  minRows?: number;
-  variant?: MarkdownEditorVariant;
+  onBlur?: (() => void) | undefined;
+  placeholder?: string | undefined;
+  label?: string | undefined;
+  error?: boolean | undefined;
+  helperText?: string | undefined;
+  disabled?: boolean | undefined;
+  minRows?: number | undefined;
+  variant?: MarkdownEditorVariant | undefined;
 };
 
 export const MarkdownEditor = ({
@@ -39,7 +39,14 @@ export const MarkdownEditor = ({
 }: MarkdownEditorProps) => {
   const theme = useTheme();
   const editorId = useId();
-  const editor = useEditor({ value, onChange, onBlur, placeholder, disabled, editorId });
+  const editor = useEditor({
+    value,
+    onChange,
+    placeholder,
+    disabled,
+    editorId,
+    ...(onBlur !== undefined && { onBlur }),
+  });
   const isInline = variant === "inline";
   const resolvedMinRows = minRows ?? (isInline ? 3 : 10);
 
@@ -127,7 +134,7 @@ export const MarkdownEditor = ({
       </Stack>
 
       {helperText && (
-        <FormHelperText error={error} sx={{ ml: 1 }}>
+        <FormHelperText {...(error !== undefined && { error })} sx={{ ml: 1 }}>
           {helperText}
         </FormHelperText>
       )}

@@ -16,7 +16,7 @@ import { SCHEME_PARAMS_DEFAULTS } from "./scheme-form-defaults";
 import { SchemeFormEmomLoop } from "./scheme-form-emom-loop";
 import { SchemeFormIntervalLoop } from "./scheme-form-interval-loop";
 import { SchemeFormNone } from "./scheme-form-none";
-import { type SchemeFormErrors } from "./scheme-form.types";
+import { type SchemeFormCommonProps } from "./scheme-form.types";
 
 export type SchemeFormInnerKind = Exclude<SchemeParams["kind"], "TIME_BOXED">;
 
@@ -27,12 +27,10 @@ export type SchemeFormInnerValue =
   | SchemeParamsIntervalLoop
   | SchemeParamsEmomLoop;
 
-export type SchemeFormInnerProps = {
+export type SchemeFormInnerProps = SchemeFormCommonProps & {
   archetypeKind: SchemeFormInnerKind;
   innerParams: unknown;
   onChange: (next: SchemeFormInnerValue) => void;
-  errors?: SchemeFormErrors;
-  disabled?: boolean;
 };
 
 const isInnerSchemeParams = (params: SchemeParams): params is SchemeFormInnerValue =>

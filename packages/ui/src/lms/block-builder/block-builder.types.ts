@@ -11,20 +11,20 @@ import { type EditSessionStatus } from "../../edit-session";
 export type BlockBuilderErrors = z.ZodError | null;
 
 export type BlockBuilderNotesSlotProps = {
-  onKeyDown?: (event: KeyboardEvent<HTMLElement>) => void;
-  onChange?: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onBlur?: () => void;
-  inputRef?: RefCallback<HTMLInputElement | HTMLTextAreaElement>;
+  onKeyDown?: ((event: KeyboardEvent<HTMLElement>) => void) | undefined;
+  onChange?: ((event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void) | undefined;
+  onBlur?: (() => void) | undefined;
+  inputRef?: RefCallback<HTMLInputElement | HTMLTextAreaElement> | undefined;
 };
 
 export type BlockBuilderProps = {
   block: Block;
-  blockKinds?: BlockKind[];
+  blockKinds?: BlockKind[] | undefined;
   onChange: (next: Block | ((prev: Block) => Block)) => void;
-  errors?: BlockBuilderErrors;
-  status?: EditSessionStatus;
-  disabled?: boolean;
-  notesSlotProps?: BlockBuilderNotesSlotProps;
+  errors?: BlockBuilderErrors | undefined;
+  status?: EditSessionStatus | undefined;
+  disabled?: boolean | undefined;
+  notesSlotProps?: BlockBuilderNotesSlotProps | undefined;
 };
 
 export type BlockStatusOption = {

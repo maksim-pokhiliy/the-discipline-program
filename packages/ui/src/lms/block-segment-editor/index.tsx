@@ -66,9 +66,9 @@ export const BlockSegmentEditor = ({
           labelSlotProps?.onChange?.(event);
           handleLabelChange(event.target.value);
         }}
-        onKeyDown={labelSlotProps?.onKeyDown}
-        onBlur={labelSlotProps?.onBlur}
-        inputRef={labelSlotProps?.inputRef}
+        {...(labelSlotProps?.onKeyDown && { onKeyDown: labelSlotProps.onKeyDown })}
+        {...(labelSlotProps?.onBlur && { onBlur: labelSlotProps.onBlur })}
+        {...(labelSlotProps?.inputRef && { inputRef: labelSlotProps.inputRef })}
         disabled={disabled}
         helperText="Optional segment label · type / for templates"
       />

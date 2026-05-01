@@ -56,7 +56,7 @@ export const UserChip = ({ user, fallback = "—", size = "small", secondary }: 
   return (
     <Stack direction="row" spacing={stackSpacing} alignItems="center" sx={{ minWidth: 0 }}>
       <Avatar
-        src={user.image ?? undefined}
+        {...(user.image && { src: user.image })}
         alt={display}
         sx={{ width: avatarSize, height: avatarSize, fontSize: avatarSize * 0.5 }}
       >

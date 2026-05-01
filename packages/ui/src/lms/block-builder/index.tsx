@@ -126,9 +126,9 @@ export const BlockBuilder = ({
           notesSlotProps?.onChange?.(event);
           handleNotesChange(event.target.value);
         }}
-        onKeyDown={notesSlotProps?.onKeyDown}
-        onBlur={notesSlotProps?.onBlur}
-        inputRef={notesSlotProps?.inputRef}
+        {...(notesSlotProps?.onKeyDown && { onKeyDown: notesSlotProps.onKeyDown })}
+        {...(notesSlotProps?.onBlur && { onBlur: notesSlotProps.onBlur })}
+        {...(notesSlotProps?.inputRef && { inputRef: notesSlotProps.inputRef })}
         disabled={disabled}
         helperText="Type / for templates and block kinds"
       />

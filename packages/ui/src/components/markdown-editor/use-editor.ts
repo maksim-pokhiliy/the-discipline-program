@@ -13,10 +13,10 @@ const UPDATE_THROTTLE_MS = 150;
 type UseEditorProps = {
   value: string;
   onChange: (value: string) => void;
-  onBlur?: () => void;
+  onBlur?: (() => void) | undefined;
   placeholder: string;
   disabled: boolean;
-  editorId?: string;
+  editorId?: string | undefined;
 };
 
 export const useEditor = ({
@@ -71,13 +71,13 @@ export const useEditor = ({
         placeholder,
       }),
     ],
-    editorProps: editorId
-      ? {
-          attributes: {
-            id: editorId,
-          },
-        }
-      : undefined,
+    ...(editorId !== undefined && {
+      editorProps: {
+        attributes: {
+          id: editorId,
+        },
+      },
+    }),
     content: value,
     editable: !disabled,
     onUpdate: ({ editor }) => {
