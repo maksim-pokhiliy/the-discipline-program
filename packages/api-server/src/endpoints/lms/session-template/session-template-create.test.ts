@@ -2,12 +2,12 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
 
-import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
+import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
 import {
   buildApplyFixture,
   makeSessionPayload,
-} from "../../services/lms/apply-template/apply-template.fixtures";
-import { cleanup, cleanupRaw, createTestUser } from "../../test/helpers";
+} from "../../../services/lms/apply-template/apply-template.fixtures";
+import { cleanup, cleanupRaw, createTestUser } from "../../../test/helpers";
 
 import { lmsSessionTemplateApi } from "./session-template";
 

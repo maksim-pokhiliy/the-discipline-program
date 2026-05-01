@@ -8,11 +8,11 @@ import {
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
-import { requireAdmin, requireCoachLikeRole } from "../../authz/guards";
-import { prisma } from "../../db/client";
-import { ROLE_MAP } from "../../mappers/iam";
-import { LIBRARY_SCOPE_TO_PRISMA_MAP, mapToSessionTemplate } from "../../mappers/lms";
-import { findOrThrow, handlePrismaError } from "../../utils";
+import { requireAdmin, requireCoachLikeRole } from "../../../authz/guards";
+import { prisma } from "../../../db/client";
+import { ROLE_MAP } from "../../../mappers/iam";
+import { LIBRARY_SCOPE_TO_PRISMA_MAP, mapToSessionTemplate } from "../../../mappers/lms";
+import { findOrThrow, handlePrismaError } from "../../../utils";
 
 import { createSessionTemplateImpl } from "./session-template-create";
 import { updateSessionTemplateImpl } from "./session-template-update";
