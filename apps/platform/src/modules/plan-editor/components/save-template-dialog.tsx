@@ -36,7 +36,7 @@ export type SaveTemplateDialogProps = {
   onClose: () => void;
   planStructure: GetPlanStructureResponse | undefined;
   selectedBlock: PlanStructureBlock | null;
-  initialScope?: SaveTemplateScope;
+  initialScope?: SaveTemplateScope | undefined;
 };
 
 const renderSessionField = (

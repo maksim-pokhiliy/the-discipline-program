@@ -30,6 +30,16 @@ export default defineConfig({
           include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
         },
       },
+      {
+        plugins: [reactPlugin()],
+        test: {
+          name: "platform",
+          root: "apps/platform",
+          environment: "jsdom",
+          globals: true,
+          include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+        },
+      },
     ],
     coverage: {
       provider: "v8",

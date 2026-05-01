@@ -17,9 +17,9 @@ const STALE_TIME_MS = 30_000;
 const PREFETCH_DELAY_MS = 250;
 
 export type UsePlanStructureOptions = {
-  fromWeek?: number;
-  toWeek?: number;
-  enabled?: boolean;
+  fromWeek?: number | undefined;
+  toWeek?: number | undefined;
+  enabled?: boolean | undefined;
 };
 
 const buildQuery = (options: UsePlanStructureOptions): GetPlanStructureQuery | undefined => {

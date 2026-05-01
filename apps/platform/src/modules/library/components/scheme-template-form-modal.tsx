@@ -94,7 +94,7 @@ const buildDefaults = (initial?: SchemeTemplate): SchemeTemplateFormInput => ({
 
 type SchemeTemplateFormModalProps = {
   open: boolean;
-  initial?: SchemeTemplate;
+  initial?: SchemeTemplate | undefined;
   onClose: () => void;
 };
 

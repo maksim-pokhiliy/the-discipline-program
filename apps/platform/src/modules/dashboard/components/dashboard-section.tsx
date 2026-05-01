@@ -10,7 +10,7 @@ import {
 
 type DashboardSectionProps = {
   title: string;
-  badge?: { label: string | number; color: ChipProps["color"] };
+  badge?: { label: string | number; color: NonNullable<ChipProps["color"]> } | undefined;
   children: React.ReactNode;
 };
 

@@ -16,7 +16,10 @@ export const GET = withCoachAuth(
     const query = getPlanStructureQuerySchema.parse(
       Object.fromEntries(new URL(request.url).searchParams.entries()),
     );
-    const data = await lmsPlanStructureApi.getStructure(userId, params.planId, query);
+    const data = await lmsPlanStructureApi.getStructure(userId, params.planId, {
+      ...(query.fromWeek !== undefined && { fromWeek: query.fromWeek }),
+      ...(query.toWeek !== undefined && { toWeek: query.toWeek }),
+    });
     const validated = getPlanStructureResponseSchema.parse(data);
 
     return NextResponse.json(validated);

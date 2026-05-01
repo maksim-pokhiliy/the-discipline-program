@@ -40,11 +40,20 @@ export const useTrainingPlan = trainingPlanHooks.useById;
 export const useCreateTrainingPlan = trainingPlanHooks.useCreate;
 export const useDeleteTrainingPlan = trainingPlanHooks.useDelete;
 
+export const applyTrainingPlanUpdate = (
+  plan: TrainingPlan,
+  data: UpdateTrainingPlanData,
+): TrainingPlan => ({
+  ...plan,
+  ...(data.name !== undefined && { name: data.name }),
+  ...(data.description !== undefined && { description: data.description }),
+});
+
 export const useUpdateTrainingPlan = () =>
   useOptimisticMutation<TrainingPlan, { id: string; data: UpdateTrainingPlanData }>({
     mutationFn: ({ id, data }) => api.trainingPlans.update(id, data),
     queryKey: ({ id }) => platformKeys.trainingPlans.byId(id),
-    transform: (prev, { data }) => ({ ...prev, ...data }),
+    transform: (prev, { data }) => applyTrainingPlanUpdate(prev, data),
     invalidateKeys: ({ id }) => [
       platformKeys.trainingPlans.byId(id),
       platformKeys.trainingPlans.page(),

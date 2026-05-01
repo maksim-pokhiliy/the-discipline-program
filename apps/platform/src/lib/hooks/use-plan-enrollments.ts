@@ -80,11 +80,21 @@ export const useBulkEnrollAthletes = (planId: string) => {
   });
 };
 
+export const applyEnrollmentUpdate = (
+  entry: PlanRosterEntry,
+  data: UpdatePlanEnrollmentData,
+): PlanRosterEntry => ({
+  ...entry,
+  ...(data.status !== undefined && { status: data.status }),
+  ...(data.endedOnDate !== undefined && { endedOnDate: data.endedOnDate }),
+});
+
 export const useUpdatePlanEnrollment = (planId: string) =>
   useOptimisticMutation<PlanRosterEntry[], { id: string; data: UpdatePlanEnrollmentData }>({
     mutationFn: ({ id, data }) => api.planEnrollments.update(planId, id, data),
     queryKey: platformKeys.planEnrollments.byPlan(planId),
-    transform: (prev, { id, data }) => prev.map((e) => (e.id === id ? { ...e, ...data } : e)),
+    transform: (prev, { id, data }) =>
+      prev.map((e) => (e.id === id ? applyEnrollmentUpdate(e, data) : e)),
     invalidateKeys: [platformKeys.planEnrollments.byPlan(planId)],
     errorMessage: "Failed to update enrollment",
   });

@@ -90,7 +90,7 @@ export const EnrollAthleteDialog: React.FC<EnrollAthleteDialogProps> = ({
         getOptionSubLabel={(u) => (u.name ? u.email : null)}
         renderOptionIcon={(u) => (
           <Avatar
-            src={u.image ?? undefined}
+            {...(u.image != null && { src: u.image })}
             sx={(theme) => ({
               width: theme.spacing(3.5),
               height: theme.spacing(3.5),

@@ -8,11 +8,11 @@ import { Logo } from "@repo/ui";
 import { PlatformUserMenu } from "./platform-user-menu";
 
 type PlatformHeaderProps = {
-  logoHref?: string;
-  profileHref?: string;
-  userName?: string | null;
-  userEmail?: string | null;
-  userImage?: string | null;
+  logoHref?: string | undefined;
+  profileHref?: string | undefined;
+  userName?: string | null | undefined;
+  userEmail?: string | null | undefined;
+  userImage?: string | null | undefined;
   onSignOut: () => void;
 };
 

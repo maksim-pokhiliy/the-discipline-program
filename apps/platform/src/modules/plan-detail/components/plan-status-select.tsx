@@ -17,7 +17,7 @@ import {
 type ActionConfig = {
   label: string;
   target: TrainingPlanStatus;
-  color: ButtonProps["color"];
+  color: NonNullable<ButtonProps["color"]>;
 };
 
 const STATUS_ACTIONS: Record<TrainingPlanStatus, ActionConfig> = {
