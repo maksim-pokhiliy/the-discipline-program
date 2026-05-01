@@ -256,7 +256,7 @@ module.exports = {
       to: {
         path: "^packages/api-server/src/(endpoints|mappers)/lms/",
         pathNot:
-          "^packages/api-server/src/(endpoints|mappers)/lms/(exercise-library-item|block-kind|scheme-template|block-template|session-template|week-template)\\.(ts|mapper\\.ts)$",
+          "^packages/api-server/src/(endpoints/lms/(exercise-library-item|block-kind|scheme-template|block-template|session-template|week-template)(\\.ts|/[^/]+\\.ts)|mappers/lms/(exercise-library-item|block-kind|scheme-template|block-template|session-template|week-template)\\.mapper\\.ts)$",
       },
     },
 
