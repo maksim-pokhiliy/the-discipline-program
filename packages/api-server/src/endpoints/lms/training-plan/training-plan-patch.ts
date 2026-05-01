@@ -16,8 +16,9 @@ import { prisma } from "../../../db/client";
 import { TX_BUDGET_BULK } from "../../../db/transaction-config";
 import { mapToBlock, mapToBlockSegment, mapToExerciseEntry } from "../../../mappers/lms";
 import { handlePrismaError } from "../../../utils";
-import { applyOpInTx } from "../bulk-patch-apply-op";
-import { verifyOpsBelongToPlan } from "../bulk-patch-helpers";
+
+import { applyOpInTx } from "./bulk-patch/bulk-patch-apply-op";
+import { verifyOpsBelongToPlan } from "./bulk-patch/bulk-patch-helpers";
 
 class BulkPatchRollback extends Error {
   conflicts: BulkPatchConflict[];

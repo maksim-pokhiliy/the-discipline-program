@@ -7,11 +7,14 @@ import {
 
 import { type BulkPatchOp } from "@repo/contracts/lms/training-plan";
 
-import { type TxClient } from "../../db/tx";
-import { BLOCK_STATUS_TO_PRISMA_MAP, SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP } from "../../mappers/lms";
-import { cloneExistingBlockSubtree } from "../../services/lms/apply-template/clone-existing-block-subtree";
-import { deriveExerciseSnapshot } from "../../services/lms/derive-exercise-snapshot";
-import { findOrThrow, toInputJson } from "../../utils";
+import { type TxClient } from "../../../../db/tx";
+import {
+  BLOCK_STATUS_TO_PRISMA_MAP,
+  SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP,
+} from "../../../../mappers/lms";
+import { cloneExistingBlockSubtree } from "../../../../services/lms/apply-template/clone-existing-block-subtree";
+import { deriveExerciseSnapshot } from "../../../../services/lms/derive-exercise-snapshot";
+import { findOrThrow, toInputJson } from "../../../../utils";
 
 export { deriveExerciseSnapshot };
 export type { TxClient };

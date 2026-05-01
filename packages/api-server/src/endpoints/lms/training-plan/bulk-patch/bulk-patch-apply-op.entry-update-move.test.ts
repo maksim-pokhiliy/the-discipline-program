@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { NotFoundError } from "@repo/errors";
 
-import { type prisma } from "../../db/client";
+import { type prisma } from "../../../../db/client";
 
 import { applyOpInTx } from "./bulk-patch-apply-op";
 
