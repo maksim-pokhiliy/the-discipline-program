@@ -216,7 +216,7 @@ The `Product` model itself keeps its current physical shape; only the contracts 
 
 - **DB:** `TrainingPlan`, `Workout`, `WorkoutLog`, `PlanEnrollment`, `BenchmarkDefinition`, `UserBenchmark`, plus `AthleteProfile` which is logically half-LMS half-Coaching (see §4).
 - **Contracts:** `packages/contracts/src/entities/lms/training-plan/`, `lms/workout/`, `lms/workout-log/`, `lms/plan-enrollment/`, `lms/benchmark-definition/`, `lms/user-benchmark/` (subpath exports `@repo/contracts/lms/*`).
-- **API — `api-server`:** entirely in `endpoints/lms/` after 1.2.C: `training-plan.ts`, `workout.ts`, `workout-log.ts`, `plan-enrollment.ts`, `benchmark-definition.ts`, `user-benchmark.ts` (all renamed to singular during the reorg). Ownership guards live in the top-level `packages/api-server/src/authz/guards.ts` and are imported by LMS endpoints via `../../authz/guards`.
+- **API — `api-server`:** entirely in `endpoints/lms/`. After ARCH-003 the directory is subdivided by entity following the coaching-style mixed model: per-entity subdirs for the 6 library entities (`block-kind/`, `block-template/`, `exercise-library-item/`, `scheme-template/`, `session-template/`, `week-template/`), `plan-override/`, and `training-plan/` (with nested `bulk-patch/`); single- or two-file entities stay flat at lms/ root (`benchmark.ts`, `personal-record.ts`, `weekly-volume.ts`, `plan-structure.ts`, `plan-enrollment.ts`, `plan-coach-assignment.ts`, `block.ts`, `block-segment.ts`, `exercise-entry.ts`, `set-group.ts`, `lms-session.ts`, `day.ts`, `week.ts`). Ownership guards live in the top-level `packages/api-server/src/authz/guards.ts` and are imported by LMS endpoints via `../../authz/guards` (flat) or `../../../authz/guards` (subdir).
 - **Consumer apps:** `apps/platform` exclusively. `apps/admin` does not currently read LMS state (the admin dashboard counts at the marketing level, not workout level).
 
 ### Dependencies
@@ -227,20 +227,31 @@ The `Product` model itself keeps its current physical shape; only the contracts 
 
 ### Target state
 
-Landed in 1.2.B (contracts) and 1.2.C (endpoints). LMS lives flat-per-entity (not in per-entity subfolders — LMS entities have a single responsibility each, no admin/public split):
+Landed in 1.2.B (contracts), 1.2.C (endpoints), and ARCH-003 (subdivision). LMS uses a coaching-style mixed model — per-entity subdirs once an entity owns 3+ files, otherwise flat at lms/ root (rule-of-two). Library entities share a uniform shape (`<entity>.ts` umbrella + `<entity>-create.ts` + `<entity>-update.ts`), composed by the per-subdir `index.ts`:
 
 ```
 api-server/src/endpoints/lms/
-  benchmark-definition.ts
-  plan-enrollment.ts
-  training-plan.ts
-  training-plan.test.ts
-  user-benchmark.ts
-  workout.ts
-  workout.test.ts
-  workout-log.ts
-  index.ts
+  index.ts                                  (parent barrel)
+  plan-tree-helpers.ts                      (shared helper)
+  templates-promote-demote.test.ts          (cross-entity test)
+
+  benchmark.ts, personal-record.ts, weekly-volume.ts
+  plan-structure.ts, plan-enrollment.ts (+test), plan-coach-assignment.ts (+test)
+  day.ts, lms-session.ts, set-group.ts, week.ts
+  block.ts (+test), block-segment.ts (+test), exercise-entry.ts (+test)
+
+  block-kind/                               (subdir — 5 files)
+  block-template/                           (subdir — 4 files)
+  exercise-library-item/                    (subdir — 5 files)
+  plan-override/                            (subdir — 3 files)
+  scheme-template/                          (subdir — 5 files)
+  session-template/                         (subdir — 4 files)
+  week-template/                            (subdir — 4 files)
+  training-plan/                            (subdir — 7 files + bulk-patch/ sub-subdir)
+    bulk-patch/                             (sub-subdir — 9 files; consumed only by training-plan-patch)
 ```
+
+Each subdir's `index.ts` is a one-line `export * from "./<entity>"` (three lines for `training-plan/` covering training-plan, training-plan-patch, plan-clone). The parent barrel re-exports every entity-subdir + flat-entity. The `package.json` `exports` map repoints `./lms/<library-entity>` to the new subdir's `index.ts` for the 6 library entities; mappers stay flat.
 
 Contracts live at `packages/contracts/src/entities/lms/<entity>/` with subpath exports `@repo/contracts/lms/<entity>`. `apps/platform` is the only legitimate consumer of LMS endpoints.
 
