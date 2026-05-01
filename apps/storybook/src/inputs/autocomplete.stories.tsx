@@ -1,37 +1,31 @@
-import {
-  Autocomplete,
-  type AutocompleteRenderInputParams,
-  Chip,
-  TextField,
-  type TextFieldProps,
-} from "@mui/material";
+import { Autocomplete, type AutocompleteRenderInputParams, Chip, TextField } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { StoryPage, StorySection } from "../story-layout";
 
-const stripUndefined = <T extends object>(input: T): Partial<T> => {
-  const result: Partial<T> = {};
-
-  for (const key of Object.keys(input) as Array<keyof T>) {
-    const value = input[key];
-
-    if (value !== undefined) {
-      result[key] = value;
-    }
-  }
-
-  return result;
-};
-
 type AutocompleteTextFieldProps = AutocompleteRenderInputParams & {
-  label?: string;
+  label?: string | undefined;
 };
 
-const AutocompleteTextField = (props: AutocompleteTextFieldProps) => {
-  const sanitized = stripUndefined(props) as TextFieldProps;
-
-  return <TextField {...sanitized} />;
-};
+const AutocompleteTextField = ({
+  size,
+  InputLabelProps,
+  InputProps,
+  inputProps,
+  label,
+  ...rest
+}: AutocompleteTextFieldProps) => (
+  <TextField
+    {...rest}
+    {...(size !== undefined && { size })}
+    {...(label !== undefined && { label })}
+    slotProps={{
+      input: InputProps,
+      inputLabel: InputLabelProps,
+      htmlInput: inputProps,
+    }}
+  />
+);
 
 const meta = {
   title: "Inputs/Autocomplete",
