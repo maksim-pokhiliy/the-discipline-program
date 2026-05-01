@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiTypography: Components<Theme>["MuiTypography"] = {
+export const MuiTypography: NonNullable<Components<Theme>["MuiTypography"]> = {
   defaultProps: {
     variantMapping: {
       display1: "h1",

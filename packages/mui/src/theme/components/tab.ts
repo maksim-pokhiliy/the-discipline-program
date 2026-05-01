@@ -1,6 +1,6 @@
 import { alpha, type Components, type Theme } from "@mui/material/styles";
 
-export const MuiTabs: Components<Theme>["MuiTabs"] = {
+export const MuiTabs: NonNullable<Components<Theme>["MuiTabs"]> = {
   styleOverrides: {
     indicator: {
       display: "none",
@@ -12,7 +12,7 @@ export const MuiTabs: Components<Theme>["MuiTabs"] = {
   },
 };
 
-export const MuiTab: Components<Theme>["MuiTab"] = {
+export const MuiTab: NonNullable<Components<Theme>["MuiTab"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       padding: theme.spacing(0, 3),

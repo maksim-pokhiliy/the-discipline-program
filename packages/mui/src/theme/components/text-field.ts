@@ -1,13 +1,13 @@
 import { alpha, type Components, type Theme } from "@mui/material/styles";
 
-export const MuiTextField: Components<Theme>["MuiTextField"] = {
+export const MuiTextField: NonNullable<Components<Theme>["MuiTextField"]> = {
   defaultProps: {
     fullWidth: true,
     variant: "outlined",
   },
 };
 
-export const MuiOutlinedInput: Components<Theme>["MuiOutlinedInput"] = {
+export const MuiOutlinedInput: NonNullable<Components<Theme>["MuiOutlinedInput"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       backgroundColor: alpha(theme.palette.common.white, 0.02),
@@ -34,7 +34,7 @@ export const MuiOutlinedInput: Components<Theme>["MuiOutlinedInput"] = {
   },
 };
 
-export const MuiFilledInput: Components<Theme>["MuiFilledInput"] = {
+export const MuiFilledInput: NonNullable<Components<Theme>["MuiFilledInput"]> = {
   styleOverrides: {
     root: {
       "&::before, &::after": { display: "none" },
@@ -48,7 +48,7 @@ export const MuiFilledInput: Components<Theme>["MuiFilledInput"] = {
   },
 };
 
-export const MuiInput: Components<Theme>["MuiInput"] = {
+export const MuiInput: NonNullable<Components<Theme>["MuiInput"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       "&::before": {
@@ -69,7 +69,7 @@ export const MuiInput: Components<Theme>["MuiInput"] = {
   },
 };
 
-export const MuiInputLabel: Components<Theme>["MuiInputLabel"] = {
+export const MuiInputLabel: NonNullable<Components<Theme>["MuiInputLabel"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       fontSize: theme.typography.body1.fontSize,
@@ -80,7 +80,7 @@ export const MuiInputLabel: Components<Theme>["MuiInputLabel"] = {
   },
 };
 
-export const MuiFormHelperText: Components<Theme>["MuiFormHelperText"] = {
+export const MuiFormHelperText: NonNullable<Components<Theme>["MuiFormHelperText"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       fontSize: theme.typography.caption.fontSize,
@@ -90,7 +90,7 @@ export const MuiFormHelperText: Components<Theme>["MuiFormHelperText"] = {
   },
 };
 
-export const MuiSelect: Components<Theme>["MuiSelect"] = {
+export const MuiSelect: NonNullable<Components<Theme>["MuiSelect"]> = {
   styleOverrides: {
     select: ({ theme }) => ({
       "&.MuiInputBase-inputSizeSmall": {

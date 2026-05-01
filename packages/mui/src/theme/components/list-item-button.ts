@@ -1,6 +1,6 @@
 import { alpha, type Components, type Theme } from "@mui/material/styles";
 
-export const MuiListItemButton: Components<Theme>["MuiListItemButton"] = {
+export const MuiListItemButton: NonNullable<Components<Theme>["MuiListItemButton"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       padding: theme.spacing(0.75, 1.5),

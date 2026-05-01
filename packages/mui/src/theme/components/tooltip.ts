@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiTooltip: Components<Theme>["MuiTooltip"] = {
+export const MuiTooltip: NonNullable<Components<Theme>["MuiTooltip"]> = {
   styleOverrides: {
     tooltip: ({ theme }) => ({
       backgroundColor: theme.palette.background.paper,

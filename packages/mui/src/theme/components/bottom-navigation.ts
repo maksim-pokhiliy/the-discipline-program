@@ -1,6 +1,6 @@
 import { alpha, type Components, type Theme } from "@mui/material/styles";
 
-export const MuiBottomNavigation: Components<Theme>["MuiBottomNavigation"] = {
+export const MuiBottomNavigation: NonNullable<Components<Theme>["MuiBottomNavigation"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       height: `calc(${theme.layout.platformBottomNavHeight}px + env(safe-area-inset-bottom))`,
@@ -15,7 +15,9 @@ export const MuiBottomNavigation: Components<Theme>["MuiBottomNavigation"] = {
   },
 };
 
-export const MuiBottomNavigationAction: Components<Theme>["MuiBottomNavigationAction"] = {
+export const MuiBottomNavigationAction: NonNullable<
+  Components<Theme>["MuiBottomNavigationAction"]
+> = {
   styleOverrides: {
     root: ({ theme }) => ({
       borderRadius: theme.shape.borderRadius,

@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiToggleButton: Components<Theme>["MuiToggleButton"] = {
+export const MuiToggleButton: NonNullable<Components<Theme>["MuiToggleButton"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       color: theme.palette.text.secondary,

@@ -1,6 +1,6 @@
 import { alpha, type Components, type Theme } from "@mui/material/styles";
 
-export const MuiTableCell: Components<Theme>["MuiTableCell"] = {
+export const MuiTableCell: NonNullable<Components<Theme>["MuiTableCell"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       borderColor: theme.palette.divider,
@@ -14,7 +14,7 @@ export const MuiTableCell: Components<Theme>["MuiTableCell"] = {
   },
 };
 
-export const MuiTableRow: Components<Theme>["MuiTableRow"] = {
+export const MuiTableRow: NonNullable<Components<Theme>["MuiTableRow"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       "&.MuiTableRow-hover:hover": {

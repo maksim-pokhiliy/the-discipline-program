@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiTablePagination: Components<Theme>["MuiTablePagination"] = {
+export const MuiTablePagination: NonNullable<Components<Theme>["MuiTablePagination"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       borderTop: `1px solid ${theme.palette.divider}`,

@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiAvatar: Components<Theme>["MuiAvatar"] = {
+export const MuiAvatar: NonNullable<Components<Theme>["MuiAvatar"]> = {
   defaultProps: {
     variant: "circular",
   },

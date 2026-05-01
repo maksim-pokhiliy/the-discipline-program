@@ -10,7 +10,7 @@ const severityStyles = (theme: Theme, severity: AlertColor) => {
   };
 };
 
-export const MuiAlert: Components<Theme>["MuiAlert"] = {
+export const MuiAlert: NonNullable<Components<Theme>["MuiAlert"]> = {
   defaultProps: {
     variant: "standard",
   },

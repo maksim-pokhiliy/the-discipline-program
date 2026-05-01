@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiDrawer: Components<Theme>["MuiDrawer"] = {
+export const MuiDrawer: NonNullable<Components<Theme>["MuiDrawer"]> = {
   defaultProps: {
     anchor: "left",
     elevation: 0,
