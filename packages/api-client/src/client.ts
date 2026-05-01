@@ -59,8 +59,8 @@ type RequestOptions = {
 type ApiClientConfig = {
   baseUrl: string;
   getHeaders?: () => Record<string, string> | Promise<Record<string, string>>;
-  credentials?: RequestCredentials;
-  onUnauthorized?: () => never;
+  credentials?: RequestCredentials | undefined;
+  onUnauthorized?: (() => never) | undefined;
   timeoutMs?: number;
   maxRetries?: number;
   maxTotalDurationMs?: number;
@@ -84,8 +84,8 @@ type ApiErrorBody = {
 export class ApiClient {
   private baseUrl: string;
   private getHeadersFn?: ApiClientConfig["getHeaders"];
-  private credentials?: RequestCredentials;
-  private onUnauthorized?: () => never;
+  private credentials?: RequestCredentials | undefined;
+  private onUnauthorized?: (() => never) | undefined;
   private timeoutMs: number;
   private maxRetries: number;
   private maxTotalDurationMs: number;
@@ -238,9 +238,9 @@ export class ApiClient {
         response = await fetch(prepared.fullUrl, {
           method,
           headers: prepared.headers,
-          body: prepared.body,
-          cache: prepared.cache,
-          credentials: this.credentials,
+          ...(prepared.body !== undefined && { body: prepared.body }),
+          ...(prepared.cache !== undefined && { cache: prepared.cache }),
+          ...(this.credentials !== undefined && { credentials: this.credentials }),
           signal: controller.signal,
         });
       } catch (error) {

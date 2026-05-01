@@ -174,18 +174,38 @@ export const ExerciseEntryRow = ({
         getOptionLabel={(option) => option.name}
         onChange={(_event, next) => handleExerciseChange(next)}
         disabled={disabled}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Exercise"
-            size="small"
-            helperText={
-              exerciseLibrary.length === 0
-                ? `Locked to ${entry.exerciseSnapshot.name} — no library data`
-                : undefined
-            }
-          />
-        )}
+        renderInput={(params) => {
+          const {
+            size: paramsSize,
+            disabled: paramsDisabled,
+            fullWidth: paramsFullWidth,
+            id: paramsId,
+            InputLabelProps,
+            inputProps,
+            InputProps,
+          } = params;
+          const helperTextValue =
+            exerciseLibrary.length === 0
+              ? `Locked to ${entry.exerciseSnapshot.name} — no library data`
+              : undefined;
+
+          return (
+            <TextField
+              {...(paramsSize !== undefined && { size: paramsSize })}
+              {...(paramsDisabled !== undefined && { disabled: paramsDisabled })}
+              {...(paramsFullWidth !== undefined && { fullWidth: paramsFullWidth })}
+              {...(paramsId !== undefined && { id: paramsId })}
+              inputProps={inputProps}
+              label="Exercise"
+              size="small"
+              {...(helperTextValue !== undefined && { helperText: helperTextValue })}
+              slotProps={{
+                inputLabel: InputLabelProps,
+                input: InputProps,
+              }}
+            />
+          );
+        }}
         noOptionsText="No exercises"
         size="small"
       />
@@ -261,9 +281,9 @@ export const ExerciseEntryRow = ({
           notesSlotProps?.onChange?.(event);
           handleNotesChange(event.target.value);
         }}
-        onKeyDown={notesSlotProps?.onKeyDown}
-        onBlur={notesSlotProps?.onBlur}
-        inputRef={notesSlotProps?.inputRef}
+        {...(notesSlotProps?.onKeyDown && { onKeyDown: notesSlotProps.onKeyDown })}
+        {...(notesSlotProps?.onBlur && { onBlur: notesSlotProps.onBlur })}
+        {...(notesSlotProps?.inputRef && { inputRef: notesSlotProps.inputRef })}
         disabled={disabled}
         helperText="Type @ to insert exercises from the library"
       />

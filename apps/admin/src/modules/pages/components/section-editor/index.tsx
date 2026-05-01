@@ -85,11 +85,12 @@ export const SectionEditor = ({
 
   const parsedData = currentSchema?.deepPartial().safeParse(section.data);
   const safeDefaultValues = parsedData?.success ? parsedData.data : {};
+  const resolver = currentSchema ? zodResolver(currentSchema.deepPartial()) : undefined;
 
   const methods = useForm<UpdatePageSectionData["data"]>({
     defaultValues: safeDefaultValues,
-    resolver: currentSchema ? zodResolver(currentSchema.deepPartial()) : undefined,
     mode: "onChange",
+    ...(resolver && { resolver }),
   });
 
   const renderForm = () => {

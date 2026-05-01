@@ -22,9 +22,9 @@ type ProductCardProps = {
   product: Product;
   freeLabel: string;
   onAction: () => void;
-  actionLabel?: string;
-  variant?: "default" | "featured";
-  cardVariant?: CardProps["variant"];
+  actionLabel?: string | undefined;
+  variant?: "default" | "featured" | undefined;
+  cardVariant?: CardProps["variant"] | undefined;
 };
 
 export const ProductCard = ({

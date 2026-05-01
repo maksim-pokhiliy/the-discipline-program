@@ -42,12 +42,12 @@ const formatRelative = (date: Date | null, now: number): string => {
 
 export type SaveIndicatorProps = {
   status: EditSessionStatus;
-  lastSavedAt?: Date | null;
-  conflict?: { currentVersion: number } | null;
-  errorMessage?: string;
-  validationMessage?: string;
-  onRetry?: () => void;
-  onReload?: () => void;
+  lastSavedAt?: Date | null | undefined;
+  conflict?: { currentVersion: number } | null | undefined;
+  errorMessage?: string | undefined;
+  validationMessage?: string | undefined;
+  onRetry?: (() => void) | undefined;
+  onReload?: (() => void) | undefined;
 };
 
 export const SaveIndicator = ({

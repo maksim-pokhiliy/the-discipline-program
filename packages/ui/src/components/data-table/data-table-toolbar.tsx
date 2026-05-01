@@ -14,11 +14,11 @@ type FilterConfig = {
 };
 
 type DataTableToolbarProps = {
-  searchValue?: string;
-  searchPlaceholder?: string;
-  onSearchChange?: (value: string) => void;
-  filters?: FilterConfig[];
-  action?: ReactNode;
+  searchValue?: string | undefined;
+  searchPlaceholder?: string | undefined;
+  onSearchChange?: ((value: string) => void) | undefined;
+  filters?: FilterConfig[] | undefined;
+  action?: ReactNode | undefined;
 };
 
 export const DataTableToolbar = ({

@@ -57,7 +57,7 @@ export const lmsSchemeTemplateApi = {
     const items = await prisma.schemeTemplate.findMany({
       where,
       orderBy: { name: "asc" },
-      take: query.take,
+      ...(query.take !== undefined && { take: query.take }),
     });
 
     return { items: items.map(mapToSchemeTemplate), total: items.length };

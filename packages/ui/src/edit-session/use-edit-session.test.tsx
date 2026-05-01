@@ -10,7 +10,7 @@ import { ConflictError } from "@repo/errors";
 import { type UseEditSessionConfig } from "./types";
 import { useEditSession } from "./use-edit-session";
 
-type Draft = { value: string; version?: number };
+type Draft = { value: string; version?: number | undefined };
 
 const draftSchema = z.object({
   value: z.string().min(1, "value is required"),
@@ -287,5 +287,38 @@ describe("useEditSession", () => {
     });
     expect(result.current.isDirty).toBe(false);
     expect(result.current.draft).toEqual({ value: "alpha" });
+  });
+
+  it("schema accepts a Draft without version and the hook stores version as undefined", async () => {
+    const queryClient = new QueryClient();
+    const wrapper = buildWrapper(queryClient);
+    const initialNoVersion: Draft = { value: "alpha" };
+    const parsed = draftSchema.safeParse(initialNoVersion);
+
+    expect(parsed.success).toBe(true);
+
+    if (parsed.success) {
+      expect(parsed.data.version).toBeUndefined();
+    }
+
+    const mutationFn = vi.fn(async (draft: Draft, version: number) => ({
+      ...draft,
+      version: version + 1,
+    }));
+    const config = baseConfig({ initial: initialNoVersion, mutationFn });
+    const { result } = renderHook(() => useEditSession<Draft>(config), { wrapper });
+
+    expect(result.current.draft.version).toBeUndefined();
+
+    act(() => {
+      result.current.dispatch({ value: "beta" });
+    });
+
+    await act(async () => {
+      await result.current.save();
+    });
+
+    expect(mutationFn).toHaveBeenCalledWith({ value: "beta" }, 1);
+    expect(result.current.expectedVersion).toBe(2);
   });
 });

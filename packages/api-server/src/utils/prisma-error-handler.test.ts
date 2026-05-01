@@ -12,7 +12,7 @@ const makePrismaError = (
   const error = new Prisma.PrismaClientKnownRequestError("Prisma error", {
     code,
     clientVersion: "5.0.0",
-    meta,
+    ...(meta && { meta }),
   });
 
   return error;

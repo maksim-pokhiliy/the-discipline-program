@@ -43,7 +43,12 @@ const DialogDemo = ({ title, maxWidth, fullWidth, content }: DialogDemoProps) =>
       <Button size="small" onClick={() => setOpen(true)}>
         {title}
       </Button>
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth={maxWidth} fullWidth={fullWidth}>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        {...(maxWidth !== undefined && { maxWidth })}
+        {...(fullWidth !== undefined && { fullWidth })}
+      >
         <DialogTitle>
           {title}
           <IconButton size="small" onClick={() => setOpen(false)} aria-label="Close">

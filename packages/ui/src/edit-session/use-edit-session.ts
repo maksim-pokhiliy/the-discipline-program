@@ -161,7 +161,11 @@ export const useEditSession = <TDraft>(
     (next: TDraft, version?: number) => {
       clearIdleTimer();
       clearFadeTimer();
-      dispatchAction({ type: "reset", draft: next, version });
+      dispatchAction({
+        type: "reset",
+        draft: next,
+        ...(version !== undefined && { version }),
+      });
     },
     [clearFadeTimer, clearIdleTimer],
   );

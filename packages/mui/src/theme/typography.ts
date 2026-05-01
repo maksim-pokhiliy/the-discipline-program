@@ -22,7 +22,7 @@ declare module "@mui/material/Typography" {
 const FONT_BASE = 'var(--font-base), "Barlow", sans-serif';
 const FONT_DISPLAY = 'var(--font-display), "Barlow Condensed", sans-serif';
 
-export const typography = (baseTheme: Theme): ThemeOptions["typography"] => {
+export const typography = (baseTheme: Theme): NonNullable<ThemeOptions["typography"]> => {
   const h3 = {
     fontSize: baseTheme.typography.pxToRem(24),
 

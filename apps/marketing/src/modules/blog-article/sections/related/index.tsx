@@ -7,7 +7,7 @@ import { BlogPostCard } from "@app/lib/components/ui";
 
 type BlogArticleRelatedProps = {
   relatedPosts: PublicBlogPostPreview[];
-  sectionTitle?: string;
+  sectionTitle?: string | undefined;
   labels: BlogPostPageData["labels"];
 };
 

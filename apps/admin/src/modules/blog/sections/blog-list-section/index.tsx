@@ -120,7 +120,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
             />
 
             <Chip
-              icon={post.isFeatured ? <StarIcon fontSize="small" /> : undefined}
+              {...(post.isFeatured && { icon: <StarIcon fontSize="small" /> })}
               label={post.isFeatured ? "Featured" : "Standard"}
               color={post.isFeatured ? "warning" : "default"}
               size="small"

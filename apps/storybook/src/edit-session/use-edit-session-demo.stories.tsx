@@ -17,7 +17,7 @@ import { StoryPage, StorySection } from "../story-layout";
 type Draft = {
   title: string;
   reps: number;
-  version?: number;
+  version?: number | undefined;
 };
 
 const draftSchema = z.object({

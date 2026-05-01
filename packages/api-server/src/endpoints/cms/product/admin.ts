@@ -100,7 +100,18 @@ export const cmsProductAdminApi = {
 
         return tx.product.update({
           where: { id },
-          data: productData,
+          data: {
+            ...(productData.title !== undefined && { title: productData.title }),
+            ...(productData.slug !== undefined && { slug: productData.slug }),
+            ...(productData.description !== undefined && {
+              description: productData.description,
+            }),
+            ...(productData.features !== undefined && { features: productData.features }),
+            ...(productData.isFeatured !== undefined && {
+              isFeatured: productData.isFeatured,
+            }),
+            ...(productData.isActive !== undefined && { isActive: productData.isActive }),
+          },
           include: includeWithPrices,
         });
       });

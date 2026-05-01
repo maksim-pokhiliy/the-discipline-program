@@ -50,7 +50,7 @@ export const lmsBlockKindApi = {
     const items = await prisma.blockKind.findMany({
       where,
       orderBy: { name: "asc" },
-      take: query.take,
+      ...(query.take !== undefined && { take: query.take }),
     });
 
     return { items: items.map(mapToBlockKind), total: items.length };

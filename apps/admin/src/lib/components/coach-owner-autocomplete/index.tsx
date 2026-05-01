@@ -9,10 +9,10 @@ import { useCoachesList } from "@app/lib/hooks";
 type CoachOwnerAutocompleteProps = {
   value: string | null;
   onChange: (userId: string | null) => void;
-  disabled?: boolean;
-  error?: boolean;
-  helperText?: string;
-  label?: string;
+  disabled?: boolean | undefined;
+  error?: boolean | undefined;
+  helperText?: string | undefined;
+  label?: string | undefined;
 };
 
 const getOptionLabel = (option: CoachListItem) => option.name ?? option.email;
@@ -36,24 +36,43 @@ export const CoachOwnerAutocomplete = ({
       getOptionLabel={getOptionLabel}
       isOptionEqualToValue={(option, val) => option.userId === val.userId}
       disabled={disabled || isLoading}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label={label}
-          variant="outlined"
-          error={error}
-          helperText={helperText}
-          InputProps={{
-            ...params.InputProps,
-            endAdornment: (
-              <>
-                {isLoading ? <CircularProgress color="inherit" size={16} /> : null}
-                {params.InputProps.endAdornment}
-              </>
-            ),
-          }}
-        />
-      )}
+      renderInput={(params) => {
+        const {
+          size: paramsSize,
+          disabled: paramsDisabled,
+          fullWidth: paramsFullWidth,
+          id: paramsId,
+          InputLabelProps,
+          inputProps,
+          InputProps,
+        } = params;
+
+        return (
+          <TextField
+            {...(paramsSize !== undefined && { size: paramsSize })}
+            {...(paramsDisabled !== undefined && { disabled: paramsDisabled })}
+            {...(paramsFullWidth !== undefined && { fullWidth: paramsFullWidth })}
+            {...(paramsId !== undefined && { id: paramsId })}
+            inputProps={inputProps}
+            label={label}
+            variant="outlined"
+            error={error}
+            {...(helperText !== undefined && { helperText })}
+            slotProps={{
+              inputLabel: InputLabelProps,
+              input: {
+                ...InputProps,
+                endAdornment: (
+                  <>
+                    {isLoading ? <CircularProgress color="inherit" size={16} /> : null}
+                    {InputProps.endAdornment}
+                  </>
+                ),
+              },
+            }}
+          />
+        );
+      }}
     />
   );
 };

@@ -26,7 +26,7 @@ const updateBlockBodySchema = updateBlockInputSchema.omit({ expectedVersion: tru
 export type BlockInspectorProps = {
   planId: string;
   block: Block;
-  blockKinds?: BlockKind[];
+  blockKinds?: BlockKind[] | undefined;
 };
 
 const toDraft = (block: Block) => ({

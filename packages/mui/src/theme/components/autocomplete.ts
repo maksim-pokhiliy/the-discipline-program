@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiAutocomplete: Components<Theme>["MuiAutocomplete"] = {
+export const MuiAutocomplete: NonNullable<Components<Theme>["MuiAutocomplete"]> = {
   styleOverrides: {
     paper: ({ theme }) => ({
       marginTop: theme.spacing(1),

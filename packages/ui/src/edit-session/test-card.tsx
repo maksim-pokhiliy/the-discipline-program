@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { useEditSession } from "./use-edit-session";
 
-export type TestDraft = { value: string; version?: number };
+export type TestDraft = { value: string; version?: number | undefined };
 
 export const testDraftSchema = z.object({
   value: z.string().min(1),

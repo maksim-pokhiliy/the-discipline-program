@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiAppBar: Components<Theme>["MuiAppBar"] = {
+export const MuiAppBar: NonNullable<Components<Theme>["MuiAppBar"]> = {
   defaultProps: {
     elevation: 0,
   },
@@ -12,7 +12,7 @@ export const MuiAppBar: Components<Theme>["MuiAppBar"] = {
   },
 };
 
-export const MuiToolbar: Components<Theme>["MuiToolbar"] = {
+export const MuiToolbar: NonNullable<Components<Theme>["MuiToolbar"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       padding: theme.spacing(2),

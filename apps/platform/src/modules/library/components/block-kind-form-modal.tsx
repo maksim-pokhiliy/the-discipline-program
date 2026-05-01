@@ -36,7 +36,7 @@ const buildDefaults = (initial?: BlockKind): BlockKindFormInput => ({
 
 type BlockKindFormModalProps = {
   open: boolean;
-  initial?: BlockKind;
+  initial?: BlockKind | undefined;
   onClose: () => void;
 };
 

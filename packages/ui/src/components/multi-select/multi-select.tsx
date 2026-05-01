@@ -26,19 +26,19 @@ export type MultiSelectProps<TOption> = {
   onChange: (next: string[]) => void;
   getOptionId: (option: TOption) => string;
   getOptionLabel: (option: TOption) => string;
-  getOptionSubLabel?: (option: TOption) => string | null;
-  renderOptionIcon?: (option: TOption) => ReactNode;
+  getOptionSubLabel?: ((option: TOption) => string | null) | undefined;
+  renderOptionIcon?: ((option: TOption) => ReactNode) | undefined;
   label: string;
-  placeholder?: string;
-  helperText?: string;
-  errorText?: string;
-  isLoading?: boolean;
-  disabled?: boolean;
-  emptyLabel?: string;
-  selectAllLabel?: string;
-  onInputChange?: (next: string) => void;
-  inputValue?: string;
-  disableSelectAll?: boolean;
+  placeholder?: string | undefined;
+  helperText?: string | undefined;
+  errorText?: string | undefined;
+  isLoading?: boolean | undefined;
+  disabled?: boolean | undefined;
+  emptyLabel?: string | undefined;
+  selectAllLabel?: string | undefined;
+  onInputChange?: ((next: string) => void) | undefined;
+  inputValue?: string | undefined;
+  disableSelectAll?: boolean | undefined;
 };
 
 const SELECT_ALL_OPTION: SelectAllSentinel = { id: SELECT_ALL_SENTINEL };
@@ -166,7 +166,11 @@ export const MultiSelect = <TOption,>(props: MultiSelectProps<TOption>) => {
           }
         : {})}
       renderOption={(liProps, option, { selected }) => {
-        const { key, ...rest } = liProps;
+        const { key, className, style, ...rest } = liProps;
+        const liOverrides = {
+          ...(className !== undefined && { className }),
+          ...(style !== undefined && { style }),
+        };
 
         if (isSentinel(option)) {
           const filtered = lastFilteredRef.current;
@@ -183,6 +187,7 @@ export const MultiSelect = <TOption,>(props: MultiSelectProps<TOption>) => {
               direction="row"
               spacing={1}
               alignItems="center"
+              {...liOverrides}
               {...rest}
             >
               <Checkbox
@@ -204,6 +209,7 @@ export const MultiSelect = <TOption,>(props: MultiSelectProps<TOption>) => {
             direction="row"
             spacing={1.5}
             alignItems="center"
+            {...liOverrides}
             {...rest}
           >
             <Checkbox size="small" checked={selected} />
@@ -229,26 +235,44 @@ export const MultiSelect = <TOption,>(props: MultiSelectProps<TOption>) => {
           />
         ))
       }
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label={label}
-          placeholder={placeholder}
-          error={Boolean(errorText)}
-          helperText={errorText ?? helperText}
-          slotProps={{
-            input: {
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {isLoading && <CircularProgress size={16} sx={{ mr: 1 }} />}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            },
-          }}
-        />
-      )}
+      renderInput={(params) => {
+        const helperTextValue = errorText ?? helperText;
+        const {
+          size: paramsSize,
+          disabled: paramsDisabled,
+          fullWidth: paramsFullWidth,
+          id: paramsId,
+          InputLabelProps,
+          inputProps,
+          InputProps,
+        } = params;
+
+        return (
+          <TextField
+            {...(paramsSize !== undefined && { size: paramsSize })}
+            {...(paramsDisabled !== undefined && { disabled: paramsDisabled })}
+            {...(paramsFullWidth !== undefined && { fullWidth: paramsFullWidth })}
+            {...(paramsId !== undefined && { id: paramsId })}
+            inputProps={inputProps}
+            label={label}
+            {...(placeholder !== undefined && { placeholder })}
+            error={Boolean(errorText)}
+            {...(helperTextValue !== undefined && { helperText: helperTextValue })}
+            slotProps={{
+              inputLabel: InputLabelProps,
+              input: {
+                ...InputProps,
+                endAdornment: (
+                  <>
+                    {isLoading && <CircularProgress size={16} sx={{ mr: 1 }} />}
+                    {InputProps.endAdornment}
+                  </>
+                ),
+              },
+            }}
+          />
+        );
+      }}
     />
   );
 };

@@ -7,13 +7,13 @@ import { Button, Stack, Typography } from "@mui/material";
 export type EmptyStateAction = {
   label: string;
   onClick: () => void;
-  icon?: ReactNode;
-  disabled?: boolean;
+  icon?: ReactNode | undefined;
+  disabled?: boolean | undefined;
 };
 
 export type EmptyStateProps = {
   message: string;
-  action?: EmptyStateAction;
+  action?: EmptyStateAction | undefined;
 };
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ message, action }) => (
@@ -22,7 +22,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ message, action }) => (
       {message}
     </Typography>
     {action ? (
-      <Button startIcon={action.icon} onClick={action.onClick} disabled={action.disabled}>
+      <Button
+        {...(action.icon !== undefined && { startIcon: action.icon })}
+        onClick={action.onClick}
+        {...(action.disabled !== undefined && { disabled: action.disabled })}
+      >
         {action.label}
       </Button>
     ) : null}

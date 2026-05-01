@@ -171,15 +171,35 @@ export const EntryRow = ({
           isOptionEqualToValue={(a, b) => a.id === b.id}
           onChange={(_event, next) => handleExerciseChange(next)}
           disabled={isLoading}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label="Exercise"
-              size="small"
-              required
-              helperText={exercises.length === 0 ? "No exercise library data available" : undefined}
-            />
-          )}
+          renderInput={(params) => {
+            const {
+              disabled: paramsDisabled,
+              fullWidth: paramsFullWidth,
+              id: paramsId,
+              InputLabelProps,
+              inputProps,
+              InputProps,
+            } = params;
+            const helperTextValue =
+              exercises.length === 0 ? "No exercise library data available" : undefined;
+
+            return (
+              <TextField
+                {...(paramsDisabled !== undefined && { disabled: paramsDisabled })}
+                {...(paramsFullWidth !== undefined && { fullWidth: paramsFullWidth })}
+                {...(paramsId !== undefined && { id: paramsId })}
+                inputProps={inputProps}
+                label="Exercise"
+                size="small"
+                required
+                {...(helperTextValue !== undefined && { helperText: helperTextValue })}
+                slotProps={{
+                  inputLabel: InputLabelProps,
+                  input: InputProps,
+                }}
+              />
+            );
+          }}
           noOptionsText="No exercises"
           size="small"
         />

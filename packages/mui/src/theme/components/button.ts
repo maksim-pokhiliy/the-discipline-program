@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiButton: Components<Theme>["MuiButton"] = {
+export const MuiButton: NonNullable<Components<Theme>["MuiButton"]> = {
   defaultProps: {
     disableElevation: true,
   },

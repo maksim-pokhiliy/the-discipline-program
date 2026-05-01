@@ -50,7 +50,7 @@ export const lmsBlockTemplateApi = {
     const items = await prisma.blockTemplate.findMany({
       where,
       orderBy: { name: "asc" },
-      take: query.take,
+      ...(query.take !== undefined && { take: query.take }),
     });
 
     return { items: items.map(mapToBlockTemplate), total: items.length };

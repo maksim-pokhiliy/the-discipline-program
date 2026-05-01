@@ -26,7 +26,10 @@ const consumeInviteHandler = async (request: Request, context: RouteContext): Pr
   const { token } = consumeInviteParamsSchema.parse(await context.params);
   const body = await parseRequestBody(request);
   const input = consumeInviteRequestSchema.parse(body);
-  const result = await iamInviteTokenApi.consume(token, input);
+  const result = await iamInviteTokenApi.consume(token, {
+    password: input.password,
+    ...(input.timezone !== undefined && { timezone: input.timezone }),
+  });
   const validated = consumeInviteResponseSchema.parse(result);
 
   return NextResponse.json(validated);

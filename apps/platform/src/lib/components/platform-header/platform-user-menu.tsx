@@ -19,10 +19,10 @@ const getInitial = (name?: string | null, email?: string | null): string => {
 };
 
 type PlatformUserMenuProps = {
-  profileHref?: string;
-  userName?: string | null;
-  userEmail?: string | null;
-  userImage?: string | null;
+  profileHref?: string | undefined;
+  userName?: string | null | undefined;
+  userEmail?: string | null | undefined;
+  userImage?: string | null | undefined;
   onSignOut: () => void;
 };
 
@@ -43,7 +43,9 @@ export const PlatformUserMenu = ({
   return (
     <>
       <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} aria-label="User menu">
-        <Avatar src={userImage ?? undefined}>{getInitial(userName, userEmail)}</Avatar>
+        <Avatar {...(userImage != null && { src: userImage })}>
+          {getInitial(userName, userEmail)}
+        </Avatar>
       </IconButton>
 
       <Menu

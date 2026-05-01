@@ -13,20 +13,20 @@ export type ExerciseEntryRowMode = "edit" | "read";
 export type ExerciseEntryRowErrors = z.ZodError | null;
 
 export type ExerciseEntryRowNotesSlotProps = {
-  onKeyDown?: (event: KeyboardEvent<HTMLElement>) => void;
-  onChange?: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onBlur?: () => void;
-  inputRef?: RefCallback<HTMLInputElement | HTMLTextAreaElement>;
+  onKeyDown?: ((event: KeyboardEvent<HTMLElement>) => void) | undefined;
+  onChange?: ((event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void) | undefined;
+  onBlur?: (() => void) | undefined;
+  inputRef?: RefCallback<HTMLInputElement | HTMLTextAreaElement> | undefined;
 };
 
 export type ExerciseEntryRowProps = {
   entry: ExerciseEntry;
-  mode?: ExerciseEntryRowMode;
-  exerciseLibrary?: ExerciseLibraryItem[];
+  mode?: ExerciseEntryRowMode | undefined;
+  exerciseLibrary?: ExerciseLibraryItem[] | undefined;
   onChange: (next: ExerciseEntry | ((prev: ExerciseEntry) => ExerciseEntry)) => void;
-  onPrescriptionChange?: (next: Prescription) => void;
-  errors?: ExerciseEntryRowErrors;
-  status?: EditSessionStatus;
-  disabled?: boolean;
-  notesSlotProps?: ExerciseEntryRowNotesSlotProps;
+  onPrescriptionChange?: ((next: Prescription) => void) | undefined;
+  errors?: ExerciseEntryRowErrors | undefined;
+  status?: EditSessionStatus | undefined;
+  disabled?: boolean | undefined;
+  notesSlotProps?: ExerciseEntryRowNotesSlotProps | undefined;
 };

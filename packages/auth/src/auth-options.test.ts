@@ -318,12 +318,11 @@ describe("createAuthOptions", () => {
     it("collapses missing email/name/image/role to null", () => {
       const { service } = buildService();
       const options = createAuthOptions(service);
-      const token = buildToken({
-        email: undefined,
-        name: undefined,
-        image: undefined,
-        role: null,
-      });
+      const token = buildToken({ role: null });
+
+      delete token.email;
+      delete token.name;
+      delete token.image;
 
       const session = invokeSession(options, token);
 

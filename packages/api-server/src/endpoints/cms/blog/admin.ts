@@ -100,11 +100,22 @@ export const cmsBlogAdminApi = {
     );
 
     try {
-      const updateData: Prisma.MarketingBlogPostUpdateInput = { ...data };
-
-      if (data.coverImage !== undefined) {
-        updateData.coverImage = data.coverImage?.trim() || null;
-      }
+      const updateData: Prisma.MarketingBlogPostUpdateInput = {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.slug !== undefined && { slug: data.slug }),
+        ...(data.excerpt !== undefined && { excerpt: data.excerpt }),
+        ...(data.content !== undefined && { content: data.content }),
+        ...(data.authorName !== undefined && { authorName: data.authorName }),
+        ...(data.category !== undefined && { category: data.category }),
+        ...(data.tags !== undefined && { tags: data.tags }),
+        ...(data.isPublished !== undefined && { isPublished: data.isPublished }),
+        ...(data.isFeatured !== undefined && { isFeatured: data.isFeatured }),
+        ...(data.publishedAt !== undefined && { publishedAt: data.publishedAt }),
+        ...(data.readTime !== undefined && { readTime: data.readTime }),
+        ...(data.coverImage !== undefined && {
+          coverImage: data.coverImage?.trim() || null,
+        }),
+      };
 
       if (data.isPublished === true && !existing.publishedAt && !data.publishedAt) {
         updateData.publishedAt = new Date();

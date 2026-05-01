@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiDialogTitle: Components<Theme>["MuiDialogTitle"] = {
+export const MuiDialogTitle: NonNullable<Components<Theme>["MuiDialogTitle"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       display: "flex",
@@ -11,7 +11,7 @@ export const MuiDialogTitle: Components<Theme>["MuiDialogTitle"] = {
   },
 };
 
-export const MuiDialogContent: Components<Theme>["MuiDialogContent"] = {
+export const MuiDialogContent: NonNullable<Components<Theme>["MuiDialogContent"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       padding: theme.spacing(3),
@@ -23,7 +23,7 @@ export const MuiDialogContent: Components<Theme>["MuiDialogContent"] = {
   },
 };
 
-export const MuiDialogActions: Components<Theme>["MuiDialogActions"] = {
+export const MuiDialogActions: NonNullable<Components<Theme>["MuiDialogActions"]> = {
   defaultProps: {
     disableSpacing: false,
   },

@@ -1,14 +1,38 @@
-import { Autocomplete, Chip, TextField } from "@mui/material";
+import { Autocomplete, type AutocompleteRenderInputParams, Chip, TextField } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { StoryPage, StorySection } from "../story-layout";
+
+type AutocompleteTextFieldProps = AutocompleteRenderInputParams & {
+  label?: string | undefined;
+};
+
+const AutocompleteTextField = ({
+  size,
+  InputLabelProps,
+  InputProps,
+  inputProps,
+  label,
+  ...rest
+}: AutocompleteTextFieldProps) => (
+  <TextField
+    {...rest}
+    {...(size !== undefined && { size })}
+    {...(label !== undefined && { label })}
+    slotProps={{
+      input: InputProps,
+      inputLabel: InputLabelProps,
+      htmlInput: inputProps,
+    }}
+  />
+);
 
 const meta = {
   title: "Inputs/Autocomplete",
   component: Autocomplete,
   args: {
     options: [],
-    renderInput: (params) => <TextField {...params} />,
+    renderInput: (params) => <AutocompleteTextField {...params} />,
   },
 } satisfies Meta<typeof Autocomplete>;
 
@@ -34,7 +58,7 @@ export const AllVariants: Story = {
       <StorySection title="single select" direction="column">
         <Autocomplete
           options={EXERCISES}
-          renderInput={(params) => <TextField {...params} label="Exercise" />}
+          renderInput={(params) => <AutocompleteTextField {...params} label="Exercise" />}
         />
       </StorySection>
 
@@ -43,7 +67,7 @@ export const AllVariants: Story = {
           multiple
           options={EXERCISES}
           defaultValue={[EXERCISES[0], EXERCISES[3]].filter(Boolean)}
-          renderInput={(params) => <TextField {...params} label="Exercises" />}
+          renderInput={(params) => <AutocompleteTextField {...params} label="Exercises" />}
         />
       </StorySection>
 
@@ -57,7 +81,7 @@ export const AllVariants: Story = {
               <Chip label={option} size="small" {...getTagProps({ index })} key={option} />
             ))
           }
-          renderInput={(params) => <TextField {...params} label="With Chips" />}
+          renderInput={(params) => <AutocompleteTextField {...params} label="With Chips" />}
         />
       </StorySection>
 
@@ -66,7 +90,7 @@ export const AllVariants: Story = {
           disabled
           options={EXERCISES}
           value={EXERCISES[0]}
-          renderInput={(params) => <TextField {...params} label="Disabled" />}
+          renderInput={(params) => <AutocompleteTextField {...params} label="Disabled" />}
         />
       </StorySection>
 
@@ -74,11 +98,11 @@ export const AllVariants: Story = {
         <Autocomplete
           size="small"
           options={EXERCISES}
-          renderInput={(params) => <TextField {...params} label="Small" />}
+          renderInput={(params) => <AutocompleteTextField {...params} label="Small" />}
         />
         <Autocomplete
           options={EXERCISES}
-          renderInput={(params) => <TextField {...params} label="Medium (default)" />}
+          renderInput={(params) => <AutocompleteTextField {...params} label="Medium (default)" />}
         />
       </StorySection>
 
@@ -86,7 +110,7 @@ export const AllVariants: Story = {
         <Autocomplete
           freeSolo
           options={EXERCISES}
-          renderInput={(params) => <TextField {...params} label="Type or select" />}
+          renderInput={(params) => <AutocompleteTextField {...params} label="Type or select" />}
         />
       </StorySection>
     </StoryPage>

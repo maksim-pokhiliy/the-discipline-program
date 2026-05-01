@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiMenu: Components<Theme>["MuiMenu"] = {
+export const MuiMenu: NonNullable<Components<Theme>["MuiMenu"]> = {
   styleOverrides: {
     paper: ({ theme }) => ({
       marginTop: theme.spacing(1),
@@ -15,7 +15,7 @@ export const MuiMenu: Components<Theme>["MuiMenu"] = {
   },
 };
 
-export const MuiMenuItem: Components<Theme>["MuiMenuItem"] = {
+export const MuiMenuItem: NonNullable<Components<Theme>["MuiMenuItem"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       padding: theme.spacing(1),

@@ -76,20 +76,40 @@ export const ScopeCard = ({ isLoading }: ScopeCardProps) => {
                 getOptionLabel={(option) => option.name ?? option.email}
                 isOptionEqualToValue={(a, b) => a.userId === b.userId}
                 disabled={isLoading}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Owner (creator)"
-                    variant="outlined"
-                    error={Boolean(fieldState.error) || !ownerId}
-                    helperText={
-                      fieldState.error?.message ??
-                      (ownerId
-                        ? "Coach who owns this item"
-                        : "Required: pick a coach to own this item")
-                    }
-                  />
-                )}
+                renderInput={(params) => {
+                  const {
+                    size: paramsSize,
+                    disabled: paramsDisabled,
+                    fullWidth: paramsFullWidth,
+                    id: paramsId,
+                    InputLabelProps,
+                    inputProps,
+                    InputProps,
+                  } = params;
+
+                  return (
+                    <TextField
+                      {...(paramsSize !== undefined && { size: paramsSize })}
+                      {...(paramsDisabled !== undefined && { disabled: paramsDisabled })}
+                      {...(paramsFullWidth !== undefined && { fullWidth: paramsFullWidth })}
+                      {...(paramsId !== undefined && { id: paramsId })}
+                      inputProps={inputProps}
+                      label="Owner (creator)"
+                      variant="outlined"
+                      error={Boolean(fieldState.error) || !ownerId}
+                      helperText={
+                        fieldState.error?.message ??
+                        (ownerId
+                          ? "Coach who owns this item"
+                          : "Required: pick a coach to own this item")
+                      }
+                      slotProps={{
+                        inputLabel: InputLabelProps,
+                        input: InputProps,
+                      }}
+                    />
+                  );
+                }}
               />
             )}
           />

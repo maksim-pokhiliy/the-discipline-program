@@ -3,7 +3,15 @@
 import { type ReactNode } from "react";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { Box, Button, Container, Stack, Typography, type ButtonProps } from "@mui/material";
+import {
+  Box,
+  Button,
+  Container,
+  Stack,
+  Toolbar,
+  Typography,
+  type ButtonProps,
+} from "@mui/material";
 import { type Variants, motion } from "framer-motion";
 import Link from "next/link";
 
@@ -26,18 +34,18 @@ export type ContentAction = ButtonProps & {
 };
 
 export type ContentSectionProps = {
-  title?: string;
-  subtitle?: string;
-  surface?: "base" | "raised";
-  maxWidth?: "sm" | "md" | "lg" | "xl";
-  backHref?: string;
-  backLabel?: string;
-  actions?: ContentAction[];
-  offset?: number;
-  textAlign?: "left" | "center";
-  id?: string;
-  animated?: boolean;
-  children?: ReactNode;
+  title?: string | undefined;
+  subtitle?: string | undefined;
+  surface?: "base" | "raised" | undefined;
+  maxWidth?: "sm" | "md" | "lg" | "xl" | undefined;
+  backHref?: string | undefined;
+  backLabel?: string | undefined;
+  actions?: ContentAction[] | undefined;
+  offset?: number | undefined;
+  textAlign?: "left" | "center" | undefined;
+  id?: string | undefined;
+  animated?: boolean | undefined;
+  children?: ReactNode | undefined;
 };
 
 export const ContentSection = ({
@@ -81,7 +89,7 @@ export const ContentSection = ({
       })}
     >
       {Array.from({ length: offset }, (_, i) => (
-        <Box key={i} sx={(theme) => ({ ...theme.mixins.toolbar })} />
+        <Toolbar key={i} />
       ))}
 
       <Container maxWidth={maxWidth}>
@@ -159,10 +167,9 @@ export const ContentSection = ({
                           type={action.type || "button"}
                           loading={Boolean(action.loading)}
                           disabled={Boolean(action.disabled)}
-                          onClick={action.onClick}
-                          href={action.href}
-                          component={action.href ? Link : "button"}
-                          startIcon={action.startIcon}
+                          {...(action.onClick && { onClick: action.onClick })}
+                          {...(action.href && { href: action.href, component: Link })}
+                          {...(action.startIcon !== undefined && { startIcon: action.startIcon })}
                           size="small"
                         >
                           {action.label}

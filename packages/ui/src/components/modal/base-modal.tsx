@@ -16,12 +16,12 @@ export type BaseModalProps = {
   open: boolean;
   onClose: () => void;
   title: string;
-  maxWidth?: DialogProps["maxWidth"];
-  fullWidth?: boolean;
+  maxWidth?: DialogProps["maxWidth"] | undefined;
+  fullWidth?: boolean | undefined;
   children: ReactNode;
-  actions?: ReactNode;
-  disableBackdropClick?: boolean;
-  disableEscapeKeyDown?: boolean;
+  actions?: ReactNode | undefined;
+  disableBackdropClick?: boolean | undefined;
+  disableEscapeKeyDown?: boolean | undefined;
 };
 
 export const BaseModal = ({

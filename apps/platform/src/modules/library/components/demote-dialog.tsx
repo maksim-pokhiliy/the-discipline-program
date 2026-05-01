@@ -53,7 +53,23 @@ export const DemoteDialog = ({
           onChange={(_, value) => setSelected(value)}
           getOptionLabel={(option) => option.name ?? option.email}
           isOptionEqualToValue={(a, b) => a.userId === b.userId}
-          renderInput={(params) => <TextField {...params} label="New owner" autoFocus />}
+          renderInput={(params) => {
+            const { size, InputLabelProps, InputProps, inputProps, ...rest } = params;
+
+            return (
+              <TextField
+                {...rest}
+                inputProps={inputProps}
+                {...(size !== undefined && { size })}
+                slotProps={{
+                  inputLabel: InputLabelProps,
+                  input: InputProps,
+                }}
+                label="New owner"
+                autoFocus
+              />
+            );
+          }}
         />
       </DialogContent>
       <DialogActions>

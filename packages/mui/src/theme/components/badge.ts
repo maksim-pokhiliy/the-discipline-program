@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiBadge: Components<Theme>["MuiBadge"] = {
+export const MuiBadge: NonNullable<Components<Theme>["MuiBadge"]> = {
   styleOverrides: {
     standard: ({ theme }) => ({
       fontSize: theme.typography.pxToRem(11),

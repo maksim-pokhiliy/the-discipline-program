@@ -13,52 +13,43 @@ import {
 
 export type SchemeFormErrors = z.ZodError | null;
 
-export type SchemeFormProps = {
+export type SchemeFormCommonProps = {
+  errors?: SchemeFormErrors | undefined;
+  disabled?: boolean | undefined;
+};
+
+export type SchemeFormProps = SchemeFormCommonProps & {
   archetypeKind: SchemeArchetypeKind;
   schemeParams: SchemeParams;
   onChange: (next: SchemeParams) => void;
-  errors?: SchemeFormErrors;
-  disabled?: boolean;
 };
 
-export type SchemeFormNoneProps = {
+export type SchemeFormNoneProps = SchemeFormCommonProps & {
   value: SchemeParamsNone;
   onChange: (next: SchemeParamsNone) => void;
-  errors?: SchemeFormErrors;
-  disabled?: boolean;
 };
 
-export type SchemeFormCountUpProps = {
+export type SchemeFormCountUpProps = SchemeFormCommonProps & {
   value: SchemeParamsCountUp;
   onChange: (next: SchemeParamsCountUp) => void;
-  errors?: SchemeFormErrors;
-  disabled?: boolean;
 };
 
-export type SchemeFormCountDownProps = {
+export type SchemeFormCountDownProps = SchemeFormCommonProps & {
   value: SchemeParamsCountDown;
   onChange: (next: SchemeParamsCountDown) => void;
-  errors?: SchemeFormErrors;
-  disabled?: boolean;
 };
 
-export type SchemeFormIntervalLoopProps = {
+export type SchemeFormIntervalLoopProps = SchemeFormCommonProps & {
   value: SchemeParamsIntervalLoop;
   onChange: (next: SchemeParamsIntervalLoop) => void;
-  errors?: SchemeFormErrors;
-  disabled?: boolean;
 };
 
-export type SchemeFormEmomLoopProps = {
+export type SchemeFormEmomLoopProps = SchemeFormCommonProps & {
   value: SchemeParamsEmomLoop;
   onChange: (next: SchemeParamsEmomLoop) => void;
-  errors?: SchemeFormErrors;
-  disabled?: boolean;
 };
 
-export type SchemeFormTimeBoxedProps = {
+export type SchemeFormTimeBoxedProps = SchemeFormCommonProps & {
   value: SchemeParamsTimeBoxed;
   onChange: (next: SchemeParamsTimeBoxed) => void;
-  errors?: SchemeFormErrors;
-  disabled?: boolean;
 };

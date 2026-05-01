@@ -113,7 +113,7 @@ export const ContactsListSection = ({ contacts }: ContactsListSectionProps) => {
           return (
             <Chip
               label={config.label}
-              color={config.color}
+              {...(config.color !== undefined && { color: config.color })}
               size="small"
               variant="outlined"
               onClick={(e) => openMenu(e, item.id)}

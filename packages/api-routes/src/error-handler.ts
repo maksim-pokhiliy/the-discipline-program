@@ -120,8 +120,10 @@ const appErrorResponse = (error: AppError, requestId: string | undefined): NextR
   );
 };
 
-const zodErrorResponse = (error: ZodError, requestId: string | undefined): NextResponse =>
-  NextResponse.json(
+const zodErrorResponse = (error: ZodError, requestId: string | undefined): NextResponse => {
+  const headers = buildHeaders(requestId);
+
+  return NextResponse.json(
     {
       error: {
         code: ERROR_CODES.VALIDATION_ERROR,
@@ -133,19 +135,23 @@ const zodErrorResponse = (error: ZodError, requestId: string | undefined): NextR
         })),
       },
     },
-    { status: 400, headers: buildHeaders(requestId) },
+    { status: 400, ...(headers && { headers }) },
   );
+};
 
-const unknownErrorResponse = (requestId: string | undefined): NextResponse =>
-  NextResponse.json(
+const unknownErrorResponse = (requestId: string | undefined): NextResponse => {
+  const headers = buildHeaders(requestId);
+
+  return NextResponse.json(
     {
       error: {
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
         message: "Internal server error",
       },
     },
-    { status: 500, headers: buildHeaders(requestId) },
+    { status: 500, ...(headers && { headers }) },
   );
+};
 
 export const handleApiError = (error: unknown, requestId?: string): NextResponse => {
   unstable_rethrow(error);

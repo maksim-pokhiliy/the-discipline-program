@@ -1,10 +1,10 @@
 "use client";
 
-import { Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { CircularProgress, Stack, Toolbar, Typography } from "@mui/material";
 
 const Loading = () => (
   <Stack>
-    <Box sx={(theme) => ({ ...theme.mixins.toolbar })} />
+    <Toolbar />
 
     <Stack direction="row" justifyContent="center" alignItems="center" minHeight="20vh" spacing={2}>
       <CircularProgress size={20} />

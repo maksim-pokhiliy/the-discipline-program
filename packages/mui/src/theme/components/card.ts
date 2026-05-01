@@ -1,6 +1,6 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
-export const MuiCard: Components<Theme>["MuiCard"] = {
+export const MuiCard: NonNullable<Components<Theme>["MuiCard"]> = {
   defaultProps: {
     variant: "outlined",
     elevation: 0,
@@ -24,7 +24,7 @@ export const MuiCard: Components<Theme>["MuiCard"] = {
   },
 };
 
-export const MuiCardContent: Components<Theme>["MuiCardContent"] = {
+export const MuiCardContent: NonNullable<Components<Theme>["MuiCardContent"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       display: "flex",
@@ -39,7 +39,7 @@ export const MuiCardContent: Components<Theme>["MuiCardContent"] = {
   },
 };
 
-export const MuiCardActionArea: Components<Theme>["MuiCardActionArea"] = {
+export const MuiCardActionArea: NonNullable<Components<Theme>["MuiCardActionArea"]> = {
   styleOverrides: {
     root: {
       "&:hover .MuiCardActionArea-focusHighlight": {
@@ -49,7 +49,7 @@ export const MuiCardActionArea: Components<Theme>["MuiCardActionArea"] = {
   },
 };
 
-export const MuiCardActions: Components<Theme>["MuiCardActions"] = {
+export const MuiCardActions: NonNullable<Components<Theme>["MuiCardActions"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       padding: theme.spacing(2),

@@ -36,7 +36,7 @@ export type UseSaveTemplateDialogInput = {
   onClose: () => void;
   planStructure: GetPlanStructureResponse | undefined;
   selectedBlock: PlanStructureBlock | null;
-  initialScope?: SaveTemplateScope;
+  initialScope?: SaveTemplateScope | undefined;
 };
 
 export type ScopeOption = { value: "COACH" | "SYSTEM"; label: string };

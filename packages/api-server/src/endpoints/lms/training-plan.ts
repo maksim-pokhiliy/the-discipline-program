@@ -138,7 +138,11 @@ export const lmsTrainingPlanApi = {
   create: async (userId: string, data: CreateTrainingPlanData): Promise<TrainingPlan> => {
     try {
       const plan = await prisma.trainingPlan.create({
-        data: { creatorId: userId, ...data },
+        data: {
+          creatorId: userId,
+          name: data.name,
+          ...(data.description !== undefined && { description: data.description }),
+        },
       });
 
       return mapToTrainingPlan(plan);
@@ -157,7 +161,10 @@ export const lmsTrainingPlanApi = {
     try {
       const plan = await prisma.trainingPlan.update({
         where: { id },
-        data,
+        data: {
+          ...(data.name !== undefined && { name: data.name }),
+          ...(data.description !== undefined && { description: data.description }),
+        },
       });
 
       return mapToTrainingPlan(plan);

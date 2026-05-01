@@ -2,15 +2,23 @@ import { Chip, type ChipProps, Tooltip } from "@mui/material";
 
 export type StatusChipConfig = {
   label: string;
-  color?: ChipProps["color"];
-  icon?: React.ReactElement;
-  tooltip?: string;
+  color?: ChipProps["color"] | undefined;
+  icon?: React.ReactElement | undefined;
+  tooltip?: string | undefined;
 };
 
 type StatusChipProps = StatusChipConfig;
 
 export const StatusChip: React.FC<StatusChipProps> = ({ label, color, icon, tooltip }) => {
-  const chip = <Chip size="small" label={label} color={color} icon={icon} variant="outlined" />;
+  const chip = (
+    <Chip
+      size="small"
+      label={label}
+      {...(color !== undefined && { color })}
+      {...(icon !== undefined && { icon })}
+      variant="outlined"
+    />
+  );
 
   if (tooltip) {
     return (

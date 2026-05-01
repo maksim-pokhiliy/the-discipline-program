@@ -18,8 +18,8 @@ import { filterPickerOptions } from "@repo/ui";
 export type InlinePickerOption = {
   id: string;
   label: string;
-  description?: string;
-  group?: string;
+  description?: string | undefined;
+  group?: string | undefined;
 };
 
 export type InlinePickerPopoverProps = {

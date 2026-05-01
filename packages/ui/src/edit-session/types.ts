@@ -20,11 +20,11 @@ export type UseEditSessionConfig<TDraft> = {
   validate: (draft: TDraft) => SafeParseReturnType<TDraft, TDraft>;
   mutationKey: readonly unknown[];
   mutationFn: (draft: TDraft, expectedVersion: number) => Promise<TDraft>;
-  label?: string;
-  idleSaveMs?: number;
-  savedFadeMs?: number;
-  onSaved?: (next: TDraft) => void;
-  onConflict?: (currentVersion: number) => void;
+  label?: string | undefined;
+  idleSaveMs?: number | undefined;
+  savedFadeMs?: number | undefined;
+  onSaved?: ((next: TDraft) => void) | undefined;
+  onConflict?: ((currentVersion: number) => void) | undefined;
 };
 
 export type UseEditSessionApi<TDraft> = {
@@ -46,7 +46,7 @@ export type UseEditSessionApi<TDraft> = {
 
 export type EditSessionRegistration = {
   sessionId: string;
-  label?: string;
+  label?: string | undefined;
   status: EditSessionStatus;
   isDirty: boolean;
   isValid: boolean;

@@ -33,17 +33,17 @@ const fadeSlideUp: Variants = {
 };
 
 type FullscreenSectionProps = {
-  backgroundImage?: string;
-  priority?: boolean;
-  sx?: SxProps<Theme>;
+  backgroundImage?: string | undefined;
+  priority?: boolean | undefined;
+  sx?: SxProps<Theme> | undefined;
 } & (
   | { children: ReactNode; title?: never; subtitle?: never; buttonText?: never; buttonHref?: never }
   | {
       children?: never;
-      title?: string;
-      subtitle?: string;
-      buttonText?: string;
-      buttonHref?: string;
+      title?: string | undefined;
+      subtitle?: string | undefined;
+      buttonText?: string | undefined;
+      buttonHref?: string | undefined;
     }
 );
 
@@ -77,7 +77,7 @@ export const FullscreenSection = ({
           src={backgroundImage}
           alt=""
           fill
-          priority={priority}
+          {...(priority !== undefined && { priority })}
           sizes="100vw"
           style={{ objectFit: "cover" }}
         />

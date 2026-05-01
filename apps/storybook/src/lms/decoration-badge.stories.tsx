@@ -18,10 +18,11 @@ const KIND_TO_COLOR: Record<DecorationKind, ChipProps["color"]> = {
 };
 
 const DemoDecorationBadge = ({ kind, tooltip }: DemoDecorationBadgeProps) => {
+  const color = KIND_TO_COLOR[kind];
   const chip = (
     <Chip
       size="small"
-      color={KIND_TO_COLOR[kind]}
+      {...(color !== undefined && { color })}
       label={kind}
       variant="filled"
       sx={{ height: 20, fontSize: 10, fontWeight: 600 }}

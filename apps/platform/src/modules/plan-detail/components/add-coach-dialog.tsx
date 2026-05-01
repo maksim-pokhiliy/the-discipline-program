@@ -80,23 +80,32 @@ export const AddCoachDialog: React.FC<AddCoachDialogProps> = ({
         disabled={addCoach.isPending}
         loading={isLoading}
         noOptionsText={isLoading ? "Loading..." : "No available coaches"}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Coach"
-            placeholder="Name or email"
-            variant="outlined"
-            InputProps={{
-              ...params.InputProps,
-              endAdornment: (
-                <>
-                  {isLoading ? <CircularProgress color="inherit" size={16} /> : null}
-                  {params.InputProps.endAdornment}
-                </>
-              ),
-            }}
-          />
-        )}
+        renderInput={(params) => {
+          const { size, InputLabelProps, InputProps, inputProps, ...rest } = params;
+
+          return (
+            <TextField
+              {...rest}
+              inputProps={inputProps}
+              {...(size !== undefined && { size })}
+              label="Coach"
+              placeholder="Name or email"
+              variant="outlined"
+              slotProps={{
+                inputLabel: InputLabelProps,
+                input: {
+                  ...InputProps,
+                  endAdornment: (
+                    <>
+                      {isLoading ? <CircularProgress color="inherit" size={16} /> : null}
+                      {InputProps.endAdornment}
+                    </>
+                  ),
+                },
+              }}
+            />
+          );
+        }}
       />
     </FormModal>
   );

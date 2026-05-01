@@ -121,9 +121,23 @@ export const BulkReplaceDialog = ({
             getOptionLabel={(option) => option.name}
             value={replacement}
             onChange={(_, value) => setReplacement(value)}
-            renderInput={(params) => (
-              <TextField {...params} label="Replacement exercise" placeholder="Search…" />
-            )}
+            renderInput={(params) => {
+              const { size, InputLabelProps, InputProps, inputProps, ...rest } = params;
+
+              return (
+                <TextField
+                  {...rest}
+                  inputProps={inputProps}
+                  {...(size !== undefined && { size })}
+                  slotProps={{
+                    inputLabel: InputLabelProps,
+                    input: InputProps,
+                  }}
+                  label="Replacement exercise"
+                  placeholder="Search…"
+                />
+              );
+            }}
             isOptionEqualToValue={(option, value) => option.id === value.id}
           />
         </Stack>

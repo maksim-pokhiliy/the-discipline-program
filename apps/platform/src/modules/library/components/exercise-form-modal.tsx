@@ -61,7 +61,7 @@ const buildDefaults = (initial?: ExerciseLibraryItem): ExerciseFormInput => ({
 
 type ExerciseFormModalProps = {
   open: boolean;
-  initial?: ExerciseLibraryItem;
+  initial?: ExerciseLibraryItem | undefined;
   onClose: () => void;
 };
 

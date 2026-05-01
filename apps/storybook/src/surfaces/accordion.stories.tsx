@@ -8,7 +8,16 @@ const meta = {
   title: "Surfaces/Accordion",
   component: Accordion,
   args: {
-    children: undefined,
+    children: (
+      <>
+        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+          <Typography>Accordion section</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography>Accordion content.</Typography>
+        </AccordionDetails>
+      </>
+    ),
   },
 } satisfies Meta<typeof Accordion>;
 

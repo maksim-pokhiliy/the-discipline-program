@@ -24,8 +24,8 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
+  ...(process.env.SENTRY_ORG !== undefined && { org: process.env.SENTRY_ORG }),
+  ...(process.env.SENTRY_PROJECT !== undefined && { project: process.env.SENTRY_PROJECT }),
   silent: !process.env.CI,
   widenClientFileUpload: true,
   webpack: {

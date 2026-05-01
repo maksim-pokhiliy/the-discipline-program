@@ -70,7 +70,7 @@ export const lmsExerciseLibraryItemApi = {
     const items = await prisma.exerciseLibraryItem.findMany({
       where,
       orderBy: { name: "asc" },
-      take: query.take,
+      ...(query.take !== undefined && { take: query.take }),
     });
 
     return { items: items.map(mapToExerciseLibraryItem), total: items.length };

@@ -5,14 +5,14 @@ import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { Chip, Stack, TextField, type TextFieldProps } from "@mui/material";
 
 export type TagsInputProps = {
-  value?: string[];
+  value?: string[] | undefined;
   onChange: (tags: string[]) => void;
-  label?: string;
-  placeholder?: string;
-  disabled?: boolean;
-  size?: TextFieldProps["size"];
-  error?: boolean;
-  helperText?: ReactNode;
+  label?: string | undefined;
+  placeholder?: string | undefined;
+  disabled?: boolean | undefined;
+  size?: TextFieldProps["size"] | undefined;
+  error?: boolean | undefined;
+  helperText?: ReactNode | undefined;
 };
 
 export const TagsInput = ({
@@ -67,7 +67,7 @@ export const TagsInput = ({
             <Chip
               key={tag}
               label={tag}
-              onDelete={disabled ? undefined : () => handleDelete(tag)}
+              {...(!disabled && { onDelete: () => handleDelete(tag) })}
               size="small"
             />
           ))}

@@ -4,10 +4,10 @@ import { CTASection } from "./cta-section";
 
 type PageCTASectionProps = {
   id: string;
-  title?: string;
-  subtitle?: string;
-  buttonText?: string;
-  buttonHref?: string;
+  title?: string | undefined;
+  subtitle?: string | undefined;
+  buttonText?: string | undefined;
+  buttonHref?: string | undefined;
 };
 
 export const PageCTASection = ({

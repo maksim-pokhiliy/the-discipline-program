@@ -42,9 +42,11 @@ export const HomeStorefrontProgramsPreview = ({
       </Grid>
 
       <Stack alignItems="center" sx={{ mt: 10 }}>
-        <Button component={Link} href={programs.buttonHref} size="large">
-          {programs.buttonText}
-        </Button>
+        {programs.buttonHref !== undefined && programs.buttonText !== undefined && (
+          <Button component={Link} href={programs.buttonHref} size="large">
+            {programs.buttonText}
+          </Button>
+        )}
       </Stack>
 
       <ProductModal

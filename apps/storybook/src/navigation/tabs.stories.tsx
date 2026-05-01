@@ -107,9 +107,18 @@ const WithIconsStory = () => {
     <StoryPage>
       <StorySection title="icon + label (start)" direction="column">
         <Tabs {...start}>
-          {LABELS.map((label, i) => (
-            <Tab key={label} label={label} icon={ICONS[i]} iconPosition="start" />
-          ))}
+          {LABELS.map((label, i) => {
+            const icon = ICONS[i];
+
+            return (
+              <Tab
+                key={label}
+                label={label}
+                {...(icon !== undefined && { icon })}
+                iconPosition="start"
+              />
+            );
+          })}
         </Tabs>
       </StorySection>
 
@@ -123,17 +132,28 @@ const WithIconsStory = () => {
 
       <StorySection title="icon top (default)" direction="column">
         <Tabs {...top}>
-          {LABELS.map((label, i) => (
-            <Tab key={label} label={label} icon={ICONS[i]} />
-          ))}
+          {LABELS.map((label, i) => {
+            const icon = ICONS[i];
+
+            return <Tab key={label} label={label} {...(icon !== undefined && { icon })} />;
+          })}
         </Tabs>
       </StorySection>
 
       <StorySection title="icon end" direction="column">
         <Tabs {...end}>
-          {LABELS.map((label, i) => (
-            <Tab key={label} label={label} icon={ICONS[i]} iconPosition="end" />
-          ))}
+          {LABELS.map((label, i) => {
+            const icon = ICONS[i];
+
+            return (
+              <Tab
+                key={label}
+                label={label}
+                {...(icon !== undefined && { icon })}
+                iconPosition="end"
+              />
+            );
+          })}
         </Tabs>
       </StorySection>
     </StoryPage>

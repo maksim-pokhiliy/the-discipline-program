@@ -50,7 +50,7 @@ export const lmsWeekTemplateApi = {
     const items = await prisma.weekTemplate.findMany({
       where,
       orderBy: { name: "asc" },
-      take: query.take,
+      ...(query.take !== undefined && { take: query.take }),
     });
 
     return { items: items.map(mapToWeekTemplate), total: items.length };

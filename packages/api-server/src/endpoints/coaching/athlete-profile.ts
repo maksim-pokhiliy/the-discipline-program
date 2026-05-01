@@ -23,9 +23,11 @@ export const coachingAthleteProfileApi = {
 
   upsert: async (userId: string, data: UpdateAthleteProfileData): Promise<AthleteProfile> => {
     const prismaData = {
-      ...data,
       ...(data.gender && { gender: GENDER_TO_PRISMA_MAP[data.gender] }),
       ...(data.healthStatus && { healthStatus: HEALTH_STATUS_TO_PRISMA_MAP[data.healthStatus] }),
+      ...(data.heightCm !== undefined && { heightCm: data.heightCm }),
+      ...(data.weightKg !== undefined && { weightKg: data.weightKg }),
+      ...(data.healthNote !== undefined && { healthNote: data.healthNote }),
     };
 
     try {

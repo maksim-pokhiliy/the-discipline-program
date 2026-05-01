@@ -89,10 +89,9 @@ export const cloneWeeksIntoPlan = async (
                     ? {}
                     : (segment.schemeParams as Prisma.InputJsonValue),
                 schemeTemplateId: segment.schemeTemplateId,
-                restConfig:
-                  segment.restConfig === null
-                    ? undefined
-                    : (segment.restConfig as Prisma.InputJsonValue),
+                ...(segment.restConfig !== null && {
+                  restConfig: segment.restConfig as Prisma.InputJsonValue,
+                }),
                 version: 1,
               },
             });
@@ -103,10 +102,9 @@ export const cloneWeeksIntoPlan = async (
                   segmentId: newSegment.id,
                   order: setGroup.order,
                   label: setGroup.label,
-                  restConfig:
-                    setGroup.restConfig === null
-                      ? undefined
-                      : (setGroup.restConfig as Prisma.InputJsonValue),
+                  ...(setGroup.restConfig !== null && {
+                    restConfig: setGroup.restConfig as Prisma.InputJsonValue,
+                  }),
                 },
               });
 

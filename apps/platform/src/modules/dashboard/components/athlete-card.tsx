@@ -4,11 +4,11 @@ import { StatusChip, type StatusChipConfig } from "@repo/ui";
 
 type AthleteCardProps = {
   name: string;
-  image?: string | null;
+  image?: string | null | undefined;
   severity: AlertColor;
   message: string;
-  chips?: StatusChipConfig[];
-  details?: string;
+  chips?: StatusChipConfig[] | undefined;
+  details?: string | undefined;
   action?: React.ReactNode;
 };
 
@@ -24,7 +24,7 @@ export const AthleteCard: React.FC<AthleteCardProps> = ({
   <Alert
     severity={severity}
     variant="filled"
-    icon={<Avatar src={image ?? undefined}>{name[0]?.toUpperCase()}</Avatar>}
+    icon={<Avatar {...(image != null && { src: image })}>{(name[0] ?? "").toUpperCase()}</Avatar>}
     action={action}
   >
     <AlertTitle>

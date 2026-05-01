@@ -15,9 +15,9 @@ import { api } from "../api";
 import { platformKeys } from "../api/keys";
 
 export type LibraryListParams = {
-  search?: string;
-  scope?: "OWN" | "SYSTEM" | "ALL";
-  take?: number;
+  search?: string | undefined;
+  scope?: "OWN" | "SYSTEM" | "ALL" | undefined;
+  take?: number | undefined;
 };
 
 const DEFAULT_TAKE = 100;
