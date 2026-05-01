@@ -30,10 +30,10 @@ type TimezoneAutocompleteProps = {
   value: string;
   onChange: (value: string) => void;
   onBlur: () => void;
-  disabled?: boolean;
-  error?: boolean;
-  helperText?: string;
-  label?: string;
+  disabled?: boolean | undefined;
+  error?: boolean | undefined;
+  helperText?: string | undefined;
+  label?: string | undefined;
 };
 
 export const TimezoneAutocomplete = ({
@@ -67,16 +67,34 @@ export const TimezoneAutocomplete = ({
       autoHighlight
       getOptionLabel={(option) => labelMap.get(option) ?? option}
       isOptionEqualToValue={(option, selected) => option === selected}
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          label={label}
-          variant="outlined"
-          fullWidth
-          error={error}
-          helperText={helperText}
-        />
-      )}
+      renderInput={(params) => {
+        const {
+          size: paramsSize,
+          disabled: paramsDisabled,
+          id: paramsId,
+          InputLabelProps,
+          inputProps,
+          InputProps,
+        } = params;
+
+        return (
+          <TextField
+            {...(paramsSize !== undefined && { size: paramsSize })}
+            {...(paramsDisabled !== undefined && { disabled: paramsDisabled })}
+            {...(paramsId !== undefined && { id: paramsId })}
+            inputProps={inputProps}
+            label={label}
+            variant="outlined"
+            fullWidth
+            error={error}
+            {...(helperText !== undefined && { helperText })}
+            slotProps={{
+              inputLabel: InputLabelProps,
+              input: InputProps,
+            }}
+          />
+        );
+      }}
     />
   );
 };

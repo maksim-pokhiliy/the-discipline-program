@@ -113,7 +113,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
           return (
             <Chip
               label={config.label}
-              color={config.color}
+              {...(config.color !== undefined && { color: config.color })}
               size="small"
               variant="outlined"
               onClick={(e) => openMenu(e, user.id)}

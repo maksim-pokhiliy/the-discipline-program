@@ -128,7 +128,7 @@ export const ProductsListSection = ({ products }: ProductsListSectionProps) => {
             />
 
             <Chip
-              icon={product.isFeatured ? <StarIcon fontSize="small" /> : undefined}
+              {...(product.isFeatured && { icon: <StarIcon fontSize="small" /> })}
               label={product.isFeatured ? "Featured" : "Standard"}
               color={product.isFeatured ? "warning" : "default"}
               size="small"
