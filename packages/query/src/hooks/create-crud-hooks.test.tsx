@@ -309,11 +309,11 @@ describe("createCrudHooks", () => {
 
   it("useCreate throws when api.create is not configured", async () => {
     const queryClient = buildClient();
-    const api = buildApi();
+    const { getPageData, getById, update, delete: deleteFn } = buildApi();
     const hooks = createCrudHooks<PageData, Entity, { name: string }, { name: string }>({
       entityName: "Entity",
       keys: buildKeys(),
-      api: { ...api, create: undefined },
+      api: { getPageData, getById, update, delete: deleteFn },
     });
 
     const { result } = renderHook(() => hooks.useCreate(), {

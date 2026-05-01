@@ -25,7 +25,12 @@ export const useOptimisticMutation = <TData, TVars, TResult = unknown>(
 ) => {
   const queryClient = useQueryClient();
 
-  return useMutation<TResult, Error, TVars, { previous?: TData; queryKey: QueryKey }>({
+  return useMutation<
+    TResult,
+    Error,
+    TVars,
+    { previous?: TData | undefined; queryKey: readonly unknown[] }
+  >({
     mutationFn: config.mutationFn,
     onMutate: async (vars) => {
       const queryKey = resolve(config.queryKey, vars);
