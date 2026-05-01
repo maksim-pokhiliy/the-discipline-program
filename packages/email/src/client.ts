@@ -37,8 +37,8 @@ export const createResendEmailService = (config: ResendEmailServiceConfig): Emai
         to: formatRecipients(input.to),
         subject: input.subject,
         html: input.html,
-        text: input.text,
-        replyTo: replyTo ? formatAddress(replyTo) : undefined,
+        ...(input.text !== undefined && { text: input.text }),
+        ...(replyTo && { replyTo: formatAddress(replyTo) }),
       });
 
       if (response.error || !response.data) {
