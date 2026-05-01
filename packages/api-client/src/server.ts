@@ -15,5 +15,5 @@ export const createNextServerClient = () =>
 
       return { Cookie: cookieStore.toString() };
     },
-    onUnauthorized: () => redirect(AUTH_ROUTES.LOGOUT),
+    onUnauthorized: () => redirect(AUTH_ROUTES.LOGIN),
   });

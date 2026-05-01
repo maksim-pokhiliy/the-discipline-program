@@ -1,5 +1,23 @@
 type LogLevel = "info" | "warn" | "error" | "debug";
 
+const LOG_LEVEL_PRIORITY: Record<LogLevel, number> = {
+  debug: 0,
+  info: 1,
+  warn: 2,
+  error: 3,
+};
+
+export const isLogLevel = (value: string): value is LogLevel =>
+  value === "debug" || value === "info" || value === "warn" || value === "error";
+
+let configuredMinLevel: LogLevel = "debug";
+
+export const setLoggerMinLevel = (level: LogLevel): void => {
+  configuredMinLevel = level;
+};
+
+const resolveMinLogLevel = (): LogLevel => configuredMinLevel;
+
 type LogContext = Record<string, unknown>;
 
 type ContextProvider = () => LogContext | undefined;
@@ -164,6 +182,12 @@ const LOG_METHODS: Record<LogLevel, (...args: unknown[]) => void> = {
 
 export const createLogger = (config: LoggerConfig = {}): Logger => {
   const log = (level: LogLevel, msg: string, data?: LogData): void => {
+    const minLevel = resolveMinLogLevel();
+
+    if (LOG_LEVEL_PRIORITY[level] < LOG_LEVEL_PRIORITY[minLevel]) {
+      return;
+    }
+
     const entry = createLogEntry(level, msg, config, data);
 
     LOG_METHODS[level](JSON.stringify(entry));

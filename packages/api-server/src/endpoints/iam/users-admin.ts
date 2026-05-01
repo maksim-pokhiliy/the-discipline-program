@@ -13,6 +13,7 @@ import { prisma } from "../../db/client";
 import { type TxClient } from "../../db/tx";
 import { mapToAdminUserListItem, mapToUser, ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { findOrThrow, handlePrismaError } from "../../utils";
+import { DEFAULT_LIST_LIMIT } from "../../utils/list-limits";
 
 import {
   assertCoachesExist,
@@ -97,8 +98,10 @@ const applyRoleEnter = async (
   }
 };
 
-const assertNotLastAdminDemotion = async (): Promise<void> => {
-  const adminCount = await prisma.user.count({
+const assertNotLastAdminDemotion = async (tx: TxClient): Promise<void> => {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('admin-role-mutation'))`;
+
+  const adminCount = await tx.user.count({
     where: { role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] },
   });
 
@@ -111,6 +114,7 @@ export const iamUserAdminApi = {
   getAll: async (): Promise<AdminUserListItem[]> => {
     const users = await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
+      take: DEFAULT_LIST_LIMIT,
     });
 
     return users.map(mapToAdminUserListItem);
@@ -177,10 +181,6 @@ export const iamUserAdminApi = {
       throw new ForbiddenError("Cannot demote yourself from admin");
     }
 
-    if (isDemotionFromAdmin) {
-      await assertNotLastAdminDemotion();
-    }
-
     const newRole: UserRole = data.role ?? currentRole;
 
     if (data.coachIds !== undefined && data.coachIds.length > 0 && newRole !== UserRole.ATHLETE) {
@@ -222,6 +222,10 @@ export const iamUserAdminApi = {
 
     try {
       return await prisma.$transaction(async (tx) => {
+        if (isDemotionFromAdmin) {
+          await assertNotLastAdminDemotion(tx);
+        }
+
         if (data.coachIds !== undefined && data.coachIds.length > 0) {
           await assertCoachesExist(tx, dedupe(data.coachIds));
         }
@@ -257,10 +261,6 @@ export const iamUserAdminApi = {
       throw new ForbiddenError("Cannot demote yourself from admin");
     }
 
-    if (isDemotionFromAdmin) {
-      await assertNotLastAdminDemotion();
-    }
-
     if (newRole === UserRole.HEAD_COACH) {
       const existingHC = await prisma.user.findFirst({
         where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
@@ -273,6 +273,10 @@ export const iamUserAdminApi = {
 
     try {
       return await prisma.$transaction(async (tx) => {
+        if (isDemotionFromAdmin) {
+          await assertNotLastAdminDemotion(tx);
+        }
+
         const updated = await tx.user.update({
           where: { id },
           data: { role: ROLE_TO_PRISMA_MAP[newRole], tokenVersion: { increment: 1 } },
@@ -297,15 +301,16 @@ export const iamUserAdminApi = {
       throw new ForbiddenError("Cannot delete yourself");
     }
 
-    if (ROLE_MAP[existing.role] === UserRole.ADMIN) {
-      await assertNotLastAdminDemotion();
-    }
-
     const deletedAt = new Date();
     const suffixedEmail = `${existing.email}_deleted_${deletedAt.getTime()}`;
+    const isAdmin = ROLE_MAP[existing.role] === UserRole.ADMIN;
 
     try {
       await prisma.$transaction(async (tx) => {
+        if (isAdmin) {
+          await assertNotLastAdminDemotion(tx);
+        }
+
         await applyRoleExit(tx, id, ROLE_MAP[existing.role]);
         await tx.user.update({
           where: { id },
@@ -330,14 +335,18 @@ export const iamUserAdminApi = {
 
     resolveInviteEmailConfig();
 
-    const since = new Date(Date.now() - 24 * MS_PER_HOUR);
-    const recentTokenCount = await prisma.userInviteToken.count({
-      where: { userId, createdAt: { gte: since } },
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`resend:${userId}`}))`;
 
-    if (recentTokenCount >= MAX_RESENDS_PER_DAY) {
-      throw new TooManyRequestsError("Too many resends in 24 hours");
-    }
+      const since = new Date(Date.now() - 24 * MS_PER_HOUR);
+      const recentTokenCount = await tx.userInviteToken.count({
+        where: { userId, createdAt: { gte: since } },
+      });
+
+      if (recentTokenCount >= MAX_RESENDS_PER_DAY) {
+        throw new TooManyRequestsError("Too many resends in 24 hours");
+      }
+    });
 
     return iamUserCreationApi.issueInviteAndSendEmail(actorId, {
       id: user.id,

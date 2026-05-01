@@ -43,6 +43,7 @@ const ERROR_CODE_TO_CLASS: Partial<Record<string, AppErrorConstructor>> = {
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const DEFAULT_MAX_RETRIES = 1;
+const DEFAULT_MAX_TOTAL_DURATION_MS = 8_000;
 const BASE_RETRY_DELAY_MS = 1_000;
 const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
 const NO_CONTENT_STATUS = 204;
@@ -62,6 +63,7 @@ type ApiClientConfig = {
   onUnauthorized?: () => never;
   timeoutMs?: number;
   maxRetries?: number;
+  maxTotalDurationMs?: number;
   cache?: RequestCache;
 };
 
@@ -86,6 +88,7 @@ export class ApiClient {
   private onUnauthorized?: () => never;
   private timeoutMs: number;
   private maxRetries: number;
+  private maxTotalDurationMs: number;
   private cache: RequestCache | undefined;
 
   constructor({
@@ -95,6 +98,7 @@ export class ApiClient {
     onUnauthorized,
     timeoutMs,
     maxRetries,
+    maxTotalDurationMs,
     cache,
   }: ApiClientConfig) {
     this.baseUrl = baseUrl;
@@ -103,6 +107,7 @@ export class ApiClient {
     this.onUnauthorized = onUnauthorized;
     this.timeoutMs = timeoutMs ?? DEFAULT_TIMEOUT_MS;
     this.maxRetries = maxRetries ?? DEFAULT_MAX_RETRIES;
+    this.maxTotalDurationMs = maxTotalDurationMs ?? DEFAULT_MAX_TOTAL_DURATION_MS;
     this.cache = cache;
   }
 
@@ -188,17 +193,44 @@ export class ApiClient {
 
   private async executeRequest(prepared: PreparedRequest, method: HttpMethod): Promise<Response> {
     let lastError: unknown;
+    const startedAt = Date.now();
 
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
+      const elapsedMs = Date.now() - startedAt;
+
       if (attempt > 0) {
+        if (elapsedMs >= this.maxTotalDurationMs) {
+          throw (
+            lastError ??
+            new InternalServerError("Request retry budget exhausted", {
+              url: prepared.fullUrl,
+              elapsedMs,
+              maxTotalDurationMs: this.maxTotalDurationMs,
+            })
+          );
+        }
+
         const delay =
           BASE_RETRY_DELAY_MS * 2 ** (attempt - 1) + Math.random() * BASE_RETRY_DELAY_MS;
 
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
 
+      const remainingBudgetMs = this.maxTotalDurationMs - (Date.now() - startedAt);
+      const attemptTimeoutMs = Math.max(0, Math.min(this.timeoutMs, remainingBudgetMs));
+
+      if (attemptTimeoutMs <= 0) {
+        throw (
+          lastError ??
+          new InternalServerError("Request retry budget exhausted", {
+            url: prepared.fullUrl,
+            maxTotalDurationMs: this.maxTotalDurationMs,
+          })
+        );
+      }
+
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
+      const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
 
       let response: Response;
 

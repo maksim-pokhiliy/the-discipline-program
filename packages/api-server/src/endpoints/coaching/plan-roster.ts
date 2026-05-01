@@ -4,6 +4,7 @@ import { NotFoundError } from "@repo/errors";
 import { verifyPlanOwnership } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { mapToPlanRosterEntry } from "../../mappers/coaching";
+import { DEFAULT_LIST_LIMIT } from "../../utils/list-limits";
 
 const includeRosterUser = {
   user: {
@@ -25,6 +26,7 @@ export const coachingPlanRosterApi = {
       where: { planId },
       include: includeRosterUser,
       orderBy: { createdAt: "desc" },
+      take: DEFAULT_LIST_LIMIT,
     });
 
     return enrollments.map(mapToPlanRosterEntry);

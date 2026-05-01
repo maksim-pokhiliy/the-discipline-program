@@ -45,90 +45,120 @@ const redactSensitiveFields = (obj: unknown, visited = new WeakSet<object>()): u
   return result;
 };
 
-export const handleApiError = (error: unknown, requestId?: string): NextResponse => {
-  unstable_rethrow(error);
+const buildHeaders = (requestId: string | undefined): Headers | undefined =>
+  requestId ? new Headers({ "x-request-id": requestId }) : undefined;
 
-  const safeError =
-    error instanceof AppError
-      ? { message: error.message, code: error.code, details: redactSensitiveFields(error.details) }
-      : error instanceof ZodError
-        ? {
-            message: "Validation failed",
-            code: ERROR_CODES.VALIDATION_ERROR,
-            issues: error.errors.map((e) => ({
-              path: e.path.join("."),
-              message: e.message,
-              code: e.code,
-            })),
-          }
-        : error instanceof Error
-          ? { message: error.message }
-          : { message: String(error) };
+const summarizeError = (error: unknown): Record<string, unknown> => {
+  if (error instanceof AppError) {
+    return {
+      message: error.message,
+      code: error.code,
+      details: redactSensitiveFields(error.details),
+    };
+  }
 
+  if (error instanceof ZodError) {
+    return {
+      message: "Validation failed",
+      code: ERROR_CODES.VALIDATION_ERROR,
+      issues: error.errors.map((e) => ({
+        path: e.path.join("."),
+        message: e.message,
+        code: e.code,
+      })),
+    };
+  }
+
+  if (error instanceof Error) {
+    return { message: error.message };
+  }
+
+  return { message: String(error) };
+};
+
+const reportError = (
+  error: unknown,
+  safeError: Record<string, unknown>,
+  requestId: string | undefined,
+): void => {
   logger.error("API Error", { ...safeError, ...(requestId && { requestId }) });
 
   const monitoring = getMonitoring();
 
-  if (monitoring) {
-    monitoring.captureException(error, {
-      tags: { requestId: requestId ?? "unknown" },
-      extra: safeError as Record<string, unknown>,
-      level: error instanceof AppError && error.statusCode < 500 ? "warning" : "error",
-    });
+  if (!monitoring) {
+    return;
   }
 
-  const headers = requestId ? { "x-request-id": requestId } : undefined;
+  monitoring.captureException(error, {
+    tags: { requestId: requestId ?? "unknown" },
+    extra: safeError,
+    level: error instanceof AppError && error.statusCode < 500 ? "warning" : "error",
+  });
+};
 
-  if (error instanceof AppError) {
-    const appErrorHeaders = new Headers(headers);
+const appErrorResponse = (error: AppError, requestId: string | undefined): NextResponse => {
+  const headers = buildHeaders(requestId) ?? new Headers();
 
-    if (error.statusCode === 429 && typeof error.details?.retryAfter === "number") {
-      appErrorHeaders.set("Retry-After", String(error.details.retryAfter));
-    }
-
-    const redactedDetails = error.details
-      ? (redactSensitiveFields(error.details) as Record<string, unknown>)
-      : undefined;
-
-    return NextResponse.json(
-      {
-        error: {
-          code: error.code,
-          message: error.message,
-          ...(redactedDetails &&
-            Object.keys(redactedDetails).length > 0 && { details: redactedDetails }),
-        },
-      },
-      { status: error.statusCode, headers: appErrorHeaders },
-    );
+  if (error.statusCode === 429 && typeof error.details?.retryAfter === "number") {
+    headers.set("Retry-After", String(error.details.retryAfter));
   }
 
-  if (error instanceof ZodError) {
-    const issues = error.errors.map((e) => ({
-      path: e.path.join("."),
-      message: e.message,
-      code: e.code,
-    }));
-
-    return NextResponse.json(
-      {
-        error: {
-          code: ERROR_CODES.VALIDATION_ERROR,
-          message: "Validation failed",
-          issues,
-        },
-      },
-      { status: 400, headers },
-    );
-  }
+  const redactedDetails = error.details
+    ? (redactSensitiveFields(error.details) as Record<string, unknown>)
+    : undefined;
 
   return NextResponse.json(
+    {
+      error: {
+        code: error.code,
+        message: error.message,
+        ...(redactedDetails &&
+          Object.keys(redactedDetails).length > 0 && { details: redactedDetails }),
+      },
+    },
+    { status: error.statusCode, headers },
+  );
+};
+
+const zodErrorResponse = (error: ZodError, requestId: string | undefined): NextResponse =>
+  NextResponse.json(
+    {
+      error: {
+        code: ERROR_CODES.VALIDATION_ERROR,
+        message: "Validation failed",
+        issues: error.errors.map((e) => ({
+          path: e.path.join("."),
+          message: e.message,
+          code: e.code,
+        })),
+      },
+    },
+    { status: 400, headers: buildHeaders(requestId) },
+  );
+
+const unknownErrorResponse = (requestId: string | undefined): NextResponse =>
+  NextResponse.json(
     {
       error: {
         code: ERROR_CODES.INTERNAL_SERVER_ERROR,
         message: "Internal server error",
       },
     },
-    { status: 500, headers },
+    { status: 500, headers: buildHeaders(requestId) },
   );
+
+export const handleApiError = (error: unknown, requestId?: string): NextResponse => {
+  unstable_rethrow(error);
+
+  reportError(error, summarizeError(error), requestId);
+
+  if (error instanceof AppError) {
+    return appErrorResponse(error, requestId);
+  }
+
+  if (error instanceof ZodError) {
+    return zodErrorResponse(error, requestId);
+  }
+
+  return unknownErrorResponse(requestId);
 };

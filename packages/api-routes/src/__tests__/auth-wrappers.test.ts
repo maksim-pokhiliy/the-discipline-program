@@ -142,10 +142,59 @@ describe("withCoachAuth (HEAD_COACH widening)", () => {
   });
 });
 
-describe("withPlatformAuth", () => {
+describe("withAthleteAuth", () => {
   it("returns 401 when no session", async () => {
     setSession(null);
-    const handler = wrappers.withPlatformAuth(okHandler);
+    const handler = wrappers.withAthleteAuth(okHandler);
+
+    const response = await handler(buildRequest(), emptyContext);
+
+    expect(response.status).toBe(401);
+    expect(okHandler).not.toHaveBeenCalled();
+  });
+
+  it("admits ATHLETE", async () => {
+    setSession(UserRole.ATHLETE);
+    const handler = wrappers.withAthleteAuth(okHandler);
+
+    const response = await handler(buildRequest(), emptyContext);
+
+    expect(response.status).toBe(204);
+  });
+
+  it("admits COACH", async () => {
+    setSession(UserRole.COACH);
+    const handler = wrappers.withAthleteAuth(okHandler);
+
+    const response = await handler(buildRequest(), emptyContext);
+
+    expect(response.status).toBe(204);
+  });
+
+  it("admits HEAD_COACH", async () => {
+    setSession(UserRole.HEAD_COACH);
+    const handler = wrappers.withAthleteAuth(okHandler);
+
+    const response = await handler(buildRequest(), emptyContext);
+
+    expect(response.status).toBe(204);
+  });
+
+  it("rejects ADMIN with 403 (admin-only console is on the admin app)", async () => {
+    setSession(UserRole.ADMIN);
+    const handler = wrappers.withAthleteAuth(okHandler);
+
+    const response = await handler(buildRequest(), emptyContext);
+
+    expect(response.status).toBe(403);
+    expect(okHandler).not.toHaveBeenCalled();
+  });
+});
+
+describe("withAuthenticated (any role)", () => {
+  it("returns 401 when no session", async () => {
+    setSession(null);
+    const handler = wrappers.withAuthenticated(okHandler);
 
     const response = await handler(buildRequest(), emptyContext);
 
@@ -155,7 +204,7 @@ describe("withPlatformAuth", () => {
 
   it("admits any authenticated role", async () => {
     setSession(UserRole.ATHLETE);
-    const handler = wrappers.withPlatformAuth(okHandler);
+    const handler = wrappers.withAuthenticated(okHandler);
 
     const response = await handler(buildRequest(), emptyContext);
 

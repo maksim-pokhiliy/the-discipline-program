@@ -6,6 +6,7 @@ import { logger } from "@repo/shared";
 
 import { requireCoachLikeRole, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
+import { TX_BUDGET_LONG } from "../../../db/transaction-config";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 
 import { cloneBlockSubtree } from "./clone-block-subtree";
@@ -67,7 +68,7 @@ export const applyBlockTemplate = async (
         sessionId: data.target.sessionId,
         order: data.target.order,
       });
-    });
+    }, TX_BUDGET_LONG);
 
     logger.info("lms.editor.template_applied", {
       userId,

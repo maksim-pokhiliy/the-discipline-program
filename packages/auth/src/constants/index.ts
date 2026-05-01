@@ -1,7 +1,6 @@
 export const AUTH_ROUTES = {
   LOGIN: "/login",
   API_PREFIX: "/api/auth",
-  LOGOUT: "/api/auth/logout",
 } as const;
 
 export const PUBLIC_ROUTES = [AUTH_ROUTES.LOGIN, "/invite"] as const;

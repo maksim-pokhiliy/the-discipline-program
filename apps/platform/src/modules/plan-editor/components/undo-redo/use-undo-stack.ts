@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { type BulkPatchOp } from "@repo/contracts/lms/training-plan";
+import { logger } from "@repo/shared";
 import { trimHistoryStack } from "@repo/ui";
 
 import { usePlanBulkPatch } from "@app/lib/hooks";
@@ -55,7 +56,11 @@ export const usePlanHistory = (planId: string): UsePlanHistoryApi => {
     try {
       await bulkPatch.mutateAsync({ ops: last.inverse });
       setRedoStack((prev) => trimHistoryStack([...prev, last], UNDO_STACK_CAPACITY));
-    } catch {
+    } catch (error) {
+      logger.warn("plan-editor.undo.bulk_patch_failed", {
+        entryId: last.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
       setUndoStack((prev) => trimHistoryStack([...prev, last], UNDO_STACK_CAPACITY));
     }
   }, [bulkPatch]);
@@ -73,7 +78,11 @@ export const usePlanHistory = (planId: string): UsePlanHistoryApi => {
     try {
       await bulkPatch.mutateAsync({ ops: last.forward });
       setUndoStack((prev) => trimHistoryStack([...prev, last], UNDO_STACK_CAPACITY));
-    } catch {
+    } catch (error) {
+      logger.warn("plan-editor.redo.bulk_patch_failed", {
+        entryId: last.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
       setRedoStack((prev) => trimHistoryStack([...prev, last], UNDO_STACK_CAPACITY));
     }
   }, [bulkPatch]);

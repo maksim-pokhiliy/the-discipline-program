@@ -6,6 +6,7 @@ export default defineConfig({
     projects: [
       "packages/api-server",
       "packages/api-routes",
+      "packages/auth",
       "packages/contracts",
       "packages/shared",
       {
@@ -37,6 +38,7 @@ export default defineConfig({
       include: [
         "packages/api-server/src/**/*.ts",
         "packages/api-routes/src/**/*.ts",
+        "packages/auth/src/**/*.ts",
         "packages/contracts/src/**/*.ts",
         "packages/shared/src/**/*.ts",
         "packages/ui/src/**/*.{ts,tsx}",

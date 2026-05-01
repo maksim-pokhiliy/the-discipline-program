@@ -11,7 +11,7 @@ import type {
   UpdateUserRoleData,
   User,
 } from "@repo/contracts/iam/user";
-import { createCrudHooks, notifyError } from "@repo/query";
+import { createCrudHooks, notifyError, STALE_TIMES } from "@repo/query";
 import { formatDate } from "@repo/shared";
 
 import { api } from "../api";
@@ -50,7 +50,7 @@ export const useCoachesList = () =>
   useQuery({
     queryKey: adminKeys.users.coaches(),
     queryFn: api.users.getCoaches,
-    staleTime: 5 * 60_000,
+    staleTime: STALE_TIMES.FIVE_MINUTES,
   });
 
 export const useUpdateUserRole = () => {

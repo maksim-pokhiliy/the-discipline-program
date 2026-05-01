@@ -7,13 +7,17 @@ import { toast } from "sonner";
 
 import { validateCallbackUrl } from "@repo/auth";
 import { signIn } from "@repo/auth/client";
-import { type LoginFormData } from "@repo/contracts/iam/auth";
+import { type LoginFormData, UserRole } from "@repo/contracts/iam/auth";
 import { LoginForm, Logo } from "@repo/ui";
+
+const ADMIN_ALLOWED_ROLES = [UserRole.ADMIN, UserRole.HEAD_COACH] as const;
 
 export const LoginPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = validateCallbackUrl(searchParams.get("callbackUrl")) ?? "/";
+  const callbackUrl =
+    validateCallbackUrl(searchParams.get("callbackUrl"), { allowedRoles: ADMIN_ALLOWED_ROLES }) ??
+    "/";
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginFormData) => {

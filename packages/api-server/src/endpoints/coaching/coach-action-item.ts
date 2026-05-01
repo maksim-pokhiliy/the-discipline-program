@@ -1,175 +1,48 @@
-import type { CoachActionItem as PrismaCoachActionItemRecord } from "@prisma/client";
-import type { JsonObject } from "@prisma/client/runtime/library";
-
-import { HEALTH_STATUS_LABELS, HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import {
   ActionItemResolveReason,
-  ActionItemSeverity,
   ActionItemStatus,
-  ActionItemType,
   type CoachActionItem,
-  type HealthReportMetadata,
-  type MissedWorkoutsMetadata,
-  type NewNoStartMetadata,
   type ReconcileResponse,
 } from "@repo/contracts/coaching/coach-action-item";
-import { NEW_ATHLETE_THRESHOLD_DAYS } from "@repo/contracts/coaching/coach-dashboard";
 import { NotFoundError } from "@repo/errors";
 
 import { resolveCoachId } from "../../authz/guards";
 import { prisma } from "../../db/client";
+import { TX_BUDGET_LONG } from "../../db/transaction-config";
+import { inMemoryCache } from "../../infrastructure/cache";
 import {
   ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP,
-  ACTION_ITEM_SEVERITY_MAP,
-  ACTION_ITEM_SEVERITY_TO_PRISMA_MAP,
   ACTION_ITEM_STATUS_MAP,
   ACTION_ITEM_STATUS_TO_PRISMA_MAP,
-  ACTION_ITEM_TYPE_TO_PRISMA_MAP,
-  HEALTH_STATUS_MAP,
   mapToCoachActionItem,
 } from "../../mappers/coaching";
 import { findOrThrow, handlePrismaError } from "../../utils";
-import { daysBetweenInTz, MS_PER_DAY, startOfTodayInTz } from "../../utils/date-helpers";
-import { asJsonRecord } from "../../utils/json-record";
 
+import { buildAssignedAthleteInclude } from "./assigned-athlete-query";
 import {
-  type AssignedAthleteWithData,
-  buildAssignedAthleteInclude,
-} from "./assigned-athlete-query";
+  applyConditions,
+  closeOrphanedOpenItems,
+  computeBaseConditions,
+  computeMissedWorkoutsConditions,
+  partitionOpenItems,
+  resolveDuplicates,
+} from "./coach-action-item-reconcile";
 
-type ConditionBase = {
-  athleteId: string;
-  severity: ActionItemSeverity;
-  message: string;
-};
+const RECONCILE_CACHE_TTL_SECONDS = 60;
+const CACHED_RECONCILE_RESPONSE: ReconcileResponse = { created: 0, updated: 0, resolved: 0 };
 
-type Condition =
-  | (ConditionBase & { type: ActionItemType.NEW_NO_START; metadata: NewNoStartMetadata })
-  | (ConditionBase & { type: ActionItemType.HEALTH_REPORT; metadata: HealthReportMetadata })
-  | (ConditionBase & { type: ActionItemType.MISSED_WORKOUTS; metadata: MissedWorkoutsMetadata });
-
-const computeBaseConditions = (assignments: AssignedAthleteWithData[], tz: string): Condition[] => {
-  const conditions: Condition[] = [];
-  const today = startOfTodayInTz(tz);
-
-  for (const a of assignments) {
-    const athlete = a.athlete;
-
-    const earliestEnrollment =
-      athlete.planEnrollments.length > 0
-        ? athlete.planEnrollments.reduce((min, e) =>
-            e.startedOnDate < min.startedOnDate ? e : min,
-          )
-        : null;
-
-    if (earliestEnrollment) {
-      const enrolledDays = daysBetweenInTz(earliestEnrollment.startedOnDate, today, tz);
-
-      if (enrolledDays <= NEW_ATHLETE_THRESHOLD_DAYS) {
-        const enrolledText =
-          enrolledDays === 0
-            ? "Enrolled today"
-            : enrolledDays === 1
-              ? "Enrolled yesterday"
-              : `Enrolled ${enrolledDays} days ago`;
-
-        conditions.push({
-          athleteId: athlete.id,
-          type: ActionItemType.NEW_NO_START,
-          severity: ActionItemSeverity.INFO,
-          message: `${enrolledText}, no workouts started`,
-          metadata: { enrollmentId: earliestEnrollment.id },
-        });
-      }
-    }
-
-    const healthStatus = athlete.athleteProfile
-      ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
-      : HealthStatus.HEALTHY;
-
-    if (healthStatus !== HealthStatus.HEALTHY) {
-      conditions.push({
-        athleteId: athlete.id,
-        type: ActionItemType.HEALTH_REPORT,
-        severity:
-          healthStatus === HealthStatus.INJURED
-            ? ActionItemSeverity.CRITICAL
-            : ActionItemSeverity.WARNING,
-        message: `Status: ${HEALTH_STATUS_LABELS[healthStatus].toLowerCase()} — review exercise assignments`,
-        metadata: { healthStatus },
-      });
-    }
-  }
-
-  return conditions;
-};
-
-const computeMissedWorkoutsConditions = async (
-  assignments: AssignedAthleteWithData[],
-): Promise<Condition[]> => {
-  const conditions: Condition[] = [];
-  const sevenDaysAgo = new Date(Date.now() - 7 * MS_PER_DAY);
-
-  await Promise.all(
-    assignments.map(async (a) => {
-      const athlete = a.athlete;
-
-      const missedCount = await prisma.workoutSession.count({
-        where: {
-          userId: athlete.id,
-          completionRatio: { lt: 0.3 },
-          startedAt: { gte: sevenDaysAgo },
-        },
-      });
-
-      if (missedCount === 0) {
-        return;
-      }
-
-      const latestSession = await prisma.workoutSession.findFirst({
-        where: { userId: athlete.id },
-        orderBy: { startedAt: "desc" },
-        select: { startedAt: true },
-      });
-
-      const lastActivityDate = latestSession?.startedAt.toISOString() ?? new Date(0).toISOString();
-
-      conditions.push({
-        athleteId: athlete.id,
-        type: ActionItemType.MISSED_WORKOUTS,
-        severity: ActionItemSeverity.WARNING,
-        message: `${missedCount} missed workout${missedCount === 1 ? "" : "s"} in the last 7 days`,
-        metadata: { lastActivityDate },
-      });
-    }),
-  );
-
-  return conditions;
-};
-
-const conditionMatchesResolved = (
-  condition: Condition,
-  resolvedMetadata: JsonObject | null,
-): boolean => {
-  if (!resolvedMetadata) {
-    return false;
-  }
-
-  switch (condition.type) {
-    case ActionItemType.NEW_NO_START:
-      return condition.metadata.enrollmentId === resolvedMetadata.enrollmentId;
-    case ActionItemType.HEALTH_REPORT:
-      return condition.metadata.healthStatus === resolvedMetadata.healthStatus;
-    case ActionItemType.MISSED_WORKOUTS:
-      return false;
-    default:
-      return false;
-  }
-};
+const buildReconcileCacheKey = (coachId: string): string => `reconcile:${coachId}`;
 
 export const coachingCoachActionItemApi = {
   reconcile: async (userId: string): Promise<ReconcileResponse & { coachId: string }> => {
     const coachId = await resolveCoachId(userId);
+
+    const cacheKey = buildReconcileCacheKey(coachId);
+    const cached = await inMemoryCache.get<true>(cacheKey);
+
+    if (cached) {
+      return { ...CACHED_RECONCILE_RESPONSE, coachId };
+    }
 
     const user = await findOrThrow(
       prisma.user.findUnique({ where: { id: userId }, select: { timezone: true } }),
@@ -179,7 +52,7 @@ export const coachingCoachActionItemApi = {
     const tz = user.timezone;
 
     try {
-      return prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx) => {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`reconcile:${coachId}`}))`;
 
         const [assignments, openItems, latestResolved] = await Promise.all([
@@ -201,21 +74,10 @@ export const coachingCoachActionItemApi = {
         ]);
 
         const baseConditions = computeBaseConditions(assignments, tz);
-        const missedConditions = await computeMissedWorkoutsConditions(assignments);
+        const missedConditions = await computeMissedWorkoutsConditions(assignments, tz);
         const conditions = [...baseConditions, ...missedConditions];
 
-        const openByKey = new Map<string, PrismaCoachActionItemRecord>();
-        const duplicates: PrismaCoachActionItemRecord[] = [];
-
-        for (const item of openItems) {
-          const key = `${item.type}:${item.athleteId}`;
-
-          if (openByKey.has(key)) {
-            duplicates.push(item);
-          } else {
-            openByKey.set(key, item);
-          }
-        }
+        const { openByKey, duplicates } = partitionOpenItems(openItems);
 
         const resolvedByKey = new Map(
           latestResolved.map((item) => [`${item.type}:${item.athleteId}`, item]),
@@ -223,96 +85,26 @@ export const coachingCoachActionItemApi = {
 
         const activeAthleteIds = new Set(assignments.map((a) => a.athleteId));
 
-        let created = 0;
-        let updated = 0;
-        let resolved = 0;
+        const duplicatesResolved = await resolveDuplicates(tx, duplicates);
+        const { created, updated } = await applyConditions(tx, {
+          coachId,
+          conditions,
+          openByKey,
+          resolvedByKey,
+        });
+        const orphansResolved = await closeOrphanedOpenItems(tx, { openByKey, activeAthleteIds });
 
-        for (const item of duplicates) {
-          await tx.coachActionItem.update({
-            where: { id: item.id },
-            data: {
-              status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
-              resolvedAt: new Date(),
-              resolveReason:
-                ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[
-                  ActionItemResolveReason.AUTO_CONDITION_CLEARED
-                ],
-            },
-          });
-          resolved++;
-        }
+        return {
+          created,
+          updated,
+          resolved: duplicatesResolved + orphansResolved,
+          coachId,
+        };
+      }, TX_BUDGET_LONG);
 
-        for (const condition of conditions) {
-          const key = `${condition.type}:${condition.athleteId}`;
-          const existingOpen = openByKey.get(key);
+      await inMemoryCache.set(cacheKey, true, { ttlSeconds: RECONCILE_CACHE_TTL_SECONDS });
 
-          if (existingOpen) {
-            const needsUpdate =
-              existingOpen.message !== condition.message ||
-              ACTION_ITEM_SEVERITY_MAP[existingOpen.severity] !== condition.severity;
-
-            if (needsUpdate) {
-              await tx.coachActionItem.update({
-                where: { id: existingOpen.id },
-                data: {
-                  message: condition.message,
-                  severity: ACTION_ITEM_SEVERITY_TO_PRISMA_MAP[condition.severity],
-                  metadata: condition.metadata,
-                },
-              });
-              updated++;
-            }
-
-            openByKey.delete(key);
-            continue;
-          }
-
-          const latestResolvedItem = resolvedByKey.get(key);
-
-          if (
-            latestResolvedItem &&
-            conditionMatchesResolved(condition, asJsonRecord(latestResolvedItem.metadata))
-          ) {
-            continue;
-          }
-
-          await tx.coachActionItem.create({
-            data: {
-              coachId,
-              athleteId: condition.athleteId,
-              type: ACTION_ITEM_TYPE_TO_PRISMA_MAP[condition.type],
-              severity: ACTION_ITEM_SEVERITY_TO_PRISMA_MAP[condition.severity],
-              message: condition.message,
-              metadata: condition.metadata,
-            },
-          });
-          created++;
-        }
-
-        for (const [key, item] of openByKey) {
-          const athleteId = key.split(":")[1];
-
-          if (!athleteId) {
-            continue;
-          }
-
-          const reason = activeAthleteIds.has(athleteId)
-            ? ActionItemResolveReason.AUTO_CONDITION_CLEARED
-            : ActionItemResolveReason.AUTO_ENROLLMENT_ENDED;
-
-          await tx.coachActionItem.update({
-            where: { id: item.id },
-            data: {
-              status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
-              resolvedAt: new Date(),
-              resolveReason: ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[reason],
-            },
-          });
-          resolved++;
-        }
-
-        return { created, updated, resolved, coachId };
-      });
+      return result;
     } catch (error) {
       return handlePrismaError(error, { entity: "Action item" });
     }
@@ -341,6 +133,8 @@ export const coachingCoachActionItemApi = {
             ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[ActionItemResolveReason.MANUAL_CONTACTED],
         },
       });
+
+      await inMemoryCache.delete(buildReconcileCacheKey(coachId));
 
       return mapToCoachActionItem(updated);
     } catch (error) {

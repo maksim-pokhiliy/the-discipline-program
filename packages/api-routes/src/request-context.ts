@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
-import { setLoggerContextProvider } from "@repo/shared";
+import { isLogLevel, setLoggerContextProvider, setLoggerMinLevel } from "@repo/shared";
 
 export type RequestContext = {
   requestId: string;
@@ -43,3 +43,11 @@ setLoggerContextProvider(() => {
     ...(ctx.role && { role: ctx.role }),
   };
 });
+
+const envLevel = process.env.LOG_LEVEL?.toLowerCase();
+
+if (envLevel && isLogLevel(envLevel)) {
+  setLoggerMinLevel(envLevel);
+} else if (process.env.NODE_ENV === "production") {
+  setLoggerMinLevel("info");
+}

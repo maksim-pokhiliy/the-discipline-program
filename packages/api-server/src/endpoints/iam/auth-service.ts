@@ -37,9 +37,10 @@ export const iamAuthService = {
   },
 
   validateUser: async (email: string, rawPassword: string): Promise<ValidatedUser | null> => {
-    if (rawPassword.length > AUTH_CONSTANTS.MAX_PASSWORD_LENGTH) {
-      return null;
-    }
+    const isOverLength = rawPassword.length > AUTH_CONSTANTS.MAX_PASSWORD_LENGTH;
+    const safePassword = isOverLength
+      ? rawPassword.slice(0, AUTH_CONSTANTS.MAX_PASSWORD_LENGTH)
+      : rawPassword;
 
     const normalizedEmail = email.toLowerCase().trim();
 
@@ -59,12 +60,18 @@ export const iamAuthService = {
     });
 
     if (!user || !user.password) {
-      await bcrypt.compare(rawPassword, DUMMY_BCRYPT_HASH);
+      await bcrypt.compare(safePassword, DUMMY_BCRYPT_HASH);
 
       return null;
     }
 
-    const isValid = await iamAuthService.comparePassword(rawPassword, user.password);
+    if (isOverLength) {
+      await bcrypt.compare(safePassword, DUMMY_BCRYPT_HASH);
+
+      return null;
+    }
+
+    const isValid = await iamAuthService.comparePassword(safePassword, user.password);
 
     if (!isValid) {
       return null;

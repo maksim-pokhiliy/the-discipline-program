@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { applyCspHeaders, createCspResponse } from "@repo/api-routes";
+import { applyCspHeaders, createCspResponse, getMonitoring } from "@repo/api-routes";
 import { AUTH_ROUTES, getToken, hasSessionCookie, isPublicRoute } from "@repo/auth";
 import { ROLE_HOMES, UserRole } from "@repo/contracts/iam/auth";
 import { logger } from "@repo/shared";
@@ -38,6 +38,10 @@ export const proxy = async (req: NextRequest) => {
     logger.error("Proxy auth failed", {
       path,
       error: error instanceof Error ? error.message : String(error),
+    });
+    getMonitoring()?.captureException(error, {
+      tags: { component: "proxy-auth", app: "platform" },
+      level: "warning",
     });
   }
 

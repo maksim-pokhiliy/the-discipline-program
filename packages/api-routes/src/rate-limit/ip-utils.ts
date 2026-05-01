@@ -1,14 +1,38 @@
-export const getClientIp = (request: Request): string => {
-  const realIp = request.headers.get("x-real-ip");
+import { isIP } from "node:net";
 
-  if (realIp) {
-    return realIp.trim();
+const sanitize = (raw: string | undefined): string | null => {
+  if (!raw) {
+    return null;
   }
 
+  const trimmed = raw.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  return isIP(trimmed) ? trimmed : null;
+};
+
+const isOnVercel = (): boolean => Boolean(process.env.VERCEL);
+
+export const getClientIp = (request: Request): string => {
   const forwarded = request.headers.get("x-forwarded-for");
 
   if (forwarded) {
-    return forwarded.split(",").at(-1)?.trim() ?? "unknown";
+    const first = sanitize(forwarded.split(",")[0]);
+
+    if (first) {
+      return first;
+    }
+  }
+
+  if (isOnVercel()) {
+    const realIp = sanitize(request.headers.get("x-real-ip") ?? undefined);
+
+    if (realIp) {
+      return realIp;
+    }
   }
 
   return "unknown";

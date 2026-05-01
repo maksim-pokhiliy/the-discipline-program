@@ -25,8 +25,8 @@ export { createHealthHandler, createReadyHandler, createVersionHandler } from ".
 export { CACHE_POLICY, withCacheControl } from "./cache-control";
 export { applyCspHeaders, createCspResponse, generateNonce } from "./csp";
 export type { CspOptions } from "./csp";
-export { setMonitoring } from "./monitoring";
-export type { MonitoringPort } from "./monitoring";
+export { setMonitoring, getMonitoring } from "./monitoring";
+export type { MonitoringPort, CaptureContext, SeverityLevel } from "./monitoring";
 export {
   createAuthGetHandler,
   createAuthGetWithQueryHandler,

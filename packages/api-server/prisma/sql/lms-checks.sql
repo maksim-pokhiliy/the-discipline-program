@@ -32,3 +32,10 @@ DO $$ BEGIN
     WHERE role = 'HEAD_COACH';
 EXCEPTION WHEN others THEN NULL;
 END $$;
+
+DO $$ BEGIN
+  ALTER TABLE marketing_reviews
+    ADD CONSTRAINT chk_review_rating
+      CHECK (rating BETWEEN 1 AND 5);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
