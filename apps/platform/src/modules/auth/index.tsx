@@ -37,7 +37,6 @@ export const PlatformLoginPage = () => {
     },
     onSuccess: () => {
       toast.success("Welcome back");
-      router.refresh();
       router.replace(callbackUrl);
     },
   });
