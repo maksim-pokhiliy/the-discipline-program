@@ -1,17 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MenuItem, Stack, TextField, Typography } from "@mui/material";
+import { MenuItem, Stack, TextField } from "@mui/material";
 import { Controller, FormProvider, useForm, useWatch } from "react-hook-form";
 import { type z } from "zod";
 
-import {
-  schemeParamsSchema,
-  type SchemeArchetypeKind,
-  type SchemeParams,
-} from "@repo/contracts/lms/_domain";
 import {
   type CreateSchemeTemplateInput,
   createSchemeTemplateInputSchema,
@@ -19,7 +14,7 @@ import {
   type SchemeTemplate,
   type UpdateSchemeTemplateInput,
 } from "@repo/contracts/lms/scheme-template";
-import { FormModal } from "@repo/ui";
+import { FormModal, SchemeForm } from "@repo/ui";
 
 import { useCreateSchemeTemplate, useUpdateSchemeTemplate } from "@app/lib/hooks";
 
@@ -27,69 +22,12 @@ import { DEFAULT_PARAMS_TEMPLATES, SCHEME_ARCHETYPE_KIND_OPTIONS } from "../cons
 
 type SchemeTemplateFormInput = z.input<typeof createSchemeTemplateInputSchema>;
 
-const stringifyParams = (value: unknown): string => {
-  if (value === undefined || value === null) {
-    return "";
-  }
-
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return "";
-  }
-};
-
-const validateDefaultParams = (
-  raw: string,
-  archetypeKind: SchemeArchetypeKind | undefined,
-): { ok: true; value: SchemeParams } | { ok: false; message: string } => {
-  if (raw.trim().length === 0) {
-    return { ok: false, message: "Default params required" };
-  }
-
-  let parsed: unknown;
-
-  try {
-    parsed = JSON.parse(raw);
-  } catch (error) {
-    return {
-      ok: false,
-      message: `Invalid JSON: ${error instanceof Error ? error.message : "parse error"}`,
-    };
-  }
-
-  const result = schemeParamsSchema.safeParse(parsed);
-
-  if (!result.success) {
-    return { ok: false, message: result.error.issues.map((i) => i.message).join("; ") };
-  }
-
-  if (archetypeKind && result.data.kind !== archetypeKind) {
-    return {
-      ok: false,
-      message: `Params 'kind' must equal selected archetype (${archetypeKind})`,
-    };
-  }
-
-  return { ok: true, value: result.data };
-};
-
-const initialParams = (initial?: SchemeTemplate): SchemeParams => {
-  if (!initial) {
-    return { kind: "NONE" };
-  }
-
-  const parsed = schemeParamsSchema.safeParse(initial.defaultParams);
-
-  return parsed.success ? parsed.data : { kind: "NONE" };
-};
-
 const buildDefaults = (initial?: SchemeTemplate): SchemeTemplateFormInput => ({
   scope: "COACH",
   name: initial?.name ?? "",
   description: initial?.description ?? undefined,
   archetypeKind: initial?.archetypeKind ?? "NONE",
-  defaultParams: initialParams(initial),
+  defaultParams: initial?.defaultParams ?? DEFAULT_PARAMS_TEMPLATES.NONE,
 });
 
 type SchemeTemplateFormModalProps = {
@@ -114,16 +52,10 @@ export const SchemeTemplateFormModal = ({
   });
 
   const archetypeKind = useWatch({ control: methods.control, name: "archetypeKind" });
-  const [paramsText, setParamsText] = useState(() =>
-    stringifyParams(methods.getValues("defaultParams")),
-  );
 
   useEffect(() => {
     if (open) {
-      const defaults = buildDefaults(initial);
-
-      methods.reset(defaults);
-      setParamsText(stringifyParams(defaults.defaultParams));
+      methods.reset(buildDefaults(initial));
     }
   }, [open, initial, methods]);
 
@@ -134,23 +66,14 @@ export const SchemeTemplateFormModal = ({
 
     const current = methods.getValues("defaultParams");
 
-    if (current.kind === archetypeKind) {
+    if (current?.kind === archetypeKind) {
       return;
     }
 
-    const template = DEFAULT_PARAMS_TEMPLATES[archetypeKind];
-
-    if (template) {
-      const parsed = schemeParamsSchema.safeParse(template);
-
-      if (parsed.success) {
-        methods.setValue("defaultParams", parsed.data, {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-        setParamsText(stringifyParams(parsed.data));
-      }
-    }
+    methods.setValue("defaultParams", DEFAULT_PARAMS_TEMPLATES[archetypeKind], {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
   }, [archetypeKind, methods]);
 
   const submit = methods.handleSubmit((data) => {
@@ -243,46 +166,18 @@ export const SchemeTemplateFormModal = ({
           <Controller
             name="defaultParams"
             control={control}
-            render={({ fieldState }) => {
-              const result = validateDefaultParams(paramsText, archetypeKind);
-              const errorMessage = !result.ok ? result.message : undefined;
+            render={({ field }) => {
+              if (!archetypeKind || !field.value) {
+                return <></>;
+              }
 
               return (
-                <Stack spacing={1}>
-                  <TextField
-                    label="Default params (JSON)"
-                    multiline
-                    minRows={8}
-                    fullWidth
-                    variant="outlined"
-                    disabled={isPending}
-                    error={!!fieldState.error || Boolean(errorMessage)}
-                    value={paramsText}
-                    onChange={(event) => {
-                      const next = event.target.value;
-
-                      setParamsText(next);
-
-                      const validation = validateDefaultParams(next, archetypeKind);
-
-                      if (validation.ok) {
-                        methods.setValue("defaultParams", validation.value, {
-                          shouldDirty: true,
-                          shouldValidate: true,
-                        });
-                      }
-                    }}
-                    inputProps={{ "aria-label": "Default params JSON" }}
-                  />
-
-                  <Typography
-                    variant="caption"
-                    color={errorMessage ? "error" : "text.secondary"}
-                    sx={{ fontFamily: "monospace" }}
-                  >
-                    {errorMessage ?? "Validated against schemeParamsSchema before save"}
-                  </Typography>
-                </Stack>
+                <SchemeForm
+                  archetypeKind={archetypeKind}
+                  schemeParams={field.value}
+                  onChange={(next) => field.onChange(next)}
+                  disabled={isPending}
+                />
               );
             }}
           />
