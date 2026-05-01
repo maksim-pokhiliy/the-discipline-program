@@ -21,7 +21,8 @@ import {
   closeCoachActionItemsBulk,
   syncAthleteAssignments,
 } from "./assignment-sync";
-import { resolveInviteEmailConfig } from "./send-invitation-email";
+import { iamInviteTokenApi } from "./invite-token";
+import { resolveInviteEmailConfig, sendInvitationEmail } from "./send-invitation-email";
 import { iamUserCreationApi } from "./user-creation";
 
 const MS_PER_HOUR = 3_600_000;
@@ -335,7 +336,7 @@ export const iamUserAdminApi = {
 
     resolveInviteEmailConfig();
 
-    await prisma.$transaction(async (tx) => {
+    const { plainToken, expiresAt } = await prisma.$transaction(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`resend:${userId}`}))`;
 
       const since = new Date(Date.now() - 24 * MS_PER_HOUR);
@@ -346,12 +347,23 @@ export const iamUserAdminApi = {
       if (recentTokenCount >= MAX_RESENDS_PER_DAY) {
         throw new TooManyRequestsError("Too many resends in 24 hours");
       }
+
+      return iamInviteTokenApi.issueInTx(tx, { userId, createdByAdminId: actorId });
     });
 
-    return iamUserCreationApi.issueInviteAndSendEmail(actorId, {
-      id: user.id,
-      email: user.email,
-      name: user.name,
+    const expiresInHours = Math.max(
+      1,
+      Math.round((expiresAt.getTime() - Date.now()) / MS_PER_HOUR),
+    );
+
+    await sendInvitationEmail({
+      userId: user.id,
+      recipientEmail: user.email,
+      recipientName: user.name,
+      plainToken,
+      expiresInHours,
     });
+
+    return { expiresAt };
   },
 };
