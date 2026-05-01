@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import {
   ActionItemResolveReason,
