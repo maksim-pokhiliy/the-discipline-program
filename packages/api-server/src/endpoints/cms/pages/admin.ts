@@ -79,7 +79,11 @@ export const cmsPagesAdminApi = {
     try {
       await prisma.marketingPage.update({
         where: { slug },
-        data: payload,
+        data: {
+          title: payload.title,
+          ...(payload.seoTitle !== undefined && { seoTitle: payload.seoTitle }),
+          ...(payload.seoDesc !== undefined && { seoDesc: payload.seoDesc }),
+        },
       });
     } catch (error) {
       return handlePrismaError(error, { entity: "Page", field: "slug" });

@@ -12,8 +12,8 @@ export const cmsContactInboundApi = {
       data: {
         name: data.name,
         contact: data.contact,
-        program: data.program,
         message: data.message,
+        ...(data.program !== undefined && { program: data.program }),
       },
     });
 

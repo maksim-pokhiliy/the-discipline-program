@@ -45,7 +45,14 @@ export const cmsReviewAdminApi = {
     try {
       const review = await prisma.marketingReview.update({
         where: { id },
-        data,
+        data: {
+          ...(data.authorName !== undefined && { authorName: data.authorName }),
+          ...(data.authorRole !== undefined && { authorRole: data.authorRole }),
+          ...(data.authorAvatar !== undefined && { authorAvatar: data.authorAvatar }),
+          ...(data.text !== undefined && { text: data.text }),
+          ...(data.rating !== undefined && { rating: data.rating }),
+          ...(data.isActive !== undefined && { isActive: data.isActive }),
+        },
       });
 
       return mapToReview(review);
