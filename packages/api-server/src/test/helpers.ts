@@ -212,7 +212,7 @@ export const createTestScenario = async (options?: {
       toCleanup.push({ table: "athleteProfile", id: profile.id });
     }
 
-    athletes.push({ user, enrollment, assignment, profile });
+    athletes.push({ user, enrollment, assignment, ...(profile && { profile }) });
   }
 
   return { coach, plan, athletes, toCleanup };

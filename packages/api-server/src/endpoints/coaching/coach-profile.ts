@@ -18,11 +18,15 @@ export const coachingCoachProfileApi = {
   },
 
   upsert: async (userId: string, data: UpdateCoachProfileData): Promise<CoachProfile> => {
+    const prismaData = {
+      ...(data.bio !== undefined && { bio: data.bio }),
+    };
+
     try {
       const profile = await prisma.coachProfile.upsert({
         where: { userId },
-        create: { userId, ...data },
-        update: data,
+        create: { userId, ...prismaData },
+        update: prismaData,
       });
 
       return mapToCoachProfile(profile);

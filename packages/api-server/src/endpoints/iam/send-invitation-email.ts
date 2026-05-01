@@ -23,7 +23,7 @@ export const resolveInviteEmailConfig = (): InviteEmailConfig => {
   return {
     apiKey,
     from: { email: fromAddress },
-    replyTo: replyToAddress ? { email: replyToAddress } : undefined,
+    ...(replyToAddress && { replyTo: { email: replyToAddress } }),
   };
 };
 
@@ -38,7 +38,7 @@ const getEmailService = (config: InviteEmailConfig): EmailPort => {
   cachedService = createResendEmailService({
     apiKey: config.apiKey,
     defaultFrom: config.from,
-    defaultReplyTo: config.replyTo,
+    ...(config.replyTo && { defaultReplyTo: config.replyTo }),
   });
   cachedApiKey = config.apiKey;
 
@@ -72,7 +72,7 @@ export const sendInvitationEmail = async (input: SendInvitationEmailInput): Prom
       subject: "You've been invited",
       html,
       text,
-      replyTo: config.replyTo,
+      ...(config.replyTo && { replyTo: config.replyTo }),
     });
   } catch (error) {
     const reason = error instanceof Error ? error.message : "unknown error";

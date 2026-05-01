@@ -22,7 +22,7 @@ export const createTestWorkoutSession = async (params: {
   return rawPrisma.workoutSession.create({
     data: {
       userId,
-      enrollmentId,
+      ...(enrollmentId !== undefined && { enrollmentId }),
       status: "COMPLETED",
       completionRatio: 1.0,
       startedAt: new Date(),
