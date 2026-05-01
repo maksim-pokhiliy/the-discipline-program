@@ -9,11 +9,11 @@ import {
 import { BadRequestError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
-import { verifyPlanOwnership } from "../../authz/guards";
-import { prisma, prismaAsCore } from "../../db/client";
-import { mapToPlanOverride } from "../../mappers/lms";
-import { resolveEffectivePlan } from "../../services/lms/plan-override-resolver";
-import { findOrThrow, handlePrismaError, toInputJson } from "../../utils";
+import { verifyPlanOwnership } from "../../../authz/guards";
+import { prisma, prismaAsCore } from "../../../db/client";
+import { mapToPlanOverride } from "../../../mappers/lms";
+import { resolveEffectivePlan } from "../../../services/lms/plan-override-resolver";
+import { findOrThrow, handlePrismaError, toInputJson } from "../../../utils";
 
 const verifyEnrollmentBelongsToCoach = async (
   enrollmentId: string,

@@ -8,7 +8,7 @@ import {
   createTestEnrollment,
   createTestPlan,
   createTestUser,
-} from "../../test/helpers";
+} from "../../../test/helpers";
 
 import { lmsPlanOverrideApi } from "./plan-override";
 
