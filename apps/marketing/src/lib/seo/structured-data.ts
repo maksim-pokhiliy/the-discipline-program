@@ -13,19 +13,21 @@ type StructuredDataType =
   | "person";
 
 type StructuredDataInput = {
-  title?: string;
-  description?: string;
-  image?: string;
-  author?: string;
-  publishedTime?: string;
-  modifiedTime?: string;
-  url?: string;
-  products?: Product[];
-  reviews?: Review[];
-  faqItems?: Array<{
-    question: string;
-    answer: string;
-  }>;
+  title?: string | undefined;
+  description?: string | undefined;
+  image?: string | undefined;
+  author?: string | undefined;
+  publishedTime?: string | undefined;
+  modifiedTime?: string | undefined;
+  url?: string | undefined;
+  products?: Product[] | undefined;
+  reviews?: Review[] | undefined;
+  faqItems?:
+    | Array<{
+        question: string;
+        answer: string;
+      }>
+    | undefined;
 };
 
 type JsonLdObject = {

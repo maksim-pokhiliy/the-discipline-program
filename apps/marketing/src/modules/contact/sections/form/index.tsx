@@ -88,7 +88,7 @@ export const ContactFormSection = ({
                 fullWidth
                 disabled={isPending}
                 error={!!errors.name}
-                helperText={errors.name?.message}
+                {...(errors.name?.message !== undefined && { helperText: errors.name.message })}
                 {...register("name")}
               />
             </Grid>
@@ -99,9 +99,13 @@ export const ContactFormSection = ({
                 required
                 fullWidth
                 disabled={isPending}
-                placeholder={fieldPlaceholders?.contact}
+                {...(fieldPlaceholders?.contact !== undefined && {
+                  placeholder: fieldPlaceholders.contact,
+                })}
                 error={!!errors.contact}
-                helperText={errors.contact?.message}
+                {...(errors.contact?.message !== undefined && {
+                  helperText: errors.contact.message,
+                })}
                 {...register("contact")}
               />
             </Grid>
@@ -114,7 +118,7 @@ export const ContactFormSection = ({
             disabled={isPending}
             defaultValue=""
             error={!!errors.program}
-            helperText={errors.program?.message}
+            {...(errors.program?.message !== undefined && { helperText: errors.program.message })}
             {...register("program")}
           >
             {programOptions.map((option) => (
@@ -131,9 +135,11 @@ export const ContactFormSection = ({
             rows={4}
             fullWidth
             disabled={isPending}
-            placeholder={fieldPlaceholders?.message}
+            {...(fieldPlaceholders?.message !== undefined && {
+              placeholder: fieldPlaceholders.message,
+            })}
             error={!!errors.message}
-            helperText={errors.message?.message}
+            {...(errors.message?.message !== undefined && { helperText: errors.message.message })}
             {...register("message")}
           />
 

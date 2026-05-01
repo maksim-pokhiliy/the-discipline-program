@@ -6,9 +6,9 @@ import Image from "next/image";
 import { ImageOverlay } from "./image-overlay";
 
 type SplitSectionProps = {
-  backgroundImage?: string;
-  imageContent?: ReactNode;
-  surface?: "base" | "raised";
+  backgroundImage?: string | undefined;
+  imageContent?: ReactNode | undefined;
+  surface?: "base" | "raised" | undefined;
   children: ReactNode;
 };
 

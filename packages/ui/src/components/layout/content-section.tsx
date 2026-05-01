@@ -34,18 +34,18 @@ export type ContentAction = ButtonProps & {
 };
 
 export type ContentSectionProps = {
-  title?: string;
-  subtitle?: string;
-  surface?: "base" | "raised";
-  maxWidth?: "sm" | "md" | "lg" | "xl";
-  backHref?: string;
-  backLabel?: string;
-  actions?: ContentAction[];
-  offset?: number;
-  textAlign?: "left" | "center";
-  id?: string;
-  animated?: boolean;
-  children?: ReactNode;
+  title?: string | undefined;
+  subtitle?: string | undefined;
+  surface?: "base" | "raised" | undefined;
+  maxWidth?: "sm" | "md" | "lg" | "xl" | undefined;
+  backHref?: string | undefined;
+  backLabel?: string | undefined;
+  actions?: ContentAction[] | undefined;
+  offset?: number | undefined;
+  textAlign?: "left" | "center" | undefined;
+  id?: string | undefined;
+  animated?: boolean | undefined;
+  children?: ReactNode | undefined;
 };
 
 export const ContentSection = ({

@@ -4,10 +4,10 @@ import { alpha, Button, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 
 type CtaSectionProps = {
-  title?: string;
-  subtitle?: string;
-  buttonText?: string;
-  buttonHref?: string;
+  title?: string | undefined;
+  subtitle?: string | undefined;
+  buttonText?: string | undefined;
+  buttonHref?: string | undefined;
 };
 
 export const CTASection = ({ title, subtitle, buttonText, buttonHref }: CtaSectionProps) => {
