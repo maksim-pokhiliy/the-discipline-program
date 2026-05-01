@@ -1,5 +1,13 @@
 export type { RouteContext, RouteHandler, AuthenticatedHandler } from "./types";
 export {
+  runWithContext,
+  getContext,
+  getRequestId,
+  getUserId,
+  updateContext,
+} from "./request-context";
+export type { RequestContext } from "./request-context";
+export {
   withPublicRoute,
   createGetHandler,
   createGetByIdHandler,

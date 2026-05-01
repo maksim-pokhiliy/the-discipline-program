@@ -2,7 +2,6 @@ export * from "./alert";
 export * from "./autocomplete";
 export * from "./bottom-navigation";
 export * from "./button";
-export * from "./button-base";
 export * from "./app-bar";
 export * from "./accordion";
 export * from "./avatar";

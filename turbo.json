@@ -43,6 +43,9 @@
       "cache": false,
       "dependsOn": ["^format"]
     },
+    "format:check": {
+      "dependsOn": ["^format:check"]
+    },
     "lint": {
       "dependsOn": ["^lint"]
     },

@@ -147,6 +147,7 @@ export const lmsSessionTemplateApi = {
       });
 
       logger.info("lms.library.session_template.promoted", {
+        actingUserId: userId,
         sessionTemplateId,
         fromScope: existing.scope,
         toScope: "SYSTEM",
@@ -209,6 +210,7 @@ export const lmsSessionTemplateApi = {
       });
 
       logger.info("lms.library.session_template.demoted", {
+        actingUserId: userId,
         sessionTemplateId,
         fromScope: existing.scope,
         toScope: "COACH",

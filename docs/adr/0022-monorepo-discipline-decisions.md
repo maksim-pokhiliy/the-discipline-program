@@ -39,7 +39,7 @@ Of these 19 items, 4 were already closed in section 1 (dependency-cruiser, api-s
 
 ### Concrete fixes (implemented in 8.2.A)
 
-**lefthook test not filtered.** `pnpm test` ran all 240 tests on every commit regardless of changes. `lint` and `check-types` already use `--filter="...[HEAD]"`. Fixed: test now uses turbo filtering.
+**husky test not filtered.** `pnpm test` ran all 240 tests on every commit regardless of changes. `lint` and `check-types` already use `--filter="...[HEAD]"`. Fixed: test now uses turbo filtering.
 
 **@repo/env missing `"type": "module"`.** All 11 other packages declare it. Fixed: added for consistency.
 

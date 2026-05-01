@@ -3,25 +3,32 @@
   "private": true,
   "packageManager": "pnpm@10.33.2",
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev",
-    "lint": "turbo run lint",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
-    "test": "cross-env SKIP_ENV_VALIDATION=1 vitest run",
-    "test:watch": "cross-env SKIP_ENV_VALIDATION=1 vitest",
-    "test:coverage": "cross-env SKIP_ENV_VALIDATION=1 vitest run --coverage",
-    "check-types": "turbo run check-types",
     "analyze:admin": "pnpm --filter admin analyze",
     "analyze:marketing": "pnpm --filter marketing analyze",
     "analyze:platform": "pnpm --filter platform analyze",
-    "dep:check": "depcruise --config .dependency-cruiser.cjs --no-progress --output-type err packages apps",
-    "dep:graph": "node scripts/dep-graph.mjs",
+    "build": "turbo run build",
+    "check-types": "turbo run check-types",
+    "clean": "node scripts/clean.mjs",
     "db:generate": "pnpm --filter @repo/api-server db:generate",
     "db:push": "pnpm --filter @repo/api-server db:push",
     "db:reset": "pnpm --filter @repo/api-server db:reset",
     "db:seed": "pnpm --filter @repo/api-server db:seed",
+    "dep:check": "depcruise --config .dependency-cruiser.cjs --no-progress --output-type err packages apps",
+    "dep:graph": "node scripts/dep-graph.mjs",
+    "dev": "turbo run dev",
+    "dev:admin": "pnpm --filter admin dev",
+    "dev:marketing": "pnpm --filter marketing dev",
+    "dev:platform": "pnpm --filter platform dev",
+    "dev:storybook": "pnpm --filter storybook dev",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json}\"",
+    "lint": "turbo run lint",
     "postinstall": "pnpm --filter @repo/api-server db:generate",
-    "prepare": "husky"
+    "prepare": "husky",
+    "setup": "pnpm install && pnpm db:generate && pnpm db:push && pnpm db:seed",
+    "test": "cross-env SKIP_ENV_VALIDATION=1 vitest run",
+    "test:coverage": "cross-env SKIP_ENV_VALIDATION=1 vitest run --coverage",
+    "test:watch": "cross-env SKIP_ENV_VALIDATION=1 vitest"
   },
   "devDependencies": {
     "@commitlint/cli": "catalog:",
@@ -46,7 +53,14 @@
   },
   "pnpm": {
     "overrides": {
-      "markdown-it": "^14.1.1"
+      "brace-expansion@<1.1.12": "^1.1.12",
+      "brace-expansion@>=2 <2.0.2": "^2.0.2",
+      "flatted@<3.3.3": "^3.3.3",
+      "markdown-it": "^14.1.1",
+      "minimatch@<3.1.2": "^3.1.2",
+      "minimatch@>=9 <9.0.5": "^9.0.5",
+      "picomatch@<2.3.2": "^2.3.2",
+      "picomatch@>=4 <4.0.2": "^4.0.2"
     }
   }
 }

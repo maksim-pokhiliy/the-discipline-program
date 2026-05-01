@@ -141,6 +141,7 @@ export const lmsWeekTemplateApi = {
       });
 
       logger.info("lms.library.week_template.promoted", {
+        actingUserId: userId,
         weekTemplateId,
         fromScope: existing.scope,
         toScope: "SYSTEM",
@@ -203,6 +204,7 @@ export const lmsWeekTemplateApi = {
       });
 
       logger.info("lms.library.week_template.demoted", {
+        actingUserId: userId,
         weekTemplateId,
         fromScope: existing.scope,
         toScope: "COACH",

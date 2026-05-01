@@ -108,6 +108,7 @@ export const SetGroupRow = ({
                   size="small"
                   onClick={onMoveUp}
                   disabled={isLoading || setGroupIndex === 0}
+                  aria-label="Move set group up"
                 >
                   <ArrowUpwardIcon fontSize="small" />
                 </IconButton>
@@ -119,6 +120,7 @@ export const SetGroupRow = ({
                   size="small"
                   onClick={onMoveDown}
                   disabled={isLoading || setGroupIndex === totalSetGroups - 1}
+                  aria-label="Move set group down"
                 >
                   <ArrowDownwardIcon fontSize="small" />
                 </IconButton>
@@ -131,6 +133,7 @@ export const SetGroupRow = ({
                   color="error"
                   onClick={onRemove}
                   disabled={isLoading || totalSetGroups <= 1}
+                  aria-label="Remove set group"
                 >
                   <DeleteIcon fontSize="small" />
                 </IconButton>

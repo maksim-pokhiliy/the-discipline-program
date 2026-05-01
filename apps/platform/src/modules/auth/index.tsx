@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import { Alert, Container, Divider, Stack, Typography } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import { useMutation } from "@tanstack/react-query";
@@ -11,35 +9,31 @@ import { toast } from "sonner";
 import { validateCallbackUrl } from "@repo/auth";
 import { signIn } from "@repo/auth/client";
 import { type LoginFormData } from "@repo/contracts/iam/auth";
-import { Logo } from "@repo/ui";
-
-import { LoginForm } from "./components";
+import { LoginForm, Logo } from "@repo/ui";
 
 export const PlatformLoginPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
-
   const callbackUrl = validateCallbackUrl(searchParams.get("callbackUrl")) ?? "/";
 
   const loginMutation = useMutation({
-    mutationFn: (data: LoginFormData) =>
-      signIn("credentials", {
+    mutationFn: async (data: LoginFormData) => {
+      const result = await signIn("credentials", {
         email: data.email,
         password: data.password,
         redirect: false,
-      }),
-    onSuccess: (result) => {
+      });
+
       if (result?.error) {
-        setError("Invalid email or password");
-      } else if (result?.ok) {
-        toast.success("Welcome back");
-        router.replace(callbackUrl);
-        router.refresh();
+        throw new Error("Invalid email or password");
       }
+
+      return result;
     },
-    onError: () => {
-      setError("An unexpected error occurred");
+    onSuccess: () => {
+      toast.success("Welcome back");
+      router.refresh();
+      router.replace(callbackUrl);
     },
   });
 
@@ -74,9 +68,9 @@ export const PlatformLoginPage = () => {
           </Stack>
 
           <Stack spacing={3} sx={{ width: "100%" }}>
-            {error && (
-              <Alert severity="error" onClose={() => setError(null)}>
-                {error}
+            {loginMutation.error && (
+              <Alert severity="error" onClose={() => loginMutation.reset()}>
+                {loginMutation.error.message}
               </Alert>
             )}
 

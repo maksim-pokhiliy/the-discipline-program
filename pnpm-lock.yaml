@@ -239,7 +239,14 @@ catalogs:
       version: 3.25.76
 
 overrides:
+  brace-expansion@<1.1.12: ^1.1.12
+  brace-expansion@>=2 <2.0.2: ^2.0.2
+  flatted@<3.3.3: ^3.3.3
   markdown-it: ^14.1.1
+  minimatch@<3.1.2: ^3.1.2
+  minimatch@>=9 <9.0.5: ^9.0.5
+  picomatch@<2.3.2: ^2.3.2
+  picomatch@>=4 <4.0.2: ^4.0.2
 
 importers:
 
@@ -654,9 +661,6 @@ importers:
       '@types/react':
         specifier: 'catalog:'
         version: 19.1.6
-      '@types/react-dom':
-        specifier: 'catalog:'
-        version: 19.1.5(@types/react@19.1.6)
       eslint:
         specifier: 'catalog:'
         version: 9.30.1(jiti@2.6.1)
@@ -718,9 +722,6 @@ importers:
       '@repo/contracts':
         specifier: workspace:*
         version: link:../contracts
-      '@repo/env':
-        specifier: workspace:*
-        version: link:../env
       '@repo/errors':
         specifier: workspace:*
         version: link:../errors
@@ -899,9 +900,6 @@ importers:
       '@react-email/render':
         specifier: 'catalog:'
         version: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      react-email:
-        specifier: 'catalog:'
-        version: 5.2.11
       resend:
         specifier: 'catalog:'
         version: 6.12.0(@react-email/render@2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3))
@@ -927,6 +925,9 @@ importers:
       react:
         specifier: 'catalog:'
         version: 19.2.3
+      react-email:
+        specifier: 'catalog:'
+        version: 5.2.11
       typescript:
         specifier: 'catalog:'
         version: 5.7.2
@@ -1031,9 +1032,6 @@ importers:
       '@emotion/styled':
         specifier: 'catalog:'
         version: 11.14.0(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react@19.2.3)
-      '@mui/icons-material':
-        specifier: 'catalog:'
-        version: 7.3.6(@mui/material@7.3.6(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(@types/react@19.1.6)(react@19.2.3)
       '@mui/material':
         specifier: 'catalog:'
         version: 7.3.6(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1043,9 +1041,6 @@ importers:
       '@repo/shared':
         specifier: workspace:*
         version: link:../shared
-      framer-motion:
-        specifier: 'catalog:'
-        version: 12.38.0(@emotion/is-prop-valid@1.3.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       next:
         specifier: 'catalog:'
         version: 16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.59.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1162,6 +1157,9 @@ importers:
 
   packages/ui:
     dependencies:
+      '@hookform/resolvers':
+        specifier: 'catalog:'
+        version: 5.2.2(react-hook-form@7.60.0(react@19.2.3))
       '@mui/icons-material':
         specifier: 'catalog:'
         version: 7.3.6(@mui/material@7.3.6(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@emotion/styled@11.14.0(@emotion/react@11.14.0(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react@19.2.3))(@types/react@19.1.6)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(@types/react@19.1.6)(react@19.2.3)
@@ -4200,14 +4198,14 @@ packages:
   bidi-js@1.0.3:
     resolution: {integrity: sha512-RKshQI1R3YQ+n9YJz2QQ147P66ELpa1FQEg20Dk8oW9t2KgLbpDLLp9aGZ7y8WHSshDknG0bknqGw5/tyCs5tw==}
 
-  brace-expansion@1.1.11:
-    resolution: {integrity: sha512-iCuPHDFgrHX7H2vEI/5xpz07zSHB00TpugqhmYtVmMO6518mCuRMoOYFldEBl0g187ufozdaHgWKcYFb61qGiA==}
+  brace-expansion@1.1.14:
+    resolution: {integrity: sha512-MWPGfDxnyzKU7rNOW9SP/c50vi3xrmrua/+6hfPbCS2ABNWfx24vPidzvC7krjU/RTo235sV776ymlsMtGKj8g==}
 
-  brace-expansion@2.0.1:
-    resolution: {integrity: sha512-XnAIvQ8eM+kC6aULx6wuQiwVsnzsi9d3WxzV3FpWTGA19F621kwdbsAcFKXgKUHZWsy+mY6iL1sHTxWEFCytDA==}
+  brace-expansion@2.1.0:
+    resolution: {integrity: sha512-TN1kCZAgdgweJhWWpgKYrQaMNHcDULHkWwQIspdtjV4Y5aurRdZpjAqn6yX3FPqTA9ngHCc4hJxMAMgGfve85w==}
 
-  brace-expansion@5.0.4:
-    resolution: {integrity: sha512-h+DEnpVvxmfVefa4jFbCf5HdH5YMDXRsmKflpf1pILZWRFlTbJpxeU55nJl4Smt5HQaGzg1o6RHFPJaOqnmBDg==}
+  brace-expansion@5.0.5:
+    resolution: {integrity: sha512-VZznLgtwhn+Mact9tfiwx64fA9erHH/MCXEUfB/0bX/6Fz6ny5EGTXYltMocqg4xFAQZtnO3DHWWXi8RiuN7cQ==}
     engines: {node: 18 || 20 || >=22}
 
   braces@3.0.3:
@@ -4890,7 +4888,7 @@ packages:
     resolution: {integrity: sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
-      picomatch: ^3 || ^4
+      picomatch: ^4.0.2
     peerDependenciesMeta:
       picomatch:
         optional: true
@@ -5714,12 +5712,12 @@ packages:
     resolution: {integrity: sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==}
     engines: {node: '>=4'}
 
-  minimatch@10.2.4:
-    resolution: {integrity: sha512-oRjTw/97aTBN0RHbYCdtF1MQfvusSIBQM0IZEgzl6426+8jSC0nF1a/GmnVLpfB9yyr6g6FTqWqiZVbxrtaCIg==}
+  minimatch@10.2.5:
+    resolution: {integrity: sha512-MULkVLfKGYDFYejP07QOurDLLQpcjk7Fw+7jXS2R2czRQzR56yHRveU5NDJEOviH+hETZKSkIk5c+T23GjFUMg==}
     engines: {node: 18 || 20 || >=22}
 
-  minimatch@3.1.2:
-    resolution: {integrity: sha512-J7p63hRiAjw1NDEww1W7i37+ByIrOWO5XQQAzZ3VOcL0PNybwpfmV/N05zFAzwQ9USyEcX6t3UO+K5aqBQOIHw==}
+  minimatch@3.1.5:
+    resolution: {integrity: sha512-VgjWUsnnT6n+NUk6eZq77zeFdpW2LWDzP6zFGrCbHXiYNul5Dzqk2HHQ5uFH2DNW5Xbp8+jVzaeNt94ssEEl4w==}
 
   minimatch@9.0.5:
     resolution: {integrity: sha512-G6T0ZX48xgozx7587koeX9Ys2NYy6Gmv//P89sEte9V9whIapMNF4idKxnW2QtCcLiTWlb/wfCabAtAFWhhBow==}
@@ -5978,8 +5976,8 @@ packages:
   picocolors@1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
-  picomatch@2.3.1:
-    resolution: {integrity: sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==}
+  picomatch@2.3.2:
+    resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
 
   picomatch@4.0.3:
@@ -7813,7 +7811,7 @@ snapshots:
     dependencies:
       '@eslint/object-schema': 2.1.6
       debug: 4.4.1
-      minimatch: 3.1.2
+      minimatch: 3.1.5
     transitivePeerDependencies:
       - supports-color
 
@@ -7832,7 +7830,7 @@ snapshots:
       ignore: 5.3.2
       import-fresh: 3.3.1
       js-yaml: 4.1.0
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       strip-json-comments: 3.1.1
     transitivePeerDependencies:
       - supports-color
@@ -7854,7 +7852,7 @@ snapshots:
       '@opentelemetry/core': 2.6.1(@opentelemetry/api@1.9.1)
       '@opentelemetry/instrumentation': 0.212.0(@opentelemetry/api@1.9.1)
       '@opentelemetry/semantic-conventions': 1.40.0
-      minimatch: 10.2.4
+      minimatch: 10.2.5
     transitivePeerDependencies:
       - supports-color
 
@@ -9997,16 +9995,16 @@ snapshots:
     dependencies:
       require-from-string: 2.0.2
 
-  brace-expansion@1.1.11:
+  brace-expansion@1.1.14:
     dependencies:
       balanced-match: 1.0.2
       concat-map: 0.0.1
 
-  brace-expansion@2.0.1:
+  brace-expansion@2.1.0:
     dependencies:
       balanced-match: 1.0.2
 
-  brace-expansion@5.0.4:
+  brace-expansion@5.0.5:
     dependencies:
       balanced-match: 4.0.4
 
@@ -10702,7 +10700,7 @@ snapshots:
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       object.fromentries: 2.0.8
       object.groupby: 1.0.3
       object.values: 1.2.1
@@ -10731,7 +10729,7 @@ snapshots:
       hasown: 2.0.2
       is-core-module: 2.16.1
       is-glob: 4.0.3
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       object.fromentries: 2.0.8
       object.groupby: 1.0.3
       object.values: 1.2.1
@@ -10759,7 +10757,7 @@ snapshots:
       hasown: 2.0.2
       jsx-ast-utils: 3.3.5
       language-tags: 1.0.9
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       object.fromentries: 2.0.8
       safe-regex-test: 1.1.0
       string.prototype.includes: 2.0.1
@@ -10791,7 +10789,7 @@ snapshots:
       estraverse: 5.3.0
       hasown: 2.0.2
       jsx-ast-utils: 3.3.5
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       object.entries: 1.1.9
       object.fromentries: 2.0.8
       object.values: 1.2.1
@@ -10855,7 +10853,7 @@ snapshots:
       is-glob: 4.0.3
       json-stable-stringify-without-jsonify: 1.0.1
       lodash.merge: 4.6.2
-      minimatch: 3.1.2
+      minimatch: 3.1.5
       natural-compare: 1.4.0
       optionator: 0.9.4
     optionalDependencies:
@@ -11044,7 +11042,7 @@ snapshots:
 
   glob@13.0.6:
     dependencies:
-      minimatch: 10.2.4
+      minimatch: 10.2.5
       minipass: 7.1.3
       path-scurry: 2.0.2
 
@@ -11725,7 +11723,7 @@ snapshots:
   micromatch@4.0.8:
     dependencies:
       braces: 3.0.3
-      picomatch: 2.3.1
+      picomatch: 2.3.2
 
   mime-db@1.52.0: {}
 
@@ -11743,17 +11741,17 @@ snapshots:
 
   min-indent@1.0.1: {}
 
-  minimatch@10.2.4:
+  minimatch@10.2.5:
     dependencies:
-      brace-expansion: 5.0.4
+      brace-expansion: 5.0.5
 
-  minimatch@3.1.2:
+  minimatch@3.1.5:
     dependencies:
-      brace-expansion: 1.1.11
+      brace-expansion: 1.1.14
 
   minimatch@9.0.5:
     dependencies:
-      brace-expansion: 2.0.1
+      brace-expansion: 2.1.0
 
   minimist@1.2.8: {}
 
@@ -12010,7 +12008,7 @@ snapshots:
 
   picocolors@1.1.1: {}
 
-  picomatch@2.3.1: {}
+  picomatch@2.3.2: {}
 
   picomatch@4.0.3: {}
 

@@ -30,7 +30,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
             <AuthProvider>
               {children}
 
-              <Toaster />
+              <Toaster position="top-right" />
               {isVercelDeployment && <Analytics />}
               {isVercelDeployment && <SpeedInsights />}
             </AuthProvider>

@@ -132,6 +132,7 @@ export const EntryRow = ({
                   size="small"
                   onClick={onMoveUp}
                   disabled={isLoading || entryIndex === 0}
+                  aria-label="Move entry up"
                 >
                   <ArrowUpwardIcon fontSize="small" />
                 </IconButton>
@@ -143,13 +144,20 @@ export const EntryRow = ({
                   size="small"
                   onClick={onMoveDown}
                   disabled={isLoading || entryIndex === totalEntries - 1}
+                  aria-label="Move entry down"
                 >
                   <ArrowDownwardIcon fontSize="small" />
                 </IconButton>
               </span>
             </Tooltip>
             <Tooltip title="Remove entry">
-              <IconButton size="small" color="error" onClick={onRemove} disabled={isLoading}>
+              <IconButton
+                size="small"
+                color="error"
+                onClick={onRemove}
+                disabled={isLoading}
+                aria-label="Remove entry"
+              >
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </Tooltip>

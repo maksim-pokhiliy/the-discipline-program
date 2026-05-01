@@ -163,6 +163,7 @@ export const lmsExerciseLibraryItemApi = {
       });
 
       logger.info("lms.library.exercise.promoted", {
+        actingUserId: userId,
         exerciseLibraryItemId,
         fromScope: existing.scope,
         toScope: "SYSTEM",
@@ -231,6 +232,7 @@ export const lmsExerciseLibraryItemApi = {
       });
 
       logger.info("lms.library.exercise.demoted", {
+        actingUserId: userId,
         exerciseLibraryItemId,
         fromScope: existing.scope,
         toScope: "COACH",

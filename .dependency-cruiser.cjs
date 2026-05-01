@@ -45,14 +45,27 @@ module.exports = {
     },
 
     {
-      name: "contracts-lms-no-coaching",
+      name: "contracts-lms-no-coaching-cms-billing",
       severity: "error",
       comment:
-        "BOUNDED-CONTEXTS.md §8: LMS → Coaching is forbidden. LMS must not know about " +
-        "coach dashboards, health status, or action items. If a schema needs to project " +
-        "LMS + coaching data together, it belongs in coaching/ (see 1.2.I plan-roster).",
+        "BOUNDED-CONTEXTS.md §8: LMS depends on IAM only. LMS must not know about coach " +
+        "dashboards (Coaching), marketing content (CMS), or commerce state (Billing). If a " +
+        "schema needs to project LMS + Coaching data together, it belongs in coaching/ " +
+        "(see 1.2.I plan-roster). Subscription gating is enforced upstream in a guard, not " +
+        "via LMS reaching into Billing.",
       from: { path: "^packages/contracts/src/entities/lms/" },
-      to: { path: "^packages/contracts/src/entities/coaching/" },
+      to: { path: "^packages/contracts/src/entities/(coaching|cms|billing)/" },
+    },
+
+    {
+      name: "contracts-coaching-no-cms-billing",
+      severity: "error",
+      comment:
+        "BOUNDED-CONTEXTS.md §8: Coaching depends on IAM + LMS. Coaching schemas must not " +
+        "project marketing content (CMS) or commerce state (Billing). Closes the contract-" +
+        "side gap mirroring api-server-coaching-no-cms-billing.",
+      from: { path: "^packages/contracts/src/entities/coaching/" },
+      to: { path: "^packages/contracts/src/entities/(cms|billing)/" },
     },
 
     {
@@ -122,6 +135,42 @@ module.exports = {
         "coaching. Marketing pages do not render training data or coach dashboards.",
       from: { path: "^packages/api-server/src/(endpoints|mappers)/cms/" },
       to: { path: "^packages/api-server/src/(endpoints|mappers)/(lms|coaching)/" },
+    },
+
+    {
+      name: "api-server-lms-no-cms-billing",
+      severity: "error",
+      comment:
+        "BOUNDED-CONTEXTS.md §8: LMS must not read marketing content or commerce state. " +
+        "LMS depends on IAM only; subscription gating is enforced upstream in a guard, not " +
+        "by LMS endpoints reaching into Billing. Mirrors api-server-lms-no-coaching.",
+      from: { path: "^packages/api-server/src/(endpoints|mappers)/lms/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/" },
+    },
+
+    {
+      name: "api-server-coaching-no-cms-billing",
+      severity: "error",
+      comment:
+        "BOUNDED-CONTEXTS.md §8: Coaching does not render marketing content or manage " +
+        "subscriptions. Coaching depends on IAM + LMS only. Closes the rule-catalog gap " +
+        "for the Coaching → CMS / Billing direction (no Coaching → CMS / Billing imports " +
+        "exist today, but the rule must land before Billing endpoints do).",
+      from: { path: "^packages/api-server/src/(endpoints|mappers)/coaching/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/" },
+    },
+
+    {
+      name: "api-server-billing-no-cms-coaching",
+      severity: "error",
+      comment:
+        "BOUNDED-CONTEXTS.md §8: Billing depends on IAM + LMS (Product.trainingPlanId) " +
+        "only. Billing must not read marketing content or coach state. The single allowed " +
+        "cross-context write Billing → LMS (PlanEnrollment on purchase success, see §8 " +
+        "'Purchase = Immediate Value') stays inside LMS — it does not require Coaching or " +
+        "CMS reads.",
+      from: { path: "^packages/api-server/src/(endpoints|mappers)/billing/" },
+      to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|coaching)/" },
     },
 
     {
@@ -234,6 +283,52 @@ module.exports = {
         "content or process billing. Its allowed backend surface is LMS + Coaching + IAM.",
       from: { path: "^apps/platform/" },
       to: { path: "^packages/api-server/src/(endpoints|mappers)/(cms|billing)/" },
+    },
+
+    {
+      name: "apps-do-not-import-each-other",
+      severity: "error",
+      comment:
+        "Each Next.js app is its own deployable: admin (M1.2 internal console), " +
+        "marketing (public landing), platform (coach/athlete product), storybook " +
+        "(component preview). Cross-app imports cannot be resolved by Next at build " +
+        "time — a relative `../../<other-app>` path would only fail when the offending " +
+        "app builds. Encoding the boundary in dep-cruiser surfaces the violation in " +
+        "`pnpm dep:check` instead, alongside the other forbidden directions. Shared code " +
+        "belongs in `packages/`, not in another app.",
+      from: { path: "^apps/admin/" },
+      to: { path: "^apps/(marketing|platform|storybook)/" },
+    },
+
+    {
+      name: "apps-marketing-no-other-apps",
+      severity: "error",
+      comment:
+        "Mirror of apps-do-not-import-each-other for marketing. Each app is its own " +
+        "deployable; shared code belongs in `packages/`.",
+      from: { path: "^apps/marketing/" },
+      to: { path: "^apps/(admin|platform|storybook)/" },
+    },
+
+    {
+      name: "apps-platform-no-other-apps",
+      severity: "error",
+      comment:
+        "Mirror of apps-do-not-import-each-other for platform. Each app is its own " +
+        "deployable; shared code belongs in `packages/`.",
+      from: { path: "^apps/platform/" },
+      to: { path: "^apps/(admin|marketing|storybook)/" },
+    },
+
+    {
+      name: "apps-storybook-no-other-apps",
+      severity: "error",
+      comment:
+        "Mirror of apps-do-not-import-each-other for storybook. Storybook previews " +
+        "components from `packages/ui` (and other shared packages), never from another " +
+        "Next.js app's source tree.",
+      from: { path: "^apps/storybook/" },
+      to: { path: "^apps/(admin|marketing|platform)/" },
     },
   ],
 

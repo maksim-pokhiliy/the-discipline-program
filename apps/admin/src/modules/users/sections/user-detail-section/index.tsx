@@ -1,11 +1,11 @@
 "use client";
 
 import SendIcon from "@mui/icons-material/Send";
-import { Avatar, Button, Grid, Stack, Typography, useTheme } from "@mui/material";
+import { Button, Grid, Stack, useTheme } from "@mui/material";
 
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
 import { formatDate } from "@repo/shared";
-import { DetailField, FormCard } from "@repo/ui";
+import { DetailField, FormCard, UserChip } from "@repo/ui";
 
 import { useResendInvite } from "@app/lib/hooks";
 
@@ -19,8 +19,6 @@ type UserDetailSectionProps = {
 export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) => {
   const theme = useTheme();
   const { mutate: resendInvite, isPending: isResending } = useResendInvite();
-  const displayLabel = user.name ?? user.email;
-  const initial = displayLabel.slice(0, 1).toUpperCase();
   const canResendInvite = !user.hasPassword;
 
   return (
@@ -31,17 +29,7 @@ export const UserDetailSection = ({ user, isPending }: UserDetailSectionProps) =
         alignItems={{ xs: "flex-start", sm: "center" }}
         justifyContent="space-between"
       >
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Avatar src={user.image ?? undefined} alt={displayLabel} sx={{ width: 56, height: 56 }}>
-            {initial}
-          </Avatar>
-          <Stack spacing={0.25}>
-            {user.name && <Typography variant="subtitle1">{user.name}</Typography>}
-            <Typography variant="body2" color="text.secondary">
-              {user.email}
-            </Typography>
-          </Stack>
-        </Stack>
+        <UserChip user={user} size="large" />
         {canResendInvite && (
           <Button
             type="button"

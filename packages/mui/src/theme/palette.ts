@@ -1,5 +1,11 @@
 import { type PaletteOptions } from "@mui/material/styles";
 
+declare module "@mui/material/styles" {
+  interface TypeText {
+    muted: string;
+  }
+}
+
 export const palette: PaletteOptions = {
   mode: "dark",
   primary: {
@@ -15,23 +21,24 @@ export const palette: PaletteOptions = {
   text: {
     primary: "rgba(255, 255, 255, 0.87)",
     secondary: "rgba(255, 255, 255, 0.60)",
+    muted: "rgba(255, 255, 255, 0.50)",
     disabled: "rgba(255, 255, 255, 0.38)",
   },
   divider: "rgba(255, 255, 255, 0.12)",
   error: {
     main: "#E85454",
-    contrastText: "#FFFFFF",
+    contrastText: "#1F1F1F",
   },
   warning: {
     main: "#E8C844",
-    contrastText: "#FFFFFF",
+    contrastText: "#1F1F1F",
   },
   success: {
     main: "#4DB76A",
-    contrastText: "#FFFFFF",
+    contrastText: "#1F1F1F",
   },
   info: {
     main: "#6CB4EE",
-    contrastText: "#FFFFFF",
+    contrastText: "#1F1F1F",
   },
 };

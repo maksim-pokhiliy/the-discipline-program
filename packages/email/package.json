@@ -19,7 +19,6 @@
   "dependencies": {
     "@react-email/components": "catalog:",
     "@react-email/render": "catalog:",
-    "react-email": "catalog:",
     "resend": "catalog:"
   },
   "peerDependencies": {
@@ -33,6 +32,7 @@
     "eslint": "catalog:",
     "prettier": "catalog:",
     "react": "catalog:",
+    "react-email": "catalog:",
     "typescript": "catalog:"
   }
 }

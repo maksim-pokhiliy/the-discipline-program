@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+
 import { Box, FormHelperText, Stack, Typography, useTheme } from "@mui/material";
 import { EditorContent } from "@tiptap/react";
 
@@ -36,7 +38,8 @@ export const MarkdownEditor = ({
   variant = "default",
 }: MarkdownEditorProps) => {
   const theme = useTheme();
-  const editor = useEditor({ value, onChange, onBlur, placeholder, disabled });
+  const editorId = useId();
+  const editor = useEditor({ value, onChange, onBlur, placeholder, disabled, editorId });
   const isInline = variant === "inline";
   const resolvedMinRows = minRows ?? (isInline ? 3 : 10);
 
@@ -51,6 +54,7 @@ export const MarkdownEditor = ({
       {label && (
         <Typography
           component="label"
+          htmlFor={editorId}
           variant="caption"
           color={error ? "error" : "text.secondary"}
           sx={{ mb: 0.5, ml: 1 }}
@@ -96,7 +100,7 @@ export const MarkdownEditor = ({
               height: "100%",
             },
             "& .ProseMirror p.is-editor-empty:first-child::before": {
-              color: "text.disabled",
+              color: "text.muted",
               content: "attr(data-placeholder)",
               float: "left",
               height: 0,

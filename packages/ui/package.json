@@ -17,6 +17,7 @@
     "test": "cross-env SKIP_ENV_VALIDATION=1 vitest run"
   },
   "dependencies": {
+    "@hookform/resolvers": "catalog:",
     "@mui/icons-material": "catalog:",
     "@mui/material": "catalog:",
     "@repo/contracts": "workspace:*",

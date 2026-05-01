@@ -122,6 +122,7 @@ export const SegmentRow = ({
                   size="small"
                   onClick={onMoveUp}
                   disabled={isLoading || segmentIndex === 0}
+                  aria-label="Move segment up"
                 >
                   <ArrowUpwardIcon fontSize="small" />
                 </IconButton>
@@ -133,6 +134,7 @@ export const SegmentRow = ({
                   size="small"
                   onClick={onMoveDown}
                   disabled={isLoading || segmentIndex === totalSegments - 1}
+                  aria-label="Move segment down"
                 >
                   <ArrowDownwardIcon fontSize="small" />
                 </IconButton>
@@ -145,6 +147,7 @@ export const SegmentRow = ({
                   color="error"
                   onClick={onRemove}
                   disabled={isLoading || totalSegments <= 1}
+                  aria-label="Remove segment"
                 >
                   <DeleteIcon fontSize="small" />
                 </IconButton>

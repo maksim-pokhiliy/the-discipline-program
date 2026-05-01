@@ -2,6 +2,14 @@
 import { execSync } from "node:child_process";
 import { readFileSync, existsSync, statSync } from "node:fs";
 
+const KNOWN_PLACEHOLDERS = [
+  /postgres(?:ql)?:\/\/postgres:postgres@/,
+  /postgres(?:ql)?:\/\/user:password@/,
+  /postgres(?:ql)?:\/\/your_user:your_password@/,
+];
+
+const isPlaceholder = (sample) => KNOWN_PLACEHOLDERS.some((rx) => rx.test(sample));
+
 const PATTERNS = [
   { name: "Neon Postgres password", regex: /npg_[A-Za-z0-9]{16,}/ },
   { name: "Postgres URL with credentials", regex: /postgres(?:ql)?:\/\/[^\s:]+:[^\s@]+@/ },
@@ -74,7 +82,7 @@ for (const file of getStaged()) {
 
   for (const { name, regex } of PATTERNS) {
     const match = content.match(regex);
-    if (match) {
+    if (match && !isPlaceholder(match[0])) {
       findings.push({ file, name, snippet: match[0].slice(0, 60) });
     }
   }

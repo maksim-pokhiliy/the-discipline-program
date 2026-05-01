@@ -8,9 +8,7 @@ import { toast } from "sonner";
 import { validateCallbackUrl } from "@repo/auth";
 import { signIn } from "@repo/auth/client";
 import { type LoginFormData } from "@repo/contracts/iam/auth";
-import { Logo } from "@repo/ui";
-
-import { LoginForm } from "./components";
+import { LoginForm, Logo } from "@repo/ui";
 
 export const LoginPage = () => {
   const router = useRouter();

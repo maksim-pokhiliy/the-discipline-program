@@ -62,7 +62,7 @@ export const EntryRow = ({ entryId, exerciseName, selection, onSelect }: EntryRo
       <Box
         {...sortable.attributes}
         {...sortable.listeners}
-        sx={{ cursor: "grab", display: "flex", color: "text.disabled" }}
+        sx={{ cursor: "grab", display: "flex", color: "text.muted" }}
         aria-label="Drag entry"
       >
         <DragIndicatorIcon fontSize="inherit" />

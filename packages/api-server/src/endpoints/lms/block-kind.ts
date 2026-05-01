@@ -141,6 +141,7 @@ export const lmsBlockKindApi = {
       });
 
       logger.info("lms.library.block_kind.promoted", {
+        actingUserId: userId,
         blockKindId,
         fromScope: existing.scope,
         toScope: "SYSTEM",
@@ -203,6 +204,7 @@ export const lmsBlockKindApi = {
       });
 
       logger.info("lms.library.block_kind.demoted", {
+        actingUserId: userId,
         blockKindId,
         fromScope: existing.scope,
         toScope: "COACH",

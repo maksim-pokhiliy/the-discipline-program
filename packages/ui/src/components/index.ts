@@ -11,6 +11,7 @@ export * from "./form-view";
 export * from "./image-upload";
 export * from "./layout";
 export * from "./loading-state";
+export * from "./login-form";
 export * from "./logo";
 export * from "./modal";
 export * from "./multi-select";

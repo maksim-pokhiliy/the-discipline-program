@@ -52,7 +52,7 @@ export const DayCard = ({ day, selection, onSelect }: DayCardProps) => {
           </Stack>
 
           {day.sessions.length === 0 ? (
-            <Typography variant="caption" color="text.disabled">
+            <Typography variant="caption" color="text.muted">
               No sessions
             </Typography>
           ) : (

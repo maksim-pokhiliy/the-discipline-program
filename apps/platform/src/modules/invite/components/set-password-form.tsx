@@ -160,7 +160,9 @@ export const SetPasswordForm = ({ token, email }: SetPasswordFormProps) => {
         autoComplete="new-password"
         disabled={isSubmitting}
         error={!!errors.password}
-        helperText={errors.password?.message ?? "At least 12 characters"}
+        helperText={
+          errors.password?.message ?? `At least ${AUTH_CONSTANTS.MIN_PASSWORD_LENGTH} characters`
+        }
         {...register("password")}
         slotProps={{
           input: {

@@ -151,6 +151,7 @@ export const lmsSchemeTemplateApi = {
       });
 
       logger.info("lms.library.scheme_template.promoted", {
+        actingUserId: userId,
         schemeTemplateId,
         fromScope: existing.scope,
         toScope: "SYSTEM",
@@ -213,6 +214,7 @@ export const lmsSchemeTemplateApi = {
       });
 
       logger.info("lms.library.scheme_template.demoted", {
+        actingUserId: userId,
         schemeTemplateId,
         fromScope: existing.scope,
         toScope: "COACH",

@@ -18,11 +18,9 @@
     "@emotion/cache": "catalog:",
     "@emotion/react": "catalog:",
     "@emotion/styled": "catalog:",
-    "@mui/icons-material": "catalog:",
     "@mui/material": "catalog:",
     "@mui/material-nextjs": "catalog:",
-    "@repo/shared": "workspace:*",
-    "framer-motion": "catalog:"
+    "@repo/shared": "workspace:*"
   },
   "peerDependencies": {
     "react": "catalog:",

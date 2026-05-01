@@ -4,16 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import {
-  Avatar,
-  Chip,
-  IconButton,
-  Menu,
-  MenuItem,
-  Stack,
-  Tooltip,
-  Typography,
-} from "@mui/material";
+import { Chip, IconButton, Menu, MenuItem, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
 import { UserRole } from "@repo/contracts/iam/auth";
@@ -23,6 +14,7 @@ import { formatDate } from "@repo/shared";
 import {
   ConfirmationModal,
   DataTable,
+  UserChip,
   useDataTableUrlState,
   type Column,
   type DataTableFilter,
@@ -103,17 +95,7 @@ export const UsersListSection = ({ users }: UsersListSectionProps) => {
         sortable: true,
         sortValue: (user) => user.email,
         searchValue: (user) => user.email,
-        render: (user) => (
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Avatar
-              src={user.image || undefined}
-              sx={(theme) => ({ width: theme.spacing(4), height: theme.spacing(4) })}
-            >
-              {user.email.charAt(0).toUpperCase()}
-            </Avatar>
-            <Typography variant="subtitle2">{user.email}</Typography>
-          </Stack>
-        ),
+        render: (user) => <UserChip user={user} size="medium" />,
       },
       {
         id: "role",

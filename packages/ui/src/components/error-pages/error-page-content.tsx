@@ -23,7 +23,7 @@ export const ErrorPageContent = ({
     </Typography>
 
     {error.digest && (
-      <Typography variant="caption" color="text.disabled" sx={{ mt: 1 }}>
+      <Typography variant="caption" color="text.muted" sx={{ mt: 1 }}>
         Error ID: {error.digest}
       </Typography>
     )}

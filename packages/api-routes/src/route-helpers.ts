@@ -4,6 +4,7 @@ import { type ZodType, type ZodTypeDef } from "zod";
 import { BadRequestError } from "@repo/errors";
 
 import { handleApiError } from "./error-handler";
+import { runWithContext } from "./request-context";
 import { type RouteContext, type RouteHandler } from "./types";
 
 type ParseSchema<T> = ZodType<T, ZodTypeDef, unknown>;
@@ -21,15 +22,17 @@ export const withErrorHandling =
   async (request, context) => {
     const requestId = request.headers.get("x-request-id") || crypto.randomUUID();
 
-    try {
-      const response = await fn(request, context);
+    return runWithContext({ requestId }, async () => {
+      try {
+        const response = await fn(request, context);
 
-      response.headers.set("x-request-id", requestId);
+        response.headers.set("x-request-id", requestId);
 
-      return response;
-    } catch (error) {
-      return handleApiError(error, requestId);
-    }
+        return response;
+      } catch (error) {
+        return handleApiError(error, requestId);
+      }
+    });
   };
 
 export const withPublicRoute = (handler: RouteHandler): RouteHandler => withErrorHandling(handler);

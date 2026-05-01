@@ -6,8 +6,19 @@ import { getServerSession } from "next-auth/next";
 import { UserRole } from "@repo/contracts/iam/auth";
 import { ForbiddenError, UnauthorizedError } from "@repo/errors";
 
+import { getMonitoring } from "./monitoring";
+import { updateContext } from "./request-context";
 import { withErrorHandling } from "./route-helpers";
 import type { AuthenticatedHandler, RouteHandler } from "./types";
+
+const bindIdentity = (userId: string, role?: string): void => {
+  updateContext({ userId, role });
+  getMonitoring()?.setUser({ id: userId, role });
+};
+
+const releaseIdentity = (): void => {
+  getMonitoring()?.setUser(null);
+};
 
 export const createAuthWrappers = (authOptions: NextAuthOptions) => ({
   withAdminAuth: (handler: AuthenticatedHandler): RouteHandler =>
@@ -22,7 +33,13 @@ export const createAuthWrappers = (authOptions: NextAuthOptions) => ({
         throw new ForbiddenError();
       }
 
-      return await handler(request, context, session.user.id);
+      bindIdentity(session.user.id, session.user.role ?? undefined);
+
+      try {
+        return await handler(request, context, session.user.id);
+      } finally {
+        releaseIdentity();
+      }
     }),
 
   withPlatformAuth: (handler: AuthenticatedHandler): RouteHandler =>
@@ -33,7 +50,13 @@ export const createAuthWrappers = (authOptions: NextAuthOptions) => ({
         throw new UnauthorizedError();
       }
 
-      return await handler(request, context, session.user.id);
+      bindIdentity(session.user.id, session.user.role ?? undefined);
+
+      try {
+        return await handler(request, context, session.user.id);
+      } finally {
+        releaseIdentity();
+      }
     }),
 
   withCoachAuth: (handler: AuthenticatedHandler): RouteHandler =>
@@ -52,6 +75,12 @@ export const createAuthWrappers = (authOptions: NextAuthOptions) => ({
         throw new ForbiddenError();
       }
 
-      return await handler(request, context, session.user.id);
+      bindIdentity(session.user.id, session.user.role ?? undefined);
+
+      try {
+        return await handler(request, context, session.user.id);
+      } finally {
+        releaseIdentity();
+      }
     }),
 });
