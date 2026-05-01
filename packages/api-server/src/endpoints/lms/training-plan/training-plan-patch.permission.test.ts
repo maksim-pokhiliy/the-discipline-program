@@ -4,8 +4,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { UserRole } from "@repo/contracts/iam/auth";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
-import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
-import { cleanup, cleanupRaw, createTestCoach } from "../../test/helpers";
+import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
+import { cleanup, cleanupRaw, createTestCoach } from "../../../test/helpers";
 
 import { lmsTrainingPlanPatchApi } from "./training-plan-patch";
 

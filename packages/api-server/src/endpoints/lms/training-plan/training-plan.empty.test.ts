@@ -5,7 +5,7 @@ import {
   getTrainingPlansResponseSchema,
 } from "@repo/contracts/lms/training-plan";
 
-import { cleanup, cleanupRaw, createTestCoach, createTestPlan } from "../../test/helpers";
+import { cleanup, cleanupRaw, createTestCoach, createTestPlan } from "../../../test/helpers";
 
 import { lmsTrainingPlanApi } from "./training-plan";
 

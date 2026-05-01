@@ -11,14 +11,13 @@ import {
 } from "@repo/contracts/lms/training-plan";
 import { logger } from "@repo/shared";
 
-import { verifyPlanOwnership } from "../../authz/guards";
-import { prisma } from "../../db/client";
-import { TX_BUDGET_BULK } from "../../db/transaction-config";
-import { mapToBlock, mapToBlockSegment, mapToExerciseEntry } from "../../mappers/lms";
-import { handlePrismaError } from "../../utils";
-
-import { applyOpInTx } from "./bulk-patch-apply-op";
-import { verifyOpsBelongToPlan } from "./bulk-patch-helpers";
+import { verifyPlanOwnership } from "../../../authz/guards";
+import { prisma } from "../../../db/client";
+import { TX_BUDGET_BULK } from "../../../db/transaction-config";
+import { mapToBlock, mapToBlockSegment, mapToExerciseEntry } from "../../../mappers/lms";
+import { handlePrismaError } from "../../../utils";
+import { applyOpInTx } from "../bulk-patch-apply-op";
+import { verifyOpsBelongToPlan } from "../bulk-patch-helpers";
 
 class BulkPatchRollback extends Error {
   conflicts: BulkPatchConflict[];

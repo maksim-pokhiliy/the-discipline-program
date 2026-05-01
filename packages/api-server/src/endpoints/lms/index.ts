@@ -17,7 +17,6 @@ export * from "./scheme-template";
 export * from "./session-template";
 export * from "./set-group";
 export * from "./training-plan";
-export * from "./training-plan-patch";
 export * from "./week";
 export * from "./week-template";
 export * from "./weekly-volume";

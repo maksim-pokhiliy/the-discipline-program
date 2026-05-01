@@ -4,8 +4,8 @@ import { UserRole } from "@repo/contracts/iam/auth";
 import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
-import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
-import { cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
+import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
+import { cleanupRaw, createTestCoach, createTestUser } from "../../../test/helpers";
 
 import { lmsTrainingPlanApi } from "./training-plan";
 

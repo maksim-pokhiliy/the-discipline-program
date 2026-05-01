@@ -12,17 +12,17 @@ import {
 } from "@repo/contracts/lms/training-plan";
 import { ConflictError, NotFoundError } from "@repo/errors";
 
-import { verifyPlanOwnership } from "../../authz/guards";
-import { prisma } from "../../db/client";
-import { ROLE_MAP } from "../../mappers/iam";
+import { verifyPlanOwnership } from "../../../authz/guards";
+import { prisma } from "../../../db/client";
+import { ROLE_MAP } from "../../../mappers/iam";
 import {
   mapToTrainingPlan,
   PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
   TRAINING_PLAN_STATUS_MAP,
   TRAINING_PLAN_STATUS_TO_PRISMA_MAP,
-} from "../../mappers/lms";
-import { findOrThrow, handlePrismaError } from "../../utils";
-import { DEFAULT_LIST_LIMIT } from "../../utils/list-limits";
+} from "../../../mappers/lms";
+import { findOrThrow, handlePrismaError } from "../../../utils";
+import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
 import { cloneWeeksIntoPlan } from "./plan-clone";
 

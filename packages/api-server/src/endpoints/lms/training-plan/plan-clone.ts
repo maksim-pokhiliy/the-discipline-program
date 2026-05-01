@@ -1,6 +1,6 @@
 import { type Prisma } from "@prisma/client";
 
-import { type prisma } from "../../db/client";
+import { type prisma } from "../../../db/client";
 
 type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 

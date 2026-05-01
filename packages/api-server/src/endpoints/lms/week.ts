@@ -12,8 +12,8 @@ import { prisma } from "../../db/client";
 import { mapToWeek } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
 
-import { cloneWeeksIntoPlan } from "./plan-clone";
 import { resolvePlanIdForWeek } from "./plan-tree-helpers";
+import { cloneWeeksIntoPlan } from "./training-plan/plan-clone";
 
 const DAYS_OF_WEEK_PRISMA: readonly PrismaDayOfWeek[] = [
   "MON",
