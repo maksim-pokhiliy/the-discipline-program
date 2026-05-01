@@ -7,30 +7,30 @@ declare module "next-auth" {
   interface Session {
     user: {
       id: string;
-      email?: string | null;
-      name?: string | null;
-      image?: string | null;
+      email?: string | null | undefined;
+      name?: string | null | undefined;
+      image?: string | null | undefined;
       role: UserRole | null;
     };
   }
 
   interface User {
     id: string;
-    email?: string | null;
-    name?: string | null;
-    image?: string | null;
+    email?: string | null | undefined;
+    name?: string | null | undefined;
+    image?: string | null | undefined;
     role: UserRole | null;
-    tokenVersion?: number;
+    tokenVersion?: number | undefined;
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
     id: string;
-    email?: string | null;
-    name?: string | null;
-    image?: string | null;
+    email?: string | null | undefined;
+    name?: string | null | undefined;
+    image?: string | null | undefined;
     role: UserRole | null;
-    tokenVersion?: number;
+    tokenVersion?: number | undefined;
   }
 }
