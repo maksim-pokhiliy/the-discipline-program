@@ -3,8 +3,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { UserRole } from "@repo/contracts/iam/auth";
 import { type UpdateBlockKindInput } from "@repo/contracts/lms/block-kind";
 
-import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
-import { cleanup, cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
+import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
+import { cleanup, cleanupRaw, createTestCoach, createTestUser } from "../../../test/helpers";
 
 import { lmsBlockKindApi } from "./block-kind";
 

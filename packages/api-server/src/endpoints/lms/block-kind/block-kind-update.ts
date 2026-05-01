@@ -2,15 +2,15 @@ import { UserRole } from "@repo/contracts/iam/auth";
 import { type UpdateBlockKindInput } from "@repo/contracts/lms/block-kind";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
-import { requireCoachLikeRole } from "../../authz/guards";
-import { prisma } from "../../db/client";
-import { ROLE_MAP } from "../../mappers/iam";
+import { requireCoachLikeRole } from "../../../authz/guards";
+import { prisma } from "../../../db/client";
+import { ROLE_MAP } from "../../../mappers/iam";
 import {
   LIBRARY_SCOPE_TO_PRISMA_MAP,
   mapToBlockKind,
   SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP,
-} from "../../mappers/lms";
-import { findOrThrow, handlePrismaError } from "../../utils";
+} from "../../../mappers/lms";
+import { findOrThrow, handlePrismaError } from "../../../utils";
 
 const ADMIN_OR_COACH_LIKE: ReadonlySet<UserRole> = new Set([
   UserRole.COACH,
