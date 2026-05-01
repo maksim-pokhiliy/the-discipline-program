@@ -1,4 +1,5 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+
 
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import {
@@ -11,6 +12,7 @@ import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { NotFoundError } from "@repo/errors";
 
+import { inMemoryCache } from "../../infrastructure/cache";
 import {
   cleanup,
   cleanupRaw,
@@ -96,6 +98,10 @@ describe("coachingCoachActionItemApi", () => {
   });
 
   describe("reconcile", () => {
+    beforeEach(async () => {
+      await inMemoryCache.delete(`reconcile:${coach.profile.id}`);
+    });
+
     it("creates action items for detected conditions", async () => {
       const result = await coachingCoachActionItemApi.reconcile(coach.user.id);
 
