@@ -22,7 +22,6 @@ import { buildAuthScope, buildCanonicalRoute, buildPublicScope } from "./request
 export type IdempotencyBodyMode = "json" | "formdata" | "none";
 
 export type IdempotencyConfig = {
-  method: string;
   bodyMode: IdempotencyBodyMode;
 };
 
@@ -266,7 +265,8 @@ type RunIdempotentArgs = {
 const runIdempotent = async (args: RunIdempotentArgs): Promise<Response> => {
   const { run, config, request, context, params, scope } = args;
   const key = validateKey(request.headers.get(IDEMPOTENCY_HEADER_REQUEST));
-  const route = buildCanonicalRoute(config.method, request, params);
+  const method = request.method.toUpperCase();
+  const route = buildCanonicalRoute(method, request, params);
 
   if (!key) {
     logger.info("idempotency.no_key", { route });
@@ -281,7 +281,7 @@ const runIdempotent = async (args: RunIdempotentArgs): Promise<Response> => {
   }
 
   const { rebuiltRequest, fingerprint } = await captureBody(request, config.bodyMode);
-  const storeCtx: StoreContext = { key, scope, route, method: config.method, fingerprint };
+  const storeCtx: StoreContext = { key, scope, route, method, fingerprint };
 
   let lookup: IdempotencyLookupResult;
 

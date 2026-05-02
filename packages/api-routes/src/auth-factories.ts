@@ -1,16 +1,15 @@
 import { NextResponse } from "next/server";
 import { type ZodType, type ZodTypeDef } from "zod";
 
-import { type IdempotencyConfig, wrapAuthHandler } from "./idempotency";
+import { wrapAuthHandler } from "./idempotency";
+import type { IdempotencyConfig } from "./idempotency";
 import { parseJsonBody } from "./route-helpers";
 import type { AuthenticatedHandler } from "./types";
 
 type ParseSchema<T> = ZodType<T, ZodTypeDef, unknown>;
 
-const POST_JSON_CONFIG: IdempotencyConfig = { method: "POST", bodyMode: "json" };
-const PUT_JSON_CONFIG: IdempotencyConfig = { method: "PUT", bodyMode: "json" };
-const DELETE_NONE_CONFIG: IdempotencyConfig = { method: "DELETE", bodyMode: "none" };
-const POST_NONE_CONFIG: IdempotencyConfig = { method: "POST", bodyMode: "none" };
+const JSON_CONFIG: IdempotencyConfig = { bodyMode: "json" };
+const NONE_CONFIG: IdempotencyConfig = { bodyMode: "none" };
 
 export const createAuthGetHandler = <TResponse>(
   apiFn: (userId: string) => Promise<TResponse>,
@@ -67,7 +66,7 @@ export const createAuthPostHandler = <TRequest, TResponse>(
     return NextResponse.json(validated, { status: 201 });
   };
 
-  return wrapAuthHandler(inner, POST_JSON_CONFIG);
+  return wrapAuthHandler(inner, JSON_CONFIG);
 };
 
 export const createAuthPostByParamHandler = <TParams, TRequest, TResponse>(
@@ -86,7 +85,7 @@ export const createAuthPostByParamHandler = <TParams, TRequest, TResponse>(
     return NextResponse.json(validated, { status: 201 });
   };
 
-  return wrapAuthHandler(inner, POST_JSON_CONFIG);
+  return wrapAuthHandler(inner, JSON_CONFIG);
 };
 
 export const createAuthPutHandler = <TRequest, TResponse>(
@@ -103,7 +102,7 @@ export const createAuthPutHandler = <TRequest, TResponse>(
     return NextResponse.json(validated);
   };
 
-  return wrapAuthHandler(inner, PUT_JSON_CONFIG);
+  return wrapAuthHandler(inner, JSON_CONFIG);
 };
 
 export const createAuthPutByParamHandler = <TParams, TRequest, TResponse>(
@@ -122,7 +121,7 @@ export const createAuthPutByParamHandler = <TParams, TRequest, TResponse>(
     return NextResponse.json(validated);
   };
 
-  return wrapAuthHandler(inner, PUT_JSON_CONFIG);
+  return wrapAuthHandler(inner, JSON_CONFIG);
 };
 
 export const createAuthVoidPutByParamHandler = <TParams, TRequest>(
@@ -140,7 +139,7 @@ export const createAuthVoidPutByParamHandler = <TParams, TRequest>(
     return new NextResponse(null, { status: 204 });
   };
 
-  return wrapAuthHandler(inner, PUT_JSON_CONFIG);
+  return wrapAuthHandler(inner, JSON_CONFIG);
 };
 
 export const createAuthDeleteHandler = <TParams>(
@@ -155,7 +154,7 @@ export const createAuthDeleteHandler = <TParams>(
     return new NextResponse(null, { status: 204 });
   };
 
-  return wrapAuthHandler(inner, DELETE_NONE_CONFIG);
+  return wrapAuthHandler(inner, NONE_CONFIG);
 };
 
 export const createAuthActionHandler = <TParams, TResponse>(
@@ -172,5 +171,5 @@ export const createAuthActionHandler = <TParams, TResponse>(
     return NextResponse.json(validated, status !== 200 ? { status } : undefined);
   };
 
-  return wrapAuthHandler(inner, POST_NONE_CONFIG);
+  return wrapAuthHandler(inner, NONE_CONFIG);
 };

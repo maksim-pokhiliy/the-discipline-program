@@ -4,7 +4,8 @@ import { type ZodType, type ZodTypeDef } from "zod";
 import { BadRequestError } from "@repo/errors";
 
 import { handleApiError } from "./error-handler";
-import { type IdempotencyConfig, wrapHandler } from "./idempotency";
+import { wrapHandler } from "./idempotency";
+import type { IdempotencyConfig } from "./idempotency";
 import { runWithContext } from "./request-context";
 import { type RouteContext, type RouteHandler } from "./types";
 
@@ -64,13 +65,9 @@ export const createGetByIdHandler = <TResponse>(
   };
 };
 
-const POST_JSON_CONFIG: IdempotencyConfig = { method: "POST", bodyMode: "json" };
-const PUT_JSON_CONFIG: IdempotencyConfig = { method: "PUT", bodyMode: "json" };
-const PATCH_JSON_CONFIG: IdempotencyConfig = { method: "PATCH", bodyMode: "json" };
-const DELETE_JSON_CONFIG: IdempotencyConfig = { method: "DELETE", bodyMode: "json" };
-const DELETE_NONE_CONFIG: IdempotencyConfig = { method: "DELETE", bodyMode: "none" };
-const POST_FORMDATA_CONFIG: IdempotencyConfig = { method: "POST", bodyMode: "formdata" };
-const POST_NONE_CONFIG: IdempotencyConfig = { method: "POST", bodyMode: "none" };
+const JSON_CONFIG: IdempotencyConfig = { bodyMode: "json" };
+const NONE_CONFIG: IdempotencyConfig = { bodyMode: "none" };
+const FORMDATA_CONFIG: IdempotencyConfig = { bodyMode: "formdata" };
 
 export const createPostHandler = <TRequest, TResponse>(
   apiFn: (data: TRequest) => Promise<TResponse>,
@@ -86,7 +83,7 @@ export const createPostHandler = <TRequest, TResponse>(
     return NextResponse.json(validated, { status: 201 });
   };
 
-  return wrapHandler(inner, POST_JSON_CONFIG);
+  return wrapHandler(inner, JSON_CONFIG);
 };
 
 export const createPutHandler = <TRequest, TResponse>(
@@ -105,7 +102,7 @@ export const createPutHandler = <TRequest, TResponse>(
     return NextResponse.json(validated);
   };
 
-  return wrapHandler(inner, PUT_JSON_CONFIG);
+  return wrapHandler(inner, JSON_CONFIG);
 };
 
 export const createGetByParamHandler = <TParams, TResponse>(
@@ -137,7 +134,7 @@ export const createPatchByParamHandler = <TParams, TRequest>(
     return new NextResponse(null, { status: 204 });
   };
 
-  return wrapHandler(inner, PATCH_JSON_CONFIG);
+  return wrapHandler(inner, JSON_CONFIG);
 };
 
 export const createFormDataPostHandler = <TResponse>(
@@ -152,7 +149,7 @@ export const createFormDataPostHandler = <TResponse>(
     return NextResponse.json(validated, { status: 201 });
   };
 
-  return wrapHandler(inner, POST_FORMDATA_CONFIG);
+  return wrapHandler(inner, FORMDATA_CONFIG);
 };
 
 export const createDeleteWithBodyHandler = <TRequest>(
@@ -168,7 +165,7 @@ export const createDeleteWithBodyHandler = <TRequest>(
     return new NextResponse(null, { status: 204 });
   };
 
-  return wrapHandler(inner, DELETE_JSON_CONFIG);
+  return wrapHandler(inner, JSON_CONFIG);
 };
 
 export const createDeleteHandler = (
@@ -183,7 +180,7 @@ export const createDeleteHandler = (
     return new NextResponse(null, { status: 204 });
   };
 
-  return wrapHandler(inner, DELETE_NONE_CONFIG);
+  return wrapHandler(inner, NONE_CONFIG);
 };
 
 export const createToggleHandler = <TResponse>(
@@ -199,7 +196,7 @@ export const createToggleHandler = <TResponse>(
     return NextResponse.json(validated);
   };
 
-  return wrapHandler(inner, POST_NONE_CONFIG);
+  return wrapHandler(inner, NONE_CONFIG);
 };
 
 export const createMultiToggleHandler = <TField extends string, TResponse>(
@@ -219,5 +216,5 @@ export const createMultiToggleHandler = <TField extends string, TResponse>(
     return NextResponse.json(validated);
   };
 
-  return wrapHandler(inner, POST_NONE_CONFIG);
+  return wrapHandler(inner, NONE_CONFIG);
 };

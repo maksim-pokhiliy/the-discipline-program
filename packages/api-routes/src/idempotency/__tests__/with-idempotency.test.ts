@@ -77,7 +77,7 @@ describe("MT-1: multi-value Idempotency-Key — first value wins (post-QA-001)",
     persistMock.mockResolvedValue({ status: "persisted" });
 
     const inner: RouteHandler = vi.fn(async () => new Response("{}", { status: 201 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     const request = new Request("https://example.com/api/x", {
       method: "POST",
@@ -104,7 +104,7 @@ describe("MT-4: non-JSON live response gracefully skips caching", () => {
     lookupMock.mockResolvedValue({ kind: "miss" });
 
     const inner: RouteHandler = vi.fn(async () => new Response("plaintext", { status: 200 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     const response = await wrapped(
       buildJsonRequest({ ping: 1 }, { headers: { "Idempotency-Key": KEY } }),
@@ -140,8 +140,8 @@ describe("MT-5: concurrent miss — race resolved via persist returning raced", 
     const innerB: RouteHandler = vi.fn(
       async () => new Response('{"id":"local-b"}', { status: 201 }),
     );
-    const wrappedA = wrapHandler(innerA, { method: "POST", bodyMode: "json" });
-    const wrappedB = wrapHandler(innerB, { method: "POST", bodyMode: "json" });
+    const wrappedA = wrapHandler(innerA, { bodyMode: "json" });
+    const wrappedB = wrapHandler(innerB, { bodyMode: "json" });
 
     const responseA = await wrappedA(
       buildJsonRequest({ x: 1 }, { headers: { "Idempotency-Key": KEY } }),
@@ -177,7 +177,7 @@ describe("MT-7: throw inside inner does not call persist", () => {
     const inner: RouteHandler = vi.fn(async () => {
       throw new BadRequestError("validation failed");
     });
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     await expect(
       wrapped(buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }), dummyContext()),
@@ -191,7 +191,7 @@ describe("MT-8: empty Idempotency-Key value treated as absent", () => {
     installStore();
 
     const inner: RouteHandler = vi.fn(async () => new Response('{"ok":1}', { status: 201 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     const response = await wrapped(
       buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": "" } }),
@@ -211,7 +211,7 @@ describe("MT-9: 257-char key rejected with BadRequestError carrying details.leng
     installStore();
 
     const inner: RouteHandler = vi.fn(async () => new Response("{}", { status: 201 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     const overLength = "a".repeat(257);
 
@@ -253,7 +253,7 @@ describe("MT-10: Set-Cookie excluded from replay", () => {
 
       return new Response('{"ok":1}', { status: 201, headers });
     });
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     await wrapped(
       buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
@@ -282,7 +282,7 @@ describe("MT-10: Set-Cookie excluded from replay", () => {
     });
 
     const inner: RouteHandler = vi.fn(async () => new Response("{}", { status: 200 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     const response = await wrapped(
       buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
@@ -304,7 +304,7 @@ describe("MT-11: cross-tenant scoping prevents replay across user identities", (
     const inner: AuthenticatedHandler = vi.fn(
       async () => new Response('{"ok":1}', { status: 201 }),
     );
-    const wrapped = wrapAuthHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapAuthHandler(inner, { bodyMode: "json" });
 
     await wrapped(
       buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
@@ -319,6 +319,31 @@ describe("MT-11: cross-tenant scoping prevents replay across user identities", (
   });
 });
 
+describe("REVIEW-FOLLOWUP: canonical route reflects request.method, not a stale config value", () => {
+  it("PATCH request through a none-config wrapper emits 'PATCH /api/...' as the route + method, not 'POST'", async () => {
+    installStore();
+    lookupMock.mockResolvedValue({ kind: "miss" });
+    persistMock.mockResolvedValue({ status: "persisted" });
+
+    const inner: RouteHandler = vi.fn(async () => new Response(null, { status: 204 }));
+    const wrapped = wrapHandler(inner, { bodyMode: "none" });
+
+    await wrapped(
+      buildEmptyRequest({
+        url: "https://example.com/api/admin/blog/abc/toggle",
+        headers: { "Idempotency-Key": KEY },
+        method: "PATCH",
+      }),
+      dummyContext({ id: "abc" }),
+    );
+
+    expect(persistMock.mock.calls[0]?.[0]).toMatchObject({
+      route: "PATCH /api/admin/blog/[id]/toggle",
+      method: "PATCH",
+    });
+  });
+});
+
 describe("REVIEW-FOLLOWUP: wrapHandler resolves auth scope from request-context when userId is bound", () => {
   it("uses user:<userId> when request-context has a userId (auth wrapper bound identity)", async () => {
     installStore();
@@ -326,7 +351,7 @@ describe("REVIEW-FOLLOWUP: wrapHandler resolves auth scope from request-context 
     persistMock.mockResolvedValue({ status: "persisted" });
 
     const inner: RouteHandler = vi.fn(async () => new Response('{"ok":1}', { status: 201 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     await runWithContext({ requestId: "rid-test", userId: "user-A" }, async () => {
       await wrapped(
@@ -347,7 +372,7 @@ describe("REVIEW-FOLLOWUP: wrapHandler resolves auth scope from request-context 
     persistMock.mockResolvedValue({ status: "persisted" });
 
     const inner: RouteHandler = vi.fn(async () => new Response('{"ok":1}', { status: 201 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     await runWithContext({ requestId: "rid-test" }, async () => {
       await wrapped(
@@ -388,7 +413,7 @@ describe("MT-12: formdata bodyMode rebuilds the request so inner.formData() pars
         headers: { "content-type": "application/json" },
       });
     });
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "formdata" });
+    const wrapped = wrapHandler(inner, { bodyMode: "formdata" });
 
     const form = new FormData();
 
@@ -425,7 +450,7 @@ describe("MT-13: JSON rebuild preserves Authorization header and the original bo
 
       return new Response('{"ok":1}', { status: 201 });
     });
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     await wrapped(
       buildJsonRequest(
@@ -449,7 +474,7 @@ describe("MT-14: same key + same body + different scope produce independent pers
     const inner: AuthenticatedHandler = vi.fn(
       async () => new Response('{"ok":1}', { status: 201 }),
     );
-    const wrapped = wrapAuthHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapAuthHandler(inner, { bodyMode: "json" });
 
     await wrapped(
       buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
@@ -487,7 +512,7 @@ describe("MT-15: lookup throw falls open and reports to monitoring", () => {
     persistMock.mockResolvedValue({ status: "persisted" });
 
     const inner: RouteHandler = vi.fn(async () => new Response('{"ok":1}', { status: 201 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     const response = await wrapped(
       buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
@@ -515,7 +540,7 @@ describe("MT-16: whitespace-padded Idempotency-Key is trimmed by the runtime the
     persistMock.mockResolvedValue({ status: "persisted" });
 
     const inner: RouteHandler = vi.fn(async () => new Response('{"ok":1}', { status: 201 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     const request = new Request("https://example.com/api/x", {
       method: "POST",
@@ -546,7 +571,7 @@ describe("MT-17: replay of a 204 returns a body-less Response", () => {
     });
 
     const inner: RouteHandler = vi.fn(async () => new Response(null, { status: 204 }));
-    const wrapped = wrapHandler(inner, { method: "DELETE", bodyMode: "none" });
+    const wrapped = wrapHandler(inner, { bodyMode: "none" });
 
     const response = await wrapped(
       buildEmptyRequest({ headers: { "Idempotency-Key": KEY }, method: "DELETE" }),
@@ -574,7 +599,7 @@ describe("MT-18: replay of a 200 hard-codes content-type application/json", () =
     });
 
     const inner: RouteHandler = vi.fn(async () => new Response('{"x":1}', { status: 200 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     const response = await wrapped(
       buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
@@ -601,7 +626,7 @@ describe("MT-19: replay does not re-run the handler", () => {
     });
 
     const inner: RouteHandler = vi.fn(async () => new Response('{"id":"local"}', { status: 201 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     const response = await wrapped(
       buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
@@ -622,7 +647,7 @@ describe("MT-20: empty body fingerprint is path-aware sha256 of canonical input"
     persistMock.mockResolvedValue({ status: "persisted" });
 
     const inner: RouteHandler = vi.fn(async () => new Response(null, { status: 204 }));
-    const wrapped = wrapHandler(inner, { method: "DELETE", bodyMode: "none" });
+    const wrapped = wrapHandler(inner, { bodyMode: "none" });
 
     await wrapped(
       buildEmptyRequest({
@@ -645,7 +670,7 @@ describe("MT-20: empty body fingerprint is path-aware sha256 of canonical input"
     persistMock.mockResolvedValue({ status: "persisted" });
 
     const inner: RouteHandler = vi.fn(async () => new Response(null, { status: 204 }));
-    const wrapped = wrapHandler(inner, { method: "DELETE", bodyMode: "none" });
+    const wrapped = wrapHandler(inner, { bodyMode: "none" });
 
     await wrapped(
       buildEmptyRequest({ headers: { "Idempotency-Key": KEY }, method: "DELETE" }),
@@ -672,7 +697,7 @@ describe("REVIEW-FOLLOWUP: query-string discriminates bodyless multi-toggle acti
     persistMock.mockResolvedValue({ status: "persisted" });
 
     const inner: RouteHandler = vi.fn(async () => new Response(null, { status: 204 }));
-    const wrapped = wrapHandler(inner, { method: "PATCH", bodyMode: "none" });
+    const wrapped = wrapHandler(inner, { bodyMode: "none" });
 
     await wrapped(
       buildEmptyRequest({
@@ -708,7 +733,7 @@ describe("REVIEW-FOLLOWUP: bodyless mutations on different IDs produce different
     persistMock.mockResolvedValue({ status: "persisted" });
 
     const inner: RouteHandler = vi.fn(async () => new Response(null, { status: 204 }));
-    const wrapped = wrapHandler(inner, { method: "DELETE", bodyMode: "none" });
+    const wrapped = wrapHandler(inner, { bodyMode: "none" });
 
     await wrapped(
       buildEmptyRequest({
@@ -743,7 +768,7 @@ describe("Mismatch path locks down ConflictError contract", () => {
     lookupMock.mockResolvedValue({ kind: "mismatch" });
 
     const inner: RouteHandler = vi.fn(async () => new Response('{"x":1}', { status: 200 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     let captured: unknown;
 
@@ -775,7 +800,7 @@ describe("Store registry unset falls open", () => {
     getStoreMock.mockReturnValue(undefined);
 
     const inner: RouteHandler = vi.fn(async () => new Response('{"ok":1}', { status: 201 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     const response = await wrapped(
       buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
@@ -796,7 +821,7 @@ describe("Persist failure is captured and live response returned", () => {
     persistMock.mockRejectedValue(new Error("pool exhausted"));
 
     const inner: RouteHandler = vi.fn(async () => new Response('{"ok":1}', { status: 201 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     const response = await wrapped(
       buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
@@ -818,7 +843,7 @@ describe("No Idempotency-Key header runs the handler with no Idempotency-Replaye
     installStore();
 
     const inner: RouteHandler = vi.fn(async () => new Response('{"ok":1}', { status: 201 }));
-    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
     const response = await wrapped(buildJsonRequest({ a: 1 }), dummyContext());
 
