@@ -11,6 +11,7 @@ import { BulkActionToolbar } from "./bulk-action-toolbar";
 import { InspectorPanel } from "./inspector";
 import { LibraryPanel } from "./library-panel";
 import { PlanCanvas, usePlanCanvasSelection } from "./plan-canvas";
+import { PlanEditorDndProvider } from "./plan-editor-dnd-provider";
 
 const DRAWER_HEIGHT_VH = 75;
 
@@ -45,89 +46,91 @@ export const PlanEditorMobileChrome = ({ planId }: PlanEditorMobileChromeProps) 
   const handleClose = () => setPane("canvas");
 
   return (
-    <Stack
-      sx={{
-        flex: 1,
-        minHeight: 0,
-        bgcolor: "background.default",
-        border: 1,
-        borderColor: "divider",
-        borderRadius: 1,
-        overflow: "hidden",
-        position: "relative",
-      }}
-    >
+    <PlanEditorDndProvider planId={planId}>
       <Stack
         sx={{
           flex: 1,
-          minWidth: 0,
           minHeight: 0,
+          bgcolor: "background.default",
+          border: 1,
+          borderColor: "divider",
+          borderRadius: 1,
+          overflow: "hidden",
           position: "relative",
         }}
       >
-        <Box sx={{ flex: 1, minHeight: 0, display: "flex" }}>
-          <PlanCanvas planId={planId} />
-        </Box>
-        <BulkActionToolbar planId={planId} />
-      </Stack>
-
-      <Drawer
-        anchor="bottom"
-        open={pane === "library"}
-        onClose={handleClose}
-        slotProps={{
-          paper: {
-            sx: {
-              height: `${DRAWER_HEIGHT_VH.toString()}dvh`,
-              borderTopLeftRadius: 12,
-              borderTopRightRadius: 12,
-            },
-          },
-        }}
-      >
-        <Box sx={{ height: "100%", overflow: "hidden" }}>
-          <LibraryPanel />
-        </Box>
-      </Drawer>
-
-      <Drawer
-        anchor="bottom"
-        open={pane === "inspector"}
-        onClose={handleClose}
-        slotProps={{
-          paper: {
-            sx: {
-              height: `${DRAWER_HEIGHT_VH.toString()}dvh`,
-              borderTopLeftRadius: 12,
-              borderTopRightRadius: 12,
-            },
-          },
-        }}
-      >
-        <Box sx={{ height: "100%", overflow: "hidden" }}>
-          <InspectorPanel planId={planId} />
-        </Box>
-      </Drawer>
-
-      <Paper
-        elevation={3}
-        sx={{
-          borderTop: 1,
-          borderColor: "divider",
-          flexShrink: 0,
-        }}
-      >
-        <BottomNavigation
-          value={pane}
-          onChange={(_, next: MobilePane) => setPane(next)}
-          showLabels
-          sx={{ minHeight: 56 }}
+        <Stack
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            minHeight: 0,
+            position: "relative",
+          }}
         >
-          <BottomNavigationAction value="library" label="Library" icon={<LibraryBooksIcon />} />
-          <BottomNavigationAction value="canvas" label="Canvas" icon={<ViewModuleIcon />} />
-          <BottomNavigationAction value="inspector" label="Inspector" icon={<TuneIcon />} />
-        </BottomNavigation>
-      </Paper>
-    </Stack>
+          <Box sx={{ flex: 1, minHeight: 0, display: "flex" }}>
+            <PlanCanvas planId={planId} />
+          </Box>
+          <BulkActionToolbar planId={planId} />
+        </Stack>
+
+        <Drawer
+          anchor="bottom"
+          open={pane === "library"}
+          onClose={handleClose}
+          slotProps={{
+            paper: {
+              sx: {
+                height: `${DRAWER_HEIGHT_VH.toString()}dvh`,
+                borderTopLeftRadius: 12,
+                borderTopRightRadius: 12,
+              },
+            },
+          }}
+        >
+          <Box sx={{ height: "100%", overflow: "hidden" }}>
+            <LibraryPanel />
+          </Box>
+        </Drawer>
+
+        <Drawer
+          anchor="bottom"
+          open={pane === "inspector"}
+          onClose={handleClose}
+          slotProps={{
+            paper: {
+              sx: {
+                height: `${DRAWER_HEIGHT_VH.toString()}dvh`,
+                borderTopLeftRadius: 12,
+                borderTopRightRadius: 12,
+              },
+            },
+          }}
+        >
+          <Box sx={{ height: "100%", overflow: "hidden" }}>
+            <InspectorPanel planId={planId} />
+          </Box>
+        </Drawer>
+
+        <Paper
+          elevation={3}
+          sx={{
+            borderTop: 1,
+            borderColor: "divider",
+            flexShrink: 0,
+          }}
+        >
+          <BottomNavigation
+            value={pane}
+            onChange={(_, next: MobilePane) => setPane(next)}
+            showLabels
+            sx={{ minHeight: 56 }}
+          >
+            <BottomNavigationAction value="library" label="Library" icon={<LibraryBooksIcon />} />
+            <BottomNavigationAction value="canvas" label="Canvas" icon={<ViewModuleIcon />} />
+            <BottomNavigationAction value="inspector" label="Inspector" icon={<TuneIcon />} />
+          </BottomNavigation>
+        </Paper>
+      </Stack>
+    </PlanEditorDndProvider>
   );
 };
