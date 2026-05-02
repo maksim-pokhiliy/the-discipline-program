@@ -13,6 +13,7 @@ import { useEditingTarget } from "../../lib/editing-target";
 
 import { DayCard } from "./day-card";
 import { EffectivePlanDecorationProvider } from "./effective-plan-decoration-context";
+import { PlanCanvasEmptyState } from "./plan-canvas-empty-state";
 import { type PlanSelection, type PlanSelectionKind } from "./selection";
 import { usePlanCanvasSelection } from "./use-plan-canvas-selection";
 import { WeekNavigator } from "./week-navigator";
@@ -39,6 +40,7 @@ export type PlanCanvasSelectArgs = {
 
 const renderWeeks = (
   data: GetPlanStructureResponse,
+  planId: string,
   selection: PlanSelection | null,
   onSelect: (args: PlanCanvasSelectArgs) => void,
 ) =>
@@ -50,7 +52,13 @@ const renderWeeks = (
       </Typography>
       <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
         {week.days.map((day) => (
-          <DayCard key={day.id} day={day} selection={selection} onSelect={onSelect} />
+          <DayCard
+            key={day.id}
+            day={day}
+            planId={planId}
+            selection={selection}
+            onSelect={onSelect}
+          />
         ))}
       </Stack>
     </Stack>
@@ -96,6 +104,10 @@ export const PlanCanvas = ({ planId }: PlanCanvasProps) => {
     );
   }
 
+  if (data.plan.weeks.length === 0) {
+    return <PlanCanvasEmptyState planId={planId} />;
+  }
+
   const { window: w } = data;
 
   const effectiveFrom = fromWeek ?? w.fromWeek;
@@ -114,7 +126,7 @@ export const PlanCanvas = ({ planId }: PlanCanvasProps) => {
         <WeekNavigator fromWeek={decorationFrom} toWeek={decorationTo} maxIndex={w.maxIndex} />
 
         <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
-          <Stack spacing={3}>{renderWeeks(data, selection, handleSelect)}</Stack>
+          <Stack spacing={3}>{renderWeeks(data, planId, selection, handleSelect)}</Stack>
         </Box>
       </Stack>
     </EffectivePlanDecorationProvider>

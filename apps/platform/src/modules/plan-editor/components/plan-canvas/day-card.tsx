@@ -4,6 +4,7 @@ import { Card, CardContent, Stack, Typography } from "@mui/material";
 
 import { type PlanStructureDay } from "@repo/contracts/lms/training-plan";
 
+import { AddSessionCta } from "./add-session-cta";
 import { DecorationBadge } from "./decoration-badge";
 import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-context";
 import { getDecorationStyles } from "./get-decoration-styles";
@@ -24,11 +25,12 @@ const DAY_LABEL: Record<PlanStructureDay["dayOfWeek"], string> = {
 
 export type DayCardProps = {
   day: PlanStructureDay;
+  planId: string;
   selection: PlanSelection | null;
   onSelect: (args: PlanCanvasSelectArgs) => void;
 };
 
-export const DayCard = ({ day, selection, onSelect }: DayCardProps) => {
+export const DayCard = ({ day, planId, selection, onSelect }: DayCardProps) => {
   const decoration = useEffectivePlanDecorationContext().getDecoration(day.id);
   const decorationStyles = getDecorationStyles(decoration);
   const touchTargetSx = useTouchTargetSx();
@@ -52,9 +54,7 @@ export const DayCard = ({ day, selection, onSelect }: DayCardProps) => {
           </Stack>
 
           {day.sessions.length === 0 ? (
-            <Typography variant="caption" color="text.muted">
-              No sessions
-            </Typography>
+            <AddSessionCta planId={planId} dayId={day.id} />
           ) : (
             day.sessions.map((session) => (
               <SessionList
