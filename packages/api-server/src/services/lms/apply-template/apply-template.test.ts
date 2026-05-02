@@ -158,7 +158,7 @@ describe("applyBlockTemplate (integration)", () => {
     ).rejects.toMatchObject({ statusCode: 403 });
   });
 
-  it("admin can apply COACH-template owned by any coach (privileged path)", async () => {
+  it("rejects admin without coach-athlete linkage to plan's athletes (no implicit role bypass)", async () => {
     const tpl = await cleanupRaw.blockTemplate.create({
       data: {
         scope: "COACH",
@@ -170,13 +170,13 @@ describe("applyBlockTemplate (integration)", () => {
 
     toCleanup.push({ table: "blockTemplate", id: tpl.id });
 
-    const result = await applyBlockTemplate(admin.id, fixture.planId, {
-      kind: "block",
-      templateId: tpl.id,
-      target: { sessionId: fixture.sessionId, order: 3 },
-    });
-
-    expect(result.blockId).toBeDefined();
+    await expect(
+      applyBlockTemplate(admin.id, fixture.planId, {
+        kind: "block",
+        templateId: tpl.id,
+        target: { sessionId: fixture.sessionId, order: 3 },
+      }),
+    ).rejects.toMatchObject({ statusCode: 403 });
   });
 
   it("rejects when target session belongs to a different plan (422)", async () => {

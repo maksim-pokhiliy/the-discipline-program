@@ -127,8 +127,43 @@ describe("platform guards", () => {
       }
     });
 
-    it("does not throw for HEAD_COACH user (bypasses ownership)", async () => {
-      await expect(verifyPlanOwnership(plan.id, headCoachUser.id)).resolves.toBeUndefined();
+    it("does not throw for HEAD_COACH linked via coach-athlete assignment to enrolled athlete", async () => {
+      const headCoachProfile = await cleanupRaw.coachProfile.create({
+        data: { userId: headCoachUser.id },
+      });
+      const headCoachAssignment = await cleanupRaw.coachAthleteAssignment.create({
+        data: { coachId: headCoachProfile.id, athleteId: athleteUser.id },
+      });
+      const enrollment = await cleanupRaw.planEnrollment.create({
+        data: {
+          planId: plan.id,
+          userId: athleteUser.id,
+          startedAtWeekIndex: 0,
+          startedOnDate: new Date(),
+        },
+      });
+
+      try {
+        await expect(verifyPlanOwnership(plan.id, headCoachUser.id)).resolves.toBeUndefined();
+      } finally {
+        await cleanupRaw.planEnrollment.delete({ where: { id: enrollment.id } });
+        await cleanupRaw.coachAthleteAssignment.delete({ where: { id: headCoachAssignment.id } });
+        await cleanupRaw.coachProfile.delete({ where: { id: headCoachProfile.id } });
+      }
+    });
+
+    it("throws ForbiddenError for HEAD_COACH without linkage to plan's athletes", async () => {
+      await expect(verifyPlanOwnership(plan.id, headCoachUser.id)).rejects.toThrow(ForbiddenError);
+    });
+
+    it("throws ForbiddenError for ADMIN without coach-athlete linkage or plan-coach-assignment", async () => {
+      const adminUser = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
+
+      try {
+        await expect(verifyPlanOwnership(plan.id, adminUser.id)).rejects.toThrow(ForbiddenError);
+      } finally {
+        await cleanupRaw.user.delete({ where: { id: adminUser.id } });
+      }
     });
 
     it("throws NotFoundError for soft-deleted plan", async () => {

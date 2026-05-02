@@ -16,15 +16,15 @@ const sanitize = (raw: string | undefined | null): string | null => {
 
 const isOnVercel = (): boolean => Boolean(process.env.VERCEL);
 
-const rightmostForwardedFor = (forwarded: string | null): string | null => {
+const leftmostForwardedFor = (forwarded: string | null): string | null => {
   if (!forwarded) {
     return null;
   }
 
   const hops = forwarded.split(",");
 
-  for (let i = hops.length - 1; i >= 0; i -= 1) {
-    const candidate = sanitize(hops[i]);
+  for (const hop of hops) {
+    const candidate = sanitize(hop);
 
     if (candidate) {
       return candidate;
@@ -35,13 +35,13 @@ const rightmostForwardedFor = (forwarded: string | null): string | null => {
 };
 
 export const getClientIp = (request: Request): string => {
+  const vercelClient = sanitize(request.headers.get("x-vercel-forwarded-for"));
+
+  if (vercelClient) {
+    return vercelClient;
+  }
+
   if (isOnVercel()) {
-    const vercelClient = sanitize(request.headers.get("x-vercel-forwarded-for"));
-
-    if (vercelClient) {
-      return vercelClient;
-    }
-
     const realIp = sanitize(request.headers.get("x-real-ip"));
 
     if (realIp) {
@@ -49,10 +49,10 @@ export const getClientIp = (request: Request): string => {
     }
   }
 
-  const rightmost = rightmostForwardedFor(request.headers.get("x-forwarded-for"));
+  const leftmost = leftmostForwardedFor(request.headers.get("x-forwarded-for"));
 
-  if (rightmost) {
-    return rightmost;
+  if (leftmost) {
+    return leftmost;
   }
 
   return "unknown";
