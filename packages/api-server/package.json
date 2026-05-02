@@ -20,7 +20,8 @@
     "./storage": "./src/endpoints/storage/index.ts",
     "./ops": "./src/endpoints/ops/index.ts",
     "./infrastructure/monitoring": "./src/infrastructure/monitoring/index.ts",
-    "./idempotency": "./src/idempotency/index.ts"
+    "./idempotency": "./src/idempotency/index.ts",
+    "./instrumentation": "./src/instrumentation/index.ts"
   },
   "scripts": {
     "test": "vitest run",

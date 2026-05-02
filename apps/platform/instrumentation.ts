@@ -1,58 +1,13 @@
-export const register = async () => {
-  if (process.env.NEXT_RUNTIME === "nodejs") {
-    const Sentry = await import("@sentry/nextjs");
+import { bootstrapBackendDI } from "@repo/api-server/instrumentation";
+import { createSentryRequestErrorHandler, createSentryServerRegister } from "@repo/shared/sentry";
 
-    Sentry.init({
-      dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-      environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
-      tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
-      debug: false,
-    });
+export const register = createSentryServerRegister({
+  sentry: {
+    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
+    tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
+  },
+  setupDI: bootstrapBackendDI,
+});
 
-    const { setMonitoring } = await import("@repo/api-routes");
-    const { defaultMonitoring } = await import("@repo/api-server/infrastructure/monitoring");
-
-    setMonitoring(defaultMonitoring);
-
-    const { setRateLimiter, defaultRateLimiter } = await import("@repo/api-routes");
-
-    setRateLimiter(defaultRateLimiter);
-
-    const { setIdempotencyStore } = await import("@repo/api-routes");
-    const { prismaIdempotencyStore } = await import("@repo/api-server/idempotency");
-
-    setIdempotencyStore(prismaIdempotencyStore);
-  }
-
-  if (process.env.NEXT_RUNTIME === "edge") {
-    const Sentry = await import("@sentry/nextjs");
-
-    Sentry.init({
-      dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-      environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
-      tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
-      debug: false,
-    });
-  }
-};
-
-export const onRequestError = async (
-  error: { digest: string } & Error,
-  request: { path: string; method: string; headers: Record<string, string> },
-  context: { routerKind: string; routePath: string; routeType: string; renderSource: string },
-) => {
-  const Sentry = await import("@sentry/nextjs");
-
-  Sentry.captureException(error, {
-    tags: {
-      routerKind: context.routerKind,
-      routePath: context.routePath,
-      routeType: context.routeType,
-      renderSource: context.renderSource,
-    },
-    extra: {
-      path: request.path,
-      method: request.method,
-    },
-  });
-};
+export const onRequestError = createSentryRequestErrorHandler();

@@ -1,19 +1,13 @@
-import * as Sentry from "@sentry/nextjs";
+import { createSentryClientInit } from "@repo/shared/sentry";
 
-if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-    environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
-    tracesSampleRate: process.env.NODE_ENV === "production" ? 0.1 : 1.0,
-    replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: process.env.NODE_ENV === "production" ? 1.0 : 0,
-    integrations: [
-      Sentry.replayIntegration({
-        maskAllText: true,
-        maskAllInputs: true,
-        blockAllMedia: true,
-      }),
-    ],
-    debug: false,
-  });
-}
+const isProduction = process.env.NODE_ENV === "production";
+
+const initSentryClient = createSentryClientInit({
+  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "development",
+  tracesSampleRate: isProduction ? 0.1 : 1.0,
+  replaysSessionSampleRate: 0,
+  replaysOnErrorSampleRate: isProduction ? 1.0 : 0,
+});
+
+initSentryClient();
