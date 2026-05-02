@@ -137,25 +137,26 @@ Validated at boot by `@repo/env` (Zod). `SKIP_ENV_VALIDATION=1` bypasses validat
 
 ### Required
 
-| Variable                    | Where                                 | Purpose                                                                       |
-| --------------------------- | ------------------------------------- | ----------------------------------------------------------------------------- |
-| `DATABASE_URL`              | all apps + `packages/api-server/.env` | PostgreSQL connection string (Neon or local).                                 |
-| `NEXTAUTH_SECRET`           | admin + platform                      | JWT signing secret. Generate: `openssl rand -base64 32`.                      |
-| `NEXTAUTH_URL`              | admin + platform                      | Canonical app URL for NextAuth callbacks.                                     |
-| `NEXT_PUBLIC_APP_URL`       | all apps                              | Base URL for HTTP loopback + cross-app links.                                 |
-| `NEXT_PUBLIC_MARKETING_URL` | all apps                              | Base URL for the marketing app.                                               |
-| `BLOB_READ_WRITE_TOKEN`     | admin (file uploads)                  | Vercel Blob read/write token.                                                 |
-| `RESEND_API_KEY`            | admin + platform (invite emails)      | Resend API key for transactional invite emails.                               |
-| `EMAIL_FROM`                | admin + platform (invite emails)      | Default From address for invite emails (must be a verified domain in Resend). |
+| Variable                    | Where                                 | Purpose                                                  |
+| --------------------------- | ------------------------------------- | -------------------------------------------------------- |
+| `DATABASE_URL`              | all apps + `packages/api-server/.env` | PostgreSQL connection string (Neon or local).            |
+| `NEXTAUTH_SECRET`           | admin + platform                      | JWT signing secret. Generate: `openssl rand -base64 32`. |
+| `NEXTAUTH_URL`              | admin + platform                      | Canonical app URL for NextAuth callbacks.                |
+| `NEXT_PUBLIC_APP_URL`       | all apps                              | Base URL for HTTP loopback + cross-app links.            |
+| `NEXT_PUBLIC_MARKETING_URL` | all apps                              | Base URL for the marketing app.                          |
+| `BLOB_READ_WRITE_TOKEN`     | admin (file uploads)                  | Vercel Blob read/write token.                            |
 
 ### Optional
 
-| Variable                   | Purpose                                                             |
-| -------------------------- | ------------------------------------------------------------------- |
-| `UPSTASH_REDIS_REST_URL`   | Upstash Redis REST URL for rate limiting (no-op when unset).        |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token.                                           |
-| `NEXT_PUBLIC_SENTRY_DSN`   | Sentry DSN. Monitoring is no-op when unset.                         |
-| `SENTRY_AUTH_TOKEN`        | Sentry auth token for source-map upload at build time.              |
-| `SENTRY_ORG`               | Sentry org slug (source-map upload).                                |
-| `SENTRY_PROJECT`           | Sentry project slug (source-map upload).                            |
-| `SKIP_ENV_VALIDATION`      | Set to `1` to bypass Zod env validation. Used by CI + local builds. |
+| Variable                   | Purpose                                                                                                                      |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `RESEND_API_KEY`           | Resend API key for transactional invite emails. Boot-optional; `resolveInviteEmailConfig` throws lazily at invite-send time. |
+| `EMAIL_FROM`               | Default From address for invite emails (must be a verified domain in Resend). Boot-optional; same lazy-fail as above.        |
+| `EMAIL_REPLY_TO`           | Reply-To address for invite emails. Boot-optional; falls back to `EMAIL_FROM`.                                               |
+| `UPSTASH_REDIS_REST_URL`   | Upstash Redis REST URL for rate limiting (no-op when unset).                                                                 |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token.                                                                                                    |
+| `NEXT_PUBLIC_SENTRY_DSN`   | Sentry DSN. Monitoring is no-op when unset.                                                                                  |
+| `SENTRY_AUTH_TOKEN`        | Sentry auth token for source-map upload at build time.                                                                       |
+| `SENTRY_ORG`               | Sentry org slug (source-map upload).                                                                                         |
+| `SENTRY_PROJECT`           | Sentry project slug (source-map upload).                                                                                     |
+| `SKIP_ENV_VALIDATION`      | Set to `1` to bypass Zod env validation. Used by CI + local builds.                                                          |
