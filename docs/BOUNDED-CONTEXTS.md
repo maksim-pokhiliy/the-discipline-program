@@ -80,7 +80,7 @@ The rest of this document describes each context in detail: what it owns, which 
 
 - **Email is unique.** `User.email @unique`.
 - **One user may have at most one `AthleteProfile` and at most one `CoachProfile`.** Enforced by `@unique` on `userId` in both profile tables. This is a cross-context invariant — the profiles themselves live in LMS (athlete) and Coaching (coach). IAM owns the uniqueness guarantee because the profiles key off `User.id`.
-- **Soft-deleted users should not authenticate.** Enforced by the soft-delete extension in `packages/api-server/src/db/client.ts` on `findUnique` / `findFirst`. Note: the extension does not cover `count` / `update` / `aggregate`, so the guarantee is incomplete (see ADR 0019).
+- **Soft-deleted users should not authenticate.** Enforced by the soft-delete extension in `packages/api-server/src/db/client.ts` on every read path (`findMany`, `findFirst`, `findFirstOrThrow`, `findUnique`, `findUniqueOrThrow`, `count`, `aggregate`, `groupBy`). The remaining gap is `update` / `updateMany` / `upsert` — those are intentionally unfiltered as the restoration path; see ADR 0009 for the authoritative coverage spec.
 - **Cannot remove the last admin.** Application-level check in `iamUserAdminApi.updateRole` — there is no DB constraint behind it. This is a rare case where the invariant cannot be expressed in SQL and must live in the service layer.
 
 ### Where it lives today

@@ -1,12 +1,13 @@
 # 0004. NextAuth v4 with credentials provider
 
-- **Status:** Accepted
+- **Status:** Accepted (with known gaps — see Consequences)
 - **Date:** 2026-04-10
+- **Last revised:** 2026-05-02 (Consequences updated to reflect role-aware wrappers and IAM strict-actor guard; see Revision history)
 - **Tags:** `auth`, `security`, `session`
 
 ## Context
 
-The project has three role types — ADMIN, COACH, USER (athlete) — and three apps that need authenticated sessions: `admin` (desktop back-office), `platform` (mobile-first coach/athlete app), and `marketing` (public, no auth). Requirements for the auth layer:
+The project has four role types — `ATHLETE`, `COACH`, `HEAD_COACH`, `ADMIN` (per `UserRole` enum in `packages/contracts/src/entities/iam/auth/auth.constants.ts`) — and three apps that need authenticated sessions: `admin` (desktop back-office, `ADMIN` only), `platform` (mobile-first coach / athlete app, `COACH` / `HEAD_COACH` / `ATHLETE`), and `marketing` (public, no auth). Requirements for the auth layer:
 
 1. **Email + password login.** At launch, no OAuth. Coaches and athletes are onboarded through direct signup or coach invitation, not through Google/GitHub.
 2. **Session-bound API calls from the same browser.** A cookie-based session that the Next.js route handlers can read on the server.
@@ -48,13 +49,13 @@ Passwords are hashed with `bcryptjs` at salt rounds = 10. The JWT callback refre
 - JWT sessions are stateless: zero database reads to validate a session cookie. Serverless-friendly.
 - The JWT callback still calls `service.getUserById(token.id)` on every refresh, so a deleted user invalidates the session at the next cookie refresh. We pay a DB lookup for the freshness guarantee, but not on every single request — only on JWT refresh.
 - Credentials-only login keeps the surface area small. No OAuth consent screens, no external provider keys, no "sign in with Google but also have an account" ambiguity.
-- `withAdminAuth` and `withPlatformAuth` wrappers in `@repo/api-routes` bind the session check to the handler factory layer, so forgetting to auth a route requires deliberate effort.
+- The role-aware wrappers in `@repo/api-routes` (`withAdminAuth`, `withCoachAuth`, `withAthleteAuth`, `withAuthenticated`) bind both the session check and the role allow-list to the handler factory layer, so forgetting to auth or misclassifying a route requires deliberate effort.
 
 **Negative:**
 
-- **`withPlatformAuth` does not check role**, only session presence. Any authenticated user — athlete, coach, admin — can call any `/api/platform/*` endpoint. Role enforcement is delegated to manual guards inside each endpoint (`verifyAthleteBelongsToCoach`, `verifyPlanOwnership`, etc.). This is an "open door + manual bouncer" pattern, and a forgotten guard is a data leak. Flagged as a security gap; a policy layer is the long-term fix.
-- **`MIN_PASSWORD_LENGTH = 6`** is weak by 2026 standards (NIST recommends ≥ 8, OWASP ≥ 12). Flagged as a known security gap.
-- **`SESSION_MAX_AGE = 30 * 24 * 60 * 60`** (30 days) with JWT means a leaked token is valid for a month. There is no revocation path for an in-flight JWT short of rotating `NEXTAUTH_SECRET` (which logs out everyone). Access token / refresh token split is the standard mitigation; we do not have it.
+- **Role enforcement now lives at the wrapper layer.** `createAuthWrappers` (in `packages/api-routes/src/auth-wrappers.ts:64-69`) emits `withAdminAuth` (`ADMIN | HEAD_COACH`), `withCoachAuth` (`COACH | HEAD_COACH | ADMIN`), `withAthleteAuth` (`ATHLETE | COACH | HEAD_COACH`), and `withAuthenticated` (any authenticated role) — each composed by `buildWrapper(authOptions, allowed)` and gated by `isRoleAllowed(role, allowed)`. Per-resource ownership guards (`verifyPlanOwnership`, `verifyAthleteBelongsToCoach`, `resolveCoachId`) still live in the endpoints — those are the second hop, not the first. For IAM mutations that must reject HEAD_COACH because the role allow-list of `withAdminAuth` is intentionally broader, `requireAdminStrict` (in `packages/api-server/src/authz/guards.ts:29-38`) tightens to `role === ADMIN` exactly; it is invoked at the top of `iamUserAdminApi.updateUser`, `updateRole`, and `deleteUser` (committed in `f3a13709`). The remaining gap is the absence of a declarative policy layer (CASL / oso / OPA) — the wrappers cover entry-level role gating, but cross-resource policies are still hand-coded.
+- **Password floor — `MIN_PASSWORD_LENGTH = 12`**, tightened from the original `6` to meet OWASP's 12-character recommendation. Per-email login rate-limiting and MFA remain deferred (ADR 0018).
+- **Session window — `SESSION_MAX_AGE = 7 * 24 * 60 * 60`** (7 days, tightened from the original 30 days). Per-user revocation now exists via the `tokenVersion` JWT claim (see ADR 0012) — bumped on logout, role change, soft-delete, and invite acceptance — so a leaked JWT can be invalidated for that user without rotating `NEXTAUTH_SECRET`. Access-token / refresh-token split, per-cookie JTI revocation, and a standalone admin "revoke session" endpoint remain deferred.
 - **Timing attack on user enumeration.** `validateUser` returns `null` immediately if the user does not exist, without running `bcrypt.compare`. Existing vs non-existing users have distinguishable response times. Flagged as a known security gap.
 - **Two NextAuth instances** (admin and platform apps each build their own `authOptions` and mount their own `/api/auth/[...nextauth]/route.ts`). See ADR 0011 for the separate decision on why this is acceptable.
 - **Credentials-only means no OAuth recovery path.** A forgotten password requires an email reset flow, which does not exist yet.
@@ -85,8 +86,14 @@ Passwords are hashed with `bcryptjs` at salt rounds = 10. The JWT callback refre
 
 - `packages/auth/src/auth-options.ts` — the config factory and `AuthServiceAdapter` port.
 - `packages/auth/src/providers/session-guard.tsx` — client-side session enforcement.
-- `packages/api-routes/src/auth-wrappers.ts` — `withAdminAuth` and `withPlatformAuth`.
-- `packages/api-server/src/services/auth.ts` — the adapter implementation.
+- `packages/api-routes/src/auth-wrappers.ts` — `createAuthWrappers` factory + role-aware wrappers (`withAdminAuth`, `withCoachAuth`, `withAthleteAuth`, `withAuthenticated`).
+- `packages/api-server/src/authz/guards.ts` — `requireAdminStrict` (strict `role === ADMIN` actor guard for IAM mutations), `requireAdmin` (admin-or-head-coach), `requireCoachLikeRole`, `verifyPlanOwnership`, `verifyAthleteBelongsToCoach`, `resolveCoachId`.
+- `packages/api-server/src/endpoints/iam/auth-service.ts` — the adapter implementation (`iamAuthService`), exposing `validateUser`, `getUserById`, `incrementTokenVersion`.
 - ADR 0011 — two independent NextAuth instances.
-- ADR 0012 — JWT session strategy with 30-day max age.
-- ADR 0018 — security deferred decisions (password policy, role-check policy layer, timing-attack mitigation).
+- ADR 0012 — JWT session strategy.
+- ADR 0018 — security deferred decisions (declarative authz policy layer, timing-attack mitigation, password-policy upgrade rationale).
+
+## Revision history
+
+- **2026-05-02** — Consequences and References updated to match current code. The Negative bullet about `withPlatformAuth` not checking role was rewritten because role-aware wrappers landed in `packages/api-routes/src/auth-wrappers.ts` (no `withPlatformAuth` symbol exists; the four exported wrappers are `withAdminAuth`, `withCoachAuth`, `withAthleteAuth`, `withAuthenticated`, all role-gated via `isRoleAllowed`). Added a pointer to `requireAdminStrict` (commit `f3a13709`), the actor-role guard now invoked at the top of `iamUserAdminApi.updateUser`, `updateRole`, and `deleteUser` to reject HEAD_COACH for IAM mutations. References repointed at the canonical files (`endpoints/iam/auth-service.ts`, `authz/guards.ts`). Context updated to four-role `UserRole` enum (was "three role types"). Negative bullets for `MIN_PASSWORD_LENGTH` (6 → 12) and `SESSION_MAX_AGE` (30d → 7d) updated to current values; the original-value framing moved into a short historical note.
+- **2026-04-10** — original draft.

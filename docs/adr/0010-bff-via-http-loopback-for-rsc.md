@@ -68,7 +68,7 @@ const HomePage = async () => {
 - Single code path for server and client. Every data fetch goes through the same route handler, the same validation, the same auth.
 - Session propagation is automatic via cookies. No threading session IDs through server component props.
 - Debugging is easier: an issue with a server component fetch shows up in the same HTTP request logs as a browser fetch. One place to look.
-- Auth wrappers in `@repo/api-routes` (`withAdminAuth`, `withPlatformAuth`) run on the loopback path. Adding a security check at the route level covers both the browser and server component call paths.
+- Auth wrappers in `@repo/api-routes` (`withAdminAuth`, `withCoachAuth`, `withAthleteAuth`, `withAuthenticated`) run on the loopback path. Adding a security check at the route level covers both the browser and server component call paths.
 - The `@repo/api-client` is genuinely shared between browser and server. Small package, one implementation.
 
 **Negative:**
