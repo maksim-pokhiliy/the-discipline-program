@@ -470,6 +470,7 @@ model Block {
   blockSessions BlockSession[]
 
   @@index([sessionId, order])
+  @@index([kindId])
   @@map("lms_blocks")
 }
 
@@ -488,6 +489,7 @@ model BlockSegment {
   setGroups        SetGroup[]
 
   @@index([blockId, order])
+  @@index([schemeTemplateId])
   @@map("lms_block_segments")
 }
 
@@ -542,6 +544,7 @@ model BlockKind {
 
   @@unique([scope, ownerId, name])
   @@index([scope, ownerId])
+  @@index([deletedAt])
   @@map("lms_block_kinds")
 }
 
@@ -562,6 +565,7 @@ model SchemeTemplate {
 
   @@unique([scope, ownerId, name])
   @@index([scope, ownerId])
+  @@index([deletedAt])
   @@map("lms_scheme_templates")
 }
 
@@ -580,6 +584,7 @@ model BlockTemplate {
 
   @@unique([scope, ownerId, name])
   @@index([scope, ownerId])
+  @@index([deletedAt])
   @@map("lms_block_templates")
 }
 
@@ -598,6 +603,7 @@ model SessionTemplate {
 
   @@unique([scope, ownerId, name])
   @@index([scope, ownerId])
+  @@index([deletedAt])
   @@map("lms_session_templates")
 }
 
@@ -616,6 +622,7 @@ model WeekTemplate {
 
   @@unique([scope, ownerId, name])
   @@index([scope, ownerId])
+  @@index([deletedAt])
   @@map("lms_week_templates")
 }
 
@@ -658,6 +665,9 @@ model ExerciseLibraryItem {
   @@index([primaryMovement])
   @@index([modality])
   @@index([isBenchmark])
+  @@index([parentId])
+  @@index([supersedesId])
+  @@index([deletedAt])
   @@map("lms_exercise_library")
 }
 
@@ -743,6 +753,7 @@ model BlockSession {
   exerciseLogs         ExerciseLog[]
 
   @@index([workoutSessionId, order])
+  @@index([sourceBlockId])
   @@map("lms_block_sessions")
 }
 
@@ -1027,5 +1038,6 @@ model UserInviteToken {
 
   @@index([userId, consumedAt])
   @@index([expiresAt])
+  @@index([createdByAdminId])
   @@map("app_user_invite_tokens")
 }
