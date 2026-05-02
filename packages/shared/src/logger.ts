@@ -139,17 +139,20 @@ const redact = (value: unknown, visited: WeakSet<object>): unknown => {
   return result;
 };
 
-const redactPii = (data: LogData | undefined): LogData | undefined => {
-  if (!data) {
-    return data;
+export function redactPii<T extends Record<string, unknown>>(value: T): T;
+export function redactPii<T extends Record<string, unknown>>(value: T | undefined): T | undefined;
+export function redactPii(value: unknown): unknown;
+export function redactPii(value: unknown): unknown {
+  if (value === null || value === undefined || typeof value !== "object") {
+    return value;
   }
 
-  if (!hasSensitiveField(data, new WeakSet<object>())) {
-    return data;
+  if (!hasSensitiveField(value, new WeakSet<object>())) {
+    return value;
   }
 
-  return redact(data, new WeakSet<object>()) as LogData;
-};
+  return redact(value, new WeakSet<object>());
+}
 
 const createLogEntry = (
   level: LogLevel,

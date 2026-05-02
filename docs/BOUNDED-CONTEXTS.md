@@ -362,7 +362,7 @@ Shared authz guards (`resolveCoachId`, `verifyAthleteBelongsToCoach`, `verifyPla
 
 - **Singleton subscription per user.** `Subscription.userId @unique` — enforced at the DB. See ADR 0008 for the full reasoning.
 - **Provider transaction ID is unique.** `Transaction.providerTxId @unique` — the payment provider's native idempotency. This is enforced at the DB.
-- **Idempotency key is unique (when present).** `Transaction.idempotencyKey @unique` — partial idempotency for API-level retries. Audit section 3 flagged that this column is currently nullable and should be `NOT NULL` before any transaction write code is shipped.
+- **Idempotency key is unique.** `Transaction.idempotencyKey @unique` and `NOT NULL` — required idempotency for API-level retries. Enforced at the DB.
 - **Price active flag independent of product.** `Price.isActive` vs `Product.isActive` are independent booleans. A product can be marketed but its prices deprecated, or vice versa. Currently there is no coordination logic for this.
 - **Subscription references a specific price.** `Subscription.priceId → Price.id` with `onDelete: Restrict`. You cannot delete a price that an active subscription points at.
 - **Transaction → subscription is optional.** `Transaction.subscriptionId` is nullable (`onDelete: SetNull`). Preserves transaction history even if a subscription is removed, though subscription rows should never be hard-deleted in practice.
@@ -392,7 +392,6 @@ Create the missing pieces top-down:
 2. **Add missing billing contracts.** `billing/price/`, `billing/subscription/`, `billing/transaction/`.
 3. **Add `endpoints/billing/`**, initially empty, with a README placeholder describing the target shape (`subscription/`, `transaction/`, `webhook/`).
 4. **Add `endpoints/billing/webhook/stripe.ts`** when Stripe goes in — with signature verification, idempotency via `providerTxId`, and transactional enrollment creation.
-5. **Tighten `Transaction.idempotencyKey` to `NOT NULL`** before any code is written against it (audit section 3).
 
 Until steps 1–3 are done, `endpoints/billing/` stays empty and acts as a placeholder reminding contributors that Billing is a recognized context.
 
@@ -524,22 +523,22 @@ A few invariants span contexts. They do not belong to any single context and are
 
 These invariants are guaranteed by database constraints (`@@unique`, `@unique`, `onDelete`). They do not require application-level guards.
 
-| Aggregate            | Invariant                                        | Constraint                                  | Location            |
-| -------------------- | ------------------------------------------------ | ------------------------------------------- | ------------------- |
-| User                 | One user per email                               | `email @unique`                             | `schema.prisma:12`  |
-| Subscription         | One subscription per user (singleton)            | `userId @unique`                            | `schema.prisma:180` |
-| WorkoutLog           | One log per user+workout pair                    | `@@unique([userId, workoutId])`             | `schema.prisma:288` |
-| PlanEnrollment       | One enrollment per plan+user pair                | `@@unique([trainingPlanId, userId])`        | `schema.prisma:390` |
-| UserBenchmark        | One benchmark per user+definition pair           | `@@unique([userId, benchmarkDefinitionId])` | `schema.prisma:421` |
-| MarketingPageSection | One section per page+section-name pair           | `@@unique([pageSlug, section])`             | `schema.prisma:449` |
-| Product              | One product per slug                             | `slug @unique`                              | `schema.prisma:129` |
-| Product              | One product per Stripe product ID                | `stripeProductId @unique`                   | `schema.prisma:135` |
-| Price                | One price per Stripe price ID                    | `stripePriceId @unique`                     | `schema.prisma:158` |
-| Transaction          | One transaction per provider TX ID               | `providerTxId @unique`                      | `schema.prisma:208` |
-| Transaction          | One transaction per idempotency key (if present) | `idempotencyKey @unique` (nullable)         | `schema.prisma:209` |
-| BenchmarkDefinition  | One definition per name                          | `name @unique`                              | `schema.prisma:400` |
-| MarketingBlogPost    | One post per slug                                | `slug @unique`                              | `schema.prisma:456` |
-| MarketingPage        | One page per slug                                | `slug @unique`                              | `schema.prisma:429` |
+| Aggregate            | Invariant                              | Constraint                                  | Location            |
+| -------------------- | -------------------------------------- | ------------------------------------------- | ------------------- |
+| User                 | One user per email                     | `email @unique`                             | `schema.prisma:12`  |
+| Subscription         | One subscription per user (singleton)  | `userId @unique`                            | `schema.prisma:180` |
+| WorkoutLog           | One log per user+workout pair          | `@@unique([userId, workoutId])`             | `schema.prisma:288` |
+| PlanEnrollment       | One enrollment per plan+user pair      | `@@unique([trainingPlanId, userId])`        | `schema.prisma:390` |
+| UserBenchmark        | One benchmark per user+definition pair | `@@unique([userId, benchmarkDefinitionId])` | `schema.prisma:421` |
+| MarketingPageSection | One section per page+section-name pair | `@@unique([pageSlug, section])`             | `schema.prisma:449` |
+| Product              | One product per slug                   | `slug @unique`                              | `schema.prisma:129` |
+| Product              | One product per Stripe product ID      | `stripeProductId @unique`                   | `schema.prisma:135` |
+| Price                | One price per Stripe price ID          | `stripePriceId @unique`                     | `schema.prisma:158` |
+| Transaction          | One transaction per provider TX ID     | `providerTxId @unique`                      | `schema.prisma:208` |
+| Transaction          | One transaction per idempotency key    | `idempotencyKey @unique`                    | `schema.prisma:209` |
+| BenchmarkDefinition  | One definition per name                | `name @unique`                              | `schema.prisma:400` |
+| MarketingBlogPost    | One post per slug                      | `slug @unique`                              | `schema.prisma:456` |
+| MarketingPage        | One page per slug                      | `slug @unique`                              | `schema.prisma:429` |
 
 ### Application-level invariants (not DB-enforced)
 

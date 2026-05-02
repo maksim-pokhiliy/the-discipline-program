@@ -17,7 +17,7 @@ The auth wrappers are the default-deny mechanism: routes must be wrapped to opt-
 ```
 src/
   index.ts              Barrel — handler factories + helpers
-  auth-wrappers.ts      withSession / withRole / public wrappers (NextAuth glue)
+  auth-wrappers.ts      withAdminAuth / withCoachAuth / withAthleteAuth / withAuthenticated (built by createAuthWrappers; role-aware NextAuth glue)
   csp.ts                Per-request CSP nonce + header builder
   types.ts              Shared route-handler types
   <other>.ts            Rate-limit helpers, validation glue, error mappers
@@ -31,6 +31,6 @@ src/
 
 ## Related ADRs
 
-- [ADR 0017 — anemic-domain handler shape](../../docs/adr/0017-anemic-domain-handler-shape.md)
+- [ADR 0017 — Anemic domain model acceptable pre-product](../../docs/adr/0017-anemic-domain-model-acceptable-pre-product.md)
 - [ADR 0020 — API design decisions](../../docs/adr/0020-api-design-decisions.md) (pagination, error shape)
 - [ADR 0036 — Idempotency-Key on mutation endpoints](../../docs/adr/0036-idempotency-key-on-mutation-endpoints.md) (default-on factory wrapper)

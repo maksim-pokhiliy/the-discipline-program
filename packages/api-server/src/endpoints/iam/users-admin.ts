@@ -9,6 +9,7 @@ import {
 } from "@repo/contracts/iam/user";
 import { BadRequestError, ConflictError, ForbiddenError, TooManyRequestsError } from "@repo/errors";
 
+import { requireAdminStrict } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { type TxClient } from "../../db/tx";
 import { mapToAdminUserListItem, mapToUser, ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
@@ -171,6 +172,8 @@ export const iamUserAdminApi = {
   },
 
   updateUser: async (actorId: string, id: string, data: UpdateUserData): Promise<User> => {
+    await requireAdminStrict(actorId);
+
     const existing = await findOrThrow(prisma.user.findUnique({ where: { id } }), "User");
 
     const currentRole = ROLE_MAP[existing.role];
@@ -250,6 +253,8 @@ export const iamUserAdminApi = {
   },
 
   updateRole: async (actorId: string, id: string, data: UpdateUserRoleData): Promise<User> => {
+    await requireAdminStrict(actorId);
+
     const existing = await findOrThrow(prisma.user.findUnique({ where: { id } }), "User");
 
     const currentRole = ROLE_MAP[existing.role];
@@ -296,6 +301,8 @@ export const iamUserAdminApi = {
   },
 
   deleteUser: async (actorId: string, id: string): Promise<void> => {
+    await requireAdminStrict(actorId);
+
     const existing = await findOrThrow(prisma.user.findUnique({ where: { id } }), "User");
 
     if (actorId === id) {

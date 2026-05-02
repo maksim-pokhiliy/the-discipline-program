@@ -21,7 +21,7 @@ src/
 ## Conventions
 
 - Cache keys are an array per entity: `[context, entity, scope, ...filters]`. Invalidation uses prefix matches.
-- Mutation `onError` callbacks chain through `extractValidationMessage` from the project's infrastructure helper before falling back to `error.message` (memory: validation message helper).
+- Mutation `onError` callbacks chain through `notifyError` (and/or `getIssues`) from `@repo/query` (`src/hooks/notify-error.ts`) before falling back to `error.message`.
 - Toast surfacing routes through `sonner` (declared as a peer dependency).
 - Tests live next to the hook (`*.test.ts`), use `@testing-library/react` + `jsdom`.
 

@@ -183,17 +183,19 @@ export const cmsBlogAdminApi = {
   },
 
   toggleBlogPostFeatured: async (id: string): Promise<BlogPost> =>
-    toggleExclusiveFeatured({
-      find: () => prisma.marketingBlogPost.findUnique({ where: { id } }),
-      unfeatureOthers: () =>
-        prisma.marketingBlogPost.updateMany({
-          where: { isFeatured: true, id: { not: id } },
-          data: { isFeatured: false },
-        }),
-      update: (isFeatured) =>
-        prisma.marketingBlogPost.update({ where: { id }, data: { isFeatured } }),
-      map: mapToBlogPost,
-      entityName: "Blog post",
-      id,
-    }),
+    prisma.$transaction((tx) =>
+      toggleExclusiveFeatured({
+        find: () => tx.marketingBlogPost.findUnique({ where: { id } }),
+        unfeatureOthers: () =>
+          tx.marketingBlogPost.updateMany({
+            where: { isFeatured: true, id: { not: id } },
+            data: { isFeatured: false },
+          }),
+        update: (isFeatured) =>
+          tx.marketingBlogPost.update({ where: { id }, data: { isFeatured } }),
+        map: mapToBlogPost,
+        entityName: "Blog post",
+        id,
+      }),
+    ),
 };

@@ -48,7 +48,7 @@ Modules: `home`, `blog`, `blog-article`, `contact`, `faq`, `about`, `storefront`
 ## Related ADRs
 
 - [ADR 0010 — BFF via HTTP loopback for RSC](../../docs/adr/0010-bff-via-http-loopback-for-rsc.md)
-- [ADR 0017 — anemic-domain handler shape](../../docs/adr/0017-anemic-domain-handler-shape.md)
+- [ADR 0017 — Anemic domain model acceptable pre-product](../../docs/adr/0017-anemic-domain-model-acceptable-pre-product.md)
 - [ADR 0020 — API design decisions](../../docs/adr/0020-api-design-decisions.md) (pagination, error shape)
 
 See the root [README](../../README.md) for the full architecture overview.

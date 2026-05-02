@@ -22,7 +22,7 @@ src/
 
 - Domain code throws `AppError` subclasses; the route handler boundary catches and maps them to `{ error: { code, message, details? } }` per [ADR 0020](../../docs/adr/0020-api-design-decisions.md).
 - The API client decodes the wire shape back into the same classes so consumers `instanceof`-check the same way on both sides.
-- Validation messages destined for users go through the project's infrastructure `extractValidationMessage` helper (memory: validation message helper).
+- Validation messages destined for users go through `notifyError` / `getIssues` from `@repo/query` (`packages/query/src/hooks/notify-error.ts`), which normalizes the `{ error: { details: { issues } } }` shape before falling back to `error.message`.
 
 ## Related ADRs
 

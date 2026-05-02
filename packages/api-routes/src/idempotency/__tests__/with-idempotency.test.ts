@@ -163,10 +163,42 @@ describe("MT-5: concurrent miss — race resolved via persist returning raced", 
   });
 });
 
-describe("MT-6: persist race + raced row has different fingerprint (REL-003 hardening, future)", () => {
-  it.todo(
-    'MT-6 / QA-007 — persist returning {status:"persisted"} on different-fingerprint race silently swallows the mismatch; harden by throwing ConflictError',
-  );
+describe("MT-6: persist race + raced row has different fingerprint (REL-003)", () => {
+  it("MT-6 / QA-007 — store rethrows ConflictError on different-fingerprint race; wrapper bubbles it instead of returning a live response", async () => {
+    installStore();
+    lookupMock.mockResolvedValue({ kind: "miss" });
+    persistMock.mockRejectedValue(
+      new ConflictError("Idempotency-Key reuse with different request body", {
+        keyHash: KEY_HASH,
+      }),
+    );
+
+    const inner: RouteHandler = vi.fn(async () => new Response('{"id":"local"}', { status: 201 }));
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
+
+    let captured: unknown;
+
+    try {
+      await wrapped(
+        buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
+        dummyContext(),
+      );
+    } catch (error) {
+      captured = error;
+    }
+
+    expect(captured).toBeInstanceOf(ConflictError);
+
+    if (!(captured instanceof ConflictError)) {
+      throw captured;
+    }
+
+    expect(captured.statusCode).toBe(409);
+    expect(captured.message).toBe("Idempotency-Key reuse with different request body");
+    expect(captured.details?.keyHash).toBe(KEY_HASH);
+    expect(inner).toHaveBeenCalledOnce();
+    expect(captureExceptionMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("MT-7: throw inside inner does not call persist", () => {

@@ -64,23 +64,40 @@ const transitionPlanStatus = async (
 ): Promise<TrainingPlan> => {
   await verifyPlanOwnership(id, userId);
 
-  const plan = await findOrThrow(
-    prisma.trainingPlan.findUnique({ where: { id }, select: { status: true } }),
-    "Training plan",
-  );
-
-  if (TRAINING_PLAN_STATUS_MAP[plan.status] !== expectedCurrentStatus) {
-    throw new ConflictError(errorMessage);
-  }
-
   try {
-    const updated = await prisma.trainingPlan.update({
-      where: { id },
+    const result = await prisma.trainingPlan.updateMany({
+      where: { id, status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[expectedCurrentStatus] },
       data: { status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[targetStatus] },
     });
 
-    return mapToTrainingPlan(updated);
+    if (result.count === 0) {
+      const current = await prisma.trainingPlan.findUnique({
+        where: { id },
+        select: { status: true },
+      });
+
+      if (!current) {
+        throw new NotFoundError("Training plan not found", { id });
+      }
+
+      throw new ConflictError(errorMessage, {
+        id,
+        currentStatus: TRAINING_PLAN_STATUS_MAP[current.status],
+        expectedStatus: expectedCurrentStatus,
+      });
+    }
+
+    const plan = await findOrThrow(
+      prisma.trainingPlan.findUnique({ where: { id } }),
+      "Training plan",
+    );
+
+    return mapToTrainingPlan(plan);
   } catch (error) {
+    if (error instanceof ConflictError || error instanceof NotFoundError) {
+      throw error;
+    }
+
     return handlePrismaError(error, { entity: "Training plan" });
   }
 };
