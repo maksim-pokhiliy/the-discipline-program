@@ -3,47 +3,9 @@ import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
 import { AppError, ERROR_CODES } from "@repo/errors";
-import { logger } from "@repo/shared";
+import { logger, redactPii } from "@repo/shared";
 
 import { getMonitoring } from "./monitoring";
-
-const REDACTED_KEYS = new Set([
-  "password",
-  "token",
-  "secret",
-  "authorization",
-  "cookie",
-  "creditcard",
-  "ssn",
-]);
-
-const redactSensitiveFields = (obj: unknown, visited = new WeakSet<object>()): unknown => {
-  if (obj === null || obj === undefined || typeof obj !== "object") {
-    return obj;
-  }
-
-  if (visited.has(obj)) {
-    return "[Circular]";
-  }
-
-  visited.add(obj);
-
-  if (Array.isArray(obj)) {
-    return obj.map((item) => redactSensitiveFields(item, visited));
-  }
-
-  const result: Record<string, unknown> = {};
-
-  for (const [key, value] of Object.entries(obj)) {
-    if (REDACTED_KEYS.has(key.toLowerCase())) {
-      result[key] = "[REDACTED]";
-    } else {
-      result[key] = redactSensitiveFields(value, visited);
-    }
-  }
-
-  return result;
-};
 
 const buildHeaders = (requestId: string | undefined): Headers | undefined =>
   requestId ? new Headers({ "x-request-id": requestId }) : undefined;
@@ -53,7 +15,7 @@ const summarizeError = (error: unknown): Record<string, unknown> => {
     return {
       message: error.message,
       code: error.code,
-      details: redactSensitiveFields(error.details),
+      details: redactPii(error.details),
     };
   }
 
@@ -103,9 +65,7 @@ const appErrorResponse = (error: AppError, requestId: string | undefined): NextR
     headers.set("Retry-After", String(error.details.retryAfter));
   }
 
-  const redactedDetails = error.details
-    ? (redactSensitiveFields(error.details) as Record<string, unknown>)
-    : undefined;
+  const redactedDetails = error.details ? redactPii(error.details) : undefined;
 
   return NextResponse.json(
     {

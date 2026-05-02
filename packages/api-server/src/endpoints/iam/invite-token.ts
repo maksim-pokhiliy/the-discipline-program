@@ -137,13 +137,13 @@ export const iamInviteTokenApi = {
       });
 
       if (consumed.count === 0) {
-        return throwGenericGone("NOT_FOUND", { tokenHash });
+        return throwGenericGone("NOT_FOUND", { tokenHashPrefix: tokenHash.slice(0, 12) });
       }
 
       const row = await tx.userInviteToken.findUnique({ where: { tokenHash } });
 
       if (!row) {
-        return throwGenericGone("NOT_FOUND", { tokenHash });
+        return throwGenericGone("NOT_FOUND", { tokenHashPrefix: tokenHash.slice(0, 12) });
       }
 
       const user = await tx.user.findUnique({ where: { id: row.userId } });
