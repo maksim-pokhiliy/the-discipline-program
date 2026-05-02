@@ -5,8 +5,8 @@ import { resolveCoachId, verifyAthleteBelongsToCoach } from "../../../authz/guar
 import { prisma } from "../../../db/client";
 import { ROLE_MAP } from "../../../mappers/iam";
 import { findOrThrow } from "../../../utils";
-import { resolveInviteEmailConfig } from "../../iam/send-invitation-email";
-import { iamUserCreationApi } from "../../iam/user-creation";
+import { iamInviteTokenApi } from "../../iam/invite-token";
+import { resolveInviteEmailConfig, sendInvitationEmail } from "../../iam/send-invitation-email";
 
 const MS_PER_HOUR = 3_600_000;
 const MAX_RESENDS_PER_DAY = 3;
@@ -43,18 +43,33 @@ export const resend = async (
 
   resolveInviteEmailConfig();
 
-  const since = new Date(Date.now() - 24 * MS_PER_HOUR);
-  const recentTokenCount = await prisma.userInviteToken.count({
-    where: { userId: invitee.id, createdAt: { gte: since } },
+  const { plainToken, expiresAt } = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`resend:${invitee.id}`}))`;
+
+    const since = new Date(Date.now() - 24 * MS_PER_HOUR);
+    const recentTokenCount = await tx.userInviteToken.count({
+      where: { userId: invitee.id, createdAt: { gte: since } },
+    });
+
+    if (recentTokenCount >= MAX_RESENDS_PER_DAY) {
+      throw new TooManyRequestsError("Too many resends in 24 hours");
+    }
+
+    return iamInviteTokenApi.issueInTx(tx, {
+      userId: invitee.id,
+      createdByAdminId: userId,
+    });
   });
 
-  if (recentTokenCount >= MAX_RESENDS_PER_DAY) {
-    throw new TooManyRequestsError("Too many resends in 24 hours");
-  }
+  const expiresInHours = Math.max(1, Math.round((expiresAt.getTime() - Date.now()) / MS_PER_HOUR));
 
-  return iamUserCreationApi.issueInviteAndSendEmail(userId, {
-    id: invitee.id,
-    email: invitee.email,
-    name: invitee.name,
+  await sendInvitationEmail({
+    userId: invitee.id,
+    recipientEmail: invitee.email,
+    recipientName: invitee.name,
+    plainToken,
+    expiresInHours,
   });
+
+  return { expiresAt };
 };

@@ -1,3 +1,5 @@
+import crypto from "node:crypto";
+
 import { Prisma } from "@prisma/client";
 
 import type {
@@ -6,9 +8,15 @@ import type {
   IdempotencyPersistResult,
   IdempotencyStorePort,
 } from "@repo/api-routes";
+import { ConflictError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 import { prisma, type ExtendedPrismaClient } from "../db/client";
+
+const KEY_HASH_LENGTH = 12;
+
+const hashKey = (key: string): string =>
+  crypto.createHash("sha256").update(key).digest("hex").slice(0, KEY_HASH_LENGTH);
 
 const isP2002 = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
@@ -106,14 +114,18 @@ const persist =
         where: { key_scope_route: { key, scope, route } },
       });
 
-      if (
-        !raced ||
-        raced.requestFingerprint !== requestFingerprint ||
-        raced.expiresAt.getTime() <= Date.now()
-      ) {
+      if (!raced || raced.expiresAt.getTime() <= Date.now()) {
         logger.warn("idempotency.persist_race_unrecoverable", { route });
 
         return { status: "persisted" };
+      }
+
+      if (raced.requestFingerprint !== requestFingerprint) {
+        logger.warn("idempotency.persist_race_mismatch", { route });
+
+        throw new ConflictError("Idempotency-Key reuse with different request body", {
+          keyHash: hashKey(key),
+        });
       }
 
       return { status: "raced", cached: recordToCachedResponse(raced) };

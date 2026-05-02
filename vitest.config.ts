@@ -4,6 +4,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     projects: [
+      "packages/api-client",
       "packages/api-server",
       "packages/api-routes",
       "packages/auth",

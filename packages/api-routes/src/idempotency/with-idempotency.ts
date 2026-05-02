@@ -1,4 +1,4 @@
-import { BadRequestError, ConflictError } from "@repo/errors";
+import { AppError, BadRequestError, ConflictError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 import { getMonitoring } from "../monitoring";
@@ -243,6 +243,10 @@ const persistAndFinalize = async (
       return replayResponse(persistResult.cached);
     }
   } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+
     getMonitoring()?.captureException(error, {
       tags: { component: "idempotency-store" },
       level: "warning",
