@@ -17,6 +17,7 @@ import {
   PR_KIND_TO_PRISMA_MAP,
 } from "../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../utils";
+import { DEFAULT_LIST_LIMIT } from "../../utils/list-limits";
 
 const ensureCanReadOrWriteForUser = (
   role: UserRole,
@@ -48,12 +49,18 @@ export const lmsBenchmarkApi = {
       ...(query.kind ? { kind: PR_KIND_TO_PRISMA_MAP[query.kind] } : {}),
     };
 
-    const items = await prisma.benchmark.findMany({
-      where,
-      orderBy: { setAt: "desc" },
-    });
+    const take = query.take ?? DEFAULT_LIST_LIMIT;
 
-    return { items: items.map(mapToBenchmark), total: items.length };
+    const [total, items] = await prisma.$transaction([
+      prisma.benchmark.count({ where }),
+      prisma.benchmark.findMany({
+        where,
+        orderBy: { setAt: "desc" },
+        take,
+      }),
+    ]);
+
+    return { items: items.map(mapToBenchmark), total };
   },
 
   getById: async (userId: string, benchmarkId: string) => {

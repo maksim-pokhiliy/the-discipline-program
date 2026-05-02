@@ -13,6 +13,7 @@ import { prisma } from "../../../db/client";
 import { ROLE_MAP } from "../../../mappers/iam";
 import { LIBRARY_SCOPE_TO_PRISMA_MAP, mapToBlockTemplate } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
+import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
 import { createBlockTemplateImpl } from "./block-template-create";
 import { updateBlockTemplateImpl } from "./block-template-update";
@@ -47,13 +48,18 @@ export const lmsBlockTemplateApi = {
       ...(query.includeDeleted ? {} : { deletedAt: null }),
     };
 
-    const items = await prisma.blockTemplate.findMany({
-      where,
-      orderBy: { name: "asc" },
-      ...(query.take !== undefined && { take: query.take }),
-    });
+    const take = query.take ?? DEFAULT_LIST_LIMIT;
 
-    return { items: items.map(mapToBlockTemplate), total: items.length };
+    const [total, items] = await prisma.$transaction([
+      prisma.blockTemplate.count({ where }),
+      prisma.blockTemplate.findMany({
+        where,
+        orderBy: { name: "asc" },
+        take,
+      }),
+    ]);
+
+    return { items: items.map(mapToBlockTemplate), total };
   },
 
   getById: async (userId: string, blockTemplateId: string) => {

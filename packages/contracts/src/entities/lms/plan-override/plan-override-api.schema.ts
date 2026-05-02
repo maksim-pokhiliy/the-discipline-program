@@ -44,6 +44,7 @@ export const listPlanOverridesQuerySchema = z.object({
   enrollmentId: z.string().cuid().optional(),
   scope: PlanOverrideScopeEnum.optional(),
   scopeId: z.string().cuid().optional(),
+  take: z.coerce.number().int().min(1).max(500).optional(),
 });
 
 export const listPlanOverridesResponseSchema = z.object({

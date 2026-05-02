@@ -8,6 +8,7 @@ import { requireCoachLikeRole } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { mapToWeeklyVolume } from "../../mappers/lms";
 import { findOrThrow } from "../../utils";
+import { DEFAULT_LIST_LIMIT } from "../../utils/list-limits";
 
 export const lmsWeeklyVolumeApi = {
   list: async (userId: string, query: ListWeeklyVolumesQuery) => {
@@ -34,12 +35,18 @@ export const lmsWeeklyVolumeApi = {
         : {}),
     };
 
-    const items = await prisma.weeklyVolume.findMany({
-      where,
-      orderBy: { weekStartDate: "desc" },
-    });
+    const take = query.take ?? DEFAULT_LIST_LIMIT;
 
-    return { items: items.map(mapToWeeklyVolume), total: items.length };
+    const [total, items] = await prisma.$transaction([
+      prisma.weeklyVolume.count({ where }),
+      prisma.weeklyVolume.findMany({
+        where,
+        orderBy: { weekStartDate: "desc" },
+        take,
+      }),
+    ]);
+
+    return { items: items.map(mapToWeeklyVolume), total };
   },
 
   getById: async (userId: string, weeklyVolumeId: string) => {

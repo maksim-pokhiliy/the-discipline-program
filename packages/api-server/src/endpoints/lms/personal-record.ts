@@ -8,6 +8,7 @@ import { requireCoachLikeRole } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { mapToPersonalRecord, PR_KIND_TO_PRISMA_MAP } from "../../mappers/lms";
 import { findOrThrow } from "../../utils";
+import { DEFAULT_LIST_LIMIT } from "../../utils/list-limits";
 
 export const lmsPersonalRecordApi = {
   list: async (userId: string, query: ListPersonalRecordsQuery) => {
@@ -28,12 +29,18 @@ export const lmsPersonalRecordApi = {
       ...(query.kind ? { kind: PR_KIND_TO_PRISMA_MAP[query.kind] } : {}),
     };
 
-    const items = await prisma.personalRecord.findMany({
-      where,
-      orderBy: { achievedAt: "desc" },
-    });
+    const take = query.take ?? DEFAULT_LIST_LIMIT;
 
-    return { items: items.map(mapToPersonalRecord), total: items.length };
+    const [total, items] = await prisma.$transaction([
+      prisma.personalRecord.count({ where }),
+      prisma.personalRecord.findMany({
+        where,
+        orderBy: { achievedAt: "desc" },
+        take,
+      }),
+    ]);
+
+    return { items: items.map(mapToPersonalRecord), total };
   },
 
   getById: async (userId: string, personalRecordId: string) => {
