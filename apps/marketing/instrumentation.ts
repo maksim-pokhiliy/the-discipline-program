@@ -17,6 +17,11 @@ export const register = async () => {
     const { setRateLimiter, defaultRateLimiter } = await import("@repo/api-routes");
 
     setRateLimiter(defaultRateLimiter);
+
+    const { setIdempotencyStore } = await import("@repo/api-routes");
+    const { prismaIdempotencyStore } = await import("@repo/api-server/idempotency");
+
+    setIdempotencyStore(prismaIdempotencyStore);
   }
 
   if (process.env.NEXT_RUNTIME === "edge") {

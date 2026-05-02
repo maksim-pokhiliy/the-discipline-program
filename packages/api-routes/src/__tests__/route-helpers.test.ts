@@ -172,7 +172,7 @@ describe("createPostHandler", () => {
     const responseSchema = z.object({ id: z.string(), name: z.string() });
     const handler = createPostHandler(apiFn, requestSchema, responseSchema);
 
-    const response = await handler(buildJsonRequest({ name: "bob" }));
+    const response = await handler(buildJsonRequest({ name: "bob" }), dummyContext());
     const data = await response.json();
 
     expect(response.status).toBe(201);
@@ -190,7 +190,7 @@ describe("createPostHandler", () => {
       body: "not-json",
     });
 
-    await expect(handler(request)).rejects.toBeInstanceOf(BadRequestError);
+    await expect(handler(request, dummyContext())).rejects.toBeInstanceOf(BadRequestError);
     expect(apiFn).not.toHaveBeenCalled();
   });
 });
@@ -253,7 +253,7 @@ describe("createFormDataPostHandler", () => {
     formData.append("name", "doc.pdf");
 
     const request = new Request("https://example.com/upload", { method: "POST", body: formData });
-    const response = await handler(request);
+    const response = await handler(request, dummyContext());
     const data = await response.json();
 
     expect(response.status).toBe(201);
@@ -267,7 +267,7 @@ describe("createDeleteWithBodyHandler", () => {
     const requestSchema = z.object({ ids: z.array(z.string()) });
     const handler = createDeleteWithBodyHandler(apiFn, requestSchema);
 
-    const response = await handler(buildJsonRequest({ ids: ["a", "b"] }));
+    const response = await handler(buildJsonRequest({ ids: ["a", "b"] }), dummyContext());
 
     expect(response.status).toBe(204);
     expect(apiFn).toHaveBeenCalledWith({ ids: ["a", "b"] });
