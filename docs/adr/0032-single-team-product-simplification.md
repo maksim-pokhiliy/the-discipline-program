@@ -1,8 +1,10 @@
 # 0032. Single-team product simplification
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `domain`, `scope`, `lms`, `iam`
+
+> Status flipped from Proposed to Accepted: single-team simplification has landed and is load-bearing in the schema and the role model.
 
 ## Context
 

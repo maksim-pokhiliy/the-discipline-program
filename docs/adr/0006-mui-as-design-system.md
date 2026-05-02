@@ -80,6 +80,7 @@ Per-instance styling uses the `sx` prop with theme tokens (`p: 2`, `bgcolor: "ba
 - `packages/mui/src/theme/` — theme configuration.
 - `packages/ui/src/` — shared component library.
 - `packages/ui/src/mui-augmentations.d.ts` — theme type augmentation.
-- `apps/storybook/` — MUI component catalog (see audit section 8 for gap: should document `@repo/ui`).
+- `apps/storybook/` — MUI component catalog (gap: should also document `@repo/ui`; see ADR 0022 for the deferral).
 - `CLAUDE.md` anti-patterns section — `sx` constraints.
-- Big Tech audit, sections 8 (package hygiene), 10 (bundle, frontend) — known gaps.
+- ADR 0022 — monorepo discipline (Storybook coverage trigger).
+- ADR 0024 — frontend-performance deferred decisions (bundle/perf gaps).

@@ -23,7 +23,6 @@ src/
 ## Conventions
 
 - One theme. All apps consume the same palette + typography ramp; per-app overrides happen at the page level, not by forking the theme.
-- `framer-motion` is a dependency here only because the theme exposes a couple of motion-token helpers; UI components depending on `framer-motion` import it themselves.
 
 ## Related ADRs
 

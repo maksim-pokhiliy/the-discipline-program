@@ -7,9 +7,9 @@
 
 ## Context
 
-Section 8 of the Big Tech audit examined monorepo hygiene: package boundaries, version policy, turbo caching, test infrastructure, ESLint configuration, Storybook coverage, and dependency management. 16 original bullets + 3 new findings from exhaustive research.
+This ADR captures monorepo-hygiene decisions: package boundaries, version policy, turbo caching, test infrastructure, ESLint configuration, Storybook coverage, and dependency management. 16 original bullets + 3 follow-up findings from exhaustive research.
 
-Of these 19 items, 4 were already closed in section 1 (dependency-cruiser, api-server exports, auth peer deps, contracts in api-client), 2 turned out to be inapplicable (пшики), 10 are intentional design choices that don't warrant changes, and 3 are concrete config fixes.
+Of these 19 items, 4 were already closed by earlier work (dependency-cruiser, api-server exports, auth peer deps, contracts in api-client), 2 turned out to be inapplicable (пшики), 10 are intentional design choices that don't warrant changes, and 3 are concrete config fixes.
 
 ## Decision
 

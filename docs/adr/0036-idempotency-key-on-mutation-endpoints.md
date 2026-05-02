@@ -6,11 +6,11 @@
 
 ## Context
 
-The audit `.audit/1777554456/resilience.md` flagged REL-003: every mutation route in the codebase ran through factories in `packages/api-routes/src/route-helpers.ts` and `packages/api-routes/src/auth-factories.ts`, none of which read `Idempotency-Key`. ADR 0020 and the project manifesto both require idempotency keys on writes; the codebase relied on _accidental_ DB-level idempotency (invite-token consume, optimistic-version bulk patch, advisory-locked reconcile) for a handful of flows and on nothing for the other 110+ mutation routes.
+An earlier resilience review (REL-003) flagged that every mutation route in the codebase ran through factories in `packages/api-routes/src/route-helpers.ts` and `packages/api-routes/src/auth-factories.ts`, none of which read `Idempotency-Key`. ADR 0020 and the project manifesto both require idempotency keys on writes; the codebase relied on _accidental_ DB-level idempotency (invite-token consume, optimistic-version bulk patch, advisory-locked reconcile) for a handful of flows and on nothing for the other 110+ mutation routes.
 
 The client side (`packages/api-client/src/client.ts`) already attached `Idempotency-Key: <crypto.randomUUID()>` to every non-idempotent method as part of REL-001 hardening. The server simply ignored the header. A double-click submit, a flaky-mobile retry, or any 5xx-then-retry from `ApiClient` produced duplicate rows on every endpoint that wasn't already DB-idempotent.
 
-The factories are a hard chokepoint — every mutation runs through one of 15 factories in those two files. Adding idempotency anywhere else (per-route, per-app) would have been opt-in and partial. The audit recommendation was explicit: extend the factories.
+The factories are a hard chokepoint — every mutation runs through one of 15 factories in those two files. Adding idempotency anywhere else (per-route, per-app) would have been opt-in and partial. The resolution was to extend the factories themselves.
 
 ## Decision
 
@@ -56,7 +56,7 @@ Header contract:
 
 ## Alternatives considered
 
-**Wrapper-style (`withIdempotency` / `withAuthIdempotency`).** Mirror the existing rate-limit pattern: each route opts in by wrapping its factory output. Rejected because it leaves manifesto §2.7 partially unmet — opt-in routes get coverage, the rest stay vulnerable. The audit recommendation was explicit about extending the factories themselves.
+**Wrapper-style (`withIdempotency` / `withAuthIdempotency`).** Mirror the existing rate-limit pattern: each route opts in by wrapping its factory output. Rejected because it leaves manifesto §2.7 partially unmet — opt-in routes get coverage, the rest stay vulnerable. The resolution required extending the factories themselves so coverage is structural, not opt-in.
 
 **In-memory LRU.** Faster, no DB hit. Rejected because Vercel deploys are multi-instance and serverless cold-starts evict the cache; a request retried against a different instance would not replay. Durability across cold-starts is the point.
 
@@ -72,10 +72,6 @@ Header contract:
 
 ## References
 
-- `.audit/1777554456/resilience.md` — REL-003 finding.
-- `.feature-dev/1777656292/research.md` — surface map (113 mutation factory call sites).
-- `.feature-dev/1777656292/design.md` — full RFC.
-- `.feature-dev/1777656292/qa.md` — 20 must-test scenarios.
 - ADR 0007 — Prisma client isolated in api-server.
 - ADR 0020 — API design (pagination + error shape, includes idempotency-key requirement on writes).
 - ADR 0017 — anemic-domain handler shape (factories own cross-cutting concerns).

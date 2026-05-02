@@ -36,13 +36,13 @@ New ports follow this shape. When adding one:
 
 ## Active ports
 
-| Port    | Status        | Default adapter | Landing commit |
-| ------- | ------------- | --------------- | -------------- |
-| storage | Live          | `vercel-blob`   | 1.4.A          |
-| email   | Scaffold only | —               | 1.4.C          |
-| payment | Scaffold only | —               | 1.4.C          |
-| queue   | Scaffold only | —               | 1.4.C          |
-| cache   | Scaffold only | —               | 1.4.C          |
+| Port    | Status        | Default adapter                                 |
+| ------- | ------------- | ----------------------------------------------- |
+| storage | Live          | `vercel-blob`                                   |
+| email   | Live          | `@repo/email/createResendEmailService` (Resend) |
+| payment | Scaffold only | —                                               |
+| queue   | Scaffold only | —                                               |
+| cache   | Scaffold only | —                                               |
 
 "Scaffold only" means the `port.ts` interface exists and is considered stable for a first adapter, but no adapter has landed yet. Consumers may import the type for design purposes, but there is no default instance to inject at runtime. Adding an adapter requires:
 

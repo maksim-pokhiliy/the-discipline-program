@@ -1,8 +1,10 @@
 # 0034. Three independent CRUD libraries (Exercise, BlockKind, SchemeTemplate)
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `lms`, `data-modeling`, `libraries`, `breaking-change`
+
+> Status flipped from Proposed to Accepted: the three-library split (Exercise / BlockKind / SchemeTemplate) has landed and is load-bearing in code; see ADRs 0030 and 0031 for snapshot and scheme-params details.
 
 ## Context
 

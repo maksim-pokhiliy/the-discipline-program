@@ -58,21 +58,21 @@ The `@repo/contracts` package has exactly one runtime dependency: `zod`.
 - End-to-end type safety. A schema change in `training-plan.schema.ts` ripples to every consumer through `z.infer`. `pnpm check-types` catches drift at build time.
 - Zero Prisma leakage. A UI component can safely import `@repo/contracts/training-plan` without pulling `@prisma/client` into the browser bundle.
 - Request validation is enforced by the handler factories, not left to the discretion of each endpoint author. Bypass requires writing a raw `NextResponse.json` handler, which is visible in code review.
-- Same schemas validate both directions: a client can parse a response with the same Zod schema the server used to produce it (when we wire client-side response validation — currently a gap, see audit section 6).
+- Same schemas validate both directions: a client can parse a response with the same Zod schema the server used to produce it (when we wire client-side response validation — currently a gap).
 - Error messages from `ZodError` are structured: `{ path, message }`. They are mapped to `ValidationError` in `handleApiError`.
 
 **Negative:**
 
-- **`responseSchema` is optional** in every factory (`createGetHandler`, `createPostHandler`, etc.). A handler author can forget to validate the response. Tracked in the audit, section 6 — the response schema should be mandatory or at least lint-checked.
-- **`api-client` does not import `@repo/contracts`.** The client-side HTTP layer is typed through generics (`request<T>`) but does not actually validate responses at runtime. A server-side schema drift reaches the UI as a runtime crash, not a validation error. Tracked in the audit, sections 1.6 and 9.
-- **Zod schemas are inconsistent about constants vs magic numbers.** Some schemas import from `<entity>.constants.ts`; others hard-code `.max(200)`. Tracked in the audit, section 6.
-- **`z.date()` vs `z.coerce.date()`** is not consistently applied. `z.date()` works for server-internal validation (where data is already a `Date` instance) but fails on JSON-parsed input where dates are strings. 51 `z.date()` usages across 20 files; 9 `z.coerce.date()` across 5. Tracked in the audit, section 6.
-- **Hardcoded English error messages in schemas** (`"Password must be at least 6 characters"`, `"Author name is required"`). Contract-level i18n is fragmented. Tracked in the audit, section 7.
+- **`responseSchema` is optional** in every factory (`createGetHandler`, `createPostHandler`, etc.). A handler author can forget to validate the response — flagged as an API-design gap; the response schema should be mandatory or at least lint-checked.
+- **`api-client` does not import `@repo/contracts`.** The client-side HTTP layer is typed through generics (`request<T>`) but does not actually validate responses at runtime. A server-side schema drift reaches the UI as a runtime crash, not a validation error. Flagged as a known gap.
+- **Zod schemas are inconsistent about constants vs magic numbers.** Some schemas import from `<entity>.constants.ts`; others hard-code `.max(200)`. Flagged as an API-design gap.
+- **`z.date()` vs `z.coerce.date()`** is not consistently applied. `z.date()` works for server-internal validation (where data is already a `Date` instance) but fails on JSON-parsed input where dates are strings. 51 `z.date()` usages across 20 files; 9 `z.coerce.date()` across 5. Flagged as an API-design gap.
+- **Hardcoded English error messages in schemas** (`"Password must be at least 6 characters"`, `"Author name is required"`). Contract-level i18n is fragmented (see ADR 0021 §4 for i18n trigger).
 - Zod adds a runtime cost on every parse. At our workload this is negligible, but it is not free.
 
 **Neutral:**
 
-- `packages/contracts/src/common.ts` is almost empty (two schemas: `idParamSchema`, `planIdParamSchema`). Domain primitives — `Money`, `Email`, `Cuid`, `Slug`, `Pagination<T>`, `ListRequest<T>` — should live here but do not. Rebuilding `common.ts` is part of pending work (audit sections 2 and 6).
+- `packages/contracts/src/common.ts` is almost empty (two schemas: `idParamSchema`, `planIdParamSchema`). Domain primitives — `Money`, `Email`, `Cuid`, `Slug`, `Pagination<T>`, `ListRequest<T>` — should live here but do not. Rebuilding `common.ts` is part of pending domain-modeling and API-design work.
 - Zod 3 is the current stable line. Zod 4 exists in alpha; not adopted yet. Worth revisiting when Zod 4 stabilizes and the ecosystem (OpenAPI generators, tRPC adapters) catches up.
 
 ## Alternatives considered
@@ -97,4 +97,5 @@ The `@repo/contracts` package has exactly one runtime dependency: `zod`.
 - `packages/api-routes/src/route-helpers.ts` — request/response validation wiring.
 - `packages/contracts/src/entities/training-plan/` — canonical entity layout.
 - ADR 0003 — Prisma as the source of physical truth; contracts as the source of API truth.
-- Big Tech audit, sections 6 (API design), 2 (value objects), 7 (i18n) — known gaps.
+- ADR 0020 — API design decisions (response-schema enforcement, client-side validation, value-object plan).
+- ADR 0021 — six-month-horizon risks (i18n readiness §4).

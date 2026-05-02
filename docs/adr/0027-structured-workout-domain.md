@@ -1,8 +1,10 @@
 # 0027. Structured workout domain (supersedes ADR-0016)
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `domain`, `lms`, `breaking-change`, `schema`
+
+> Status flipped from Proposed to Accepted: the implementation has landed and is load-bearing in code; see ADR 0035 (editor save model) and ADR 0036 (idempotency) which build on this.
 
 ## Context
 

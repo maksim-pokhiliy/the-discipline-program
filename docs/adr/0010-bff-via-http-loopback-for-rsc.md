@@ -1,6 +1,6 @@
 # 0010. BFF via HTTP loopback for server components
 
-- **Status:** Accepted (under review — see Consequences and audit 1.1)
+- **Status:** Accepted (under review — see Consequences)
 - **Date:** 2026-04-10
 - **Tags:** `architecture`, `nextjs`, `rsc`, `bff`, `under-review`
 
@@ -77,7 +77,7 @@ const HomePage = async () => {
 - **Extra latency on every server component render.** Even loopback `fetch` is not free. On Vercel serverless, cold starts exacerbate this: the server component waits for its own function to respond.
 - **`cache: "no-store"` is hard-coded in `ApiClient`.** Server components cannot opt into HTTP caching for idempotent reads. Every SSR render hits the database. Marketing pages with `export const dynamic = "force-dynamic"` compound this — there is no CDN cache in front of the route handler either.
 - **`NEXT_PUBLIC_APP_URL` is load-bearing.** If misconfigured in production, SSR breaks. If set to the wrong host, SSR makes requests to the wrong environment. One env var that absolutely must be correct.
-- **Audit status.** The Big Tech audit section 1.1 has this decision flagged for review: it may be the right call for consistency, but the performance cost is significant enough that it deserves a dedicated re-evaluation once real traffic arrives. This ADR captures the current state; a future ADR may supersede it.
+- **Re-evaluation pending real traffic.** This decision has been flagged for review: it may be the right call for consistency, but the performance cost is significant enough that it deserves a dedicated re-evaluation once real traffic arrives. This ADR captures the current state; a future ADR may supersede it.
 
 **Neutral:**
 
@@ -104,7 +104,7 @@ Until one of these triggers fires, this ADR remains the canonical answer and dir
 
 **GraphQL with a server-side executor.** A GraphQL server can be called over HTTP from the browser and over a direct executor (`graphql()` function) from the server. Gets the same "one schema, two transports" win. Rejected for the same reason as tRPC — the project is not built on GraphQL, and introducing it is a major architectural shift.
 
-**SSR without data fetching; hydrate on the client only.** Render skeleton HTML on the server, let React Query fetch on the client. Simpler, no loopback. Rejected because it breaks SEO (search engines see empty HTML) and breaks initial content delivery (user sees a loading state instead of content). Ironically this is exactly what the current marketing pages effectively do today: they `force-dynamic` + use client components with `initialData`, but the initial data still comes from the loopback path. The audit flags this as a separate problem (marketing should be static).
+**SSR without data fetching; hydrate on the client only.** Render skeleton HTML on the server, let React Query fetch on the client. Simpler, no loopback. Rejected because it breaks SEO (search engines see empty HTML) and breaks initial content delivery (user sees a loading state instead of content). Ironically this is exactly what the current marketing pages effectively do today: they `force-dynamic` + use client components with `initialData`, but the initial data still comes from the loopback path. Whether marketing should be static instead is tracked separately as a frontend-performance concern.
 
 ## References
 
@@ -113,4 +113,3 @@ Until one of these triggers fires, this ADR remains the canonical answer and dir
 - `apps/marketing/src/app/page.tsx` — a canonical server component that uses loopback.
 - ADR 0004 — NextAuth and the cookie-based session that loopback propagates.
 - ADR 0005 — contracts-first, which the route handlers validate.
-- Big Tech audit, section 1.1 — this decision is flagged for review.

@@ -73,14 +73,14 @@ The rest of this document describes each context in detail: what it owns, which 
 ### Value objects
 
 - `Role` (`USER | COACH | ADMIN`) — authorization primitive. The only role hierarchy the system recognizes.
-- `timezone: string` — stored as IANA string, but **not validated** (noted in audit section 3).
+- `timezone: string` — stored as IANA string, but **not validated** (known data-validation gap; see ADR 0019 for the database-strategy deferral).
 - `email: string` — stored lowercase by convention but not enforced.
 
 ### Invariants
 
 - **Email is unique.** `User.email @unique`.
 - **One user may have at most one `AthleteProfile` and at most one `CoachProfile`.** Enforced by `@unique` on `userId` in both profile tables. This is a cross-context invariant — the profiles themselves live in LMS (athlete) and Coaching (coach). IAM owns the uniqueness guarantee because the profiles key off `User.id`.
-- **Soft-deleted users should not authenticate.** Enforced by the soft-delete extension in `packages/api-server/src/db/client.ts` on `findUnique` / `findFirst`. Note: audit section 5 flagged that the extension does not cover `count` / `update`, so the guarantee is incomplete.
+- **Soft-deleted users should not authenticate.** Enforced by the soft-delete extension in `packages/api-server/src/db/client.ts` on `findUnique` / `findFirst`. Note: the extension does not cover `count` / `update` / `aggregate`, so the guarantee is incomplete (see ADR 0019).
 - **Cannot remove the last admin.** Application-level check in `iamUserAdminApi.updateRole` — there is no DB constraint behind it. This is a rare case where the invariant cannot be expressed in SQL and must live in the service layer.
 
 ### Where it lives today
@@ -128,7 +128,7 @@ The marketing facet of `Product` is the only cross-context entity in the repo to
 
 - **Unique slug per page.** `MarketingPage.slug @unique`, `MarketingBlogPost.slug @unique`, `Product.slug @unique`.
 - **One section of each kind per page.** `@@unique([pageSlug, section])` on `MarketingPageSection`. A page cannot have two "hero" sections.
-- **Section payload must match its Zod schema.** Enforced at read time in `cmsPagesPublicApi.extractSectionData` via `SECTION_SCHEMAS[key].parse(...)`. This is an invariant that lives in the contract layer, not the DB — the DB stores the payload as untyped JSON (noted in audit section 2: "section `data` as untyped JSON without discriminated union").
+- **Section payload must match its Zod schema.** Enforced at read time in `cmsPagesPublicApi.extractSectionData` via `SECTION_SCHEMAS[key].parse(...)`. This is an invariant that lives in the contract layer, not the DB — the DB stores the payload as untyped JSON (known domain-modeling gap: section `data` would benefit from a discriminated-union representation).
 - **At most one featured blog post / featured product at a time.** Enforced by `ensureExclusiveFeatured` / `toggleExclusiveFeatured` utilities inside `$transaction`. This is a mutable-invariant — not a DB constraint, so in principle a concurrent writer could break it, but the `updateMany` inside the same transaction closes the race for single-node Postgres.
 - **Featured-post transition on publish.** A blog post being published for the first time gets `publishedAt = now()`. This is a `prepareCreateInput`/`updatePost` detail, not a DB default.
 - **Read-time is derived, not authoritative.** `MarketingBlogPost.readTime` is computed from `content` word count during create/update. A hand edit to the raw column would be stale. Treat it as a cache.
@@ -207,7 +207,7 @@ The `Product` model itself keeps its current physical shape; only the contracts 
 - **One log per athlete per workout.** `@@unique([userId, workoutId])` on `WorkoutLog` (`schema.prisma:288`). This is _the_ definition of "logs are immutable": if an athlete re-logs a workout, it is the same row updated, not a new row. In practice the code creates-only, never updates.
 - **One enrollment per athlete per plan.** `@@unique([trainingPlanId, userId])` on `PlanEnrollment` (`schema.prisma:390`). An athlete cannot be enrolled in the same plan twice.
 - **One user benchmark per definition.** `@@unique([userId, benchmarkDefinitionId])` on `UserBenchmark` (`schema.prisma:421`). Personal bests are singletons per definition.
-- **Plan ownership.** Every `TrainingPlan` is owned by exactly one `CoachProfile` (foreign key `coachId`). A plan's author cannot change. Coach soft-delete cascades to plans (`onDelete: Cascade`). Note: cascade on soft delete is risky and is flagged in audit sections 3 and 5.
+- **Plan ownership.** Every `TrainingPlan` is owned by exactly one `CoachProfile` (foreign key `coachId`). A plan's author cannot change. Coach soft-delete cascades to plans (`onDelete: Cascade`). Note: cascade on soft delete is risky and is flagged in ADR 0019 as a known database-strategy gap.
 - **Plan archive lifecycle.** `TrainingPlanStatus` transitions are gated by `transitionPlanStatus` logic in `training-plans.ts`. `ARCHIVED` is terminal.
 - **Workout archive vs plan archive.** `Workout.isArchived` is a per-workout boolean, distinct from `TrainingPlanStatus.ARCHIVED`. Audit section 2 flagged this as a domain inconsistency — two different archive mechanisms for two different things.
 - **Benchmark definitions are shared reference data.** Unique by name (`BenchmarkDefinition.name @unique`), referenced by ID from `UserBenchmark`. `onDelete: Restrict` prevents accidental removal of a definition that has logged user benchmarks.
@@ -278,7 +278,7 @@ Contracts live at `packages/contracts/src/entities/lms/<entity>/` with subpath e
 ### Value objects
 
 - `HealthStatus` (`HEALTHY | INJURED | RESTRICTED`).
-- `Gender` (`MALE | FEMALE`) — noted in audit section 2 as an intentional product decision that should be revisited.
+- `Gender` (`MALE | FEMALE`) — an intentional product decision that should be revisited as the product matures.
 - `ActionItemType` (`MISSED_WORKOUTS | NEW_NO_START | HEALTH_REPORT`).
 - `ActionItemStatus` (`OPEN | RESOLVED`).
 - `ActionItemSeverity` (`INFO | WARNING | CRITICAL`).
@@ -302,7 +302,7 @@ Contracts live at `packages/contracts/src/entities/lms/<entity>/` with subpath e
 
 ### Dependencies
 
-- **Coaching → IAM:** every coach/athlete is a `User`. Role `COACH` gates coach-area access (currently only per-endpoint, not in middleware — flagged in audit section 1.5).
+- **Coaching → IAM:** every coach/athlete is a `User`. Role `COACH` gates coach-area access (currently only per-endpoint, not in middleware — see ADR 0018 for the policy-layer deferral).
 - **Coaching → LMS:** heavy read dependency. The dashboard query pulls `PlanEnrollment`, `Workout`, `WorkoutLog` via a nested include on `CoachAthleteAssignment` (`assigned-athlete-query.ts`). Action item reconciliation reads `Workout.scheduledDate` and `WorkoutLog.createdAt`. This is the primary cross-context data flow in the repo today.
 - **Coaching ↛ CMS:** no dependency. Coach dashboards do not show marketing content.
 - **Coaching ↛ Billing:** currently no dependency, but once Billing exists, subscription status will gate whether an athlete shows in a coach dashboard at all (via "Access = Subscription State" invariant).
@@ -509,15 +509,15 @@ The Prisma model does not split. The contracts and the API do. This keeps the sc
 
 A few invariants span contexts. They do not belong to any single context and are listed here explicitly.
 
-| Invariant                       | Enforced where                                                                                 | Status                                                                                               |
-| ------------------------------- | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **Access = Subscription State** | Planned: Billing `SubscriptionStatus` gates every LMS / Coaching read.                         | Not implemented. `apps/platform` does not currently check subscription state before serving content. |
-| **Purchase = Immediate Value**  | Planned: Billing webhook creates `PlanEnrollment` atomically on successful first transaction.  | Not implemented. Enrollments are currently created manually by coaches.                              |
-| **Shared Exercise Library**     | Planned: read access for all authenticated users, write restricted to `ADMIN` and `COACH`.     | `BenchmarkDefinition` matches this shape. Exercise catalog as a whole is not yet modeled (audit 2).  |
-| **Logs are Immutable**          | Application convention (`workoutLogs` is create + delete only). No DB-level enforcement.       | De-facto honored. Could be strengthened by a Postgres rule or an application-layer write guard.      |
-| **Reference Data Integrity**    | `UserBenchmark.benchmarkDefinitionId` has `onDelete: Restrict`. Applies to any reference data. | Enforced at the DB for benchmarks. Exercises will need the same when added.                          |
-| **Money is Integer**            | Every monetary field is `Int @db.Integer`. No `Float` / `Decimal` on money.                    | Enforced schema-wide.                                                                                |
-| **Singleton Subscription**      | `Subscription.userId @unique`. ADR 0008.                                                       | Enforced at the DB.                                                                                  |
+| Invariant                       | Enforced where                                                                                 | Status                                                                                                         |
+| ------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| **Access = Subscription State** | Planned: Billing `SubscriptionStatus` gates every LMS / Coaching read.                         | Not implemented. `apps/platform` does not currently check subscription state before serving content.           |
+| **Purchase = Immediate Value**  | Planned: Billing webhook creates `PlanEnrollment` atomically on successful first transaction.  | Not implemented. Enrollments are currently created manually by coaches.                                        |
+| **Shared Exercise Library**     | Planned: read access for all authenticated users, write restricted to `ADMIN` and `COACH`.     | `BenchmarkDefinition` matches this shape. Exercise catalog as a whole is not yet modeled (see ADR 0030, 0034). |
+| **Logs are Immutable**          | Application convention (`workoutLogs` is create + delete only). No DB-level enforcement.       | De-facto honored. Could be strengthened by a Postgres rule or an application-layer write guard.                |
+| **Reference Data Integrity**    | `UserBenchmark.benchmarkDefinitionId` has `onDelete: Restrict`. Applies to any reference data. | Enforced at the DB for benchmarks. Exercises will need the same when added.                                    |
+| **Money is Integer**            | Every monetary field is `Int @db.Integer`. No `Float` / `Decimal` on money.                    | Enforced schema-wide.                                                                                          |
+| **Singleton Subscription**      | `Subscription.userId @unique`. ADR 0008.                                                       | Enforced at the DB.                                                                                            |
 
 ### Per-aggregate DB-enforced invariants
 
@@ -555,7 +555,7 @@ These are the rules a newcomer needs to know within the first hour of reading th
 
 ## 9. Dependency rules — what is allowed to import what
 
-This is the authoritative direction graph. The next audit bullet (1.3.A) will encode these rules in `dependency-cruiser`.
+This is the authoritative direction graph. These rules are encoded in `.dependency-cruiser.cjs` and enforced in CI via `pnpm dep:check`.
 
 ```
 IAM        →   (leaf, depends on nothing)
@@ -589,13 +589,13 @@ Every other cross-context interaction is a read. Reads are preferable to writes 
 
 ## 10. De-facto non-leak: why this document can be written at all
 
-A context map is only useful if it reflects reality. At the start of the audit, the following was verified by grep and by reading every endpoint file:
+A context map is only useful if it reflects reality. At the time this document was first written, the following was verified by grep and by reading every endpoint file:
 
 - `apps/marketing` imports only `cmsPagesPublicApi` and `cmsContactInboundApi` from `@repo/api-server`. Both are CMS-only. No LMS, no Coaching, no Billing, no IAM writes.
 - `apps/admin` imports admin CMS endpoints (`adminBlog`, `adminPages`, `adminContacts`, `adminProducts`, `adminReviews`), admin IAM (`adminUsers`, `adminUpload`), and the admin analytics dashboard (`adminDashboard`). No LMS, no Coaching. No Billing.
 - `apps/platform` imports platform LMS endpoints (`platformTrainingPlans`, `platformWorkouts`, `platformWorkoutLogs`, `platformPlanEnrollments`, `platformBenchmarkDefinitions`, `platformUserBenchmarks`), platform Coaching endpoints (`platformCoachProfile`, `platformAthleteProfile`, `platformCoachNotes`, `platformCoachActionItems`, `platformCoachDashboard`, `platformCoachAthletes`), and platform IAM (`platformUsers`). No CMS. No Billing.
 
-**There are zero cross-context leaks between apps and the intended context for each app.** The codebase is already disciplined — but the discipline is enforced by convention (nobody has written a cross-context import yet) rather than by structure. This document and the work in sections 1.2–1.3 will turn convention into structure: subpath exports in `@repo/contracts`, context subfolders in `api-server/endpoints/`, and a `dependency-cruiser` gate that fails CI on a violation.
+**There are zero cross-context leaks between apps and the intended context for each app.** The codebase is already disciplined and the discipline is now enforced by structure: subpath exports in `@repo/contracts`, context subfolders in `api-server/endpoints/`, and the `dependency-cruiser` gate that fails CI on a violation.
 
 It is easier to lock in correct behavior that already exists than to fix incorrect behavior that has spread. That is why this work lands now and not in six months.
 
@@ -605,12 +605,12 @@ It is easier to lock in correct behavior that already exists than to fix incorre
 
 Items flagged during the context-mapping pass that do not belong to any single bullet yet:
 
-- **`CoachActionItem` reconciliation has no scheduler.** Audit 1.5 and 7 flagged this. Reconciliation currently runs synchronously when a coach opens the dashboard — inefficient and means "missed workout" signals only appear when a coach looks, not when the miss happens. Needs a job queue.
+- **`CoachActionItem` reconciliation has no scheduler.** Reconciliation currently runs synchronously when a coach opens the dashboard — inefficient and means "missed workout" signals only appear when a coach looks, not when the miss happens. Needs a job queue (see ADR 0021 §3 for the queue trigger).
 - ~~**`enrollment-query.ts` is the cross-boundary read between Coaching and LMS.**~~ Closed in 1.2.C — the helper moved to `endpoints/coaching/enrollment-query.ts` alongside the endpoints that consume it. Superseded by `assigned-athlete-query.ts` in Follow-up #1 after the `CoachAthleteAssignment` model landed.
 - ~~**Coach access via `PlanEnrollmentStatus.ACTIVE` only is too narrow.**~~ Closed in Follow-up #1 — `verifyAthleteBelongsToCoach` and every coach-facing read now resolve athletes via `CoachAthleteAssignment`, independent of enrollment state.
 - **Product split: when to split the Prisma model itself.** The current plan is to split contracts only, not the schema. If the two facets diverge further — separate lifecycles, separate audit logs, separate owners — a schema split may eventually be justified. Out of scope for 1.2.
 - **Where does the Stripe webhook live.** A webhook is an inbound, not an outbound; it is a Billing handler. But it also writes to LMS (enrollment). The handler file goes in `endpoints/billing/webhook/` and calls into an LMS-aware service. That service is the single place where the Billing → LMS write rule is exercised.
-- **`@repo/shared` split.** `centsToAmount` is a Billing primitive that lives in `shared`. Audit 1.4.B moves it to `contracts/common/money`. Similar primitives will be pulled out of `shared` as their owning context is clarified. Tracked separately.
+- **`@repo/shared` split.** `centsToAmount` was a Billing primitive that lived in `shared`; it was relocated to `contracts/common/money`. Similar primitives will be pulled out of `shared` as their owning context is clarified. Tracked separately.
 
 ---
 

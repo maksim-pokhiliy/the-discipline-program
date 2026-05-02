@@ -21,7 +21,7 @@ The shape is the largest common denominator across Resend / Postmark / Amazon SE
 | SES      | Raw infra        | ~$1           | via SNS: delivery / bounce / complaint  | Cheapest at scale; more setup (domain DKIM, SNS wiring); no DX layer   |
 | Mailgun  | Middle ground    | ~$15          | delivered / failed / opened             | EU region option; fine API but less actively invested in recently      |
 
-Current lean: **Resend** for v1. React Email templates line up with our Next.js 16 stack, the SDK is a 2-liner, and the pricing tier makes sense for our scale. Migration to Postmark or SES is purely a swap of the adapter — no endpoint or domain-layer code changes.
+Live: **Resend** via `@repo/email/createResendEmailService`. React Email templates line up with our Next.js 16 stack, the SDK is a 2-liner, and the pricing tier makes sense for our scale. Migration to Postmark or SES is purely a swap of the adapter — no endpoint or domain-layer code changes.
 
 ## Open questions (deferred until vendor is chosen)
 

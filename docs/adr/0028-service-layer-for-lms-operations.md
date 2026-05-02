@@ -1,8 +1,10 @@
 # 0028. Service layer for LMS operations (partially supersedes ADR-0017)
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `architecture`, `lms`, `services`
+
+> Status flipped from Proposed to Accepted: the LMS service layer has landed and is referenced by ADRs 0017, 0027, 0033 plus `packages/api-server/README.md`.
 
 ## Context
 

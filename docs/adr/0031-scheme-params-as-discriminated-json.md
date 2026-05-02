@@ -1,8 +1,10 @@
 # 0031. Scheme params as discriminated JSON
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `lms`, `schema`, `validation`
+
+> Status flipped from Proposed to Accepted: discriminated-JSON scheme params have landed and are referenced by ADRs 0027, 0034, 0035 plus `packages/contracts/README.md`.
 
 ## Context
 

@@ -75,15 +75,16 @@ Each app has its own `.env.local` for local development. The `packages/api-serve
 
 ## CI pipeline
 
-GitHub Actions CI (`.github/workflows/ci.yml`) runs 5 parallel jobs on every PR and push to `main`:
+GitHub Actions CI (`.github/workflows/ci.yml`) runs 6 parallel jobs on every PR and push to `main`:
 
-| Job           | What it does                                                                             |
-| ------------- | ---------------------------------------------------------------------------------------- |
-| `check-types` | `pnpm check-types` — TypeScript across all packages                                      |
-| `lint`        | `pnpm lint` — ESLint across all packages                                                 |
-| `dep-check`   | `pnpm dep:check` — dependency-cruiser boundary rules (enforces `BOUNDED-CONTEXTS.md` §8) |
-| `test`        | `pnpm test` — Vitest with a fresh `postgres:16-alpine` service container                 |
-| `build`       | `pnpm build` — full production build with dummy env vars                                 |
+| Job            | What it does                                                                             |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| `check-types`  | `pnpm check-types` — TypeScript across all packages                                      |
+| `lint`         | `pnpm lint` — ESLint across all packages                                                 |
+| `dep-check`    | `pnpm dep:check` — dependency-cruiser boundary rules (enforces `BOUNDED-CONTEXTS.md` §8) |
+| `format-check` | `pnpm format:check` — Prettier check on `**/*.{ts,tsx,md,json}`                          |
+| `test`         | `pnpm test` — Vitest with a fresh `postgres:16-alpine` service container                 |
+| `build`        | `pnpm build` — full production build with dummy env vars                                 |
 
 Concurrency: newer pushes to the same ref cancel in-flight runs.
 
@@ -107,7 +108,7 @@ There is **no automated database rollback**. Prisma does not generate down-migra
 
 1. **Forward-fix:** Write and apply a corrective migration.
 2. **Point-in-time recovery:** Neon supports branching and PITR. Restore from a branch taken before the bad migration.
-3. **Prevention:** Always review `prisma db push` changes before applying to production. Consider using `prisma migrate` with explicit migration files for production (not yet adopted — see §5 audit section).
+3. **Prevention:** Always review `prisma db push` changes before applying to production. Consider using `prisma migrate` with explicit migration files for production (not yet adopted — see ADR 0019 for the database-strategy deferral).
 
 ### Rollback checklist
 

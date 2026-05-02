@@ -83,7 +83,7 @@ packages/
   mui/            MUI theme + providers
   env/            Environment variable validation
 
-docs/adr/         Architecture Decision Records (37)
+docs/adr/         Architecture Decision Records (36)
 ```
 
 ## Commands
@@ -121,7 +121,7 @@ docs/adr/         Architecture Decision Records (37)
 - [docs/DEPLOY.md](docs/DEPLOY.md) -- deployment guide
 - [docs/DEPENDENCY-GRAPH.md](docs/DEPENDENCY-GRAPH.md) -- package dependency map
 - [docs/BOUNDED-CONTEXTS.md](docs/BOUNDED-CONTEXTS.md) -- domain boundaries
-- [docs/adr/](docs/adr/) -- 37 Architecture Decision Records
+- [docs/adr/](docs/adr/) -- 36 Architecture Decision Records
 
 ## Data Flow
 
@@ -148,12 +148,15 @@ Validated at boot by `@repo/env` (Zod). `SKIP_ENV_VALIDATION=1` bypasses validat
 
 ### Optional
 
-| Variable                   | Purpose                                                             |
-| -------------------------- | ------------------------------------------------------------------- |
-| `UPSTASH_REDIS_REST_URL`   | Upstash Redis REST URL for rate limiting (no-op when unset).        |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token.                                           |
-| `NEXT_PUBLIC_SENTRY_DSN`   | Sentry DSN. Monitoring is no-op when unset.                         |
-| `SENTRY_AUTH_TOKEN`        | Sentry auth token for source-map upload at build time.              |
-| `SENTRY_ORG`               | Sentry org slug (source-map upload).                                |
-| `SENTRY_PROJECT`           | Sentry project slug (source-map upload).                            |
-| `SKIP_ENV_VALIDATION`      | Set to `1` to bypass Zod env validation. Used by CI + local builds. |
+| Variable                   | Purpose                                                                                                                      |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `RESEND_API_KEY`           | Resend API key for transactional invite emails. Boot-optional; `resolveInviteEmailConfig` throws lazily at invite-send time. |
+| `EMAIL_FROM`               | Default From address for invite emails (must be a verified domain in Resend). Boot-optional; same lazy-fail as above.        |
+| `EMAIL_REPLY_TO`           | Reply-To address for invite emails. Boot-optional; falls back to `EMAIL_FROM`.                                               |
+| `UPSTASH_REDIS_REST_URL`   | Upstash Redis REST URL for rate limiting (no-op when unset).                                                                 |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token.                                                                                                    |
+| `NEXT_PUBLIC_SENTRY_DSN`   | Sentry DSN. Monitoring is no-op when unset.                                                                                  |
+| `SENTRY_AUTH_TOKEN`        | Sentry auth token for source-map upload at build time.                                                                       |
+| `SENTRY_ORG`               | Sentry org slug (source-map upload).                                                                                         |
+| `SENTRY_PROJECT`           | Sentry project slug (source-map upload).                                                                                     |
+| `SKIP_ENV_VALIDATION`      | Set to `1` to bypass Zod env validation. Used by CI + local builds.                                                          |

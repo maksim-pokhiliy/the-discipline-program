@@ -1,23 +1,24 @@
 # `@repo/email`
 
-Transactional email primitives — provider port + react-email templates. Currently uses Resend as the concrete implementation, but the port lets the apps stay decoupled.
+Transactional email primitives — provider port + Resend adapter + react-email templates. The port lets consumers stay decoupled from the concrete vendor.
 
 ## Public API
 
 ```ts
-import {} from /* shared helpers */ "@repo/email";
-import {} from /* port + adapter */ "@repo/email/port";
+import {} from /* port + Resend factory + templates */ "@repo/email";
+import {} from /* port types only */ "@repo/email/port";
 import {} from /* templates */ "@repo/email/templates";
 ```
 
-The `/port` entry exposes the `EmailSender` interface + Resend adapter; templates render via `@react-email/render` to HTML at send time.
+The root barrel re-exports the `EmailPort` interface (from `port.ts`), the `createResendEmailService` factory (from `client.ts`), and the templates. The `/port` subpath is the type-only entry for consumers that want to depend on the interface without pulling the Resend SDK into their import graph.
 
 ## Layout
 
 ```
 src/
-  index.ts        Barrel — high-level send helpers
-  port.ts         EmailSender port + Resend adapter
+  index.ts        Barrel — re-exports port types, Resend client factory, templates
+  port.ts         EmailPort interface + SendEmailInput / SendEmailResult / EmailAddress types (zero vendor SDK imports)
+  client.ts       createResendEmailService(config) — the only file that imports the Resend SDK
   templates/      React-email templates (one component per file)
 ```
 

@@ -33,7 +33,7 @@ Two questions fall out of this:
 1. **Is this duplication intentional or accidental?** Writing the same code twice with the same dependencies is a smell unless there is a reason.
 2. **Are these two actually different NextAuth instances at runtime?** If `admin` and `platform` are deployed as separate Vercel projects on separate subdomains, each gets its own cookie jar and its own process — they are independent by virtue of the deploy topology, and the duplication is a necessary consequence. If they are deployed as one project, the duplication is pure waste.
 
-Today the deploy topology is unclear (no `vercel.json` is checked in, see Big Tech audit section 1.5). The code behaves as if the two were independent. That is a decision that has been made by default, not by design.
+Deploy topology is documented in `docs/runbooks/vercel-json.md`. Each Next app has its own `vercel.json` (`apps/admin`, `apps/marketing`, `apps/platform`), so the two NextAuth instances run in separate Vercel projects with separate cookie jars. The code behaves as if the two were independent because they are.
 
 ## Decision
 
@@ -68,7 +68,7 @@ The reasons this is still tech debt:
 **Negative:**
 
 - Six lines of duplication × two apps = the code is copy-pasted. Changes to auth behavior (callback logic, session shape, maxAge) must be made in `@repo/auth`'s `createAuthOptions` — which is how it works today — but the _wrapper_ code in each app can drift.
-- Audit debt: the Big Tech audit section 1.5 flags this as an item to resolve (either with an ADR or with consolidation). This ADR is the first half of the resolution; the second half is a decision on whether to consolidate.
+- Audit debt: the duplication has been flagged for resolution (either via this ADR or via consolidation). This ADR is the first half of the resolution; the second half is a decision on whether to consolidate.
 - The shared `NEXTAUTH_SECRET` means the "independent" claim is topological, not cryptographic. If the apps ever share a domain, the independence disappears.
 - Two `/api/auth/[...nextauth]/route.ts` files is two places to forget an update. If NextAuth v5 migration happens, both files need to be updated in lockstep.
 
@@ -96,4 +96,4 @@ The reasons this is still tech debt:
 - `packages/auth/src/auth-options.ts` — the `createAuthOptions` factory.
 - `packages/api-routes/src/auth-wrappers.ts` — `createAuthWrappers` and the per-app wrapper logic.
 - ADR 0004 — the NextAuth + credentials decision.
-- Big Tech audit, section 1.5 — this item is flagged for resolution.
+- `docs/runbooks/vercel-json.md` — deploy topology (three independent Vercel projects, one `vercel.json` per app).

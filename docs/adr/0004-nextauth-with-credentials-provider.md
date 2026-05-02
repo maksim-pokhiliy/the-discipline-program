@@ -52,10 +52,10 @@ Passwords are hashed with `bcryptjs` at salt rounds = 10. The JWT callback refre
 
 **Negative:**
 
-- **`withPlatformAuth` does not check role**, only session presence. Any authenticated user — athlete, coach, admin — can call any `/api/platform/*` endpoint. Role enforcement is delegated to manual guards inside each endpoint (`verifyAthleteBelongsToCoach`, `verifyPlanOwnership`, etc.). This is an "open door + manual bouncer" pattern, and a forgotten guard is a data leak. Tracked in the audit, section 3; a policy layer is the long-term fix.
-- **`MIN_PASSWORD_LENGTH = 6`** is weak by 2026 standards (NIST recommends ≥ 8, OWASP ≥ 12). Tracked in the audit, section 3.
+- **`withPlatformAuth` does not check role**, only session presence. Any authenticated user — athlete, coach, admin — can call any `/api/platform/*` endpoint. Role enforcement is delegated to manual guards inside each endpoint (`verifyAthleteBelongsToCoach`, `verifyPlanOwnership`, etc.). This is an "open door + manual bouncer" pattern, and a forgotten guard is a data leak. Flagged as a security gap; a policy layer is the long-term fix.
+- **`MIN_PASSWORD_LENGTH = 6`** is weak by 2026 standards (NIST recommends ≥ 8, OWASP ≥ 12). Flagged as a known security gap.
 - **`SESSION_MAX_AGE = 30 * 24 * 60 * 60`** (30 days) with JWT means a leaked token is valid for a month. There is no revocation path for an in-flight JWT short of rotating `NEXTAUTH_SECRET` (which logs out everyone). Access token / refresh token split is the standard mitigation; we do not have it.
-- **Timing attack on user enumeration.** `validateUser` returns `null` immediately if the user does not exist, without running `bcrypt.compare`. Existing vs non-existing users have distinguishable response times. Tracked in the audit, section 3.
+- **Timing attack on user enumeration.** `validateUser` returns `null` immediately if the user does not exist, without running `bcrypt.compare`. Existing vs non-existing users have distinguishable response times. Flagged as a known security gap.
 - **Two NextAuth instances** (admin and platform apps each build their own `authOptions` and mount their own `/api/auth/[...nextauth]/route.ts`). See ADR 0011 for the separate decision on why this is acceptable.
 - **Credentials-only means no OAuth recovery path.** A forgotten password requires an email reset flow, which does not exist yet.
 - NextAuth v4 is the pre-rename release. Auth.js v5 is the current name. We have not migrated because v5 has breaking changes and the upgrade is scheduled for when ADR 0011 (dual instances) is revisited.
@@ -63,7 +63,7 @@ Passwords are hashed with `bcryptjs` at salt rounds = 10. The JWT callback refre
 **Neutral:**
 
 - `bcryptjs` is a pure-JS bcrypt implementation. Slower than native `bcrypt` but works on every runtime including serverless cold starts. Trade-off: ~100ms extra on cold start vs broken native bindings on some deploys.
-- Email is not normalized on login (`where: { email }` is used as-is). Postgres string comparison is case-sensitive by default, so `FOO@example.com` and `foo@example.com` are different users. Tracked in the audit, section 3.
+- Email is not normalized on login (`where: { email }` is used as-is). Postgres string comparison is case-sensitive by default, so `FOO@example.com` and `foo@example.com` are different users. Flagged as a known security gap.
 
 ## Alternatives considered
 
@@ -89,4 +89,4 @@ Passwords are hashed with `bcryptjs` at salt rounds = 10. The JWT callback refre
 - `packages/api-server/src/services/auth.ts` — the adapter implementation.
 - ADR 0011 — two independent NextAuth instances.
 - ADR 0012 — JWT session strategy with 30-day max age.
-- Big Tech audit, section 3 — security gaps around password policy, role check, timing attack.
+- ADR 0018 — security deferred decisions (password policy, role-check policy layer, timing-attack mitigation).
