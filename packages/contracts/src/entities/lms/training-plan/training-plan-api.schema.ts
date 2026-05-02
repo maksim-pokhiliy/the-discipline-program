@@ -1,17 +1,22 @@
 import { z } from "zod";
 
 import { planIdParamSchema } from "../../../common";
+import { dayKindSchema } from "../_domain/day-kind.schema";
+import { dayOfWeekSchema } from "../_domain/day-of-week.schema";
 import { createBlockInputSchema, blockSchema, updateBlockInputSchema } from "../block";
 import {
   createBlockSegmentInputSchema,
   blockSegmentSchema,
   updateBlockSegmentInputSchema,
 } from "../block-segment";
+import { DAY_CONSTANTS, updateDayInputSchema } from "../day";
 import {
   createExerciseEntryInputSchema,
   exerciseEntrySchema,
   updateExerciseEntryInputSchema,
 } from "../exercise-entry";
+import { createLmsSessionInputSchema, updateLmsSessionInputSchema } from "../lms-session";
+import { createWeekInputSchema, updateWeekInputSchema } from "../week";
 
 import {
   createTrainingPlanSchema,
@@ -19,6 +24,18 @@ import {
   trainingPlanSchema,
   updateTrainingPlanSchema,
 } from "./training-plan.schema";
+
+const createDayInputSchema = z.object({
+  dayOfWeek: dayOfWeekSchema,
+  kind: dayKindSchema.optional(),
+  notes: z.string().max(DAY_CONSTANTS.MAX_NOTES_LENGTH).optional(),
+});
+
+const createSessionInputSchema = createLmsSessionInputSchema
+  .omit({ dayId: true, order: true })
+  .extend({
+    order: z.number().int().nonnegative().optional(),
+  });
 
 export const getTrainingPlansResponseSchema = z.array(trainingPlanSchema);
 
@@ -127,6 +144,53 @@ export const bulkPatchOpSchema = z.discriminatedUnion("kind", [
     sourceBlockId: z.string().cuid(),
     targetSessionId: z.string().cuid(),
     targetOrder: z.number().int().nonnegative(),
+  }),
+  z.object({
+    kind: z.literal("create-week"),
+    payload: createWeekInputSchema,
+  }),
+  z.object({
+    kind: z.literal("update-week"),
+    weekId: z.string().cuid(),
+    expectedVersion: z.number().int().nonnegative().max(2_147_483_647),
+    fullEntity: updateWeekInputSchema,
+  }),
+  z.object({
+    kind: z.literal("delete-week"),
+    weekId: z.string().cuid(),
+    expectedVersion: z.number().int().nonnegative().max(2_147_483_647),
+  }),
+  z.object({
+    kind: z.literal("create-day"),
+    weekId: z.string().cuid(),
+    payload: createDayInputSchema,
+  }),
+  z.object({
+    kind: z.literal("update-day"),
+    dayId: z.string().cuid(),
+    expectedVersion: z.number().int().nonnegative().max(2_147_483_647),
+    fullEntity: updateDayInputSchema,
+  }),
+  z.object({
+    kind: z.literal("delete-day"),
+    dayId: z.string().cuid(),
+    expectedVersion: z.number().int().nonnegative().max(2_147_483_647),
+  }),
+  z.object({
+    kind: z.literal("create-session"),
+    dayId: z.string().cuid(),
+    payload: createSessionInputSchema,
+  }),
+  z.object({
+    kind: z.literal("update-session"),
+    sessionId: z.string().cuid(),
+    expectedVersion: z.number().int().nonnegative().max(2_147_483_647),
+    fullEntity: updateLmsSessionInputSchema,
+  }),
+  z.object({
+    kind: z.literal("delete-session"),
+    sessionId: z.string().cuid(),
+    expectedVersion: z.number().int().nonnegative().max(2_147_483_647),
   }),
 ]);
 

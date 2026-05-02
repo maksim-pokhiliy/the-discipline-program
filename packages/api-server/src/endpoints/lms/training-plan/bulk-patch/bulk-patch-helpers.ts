@@ -25,6 +25,8 @@ const collectIds = (ops: BulkPatchOp[]) => {
   const entryIds = new Set<string>();
   const sessionIds = new Set<string>();
   const setGroupIds = new Set<string>();
+  const weekIds = new Set<string>();
+  const dayIds = new Set<string>();
 
   for (const op of ops) {
     switch (op.kind) {
@@ -75,10 +77,36 @@ const collectIds = (ops: BulkPatchOp[]) => {
         sessionIds.add(op.targetSessionId);
         break;
       }
+      case "create-week": {
+        break;
+      }
+      case "update-week":
+      case "delete-week": {
+        weekIds.add(op.weekId);
+        break;
+      }
+      case "create-day": {
+        weekIds.add(op.weekId);
+        break;
+      }
+      case "update-day":
+      case "delete-day": {
+        dayIds.add(op.dayId);
+        break;
+      }
+      case "create-session": {
+        dayIds.add(op.dayId);
+        break;
+      }
+      case "update-session":
+      case "delete-session": {
+        sessionIds.add(op.sessionId);
+        break;
+      }
     }
   }
 
-  return { blockIds, segmentIds, entryIds, sessionIds, setGroupIds };
+  return { blockIds, segmentIds, entryIds, sessionIds, setGroupIds, weekIds, dayIds };
 };
 
 export const verifyOpsBelongToPlan = async (
@@ -86,7 +114,46 @@ export const verifyOpsBelongToPlan = async (
   planId: string,
   ops: BulkPatchOp[],
 ): Promise<void> => {
-  const { blockIds, segmentIds, entryIds, sessionIds, setGroupIds } = collectIds(ops);
+  const { blockIds, segmentIds, entryIds, sessionIds, setGroupIds, weekIds, dayIds } =
+    collectIds(ops);
+
+  if (weekIds.size > 0) {
+    const weeks = await tx.week.findMany({
+      where: { id: { in: [...weekIds] } },
+      select: { id: true, planId: true },
+    });
+
+    if (weeks.length !== weekIds.size) {
+      throw new NotFoundError("Bulk-patch op references a missing week");
+    }
+
+    for (const w of weeks) {
+      if (w.planId !== planId) {
+        throw new NotFoundError("Bulk-patch op references a week from another plan", {
+          weekId: w.id,
+        });
+      }
+    }
+  }
+
+  if (dayIds.size > 0) {
+    const days = await tx.day.findMany({
+      where: { id: { in: [...dayIds] } },
+      select: { id: true, week: { select: { planId: true } } },
+    });
+
+    if (days.length !== dayIds.size) {
+      throw new NotFoundError("Bulk-patch op references a missing day");
+    }
+
+    for (const d of days) {
+      if (d.week.planId !== planId) {
+        throw new NotFoundError("Bulk-patch op references a day from another plan", {
+          dayId: d.id,
+        });
+      }
+    }
+  }
 
   if (sessionIds.size > 0) {
     const sessions = await tx.lmsSession.findMany({

@@ -8,17 +8,26 @@ import {
   type TxClient,
   applyCloneBlockSubtree,
   applyCreateBlock,
+  applyCreateDay,
   applyCreateEntry,
   applyCreateSegment,
+  applyCreateSession,
+  applyCreateWeek,
   applyDeleteBlock,
+  applyDeleteDay,
   applyDeleteEntry,
   applyDeleteSegment,
+  applyDeleteSession,
+  applyDeleteWeek,
   applyMoveBlock,
   applyMoveEntry,
   applyMoveSegment,
   applyUpdateBlock,
+  applyUpdateDay,
   applyUpdateEntry,
   applyUpdateSegment,
+  applyUpdateSession,
+  applyUpdateWeek,
 } from "./bulk-patch-ops";
 
 export { deriveExerciseSnapshot };
@@ -56,5 +65,23 @@ export const applyOpInTx = async (
       return applyDeleteEntry(tx, op);
     case "clone-block-subtree":
       return applyCloneBlockSubtree(tx, op);
+    case "create-week":
+      return applyCreateWeek(tx, op);
+    case "update-week":
+      return applyUpdateWeek(tx, op);
+    case "delete-week":
+      return applyDeleteWeek(tx, op);
+    case "create-day":
+      return applyCreateDay(tx, op);
+    case "update-day":
+      return applyUpdateDay(tx, op);
+    case "delete-day":
+      return applyDeleteDay(tx, op);
+    case "create-session":
+      return applyCreateSession(tx, op);
+    case "update-session":
+      return applyUpdateSession(tx, op);
+    case "delete-session":
+      return applyDeleteSession(tx, op);
   }
 };
