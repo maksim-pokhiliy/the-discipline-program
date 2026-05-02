@@ -208,6 +208,7 @@ export const ExerciseLibraryListSection = ({ items }: ExerciseLibraryListSection
                 disabled={isToggling}
                 onChange={() => handleDeprecatedToggle(item)}
                 color="warning"
+                inputProps={{ "aria-label": "Toggle deprecated status" }}
               />
               {item.isDeprecated && (
                 <Chip label="Deprecated" color="default" size="small" variant="outlined" />

@@ -92,6 +92,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
               }
               onChange={() => toggleStatusMutation.mutate(post.id)}
               color="success"
+              inputProps={{ "aria-label": "Toggle published status" }}
             />
 
             <Chip
@@ -117,6 +118,7 @@ export const BlogListSection = ({ posts }: BlogListSectionProps) => {
               }
               onChange={() => toggleFeaturedMutation.mutate(post.id)}
               color="warning"
+              inputProps={{ "aria-label": "Toggle featured status" }}
             />
 
             <Chip
