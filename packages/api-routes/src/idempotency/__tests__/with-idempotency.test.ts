@@ -27,6 +27,7 @@ vi.mock("../../monitoring", () => ({
 
 const { wrapAuthHandler, wrapHandler } = await import("../with-idempotency");
 const { sha256Hex } = await import("../request-fingerprint");
+const { runWithContext } = await import("../../request-context");
 
 const KEY = "abc-12345";
 const KEY_HASH = sha256Hex(KEY).slice(0, 12);
@@ -313,6 +314,56 @@ describe("MT-11: cross-tenant scoping prevents replay across user identities", (
     expect(lookupMock.mock.calls[0]?.[0]).toMatchObject({ scope: "user:B" });
     expect(persistMock).toHaveBeenCalledOnce();
     expect(persistMock.mock.calls[0]?.[0]).toMatchObject({ scope: "user:B" });
+  });
+});
+
+describe("REVIEW-FOLLOWUP: wrapHandler resolves auth scope from request-context when userId is bound", () => {
+  it("uses user:<userId> when request-context has a userId (auth wrapper bound identity)", async () => {
+    installStore();
+    lookupMock.mockResolvedValue({ kind: "miss" });
+    persistMock.mockResolvedValue({ status: "persisted" });
+
+    const inner: RouteHandler = vi.fn(async () => new Response('{"ok":1}', { status: 201 }));
+    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+
+    await runWithContext({ requestId: "rid-test", userId: "user-A" }, async () => {
+      await wrapped(
+        buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
+        dummyContext(),
+      );
+    });
+
+    expect(lookupMock).toHaveBeenCalledOnce();
+    expect(lookupMock.mock.calls[0]?.[0]).toMatchObject({ scope: "user:user-A" });
+    expect(persistMock).toHaveBeenCalledOnce();
+    expect(persistMock.mock.calls[0]?.[0]).toMatchObject({ scope: "user:user-A" });
+  });
+
+  it("falls back to ip:<addr> when no userId is bound (anonymous / public route)", async () => {
+    installStore();
+    lookupMock.mockResolvedValue({ kind: "miss" });
+    persistMock.mockResolvedValue({ status: "persisted" });
+
+    const inner: RouteHandler = vi.fn(async () => new Response('{"ok":1}', { status: 201 }));
+    const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
+
+    await runWithContext({ requestId: "rid-test" }, async () => {
+      await wrapped(
+        buildJsonRequest(
+          { a: 1 },
+          {
+            headers: {
+              "Idempotency-Key": KEY,
+              "x-forwarded-for": "203.0.113.42",
+            },
+          },
+        ),
+        dummyContext(),
+      );
+    });
+
+    expect(lookupMock).toHaveBeenCalledOnce();
+    expect(lookupMock.mock.calls[0]?.[0]).toMatchObject({ scope: "ip:203.0.113.42" });
   });
 });
 

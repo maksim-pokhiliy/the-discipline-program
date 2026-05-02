@@ -2,6 +2,7 @@ import { BadRequestError, ConflictError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 import { getMonitoring } from "../monitoring";
+import { getUserId } from "../request-context";
 import type { AuthenticatedHandler, RouteContext, RouteHandler } from "../types";
 
 import {
@@ -27,6 +28,12 @@ export type IdempotencyConfig = {
 
 type Run = (request: Request, context: RouteContext) => Promise<Response>;
 type AuthRun = (request: Request, context: RouteContext, userId: string) => Promise<Response>;
+
+const resolvePublicOrAuthScope = (request: Request): string => {
+  const userId = getUserId();
+
+  return userId ? buildAuthScope(userId) : buildPublicScope(request);
+};
 
 const validateKey = (raw: string | null): string | null => {
   if (!raw) {
@@ -264,7 +271,7 @@ export const wrapHandler =
   (run: Run, config: IdempotencyConfig): RouteHandler =>
   async (request, context) => {
     const params = await context.params;
-    const scope = buildPublicScope(request);
+    const scope = resolvePublicOrAuthScope(request);
 
     return runIdempotent({ run, config, request, context, params, scope });
   };

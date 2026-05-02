@@ -106,7 +106,11 @@ const persist =
         where: { key_scope_route: { key, scope, route } },
       });
 
-      if (!raced || raced.requestFingerprint !== requestFingerprint) {
+      if (
+        !raced ||
+        raced.requestFingerprint !== requestFingerprint ||
+        raced.expiresAt.getTime() <= Date.now()
+      ) {
         logger.warn("idempotency.persist_race_unrecoverable", { route });
 
         return { status: "persisted" };
