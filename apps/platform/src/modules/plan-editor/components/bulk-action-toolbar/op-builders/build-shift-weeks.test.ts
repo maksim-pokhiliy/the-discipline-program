@@ -35,6 +35,7 @@ const makeSession = (
   order: 0,
   label: null,
   notes: null,
+  version: 1,
   blocks,
 });
 
@@ -48,6 +49,7 @@ const makeDay = (
   dayOfWeek: "MON",
   kind: "TRAINING",
   notes: null,
+  version: 1,
   sessions,
 });
 
@@ -57,6 +59,7 @@ const makeWeek = (id: string, index: number, days: PlanStructureDay[]): PlanStru
   index,
   label: null,
   notes: null,
+  version: 1,
   days,
 });
 

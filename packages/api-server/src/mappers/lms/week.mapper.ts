@@ -44,6 +44,7 @@ export const mapToWeek = (w: PrismaWeek): Week => ({
   index: w.index,
   label: w.label,
   notes: w.notes,
+  version: w.version,
 });
 
 export const mapToWeekWithDays = (w: WeekWithDaysRow): WeekWithDays => ({

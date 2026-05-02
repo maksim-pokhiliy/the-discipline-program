@@ -40,6 +40,7 @@ export const mapToDay = (d: PrismaDay): Day => ({
   dayOfWeek: DAY_OF_WEEK_MAP[d.dayOfWeek],
   kind: DAY_KIND_MAP[d.kind],
   notes: d.notes,
+  version: d.version,
 });
 
 export const mapToDayWithSessions = (d: DayWithSessionsRow): DayWithSessions => ({
