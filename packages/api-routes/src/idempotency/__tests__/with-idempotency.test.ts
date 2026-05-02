@@ -98,20 +98,22 @@ describe("MT-1: multi-value Idempotency-Key — first value wins (post-QA-001)",
   });
 });
 
-describe("MT-4: non-JSON live response with bodyMode json — current contract", () => {
-  it("MT-4 / QA-003 — JSON.parse on a plaintext response throws inside cloneResponseForCache (post-fix QA-003 will change this)", async () => {
+describe("MT-4: non-JSON live response gracefully skips caching", () => {
+  it("MT-4 / QA-003 — plaintext response returns to client without throwing and without calling persist", async () => {
     installStore();
     lookupMock.mockResolvedValue({ kind: "miss" });
 
     const inner: RouteHandler = vi.fn(async () => new Response("plaintext", { status: 200 }));
     const wrapped = wrapHandler(inner, { method: "POST", bodyMode: "json" });
 
-    await expect(
-      wrapped(
-        buildJsonRequest({ ping: 1 }, { headers: { "Idempotency-Key": KEY } }),
-        dummyContext(),
-      ),
-    ).rejects.toBeInstanceOf(SyntaxError);
+    const response = await wrapped(
+      buildJsonRequest({ ping: 1 }, { headers: { "Idempotency-Key": KEY } }),
+      dummyContext(),
+    );
+
+    expect(response.status).toBe(200);
+    expect(await response.text()).toBe("plaintext");
+    expect(response.headers.get("Idempotency-Replayed")).toBe("false");
     expect(persistMock).not.toHaveBeenCalled();
   });
 });
@@ -613,8 +615,8 @@ describe("MT-19: replay does not re-run the handler", () => {
   });
 });
 
-describe('MT-20: empty body fingerprint is sha256("")', () => {
-  it('MT-20 — bodyMode none produces sha256("") as the request fingerprint passed to lookup/persist', async () => {
+describe("MT-20: empty body fingerprint is path-aware sha256 of canonical input", () => {
+  it("MT-20 — bodyMode none produces sha256('path:<pathname>\\nbody:') for the request fingerprint", async () => {
     installStore();
     lookupMock.mockResolvedValue({ kind: "miss" });
     persistMock.mockResolvedValue({ status: "persisted" });
@@ -623,17 +625,21 @@ describe('MT-20: empty body fingerprint is sha256("")', () => {
     const wrapped = wrapHandler(inner, { method: "DELETE", bodyMode: "none" });
 
     await wrapped(
-      buildEmptyRequest({ headers: { "Idempotency-Key": KEY }, method: "DELETE" }),
+      buildEmptyRequest({
+        url: "https://example.com/api/admin/contacts/abc-123",
+        headers: { "Idempotency-Key": KEY },
+        method: "DELETE",
+      }),
       dummyContext(),
     );
 
-    const expected = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+    const expected = sha256Hex("path:/api/admin/contacts/abc-123\nbody:");
 
     expect(lookupMock.mock.calls[0]?.[0]).toMatchObject({ requestFingerprint: expected });
     expect(persistMock.mock.calls[0]?.[0]).toMatchObject({ requestFingerprint: expected });
   });
 
-  it("MT-20 — two bodyless requests with the same key + scope produce identical fingerprints", async () => {
+  it("MT-20 — two bodyless requests on the same path with the same key produce identical fingerprints", async () => {
     installStore();
     lookupMock.mockResolvedValue({ kind: "miss" });
     persistMock.mockResolvedValue({ status: "persisted" });
@@ -656,6 +662,42 @@ describe('MT-20: empty body fingerprint is sha256("")', () => {
       .requestFingerprint;
 
     expect(fpA).toBe(fpB);
+  });
+});
+
+describe("REVIEW-FOLLOWUP: bodyless mutations on different IDs produce different fingerprints", () => {
+  it("DELETE /a/1 vs DELETE /a/2 with the same key + scope yields distinct fingerprints (no replay collision)", async () => {
+    installStore();
+    lookupMock.mockResolvedValue({ kind: "miss" });
+    persistMock.mockResolvedValue({ status: "persisted" });
+
+    const inner: RouteHandler = vi.fn(async () => new Response(null, { status: 204 }));
+    const wrapped = wrapHandler(inner, { method: "DELETE", bodyMode: "none" });
+
+    await wrapped(
+      buildEmptyRequest({
+        url: "https://example.com/api/admin/contacts/1",
+        headers: { "Idempotency-Key": KEY },
+        method: "DELETE",
+      }),
+      dummyContext({ id: "1" }),
+    );
+    await wrapped(
+      buildEmptyRequest({
+        url: "https://example.com/api/admin/contacts/2",
+        headers: { "Idempotency-Key": KEY },
+        method: "DELETE",
+      }),
+      dummyContext({ id: "2" }),
+    );
+
+    const fpA = (lookupMock.mock.calls[0]?.[0] as { requestFingerprint: string })
+      .requestFingerprint;
+    const fpB = (lookupMock.mock.calls[1]?.[0] as { requestFingerprint: string })
+      .requestFingerprint;
+
+    expect(fpA).not.toBe(fpB);
+    expect(persistMock).toHaveBeenCalledTimes(2);
   });
 });
 

@@ -56,20 +56,31 @@ const validateKey = (raw: string | null): string | null => {
   return first;
 };
 
+const buildFingerprintInput = (request: Request, bodyTag: string): string => {
+  const pathname = new URL(request.url).pathname;
+
+  return `path:${pathname}\nbody:${bodyTag}`;
+};
+
 const captureBody = async (
   request: Request,
   mode: IdempotencyBodyMode,
 ): Promise<{ rebuiltRequest: Request; fingerprint: string }> => {
   if (mode === "none") {
-    return { rebuiltRequest: request, fingerprint: sha256Hex("") };
+    return {
+      rebuiltRequest: request,
+      fingerprint: sha256Hex(buildFingerprintInput(request, "")),
+    };
   }
 
   if (mode === "formdata") {
     const form = await request.formData();
-    const fingerprint = await fingerprintFormData(form);
+    const formTag = await fingerprintFormData(form);
+    const fingerprint = sha256Hex(buildFingerprintInput(request, formTag));
     const headers = new Headers(request.headers);
 
     headers.delete("content-type");
+    headers.delete("content-length");
 
     const rebuiltRequest = new Request(request.url, {
       method: request.method,
@@ -81,7 +92,8 @@ const captureBody = async (
   }
 
   const text = await request.text();
-  const fingerprint = fingerprintRawBody(text);
+  const bodyTag = fingerprintRawBody(text);
+  const fingerprint = sha256Hex(buildFingerprintInput(request, bodyTag));
   const rebuiltRequest = new Request(request.url, {
     method: request.method,
     headers: request.headers,
@@ -91,10 +103,30 @@ const captureBody = async (
   return { rebuiltRequest, fingerprint };
 };
 
-const cloneResponseForCache = async (response: Response): Promise<CachedResponse> => {
+const safeJsonParse = (raw: string): { ok: true; value: unknown } | { ok: false } => {
+  try {
+    return { ok: true, value: JSON.parse(raw) };
+  } catch {
+    return { ok: false };
+  }
+};
+
+const cloneResponseForCache = async (response: Response): Promise<CachedResponse | null> => {
   const clone = response.clone();
   const bodyText = clone.status === 204 ? null : await clone.text();
-  const body: unknown = bodyText ? JSON.parse(bodyText) : null;
+
+  let body: unknown = null;
+
+  if (bodyText) {
+    const parsed = safeJsonParse(bodyText);
+
+    if (!parsed.ok) {
+      return null;
+    }
+
+    body = parsed.value;
+  }
+
   const headers: Record<string, string> = {};
 
   for (const [name, value] of clone.headers.entries()) {
@@ -182,6 +214,15 @@ const persistAndFinalize = async (
   liveResponse: Response,
 ): Promise<Response> => {
   const cached = await cloneResponseForCache(liveResponse);
+
+  if (!cached) {
+    logger.warn("idempotency.cache_skipped_non_json", {
+      route: ctx.route,
+      scope: redactScope(ctx.scope),
+    });
+
+    return annotateLive(liveResponse);
+  }
 
   try {
     const persistResult = await store.persist({
