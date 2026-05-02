@@ -147,6 +147,7 @@ export const bulkPatchOpSchema = z.discriminatedUnion("kind", [
   }),
   z.object({
     kind: z.literal("create-week"),
+    planId: z.string().cuid(),
     payload: createWeekInputSchema,
   }),
   z.object({

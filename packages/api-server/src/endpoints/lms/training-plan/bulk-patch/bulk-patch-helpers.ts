@@ -27,6 +27,7 @@ const collectIds = (ops: BulkPatchOp[]) => {
   const setGroupIds = new Set<string>();
   const weekIds = new Set<string>();
   const dayIds = new Set<string>();
+  const planIds = new Set<string>();
 
   for (const op of ops) {
     switch (op.kind) {
@@ -78,6 +79,7 @@ const collectIds = (ops: BulkPatchOp[]) => {
         break;
       }
       case "create-week": {
+        planIds.add(op.planId);
         break;
       }
       case "update-week":
@@ -106,7 +108,7 @@ const collectIds = (ops: BulkPatchOp[]) => {
     }
   }
 
-  return { blockIds, segmentIds, entryIds, sessionIds, setGroupIds, weekIds, dayIds };
+  return { blockIds, segmentIds, entryIds, sessionIds, setGroupIds, weekIds, dayIds, planIds };
 };
 
 export const verifyOpsBelongToPlan = async (
@@ -114,8 +116,16 @@ export const verifyOpsBelongToPlan = async (
   planId: string,
   ops: BulkPatchOp[],
 ): Promise<void> => {
-  const { blockIds, segmentIds, entryIds, sessionIds, setGroupIds, weekIds, dayIds } =
+  const { blockIds, segmentIds, entryIds, sessionIds, setGroupIds, weekIds, dayIds, planIds } =
     collectIds(ops);
+
+  for (const opPlanId of planIds) {
+    if (opPlanId !== planId) {
+      throw new NotFoundError("Bulk-patch op references another plan", {
+        opPlanId,
+      });
+    }
+  }
 
   if (weekIds.size > 0) {
     const weeks = await tx.week.findMany({
