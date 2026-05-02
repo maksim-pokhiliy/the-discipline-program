@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
+import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { cleanup, cleanupRaw, createTestUser } from "../../test/helpers";
@@ -141,25 +141,30 @@ describe("iamUserAdminApi", () => {
       ).rejects.toThrow(NotFoundError);
     });
 
-    it("throws ConflictError when demoting the last admin", async () => {
+    it("blocks the last admin from self-demoting (sole route to last-admin demotion post-requireAdminStrict)", async () => {
       const soloAdmin = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
 
-      const allUsers = await iamUserAdminApi.getAll();
-      const admins = allUsers.filter((u) => u.role === UserRole.ADMIN);
+      const otherAdmins = (await iamUserAdminApi.getAll()).filter(
+        (u) => u.role === UserRole.ADMIN && u.id !== soloAdmin.id,
+      );
 
-      const otherAdminIds = admins.filter((a) => a.id !== soloAdmin.id).map((a) => a.id);
-
-      for (const id of otherAdminIds) {
-        await iamUserAdminApi.updateRole(soloAdmin.id, id, { role: UserRole.ATHLETE });
+      for (const other of otherAdmins) {
+        await cleanupRaw.user.update({
+          where: { id: other.id },
+          data: { role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE] },
+        });
       }
 
       try {
         await expect(
-          iamUserAdminApi.updateRole(adminUser.id, soloAdmin.id, { role: UserRole.ATHLETE }),
-        ).rejects.toThrow(ConflictError);
+          iamUserAdminApi.updateRole(soloAdmin.id, soloAdmin.id, { role: UserRole.ATHLETE }),
+        ).rejects.toThrow(ForbiddenError);
       } finally {
-        for (const id of otherAdminIds) {
-          await iamUserAdminApi.updateRole(soloAdmin.id, id, { role: UserRole.ADMIN });
+        for (const other of otherAdmins) {
+          await cleanupRaw.user.update({
+            where: { id: other.id },
+            data: { role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] },
+          });
         }
 
         await cleanup({ table: "user", id: soloAdmin.id });
@@ -233,24 +238,29 @@ describe("iamUserAdminApi", () => {
       }
     });
 
-    it("throws ConflictError when demoting the last admin (acting as a different actor)", async () => {
+    it("blocks last-admin demotion via updateUser by rejecting non-admin actors", async () => {
       const soloAdmin = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
-
-      const allAdmins = (await iamUserAdminApi.getAll()).filter(
+      const otherAdmins = (await iamUserAdminApi.getAll()).filter(
         (u) => u.role === UserRole.ADMIN && u.id !== soloAdmin.id,
       );
 
-      for (const other of allAdmins) {
-        await iamUserAdminApi.updateRole(soloAdmin.id, other.id, { role: UserRole.ATHLETE });
+      for (const other of otherAdmins) {
+        await cleanupRaw.user.update({
+          where: { id: other.id },
+          data: { role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE] },
+        });
       }
 
       try {
         await expect(
           iamUserAdminApi.updateUser(adminUser.id, soloAdmin.id, { role: UserRole.ATHLETE }),
-        ).rejects.toThrow(ConflictError);
+        ).rejects.toThrow(ForbiddenError);
       } finally {
-        for (const other of allAdmins) {
-          await iamUserAdminApi.updateRole(soloAdmin.id, other.id, { role: UserRole.ADMIN });
+        for (const other of otherAdmins) {
+          await cleanupRaw.user.update({
+            where: { id: other.id },
+            data: { role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] },
+          });
         }
 
         await cleanup({ table: "user", id: soloAdmin.id });
@@ -289,24 +299,29 @@ describe("iamUserAdminApi", () => {
       );
     });
 
-    it("throws ConflictError when deleting the last admin", async () => {
+    it("blocks last-admin deletion by rejecting non-admin actors", async () => {
       const soloAdmin = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
-
-      const allAdmins = (await iamUserAdminApi.getAll()).filter(
+      const otherAdmins = (await iamUserAdminApi.getAll()).filter(
         (u) => u.role === UserRole.ADMIN && u.id !== soloAdmin.id,
       );
 
-      for (const other of allAdmins) {
-        await iamUserAdminApi.updateRole(soloAdmin.id, other.id, { role: UserRole.ATHLETE });
+      for (const other of otherAdmins) {
+        await cleanupRaw.user.update({
+          where: { id: other.id },
+          data: { role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE] },
+        });
       }
 
       try {
         await expect(iamUserAdminApi.deleteUser(adminUser.id, soloAdmin.id)).rejects.toThrow(
-          ConflictError,
+          ForbiddenError,
         );
       } finally {
-        for (const other of allAdmins) {
-          await iamUserAdminApi.updateRole(soloAdmin.id, other.id, { role: UserRole.ADMIN });
+        for (const other of otherAdmins) {
+          await cleanupRaw.user.update({
+            where: { id: other.id },
+            data: { role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] },
+          });
         }
 
         await cleanup({ table: "user", id: soloAdmin.id });
