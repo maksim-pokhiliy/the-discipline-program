@@ -47,14 +47,14 @@ The athlete vs coach surface split is enforced at the route level (`app/athlete/
 
 - Mobile-first: `Stack spacing={4}` is the spacing primitive (memory: pattern compliance). Reuse `ChipTab` / admin filter primitives — do not reinvent.
 - Drag-and-drop in the plan editor uses `@dnd-kit` (this app is the only one that pulls it in).
-- Mutation `onError` MUST chain through `extractValidationMessage` before falling back to `error.message` (memory: validation message helper).
+- Mutation `onError` MUST chain through `notifyError` (and/or `getIssues`) from `@repo/query` (`packages/query/src/hooks/notify-error.ts`) before falling back to `error.message`.
 - Plan detail and athlete-facing reads are cache-sensitive — see ADR 0010 for the BFF caching rationale and the `cache: 'no-store'` discipline.
 
 ## Related ADRs
 
 - [ADR 0010 — BFF via HTTP loopback for RSC](../../docs/adr/0010-bff-via-http-loopback-for-rsc.md)
 - [ADR 0011 — two independent NextAuth instances](../../docs/adr/0011-two-independent-nextauth-instances.md)
-- [ADR 0017 — anemic-domain handler shape](../../docs/adr/0017-anemic-domain-handler-shape.md) (and ADR 0028 partial supersession for LMS)
+- [ADR 0017 — Anemic domain model acceptable pre-product](../../docs/adr/0017-anemic-domain-model-acceptable-pre-product.md) (and ADR 0028 partial supersession for LMS)
 - [ADR 0027 — structured workout domain](../../docs/adr/0027-structured-workout-domain.md) (workout redesign in flight)
 - [ADR 0035 — editor save model](../../docs/adr/0035-editor-save-model.md) (plan-editor save semantics)
 

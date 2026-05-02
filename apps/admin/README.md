@@ -57,6 +57,6 @@ The admin imports server logic from `@repo/api-server/{cms,lms,iam,coaching,stor
 - [ADR 0010 — BFF via HTTP loopback for RSC](../../docs/adr/0010-bff-via-http-loopback-for-rsc.md)
 - [ADR 0011 — two independent NextAuth instances](../../docs/adr/0011-two-independent-nextauth-instances.md)
 - [ADR 0013 — Vercel Blob for image storage](../../docs/adr/0013-vercel-blob-for-image-storage.md)
-- [ADR 0017 — anemic-domain handler shape](../../docs/adr/0017-anemic-domain-handler-shape.md) (and its partial supersession ADR 0028)
+- [ADR 0017 — Anemic domain model acceptable pre-product](../../docs/adr/0017-anemic-domain-model-acceptable-pre-product.md) (and its partial supersession ADR 0028)
 
 See the root [README](../../README.md) for the full architecture overview.

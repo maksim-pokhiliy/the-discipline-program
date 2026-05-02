@@ -22,7 +22,7 @@ src/
 
 ## Conventions
 
-- Errors normalize to `@repo/errors` shapes; consumers use `extractValidationMessage` from the project's infrastructure helper before falling back to `error.message` (memory: validation message helper).
+- Errors normalize to `@repo/errors` shapes; consumers surface them via `notifyError` (and/or `getIssues`) from `@repo/query` (`packages/query/src/hooks/notify-error.ts`) before falling back to `error.message`.
 - `cache: 'no-store'` is the default discipline for write paths and per-request reads. Caching is opt-in.
 
 ## Related ADRs

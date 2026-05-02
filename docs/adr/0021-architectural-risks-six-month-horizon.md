@@ -17,10 +17,10 @@ Each risk is documented below with: current state, trigger (when it becomes crit
 
 ### Tier 1 — Must resolve before first paying user
 
-**1. Billing domain design.** Schema models exist (`Subscription`, `Transaction`, `Price` with `stripePriceId/stripeProductId`) but API and contracts are placeholder directories. `Transaction.idempotencyKey` is nullable (should be NOT NULL). No webhook signature verification infrastructure. No idempotency middleware. No billing-aware access policies.
+**1. Billing domain design.** Schema models exist (`Subscription`, `Transaction`, `Price` with `stripePriceId/stripeProductId`) but API and contracts are placeholder directories. `Transaction.idempotencyKey` is `NOT NULL` (already tightened). No webhook signature verification infrastructure. No idempotency middleware. No billing-aware access policies.
 
 - **Trigger:** First payment integration work begins.
-- **Approach:** ADR for billing architecture (Stripe checkout flow, webhook idempotency, subscription lifecycle state machine). Build billing API + contracts before writing any Stripe integration code. Fix `idempotencyKey` nullability in the same migration.
+- **Approach:** ADR for billing architecture (Stripe checkout flow, webhook idempotency, subscription lifecycle state machine). Build billing API + contracts before writing any Stripe integration code.
 
 **2. Email and notification service.** Email port exists (`infrastructure/email/port.ts`) with `send(input)` interface but zero vendor implementations. `MarketingContactSubmission` records are created without sending confirmation emails to submitters.
 

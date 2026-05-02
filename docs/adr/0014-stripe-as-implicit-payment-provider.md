@@ -34,7 +34,7 @@ model Subscription {
 model Transaction {
   ...
   providerTxId   String  @unique
-  idempotencyKey String? @unique
+  idempotencyKey String  @unique
   ...
 }
 ```
@@ -68,7 +68,7 @@ When billing is implemented (see Big Tech audit, section 7 — billing bounded c
 - Billing endpoints depend on `PaymentsPort`, not on `stripe` directly.
 - The `stripe` package is a dependency only of the adapter file, enforced via `dependency-cruiser`.
 
-Webhook handling will live at `/api/webhooks/stripe` in whichever app ends up owning the billing domain (likely `admin` or a new dedicated `billing` surface — deferred decision). The webhook handler will verify Stripe's signature and route events to the billing service. `Transaction.idempotencyKey` will be marked `NOT NULL` as part of the billing implementation (it is currently `String?` in the schema, which is a gap tracked in the audit section 3).
+Webhook handling will live at `/api/webhooks/stripe` in whichever app ends up owning the billing domain (likely `admin` or a new dedicated `billing` surface — deferred decision). The webhook handler will verify Stripe's signature and route events to the billing service. `Transaction.idempotencyKey` is `NOT NULL` in the schema — was a known gap at the time of this ADR write and has since been tightened.
 
 ## Consequences
 
@@ -87,7 +87,6 @@ Webhook handling will live at `/api/webhooks/stripe` in whichever app ends up ow
 - **Schema drift if Stripe changes their data model.** Stripe occasionally introduces new product types (usage-based billing, one-time payments with subscriptions, etc.) that do not fit cleanly into `Product → Price → Subscription`. Each such change is a schema migration.
 - **Webhook security is critical from day one.** Stripe's webhook signature verification must be correct or attackers can forge billing events. The adapter layer must get this right on the first try — there is no "we'll harden it later" path for something that awards subscriptions.
 - **Retroactive documentation risk.** This ADR captures a decision that has already been made implicitly. The risk is that there is reasoning we are not aware of and cannot document because it is in someone's head or in an old chat log. Future contributors should treat this ADR's "reasoning" with appropriate skepticism.
-- **`Transaction.idempotencyKey String?`** is currently nullable, which is a bug class. Any `Transaction` created without an idempotency key is one retry away from a double charge. Tracked in the audit section 3 — fix when billing is implemented.
 
 **Neutral:**
 
@@ -113,6 +112,6 @@ Webhook handling will live at `/api/webhooks/stripe` in whichever app ends up ow
 - `packages/api-server/prisma/schema.prisma` — the models containing Stripe-flavored fields.
 - ADR 0008 — singleton subscription invariant (which shapes how Stripe data lands in the database).
 - ADR 0013 — storage port / adapter pattern (which the billing adapter will mirror).
-- Big Tech audit, section 3 — `idempotencyKey` currently nullable.
+- Big Tech audit, section 3 — `idempotencyKey` is now `NOT NULL` (was a known gap at the time of ADR write).
 - Big Tech audit, section 7 — billing as an architectural risk on the six-month horizon.
 - https://stripe.com/docs/api — Stripe API reference (provider documentation).

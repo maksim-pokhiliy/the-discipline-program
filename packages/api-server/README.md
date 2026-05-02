@@ -47,4 +47,4 @@ scripts/                apply-sql-checks.ts (DB-level CHECK constraints)
 - [ADR 0003 — Prisma as ORM](../../docs/adr/0003-prisma-as-orm.md)
 - [ADR 0007 — Prisma client isolated in api-server](../../docs/adr/0007-prisma-client-isolated-in-api-server.md)
 - [ADR 0009 — soft delete via Prisma extension](../../docs/adr/0009-soft-delete-via-prisma-extension.md)
-- [ADR 0017 — anemic-domain handler shape](../../docs/adr/0017-anemic-domain-handler-shape.md) and [ADR 0028 — service layer for LMS](../../docs/adr/0028-service-layer-for-lms-operations.md) (partial supersession for LMS).
+- [ADR 0017 — Anemic domain model acceptable pre-product](../../docs/adr/0017-anemic-domain-model-acceptable-pre-product.md) and [ADR 0028 — service layer for LMS](../../docs/adr/0028-service-layer-for-lms-operations.md) (partial supersession for LMS).

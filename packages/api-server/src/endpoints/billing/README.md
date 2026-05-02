@@ -20,7 +20,6 @@ Per BOUNDED-CONTEXTS.md §5 and §10, the target endpoints are:
 
 Tracked in ADR 0018 (security deferrals) and ADR 0019 (database strategy):
 
-- `Transaction.idempotencyKey` must be `NOT NULL` (it is currently nullable).
 - Webhook signature verification and rate limiting must exist as infrastructure.
 - An idempotency middleware must accept `Idempotency-Key` headers on every payment mutation.
 - `authz/guards.ts` or a future `authz/policies/` module must have a billing-aware access policy (subscription state gates platform access).
