@@ -1,4 +1,8 @@
+import { type Prisma } from "@prisma/client";
+
 import { type BulkPatchOp } from "@repo/contracts/lms/training-plan";
+
+import { findOrThrow } from "../../../../../utils";
 
 import { type ApplyOutcome, type TxClient } from "./shared";
 
@@ -6,23 +10,98 @@ type CreateSessionOp = Extract<BulkPatchOp, { kind: "create-session" }>;
 type UpdateSessionOp = Extract<BulkPatchOp, { kind: "update-session" }>;
 type DeleteSessionOp = Extract<BulkPatchOp, { kind: "delete-session" }>;
 
+const readSessionVersion = async (tx: TxClient, sessionId: string): Promise<number> => {
+  const row = await findOrThrow(
+    tx.lmsSession.findUnique({ where: { id: sessionId }, select: { version: true } }),
+    "Session",
+  );
+
+  return row.version;
+};
+
+const resolveCreateOrder = async (
+  tx: TxClient,
+  dayId: string,
+  explicitOrder: number | undefined,
+): Promise<number> => {
+  if (explicitOrder !== undefined) {
+    return explicitOrder;
+  }
+
+  const aggregate = await tx.lmsSession.aggregate({
+    where: { dayId },
+    _max: { order: true },
+  });
+
+  return (aggregate._max.order ?? -1) + 1;
+};
+
 export const applyCreateSession = async (
-  _tx: TxClient,
-  _op: CreateSessionOp,
+  tx: TxClient,
+  op: CreateSessionOp,
 ): Promise<ApplyOutcome> => {
-  throw new Error("not implemented: create-session");
+  const order = await resolveCreateOrder(tx, op.dayId, op.payload.order);
+
+  await tx.lmsSession.create({
+    data: {
+      dayId: op.dayId,
+      order,
+      label: op.payload.label ?? null,
+      notes: op.payload.notes ?? null,
+    },
+    select: { id: true },
+  });
+
+  return { kind: "ok" };
+};
+
+const buildSessionUpdateData = (
+  fullEntity: UpdateSessionOp["fullEntity"],
+): Prisma.LmsSessionUpdateManyMutationInput => {
+  const data: Prisma.LmsSessionUpdateManyMutationInput = { version: { increment: 1 } };
+
+  if (fullEntity.order !== undefined) {
+    data.order = fullEntity.order;
+  }
+
+  if (fullEntity.label !== undefined) {
+    data.label = fullEntity.label;
+  }
+
+  if (fullEntity.notes !== undefined) {
+    data.notes = fullEntity.notes;
+  }
+
+  return data;
 };
 
 export const applyUpdateSession = async (
-  _tx: TxClient,
-  _op: UpdateSessionOp,
+  tx: TxClient,
+  op: UpdateSessionOp,
 ): Promise<ApplyOutcome> => {
-  throw new Error("not implemented: update-session");
+  const result = await tx.lmsSession.updateMany({
+    where: { id: op.sessionId, version: op.expectedVersion },
+    data: buildSessionUpdateData(op.fullEntity),
+  });
+
+  if (result.count === 0) {
+    return { kind: "conflict", currentVersion: await readSessionVersion(tx, op.sessionId) };
+  }
+
+  return { kind: "ok" };
 };
 
 export const applyDeleteSession = async (
-  _tx: TxClient,
-  _op: DeleteSessionOp,
+  tx: TxClient,
+  op: DeleteSessionOp,
 ): Promise<ApplyOutcome> => {
-  throw new Error("not implemented: delete-session");
+  const result = await tx.lmsSession.deleteMany({
+    where: { id: op.sessionId, version: op.expectedVersion },
+  });
+
+  if (result.count === 0) {
+    return { kind: "conflict", currentVersion: await readSessionVersion(tx, op.sessionId) };
+  }
+
+  return { kind: "ok" };
 };
