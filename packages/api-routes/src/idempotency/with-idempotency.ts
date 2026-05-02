@@ -57,9 +57,9 @@ const validateKey = (raw: string | null): string | null => {
 };
 
 const buildFingerprintInput = (request: Request, bodyTag: string): string => {
-  const pathname = new URL(request.url).pathname;
+  const { pathname, search } = new URL(request.url);
 
-  return `path:${pathname}\nbody:${bodyTag}`;
+  return `path:${pathname}${search}\nbody:${bodyTag}`;
 };
 
 const captureBody = async (

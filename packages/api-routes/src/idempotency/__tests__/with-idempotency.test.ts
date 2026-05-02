@@ -665,6 +665,42 @@ describe("MT-20: empty body fingerprint is path-aware sha256 of canonical input"
   });
 });
 
+describe("REVIEW-FOLLOWUP: query-string discriminates bodyless multi-toggle actions", () => {
+  it("PATCH /toggle?field=A vs PATCH /toggle?field=B with the same key + scope yields distinct fingerprints", async () => {
+    installStore();
+    lookupMock.mockResolvedValue({ kind: "miss" });
+    persistMock.mockResolvedValue({ status: "persisted" });
+
+    const inner: RouteHandler = vi.fn(async () => new Response(null, { status: 204 }));
+    const wrapped = wrapHandler(inner, { method: "PATCH", bodyMode: "none" });
+
+    await wrapped(
+      buildEmptyRequest({
+        url: "https://example.com/api/admin/blog/abc/toggle?field=isPublished",
+        headers: { "Idempotency-Key": KEY },
+        method: "PATCH",
+      }),
+      dummyContext({ id: "abc" }),
+    );
+    await wrapped(
+      buildEmptyRequest({
+        url: "https://example.com/api/admin/blog/abc/toggle?field=isFeatured",
+        headers: { "Idempotency-Key": KEY },
+        method: "PATCH",
+      }),
+      dummyContext({ id: "abc" }),
+    );
+
+    const fpA = (lookupMock.mock.calls[0]?.[0] as { requestFingerprint: string })
+      .requestFingerprint;
+    const fpB = (lookupMock.mock.calls[1]?.[0] as { requestFingerprint: string })
+      .requestFingerprint;
+
+    expect(fpA).not.toBe(fpB);
+    expect(persistMock).toHaveBeenCalledTimes(2);
+  });
+});
+
 describe("REVIEW-FOLLOWUP: bodyless mutations on different IDs produce different fingerprints", () => {
   it("DELETE /a/1 vs DELETE /a/2 with the same key + scope yields distinct fingerprints (no replay collision)", async () => {
     installStore();
