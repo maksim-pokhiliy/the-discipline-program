@@ -33,3 +33,4 @@ src/
 
 - [ADR 0017 — anemic-domain handler shape](../../docs/adr/0017-anemic-domain-handler-shape.md)
 - [ADR 0020 — API design decisions](../../docs/adr/0020-api-design-decisions.md) (pagination, error shape)
+- [ADR 0036 — Idempotency-Key on mutation endpoints](../../docs/adr/0036-idempotency-key-on-mutation-endpoints.md) (default-on factory wrapper)

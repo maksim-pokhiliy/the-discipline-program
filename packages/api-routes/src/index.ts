@@ -53,3 +53,20 @@ export type {
   RateLimitTier,
   RateLimitTierValue,
 } from "./rate-limit";
+export {
+  setIdempotencyStore,
+  getIdempotencyStore,
+  IDEMPOTENCY_TTL_HOURS,
+  IDEMPOTENCY_TTL_SECONDS,
+  IDEMPOTENCY_HEADER_REQUEST,
+  IDEMPOTENCY_HEADER_REPLAYED,
+  IDEMPOTENCY_HEADER_CREATED_AT,
+} from "./idempotency";
+export type {
+  CachedResponse,
+  IdempotencyLookupResult,
+  IdempotencyPersistResult,
+  IdempotencyStorePort,
+  IdempotencyBodyMode,
+  IdempotencyConfig,
+} from "./idempotency";

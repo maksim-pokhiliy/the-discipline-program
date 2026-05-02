@@ -203,6 +203,24 @@ model Transaction {
   @@map("app_transactions")
 }
 
+model RequestIdempotency {
+  id                 String   @id @default(cuid())
+  key                String
+  scope              String
+  route              String
+  method             String
+  requestFingerprint String
+  responseStatus     Int
+  responseBody       Json
+  responseHeaders    Json
+  expiresAt          DateTime
+  createdAt          DateTime @default(now())
+
+  @@unique([key, scope, route])
+  @@index([expiresAt])
+  @@map("app_request_idempotency")
+}
+
 enum SubscriptionStatus {
   TRIAL
   ACTIVE

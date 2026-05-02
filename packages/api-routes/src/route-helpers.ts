@@ -4,6 +4,7 @@ import { type ZodType, type ZodTypeDef } from "zod";
 import { BadRequestError } from "@repo/errors";
 
 import { handleApiError } from "./error-handler";
+import { type IdempotencyConfig, wrapHandler } from "./idempotency";
 import { runWithContext } from "./request-context";
 import { type RouteContext, type RouteHandler } from "./types";
 
@@ -63,12 +64,20 @@ export const createGetByIdHandler = <TResponse>(
   };
 };
 
+const POST_JSON_CONFIG: IdempotencyConfig = { method: "POST", bodyMode: "json" };
+const PUT_JSON_CONFIG: IdempotencyConfig = { method: "PUT", bodyMode: "json" };
+const PATCH_JSON_CONFIG: IdempotencyConfig = { method: "PATCH", bodyMode: "json" };
+const DELETE_JSON_CONFIG: IdempotencyConfig = { method: "DELETE", bodyMode: "json" };
+const DELETE_NONE_CONFIG: IdempotencyConfig = { method: "DELETE", bodyMode: "none" };
+const POST_FORMDATA_CONFIG: IdempotencyConfig = { method: "POST", bodyMode: "formdata" };
+const POST_NONE_CONFIG: IdempotencyConfig = { method: "POST", bodyMode: "none" };
+
 export const createPostHandler = <TRequest, TResponse>(
   apiFn: (data: TRequest) => Promise<TResponse>,
   requestSchema: ParseSchema<TRequest>,
   responseSchema: ParseSchema<TResponse>,
-) => {
-  return async (request: Request) => {
+): RouteHandler => {
+  const inner: RouteHandler = async (request) => {
     const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
     const result = await apiFn(data);
@@ -76,6 +85,8 @@ export const createPostHandler = <TRequest, TResponse>(
 
     return NextResponse.json(validated, { status: 201 });
   };
+
+  return wrapHandler(inner, POST_JSON_CONFIG);
 };
 
 export const createPutHandler = <TRequest, TResponse>(
@@ -83,8 +94,8 @@ export const createPutHandler = <TRequest, TResponse>(
   paramsSchema: ParseSchema<{ id: string }>,
   requestSchema: ParseSchema<TRequest>,
   responseSchema: ParseSchema<TResponse>,
-) => {
-  return async (request: Request, context: RouteContext) => {
+): RouteHandler => {
+  const inner: RouteHandler = async (request, context) => {
     const { id } = paramsSchema.parse(await context.params);
     const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
@@ -93,6 +104,8 @@ export const createPutHandler = <TRequest, TResponse>(
 
     return NextResponse.json(validated);
   };
+
+  return wrapHandler(inner, PUT_JSON_CONFIG);
 };
 
 export const createGetByParamHandler = <TParams, TResponse>(
@@ -113,8 +126,8 @@ export const createPatchByParamHandler = <TParams, TRequest>(
   apiFn: (params: TParams, data: TRequest) => Promise<void>,
   paramsSchema: ParseSchema<TParams>,
   requestSchema: ParseSchema<TRequest>,
-) => {
-  return async (request: Request, context: RouteContext) => {
+): RouteHandler => {
+  const inner: RouteHandler = async (request, context) => {
     const params = paramsSchema.parse(await context.params);
     const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
@@ -123,26 +136,30 @@ export const createPatchByParamHandler = <TParams, TRequest>(
 
     return new NextResponse(null, { status: 204 });
   };
+
+  return wrapHandler(inner, PATCH_JSON_CONFIG);
 };
 
 export const createFormDataPostHandler = <TResponse>(
   apiFn: (formData: FormData) => Promise<TResponse>,
   responseSchema: ParseSchema<TResponse>,
-) => {
-  return async (request: Request) => {
+): RouteHandler => {
+  const inner: RouteHandler = async (request) => {
     const formData = await request.formData();
     const result = await apiFn(formData);
     const validated = responseSchema.parse(result);
 
     return NextResponse.json(validated, { status: 201 });
   };
+
+  return wrapHandler(inner, POST_FORMDATA_CONFIG);
 };
 
 export const createDeleteWithBodyHandler = <TRequest>(
   apiFn: (data: TRequest) => Promise<void>,
   requestSchema: ParseSchema<TRequest>,
-) => {
-  return async (request: Request) => {
+): RouteHandler => {
+  const inner: RouteHandler = async (request) => {
     const body = await parseJsonBody(request);
     const data = requestSchema.parse(body);
 
@@ -150,33 +167,39 @@ export const createDeleteWithBodyHandler = <TRequest>(
 
     return new NextResponse(null, { status: 204 });
   };
+
+  return wrapHandler(inner, DELETE_JSON_CONFIG);
 };
 
 export const createDeleteHandler = (
   apiFn: (id: string) => Promise<void>,
   paramsSchema: ParseSchema<{ id: string }>,
-) => {
-  return async (_: Request, context: RouteContext) => {
+): RouteHandler => {
+  const inner: RouteHandler = async (_request, context) => {
     const { id } = paramsSchema.parse(await context.params);
 
     await apiFn(id);
 
     return new NextResponse(null, { status: 204 });
   };
+
+  return wrapHandler(inner, DELETE_NONE_CONFIG);
 };
 
 export const createToggleHandler = <TResponse>(
   apiFn: (id: string) => Promise<TResponse>,
   paramsSchema: ParseSchema<{ id: string }>,
   responseSchema: ParseSchema<TResponse>,
-) => {
-  return async (_: Request, context: RouteContext) => {
+): RouteHandler => {
+  const inner: RouteHandler = async (_request, context) => {
     const { id } = paramsSchema.parse(await context.params);
     const result = await apiFn(id);
     const validated = responseSchema.parse(result);
 
     return NextResponse.json(validated);
   };
+
+  return wrapHandler(inner, POST_NONE_CONFIG);
 };
 
 export const createMultiToggleHandler = <TField extends string, TResponse>(
@@ -184,8 +207,8 @@ export const createMultiToggleHandler = <TField extends string, TResponse>(
   paramsSchema: ParseSchema<{ id: string }>,
   querySchema: ParseSchema<{ field: TField }>,
   responseSchema: ParseSchema<TResponse>,
-) => {
-  return async (request: Request, context: RouteContext) => {
+): RouteHandler => {
+  const inner: RouteHandler = async (request, context) => {
     const { id } = paramsSchema.parse(await context.params);
     const { field } = querySchema.parse({
       field: new URL(request.url).searchParams.get("field"),
@@ -195,4 +218,6 @@ export const createMultiToggleHandler = <TField extends string, TResponse>(
 
     return NextResponse.json(validated);
   };
+
+  return wrapHandler(inner, POST_NONE_CONFIG);
 };
