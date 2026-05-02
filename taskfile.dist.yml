@@ -72,6 +72,11 @@ tasks:
     cmds:
       - pnpm db:push
 
+  db:reset:
+    desc: "Force-reset the dev database (drops all data, re-applies schema + SQL checks)"
+    cmds:
+      - pnpm db:reset
+
   db:seed:
     desc: "Seed the database with baseline data"
     cmds:

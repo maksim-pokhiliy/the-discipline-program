@@ -6,8 +6,7 @@
     "dev": "storybook dev -p 6006",
     "build": "storybook build",
     "lint": "eslint . --fix --max-warnings 0",
-    "check-types": "tsc --noEmit",
-    "format": "prettier --write \"**/*.{ts,tsx,json}\""
+    "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@repo/contracts": "workspace:*",

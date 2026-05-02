@@ -7,7 +7,7 @@
 
 ## Context
 
-Section 7 of the Big Tech audit asks: "What will hurt the most to retrofit in six months?" These are not bugs or code quality issues — they are architectural decisions that become exponentially harder to change once downstream consumers accumulate. The audit surfaced 10 concrete risk areas, each verified against the current codebase.
+This ADR answers "What will hurt the most to retrofit in six months?" These are not bugs or code quality issues — they are architectural decisions that become exponentially harder to change once downstream consumers accumulate. Ten concrete risk areas were surfaced and each was verified against the codebase at write time.
 
 The project is pre-launch. Three apps (admin working, marketing working, platform scaffolded). No production traffic, no paying users. This is the last window where foundational decisions are cheap.
 
@@ -22,10 +22,10 @@ Each risk is documented below with: current state, trigger (when it becomes crit
 - **Trigger:** First payment integration work begins.
 - **Approach:** ADR for billing architecture (Stripe checkout flow, webhook idempotency, subscription lifecycle state machine). Build billing API + contracts before writing any Stripe integration code.
 
-**2. Email and notification service.** Email port exists (`infrastructure/email/port.ts`) with `send(input)` interface but zero vendor implementations. `MarketingContactSubmission` records are created without sending confirmation emails to submitters.
+**2. Email and notification service.** Email port exists (`infrastructure/email/port.ts`) with `send(input)` interface. A Resend adapter is live via `@repo/email/createResendEmailService` and is wired into invite flows. `MarketingContactSubmission` records are still created without sending confirmation emails to submitters; broader notification coverage (password reset, subscription receipts, coach notifications) is not yet built.
 
-- **Trigger:** Any feature that needs to send email (contact confirmation, password reset, subscription receipts, coach notifications).
-- **Approach:** Pick a vendor (Resend recommended for Vercel ecosystem), implement the adapter behind the existing port. Build a notification service layer above the port that owns templates, locale, retry/failure handling. Queue port (already scaffolded) handles async delivery.
+- **Trigger:** Any new feature that needs to send email beyond invites (contact confirmation, password reset, subscription receipts, coach notifications).
+- **Approach:** Build a notification service layer above the existing port that owns templates, locale, retry/failure handling. Queue port (already scaffolded) handles async delivery.
 
 **3. Job queue and scheduled work.** Queue port exists (`infrastructure/queue/port.ts`) with producer-only `enqueue<T>()` interface. No consumer registration, no scheduled job infrastructure. `CoachActionItem` has three `AUTO_*` resolution reasons (`AUTO_CONDITION_CLEARED`, `AUTO_ENROLLMENT_ENDED`) that imply background processing, but resolution currently runs synchronously during dashboard data aggregation.
 

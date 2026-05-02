@@ -1,8 +1,10 @@
 # 0030. Exercise library snapshot strategy — hybrid FK + immutable JSON
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `lms`, `data-modeling`, `analytics`
+
+> Status flipped from Proposed to Accepted: the hybrid FK + immutable JSON strategy has landed and is load-bearing in code.
 
 ## Context
 

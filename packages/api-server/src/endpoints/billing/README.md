@@ -21,7 +21,8 @@ Per BOUNDED-CONTEXTS.md §5 and §10, the target endpoints are:
 Tracked in ADR 0018 (security deferrals) and ADR 0019 (database strategy):
 
 - Webhook signature verification and rate limiting must exist as infrastructure.
-- An idempotency middleware must accept `Idempotency-Key` headers on every payment mutation.
 - `authz/guards.ts` or a future `authz/policies/` module must have a billing-aware access policy (subscription state gates platform access).
+
+Already in place: `Transaction.idempotencyKey` is `String @unique` NOT NULL in the schema; `wrapHandler` / `wrapAuthHandler` from `@repo/api-routes/idempotency` accept `Idempotency-Key` on every mutation factory call site (see ADR 0036).
 
 **Do not put non-Billing endpoints here.** CMS, LMS, Coaching, and IAM each have their own folder.

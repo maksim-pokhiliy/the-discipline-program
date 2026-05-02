@@ -11,14 +11,14 @@ Tests are **not** in pre-push.
 
 ## CI (`.github/workflows/ci.yml`)
 
-Runs on every PR and push to `main`. Five parallel jobs:
+Runs on every PR and push to `main`. Six parallel jobs:
 
 - `check-types` -- full workspace `tsc --noEmit`.
 - `lint` -- full workspace ESLint.
 - `dep-check` -- full repo dependency-cruiser.
+- `format-check` -- Prettier check on `**/*.{ts,tsx,md,json}`.
 - `test` -- full Vitest suite incl. `api-server` integration tests against a fresh `postgres:16-alpine` (~10-12 min, serial per `project_api_server_serial_tests` memory).
 - `build` -- production build for all three apps + Storybook.
-- `format:check` -- Prettier check on `**/*.{ts,tsx,md,json}`.
 
 ## Trade-off
 

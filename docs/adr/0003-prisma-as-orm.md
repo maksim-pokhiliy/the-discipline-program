@@ -10,7 +10,7 @@ The project persists a PostgreSQL database with 23 entities spanning four bounde
 
 1. **Full TypeScript type-safety end to end.** A field rename in the schema must fail `check-types` in every consumer — no string-based query paths.
 2. **Relational queries with nested includes.** Training plans fetch nested workouts, workout logs fetch nested set logs, coach dashboards fetch athletes with their plans and enrollments. The ORM must generate correct SQL for multi-level nested loads without N+1.
-3. **Migrations as code.** Schema changes live in the repository and are reviewable. (Note: this requirement is not yet met — see ADR 0009 and the Big Tech audit, section 5.)
+3. **Migrations as code.** Schema changes live in the repository and are reviewable. (Note: this requirement is not yet met — see ADR 0009 and ADR 0019.)
 4. **Soft delete semantics.** Several models (`User`, `Product`, `TrainingPlan`, `Workout`, `CoachProfile`, `MarketingBlogPost`, `MarketingReview`, `MarketingContactSubmission`) must support soft delete with filtering transparent to query callers.
 5. **Single-place Prisma ownership.** Only `packages/api-server` may import `@prisma/client`. The rest of the monorepo consumes domain types through `@repo/contracts`, never Prisma types.
 
@@ -30,14 +30,14 @@ Conventions:
 
 - The Prisma client is fully typed against the schema. A rename of `TrainingPlan.name` would fail compilation in every endpoint, mapper, and test that touches it.
 - `include` / `select` generate correct SQL with a single query for nested loads. N+1 is avoided by construction for relational reads.
-- The Prisma `$transaction` API works for both interactive transactions (`$transaction(async tx => ...)`) and batched arrays. We use it inconsistently today (see audit section 5); the tooling is there.
+- The Prisma `$transaction` API works for both interactive transactions (`$transaction(async tx => ...)`) and batched arrays. We use it inconsistently today (flagged as a database-strategy gap in ADR 0019); the tooling is there.
 - Prisma enforces a single source of truth for the physical schema. No hand-written SQL types, no drift.
 - `prisma generate` is wired into `postinstall` via `turbo run db:generate`, so a fresh clone is one `pnpm install` away from a working client.
 
 **Negative:**
 
 - **Prisma types cannot be used across the monorepo boundary.** The rule "only `api-server` imports `@prisma/client`" is a hard constraint that requires a mapper layer for every entity. This is extra code, and every mapper is a place to introduce drift between the physical schema and the contract.
-- **The soft-delete extension is brittle.** It covers `findMany` / `findFirst` / `findUnique` / `delete` / `deleteMany`, but not `count`, `aggregate`, `groupBy`, `findUniqueOrThrow`, `findFirstOrThrow`, `update`, `updateMany`, or `upsert`. Dashboard metrics that use `count` will include soft-deleted rows. Fixing this is tracked in the Big Tech audit, section 5.
+- **The soft-delete extension is brittle.** It covers `findMany` / `findFirst` / `findUnique` / `delete` / `deleteMany`, but not `count`, `aggregate`, `groupBy`, `findUniqueOrThrow`, `findFirstOrThrow`, `update`, `updateMany`, or `upsert`. Dashboard metrics that use `count` will include soft-deleted rows. Tracked as a known gap in ADR 0019.
 - **Prisma has historically been heavy at query time** due to its Rust-based query engine. Cold start on serverless is measurable. We accept this because we are running on Vercel with warm instances, but it is a watch-list item.
 - **Raw SQL escape hatches exist** (`$queryRaw`, `$executeRaw`) and are untyped. Code review must catch any use of them that bypasses the mapper layer.
 - **`Decimal` columns return as a `Decimal` instance**, not a number, and mappers must explicitly convert (`Number(p.weightKg)` in `user.mapper.ts`). Precision loss is possible if a developer forgets.
@@ -67,4 +67,4 @@ Conventions:
 - `packages/api-server/src/db/client.ts` — Prisma singleton + soft-delete extension.
 - `packages/api-server/src/mappers/` — Prisma → contracts mapper layer.
 - ADR 0009 — the soft-delete extension as a separate, explicit decision.
-- Big Tech audit, section 5 — known gaps in the current Prisma usage.
+- ADR 0019 — database-strategy deferred decisions (production migrations, soft-delete coverage, transaction discipline).

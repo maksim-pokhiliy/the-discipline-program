@@ -1,8 +1,10 @@
 # 0029. WorkoutLog repeatability — drop @@unique constraint
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `lms`, `schema`, `breaking-change`
+
+> Status flipped from Proposed to Accepted: the schema change has landed and is load-bearing in code.
 
 ## Context
 

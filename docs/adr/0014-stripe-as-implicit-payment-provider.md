@@ -61,7 +61,7 @@ The decision is retroactive because:
 2. Changing providers now would require a schema migration, which we want to avoid before launch.
 3. Stripe is the dominant choice for SaaS subscriptions in the relevant markets, and the schema decisions are already compatible with it.
 
-When billing is implemented (see Big Tech audit, section 7 — billing bounded context does not yet exist), it will follow the same port/adapter pattern that ADR 0013 prescribes for storage:
+When billing is implemented (the bounded context is reserved but the endpoints are not yet written — see ADR 0021 §1), it will follow the same port/adapter pattern that ADR 0013 prescribes for storage:
 
 - A `PaymentsPort` interface in `packages/api-server/src/infrastructure/payments/payments.port.ts`.
 - A `StripeAdapter` in the same directory implementing the port.
@@ -112,6 +112,6 @@ Webhook handling will live at `/api/webhooks/stripe` in whichever app ends up ow
 - `packages/api-server/prisma/schema.prisma` — the models containing Stripe-flavored fields.
 - ADR 0008 — singleton subscription invariant (which shapes how Stripe data lands in the database).
 - ADR 0013 — storage port / adapter pattern (which the billing adapter will mirror).
-- Big Tech audit, section 3 — `idempotencyKey` is now `NOT NULL` (was a known gap at the time of ADR write).
-- Big Tech audit, section 7 — billing as an architectural risk on the six-month horizon.
+- ADR 0021 §1 — billing as a Tier 1 architectural risk; this ADR fixes the provider, ADR 0021 documents the trigger.
+- ADR 0036 — `Transaction.idempotencyKey` is `NOT NULL` and idempotency middleware lives at the factory layer.
 - https://stripe.com/docs/api — Stripe API reference (provider documentation).

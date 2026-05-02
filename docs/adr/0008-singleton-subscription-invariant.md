@@ -80,5 +80,4 @@ This is explicitly a **domain invariant**, not a schema accident. Future contrib
 
 - `packages/api-server/prisma/schema.prisma` model `Subscription` — the `@unique` constraint on `userId`.
 - `packages/api-server/src/utils/prisma-error-handler.ts` — `P2002` handling that turns the constraint violation into a domain error.
-- Big Tech audit, section 2 — the list of invariants that already live in the database (this is one of them).
 - CLAUDE.md section "Global Invariants" — the codified list of system laws.

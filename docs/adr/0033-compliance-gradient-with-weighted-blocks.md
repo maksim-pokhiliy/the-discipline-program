@@ -1,8 +1,10 @@
 # 0033. Compliance gradient with weighted blocks
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `lms`, `analytics`
+
+> Status flipped from Proposed to Accepted: weighted-block compliance has landed and is load-bearing in analytics; see ADR 0028 for the service-layer placement.
 
 ## Context
 

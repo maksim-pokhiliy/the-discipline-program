@@ -83,7 +83,7 @@ packages/
   mui/            MUI theme + providers
   env/            Environment variable validation
 
-docs/adr/         Architecture Decision Records (37)
+docs/adr/         Architecture Decision Records (36)
 ```
 
 ## Commands
@@ -121,7 +121,7 @@ docs/adr/         Architecture Decision Records (37)
 - [docs/DEPLOY.md](docs/DEPLOY.md) -- deployment guide
 - [docs/DEPENDENCY-GRAPH.md](docs/DEPENDENCY-GRAPH.md) -- package dependency map
 - [docs/BOUNDED-CONTEXTS.md](docs/BOUNDED-CONTEXTS.md) -- domain boundaries
-- [docs/adr/](docs/adr/) -- 37 Architecture Decision Records
+- [docs/adr/](docs/adr/) -- 36 Architecture Decision Records
 
 ## Data Flow
 
@@ -137,14 +137,16 @@ Validated at boot by `@repo/env` (Zod). `SKIP_ENV_VALIDATION=1` bypasses validat
 
 ### Required
 
-| Variable                    | Where                                 | Purpose                                                  |
-| --------------------------- | ------------------------------------- | -------------------------------------------------------- |
-| `DATABASE_URL`              | all apps + `packages/api-server/.env` | PostgreSQL connection string (Neon or local).            |
-| `NEXTAUTH_SECRET`           | admin + platform                      | JWT signing secret. Generate: `openssl rand -base64 32`. |
-| `NEXTAUTH_URL`              | admin + platform                      | Canonical app URL for NextAuth callbacks.                |
-| `NEXT_PUBLIC_APP_URL`       | all apps                              | Base URL for HTTP loopback + cross-app links.            |
-| `NEXT_PUBLIC_MARKETING_URL` | all apps                              | Base URL for the marketing app.                          |
-| `BLOB_READ_WRITE_TOKEN`     | admin (file uploads)                  | Vercel Blob read/write token.                            |
+| Variable                    | Where                                 | Purpose                                                                       |
+| --------------------------- | ------------------------------------- | ----------------------------------------------------------------------------- |
+| `DATABASE_URL`              | all apps + `packages/api-server/.env` | PostgreSQL connection string (Neon or local).                                 |
+| `NEXTAUTH_SECRET`           | admin + platform                      | JWT signing secret. Generate: `openssl rand -base64 32`.                      |
+| `NEXTAUTH_URL`              | admin + platform                      | Canonical app URL for NextAuth callbacks.                                     |
+| `NEXT_PUBLIC_APP_URL`       | all apps                              | Base URL for HTTP loopback + cross-app links.                                 |
+| `NEXT_PUBLIC_MARKETING_URL` | all apps                              | Base URL for the marketing app.                                               |
+| `BLOB_READ_WRITE_TOKEN`     | admin (file uploads)                  | Vercel Blob read/write token.                                                 |
+| `RESEND_API_KEY`            | admin + platform (invite emails)      | Resend API key for transactional invite emails.                               |
+| `EMAIL_FROM`                | admin + platform (invite emails)      | Default From address for invite emails (must be a verified domain in Resend). |
 
 ### Optional
 

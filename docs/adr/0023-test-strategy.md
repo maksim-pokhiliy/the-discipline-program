@@ -7,7 +7,7 @@
 
 ## Context
 
-Section 9 of the Big Tech audit assessed the testing infrastructure. The project has 240 tests across 23 files in 2 packages (api-server: 201 tests in 21 files, contracts: 39 tests in 2 files). All other packages (apps, ui, query, shared, auth, api-client) have zero tests.
+This ADR captures the test-strategy assessment of the project. At write time the project had 240 tests across 23 files in 2 packages (api-server: 201 tests in 21 files, contracts: 39 tests in 2 files). All other packages (apps, ui, query, shared, auth, api-client) had zero tests.
 
 The test suite is reliable — all 240 tests pass consistently, with Neon cold-start as the only known flake (CI uses local postgres, eliminating this). Test run time is ~12 seconds.
 
@@ -17,7 +17,7 @@ The test suite is reliable — all 240 tests pass consistently, with Neon cold-s
 
 **Suite-level isolation, not per-test.** Tests use `beforeAll`/`afterAll` with shared test data. This is intentional — transaction-per-test with real Postgres is 10x slower, and the current approach works reliably for 240 tests. The trade-off (shared state between tests within a suite) is acceptable at this scale.
 
-**Raw PrismaClient in test helpers.** Cleanup uses `new PrismaClient()` directly, bypassing the soft-delete extension. This is correct — cleanup must hard-delete data, and the soft-delete extension would intercept deletions. Confirmed in section 5 audit.
+**Raw PrismaClient in test helpers.** Cleanup uses `new PrismaClient()` directly, bypassing the soft-delete extension. This is correct — cleanup must hard-delete data, and the soft-delete extension would intercept deletions.
 
 **Dynamic table cleanup with type cast.** `cleanup()` uses `(rawPrisma as unknown as Record<...>)` for universal table-based deletion. This is a pragmatic choice for test infrastructure — the alternative (explicitly listing every model) is more verbose and harder to maintain.
 

@@ -38,12 +38,12 @@ If the `getUserById` lookup fails, the JWT callback throws `UnauthorizedError`, 
 - **Stateless scaling.** JWT sessions scale horizontally without any session affinity or shared session store. One less piece of infrastructure.
 - **Simple secret rotation story.** Rotating `NEXTAUTH_SECRET` invalidates every active session, which is exactly what you want in a security incident.
 
-**Negative (tracked in the audit, section 3):**
+**Negative (known security gaps — see ADR 0018):**
 
 - **30-day JWT with no revocation is a long blast radius.** A leaked token is valid for a month. There is no way to invalidate a specific JWT short of rotating the shared secret (which logs everyone out). This is the industry-standard reason for splitting sessions into a short-lived access token (minutes) and a long-lived refresh token (days or weeks). We do not have that split. A stolen laptop, a phishing victim, a compromised browser extension — all of these have up to 30 days of access before the token naturally expires.
 - **Cookie size.** JWTs are larger than session IDs. NextAuth chunks large cookies automatically, but every request carries the JWT bytes in the `Cookie` header. Not a problem at the current session payload size, but a watch-list item if we ever want to cram more state into the token.
 - **Role change lag.** A user demoted from ADMIN to USER sees the old role in `session.user.role` until the next JWT refresh. For security-critical role changes (firing an admin), this means the admin retains admin permissions for up to the refresh interval. In practice the refresh happens within minutes of the next request, but "within minutes" is not "instantly".
-- **`MIN_PASSWORD_LENGTH = 6`** combined with 30-day JWTs is a bad pair. A weak password plus a month-long valid token is more risk than either alone. See the audit section 3 for the password policy issue.
+- **`MIN_PASSWORD_LENGTH = 6`** combined with 30-day JWTs is a bad pair. A weak password plus a month-long valid token is more risk than either alone. See ADR 0018 for the password-policy deferral.
 - **JWT contents are readable (just not forgeable).** Anyone with the cookie can decode the JWT payload in one line of JavaScript and read the user's ID, email, name, avatar URL, and role. No sensitive secrets should ever land in the token. Today they do not — but a future contributor adding "convenience" fields to the session object could accidentally expose PII.
 
 **Neutral:**
@@ -55,7 +55,7 @@ If the `getUserById` lookup fails, the JWT callback throws `UnauthorizedError`, 
 
 **Database sessions.** The obvious alternative. Fresh revocation, smaller cookie, no JWT gymnastics. Cost: a database round-trip on every authenticated request. On Vercel serverless with warm instances, that is ~5-20ms of added latency per request. On cold starts, much worse (the cold function + cold database connection). Multiply by every page load × every session-checked API call. Rejected as too expensive at the deploy target.
 
-**Hybrid: JWT access token (15 min) + database refresh token (30 days).** The industry-standard pattern. Short access token minimizes leak window. Long refresh token avoids daily re-login. Requires a refresh endpoint, client-side refresh logic, and a refresh token table in the database. NextAuth v4 does not support this pattern out of the box; implementing it means writing a custom flow that diverges from the NextAuth abstractions we are relying on. **This is the right long-term direction, but it is a non-trivial implementation and is deferred.** A future ADR will supersede this one when the refresh-token flow is built. Tracked in the Big Tech audit, section 3.
+**Hybrid: JWT access token (15 min) + database refresh token (30 days).** The industry-standard pattern. Short access token minimizes leak window. Long refresh token avoids daily re-login. Requires a refresh endpoint, client-side refresh logic, and a refresh token table in the database. NextAuth v4 does not support this pattern out of the box; implementing it means writing a custom flow that diverges from the NextAuth abstractions we are relying on. **This is the right long-term direction, but it is a non-trivial implementation and is deferred.** A future ADR will supersede this one when the refresh-token flow is built. Tracked in ADR 0018.
 
 **Shorter JWT max age.** Reduce the 30-day window to, say, 7 days. Reduces blast radius without adding infrastructure. Also annoys users — anyone who does not log in weekly gets kicked out. A middle ground is 14 days. Deferred: the right number depends on product data we do not have yet (how often do coaches actually use the platform?). When we have usage data, revisit.
 
@@ -72,4 +72,4 @@ If the `getUserById` lookup fails, the JWT callback throws `UnauthorizedError`, 
 - `apps/platform/src/proxy.ts` — the middleware that reads the JWT via `getToken()`.
 - ADR 0004 — NextAuth + credentials (this ADR is the session half of that decision).
 - ADR 0011 — two independent NextAuth instances (sharing the same `NEXTAUTH_SECRET`).
-- Big Tech audit, section 3 — the security gaps (weak password, long session, no refresh tokens).
+- ADR 0018 — security deferred decisions (password policy, long session, refresh tokens).

@@ -22,11 +22,11 @@ The rule we want is simple: **one package, and only one package, imports `@prism
 
 `@prisma/client` and `@prisma/engines` are dependencies **only** of `packages/api-server`. No other package in `packages/` and no app in `apps/` may import from `@prisma/client`.
 
-Enforcement is currently by convention and code review. Automatic enforcement will be added when `dependency-cruiser` ships in commit 1.3.A (Big Tech audit, section 1.3) with the rule:
+Enforcement is automatic via `dependency-cruiser`. `.dependency-cruiser.cjs` ships the `prisma-only-in-api-server` rule (plus a paired `shared-packages-no-prisma` rule and a `contracts-no-prisma` rule) that fails CI on any cross-boundary import:
 
 ```js
 {
-  name: "no-prisma-outside-api-server",
+  name: "prisma-only-in-api-server",
   severity: "error",
   from: { pathNot: "^packages/api-server/" },
   to: { path: "^@prisma/client" },
@@ -56,7 +56,7 @@ The test infrastructure in `packages/api-server/src/test/helpers.ts` is a delibe
 - **Every entity needs a mapper.** For a twenty-something-entity domain, that is a lot of boilerplate. Some of it is mechanical: `id → id`, `createdAt → createdAt`, `role → ROLE_MAP[role]`. The boilerplate is the cost of the boundary.
 - **Enum mapping is especially verbose.** Each Prisma enum needs a paired contract enum and a `Record<Prisma, Contract>` + `Record<Contract, Prisma>` map in `enum-maps.ts`. Anti-pattern in `CLAUDE.md` explicitly forbids `as` casts here, which keeps the boundary honest at the cost of two extra lines per enum value.
 - **Drift risk at the mapper layer.** A new field added to Prisma is not automatically exposed in the contract — which is the point, but it also means a new field can be silently dropped from the API because nobody updated the mapper. Mapper unit tests partially mitigate this (`training-plan.mapper.test.ts`, `user.mapper.test.ts`, `enum-maps.test.ts`).
-- **Automatic enforcement is pending.** Today the rule is "code review catches it". One motivated developer pushes a PR with `import { User } from "@prisma/client"` in `packages/ui` and it takes a human to notice. Dep-cruiser will close this gap (audit section 1.3).
+- **Automatic enforcement is in place.** `.dependency-cruiser.cjs` fails CI on a cross-boundary Prisma import (`prisma-only-in-api-server`, `shared-packages-no-prisma`, `contracts-no-prisma`).
 
 **Neutral:**
 
@@ -83,4 +83,4 @@ The test infrastructure in `packages/api-server/src/test/helpers.ts` is a delibe
 - ADR 0003 — Prisma as the ORM.
 - ADR 0005 — contracts as the API boundary type.
 - ADR 0009 — the soft-delete extension, and why the test harness gets an exception.
-- Big Tech audit, section 1.3 — pending enforcement via dependency-cruiser.
+- `.dependency-cruiser.cjs` — `prisma-only-in-api-server`, `shared-packages-no-prisma`, `contracts-no-prisma` rules.

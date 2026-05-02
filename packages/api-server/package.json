@@ -25,7 +25,6 @@
     "test": "vitest run",
     "check-types": "tsc --noEmit",
     "lint": "eslint . --fix --max-warnings 0",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
     "db:generate": "prisma generate",
     "db:push:prisma": "prisma db push",
     "db:push": "prisma db push && tsx scripts/apply-sql-checks.ts",
@@ -59,6 +58,7 @@
     "prettier": "catalog:",
     "prisma": "catalog:",
     "tsx": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }
