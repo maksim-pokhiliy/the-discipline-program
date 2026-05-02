@@ -11,12 +11,12 @@ import { usePlanStructure } from "@app/lib/hooks";
 
 import { useEditingTarget } from "../../lib/editing-target";
 
-import { DayCard } from "./day-card";
 import { EffectivePlanDecorationProvider } from "./effective-plan-decoration-context";
 import { PlanCanvasEmptyState } from "./plan-canvas-empty-state";
 import { type PlanSelection, type PlanSelectionKind } from "./selection";
 import { usePlanCanvasSelection } from "./use-plan-canvas-selection";
 import { WeekNavigator } from "./week-navigator";
+import { WeekRow } from "./week-row";
 
 const DEFAULT_WINDOW = 5;
 
@@ -45,23 +45,7 @@ const renderWeeks = (
   onSelect: (args: PlanCanvasSelectArgs) => void,
 ) =>
   data.plan.weeks.map((week) => (
-    <Stack key={week.id} spacing={1.5}>
-      <Typography variant="overline" color="text.secondary">
-        Week {week.index + 1}
-        {week.label ? ` — ${week.label}` : ""}
-      </Typography>
-      <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-        {week.days.map((day) => (
-          <DayCard
-            key={day.id}
-            day={day}
-            planId={planId}
-            selection={selection}
-            onSelect={onSelect}
-          />
-        ))}
-      </Stack>
-    </Stack>
+    <WeekRow key={week.id} week={week} planId={planId} selection={selection} onSelect={onSelect} />
   ));
 
 export const PlanCanvas = ({ planId }: PlanCanvasProps) => {

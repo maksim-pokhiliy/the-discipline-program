@@ -1,16 +1,32 @@
 "use client";
 
-import { Card, CardContent, Stack, Typography } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import {
+  Card,
+  CardContent,
+  ListItemIcon,
+  ListItemText,
+  MenuItem,
+  Stack,
+  Typography,
+} from "@mui/material";
 
 import { type PlanStructureDay } from "@repo/contracts/lms/training-plan";
 
+import { usePlanBulkPatch } from "@app/lib/hooks";
+
 import { AddSessionCta } from "./add-session-cta";
+import { countDayEntities, isContainerEmpty } from "./count-nested-entities";
 import { DecorationBadge } from "./decoration-badge";
+import { DeleteEntityDialog } from "./delete-entity-dialog";
 import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-context";
 import { getDecorationStyles } from "./get-decoration-styles";
+import { buildDeleteDay, buildOptimisticDeleteDay } from "./op-builders";
 import { type PlanCanvasSelectArgs } from "./plan-canvas";
+import { RowActionMenu } from "./row-action-menu";
 import { type PlanSelection } from "./selection";
 import { SessionList } from "./session-list";
+import { useDeleteEntityDialog } from "./use-delete-entity-dialog";
 import { useTouchTargetSx } from "./use-touch-target-sx";
 
 const DAY_LABEL: Record<PlanStructureDay["dayOfWeek"], string> = {
@@ -34,6 +50,22 @@ export const DayCard = ({ day, planId, selection, onSelect }: DayCardProps) => {
   const decoration = useEffectivePlanDecorationContext().getDecoration(day.id);
   const decorationStyles = getDecorationStyles(decoration);
   const touchTargetSx = useTouchTargetSx();
+  const bulkPatch = usePlanBulkPatch(planId);
+  const dialog = useDeleteEntityDialog();
+  const counts = countDayEntities(day);
+  const dayLabel = DAY_LABEL[day.dayOfWeek];
+
+  const handleConfirm = async () => {
+    const op = buildDeleteDay({ dayId: day.id, expectedVersion: day.version });
+    const optimisticPatch = isContainerEmpty(counts) ? buildOptimisticDeleteDay(day.id) : undefined;
+
+    try {
+      await bulkPatch.mutateAsync({ ops: [op], ...(optimisticPatch ? { optimisticPatch } : {}) });
+      dialog.close();
+    } catch {
+      return;
+    }
+  };
 
   return (
     <Card
@@ -45,12 +77,28 @@ export const DayCard = ({ day, planId, selection, onSelect }: DayCardProps) => {
     >
       <CardContent>
         <Stack spacing={1.5}>
-          <Stack direction="row" alignItems="baseline" spacing={1} sx={touchTargetSx}>
-            <Typography variant="subtitle1">{DAY_LABEL[day.dayOfWeek]}</Typography>
+          <Stack direction="row" alignItems="center" spacing={1} sx={touchTargetSx}>
+            <Typography variant="subtitle1">{dayLabel}</Typography>
             <Typography variant="caption" color="text.secondary" sx={{ flex: 1 }}>
               {day.kind === "REST" ? "Rest" : "Workout"}
             </Typography>
             <DecorationBadge styles={decorationStyles} />
+            <RowActionMenu ariaLabel={`${dayLabel} actions`}>
+              {(close) => (
+                <MenuItem
+                  onClick={() => {
+                    close();
+                    dialog.open();
+                  }}
+                  sx={{ color: "error.main" }}
+                >
+                  <ListItemIcon sx={{ color: "inherit" }}>
+                    <DeleteIcon fontSize="small" />
+                  </ListItemIcon>
+                  <ListItemText>Delete day</ListItemText>
+                </MenuItem>
+              )}
+            </RowActionMenu>
           </Stack>
 
           {day.sessions.length === 0 ? (
@@ -60,6 +108,7 @@ export const DayCard = ({ day, planId, selection, onSelect }: DayCardProps) => {
               <SessionList
                 key={session.id}
                 session={session}
+                planId={planId}
                 selection={selection}
                 onSelect={onSelect}
               />
@@ -67,6 +116,17 @@ export const DayCard = ({ day, planId, selection, onSelect }: DayCardProps) => {
           )}
         </Stack>
       </CardContent>
+      <DeleteEntityDialog
+        isOpen={dialog.isOpen}
+        onClose={dialog.close}
+        onConfirm={() => {
+          void handleConfirm();
+        }}
+        entityKind="day"
+        entityLabel={dayLabel}
+        counts={counts}
+        isPending={bulkPatch.isPending}
+      />
     </Card>
   );
 };
