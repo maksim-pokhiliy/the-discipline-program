@@ -36,6 +36,22 @@ Copy `.env.example` to the locations below and fill in the values -- see [Enviro
 - `apps/admin/.env.local`, `apps/marketing/.env.local`, `apps/platform/.env.local` -- app URLs, auth secrets
 - `packages/api-server/.env` -- `DATABASE_URL` (Neon PostgreSQL or local Docker)
 
+#### Pulling shared secrets via Vercel CLI (recommended)
+
+Rather than hard-coding Neon DB credentials, NextAuth secrets, and the Resend API key in `.env.local` files, pull them from the project's Vercel environment so your local mirrors what's deployed and rotates with it:
+
+```bash
+vercel link                                       # link the local checkout to the Vercel project (one-time)
+vercel env pull apps/admin/.env.local             # repeat per-app for admin/marketing/platform
+vercel env pull packages/api-server/.env          # api-server (DATABASE_URL for Prisma CLI + tests)
+```
+
+Re-run `vercel env pull` whenever a secret is rotated or a new variable is added. Never commit the resulting files (already covered by `.gitignore`).
+
+#### Provisioning `BLOB_READ_WRITE_TOKEN` (admin only)
+
+The admin app needs a personal Vercel Blob store for file uploads. Provision one at `Vercel Dashboard → Storage → Create Blob Store`, then copy the read/write token into `apps/admin/.env.local` as `BLOB_READ_WRITE_TOKEN`. Each contributor should use their own store -- don't share tokens.
+
 ```bash
 pnpm db:generate    # generate Prisma client
 pnpm db:push        # apply schema + CHECK constraints
