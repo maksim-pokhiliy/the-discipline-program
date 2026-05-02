@@ -1,7 +1,6 @@
 import { getServerSession } from "next-auth/next";
 
 import { RATE_LIMIT_TIER, withPublicRoute, withRateLimit } from "@repo/api-routes";
-import type { RouteHandler } from "@repo/api-routes";
 import { iamAuthService } from "@repo/api-server/iam";
 import { createLogoutHandler } from "@repo/auth";
 
@@ -12,6 +11,4 @@ const logoutHandler = createLogoutHandler({
   incrementTokenVersion: iamAuthService.incrementTokenVersion,
 });
 
-export const POST = withPublicRoute(
-  withRateLimit(logoutHandler as unknown as RouteHandler, RATE_LIMIT_TIER.AUTH),
-);
+export const POST = withPublicRoute(withRateLimit(logoutHandler, RATE_LIMIT_TIER.AUTH));

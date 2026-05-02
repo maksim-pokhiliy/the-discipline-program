@@ -17,7 +17,8 @@
   "dependencies": {
     "@repo/auth": "workspace:*",
     "@repo/env": "workspace:*",
-    "@repo/errors": "workspace:*"
+    "@repo/errors": "workspace:*",
+    "zod": "catalog:"
   },
   "peerDependencies": {
     "next": "catalog:"

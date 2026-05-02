@@ -1,85 +1,36 @@
+import { InternalServerError } from "@repo/errors";
+
+import { parseErrorResponse } from "./client-error-mapping";
+import { parseSuccessBody } from "./client-response";
 import {
-  type AppError,
-  BadRequestError,
-  ConflictError,
-  ERROR_CODES,
-  ForbiddenError,
-  InternalServerError,
-  NotFoundError,
-  ServiceUnavailableError,
-  TimeoutError,
-  TooManyRequestsError,
-  UnauthorizedError,
-  ValidationError,
-} from "@repo/errors";
+  RETRYABLE_STATUS_CODES,
+  buildRetryBudgetExhaustedError,
+  classifyTransportError,
+  computeBackoffDelay,
+  sleep,
+} from "./client-retry";
+import type {
+  ApiClientConfig,
+  HttpMethod,
+  PreparedRequest,
+  RequestOptions,
+  TypedRequestOptions,
+} from "./client-types";
 
-type AppErrorConstructor = new (message: string, details?: Record<string, unknown>) => AppError;
-
-const HTTP_STATUS_ERROR_MAP: Partial<Record<number, AppErrorConstructor>> = {
-  400: ValidationError,
-  401: UnauthorizedError,
-  403: ForbiddenError,
-  404: NotFoundError,
-  409: ConflictError,
-  422: ValidationError,
-  429: TooManyRequestsError,
-  502: ServiceUnavailableError,
-  503: ServiceUnavailableError,
-  504: ServiceUnavailableError,
-};
-
-const ERROR_CODE_TO_CLASS: Partial<Record<string, AppErrorConstructor>> = {
-  [ERROR_CODES.VALIDATION_ERROR]: ValidationError,
-  [ERROR_CODES.INVALID_INPUT]: BadRequestError,
-  [ERROR_CODES.NOT_FOUND]: NotFoundError,
-  [ERROR_CODES.UNAUTHORIZED]: UnauthorizedError,
-  [ERROR_CODES.FORBIDDEN]: ForbiddenError,
-  [ERROR_CODES.ALREADY_EXISTS]: ConflictError,
-  [ERROR_CODES.TOO_MANY_REQUESTS]: TooManyRequestsError,
-  [ERROR_CODES.TIMEOUT]: TimeoutError,
-  [ERROR_CODES.SERVICE_UNAVAILABLE]: ServiceUnavailableError,
-  [ERROR_CODES.INTERNAL_SERVER_ERROR]: InternalServerError,
-};
+export type {
+  ApiClientConfig,
+  HttpMethod,
+  RequestOptions,
+  TypedRequestOptions,
+} from "./client-types";
+export { type ResponseSchema } from "./client-types";
 
 const DEFAULT_TIMEOUT_MS = 5_000;
 const DEFAULT_MAX_RETRIES = 2;
 const DEFAULT_MAX_TOTAL_DURATION_MS = 15_000;
-const BASE_RETRY_DELAY_MS = 1_000;
-const RETRYABLE_STATUS_CODES = new Set([429, 502, 503, 504]);
 const NO_CONTENT_STATUS = 204;
+const UNAUTHORIZED_STATUS = 401;
 const IDEMPOTENT_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
-
-type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-
-type RequestOptions = {
-  cache?: RequestCache;
-  idempotencyKey?: string;
-};
-
-type ApiClientConfig = {
-  baseUrl: string;
-  getHeaders?: () => Record<string, string> | Promise<Record<string, string>>;
-  credentials?: RequestCredentials | undefined;
-  onUnauthorized?: (() => never) | undefined;
-  timeoutMs?: number;
-  maxRetries?: number;
-  maxTotalDurationMs?: number;
-  cache?: RequestCache;
-};
-
-type PreparedRequest = {
-  fullUrl: string;
-  headers: Record<string, string>;
-  body: BodyInit | undefined;
-  cache: RequestCache | undefined;
-};
-
-type ApiErrorBody = {
-  message?: unknown;
-  code?: unknown;
-  issues?: unknown;
-  details?: unknown;
-};
 
 export class ApiClient {
   private baseUrl: string;
@@ -116,7 +67,7 @@ export class ApiClient {
     method: HttpMethod = "GET",
     body?: unknown,
     queryParams?: Record<string, string>,
-    options?: RequestOptions,
+    options?: TypedRequestOptions<T>,
   ): Promise<T> {
     const prepared = await this.prepareRequest(url, method, body, queryParams, options);
     const response = await this.executeRequest(prepared, method);
@@ -128,7 +79,7 @@ export class ApiClient {
       });
     }
 
-    return this.parseSuccessBody<T>(response, prepared.fullUrl);
+    return parseSuccessBody<T>(response, prepared.fullUrl, options?.responseSchema);
   }
 
   async requestNoContent(
@@ -191,6 +142,75 @@ export class ApiClient {
     return JSON.stringify(body);
   }
 
+  private async fetchWithTimeout(
+    prepared: PreparedRequest,
+    method: HttpMethod,
+    attemptTimeoutMs: number,
+  ): Promise<Response> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
+
+    try {
+      return await fetch(prepared.fullUrl, {
+        method,
+        headers: prepared.headers,
+        ...(prepared.body !== undefined && { body: prepared.body }),
+        ...(prepared.cache !== undefined && { cache: prepared.cache }),
+        ...(this.credentials !== undefined && { credentials: this.credentials }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  private resolveAttemptTimeout(startedAt: number): number {
+    const remainingBudgetMs = this.maxTotalDurationMs - (Date.now() - startedAt);
+
+    return Math.max(0, Math.min(this.timeoutMs, remainingBudgetMs));
+  }
+
+  private async runOneAttempt(
+    prepared: PreparedRequest,
+    method: HttpMethod,
+    attempt: number,
+    attemptTimeoutMs: number,
+  ): Promise<{ kind: "success"; response: Response } | { kind: "retry"; error: unknown }> {
+    let response: Response;
+
+    try {
+      response = await this.fetchWithTimeout(prepared, method, attemptTimeoutMs);
+    } catch (error) {
+      const outcome = classifyTransportError(
+        error,
+        prepared.fullUrl,
+        attempt,
+        this.maxRetries,
+        this.timeoutMs,
+      );
+
+      if (outcome.kind === "retry") {
+        return { kind: "retry", error: outcome.error };
+      }
+
+      throw outcome.error;
+    }
+
+    if (response.ok) {
+      return { kind: "success", response };
+    }
+
+    if (response.status === UNAUTHORIZED_STATUS && this.onUnauthorized) {
+      this.onUnauthorized();
+    }
+
+    if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < this.maxRetries) {
+      return { kind: "retry", error: undefined };
+    }
+
+    throw await parseErrorResponse(response, prepared.fullUrl);
+  }
+
   private async executeRequest(prepared: PreparedRequest, method: HttpMethod): Promise<Response> {
     let lastError: unknown;
     const startedAt = Date.now();
@@ -202,141 +222,32 @@ export class ApiClient {
         if (elapsedMs >= this.maxTotalDurationMs) {
           throw (
             lastError ??
-            new InternalServerError("Request retry budget exhausted", {
-              url: prepared.fullUrl,
-              elapsedMs,
-              maxTotalDurationMs: this.maxTotalDurationMs,
-            })
+            buildRetryBudgetExhaustedError(prepared.fullUrl, this.maxTotalDurationMs, elapsedMs)
           );
         }
 
-        const delay =
-          BASE_RETRY_DELAY_MS * 2 ** (attempt - 1) + Math.random() * BASE_RETRY_DELAY_MS;
-
-        await new Promise((resolve) => setTimeout(resolve, delay));
+        await sleep(computeBackoffDelay(attempt));
       }
 
-      const remainingBudgetMs = this.maxTotalDurationMs - (Date.now() - startedAt);
-      const attemptTimeoutMs = Math.max(0, Math.min(this.timeoutMs, remainingBudgetMs));
+      const attemptTimeoutMs = this.resolveAttemptTimeout(startedAt);
 
       if (attemptTimeoutMs <= 0) {
         throw (
-          lastError ??
-          new InternalServerError("Request retry budget exhausted", {
-            url: prepared.fullUrl,
-            maxTotalDurationMs: this.maxTotalDurationMs,
-          })
+          lastError ?? buildRetryBudgetExhaustedError(prepared.fullUrl, this.maxTotalDurationMs)
         );
       }
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
+      const outcome = await this.runOneAttempt(prepared, method, attempt, attemptTimeoutMs);
 
-      let response: Response;
-
-      try {
-        response = await fetch(prepared.fullUrl, {
-          method,
-          headers: prepared.headers,
-          ...(prepared.body !== undefined && { body: prepared.body }),
-          ...(prepared.cache !== undefined && { cache: prepared.cache }),
-          ...(this.credentials !== undefined && { credentials: this.credentials }),
-          signal: controller.signal,
-        });
-      } catch (error) {
-        const transientError = this.handleTransportError(error, prepared.fullUrl, attempt);
-
-        if (transientError) {
-          lastError = transientError;
-          continue;
-        }
-
-        throw error;
-      } finally {
-        clearTimeout(timeoutId);
+      if (outcome.kind === "success") {
+        return outcome.response;
       }
 
-      if (response.ok) {
-        return response;
+      if (outcome.error !== undefined) {
+        lastError = outcome.error;
       }
-
-      if (response.status === 401 && this.onUnauthorized) {
-        this.onUnauthorized();
-      }
-
-      if (RETRYABLE_STATUS_CODES.has(response.status) && attempt < this.maxRetries) {
-        continue;
-      }
-
-      throw await this.parseErrorResponse(response, prepared.fullUrl);
     }
 
     throw lastError ?? new InternalServerError("Request retry loop exited without resolution");
-  }
-
-  private handleTransportError(error: unknown, fullUrl: string, attempt: number): Error | null {
-    if (error instanceof Error && error.name === "AbortError") {
-      const timeoutError = new TimeoutError(`Request timed out after ${this.timeoutMs}ms`, {
-        url: fullUrl,
-        timeoutMs: this.timeoutMs,
-      });
-
-      if (attempt < this.maxRetries) {
-        return timeoutError;
-      }
-
-      throw timeoutError;
-    }
-
-    if (error instanceof TypeError && attempt < this.maxRetries) {
-      return error;
-    }
-
-    return null;
-  }
-
-  private async parseErrorResponse(response: Response, fullUrl: string): Promise<AppError> {
-    const errBody = await response
-      .json()
-      .catch(() => ({ error: { message: `Request failed: ${response.status}` } }));
-
-    const errorData: ApiErrorBody =
-      typeof errBody === "object" && errBody !== null && "error" in errBody
-        ? ((errBody as { error: ApiErrorBody }).error ?? {})
-        : {};
-
-    const message =
-      typeof errorData.message === "string" ? errorData.message : "API request failed";
-    const code = typeof errorData.code === "string" ? errorData.code : undefined;
-    const issues = Array.isArray(errorData.issues) ? errorData.issues : undefined;
-    const serverDetails =
-      typeof errorData.details === "object" && errorData.details !== null
-        ? (errorData.details as Record<string, unknown>)
-        : {};
-    const details = {
-      status: response.status,
-      url: fullUrl,
-      ...(code && { code }),
-      ...(issues && { issues }),
-      ...serverDetails,
-    };
-
-    const ErrorClass =
-      (code ? ERROR_CODE_TO_CLASS[code] : undefined) ??
-      HTTP_STATUS_ERROR_MAP[response.status] ??
-      InternalServerError;
-
-    return new ErrorClass(message, details);
-  }
-
-  private async parseSuccessBody<T>(response: Response, fullUrl: string): Promise<T> {
-    try {
-      return (await response.json()) as T;
-    } catch {
-      throw new InternalServerError("Failed to parse API response", {
-        status: response.status,
-        url: fullUrl,
-      });
-    }
   }
 }

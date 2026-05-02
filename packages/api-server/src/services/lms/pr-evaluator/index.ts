@@ -5,7 +5,11 @@ import {
   PrKind,
 } from "@prisma/client";
 
-import { type ExerciseDefaultMetrics } from "@repo/contracts/lms/exercise-library-item";
+import {
+  type ExerciseDefaultMetrics,
+  exerciseDefaultMetricsSchema,
+} from "@repo/contracts/lms/exercise-library-item";
+import { InternalServerError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 import { dispatchDetector, upsertPersonalRecord } from "./_dispatch";
@@ -64,8 +68,18 @@ export const evaluatePr = async ({ db, setLogId }: EvaluatePrInput): Promise<Eva
 
   const userId = setLog.exerciseLog.blockSession.workoutSession.userId;
   const exerciseId = setLog.exerciseLog.exerciseId;
-  const metrics = setLog.exerciseLog.exercise.defaultMetrics as ExerciseDefaultMetrics;
-  const kinds = resolveKinds(metrics);
+  const parsedMetrics = exerciseDefaultMetricsSchema.safeParse(
+    setLog.exerciseLog.exercise.defaultMetrics,
+  );
+
+  if (!parsedMetrics.success) {
+    throw new InternalServerError("Exercise defaultMetrics parse failure", {
+      exerciseId,
+      error: parsedMetrics.error.message,
+    });
+  }
+
+  const kinds = resolveKinds(parsedMetrics.data);
 
   if (kinds.length === 0) {
     logger.info("lms.pr_evaluator.dispatched", {
