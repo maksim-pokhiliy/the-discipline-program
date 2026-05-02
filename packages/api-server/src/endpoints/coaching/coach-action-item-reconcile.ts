@@ -207,19 +207,21 @@ export const resolveDuplicates = async (
   tx: TxClient,
   duplicates: PrismaCoachActionItemRecord[],
 ): Promise<number> => {
-  for (const item of duplicates) {
-    await tx.coachActionItem.update({
-      where: { id: item.id },
-      data: {
-        status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
-        resolvedAt: new Date(),
-        resolveReason:
-          ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[ActionItemResolveReason.AUTO_CONDITION_CLEARED],
-      },
-    });
+  if (duplicates.length === 0) {
+    return 0;
   }
 
-  return duplicates.length;
+  const result = await tx.coachActionItem.updateMany({
+    where: { id: { in: duplicates.map((d) => d.id) } },
+    data: {
+      status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
+      resolvedAt: new Date(),
+      resolveReason:
+        ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[ActionItemResolveReason.AUTO_CONDITION_CLEARED],
+    },
+  });
+
+  return result.count;
 };
 
 export type ApplyConditionsResult = { created: number; updated: number };
@@ -293,7 +295,7 @@ export const closeOrphanedOpenItems = async (
     activeAthleteIds: Set<string>;
   },
 ): Promise<number> => {
-  let resolved = 0;
+  const idsByReason = new Map<ActionItemResolveReason, string[]>();
 
   for (const [key, item] of args.openByKey) {
     const athleteId = key.split(":")[1];
@@ -306,15 +308,33 @@ export const closeOrphanedOpenItems = async (
       ? ActionItemResolveReason.AUTO_CONDITION_CLEARED
       : ActionItemResolveReason.AUTO_ENROLLMENT_ENDED;
 
-    await tx.coachActionItem.update({
-      where: { id: item.id },
+    const bucket = idsByReason.get(reason);
+
+    if (bucket) {
+      bucket.push(item.id);
+    } else {
+      idsByReason.set(reason, [item.id]);
+    }
+  }
+
+  let resolved = 0;
+  const now = new Date();
+
+  for (const [reason, ids] of idsByReason) {
+    if (ids.length === 0) {
+      continue;
+    }
+
+    const result = await tx.coachActionItem.updateMany({
+      where: { id: { in: ids } },
       data: {
         status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.RESOLVED],
-        resolvedAt: new Date(),
+        resolvedAt: now,
         resolveReason: ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP[reason],
       },
     });
-    resolved++;
+
+    resolved += result.count;
   }
 
   return resolved;

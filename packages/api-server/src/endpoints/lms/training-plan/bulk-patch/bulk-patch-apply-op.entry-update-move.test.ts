@@ -195,6 +195,39 @@ describe("bulk-patch-apply-op / update-entry", () => {
     ).rejects.toBeInstanceOf(NotFoundError);
   });
 
+  it("snapshotMap hit: skips exerciseLibraryItem.findUnique (perf-003)", async () => {
+    const tx = makeTx();
+    const cachedSnapshot = {
+      id: "exercise-1",
+      name: "Cached Squat",
+      primaryMovement: "SQUAT" as const,
+      modality: "BARBELL" as const,
+      primaryBodyParts: ["QUADS" as const],
+      defaultMetrics: undefined,
+      demoVideoUrl: null,
+      demoImageUrl: null,
+    };
+    const snapshotMap = new Map([["exercise-1", cachedSnapshot]]);
+
+    vi.mocked(tx.exerciseEntry.updateMany).mockResolvedValue({ count: 1 });
+    vi.mocked(tx.exerciseEntry.findUnique).mockResolvedValue(mockEntry());
+
+    await applyOpInTx(
+      tx,
+      { kind: "update-entry", entryId: "entry-1", expectedVersion: 1, fullEntity: FULL_ENTRY },
+      snapshotMap,
+    );
+
+    expect(tx.exerciseLibraryItem.findUnique).not.toHaveBeenCalled();
+
+    const call = vi.mocked(tx.exerciseEntry.updateMany).mock.calls[0]?.[0] as {
+      data: Record<string, unknown>;
+    };
+    const writtenSnapshot = call.data.exerciseSnapshot as Record<string, unknown>;
+
+    expect(writtenSnapshot.name).toBe("Cached Squat");
+  });
+
   it("not-found entry: throws NotFoundError when entry is missing after conflict path", async () => {
     const tx = makeTx();
 

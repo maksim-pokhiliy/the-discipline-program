@@ -380,4 +380,94 @@ describe("applyWeekTemplate (integration)", () => {
       }),
     ).rejects.toMatchObject({ statusCode: 409 });
   });
+
+  it("nested-create: full multi-day/session/block tree applied with shared snapshot map (perf-002)", async () => {
+    const baseSessionPayload = makeSessionPayload(fixture.blockKindId, fixture.exerciseId);
+    const secondSession = {
+      ...baseSessionPayload,
+      session: { ...baseSessionPayload.session, order: 1 },
+    };
+    const richPayload = {
+      week: { label: "Rich Week", notes: null },
+      days: [
+        {
+          dayOfWeek: "MON" as const,
+          kind: "TRAINING" as const,
+          notes: null,
+          sessions: [baseSessionPayload, secondSession],
+        },
+        {
+          dayOfWeek: "WED" as const,
+          kind: "TRAINING" as const,
+          notes: null,
+          sessions: [baseSessionPayload],
+        },
+      ],
+    };
+
+    const tpl = await cleanupRaw.weekTemplate.create({
+      data: {
+        scope: "COACH",
+        ownerId: fixture.coachUserId,
+        name: `WT Rich ${crypto.randomUUID().slice(0, 8)}`,
+        payload: toJson(richPayload),
+      },
+    });
+
+    toCleanup.push({ table: "weekTemplate", id: tpl.id });
+
+    const result = await applyWeekTemplate(fixture.coachUserId, fixture.planId, {
+      kind: "week",
+      templateId: tpl.id,
+      target: { index: 8 },
+    });
+
+    const week = await cleanupRaw.week.findUnique({
+      where: { id: result.weekId },
+      select: {
+        days: {
+          select: {
+            sessions: {
+              select: {
+                blocks: {
+                  select: {
+                    segments: {
+                      select: {
+                        setGroups: {
+                          select: { entries: { select: { exerciseSnapshot: true } } },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(week?.days.length).toBe(2);
+
+    const totalSessions = (week?.days ?? []).reduce((sum, d) => sum + d.sessions.length, 0);
+
+    expect(totalSessions).toBe(3);
+
+    const allEntries = (week?.days ?? []).flatMap((d) =>
+      d.sessions.flatMap((s) =>
+        s.blocks.flatMap((b) =>
+          b.segments.flatMap((seg) => seg.setGroups.flatMap((sg) => sg.entries)),
+        ),
+      ),
+    );
+
+    expect(allEntries.length).toBe(3);
+
+    for (const entry of allEntries) {
+      const snap = entry.exerciseSnapshot as { id?: string; primaryMovement?: string };
+
+      expect(snap.id).toBe(fixture.exerciseId);
+      expect(snap.primaryMovement).toBe("SQUAT");
+    }
+  });
 });

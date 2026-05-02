@@ -5,6 +5,7 @@ import {
   Prisma,
 } from "@prisma/client";
 
+import { type ExerciseSnapshot } from "@repo/contracts/lms/_domain";
 import { type BulkPatchOp } from "@repo/contracts/lms/training-plan";
 
 import { type TxClient } from "../../../../db/tx";
@@ -18,6 +19,20 @@ import { findOrThrow, toInputJson } from "../../../../utils";
 
 export { deriveExerciseSnapshot };
 export type { TxClient };
+
+const resolveSnapshot = async (
+  tx: TxClient,
+  exerciseId: string,
+  snapshotMap: Map<string, ExerciseSnapshot> | undefined,
+): Promise<ExerciseSnapshot> => {
+  const cached = snapshotMap?.get(exerciseId);
+
+  if (cached) {
+    return cached;
+  }
+
+  return deriveExerciseSnapshot(tx, exerciseId);
+};
 
 export type ApplyOutcome =
   | {
@@ -55,7 +70,11 @@ const readEntryVersion = async (tx: TxClient, entryId: string): Promise<number> 
   return row.version;
 };
 
-export const applyOpInTx = async (tx: TxClient, op: BulkPatchOp): Promise<ApplyOutcome> => {
+export const applyOpInTx = async (
+  tx: TxClient,
+  op: BulkPatchOp,
+  snapshotMap?: Map<string, ExerciseSnapshot>,
+): Promise<ApplyOutcome> => {
   switch (op.kind) {
     case "update-block": {
       const result = await tx.block.updateMany({
@@ -110,7 +129,7 @@ export const applyOpInTx = async (tx: TxClient, op: BulkPatchOp): Promise<ApplyO
     }
 
     case "update-entry": {
-      const serverSnapshot = await deriveExerciseSnapshot(tx, op.fullEntity.exerciseId);
+      const serverSnapshot = await resolveSnapshot(tx, op.fullEntity.exerciseId, snapshotMap);
 
       const result = await tx.exerciseEntry.updateMany({
         where: { id: op.entryId, version: op.expectedVersion },
@@ -237,7 +256,7 @@ export const applyOpInTx = async (tx: TxClient, op: BulkPatchOp): Promise<ApplyO
     }
 
     case "create-entry": {
-      const serverSnapshot = await deriveExerciseSnapshot(tx, op.payload.exerciseId);
+      const serverSnapshot = await resolveSnapshot(tx, op.payload.exerciseId, snapshotMap);
 
       const entry = await tx.exerciseEntry.create({
         data: {
