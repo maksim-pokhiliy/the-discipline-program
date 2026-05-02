@@ -13,6 +13,7 @@ import { prisma } from "../../../db/client";
 import { ROLE_MAP } from "../../../mappers/iam";
 import { LIBRARY_SCOPE_TO_PRISMA_MAP, mapToBlockKind } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
+import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
 import { createBlockKindImpl } from "./block-kind-create";
 import { updateBlockKindImpl } from "./block-kind-update";
@@ -47,13 +48,18 @@ export const lmsBlockKindApi = {
       ...(query.includeDeleted ? {} : { deletedAt: null }),
     };
 
-    const items = await prisma.blockKind.findMany({
-      where,
-      orderBy: { name: "asc" },
-      ...(query.take !== undefined && { take: query.take }),
-    });
+    const take = query.take ?? DEFAULT_LIST_LIMIT;
 
-    return { items: items.map(mapToBlockKind), total: items.length };
+    const [total, items] = await prisma.$transaction([
+      prisma.blockKind.count({ where }),
+      prisma.blockKind.findMany({
+        where,
+        orderBy: { name: "asc" },
+        take,
+      }),
+    ]);
+
+    return { items: items.map(mapToBlockKind), total };
   },
 
   getById: async (userId: string, blockKindId: string) => {

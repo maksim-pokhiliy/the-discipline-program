@@ -11,6 +11,7 @@ export const baseEnv = createEnv({
     VERCEL_ENV: z.enum(["development", "preview", "production"]).optional(),
     LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).optional(),
     REVALIDATE_SECRET: z.string().optional(),
+    CRON_SECRET: z.string().optional(),
     INVITE_TOKEN_TTL_HOURS: z.coerce.number().int().positive().default(72),
   },
   client: {

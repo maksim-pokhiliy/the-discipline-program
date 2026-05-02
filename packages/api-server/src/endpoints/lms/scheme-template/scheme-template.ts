@@ -17,6 +17,7 @@ import {
   SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP,
 } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
+import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
 import { createSchemeTemplateImpl } from "./scheme-template-create";
 import { updateSchemeTemplateImpl } from "./scheme-template-update";
@@ -54,13 +55,18 @@ export const lmsSchemeTemplateApi = {
       ...(query.includeDeleted ? {} : { deletedAt: null }),
     };
 
-    const items = await prisma.schemeTemplate.findMany({
-      where,
-      orderBy: { name: "asc" },
-      ...(query.take !== undefined && { take: query.take }),
-    });
+    const take = query.take ?? DEFAULT_LIST_LIMIT;
 
-    return { items: items.map(mapToSchemeTemplate), total: items.length };
+    const [total, items] = await prisma.$transaction([
+      prisma.schemeTemplate.count({ where }),
+      prisma.schemeTemplate.findMany({
+        where,
+        orderBy: { name: "asc" },
+        take,
+      }),
+    ]);
+
+    return { items: items.map(mapToSchemeTemplate), total };
   },
 
   getById: async (userId: string, schemeTemplateId: string) => {

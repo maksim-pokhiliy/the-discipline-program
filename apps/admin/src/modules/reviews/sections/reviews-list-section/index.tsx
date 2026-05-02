@@ -103,6 +103,7 @@ export const ReviewsListSection = ({ reviews }: ReviewsListSectionProps) => {
               }
               onChange={() => toggleActiveMutation.mutate(review.id)}
               color="success"
+              inputProps={{ "aria-label": "Toggle active status" }}
             />
             <Chip
               label={review.isActive ? "Active" : "Hidden"}

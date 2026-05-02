@@ -13,6 +13,7 @@ import { prisma } from "../../../db/client";
 import { ROLE_MAP } from "../../../mappers/iam";
 import { LIBRARY_SCOPE_TO_PRISMA_MAP, mapToWeekTemplate } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
+import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
 import { createWeekTemplateImpl } from "./week-template-create";
 import { updateWeekTemplateImpl } from "./week-template-update";
@@ -47,13 +48,18 @@ export const lmsWeekTemplateApi = {
       ...(query.includeDeleted ? {} : { deletedAt: null }),
     };
 
-    const items = await prisma.weekTemplate.findMany({
-      where,
-      orderBy: { name: "asc" },
-      ...(query.take !== undefined && { take: query.take }),
-    });
+    const take = query.take ?? DEFAULT_LIST_LIMIT;
 
-    return { items: items.map(mapToWeekTemplate), total: items.length };
+    const [total, items] = await prisma.$transaction([
+      prisma.weekTemplate.count({ where }),
+      prisma.weekTemplate.findMany({
+        where,
+        orderBy: { name: "asc" },
+        take,
+      }),
+    ]);
+
+    return { items: items.map(mapToWeekTemplate), total };
   },
 
   getById: async (userId: string, weekTemplateId: string) => {

@@ -121,4 +121,62 @@ describe("lmsTrainingPlanApi", () => {
       expect(enrollments).toHaveLength(0);
     });
   });
+
+  describe("delete", () => {
+    it("soft-deletes the plan but preserves enrollment history and product links", async () => {
+      const localCoach = await createTestCoach();
+      const localAthlete = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE] });
+      const localPlan = await cleanupRaw.trainingPlan.create({
+        data: { creatorId: localCoach.user.id, name: "Plan To Delete" },
+      });
+      const enrollment = await cleanupRaw.planEnrollment.create({
+        data: {
+          planId: localPlan.id,
+          userId: localAthlete.id,
+          status: PlanEnrollmentStatus.ACTIVE,
+          startedAtWeekIndex: 0,
+          startedOnDate: new Date(),
+        },
+      });
+      const product = await cleanupRaw.product.create({
+        data: {
+          slug: `prod-${localPlan.id}`,
+          title: "Linked Product",
+          description: "Product linked to the plan being deleted",
+          trainingPlanId: localPlan.id,
+        },
+      });
+
+      try {
+        await lmsTrainingPlanApi.delete(localCoach.user.id, localPlan.id);
+
+        const planAfter = await cleanupRaw.trainingPlan.findUnique({
+          where: { id: localPlan.id },
+          select: { deletedAt: true },
+        });
+        const enrollmentAfter = await cleanupRaw.planEnrollment.findUnique({
+          where: { id: enrollment.id },
+          select: { id: true, planId: true },
+        });
+        const productAfter = await cleanupRaw.product.findUnique({
+          where: { id: product.id },
+          select: { trainingPlanId: true },
+        });
+
+        expect(planAfter?.deletedAt).toBeInstanceOf(Date);
+        expect(enrollmentAfter).not.toBeNull();
+        expect(enrollmentAfter?.planId).toBe(localPlan.id);
+        expect(productAfter?.trainingPlanId).toBe(localPlan.id);
+      } finally {
+        await cleanupRaw.product.delete({ where: { id: product.id } }).catch(() => {});
+        await cleanupRaw.planEnrollment.delete({ where: { id: enrollment.id } }).catch(() => {});
+        await cleanupRaw.trainingPlan.delete({ where: { id: localPlan.id } }).catch(() => {});
+        await cleanupRaw.coachProfile
+          .delete({ where: { id: localCoach.profile.id } })
+          .catch(() => {});
+        await cleanupRaw.user.delete({ where: { id: localCoach.user.id } }).catch(() => {});
+        await cleanupRaw.user.delete({ where: { id: localAthlete.id } }).catch(() => {});
+      }
+    });
+  });
 });

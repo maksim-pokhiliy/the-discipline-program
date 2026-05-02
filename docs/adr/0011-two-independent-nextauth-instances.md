@@ -2,6 +2,7 @@
 
 - **Status:** Accepted (tech debt — planned for consolidation; see Consequences)
 - **Date:** 2026-04-10
+- **Last revised:** 2026-05-02 (Decision and Negative consequences updated to reflect role-aware wrappers; see Revision history)
 - **Tags:** `auth`, `tech-debt`, `under-review`
 
 ## Context
@@ -25,7 +26,7 @@ import { iamAuthService } from "@repo/api-server/iam";
 import { createAuthOptions } from "@repo/auth/config";
 
 export const authOptions = createAuthOptions(iamAuthService);
-export const { withPlatformAuth } = createAuthWrappers(authOptions);
+export const { withAdminAuth, withAthleteAuth, withCoachAuth } = createAuthWrappers(authOptions);
 ```
 
 Two questions fall out of this:
@@ -41,12 +42,12 @@ We **accept the duplication as tech debt** and document it here so that the debt
 
 - Each app continues to create its own `authOptions` via `createAuthOptions(iamAuthService)`.
 - Each app continues to mount its own `/api/auth/[...nextauth]/route.ts`.
-- Each app continues to create its own auth wrappers (`withAdminAuth` in admin, `withPlatformAuth` in platform).
+- Each app continues to pick its own subset of role-aware wrappers from `createAuthWrappers(authOptions)` (admin re-exports `withAdminAuth`; platform re-exports `withAdminAuth`, `withCoachAuth`, `withAthleteAuth`).
 
 The reasons this is acceptable today:
 
 - The code duplication is tiny (six lines per app). Consolidation does not save much.
-- The two apps have **different auth wrappers** (`withAdminAuth` enforces `role === ADMIN`, `withPlatformAuth` only checks presence of a session). Consolidating into a single shared `authOptions` module would still leave the wrapper duplication.
+- The two apps consume **different subsets of role-aware wrappers**. `createAuthWrappers(authOptions)` (in `packages/api-routes/src/auth-wrappers.ts:64-69`) emits `withAdminAuth` (`ADMIN | HEAD_COACH`), `withCoachAuth` (`COACH | HEAD_COACH | ADMIN`), `withAthleteAuth` (`ATHLETE | COACH | HEAD_COACH`), and `withAuthenticated` (any). Admin only re-exports `withAdminAuth`; platform re-exports the three role-tiered ones. For IAM mutations that must reject HEAD_COACH (admin-only operations), `requireAdminStrict` in `packages/api-server/src/authz/guards.ts:29-38` tightens to `role === ADMIN` and is invoked at the top of `iamUserAdminApi.updateUser`, `updateRole`, and `deleteUser` (commit `f3a13709`). Consolidating into a single shared `authOptions` module would still leave the wrapper-selection duplication.
 - The deploy topology question is unresolved. If the apps end up on separate subdomains, independent NextAuth instances are not just acceptable — they are correct (cookies do not cross subdomain boundaries, sessions are scoped to the right surface).
 - The two apps have **different user populations**. Admin is for ADMIN users. Platform is for COACH and USER (athlete). Keeping the NextAuth surface physically separate has a security upside: a misconfigured callback in admin cannot accidentally grant a session to an athlete, because the athlete never hits the admin NextAuth route.
 
@@ -62,7 +63,7 @@ The reasons this is still tech debt:
 
 - Blast radius: a misconfiguration in admin auth does not leak into platform and vice versa. They are separate physical routes.
 - Deploy flexibility: the two apps can live on separate subdomains, separate Vercel projects, separate cookies without any code change.
-- Per-app wrappers (`withAdminAuth`, `withPlatformAuth`) are colocated with the per-app `authOptions`, which is the natural place for them.
+- The per-app `authOptions` and the wrapper subset re-exported from `createAuthWrappers(authOptions)` are colocated in the same `src/lib/server/auth.ts` file, which is the natural place for them.
 - No shared state: debugging an auth issue in one app does not require understanding the other.
 
 **Negative:**
@@ -83,7 +84,7 @@ The reasons this is still tech debt:
 
 **Put `authOptions` and the route handler in `@repo/auth`** as a shared factory + shared route. Both apps re-export the same route. Saves the six lines per app. Rejected because NextAuth route handlers are tightly coupled to the Next.js routing layer — exporting them from a package and re-importing them in each app would require workarounds that cost more than the duplication saves.
 
-**Keep two instances, share the wrapper code.** Move `withAdminAuth` and `withPlatformAuth` to `@repo/auth` or `@repo/api-routes`. This is actually close to the current state: both wrappers are in `@repo/api-routes/auth-wrappers.ts`, created by `createAuthWrappers(authOptions)` which takes the per-app options. The per-app file just picks which wrapper to re-export. This is acceptable — it is the pattern we already have.
+**Keep two instances, share the wrapper code.** Move the role-aware wrappers (`withAdminAuth`, `withCoachAuth`, `withAthleteAuth`, `withAuthenticated`) to `@repo/auth` or `@repo/api-routes`. This is actually close to the current state: all four wrappers are in `@repo/api-routes/auth-wrappers.ts`, created by `createAuthWrappers(authOptions)` which takes the per-app options. The per-app file just picks the subset it re-exports. This is acceptable — it is the pattern we already have.
 
 **Use a single NextAuth instance on a shared domain with role-based routing.** One `authOptions`, one route handler, one session cookie, routing logic decides which app the user lands on based on their role. Rejected because it couples the three apps into a single deploy unit, which the product strategy explicitly wants to avoid.
 
@@ -94,6 +95,12 @@ The reasons this is still tech debt:
 - `apps/admin/src/lib/server/auth.ts` and `apps/platform/src/lib/server/auth.ts` — the duplicated files.
 - `apps/admin/src/app/api/auth/[...nextauth]/route.ts` and `apps/platform/src/app/api/auth/[...nextauth]/route.ts` — the duplicated route handlers.
 - `packages/auth/src/auth-options.ts` — the `createAuthOptions` factory.
-- `packages/api-routes/src/auth-wrappers.ts` — `createAuthWrappers` and the per-app wrapper logic.
+- `packages/api-routes/src/auth-wrappers.ts` — `createAuthWrappers` and the four role-aware wrappers.
+- `packages/api-server/src/authz/guards.ts` — `requireAdminStrict` (strict actor-role guard for IAM mutations).
 - ADR 0004 — the NextAuth + credentials decision.
 - `docs/runbooks/vercel-json.md` — deploy topology (three independent Vercel projects, one `vercel.json` per app).
+
+## Revision history
+
+- **2026-05-02** — Decision and Consequences updated to drop the stale `withPlatformAuth` symbol (no such export exists). The two apps consume distinct subsets of the four role-aware wrappers emitted by `createAuthWrappers`. Added a pointer to `requireAdminStrict` (commit `f3a13709`) for IAM mutations that must reject HEAD_COACH.
+- **2026-04-10** — original draft.

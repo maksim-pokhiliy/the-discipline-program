@@ -14,6 +14,7 @@ import { prisma, prismaAsCore } from "../../../db/client";
 import { mapToPlanOverride } from "../../../mappers/lms";
 import { resolveEffectivePlan } from "../../../services/lms/plan-override-resolver";
 import { findOrThrow, handlePrismaError, toInputJson } from "../../../utils";
+import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
 const verifyEnrollmentBelongsToCoach = async (
   enrollmentId: string,
@@ -48,16 +49,24 @@ export const lmsPlanOverrideApi = {
 
     await verifyEnrollmentBelongsToCoach(query.enrollmentId, userId);
 
-    const items = await prisma.planOverride.findMany({
-      where: {
-        enrollmentId: query.enrollmentId,
-        ...(query.scope ? { scope: query.scope } : {}),
-        ...(query.scopeId ? { scopeId: query.scopeId } : {}),
-      },
-      orderBy: { createdAt: "asc" },
-    });
+    const where = {
+      enrollmentId: query.enrollmentId,
+      ...(query.scope ? { scope: query.scope } : {}),
+      ...(query.scopeId ? { scopeId: query.scopeId } : {}),
+    };
 
-    return { items: items.map(mapToPlanOverride), total: items.length };
+    const take = query.take ?? DEFAULT_LIST_LIMIT;
+
+    const [total, items] = await prisma.$transaction([
+      prisma.planOverride.count({ where }),
+      prisma.planOverride.findMany({
+        where,
+        orderBy: { createdAt: "asc" },
+        take,
+      }),
+    ]);
+
+    return { items: items.map(mapToPlanOverride), total };
   },
 
   getById: async (userId: string, overrideId: string) => {

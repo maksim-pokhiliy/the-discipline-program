@@ -18,6 +18,7 @@ import {
   MOVEMENT_PATTERN_TO_PRISMA_MAP,
 } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
+import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
 import { createExerciseLibraryItemImpl } from "./exercise-library-item-create";
 import { updateExerciseLibraryItemImpl } from "./exercise-library-item-update";
@@ -67,13 +68,18 @@ export const lmsExerciseLibraryItemApi = {
       ...(query.includeDeleted ? {} : { deletedAt: null }),
     };
 
-    const items = await prisma.exerciseLibraryItem.findMany({
-      where,
-      orderBy: { name: "asc" },
-      ...(query.take !== undefined && { take: query.take }),
-    });
+    const take = query.take ?? DEFAULT_LIST_LIMIT;
 
-    return { items: items.map(mapToExerciseLibraryItem), total: items.length };
+    const [total, items] = await prisma.$transaction([
+      prisma.exerciseLibraryItem.count({ where }),
+      prisma.exerciseLibraryItem.findMany({
+        where,
+        orderBy: { name: "asc" },
+        take,
+      }),
+    ]);
+
+    return { items: items.map(mapToExerciseLibraryItem), total };
   },
 
   getById: async (userId: string, exerciseLibraryItemId: string) => {

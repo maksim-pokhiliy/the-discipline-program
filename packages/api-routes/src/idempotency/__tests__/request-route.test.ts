@@ -73,9 +73,9 @@ describe("buildPublicScope", () => {
     expect(buildPublicScope(req("/api/public/contact"))).toBe("ip:unknown");
   });
 
-  it("uses the rightmost x-forwarded-for value", () => {
+  it("uses the leftmost x-forwarded-for value (the originating client)", () => {
     expect(
       buildPublicScope(req("/api/public/contact", { "x-forwarded-for": "10.0.0.1, 1.2.3.4" })),
-    ).toBe("ip:1.2.3.4");
+    ).toBe("ip:10.0.0.1");
   });
 });

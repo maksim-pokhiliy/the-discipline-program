@@ -24,6 +24,7 @@ export const listPersonalRecordsQuerySchema = z.object({
   userId: z.string().cuid().optional(),
   exerciseId: z.string().cuid().optional(),
   kind: prKindSchema.optional(),
+  take: z.coerce.number().int().min(1).max(500).optional(),
 });
 
 export const listPersonalRecordsResponseSchema = z.object({

@@ -5,6 +5,20 @@ import { type prisma } from "../../../../db/client";
 
 type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
+export const collectEntryExerciseIds = (ops: BulkPatchOp[]): string[] => {
+  const ids: string[] = [];
+
+  for (const op of ops) {
+    if (op.kind === "update-entry") {
+      ids.push(op.fullEntity.exerciseId);
+    } else if (op.kind === "create-entry") {
+      ids.push(op.payload.exerciseId);
+    }
+  }
+
+  return ids;
+};
+
 const collectIds = (ops: BulkPatchOp[]) => {
   const blockIds = new Set<string>();
   const segmentIds = new Set<string>();

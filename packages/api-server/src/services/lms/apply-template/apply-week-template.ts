@@ -1,5 +1,11 @@
+import { type Prisma } from "@prisma/client";
+
 import { UserRole } from "@repo/contracts/iam/auth";
-import { weekTemplatePayloadSchema } from "@repo/contracts/lms/_domain";
+import {
+  type ExerciseSnapshot,
+  weekTemplatePayloadSchema,
+  type WeekTemplatePayload,
+} from "@repo/contracts/lms/_domain";
 import { type ApplyWeekTemplateInput } from "@repo/contracts/lms/training-plan";
 import { ConflictError, ForbiddenError, InternalServerError, NotFoundError } from "@repo/errors";
 import { logger } from "@repo/shared";
@@ -7,12 +13,67 @@ import { logger } from "@repo/shared";
 import { requireCoachLikeRole, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { TX_BUDGET_LONG } from "../../../db/transaction-config";
+import { type TxClient } from "../../../db/tx";
 import { DAY_KIND_TO_PRISMA_MAP, DAY_OF_WEEK_TO_PRISMA_MAP } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
+import { buildExerciseSnapshotMap } from "../derive-exercise-snapshot";
 
-import { cloneBlockSubtree } from "./clone-block-subtree";
+import {
+  buildBlockCreateWithoutSessionInput,
+  collectBlockExerciseIds,
+} from "./clone-block-subtree";
 
 export type ApplyWeekTemplateResult = { weekId: string };
+
+const collectWeekExerciseIds = (payload: WeekTemplatePayload): string[] => {
+  const ids: string[] = [];
+
+  for (const day of payload.days) {
+    for (const session of day.sessions) {
+      for (const block of session.blocks) {
+        ids.push(...collectBlockExerciseIds(block));
+      }
+    }
+  }
+
+  return ids;
+};
+
+const buildWeekDaysCreate = (
+  payload: WeekTemplatePayload,
+  snapshotMap: Map<string, ExerciseSnapshot>,
+): Prisma.DayUncheckedCreateWithoutWeekInput[] =>
+  payload.days.map((dayPayload) => ({
+    dayOfWeek: DAY_OF_WEEK_TO_PRISMA_MAP[dayPayload.dayOfWeek],
+    kind: DAY_KIND_TO_PRISMA_MAP[dayPayload.kind],
+    notes: dayPayload.notes,
+    sessions: {
+      create: dayPayload.sessions.map((sessionPayload) => ({
+        order: sessionPayload.session.order,
+        label: sessionPayload.session.label,
+        notes: sessionPayload.session.notes,
+        blocks: {
+          create: sessionPayload.blocks.map((blockPayload, blockIndex) =>
+            buildBlockCreateWithoutSessionInput(blockPayload, snapshotMap, blockIndex),
+          ),
+        },
+      })),
+    },
+  }));
+
+const ensureWeekIndexFree = async (tx: TxClient, planId: string, index: number): Promise<void> => {
+  const existingWeek = await tx.week.findFirst({
+    where: { planId, index },
+    select: { id: true },
+  });
+
+  if (existingWeek) {
+    throw new ConflictError("Week with this index already exists in plan", {
+      planId,
+      weekIndex: index,
+    });
+  }
+};
 
 export const applyWeekTemplate = async (
   userId: string,
@@ -50,55 +111,19 @@ export const applyWeekTemplate = async (
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      const existingWeek = await tx.week.findFirst({
-        where: { planId, index: data.target.index },
-        select: { id: true },
-      });
+      await ensureWeekIndexFree(tx, planId, data.target.index);
 
-      if (existingWeek) {
-        throw new ConflictError("Week with this index already exists in plan", {
-          planId,
-          weekIndex: data.target.index,
-        });
-      }
-
+      const snapshotMap = await buildExerciseSnapshotMap(tx, collectWeekExerciseIds(parsed.data));
       const newWeek = await tx.week.create({
         data: {
           planId,
           index: data.target.index,
           label: parsed.data.week.label,
           notes: parsed.data.week.notes,
+          days: { create: buildWeekDaysCreate(parsed.data, snapshotMap) },
         },
+        select: { id: true },
       });
-
-      for (const dayPayload of parsed.data.days) {
-        const newDay = await tx.day.create({
-          data: {
-            weekId: newWeek.id,
-            dayOfWeek: DAY_OF_WEEK_TO_PRISMA_MAP[dayPayload.dayOfWeek],
-            kind: DAY_KIND_TO_PRISMA_MAP[dayPayload.kind],
-            notes: dayPayload.notes,
-          },
-        });
-
-        for (const sessionPayload of dayPayload.sessions) {
-          const newSession = await tx.lmsSession.create({
-            data: {
-              dayId: newDay.id,
-              order: sessionPayload.session.order,
-              label: sessionPayload.session.label,
-              notes: sessionPayload.session.notes,
-            },
-          });
-
-          for (const [blockIndex, blockPayload] of sessionPayload.blocks.entries()) {
-            await cloneBlockSubtree(tx, blockPayload, {
-              sessionId: newSession.id,
-              order: blockIndex,
-            });
-          }
-        }
-      }
 
       return { weekId: newWeek.id };
     }, TX_BUDGET_LONG);

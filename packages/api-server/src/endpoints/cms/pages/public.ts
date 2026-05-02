@@ -17,7 +17,11 @@ import {
 import { prisma } from "../../../db/client";
 import { defaultMonitoring } from "../../../infrastructure/monitoring";
 import { mapToReview, mapToProduct } from "../../../mappers/cms";
+import { PUBLIC_LIST_LIMIT } from "../../../utils/list-limits";
 import { cmsBlogPublicApi } from "../blog/public";
+
+const HOME_PAGE_PRODUCTS_LIMIT = 6;
+const HOME_PAGE_REVIEWS_LIMIT = 12;
 
 const extractSectionDataOrNull = <TKey extends SectionSchemaKey>(
   sections: { section: string; data: Prisma.JsonValue }[],
@@ -60,8 +64,12 @@ export const cmsPagesPublicApi = {
       prisma.product.findMany({
         where: { isActive: true },
         include: { prices: { where: { isActive: true } } },
+        take: HOME_PAGE_PRODUCTS_LIMIT,
       }),
-      prisma.marketingReview.findMany({ where: { isActive: true } }),
+      prisma.marketingReview.findMany({
+        where: { isActive: true },
+        take: HOME_PAGE_REVIEWS_LIMIT,
+      }),
     ]);
 
     const map = PAGE_SECTIONS_MAP.home;
@@ -85,6 +93,7 @@ export const cmsPagesPublicApi = {
       prisma.product.findMany({
         where: { isActive: true },
         include: { prices: { where: { isActive: true } } },
+        take: PUBLIC_LIST_LIMIT,
       }),
     ]);
 
@@ -136,6 +145,7 @@ export const cmsPagesPublicApi = {
       }),
       prisma.product.findMany({
         where: { isActive: true },
+        take: PUBLIC_LIST_LIMIT,
       }),
     ]);
 

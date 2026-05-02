@@ -15,10 +15,11 @@ import { verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { TX_BUDGET_BULK } from "../../../db/transaction-config";
 import { mapToBlock, mapToBlockSegment, mapToExerciseEntry } from "../../../mappers/lms";
+import { buildExerciseSnapshotMap } from "../../../services/lms/derive-exercise-snapshot";
 import { handlePrismaError } from "../../../utils";
 
 import { applyOpInTx } from "./bulk-patch/bulk-patch-apply-op";
-import { verifyOpsBelongToPlan } from "./bulk-patch/bulk-patch-helpers";
+import { collectEntryExerciseIds, verifyOpsBelongToPlan } from "./bulk-patch/bulk-patch-helpers";
 
 class BulkPatchRollback extends Error {
   conflicts: BulkPatchConflict[];
@@ -44,13 +45,15 @@ export const lmsTrainingPlanPatchApi = {
       const outcome = await prisma.$transaction(async (tx) => {
         await verifyOpsBelongToPlan(tx, planId, data.ops);
 
+        const snapshotMap = await buildExerciseSnapshotMap(tx, collectEntryExerciseIds(data.ops));
+
         const conflicts: BulkPatchConflict[] = [];
         const updatedBlocks: PrismaBlock[] = [];
         const updatedSegments: PrismaBlockSegment[] = [];
         const updatedEntries: PrismaExerciseEntry[] = [];
 
         for (const [opIndex, op] of data.ops.entries()) {
-          const result = await applyOpInTx(tx, op);
+          const result = await applyOpInTx(tx, op, snapshotMap);
 
           if (result.kind === "conflict") {
             conflicts.push({ opIndex, kind: op.kind, currentVersion: result.currentVersion });

@@ -56,7 +56,7 @@ const RootLayout = ({ children }: RootLayoutProps) => (
 
             <MarketingHeader />
 
-            <Box component="main" id="main-content" sx={{ minHeight: "100vh" }}>
+            <Box component="main" id="main-content" sx={{ minHeight: "100dvh" }}>
               {children}
             </Box>
 

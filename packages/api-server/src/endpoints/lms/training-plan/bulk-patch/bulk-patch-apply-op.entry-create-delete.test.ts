@@ -171,6 +171,38 @@ describe("bulk-patch-apply-op / create-entry", () => {
       }),
     ).rejects.toBeInstanceOf(NotFoundError);
   });
+
+  it("snapshotMap hit: skips exerciseLibraryItem.findUnique (perf-003)", async () => {
+    const tx = makeTx();
+    const cachedSnapshot = {
+      id: "exercise-1",
+      name: "Cached Squat",
+      primaryMovement: "SQUAT" as const,
+      modality: "BARBELL" as const,
+      primaryBodyParts: ["QUADS" as const],
+      defaultMetrics: undefined,
+      demoVideoUrl: null,
+      demoImageUrl: null,
+    };
+    const snapshotMap = new Map([["exercise-1", cachedSnapshot]]);
+
+    vi.mocked(tx.exerciseEntry.create).mockResolvedValue(mockEntry());
+
+    await applyOpInTx(
+      tx,
+      { kind: "create-entry", setGroupId: "setgroup-1", payload: PAYLOAD },
+      snapshotMap,
+    );
+
+    expect(tx.exerciseLibraryItem.findUnique).not.toHaveBeenCalled();
+
+    const call = vi.mocked(tx.exerciseEntry.create).mock.calls[0]?.[0] as {
+      data: Record<string, unknown>;
+    };
+    const snapshot = call.data.exerciseSnapshot as Record<string, unknown>;
+
+    expect(snapshot.name).toBe("Cached Squat");
+  });
 });
 
 describe("bulk-patch-apply-op / delete-entry", () => {

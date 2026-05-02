@@ -194,14 +194,7 @@ export const lmsTrainingPlanApi = {
     await verifyPlanOwnership(id, userId);
 
     try {
-      await prisma.$transaction(async (tx) => {
-        await tx.planEnrollment.deleteMany({ where: { planId: id } });
-        await tx.product.updateMany({
-          where: { trainingPlanId: id },
-          data: { trainingPlanId: null },
-        });
-        await tx.trainingPlan.delete({ where: { id } });
-      });
+      await prisma.trainingPlan.delete({ where: { id } });
     } catch (error) {
       return handlePrismaError(error, { entity: "Training plan" });
     }

@@ -10,6 +10,7 @@ export const listWeeklyVolumesQuerySchema = z.object({
   userId: z.string().cuid().optional(),
   fromDate: z.date().optional(),
   toDate: z.date().optional(),
+  take: z.coerce.number().int().min(1).max(500).optional(),
 });
 
 export const listWeeklyVolumesResponseSchema = z.object({

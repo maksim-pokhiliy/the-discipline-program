@@ -1,25 +1,19 @@
-import { AppError, BadRequestError, ConflictError } from "@repo/errors";
+import { AppError, ConflictError } from "@repo/errors";
 import { logger } from "@repo/shared";
 
 import { getMonitoring } from "../monitoring";
 import { getUserId } from "../request-context";
 import type { AuthenticatedHandler, RouteContext, RouteHandler } from "../types";
 
-import {
-  IDEMPOTENCY_HEADER_CREATED_AT,
-  IDEMPOTENCY_HEADER_REPLAYED,
-  IDEMPOTENCY_HEADER_REQUEST,
-  IDEMPOTENCY_KEY_MAX_LENGTH,
-  IDEMPOTENCY_KEY_REGEX,
-  IDEMPOTENCY_TTL_SECONDS,
-  REPLAYABLE_RESPONSE_HEADERS,
-} from "./constants";
+import { IDEMPOTENCY_HEADER_REQUEST, IDEMPOTENCY_TTL_SECONDS } from "./constants";
 import { getIdempotencyStore } from "./idempotency-store-registry";
 import type { CachedResponse, IdempotencyLookupResult, IdempotencyStorePort } from "./port";
-import { fingerprintFormData, fingerprintRawBody, sha256Hex } from "./request-fingerprint";
+import { type IdempotencyBodyMode, captureBody, redactScope, validateKey } from "./request-codec";
+import { sha256Hex } from "./request-fingerprint";
 import { buildAuthScope, buildCanonicalRoute, buildPublicScope } from "./request-route";
+import { annotateLive, cloneResponseForCache, replayResponse } from "./response-codec";
 
-export type IdempotencyBodyMode = "json" | "formdata" | "none";
+export type { IdempotencyBodyMode };
 
 export type IdempotencyConfig = {
   bodyMode: IdempotencyBodyMode;
@@ -34,152 +28,10 @@ const resolvePublicOrAuthScope = (request: Request): string => {
   return userId ? buildAuthScope(userId) : buildPublicScope(request);
 };
 
-const validateKey = (raw: string | null): string | null => {
-  if (!raw) {
-    return null;
-  }
-
-  const first = raw.split(",", 1)[0]?.trim() ?? "";
-
-  if (!first) {
-    return null;
-  }
-
-  if (first.length > IDEMPOTENCY_KEY_MAX_LENGTH || !IDEMPOTENCY_KEY_REGEX.test(first)) {
-    throw new BadRequestError("Idempotency-Key header malformed", {
-      length: first.length,
-      keyHash: sha256Hex(first).slice(0, 12),
-    });
-  }
-
-  return first;
-};
-
-const buildFingerprintInput = (request: Request, bodyTag: string): string => {
-  const { pathname, search } = new URL(request.url);
-
-  return `path:${pathname}${search}\nbody:${bodyTag}`;
-};
-
-const captureBody = async (
-  request: Request,
-  mode: IdempotencyBodyMode,
-): Promise<{ rebuiltRequest: Request; fingerprint: string }> => {
-  if (mode === "none") {
-    return {
-      rebuiltRequest: request,
-      fingerprint: sha256Hex(buildFingerprintInput(request, "")),
-    };
-  }
-
-  if (mode === "formdata") {
-    const form = await request.formData();
-    const formTag = await fingerprintFormData(form);
-    const fingerprint = sha256Hex(buildFingerprintInput(request, formTag));
-    const headers = new Headers(request.headers);
-
-    headers.delete("content-type");
-    headers.delete("content-length");
-
-    const rebuiltRequest = new Request(request.url, {
-      method: request.method,
-      headers,
-      body: form,
-    });
-
-    return { rebuiltRequest, fingerprint };
-  }
-
-  const text = await request.text();
-  const bodyTag = fingerprintRawBody(text);
-  const fingerprint = sha256Hex(buildFingerprintInput(request, bodyTag));
-  const rebuiltRequest = new Request(request.url, {
-    method: request.method,
-    headers: request.headers,
-    body: text,
-  });
-
-  return { rebuiltRequest, fingerprint };
-};
-
-const safeJsonParse = (raw: string): { ok: true; value: unknown } | { ok: false } => {
-  try {
-    return { ok: true, value: JSON.parse(raw) };
-  } catch {
-    return { ok: false };
-  }
-};
-
-const cloneResponseForCache = async (response: Response): Promise<CachedResponse | null> => {
-  const clone = response.clone();
-  const bodyText = clone.status === 204 ? null : await clone.text();
-
-  let body: unknown = null;
-
-  if (bodyText) {
-    const parsed = safeJsonParse(bodyText);
-
-    if (!parsed.ok) {
-      return null;
-    }
-
-    body = parsed.value;
-  }
-
-  const headers: Record<string, string> = {};
-
-  for (const [name, value] of clone.headers.entries()) {
-    if (REPLAYABLE_RESPONSE_HEADERS.has(name.toLowerCase())) {
-      headers[name] = value;
-    }
-  }
-
-  return { status: clone.status, body, headers, createdAt: new Date() };
-};
-
-const replayResponse = (cached: CachedResponse): Response => {
-  const headers = new Headers(cached.headers);
-
-  headers.set(IDEMPOTENCY_HEADER_REPLAYED, "true");
-  headers.set(IDEMPOTENCY_HEADER_CREATED_AT, cached.createdAt.toISOString());
-
-  if (cached.status === 204) {
-    return new Response(null, { status: 204, headers });
-  }
-
-  return new Response(JSON.stringify(cached.body), {
-    status: cached.status,
-    headers: { ...Object.fromEntries(headers.entries()), "content-type": "application/json" },
-  });
-};
-
-const annotateLive = (response: Response): Response => {
-  response.headers.set(IDEMPOTENCY_HEADER_REPLAYED, "false");
-
-  return response;
-};
-
 const freezeContext = (context: RouteContext, params: Record<string, string>): RouteContext => ({
   ...context,
   params: Promise.resolve(params),
 });
-
-const redactScope = (scope: string): string => {
-  const colonIdx = scope.indexOf(":");
-
-  if (colonIdx === -1) {
-    return scope;
-  }
-
-  const kind = scope.slice(0, colonIdx);
-  const value = scope.slice(colonIdx + 1);
-
-  if (kind === "user" && value) {
-    return `user:${sha256Hex(value).slice(0, 12)}`;
-  }
-
-  return scope;
-};
 
 type StoreContext = {
   key: string;
@@ -207,22 +59,11 @@ const dispatchLookup = (lookup: IdempotencyLookupResult, ctx: StoreContext): Res
   return null;
 };
 
-const persistAndFinalize = async (
+const tryPersist = async (
   store: IdempotencyStorePort,
   ctx: StoreContext,
-  liveResponse: Response,
-): Promise<Response> => {
-  const cached = await cloneResponseForCache(liveResponse);
-
-  if (!cached) {
-    logger.warn("idempotency.cache_skipped_non_json", {
-      route: ctx.route,
-      scope: redactScope(ctx.scope),
-    });
-
-    return annotateLive(liveResponse);
-  }
-
+  cached: CachedResponse,
+): Promise<CachedResponse | null> => {
   try {
     const persistResult = await store.persist({
       key: ctx.key,
@@ -240,8 +81,10 @@ const persistAndFinalize = async (
         scope: redactScope(ctx.scope),
       });
 
-      return replayResponse(persistResult.cached);
+      return persistResult.cached;
     }
+
+    return null;
   } catch (error) {
     if (error instanceof AppError) {
       throw error;
@@ -252,6 +95,31 @@ const persistAndFinalize = async (
       level: "warning",
     });
     logger.warn("idempotency.persist_failed", { route: ctx.route, scope: redactScope(ctx.scope) });
+
+    return null;
+  }
+};
+
+const persistAndFinalize = async (
+  store: IdempotencyStorePort,
+  ctx: StoreContext,
+  liveResponse: Response,
+): Promise<Response> => {
+  const cached = await cloneResponseForCache(liveResponse);
+
+  if (!cached) {
+    logger.warn("idempotency.cache_skipped_non_json", {
+      route: ctx.route,
+      scope: redactScope(ctx.scope),
+    });
+
+    return annotateLive(liveResponse);
+  }
+
+  const racedCached = await tryPersist(store, ctx, cached);
+
+  if (racedCached) {
+    return replayResponse(racedCached);
   }
 
   return annotateLive(liveResponse);

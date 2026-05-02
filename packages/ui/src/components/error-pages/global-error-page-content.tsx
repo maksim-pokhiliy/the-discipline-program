@@ -11,7 +11,7 @@ const STYLES = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    minHeight: "100vh",
+    minHeight: "100dvh",
   },
   heading: {
     fontSize: "2rem",

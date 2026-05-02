@@ -21,14 +21,14 @@ describe("getClientIp", () => {
     delete process.env.VERCEL;
   });
 
-  it("uses the rightmost x-forwarded-for hop off Vercel (the proxy-attested client)", () => {
+  it("uses the leftmost x-forwarded-for hop (the originating client)", () => {
     const request = createRequest({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" });
 
-    expect(getClientIp(request)).toBe("5.6.7.8");
+    expect(getClientIp(request)).toBe("1.2.3.4");
   });
 
-  it("skips malformed rightmost entries when collapsing x-forwarded-for", () => {
-    const request = createRequest({ "x-forwarded-for": "1.2.3.4, not-an-ip" });
+  it("skips malformed leftmost entries when collapsing x-forwarded-for", () => {
+    const request = createRequest({ "x-forwarded-for": "not-an-ip, 1.2.3.4" });
 
     expect(getClientIp(request)).toBe("1.2.3.4");
   });
@@ -43,6 +43,16 @@ describe("getClientIp", () => {
     const request = createRequest({ "x-real-ip": "10.0.0.1" });
 
     expect(getClientIp(request)).toBe("unknown");
+  });
+
+  it("prefers x-vercel-forwarded-for over every other header (even off Vercel)", () => {
+    const request = createRequest({
+      "x-vercel-forwarded-for": "1.2.3.4",
+      "x-forwarded-for": "9.9.9.9, 8.8.8.8",
+      "x-real-ip": "10.0.0.1",
+    });
+
+    expect(getClientIp(request)).toBe("1.2.3.4");
   });
 
   it("prefers x-vercel-forwarded-for on Vercel over every other header", () => {
@@ -63,11 +73,11 @@ describe("getClientIp", () => {
     expect(getClientIp(request)).toBe("10.0.0.1");
   });
 
-  it("falls back to rightmost x-forwarded-for on Vercel when both vercel-specific headers are absent", () => {
+  it("falls back to leftmost x-forwarded-for on Vercel when both vercel-specific headers are absent", () => {
     process.env.VERCEL = "1";
     const request = createRequest({ "x-forwarded-for": "1.2.3.4, 5.6.7.8" });
 
-    expect(getClientIp(request)).toBe("5.6.7.8");
+    expect(getClientIp(request)).toBe("1.2.3.4");
   });
 
   it("returns 'unknown' when no IP headers are present", () => {

@@ -1,7 +1,8 @@
 # 0003. Prisma as the ORM
 
-- **Status:** Accepted
+- **Status:** Accepted (with known gaps — see Consequences)
 - **Date:** 2026-04-10
+- **Last revised:** 2026-05-02 (Negative consequences synced with ADR-0009 — soft-delete extension now covers `count` / `aggregate` / `groupBy` / `findFirstOrThrow` / `findUniqueOrThrow`; see Revision history)
 - **Tags:** `database`, `orm`, `typescript`
 
 ## Context
@@ -37,7 +38,7 @@ Conventions:
 **Negative:**
 
 - **Prisma types cannot be used across the monorepo boundary.** The rule "only `api-server` imports `@prisma/client`" is a hard constraint that requires a mapper layer for every entity. This is extra code, and every mapper is a place to introduce drift between the physical schema and the contract.
-- **The soft-delete extension is brittle.** It covers `findMany` / `findFirst` / `findUnique` / `delete` / `deleteMany`, but not `count`, `aggregate`, `groupBy`, `findUniqueOrThrow`, `findFirstOrThrow`, `update`, `updateMany`, or `upsert`. Dashboard metrics that use `count` will include soft-deleted rows. Tracked as a known gap in ADR 0019.
+- **The soft-delete extension intentionally leaves `update` / `updateMany` / `upsert` unfiltered.** ADR 0009 is the authoritative spec: read coverage now includes `findMany`, `findFirst`, `findFirstOrThrow`, `findUnique`, `findUniqueOrThrow`, `count`, `aggregate`, `groupBy`; destructive coverage is `delete` and `deleteMany` (rewritten to set `deletedAt`). The remaining gap is by design — `update`/`updateMany` are the restoration path, and `upsert` is partially protected by the suffix-on-delete trick. Verified in `packages/api-server/src/db/client.ts:102-268`.
 - **Prisma has historically been heavy at query time** due to its Rust-based query engine. Cold start on serverless is measurable. We accept this because we are running on Vercel with warm instances, but it is a watch-list item.
 - **Raw SQL escape hatches exist** (`$queryRaw`, `$executeRaw`) and are untyped. Code review must catch any use of them that bypasses the mapper layer.
 - **`Decimal` columns return as a `Decimal` instance**, not a number, and mappers must explicitly convert (`Number(p.weightKg)` in `user.mapper.ts`). Precision loss is possible if a developer forgets.
@@ -66,5 +67,10 @@ Conventions:
 - `packages/api-server/prisma/schema.prisma` — the schema.
 - `packages/api-server/src/db/client.ts` — Prisma singleton + soft-delete extension.
 - `packages/api-server/src/mappers/` — Prisma → contracts mapper layer.
-- ADR 0009 — the soft-delete extension as a separate, explicit decision.
-- ADR 0019 — database-strategy deferred decisions (production migrations, soft-delete coverage, transaction discipline).
+- ADR 0009 — the soft-delete extension as a separate, explicit decision (authoritative for the operation coverage list).
+- ADR 0019 — database-strategy deferred decisions (production migrations, transaction discipline).
+
+## Revision history
+
+- **2026-05-02** — Negative consequences synced with ADR-0009 to remove the contradiction. The "extension does not cover `count` / `aggregate` / `groupBy` / `findFirstOrThrow` / `findUniqueOrThrow`" claim was outdated as of ADR-0009's 2026-04-30 revision (matching the `client.ts` implementation since then). Remaining gaps narrowed to `update` / `updateMany` / `upsert`, all intentional per ADR-0009.
+- **2026-04-10** — original draft.

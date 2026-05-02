@@ -83,6 +83,7 @@ export const ImageUpload = ({
           accept={acceptAttribute}
           onChange={handleFileChange}
           disabled={disabled || isUploading}
+          aria-label={label}
         />
 
         {isUploading ? (

@@ -1,4 +1,4 @@
-import { type Prisma, PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 import { baseEnv } from "@repo/env/base";
 import { NotFoundError } from "@repo/errors";
@@ -24,6 +24,14 @@ const SOFT_DELETE_UNIQUE_FIELDS: Record<string, string[]> = {
   Product: ["slug"],
   MarketingBlogPost: ["slug"],
   User: ["email"],
+};
+
+type SoftDeleteTableConfig = { table: string; columns: string[] };
+
+const SOFT_DELETE_RAW_CONFIG: Record<string, SoftDeleteTableConfig> = {
+  User: { table: "users", columns: ["email"] },
+  Product: { table: "app_products", columns: ["slug"] },
+  MarketingBlogPost: { table: "marketing_blog_posts", columns: ["slug"] },
 };
 
 type ModelDelegate = {
@@ -80,6 +88,19 @@ const withTimeoutParams = (url: string): string => {
 const isDev = baseEnv.NODE_ENV === "development";
 
 type QueryEventHandler = (event: "query", listener: (e: Prisma.QueryEvent) => void) => void;
+
+const buildSoftDeleteSql = (config: SoftDeleteTableConfig, ids: string[]): Prisma.Sql => {
+  const suffix = `_deleted_${Date.now()}`;
+  const setFragments: Prisma.Sql[] = [Prisma.sql`"deletedAt" = NOW()`];
+
+  for (const column of config.columns) {
+    setFragments.push(
+      Prisma.sql`${Prisma.raw(`"${column}"`)} = ${Prisma.raw(`"${column}"`)} || ${suffix}`,
+    );
+  }
+
+  return Prisma.sql`UPDATE ${Prisma.raw(`"${config.table}"`)} SET ${Prisma.join(setFragments, ", ")} WHERE "id" IN (${Prisma.join(ids)})`;
+};
 
 const createClient = () => {
   const client = new PrismaClient({
@@ -235,30 +256,24 @@ const createClient = () => {
             return query(args);
           }
 
-          const uniqueFields = SOFT_DELETE_UNIQUE_FIELDS[model];
+          const rawConfig = SOFT_DELETE_RAW_CONFIG[model];
 
-          if (uniqueFields) {
-            const select = Object.fromEntries([
-              ["id", true],
-              ...uniqueFields.map((f) => [f, true]),
-            ]);
-            const records = await delegate.findMany({ where: args.where, select });
-            const suffix = `_deleted_${Date.now()}`;
+          if (rawConfig) {
+            const records = await delegate.findMany({
+              where: args.where,
+              select: { id: true },
+            });
+            const ids = records
+              .map((r) => r.id)
+              .filter((id): id is string => typeof id === "string");
 
-            for (const record of records) {
-              const data: Record<string, unknown> = { deletedAt: new Date() };
-
-              for (const field of uniqueFields) {
-                data[field] = `${record[field]}${suffix}`;
-              }
-
-              await delegate.update({
-                where: { id: record.id },
-                data,
-              });
+            if (ids.length === 0) {
+              return { count: 0 };
             }
 
-            return { count: records.length };
+            await client.$executeRaw(buildSoftDeleteSql(rawConfig, ids));
+
+            return { count: ids.length };
           }
 
           return delegate.updateMany({ ...args, data: { deletedAt: new Date() } });

@@ -24,7 +24,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   return (
     <SessionGuard>
-      <Stack direction="row" sx={{ height: "100vh" }}>
+      <Stack direction="row" sx={{ height: "100dvh" }}>
         <Sidebar
           config={ADMIN_NAVIGATION}
           expanded={expanded}
