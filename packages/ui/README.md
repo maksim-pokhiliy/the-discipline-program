@@ -33,4 +33,3 @@ src/
 ## Related ADRs
 
 - [ADR 0006 — MUI as design system](../../docs/adr/0006-mui-as-design-system.md)
-- [ADR 0035 — editor save model](../../docs/adr/0035-editor-save-model.md) (form save semantics)

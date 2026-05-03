@@ -83,7 +83,7 @@ packages/
   mui/            MUI theme + providers
   env/            Environment variable validation
 
-docs/adr/         Architecture Decision Records (36)
+docs/adr/         Architecture Decision Records
 ```
 
 ## Commands
@@ -109,11 +109,11 @@ docs/adr/         Architecture Decision Records (36)
 
 ## App Status
 
-| App       | Status                                                                 |
-| --------- | ---------------------------------------------------------------------- |
-| Admin     | Production-ready. CMS + platform management.                           |
-| Marketing | Production-ready. Billing flow stubbed.                                |
-| Platform  | Active development (Phase 2). Auth, routing, 59 API routes, 8 modules. |
+| App       | Status                                                                    |
+| --------- | ------------------------------------------------------------------------- |
+| Admin     | Production-ready. CMS + platform management.                              |
+| Marketing | Production-ready. Billing flow stubbed.                                   |
+| Platform  | Active development. Auth, routing, coach console, athlete-facing surface. |
 
 ## Documentation
 
@@ -121,7 +121,7 @@ docs/adr/         Architecture Decision Records (36)
 - [docs/DEPLOY.md](docs/DEPLOY.md) -- deployment guide
 - [docs/DEPENDENCY-GRAPH.md](docs/DEPENDENCY-GRAPH.md) -- package dependency map
 - [docs/BOUNDED-CONTEXTS.md](docs/BOUNDED-CONTEXTS.md) -- domain boundaries
-- [docs/adr/](docs/adr/) -- 36 Architecture Decision Records
+- [docs/adr/](docs/adr/) -- Architecture Decision Records
 
 ## Data Flow
 
