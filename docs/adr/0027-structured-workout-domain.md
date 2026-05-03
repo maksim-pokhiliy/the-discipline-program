@@ -1,5 +1,7 @@
 # 0027. Structured workout domain (supersedes ADR-0016)
 
+> **[SUPERSEDED]** by ADR-0037 on 2026-05-03 — the entire seven-level structured authoring tree (`Week → Day → LmsSession → Block → BlockSegment → SetGroup → ExerciseEntry`) plus the `ExerciseLibraryItem` library was removed when the plan-editor / library / templates feature was rolled back to "not started". The four-level athlete-log tree (`WorkoutSession → BlockSession → ExerciseLog → SetLog`) is preserved but its FK to the deleted `ExerciseLibraryItem` was dropped — `ExerciseLog.exerciseSnapshot` is now the only identifier the logs retain. `BlockSession.archetypeKind` + `schemeParamsSnapshot` survive (see ADR-0031 partial supersede).
+
 - **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `domain`, `lms`, `breaking-change`, `schema`

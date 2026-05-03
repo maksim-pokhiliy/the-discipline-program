@@ -1,5 +1,7 @@
 # 0034. Three independent CRUD libraries (Exercise, BlockKind, SchemeTemplate)
 
+> **[SUPERSEDED]** by ADR-0037 on 2026-05-03 — all three libraries (`ExerciseLibraryItem`, `BlockKind`, `SchemeTemplate`) plus the `BlockTemplate` / `SessionTemplate` / `WeekTemplate` template tier were deleted when the plan-editor / library / templates feature was rolled back. The shared `LibraryScope` enum (`SYSTEM | COACH`) and the promote / demote scope-mutation operations are gone with them. The single-team simplification from ADR-0032 (Role-as-source-of-truth, no tenant entities) survives independently.
+
 - **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `lms`, `data-modeling`, `libraries`, `breaking-change`

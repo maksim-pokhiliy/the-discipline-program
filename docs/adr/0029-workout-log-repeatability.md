@@ -1,5 +1,7 @@
 # 0029. WorkoutLog repeatability — drop @@unique constraint
 
+> **[SUPERSEDED — partial]** by ADR-0037 on 2026-05-03 — the `enrollmentId` and `sourceDayId` columns referenced in this ADR's "Decision" section (`@@index([enrollmentId, startedAt])`, `WorkoutSession.sourceDayId`) were dropped when the plan-editor / library / templates feature was rolled back; `PlanEnrollment` no longer exists and `Day` was deleted with the authoring tree. The core decision — `WorkoutSession` carries no uniqueness constraint, repeatability is the contract, sessions are identified by their primary key — survives unchanged. The athlete-history index `@@index([userId, startedAt])` remains. Coach-side per-enrollment progress views are gone with the enrollments.
+
 - **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `lms`, `schema`, `breaking-change`

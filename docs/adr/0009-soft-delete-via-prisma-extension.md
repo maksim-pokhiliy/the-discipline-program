@@ -1,5 +1,7 @@
 # 0009. Soft delete via Prisma `$extends`
 
+> **[SUPERSEDED — partial]** by ADR-0037 on 2026-05-03 — the LMS library entries in `SOFT_DELETE_MODELS` (`BlockKind`, `SchemeTemplate`, `BlockTemplate`, `SessionTemplate`, `WeekTemplate`, `ExerciseLibraryItem`) were dropped when the plan-editor / library / templates feature was rolled back; those models no longer exist. The extension itself, the `$extends` mechanism, and soft-delete coverage for `User` / `Product` / `TrainingPlan` / `CoachProfile` / `MarketingBlogPost` / `MarketingReview` / `MarketingContactSubmission` are unchanged. The set must be trimmed in `packages/api-server/src/db/client.ts` to match the live schema.
+
 - **Status:** Accepted (with known gaps — see Consequences)
 - **Date:** 2026-04-10
 - **Last revised:** 2026-04-30 (Consequences section updated to match current implementation; see Revision history)

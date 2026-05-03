@@ -1,5 +1,7 @@
 # 0031. Scheme params as discriminated JSON
 
+> **[SUPERSEDED — partial]** by ADR-0037 on 2026-05-03 — the `BlockSegment` model + the `chk_scheme_params_kind_matches` DB CHECK constraint + the `SchemeTemplate` library were all deleted when the plan-editor / library / templates feature was rolled back. The discriminated-JSON pattern survives on `BlockSession.archetypeKind` + `BlockSession.schemeParamsSnapshot` (athlete-log side, preserved). The three-layer validation (write zod → DB CHECK → read zod) is reduced to two layers for the snapshot column (no DB CHECK in the new schema). The `SchemeArchetypeKind` enum + `schemeParamsSchema` zod union remain in `packages/contracts`.
+
 - **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `lms`, `schema`, `validation`

@@ -1,5 +1,7 @@
 # 0032. Single-team product simplification
 
+> **[SUPERSEDED — partial]** by ADR-0037 on 2026-05-03 — clauses (3) "Library scopes are SYSTEM and COACH" and (5) "Plan ownership is via `creatorId` plus `PlanCoachAssignment`" were rolled back when the plan-editor / library / templates feature was removed; the `LibraryScope` enum and `PlanCoachAssignment` model no longer exist. Plan ownership reduces to `creatorId === userId` OR role IN (ADMIN, HEAD_COACH) — the assignments-based grant path is gone (see ADR-0037 D6). Clauses (1) "Role enum is the source of truth" with `{ ADMIN, HEAD_COACH, COACH, ATHLETE }`, (2) "no Team / Tenant entities", (4) "HEAD_COACH sees everything", and (6) "CoachAthleteAssignment remains explicit" all survive unchanged.
+
 - **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `domain`, `scope`, `lms`, `iam`
