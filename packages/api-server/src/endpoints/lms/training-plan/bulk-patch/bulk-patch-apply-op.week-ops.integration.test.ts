@@ -296,6 +296,7 @@ describe("lmsTrainingPlanPatchApi.patch — week-ops cross-plan ownership (integ
   let coachA: Awaited<ReturnType<typeof createTestCoach>>;
   let coachB: Awaited<ReturnType<typeof createTestCoach>>;
   let planAId: string;
+  let planBId: string;
   let weekAId: string;
 
   const toCleanup: { table: string; id: string }[] = [];
@@ -332,7 +333,8 @@ describe("lmsTrainingPlanPatchApi.patch — week-ops cross-plan ownership (integ
       },
     });
 
-    toCleanup.push({ table: "trainingPlan", id: planB.id });
+    planBId = planB.id;
+    toCleanup.push({ table: "trainingPlan", id: planBId });
 
     const weekA = await cleanupRaw.week.create({ data: { planId: planAId, index: 0 } });
 
@@ -353,5 +355,34 @@ describe("lmsTrainingPlanPatchApi.patch — week-ops cross-plan ownership (integ
         ops: [{ kind: "delete-week", weekId: weekAId, expectedVersion: 1 }],
       }),
     ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it("rejects update-week against another coach's plan via verifyOpsBelongToPlan (MT-5, AuthZ)", async () => {
+    await expect(
+      lmsTrainingPlanPatchApi.patch(coachB.user.id, planBId, {
+        ops: [
+          {
+            kind: "update-week",
+            weekId: weekAId,
+            expectedVersion: 1,
+            fullEntity: { label: "spoofed" },
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it("rejects create-week with planId from another coach's plan (MT-7, AuthZ)", async () => {
+    await expect(
+      lmsTrainingPlanPatchApi.patch(coachB.user.id, planBId, {
+        ops: [
+          {
+            kind: "create-week",
+            planId: planAId,
+            payload: { index: 999 },
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ statusCode: 404 });
   });
 });

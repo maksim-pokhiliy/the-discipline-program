@@ -256,6 +256,8 @@ describe("lmsTrainingPlanPatchApi.patch — session-ops cross-plan ownership (in
   let coachA: Awaited<ReturnType<typeof createTestCoach>>;
   let coachB: Awaited<ReturnType<typeof createTestCoach>>;
   let planAId: string;
+  let planBId: string;
+  let dayAId: string;
   let sessionAId: string;
 
   const toCleanup: { table: string; id: string }[] = [];
@@ -292,14 +294,18 @@ describe("lmsTrainingPlanPatchApi.patch — session-ops cross-plan ownership (in
       },
     });
 
-    toCleanup.push({ table: "trainingPlan", id: planB.id });
+    planBId = planB.id;
+    toCleanup.push({ table: "trainingPlan", id: planBId });
 
     const weekA = await cleanupRaw.week.create({ data: { planId: planAId, index: 0 } });
     const dayA = await cleanupRaw.day.create({
       data: { weekId: weekA.id, dayOfWeek: "MON" },
     });
+
+    dayAId = dayA.id;
+
     const sessionA = await cleanupRaw.lmsSession.create({
-      data: { dayId: dayA.id, order: 0 },
+      data: { dayId: dayAId, order: 0 },
     });
 
     sessionAId = sessionA.id;
@@ -319,5 +325,34 @@ describe("lmsTrainingPlanPatchApi.patch — session-ops cross-plan ownership (in
         ops: [{ kind: "delete-session", sessionId: sessionAId, expectedVersion: 1 }],
       }),
     ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it("rejects update-session against another coach's plan via verifyOpsBelongToPlan (MT-6, AuthZ)", async () => {
+    await expect(
+      lmsTrainingPlanPatchApi.patch(coachB.user.id, planBId, {
+        ops: [
+          {
+            kind: "update-session",
+            sessionId: sessionAId,
+            expectedVersion: 1,
+            fullEntity: { label: "spoofed" },
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it("rejects create-session with dayId from another coach's plan (MT-4, AuthZ)", async () => {
+    await expect(
+      lmsTrainingPlanPatchApi.patch(coachB.user.id, planBId, {
+        ops: [
+          {
+            kind: "create-session",
+            dayId: dayAId,
+            payload: { label: "spoofed" },
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ statusCode: 404 });
   });
 });

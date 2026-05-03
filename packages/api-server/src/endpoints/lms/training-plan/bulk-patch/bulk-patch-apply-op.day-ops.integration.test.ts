@@ -190,6 +190,8 @@ describe("lmsTrainingPlanPatchApi.patch — day-ops cross-plan ownership (integr
   let coachA: Awaited<ReturnType<typeof createTestCoach>>;
   let coachB: Awaited<ReturnType<typeof createTestCoach>>;
   let planAId: string;
+  let planBId: string;
+  let weekAId: string;
   let dayAId: string;
 
   const toCleanup: { table: string; id: string }[] = [];
@@ -226,11 +228,15 @@ describe("lmsTrainingPlanPatchApi.patch — day-ops cross-plan ownership (integr
       },
     });
 
-    toCleanup.push({ table: "trainingPlan", id: planB.id });
+    planBId = planB.id;
+    toCleanup.push({ table: "trainingPlan", id: planBId });
 
     const weekA = await cleanupRaw.week.create({ data: { planId: planAId, index: 0 } });
+
+    weekAId = weekA.id;
+
     const dayA = await cleanupRaw.day.create({
-      data: { weekId: weekA.id, dayOfWeek: "MON" },
+      data: { weekId: weekAId, dayOfWeek: "MON" },
     });
 
     dayAId = dayA.id;
@@ -250,5 +256,34 @@ describe("lmsTrainingPlanPatchApi.patch — day-ops cross-plan ownership (integr
         ops: [{ kind: "delete-day", dayId: dayAId, expectedVersion: 1 }],
       }),
     ).rejects.toMatchObject({ statusCode: 403 });
+  });
+
+  it("rejects update-day against another coach's plan via verifyOpsBelongToPlan (MT-6, AuthZ)", async () => {
+    await expect(
+      lmsTrainingPlanPatchApi.patch(coachB.user.id, planBId, {
+        ops: [
+          {
+            kind: "update-day",
+            dayId: dayAId,
+            expectedVersion: 1,
+            fullEntity: { kind: "REST" },
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ statusCode: 404 });
+  });
+
+  it("rejects create-day with weekId from another coach's plan (MT-3, AuthZ)", async () => {
+    await expect(
+      lmsTrainingPlanPatchApi.patch(coachB.user.id, planBId, {
+        ops: [
+          {
+            kind: "create-day",
+            weekId: weekAId,
+            payload: { dayOfWeek: "TUE" },
+          },
+        ],
+      }),
+    ).rejects.toMatchObject({ statusCode: 404 });
   });
 });
