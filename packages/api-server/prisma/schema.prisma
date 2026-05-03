@@ -416,13 +416,14 @@ model PlanCoachAssignment {
 }
 
 model Week {
-  id     String       @id @default(cuid())
-  planId String
-  plan   TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  index  Int
-  label  String?
-  notes  String?
-  days   Day[]
+  id      String       @id @default(cuid())
+  planId  String
+  plan    TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  index   Int
+  label   String?
+  notes   String?
+  version Int          @default(1)
+  days    Day[]
 
   @@unique([planId, index])
   @@map("lms_weeks")
@@ -435,6 +436,7 @@ model Day {
   dayOfWeek DayOfWeek
   kind      DayKind      @default(TRAINING)
   notes     String?
+  version   Int          @default(1)
   sessions  LmsSession[]
 
   @@unique([weekId, dayOfWeek])
@@ -442,13 +444,14 @@ model Day {
 }
 
 model LmsSession {
-  id     String  @id @default(cuid())
-  dayId  String
-  day    Day     @relation(fields: [dayId], references: [id], onDelete: Cascade)
-  order  Int
-  label  String?
-  notes  String?
-  blocks Block[]
+  id      String  @id @default(cuid())
+  dayId   String
+  day     Day     @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  order   Int
+  label   String?
+  notes   String?
+  version Int     @default(1)
+  blocks  Block[]
 
   @@unique([dayId, order])
   @@map("lms_sessions")

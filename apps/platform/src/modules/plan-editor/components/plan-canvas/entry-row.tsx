@@ -26,6 +26,7 @@ const isAdditive = (event: MouseEvent): boolean => event.shiftKey || event.metaK
 
 export const EntryRow = ({ entryId, exerciseName, selection, onSelect }: EntryRowProps) => {
   const sortable = useSortable({ id: `entry:${entryId}`, data: { kind: "entry", entryId } });
+
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(sortable.transform),
     transition: sortable.transition,

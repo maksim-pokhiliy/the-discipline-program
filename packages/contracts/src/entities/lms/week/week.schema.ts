@@ -8,4 +8,5 @@ export const weekSchema = z.object({
   index: z.number().int().nonnegative(),
   label: z.string().max(WEEK_CONSTANTS.MAX_LABEL_LENGTH).nullable(),
   notes: z.string().max(WEEK_CONSTANTS.MAX_NOTES_LENGTH).nullable(),
+  version: z.number().int().min(1),
 });

@@ -30,6 +30,7 @@ export const SegmentRow = ({ segment, selection, onSelect }: SegmentRowProps) =>
     id: `segment:${segment.id}`,
     data: { kind: "segment", segmentId: segment.id },
   });
+
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(sortable.transform),
     transition: sortable.transition,

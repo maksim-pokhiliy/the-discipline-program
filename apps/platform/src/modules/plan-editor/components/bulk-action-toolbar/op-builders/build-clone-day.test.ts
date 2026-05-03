@@ -39,6 +39,7 @@ const makeSession = (
   order: 0,
   label: null,
   notes: null,
+  version: 1,
   blocks,
 });
 
@@ -48,6 +49,7 @@ const makeDay = (id: string, sessions: PlanStructureSession[]): PlanStructureDay
   dayOfWeek: "MON",
   kind: "TRAINING",
   notes: null,
+  version: 1,
   sessions,
 });
 

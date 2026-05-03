@@ -1,4 +1,4 @@
-import { createSentryClientInit } from "@repo/shared/sentry";
+import { createSentryClientInit } from "@repo/shared/sentry/client";
 
 const isProduction = process.env.NODE_ENV === "production";
 

@@ -118,7 +118,7 @@ export const usePlanBulkPatch = (planId: string) => {
         },
       };
     },
-    onSuccess: (result, _vars, context) => {
+    onSuccess: (result, _variables, context) => {
       if (result.conflicts && result.conflicts.length > 0) {
         context?.rollback?.();
         void queryClient.invalidateQueries({
@@ -142,6 +142,10 @@ export const usePlanBulkPatch = (planId: string) => {
           key,
           applyUpdatedToCache(data, result.updated),
         );
+      });
+
+      void queryClient.invalidateQueries({
+        queryKey: platformKeys.trainingPlans.structureByPlan(planId),
       });
     },
     onError: (error, _vars, context) => {

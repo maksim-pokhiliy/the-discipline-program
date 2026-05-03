@@ -11,7 +11,7 @@ export {
   type CommandPaletteState,
 } from "./command-palette.context";
 export { filterCommands, useFilteredCommands } from "./use-command-palette";
-export { createCreateWeekCommand } from "./commands/create-week";
+export { createCreateWeekCommand, type CreateWeekCommandOptions } from "./commands/create-week";
 export {
   createDuplicateWeekCommand,
   type DuplicateWeekCommandOptions,

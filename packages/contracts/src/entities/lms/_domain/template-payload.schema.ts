@@ -37,18 +37,27 @@ export const blockTemplatePayloadSchema = z.object({
   segments: z.array(blockTemplateSegmentSchema).max(TEMPLATE_LIMITS.MAX_SEGMENTS_PER_BLOCK),
 });
 
-const sessionTemplateSessionSchema = lmsSessionSchema.omit({ id: true, dayId: true });
+const sessionTemplateSessionSchema = lmsSessionSchema.omit({
+  id: true,
+  dayId: true,
+  version: true,
+});
 
 export const sessionTemplatePayloadSchema = z.object({
   session: sessionTemplateSessionSchema,
   blocks: z.array(blockTemplatePayloadSchema).max(TEMPLATE_LIMITS.MAX_BLOCKS_PER_SESSION),
 });
 
-const weekTemplateDaySchema = daySchema.omit({ id: true, weekId: true }).extend({
+const weekTemplateDaySchema = daySchema.omit({ id: true, weekId: true, version: true }).extend({
   sessions: z.array(sessionTemplatePayloadSchema).max(TEMPLATE_LIMITS.MAX_SESSIONS_PER_DAY),
 });
 
-const weekTemplateWeekSchema = weekSchema.omit({ id: true, planId: true, index: true });
+const weekTemplateWeekSchema = weekSchema.omit({
+  id: true,
+  planId: true,
+  index: true,
+  version: true,
+});
 
 export const weekTemplatePayloadSchema = z.object({
   week: weekTemplateWeekSchema,

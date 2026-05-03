@@ -34,6 +34,7 @@ export const mapToLmsSession = (s: PrismaLmsSession): LmsSession => ({
   order: s.order,
   label: s.label,
   notes: s.notes,
+  version: s.version,
 });
 
 export const mapToLmsSessionWithBlocks = (s: LmsSessionWithBlocksRow): LmsSessionWithBlocks => ({

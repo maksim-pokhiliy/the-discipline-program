@@ -3,6 +3,8 @@ import { NotFoundError } from "@repo/errors";
 
 import { type prisma } from "../../../../db/client";
 
+import { collectOpIds } from "./collect-op-ids";
+
 type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
 export const collectEntryExerciseIds = (ops: BulkPatchOp[]): string[] => {
@@ -19,191 +21,216 @@ export const collectEntryExerciseIds = (ops: BulkPatchOp[]): string[] => {
   return ids;
 };
 
-const collectIds = (ops: BulkPatchOp[]) => {
-  const blockIds = new Set<string>();
-  const segmentIds = new Set<string>();
-  const entryIds = new Set<string>();
-  const sessionIds = new Set<string>();
-  const setGroupIds = new Set<string>();
-
-  for (const op of ops) {
-    switch (op.kind) {
-      case "update-block":
-      case "delete-block": {
-        blockIds.add(op.blockId);
-        break;
-      }
-      case "move-block": {
-        blockIds.add(op.blockId);
-        sessionIds.add(op.targetSessionId);
-        break;
-      }
-      case "update-segment":
-      case "delete-segment": {
-        segmentIds.add(op.segmentId);
-        break;
-      }
-      case "move-segment": {
-        segmentIds.add(op.segmentId);
-        blockIds.add(op.targetBlockId);
-        break;
-      }
-      case "update-entry":
-      case "delete-entry": {
-        entryIds.add(op.entryId);
-        break;
-      }
-      case "move-entry": {
-        entryIds.add(op.entryId);
-        setGroupIds.add(op.targetSetGroupId);
-        break;
-      }
-      case "create-block": {
-        sessionIds.add(op.sessionId);
-        break;
-      }
-      case "create-segment": {
-        blockIds.add(op.blockId);
-        break;
-      }
-      case "create-entry": {
-        setGroupIds.add(op.setGroupId);
-        break;
-      }
-      case "clone-block-subtree": {
-        blockIds.add(op.sourceBlockId);
-        sessionIds.add(op.targetSessionId);
-        break;
-      }
+const verifyPlanIdsMatch = (opPlanIds: Set<string>, routePlanId: string): void => {
+  for (const opPlanId of opPlanIds) {
+    if (opPlanId !== routePlanId) {
+      throw new NotFoundError("Bulk-patch op references another plan", { opPlanId });
     }
   }
-
-  return { blockIds, segmentIds, entryIds, sessionIds, setGroupIds };
 };
 
-export const verifyOpsBelongToPlan = async (
+const verifyWeekOwnership = async (
   tx: TxClient,
+  ids: Set<string>,
   planId: string,
-  ops: BulkPatchOp[],
 ): Promise<void> => {
-  const { blockIds, segmentIds, entryIds, sessionIds, setGroupIds } = collectIds(ops);
-
-  if (sessionIds.size > 0) {
-    const sessions = await tx.lmsSession.findMany({
-      where: { id: { in: [...sessionIds] } },
-      select: {
-        id: true,
-        day: { select: { week: { select: { planId: true } } } },
-      },
-    });
-
-    if (sessions.length !== sessionIds.size) {
-      throw new NotFoundError("Bulk-patch op references a missing session");
-    }
-
-    for (const s of sessions) {
-      if (s.day.week.planId !== planId) {
-        throw new NotFoundError("Bulk-patch op references a session from another plan", {
-          sessionId: s.id,
-        });
-      }
-    }
+  if (ids.size === 0) {
+    return;
   }
 
-  if (blockIds.size > 0) {
-    const blocks = await tx.block.findMany({
-      where: { id: { in: [...blockIds] } },
-      select: {
-        id: true,
-        session: { select: { day: { select: { week: { select: { planId: true } } } } } },
-      },
-    });
+  const weeks = await tx.week.findMany({
+    where: { id: { in: [...ids] } },
+    select: { id: true, planId: true },
+  });
 
-    if (blocks.length !== blockIds.size) {
-      throw new NotFoundError("Bulk-patch op references a missing block");
-    }
-
-    for (const b of blocks) {
-      if (b.session.day.week.planId !== planId) {
-        throw new NotFoundError("Bulk-patch op references a block from another plan", {
-          blockId: b.id,
-        });
-      }
-    }
+  if (weeks.length !== ids.size) {
+    throw new NotFoundError("Bulk-patch op references a missing week");
   }
 
-  if (segmentIds.size > 0) {
-    const segments = await tx.blockSegment.findMany({
-      where: { id: { in: [...segmentIds] } },
-      select: {
-        id: true,
-        block: {
-          select: {
-            session: { select: { day: { select: { week: { select: { planId: true } } } } } },
-          },
+  for (const w of weeks) {
+    if (w.planId !== planId) {
+      throw new NotFoundError("Bulk-patch op references a week from another plan", {
+        weekId: w.id,
+      });
+    }
+  }
+};
+
+const verifyDayOwnership = async (
+  tx: TxClient,
+  ids: Set<string>,
+  planId: string,
+): Promise<void> => {
+  if (ids.size === 0) {
+    return;
+  }
+
+  const days = await tx.day.findMany({
+    where: { id: { in: [...ids] } },
+    select: { id: true, week: { select: { planId: true } } },
+  });
+
+  if (days.length !== ids.size) {
+    throw new NotFoundError("Bulk-patch op references a missing day");
+  }
+
+  for (const d of days) {
+    if (d.week.planId !== planId) {
+      throw new NotFoundError("Bulk-patch op references a day from another plan", { dayId: d.id });
+    }
+  }
+};
+
+const verifySessionOwnership = async (
+  tx: TxClient,
+  ids: Set<string>,
+  planId: string,
+): Promise<void> => {
+  if (ids.size === 0) {
+    return;
+  }
+
+  const sessions = await tx.lmsSession.findMany({
+    where: { id: { in: [...ids] } },
+    select: { id: true, day: { select: { week: { select: { planId: true } } } } },
+  });
+
+  if (sessions.length !== ids.size) {
+    throw new NotFoundError("Bulk-patch op references a missing session");
+  }
+
+  for (const s of sessions) {
+    if (s.day.week.planId !== planId) {
+      throw new NotFoundError("Bulk-patch op references a session from another plan", {
+        sessionId: s.id,
+      });
+    }
+  }
+};
+
+const verifyBlockOwnership = async (
+  tx: TxClient,
+  ids: Set<string>,
+  planId: string,
+): Promise<void> => {
+  if (ids.size === 0) {
+    return;
+  }
+
+  const blocks = await tx.block.findMany({
+    where: { id: { in: [...ids] } },
+    select: {
+      id: true,
+      session: { select: { day: { select: { week: { select: { planId: true } } } } } },
+    },
+  });
+
+  if (blocks.length !== ids.size) {
+    throw new NotFoundError("Bulk-patch op references a missing block");
+  }
+
+  for (const b of blocks) {
+    if (b.session.day.week.planId !== planId) {
+      throw new NotFoundError("Bulk-patch op references a block from another plan", {
+        blockId: b.id,
+      });
+    }
+  }
+};
+
+const verifySegmentOwnership = async (
+  tx: TxClient,
+  ids: Set<string>,
+  planId: string,
+): Promise<void> => {
+  if (ids.size === 0) {
+    return;
+  }
+
+  const segments = await tx.blockSegment.findMany({
+    where: { id: { in: [...ids] } },
+    select: {
+      id: true,
+      block: {
+        select: {
+          session: { select: { day: { select: { week: { select: { planId: true } } } } } },
         },
       },
-    });
+    },
+  });
 
-    if (segments.length !== segmentIds.size) {
-      throw new NotFoundError("Bulk-patch op references a missing segment");
-    }
-
-    for (const s of segments) {
-      if (s.block.session.day.week.planId !== planId) {
-        throw new NotFoundError("Bulk-patch op references a segment from another plan", {
-          segmentId: s.id,
-        });
-      }
-    }
+  if (segments.length !== ids.size) {
+    throw new NotFoundError("Bulk-patch op references a missing segment");
   }
 
-  if (setGroupIds.size > 0) {
-    const setGroups = await tx.setGroup.findMany({
-      where: { id: { in: [...setGroupIds] } },
-      select: {
-        id: true,
-        segment: {
-          select: {
-            block: {
-              select: {
-                session: {
-                  select: { day: { select: { week: { select: { planId: true } } } } },
-                },
-              },
+  for (const s of segments) {
+    if (s.block.session.day.week.planId !== planId) {
+      throw new NotFoundError("Bulk-patch op references a segment from another plan", {
+        segmentId: s.id,
+      });
+    }
+  }
+};
+
+const verifySetGroupOwnership = async (
+  tx: TxClient,
+  ids: Set<string>,
+  planId: string,
+): Promise<void> => {
+  if (ids.size === 0) {
+    return;
+  }
+
+  const setGroups = await tx.setGroup.findMany({
+    where: { id: { in: [...ids] } },
+    select: {
+      id: true,
+      segment: {
+        select: {
+          block: {
+            select: {
+              session: { select: { day: { select: { week: { select: { planId: true } } } } } },
             },
           },
         },
       },
-    });
+    },
+  });
 
-    if (setGroups.length !== setGroupIds.size) {
-      throw new NotFoundError("Bulk-patch op references a missing set group");
-    }
-
-    for (const g of setGroups) {
-      if (g.segment.block.session.day.week.planId !== planId) {
-        throw new NotFoundError("Bulk-patch op references a set group from another plan", {
-          setGroupId: g.id,
-        });
-      }
-    }
+  if (setGroups.length !== ids.size) {
+    throw new NotFoundError("Bulk-patch op references a missing set group");
   }
 
-  if (entryIds.size > 0) {
-    const entries = await tx.exerciseEntry.findMany({
-      where: { id: { in: [...entryIds] } },
-      select: {
-        id: true,
-        setGroup: {
-          select: {
-            segment: {
-              select: {
-                block: {
-                  select: {
-                    session: {
-                      select: { day: { select: { week: { select: { planId: true } } } } },
-                    },
+  for (const g of setGroups) {
+    if (g.segment.block.session.day.week.planId !== planId) {
+      throw new NotFoundError("Bulk-patch op references a set group from another plan", {
+        setGroupId: g.id,
+      });
+    }
+  }
+};
+
+const verifyEntryOwnership = async (
+  tx: TxClient,
+  ids: Set<string>,
+  planId: string,
+): Promise<void> => {
+  if (ids.size === 0) {
+    return;
+  }
+
+  const entries = await tx.exerciseEntry.findMany({
+    where: { id: { in: [...ids] } },
+    select: {
+      id: true,
+      setGroup: {
+        select: {
+          segment: {
+            select: {
+              block: {
+                select: {
+                  session: {
+                    select: { day: { select: { week: { select: { planId: true } } } } },
                   },
                 },
               },
@@ -211,18 +238,35 @@ export const verifyOpsBelongToPlan = async (
           },
         },
       },
-    });
+    },
+  });
 
-    if (entries.length !== entryIds.size) {
-      throw new NotFoundError("Bulk-patch op references a missing entry");
-    }
+  if (entries.length !== ids.size) {
+    throw new NotFoundError("Bulk-patch op references a missing entry");
+  }
 
-    for (const e of entries) {
-      if (e.setGroup.segment.block.session.day.week.planId !== planId) {
-        throw new NotFoundError("Bulk-patch op references an entry from another plan", {
-          entryId: e.id,
-        });
-      }
+  for (const e of entries) {
+    if (e.setGroup.segment.block.session.day.week.planId !== planId) {
+      throw new NotFoundError("Bulk-patch op references an entry from another plan", {
+        entryId: e.id,
+      });
     }
   }
+};
+
+export const verifyOpsBelongToPlan = async (
+  tx: TxClient,
+  planId: string,
+  ops: BulkPatchOp[],
+): Promise<void> => {
+  const collected = collectOpIds(ops);
+
+  verifyPlanIdsMatch(collected.planIds, planId);
+  await verifyWeekOwnership(tx, collected.weekIds, planId);
+  await verifyDayOwnership(tx, collected.dayIds, planId);
+  await verifySessionOwnership(tx, collected.sessionIds, planId);
+  await verifyBlockOwnership(tx, collected.blockIds, planId);
+  await verifySegmentOwnership(tx, collected.segmentIds, planId);
+  await verifySetGroupOwnership(tx, collected.setGroupIds, planId);
+  await verifyEntryOwnership(tx, collected.entryIds, planId);
 };

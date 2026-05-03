@@ -2,7 +2,6 @@
 
 import { useCallback } from "react";
 
-import { DndContext, closestCenter, DragOverlay } from "@dnd-kit/core";
 import { Alert, Box, Stack, Typography } from "@mui/material";
 import { useSearchParams } from "next/navigation";
 
@@ -11,14 +10,13 @@ import { type GetPlanStructureResponse } from "@repo/contracts/lms/training-plan
 import { usePlanStructure } from "@app/lib/hooks";
 
 import { useEditingTarget } from "../../lib/editing-target";
-import { useHistoryKeybindings, usePlanHistory } from "../undo-redo";
 
-import { DayCard } from "./day-card";
 import { EffectivePlanDecorationProvider } from "./effective-plan-decoration-context";
+import { PlanCanvasEmptyState } from "./plan-canvas-empty-state";
 import { type PlanSelection, type PlanSelectionKind } from "./selection";
-import { usePlanCanvasDnd } from "./use-plan-canvas-dnd";
 import { usePlanCanvasSelection } from "./use-plan-canvas-selection";
 import { WeekNavigator } from "./week-navigator";
+import { WeekRow } from "./week-row";
 
 const DEFAULT_WINDOW = 5;
 
@@ -42,21 +40,12 @@ export type PlanCanvasSelectArgs = {
 
 const renderWeeks = (
   data: GetPlanStructureResponse,
+  planId: string,
   selection: PlanSelection | null,
   onSelect: (args: PlanCanvasSelectArgs) => void,
 ) =>
   data.plan.weeks.map((week) => (
-    <Stack key={week.id} spacing={1.5}>
-      <Typography variant="overline" color="text.secondary">
-        Week {week.index + 1}
-        {week.label ? ` — ${week.label}` : ""}
-      </Typography>
-      <Stack direction="row" spacing={1.5} flexWrap="wrap" useFlexGap>
-        {week.days.map((day) => (
-          <DayCard key={day.id} day={day} selection={selection} onSelect={onSelect} />
-        ))}
-      </Stack>
-    </Stack>
+    <WeekRow key={week.id} week={week} planId={planId} selection={selection} onSelect={onSelect} />
   ));
 
 export const PlanCanvas = ({ planId }: PlanCanvasProps) => {
@@ -81,11 +70,6 @@ export const PlanCanvas = ({ planId }: PlanCanvasProps) => {
     [toggleSelection],
   );
 
-  const history = usePlanHistory(planId);
-  const dnd = usePlanCanvasDnd(planId, data, history);
-
-  useHistoryKeybindings({ history });
-
   if (error) {
     return (
       <Alert severity="error" sx={{ m: 2 }}>
@@ -104,6 +88,10 @@ export const PlanCanvas = ({ planId }: PlanCanvasProps) => {
     );
   }
 
+  if (data.plan.weeks.length === 0) {
+    return <PlanCanvasEmptyState />;
+  }
+
   const { window: w } = data;
 
   const effectiveFrom = fromWeek ?? w.fromWeek;
@@ -118,30 +106,13 @@ export const PlanCanvas = ({ planId }: PlanCanvasProps) => {
       fromWeek={decorationFrom}
       toWeek={decorationTo}
     >
-      <DndContext
-        sensors={dnd.sensors}
-        collisionDetection={closestCenter}
-        onDragStart={dnd.onDragStart}
-        onDragEnd={dnd.onDragEnd}
-      >
-        <Stack sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
-          <WeekNavigator fromWeek={decorationFrom} toWeek={decorationTo} maxIndex={w.maxIndex} />
+      <Stack sx={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+        <WeekNavigator fromWeek={decorationFrom} toWeek={decorationTo} maxIndex={w.maxIndex} />
 
-          <Box
-            aria-live="polite"
-            aria-atomic="true"
-            sx={{ position: "absolute", left: -10000, top: "auto", width: 1, height: 1 }}
-          >
-            {dnd.announcement}
-          </Box>
-
-          <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
-            <Stack spacing={3}>{renderWeeks(data, selection, handleSelect)}</Stack>
-          </Box>
-        </Stack>
-
-        <DragOverlay />
-      </DndContext>
+        <Box sx={{ flex: 1, overflowY: "auto", p: 2 }}>
+          <Stack spacing={3}>{renderWeeks(data, planId, selection, handleSelect)}</Stack>
+        </Box>
+      </Stack>
     </EffectivePlanDecorationProvider>
   );
 };

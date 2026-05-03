@@ -8,4 +8,5 @@ export const lmsSessionSchema = z.object({
   order: z.number().int().nonnegative(),
   label: z.string().max(LMS_SESSION_CONSTANTS.MAX_LABEL_LENGTH).nullable(),
   notes: z.string().max(LMS_SESSION_CONSTANTS.MAX_NOTES_LENGTH).nullable(),
+  version: z.number().int().min(1),
 });

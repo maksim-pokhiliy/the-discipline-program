@@ -11,4 +11,5 @@ export const daySchema = z.object({
   dayOfWeek: dayOfWeekSchema,
   kind: dayKindSchema,
   notes: z.string().max(DAY_CONSTANTS.MAX_NOTES_LENGTH).nullable(),
+  version: z.number().int().min(1),
 });

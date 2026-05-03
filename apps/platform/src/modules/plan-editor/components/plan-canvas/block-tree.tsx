@@ -30,6 +30,7 @@ export const BlockTree = ({ block, selection, onSelect }: BlockTreeProps) => {
     id: `block:${block.id}`,
     data: { kind: "block", blockId: block.id },
   });
+
   const style: React.CSSProperties = {
     transform: CSS.Translate.toString(sortable.transform),
     transition: sortable.transition,
