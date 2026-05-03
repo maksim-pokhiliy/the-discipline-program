@@ -55,9 +55,6 @@ export const getAthleteDetail = async (
         where: { userId: athleteUserId },
         orderBy: { startedAt: "desc" },
         take: 5,
-        include: {
-          enrollment: { select: { plan: { select: { name: true } } } },
-        },
       }),
 
       prisma.workoutSession.findMany({
@@ -93,9 +90,9 @@ export const getAthleteDetail = async (
 
   const recentWorkouts = rawRecentWorkouts.map((s) => ({
     id: s.id,
-    title: s.enrollment?.plan.name ?? "Workout",
+    title: "Workout",
     date: s.startedAt,
-    planName: s.enrollment?.plan.name ?? "",
+    planName: "",
   }));
 
   const planned28 = adherenceSessions.length;

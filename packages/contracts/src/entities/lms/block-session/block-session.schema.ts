@@ -17,7 +17,6 @@ export const blockResultPrimarySchema = z.object({
 export const blockSessionSchema = z.object({
   id: z.string().cuid(),
   workoutSessionId: z.string().cuid(),
-  sourceBlockId: z.string().cuid().nullable(),
   order: z.number().int().nonnegative(),
   kindName: z.string().min(1).max(BLOCK_SESSION_CONSTANTS.MAX_KIND_NAME_LENGTH),
   weight: z

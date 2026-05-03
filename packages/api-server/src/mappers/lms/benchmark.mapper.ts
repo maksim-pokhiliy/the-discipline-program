@@ -7,7 +7,6 @@ import { BENCHMARK_SOURCE_MAP, PR_KIND_MAP } from "./enum-maps";
 export const mapToBenchmark = (b: PrismaBenchmark): Benchmark => ({
   id: b.id,
   userId: b.userId,
-  exerciseId: b.exerciseId,
   kind: PR_KIND_MAP[b.kind],
   value: b.value.toNumber(),
   unit: b.unit,

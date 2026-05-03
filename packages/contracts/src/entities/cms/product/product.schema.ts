@@ -19,7 +19,6 @@ export const productSchema = z.object({
   title: z.string().min(1).max(PRODUCT_CONSTANTS.MAX_TITLE_LENGTH),
   description: z.string().min(1),
   features: z.array(z.string()),
-  trainingPlanId: z.string().cuid().nullable(),
   isFeatured: z.boolean(),
   isActive: z.boolean(),
   prices: z.array(priceSchema),

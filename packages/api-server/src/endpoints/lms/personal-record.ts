@@ -25,7 +25,6 @@ export const lmsPersonalRecordApi = {
 
     const where: Prisma.PersonalRecordWhereInput = {
       ...(query.userId ? { userId: query.userId } : {}),
-      ...(query.exerciseId ? { exerciseId: query.exerciseId } : {}),
       ...(query.kind ? { kind: PR_KIND_TO_PRISMA_MAP[query.kind] } : {}),
     };
 

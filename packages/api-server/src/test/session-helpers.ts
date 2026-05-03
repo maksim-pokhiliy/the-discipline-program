@@ -7,21 +7,17 @@ import {
   type WorkoutSession,
 } from "@prisma/client";
 
-import { findOrThrow } from "../utils";
-
 const rawPrisma = new PrismaClient();
 
 export const createTestWorkoutSession = async (params: {
   userId: string;
-  enrollmentId?: string;
   overrides?: Partial<Prisma.WorkoutSessionUncheckedCreateInput>;
 }): Promise<WorkoutSession> => {
-  const { userId, enrollmentId, overrides = {} } = params;
+  const { userId, overrides = {} } = params;
 
   return rawPrisma.workoutSession.create({
     data: {
       userId,
-      ...(enrollmentId !== undefined && { enrollmentId }),
       status: "COMPLETED",
       completionRatio: 1.0,
       startedAt: new Date(),
@@ -54,32 +50,21 @@ export const createTestBlockSession = async (params: {
 
 export const createTestExerciseLog = async (params: {
   blockSessionId: string;
-  exerciseId: string;
+  exerciseSnapshot?: Prisma.InputJsonObject;
   overrides?: Partial<Prisma.ExerciseLogUncheckedCreateInput>;
 }): Promise<ExerciseLog> => {
-  const { blockSessionId, exerciseId, overrides = {} } = params;
-
-  const exercise = await findOrThrow(
-    rawPrisma.exerciseLibraryItem.findUnique({ where: { id: exerciseId } }),
-    "Exercise library item",
-  );
-
-  const exerciseSnapshot = {
-    id: exercise.id,
-    name: exercise.name,
-    primaryMovement: exercise.primaryMovement,
-    modality: exercise.modality,
-    primaryBodyParts: exercise.primaryBodyParts,
-    defaultMetrics: exercise.defaultMetrics,
-    demoVideoUrl: exercise.demoVideoUrl,
-    demoImageUrl: exercise.demoImageUrl,
-  } satisfies Prisma.InputJsonObject;
+  const { blockSessionId, exerciseSnapshot, overrides = {} } = params;
 
   return rawPrisma.exerciseLog.create({
     data: {
       blockSessionId,
-      exerciseId,
-      exerciseSnapshot,
+      exerciseSnapshot: exerciseSnapshot ?? {
+        name: "Test Exercise",
+        primaryMovement: "SQUAT",
+        modality: "BARBELL",
+        primaryBodyParts: ["QUADS"],
+        defaultMetrics: ["LOAD", "REPS"],
+      },
       order: 0,
       ...overrides,
     },

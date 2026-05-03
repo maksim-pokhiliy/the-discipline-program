@@ -5,7 +5,6 @@ import { type ReactNode } from "react";
 import EventNoteRounded from "@mui/icons-material/EventNoteRounded";
 import GroupRounded from "@mui/icons-material/GroupRounded";
 import HomeRounded from "@mui/icons-material/HomeRounded";
-import LibraryBooksRounded from "@mui/icons-material/LibraryBooksRounded";
 import PersonRounded from "@mui/icons-material/PersonRounded";
 import { BottomNavigation, BottomNavigationAction } from "@mui/material";
 import { usePathname } from "next/navigation";
@@ -16,7 +15,6 @@ import { EditSessionAwareLink } from "@repo/ui";
 const ICON_MAP: Record<PlatformIconName, ReactNode> = {
   home: <HomeRounded />,
   plans: <EventNoteRounded />,
-  library: <LibraryBooksRounded />,
   athletes: <GroupRounded />,
   profile: <PersonRounded />,
 };

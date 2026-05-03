@@ -8,7 +8,6 @@ import { blockResultPrimarySchema, blockSessionSchema } from "./block-session.sc
 
 export const createBlockSessionInputSchema = z.object({
   workoutSessionId: z.string().cuid(),
-  sourceBlockId: z.string().cuid().optional(),
   order: z.number().int().nonnegative(),
   kindName: z.string().min(1).max(BLOCK_SESSION_CONSTANTS.MAX_KIND_NAME_LENGTH),
   weight: z

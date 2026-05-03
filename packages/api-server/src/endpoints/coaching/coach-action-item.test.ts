@@ -1,4 +1,3 @@
-import { PlanEnrollmentStatus } from "@prisma/client";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
@@ -8,26 +7,18 @@ import {
   ActionItemStatus,
   ActionItemType,
 } from "@repo/contracts/coaching/coach-action-item";
-import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { NotFoundError } from "@repo/errors";
 
 import { inMemoryCache } from "../../infrastructure/cache";
-import {
-  cleanup,
-  cleanupRaw,
-  createTestCoach,
-  createTestPlan,
-  createTestUser,
-} from "../../test/helpers";
+import { cleanup, cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
 
 import { coachingCoachActionItemApi } from "./coach-action-item";
 import { daysAgo } from "./coach-action-item.test-helpers";
 
 describe("coachingCoachActionItemApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
-  let plan: Awaited<ReturnType<typeof createTestPlan>>;
 
-  let athleteNew: Awaited<ReturnType<typeof createTestUser>>;
+  let athleteMissed: Awaited<ReturnType<typeof createTestUser>>;
   let athleteHealth: Awaited<ReturnType<typeof createTestUser>>;
   let athleteResolve: Awaited<ReturnType<typeof createTestUser>>;
 
@@ -44,9 +35,7 @@ describe("coachingCoachActionItemApi", () => {
       data: { timezone: "UTC" },
     });
 
-    plan = await createTestPlan(coach.user.id, { status: TrainingPlanStatus.ACTIVE });
-
-    athleteNew = await createTestUser();
+    athleteMissed = await createTestUser();
     athleteHealth = await createTestUser();
     athleteResolve = await createTestUser();
 
@@ -56,21 +45,31 @@ describe("coachingCoachActionItemApi", () => {
 
     trackCleanup("athleteProfile", profile.id);
 
-    const athleteIds = [athleteNew.id, athleteHealth.id, athleteResolve.id];
-    const startAges = [1, 5, 1];
-
-    await cleanupRaw.planEnrollment.createMany({
-      data: athleteIds.map((userId, i) => ({
-        planId: plan.id,
-        userId,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: daysAgo(startAges[i] ?? 1),
-      })),
-    });
+    const athleteIds = [athleteMissed.id, athleteHealth.id, athleteResolve.id];
 
     await cleanupRaw.coachAthleteAssignment.createMany({
       data: athleteIds.map((athleteId) => ({ coachId: coach.profile.id, athleteId })),
+    });
+
+    await cleanupRaw.workoutSession.createMany({
+      data: [
+        {
+          userId: athleteMissed.id,
+          status: "COMPLETED",
+          startedAt: daysAgo(1),
+          completedAt: daysAgo(1),
+          completionRatio: 0.1,
+          durationSec: 600,
+        },
+        {
+          userId: athleteMissed.id,
+          status: "COMPLETED",
+          startedAt: daysAgo(3),
+          completedAt: daysAgo(3),
+          completionRatio: 0.2,
+          durationSec: 600,
+        },
+      ],
     });
   });
 
@@ -83,14 +82,15 @@ describe("coachingCoachActionItemApi", () => {
       .deleteMany({ where: { coachId: coach.profile.id } })
       .catch(() => {});
 
-    await cleanupRaw.planEnrollment.deleteMany({ where: { planId: plan.id } }).catch(() => {});
+    await cleanupRaw.workoutSession
+      .deleteMany({ where: { userId: { in: [athleteMissed.id, athleteHealth.id] } } })
+      .catch(() => {});
 
     await cleanup(
       ...toCleanup,
-      { table: "trainingPlan", id: plan.id },
       { table: "coachProfile", id: coach.profile.id },
       { table: "user", id: coach.user.id },
-      { table: "user", id: athleteNew.id },
+      { table: "user", id: athleteMissed.id },
       { table: "user", id: athleteHealth.id },
       { table: "user", id: athleteResolve.id },
     );
@@ -112,22 +112,22 @@ describe("coachingCoachActionItemApi", () => {
 
       const types = items.map((i) => i.type);
 
-      expect(types).toContain("NEW_NO_START");
+      expect(types).toContain(ActionItemType.MISSED_WORKOUTS);
       expect(types).toContain(ActionItemType.HEALTH_REPORT);
     });
 
-    it("creates NEW_NO_START for newly enrolled athlete with no logs", async () => {
+    it("creates MISSED_WORKOUTS for athlete with low completionRatio sessions", async () => {
       const items = await cleanupRaw.coachActionItem.findMany({
         where: {
           coachId: coach.profile.id,
-          athleteId: athleteNew.id,
-          type: "NEW_NO_START",
+          athleteId: athleteMissed.id,
+          type: ActionItemType.MISSED_WORKOUTS,
           status: ActionItemStatus.OPEN,
         },
       });
 
       expect(items).toHaveLength(1);
-      expect(items[0]?.severity).toBe(ActionItemSeverity.INFO);
+      expect(items[0]?.severity).toBe(ActionItemSeverity.WARNING);
     });
 
     it("creates HEALTH_REPORT for injured athlete", async () => {
@@ -225,10 +225,10 @@ describe("coachingCoachActionItemApi", () => {
         data: {
           coachId: coach.profile.id,
           athleteId: athleteResolve.id,
-          type: "NEW_NO_START",
-          severity: ActionItemSeverity.INFO,
+          type: ActionItemType.HEALTH_REPORT,
+          severity: ActionItemSeverity.WARNING,
           message: "Test resolve item",
-          metadata: { enrollmentId: "test-123" },
+          metadata: { healthStatus: HealthStatus.INJURED },
         },
       });
 
@@ -244,8 +244,8 @@ describe("coachingCoachActionItemApi", () => {
         data: {
           coachId: coach.profile.id,
           athleteId: athleteResolve.id,
-          type: "NEW_NO_START",
-          severity: ActionItemSeverity.INFO,
+          type: ActionItemType.HEALTH_REPORT,
+          severity: ActionItemSeverity.WARNING,
           status: ActionItemStatus.RESOLVED,
           message: "Already resolved",
           resolvedAt: new Date(),

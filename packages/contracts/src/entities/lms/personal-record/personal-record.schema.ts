@@ -14,7 +14,6 @@ export const personalRecordContextSchema = z.object({
 export const personalRecordSchema = z.object({
   id: z.string().cuid(),
   userId: z.string().cuid(),
-  exerciseId: z.string().cuid(),
   kind: prKindSchema,
   value: z.number(),
   unit: z.string().min(1).max(PERSONAL_RECORD_CONSTANTS.MAX_UNIT_LENGTH),

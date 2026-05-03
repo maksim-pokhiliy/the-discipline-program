@@ -8,7 +8,6 @@ import { BENCHMARK_CONSTANTS } from "./benchmark.constants";
 export const benchmarkSchema = z.object({
   id: z.string().cuid(),
   userId: z.string().cuid(),
-  exerciseId: z.string().cuid(),
   kind: prKindSchema,
   value: z.number(),
   unit: z.string().min(1).max(BENCHMARK_CONSTANTS.MAX_UNIT_LENGTH),

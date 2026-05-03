@@ -39,7 +39,6 @@ export const HEALTH_STATUS_TO_PRISMA_MAP: Record<HealthStatus, PrismaHealthStatu
 
 export const ACTION_ITEM_TYPE_MAP: Record<PrismaActionItemType, ActionItemType> = {
   MISSED_WORKOUTS: ActionItemType.MISSED_WORKOUTS,
-  NEW_NO_START: ActionItemType.MISSED_WORKOUTS,
   HEALTH_REPORT: ActionItemType.HEALTH_REPORT,
 };
 

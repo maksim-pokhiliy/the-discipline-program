@@ -8,7 +8,6 @@ import { benchmarkSchema } from "./benchmark.schema";
 
 export const createBenchmarkInputSchema = z.object({
   userId: z.string().cuid(),
-  exerciseId: z.string().cuid(),
   kind: prKindSchema,
   value: z.number().positive(),
   unit: z.string().min(1).max(BENCHMARK_CONSTANTS.MAX_UNIT_LENGTH),
@@ -27,7 +26,6 @@ export const benchmarkIdParamSchema = z.object({ benchmarkId: z.string().cuid() 
 
 export const listBenchmarksQuerySchema = z.object({
   userId: z.string().cuid().optional(),
-  exerciseId: z.string().cuid().optional(),
   kind: prKindSchema.optional(),
   take: z.coerce.number().int().min(1).max(500).optional(),
 });

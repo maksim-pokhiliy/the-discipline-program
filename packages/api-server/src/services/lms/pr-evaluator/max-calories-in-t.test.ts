@@ -21,7 +21,6 @@ const buildSetLog = (actual: unknown): PrismaSetLog => ({
 const buildExistingPr = (value: number): PrismaPersonalRecord => ({
   id: "pr-id",
   userId: "user-id",
-  exerciseId: "exercise-id",
   kind: "MAX_CALORIES_IN_T",
   value: new Prisma.Decimal(value),
   unit: "cal",

@@ -40,7 +40,7 @@ const buildPlanFilter = async (userId: string): Promise<Prisma.TrainingPlanWhere
 
   return {
     deletedAt: null,
-    OR: [{ creatorId: userId }, { coachAssignments: { some: { coachId: userId } } }],
+    creatorId: userId,
   };
 };
 

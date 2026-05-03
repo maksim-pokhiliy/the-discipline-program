@@ -25,7 +25,6 @@ export type BlockSessionWithExerciseLogs = BlockSession & {
 export const mapToBlockSession = (b: PrismaBlockSession): BlockSession => ({
   id: b.id,
   workoutSessionId: b.workoutSessionId,
-  sourceBlockId: b.sourceBlockId,
   order: b.order,
   kindName: b.kindName,
   weight: b.weight,

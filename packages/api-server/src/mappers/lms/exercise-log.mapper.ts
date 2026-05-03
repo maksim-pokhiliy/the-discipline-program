@@ -14,9 +14,7 @@ export type ExerciseLogWithSetLogs = ExerciseLog & { setLogs: SetLog[] };
 export const mapToExerciseLog = (e: PrismaExerciseLog): ExerciseLog => ({
   id: e.id,
   blockSessionId: e.blockSessionId,
-  sourceEntryId: e.sourceEntryId,
   order: e.order,
-  exerciseId: e.exerciseId,
   exerciseSnapshot: exerciseSnapshotSchema.parse(e.exerciseSnapshot),
   rxStatus: RX_STATUS_MAP[e.rxStatus],
   substituteExerciseId: e.substituteExerciseId,

@@ -32,7 +32,7 @@ const main = async (): Promise<void> => {
 
   await seedCoachNotes(prisma, coachProfile.id, users);
 
-  await seedTrainingPlans(prisma, users.coach.id, users);
+  await seedTrainingPlans(prisma, users.coach.id);
 
   await seedMarketingPages(prisma);
   await seedProducts(prisma);

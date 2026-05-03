@@ -1,4 +1,3 @@
-import { PlanEnrollmentStatus } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
@@ -9,7 +8,6 @@ import {
   cleanup,
   cleanupRaw,
   createTestCoach,
-  createTestEnrollment,
   createTestPlan,
   createTestScenario,
   createTestUser,
@@ -24,7 +22,6 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
   let coachB: Awaited<ReturnType<typeof createTestCoach>>;
   let planB: Awaited<ReturnType<typeof createTestPlan>>;
   let athleteForB: Awaited<ReturnType<typeof createTestUser>>;
-  let enrollmentBId: string;
   let unrelatedUser: Awaited<ReturnType<typeof createTestUser>>;
 
   beforeAll(async () => {
@@ -43,17 +40,6 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
     planB = await createTestPlan(coachB.user.id, { status: TrainingPlanStatus.ACTIVE });
 
     athleteForB = await createTestUser();
-    const enrollmentB = await cleanupRaw.planEnrollment.create({
-      data: {
-        planId: planB.id,
-        userId: athleteForB.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: new Date(),
-      },
-    });
-
-    enrollmentBId = enrollmentB.id;
 
     unrelatedUser = await createTestUser();
   });
@@ -61,7 +47,6 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
   afterAll(async () => {
     await cleanup(
       ...scenario.toCleanup,
-      { table: "planEnrollment", id: enrollmentBId },
       { table: "trainingPlan", id: planB.id },
       { table: "coachProfile", id: coachB.profile.id },
       { table: "user", id: coachB.user.id },
@@ -84,34 +69,12 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
 
     expect(detail.userId).toBe(firstAthlete.user.id);
     expect(detail.email).toBe(firstAthlete.user.email);
-    expect(detail.planDiscipline.length).toBeGreaterThanOrEqual(1);
+    expect(detail.planDiscipline).toEqual([]);
     expect(detail.consistency).toBeDefined();
     expect(typeof detail.consistency.adherenceRate4w).toBe("number");
     expect(typeof detail.consistency.currentStreak).toBe("number");
     expect(typeof detail.consistency.missedThisWeek).toBe("number");
     expect(detail.enrolledSince).toBeInstanceOf(Date);
-  });
-
-  it("includes plan discipline data for the athlete", async () => {
-    const firstAthlete = scenario.athletes[0];
-
-    if (!firstAthlete) {
-      throw new Error("Expected at least one athlete in scenario");
-    }
-
-    const detail = await coachingCoachAthletesApi.getAthleteDetail(
-      scenario.coach.user.id,
-      firstAthlete.user.id,
-    );
-
-    for (const plan of detail.planDiscipline) {
-      expect(plan.planId).toBeDefined();
-      expect(plan.planName).toBeDefined();
-      expect(plan.enrolledDate).toBeInstanceOf(Date);
-      expect(plan.completed).toBe(0);
-      expect(plan.available).toBe(0);
-      expect(plan.planned).toBe(0);
-    }
   });
 
   it("throws ForbiddenError when coach tries to view another coach's athlete", async () => {
@@ -147,15 +110,12 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
     const assignment = await cleanupRaw.coachAthleteAssignment.create({
       data: { coachId: scenario.coach.profile.id, athleteId: athleteUser.id },
     });
-    const plan = await createTestPlan(scenario.coach.user.id);
-    const enrollment = await createTestEnrollment(plan.id, athleteUser.id);
 
     const sessionIds: string[] = [];
 
     for (let i = 0; i < 3; i++) {
       const s = await createTestWorkoutSession({
         userId: athleteUser.id,
-        enrollmentId: enrollment.id,
         overrides: {
           startedAt: new Date(Date.now() - i * 86_400_000),
           completedAt: new Date(Date.now() - i * 86_400_000),
@@ -179,8 +139,6 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
         await cleanup({ table: "workoutSession", id });
       }
       await cleanup(
-        { table: "planEnrollment", id: enrollment.id },
-        { table: "trainingPlan", id: plan.id },
         { table: "coachAthleteAssignment", id: assignment.id },
         { table: "user", id: athleteUser.id },
       );
@@ -203,7 +161,7 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
     expect(detail.processStatus).toBeDefined();
   });
 
-  it("returns detail for an assigned athlete with zero active enrollments", async () => {
+  it("returns detail for an assigned athlete with empty plan discipline", async () => {
     const assignedOnlyUser = await createTestUser();
     const assignment = await cleanupRaw.coachAthleteAssignment.create({
       data: { coachId: scenario.coach.profile.id, athleteId: assignedOnlyUser.id },

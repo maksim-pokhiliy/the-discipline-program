@@ -7,7 +7,6 @@ import { personalRecordContextSchema, personalRecordSchema } from "./personal-re
 
 export const upsertPersonalRecordInputSchema = z.object({
   userId: z.string().cuid(),
-  exerciseId: z.string().cuid(),
   kind: prKindSchema,
   value: z.number().positive(),
   unit: z.string().min(1).max(PERSONAL_RECORD_CONSTANTS.MAX_UNIT_LENGTH),
@@ -22,7 +21,6 @@ export const personalRecordIdParamSchema = z.object({
 
 export const listPersonalRecordsQuerySchema = z.object({
   userId: z.string().cuid().optional(),
-  exerciseId: z.string().cuid().optional(),
   kind: prKindSchema.optional(),
   take: z.coerce.number().int().min(1).max(500).optional(),
 });

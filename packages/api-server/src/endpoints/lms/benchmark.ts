@@ -1,7 +1,6 @@
 import { type Prisma } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { type PrKind } from "@repo/contracts/lms/_domain";
 import {
   type CreateBenchmarkInput,
   type ListBenchmarksQuery,
@@ -45,7 +44,6 @@ export const lmsBenchmarkApi = {
 
     const where: Prisma.BenchmarkWhereInput = {
       ...(query.userId ? { userId: query.userId } : {}),
-      ...(query.exerciseId ? { exerciseId: query.exerciseId } : {}),
       ...(query.kind ? { kind: PR_KIND_TO_PRISMA_MAP[query.kind] } : {}),
     };
 
@@ -76,29 +74,6 @@ export const lmsBenchmarkApi = {
     return mapToBenchmark(record);
   },
 
-  getByExerciseAndKind: async (
-    userId: string,
-    targetUserId: string,
-    exerciseId: string,
-    kind: PrKind,
-  ) => {
-    const role = await requireCoachLikeRole(userId);
-
-    ensureCanReadOrWriteForUser(role, userId, targetUserId);
-
-    const record = await prisma.benchmark.findUnique({
-      where: {
-        userId_exerciseId_kind: {
-          userId: targetUserId,
-          exerciseId,
-          kind: PR_KIND_TO_PRISMA_MAP[kind],
-        },
-      },
-    });
-
-    return record ? mapToBenchmark(record) : null;
-  },
-
   create: async (userId: string, data: CreateBenchmarkInput) => {
     const role = await requireCoachLikeRole(userId);
 
@@ -108,52 +83,11 @@ export const lmsBenchmarkApi = {
       const record = await prisma.benchmark.create({
         data: {
           userId: data.userId,
-          exerciseId: data.exerciseId,
           kind: PR_KIND_TO_PRISMA_MAP[data.kind],
           value: data.value,
           unit: data.unit,
           source: BENCHMARK_SOURCE_TO_PRISMA_MAP[data.source],
           setBy: userId,
-          notes: data.notes ?? null,
-        },
-      });
-
-      return mapToBenchmark(record);
-    } catch (error) {
-      return handlePrismaError(error, { entity: "Benchmark" });
-    }
-  },
-
-  upsert: async (userId: string, data: CreateBenchmarkInput) => {
-    const role = await requireCoachLikeRole(userId);
-
-    ensureCanReadOrWriteForUser(role, userId, data.userId);
-
-    try {
-      const record = await prisma.benchmark.upsert({
-        where: {
-          userId_exerciseId_kind: {
-            userId: data.userId,
-            exerciseId: data.exerciseId,
-            kind: PR_KIND_TO_PRISMA_MAP[data.kind],
-          },
-        },
-        create: {
-          userId: data.userId,
-          exerciseId: data.exerciseId,
-          kind: PR_KIND_TO_PRISMA_MAP[data.kind],
-          value: data.value,
-          unit: data.unit,
-          source: BENCHMARK_SOURCE_TO_PRISMA_MAP[data.source],
-          setBy: userId,
-          notes: data.notes ?? null,
-        },
-        update: {
-          value: data.value,
-          unit: data.unit,
-          source: BENCHMARK_SOURCE_TO_PRISMA_MAP[data.source],
-          setBy: userId,
-          setAt: new Date(),
           notes: data.notes ?? null,
         },
       });

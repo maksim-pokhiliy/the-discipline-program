@@ -7,8 +7,6 @@ import { workoutSessionSchema } from "./workout-session.schema";
 
 export const createWorkoutSessionInputSchema = z.object({
   userId: z.string().cuid(),
-  enrollmentId: z.string().cuid().optional(),
-  sourceDayId: z.string().cuid().optional(),
   scheduledFor: z.date().optional(),
   startedAt: z.date(),
   status: workoutSessionStatusSchema.default("IN_PROGRESS"),
@@ -36,7 +34,6 @@ export const workoutSessionIdParamSchema = z.object({
 
 export const listWorkoutSessionsQuerySchema = z.object({
   userId: z.string().cuid().optional(),
-  enrollmentId: z.string().cuid().optional(),
   status: workoutSessionStatusSchema.optional(),
   fromDate: z.date().optional(),
   toDate: z.date().optional(),

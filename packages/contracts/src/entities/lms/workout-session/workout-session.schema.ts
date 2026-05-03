@@ -7,8 +7,6 @@ import { WORKOUT_SESSION_CONSTANTS } from "./workout-session.constants";
 export const workoutSessionSchema = z.object({
   id: z.string().cuid(),
   userId: z.string().cuid(),
-  enrollmentId: z.string().cuid().nullable(),
-  sourceDayId: z.string().cuid().nullable(),
   scheduledFor: z.date().nullable(),
   startedAt: z.date(),
   completedAt: z.date().nullable(),

@@ -125,26 +125,23 @@ export const upsertPersonalRecord = async (
   db: PrismaClient | Prisma.TransactionClient,
   args: {
     userId: string;
-    exerciseId: string;
     prKind: PrKind;
     setLogId: string;
     achievedAt: Date;
     output: DispatchOutput;
   },
 ): Promise<PrismaPersonalRecord> => {
-  const { userId, exerciseId, prKind, setLogId, achievedAt, output } = args;
-  const where = { userId_exerciseId_kind: { userId, exerciseId, kind: prKind } };
-  const data = {
-    value: output.value,
-    unit: output.unit,
-    context: output.context,
-    achievedAt,
-    sourceSetLogId: setLogId,
-  };
+  const { userId, prKind, setLogId, achievedAt, output } = args;
 
-  return db.personalRecord.upsert({
-    where,
-    create: { userId, exerciseId, kind: prKind, ...data },
-    update: data,
+  return db.personalRecord.create({
+    data: {
+      userId,
+      kind: prKind,
+      value: output.value,
+      unit: output.unit,
+      context: output.context,
+      achievedAt,
+      sourceSetLogId: setLogId,
+    },
   });
 };
