@@ -139,9 +139,12 @@ export const useHistoryKeybindings = (options: UseHistoryKeybindingsOptions): vo
 
     const handler = (event: KeyboardEvent) => {
       const isMeta = event.metaKey || event.ctrlKey;
-      const key = event.key.toLowerCase();
 
-      if (!isMeta || key !== "z") {
+      if (!isMeta || typeof event.key !== "string") {
+        return;
+      }
+
+      if (event.key.toLowerCase() !== "z") {
         return;
       }
 
