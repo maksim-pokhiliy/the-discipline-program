@@ -4,7 +4,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
-  type BulkPatchOp,
   type BulkPatchPlanInput,
   type BulkPatchPlanResponse,
   type GetPlanStructureResponse,
@@ -18,21 +17,6 @@ import { api } from "../api";
 import { platformKeys } from "../api/keys";
 
 type StructureMutator = (current: GetPlanStructureResponse) => GetPlanStructureResponse;
-
-const STRUCTURAL_OP_KINDS: ReadonlySet<BulkPatchOp["kind"]> = new Set([
-  "create-week",
-  "update-week",
-  "delete-week",
-  "create-day",
-  "update-day",
-  "delete-day",
-  "create-session",
-  "update-session",
-  "delete-session",
-]);
-
-const opsRequireStructureRefetch = (ops: BulkPatchOp[]): boolean =>
-  ops.some((op) => STRUCTURAL_OP_KINDS.has(op.kind));
 
 const applyUpdatedToCache = (
   current: GetPlanStructureResponse,
@@ -134,7 +118,7 @@ export const usePlanBulkPatch = (planId: string) => {
         },
       };
     },
-    onSuccess: (result, variables, context) => {
+    onSuccess: (result, _variables, context) => {
       if (result.conflicts && result.conflicts.length > 0) {
         context?.rollback?.();
         void queryClient.invalidateQueries({
@@ -160,11 +144,9 @@ export const usePlanBulkPatch = (planId: string) => {
         );
       });
 
-      if (opsRequireStructureRefetch(variables.ops)) {
-        void queryClient.invalidateQueries({
-          queryKey: platformKeys.trainingPlans.structureByPlan(planId),
-        });
-      }
+      void queryClient.invalidateQueries({
+        queryKey: platformKeys.trainingPlans.structureByPlan(planId),
+      });
     },
     onError: (error, _vars, context) => {
       context?.rollback?.();
