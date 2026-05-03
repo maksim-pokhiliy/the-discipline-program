@@ -5,29 +5,7 @@ const ROOT = ["platform"] as const;
 export const platformKeys = {
   root: ROOT,
 
-  trainingPlans: {
-    ...createEntityKeys(ROOT, "training-plans"),
-    structure: (planId: string, fromWeek: number | undefined, toWeek: number | undefined) =>
-      [...ROOT, "training-plans", "structure", planId, fromWeek ?? null, toWeek ?? null] as const,
-    structureByPlan: (planId: string) => [...ROOT, "training-plans", "structure", planId] as const,
-    coaches: (planId: string) => [...ROOT, "training-plans", "coaches", planId] as const,
-  },
-  planEnrollments: {
-    ...createEntityKeys(ROOT, "plan-enrollments"),
-    byPlan: (planId: string) => [...ROOT, "plan-enrollments", "plan", planId] as const,
-  },
-  planOverrides: {
-    byEnrollment: (enrollmentId: string) =>
-      [...ROOT, "plan-overrides", "enrollment", enrollmentId] as const,
-    byId: (overrideId: string) => [...ROOT, "plan-overrides", "id", overrideId] as const,
-    effectivePlan: (enrollmentId: string, weekIndex: number) =>
-      [...ROOT, "plan-overrides", "effective-plan", enrollmentId, weekIndex] as const,
-    effectivePlanByEnrollment: (enrollmentId: string) =>
-      [...ROOT, "plan-overrides", "effective-plan", enrollmentId] as const,
-  },
-  platformCoaches: {
-    all: () => [...ROOT, "platform-coaches"] as const,
-  },
+  trainingPlans: createEntityKeys(ROOT, "training-plans"),
   users: {
     search: (query: string) => [...ROOT, "users", "search", query] as const,
   },
@@ -37,31 +15,5 @@ export const platformKeys = {
   },
   coachActionItems: {
     all: () => [...ROOT, "coach-action-items"] as const,
-  },
-  library: {
-    exercises: {
-      ...createEntityKeys(ROOT, "library-exercises"),
-      bySearch: (query: string) => [...ROOT, "library-exercises", "search", query] as const,
-    },
-    blockKinds: {
-      ...createEntityKeys(ROOT, "library-block-kinds"),
-      bySearch: (query: string) => [...ROOT, "library-block-kinds", "search", query] as const,
-    },
-    schemeTemplates: {
-      ...createEntityKeys(ROOT, "library-scheme-templates"),
-      bySearch: (query: string) => [...ROOT, "library-scheme-templates", "search", query] as const,
-    },
-    blockTemplates: {
-      ...createEntityKeys(ROOT, "library-block-templates"),
-      bySearch: (query: string) => [...ROOT, "library-block-templates", "search", query] as const,
-    },
-    sessionTemplates: {
-      ...createEntityKeys(ROOT, "library-session-templates"),
-      bySearch: (query: string) => [...ROOT, "library-session-templates", "search", query] as const,
-    },
-    weekTemplates: {
-      ...createEntityKeys(ROOT, "library-week-templates"),
-      bySearch: (query: string) => [...ROOT, "library-week-templates", "search", query] as const,
-    },
   },
 } as const;
