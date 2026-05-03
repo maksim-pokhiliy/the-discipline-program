@@ -89,7 +89,7 @@ export const PlanCanvas = ({ planId }: PlanCanvasProps) => {
   }
 
   if (data.plan.weeks.length === 0) {
-    return <PlanCanvasEmptyState planId={planId} />;
+    return <PlanCanvasEmptyState />;
   }
 
   const { window: w } = data;

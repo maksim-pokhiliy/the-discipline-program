@@ -26,6 +26,7 @@ import {
   parsePlanSelection,
   parseSinglePlanSelection,
 } from "../plan-canvas/selection";
+import { usePlanDialogs } from "../plan-dialogs-context";
 import { SaveTemplateDialog } from "../save-template-dialog";
 
 import { usePaletteCommand } from "./command-palette.context";
@@ -111,6 +112,7 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
   );
 
   const bulkActions = useBulkActionContext();
+  const planDialogs = usePlanDialogs();
 
   const selectedBlock = useMemo<PlanStructureBlock | null>(() => {
     if (selection?.kind === "block") {
@@ -207,7 +209,10 @@ export const PlanCommandRegistry = ({ planId }: PlanCommandRegistryProps) => {
     };
   }, [triggerSaveTemplate]);
 
-  const createCommand = useMemo(() => createCreateWeekCommand(planId), [planId]);
+  const createCommand = useMemo(
+    () => createCreateWeekCommand({ onTrigger: planDialogs.openAddWeek }),
+    [planDialogs.openAddWeek],
+  );
   const duplicateCommand = useMemo(
     () => createDuplicateWeekCommand({ planId, currentWeekIndex }),
     [currentWeekIndex, planId],

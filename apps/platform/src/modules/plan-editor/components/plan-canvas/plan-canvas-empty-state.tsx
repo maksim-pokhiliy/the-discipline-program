@@ -5,16 +5,12 @@ import AddIcon from "@mui/icons-material/Add";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import { Box, Button, Stack, Typography } from "@mui/material";
 
-import { AddWeekDialog } from "./add-week-dialog";
-import { useAddWeekDialog } from "./use-add-week-dialog";
+import { usePlanDialogs } from "../plan-dialogs-context";
+
 import { useTouchTargetSx } from "./use-touch-target-sx";
 
-export type PlanCanvasEmptyStateProps = {
-  planId: string;
-};
-
-export const PlanCanvasEmptyState = ({ planId }: PlanCanvasEmptyStateProps) => {
-  const dialog = useAddWeekDialog();
+export const PlanCanvasEmptyState = () => {
+  const planDialogs = usePlanDialogs();
   const touchTargetSx = useTouchTargetSx();
   const droppable = useDroppable({ id: "week:new", data: { kind: "week-new" } });
 
@@ -42,18 +38,12 @@ export const PlanCanvasEmptyState = ({ planId }: PlanCanvasEmptyStateProps) => {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={dialog.open}
+          onClick={planDialogs.openAddWeek}
           sx={touchTargetSx}
         >
           Add week
         </Button>
       </Stack>
-      <AddWeekDialog
-        isOpen={dialog.isOpen}
-        onClose={dialog.close}
-        planId={planId}
-        defaultIndex={0}
-      />
     </Box>
   );
 };

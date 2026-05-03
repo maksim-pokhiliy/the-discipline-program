@@ -31,7 +31,8 @@ export const createDuplicateWeekCommand = (
       }
 
       toast.message("Duplicate week", {
-        description: "Backend endpoint for week duplication lands in M2.",
+        description:
+          "Use 'Save week as template' followed by 'Apply week template' to duplicate a week.",
       });
     },
   };
