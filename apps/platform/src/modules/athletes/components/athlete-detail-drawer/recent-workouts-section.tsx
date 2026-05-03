@@ -24,7 +24,9 @@ export const RecentWorkoutsSection: React.FC<RecentWorkoutsSectionProps> = ({ wo
               {workout.title}
             </Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              {formatDate(workout.date, "weekday")} · {workout.planName}
+              {workout.planName
+                ? `${formatDate(workout.date, "weekday")} · ${workout.planName}`
+                : formatDate(workout.date, "weekday")}
             </Typography>
           </Stack>
         </Stack>

@@ -89,7 +89,7 @@ describe("closeOrphanedOpenItems (perf-004)", () => {
     }>;
 
     const cleared = calls.find((c) => c.data.resolveReason === "AUTO_CONDITION_CLEARED");
-    const ended = calls.find((c) => c.data.resolveReason === "AUTO_ENROLLMENT_ENDED");
+    const ended = calls.find((c) => c.data.resolveReason === "AUTO_ASSIGNMENT_ENDED");
 
     expect(cleared?.where.id.in).toEqual(["open-1"]);
     expect(ended?.where.id.in).toEqual(expect.arrayContaining(["open-2", "open-3"]));

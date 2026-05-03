@@ -4,8 +4,8 @@ import { useRef, useState } from "react";
 
 import ArchiveIcon from "@mui/icons-material/Archive";
 import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import RestoreIcon from "@mui/icons-material/Restore";
 import { IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
@@ -65,7 +65,7 @@ export const PlanActionMenu: React.FC<PlanActionMenuProps> = ({
       <Menu anchorEl={anchorRef.current} open={menuOpen} onClose={close}>
         <MenuItem component={Link} href={`/coach/plans/${planId}`} onClick={close}>
           <ListItemIcon>
-            <EditIcon fontSize="small" />
+            <OpenInNewIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Open</ListItemText>
         </MenuItem>
@@ -141,7 +141,7 @@ export const PlanActionMenu: React.FC<PlanActionMenuProps> = ({
         title="Delete Training Plan"
         type="danger"
         message={`Are you sure you want to delete "${planName}"?`}
-        details="This action cannot be undone. All workouts, blocks, and prescribed sets in this plan will be permanently removed."
+        details="This action cannot be undone."
         isConfirming={isPending}
         onConfirm={() =>
           onDelete().then(

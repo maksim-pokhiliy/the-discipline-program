@@ -6,7 +6,6 @@
   "exports": {
     "./cms": "./src/endpoints/cms/index.ts",
     "./lms": "./src/endpoints/lms/index.ts",
-    "./lms/pr-evaluator": "./src/services/lms/pr-evaluator/index.ts",
     "./retention": "./src/services/retention/index.ts",
     "./coaching": "./src/endpoints/coaching/index.ts",
     "./iam": "./src/endpoints/iam/index.ts",

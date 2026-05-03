@@ -182,7 +182,7 @@ const groupOrphanIdsByReason = (
 
     const reason = activeAthleteIds.has(athleteId)
       ? ActionItemResolveReason.AUTO_CONDITION_CLEARED
-      : ActionItemResolveReason.AUTO_ENROLLMENT_ENDED;
+      : ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED;
 
     const bucket = idsByReason.get(reason);
 

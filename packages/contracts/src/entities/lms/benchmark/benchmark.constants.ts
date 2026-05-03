@@ -1,4 +1,0 @@
-export const BENCHMARK_CONSTANTS = {
-  MAX_UNIT_LENGTH: 16,
-  MAX_NOTES_LENGTH: 500,
-} as const;

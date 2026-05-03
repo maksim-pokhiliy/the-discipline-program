@@ -71,7 +71,7 @@ describe("iamUserAdminApi.updateRole — role-exit action-item cleanup", () => {
       });
 
       expect(reloadedCoachItem?.status).toBe(ActionItemStatus.RESOLVED);
-      expect(reloadedCoachItem?.resolveReason).toBe(ActionItemResolveReason.AUTO_ENROLLMENT_ENDED);
+      expect(reloadedCoachItem?.resolveReason).toBe(ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED);
       expect(reloadedCoachItem?.resolvedAt).toBeInstanceOf(Date);
 
       expect(reloadedOtherItem?.status).toBe(ActionItemStatus.OPEN);
@@ -158,9 +158,9 @@ describe("iamUserAdminApi.updateRole — role-exit action-item cleanup", () => {
       });
 
       expect(reloadedOne?.status).toBe(ActionItemStatus.RESOLVED);
-      expect(reloadedOne?.resolveReason).toBe(ActionItemResolveReason.AUTO_ENROLLMENT_ENDED);
+      expect(reloadedOne?.resolveReason).toBe(ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED);
       expect(reloadedTwo?.status).toBe(ActionItemStatus.RESOLVED);
-      expect(reloadedTwo?.resolveReason).toBe(ActionItemResolveReason.AUTO_ENROLLMENT_ENDED);
+      expect(reloadedTwo?.resolveReason).toBe(ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED);
 
       const assignmentCount = await cleanupRaw.coachAthleteAssignment.count({
         where: { athleteId: athleteTarget.id },

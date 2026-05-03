@@ -1,5 +1,4 @@
 import {
-  BenchmarkSource as PrismaBenchmarkSource,
   RxStatus as PrismaRxStatus,
   SchemeArchetypeKind as PrismaSchemeArchetypeKind,
   TrainingPlanStatus as PrismaTrainingPlanStatus,
@@ -7,7 +6,6 @@ import {
 } from "@prisma/client";
 
 import {
-  type BenchmarkSource,
   type RxStatus,
   type SchemeArchetypeKind,
   type WorkoutSessionStatus,
@@ -80,14 +78,4 @@ export const RX_STATUS_TO_PRISMA_MAP: Record<RxStatus, PrismaRxStatus> = {
   SCALED: PrismaRxStatus.SCALED,
   SUBSTITUTED: PrismaRxStatus.SUBSTITUTED,
   MODIFIED: PrismaRxStatus.MODIFIED,
-};
-
-export const BENCHMARK_SOURCE_MAP: Record<PrismaBenchmarkSource, BenchmarkSource> = {
-  MANUAL: "MANUAL",
-  DERIVED_FROM_LOG: "DERIVED_FROM_LOG",
-};
-
-export const BENCHMARK_SOURCE_TO_PRISMA_MAP: Record<BenchmarkSource, PrismaBenchmarkSource> = {
-  MANUAL: PrismaBenchmarkSource.MANUAL,
-  DERIVED_FROM_LOG: PrismaBenchmarkSource.DERIVED_FROM_LOG,
 };

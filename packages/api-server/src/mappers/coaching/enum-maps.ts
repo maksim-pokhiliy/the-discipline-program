@@ -77,7 +77,7 @@ export const ACTION_ITEM_RESOLVE_REASON_MAP: Record<
   ActionItemResolveReason
 > = {
   AUTO_CONDITION_CLEARED: ActionItemResolveReason.AUTO_CONDITION_CLEARED,
-  AUTO_ENROLLMENT_ENDED: ActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
+  AUTO_ASSIGNMENT_ENDED: ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED,
   MANUAL_CONTACTED: ActionItemResolveReason.MANUAL_CONTACTED,
 };
 
@@ -87,7 +87,7 @@ export const ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP: Record<
 > = {
   [ActionItemResolveReason.AUTO_CONDITION_CLEARED]:
     PrismaActionItemResolveReason.AUTO_CONDITION_CLEARED,
-  [ActionItemResolveReason.AUTO_ENROLLMENT_ENDED]:
-    PrismaActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
+  [ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED]:
+    PrismaActionItemResolveReason.AUTO_ASSIGNMENT_ENDED,
   [ActionItemResolveReason.MANUAL_CONTACTED]: PrismaActionItemResolveReason.MANUAL_CONTACTED,
 };

@@ -1,6 +1,6 @@
-import { MovementPattern as PrismaMovementPattern, PrKind as PrismaPrKind } from "@prisma/client";
+import { MovementPattern as PrismaMovementPattern } from "@prisma/client";
 
-import { type MovementPattern, type PrKind } from "@repo/contracts/lms/_domain";
+import { type MovementPattern } from "@repo/contracts/lms/_domain";
 
 export const MOVEMENT_PATTERN_MAP: Record<PrismaMovementPattern, MovementPattern> = {
   SQUAT: "SQUAT",
@@ -46,26 +46,4 @@ export const MOVEMENT_PATTERN_TO_PRISMA_MAP: Record<MovementPattern, PrismaMovem
   GYMNASTIC_INVERTED: PrismaMovementPattern.GYMNASTIC_INVERTED,
   EXPLOSIVE: PrismaMovementPattern.EXPLOSIVE,
   COMBO: PrismaMovementPattern.COMBO,
-};
-
-export const PR_KIND_MAP: Record<PrismaPrKind, PrKind> = {
-  ONE_REP_MAX: "ONE_REP_MAX",
-  N_REP_MAX: "N_REP_MAX",
-  MAX_REPS_UNBROKEN: "MAX_REPS_UNBROKEN",
-  MAX_REPS_TOTAL: "MAX_REPS_TOTAL",
-  BEST_TIME_FOR_X: "BEST_TIME_FOR_X",
-  MAX_DISTANCE_IN_T: "MAX_DISTANCE_IN_T",
-  MAX_CALORIES_IN_T: "MAX_CALORIES_IN_T",
-  MAX_LOAD_FOR_REPS: "MAX_LOAD_FOR_REPS",
-};
-
-export const PR_KIND_TO_PRISMA_MAP: Record<PrKind, PrismaPrKind> = {
-  ONE_REP_MAX: PrismaPrKind.ONE_REP_MAX,
-  N_REP_MAX: PrismaPrKind.N_REP_MAX,
-  MAX_REPS_UNBROKEN: PrismaPrKind.MAX_REPS_UNBROKEN,
-  MAX_REPS_TOTAL: PrismaPrKind.MAX_REPS_TOTAL,
-  BEST_TIME_FOR_X: PrismaPrKind.BEST_TIME_FOR_X,
-  MAX_DISTANCE_IN_T: PrismaPrKind.MAX_DISTANCE_IN_T,
-  MAX_CALORIES_IN_T: PrismaPrKind.MAX_CALORIES_IN_T,
-  MAX_LOAD_FOR_REPS: PrismaPrKind.MAX_LOAD_FOR_REPS,
 };

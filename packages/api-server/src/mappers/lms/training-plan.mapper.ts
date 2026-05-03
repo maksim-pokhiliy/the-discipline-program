@@ -10,8 +10,6 @@ export const mapToTrainingPlan = (p: PrismaTrainingPlan): TrainingPlan => ({
   name: p.name,
   description: p.description,
   status: TRAINING_PLAN_STATUS_MAP[p.status],
-  licensable: p.licensable,
-  originalPlanId: p.originalPlanId,
   createdAt: p.createdAt,
   updatedAt: p.updatedAt,
 });
