@@ -75,6 +75,10 @@ export const resolveTemplateDropTarget = (
   }
 
   if (active.kind === "template-week" && overPrefix === "week") {
+    if (overId === "new") {
+      return { kind: "week", index: data.plan.weeks.length };
+    }
+
     const idx = Number.parseInt(overId, 10);
 
     if (Number.isNaN(idx)) {

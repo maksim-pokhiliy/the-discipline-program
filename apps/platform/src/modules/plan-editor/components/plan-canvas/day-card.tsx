@@ -1,5 +1,6 @@
 "use client";
 
+import { useDroppable } from "@dnd-kit/core";
 import DeleteIcon from "@mui/icons-material/Delete";
 import {
   Card,
@@ -15,13 +16,15 @@ import { type PlanStructureDay } from "@repo/contracts/lms/training-plan";
 
 import { usePlanBulkPatch } from "@app/lib/hooks";
 
+import { usePlanHistoryContext } from "../undo-redo";
+
 import { AddSessionCta } from "./add-session-cta";
 import { countDayEntities, isContainerEmpty } from "./count-nested-entities";
 import { DecorationBadge } from "./decoration-badge";
 import { DeleteEntityDialog } from "./delete-entity-dialog";
 import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-context";
 import { getDecorationStyles } from "./get-decoration-styles";
-import { buildDeleteDay, buildOptimisticDeleteDay } from "./op-builders";
+import { buildCreateDay, buildDeleteDay, buildOptimisticDeleteDay } from "./op-builders";
 import { type PlanCanvasSelectArgs } from "./plan-canvas";
 import { RowActionMenu } from "./row-action-menu";
 import { type PlanSelection } from "./selection";
@@ -51,17 +54,40 @@ export const DayCard = ({ day, planId, selection, onSelect }: DayCardProps) => {
   const decorationStyles = getDecorationStyles(decoration);
   const touchTargetSx = useTouchTargetSx();
   const bulkPatch = usePlanBulkPatch(planId);
+  const history = usePlanHistoryContext();
   const dialog = useDeleteEntityDialog();
   const counts = countDayEntities(day);
   const dayLabel = DAY_LABEL[day.dayOfWeek];
+  const droppable = useDroppable({
+    id: `day:${day.id}`,
+    data: { kind: "day", dayId: day.id },
+  });
 
   const handleConfirm = async () => {
+    const isEmpty = isContainerEmpty(counts);
     const op = buildDeleteDay({ dayId: day.id, expectedVersion: day.version });
-    const optimisticPatch = isContainerEmpty(counts) ? buildOptimisticDeleteDay(day.id) : undefined;
+    const optimisticPatch = isEmpty ? buildOptimisticDeleteDay(day.id) : undefined;
+    const inverseOp = isEmpty
+      ? buildCreateDay({
+          weekId: day.weekId,
+          dayOfWeek: day.dayOfWeek,
+          kind: day.kind,
+          ...(day.notes !== null ? { notes: day.notes } : {}),
+        })
+      : null;
 
     try {
       await bulkPatch.mutateAsync({ ops: [op], ...(optimisticPatch ? { optimisticPatch } : {}) });
       dialog.close();
+
+      if (inverseOp && history) {
+        history.push({
+          id: `delete-day-${day.id}-${Date.now().toString()}`,
+          forward: [op],
+          inverse: [inverseOp],
+          label: "Delete day",
+        });
+      }
     } catch {
       return;
     }
@@ -69,9 +95,15 @@ export const DayCard = ({ day, planId, selection, onSelect }: DayCardProps) => {
 
   return (
     <Card
+      ref={droppable.setNodeRef}
       variant="outlined"
       sx={[
-        { minWidth: 260, flex: "1 1 260px" },
+        {
+          minWidth: 260,
+          flex: "1 1 260px",
+          bgcolor: droppable.isOver ? "action.hover" : undefined,
+          transition: "background-color 0.15s",
+        },
         ...(Array.isArray(decorationStyles.sx) ? decorationStyles.sx : [decorationStyles.sx]),
       ]}
     >

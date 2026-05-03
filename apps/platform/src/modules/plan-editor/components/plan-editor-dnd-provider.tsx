@@ -9,7 +9,7 @@ import { useSearchParams } from "next/navigation";
 import { usePlanStructure } from "@app/lib/hooks";
 
 import { usePlanCanvasDnd } from "./plan-canvas/use-plan-canvas-dnd";
-import { useHistoryKeybindings, usePlanHistory } from "./undo-redo";
+import { PlanHistoryProvider, useHistoryKeybindings, usePlanHistory } from "./undo-redo";
 
 type PlanEditorDndProviderProps = {
   planId: string;
@@ -31,23 +31,25 @@ export const PlanEditorDndProvider = ({ planId, children }: PlanEditorDndProvide
   useHistoryKeybindings({ history });
 
   return (
-    <DndContext
-      sensors={dnd.sensors}
-      collisionDetection={closestCenter}
-      onDragStart={dnd.onDragStart}
-      onDragEnd={dnd.onDragEnd}
-    >
-      {children}
-
-      <Box
-        aria-live="polite"
-        aria-atomic="true"
-        sx={{ position: "absolute", left: -10000, top: "auto", width: 1, height: 1 }}
+    <PlanHistoryProvider history={history}>
+      <DndContext
+        sensors={dnd.sensors}
+        collisionDetection={closestCenter}
+        onDragStart={dnd.onDragStart}
+        onDragEnd={dnd.onDragEnd}
       >
-        {dnd.announcement}
-      </Box>
+        {children}
 
-      <DragOverlay />
-    </DndContext>
+        <Box
+          aria-live="polite"
+          aria-atomic="true"
+          sx={{ position: "absolute", left: -10000, top: "auto", width: 1, height: 1 }}
+        >
+          {dnd.announcement}
+        </Box>
+
+        <DragOverlay />
+      </DndContext>
+    </PlanHistoryProvider>
   );
 };

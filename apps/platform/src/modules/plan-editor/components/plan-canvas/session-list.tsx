@@ -9,13 +9,19 @@ import { type PlanStructureSession } from "@repo/contracts/lms/training-plan";
 
 import { usePlanBulkPatch } from "@app/lib/hooks";
 
+import { usePlanHistoryContext } from "../undo-redo";
+
 import { BlockTree } from "./block-tree";
 import { countSessionEntities, isContainerEmpty } from "./count-nested-entities";
 import { DecorationBadge } from "./decoration-badge";
 import { DeleteEntityDialog } from "./delete-entity-dialog";
 import { useEffectivePlanDecorationContext } from "./effective-plan-decoration-context";
 import { getDecorationStyles } from "./get-decoration-styles";
-import { buildDeleteSession, buildOptimisticDeleteSession } from "./op-builders";
+import {
+  buildCreateSession,
+  buildDeleteSession,
+  buildOptimisticDeleteSession,
+} from "./op-builders";
 import { type PlanCanvasSelectArgs } from "./plan-canvas";
 import { RowActionMenu } from "./row-action-menu";
 import { type PlanSelection } from "./selection";
@@ -37,19 +43,36 @@ export const SessionList = ({ session, planId, selection, onSelect }: SessionLis
   const decoration = useEffectivePlanDecorationContext().getDecoration(session.id);
   const decorationStyles = getDecorationStyles(decoration);
   const bulkPatch = usePlanBulkPatch(planId);
+  const history = usePlanHistoryContext();
   const dialog = useDeleteEntityDialog();
   const counts = countSessionEntities(session);
   const sessionLabel = session.label ?? "Session";
 
   const handleConfirm = async () => {
+    const isEmpty = isContainerEmpty(counts);
     const op = buildDeleteSession({ sessionId: session.id, expectedVersion: session.version });
-    const optimisticPatch = isContainerEmpty(counts)
-      ? buildOptimisticDeleteSession(session.id)
-      : undefined;
+    const optimisticPatch = isEmpty ? buildOptimisticDeleteSession(session.id) : undefined;
+    const inverseOp = isEmpty
+      ? buildCreateSession({
+          dayId: session.dayId,
+          order: session.order,
+          ...(session.label !== null ? { label: session.label } : {}),
+          ...(session.notes !== null ? { notes: session.notes } : {}),
+        })
+      : null;
 
     try {
       await bulkPatch.mutateAsync({ ops: [op], ...(optimisticPatch ? { optimisticPatch } : {}) });
       dialog.close();
+
+      if (inverseOp && history) {
+        history.push({
+          id: `delete-session-${session.id}-${Date.now().toString()}`,
+          forward: [op],
+          inverse: [inverseOp],
+          label: "Delete session",
+        });
+      }
     } catch {
       return;
     }
