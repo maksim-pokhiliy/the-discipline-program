@@ -28,8 +28,6 @@ const conditionMatchesResolved = (
   }
 
   switch (condition.type) {
-    case ActionItemType.NEW_NO_START:
-      return condition.metadata.enrollmentId === resolvedMetadata.enrollmentId;
     case ActionItemType.HEALTH_REPORT:
       return condition.metadata.healthStatus === resolvedMetadata.healthStatus;
     case ActionItemType.MISSED_WORKOUTS:

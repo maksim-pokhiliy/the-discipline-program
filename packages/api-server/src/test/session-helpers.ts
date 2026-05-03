@@ -7,7 +7,6 @@ import {
   type WorkoutSession,
 } from "@prisma/client";
 
-import { BODY_PART_MAP, MODALITY_MAP, MOVEMENT_PATTERN_MAP } from "../mappers/lms";
 import { findOrThrow } from "../utils";
 
 const rawPrisma = new PrismaClient();
@@ -65,16 +64,16 @@ export const createTestExerciseLog = async (params: {
     "Exercise library item",
   );
 
-  const exerciseSnapshot: Prisma.InputJsonValue = {
+  const exerciseSnapshot = {
     id: exercise.id,
     name: exercise.name,
-    primaryMovement: MOVEMENT_PATTERN_MAP[exercise.primaryMovement],
-    modality: MODALITY_MAP[exercise.modality],
-    primaryBodyParts: exercise.primaryBodyParts.map((bp) => BODY_PART_MAP[bp]),
+    primaryMovement: exercise.primaryMovement,
+    modality: exercise.modality,
+    primaryBodyParts: exercise.primaryBodyParts,
     defaultMetrics: exercise.defaultMetrics,
     demoVideoUrl: exercise.demoVideoUrl,
     demoImageUrl: exercise.demoImageUrl,
-  };
+  } satisfies Prisma.InputJsonObject;
 
   return rawPrisma.exerciseLog.create({
     data: {

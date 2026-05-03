@@ -4,24 +4,15 @@ import {
   ActionItemType,
   type HealthReportMetadata,
   type MissedWorkoutsMetadata,
-  type NewNoStartMetadata,
 } from "@repo/contracts/coaching/coach-action-item";
-import { NEW_ATHLETE_THRESHOLD_DAYS } from "@repo/contracts/coaching/coach-dashboard";
 
 import { prisma } from "../../db/client";
 import { HEALTH_STATUS_MAP } from "../../mappers/coaching";
-import {
-  addDaysInTz,
-  DAYS_IN_WEEK,
-  daysBetweenInTz,
-  startOfTodayInTz,
-} from "../../utils/date-helpers";
+import { addDaysInTz, DAYS_IN_WEEK } from "../../utils/date-helpers";
 
 import { type AssignedAthleteWithData } from "./assigned-athlete-query";
 
 const MISSED_WORKOUT_RATIO_THRESHOLD = 0.3;
-const ENROLLED_TODAY_DAYS = 0;
-const ENROLLED_YESTERDAY_DAYS = 1;
 
 type ConditionBase = {
   athleteId: string;
@@ -30,50 +21,8 @@ type ConditionBase = {
 };
 
 export type Condition =
-  | (ConditionBase & { type: ActionItemType.NEW_NO_START; metadata: NewNoStartMetadata })
   | (ConditionBase & { type: ActionItemType.HEALTH_REPORT; metadata: HealthReportMetadata })
   | (ConditionBase & { type: ActionItemType.MISSED_WORKOUTS; metadata: MissedWorkoutsMetadata });
-
-const formatEnrolledText = (enrolledDays: number): string => {
-  if (enrolledDays === ENROLLED_TODAY_DAYS) {
-    return "Enrolled today";
-  }
-
-  if (enrolledDays === ENROLLED_YESTERDAY_DAYS) {
-    return "Enrolled yesterday";
-  }
-
-  return `Enrolled ${enrolledDays} days ago`;
-};
-
-const buildNewNoStartCondition = (
-  athlete: AssignedAthleteWithData["athlete"],
-  today: Date,
-  tz: string,
-): Condition | null => {
-  const earliestEnrollment =
-    athlete.planEnrollments.length > 0
-      ? athlete.planEnrollments.reduce((min, e) => (e.startedOnDate < min.startedOnDate ? e : min))
-      : null;
-
-  if (!earliestEnrollment) {
-    return null;
-  }
-
-  const enrolledDays = daysBetweenInTz(earliestEnrollment.startedOnDate, today, tz);
-
-  if (enrolledDays > NEW_ATHLETE_THRESHOLD_DAYS) {
-    return null;
-  }
-
-  return {
-    athleteId: athlete.id,
-    type: ActionItemType.NEW_NO_START,
-    severity: ActionItemSeverity.INFO,
-    message: `${formatEnrolledText(enrolledDays)}, no workouts started`,
-    metadata: { enrollmentId: earliestEnrollment.id },
-  };
-};
 
 const buildHealthReportCondition = (
   athlete: AssignedAthleteWithData["athlete"],
@@ -98,20 +47,10 @@ const buildHealthReportCondition = (
   };
 };
 
-export const computeBaseConditions = (
-  assignments: AssignedAthleteWithData[],
-  tz: string,
-): Condition[] => {
+export const computeBaseConditions = (assignments: AssignedAthleteWithData[]): Condition[] => {
   const conditions: Condition[] = [];
-  const today = startOfTodayInTz(tz);
 
   for (const a of assignments) {
-    const newNoStart = buildNewNoStartCondition(a.athlete, today, tz);
-
-    if (newNoStart) {
-      conditions.push(newNoStart);
-    }
-
     const healthReport = buildHealthReportCondition(a.athlete);
 
     if (healthReport) {

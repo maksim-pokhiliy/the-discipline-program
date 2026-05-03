@@ -45,12 +45,7 @@ export const coachingCoachDashboardApi = {
     const role = ROLE_MAP[user.role];
     const isAdminLike = role === UserRole.ADMIN || role === UserRole.HEAD_COACH;
 
-    const planFilter = isAdminLike
-      ? { deletedAt: null }
-      : {
-          deletedAt: null,
-          OR: [{ creatorId: userId }, { coachAssignments: { some: { coachId: userId } } }],
-        };
+    const planFilter = isAdminLike ? { deletedAt: null } : { deletedAt: null, creatorId: userId };
 
     const [assignments, openActionItems, activePlansCount] = await Promise.all([
       prisma.coachAthleteAssignment.findMany({

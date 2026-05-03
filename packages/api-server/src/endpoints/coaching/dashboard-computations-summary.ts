@@ -40,43 +40,20 @@ const buildLatestSessionMap = async (
 const buildAthleteSummary = (
   assignment: AssignedAthleteWithData,
   lastActivityDate: Date | null,
-): AthleteDailySummary | null => {
+): AthleteDailySummary => {
   const athlete = assignment.athlete;
 
   const healthStatus = athlete.athleteProfile
     ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
     : HealthStatus.HEALTHY;
 
-  if (athlete.planEnrollments.length === 0) {
-    return {
-      userId: athlete.id,
-      name: athlete.name,
-      email: athlete.email,
-      image: athlete.image,
-      planId: null,
-      planName: null,
-      todayStatus: TodayStatus.NO_SCHEDULE,
-      missedCount: 0,
-      todayWorkoutTitle: null,
-      lastActivityDate,
-      daysSinceLastActivity: null,
-      healthStatus,
-    };
-  }
-
-  const firstEnrollment = athlete.planEnrollments[0];
-
-  if (!firstEnrollment) {
-    return null;
-  }
-
   return {
     userId: athlete.id,
     name: athlete.name,
     email: athlete.email,
     image: athlete.image,
-    planId: firstEnrollment.plan.id,
-    planName: firstEnrollment.plan.name,
+    planId: null,
+    planName: null,
     todayStatus: TodayStatus.NO_SCHEDULE,
     missedCount: 0,
     todayWorkoutTitle: null,
@@ -100,11 +77,8 @@ export const computeAthletesSummary = async ({
 
   for (const a of assignments) {
     const lastActivityDate = latestByAthleteId.get(a.athlete.id) ?? null;
-    const summary = buildAthleteSummary(a, lastActivityDate);
 
-    if (summary) {
-      summaries.push(summary);
-    }
+    summaries.push(buildAthleteSummary(a, lastActivityDate));
   }
 
   return summaries;

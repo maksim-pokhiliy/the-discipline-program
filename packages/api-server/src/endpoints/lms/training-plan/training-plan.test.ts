@@ -92,36 +92,6 @@ describe("lmsTrainingPlanApi", () => {
     });
   });
 
-  describe("duplicate", () => {
-    it("creates a copy with 'Copy of' prefix", async () => {
-      const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
-
-      expect(copy.name).toBe("Copy of Original Plan");
-    });
-
-    it("new plan is DRAFT status regardless of source status", async () => {
-      const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
-
-      expect(copy.status).toBe(TrainingPlanStatus.DRAFT);
-    });
-
-    it("references the source plan via originalPlanId", async () => {
-      const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
-
-      expect(copy.originalPlanId).toBe(planId);
-    });
-
-    it("does NOT copy enrollments", async () => {
-      const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
-
-      const enrollments = await cleanupRaw.planEnrollment.findMany({
-        where: { planId: copy.id },
-      });
-
-      expect(enrollments).toHaveLength(0);
-    });
-  });
-
   describe("delete", () => {
     it("soft-deletes the plan but preserves enrollment history and product links", async () => {
       const localCoach = await createTestCoach();

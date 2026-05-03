@@ -26,36 +26,6 @@ export const requireAdmin = async (userId: string): Promise<void> => {
   }
 };
 
-const hasPlanCoachAssignment = async (planId: string, userId: string): Promise<boolean> => {
-  const assignment = await prisma.planCoachAssignment.findUnique({
-    where: { planId_coachId: { planId, coachId: userId } },
-    select: { id: true },
-  });
-
-  return assignment !== null;
-};
-
-const hasCoachAthleteLinkageForPlan = async (planId: string, userId: string): Promise<boolean> => {
-  const coachProfile = await prisma.coachProfile.findFirst({
-    where: { userId, deletedAt: null },
-    select: { id: true },
-  });
-
-  if (!coachProfile) {
-    return false;
-  }
-
-  const linkage = await prisma.coachAthleteAssignment.findFirst({
-    where: {
-      coachId: coachProfile.id,
-      athlete: { planEnrollments: { some: { planId } } },
-    },
-    select: { id: true },
-  });
-
-  return linkage !== null;
-};
-
 export const requireAdminStrict = async (userId: string): Promise<void> => {
   const user = await findOrThrow(
     prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
@@ -109,11 +79,12 @@ export const verifyPlanOwnership = async (planId: string, userId: string): Promi
     return;
   }
 
-  if (await hasPlanCoachAssignment(planId, userId)) {
-    return;
-  }
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
 
-  if (await hasCoachAthleteLinkageForPlan(planId, userId)) {
+  if (user && isAdminOrHeadCoach(ROLE_MAP[user.role])) {
     return;
   }
 

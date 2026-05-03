@@ -73,7 +73,7 @@ export const coachingCoachActionItemApi = {
           }),
         ]);
 
-        const baseConditions = computeBaseConditions(assignments, tz);
+        const baseConditions = computeBaseConditions(assignments);
         const missedConditions = await computeMissedWorkoutsConditions(assignments, tz);
         const conditions = [...baseConditions, ...missedConditions];
 
