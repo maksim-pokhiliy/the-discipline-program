@@ -1,6 +1,6 @@
+import { PlanEnrollmentStatus } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import {

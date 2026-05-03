@@ -1,7 +1,7 @@
+import { PlanEnrollmentStatus } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
@@ -82,7 +82,6 @@ describe("lmsTrainingPlanApi", () => {
       const ourPlan = result.plans.find((p) => p.id === planId);
 
       expect(ourPlan).toBeDefined();
-      expect(ourPlan?.enrolledAthletesCount).toBe(1);
     });
 
     it("does not list plans owned by another coach", async () => {

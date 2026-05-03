@@ -3,7 +3,6 @@
 import { useRef, useState } from "react";
 
 import ArchiveIcon from "@mui/icons-material/Archive";
-import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
@@ -22,7 +21,6 @@ type PlanActionMenuProps = {
   onActivate: () => void;
   onArchive: () => Promise<void>;
   onRestore: () => void;
-  onDuplicate: () => void;
   onDelete: () => Promise<void>;
   isPending: boolean;
 };
@@ -34,7 +32,6 @@ export const PlanActionMenu: React.FC<PlanActionMenuProps> = ({
   onActivate,
   onArchive,
   onRestore,
-  onDuplicate,
   onDelete,
   isPending,
 }) => {
@@ -71,13 +68,6 @@ export const PlanActionMenu: React.FC<PlanActionMenuProps> = ({
             <EditIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Open</ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={handle(onDuplicate)} disabled={isPending}>
-          <ListItemIcon>
-            <ContentCopyIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Duplicate</ListItemText>
         </MenuItem>
 
         {status === TrainingPlanStatus.DRAFT && (

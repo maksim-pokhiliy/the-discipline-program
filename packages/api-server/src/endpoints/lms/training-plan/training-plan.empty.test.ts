@@ -68,8 +68,6 @@ describe("lmsTrainingPlanApi — empty DB", () => {
       if (!ourPlan) {
         throw new Error("Expected plan to be in results");
       }
-
-      expect(ourPlan.enrolledAthletesCount).toBe(0);
     });
 
     it("page data validates against response schema", async () => {

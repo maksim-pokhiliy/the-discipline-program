@@ -39,13 +39,12 @@ export const HEALTH_STATUS_TO_PRISMA_MAP: Record<HealthStatus, PrismaHealthStatu
 
 export const ACTION_ITEM_TYPE_MAP: Record<PrismaActionItemType, ActionItemType> = {
   MISSED_WORKOUTS: ActionItemType.MISSED_WORKOUTS,
-  NEW_NO_START: ActionItemType.NEW_NO_START,
+  NEW_NO_START: ActionItemType.MISSED_WORKOUTS,
   HEALTH_REPORT: ActionItemType.HEALTH_REPORT,
 };
 
 export const ACTION_ITEM_TYPE_TO_PRISMA_MAP: Record<ActionItemType, PrismaActionItemType> = {
   [ActionItemType.MISSED_WORKOUTS]: PrismaActionItemType.MISSED_WORKOUTS,
-  [ActionItemType.NEW_NO_START]: PrismaActionItemType.NEW_NO_START,
   [ActionItemType.HEALTH_REPORT]: PrismaActionItemType.HEALTH_REPORT,
 };
 

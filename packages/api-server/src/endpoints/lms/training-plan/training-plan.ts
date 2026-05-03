@@ -22,10 +22,7 @@ import {
 import { findOrThrow, handlePrismaError } from "../../../utils";
 import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
-const mapToListItem = (p: PrismaTrainingPlan): TrainingPlanListItem => ({
-  ...mapToTrainingPlan(p),
-  enrolledAthletesCount: 0,
-});
+const mapToListItem = (p: PrismaTrainingPlan): TrainingPlanListItem => mapToTrainingPlan(p);
 
 const buildPlanFilter = async (userId: string): Promise<Prisma.TrainingPlanWhereInput> => {
   const user = await prisma.user.findUnique({

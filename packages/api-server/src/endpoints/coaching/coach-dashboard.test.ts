@@ -1,7 +1,7 @@
+import { PlanEnrollmentStatus } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { ActionItemSeverity, ActionItemType } from "@repo/contracts/coaching/coach-action-item";
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import {

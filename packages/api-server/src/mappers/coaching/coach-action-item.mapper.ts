@@ -6,7 +6,6 @@ import {
   type ActionItemMetadata,
   type CoachActionItem,
   missedWorkoutsMetadataSchema,
-  newNoStartMetadataSchema,
   healthReportMetadataSchema,
 } from "@repo/contracts/coaching/coach-action-item";
 
@@ -17,11 +16,7 @@ import {
   ACTION_ITEM_TYPE_MAP,
 } from "./enum-maps";
 
-const metadataSchema = z.union([
-  missedWorkoutsMetadataSchema,
-  newNoStartMetadataSchema,
-  healthReportMetadataSchema,
-]);
+const metadataSchema = z.union([missedWorkoutsMetadataSchema, healthReportMetadataSchema]);
 
 const parseMetadata = (raw: JsonValue): ActionItemMetadata | null => {
   const result = metadataSchema.safeParse(raw);

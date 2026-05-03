@@ -1,6 +1,5 @@
 "use client";
 
-import GroupIcon from "@mui/icons-material/Group";
 import { Box, Paper, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
@@ -15,7 +14,6 @@ type PlanCardProps = {
   onActivate: (id: string) => void;
   onArchive: (id: string) => Promise<void>;
   onRestore: (id: string) => void;
-  onDuplicate: (id: string) => void;
   onDelete: (id: string) => Promise<void>;
   isPending: boolean;
 };
@@ -25,7 +23,6 @@ export const PlanCard: React.FC<PlanCardProps> = ({
   onActivate,
   onArchive,
   onRestore,
-  onDuplicate,
   onDelete,
   isPending,
 }) => (
@@ -74,16 +71,6 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         </Stack>
 
         <Stack direction="row" spacing={2} sx={{ color: "text.secondary" }}>
-          <Tooltip title="Active enrolled athletes" arrow placement="top">
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <GroupIcon fontSize="small" />
-              <Typography variant="caption">
-                {plan.enrolledAthletesCount}{" "}
-                {plan.enrolledAthletesCount === 1 ? "athlete" : "athletes"}
-              </Typography>
-            </Stack>
-          </Tooltip>
-
           <Tooltip title="Plan created" arrow placement="top">
             <Typography variant="caption" sx={{ ml: "auto" }}>
               {formatDate(plan.createdAt, "short")}
@@ -101,7 +88,6 @@ export const PlanCard: React.FC<PlanCardProps> = ({
         onActivate={() => onActivate(plan.id)}
         onArchive={() => onArchive(plan.id)}
         onRestore={() => onRestore(plan.id)}
-        onDuplicate={() => onDuplicate(plan.id)}
         onDelete={() => onDelete(plan.id)}
         isPending={isPending}
       />

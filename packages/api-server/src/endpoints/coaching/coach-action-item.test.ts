@@ -1,3 +1,4 @@
+import { PlanEnrollmentStatus } from "@prisma/client";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
@@ -7,7 +8,6 @@ import {
   ActionItemStatus,
   ActionItemType,
 } from "@repo/contracts/coaching/coach-action-item";
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { NotFoundError } from "@repo/errors";
 
@@ -112,7 +112,7 @@ describe("coachingCoachActionItemApi", () => {
 
       const types = items.map((i) => i.type);
 
-      expect(types).toContain(ActionItemType.NEW_NO_START);
+      expect(types).toContain("NEW_NO_START");
       expect(types).toContain(ActionItemType.HEALTH_REPORT);
     });
 
@@ -121,7 +121,7 @@ describe("coachingCoachActionItemApi", () => {
         where: {
           coachId: coach.profile.id,
           athleteId: athleteNew.id,
-          type: ActionItemType.NEW_NO_START,
+          type: "NEW_NO_START",
           status: ActionItemStatus.OPEN,
         },
       });
@@ -225,7 +225,7 @@ describe("coachingCoachActionItemApi", () => {
         data: {
           coachId: coach.profile.id,
           athleteId: athleteResolve.id,
-          type: ActionItemType.NEW_NO_START,
+          type: "NEW_NO_START",
           severity: ActionItemSeverity.INFO,
           message: "Test resolve item",
           metadata: { enrollmentId: "test-123" },
@@ -244,7 +244,7 @@ describe("coachingCoachActionItemApi", () => {
         data: {
           coachId: coach.profile.id,
           athleteId: athleteResolve.id,
-          type: ActionItemType.NEW_NO_START,
+          type: "NEW_NO_START",
           severity: ActionItemSeverity.INFO,
           status: ActionItemStatus.RESOLVED,
           message: "Already resolved",

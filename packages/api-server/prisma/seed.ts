@@ -7,7 +7,6 @@ import { seedBlogPosts } from "./seed/blog-posts";
 import { clearAll } from "./seed/clear-all";
 import { seedCoachNotes } from "./seed/coach-notes";
 import { seedContactSubmissions } from "./seed/contact-submissions";
-import { seedLms } from "./seed/lms";
 import { seedMarketingPages } from "./seed/marketing-pages";
 import { seedProducts } from "./seed/products";
 import { seedProfiles } from "./seed/profiles";
@@ -32,12 +31,6 @@ const main = async (): Promise<void> => {
   const { coachProfile } = await seedProfiles(prisma, users);
 
   await seedCoachNotes(prisma, coachProfile.id, users);
-
-  const lmsCounts = await seedLms({ db: prisma });
-
-  console.log(
-    `  LMS: ${lmsCounts.blockKinds} block kinds, ${lmsCounts.schemeTemplates} scheme templates, ${lmsCounts.exercises} exercises`,
-  );
 
   await seedTrainingPlans(prisma, users.coach.id, users);
 

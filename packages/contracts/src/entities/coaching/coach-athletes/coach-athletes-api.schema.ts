@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 import { imageUrlSchema } from "../../../common/image";
-import { PlanEnrollmentStatus } from "../../lms/plan-enrollment";
 import { HealthStatus } from "../athlete-profile";
 import { ActionItemSeverity, ActionItemType } from "../coach-action-item";
 import { ProcessStatus } from "../coach-dashboard";
@@ -20,7 +19,6 @@ export const coachAthletesDataSchema = z.object({
 export const planDisciplineSchema = z.object({
   planId: z.string().cuid(),
   planName: z.string(),
-  enrollmentStatus: z.nativeEnum(PlanEnrollmentStatus),
   enrolledDate: z.date(),
   completed: z.number().int().nonnegative(),
   available: z.number().int().nonnegative(),

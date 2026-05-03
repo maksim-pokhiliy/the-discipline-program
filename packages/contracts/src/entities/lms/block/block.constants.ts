@@ -1,6 +1,0 @@
-export const BLOCK_CONSTANTS = {
-  MAX_TITLE_LENGTH: 200,
-  MAX_NOTES_LENGTH: 4000,
-  MIN_WEIGHT: 1,
-  MAX_WEIGHT: 10,
-} as const;

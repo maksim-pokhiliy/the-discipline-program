@@ -1,7 +1,7 @@
+import { PlanEnrollmentStatus } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ForbiddenError } from "@repo/errors";
 
@@ -107,7 +107,6 @@ describe("coachingCoachAthletesApi.getAthleteDetail", () => {
     for (const plan of detail.planDiscipline) {
       expect(plan.planId).toBeDefined();
       expect(plan.planName).toBeDefined();
-      expect(plan.enrollmentStatus).toBeDefined();
       expect(plan.enrolledDate).toBeInstanceOf(Date);
       expect(plan.completed).toBe(0);
       expect(plan.available).toBe(0);

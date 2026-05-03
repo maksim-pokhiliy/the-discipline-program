@@ -26,6 +26,4 @@ export const updateTrainingPlanSchema = z.object({
   description: z.string().max(TRAINING_PLAN_CONSTANTS.MAX_DESCRIPTION_LENGTH).nullable().optional(),
 });
 
-export const trainingPlanListItemSchema = trainingPlanSchema.extend({
-  enrolledAthletesCount: z.number().int().nonnegative(),
-});
+export const trainingPlanListItemSchema = trainingPlanSchema;

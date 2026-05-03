@@ -2,17 +2,10 @@ import { type z } from "zod";
 
 import {
   type archiveTrainingPlanParamsSchema,
-  type bulkPatchConflictSchema,
-  type bulkPatchOpSchema,
-  type bulkPatchPlanInputSchema,
-  type bulkPatchPlanParamsSchema,
-  type bulkPatchPlanResponseSchema,
   type coachPlansPageDataSchema,
   type createTrainingPlanRequestSchema,
   type createTrainingPlanResponseSchema,
   type deleteTrainingPlanParamsSchema,
-  type duplicateTrainingPlanParamsSchema,
-  type duplicateTrainingPlanResponseSchema,
   type getTrainingPlanByIdParamsSchema,
   type getTrainingPlanResponseSchema,
   type getTrainingPlansResponseSchema,
@@ -32,12 +25,5 @@ export type UpdateTrainingPlanParams = z.infer<typeof updateTrainingPlanParamsSc
 export type UpdateTrainingPlanRequest = z.infer<typeof updateTrainingPlanRequestSchema>;
 export type UpdateTrainingPlanResponse = z.infer<typeof updateTrainingPlanResponseSchema>;
 export type DeleteTrainingPlanParams = z.infer<typeof deleteTrainingPlanParamsSchema>;
-export type DuplicateTrainingPlanParams = z.infer<typeof duplicateTrainingPlanParamsSchema>;
-export type DuplicateTrainingPlanResponse = z.infer<typeof duplicateTrainingPlanResponseSchema>;
 export type ArchiveTrainingPlanParams = z.infer<typeof archiveTrainingPlanParamsSchema>;
 export type RestoreTrainingPlanParams = z.infer<typeof restoreTrainingPlanParamsSchema>;
-export type BulkPatchPlanParams = z.infer<typeof bulkPatchPlanParamsSchema>;
-export type BulkPatchOp = z.infer<typeof bulkPatchOpSchema>;
-export type BulkPatchPlanInput = z.infer<typeof bulkPatchPlanInputSchema>;
-export type BulkPatchPlanResponse = z.infer<typeof bulkPatchPlanResponseSchema>;
-export type BulkPatchConflict = z.infer<typeof bulkPatchConflictSchema>;
