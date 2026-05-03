@@ -41,10 +41,6 @@ const formatTitle = (entityKind: DeleteEntityKind, entityLabel: string): string 
 const formatCountFragments = (counts: NestedEntityCounts): string[] => {
   const fragments: string[] = [];
 
-  if (typeof counts.days === "number" && counts.days > 0) {
-    fragments.push(`${counts.days.toString()} ${counts.days === 1 ? "day" : "days"}`);
-  }
-
   if (typeof counts.sessions === "number" && counts.sessions > 0) {
     fragments.push(
       `${counts.sessions.toString()} ${counts.sessions === 1 ? "session" : "sessions"}`,
@@ -98,17 +94,20 @@ export const DeleteEntityDialog = ({
       <DialogContent dividers>
         <Stack spacing={2}>
           {isEmpty ? (
-            <Typography variant="body2">This empty {entityKind} will be removed.</Typography>
-          ) : (
             <Typography variant="body2">
-              This {entityKind} contains {summary}.
+              This empty {entityKind} will be removed. You can undo this with ⌘Z.
             </Typography>
+          ) : (
+            <>
+              <Typography variant="body2">
+                This {entityKind} contains {summary}.
+              </Typography>
+              <Alert severity="error">
+                This permanently deletes the selected {entityKind}. This cannot be undone (the
+                editor undo stack does not cover bulk deletes).
+              </Alert>
+            </>
           )}
-
-          <Alert severity="error">
-            This permanently deletes the selected {entityKind}. This cannot be undone (the editor
-            undo stack does not cover bulk deletes).
-          </Alert>
         </Stack>
       </DialogContent>
       <DialogActions>

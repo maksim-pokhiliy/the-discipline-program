@@ -5,7 +5,6 @@ import {
 } from "@repo/contracts/lms/training-plan";
 
 export type NestedEntityCounts = {
-  days?: number;
   sessions?: number;
   blocks?: number;
 };
@@ -22,7 +21,6 @@ const countWeekSessions = (week: PlanStructureWeek): number =>
   week.days.reduce((acc, day) => acc + day.sessions.length, 0);
 
 export const countWeekEntities = (week: PlanStructureWeek): NestedEntityCounts => ({
-  days: week.days.length,
   sessions: countWeekSessions(week),
   blocks: countWeekBlocks(week),
 });
@@ -37,4 +35,4 @@ export const countSessionEntities = (session: PlanStructureSession): NestedEntit
 });
 
 export const isContainerEmpty = (counts: NestedEntityCounts): boolean =>
-  (counts.days ?? 0) === 0 && (counts.sessions ?? 0) === 0 && (counts.blocks ?? 0) === 0;
+  (counts.sessions ?? 0) === 0 && (counts.blocks ?? 0) === 0;
