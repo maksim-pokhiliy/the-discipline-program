@@ -13,6 +13,9 @@ const SOFT_DELETE_MODELS = new Set([
   "MarketingReview",
   "MarketingContactSubmission",
   "Exercise",
+  "BlockType",
+  "SchemeType",
+  "DayType",
 ]);
 
 const SOFT_DELETE_UNIQUE_FIELDS: Record<string, string[]> = {
