@@ -1,9 +1,12 @@
 export { createBlogAPI } from "./blog";
+export { createBlockTypesAPI } from "./block-types";
 export { createContactsAPI } from "./contacts";
 export { createDashboardAPI } from "./dashboard";
+export { createDayTypesAPI } from "./day-types";
 export { createExercisesAPI } from "./exercises";
 export { createPagesAPI } from "./pages";
 export { createProductsAPI } from "./products";
 export { createReviewsAPI } from "./reviews";
+export { createSchemeTypesAPI } from "./scheme-types";
 export { createUploadAPI } from "./upload";
 export { createUsersAPI } from "./users";
