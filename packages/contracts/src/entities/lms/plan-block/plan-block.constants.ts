@@ -1,0 +1,5 @@
+export const PLAN_BLOCK_CONSTANTS = {
+  MAX_NOTES_LENGTH: 2000,
+  MIN_BLOCK_TYPES: 1,
+  MAX_BLOCK_TYPES: 5,
+} as const;

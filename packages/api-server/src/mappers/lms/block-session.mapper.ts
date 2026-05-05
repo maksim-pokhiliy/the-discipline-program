@@ -26,7 +26,7 @@ export const mapToBlockSession = (b: PrismaBlockSession): BlockSession => ({
   id: b.id,
   workoutSessionId: b.workoutSessionId,
   order: b.order,
-  kindName: b.kindName,
+  blockNames: b.blockNames,
   weight: b.weight,
   archetypeKind: SCHEME_ARCHETYPE_KIND_MAP[b.archetypeKind],
   schemeParamsSnapshot: schemeParamsSchema.parse(b.schemeParamsSnapshot),

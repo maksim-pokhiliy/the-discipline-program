@@ -253,3 +253,109 @@ describe("schemeParamsSchema — TIME_BOXED", () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe("schemeParamsSchema — LADDER", () => {
+  it("accepts a descending 21-15-9", () => {
+    const value = {
+      kind: "LADDER" as const,
+      sequence: [21, 15, 9],
+      direction: "DESC" as const,
+    };
+
+    expect(schemeParamsSchema.parse(value)).toEqual(value);
+  });
+
+  it("accepts an ascending 3-6-9-12", () => {
+    const value = {
+      kind: "LADDER" as const,
+      sequence: [3, 6, 9, 12],
+      direction: "ASC" as const,
+    };
+
+    expect(schemeParamsSchema.parse(value)).toEqual(value);
+  });
+
+  it("accepts a pyramid 3-6-9-12-9-6-3", () => {
+    const value = {
+      kind: "LADDER" as const,
+      sequence: [3, 6, 9, 12, 9, 6, 3],
+      direction: "PYRAMID" as const,
+    };
+
+    expect(schemeParamsSchema.parse(value)).toEqual(value);
+  });
+
+  it("rejects single-step sequence", () => {
+    const result = schemeParamsSchema.safeParse({
+      kind: "LADDER",
+      sequence: [10],
+      direction: "DESC",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects zero in sequence", () => {
+    const result = schemeParamsSchema.safeParse({
+      kind: "LADDER",
+      sequence: [0, 5, 10],
+      direction: "ASC",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects unknown direction", () => {
+    const result = schemeParamsSchema.safeParse({
+      kind: "LADDER",
+      sequence: [3, 6, 9],
+      direction: "RANDOM",
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("schemeParamsSchema — DISTANCE", () => {
+  it("accepts a fixed 5km run", () => {
+    const value = {
+      kind: "DISTANCE" as const,
+      unit: "KM" as const,
+      distanceMin: 5,
+    };
+
+    expect(schemeParamsSchema.parse(value)).toEqual(value);
+  });
+
+  it("accepts a 5-7km range with cap", () => {
+    const value = {
+      kind: "DISTANCE" as const,
+      unit: "KM" as const,
+      distanceMin: 5,
+      distanceMax: 7,
+      capSec: 2400,
+    };
+
+    expect(schemeParamsSchema.parse(value)).toEqual(value);
+  });
+
+  it("rejects zero distanceMin", () => {
+    const result = schemeParamsSchema.safeParse({
+      kind: "DISTANCE",
+      unit: "KM",
+      distanceMin: 0,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects unknown unit", () => {
+    const result = schemeParamsSchema.safeParse({
+      kind: "DISTANCE",
+      unit: "PARSEC",
+      distanceMin: 5,
+    });
+
+    expect(result.success).toBe(false);
+  });
+});

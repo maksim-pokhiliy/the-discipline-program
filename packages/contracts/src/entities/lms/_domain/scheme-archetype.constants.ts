@@ -7,6 +7,8 @@ export const SCHEME_ARCHETYPE_KINDS: readonly SchemeArchetypeKind[] = [
   "INTERVAL_LOOP",
   "EMOM_LOOP",
   "TIME_BOXED",
+  "LADDER",
+  "DISTANCE",
 ] as const;
 
 export function defaultSchemeParams(kind: SchemeArchetypeKind): SchemeParams {
@@ -41,5 +43,9 @@ export function defaultSchemeParams(kind: SchemeArchetypeKind): SchemeParams {
           },
         ],
       };
+    case "LADDER":
+      return { kind: "LADDER", sequence: [21, 15, 9], direction: "DESC" };
+    case "DISTANCE":
+      return { kind: "DISTANCE", unit: "KM", distanceMin: 5 };
   }
 }

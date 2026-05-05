@@ -7,6 +7,8 @@ export const schemeArchetypeKindSchema = z.enum([
   "INTERVAL_LOOP",
   "EMOM_LOOP",
   "TIME_BOXED",
+  "LADDER",
+  "DISTANCE",
 ]);
 
 const intervalSlotSchema = z.object({
@@ -89,6 +91,20 @@ export const schemeParamsTimeBoxedSchema = z.object({
   segments: z.array(timeBoxedSegmentSchema).min(1),
 });
 
+export const schemeParamsLadderSchema = z.object({
+  kind: z.literal("LADDER"),
+  sequence: z.array(z.number().int().positive()).min(2),
+  direction: z.enum(["ASC", "DESC", "PYRAMID"]),
+});
+
+export const schemeParamsDistanceSchema = z.object({
+  kind: z.literal("DISTANCE"),
+  unit: z.enum(["KM", "M", "MI"]),
+  distanceMin: z.number().positive(),
+  distanceMax: z.number().positive().optional(),
+  capSec: z.number().int().positive().optional(),
+});
+
 export const schemeParamsSchema = z.discriminatedUnion("kind", [
   schemeParamsNoneSchema,
   schemeParamsCountUpSchema,
@@ -96,4 +112,6 @@ export const schemeParamsSchema = z.discriminatedUnion("kind", [
   schemeParamsIntervalLoopSchema,
   schemeParamsEmomLoopSchema,
   schemeParamsTimeBoxedSchema,
+  schemeParamsLadderSchema,
+  schemeParamsDistanceSchema,
 ]);

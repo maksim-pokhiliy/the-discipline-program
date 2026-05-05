@@ -34,6 +34,8 @@ export const SCHEME_ARCHETYPE_KIND_MAP: Record<PrismaSchemeArchetypeKind, Scheme
   INTERVAL_LOOP: "INTERVAL_LOOP",
   EMOM_LOOP: "EMOM_LOOP",
   TIME_BOXED: "TIME_BOXED",
+  LADDER: "LADDER",
+  DISTANCE: "DISTANCE",
 };
 
 export const SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP: Record<
@@ -46,6 +48,8 @@ export const SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP: Record<
   INTERVAL_LOOP: PrismaSchemeArchetypeKind.INTERVAL_LOOP,
   EMOM_LOOP: PrismaSchemeArchetypeKind.EMOM_LOOP,
   TIME_BOXED: PrismaSchemeArchetypeKind.TIME_BOXED,
+  LADDER: PrismaSchemeArchetypeKind.LADDER,
+  DISTANCE: PrismaSchemeArchetypeKind.DISTANCE,
 };
 
 export const WORKOUT_SESSION_STATUS_MAP: Record<PrismaWorkoutSessionStatus, WorkoutSessionStatus> =

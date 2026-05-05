@@ -8,32 +8,32 @@ datasource db {
 }
 
 model User {
-  id                   String                   @id @default(cuid())
-  email                String                   @unique
-  emailVerified        DateTime?
-  name                 String?
-  image                String?
-  password             String?
-  role                 Role                     @default(ATHLETE)
-  tokenVersion         Int                      @default(0)
-  timezone             String                   @default("UTC")
-  createdAt            DateTime                 @default(now())
-  updatedAt            DateTime                 @updatedAt
-  deletedAt            DateTime?
-  athleteProfile       AthleteProfile?
-  coachProfile         CoachProfile?
-  subscription         Subscription?
-  transactions         Transaction[]
-  trainingPlansCreated TrainingPlan[]           @relation("PlanCreator")
-  workoutSessions      WorkoutSession[]
-  personalRecords      PersonalRecord[]
-  benchmarks           Benchmark[]
-  weeklyVolumes        WeeklyVolume[]
-  coachNotes           CoachNote[]
-  actionItems          CoachActionItem[]        @relation("ActionItemAthlete")
-  inviteTokensReceived UserInviteToken[]        @relation("UserInviteTokens")
-  inviteTokensIssued   UserInviteToken[]        @relation("UserInviteTokensCreatedBy")
-  athleteAssignments   CoachAthleteAssignment[] @relation("AthleteAssignments")
+  id                       String                   @id @default(cuid())
+  email                    String                   @unique
+  emailVerified            DateTime?
+  name                     String?
+  image                    String?
+  password                 String?
+  role                     Role                     @default(ATHLETE)
+  tokenVersion             Int                      @default(0)
+  timezone                 String                   @default("UTC")
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+  deletedAt                DateTime?
+  athleteProfile           AthleteProfile?
+  coachProfile             CoachProfile?
+  subscription             Subscription?
+  transactions             Transaction[]
+  trainingPlansCreated     TrainingPlan[]           @relation("PlanCreator")
+  workoutSessions          WorkoutSession[]
+  personalRecords          PersonalRecord[]
+  coachNotes               CoachNote[]
+  actionItems              CoachActionItem[]        @relation("ActionItemAthlete")
+  inviteTokensReceived     UserInviteToken[]        @relation("UserInviteTokens")
+  inviteTokensIssued       UserInviteToken[]        @relation("UserInviteTokensCreatedBy")
+  athleteAssignments       CoachAthleteAssignment[] @relation("AthleteAssignments")
+  planEnrollmentsAsAthlete PlanEnrollment[]         @relation("EnrollmentAthlete")
+  planEnrollmentsCreated   PlanEnrollment[]         @relation("EnrollmentEnrolledBy")
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -236,6 +236,8 @@ enum SchemeArchetypeKind {
   INTERVAL_LOOP
   EMOM_LOOP
   TIME_BOXED
+  LADDER
+  DISTANCE
 }
 
 enum WorkoutSessionStatus {
@@ -286,9 +288,10 @@ enum PrKind {
   MAX_LOAD_FOR_REPS
 }
 
-enum BenchmarkSource {
-  MANUAL
-  DERIVED_FROM_LOG
+enum EnrollmentStatus {
+  ACTIVE
+  PAUSED
+  REMOVED
 }
 
 model TrainingPlan {
@@ -301,6 +304,8 @@ model TrainingPlan {
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
   deletedAt   DateTime?
+  days        PlanDay[]
+  enrollments PlanEnrollment[]
 
   @@index([creatorId])
   @@index([status])
@@ -312,7 +317,9 @@ model WorkoutSession {
   id                String               @id @default(cuid())
   userId            String
   user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  scheduledFor      DateTime?
+  planSessionId     String?
+  planSession       PlanSession?         @relation(fields: [planSessionId], references: [id], onDelete: SetNull)
+  scheduledDate     DateTime?            @db.Date
   startedAt         DateTime
   completedAt       DateTime?
   durationSec       Int?
@@ -324,6 +331,9 @@ model WorkoutSession {
   blockSessions     BlockSession[]
 
   @@index([userId, startedAt])
+  @@index([userId, completedAt])
+  @@index([userId, scheduledDate])
+  @@index([planSessionId])
   @@map("lms_workout_sessions")
 }
 
@@ -332,7 +342,7 @@ model BlockSession {
   workoutSessionId     String
   workoutSession       WorkoutSession      @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
   order                Int
-  kindName             String
+  blockNames           String[]
   weight               Int
   archetypeKind        SchemeArchetypeKind
   schemeParamsSnapshot Json
@@ -393,41 +403,167 @@ model PersonalRecord {
   @@map("lms_personal_records")
 }
 
-model WeeklyVolume {
-  id                         String   @id @default(cuid())
-  userId                     String
-  user                       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  weekStartDate              DateTime @db.Date
-  totalTonnageKg             Decimal  @db.Decimal(10, 2)
-  tonnageByPattern           Json
-  totalDurationSec           Int
-  workoutsScheduled          Int
-  workoutsFullyCompleted     Int
-  workoutsPartiallyCompleted Int
-  workoutsMissed             Int
-  workoutsRx                 Int
-  workoutsScaled             Int
-  recomputedAt               DateTime
+model Exercise {
+  id              String          @id @default(cuid())
+  name            String          @unique
+  urls            String[]        @default([])
+  primaryMovement MovementPattern
+  benchmarkPrKind PrKind?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  deletedAt       DateTime?
+  planItems       PlanItem[]
 
-  @@unique([userId, weekStartDate])
-  @@index([userId, weekStartDate])
-  @@map("lms_weekly_volumes")
+  @@index([deletedAt])
+  @@index([primaryMovement])
+  @@map("lms_exercises")
 }
 
-model Benchmark {
-  id     String          @id @default(cuid())
-  userId String
-  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  kind   PrKind
-  value  Decimal         @db.Decimal(10, 2)
-  unit   String
-  source BenchmarkSource @default(MANUAL)
-  setBy  String
-  setAt  DateTime        @default(now())
-  notes  String?
+model BlockType {
+  id            String             @id @default(cuid())
+  name          String             @unique
+  description   String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  deletedAt     DateTime?
+  blockTypeRefs PlanBlockTypeRef[]
 
-  @@index([userId])
-  @@map("lms_benchmarks")
+  @@index([deletedAt])
+  @@map("lms_block_types")
+}
+
+model SchemeType {
+  id            String              @id @default(cuid())
+  name          String              @unique
+  archetypeKind SchemeArchetypeKind
+  defaultParams Json?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  deletedAt     DateTime?
+  planBlocks    PlanBlock[]
+
+  @@index([deletedAt])
+  @@index([archetypeKind])
+  @@map("lms_scheme_types")
+}
+
+model DayType {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  color     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  planDays  PlanDay[]
+
+  @@index([deletedAt])
+  @@map("lms_day_types")
+}
+
+model PlanDay {
+  id        String        @id @default(cuid())
+  planId    String
+  plan      TrainingPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  date      DateTime      @db.Date
+  dayTypeId String?
+  dayType   DayType?      @relation(fields: [dayTypeId], references: [id], onDelete: SetNull)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  sessions  PlanSession[]
+
+  @@unique([planId, date])
+  @@index([planId, date])
+  @@index([dayTypeId])
+  @@map("lms_plan_days")
+}
+
+model PlanSession {
+  id              String           @id @default(cuid())
+  dayId           String
+  day             PlanDay          @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  order           Int
+  label           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  blocks          PlanBlock[]
+  workoutSessions WorkoutSession[]
+
+  @@index([dayId, order])
+  @@map("lms_plan_sessions")
+}
+
+model PlanBlock {
+  id            String             @id @default(cuid())
+  sessionId     String
+  session       PlanSession        @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  order         Int
+  schemeTypeId  String
+  schemeType    SchemeType         @relation(fields: [schemeTypeId], references: [id], onDelete: Restrict)
+  schemeParams  Json
+  modifiers     Json?
+  notes         String?
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  blockTypeRefs PlanBlockTypeRef[]
+  items         PlanItem[]
+
+  @@index([sessionId, order])
+  @@index([schemeTypeId])
+  @@map("lms_plan_blocks")
+}
+
+model PlanBlockTypeRef {
+  id          String    @id @default(cuid())
+  blockId     String
+  block       PlanBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  blockTypeId String
+  blockType   BlockType @relation(fields: [blockTypeId], references: [id], onDelete: Restrict)
+  order       Int       @default(0)
+
+  @@unique([blockId, blockTypeId])
+  @@index([blockId, order])
+  @@index([blockTypeId])
+  @@map("lms_plan_block_type_refs")
+}
+
+model PlanItem {
+  id           String    @id @default(cuid())
+  blockId      String
+  block        PlanBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  order        Int
+  exerciseId   String
+  exercise     Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  prescription Json
+  alternatives Json?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([blockId, order])
+  @@index([exerciseId])
+  @@map("lms_plan_items")
+}
+
+model PlanEnrollment {
+  id              String           @id @default(cuid())
+  planId          String
+  plan            TrainingPlan     @relation(fields: [planId], references: [id], onDelete: Cascade)
+  athleteId       String
+  athlete         User             @relation("EnrollmentAthlete", fields: [athleteId], references: [id], onDelete: Cascade)
+  enrolledById    String
+  enrolledBy      User             @relation("EnrollmentEnrolledBy", fields: [enrolledById], references: [id], onDelete: Restrict)
+  boardedAt       DateTime         @db.Date
+  status          EnrollmentStatus @default(ACTIVE)
+  statusChangedAt DateTime         @default(now())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+
+  @@index([planId, status])
+  @@index([athleteId, status])
+  @@index([enrolledById])
+  @@index([deletedAt])
+  @@map("lms_plan_enrollments")
 }
 
 enum HealthStatus {
