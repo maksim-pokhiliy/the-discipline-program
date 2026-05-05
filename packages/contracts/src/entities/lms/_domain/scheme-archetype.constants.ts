@@ -11,6 +11,25 @@ export const SCHEME_ARCHETYPE_KINDS: readonly SchemeArchetypeKind[] = [
   "DISTANCE",
 ] as const;
 
+export const SCHEME_ARCHETYPE_KIND_LABELS: Record<SchemeArchetypeKind, string> = {
+  NONE: "None",
+  COUNT_UP: "Count Up",
+  COUNT_DOWN: "Count Down",
+  INTERVAL_LOOP: "Interval Loop",
+  EMOM_LOOP: "EMOM",
+  TIME_BOXED: "Time-Boxed",
+  LADDER: "Ladder",
+  DISTANCE: "Distance",
+};
+
+export const SCHEME_ARCHETYPE_KIND_OPTIONS: ReadonlyArray<{
+  value: SchemeArchetypeKind;
+  label: string;
+}> = SCHEME_ARCHETYPE_KINDS.map((value) => ({
+  value,
+  label: SCHEME_ARCHETYPE_KIND_LABELS[value],
+}));
+
 export function defaultSchemeParams(kind: SchemeArchetypeKind): SchemeParams {
   switch (kind) {
     case "NONE":
