@@ -15,7 +15,12 @@ export const ADMIN_NAVIGATION: AdminNavigationConfig = {
     },
     {
       label: "Library",
-      links: [{ text: "Exercises", href: "/exercises", icon: "exercises" }],
+      links: [
+        { text: "Exercises", href: "/exercises", icon: "exercises" },
+        { text: "Block Types", href: "/block-types", icon: "blockTypes" },
+        { text: "Scheme Types", href: "/scheme-types", icon: "schemeTypes" },
+        { text: "Day Types", href: "/day-types", icon: "dayTypes" },
+      ],
     },
     {
       label: "Platform",
