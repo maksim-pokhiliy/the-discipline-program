@@ -43,7 +43,7 @@ export const AthletesTodaySection: React.FC<AthletesTodaySectionProps> = ({ athl
   const [activeTab, setActiveTab] = useState<TodayStatus>(() => getDefaultTab(grouped));
 
   if (athletes.length === 0) {
-    return <EmptyState message="No athletes enrolled" />;
+    return <EmptyState message="No athletes assigned" />;
   }
 
   const activeAthletes = sortAthletes(grouped.get(activeTab) ?? [], activeTab);

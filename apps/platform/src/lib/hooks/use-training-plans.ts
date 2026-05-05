@@ -62,22 +62,6 @@ export const useUpdateTrainingPlan = () =>
     errorMessage: "Failed to update training plan",
   });
 
-export const useDuplicateTrainingPlan = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: (id: string) => api.trainingPlans.duplicate(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: platformKeys.trainingPlans.page() });
-      queryClient.invalidateQueries({ queryKey: platformKeys.coachDashboard.data() });
-      toast.success("Training plan duplicated");
-    },
-    onError: (error: Error) => {
-      notifyError(error, "Failed to duplicate training plan");
-    },
-  });
-};
-
 const useStatusMutation = ({
   mutationFn,
   successMessage,

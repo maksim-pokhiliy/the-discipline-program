@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import { cleanupRaw, createTestCoach, createTestUser } from "../../test/helpers";
@@ -52,9 +51,6 @@ describe("coachingCoachDashboardApi — assignment-keyed counts", () => {
     await cleanupRaw.coachAthleteAssignment
       .deleteMany({ where: { coachId: { in: createdCoachProfileIds } } })
       .catch(() => {});
-    await cleanupRaw.planEnrollment
-      .deleteMany({ where: { planId: { in: createdPlanIds } } })
-      .catch(() => {});
     await cleanupRaw.trainingPlan
       .deleteMany({ where: { id: { in: createdPlanIds } } })
       .catch(() => {});
@@ -68,23 +64,13 @@ describe("coachingCoachDashboardApi — assignment-keyed counts", () => {
     createdPlanIds.length = 0;
   });
 
-  it("totalActiveAthletes counts assigned athletes independent of enrollment state", async () => {
+  it("totalActiveAthletes counts assigned athletes", async () => {
     const coach = await trackCoach();
     const a1 = await trackUser();
     const a2 = await trackUser();
     const a3 = await trackUser();
 
-    const plan = await trackPlan(coach.user.id, TrainingPlanStatus.ACTIVE, "Assigned Plan");
-
-    await cleanupRaw.planEnrollment.create({
-      data: {
-        planId: plan.id,
-        userId: a1.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: new Date(),
-      },
-    });
+    await trackPlan(coach.user.id, TrainingPlanStatus.ACTIVE, "Assigned Plan");
 
     await cleanupRaw.coachAthleteAssignment.createMany({
       data: [
@@ -104,17 +90,7 @@ describe("coachingCoachDashboardApi — assignment-keyed counts", () => {
     const coach = await trackCoach();
     const athlete = await trackUser();
 
-    const draftPlan = await trackPlan(coach.user.id, TrainingPlanStatus.DRAFT, "Draft Plan");
-
-    await cleanupRaw.planEnrollment.create({
-      data: {
-        planId: draftPlan.id,
-        userId: athlete.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: new Date(),
-      },
-    });
+    await trackPlan(coach.user.id, TrainingPlanStatus.DRAFT, "Draft Plan");
 
     await cleanupRaw.coachAthleteAssignment.create({
       data: { coachId: coach.profile.id, athleteId: athlete.id },
@@ -125,21 +101,11 @@ describe("coachingCoachDashboardApi — assignment-keyed counts", () => {
     expect(result.overview.activePlansCount).toBe(0);
   });
 
-  it("counts ACTIVE plans only", async () => {
+  it("counts ACTIVE plans created by the coach only", async () => {
     const coach = await trackCoach();
     const athlete = await trackUser();
 
-    const activePlan = await trackPlan(coach.user.id, TrainingPlanStatus.ACTIVE, "Active Plan");
-
-    await cleanupRaw.planEnrollment.create({
-      data: {
-        planId: activePlan.id,
-        userId: athlete.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: new Date(),
-      },
-    });
+    await trackPlan(coach.user.id, TrainingPlanStatus.ACTIVE, "Active Plan");
 
     await cleanupRaw.coachAthleteAssignment.create({
       data: { coachId: coach.profile.id, athleteId: athlete.id },

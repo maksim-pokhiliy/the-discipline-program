@@ -38,7 +38,7 @@ describe("lmsTrainingPlanApi — empty DB", () => {
     });
   });
 
-  describe("getPageData — coach with a plan that has no enrollments", () => {
+  describe("getPageData — coach with a plan that has no related rows", () => {
     let coach: Awaited<ReturnType<typeof createTestCoach>>;
     let plan: Awaited<ReturnType<typeof createTestPlan>>;
 
@@ -61,15 +61,13 @@ describe("lmsTrainingPlanApi — empty DB", () => {
       );
     });
 
-    it("returns plan with zeroed enrollment counter", async () => {
+    it("returns plan in page data", async () => {
       const result = await lmsTrainingPlanApi.getPageData(coach.user.id);
       const ourPlan = result.plans.find((p) => p.id === plan.id);
 
       if (!ourPlan) {
         throw new Error("Expected plan to be in results");
       }
-
-      expect(ourPlan.enrolledAthletesCount).toBe(0);
     });
 
     it("page data validates against response schema", async () => {

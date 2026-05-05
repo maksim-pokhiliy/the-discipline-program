@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { ActionItemSeverity, ActionItemType } from "@repo/contracts/coaching/coach-action-item";
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import {
@@ -22,8 +21,6 @@ describe("coachingCoachDashboardApi", () => {
   let activePlanId: string;
   let draftPlanId: string;
   let sessionId: string;
-
-  const enrollmentIds: string[] = [];
 
   beforeAll(async () => {
     coach = await createTestCoach();
@@ -50,30 +47,6 @@ describe("coachingCoachDashboardApi", () => {
     });
 
     draftPlanId = draftPlan.id;
-
-    const enrollment1 = await cleanupRaw.planEnrollment.create({
-      data: {
-        planId: activePlan.id,
-        userId: athlete1.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: new Date(),
-      },
-    });
-
-    enrollmentIds.push(enrollment1.id);
-
-    const enrollment2 = await cleanupRaw.planEnrollment.create({
-      data: {
-        planId: activePlan.id,
-        userId: athlete2.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: new Date(),
-      },
-    });
-
-    enrollmentIds.push(enrollment2.id);
 
     await cleanupRaw.coachAthleteAssignment.createMany({
       data: [
@@ -106,10 +79,6 @@ describe("coachingCoachDashboardApi", () => {
     await cleanupRaw.coachAthleteAssignment.deleteMany({
       where: { coachId: coach.profile.id },
     });
-
-    for (const eid of enrollmentIds) {
-      await cleanupRaw.planEnrollment.delete({ where: { id: eid } }).catch(() => {});
-    }
 
     await cleanupRaw.trainingPlan.delete({ where: { id: activePlanId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: draftPlanId } }).catch(() => {});
@@ -183,7 +152,16 @@ describe("coachingCoachDashboardApi", () => {
       }
     });
 
-    it("handles coach with no enrollments (empty state)", async () => {
+    it("returns null planId/planName for assigned athletes (post-rollback)", async () => {
+      const result = await coachingCoachDashboardApi.getDashboard(coach.user.id);
+
+      for (const summary of result.athletesSummary) {
+        expect(summary.planId).toBeNull();
+        expect(summary.planName).toBeNull();
+      }
+    });
+
+    it("handles coach with no athletes (empty state)", async () => {
       const result = await coachingCoachDashboardApi.getDashboard(emptyCoach.user.id);
 
       expect(result.overview.totalActiveAthletes).toBe(0);

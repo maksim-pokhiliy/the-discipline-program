@@ -13,8 +13,8 @@ const mockItem = (
   id: "item-1",
   coachId: "coach-1",
   athleteId: "athlete-1",
-  type: "NEW_NO_START",
-  severity: "INFO",
+  type: "MISSED_WORKOUTS",
+  severity: "WARNING",
   status: "OPEN",
   message: "Sample",
   metadata: null,
@@ -69,8 +69,8 @@ describe("closeOrphanedOpenItems (perf-004)", () => {
   it("groups by reason and issues one updateMany per reason bucket", async () => {
     const tx = makeTx();
     const openByKey = new Map<string, PrismaCoachActionItemRecord>([
-      ["NEW_NO_START:athlete-1", mockItem({ id: "open-1", athleteId: "athlete-1" })],
-      ["NEW_NO_START:athlete-2", mockItem({ id: "open-2", athleteId: "athlete-2" })],
+      ["MISSED_WORKOUTS:athlete-1", mockItem({ id: "open-1", athleteId: "athlete-1" })],
+      ["MISSED_WORKOUTS:athlete-2", mockItem({ id: "open-2", athleteId: "athlete-2" })],
       ["HEALTH_REPORT:athlete-3", mockItem({ id: "open-3", athleteId: "athlete-3" })],
     ]);
     const activeAthleteIds = new Set(["athlete-1"]);
@@ -89,7 +89,7 @@ describe("closeOrphanedOpenItems (perf-004)", () => {
     }>;
 
     const cleared = calls.find((c) => c.data.resolveReason === "AUTO_CONDITION_CLEARED");
-    const ended = calls.find((c) => c.data.resolveReason === "AUTO_ENROLLMENT_ENDED");
+    const ended = calls.find((c) => c.data.resolveReason === "AUTO_ASSIGNMENT_ENDED");
 
     expect(cleared?.where.id.in).toEqual(["open-1"]);
     expect(ended?.where.id.in).toEqual(expect.arrayContaining(["open-2", "open-3"]));

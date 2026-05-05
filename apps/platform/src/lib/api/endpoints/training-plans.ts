@@ -1,7 +1,5 @@
 import { type ApiClient } from "@repo/api-client";
 import type {
-  ApplyTemplateInput,
-  ApplyTemplateResponse,
   CoachPlansPageData,
   CreateTrainingPlanData,
   TrainingPlan,
@@ -23,9 +21,6 @@ export const createTrainingPlansAPI = (client: ApiClient) => ({
   delete: (id: string): Promise<void> =>
     client.requestNoContent(`/api/platform/training-plans/${id}`, "DELETE"),
 
-  duplicate: (id: string): Promise<TrainingPlan> =>
-    client.request(`/api/platform/training-plans/${id}/duplicate`, "POST"),
-
   archive: (id: string): Promise<TrainingPlan> =>
     client.request(`/api/platform/training-plans/${id}/archive`, "POST"),
 
@@ -34,7 +29,4 @@ export const createTrainingPlansAPI = (client: ApiClient) => ({
 
   activate: (id: string): Promise<TrainingPlan> =>
     client.request(`/api/platform/training-plans/${id}/activate`, "POST"),
-
-  applyTemplate: (planId: string, data: ApplyTemplateInput): Promise<ApplyTemplateResponse> =>
-    client.request(`/api/platform/training-plans/${planId}/apply-template`, "POST", data),
 });

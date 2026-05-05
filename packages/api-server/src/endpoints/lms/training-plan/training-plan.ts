@@ -1,7 +1,6 @@
 import { type Prisma, type TrainingPlan as PrismaTrainingPlan } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import {
   type CoachPlansPageData,
   type CreateTrainingPlanData,
@@ -17,23 +16,13 @@ import { prisma } from "../../../db/client";
 import { ROLE_MAP } from "../../../mappers/iam";
 import {
   mapToTrainingPlan,
-  PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP,
   TRAINING_PLAN_STATUS_MAP,
   TRAINING_PLAN_STATUS_TO_PRISMA_MAP,
 } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
-import { cloneWeeksIntoPlan } from "./plan-clone";
-
-type PlanWithStats = PrismaTrainingPlan & {
-  _count: { enrollments: number };
-};
-
-const mapToListItem = (p: PlanWithStats): TrainingPlanListItem => ({
-  ...mapToTrainingPlan(p),
-  enrolledAthletesCount: p._count.enrollments,
-});
+const mapToListItem = (p: PrismaTrainingPlan): TrainingPlanListItem => mapToTrainingPlan(p);
 
 const buildPlanFilter = async (userId: string): Promise<Prisma.TrainingPlanWhereInput> => {
   const user = await prisma.user.findUnique({
@@ -51,7 +40,7 @@ const buildPlanFilter = async (userId: string): Promise<Prisma.TrainingPlanWhere
 
   return {
     deletedAt: null,
-    OR: [{ creatorId: userId }, { coachAssignments: { some: { coachId: userId } } }],
+    creatorId: userId,
   };
 };
 
@@ -122,17 +111,6 @@ export const lmsTrainingPlanApi = {
       where,
       orderBy: { createdAt: "desc" },
       take: DEFAULT_LIST_LIMIT,
-      include: {
-        _count: {
-          select: {
-            enrollments: {
-              where: {
-                status: PLAN_ENROLLMENT_STATUS_TO_PRISMA_MAP[PlanEnrollmentStatus.ACTIVE],
-              },
-            },
-          },
-        },
-      },
     });
 
     return { plans: plans.map(mapToListItem) };
@@ -197,71 +175,6 @@ export const lmsTrainingPlanApi = {
       await prisma.trainingPlan.delete({ where: { id } });
     } catch (error) {
       return handlePrismaError(error, { entity: "Training plan" });
-    }
-  },
-
-  duplicate: async (userId: string, id: string): Promise<TrainingPlan> => {
-    await verifyPlanOwnership(id, userId);
-
-    const source = await findOrThrow(
-      prisma.trainingPlan.findUnique({
-        where: { id },
-        include: {
-          weeks: {
-            orderBy: { index: "asc" },
-            include: {
-              days: {
-                orderBy: { dayOfWeek: "asc" },
-                include: {
-                  sessions: {
-                    orderBy: { order: "asc" },
-                    include: {
-                      blocks: {
-                        orderBy: { order: "asc" },
-                        include: {
-                          segments: {
-                            orderBy: { order: "asc" },
-                            include: {
-                              setGroups: {
-                                orderBy: { order: "asc" },
-                                include: { entries: { orderBy: { order: "asc" } } },
-                              },
-                            },
-                          },
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      }),
-      "Training plan",
-    );
-
-    try {
-      const plan = await prisma.$transaction(async (tx) => {
-        const created = await tx.trainingPlan.create({
-          data: {
-            creatorId: userId,
-            name: `Copy of ${source.name}`,
-            description: source.description,
-            status: TRAINING_PLAN_STATUS_TO_PRISMA_MAP[TrainingPlanStatus.DRAFT],
-            originalPlanId: source.id,
-            licensable: source.licensable,
-          },
-        });
-
-        await cloneWeeksIntoPlan(tx, created.id, source.weeks);
-
-        return created;
-      });
-
-      return mapToTrainingPlan(plan);
-    } catch (error) {
-      return handlePrismaError(error, { entity: "Training plan", field: "name" });
     }
   },
 

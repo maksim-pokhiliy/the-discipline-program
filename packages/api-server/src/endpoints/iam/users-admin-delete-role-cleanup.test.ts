@@ -63,7 +63,7 @@ describe("iamUserAdminApi.deleteUser — role-cleanup side effects", () => {
       });
 
       expect(reloadedItem?.status).toBe(ActionItemStatus.RESOLVED);
-      expect(reloadedItem?.resolveReason).toBe(ActionItemResolveReason.AUTO_ENROLLMENT_ENDED);
+      expect(reloadedItem?.resolveReason).toBe(ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED);
       expect(reloadedItem?.resolvedAt).toBeInstanceOf(Date);
     } finally {
       await cleanupRaw.coachActionItem
@@ -112,7 +112,7 @@ describe("iamUserAdminApi.deleteUser — role-cleanup side effects", () => {
       });
 
       expect(reloadedItem?.status).toBe(ActionItemStatus.RESOLVED);
-      expect(reloadedItem?.resolveReason).toBe(ActionItemResolveReason.AUTO_ENROLLMENT_ENDED);
+      expect(reloadedItem?.resolveReason).toBe(ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED);
     } finally {
       await cleanupRaw.coachActionItem
         .deleteMany({ where: { athleteId: athleteTarget.id } })

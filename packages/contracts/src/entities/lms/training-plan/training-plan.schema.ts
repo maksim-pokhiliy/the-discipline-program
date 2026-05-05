@@ -10,8 +10,6 @@ export const trainingPlanSchema = z.object({
   name: z.string().min(1).max(TRAINING_PLAN_CONSTANTS.MAX_NAME_LENGTH),
   description: z.string().nullable(),
   status: trainingPlanStatusSchema,
-  licensable: z.boolean(),
-  originalPlanId: z.string().cuid().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -26,6 +24,4 @@ export const updateTrainingPlanSchema = z.object({
   description: z.string().max(TRAINING_PLAN_CONSTANTS.MAX_DESCRIPTION_LENGTH).nullable().optional(),
 });
 
-export const trainingPlanListItemSchema = trainingPlanSchema.extend({
-  enrolledAthletesCount: z.number().int().nonnegative(),
-});
+export const trainingPlanListItemSchema = trainingPlanSchema;

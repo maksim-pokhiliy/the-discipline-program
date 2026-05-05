@@ -15,7 +15,6 @@ import {
   useActivateTrainingPlan,
   useArchiveTrainingPlan,
   useDeleteTrainingPlan,
-  useDuplicateTrainingPlan,
   useRestoreTrainingPlan,
 } from "@app/lib/hooks";
 
@@ -61,7 +60,6 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
   const activate = useActivateTrainingPlan();
   const archive = useArchiveTrainingPlan();
   const restore = useRestoreTrainingPlan();
-  const duplicate = useDuplicateTrainingPlan();
   const deletePlan = useDeleteTrainingPlan();
 
   const isPlanPending = useCallback(
@@ -69,9 +67,8 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
       (activate.isPending && activate.variables === planId) ||
       (archive.isPending && archive.variables === planId) ||
       (restore.isPending && restore.variables === planId) ||
-      (duplicate.isPending && duplicate.variables === planId) ||
       (deletePlan.isPending && deletePlan.variables === planId),
-    [activate, archive, restore, duplicate, deletePlan],
+    [activate, archive, restore, deletePlan],
   );
 
   const counts = useMemo(() => {
@@ -122,7 +119,6 @@ export const PlansListSection: React.FC<PlansListSectionProps> = ({ plans, onCre
               onActivate={(id) => activate.mutate(id)}
               onArchive={(id) => archive.mutateAsync(id).then(() => undefined)}
               onRestore={(id) => restore.mutate(id)}
-              onDuplicate={(id) => duplicate.mutate(id)}
               onDelete={(id) => deletePlan.mutateAsync(id).then(() => undefined)}
               isPending={isPlanPending(plan.id)}
             />

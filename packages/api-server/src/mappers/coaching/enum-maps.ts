@@ -39,13 +39,11 @@ export const HEALTH_STATUS_TO_PRISMA_MAP: Record<HealthStatus, PrismaHealthStatu
 
 export const ACTION_ITEM_TYPE_MAP: Record<PrismaActionItemType, ActionItemType> = {
   MISSED_WORKOUTS: ActionItemType.MISSED_WORKOUTS,
-  NEW_NO_START: ActionItemType.NEW_NO_START,
   HEALTH_REPORT: ActionItemType.HEALTH_REPORT,
 };
 
 export const ACTION_ITEM_TYPE_TO_PRISMA_MAP: Record<ActionItemType, PrismaActionItemType> = {
   [ActionItemType.MISSED_WORKOUTS]: PrismaActionItemType.MISSED_WORKOUTS,
-  [ActionItemType.NEW_NO_START]: PrismaActionItemType.NEW_NO_START,
   [ActionItemType.HEALTH_REPORT]: PrismaActionItemType.HEALTH_REPORT,
 };
 
@@ -79,7 +77,7 @@ export const ACTION_ITEM_RESOLVE_REASON_MAP: Record<
   ActionItemResolveReason
 > = {
   AUTO_CONDITION_CLEARED: ActionItemResolveReason.AUTO_CONDITION_CLEARED,
-  AUTO_ENROLLMENT_ENDED: ActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
+  AUTO_ASSIGNMENT_ENDED: ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED,
   MANUAL_CONTACTED: ActionItemResolveReason.MANUAL_CONTACTED,
 };
 
@@ -89,7 +87,7 @@ export const ACTION_ITEM_RESOLVE_REASON_TO_PRISMA_MAP: Record<
 > = {
   [ActionItemResolveReason.AUTO_CONDITION_CLEARED]:
     PrismaActionItemResolveReason.AUTO_CONDITION_CLEARED,
-  [ActionItemResolveReason.AUTO_ENROLLMENT_ENDED]:
-    PrismaActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
+  [ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED]:
+    PrismaActionItemResolveReason.AUTO_ASSIGNMENT_ENDED,
   [ActionItemResolveReason.MANUAL_CONTACTED]: PrismaActionItemResolveReason.MANUAL_CONTACTED,
 };

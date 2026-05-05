@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ForbiddenError } from "@repo/errors";
 
@@ -65,7 +64,7 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
     for (const athlete of result.athletes) {
       expect(athlete.userId).toBeDefined();
       expect(athlete.email).toBeDefined();
-      expect(athlete.activePlans.length).toBeGreaterThanOrEqual(1);
+      expect(athlete.activePlans).toEqual([]);
       expect(athlete.processStatus).toBeDefined();
       expect(athlete.enrolledSince).toBeInstanceOf(Date);
       expect(typeof athlete.openActionItemsCount).toBe("number");
@@ -95,18 +94,8 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
     );
   });
 
-  it("does not include athletes from another coach's plans", async () => {
+  it("scopes athletes to assignments only — does not see another coach's athletes", async () => {
     const athleteForB = await createTestUser();
-
-    const enrollment = await cleanupRaw.planEnrollment.create({
-      data: {
-        planId: planB.id,
-        userId: athleteForB.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: new Date(),
-      },
-    });
 
     const assignmentForB = await cleanupRaw.coachAthleteAssignment.create({
       data: { coachId: coachB.profile.id, athleteId: athleteForB.id },
@@ -125,49 +114,11 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
 
     await cleanup(
       { table: "coachAthleteAssignment", id: assignmentForB.id },
-      { table: "planEnrollment", id: enrollment.id },
       { table: "user", id: athleteForB.id },
     );
   });
 
-  it("aggregates plans when athlete is enrolled in multiple plans of the same coach", async () => {
-    const secondPlan = await createTestPlan(scenario.coach.user.id, {
-      status: TrainingPlanStatus.ACTIVE,
-    });
-
-    const firstAthlete = scenario.athletes[0];
-
-    if (!firstAthlete) {
-      throw new Error("Expected at least one athlete in scenario");
-    }
-
-    const secondEnrollment = await cleanupRaw.planEnrollment.create({
-      data: {
-        planId: secondPlan.id,
-        userId: firstAthlete.user.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: new Date(),
-      },
-    });
-
-    const result = await coachingCoachAthletesApi.getAthletes(scenario.coach.user.id);
-
-    const athleteEntry = result.athletes.find((a) => a.userId === firstAthlete.user.id);
-
-    if (!athleteEntry) {
-      throw new Error("Expected athlete to be in results");
-    }
-
-    expect(athleteEntry.activePlans.length).toBeGreaterThanOrEqual(2);
-
-    await cleanup(
-      { table: "planEnrollment", id: secondEnrollment.id },
-      { table: "trainingPlan", id: secondPlan.id },
-    );
-  });
-
-  it("includes assigned athletes with zero active enrollments", async () => {
+  it("includes assigned athletes (active plans always empty post-rollback)", async () => {
     const assignedOnlyUser = await createTestUser();
     const assignment = await cleanupRaw.coachAthleteAssignment.create({
       data: { coachId: scenario.coach.profile.id, athleteId: assignedOnlyUser.id },
@@ -192,7 +143,7 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
     }
   });
 
-  it("does not include enrolled-but-not-assigned athletes", async () => {
+  it("does not include unassigned athletes", async () => {
     const unassignedScenario = await createTestScenario({
       planOverrides: { status: TrainingPlanStatus.ACTIVE },
       athleteCount: 1,
@@ -212,43 +163,6 @@ describe("coachingCoachAthletesApi.getAthletes", () => {
       expect(result.summary.active).toBe(0);
     } finally {
       await cleanup(...unassignedScenario.toCleanup);
-    }
-  });
-
-  it("does not include active plans from DRAFT plans", async () => {
-    const draftPlan = await createTestPlan(scenario.coach.user.id, {
-      status: TrainingPlanStatus.DRAFT,
-    });
-    const draftAthlete = await createTestUser();
-
-    const draftEnrollment = await cleanupRaw.planEnrollment.create({
-      data: {
-        planId: draftPlan.id,
-        userId: draftAthlete.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: new Date(),
-      },
-    });
-
-    const assignment = await cleanupRaw.coachAthleteAssignment.create({
-      data: { coachId: scenario.coach.profile.id, athleteId: draftAthlete.id },
-    });
-
-    try {
-      const result = await coachingCoachAthletesApi.getAthletes(scenario.coach.user.id);
-
-      const entry = result.athletes.find((a) => a.userId === draftAthlete.id);
-
-      expect(entry).toBeDefined();
-      expect(entry?.activePlans).toEqual([]);
-    } finally {
-      await cleanup(
-        { table: "coachAthleteAssignment", id: assignment.id },
-        { table: "planEnrollment", id: draftEnrollment.id },
-        { table: "trainingPlan", id: draftPlan.id },
-        { table: "user", id: draftAthlete.id },
-      );
     }
   });
 

@@ -1,8 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
-import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
+import { trainingPlanListItemSchema, TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
 import { cleanupRaw, createTestCoach, createTestUser } from "../../../test/helpers";
@@ -33,16 +32,6 @@ describe("lmsTrainingPlanApi", () => {
 
     planId = plan.id;
 
-    await cleanupRaw.planEnrollment.create({
-      data: {
-        planId: plan.id,
-        userId: athlete.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: new Date(),
-      },
-    });
-
     const coach2Plan = await cleanupRaw.trainingPlan.create({
       data: {
         creatorId: coach2.user.id,
@@ -54,16 +43,6 @@ describe("lmsTrainingPlanApi", () => {
   });
 
   afterAll(async () => {
-    await cleanupRaw.planEnrollment.deleteMany({ where: { planId } });
-
-    const duplicatedPlans = await cleanupRaw.trainingPlan.findMany({
-      where: { creatorId: coach.user.id, name: { startsWith: "Copy of" } },
-    });
-
-    for (const dp of duplicatedPlans) {
-      await cleanupRaw.trainingPlan.delete({ where: { id: dp.id } }).catch(() => {});
-    }
-
     await cleanupRaw.trainingPlan.delete({ where: { id: planId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: coach2PlanId } }).catch(() => {});
     await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
@@ -74,7 +53,7 @@ describe("lmsTrainingPlanApi", () => {
   });
 
   describe("getPageData", () => {
-    it("returns plans visible to the creator with enrolled count", async () => {
+    it("returns plans visible to the creator and matches list-item schema", async () => {
       const result = await lmsTrainingPlanApi.getPageData(coach.user.id);
 
       expect(result.plans.length).toBeGreaterThanOrEqual(1);
@@ -82,7 +61,10 @@ describe("lmsTrainingPlanApi", () => {
       const ourPlan = result.plans.find((p) => p.id === planId);
 
       expect(ourPlan).toBeDefined();
-      expect(ourPlan?.enrolledAthletesCount).toBe(1);
+
+      const parsed = trainingPlanListItemSchema.safeParse(ourPlan);
+
+      expect(parsed.success).toBe(true);
     });
 
     it("does not list plans owned by another coach", async () => {
@@ -92,90 +74,25 @@ describe("lmsTrainingPlanApi", () => {
     });
   });
 
-  describe("duplicate", () => {
-    it("creates a copy with 'Copy of' prefix", async () => {
-      const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
-
-      expect(copy.name).toBe("Copy of Original Plan");
-    });
-
-    it("new plan is DRAFT status regardless of source status", async () => {
-      const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
-
-      expect(copy.status).toBe(TrainingPlanStatus.DRAFT);
-    });
-
-    it("references the source plan via originalPlanId", async () => {
-      const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
-
-      expect(copy.originalPlanId).toBe(planId);
-    });
-
-    it("does NOT copy enrollments", async () => {
-      const copy = await lmsTrainingPlanApi.duplicate(coach.user.id, planId);
-
-      const enrollments = await cleanupRaw.planEnrollment.findMany({
-        where: { planId: copy.id },
-      });
-
-      expect(enrollments).toHaveLength(0);
-    });
-  });
-
   describe("delete", () => {
-    it("soft-deletes the plan but preserves enrollment history and product links", async () => {
+    it("soft-deletes the plan and hides it from list endpoints", async () => {
       const localCoach = await createTestCoach();
-      const localAthlete = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE] });
       const localPlan = await cleanupRaw.trainingPlan.create({
         data: { creatorId: localCoach.user.id, name: "Plan To Delete" },
-      });
-      const enrollment = await cleanupRaw.planEnrollment.create({
-        data: {
-          planId: localPlan.id,
-          userId: localAthlete.id,
-          status: PlanEnrollmentStatus.ACTIVE,
-          startedAtWeekIndex: 0,
-          startedOnDate: new Date(),
-        },
-      });
-      const product = await cleanupRaw.product.create({
-        data: {
-          slug: `prod-${localPlan.id}`,
-          title: "Linked Product",
-          description: "Product linked to the plan being deleted",
-          trainingPlanId: localPlan.id,
-        },
       });
 
       try {
         await lmsTrainingPlanApi.delete(localCoach.user.id, localPlan.id);
 
-        const planAfter = await cleanupRaw.trainingPlan.findUnique({
-          where: { id: localPlan.id },
-          select: { deletedAt: true },
-        });
-        const enrollmentAfter = await cleanupRaw.planEnrollment.findUnique({
-          where: { id: enrollment.id },
-          select: { id: true, planId: true },
-        });
-        const productAfter = await cleanupRaw.product.findUnique({
-          where: { id: product.id },
-          select: { trainingPlanId: true },
-        });
+        const after = await lmsTrainingPlanApi.getAll(localCoach.user.id);
 
-        expect(planAfter?.deletedAt).toBeInstanceOf(Date);
-        expect(enrollmentAfter).not.toBeNull();
-        expect(enrollmentAfter?.planId).toBe(localPlan.id);
-        expect(productAfter?.trainingPlanId).toBe(localPlan.id);
+        expect(after.find((p) => p.id === localPlan.id)).toBeUndefined();
       } finally {
-        await cleanupRaw.product.delete({ where: { id: product.id } }).catch(() => {});
-        await cleanupRaw.planEnrollment.delete({ where: { id: enrollment.id } }).catch(() => {});
         await cleanupRaw.trainingPlan.delete({ where: { id: localPlan.id } }).catch(() => {});
         await cleanupRaw.coachProfile
           .delete({ where: { id: localCoach.profile.id } })
           .catch(() => {});
         await cleanupRaw.user.delete({ where: { id: localCoach.user.id } }).catch(() => {});
-        await cleanupRaw.user.delete({ where: { id: localAthlete.id } }).catch(() => {});
       }
     });
   });

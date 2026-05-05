@@ -20,7 +20,6 @@ export const mapToProduct = (p: ProductWithPrices): Product => ({
   title: p.title,
   description: p.description,
   features: p.features,
-  trainingPlanId: p.trainingPlanId,
   isFeatured: p.isFeatured,
   isActive: p.isActive,
   prices: p.prices.map(mapToPrice),

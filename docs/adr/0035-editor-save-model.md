@@ -1,5 +1,7 @@
 # 0035. Editor save model — explicit edit sessions, no blur-autosave
 
+> **[SUPERSEDED]** by ADR-0037 on 2026-05-03 — the entire plan-editor (`apps/platform/src/modules/plan-editor/`), the `useEditSession` reducer + provider, the `<SaveIndicator>`, the bulk-patch endpoint, the per-entity full-entity PUTs, and the `version` columns on `Block` / `BlockSegment` / `ExerciseEntry` were all deleted when the plan-editor / library / templates feature was rolled back. The Edit Session pattern has nothing to govern — there is no editor. The plan-detail blur-autosave carve-out (TrainingPlan.name/description/status) is also gone since the detail page is now a placeholder. Re-implementation will revisit the save model alongside the editor itself.
+
 - **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `lms`, `editor`, `ux`, `data-integrity`

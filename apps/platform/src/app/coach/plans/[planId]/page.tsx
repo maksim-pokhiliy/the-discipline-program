@@ -1,18 +1,12 @@
-import { SuspenseWrapper } from "@repo/ui";
+import { Stack } from "@mui/material";
 
-import { PlanEditorLoader } from "./plan-editor-loader";
+import { PageHeader } from "@repo/ui";
 
-type PlanDetailPageProps = {
-  params: Promise<{ planId: string }>;
-};
-
-const PlanDetailPage = async ({ params }: PlanDetailPageProps) => {
-  const { planId } = await params;
-
+const PlanDetailPage = () => {
   return (
-    <SuspenseWrapper>
-      <PlanEditorLoader planId={planId} />
-    </SuspenseWrapper>
+    <Stack>
+      <PageHeader title="Plan" backHref="/coach/plans" />
+    </Stack>
   );
 };
 

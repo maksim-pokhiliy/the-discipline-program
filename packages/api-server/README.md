@@ -9,7 +9,6 @@ Subpath exports per bounded context — consumers must import from a subpath, no
 ```ts
 import {} from /* CMS endpoints */ "@repo/api-server/cms";
 import {} from /* LMS endpoints */ "@repo/api-server/lms";
-import { lmsApplyTemplate } from "@repo/api-server/lms/apply-template";
 import {} from /* coaching endpoints */ "@repo/api-server/coaching";
 import {} from /* IAM endpoints */ "@repo/api-server/iam";
 import {} from /* storage endpoints */ "@repo/api-server/storage";
@@ -17,14 +16,12 @@ import {} from /* ops endpoints */ "@repo/api-server/ops";
 import {} from /* monitoring */ "@repo/api-server/infrastructure/monitoring";
 ```
 
-LMS template-specific subpaths: `block-kind`, `scheme-template`, `block-template`, `session-template`, `week-template`, `exercise-library-item`, `apply-template`, `pr-evaluator`.
-
 ## Layout
 
 ```
 src/
   endpoints/<context>/  Per-context endpoint modules; barrel re-exports each entity API
-  services/<context>/   Cross-entity orchestration (apply-template, pr-evaluator)
+  services/<context>/   Cross-entity orchestration helpers
   infrastructure/       Cache, email port, monitoring, payment, queue ports
   db/                   Prisma client + soft-delete extension (client.ts)
 prisma/                 schema.prisma + seed.ts + seed-pages.ts
@@ -47,4 +44,5 @@ scripts/                apply-sql-checks.ts (DB-level CHECK constraints)
 - [ADR 0003 — Prisma as ORM](../../docs/adr/0003-prisma-as-orm.md)
 - [ADR 0007 — Prisma client isolated in api-server](../../docs/adr/0007-prisma-client-isolated-in-api-server.md)
 - [ADR 0009 — soft delete via Prisma extension](../../docs/adr/0009-soft-delete-via-prisma-extension.md)
-- [ADR 0017 — Anemic domain model acceptable pre-product](../../docs/adr/0017-anemic-domain-model-acceptable-pre-product.md) and [ADR 0028 — service layer for LMS](../../docs/adr/0028-service-layer-for-lms-operations.md) (partial supersession for LMS).
+- [ADR 0017 — Anemic domain model acceptable pre-product](../../docs/adr/0017-anemic-domain-model-acceptable-pre-product.md)
+- [ADR 0037 — plan editor and library rollback](../../docs/adr/0037-plan-editor-and-library-rollback.md)

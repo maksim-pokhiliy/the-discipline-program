@@ -2,18 +2,14 @@ import type { WorkoutSession } from "@prisma/client";
 
 import {
   cleanup,
-  cleanupRaw,
   createTestAssignment,
   createTestCoach,
-  createTestEnrollment,
-  createTestPlan,
   createTestUser,
   createTestWorkoutSession,
 } from "../../test/helpers";
 
 export type AthleteWithSessions = {
   athleteId: string;
-  enrollmentId: string;
   sessions: WorkoutSession[];
   toCleanup: { table: string; id: string }[];
 };
@@ -23,7 +19,6 @@ export const createAthleteWithSessions = async (
   options: {
     sessionsCount?: number;
     completionRatios?: number[];
-    enrollmentId?: string;
     weekOffsets?: number[];
   } = {},
 ): Promise<AthleteWithSessions> => {
@@ -39,22 +34,6 @@ export const createAthleteWithSessions = async (
 
   toCleanup.push({ table: "coachAthleteAssignment", id: assignment.id });
 
-  let enrollmentId = options.enrollmentId;
-
-  if (!enrollmentId) {
-    const coachUser = await cleanupRaw.coachProfile.findUnique({ where: { id: coachId } });
-    const creatorId = coachUser?.userId ?? athleteUser.id;
-    const plan = await createTestPlan(creatorId);
-
-    toCleanup.push({ table: "trainingPlan", id: plan.id });
-
-    const enrollment = await createTestEnrollment(plan.id, athleteUser.id);
-
-    enrollmentId = enrollment.id;
-
-    toCleanup.push({ table: "planEnrollment", id: enrollmentId });
-  }
-
   const MS_PER_DAY = 86_400_000;
   const sessions: WorkoutSession[] = [];
 
@@ -65,7 +44,6 @@ export const createAthleteWithSessions = async (
 
     const session = await createTestWorkoutSession({
       userId: athleteUser.id,
-      enrollmentId,
       overrides: {
         startedAt: sessionDate,
         completedAt: sessionDate,
@@ -79,7 +57,6 @@ export const createAthleteWithSessions = async (
 
   return {
     athleteId: athleteUser.id,
-    enrollmentId,
     sessions,
     toCleanup,
   };

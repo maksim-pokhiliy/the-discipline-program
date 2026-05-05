@@ -28,8 +28,6 @@ const conditionMatchesResolved = (
   }
 
   switch (condition.type) {
-    case ActionItemType.NEW_NO_START:
-      return condition.metadata.enrollmentId === resolvedMetadata.enrollmentId;
     case ActionItemType.HEALTH_REPORT:
       return condition.metadata.healthStatus === resolvedMetadata.healthStatus;
     case ActionItemType.MISSED_WORKOUTS:
@@ -184,7 +182,7 @@ const groupOrphanIdsByReason = (
 
     const reason = activeAthleteIds.has(athleteId)
       ? ActionItemResolveReason.AUTO_CONDITION_CLEARED
-      : ActionItemResolveReason.AUTO_ENROLLMENT_ENDED;
+      : ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED;
 
     const bucket = idsByReason.get(reason);
 

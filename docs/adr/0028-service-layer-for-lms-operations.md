@@ -1,5 +1,7 @@
 # 0028. Service layer for LMS operations (partially supersedes ADR-0017)
 
+> **[SUPERSEDED]** by ADR-0037 on 2026-05-03 — every LMS authoring service (`apply-template`, `plan-override-resolver`, `derive-exercise-snapshot`, `plan-snapshot-creator`, `library-search`, `program-parser`) was deleted when the plan-editor / library / templates feature was rolled back. `weekly-volume-aggregator` and `pr-evaluator` survive as stubs returning empty results (athlete-log endpoints preserve their typed contracts but the FK to `ExerciseLibraryItem` is gone). The "extract a service when an op is called from 2+ places / spans aggregates / runs from cron" trigger criteria from ADR-0017 still apply globally; the LMS-specific carve-out documented here no longer has a domain to govern.
+
 - **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `architecture`, `lms`, `services`

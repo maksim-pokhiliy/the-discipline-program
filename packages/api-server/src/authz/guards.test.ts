@@ -19,7 +19,7 @@ describe("platform guards", () => {
   let regularUser: Awaited<ReturnType<typeof createTestUser>>;
   let plan: Awaited<ReturnType<typeof createTestPlan>>;
   let athleteUser: Awaited<ReturnType<typeof createTestUser>>;
-  let nonEnrolledUser: Awaited<ReturnType<typeof createTestUser>>;
+  let nonAssignedUser: Awaited<ReturnType<typeof createTestUser>>;
   let headCoachUser: Awaited<ReturnType<typeof createTestUser>>;
   let assignmentId: string;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
@@ -30,7 +30,7 @@ describe("platform guards", () => {
     otherCoach = await createTestCoach();
     regularUser = await createTestUser();
     athleteUser = await createTestUser();
-    nonEnrolledUser = await createTestUser();
+    nonAssignedUser = await createTestUser();
 
     const preexisting = await cleanupRaw.user.findMany({
       where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
@@ -67,7 +67,7 @@ describe("platform guards", () => {
       { table: "user", id: otherCoach.user.id },
       { table: "user", id: regularUser.id },
       { table: "user", id: athleteUser.id },
-      { table: "user", id: nonEnrolledUser.id },
+      { table: "user", id: nonAssignedUser.id },
       { table: "user", id: headCoachUser.id },
     );
   });
@@ -111,56 +111,15 @@ describe("platform guards", () => {
       );
     });
 
-    it("does not throw when user has plan-coach-assignment", async () => {
-      const assignment = await cleanupRaw.planCoachAssignment.create({
-        data: {
-          planId: plan.id,
-          coachId: otherCoach.user.id,
-          grantedBy: coach.user.id,
-        },
-      });
-
-      try {
-        await expect(verifyPlanOwnership(plan.id, otherCoach.user.id)).resolves.toBeUndefined();
-      } finally {
-        await cleanupRaw.planCoachAssignment.delete({ where: { id: assignment.id } });
-      }
+    it("does not throw for HEAD_COACH on any plan", async () => {
+      await expect(verifyPlanOwnership(plan.id, headCoachUser.id)).resolves.toBeUndefined();
     });
 
-    it("does not throw for HEAD_COACH linked via coach-athlete assignment to enrolled athlete", async () => {
-      const headCoachProfile = await cleanupRaw.coachProfile.create({
-        data: { userId: headCoachUser.id },
-      });
-      const headCoachAssignment = await cleanupRaw.coachAthleteAssignment.create({
-        data: { coachId: headCoachProfile.id, athleteId: athleteUser.id },
-      });
-      const enrollment = await cleanupRaw.planEnrollment.create({
-        data: {
-          planId: plan.id,
-          userId: athleteUser.id,
-          startedAtWeekIndex: 0,
-          startedOnDate: new Date(),
-        },
-      });
-
-      try {
-        await expect(verifyPlanOwnership(plan.id, headCoachUser.id)).resolves.toBeUndefined();
-      } finally {
-        await cleanupRaw.planEnrollment.delete({ where: { id: enrollment.id } });
-        await cleanupRaw.coachAthleteAssignment.delete({ where: { id: headCoachAssignment.id } });
-        await cleanupRaw.coachProfile.delete({ where: { id: headCoachProfile.id } });
-      }
-    });
-
-    it("throws ForbiddenError for HEAD_COACH without linkage to plan's athletes", async () => {
-      await expect(verifyPlanOwnership(plan.id, headCoachUser.id)).rejects.toThrow(ForbiddenError);
-    });
-
-    it("throws ForbiddenError for ADMIN without coach-athlete linkage or plan-coach-assignment", async () => {
+    it("does not throw for ADMIN on any plan", async () => {
       const adminUser = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
 
       try {
-        await expect(verifyPlanOwnership(plan.id, adminUser.id)).rejects.toThrow(ForbiddenError);
+        await expect(verifyPlanOwnership(plan.id, adminUser.id)).resolves.toBeUndefined();
       } finally {
         await cleanupRaw.user.delete({ where: { id: adminUser.id } });
       }
@@ -194,7 +153,7 @@ describe("platform guards", () => {
 
     it("throws ForbiddenError for non-assigned athlete", async () => {
       await expect(
-        verifyAthleteBelongsToCoach(nonEnrolledUser.id, coach.profile.id),
+        verifyAthleteBelongsToCoach(nonAssignedUser.id, coach.profile.id),
       ).rejects.toThrow(ForbiddenError);
     });
   });

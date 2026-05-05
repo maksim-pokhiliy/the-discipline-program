@@ -16,10 +16,6 @@ export const missedWorkoutsMetadataSchema = z.object({
   lastActivityDate: z.string(),
 });
 
-export const newNoStartMetadataSchema = z.object({
-  enrollmentId: z.string().cuid(),
-});
-
 export const healthReportMetadataSchema = z.object({
   healthStatus: z.string(),
 });
@@ -32,9 +28,7 @@ export const coachActionItemSchema = z.object({
   severity: actionItemSeveritySchema,
   status: actionItemStatusSchema,
   message: z.string(),
-  metadata: z
-    .union([missedWorkoutsMetadataSchema, newNoStartMetadataSchema, healthReportMetadataSchema])
-    .nullable(),
+  metadata: z.union([missedWorkoutsMetadataSchema, healthReportMetadataSchema]).nullable(),
   resolvedAt: z.date().nullable(),
   resolveReason: actionItemResolveReasonSchema.nullable(),
   createdAt: z.date(),

@@ -1,5 +1,7 @@
 # 0030. Exercise library snapshot strategy — hybrid FK + immutable JSON
 
+> **[SUPERSEDED]** by ADR-0037 on 2026-05-03 — the `ExerciseLibraryItem` model was deleted and every FK to it (`ExerciseEntry.exerciseId`, `ExerciseLog.exerciseId`, `Benchmark.exerciseId`, `PersonalRecord.exerciseId`, `SetLog.prescribed.exerciseId`) was dropped along with the authoring surface. The hybrid FK + immutable JSON pattern has nothing left to apply to. `ExerciseLog.exerciseSnapshot` JSON column is preserved as the only displayable identity athlete logs retain, but it is now disconnected from any library (snapshot-without-FK; the analytics use case the hybrid was built to serve is gone with the library). Re-implementation will need to revisit the snapshot vs FK trade-off from scratch.
+
 - **Status:** Accepted
 - **Date:** 2026-04-26
 - **Tags:** `lms`, `data-modeling`, `analytics`

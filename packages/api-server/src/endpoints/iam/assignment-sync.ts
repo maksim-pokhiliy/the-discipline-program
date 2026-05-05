@@ -51,7 +51,7 @@ export const syncAthleteAssignments = async (
       data: {
         status: PrismaActionItemStatus.RESOLVED,
         resolvedAt: new Date(),
-        resolveReason: PrismaActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
+        resolveReason: PrismaActionItemResolveReason.AUTO_ASSIGNMENT_ENDED,
       },
     });
   }
@@ -73,7 +73,7 @@ export const closeAthleteActionItemsBulk = async (
     data: {
       status: PrismaActionItemStatus.RESOLVED,
       resolvedAt: new Date(),
-      resolveReason: PrismaActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
+      resolveReason: PrismaActionItemResolveReason.AUTO_ASSIGNMENT_ENDED,
     },
   });
 };
@@ -96,7 +96,7 @@ export const closeCoachActionItemsBulk = async (
     data: {
       status: PrismaActionItemStatus.RESOLVED,
       resolvedAt: new Date(),
-      resolveReason: PrismaActionItemResolveReason.AUTO_ENROLLMENT_ENDED,
+      resolveReason: PrismaActionItemResolveReason.AUTO_ASSIGNMENT_ENDED,
     },
   });
 };

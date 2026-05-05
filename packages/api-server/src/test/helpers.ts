@@ -2,7 +2,6 @@ import {
   type AthleteProfile,
   type CoachAthleteAssignment,
   type CoachProfile,
-  type PlanEnrollment,
   type Prisma,
   PrismaClient,
   type TrainingPlan,
@@ -50,22 +49,6 @@ export const createTestPlan = async (
     data: {
       creatorId: creatorUserId,
       name: `Test Plan ${crypto.randomUUID().slice(0, 8)}`,
-      ...overrides,
-    },
-  });
-};
-
-export const createTestEnrollment = async (
-  planId: string,
-  userId: string,
-  overrides: Partial<Prisma.PlanEnrollmentUncheckedCreateInput> = {},
-) => {
-  return rawPrisma.planEnrollment.create({
-    data: {
-      planId,
-      userId,
-      startedAtWeekIndex: 0,
-      startedOnDate: new Date(),
       ...overrides,
     },
   });
@@ -154,7 +137,6 @@ export type TestScenario = {
   plan: TrainingPlan;
   athletes: {
     user: User;
-    enrollment: PlanEnrollment;
     assignment: CoachAthleteAssignment | null;
     profile?: AthleteProfile;
   }[];
@@ -194,10 +176,6 @@ export const createTestScenario = async (options?: {
 
     toCleanup.push({ table: "user", id: user.id });
 
-    const enrollment = await createTestEnrollment(plan.id, user.id);
-
-    toCleanup.push({ table: "planEnrollment", id: enrollment.id });
-
     let assignment: CoachAthleteAssignment | null = null;
 
     if (withAssignments) {
@@ -212,7 +190,7 @@ export const createTestScenario = async (options?: {
       toCleanup.push({ table: "athleteProfile", id: profile.id });
     }
 
-    athletes.push({ user, enrollment, assignment, ...(profile && { profile }) });
+    athletes.push({ user, assignment, ...(profile && { profile }) });
   }
 
   return { coach, plan, athletes, toCleanup };

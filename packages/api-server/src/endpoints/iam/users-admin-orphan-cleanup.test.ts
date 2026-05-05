@@ -89,7 +89,7 @@ describe("iamUserAdminApi — orphan action-item cleanup", () => {
       });
 
       expect(reloadedA?.status).toBe(ActionItemStatus.RESOLVED);
-      expect(reloadedA?.resolveReason).toBe(ActionItemResolveReason.AUTO_ENROLLMENT_ENDED);
+      expect(reloadedA?.resolveReason).toBe(ActionItemResolveReason.AUTO_ASSIGNMENT_ENDED);
       expect(reloadedA?.resolvedAt).toBeInstanceOf(Date);
 
       expect(reloadedB?.status).toBe(ActionItemStatus.OPEN);

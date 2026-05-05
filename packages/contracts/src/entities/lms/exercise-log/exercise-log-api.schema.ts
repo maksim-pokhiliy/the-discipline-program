@@ -8,9 +8,7 @@ import { exerciseLogSchema } from "./exercise-log.schema";
 
 export const createExerciseLogInputSchema = z.object({
   blockSessionId: z.string().cuid(),
-  sourceEntryId: z.string().cuid().optional(),
   order: z.number().int().nonnegative(),
-  exerciseId: z.string().cuid(),
   exerciseSnapshot: exerciseSnapshotSchema,
   rxStatus: rxStatusSchema.default("RX"),
   substituteExerciseId: z.string().cuid().optional(),
@@ -27,7 +25,6 @@ export const exerciseLogIdParamSchema = z.object({ exerciseLogId: z.string().cui
 
 export const listExerciseLogsQuerySchema = z.object({
   blockSessionId: z.string().cuid().optional(),
-  exerciseId: z.string().cuid().optional(),
 });
 
 export const listExerciseLogsResponseSchema = z.object({

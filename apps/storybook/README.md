@@ -22,12 +22,10 @@ No app-level `.env.local`. Storybook does not boot the apps' env validators; it 
 src/
   story-layout.tsx      Shared <StoryLayout /> wrapper for stories
   data-display/         Stories for data-display primitives
-  edit-session/         Stories for the workout-edit surface
+  edit-session/         Stories for edit-session primitives
   feedback/             Stories for feedback components (snackbars, dialogs)
   inputs/               Stories for inputs (forms, selects, chips)
-  lms/                  Stories for LMS-shaped components
   navigation/           Stories for navigation primitives
-  plan-editor/          Stories for the plan-editor surface
   surfaces/             Stories for surface primitives (cards, sheets)
   theme/                Stories that exercise theme tokens directly
 ```

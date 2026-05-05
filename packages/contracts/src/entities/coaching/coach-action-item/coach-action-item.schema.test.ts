@@ -14,7 +14,6 @@ import {
   coachActionItemSchema,
   healthReportMetadataSchema,
   missedWorkoutsMetadataSchema,
-  newNoStartMetadataSchema,
 } from "./coach-action-item.schema";
 
 const VALID_CUID = "clz00000000000000000fake1";
@@ -47,10 +46,10 @@ describe("coachActionItemSchema", () => {
       id: VALID_CUID,
       coachId: VALID_CUID_2,
       athleteId: VALID_CUID_3,
-      type: ActionItemType.NEW_NO_START,
+      type: ActionItemType.HEALTH_REPORT,
       severity: ActionItemSeverity.CRITICAL,
       status: ActionItemStatus.RESOLVED,
-      message: "Athlete never started",
+      message: "Athlete reported injury",
       metadata: null,
       resolvedAt: NOW,
       resolveReason: ActionItemResolveReason.MANUAL_CONTACTED,
@@ -127,30 +126,6 @@ describe("missedWorkoutsMetadataSchema", () => {
   it("rejects non-string lastActivityDate", () => {
     const result = missedWorkoutsMetadataSchema.safeParse({
       lastActivityDate: 12345,
-    });
-
-    expect(result.success).toBe(false);
-  });
-});
-
-describe("newNoStartMetadataSchema", () => {
-  it("accepts valid metadata", () => {
-    const result = newNoStartMetadataSchema.safeParse({
-      enrollmentId: "clx1234567890abcdefghij",
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it("rejects missing enrollmentId", () => {
-    const result = newNoStartMetadataSchema.safeParse({});
-
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects non-string enrollmentId", () => {
-    const result = newNoStartMetadataSchema.safeParse({
-      enrollmentId: 999,
     });
 
     expect(result.success).toBe(false);

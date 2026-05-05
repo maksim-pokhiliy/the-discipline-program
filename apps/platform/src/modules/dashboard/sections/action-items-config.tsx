@@ -1,4 +1,3 @@
-import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import type { AlertColor } from "@mui/material";
 
 import {
@@ -28,10 +27,6 @@ export const getSeverityColor = (severity: DashboardActionItem["severity"]): Ale
 export const getChip = (item: DashboardActionItem): StatusChipConfig | null => {
   if (item.type === ActionItemType.HEALTH_REPORT) {
     return getHealthChipFromMessage(item.message);
-  }
-
-  if (item.type === ActionItemType.NEW_NO_START) {
-    return { label: "New", color: "info", icon: <PersonAddIcon /> };
   }
 
   return null;

@@ -12,7 +12,6 @@ import {
   ACTION_ITEM_TYPE_MAP,
   HEALTH_STATUS_MAP,
 } from "../../../mappers/coaching";
-import { PLAN_ENROLLMENT_STATUS_MAP } from "../../../mappers/lms";
 import { findOrThrow } from "../../../utils";
 import { addDaysInTz } from "../../../utils/date-helpers";
 import { buildAssignedAthleteInclude } from "../assigned-athlete-query";
@@ -56,9 +55,6 @@ export const getAthleteDetail = async (
         where: { userId: athleteUserId },
         orderBy: { startedAt: "desc" },
         take: 5,
-        include: {
-          enrollment: { select: { plan: { select: { name: true } } } },
-        },
       }),
 
       prisma.workoutSession.findMany({
@@ -77,7 +73,6 @@ export const getAthleteDetail = async (
   }
 
   const athlete = assignment.athlete;
-  const enrollments = athlete.planEnrollments;
 
   const healthStatus = athlete.athleteProfile
     ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
@@ -91,26 +86,13 @@ export const getAthleteDetail = async (
     createdAt: item.createdAt,
   }));
 
-  const planDiscipline = enrollments.map((e) => ({
-    planId: e.plan.id,
-    planName: e.plan.name,
-    enrollmentStatus: PLAN_ENROLLMENT_STATUS_MAP[e.status],
-    enrolledDate: e.startedOnDate,
-    completed: 0,
-    available: 0,
-    planned: 0,
-  }));
-
-  const earliestEnrollment = enrollments.reduce<Date | null>(
-    (min, e) => (min === null || e.startedOnDate < min ? e.startedOnDate : min),
-    null,
-  );
+  const planDiscipline: CoachAthleteDetail["planDiscipline"] = [];
 
   const recentWorkouts = rawRecentWorkouts.map((s) => ({
     id: s.id,
-    title: s.enrollment?.plan.name ?? "Workout",
+    title: "Workout",
     date: s.startedAt,
-    planName: s.enrollment?.plan.name ?? "",
+    planName: "",
   }));
 
   const planned28 = adherenceSessions.length;
@@ -139,7 +121,7 @@ export const getAthleteDetail = async (
       currentStreak: 0,
       missedThisWeek,
     },
-    enrolledSince: earliestEnrollment ?? assignment.createdAt,
+    enrolledSince: assignment.createdAt,
     lastActivityDate: null,
     daysSinceLastActivity: null,
   };

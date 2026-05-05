@@ -53,18 +53,8 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
   for (const a of assignments) {
     const athlete = a.athlete;
 
-    const activePlans = athlete.planEnrollments.map((e) => ({
-      id: e.plan.id,
-      name: e.plan.name,
-    }));
-
-    const firstEnrollment = athlete.planEnrollments[0];
-    const earliestStart = firstEnrollment
-      ? athlete.planEnrollments.reduce(
-          (min, e) => (e.startedOnDate < min ? e.startedOnDate : min),
-          firstEnrollment.startedOnDate,
-        )
-      : a.createdAt;
+    const activePlans: CoachAthleteListItem["activePlans"] = [];
+    const earliestStart = a.createdAt;
 
     const healthStatus = athlete.athleteProfile
       ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]

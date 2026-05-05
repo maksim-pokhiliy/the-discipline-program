@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { PlanEnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import {
@@ -20,8 +19,6 @@ describe("coachingCoachNoteApi", () => {
   let unrelatedUser: Awaited<ReturnType<typeof createTestUser>>;
   let planA: Awaited<ReturnType<typeof createTestPlan>>;
   let planB: Awaited<ReturnType<typeof createTestPlan>>;
-  let enrollmentAId: string;
-  let enrollmentBId: string;
   let assignmentAId: string;
   let assignmentBId: string;
 
@@ -33,30 +30,6 @@ describe("coachingCoachNoteApi", () => {
 
     planA = await createTestPlan(coachA.user.id);
     planB = await createTestPlan(coachB.user.id);
-
-    const enrollmentA = await cleanupRaw.planEnrollment.create({
-      data: {
-        planId: planA.id,
-        userId: athlete.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: new Date(),
-      },
-    });
-
-    enrollmentAId = enrollmentA.id;
-
-    const enrollmentB = await cleanupRaw.planEnrollment.create({
-      data: {
-        planId: planB.id,
-        userId: athlete.id,
-        status: PlanEnrollmentStatus.ACTIVE,
-        startedAtWeekIndex: 0,
-        startedOnDate: new Date(),
-      },
-    });
-
-    enrollmentBId = enrollmentB.id;
 
     const assignmentA = await cleanupRaw.coachAthleteAssignment.create({
       data: { coachId: coachA.profile.id, athleteId: athlete.id },
@@ -79,8 +52,6 @@ describe("coachingCoachNoteApi", () => {
     await cleanup(
       { table: "coachAthleteAssignment", id: assignmentAId },
       { table: "coachAthleteAssignment", id: assignmentBId },
-      { table: "planEnrollment", id: enrollmentAId },
-      { table: "planEnrollment", id: enrollmentBId },
       { table: "trainingPlan", id: planA.id },
       { table: "trainingPlan", id: planB.id },
       { table: "coachProfile", id: coachA.profile.id },
@@ -116,29 +87,29 @@ describe("coachingCoachNoteApi", () => {
       ).rejects.toThrow(ForbiddenError);
     });
 
-    it("creates a note for an assigned athlete with zero active enrollments", async () => {
-      const planlessAthlete = await createTestUser();
+    it("creates a note for an assigned athlete", async () => {
+      const otherAthlete = await createTestUser();
       const assignment = await cleanupRaw.coachAthleteAssignment.create({
-        data: { coachId: coachA.profile.id, athleteId: planlessAthlete.id },
+        data: { coachId: coachA.profile.id, athleteId: otherAthlete.id },
       });
 
       try {
         const note = await coachingCoachNoteApi.create(coachA.user.id, {
-          athleteId: planlessAthlete.id,
+          athleteId: otherAthlete.id,
           content: "Assignment-only note",
         });
 
         expect(note.id).toBeDefined();
         expect(note.coachId).toBe(coachA.profile.id);
-        expect(note.athleteId).toBe(planlessAthlete.id);
+        expect(note.athleteId).toBe(otherAthlete.id);
         expect(note.content).toBe("Assignment-only note");
       } finally {
         await cleanupRaw.coachNote
-          .deleteMany({ where: { coachId: coachA.profile.id, athleteId: planlessAthlete.id } })
+          .deleteMany({ where: { coachId: coachA.profile.id, athleteId: otherAthlete.id } })
           .catch(() => {});
         await cleanup(
           { table: "coachAthleteAssignment", id: assignment.id },
-          { table: "user", id: planlessAthlete.id },
+          { table: "user", id: otherAthlete.id },
         );
       }
     });

@@ -10,13 +10,13 @@ export const AthletesSummarySection: React.FC<AthletesSummarySectionProps> = ({ 
     {
       value: summary.total,
       label: "Total",
-      tooltip: "Total athletes enrolled in your plans",
+      tooltip: "Total athletes assigned to you",
       color: "primary",
     },
     {
       value: summary.active,
       label: "Active",
-      tooltip: "Athletes with active enrollment",
+      tooltip: "Athletes currently active",
       color: "success",
     },
     {

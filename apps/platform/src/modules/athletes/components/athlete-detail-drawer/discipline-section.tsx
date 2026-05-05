@@ -2,13 +2,10 @@
 
 import { useMemo } from "react";
 
-import { Chip, LinearProgress, Stack, Tooltip, Typography } from "@mui/material";
+import { LinearProgress, Stack, Tooltip, Typography } from "@mui/material";
 
 import type { PlanDiscipline } from "@repo/contracts/coaching/coach-athletes";
-import { PLAN_ENROLLMENT_STATUS_LABELS } from "@repo/contracts/lms/plan-enrollment";
 import { rateToPercent } from "@repo/shared";
-
-import { ENROLLMENT_STATUS_COLORS } from "@app/lib/config";
 
 type DisciplineSectionProps = {
   planDiscipline: PlanDiscipline[];
@@ -69,12 +66,6 @@ export const DisciplineSection: React.FC<DisciplineSectionProps> = ({ planDiscip
               <Typography variant="caption" noWrap sx={{ flex: 1, color: "text.secondary" }}>
                 {plan.planName}
               </Typography>
-              <Chip
-                size="small"
-                label={PLAN_ENROLLMENT_STATUS_LABELS[plan.enrollmentStatus]}
-                color={ENROLLMENT_STATUS_COLORS[plan.enrollmentStatus]}
-                variant="outlined"
-              />
               <Typography variant="caption" sx={{ whiteSpace: "nowrap" }}>
                 {plan.completed}/{plan.planned}
               </Typography>

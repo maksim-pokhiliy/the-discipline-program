@@ -10,7 +10,7 @@ export const PulseSection: React.FC<PulseSectionProps> = ({ overview }) => {
     {
       value: overview.totalActiveAthletes,
       label: "Athletes",
-      tooltip: "Total athletes with active enrollment",
+      tooltip: "Total active athletes",
       color: "success",
     },
     {
@@ -40,7 +40,7 @@ export const PulseSection: React.FC<PulseSectionProps> = ({ overview }) => {
     {
       value: overview.newAthletesCount,
       label: "New",
-      tooltip: "Athletes enrolled this calendar week",
+      tooltip: "Athletes assigned this calendar week",
       color: overview.newAthletesCount > 0 ? "info" : "primary",
     },
   ];

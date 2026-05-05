@@ -1,6 +1,6 @@
 # admin
 
-Internal business-panel + Marketing CMS for The Discipline Program. Authoring surface for the marketing site (Pages, Blog, Reviews, Products) and ops surface for the platform domain (Users, Library entities, Contacts). Desktop-first; not exposed to end users.
+Internal business-panel + Marketing CMS for The Discipline Program. Authoring surface for the marketing site (Pages, Blog, Reviews, Products) and ops surface for the platform domain (Users, Contacts). Desktop-first; not exposed to end users.
 
 ## Where it runs
 
@@ -28,7 +28,7 @@ Optional: `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` (rate limiting),
 src/
   app/
     (auth)/login        Login route group (NextAuth credentials)
-    (dashboard)/        Authoring + ops route group (Pages, Blog, Library, ...)
+    (dashboard)/        Authoring + ops route group (Pages, Blog, Users, ...)
     api/                Route handlers (factories from @repo/api-routes)
   modules/              Feature modules — one per top-level dashboard entity
   lib/                  App-local helpers (auth wrappers, query client config)
@@ -40,17 +40,16 @@ Module list (one folder per entity authored from the admin):
 - `auth` — login UI
 - `pages`, `blog`, `contacts`, `products`, `reviews` — Marketing CMS
 - `users` — IAM / role management
-- `block-kind-library`, `scheme-template-library`, `block-template-library`, `session-template-library`, `week-template-library`, `exercise-library`, `dashboard` — LMS authoring (templates promoted/demoted across SYSTEM/COACH scopes)
+- `dashboard` — admin overview
 
 ## Consumed contexts
 
-The admin imports server logic from `@repo/api-server/{cms,lms,iam,coaching,storage,ops}` and contracts from `@repo/contracts/{cms,lms,coaching,iam}`. Domain boundaries are documented in [`docs/BOUNDED-CONTEXTS.md`](../../docs/BOUNDED-CONTEXTS.md) §10.
+The admin imports server logic from `@repo/api-server/{cms,iam,coaching,storage,ops}` and contracts from `@repo/contracts/{cms,coaching,iam}`. Domain boundaries are documented in [`docs/BOUNDED-CONTEXTS.md`](../../docs/BOUNDED-CONTEXTS.md) §10.
 
 ## Conventions
 
 - Authoring forms reuse primitives from `@repo/ui` and `@repo/mui` — see project memory note "Pattern compliance" before adding a new one.
 - Image fields go through Vercel Blob; video stays as a plain URL (memory: image upload existing flow).
-- Promote/demote between scopes is row-only — see memory note "Promote/demote row-only" before touching library forms.
 
 ## Related ADRs
 

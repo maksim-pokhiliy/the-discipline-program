@@ -10,8 +10,6 @@ const basePlan: TrainingPlan = {
   name: "Strength Block",
   description: "Initial description",
   status: TrainingPlanStatus.DRAFT,
-  licensable: false,
-  originalPlanId: null,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
 };

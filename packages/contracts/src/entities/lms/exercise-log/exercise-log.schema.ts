@@ -8,9 +8,7 @@ import { EXERCISE_LOG_CONSTANTS } from "./exercise-log.constants";
 export const exerciseLogSchema = z.object({
   id: z.string().cuid(),
   blockSessionId: z.string().cuid(),
-  sourceEntryId: z.string().cuid().nullable(),
   order: z.number().int().nonnegative(),
-  exerciseId: z.string().cuid(),
   exerciseSnapshot: exerciseSnapshotSchema,
   rxStatus: rxStatusSchema,
   substituteExerciseId: z.string().cuid().nullable(),
