@@ -10,6 +10,7 @@ export const adminKeys = {
   contacts: createEntityKeys(ROOT, "contacts"),
 
   blog: createEntityKeys(ROOT, "blog"),
+  exercises: createEntityKeys(ROOT, "exercises"),
   products: createEntityKeys(ROOT, "products"),
   reviews: createEntityKeys(ROOT, "reviews"),
   users: {
