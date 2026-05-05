@@ -17,6 +17,7 @@
     "./lms": "./src/entities/lms/index.ts",
     "./lms/_domain": "./src/entities/lms/_domain/index.ts",
     "./lms/block-session": "./src/entities/lms/block-session/index.ts",
+    "./lms/exercise": "./src/entities/lms/exercise/index.ts",
     "./lms/exercise-log": "./src/entities/lms/exercise-log/index.ts",
     "./lms/set-log": "./src/entities/lms/set-log/index.ts",
     "./lms/training-plan": "./src/entities/lms/training-plan/index.ts",
