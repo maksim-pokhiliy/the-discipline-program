@@ -1,6 +1,7 @@
 import ArticleOutlined from "@mui/icons-material/ArticleOutlined";
 import ContactMailOutlined from "@mui/icons-material/ContactMailOutlined";
 import DashboardOutlined from "@mui/icons-material/DashboardOutlined";
+import FitnessCenterOutlined from "@mui/icons-material/FitnessCenterOutlined";
 import Inventory2Outlined from "@mui/icons-material/Inventory2Outlined";
 import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
 import StarBorderOutlined from "@mui/icons-material/StarBorderOutlined";
@@ -13,6 +14,7 @@ const icons = {
   blog: ArticleOutlined,
   pages: WebOutlined,
   contacts: ContactMailOutlined,
+  exercises: FitnessCenterOutlined,
   users: PeopleOutlined,
 } as const;
 

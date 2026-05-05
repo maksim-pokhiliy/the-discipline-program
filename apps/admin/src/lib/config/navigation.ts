@@ -14,6 +14,10 @@ export const ADMIN_NAVIGATION: AdminNavigationConfig = {
       ],
     },
     {
+      label: "Library",
+      links: [{ text: "Exercises", href: "/exercises", icon: "exercises" }],
+    },
+    {
       label: "Platform",
       links: [{ text: "Users", href: "/users", icon: "users" }],
     },
