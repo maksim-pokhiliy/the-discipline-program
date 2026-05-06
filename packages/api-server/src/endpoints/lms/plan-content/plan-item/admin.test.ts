@@ -2,7 +2,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { type CreatePlanItemRequest } from "@repo/contracts/lms/plan-item";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
-import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "@repo/errors";
 
 import { cleanupRaw, createTestCoach, createTestPlan } from "../../../../test/helpers";
 
@@ -324,6 +330,54 @@ describe("lmsPlanItemApi", () => {
         const refetched = await lmsPlanItemApi.getById(coach.user.id, activePlan.id, created.id);
 
         expect(refetched.alternatives).toBeNull();
+      } finally {
+        await cleanupRaw.planItem.delete({ where: { id: created.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: altExercise.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects update where new exerciseId equals an existing alternative", async () => {
+      const altExercise = await createTestExercise();
+      const created = await lmsPlanItemApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeBlockId,
+        basePlanItemData(exercise.id, {
+          order: 5,
+          alternatives: [{ exerciseId: altExercise.id }],
+        }),
+      );
+
+      try {
+        await expect(
+          lmsPlanItemApi.update(coach.user.id, activePlan.id, created.id, {
+            exerciseId: altExercise.id,
+          }),
+        ).rejects.toThrow(ValidationError);
+      } finally {
+        await cleanupRaw.planItem.delete({ where: { id: created.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: altExercise.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects update where new alternative equals the existing primary exerciseId", async () => {
+      const altExercise = await createTestExercise();
+      const created = await lmsPlanItemApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeBlockId,
+        basePlanItemData(exercise.id, {
+          order: 6,
+          alternatives: [{ exerciseId: altExercise.id }],
+        }),
+      );
+
+      try {
+        await expect(
+          lmsPlanItemApi.update(coach.user.id, activePlan.id, created.id, {
+            alternatives: [{ exerciseId: exercise.id }],
+          }),
+        ).rejects.toThrow(ValidationError);
       } finally {
         await cleanupRaw.planItem.delete({ where: { id: created.id } }).catch(() => {});
         await cleanupRaw.exercise.delete({ where: { id: altExercise.id } }).catch(() => {});

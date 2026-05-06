@@ -66,6 +66,12 @@ export const lmsPlanDayApi = {
       await ensureDayTypeExists(data.dayTypeId);
     }
 
+    const existing = await prisma.planDay.findUnique({
+      where: { planId_date: { planId, date: data.date } },
+      select: { id: true },
+    });
+    const isNew = existing === null;
+
     try {
       const day = await prisma.planDay.upsert({
         where: { planId_date: { planId, date: data.date } },
@@ -76,8 +82,6 @@ export const lmsPlanDayApi = {
           dayTypeId: data.dayTypeId ?? null,
         },
       });
-
-      const isNew = day.createdAt.getTime() === day.updatedAt.getTime();
 
       return { day: mapToPlanDay(day), isNew };
     } catch (error) {

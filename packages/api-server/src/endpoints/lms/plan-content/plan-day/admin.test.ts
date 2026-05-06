@@ -166,6 +166,22 @@ describe("lmsPlanDayApi", () => {
       expect(second.isNew).toBe(false);
     });
 
+    it("returns isNew=false on the second upsert without dayTypeId", async () => {
+      const date = dayDate(9);
+
+      const first = await lmsPlanDayApi.upsert(coach.user.id, planId, { date });
+
+      createdDayIds.push(first.day.id);
+
+      expect(first.isNew).toBe(true);
+      expect(first.day.dayTypeId).toBeNull();
+
+      const second = await lmsPlanDayApi.upsert(coach.user.id, planId, { date });
+
+      expect(second.day.id).toBe(first.day.id);
+      expect(second.isNew).toBe(false);
+    });
+
     it("rejects with NotFoundError when plan is soft-deleted", async () => {
       await expect(
         lmsPlanDayApi.upsert(coach.user.id, softDeletedPlanId, {

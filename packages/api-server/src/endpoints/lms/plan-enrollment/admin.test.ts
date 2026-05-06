@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
 import { EnrollmentStatus } from "@repo/contracts/lms/plan-enrollment";
-import { BadRequestError, ConflictError, ForbiddenError } from "@repo/errors";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
 import {
@@ -315,6 +315,26 @@ describe("lmsPlanEnrollmentApi", () => {
         await expect(
           lmsPlanEnrollmentApi.remove(coach.user.id, activePlanId, created.id),
         ).resolves.toBeUndefined();
+      } finally {
+        await cleanupRaw.planEnrollment.delete({ where: { id: created.id } }).catch(() => {});
+      }
+    });
+  });
+
+  describe("getById", () => {
+    it("rejects getById on a soft-removed enrollment with NotFoundError", async () => {
+      const created = await lmsPlanEnrollmentApi.create(
+        coach.user.id,
+        activePlanId,
+        baseEnrollmentData(assignedAthlete.id),
+      );
+
+      try {
+        await lmsPlanEnrollmentApi.remove(coach.user.id, activePlanId, created.id);
+
+        await expect(
+          lmsPlanEnrollmentApi.getById(coach.user.id, activePlanId, created.id),
+        ).rejects.toThrow(NotFoundError);
       } finally {
         await cleanupRaw.planEnrollment.delete({ where: { id: created.id } }).catch(() => {});
       }

@@ -148,13 +148,11 @@ export const lmsPlanEnrollmentApi = {
     await verifyPlanOwnership(planId, userId);
 
     const enrollment = await findOrThrow(
-      prisma.planEnrollment.findUnique({ where: { id: enrollmentId } }),
+      prisma.planEnrollment.findFirst({
+        where: { id: enrollmentId, planId, deletedAt: null },
+      }),
       "Plan enrollment",
     );
-
-    if (enrollment.planId !== planId) {
-      throw new NotFoundError("Plan enrollment not found", { enrollmentId });
-    }
 
     return mapToPlanEnrollment(enrollment);
   },

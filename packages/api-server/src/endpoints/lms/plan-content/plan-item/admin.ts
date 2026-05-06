@@ -1,11 +1,14 @@
 import { Prisma } from "@prisma/client";
 
 import {
+  altsExcludePrimary,
   type CreatePlanItemRequest,
+  hasUniqueAlternativeIds,
   type PlanItem,
+  type PlanItemAlternative,
   type UpdatePlanItemRequest,
 } from "@repo/contracts/lms/plan-item";
-import { BadRequestError, NotFoundError } from "@repo/errors";
+import { BadRequestError, NotFoundError, ValidationError } from "@repo/errors";
 
 import { verifyPlanEditable, verifyPlanOwnership } from "../../../../authz/guards";
 import { prisma } from "../../../../db/client";
@@ -92,6 +95,28 @@ const buildItemUpdate = (data: UpdatePlanItemRequest): Prisma.PlanItemUpdateInpu
   ...(data.notes !== undefined && { notes: data.notes }),
 });
 
+const validateMergedAlternatives = (current: PlanItem, data: UpdatePlanItemRequest): void => {
+  const mergedPrimary = data.exerciseId ?? current.exerciseId;
+  const mergedAlternatives: PlanItemAlternative[] | null =
+    data.alternatives !== undefined ? data.alternatives : current.alternatives;
+
+  if (mergedAlternatives === null) {
+    return;
+  }
+
+  if (!hasUniqueAlternativeIds(mergedAlternatives)) {
+    throw new ValidationError("alternatives must have unique exerciseIds", {
+      field: "alternatives",
+    });
+  }
+
+  if (!altsExcludePrimary(mergedAlternatives, mergedPrimary)) {
+    throw new ValidationError("alternatives must not include the primary exerciseId", {
+      field: "alternatives",
+    });
+  }
+};
+
 export const lmsPlanItemApi = {
   listByBlock: async (userId: string, planId: string, blockId: string): Promise<PlanItem[]> => {
     await verifyPlanOwnership(planId, userId);
@@ -157,7 +182,9 @@ export const lmsPlanItemApi = {
 
     verifyPlanEditable(plan);
 
-    await loadItemForPlan(planId, itemId);
+    const existing = mapToPlanItem(await loadItemForPlan(planId, itemId));
+
+    validateMergedAlternatives(existing, data);
 
     await validateExerciseIds(collectExerciseIds(data.exerciseId, data.alternatives));
 
