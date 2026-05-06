@@ -10,7 +10,7 @@ import { logger } from "@repo/shared";
 
 export type PlanBlockWithRefsRow = PrismaPlanBlock & { blockTypeRefs: PrismaPlanBlockTypeRef[] };
 
-const parseSchemeParamsOrThrow = (
+export const parseSchemeParamsOrThrow = (
   raw: PrismaPlanBlock["schemeParams"],
   id: string,
 ): SchemeParams => {

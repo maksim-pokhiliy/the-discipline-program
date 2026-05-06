@@ -1,5 +1,5 @@
 import {
-  type CreatePlanSessionData,
+  type CreatePlanSessionRequest,
   type PlanSession,
   type UpdatePlanSessionData,
 } from "@repo/contracts/lms/plan-session";
@@ -61,7 +61,7 @@ export const lmsPlanSessionApi = {
     userId: string,
     planId: string,
     dayId: string,
-    data: CreatePlanSessionData,
+    data: CreatePlanSessionRequest,
   ): Promise<PlanSession> => {
     const plan = await verifyPlanOwnership(planId, userId);
 

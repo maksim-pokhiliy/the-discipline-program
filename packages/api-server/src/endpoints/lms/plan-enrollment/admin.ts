@@ -2,7 +2,7 @@ import { type Prisma } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/iam/auth";
 import {
-  type CreatePlanEnrollmentData,
+  type CreatePlanEnrollmentRequest,
   EnrollmentStatus,
   type PlanEnrollment,
 } from "@repo/contracts/lms/plan-enrollment";
@@ -84,7 +84,7 @@ const transitionEnrollmentStatus = async (
         where: { id: enrollmentId, planId },
       });
 
-      if (!existing) {
+      if (!existing || existing.deletedAt !== null) {
         throw new NotFoundError("Plan enrollment not found", { enrollmentId });
       }
 
@@ -144,7 +144,7 @@ export const lmsPlanEnrollmentApi = {
   create: async (
     userId: string,
     planId: string,
-    data: CreatePlanEnrollmentData,
+    data: CreatePlanEnrollmentRequest,
   ): Promise<PlanEnrollment> => {
     const plan = await verifyPlanOwnership(planId, userId);
 

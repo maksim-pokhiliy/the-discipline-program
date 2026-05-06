@@ -12,7 +12,7 @@ export const planDaySchema = z.object({
 export const createPlanDaySchema = z.object({
   planId: z.string().cuid(),
   date: z.date(),
-  dayTypeId: z.string().cuid().optional(),
+  dayTypeId: z.string().cuid().nullable().optional(),
 });
 
 export const updatePlanDaySchema = z.object({

@@ -15,7 +15,6 @@ import {
 import { lmsPlanEnrollmentApi } from "./admin";
 
 const baseEnrollmentData = (athleteId: string) => ({
-  planId: "ignored-by-service",
   athleteId,
   boardedAt: new Date("2026-01-01"),
 });

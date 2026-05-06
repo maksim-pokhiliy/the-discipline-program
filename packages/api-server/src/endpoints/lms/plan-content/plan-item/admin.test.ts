@@ -256,5 +256,26 @@ describe("lmsPlanItemApi", () => {
         await cleanupRaw.exercise.delete({ where: { id: altExercise.id } }).catch(() => {});
       }
     });
+
+    it("rejects with BadRequestError when update sets exerciseId to a soft-deleted exercise", async () => {
+      const softDeleted = await createTestExercise({ deletedAt: new Date() });
+      const created = await lmsPlanItemApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeBlockId,
+        basePlanItemData(exercise.id, { order: 2 }),
+      );
+
+      try {
+        await expect(
+          lmsPlanItemApi.update(coach.user.id, activePlan.id, created.id, {
+            exerciseId: softDeleted.id,
+          }),
+        ).rejects.toThrow(BadRequestError);
+      } finally {
+        await cleanupRaw.planItem.delete({ where: { id: created.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: softDeleted.id } }).catch(() => {});
+      }
+    });
   });
 });

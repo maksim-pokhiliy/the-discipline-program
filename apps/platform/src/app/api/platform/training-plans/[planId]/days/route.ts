@@ -32,12 +32,7 @@ export const GET = withCoachAuth(
 export const POST = withCoachAuth(
   withAuthRateLimit(
     createAuthPostByParamHandler(
-      (userId, { planId }, data) =>
-        lmsPlanDayApi.upsert(userId, planId, {
-          planId,
-          date: data.date,
-          ...(data.dayTypeId != null && { dayTypeId: data.dayTypeId }),
-        }),
+      (userId, { planId }, data) => lmsPlanDayApi.upsert(userId, planId, data),
       planByPlanParamsSchema,
       createPlanDayRequestSchema,
       createPlanDayResponseSchema,

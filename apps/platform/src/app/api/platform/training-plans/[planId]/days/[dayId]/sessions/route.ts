@@ -30,8 +30,7 @@ export const GET = withCoachAuth(
 export const POST = withCoachAuth(
   withAuthRateLimit(
     createAuthPostByParamHandler(
-      (userId, { planId, dayId }, data) =>
-        lmsPlanSessionApi.create(userId, planId, dayId, { ...data, dayId }),
+      (userId, { planId, dayId }, data) => lmsPlanSessionApi.create(userId, planId, dayId, data),
       planSessionsByDayParamsSchema,
       createPlanSessionRequestSchema,
       createPlanSessionResponseSchema,

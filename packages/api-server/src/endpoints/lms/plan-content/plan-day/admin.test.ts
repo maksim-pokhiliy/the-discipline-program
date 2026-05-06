@@ -99,7 +99,6 @@ describe("lmsPlanDayApi", () => {
     it("rejects with ForbiddenError when the plan is ARCHIVED", async () => {
       await expect(
         lmsPlanDayApi.upsert(coach.user.id, archivedPlanId, {
-          planId: archivedPlanId,
           date: dayDate(2),
         }),
       ).rejects.toThrow(ForbiddenError);
@@ -108,7 +107,6 @@ describe("lmsPlanDayApi", () => {
     it("rejects with BadRequestError when dayTypeId references a soft-deleted DayType", async () => {
       await expect(
         lmsPlanDayApi.upsert(coach.user.id, planId, {
-          planId,
           date: dayDate(3),
           dayTypeId: softDeletedDayTypeId,
         }),
@@ -119,7 +117,6 @@ describe("lmsPlanDayApi", () => {
       const date = dayDate(4);
 
       const first = await lmsPlanDayApi.upsert(coach.user.id, planId, {
-        planId,
         date,
         dayTypeId,
       });
@@ -129,7 +126,6 @@ describe("lmsPlanDayApi", () => {
       expect(first.isNew).toBe(true);
 
       const second = await lmsPlanDayApi.upsert(coach.user.id, planId, {
-        planId,
         date,
         dayTypeId,
       });

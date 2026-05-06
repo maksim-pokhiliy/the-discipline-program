@@ -7,7 +7,6 @@ import { cleanupRaw, createTestCoach } from "../../../../test/helpers";
 import { lmsPlanSessionApi } from "./admin";
 
 const baseSessionData = (overrides: Partial<{ order: number; label: string }> = {}) => ({
-  dayId: "ignored-by-service",
   order: 0,
   ...overrides,
 });

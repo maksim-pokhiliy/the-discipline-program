@@ -36,8 +36,7 @@ export const GET = withCoachAuth(
 export const POST = withCoachAuth(
   withAuthRateLimit(
     createAuthPostByParamHandler(
-      (userId, { planId }, data) =>
-        lmsPlanEnrollmentApi.create(userId, planId, { ...data, planId }),
+      (userId, { planId }, data) => lmsPlanEnrollmentApi.create(userId, planId, data),
       planEnrollmentsByPlanParamsSchema,
       createPlanEnrollmentRequestSchema,
       createPlanEnrollmentResponseSchema,

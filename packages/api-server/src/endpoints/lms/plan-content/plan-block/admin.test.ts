@@ -246,6 +246,44 @@ describe("lmsPlanBlockApi", () => {
         await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
       }
     });
+
+    it("re-validates kind on update when only schemeParams is in the patch", async () => {
+      const created = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], { order: 8 }),
+      );
+
+      try {
+        await expect(
+          lmsPlanBlockApi.update(coach.user.id, activePlan.id, created.id, {
+            schemeParams: { kind: "COUNT_DOWN", durationSec: 60 },
+          }),
+        ).rejects.toThrow(ValidationError);
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+      }
+    });
+
+    it("re-validates kind on update when only schemeTypeId is swapped", async () => {
+      const created = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], { order: 9 }),
+      );
+
+      try {
+        await expect(
+          lmsPlanBlockApi.update(coach.user.id, activePlan.id, created.id, {
+            schemeTypeId: schemeTypeCountDown.id,
+          }),
+        ).rejects.toThrow(ValidationError);
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+      }
+    });
   });
 
   describe("delete", () => {

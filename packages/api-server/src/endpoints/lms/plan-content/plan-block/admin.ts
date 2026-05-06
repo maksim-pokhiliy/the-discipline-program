@@ -12,6 +12,7 @@ import { verifyPlanEditable, verifyPlanOwnership } from "../../../../authz/guard
 import { prisma } from "../../../../db/client";
 import {
   mapToPlanBlock,
+  parseSchemeParamsOrThrow,
   type PlanBlockWithRefsRow,
   SCHEME_ARCHETYPE_KIND_MAP,
 } from "../../../../mappers/lms";
@@ -116,9 +117,9 @@ export const lmsPlanBlockApi = {
     sessionId: string,
     data: CreatePlanBlockRequest,
   ): Promise<PlanBlock> => {
-    const { status } = await verifyPlanOwnership(planId, userId);
+    const plan = await verifyPlanOwnership(planId, userId);
 
-    verifyPlanEditable({ status });
+    verifyPlanEditable(plan);
     await verifySessionInPlan(planId, sessionId);
     await validateSchemeTypeAndKind(data.schemeTypeId, data.schemeParams);
     await validateBlockTypeIds(data.blockTypeIds);
@@ -151,15 +152,16 @@ export const lmsPlanBlockApi = {
     blockId: string,
     data: UpdatePlanBlockRequest,
   ): Promise<PlanBlock> => {
-    const { status } = await verifyPlanOwnership(planId, userId);
+    const plan = await verifyPlanOwnership(planId, userId);
 
-    verifyPlanEditable({ status });
+    verifyPlanEditable(plan);
 
     const existing = await findBlockOrThrow(planId, blockId);
 
     if (data.schemeTypeId !== undefined || data.schemeParams !== undefined) {
       const effectiveSchemeTypeId = data.schemeTypeId ?? existing.schemeTypeId;
-      const effectiveSchemeParams = data.schemeParams ?? mapToPlanBlock(existing).schemeParams;
+      const effectiveSchemeParams =
+        data.schemeParams ?? parseSchemeParamsOrThrow(existing.schemeParams, existing.id);
 
       await validateSchemeTypeAndKind(effectiveSchemeTypeId, effectiveSchemeParams);
     }
@@ -172,9 +174,9 @@ export const lmsPlanBlockApi = {
   },
 
   delete: async (userId: string, planId: string, blockId: string): Promise<void> => {
-    const { status } = await verifyPlanOwnership(planId, userId);
+    const plan = await verifyPlanOwnership(planId, userId);
 
-    verifyPlanEditable({ status });
+    verifyPlanEditable(plan);
     await findBlockOrThrow(planId, blockId);
 
     try {

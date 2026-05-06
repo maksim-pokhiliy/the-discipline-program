@@ -1,5 +1,5 @@
 import {
-  type CreatePlanDayData,
+  type CreatePlanDayRequest,
   type PlanDay,
   type UpdatePlanDayData,
 } from "@repo/contracts/lms/plan-day";
@@ -56,13 +56,13 @@ export const lmsPlanDayApi = {
   upsert: async (
     userId: string,
     planId: string,
-    data: CreatePlanDayData,
+    data: CreatePlanDayRequest,
   ): Promise<{ day: PlanDay; isNew: boolean }> => {
     const plan = await verifyPlanOwnership(planId, userId);
 
     verifyPlanEditable(plan);
 
-    if (data.dayTypeId !== undefined) {
+    if (data.dayTypeId !== undefined && data.dayTypeId !== null) {
       await ensureDayTypeExists(data.dayTypeId);
     }
 
@@ -73,7 +73,7 @@ export const lmsPlanDayApi = {
         create: {
           planId,
           date: data.date,
-          ...(data.dayTypeId !== undefined && { dayTypeId: data.dayTypeId }),
+          dayTypeId: data.dayTypeId ?? null,
         },
       });
 
