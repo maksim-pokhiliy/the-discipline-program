@@ -44,6 +44,12 @@ export const lmsSchemeTypeAdminApi = {
   },
 
   createSchemeType: async (data: CreateSchemeTypeData): Promise<SchemeType> => {
+    if (data.defaultParams !== undefined && data.defaultParams.kind !== data.archetypeKind) {
+      throw new ValidationError("defaultParams.kind must match archetypeKind", {
+        field: "defaultParams",
+      });
+    }
+
     await ensureUniqueName(data.name);
 
     try {
