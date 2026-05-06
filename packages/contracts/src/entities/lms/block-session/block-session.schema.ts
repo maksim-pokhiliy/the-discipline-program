@@ -18,7 +18,10 @@ export const blockSessionSchema = z.object({
   id: z.string().cuid(),
   workoutSessionId: z.string().cuid(),
   order: z.number().int().nonnegative(),
-  kindName: z.string().min(1).max(BLOCK_SESSION_CONSTANTS.MAX_KIND_NAME_LENGTH),
+  blockNames: z
+    .array(z.string().min(1).max(BLOCK_SESSION_CONSTANTS.MAX_BLOCK_NAME_LENGTH))
+    .min(1)
+    .max(BLOCK_SESSION_CONSTANTS.MAX_BLOCK_NAMES_PER_BLOCK),
   weight: z
     .number()
     .int()

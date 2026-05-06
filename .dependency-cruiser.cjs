@@ -249,14 +249,18 @@ module.exports = {
       comment:
         "apps/admin serves CMS management + admin user/dashboard + admin LMS libraries " +
         "(M1.2/M1.3 + M2.6). It does not need direct access to LMS plan/block/segment endpoints — " +
-        "those are platform (coach) concerns. The library endpoints (Exercise / BlockKind / " +
-        "SchemeTemplate / BlockTemplate / SessionTemplate / WeekTemplate CRUD + promote/demote) " +
-        "are explicitly allowed via the carve-out.",
+        "those are platform (coach) concerns. The library endpoints (Exercise / BlockType / " +
+        "SchemeType / DayType CRUD per ADR-0039) are explicitly allowed via the carve-out.",
       from: { path: "^apps/admin/" },
       to: {
         path: "^packages/api-server/src/(endpoints|mappers)/lms/",
-        pathNot:
-          "^packages/api-server/src/(endpoints/lms/(exercise-library-item|block-kind|scheme-template|block-template|session-template|week-template)(\\.ts|/[^/]+\\.ts)|mappers/lms/(exercise-library-item|block-kind|scheme-template|block-template|session-template|week-template)\\.mapper\\.ts)$",
+        pathNot: [
+          "^packages/api-server/src/endpoints/lms/index\\.ts$",
+          "^packages/api-server/src/endpoints/lms/library/index\\.ts$",
+          "^packages/api-server/src/endpoints/lms/library/(exercise|block-type|scheme-type|day-type)/[^/]+\\.ts$",
+          "^packages/api-server/src/mappers/lms/index\\.ts$",
+          "^packages/api-server/src/mappers/lms/(exercise|block-type|scheme-type|day-type)\\.mapper\\.ts$",
+        ],
       },
     },
 

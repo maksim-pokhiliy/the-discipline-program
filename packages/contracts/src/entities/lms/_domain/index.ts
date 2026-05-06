@@ -1,5 +1,3 @@
-export * from "./benchmark-source.schema";
-export * from "./benchmark-source.types";
 export * from "./body-part.schema";
 export * from "./body-part.types";
 export * from "./exercise-composition.schema";

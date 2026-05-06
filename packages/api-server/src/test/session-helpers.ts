@@ -38,7 +38,7 @@ export const createTestBlockSession = async (params: {
     data: {
       workoutSessionId,
       order: 0,
-      kindName: "STRENGTH",
+      blockNames: ["STRENGTH"],
       weight: 100,
       archetypeKind: "NONE",
       schemeParamsSnapshot: {},

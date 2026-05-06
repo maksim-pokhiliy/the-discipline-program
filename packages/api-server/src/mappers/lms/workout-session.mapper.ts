@@ -31,7 +31,8 @@ export type WorkoutSessionWithBlockSessions = WorkoutSession & {
 export const mapToWorkoutSession = (w: PrismaWorkoutSession): WorkoutSession => ({
   id: w.id,
   userId: w.userId,
-  scheduledFor: w.scheduledFor,
+  planSessionId: w.planSessionId,
+  scheduledDate: w.scheduledDate,
   startedAt: w.startedAt,
   completedAt: w.completedAt,
   durationSec: w.durationSec,

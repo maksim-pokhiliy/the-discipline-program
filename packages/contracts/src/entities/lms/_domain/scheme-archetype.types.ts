@@ -4,8 +4,10 @@ import {
   type schemeArchetypeKindSchema,
   type schemeParamsCountDownSchema,
   type schemeParamsCountUpSchema,
+  type schemeParamsDistanceSchema,
   type schemeParamsEmomLoopSchema,
   type schemeParamsIntervalLoopSchema,
+  type schemeParamsLadderSchema,
   type schemeParamsNoneSchema,
   type schemeParamsSchema,
   type schemeParamsTimeBoxedSchema,
@@ -21,3 +23,5 @@ export type SchemeParamsCountDown = z.infer<typeof schemeParamsCountDownSchema>;
 export type SchemeParamsIntervalLoop = z.infer<typeof schemeParamsIntervalLoopSchema>;
 export type SchemeParamsEmomLoop = z.infer<typeof schemeParamsEmomLoopSchema>;
 export type SchemeParamsTimeBoxed = z.infer<typeof schemeParamsTimeBoxedSchema>;
+export type SchemeParamsLadder = z.infer<typeof schemeParamsLadderSchema>;
+export type SchemeParamsDistance = z.infer<typeof schemeParamsDistanceSchema>;

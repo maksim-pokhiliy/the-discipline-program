@@ -7,7 +7,8 @@ import { workoutSessionSchema } from "./workout-session.schema";
 
 export const createWorkoutSessionInputSchema = z.object({
   userId: z.string().cuid(),
-  scheduledFor: z.date().optional(),
+  planSessionId: z.string().cuid().optional(),
+  scheduledDate: z.date().optional(),
   startedAt: z.date(),
   status: workoutSessionStatusSchema.default("IN_PROGRESS"),
 });
