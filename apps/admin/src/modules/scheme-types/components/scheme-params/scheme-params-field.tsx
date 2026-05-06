@@ -9,6 +9,7 @@ import { type z } from "zod";
 import { defaultSchemeParams, type SchemeArchetypeKind } from "@repo/contracts/lms/_domain";
 import { type createSchemeTypeSchema } from "@repo/contracts/lms/scheme-type";
 
+import { SchemeParamsCountDownForm } from "./scheme-params-count-down";
 import { SchemeParamsDistanceForm } from "./scheme-params-distance";
 import { SchemeParamsNoneForm } from "./scheme-params-none";
 
@@ -50,7 +51,7 @@ const renderArchetype = (
     case "COUNT_UP":
       return null;
     case "COUNT_DOWN":
-      return null;
+      return <SchemeParamsCountDownForm basePath={basePath} isLoading={isLoading} />;
     case "INTERVAL_LOOP":
       return null;
     case "EMOM_LOOP":
