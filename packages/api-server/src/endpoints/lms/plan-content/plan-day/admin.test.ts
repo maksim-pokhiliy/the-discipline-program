@@ -1,8 +1,15 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { UserRole } from "@repo/contracts/iam/auth";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
-import { cleanupRaw, createTestCoach, createTestPlan } from "../../../../test/helpers";
+import { ROLE_TO_PRISMA_MAP } from "../../../../mappers/iam";
+import {
+  cleanupRaw,
+  createTestCoach,
+  createTestPlan,
+  createTestUser,
+} from "../../../../test/helpers";
 
 import { lmsPlanDayApi } from "./admin";
 
@@ -19,9 +26,11 @@ const dayDate = (offsetDays: number): Date => {
 describe("lmsPlanDayApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
+  let headCoach: Awaited<ReturnType<typeof createTestUser>>;
   let planId: string;
   let foreignPlanId: string;
   let archivedPlanId: string;
+  let softDeletedPlanId: string;
   let dayTypeId: string;
   let softDeletedDayTypeId: string;
 
@@ -31,6 +40,20 @@ describe("lmsPlanDayApi", () => {
   beforeAll(async () => {
     coach = await createTestCoach();
     otherCoach = await createTestCoach();
+
+    const preexistingHeads = await cleanupRaw.user.findMany({
+      where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
+      select: { id: true },
+    });
+
+    for (const hc of preexistingHeads) {
+      await cleanupRaw.user.update({
+        where: { id: hc.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      });
+    }
+
+    headCoach = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
 
     const plan = await createTestPlan(coach.user.id, { status: "ACTIVE" });
 
@@ -43,6 +66,13 @@ describe("lmsPlanDayApi", () => {
     const archivedPlan = await createTestPlan(coach.user.id, { status: "ARCHIVED" });
 
     archivedPlanId = archivedPlan.id;
+
+    const softDeletedPlan = await createTestPlan(coach.user.id, {
+      status: "ACTIVE",
+      deletedAt: new Date(),
+    });
+
+    softDeletedPlanId = softDeletedPlan.id;
 
     const dayType = await cleanupRaw.dayType.create({
       data: { name: `dt-active-${uniqueSuffix()}`, color: "#ff0000" },
@@ -75,10 +105,12 @@ describe("lmsPlanDayApi", () => {
     await cleanupRaw.trainingPlan.delete({ where: { id: planId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: foreignPlanId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: archivedPlanId } }).catch(() => {});
+    await cleanupRaw.trainingPlan.delete({ where: { id: softDeletedPlanId } }).catch(() => {});
     await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
     await cleanupRaw.coachProfile.delete({ where: { id: otherCoach.profile.id } }).catch(() => {});
     await cleanupRaw.user.delete({ where: { id: coach.user.id } }).catch(() => {});
     await cleanupRaw.user.delete({ where: { id: otherCoach.user.id } }).catch(() => {});
+    await cleanupRaw.user.delete({ where: { id: headCoach.id } }).catch(() => {});
   });
 
   describe("getById", () => {
@@ -132,6 +164,28 @@ describe("lmsPlanDayApi", () => {
 
       expect(second.day.id).toBe(first.day.id);
       expect(second.isNew).toBe(false);
+    });
+
+    it("rejects with NotFoundError when plan is soft-deleted", async () => {
+      await expect(
+        lmsPlanDayApi.upsert(coach.user.id, softDeletedPlanId, {
+          date: dayDate(7),
+        }),
+      ).rejects.toThrow(NotFoundError);
+    });
+
+    it("allows HEAD_COACH to upsert on a plan owned by another coach", async () => {
+      const date = dayDate(8);
+
+      const result = await lmsPlanDayApi.upsert(headCoach.id, planId, {
+        date,
+        dayTypeId,
+      });
+
+      createdDayIds.push(result.day.id);
+
+      expect(result.day.planId).toBe(planId);
+      expect(result.day.dayTypeId).toBe(dayTypeId);
     });
   });
 

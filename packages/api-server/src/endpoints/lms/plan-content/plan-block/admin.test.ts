@@ -314,6 +314,61 @@ describe("lmsPlanBlockApi", () => {
     });
   });
 
+  describe("cross-plan smuggle", () => {
+    it("rejects update with NotFoundError when blockId belongs to a different plan", async () => {
+      const foreignBlock = await cleanupRaw.planBlock.create({
+        data: {
+          sessionId: foreignSessionId,
+          order: 0,
+          schemeTypeId: schemeTypeNone.id,
+          schemeParams: { kind: "NONE" },
+          notes: "foreign",
+        },
+      });
+
+      try {
+        await expect(
+          lmsPlanBlockApi.update(coach.user.id, activePlan.id, foreignBlock.id, {
+            notes: "smuggled",
+          }),
+        ).rejects.toThrow(NotFoundError);
+
+        const unchanged = await cleanupRaw.planBlock.findUnique({
+          where: { id: foreignBlock.id },
+        });
+
+        expect(unchanged?.notes).toBe("foreign");
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: foreignBlock.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects delete with NotFoundError when blockId belongs to a different plan", async () => {
+      const foreignBlock = await cleanupRaw.planBlock.create({
+        data: {
+          sessionId: foreignSessionId,
+          order: 1,
+          schemeTypeId: schemeTypeNone.id,
+          schemeParams: { kind: "NONE" },
+        },
+      });
+
+      try {
+        await expect(
+          lmsPlanBlockApi.delete(coach.user.id, activePlan.id, foreignBlock.id),
+        ).rejects.toThrow(NotFoundError);
+
+        const survived = await cleanupRaw.planBlock.findUnique({
+          where: { id: foreignBlock.id },
+        });
+
+        expect(survived).not.toBeNull();
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: foreignBlock.id } }).catch(() => {});
+      }
+    });
+  });
+
   describe("delete", () => {
     it("hard-deletes the block and cascades to PlanItem and PlanBlockTypeRef", async () => {
       const created = await lmsPlanBlockApi.create(

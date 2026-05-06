@@ -191,6 +191,48 @@ describe("lmsPlanSessionApi", () => {
       }
     });
 
+    it("rejects update with NotFoundError when sessionId belongs to a different plan (cross-plan smuggle)", async () => {
+      const otherSession = await cleanupRaw.planSession.create({
+        data: { dayId: otherDayId, order: 0, label: "foreign" },
+      });
+
+      try {
+        await expect(
+          lmsPlanSessionApi.update(coach.user.id, activePlanId, otherSession.id, {
+            label: "smuggled",
+          }),
+        ).rejects.toThrow(NotFoundError);
+
+        const unchanged = await cleanupRaw.planSession.findUnique({
+          where: { id: otherSession.id },
+        });
+
+        expect(unchanged?.label).toBe("foreign");
+      } finally {
+        await cleanupRaw.planSession.delete({ where: { id: otherSession.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects delete with NotFoundError when sessionId belongs to a different plan (cross-plan smuggle)", async () => {
+      const otherSession = await cleanupRaw.planSession.create({
+        data: { dayId: otherDayId, order: 0 },
+      });
+
+      try {
+        await expect(
+          lmsPlanSessionApi.delete(coach.user.id, activePlanId, otherSession.id),
+        ).rejects.toThrow(NotFoundError);
+
+        const survived = await cleanupRaw.planSession.findUnique({
+          where: { id: otherSession.id },
+        });
+
+        expect(survived).not.toBeNull();
+      } finally {
+        await cleanupRaw.planSession.delete({ where: { id: otherSession.id } }).catch(() => {});
+      }
+    });
+
     it("hard-deletes session and cascades to child blocks", async () => {
       const session = await cleanupRaw.planSession.create({
         data: { dayId: activeDayId, order: 9 },

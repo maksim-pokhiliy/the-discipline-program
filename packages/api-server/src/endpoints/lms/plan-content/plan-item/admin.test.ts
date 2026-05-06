@@ -299,5 +299,121 @@ describe("lmsPlanItemApi", () => {
         await cleanupRaw.exercise.delete({ where: { id: softDeleted.id } }).catch(() => {});
       }
     });
+
+    it("clears alternatives column when update sends alternatives: null", async () => {
+      const altExercise = await createTestExercise();
+      const created = await lmsPlanItemApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeBlockId,
+        basePlanItemData(exercise.id, {
+          order: 4,
+          alternatives: [{ exerciseId: altExercise.id }],
+        }),
+      );
+
+      try {
+        expect(created.alternatives).toEqual([{ exerciseId: altExercise.id }]);
+
+        const updated = await lmsPlanItemApi.update(coach.user.id, activePlan.id, created.id, {
+          alternatives: null,
+        });
+
+        expect(updated.alternatives).toBeNull();
+
+        const refetched = await lmsPlanItemApi.getById(coach.user.id, activePlan.id, created.id);
+
+        expect(refetched.alternatives).toBeNull();
+      } finally {
+        await cleanupRaw.planItem.delete({ where: { id: created.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: altExercise.id } }).catch(() => {});
+      }
+    });
+  });
+
+  describe("cross-plan smuggle", () => {
+    it("rejects getById with NotFoundError when itemId belongs to a different plan", async () => {
+      const foreignItem = await cleanupRaw.planItem.create({
+        data: {
+          blockId: foreignBlockId,
+          order: 0,
+          exerciseId: exercise.id,
+          prescription: {
+            reps: { kind: "FIXED", value: 5 },
+            sideMode: "BILATERAL",
+            modifiers: [],
+          },
+        },
+      });
+
+      try {
+        await expect(
+          lmsPlanItemApi.getById(coach.user.id, activePlan.id, foreignItem.id),
+        ).rejects.toThrow(NotFoundError);
+      } finally {
+        await cleanupRaw.planItem.delete({ where: { id: foreignItem.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects update with NotFoundError when itemId belongs to a different plan", async () => {
+      const foreignItem = await cleanupRaw.planItem.create({
+        data: {
+          blockId: foreignBlockId,
+          order: 1,
+          exerciseId: exercise.id,
+          prescription: {
+            reps: { kind: "FIXED", value: 7 },
+            sideMode: "BILATERAL",
+            modifiers: [],
+          },
+          notes: "foreign",
+        },
+      });
+
+      try {
+        await expect(
+          lmsPlanItemApi.update(coach.user.id, activePlan.id, foreignItem.id, {
+            notes: "smuggled",
+          }),
+        ).rejects.toThrow(NotFoundError);
+
+        const unchanged = await cleanupRaw.planItem.findUnique({
+          where: { id: foreignItem.id },
+        });
+
+        expect(unchanged?.notes).toBe("foreign");
+      } finally {
+        await cleanupRaw.planItem.delete({ where: { id: foreignItem.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects delete with NotFoundError when itemId belongs to a different plan", async () => {
+      const foreignItem = await cleanupRaw.planItem.create({
+        data: {
+          blockId: foreignBlockId,
+          order: 2,
+          exerciseId: exercise.id,
+          prescription: {
+            reps: { kind: "FIXED", value: 9 },
+            sideMode: "BILATERAL",
+            modifiers: [],
+          },
+        },
+      });
+
+      try {
+        await expect(
+          lmsPlanItemApi.delete(coach.user.id, activePlan.id, foreignItem.id),
+        ).rejects.toThrow(NotFoundError);
+
+        const survived = await cleanupRaw.planItem.findUnique({
+          where: { id: foreignItem.id },
+        });
+
+        expect(survived).not.toBeNull();
+      } finally {
+        await cleanupRaw.planItem.delete({ where: { id: foreignItem.id } }).catch(() => {});
+      }
+    });
   });
 });
