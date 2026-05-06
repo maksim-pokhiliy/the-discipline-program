@@ -1,5 +1,7 @@
 "use client";
 
+import { type ReactElement } from "react";
+
 import {
   FormControl,
   FormHelperText,
@@ -18,8 +20,17 @@ import {
 } from "@repo/contracts/lms/_domain";
 import { DynamicListItem } from "@repo/ui";
 
-import { SchemeParamsField } from "./scheme-params-field";
-import { type SchemeTypeFormValues } from "./scheme-params.types";
+import {
+  type SchemeParamsBasePath,
+  type SchemeParamsKindPath,
+  type SchemeTypeFormValues,
+} from "./scheme-params.types";
+
+export type SchemeParamsRenderInner = (props: {
+  basePath: SchemeParamsBasePath;
+  kindPath: SchemeParamsKindPath;
+  isLoading: boolean;
+}) => ReactElement;
 
 const INNER_ARCHETYPE_KIND_VALUES = [
   "NONE",
@@ -40,6 +51,7 @@ type TimeBoxedSegmentRowProps = {
   onRemove: () => void;
   isLoading: boolean;
   canRemove: boolean;
+  renderInner: SchemeParamsRenderInner;
 };
 
 export const TimeBoxedSegmentRow = ({
@@ -48,6 +60,7 @@ export const TimeBoxedSegmentRow = ({
   onRemove,
   isLoading,
   canRemove,
+  renderInner,
 }: TimeBoxedSegmentRowProps) => {
   const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
 
@@ -144,11 +157,11 @@ export const TimeBoxedSegmentRow = ({
           )}
         />
 
-        <SchemeParamsField
-          basePath={innerBasePath}
-          kindPath={innerKindPath}
-          isLoading={isLoading}
-        />
+        {renderInner({
+          basePath: innerBasePath,
+          kindPath: innerKindPath,
+          isLoading,
+        })}
       </Stack>
     </DynamicListItem>
   );

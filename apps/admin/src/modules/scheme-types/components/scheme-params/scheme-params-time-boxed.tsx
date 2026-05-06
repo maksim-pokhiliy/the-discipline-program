@@ -6,18 +6,20 @@ import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./scheme-params-shared-styles";
 import { type SchemeTypeFormValues } from "./scheme-params.types";
-import { TimeBoxedSegmentRow } from "./time-boxed-segment-row";
+import { type SchemeParamsRenderInner, TimeBoxedSegmentRow } from "./time-boxed-segment-row";
 
 const MIN_TIME_BOXED_SEGMENTS = 1;
 
 type SchemeParamsTimeBoxedFormProps = {
   basePath: "defaultParams";
   isLoading: boolean;
+  renderInner: SchemeParamsRenderInner;
 };
 
 export const SchemeParamsTimeBoxedForm = ({
   basePath,
   isLoading,
+  renderInner,
 }: SchemeParamsTimeBoxedFormProps) => {
   const { control } = useFormContext<SchemeTypeFormValues>();
 
@@ -48,6 +50,7 @@ export const SchemeParamsTimeBoxedForm = ({
             isLoading={isLoading}
             canRemove={canRemove}
             onRemove={() => removeSegment(index)}
+            renderInner={renderInner}
           />
         ))}
 

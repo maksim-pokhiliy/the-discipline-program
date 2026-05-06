@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useCallback, useEffect, useRef } from "react";
 
 import { Alert, Stack } from "@mui/material";
 import { useFormContext, useWatch } from "react-hook-form";
@@ -24,6 +24,7 @@ import {
   type SchemeParamsKindPath,
   type SchemeTypeFormValues,
 } from "./scheme-params.types";
+import { type SchemeParamsRenderInner } from "./time-boxed-segment-row";
 
 export type { SchemeParamsBasePath, SchemeParamsKindPath } from "./scheme-params.types";
 
@@ -53,6 +54,7 @@ const renderArchetype = (
   kind: SchemeArchetypeKind,
   basePath: SchemeParamsBasePath,
   isLoading: boolean,
+  renderInner: SchemeParamsRenderInner,
 ): ReactNode => {
   switch (kind) {
     case "NONE":
@@ -70,7 +72,13 @@ const renderArchetype = (
         return null;
       }
 
-      return <SchemeParamsTimeBoxedForm basePath={basePath} isLoading={isLoading} />;
+      return (
+        <SchemeParamsTimeBoxedForm
+          basePath={basePath}
+          isLoading={isLoading}
+          renderInner={renderInner}
+        />
+      );
     case "LADDER":
       if (basePath !== "defaultParams") {
         return null;
@@ -119,13 +127,18 @@ export const SchemeParamsField = ({ basePath, kindPath, isLoading }: SchemeParam
     clearErrors(kindPath);
   }, [kind, basePath, kindPath, getValues, setValue, clearErrors]);
 
+  const renderInner = useCallback<SchemeParamsRenderInner>(
+    (innerProps) => <SchemeParamsField {...innerProps} />,
+    [],
+  );
+
   const baseError = getFieldState(basePath, formState).error;
   const baseErrorMessage = typeof baseError?.message === "string" ? baseError.message : undefined;
 
   return (
     <Stack spacing={3}>
       {baseErrorMessage !== undefined && <Alert severity="error">{baseErrorMessage}</Alert>}
-      {kind !== undefined && renderArchetype(kind, basePath, isLoading)}
+      {kind !== undefined && renderArchetype(kind, basePath, isLoading, renderInner)}
     </Stack>
   );
 };
