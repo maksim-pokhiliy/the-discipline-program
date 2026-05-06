@@ -12,6 +12,7 @@ import { type createSchemeTypeSchema } from "@repo/contracts/lms/scheme-type";
 import { SchemeParamsCountDownForm } from "./scheme-params-count-down";
 import { SchemeParamsCountUpForm } from "./scheme-params-count-up";
 import { SchemeParamsDistanceForm } from "./scheme-params-distance";
+import { SchemeParamsIntervalLoopForm } from "./scheme-params-interval-loop";
 import { SchemeParamsNoneForm } from "./scheme-params-none";
 
 export type SchemeParamsBasePath = "defaultParams" | `defaultParams.segments.${number}.innerParams`;
@@ -54,7 +55,7 @@ const renderArchetype = (
     case "COUNT_DOWN":
       return <SchemeParamsCountDownForm basePath={basePath} isLoading={isLoading} />;
     case "INTERVAL_LOOP":
-      return null;
+      return <SchemeParamsIntervalLoopForm basePath={basePath} isLoading={isLoading} />;
     case "EMOM_LOOP":
       return null;
     case "TIME_BOXED":
