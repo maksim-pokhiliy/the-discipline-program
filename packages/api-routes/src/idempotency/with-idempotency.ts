@@ -183,7 +183,7 @@ const runIdempotent = async (args: RunIdempotentArgs): Promise<Response> => {
 export const wrapHandler =
   (run: Run, config: IdempotencyConfig): RouteHandler =>
   async (request, context) => {
-    const params = await context.params;
+    const params = (await context.params) ?? {};
     const scope = resolvePublicOrAuthScope(request);
 
     return runIdempotent({ run, config, request, context, params, scope });
@@ -192,7 +192,7 @@ export const wrapHandler =
 export const wrapAuthHandler =
   (run: AuthRun, config: IdempotencyConfig): AuthenticatedHandler =>
   async (request, context, userId) => {
-    const params = await context.params;
+    const params = (await context.params) ?? {};
     const scope = buildAuthScope(userId);
 
     return runIdempotent({

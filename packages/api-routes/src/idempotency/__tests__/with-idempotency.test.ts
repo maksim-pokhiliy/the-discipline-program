@@ -885,3 +885,47 @@ describe("No Idempotency-Key header runs the handler with no Idempotency-Replaye
     expect(response.headers.has("Idempotency-Replayed")).toBe(false);
   });
 });
+
+describe("Collection routes: undefined params from Next.js 16 do not crash route building", () => {
+  const noParamsContext = (): RouteContext => ({ params: Promise.resolve(undefined) });
+
+  it("wrapHandler accepts a context whose params resolves to undefined and runs the handler", async () => {
+    installStore();
+    lookupMock.mockResolvedValue({ kind: "miss" });
+    persistMock.mockResolvedValue({ status: "persisted" });
+
+    const inner: RouteHandler = vi.fn(async () => new Response('{"ok":1}', { status: 201 }));
+    const wrapped = wrapHandler(inner, { bodyMode: "json" });
+
+    const response = await wrapped(
+      buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
+      noParamsContext(),
+    );
+
+    expect(response.status).toBe(201);
+    expect(inner).toHaveBeenCalledOnce();
+    expect(lookupMock).toHaveBeenCalledOnce();
+  });
+
+  it("wrapAuthHandler accepts a context whose params resolves to undefined and runs the handler", async () => {
+    installStore();
+    lookupMock.mockResolvedValue({ kind: "miss" });
+    persistMock.mockResolvedValue({ status: "persisted" });
+
+    const inner: AuthenticatedHandler = vi.fn(
+      async () => new Response('{"ok":1}', { status: 201 }),
+    );
+    const wrapped = wrapAuthHandler(inner, { bodyMode: "json" });
+
+    const response = await wrapped(
+      buildJsonRequest({ a: 1 }, { headers: { "Idempotency-Key": KEY } }),
+      noParamsContext(),
+      "user-123",
+    );
+
+    expect(response.status).toBe(201);
+    expect(inner).toHaveBeenCalledOnce();
+    expect(lookupMock).toHaveBeenCalledOnce();
+    expect(lookupMock.mock.calls[0]?.[0]).toMatchObject({ scope: "user:user-123" });
+  });
+});
