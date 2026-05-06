@@ -4,6 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { Button, Divider, Grid, Stack, TextField, Typography } from "@mui/material";
 import { useFieldArray, useFormContext } from "react-hook-form";
 
+import { optionalNumberSetValueAs } from "./optional-number-register";
 import { ProgressionStepRow } from "./progression-step-row";
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./scheme-params-shared-styles";
 import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
@@ -43,7 +44,7 @@ export const SchemeParamsCountUpForm = ({ basePath, isLoading }: SchemeParamsCou
             error={!!capError}
             helperText={capError?.message}
             inputProps={{ min: 1, step: 1 }}
-            {...register(capName, { valueAsNumber: true })}
+            {...register(capName, { setValueAs: optionalNumberSetValueAs })}
           />
         </Grid>
 
@@ -58,7 +59,7 @@ export const SchemeParamsCountUpForm = ({ basePath, isLoading }: SchemeParamsCou
             error={!!roundsError}
             helperText={roundsError?.message}
             inputProps={{ min: 1, step: 1 }}
-            {...register(roundsName, { valueAsNumber: true })}
+            {...register(roundsName, { setValueAs: optionalNumberSetValueAs })}
           />
         </Grid>
       </Grid>

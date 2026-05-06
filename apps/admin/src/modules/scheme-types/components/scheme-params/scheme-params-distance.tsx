@@ -14,6 +14,7 @@ import { Controller, useFormContext } from "react-hook-form";
 
 import { DISTANCE_UNIT_OPTIONS } from "@repo/contracts/lms/_domain";
 
+import { optionalNumberSetValueAs } from "./optional-number-register";
 import { type SchemeTypeFormValues } from "./scheme-params.types";
 
 type SchemeParamsDistanceFormProps = {
@@ -92,7 +93,7 @@ export const SchemeParamsDistanceForm = ({
             error={!!distanceMaxError}
             helperText={distanceMaxError?.message}
             inputProps={{ min: 0.01, step: 0.01 }}
-            {...register(distanceMaxName, { valueAsNumber: true })}
+            {...register(distanceMaxName, { setValueAs: optionalNumberSetValueAs })}
           />
         </Grid>
       </Grid>
@@ -107,7 +108,7 @@ export const SchemeParamsDistanceForm = ({
         error={!!capSecError}
         helperText={capSecError?.message}
         inputProps={{ min: 1, step: 1 }}
-        {...register(capSecName, { valueAsNumber: true })}
+        {...register(capSecName, { setValueAs: optionalNumberSetValueAs })}
       />
     </Stack>
   );

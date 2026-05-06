@@ -15,6 +15,7 @@ import { Controller, useFormContext } from "react-hook-form";
 import { INTERVAL_SLOT_ACTION_OPTIONS } from "@repo/contracts/lms/_domain";
 import { DynamicListItem } from "@repo/ui";
 
+import { optionalNumberSetValueAs } from "./optional-number-register";
 import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
 
 type IntervalSlotRowProps = {
@@ -119,7 +120,7 @@ export const IntervalSlotRow = ({
           error={!!entryRefIndexError}
           helperText={entryRefIndexError?.message}
           inputProps={{ min: 0, step: 1 }}
-          {...register(entryRefIndexName, { valueAsNumber: true })}
+          {...register(entryRefIndexName, { setValueAs: optionalNumberSetValueAs })}
         />
       </Stack>
     </DynamicListItem>

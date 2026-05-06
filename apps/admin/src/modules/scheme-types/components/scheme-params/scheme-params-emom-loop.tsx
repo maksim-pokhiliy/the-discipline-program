@@ -5,6 +5,7 @@ import { Button, Divider, Grid, Stack, TextField, Typography } from "@mui/materi
 import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { EmomSlotRow } from "./emom-slot-row";
+import { optionalNumberSetValueAs } from "./optional-number-register";
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./scheme-params-shared-styles";
 import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
 
@@ -65,7 +66,7 @@ export const SchemeParamsEmomLoopForm = ({
             error={!!cycleLengthError}
             helperText={cycleLengthError?.message}
             inputProps={{ min: 1, step: 1 }}
-            {...register(cycleLengthName, { valueAsNumber: true })}
+            {...register(cycleLengthName, { setValueAs: optionalNumberSetValueAs })}
           />
         </Grid>
       </Grid>
