@@ -18,6 +18,7 @@ export * from "./rep-spec.schema";
 export * from "./rep-spec.types";
 export * from "./rx-status.schema";
 export * from "./rx-status.types";
+export * from "./safe-string.schema";
 export * from "./scheme-archetype.constants";
 export * from "./scheme-archetype.schema";
 export * from "./scheme-archetype.types";

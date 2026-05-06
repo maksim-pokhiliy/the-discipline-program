@@ -127,6 +127,40 @@ describe("lmsPlanEnrollmentApi", () => {
         await cleanupRaw.planEnrollment.delete({ where: { id: removedRow.id } }).catch(() => {});
       }
     });
+
+    it("excludes soft-removed rows when filter.status=ACTIVE", async () => {
+      const liveRow = await cleanupRaw.planEnrollment.create({
+        data: {
+          planId: activePlanId,
+          athleteId: assignedAthlete.id,
+          enrolledById: coach.user.id,
+          boardedAt: new Date("2026-01-01"),
+          status: "ACTIVE",
+        },
+      });
+      const leakRow = await cleanupRaw.planEnrollment.create({
+        data: {
+          planId: activePlanId,
+          athleteId: unassignedAthlete.id,
+          enrolledById: coach.user.id,
+          boardedAt: new Date("2026-01-01"),
+          status: "ACTIVE",
+          deletedAt: new Date(),
+        },
+      });
+
+      try {
+        const activeList = await lmsPlanEnrollmentApi.listByPlan(coach.user.id, activePlanId, {
+          status: EnrollmentStatus.ACTIVE,
+        });
+
+        expect(activeList.find((e) => e.id === liveRow.id)).toBeDefined();
+        expect(activeList.find((e) => e.id === leakRow.id)).toBeUndefined();
+      } finally {
+        await cleanupRaw.planEnrollment.delete({ where: { id: liveRow.id } }).catch(() => {});
+        await cleanupRaw.planEnrollment.delete({ where: { id: leakRow.id } }).catch(() => {});
+      }
+    });
   });
 
   describe("create", () => {
@@ -185,6 +219,50 @@ describe("lmsPlanEnrollmentApi", () => {
         expect(created.status).toBe(EnrollmentStatus.ACTIVE);
       } finally {
         await cleanupRaw.planEnrollment.delete({ where: { id: created.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects with ConflictError when athlete is already enrolled (no Remove between)", async () => {
+      const first = await lmsPlanEnrollmentApi.create(
+        coach.user.id,
+        activePlanId,
+        baseEnrollmentData(assignedAthlete.id),
+      );
+
+      try {
+        await expect(
+          lmsPlanEnrollmentApi.create(
+            coach.user.id,
+            activePlanId,
+            baseEnrollmentData(assignedAthlete.id),
+          ),
+        ).rejects.toThrow(ConflictError);
+      } finally {
+        await cleanupRaw.planEnrollment.delete({ where: { id: first.id } }).catch(() => {});
+      }
+    });
+
+    it("allows re-enrollment after Remove (soft-deleted row does not block create)", async () => {
+      const first = await lmsPlanEnrollmentApi.create(
+        coach.user.id,
+        activePlanId,
+        baseEnrollmentData(assignedAthlete.id),
+      );
+
+      await lmsPlanEnrollmentApi.remove(coach.user.id, activePlanId, first.id);
+
+      const second = await lmsPlanEnrollmentApi.create(
+        coach.user.id,
+        activePlanId,
+        baseEnrollmentData(assignedAthlete.id),
+      );
+
+      try {
+        expect(second.id).not.toBe(first.id);
+        expect(second.status).toBe(EnrollmentStatus.ACTIVE);
+      } finally {
+        await cleanupRaw.planEnrollment.delete({ where: { id: first.id } }).catch(() => {});
+        await cleanupRaw.planEnrollment.delete({ where: { id: second.id } }).catch(() => {});
       }
     });
   });

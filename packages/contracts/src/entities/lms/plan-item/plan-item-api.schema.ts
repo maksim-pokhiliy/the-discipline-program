@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-import { createPlanItemSchema, planItemSchema, updatePlanItemSchema } from "./plan-item.schema";
+import {
+  altsExcludePrimary,
+  createPlanItemBaseSchema,
+  hasUniqueAlternativeIds,
+  planItemSchema,
+  updatePlanItemSchema,
+} from "./plan-item.schema";
 
 export const planItemParamsSchema = z.object({
   planId: z.string().cuid(),
@@ -18,7 +24,16 @@ export const getPlanItemsResponseSchema = z.object({
 
 export const getPlanItemResponseSchema = planItemSchema;
 
-export const createPlanItemRequestSchema = createPlanItemSchema.omit({ blockId: true });
+export const createPlanItemRequestSchema = createPlanItemBaseSchema
+  .omit({ blockId: true })
+  .refine((data) => hasUniqueAlternativeIds(data.alternatives), {
+    message: "alternatives must have unique exerciseIds",
+    path: ["alternatives"],
+  })
+  .refine((data) => altsExcludePrimary(data.alternatives, data.exerciseId), {
+    message: "alternatives must not include the primary exerciseId",
+    path: ["alternatives"],
+  });
 
 export const createPlanItemResponseSchema = planItemSchema;
 

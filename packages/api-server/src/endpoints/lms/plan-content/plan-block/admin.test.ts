@@ -3,7 +3,13 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { type CreatePlanBlockRequest } from "@repo/contracts/lms/plan-block";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
-import { BadRequestError, ForbiddenError, NotFoundError, ValidationError } from "@repo/errors";
+import {
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from "@repo/errors";
 
 import { cleanupRaw, createTestCoach, createTestPlan } from "../../../../test/helpers";
 
@@ -217,6 +223,28 @@ describe("lmsPlanBlockApi", () => {
         expect(created.notes).toBe("warmup couplet");
       } finally {
         await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects with ConflictError on duplicate (sessionId, order)", async () => {
+      const first = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], { order: 21 }),
+      );
+
+      try {
+        await expect(
+          lmsPlanBlockApi.create(
+            coach.user.id,
+            activePlan.id,
+            activeSessionId,
+            baseCreateData(schemeTypeNone.id, [blockTypeB.id], { order: 21 }),
+          ),
+        ).rejects.toThrow(ConflictError);
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: first.id } }).catch(() => {});
       }
     });
   });

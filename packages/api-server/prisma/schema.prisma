@@ -490,7 +490,7 @@ model PlanSession {
   blocks          PlanBlock[]
   workoutSessions WorkoutSession[]
 
-  @@index([dayId, order])
+  @@unique([dayId, order])
   @@map("lms_plan_sessions")
 }
 
@@ -509,7 +509,7 @@ model PlanBlock {
   blockTypeRefs PlanBlockTypeRef[]
   items         PlanItem[]
 
-  @@index([sessionId, order])
+  @@unique([sessionId, order])
   @@index([schemeTypeId])
   @@map("lms_plan_blocks")
 }
@@ -541,7 +541,7 @@ model PlanItem {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  @@index([blockId, order])
+  @@unique([blockId, order])
   @@index([exerciseId])
   @@map("lms_plan_items")
 }

@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { ForbiddenError, NotFoundError } from "@repo/errors";
+import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach } from "../../../../test/helpers";
 
@@ -150,6 +150,28 @@ describe("lmsPlanSessionApi", () => {
         expect(created.label).toBeNull();
       } finally {
         await cleanupRaw.planSession.delete({ where: { id: created.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects with ConflictError on duplicate (dayId, order)", async () => {
+      const first = await lmsPlanSessionApi.create(
+        coach.user.id,
+        activePlanId,
+        activeDayId,
+        baseSessionData({ order: 42 }),
+      );
+
+      try {
+        await expect(
+          lmsPlanSessionApi.create(
+            coach.user.id,
+            activePlanId,
+            activeDayId,
+            baseSessionData({ order: 42 }),
+          ),
+        ).rejects.toThrow(ConflictError);
+      } finally {
+        await cleanupRaw.planSession.delete({ where: { id: first.id } }).catch(() => {});
       }
     });
   });

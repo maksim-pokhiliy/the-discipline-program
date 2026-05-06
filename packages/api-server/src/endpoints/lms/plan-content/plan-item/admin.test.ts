@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { type CreatePlanItemRequest } from "@repo/contracts/lms/plan-item";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
-import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach, createTestPlan } from "../../../../test/helpers";
 
@@ -222,6 +222,28 @@ describe("lmsPlanItemApi", () => {
         }
       } finally {
         await cleanupRaw.exercise.delete({ where: { id: altExercise.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects with ConflictError on duplicate (blockId, order)", async () => {
+      const first = await lmsPlanItemApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeBlockId,
+        basePlanItemData(exercise.id, { order: 33 }),
+      );
+
+      try {
+        await expect(
+          lmsPlanItemApi.create(
+            coach.user.id,
+            activePlan.id,
+            activeBlockId,
+            basePlanItemData(exercise.id, { order: 33 }),
+          ),
+        ).rejects.toThrow(ConflictError);
+      } finally {
+        await cleanupRaw.planItem.delete({ where: { id: first.id } }).catch(() => {});
       }
     });
   });

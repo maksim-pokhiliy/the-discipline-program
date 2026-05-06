@@ -15,6 +15,7 @@ import {
   verifyPlanOwnership,
 } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
+import { type TxClient } from "../../../db/tx";
 import { ROLE_MAP } from "../../../mappers/iam";
 import { ENROLLMENT_STATUS_TO_PRISMA_MAP, mapToPlanEnrollment } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
@@ -48,53 +49,70 @@ const buildListWhere = (
   planId: string,
   filter: { status?: EnrollmentStatus },
 ): Prisma.PlanEnrollmentWhereInput => {
-  if (filter.status === undefined) {
-    return { planId, deletedAt: null };
+  if (filter.status === EnrollmentStatus.REMOVED) {
+    return { planId, status: ENROLLMENT_STATUS_TO_PRISMA_MAP[EnrollmentStatus.REMOVED] };
   }
 
-  return { planId, status: ENROLLMENT_STATUS_TO_PRISMA_MAP[filter.status] };
+  return {
+    planId,
+    deletedAt: null,
+    ...(filter.status !== undefined && {
+      status: ENROLLMENT_STATUS_TO_PRISMA_MAP[filter.status],
+    }),
+  };
+};
+
+type StatusTransitionArgs = {
+  planId: string;
+  enrollmentId: string;
+  expected: EnrollmentStatus;
+  target: EnrollmentStatus;
+  errorMessage: string;
+};
+
+const runStatusTransition = async (tx: TxClient, args: StatusTransitionArgs) => {
+  const result = await tx.planEnrollment.updateMany({
+    where: {
+      id: args.enrollmentId,
+      planId: args.planId,
+      status: ENROLLMENT_STATUS_TO_PRISMA_MAP[args.expected],
+      deletedAt: null,
+    },
+    data: {
+      status: ENROLLMENT_STATUS_TO_PRISMA_MAP[args.target],
+      statusChangedAt: new Date(),
+    },
+  });
+
+  if (result.count === 0) {
+    const existing = await tx.planEnrollment.findFirst({
+      where: { id: args.enrollmentId, planId: args.planId },
+    });
+
+    if (!existing || existing.deletedAt !== null) {
+      throw new NotFoundError("Plan enrollment not found", { enrollmentId: args.enrollmentId });
+    }
+
+    throw new ConflictError(args.errorMessage, {
+      enrollmentId: args.enrollmentId,
+      currentStatus: existing.status,
+    });
+  }
+
+  return findOrThrow(
+    tx.planEnrollment.findUnique({ where: { id: args.enrollmentId } }),
+    "Plan enrollment",
+  );
 };
 
 const transitionEnrollmentStatus = async (
   userId: string,
-  planId: string,
-  enrollmentId: string,
-  expected: EnrollmentStatus,
-  target: EnrollmentStatus,
-  errorMessage: string,
+  args: StatusTransitionArgs,
 ): Promise<PlanEnrollment> => {
-  await verifyPlanOwnership(planId, userId);
+  await verifyPlanOwnership(args.planId, userId);
 
   try {
-    const result = await prisma.planEnrollment.updateMany({
-      where: {
-        id: enrollmentId,
-        planId,
-        status: ENROLLMENT_STATUS_TO_PRISMA_MAP[expected],
-        deletedAt: null,
-      },
-      data: {
-        status: ENROLLMENT_STATUS_TO_PRISMA_MAP[target],
-        statusChangedAt: new Date(),
-      },
-    });
-
-    if (result.count === 0) {
-      const existing = await prisma.planEnrollment.findFirst({
-        where: { id: enrollmentId, planId },
-      });
-
-      if (!existing || existing.deletedAt !== null) {
-        throw new NotFoundError("Plan enrollment not found", { enrollmentId });
-      }
-
-      throw new ConflictError(errorMessage, { enrollmentId, currentStatus: existing.status });
-    }
-
-    const refreshed = await findOrThrow(
-      prisma.planEnrollment.findUnique({ where: { id: enrollmentId } }),
-      "Plan enrollment",
-    );
+    const refreshed = await prisma.$transaction((tx) => runStatusTransition(tx, args));
 
     return mapToPlanEnrollment(refreshed);
   } catch (error) {
@@ -158,6 +176,18 @@ export const lmsPlanEnrollmentApi = {
     await ensureAthleteUser(data.athleteId);
     await ensureCoachAssignmentIfNeeded(data.athleteId, userId);
 
+    const existingActive = await prisma.planEnrollment.findFirst({
+      where: { planId, athleteId: data.athleteId, deletedAt: null },
+      select: { id: true },
+    });
+
+    if (existingActive) {
+      throw new ConflictError("Athlete is already enrolled in this plan", {
+        planId,
+        athleteId: data.athleteId,
+      });
+    }
+
     try {
       const enrollment = await prisma.planEnrollment.create({
         data: {
@@ -177,24 +207,22 @@ export const lmsPlanEnrollmentApi = {
   },
 
   pause: async (userId: string, planId: string, enrollmentId: string): Promise<PlanEnrollment> =>
-    transitionEnrollmentStatus(
-      userId,
+    transitionEnrollmentStatus(userId, {
       planId,
       enrollmentId,
-      EnrollmentStatus.ACTIVE,
-      EnrollmentStatus.PAUSED,
-      "Only active enrollments can be paused",
-    ),
+      expected: EnrollmentStatus.ACTIVE,
+      target: EnrollmentStatus.PAUSED,
+      errorMessage: "Only active enrollments can be paused",
+    }),
 
   resume: async (userId: string, planId: string, enrollmentId: string): Promise<PlanEnrollment> =>
-    transitionEnrollmentStatus(
-      userId,
+    transitionEnrollmentStatus(userId, {
       planId,
       enrollmentId,
-      EnrollmentStatus.PAUSED,
-      EnrollmentStatus.ACTIVE,
-      "Only paused enrollments can be resumed",
-    ),
+      expected: EnrollmentStatus.PAUSED,
+      target: EnrollmentStatus.ACTIVE,
+      errorMessage: "Only paused enrollments can be resumed",
+    }),
 
   remove: async (userId: string, planId: string, enrollmentId: string): Promise<void> => {
     await verifyPlanOwnership(planId, userId);
