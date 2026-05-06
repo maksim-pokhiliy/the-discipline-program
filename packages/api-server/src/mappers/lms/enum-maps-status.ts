@@ -1,16 +1,30 @@
 import {
+  EnrollmentStatus as PrismaEnrollmentStatus,
   RxStatus as PrismaRxStatus,
   SchemeArchetypeKind as PrismaSchemeArchetypeKind,
   TrainingPlanStatus as PrismaTrainingPlanStatus,
   WorkoutSessionStatus as PrismaWorkoutSessionStatus,
 } from "@prisma/client";
 
+import { EnrollmentStatus } from "@repo/contracts/lms";
 import {
   type RxStatus,
   type SchemeArchetypeKind,
   type WorkoutSessionStatus,
 } from "@repo/contracts/lms/_domain";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
+
+export const ENROLLMENT_STATUS_MAP: Record<PrismaEnrollmentStatus, EnrollmentStatus> = {
+  ACTIVE: EnrollmentStatus.ACTIVE,
+  PAUSED: EnrollmentStatus.PAUSED,
+  REMOVED: EnrollmentStatus.REMOVED,
+};
+
+export const ENROLLMENT_STATUS_TO_PRISMA_MAP: Record<EnrollmentStatus, PrismaEnrollmentStatus> = {
+  [EnrollmentStatus.ACTIVE]: PrismaEnrollmentStatus.ACTIVE,
+  [EnrollmentStatus.PAUSED]: PrismaEnrollmentStatus.PAUSED,
+  [EnrollmentStatus.REMOVED]: PrismaEnrollmentStatus.REMOVED,
+};
 
 export const TRAINING_PLAN_STATUS_MAP: Record<PrismaTrainingPlanStatus, TrainingPlanStatus> = {
   DRAFT: TrainingPlanStatus.DRAFT,
