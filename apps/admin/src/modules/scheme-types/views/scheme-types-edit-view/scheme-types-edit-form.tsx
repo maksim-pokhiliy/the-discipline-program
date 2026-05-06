@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 
-import { defaultSchemeParams } from "@repo/contracts/lms/_domain";
 import {
   createSchemeTypeSchema,
   type CreateSchemeTypeData,
@@ -30,7 +29,7 @@ export const SchemeTypesEditForm: React.FC<SchemeTypesEditFormProps> = ({ scheme
     defaultValues: {
       name: schemeType.name,
       archetypeKind: schemeType.archetypeKind,
-      defaultParams: schemeType.defaultParams ?? defaultSchemeParams(schemeType.archetypeKind),
+      defaultParams: schemeType.defaultParams ?? undefined,
     },
   });
 

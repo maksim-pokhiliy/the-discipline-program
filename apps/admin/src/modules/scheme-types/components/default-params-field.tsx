@@ -25,9 +25,12 @@ type DefaultParamsFieldProps = {
 
 const stringifyParams = (params: SchemeParams): string => JSON.stringify(params, null, JSON_INDENT);
 
-const parseTextarea = (
-  text: string,
-): { kind: "empty" } | { kind: "ok"; value: SchemeParams } | { kind: "error"; message: string } => {
+type ParseResult =
+  | { kind: "empty" }
+  | { kind: "ok"; value: SchemeParams }
+  | { kind: "error"; message: string };
+
+const parseTextarea = (text: string): ParseResult => {
   const trimmed = text.trim();
 
   if (trimmed === "") {
@@ -63,8 +66,8 @@ export const DefaultParamsField = ({ isLoading }: DefaultParamsFieldProps) => {
     name: "archetypeKind",
   });
 
-  const initialParams = getValues("defaultParams") ?? defaultSchemeParams(archetypeKind);
-  const [text, setText] = useState<string>(stringifyParams(initialParams));
+  const initialValue = getValues("defaultParams");
+  const [text, setText] = useState<string>(initialValue ? stringifyParams(initialValue) : "");
   const previousArchetypeRef = useRef<SchemeArchetypeKind>(archetypeKind);
 
   useEffect(() => {
@@ -88,7 +91,7 @@ export const DefaultParamsField = ({ isLoading }: DefaultParamsFieldProps) => {
       render={({ field, fieldState }) => (
         <TextField
           label="Default Params (JSON)"
-          placeholder="{}"
+          placeholder={stringifyParams(defaultSchemeParams(archetypeKind))}
           variant="outlined"
           fullWidth
           size="small"
@@ -97,10 +100,11 @@ export const DefaultParamsField = ({ isLoading }: DefaultParamsFieldProps) => {
           disabled={isLoading}
           value={text}
           onChange={(event) => {
-            setText(event.target.value);
-          }}
-          onBlur={() => {
-            const result = parseTextarea(text);
+            const next = event.target.value;
+
+            setText(next);
+
+            const result = parseTextarea(next);
 
             if (result.kind === "empty") {
               field.onChange(undefined);
@@ -110,6 +114,7 @@ export const DefaultParamsField = ({ isLoading }: DefaultParamsFieldProps) => {
             }
 
             if (result.kind === "error") {
+              field.onChange(undefined);
               setError("defaultParams", { message: result.message });
 
               return;
