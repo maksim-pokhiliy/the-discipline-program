@@ -16,6 +16,7 @@ import { SchemeParamsEmomLoopForm } from "./scheme-params-emom-loop";
 import { SchemeParamsIntervalLoopForm } from "./scheme-params-interval-loop";
 import { SchemeParamsLadderForm } from "./scheme-params-ladder";
 import { SchemeParamsNoneForm } from "./scheme-params-none";
+import { SchemeParamsTimeBoxedForm } from "./scheme-params-time-boxed";
 
 export type SchemeParamsBasePath = "defaultParams" | `defaultParams.segments.${number}.innerParams`;
 
@@ -61,7 +62,11 @@ const renderArchetype = (
     case "EMOM_LOOP":
       return <SchemeParamsEmomLoopForm basePath={basePath} isLoading={isLoading} />;
     case "TIME_BOXED":
-      return null;
+      if (basePath !== "defaultParams") {
+        return null;
+      }
+
+      return <SchemeParamsTimeBoxedForm basePath={basePath} isLoading={isLoading} />;
     case "LADDER":
       if (basePath !== "defaultParams") {
         return null;
