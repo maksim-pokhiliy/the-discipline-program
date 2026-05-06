@@ -20,7 +20,7 @@ import {
 } from "@repo/contracts/lms/scheme-type";
 import { FormCard } from "@repo/ui";
 
-import { DefaultParamsField } from "./default-params-field";
+import { SchemeParamsField } from "./scheme-params";
 
 type SchemeTypeFormValues = z.input<typeof createSchemeTypeSchema>;
 
@@ -85,7 +85,11 @@ export const SchemeTypeForm = ({ isLoading = false }: SchemeTypeFormProps) => {
 
       <Grid size={{ xs: 12, lg: 6 }}>
         <FormCard title="Default Params">
-          <DefaultParamsField isLoading={isLoading} />
+          <SchemeParamsField
+            basePath="defaultParams"
+            kindPath="archetypeKind"
+            isLoading={isLoading}
+          />
         </FormCard>
       </Grid>
     </Grid>
