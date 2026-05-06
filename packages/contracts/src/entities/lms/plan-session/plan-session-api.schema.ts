@@ -26,6 +26,9 @@ export const createPlanSessionRequestSchema = createPlanSessionSchema.omit({ day
 
 export const createPlanSessionResponseSchema = planSessionSchema;
 
-export const updatePlanSessionRequestSchema = updatePlanSessionSchema;
+export const updatePlanSessionRequestSchema = updatePlanSessionSchema.refine(
+  (data) => Object.keys(data).length > 0,
+  { message: "patch cannot be empty" },
+);
 
 export const updatePlanSessionResponseSchema = planSessionSchema;

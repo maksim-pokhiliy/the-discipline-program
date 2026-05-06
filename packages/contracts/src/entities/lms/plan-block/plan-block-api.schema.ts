@@ -22,6 +22,9 @@ export const createPlanBlockRequestSchema = createPlanBlockSchema.omit({ session
 
 export const createPlanBlockResponseSchema = planBlockSchema;
 
-export const updatePlanBlockRequestSchema = updatePlanBlockSchema;
+export const updatePlanBlockRequestSchema = updatePlanBlockSchema.refine(
+  (data) => Object.keys(data).length > 0,
+  { message: "patch cannot be empty" },
+);
 
 export const updatePlanBlockResponseSchema = planBlockSchema;

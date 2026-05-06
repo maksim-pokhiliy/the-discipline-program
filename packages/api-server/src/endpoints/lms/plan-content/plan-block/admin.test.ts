@@ -312,6 +312,30 @@ describe("lmsPlanBlockApi", () => {
         await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
       }
     });
+
+    it("bumps updatedAt when only blockTypeIds is patched", async () => {
+      const created = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], { order: 10 }),
+      );
+
+      try {
+        const before = await cleanupRaw.planBlock.findUniqueOrThrow({
+          where: { id: created.id },
+          select: { updatedAt: true },
+        });
+
+        const updated = await lmsPlanBlockApi.update(coach.user.id, activePlan.id, created.id, {
+          blockTypeIds: [blockTypeB.id, blockTypeC.id],
+        });
+
+        expect(updated.updatedAt.getTime()).toBeGreaterThan(before.updatedAt.getTime());
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+      }
+    });
   });
 
   describe("cross-plan smuggle", () => {

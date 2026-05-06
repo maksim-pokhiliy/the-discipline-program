@@ -33,9 +33,6 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
-DO $$ BEGIN
-  CREATE UNIQUE INDEX IF NOT EXISTS plan_enrollment_unique_active
-    ON lms_plan_enrollments ("planId", "athleteId")
-    WHERE "deletedAt" IS NULL;
-EXCEPTION WHEN others THEN NULL;
-END $$;
+CREATE UNIQUE INDEX IF NOT EXISTS plan_enrollment_unique_active
+  ON lms_plan_enrollments ("planId", "athleteId")
+  WHERE "deletedAt" IS NULL;

@@ -214,9 +214,13 @@ const applyBlockUpdate = async (
         });
       }
 
+      const scalarUpdate = buildScalarUpdate(data);
+      const hasScalarChanges = Object.keys(scalarUpdate).length > 0;
+      const updateData = hasScalarChanges ? scalarUpdate : { updatedAt: new Date() };
+
       return tx.planBlock.update({
         where: { id: blockId },
-        data: buildScalarUpdate(data),
+        data: updateData,
         include: blockInclude,
       });
     });

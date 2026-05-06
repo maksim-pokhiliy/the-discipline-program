@@ -15,14 +15,16 @@ const SQL_FILE_PATH = resolve(
 );
 
 function splitStatements(raw: string): Statement[] {
-  const blocks = raw.split(/\n(?=DO \$\$)/u);
+  const blocks = raw.split(/\n(?=DO \$\$|CREATE\s+UNIQUE\s+INDEX)/u);
 
   return blocks
     .map((block) => block.trim())
     .filter((block) => block.length > 0)
     .map((block, index) => {
-      const constraintMatch = block.match(/CONSTRAINT\s+(\w+)/u);
-      const label = constraintMatch ? constraintMatch[1] : `statement_${index + 1}`;
+      const match = block.match(
+        /CONSTRAINT\s+(\w+)|UNIQUE\s+INDEX(?:\s+IF\s+NOT\s+EXISTS)?\s+(\w+)/u,
+      );
+      const label = match?.[1] ?? match?.[2] ?? `statement_${index + 1}`;
       const sql = block.endsWith(";") ? block : `${block};`;
 
       return { label, sql };

@@ -44,8 +44,12 @@ export const createPlanDayResponseSchema = z.object({
   isNew: z.boolean(),
 });
 
-export const updatePlanDayRequestSchema = z.object({
-  dayTypeId: z.string().cuid().nullable().optional(),
-});
+export const updatePlanDayRequestSchema = z
+  .object({
+    dayTypeId: z.string().cuid().nullable().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "patch cannot be empty",
+  });
 
 export const updatePlanDayResponseSchema = planDaySchema;

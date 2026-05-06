@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getPlanDaysQuerySchema } from "./plan-day-api.schema";
+import { getPlanDaysQuerySchema, updatePlanDayRequestSchema } from "./plan-day-api.schema";
 
 describe("getPlanDaysQuerySchema", () => {
   it("accepts from <= to within 366 days", () => {
@@ -45,5 +45,23 @@ describe("getPlanDaysQuerySchema", () => {
     if (!result.success) {
       expect(result.error.issues[0]?.message).toContain("range must be <= 366 days");
     }
+  });
+});
+
+describe("updatePlanDayRequestSchema", () => {
+  it("rejects empty update body", () => {
+    const result = updatePlanDayRequestSchema.safeParse({});
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain("patch cannot be empty");
+    }
+  });
+
+  it("accepts a patch with dayTypeId set to null", () => {
+    const result = updatePlanDayRequestSchema.safeParse({ dayTypeId: null });
+
+    expect(result.success).toBe(true);
   });
 });

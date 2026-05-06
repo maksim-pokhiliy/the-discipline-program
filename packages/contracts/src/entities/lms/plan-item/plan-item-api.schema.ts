@@ -39,6 +39,9 @@ export const createPlanItemRequestSchema = createPlanItemBaseSchema
 
 export const createPlanItemResponseSchema = planItemSchema;
 
-export const updatePlanItemRequestSchema = updatePlanItemSchema;
+export const updatePlanItemRequestSchema = updatePlanItemSchema.refine(
+  (data) => Object.keys(data).length > 0,
+  { message: "patch cannot be empty" },
+);
 
 export const updatePlanItemResponseSchema = planItemSchema;
