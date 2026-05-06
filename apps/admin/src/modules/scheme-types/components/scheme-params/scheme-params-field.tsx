@@ -9,6 +9,8 @@ import { type z } from "zod";
 import { defaultSchemeParams, type SchemeArchetypeKind } from "@repo/contracts/lms/_domain";
 import { type createSchemeTypeSchema } from "@repo/contracts/lms/scheme-type";
 
+import { SchemeParamsNoneForm } from "./scheme-params-none";
+
 export type SchemeParamsBasePath = "defaultParams" | `defaultParams.segments.${number}.innerParams`;
 
 export type SchemeParamsKindPath =
@@ -38,12 +40,12 @@ const isArchetypeKind = (value: unknown): value is SchemeArchetypeKind => {
 
 const renderArchetype = (
   kind: SchemeArchetypeKind,
-  _basePath: SchemeParamsBasePath,
+  basePath: SchemeParamsBasePath,
   _isLoading: boolean,
 ): ReactNode => {
   switch (kind) {
     case "NONE":
-      return null;
+      return <SchemeParamsNoneForm basePath={basePath} />;
     case "COUNT_UP":
       return null;
     case "COUNT_DOWN":
