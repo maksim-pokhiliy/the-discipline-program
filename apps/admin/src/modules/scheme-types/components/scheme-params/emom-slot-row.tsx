@@ -3,16 +3,15 @@
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Button, IconButton, Stack, TextField, Typography } from "@mui/material";
-import { type FieldValues, useFieldArray, useFormContext } from "react-hook-form";
+import { useFormContext } from "react-hook-form";
 
 import { DynamicListItem } from "@repo/ui";
 
 import { EmomSlotActionField } from "./emom-slot-action-field";
-import { type SchemeParamsBasePath } from "./scheme-params-field";
+import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
+import { usePrimitiveFieldArray } from "./use-primitive-field-array";
 
 const MIN_EMOM_SLOT_MINUTES = 1;
-
-type UntypedFormValues = FieldValues;
 
 type EmomSlotRowProps = {
   basePath: SchemeParamsBasePath;
@@ -29,15 +28,15 @@ export const EmomSlotRow = ({
   isLoading,
   canRemove,
 }: EmomSlotRowProps) => {
-  const { register, control, getFieldState, formState } = useFormContext<UntypedFormValues>();
+  const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
 
-  const minutesArrayName = `${basePath}.slots.${index}.minutes`;
+  const minutesArrayName = `${basePath}.slots.${index}.minutes` as const;
 
   const {
     fields: minuteFields,
     append: appendMinute,
     remove: removeMinute,
-  } = useFieldArray({ control, name: minutesArrayName });
+  } = usePrimitiveFieldArray<SchemeTypeFormValues>({ control, name: minutesArrayName });
 
   const canRemoveMinute = minuteFields.length > MIN_EMOM_SLOT_MINUTES;
 
@@ -54,7 +53,7 @@ export const EmomSlotRow = ({
 
         <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center">
           {minuteFields.map((minuteField, minuteIndex) => {
-            const minuteName = `${basePath}.slots.${index}.minutes.${minuteIndex}`;
+            const minuteName = `${basePath}.slots.${index}.minutes.${minuteIndex}` as const;
             const minuteError = getFieldState(minuteName, formState).error;
 
             return (

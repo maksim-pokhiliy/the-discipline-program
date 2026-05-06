@@ -2,15 +2,13 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Divider, Grid, Stack, TextField, Typography } from "@mui/material";
-import { type FieldValues, useFieldArray, useFormContext } from "react-hook-form";
+import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { EmomSlotRow } from "./emom-slot-row";
-import { type SchemeParamsBasePath } from "./scheme-params-field";
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./scheme-params-shared-styles";
+import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
 
 const MIN_EMOM_SLOTS = 1;
-
-type UntypedFormValues = FieldValues;
 
 type SchemeParamsEmomLoopFormProps = {
   basePath: SchemeParamsBasePath;
@@ -21,11 +19,11 @@ export const SchemeParamsEmomLoopForm = ({
   basePath,
   isLoading,
 }: SchemeParamsEmomLoopFormProps) => {
-  const { register, control, getFieldState, formState } = useFormContext<UntypedFormValues>();
+  const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
 
-  const totalMinutesName = `${basePath}.totalMinutes`;
-  const cycleLengthName = `${basePath}.cycleLength`;
-  const slotsName = `${basePath}.slots`;
+  const totalMinutesName = `${basePath}.totalMinutes` as const;
+  const cycleLengthName = `${basePath}.cycleLength` as const;
+  const slotsName = `${basePath}.slots` as const;
 
   const totalMinutesError = getFieldState(totalMinutesName, formState).error;
   const cycleLengthError = getFieldState(cycleLengthName, formState).error;

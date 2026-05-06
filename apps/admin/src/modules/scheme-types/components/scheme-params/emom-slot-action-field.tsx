@@ -11,25 +11,23 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { Controller, type FieldValues, useFormContext, useWatch } from "react-hook-form";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 
-import { type SchemeParamsBasePath } from "./scheme-params-field";
+import {
+  EMOM_SLOT_ACTION_KIND_OPTIONS,
+  type EmomSlotActionKind,
+  type SchemeParamsEmomLoop,
+} from "@repo/contracts/lms/_domain";
 
-type UntypedFormValues = FieldValues;
+import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
 
-type EmomSlotActionKind = "ENTRY" | "REST" | "MAX_OF_ENTRY";
+type EmomSlotAction = SchemeParamsEmomLoop["slots"][number]["action"];
 
 type EmomSlotActionFieldProps = {
   basePath: SchemeParamsBasePath;
   slotIndex: number;
   isLoading: boolean;
 };
-
-const ACTION_KIND_OPTIONS = [
-  { value: "ENTRY", label: "Entry" },
-  { value: "REST", label: "Rest" },
-  { value: "MAX_OF_ENTRY", label: "Max of Entry" },
-] as const;
 
 const isActionKind = (value: unknown): value is EmomSlotActionKind => {
   return value === "ENTRY" || value === "REST" || value === "MAX_OF_ENTRY";
@@ -38,7 +36,7 @@ const isActionKind = (value: unknown): value is EmomSlotActionKind => {
 const buildActionPayload = (
   kind: EmomSlotActionKind,
   previousEntryRefIndex: number,
-): { kind: EmomSlotActionKind; entryRefIndex?: number } => {
+): EmomSlotAction => {
   if (kind === "REST") {
     return { kind };
   }
@@ -66,11 +64,11 @@ export const EmomSlotActionField = ({
   isLoading,
 }: EmomSlotActionFieldProps) => {
   const { register, control, setValue, getValues, getFieldState, formState } =
-    useFormContext<UntypedFormValues>();
+    useFormContext<SchemeTypeFormValues>();
 
-  const actionPath = `${basePath}.slots.${slotIndex}.action`;
-  const kindPath = `${actionPath}.kind`;
-  const entryRefIndexPath = `${actionPath}.entryRefIndex`;
+  const actionPath = `${basePath}.slots.${slotIndex}.action` as const;
+  const kindPath = `${actionPath}.kind` as const;
+  const entryRefIndexPath = `${actionPath}.entryRefIndex` as const;
 
   const watchedKind: unknown = useWatch({ control, name: kindPath });
   const kind = isActionKind(watchedKind) ? watchedKind : undefined;
@@ -109,12 +107,12 @@ export const EmomSlotActionField = ({
             <Select
               labelId={`${basePath}-slot-${slotIndex}-action-kind-label`}
               label="Action Kind"
-              value={typeof field.value === "string" ? field.value : ""}
+              value={field.value ?? ""}
               onChange={field.onChange}
               onBlur={field.onBlur}
               disabled={isLoading}
             >
-              {ACTION_KIND_OPTIONS.map((option) => (
+              {EMOM_SLOT_ACTION_KIND_OPTIONS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
                   {option.label}
                 </MenuItem>

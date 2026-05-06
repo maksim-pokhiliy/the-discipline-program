@@ -1,4 +1,11 @@
-import { type SchemeArchetypeKind, type SchemeParams } from "./scheme-archetype.types";
+import {
+  type DistanceUnit,
+  type EmomSlotActionKind,
+  type IntervalSlotAction,
+  type LadderDirection,
+  type SchemeArchetypeKind,
+  type SchemeParams,
+} from "./scheme-archetype.types";
 
 export const SCHEME_ARCHETYPE_KINDS: readonly SchemeArchetypeKind[] = [
   "NONE",
@@ -29,6 +36,63 @@ export const SCHEME_ARCHETYPE_KIND_OPTIONS: ReadonlyArray<{
   value,
   label: SCHEME_ARCHETYPE_KIND_LABELS[value],
 }));
+
+export const DISTANCE_UNITS: readonly DistanceUnit[] = ["KM", "M", "MI"] as const;
+
+export const DISTANCE_UNIT_LABELS: Record<DistanceUnit, string> = {
+  KM: "Kilometers (KM)",
+  M: "Meters (M)",
+  MI: "Miles (MI)",
+};
+
+export const DISTANCE_UNIT_OPTIONS: ReadonlyArray<{ value: DistanceUnit; label: string }> =
+  DISTANCE_UNITS.map((value) => ({ value, label: DISTANCE_UNIT_LABELS[value] }));
+
+export const INTERVAL_SLOT_ACTIONS: readonly IntervalSlotAction[] = ["WORK", "REST"] as const;
+
+export const INTERVAL_SLOT_ACTION_LABELS: Record<IntervalSlotAction, string> = {
+  WORK: "Work",
+  REST: "Rest",
+};
+
+export const INTERVAL_SLOT_ACTION_OPTIONS: ReadonlyArray<{
+  value: IntervalSlotAction;
+  label: string;
+}> = INTERVAL_SLOT_ACTIONS.map((value) => ({
+  value,
+  label: INTERVAL_SLOT_ACTION_LABELS[value],
+}));
+
+export const EMOM_SLOT_ACTION_KINDS: readonly EmomSlotActionKind[] = [
+  "ENTRY",
+  "REST",
+  "MAX_OF_ENTRY",
+] as const;
+
+export const EMOM_SLOT_ACTION_KIND_LABELS: Record<EmomSlotActionKind, string> = {
+  ENTRY: "Entry",
+  REST: "Rest",
+  MAX_OF_ENTRY: "Max of Entry",
+};
+
+export const EMOM_SLOT_ACTION_KIND_OPTIONS: ReadonlyArray<{
+  value: EmomSlotActionKind;
+  label: string;
+}> = EMOM_SLOT_ACTION_KINDS.map((value) => ({
+  value,
+  label: EMOM_SLOT_ACTION_KIND_LABELS[value],
+}));
+
+export const LADDER_DIRECTIONS: readonly LadderDirection[] = ["ASC", "DESC", "PYRAMID"] as const;
+
+export const LADDER_DIRECTION_LABELS: Record<LadderDirection, string> = {
+  ASC: "Ascending",
+  DESC: "Descending",
+  PYRAMID: "Pyramid",
+};
+
+export const LADDER_DIRECTION_OPTIONS: ReadonlyArray<{ value: LadderDirection; label: string }> =
+  LADDER_DIRECTIONS.map((value) => ({ value, label: LADDER_DIRECTION_LABELS[value] }));
 
 export function defaultSchemeParams(kind: SchemeArchetypeKind): SchemeParams {
   switch (kind) {

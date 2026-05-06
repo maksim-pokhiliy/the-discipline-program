@@ -12,37 +12,33 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { Controller, type FieldValues, useFieldArray, useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
+
+import { LADDER_DIRECTION_OPTIONS } from "@repo/contracts/lms/_domain";
 
 import { LadderStepRow } from "./ladder-step-row";
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./scheme-params-shared-styles";
+import { type SchemeTypeFormValues } from "./scheme-params.types";
+import { usePrimitiveFieldArray } from "./use-primitive-field-array";
 
 const MIN_LADDER_SEQUENCE = 2;
-
-type UntypedFormValues = FieldValues;
 
 type SchemeParamsLadderFormProps = {
   basePath: "defaultParams";
   isLoading: boolean;
 };
 
-const DIRECTION_OPTIONS = [
-  { value: "ASC", label: "Ascending" },
-  { value: "DESC", label: "Descending" },
-  { value: "PYRAMID", label: "Pyramid" },
-] as const;
-
 export const SchemeParamsLadderForm = ({ basePath, isLoading }: SchemeParamsLadderFormProps) => {
-  const { control } = useFormContext<UntypedFormValues>();
+  const { control } = useFormContext<SchemeTypeFormValues>();
 
-  const directionName = `${basePath}.direction`;
-  const sequenceName = `${basePath}.sequence`;
+  const directionName = `${basePath}.direction` as const;
+  const sequenceName = `${basePath}.sequence` as const;
 
   const {
     fields: sequenceFields,
     append: appendStep,
     remove: removeStep,
-  } = useFieldArray({ control, name: sequenceName });
+  } = usePrimitiveFieldArray<SchemeTypeFormValues>({ control, name: sequenceName });
 
   const canRemove = sequenceFields.length > MIN_LADDER_SEQUENCE;
 
@@ -57,12 +53,12 @@ export const SchemeParamsLadderForm = ({ basePath, isLoading }: SchemeParamsLadd
             <Select
               labelId={`${basePath}-ladder-direction-label`}
               label="Direction"
-              value={typeof field.value === "string" ? field.value : ""}
+              value={field.value ?? ""}
               onChange={field.onChange}
               onBlur={field.onBlur}
               disabled={isLoading}
             >
-              {DIRECTION_OPTIONS.map((option) => (
+              {LADDER_DIRECTION_OPTIONS.map((option) => (
                 <MenuItem key={option.value} value={option.value}>
                   {option.label}
                 </MenuItem>

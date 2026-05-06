@@ -10,13 +10,12 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { Controller, type FieldValues, useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 
+import { INTERVAL_SLOT_ACTION_OPTIONS } from "@repo/contracts/lms/_domain";
 import { DynamicListItem } from "@repo/ui";
 
-import { type SchemeParamsBasePath } from "./scheme-params-field";
-
-type UntypedFormValues = FieldValues;
+import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
 
 type IntervalSlotRowProps = {
   basePath: SchemeParamsBasePath;
@@ -26,11 +25,6 @@ type IntervalSlotRowProps = {
   canRemove: boolean;
 };
 
-const ACTION_OPTIONS = [
-  { value: "WORK", label: "Work" },
-  { value: "REST", label: "Rest" },
-] as const;
-
 export const IntervalSlotRow = ({
   basePath,
   index,
@@ -38,12 +32,12 @@ export const IntervalSlotRow = ({
   isLoading,
   canRemove,
 }: IntervalSlotRowProps) => {
-  const { register, control, getFieldState, formState } = useFormContext<UntypedFormValues>();
+  const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
 
-  const durationName = `${basePath}.slots.${index}.durationSec`;
-  const actionName = `${basePath}.slots.${index}.action`;
-  const labelName = `${basePath}.slots.${index}.label`;
-  const entryRefIndexName = `${basePath}.slots.${index}.entryRefIndex`;
+  const durationName = `${basePath}.slots.${index}.durationSec` as const;
+  const actionName = `${basePath}.slots.${index}.action` as const;
+  const labelName = `${basePath}.slots.${index}.label` as const;
+  const entryRefIndexName = `${basePath}.slots.${index}.entryRefIndex` as const;
 
   const durationError = getFieldState(durationName, formState).error;
   const labelError = getFieldState(labelName, formState).error;
@@ -82,12 +76,12 @@ export const IntervalSlotRow = ({
                   <Select
                     labelId={`${basePath}-slot-${index}-action-label`}
                     label="Action"
-                    value={typeof field.value === "string" ? field.value : ""}
+                    value={field.value ?? ""}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
                     disabled={isLoading}
                   >
-                    {ACTION_OPTIONS.map((option) => (
+                    {INTERVAL_SLOT_ACTION_OPTIONS.map((option) => (
                       <MenuItem key={option.value} value={option.value}>
                         {option.label}
                       </MenuItem>

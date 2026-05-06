@@ -10,7 +10,7 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { Controller, type FieldValues, useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from "react-hook-form";
 
 import {
   SCHEME_ARCHETYPE_KIND_LABELS,
@@ -19,6 +19,7 @@ import {
 import { DynamicListItem } from "@repo/ui";
 
 import { SchemeParamsField } from "./scheme-params-field";
+import { type SchemeTypeFormValues } from "./scheme-params.types";
 
 const INNER_ARCHETYPE_KIND_VALUES = [
   "NONE",
@@ -32,8 +33,6 @@ const INNER_ARCHETYPE_KIND_OPTIONS = INNER_ARCHETYPE_KIND_VALUES.map((value) => 
   value,
   label: SCHEME_ARCHETYPE_KIND_LABELS[value],
 }));
-
-type UntypedFormValues = FieldValues;
 
 type TimeBoxedSegmentRowProps = {
   basePath: "defaultParams";
@@ -50,12 +49,12 @@ export const TimeBoxedSegmentRow = ({
   isLoading,
   canRemove,
 }: TimeBoxedSegmentRowProps) => {
-  const { register, control, getFieldState, formState } = useFormContext<UntypedFormValues>();
+  const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
 
-  const startSecName = `${basePath}.segments.${index}.startSec`;
-  const endSecName = `${basePath}.segments.${index}.endSec`;
-  const labelName = `${basePath}.segments.${index}.label`;
-  const innerArchetypeKindName = `${basePath}.segments.${index}.innerArchetypeKind`;
+  const startSecName = `${basePath}.segments.${index}.startSec` as const;
+  const endSecName = `${basePath}.segments.${index}.endSec` as const;
+  const labelName = `${basePath}.segments.${index}.label` as const;
+  const innerArchetypeKindName = `${basePath}.segments.${index}.innerArchetypeKind` as const;
 
   const startSecError = getFieldState(startSecName, formState).error;
   const endSecError = getFieldState(endSecName, formState).error;
@@ -127,7 +126,7 @@ export const TimeBoxedSegmentRow = ({
               <Select
                 labelId={`${basePath}-segment-${index}-inner-kind-label`}
                 label="Inner Archetype"
-                value={typeof field.value === "string" ? field.value : ""}
+                value={field.value ?? ""}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
                 disabled={isLoading}

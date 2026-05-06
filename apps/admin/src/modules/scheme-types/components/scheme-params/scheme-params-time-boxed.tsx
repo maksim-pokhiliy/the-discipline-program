@@ -2,14 +2,13 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Divider, Stack, Typography } from "@mui/material";
-import { type FieldValues, useFieldArray, useFormContext } from "react-hook-form";
+import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./scheme-params-shared-styles";
+import { type SchemeTypeFormValues } from "./scheme-params.types";
 import { TimeBoxedSegmentRow } from "./time-boxed-segment-row";
 
 const MIN_TIME_BOXED_SEGMENTS = 1;
-
-type UntypedFormValues = FieldValues;
 
 type SchemeParamsTimeBoxedFormProps = {
   basePath: "defaultParams";
@@ -20,9 +19,9 @@ export const SchemeParamsTimeBoxedForm = ({
   basePath,
   isLoading,
 }: SchemeParamsTimeBoxedFormProps) => {
-  const { control } = useFormContext<UntypedFormValues>();
+  const { control } = useFormContext<SchemeTypeFormValues>();
 
-  const segmentsName = `${basePath}.segments`;
+  const segmentsName = `${basePath}.segments` as const;
 
   const {
     fields: segmentFields,

@@ -4,10 +4,8 @@ import { type ReactNode, useEffect, useRef } from "react";
 
 import { Alert, Stack } from "@mui/material";
 import { useFormContext, useWatch } from "react-hook-form";
-import { type z } from "zod";
 
 import { defaultSchemeParams, type SchemeArchetypeKind } from "@repo/contracts/lms/_domain";
-import { type createSchemeTypeSchema } from "@repo/contracts/lms/scheme-type";
 
 import { SchemeParamsCountDownForm } from "./scheme-params-count-down";
 import { SchemeParamsCountUpForm } from "./scheme-params-count-up";
@@ -17,14 +15,13 @@ import { SchemeParamsIntervalLoopForm } from "./scheme-params-interval-loop";
 import { SchemeParamsLadderForm } from "./scheme-params-ladder";
 import { SchemeParamsNoneForm } from "./scheme-params-none";
 import { SchemeParamsTimeBoxedForm } from "./scheme-params-time-boxed";
+import {
+  type SchemeParamsBasePath,
+  type SchemeParamsKindPath,
+  type SchemeTypeFormValues,
+} from "./scheme-params.types";
 
-export type SchemeParamsBasePath = "defaultParams" | `defaultParams.segments.${number}.innerParams`;
-
-export type SchemeParamsKindPath =
-  | "archetypeKind"
-  | `defaultParams.segments.${number}.innerArchetypeKind`;
-
-type SchemeTypeFormValues = z.input<typeof createSchemeTypeSchema>;
+export type { SchemeParamsBasePath, SchemeParamsKindPath } from "./scheme-params.types";
 
 type SchemeParamsFieldProps = {
   basePath: SchemeParamsBasePath;
@@ -103,8 +100,10 @@ export const SchemeParamsField = ({ basePath, kindPath, isLoading }: SchemeParam
       return;
     }
 
+    const isMountSeed = currentValue === undefined && previousKind === kind;
+
     previousKindRef.current = kind;
-    setValue(basePath, defaultSchemeParams(kind), { shouldDirty: true });
+    setValue(basePath, defaultSchemeParams(kind), { shouldDirty: !isMountSeed });
     clearErrors(basePath);
     clearErrors(kindPath);
   }, [kind, basePath, kindPath, getValues, setValue, clearErrors]);

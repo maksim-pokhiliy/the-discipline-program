@@ -11,22 +11,15 @@ import {
   TextField,
 } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
-import { type z } from "zod";
 
-import { type createSchemeTypeSchema } from "@repo/contracts/lms/scheme-type";
+import { DISTANCE_UNIT_OPTIONS } from "@repo/contracts/lms/_domain";
 
-type SchemeTypeFormValues = z.input<typeof createSchemeTypeSchema>;
+import { type SchemeTypeFormValues } from "./scheme-params.types";
 
 type SchemeParamsDistanceFormProps = {
   basePath: "defaultParams";
   isLoading: boolean;
 };
-
-const DISTANCE_UNIT_OPTIONS = [
-  { value: "KM", label: "Kilometers (KM)" },
-  { value: "M", label: "Meters (M)" },
-  { value: "MI", label: "Miles (MI)" },
-] as const;
 
 export const SchemeParamsDistanceForm = ({
   basePath,
@@ -54,7 +47,7 @@ export const SchemeParamsDistanceForm = ({
             <Select
               labelId={`${basePath}-distance-unit-label`}
               label="Unit"
-              value={typeof field.value === "string" ? field.value : ""}
+              value={field.value ?? ""}
               onChange={field.onChange}
               onBlur={field.onBlur}
               disabled={isLoading}

@@ -2,15 +2,13 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Divider, Stack, TextField, Typography } from "@mui/material";
-import { type FieldValues, useFieldArray, useFormContext } from "react-hook-form";
+import { useFieldArray, useFormContext } from "react-hook-form";
 
 import { IntervalSlotRow } from "./interval-slot-row";
-import { type SchemeParamsBasePath } from "./scheme-params-field";
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./scheme-params-shared-styles";
+import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
 
 const MIN_INTERVAL_SLOTS = 1;
-
-type UntypedFormValues = FieldValues;
 
 type SchemeParamsIntervalLoopFormProps = {
   basePath: SchemeParamsBasePath;
@@ -21,10 +19,10 @@ export const SchemeParamsIntervalLoopForm = ({
   basePath,
   isLoading,
 }: SchemeParamsIntervalLoopFormProps) => {
-  const { register, control, getFieldState, formState } = useFormContext<UntypedFormValues>();
+  const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
 
-  const setsName = `${basePath}.sets`;
-  const slotsName = `${basePath}.slots`;
+  const setsName = `${basePath}.sets` as const;
+  const slotsName = `${basePath}.slots` as const;
 
   const setsError = getFieldState(setsName, formState).error;
 
