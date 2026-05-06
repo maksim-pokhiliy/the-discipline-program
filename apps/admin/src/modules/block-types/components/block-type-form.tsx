@@ -54,7 +54,7 @@ export const BlockTypeForm = ({ isLoading = false }: BlockTypeFormProps) => {
               helperText={errors.description?.message}
               inputProps={{ maxLength: BLOCK_TYPE_CONSTANTS.MAX_DESCRIPTION_LENGTH }}
               {...register("description", {
-                setValueAs: (value) => (value === "" ? undefined : value),
+                setValueAs: (value) => (value === "" ? null : value),
               })}
             />
           </FormCard>

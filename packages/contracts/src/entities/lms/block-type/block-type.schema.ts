@@ -12,7 +12,7 @@ export const blockTypeSchema = z.object({
 
 export const createBlockTypeSchema = z.object({
   name: z.string().min(1).max(BLOCK_TYPE_CONSTANTS.MAX_NAME_LENGTH),
-  description: z.string().max(BLOCK_TYPE_CONSTANTS.MAX_DESCRIPTION_LENGTH).optional(),
+  description: z.string().max(BLOCK_TYPE_CONSTANTS.MAX_DESCRIPTION_LENGTH).nullable().optional(),
 });
 
 export const updateBlockTypeSchema = createBlockTypeSchema.partial();
