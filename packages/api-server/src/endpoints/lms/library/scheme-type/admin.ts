@@ -6,7 +6,7 @@ import {
   type SchemeType,
   type UpdateSchemeTypeData,
 } from "@repo/contracts/lms/scheme-type";
-import { ConflictError } from "@repo/errors";
+import { ConflictError, ValidationError } from "@repo/errors";
 
 import { prisma } from "../../../../db/client";
 import { mapToSchemeType, SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP } from "../../../../mappers/lms";
@@ -63,10 +63,22 @@ export const lmsSchemeTypeAdminApi = {
   },
 
   updateSchemeType: async (id: string, data: UpdateSchemeTypeData): Promise<SchemeType> => {
-    await findOrThrow(prisma.schemeType.findUnique({ where: { id } }), "SchemeType");
+    const existing = mapToSchemeType(
+      await findOrThrow(prisma.schemeType.findUnique({ where: { id } }), "SchemeType"),
+    );
 
     if (data.name !== undefined) {
       await ensureUniqueName(data.name, id);
+    }
+
+    const effectiveArchetypeKind = data.archetypeKind ?? existing.archetypeKind;
+    const effectiveDefaultParams =
+      data.defaultParams !== undefined ? data.defaultParams : existing.defaultParams;
+
+    if (effectiveDefaultParams !== null && effectiveDefaultParams.kind !== effectiveArchetypeKind) {
+      throw new ValidationError("defaultParams.kind must match archetypeKind", {
+        field: "defaultParams",
+      });
     }
 
     try {
