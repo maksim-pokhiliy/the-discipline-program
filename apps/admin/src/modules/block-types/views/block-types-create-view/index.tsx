@@ -20,7 +20,7 @@ export const BlockTypesCreateView = () => {
     resolver: zodResolver(createBlockTypeSchema),
     defaultValues: {
       name: "",
-      description: "",
+      description: null,
     },
   });
 
