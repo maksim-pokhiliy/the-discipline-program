@@ -9,6 +9,7 @@ import { type z } from "zod";
 import { defaultSchemeParams, type SchemeArchetypeKind } from "@repo/contracts/lms/_domain";
 import { type createSchemeTypeSchema } from "@repo/contracts/lms/scheme-type";
 
+import { SchemeParamsDistanceForm } from "./scheme-params-distance";
 import { SchemeParamsNoneForm } from "./scheme-params-none";
 
 export type SchemeParamsBasePath = "defaultParams" | `defaultParams.segments.${number}.innerParams`;
@@ -41,7 +42,7 @@ const isArchetypeKind = (value: unknown): value is SchemeArchetypeKind => {
 const renderArchetype = (
   kind: SchemeArchetypeKind,
   basePath: SchemeParamsBasePath,
-  _isLoading: boolean,
+  isLoading: boolean,
 ): ReactNode => {
   switch (kind) {
     case "NONE":
@@ -59,7 +60,11 @@ const renderArchetype = (
     case "LADDER":
       return null;
     case "DISTANCE":
-      return null;
+      if (basePath !== "defaultParams") {
+        return null;
+      }
+
+      return <SchemeParamsDistanceForm basePath={basePath} isLoading={isLoading} />;
   }
 };
 
