@@ -22,6 +22,10 @@ const SOFT_DELETE_UNIQUE_FIELDS: Record<string, string[]> = {
   Product: ["slug"],
   MarketingBlogPost: ["slug"],
   User: ["email"],
+  Exercise: ["name"],
+  BlockType: ["name"],
+  SchemeType: ["name"],
+  DayType: ["name"],
 };
 
 type SoftDeleteTableConfig = { table: string; columns: string[] };
@@ -30,6 +34,10 @@ const SOFT_DELETE_RAW_CONFIG: Record<string, SoftDeleteTableConfig> = {
   User: { table: "users", columns: ["email"] },
   Product: { table: "app_products", columns: ["slug"] },
   MarketingBlogPost: { table: "marketing_blog_posts", columns: ["slug"] },
+  Exercise: { table: "lms_exercises", columns: ["name"] },
+  BlockType: { table: "lms_block_types", columns: ["name"] },
+  SchemeType: { table: "lms_scheme_types", columns: ["name"] },
+  DayType: { table: "lms_day_types", columns: ["name"] },
 };
 
 type ModelDelegate = {
