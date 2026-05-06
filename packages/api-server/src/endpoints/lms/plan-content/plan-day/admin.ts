@@ -99,16 +99,20 @@ export const lmsPlanDayApi = {
 
     verifyPlanEditable(plan);
 
-    await findDayInPlan(planId, dayId);
+    const existing = await findDayInPlan(planId, dayId);
 
-    if (data.dayTypeId !== undefined && data.dayTypeId !== null) {
+    if (data.dayTypeId === undefined) {
+      return existing;
+    }
+
+    if (data.dayTypeId !== null) {
       await ensureDayTypeExists(data.dayTypeId);
     }
 
     try {
       const day = await prisma.planDay.update({
         where: { id: dayId },
-        data: { ...(data.dayTypeId !== undefined && { dayTypeId: data.dayTypeId }) },
+        data: { dayTypeId: data.dayTypeId },
       });
 
       return mapToPlanDay(day);

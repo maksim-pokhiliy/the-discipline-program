@@ -205,6 +205,34 @@ describe("lmsPlanDayApi", () => {
     });
   });
 
+  describe("update", () => {
+    it("returns the existing row unchanged and does NOT write when dayTypeId is omitted", async () => {
+      const initial = await lmsPlanDayApi.upsert(coach.user.id, planId, {
+        date: dayDate(15),
+        dayTypeId,
+      });
+
+      createdDayIds.push(initial.day.id);
+
+      const before = await cleanupRaw.planDay.findUniqueOrThrow({
+        where: { id: initial.day.id },
+        select: { updatedAt: true, dayTypeId: true },
+      });
+
+      const result = await lmsPlanDayApi.update(coach.user.id, planId, initial.day.id, {});
+
+      const after = await cleanupRaw.planDay.findUniqueOrThrow({
+        where: { id: initial.day.id },
+        select: { updatedAt: true, dayTypeId: true },
+      });
+
+      expect(result.id).toBe(initial.day.id);
+      expect(result.dayTypeId).toBe(dayTypeId);
+      expect(after.updatedAt.getTime()).toBe(before.updatedAt.getTime());
+      expect(after.dayTypeId).toBe(dayTypeId);
+    });
+  });
+
   describe("getById parent-chain enforcement", () => {
     it("rejects with NotFoundError when dayId belongs to a different plan", async () => {
       const day = await cleanupRaw.planDay.create({

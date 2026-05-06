@@ -39,8 +39,9 @@ export const altsExcludePrimary = (
   return !alts.some((a) => a.exerciseId === primary);
 };
 
-const ALTERNATIVES_UNIQUE_MESSAGE = "alternatives must have unique exerciseIds";
-const ALTERNATIVES_NO_PRIMARY_MESSAGE = "alternatives must not include the primary exerciseId";
+export const ALTERNATIVES_UNIQUE_MESSAGE = "alternatives must have unique exerciseIds";
+export const ALTERNATIVES_NO_PRIMARY_MESSAGE =
+  "alternatives must not include the primary exerciseId";
 
 export const planItemSchema = z.object({
   id: z.string().cuid(),

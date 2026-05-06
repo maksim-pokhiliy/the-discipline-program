@@ -49,7 +49,7 @@ const validateSchemeTypeAndKind = async (
 
 const validateBlockTypeIds = async (ids: string[]): Promise<void> => {
   const found = await prisma.blockType.findMany({
-    where: { id: { in: ids }, deletedAt: null },
+    where: { id: { in: ids } },
     select: { id: true },
   });
 
@@ -204,29 +204,21 @@ const applyBlockUpdate = async (
   data: UpdatePlanBlockRequest,
 ): Promise<PlanBlock> => {
   try {
-    if (data.blockTypeIds !== undefined) {
-      const ids = data.blockTypeIds;
+    const block = await prisma.$transaction(async (tx) => {
+      if (data.blockTypeIds !== undefined) {
+        const ids = data.blockTypeIds;
 
-      await prisma.$transaction([
-        prisma.planBlockTypeRef.deleteMany({ where: { blockId } }),
-        prisma.planBlockTypeRef.createMany({
+        await tx.planBlockTypeRef.deleteMany({ where: { blockId } });
+        await tx.planBlockTypeRef.createMany({
           data: ids.map((blockTypeId, order) => ({ blockId, blockTypeId, order })),
-        }),
-        prisma.planBlock.update({ where: { id: blockId }, data: buildScalarUpdate(data) }),
-      ]);
+        });
+      }
 
-      const refreshed = await prisma.planBlock.findUniqueOrThrow({
+      return tx.planBlock.update({
         where: { id: blockId },
+        data: buildScalarUpdate(data),
         include: blockInclude,
       });
-
-      return mapToPlanBlock(refreshed);
-    }
-
-    const block = await prisma.planBlock.update({
-      where: { id: blockId },
-      data: buildScalarUpdate(data),
-      include: blockInclude,
     });
 
     return mapToPlanBlock(block);

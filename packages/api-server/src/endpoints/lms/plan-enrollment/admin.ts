@@ -1,4 +1,4 @@
-import { type Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import { UserRole } from "@repo/contracts/iam/auth";
 import {
@@ -19,6 +19,22 @@ import { type TxClient } from "../../../db/tx";
 import { ROLE_MAP } from "../../../mappers/iam";
 import { ENROLLMENT_STATUS_TO_PRISMA_MAP, mapToPlanEnrollment } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
+
+const ACTIVE_ENROLLMENT_INDEX_NAME = "plan_enrollment_unique_active";
+
+const isActiveEnrollmentIndex = (error: Prisma.PrismaClientKnownRequestError): boolean => {
+  const target = error.meta?.target;
+
+  if (typeof target === "string") {
+    return target.includes(ACTIVE_ENROLLMENT_INDEX_NAME);
+  }
+
+  if (Array.isArray(target)) {
+    return target.includes("planId") && target.includes("athleteId");
+  }
+
+  return false;
+};
 
 const ensureAthleteUser = async (athleteId: string): Promise<void> => {
   const user = await prisma.user.findUnique({
@@ -200,6 +216,17 @@ export const lmsPlanEnrollmentApi = {
 
       return mapToPlanEnrollment(enrollment);
     } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002" &&
+        isActiveEnrollmentIndex(error)
+      ) {
+        throw new ConflictError("Athlete is already enrolled in this plan", {
+          planId,
+          athleteId: data.athleteId,
+        });
+      }
+
       return handlePrismaError(error, { entity: "Plan enrollment" });
     }
   },

@@ -242,6 +242,35 @@ describe("lmsPlanEnrollmentApi", () => {
       }
     });
 
+    it("rejects exactly one of two concurrent enroll requests for the same athlete", async () => {
+      const data = baseEnrollmentData(assignedAthlete.id);
+
+      const results = await Promise.allSettled([
+        lmsPlanEnrollmentApi.create(coach.user.id, activePlanId, data),
+        lmsPlanEnrollmentApi.create(coach.user.id, activePlanId, data),
+      ]);
+
+      const fulfilled = results.filter(
+        (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof lmsPlanEnrollmentApi.create>>> =>
+          r.status === "fulfilled",
+      );
+      const rejected = results.filter((r): r is PromiseRejectedResult => r.status === "rejected");
+
+      const [firstRejection] = rejected;
+
+      try {
+        expect(fulfilled).toHaveLength(1);
+        expect(rejected).toHaveLength(1);
+        expect(firstRejection?.reason).toBeInstanceOf(ConflictError);
+      } finally {
+        for (const result of fulfilled) {
+          await cleanupRaw.planEnrollment
+            .delete({ where: { id: result.value.id } })
+            .catch(() => {});
+        }
+      }
+    });
+
     it("allows re-enrollment after Remove (soft-deleted row does not block create)", async () => {
       const first = await lmsPlanEnrollmentApi.create(
         coach.user.id,

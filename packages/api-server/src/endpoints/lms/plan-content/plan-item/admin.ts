@@ -1,6 +1,8 @@
 import { Prisma } from "@prisma/client";
 
 import {
+  ALTERNATIVES_NO_PRIMARY_MESSAGE,
+  ALTERNATIVES_UNIQUE_MESSAGE,
   altsExcludePrimary,
   type CreatePlanItemRequest,
   hasUniqueAlternativeIds,
@@ -23,7 +25,7 @@ const validateExerciseIds = async (exerciseIds: readonly string[]): Promise<void
   const uniqueIds = [...new Set(exerciseIds)];
 
   const exercises = await prisma.exercise.findMany({
-    where: { id: { in: uniqueIds }, deletedAt: null },
+    where: { id: { in: uniqueIds } },
     select: { id: true },
   });
 
@@ -105,13 +107,13 @@ const validateMergedAlternatives = (current: PlanItem, data: UpdatePlanItemReque
   }
 
   if (!hasUniqueAlternativeIds(mergedAlternatives)) {
-    throw new ValidationError("alternatives must have unique exerciseIds", {
+    throw new ValidationError(ALTERNATIVES_UNIQUE_MESSAGE, {
       field: "alternatives",
     });
   }
 
   if (!altsExcludePrimary(mergedAlternatives, mergedPrimary)) {
-    throw new ValidationError("alternatives must not include the primary exerciseId", {
+    throw new ValidationError(ALTERNATIVES_NO_PRIMARY_MESSAGE, {
       field: "alternatives",
     });
   }

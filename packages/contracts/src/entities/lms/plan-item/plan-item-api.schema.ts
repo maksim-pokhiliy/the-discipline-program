@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 import {
+  ALTERNATIVES_NO_PRIMARY_MESSAGE,
+  ALTERNATIVES_UNIQUE_MESSAGE,
   altsExcludePrimary,
   createPlanItemBaseSchema,
   hasUniqueAlternativeIds,
@@ -27,11 +29,11 @@ export const getPlanItemResponseSchema = planItemSchema;
 export const createPlanItemRequestSchema = createPlanItemBaseSchema
   .omit({ blockId: true })
   .refine((data) => hasUniqueAlternativeIds(data.alternatives), {
-    message: "alternatives must have unique exerciseIds",
+    message: ALTERNATIVES_UNIQUE_MESSAGE,
     path: ["alternatives"],
   })
   .refine((data) => altsExcludePrimary(data.alternatives, data.exerciseId), {
-    message: "alternatives must not include the primary exerciseId",
+    message: ALTERNATIVES_NO_PRIMARY_MESSAGE,
     path: ["alternatives"],
   });
 
