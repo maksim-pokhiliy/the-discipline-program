@@ -32,3 +32,7 @@ DO $$ BEGIN
       CHECK (rating BETWEEN 1 AND 5);
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS plan_enrollment_unique_active
+  ON lms_plan_enrollments ("planId", "athleteId")
+  WHERE "deletedAt" IS NULL;

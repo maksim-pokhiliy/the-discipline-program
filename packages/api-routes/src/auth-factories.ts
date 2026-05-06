@@ -52,6 +52,23 @@ export const createAuthGetByParamHandler = <TParams, TResponse>(
   };
 };
 
+export const createAuthGetByParamWithQueryHandler = <TParams, TQuery, TResponse>(
+  apiFn: (userId: string, params: TParams, query: TQuery) => Promise<TResponse>,
+  paramsSchema: ParseSchema<TParams>,
+  querySchema: ParseSchema<TQuery>,
+  responseSchema: ParseSchema<TResponse>,
+): AuthenticatedHandler => {
+  return async (request, context, userId) => {
+    const params = paramsSchema.parse(await context.params);
+    const queryParams = Object.fromEntries(new URL(request.url).searchParams.entries());
+    const query = querySchema.parse(queryParams);
+    const data = await apiFn(userId, params, query);
+    const validated = responseSchema.parse(data);
+
+    return NextResponse.json(validated);
+  };
+};
+
 export const createAuthPostHandler = <TRequest, TResponse>(
   apiFn: (userId: string, data: TRequest) => Promise<TResponse>,
   requestSchema: ParseSchema<TRequest>,

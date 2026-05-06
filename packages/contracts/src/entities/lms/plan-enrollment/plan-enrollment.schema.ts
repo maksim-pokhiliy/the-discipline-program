@@ -9,7 +9,7 @@ export const planEnrollmentSchema = z.object({
   planId: z.string().cuid(),
   athleteId: z.string().cuid(),
   enrolledById: z.string().cuid(),
-  boardedAt: z.date(),
+  boardedAt: z.coerce.date(),
   status: enrollmentStatusSchema,
   statusChangedAt: z.date(),
   createdAt: z.date(),
@@ -19,5 +19,5 @@ export const planEnrollmentSchema = z.object({
 export const createPlanEnrollmentSchema = z.object({
   planId: z.string().cuid(),
   athleteId: z.string().cuid(),
-  boardedAt: z.date(),
+  boardedAt: z.coerce.date(),
 });

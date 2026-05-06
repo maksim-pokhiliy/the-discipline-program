@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../mappers/iam";
@@ -102,7 +103,9 @@ describe("platform guards", () => {
 
   describe("verifyPlanOwnership", () => {
     it("does not throw when plan was created by user", async () => {
-      await expect(verifyPlanOwnership(plan.id, coach.user.id)).resolves.toBeUndefined();
+      await expect(verifyPlanOwnership(plan.id, coach.user.id)).resolves.toEqual({
+        status: TrainingPlanStatus.DRAFT,
+      });
     });
 
     it("throws ForbiddenError when plan belongs to another coach", async () => {
@@ -112,14 +115,18 @@ describe("platform guards", () => {
     });
 
     it("does not throw for HEAD_COACH on any plan", async () => {
-      await expect(verifyPlanOwnership(plan.id, headCoachUser.id)).resolves.toBeUndefined();
+      await expect(verifyPlanOwnership(plan.id, headCoachUser.id)).resolves.toEqual({
+        status: TrainingPlanStatus.DRAFT,
+      });
     });
 
     it("does not throw for ADMIN on any plan", async () => {
       const adminUser = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
 
       try {
-        await expect(verifyPlanOwnership(plan.id, adminUser.id)).resolves.toBeUndefined();
+        await expect(verifyPlanOwnership(plan.id, adminUser.id)).resolves.toEqual({
+          status: TrainingPlanStatus.DRAFT,
+        });
       } finally {
         await cleanupRaw.user.delete({ where: { id: adminUser.id } });
       }

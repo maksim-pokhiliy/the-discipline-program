@@ -31,6 +31,7 @@ export {
   createAuthGetHandler,
   createAuthGetWithQueryHandler,
   createAuthGetByParamHandler,
+  createAuthGetByParamWithQueryHandler,
   createAuthPostHandler,
   createAuthPostByParamHandler,
   createAuthPutHandler,

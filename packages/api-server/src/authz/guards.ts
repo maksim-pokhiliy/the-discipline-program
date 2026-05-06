@@ -1,8 +1,10 @@
 import { UserRole } from "@repo/contracts/iam/auth";
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../db/client";
 import { ROLE_MAP } from "../mappers/iam";
+import { TRAINING_PLAN_STATUS_MAP } from "../mappers/lms";
 import { findOrThrow } from "../utils";
 
 const ADMIN_OR_HEAD_COACH: ReadonlySet<UserRole> = new Set([UserRole.ADMIN, UserRole.HEAD_COACH]);
@@ -65,10 +67,13 @@ export const resolveCoachId = async (userId: string): Promise<string> => {
   return profile.id;
 };
 
-export const verifyPlanOwnership = async (planId: string, userId: string): Promise<void> => {
+export const verifyPlanOwnership = async (
+  planId: string,
+  userId: string,
+): Promise<{ status: TrainingPlanStatus }> => {
   const plan = await prisma.trainingPlan.findUnique({
     where: { id: planId },
-    select: { creatorId: true, deletedAt: true },
+    select: { creatorId: true, deletedAt: true, status: true },
   });
 
   if (!plan || plan.deletedAt !== null) {
@@ -76,7 +81,7 @@ export const verifyPlanOwnership = async (planId: string, userId: string): Promi
   }
 
   if (plan.creatorId === userId) {
-    return;
+    return { status: TRAINING_PLAN_STATUS_MAP[plan.status] };
   }
 
   const user = await prisma.user.findUnique({
@@ -85,10 +90,16 @@ export const verifyPlanOwnership = async (planId: string, userId: string): Promi
   });
 
   if (user && isAdminOrHeadCoach(ROLE_MAP[user.role])) {
-    return;
+    return { status: TRAINING_PLAN_STATUS_MAP[plan.status] };
   }
 
   throw new ForbiddenError("Training plan does not belong to this coach");
+};
+
+export const verifyPlanEditable = (plan: { status: TrainingPlanStatus }): void => {
+  if (plan.status === TrainingPlanStatus.ARCHIVED) {
+    throw new ForbiddenError("Plan is archived; edits not allowed");
+  }
 };
 
 export const verifyAthleteBelongsToCoach = async (
