@@ -14,6 +14,7 @@ import { SchemeParamsCountUpForm } from "./scheme-params-count-up";
 import { SchemeParamsDistanceForm } from "./scheme-params-distance";
 import { SchemeParamsEmomLoopForm } from "./scheme-params-emom-loop";
 import { SchemeParamsIntervalLoopForm } from "./scheme-params-interval-loop";
+import { SchemeParamsLadderForm } from "./scheme-params-ladder";
 import { SchemeParamsNoneForm } from "./scheme-params-none";
 
 export type SchemeParamsBasePath = "defaultParams" | `defaultParams.segments.${number}.innerParams`;
@@ -62,7 +63,11 @@ const renderArchetype = (
     case "TIME_BOXED":
       return null;
     case "LADDER":
-      return null;
+      if (basePath !== "defaultParams") {
+        return null;
+      }
+
+      return <SchemeParamsLadderForm basePath={basePath} isLoading={isLoading} />;
     case "DISTANCE":
       if (basePath !== "defaultParams") {
         return null;
