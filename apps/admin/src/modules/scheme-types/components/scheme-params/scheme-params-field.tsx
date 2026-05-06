@@ -5,7 +5,11 @@ import { type ReactNode, useEffect, useRef } from "react";
 import { Alert, Stack } from "@mui/material";
 import { useFormContext, useWatch } from "react-hook-form";
 
-import { defaultSchemeParams, type SchemeArchetypeKind } from "@repo/contracts/lms/_domain";
+import {
+  defaultSchemeParams,
+  type SchemeArchetypeKind,
+  type SchemeParams,
+} from "@repo/contracts/lms/_domain";
 
 import { SchemeParamsCountDownForm } from "./scheme-params-count-down";
 import { SchemeParamsCountUpForm } from "./scheme-params-count-up";
@@ -41,6 +45,9 @@ const isArchetypeKind = (value: unknown): value is SchemeArchetypeKind => {
     value === "DISTANCE"
   );
 };
+
+const isSchemeParamsForKind = (value: SchemeParams, kind: SchemeArchetypeKind): boolean =>
+  value.kind === kind;
 
 const renderArchetype = (
   kind: SchemeArchetypeKind,
@@ -96,14 +103,18 @@ export const SchemeParamsField = ({ basePath, kindPath, isLoading }: SchemeParam
     const previousKind = previousKindRef.current;
     const currentValue = getValues(basePath);
 
-    if (previousKind === kind && currentValue !== undefined) {
+    if (
+      previousKind === kind &&
+      currentValue !== undefined &&
+      isSchemeParamsForKind(currentValue, kind)
+    ) {
       return;
     }
 
-    const isMountSeed = currentValue === undefined && previousKind === kind;
+    const isUserDrivenSwap = previousKind !== kind;
 
     previousKindRef.current = kind;
-    setValue(basePath, defaultSchemeParams(kind), { shouldDirty: !isMountSeed });
+    setValue(basePath, defaultSchemeParams(kind), { shouldDirty: isUserDrivenSwap });
     clearErrors(basePath);
     clearErrors(kindPath);
   }, [kind, basePath, kindPath, getValues, setValue, clearErrors]);

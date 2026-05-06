@@ -63,7 +63,7 @@ export const EmomSlotActionField = ({
   slotIndex,
   isLoading,
 }: EmomSlotActionFieldProps) => {
-  const { register, control, setValue, getValues, getFieldState, formState } =
+  const { register, control, setValue, clearErrors, getValues, getFieldState, formState } =
     useFormContext<SchemeTypeFormValues>();
 
   const actionPath = `${basePath}.slots.${slotIndex}.action` as const;
@@ -89,7 +89,8 @@ export const EmomSlotActionField = ({
 
     previousKindRef.current = kind;
     setValue(actionPath, buildActionPayload(kind, previousIndex), { shouldDirty: true });
-  }, [kind, actionPath, getValues, setValue]);
+    clearErrors(actionPath);
+  }, [kind, actionPath, getValues, setValue, clearErrors]);
 
   const entryRefIndexError = getFieldState(entryRefIndexPath, formState).error;
   const showEntryRefIndex = kind === "ENTRY" || kind === "MAX_OF_ENTRY";
