@@ -15,7 +15,7 @@ import { findOrThrow, handlePrismaError, toInputJson } from "../../../../utils";
 const ensureUniqueName = async (name: string, excludeId?: string): Promise<void> => {
   const existing = await prisma.schemeType.findFirst({
     where: {
-      name: { equals: name, mode: "insensitive" },
+      name,
       ...(excludeId !== undefined && { id: { not: excludeId } }),
     },
   });

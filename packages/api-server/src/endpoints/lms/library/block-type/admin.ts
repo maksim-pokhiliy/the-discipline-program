@@ -13,7 +13,7 @@ import { findOrThrow, handlePrismaError } from "../../../../utils";
 const ensureUniqueName = async (name: string, excludeId?: string): Promise<void> => {
   const existing = await prisma.blockType.findFirst({
     where: {
-      name: { equals: name, mode: "insensitive" },
+      name,
       ...(excludeId !== undefined && { id: { not: excludeId } }),
     },
   });
