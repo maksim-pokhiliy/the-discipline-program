@@ -7,7 +7,9 @@ import { seedBlogPosts } from "./seed/blog-posts";
 import { clearAll } from "./seed/clear-all";
 import { seedCoachNotes } from "./seed/coach-notes";
 import { seedContactSubmissions } from "./seed/contact-submissions";
+import { seedLibrary } from "./seed/library";
 import { seedMarketingPages } from "./seed/marketing-pages";
+import { seedPlanContent } from "./seed/plan-content";
 import { seedProducts } from "./seed/products";
 import { seedProfiles } from "./seed/profiles";
 import { seedReviews } from "./seed/reviews";
@@ -32,7 +34,10 @@ const main = async (): Promise<void> => {
 
   await seedCoachNotes(prisma, coachProfile.id, users);
 
-  await seedTrainingPlans(prisma, users.coach.id);
+  const library = await seedLibrary(prisma);
+  const plans = await seedTrainingPlans(prisma, users.coach.id);
+
+  await seedPlanContent(prisma, plans, library);
 
   await seedMarketingPages(prisma);
   await seedProducts(prisma);

@@ -10,8 +10,17 @@ export const useWeekStart = (): Date => {
   const searchParams = useSearchParams();
   const weekParam = searchParams.get("week");
 
-  return useMemo(
-    () => (weekParam ? getMonday(parseDateParam(weekParam)) : getMonday(new Date())),
-    [weekParam],
-  );
+  return useMemo(() => {
+    if (!weekParam) {
+      return getMonday(new Date());
+    }
+
+    const parsed = parseDateParam(weekParam);
+
+    if (parsed === null) {
+      return getMonday(new Date());
+    }
+
+    return getMonday(parsed);
+  }, [weekParam]);
 };

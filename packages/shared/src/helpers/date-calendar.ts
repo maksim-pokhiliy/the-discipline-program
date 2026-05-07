@@ -1,7 +1,9 @@
 import { DEFAULT_LOCALE } from "./locale";
 
 const MS_PER_DAY = 86_400_000;
-const DAYS_IN_WEEK = 7;
+
+export const DAYS_IN_WEEK = 7;
+export const LAST_DAY_OFFSET_IN_WEEK = 6;
 
 export const getMonday = (date: Date): Date => {
   const day = date.getDay();
@@ -39,10 +41,30 @@ export const formatDateParam = (date: Date): string => {
   return `${y}-${m}-${d}`;
 };
 
-export const parseDateParam = (param: string): Date => {
-  const parts = param.split("-").map(Number);
+const DATE_PARAM_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-  return new Date(parts[0] ?? 0, (parts[1] ?? 1) - 1, parts[2] ?? 1);
+export const parseDateParam = (param: string): Date | null => {
+  const match = DATE_PARAM_PATTERN.exec(param);
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return null;
+  }
+
+  const date = new Date(year, month - 1, day);
+
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null;
+  }
+
+  return date;
 };
 
 export const formatDayHeader = (date: Date, locale: string = DEFAULT_LOCALE): string => {
@@ -56,7 +78,7 @@ export const formatDayName = (date: Date, locale: string = DEFAULT_LOCALE): stri
   new Intl.DateTimeFormat(locale, { weekday: "short" }).format(date);
 
 export const formatWeekRange = (monday: Date, locale: string = DEFAULT_LOCALE): string => {
-  const sunday = addDays(monday, 6);
+  const sunday = addDays(monday, LAST_DAY_OFFSET_IN_WEEK);
   const dateF = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" });
   const rangeF = new Intl.DateTimeFormat(locale, {
     month: "short",

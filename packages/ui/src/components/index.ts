@@ -18,6 +18,7 @@ export * from "./multi-select";
 export * from "./nav-link-button";
 export * from "./page-header";
 export * from "./person-card";
+export * from "./plan-status-chip";
 export * from "./pulse-stat";
 export * from "./pulse-stats-card";
 export * from "./query-wrapper";

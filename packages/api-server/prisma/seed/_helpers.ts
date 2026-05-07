@@ -17,11 +17,9 @@ export const at = <T>(arr: T[], index: number): T => {
 };
 
 export const today = (): Date => {
-  const d = new Date();
+  const now = new Date();
 
-  d.setHours(0, 0, 0, 0);
-
-  return d;
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 };
 
 export const dateOnly = (date: Date): Date => {
@@ -30,4 +28,20 @@ export const dateOnly = (date: Date): Date => {
   d.setUTCHours(0, 0, 0, 0);
 
   return d;
+};
+
+export const weekStart = (): Date => {
+  const now = new Date();
+  const day = now.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate() + diff));
+};
+
+export const dayOffset = (offsetDays: number): Date => {
+  const start = weekStart();
+
+  return new Date(
+    Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate() + offsetDays),
+  );
 };

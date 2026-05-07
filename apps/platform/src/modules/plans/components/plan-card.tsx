@@ -5,9 +5,9 @@ import Link from "next/link";
 
 import type { TrainingPlanListItem } from "@repo/contracts/lms/training-plan";
 import { formatDate } from "@repo/shared";
+import { PlanStatusChip } from "@repo/ui";
 
 import { PlanActionMenu } from "./plan-action-menu";
-import { PlanStatusChip } from "./plan-status-chip";
 
 type PlanCardProps = {
   plan: TrainingPlanListItem;
