@@ -11,6 +11,10 @@ describe("schemeParamsSchema — NONE", () => {
     const result = schemeParamsSchema.safeParse({ kind: "NONE", durationSec: 60 });
 
     expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).toEqual({ kind: "NONE" });
+    }
   });
 
   it("rejects unknown kind", () => {
@@ -189,6 +193,59 @@ describe("schemeParamsSchema — EMOM_LOOP", () => {
 
     expect(result.success).toBe(false);
   });
+});
+
+describe("schemeParamsSchema — TIME_BOXED inner archetype kind tuple", () => {
+  it.each([
+    ["NONE", { kind: "NONE" }],
+    ["COUNT_UP", { kind: "COUNT_UP" }],
+    ["COUNT_DOWN", { kind: "COUNT_DOWN", durationSec: 600 }],
+    [
+      "INTERVAL_LOOP",
+      { kind: "INTERVAL_LOOP", sets: 1, slots: [{ durationSec: 30, action: "WORK" }] },
+    ],
+    [
+      "EMOM_LOOP",
+      {
+        kind: "EMOM_LOOP",
+        totalMinutes: 10,
+        slots: [{ minutes: [0], action: { kind: "REST" } }],
+      },
+    ],
+  ] as const)("accepts %s as innerArchetypeKind", (innerKind, innerParams) => {
+    const result = schemeParamsSchema.safeParse({
+      kind: "TIME_BOXED",
+      segments: [
+        {
+          startSec: 0,
+          endSec: 600,
+          innerArchetypeKind: innerKind,
+          innerParams,
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it.each(["TIME_BOXED", "LADDER", "DISTANCE"] as const)(
+    "rejects %s as innerArchetypeKind (only 5 of 8 archetypes are allowed inside)",
+    (forbiddenInner) => {
+      const result = schemeParamsSchema.safeParse({
+        kind: "TIME_BOXED",
+        segments: [
+          {
+            startSec: 0,
+            endSec: 600,
+            innerArchetypeKind: forbiddenInner,
+            innerParams: { kind: "NONE" },
+          },
+        ],
+      });
+
+      expect(result.success).toBe(false);
+    },
+  );
 });
 
 describe("schemeParamsSchema — TIME_BOXED", () => {

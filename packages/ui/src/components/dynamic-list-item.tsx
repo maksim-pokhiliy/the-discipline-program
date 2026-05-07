@@ -8,9 +8,16 @@ import { IconButton, Stack, Paper, alpha } from "@mui/material";
 export type DynamicListItemProps = {
   children: ReactNode;
   onRemove: () => void;
+  disableRemove?: boolean;
+  removeAriaLabel?: string;
 };
 
-export const DynamicListItem = ({ children, onRemove }: DynamicListItemProps) => {
+export const DynamicListItem = ({
+  children,
+  onRemove,
+  disableRemove = false,
+  removeAriaLabel = "Remove item",
+}: DynamicListItemProps) => {
   return (
     <Paper
       variant="outlined"
@@ -36,7 +43,8 @@ export const DynamicListItem = ({ children, onRemove }: DynamicListItemProps) =>
           size="medium"
           color="error"
           onClick={onRemove}
-          aria-label="Remove item"
+          disabled={disableRemove}
+          aria-label={removeAriaLabel}
           sx={{ mt: 0.5 }}
         >
           <DeleteIcon />

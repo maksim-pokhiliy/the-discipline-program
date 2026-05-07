@@ -25,3 +25,8 @@ export type SchemeParamsEmomLoop = z.infer<typeof schemeParamsEmomLoopSchema>;
 export type SchemeParamsTimeBoxed = z.infer<typeof schemeParamsTimeBoxedSchema>;
 export type SchemeParamsLadder = z.infer<typeof schemeParamsLadderSchema>;
 export type SchemeParamsDistance = z.infer<typeof schemeParamsDistanceSchema>;
+
+export type DistanceUnit = SchemeParamsDistance["unit"];
+export type IntervalSlotAction = SchemeParamsIntervalLoop["slots"][number]["action"];
+export type EmomSlotActionKind = SchemeParamsEmomLoop["slots"][number]["action"]["kind"];
+export type LadderDirection = SchemeParamsLadder["direction"];
