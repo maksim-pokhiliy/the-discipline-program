@@ -1,17 +1,48 @@
 "use client";
 
-import { Stack, Typography } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 
-import { type DayType } from "@repo/contracts/lms/day-type";
-import { formatDayHeader } from "@repo/shared";
+import { formatDayName } from "@repo/shared";
 
-import { DayTypeBadge } from "./day-type-badge";
+const TODAY_CIRCLE_SIZE_PX = 24;
 
-type DayRowHeaderProps = { date: Date; dayType: DayType | null };
+type DayRowHeaderProps = { date: Date; isToday: boolean };
 
-export const DayRowHeader: React.FC<DayRowHeaderProps> = ({ date, dayType }) => (
-  <Stack direction="row" spacing={1} alignItems="center">
-    <Typography variant="subtitle2">{formatDayHeader(date)}</Typography>
-    {dayType !== null ? <DayTypeBadge dayType={dayType} /> : null}
-  </Stack>
-);
+export const DayRowHeader: React.FC<DayRowHeaderProps> = ({ date, isToday }) => {
+  const weekday = formatDayName(date);
+  const monthLabel = new Intl.DateTimeFormat(undefined, { month: "short" }).format(date);
+  const dayNumber = date.getDate();
+
+  return (
+    <Stack spacing={0.5}>
+      <Typography variant="subtitle2">{weekday}</Typography>
+      <Stack direction="row" spacing={0.5} alignItems="center">
+        <Typography variant="body2" color="text.secondary">
+          {monthLabel}
+        </Typography>
+        {isToday ? (
+          <Box
+            sx={{
+              width: TODAY_CIRCLE_SIZE_PX,
+              height: TODAY_CIRCLE_SIZE_PX,
+              borderRadius: "50%",
+              bgcolor: "primary.main",
+              color: "primary.contrastText",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: (theme) => theme.typography.body2.fontSize,
+              fontWeight: (theme) => theme.typography.fontWeightMedium,
+            }}
+          >
+            {dayNumber}
+          </Box>
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            {dayNumber}
+          </Typography>
+        )}
+      </Stack>
+    </Stack>
+  );
+};

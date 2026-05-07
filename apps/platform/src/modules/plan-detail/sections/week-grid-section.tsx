@@ -1,8 +1,8 @@
 "use client";
 
-import { Stack } from "@mui/material";
+import { Divider, Stack } from "@mui/material";
 
-import { formatDateParam, getWeekDays } from "@repo/shared";
+import { formatDateParam, getWeekDays, isSameDay } from "@repo/shared";
 
 import { DayRow, type Lookups } from "../components";
 import { type DayBucket } from "../lib";
@@ -19,21 +19,26 @@ export const WeekGridSection: React.FC<WeekGridSectionProps> = ({
   weekStart,
   dayBuckets,
   lookups,
-}) => (
-  <Stack spacing={3}>
-    {getWeekDays(weekStart).map((date) => {
-      const bucket = dayBuckets.get(formatDateParam(date));
+}) => {
+  const today = new Date();
 
-      return (
-        <DayRow
-          key={formatDateParam(date)}
-          planId={planId}
-          date={date}
-          planDayId={bucket?.planDayId ?? null}
-          dayType={bucket?.dayType ?? null}
-          lookups={lookups}
-        />
-      );
-    })}
-  </Stack>
-);
+  return (
+    <Stack divider={<Divider />} spacing={0}>
+      {getWeekDays(weekStart).map((date) => {
+        const bucket = dayBuckets.get(formatDateParam(date));
+
+        return (
+          <DayRow
+            key={formatDateParam(date)}
+            planId={planId}
+            date={date}
+            isToday={isSameDay(date, today)}
+            planDayId={bucket?.planDayId ?? null}
+            dayType={bucket?.dayType ?? null}
+            lookups={lookups}
+          />
+        );
+      })}
+    </Stack>
+  );
+};

@@ -1,37 +1,50 @@
 "use client";
 
-import { Alert, Skeleton, Stack } from "@mui/material";
+import { Alert, Stack } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 
 import { type DayType } from "@repo/contracts/lms/day-type";
+import { LoadingState } from "@repo/ui";
 
 import { useSessionsByDay } from "@app/lib/hooks";
 
 import { DayEmpty } from "./day-empty";
 import { DayRowHeader } from "./day-row-header";
+import { DayTypeBadge } from "./day-type-badge";
 import { PlanSessionCard } from "./plan-session-card";
 import { type Lookups } from "./types";
 
-const SESSIONS_SKELETON_HEIGHT_PX = 96;
+const DAY_BG_ALPHA = 0.08;
+const DATE_COL_MIN_WIDTH_FACTOR = 10;
+const SESSIONS_LOADING_MIN_HEIGHT = "6vh";
 
 type DayRowProps = {
   planId: string;
   date: Date;
+  isToday: boolean;
   planDayId: string | null;
   dayType: DayType | null;
   lookups: Lookups;
 };
 
-export const DayRow: React.FC<DayRowProps> = ({ planId, date, planDayId, dayType, lookups }) => {
+export const DayRow: React.FC<DayRowProps> = ({
+  planId,
+  date,
+  isToday,
+  planDayId,
+  dayType,
+  lookups,
+}) => {
   const hasDayType = dayType !== null;
   const sessionsQuery = useSessionsByDay(planId, planDayId);
 
-  const renderBody = (): React.ReactNode => {
+  const renderSessions = (): React.ReactNode => {
     if (planDayId === null) {
       return <DayEmpty hasDayType={hasDayType} />;
     }
 
     if (sessionsQuery.isLoading) {
-      return <Skeleton variant="rectangular" height={SESSIONS_SKELETON_HEIGHT_PX} />;
+      return <LoadingState message="Loading sessions..." minHeight={SESSIONS_LOADING_MIN_HEIGHT} />;
     }
 
     if (sessionsQuery.error) {
@@ -54,9 +67,21 @@ export const DayRow: React.FC<DayRowProps> = ({ planId, date, planDayId, dayType
   };
 
   return (
-    <Stack spacing={1}>
-      <DayRowHeader date={date} dayType={dayType} />
-      {renderBody()}
+    <Stack
+      direction="row"
+      spacing={2}
+      sx={{
+        p: 2,
+        bgcolor: dayType !== null ? alpha(dayType.color, DAY_BG_ALPHA) : "transparent",
+      }}
+    >
+      <Stack sx={{ minWidth: (theme) => theme.spacing(DATE_COL_MIN_WIDTH_FACTOR) }}>
+        <DayRowHeader date={date} isToday={isToday} />
+      </Stack>
+      <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
+        {dayType !== null ? <DayTypeBadge dayType={dayType} /> : null}
+        {renderSessions()}
+      </Stack>
     </Stack>
   );
 };
