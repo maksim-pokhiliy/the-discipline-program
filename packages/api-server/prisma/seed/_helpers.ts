@@ -31,3 +31,17 @@ export const dateOnly = (date: Date): Date => {
 
   return d;
 };
+
+export const weekStart = (): Date => {
+  const d = today();
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
+};
+
+export const dayOffset = (offsetDays: number): Date => {
+  const start = weekStart();
+
+  return new Date(start.getFullYear(), start.getMonth(), start.getDate() + offsetDays);
+};
