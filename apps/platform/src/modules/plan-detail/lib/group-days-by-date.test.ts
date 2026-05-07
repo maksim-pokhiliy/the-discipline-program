@@ -35,48 +35,48 @@ const makePlanDay = (
   updatedAt: NOW,
 });
 
+const calendarDate = (year: number, month: number, day: number): Date => new Date(year, month, day);
+
+const wireDate = (year: number, month: number, day: number): Date =>
+  new Date(Date.UTC(year, month, day));
+
 describe("groupDaysByDate", () => {
   it("resolves dayType from the map when the dayTypeId is present", () => {
-    const date = new Date(2026, 0, 5);
-    const day = makePlanDay("pd-1", date, STRENGTH_DAY_TYPE_ID);
+    const day = makePlanDay("pd-1", wireDate(2026, 0, 5), STRENGTH_DAY_TYPE_ID);
 
     const buckets = groupDaysByDate([day], dayTypeMap);
 
     expect(buckets.size).toBe(1);
 
-    const bucket = buckets.get(formatDateParam(date));
+    const bucket = buckets.get(formatDateParam(calendarDate(2026, 0, 5)));
 
     expect(bucket).toBeDefined();
-    expect(bucket?.date).toBe(date);
+    expect(bucket?.date).toEqual(calendarDate(2026, 0, 5));
     expect(bucket?.planDayId).toBe("pd-1");
     expect(bucket?.dayType).toBe(strengthDayType);
   });
 
   it("creates one bucket per day keyed by formatDateParam when given multiple days", () => {
-    const dateMon = new Date(2026, 0, 5);
-    const dateTue = new Date(2026, 0, 6);
-    const dateWed = new Date(2026, 0, 7);
     const days: PlanDay[] = [
-      makePlanDay("pd-mon", dateMon, STRENGTH_DAY_TYPE_ID),
-      makePlanDay("pd-tue", dateTue, null),
-      makePlanDay("pd-wed", dateWed, STRENGTH_DAY_TYPE_ID),
+      makePlanDay("pd-mon", wireDate(2026, 0, 5), STRENGTH_DAY_TYPE_ID),
+      makePlanDay("pd-tue", wireDate(2026, 0, 6), null),
+      makePlanDay("pd-wed", wireDate(2026, 0, 7), STRENGTH_DAY_TYPE_ID),
     ];
 
     const buckets = groupDaysByDate(days, dayTypeMap);
 
     expect(buckets.size).toBe(3);
-    expect(buckets.get(formatDateParam(dateMon))?.planDayId).toBe("pd-mon");
-    expect(buckets.get(formatDateParam(dateTue))?.planDayId).toBe("pd-tue");
-    expect(buckets.get(formatDateParam(dateWed))?.planDayId).toBe("pd-wed");
+    expect(buckets.get(formatDateParam(calendarDate(2026, 0, 5)))?.planDayId).toBe("pd-mon");
+    expect(buckets.get(formatDateParam(calendarDate(2026, 0, 6)))?.planDayId).toBe("pd-tue");
+    expect(buckets.get(formatDateParam(calendarDate(2026, 0, 7)))?.planDayId).toBe("pd-wed");
   });
 
   it("yields a bucket with dayType null when the day's dayTypeId is null", () => {
-    const date = new Date(2026, 0, 5);
-    const day = makePlanDay("pd-1", date, null);
+    const day = makePlanDay("pd-1", wireDate(2026, 0, 5), null);
 
     const buckets = groupDaysByDate([day], dayTypeMap);
 
-    const bucket = buckets.get(formatDateParam(date));
+    const bucket = buckets.get(formatDateParam(calendarDate(2026, 0, 5)));
 
     expect(bucket).toBeDefined();
     expect(bucket?.dayType).toBeNull();
@@ -84,12 +84,11 @@ describe("groupDaysByDate", () => {
   });
 
   it("falls back to dayType null when the dayTypeId references a soft-deleted entry not in the map", () => {
-    const date = new Date(2026, 0, 5);
-    const day = makePlanDay("pd-1", date, SOFT_DELETED_DAY_TYPE_ID);
+    const day = makePlanDay("pd-1", wireDate(2026, 0, 5), SOFT_DELETED_DAY_TYPE_ID);
 
     const buckets = groupDaysByDate([day], dayTypeMap);
 
-    const bucket = buckets.get(formatDateParam(date));
+    const bucket = buckets.get(formatDateParam(calendarDate(2026, 0, 5)));
 
     expect(bucket).toBeDefined();
     expect(bucket?.dayType).toBeNull();

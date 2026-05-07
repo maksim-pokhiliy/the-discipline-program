@@ -8,8 +8,11 @@ export type DayBucket = {
   readonly dayType: DayType | null;
 };
 
-const toDate = (value: Date | string): Date =>
-  typeof value === "string" ? new Date(value) : value;
+const toCalendarDate = (value: Date | string): Date => {
+  const d = typeof value === "string" ? new Date(value) : value;
+
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+};
 
 export const groupDaysByDate = (
   days: PlanDay[],
@@ -18,7 +21,7 @@ export const groupDaysByDate = (
   const buckets: Map<string, DayBucket> = new Map();
 
   for (const day of days) {
-    const date = toDate(day.date);
+    const date = toCalendarDate(day.date);
     const dayType = day.dayTypeId !== null ? (dayTypeMap.get(day.dayTypeId) ?? null) : null;
 
     buckets.set(formatDateParam(date), {
