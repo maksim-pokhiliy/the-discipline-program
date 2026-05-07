@@ -41,10 +41,30 @@ export const formatDateParam = (date: Date): string => {
   return `${y}-${m}-${d}`;
 };
 
-export const parseDateParam = (param: string): Date => {
-  const parts = param.split("-").map(Number);
+const DATE_PARAM_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
-  return new Date(parts[0] ?? 0, (parts[1] ?? 1) - 1, parts[2] ?? 1);
+export const parseDateParam = (param: string): Date | null => {
+  const match = DATE_PARAM_PATTERN.exec(param);
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+
+  if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return null;
+  }
+
+  const date = new Date(year, month - 1, day);
+
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return null;
+  }
+
+  return date;
 };
 
 export const formatDayHeader = (date: Date, locale: string = DEFAULT_LOCALE): string => {
