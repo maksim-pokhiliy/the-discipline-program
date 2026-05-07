@@ -1,13 +1,11 @@
-import { Stack } from "@mui/material";
+import { PlanDetailView } from "@app/modules/plan-detail";
 
-import { PageHeader } from "@repo/ui";
+type PlanDetailPageProps = { params: Promise<{ planId: string }> };
 
-const PlanDetailPage = () => {
-  return (
-    <Stack>
-      <PageHeader title="Plan" backHref="/coach/plans" />
-    </Stack>
-  );
+const PlanDetailPage = async ({ params }: PlanDetailPageProps) => {
+  const { planId } = await params;
+
+  return <PlanDetailView planId={planId} />;
 };
 
 export default PlanDetailPage;
