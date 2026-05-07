@@ -4,3 +4,8 @@ export { createCoachDashboardAPI } from "./coach-dashboard";
 export { createCoachInviteAPI } from "./coach-invite";
 export { createTrainingPlansAPI } from "./training-plans";
 export { createUsersAPI } from "./users";
+export { createPlanDaysAPI } from "./plan-days";
+export { createPlanSessionsAPI } from "./plan-sessions";
+export { createPlanBlocksAPI } from "./plan-blocks";
+export { createPlanItemsAPI } from "./plan-items";
+export { createLibraryAPI, type LibraryCatalog } from "./library";
