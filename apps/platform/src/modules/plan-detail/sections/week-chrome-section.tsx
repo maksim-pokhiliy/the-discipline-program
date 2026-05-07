@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -28,7 +28,6 @@ export const WeekChromeSection: React.FC<WeekChromeSectionProps> = ({
   onArrowHover,
 }) => {
   const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const todayValue = useMemo(() => new Date(), []);
 
   useEffect(
     () => () => {
@@ -114,7 +113,7 @@ export const WeekChromeSection: React.FC<WeekChromeSectionProps> = ({
             Today
           </Button>
           <DatePicker
-            value={todayValue}
+            value={weekStart}
             onChange={handlePick}
             slotProps={{
               textField: {
