@@ -1,8 +1,9 @@
 "use client";
 
-import { Alert, Paper, Skeleton, Stack, Typography } from "@mui/material";
+import { Alert, Paper, Stack, Typography } from "@mui/material";
 
 import { type PlanBlock } from "@repo/contracts/lms/plan-block";
+import { LoadingState } from "@repo/ui";
 
 import { useItemsByBlock } from "@app/lib/hooks";
 
@@ -12,7 +13,7 @@ import { type Lookups } from "./types";
 
 const BLOCK_TYPE_SEPARATOR = " | ";
 const DELETED_BLOCK_TYPE_LABEL = "(deleted block type)";
-const ITEMS_SKELETON_HEIGHT_PX = 24;
+const ITEMS_LOADING_MIN_HEIGHT = "4vh";
 
 type PlanBlockCardProps = { planId: string; block: PlanBlock; lookups: Lookups };
 
@@ -34,7 +35,7 @@ export const PlanBlockCard: React.FC<PlanBlockCardProps> = ({ planId, block, loo
           </Typography>
         ) : null}
         {itemsQuery.isLoading ? (
-          <Skeleton variant="rectangular" height={ITEMS_SKELETON_HEIGHT_PX} />
+          <LoadingState message="Loading items..." minHeight={ITEMS_LOADING_MIN_HEIGHT} />
         ) : null}
         {itemsQuery.error ? <Alert severity="error">Failed to load items</Alert> : null}
         {itemsQuery.data ? (
