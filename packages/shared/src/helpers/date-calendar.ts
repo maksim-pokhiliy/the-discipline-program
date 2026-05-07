@@ -1,7 +1,9 @@
 import { DEFAULT_LOCALE } from "./locale";
 
 const MS_PER_DAY = 86_400_000;
-const DAYS_IN_WEEK = 7;
+
+export const DAYS_IN_WEEK = 7;
+export const LAST_DAY_OFFSET_IN_WEEK = 6;
 
 export const getMonday = (date: Date): Date => {
   const day = date.getDay();
@@ -56,7 +58,7 @@ export const formatDayName = (date: Date, locale: string = DEFAULT_LOCALE): stri
   new Intl.DateTimeFormat(locale, { weekday: "short" }).format(date);
 
 export const formatWeekRange = (monday: Date, locale: string = DEFAULT_LOCALE): string => {
-  const sunday = addDays(monday, 6);
+  const sunday = addDays(monday, LAST_DAY_OFFSET_IN_WEEK);
   const dateF = new Intl.DateTimeFormat(locale, { month: "short", day: "numeric" });
   const rangeF = new Intl.DateTimeFormat(locale, {
     month: "short",

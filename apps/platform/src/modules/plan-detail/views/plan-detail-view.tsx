@@ -6,11 +6,14 @@ import { Stack } from "@mui/material";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 
+import { type PlanDay } from "@repo/contracts/lms/plan-day";
+import { type TrainingPlan } from "@repo/contracts/lms/training-plan";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
-import { addDays, formatDateParam } from "@repo/shared";
+import { addDays, DAYS_IN_WEEK, formatDateParam, LAST_DAY_OFFSET_IN_WEEK } from "@repo/shared";
 import { QueryWrapper } from "@repo/ui";
 
 import { api } from "@app/lib/api";
+import { type LibraryCatalog } from "@app/lib/api/endpoints";
 import { platformKeys } from "@app/lib/api/keys";
 import {
   useLibraryCatalog,
@@ -30,9 +33,6 @@ import {
 } from "../lib";
 import { PlanDetailHeaderSection, WeekChromeSection, WeekGridSection } from "../sections";
 
-const WEEK_LENGTH_DAYS = 6;
-const WEEK_STEP_DAYS = 7;
-
 const FORBIDDEN_MESSAGE = "You don't have access to this plan";
 const NOT_FOUND_MESSAGE = "Plan not found";
 const GENERIC_ERROR_MESSAGE = "Failed to load plan";
@@ -47,6 +47,12 @@ const narrowErrorMessage = (error: Error | null): string => {
   }
 
   return GENERIC_ERROR_MESSAGE;
+};
+
+type PlanDetailData = {
+  plan: TrainingPlan;
+  library: LibraryCatalog;
+  days: PlanDay[];
 };
 
 type PlanDetailViewProps = { planId: string };
@@ -83,8 +89,10 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
 
   const isLoading = planQuery.isLoading || libraryQuery.isLoading || daysQuery.isLoading;
   const error = planQuery.error ?? libraryQuery.error ?? daysQuery.error;
-  const data =
-    planQuery.data && libraryQuery.data && daysQuery.data ? { plan: planQuery.data } : undefined;
+  const data: PlanDetailData | undefined =
+    planQuery.data && libraryQuery.data && daysQuery.data
+      ? { plan: planQuery.data, library: libraryQuery.data, days: daysQuery.data.days }
+      : undefined;
 
   const handleWeekChange = useCallback(
     (next: Date): void => {
@@ -95,7 +103,7 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
 
   const handleArrowHover = useCallback(
     (direction: "prev" | "next"): void => {
-      const offset = direction === "prev" ? -WEEK_STEP_DAYS : WEEK_STEP_DAYS;
+      const offset = direction === "prev" ? -DAYS_IN_WEEK : DAYS_IN_WEEK;
       const target = addDays(weekStart, offset);
 
       void queryClient.prefetchQuery({
@@ -103,7 +111,7 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
         queryFn: () =>
           api.planDays.listByPlan(planId, {
             from: target,
-            to: addDays(target, WEEK_LENGTH_DAYS),
+            to: addDays(target, LAST_DAY_OFFSET_IN_WEEK),
           }),
       });
     },

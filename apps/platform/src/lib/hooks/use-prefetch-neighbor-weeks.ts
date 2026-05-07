@@ -4,20 +4,17 @@ import { useEffect } from "react";
 
 import { useQueryClient } from "@tanstack/react-query";
 
-import { addDays } from "@repo/shared";
+import { addDays, DAYS_IN_WEEK, LAST_DAY_OFFSET_IN_WEEK } from "@repo/shared";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
-
-const WEEK_LENGTH_DAYS = 6;
-const WEEK_STEP_DAYS = 7;
 
 export const usePrefetchNeighborWeeks = (planId: string, weekStart: Date): void => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const prevStart = addDays(weekStart, -WEEK_STEP_DAYS);
-    const nextStart = addDays(weekStart, WEEK_STEP_DAYS);
+    const prevStart = addDays(weekStart, -DAYS_IN_WEEK);
+    const nextStart = addDays(weekStart, DAYS_IN_WEEK);
 
     const prefetch = (start: Date) =>
       queryClient.prefetchQuery({
@@ -25,7 +22,7 @@ export const usePrefetchNeighborWeeks = (planId: string, weekStart: Date): void 
         queryFn: () =>
           api.planDays.listByPlan(planId, {
             from: start,
-            to: addDays(start, WEEK_LENGTH_DAYS),
+            to: addDays(start, LAST_DAY_OFFSET_IN_WEEK),
           }),
       });
 

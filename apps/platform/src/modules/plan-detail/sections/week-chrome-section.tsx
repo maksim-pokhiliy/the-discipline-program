@@ -9,9 +9,8 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 
-import { addDays, formatWeekRange, getISOWeekNumber, getMonday } from "@repo/shared";
+import { addDays, DAYS_IN_WEEK, formatWeekRange, getISOWeekNumber, getMonday } from "@repo/shared";
 
-const WEEK_LENGTH_DAYS = 7;
 const ARROW_HOVER_DEBOUNCE_MS = 50;
 const DATE_PICKER_MIN_WIDTH_UNITS = 22;
 
@@ -58,12 +57,12 @@ export const WeekChromeSection: React.FC<WeekChromeSectionProps> = ({
   );
 
   const handlePrev = useCallback(
-    (): void => onWeekChange(addDays(weekStart, -WEEK_LENGTH_DAYS)),
+    (): void => onWeekChange(addDays(weekStart, -DAYS_IN_WEEK)),
     [onWeekChange, weekStart],
   );
 
   const handleNext = useCallback(
-    (): void => onWeekChange(addDays(weekStart, WEEK_LENGTH_DAYS)),
+    (): void => onWeekChange(addDays(weekStart, DAYS_IN_WEEK)),
     [onWeekChange, weekStart],
   );
 

@@ -2,12 +2,10 @@
 
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
-import { addDays } from "@repo/shared";
+import { addDays, LAST_DAY_OFFSET_IN_WEEK } from "@repo/shared";
 
 import { api } from "../api";
 import { platformKeys } from "../api/keys";
-
-const WEEK_LENGTH_DAYS = 6;
 
 export const usePlanDaysWeek = (planId: string, weekStart: Date) =>
   useQuery({
@@ -15,7 +13,7 @@ export const usePlanDaysWeek = (planId: string, weekStart: Date) =>
     queryFn: () =>
       api.planDays.listByPlan(planId, {
         from: weekStart,
-        to: addDays(weekStart, WEEK_LENGTH_DAYS),
+        to: addDays(weekStart, LAST_DAY_OFFSET_IN_WEEK),
       }),
     placeholderData: keepPreviousData,
   });

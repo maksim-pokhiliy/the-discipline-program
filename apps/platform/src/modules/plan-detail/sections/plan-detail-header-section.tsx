@@ -3,9 +3,7 @@
 import { Stack } from "@mui/material";
 
 import { type TrainingPlan } from "@repo/contracts/lms/training-plan";
-import { PageHeader } from "@repo/ui";
-
-import { PlanStatusChip } from "@app/modules/plans/components";
+import { PageHeader, PlanStatusChip } from "@repo/ui";
 
 const BACK_HREF = "/coach/plans";
 
