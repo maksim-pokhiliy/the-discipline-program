@@ -58,6 +58,28 @@ const readEntryRefIndex = (value: unknown): number => {
   return typeof refIndex === "number" && Number.isFinite(refIndex) ? refIndex : 0;
 };
 
+const isActionShapeForKind = (value: unknown, kind: EmomSlotActionKind): boolean => {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  if (!("kind" in value) || value.kind !== kind) {
+    return false;
+  }
+
+  if (kind === "REST") {
+    return !("entryRefIndex" in value);
+  }
+
+  if (!("entryRefIndex" in value)) {
+    return false;
+  }
+
+  const refIndex = value.entryRefIndex;
+
+  return typeof refIndex === "number" && Number.isFinite(refIndex);
+};
+
 export const EmomSlotActionField = ({
   basePath,
   slotIndex,
@@ -80,15 +102,19 @@ export const EmomSlotActionField = ({
       return;
     }
 
-    if (previousKindRef.current === kind) {
+    const previousAction = getValues(actionPath);
+    const isUserDrivenSwap = previousKindRef.current !== kind;
+
+    if (!isUserDrivenSwap && isActionShapeForKind(previousAction, kind)) {
       return;
     }
 
-    const previousAction = getValues(actionPath);
     const previousIndex = readEntryRefIndex(previousAction);
 
     previousKindRef.current = kind;
-    setValue(actionPath, buildActionPayload(kind, previousIndex), { shouldDirty: true });
+    setValue(actionPath, buildActionPayload(kind, previousIndex), {
+      shouldDirty: isUserDrivenSwap,
+    });
     clearErrors(actionPath);
   }, [kind, actionPath, getValues, setValue, clearErrors]);
 

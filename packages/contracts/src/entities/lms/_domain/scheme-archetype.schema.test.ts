@@ -11,6 +11,10 @@ describe("schemeParamsSchema — NONE", () => {
     const result = schemeParamsSchema.safeParse({ kind: "NONE", durationSec: 60 });
 
     expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data).toEqual({ kind: "NONE" });
+    }
   });
 
   it("rejects unknown kind", () => {

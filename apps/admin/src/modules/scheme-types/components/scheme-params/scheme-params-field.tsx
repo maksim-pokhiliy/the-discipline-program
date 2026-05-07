@@ -26,8 +26,6 @@ import {
 } from "./scheme-params.types";
 import { type SchemeParamsRenderInner } from "./time-boxed-segment-row";
 
-export type { SchemeParamsBasePath, SchemeParamsKindPath } from "./scheme-params.types";
-
 type SchemeParamsFieldProps = {
   basePath: SchemeParamsBasePath;
   kindPath: SchemeParamsKindPath;
@@ -58,7 +56,7 @@ const renderArchetype = (
 ): ReactNode => {
   switch (kind) {
     case "NONE":
-      return <SchemeParamsNoneForm basePath={basePath} />;
+      return <SchemeParamsNoneForm />;
     case "COUNT_UP":
       return <SchemeParamsCountUpForm basePath={basePath} isLoading={isLoading} />;
     case "COUNT_DOWN":

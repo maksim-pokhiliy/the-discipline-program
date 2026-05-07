@@ -26,7 +26,7 @@ describe("createSchemeTypeSchema kind-match refine", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts a payload with mismatched archetypeKind=NONE because defaultParams is omitted", () => {
+  it("accepts a payload with archetypeKind=COUNT_DOWN when defaultParams is omitted", () => {
     const result = createSchemeTypeSchema.safeParse({
       name: "Plain block",
       archetypeKind: "COUNT_DOWN",
