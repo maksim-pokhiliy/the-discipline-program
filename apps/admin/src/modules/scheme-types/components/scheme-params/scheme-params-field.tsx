@@ -60,6 +60,10 @@ const renderArchetype = (
     case "NONE":
       return <SchemeParamsNoneForm />;
     case "SETS_REPS":
+      if (basePath !== "defaultParams") {
+        return null;
+      }
+
       return <SchemeParamsSetsRepsForm basePath={basePath} isLoading={isLoading} />;
     case "COUNT_UP":
       return <SchemeParamsCountUpForm basePath={basePath} isLoading={isLoading} />;
