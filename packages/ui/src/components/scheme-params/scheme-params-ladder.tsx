@@ -12,33 +12,33 @@ import {
   Stack,
   Typography,
 } from "@mui/material";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, type FieldValues, useFormContext } from "react-hook-form";
 
 import { LADDER_DIRECTION_OPTIONS } from "@repo/contracts/lms/_domain";
 
 import { LadderStepRow } from "./ladder-step-row";
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./scheme-params-shared-styles";
-import { type SchemeTypeFormValues } from "./scheme-params.types";
+import { type SchemeParamsBasePath } from "./scheme-params.types";
 import { usePrimitiveFieldArray } from "./use-primitive-field-array";
 
 const MIN_LADDER_SEQUENCE = 2;
 
 type SchemeParamsLadderFormProps = {
-  basePath: "defaultParams";
+  basePath: SchemeParamsBasePath;
   isLoading: boolean;
 };
 
 export const SchemeParamsLadderForm = ({ basePath, isLoading }: SchemeParamsLadderFormProps) => {
-  const { control } = useFormContext<SchemeTypeFormValues>();
+  const { control } = useFormContext<FieldValues>();
 
-  const directionName = `${basePath}.direction` as const;
-  const sequenceName = `${basePath}.sequence` as const;
+  const directionName = `${basePath}.direction`;
+  const sequenceName = `${basePath}.sequence`;
 
   const {
     fields: sequenceFields,
     append: appendStep,
     remove: removeStep,
-  } = usePrimitiveFieldArray<SchemeTypeFormValues>({ control, name: sequenceName });
+  } = usePrimitiveFieldArray<FieldValues>({ control, name: sequenceName });
 
   const canRemove = sequenceFields.length > MIN_LADDER_SEQUENCE;
 

@@ -11,7 +11,7 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { Controller, type FieldValues, useFormContext, useWatch } from "react-hook-form";
 
 import {
   EMOM_SLOT_ACTION_KIND_OPTIONS,
@@ -19,7 +19,7 @@ import {
   type SchemeParamsEmomLoop,
 } from "@repo/contracts/lms/_domain";
 
-import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
+import { type SchemeParamsBasePath } from "./scheme-params.types";
 
 type EmomSlotAction = SchemeParamsEmomLoop["slots"][number]["action"];
 
@@ -86,11 +86,11 @@ export const EmomSlotActionField = ({
   isLoading,
 }: EmomSlotActionFieldProps) => {
   const { register, control, setValue, clearErrors, getValues, getFieldState, formState } =
-    useFormContext<SchemeTypeFormValues>();
+    useFormContext<FieldValues>();
 
-  const actionPath = `${basePath}.slots.${slotIndex}.action` as const;
-  const kindPath = `${actionPath}.kind` as const;
-  const entryRefIndexPath = `${actionPath}.entryRefIndex` as const;
+  const actionPath = `${basePath}.slots.${slotIndex}.action`;
+  const kindPath = `${actionPath}.kind`;
+  const entryRefIndexPath = `${actionPath}.entryRefIndex`;
 
   const watchedKind: unknown = useWatch({ control, name: kindPath });
   const kind = isActionKind(watchedKind) ? watchedKind : undefined;

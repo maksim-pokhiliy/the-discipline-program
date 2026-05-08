@@ -2,12 +2,12 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Divider, Grid, Stack, TextField, Typography } from "@mui/material";
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { type FieldValues, useFieldArray, useFormContext } from "react-hook-form";
 
 import { optionalNumberSetValueAs } from "./optional-number-register";
 import { ProgressionStepRow } from "./progression-step-row";
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./scheme-params-shared-styles";
-import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
+import { type SchemeParamsBasePath } from "./scheme-params.types";
 
 type SchemeParamsCountUpFormProps = {
   basePath: SchemeParamsBasePath;
@@ -15,11 +15,11 @@ type SchemeParamsCountUpFormProps = {
 };
 
 export const SchemeParamsCountUpForm = ({ basePath, isLoading }: SchemeParamsCountUpFormProps) => {
-  const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
+  const { register, control, getFieldState, formState } = useFormContext<FieldValues>();
 
-  const capName = `${basePath}.cap` as const;
-  const roundsName = `${basePath}.rounds` as const;
-  const progressionName = `${basePath}.progression` as const;
+  const capName = `${basePath}.cap`;
+  const roundsName = `${basePath}.rounds`;
+  const progressionName = `${basePath}.progression`;
 
   const capError = getFieldState(capName, formState).error;
   const roundsError = getFieldState(roundsName, formState).error;

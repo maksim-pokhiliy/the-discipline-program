@@ -3,11 +3,11 @@
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Button, IconButton, Stack, TextField } from "@mui/material";
-import { useFormContext } from "react-hook-form";
+import { type FieldValues, useFormContext } from "react-hook-form";
 
-import { DynamicListItem } from "@repo/ui";
+import { DynamicListItem } from "../dynamic-list-item";
 
-import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
+import { type SchemeParamsBasePath } from "./scheme-params.types";
 import { usePrimitiveFieldArray } from "./use-primitive-field-array";
 
 type ProgressionStepRowProps = {
@@ -23,11 +23,11 @@ export const ProgressionStepRow = ({
   onRemove,
   isLoading,
 }: ProgressionStepRowProps) => {
-  const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
+  const { register, control, getFieldState, formState } = useFormContext<FieldValues>();
 
-  const roundName = `${basePath}.progression.${index}.round` as const;
-  const modifierName = `${basePath}.progression.${index}.modifier` as const;
-  const repsArrayName = `${basePath}.progression.${index}.reps` as const;
+  const roundName = `${basePath}.progression.${index}.round`;
+  const modifierName = `${basePath}.progression.${index}.modifier`;
+  const repsArrayName = `${basePath}.progression.${index}.reps`;
 
   const roundError = getFieldState(roundName, formState).error;
   const modifierError = getFieldState(modifierName, formState).error;
@@ -36,7 +36,7 @@ export const ProgressionStepRow = ({
     fields: repsFields,
     append: appendRep,
     remove: removeRep,
-  } = usePrimitiveFieldArray<SchemeTypeFormValues>({ control, name: repsArrayName });
+  } = usePrimitiveFieldArray<FieldValues>({ control, name: repsArrayName });
 
   return (
     <DynamicListItem onRemove={onRemove}>
@@ -56,7 +56,7 @@ export const ProgressionStepRow = ({
 
         <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center">
           {repsFields.map((repField, repIndex) => {
-            const repName = `${basePath}.progression.${index}.reps.${repIndex}` as const;
+            const repName = `${basePath}.progression.${index}.reps.${repIndex}`;
             const repError = getFieldState(repName, formState).error;
 
             return (

@@ -10,15 +10,15 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, type FieldValues, useFormContext } from "react-hook-form";
 
 import { DISTANCE_UNIT_OPTIONS } from "@repo/contracts/lms/_domain";
 
 import { optionalNumberSetValueAs } from "./optional-number-register";
-import { type SchemeTypeFormValues } from "./scheme-params.types";
+import { type SchemeParamsBasePath } from "./scheme-params.types";
 
 type SchemeParamsDistanceFormProps = {
-  basePath: "defaultParams";
+  basePath: SchemeParamsBasePath;
   isLoading: boolean;
 };
 
@@ -26,12 +26,12 @@ export const SchemeParamsDistanceForm = ({
   basePath,
   isLoading,
 }: SchemeParamsDistanceFormProps) => {
-  const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
+  const { register, control, getFieldState, formState } = useFormContext<FieldValues>();
 
-  const unitName = `${basePath}.unit` as const;
-  const distanceMinName = `${basePath}.distanceMin` as const;
-  const distanceMaxName = `${basePath}.distanceMax` as const;
-  const capSecName = `${basePath}.capSec` as const;
+  const unitName = `${basePath}.unit`;
+  const distanceMinName = `${basePath}.distanceMin`;
+  const distanceMaxName = `${basePath}.distanceMax`;
+  const capSecName = `${basePath}.capSec`;
 
   const distanceMinError = getFieldState(distanceMinName, formState).error;
   const distanceMaxError = getFieldState(distanceMaxName, formState).error;

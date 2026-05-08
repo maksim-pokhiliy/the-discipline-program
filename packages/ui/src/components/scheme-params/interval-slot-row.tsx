@@ -10,13 +10,14 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, type FieldValues, useFormContext } from "react-hook-form";
 
 import { INTERVAL_SLOT_ACTION_OPTIONS } from "@repo/contracts/lms/_domain";
-import { DynamicListItem } from "@repo/ui";
+
+import { DynamicListItem } from "../dynamic-list-item";
 
 import { optionalNumberSetValueAs } from "./optional-number-register";
-import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
+import { type SchemeParamsBasePath } from "./scheme-params.types";
 
 type IntervalSlotRowProps = {
   basePath: SchemeParamsBasePath;
@@ -33,12 +34,12 @@ export const IntervalSlotRow = ({
   isLoading,
   canRemove,
 }: IntervalSlotRowProps) => {
-  const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
+  const { register, control, getFieldState, formState } = useFormContext<FieldValues>();
 
-  const durationName = `${basePath}.slots.${index}.durationSec` as const;
-  const actionName = `${basePath}.slots.${index}.action` as const;
-  const labelName = `${basePath}.slots.${index}.label` as const;
-  const entryRefIndexName = `${basePath}.slots.${index}.entryRefIndex` as const;
+  const durationName = `${basePath}.slots.${index}.durationSec`;
+  const actionName = `${basePath}.slots.${index}.action`;
+  const labelName = `${basePath}.slots.${index}.label`;
+  const entryRefIndexName = `${basePath}.slots.${index}.entryRefIndex`;
 
   const durationError = getFieldState(durationName, formState).error;
   const labelError = getFieldState(labelName, formState).error;

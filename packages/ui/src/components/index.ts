@@ -24,6 +24,7 @@ export * from "./pulse-stats-card";
 export * from "./query-wrapper";
 export * from "./markdown-editor";
 export * from "./rich-text-viewer";
+export * from "./scheme-params";
 export * from "./skip-to-content";
 export * from "./status-chip";
 export * from "./tags-input";

@@ -1,14 +1,14 @@
 "use client";
 
 import { TextField } from "@mui/material";
-import { useFormContext } from "react-hook-form";
+import { type FieldValues, useFormContext } from "react-hook-form";
 
-import { DynamicListItem } from "@repo/ui";
+import { DynamicListItem } from "../dynamic-list-item";
 
-import { type SchemeTypeFormValues } from "./scheme-params.types";
+import { type SchemeParamsBasePath } from "./scheme-params.types";
 
 type LadderStepRowProps = {
-  basePath: "defaultParams";
+  basePath: SchemeParamsBasePath;
   index: number;
   onRemove: () => void;
   isLoading: boolean;
@@ -22,9 +22,9 @@ export const LadderStepRow = ({
   isLoading,
   canRemove,
 }: LadderStepRowProps) => {
-  const { register, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
+  const { register, getFieldState, formState } = useFormContext<FieldValues>();
 
-  const stepName = `${basePath}.sequence.${index}` as const;
+  const stepName = `${basePath}.sequence.${index}`;
   const stepError = getFieldState(stepName, formState).error;
 
   return (

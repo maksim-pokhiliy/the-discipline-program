@@ -12,19 +12,16 @@ import {
   Stack,
   TextField,
 } from "@mui/material";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, type FieldValues, useFormContext } from "react-hook-form";
 
 import {
   SCHEME_ARCHETYPE_KIND_LABELS,
   type SchemeArchetypeKind,
 } from "@repo/contracts/lms/_domain";
-import { DynamicListItem } from "@repo/ui";
 
-import {
-  type SchemeParamsBasePath,
-  type SchemeParamsKindPath,
-  type SchemeTypeFormValues,
-} from "./scheme-params.types";
+import { DynamicListItem } from "../dynamic-list-item";
+
+import { type SchemeParamsBasePath, type SchemeParamsKindPath } from "./scheme-params.types";
 
 export type SchemeParamsRenderInner = (props: {
   basePath: SchemeParamsBasePath;
@@ -46,7 +43,7 @@ const INNER_ARCHETYPE_KIND_OPTIONS = INNER_ARCHETYPE_KIND_VALUES.map((value) => 
 }));
 
 type TimeBoxedSegmentRowProps = {
-  basePath: "defaultParams";
+  basePath: SchemeParamsBasePath;
   index: number;
   onRemove: () => void;
   isLoading: boolean;
@@ -62,19 +59,19 @@ export const TimeBoxedSegmentRow = ({
   canRemove,
   renderInner,
 }: TimeBoxedSegmentRowProps) => {
-  const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
+  const { register, control, getFieldState, formState } = useFormContext<FieldValues>();
 
-  const startSecName = `${basePath}.segments.${index}.startSec` as const;
-  const endSecName = `${basePath}.segments.${index}.endSec` as const;
-  const labelName = `${basePath}.segments.${index}.label` as const;
-  const innerArchetypeKindName = `${basePath}.segments.${index}.innerArchetypeKind` as const;
+  const startSecName = `${basePath}.segments.${index}.startSec`;
+  const endSecName = `${basePath}.segments.${index}.endSec`;
+  const labelName = `${basePath}.segments.${index}.label`;
+  const innerArchetypeKindName = `${basePath}.segments.${index}.innerArchetypeKind`;
 
   const startSecError = getFieldState(startSecName, formState).error;
   const endSecError = getFieldState(endSecName, formState).error;
   const labelError = getFieldState(labelName, formState).error;
 
-  const innerBasePath = `${basePath}.segments.${index}.innerParams` as const;
-  const innerKindPath = `${basePath}.segments.${index}.innerArchetypeKind` as const;
+  const innerBasePath = `${basePath}.segments.${index}.innerParams`;
+  const innerKindPath = `${basePath}.segments.${index}.innerArchetypeKind`;
 
   return (
     <DynamicListItem

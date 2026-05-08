@@ -2,11 +2,11 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import { Button, Divider, Stack, TextField, Typography } from "@mui/material";
-import { useFieldArray, useFormContext } from "react-hook-form";
+import { type FieldValues, useFieldArray, useFormContext } from "react-hook-form";
 
 import { ProgressionStepRow } from "./progression-step-row";
 import { ADD_BUTTON_SX, ITEMS_STACK_SX } from "./scheme-params-shared-styles";
-import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
+import { type SchemeParamsBasePath } from "./scheme-params.types";
 
 type SchemeParamsSetsRepsFormProps = {
   basePath: SchemeParamsBasePath;
@@ -17,10 +17,10 @@ export const SchemeParamsSetsRepsForm = ({
   basePath,
   isLoading,
 }: SchemeParamsSetsRepsFormProps) => {
-  const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
+  const { register, control, getFieldState, formState } = useFormContext<FieldValues>();
 
-  const setsName = `${basePath}.sets` as const;
-  const progressionName = `${basePath}.progression` as const;
+  const setsName = `${basePath}.sets`;
+  const progressionName = `${basePath}.progression`;
 
   const setsError = getFieldState(setsName, formState).error;
 

@@ -3,12 +3,12 @@
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Button, IconButton, Stack, TextField, Typography } from "@mui/material";
-import { useFormContext } from "react-hook-form";
+import { type FieldValues, useFormContext } from "react-hook-form";
 
-import { DynamicListItem } from "@repo/ui";
+import { DynamicListItem } from "../dynamic-list-item";
 
 import { EmomSlotActionField } from "./emom-slot-action-field";
-import { type SchemeParamsBasePath, type SchemeTypeFormValues } from "./scheme-params.types";
+import { type SchemeParamsBasePath } from "./scheme-params.types";
 import { usePrimitiveFieldArray } from "./use-primitive-field-array";
 
 const MIN_EMOM_SLOT_MINUTES = 1;
@@ -28,15 +28,15 @@ export const EmomSlotRow = ({
   isLoading,
   canRemove,
 }: EmomSlotRowProps) => {
-  const { register, control, getFieldState, formState } = useFormContext<SchemeTypeFormValues>();
+  const { register, control, getFieldState, formState } = useFormContext<FieldValues>();
 
-  const minutesArrayName = `${basePath}.slots.${index}.minutes` as const;
+  const minutesArrayName = `${basePath}.slots.${index}.minutes`;
 
   const {
     fields: minuteFields,
     append: appendMinute,
     remove: removeMinute,
-  } = usePrimitiveFieldArray<SchemeTypeFormValues>({ control, name: minutesArrayName });
+  } = usePrimitiveFieldArray<FieldValues>({ control, name: minutesArrayName });
 
   const canRemoveMinute = minuteFields.length > MIN_EMOM_SLOT_MINUTES;
 
@@ -53,7 +53,7 @@ export const EmomSlotRow = ({
 
         <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center">
           {minuteFields.map((minuteField, minuteIndex) => {
-            const minuteName = `${basePath}.slots.${index}.minutes.${minuteIndex}` as const;
+            const minuteName = `${basePath}.slots.${index}.minutes.${minuteIndex}`;
             const minuteError = getFieldState(minuteName, formState).error;
 
             return (

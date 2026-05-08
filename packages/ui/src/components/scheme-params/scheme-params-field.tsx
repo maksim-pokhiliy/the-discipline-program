@@ -3,13 +3,9 @@
 import { type ReactNode, useCallback, useEffect, useRef } from "react";
 
 import { Alert, Stack } from "@mui/material";
-import { useFormContext, useWatch } from "react-hook-form";
+import { type FieldValues, useFormContext, useWatch } from "react-hook-form";
 
-import {
-  defaultSchemeParams,
-  type SchemeArchetypeKind,
-  type SchemeParams,
-} from "@repo/contracts/lms/_domain";
+import { defaultSchemeParams, type SchemeArchetypeKind } from "@repo/contracts/lms/_domain";
 
 import { SchemeParamsCountDownForm } from "./scheme-params-count-down";
 import { SchemeParamsCountUpForm } from "./scheme-params-count-up";
@@ -20,17 +16,13 @@ import { SchemeParamsLadderForm } from "./scheme-params-ladder";
 import { SchemeParamsNoneForm } from "./scheme-params-none";
 import { SchemeParamsSetsRepsForm } from "./scheme-params-sets-reps";
 import { SchemeParamsTimeBoxedForm } from "./scheme-params-time-boxed";
-import {
-  type SchemeParamsBasePath,
-  type SchemeParamsKindPath,
-  type SchemeTypeFormValues,
-} from "./scheme-params.types";
+import { type SchemeParamsBasePath, type SchemeParamsKindPath } from "./scheme-params.types";
 import { type SchemeParamsRenderInner } from "./time-boxed-segment-row";
 
 type SchemeParamsFieldProps = {
   basePath: SchemeParamsBasePath;
   kindPath: SchemeParamsKindPath;
-  isLoading: boolean;
+  isLoading?: boolean;
 };
 
 const isArchetypeKind = (value: unknown): value is SchemeArchetypeKind => {
@@ -47,8 +39,13 @@ const isArchetypeKind = (value: unknown): value is SchemeArchetypeKind => {
   );
 };
 
-const isSchemeParamsForKind = (value: SchemeParams, kind: SchemeArchetypeKind): boolean =>
-  value.kind === kind;
+const isSchemeParamsForKind = (value: unknown, kind: SchemeArchetypeKind): boolean => {
+  if (typeof value !== "object" || value === null || !("kind" in value)) {
+    return false;
+  }
+
+  return value.kind === kind;
+};
 
 const renderArchetype = (
   kind: SchemeArchetypeKind,
@@ -60,10 +57,6 @@ const renderArchetype = (
     case "NONE":
       return <SchemeParamsNoneForm />;
     case "SETS_REPS":
-      if (basePath !== "defaultParams") {
-        return null;
-      }
-
       return <SchemeParamsSetsRepsForm basePath={basePath} isLoading={isLoading} />;
     case "COUNT_UP":
       return <SchemeParamsCountUpForm basePath={basePath} isLoading={isLoading} />;
@@ -74,10 +67,6 @@ const renderArchetype = (
     case "EMOM_LOOP":
       return <SchemeParamsEmomLoopForm basePath={basePath} isLoading={isLoading} />;
     case "TIME_BOXED":
-      if (basePath !== "defaultParams") {
-        return null;
-      }
-
       return (
         <SchemeParamsTimeBoxedForm
           basePath={basePath}
@@ -86,25 +75,21 @@ const renderArchetype = (
         />
       );
     case "LADDER":
-      if (basePath !== "defaultParams") {
-        return null;
-      }
-
       return <SchemeParamsLadderForm basePath={basePath} isLoading={isLoading} />;
     case "DISTANCE":
-      if (basePath !== "defaultParams") {
-        return null;
-      }
-
       return <SchemeParamsDistanceForm basePath={basePath} isLoading={isLoading} />;
   }
 };
 
-export const SchemeParamsField = ({ basePath, kindPath, isLoading }: SchemeParamsFieldProps) => {
+export const SchemeParamsField = ({
+  basePath,
+  kindPath,
+  isLoading = false,
+}: SchemeParamsFieldProps) => {
   const { control, setValue, clearErrors, getValues, getFieldState, formState } =
-    useFormContext<SchemeTypeFormValues>();
+    useFormContext<FieldValues>();
 
-  const watched: unknown = useWatch<SchemeTypeFormValues>({ control, name: kindPath });
+  const watched: unknown = useWatch({ control, name: kindPath });
   const kind = isArchetypeKind(watched) ? watched : undefined;
 
   const previousKindRef = useRef<SchemeArchetypeKind | undefined>(kind);
@@ -115,7 +100,7 @@ export const SchemeParamsField = ({ basePath, kindPath, isLoading }: SchemeParam
     }
 
     const previousKind = previousKindRef.current;
-    const currentValue = getValues(basePath);
+    const currentValue: unknown = getValues(basePath);
 
     if (
       previousKind === kind &&
