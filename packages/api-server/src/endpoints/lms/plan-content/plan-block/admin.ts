@@ -1,25 +1,41 @@
 import { Prisma } from "@prisma/client";
 
-import { type SchemeParams } from "@repo/contracts/lms/_domain";
+import { defaultSchemeParams } from "@repo/contracts/lms/_domain";
 import {
   type CreatePlanBlockRequest,
-  type PlanBlock,
+  type CreatePlanBlockResponse,
   type UpdatePlanBlockRequest,
+  type UpdatePlanBlockResponse,
+  type PlanBlock,
 } from "@repo/contracts/lms/plan-block";
-import { BadRequestError, NotFoundError, ValidationError } from "@repo/errors";
+import { NotFoundError } from "@repo/errors";
 
 import { verifyPlanEditable, verifyPlanOwnership } from "../../../../authz/guards";
 import { prisma } from "../../../../db/client";
 import {
   mapToPlanBlock,
+  mapToPlanItem,
   parseSchemeParamsOrThrow,
   type PlanBlockWithRefsRow,
-  SCHEME_ARCHETYPE_KIND_MAP,
 } from "../../../../mappers/lms";
 import { handlePrismaError, toInputJson } from "../../../../utils";
 
+import {
+  applyItemDiff,
+  loadActiveArchetypeKindOrThrow,
+  toCreatePlanItemInput,
+  validateBlockTypeIds,
+  validatePlanItemsBatch,
+  validateSchemeTypeAndKind,
+} from "./plan-item-batch";
+
 const blockInclude = {
   blockTypeRefs: { orderBy: { order: "asc" } },
+} as const;
+
+const blockWithItemsInclude = {
+  blockTypeRefs: { orderBy: { order: "asc" } },
+  items: { orderBy: { order: "asc" } },
 } as const;
 
 const parentChainInclude = {
@@ -27,39 +43,10 @@ const parentChainInclude = {
   blockTypeRefs: { orderBy: { order: "asc" } },
 } as const;
 
-const validateSchemeTypeAndKind = async (
-  schemeTypeId: string,
-  schemeParams: SchemeParams,
-): Promise<void> => {
-  const schemeType = await prisma.schemeType.findUnique({
-    where: { id: schemeTypeId },
-    select: { archetypeKind: true, deletedAt: true },
-  });
+type PrismaTx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
-  if (!schemeType || schemeType.deletedAt !== null) {
-    throw new BadRequestError("Referenced SchemeType does not exist", { schemeTypeId });
-  }
-
-  if (SCHEME_ARCHETYPE_KIND_MAP[schemeType.archetypeKind] !== schemeParams.kind) {
-    throw new ValidationError("schemeParams.kind must match SchemeType.archetypeKind", {
-      field: "schemeParams",
-    });
-  }
-};
-
-const validateBlockTypeIds = async (ids: string[]): Promise<void> => {
-  const found = await prisma.blockType.findMany({
-    where: { id: { in: ids } },
-    select: { id: true },
-  });
-
-  if (found.length !== ids.length) {
-    const foundIds = new Set(found.map((b) => b.id));
-
-    throw new BadRequestError("One or more referenced BlockType ids do not exist", {
-      missingIds: ids.filter((id) => !foundIds.has(id)),
-    });
-  }
+type PlanBlockWithItemsRow = PlanBlockWithRefsRow & {
+  items: Array<Parameters<typeof mapToPlanItem>[0]>;
 };
 
 const findBlockOrThrow = async (planId: string, blockId: string): Promise<PlanBlockWithRefsRow> => {
@@ -84,6 +71,18 @@ const verifySessionInPlan = async (planId: string, sessionId: string): Promise<v
   if (!session || session.day.planId !== planId) {
     throw new NotFoundError("PlanSession not found", { planId, sessionId });
   }
+};
+
+const findBlockWithItemsOrThrow = (tx: PrismaTx, blockId: string): Promise<PlanBlockWithItemsRow> =>
+  tx.planBlock.findUniqueOrThrow({
+    where: { id: blockId },
+    include: blockWithItemsInclude,
+  });
+
+const mapBlockWithItems = (block: PlanBlockWithItemsRow): CreatePlanBlockResponse => {
+  const baseBlock: PlanBlock = mapToPlanBlock(block);
+
+  return { ...baseBlock, items: block.items.map(mapToPlanItem) };
 };
 
 export const lmsPlanBlockApi = {
@@ -116,31 +115,50 @@ export const lmsPlanBlockApi = {
     planId: string,
     sessionId: string,
     data: CreatePlanBlockRequest,
-  ): Promise<PlanBlock> => {
+  ): Promise<CreatePlanBlockResponse> => {
     const plan = await verifyPlanOwnership(planId, userId);
 
     verifyPlanEditable(plan);
     await verifySessionInPlan(planId, sessionId);
-    await validateSchemeTypeAndKind(data.schemeTypeId, data.schemeParams);
+
+    const archetypeKind = await loadActiveArchetypeKindOrThrow(data.schemeTypeId);
+    const schemeParams = defaultSchemeParams(archetypeKind);
+
     await validateBlockTypeIds(data.blockTypeIds);
 
+    const items = data.items ?? [];
+
+    if (items.length > 0) {
+      await validatePlanItemsBatch(items);
+    }
+
     try {
-      const block = await prisma.planBlock.create({
-        data: {
-          sessionId,
-          order: data.order,
-          schemeTypeId: data.schemeTypeId,
-          schemeParams: toInputJson(data.schemeParams),
-          ...(data.modifiers !== undefined && { modifiers: toInputJson(data.modifiers) }),
-          ...(data.notes !== undefined && { notes: data.notes }),
-          blockTypeRefs: {
-            create: data.blockTypeIds.map((blockTypeId, order) => ({ blockTypeId, order })),
+      const block = await prisma.$transaction(async (tx) => {
+        const created = await tx.planBlock.create({
+          data: {
+            sessionId,
+            order: data.order,
+            schemeTypeId: data.schemeTypeId,
+            schemeParams: toInputJson(schemeParams),
+            ...(data.modifiers !== undefined && { modifiers: toInputJson(data.modifiers) }),
+            ...(data.notes !== undefined && { notes: data.notes }),
+            blockTypeRefs: {
+              create: data.blockTypeIds.map((blockTypeId, order) => ({ blockTypeId, order })),
+            },
           },
-        },
-        include: blockInclude,
+          select: { id: true },
+        });
+
+        if (items.length > 0) {
+          await tx.planItem.createMany({
+            data: items.map((i) => toCreatePlanItemInput(created.id, i)),
+          });
+        }
+
+        return findBlockWithItemsOrThrow(tx, created.id);
       });
 
-      return mapToPlanBlock(block);
+      return mapBlockWithItems(block);
     } catch (error) {
       return handlePrismaError(error, { entity: "PlanBlock" });
     }
@@ -151,7 +169,7 @@ export const lmsPlanBlockApi = {
     planId: string,
     blockId: string,
     data: UpdatePlanBlockRequest,
-  ): Promise<PlanBlock> => {
+  ): Promise<UpdatePlanBlockResponse> => {
     const plan = await verifyPlanOwnership(planId, userId);
 
     verifyPlanEditable(plan);
@@ -168,6 +186,10 @@ export const lmsPlanBlockApi = {
 
     if (data.blockTypeIds !== undefined) {
       await validateBlockTypeIds(data.blockTypeIds);
+    }
+
+    if (data.items !== undefined && data.items.length > 0) {
+      await validatePlanItemsBatch(data.items);
     }
 
     return applyBlockUpdate(blockId, data);
@@ -202,7 +224,7 @@ const buildScalarUpdate = (data: UpdatePlanBlockRequest): Prisma.PlanBlockUpdate
 const applyBlockUpdate = async (
   blockId: string,
   data: UpdatePlanBlockRequest,
-): Promise<PlanBlock> => {
+): Promise<UpdatePlanBlockResponse> => {
   try {
     const block = await prisma.$transaction(async (tx) => {
       if (data.blockTypeIds !== undefined) {
@@ -214,18 +236,23 @@ const applyBlockUpdate = async (
         });
       }
 
+      if (data.items !== undefined) {
+        await applyItemDiff(tx, blockId, data.items);
+      }
+
       const scalarUpdate = buildScalarUpdate(data);
       const hasScalarChanges = Object.keys(scalarUpdate).length > 0;
       const updateData = hasScalarChanges ? scalarUpdate : { updatedAt: new Date() };
 
-      return tx.planBlock.update({
+      await tx.planBlock.update({
         where: { id: blockId },
         data: updateData,
-        include: blockInclude,
       });
+
+      return findBlockWithItemsOrThrow(tx, blockId);
     });
 
-    return mapToPlanBlock(block);
+    return mapBlockWithItems(block);
   } catch (error) {
     return handlePrismaError(error, { entity: "PlanBlock" });
   }

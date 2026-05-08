@@ -7,7 +7,6 @@ const baseValid = {
   order: 0,
   schemeTypeId: "ckxabcdefghijklmnopqrsu",
   blockTypeIds: ["ckxabcdefghijklmnopqrsv"],
-  schemeParams: { kind: "NONE" as const },
 };
 
 const validItem = {
@@ -21,6 +20,29 @@ const validItem = {
 };
 
 describe("createPlanBlockSchema", () => {
+  it("accepts a body without schemeParams (server fills via defaultSchemeParams)", () => {
+    const result = createPlanBlockSchema.safeParse(baseValid);
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(Object.prototype.hasOwnProperty.call(result.data, "schemeParams")).toBe(false);
+    }
+  });
+
+  it("strips schemeParams when present in body (server-only field)", () => {
+    const result = createPlanBlockSchema.safeParse({
+      ...baseValid,
+      schemeParams: { kind: "NONE" as const },
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(Object.prototype.hasOwnProperty.call(result.data, "schemeParams")).toBe(false);
+    }
+  });
+
   it("accepts a body without items field", () => {
     const result = createPlanBlockSchema.safeParse({
       ...baseValid,

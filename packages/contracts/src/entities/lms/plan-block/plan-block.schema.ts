@@ -34,7 +34,6 @@ export const createPlanBlockSchema = z.object({
   order: z.number().int().nonnegative(),
   schemeTypeId: z.string().cuid(),
   blockTypeIds: blockTypeIdsSchema,
-  schemeParams: schemeParamsSchema,
   modifiers: z.unknown().optional(),
   notes: blockNotesSchema.optional(),
   items: z.array(planItemForUpsertSchema).optional(),

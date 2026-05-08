@@ -1,7 +1,11 @@
 import { type SchemeArchetypeKind } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { type CreatePlanBlockRequest } from "@repo/contracts/lms/plan-block";
+import { defaultSchemeParams } from "@repo/contracts/lms/_domain";
+import {
+  createPlanBlockRequestSchema,
+  type CreatePlanBlockRequest,
+} from "@repo/contracts/lms/plan-block";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import {
   BadRequestError,
@@ -48,7 +52,6 @@ const baseCreateData = (
   order: 0,
   schemeTypeId,
   blockTypeIds,
-  schemeParams: { kind: "NONE" },
   ...overrides,
 });
 
@@ -152,19 +155,6 @@ describe("lmsPlanBlockApi", () => {
       ).rejects.toThrow(NotFoundError);
     });
 
-    it("rejects with ValidationError when schemeParams.kind does not match SchemeType.archetypeKind", async () => {
-      await expect(
-        lmsPlanBlockApi.create(
-          coach.user.id,
-          activePlan.id,
-          activeSessionId,
-          baseCreateData(schemeTypeCountDown.id, [blockTypeA.id], {
-            schemeParams: { kind: "COUNT_UP" },
-          }),
-        ),
-      ).rejects.toThrow(ValidationError);
-    });
-
     it("rejects with BadRequestError when schemeTypeId points to a soft-deleted SchemeType", async () => {
       const softDeleted = await cleanupRaw.schemeType.create({
         data: {
@@ -221,8 +211,185 @@ describe("lmsPlanBlockApi", () => {
         expect(created.sessionId).toBe(activeSessionId);
         expect(created.blockTypeIds).toEqual([blockTypeC.id, blockTypeA.id, blockTypeB.id]);
         expect(created.notes).toBe("warmup couplet");
+        expect(created.items).toEqual([]);
       } finally {
         await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+      }
+    });
+
+    it("server-fills schemeParams from defaultSchemeParams matching SchemeType.archetypeKind", async () => {
+      const noneCreated = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], { order: 30 }),
+      );
+
+      try {
+        expect(noneCreated.schemeParams).toEqual(defaultSchemeParams("NONE"));
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: noneCreated.id } }).catch(() => {});
+      }
+
+      const countDownCreated = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeCountDown.id, [blockTypeA.id], { order: 31 }),
+      );
+
+      try {
+        expect(countDownCreated.schemeParams).toEqual(defaultSchemeParams("COUNT_DOWN"));
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: countDownCreated.id } }).catch(() => {});
+      }
+    });
+
+    it("creates a block with non-empty items round-tripping the items in the response", async () => {
+      const exerciseA = await cleanupRaw.exercise.create({
+        data: { name: `nested-ex-a-${uniqueSuffix()}`, primaryMovement: "SQUAT" },
+      });
+      const exerciseB = await cleanupRaw.exercise.create({
+        data: { name: `nested-ex-b-${uniqueSuffix()}`, primaryMovement: "PUSH_HORIZONTAL" },
+      });
+
+      const created = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], {
+          order: 32,
+          items: [
+            {
+              order: 0,
+              exerciseId: exerciseA.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 5 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+            {
+              order: 1,
+              exerciseId: exerciseB.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 8 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+          ],
+        }),
+      );
+
+      try {
+        expect(created.items).toHaveLength(2);
+        expect(created.items[0]?.exerciseId).toBe(exerciseA.id);
+        expect(created.items[0]?.order).toBe(0);
+        expect(created.items[1]?.exerciseId).toBe(exerciseB.id);
+        expect(created.items[1]?.order).toBe(1);
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: exerciseA.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: exerciseB.id } }).catch(() => {});
+      }
+    });
+
+    it("creates a block with empty items array producing no items", async () => {
+      const created = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], { order: 33, items: [] }),
+      );
+
+      try {
+        expect(created.items).toEqual([]);
+
+        const itemCount = await cleanupRaw.planItem.count({ where: { blockId: created.id } });
+
+        expect(itemCount).toBe(0);
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects with BadRequestError when items reference an unknown exerciseId and rolls back the block insert", async () => {
+      const orderForFailedCreate = 34;
+      const fakeExerciseId = "ckxabcdefghijklmnopqr00";
+
+      const validExercise = await cleanupRaw.exercise.create({
+        data: { name: `valid-ex-${uniqueSuffix()}`, primaryMovement: "SQUAT" },
+      });
+
+      try {
+        await expect(
+          lmsPlanBlockApi.create(
+            coach.user.id,
+            activePlan.id,
+            activeSessionId,
+            baseCreateData(schemeTypeNone.id, [blockTypeA.id], {
+              order: orderForFailedCreate,
+              items: [
+                {
+                  order: 0,
+                  exerciseId: validExercise.id,
+                  prescription: {
+                    reps: { kind: "FIXED", value: 5 },
+                    sideMode: "BILATERAL",
+                    modifiers: [],
+                  },
+                },
+                {
+                  order: 1,
+                  exerciseId: fakeExerciseId,
+                  prescription: {
+                    reps: { kind: "FIXED", value: 8 },
+                    sideMode: "BILATERAL",
+                    modifiers: [],
+                  },
+                },
+              ],
+            }),
+          ),
+        ).rejects.toThrow(BadRequestError);
+
+        const orphans = await cleanupRaw.planBlock.findMany({
+          where: { sessionId: activeSessionId, order: orderForFailedCreate },
+        });
+
+        expect(orphans).toEqual([]);
+      } finally {
+        await cleanupRaw.exercise.delete({ where: { id: validExercise.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects via Zod when items contain a prescription with a payload mismatching its kind discriminator", async () => {
+      const malformedBody: unknown = {
+        ...baseCreateData(schemeTypeNone.id, [blockTypeA.id], { order: 35 }),
+        items: [
+          {
+            order: 0,
+            exerciseId: "ckxabcdefghijklmnopqr11",
+            prescription: {
+              reps: { kind: "RANGE", value: 5 },
+              sideMode: "BILATERAL",
+              modifiers: [],
+            },
+          },
+        ],
+      };
+
+      const parsed = createPlanBlockRequestSchema.safeParse(malformedBody);
+
+      expect(parsed.success).toBe(false);
+
+      if (!parsed.success) {
+        const hasRangeIssue = parsed.error.issues.some((issue) =>
+          issue.path.join(".").includes("reps"),
+        );
+
+        expect(hasRangeIssue).toBe(true);
       }
     });
 
@@ -334,6 +501,262 @@ describe("lmsPlanBlockApi", () => {
         expect(updated.updatedAt.getTime()).toBeGreaterThan(before.updatedAt.getTime());
       } finally {
         await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+      }
+    });
+
+    it("updates one item and creates one when items mix existing ids and new rows", async () => {
+      const exerciseA = await cleanupRaw.exercise.create({
+        data: { name: `mix-ex-a-${uniqueSuffix()}`, primaryMovement: "SQUAT" },
+      });
+      const exerciseB = await cleanupRaw.exercise.create({
+        data: { name: `mix-ex-b-${uniqueSuffix()}`, primaryMovement: "PUSH_HORIZONTAL" },
+      });
+
+      const created = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], {
+          order: 40,
+          items: [
+            {
+              order: 0,
+              exerciseId: exerciseA.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 5 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+          ],
+        }),
+      );
+
+      try {
+        const existingItemId = created.items[0]?.id;
+
+        expect(existingItemId).toBeDefined();
+
+        const updated = await lmsPlanBlockApi.update(coach.user.id, activePlan.id, created.id, {
+          items: [
+            {
+              id: existingItemId,
+              order: 0,
+              exerciseId: exerciseA.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 8 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+            {
+              order: 1,
+              exerciseId: exerciseB.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 10 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+          ],
+        });
+
+        expect(updated.items).toHaveLength(2);
+        expect(updated.items[0]?.id).toBe(existingItemId);
+        expect(updated.items[0]?.prescription).toMatchObject({
+          reps: { kind: "FIXED", value: 8 },
+        });
+        expect(updated.items[1]?.exerciseId).toBe(exerciseB.id);
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: exerciseA.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: exerciseB.id } }).catch(() => {});
+      }
+    });
+
+    it("hard-deletes items absent from the incoming items list", async () => {
+      const exerciseA = await cleanupRaw.exercise.create({
+        data: { name: `del-ex-a-${uniqueSuffix()}`, primaryMovement: "SQUAT" },
+      });
+      const exerciseB = await cleanupRaw.exercise.create({
+        data: { name: `del-ex-b-${uniqueSuffix()}`, primaryMovement: "PUSH_HORIZONTAL" },
+      });
+
+      const created = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], {
+          order: 41,
+          items: [
+            {
+              order: 0,
+              exerciseId: exerciseA.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 5 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+            {
+              order: 1,
+              exerciseId: exerciseB.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 5 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+          ],
+        }),
+      );
+
+      try {
+        const survivor = created.items[0];
+        const removed = created.items[1];
+
+        expect(survivor).toBeDefined();
+        expect(removed).toBeDefined();
+
+        const updated = await lmsPlanBlockApi.update(coach.user.id, activePlan.id, created.id, {
+          items: [
+            {
+              id: survivor?.id,
+              order: 0,
+              exerciseId: exerciseA.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 5 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+          ],
+        });
+
+        expect(updated.items).toHaveLength(1);
+        expect(updated.items[0]?.id).toBe(survivor?.id);
+
+        const removedRow = await cleanupRaw.planItem.findUnique({
+          where: { id: removed?.id ?? "" },
+        });
+
+        expect(removedRow).toBeNull();
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: exerciseA.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: exerciseB.id } }).catch(() => {});
+      }
+    });
+
+    it("is idempotent when the same items payload is re-applied", async () => {
+      const exercise = await cleanupRaw.exercise.create({
+        data: { name: `idem-ex-${uniqueSuffix()}`, primaryMovement: "SQUAT" },
+      });
+
+      const created = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], {
+          order: 42,
+          items: [
+            {
+              order: 0,
+              exerciseId: exercise.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 5 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+          ],
+        }),
+      );
+
+      try {
+        const itemId = created.items[0]?.id;
+
+        expect(itemId).toBeDefined();
+
+        const samePayload = {
+          items: [
+            {
+              id: itemId,
+              order: 0,
+              exerciseId: exercise.id,
+              prescription: {
+                reps: { kind: "FIXED" as const, value: 5 },
+                sideMode: "BILATERAL" as const,
+                modifiers: [],
+              },
+            },
+          ],
+        };
+
+        const firstUpdate = await lmsPlanBlockApi.update(
+          coach.user.id,
+          activePlan.id,
+          created.id,
+          samePayload,
+        );
+        const secondUpdate = await lmsPlanBlockApi.update(
+          coach.user.id,
+          activePlan.id,
+          created.id,
+          samePayload,
+        );
+
+        expect(firstUpdate.items).toHaveLength(1);
+        expect(secondUpdate.items).toHaveLength(1);
+        expect(secondUpdate.items[0]?.id).toBe(itemId);
+
+        const itemCount = await cleanupRaw.planItem.count({ where: { blockId: created.id } });
+
+        expect(itemCount).toBe(1);
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: exercise.id } }).catch(() => {});
+      }
+    });
+
+    it("updates only block-level fields when items field is omitted", async () => {
+      const exercise = await cleanupRaw.exercise.create({
+        data: { name: `omit-ex-${uniqueSuffix()}`, primaryMovement: "SQUAT" },
+      });
+
+      const created = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], {
+          order: 43,
+          items: [
+            {
+              order: 0,
+              exerciseId: exercise.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 5 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+          ],
+        }),
+      );
+
+      try {
+        const itemId = created.items[0]?.id;
+
+        const updated = await lmsPlanBlockApi.update(coach.user.id, activePlan.id, created.id, {
+          notes: "updated-notes-only",
+        });
+
+        expect(updated.notes).toBe("updated-notes-only");
+        expect(updated.items).toHaveLength(1);
+        expect(updated.items[0]?.id).toBe(itemId);
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: exercise.id } }).catch(() => {});
       }
     });
   });
