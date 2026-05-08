@@ -9,6 +9,7 @@ import {
 
 export const SCHEME_ARCHETYPE_KINDS: readonly SchemeArchetypeKind[] = [
   "NONE",
+  "SETS_REPS",
   "COUNT_UP",
   "COUNT_DOWN",
   "INTERVAL_LOOP",
@@ -20,6 +21,7 @@ export const SCHEME_ARCHETYPE_KINDS: readonly SchemeArchetypeKind[] = [
 
 export const SCHEME_ARCHETYPE_KIND_LABELS: Record<SchemeArchetypeKind, string> = {
   NONE: "None",
+  SETS_REPS: "Sets × Reps",
   COUNT_UP: "Count Up",
   COUNT_DOWN: "Count Down",
   INTERVAL_LOOP: "Interval Loop",
@@ -98,6 +100,8 @@ export function defaultSchemeParams(kind: SchemeArchetypeKind): SchemeParams {
   switch (kind) {
     case "NONE":
       return { kind: "NONE" };
+    case "SETS_REPS":
+      return { kind: "SETS_REPS", sets: 3 };
     case "COUNT_UP":
       return { kind: "COUNT_UP" };
     case "COUNT_DOWN":

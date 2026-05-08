@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export const schemeArchetypeKindSchema = z.enum([
   "NONE",
+  "SETS_REPS",
   "COUNT_UP",
   "COUNT_DOWN",
   "INTERVAL_LOOP",
@@ -60,6 +61,12 @@ const timeBoxedSegmentSchema = z.object({
 
 export const schemeParamsNoneSchema = z.object({ kind: z.literal("NONE") });
 
+export const schemeParamsSetsRepsSchema = z.object({
+  kind: z.literal("SETS_REPS"),
+  sets: z.number().int().positive(),
+  progression: z.array(progressionStepSchema).optional(),
+});
+
 export const schemeParamsCountUpSchema = z.object({
   kind: z.literal("COUNT_UP"),
   cap: z.number().int().positive().optional(),
@@ -107,6 +114,7 @@ export const schemeParamsDistanceSchema = z.object({
 
 export const schemeParamsSchema = z.discriminatedUnion("kind", [
   schemeParamsNoneSchema,
+  schemeParamsSetsRepsSchema,
   schemeParamsCountUpSchema,
   schemeParamsCountDownSchema,
   schemeParamsIntervalLoopSchema,

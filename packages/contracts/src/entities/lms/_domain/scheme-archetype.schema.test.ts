@@ -24,6 +24,84 @@ describe("schemeParamsSchema — NONE", () => {
   });
 });
 
+describe("schemeParamsSchema — SETS_REPS", () => {
+  it("accepts a single set", () => {
+    expect(schemeParamsSchema.parse({ kind: "SETS_REPS", sets: 1 })).toEqual({
+      kind: "SETS_REPS",
+      sets: 1,
+    });
+  });
+
+  it("accepts a 5-set strength block", () => {
+    expect(schemeParamsSchema.parse({ kind: "SETS_REPS", sets: 5 })).toEqual({
+      kind: "SETS_REPS",
+      sets: 5,
+    });
+  });
+
+  it("accepts progression with per-set load overrides", () => {
+    const value = {
+      kind: "SETS_REPS" as const,
+      sets: 5,
+      progression: [
+        { round: 1, reps: [3] },
+        { round: 2, reps: [3] },
+        { round: 3, reps: [1] },
+      ],
+    };
+
+    expect(schemeParamsSchema.parse(value)).toEqual(value);
+  });
+
+  it("rejects missing sets", () => {
+    const result = schemeParamsSchema.safeParse({ kind: "SETS_REPS" });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects zero sets", () => {
+    const result = schemeParamsSchema.safeParse({ kind: "SETS_REPS", sets: 0 });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects negative sets", () => {
+    const result = schemeParamsSchema.safeParse({ kind: "SETS_REPS", sets: -3 });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects non-integer sets", () => {
+    const result = schemeParamsSchema.safeParse({ kind: "SETS_REPS", sets: 2.5 });
+
+    expect(result.success).toBe(false);
+  });
+
+  it.each([
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+    ["-Infinity", Number.NEGATIVE_INFINITY],
+    ["string '5'", "5"],
+    ["null", null],
+    ["boolean true", true],
+    ["empty array", []],
+    ["empty object", {}],
+  ] as const)("rejects sets: %s (QA-3)", (_label, setsValue) => {
+    const result = schemeParamsSchema.safeParse({ kind: "SETS_REPS", sets: setsValue });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts MAX_SAFE_INTEGER sets — documents the unbounded-by-design contract (QA-3)", () => {
+    const result = schemeParamsSchema.safeParse({
+      kind: "SETS_REPS",
+      sets: Number.MAX_SAFE_INTEGER,
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
 describe("schemeParamsSchema — COUNT_UP", () => {
   it("accepts minimal", () => {
     expect(schemeParamsSchema.parse({ kind: "COUNT_UP" })).toEqual({ kind: "COUNT_UP" });
@@ -228,8 +306,8 @@ describe("schemeParamsSchema — TIME_BOXED inner archetype kind tuple", () => {
     expect(result.success).toBe(true);
   });
 
-  it.each(["TIME_BOXED", "LADDER", "DISTANCE"] as const)(
-    "rejects %s as innerArchetypeKind (only 5 of 8 archetypes are allowed inside)",
+  it.each(["SETS_REPS", "TIME_BOXED", "LADDER", "DISTANCE"] as const)(
+    "rejects %s as innerArchetypeKind (only 5 of 9 archetypes are allowed inside) (QA-4)",
     (forbiddenInner) => {
       const result = schemeParamsSchema.safeParse({
         kind: "TIME_BOXED",

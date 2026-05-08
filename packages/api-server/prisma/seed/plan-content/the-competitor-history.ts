@@ -6,7 +6,7 @@ import { lightCooldownBlock, standardWarmupBlock } from "./_fixtures";
 const monStrengthBlock = (): BlockSpec => ({
   blockTypeNames: ["Strength"],
   schemeTypeName: "Sets × Reps",
-  schemeParams: { kind: "NONE" },
+  schemeParams: { kind: "SETS_REPS", sets: 5 },
   items: [
     {
       exerciseName: "Back Squat",
@@ -164,7 +164,7 @@ const thuLastWeek = (): DaySpec => ({
 const friStrengthBlock = (): BlockSpec => ({
   blockTypeNames: ["Strength"],
   schemeTypeName: "Sets × Reps",
-  schemeParams: { kind: "NONE" },
+  schemeParams: { kind: "SETS_REPS", sets: 5 },
   items: [
     {
       exerciseName: "Deadlift",

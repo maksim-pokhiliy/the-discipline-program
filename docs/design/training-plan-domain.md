@@ -150,7 +150,8 @@ After PDF pattern validation, the MVP archetype set is:
 
 | Archetype       | Covers                                                                                     |
 | --------------- | ------------------------------------------------------------------------------------------ |
-| `NONE`          | sets×reps, plain composition, accessory list                                               |
+| `NONE`          | plain composition, accessory list, free-form / structure-less containers                   |
+| `SETS_REPS`     | sets × reps (Strength workhorse) — `{ sets: number, progression?: ProgressionStep[] }`     |
 | `COUNT_UP`      | AMRAP / RFT / Chipper / For Time / Density (target = rounds/reps; capped or uncapped time) |
 | `COUNT_DOWN`    | descending for-time variants                                                               |
 | `LADDER`        | rep ladders — asc / desc / pyramid (params: `{ sequence: number[], direction }`)           |
@@ -159,7 +160,7 @@ After PDF pattern validation, the MVP archetype set is:
 | `TIME_BOXED`    | time-windowed segments ("0:00-10:00 \| 10:00-20:00"), skill practice                       |
 | `DISTANCE`      | running prescriptions ("RUN 5 km", "RUN 5-7 km")                                           |
 
-The two new archetypes (`LADDER`, `DISTANCE`) are a delta against the currently shipped six in `@repo/contracts/lms/_domain/scheme-archetype.schema.ts`. Within-block phases ("...then..." part 2) are handled by splitting into two sequential blocks in the same session, not by phases inside a single scheme — keeps schemeParams clean.
+`SETS_REPS` was promoted from a `NONE` sub-case to a first-class archetype in ADR-0041 (PR #185) — see `docs/adr/0041-sets-reps-archetype.md` for the schema diff and the rationale. `LADDER` and `DISTANCE` were a delta against the original six archetypes shipped in `@repo/contracts/lms/_domain/scheme-archetype.schema.ts`; the closed enum is now nine. Within-block phases ("...then..." part 2) are handled by splitting into two sequential blocks in the same session, not by phases inside a single scheme — keeps schemeParams clean.
 
 ##### `DayType`
 

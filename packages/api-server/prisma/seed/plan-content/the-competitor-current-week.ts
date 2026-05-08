@@ -6,7 +6,7 @@ import { lightCooldownBlock, standardWarmupBlock } from "./_fixtures";
 const monMorningStrengthBlock = (): BlockSpec => ({
   blockTypeNames: ["Strength"],
   schemeTypeName: "Sets × Reps",
-  schemeParams: { kind: "NONE" },
+  schemeParams: { kind: "SETS_REPS", sets: 5 },
   items: [
     {
       exerciseName: "Front Squat",
@@ -65,7 +65,7 @@ const monMorningCompositeBlock = (): BlockSpec => ({
 const monAfternoonAccessoryBlock = (): BlockSpec => ({
   blockTypeNames: ["Accessory"],
   schemeTypeName: "Sets × Reps",
-  schemeParams: { kind: "NONE" },
+  schemeParams: { kind: "SETS_REPS", sets: 3 },
   items: [
     {
       exerciseName: "DB Bench Press",
@@ -156,7 +156,7 @@ const wedThisWeek = (): DaySpec => ({
 const thuStrengthBlock = (): BlockSpec => ({
   blockTypeNames: ["Strength"],
   schemeTypeName: "Sets × Reps",
-  schemeParams: { kind: "NONE" },
+  schemeParams: { kind: "SETS_REPS", sets: 5 },
   items: [
     {
       exerciseName: "Deadlift",

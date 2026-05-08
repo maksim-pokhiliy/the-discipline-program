@@ -13,7 +13,7 @@ type SchemeTypeSeed = {
 };
 
 const SCHEME_TYPES: readonly SchemeTypeSeed[] = [
-  { name: "Sets × Reps", archetypeKind: SchemeArchetypeKind.NONE },
+  { name: "Sets × Reps", archetypeKind: SchemeArchetypeKind.SETS_REPS },
   { name: "AMRAP", archetypeKind: SchemeArchetypeKind.COUNT_UP },
   { name: "For Time", archetypeKind: SchemeArchetypeKind.COUNT_DOWN },
   { name: "Interval Loop", archetypeKind: SchemeArchetypeKind.INTERVAL_LOOP },
