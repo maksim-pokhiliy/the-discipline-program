@@ -3,7 +3,7 @@ import { type BlockSpec } from "./_builders";
 export const standardWarmupBlock = (): BlockSpec => ({
   blockTypeNames: ["Warm-Up"],
   schemeTypeName: "Sets × Reps",
-  schemeParams: { kind: "NONE" },
+  schemeParams: { kind: "SETS_REPS", sets: 1 },
   items: [
     {
       exerciseName: "Double-Under",
@@ -35,7 +35,7 @@ export const standardWarmupBlock = (): BlockSpec => ({
 export const lightCooldownBlock = (): BlockSpec => ({
   blockTypeNames: ["Cool-Down"],
   schemeTypeName: "Sets × Reps",
-  schemeParams: { kind: "NONE" },
+  schemeParams: { kind: "SETS_REPS", sets: 1 },
   items: [
     {
       exerciseName: "KB Swing",

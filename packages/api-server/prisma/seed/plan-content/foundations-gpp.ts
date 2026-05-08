@@ -8,7 +8,7 @@ import { type BlockSpec, buildDays, type DaySpec } from "./_builders";
 const warmupBlock = (): BlockSpec => ({
   blockTypeNames: ["Warm-Up"],
   schemeTypeName: "Sets × Reps",
-  schemeParams: { kind: "NONE" },
+  schemeParams: { kind: "SETS_REPS", sets: 1 },
   items: [
     {
       exerciseName: "Box Jump",
@@ -33,7 +33,7 @@ const warmupBlock = (): BlockSpec => ({
 const strengthBlock = (): BlockSpec => ({
   blockTypeNames: ["Strength"],
   schemeTypeName: "Sets × Reps",
-  schemeParams: { kind: "NONE" },
+  schemeParams: { kind: "SETS_REPS", sets: 5 },
   items: [
     {
       exerciseName: "Back Squat",

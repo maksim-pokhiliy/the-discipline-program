@@ -104,7 +104,7 @@ const thuNextWeek = (): DaySpec => ({
 const monWeekTwoStrengthBlock = (): BlockSpec => ({
   blockTypeNames: ["Strength"],
   schemeTypeName: "Sets × Reps",
-  schemeParams: { kind: "NONE" },
+  schemeParams: { kind: "SETS_REPS", sets: 5 },
   items: [
     {
       exerciseName: "Front Squat",
