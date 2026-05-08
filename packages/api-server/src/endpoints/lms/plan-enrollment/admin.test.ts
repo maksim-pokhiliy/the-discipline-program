@@ -37,6 +37,19 @@ describe("lmsPlanEnrollmentApi", () => {
   beforeAll(async () => {
     coach = await createTestCoach();
     otherCoach = await createTestCoach();
+
+    const preexisting = await cleanupRaw.user.findMany({
+      where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
+      select: { id: true },
+    });
+
+    for (const hc of preexisting) {
+      await cleanupRaw.user.update({
+        where: { id: hc.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      });
+    }
+
     headCoach = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
 
     assignedAthlete = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ATHLETE] });
