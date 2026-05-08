@@ -1,11 +1,4 @@
-import {
-  type Prisma,
-  type PrismaClient,
-  type SchemeType,
-  SchemeArchetypeKind,
-} from "@prisma/client";
-
-import { defaultSchemeParams, type SchemeParams } from "@repo/contracts/lms/_domain";
+import { type PrismaClient, type SchemeType, SchemeArchetypeKind } from "@prisma/client";
 
 type SchemeTypeSeed = {
   name: string;
@@ -23,9 +16,6 @@ const SCHEME_TYPES: readonly SchemeTypeSeed[] = [
   { name: "Distance Run", archetypeKind: SchemeArchetypeKind.DISTANCE },
 ] as const;
 
-const toInputJson = (params: SchemeParams): Prisma.InputJsonValue =>
-  JSON.parse(JSON.stringify(params)) as Prisma.InputJsonValue;
-
 export const seedSchemeTypes = async (db: PrismaClient): Promise<Map<string, SchemeType>> => {
   const map = new Map<string, SchemeType>();
 
@@ -34,7 +24,6 @@ export const seedSchemeTypes = async (db: PrismaClient): Promise<Map<string, Sch
       data: {
         name: seed.name,
         archetypeKind: seed.archetypeKind,
-        defaultParams: toInputJson(defaultSchemeParams(seed.archetypeKind)),
       },
     });
 

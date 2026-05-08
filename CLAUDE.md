@@ -51,5 +51,5 @@
 - Before multi-file / cross-package changes — output a plan first, wait for approval.
 - Respect workspace boundaries: don't add deps to the wrong package; use `catalog:` versions.
 - Don't run install/build/test at workspace level without confirmation.
-- Don't modify .env\*, lock files, Prisma schema/migrations, CI configs, or .gitignore without confirmation.
+- Don't modify lock files, Prisma migrations, CI configs, or .gitignore without confirmation.
 - Be concise. Senior developer context. Russian for explanations, English for code.

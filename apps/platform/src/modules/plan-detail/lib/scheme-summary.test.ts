@@ -9,7 +9,6 @@ const buildSchemeType = (name: string, archetypeKind: SchemeType["archetypeKind"
   id: "ckxw5p7gp0000q1mnzv5cuq0a",
   name,
   archetypeKind,
-  defaultParams: null,
   createdAt: new Date("2026-01-01T00:00:00.000Z"),
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
 });

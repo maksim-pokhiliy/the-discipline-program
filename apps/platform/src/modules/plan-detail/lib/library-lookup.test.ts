@@ -36,7 +36,6 @@ const makeSchemeType = (id: string, name: string): SchemeType => ({
   id,
   name,
   archetypeKind: "NONE",
-  defaultParams: { kind: "NONE" },
   createdAt: NOW,
   updatedAt: NOW,
 });

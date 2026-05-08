@@ -16,8 +16,6 @@ import { ConfirmationModal, DataTable, useDataTableUrlState, type Column } from 
 import { CreateButton } from "@app/lib/components/create-button";
 import { useDeleteSchemeType } from "@app/lib/hooks";
 
-const EMPTY_VALUE_PLACEHOLDER = "—";
-
 type SchemeTypesListSectionProps = {
   schemeTypes: SchemeType[];
 };
@@ -33,7 +31,7 @@ export const SchemeTypesListSection = ({ schemeTypes }: SchemeTypesListSectionPr
       {
         id: "name",
         label: "Name",
-        width: "25%",
+        width: "45%",
         sortable: true,
         sortValue: (schemeType) => schemeType.name,
         searchValue: (schemeType) => schemeType.name,
@@ -46,32 +44,10 @@ export const SchemeTypesListSection = ({ schemeTypes }: SchemeTypesListSectionPr
       {
         id: "archetypeKind",
         label: "Archetype",
-        width: "15%",
+        width: "25%",
         render: (schemeType) => (
           <Typography variant="body2">
             {SCHEME_ARCHETYPE_KIND_LABELS[schemeType.archetypeKind]}
-          </Typography>
-        ),
-      },
-      {
-        id: "defaultParams",
-        label: "Default Params",
-        width: "30%",
-        render: (schemeType) => (
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            sx={{
-              display: "block",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              fontFamily: "monospace",
-            }}
-          >
-            {schemeType.defaultParams
-              ? JSON.stringify(schemeType.defaultParams)
-              : EMPTY_VALUE_PLACEHOLDER}
           </Typography>
         ),
       },

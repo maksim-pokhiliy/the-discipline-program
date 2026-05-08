@@ -29,7 +29,6 @@ export const SchemeTypesEditForm: React.FC<SchemeTypesEditFormProps> = ({ scheme
     defaultValues: {
       name: schemeType.name,
       archetypeKind: schemeType.archetypeKind,
-      defaultParams: schemeType.defaultParams ?? undefined,
     },
   });
 
