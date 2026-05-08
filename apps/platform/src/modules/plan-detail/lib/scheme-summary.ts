@@ -25,6 +25,8 @@ export const formatSchemeSummary = (schemeType: SchemeType, params: SchemeParams
   switch (params.kind) {
     case "NONE":
       return name;
+    case "SETS_REPS":
+      return `${name}${SUMMARY_SEPARATOR}${params.sets} ${pluralize(params.sets, "set")}`;
     case "COUNT_UP":
       return params.cap !== undefined
         ? `${name}${SUMMARY_SEPARATOR}cap ${formatSec(params.cap)}`

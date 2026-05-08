@@ -22,6 +22,42 @@ describe("formatSchemeSummary", () => {
     expect(formatSchemeSummary(schemeType, params)).toBe("For Time");
   });
 
+  it("uses the singular set label when SETS_REPS has exactly one set", () => {
+    const schemeType = buildSchemeType("Sets × Reps", "SETS_REPS");
+    const params: SchemeParams = { kind: "SETS_REPS", sets: 1 };
+
+    expect(formatSchemeSummary(schemeType, params)).toBe("Sets × Reps • 1 set");
+  });
+
+  it("renders SETS_REPS with the plural set label for multi-set blocks", () => {
+    const schemeType = buildSchemeType("Sets × Reps", "SETS_REPS");
+    const params: SchemeParams = { kind: "SETS_REPS", sets: 5 };
+
+    expect(formatSchemeSummary(schemeType, params)).toBe("Sets × Reps • 5 sets");
+  });
+
+  it("renders SETS_REPS with a larger set count", () => {
+    const schemeType = buildSchemeType("Sets × Reps", "SETS_REPS");
+    const params: SchemeParams = { kind: "SETS_REPS", sets: 12 };
+
+    expect(formatSchemeSummary(schemeType, params)).toBe("Sets × Reps • 12 sets");
+  });
+
+  it("ignores progression on SETS_REPS in the one-line block summary", () => {
+    const schemeType = buildSchemeType("Sets × Reps", "SETS_REPS");
+    const params: SchemeParams = {
+      kind: "SETS_REPS",
+      sets: 5,
+      progression: [
+        { round: 1, reps: [5] },
+        { round: 2, reps: [3] },
+        { round: 3, reps: [1] },
+      ],
+    };
+
+    expect(formatSchemeSummary(schemeType, params)).toBe("Sets × Reps • 5 sets");
+  });
+
   it("returns the bare scheme name for COUNT_UP without a cap", () => {
     const schemeType = buildSchemeType("AMRAP", "COUNT_UP");
     const params: SchemeParams = { kind: "COUNT_UP" };

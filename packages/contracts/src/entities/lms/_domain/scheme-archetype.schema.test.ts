@@ -24,6 +24,60 @@ describe("schemeParamsSchema — NONE", () => {
   });
 });
 
+describe("schemeParamsSchema — SETS_REPS", () => {
+  it("accepts a single set", () => {
+    expect(schemeParamsSchema.parse({ kind: "SETS_REPS", sets: 1 })).toEqual({
+      kind: "SETS_REPS",
+      sets: 1,
+    });
+  });
+
+  it("accepts a 5-set strength block", () => {
+    expect(schemeParamsSchema.parse({ kind: "SETS_REPS", sets: 5 })).toEqual({
+      kind: "SETS_REPS",
+      sets: 5,
+    });
+  });
+
+  it("accepts progression with per-set load overrides", () => {
+    const value = {
+      kind: "SETS_REPS" as const,
+      sets: 5,
+      progression: [
+        { round: 1, reps: [3] },
+        { round: 2, reps: [3] },
+        { round: 3, reps: [1] },
+      ],
+    };
+
+    expect(schemeParamsSchema.parse(value)).toEqual(value);
+  });
+
+  it("rejects missing sets", () => {
+    const result = schemeParamsSchema.safeParse({ kind: "SETS_REPS" });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects zero sets", () => {
+    const result = schemeParamsSchema.safeParse({ kind: "SETS_REPS", sets: 0 });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects negative sets", () => {
+    const result = schemeParamsSchema.safeParse({ kind: "SETS_REPS", sets: -3 });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects non-integer sets", () => {
+    const result = schemeParamsSchema.safeParse({ kind: "SETS_REPS", sets: 2.5 });
+
+    expect(result.success).toBe(false);
+  });
+});
+
 describe("schemeParamsSchema — COUNT_UP", () => {
   it("accepts minimal", () => {
     expect(schemeParamsSchema.parse({ kind: "COUNT_UP" })).toEqual({ kind: "COUNT_UP" });

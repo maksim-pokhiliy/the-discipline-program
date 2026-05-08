@@ -43,6 +43,7 @@ export const TRAINING_PLAN_STATUS_TO_PRISMA_MAP: Record<
 
 export const SCHEME_ARCHETYPE_KIND_MAP: Record<PrismaSchemeArchetypeKind, SchemeArchetypeKind> = {
   NONE: "NONE",
+  SETS_REPS: "SETS_REPS",
   COUNT_UP: "COUNT_UP",
   COUNT_DOWN: "COUNT_DOWN",
   INTERVAL_LOOP: "INTERVAL_LOOP",
@@ -57,6 +58,7 @@ export const SCHEME_ARCHETYPE_KIND_TO_PRISMA_MAP: Record<
   PrismaSchemeArchetypeKind
 > = {
   NONE: PrismaSchemeArchetypeKind.NONE,
+  SETS_REPS: PrismaSchemeArchetypeKind.SETS_REPS,
   COUNT_UP: PrismaSchemeArchetypeKind.COUNT_UP,
   COUNT_DOWN: PrismaSchemeArchetypeKind.COUNT_DOWN,
   INTERVAL_LOOP: PrismaSchemeArchetypeKind.INTERVAL_LOOP,

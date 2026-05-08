@@ -18,6 +18,22 @@ import {
 } from "./scheme-archetype.schema";
 import { type SchemeArchetypeKind } from "./scheme-archetype.types";
 
+describe("SCHEME_ARCHETYPE_KINDS", () => {
+  it("includes SETS_REPS as the 9th archetype kind", () => {
+    expect(SCHEME_ARCHETYPE_KINDS).toContain("SETS_REPS");
+  });
+
+  it("exposes all nine archetype kinds", () => {
+    expect(SCHEME_ARCHETYPE_KINDS).toHaveLength(9);
+  });
+});
+
+describe("defaultSchemeParams — SETS_REPS", () => {
+  it("returns a 3-set default with no progression", () => {
+    expect(defaultSchemeParams("SETS_REPS")).toEqual({ kind: "SETS_REPS", sets: 3 });
+  });
+});
+
 describe("defaultSchemeParams round-trip across all archetypes", () => {
   it.each(SCHEME_ARCHETYPE_KINDS.map((kind) => [kind] as const))(
     "produces a value with matching kind for %s",

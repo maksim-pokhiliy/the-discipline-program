@@ -233,6 +233,7 @@ enum TrainingPlanStatus {
 
 enum SchemeArchetypeKind {
   NONE
+  SETS_REPS
   COUNT_UP
   COUNT_DOWN
   INTERVAL_LOOP

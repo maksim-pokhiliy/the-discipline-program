@@ -18,6 +18,7 @@ import { SchemeParamsEmomLoopForm } from "./scheme-params-emom-loop";
 import { SchemeParamsIntervalLoopForm } from "./scheme-params-interval-loop";
 import { SchemeParamsLadderForm } from "./scheme-params-ladder";
 import { SchemeParamsNoneForm } from "./scheme-params-none";
+import { SchemeParamsSetsRepsForm } from "./scheme-params-sets-reps";
 import { SchemeParamsTimeBoxedForm } from "./scheme-params-time-boxed";
 import {
   type SchemeParamsBasePath,
@@ -35,6 +36,7 @@ type SchemeParamsFieldProps = {
 const isArchetypeKind = (value: unknown): value is SchemeArchetypeKind => {
   return (
     value === "NONE" ||
+    value === "SETS_REPS" ||
     value === "COUNT_UP" ||
     value === "COUNT_DOWN" ||
     value === "INTERVAL_LOOP" ||
@@ -57,6 +59,8 @@ const renderArchetype = (
   switch (kind) {
     case "NONE":
       return <SchemeParamsNoneForm />;
+    case "SETS_REPS":
+      return <SchemeParamsSetsRepsForm basePath={basePath} isLoading={isLoading} />;
     case "COUNT_UP":
       return <SchemeParamsCountUpForm basePath={basePath} isLoading={isLoading} />;
     case "COUNT_DOWN":
