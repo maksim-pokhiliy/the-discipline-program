@@ -439,7 +439,6 @@ model SchemeType {
   id            String              @id @default(cuid())
   name          String              @unique @db.Citext
   archetypeKind SchemeArchetypeKind
-  defaultParams Json?
   createdAt     DateTime            @default(now())
   updatedAt     DateTime            @updatedAt
   deletedAt     DateTime?
