@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { planItemSchema } from "../plan-item/plan-item.schema";
+
 import { createPlanBlockSchema, planBlockSchema, updatePlanBlockSchema } from "./plan-block.schema";
 
 export const planBlockParamsSchema = z.object({
@@ -20,11 +22,15 @@ export const getPlanBlockResponseSchema = planBlockSchema;
 
 export const createPlanBlockRequestSchema = createPlanBlockSchema.omit({ sessionId: true });
 
-export const createPlanBlockResponseSchema = planBlockSchema;
+export const createPlanBlockResponseSchema = planBlockSchema.extend({
+  items: z.array(planItemSchema),
+});
 
 export const updatePlanBlockRequestSchema = updatePlanBlockSchema.refine(
   (data) => Object.keys(data).length > 0,
   { message: "patch cannot be empty" },
 );
 
-export const updatePlanBlockResponseSchema = planBlockSchema;
+export const updatePlanBlockResponseSchema = planBlockSchema.extend({
+  items: z.array(planItemSchema),
+});

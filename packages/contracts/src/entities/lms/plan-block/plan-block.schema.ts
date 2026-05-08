@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { noNulByteString } from "../_domain/safe-string.schema";
 import { schemeParamsSchema } from "../_domain/scheme-archetype.schema";
+import { planItemForUpsertSchema } from "../plan-item/plan-item-for-upsert.schema";
 
 import { PLAN_BLOCK_CONSTANTS } from "./plan-block.constants";
 
@@ -36,6 +37,7 @@ export const createPlanBlockSchema = z.object({
   schemeParams: schemeParamsSchema,
   modifiers: z.unknown().optional(),
   notes: blockNotesSchema.optional(),
+  items: z.array(planItemForUpsertSchema).optional(),
 });
 
 export const updatePlanBlockSchema = z.object({
@@ -45,4 +47,5 @@ export const updatePlanBlockSchema = z.object({
   schemeParams: schemeParamsSchema.optional(),
   modifiers: z.unknown().nullable().optional(),
   notes: blockNotesSchema.nullable().optional(),
+  items: z.array(planItemForUpsertSchema).optional(),
 });
