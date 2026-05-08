@@ -76,6 +76,30 @@ describe("schemeParamsSchema — SETS_REPS", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it.each([
+    ["NaN", Number.NaN],
+    ["Infinity", Number.POSITIVE_INFINITY],
+    ["-Infinity", Number.NEGATIVE_INFINITY],
+    ["string '5'", "5"],
+    ["null", null],
+    ["boolean true", true],
+    ["empty array", []],
+    ["empty object", {}],
+  ] as const)("rejects sets: %s (QA-3)", (_label, setsValue) => {
+    const result = schemeParamsSchema.safeParse({ kind: "SETS_REPS", sets: setsValue });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts MAX_SAFE_INTEGER sets — documents the unbounded-by-design contract (QA-3)", () => {
+    const result = schemeParamsSchema.safeParse({
+      kind: "SETS_REPS",
+      sets: Number.MAX_SAFE_INTEGER,
+    });
+
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("schemeParamsSchema — COUNT_UP", () => {
@@ -282,8 +306,8 @@ describe("schemeParamsSchema — TIME_BOXED inner archetype kind tuple", () => {
     expect(result.success).toBe(true);
   });
 
-  it.each(["TIME_BOXED", "LADDER", "DISTANCE"] as const)(
-    "rejects %s as innerArchetypeKind (only 5 of 8 archetypes are allowed inside)",
+  it.each(["SETS_REPS", "TIME_BOXED", "LADDER", "DISTANCE"] as const)(
+    "rejects %s as innerArchetypeKind (only 5 of 9 archetypes are allowed inside) (QA-4)",
     (forbiddenInner) => {
       const result = schemeParamsSchema.safeParse({
         kind: "TIME_BOXED",

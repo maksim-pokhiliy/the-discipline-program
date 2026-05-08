@@ -70,6 +70,35 @@ describe("createSchemeTypeSchema kind-match refine", () => {
       expect(archetypeIssue).toBeDefined();
     }
   });
+
+  it("accepts archetypeKind=SETS_REPS with matching defaultSchemeParams (QA-5)", () => {
+    const result = createSchemeTypeSchema.safeParse({
+      name: "Sets × Reps",
+      archetypeKind: "SETS_REPS",
+      defaultParams: defaultSchemeParams("SETS_REPS"),
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects archetypeKind=SETS_REPS with NONE defaultParams (QA-5)", () => {
+    const result = createSchemeTypeSchema.safeParse({
+      name: "Bogus Sets × Reps",
+      archetypeKind: "SETS_REPS",
+      defaultParams: { kind: "NONE" },
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      const issue = result.error.issues.find(
+        (current) => current.message === KIND_MISMATCH_MESSAGE,
+      );
+
+      expect(issue).toBeDefined();
+      expect(issue?.path).toEqual(["defaultParams"]);
+    }
+  });
 });
 
 describe("updateSchemeTypeSchema kind-match refine", () => {
