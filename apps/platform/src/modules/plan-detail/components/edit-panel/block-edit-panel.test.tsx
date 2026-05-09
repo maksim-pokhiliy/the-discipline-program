@@ -106,7 +106,6 @@ const makeExistingItem = (overrides: Partial<PlanItem> = {}): PlanItem => ({
 const renderCreatePanel = () => {
   const onClose = vi.fn();
   const onStatusChange = vi.fn();
-  const onDirtyChange = vi.fn();
 
   render(
     <BlockEditPanel
@@ -118,17 +117,15 @@ const renderCreatePanel = () => {
       lookups={makeLookups()}
       onClose={onClose}
       onStatusChange={onStatusChange}
-      onDirtyChange={onDirtyChange}
     />,
   );
 
-  return { onClose, onStatusChange, onDirtyChange };
+  return { onClose, onStatusChange };
 };
 
 const renderEditPanel = () => {
   const onClose = vi.fn();
   const onStatusChange = vi.fn();
-  const onDirtyChange = vi.fn();
   const block = makeExistingBlock();
   const item = makeExistingItem();
 
@@ -143,11 +140,10 @@ const renderEditPanel = () => {
       lookups={makeLookups()}
       onClose={onClose}
       onStatusChange={onStatusChange}
-      onDirtyChange={onDirtyChange}
     />,
   );
 
-  return { onClose, onStatusChange, onDirtyChange, block, item };
+  return { onClose, onStatusChange, block, item };
 };
 
 describe("BlockEditPanel", () => {
@@ -259,10 +255,10 @@ describe("BlockEditPanel", () => {
     expect(schemeSelect).toHaveTextContent("Count down");
   });
 
-  it("emits 'saving' then 'saved' through onStatusChange and clears dirty on successful submit", async () => {
+  it("emits 'saving' then 'saved' through onStatusChange on successful submit", async () => {
     updateMutation.mockResolvedValue({ id: BLOCK_ID });
 
-    const { onStatusChange, onDirtyChange } = renderEditPanel();
+    const { onStatusChange } = renderEditPanel();
 
     const blockNotes = document.querySelector(
       'textarea[name="notes"]',
@@ -281,10 +277,6 @@ describe("BlockEditPanel", () => {
     const statuses = onStatusChange.mock.calls.map((call) => call[0]);
 
     expect(statuses).toEqual(expect.arrayContaining(["saving", "saved"]));
-
-    const lastDirtyCall = onDirtyChange.mock.calls.at(-1);
-
-    expect(lastDirtyCall?.[0]).toBe(false);
   });
 
   it("ignores rapid double-click on Save and triggers updatePlanBlock.mutateAsync exactly once", async () => {

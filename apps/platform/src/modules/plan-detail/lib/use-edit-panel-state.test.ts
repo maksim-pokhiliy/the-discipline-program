@@ -12,12 +12,6 @@ const dayPanel = (date: Date = SOME_DATE): OpenPanel => ({
   date,
 });
 
-const sessionPanel = (): OpenPanel => ({
-  kind: "session",
-  dayId: "ckxdayid0000000000000000000",
-  sessionId: null,
-});
-
 const errorOptions = (message: string, retry: () => void = () => undefined) => ({
   message,
   retry,
@@ -28,13 +22,11 @@ describe("useEditPanelState", () => {
     const { result } = renderHook(() => useEditPanelState());
 
     expect(result.current.open).toBeNull();
-    expect(result.current.isDirty).toBe(false);
     expect(result.current.saveStatus).toBe("clean");
-    expect(result.current.pendingClose).toBe(false);
     expect(result.current.lastError).toBeNull();
   });
 
-  it("openPanel sets the open panel when no draft is in flight", () => {
+  it("openPanel sets the open panel", () => {
     const { result } = renderHook(() => useEditPanelState());
 
     act(() => {
@@ -42,40 +34,16 @@ describe("useEditPanelState", () => {
     });
 
     expect(result.current.open?.kind).toBe("day");
-    expect(result.current.pendingClose).toBe(false);
   });
 
-  it("markDirty(true) flips isDirty to true", () => {
+  it("requestClose closes the panel and resets save status", () => {
     const { result } = renderHook(() => useEditPanelState());
 
     act(() => {
       result.current.openPanel(dayPanel());
     });
     act(() => {
-      result.current.markDirty(true);
-    });
-
-    expect(result.current.isDirty).toBe(true);
-  });
-
-  it("requestClose sets pendingClose when dirty and closes immediately when clean", () => {
-    const { result } = renderHook(() => useEditPanelState());
-
-    act(() => {
-      result.current.openPanel(dayPanel());
-    });
-    act(() => {
-      result.current.markDirty(true);
-    });
-    act(() => {
-      result.current.requestClose();
-    });
-
-    expect(result.current.pendingClose).toBe(true);
-    expect(result.current.open?.kind).toBe("day");
-
-    act(() => {
-      result.current.markDirty(false);
+      result.current.setSaveStatus("error", errorOptions("Boom"));
     });
     act(() => {
       result.current.requestClose();
@@ -83,6 +51,7 @@ describe("useEditPanelState", () => {
 
     expect(result.current.open).toBeNull();
     expect(result.current.saveStatus).toBe("clean");
+    expect(result.current.lastError).toBeNull();
   });
 
   it("requestClose is a no-op while saveStatus is 'saving'", () => {
@@ -92,9 +61,6 @@ describe("useEditPanelState", () => {
       result.current.openPanel(dayPanel());
     });
     act(() => {
-      result.current.markDirty(true);
-    });
-    act(() => {
       result.current.setSaveStatus("saving");
     });
     act(() => {
@@ -102,79 +68,10 @@ describe("useEditPanelState", () => {
     });
 
     expect(result.current.open?.kind).toBe("day");
-    expect(result.current.pendingClose).toBe(false);
     expect(result.current.saveStatus).toBe("saving");
   });
 
-  it("confirmDiscard clears state when no pending panel was stashed", () => {
-    const { result } = renderHook(() => useEditPanelState());
-
-    act(() => {
-      result.current.openPanel(dayPanel());
-    });
-    act(() => {
-      result.current.markDirty(true);
-    });
-    act(() => {
-      result.current.requestClose();
-    });
-    act(() => {
-      result.current.confirmDiscard();
-    });
-
-    expect(result.current.open).toBeNull();
-    expect(result.current.isDirty).toBe(false);
-    expect(result.current.saveStatus).toBe("clean");
-    expect(result.current.pendingClose).toBe(false);
-  });
-
-  it("cancelDiscard clears pendingClose but keeps the open panel", () => {
-    const { result } = renderHook(() => useEditPanelState());
-
-    act(() => {
-      result.current.openPanel(dayPanel());
-    });
-    act(() => {
-      result.current.markDirty(true);
-    });
-    act(() => {
-      result.current.requestClose();
-    });
-    act(() => {
-      result.current.cancelDiscard();
-    });
-
-    expect(result.current.pendingClose).toBe(false);
-    expect(result.current.open?.kind).toBe("day");
-    expect(result.current.isDirty).toBe(true);
-  });
-
-  it("opening a different panel while dirty stashes the request and triggers pendingClose", () => {
-    const { result } = renderHook(() => useEditPanelState());
-
-    act(() => {
-      result.current.openPanel(dayPanel());
-    });
-    act(() => {
-      result.current.markDirty(true);
-    });
-    act(() => {
-      result.current.openPanel(sessionPanel());
-    });
-
-    expect(result.current.pendingClose).toBe(true);
-    expect(result.current.open?.kind).toBe("day");
-
-    act(() => {
-      result.current.confirmDiscard();
-    });
-
-    expect(result.current.open?.kind).toBe("session");
-    expect(result.current.isDirty).toBe(false);
-    expect(result.current.pendingClose).toBe(false);
-  });
-
-  it("openPanel resets save status and last error when no draft is in flight", () => {
+  it("openPanel resets save status and last error", () => {
     const { result } = renderHook(() => useEditPanelState());
 
     act(() => {

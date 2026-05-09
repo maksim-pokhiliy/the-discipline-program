@@ -27,7 +27,6 @@ import { type Lookups } from "../components";
 import {
   BlockPanelContainer,
   DayPanelContainer,
-  DiscardConfirmDialog,
   SessionPanelContainer,
 } from "../components/edit-panel";
 import {
@@ -36,7 +35,6 @@ import {
   buildExerciseMap,
   buildSchemeTypeMap,
   groupDaysByDate,
-  useBeforeUnload,
   useEditPanelState,
 } from "../lib";
 import { PlanDetailHeaderSection, WeekChromeSection, WeekGridSection } from "../sections";
@@ -102,8 +100,6 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
     planQuery.data && libraryQuery.data && daysQuery.data
       ? { plan: planQuery.data, library: libraryQuery.data, days: daysQuery.data.days }
       : undefined;
-
-  useBeforeUnload(editPanel.isDirty);
 
   const handleWeekChange = useCallback(
     (next: Date): void => {
@@ -198,7 +194,6 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
                 days={days}
                 dayTypes={library.dayTypes}
                 onClose={editPanel.requestClose}
-                onDirtyChange={editPanel.markDirty}
                 onStatusChange={editPanel.setSaveStatus}
               />
             )}
@@ -207,7 +202,6 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
                 planId={planId}
                 panel={editPanel.open}
                 onClose={editPanel.requestClose}
-                onDirtyChange={editPanel.markDirty}
                 onStatusChange={editPanel.setSaveStatus}
               />
             )}
@@ -217,15 +211,9 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
                 panel={editPanel.open}
                 lookups={lookups}
                 onClose={editPanel.requestClose}
-                onDirtyChange={editPanel.markDirty}
                 onStatusChange={editPanel.setSaveStatus}
               />
             )}
-            <DiscardConfirmDialog
-              open={editPanel.pendingClose}
-              onConfirm={editPanel.confirmDiscard}
-              onCancel={editPanel.cancelDiscard}
-            />
           </Stack>
         )}
       </QueryWrapper>

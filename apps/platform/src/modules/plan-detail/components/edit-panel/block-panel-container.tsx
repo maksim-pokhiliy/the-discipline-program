@@ -25,7 +25,6 @@ type BlockPanelContainerProps = {
   panel: BlockPanel;
   lookups: BlockPanelLookups;
   onClose: () => void;
-  onDirtyChange: (isDirty: boolean) => void;
   onStatusChange: SaveStatusChange;
 };
 
@@ -34,7 +33,6 @@ export const BlockPanelContainer: React.FC<BlockPanelContainerProps> = ({
   panel,
   lookups,
   onClose,
-  onDirtyChange,
   onStatusChange,
 }) => {
   const blocksQuery = useBlocksBySession(planId, panel.sessionId);
@@ -52,7 +50,6 @@ export const BlockPanelContainer: React.FC<BlockPanelContainerProps> = ({
         existingItems={[]}
         lookups={lookups}
         onClose={onClose}
-        onDirtyChange={onDirtyChange}
         onStatusChange={onStatusChange}
       />
     );
@@ -67,7 +64,6 @@ export const BlockPanelContainer: React.FC<BlockPanelContainerProps> = ({
       existingBlocks={blocks}
       lookups={lookups}
       onClose={onClose}
-      onDirtyChange={onDirtyChange}
       onStatusChange={onStatusChange}
     />
   );

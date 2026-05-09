@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Stack, TextField } from "@mui/material";
 import { useForm } from "react-hook-form";
@@ -29,7 +27,6 @@ type SessionEditPanelProps = {
   existingSession?: PlanSession | null;
   existingSessions: readonly PlanSession[];
   onClose: () => void;
-  onDirtyChange?: (isDirty: boolean) => void;
   onStatusChange?: SaveStatusChange;
 };
 
@@ -71,7 +68,6 @@ export const SessionEditPanel: React.FC<SessionEditPanelProps> = ({
   existingSession,
   existingSessions,
   onClose,
-  onDirtyChange,
   onStatusChange,
 }) => {
   const createSession = useCreatePlanSession({ planId, dayId });
@@ -90,10 +86,6 @@ export const SessionEditPanel: React.FC<SessionEditPanelProps> = ({
     reset,
     formState: { isDirty, errors },
   } = form;
-
-  useEffect(() => {
-    onDirtyChange?.(isDirty);
-  }, [isDirty, onDirtyChange]);
 
   const isSaving = createSession.isPending || updateSession.isPending;
 

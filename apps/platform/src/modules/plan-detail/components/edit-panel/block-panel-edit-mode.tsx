@@ -29,7 +29,6 @@ type BlockPanelEditModeProps = {
   existingBlocks: readonly PlanBlock[];
   lookups: BlockEditModeLookups;
   onClose: () => void;
-  onDirtyChange: (isDirty: boolean) => void;
   onStatusChange: SaveStatusChange;
 };
 
@@ -41,7 +40,6 @@ export const BlockPanelEditMode: React.FC<BlockPanelEditModeProps> = ({
   existingBlocks,
   lookups,
   onClose,
-  onDirtyChange,
   onStatusChange,
 }) => {
   const itemsQuery = useItemsByBlock(planId, blockId);
@@ -72,7 +70,6 @@ export const BlockPanelEditMode: React.FC<BlockPanelEditModeProps> = ({
       existingItems={itemsQuery.data.items}
       lookups={lookups}
       onClose={onClose}
-      onDirtyChange={onDirtyChange}
       onStatusChange={onStatusChange}
     />
   );

@@ -8,7 +8,6 @@ export {
 export { formatPrescriptionSummary } from "./prescription-summary";
 export { formatSchemeSummary } from "./scheme-summary";
 export { DEFAULT_ERROR_MESSAGE, toErrorMessage } from "./to-error-message";
-export { useBeforeUnload } from "./use-before-unload";
 export {
   type BlockFormValues,
   blockFormSchema,

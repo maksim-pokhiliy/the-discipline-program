@@ -13,7 +13,6 @@ type SessionPanelContainerProps = {
   planId: string;
   panel: SessionPanel;
   onClose: () => void;
-  onDirtyChange: (isDirty: boolean) => void;
   onStatusChange: SaveStatusChange;
 };
 
@@ -21,7 +20,6 @@ export const SessionPanelContainer: React.FC<SessionPanelContainerProps> = ({
   planId,
   panel,
   onClose,
-  onDirtyChange,
   onStatusChange,
 }) => {
   const sessionsQuery = useSessionsByDay(planId, panel.dayId);
@@ -36,7 +34,6 @@ export const SessionPanelContainer: React.FC<SessionPanelContainerProps> = ({
       existingSession={existingSession}
       existingSessions={sessions}
       onClose={onClose}
-      onDirtyChange={onDirtyChange}
       onStatusChange={onStatusChange}
     />
   );

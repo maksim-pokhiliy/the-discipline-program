@@ -51,7 +51,6 @@ type BlockEditPanelProps = {
   existingItems: readonly PlanItem[];
   lookups: BlockEditPanelLookups;
   onClose: () => void;
-  onDirtyChange?: (isDirty: boolean) => void;
   onStatusChange?: SaveStatusChange;
 };
 
@@ -64,7 +63,6 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
   existingItems,
   lookups,
   onClose,
-  onDirtyChange,
   onStatusChange,
 }) => {
   const createBlock = useCreatePlanBlock({ planId, sessionId });
@@ -75,7 +73,6 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
     existingBlocks,
     existingItems,
     schemeTypes: lookups.schemeTypes,
-    ...(onDirtyChange !== undefined ? { onDirtyChange } : {}),
   });
 
   const {

@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormControl, FormHelperText, InputLabel, MenuItem, Select, Stack } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
@@ -31,7 +29,6 @@ type DayEditPanelProps = {
   existingDay?: PlanDay | null;
   lookups: DayEditPanelLookups;
   onClose: () => void;
-  onDirtyChange?: (isDirty: boolean) => void;
   onStatusChange?: SaveStatusChange;
 };
 
@@ -50,7 +47,6 @@ export const DayEditPanel: React.FC<DayEditPanelProps> = ({
   existingDay,
   lookups,
   onClose,
-  onDirtyChange,
   onStatusChange,
 }) => {
   const upsertDay = useUpsertPlanDay({ planId });
@@ -67,10 +63,6 @@ export const DayEditPanel: React.FC<DayEditPanelProps> = ({
     reset,
     formState: { isDirty, errors },
   } = form;
-
-  useEffect(() => {
-    onDirtyChange?.(isDirty);
-  }, [isDirty, onDirtyChange]);
 
   const isSaving = upsertDay.isPending || updateDay.isPending;
   const dayTypeOptions = Array.from(lookups.dayTypes.values());

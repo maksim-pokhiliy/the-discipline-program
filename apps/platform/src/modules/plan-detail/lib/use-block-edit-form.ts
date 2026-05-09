@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type UseFormReturn, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -59,7 +57,6 @@ type UseBlockEditFormParams = {
   existingBlocks: readonly PlanBlock[];
   existingItems: readonly PlanItem[];
   schemeTypes: ReadonlyMap<string, SchemeType>;
-  onDirtyChange?: (isDirty: boolean) => void;
 };
 
 const toFormItems = (items: readonly PlanItem[]): PlanItemForUpsert[] =>
@@ -134,17 +131,8 @@ export const toUpdatePlanBlockRequest = (values: BlockFormValues): UpdatePlanBlo
 export const useBlockEditForm = (
   params: UseBlockEditFormParams,
 ): UseFormReturn<BlockFormValues> => {
-  const form = useForm({
+  return useForm({
     resolver: zodResolver(blockFormSchema),
     defaultValues: buildDefaults(params),
   });
-
-  const { isDirty } = form.formState;
-  const { onDirtyChange } = params;
-
-  useEffect(() => {
-    onDirtyChange?.(isDirty);
-  }, [isDirty, onDirtyChange]);
-
-  return form;
 };
