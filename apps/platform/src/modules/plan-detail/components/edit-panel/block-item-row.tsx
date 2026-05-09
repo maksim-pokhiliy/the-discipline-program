@@ -31,7 +31,6 @@ type BlockItemRowProps = {
   index: number;
   lookups: BlockItemRowLookups;
   onRemove: () => void;
-  canRemove: boolean;
   isLoading?: boolean;
 };
 
@@ -66,7 +65,6 @@ export const BlockItemRow: React.FC<BlockItemRowProps> = ({
   index,
   lookups,
   onRemove,
-  canRemove,
   isLoading = false,
 }) => {
   const { control, register, getFieldState, formState, getValues } =
@@ -103,13 +101,9 @@ export const BlockItemRow: React.FC<BlockItemRowProps> = ({
             )}
           />
 
-          <Tooltip title={canRemove ? "Remove item" : "At least one item required"}>
+          <Tooltip title="Remove item">
             <span>
-              <IconButton
-                aria-label="Remove item"
-                onClick={onRemove}
-                disabled={!canRemove || isLoading}
-              >
+              <IconButton aria-label="Remove item" onClick={onRemove} disabled={isLoading}>
                 <DeleteOutlineIcon />
               </IconButton>
             </span>

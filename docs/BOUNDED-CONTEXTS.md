@@ -47,7 +47,7 @@ This file answers those questions. It is the canonical record of the context-fir
 
 - **IAM** sits under everything. Every other context assumes a `User` exists and has a stable ID.
 - **CMS** is the marketing surface — landing page content, blog posts, reviews, contact-form inbox. Mostly read on `apps/marketing`, mostly written on `apps/admin`.
-- **LMS** is the training product — training plans (slim metadata only post-rollback) and athlete logs (workout sessions, exercise logs, set logs, personal records, benchmarks, weekly volumes). Almost entirely owned by `apps/platform`. The plan-authoring tier (weeks/days/sessions/blocks/segments/sets/templates/library) was rolled back to "not started" — see [ADR 0037](adr/0037-plan-editor-and-library-rollback.md).
+- **LMS** is the training product — training plans plus their authoring tree (day → session → block → item per [ADR 0038](adr/0038-training-plan-domain.md)), the shared library catalog (BlockType, SchemeType, DayType, Exercise per [ADR 0039](adr/0039-training-plan-library-catalog.md)), athlete enrollments, and the athlete-log domain (workout sessions, exercise logs, set logs, personal records). Almost entirely owned by `apps/platform`. The earlier slim-metadata rollback ([ADR 0037](adr/0037-plan-editor-and-library-rollback.md)) was undone across PRs #181/#184/#185/#186/#187; the editor save model is governed by [ADR 0043](adr/0043-plan-editor-save-model.md).
 - **Coaching** sits on top of LMS and IAM. It does not own workout data — it consumes it. Coaching owns coach-athlete relationships, notes, action items, and the coach dashboard read model.
 - **Billing** exists only in `schema.prisma` today. No contracts, no API, no UI. It is the one context where we still have a clean window to get the design right before any code is written against it.
 
@@ -180,66 +180,85 @@ The `Product` model itself keeps its current physical shape; only the contracts 
 
 ## 3. LMS — Learning Management System
 
-**Responsibility:** The training surface — slim training-plan metadata (created and listed by coaches) and the athlete-log domain (sessions, exercise logs, set logs, personal records, benchmarks, weekly volumes). The plan-authoring vertical (workout editor, library, templates, enrollments, overrides) was rolled back to "not started" — see [ADR 0037](adr/0037-plan-editor-and-library-rollback.md). The athlete is what the surviving LMS shape primarily serves today.
+**Responsibility:** The training surface — coach-authored training plans with a four-level authoring tree (day → session → block → item per [ADR 0038](adr/0038-training-plan-domain.md)), a shared library catalog (BlockType, SchemeType, DayType, Exercise per [ADR 0039](adr/0039-training-plan-library-catalog.md)), athlete enrollments onto plans, and the athlete-log domain (workout sessions, exercise logs, set logs, personal records). The earlier rollback in [ADR 0037](adr/0037-plan-editor-and-library-rollback.md) was undone across PRs #181/#184/#185/#186/#187; the per-block atomic save model now lives in [ADR 0043](adr/0043-plan-editor-save-model.md), superseding ADR 0035.
 
 ### Aggregates and entities
 
-| Aggregate / entity      | Prisma model     | Role                                                                                                                                                |
-| ----------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `TrainingPlan` (root)   | `TrainingPlan`   | Coach-owned plan metadata: name, description, status lifecycle `DRAFT → ACTIVE → ARCHIVED`. Soft-deletable. No nested authoring tree post-rollback. |
-| `WorkoutSession` (root) | `WorkoutSession` | An athlete's training session. Owns scheduling + completion fields, mood, perceived exertion. Holds child `BlockSession`s.                          |
-| `BlockSession`          | `BlockSession`   | Child of `WorkoutSession`. Carries `archetypeKind` + `schemeParamsSnapshot` (discriminated JSON snapshot).                                          |
-| `ExerciseLog`           | `ExerciseLog`    | Child of `BlockSession`. Carries `exerciseSnapshot` JSON (movement + metrics) — the athlete-log identifier post-rollback. Holds `SetLog`s.          |
-| `SetLog`                | `SetLog`         | Per-set actuals (reps, load, distance, time) tied to a single `ExerciseLog`.                                                                        |
-| `PersonalRecord` (root) | `PersonalRecord` | An athlete's PR row. `kind` ∈ `PrKind`. No FK to a library item — rows are append-only, "current PR" comes from `findFirst` ordered by date.        |
-| `Benchmark` (root)      | `Benchmark`      | An athlete's benchmark attempt. Same shape posture as `PersonalRecord` — append-only, no library FK.                                                |
-| `WeeklyVolume`          | `WeeklyVolume`   | Aggregate row per athlete-week. Holds total tonnage, tonnage by movement pattern (`MovementPattern` enum), duration, scheduled count.               |
+| Aggregate / entity      | Prisma model     | Role                                                                                                                                                                                                             |
+| ----------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `TrainingPlan` (root)   | `TrainingPlan`   | Coach-owned plan metadata: name, description, status lifecycle `DRAFT → ACTIVE → ARCHIVED`. Soft-deletable. Owns the authoring tree below.                                                                       |
+| `PlanDay`               | `PlanDay`        | Child of `TrainingPlan`. Date-keyed day on the plan rail. Optional `dayTypeId` color tag. Owns sessions.                                                                                                         |
+| `PlanSession`           | `PlanSession`    | Child of `PlanDay`. Order within the day, optional label. Owns blocks.                                                                                                                                           |
+| `PlanBlock`             | `PlanBlock`      | Child of `PlanSession`. Carries `SchemeType` reference, scheme params, `BlockType` refs (via `PlanBlockTypeRef`), modifiers, notes. Owns items. `MAX_ITEMS_PER_BLOCK = 50`.                                      |
+| `PlanItem`              | `PlanItem`       | Child of `PlanBlock`. Carries an `Exercise` reference, prescription, alternatives, notes. **Hard-deleted** (excluded from soft-delete extension — see [ADR 0009](adr/0009-soft-delete-via-prisma-extension.md)). |
+| `PlanEnrollment`        | `PlanEnrollment` | Athlete enrollment onto a plan with active/paused/removed lifecycle. **Hard-deleted** (excluded from soft-delete extension).                                                                                     |
+| `BlockType`             | `BlockType`      | Library entry — block role taxonomy (warmup, strength, conditioning, etc.). Soft-deletable.                                                                                                                      |
+| `SchemeType`            | `SchemeType`     | Library entry — abstract scheme template `{id, name, archetypeKind}` per [ADR 0042](adr/0042-drop-scheme-type-default-params.md). Soft-deletable.                                                                |
+| `DayType`               | `DayType`        | Library entry — day archetype with color tag. Soft-deletable.                                                                                                                                                    |
+| `Exercise`              | `Exercise`       | Library entry — exercise definition (primary movement, metrics). Soft-deletable.                                                                                                                                 |
+| `WorkoutSession` (root) | `WorkoutSession` | An athlete's training session. Owns scheduling + completion fields, mood, perceived exertion. Holds child `BlockSession`s.                                                                                       |
+| `BlockSession`          | `BlockSession`   | Child of `WorkoutSession`. Carries `archetypeKind` + `schemeParamsSnapshot` (discriminated JSON snapshot per ADR 0040).                                                                                          |
+| `ExerciseLog`           | `ExerciseLog`    | Child of `BlockSession`. Carries `exerciseSnapshot` JSON (movement + metrics). Holds `SetLog`s.                                                                                                                  |
+| `SetLog`                | `SetLog`         | Per-set actuals (reps, load, distance, time) tied to a single `ExerciseLog`.                                                                                                                                     |
+| `PersonalRecord` (root) | `PersonalRecord` | An athlete's PR row. `kind` ∈ `PrKind`. Append-only — "current PR" comes from `findFirst` ordered by date.                                                                                                       |
 
-`WorkoutSession` and its descendants are the athlete-log subtree — created when an athlete logs a workout. The `exerciseSnapshot` JSON column on `ExerciseLog` is the only identifier the logs retain; the FK to a library item was dropped during the rollback.
+The authoring tree is what coaches edit; the athlete-log subtree is what athletes execute. The two are linked by snapshots ([ADR 0040](adr/0040-training-plan-snapshot-and-analytics.md)) — `BlockSession.schemeParamsSnapshot` and `ExerciseLog.exerciseSnapshot` capture immutable state at log time, decoupling logs from later edits to the source plan or library.
 
 ### Value objects
 
 - `TrainingPlanStatus` (`DRAFT | ACTIVE | ARCHIVED`).
+- `PlanEnrollmentStatus` (`ACTIVE | PAUSED | REMOVED`).
 - `WorkoutSessionStatus` (`PLANNED | IN_PROGRESS | COMPLETED | SKIPPED`).
 - `RxStatus` on `BlockSession` and `ExerciseLog` — Rx / scaled / DNF posture.
-- `SchemeArchetypeKind` on `BlockSession` — discriminator for `schemeParamsSnapshot` JSON ([ADR 0031](adr/0031-scheme-params-as-discriminated-json.md), partially superseded — only the snapshot side survives).
+- `SchemeArchetypeKind` on `BlockSession` and `SchemeType` — nine archetypes (`COUNT_DOWN`, `COUNT_UP`, `STRAIGHT_SETS`, `SUPERSET`, `EMOM`, `AMRAP`, `LADDER`, `TABATA`, `SETS_REPS`); the discriminator for `schemeParamsSnapshot` JSON ([ADR 0031](adr/0031-scheme-params-as-discriminated-json.md), [ADR 0041](adr/0041-sets-reps-archetype.md) added `SETS_REPS`).
 - `PrKind` (`MAX_LOAD_FOR_REPS | ONE_REP_MAX | N_REP_MAX | MAX_REPS_UNBROKEN | MAX_REPS_TOTAL | BEST_TIME_FOR_X | MAX_DISTANCE_IN_T | MAX_CALORIES_IN_T`).
-- `BenchmarkSource` on `Benchmark`.
-- `MovementPattern` — used as the key set in `WeeklyVolume.tonnageByPattern` JSON.
+- `MovementPattern` — used on `Exercise.primaryMovement` and on prescription metric typing.
 
 ### Invariants
 
-- **Plan ownership.** Every `TrainingPlan` is owned by exactly one `User` via `creatorId`. Authorization for plan reads/writes routes through `verifyPlanOwnership` in `authz/guards.ts` (post-rollback: creator OR `ADMIN` / `HEAD_COACH`; the assignment-based grant path is gone with `PlanCoachAssignment`).
+- **Plan ownership.** Every `TrainingPlan` is owned by exactly one `User` via `creatorId`. Authorization routes through `verifyPlanOwnership` in `authz/guards.ts` (creator OR `ADMIN` / `HEAD_COACH`).
 - **Plan archive lifecycle.** `TrainingPlanStatus` transitions are gated by the training-plan endpoint code. `ARCHIVED` is terminal until restored.
+- **Authoring-tree integrity.** `MAX_ITEMS_PER_BLOCK = 50` per ADR 0038. `PlanBlock.items.id` cannot be smuggled across blocks — batch update validates the `id`'s parent block before applying (see `applyItemDiff` in `endpoints/lms/plan-content/plan-block/plan-item-batch.ts`).
 - **Athlete-log immutability.** Conventionally, log rows are create-only — no edit semantics in the surviving endpoints. There is no DB-level write guard; the convention is enforced by the absence of update routes.
-- **PR / Benchmark uniqueness — none post-rollback.** Both tables previously held `@@unique([userId, exerciseId, kind])`. The `exerciseId` column was dropped; the unique was dropped with it. Rows stack chronologically; "current PR for kind X" comes from `findFirst({ where: { userId, kind }, orderBy: { achievedAt: 'desc' }})`. Aggregators that used these tables (`pr-evaluator`, `weekly-volume-aggregator`) now return empty / zero results until the feature is rebuilt.
+- **PR uniqueness — none.** `PersonalRecord` no longer holds `@@unique([userId, exerciseId, kind])`. Rows stack chronologically; "current PR for kind X" comes from `findFirst({ where: { userId, kind }, orderBy: { achievedAt: 'desc' }})`.
+- **Editor save model.** Per [ADR 0043](adr/0043-plan-editor-save-model.md): per-block atomic save (block + nested `items[]` in one transaction); explicit Save (no autosave); LWW silent for MVP. Five-state save indicator at the form layer (`clean | dirty | saving | saved | error`).
+- **Per-archetype scheme-param shape.** `SchemeType.archetypeKind` is the contract between the library entry and the editor's typed param form ([ADR 0042](adr/0042-drop-scheme-type-default-params.md)) — no `defaultParams` column; defaults come from the factory at block creation.
 
 ### Where it lives today
 
-- **DB:** `TrainingPlan`, `WorkoutSession`, `BlockSession`, `ExerciseLog`, `SetLog`, `PersonalRecord`, `Benchmark`, `WeeklyVolume`. `AthleteProfile` is logically half-LMS half-Coaching (see §4).
-- **Contracts:** `packages/contracts/src/entities/lms/training-plan/`, `lms/workout-session/`, `lms/block-session/`, `lms/exercise-log/`, `lms/set-log/`, `lms/_domain/` (subpath exports `@repo/contracts/lms/*`).
-- **API — `api-server`:** `packages/api-server/src/endpoints/lms/` is now slim — just `training-plan/` (list, get, create, update, delete, status transitions). The plan-authoring tree, templates, library, enrollments, overrides, plan-coach-assignment, and bulk-patch endpoints are gone. Ownership guards live in `packages/api-server/src/authz/guards.ts`.
+- **DB:** `TrainingPlan`, `PlanDay`, `PlanSession`, `PlanBlock`, `PlanBlockTypeRef`, `PlanItem`, `PlanEnrollment`, `BlockType`, `SchemeType`, `DayType`, `Exercise`, `WorkoutSession`, `BlockSession`, `ExerciseLog`, `SetLog`, `PersonalRecord`. `AthleteProfile` is logically half-LMS half-Coaching (see §4).
+- **Contracts:** `packages/contracts/src/entities/lms/{training-plan,plan-day,plan-session,plan-block,plan-item,plan-enrollment,block-type,scheme-type,day-type,exercise,workout-session,block-session,exercise-log,set-log,_domain}/` (subpath exports `@repo/contracts/lms/*`).
+- **API — `api-server`:** `packages/api-server/src/endpoints/lms/` houses `training-plan/`, `plan-content/{plan-day,plan-session,plan-block,plan-item}/`, `library/{block-type,scheme-type,day-type,exercise}/`, `plan-enrollment/`. Ownership guards live in `packages/api-server/src/authz/guards.ts`.
 - **Consumer apps:** `apps/platform` exclusively. `apps/admin` does not currently read LMS state.
 
 ### Dependencies
 
 - **LMS → IAM:** every LMS aggregate references `User.id`. Plan ownership routes through `verifyPlanOwnership` in `authz/guards.ts`.
 - **LMS → Coaching:** TrainingPlan ownership is by `User` (creator role checked via IAM); LMS does not know about action items or coach dashboards.
-- **LMS ⇄ Billing:** future. The previous `Product.trainingPlanId` linkage was dropped during the rollback. When Billing comes online, the linkage will be reintroduced alongside whatever access-on-purchase model lands.
+- **LMS ⇄ Billing:** future. There is currently no `Product.trainingPlanId` linkage — when Billing comes online, the access-on-purchase model will be re-evaluated alongside whatever shape it takes.
 
 ### Target state
 
-Post-rollback the directory is small:
+Current shape:
 
 ```
 api-server/src/endpoints/lms/
   index.ts                                  (parent barrel)
-  training-plan/                            (subdir — list/get/create/update/delete + status transitions)
+  training-plan/                            (list / get / create / update / delete / status transitions)
+  plan-content/
+    plan-day/
+    plan-session/
+    plan-block/
+    plan-item/
+  library/
+    block-type/
+    scheme-type/
+    day-type/
+    exercise/
+  plan-enrollment/                          (active / paused / removed lifecycle, athlete-side reads)
 ```
 
-Future authoring re-implementation will rebuild the deleted tree from scratch — see ADR 0037 §"Reversibility".
-
-Contracts live at `packages/contracts/src/entities/lms/<entity>/` with subpath exports `@repo/contracts/lms/<entity>`. `apps/platform` is the only legitimate consumer of LMS endpoints.
+Contracts mirror under `packages/contracts/src/entities/lms/<entity>/` with subpath exports `@repo/contracts/lms/<entity>`. `apps/platform` is the only legitimate consumer of LMS endpoints. The remaining editor work tracked at the time of writing — drag-and-drop reordering across the four levels, the enrollments management tab UI, and the compliance gradient with weighted blocks ([ADR 0033](adr/0033-compliance-gradient-with-weighted-blocks.md), pending column implementation) — extends this shape rather than reshaping it.
 
 ---
 
@@ -268,7 +287,7 @@ Contracts live at `packages/contracts/src/entities/lms/<entity>/` with subpath e
 - `ActionItemType` (`MISSED_WORKOUTS | HEALTH_REPORT`).
 - `ActionItemStatus` (`OPEN | RESOLVED`).
 - `ActionItemSeverity` (`INFO | WARNING | CRITICAL`).
-- `ActionItemResolveReason` (`AUTO_CONDITION_CLEARED | AUTO_ENROLLMENT_ENDED | MANUAL_CONTACTED`) — distinguishes human from automatic resolution. Note: `AUTO_ENROLLMENT_ENDED` survives by name post-rollback even though `PlanEnrollment` is gone — the value now fires on `CoachAthleteAssignment` removal. Renaming is queued as a follow-up.
+- `ActionItemResolveReason` (`AUTO_CONDITION_CLEARED | AUTO_ENROLLMENT_ENDED | MANUAL_CONTACTED`) — distinguishes human from automatic resolution. `AUTO_ENROLLMENT_ENDED` fires on `CoachAthleteAssignment` removal; with `PlanEnrollment` restored, whether enrollment removal should also trigger this is a follow-up to evaluate.
 - Adherence thresholds and priority maps in `coach-dashboard.constants.ts`.
 
 ### Invariants
@@ -289,7 +308,7 @@ Contracts live at `packages/contracts/src/entities/lms/<entity>/` with subpath e
 ### Dependencies
 
 - **Coaching → IAM:** every coach/athlete is a `User`. Role `COACH` gates coach-area access (currently only per-endpoint, not in middleware — see ADR 0018 for the policy-layer deferral).
-- **Coaching → LMS:** read dependency. The dashboard query pulls athlete-log rows via the nested Prisma include on `CoachAthleteAssignment` (`assigned-athlete-query.ts`). Action item reconciliation reads `WorkoutSession`. The pre-rollback `PlanEnrollment` / `Workout` / `WorkoutLog` includes are gone.
+- **Coaching → LMS:** read dependency. The dashboard query pulls athlete-log rows via the nested Prisma include on `CoachAthleteAssignment` (`assigned-athlete-query.ts`). Action item reconciliation reads `WorkoutSession`. Coaching does not include `PlanEnrollment` directly — coach-athlete binding goes through assignments, even after enrollments returned.
 - **Coaching ↛ CMS:** no dependency. Coach dashboards do not show marketing content.
 - **Coaching ↛ Billing:** currently no dependency, but once Billing exists, subscription status will gate whether an athlete shows in a coach dashboard at all (via "Access = Subscription State" invariant).
 
@@ -539,7 +558,7 @@ IAM        →   (leaf, depends on nothing)
 LMS        →   IAM
 Coaching   →   IAM, LMS
 CMS        →   IAM, Billing   (read-only: storefront reads Product + Price)
-Billing    →   IAM            (LMS link removed during plan-editor rollback; will return alongside future authoring)
+Billing    →   IAM            (no current LMS link; access-on-purchase model deferred to future Billing work)
 Storage    →   (leaf supporting context — depends on nothing domain-side)
 ```
 
@@ -558,7 +577,7 @@ Storage is a supporting context, not a domain context. Its arrow points at nothi
 
 **Cross-context writes:**
 
-There are no allowed cross-context writes today. The previously sanctioned `Billing → LMS` write (purchase success creates a plan enrollment) is gone with the plan-editor rollback. When the LMS authoring vertical returns, the access-on-purchase flow will be re-evaluated alongside it.
+There are no allowed cross-context writes today. A previously sanctioned `Billing → LMS` write (purchase success creates a plan enrollment) is not currently wired — Billing has no endpoints, and the access-on-purchase flow will be designed once Billing comes online. The LMS authoring vertical and `PlanEnrollment` are now in place to receive such a write when the time comes.
 
 Every cross-context interaction is currently a read. Reads are preferable to writes because they do not require distributed transactions.
 
@@ -570,7 +589,7 @@ A context map is only useful if it reflects reality. At the time this document w
 
 - `apps/marketing` imports only `cmsPagesPublicApi` and `cmsContactInboundApi` from `@repo/api-server`. Both are CMS-only. No LMS, no Coaching, no Billing, no IAM writes.
 - `apps/admin` imports admin CMS endpoints (`adminBlog`, `adminPages`, `adminContacts`, `adminProducts`, `adminReviews`), admin IAM (`adminUsers`, `adminUpload`), and the admin analytics dashboard (`adminDashboard`). No LMS, no Coaching. No Billing.
-- `apps/platform` imports platform LMS endpoints (`lmsTrainingPlanApi` plus the slim athlete-log shells), platform Coaching endpoints (`coachingCoachProfileApi`, `coachingAthleteProfileApi`, `coachingCoachNoteApi`, `coachingCoachActionItemApi`, `coachingCoachDashboardApi`, `coachingCoachAthletesApi`), and platform IAM. No CMS. No Billing.
+- `apps/platform` imports platform LMS endpoints (training-plan, plan-content for the day/session/block/item authoring tree, library catalog, plan-enrollment, plus the athlete-log shells), platform Coaching endpoints (`coachingCoachProfileApi`, `coachingAthleteProfileApi`, `coachingCoachNoteApi`, `coachingCoachActionItemApi`, `coachingCoachDashboardApi`, `coachingCoachAthletesApi`), and platform IAM. No CMS. No Billing.
 
 **There are zero cross-context leaks between apps and the intended context for each app.** The codebase is already disciplined and the discipline is now enforced by structure: subpath exports in `@repo/contracts`, context subfolders in `api-server/endpoints/`, and the `dependency-cruiser` gate that fails CI on a violation.
 
@@ -586,7 +605,7 @@ Items flagged during the context-mapping pass that do not belong to any single b
 - ~~**`enrollment-query.ts` is the cross-boundary read between Coaching and LMS.**~~ Closed in 1.2.C — the helper moved to `endpoints/coaching/enrollment-query.ts` alongside the endpoints that consume it. Superseded by `assigned-athlete-query.ts` in Follow-up #1 after the `CoachAthleteAssignment` model landed.
 - ~~**Coach access via `PlanEnrollmentStatus.ACTIVE` only is too narrow.**~~ Closed in Follow-up #1 — `verifyAthleteBelongsToCoach` and every coach-facing read now resolve athletes via `CoachAthleteAssignment`, independent of enrollment state.
 - **Product split: when to split the Prisma model itself.** The current plan is to split contracts only, not the schema. If the two facets diverge further — separate lifecycles, separate audit logs, separate owners — a schema split may eventually be justified. Out of scope for 1.2.
-- **Where does the Stripe webhook live.** A webhook is an inbound, not an outbound; it is a Billing handler. The handler file goes in `endpoints/billing/webhook/`. Whether it writes anything to LMS depends on whether the LMS authoring vertical and access-on-purchase model return — both gated on future work post-rollback.
+- **Where does the Stripe webhook live.** A webhook is an inbound, not an outbound; it is a Billing handler. The handler file goes in `endpoints/billing/webhook/`. Whether it writes anything to LMS depends on the access-on-purchase model — the LMS authoring vertical and `PlanEnrollment` are in place; what remains is the Billing-side wiring.
 - **`@repo/shared` split.** `centsToAmount` was a Billing primitive that lived in `shared`; it was relocated to `contracts/common/money`. Similar primitives will be pulled out of `shared` as their owning context is clarified. Tracked separately.
 
 ---
@@ -595,27 +614,26 @@ Items flagged during the context-mapping pass that do not belong to any single b
 
 These are the agreed-upon terms used in the codebase. When writing code, docs, or commit messages — use these exact words. If a term is ambiguous or missing, add it here before using it.
 
-| Term                | Context     | Definition                                                                                                                                    | Not to be confused with                                                              |
-| ------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| **User**            | IAM         | The identity record. Every person in the system is a User with a `Role`.                                                                      | Athlete, Coach — those are role-specific profiles attached to a User                 |
-| **Athlete**         | Coaching    | A User with an `AthleteProfile`. Consumes training plans.                                                                                     | User — Athlete is a role, User is the identity                                       |
-| **Coach**           | Coaching    | A User with a `CoachProfile`. Creates plans, monitors athletes.                                                                               | Admin — Admin manages the business, Coach manages athletes                           |
-| **TrainingPlan**    | LMS         | Coach-owned plan metadata with a lifecycle (DRAFT → ACTIVE → ARCHIVED). Slim post-rollback — no nested authoring tree.                        | Product — Product is the billing wrapper around a TrainingPlan                       |
-| **WorkoutSession**  | LMS         | An athlete's training session record. Owns scheduling, completion timing, mood, perceived exertion. Holds child `BlockSession`s.              | TrainingPlan — TrainingPlan is metadata, WorkoutSession is what the athlete did      |
-| **BlockSession**    | LMS         | Child of `WorkoutSession`. Holds `archetypeKind` + `schemeParamsSnapshot` JSON.                                                               | —                                                                                    |
-| **ExerciseLog**     | LMS         | Child of `BlockSession`. Holds `exerciseSnapshot` JSON identifying the movement and metrics. Holds child `SetLog`s.                           | —                                                                                    |
-| **SetLog**          | LMS         | Per-set actuals for an `ExerciseLog` — reps, load, distance, time.                                                                            | —                                                                                    |
-| **PersonalRecord**  | LMS         | Append-only PR row, keyed by `userId` + `kind`. Aggregators that compute "current PR" are stubbed post-rollback.                              | Benchmark — both append-only, Benchmark covers named tests, PR covers training PRs   |
-| **Benchmark**       | LMS         | Append-only benchmark attempt row. Aggregators stubbed post-rollback.                                                                         | —                                                                                    |
-| **WeeklyVolume**    | LMS         | Aggregate row per athlete-week — total tonnage, tonnage by movement pattern, duration.                                                        | —                                                                                    |
-| **Product**         | Billing/CMS | The public-facing purchasable item on the marketing site. Has prices, features, and a slug. The previous LMS plan link is gone post-rollback. | TrainingPlan — Product is what athletes buy, TrainingPlan is internal coach metadata |
-| **Price**           | Billing     | A specific monetary offer for a Product (amount in cents, currency, interval).                                                                | —                                                                                    |
-| **Subscription**    | Billing     | A recurring payment relationship: one User, one Price. Singleton per user (enforced by DB).                                                   | —                                                                                    |
-| **Transaction**     | Billing     | A single payment event (PENDING → SUCCEEDED / FAILED). Linked to a Subscription.                                                              | —                                                                                    |
-| **CoachActionItem** | Coaching    | A system-generated or coach-created task about an athlete (missed workouts, health report).                                                   | CoachNote — ActionItem is structured and has status, Note is free-text               |
-| **CoachNote**       | Coaching    | Free-text note a coach writes about an athlete. No status, no lifecycle.                                                                      | CoachActionItem — Note is observation, ActionItem is action                          |
-| **MarketingPage**   | CMS         | A page on the public site (home, about, pricing). Content stored as JSON sections.                                                            | —                                                                                    |
-| **Program**         | —           | **Not a term in the codebase.** Marketing copy may say "program" loosely. Do not use "Program" in code — use Product (billing/marketing).     | TrainingPlan, Product                                                                |
+| Term                | Context     | Definition                                                                                                                                                 | Not to be confused with                                                              |
+| ------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **User**            | IAM         | The identity record. Every person in the system is a User with a `Role`.                                                                                   | Athlete, Coach — those are role-specific profiles attached to a User                 |
+| **Athlete**         | Coaching    | A User with an `AthleteProfile`. Consumes training plans.                                                                                                  | User — Athlete is a role, User is the identity                                       |
+| **Coach**           | Coaching    | A User with a `CoachProfile`. Creates plans, monitors athletes.                                                                                            | Admin — Admin manages the business, Coach manages athletes                           |
+| **TrainingPlan**    | LMS         | Coach-owned plan metadata with a lifecycle (DRAFT → ACTIVE → ARCHIVED). Owns the four-level authoring tree (PlanDay → PlanSession → PlanBlock → PlanItem). | Product — Product is the billing wrapper around a TrainingPlan                       |
+| **WorkoutSession**  | LMS         | An athlete's training session record. Owns scheduling, completion timing, mood, perceived exertion. Holds child `BlockSession`s.                           | TrainingPlan — TrainingPlan is metadata, WorkoutSession is what the athlete did      |
+| **BlockSession**    | LMS         | Child of `WorkoutSession`. Holds `archetypeKind` + `schemeParamsSnapshot` JSON.                                                                            | —                                                                                    |
+| **ExerciseLog**     | LMS         | Child of `BlockSession`. Holds `exerciseSnapshot` JSON identifying the movement and metrics. Holds child `SetLog`s.                                        | —                                                                                    |
+| **SetLog**          | LMS         | Per-set actuals for an `ExerciseLog` — reps, load, distance, time.                                                                                         | —                                                                                    |
+| **PersonalRecord**  | LMS         | Append-only PR row, keyed by `userId` + `kind`. "Current PR for kind X" comes from `findFirst` ordered by date.                                            | —                                                                                    |
+| **WeeklyVolume**    | LMS         | Aggregate row per athlete-week — total tonnage, tonnage by movement pattern, duration.                                                                     | —                                                                                    |
+| **Product**         | Billing/CMS | The public-facing purchasable item on the marketing site. Has prices, features, and a slug. No current LMS plan link.                                      | TrainingPlan — Product is what athletes buy, TrainingPlan is internal coach metadata |
+| **Price**           | Billing     | A specific monetary offer for a Product (amount in cents, currency, interval).                                                                             | —                                                                                    |
+| **Subscription**    | Billing     | A recurring payment relationship: one User, one Price. Singleton per user (enforced by DB).                                                                | —                                                                                    |
+| **Transaction**     | Billing     | A single payment event (PENDING → SUCCEEDED / FAILED). Linked to a Subscription.                                                                           | —                                                                                    |
+| **CoachActionItem** | Coaching    | A system-generated or coach-created task about an athlete (missed workouts, health report).                                                                | CoachNote — ActionItem is structured and has status, Note is free-text               |
+| **CoachNote**       | Coaching    | Free-text note a coach writes about an athlete. No status, no lifecycle.                                                                                   | CoachActionItem — Note is observation, ActionItem is action                          |
+| **MarketingPage**   | CMS         | A page on the public site (home, about, pricing). Content stored as JSON sections.                                                                         | —                                                                                    |
+| **Program**         | —           | **Not a term in the codebase.** Marketing copy may say "program" loosely. Do not use "Program" in code — use Product (billing/marketing).                  | TrainingPlan, Product                                                                |
 
 ---
 

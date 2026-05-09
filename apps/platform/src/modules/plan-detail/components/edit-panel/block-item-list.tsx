@@ -33,8 +33,6 @@ export const BlockItemList: React.FC<BlockItemListProps> = ({ lookups, isLoading
 
   const { fields, append, remove } = useFieldArray({ control, name: "items" });
 
-  const canRemove = fields.length > 0;
-
   return (
     <Stack spacing={2}>
       <Divider>
@@ -50,7 +48,6 @@ export const BlockItemList: React.FC<BlockItemListProps> = ({ lookups, isLoading
           index={index}
           lookups={lookups}
           onRemove={() => remove(index)}
-          canRemove={canRemove}
           isLoading={isLoading}
         />
       ))}

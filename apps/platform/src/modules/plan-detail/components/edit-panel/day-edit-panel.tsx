@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormControl, FormHelperText, InputLabel, MenuItem, Select, Stack } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
@@ -16,15 +14,11 @@ import {
 
 import { useUpdatePlanDay, useUpsertPlanDay } from "@app/lib/hooks";
 
+import { toErrorMessage } from "../../lib/to-error-message";
 import { useSubmitGuard } from "../../lib/use-submit-guard";
 
 import { EditPanel } from "./edit-panel";
 import { type SaveStatusChange } from "./edit-panel-status";
-
-const DEFAULT_ERROR_MESSAGE = "Save failed";
-
-const toErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE;
 
 type DayEditPanelLookups = { readonly dayTypes: ReadonlyMap<string, DayType> };
 
@@ -35,7 +29,6 @@ type DayEditPanelProps = {
   existingDay?: PlanDay | null;
   lookups: DayEditPanelLookups;
   onClose: () => void;
-  onDirtyChange?: (isDirty: boolean) => void;
   onStatusChange?: SaveStatusChange;
 };
 
@@ -54,7 +47,6 @@ export const DayEditPanel: React.FC<DayEditPanelProps> = ({
   existingDay,
   lookups,
   onClose,
-  onDirtyChange,
   onStatusChange,
 }) => {
   const upsertDay = useUpsertPlanDay({ planId });
@@ -71,10 +63,6 @@ export const DayEditPanel: React.FC<DayEditPanelProps> = ({
     reset,
     formState: { isDirty, errors },
   } = form;
-
-  useEffect(() => {
-    onDirtyChange?.(isDirty);
-  }, [isDirty, onDirtyChange]);
 
   const isSaving = upsertDay.isPending || updateDay.isPending;
   const dayTypeOptions = Array.from(lookups.dayTypes.values());
@@ -112,7 +100,6 @@ export const DayEditPanel: React.FC<DayEditPanelProps> = ({
       open
       onClose={onClose}
       title={title}
-      isDirty={isDirty}
       isSaving={isSaving}
       canSave={isDirty && Object.keys(errors).length === 0}
       onSave={() => void onSubmit()}

@@ -5,8 +5,7 @@ import { useState } from "react";
 import LogoutRounded from "@mui/icons-material/LogoutRounded";
 import SettingsRounded from "@mui/icons-material/SettingsRounded";
 import { Avatar, IconButton, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
-
-import { EditSessionAwareLink } from "@repo/ui";
+import Link from "next/link";
 
 const getInitial = (name?: string | null, email?: string | null): string => {
   const source = name || email;
@@ -60,11 +59,7 @@ export const PlatformUserMenu = ({
           },
         }}
       >
-        <MenuItem
-          component={EditSessionAwareLink}
-          href={profileHref}
-          onClick={() => setAnchorEl(null)}
-        >
+        <MenuItem component={Link} href={profileHref} onClick={() => setAnchorEl(null)}>
           <ListItemIcon>
             <SettingsRounded fontSize="small" />
           </ListItemIcon>

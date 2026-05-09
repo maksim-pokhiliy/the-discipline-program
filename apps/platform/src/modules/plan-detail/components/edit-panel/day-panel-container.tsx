@@ -19,7 +19,6 @@ type DayPanelContainerProps = {
   days: readonly PlanDay[];
   dayTypes: readonly DayType[];
   onClose: () => void;
-  onDirtyChange: (isDirty: boolean) => void;
   onStatusChange: SaveStatusChange;
 };
 
@@ -29,7 +28,6 @@ export const DayPanelContainer: React.FC<DayPanelContainerProps> = ({
   days,
   dayTypes,
   onClose,
-  onDirtyChange,
   onStatusChange,
 }) => {
   const dayTypeMap = useMemo(() => buildDayTypeMap(dayTypes), [dayTypes]);
@@ -46,7 +44,6 @@ export const DayPanelContainer: React.FC<DayPanelContainerProps> = ({
       existingDay={existingDay}
       lookups={{ dayTypes: dayTypeMap }}
       onClose={onClose}
-      onDirtyChange={onDirtyChange}
       onStatusChange={onStatusChange}
     />
   );

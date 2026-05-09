@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
 
 import { type SchemeArchetypeKind, type SchemeParams } from "@repo/contracts/lms/_domain";
 import {
@@ -136,8 +136,8 @@ const buildPlanItemUpdate = (item: PlanItemForUpdate): Prisma.PlanItemUpdateInpu
   order: item.order,
   exercise: { connect: { id: item.exerciseId } },
   prescription: toInputJson(item.prescription),
-  alternatives: item.alternatives === undefined ? Prisma.DbNull : toInputJson(item.alternatives),
-  notes: item.notes ?? null,
+  ...(item.alternatives !== undefined && { alternatives: toInputJson(item.alternatives) }),
+  ...(item.notes !== undefined && { notes: item.notes }),
 });
 
 export const applyItemDiff = async (

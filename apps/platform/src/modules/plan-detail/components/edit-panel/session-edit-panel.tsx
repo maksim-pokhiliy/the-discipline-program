@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Stack, TextField } from "@mui/material";
 import { useForm } from "react-hook-form";
@@ -16,15 +14,11 @@ import {
 
 import { useCreatePlanSession, useUpdatePlanSession } from "@app/lib/hooks";
 
+import { toErrorMessage } from "../../lib/to-error-message";
 import { useSubmitGuard } from "../../lib/use-submit-guard";
 
 import { EditPanel } from "./edit-panel";
 import { type SaveStatusChange } from "./edit-panel-status";
-
-const DEFAULT_ERROR_MESSAGE = "Save failed";
-
-const toErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE;
 
 type SessionEditPanelProps = {
   planId: string;
@@ -33,7 +27,6 @@ type SessionEditPanelProps = {
   existingSession?: PlanSession | null;
   existingSessions: readonly PlanSession[];
   onClose: () => void;
-  onDirtyChange?: (isDirty: boolean) => void;
   onStatusChange?: SaveStatusChange;
 };
 
@@ -75,7 +68,6 @@ export const SessionEditPanel: React.FC<SessionEditPanelProps> = ({
   existingSession,
   existingSessions,
   onClose,
-  onDirtyChange,
   onStatusChange,
 }) => {
   const createSession = useCreatePlanSession({ planId, dayId });
@@ -94,10 +86,6 @@ export const SessionEditPanel: React.FC<SessionEditPanelProps> = ({
     reset,
     formState: { isDirty, errors },
   } = form;
-
-  useEffect(() => {
-    onDirtyChange?.(isDirty);
-  }, [isDirty, onDirtyChange]);
 
   const isSaving = createSession.isPending || updateSession.isPending;
 
@@ -131,7 +119,6 @@ export const SessionEditPanel: React.FC<SessionEditPanelProps> = ({
       open
       onClose={onClose}
       title={title}
-      isDirty={isDirty}
       isSaving={isSaving}
       canSave={isDirty && Object.keys(errors).length === 0}
       onSave={() => void onSubmit()}

@@ -91,7 +91,6 @@ const renderEditMode = () =>
       existingBlocks={[makeBlock()]}
       lookups={lookups}
       onClose={vi.fn()}
-      onDirtyChange={vi.fn()}
       onStatusChange={vi.fn()}
     />,
   );
