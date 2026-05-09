@@ -16,7 +16,10 @@ export const createPlanDaysAPI = (client: ApiClient) => ({
     }),
 
   upsert: (planId: string, data: CreatePlanDayRequest): Promise<CreatePlanDayResponse> =>
-    client.request(`/api/platform/training-plans/${planId}/days`, "POST", data),
+    client.request(`/api/platform/training-plans/${planId}/days`, "POST", {
+      date: formatDateParam(data.date),
+      ...(data.dayTypeId !== undefined && { dayTypeId: data.dayTypeId }),
+    }),
 
   update: (
     planId: string,
