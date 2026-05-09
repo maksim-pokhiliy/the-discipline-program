@@ -1,11 +1,19 @@
 "use client";
 
-import { Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 
-type DayEmptyProps = { hasDayType: boolean };
+import { EmptyAddCell } from "./empty-add-cell";
 
-export const DayEmpty: React.FC<DayEmptyProps> = ({ hasDayType }) => (
-  <Typography variant="body2" color="text.secondary">
-    {hasDayType ? "No sessions planned" : "Empty"}
-  </Typography>
+type DayEmptyProps = {
+  hasDayType: boolean;
+  onAddDay: () => void;
+};
+
+export const DayEmpty: React.FC<DayEmptyProps> = ({ hasDayType, onAddDay }) => (
+  <Stack direction="row" spacing={1} alignItems="center">
+    <Typography variant="body2" color="text.secondary">
+      {hasDayType ? "No sessions planned" : "Empty"}
+    </Typography>
+    <EmptyAddCell label="Add day" onAdd={onAddDay} />
+  </Stack>
 );

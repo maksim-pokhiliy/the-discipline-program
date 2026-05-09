@@ -1,7 +1,7 @@
 # Training Plan Domain — Design Notes
 
 > **Status:** Live design document. Will be promoted to ADR(s) once the model freezes for build.
-> **Last updated:** 2026-05-05
+> **Last updated:** 2026-05-09
 
 Decisions here are co-signed by Maksim (coach context + product holder) and Claude (tech lead). Each section is marked `agreed` when both have committed or `open` when actively under discussion. Detail is added top-down: large masses first, contours next, fine lines last.
 
@@ -428,3 +428,22 @@ Late-close (athlete returns hours or days later to mark an abandoned session don
 #### Materialization
 
 Analytics in MVP is **derived live** from snapshot tables — no materialized weekly aggregates, no background recompute jobs. The existing `WeeklyVolume` table stays unused. With proper indices on `WorkoutSession (athleteId, completedAt)` and `WorkoutSession (athleteId, scheduledDate)` this stays cheap at MVP scale; we materialize later if we hit perf walls.
+
+### Round 7 — Coach editor save model (`agreed`)
+
+The Round 6 UX shape (week view + side-panel hover affordances) ships in two iterations against the same surface:
+
+- **i1 (PR #184)** — read-only week view: the four-level tree renders, navigation chrome (week chips, date picker, prev/next), no mutation paths.
+- **i2a (PR #187)** — coach mutations and side-panel editor on top of the i1 chrome. Save model, conflict semantics, indicator placement, items-batch shape, and dispatcher lift are locked in [ADR 0043](../adr/0043-plan-editor-save-model.md).
+
+The canonical decisions for the editor live in ADR-0043; this round only adds the cross-references that other masses need:
+
+- **Save granularity → per-block atomic** (ADR-0043 §1). Day, session, block each have their own dedicated Save action. Items are nested under the block's payload: `updatePlanBlock` accepts `items: PlanItemForUpsert[]` and runs `delete-missing → update-matching → create-new` inside one Prisma `$transaction`. PlanItem stays out of `SOFT_DELETE_MODELS` — items omitted from the array hard-delete. The plan-as-rail tier is the blueprint; immortality is the snapshot tier's job (Round 4).
+- **Block create-time defaults → server-driven** (ADR-0043 §2). Client POSTs `{ planSessionId, schemeTypeId, blockTypeIds[], order, modifiers?, items? }`; backend resolves `defaultSchemeParams(SCHEME_ARCHETYPE_KIND_MAP[schemeType.archetypeKind])` and writes `block.schemeParams`. Single source of truth lives in `packages/contracts/src/entities/lms/_domain/scheme-archetype.constants.ts` (`defaultSchemeParams`). Future factory updates (e.g., SETS_REPS default sets count) ship without client redeploy.
+- **Conflict resolution → last-write-wins, no detection in MVP** (ADR-0043 §3). No `version` column on `PlanBlock`, no `If-Match` header, no 409 handler. Single-team-product assumption (ADR-0032). Upgrade path is additive when multi-coach lands.
+- **Indicator → 5-state chip in page header** (ADR-0043 §7). States: `clean | dirty | saving | saved | error`. `conflict` and `offline` are dropped. Lives at `packages/ui/src/components/save-indicator.tsx` (the legacy 7-state indicator at `packages/ui/src/edit-session/save-indicator.tsx` stays for a follow-up cleanup PR).
+- **Hover-reveal cascade** (ADR-0043 §8). Empty day cell → empty session row → empty block all expose a `+` IconButton on hover (desktop) / always (touch via `@media (hover: hover)`). The same `<EmptyAddCell>` primitive backs all four levels.
+- **Dispatcher lift** (ADR-0043 §4 implementation, ADR-0042 follow-up). `apps/admin/src/modules/scheme-types/components/scheme-params/` lifted to `packages/ui/src/components/scheme-params/` and consumed by `<BlockEditPanel>`. Admin re-imports from the new path; the SchemeType admin form does not currently render the dispatcher post-#186, so the lift is a salvage + path rebase.
+- **Mutation hooks** (ADR-0043 §Frontend additions). Hand-rolled on top of `useOptimisticMutation` from `@repo/query` rather than `createCrudHooks`. The factory's `keys: { page, byId }` shape mismatches parent-keyed reads (`planBlocks.bySession(planId, sessionId)`, `planItems.byBlock(planId, blockId)`, etc.). A nested-CRUD factory is rejected as premature (rule of two).
+
+Out of i2a scope and explicitly deferred: drag-reorder (i2b), enrollments tab (i2d), `block.weight` + compliance gradient UI (ADR-0033 territory; the column does not exist on `PlanBlock` today), athlete-side execution UI (Round 4 territory), Cmd+S / autosave / route-change interceptor, optimistic-locking infrastructure, cleanup of the legacy `packages/ui/src/edit-session/` subtree.

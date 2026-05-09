@@ -1,5 +1,11 @@
 import { type ApiClient } from "@repo/api-client";
-import type { GetPlanDaysResponse } from "@repo/contracts/lms/plan-day";
+import type {
+  CreatePlanDayRequest,
+  CreatePlanDayResponse,
+  GetPlanDaysResponse,
+  UpdatePlanDayRequest,
+  UpdatePlanDayResponse,
+} from "@repo/contracts/lms/plan-day";
 import { formatDateParam } from "@repo/shared";
 
 export const createPlanDaysAPI = (client: ApiClient) => ({
@@ -8,4 +14,17 @@ export const createPlanDaysAPI = (client: ApiClient) => ({
       from: formatDateParam(range.from),
       to: formatDateParam(range.to),
     }),
+
+  upsert: (planId: string, data: CreatePlanDayRequest): Promise<CreatePlanDayResponse> =>
+    client.request(`/api/platform/training-plans/${planId}/days`, "POST", data),
+
+  update: (
+    planId: string,
+    dayId: string,
+    data: UpdatePlanDayRequest,
+  ): Promise<UpdatePlanDayResponse> =>
+    client.request(`/api/platform/training-plans/${planId}/days/${dayId}`, "PUT", data),
+
+  delete: (planId: string, dayId: string): Promise<void> =>
+    client.requestNoContent(`/api/platform/training-plans/${planId}/days/${dayId}`, "DELETE"),
 });

@@ -11,6 +11,7 @@ import { useSessionsByDay } from "@app/lib/hooks";
 import { DayEmpty } from "./day-empty";
 import { DayRowHeader } from "./day-row-header";
 import { DayTypeBadge } from "./day-type-badge";
+import { EmptyAddCell } from "./empty-add-cell";
 import { PlanSessionCard } from "./plan-session-card";
 import { type Lookups } from "./types";
 
@@ -25,6 +26,10 @@ type DayRowProps = {
   planDayId: string | null;
   dayType: DayType | null;
   lookups: Lookups;
+  onAddDay: (date: Date) => void;
+  onAddSession: (dayId: string) => void;
+  onAddBlock: (sessionId: string) => void;
+  onEditBlock: (sessionId: string, blockId: string) => void;
 };
 
 export const DayRow: React.FC<DayRowProps> = ({
@@ -34,13 +39,17 @@ export const DayRow: React.FC<DayRowProps> = ({
   planDayId,
   dayType,
   lookups,
+  onAddDay,
+  onAddSession,
+  onAddBlock,
+  onEditBlock,
 }) => {
   const hasDayType = dayType !== null;
   const sessionsQuery = useSessionsByDay(planId, planDayId);
 
   const renderSessions = (): React.ReactNode => {
     if (planDayId === null) {
-      return <DayEmpty hasDayType={hasDayType} />;
+      return <DayEmpty hasDayType={hasDayType} onAddDay={() => onAddDay(date)} />;
     }
 
     if (sessionsQuery.isLoading) {
@@ -54,13 +63,25 @@ export const DayRow: React.FC<DayRowProps> = ({
     const sessions = sessionsQuery.data?.sessions;
 
     if (!sessions || sessions.length === 0) {
-      return <DayEmpty hasDayType={hasDayType} />;
+      return (
+        <Stack direction="row" spacing={1} alignItems="center">
+          <DayEmpty hasDayType={hasDayType} onAddDay={() => onAddDay(date)} />
+          <EmptyAddCell label="Add session" onAdd={() => onAddSession(planDayId)} />
+        </Stack>
+      );
     }
 
     return (
       <Stack spacing={2}>
         {sessions.map((session) => (
-          <PlanSessionCard key={session.id} planId={planId} session={session} lookups={lookups} />
+          <PlanSessionCard
+            key={session.id}
+            planId={planId}
+            session={session}
+            lookups={lookups}
+            onAddBlock={onAddBlock}
+            onEditBlock={onEditBlock}
+          />
         ))}
       </Stack>
     );
