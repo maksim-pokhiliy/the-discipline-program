@@ -759,6 +759,65 @@ describe("lmsPlanBlockApi", () => {
         await cleanupRaw.exercise.delete({ where: { id: exercise.id } }).catch(() => {});
       }
     });
+
+    it("preserves alternatives and notes when item update omits those fields", async () => {
+      const primaryEx = await cleanupRaw.exercise.create({
+        data: { name: `preserve-primary-${uniqueSuffix()}`, primaryMovement: "SQUAT" },
+      });
+      const altEx = await cleanupRaw.exercise.create({
+        data: { name: `preserve-alt-${uniqueSuffix()}`, primaryMovement: "SQUAT" },
+      });
+
+      const created = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], {
+          order: 44,
+          items: [
+            {
+              order: 0,
+              exerciseId: primaryEx.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 5 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+              alternatives: [{ exerciseId: altEx.id, note: "swap" }],
+              notes: "keep me",
+            },
+          ],
+        }),
+      );
+
+      try {
+        const itemId = created.items[0]?.id;
+
+        const updated = await lmsPlanBlockApi.update(coach.user.id, activePlan.id, created.id, {
+          items: [
+            {
+              id: itemId,
+              order: 0,
+              exerciseId: primaryEx.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 8 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+          ],
+        });
+
+        expect(updated.items).toHaveLength(1);
+        expect(updated.items[0]?.alternatives).toEqual([{ exerciseId: altEx.id, note: "swap" }]);
+        expect(updated.items[0]?.notes).toBe("keep me");
+        expect(updated.items[0]?.prescription).toMatchObject({ reps: { kind: "FIXED", value: 8 } });
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: created.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: primaryEx.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: altEx.id } }).catch(() => {});
+      }
+    });
   });
 
   describe("cross-plan smuggle", () => {
