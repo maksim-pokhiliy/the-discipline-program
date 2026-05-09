@@ -2,7 +2,7 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
-import { Alert, Box, IconButton, Stack, Tooltip } from "@mui/material";
+import { Alert, IconButton, Stack, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 
 import { type DayType } from "@repo/contracts/lms/day-type";
@@ -72,6 +72,7 @@ export const DayRow: React.FC<DayRowProps> = ({
   return (
     <Stack
       direction="row"
+      alignItems="center"
       spacing={2}
       sx={{
         p: 2,
@@ -82,33 +83,34 @@ export const DayRow: React.FC<DayRowProps> = ({
       <Stack sx={{ minWidth: (theme) => theme.spacing(DATE_COL_MIN_WIDTH_FACTOR) }}>
         <DayRowHeader date={date} isToday={isToday} />
       </Stack>
-      <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
-        <Stack direction="row" spacing={0.5} alignItems="center">
+
+      <Stack spacing={2} sx={{ flex: 1, minWidth: 0 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
           <DayLabel dayType={dayType} />
-          <Tooltip title="Edit day">
-            <IconButton
-              className={ROW_ACTION_CLASS}
-              size="small"
-              aria-label="Edit day"
-              onClick={handleEdit}
-              sx={rowActionSx}
-            >
-              <EditIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
-          <Box sx={{ flex: 1 }} />
-          <Tooltip title="Add session">
-            <IconButton
-              className={ROW_ACTION_CLASS}
-              size="small"
-              aria-label="Add session"
-              onClick={handleAddSession}
-              disabled={addEmptySession.isPending}
-              sx={{ ...rowActionSx, color: "primary.main" }}
-            >
-              <AddIcon fontSize="small" />
-            </IconButton>
-          </Tooltip>
+
+          <Stack direction="row" spacing={1}>
+            <Tooltip title="Edit day">
+              <IconButton
+                className={ROW_ACTION_CLASS}
+                aria-label="Edit day"
+                onClick={handleEdit}
+                sx={rowActionSx}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Add session">
+              <IconButton
+                className={ROW_ACTION_CLASS}
+                aria-label="Add session"
+                onClick={handleAddSession}
+                disabled={addEmptySession.isPending}
+                sx={{ ...rowActionSx, color: "primary.main" }}
+              >
+                <AddIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
         </Stack>
         {sessionsLoading && (
           <LoadingState message="Loading sessions..." minHeight={SESSIONS_LOADING_MIN_HEIGHT} />

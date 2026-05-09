@@ -48,51 +48,58 @@ export const PlanSessionCard: React.FC<PlanSessionCardProps> = ({
       variant="outlined"
       sx={{
         p: 2,
-        position: "relative",
         [`&:hover .${CARD_ACTION_CLASS}`]: { opacity: 1 },
       }}
     >
-      <Stack direction="row" spacing={0.5} sx={{ position: "absolute", top: 8, right: 8 }}>
-        <Tooltip title="Edit session">
-          <IconButton
-            className={CARD_ACTION_CLASS}
-            size="small"
-            aria-label="Edit session"
-            onClick={() => onEditSession(session.dayId, session.id)}
-            sx={cardActionSx}
-          >
-            <EditIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Add block">
-          <IconButton
-            className={CARD_ACTION_CLASS}
-            size="small"
-            aria-label="Add block"
-            onClick={() => onAddBlock(session.id)}
-            sx={{ ...cardActionSx, color: "primary.main" }}
-          >
-            <AddIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Stack>
-      <Stack spacing={2}>
-        <Typography variant="subtitle1">{sessionTitle}</Typography>
-        {blocksQuery.isLoading && (
-          <LoadingState message="Loading blocks..." minHeight={BLOCKS_LOADING_MIN_HEIGHT} />
-        )}
-        {blocksQuery.error !== null && <Alert severity="error">Failed to load blocks</Alert>}
-        {blocks.length > 0 && (
-          <Stack spacing={1}>
-            {blocks.map((block) => (
-              <PlanBlockCard
-                key={block.id}
-                planId={planId}
-                block={block}
-                lookups={lookups}
-                onEditBlock={onEditBlock}
-              />
-            ))}
+      <Stack spacing={2} justifyContent="center" sx={{ flex: 1, minWidth: 0 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="subtitle1">{sessionTitle}</Typography>
+
+          <Stack direction="row" spacing={1}>
+            <Tooltip title="Edit session">
+              <IconButton
+                className={CARD_ACTION_CLASS}
+                aria-label="Edit session"
+                onClick={() => onEditSession(session.dayId, session.id)}
+                sx={cardActionSx}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Add block">
+              <IconButton
+                className={CARD_ACTION_CLASS}
+                aria-label="Add block"
+                onClick={() => onAddBlock(session.id)}
+                sx={{ ...cardActionSx, color: "primary.main" }}
+              >
+                <AddIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        </Stack>
+
+        {Boolean(blocksQuery.isLoading || blocksQuery.error || blocks.length > 0) && (
+          <Stack spacing={2}>
+            {blocksQuery.isLoading && (
+              <LoadingState message="Loading blocks..." minHeight={BLOCKS_LOADING_MIN_HEIGHT} />
+            )}
+
+            {blocksQuery.error !== null && <Alert severity="error">Failed to load blocks</Alert>}
+
+            {blocks.length > 0 && (
+              <Stack spacing={1}>
+                {blocks.map((block) => (
+                  <PlanBlockCard
+                    key={block.id}
+                    planId={planId}
+                    block={block}
+                    lookups={lookups}
+                    onEditBlock={onEditBlock}
+                  />
+                ))}
+              </Stack>
+            )}
           </Stack>
         )}
       </Stack>
