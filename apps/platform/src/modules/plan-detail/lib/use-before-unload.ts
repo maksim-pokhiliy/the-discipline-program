@@ -12,7 +12,6 @@ export const useBeforeUnload = (isDirty: boolean): void => {
 
     const handler = (event: BeforeUnloadEvent): void => {
       event.preventDefault();
-      event.returnValue = "";
     };
 
     window.addEventListener(BEFORE_UNLOAD_EVENT, handler);
