@@ -4,11 +4,16 @@ import { type BlockType } from "@repo/contracts/lms/block-type";
 import { type Exercise } from "@repo/contracts/lms/exercise";
 import { type PlanBlock } from "@repo/contracts/lms/plan-block";
 import { type SchemeType } from "@repo/contracts/lms/scheme-type";
+import { LoadingState } from "@repo/ui";
 
 import { useItemsByBlock } from "@app/lib/hooks";
 
 import { BlockEditPanel } from "./block-edit-panel";
+import { EditPanel } from "./edit-panel";
 import { type SaveStatusChange } from "./edit-panel-status";
+
+const ITEMS_LOADING_MESSAGE = "Loading block items...";
+const LOADING_TITLE = "Loading block";
 
 type BlockEditModeLookups = {
   readonly schemeTypes: ReadonlyMap<string, SchemeType>;
@@ -40,7 +45,23 @@ export const BlockPanelEditMode: React.FC<BlockPanelEditModeProps> = ({
   onStatusChange,
 }) => {
   const itemsQuery = useItemsByBlock(planId, blockId);
-  const items = itemsQuery.data?.items ?? [];
+
+  if (itemsQuery.data === undefined) {
+    return (
+      <EditPanel
+        open
+        onClose={onClose}
+        title={LOADING_TITLE}
+        isDirty={false}
+        isSaving={false}
+        canSave={false}
+        onSave={() => undefined}
+        onCancel={onClose}
+      >
+        <LoadingState message={ITEMS_LOADING_MESSAGE} />
+      </EditPanel>
+    );
+  }
 
   return (
     <BlockEditPanel
@@ -49,7 +70,7 @@ export const BlockPanelEditMode: React.FC<BlockPanelEditModeProps> = ({
       blockId={blockId}
       existingBlock={existingBlock}
       existingBlocks={existingBlocks}
-      existingItems={items}
+      existingItems={itemsQuery.data.items}
       lookups={lookups}
       onClose={onClose}
       onDirtyChange={onDirtyChange}

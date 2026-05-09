@@ -21,6 +21,7 @@ import { MultiSelect, SchemeParamsField } from "@repo/ui";
 import { useCreatePlanBlock, useUpdatePlanBlock } from "@app/lib/hooks";
 
 import {
+  type BlockFormValues,
   toCreatePlanBlockRequest,
   toUpdatePlanBlockRequest,
   useBlockEditForm,
@@ -32,6 +33,10 @@ import { type SaveStatusChange } from "./edit-panel-status";
 
 const BLOCK_TYPE_HELPER = `Select between ${PLAN_BLOCK_CONSTANTS.MIN_BLOCK_TYPES} and ${PLAN_BLOCK_CONSTANTS.MAX_BLOCK_TYPES}`;
 const NO_SCHEME_TYPE_VALUE = "";
+const DEFAULT_ERROR_MESSAGE = "Save failed";
+
+const toErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE;
 
 type BlockEditPanelLookups = {
   readonly schemeTypes: ReadonlyMap<string, SchemeType>;
@@ -80,6 +85,7 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
     register,
     handleSubmit,
     setValue,
+    reset,
     formState: { isDirty, errors },
   } = form;
 
@@ -88,7 +94,7 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
   const blockTypeOptions = Array.from(lookups.blockTypes.values());
   const isSaving = createBlock.isPending || updateBlock.isPending;
 
-  const onSubmit = handleSubmit(async (data) => {
+  const submitData = async (data: BlockFormValues): Promise<void> => {
     onStatusChange?.("saving");
 
     try {
@@ -101,12 +107,18 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
         });
       }
 
+      reset(data);
       onStatusChange?.("saved");
       onClose();
     } catch (error) {
-      onStatusChange?.("error", error instanceof Error ? error : new Error("Save failed"));
+      onStatusChange?.("error", {
+        message: toErrorMessage(error),
+        retry: () => submitData(data),
+      });
     }
-  });
+  };
+
+  const onSubmit = handleSubmit(submitData);
 
   const title = isCreate ? "Add block" : "Edit block";
 

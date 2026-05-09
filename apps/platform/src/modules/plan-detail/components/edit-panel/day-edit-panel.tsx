@@ -19,6 +19,11 @@ import { useUpdatePlanDay, useUpsertPlanDay } from "@app/lib/hooks";
 import { EditPanel } from "./edit-panel";
 import { type SaveStatusChange } from "./edit-panel-status";
 
+const DEFAULT_ERROR_MESSAGE = "Save failed";
+
+const toErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE;
+
 type DayEditPanelLookups = { readonly dayTypes: ReadonlyMap<string, DayType> };
 
 type DayEditPanelProps = {
@@ -53,14 +58,17 @@ export const DayEditPanel: React.FC<DayEditPanelProps> = ({
   const upsertDay = useUpsertPlanDay({ planId });
   const updateDay = useUpdatePlanDay({ planId });
 
-  const {
-    control,
-    handleSubmit,
-    formState: { isDirty, errors },
-  } = useForm<DayFormInput, unknown, UpdatePlanDayRequest>({
+  const form = useForm<DayFormInput, unknown, UpdatePlanDayRequest>({
     resolver: zodResolver(updatePlanDayRequestSchema),
     defaultValues: buildDefaults(existingDay),
   });
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { isDirty, errors },
+  } = form;
 
   useEffect(() => {
     onDirtyChange?.(isDirty);
@@ -69,8 +77,9 @@ export const DayEditPanel: React.FC<DayEditPanelProps> = ({
   const isSaving = upsertDay.isPending || updateDay.isPending;
   const dayTypeOptions = Array.from(lookups.dayTypes.values());
 
-  const onSubmit = handleSubmit(async (data) => {
+  const submitData = async (data: UpdatePlanDayRequest): Promise<void> => {
     const dayTypeId = data.dayTypeId ?? null;
+    const submittedValues: DayFormInput = { dayTypeId };
 
     onStatusChange?.("saving");
 
@@ -81,12 +90,18 @@ export const DayEditPanel: React.FC<DayEditPanelProps> = ({
         await updateDay.mutateAsync({ id: dayId, data: { dayTypeId } });
       }
 
+      reset(submittedValues);
       onStatusChange?.("saved");
       onClose();
     } catch (error) {
-      onStatusChange?.("error", error instanceof Error ? error : new Error("Save failed"));
+      onStatusChange?.("error", {
+        message: toErrorMessage(error),
+        retry: () => submitData(data),
+      });
     }
-  });
+  };
+
+  const onSubmit = handleSubmit(submitData);
 
   const title = dayId === null ? "Add day" : "Edit day";
 

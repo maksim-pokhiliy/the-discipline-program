@@ -171,6 +171,7 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
             <PlanDetailHeaderSection
               plan={plan}
               saveStatus={editPanel.saveStatus}
+              onRetry={editPanel.retryLast}
               {...(editPanel.lastError !== null
                 ? { errorMessage: editPanel.lastError.message }
                 : {})}

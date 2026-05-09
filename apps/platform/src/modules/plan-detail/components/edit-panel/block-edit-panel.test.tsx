@@ -105,6 +105,8 @@ const makeExistingItem = (overrides: Partial<PlanItem> = {}): PlanItem => ({
 
 const renderCreatePanel = () => {
   const onClose = vi.fn();
+  const onStatusChange = vi.fn();
+  const onDirtyChange = vi.fn();
 
   render(
     <BlockEditPanel
@@ -115,14 +117,18 @@ const renderCreatePanel = () => {
       existingItems={[]}
       lookups={makeLookups()}
       onClose={onClose}
+      onStatusChange={onStatusChange}
+      onDirtyChange={onDirtyChange}
     />,
   );
 
-  return { onClose };
+  return { onClose, onStatusChange, onDirtyChange };
 };
 
 const renderEditPanel = () => {
   const onClose = vi.fn();
+  const onStatusChange = vi.fn();
+  const onDirtyChange = vi.fn();
   const block = makeExistingBlock();
   const item = makeExistingItem();
 
@@ -136,10 +142,12 @@ const renderEditPanel = () => {
       existingItems={[item]}
       lookups={makeLookups()}
       onClose={onClose}
+      onStatusChange={onStatusChange}
+      onDirtyChange={onDirtyChange}
     />,
   );
 
-  return { onClose, block, item };
+  return { onClose, onStatusChange, onDirtyChange, block, item };
 };
 
 describe("BlockEditPanel", () => {
@@ -249,5 +257,75 @@ describe("BlockEditPanel", () => {
     fireEvent.click(countDownOption);
 
     expect(schemeSelect).toHaveTextContent("Count down");
+  });
+
+  it("emits 'saving' then 'saved' through onStatusChange and clears dirty on successful submit", async () => {
+    updateMutation.mockResolvedValue({ id: BLOCK_ID });
+
+    const { onStatusChange, onDirtyChange } = renderEditPanel();
+
+    const blockNotes = document.querySelector(
+      'textarea[name="notes"]',
+    ) as HTMLTextAreaElement | null;
+
+    fireEvent.change(blockNotes as HTMLTextAreaElement, {
+      target: { value: "fresh notes" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
+
+    await vi.waitFor(() => {
+      expect(onStatusChange).toHaveBeenCalledWith("saved");
+    });
+
+    const statuses = onStatusChange.mock.calls.map((call) => call[0]);
+
+    expect(statuses).toEqual(expect.arrayContaining(["saving", "saved"]));
+
+    const lastDirtyCall = onDirtyChange.mock.calls.at(-1);
+
+    expect(lastDirtyCall?.[0]).toBe(false);
+  });
+
+  it("emits 'error' with a retry callback that re-fires the same mutateAsync payload", async () => {
+    const error = new Error("Network down");
+
+    updateMutation.mockRejectedValueOnce(error);
+
+    const { onStatusChange } = renderEditPanel();
+
+    const blockNotes = document.querySelector(
+      'textarea[name="notes"]',
+    ) as HTMLTextAreaElement | null;
+
+    fireEvent.change(blockNotes as HTMLTextAreaElement, {
+      target: { value: "fail then retry" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /^Save$/ }));
+
+    await vi.waitFor(() => {
+      expect(onStatusChange).toHaveBeenCalledWith(
+        "error",
+        expect.objectContaining({ message: "Network down" }),
+      );
+    });
+
+    const errorCall = onStatusChange.mock.calls.find((call) => call[0] === "error");
+    const errorOptions = errorCall?.[1] as { message: string; retry: () => Promise<void> };
+
+    expect(typeof errorOptions.retry).toBe("function");
+
+    updateMutation.mockResolvedValueOnce({ id: BLOCK_ID });
+
+    await errorOptions.retry();
+
+    expect(updateMutation).toHaveBeenCalledTimes(2);
+
+    const firstPayload = updateMutation.mock.calls[0]?.[0] as { data: { notes: string } };
+    const secondPayload = updateMutation.mock.calls[1]?.[0] as { data: { notes: string } };
+
+    expect(firstPayload.data.notes).toBe("fail then retry");
+    expect(secondPayload.data.notes).toBe("fail then retry");
   });
 });

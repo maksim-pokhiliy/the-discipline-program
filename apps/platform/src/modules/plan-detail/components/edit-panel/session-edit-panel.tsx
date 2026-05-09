@@ -19,6 +19,11 @@ import { useCreatePlanSession, useUpdatePlanSession } from "@app/lib/hooks";
 import { EditPanel } from "./edit-panel";
 import { type SaveStatusChange } from "./edit-panel-status";
 
+const DEFAULT_ERROR_MESSAGE = "Save failed";
+
+const toErrorMessage = (error: unknown): string =>
+  error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE;
+
 type SessionEditPanelProps = {
   planId: string;
   dayId: string;
@@ -76,14 +81,17 @@ export const SessionEditPanel: React.FC<SessionEditPanelProps> = ({
 
   const isCreate = sessionId === null;
 
-  const {
-    register,
-    handleSubmit,
-    formState: { isDirty, errors },
-  } = useForm<SessionFormInput, unknown, CreatePlanSessionRequest>({
+  const form = useForm<SessionFormInput, unknown, CreatePlanSessionRequest>({
     resolver: zodResolver(createPlanSessionRequestSchema),
     defaultValues: buildDefaults(existingSession, existingSessions),
   });
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isDirty, errors },
+  } = form;
 
   useEffect(() => {
     onDirtyChange?.(isDirty);
@@ -91,7 +99,7 @@ export const SessionEditPanel: React.FC<SessionEditPanelProps> = ({
 
   const isSaving = createSession.isPending || updateSession.isPending;
 
-  const onSubmit = handleSubmit(async (data) => {
+  const submitData = async (data: CreatePlanSessionRequest): Promise<void> => {
     onStatusChange?.("saving");
 
     try {
@@ -101,12 +109,18 @@ export const SessionEditPanel: React.FC<SessionEditPanelProps> = ({
         await updateSession.mutateAsync({ id: sessionId, data: toUpdateRequest(data) });
       }
 
+      reset({ order: data.order, label: data.label ?? "" });
       onStatusChange?.("saved");
       onClose();
     } catch (error) {
-      onStatusChange?.("error", error instanceof Error ? error : new Error("Save failed"));
+      onStatusChange?.("error", {
+        message: toErrorMessage(error),
+        retry: () => submitData(data),
+      });
     }
-  });
+  };
+
+  const onSubmit = handleSubmit(submitData);
 
   const title = isCreate ? "Add session" : "Edit session";
 

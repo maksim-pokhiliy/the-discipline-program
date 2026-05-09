@@ -1,7 +1,7 @@
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { type OpenPanel, useEditPanelState } from "./use-edit-panel-state";
+import { type OpenPanel, SAVED_FADE_MS, useEditPanelState } from "./use-edit-panel-state";
 
 const SOME_DATE = new Date("2026-05-12T00:00:00.000Z");
 const ANOTHER_DATE = new Date("2026-05-13T00:00:00.000Z");
@@ -16,6 +16,11 @@ const sessionPanel = (): OpenPanel => ({
   kind: "session",
   dayId: "ckxdayid0000000000000000000",
   sessionId: null,
+});
+
+const errorOptions = (message: string, retry: () => void = () => undefined) => ({
+  message,
+  retry,
 });
 
 describe("useEditPanelState", () => {
@@ -155,7 +160,7 @@ describe("useEditPanelState", () => {
       result.current.openPanel(dayPanel());
     });
     act(() => {
-      result.current.setSaveStatus("error", new Error("Boom"));
+      result.current.setSaveStatus("error", errorOptions("Boom"));
     });
     act(() => {
       result.current.openPanel(dayPanel(ANOTHER_DATE));
@@ -174,36 +179,140 @@ describe("useEditPanelState", () => {
     expect(result.current.saveStatus).toBe("saving");
 
     act(() => {
-      result.current.setSaveStatus("saved");
+      result.current.setSaveStatus("dirty");
     });
-    expect(result.current.saveStatus).toBe("saved");
+    expect(result.current.saveStatus).toBe("dirty");
   });
 
-  it("setSaveStatus('error', error) populates lastError; other transitions clear it", () => {
+  it("setSaveStatus('error', { message, retry }) populates lastError; other transitions clear it", () => {
     const { result } = renderHook(() => useEditPanelState());
+    const retry = vi.fn();
 
     act(() => {
-      result.current.setSaveStatus("error", new Error("Save failed"));
+      result.current.setSaveStatus("error", { message: "Save failed", retry });
     });
 
     expect(result.current.saveStatus).toBe("error");
-    expect(result.current.lastError).toEqual({ message: "Save failed" });
+    expect(result.current.lastError?.message).toBe("Save failed");
+    expect(result.current.lastError?.retry).toBe(retry);
 
     act(() => {
-      result.current.setSaveStatus("saved");
+      result.current.setSaveStatus("dirty");
     });
 
-    expect(result.current.saveStatus).toBe("saved");
+    expect(result.current.saveStatus).toBe("dirty");
     expect(result.current.lastError).toBeNull();
   });
 
-  it("retryLast is a documented no-op and does not crash", () => {
-    const { result } = renderHook(() => useEditPanelState());
+  describe("retryLast", () => {
+    it("invokes the stored retry callback when lastError is populated", () => {
+      const { result } = renderHook(() => useEditPanelState());
+      const retry = vi.fn();
 
-    expect(() => {
+      act(() => {
+        result.current.setSaveStatus("error", { message: "Save failed", retry });
+      });
       act(() => {
         result.current.retryLast();
       });
-    }).not.toThrow();
+
+      expect(retry).toHaveBeenCalledTimes(1);
+    });
+
+    it("is a no-op when lastError is null and does not crash", () => {
+      const { result } = renderHook(() => useEditPanelState());
+
+      expect(() => {
+        act(() => {
+          result.current.retryLast();
+        });
+      }).not.toThrow();
+    });
+
+    it("awaits a Promise-returning retry without throwing", () => {
+      const { result } = renderHook(() => useEditPanelState());
+      const retry = vi.fn(async () => Promise.resolve());
+
+      act(() => {
+        result.current.setSaveStatus("error", { message: "Save failed", retry });
+      });
+      act(() => {
+        result.current.retryLast();
+      });
+
+      expect(retry).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("saved → clean auto-fade timer", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("flips status to 'clean' after SAVED_FADE_MS when status was 'saved'", () => {
+      const { result } = renderHook(() => useEditPanelState());
+
+      act(() => {
+        result.current.setSaveStatus("saved");
+      });
+
+      expect(result.current.saveStatus).toBe("saved");
+
+      act(() => {
+        vi.advanceTimersByTime(SAVED_FADE_MS);
+      });
+
+      expect(result.current.saveStatus).toBe("clean");
+    });
+
+    it("cancels the pending fade timer when status changes before it fires", () => {
+      const { result } = renderHook(() => useEditPanelState());
+
+      act(() => {
+        result.current.setSaveStatus("saved");
+      });
+      act(() => {
+        result.current.setSaveStatus("saving");
+      });
+      act(() => {
+        vi.advanceTimersByTime(SAVED_FADE_MS);
+      });
+
+      expect(result.current.saveStatus).toBe("saving");
+    });
+
+    it("cancels the pending fade timer on unmount", () => {
+      const { result, unmount } = renderHook(() => useEditPanelState());
+
+      act(() => {
+        result.current.setSaveStatus("saved");
+      });
+
+      unmount();
+
+      expect(() => {
+        vi.advanceTimersByTime(SAVED_FADE_MS);
+      }).not.toThrow();
+    });
+
+    it("cancels the pending fade timer when openPanel is invoked", () => {
+      const { result } = renderHook(() => useEditPanelState());
+
+      act(() => {
+        result.current.setSaveStatus("saved");
+      });
+      act(() => {
+        result.current.openPanel(dayPanel());
+      });
+      act(() => {
+        vi.advanceTimersByTime(SAVED_FADE_MS);
+      });
+
+      expect(result.current.saveStatus).toBe("clean");
+    });
   });
 });
