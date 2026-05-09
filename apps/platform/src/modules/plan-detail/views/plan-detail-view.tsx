@@ -25,11 +25,19 @@ import {
 
 import { type Lookups } from "../components";
 import {
+  BlockPanelContainer,
+  DayPanelContainer,
+  DiscardConfirmDialog,
+  SessionPanelContainer,
+} from "../components/edit-panel";
+import {
   buildBlockTypeMap,
   buildDayTypeMap,
   buildExerciseMap,
   buildSchemeTypeMap,
   groupDaysByDate,
+  useBeforeUnload,
+  useEditPanelState,
 } from "../lib";
 import { PlanDetailHeaderSection, WeekChromeSection, WeekGridSection } from "../sections";
 
@@ -65,6 +73,7 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
   const planQuery = useTrainingPlan(planId);
   const libraryQuery = useLibraryCatalog();
   const daysQuery = usePlanDaysWeek(planId, weekStart);
+  const editPanel = useEditPanelState();
 
   usePrefetchNeighborWeeks(planId, weekStart);
 
@@ -94,6 +103,8 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
       ? { plan: planQuery.data, library: libraryQuery.data, days: daysQuery.data.days }
       : undefined;
 
+  useBeforeUnload(editPanel.isDirty);
+
   const handleWeekChange = useCallback(
     (next: Date): void => {
       router.push(`?week=${formatDateParam(next)}`);
@@ -118,6 +129,34 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
     [queryClient, planId, weekStart],
   );
 
+  const handleAddDay = useCallback(
+    (date: Date): void => {
+      editPanel.openPanel({ kind: "day", dayId: null, date });
+    },
+    [editPanel],
+  );
+
+  const handleAddSession = useCallback(
+    (dayId: string): void => {
+      editPanel.openPanel({ kind: "session", dayId, sessionId: null });
+    },
+    [editPanel],
+  );
+
+  const handleAddBlock = useCallback(
+    (sessionId: string): void => {
+      editPanel.openPanel({ kind: "block", sessionId, blockId: null });
+    },
+    [editPanel],
+  );
+
+  const handleEditBlock = useCallback(
+    (sessionId: string, blockId: string): void => {
+      editPanel.openPanel({ kind: "block", sessionId, blockId });
+    },
+    [editPanel],
+  );
+
   return (
     <Stack spacing={4}>
       <QueryWrapper
@@ -127,9 +166,15 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
         loadingMessage="Loading plan..."
         errorMessage={narrowErrorMessage(error)}
       >
-        {({ plan }) => (
+        {({ plan, library, days }) => (
           <Stack spacing={3}>
-            <PlanDetailHeaderSection plan={plan} />
+            <PlanDetailHeaderSection
+              plan={plan}
+              saveStatus={editPanel.saveStatus}
+              {...(editPanel.lastError !== null
+                ? { errorMessage: editPanel.lastError.message }
+                : {})}
+            />
             <WeekChromeSection
               weekStart={weekStart}
               onWeekChange={handleWeekChange}
@@ -140,6 +185,45 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
               weekStart={weekStart}
               dayBuckets={dayBuckets}
               lookups={lookups}
+              onAddDay={handleAddDay}
+              onAddSession={handleAddSession}
+              onAddBlock={handleAddBlock}
+              onEditBlock={handleEditBlock}
+            />
+            {editPanel.open?.kind === "day" && (
+              <DayPanelContainer
+                planId={planId}
+                panel={editPanel.open}
+                days={days}
+                dayTypes={library.dayTypes}
+                onClose={editPanel.requestClose}
+                onDirtyChange={editPanel.markDirty}
+                onStatusChange={editPanel.setSaveStatus}
+              />
+            )}
+            {editPanel.open?.kind === "session" && (
+              <SessionPanelContainer
+                planId={planId}
+                panel={editPanel.open}
+                onClose={editPanel.requestClose}
+                onDirtyChange={editPanel.markDirty}
+                onStatusChange={editPanel.setSaveStatus}
+              />
+            )}
+            {editPanel.open?.kind === "block" && (
+              <BlockPanelContainer
+                planId={planId}
+                panel={editPanel.open}
+                lookups={lookups}
+                onClose={editPanel.requestClose}
+                onDirtyChange={editPanel.markDirty}
+                onStatusChange={editPanel.setSaveStatus}
+              />
+            )}
+            <DiscardConfirmDialog
+              open={editPanel.pendingClose}
+              onConfirm={editPanel.confirmDiscard}
+              onCancel={editPanel.cancelDiscard}
             />
           </Stack>
         )}

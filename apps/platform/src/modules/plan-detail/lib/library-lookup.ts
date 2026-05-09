@@ -3,7 +3,7 @@ import { type DayType } from "@repo/contracts/lms/day-type";
 import { type Exercise } from "@repo/contracts/lms/exercise";
 import { type SchemeType } from "@repo/contracts/lms/scheme-type";
 
-export const buildExerciseMap = (exercises: Exercise[]): ReadonlyMap<string, Exercise> => {
+export const buildExerciseMap = (exercises: readonly Exercise[]): ReadonlyMap<string, Exercise> => {
   const map: Map<string, Exercise> = new Map();
 
   for (const exercise of exercises) {
@@ -13,7 +13,9 @@ export const buildExerciseMap = (exercises: Exercise[]): ReadonlyMap<string, Exe
   return map;
 };
 
-export const buildBlockTypeMap = (blockTypes: BlockType[]): ReadonlyMap<string, BlockType> => {
+export const buildBlockTypeMap = (
+  blockTypes: readonly BlockType[],
+): ReadonlyMap<string, BlockType> => {
   const map: Map<string, BlockType> = new Map();
 
   for (const blockType of blockTypes) {
@@ -23,7 +25,9 @@ export const buildBlockTypeMap = (blockTypes: BlockType[]): ReadonlyMap<string, 
   return map;
 };
 
-export const buildSchemeTypeMap = (schemeTypes: SchemeType[]): ReadonlyMap<string, SchemeType> => {
+export const buildSchemeTypeMap = (
+  schemeTypes: readonly SchemeType[],
+): ReadonlyMap<string, SchemeType> => {
   const map: Map<string, SchemeType> = new Map();
 
   for (const schemeType of schemeTypes) {
@@ -33,7 +37,7 @@ export const buildSchemeTypeMap = (schemeTypes: SchemeType[]): ReadonlyMap<strin
   return map;
 };
 
-export const buildDayTypeMap = (dayTypes: DayType[]): ReadonlyMap<string, DayType> => {
+export const buildDayTypeMap = (dayTypes: readonly DayType[]): ReadonlyMap<string, DayType> => {
   const map: Map<string, DayType> = new Map();
 
   for (const dayType of dayTypes) {
