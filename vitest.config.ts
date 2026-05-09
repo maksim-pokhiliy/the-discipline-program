@@ -1,3 +1,5 @@
+import { resolve } from "node:path";
+
 import reactPlugin from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
@@ -33,12 +35,18 @@ export default defineConfig({
       },
       {
         plugins: [reactPlugin()],
+        resolve: {
+          alias: {
+            "@app": resolve(__dirname, "apps/platform/src"),
+          },
+        },
         test: {
           name: "platform",
           root: "apps/platform",
           environment: "jsdom",
           globals: true,
           include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+          setupFiles: ["./src/test/setup.ts"],
         },
       },
     ],
