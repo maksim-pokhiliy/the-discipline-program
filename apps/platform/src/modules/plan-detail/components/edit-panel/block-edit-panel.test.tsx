@@ -19,6 +19,10 @@ vi.mock("@app/lib/hooks", () => ({
     mutateAsync: updateMutation,
     isPending: false,
   }),
+  useDeletePlanBlock: () => ({
+    mutateAsync: vi.fn(),
+    isPending: false,
+  }),
 }));
 
 const { BlockEditPanel } = await import("./block-edit-panel");

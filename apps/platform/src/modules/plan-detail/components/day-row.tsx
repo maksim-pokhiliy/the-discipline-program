@@ -35,6 +35,7 @@ type DayRowProps = {
   dayType: DayType | null;
   lookups: Lookups;
   onEditDay: (date: Date, dayId: string | null) => void;
+  onEditSession: (dayId: string, sessionId: string) => void;
   onAddBlock: (sessionId: string) => void;
   onEditBlock: (sessionId: string, blockId: string) => void;
 };
@@ -47,6 +48,7 @@ export const DayRow: React.FC<DayRowProps> = ({
   dayType,
   lookups,
   onEditDay,
+  onEditSession,
   onAddBlock,
   onEditBlock,
 }) => {
@@ -120,6 +122,7 @@ export const DayRow: React.FC<DayRowProps> = ({
                 planId={planId}
                 session={session}
                 lookups={lookups}
+                onEditSession={onEditSession}
                 onAddBlock={onAddBlock}
                 onEditBlock={onEditBlock}
               />

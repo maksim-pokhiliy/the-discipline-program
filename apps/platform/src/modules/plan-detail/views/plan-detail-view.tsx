@@ -132,6 +132,13 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
     [editPanel],
   );
 
+  const handleEditSession = useCallback(
+    (dayId: string, sessionId: string): void => {
+      editPanel.openPanel({ kind: "session", dayId, sessionId });
+    },
+    [editPanel],
+  );
+
   const handleAddBlock = useCallback(
     (sessionId: string): void => {
       editPanel.openPanel({ kind: "block", sessionId, blockId: null });
@@ -176,6 +183,7 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
               dayBuckets={dayBuckets}
               lookups={lookups}
               onEditDay={handleEditDay}
+              onEditSession={handleEditSession}
               onAddBlock={handleAddBlock}
               onEditBlock={handleEditBlock}
             />

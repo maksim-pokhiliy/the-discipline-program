@@ -3,7 +3,7 @@
 import type { ReactNode } from "react";
 
 import CloseIcon from "@mui/icons-material/Close";
-import { Button, Divider, Drawer, IconButton, Stack, Typography } from "@mui/material";
+import { Box, Button, Divider, Drawer, IconButton, Stack, Typography } from "@mui/material";
 
 import { LAYOUT } from "@repo/shared";
 
@@ -15,6 +15,8 @@ export type EditPanelProps = {
   canSave: boolean;
   onSave: () => void;
   onCancel: () => void;
+  onDelete?: () => void;
+  deleteLabel?: string;
   children: ReactNode;
 };
 
@@ -26,6 +28,8 @@ export const EditPanel: React.FC<EditPanelProps> = ({
   canSave,
   onSave,
   onCancel,
+  onDelete,
+  deleteLabel = "Delete",
   children,
 }) => (
   <Drawer
@@ -53,7 +57,13 @@ export const EditPanel: React.FC<EditPanelProps> = ({
 
       <Divider />
 
-      <Stack direction="row" justifyContent="flex-end" spacing={1} sx={{ p: 2 }}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ p: 2 }}>
+        {onDelete !== undefined && (
+          <Button onClick={onDelete} color="error" size="small" disabled={isSaving}>
+            {deleteLabel}
+          </Button>
+        )}
+        <Box sx={{ flex: 1 }} />
         <Button onClick={onCancel} size="small">
           Cancel
         </Button>
