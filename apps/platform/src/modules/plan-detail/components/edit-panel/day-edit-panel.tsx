@@ -108,7 +108,6 @@ export const DayEditPanel: React.FC<DayEditPanelProps> = ({
       open
       onClose={onClose}
       title={title}
-      isDirty={isDirty}
       isSaving={isSaving}
       canSave={isDirty && Object.keys(errors).length === 0}
       onSave={() => void onSubmit()}

@@ -52,7 +52,6 @@ export const BlockPanelEditMode: React.FC<BlockPanelEditModeProps> = ({
         open
         onClose={onClose}
         title={LOADING_TITLE}
-        isDirty={false}
         isSaving={false}
         canSave={false}
         onSave={() => undefined}

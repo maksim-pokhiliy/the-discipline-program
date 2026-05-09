@@ -11,7 +11,6 @@ export type EditPanelProps = {
   open: boolean;
   onClose: () => void;
   title: string;
-  isDirty: boolean;
   isSaving: boolean;
   canSave: boolean;
   onSave: () => void;

@@ -126,7 +126,6 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
         open
         onClose={onClose}
         title={title}
-        isDirty={isDirty}
         isSaving={isSaving}
         canSave={isDirty && Object.keys(errors).length === 0}
         onSave={() => void onSubmit()}
