@@ -20,6 +20,7 @@ import { MultiSelect, SchemeParamsField } from "@repo/ui";
 
 import { useCreatePlanBlock, useUpdatePlanBlock } from "@app/lib/hooks";
 
+import { toErrorMessage } from "../../lib/to-error-message";
 import {
   type BlockFormValues,
   toCreatePlanBlockRequest,
@@ -34,10 +35,6 @@ import { type SaveStatusChange } from "./edit-panel-status";
 
 const BLOCK_TYPE_HELPER = `Select between ${PLAN_BLOCK_CONSTANTS.MIN_BLOCK_TYPES} and ${PLAN_BLOCK_CONSTANTS.MAX_BLOCK_TYPES}`;
 const NO_SCHEME_TYPE_VALUE = "";
-const DEFAULT_ERROR_MESSAGE = "Save failed";
-
-const toErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE;
 
 type BlockEditPanelLookups = {
   readonly schemeTypes: ReadonlyMap<string, SchemeType>;

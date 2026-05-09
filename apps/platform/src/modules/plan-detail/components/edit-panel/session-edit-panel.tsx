@@ -16,15 +16,11 @@ import {
 
 import { useCreatePlanSession, useUpdatePlanSession } from "@app/lib/hooks";
 
+import { toErrorMessage } from "../../lib/to-error-message";
 import { useSubmitGuard } from "../../lib/use-submit-guard";
 
 import { EditPanel } from "./edit-panel";
 import { type SaveStatusChange } from "./edit-panel-status";
-
-const DEFAULT_ERROR_MESSAGE = "Save failed";
-
-const toErrorMessage = (error: unknown): string =>
-  error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE;
 
 type SessionEditPanelProps = {
   planId: string;
