@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { orderFieldSchema } from "../_domain/order.schema";
 import { prescriptionSchema } from "../_domain/prescription.schema";
 import { noNulByteString } from "../_domain/safe-string.schema";
 
@@ -46,7 +47,7 @@ export const ALTERNATIVES_NO_PRIMARY_MESSAGE =
 export const planItemSchema = z.object({
   id: z.string().cuid(),
   blockId: z.string().cuid(),
-  order: z.number().int().nonnegative(),
+  order: orderFieldSchema,
   exerciseId: z.string().cuid(),
   prescription: prescriptionSchema,
   alternatives: alternativesArraySchema.nullable(),
@@ -57,7 +58,7 @@ export const planItemSchema = z.object({
 
 export const createPlanItemBaseSchema = z.object({
   blockId: z.string().cuid(),
-  order: z.number().int().nonnegative(),
+  order: orderFieldSchema,
   exerciseId: z.string().cuid(),
   prescription: prescriptionSchema,
   alternatives: alternativesArraySchema.optional(),
@@ -65,7 +66,7 @@ export const createPlanItemBaseSchema = z.object({
 });
 
 export const updatePlanItemBaseSchema = z.object({
-  order: z.number().int().nonnegative().optional(),
+  order: orderFieldSchema.optional(),
   exerciseId: z.string().cuid().optional(),
   prescription: prescriptionSchema.optional(),
   alternatives: alternativesArraySchema.nullable().optional(),

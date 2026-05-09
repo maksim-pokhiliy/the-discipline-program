@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { orderFieldSchema } from "../_domain/order.schema";
 import { noNulByteString } from "../_domain/safe-string.schema";
 import { schemeParamsSchema } from "../_domain/scheme-archetype.schema";
 import { planItemForUpsertSchema } from "../plan-item/plan-item-for-upsert.schema";
@@ -34,7 +35,7 @@ const itemsArraySchema = z
 export const planBlockSchema = z.object({
   id: z.string().cuid(),
   sessionId: z.string().cuid(),
-  order: z.number().int().nonnegative(),
+  order: orderFieldSchema,
   schemeTypeId: z.string().cuid(),
   blockTypeIds: blockTypeIdsSchema,
   schemeParams: schemeParamsSchema,
@@ -46,7 +47,7 @@ export const planBlockSchema = z.object({
 
 export const createPlanBlockSchema = z.object({
   sessionId: z.string().cuid(),
-  order: z.number().int().nonnegative(),
+  order: orderFieldSchema,
   schemeTypeId: z.string().cuid(),
   blockTypeIds: blockTypeIdsSchema,
   modifiers: z.unknown().optional(),
@@ -55,7 +56,7 @@ export const createPlanBlockSchema = z.object({
 });
 
 export const updatePlanBlockSchema = z.object({
-  order: z.number().int().nonnegative().optional(),
+  order: orderFieldSchema.optional(),
   schemeTypeId: z.string().cuid().optional(),
   blockTypeIds: blockTypeIdsSchema.optional(),
   schemeParams: schemeParamsSchema.optional(),
