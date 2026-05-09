@@ -125,16 +125,9 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
     [queryClient, planId, weekStart],
   );
 
-  const handleAddDay = useCallback(
-    (date: Date): void => {
-      editPanel.openPanel({ kind: "day", dayId: null, date });
-    },
-    [editPanel],
-  );
-
-  const handleAddSession = useCallback(
-    (dayId: string): void => {
-      editPanel.openPanel({ kind: "session", dayId, sessionId: null });
+  const handleEditDay = useCallback(
+    (date: Date, dayId: string | null): void => {
+      editPanel.openPanel({ kind: "day", dayId, date });
     },
     [editPanel],
   );
@@ -182,8 +175,7 @@ export const PlanDetailView: React.FC<PlanDetailViewProps> = ({ planId }) => {
               weekStart={weekStart}
               dayBuckets={dayBuckets}
               lookups={lookups}
-              onAddDay={handleAddDay}
-              onAddSession={handleAddSession}
+              onEditDay={handleEditDay}
               onAddBlock={handleAddBlock}
               onEditBlock={handleEditBlock}
             />

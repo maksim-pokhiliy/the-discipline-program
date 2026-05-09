@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type {
   CreatePlanSessionRequest,
@@ -17,6 +17,12 @@ import { platformKeys } from "../api/keys";
 type PlanSessionScope = {
   planId: string;
   dayId: string;
+};
+
+type AddEmptySessionInput = {
+  date: Date;
+  dayId: string | null;
+  order: number;
 };
 
 export const useSessionsByDay = (planId: string, dayId: string | null) =>
@@ -61,6 +67,29 @@ export const useUpdatePlanSession = ({ planId, dayId }: PlanSessionScope) =>
     invalidateKeys: () => [platformKeys.planSessions.byDay(planId, dayId)],
     errorMessage: "Failed to update session",
   });
+
+export const useAddEmptySessionToDay = (planId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ date, dayId, order }: AddEmptySessionInput) => {
+      const targetDayId = dayId ?? (await api.planDays.upsert(planId, { date })).day.id;
+
+      return api.planSessions.create(planId, targetDayId, { order });
+    },
+    onSuccess: async (_data, { dayId }) => {
+      await queryClient.invalidateQueries({
+        queryKey: platformKeys.planDays.byPlan(planId),
+      });
+
+      if (dayId !== null) {
+        await queryClient.invalidateQueries({
+          queryKey: platformKeys.planSessions.byDay(planId, dayId),
+        });
+      }
+    },
+  });
+};
 
 export const useDeletePlanSession = ({ planId, dayId }: PlanSessionScope) =>
   useOptimisticMutation<GetPlanSessionsResponse, string, void>({

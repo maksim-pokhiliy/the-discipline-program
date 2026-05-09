@@ -1,23 +1,31 @@
 "use client";
 
-import { Alert, Stack } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import EditIcon from "@mui/icons-material/Edit";
+import { Alert, Box, IconButton, Stack, Tooltip } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 
 import { type DayType } from "@repo/contracts/lms/day-type";
 import { LoadingState } from "@repo/ui";
 
-import { useSessionsByDay } from "@app/lib/hooks";
+import { useAddEmptySessionToDay, useSessionsByDay } from "@app/lib/hooks";
 
-import { DayEmpty } from "./day-empty";
+import { DayLabel } from "./day-label";
 import { DayRowHeader } from "./day-row-header";
-import { DayTypeBadge } from "./day-type-badge";
-import { EmptyAddCell } from "./empty-add-cell";
 import { PlanSessionCard } from "./plan-session-card";
 import { type Lookups } from "./types";
 
 const DAY_BG_ALPHA = 0.08;
 const DATE_COL_MIN_WIDTH_FACTOR = 10;
 const SESSIONS_LOADING_MIN_HEIGHT = "6vh";
+const ROW_ACTION_CLASS = "DayRowAction";
+const ROW_ACTION_TRANSITION = "opacity 0.15s ease";
+
+const rowActionSx = {
+  opacity: 0,
+  transition: ROW_ACTION_TRANSITION,
+  "&:focus-visible": { opacity: 1 },
+} as const;
 
 type DayRowProps = {
   planId: string;
@@ -26,8 +34,7 @@ type DayRowProps = {
   planDayId: string | null;
   dayType: DayType | null;
   lookups: Lookups;
-  onAddDay: (date: Date) => void;
-  onAddSession: (dayId: string) => void;
+  onEditDay: (date: Date, dayId: string | null) => void;
   onAddBlock: (sessionId: string) => void;
   onEditBlock: (sessionId: string, blockId: string) => void;
 };
@@ -39,52 +46,25 @@ export const DayRow: React.FC<DayRowProps> = ({
   planDayId,
   dayType,
   lookups,
-  onAddDay,
-  onAddSession,
+  onEditDay,
   onAddBlock,
   onEditBlock,
 }) => {
-  const hasDayType = dayType !== null;
   const sessionsQuery = useSessionsByDay(planId, planDayId);
+  const addEmptySession = useAddEmptySessionToDay(planId);
 
-  const renderSessions = (): React.ReactNode => {
-    if (planDayId === null) {
-      return <DayEmpty hasDayType={hasDayType} onAddDay={() => onAddDay(date)} />;
-    }
+  const sessions = sessionsQuery.data?.sessions;
+  const sessionsLoading = planDayId !== null && sessionsQuery.isLoading;
+  const sessionsError = planDayId !== null && sessionsQuery.error !== null;
 
-    if (sessionsQuery.isLoading) {
-      return <LoadingState message="Loading sessions..." minHeight={SESSIONS_LOADING_MIN_HEIGHT} />;
-    }
+  const handleEdit = (): void => onEditDay(date, planDayId);
 
-    if (sessionsQuery.error) {
-      return <Alert severity="error">Failed to load sessions</Alert>;
-    }
-
-    const sessions = sessionsQuery.data?.sessions;
-
-    if (!sessions || sessions.length === 0) {
-      return (
-        <Stack direction="row" spacing={1} alignItems="center">
-          <DayEmpty hasDayType={hasDayType} onAddDay={() => onAddDay(date)} />
-          <EmptyAddCell label="Add session" onAdd={() => onAddSession(planDayId)} />
-        </Stack>
-      );
-    }
-
-    return (
-      <Stack spacing={2}>
-        {sessions.map((session) => (
-          <PlanSessionCard
-            key={session.id}
-            planId={planId}
-            session={session}
-            lookups={lookups}
-            onAddBlock={onAddBlock}
-            onEditBlock={onEditBlock}
-          />
-        ))}
-      </Stack>
-    );
+  const handleAddSession = (): void => {
+    addEmptySession.mutate({
+      date,
+      dayId: planDayId,
+      order: sessions?.length ?? 0,
+    });
   };
 
   return (
@@ -94,14 +74,58 @@ export const DayRow: React.FC<DayRowProps> = ({
       sx={{
         p: 2,
         bgcolor: dayType !== null ? alpha(dayType.color, DAY_BG_ALPHA) : "transparent",
+        [`&:hover .${ROW_ACTION_CLASS}`]: { opacity: 1 },
       }}
     >
       <Stack sx={{ minWidth: (theme) => theme.spacing(DATE_COL_MIN_WIDTH_FACTOR) }}>
         <DayRowHeader date={date} isToday={isToday} />
       </Stack>
       <Stack spacing={1} sx={{ flex: 1, minWidth: 0 }}>
-        {dayType !== null ? <DayTypeBadge dayType={dayType} /> : null}
-        {renderSessions()}
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <DayLabel dayType={dayType} />
+          <Tooltip title="Edit day">
+            <IconButton
+              className={ROW_ACTION_CLASS}
+              size="small"
+              aria-label="Edit day"
+              onClick={handleEdit}
+              sx={rowActionSx}
+            >
+              <EditIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Box sx={{ flex: 1 }} />
+          <Tooltip title="Add session">
+            <IconButton
+              className={ROW_ACTION_CLASS}
+              size="small"
+              aria-label="Add session"
+              onClick={handleAddSession}
+              disabled={addEmptySession.isPending}
+              sx={{ ...rowActionSx, color: "primary.main" }}
+            >
+              <AddIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+        {sessionsLoading && (
+          <LoadingState message="Loading sessions..." minHeight={SESSIONS_LOADING_MIN_HEIGHT} />
+        )}
+        {sessionsError && <Alert severity="error">Failed to load sessions</Alert>}
+        {sessions !== undefined && sessions.length > 0 && (
+          <Stack spacing={2}>
+            {sessions.map((session) => (
+              <PlanSessionCard
+                key={session.id}
+                planId={planId}
+                session={session}
+                lookups={lookups}
+                onAddBlock={onAddBlock}
+                onEditBlock={onEditBlock}
+              />
+            ))}
+          </Stack>
+        )}
       </Stack>
     </Stack>
   );
