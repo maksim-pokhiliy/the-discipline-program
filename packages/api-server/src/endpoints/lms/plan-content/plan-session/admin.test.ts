@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { ConflictError, ForbiddenError, NotFoundError } from "@repo/errors";
+import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach } from "../../../../test/helpers";
 
@@ -153,8 +153,14 @@ describe("lmsPlanSessionApi", () => {
       }
     });
 
-    it("rejects with ConflictError on duplicate (dayId, order)", async () => {
+    it("allows two sessions with the same (dayId, order) — order is sort hint, not unique", async () => {
       const first = await lmsPlanSessionApi.create(
+        coach.user.id,
+        activePlanId,
+        activeDayId,
+        baseSessionData({ order: 42 }),
+      );
+      const second = await lmsPlanSessionApi.create(
         coach.user.id,
         activePlanId,
         activeDayId,
@@ -162,16 +168,12 @@ describe("lmsPlanSessionApi", () => {
       );
 
       try {
-        await expect(
-          lmsPlanSessionApi.create(
-            coach.user.id,
-            activePlanId,
-            activeDayId,
-            baseSessionData({ order: 42 }),
-          ),
-        ).rejects.toThrow(ConflictError);
+        expect(first.order).toBe(42);
+        expect(second.order).toBe(42);
+        expect(first.id).not.toBe(second.id);
       } finally {
         await cleanupRaw.planSession.delete({ where: { id: first.id } }).catch(() => {});
+        await cleanupRaw.planSession.delete({ where: { id: second.id } }).catch(() => {});
       }
     });
   });

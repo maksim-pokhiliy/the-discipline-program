@@ -7,13 +7,7 @@ import {
   type CreatePlanBlockRequest,
 } from "@repo/contracts/lms/plan-block";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
-import {
-  BadRequestError,
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from "@repo/errors";
+import { BadRequestError, ForbiddenError, NotFoundError, ValidationError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach, createTestPlan } from "../../../../test/helpers";
 
@@ -393,25 +387,27 @@ describe("lmsPlanBlockApi", () => {
       }
     });
 
-    it("rejects with ConflictError on duplicate (sessionId, order)", async () => {
+    it("allows two blocks with the same (sessionId, order) — order is sort hint, not unique", async () => {
       const first = await lmsPlanBlockApi.create(
         coach.user.id,
         activePlan.id,
         activeSessionId,
         baseCreateData(schemeTypeNone.id, [blockTypeA.id], { order: 21 }),
       );
+      const second = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeB.id], { order: 21 }),
+      );
 
       try {
-        await expect(
-          lmsPlanBlockApi.create(
-            coach.user.id,
-            activePlan.id,
-            activeSessionId,
-            baseCreateData(schemeTypeNone.id, [blockTypeB.id], { order: 21 }),
-          ),
-        ).rejects.toThrow(ConflictError);
+        expect(first.order).toBe(21);
+        expect(second.order).toBe(21);
+        expect(first.id).not.toBe(second.id);
       } finally {
         await cleanupRaw.planBlock.delete({ where: { id: first.id } }).catch(() => {});
+        await cleanupRaw.planBlock.delete({ where: { id: second.id } }).catch(() => {});
       }
     });
   });
