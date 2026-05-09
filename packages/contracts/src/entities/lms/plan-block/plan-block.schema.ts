@@ -16,6 +16,21 @@ const blockTypeIdsSchema = z
 
 const blockNotesSchema = noNulByteString(PLAN_BLOCK_CONSTANTS.MAX_NOTES_LENGTH);
 
+const hasUniqueItemIds = (
+  items: ReadonlyArray<z.infer<typeof planItemForUpsertSchema>>,
+): boolean => {
+  const ids = items.map((i) => i.id).filter((id): id is string => id !== undefined);
+
+  return new Set(ids).size === ids.length;
+};
+
+const itemsArraySchema = z
+  .array(planItemForUpsertSchema)
+  .max(PLAN_BLOCK_CONSTANTS.MAX_ITEMS_PER_BLOCK, {
+    message: `items must contain at most ${PLAN_BLOCK_CONSTANTS.MAX_ITEMS_PER_BLOCK} entries`,
+  })
+  .refine(hasUniqueItemIds, { message: "items must have unique ids" });
+
 export const planBlockSchema = z.object({
   id: z.string().cuid(),
   sessionId: z.string().cuid(),
@@ -36,7 +51,7 @@ export const createPlanBlockSchema = z.object({
   blockTypeIds: blockTypeIdsSchema,
   modifiers: z.unknown().optional(),
   notes: blockNotesSchema.optional(),
-  items: z.array(planItemForUpsertSchema).optional(),
+  items: itemsArraySchema.optional(),
 });
 
 export const updatePlanBlockSchema = z.object({
@@ -46,5 +61,5 @@ export const updatePlanBlockSchema = z.object({
   schemeParams: schemeParamsSchema.optional(),
   modifiers: z.unknown().nullable().optional(),
   notes: blockNotesSchema.nullable().optional(),
-  items: z.array(planItemForUpsertSchema).optional(),
+  items: itemsArraySchema.optional(),
 });

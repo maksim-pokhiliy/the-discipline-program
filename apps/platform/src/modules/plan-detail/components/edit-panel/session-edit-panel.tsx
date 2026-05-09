@@ -16,6 +16,8 @@ import {
 
 import { useCreatePlanSession, useUpdatePlanSession } from "@app/lib/hooks";
 
+import { useSubmitGuard } from "../../lib/use-submit-guard";
+
 import { EditPanel } from "./edit-panel";
 import { type SaveStatusChange } from "./edit-panel-status";
 
@@ -120,7 +122,7 @@ export const SessionEditPanel: React.FC<SessionEditPanelProps> = ({
     }
   };
 
-  const onSubmit = handleSubmit(submitData);
+  const onSubmit = useSubmitGuard(handleSubmit(submitData));
 
   const title = isCreate ? "Add session" : "Edit session";
 

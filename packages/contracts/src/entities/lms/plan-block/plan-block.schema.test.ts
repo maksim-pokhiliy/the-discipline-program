@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { PLAN_BLOCK_CONSTANTS } from "./plan-block.constants";
 import { createPlanBlockSchema, updatePlanBlockSchema } from "./plan-block.schema";
 
 const baseValid = {
@@ -149,6 +150,92 @@ describe("updatePlanBlockSchema", () => {
           ...validItem,
           alternatives: [{ exerciseId: validItem.exerciseId }],
         },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects items array exceeding MAX_ITEMS_PER_BLOCK", () => {
+    const overCap = Array.from(
+      { length: PLAN_BLOCK_CONSTANTS.MAX_ITEMS_PER_BLOCK + 1 },
+      (_, i) => ({
+        ...validItem,
+        order: i,
+      }),
+    );
+
+    const result = updatePlanBlockSchema.safeParse({ items: overCap });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain("at most");
+    }
+  });
+
+  it("accepts items array at MAX_ITEMS_PER_BLOCK", () => {
+    const atCap = Array.from({ length: PLAN_BLOCK_CONSTANTS.MAX_ITEMS_PER_BLOCK }, (_, i) => ({
+      ...validItem,
+      order: i,
+    }));
+
+    const result = updatePlanBlockSchema.safeParse({ items: atCap });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects items array with duplicate ids", () => {
+    const duplicateId = "ckxabcdefghijklmnopqr01";
+    const result = updatePlanBlockSchema.safeParse({
+      items: [
+        { ...validItem, id: duplicateId },
+        { ...validItem, id: duplicateId, order: 1 },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toContain("unique ids");
+    }
+  });
+
+  it("accepts items array with mixed ids and undefined ids", () => {
+    const result = updatePlanBlockSchema.safeParse({
+      items: [
+        { ...validItem, id: "ckxabcdefghijklmnopqr01" },
+        { ...validItem, order: 1 },
+        { ...validItem, id: "ckxabcdefghijklmnopqr02", order: 2 },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("createPlanBlockSchema items array refinements", () => {
+  it("rejects items array exceeding MAX_ITEMS_PER_BLOCK", () => {
+    const overCap = Array.from(
+      { length: PLAN_BLOCK_CONSTANTS.MAX_ITEMS_PER_BLOCK + 1 },
+      (_, i) => ({
+        ...validItem,
+        order: i,
+      }),
+    );
+
+    const result = createPlanBlockSchema.safeParse({ ...baseValid, items: overCap });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects items array with duplicate ids", () => {
+    const duplicateId = "ckxabcdefghijklmnopqr01";
+    const result = createPlanBlockSchema.safeParse({
+      ...baseValid,
+      items: [
+        { ...validItem, id: duplicateId },
+        { ...validItem, id: duplicateId, order: 1 },
       ],
     });
 

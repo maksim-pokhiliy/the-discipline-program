@@ -26,6 +26,7 @@ import {
   toUpdatePlanBlockRequest,
   useBlockEditForm,
 } from "../../lib/use-block-edit-form";
+import { useSubmitGuard } from "../../lib/use-submit-guard";
 
 import { BlockItemList } from "./block-item-list";
 import { EditPanel } from "./edit-panel";
@@ -118,7 +119,7 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
     }
   };
 
-  const onSubmit = handleSubmit(submitData);
+  const onSubmit = useSubmitGuard(handleSubmit(submitData));
 
   const title = isCreate ? "Add block" : "Edit block";
 

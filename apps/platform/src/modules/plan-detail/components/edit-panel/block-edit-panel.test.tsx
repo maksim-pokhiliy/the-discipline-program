@@ -287,6 +287,46 @@ describe("BlockEditPanel", () => {
     expect(lastDirtyCall?.[0]).toBe(false);
   });
 
+  it("ignores rapid double-click on Save and triggers updatePlanBlock.mutateAsync exactly once", async () => {
+    let resolveMutation: ((value: { id: string }) => void) | null = null;
+    const mutationPromise = new Promise<{ id: string }>((resolve) => {
+      resolveMutation = resolve;
+    });
+
+    updateMutation.mockReturnValueOnce(mutationPromise);
+
+    renderEditPanel();
+
+    const blockNotes = document.querySelector(
+      'textarea[name="notes"]',
+    ) as HTMLTextAreaElement | null;
+
+    fireEvent.change(blockNotes as HTMLTextAreaElement, {
+      target: { value: "guard-double-click" },
+    });
+
+    const saveButton = screen.getByRole("button", { name: /^Save$/ });
+
+    fireEvent.click(saveButton);
+    fireEvent.click(saveButton);
+    fireEvent.click(saveButton);
+
+    await vi.waitFor(() => {
+      expect(updateMutation).toHaveBeenCalledTimes(1);
+    });
+
+    fireEvent.click(saveButton);
+    fireEvent.click(saveButton);
+
+    expect(updateMutation).toHaveBeenCalledTimes(1);
+
+    if (resolveMutation !== null) {
+      (resolveMutation as (value: { id: string }) => void)({ id: BLOCK_ID });
+    }
+
+    await mutationPromise;
+  });
+
   it("emits 'error' with a retry callback that re-fires the same mutateAsync payload", async () => {
     const error = new Error("Network down");
 

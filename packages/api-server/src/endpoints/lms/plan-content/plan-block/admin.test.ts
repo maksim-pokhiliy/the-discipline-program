@@ -814,6 +814,231 @@ describe("lmsPlanBlockApi", () => {
         await cleanupRaw.planBlock.delete({ where: { id: foreignBlock.id } }).catch(() => {});
       }
     });
+
+    it("rejects update with item id from a different block and leaves the foreign item intact", async () => {
+      const exerciseA = await cleanupRaw.exercise.create({
+        data: { name: `xb-ex-a-${uniqueSuffix()}`, primaryMovement: "SQUAT" },
+      });
+      const exerciseB = await cleanupRaw.exercise.create({
+        data: { name: `xb-ex-b-${uniqueSuffix()}`, primaryMovement: "PUSH_HORIZONTAL" },
+      });
+
+      const blockA = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], {
+          order: 60,
+          items: [
+            {
+              order: 0,
+              exerciseId: exerciseA.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 5 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+          ],
+        }),
+      );
+
+      const blockB = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], {
+          order: 61,
+          items: [
+            {
+              order: 0,
+              exerciseId: exerciseB.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 8 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+              notes: "B-original",
+            },
+          ],
+        }),
+      );
+
+      try {
+        const blockAItemId = blockA.items[0]?.id;
+        const blockBItemId = blockB.items[0]?.id;
+
+        expect(blockAItemId).toBeDefined();
+        expect(blockBItemId).toBeDefined();
+
+        await expect(
+          lmsPlanBlockApi.update(coach.user.id, activePlan.id, blockA.id, {
+            items: [
+              {
+                id: blockBItemId,
+                order: 0,
+                exerciseId: exerciseA.id,
+                prescription: {
+                  reps: { kind: "FIXED", value: 99 },
+                  sideMode: "BILATERAL",
+                  modifiers: [],
+                },
+                notes: "smuggled",
+              },
+            ],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const blockBItem = await cleanupRaw.planItem.findUnique({
+          where: { id: blockBItemId ?? "" },
+        });
+
+        expect(blockBItem?.notes).toBe("B-original");
+        expect(blockBItem?.exerciseId).toBe(exerciseB.id);
+
+        const blockAItem = await cleanupRaw.planItem.findUnique({
+          where: { id: blockAItemId ?? "" },
+        });
+
+        expect(blockAItem).not.toBeNull();
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: blockA.id } }).catch(() => {});
+        await cleanupRaw.planBlock.delete({ where: { id: blockB.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: exerciseA.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: exerciseB.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects update with item id belonging to a different coach's plan", async () => {
+      const exerciseFar = await cleanupRaw.exercise.create({
+        data: { name: `xc-ex-${uniqueSuffix()}`, primaryMovement: "SQUAT" },
+      });
+
+      const foreignBlock = await cleanupRaw.planBlock.create({
+        data: {
+          sessionId: foreignSessionId,
+          order: 70,
+          schemeTypeId: schemeTypeNone.id,
+          schemeParams: { kind: "NONE" },
+          notes: "foreign-coach-block",
+        },
+      });
+
+      const foreignItem = await cleanupRaw.planItem.create({
+        data: {
+          blockId: foreignBlock.id,
+          order: 0,
+          exerciseId: exerciseFar.id,
+          prescription: {
+            reps: { kind: "FIXED", value: 5 },
+            sideMode: "BILATERAL",
+            modifiers: [],
+          },
+          notes: "foreign-original",
+        },
+      });
+
+      const localBlock = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], { order: 71 }),
+      );
+
+      try {
+        await expect(
+          lmsPlanBlockApi.update(coach.user.id, activePlan.id, localBlock.id, {
+            items: [
+              {
+                id: foreignItem.id,
+                order: 0,
+                exerciseId: exerciseFar.id,
+                prescription: {
+                  reps: { kind: "FIXED", value: 999 },
+                  sideMode: "BILATERAL",
+                  modifiers: [],
+                },
+                notes: "cross-coach-smuggle",
+              },
+            ],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const survivor = await cleanupRaw.planItem.findUnique({
+          where: { id: foreignItem.id },
+        });
+
+        expect(survivor?.notes).toBe("foreign-original");
+        expect(survivor?.blockId).toBe(foreignBlock.id);
+      } finally {
+        await cleanupRaw.planItem.delete({ where: { id: foreignItem.id } }).catch(() => {});
+        await cleanupRaw.planBlock.delete({ where: { id: foreignBlock.id } }).catch(() => {});
+        await cleanupRaw.planBlock.delete({ where: { id: localBlock.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: exerciseFar.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects update with duplicate item ids in the items array", async () => {
+      const exercise = await cleanupRaw.exercise.create({
+        data: { name: `dup-ex-${uniqueSuffix()}`, primaryMovement: "SQUAT" },
+      });
+
+      const block = await lmsPlanBlockApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeSessionId,
+        baseCreateData(schemeTypeNone.id, [blockTypeA.id], {
+          order: 80,
+          items: [
+            {
+              order: 0,
+              exerciseId: exercise.id,
+              prescription: {
+                reps: { kind: "FIXED", value: 5 },
+                sideMode: "BILATERAL",
+                modifiers: [],
+              },
+            },
+          ],
+        }),
+      );
+
+      try {
+        const itemId = block.items[0]?.id;
+
+        expect(itemId).toBeDefined();
+
+        await expect(
+          lmsPlanBlockApi.update(coach.user.id, activePlan.id, block.id, {
+            items: [
+              {
+                id: itemId,
+                order: 0,
+                exerciseId: exercise.id,
+                prescription: {
+                  reps: { kind: "FIXED", value: 5 },
+                  sideMode: "BILATERAL",
+                  modifiers: [],
+                },
+              },
+              {
+                id: itemId,
+                order: 1,
+                exerciseId: exercise.id,
+                prescription: {
+                  reps: { kind: "FIXED", value: 8 },
+                  sideMode: "BILATERAL",
+                  modifiers: [],
+                },
+              },
+            ],
+          }),
+        ).rejects.toThrow(ValidationError);
+      } finally {
+        await cleanupRaw.planBlock.delete({ where: { id: block.id } }).catch(() => {});
+        await cleanupRaw.exercise.delete({ where: { id: exercise.id } }).catch(() => {});
+      }
+    });
   });
 
   describe("delete", () => {

@@ -22,3 +22,4 @@ export {
   type OpenPanel,
   useEditPanelState,
 } from "./use-edit-panel-state";
+export { useSubmitGuard } from "./use-submit-guard";

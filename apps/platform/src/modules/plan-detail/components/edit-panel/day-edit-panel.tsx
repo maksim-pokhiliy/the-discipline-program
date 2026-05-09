@@ -16,6 +16,8 @@ import {
 
 import { useUpdatePlanDay, useUpsertPlanDay } from "@app/lib/hooks";
 
+import { useSubmitGuard } from "../../lib/use-submit-guard";
+
 import { EditPanel } from "./edit-panel";
 import { type SaveStatusChange } from "./edit-panel-status";
 
@@ -101,7 +103,7 @@ export const DayEditPanel: React.FC<DayEditPanelProps> = ({
     }
   };
 
-  const onSubmit = handleSubmit(submitData);
+  const onSubmit = useSubmitGuard(handleSubmit(submitData));
 
   const title = dayId === null ? "Add day" : "Edit day";
 

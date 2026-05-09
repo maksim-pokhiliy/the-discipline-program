@@ -94,9 +94,19 @@ const validateExerciseIds = async (exerciseIds: readonly string[]): Promise<void
   }
 };
 
+const validateUniqueIncomingIds = (items: readonly PlanItemForUpsert[]): void => {
+  const ids = items.map((i) => i.id).filter((id): id is string => id !== undefined);
+
+  if (new Set(ids).size !== ids.length) {
+    throw new ValidationError("items contains duplicate ids", { field: "items" });
+  }
+};
+
 export const validatePlanItemsBatch = async (
   items: readonly PlanItemForUpsert[],
 ): Promise<void> => {
+  validateUniqueIncomingIds(items);
+
   for (const item of items) {
     if (!hasUniqueAlternativeIds(item.alternatives)) {
       throw new ValidationError(ALTERNATIVES_UNIQUE_MESSAGE, { field: "alternatives" });
@@ -139,21 +149,29 @@ export const applyItemDiff = async (
     where: { blockId },
     select: { id: true },
   });
-  const existingIds = existing.map((i) => i.id);
-  const incomingIds = items.map((i) => i.id).filter((id): id is string => id !== undefined);
-  const incomingSet = new Set(incomingIds);
-  const idsToDelete = existingIds.filter((id) => !incomingSet.has(id));
-
-  if (idsToDelete.length > 0) {
-    await tx.planItem.deleteMany({ where: { id: { in: idsToDelete } } });
-  }
-
+  const existingItemIdSet = new Set(existing.map((i) => i.id));
   const itemsToUpdate = items.filter((i): i is PlanItemForUpdate => i.id !== undefined);
   const itemsToCreate = items.filter((i) => i.id === undefined);
 
+  for (const upd of itemsToUpdate) {
+    if (!existingItemIdSet.has(upd.id)) {
+      throw new BadRequestError("Item id does not belong to this block", {
+        itemId: upd.id,
+        blockId,
+      });
+    }
+  }
+
+  const incomingIdSet = new Set(itemsToUpdate.map((i) => i.id));
+  const idsToDelete = [...existingItemIdSet].filter((id) => !incomingIdSet.has(id));
+
+  if (idsToDelete.length > 0) {
+    await tx.planItem.deleteMany({ where: { id: { in: idsToDelete }, blockId } });
+  }
+
   for (const item of itemsToUpdate) {
     await tx.planItem.update({
-      where: { id: item.id },
+      where: { id: item.id, blockId },
       data: buildPlanItemUpdate(item),
     });
   }
