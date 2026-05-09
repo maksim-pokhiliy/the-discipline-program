@@ -8,6 +8,7 @@ import { z } from "zod";
 
 import {
   defaultSchemeParams,
+  type Prescription,
   schemeArchetypeKindSchema,
   schemeParamsSchema,
 } from "@repo/contracts/lms/_domain";
@@ -17,10 +18,21 @@ import {
   PLAN_BLOCK_CONSTANTS,
   type UpdatePlanBlockRequest,
 } from "@repo/contracts/lms/plan-block";
-import { type PlanItem, type PlanItemForUpsert } from "@repo/contracts/lms/plan-item";
+import {
+  type PlanItem,
+  type PlanItemForUpsert,
+  planItemForUpsertSchema,
+} from "@repo/contracts/lms/plan-item";
 import { type SchemeType } from "@repo/contracts/lms/scheme-type";
 
 const INITIAL_SCHEME_KIND = "NONE" as const;
+const DEFAULT_FIXED_REPS = 10;
+
+export const defaultPrescription = (): Prescription => ({
+  reps: { kind: "FIXED", value: DEFAULT_FIXED_REPS },
+  sideMode: "BILATERAL",
+  modifiers: [],
+});
 
 const blockTypeIdsSchema = z
   .array(z.string().cuid())
@@ -37,19 +49,31 @@ export const blockFormSchema = z.object({
   schemeParams: schemeParamsSchema,
   blockTypeIds: blockTypeIdsSchema,
   notes: z.string().max(PLAN_BLOCK_CONSTANTS.MAX_NOTES_LENGTH),
+  items: z.array(planItemForUpsertSchema),
 });
 
-export type BlockFormValues = z.infer<typeof blockFormSchema>;
+export type BlockFormValues = z.input<typeof blockFormSchema>;
 
 type UseBlockEditFormParams = {
   existingBlock: PlanBlock | null | undefined;
   existingBlocks: readonly PlanBlock[];
+  existingItems: readonly PlanItem[];
   schemeTypes: ReadonlyMap<string, SchemeType>;
   onDirtyChange?: (isDirty: boolean) => void;
 };
 
+const toFormItems = (items: readonly PlanItem[]): PlanItemForUpsert[] =>
+  items.map((item) => ({
+    id: item.id,
+    order: item.order,
+    exerciseId: item.exerciseId,
+    prescription: item.prescription,
+    ...(item.alternatives !== null ? { alternatives: item.alternatives } : {}),
+    ...(item.notes !== null ? { notes: item.notes } : {}),
+  }));
+
 const buildDefaults = (params: UseBlockEditFormParams): BlockFormValues => {
-  const { existingBlock, existingBlocks, schemeTypes } = params;
+  const { existingBlock, existingBlocks, existingItems, schemeTypes } = params;
 
   if (existingBlock) {
     const archetypeKind =
@@ -62,6 +86,7 @@ const buildDefaults = (params: UseBlockEditFormParams): BlockFormValues => {
       schemeParams: existingBlock.schemeParams,
       blockTypeIds: [...existingBlock.blockTypeIds],
       notes: existingBlock.notes ?? "",
+      items: toFormItems(existingItems),
     };
   }
 
@@ -72,18 +97,14 @@ const buildDefaults = (params: UseBlockEditFormParams): BlockFormValues => {
     schemeParams: defaultSchemeParams(INITIAL_SCHEME_KIND),
     blockTypeIds: [],
     notes: "",
+    items: [],
   };
 };
 
-const toExistingItemsForUpsert = (items: readonly PlanItem[]): PlanItemForUpsert[] =>
-  items.map((item) => ({
-    id: item.id,
-    order: item.order,
-    exerciseId: item.exerciseId,
-    prescription: item.prescription,
-    ...(item.alternatives !== null ? { alternatives: item.alternatives } : {}),
-    ...(item.notes !== null ? { notes: item.notes } : {}),
-  }));
+const reorderFormItems = (
+  items: readonly z.input<typeof planItemForUpsertSchema>[],
+): PlanItemForUpsert[] =>
+  items.map((item, index) => planItemForUpsertSchema.parse({ ...item, order: index }));
 
 export const toCreatePlanBlockRequest = (values: BlockFormValues): CreatePlanBlockRequest => {
   const trimmedNotes = values.notes.trim();
@@ -93,14 +114,11 @@ export const toCreatePlanBlockRequest = (values: BlockFormValues): CreatePlanBlo
     schemeTypeId: values.schemeTypeId,
     blockTypeIds: values.blockTypeIds,
     ...(trimmedNotes.length > 0 ? { notes: trimmedNotes } : {}),
-    items: [],
+    items: reorderFormItems(values.items),
   };
 };
 
-export const toUpdatePlanBlockRequest = (
-  values: BlockFormValues,
-  existingItems: readonly PlanItem[],
-): UpdatePlanBlockRequest => {
+export const toUpdatePlanBlockRequest = (values: BlockFormValues): UpdatePlanBlockRequest => {
   const trimmedNotes = values.notes.trim();
 
   return {
@@ -109,14 +127,14 @@ export const toUpdatePlanBlockRequest = (
     blockTypeIds: values.blockTypeIds,
     schemeParams: values.schemeParams,
     notes: trimmedNotes.length > 0 ? trimmedNotes : null,
-    items: toExistingItemsForUpsert(existingItems),
+    items: reorderFormItems(values.items),
   };
 };
 
 export const useBlockEditForm = (
   params: UseBlockEditFormParams,
 ): UseFormReturn<BlockFormValues> => {
-  const form = useForm<BlockFormValues>({
+  const form = useForm({
     resolver: zodResolver(blockFormSchema),
     defaultValues: buildDefaults(params),
   });

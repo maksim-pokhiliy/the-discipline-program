@@ -12,6 +12,7 @@ import {
 import { Controller, FormProvider } from "react-hook-form";
 
 import { type BlockType } from "@repo/contracts/lms/block-type";
+import { type Exercise } from "@repo/contracts/lms/exercise";
 import { type PlanBlock, PLAN_BLOCK_CONSTANTS } from "@repo/contracts/lms/plan-block";
 import { type PlanItem } from "@repo/contracts/lms/plan-item";
 import { type SchemeType } from "@repo/contracts/lms/scheme-type";
@@ -25,6 +26,7 @@ import {
   useBlockEditForm,
 } from "../../lib/use-block-edit-form";
 
+import { BlockItemList } from "./block-item-list";
 import { EditPanel } from "./edit-panel";
 import { type SaveStatusChange } from "./edit-panel-status";
 
@@ -34,6 +36,7 @@ const NO_SCHEME_TYPE_VALUE = "";
 type BlockEditPanelLookups = {
   readonly schemeTypes: ReadonlyMap<string, SchemeType>;
   readonly blockTypes: ReadonlyMap<string, BlockType>;
+  readonly exercises: ReadonlyMap<string, Exercise>;
 };
 
 type BlockEditPanelProps = {
@@ -67,6 +70,7 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
   const form = useBlockEditForm({
     existingBlock,
     existingBlocks,
+    existingItems,
     schemeTypes: lookups.schemeTypes,
     ...(onDirtyChange !== undefined ? { onDirtyChange } : {}),
   });
@@ -93,7 +97,7 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
       } else {
         await updateBlock.mutateAsync({
           id: blockId,
-          data: toUpdatePlanBlockRequest(data, existingItems),
+          data: toUpdatePlanBlockRequest(data),
         });
       }
 
@@ -212,6 +216,8 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
             helperText={errors.notes?.message}
             {...register("notes")}
           />
+
+          <BlockItemList lookups={{ exercises: lookups.exercises }} isLoading={isSaving} />
         </Stack>
       </EditPanel>
     </FormProvider>
