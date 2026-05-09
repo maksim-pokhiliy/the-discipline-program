@@ -85,6 +85,27 @@ describe("useEditPanelState", () => {
     expect(result.current.saveStatus).toBe("clean");
   });
 
+  it("requestClose is a no-op while saveStatus is 'saving'", () => {
+    const { result } = renderHook(() => useEditPanelState());
+
+    act(() => {
+      result.current.openPanel(dayPanel());
+    });
+    act(() => {
+      result.current.markDirty(true);
+    });
+    act(() => {
+      result.current.setSaveStatus("saving");
+    });
+    act(() => {
+      result.current.requestClose();
+    });
+
+    expect(result.current.open?.kind).toBe("day");
+    expect(result.current.pendingClose).toBe(false);
+    expect(result.current.saveStatus).toBe("saving");
+  });
+
   it("confirmDiscard clears state when no pending panel was stashed", () => {
     const { result } = renderHook(() => useEditPanelState());
 

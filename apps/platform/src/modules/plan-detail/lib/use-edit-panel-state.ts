@@ -72,6 +72,10 @@ export const useEditPanelState = (): EditPanelStateApi => {
   );
 
   const requestClose = useCallback(() => {
+    if (saveStatus === "saving") {
+      return;
+    }
+
     if (isDirty) {
       setPendingClose(true);
 
@@ -82,7 +86,7 @@ export const useEditPanelState = (): EditPanelStateApi => {
     setOpen(null);
     setSaveStatusState(INITIAL_STATUS);
     setLastError(null);
-  }, [isDirty, clearFadeTimer]);
+  }, [isDirty, saveStatus, clearFadeTimer]);
 
   const confirmDiscard = useCallback(() => {
     clearFadeTimer();
