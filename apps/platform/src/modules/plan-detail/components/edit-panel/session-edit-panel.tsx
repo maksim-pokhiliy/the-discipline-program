@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Stack, TextField } from "@mui/material";
 import { useForm } from "react-hook-form";
@@ -11,8 +13,9 @@ import {
   type PlanSession,
   type UpdatePlanSessionRequest,
 } from "@repo/contracts/lms/plan-session";
+import { ConfirmationModal } from "@repo/ui";
 
-import { useCreatePlanSession, useUpdatePlanSession } from "@app/lib/hooks";
+import { useCreatePlanSession, useDeletePlanSession, useUpdatePlanSession } from "@app/lib/hooks";
 
 import { toErrorMessage } from "../../lib/to-error-message";
 import { useSubmitGuard } from "../../lib/use-submit-guard";
@@ -72,6 +75,9 @@ export const SessionEditPanel: React.FC<SessionEditPanelProps> = ({
 }) => {
   const createSession = useCreatePlanSession({ planId, dayId });
   const updateSession = useUpdatePlanSession({ planId, dayId });
+  const deleteSession = useDeletePlanSession({ planId, dayId });
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const isCreate = sessionId === null;
 
@@ -114,40 +120,76 @@ export const SessionEditPanel: React.FC<SessionEditPanelProps> = ({
 
   const title = isCreate ? "Add session" : "Edit session";
 
-  return (
-    <EditPanel
-      open
-      onClose={onClose}
-      title={title}
-      isSaving={isSaving}
-      canSave={isDirty && Object.keys(errors).length === 0}
-      onSave={() => void onSubmit()}
-      onCancel={onClose}
-    >
-      <Stack spacing={3}>
-        <TextField
-          label="Order"
-          type="number"
-          size="small"
-          fullWidth
-          disabled={isSaving}
-          error={Boolean(errors.order)}
-          helperText={errors.order?.message}
-          inputProps={{ min: 0, step: 1 }}
-          {...register("order", { valueAsNumber: true })}
-        />
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (sessionId === null) {
+      return;
+    }
 
-        <TextField
-          label="Label"
-          placeholder="Optional session label"
-          size="small"
-          fullWidth
-          disabled={isSaving}
-          error={Boolean(errors.label)}
-          helperText={errors.label?.message}
-          {...register("label")}
-        />
-      </Stack>
-    </EditPanel>
+    setDeleteError(null);
+    onStatusChange?.("saving");
+
+    try {
+      await deleteSession.mutateAsync(sessionId);
+      onStatusChange?.("saved");
+      setIsConfirmingDelete(false);
+      onClose();
+    } catch (error) {
+      const message = toErrorMessage(error);
+
+      setDeleteError(message);
+      onStatusChange?.("error", { message, retry: handleConfirmDelete });
+    }
+  };
+
+  return (
+    <>
+      <EditPanel
+        open
+        onClose={onClose}
+        title={title}
+        isSaving={isSaving || deleteSession.isPending}
+        canSave={isDirty && Object.keys(errors).length === 0}
+        onSave={() => void onSubmit()}
+        onCancel={onClose}
+        {...(!isCreate && { onDelete: () => setIsConfirmingDelete(true) })}
+      >
+        <Stack spacing={3}>
+          <TextField
+            label="Order"
+            type="number"
+            size="small"
+            fullWidth
+            disabled={isSaving}
+            error={Boolean(errors.order)}
+            helperText={errors.order?.message}
+            inputProps={{ min: 0, step: 1 }}
+            {...register("order", { valueAsNumber: true })}
+          />
+
+          <TextField
+            label="Label"
+            placeholder="Optional session label"
+            size="small"
+            fullWidth
+            disabled={isSaving}
+            error={Boolean(errors.label)}
+            helperText={errors.label?.message}
+            {...register("label")}
+          />
+        </Stack>
+      </EditPanel>
+
+      <ConfirmationModal
+        open={isConfirmingDelete}
+        onClose={() => setIsConfirmingDelete(false)}
+        title="Delete session"
+        type="danger"
+        message="Are you sure you want to delete this session?"
+        details="All blocks and items inside will be removed. This cannot be undone."
+        isConfirming={deleteSession.isPending}
+        error={deleteError}
+        onConfirm={handleConfirmDelete}
+      />
+    </>
   );
 };

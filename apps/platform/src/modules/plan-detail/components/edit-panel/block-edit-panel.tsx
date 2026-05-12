@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import {
   FormControl,
   FormHelperText,
@@ -16,9 +18,9 @@ import { type Exercise } from "@repo/contracts/lms/exercise";
 import { type PlanBlock, PLAN_BLOCK_CONSTANTS } from "@repo/contracts/lms/plan-block";
 import { type PlanItem } from "@repo/contracts/lms/plan-item";
 import { type SchemeType } from "@repo/contracts/lms/scheme-type";
-import { MultiSelect, SchemeParamsField } from "@repo/ui";
+import { ConfirmationModal, MultiSelect, SchemeParamsField } from "@repo/ui";
 
-import { useCreatePlanBlock, useUpdatePlanBlock } from "@app/lib/hooks";
+import { useCreatePlanBlock, useDeletePlanBlock, useUpdatePlanBlock } from "@app/lib/hooks";
 
 import { toErrorMessage } from "../../lib/to-error-message";
 import {
@@ -67,6 +69,9 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
 }) => {
   const createBlock = useCreatePlanBlock({ planId, sessionId });
   const updateBlock = useUpdatePlanBlock({ planId, sessionId });
+  const deleteBlock = useDeletePlanBlock({ planId, sessionId });
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const form = useBlockEditForm({
     existingBlock,
@@ -117,16 +122,38 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
 
   const title = isCreate ? "Add block" : "Edit block";
 
+  const handleConfirmDelete = async (): Promise<void> => {
+    if (blockId === null) {
+      return;
+    }
+
+    setDeleteError(null);
+    onStatusChange?.("saving");
+
+    try {
+      await deleteBlock.mutateAsync(blockId);
+      onStatusChange?.("saved");
+      setIsConfirmingDelete(false);
+      onClose();
+    } catch (error) {
+      const message = toErrorMessage(error);
+
+      setDeleteError(message);
+      onStatusChange?.("error", { message, retry: handleConfirmDelete });
+    }
+  };
+
   return (
     <FormProvider {...form}>
       <EditPanel
         open
         onClose={onClose}
         title={title}
-        isSaving={isSaving}
+        isSaving={isSaving || deleteBlock.isPending}
         canSave={isDirty && Object.keys(errors).length === 0}
         onSave={() => void onSubmit()}
         onCancel={onClose}
+        {...(!isCreate && { onDelete: () => setIsConfirmingDelete(true) })}
       >
         <Stack spacing={3}>
           <TextField
@@ -226,6 +253,18 @@ export const BlockEditPanel: React.FC<BlockEditPanelProps> = ({
           <BlockItemList lookups={{ exercises: lookups.exercises }} isLoading={isSaving} />
         </Stack>
       </EditPanel>
+
+      <ConfirmationModal
+        open={isConfirmingDelete}
+        onClose={() => setIsConfirmingDelete(false)}
+        title="Delete block"
+        type="danger"
+        message="Are you sure you want to delete this block?"
+        details="All items inside will be removed. This cannot be undone."
+        isConfirming={deleteBlock.isPending}
+        error={deleteError}
+        onConfirm={handleConfirmDelete}
+      />
     </FormProvider>
   );
 };

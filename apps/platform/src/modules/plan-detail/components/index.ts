@@ -1,7 +1,6 @@
-export { DayEmpty } from "./day-empty";
+export { DayLabel } from "./day-label";
 export { DayRow } from "./day-row";
 export { DayRowHeader } from "./day-row-header";
-export { DayTypeBadge } from "./day-type-badge";
 export { EmptyAddCell, type EmptyAddCellProps } from "./empty-add-cell";
 export { PlanBlockCard } from "./plan-block-card";
 export { PlanItemRow } from "./plan-item-row";

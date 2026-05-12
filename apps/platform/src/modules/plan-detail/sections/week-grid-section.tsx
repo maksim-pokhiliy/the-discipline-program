@@ -12,8 +12,8 @@ type WeekGridSectionProps = {
   weekStart: Date;
   dayBuckets: ReadonlyMap<string, DayBucket>;
   lookups: Lookups;
-  onAddDay: (date: Date) => void;
-  onAddSession: (dayId: string) => void;
+  onEditDay: (date: Date, dayId: string | null) => void;
+  onEditSession: (dayId: string, sessionId: string) => void;
   onAddBlock: (sessionId: string) => void;
   onEditBlock: (sessionId: string, blockId: string) => void;
 };
@@ -23,8 +23,8 @@ export const WeekGridSection: React.FC<WeekGridSectionProps> = ({
   weekStart,
   dayBuckets,
   lookups,
-  onAddDay,
-  onAddSession,
+  onEditDay,
+  onEditSession,
   onAddBlock,
   onEditBlock,
 }) => {
@@ -44,8 +44,8 @@ export const WeekGridSection: React.FC<WeekGridSectionProps> = ({
             planDayId={bucket?.planDayId ?? null}
             dayType={bucket?.dayType ?? null}
             lookups={lookups}
-            onAddDay={onAddDay}
-            onAddSession={onAddSession}
+            onEditDay={onEditDay}
+            onEditSession={onEditSession}
             onAddBlock={onAddBlock}
             onEditBlock={onEditBlock}
           />

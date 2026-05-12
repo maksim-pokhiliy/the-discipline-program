@@ -33,6 +33,9 @@ yarn-error.log*
 # Audit artifacts
 .audit/
 
+# Analysis scratch (local-only domain-modeling artifacts)
+analysis/
+
 # Claude Code runtime
 .claude/
 

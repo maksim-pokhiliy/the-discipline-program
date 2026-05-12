@@ -2,13 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { type CreatePlanItemRequest } from "@repo/contracts/lms/plan-item";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
-import {
-  BadRequestError,
-  ConflictError,
-  ForbiddenError,
-  NotFoundError,
-  ValidationError,
-} from "@repo/errors";
+import { BadRequestError, ForbiddenError, NotFoundError, ValidationError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach, createTestPlan } from "../../../../test/helpers";
 
@@ -231,8 +225,14 @@ describe("lmsPlanItemApi", () => {
       }
     });
 
-    it("rejects with ConflictError on duplicate (blockId, order)", async () => {
+    it("allows two items with the same (blockId, order) — order is sort hint, not unique", async () => {
       const first = await lmsPlanItemApi.create(
+        coach.user.id,
+        activePlan.id,
+        activeBlockId,
+        basePlanItemData(exercise.id, { order: 33 }),
+      );
+      const second = await lmsPlanItemApi.create(
         coach.user.id,
         activePlan.id,
         activeBlockId,
@@ -240,16 +240,12 @@ describe("lmsPlanItemApi", () => {
       );
 
       try {
-        await expect(
-          lmsPlanItemApi.create(
-            coach.user.id,
-            activePlan.id,
-            activeBlockId,
-            basePlanItemData(exercise.id, { order: 33 }),
-          ),
-        ).rejects.toThrow(ConflictError);
+        expect(first.order).toBe(33);
+        expect(second.order).toBe(33);
+        expect(first.id).not.toBe(second.id);
       } finally {
         await cleanupRaw.planItem.delete({ where: { id: first.id } }).catch(() => {});
+        await cleanupRaw.planItem.delete({ where: { id: second.id } }).catch(() => {});
       }
     });
   });
