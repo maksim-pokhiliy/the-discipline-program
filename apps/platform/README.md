@@ -54,6 +54,5 @@ The athlete vs coach surface split is enforced at the route level (`app/athlete/
 - [ADR 0010 — BFF via HTTP loopback for RSC](../../docs/adr/0010-bff-via-http-loopback-for-rsc.md)
 - [ADR 0011 — two independent NextAuth instances](../../docs/adr/0011-two-independent-nextauth-instances.md)
 - [ADR 0017 — Anemic domain model acceptable pre-product](../../docs/adr/0017-anemic-domain-model-acceptable-pre-product.md)
-- [ADR 0037 — plan editor and library rollback](../../docs/adr/0037-plan-editor-and-library-rollback.md)
 
 See the root [README](../../README.md) for the full architecture overview.

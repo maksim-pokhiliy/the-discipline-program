@@ -1,20 +1,25 @@
+import { HealthStatus } from "@repo/contracts/coaching/athlete-profile";
 import {
   ActionItemStatus,
   SEVERITY_PRIORITY,
   TYPE_PRIORITY,
 } from "@repo/contracts/coaching/coach-action-item";
 import {
+  type AthleteDailySummary,
   type CoachDashboardData,
   type DashboardActionItem,
+  type ProgressBuckets,
+  TodayStatus,
 } from "@repo/contracts/coaching/coach-dashboard";
 import { UserRole } from "@repo/contracts/iam/auth";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 
-import { prisma, prismaAsCore } from "../../db/client";
+import { prisma } from "../../db/client";
 import {
   ACTION_ITEM_SEVERITY_MAP,
   ACTION_ITEM_STATUS_TO_PRISMA_MAP,
   ACTION_ITEM_TYPE_MAP,
+  HEALTH_STATUS_MAP,
 } from "../../mappers/coaching";
 import { ROLE_MAP } from "../../mappers/iam";
 import { TRAINING_PLAN_STATUS_TO_PRISMA_MAP } from "../../mappers/lms";
@@ -23,12 +28,13 @@ import { startOfTodayInTz, startOfWeekInTz } from "../../utils/date-helpers";
 
 import { buildAssignedAthleteInclude } from "./assigned-athlete-query";
 import { coachingCoachActionItemApi } from "./coach-action-item";
-import {
-  computeAthletesSummary,
-  computeProgressBuckets,
-  computeTodayStatus,
-  computeWeekStatus,
-} from "./dashboard-computations";
+
+const EMPTY_PROGRESS_BUCKETS: ProgressBuckets = {
+  onTrack: [],
+  steady: [],
+  fallingBehind: [],
+  avgEngagementRate: 0,
+};
 
 export const coachingCoachDashboardApi = {
   getDashboard: async (userId: string): Promise<CoachDashboardData> => {
@@ -69,13 +75,6 @@ export const coachingCoachDashboardApi = {
       }),
     ]);
 
-    const [athletesSummary, progressBuckets, todayStatus, weekStatus] = await Promise.all([
-      computeAthletesSummary({ db: prismaAsCore, assignments }),
-      computeProgressBuckets({ db: prismaAsCore, assignments }),
-      computeTodayStatus({ db: prismaAsCore, userId, timezone: tz }),
-      computeWeekStatus({ db: prismaAsCore, userId, timezone: tz }),
-    ]);
-
     const recentAthletes = new Set<string>();
 
     for (const a of assignments) {
@@ -83,6 +82,28 @@ export const coachingCoachDashboardApi = {
         recentAthletes.add(a.athlete.id);
       }
     }
+
+    const athletesSummary: AthleteDailySummary[] = assignments.map((a) => {
+      const athlete = a.athlete;
+      const healthStatus = athlete.athleteProfile
+        ? HEALTH_STATUS_MAP[athlete.athleteProfile.healthStatus]
+        : HealthStatus.HEALTHY;
+
+      return {
+        userId: athlete.id,
+        name: athlete.name,
+        email: athlete.email,
+        image: athlete.image,
+        planId: null,
+        planName: null,
+        todayStatus: TodayStatus.NO_SCHEDULE,
+        missedCount: 0,
+        todayWorkoutTitle: null,
+        lastActivityDate: null,
+        daysSinceLastActivity: null,
+        healthStatus,
+      };
+    });
 
     const actionItems: DashboardActionItem[] = openActionItems
       .map((item) => ({
@@ -105,16 +126,16 @@ export const coachingCoachDashboardApi = {
       overview: {
         totalActiveAthletes: assignments.length,
         activePlansCount,
-        workoutsPlannedToday: todayStatus.workoutsPlannedToday,
-        workoutsCompletedToday: todayStatus.workoutsCompletedToday,
-        workoutsPlannedThisWeek: weekStatus.workoutsPlannedThisWeek,
-        workoutsCompletedThisWeek: weekStatus.workoutsCompletedThisWeek,
+        workoutsPlannedToday: 0,
+        workoutsCompletedToday: 0,
+        workoutsPlannedThisWeek: 0,
+        workoutsCompletedThisWeek: 0,
         openActionItemsCount: openActionItems.length,
         newAthletesCount: recentAthletes.size,
       },
       actionItems,
       athletesSummary,
-      progressBuckets,
+      progressBuckets: EMPTY_PROGRESS_BUCKETS,
     };
   },
 };

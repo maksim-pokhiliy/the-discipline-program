@@ -1,7 +1,5 @@
 # 0036. Idempotency-Key support on every mutation endpoint
 
-> **[SUPERSEDED — partial]** by ADR-0037 on 2026-05-03 — the LMS authoring mutation endpoints that this ADR covered (`bulk-patch`, `apply-template`, `duplicate`, library CRUD, plan-coach-assignments, plan-enrollments, plan-overrides) were deleted when the plan-editor / library / templates feature was rolled back. The factory-level `wrapHandler` / `wrapAuthHandler` infrastructure, the `RequestIdempotency` table, the `IdempotencyStorePort` + Prisma adapter, and the inbound / outbound header contract all remain in force for every surviving mutation endpoint (auth, billing, coaching dashboard, action items, athlete logs, CMS, contact). Coverage is structural at the factory, not opt-in, so new endpoints inherit it automatically.
-
 - **Status:** Accepted (with known gaps — see Consequences)
 - **Date:** 2026-05-01
 - **Tags:** `api`, `reliability`, `factories`, `prisma`

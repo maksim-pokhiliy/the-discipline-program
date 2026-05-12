@@ -14,7 +14,6 @@
     "@hookform/resolvers": "catalog:",
     "@mui/icons-material": "catalog:",
     "@mui/material": "catalog:",
-    "@mui/x-date-pickers": "catalog:",
     "@repo/api-client": "workspace:*",
     "@repo/api-routes": "workspace:*",
     "@repo/api-server": "workspace:*",
@@ -36,7 +35,6 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-hook-form": "catalog:",
-    "react-virtuoso": "catalog:",
     "sonner": "catalog:",
     "zod": "catalog:"
   },

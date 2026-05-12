@@ -1,7 +1,5 @@
 # 0023. Test strategy — current state and improvement plan
 
-> **[SUPERSEDED — partial]** by ADR-0037 on 2026-05-03 — every LMS authoring test tier (~50 api-server test files covering plan-editor, bulk-patch, apply-template, plan-overrides, library CRUD, derive-exercise-snapshot, plan-roster, plan-coach-assignment, plan-enrollment, scheme-template, etc.) was deleted when the plan-editor / library / templates feature was rolled back. `weekly-volume-aggregator` and `pr-evaluator` tests now assert empty / no-op stub returns. The test-strategy framing (suite-level isolation, raw PrismaClient in helpers, deferred E2E / property / mutation testing with documented triggers) is unchanged for the surviving surface (IAM, billing, marketing, coaching dashboard, athlete-log domain).
-
 - **Status:** Accepted
 - **Date:** 2026-04-13
 - **Deciders:** Lead Architect
@@ -37,8 +35,8 @@ The test suite is reliable — all 240 tests pass consistently, with Neon cold-s
 **Untested mappers (~12):**
 
 - CMS: blog, contact, product, review
-- Coaching: coach-action-item, coach-note, plan-roster
-- LMS: benchmark-definition, plan-enrollment, user-benchmark, workout-log, workout
+- Coaching: coach-action-item, coach-note
+- LMS: plan-enrollment
 
 **Untested contract schemas (~110 of ~115 files):**
 
