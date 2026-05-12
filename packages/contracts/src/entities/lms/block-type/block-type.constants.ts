@@ -1,4 +1,0 @@
-export const BLOCK_TYPE_CONSTANTS = {
-  MAX_NAME_LENGTH: 100,
-  MAX_DESCRIPTION_LENGTH: 1000,
-} as const;

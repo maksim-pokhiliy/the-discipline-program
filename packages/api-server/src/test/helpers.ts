@@ -13,8 +13,6 @@ import { logger } from "@repo/shared";
 
 import { ROLE_TO_PRISMA_MAP } from "../mappers/iam";
 
-export * from "./session-helpers";
-
 const rawPrisma = new PrismaClient();
 
 export const createTestUser = async (

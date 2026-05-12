@@ -1,10 +1,7 @@
 # 0009. Soft delete via Prisma `$extends`
 
-> **[SUPERSEDED — partial]** by ADR-0037 on 2026-05-03 — the LMS library entries in `SOFT_DELETE_MODELS` (`BlockKind`, `SchemeTemplate`, `BlockTemplate`, `SessionTemplate`, `WeekTemplate`, `ExerciseLibraryItem`) were dropped when the plan-editor / library / templates feature was rolled back; those models no longer exist. The extension itself, the `$extends` mechanism, and soft-delete coverage for `User` / `Product` / `TrainingPlan` / `CoachProfile` / `MarketingBlogPost` / `MarketingReview` / `MarketingContactSubmission` are unchanged. The set must be trimmed in `packages/api-server/src/db/client.ts` to match the live schema.
-
 - **Status:** Accepted (with known gaps — see Consequences)
 - **Date:** 2026-04-10
-- **Last revised:** 2026-04-30 (Consequences section updated to match current implementation; see Revision history)
 - **Tags:** `database`, `prisma`, `soft-delete`, `known-gaps`
 
 ## Context
@@ -19,14 +16,12 @@ Several models in the schema need **soft delete** semantics: a deleted record mu
 The models that require soft delete today (every model with a `deletedAt DateTime?` column in `schema.prisma`):
 
 - `User`, `Product`, `TrainingPlan`, `CoachProfile`.
-- LMS library entities: `BlockKind`, `SchemeTemplate`, `BlockTemplate`, `SessionTemplate`, `WeekTemplate`, `ExerciseLibraryItem`.
 - Marketing CMS: `MarketingBlogPost`, `MarketingReview`, `MarketingContactSubmission`.
 
 The models that are intentionally hard-deleted (cascade from parent, or domain does not require recovery):
 
-- `WorkoutSession`, `BlockSession`, `ExerciseLog`, `SetLog` (training history; cascades from `User` / parent session).
-- `PlanEnrollment`, `Week`, `Day`, `LmsSession`, `Block`, `BlockSegment`, `SetGroup`, `ExerciseEntry` (cascade from their parent).
-- `AthleteProfile`, `Account`, `Session` (cascade from `User`).
+- `PlanEnrollment` (cascade from `TrainingPlan` and `User`).
+- `AthleteProfile` (cascade from `User`).
 - `MarketingPage` and `MarketingPageSection` (cascade from the page).
 
 The implementation requirement is that soft delete must be **transparent at the call site**. A developer writing `prisma.user.findMany({ where: { email: "foo" } })` should not have to remember to add `deletedAt: null`. If they forget, deleted users will silently appear in the result.
@@ -41,12 +36,6 @@ const SOFT_DELETE_MODELS = new Set([
   "Product",
   "TrainingPlan",
   "CoachProfile",
-  "BlockKind",
-  "SchemeTemplate",
-  "BlockTemplate",
-  "SessionTemplate",
-  "WeekTemplate",
-  "ExerciseLibraryItem",
   "MarketingBlogPost",
   "MarketingReview",
   "MarketingContactSubmission",
@@ -125,8 +114,3 @@ The extended client is exported as `prisma` from `packages/api-server/src/db/cli
 - `CLAUDE.md` — the "Soft-delete through the Prisma extension only" anti-pattern that says manual `deletedAt` filters are forbidden in call sites.
 - ADR 0003 — Prisma as the ORM.
 - ADR 0007 — Prisma client isolation to `api-server`.
-
-## Revision history
-
-- **2026-04-30** — synced ADR with current implementation. The extension's read coverage was extended over time to include `findFirstOrThrow`, `findUniqueOrThrow`, `count`, `aggregate`, and `groupBy`; the original ADR text listed those as gaps. Removed the stale `"Workout"` entry from `SOFT_DELETE_MODELS` (the model was replaced by `Block`/`BlockSegment`/`SetGroup`/`ExerciseEntry`/`WorkoutSession` per ADR 0027) and added the six LMS library models that already carry `deletedAt` columns (`BlockKind`, `SchemeTemplate`, `BlockTemplate`, `SessionTemplate`, `WeekTemplate`, `ExerciseLibraryItem`). Remaining gaps narrowed to `update` / `updateMany` / `upsert`, all intentional.
-- **2026-04-10** — original draft.

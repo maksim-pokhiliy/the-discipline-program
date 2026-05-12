@@ -1,0 +1,367 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Equipment {
+  ASSAULT_BIKE
+  ATLAS_STONE
+  BAND
+  BARBELL
+  BODYWEIGHT
+  BOX
+  BOX_OR_SOFA
+  DUMBBELL
+  JUMP_ROPE
+  KETTLEBELL
+  MIXED
+  PARALLEL_BARS
+  RINGS
+  ROW_ERG
+  SKI_ERG
+  SLED
+  SOFA
+  UNKNOWN
+  YOKE
+}
+
+enum MovementType {
+  SQUAT
+  HINGE
+  PRESS
+  PULL
+  LUNGE
+  CARRY
+  LOCOMOTION
+  STATIC_HOLD
+  ROTATIONAL
+  CARDIO_FLOW
+  CORE
+  COMBINED_OLYMPIC
+  RAISE
+  EXTENSION
+  UNKNOWN
+}
+
+enum CanonicalCompoundType {
+  ATOMIC
+  COMPOUND_PLUS
+  COMPOSITE_NAMED
+  PLACEHOLDER
+  ALTERNATIVE_OR
+}
+
+enum SchemaKind {
+  ATOMIC
+  HEADERLESS
+  NESTED
+  NAMED
+  COMPOSITE
+}
+
+enum RowKind {
+  EXERCISE
+  REST
+  FOOTNOTE
+  STANDALONE_LOAD
+  STANDALONE_URL
+  PLACEHOLDER
+  INNER_LADDER_MARKER
+  REP_DEFINITION
+  CONNECTOR
+  REST_SLOT
+}
+
+enum ArchetypeFamily {
+  ROUNDS_SETS
+  LADDER
+  TIME_CAP
+  COMPOSITE_ROUNDS
+  NESTED
+  NAMED
+  SINGLE_LINE_HEADERLESS
+  FLAT_PARALLEL_HEADERLESS
+  MODALITY_REFERENCE
+}
+
+enum Position {
+  NEUTRAL_GRIP
+  FROM_SOFA
+  FROM_BOX
+  FROM_BOX_OR_SOFA
+  FROM_SOFA_BOX
+  WITHOUT_BENCH
+  WITHOUT_JUMP
+  HOLD_FARM_CARRY
+  HAND_ON_DB
+  HANDS_ON_DB
+  HAND_ON_DB_NEUTRAL_GRIP
+}
+
+enum OneRMRecordSource {
+  MANUAL
+  AUTO_INFERRED
+  TESTED
+}
+
+enum SchemaPairingRelation {
+  ALTERNATING_SETS
+}
+
+enum AppLevel {
+  DAY
+  SESSION
+  BLOCK
+}
+
+model Day {
+  id        String   @id @default(cuid())
+  order     Int
+  labelId   String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  label    Label?    @relation(fields: [labelId], references: [id], onDelete: Restrict)
+  sessions Session[]
+
+  @@index([labelId])
+}
+
+model Session {
+  id                    String   @id @default(cuid())
+  dayId                 String
+  order                 Int
+  labelId               String?
+  notes                 String?
+  freezeLoadsAtCreation Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  day               Day                @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  label             Label?             @relation(fields: [labelId], references: [id], onDelete: Restrict)
+  blocks            Block[]
+  performedSessions PerformedSession[]
+
+  @@index([dayId, order])
+  @@index([labelId])
+}
+
+model Block {
+  id        String   @id @default(cuid())
+  sessionId String
+  order     Int
+  intensity Json?
+  timeCap   Json?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  session          Session                @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  labelAssignments BlockLabelAssignment[]
+  schemas          Schema[]
+
+  @@index([sessionId, order])
+}
+
+model BlockLabelAssignment {
+  id      String @id @default(cuid())
+  blockId String
+  labelId String
+  order   Int
+
+  block Block @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  label Label @relation(fields: [labelId], references: [id], onDelete: Restrict)
+
+  @@unique([blockId, labelId])
+  @@index([blockId, order])
+  @@index([labelId])
+}
+
+model Schema {
+  id                String   @id @default(cuid())
+  blockId           String
+  parentSchemaId    String?
+  order             Int
+  kind              SchemaKind
+  archetypeId       String
+  header            String?
+  archetypeParams   Json
+  intensity         Json?
+  trailingConnector Json?
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  block        Block          @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  parentSchema Schema?        @relation("SchemaSubSchemas", fields: [parentSchemaId], references: [id], onDelete: Cascade)
+  subSchemas   Schema[]       @relation("SchemaSubSchemas")
+  archetype    Archetype      @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
+  rows         SchemaRow[]
+  pairingsA    SchemaPairing[] @relation("SchemaPairingA")
+  pairingsB    SchemaPairing[] @relation("SchemaPairingB")
+
+  @@index([blockId, order])
+  @@index([parentSchemaId, order])
+  @@index([archetypeId])
+}
+
+model SchemaPairing {
+  id           String                @id @default(cuid())
+  schemaAId    String
+  schemaBId    String
+  relationKind SchemaPairingRelation
+
+  schemaA Schema @relation("SchemaPairingA", fields: [schemaAId], references: [id], onDelete: Cascade)
+  schemaB Schema @relation("SchemaPairingB", fields: [schemaBId], references: [id], onDelete: Cascade)
+
+  @@unique([schemaAId, schemaBId])
+  @@index([schemaBId])
+}
+
+model SchemaRow {
+  id          String   @id @default(cuid())
+  schemaId    String
+  order       Int
+  rowKind     RowKind
+  rowPayload  Json
+  load        Json?
+  reps        Json?
+  side        Json?
+  tempo       Json?
+  position    Position?
+  sequence    Json?
+  intensity   Json?
+  media       Json?
+  compoundRep Json?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  schema                     Schema                      @relation(fields: [schemaId], references: [id], onDelete: Cascade)
+  performedExerciseInstances PerformedExerciseInstance[]
+
+  @@index([schemaId, order])
+}
+
+model Exercise {
+  id                       String                @id @default(cuid())
+  canonicalName            String
+  canonicalNameLower       String                @unique
+  primaryEquipment         Equipment
+  movementTypeTagPrimary   MovementType
+  movementTypeTagSecondary MovementType?
+  defaultDemoUrl           String?
+  canonicalCompoundType    CanonicalCompoundType
+  placeholderFlag          Boolean               @default(false)
+  movementFamily           String?
+  defaultLoad              Json?
+  aliases                  Json?
+  notes                    String?
+  createdAt                DateTime              @default(now())
+  updatedAt                DateTime              @updatedAt
+
+  oneRMRecords OneRMRecord[]
+
+  @@index([canonicalName])
+  @@index([movementFamily])
+}
+
+model Label {
+  id               String   @id @default(cuid())
+  name             String
+  nameLower        String   @unique
+  applicableLevels Json
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  days             Day[]
+  sessions         Session[]
+  blockAssignments BlockLabelAssignment[]
+
+  @@index([name])
+}
+
+model Archetype {
+  id                       String          @id @default(cuid())
+  name                     String          @unique
+  kind                     SchemaKind
+  family                   ArchetypeFamily
+  headerPatternDescription String
+  bodyLayoutDescription    String
+  archetypeParamsSchema    Json
+  relatedArchetypes        Json
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+
+  schemas Schema[]
+}
+
+model Athlete {
+  id                String   @id @default(cuid())
+  displayName       String
+  profileAttributes Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  oneRMRecords      OneRMRecord[]
+  performedSessions PerformedSession[]
+}
+
+model OneRMRecord {
+  id         String            @id @default(cuid())
+  athleteId  String
+  exerciseId String
+  valueKg    Decimal
+  recordedAt DateTime
+  source     OneRMRecordSource
+
+  athlete  Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+
+  @@unique([athleteId, exerciseId])
+  @@index([exerciseId])
+}
+
+model PerformedSession {
+  id           String    @id @default(cuid())
+  sessionId    String
+  athleteId    String
+  startedAt    DateTime
+  completedAt  DateTime?
+  coachNotes   String?
+  athleteNotes String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  session                    Session                     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  athlete                    Athlete                     @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  performedExerciseInstances PerformedExerciseInstance[]
+
+  @@unique([sessionId, athleteId])
+  @@index([athleteId])
+}
+
+model PerformedExerciseInstance {
+  id                  String   @id @default(cuid())
+  performedSessionId  String
+  plannedSchemaRowId  String
+  actualLoad          Json
+  actualReps          Json
+  actualIntensity     Json?
+  stageActuals        Json?
+  notes               String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  performedSession PerformedSession @relation(fields: [performedSessionId], references: [id], onDelete: Cascade)
+  plannedSchemaRow SchemaRow        @relation(fields: [plannedSchemaRowId], references: [id], onDelete: Restrict)
+
+  @@index([performedSessionId])
+  @@index([plannedSchemaRowId])
+}

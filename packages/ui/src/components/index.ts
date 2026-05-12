@@ -24,12 +24,6 @@ export * from "./pulse-stats-card";
 export * from "./query-wrapper";
 export * from "./markdown-editor";
 export * from "./rich-text-viewer";
-export {
-  SaveIndicator as PlanEditorSaveIndicator,
-  type SaveIndicatorProps as PlanEditorSaveIndicatorProps,
-} from "./save-indicator";
-export type { SaveIndicatorStatus } from "./save-indicator.types";
-export * from "./scheme-params";
 export * from "./skip-to-content";
 export * from "./status-chip";
 export * from "./tags-input";

@@ -1,6 +1,0 @@
-export const WORKOUT_SESSION_CONSTANTS = {
-  MAX_MOOD_LENGTH: 100,
-  MAX_NOTES_LENGTH: 4000,
-  MIN_RPE: 1,
-  MAX_RPE: 10,
-} as const;

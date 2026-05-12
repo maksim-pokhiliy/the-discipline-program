@@ -12,8 +12,6 @@ import {
   ACTION_ITEM_TYPE_MAP,
   HEALTH_STATUS_MAP,
 } from "../../../mappers/coaching";
-import { findOrThrow } from "../../../utils";
-import { addDaysInTz } from "../../../utils/date-helpers";
 import { buildAssignedAthleteInclude } from "../assigned-athlete-query";
 
 export const getAthleteDetail = async (
@@ -24,49 +22,22 @@ export const getAthleteDetail = async (
 
   await verifyAthleteBelongsToCoach(athleteUserId, coachId);
 
-  const coach = await findOrThrow(
-    prisma.user.findUnique({ where: { id: coachUserId }, select: { timezone: true } }),
-    "User",
-  );
-  const tz = coach.timezone;
+  const [assignment, actionItems] = await Promise.all([
+    prisma.coachAthleteAssignment.findUnique({
+      where: { coachId_athleteId: { coachId, athleteId: athleteUserId } },
+      include: buildAssignedAthleteInclude(coachUserId),
+    }),
 
-  const now = new Date();
-  const window28Start = addDaysInTz(now, -28, tz);
-  const week7Start = addDaysInTz(now, -7, tz);
-
-  const [assignment, actionItems, rawRecentWorkouts, adherenceSessions, weekSessions] =
-    await Promise.all([
-      prisma.coachAthleteAssignment.findUnique({
-        where: { coachId_athleteId: { coachId, athleteId: athleteUserId } },
-        include: buildAssignedAthleteInclude(coachUserId),
-      }),
-
-      prisma.coachActionItem.findMany({
-        where: {
-          coachId,
-          athleteId: athleteUserId,
-          status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN],
-        },
-        select: { id: true, type: true, severity: true, message: true, createdAt: true },
-        orderBy: { createdAt: "desc" },
-      }),
-
-      prisma.workoutSession.findMany({
-        where: { userId: athleteUserId },
-        orderBy: { startedAt: "desc" },
-        take: 5,
-      }),
-
-      prisma.workoutSession.findMany({
-        where: { userId: athleteUserId, startedAt: { gte: window28Start, lte: now } },
-        select: { completionRatio: true },
-      }),
-
-      prisma.workoutSession.findMany({
-        where: { userId: athleteUserId, startedAt: { gte: week7Start, lte: now } },
-        select: { completionRatio: true },
-      }),
-    ]);
+    prisma.coachActionItem.findMany({
+      where: {
+        coachId,
+        athleteId: athleteUserId,
+        status: ACTION_ITEM_STATUS_TO_PRISMA_MAP[ActionItemStatus.OPEN],
+      },
+      select: { id: true, type: true, severity: true, message: true, createdAt: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   if (!assignment) {
     throw new ForbiddenError("Athlete does not belong to this coach");
@@ -86,25 +57,6 @@ export const getAthleteDetail = async (
     createdAt: item.createdAt,
   }));
 
-  const planDiscipline: CoachAthleteDetail["planDiscipline"] = [];
-
-  const recentWorkouts = rawRecentWorkouts.map((s) => ({
-    id: s.id,
-    title: "Workout",
-    date: s.startedAt,
-    planName: "",
-  }));
-
-  const planned28 = adherenceSessions.length;
-  const completed28 = adherenceSessions.filter(
-    (s) => s.completionRatio !== null && Number(s.completionRatio) >= 0.9,
-  ).length;
-  const adherenceRate4w = planned28 === 0 ? 0 : completed28 / planned28;
-
-  const missedThisWeek = weekSessions.filter(
-    (s) => s.completionRatio === null || Number(s.completionRatio) < 0.9,
-  ).length;
-
   return {
     userId: athleteUserId,
     name: athlete.name,
@@ -112,14 +64,14 @@ export const getAthleteDetail = async (
     image: athlete.image,
     healthStatus,
     processStatus: ProcessStatus.STEADY,
-    planDiscipline,
-    recentWorkouts,
+    planDiscipline: [],
+    recentWorkouts: [],
     actionItems: mappedActionItems,
     nextWorkout: null,
     consistency: {
-      adherenceRate4w,
+      adherenceRate4w: 0,
       currentStreak: 0,
-      missedThisWeek,
+      missedThisWeek: 0,
     },
     enrolledSince: assignment.createdAt,
     lastActivityDate: null,

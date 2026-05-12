@@ -17,7 +17,7 @@ Subpath taxonomy:
 
 - `common` — shared primitives (pagination cursor, ID brand, error response shape).
 - `cms/<entity>` — CMS context: `blog`, `contact`, `dashboard`, `pages`, `product`, `review`.
-- `lms/<entity>` — LMS context: `_domain` (shared LMS primitives), `block-session`, `block-type`, `day-type`, `exercise`, `exercise-log`, `plan-block`, `plan-day`, `plan-enrollment`, `plan-item`, `plan-session`, `scheme-type`, `set-log`, `training-plan`, `workout-session`.
+- `lms/<entity>` — LMS context: `plan-enrollment`, `training-plan`.
 - `coaching/<entity>` — coaching context: profiles, athletes lists, invites, notes, dashboards.
 - `iam/<entity>` — identity + role contracts.
 - `storage/<entity>` — storage context: `upload`.
@@ -32,4 +32,3 @@ Subpath taxonomy:
 
 - [ADR 0005 — contracts-first with Zod](../../docs/adr/0005-contracts-first-with-zod.md)
 - [ADR 0020 — API design decisions](../../docs/adr/0020-api-design-decisions.md)
-- [ADR 0037 — plan editor and library rollback](../../docs/adr/0037-plan-editor-and-library-rollback.md)

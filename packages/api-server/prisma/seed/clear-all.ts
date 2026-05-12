@@ -1,21 +1,7 @@
 import { type PrismaClient } from "@prisma/client";
 
 export const clearAll = async (db: PrismaClient): Promise<void> => {
-  await db.setLog.deleteMany();
-  await db.exerciseLog.deleteMany();
-  await db.blockSession.deleteMany();
-  await db.workoutSession.deleteMany();
-  await db.personalRecord.deleteMany();
-  await db.planItem.deleteMany();
-  await db.planBlockTypeRef.deleteMany();
-  await db.planBlock.deleteMany();
-  await db.planSession.deleteMany();
-  await db.planDay.deleteMany();
   await db.planEnrollment.deleteMany();
-  await db.exercise.deleteMany();
-  await db.blockType.deleteMany();
-  await db.schemeType.deleteMany();
-  await db.dayType.deleteMany();
   await db.coachNote.deleteMany();
   await db.coachActionItem.deleteMany();
   await db.trainingPlan.deleteMany();
