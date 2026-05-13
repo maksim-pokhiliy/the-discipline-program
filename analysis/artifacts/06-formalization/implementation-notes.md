@@ -45,6 +45,10 @@ Standalone `Athlete` модель убрана. В этом срезе:
 
 Implication для §4.5 (Archetype seed): остаётся обязательным mandatory step. Для §4.6 (Catalog seed scope): 149-список становится starter content, не auto-seed (см. RATIFIED note ниже).
 
+### §0.5 D5 — defaultDemoUrls as Postgres native array (2026-05-13)
+
+`Exercise.defaultDemoUrl String?` → `defaultDemoUrls String[]`. Native PG array over Json for type-safety and to avoid JSON parsing overhead. Coach attaches multiple demo videos per exercise without limit. Ratified prior to Step 3 (Admin Exercise CRUD) implementation.
+
 ---
 
 ## §1. JSON shape examples per embedded VO

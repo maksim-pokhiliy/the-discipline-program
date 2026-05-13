@@ -294,7 +294,7 @@ model Exercise {
   primaryEquipment         Equipment
   movementTypeTagPrimary   MovementType
   movementTypeTagSecondary MovementType?
-  defaultDemoUrl           String?
+  defaultDemoUrls          String[]
   canonicalCompoundType    CanonicalCompoundType
   placeholderFlag          Boolean               @default(false)
   movementFamily           String?

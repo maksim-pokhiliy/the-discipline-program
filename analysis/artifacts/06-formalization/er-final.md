@@ -28,6 +28,7 @@
 | `Equipment` enum +7 values                             | Q21 (Phase 7)                | ASSAULT_BIKE / ATLAS_STONE / JUMP_ROPE / ROW_ERG / SKI_ERG / SLED / YOKE            |
 | `WEEK` model + `DayOfWeek` enum                        | D1 (Phase 7 ratification)    | `TRAINING_PLAN → WEEK → DAY` cascade; Day.order replaced by (weekId, dayOfWeek)     |
 | `ATHLETE` model dropped                                | D2 (Phase 7 ratification)    | `OneRMRecord` / `PerformedSession` → `User` (external); `profileAttributes` dropped |
+| D5                                                     | 2026-05-13                   | Exercise.defaultDemoUrl → defaultDemoUrls String[]                                  |
 
 ---
 
@@ -308,7 +309,7 @@ Per Q10: при `true` все percentage Loads резолвятся в absolute 
 ### 3.9 Что НЕ в диаграмме
 
 - **MovementFamily entity** — soft string field.
-- **MediaReference table** — embedded VO в SchemaRow.media + Exercise.defaultDemoUrl. Library-wide URL dedup — future.
+- **MediaReference table** — embedded VO в SchemaRow.media + Exercise.defaultDemoUrls. Library-wide URL dedup — future.
 - **RestSpec / TimeCap / Intensity / Load / RepNotation** — embedded JSON VOs. Intensity несёт также Phase 7 поля `hrZone` + `numericPace` (см. §3.10).
 - **StagedProgram (ex-DropSetProgram) / PerSetSubstitution / CompoundRow / CyclicalCompound / SandwichCompound / OrAlternative / SuperSetPair[]** — embedded VOs внутри SchemaRow.row_payload или Schema.archetype_params. StagedProgram = generalized rename DropSetProgram (Q19), покрывает drop_set / wave / cluster через `programKind`. SuperSetPair[] лежит в archetype_params для archetype `super-set` (Q20).
 - **TempoModifier** — embedded в SchemaRow.tempo; Phase 7 расширен `fullTempo` (4-digit нотация Olympic / accessory tempo).
