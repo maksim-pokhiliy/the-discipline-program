@@ -11,6 +11,28 @@ export const exerciseEquipmentSchema = z.enum(EXERCISE_EQUIPMENT);
 export const exerciseMovementTypeSchema = z.enum(EXERCISE_MOVEMENT_TYPE);
 export const exerciseCanonicalCompoundTypeSchema = z.enum(EXERCISE_CANONICAL_COMPOUND_TYPE);
 
+const ZERO_WIDTH_RE = /\u200B|\u200C|\u200D|\uFEFF|\u2060/g;
+
+const normalizeText = (raw: string): string => raw.normalize("NFKC").replace(ZERO_WIDTH_RE, "");
+
+const normalizedString = (max: number) =>
+  z.string().transform(normalizeText).pipe(z.string().trim().min(1).max(max));
+
+const httpUrlSchema = z
+  .string()
+  .url()
+  .max(EXERCISE_CONSTANTS.MAX_URL_LENGTH)
+  .refine(
+    (raw) => {
+      try {
+        return ["http:", "https:"].includes(new URL(raw).protocol);
+      } catch {
+        return false;
+      }
+    },
+    { message: "Only http(s) URLs are allowed" },
+  );
+
 export const exerciseSchema = z.object({
   id: z.string().cuid(),
   canonicalName: z.string().min(1).max(EXERCISE_CONSTANTS.MAX_CANONICAL_NAME_LENGTH),
@@ -28,23 +50,53 @@ export const exerciseSchema = z.object({
   updatedAt: z.date(),
 });
 
-export const createExerciseSchema = z.object({
-  canonicalName: z.string().trim().min(1).max(EXERCISE_CONSTANTS.MAX_CANONICAL_NAME_LENGTH),
+const exerciseFormBase = z.object({
+  canonicalName: normalizedString(EXERCISE_CONSTANTS.MAX_CANONICAL_NAME_LENGTH),
   primaryEquipment: exerciseEquipmentSchema,
   movementTypeTagPrimary: exerciseMovementTypeSchema,
   movementTypeTagSecondary: exerciseMovementTypeSchema.nullable().optional(),
   canonicalCompoundType: exerciseCanonicalCompoundTypeSchema.default("ATOMIC"),
   placeholderFlag: z.boolean().default(false),
-  movementFamily: z
-    .string()
-    .trim()
-    .min(1)
-    .max(EXERCISE_CONSTANTS.MAX_MOVEMENT_FAMILY_LENGTH)
+  movementFamily: normalizedString(EXERCISE_CONSTANTS.MAX_MOVEMENT_FAMILY_LENGTH)
     .nullable()
     .optional(),
-  defaultDemoUrls: z.array(z.string().url()).default([]),
-  aliases: z.array(z.string().trim().min(1)).default([]),
-  notes: z.string().nullable().optional(),
+  defaultDemoUrls: z.array(httpUrlSchema).max(EXERCISE_CONSTANTS.MAX_ARRAY_LENGTH).default([]),
+  aliases: z
+    .array(normalizedString(EXERCISE_CONSTANTS.MAX_CANONICAL_NAME_LENGTH))
+    .max(EXERCISE_CONSTANTS.MAX_ARRAY_LENGTH)
+    .default([]),
+  notes: z.string().max(EXERCISE_CONSTANTS.MAX_NOTES_LENGTH).nullable().optional(),
 });
 
-export const updateExerciseSchema = createExerciseSchema.partial();
+type PlaceholderShape = {
+  placeholderFlag?: boolean | undefined;
+  canonicalCompoundType?:
+    | "ATOMIC"
+    | "COMPOUND_PLUS"
+    | "COMPOSITE_NAMED"
+    | "PLACEHOLDER"
+    | "ALTERNATIVE_OR"
+    | undefined;
+};
+
+const placeholderConsistency = (data: PlaceholderShape): boolean => {
+  if (data.placeholderFlag === undefined || data.canonicalCompoundType === undefined) {
+    return true;
+  }
+
+  return data.placeholderFlag === (data.canonicalCompoundType === "PLACEHOLDER");
+};
+
+const placeholderRefineError = {
+  message: "placeholderFlag must match canonicalCompoundType === 'PLACEHOLDER'",
+  path: ["placeholderFlag"],
+};
+
+export const createExerciseSchema = exerciseFormBase.refine(
+  placeholderConsistency,
+  placeholderRefineError,
+);
+
+export const updateExerciseSchema = exerciseFormBase
+  .partial()
+  .refine(placeholderConsistency, placeholderRefineError);
