@@ -61,8 +61,8 @@ export const ClassificationCard = ({ isLoading }: ClassificationCardProps) => {
         <Controller
           name="placeholderFlag"
           control={control}
-          render={({ field }) => (
-            <Stack spacing={0.5}>
+          render={({ field, fieldState }) => (
+            <FormControl error={!!fieldState.error} component="fieldset" variant="standard">
               <FormControlLabel
                 control={
                   <Switch
@@ -75,9 +75,9 @@ export const ClassificationCard = ({ isLoading }: ClassificationCardProps) => {
               />
 
               <FormHelperText>
-                Use for coach-choice slots like &quot;biceps / triceps&quot;
+                {fieldState.error?.message ?? 'Use for coach-choice slots like "biceps / triceps"'}
               </FormHelperText>
-            </Stack>
+            </FormControl>
           )}
         />
 
