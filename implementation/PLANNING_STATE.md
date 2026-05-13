@@ -1,6 +1,6 @@
 # Planning State
 
-> Last updated: 2026-05-13 (Step 2 complete; Step 3 thesis drafting)
+> Last updated: 2026-05-13 (Step 2 committed; D5 ratified; Step 3 prompt ready)
 
 ## Workflow goal
 
@@ -14,7 +14,7 @@ End-to-end coach happy path:
 
 ## Current step
 
-**Step 2 closed** (2026-05-13). Schema ported (14 models + 11 enums + 3 back-relations), 34 archetypes seeded. Verification all green. **Step 3 thesis** (Admin Exercise CRUD) about to be drafted. Commit strategy pending user input.
+**Step 2 committed** (2026-05-13). Branch `feat/training-domain` created; commits `995504c0` (Step 1) + `b9d84876` (Step 2). **D5 ratified** during Step 3 planning (defaultDemoUrl → defaultDemoUrls String[]). `implementation/step-03/prompt.md` written. Awaiting Step 3 execution via separate Opus 4.7 max-effort session through `/feature` (full pipeline).
 
 ## Step queue (draft, refined per iteration)
 
@@ -24,7 +24,7 @@ End-to-end coach happy path:
 
 - **Step 2** — Prisma schema port + Archetype seed + minimal user/plan seed. Bring ratified schema into `packages/api-server/prisma/schema.prisma`. Wire seed: 1 coach (User+CoachProfile), 1 athlete (User+AthleteProfile), 1 empty TrainingPlan, all 34 archetypes (full canonical set, derived from `analysis/artifacts/06-formalization/implementation-notes.md` archetype catalog). NO seed for Exercise/Label — user creates via admin UI. `pnpm --filter @repo/api-server db:reset` per ADR-0019; no versioned migrations during workflow.
 
-- **Step 3** — Admin Exercise CRUD. Contracts → endpoints → mappers → api-client → query hooks → admin module (`apps/admin/src/modules/exercises/`) → routes. Match existing module conventions (per `apps/admin/src/modules/reviews/` reference). Forms: react-hook-form + zod; tables: `@repo/ui` `DataTable`.
+- **Step 3** — Admin Exercise CRUD. **Phase 0**: schema refinement (D5 — defaultDemoUrl → defaultDemoUrls String[]) + analysis-artifact sync + `db:reset + db:seed`. **Phase 1-7**: contracts → endpoints → mappers → api-client → query hooks → admin module (`apps/admin/src/modules/exercises/`) → routes → sidebar nav. Match existing module conventions (per `apps/admin/src/modules/reviews/` reference). Forms: react-hook-form + zod; tables: `@repo/ui` `DataTable`. Sidebar: new "Library" group at end of existing items. defaultLoad — NOT exposed in v1 UI; auto-derived `canonicalNameLower` in handlers; movementFamily autocomplete with distinct DB values; defaultDemoUrls chip-input with URL validation; aliases chip-input.
 
 - **Step 4** — Admin Label CRUD. Same conventions as Step 3. Distinguishing feature: `applicableLevels` multi-select (day/session/block); typeahead/autocomplete UX expected later in plan-editor.
 
@@ -71,6 +71,10 @@ Pending Step 1 follow-up micro-questions (see chat turn).
 - **D3 (Full-scope port at Step 2).** All ratified entities — catalogue (Exercise, Label, Archetype), plan-content (Week, Day, Session, Block, BlockLabelAssignment, Schema, SchemaPairing, SchemaRow), athlete-facing (OneRMRecord, PerformedSession, PerformedExerciseInstance) — go into `packages/api-server/prisma/schema.prisma` at Step 2, even though athlete-flow UI/API stays out of scope. Avoids a second schema-change wave mid-workflow.
 - **D4 (Library vs Configuration split).** `Exercise` and `Label` are **libraries** — created/managed by coach in admin UI, used for future analytics. NOT seeded; coach populates via admin during smoke-test. `Archetype` is **configuration** — part of the model itself; full canonical set (34) MUST be seeded at Step 2. No admin CRUD for Archetype (UI-editing it is meaningless without parser+renderer updates). `archetypeParamsSchema` lives in DB (Prisma model) rather than code to allow patching without redeploy.
 
+### 2026-05-13 — Exercise model refinement (D5 ratified)
+
+- **D5 (defaultDemoUrl → defaultDemoUrls String[]).** Single URL field replaced by Postgres native string array. Coach can attach multiple demo videos per exercise without limit. Native `String[]` over `Json?` for type-safety and no JSON parsing overhead. Applies to both `analysis/artifacts/06-formalization/schema.prisma` (anchor spec) and real `packages/api-server/prisma/schema.prisma`. Step 3 Phase 0 implements the schema refinement (with analysis-artifact sync) before any UI work.
+
 ### Deferred sub-decisions (default hypothesis applied; revisit on contact)
 
 - **Order semantics**: **sparse integers (10/20/30)** per Phase 4 Q6 (ratified in `analysis/artifacts/06-formalization/er-final.md §5 #7`). Earlier draft in this file mistakenly proposed sequential; reverted 2026-05-12 after Step 1 executor flagged the divergence. Step 2 seed and any insert-helpers must use sparse increments; renumber only on collision.
@@ -89,5 +93,4 @@ Pending Step 1 follow-up micro-questions (see chat turn).
 
 ## Next action
 
-1. **Commit strategy decision** — Steps 1+2 are uncommitted on main; planner asks user for preference (feature-branch + PR, incremental commits on main, defer to later batching).
-2. **Step 3 thesis** (Admin Exercise CRUD) — drafted in chat following Step 2 close. On approval — write `implementation/step-03/prompt.md`.
+User launches separate Opus 4.7 max-effort session pointed at `implementation/step-03/prompt.md`. Executor invokes `/feature` (full pipeline) per prompt. On completion — planner reads `implementation/step-03/output.md` and `.feature-dev/<ts>/`, manual smoke-test in browser per provided scenario, validates, updates `IMPLEMENTATION_LOG.md`, drafts Step 4 thesis (Admin Label CRUD — should be quick, follows Exercise template).
