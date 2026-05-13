@@ -21,7 +21,7 @@ import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 const buildExerciseUpdateData = (data: UpdateExerciseData): Prisma.ExerciseUpdateInput => ({
   ...(data.canonicalName !== undefined && {
     canonicalName: data.canonicalName,
-    canonicalNameLower: data.canonicalName.toLowerCase().trim(),
+    canonicalNameLower: data.canonicalName.trim().toLowerCase(),
   }),
   ...(data.primaryEquipment !== undefined && {
     primaryEquipment: equipmentToPrisma[data.primaryEquipment],
@@ -61,7 +61,7 @@ export const cmsExerciseAdminApi = {
   },
 
   createExercise: async (data: CreateExerciseData): Promise<Exercise> => {
-    const canonicalNameLower = data.canonicalName.toLowerCase().trim();
+    const canonicalNameLower = data.canonicalName.trim().toLowerCase();
 
     try {
       const row = await prisma.exercise.create({

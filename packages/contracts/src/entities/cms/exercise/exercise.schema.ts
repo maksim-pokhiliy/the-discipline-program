@@ -29,7 +29,7 @@ export const exerciseSchema = z.object({
 });
 
 export const createExerciseSchema = z.object({
-  canonicalName: z.string().min(1).max(EXERCISE_CONSTANTS.MAX_CANONICAL_NAME_LENGTH),
+  canonicalName: z.string().trim().min(1).max(EXERCISE_CONSTANTS.MAX_CANONICAL_NAME_LENGTH),
   primaryEquipment: exerciseEquipmentSchema,
   movementTypeTagPrimary: exerciseMovementTypeSchema,
   movementTypeTagSecondary: exerciseMovementTypeSchema.nullable().optional(),
@@ -37,12 +37,13 @@ export const createExerciseSchema = z.object({
   placeholderFlag: z.boolean().default(false),
   movementFamily: z
     .string()
+    .trim()
     .min(1)
     .max(EXERCISE_CONSTANTS.MAX_MOVEMENT_FAMILY_LENGTH)
     .nullable()
     .optional(),
   defaultDemoUrls: z.array(z.string().url()).default([]),
-  aliases: z.array(z.string().min(1)).default([]),
+  aliases: z.array(z.string().trim().min(1)).default([]),
   notes: z.string().nullable().optional(),
 });
 

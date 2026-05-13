@@ -3,20 +3,11 @@
 import { FormControl, FormHelperText, InputLabel, MenuItem, Select } from "@mui/material";
 import { Controller, useFormContext, type FieldError } from "react-hook-form";
 
-import {
-  EXERCISE_MOVEMENT_TYPE,
-  type CreateExerciseData,
-  type ExerciseMovementType,
-} from "@repo/contracts/cms/exercise";
+import { type CreateExerciseData, type ExerciseMovementType } from "@repo/contracts/cms/exercise";
 
 import { MOVEMENT_TYPE_LABELS } from "../constants";
 
 const SECONDARY_NONE = "__none__";
-
-const MOVEMENT_TYPE_SET = new Set<string>(EXERCISE_MOVEMENT_TYPE);
-
-const isMovementType = (value: unknown): value is ExerciseMovementType =>
-  typeof value === "string" && MOVEMENT_TYPE_SET.has(value);
 
 type SecondaryMovementSelectProps = {
   error: FieldError | undefined;
@@ -35,21 +26,14 @@ export const SecondaryMovementSelect = ({ error, isLoading }: SecondaryMovementS
         control={control}
         render={({ field }) => (
           <Select
+            {...field}
             label="Secondary Movement Type"
             disabled={isLoading}
             value={field.value ?? SECONDARY_NONE}
             onChange={(event) => {
               const next = event.target.value;
 
-              if (next === SECONDARY_NONE) {
-                field.onChange(null);
-
-                return;
-              }
-
-              if (isMovementType(next)) {
-                field.onChange(next);
-              }
+              field.onChange(next === SECONDARY_NONE ? null : (next as ExerciseMovementType));
             }}
           >
             <MenuItem value={SECONDARY_NONE}>None</MenuItem>
