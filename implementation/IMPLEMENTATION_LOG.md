@@ -22,6 +22,46 @@
 
 <!-- entries appended below this line, newest first -->
 
+## Lesson learned (planner discipline)
+
+**Strike pattern surfaced during Step 3** — six (6) deviations between prompt-spec and codebase patterns, all on the same dimension: my prompt encoded "TS best-practice instincts" rather than reading the codebase. Each was caught by the executor at Stage 1 / Stage 2 of `/feature` and resolved via rule 4 ("existing patterns are sacred"):
+
+1. **D2** — server-side pagination spec vs codebase client-side (`z.array(entity)` cap=100 + `DataTable` client-paginate).
+2. **D3** — multi-select `DataTableFilter` spec vs codebase single-value primitive (multi extension would touch shared `@repo/ui`).
+3. **D4** — `.toISOString()` Date marshalling spec vs codebase raw `Date` + RSC payload.
+4. **D7** — backend ILIKE search spec vs codebase client-side `Column.searchValue`.
+5. **D10** — `Stack spacing={4}` per global memory vs project codebase `{3}` (41/61 occurrences).
+6. **D11** — `z.nativeEnum(Equipment from @prisma/client)` spec vs `.dependency-cruiser.cjs` `contracts-no-prisma` rule + codebase mirror+bridge pattern (per `BLOG_CATEGORY` precedent).
+
+**Rule for Step 4+ prompts**: before specing any cross-package boundary (mapper output, contract schema, API response, client API type, form field, list/filter/search behaviour, sidebar config), the planner **reads 2-3 canonical implementations verbatim** and quotes the pattern in the prompt with file paths + line ranges. No "TS best practice" instincts. Rule 4 supersedes any external convention. The executor's Stage 1 RFC should not be the first time codebase compatibility is checked — the prompt should already align.
+
+**Step 3's `apps/admin/src/modules/exercises/` is now the canonical reference** for catalog-library admin CRUD (Step 4 Label CRUD, future entity catalogs).
+
+---
+
+## Step 03 — Admin Exercise CRUD (with Phase 0 D5 refinement)
+
+- **Date**: 2026-05-13
+- **Feature-dev artifacts**: `.feature-dev/1778666831/` (research.md, design.md, plan.md, review.md, qa.md, tasks.md)
+- **Prompt**: `implementation/step-03/prompt.md`
+- **Output**: `implementation/step-03/output.md`
+- **Summary**: Phase 0 ratified D5 (`Exercise.defaultDemoUrl String?` → `defaultDemoUrls String[]`) across analysis-artifacts + real schema; `db:reset+seed` clean. Phases 1-7 shipped first user-visible admin CRUD: contracts (mirrored enums per dep-cruiser `contracts-no-prisma` rule), backend handlers with `P2002`/`P2003` intercepts, 4 admin routes, client API + TanStack hooks, admin module (form split into 4 sub-cards + 2 helpers per `react/no-multi-comp`), 3 pages, new `Library` sidebar group. Stage 5/6 hardening: NFKC normalize + zero-width strip, http(s)-only URL scheme refine, length/array caps (`MAX_URL_LENGTH=2048`, `MAX_NOTES_LENGTH=10_000`, `MAX_ARRAY_LENGTH=20`), cross-field placeholder consistency refine. 12 commits on `feat/training-domain` (HEAD `51302f93`). 753 tests passing (+25); type-check/lint/dep:check all 16/16 green.
+- **Open questions**:
+  - **Memory hygiene** flagged by planner this turn — `feedback_localized_helper.md` is admin-v4 cross-pollution; `feedback_pattern_compliance.md` Stack spacing should note discipline-specific `{3}` override. Both pending user approval.
+  - **Browser smoke-test** scenario documented in `step-03/output.md` §"Сценарий смоук-теста"; awaiting user execution.
+- **Deferred decisions** (from executor's Stage 6 QA):
+  - **QA-008** server-side pagination — defer until library > ~500 entries; cross-cutting refactor on all admin CMS endpoints simultaneously.
+  - **QA-010** `canonicalCompoundType × placeholderFlag` dual-encoding collapse — long-term schema migration (drop flag, derive on read).
+  - **QA-011** `ConfirmationModal` stuck open on delete-error — project-wide pattern in `useDeleteConfirmation`; fix once for all modules.
+  - **QA-012** Server-validation errors not inline on input — project-wide; centralized fix in `createCrudHooks` `setError` chain.
+  - **`aliases Json? → String[]`** schema migration — bounded `as string[] | null` narrowing in mapper this step; future symmetry with `defaultDemoUrls`.
+  - **`defaultLoad` UI surface** — nullable in schema; no form input this step; future schema-extension step.
+  - **Multi-select `DataTableFilter` primitive** — `@repo/ui` extension; needed by plan-builder picker (Step 9+).
+  - **`stress-final.md` / `00-meta/phase-06-prompt.md` stale `defaultDemoUrl` mentions** — out-of-scope per prompt §2/§3; paper trail in output.md.
+  - **Production rollout workflow** — separate ADR when prod migrates off Neon dev.
+- **Analysis/-files touched**: `06-formalization/{schema.prisma, implementation-notes.md, er-final.md}` (Phase 0 D5 refinement only).
+- **Smoke-test status**: pending (user runs browser scenario from output.md §"Сценарий смоук-теста").
+
 ## Step 02 — Prisma Schema Port + Archetype Seed
 
 - **Date**: 2026-05-13

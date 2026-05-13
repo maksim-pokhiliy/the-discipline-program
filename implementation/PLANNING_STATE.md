@@ -1,6 +1,6 @@
 # Planning State
 
-> Last updated: 2026-05-13 (Step 2 committed; D5 ratified; Step 3 prompt ready)
+> Last updated: 2026-05-13 (Step 3 committed; awaiting browser smoke-test before Step 4)
 
 ## Workflow goal
 
@@ -14,7 +14,12 @@ End-to-end coach happy path:
 
 ## Current step
 
-**Step 2 committed** (2026-05-13). Branch `feat/training-domain` created; commits `995504c0` (Step 1) + `b9d84876` (Step 2). **D5 ratified** during Step 3 planning (defaultDemoUrl → defaultDemoUrls String[]). `implementation/step-03/prompt.md` written. Awaiting Step 3 execution via separate Opus 4.7 max-effort session through `/feature` (full pipeline).
+**Step 3 committed** (2026-05-13). HEAD `51302f93` on `feat/training-domain`. Phase 0 D5 schema refinement + Phases 1-7 admin Exercise CRUD shipped. 12 commits since `241f711c`. Six prompt deviations resolved against codebase patterns (recorded as Strike-lesson in `IMPLEMENTATION_LOG.md`). All verification gates green (753 tests, type-check/lint/dep:check 16/16). Awaiting browser smoke-test by user before queueing **Step 4** (Admin Label CRUD — near-copy of Exercise template).
+
+### Memory hygiene pending user approval
+
+- `feedback_localized_helper.md` — admin-v4 cross-pollution into discipline memory dir; propose `rm`.
+- `feedback_pattern_compliance.md` — global `Stack spacing={4}` contradicts discipline `{3}` (41/61 codebase occurrences); propose body-edit with project-specific override note.
 
 ## Step queue (draft, refined per iteration)
 
@@ -24,9 +29,15 @@ End-to-end coach happy path:
 
 - **Step 2** — Prisma schema port + Archetype seed + minimal user/plan seed. Bring ratified schema into `packages/api-server/prisma/schema.prisma`. Wire seed: 1 coach (User+CoachProfile), 1 athlete (User+AthleteProfile), 1 empty TrainingPlan, all 34 archetypes (full canonical set, derived from `analysis/artifacts/06-formalization/implementation-notes.md` archetype catalog). NO seed for Exercise/Label — user creates via admin UI. `pnpm --filter @repo/api-server db:reset` per ADR-0019; no versioned migrations during workflow.
 
-- **Step 3** — Admin Exercise CRUD. **Phase 0**: schema refinement (D5 — defaultDemoUrl → defaultDemoUrls String[]) + analysis-artifact sync + `db:reset + db:seed`. **Phase 1-7**: contracts → endpoints → mappers → api-client → query hooks → admin module (`apps/admin/src/modules/exercises/`) → routes → sidebar nav. Match existing module conventions (per `apps/admin/src/modules/reviews/` reference). Forms: react-hook-form + zod; tables: `@repo/ui` `DataTable`. Sidebar: new "Library" group at end of existing items. defaultLoad — NOT exposed in v1 UI; auto-derived `canonicalNameLower` in handlers; movementFamily autocomplete with distinct DB values; defaultDemoUrls chip-input with URL validation; aliases chip-input.
+- **Step 3** — Admin Exercise CRUD + Phase 0 D5 schema refinement. **COMPLETED** 2026-05-13 (HEAD `51302f93`). `apps/admin/src/modules/exercises/` shipped as canonical reference template for future catalog-library CRUD modules. Smoke-test scenario in `implementation/step-03/output.md`.
 
-- **Step 4** — Admin Label CRUD. Same conventions as Step 3. Distinguishing feature: `applicableLevels` multi-select (day/session/block); typeahead/autocomplete UX expected later in plan-editor.
+- **Step 4** — Admin Label CRUD. **Near-copy of Step 3 exercise template** (`apps/admin/src/modules/exercises/` is canonical reference). Label-specific differences:
+
+  - Fields: `name` + `nameLower` (auto-derived mirror), `applicableLevels Json` (set of AppLevel values), `notes`. No enums for primary/secondary type; no compound classification; no placeholder flag; no movement family; no URLs; no aliases.
+  - `applicableLevels` UX: multi-checkbox or chip selector with 3 values (DAY/SESSION/BLOCK from `AppLevel` enum). This is THE first field that requires multi-value semantics within Step 4; needs canonical pattern study (probable: stored as `Json` `["DAY","SESSION","BLOCK"]` subset; UI = 3 chips/checkboxes).
+  - List filter by single `AppLevel` (using existing single-value `DataTableFilter`): show labels applicable to selected level.
+  - Smaller form: 1 card with 3 fields. ~50% less code than Exercise.
+  - Step 4 planner reads canonical Step 3 files (`apps/admin/src/modules/exercises/{components,sections,views}/`) verbatim before specing.
 
 - **Step 5** — Platform plan list / create-plan flow. Replace/verify `apps/platform/src/modules/plans/` scaffolding; ensure CreatePlan dialog persists to new `TrainingPlan` shape; navigate to plan-detail.
 
@@ -93,4 +104,6 @@ Pending Step 1 follow-up micro-questions (see chat turn).
 
 ## Next action
 
-User launches separate Opus 4.7 max-effort session pointed at `implementation/step-03/prompt.md`. Executor invokes `/feature` (full pipeline) per prompt. On completion — planner reads `implementation/step-03/output.md` and `.feature-dev/<ts>/`, manual smoke-test in browser per provided scenario, validates, updates `IMPLEMENTATION_LOG.md`, drafts Step 4 thesis (Admin Label CRUD — should be quick, follows Exercise template).
+1. **Memory hygiene decision** — user approves cleanup proposals (above).
+2. **Browser smoke-test** — user runs scenario from `implementation/step-03/output.md` §"Сценарий смоук-теста" (11 steps). On pass — Step 3 fully closes; on issue — Step 3 follow-up fix.
+3. **Step 4 thesis** — planner reads Step 3 canonical module files verbatim BEFORE specing (per Lesson learned in `IMPLEMENTATION_LOG.md`). Then drafts thesis with file-path-quoted patterns.
