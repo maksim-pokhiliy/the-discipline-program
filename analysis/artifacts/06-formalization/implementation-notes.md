@@ -6,6 +6,47 @@ JSON shape examples + Zod validation samples + resolution algorithms + migration
 
 ---
 
+## §0. Phase 7 — Integration Ratifications (2026-05-12)
+
+Четыре ratifications (D1-D4) согласуют training-domain срез с уже существующим app schema (`packages/api-server/prisma/schema.prisma`, содержит `User`, `CoachProfile`, `AthleteProfile`, `TrainingPlan`, `PlanEnrollment`, `CoachAthleteAssignment`). Закрывают OPEN items §5 ("Calendar / Week / Plan", "Athlete.profileAttributes.hrMax finalization", "Dual-value resolver") — см. inline annotations ниже по тексту.
+
+### §0.1 D1 — Calendar Week as entity
+
+Между `TrainingPlan` (app-level) и `Day` (этот срез) добавлен явный `Week` entity:
+
+- `Week { id, planId, startDate Date, notes?, createdAt, updatedAt }` с `@@unique([planId, startDate])` + `@@index([planId, startDate])`.
+- `startDate` = понедельник ISO-недели (Mon-Sun). Week — **календарный слот**, не «week 1 of 12» относительной программы. План — «поезд», который катится вперёд: тренер программирует очередную календарную неделю, атлет подключается/уходит в любой момент. Финал плана не зашит.
+- `Day.order` удалён; заменён на `(weekId String, dayOfWeek DayOfWeek)` с unique. Новый enum `DayOfWeek { MONDAY..SUNDAY }`.
+- Derived (не stored): week-end date (`startDate + 6 days`), ISO year+week number, per-day calendar date. Живут в app layer.
+
+Coach-facing смысл: атомарные week-level операции (add/remove/clone/clear), per-week notes ("deload", "competition prep", "vacation skip"), естественная ось навигации в plan-editor UI.
+
+### §0.2 D2 — Athlete = User + AthleteProfile; `profileAttributes` dropped
+
+Standalone `Athlete` модель убрана. В этом срезе:
+
+- `OneRMRecord.athleteId` → **`userId`**; relation `athlete Athlete` → `user User`. Stub `User` живёт в конце `schema.prisma`.
+- `PerformedSession.athleteId` → **`userId`**; relation аналогично.
+- `Athlete.profileAttributes` (Phase 6 placeholder для dual-value resolver, sex, level, RX-SC tier) **полностью удалён**. Это был placeholder без чёткого UX-shape; держать jsonb-багги «на потом» — анти-pattern.
+- Будущие athlete-attribute поля (level, modalityTier, hrMax, sex для dual-value) лягут как **explicit enum / scalar columns на `AthleteProfile`** в app-level schema, **не** как jsonb.
+
+Импликации в этом файле: pseudocode в §3.5 (`resolveDualValue`) и §3.8 (`resolveHrZoneToBpm`) — обращаются к `athlete.profileAttributes.*`. Они помечены RATIFIED OUT ниже; rewrite — Phase 8+ когда AthleteProfile получит соответствующие explicit columns.
+
+### §0.3 D3 — Full-scope port at Step 2
+
+Этот документ остаётся документом. Step 2 (отдельная итерация workflow) портирует **весь** ratified set entities — catalogue (Exercise, Label, Archetype), plan-content (Week, Day, Session, Block, BlockLabelAssignment, Schema, SchemaPairing, SchemaRow), athlete-facing (OneRMRecord, PerformedSession, PerformedExerciseInstance) — в `packages/api-server/prisma/schema.prisma`, даже если athlete-flow UI/API остаются вне scope первой volna. Альтернатива (порт только coach-fas) потребует второго schema-wave mid-workflow.
+
+### §0.4 D4 — Library vs Configuration split
+
+Два разных режима жизненного цикла для catalog entities:
+
+- **Library** — `Exercise`, `Label`. Coach создаёт / редактирует через admin UI. **Не seedится системой.** Используется для future analytics (per-exercise volume, label-based filtering). 149 canonical exercises из Phase 3.2 — reference content (CSV / starter pack), но не автоматический seed; coach при онбординге заполняет либо вручную, либо через bulk-import. См. inline-аннотацию у §4.6.
+- **Configuration** — `Archetype`. **Часть** доменной модели: 34 канонические записи (Phase 1-6: 33 + super-set Phase 7) — **обязательный** seed при Step 2. **Нет admin CRUD**: archetype-каталог менять через UI невозможно без синхронного апдейта parser/renderer. `archetypeParamsSchema Json` остаётся колонкой Prisma (не enum), чтобы расширять каталог без code redeploy при необходимости.
+
+Implication для §4.5 (Archetype seed): остаётся обязательным mandatory step. Для §4.6 (Catalog seed scope): 149-список становится starter content, не auto-seed (см. RATIFIED note ниже).
+
+---
+
 ## §1. JSON shape examples per embedded VO
 
 Все примеры — concrete fixtures для типичных sample occurrences.
@@ -787,12 +828,12 @@ Per-exercise primary; movement_family soft fallback.
 
 ```typescript
 async function lookupOneRM(
-  athleteId: string,
+  userId: string,
   exercise: Exercise,
 ): Promise<{ valueKg: number; source: "direct" | "family_fallback" } | null> {
   // 1. Direct per-exercise.
   const direct = await db.oneRMRecord.findUnique({
-    where: { athleteId_exerciseId: { athleteId, exerciseId: exercise.id } },
+    where: { userId_exerciseId: { userId, exerciseId: exercise.id } },
   });
   if (direct) return { valueKg: Number(direct.valueKg), source: "direct" };
 
@@ -800,7 +841,7 @@ async function lookupOneRM(
   if (exercise.movementFamily) {
     const familyRecords = await db.oneRMRecord.findMany({
       where: {
-        athleteId,
+        userId,
         exercise: { movementFamily: exercise.movementFamily },
       },
       orderBy: { recordedAt: "desc" },
@@ -821,7 +862,7 @@ async function lookupOneRM(
 Применяется при render / actual_load capture.
 
 ```typescript
-async function resolveSessionLoads(session: Session, athleteId: string): Promise<ResolvedSession> {
+async function resolveSessionLoads(session: Session, userId: string): Promise<ResolvedSession> {
   const blocks = await db.block.findMany({
     where: { sessionId: session.id },
     include: { schemas: true },
@@ -840,7 +881,7 @@ async function resolveSessionLoads(session: Session, athleteId: string): Promise
           if (!exerciseRef) continue;
           const exercise = await db.exercise.findUnique({ where: { id: exerciseRef } });
           if (!exercise) continue;
-          const oneRm = await lookupOneRM(athleteId, exercise);
+          const oneRm = await lookupOneRM(userId, exercise);
           if (oneRm) {
             const percentage = load.value / 100;
             const resolvedKg = oneRm.valueKg * percentage;
@@ -857,6 +898,8 @@ async function resolveSessionLoads(session: Session, athleteId: string): Promise
 При `freezeLoadsAtCreation = true` Session creation hook резолвит все percentage loads в absolute kg и пишет в DB (через Prisma update). После этого all reads возвращают frozen values.
 
 ### §3.5 Dual-value resolver (deferred placeholder)
+
+> **RATIFIED OUT 2026-05-12** per D2 — `Athlete` and `Athlete.profileAttributes` removed. The pseudocode below is preserved for historical context; future implementation reads `tier` / `sex` from **explicit columns on `AthleteProfile`** (app-level schema), not from a jsonb bag. Concrete column shapes land in Phase 8+ when the dual-value UX is designed.
 
 ```typescript
 function resolveDualValue(weight: Weight, athlete: Athlete): Weight {
@@ -950,7 +993,9 @@ Phase 5 ratified explicit row (ConnectorRow); Phase 6 хранит и в `Schema
 
 ### §3.8 HR zone resolution (Ext 1, Q16)
 
-Categorical `hrZone.zone` → athlete-specific BPM range через `Athlete.profileAttributes.hrMax` placeholder. Phase 7 model не хранит абсолютные BPM — только zone enum. Resolution = derived view.
+> **RATIFIED OUT 2026-05-12** per D2 — `Athlete.profileAttributes.hrMax` removed. Future implementation reads `hrMaxBpm` (или аналогичное explicit field) **из `AthleteProfile`** (app-level schema), не jsonb. Concrete column shape — Phase 8+ когда athlete-profile UI получит HR-max input. The Z1..Z5 percent table below остаётся canonical.
+
+Categorical `hrZone.zone` → athlete-specific BPM range. Phase 7 model не хранит абсолютные BPM — только zone enum. Resolution = derived view (по будущему `AthleteProfile.hrMaxBpm`).
 
 ```typescript
 type HrZone = "Z1" | "Z2" | "Z3" | "Z4" | "Z5";
@@ -979,7 +1024,7 @@ function resolveHrZoneToBpm(
 }
 ```
 
-`profileAttributes.hrMax` — placeholder attribute name; финализация — Phase 7+ при добавлении athlete profile UI. Если absent → UI prompts coach "set athlete HR max to display BPM ranges". Zone enum остаётся canonical в prescription.
+Zone enum остаётся canonical в prescription. Если `AthleteProfile.hrMaxBpm` отсутствует → UI prompts coach "set athlete HR max to display BPM ranges".
 
 ### §3.9 Numeric pace interpretation (Ext 2, Q17)
 
@@ -1269,6 +1314,8 @@ await db.archetype.upsert({
 
 ### §4.6 Catalog seed scope (Q11 Phase 7.1)
 
+> **RATIFIED 2026-05-12 (D4)** — `Exercise` и `Label` объявлены **libraries** (admin-managed, **не** auto-seeded). 149-список Phase 3.2 остаётся reference content / starter pack (например, CSV-import при онбординге), но не выполняется автоматически при `db:reset`. Coach при первом запуске admin UI заполняет catalog сам. См. §0.4.
+
 Exercise catalog seed = **149 canonical exercises** (Phase 3.2 list, no special abstract entries). Не вводить equipment-stripped duplicate ("Bulgarian split squats" abstract) — это не масштабируется (каждый named-program movement требовал бы отдельной abstract entry, шум в search/library).
 
 Resolution для named-exercise-program archetype:
@@ -1281,16 +1328,16 @@ Resolution для named-exercise-program archetype:
 
 ## §5. Open items / future work
 
-| Item                                                                          | Status       | Future phase                                                                      |
-| ----------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------- |
-| Dual-value resolver (athlete profile attribute name)                          | placeholder  | финализируется при росте sample                                                   |
-| RPE-based notation parsing                                                    | model-ready  | parser extension при появлении gym-context sample                                 |
-| MovementFamily entity upgrade                                                 | string field | если families > 15 — extract в entity                                             |
-| MediaReference library entity                                                 | embedded VO  | extract для URL dedup при росте catalog                                           |
-| Calendar / Week / Plan entities                                               | out-of-scope | Phase 8+ / future                                                                 |
-| Template / cloning model                                                      | out-of-scope | uplevel когда templating feature designed                                         |
-| `Athlete.profileAttributes.hrMax` finalization                                | placeholder  | концретный shape профайла + UI input (Phase 7+ при добавлении athlete management) |
-| Modality-specific NumericPace decorations (e.g., "/500m" canonical row split) | UI layer     | parser выдаёт canonical shape; UI добавляет per-modality conventions              |
+| Item                                                                          | Status                      | Future phase                                                                                                                         |
+| ----------------------------------------------------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Dual-value resolver (athlete profile attribute name)                          | **DROPPED 2026-05-12 (D2)** | Resolver-input fields переезжают на `AthleteProfile` как explicit columns (sex, tier, ...) когда дизайн UX будет готов               |
+| RPE-based notation parsing                                                    | model-ready                 | parser extension при появлении gym-context sample                                                                                    |
+| MovementFamily entity upgrade                                                 | string field                | если families > 15 — extract в entity                                                                                                |
+| MediaReference library entity                                                 | embedded VO                 | extract для URL dedup при росте catalog                                                                                              |
+| Calendar / Week / Plan entities                                               | **CLOSED 2026-05-12 (D1)**  | `Week` ratified как calendar slot (Mon-Sun) с FK на `TrainingPlan` (app-level). `Day.order` → `(weekId, dayOfWeek)`. См. §0.1.       |
+| Template / cloning model                                                      | out-of-scope                | uplevel когда templating feature designed                                                                                            |
+| `Athlete.profileAttributes.hrMax` finalization                                | **DROPPED 2026-05-12 (D2)** | `hrMaxBpm` (или эквивалент) лягут explicit column на `AthleteProfile` (app-level) при появлении athlete-profile UI. См. §0.2 / §3.8. |
+| Modality-specific NumericPace decorations (e.g., "/500m" canonical row split) | UI layer                    | parser выдаёт canonical shape; UI добавляет per-modality conventions                                                                 |
 
 ---
 
