@@ -14,6 +14,7 @@ export const adminKeys = {
     ...createEntityKeys(ROOT, "exercises"),
     movementFamilies: () => [...ROOT, "exercises-movement-families"] as const,
   },
+  labels: createEntityKeys(ROOT, "labels"),
   products: createEntityKeys(ROOT, "products"),
   reviews: createEntityKeys(ROOT, "reviews"),
   users: {
