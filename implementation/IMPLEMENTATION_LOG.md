@@ -60,7 +60,7 @@
   - **`stress-final.md` / `00-meta/phase-06-prompt.md` stale `defaultDemoUrl` mentions** — out-of-scope per prompt §2/§3; paper trail in output.md.
   - **Production rollout workflow** — separate ADR when prod migrates off Neon dev.
 - **Analysis/-files touched**: `06-formalization/{schema.prisma, implementation-notes.md, er-final.md}` (Phase 0 D5 refinement only).
-- **Smoke-test status**: pending (user runs browser scenario from output.md §"Сценарий смоук-теста").
+- **Smoke-test status**: passed (2026-05-13). 10 of 11 scenario steps green on first run; step 8 (cross-field refine UX) silently failed — refine fired at resolver but Switch field did not surface error. Fixed inline via commit `919b836d fix(exercise): surface cross-field refine error on placeholder flag toggle` (`classification-card.tsx` placeholderFlag Controller now subscribes to `fieldState` and renders error in `FormHelperText`, matching the `canonicalCompoundType` Select pattern in the same file). Re-test passed both directions (PLACEHOLDER+off and ATOMIC+on). Step 3 fully closed.
 
 ## Step 02 — Prisma Schema Port + Archetype Seed
 

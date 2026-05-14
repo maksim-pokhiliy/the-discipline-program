@@ -1,6 +1,6 @@
 # Planning State
 
-> Last updated: 2026-05-13 (Step 3 committed; awaiting browser smoke-test before Step 4)
+> Last updated: 2026-05-13 (Step 3 closed + smoke-passed; Step 4 prompt ready)
 
 ## Workflow goal
 
@@ -14,12 +14,9 @@ End-to-end coach happy path:
 
 ## Current step
 
-**Step 3 committed** (2026-05-13). HEAD `51302f93` on `feat/training-domain`. Phase 0 D5 schema refinement + Phases 1-7 admin Exercise CRUD shipped. 12 commits since `241f711c`. Six prompt deviations resolved against codebase patterns (recorded as Strike-lesson in `IMPLEMENTATION_LOG.md`). All verification gates green (753 tests, type-check/lint/dep:check 16/16). Awaiting browser smoke-test by user before queueing **Step 4** (Admin Label CRUD — near-copy of Exercise template).
+**Step 3 fully closed** (2026-05-13). HEAD `919b836d` on `feat/training-domain` (14 commits). Phase 0 D5 schema refinement + Phases 1-7 admin Exercise CRUD shipped; browser smoke-test passed (1 inline UX fix `919b836d` for placeholder refine error surfacing). Memory hygiene done (`feedback_localized_helper.md` removed, `feedback_pattern_compliance.md` index line corrected). **`implementation/step-04/prompt.md` written** — Admin Label CRUD, near-copy of Exercise template. Awaiting Step 4 execution via separate Opus 4.7 max-effort session through `/feature` (full pipeline).
 
-### Memory hygiene pending user approval
-
-- `feedback_localized_helper.md` — admin-v4 cross-pollution into discipline memory dir; propose `rm`.
-- `feedback_pattern_compliance.md` — global `Stack spacing={4}` contradicts discipline `{3}` (41/61 codebase occurrences); propose body-edit with project-specific override note.
+This planner session ends here (clean handoff boundary). A fresh planner session resumes by reading `PLANNING_STATE.md` → `IMPLEMENTATION_LOG.md` → `analysis/artifacts/05-synthesis/` + `06-formalization/`, then validating Step 4 output when it lands.
 
 ## Step queue (draft, refined per iteration)
 
@@ -57,17 +54,6 @@ End-to-end coach happy path:
 
 Some steps (especially 10, 11) will likely split into sub-steps. Granularity locked at thesis time, not now.
 
-## Open architectural questions (block Step 1)
-
-Pending Step 1 follow-up micro-questions (see chat turn).
-
-## Deferred questions (default hypothesis applied; will revisit if needed)
-
-- **Order semantics**: sequential integers (1, 2, 3 …) with whole-row reorder operations (not sparse 10/20/30). Simpler UX, no half-integer hacks; reorder is cheap enough at the cardinalities we expect (≤ ~10 of each child).
-- **Phase 7 archetypes (super-set, hrZone, numericPace)**: include now if it costs nothing — they are JSON-only additions. Schema-level: add `super-set` to archetype seed; `Intensity` Zod schema admits `hrZone` and `numericPace` optional fields.
-- **Migrations directory**: not maintained during workflow per ADR-0019; `pnpm --filter @repo/api-server db:reset` is the per-step refresh.
-- **Naming clash with existing `TrainingPlan`**: keep `TrainingPlan` as the plan-shell entity (creator, status, name). Domain-model `Plan` notion subsumed.
-
 ## Decisions accepted
 
 ### 2026-05-12 — Foundation architecture (D1-D4 finalized)
@@ -104,6 +90,4 @@ Pending Step 1 follow-up micro-questions (see chat turn).
 
 ## Next action
 
-1. **Memory hygiene decision** — user approves cleanup proposals (above).
-2. **Browser smoke-test** — user runs scenario from `implementation/step-03/output.md` §"Сценарий смоук-теста" (11 steps). On pass — Step 3 fully closes; on issue — Step 3 follow-up fix.
-3. **Step 4 thesis** — planner reads Step 3 canonical module files verbatim BEFORE specing (per Lesson learned in `IMPLEMENTATION_LOG.md`). Then drafts thesis with file-path-quoted patterns.
+User launches separate Opus 4.7 max-effort session pointed at `implementation/step-04/prompt.md`. Executor invokes `/feature` (full pipeline) per prompt. On completion — a fresh planner session reads `implementation/step-04/output.md` + `.feature-dev/<ts>/`, runs browser smoke-test per provided scenario, validates, updates `IMPLEMENTATION_LOG.md`, then drafts Step 5 thesis (Platform plan list / create-plan flow — `apps/platform`, new app surface, requires fresh canonical-pattern reads of platform conventions before specing).
