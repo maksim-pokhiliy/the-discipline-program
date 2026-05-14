@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { ForbiddenError } from "@repo/errors";
+import { BadRequestError, ForbiddenError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach } from "../../../test/helpers";
 
@@ -8,6 +8,7 @@ import { lmsWeekApi } from "./admin";
 
 const MONDAY_PARAM = "2026-05-18";
 const WEDNESDAY_PARAM = "2026-05-20";
+const IMPOSSIBLE_DATE_PARAMS = ["2026-13-40", "2026-02-30", "2026-04-31"];
 
 describe("lmsWeekApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
@@ -57,19 +58,60 @@ describe("lmsWeekApi", () => {
         lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM),
       ).resolves.toBeNull();
     });
+
+    it("rejects with BadRequestError for a regex-passing but impossible startDate", async () => {
+      for (const param of IMPOSSIBLE_DATE_PARAMS) {
+        await expect(
+          lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, param),
+        ).rejects.toThrow(BadRequestError);
+      }
+    });
   });
 
   describe("upsertNotes", () => {
-    it("rejects when caller does not own the plan and is not admin/head-coach", async () => {
+    it("rejects a non-owner and materializes no Week row as a side effect", async () => {
       await expect(
         lmsWeekApi.upsertNotes(otherCoach.user.id, activePlanId, MONDAY_PARAM, { notes: "x" }),
       ).rejects.toThrow(ForbiddenError);
+
+      await expect(
+        lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM),
+      ).resolves.toBeNull();
     });
 
-    it("rejects with ForbiddenError on an archived plan", async () => {
+    it("rejects on an archived plan and materializes no Week row as a side effect", async () => {
       await expect(
         lmsWeekApi.upsertNotes(coach.user.id, archivedPlanId, MONDAY_PARAM, { notes: "x" }),
       ).rejects.toThrow(ForbiddenError);
+
+      await expect(
+        lmsWeekApi.getByPlanAndDate(coach.user.id, archivedPlanId, MONDAY_PARAM),
+      ).resolves.toBeNull();
+    });
+
+    it("rejects with BadRequestError for a regex-passing but impossible startDate", async () => {
+      for (const param of IMPOSSIBLE_DATE_PARAMS) {
+        await expect(
+          lmsWeekApi.upsertNotes(coach.user.id, activePlanId, param, { notes: "x" }),
+        ).rejects.toThrow(BadRequestError);
+      }
+    });
+
+    it("materializes a row with notes null when upserting null onto an unmaterialized slot", async () => {
+      const created = await lmsWeekApi.upsertNotes(coach.user.id, activePlanId, MONDAY_PARAM, {
+        notes: null,
+      });
+
+      try {
+        expect(created.notes).toBeNull();
+
+        const stored = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
+
+        expect(stored?.id).toBe(created.id);
+        expect(stored?.notes).toBeNull();
+      } finally {
+        await cleanupRaw.week.delete({ where: { id: created.id } }).catch(() => {});
+      }
     });
 
     it("creates the row on the first call and updates it on the second", async () => {
