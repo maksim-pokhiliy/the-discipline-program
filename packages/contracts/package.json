@@ -12,6 +12,7 @@
     "./cms/contact": "./src/entities/cms/contact/index.ts",
     "./cms/dashboard": "./src/entities/cms/dashboard/index.ts",
     "./cms/exercise": "./src/entities/cms/exercise/index.ts",
+    "./cms/label": "./src/entities/cms/label/index.ts",
     "./cms/pages": "./src/entities/cms/pages/index.ts",
     "./cms/product": "./src/entities/cms/product/index.ts",
     "./cms/review": "./src/entities/cms/review/index.ts",
