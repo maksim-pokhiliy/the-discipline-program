@@ -37,7 +37,27 @@
 
 **Step 3's `apps/admin/src/modules/exercises/` is now the canonical reference** for catalog-library admin CRUD (Step 4 Label CRUD, future entity catalogs).
 
+**Addendum (Step 4)** — a 7th deviation surfaced, but a _new flavour_: not prompt-vs-codebase misalignment, but **prompt-internal contradiction**. The Step 4 prompt simultaneously specified (a) bounded-`as` mapper handling for `applicableLevels` (correct) and (b) an `enum-maps.ts` AppLevel bridge (wrong — `applicableLevels` is a `Json` column, not an enum column; the bridge would be dead code). Both can't be true. **Rule extension**: prompt self-review must check _internal consistency_ — every field's handling described exactly once, no contradictory instructions across scope-list / phases / ratified-decisions sections.
+
 ---
+
+## Step 04 — Admin Label CRUD
+
+- **Date**: 2026-05-14
+- **Feature-dev artifacts**: `.feature-dev/1778744240/` (research, design, plan, tasks, review, qa)
+- **Prompt**: `implementation/step-04/prompt.md`
+- **Output**: `implementation/step-04/output.md`
+- **Summary**: Second admin catalog-library CRUD — Label. Structural mirror of Step 3 Exercise module, adapted from 10-field Exercise to 3-field Label (`name`, `applicableLevels`, `notes`). One new pattern — `applicableLevels` multi-value checkbox widget (`FormGroup` + 3 `Checkbox`), `Controller` subscribed to `fieldState` with `FormControl error` + `FormHelperText` (direct copy of the Step 3.1 `placeholderFlag` fix — regression guard for the silent-submit bug). 9 commits `6a8b2302..252d7323`. No schema change (Label + AppLevel shipped in Step 2). 786 tests passing (+33: 22 contract unit + 11 api-server integration). Review APPROVE 0/0/0, QA A−. `enum-maps.ts` NOT touched (DEC-7).
+- **Open questions** (3 escalations, all resolved):
+  - **Trigger-2 (memory prior-attempt vocab)** — `feedback_discipline_db_non_prod.md` had a stale ADR-0037/plan-editor breadcrumb. Resolution: surface-only (per Step 1 precedent); planner cleaned the memory file in parallel (removed breadcrumb + corrected stale `db:reset` definition that wrongly included `&& prisma db seed`). Re-grep of memory dir confirmed zero remaining stale refs.
+  - **enum-maps.ts dead-code** — prompt specified an AppLevel bridge in `enum-maps.ts`, but `applicableLevels` is a `Json` column (mirrors Exercise `aliases Json` — no bridge). Planner-side prompt error (internal contradiction — see Lesson learned addendum). Resolution: skip `enum-maps.ts` (DEC-7); append-only edits 8 not 9.
+  - **QA-001 (duplicate applicableLevels)** — `["DAY","DAY"]` passed write+read schemas; UI checkboxes can't produce dups but direct API / edit-reseed bypass that. Fixed (`4c9c922a`): field-level `.refine` uniqueness on `applicableLevelsSchema`.
+- **Deferred decisions** (from QA):
+  - QA-002 (`notes: ""` not normalized to `null`) — codebase-wide pattern shared with Exercise; fix codebase-wide or leave, not in isolation.
+  - QA-003 (`as AppLevelValue[]` mapper narrowing) — ratified pattern (mirrors Exercise `aliases`); guarded by integration test asserting read-path throws `ZodError` on malformed data.
+  - Separate sidebar icon for "Labels" — currently shares `"exercises"` icon; ~2-line `icon-map.ts` addition, out of Step 4 scope.
+- **Analysis/-files touched**: none (no schema change).
+- **Smoke-test status**: pending (user runs 9-step scenario from `step-04/output.md`; step 4 is the Step-3-bug regression guard — empty `applicableLevels` must show inline error, not silent no-op).
 
 ## Step 03 — Admin Exercise CRUD (with Phase 0 D5 refinement)
 

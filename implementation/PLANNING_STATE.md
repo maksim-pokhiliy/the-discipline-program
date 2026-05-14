@@ -1,6 +1,6 @@
 # Planning State
 
-> Last updated: 2026-05-13 (Step 3 closed + smoke-passed; Step 4 prompt ready)
+> Last updated: 2026-05-14 (Step 4 committed; awaiting browser smoke-test before Step 5)
 
 ## Workflow goal
 
@@ -14,9 +14,7 @@ End-to-end coach happy path:
 
 ## Current step
 
-**Step 3 fully closed** (2026-05-13). HEAD `919b836d` on `feat/training-domain` (14 commits). Phase 0 D5 schema refinement + Phases 1-7 admin Exercise CRUD shipped; browser smoke-test passed (1 inline UX fix `919b836d` for placeholder refine error surfacing). Memory hygiene done (`feedback_localized_helper.md` removed, `feedback_pattern_compliance.md` index line corrected). **`implementation/step-04/prompt.md` written** — Admin Label CRUD, near-copy of Exercise template. Awaiting Step 4 execution via separate Opus 4.7 max-effort session through `/feature` (full pipeline).
-
-This planner session ends here (clean handoff boundary). A fresh planner session resumes by reading `PLANNING_STATE.md` → `IMPLEMENTATION_LOG.md` → `analysis/artifacts/05-synthesis/` + `06-formalization/`, then validating Step 4 output when it lands.
+**Step 4 committed** (2026-05-14). HEAD `252d7323` on `feat/training-domain`. Admin Label CRUD shipped — structural mirror of Step 3 Exercise, plus the `applicableLevels` multi-value checkbox widget. 9 commits `6a8b2302..252d7323`. All verification gates green (786 tests, type-check/lint/dep:check 16/16, Review APPROVE 0/0/0, QA A−). Three executor escalations resolved (trigger-2 memory breadcrumb, enum-maps dead-code, QA-001 duplicate levels). 7th cumulative prompt deviation surfaced — internal-contradiction flavour — recorded in `IMPLEMENTATION_LOG.md` Lesson-learned addendum. Awaiting browser smoke-test by user before queueing **Step 5**.
 
 ## Step queue (draft, refined per iteration)
 
@@ -28,13 +26,7 @@ This planner session ends here (clean handoff boundary). A fresh planner session
 
 - **Step 3** — Admin Exercise CRUD + Phase 0 D5 schema refinement. **COMPLETED** 2026-05-13 (HEAD `51302f93`). `apps/admin/src/modules/exercises/` shipped as canonical reference template for future catalog-library CRUD modules. Smoke-test scenario in `implementation/step-03/output.md`.
 
-- **Step 4** — Admin Label CRUD. **Near-copy of Step 3 exercise template** (`apps/admin/src/modules/exercises/` is canonical reference). Label-specific differences:
-
-  - Fields: `name` + `nameLower` (auto-derived mirror), `applicableLevels Json` (set of AppLevel values), `notes`. No enums for primary/secondary type; no compound classification; no placeholder flag; no movement family; no URLs; no aliases.
-  - `applicableLevels` UX: multi-checkbox or chip selector with 3 values (DAY/SESSION/BLOCK from `AppLevel` enum). This is THE first field that requires multi-value semantics within Step 4; needs canonical pattern study (probable: stored as `Json` `["DAY","SESSION","BLOCK"]` subset; UI = 3 chips/checkboxes).
-  - List filter by single `AppLevel` (using existing single-value `DataTableFilter`): show labels applicable to selected level.
-  - Smaller form: 1 card with 3 fields. ~50% less code than Exercise.
-  - Step 4 planner reads canonical Step 3 files (`apps/admin/src/modules/exercises/{components,sections,views}/`) verbatim before specing.
+- **Step 4** — Admin Label CRUD. **COMPLETED** 2026-05-14 (HEAD `252d7323`). Structural mirror of Step 3 Exercise module + `applicableLevels` multi-value checkbox widget (`FormGroup` + 3 `Checkbox`, `fieldState`-subscribed per Step 3.1 regression guard). No schema change. Smoke-test scenario in `implementation/step-04/output.md`.
 
 - **Step 5** — Platform plan list / create-plan flow. Replace/verify `apps/platform/src/modules/plans/` scaffolding; ensure CreatePlan dialog persists to new `TrainingPlan` shape; navigate to plan-detail.
 
@@ -90,4 +82,6 @@ Some steps (especially 10, 11) will likely split into sub-steps. Granularity loc
 
 ## Next action
 
-User launches separate Opus 4.7 max-effort session pointed at `implementation/step-04/prompt.md`. Executor invokes `/feature` (full pipeline) per prompt. On completion — a fresh planner session reads `implementation/step-04/output.md` + `.feature-dev/<ts>/`, runs browser smoke-test per provided scenario, validates, updates `IMPLEMENTATION_LOG.md`, then drafts Step 5 thesis (Platform plan list / create-plan flow — `apps/platform`, new app surface, requires fresh canonical-pattern reads of platform conventions before specing).
+1. **Browser smoke-test** — user runs the 9-step scenario from `implementation/step-04/output.md` §"Сценарий смоук-теста". Step 4 of that scenario is the Step-3-bug regression guard (empty `applicableLevels` must show an inline error, not a silent no-op). On pass — Step 4 fully closes; on issue — Step 4.1 follow-up fix.
+2. **`pnpm build`** — not run yet (not in Step 4 Phase-8 gates). Not a smoke-test blocker (dev server compiles routes on-demand), but recommended as a gate before the eventual PR merge.
+3. **Step 5 thesis** — Platform plan list / create-plan flow. NEW app surface (`apps/platform`) — the admin canonical refs do NOT transfer; platform has its own module / routing / query patterns. Per Lesson learned: planner reads canonical platform conventions verbatim before specing, and checks prompt-internal consistency.
