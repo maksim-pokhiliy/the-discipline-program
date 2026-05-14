@@ -6,24 +6,19 @@ import { render } from "../test/render";
 import { InlineEditText } from "./inline-edit-text";
 
 describe("InlineEditText", () => {
-  it("toggles from display to edit mode on click", () => {
+  it("renders the value in an always-present editable textbox", () => {
     render(<InlineEditText value="Hello" onCommit={vi.fn()} variant="h3" ariaLabel="Field" />);
 
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Field" }));
-
-    expect(screen.getByRole("textbox", { name: "Field" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Field" })).toHaveValue("Hello");
   });
 
-  it("commits a changed value on blur", () => {
+  it("commits a trimmed changed value on blur", () => {
     const onCommit = vi.fn();
 
     render(<InlineEditText value="Hello" onCommit={onCommit} variant="h3" ariaLabel="Field" />);
+    const input = screen.getByRole("textbox", { name: "Field" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Field" }));
-    const input = screen.getByRole("textbox");
-
+    fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "  Updated  " } });
     fireEvent.blur(input);
 
@@ -31,14 +26,13 @@ describe("InlineEditText", () => {
     expect(onCommit).toHaveBeenCalledWith("Updated");
   });
 
-  it("commits a changed value on Enter when not multiline", () => {
+  it("commits on Enter when not multiline", () => {
     const onCommit = vi.fn();
 
     render(<InlineEditText value="Hello" onCommit={onCommit} variant="h3" ariaLabel="Field" />);
+    const input = screen.getByRole("textbox", { name: "Field" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Field" }));
-    const input = screen.getByRole("textbox");
-
+    fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "Updated" } });
     fireEvent.keyDown(input, { key: "Enter" });
 
@@ -46,43 +40,41 @@ describe("InlineEditText", () => {
     expect(onCommit).toHaveBeenCalledWith("Updated");
   });
 
-  it("reverts on Escape without committing", () => {
+  it("reverts the draft on Escape without committing", () => {
     const onCommit = vi.fn();
 
     render(<InlineEditText value="Hello" onCommit={onCommit} variant="h3" ariaLabel="Field" />);
+    const input = screen.getByRole("textbox", { name: "Field" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Field" }));
-    const input = screen.getByRole("textbox");
-
+    fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "Updated" } });
     fireEvent.keyDown(input, { key: "Escape" });
 
     expect(onCommit).not.toHaveBeenCalled();
-    expect(screen.queryByRole("textbox")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Field" })).toHaveTextContent("Hello");
+    expect(input).toHaveValue("Hello");
   });
 
   it("does not commit when the value is unchanged", () => {
     const onCommit = vi.fn();
 
     render(<InlineEditText value="Hello" onCommit={onCommit} variant="h3" ariaLabel="Field" />);
+    const input = screen.getByRole("textbox", { name: "Field" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Field" }));
-    fireEvent.blur(screen.getByRole("textbox"));
+    fireEvent.focus(input);
+    fireEvent.blur(input);
 
     expect(onCommit).not.toHaveBeenCalled();
   });
 
-  it("commits the in-progress draft when the value prop changes mid-edit", () => {
+  it("keeps the in-progress draft when the value prop changes while focused", () => {
     const onCommit = vi.fn();
 
     const { rerender } = render(
       <InlineEditText value="Hello" onCommit={onCommit} variant="h3" ariaLabel="Field" />,
     );
+    const input = screen.getByRole("textbox", { name: "Field" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Field" }));
-    const input = screen.getByRole("textbox");
-
+    fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "User draft" } });
 
     rerender(
@@ -94,7 +86,7 @@ describe("InlineEditText", () => {
       />,
     );
 
-    fireEvent.blur(screen.getByRole("textbox"));
+    fireEvent.blur(input);
 
     expect(onCommit).toHaveBeenCalledTimes(1);
     expect(onCommit).toHaveBeenCalledWith("User draft");
@@ -112,31 +104,13 @@ describe("InlineEditText", () => {
         multiline
       />,
     );
+    const input = screen.getByRole("textbox", { name: "Field" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Field" }));
-    const input = screen.getByRole("textbox");
-
+    fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "Updated" } });
     fireEvent.keyDown(input, { key: "Enter" });
 
     expect(onCommit).not.toHaveBeenCalled();
-    expect(screen.getByRole("textbox")).toBeInTheDocument();
-  });
-
-  it("preserves line breaks in multiline display mode", () => {
-    render(
-      <InlineEditText
-        value={"line one\nline two"}
-        onCommit={vi.fn()}
-        variant="body2"
-        ariaLabel="Field"
-        multiline
-      />,
-    );
-
-    expect(screen.getByRole("button", { name: "Field" })).toHaveStyle({
-      whiteSpace: "pre-wrap",
-    });
   });
 
   it("handles an emptied field per emptyIsValid", () => {
@@ -144,15 +118,14 @@ describe("InlineEditText", () => {
     const { unmount } = render(
       <InlineEditText value="Hello" onCommit={strictOnCommit} variant="h3" ariaLabel="Field" />,
     );
+    const strictInput = screen.getByRole("textbox", { name: "Field" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Field" }));
-    const strictInput = screen.getByRole("textbox");
-
+    fireEvent.focus(strictInput);
     fireEvent.change(strictInput, { target: { value: "  " } });
     fireEvent.blur(strictInput);
 
     expect(strictOnCommit).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Field" })).toHaveTextContent("Hello");
+    expect(strictInput).toHaveValue("Hello");
 
     unmount();
 
@@ -167,10 +140,9 @@ describe("InlineEditText", () => {
         emptyIsValid
       />,
     );
+    const lenientInput = screen.getByRole("textbox", { name: "Field" });
 
-    fireEvent.click(screen.getByRole("button", { name: "Field" }));
-    const lenientInput = screen.getByRole("textbox");
-
+    fireEvent.focus(lenientInput);
     fireEvent.change(lenientInput, { target: { value: "" } });
     fireEvent.blur(lenientInput);
 

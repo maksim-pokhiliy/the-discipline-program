@@ -1,8 +1,8 @@
 "use client";
 
-import { type KeyboardEvent, useRef, useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
-import { InputBase, Typography, type TypographyVariant } from "@mui/material";
+import { InputBase, type TypographyVariant } from "@mui/material";
 
 export type InlineEditTextProps = {
   value: string;
@@ -23,41 +23,45 @@ export const InlineEditText: React.FC<InlineEditTextProps> = ({
   multiline = false,
   emptyIsValid = false,
 }) => {
-  const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const committedValueRef = useRef(value);
+  const isFocusedRef = useRef(false);
 
-  const enterEdit = () => {
-    setDraft(value);
-    committedValueRef.current = value;
-    setIsEditing(true);
-  };
+  useEffect(() => {
+    if (!isFocusedRef.current) {
+      setDraft(value);
+      committedValueRef.current = value;
+    }
+  }, [value]);
 
   const commit = () => {
     const trimmed = draft.trim();
 
-    setIsEditing(false);
+    if (trimmed === committedValueRef.current || (trimmed === "" && !emptyIsValid)) {
+      setDraft(committedValueRef.current);
 
-    if (trimmed === committedValueRef.current) {
       return;
     }
 
-    if (trimmed === "" && !emptyIsValid) {
-      return;
-    }
-
+    committedValueRef.current = trimmed;
+    setDraft(trimmed);
     onCommit(trimmed);
   };
 
-  const cancel = () => {
-    setDraft(committedValueRef.current);
-    setIsEditing(false);
+  const handleFocus = () => {
+    isFocusedRef.current = true;
+    committedValueRef.current = value;
+  };
+
+  const handleBlur = () => {
+    isFocusedRef.current = false;
+    commit();
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.key === "Escape") {
       event.preventDefault();
-      cancel();
+      setDraft(committedValueRef.current);
 
       return;
     }
@@ -68,45 +72,21 @@ export const InlineEditText: React.FC<InlineEditTextProps> = ({
     }
   };
 
-  if (isEditing) {
-    return (
-      <InputBase
-        value={draft}
-        onChange={(event) => setDraft(event.target.value)}
-        onBlur={commit}
-        onKeyDown={handleKeyDown}
-        fullWidth
-        autoFocus
-        multiline={multiline}
-        {...(placeholder !== undefined && { placeholder })}
-        inputProps={{ "aria-label": ariaLabel }}
-        sx={{ ".MuiInputBase-input": { typography: variant } }}
-      />
-    );
-  }
-
-  const isEmpty = value === "";
-
   return (
-    <Typography
-      variant={variant}
-      role="button"
-      tabIndex={0}
-      aria-label={ariaLabel}
-      onClick={enterEdit}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          enterEdit();
-        }
-      }}
+    <InputBase
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      onKeyDown={handleKeyDown}
+      multiline={multiline}
+      fullWidth
+      {...(placeholder !== undefined && { placeholder })}
+      inputProps={{ "aria-label": ariaLabel }}
       sx={{
-        cursor: "text",
-        color: isEmpty ? "text.disabled" : "text.primary",
-        whiteSpace: multiline ? "pre-wrap" : undefined,
+        p: 0,
+        ".MuiInputBase-input": { p: 0, height: "auto", typography: variant },
       }}
-    >
-      {isEmpty ? placeholder : value}
-    </Typography>
+    />
   );
 };
