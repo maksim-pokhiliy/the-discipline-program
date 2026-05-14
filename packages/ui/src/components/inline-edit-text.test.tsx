@@ -13,7 +13,7 @@ describe("InlineEditText", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Field" }));
 
-    expect(screen.getByRole("textbox")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Field" })).toBeInTheDocument();
   });
 
   it("commits a changed value on blur", () => {

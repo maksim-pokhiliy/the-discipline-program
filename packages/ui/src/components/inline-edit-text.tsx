@@ -2,7 +2,7 @@
 
 import { type KeyboardEvent, useRef, useState } from "react";
 
-import { TextField, Typography, type TypographyVariant } from "@mui/material";
+import { InputBase, Typography, type TypographyVariant } from "@mui/material";
 
 export type InlineEditTextProps = {
   value: string;
@@ -54,7 +54,7 @@ export const InlineEditText: React.FC<InlineEditTextProps> = ({
     setIsEditing(false);
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.key === "Escape") {
       event.preventDefault();
       cancel();
@@ -70,17 +70,16 @@ export const InlineEditText: React.FC<InlineEditTextProps> = ({
 
   if (isEditing) {
     return (
-      <TextField
+      <InputBase
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
         onBlur={commit}
         onKeyDown={handleKeyDown}
-        variant="standard"
         fullWidth
         autoFocus
         multiline={multiline}
         {...(placeholder !== undefined && { placeholder })}
-        slotProps={{ htmlInput: { "aria-label": ariaLabel } }}
+        inputProps={{ "aria-label": ariaLabel }}
         sx={{ ".MuiInputBase-input": { typography: variant } }}
       />
     );
