@@ -129,14 +129,15 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ## 3. LMS — Training Plans and Enrollments
 
-**Responsibility:** Training plan metadata, plus athlete enrollments onto plans. The richer authoring tree, library catalog, and athlete-log surfaces are not part of the live system; only the plan list and the enrollment lifecycle ship.
+**Responsibility:** Training plan metadata, athlete enrollments onto plans, and the per-plan calendar of weeks. The richer authoring tree, library catalog, and athlete-log surfaces are not part of the live system; the plan list, the enrollment lifecycle, and the plan-detail calendar viewport ship.
 
 ### Aggregates and entities
 
-| Aggregate / entity    | Prisma model     | Role                                                                                                        |
-| --------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------- |
-| `TrainingPlan` (root) | `TrainingPlan`   | Coach-owned plan metadata: name, description, status lifecycle `DRAFT → ACTIVE → ARCHIVED`. Soft-deletable. |
-| `PlanEnrollment`      | `PlanEnrollment` | Athlete enrollment onto a plan with `ACTIVE                                                                 | PAUSED | REMOVED` lifecycle. Soft-deletable. |
+| Aggregate / entity    | Prisma model     | Role                                                                                                                                                                  |
+| --------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------- |
+| `TrainingPlan` (root) | `TrainingPlan`   | Coach-owned plan metadata: name, description, status lifecycle `DRAFT → ACTIVE → ARCHIVED`. Soft-deletable.                                                           |
+| `PlanEnrollment`      | `PlanEnrollment` | Athlete enrollment onto a plan with `ACTIVE                                                                                                                           | PAUSED | REMOVED` lifecycle. Soft-deletable. |
+| `Week`                | `Week`           | Lazily-materialized calendar slot under a plan, keyed by `(planId, startDate)`. Materializes on first note (or first `Day`); an absent row is the normal empty state. |
 
 ### Value objects
 
@@ -151,9 +152,9 @@ The rest of this document describes each context in detail: what it owns, which 
 
 ### Where it lives today
 
-- **DB:** `TrainingPlan`, `PlanEnrollment`.
-- **Contracts:** `packages/contracts/src/entities/lms/training-plan/`, `lms/plan-enrollment/`.
-- **API — `api-server`:** `packages/api-server/src/endpoints/lms/training-plan/`, `endpoints/lms/plan-enrollment/`. Ownership guards live in `packages/api-server/src/authz/guards.ts`.
+- **DB:** `TrainingPlan`, `PlanEnrollment`, `Week`.
+- **Contracts:** `packages/contracts/src/entities/lms/training-plan/`, `lms/plan-enrollment/`, `lms/week/`.
+- **API — `api-server`:** `packages/api-server/src/endpoints/lms/training-plan/`, `endpoints/lms/plan-enrollment/`, `endpoints/lms/week/`. Ownership guards live in `packages/api-server/src/authz/guards.ts`.
 - **Consumer apps:** `apps/platform` exclusively. `apps/admin` does not currently read LMS state.
 
 ### Dependencies
