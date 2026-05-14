@@ -1,6 +1,6 @@
 "use client";
 
-import { type KeyboardEvent, useState } from "react";
+import { type KeyboardEvent, useRef, useState } from "react";
 
 import { TextField, Typography, type TypographyVariant } from "@mui/material";
 
@@ -25,9 +25,11 @@ export const InlineEditText: React.FC<InlineEditTextProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+  const committedValueRef = useRef(value);
 
   const enterEdit = () => {
     setDraft(value);
+    committedValueRef.current = value;
     setIsEditing(true);
   };
 
@@ -36,7 +38,7 @@ export const InlineEditText: React.FC<InlineEditTextProps> = ({
 
     setIsEditing(false);
 
-    if (trimmed === value) {
+    if (trimmed === committedValueRef.current) {
       return;
     }
 
@@ -48,7 +50,7 @@ export const InlineEditText: React.FC<InlineEditTextProps> = ({
   };
 
   const cancel = () => {
-    setDraft(value);
+    setDraft(committedValueRef.current);
     setIsEditing(false);
   };
 
@@ -102,6 +104,7 @@ export const InlineEditText: React.FC<InlineEditTextProps> = ({
       sx={{
         cursor: "text",
         color: isEmpty ? "text.disabled" : "text.primary",
+        whiteSpace: multiline ? "pre-wrap" : undefined,
       }}
     >
       {isEmpty ? placeholder : value}

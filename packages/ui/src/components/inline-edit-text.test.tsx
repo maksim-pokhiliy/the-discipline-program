@@ -73,6 +73,72 @@ describe("InlineEditText", () => {
     expect(onCommit).not.toHaveBeenCalled();
   });
 
+  it("commits the in-progress draft when the value prop changes mid-edit", () => {
+    const onCommit = vi.fn();
+
+    const { rerender } = render(
+      <InlineEditText value="Hello" onCommit={onCommit} variant="h3" ariaLabel="Field" />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Field" }));
+    const input = screen.getByRole("textbox");
+
+    fireEvent.change(input, { target: { value: "User draft" } });
+
+    rerender(
+      <InlineEditText
+        value="Background refetch"
+        onCommit={onCommit}
+        variant="h3"
+        ariaLabel="Field"
+      />,
+    );
+
+    fireEvent.blur(screen.getByRole("textbox"));
+
+    expect(onCommit).toHaveBeenCalledTimes(1);
+    expect(onCommit).toHaveBeenCalledWith("User draft");
+  });
+
+  it("does not commit on Enter when multiline", () => {
+    const onCommit = vi.fn();
+
+    render(
+      <InlineEditText
+        value="Hello"
+        onCommit={onCommit}
+        variant="body2"
+        ariaLabel="Field"
+        multiline
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Field" }));
+    const input = screen.getByRole("textbox");
+
+    fireEvent.change(input, { target: { value: "Updated" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+
+    expect(onCommit).not.toHaveBeenCalled();
+    expect(screen.getByRole("textbox")).toBeInTheDocument();
+  });
+
+  it("preserves line breaks in multiline display mode", () => {
+    render(
+      <InlineEditText
+        value={"line one\nline two"}
+        onCommit={vi.fn()}
+        variant="body2"
+        ariaLabel="Field"
+        multiline
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Field" })).toHaveStyle({
+      whiteSpace: "pre-wrap",
+    });
+  });
+
   it("handles an emptied field per emptyIsValid", () => {
     const strictOnCommit = vi.fn();
     const { unmount } = render(
