@@ -19,7 +19,10 @@ export const ADMIN_NAVIGATION: AdminNavigationConfig = {
     },
     {
       label: "Library",
-      links: [{ text: "Exercises", href: "/exercises", icon: "exercises" }],
+      links: [
+        { text: "Exercises", href: "/exercises", icon: "exercises" },
+        { text: "Labels", href: "/labels", icon: "exercises" },
+      ],
     },
   ],
 };
