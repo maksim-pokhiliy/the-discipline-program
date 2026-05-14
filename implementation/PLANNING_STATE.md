@@ -1,6 +1,6 @@
 # Planning State
 
-> Last updated: 2026-05-14 (Step 4 committed; awaiting browser smoke-test before Step 5)
+> Last updated: 2026-05-14 (Step 4 fully closed + smoke-passed; planner session winding down; Step 5 next)
 
 ## Workflow goal
 
@@ -14,7 +14,14 @@ End-to-end coach happy path:
 
 ## Current step
 
-**Step 4 committed** (2026-05-14). HEAD `252d7323` on `feat/training-domain`. Admin Label CRUD shipped — structural mirror of Step 3 Exercise, plus the `applicableLevels` multi-value checkbox widget. 9 commits `6a8b2302..252d7323`. All verification gates green (786 tests, type-check/lint/dep:check 16/16, Review APPROVE 0/0/0, QA A−). Three executor escalations resolved (trigger-2 memory breadcrumb, enum-maps dead-code, QA-001 duplicate levels). 7th cumulative prompt deviation surfaced — internal-contradiction flavour — recorded in `IMPLEMENTATION_LOG.md` Lesson-learned addendum. Awaiting browser smoke-test by user before queueing **Step 5**.
+**Step 4 fully closed** (2026-05-14). HEAD `b7defec9` on `feat/training-domain` (30 commits ahead of main). Admin Label CRUD shipped + smoke-tested green (incl. the Step-3-bug regression guard). Two user-directed post-acceptance tweaks landed via a separate session: `6f4b033f` (distinct sidebar icon) and `b7defec9` (label form split into two cards). Steps 1-4 done — the workflow foundation (training-domain schema + 34 archetypes seeded + 2 admin catalog CRUDs) is in place. **Step 5** (Platform plan list / create-plan flow) is next.
+
+This planner session is being wound down at a clean boundary. Handoff: a fresh planner session reads `implementation/WORKFLOW.md` (durable workflow rules + lessons learned) → this file → `IMPLEMENTATION_LOG.md` → `analysis/artifacts/05-synthesis/` + `06-formalization/`, then drafts the Step 5 thesis.
+
+## Known working-tree state (not workflow artifacts — do not be alarmed)
+
+- `analysis/artifacts/04-structure/labels-catalog.md` — shows modified since before this workflow began (external prettier/editor formatting). Read-only-forever zone; left untouched by every step. Not staged, not ours — leave it.
+- `implementation/step-02/output.md` — recurring prettier-escape churn (markdown special-char re-escaping inside code spans, e.g. `app_*` → `app*\_`). Semantically irrelevant; committed version is canonical. Safe to `git checkout` if it reappears as working-tree drift.
 
 ## Step queue (draft, refined per iteration)
 
@@ -82,6 +89,6 @@ Some steps (especially 10, 11) will likely split into sub-steps. Granularity loc
 
 ## Next action
 
-1. **Browser smoke-test** — user runs the 9-step scenario from `implementation/step-04/output.md` §"Сценарий смоук-теста". Step 4 of that scenario is the Step-3-bug regression guard (empty `applicableLevels` must show an inline error, not a silent no-op). On pass — Step 4 fully closes; on issue — Step 4.1 follow-up fix.
-2. **`pnpm build`** — not run yet (not in Step 4 Phase-8 gates). Not a smoke-test blocker (dev server compiles routes on-demand), but recommended as a gate before the eventual PR merge.
-3. **Step 5 thesis** — Platform plan list / create-plan flow. NEW app surface (`apps/platform`) — the admin canonical refs do NOT transfer; platform has its own module / routing / query patterns. Per Lesson learned: planner reads canonical platform conventions verbatim before specing, and checks prompt-internal consistency.
+1. **Step 5 thesis** — Platform plan list / create-plan flow. NEW app surface (`apps/platform`) — the admin canonical refs do NOT transfer; platform has its own module / routing / query patterns. Existing `apps/platform/src/modules/plans/` is scaffolding to verify/replace; `plan-detail/` is a stub. Per Lesson learned: the planner reads canonical platform conventions verbatim before specing, and checks prompt-internal consistency. Drafting starts with тезисы → user approval → `implementation/step-05/prompt.md`.
+2. **`pnpm build`** — still not run; not blocking, but recommended as a gate before the eventual PR merge (branch now carries schema + seed + 2 admin modules).
+3. **PR** — `feat/training-domain` → `main` is a single long-lived branch (30 commits). Open the PR when the user wants review — likely after the plan-editor steps land, or earlier for incremental review. Not yet.

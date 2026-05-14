@@ -57,7 +57,7 @@
   - QA-003 (`as AppLevelValue[]` mapper narrowing) — ratified pattern (mirrors Exercise `aliases`); guarded by integration test asserting read-path throws `ZodError` on malformed data.
   - Separate sidebar icon for "Labels" — currently shares `"exercises"` icon; ~2-line `icon-map.ts` addition, out of Step 4 scope.
 - **Analysis/-files touched**: none (no schema change).
-- **Smoke-test status**: pending (user runs 9-step scenario from `step-04/output.md`; step 4 is the Step-3-bug regression guard — empty `applicableLevels` must show inline error, not silent no-op).
+- **Smoke-test status**: **passed** (2026-05-14). 9-step scenario green, including the step-4 regression guard (empty `applicableLevels` surfaces an inline error, not a silent no-op). Two user-directed post-acceptance tweaks committed via a separate session: `6f4b033f` (distinct sidebar icon for Labels — closes the deferred DEC-5 shared-icon item) and `b7defec9` (label form split into two cards — supersedes DEC-3 flat-single-card, user preference). Step 4 fully closed.
 
 ## Step 03 — Admin Exercise CRUD (with Phase 0 D5 refinement)
 
