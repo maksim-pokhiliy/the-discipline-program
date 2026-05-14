@@ -8,6 +8,8 @@ import { fontVariables } from "@repo/mui/fonts";
 import { QueryProvider } from "@repo/query";
 import { Toaster } from "@repo/ui";
 
+import { DateLocalizationProvider } from "@app/lib/components";
+
 type RootLayoutProps = Readonly<{ children: React.ReactNode }>;
 
 export const metadata: Metadata = {
@@ -28,7 +30,7 @@ const RootLayout = ({ children }: RootLayoutProps) => {
         <NextProvider>
           <QueryProvider>
             <AuthProvider>
-              {children}
+              <DateLocalizationProvider>{children}</DateLocalizationProvider>
 
               <Toaster position="top-right" />
               {isVercelDeployment && <Analytics />}
