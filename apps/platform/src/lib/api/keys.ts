@@ -16,4 +16,8 @@ export const platformKeys = {
   coachActionItems: {
     all: () => [...ROOT, "coach-action-items"] as const,
   },
+  weeks: {
+    byDate: (planId: string, startDate: string) =>
+      [...ROOT, "training-plans", planId, "weeks", startDate] as const,
+  },
 } as const;

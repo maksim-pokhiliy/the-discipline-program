@@ -10,6 +10,7 @@ export const createApi = (client: ApiClient) => ({
   coachInvite: endpoints.createCoachInviteAPI(client),
   trainingPlans: endpoints.createTrainingPlansAPI(client),
   users: endpoints.createUsersAPI(client),
+  weeks: endpoints.createWeeksAPI(client),
 });
 
 export const api = createApi(browserApiClient);
