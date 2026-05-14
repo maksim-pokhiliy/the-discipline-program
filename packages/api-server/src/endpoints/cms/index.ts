@@ -4,6 +4,7 @@ export * from "./contact/admin";
 export * from "./contact/inbound";
 export * from "./dashboard/admin";
 export * from "./exercise/admin";
+export * from "./label/admin";
 export * from "./pages/admin";
 export * from "./pages/public";
 export * from "./product/admin";
