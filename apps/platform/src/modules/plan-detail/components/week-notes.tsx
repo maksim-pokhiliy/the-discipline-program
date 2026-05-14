@@ -1,9 +1,10 @@
 "use client";
 
-import { Stack, Typography } from "@mui/material";
+import { useEffect, useRef, useState } from "react";
+
+import { TextField } from "@mui/material";
 
 import { formatDateParam } from "@repo/shared";
-import { InlineEditText } from "@repo/ui";
 
 import { useUpdateWeekNotes } from "@app/lib/hooks";
 
@@ -15,28 +16,53 @@ type WeekNotesProps = {
 
 export const WeekNotes: React.FC<WeekNotesProps> = ({ planId, monday, notes }) => {
   const updateNotes = useUpdateWeekNotes(planId);
+  const [draft, setDraft] = useState(notes ?? "");
+  const committedRef = useRef(notes ?? "");
+  const isFocusedRef = useRef(false);
 
-  const handleCommit = (next: string) => {
+  useEffect(() => {
+    if (!isFocusedRef.current) {
+      setDraft(notes ?? "");
+      committedRef.current = notes ?? "";
+    }
+  }, [notes]);
+
+  const commit = () => {
+    isFocusedRef.current = false;
+
+    const trimmed = draft.trim();
+
+    if (trimmed === committedRef.current) {
+      setDraft(committedRef.current);
+
+      return;
+    }
+
+    committedRef.current = trimmed;
+    setDraft(trimmed);
     updateNotes.mutate({
       startDate: formatDateParam(monday),
-      data: { notes: next === "" ? null : next },
+      data: { notes: trimmed === "" ? null : trimmed },
     });
   };
 
+  const handleFocus = () => {
+    isFocusedRef.current = true;
+    committedRef.current = notes ?? "";
+  };
+
   return (
-    <Stack spacing={0.5}>
-      <Typography variant="overline" sx={{ color: "text.secondary" }}>
-        Week notes
-      </Typography>
-      <InlineEditText
-        variant="body2"
-        multiline
-        emptyIsValid
-        value={notes ?? ""}
-        ariaLabel="Week notes"
-        placeholder="Add week notes…"
-        onCommit={handleCommit}
-      />
-    </Stack>
+    <TextField
+      label="Week notes"
+      placeholder="Add week notes…"
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onFocus={handleFocus}
+      onBlur={commit}
+      multiline
+      minRows={2}
+      fullWidth
+      size="small"
+    />
   );
 };

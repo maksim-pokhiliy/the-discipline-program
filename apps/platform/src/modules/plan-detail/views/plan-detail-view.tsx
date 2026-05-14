@@ -52,7 +52,12 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
           />
 
           <WeekNavigator monday={activeMonday} onChange={pushWeekParam} />
-          <WeekNotes planId={planId} monday={activeMonday} notes={weekData?.week?.notes ?? null} />
+          <WeekNotes
+            key={formatDateParam(activeMonday)}
+            planId={planId}
+            monday={activeMonday}
+            notes={weekData?.week?.notes ?? null}
+          />
           <WeekGrid monday={activeMonday} />
         </Stack>
       )}
