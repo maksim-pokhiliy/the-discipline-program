@@ -114,5 +114,29 @@ describe("lmsWeekApi", () => {
         await cleanupRaw.week.delete({ where: { id: created.id } }).catch(() => {});
       }
     });
+
+    it("persists startDate as the intended Monday regardless of server timezone", async () => {
+      const created = await lmsWeekApi.upsertNotes(coach.user.id, activePlanId, WEDNESDAY_PARAM, {
+        notes: "tz round-trip note",
+      });
+
+      try {
+        expect(created.startDate.getUTCFullYear()).toBe(2026);
+        expect(created.startDate.getUTCMonth()).toBe(4);
+        expect(created.startDate.getUTCDate()).toBe(18);
+
+        const roundTripped = await lmsWeekApi.getByPlanAndDate(
+          coach.user.id,
+          activePlanId,
+          MONDAY_PARAM,
+        );
+
+        expect(roundTripped?.startDate.getUTCFullYear()).toBe(2026);
+        expect(roundTripped?.startDate.getUTCMonth()).toBe(4);
+        expect(roundTripped?.startDate.getUTCDate()).toBe(18);
+      } finally {
+        await cleanupRaw.week.delete({ where: { id: created.id } }).catch(() => {});
+      }
+    });
   });
 });

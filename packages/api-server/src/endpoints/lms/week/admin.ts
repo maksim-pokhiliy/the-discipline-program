@@ -19,6 +19,12 @@ const parseStartDate = (param: string): Date => {
   return parsed;
 };
 
+const resolveWeekStartDate = (startDateParam: string): Date => {
+  const monday = getMonday(parseStartDate(startDateParam));
+
+  return new Date(Date.UTC(monday.getFullYear(), monday.getMonth(), monday.getDate()));
+};
+
 export const lmsWeekApi = {
   getByPlanAndDate: async (
     userId: string,
@@ -27,7 +33,7 @@ export const lmsWeekApi = {
   ): Promise<Week | null> => {
     await verifyPlanOwnership(planId, userId);
 
-    const startDate = getMonday(parseStartDate(startDateParam));
+    const startDate = resolveWeekStartDate(startDateParam);
 
     const week = await prisma.week.findUnique({
       where: { planId_startDate: { planId, startDate } },
@@ -46,7 +52,7 @@ export const lmsWeekApi = {
 
     verifyPlanEditable(plan);
 
-    const startDate = getMonday(parseStartDate(startDateParam));
+    const startDate = resolveWeekStartDate(startDateParam);
 
     try {
       const week = await prisma.week.upsert({
