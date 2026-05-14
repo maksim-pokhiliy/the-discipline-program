@@ -1,6 +1,6 @@
 "use client";
 
-import { Stack, TextField } from "@mui/material";
+import { Grid, Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 
 import { type CreateLabelData } from "@repo/contracts/cms/label";
@@ -19,36 +19,44 @@ export const LabelForm = ({ isLoading }: LabelFormProps) => {
   } = useFormContext<CreateLabelData>();
 
   return (
-    <FormCard title="Basic info">
-      <Stack spacing={3}>
-        <TextField
-          label="Name"
-          placeholder="e.g. Push Day"
-          variant="outlined"
-          fullWidth
-          size="small"
-          disabled={isLoading}
-          error={!!errors.name}
-          helperText={errors.name?.message ?? "Will be uniquely matched case-insensitively"}
-          {...register("name")}
-        />
+    <Grid container spacing={3}>
+      <Grid size={{ xs: 12, lg: 8 }}>
+        <FormCard title="Basic info">
+          <Stack spacing={3}>
+            <TextField
+              label="Name"
+              placeholder="e.g. Push Day"
+              variant="outlined"
+              fullWidth
+              size="small"
+              disabled={isLoading}
+              error={!!errors.name}
+              helperText={errors.name?.message ?? "Will be uniquely matched case-insensitively"}
+              {...register("name")}
+            />
 
-        <ApplicableLevelsField isLoading={isLoading} />
+            <TextField
+              label="Notes"
+              placeholder="Coaching notes, usage guidance..."
+              multiline
+              rows={4}
+              variant="outlined"
+              fullWidth
+              size="small"
+              disabled={isLoading}
+              error={!!errors.notes}
+              helperText={errors.notes?.message}
+              {...register("notes")}
+            />
+          </Stack>
+        </FormCard>
+      </Grid>
 
-        <TextField
-          label="Notes"
-          placeholder="Coaching notes, usage guidance..."
-          multiline
-          rows={4}
-          variant="outlined"
-          fullWidth
-          size="small"
-          disabled={isLoading}
-          error={!!errors.notes}
-          helperText={errors.notes?.message}
-          {...register("notes")}
-        />
-      </Stack>
-    </FormCard>
+      <Grid size={{ xs: 12, lg: 4 }}>
+        <FormCard title="Applicable levels">
+          <ApplicableLevelsField isLoading={isLoading} />
+        </FormCard>
+      </Grid>
+    </Grid>
   );
 };

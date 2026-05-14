@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Checkbox,
-  FormControl,
-  FormControlLabel,
-  FormGroup,
-  FormHelperText,
-  FormLabel,
-} from "@mui/material";
+import { Checkbox, FormControl, FormControlLabel, FormGroup, FormHelperText } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
 import { APP_LEVELS, type AppLevelValue, type CreateLabelData } from "@repo/contracts/cms/label";
@@ -30,8 +23,6 @@ export const ApplicableLevelsField = ({ isLoading }: ApplicableLevelsFieldProps)
       control={control}
       render={({ field, fieldState }) => (
         <FormControl error={!!fieldState.error} component="fieldset" variant="standard">
-          <FormLabel component="legend">Applicable levels</FormLabel>
-
           <FormGroup>
             {APP_LEVELS.map((level) => (
               <FormControlLabel
