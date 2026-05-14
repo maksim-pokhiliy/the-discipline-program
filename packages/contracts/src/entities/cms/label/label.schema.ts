@@ -11,11 +11,19 @@ const normalizedString = (max: number) =>
 
 export const appLevelSchema = z.enum(APP_LEVELS);
 
+const applicableLevelsSchema = z
+  .array(appLevelSchema)
+  .min(1)
+  .max(3)
+  .refine((levels) => new Set(levels).size === levels.length, {
+    message: "Applicable levels must be unique",
+  });
+
 export const labelSchema = z.object({
   id: z.string().cuid(),
   name: z.string().min(1).max(LABEL_CONSTANTS.MAX_NAME_LENGTH),
   nameLower: z.string(),
-  applicableLevels: z.array(appLevelSchema).min(1).max(3),
+  applicableLevels: applicableLevelsSchema,
   notes: z.string().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
@@ -23,7 +31,7 @@ export const labelSchema = z.object({
 
 const labelFormBase = z.object({
   name: normalizedString(LABEL_CONSTANTS.MAX_NAME_LENGTH),
-  applicableLevels: z.array(appLevelSchema).min(1).max(3),
+  applicableLevels: applicableLevelsSchema,
   notes: z.string().max(LABEL_CONSTANTS.MAX_NOTES_LENGTH).nullable().optional(),
 });
 
