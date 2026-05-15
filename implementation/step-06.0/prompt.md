@@ -48,10 +48,10 @@ First atomic slice of **Step 6.x** (Day-level + Session-level operations decompo
 - `packages/contracts/src/entities/lms/training-plan/` — full-CRUD contract layout (Week was read-mostly; Session is POST + PUT + DELETE + PATCH:reorder).
 - `packages/contracts/src/entities/cms/label/label.schema.test.ts` — entity-schema test pattern (`safeParse`-based accept/reject for both successful and failed validation, cap test for `MAX_NOTES_LENGTH`). Mirror this rather than `lms/week/week-api.schema.test.ts`'s api-only pattern — Session has create/update/reorder write schemas that warrant entity-level coverage.
 
-**Registration**:
+**Registration** (additive only — preserve every existing entry; do not delete or reorder unrelated lines):
 
-- `packages/contracts/src/entities/lms/index.ts` (currently exports `./training-plan` and `./week`) — add `./_shared` and `./session`.
-- `packages/contracts/package.json` exports map (lines 8-34; currently has `./lms/training-plan` and `./lms/week`) — alphabetical. Add `./lms/_shared` and `./lms/session`. The map has **no wildcard** — missing entries fail at `@repo/contracts/lms/session` resolution.
+- `packages/contracts/src/entities/lms/index.ts` (currently exports `./plan-enrollment`, `./training-plan`, `./week`) — add `./_shared` and `./session`. **Do not remove `./plan-enrollment`** — it is a legitimate sibling entity in this bounded context (pre-Step 5).
+- `packages/contracts/package.json` `exports` map (lines 19-22 are the current `./lms*` cluster: `./lms` root, `./lms/plan-enrollment`, `./lms/training-plan`, `./lms/week`) — alphabetical-with-underscore-first. Add `./lms/_shared` and `./lms/session`; **keep the `./lms` root entry and `./lms/plan-enrollment` line untouched**. The map has **no wildcard** — missing entries fail at `@repo/contracts/lms/session` resolution.
 
 **Codebase rules (sacred — non-negotiable)**:
 
@@ -285,41 +285,47 @@ export * from "./session-api.types";
 
 ### 3.3 Registration
 
-**`packages/contracts/src/entities/lms/index.ts`** — current state:
+**Additive only. Preserve every existing entry. Do not delete or reorder unrelated lines.** Run `git show HEAD:packages/contracts/src/entities/lms/index.ts` and `git show HEAD:packages/contracts/package.json` at task start to confirm the current state matches what is quoted below — if not, **STOP and surface to the planner**.
+
+**`packages/contracts/src/entities/lms/index.ts`** — current state (verbatim at planning time):
 
 ```ts
+export * from "./plan-enrollment";
 export * from "./training-plan";
 export * from "./week";
 ```
 
-Update to:
+Final state (added `_shared` and `session`, all others untouched; alphabetical with underscore-first):
 
 ```ts
 export * from "./_shared";
+export * from "./plan-enrollment";
 export * from "./session";
 export * from "./training-plan";
 export * from "./week";
 ```
 
-(`_shared` first because Session imports `dayOfWeekSchema` from it; alphabetical-with-underscore-first is fine.)
-
-**`packages/contracts/package.json` exports map** — current LMS entries:
+**`packages/contracts/package.json` `exports` map** — current `./lms*` cluster (verbatim at planning time, lines 19-22):
 
 ```json
+"./lms": "./src/entities/lms/index.ts",
+"./lms/plan-enrollment": "./src/entities/lms/plan-enrollment/index.ts",
 "./lms/training-plan": "./src/entities/lms/training-plan/index.ts",
 "./lms/week": "./src/entities/lms/week/index.ts",
 ```
 
-Add (alphabetical):
+Final state (added `./lms/_shared` and `./lms/session`; existing entries kept as-is, alphabetical-with-underscore-first):
 
 ```json
+"./lms": "./src/entities/lms/index.ts",
 "./lms/_shared": "./src/entities/lms/_shared/index.ts",
+"./lms/plan-enrollment": "./src/entities/lms/plan-enrollment/index.ts",
 "./lms/session": "./src/entities/lms/session/index.ts",
 "./lms/training-plan": "./src/entities/lms/training-plan/index.ts",
 "./lms/week": "./src/entities/lms/week/index.ts",
 ```
 
-(`_shared` sorts before `s` alphabetically; underscore before letters in JSON-key sort is the convention.)
+(`./lms` root entry stays first; underscore sorts before letters in JSON-key convention. Surrounding `./cms/*`, `./coaching/*`, `./iam/*`, `./storage/*` clusters are untouched.)
 
 ---
 
