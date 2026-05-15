@@ -1,6 +1,6 @@
 # Planning State
 
-> Last updated: 2026-05-14 (Step 4 fully closed + smoke-passed; planner session winding down; Step 5 next)
+> Last updated: 2026-05-15 (Step 5 fully closed; PR opened against `main`; Step 6 thesis is the next planner action)
 
 ## Workflow goal
 
@@ -14,14 +14,17 @@ End-to-end coach happy path:
 
 ## Current step
 
-**Step 4 fully closed** (2026-05-14). HEAD `b7defec9` on `feat/training-domain` (30 commits ahead of main). Admin Label CRUD shipped + smoke-tested green (incl. the Step-3-bug regression guard). Two user-directed post-acceptance tweaks landed via a separate session: `6f4b033f` (distinct sidebar icon) and `b7defec9` (label form split into two cards). Steps 1-4 done — the workflow foundation (training-domain schema + 34 archetypes seeded + 2 admin catalog CRUDs) is in place. **Step 5** (Platform plan list / create-plan flow) is next.
+**Step 5 fully closed** (2026-05-15). HEAD on `feat/training-domain` past `169d5086`; first PR `feat/training-domain → main` opened at close-out, batching Steps 1-5 (schema + 34 archetypes seed + Exercise & Label admin CRUDs + plan-detail calendar viewport). Plan-detail page at `/coach/plans/[planId]` is the first real training-domain surface in `apps/platform` — calendar viewport over weeks per **D6**, 7 full-width day rows, lazy `Week` materialization via `upsertNotes`, inline-edit plan title/description, and the create-plan landing redirect.
 
-This planner session is being wound down at a clean boundary. Handoff: a fresh planner session reads `implementation/WORKFLOW.md` (durable workflow rules + lessons learned) → this file → `IMPLEMENTATION_LOG.md` → `analysis/artifacts/05-synthesis/` + `06-formalization/`, then drafts the Step 5 thesis.
+What shipped: the `lms/week` contract slice (`weekSchema`, `updateWeekNotesSchema`, api-types; addressed by `(planId, startDate)`; `null`-week as a 200, not a 404); `lmsWeekApi` (`getByPlanAndDate` + `upsertNotes`, ownership-guard first, write-only `verifyPlanEditable`, `resolveWeekStartDate` UTC-midnight anchor for `@db.Date`); `mapToWeek`; platform GET+PUT route at `/api/platform/training-plans/[planId]/weeks/[startDate]` (no POST, no DELETE, no list); `useWeek` / `useUpdateWeekNotes`; `@repo/ui` `InlineEditText` primitive + strictly-additive `PageHeader` editable extension; the `plan-detail` module (`PlanDetailView`, `WeekNavigator` with MUI `DatePicker`, `WeekGrid`, `DayRow`, `WeekNotes`); OQ-D create-plan redirect. 12 executor commits `2845244a..42787606` + 5 post-validation tweaks (`11a7c463`, `8cc8cf43`, `27be221c`, `e600c23c`, `9d9389bd`) + 2 close-out cosmetic commits (`3dc40feb`, `169d5086`). Smoke-test **passed** 2026-05-15 — 15 scenario steps green.
 
-## Known working-tree state (not workflow artifacts — do not be alarmed)
+Three executor-caught planner prompt bugs, all resolved during Stage 6 / fix-loop; full details in the `IMPLEMENTATION_LOG.md` Lesson-learned addendum:
 
-- `analysis/artifacts/04-structure/labels-catalog.md` — shows modified since before this workflow began (external prettier/editor formatting). Read-only-forever zone; left untouched by every step. Not staged, not ours — leave it.
-- `implementation/step-02/output.md` — recurring prettier-escape churn (markdown special-char re-escaping inside code spans, e.g. `app_*` → `app*\_`). Semantically irrelevant; committed version is canonical. Safe to `git checkout` if it reappears as working-tree drift.
+1. **Write-back cache key** — `useUpdateWeekNotes` writes back via the caller's `startDate` string (not `formatDateParam(week.startDate)`); the response isn't Zod-coerced, so the field is a string at runtime.
+2. **`description` conditional-spread** — `exactOptionalPropertyTypes: true` rejects `?? undefined`; codebase idiom is `{...(plan.description !== null && { description: plan.description })}`.
+3. **QA-001 (CRITICAL)** — `Week.startDate` re-anchored to `Date.UTC(...)` at the api-server boundary via `resolveWeekStartDate` in `endpoints/lms/week/admin.ts`. Proven with `TZ=Asia/Kolkata` (pre-fix: `expected 17 to be 18`; post-fix: 7/7 green). **Step 6 hard carry-forward**: `Day` materialization upserts a `Week` row → same boundary; the prompt must spec the same UTC anchor.
+
+Deferred non-blockers: QA-003 (no `invalidateQueries` in `useUpdateWeekNotes` — accepted: single-user blur-commit surface, `setQueryData` is correct); QA-005 (no client-side length cap on `InlineEditText` — server-side rejected with a toast, follow-up); QA-002 / QA-007 / QA-008 / QA-009 / Review WARN-2 (pre-existing surface or completeness-level).
 
 ## Step queue (draft, refined per iteration)
 
@@ -35,23 +38,23 @@ This planner session is being wound down at a clean boundary. Handoff: a fresh p
 
 - **Step 4** — Admin Label CRUD. **COMPLETED** 2026-05-14 (HEAD `252d7323`). Structural mirror of Step 3 Exercise module + `applicableLevels` multi-value checkbox widget (`FormGroup` + 3 `Checkbox`, `fieldState`-subscribed per Step 3.1 regression guard). No schema change. Smoke-test scenario in `implementation/step-04/output.md`.
 
-- **Step 5** — Platform plan list / create-plan flow. Replace/verify `apps/platform/src/modules/plans/` scaffolding; ensure CreatePlan dialog persists to new `TrainingPlan` shape; navigate to plan-detail.
+- **~~Step 5~~ — Platform plan list / create-plan flow. DROPPED 2026-05-14.** Found already implemented as pre-existing base LMS infrastructure (see § "Current step"). Queue renumbered below; old 6-12 → 5-11.
 
-- **Step 6** — Plan-detail shell. Route `apps/platform/.../plan/[id]/`, week navigator (week-as-primary view), add/remove-week primitives, empty-state UX. `apps/platform/src/modules/plan-detail/` currently a stub — full rewrite.
+- **Step 5** (was Step 6) — Plan-detail shell (calendar viewport). **COMPLETED** 2026-05-15. `lms/week` contract slice, `lmsWeekApi` (read + lazy notes-upsert with UTC-midnight anchor), platform week API route + hooks, `@repo/ui` `InlineEditText` + additive `PageHeader` extension, `plan-detail` calendar-viewport module, create-plan redirect (OQ-D). Smoke-test scenario in `implementation/step-05/output.md`.
 
-- **Step 7** — Day-level operations within a week. Day add/edit/reorder/delete; Day.label autocomplete from Label library.
+- **Step 6** (was Step 7) — Day-level operations within a week. Day add/edit/reorder/delete; Day.label autocomplete from Label library.
 
-- **Step 8** — Session-level operations. Add/edit/reorder sessions inside a day; Session.label autocomplete.
+- **Step 7** (was Step 8) — Session-level operations. Add/edit/reorder sessions inside a day; Session.label autocomplete.
 
-- **Step 9** — Block-level operations. Block add/edit/delete inside a session; block-label M:N with order; block-level Intensity / TimeCap composites.
+- **Step 8** (was Step 9) — Block-level operations. Block add/edit/delete inside a session; block-label M:N with order; block-level Intensity / TimeCap composites.
 
-- **Step 10** — Schema editor. Archetype picker (from seeded archetype catalog), `archetypeParams` form per archetype (driven by `archetypeParamsSchema`), schema body switching (rows vs subSchemas based on `kind`).
+- **Step 9** (was Step 10) — Schema editor. Archetype picker (from seeded archetype catalog), `archetypeParams` form per archetype (driven by `archetypeParamsSchema`), schema body switching (rows vs subSchemas based on `kind`).
 
-- **Step 11** — SchemaRow editor. Per-rowKind forms (EXERCISE, REST, FOOTNOTE, STANDALONE_LOAD, PLACEHOLDER, INNER_LADDER_MARKER, CONNECTOR, REST_SLOT, REP_DEFINITION, STANDALONE_URL); shared Load / RepNotation / Intensity / Tempo / Side / Media / CompoundRep composites.
+- **Step 10** (was Step 11) — SchemaRow editor. Per-rowKind forms (EXERCISE, REST, FOOTNOTE, STANDALONE_LOAD, PLACEHOLDER, INNER_LADDER_MARKER, CONNECTOR, REST_SLOT, REP_DEFINITION, STANDALONE_URL); shared Load / RepNotation / Intensity / Tempo / Side / Media / CompoundRep composites.
 
-- **Step 12** — End-to-end coach happy path smoke-test + cleanup. Manual scenario validated; defects fixed.
+- **Step 11** (was Step 12) — End-to-end coach happy path smoke-test + cleanup. Manual scenario validated; defects fixed.
 
-Some steps (especially 10, 11) will likely split into sub-steps. Granularity locked at thesis time, not now.
+Some steps (especially 9, 10) will likely split into sub-steps. Granularity locked at thesis time, not now.
 
 ## Decisions accepted
 
@@ -71,12 +74,24 @@ Some steps (especially 10, 11) will likely split into sub-steps. Granularity loc
 
 - **D5 (defaultDemoUrl → defaultDemoUrls String[]).** Single URL field replaced by Postgres native string array. Coach can attach multiple demo videos per exercise without limit. Native `String[]` over `Json?` for type-safety and no JSON parsing overhead. Applies to both `analysis/artifacts/06-formalization/schema.prisma` (anchor spec) and real `packages/api-server/prisma/schema.prisma`. Step 3 Phase 0 implements the schema refinement (with analysis-artifact sync) before any UI work.
 
+### 2026-05-14 — Week = calendar slot (D6 ratified)
+
+- **D6 (Week is a lazily-materialized calendar slot, not a managed entity).** The plan-detail surface is a **calendar viewport**, not a week-list manager. Settled during the Step 5 thesis discussion. Decisions:
+  - No coach-facing "add week" / "remove week" / "add first week" UX. The coach navigates the calendar axis (week = viewport unit, **no free calendar scroll**) and programmes whichever slot they need — empty or not.
+  - A `Week` DB row materializes **lazily** — upsert by `(planId, startDate)` on the first `Day` created in that week (Step 6, via `connectOrCreate`/upsert) or the first per-week note. Navigating past empty weeks creates nothing; an empty slot = no `Week` row.
+  - Weeks are addressed by `(planId, startDate)`, not `weekId` — the client computes the viewport's `startDate`; the row may not exist. Step 5's Week API surface is therefore read-mostly: `GET .../weeks/[startDate]` + a notes upsert. **No POST-create-week / DELETE-week routes.** Week-row creation as a side-effect of `Day` creation is a Step 6 concern.
+  - Plan-detail body layout: **7 full-width day rows** (Mon–Sun), not 7 columns. A Day is a nested document (Session→Block→Schema→SchemaRow), not a calendar event; 7 columns at `maxWidth="lg"` give ~140px/day and content dies. Today's date gets the "Thu 14"-with-bright-circle row-label treatment.
+  - Week navigation: prev/next + jump-to-date + "today"; default on open = current calendar week, `?week=<startDate>` URL param overrides.
+  - Drove a ratified **prose clarification** of `analysis/artifacts/05-synthesis/domain-model.md §1.0` — the loose "add / remove / clone / clear week" phrasing reframed to calendar-slot + lazy-materialization wording. **No schema change** — the `Week` Prisma model already supports this; no `06-formalization` touch.
+
 ### Deferred sub-decisions (default hypothesis applied; revisit on contact)
 
 - **Order semantics**: **sparse integers (10/20/30)** per Phase 4 Q6 (ratified in `analysis/artifacts/06-formalization/er-final.md §5 #7`). Earlier draft in this file mistakenly proposed sequential; reverted 2026-05-12 after Step 1 executor flagged the divergence. Step 2 seed and any insert-helpers must use sparse increments; renumber only on collision.
 - **Phase 7 archetypes (super-set)**: include in archetype seed at Step 2. `Intensity` Zod schema admits optional `hrZone` and `numericPace`.
 - **Migrations stance**: no versioned migrations during workflow; `db:reset` per schema change per ADR-0019. **Note (Step 2 finding)**: `db:reset` script in this repo runs `prisma db push --force-reset && tsx scripts/apply-sql-checks.ts` only — does NOT auto-seed. After every schema change run `db:reset` then `db:seed` explicitly.
 - **`TrainingPlan` naming**: keep as plan-shell (creator/status/name). Plan-content lives below Week.
+- **Plan edit/rename UI**: ~~`useUpdateTrainingPlan` exists but no edit UI~~ — **resolved in Step 5** (inline name/description edit in the plan-detail `PageHeader` via the `InlineEditText` primitive).
+- **QA-001 — `@db.Date` ↔ local-midnight boundary (Step 5 finding; Step 6+ hard carry-forward)**: `getMonday` / `parseDateParam` (`@repo/shared`) build **local-midnight** `Date`s; Prisma serializes `@db.Date` columns via `toISOString()` (UTC) — so a local-midnight `Date` on a positive-UTC-offset server persists one day early. Step 5 fixed it for `Week.startDate` via `resolveWeekStartDate` in `packages/api-server/src/endpoints/lms/week/admin.ts` (re-anchors the Monday to `Date.UTC(...)` before the Prisma boundary; proven with a `TZ=Asia/Kolkata` test). **Any future step writing a `Date` into a `@db.Date` column must do the same.** Step 6 `Day` materialization upserts a `Week` row (D6) → hits this directly; the Step 6 prompt must spec it.
 
 ## Rules / invariants
 
@@ -89,6 +104,6 @@ Some steps (especially 10, 11) will likely split into sub-steps. Granularity loc
 
 ## Next action
 
-1. **Step 5 thesis** — Platform plan list / create-plan flow. NEW app surface (`apps/platform`) — the admin canonical refs do NOT transfer; platform has its own module / routing / query patterns. Existing `apps/platform/src/modules/plans/` is scaffolding to verify/replace; `plan-detail/` is a stub. Per Lesson learned: the planner reads canonical platform conventions verbatim before specing, and checks prompt-internal consistency. Drafting starts with тезисы → user approval → `implementation/step-05/prompt.md`.
-2. **`pnpm build`** — still not run; not blocking, but recommended as a gate before the eventual PR merge (branch now carries schema + seed + 2 admin modules).
-3. **PR** — `feat/training-domain` → `main` is a single long-lived branch (30 commits). Open the PR when the user wants review — likely after the plan-editor steps land, or earlier for incremental review. Not yet.
+1. **Step 6 thesis** — Day-level operations within a week. NEW surface, but builds directly on Step 5's `plan-detail` module + `lmsWeekApi`. Per the read-then-spec lesson: read the Step 5 code verbatim before specing — `lmsWeekApi` (`packages/api-server/src/endpoints/lms/week/admin.ts`) is the nested-resource template, `mapToWeek` is the no-enum mapper template, the `plan-detail` components are the consumption seam, plus the `Day` Prisma model + `DayOfWeek` enum + `(weekId, dayOfWeek)` unique constraint. **Hard carry-forward: QA-001** — `Day` creation materializes a `Week` row (D6) via `connectOrCreate`/upsert; the `Week.startDate` write hits the same `@db.Date` boundary, so the Step 6 prompt must spec `resolveWeekStartDate`-style UTC anchoring (reuse the helper directly, or mirror the pattern if the import boundary doesn't allow it). Drafting: тезисы → user approval → `implementation/step-06/prompt.md`.
+2. **PR review** — `feat/training-domain` → `main` PR opened at Step 5 close-out, batching Steps 1-5. Review may flag items for follow-up; route them to either a Step-5-followup commit on the same branch or an explicit "deferred to Step N+" note here, then merge or keep open until the plan-editor steps land.
+3. **`pnpm build`** — still not run on the workflow branch; not blocking, but recommended as a gate before merging the PR.
