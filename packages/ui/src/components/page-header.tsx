@@ -42,14 +42,15 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           {editable ? (
             <>
               <InlineEditText
-                variant="h3"
+                variant="h2"
                 emptyIsValid={false}
                 value={title}
                 onCommit={onTitleCommit ?? (() => {})}
                 ariaLabel="Plan name"
               />
+
               <InlineEditText
-                variant="body2"
+                variant="body1"
                 multiline
                 emptyIsValid
                 value={description ?? ""}
@@ -63,6 +64,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               <Typography variant="h3" noWrap>
                 {title}
               </Typography>
+
               {description !== undefined && <Typography variant="body2">{description}</Typography>}
             </>
           )}
