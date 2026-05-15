@@ -69,6 +69,14 @@ describe("sessionSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("does not expose freezeLoadsAtCreation (Q10 guardrail)", () => {
+    expect(sessionSchema.shape).not.toHaveProperty("freezeLoadsAtCreation");
+  });
+
+  it("does not expose name (Session.name guardrail)", () => {
+    expect(sessionSchema.shape).not.toHaveProperty("name");
+  });
 });
 
 describe("createSessionSchema", () => {
@@ -130,9 +138,21 @@ describe("createSessionSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("does not expose freezeLoadsAtCreation (Q10 guardrail)", () => {
+    expect(createSessionSchema.shape).not.toHaveProperty("freezeLoadsAtCreation");
+  });
+
+  it("does not expose name (Session.name guardrail)", () => {
+    expect(createSessionSchema.shape).not.toHaveProperty("name");
+  });
 });
 
 describe("updateSessionSchema", () => {
+  it("is an alias of createSessionSchema (identity)", () => {
+    expect(updateSessionSchema).toBe(createSessionSchema);
+  });
+
   it("accepts an empty object", () => {
     const result = updateSessionSchema.safeParse({});
 
