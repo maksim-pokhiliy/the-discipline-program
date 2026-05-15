@@ -21,8 +21,8 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({ monday, onChange }
   };
 
   return (
-    <Stack spacing={1}>
-      <Stack direction="row" spacing={1} alignItems="center" justifyContent="flex-end">
+    <Stack spacing={1} alignItems="flex-end">
+      <Stack direction="row" spacing={1} alignItems="center">
         <IconButton
           aria-label="Previous week"
           onClick={() => onChange(addDays(monday, -DAYS_IN_WEEK))}
@@ -37,7 +37,7 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({ monday, onChange }
         </IconButton>
       </Stack>
 
-      <Stack direction="row" justifyContent="flex-end">
+      <Stack direction="row">
         <DatePicker
           label="Jump to date"
           value={monday}
