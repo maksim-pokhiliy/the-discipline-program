@@ -388,6 +388,70 @@ describe("lmsSessionApi", () => {
       }
     });
 
+    it("rejects when orderedIds is a subset of the target Day's sessions", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "TUESDAY" },
+      });
+      const a = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
+      const b = await cleanupRaw.session.create({ data: { dayId: day.id, order: 20 } });
+      const c = await cleanupRaw.session.create({ data: { dayId: day.id, order: 30 } });
+
+      try {
+        await expect(
+          lmsSessionApi.reorder(coach.user.id, activePlanId, MONDAY_PARAM, "TUESDAY", {
+            orderedIds: [a.id, b.id],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const stored = await cleanupRaw.session.findMany({
+          where: { dayId: day.id },
+          orderBy: { order: "asc" },
+          select: { id: true, order: true },
+        });
+
+        expect(stored).toEqual([
+          { id: a.id, order: 10 },
+          { id: b.id, order: 20 },
+          { id: c.id, order: 30 },
+        ]);
+      } finally {
+        await cleanupRaw.session.delete({ where: { id: a.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: b.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: c.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects when orderedIds references a non-existent session", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "TUESDAY" },
+      });
+      const a = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
+
+      try {
+        await expect(
+          lmsSessionApi.reorder(coach.user.id, activePlanId, MONDAY_PARAM, "TUESDAY", {
+            orderedIds: [a.id, "clz0000000000000000000000"],
+          }),
+        ).rejects.toThrow(BadRequestError);
+
+        const stored = await cleanupRaw.session.findUnique({ where: { id: a.id } });
+
+        expect(stored?.order).toBe(10);
+      } finally {
+        await cleanupRaw.session.delete({ where: { id: a.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+
     it("rejects on an unmaterialized Day slot without any side-effect", async () => {
       await expect(
         lmsSessionApi.reorder(coach.user.id, activePlanId, NEXT_MONDAY_PARAM, "MONDAY", {
