@@ -115,3 +115,57 @@ export const verifyAthleteBelongsToCoach = async (
     throw new ForbiddenError("Athlete does not belong to this coach");
   }
 };
+
+export const verifySessionOwnership = async (
+  sessionId: string,
+  userId: string,
+): Promise<{ status: TrainingPlanStatus; dayId: string; weekId: string; planId: string }> => {
+  const session = await prisma.session.findUnique({
+    where: { id: sessionId },
+    select: {
+      dayId: true,
+      day: {
+        select: {
+          weekId: true,
+          week: {
+            select: {
+              planId: true,
+              plan: { select: { creatorId: true, deletedAt: true, status: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!session || session.day.week.plan.deletedAt !== null) {
+    throw new NotFoundError("Session not found", { sessionId });
+  }
+
+  const plan = session.day.week.plan;
+
+  if (plan.creatorId === userId) {
+    return {
+      status: TRAINING_PLAN_STATUS_MAP[plan.status],
+      dayId: session.dayId,
+      weekId: session.day.weekId,
+      planId: session.day.week.planId,
+    };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+
+  if (user && isAdminOrHeadCoach(ROLE_MAP[user.role])) {
+    return {
+      status: TRAINING_PLAN_STATUS_MAP[plan.status],
+      dayId: session.dayId,
+      weekId: session.day.weekId,
+      planId: session.day.week.planId,
+    };
+  }
+
+  throw new ForbiddenError("Session does not belong to this coach");
+};
