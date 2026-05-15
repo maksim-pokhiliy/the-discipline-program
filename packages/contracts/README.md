@@ -17,7 +17,7 @@ Subpath taxonomy:
 
 - `common` — shared primitives (pagination cursor, ID brand, error response shape).
 - `cms/<entity>` — CMS context: `blog`, `contact`, `dashboard`, `pages`, `product`, `review`.
-- `lms/<entity>` — LMS context: `plan-enrollment`, `training-plan`, `week`.
+- `lms/<entity>` — LMS context: `plan-enrollment`, `session`, `training-plan`, `week`. Shared primitives (e.g. `dayOfWeekSchema`) live under `lms/_shared`.
 - `coaching/<entity>` — coaching context: profiles, athletes lists, invites, notes, dashboards.
 - `iam/<entity>` — identity + role contracts.
 - `storage/<entity>` — storage context: `upload`.
