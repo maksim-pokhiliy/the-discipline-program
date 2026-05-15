@@ -3,6 +3,7 @@
 import { type FormEvent, useState } from "react";
 
 import { TextField } from "@mui/material";
+import { useRouter } from "next/navigation";
 
 import { FormModal } from "@repo/ui";
 
@@ -17,6 +18,7 @@ export const CreatePlanDialog: React.FC<CreatePlanDialogProps> = ({ open, onClos
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const create = useCreateTrainingPlan();
+  const router = useRouter();
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,7 +30,12 @@ export const CreatePlanDialog: React.FC<CreatePlanDialogProps> = ({ open, onClos
 
     create.mutate(
       { name: trimmedName, description: description.trim() || undefined },
-      { onSuccess: () => handleClose() },
+      {
+        onSuccess: (plan) => {
+          handleClose();
+          router.push(`/coach/plans/${plan.id}`);
+        },
+      },
     );
   };
 

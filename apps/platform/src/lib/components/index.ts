@@ -1,4 +1,5 @@
 export { AthleteCardLink } from "./athlete-card-link";
+export { DateLocalizationProvider } from "./date-localization-provider";
 export { HealthStatusChip } from "./health-status-chip";
 export { PlatformBottomNav } from "./platform-bottom-nav";
 export { PlatformFab } from "./platform-fab";

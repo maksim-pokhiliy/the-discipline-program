@@ -4,9 +4,15 @@
 
 Inheritance: все ratified decisions Phase 1-4 + Phase 3.3/Phase 4 correction (Intensity = struct с optional fields) применяются как ground truth.
 
-Scope: не Prisma/TS/Zod (Phase 6). Не calendar/week (out-of-scope per workflow).
-
 Identifiers — English (для будущей формализации в Phase 6). Содержимое — Russian.
+
+> **Revision 2026-05-12** — D1-D4 (Phase 7 Integration) applied:
+>
+> - **Week** добавлен как entity между `TrainingPlan` (app-level) и `Day` (см. §1.0, §1.1 update, §1.14 cardinality refresh).
+> - **Athlete identity** = `User` + `AthleteProfile` (нет standalone `Athlete`); `profileAttributes` dropped (см. §1.10 replacement).
+> - **Library vs Configuration split** аннотирован у `Exercise` / `Label` / `Archetype` (§1.7-§1.9 tags).
+> - Previous "calendar/week — out-of-scope" disclaimer снят: Week теперь in-scope как календарный слот.
+> - Cross-reference: `06-formalization/implementation-notes.md` §0 (Phase 7 ratifications), `er-final.md` revision note.
 
 ---
 
@@ -36,23 +42,60 @@ Identifiers — English (для будущей формализации в Phase
 
 Финальный список entities. Для каждой: purpose (1 предложение), attributes, key relations.
 
-### 1.1 Day
+### 1.0 Week (Phase 7 ratification, 2026-05-12)
 
-**Purpose**: контейнер sessions в рамках одного календарного дня (календарная координата — out-of-scope Phase 4/5; владелец day-привязки — уровень выше Day).
+**Purpose**: календарный слот (понедельник-воскресенье ISO-недели), контейнер всех `Day` записей этой недели в рамках конкретного `TrainingPlan`. Между `TrainingPlan` (app-level: creator/status/name) и `Day` (этот срез).
+
+**Coach POV**: план — это «поезд», который катится вперёд без фиксированного конца. Тренер не задумывает «week 1 of 12» при создании плана и не «создаёт недели» вручную — он навигирует календарь плана и программирует тот календарный слот, который ему нужен. Неделя — не управляемая сущность-в-списке, а единица оси времени. Атлеты подключаются / уходят в любой момент через `PlanEnrollment` (app-level). Week как entity нужен для:
+
+- материализации календарного слота: строка `Week` возникает **лениво** — upsert по `(planId, startDate)` при появлении первого `Day` в этой неделе либо первой per-week заметки. Навигация по пустым неделям строк не создаёт; пустой слот = просто отсутствие строки `Week`;
+- per-week notes ("deload", "competition prep", "vacation skip");
+- естественной оси навигации в plan-editor UI — неделя — единица viewport'а (без свободного календарного скролла);
+- week-level операций над **содержимым** слота (clone / clear week) — копирование/очистка программы недели, не управление списком недель-сущностей. Явных coach-операций «add week» / «remove week» нет.
 
 **Attributes**:
 
 - `id` — identity.
-- `order` — позиция Day в parent context (week / plan — out-of-scope).
-- `label` — optional single LabelRef.
-- `notes` — optional free-text.
-- `sessions` — ordered children, 0..N.
+- `planId` — FK на `TrainingPlan` (app-level).
+- `startDate` — Date (Monday of ISO week).
+- `notes` — optional, coach-facing free text.
+- `createdAt` / `updatedAt`.
 
 **Invariants**:
 
+- `(planId, startDate)` unique — один Week на план на ISO-неделю.
+- `startDate` всегда понедельник (validation на app-layer).
+- `days[]` may содержать 0..7 Day entries; `Week → Day` enforced through `(weekId, dayOfWeek)` unique.
+
+**Derived (не stored)**: week-end date (`startDate + 6 days`), ISO year+week number, per-day calendar date — вычисляются на app layer.
+
+**Relations**:
+
+- `TrainingPlan 1..N Week` (Cascade on plan delete).
+- `Week 1..N Day` (Cascade on week delete).
+
+---
+
+### 1.1 Day
+
+**Purpose**: контейнер sessions для одного weekday в рамках одной `Week`. После D1 (2026-05-12) Day напрямую связан с календарной осью через `weekId` + `dayOfWeek`.
+
+**Attributes** (post D1):
+
+- `id` — identity.
+- `weekId` — FK на `Week`.
+- `dayOfWeek` — enum `DayOfWeek { MONDAY..SUNDAY }`.
+- `label` — optional single LabelRef.
+- `notes` — optional free-text.
+- `sessions` — ordered children, 0..N (по `Session.order`).
+
+**Invariants**:
+
+- `(weekId, dayOfWeek)` unique — один Day на weekday на Week (≤7 Days per Week).
 - `sessions.length === 0` валидно (REST DAY: 66 occurrences в sample).
 - Single label (sample evidence: только `R E S T  D A Y`, всегда один).
-- Нет даты / dayOfWeek / week index attributes.
+- **Удалено** (D1): `order Int`. Позиция теперь indexed enum `dayOfWeek`, не sparse integer.
+- Календарная дата конкретного Day = `week.startDate + offset(dayOfWeek)` — derived, не stored.
 
 **Sample evidence**: 1 label (`REST DAY`), 66 occurrences. Active days (5/7) — без label.
 
@@ -252,6 +295,8 @@ Identifiers — English (для будущей формализации в Phase
 
 ### 1.7 Exercise
 
+**Catalog tag**: **library** (per D4, 2026-05-12) — coach-managed через admin UI, **не** seedится системой. 149 canonical list (Phase 3.2) = reference content / optional starter pack для онбординга, не auto-seed.
+
 **Purpose**: упражнение как сущность в catalog'е (тренер управляет library). Intrinsic identity для всех use-site occurrences.
 
 **Attributes** (intrinsic, per Phase 3.2):
@@ -279,6 +324,8 @@ Identifiers — English (для будущей формализации в Phase
 
 ### 1.8 Label
 
+**Catalog tag**: **library** (per D4, 2026-05-12) — coach-managed через admin UI, **не** seedится системой. Phase 4 sample даёт 19 canonical labels (1 day + 1 session + 17 block) — reference, не auto-seed.
+
 **Purpose**: единичный тег для Day / Session / Block. Per Phase 4 Option C: единый global namespace + soft applicable_levels.
 
 **Attributes**:
@@ -305,6 +352,8 @@ Identifiers — English (для будущей формализации в Phase
 
 ### 1.9 Archetype
 
+**Catalog tag**: **configuration** (per D4, 2026-05-12) — часть доменной модели; полный канонический набор (34 после Phase 7: 33 + super-set) **обязателен** при Step 2 seed. **Нет admin CRUD** — UI-редактирование archetype-каталога без синхронного апдейта parser/renderer бессмысленно. `archetypeParamsSchema Json` живёт в Prisma column (не enum), чтобы расширять каталог без code redeploy при необходимости.
+
 **Purpose**: catalog 33 структурных архетипов schemas (Phase 2.2). Используется как library reference; coach при создании schema выбирает archetype, system применяет invariants.
 
 **Attributes**:
@@ -324,19 +373,16 @@ Identifiers — English (для будущей формализации в Phase
 
 ---
 
-### 1.10 Athlete
+### 1.10 Athlete identity (ratified 2026-05-12)
 
-**Purpose**: пользователь, для которого создаётся сессия. Источник 1RM records, actual performance, profile-зависимых resolver'ов (dual-value, RX/SC).
+В этом срезе **нет** standalone `Athlete` entity. «Атлет» = `User` (app-level) с `role = ATHLETE` плюс associated `AthleteProfile` (1:1 с `User`). Этот срез ссылается на `User` напрямую (stub в `06-formalization/schema.prisma`), а реальная shape — в `packages/api-server/prisma/schema.prisma`.
 
-**Attributes**:
+Импликации:
 
-- `id`.
-- `display_name` — human-readable.
-- `profile_attributes` — Map<string, Value> (для future resolver: sex / level / RX-SC tier — deferred per Phase 3.3 §1.6).
-
-**Invariants**: minimum viable. Phase 5 не финализирует полный profile shape (Phase 6 / future).
-
-**Sample evidence**: не моделируется в sample (1 athlete implicit). Out-of-sample модели — gym programs с N athletes.
+- `OneRMRecord.userId` → `User.id` (см. §1.11).
+- `PerformedSession.userId` → `User.id` (см. §1.12).
+- `Athlete.profileAttributes` (Phase 6 placeholder для dual-value resolver / sex / level / RX-SC tier) **dropped** per D2. Это был jsonb-placeholder без чёткого UX-shape — держать «на всякий случай» = технический долг с известным запахом.
+- Future athlete-attribute поля (level, modalityTier, hrMaxBpm, sex для dual-value resolver) лягут как **explicit enum / scalar columns на `AthleteProfile`**, не jsonb. Конкретный момент — Phase 8+ когда соответствующий UX будет нарисован.
 
 ---
 
@@ -344,10 +390,10 @@ Identifiers — English (для будущей формализации в Phase
 
 **Purpose**: 1RM запись athlete для конкретного exercise. Используется для resolution `Percentage` Load variant.
 
-**Attributes**:
+**Attributes** (post D2, 2026-05-12):
 
 - `id`.
-- `athlete` — reference на Athlete.
+- `userId` — FK на `User` (external stub в этом срезе; реальная модель — app-level). Раньше — `athleteId → Athlete`; merged per D2.
 - `exercise` — reference на Exercise (per DP1 option c — per-exercise primary).
 - `value_kg` — number.
 - `recorded_at` — timestamp.
@@ -355,7 +401,7 @@ Identifiers — English (для будущей формализации в Phase
 
 **Invariants**:
 
-- `(athlete, exercise)` — uniqueness либо most-recent (Phase 6 ratifies).
+- `(userId, exerciseId)` — unique (one canonical 1RM per (athlete, exercise)).
 - Phase 3.3 DP1 c: `exercise` — primary FK; `movement_family` соседствует для smart-default (если athlete не имеет 1RM для `DB Snatches`, smart UI suggests 90% от `barbell snatch` 1RM из same `snatch` family).
 
 **Sample evidence**: 0 в sample (домашняя тренировка, absolute weights only). Модель ready beyond sample.
@@ -366,18 +412,18 @@ Identifiers — English (для будущей формализации в Phase
 
 **Purpose**: запись об actual выполнении planned Session. Хранит actual_load + completion notes (per Phase 3.3 DP2 b: prescription = live formula, performance = recorded отдельно).
 
-**Attributes**:
+**Attributes** (post D2, 2026-05-12):
 
 - `id`.
 - `session` — reference на planned Session.
-- `athlete` — reference на Athlete.
+- `userId` — FK на `User` (external stub). Раньше — `athleteId → Athlete`; merged per D2.
 - `started_at` / `completed_at` — timestamps.
 - `actual_rows` — ordered array of PerformedExerciseInstance (см. ниже).
 - `coach_notes` / `athlete_notes` — optional free-text.
 
 **Invariants**:
 
-- 1:1 (или 1:0..1) с Session — каждое выполнение генерирует one PerformedSession. Если атлет переделывает session — open question, treat as new entry или versioned (deferred to Phase 6).
+- `(sessionId, userId)` unique per Q9 — latest-only PerformedSession per (Session, User). Re-do = тренер делает новый Session (clone), не versioning.
 - `actual_rows` повторяют структуру Session (block × schema × row), но per-row хранят `actual_load` / `actual_reps` / `notes` (не полную rebuild structure).
 
 ---
@@ -405,21 +451,21 @@ Identifiers — English (для будущей формализации в Phase
 
 ### 1.14 Catalog summary
 
-| Entity                    | Cardinality                              | Owner            | Notes                                                        |
-| ------------------------- | ---------------------------------------- | ---------------- | ------------------------------------------------------------ |
-| Day                       | 1..N per parent                          | week / plan      | order, label?, notes?, sessions[]                            |
-| Session                   | 0..N per Day                             | Day              | order, label?, notes?, blocks[]                              |
-| Block                     | 0..N per Session                         | Session          | order, labels[], intensity?, notes?, time_cap?, schemas[]    |
-| Schema                    | 0..N per Block                           | Block            | kind, archetype, header?, archetype_params, intensity?, body |
-| SubSchema                 | 0..N per Schema (nested only)            | Schema (parent)  | те же attributes                                             |
-| SchemaRow                 | 0..N per Schema (non-nested) / SubSchema | Schema/SubSchema | discriminated union по row_kind                              |
-| Exercise                  | library                                  | global library   | intrinsic catalog (149 canonical)                            |
-| Label                     | library                                  | global library   | unified namespace + applicable_levels                        |
-| Archetype                 | library                                  | global library   | 34 catalog (33 Phase 1-6 + super-set Phase 7)                |
-| Athlete                   | 1..N per system                          | system           | profile attributes                                           |
-| OneRMRecord               | 0..N per (Athlete, Exercise)             | Athlete          | per-exercise, with movement_family fallback                  |
-| PerformedSession          | 0..1 per (Session, Athlete)              | Athlete          | actual outcomes                                              |
-| PerformedExerciseInstance | per planned row                          | PerformedSession | actual_load / reps / intensity                               |
+| Entity                    | Cardinality                              | Owner            | Notes                                                                                   |
+| ------------------------- | ---------------------------------------- | ---------------- | --------------------------------------------------------------------------------------- |
+| Week (D1)                 | 0..N per TrainingPlan                    | TrainingPlan     | startDate (Mon ISO), notes?, days[≤7]                                                   |
+| Day                       | 0..7 per Week                            | Week             | dayOfWeek (enum, D1), label?, notes?, sessions[]                                        |
+| Session                   | 0..N per Day                             | Day              | order, label?, notes?, blocks[]                                                         |
+| Block                     | 0..N per Session                         | Session          | order, labels[], intensity?, notes?, time_cap?, schemas[]                               |
+| Schema                    | 0..N per Block                           | Block            | kind, archetype, header?, archetype_params, intensity?, body                            |
+| SubSchema                 | 0..N per Schema (nested only)            | Schema (parent)  | те же attributes                                                                        |
+| SchemaRow                 | 0..N per Schema (non-nested) / SubSchema | Schema/SubSchema | discriminated union по row_kind                                                         |
+| Exercise                  | library **(D4)**                         | admin UI         | coach-managed; 149 canonical = reference content, не auto-seed                          |
+| Label                     | library **(D4)**                         | admin UI         | coach-managed; unified namespace + applicable_levels                                    |
+| Archetype                 | configuration **(D4)**                   | system seed      | 34 catalog (33 Phase 1-6 + super-set Phase 7) — mandatory seed at Step 2, no admin CRUD |
+| OneRMRecord               | 0..N per (User, Exercise)                | User (external)  | per-exercise, with movement_family fallback                                             |
+| PerformedSession          | 0..1 per (Session, User)                 | User (external)  | actual outcomes                                                                         |
+| PerformedExerciseInstance | per planned row                          | PerformedSession | actual_load / reps / intensity                                                          |
 
 **Movement family** — string field на Exercise, **не** отдельная entity (см. §1.7 + edge-cases для обоснования). Phase 6 может upgrade в entity при росте sample (5-15 families became >>15).
 
@@ -539,7 +585,7 @@ Per Phase 3.3 §5.1 catalog 11 variants. Финальный список:
 - `effort_percent` — optional: `{ value: number }` **или** `{ range: { min, max } }`.
 - `rpe` — optional: `{ value: number }`. Deferred (out-of-sample, model-ready).
 - `pace` — optional: enum `easy` | `moderate` | `hard` | `recovery` (extensible).
-- `hr_zone` — optional: `{ zone: "Z1" | "Z2" | "Z3" | "Z4" | "Z5" }` (Phase 7 Ext 1 / Q16). Endurance / aerobic prescriptions. Athlete-specific BPM резолвится через `Athlete.profile_attributes.hr_max` placeholder; модель не хранит абсолютные BPM.
+- `hr_zone` — optional: `{ zone: "Z1" | "Z2" | "Z3" | "Z4" | "Z5" }` (Phase 7 Ext 1 / Q16). Endurance / aerobic prescriptions. Athlete-specific BPM-резолвер deferred per D2 (2026-05-12) — future `hrMaxBpm` лагает explicit column на `AthleteProfile` (app-level), не jsonb; zone enum остаётся canonical.
 - `numeric_pace` — optional: `{ value: "MM:SS" string, distance_unit: "km" | "mi" | "m" | "yd" | "lap", pace_type: "min_per_distance" | "distance_per_min" }` (Phase 7 Ext 2 / Q17). Run / row / swim interval prescriptions. Default `pace_type = "min_per_distance"`.
 
 **Scope**: block / schema / row.
@@ -1037,14 +1083,16 @@ Phase 5 ratify: ConnectorRow (см. §1.6.9) — explicit row. Альтерна�
 
 ### 5.1 Hierarchy
 
-| Relation              | Cardinality              | Ordered? | Invariants                                |
-| --------------------- | ------------------------ | -------- | ----------------------------------------- |
-| Day → Session         | 1:N (0..N)               | yes      | order: integer; sparse vs dense — Phase 6 |
-| Session → Block       | 1:N (0..N)               | yes      | order                                     |
-| Block → Schema        | 1:N (0..N)               | yes      | order; empty array valid                  |
-| Schema → SchemaRow    | 1:N (kind ≠ nested)      | yes      | order                                     |
-| Schema → SubSchema    | 1:N (kind = nested only) | yes      | order; SubSchema.parent_schema = parent   |
-| SubSchema → SchemaRow | 1:N                      | yes      | те же invariants как Schema → SchemaRow   |
+| Relation              | Cardinality              | Ordered?            | Invariants                                    |
+| --------------------- | ------------------------ | ------------------- | --------------------------------------------- |
+| TrainingPlan → Week   | 1:N (0..N, indefinite)   | by startDate        | `(planId, startDate)` unique; D1 (2026-05-12) |
+| Week → Day            | 1:N (0..7)               | by dayOfWeek (enum) | `(weekId, dayOfWeek)` unique; D1 (2026-05-12) |
+| Day → Session         | 1:N (0..N)               | yes (Session.order) | order: integer; sparse vs dense — Phase 6     |
+| Session → Block       | 1:N (0..N)               | yes                 | order                                         |
+| Block → Schema        | 1:N (0..N)               | yes                 | order; empty array valid                      |
+| Schema → SchemaRow    | 1:N (kind ≠ nested)      | yes                 | order                                         |
+| Schema → SubSchema    | 1:N (kind = nested only) | yes                 | order; SubSchema.parent_schema = parent       |
+| SubSchema → SchemaRow | 1:N                      | yes                 | те же invariants как Schema → SchemaRow       |
 
 ### 5.2 Library references
 
@@ -1073,17 +1121,24 @@ Phase 5 ratify: ConnectorRow (см. §1.6.9) — explicit row. Альтерна�
 | StandaloneLoadRow → Load | 1:1         | applies к all preceding rows in schema         |
 | Exercise → default_load  | 1:0..1      | intrinsic fallback                             |
 
-### 5.4 Athlete data
+### 5.4 Athlete data (post D2, 2026-05-12)
 
-| Relation                                        | Cardinality          | Notes                                                                                             |
-| ----------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------- |
-| Athlete → OneRMRecord                           | 1:N                  | per (Athlete, Exercise) unique latest                                                             |
-| OneRMRecord → Exercise                          | M:1                  | per-exercise reference per DP1 c                                                                  |
-| Exercise.movement_family → string               | 1:1 (optional)       | soft grouping for OneRM fallback / UI                                                             |
-| Session → PerformedSession                      | 1:0..1 (per Athlete) | если N athletes выполняют same Session, expect 1 PerformedSession per Athlete (1:N через Athlete) |
-| Athlete → PerformedSession                      | 1:N                  | atлет имеет историю performances                                                                  |
-| PerformedSession → PerformedExerciseInstance    | 1:N                  | per planned row                                                                                   |
-| PerformedExerciseInstance → planned ExerciseRow | M:1 (pointer)        | (block_id, schema_id, row_order) — composite pointer                                              |
+| Relation                                        | Cardinality       | Notes                                                                                       |
+| ----------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------- |
+| User → OneRMRecord                              | 1:N               | per (User, Exercise) unique latest; FK на external `User` stub (Athlete сущность убрана)    |
+| OneRMRecord → Exercise                          | M:1               | per-exercise reference per DP1 c                                                            |
+| Exercise.movement_family → string               | 1:1 (optional)    | soft grouping for OneRM fallback / UI                                                       |
+| Session → PerformedSession                      | 1:0..1 (per User) | если N athletes выполняют same Session, expect 1 PerformedSession per User (1:N через User) |
+| User → PerformedSession                         | 1:N               | athlete имеет историю performances                                                          |
+| PerformedSession → PerformedExerciseInstance    | 1:N               | per planned row                                                                             |
+| PerformedExerciseInstance → planned ExerciseRow | M:1 (pointer)     | (block_id, schema_id, row_order) — composite pointer                                        |
+
+### 5.6 Plan / Week hierarchy (D1, 2026-05-12)
+
+| Relation            | Cardinality              | Notes                                                                                |
+| ------------------- | ------------------------ | ------------------------------------------------------------------------------------ |
+| TrainingPlan → Week | 1:N (0..N, indefinite)   | FK на external `TrainingPlan` stub; план — «поезд», weeks добавляются вперёд по дате |
+| Week → Day          | 1:N (0..7, by dayOfWeek) | `(weekId, dayOfWeek)` unique; ≤7 Days per Week                                       |
 
 ### 5.5 Invariants — cross-cutting
 
@@ -1107,7 +1162,7 @@ Phase 5 ratify: ConnectorRow (см. §1.6.9) — explicit row. Альтерна�
 3. **applicable_levels enforcement** strength (Phase 4 Q1). Soft per Option C.
 4. **Label.applicable_levels mutation policy** (Phase 4 Q2). What happens to existing assignments при change.
 5. **Empty-body block semantic** placeholder explanation field (Phase 4 Q4).
-6. **Dual-value resolver** — конкретное правило (M/F, RX/SC, athlete profile attribute). Deferred.
+6. **Dual-value resolver** — конкретное правило (M/F, RX/SC, athlete profile attribute). **DROPPED 2026-05-12 per D2** — `profileAttributes` jsonb-bag убран; future resolver-input fields появятся как explicit columns на `AthleteProfile` (app-level) когда соответствующий UX будет дизайнирован.
 7. **RPE inclusion** — model-ready как Intensity.rpe field, но 0 sample evidence. Phase 6 keeps или drops.
 8. **Movement family upgrade** — string field на Exercise сейчас; если sample растёт и family >> 15 — upgrade в entity. Phase 6 / future.
 9. **PerformedSession versioning** — if athlete repeats session, separate entry или single most-recent?
@@ -1117,13 +1172,15 @@ Phase 5 ratify: ConnectorRow (см. §1.6.9) — explicit row. Альтерна�
 
 ## §7. Summary
 
-- **Entities**: 13 (Day, Session, Block, Schema, SubSchema, SchemaRow, Exercise, Label, Archetype, Athlete, OneRMRecord, PerformedSession, PerformedExerciseInstance).
+- **Entities**: 13 in-scope в этом срезе (Week, Day, Session, Block, Schema, SubSchema, SchemaRow, Exercise, Label, Archetype, OneRMRecord, PerformedSession, PerformedExerciseInstance) + 2 external stubs (TrainingPlan, User — full shape в app-level schema). Standalone `Athlete` убран per D2 — athlete identity = `User` + `AthleteProfile`.
 - **Value Objects**: 18 (Load, Weight, Intensity, RepNotation, CompoundRepDefinition, PerLimbDistribution, TempoModifier, PositionEquipmentModifier, SequenceIndicator, StagedProgram, PerSetSubstitution, OrAlternative, MediaReference, TimeCap, CyclicalCompound, SandwichCompound, CompoundRow, ArchetypeSuperSetParams). Phase 7: StagedProgram = rename DropSetProgram + generalize; ArchetypeSuperSetParams = new VO.
 - **Schema kinds**: 5 (atomic, headerless, nested, named, composite).
-- **Archetypes**: 34 catalog (33 Phase 1-6 + super-set Phase 7).
-- **SchemaRow subtypes**: 9 (exercise, rest, footnote, standalone_load, standalone_url, placeholder, inner_ladder_marker, rep_definition, connector).
+- **Archetypes**: 34 catalog (33 Phase 1-6 + super-set Phase 7) — **configuration** per D4 (mandatory system seed, no admin CRUD).
+- **Libraries**: Exercise, Label — coach-managed via admin UI per D4 (not auto-seeded; 149 canonical exercises + 19 canonical labels = reference content).
+- **SchemaRow subtypes**: 9 (exercise, rest, footnote, standalone_load, standalone_url, placeholder, inner_ladder_marker, rep_definition, connector) + REST_SLOT (Phase 6 Q12).
 - **Movement family**: string field на Exercise (soft grouping, не entity).
 - **Intensity**: struct с optional fields (5 после Phase 7: effort_percent / rpe / pace / hr_zone / numeric_pace), partial overlay inheritance (per Phase 4 correction).
 - **TempoModifier**: 5 optional fields (4 Phase 1-6 + full_tempo Phase 7).
 - **Equipment enum**: 19 values после Phase 7 (12 Phase 1-6 + 7 Phase 7 для professional CrossFit / strongman).
-- **Open questions** Phase 5 → Phase 6: 10 documented. Phase 7 closes Q16-Q21 (см. `edge-cases.md` §10).
+- **DayOfWeek enum** (D1, 2026-05-12): 7 values (MONDAY..SUNDAY). Day отбит от parent через `(weekId, dayOfWeek)` unique, не sparse integer `order`.
+- **Open questions** Phase 5 → Phase 6: 10 documented. Phase 7 closes Q16-Q21 (см. `edge-cases.md` §10). Phase 7 ratifications D1-D4 (2026-05-12) закрывают связанные OPEN items в `06-formalization/implementation-notes.md` §5.

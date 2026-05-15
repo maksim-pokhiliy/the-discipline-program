@@ -1,4 +1,5 @@
 import type {
+  Week,
   Day,
   Session,
   Block,
@@ -9,7 +10,6 @@ import type {
   Exercise,
   Label,
   Archetype,
-  Athlete,
   OneRMRecord,
   PerformedSession,
   PerformedExerciseInstance,
@@ -23,9 +23,11 @@ import type {
   OneRMRecordSource,
   SchemaPairingRelation,
   AppLevel,
+  DayOfWeek,
 } from "@prisma/client";
 
 export type {
+  Week,
   Day,
   Session,
   Block,
@@ -36,7 +38,6 @@ export type {
   Exercise,
   Label,
   Archetype,
-  Athlete,
   OneRMRecord,
   PerformedSession,
   PerformedExerciseInstance,
@@ -50,6 +51,7 @@ export type {
   OneRMRecordSource,
   SchemaPairingRelation,
   AppLevel,
+  DayOfWeek,
 };
 
 export type PaceValue = "easy" | "moderate" | "hard" | "recovery";
@@ -640,8 +642,6 @@ export type TrailingConnector = {
   form: ConnectorForm;
   roundsCount?: number;
 };
-
-export type ProfileAttributes = Record<string, string | number | boolean | null>;
 
 export type StageActual = {
   stageIndex: number;

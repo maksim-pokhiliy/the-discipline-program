@@ -7,6 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+//// Canonical Prisma DSL for the training-domain slice.
+//// Integration target: packages/api-server/prisma/schema.prisma already
+//// contains User, CoachProfile, AthleteProfile, TrainingPlan, PlanEnrollment
+//// and CoachAthleteAssignment. In this slice, User and TrainingPlan appear
+//// as minimal stub models at the bottom so FK relations resolve and the
+//// fragment parses as standalone Prisma DSL.
+//// Updated 2026-05-12 per ratifications D1-D4 (Week-as-calendar-slot,
+//// Athlete merged into User+AthleteProfile, full-scope port at Step 2,
+//// library-vs-configuration split). See implementation/PLANNING_STATE.md.
+
 enum Equipment {
   ASSAULT_BIKE
   ATLAS_STONE
@@ -118,17 +128,46 @@ enum AppLevel {
   BLOCK
 }
 
-model Day {
+enum DayOfWeek {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
+
+model Week {
   id        String   @id @default(cuid())
-  order     Int
-  labelId   String?
+  planId    String
+  startDate DateTime @db.Date
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  plan TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  days Day[]
+
+  @@unique([planId, startDate])
+  @@index([planId, startDate])
+}
+
+model Day {
+  id        String    @id @default(cuid())
+  weekId    String
+  dayOfWeek DayOfWeek
+  labelId   String?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  week     Week      @relation(fields: [weekId], references: [id], onDelete: Cascade)
   label    Label?    @relation(fields: [labelId], references: [id], onDelete: Restrict)
   sessions Session[]
 
+  @@unique([weekId, dayOfWeek])
+  @@index([weekId, dayOfWeek])
   @@index([labelId])
 }
 
@@ -183,7 +222,7 @@ model BlockLabelAssignment {
 }
 
 model Schema {
-  id                String   @id @default(cuid())
+  id                String     @id @default(cuid())
   blockId           String
   parentSchemaId    String?
   order             Int
@@ -194,13 +233,13 @@ model Schema {
   intensity         Json?
   trailingConnector Json?
   notes             String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
 
-  block        Block          @relation(fields: [blockId], references: [id], onDelete: Cascade)
-  parentSchema Schema?        @relation("SchemaSubSchemas", fields: [parentSchemaId], references: [id], onDelete: Cascade)
-  subSchemas   Schema[]       @relation("SchemaSubSchemas")
-  archetype    Archetype      @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
+  block        Block           @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  parentSchema Schema?         @relation("SchemaSubSchemas", fields: [parentSchemaId], references: [id], onDelete: Cascade)
+  subSchemas   Schema[]        @relation("SchemaSubSchemas")
+  archetype    Archetype       @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
   rows         SchemaRow[]
   pairingsA    SchemaPairing[] @relation("SchemaPairingA")
   pairingsB    SchemaPairing[] @relation("SchemaPairingB")
@@ -224,7 +263,7 @@ model SchemaPairing {
 }
 
 model SchemaRow {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   schemaId    String
   order       Int
   rowKind     RowKind
@@ -239,8 +278,8 @@ model SchemaRow {
   media       Json?
   compoundRep Json?
   notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   schema                     Schema                      @relation(fields: [schemaId], references: [id], onDelete: Cascade)
   performedExerciseInstances PerformedExerciseInstance[]
@@ -255,7 +294,7 @@ model Exercise {
   primaryEquipment         Equipment
   movementTypeTagPrimary   MovementType
   movementTypeTagSecondary MovementType?
-  defaultDemoUrl           String?
+  defaultDemoUrls          String[]
   canonicalCompoundType    CanonicalCompoundType
   placeholderFlag          Boolean               @default(false)
   movementFamily           String?
@@ -302,36 +341,26 @@ model Archetype {
   schemas Schema[]
 }
 
-model Athlete {
-  id                String   @id @default(cuid())
-  displayName       String
-  profileAttributes Json
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  oneRMRecords      OneRMRecord[]
-  performedSessions PerformedSession[]
-}
-
 model OneRMRecord {
   id         String            @id @default(cuid())
-  athleteId  String
+  userId     String
   exerciseId String
   valueKg    Decimal
   recordedAt DateTime
   source     OneRMRecordSource
 
-  athlete  Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   exercise Exercise @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
 
-  @@unique([athleteId, exerciseId])
+  @@unique([userId, exerciseId])
   @@index([exerciseId])
+  @@index([userId])
 }
 
 model PerformedSession {
   id           String    @id @default(cuid())
   sessionId    String
-  athleteId    String
+  userId       String
   startedAt    DateTime
   completedAt  DateTime?
   coachNotes   String?
@@ -340,28 +369,43 @@ model PerformedSession {
   updatedAt    DateTime  @updatedAt
 
   session                    Session                     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  athlete                    Athlete                     @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  user                       User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
   performedExerciseInstances PerformedExerciseInstance[]
 
-  @@unique([sessionId, athleteId])
-  @@index([athleteId])
+  @@unique([sessionId, userId])
+  @@index([userId])
 }
 
 model PerformedExerciseInstance {
-  id                  String   @id @default(cuid())
-  performedSessionId  String
-  plannedSchemaRowId  String
-  actualLoad          Json
-  actualReps          Json
-  actualIntensity     Json?
-  stageActuals        Json?
-  notes               String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  performedSessionId String
+  plannedSchemaRowId String
+  actualLoad         Json
+  actualReps         Json
+  actualIntensity    Json?
+  stageActuals       Json?
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   performedSession PerformedSession @relation(fields: [performedSessionId], references: [id], onDelete: Cascade)
   plannedSchemaRow SchemaRow        @relation(fields: [plannedSchemaRowId], references: [id], onDelete: Restrict)
 
   @@index([performedSessionId])
   @@index([plannedSchemaRowId])
+}
+
+// Stub: lives in app-level packages/api-server/prisma/schema.prisma.
+// Declared here only so this slice parses and FK relations resolve.
+model TrainingPlan {
+  id    String @id
+  weeks Week[]
+}
+
+// Stub: lives in app-level packages/api-server/prisma/schema.prisma.
+// Declared here only so this slice parses and FK relations resolve.
+model User {
+  id                String             @id
+  oneRMRecords      OneRMRecord[]
+  performedSessions PerformedSession[]
 }

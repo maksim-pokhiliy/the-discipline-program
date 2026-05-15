@@ -4,12 +4,17 @@ Mermaid ER модели тренировочных сессий. Value objects e
 
 Identifiers — English; descriptions inline в диаграмме на English (mermaid рендерится моноширинно и translation в диаграммах путает связи).
 
+> **Revised 2026-05-12** — synced с `06-formalization/er-final.md` после D1-D4: добавлены `TRAINING_PLAN` + `WEEK` nodes, `ATHLETE` → `USER` (external stub), `DAY.order` заменён на `(week_id, day_of_week)`. См. `06-formalization/implementation-notes.md` (Phase 7 Integration Ratifications).
+
 ---
 
 ## §1. Core diagram
 
 ```mermaid
 erDiagram
+    TRAINING_PLAN ||--o{ WEEK : "indefinite train (D1)"
+    WEEK ||--o{ DAY : "ISO Mon-Sun slot (≤7 Days)"
+
     DAY ||--o{ SESSION : contains
     DAY }o--o| LABEL : "labeled by (0..1)"
 
@@ -29,16 +34,28 @@ erDiagram
 
     EXERCISE }o--o| EXERCISE : "OR-alternative substitute"
 
-    ATHLETE ||--o{ ONE_RM_RECORD : "owns"
+    USER ||--o{ ONE_RM_RECORD : "owns"
     ONE_RM_RECORD }o--|| EXERCISE : "for"
 
-    ATHLETE ||--o{ PERFORMED_SESSION : "owns"
+    USER ||--o{ PERFORMED_SESSION : "owns"
     PERFORMED_SESSION ||--o{ PERFORMED_EXERCISE_INSTANCE : contains
     PERFORMED_EXERCISE_INSTANCE }o--|| SCHEMA_ROW : "actuals against planned"
 
+    TRAINING_PLAN {
+        id pk "external — full shape lives in app-level schema"
+    }
+
+    WEEK {
+        id pk
+        ref plan_id "FK TrainingPlan"
+        date start_date "Monday of ISO week (D1)"
+        text notes "optional, coach-facing"
+    }
+
     DAY {
         id pk
-        int order
+        ref week_id "FK Week"
+        enum day_of_week "MONDAY..SUNDAY (D1)"
         ref label_id "FK Label optional"
         text notes "optional"
     }
@@ -125,15 +142,13 @@ erDiagram
         json related_archetypes "graph specialization_of / paired_with / continuation_of / extension_of / contained_by / contains"
     }
 
-    ATHLETE {
-        id pk
-        text display_name
-        json profile_attributes "for future dual-value resolver / RX-SC tier"
+    USER {
+        id pk "external — full shape lives in app-level schema (User + AthleteProfile)"
     }
 
     ONE_RM_RECORD {
         id pk
-        ref athlete_id "FK Athlete"
+        ref user_id "FK User (D2)"
         ref exercise_id "FK Exercise"
         decimal value_kg
         timestamp recorded_at
@@ -143,7 +158,7 @@ erDiagram
     PERFORMED_SESSION {
         id pk
         ref session_id "FK Session"
-        ref athlete_id "FK Athlete"
+        ref user_id "FK User (D2)"
         timestamp started_at
         timestamp completed_at "optional"
         text coach_notes "optional"
@@ -222,14 +237,14 @@ Phase 6 решит persistence: отдельные join-tables или JSON-array
 
 `EXERCISE.movement_family` — text field, **не** FK. Soft grouping per DP1 c. Если будет upgrade в entity (Phase 6 / future) — становится `EXERCISE }o--o| MOVEMENT_FAMILY`.
 
-### 2.7 PerformedSession ↔ Athlete
+### 2.7 PerformedSession ↔ User
 
-Session — planned (создаётся coach). PerformedSession — actual выполнение (1 per (Session, Athlete) tuple).
+Session — planned (создаётся coach). PerformedSession — actual выполнение (1 per (Session, User) tuple). Per D2 (2026-05-12) `athleteId` переименован в `userId`; standalone `Athlete` entity отсутствует — athlete = `User` с `role=ATHLETE` + `AthleteProfile` (живут в app-level schema).
 
 Текущая cardinality:
 
 - `SESSION ||--o{ PERFORMED_SESSION` (1 planned может быть выполнена N athletes — group sessions).
-- `ATHLETE ||--o{ PERFORMED_SESSION` (1 athlete имеет N performances).
+- `USER ||--o{ PERFORMED_SESSION` (1 athlete имеет N performances).
 
 В sample (1 athlete, no group sessions) — это (1:1). Модель готова к (1:N).
 
@@ -239,27 +254,28 @@ Session — planned (создаётся coach). PerformedSession — actual вы
 - **MediaReference entity** — embedded VO, не отдельный entity. Если Phase 6 решит выделить (для library URL dedup) — добавится `EXERCISE ||--o{ MEDIA_REFERENCE` + `SCHEMA_ROW }o--o{ MEDIA_REFERENCE`.
 - **RestSpec / TimeCap / RepNotation / Load / Intensity** — embedded VOs.
 - **StagedProgram (ex-DropSetProgram, Phase 7 Q19) / PerSetSubstitution / CompoundRow / ArchetypeSuperSetParams (Phase 7 Q20)** — embedded VOs (внутри SchemaRow.row_payload или Schema.archetype_params).
-- **Calendar / Week / Plan** — out-of-scope Phase 4/5.
+- **TRAINING_PLAN / USER** (external stubs, D1/D2 2026-05-12) — отображены здесь PK-only ради FK validity; full shape живёт в `packages/api-server/prisma/schema.prisma` (TrainingPlan = creator/status/name; User = identity + role + AthleteProfile/CoachProfile).
+- **Calendar derivations** (week-end date, ISO year+week number, per-day calendar date) — derived в app layer, не stored.
 
 ---
 
 ## §3. Quick-reference invariants
 
-| Invariant                                                                                       | Scope            | Source                   |
-| ----------------------------------------------------------------------------------------------- | ---------------- | ------------------------ |
-| Day.sessions[] может быть пустым                                                                | Day              | REST DAY 66 occurrences  |
-| Block.labels[] может быть пустым (implicit)                                                     | Block            | 75 implicit occurrences  |
-| Block.schemas[] может быть пустым (empty-body)                                                  | Block            | 6 empty-body occurrences |
-| Schema.kind === 'headerless' ↔ header IS NULL                                                  | Schema           | structural rule          |
-| Schema.kind === 'nested' ↔ body содержит sub-schemas, не SchemaRows                            | Schema           | Phase 2.1                |
-| SubSchema.parent.kind === 'nested'                                                              | Schema           | self-reference invariant |
-| Block.labels — set semantics (no dups), ordered list (presentation)                             | Block            | Phase 4                  |
-| Label.applicable_levels — non-empty set                                                         | Label            | Phase 4 Option C         |
-| Intensity scope hierarchy: row → schema → block (partial overlay per field)                     | Intensity        | Phase 4 correction       |
-| Exercise.primary_equipment ∈ {bodyweight,band,parallel_bars,rings} → row.load.kind ∉ {absolute} | Load consistency | DP3 b                    |
-| 1RM record (Athlete, Exercise) — primary FK per DP1 c; family is soft fallback                  | OneRMRecord      | Phase 3.3                |
-| Compound trailing weight applies to loaded elements only (bodyweight skip)                      | DP4              | Phase 3.3                |
-| Per-element inline weight overrides shared trailing                                             | DP4              | Phase 3.3                |
+| Invariant                                                                                                 | Scope            | Source                      |
+| --------------------------------------------------------------------------------------------------------- | ---------------- | --------------------------- |
+| Day.sessions[] может быть пустым                                                                          | Day              | REST DAY 66 occurrences     |
+| Block.labels[] может быть пустым (implicit)                                                               | Block            | 75 implicit occurrences     |
+| Block.schemas[] может быть пустым (empty-body)                                                            | Block            | 6 empty-body occurrences    |
+| Schema.kind === 'headerless' ↔ header IS NULL                                                            | Schema           | structural rule             |
+| Schema.kind === 'nested' ↔ body содержит sub-schemas, не SchemaRows                                      | Schema           | Phase 2.1                   |
+| SubSchema.parent.kind === 'nested'                                                                        | Schema           | self-reference invariant    |
+| Block.labels — set semantics (no dups), ordered list (presentation)                                       | Block            | Phase 4                     |
+| Label.applicable_levels — non-empty set                                                                   | Label            | Phase 4 Option C            |
+| Intensity scope hierarchy: row → schema → block (partial overlay per field)                               | Intensity        | Phase 4 correction          |
+| Exercise.primary_equipment ∈ {bodyweight,band,parallel_bars,rings} → row.load.kind ∉ {absolute}           | Load consistency | DP3 b                       |
+| 1RM record (User, Exercise) — primary FK per DP1 c (renamed from Athlete per D2); family is soft fallback | OneRMRecord      | Phase 3.3 + D2 (2026-05-12) |
+| Compound trailing weight applies to loaded elements only (bodyweight skip)                                | DP4              | Phase 3.3                   |
+| Per-element inline weight overrides shared trailing                                                       | DP4              | Phase 3.3                   |
 
 ---
 

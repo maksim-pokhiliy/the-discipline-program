@@ -4,26 +4,31 @@
 
 Идентификаторы — English; описания inline на English. Содержательный комментарий — Russian.
 
+> **Revised 2026-05-12** — D1-D4 applied (Week as calendar slot, Athlete merged into `User` + `AthleteProfile`, `profileAttributes` dropped, library/configuration split). `User` и `TrainingPlan` теперь external stubs (full shape — в `packages/api-server/prisma/schema.prisma`). См. `implementation-notes.md` §0 (Phase 7 Integration Ratifications).
+
 ---
 
 ## §1. Key changes vs Phase 5 ER
 
-| Change                                                 | Source                       | Effect                                                                     |
-| ------------------------------------------------------ | ---------------------------- | -------------------------------------------------------------------------- |
-| `BLOCK_LABEL_ASSIGNMENT` explicit join                 | Q7                           | many-to-many `Block ↔ Label` через таблицу с `order` field                |
-| `SCHEMA_PAIRING` explicit join                         | dual-FK для alternating-sets | bidirectional reference вместо JSON-FK                                     |
-| `Session.freezeLoadsAtCreation`                        | Q10                          | per-session snapshot mode flag                                             |
-| `RowKind.REST_SLOT`                                    | Q12                          | новый row_kind для EMOM REST body                                          |
-| `Schema.notes`                                         | Q15                          | EXAMPLE-style explanatory annotation                                       |
-| `PerformedSession` unique `(session, athlete)`         | Q9                           | latest-only per (Session, Athlete)                                         |
-| Pace = Intensity field (no `EASY PACE` label)          | Q8                           | label-catalog не содержит pace categorical labels                          |
-| `Exercise.canonicalName` case-insensitive unique       | Phase 5 ratify               | lower-индекс через generated column                                        |
-| Cross-movement `Percentage.reference.targetExerciseId` | Phase 5 final                | FK на Exercise для cross-exercise percentages                              |
-| `Intensity.hrZone` + `Intensity.numericPace`           | Q16, Q17 (Phase 7)           | HR zone categorical + numeric pace (run/row/swim)                          |
-| `TempoModifier.fullTempo`                              | Q18 (Phase 7)                | 4-digit Olympic tempo notation (eccentric-pauseBottom-concentric-pauseTop) |
-| `DropSetProgram` → `StagedProgram`                     | Q19 (Phase 7)                | rename + generalize (drop_set / wave / cluster) + `restBetweenStages`      |
-| `super-set` archetype                                  | Q20 (Phase 7)                | ordered exercise sequence within single schema (A1/A2/B1)                  |
-| `Equipment` enum +7 values                             | Q21 (Phase 7)                | ASSAULT_BIKE / ATLAS_STONE / JUMP_ROPE / ROW_ERG / SKI_ERG / SLED / YOKE   |
+| Change                                                 | Source                       | Effect                                                                              |
+| ------------------------------------------------------ | ---------------------------- | ----------------------------------------------------------------------------------- |
+| `BLOCK_LABEL_ASSIGNMENT` explicit join                 | Q7                           | many-to-many `Block ↔ Label` через таблицу с `order` field                         |
+| `SCHEMA_PAIRING` explicit join                         | dual-FK для alternating-sets | bidirectional reference вместо JSON-FK                                              |
+| `Session.freezeLoadsAtCreation`                        | Q10                          | per-session snapshot mode flag                                                      |
+| `RowKind.REST_SLOT`                                    | Q12                          | новый row_kind для EMOM REST body                                                   |
+| `Schema.notes`                                         | Q15                          | EXAMPLE-style explanatory annotation                                                |
+| `PerformedSession` unique `(session, athlete)`         | Q9                           | latest-only per (Session, Athlete)                                                  |
+| Pace = Intensity field (no `EASY PACE` label)          | Q8                           | label-catalog не содержит pace categorical labels                                   |
+| `Exercise.canonicalName` case-insensitive unique       | Phase 5 ratify               | lower-индекс через generated column                                                 |
+| Cross-movement `Percentage.reference.targetExerciseId` | Phase 5 final                | FK на Exercise для cross-exercise percentages                                       |
+| `Intensity.hrZone` + `Intensity.numericPace`           | Q16, Q17 (Phase 7)           | HR zone categorical + numeric pace (run/row/swim)                                   |
+| `TempoModifier.fullTempo`                              | Q18 (Phase 7)                | 4-digit Olympic tempo notation (eccentric-pauseBottom-concentric-pauseTop)          |
+| `DropSetProgram` → `StagedProgram`                     | Q19 (Phase 7)                | rename + generalize (drop_set / wave / cluster) + `restBetweenStages`               |
+| `super-set` archetype                                  | Q20 (Phase 7)                | ordered exercise sequence within single schema (A1/A2/B1)                           |
+| `Equipment` enum +7 values                             | Q21 (Phase 7)                | ASSAULT_BIKE / ATLAS_STONE / JUMP_ROPE / ROW_ERG / SKI_ERG / SLED / YOKE            |
+| `WEEK` model + `DayOfWeek` enum                        | D1 (Phase 7 ratification)    | `TRAINING_PLAN → WEEK → DAY` cascade; Day.order replaced by (weekId, dayOfWeek)     |
+| `ATHLETE` model dropped                                | D2 (Phase 7 ratification)    | `OneRMRecord` / `PerformedSession` → `User` (external); `profileAttributes` dropped |
+| D5                                                     | 2026-05-13                   | Exercise.defaultDemoUrl → defaultDemoUrls String[]                                  |
 
 ---
 
@@ -31,6 +36,9 @@
 
 ```mermaid
 erDiagram
+    TRAINING_PLAN ||--o{ WEEK : "indefinite train (weeks added forward)"
+    WEEK ||--o{ DAY : "ISO Mon-Sun slot (≤7 Days)"
+
     DAY ||--o{ SESSION : contains
     DAY }o--o| LABEL : "labeled by (0..1)"
 
@@ -51,16 +59,30 @@ erDiagram
     SCHEMA_ROW }o--o| EXERCISE : "atomic / placeholder references"
     SCHEMA_ROW }o--o{ EXERCISE : "compound element references (via row_payload)"
 
-    ATHLETE ||--o{ ONE_RM_RECORD : owns
+    USER ||--o{ ONE_RM_RECORD : owns
     ONE_RM_RECORD }o--|| EXERCISE : for
 
-    ATHLETE ||--o{ PERFORMED_SESSION : owns
+    USER ||--o{ PERFORMED_SESSION : owns
     PERFORMED_SESSION ||--o{ PERFORMED_EXERCISE_INSTANCE : contains
     PERFORMED_EXERCISE_INSTANCE }o--|| SCHEMA_ROW : "actuals against planned"
 
+    TRAINING_PLAN {
+        string id PK "external — full shape in app-level schema (creator / status / name)"
+    }
+
+    WEEK {
+        string id PK
+        string plan_id FK "TrainingPlan"
+        date start_date "Monday of ISO week (D1)"
+        text notes "optional, coach-facing"
+        timestamp created_at
+        timestamp updated_at
+    }
+
     DAY {
         string id PK
-        int order
+        string week_id FK "Week"
+        enum day_of_week "MONDAY..SUNDAY (D1)"
         string label_id FK "Label optional"
         text notes "optional"
         timestamp created_at
@@ -180,17 +202,13 @@ erDiagram
         timestamp updated_at
     }
 
-    ATHLETE {
-        string id PK
-        text display_name
-        json profile_attributes "dual-value resolver placeholder etc."
-        timestamp created_at
-        timestamp updated_at
+    USER {
+        string id PK "external — full shape in app-level schema (User + AthleteProfile)"
     }
 
     ONE_RM_RECORD {
         string id PK
-        string athlete_id FK
+        string user_id FK "User (D2)"
         string exercise_id FK
         decimal value_kg
         timestamp recorded_at
@@ -200,7 +218,7 @@ erDiagram
     PERFORMED_SESSION {
         string id PK
         string session_id FK
-        string athlete_id FK
+        string user_id FK "User (D2)"
         timestamp started_at
         timestamp completed_at "optional"
         text coach_notes "optional"
@@ -282,7 +300,7 @@ Persistence: JSON store с `exerciseId` строками; application-layer join
 
 ### 3.7 PerformedSession latest-only
 
-`(sessionId, athleteId)` unique per Q9. Re-do session = создать новый Session (тренер копирует или generates), `PerformedSession` остаётся single per pair.
+`(sessionId, userId)` unique per Q9 (renamed `athleteId` → `userId` per D2, 2026-05-12). Re-do session = создать новый Session (тренер копирует или generates), `PerformedSession` остаётся single per pair.
 
 ### 3.8 freezeLoadsAtCreation
 
@@ -291,11 +309,12 @@ Per Q10: при `true` все percentage Loads резолвятся в absolute 
 ### 3.9 Что НЕ в диаграмме
 
 - **MovementFamily entity** — soft string field.
-- **MediaReference table** — embedded VO в SchemaRow.media + Exercise.defaultDemoUrl. Library-wide URL dedup — future.
+- **MediaReference table** — embedded VO в SchemaRow.media + Exercise.defaultDemoUrls. Library-wide URL dedup — future.
 - **RestSpec / TimeCap / Intensity / Load / RepNotation** — embedded JSON VOs. Intensity несёт также Phase 7 поля `hrZone` + `numericPace` (см. §3.10).
 - **StagedProgram (ex-DropSetProgram) / PerSetSubstitution / CompoundRow / CyclicalCompound / SandwichCompound / OrAlternative / SuperSetPair[]** — embedded VOs внутри SchemaRow.row_payload или Schema.archetype_params. StagedProgram = generalized rename DropSetProgram (Q19), покрывает drop_set / wave / cluster через `programKind`. SuperSetPair[] лежит в archetype_params для archetype `super-set` (Q20).
 - **TempoModifier** — embedded в SchemaRow.tempo; Phase 7 расширен `fullTempo` (4-digit нотация Olympic / accessory tempo).
-- **Calendar / Week / Plan** — out-of-scope (выше Day).
+- **TrainingPlan / User** (external stubs) — full shape живёт в app-level `packages/api-server/prisma/schema.prisma`. В этом срезе показаны как PK-only nodes ради FK validity (см. D1, D2 в `implementation-notes.md`). `User` covers оба роля: coach создаёт План, athlete владеет OneRM / PerformedSession.
+- **Calendar derivations** — week-end date (`startDate + 6 days`), ISO year+week number, per-day calendar date — derived в app layer, не stored.
 
 ### 3.10 Phase 7 extensions (Q16-Q21)
 
@@ -303,7 +322,7 @@ Per Q10: при `true` все percentage Loads резолвятся в absolute 
 
 | Extension                                 | Carrier                                                                                            | Shape                                                                                                                                             | Use                                                                                                                                                                                    |
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| HR zone (Q16)                             | `Block.intensity.hrZone` / `Schema.intensity.hrZone` / `SchemaRow.intensity.hrZone`                | `{ zone: "Z1"\|"Z2"\|"Z3"\|"Z4"\|"Z5" }`                                                                                                          | Endurance / aerobic prescriptions. Athlete-specific BPM резолвится через `Athlete.profileAttributes.hrMax` (placeholder; absolute BPM не хранится в модели).                           |
+| HR zone (Q16)                             | `Block.intensity.hrZone` / `Schema.intensity.hrZone` / `SchemaRow.intensity.hrZone`                | `{ zone: "Z1"\|"Z2"\|"Z3"\|"Z4"\|"Z5" }`                                                                                                          | Endurance / aerobic prescriptions. Athlete-specific BPM-resolver deferred — per D2 (2026-05-12) future `hrMax` lands as explicit column on `AthleteProfile` (app-level), не jsonb.     |
 | Numeric pace (Q17)                        | `Block.intensity.numericPace` / `Schema.intensity.numericPace` / `SchemaRow.intensity.numericPace` | `{ value: "4:30", distanceUnit: "km"\|"mi"\|"m"\|"yd"\|"lap", paceType: "min_per_distance"\|"distance_per_min" }`                                 | Run / row / swim interval pace. Default `paceType="min_per_distance"`.                                                                                                                 |
 | Full tempo (Q18)                          | `SchemaRow.tempo.fullTempo`                                                                        | `{ eccentric: n, pauseBottom: n, concentric: n, pauseTop: n }` (seconds; "X" eXplosive notation = 0)                                              | Olympic / accessory tempo (e.g. `3-1-2-0`).                                                                                                                                            |
 | StagedProgram (Q19)                       | `Schema.archetypeParams.program` для `named-exercise-program`                                      | `{ programKind: "drop_set"\|"wave"\|"cluster", stages: Stage[], restBetweenStages?: RestSpec, ... }`                                              | Rename DropSetProgram → StagedProgram. Covers drop-set (existing), wave loading (5×3 @ 70/80/90%), cluster sets (5×[3+3+3]).                                                           |
@@ -317,26 +336,28 @@ Archetype catalog: 33 → **34** после Phase 7 (super-set добавлен 
 
 ## §4. Cardinality matrix
 
-| Relation                                     | Cardinality         | Ordered?    | onDelete       |
-| -------------------------------------------- | ------------------- | ----------- | -------------- |
-| Day → Session                                | 1:N (0..N)          | yes (order) | Cascade        |
-| Day → Label                                  | M:1 (0..1)          | —           | Restrict       |
-| Session → Block                              | 1:N (0..N)          | yes (order) | Cascade        |
-| Session → Label                              | M:1 (0..1)          | —           | Restrict       |
-| Session → PerformedSession                   | 1:N (1 per Athlete) | —           | Cascade        |
-| Block → BlockLabelAssignment                 | 1:N (0..N)          | yes (order) | Cascade        |
-| BlockLabelAssignment → Label                 | M:1                 | —           | Restrict       |
-| Block → Schema (top-level)                   | 1:N (0..N)          | yes (order) | Cascade        |
-| Schema → Archetype                           | M:1                 | —           | Restrict       |
-| Schema → Schema (sub)                        | 1:N                 | yes (order) | Cascade        |
-| Schema → SchemaRow                           | 1:N                 | yes (order) | Cascade        |
-| Schema ↔ SchemaPairing                      | 2 FKs (A, B)        | —           | Cascade        |
-| SchemaRow → Exercise (atomic)                | M:1                 | —           | (JSON soft FK) |
-| Athlete → OneRMRecord                        | 1:N                 | —           | Cascade        |
-| OneRMRecord → Exercise                       | M:1                 | —           | Restrict       |
-| Athlete → PerformedSession                   | 1:N                 | —           | Cascade        |
-| PerformedSession → PerformedExerciseInstance | 1:N                 | —           | Cascade        |
-| PerformedExerciseInstance → SchemaRow        | M:1                 | —           | Restrict       |
+| Relation                                     | Cardinality            | Ordered?            | onDelete       |
+| -------------------------------------------- | ---------------------- | ------------------- | -------------- |
+| TrainingPlan → Week                          | 1:N (0..N, indefinite) | by startDate        | Cascade        |
+| Week → Day                                   | 1:N (0..7)             | by dayOfWeek (enum) | Cascade        |
+| Day → Session                                | 1:N (0..N)             | yes (order)         | Cascade        |
+| Day → Label                                  | M:1 (0..1)             | —                   | Restrict       |
+| Session → Block                              | 1:N (0..N)             | yes (order)         | Cascade        |
+| Session → Label                              | M:1 (0..1)             | —                   | Restrict       |
+| Session → PerformedSession                   | 1:N (1 per User)       | —                   | Cascade        |
+| Block → BlockLabelAssignment                 | 1:N (0..N)             | yes (order)         | Cascade        |
+| BlockLabelAssignment → Label                 | M:1                    | —                   | Restrict       |
+| Block → Schema (top-level)                   | 1:N (0..N)             | yes (order)         | Cascade        |
+| Schema → Archetype                           | M:1                    | —                   | Restrict       |
+| Schema → Schema (sub)                        | 1:N                    | yes (order)         | Cascade        |
+| Schema → SchemaRow                           | 1:N                    | yes (order)         | Cascade        |
+| Schema ↔ SchemaPairing                      | 2 FKs (A, B)           | —                   | Cascade        |
+| SchemaRow → Exercise (atomic)                | M:1                    | —                   | (JSON soft FK) |
+| User → OneRMRecord                           | 1:N                    | —                   | Cascade        |
+| OneRMRecord → Exercise                       | M:1                    | —                   | Restrict       |
+| User → PerformedSession                      | 1:N                    | —                   | Cascade        |
+| PerformedSession → PerformedExerciseInstance | 1:N                    | —                   | Cascade        |
+| PerformedExerciseInstance → SchemaRow        | M:1                    | —                   | Restrict       |
 
 ---
 
@@ -350,7 +371,8 @@ Archetype catalog: 33 → **34** после Phase 7 (super-set добавлен 
 6. **Label.applicableLevels** — soft hint, не enforced. UI filters by current level. Mutation = keep existing assignments (Q2).
 7. **Order semantics** (Q6): sparse integers, default 10/20/30 increments. Gaps allowed.
 8. **BlockLabelAssignment** unique `(blockId, labelId)`: set semantics (no dups), ordered list (presentation).
-9. **PerformedSession** unique `(sessionId, athleteId)`: latest-only (Q9). Re-do = new Session.
+9. **PerformedSession** unique `(sessionId, userId)`: latest-only (Q9). Re-do = new Session. Per D2 (2026-05-12), `userId` references `User` (external).
+10. **Week** unique `(planId, startDate)`: один Week per ISO-week per Plan (D1, 2026-05-12). Day unique `(weekId, dayOfWeek)`: ≤7 Days per Week, индексированы перечислением, не sparse integer.
 
 ---
 

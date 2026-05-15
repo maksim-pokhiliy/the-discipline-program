@@ -4,3 +4,4 @@ export { createCoachDashboardAPI } from "./coach-dashboard";
 export { createCoachInviteAPI } from "./coach-invite";
 export { createTrainingPlansAPI } from "./training-plans";
 export { createUsersAPI } from "./users";
+export { createWeeksAPI } from "./weeks";

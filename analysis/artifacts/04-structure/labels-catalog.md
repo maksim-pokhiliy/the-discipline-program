@@ -118,10 +118,10 @@ Phase 1 канонизировал 4 composite block-label strings как distin
 
 **Examples**:
 
-| input                                                                            | extracted                                            | remaining                                       |
-| -------------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------------------------------------- | ------------------- | ---------- |
-| `STRENGTH ENDURANCE                                                              | EASY PACE [ 70% EFFORT ]`                            | intensity = `{ kind:effort_percent, value:70 }` | `STRENGTH ENDURANCE | EASY PACE` |
-| `PRACTICE [ 5-10 min ]` _(out-of-scope для Rule 1 — это time-cap, не intensity)_ | time_cap = `{ min:5, max:10 }` _(см. edge-cases.md)_ | `PRACTICE`                                      |
+| input                                                                            | extracted                                             | remaining                                       |
+| -------------------------------------------------------------------------------- | ----------------------------------------------------- | ----------------------------------------------- | ------------------- | ---------- |
+| `STRENGTH ENDURANCE                                                              | EASY PACE [ 70% EFFORT ]`                             | intensity = `{ kind:effort_percent, value:70 }` | `STRENGTH ENDURANCE | EASY PACE` |
+| `PRACTICE [ 5-10 min ]` _(out-of-scope для Rule 1 — это time-cap, не intensity)_ | time*cap = `{ min:5, max:10 }` *(см. edge-cases.md)\_ | `PRACTICE`                                      |
 
 **Sample coverage**: 1 occurrence в 4-х composite inputs (block-055).
 

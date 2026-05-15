@@ -40,6 +40,7 @@ Modules:
 - `auth`, `invite` — login + invite-accept flows
 - `dashboard` — athlete today / coach overview entry
 - `athletes`, `plans` — coach console (browse athletes, list plans)
+- `plan-detail` — per-plan calendar viewport (week-by-week navigation, week notes)
 
 The athlete vs coach surface split is enforced at the route level (`app/athlete/*` vs `app/coach/*`) and at the proxy level (role-based redirect). Platform consumes the coaching, IAM, and storage contexts — see [`docs/BOUNDED-CONTEXTS.md`](../../docs/BOUNDED-CONTEXTS.md).
 

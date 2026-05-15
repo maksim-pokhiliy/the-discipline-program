@@ -30,7 +30,6 @@ const trainingPlanHooks = createCrudHooks<
     update: api.trainingPlans.update,
     delete: api.trainingPlans.delete,
   },
-  redirectTo: "/coach/plans",
   useNavigate: () => useRouter().push,
   additionalInvalidateKeys: [platformKeys.coachDashboard.data()],
 });

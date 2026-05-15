@@ -5,3 +5,4 @@ export * from "./use-coach-dashboard";
 export * from "./use-coach-invite";
 export * from "./use-training-plans";
 export * from "./use-users";
+export * from "./use-weeks";
