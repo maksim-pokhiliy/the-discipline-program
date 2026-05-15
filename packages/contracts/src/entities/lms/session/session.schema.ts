@@ -20,5 +20,10 @@ export const createSessionSchema = z.object({
 export const updateSessionSchema = createSessionSchema;
 
 export const reorderSessionsSchema = z.object({
-  orderedIds: z.array(z.string().cuid()).min(1),
+  orderedIds: z
+    .array(z.string().cuid())
+    .min(1)
+    .refine((ids) => new Set(ids).size === ids.length, {
+      message: "orderedIds must be unique",
+    }),
 });

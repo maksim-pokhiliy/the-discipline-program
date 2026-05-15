@@ -210,4 +210,20 @@ describe("reorderSessionsSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("rejects duplicate cuids", () => {
+    const result = reorderSessionsSchema.safeParse({
+      orderedIds: [
+        "clz1234567890123456789aaa",
+        "clz1234567890123456789bbb",
+        "clz1234567890123456789aaa",
+      ],
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe("orderedIds must be unique");
+    }
+  });
 });
