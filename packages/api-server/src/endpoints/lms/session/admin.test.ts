@@ -297,6 +297,33 @@ describe("lmsSessionApi", () => {
         await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
       }
     });
+
+    it("rejects when caller does not own the session", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "TUESDAY" },
+      });
+      const session = await cleanupRaw.session.create({
+        data: { dayId: day.id, order: 10 },
+      });
+
+      try {
+        await expect(lmsSessionApi.delete(otherCoach.user.id, session.id)).rejects.toThrow(
+          ForbiddenError,
+        );
+
+        const stored = await cleanupRaw.session.findUnique({ where: { id: session.id } });
+
+        expect(stored).not.toBeNull();
+        expect(stored?.id).toBe(session.id);
+      } finally {
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
   });
 
   describe("reorder", () => {
