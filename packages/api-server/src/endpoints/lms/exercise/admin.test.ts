@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { createExerciseSchema, type CreateExerciseData } from "@repo/contracts/cms/exercise";
+import { createExerciseSchema, type CreateExerciseData } from "@repo/contracts/lms/exercise";
 import { ConflictError } from "@repo/errors";
 
 import { cleanupRaw } from "../../../test/helpers";

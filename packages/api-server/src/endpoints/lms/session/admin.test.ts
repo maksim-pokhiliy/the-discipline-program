@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { BadRequestError, ForbiddenError } from "@repo/errors";
+import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach, createTestPlan } from "../../../test/helpers";
 
@@ -19,6 +19,8 @@ describe("lmsSessionApi", () => {
   let activePlanId: string;
   let archivedPlanId: string;
   let sessionLabelId: string;
+  let dayOnlyLabelId: string;
+  let blockOnlyLabelId: string;
 
   beforeAll(async () => {
     coach = await createTestCoach();
@@ -45,6 +47,28 @@ describe("lmsSessionApi", () => {
     });
 
     sessionLabelId = sessionLabel.id;
+
+    const dayLabel = await cleanupRaw.label.create({
+      data: {
+        name: `Day Only Label ${labelSuffix}`,
+        nameLower: `day only label ${labelSuffix}`,
+        applicableLevels: ["DAY"],
+        notes: null,
+      },
+    });
+
+    dayOnlyLabelId = dayLabel.id;
+
+    const blockLabel = await cleanupRaw.label.create({
+      data: {
+        name: `Block Only Label ${labelSuffix}`,
+        nameLower: `block only label ${labelSuffix}`,
+        applicableLevels: ["BLOCK"],
+        notes: null,
+      },
+    });
+
+    blockOnlyLabelId = blockLabel.id;
   });
 
   afterAll(async () => {
@@ -58,6 +82,8 @@ describe("lmsSessionApi", () => {
       .deleteMany({ where: { planId: { in: [activePlanId, archivedPlanId] } } })
       .catch(() => {});
     await cleanupRaw.label.delete({ where: { id: sessionLabelId } }).catch(() => {});
+    await cleanupRaw.label.delete({ where: { id: dayOnlyLabelId } }).catch(() => {});
+    await cleanupRaw.label.delete({ where: { id: blockOnlyLabelId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: archivedPlanId } }).catch(() => {});
     await cleanupRaw.trainingPlan.delete({ where: { id: activePlanId } }).catch(() => {});
     await cleanupRaw.coachProfile.delete({ where: { id: coach.profile.id } }).catch(() => {});
@@ -219,6 +245,83 @@ describe("lmsSessionApi", () => {
         await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
       }
     });
+
+    it("rejects a label whose applicableLevels does not include SESSION (OQ-C)", async () => {
+      await expect(
+        lmsSessionApi.create(coach.user.id, activePlanId, MONDAY_PARAM, "TUESDAY", {
+          labelId: dayOnlyLabelId,
+          notes: null,
+        }),
+      ).rejects.toThrow(BadRequestError);
+
+      const sessionCount = await cleanupRaw.session.count({
+        where: { day: { week: { planId: activePlanId } } },
+      });
+      const weekCount = await cleanupRaw.week.count({ where: { planId: activePlanId } });
+
+      expect(sessionCount).toBe(0);
+      expect(weekCount).toBe(0);
+    });
+
+    it("rejects a non-existent labelId without creating any side-effect (OQ-C)", async () => {
+      await expect(
+        lmsSessionApi.create(coach.user.id, activePlanId, MONDAY_PARAM, "TUESDAY", {
+          labelId: "clz0000000000000000000000",
+          notes: null,
+        }),
+      ).rejects.toThrow(NotFoundError);
+
+      const sessionCount = await cleanupRaw.session.count({
+        where: { day: { week: { planId: activePlanId } } },
+      });
+      const weekCount = await cleanupRaw.week.count({ where: { planId: activePlanId } });
+
+      expect(sessionCount).toBe(0);
+      expect(weekCount).toBe(0);
+    });
+
+    it("concurrent Session.create on pre-materialized Day — at least one succeeds via P2034 retry", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "FRIDAY" },
+      });
+
+      try {
+        const [first, second] = await Promise.allSettled([
+          lmsSessionApi.create(coach.user.id, activePlanId, MONDAY_PARAM, "FRIDAY", {
+            labelId: null,
+            notes: "first concurrent",
+          }),
+          lmsSessionApi.create(coach.user.id, activePlanId, MONDAY_PARAM, "FRIDAY", {
+            labelId: null,
+            notes: "second concurrent",
+          }),
+        ]);
+
+        expect(first.status === "fulfilled" || second.status === "fulfilled").toBe(true);
+
+        const stored = await cleanupRaw.session.findMany({
+          where: { dayId: day.id },
+          orderBy: { order: "asc" },
+        });
+
+        const fulfilledCount = [first, second].filter((r) => r.status === "fulfilled").length;
+
+        expect(stored).toHaveLength(fulfilledCount);
+
+        if (fulfilledCount === 2) {
+          expect(stored[0]?.order).toBe(10);
+          expect(stored[1]?.order).toBe(20);
+          expect(new Set(stored.map((s) => s.id)).size).toBe(2);
+        }
+      } finally {
+        await cleanupRaw.session.deleteMany({ where: { dayId: day.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
   });
 
   describe("update", () => {
@@ -253,6 +356,54 @@ describe("lmsSessionApi", () => {
 
         expect(stored?.labelId).toBe(sessionLabelId);
         expect(stored?.notes).toBe("test notes");
+      } finally {
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+
+    it("rejects a label whose applicableLevels does not include SESSION (OQ-C)", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "TUESDAY" },
+      });
+      const session = await cleanupRaw.session.create({
+        data: { dayId: day.id, order: 10, labelId: sessionLabelId },
+      });
+
+      try {
+        await expect(
+          lmsSessionApi.update(coach.user.id, session.id, { labelId: blockOnlyLabelId }),
+        ).rejects.toThrow(BadRequestError);
+
+        const stored = await cleanupRaw.session.findUnique({ where: { id: session.id } });
+
+        expect(stored?.labelId).toBe(sessionLabelId);
+      } finally {
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+
+    it("allows clearing the label with labelId: null (no applicableLevels check)", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "TUESDAY" },
+      });
+      const session = await cleanupRaw.session.create({
+        data: { dayId: day.id, order: 10, labelId: sessionLabelId },
+      });
+
+      try {
+        const updated = await lmsSessionApi.update(coach.user.id, session.id, { labelId: null });
+
+        expect(updated.labelId).toBeNull();
       } finally {
         await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
         await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});

@@ -65,6 +65,10 @@ const appErrorResponse = (error: AppError, requestId: string | undefined): NextR
     headers.set("Retry-After", String(error.details.retryAfter));
   }
 
+  if (error.statusCode === 503 && typeof error.details?.retryAfter === "number") {
+    headers.set("Retry-After", String(error.details.retryAfter));
+  }
+
   const redactedDetails = error.details ? redactPii(error.details) : undefined;
 
   return NextResponse.json(

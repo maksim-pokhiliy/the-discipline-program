@@ -7,7 +7,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
-import { APP_LEVELS, type Label } from "@repo/contracts/cms/label";
+import { APP_LEVELS, type Label } from "@repo/contracts/lms/label";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";
 import {

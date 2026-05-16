@@ -1,6 +1,7 @@
-import { Prisma, type DayOfWeek as PrismaDayOfWeek } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import { type DayOfWeek } from "@repo/contracts/lms/_shared";
+import { type AppLevelValue } from "@repo/contracts/lms/label";
 import {
   type CreateSessionData,
   type ReorderSessionsData,
@@ -16,18 +17,8 @@ import {
 } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToSession } from "../../../mappers/lms";
-import { handlePrismaError } from "../../../utils";
-import { resolveWeekStartDate } from "../_shared";
-
-const DAY_OF_WEEK_TO_PRISMA = {
-  MONDAY: "MONDAY",
-  TUESDAY: "TUESDAY",
-  WEDNESDAY: "WEDNESDAY",
-  THURSDAY: "THURSDAY",
-  FRIDAY: "FRIDAY",
-  SATURDAY: "SATURDAY",
-  SUNDAY: "SUNDAY",
-} as const satisfies Record<DayOfWeek, PrismaDayOfWeek>;
+import { handlePrismaError, retryOnP2034 } from "../../../utils";
+import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate } from "../_shared";
 
 export const lmsSessionApi = {
   create: async (
@@ -45,50 +36,72 @@ export const lmsSessionApi = {
     const prismaDayOfWeek = DAY_OF_WEEK_TO_PRISMA[dayOfWeek];
 
     try {
-      const session = await prisma.$transaction(
-        async (tx) => {
-          const planCheck = await tx.trainingPlan.findUnique({
-            where: { id: planId },
-            select: { deletedAt: true, status: true },
-          });
+      const session = await retryOnP2034(() =>
+        prisma.$transaction(
+          async (tx) => {
+            const planCheck = await tx.trainingPlan.findUnique({
+              where: { id: planId },
+              select: { deletedAt: true, status: true },
+            });
 
-          if (!planCheck || planCheck.deletedAt !== null) {
-            throw new NotFoundError("Training plan not found", { planId });
-          }
+            if (!planCheck || planCheck.deletedAt !== null) {
+              throw new NotFoundError("Training plan not found", { planId });
+            }
 
-          if (planCheck.status === "ARCHIVED") {
-            throw new ForbiddenError("Plan is archived; edits not allowed");
-          }
+            if (planCheck.status === "ARCHIVED") {
+              throw new ForbiddenError("Plan is archived; edits not allowed");
+            }
 
-          const week = await tx.week.upsert({
-            where: { planId_startDate: { planId, startDate } },
-            create: { planId, startDate },
-            update: {},
-          });
+            if (data.labelId !== null && data.labelId !== undefined) {
+              const label = await tx.label.findUnique({
+                where: { id: data.labelId },
+                select: { applicableLevels: true },
+              });
 
-          const day = await tx.day.upsert({
-            where: { weekId_dayOfWeek: { weekId: week.id, dayOfWeek: prismaDayOfWeek } },
-            create: { weekId: week.id, dayOfWeek: prismaDayOfWeek },
-            update: {},
-          });
+              if (!label) {
+                throw new NotFoundError("Label not found", { labelId: data.labelId });
+              }
 
-          const max = await tx.session.aggregate({
-            where: { dayId: day.id },
-            _max: { order: true },
-          });
+              const levels = label.applicableLevels as AppLevelValue[];
 
-          const nextOrder = (max._max.order ?? 0) + 10;
+              if (!levels.includes("SESSION")) {
+                throw new BadRequestError("Label is not applicable to SESSION level", {
+                  labelId: data.labelId,
+                  applicableLevels: levels,
+                });
+              }
+            }
 
-          return tx.session.create({
-            data: {
-              dayId: day.id,
-              order: nextOrder,
-              labelId: data.labelId ?? null,
-              notes: data.notes ?? null,
-            },
-          });
-        },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+            const week = await tx.week.upsert({
+              where: { planId_startDate: { planId, startDate } },
+              create: { planId, startDate },
+              update: {},
+            });
+
+            const day = await tx.day.upsert({
+              where: { weekId_dayOfWeek: { weekId: week.id, dayOfWeek: prismaDayOfWeek } },
+              create: { weekId: week.id, dayOfWeek: prismaDayOfWeek },
+              update: {},
+            });
+
+            const max = await tx.session.aggregate({
+              where: { dayId: day.id },
+              _max: { order: true },
+            });
+
+            const nextOrder = (max._max.order ?? 0) + 10;
+
+            return tx.session.create({
+              data: {
+                dayId: day.id,
+                order: nextOrder,
+                labelId: data.labelId ?? null,
+                notes: data.notes ?? null,
+              },
+            });
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
       );
 
       return mapToSession(session);
@@ -101,6 +114,26 @@ export const lmsSessionApi = {
     const owner = await verifySessionOwnership(sessionId, userId);
 
     verifyPlanEditable(owner);
+
+    if (data.labelId !== null && data.labelId !== undefined) {
+      const label = await prisma.label.findUnique({
+        where: { id: data.labelId },
+        select: { applicableLevels: true },
+      });
+
+      if (!label) {
+        throw new NotFoundError("Label not found", { labelId: data.labelId });
+      }
+
+      const levels = label.applicableLevels as AppLevelValue[];
+
+      if (!levels.includes("SESSION")) {
+        throw new BadRequestError("Label is not applicable to SESSION level", {
+          labelId: data.labelId,
+          applicableLevels: levels,
+        });
+      }
+    }
 
     try {
       const session = await prisma.session.update({

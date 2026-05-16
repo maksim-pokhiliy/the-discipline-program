@@ -8,7 +8,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import { Chip, IconButton, Stack, Tooltip, Typography } from "@mui/material";
 import Link from "next/link";
 
-import { type Exercise } from "@repo/contracts/cms/exercise";
+import { type Exercise } from "@repo/contracts/lms/exercise";
 import { useDeleteConfirmation } from "@repo/query";
 import { formatDate } from "@repo/shared";
 import {

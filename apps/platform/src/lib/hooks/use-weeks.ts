@@ -22,9 +22,10 @@ export const useUpdateWeekNotes = (planId: string) => {
   return useMutation({
     mutationFn: ({ startDate, data }: { startDate: string; data: UpdateWeekNotesData }) =>
       api.weeks.updateNotes(planId, startDate, data),
-    onSuccess: (week, { startDate }) => {
-      // write back with the caller's startDate string — it is the exact useWeek read key; week.startDate (@db.Date over JSON) would not round-trip
-      queryClient.setQueryData(platformKeys.weeks.byDate(planId, startDate), { week });
+    onSuccess: (_week, { startDate }) => {
+      queryClient.invalidateQueries({
+        queryKey: platformKeys.weeks.byDate(planId, startDate),
+      });
       toast.success("Week notes saved");
     },
     onError: (error: Error) => {

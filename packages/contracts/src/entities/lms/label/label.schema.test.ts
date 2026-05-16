@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { labelSearchParamsSchema } from "./label-api.schema";
 import { LABEL_CONSTANTS } from "./label.constants";
 import { createLabelSchema, labelSchema, updateLabelSchema } from "./label.schema";
 
@@ -200,5 +201,67 @@ describe("labelSchema", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe("labelSearchParamsSchema", () => {
+  it("accepts an empty object (no filters; preload use-case)", () => {
+    const result = labelSearchParamsSchema.safeParse({});
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.q).toBeUndefined();
+      expect(result.data.level).toBeUndefined();
+    }
+  });
+
+  it("trims surrounding whitespace from q before validation", () => {
+    const result = labelSearchParamsSchema.safeParse({ q: "  push  " });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.q).toBe("push");
+    }
+  });
+
+  it("rejects a whitespace-only q (empty after trim)", () => {
+    const result = labelSearchParamsSchema.safeParse({ q: "   " });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects q longer than 200 characters", () => {
+    const result = labelSearchParamsSchema.safeParse({ q: "a".repeat(201) });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts a valid level value", () => {
+    const result = labelSearchParamsSchema.safeParse({ level: "DAY" });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.level).toBe("DAY");
+    }
+  });
+
+  it("rejects an invalid level value", () => {
+    const result = labelSearchParamsSchema.safeParse({ level: "INVALID" });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts both q and level together", () => {
+    const result = labelSearchParamsSchema.safeParse({ q: "push", level: "SESSION" });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.q).toBe("push");
+      expect(result.data.level).toBe("SESSION");
+    }
   });
 });

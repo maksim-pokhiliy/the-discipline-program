@@ -3,7 +3,7 @@
 import { Checkbox, FormControl, FormControlLabel, FormGroup, FormHelperText } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { APP_LEVELS, type AppLevelValue, type CreateLabelData } from "@repo/contracts/cms/label";
+import { APP_LEVELS, type AppLevelValue, type CreateLabelData } from "@repo/contracts/lms/label";
 
 import { APP_LEVEL_LABELS } from "../constants";
 

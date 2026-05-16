@@ -3,7 +3,7 @@
 import { TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 
-import { type CreateExerciseData } from "@repo/contracts/cms/exercise";
+import { type CreateExerciseData } from "@repo/contracts/lms/exercise";
 import { FormCard } from "@repo/ui";
 
 type NotesCardProps = {

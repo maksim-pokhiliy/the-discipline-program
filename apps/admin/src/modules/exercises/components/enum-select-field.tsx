@@ -3,7 +3,7 @@
 import { FormControl, FormHelperText, InputLabel, MenuItem, Select } from "@mui/material";
 import { Controller, useFormContext, type FieldError, type FieldPath } from "react-hook-form";
 
-import { type CreateExerciseData } from "@repo/contracts/cms/exercise";
+import { type CreateExerciseData } from "@repo/contracts/lms/exercise";
 
 type EnumSelectFieldProps = {
   name: Extract<FieldPath<CreateExerciseData>, "primaryEquipment" | "movementTypeTagPrimary">;

@@ -95,7 +95,8 @@ Any step adding/changing a Prisma entity updates the seed in the same session �
 - Code, comments, commits, PRs, technical artifacts — English. Chat-prose with the user — Russian. Domain terms per `analysis/artifacts/06-formalization/`.
 - No comments in code unless they encode a non-obvious _why_ (single line). Schema-DSL section markers are deliberate exceptions.
 - No `Co-Authored-By` / `Generated-with` / similar trailers anywhere.
-- Commits: `feat/training-domain` is a single long-lived branch, per-layer (not squashed) commits. Conventional-commits format. **Commitlint enforces: subject fully lowercase (no capitals anywhere, including acronyms — `d5` not `D5`), body lines ≤ 150 chars.** Never `--no-verify` / `--no-edit` / `--no-gpg-sign` — if a hook fails, fix the root cause.
+- Commits: `feat/training-domain` is a single long-lived branch, per-layer (not squashed) commits **by default**. Conventional-commits format. **Commitlint enforces: subject ≤ 100 chars, fully lowercase (no capitals anywhere, including acronyms — `d5` not `D5`), body lines ≤ 150 chars.** Never `--no-verify` / `--no-edit` / `--no-gpg-sign` — if a hook fails, fix the root cause.
+- **Squash exception** (per `[[husky-cross-package-squash]]`, Step 6.1.5 + 6.2): when a step's planned intermediate state would leave **any downstream package** broken under `.husky/pre-commit` (`turbo check-types --filter="...[HEAD]"`) — typically a cross-package contract response shape change — squash all phases into one commit, body listing per-layer changes for logical revertability. Deprecation-shim alternatives are anti-pattern (they import in directions forbidden by sibling dep-cruiser rules). Before drafting any step's § 7 commit strategy, read `.husky/{pre-commit,pre-push}` + `turbo.json` to confirm hook gates and fan-out.
 
 ## Forbidden
 
@@ -119,9 +120,20 @@ Any step adding/changing a Prisma entity updates the seed in the same session �
 
 ## Lessons learned (planner discipline)
 
-These accreted across Steps 1-4. Full detail in `IMPLEMENTATION_LOG.md` § "Lesson learned"; the binding rules:
+Six "read/verify-then-spec" procedural checklists accreted across Steps 1-6.3 (full per-step diagnoses in `IMPLEMENTATION_LOG.md` § "Lesson learned" addenda):
 
-- **Read-then-spec.** Before specing any cross-package boundary (mapper output, contract schema, API response, client API type, form field, list/filter/search behaviour, sidebar config), the planner reads 2-3 canonical implementations verbatim and quotes the pattern in the prompt with file paths + line ranges. No "TS best practice" instincts — the project's existing patterns are sacred (rule 4). Six Step-3 deviations all came from instinct-specing.
-- **Check prompt-internal consistency.** A 7th deviation was the prompt contradicting itself (specced both a bounded-`as` mapper and an enum-maps bridge for the same `Json` field — mutually exclusive). Every field's handling described exactly once; no contradictory instructions across scope-list / phases / ratified-decisions.
-- **Memory hygiene.** When deleting memory entries, `grep` the survivors for cross-references to the deleted ones — deleting files alone leaves dangling breadcrumbs that re-trigger escalations.
-- **Executor escalation protocol.** When an executor hits a prompt-vs-codebase conflict or a hard-trigger, it surfaces with a hypothesis and waits — it does not silently comply with a wrong prompt. The planner answers fast, owns prompt errors, and records them.
+1. **(a) Canonical codebase patterns** — [[scope-via-existing-patterns]]. Step 3 strike. Before specing a cross-package boundary (mapper output, contract schema, API response, client API type, form field, list/filter/search behaviour, sidebar config), read 2-3 canonical implementations verbatim and quote them with file paths + line ranges. No "TS best practice" instincts — project patterns are sacred.
+2. **(b) Domain semantics** — [[coach-pov-first]]. Step 6 thesis cycle. Before specing a domain field or operation, cite `analysis/artifacts/` verbatim. No citation → field is engineer-cargo or genuinely deferred → escalate, don't invent.
+3. **(c) Registration-file completeness** — [[planner-verbatim-registration]]. Step 6.0 CONTEXT-001. For barrels, `package.json` exports, app routers, sidebar config, dep-cruiser arrays, `pnpm-workspace.yaml`, `turbo.json` — `Read` verbatim at **prompt-write time** (not thesis time). Quote current state in full; state additive intent explicit; show final state in full.
+4. **(d) Engineering correctness under adversarial input** — [[planner-adversarial-review]]. Step 6.1 QA-001/002. Before locking § 3 with write ops, run mental sweep: concurrent / TOCTOU / partial inputs (subset / superset / empty / duplicates) / malformed / boundary. Each axis ~30 seconds.
+5. **(e) Commit-strategy correctness under live hook config** — [[husky-cross-package-squash]]. Step 6.1.5 D-OUTPUT-1. Before locking § 7, read `.husky/{pre-commit,pre-push}` + `turbo.json`. Cross-package change with intermediate broken trees → squash into 1 commit with per-layer body. Never bypass hooks. Deprecation-shim is anti-pattern.
+6. **(f) Consumer-pattern completeness for contract response shape changes** — [[planner-consumer-pattern-read]]. Step 6.2 CONTEXT-001. When extending a contract response shape, read every HTTP route handler + client API endpoint + client hook/adapter + downstream mapper that consumes it, verbatim. Handlers may manually wrap / transform / validate; cascades into double-wrap or parse-fail if not adjusted in the same change.
+
+None is optional. Six together = procedural checklist; the collaboration rule ([[collaboration-co-ownership-claude-md]]) sets the stance.
+
+Adjacent bindings:
+
+- **Prompt-internal consistency** (Step 4 finding) — every field handled exactly once; no contradictory instructions across scope-list / phases / ratified-decisions sections.
+- **Memory hygiene** (Step 1 + Step 6.1.5) — when deleting memory entries, `grep` survivors for cross-references; after any namespace-affecting refactor (e.g. Step 6.1.5 cms→lms), sweep memory dir for stale path references and update.
+- **Executor escalation protocol** — surface-with-hypothesis-and-wait, never silently comply with a wrong prompt. Planner answers fast, owns prompt errors, records them. Prior precedents: Step 6.0 CONTEXT-001 (barrel drift), Step 6.1.5 Q1 (husky strategy mismatch) + Q2 (admin-import miss), Step 6.2 CONTEXT-001 (route-handler manual-wrap).
+- **Postgres SSI write semantics** ([[postgres-ssi-upsert-unique-key]], Step 6.2 case 13) — concurrent `prisma.$transaction(..., Serializable)` upserts on same unique key fail P2034 even with disjoint UPDATE columns (SSI is row-grained). Test design: pre-materialize then UPDATE; production: retry-on-P2034 at HTTP layer.

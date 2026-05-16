@@ -5,7 +5,7 @@ import {
   type CreateLabelData,
   type Label,
   type UpdateLabelData,
-} from "@repo/contracts/cms/label";
+} from "@repo/contracts/lms/label";
 import { createCrudHooks } from "@repo/query";
 
 import { api } from "../api";
