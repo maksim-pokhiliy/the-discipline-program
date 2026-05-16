@@ -1,6 +1,4 @@
-import { type DayOfWeek as PrismaDayOfWeek } from "@prisma/client";
-
-import { type DayOfWeek, dayOfWeekValues } from "@repo/contracts/lms/_shared";
+import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
 import {
   type GetWeekResponse,
   type UpdateWeekNotesData,
@@ -11,17 +9,7 @@ import { verifyPlanEditable, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToDaySlot, mapToWeek } from "../../../mappers/lms";
 import { handlePrismaError } from "../../../utils";
-import { resolveWeekStartDate } from "../_shared";
-
-const DAY_OF_WEEK_TO_PRISMA = {
-  MONDAY: "MONDAY",
-  TUESDAY: "TUESDAY",
-  WEDNESDAY: "WEDNESDAY",
-  THURSDAY: "THURSDAY",
-  FRIDAY: "FRIDAY",
-  SATURDAY: "SATURDAY",
-  SUNDAY: "SUNDAY",
-} as const satisfies Record<DayOfWeek, PrismaDayOfWeek>;
+import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate } from "../_shared";
 
 export const lmsWeekApi = {
   getByPlanAndDate: async (

@@ -1,4 +1,4 @@
-import { Prisma, type DayOfWeek as PrismaDayOfWeek } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 import { type DayOfWeek } from "@repo/contracts/lms/_shared";
 import {
@@ -13,17 +13,7 @@ import { verifyPlanEditable, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToDaySlot } from "../../../mappers/lms";
 import { handlePrismaError } from "../../../utils";
-import { resolveWeekStartDate } from "../_shared";
-
-const DAY_OF_WEEK_TO_PRISMA = {
-  MONDAY: "MONDAY",
-  TUESDAY: "TUESDAY",
-  WEDNESDAY: "WEDNESDAY",
-  THURSDAY: "THURSDAY",
-  FRIDAY: "FRIDAY",
-  SATURDAY: "SATURDAY",
-  SUNDAY: "SUNDAY",
-} as const satisfies Record<DayOfWeek, PrismaDayOfWeek>;
+import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate } from "../_shared";
 
 const DAY_INCLUDE = {
   label: true,
