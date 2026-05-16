@@ -22,6 +22,27 @@
 
 <!-- entries appended below this line, newest first -->
 
+## Step 06.3 — `lmsLabelPlatformApi` (read-only platform mirror)
+
+- **Date**: 2026-05-16
+- **Feature-dev artifacts**: `.feature-dev/1778922338/` (`research.md` + `review.md`; `/feature small` pipeline)
+- **Prompt**: `implementation/step-06.3/prompt.md`
+- **Output**: `implementation/step-06.3/output.md`
+- **Summary**: Cleanest executor run of the workflow — zero new planner-discipline flavours surfaced; independent reviewer verdict **APPROVED** with zero CRITICAL/WARNING/INFO findings across 6 files / +265 LOC. Shipped `lmsLabelPlatformApi.list(userId, query?)` read-only platform mirror in new `packages/api-server/src/endpoints/lms/label/platform.ts` (`requireCoachLikeRole` outer, optional case-insensitive substring `nameLower contains q.toLowerCase()`, sort `nameLower asc`, hardcoded module-local `LABEL_SEARCH_CAP = 50`). `labelSearchParamsSchema = z.object({ q?: string.min(1).max(200) })` added to existing `lms/label` contract slice; response reuses `getLabelsResponseSchema` (no alias, KISS). Structural symmetry fix: added missing `endpoints/lms/label/index.ts` barrel (asymmetric vs `lms/{session,week,training-plan,plan-enrollment,day}/`), flipped `endpoints/lms/index.ts` `./label/admin` → `./label`. **2 atomic per-layer commits** — additive only, no broken intermediates: `4aca6ea0 feat(contracts): add label search params schema for platform mirror` → `29901fe3 feat(api-server): add lms label platform api with structural label/index barrel`. Plus `c651927b docs(step-06.3): write executor output report`. Root verification all-green: `pnpm check-types` 16/16 (FULL TURBO cached 186ms), `pnpm lint` 16/16, `pnpm test` 937/937 (+11 net new in `platform.test.ts`), `pnpm dep:check` 0/1127. Api-server isolated 538/538 (305.35s serial). Grep regressions all-zero (`cmsLabelAdminApi` intact in admin.ts:2 hits, `lmsLabelPlatformApi` defined 1 hit, `@repo/contracts/cms/label` 0 hits). Husky pre-commit clean both commits without `--no-verify`.
+- **Open questions** (3 minor observations, all resolved inline by executor, no escalation):
+  - **D-minor-deviation** — `platform.ts` Prisma `findMany` uses `{ ...(query !== undefined && { where: ... }) }` conditional-spread instead of prompt § 3.2.1 verbatim `where: query !== undefined ? {...} : undefined`. Required by `exactOptionalPropertyTypes: true` (`packages/typescript-config/base.json:10`) — TS2379 rejects passing `undefined` to optional property. **Pattern-aligned** with sibling `admin.ts:16-23` (`buildLabelUpdateData`) which uses the same idiom. Independent reviewer confirmed "strictly better than the prompt". Same family as the Step 5 deviation #2 (`description={plan.description ?? undefined}` → conditional-spread). Not a new planner-discipline flavour — the established codebase rule is documented in Step 5 Addendum.
+  - **labelSchema shape summary mismatch in prompt § 2** — prompt summary line wrote "id, name, nameLower, applicableLevels, notes, ts" but actual schema uses `createdAt` / `updatedAt` (not `ts`). All actionable sections (§ 3.1/3.2) correctly route through `Label` type via `mapToLabel`. Doc imprecision only; not a blocker. Executor continued without surface.
+  - **Optional § 3.1.3 contract tests skipped** per strict prompt reading — only `label.schema.test.ts` exists (Step 4 schema test); `labelSearchParamsSchema` Zod cases will be exercised via HTTP route layer in Step 6.4. Acceptable.
+- **Deferred decisions** (from `output.md` § "Что отложено", carried forward):
+  - **`endpoints/lms/exercise/index.ts` structural symmetry fix** — same asymmetry as label/ pre-fix (no `index.ts` in folder). 1-commit cleanup in any future Step 6.x close-out batch.
+  - **Symbol rename `cmsLabelAdminApi` → `lmsLabelAdminApi`** — carry-forward from Step 6.1.5 deferred. Step 6.3 introduced `lmsLabelPlatformApi` with the correct prefix from start.
+  - **`?q=` trim / zero-width-strip normalization** — Step 6.4 HTTP layer concern if needed.
+  - **GIN trgm index for `nameLower`** — perf optimization for catalog > 1k labels; not needed at ~100 scale.
+  - **`labelSearchResponseSchema` alias** — extract if platform diverges from admin response shape (cursor pagination, slim payload).
+  - **Pagination / cursor** — hardcoded `take: 50` deferred indefinitely.
+- **Analysis/-files touched**: none.
+- **Smoke-test status**: **N/A** — api-server-only step, no user-visible surface yet. Smoke-test arrives in Step 6.6 / 6.7 (UI autocomplete consumers will exercise this through HTTP route Step 6.4 + hook Step 6.5).
+
 ## Step 06.2 — `lmsDayMetadataApi` + `getWeekResponseSchema` 7-day shape with embedded `Label`
 
 - **Date**: 2026-05-16
