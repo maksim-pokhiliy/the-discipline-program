@@ -1,26 +1,56 @@
-import { type UpdateWeekNotesData, type Week } from "@repo/contracts/lms/week";
+import { type DayOfWeek as PrismaDayOfWeek } from "@prisma/client";
+
+import { type DayOfWeek, dayOfWeekValues } from "@repo/contracts/lms/_shared";
+import {
+  type GetWeekResponse,
+  type UpdateWeekNotesData,
+  type Week,
+} from "@repo/contracts/lms/week";
 
 import { verifyPlanEditable, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
-import { mapToWeek } from "../../../mappers/lms";
+import { mapToDaySlot, mapToWeek } from "../../../mappers/lms";
 import { handlePrismaError } from "../../../utils";
 import { resolveWeekStartDate } from "../_shared";
+
+const DAY_OF_WEEK_TO_PRISMA = {
+  MONDAY: "MONDAY",
+  TUESDAY: "TUESDAY",
+  WEDNESDAY: "WEDNESDAY",
+  THURSDAY: "THURSDAY",
+  FRIDAY: "FRIDAY",
+  SATURDAY: "SATURDAY",
+  SUNDAY: "SUNDAY",
+} as const satisfies Record<DayOfWeek, PrismaDayOfWeek>;
 
 export const lmsWeekApi = {
   getByPlanAndDate: async (
     userId: string,
     planId: string,
     startDateParam: string,
-  ): Promise<Week | null> => {
+  ): Promise<GetWeekResponse> => {
     await verifyPlanOwnership(planId, userId);
 
     const startDate = resolveWeekStartDate(startDateParam);
 
     const week = await prisma.week.findUnique({
       where: { planId_startDate: { planId, startDate } },
+      include: {
+        days: {
+          include: {
+            label: true,
+            sessions: { orderBy: { order: "asc" }, include: { label: true } },
+          },
+        },
+      },
     });
 
-    return week ? mapToWeek(week) : null;
+    const dayMap = new Map(week?.days.map((d) => [d.dayOfWeek, d]) ?? []);
+    const days = dayOfWeekValues.map((dow) =>
+      mapToDaySlot(dow, dayMap.get(DAY_OF_WEEK_TO_PRISMA[dow]) ?? null),
+    );
+
+    return { week: week ? mapToWeek(week) : null, days };
   },
 
   upsertNotes: async (

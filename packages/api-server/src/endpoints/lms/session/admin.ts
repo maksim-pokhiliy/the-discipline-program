@@ -1,6 +1,7 @@
 import { Prisma, type DayOfWeek as PrismaDayOfWeek } from "@prisma/client";
 
 import { type DayOfWeek } from "@repo/contracts/lms/_shared";
+import { type AppLevelValue } from "@repo/contracts/lms/label";
 import {
   type CreateSessionData,
   type ReorderSessionsData,
@@ -60,6 +61,26 @@ export const lmsSessionApi = {
             throw new ForbiddenError("Plan is archived; edits not allowed");
           }
 
+          if (data.labelId !== null && data.labelId !== undefined) {
+            const label = await tx.label.findUnique({
+              where: { id: data.labelId },
+              select: { applicableLevels: true },
+            });
+
+            if (!label) {
+              throw new NotFoundError("Label not found", { labelId: data.labelId });
+            }
+
+            const levels = label.applicableLevels as AppLevelValue[];
+
+            if (!levels.includes("SESSION")) {
+              throw new BadRequestError("Label is not applicable to SESSION level", {
+                labelId: data.labelId,
+                applicableLevels: levels,
+              });
+            }
+          }
+
           const week = await tx.week.upsert({
             where: { planId_startDate: { planId, startDate } },
             create: { planId, startDate },
@@ -101,6 +122,26 @@ export const lmsSessionApi = {
     const owner = await verifySessionOwnership(sessionId, userId);
 
     verifyPlanEditable(owner);
+
+    if (data.labelId !== null && data.labelId !== undefined) {
+      const label = await prisma.label.findUnique({
+        where: { id: data.labelId },
+        select: { applicableLevels: true },
+      });
+
+      if (!label) {
+        throw new NotFoundError("Label not found", { labelId: data.labelId });
+      }
+
+      const levels = label.applicableLevels as AppLevelValue[];
+
+      if (!levels.includes("SESSION")) {
+        throw new BadRequestError("Label is not applicable to SESSION level", {
+          labelId: data.labelId,
+          applicableLevels: levels,
+        });
+      }
+    }
 
     try {
       const session = await prisma.session.update({

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { daySlotSchema } from "../day";
+
 import { updateWeekNotesSchema, weekSchema } from "./week.schema";
 
 export const weekByPlanAndDateParamsSchema = z.object({
@@ -9,6 +11,7 @@ export const weekByPlanAndDateParamsSchema = z.object({
 
 export const getWeekResponseSchema = z.object({
   week: weekSchema.nullable(),
+  days: z.array(daySlotSchema).length(7),
 });
 
 export const updateWeekNotesRequestSchema = updateWeekNotesSchema;

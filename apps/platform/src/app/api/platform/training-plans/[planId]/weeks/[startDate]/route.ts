@@ -17,9 +17,7 @@ import { withCoachAuth } from "@app/lib/server/auth";
 export const GET = withCoachAuth(
   withAuthRateLimit(
     createAuthGetByParamHandler(
-      async (userId, { planId, startDate }) => ({
-        week: await lmsWeekApi.getByPlanAndDate(userId, planId, startDate),
-      }),
+      (userId, { planId, startDate }) => lmsWeekApi.getByPlanAndDate(userId, planId, startDate),
       weekByPlanAndDateParamsSchema,
       getWeekResponseSchema,
     ),
