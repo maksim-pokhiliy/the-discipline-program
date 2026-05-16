@@ -12,7 +12,7 @@ import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 import { verifyPlanEditable, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToDaySlot } from "../../../mappers/lms";
-import { handlePrismaError } from "../../../utils";
+import { handlePrismaError, retryOnP2034 } from "../../../utils";
 import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate } from "../_shared";
 
 const DAY_INCLUDE = {
@@ -47,55 +47,57 @@ export const lmsDayMetadataApi = {
     }
 
     try {
-      const day = await prisma.$transaction(
-        async (tx) => {
-          const planCheck = await tx.trainingPlan.findUnique({
-            where: { id: planId },
-            select: { deletedAt: true, status: true },
-          });
-
-          if (!planCheck || planCheck.deletedAt !== null) {
-            throw new NotFoundError("Training plan not found", { planId });
-          }
-
-          if (planCheck.status === "ARCHIVED") {
-            throw new ForbiddenError("Plan is archived; edits not allowed");
-          }
-
-          if (data.labelId !== null) {
-            const label = await tx.label.findUnique({
-              where: { id: data.labelId },
-              select: { applicableLevels: true },
+      const day = await retryOnP2034(() =>
+        prisma.$transaction(
+          async (tx) => {
+            const planCheck = await tx.trainingPlan.findUnique({
+              where: { id: planId },
+              select: { deletedAt: true, status: true },
             });
 
-            if (!label) {
-              throw new NotFoundError("Label not found", { labelId: data.labelId });
+            if (!planCheck || planCheck.deletedAt !== null) {
+              throw new NotFoundError("Training plan not found", { planId });
             }
 
-            const levels = label.applicableLevels as AppLevelValue[];
+            if (planCheck.status === "ARCHIVED") {
+              throw new ForbiddenError("Plan is archived; edits not allowed");
+            }
 
-            if (!levels.includes("DAY")) {
-              throw new BadRequestError("Label is not applicable to DAY level", {
-                labelId: data.labelId,
-                applicableLevels: levels,
+            if (data.labelId !== null) {
+              const label = await tx.label.findUnique({
+                where: { id: data.labelId },
+                select: { applicableLevels: true },
               });
+
+              if (!label) {
+                throw new NotFoundError("Label not found", { labelId: data.labelId });
+              }
+
+              const levels = label.applicableLevels as AppLevelValue[];
+
+              if (!levels.includes("DAY")) {
+                throw new BadRequestError("Label is not applicable to DAY level", {
+                  labelId: data.labelId,
+                  applicableLevels: levels,
+                });
+              }
             }
-          }
 
-          const week = await tx.week.upsert({
-            where: { planId_startDate: { planId, startDate } },
-            create: { planId, startDate },
-            update: {},
-          });
+            const week = await tx.week.upsert({
+              where: { planId_startDate: { planId, startDate } },
+              create: { planId, startDate },
+              update: {},
+            });
 
-          return tx.day.upsert({
-            where: { weekId_dayOfWeek: { weekId: week.id, dayOfWeek: prismaDayOfWeek } },
-            create: { weekId: week.id, dayOfWeek: prismaDayOfWeek, labelId: data.labelId },
-            update: { labelId: data.labelId },
-            include: DAY_INCLUDE,
-          });
-        },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+            return tx.day.upsert({
+              where: { weekId_dayOfWeek: { weekId: week.id, dayOfWeek: prismaDayOfWeek } },
+              create: { weekId: week.id, dayOfWeek: prismaDayOfWeek, labelId: data.labelId },
+              update: { labelId: data.labelId },
+              include: DAY_INCLUDE,
+            });
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
       );
 
       return mapToDaySlot(dayOfWeek, day);
@@ -130,35 +132,37 @@ export const lmsDayMetadataApi = {
     }
 
     try {
-      const day = await prisma.$transaction(
-        async (tx) => {
-          const planCheck = await tx.trainingPlan.findUnique({
-            where: { id: planId },
-            select: { deletedAt: true, status: true },
-          });
+      const day = await retryOnP2034(() =>
+        prisma.$transaction(
+          async (tx) => {
+            const planCheck = await tx.trainingPlan.findUnique({
+              where: { id: planId },
+              select: { deletedAt: true, status: true },
+            });
 
-          if (!planCheck || planCheck.deletedAt !== null) {
-            throw new NotFoundError("Training plan not found", { planId });
-          }
+            if (!planCheck || planCheck.deletedAt !== null) {
+              throw new NotFoundError("Training plan not found", { planId });
+            }
 
-          if (planCheck.status === "ARCHIVED") {
-            throw new ForbiddenError("Plan is archived; edits not allowed");
-          }
+            if (planCheck.status === "ARCHIVED") {
+              throw new ForbiddenError("Plan is archived; edits not allowed");
+            }
 
-          const week = await tx.week.upsert({
-            where: { planId_startDate: { planId, startDate } },
-            create: { planId, startDate },
-            update: {},
-          });
+            const week = await tx.week.upsert({
+              where: { planId_startDate: { planId, startDate } },
+              create: { planId, startDate },
+              update: {},
+            });
 
-          return tx.day.upsert({
-            where: { weekId_dayOfWeek: { weekId: week.id, dayOfWeek: prismaDayOfWeek } },
-            create: { weekId: week.id, dayOfWeek: prismaDayOfWeek, notes: data.notes },
-            update: { notes: data.notes },
-            include: DAY_INCLUDE,
-          });
-        },
-        { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+            return tx.day.upsert({
+              where: { weekId_dayOfWeek: { weekId: week.id, dayOfWeek: prismaDayOfWeek } },
+              create: { weekId: week.id, dayOfWeek: prismaDayOfWeek, notes: data.notes },
+              update: { notes: data.notes },
+              include: DAY_INCLUDE,
+            });
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
       );
 
       return mapToDaySlot(dayOfWeek, day);
