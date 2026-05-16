@@ -22,6 +22,17 @@
 
 <!-- entries appended below this line, newest first -->
 
+## PR #193 merged into `main` (Steps 6.1.5 → 6.5 batch)
+
+- **Date**: 2026-05-16T12:35:00Z
+- **Merge commit**: `fcff61cd Merge pull request #193 from maksim-pokhiliy/feat/training-domain`
+- **PR URL**: https://github.com/maksim-pokhiliy/the-discipline-program/pull/193
+- **Scope**: 32 commits / 117 files / +8624 −261 LOC. Spans Steps 6.1.5 (namespace correction) → 6.2 (7-day shape + day-metadata) → 6.3 (labels-platform) → 6.4 (routes + retry infra) → 6.4.5 (session routes + retry apply) → 6.5 (client API + hooks). Continues PR #192 which batched Steps 6.0 + 6.1.
+- **Pre-merge gates**: `pnpm check-types` 16/16, `pnpm lint` 16/16, `pnpm test` 958/958, `pnpm dep:check` 0/1144, `pnpm build` 4/4 apps in 2m32s. Pre-push hook (`dep:check + turbo lint check-types --filter="...[origin/main]"`) — 32/32 successful in 27.85s, zero `--no-verify`.
+- **Post-merge cleanup**: `feat/training-domain` deleted on `origin`; recreated locally from fresh `main` (HEAD `fcff61cd`) for Step 6.6 work per `[[training-domain-workflow]]` convention.
+- **No CI-blocking findings surfaced** during PR review. PR body documented per-sub-step deliverables, per-layer changes, architectural decisions (D7 lazy Day calendar slot, D8 LMS namespace correction, all OQ-A..G ratifications across the 6 sub-steps), verification table, explicit out-of-scope list (Step 6.6/6.7 UI deferred).
+- **Carry-forwards into `main`**: all deferred items from individual sub-steps remain open per their original close-out entries (symbol rename `cms{Label,Exercise}AdminApi → lms*`, `mapToSessionWithLabel` extraction, `retryOnP2034.attempts.max(10)` clamp, GIN expression index on `Label.applicableLevels`). None are blockers for Step 6.6/6.7.
+
 ## Step 06.5 — Platform client API + hooks for Sessions / DayMetadata / Labels
 
 - **Date**: 2026-05-16
