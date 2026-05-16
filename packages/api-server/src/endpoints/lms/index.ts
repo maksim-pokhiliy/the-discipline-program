@@ -1,6 +1,6 @@
 export * from "./_shared";
 export * from "./day";
-export * from "./exercise/admin";
+export * from "./exercise";
 export * from "./label";
 export * from "./plan-enrollment";
 export * from "./session";
