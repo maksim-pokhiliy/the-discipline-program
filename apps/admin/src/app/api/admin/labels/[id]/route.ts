@@ -5,14 +5,14 @@ import {
   RATE_LIMIT_TIER,
   withAuthRateLimit,
 } from "@repo/api-routes";
-import { cmsLabelAdminApi } from "@repo/api-server/cms";
+import { cmsLabelAdminApi } from "@repo/api-server/lms";
 import {
   deleteLabelParamsSchema,
   getLabelByIdParamsSchema,
   labelSchema,
   updateLabelParamsSchema,
   updateLabelRequestSchema,
-} from "@repo/contracts/cms/label";
+} from "@repo/contracts/lms/label";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 
-import { createExerciseSchema, type CreateExerciseData } from "@repo/contracts/cms/exercise";
+import { createExerciseSchema, type CreateExerciseData } from "@repo/contracts/lms/exercise";
 import { FormView } from "@repo/ui";
 
 import { useCreateExercise } from "@app/lib/hooks";

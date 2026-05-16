@@ -5,7 +5,7 @@ import {
   createLabelSchema,
   type CreateLabelData,
   getLabelsResponseSchema,
-} from "@repo/contracts/cms/label";
+} from "@repo/contracts/lms/label";
 import { BadRequestError, ConflictError } from "@repo/errors";
 
 import { cleanupRaw, createTestPlan, createTestUser } from "../../../test/helpers";

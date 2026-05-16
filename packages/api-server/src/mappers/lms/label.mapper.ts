@@ -1,6 +1,6 @@
 import { type Label as PrismaLabel } from "@prisma/client";
 
-import { type AppLevelValue, type Label } from "@repo/contracts/cms/label";
+import { type AppLevelValue, type Label } from "@repo/contracts/lms/label";
 
 export const mapToLabel = (row: PrismaLabel): Label => ({
   id: row.id,

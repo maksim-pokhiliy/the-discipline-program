@@ -4,7 +4,7 @@ import {
   type CreateLabelData,
   type Label,
   type UpdateLabelData,
-} from "@repo/contracts/cms/label";
+} from "@repo/contracts/lms/label";
 
 export const createLabelsAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminLabelsPageData> => client.request("/api/admin/labels/page-data"),

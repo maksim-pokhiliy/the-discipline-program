@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 
-import { createLabelSchema, type CreateLabelData } from "@repo/contracts/cms/label";
+import { createLabelSchema, type CreateLabelData } from "@repo/contracts/lms/label";
 import { FormView } from "@repo/ui";
 
 import { useCreateLabel } from "@app/lib/hooks";

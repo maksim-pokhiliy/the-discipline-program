@@ -5,7 +5,7 @@ import {
   type Exercise,
   type GetMovementFamiliesResponse,
   type UpdateExerciseData,
-} from "@repo/contracts/cms/exercise";
+} from "@repo/contracts/lms/exercise";
 
 export const createExercisesAPI = (client: ApiClient) => ({
   getPageData: (): Promise<AdminExercisesPageData> =>

@@ -3,7 +3,7 @@
 import { Stack } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { type CreateExerciseData } from "@repo/contracts/cms/exercise";
+import { type CreateExerciseData } from "@repo/contracts/lms/exercise";
 import { FormCard, TagsInput } from "@repo/ui";
 
 type DemosAndAliasesCardProps = {

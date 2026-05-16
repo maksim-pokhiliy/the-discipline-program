@@ -3,7 +3,7 @@
 import { FormControl, FormHelperText, InputLabel, MenuItem, Select } from "@mui/material";
 import { Controller, useFormContext, type FieldError } from "react-hook-form";
 
-import { type CreateExerciseData, type ExerciseMovementType } from "@repo/contracts/cms/exercise";
+import { type CreateExerciseData, type ExerciseMovementType } from "@repo/contracts/lms/exercise";
 
 import { MOVEMENT_TYPE_LABELS } from "../constants";
 

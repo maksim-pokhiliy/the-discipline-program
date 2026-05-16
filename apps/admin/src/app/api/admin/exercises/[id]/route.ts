@@ -5,14 +5,14 @@ import {
   RATE_LIMIT_TIER,
   withAuthRateLimit,
 } from "@repo/api-routes";
-import { cmsExerciseAdminApi } from "@repo/api-server/cms";
+import { cmsExerciseAdminApi } from "@repo/api-server/lms";
 import {
   deleteExerciseParamsSchema,
   exerciseSchema,
   getExerciseByIdParamsSchema,
   updateExerciseParamsSchema,
   updateExerciseRequestSchema,
-} from "@repo/contracts/cms/exercise";
+} from "@repo/contracts/lms/exercise";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

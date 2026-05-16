@@ -1,6 +1,6 @@
 import { createGetHandler, RATE_LIMIT_TIER, withAuthRateLimit } from "@repo/api-routes";
-import { cmsExerciseAdminApi } from "@repo/api-server/cms";
-import { getMovementFamiliesResponseSchema } from "@repo/contracts/cms/exercise";
+import { cmsExerciseAdminApi } from "@repo/api-server/lms";
+import { getMovementFamiliesResponseSchema } from "@repo/contracts/lms/exercise";
 
 import { withAdminAuth } from "@app/lib/server/auth";
 

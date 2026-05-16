@@ -8,7 +8,7 @@ import {
   createExerciseSchema,
   type CreateExerciseData,
   type Exercise,
-} from "@repo/contracts/cms/exercise";
+} from "@repo/contracts/lms/exercise";
 import { FormView } from "@repo/ui";
 
 import { useUpdateExercise } from "@app/lib/hooks";

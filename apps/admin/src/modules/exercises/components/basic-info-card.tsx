@@ -3,7 +3,7 @@
 import { Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 
-import { type CreateExerciseData } from "@repo/contracts/cms/exercise";
+import { type CreateExerciseData } from "@repo/contracts/lms/exercise";
 import { FormCard } from "@repo/ui";
 
 import { EQUIPMENT_LABELS, MOVEMENT_TYPE_LABELS } from "../constants";

@@ -7,7 +7,7 @@ import {
   type CreateExerciseData,
   type Exercise,
   type UpdateExerciseData,
-} from "@repo/contracts/cms/exercise";
+} from "@repo/contracts/lms/exercise";
 import { createCrudHooks, STALE_TIMES } from "@repo/query";
 
 import { api } from "../api";

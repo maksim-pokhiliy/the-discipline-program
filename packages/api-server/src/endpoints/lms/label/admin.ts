@@ -5,11 +5,11 @@ import {
   type CreateLabelData,
   type Label,
   type UpdateLabelData,
-} from "@repo/contracts/cms/label";
+} from "@repo/contracts/lms/label";
 import { ConflictError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
-import { mapToLabel } from "../../../mappers/cms";
+import { mapToLabel } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 

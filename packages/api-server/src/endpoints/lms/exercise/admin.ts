@@ -5,7 +5,7 @@ import {
   type CreateExerciseData,
   type Exercise,
   type UpdateExerciseData,
-} from "@repo/contracts/cms/exercise";
+} from "@repo/contracts/lms/exercise";
 import { ConflictError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
@@ -14,7 +14,7 @@ import {
   equipmentToPrisma,
   mapToExercise,
   movementTypeToPrisma,
-} from "../../../mappers/cms";
+} from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
 import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 

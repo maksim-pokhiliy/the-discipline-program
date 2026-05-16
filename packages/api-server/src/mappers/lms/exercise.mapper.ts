@@ -1,8 +1,12 @@
 import { type Exercise as PrismaExercise } from "@prisma/client";
 
-import { type Exercise } from "@repo/contracts/cms/exercise";
+import { type Exercise } from "@repo/contracts/lms/exercise";
 
-import { CANONICAL_COMPOUND_TYPE_MAP, EQUIPMENT_MAP, MOVEMENT_TYPE_MAP } from "./enum-maps";
+import {
+  CANONICAL_COMPOUND_TYPE_MAP,
+  EQUIPMENT_MAP,
+  MOVEMENT_TYPE_MAP,
+} from "./exercise.enum-maps";
 
 export const mapToExercise = (row: PrismaExercise): Exercise => ({
   id: row.id,

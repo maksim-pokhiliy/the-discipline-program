@@ -1,4 +1,7 @@
 export * from "./enum-maps";
+export * from "./exercise.enum-maps";
+export * from "./exercise.mapper";
+export * from "./label.mapper";
 export * from "./plan-enrollment.mapper";
 export * from "./session.mapper";
 export * from "./training-plan.mapper";

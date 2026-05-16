@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
-import { type CreateExerciseData } from "@repo/contracts/cms/exercise";
+import { type CreateExerciseData } from "@repo/contracts/lms/exercise";
 import { FormCard } from "@repo/ui";
 
 import { useMovementFamilies } from "@app/lib/hooks";

@@ -2,7 +2,7 @@ import {
   type ExerciseCanonicalCompoundType,
   type ExerciseEquipment,
   type ExerciseMovementType,
-} from "@repo/contracts/cms/exercise";
+} from "@repo/contracts/lms/exercise";
 
 export const EQUIPMENT_LABELS: Record<ExerciseEquipment, string> = {
   ASSAULT_BIKE: "Assault Bike",
