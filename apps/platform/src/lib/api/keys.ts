@@ -1,3 +1,4 @@
+import type { AppLevelValue } from "@repo/contracts/lms/label";
 import { createEntityKeys } from "@repo/query";
 
 const ROOT = ["platform"] as const;
@@ -19,5 +20,9 @@ export const platformKeys = {
   weeks: {
     byDate: (planId: string, startDate: string) =>
       [...ROOT, "training-plans", planId, "weeks", startDate] as const,
+  },
+  labels: {
+    search: (level?: AppLevelValue, q?: string) =>
+      [...ROOT, "labels", "search", level ?? null, q ?? null] as const,
   },
 } as const;
