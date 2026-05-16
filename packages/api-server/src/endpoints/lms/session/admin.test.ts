@@ -279,6 +279,49 @@ describe("lmsSessionApi", () => {
       expect(sessionCount).toBe(0);
       expect(weekCount).toBe(0);
     });
+
+    it("concurrent Session.create on pre-materialized Day — at least one succeeds via P2034 retry", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "FRIDAY" },
+      });
+
+      try {
+        const [first, second] = await Promise.allSettled([
+          lmsSessionApi.create(coach.user.id, activePlanId, MONDAY_PARAM, "FRIDAY", {
+            labelId: null,
+            notes: "first concurrent",
+          }),
+          lmsSessionApi.create(coach.user.id, activePlanId, MONDAY_PARAM, "FRIDAY", {
+            labelId: null,
+            notes: "second concurrent",
+          }),
+        ]);
+
+        expect(first.status === "fulfilled" || second.status === "fulfilled").toBe(true);
+
+        const stored = await cleanupRaw.session.findMany({
+          where: { dayId: day.id },
+          orderBy: { order: "asc" },
+        });
+
+        const fulfilledCount = [first, second].filter((r) => r.status === "fulfilled").length;
+
+        expect(stored).toHaveLength(fulfilledCount);
+
+        if (fulfilledCount === 2) {
+          expect(stored[0]?.order).toBe(10);
+          expect(stored[1]?.order).toBe(20);
+          expect(new Set(stored.map((s) => s.id)).size).toBe(2);
+        }
+      } finally {
+        await cleanupRaw.session.deleteMany({ where: { dayId: day.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
   });
 
   describe("update", () => {
