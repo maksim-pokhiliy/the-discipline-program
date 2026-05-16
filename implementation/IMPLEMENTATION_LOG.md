@@ -50,7 +50,7 @@
   - **CONTEXT-001 inline-fix** (D-6) — see Open questions above.
   - **Subject reflow** — original prompt § 7 subject was 112 chars; commitlint cap 100. Reflowed to 91 chars without semantic loss; body unchanged.
 - **Analysis/-files touched**: none (D7 already ratified; embed unlocked by Step 6.1.5; no schema change).
-- **Smoke-test status**: **prepared, user-side validation pending**. Executor did not run dev server. 3-step scenario in `step-06.2/output.md` § "Сценарий смоук-теста" — load plan-detail (assert `GET .../weeks/{monday}` 200 OK with 7-day shape; WeekGrid renders 7 placeholder DayRows) → type "deload" in WeekNotes + blur (assert PUT + follow-up GET via invalidateQueries; new GET response carries the updated note) → refresh (assert persistence). UI is still Step-5-level — Step 6.6+ wires `days[i]` into DayRow.
+- **Smoke-test status**: **passed** (2026-05-16, user-side browser smoke). Все 3 шага сценария из `step-06.2/output.md` зелёные: 7-day shape грузится в `GET .../weeks/{monday}` Network response с 7 DayRows; "deload" note blur-commit triggers PUT + auto-refetch через `invalidateQueries`; page refresh persists. Zero UI regression — Step 5 week-notes flow intact under new contract shape. Step 6.2 fully closed.
 
 ## Step 06.1.5 — `Label` + `Exercise` namespace move (`cms/*` → `lms/*`)
 
