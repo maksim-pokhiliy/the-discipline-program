@@ -6,6 +6,7 @@ import {
   type getLabelByIdParamsSchema,
   type getLabelsPageDataResponseSchema,
   type getLabelsResponseSchema,
+  type labelSearchParamsSchema,
   type updateLabelParamsSchema,
   type updateLabelRequestSchema,
 } from "./label-api.schema";
@@ -21,6 +22,8 @@ export type UpdateLabelParams = z.infer<typeof updateLabelParamsSchema>;
 export type UpdateLabelRequest = z.infer<typeof updateLabelRequestSchema>;
 
 export type DeleteLabelParams = z.infer<typeof deleteLabelParamsSchema>;
+
+export type LabelSearchParams = z.infer<typeof labelSearchParamsSchema>;
 
 export type GetLabelsPageDataResponse = z.infer<typeof getLabelsPageDataResponseSchema>;
 

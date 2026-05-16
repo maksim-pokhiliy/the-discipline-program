@@ -16,6 +16,10 @@ export const updateLabelRequestSchema = updateLabelSchema;
 
 export const deleteLabelParamsSchema = idParamSchema;
 
+export const labelSearchParamsSchema = z.object({
+  q: z.string().min(1).max(200).optional(),
+});
+
 export const getLabelsPageDataResponseSchema = z.object({
   labels: getLabelsResponseSchema,
 });
