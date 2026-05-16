@@ -37,7 +37,7 @@
   - **Memory hygiene sweep** of `~/.claude/projects/.../memory/` for stale `cms/{label,exercise}` refs — flagged as planner-side housekeeping for close-out. **Resolved by planner this turn**: `project_training_domain_workflow.md:14` updated (cms → lms paths + cross-link to `[[husky-cross-package-squash]]` + Step 6.1.5 note). No other matches.
   - **WORKFLOW.md guidance addition** — durable rule for cross-package refactors with intermediate broken trees: choose squash or reorder-with-shim, never `--no-verify`. Planner-side; one-paragraph addition to `implementation/WORKFLOW.md` queued for the next planner-housekeeping touch.
 - **Analysis/-files touched**: none (D8 is a code-side namespace correction; `analysis/artifacts/06-formalization/schema.prisma` Label+Exercise blocks already had `@@map("training_*")` — no semantic change).
-- **Smoke-test status**: **prepared, user-side validation pending**. Executor did not run dev server in `/feature small` session; scenario in `step-06.1.5/output.md` § "Сценарий смоук-теста" — 8 steps covering `/admin/labels` list + create + edit roundtrip and `/admin/exercises` list + create + add demo URL roundtrip. Predicted no UI regression (refactor is pure path-and-import; runtime behaviour byte-identical).
+- **Smoke-test status**: **passed** (2026-05-16, user-side browser smoke). Все 8 шагов сценария из `step-06.1.5/output.md` зелёные: `/admin/labels` list+create+edit roundtrip + `/admin/exercises` list+create+add-demo-URL roundtrip. No UI regression — refactor предсказание "byte-identical runtime" подтверждено. Step 6.1.5 fully closed.
 
 ## Step 06.1 — `lmsSessionApi` + `endpoints/lms/_shared/date.ts` extraction
 
