@@ -11,6 +11,9 @@
     "analyze": "next experimental-analyze"
   },
   "dependencies": {
+    "@dnd-kit/core": "catalog:",
+    "@dnd-kit/sortable": "catalog:",
+    "@dnd-kit/utilities": "catalog:",
     "@hookform/resolvers": "catalog:",
     "@mui/icons-material": "catalog:",
     "@mui/material": "catalog:",

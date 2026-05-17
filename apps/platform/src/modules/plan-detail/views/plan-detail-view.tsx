@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatDateParam, getMonday, parseDateParam } from "@repo/shared";
 import { PageHeader, PlanStatusChip, QueryWrapper } from "@repo/ui";
 
-import { useTrainingPlan, useUpdateTrainingPlan, useWeek } from "@app/lib/hooks";
+import { useLabelSearch, useTrainingPlan, useUpdateTrainingPlan, useWeek } from "@app/lib/hooks";
 
 import { WeekGrid, WeekNavigator, WeekNotes } from "../components";
 
@@ -23,6 +23,12 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
 
   const { data: plan, isLoading, error } = useTrainingPlan(planId);
   const { data: weekData } = useWeek(planId, formatDateParam(activeMonday));
+  const { data: labelOptions = [], isLoading: labelOptionsLoading } = useLabelSearch({
+    level: "DAY",
+  });
+  const { data: sessionLabelOptions = [], isLoading: sessionLabelOptionsLoading } = useLabelSearch({
+    level: "SESSION",
+  });
   const updatePlan = useUpdateTrainingPlan();
 
   const pushWeekParam = (nextMonday: Date) => {
@@ -58,7 +64,15 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
             monday={activeMonday}
             notes={weekData?.week?.notes ?? null}
           />
-          <WeekGrid monday={activeMonday} />
+          <WeekGrid
+            planId={planId}
+            monday={activeMonday}
+            days={weekData?.days ?? []}
+            labelOptions={labelOptions}
+            labelOptionsLoading={labelOptionsLoading}
+            sessionLabelOptions={sessionLabelOptions}
+            sessionLabelOptionsLoading={sessionLabelOptionsLoading}
+          />
         </Stack>
       )}
     </QueryWrapper>

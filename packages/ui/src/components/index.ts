@@ -10,6 +10,7 @@ export * from "./form-card";
 export * from "./form-view";
 export * from "./image-upload";
 export * from "./inline-edit-text";
+export * from "./label-select";
 export * from "./layout";
 export * from "./loading-state";
 export * from "./login-form";
