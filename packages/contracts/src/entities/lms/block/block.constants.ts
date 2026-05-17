@@ -1,0 +1,4 @@
+export const BLOCK_CONSTANTS = {
+  MAX_NOTES_LENGTH: 2000,
+  MAX_LABELS_PER_BLOCK: 10,
+} as const;

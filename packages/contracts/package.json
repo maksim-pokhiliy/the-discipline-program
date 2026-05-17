@@ -16,6 +16,7 @@
     "./cms/review": "./src/entities/cms/review/index.ts",
     "./lms": "./src/entities/lms/index.ts",
     "./lms/_shared": "./src/entities/lms/_shared/index.ts",
+    "./lms/block": "./src/entities/lms/block/index.ts",
     "./lms/day": "./src/entities/lms/day/index.ts",
     "./lms/exercise": "./src/entities/lms/exercise/index.ts",
     "./lms/label": "./src/entities/lms/label/index.ts",
