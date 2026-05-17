@@ -1,8 +1,7 @@
 "use client";
 
-import { Autocomplete, CircularProgress, TextField } from "@mui/material";
-
 import type { Label } from "@repo/contracts/lms/label";
+import { LabelSelect } from "@repo/ui";
 
 type DayLabelSelectProps = {
   value: Label | null;
@@ -12,8 +11,6 @@ type DayLabelSelectProps = {
   disabled?: boolean | undefined;
 };
 
-const getOptionLabel = (option: Label) => option.name;
-
 export const DayLabelSelect = ({
   value,
   options,
@@ -21,49 +18,13 @@ export const DayLabelSelect = ({
   onChange,
   disabled = false,
 }: DayLabelSelectProps) => (
-  <Autocomplete<Label>
-    options={options}
+  <LabelSelect
     value={value}
-    onChange={(_, next) => onChange(next?.id ?? null)}
-    getOptionLabel={getOptionLabel}
-    isOptionEqualToValue={(option, val) => option.id === val.id}
-    disabled={disabled || isLoading}
-    size="small"
-    renderInput={(params) => {
-      const {
-        size: paramsSize,
-        disabled: paramsDisabled,
-        fullWidth: paramsFullWidth,
-        id: paramsId,
-        InputLabelProps,
-        inputProps,
-        InputProps,
-      } = params;
-
-      return (
-        <TextField
-          {...(paramsSize !== undefined && { size: paramsSize })}
-          {...(paramsDisabled !== undefined && { disabled: paramsDisabled })}
-          {...(paramsFullWidth !== undefined && { fullWidth: paramsFullWidth })}
-          {...(paramsId !== undefined && { id: paramsId })}
-          inputProps={inputProps}
-          label="Day label"
-          placeholder="Tag this day…"
-          variant="outlined"
-          slotProps={{
-            inputLabel: InputLabelProps,
-            input: {
-              ...InputProps,
-              endAdornment: (
-                <>
-                  {isLoading ? <CircularProgress color="inherit" size={16} /> : null}
-                  {InputProps.endAdornment}
-                </>
-              ),
-            },
-          }}
-        />
-      );
-    }}
+    options={options}
+    isLoading={isLoading}
+    onChange={onChange}
+    disabled={disabled}
+    label="Day label"
+    placeholder="Tag this day…"
   />
 );
