@@ -22,6 +22,32 @@
 
 <!-- entries appended below this line, newest first -->
 
+## PR #194 merged into `main` (Steps 6.6 + 6.7 batch)
+
+- **Date**: 2026-05-17T??:??:??Z (merge commit `376e694f`; clock not captured at merge — recreate-branch step retroactive close-out)
+- **Merge commit**: `376e694f Merge pull request #194 from maksim-pokhiliy/feat/training-domain`
+- **PR URL**: https://github.com/maksim-pokhiliy/the-discipline-program/pull/194
+- **Scope**: 9 commits / 25 files / +978/-139 LOC. Batches **Step 6.6** (DayRow header reshape — 1 atomic code commit) + **Step 6.7** (Session body + dnd-kit reorder + SessionCard + cross-package extracts — 5 atomic per-layer code commits). First two UI surfaces workflow's; first `@dnd-kit/*` install in repo. Continues PR #193 (Steps 6.1.5 → 6.5).
+- **Pre-merge gates** (all green; planner-side gate sweep before `gh pr create`):
+  - `pnpm check-types` 16/16 (turbo 32/32 cache-miss → all clean).
+  - `pnpm lint` 16/16.
+  - `pnpm test` 958/958 (zero test file deltas verified via `git diff fcff61cd..HEAD -- '**/*.test.*' '**/*.spec.*'`).
+  - `pnpm dep:check` 0 violations / 1153 modules.
+  - `pnpm build` 4/4 apps in 1m41s (admin/marketing/platform/storybook).
+  - Pre-push hook 32/32 tasks in 1m37s (`dep:check + turbo lint check-types --filter="...[origin/main]"`).
+  - Husky pre-commit + commit-msg clean all 9 commits без `--no-verify`.
+- **Browser smoke-tests**: 12/12 Step 6.6 + 13/13 Step 6.7 — both green (2026-05-17, user-side).
+- **No CI-blocking findings surfaced** during PR review. PR body documented per-step deliverables, architectural decisions (D7 lazy Day + 9 OQ A-G ratifications across 6.6 + 6.7), verification table, 11 deferred carry-forwards, process-rule reversal note (`[[always-via-feature-skill]]` codified mid-batch — Step 7 onwards prompts wrap в `/feature` / `/feature small`).
+- **Post-merge cleanup**: `feat/training-domain` deleted on `origin`; recreated locally from fresh `main` (HEAD `376e694f`) per `[[training-domain-workflow]]` convention. Untracked `implementation/step-06.7/prompt.md` (executor docs commit `daf6b293` included only output.md — minor planner-side housekeeping miss) staged into this close-out commit retroactively.
+- **Carry-forwards into `main`** (all remain open per their original close-out entries; none blocker for Step 7):
+  - React Context для label preload (5-level trigger arrives Step 7.4 BlockList).
+  - `@repo/ui` `LabelSelect` `size`/`variant` props extension (Step 7 BlockLabelSelect trigger if needed).
+  - ZWS strip on Day/Session notes (domain free-text + coach-owned; revisit on QA report).
+  - WeekNotes client `maxLength` cap (Step 5 QA-005 deferred indefinitely).
+  - Cross-day Session drag (out per Step 6.1 design).
+  - `useBlurCommit` 4th callsite trigger (only if Block adds notes field — verify Step 7 thesis).
+  - Tests for new UI components (UI-layer; mirror Step 5/6.x no-test precedent; coverage via browser smoke-tests).
+
 ## Step 06.7 — Session body: SessionCard + dnd-kit reorder + Add session + extracts (LabelSelect, useBlurCommit)
 
 - **Date**: 2026-05-17
