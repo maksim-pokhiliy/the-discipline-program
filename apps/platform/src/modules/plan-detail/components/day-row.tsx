@@ -3,6 +3,7 @@
 import { Box, Stack, Typography } from "@mui/material";
 
 import type { DayOfWeek } from "@repo/contracts/lms/_shared";
+import type { SessionWithLabel } from "@repo/contracts/lms/day";
 import type { Label } from "@repo/contracts/lms/label";
 import { formatDayName, isSameDay } from "@repo/shared";
 
@@ -10,6 +11,7 @@ import { useUpdateDayLabel, useUpdateDayNotes } from "@app/lib/hooks";
 
 import { DayLabelSelect } from "./day-label-select";
 import { DayNotesField } from "./day-notes-field";
+import { SessionList } from "./session-list";
 
 type DayRowProps = {
   date: Date;
@@ -18,8 +20,11 @@ type DayRowProps = {
   dayOfWeek: DayOfWeek;
   label: Label | null;
   notes: string | null;
+  sessions: SessionWithLabel[];
   labelOptions: Label[];
   labelOptionsLoading: boolean;
+  sessionLabelOptions: Label[];
+  sessionLabelOptionsLoading: boolean;
 };
 
 export const DayRow: React.FC<DayRowProps> = ({
@@ -29,8 +34,11 @@ export const DayRow: React.FC<DayRowProps> = ({
   dayOfWeek,
   label,
   notes,
+  sessions,
   labelOptions,
   labelOptionsLoading,
+  sessionLabelOptions,
+  sessionLabelOptionsLoading,
 }) => {
   const updateLabel = useUpdateDayLabel(planId, startDate, dayOfWeek);
   const updateNotes = useUpdateDayNotes(planId, startDate, dayOfWeek);
@@ -81,9 +89,14 @@ export const DayRow: React.FC<DayRowProps> = ({
         </Box>
       </Stack>
 
-      <Typography variant="body2" sx={{ color: "text.disabled" }}>
-        No sessions
-      </Typography>
+      <SessionList
+        planId={planId}
+        startDate={startDate}
+        dayOfWeek={dayOfWeek}
+        sessions={sessions}
+        sessionLabelOptions={sessionLabelOptions}
+        sessionLabelOptionsLoading={sessionLabelOptionsLoading}
+      />
     </Stack>
   );
 };

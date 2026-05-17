@@ -1,6 +1,11 @@
+export { AddSessionButton } from "./add-session-button";
 export { DayLabelSelect } from "./day-label-select";
 export { DayNotesField } from "./day-notes-field";
 export { DayRow } from "./day-row";
+export { SessionCard } from "./session-card";
+export { SessionLabelSelect } from "./session-label-select";
+export { SessionList } from "./session-list";
+export { SessionNotesField } from "./session-notes-field";
 export { WeekGrid } from "./week-grid";
 export { WeekNavigator } from "./week-navigator";
 export { WeekNotes } from "./week-notes";

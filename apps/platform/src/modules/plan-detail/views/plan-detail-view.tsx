@@ -26,6 +26,9 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
   const { data: labelOptions = [], isLoading: labelOptionsLoading } = useLabelSearch({
     level: "DAY",
   });
+  const { data: sessionLabelOptions = [], isLoading: sessionLabelOptionsLoading } = useLabelSearch({
+    level: "SESSION",
+  });
   const updatePlan = useUpdateTrainingPlan();
 
   const pushWeekParam = (nextMonday: Date) => {
@@ -67,6 +70,8 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
             days={weekData?.days ?? []}
             labelOptions={labelOptions}
             labelOptionsLoading={labelOptionsLoading}
+            sessionLabelOptions={sessionLabelOptions}
+            sessionLabelOptionsLoading={sessionLabelOptionsLoading}
           />
         </Stack>
       )}

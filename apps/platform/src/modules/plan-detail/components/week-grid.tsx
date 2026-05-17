@@ -13,6 +13,8 @@ type WeekGridProps = {
   days: DaySlot[];
   labelOptions: Label[];
   labelOptionsLoading: boolean;
+  sessionLabelOptions: Label[];
+  sessionLabelOptionsLoading: boolean;
 };
 
 export const WeekGrid: React.FC<WeekGridProps> = ({
@@ -21,6 +23,8 @@ export const WeekGrid: React.FC<WeekGridProps> = ({
   days,
   labelOptions,
   labelOptionsLoading,
+  sessionLabelOptions,
+  sessionLabelOptionsLoading,
 }) => {
   const startDate = formatDateParam(monday);
   const dates = getWeekDays(monday);
@@ -45,8 +49,11 @@ export const WeekGrid: React.FC<WeekGridProps> = ({
             dayOfWeek={dayOfWeek}
             label={day?.label ?? null}
             notes={day?.notes ?? null}
+            sessions={day?.sessions ?? []}
             labelOptions={labelOptions}
             labelOptionsLoading={labelOptionsLoading}
+            sessionLabelOptions={sessionLabelOptions}
+            sessionLabelOptionsLoading={sessionLabelOptionsLoading}
           />
         );
       })}
