@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { ZodError } from "zod";
 
 import { BadRequestError, ConflictError, InternalServerError, NotFoundError } from "@repo/errors";
 
@@ -44,6 +45,18 @@ export const handlePrismaError = (
 
   if (error instanceof Prisma.PrismaClientUnknownRequestError) {
     throw new InternalServerError(`Database operation failed for ${context.entity}`);
+  }
+
+  if (error instanceof ZodError) {
+    throw new InternalServerError(`${context.entity} content failed schema validation`, {
+      kind: "DbCorruption",
+      entity: context.entity,
+      issues: error.errors.map((e) => ({
+        path: e.path.join("."),
+        message: e.message,
+        code: e.code,
+      })),
+    });
   }
 
   throw error;
