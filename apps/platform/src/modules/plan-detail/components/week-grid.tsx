@@ -2,7 +2,6 @@ import { Stack } from "@mui/material";
 
 import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
 import type { DaySlot } from "@repo/contracts/lms/day";
-import type { Label } from "@repo/contracts/lms/label";
 import { formatDateParam, getWeekDays } from "@repo/shared";
 
 import { DayRow } from "./day-row";
@@ -11,21 +10,9 @@ type WeekGridProps = {
   planId: string;
   monday: Date;
   days: DaySlot[];
-  labelOptions: Label[];
-  labelOptionsLoading: boolean;
-  sessionLabelOptions: Label[];
-  sessionLabelOptionsLoading: boolean;
 };
 
-export const WeekGrid: React.FC<WeekGridProps> = ({
-  planId,
-  monday,
-  days,
-  labelOptions,
-  labelOptionsLoading,
-  sessionLabelOptions,
-  sessionLabelOptionsLoading,
-}) => {
+export const WeekGrid: React.FC<WeekGridProps> = ({ planId, monday, days }) => {
   const startDate = formatDateParam(monday);
   const dates = getWeekDays(monday);
 
@@ -50,10 +37,6 @@ export const WeekGrid: React.FC<WeekGridProps> = ({
             label={day?.label ?? null}
             notes={day?.notes ?? null}
             sessions={day?.sessions ?? []}
-            labelOptions={labelOptions}
-            labelOptionsLoading={labelOptionsLoading}
-            sessionLabelOptions={sessionLabelOptions}
-            sessionLabelOptionsLoading={sessionLabelOptionsLoading}
           />
         );
       })}

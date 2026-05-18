@@ -21,7 +21,6 @@ import { Box, Stack } from "@mui/material";
 
 import type { DayOfWeek } from "@repo/contracts/lms/_shared";
 import type { SessionWithLabel } from "@repo/contracts/lms/day";
-import type { Label } from "@repo/contracts/lms/label";
 
 import { useReorderSessions } from "@app/lib/hooks";
 
@@ -33,8 +32,6 @@ type SessionListProps = {
   startDate: string;
   dayOfWeek: DayOfWeek;
   sessions: SessionWithLabel[];
-  sessionLabelOptions: Label[];
-  sessionLabelOptionsLoading: boolean;
 };
 
 export const SessionList: React.FC<SessionListProps> = ({
@@ -42,8 +39,6 @@ export const SessionList: React.FC<SessionListProps> = ({
   startDate,
   dayOfWeek,
   sessions,
-  sessionLabelOptions,
-  sessionLabelOptionsLoading,
 }) => {
   const reorderSessions = useReorderSessions(planId, startDate, dayOfWeek);
   const [sortedSessions, setSortedSessions] = useState<SessionWithLabel[]>(sessions);
@@ -98,8 +93,6 @@ export const SessionList: React.FC<SessionListProps> = ({
                   session={session}
                   planId={planId}
                   startDate={startDate}
-                  sessionLabelOptions={sessionLabelOptions}
-                  sessionLabelOptionsLoading={sessionLabelOptionsLoading}
                 />
               ))}
             </Stack>

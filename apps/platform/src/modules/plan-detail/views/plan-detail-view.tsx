@@ -6,7 +6,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatDateParam, getMonday, parseDateParam } from "@repo/shared";
 import { PageHeader, PlanStatusChip, QueryWrapper } from "@repo/ui";
 
-import { useLabelSearch, useTrainingPlan, useUpdateTrainingPlan, useWeek } from "@app/lib/hooks";
+import { LabelOptionsProvider } from "@app/lib/contexts";
+import { useTrainingPlan, useUpdateTrainingPlan, useWeek } from "@app/lib/hooks";
 
 import { WeekGrid, WeekNavigator, WeekNotes } from "../components";
 
@@ -23,12 +24,6 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
 
   const { data: plan, isLoading, error } = useTrainingPlan(planId);
   const { data: weekData } = useWeek(planId, formatDateParam(activeMonday));
-  const { data: labelOptions = [], isLoading: labelOptionsLoading } = useLabelSearch({
-    level: "DAY",
-  });
-  const { data: sessionLabelOptions = [], isLoading: sessionLabelOptionsLoading } = useLabelSearch({
-    level: "SESSION",
-  });
   const updatePlan = useUpdateTrainingPlan();
 
   const pushWeekParam = (nextMonday: Date) => {
@@ -41,39 +36,33 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
   return (
     <QueryWrapper isLoading={isLoading} error={error} data={plan} loadingMessage="Loading plan...">
       {(plan) => (
-        <Stack spacing={4}>
-          <PageHeader
-            editable
-            title={plan.name}
-            {...(plan.description !== null && { description: plan.description })}
-            backHref="/coach/plans"
-            actions={<PlanStatusChip status={plan.status} />}
-            onTitleCommit={(next) => updatePlan.mutate({ id: planId, data: { name: next } })}
-            onDescriptionCommit={(next) =>
-              updatePlan.mutate({
-                id: planId,
-                data: { description: next === "" ? null : next },
-              })
-            }
-          />
+        <LabelOptionsProvider>
+          <Stack spacing={4}>
+            <PageHeader
+              editable
+              title={plan.name}
+              {...(plan.description !== null && { description: plan.description })}
+              backHref="/coach/plans"
+              actions={<PlanStatusChip status={plan.status} />}
+              onTitleCommit={(next) => updatePlan.mutate({ id: planId, data: { name: next } })}
+              onDescriptionCommit={(next) =>
+                updatePlan.mutate({
+                  id: planId,
+                  data: { description: next === "" ? null : next },
+                })
+              }
+            />
 
-          <WeekNavigator monday={activeMonday} onChange={pushWeekParam} />
-          <WeekNotes
-            key={formatDateParam(activeMonday)}
-            planId={planId}
-            monday={activeMonday}
-            notes={weekData?.week?.notes ?? null}
-          />
-          <WeekGrid
-            planId={planId}
-            monday={activeMonday}
-            days={weekData?.days ?? []}
-            labelOptions={labelOptions}
-            labelOptionsLoading={labelOptionsLoading}
-            sessionLabelOptions={sessionLabelOptions}
-            sessionLabelOptionsLoading={sessionLabelOptionsLoading}
-          />
-        </Stack>
+            <WeekNavigator monday={activeMonday} onChange={pushWeekParam} />
+            <WeekNotes
+              key={formatDateParam(activeMonday)}
+              planId={planId}
+              monday={activeMonday}
+              notes={weekData?.week?.notes ?? null}
+            />
+            <WeekGrid planId={planId} monday={activeMonday} days={weekData?.days ?? []} />
+          </Stack>
+        </LabelOptionsProvider>
       )}
     </QueryWrapper>
   );
