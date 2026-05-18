@@ -1,4 +1,9 @@
+export { AddBlockButton } from "./add-block-button";
 export { AddSessionButton } from "./add-session-button";
+export { BlockCard } from "./block-card";
+export { BlockLabelSelect } from "./block-label-select";
+export { BlockList } from "./block-list";
+export { BlockNotesField } from "./block-notes-field";
 export { DayLabelSelect } from "./day-label-select";
 export { DayNotesField } from "./day-notes-field";
 export { DayRow } from "./day-row";
