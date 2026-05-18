@@ -1,3 +1,4 @@
+export { createBlocksAPI } from "./blocks";
 export { createCoachAthletesAPI } from "./coach-athletes";
 export { createCoachActionItemsAPI } from "./coach-action-items";
 export { createCoachDashboardAPI } from "./coach-dashboard";
