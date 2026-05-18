@@ -1,3 +1,4 @@
+export * from "./use-blocks";
 export * from "./use-blur-commit";
 export * from "./use-coach-athletes";
 export * from "./use-current-user-role";
