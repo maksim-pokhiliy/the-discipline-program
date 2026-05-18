@@ -204,6 +204,178 @@ describe("lmsWeekApi", () => {
         await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
       }
     });
+
+    it("embeds blocks per session with labels sorted by BlockLabelAssignment.order", async () => {
+      const labelSuffix = crypto.randomUUID().slice(0, 8);
+      const blockLabelFirst = await cleanupRaw.label.create({
+        data: {
+          name: `Block Label First ${labelSuffix}`,
+          nameLower: `block label first ${labelSuffix}`,
+          applicableLevels: ["BLOCK"],
+        },
+      });
+      const blockLabelSecond = await cleanupRaw.label.create({
+        data: {
+          name: `Block Label Second ${labelSuffix}`,
+          nameLower: `block label second ${labelSuffix}`,
+          applicableLevels: ["BLOCK"],
+        },
+      });
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "TUESDAY" },
+      });
+      const session = await cleanupRaw.session.create({
+        data: { dayId: day.id, order: 10 },
+      });
+      const blockFirst = await cleanupRaw.block.create({
+        data: {
+          sessionId: session.id,
+          order: 10,
+          intensity: { rpe: { value: 7 } },
+          timeCap: { min: 10, max: 15, unit: "min" },
+          notes: "first block",
+        },
+      });
+      const blockSecond = await cleanupRaw.block.create({
+        data: {
+          sessionId: session.id,
+          order: 20,
+        },
+      });
+
+      await cleanupRaw.blockLabelAssignment.create({
+        data: { blockId: blockFirst.id, labelId: blockLabelFirst.id, order: 10 },
+      });
+      await cleanupRaw.blockLabelAssignment.create({
+        data: { blockId: blockFirst.id, labelId: blockLabelSecond.id, order: 20 },
+      });
+      await cleanupRaw.blockLabelAssignment.create({
+        data: { blockId: blockSecond.id, labelId: blockLabelFirst.id, order: 10 },
+      });
+
+      try {
+        const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
+
+        const tuesday = result.days[1];
+
+        expect(tuesday?.dayOfWeek).toBe("TUESDAY");
+        expect(tuesday?.sessions).toHaveLength(1);
+
+        const blocks = tuesday?.sessions[0]?.blocks ?? [];
+
+        expect(blocks).toHaveLength(2);
+        expect(blocks[0]?.id).toBe(blockFirst.id);
+        expect(blocks[0]?.order).toBe(10);
+        expect(blocks[0]?.intensity).toEqual({ rpe: { value: 7 } });
+        expect(blocks[0]?.timeCap).toEqual({ min: 10, max: 15, unit: "min" });
+        expect(blocks[0]?.notes).toBe("first block");
+        expect(blocks[0]?.labels).toHaveLength(2);
+        expect(blocks[0]?.labels[0]?.id).toBe(blockLabelFirst.id);
+        expect(blocks[0]?.labels[1]?.id).toBe(blockLabelSecond.id);
+
+        expect(blocks[1]?.id).toBe(blockSecond.id);
+        expect(blocks[1]?.order).toBe(20);
+        expect(blocks[1]?.intensity).toBeNull();
+        expect(blocks[1]?.timeCap).toBeNull();
+        expect(blocks[1]?.notes).toBeNull();
+        expect(blocks[1]?.labels).toHaveLength(1);
+        expect(blocks[1]?.labels[0]?.id).toBe(blockLabelFirst.id);
+      } finally {
+        await cleanupRaw.blockLabelAssignment
+          .deleteMany({ where: { blockId: { in: [blockFirst.id, blockSecond.id] } } })
+          .catch(() => {});
+        await cleanupRaw.block.delete({ where: { id: blockFirst.id } }).catch(() => {});
+        await cleanupRaw.block.delete({ where: { id: blockSecond.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+        await cleanupRaw.label.delete({ where: { id: blockLabelFirst.id } }).catch(() => {});
+        await cleanupRaw.label.delete({ where: { id: blockLabelSecond.id } }).catch(() => {});
+      }
+    });
+
+    it("returns blocks: [] for a session without any blocks", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "FRIDAY" },
+      });
+      const session = await cleanupRaw.session.create({
+        data: { dayId: day.id, order: 10 },
+      });
+
+      try {
+        const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
+
+        const friday = result.days[4];
+
+        expect(friday?.dayOfWeek).toBe("FRIDAY");
+        expect(friday?.sessions).toHaveLength(1);
+        expect(friday?.sessions[0]?.blocks).toEqual([]);
+      } finally {
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+
+    it("isolates blocks across sessions on the same day", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "SATURDAY" },
+      });
+      const sessionA = await cleanupRaw.session.create({
+        data: { dayId: day.id, order: 10 },
+      });
+      const sessionB = await cleanupRaw.session.create({
+        data: { dayId: day.id, order: 20 },
+      });
+      const blockA1 = await cleanupRaw.block.create({
+        data: { sessionId: sessionA.id, order: 10 },
+      });
+      const blockA2 = await cleanupRaw.block.create({
+        data: { sessionId: sessionA.id, order: 20 },
+      });
+      const blockB = await cleanupRaw.block.create({
+        data: { sessionId: sessionB.id, order: 10 },
+      });
+
+      try {
+        const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
+
+        const saturday = result.days[5];
+
+        expect(saturday?.dayOfWeek).toBe("SATURDAY");
+        expect(saturday?.sessions).toHaveLength(2);
+
+        const sessionAResponse = saturday?.sessions[0];
+        const sessionBResponse = saturday?.sessions[1];
+
+        expect(sessionAResponse?.id).toBe(sessionA.id);
+        expect(sessionAResponse?.blocks).toHaveLength(2);
+        expect(sessionAResponse?.blocks.map((b) => b.id)).toEqual([blockA1.id, blockA2.id]);
+        expect(sessionAResponse?.blocks.every((b) => b.sessionId === sessionA.id)).toBe(true);
+
+        expect(sessionBResponse?.id).toBe(sessionB.id);
+        expect(sessionBResponse?.blocks).toHaveLength(1);
+        expect(sessionBResponse?.blocks[0]?.id).toBe(blockB.id);
+        expect(sessionBResponse?.blocks[0]?.sessionId).toBe(sessionB.id);
+      } finally {
+        await cleanupRaw.block.delete({ where: { id: blockA1.id } }).catch(() => {});
+        await cleanupRaw.block.delete({ where: { id: blockA2.id } }).catch(() => {});
+        await cleanupRaw.block.delete({ where: { id: blockB.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: sessionA.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: sessionB.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
   });
 
   describe("upsertNotes", () => {

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { dayOfWeekSchema } from "../_shared";
+import { blockSchema } from "../block";
 import { labelSchema } from "../label";
 import { sessionSchema } from "../session";
 
@@ -8,6 +9,7 @@ import { DAY_CONSTANTS } from "./day.constants";
 
 export const sessionWithLabelSchema = sessionSchema.extend({
   label: labelSchema.nullable(),
+  blocks: z.array(blockSchema),
 });
 
 export const daySlotSchema = z.object({
