@@ -14,6 +14,7 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteSession, useUpdateSession } from "@app/lib/hooks";
 
+import { BlockList } from "./block-list";
 import { SessionLabelSelect } from "./session-label-select";
 import { SessionNotesField } from "./session-notes-field";
 
@@ -92,6 +93,15 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
           <MoreVertIcon fontSize="small" />
         </IconButton>
       </Stack>
+
+      <Box sx={{ pt: 1.5 }}>
+        <BlockList
+          planId={planId}
+          startDate={startDate}
+          sessionId={session.id}
+          blocks={session.blocks}
+        />
+      </Box>
 
       <Menu anchorEl={anchorRef.current} open={menuOpen} onClose={() => setMenuOpen(false)}>
         <MenuItem
