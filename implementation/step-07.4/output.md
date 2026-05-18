@@ -82,6 +82,7 @@
 **NEW (Step 7.4 surfaced):**
 
 - **PLAN-001 — Planner adversarial axis "static analysis"**: extracting factories returning JSX в `@repo/ui` triggers `react/no-multi-comp` + `react/display-name`. Future planner spec'и для `@repo/ui` edits должны верифицировать lint rule impact (mental run или explicit instruction "не выделять JSX-returning helpers в module scope в `@repo/ui`"). Severity: WORKFLOW. Add к `[[planner-adversarial-review]]` axes.
+- **QA-023 — Flaky timing-proxy assertion в `packages/api-server/src/endpoints/lms/block/admin.test.ts:406`**: тест `does not retry P2002 collision under retryOnP2034 wrap` использует `expect(elapsed).toBeLessThan(50)` как proxy для проверки отсутствия retry. Threshold 50ms слишком tight для real-world Postgres single-INSERT roundtrip + assertion overhead под нагрузкой (на этом репро 1 run @ 68ms из 3 при идентичном коде; 2 другие run'a green). Behavioral invariant корректный, но timing-proxy fragile. Fix options: (1) widen threshold к 200ms; (2) заменить timing-proxy на call-counter spy via `vi.spyOn` на underlying prisma method; (3) проверять отсутствие retry через `retryOnP2034` internal logging. Severity: INFRA/test-quality. Не блокирует Step 7.4 close-out.
 
 **Closed по Step 7.4:**
 
