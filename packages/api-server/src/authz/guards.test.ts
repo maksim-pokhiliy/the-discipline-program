@@ -13,7 +13,12 @@ import {
   createTestUser,
 } from "../test/helpers";
 
-import { resolveCoachId, verifyAthleteBelongsToCoach, verifyPlanOwnership } from "./guards";
+import {
+  resolveCoachId,
+  verifyAthleteBelongsToCoach,
+  verifyBlockOwnership,
+  verifyPlanOwnership,
+} from "./guards";
 
 describe("platform guards", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
@@ -162,6 +167,78 @@ describe("platform guards", () => {
       await expect(
         verifyAthleteBelongsToCoach(nonAssignedUser.id, coach.profile.id),
       ).rejects.toThrow(ForbiddenError);
+    });
+  });
+
+  describe("verifyBlockOwnership", () => {
+    let weekId: string;
+    let dayId: string;
+    let sessionId: string;
+    let blockId: string;
+
+    beforeAll(async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: plan.id, startDate: new Date(Date.UTC(2026, 4, 18)) },
+      });
+
+      weekId = week.id;
+
+      const day = await cleanupRaw.day.create({
+        data: { weekId, dayOfWeek: "TUESDAY" },
+      });
+
+      dayId = day.id;
+
+      const session = await cleanupRaw.session.create({
+        data: { dayId, order: 10 },
+      });
+
+      sessionId = session.id;
+
+      const block = await cleanupRaw.block.create({
+        data: { sessionId, order: 10 },
+      });
+
+      blockId = block.id;
+    });
+
+    afterAll(async () => {
+      await cleanupRaw.block.delete({ where: { id: blockId } }).catch(() => {});
+      await cleanupRaw.session.delete({ where: { id: sessionId } }).catch(() => {});
+      await cleanupRaw.day.delete({ where: { id: dayId } }).catch(() => {});
+      await cleanupRaw.week.delete({ where: { id: weekId } }).catch(() => {});
+    });
+
+    it("returns chain ids and status for the plan creator", async () => {
+      await expect(verifyBlockOwnership(blockId, coach.user.id)).resolves.toEqual({
+        status: TrainingPlanStatus.DRAFT,
+        sessionId,
+        dayId,
+        weekId,
+        planId: plan.id,
+      });
+    });
+
+    it("throws ForbiddenError for an unrelated coach", async () => {
+      await expect(verifyBlockOwnership(blockId, otherCoach.user.id)).rejects.toThrow(
+        ForbiddenError,
+      );
+    });
+
+    it("returns chain ids and status for a HEAD_COACH bypass", async () => {
+      await expect(verifyBlockOwnership(blockId, headCoachUser.id)).resolves.toEqual({
+        status: TrainingPlanStatus.DRAFT,
+        sessionId,
+        dayId,
+        weekId,
+        planId: plan.id,
+      });
+    });
+
+    it("throws NotFoundError when block does not exist", async () => {
+      await expect(
+        verifyBlockOwnership("clz0000000000000000000000", coach.user.id),
+      ).rejects.toThrow(NotFoundError);
     });
   });
 });

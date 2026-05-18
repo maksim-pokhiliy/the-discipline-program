@@ -169,3 +169,70 @@ export const verifySessionOwnership = async (
 
   throw new ForbiddenError("Session does not belong to this coach");
 };
+
+export const verifyBlockOwnership = async (
+  blockId: string,
+  userId: string,
+): Promise<{
+  status: TrainingPlanStatus;
+  sessionId: string;
+  dayId: string;
+  weekId: string;
+  planId: string;
+}> => {
+  const block = await prisma.block.findUnique({
+    where: { id: blockId },
+    select: {
+      sessionId: true,
+      session: {
+        select: {
+          dayId: true,
+          day: {
+            select: {
+              weekId: true,
+              week: {
+                select: {
+                  planId: true,
+                  plan: { select: { creatorId: true, deletedAt: true, status: true } },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!block || block.session.day.week.plan.deletedAt !== null) {
+    throw new NotFoundError("Block not found", { blockId });
+  }
+
+  const plan = block.session.day.week.plan;
+
+  if (plan.creatorId === userId) {
+    return {
+      status: TRAINING_PLAN_STATUS_MAP[plan.status],
+      sessionId: block.sessionId,
+      dayId: block.session.dayId,
+      weekId: block.session.day.weekId,
+      planId: block.session.day.week.planId,
+    };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+
+  if (user && isAdminOrHeadCoach(ROLE_MAP[user.role])) {
+    return {
+      status: TRAINING_PLAN_STATUS_MAP[plan.status],
+      sessionId: block.sessionId,
+      dayId: block.session.dayId,
+      weekId: block.session.day.weekId,
+      planId: block.session.day.week.planId,
+    };
+  }
+
+  throw new ForbiddenError("Block does not belong to this coach");
+};

@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { describe, expect, it } from "vitest";
+import { z } from "zod";
 
 import { BadRequestError, ConflictError, InternalServerError, NotFoundError } from "@repo/errors";
 
@@ -123,5 +124,48 @@ describe("handlePrismaError", () => {
 
   it("non-Error value is rethrown", () => {
     expect(() => handlePrismaError("string error", { entity: "X" })).toThrow();
+  });
+
+  it("ZodError throws InternalServerError with DbCorruption kind and structured issues", () => {
+    const parseResult = z.object({ rpe: z.object({ value: z.number().positive() }) }).safeParse({
+      rpe: { value: -5 },
+    });
+
+    if (parseResult.success) {
+      throw new Error("test setup: expected Zod parse to fail");
+    }
+
+    expect(() => handlePrismaError(parseResult.error, { entity: "Block" })).toThrow(
+      InternalServerError,
+    );
+
+    try {
+      handlePrismaError(parseResult.error, { entity: "Block" });
+    } catch (e) {
+      const err = e as InternalServerError;
+
+      expect(err.message).toBe("Block content failed schema validation");
+      expect(err.details?.kind).toBe("DbCorruption");
+      expect(err.details?.entity).toBe("Block");
+      expect(Array.isArray(err.details?.issues)).toBe(true);
+
+      const issues = err.details?.issues as Array<{ path: string; message: string; code: string }>;
+
+      expect(issues.length).toBeGreaterThan(0);
+      expect(issues[0]?.path).toContain("rpe");
+    }
+  });
+
+  it("non-Zod non-Prisma Error subclass still rethrown as-is (regression guard for ZodError branch)", () => {
+    class CustomError extends Error {
+      constructor(message: string) {
+        super(message);
+        this.name = "CustomError";
+      }
+    }
+
+    const error = new CustomError("custom failure");
+
+    expect(() => handlePrismaError(error, { entity: "X" })).toThrow(CustomError);
   });
 });
