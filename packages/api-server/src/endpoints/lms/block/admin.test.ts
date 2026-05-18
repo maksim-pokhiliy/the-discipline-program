@@ -464,7 +464,7 @@ describe("lmsBlockApi", () => {
   });
 
   describe("delete", () => {
-    it("removes the Block and cascades labelAssignments", async () => {
+    it("removes the Block and cascades labelAssignments + schemas", async () => {
       const ctx = await provisionSession();
       const block = await cleanupRaw.block.create({
         data: { sessionId: ctx.session.id, order: 10 },
@@ -476,6 +476,22 @@ describe("lmsBlockApi", () => {
           { blockId: block.id, labelId: blockLabelB, order: 20 },
         ],
       });
+
+      const archetype = await cleanupRaw.archetype.findFirst({
+        select: { id: true, kind: true },
+      });
+
+      if (archetype) {
+        await cleanupRaw.schema.create({
+          data: {
+            blockId: block.id,
+            order: 10,
+            kind: archetype.kind,
+            archetypeId: archetype.id,
+            archetypeParams: {},
+          },
+        });
+      }
 
       try {
         await lmsBlockApi.delete(coach.user.id, block.id);
@@ -489,7 +505,16 @@ describe("lmsBlockApi", () => {
         });
 
         expect(assignmentsAfter).toEqual([]);
+
+        if (archetype) {
+          const schemasAfter = await cleanupRaw.schema.findMany({
+            where: { blockId: block.id },
+          });
+
+          expect(schemasAfter).toEqual([]);
+        }
       } finally {
+        await cleanupRaw.schema.deleteMany({ where: { blockId: block.id } }).catch(() => {});
         await ctx.cleanup();
       }
     });

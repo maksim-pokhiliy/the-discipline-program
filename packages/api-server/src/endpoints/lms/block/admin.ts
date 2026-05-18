@@ -24,6 +24,39 @@ const BLOCK_WITH_LABELS_INCLUDE = {
     include: { label: true },
     orderBy: { order: "asc" as const },
   },
+} satisfies Prisma.BlockInclude;
+
+type TxClient = Omit<
+  typeof prisma,
+  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
+>;
+
+const assertLabelsApplicable = async (tx: TxClient, labelIds: readonly string[]): Promise<void> => {
+  if (labelIds.length === 0) {
+    return;
+  }
+
+  const labels = await tx.label.findMany({
+    where: { id: { in: [...labelIds] } },
+    select: { id: true, applicableLevels: true },
+  });
+
+  if (labels.length !== labelIds.length) {
+    const missing = labelIds.filter((id) => !labels.some((l) => l.id === id));
+
+    throw new NotFoundError("Label not found", { missing });
+  }
+
+  for (const label of labels) {
+    const levels = label.applicableLevels as AppLevelValue[];
+
+    if (!levels.includes("BLOCK")) {
+      throw new BadRequestError("Label is not applicable to BLOCK level", {
+        labelId: label.id,
+        applicableLevels: levels,
+      });
+    }
+  }
 };
 
 export const lmsBlockApi = {
@@ -69,29 +102,7 @@ export const lmsBlockApi = {
               throw new NotFoundError("Session not found", { sessionId, planId });
             }
 
-            if (labelIds.length > 0) {
-              const labels = await tx.label.findMany({
-                where: { id: { in: [...labelIds] } },
-                select: { id: true, applicableLevels: true },
-              });
-
-              if (labels.length !== labelIds.length) {
-                const missing = labelIds.filter((id) => !labels.some((l) => l.id === id));
-
-                throw new NotFoundError("Label not found", { missing });
-              }
-
-              for (const label of labels) {
-                const levels = label.applicableLevels as AppLevelValue[];
-
-                if (!levels.includes("BLOCK")) {
-                  throw new BadRequestError("Label is not applicable to BLOCK level", {
-                    labelId: label.id,
-                    applicableLevels: levels,
-                  });
-                }
-              }
-            }
+            await assertLabelsApplicable(tx, labelIds);
 
             const max = await tx.block.aggregate({
               where: { sessionId },
@@ -247,29 +258,7 @@ export const lmsBlockApi = {
       const block = await retryOnP2034(() =>
         prisma.$transaction(
           async (tx) => {
-            if (data.labelIds.length > 0) {
-              const labels = await tx.label.findMany({
-                where: { id: { in: [...data.labelIds] } },
-                select: { id: true, applicableLevels: true },
-              });
-
-              if (labels.length !== data.labelIds.length) {
-                const missing = data.labelIds.filter((id) => !labels.some((l) => l.id === id));
-
-                throw new NotFoundError("Label not found", { missing });
-              }
-
-              for (const label of labels) {
-                const levels = label.applicableLevels as AppLevelValue[];
-
-                if (!levels.includes("BLOCK")) {
-                  throw new BadRequestError("Label is not applicable to BLOCK level", {
-                    labelId: label.id,
-                    applicableLevels: levels,
-                  });
-                }
-              }
-            }
+            await assertLabelsApplicable(tx, data.labelIds);
 
             await tx.blockLabelAssignment.deleteMany({ where: { blockId } });
 
