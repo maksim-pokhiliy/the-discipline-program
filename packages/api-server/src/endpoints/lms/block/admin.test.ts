@@ -809,7 +809,7 @@ describe("lmsBlockApi", () => {
       }
     });
 
-    it("concurrent assignLabels on the same block — at least one succeeds via P2034 retry", async () => {
+    it("concurrent assignLabels on the same block — at least one succeeds and stored state matches a winner", async () => {
       const ctx = await provisionSession();
       const block = await cleanupRaw.block.create({
         data: { sessionId: ctx.session.id, order: 10 },
@@ -825,7 +825,12 @@ describe("lmsBlockApi", () => {
           }),
         ]);
 
-        expect(first.status === "fulfilled" || second.status === "fulfilled").toBe(true);
+        const fulfilled = [first, second].filter(
+          (r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof lmsBlockApi.assignLabels>>> =>
+            r.status === "fulfilled",
+        );
+
+        expect(fulfilled.length).toBeGreaterThanOrEqual(1);
 
         const stored = await cleanupRaw.blockLabelAssignment.findMany({
           where: { blockId: block.id },
@@ -833,16 +838,12 @@ describe("lmsBlockApi", () => {
           select: { labelId: true },
         });
 
-        const allowedFinalStates = [
-          [{ labelId: blockLabelA }, { labelId: blockLabelB }],
-          [{ labelId: blockLabelC }],
-        ];
-
-        const matches = allowedFinalStates.some(
-          (state) => JSON.stringify(state) === JSON.stringify(stored),
+        const storedKey = JSON.stringify(stored);
+        const fulfilledKeys = fulfilled.map((r) =>
+          JSON.stringify(r.value.labels.map((l) => ({ labelId: l.id }))),
         );
 
-        expect(matches).toBe(true);
+        expect(fulfilledKeys).toContain(storedKey);
       } finally {
         await ctx.cleanup();
       }
