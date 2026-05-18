@@ -10,11 +10,11 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack } from "@mui/material";
 
 import type { SessionWithLabel } from "@repo/contracts/lms/day";
-import type { Label } from "@repo/contracts/lms/label";
 import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteSession, useUpdateSession } from "@app/lib/hooks";
 
+import { BlockList } from "./block-list";
 import { SessionLabelSelect } from "./session-label-select";
 import { SessionNotesField } from "./session-notes-field";
 
@@ -22,17 +22,9 @@ type SessionCardProps = {
   session: SessionWithLabel;
   planId: string;
   startDate: string;
-  sessionLabelOptions: Label[];
-  sessionLabelOptionsLoading: boolean;
 };
 
-export const SessionCard: React.FC<SessionCardProps> = ({
-  session,
-  planId,
-  startDate,
-  sessionLabelOptions,
-  sessionLabelOptionsLoading,
-}) => {
+export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, startDate }) => {
   const updateSession = useUpdateSession(planId, startDate);
   const deleteSession = useDeleteSession(planId, startDate);
 
@@ -85,12 +77,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         </IconButton>
 
         <Box sx={{ width: 240, flexShrink: 0 }}>
-          <SessionLabelSelect
-            value={session.label}
-            options={sessionLabelOptions}
-            isLoading={sessionLabelOptionsLoading}
-            onChange={handleLabelChange}
-          />
+          <SessionLabelSelect value={session.label} onChange={handleLabelChange} />
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -106,6 +93,15 @@ export const SessionCard: React.FC<SessionCardProps> = ({
           <MoreVertIcon fontSize="small" />
         </IconButton>
       </Stack>
+
+      <Box sx={{ pt: 1.5 }}>
+        <BlockList
+          planId={planId}
+          startDate={startDate}
+          sessionId={session.id}
+          blocks={session.blocks}
+        />
+      </Box>
 
       <Menu anchorEl={anchorRef.current} open={menuOpen} onClose={() => setMenuOpen(false)}>
         <MenuItem

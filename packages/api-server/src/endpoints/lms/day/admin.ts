@@ -17,7 +17,21 @@ import { DAY_OF_WEEK_TO_PRISMA, resolveWeekStartDate } from "../_shared";
 
 const DAY_INCLUDE = {
   label: true,
-  sessions: { orderBy: { order: "asc" as const }, include: { label: true } },
+  sessions: {
+    orderBy: { order: "asc" as const },
+    include: {
+      label: true,
+      blocks: {
+        orderBy: { order: "asc" as const },
+        include: {
+          labelAssignments: {
+            orderBy: { order: "asc" as const },
+            include: { label: true },
+          },
+        },
+      },
+    },
+  },
 } as const;
 
 export const lmsDayMetadataApi = {

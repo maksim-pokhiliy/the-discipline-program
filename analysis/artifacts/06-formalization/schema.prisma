@@ -204,6 +204,7 @@ model Block {
   labelAssignments BlockLabelAssignment[]
   schemas          Schema[]
 
+  @@unique([sessionId, order])
   @@index([sessionId, order])
 }
 

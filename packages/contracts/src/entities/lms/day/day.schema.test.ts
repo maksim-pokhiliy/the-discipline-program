@@ -31,6 +31,19 @@ const baseSessionWithLabel = {
   createdAt: new Date(),
   updatedAt: new Date(),
   label: null,
+  blocks: [],
+};
+
+const baseBlock = {
+  id: "clp9z8x7w0000abcd1234dddd",
+  sessionId: "clp9z8x7w0000abcd1234abcd",
+  order: 10,
+  intensity: { rpe: { value: 7 } },
+  timeCap: { min: 10, max: 15, unit: "min" as const },
+  notes: "block focus",
+  labels: [baseLabel],
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 describe("daySlotSchema", () => {
@@ -133,6 +146,32 @@ describe("sessionWithLabelSchema", () => {
 
   it("does not expose freezeLoadsAtCreation (Q10 carry-forward regression guard)", () => {
     expect(sessionWithLabelSchema.shape).not.toHaveProperty("freezeLoadsAtCreation");
+  });
+
+  it("accepts blocks: [] (empty array — session without blocks)", () => {
+    const result = sessionWithLabelSchema.safeParse(baseSessionWithLabel);
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.blocks).toEqual([]);
+    }
+  });
+
+  it("accepts a populated blocks array with embedded labels", () => {
+    const result = sessionWithLabelSchema.safeParse({
+      ...baseSessionWithLabel,
+      blocks: [baseBlock],
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.blocks).toHaveLength(1);
+      expect(result.data.blocks[0]?.id).toBe(baseBlock.id);
+      expect(result.data.blocks[0]?.labels).toHaveLength(1);
+      expect(result.data.blocks[0]?.labels[0]?.id).toBe(baseLabel.id);
+    }
   });
 });
 

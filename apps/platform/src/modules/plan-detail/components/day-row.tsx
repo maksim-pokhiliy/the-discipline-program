@@ -21,10 +21,6 @@ type DayRowProps = {
   label: Label | null;
   notes: string | null;
   sessions: SessionWithLabel[];
-  labelOptions: Label[];
-  labelOptionsLoading: boolean;
-  sessionLabelOptions: Label[];
-  sessionLabelOptionsLoading: boolean;
 };
 
 export const DayRow: React.FC<DayRowProps> = ({
@@ -35,10 +31,6 @@ export const DayRow: React.FC<DayRowProps> = ({
   label,
   notes,
   sessions,
-  labelOptions,
-  labelOptionsLoading,
-  sessionLabelOptions,
-  sessionLabelOptionsLoading,
 }) => {
   const updateLabel = useUpdateDayLabel(planId, startDate, dayOfWeek);
   const updateNotes = useUpdateDayNotes(planId, startDate, dayOfWeek);
@@ -77,12 +69,7 @@ export const DayRow: React.FC<DayRowProps> = ({
         alignItems={{ xs: "stretch", md: "flex-start" }}
       >
         <Box sx={{ width: { xs: "100%", md: 280 }, flexShrink: 0 }}>
-          <DayLabelSelect
-            value={label}
-            options={labelOptions}
-            isLoading={labelOptionsLoading}
-            onChange={(labelId) => updateLabel.mutate({ labelId })}
-          />
+          <DayLabelSelect value={label} onChange={(labelId) => updateLabel.mutate({ labelId })} />
         </Box>
         <Box sx={{ flex: 1, minWidth: 0 }}>
           <DayNotesField value={notes} onCommit={(next) => updateNotes.mutate({ notes: next })} />
@@ -94,8 +81,6 @@ export const DayRow: React.FC<DayRowProps> = ({
         startDate={startDate}
         dayOfWeek={dayOfWeek}
         sessions={sessions}
-        sessionLabelOptions={sessionLabelOptions}
-        sessionLabelOptionsLoading={sessionLabelOptionsLoading}
       />
     </Stack>
   );

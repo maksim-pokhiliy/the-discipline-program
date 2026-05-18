@@ -1328,6 +1328,12 @@ Resolution для named-exercise-program archetype:
 - `Schema.header String?` — optional display override. Algorithm: `displayHeader = schema.header ?? (exercise.canonicalName + ":")` (см. §3.13).
 - Block-008 sample-case: `exerciseId → DB Bulgarian split squats`, `Schema.header = "Bulgarian split squats:"` (override для bare display).
 
+### §4.7 Step 7.3.6 — Block (sessionId, order) composite uniqueness constraint
+
+Added 2026-05-18 per Step 7.3.6 (closes Step 7.1 Stage 6 QA-001 carry-forward). Prisma `@@unique([sessionId, order])` on Block model enforces composite uniqueness at the DB layer. Pre-existing `lmsBlockApi.create` flow (`_max(order) + 10` inside `Serializable` transaction wrapped in `retryOnP2034`) was previously protected only by Postgres SSI false-positive detection — under SSI predicate-lock granularity edge cases, concurrent creates on the same session could silently insert duplicate `(sessionId, order)` rows. Constraint addition eliminates the silent-corruption surface; P2002 surface on the loser propagates as `ConflictError` via existing `handlePrismaError`. Future enhancement (deferred carry-forward QA-001b): wrap `retryOnP2034` (or new variant) to also retry P2002 на `_max+N` insert pattern, preserving prior concurrent UX where two simultaneous creates often produced fulfilledCount=2. Out of QA-001 closure scope.
+
+Reorder fix (scope-expansion ratified at execution time after intermediate-state P2002 surfaced in the `reorder` happy-path swap test — planner adversarial pass had only considered concurrent reorder+create): `lmsBlockApi.reorder` now uses a two-pass `UPDATE` pattern within a single `prisma.$transaction([...])` batch — Pass 1 shifts every target row to a negative-order placeholder (`-1, -2, -3, ...`) to clear unique-constraint collisions on stateful swap patterns (e.g., `[c, a, b]` from initial `[a:10, b:20, c:30]`); Pass 2 assigns the final sparse orders (`10, 20, 30, ...`). Atomic via Prisma batch transaction. Required because Postgres unique constraints are NOT `DEFERRABLE` by default — they fire at statement boundary, so direct UPDATEs that swap orders collide intra-transaction. Pure app-layer fix; the constraint itself stays in Prisma DSL per § 0.9 convention (no SQL outside `apply-sql-checks.ts`).
+
 ---
 
 ## §5. Open items / future work

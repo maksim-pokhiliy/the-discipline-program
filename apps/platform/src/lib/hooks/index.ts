@@ -1,3 +1,4 @@
+export * from "./use-blocks";
 export * from "./use-blur-commit";
 export * from "./use-coach-athletes";
 export * from "./use-current-user-role";
@@ -5,6 +6,7 @@ export * from "./use-coach-action-items";
 export * from "./use-coach-dashboard";
 export * from "./use-coach-invite";
 export * from "./use-day-metadata";
+export * from "./use-label-options";
 export * from "./use-label-search";
 export * from "./use-sessions";
 export * from "./use-training-plans";

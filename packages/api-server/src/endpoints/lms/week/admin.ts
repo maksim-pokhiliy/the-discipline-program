@@ -27,7 +27,21 @@ export const lmsWeekApi = {
         days: {
           include: {
             label: true,
-            sessions: { orderBy: { order: "asc" }, include: { label: true } },
+            sessions: {
+              orderBy: { order: "asc" },
+              include: {
+                label: true,
+                blocks: {
+                  orderBy: { order: "asc" },
+                  include: {
+                    labelAssignments: {
+                      orderBy: { order: "asc" },
+                      include: { label: true },
+                    },
+                  },
+                },
+              },
+            },
           },
         },
       },
