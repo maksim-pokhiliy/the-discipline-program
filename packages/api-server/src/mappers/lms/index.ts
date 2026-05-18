@@ -1,3 +1,4 @@
+export * from "./block.mapper";
 export * from "./day.mapper";
 export * from "./enum-maps";
 export * from "./exercise.enum-maps";
