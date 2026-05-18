@@ -1,6 +1,7 @@
 export { AddBlockButton } from "./add-block-button";
 export { AddSessionButton } from "./add-session-button";
 export { BlockCard } from "./block-card";
+export { BlockEditorModal } from "./block-editor-modal";
 export { BlockLabelSelect } from "./block-label-select";
 export { BlockList } from "./block-list";
 export { BlockNotesField } from "./block-notes-field";
