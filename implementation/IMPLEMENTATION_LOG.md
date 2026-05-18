@@ -22,6 +22,31 @@
 
 <!-- entries appended below this line, newest first -->
 
+## PR #195 merged into `main` (Steps 7.0 + 7.1 + 7.2 batch)
+
+- **Date**: 2026-05-18T??:??:??Z (merge commit `8ee4b720`; clock not captured at merge — recreate-branch step retroactive close-out)
+- **Merge commit**: `8ee4b720 Merge pull request #195 from maksim-pokhiliy/feat/training-domain`
+- **PR URL**: https://github.com/maksim-pokhiliy/the-discipline-program/pull/195
+- **Scope**: 16 commits / 39 files / +8264 −36 LOC. Batches **Step 7.0** (Block contract slice + Intensity/TimeCap shared VOs — 2 atomic commits) + **Step 7.1** (api-server `lmsBlockApi` slice + `verifyBlockOwnership` guard + `mapToBlock` mapper — 6 commits) + **Step 7.2** (Platform HTTP routes для Block + `handlePrismaError` ZodError DB-corruption defence — 4 commits). Complete **Block backend vertical** (contracts → api-server slice → HTTP routes); UI consumers defer к Steps 7.3-7.5 next batch. Continues PR #194 (Steps 6.6 + 6.7 UI batch).
+- **Pre-merge gates** (delegated к pre-push hook + GitHub CI per user direction; PR created без full local sweep — Step 7.x close-out verifications uncovered green state at each step):
+  - Pre-push hook 32/32 tasks (`dep:check + turbo lint check-types --filter="...[origin/main]"`) in ~15s — all green; `dep:check` 0 violations / 1173 modules.
+  - Husky pre-commit + commit-msg clean all 16 commits без `--no-verify` / `--no-edit` / `--no-gpg-sign`.
+  - Per-step root verification (check-types 16/16, lint 16/16, test 1068/1068, dep:check 0/1173, build 4/4) done at each Step 7.x close-out per PLANNING_STATE entries — confirmed green pre-PR-create.
+- **Browser smoke-tests**: **N/A** — backend-only PR (no UI surface). Smoke resumes Step 7.4 (BlockList UI surface — first scenario-based browser smoke с Step 6.7).
+- **No CI-blocking findings expected** during PR review — `/feature small` + `/feature` full Stage 5 reviewers APPROVED all 3 sub-steps individually: Step 7.0 (0 CRITICAL / 2 WARNING actioned / 3 INFO), Step 7.1 (0 CRITICAL / 3 WARNING actioned-or-deferred / 22 INFO), Step 7.2 (0 CRITICAL / 0 WARNING / 1 INFO). PR body documented per-sub-step deliverables + 4 deferred carry-forwards.
+- **Post-merge cleanup**: `feat/training-domain` deleted on `origin`; recreated locally from fresh `main` (HEAD `8ee4b720`) per `[[training-domain-workflow]]` convention.
+- **Carry-forwards into `main`** (all remain open per their original close-out entries; none blocker для Steps 7.3-7.5):
+  - **QA-001** schema `@@unique([sessionId, order])` constraint absence — schema change OOS Step 7.x; **action**: planner surface перед Step 8 thesis (dedicated mini-step OR Step 8.0 prepend).
+  - **QA-006** HEAD_COACH + ARCHIVED composition test — INFO optional, не blocker.
+  - **QA-019** D-7 outcome-only test acceptable — per `[[no-tech-debt-in-mocks]]`.
+  - **QA-022** TxClient Omit deny-list fragile к Prisma major upgrades — flag для `/upgrade @prisma/client` prompts.
+  - Hoist `BLOCK_WITH_LABELS_INCLUDE` к shared module — Step 8 trigger (Schema entity also wants include).
+  - `mapToBlockWithSchemas` mapper — Step 8 (Schema entity).
+  - React Context для label preload — Step 7.4 trigger (5-6 level prop drilling materializes per Step 6.6/6.7 deferred).
+  - Symbol rename `cms{Label,Exercise}AdminApi` → `lms*` — Step 6.1.5 deferred, low priority.
+  - `useLabelSearch({level:"BLOCK"})` third callsite — **Step 7.4** trigger (R1 ratification 2026-05-18 deferred from initially-staged Step 7.3 scope; consumer surface BlockLabelSelect lives Step 7.4).
+- **Process note — first PR cycle under `[[always-via-feature-skill]]` rule** (codified Step 6.7). Three sub-steps все ran через `/feature` (full pipeline для 7.1 multi-method api-server slice) или `/feature small` (для 7.0 contracts + 7.2 thin routes wrappers). Calibration confirmed: `/feature small` adequate для thin-wrapper / single-package additive steps (7.0 + 7.2); `/feature` full pipeline reserve для multi-method api-server slices (7.1) + UI surfaces (7.4 + 7.5 forthcoming). **Tenth cleanest run в ряд** holds (6.3 → 6.4 → 6.4.5 → 6.5 → 6.6 → 6.7 → 7.0 → 7.1 → 7.2). PR creation flow itself was clean — single `git push origin feat/training-domain -u` triggered pre-push hook (all green) → `gh pr create` returned URL immediately; no fix-loops, zero CI flakes pre-merge.
+
 ## Step 07.2 — Platform HTTP routes для Block + `handlePrismaError` ZodError DB-corruption defence
 
 - **Date**: 2026-05-18
