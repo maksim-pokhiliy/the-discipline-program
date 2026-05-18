@@ -280,59 +280,9 @@ Some steps (especially 9, 10) will likely split into sub-steps. Granularity lock
    - If @repo/ui extension is additive (non-breaking props/components), no cross-package broken trees → per-layer atomic OK.
    - Hypothesis: 4-6 per-layer atomic commits (depends on Phase decomposition).
 
-   **Executor handoff after thesis ratification**: user takes prompt path `implementation/step-07.5/prompt.md` to fresh Opus session; invokes `/feature` full pipeline; honors branch-cut override (stays on `feat/training-domain`); ships per § 3 phases; writes `implementation/step-07.5/output.md`. Then **coach validation-gate pause** per `[[training-domain-validation-gate]]` — surface 3 options (Schema editor / middle path / rich text drop) to user before Step 8 thesis.
+   **Executor handoff after thesis ratification**: user takes prompt path `implementation/step-07.5/prompt.md` to fresh Opus session; invokes `/feature` full pipeline; honors branch-cut override (stays on `feat/training-domain`); ships per § 3 phases; writes `implementation/step-07.5/output.md`. Then **Step 8 thesis cycle** per `[[training-domain-validation-gate]]` (refined 2026-05-18) — **user pre-committed Option 1 (full Schema editor)** mid-Step-7.5 thesis cycle 2026-05-18, rationale «там тренеру сейчас нечего показывать. он может создать сессию, блок, поперетаскивать их между собой. в рабочих условиях там нечего тестировать. идем по Option 1» (Step 7.4-7.5 surface = skeleton-only, insufficient evidence для meaningful coach validation; mini-gate framing was wrong). Middle/full-drop options removed from active queue unless coach validation post-Step-10 surfaces rejection signal triggering rip-eject contingency.
 
-   **Thesis cycle should resolve (6-7 OQ each with hypothesis)**:
-
-   - **(a) Verbatim-read existing surfaces per `[[scope-via-existing-patterns]]`** at thesis-write time:
-
-     - `apps/platform/src/modules/plan-detail/components/session-card.tsx` (Step 6.7 — canonical mirror для BlockCard: dnd-kit `useSortable` + drag-handle IconButton + LabelSelect + NotesField + kebab Menu → ConfirmationModal Delete sibling layout per D-3 plan-action-menu canon).
-     - `apps/platform/src/modules/plan-detail/components/session-list.tsx` (Step 6.7 — canonical mirror для BlockList: DndContext + SortableContext + Pointer/Keyboard sensors + verticalListSortingStrategy + optimistic local `sortedBlocks` + rollback `onError: setSortedBlocks(previousOrder)` + `useEffect([blocks])` invalidate-resync per OQ-D D1).
-     - `apps/platform/src/modules/plan-detail/components/add-session-button.tsx` (Step 6.7 — canonical mirror для AddBlockButton: instant-create через `useCreateBlock.mutate({})` per OQ-F F1).
-     - `apps/platform/src/modules/plan-detail/components/session-label-select.tsx` (Step 6.7 — canonical for **single**-Label select; BlockLabelSelect must be **multi** Label — OQ (b) below).
-     - `apps/platform/src/modules/plan-detail/components/session-notes-field.tsx` + `apps/platform/src/lib/hooks/use-blur-commit.ts` (Step 6.7 — canonical mirror для BlockNotesField; 4th `useBlurCommit` callsite trigger).
-     - `apps/platform/src/modules/plan-detail/views/plan-detail-view.tsx` (Step 6.6 + 6.7 — current 2 `useLabelSearch` calls + 4 props drilled через WeekGrid; insertion point для 3rd call OR React Context provider extraction).
-     - `packages/ui/src/components/label-select/index.tsx` (Step 6.7 — generic `LabelSelect Autocomplete<Label>` 73 LOC; verify `multiple: true` prop extension viability OR fork decision per OQ (b)).
-     - `apps/platform/src/lib/hooks/use-blocks.ts` (Step 7.3 — 5 hooks UI consumes here).
-
-   - **(b) BlockLabelSelect widget shape — extend or fork?** (OQ-3 from Step 7 top-level thesis, deferred к 7.4 since 7.0). Block needs **multi**-Label select (per Step 7.0 `assignBlockLabelsSchema = {labelIds: cuid[].max(MAX_LABELS_PER_BLOCK=10)}`). Two options:
-
-     - **B1 (extend `@repo/ui/LabelSelect`)** — add `multiple?: boolean` prop; пробросить к MUI Autocomplete `multiple` prop; widen `value` type `Label | Label[]`; existing single-select callsites (DayLabelSelect + SessionLabelSelect) pass `multiple={false}` (or omit, default false — preserves behavior). Cheap (~15 LOC change); minor type-narrowing complexity.
-     - **B2 (fork to new `@repo/ui/MultiLabelSelect`)** — copy-paste base, hardcode `multiple={true}`; new value type `Label[]`. Avoids variance complexity in single component but duplicates ~60 LOC. Two-file maintenance overhead.
-     - **Hypothesis: B1 (extend)** — TS variance over `multiple` boolean discriminator is standard MUI pattern (matches MUI Autocomplete itself); avoid duplication; existing callsites need zero changes per default `false`. **Прав?**
-
-   - **(c) React Context refactor scope** — Step 6.6/6.7 deferred trigger materializes here. Three useLabelSearch calls (DAY + SESSION + BLOCK) с 6+ level prop drilling = clear refactor signal. Two options:
-
-     - **C1 (full LabelOptionsContext at PlanDetailView)** — extract `<LabelOptionsProvider planId={planId}>` wrapping children; provides `{day: {options, isLoading}, session: {options, isLoading}, block: {options, isLoading}}`; consumers `useLabelOptions("DAY"|"SESSION"|"BLOCK")` hook reads context. Kills ALL drilling (4 → 0 props через WeekGrid + DayRow + SessionList + SessionCard). Refactor scope: WeekGrid signature − 4 props; DayRow signature − 2 props; SessionList/SessionCard signatures − 2 props; PlanDetailView wraps children в Provider.
-     - **C2 (BlockLabelContext only)** — narrow new Context just для BLOCK level; preserve existing DAY + SESSION prop drill from Step 6.6/6.7. Half-measure; doesn't kill drill; inconsistent.
-     - **Hypothesis: C1 (full refactor)** — Step 7.4 IS the planner-flagged trigger ("5-level prop drilling materializes" → actually 6-7 levels by time BlockList lands). Full refactor cheaper than half-measure since все surfaces (WeekGrid + DayRow + SessionList + SessionCard) already touched в Step 7.4 для BlockList integration; bundled refactor amortized. **Прав?**
-
-   - **(d) BlockCard scope — full mirror SessionCard или narrow first?** Block has more fields than Session (intensity + timeCap + multiple labels + notes vs Session's single label + notes). Step 7.4 risks UI scope sprawl. Options:
-
-     - **D1 (full mirror: dnd-kit reorder + ConfirmationModal Delete + kebab + Add + Multi-Label + Notes)** — match Session pattern 1:1 + 5th multi-label widget. Most consistent UX. Highest LOC budget.
-     - **D2 (narrow first: just create + delete + multi-label + notes, NO reorder)** — defer reorder к Step 7.5 OR follow-up. Saves dnd-kit integration complexity for first surface.
-
-     - **Hypothesis: D1 (full mirror)** — Block reorder is real coach workflow (drag block within session: warm-up → working sets → cooldown). Step 7.1 already shipped `reorder` api + Step 7.3 shipped `useReorderBlocks` hook — UI consumer должен arrive here, not be deferred. Block reorder mirror of Session reorder = low marginal cost (dnd-kit context already in tree). **Прав?**
-
-   - **(e) Intensity + TimeCap rendering в BlockCard — read-only inline или skip until 7.5?** Step 7.5 ships edit forms; Step 7.4 ships read surface only (per Step 7 thesis splitting). Options:
-
-     - **E1 (read-only inline в BlockCard)** — render Chip rows: "RPE 8" / "75% 1RM" / "Z3" / "5min cap" (per Intensity 5-dim + TimeCap shape). Read-only display; editing arrives Step 7.5 via dedicated `BlockIntensityEditor` / `BlockTimeCapEditor` modal/inline.
-     - **E2 (skip rendering until 7.5)** — BlockCard shows only labels + notes; intensity/timeCap fields hidden до Step 7.5 ship.
-     - **Hypothesis: E1 (read-only inline)** — keeps Step 7.5 cleanly form-only; read display сейчас validates coach can see programmed data (helps smoke-test trace); minimal LOC (~30-40). **Прав?**
-
-   - **(f) `useBlurCommit` 4th callsite trigger materializes** — Step 6.7 deferred ("3rd surface trigger; BlockNotes? — Step 7 candidate"). Step 7.4 BlockNotesField = 4th callsite (WeekNotes + DayNotesField + SessionNotesField + BlockNotesField). **Hypothesis**: thin wrapper around `useBlurCommit({value, onCommit})` mirror SessionNotesField verbatim — zero new abstractions. **Прав?**
-
-   - **(g) Mandatory adversarial pass per `[[planner-adversarial-review]]`** (5-6 axes — UI scope justifies wider sweep):
-     - Drag-handle a11y — touchAction:none + cursor:grab per Step 6.7 D-4 dnd-kit idiom. Mirror.
-     - Optimistic local sort state + rollback — `sortedBlocks` state mirror SessionList D-1 pattern.
-     - Empty state — first Block create instant via `useCreateBlock.mutate({})` server stores `{intensity:null, timeCap:null, notes:null, order=max+10, labels:[]}`. No form needed at create time (mirror AddSessionButton).
-     - Multi-Label widget UX — `Chip[]` rendering for selected; tag-style display; clear-on-X icon per MUI Autocomplete default.
-     - Context refactor regression risk — verify WeekNotes / DayLabelSelect / DayNotesField / SessionLabelSelect / SessionNotesField все still work post-Context cleanup; no prop-drop misses.
-     - Cross-Session BlockList — Block reorder scoped to single Session (mirror Step 6.1 Session reorder constraint — no cross-Day drag); enforce via SortableContext per-Session boundary.
-
-   Commit strategy per `[[husky-cross-package-squash]]` pre-check: scope mix = `apps/platform/` (UI surface) + likely `packages/ui/` (LabelSelect extension per (b) hypothesis B1). Cross-package change with extension → Phase 1 ship `@repo/ui` change first (additive `multiple` prop; non-breaking); Phase 2 consume в platform. NO broken intermediate trees expected (additive prop default false preserves behavior). **Per-phase atomic OK; if Context refactor + UI integration done in same commit causes large diff hard to review, split BlockList + Context as 2 commits** — final pick at thesis lock-time.
-
-2. **Step 7.5** — Intensity + TimeCap UI composites (form-driven per 5-dim Intensity + 3-field TimeCap; consume pre-shipped Step 7.0 D-2 affordances: `as const` tuples + standalone `rpeSchema`/`paceSchema`). `/feature` full pipeline. **Hypothesis**: BlockIntensityEditor + BlockTimeCapEditor inline-or-modal forms; trigger from BlockCard edit buttons (Step 7.4 shipped read-only display per OQ (e) above).
+2. **Step 7.5** — Intensity + TimeCap UI composites (form-driven per 5-dim Intensity + 3-field TimeCap; consume pre-shipped Step 7.0 D-2 affordances: `as const` tuples + standalone `rpeSchema`/`paceSchema`). `/feature` full pipeline. **Ratified at thesis 2026-05-18**: B1 single FormModal Edit-block (Intensity + TimeCap sections inside one form) + C1 per-dimension `<Switch>` + conditional reveal для 5 optional Intensity dims + D1 max-Toggle + unit ToggleButtonGroup для TimeCap + E1 Chip-row read display в BlockCard between header and BlockList + F no useBlurCommit (RHF-submitted form not blur-commit) + 6 new per-dim component files (5 Intensity dims + 1 TimeCap) per `[[one-component-per-file]]` + `[[planner-lint-impact-trace]]`. Pre-shipped affordances corrected vs handoff hypotheses: `TIME_CAP_UNITS = ["min", "sec"]` only (NO "round"); Intensity = multi-set struct (block-055 sample: `{pace: "easy", effortPercent: {value: 70}}`) NOT discriminated union.
 
 3. **Coach validation pause перед Step 8** (per `[[training-domain-validation-gate]]`) — после Step 7.5 close-out **surface to user**: 3 options для Step 8 (full Schema editor / middle path с rich text в Block.body / full rich text drop Steps 7-9). Mini coach-validation gate с current MVP (Plan + Sessions + Blocks с empty bodies / placeholder textarea) перед commit на самую дорогую часть workflow.
 
