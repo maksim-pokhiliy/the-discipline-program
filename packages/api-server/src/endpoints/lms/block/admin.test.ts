@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach, createTestPlan } from "../../../test/helpers";
+import { retryOnP2034 } from "../../../utils";
 
 import { lmsBlockApi } from "./admin";
 
@@ -351,6 +352,58 @@ describe("lmsBlockApi", () => {
           expect(stored[1]?.order).toBe(20);
           expect(new Set(stored.map((s) => s.id)).size).toBe(2);
         }
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("enforces composite uniqueness on (sessionId, order) via P2002", async () => {
+      const ctx = await provisionSession();
+
+      try {
+        await cleanupRaw.block.create({
+          data: { sessionId: ctx.session.id, order: 10 },
+        });
+
+        await expect(
+          cleanupRaw.block.create({
+            data: { sessionId: ctx.session.id, order: 10 },
+          }),
+        ).rejects.toMatchObject({
+          code: "P2002",
+        });
+
+        const stored = await cleanupRaw.block.count({ where: { sessionId: ctx.session.id } });
+
+        expect(stored).toBe(1);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("does not retry P2002 collision under retryOnP2034 wrap", async () => {
+      const ctx = await provisionSession();
+
+      await cleanupRaw.block.create({
+        data: { sessionId: ctx.session.id, order: 10 },
+      });
+
+      try {
+        const start = Date.now();
+
+        await expect(
+          retryOnP2034(() =>
+            cleanupRaw.block.create({
+              data: { sessionId: ctx.session.id, order: 10 },
+            }),
+          ),
+        ).rejects.toMatchObject({
+          code: "P2002",
+        });
+
+        const elapsed = Date.now() - start;
+
+        expect(elapsed).toBeLessThan(50);
       } finally {
         await ctx.cleanup();
       }

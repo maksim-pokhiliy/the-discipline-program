@@ -233,13 +233,16 @@ export const lmsBlockApi = {
     }
 
     try {
-      const updated = await prisma.$transaction(
-        data.orderedIds.map((id, i) =>
+      const updated = await prisma.$transaction([
+        ...data.orderedIds.map((id, i) =>
+          prisma.block.update({ where: { id }, data: { order: -(i + 1) } }),
+        ),
+        ...data.orderedIds.map((id, i) =>
           prisma.block.update({ where: { id }, data: { order: (i + 1) * 10 } }),
         ),
-      );
+      ]);
 
-      return updated.map(mapToBlock);
+      return updated.slice(data.orderedIds.length).map(mapToBlock);
     } catch (error) {
       return handlePrismaError(error, { entity: "Block" });
     }
