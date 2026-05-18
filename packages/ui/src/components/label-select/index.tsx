@@ -34,9 +34,10 @@ type LabelSelectProps = LabelSelectSingleProps | LabelSelectMultiProps;
 const getOptionLabel = (option: Label) => option.name;
 const isOptionEqualToValue = (option: Label, val: Label) => option.id === val.id;
 
-const buildRenderInput =
-  ({ label, placeholder, isLoading }: { label: string; placeholder: string; isLoading: boolean }) =>
-  (params: AutocompleteRenderInputParams) => {
+export const LabelSelect = (props: LabelSelectProps) => {
+  const { options, isLoading, disabled = false, label = "Label", placeholder = "Select…" } = props;
+
+  const renderInput = (params: AutocompleteRenderInputParams) => {
     const {
       size: paramsSize,
       disabled: paramsDisabled,
@@ -72,11 +73,6 @@ const buildRenderInput =
       />
     );
   };
-
-export const LabelSelect = (props: LabelSelectProps) => {
-  const { options, isLoading, disabled = false, label = "Label", placeholder = "Select…" } = props;
-
-  const renderInput = buildRenderInput({ label, placeholder, isLoading });
 
   if (props.multiple === true) {
     return (
