@@ -6,6 +6,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import EditIcon from "@mui/icons-material/Edit";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack } from "@mui/material";
 
@@ -14,8 +15,11 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useAssignBlockLabels, useDeleteBlock, useUpdateBlock } from "@app/lib/hooks";
 
+import { BlockEditorModal } from "./block-editor-modal";
+import { BlockIntensitySummary } from "./block-intensity-summary";
 import { BlockLabelSelect } from "./block-label-select";
 import { BlockNotesField } from "./block-notes-field";
+import { BlockTimeCapSummary } from "./block-time-cap-summary";
 
 type BlockCardProps = {
   block: Block;
@@ -34,6 +38,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
   });
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
 
@@ -55,6 +60,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
 
   const deleteDetails =
     block.labels.length > 0 ? block.labels.map((l) => l.name).join(", ") : "Empty block";
+
+  const hasSummary = block.intensity !== null || block.timeCap !== null;
 
   return (
     <Box
@@ -97,7 +104,26 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
         </IconButton>
       </Stack>
 
+      {hasSummary && (
+        <Box sx={{ pt: 1, display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+          <BlockIntensitySummary intensity={block.intensity} />
+          <BlockTimeCapSummary timeCap={block.timeCap} />
+        </Box>
+      )}
+
       <Menu anchorEl={anchorRef.current} open={menuOpen} onClose={() => setMenuOpen(false)}>
+        <MenuItem
+          onClick={() => {
+            setMenuOpen(false);
+            setEditOpen(true);
+          }}
+        >
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>Edit details</ListItemText>
+        </MenuItem>
+
         <MenuItem
           onClick={() => {
             setMenuOpen(false);
@@ -111,6 +137,14 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
           <ListItemText>Delete</ListItemText>
         </MenuItem>
       </Menu>
+
+      <BlockEditorModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        block={block}
+        planId={planId}
+        startDate={startDate}
+      />
 
       <ConfirmationModal
         open={deleteOpen}
