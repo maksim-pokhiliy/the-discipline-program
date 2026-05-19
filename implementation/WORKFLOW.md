@@ -28,7 +28,7 @@ Everything beyond (athlete flow, analytics, UX optimization) is a separate workf
 
 ## Per-step cycle
 
-1. Planner drafts **тезисы** (thesis) for the step: Goal · Inputs · Outputs · Acceptance criteria · Known risks & open questions (each open question stated **with a hypothesis** — "here's what surfaced; from a coach's view it's probably X; right?").
+1. Planner drafts **тезисы** (thesis) for the step in **two voice-coded sections** per `[[feedback-planner-language-style]]` + `[[thesis-format]]` (codified 2026-05-18): **coach view** (что тренер видит/делает в продукте после шага) + **developer view** (engineering scope). Each section contains **only Goal + Open Questions** (each open question stated **with a hypothesis** — «from a coach's view it's probably X; right?» в coach view, или «по существующему pattern X — согласны?» в developer view). Inputs / Outputs / Acceptance criteria / Known risks / Adversarial pass / Commit strategy / Verifications — write into the `prompt.md` proper after thesis ratify (item 2 below), NOT in the thesis itself.
 2. User reads, asks/adjusts. When both agree — planner writes the full prompt to `implementation/step-NN/prompt.md`.
 3. User carries the prompt path to a fresh executor session.
 4. Executor runs the step, writes `implementation/step-NN/output.md`, commits per-layer on `feat/training-domain`.
