@@ -19,6 +19,7 @@ import {
   verifyBlockOwnership,
   verifyPlanOwnership,
   verifySchemaOwnership,
+  verifySchemaRowOwnership,
 } from "./guards";
 
 describe("platform guards", () => {
@@ -340,6 +341,122 @@ describe("platform guards", () => {
     it("throws NotFoundError when schema does not exist", async () => {
       await expect(
         verifySchemaOwnership("clz0000000000000000000000", coach.user.id),
+      ).rejects.toThrow(NotFoundError);
+    });
+  });
+
+  describe("verifySchemaRowOwnership", () => {
+    let weekId: string;
+    let dayId: string;
+    let sessionId: string;
+    let blockId: string;
+    let schemaId: string;
+    let schemaRowId: string;
+
+    beforeAll(async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: plan.id, startDate: new Date(Date.UTC(2026, 5, 1)) },
+      });
+
+      weekId = week.id;
+
+      const day = await cleanupRaw.day.create({
+        data: { weekId, dayOfWeek: "THURSDAY" },
+      });
+
+      dayId = day.id;
+
+      const session = await cleanupRaw.session.create({
+        data: { dayId, order: 10 },
+      });
+
+      sessionId = session.id;
+
+      const block = await cleanupRaw.block.create({
+        data: { sessionId, order: 10 },
+      });
+
+      blockId = block.id;
+
+      const archetype = await cleanupRaw.archetype.findFirst({
+        where: { name: "n-rounds" },
+        select: { id: true },
+      });
+
+      if (!archetype) {
+        throw new Error("n-rounds archetype not seeded; cannot run verifySchemaRowOwnership tests");
+      }
+
+      const schema = await cleanupRaw.schema.create({
+        data: {
+          blockId,
+          order: 10,
+          kind: "ATOMIC",
+          archetypeId: archetype.id,
+          archetypeParams: { archetype: "n-rounds", params: { countForm: "exact", count: 5 } },
+        },
+      });
+
+      schemaId = schema.id;
+
+      const schemaRow = await cleanupRaw.schemaRow.create({
+        data: {
+          schemaId,
+          order: 10,
+          rowKind: "REST_SLOT",
+          rowPayload: { rowKind: "REST_SLOT" },
+        },
+      });
+
+      schemaRowId = schemaRow.id;
+    });
+
+    afterAll(async () => {
+      await cleanupRaw.schemaRow.delete({ where: { id: schemaRowId } }).catch(() => {});
+      await cleanupRaw.schema.delete({ where: { id: schemaId } }).catch(() => {});
+      await cleanupRaw.block.delete({ where: { id: blockId } }).catch(() => {});
+      await cleanupRaw.session.delete({ where: { id: sessionId } }).catch(() => {});
+      await cleanupRaw.day.delete({ where: { id: dayId } }).catch(() => {});
+      await cleanupRaw.week.delete({ where: { id: weekId } }).catch(() => {});
+    });
+
+    it("returns chain ids and status for the plan creator", async () => {
+      await expect(verifySchemaRowOwnership(schemaRowId, coach.user.id)).resolves.toEqual({
+        status: TrainingPlanStatus.DRAFT,
+        schemaId,
+        schemaKind: "ATOMIC",
+        parentSchemaId: null,
+        blockId,
+        sessionId,
+        dayId,
+        weekId,
+        planId: plan.id,
+      });
+    });
+
+    it("returns chain ids and status for a HEAD_COACH bypass", async () => {
+      await expect(verifySchemaRowOwnership(schemaRowId, headCoachUser.id)).resolves.toEqual({
+        status: TrainingPlanStatus.DRAFT,
+        schemaId,
+        schemaKind: "ATOMIC",
+        parentSchemaId: null,
+        blockId,
+        sessionId,
+        dayId,
+        weekId,
+        planId: plan.id,
+      });
+    });
+
+    it("throws ForbiddenError for an unrelated coach", async () => {
+      await expect(verifySchemaRowOwnership(schemaRowId, otherCoach.user.id)).rejects.toThrow(
+        ForbiddenError,
+      );
+    });
+
+    it("throws NotFoundError when schema row does not exist", async () => {
+      await expect(
+        verifySchemaRowOwnership("clz0000000000000000000000", coach.user.id),
       ).rejects.toThrow(NotFoundError);
     });
   });
