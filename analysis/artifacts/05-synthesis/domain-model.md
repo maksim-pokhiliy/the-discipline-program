@@ -283,13 +283,13 @@ Identifiers — English (для будущей формализации в Phase
 
 **Note**: отличается от inline `compound_rep` field на ExerciseRow (форма curly-brace `{ ... = 1 rep }`) — здесь rep-definition сам по себе independent row.
 
-#### 1.6.9 ConnectorRow
+#### 1.6.9 ~~ConnectorRow~~ (dropped per D12, 2026-05-18)
 
-- `kind = "connector"`.
-- `form` — `then:` | `...then...:` | `...then_N_rounds`.
-- `rounds_count` — integer (если form = `...then_N_rounds`).
+Per D12 ratify 2026-05-18: `Schema.trailing_connector` field on the Schema entity is the canonical persistence для трейлинг-коннектора (`then:` / `...then...:` / `...then N rounds:`). The earlier Phase 5 ratification of «ConnectorRow as explicit row at body tail» — **OVERRIDDEN**. Rationale (coach POV): "then 3 rounds" — модификатор на schema-to-schema transition (meta), не content tail of body; cleaner data shape; render logic не фильтрует CONNECTOR row из body iteration.
 
-**Note**: per Phase 2.1, connector хранится в конце body предыдущей schema. Альтернативная trabajo: вместо отдельной row — это `Schema.trailing_connector` field. **Решение Phase 5**: ConnectorRow — explicit row на хвосте body (одна строка, последняя). Это симметрично с `then:` и `...then N rounds:` continuation, упрощает iteration. Phase 6 решает persistence (отдельная row vs nullable field).
+**Persistence**: `Schema.trailing_connector Json?` field stores `{ form: ConnectorForm, roundsCount?: number }` shape per `types.ts` `TrailingConnector` type. `ConnectorForm` enum (`then` / `then_dots` / `then_n_rounds`) survives в `_shared/enums.ts` shipped Step 8.0a. `RowKind.CONNECTOR` enum value DROPPED from Prisma schema + 06-formalization mirror + types.ts SchemaRowPayload variant Step 8.0b.
+
+**SchemaRow discriminator count post-D12**: 9 row kinds (was 10).
 
 ---
 
@@ -980,11 +980,11 @@ Schema entity имеет:
 
 ### 3.7 Single-line headerless family
 
-| Archetype                       | Kind       | archetype_params shape                                      |
-| ------------------------------- | ---------- | ----------------------------------------------------------- |
-| single-line-with-then-connector | headerless | `{}` (body содержит ConnectorRow в конце)                   |
-| single-line-bare                | headerless | `{}`                                                        |
-| single-line-total-counter       | headerless | `{ total_flag: true }` (rep-row carries `[ TOTAL ]` marker) |
+| Archetype                       | Kind       | archetype_params shape                                              |
+| ------------------------------- | ---------- | ------------------------------------------------------------------- |
+| single-line-with-then-connector | headerless | `{}` (Schema.trailing_connector field carries the marker; post-D12) |
+| single-line-bare                | headerless | `{}`                                                                |
+| single-line-total-counter       | headerless | `{ total_flag: true }` (rep-row carries `[ TOTAL ]` marker)         |
 
 ### 3.8 Flat / Parallel headerless family
 
@@ -1073,9 +1073,9 @@ PlaceholderRow + PerSetSubstitution VO:
 
 ### 4.6 Connector lines — body trailing primitive
 
-Per Phase 2.1: `then:` / `...then...:` / `...then N rounds:` хранятся в body предыдущей schema (или в schema's own body, если continuation внутри composite).
+Per Phase 2.1: `then:` / `...then...:` / `...then N rounds:` маркируют transition от одной schema к следующей (или continuation внутри composite).
 
-Phase 5 ratify: ConnectorRow (см. §1.6.9) — explicit row. Альтернатива `Schema.trailing_connector` — equivalent semantically. **Решение Phase 5**: explicit row (упрощает iteration + matches Phase 2.1 ratification).
+**Post-D12 ratify (2026-05-18)**: persistence = `Schema.trailing_connector Json?` field на Schema entity (см. §1.6.9 reframe). Phase 5's earlier «ConnectorRow as explicit row at body tail» — overridden. Rationale (coach POV): connector — meta-модификатор schema-to-schema transition, не content tail body; cleaner data shape; render logic не фильтрует CONNECTOR row из body iteration.
 
 ---
 
