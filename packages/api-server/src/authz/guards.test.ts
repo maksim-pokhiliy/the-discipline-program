@@ -459,5 +459,23 @@ describe("platform guards", () => {
         verifySchemaRowOwnership("clz0000000000000000000000", coach.user.id),
       ).rejects.toThrow(NotFoundError);
     });
+
+    it("throws NotFoundError when parent plan is soft-deleted", async () => {
+      await cleanupRaw.trainingPlan.update({
+        where: { id: plan.id },
+        data: { deletedAt: new Date() },
+      });
+
+      try {
+        await expect(verifySchemaRowOwnership(schemaRowId, coach.user.id)).rejects.toThrow(
+          NotFoundError,
+        );
+      } finally {
+        await cleanupRaw.trainingPlan.update({
+          where: { id: plan.id },
+          data: { deletedAt: null },
+        });
+      }
+    });
   });
 });
