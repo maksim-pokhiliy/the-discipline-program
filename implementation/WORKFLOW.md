@@ -1,6 +1,6 @@
 # Training-Domain Implementation Workflow
 
-> Durable workflow rules + lessons learned. Read this FIRST when resuming as planner or starting as executor. This file does not change per-step (unlike `PLANNING_STATE.md`); update it only when a workflow rule itself changes.
+> Durable workflow rules + lessons learned. Read this FIRST when resuming as planner or starting as executor. This file does not change per-step (unlike `state/00-current.md` and `log/step-NN.md`); update it only when a workflow rule itself changes.
 
 ## Context
 
@@ -28,34 +28,49 @@ Everything beyond (athlete flow, analytics, UX optimization) is a separate workf
 
 ## Per-step cycle
 
-1. Planner drafts **тезисы** (thesis) for the step: Goal · Inputs · Outputs · Acceptance criteria · Known risks & open questions (each open question stated **with a hypothesis** — "here's what surfaced; from a coach's view it's probably X; right?").
+1. Planner drafts **тезисы** (thesis) for the step in **two voice-coded sections** per `[[feedback-planner-language-style]]` + `[[thesis-format]]` (codified 2026-05-18): **coach view** (что тренер видит/делает в продукте после шага) + **developer view** (engineering scope). Each section contains **only Goal + Open Questions** (each open question stated **with a hypothesis** — «from a coach's view it's probably X; right?» в coach view, или «по существующему pattern X — согласны?» в developer view). Inputs / Outputs / Acceptance criteria / Known risks / Adversarial pass / Commit strategy / Verifications — write into the `prompt.md` proper after thesis ratify (item 2 below), NOT in the thesis itself.
 2. User reads, asks/adjusts. When both agree — planner writes the full prompt to `implementation/step-NN/prompt.md`.
 3. User carries the prompt path to a fresh executor session.
 4. Executor runs the step, writes `implementation/step-NN/output.md`, commits per-layer on `feat/training-domain`.
 5. User reports completion. Planner reads `output.md` (+ `.feature-dev/<ts>/` if `/feature` was used), spot-checks artifacts, validates.
 6. For UI steps: user runs the smoke-test scenario in a browser.
-7. Step is **closed** only when planner + user both accept it. Planner updates `IMPLEMENTATION_LOG.md` and `PLANNING_STATE.md`.
+7. Step is **closed** only when planner + user both accept it. Planner writes new `implementation/log/step-NN.md` entry + updates `state/00-current.md` (current paragraph) + `state/01-step-queue.md` (mark step COMPLETED) + `state/03-deferred.md` (new carry-forwards) + `state/04-next-action.md` (shift к next step) — single docs commit per close-out.
 
 Each step runs through `/feature` (or `/feature small` for trivial 1-3-file no-schema steps). The step prompt is the entry into the skill's Research stage.
 
 ## Working-memory files
 
+Refactored 2026-05-18 from monolithic `PLANNING_STATE.md` + `IMPLEMENTATION_LOG.md` к analysis/-style structured folders. Historical archive of pre-refactor monolith preserved at `implementation/log/_archive-pre-refactor.md`.
+
 - `implementation/WORKFLOW.md` — this file. Durable rules + lessons. Rarely changes.
-- `implementation/PLANNING_STATE.md` — current step, step queue, open questions, accepted decisions (D1, D2, …). **Changes every step.** Authoritative live state.
-- `implementation/IMPLEMENTATION_LOG.md` — append-only journal: per-step date, `.feature-dev/<ts>/` link, 3-5 line summary, open questions, deferred decisions, analysis-files touched, smoke-test status. Newest entry first. Has a "Lesson learned" meta-block at the top.
-- `implementation/step-NN/prompt.md` — the step's prompt.
-- `implementation/step-NN/output.md` — the step's output report.
+- `implementation/state/` — live planner state (changes every close-out):
+  - `00-current.md` — compact «где остановились» (2-3 paragraph entry point).
+  - `01-step-queue.md` — tree всех шагов с статусами (COMPLETED / pending / DROPPED).
+  - `02-decisions.md` — D-numbered ratified decisions catalog.
+  - `03-deferred.md` — carry-forwards (active + closed history).
+  - `04-next-action.md` — concrete next planner action handoff brief.
+  - `05-rules.md` — durable invariants (rarely changes).
+- `implementation/log/` — append-only per-step journal:
+  - `step-NN.md` — one file per closed sub-step (e.g., `step-08.0b.md`).
+  - `_archive-pre-refactor.md` — full historical IMPLEMENTATION_LOG (Steps 1 → Step 8.0a) в old monolithic format.
+  - `README.md` — folder convention + entry format spec.
+- `implementation/step-NN/prompt.md` — the step's prompt (per-step working artifact).
+- `implementation/step-NN/output.md` — the step's output report (per-step working artifact).
 
 ## Session handoff protocol
 
 A fresh planner session resumes by reading, in order:
 
-1. `implementation/WORKFLOW.md` (this file)
-2. `implementation/PLANNING_STATE.md`
-3. `implementation/IMPLEMENTATION_LOG.md`
-4. `analysis/artifacts/05-synthesis/` + `analysis/artifacts/06-formalization/` (the living model source)
+1. `implementation/WORKFLOW.md` (this file — durable rules)
+2. `implementation/state/00-current.md` (compact entry point — current step status + pointers)
+3. `implementation/state/04-next-action.md` (concrete next planner action handoff brief)
+4. Last 1-2 `implementation/log/step-*.md` entries (recent close-outs for context)
+5. `implementation/state/01-step-queue.md` + `02-decisions.md` + `03-deferred.md` as needed (per-topic — read selectively, not all)
+6. `analysis/artifacts/05-synthesis/` + `analysis/artifacts/06-formalization/` (the living domain model source)
 
-Then it picks up at `PLANNING_STATE.md` § "Next action".
+Then planner picks up at `state/04-next-action.md`.
+
+For investigating specific historical step (pre-Step-8.0b), open `implementation/log/_archive-pre-refactor.md` and search by step header (`## Step NN — <title>`).
 
 ## `output.md` format (executor produces)
 
@@ -72,7 +87,7 @@ Three categories:
 
 - **Read-only forever** (historical design artifacts): `analysis/source/`, `analysis/artifacts/00-meta/`, `01-inventory/`, `02-patterns/`, `03-content/`, `04-structure/`.
 - **Living source of truth** (updated in sync with schema changes): `analysis/artifacts/05-synthesis/`, `analysis/artifacts/06-formalization/`.
-- A step that changes the Prisma schema updates, in the same session: `06-formalization/schema.prisma`, `06-formalization/er-final.md` (if relations/cardinalities change), `05-synthesis/domain-model.md` (if entity semantics change), `06-formalization/implementation-notes.md` (short record of what changed and why). Stress tests (`05-synthesis/stress-test.md`, `06-formalization/stress-final.md`) update only if the change is driven by a case the old model didn't cover. `IMPLEMENTATION_LOG.md` gets an explicit "analysis-files touched: X, Y, Z" note.
+- A step that changes the Prisma schema updates, in the same session: `06-formalization/schema.prisma`, `06-formalization/er-final.md` (if relations/cardinalities change), `05-synthesis/domain-model.md` (if entity semantics change), `06-formalization/implementation-notes.md` (short record of what changed and why). Stress tests (`05-synthesis/stress-test.md`, `06-formalization/stress-final.md`) update only if the change is driven by a case the old model didn't cover. The step's `log/step-NN.md` entry gets an explicit "analysis-files touched: X, Y, Z" line.
 
 ## Domain-model change protocol
 
@@ -120,7 +135,7 @@ Any step adding/changing a Prisma entity updates the seed in the same session �
 
 ## Lessons learned (planner discipline)
 
-Nine "read/verify-then-spec" procedural checklists accreted across Steps 1-7.4 (full per-step diagnoses in `IMPLEMENTATION_LOG.md` per-step "Open questions" + "Process note" footers):
+Nine "read/verify-then-spec" procedural checklists accreted across Steps 1-7.4 (full per-step diagnoses in `log/step-NN.md` (newer steps) or `log/_archive-pre-refactor.md` (Steps 1 → Step 8.0a) per-step "Open questions" + "Process note" footers):
 
 1. **(a) Canonical codebase patterns** — [[scope-via-existing-patterns]]. Step 3 strike. Before specing a cross-package boundary (mapper output, contract schema, API response, client API type, form field, list/filter/search behaviour, sidebar config), read 2-3 canonical implementations verbatim and quote them with file paths + line ranges. No "TS best practice" instincts — project patterns are sacred.
 2. **(b) Domain semantics** — [[coach-pov-first]]. Step 6 thesis cycle. Before specing a domain field or operation, cite `analysis/artifacts/` verbatim. No citation → field is engineer-cargo or genuinely deferred → escalate, don't invent.

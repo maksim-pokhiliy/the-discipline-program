@@ -273,8 +273,9 @@ Depth: 2 уровня (top + sub). Sample не показывает sub-sub-sche
 | `PLACEHOLDER`         | `{ placeholder: PlaceholderPayload }` (kind, text, perSetAssignments?, pairedConcreteRowId?)              |
 | `INNER_LADDER_MARKER` | `{ steps: number[] }`                                                                                     |
 | `REP_DEFINITION`      | `{ equality: CompoundRepDefinition_inline_form }`                                                         |
-| `CONNECTOR`           | `{ form, roundsCount? }`                                                                                  |
 | `REST_SLOT`           | `{}` (empty body — REST sub-schema внутри EMOM)                                                           |
+
+Trailing connector marker — `{ form, roundsCount? }` — stored on `SCHEMA.trailing_connector` (nullable Json column), not as a `SCHEMA_ROW` payload. See `domain-model.md` §1.6.9 (post-D12 reframe) for the persistence decision.
 
 ### 3.4 ExerciseRow ↔ Exercise cardinality
 

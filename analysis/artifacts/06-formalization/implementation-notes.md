@@ -1334,6 +1334,10 @@ Added 2026-05-18 per Step 7.3.6 (closes Step 7.1 Stage 6 QA-001 carry-forward). 
 
 Reorder fix (scope-expansion ratified at execution time after intermediate-state P2002 surfaced in the `reorder` happy-path swap test — planner adversarial pass had only considered concurrent reorder+create): `lmsBlockApi.reorder` now uses a two-pass `UPDATE` pattern within a single `prisma.$transaction([...])` batch — Pass 1 shifts every target row to a negative-order placeholder (`-1, -2, -3, ...`) to clear unique-constraint collisions on stateful swap patterns (e.g., `[c, a, b]` from initial `[a:10, b:20, c:30]`); Pass 2 assigns the final sparse orders (`10, 20, 30, ...`). Atomic via Prisma batch transaction. Required because Postgres unique constraints are NOT `DEFERRABLE` by default — they fire at statement boundary, so direct UPDATEs that swap orders collide intra-transaction. Pure app-layer fix; the constraint itself stays in Prisma DSL per § 0.9 convention (no SQL outside `apply-sql-checks.ts`).
 
+### §4.8 Step 8.0b — RowKind.CONNECTOR dropped per D12 (2026-05-18)
+
+Per D12 ratify 2026-05-18 (planning thesis cycle Step 8 top-level): `Schema.trailingConnector Json?` field on the Schema entity is canonical persistence для трейлинг-коннектора. The earlier Phase 5 ratification of «ConnectorRow as explicit row at body tail» (domain-model.md §1.6.9 pre-D12) was overridden. `RowKind.CONNECTOR` enum value dropped from Prisma schema + 06-formalization/schema.prisma mirror + 06-formalization/types.ts SchemaRowPayload variant. Resulting `RowKind` enum = 9 values (was 10). `ConnectorForm` enum (`then` / `then_dots` / `then_n_rounds`) survives в `_shared/enums.ts` shipped Step 8.0a — consumed by `Schema.trailingConnector` field via `trailingConnectorSchema` (XOR refine: `form === "then_n_rounds"` requires `roundsCount`; else `roundsCount` forbidden). Per coach POV: "then 3 rounds" = modifier на schema-to-schema transition (meta), not content tail body; cleaner data shape; render logic не фильтрует CONNECTOR row из body iteration.
+
 ---
 
 ## §5. Open items / future work

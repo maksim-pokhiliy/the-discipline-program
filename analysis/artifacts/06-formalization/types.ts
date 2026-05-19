@@ -371,11 +371,6 @@ export type SchemaRowPayload =
       rowKind: "REP_DEFINITION";
       equality: Extract<CompoundRepDefinition, { form: "inline_equality" }>;
     }
-  | {
-      rowKind: "CONNECTOR";
-      form: ConnectorForm;
-      roundsCount?: number;
-    }
   | { rowKind: "REST_SLOT" };
 
 export type SlotSpec = { kind: "single"; minute: number } | { kind: "grouped"; minutes: number[] };
