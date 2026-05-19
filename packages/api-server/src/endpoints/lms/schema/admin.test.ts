@@ -753,6 +753,28 @@ describe("lmsSchemaApi", () => {
       }
     });
 
+    it("rejects update with parentSchemaId set explicitly to null (QA-Must-Test-36)", async () => {
+      const ctx = await provisionBlock();
+      const schema = await lmsSchemaApi.create(
+        coach.user.id,
+        activePlanId,
+        { blockId: ctx.block.id },
+        { kind: "ATOMIC", archetypeId: atomicArchetypeId, archetypeParams: ATOMIC_PARAMS },
+      );
+
+      try {
+        await expect(
+          lmsSchemaApi.update(coach.user.id, schema.id, { parentSchemaId: null }),
+        ).rejects.toThrow(BadRequestError);
+
+        const stored = await cleanupRaw.schema.findUnique({ where: { id: schema.id } });
+
+        expect(stored?.parentSchemaId).toBeNull();
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
     it("rejects non-owner update", async () => {
       const ctx = await provisionBlock();
       const schema = await lmsSchemaApi.create(
@@ -1118,6 +1140,53 @@ describe("lmsSchemaApi", () => {
         const stored = await cleanupRaw.schema.findUnique({ where: { id: a.id } });
 
         expect(stored?.order).toBe(10);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("rejects duplicate ids in orderedIds at the server boundary (QA-Must-Test-37)", async () => {
+      const ctx = await provisionBlock();
+      const a = await lmsSchemaApi.create(
+        coach.user.id,
+        activePlanId,
+        { blockId: ctx.block.id },
+        { kind: "ATOMIC", archetypeId: atomicArchetypeId, archetypeParams: ATOMIC_PARAMS },
+      );
+      const b = await lmsSchemaApi.create(
+        coach.user.id,
+        activePlanId,
+        { blockId: ctx.block.id },
+        { kind: "ATOMIC", archetypeId: atomicArchetypeId, archetypeParams: ATOMIC_PARAMS },
+      );
+      const c = await lmsSchemaApi.create(
+        coach.user.id,
+        activePlanId,
+        { blockId: ctx.block.id },
+        { kind: "ATOMIC", archetypeId: atomicArchetypeId, archetypeParams: ATOMIC_PARAMS },
+      );
+
+      try {
+        await expect(
+          lmsSchemaApi.reorder(
+            coach.user.id,
+            activePlanId,
+            { blockId: ctx.block.id },
+            { orderedIds: [a.id, a.id, b.id] },
+          ),
+        ).rejects.toThrow(BadRequestError);
+
+        const stored = await cleanupRaw.schema.findMany({
+          where: { blockId: ctx.block.id, parentSchemaId: null },
+          orderBy: { order: "asc" },
+          select: { id: true, order: true },
+        });
+
+        expect(stored).toEqual([
+          { id: a.id, order: 10 },
+          { id: b.id, order: 20 },
+          { id: c.id, order: 30 },
+        ]);
       } finally {
         await ctx.cleanup();
       }
