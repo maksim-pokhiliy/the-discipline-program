@@ -18,11 +18,11 @@ Granularity locked at thesis time; some steps may expand into sub-steps as decom
   - 7.0 contracts → 7.1 api-server → 7.2 routes → 7.3 client hooks → 7.3.5 read-embed enabler → 7.3.6 Block @@unique constraint → 7.4 Block UI → 7.5 Intensity + TimeCap UI. All sub-steps COMPLETED.
 - **Step 8.0a** — VO infrastructure в `lms/_shared/`: 11 new Zod schema modules. **COMPLETED** 2026-05-18 (`92b8f915..1608a83a`).
 - **Step 8.0b** — Entity contract slice: Schema + SchemaRow + SchemaPairing + Archetype + drop `RowKind.CONNECTOR` per D12 + analysis-artifacts sync. **COMPLETED** 2026-05-18 (`55f5c49e..2d8a4409`).
+- **Step 8.1a** — `lmsSchemaApi` (CRUD + two-pass reorder + parent-vs-child discriminated create per D10 + sub-schema invariants + archetype consistency cross-checks + structural-immutable update) + `verifySchemaOwnership` guard + `mapToSchema` mapper + D-4 prereq exports-map fix. **COMPLETED** 2026-05-19 (`3545ab52..52a49d43`).
 
 ## Pending (Step 8 trajectory per D9 split policy)
 
-- **Step 8.1a** — `lmsSchemaApi` (CRUD + two-pass reorder + parent-vs-child discriminated create arg per D10 + sub-schema kind=ATOMIC invariant) + `verifySchemaOwnership` guard + `mapToSchema` mapper. `/feature` full mirror Step 7.1.
-- **Step 8.1b** — `lmsSchemaRowApi` (CRUD + reorder mirror lmsBlockApi/lmsSessionApi pattern). `/feature` full mirror Step 7.1.
+- **Step 8.1b** — `lmsSchemaRowApi` (CRUD + reorder mirror lmsBlockApi/lmsSchemaApi pattern). `/feature` full mirror Step 7.1.
 - **Step 8.1c** — `lmsSchemaPairingApi` (basic CRUD; UI deferred per D11). `/feature small`, thin scope.
 - **Step 8.2** — Platform HTTP routes (per-entity split 8.2a/b/c возможен если grep > 6-7 files; collapsed if ≤6). `/feature small` mirror Step 7.2.
 - **Step 8.3** — Platform client API + hooks (Schema + SchemaRow + Pairing). `/feature small` mirror Step 7.3.

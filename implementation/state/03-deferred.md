@@ -2,7 +2,25 @@
 
 > Active + closed carry-forwards. Default hypothesis applied; revisit on contact. Resolved items struck through with closing commit reference.
 
-## Active (12 items as of 2026-05-18)
+## Active (as of 2026-05-19)
+
+### Step 8.1a follow-ups (NEW)
+
+- **QA-B4 — `lmsSchemaApi.reorder` без `retryOnP2034`** (WARNING). Concurrent create on same scope can lose reorder под SSI. Mirror Block precedent (`lmsBlockApi.reorder` also unwrapped). **Action when triggered**: address при Step 8.2 HTTP route layer retry semantics (preserves UX without bloating api-server method). Defer.
+
+- **QA-C2 — `handlePrismaError` не маппит P2028 (tx-timeout)** (WARNING). Surfaces as raw 500. Out-of-zone for 8.1a (file unmodified). **Action when triggered**: separate `/fix` ticket covering P2028 mapping across all error paths. Effort S (~5 LOC + 1 test).
+
+- **QA-D1 — `reorderSchemasSchema.orderedIds` имеет `.min(1)` без `.max()` cap** (WARNING). DoS-class via tx-timeout на гигантских массивах. Out-of-zone for 8.1a (Step 8.0b contracts territory). **Action when triggered**: Step 8.0b follow-up `.max(N)` cap или `/fix`. Suggest `N = 1000` matching reasonable schema-per-block upper bound. Effort S.
+
+- **QA-E3 — All 4 guards propagate `PrismaClientValidationError` на `userId = undefined`** (WARNING). Plan/Block/Schema + future Row/Pairing guards. 4 × 2-line defensive fix exceeds `[[inline-fix-pre-existing]]` 5-LOC threshold. **Action when triggered**: separate cross-guard `/fix` уни formly adding `if (!userId) throw new ForbiddenError(...)` early-throw at each guard entry. Effort S (4 × 2 LOC + 4 tests).
+
+- **QA-F2 — Delete-blocked-by-PerformedExerciseInstance surfaces as misleading "Referenced Schema does not exist" P2003** (WARNING). Actually FK violation от downstream entity. Defer к Step 8.1b/c (SchemaRow API + delete-blocked semantics + improved error message). Surface будет fire когда athlete-facing entities materialize (out of this workflow's primary scope; may stay deferred indefinitely).
+
+- **FIND-001 — `lmsSchemaApi.create` body 132 lines exceeds manifesto 2.2 soft cap 100** (WARNING; review note). Drivers: discriminated-scope full TOCTOU re-fetch (~45 lines) + 3-Json-column conditional marshalling (~20 lines) + tx-wrapper boilerplate. Block precedent at 91; Session at 88. **Action when triggered**: candidate для `resolveStorageContext` helper extraction at Step 8.1b/c (~35-line savings; brings к ~97 lines). Effort S; not blocking.
+
+- **Schema 8.1a INFO bundle (8 items)** — purely advisory, no immediate action: QA-A3 int32 overflow on `_max(order)+10` (200M+ inserts), QA-A4 UTF-16 vs codepoint length semantics on `header.max(500)`, QA-A5 discriminated-scope runtime-erasure `{blockId, parentSchemaId}` silent top-route, QA-B1 P2034 retry-exhaustion deterministic, QA-B2 P2003 message imprecision Block-vs-Schema, QA-B5 last-writer-wins reorder без optimistic-concurrency, QA-F3 duplicate-id reorder error reports `missing: []` (partially Stage 7-covered C30), QA-I1 `TxClient` structural-typing leak (local alias duplicated 3 sites; hoist к `endpoints/lms/_shared/` when 4th consumer materializes — likely Step 8.1b or 8.1c).
+
+- **Cross-step planner-discipline note — `[[planner-verbatim-registration]]` (c) consumer-package package.json exports axis**. Two-layer miss surfaced 8.1a-time (Step 8.0b shipped barrels but forgot exports map; Step 8.1a planner didn't Read package.json verbatim at prompt-write). Memory entry update queued — extend `[[planner-verbatim-registration]]` body 1-2 sentences к explicitly include "consumer-package `package.json` `exports` field" alongside existing list (barrels/dep-cruiser/turbo.json/pnpm-workspace.yaml). Не a new flavour; axis expansion to existing (c). **Action**: update memory file body during this close-out cycle.
 
 ### Pre-Step-8 cleanup candidates
 
