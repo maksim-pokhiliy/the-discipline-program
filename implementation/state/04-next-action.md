@@ -41,9 +41,9 @@
 - **`mapToBlockWithSchemas` mapper** still deferred к Step 8.3.5 (rows embed inside schemas embed). Out of 8.1b.
 - **QA-022 `TxClient` Omit deny-list re-verify** — re-verify if Prisma upgraded since 7.1. No upgrade yet; skip.
 
-**Push consideration**: branch теперь 15 commits ahead of `main` (PR #196 last merged 2026-05-18). PR candidate accumulates 8.0a + 8.0b + 8.1a + 8.1b + 8.1c per Step 6.x precedent (batch when backend vertical complete). Push consideration не блокирует thesis cycle.
+**Push consideration**: PR #197 merged 2026-05-19 (Step 8.0a/8.0b/8.1a batched onto `main`). Branch `feat/training-domain` recreated from fresh `main` (0 commits ahead). Next PR candidate accumulates Step 8.1b + 8.1c (server vertical complete) per Step 6.x precedent; UI work (Step 8.4+) gets its own subsequent PR.
 
-**Memory file update queued (this close-out cycle)**: extend `[[planner-verbatim-registration]]` body to include "consumer-package `package.json` `exports` field" axis per Step 8.1a D-4 cross-step finding.
+**Memory entry update done (8.1a close-out cycle)**: `[[planner-verbatim-registration]]` (c) body extended at `~/.claude/projects/-home-maksym-projects-contrib-the-discipline-program/memory/feedback_planner_verbatim_registration.md` to include "consumer-package `package.json` `exports` field whenever the step prescribes subpath imports" — applies to all subsequent steps that prescribe `from "@repo/<pkg>/<subpath>"`.
 
 ## After Step 8.1b close-out
 
