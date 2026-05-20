@@ -18,6 +18,7 @@ export const createAlternatingGroupSchema = z.object({
   schemaIds: z
     .array(z.string().cuid())
     .min(2)
+    .max(24)
     .refine((ids) => new Set(ids).size === ids.length, {
       message: "schemaIds must be unique",
     }),

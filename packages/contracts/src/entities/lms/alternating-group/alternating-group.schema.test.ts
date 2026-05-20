@@ -11,6 +11,9 @@ const cuidA = "clz1234567890123456789aaa";
 const cuidB = "clz1234567890123456789bbb";
 const cuidC = "clz1234567890123456789ccc";
 
+const distinctCuids = (count: number): string[] =>
+  Array.from({ length: count }, (_, i) => `clz1234567890123456789${String(i).padStart(3, "0")}`);
+
 describe("alternatingGroupRelationSchema", () => {
   for (const r of ALTERNATING_GROUP_RELATIONS) {
     it(`accepts AlternatingGroupRelation "${r}"`, () => {
@@ -82,6 +85,24 @@ describe("createAlternatingGroupSchema", () => {
       createAlternatingGroupSchema.safeParse({
         relationKind: "ALTERNATING_SETS",
         schemaIds: [cuidA],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts a 24-element schemaIds array", () => {
+    expect(
+      createAlternatingGroupSchema.safeParse({
+        relationKind: "ALTERNATING_SETS",
+        schemaIds: distinctCuids(24),
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects a 25-element schemaIds array", () => {
+    expect(
+      createAlternatingGroupSchema.safeParse({
+        relationKind: "ALTERNATING_SETS",
+        schemaIds: distinctCuids(25),
       }).success,
     ).toBe(false);
   });
