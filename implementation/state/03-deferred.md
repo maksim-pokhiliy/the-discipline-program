@@ -10,7 +10,7 @@
 
 - **QA-W2 — `lmsSchemaRowApi.reorder` array-form `$transaction([...])` cannot embed plan re-fetch** (WARNING). Array form, not interactive tx. Either convert к interactive `$transaction(async tx)` or accept the race as known-defer. **Action when triggered**: future `/fix` cycle, decide form at that time.
 
-- **REVIEW-I3 — `lms-guards.ts` at ~293/300 logical LOC** (INFO; **Step 8.1d** heads-up). The `authz/guards.ts` split (Step 8.1b D-1) produced `lms-guards.ts` holding the full ownership chain — ~7-line headroom. Step 8.1c shipped no guard (model-redesign only); the guard append moved to **Step 8.1d** — `verifyAlternatingGroupOwnership` will trip eslint `max-lines: 300`. **Action**: executor-side tactical — when the 8.1d executor hits the cap, it splits `lms-guards.ts` further (e.g. plan/session/block vs schema-family). No planner pre-work; non-surprising scope note for the 8.1d close-out.
+- ~~**REVIEW-I3 — `lms-guards.ts` at ~293/300 logical LOC**~~ — **CLOSED 2026-05-20** via Step 8.1d commit `f99d9ba6` (own-file axis): executor placed `verifyAlternatingGroupOwnership` in a new `authz/alternating-group-guards.ts` (83 lines) joined to the `authz/guards.ts` barrel, leaving `lms-guards.ts` byte-identical at 331 physical / ~293 logical lines (under the 300 cap). Zero churn risk in the four shipped sibling guards; importers continue resolving via `from "…/authz/guards"`. The cap is cleared via separate-file split rather than in-place — acceptable axis, planner-concur'd at close-out.
 
 ### Step 8.1a follow-ups
 
