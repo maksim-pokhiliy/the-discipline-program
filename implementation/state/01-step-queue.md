@@ -24,13 +24,13 @@ Granularity locked at thesis time; some steps may expand into sub-steps as decom
 - **Step 8.1b** — `lmsSchemaRowApi` (CRUD + 2-pass reorder + parent-kind invariant + payload-discriminator alignment) + `verifySchemaRowOwnership` guard + `mapToSchemaRow` mapper + `TxClient` hoist к `endpoints/lms/_shared/`. **COMPLETED** 2026-05-19. 5 atomic commits + docs commit. Verifications: 661/661 api-server tests + 1609/1609 root tests pass, all gates clean.
 - **Step 8.1c** — `SchemaPairing` → `AlternatingGroup` N-ary model redesign (D14): Prisma + `@repo/contracts` slice + `analysis/` sync + seed. Definition layer — no endpoint/guard/mapper (those are 8.1d). **COMPLETED** 2026-05-20. 5 commits `aec22f8a..cf14aab8` + close-out docs commit. Review A / QA A; 1610/1610 root tests; `db:reset`+`db:seed` green. WORKFLOW-001 resolved inline (commit `8c3a701b`).
 - **Step 8.1d** — `lmsAlternatingGroupApi` (`create`/`addMember`/`removeMember`/`delete`) + `verifyAlternatingGroupOwnership` guard (new `authz/alternating-group-guards.ts`, REVIEW-I3 closure via own-file axis — `lms-guards.ts` byte-identical) + `mapToAlternatingGroup` mapper + `addMember`/`removeMember` contract schemas + `.max(24)` on `createAlternatingGroupSchema.schemaIds` + D-A4 scope expansion (group-aware `lmsSchemaApi.delete`). **COMPLETED** 2026-05-20. 6 commits `a2e261e8..66626a11` + close-out docs commit. Review APPROVE / QA PASS; 1670/1670 root tests; 38 adversarial attacks attempted, 0 exploited.
+- **Step 8.2** — Platform HTTP routes for the `Schema` / `SchemaRow` / `AlternatingGroup` api slices: 10 Next.js App Router `route.ts` handlers over the 12 write methods + contract route-param / `z.union`-widened reorder request schemas. Composition mirrors Step 7.2 (Block). D-8.2-1..7 ratified (D-8.2-7 = `z.union` over `superRefine`, mid-execution escalation). **COMPLETED** 2026-05-20. 7 code/test commits `499b11cb..716c95f2` + prompt/ratify/output docs. Review APPROVED / QA Score A; 1680/1680 root tests; scope confined (no `api-server` / `api-routes` / Prisma touch).
 
 ## Pending — Step 8 infrastructure (pre-anchor, untouched по задаче)
 
 Backend plumbing — coach UI surface не materialise-ится здесь; walkthrough stubs не добавляются per «untouched» constraint. Thesis для каждого включает walkthrough параграф per [[coach-walkthrough-gate]] на момент написания.
 
-- **Step 8.2** — Platform HTTP routes (per-entity split 8.2a/b/c возможен если grep > 6-7 files; collapsed if ≤6). `/feature small` mirror Step 7.2.
-- **Step 8.3** — Platform client API + hooks (Schema + SchemaRow + Pairing). `/feature small` mirror Step 7.3.
+- **Step 8.3** — Platform client API + hooks (Schema + SchemaRow + AlternatingGroup). `/feature small` mirror Step 7.3.
 - **Step 8.3.5** — `schemas[]` read-embed в `blockSchema` (bounded recursion safe per domain §1.5 sub.kind=atomic invariant). `/feature small` mirror Step 7.3.5.
 - **Step 8.3.6** — SchemaRow `@@unique([schemaId, order])` + reorder two-pass (simple mirror Step 7.3.6). `/feature small`.
 - ~~**Step 8.3.7-pre**~~ — WORKFLOW-001 fix per D13. **DROPPED 2026-05-20** — WORKFLOW-001 resolved inline in Step 8.1c (commit `8c3a701b`, D13 path (b)); deterministic collision no longer reproduces, `pnpm test` green on `db:reset`+`db:seed`. See `log/step-08.1c.md`.
@@ -212,8 +212,8 @@ Pace: 1-4 archetypes per sub-step. Group batching по UI shape similarity.
 
 ## Calendar / scope estimates
 
-- **Execution order**: ~~8.1c~~ (done) → ~~8.1d~~ (done) → 8.2 → 8.3 → 8.3.5 → 8.3.6 → ~~8.3.7-pre~~ (dropped) → 8.3.7 → **8.4 anchor** → **9.1..9.11 row editor** → **8.5..8.20 archetype expansion** → 10.
-- Step 8 sub-steps total: **28** (6 completed + 5 infrastructure + 1 anchor + 16 archetype expansion). 8.1c split into redesign (8.1c, done) + api (8.1d, done); 8.3.7-pre dropped — net 0.
+- **Execution order**: ~~8.1c~~ (done) → ~~8.1d~~ (done) → ~~8.2~~ (done) → 8.3 → 8.3.5 → 8.3.6 → ~~8.3.7-pre~~ (dropped) → 8.3.7 → **8.4 anchor** → **9.1..9.11 row editor** → **8.5..8.20 archetype expansion** → 10.
+- Step 8 sub-steps total: **28** (7 completed + 4 infrastructure + 1 anchor + 16 archetype expansion). 8.1c split into redesign (8.1c, done) + api (8.1d, done); 8.3.7-pre dropped — net 0.
 - Step 9 sub-steps total: **11** (9.1..9.11).
 - Step 10: 1.
 - Pace 2-5 days per sub-step → ~3-4 months end-to-end realistic. Empty-params batches ~1 day each; EXERCISE atomic 9.3 ~5-7 days (3 composite VOs).

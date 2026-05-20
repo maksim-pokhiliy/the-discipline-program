@@ -2,6 +2,24 @@
 
 > Canonical D-numbered decisions catalog. Each entry preserves full ratification body. Newest groups at top per chronological ratify date.
 
+## 2026-05-20 — Step 8.2 — Platform HTTP routes (D-8.2-1..7)
+
+Ratified in the planner-user thesis cycle 2026-05-20 (D-8.2-1..6 upfront, all hypotheses approved; D-8.2-7 added during Design and re-ratified mid-execution after an executor escalation). Implemented Step 8.2 (commits `499b11cb..716c95f2`).
+
+- **D-8.2-1 (collapsed single step, `/feature` full).** Step 8.2 ships as one step, not split into 8.2a/b/c. ~10 `route.ts` + a contract change — near-zero per-file novelty (1:1 Block mirror); splitting into three close-out cycles is process overhead with no downstream gain (Step 8.3 / 8.4 need the whole HTTP layer anyway). Volume exceeds the `/feature small` thin-additive carve-out (Step 7.2 was `small` as 4 single-scope pass-through files; 8.2 adds a dual-scope split + a contract change) → `/feature` full.
+
+- **D-8.2-2 (no GET routes — read surface out of scope).** None of `lmsSchemaApi` / `lmsSchemaRowApi` / `lmsAlternatingGroupApi` exports a `get` / `list` method; 8.2 ships **write routes only** (the 12 write methods). The `get…ResponseSchema` contract schemas exist but stay unconsumed — the read surface (a dedicated GET or a `schemas[]` / group embed into the Block/Week read) is Step 8.3.5.
+
+- **D-8.2-3 (8.2 modifies `packages/contracts`).** The slices lacked route-param schemas (only `idParamSchema`-aliases — `{ id }`, no `planId`, key mismatched to the Next.js segment). Phase 1 adds named params schemas mirroring `blockByIdParamsSchema` / `blockBySessionParamsSchema`, and widens the reorder **request** schemas to carry scope (D-8.2-4). Additive (new exports) → no squash. Trivial `z.object({cuid})` params schemas need no dedicated test — such a test re-asserts only what Zod already guarantees.
+
+- **D-8.2-4 (discriminated scope travels in the request body; routes are flat plan-scoped).** `lmsSchemaApi.create`/`.reorder` need a `CreateScope` (`{blockId}` xor `{parentSchemaId}`) separate from `data`. The request body carries the scope; the route is flat — `POST/PUT .../training-plans/[planId]/schemas[/reorder]`, params `{ planId }`. The handler call-function splits the parsed body into `scope` + `data`. Rationale: `createSchemaSchema` already designs body-carries-scope; reorder aligns to one consistent scope carrier; one route per operation vs. a discriminated path doubling the route branches. The reorder **request** schemas are widened (D-8.2-7 fixes the shape); the entity-level `reorderSchemasSchema` / `reorderSchemaRowsSchema` stay unchanged.
+
+- **D-8.2-5 (`removeMember` uses `createAuthActionHandler`).** `removeMember` is a `DELETE` verb but returns a body (`AlternatingGroup | null`). `createAuthDeleteHandler` is `204`/void/no-responseSchema — unusable. `createAuthActionHandler` (params-only input + a validated response body, verb-agnostic, status `200`) is the only existing factory of the right shape. No new factory added to `@repo/api-routes` — that would be scope creep for a cosmetic name mismatch.
+
+- **D-8.2-6 (QA-E3 closed at the route layer by construction).** `withCoachAuth` throws `UnauthorizedError` (`401`) when `session.user.id` is absent (`auth-wrappers.ts:41`) — the handler's `userId` is always a non-empty string. The api-server-layer QA-E3 carry-forward stays deferred for that layer; 8.2 needs no route-side `userId` guard.
+
+- **D-8.2-7 (the widened reorder request schema is a `z.union`, not `object + superRefine`).** Added during Design, re-ratified mid-execution after an executor escalation. A `superRefine` on a both-keys-optional object validates correctly at runtime but its `z.infer` keeps both scope keys `optional` — the reorder handler cannot narrow to `CreateScope` without a dead `throw` on a branch `superRefine` already made unreachable (compiler-appeasement, rejected per `[[type-quality]]`). The `z.union` of two scope members (each actively rejecting the other's key via `z.undefined()` — Zod strips unknown keys, so a bare omission would let a both-keys payload pass member A) infers a genuine narrowable union; the handler narrows via `request.blockId !== undefined`, no throw. `superRefine` stays correct for _conditional-field_ invariants (`trailingConnectorSchema`) — not for _mutually-exclusive scope_, which is a union by construction. Shipped `44a3680a`; planner ratification commit `e91f6344`. Lesson folded into flavour (i) `[[planner-lint-impact-trace]]` — a schema's runtime validation and its `z.infer` shape are distinct surfaces.
+
 ## 2026-05-20 — Step 8.1d — `lmsAlternatingGroupApi` operational semantics (D-A4 / D-A5 / D-A6 / D-A6.1)
 
 Ratified in the planner-user thesis cycle 2026-05-20; implemented Step 8.1d (commits `a2e261e8..66626a11`).

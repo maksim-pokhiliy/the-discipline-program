@@ -2,49 +2,43 @@
 
 > Concrete next-action handoff brief. Updated every close-out as the queue shifts.
 
-## Status: Step 8.1d CLOSED 2026-05-20
+## Status: Step 8.2 CLOSED 2026-05-20
 
-`lmsAlternatingGroupApi` api-server vertical shipped — 6 commits `a2e261e8..66626a11` + close-out docs commit; **PR #199 merged into `main` 2026-05-20** (Steps 8.1c + 8.1d together), `feat/training-domain` re-cut from fresh `main` (`9a5c217e`). 4-method endpoint (`create` / `addMember` / `removeMember` / `delete`) + `verifyAlternatingGroupOwnership` guard + `mapToAlternatingGroup` mapper + `addMember` / `removeMember` contract schemas (response nullable for D-A4 dissolve) + `createAlternatingGroupSchema.schemaIds.max(24)` (QA-004 closure) + D-A4 scope expansion to `lmsSchemaApi.delete` (group-aware, one Serializable tx). Review APPROVE / QA PASS, 1670/1670 tests, 38 adversarial attacks attempted with 0 exploited. Full entry: [../log/step-08.1d.md](../log/step-08.1d.md).
+Platform HTTP routes for the `Schema` / `SchemaRow` / `AlternatingGroup` api slices shipped — 10 Next.js App Router `route.ts` handlers over all 12 write methods + contract enablers (named route-param schemas + `z.union`-widened reorder-request schemas). 7 executor code/test commits `499b11cb..716c95f2` + 2 planner docs commits + close-out. Composition mirrors the Block precedent (Step 7.2): `withCoachAuth( withAuthRateLimit( createAuth*Handler(...), RATE_LIMIT_TIER.API ) )`. D-8.2-7 ratified mid-execution: the widened reorder request schema is a `z.union`, not `superRefine`. Review APPROVED / QA Score A; `pnpm test` 1680/1680; scope confined (`api-server` / `api-routes` / Prisma / `analysis/` 0 lines). Full entry: [../log/step-08.2.md](../log/step-08.2.md).
 
-## Next planner action: Step 8.2 — validate executor output
+## Next planner action: Step 8.3 thesis cycle — platform client API + hooks
 
-**Update 2026-05-20**: thesis ratified (D-8.2-1..6 — collapsed `/feature` full · no GET routes · contracts touched for route-param + reorder-scope schemas · discriminated scope in request body · `removeMember` via `createAuthActionHandler` · QA-E3 route-closed; user approved all hypotheses). `implementation/step-08.2/prompt.md` written and handed to the executor. Next planner action — validate the executor's `output.md` + `.feature-dev/` when it returns, then close out. The thesis-cycle brief below is retained for reference.
+Client API factories + TanStack Query mutation hooks for the `Schema` / `SchemaRow` / `AlternatingGroup` slices, mirroring Step 7.3 (Block). The 8.2 HTTP routes are the call target. 8.3 wires `apps/platform/src/lib/api/endpoints/` factories + `apps/platform/src/lib/hooks/use-*.ts` mutation hooks. **`/feature small`** likely — Step 7.3 (Block hooks) was `small`; 8.3 is 3× the same thin-wrapper pattern, confirm at prompt-write by the file count. Walkthrough gate: 8.3 ships no UI — the thesis walkthrough describes the **final coach UX** the hooks will serve (the plan-editor mutations 8.4 surfaces), screen-only language per `[[coach-daily-ux-priority]]` (no HTTP / hook / query-key terms in the coach view).
 
-**Mid-execution escalation 2026-05-20**: executor flagged `reorderSchemasRequestSchema` Zod shape — `object + superRefine` validates but does not narrow its inferred type to `CreateScope`, forcing a dead `throw` in the reorder handler. Ratified **`z.union`** of two scope members (narrows cleanly, no throw — per `[[type-quality]]`); recorded in `prompt.md` § 3.1 op 2. At Step 8.2 close-out, consider extending `[[planner-lint-impact-trace]]` with a Zod inferred-type-shape axis.
+**Thesis OQ surface (8.3's to ratify):**
 
-HTTP routes for the `Schema` / `SchemaRow` / `AlternatingGroup` api slices (mirror Step 7.2 for Block). The api-server vertical is complete after 8.1d; Step 8.2 wires HTTP in `packages/api-routes` + handler files in `apps/platform/src/app/api/...`. **`/feature small`** unless the file count > 6-7 (then per-entity split 8.2a/b/c). Walkthrough gate: thesis must include a 1-paragraph coach walkthrough — Step 8.2 is HTTP-only, so the walkthrough describes the **final coach UX** the routes will serve (the plan-editor schema/row/group mutations that 8.3 hooks + 8.4 UI surface).
+- **Collapsed vs. per-entity split.** ~3 endpoint files + ~3 hook files + barrels. Hypothesis: collapsed single step — Step 7.3 Block was one `/feature small`; 8.3 is 3× the same thin pattern, well within one step.
+- **Hook helper + invalidation.** Step 7.3 built mutation hooks via the `useWeekMutation` helper, each invalidating `platformKeys.weeks.byDate(planId, startDate)` (full week-tree refresh). Hypothesis: 8.3 reuses `useWeekMutation` identically — Schema / SchemaRow / AlternatingGroup mutations all invalidate the same week-tree key (the editor renders them inside the week view).
+- **`removeMember` nullable result.** The `useRemoveMember` mutation result type is `AlternatingGroup | null` (the contract response). Hypothesis: pass the nullable through to the caller; the future UI branches on `null` = group dissolved.
+- **reorder scope shape (carry QA-I1).** The `useReorderSchemas` hook builds the `reorderSchemasRequestSchema` body — the `z.union` rejects an explicit `parentSchemaId: null`. Hypothesis: the hook's TVars carries a `CreateScope`-shaped discriminated arg and sends the scope key **absent**, never `null`.
+- **API factory signature.** Step 7.3 `createBlocksAPI` used a flat id-addressed signature (no `DayOfWeek` import). Hypothesis: `createSchemasAPI` / etc. mirror it — `planId` + the route-specific ids/body.
 
-**Thesis OQ surface (8.2's to ratify):**
+**Reference points to read at 8.3 prompt-write time:**
 
-- **Per-entity split vs. single step.** At prompt-write time `grep -rn "lmsSchemaApi\|lmsSchemaRowApi\|lmsAlternatingGroupApi" packages/api-routes/ apps/platform/src/app/api/` decides; > 6-7 file touch ⇒ split into 8.2a (Schema) / 8.2b (SchemaRow) / 8.2c (AlternatingGroup); ≤ 6 ⇒ single step. Hypothesis: collapsed (~5-6 route files total — Block precedent under Step 7.2 was ~4 files).
-- **`removeMember` nullable-response wiring.** Route returns `200 { ...group }` vs `200 null` vs `200 group | 204 No Content` on dissolve. Hypothesis: `200` with a nullable body matching the contract `alternatingGroupSchema.nullable()` — single response shape, the client-side type is already `AlternatingGroup | null`, simplest for the future TanStack hook.
-- **Member-id route shape.** `POST /alternating-groups/:id/members` body `{ schemaId }` for `addMember`; `DELETE /alternating-groups/:id/members/:schemaId` path-param for `removeMember`. Hypothesis: REST-idiomatic — `add` carries the member id in the body (post-create-style), `remove` in the path (delete-by-id-style). 8.1d's contract member-ref schema (`{ schemaId: cuid }`) is reusable as a body parser for `add`; `remove` composes `idParamSchema` + a `schemaId` param.
-- **`create` route — group within a plan.** `POST /plans/:planId/alternating-groups` body `{ relationKind, schemaIds }`. Mirrors Block / Schema / SchemaRow create idioms (plan-scoped POST).
-- **`delete` route.** `DELETE /alternating-groups/:id`. Bare id-only.
-- **Role gates.** Guards already enforce coach-or-admin; routes inherit. No new authz logic at the route layer.
+- Step 7.3 entry — `implementation/log/_archive-pre-refactor.md` (search `## Step 7.3`) — the canonical client-API + hooks precedent (`createBlocksAPI` + 5 `useBlock*` hooks via `useWeekMutation`).
+- `apps/platform/src/lib/api/endpoints/blocks.ts` + `apps/platform/src/lib/api/endpoints/index.ts` + `apps/platform/src/lib/api/index.ts` — the client-API factory + its barrels (registration files — read verbatim per `[[planner-verbatim-registration]]`).
+- `apps/platform/src/lib/hooks/use-blocks.ts` + `apps/platform/src/lib/hooks/index.ts` — the hook precedent.
+- `apps/platform/src/lib/api/keys.ts` — the `platformKeys` query-key factory (invalidation targets).
+- The 8.2 routes (`apps/platform/src/app/api/platform/training-plans/[planId]/{schemas,schema-rows,alternating-groups}/`) — the call target; the request/response contract schemas are their inputs.
 
-**Reference points to read at 8.2 prompt-write time:**
+**Carry-forwards into the 8.3 thesis:**
 
-- Step 7.2 prompt + log (`implementation/log/step-07.2.md` if present in archive, else the pre-refactor archive) — canonical precedent for HTTP-route-only steps in this workflow.
-- `packages/api-routes/src/lms/block/` (and siblings) — canonical routes-package layout (route definitions, OpenAPI/Zod wiring).
-- `apps/platform/src/app/api/...` — Block route handler precedent (handler wrap + auth + body/params Zod parse + `lmsBlockApi` call + response mapping).
-- 8.1d contract schemas — `createAlternatingGroupRequestSchema`, the member-ref request, the `addMember` / `removeMember` response (nullable). All shipped, awaiting routing.
-- 8.1d api method signatures: `lmsAlternatingGroupApi.create(userId, planId, data)`, `.addMember(userId, groupId, schemaId)`, `.removeMember(userId, groupId, schemaId): Promise<AlternatingGroup | null>`, `.delete(userId, groupId)`.
-
-**Carry-forwards into the 8.2 thesis:**
-
-- **PR #199 review (`claude[bot]`)** — CI review on merged #199, verdict LGTM, all notes non-blocking. 3 polish items logged as `REVIEW-I4/I5/I6` in `03-deferred.md` (one `/fix` bundle, schedulable with QA-W1). Review note #1 (`schemaIds` ordering) — at 8.2 prompt-write verbatim-research found no route-level tests exist (Block precedent) and the ordering is already pinned by the 8.1d mapper-determinism test; recorded covered, no further artifact (`step-08.2/prompt.md` § 7). Note #3 folded into QA-W1; note #5 discarded (ADR-0019).
-
-- **QA-W1** — in-tx `plan` re-check missing on `lmsSchemaRowApi.update`/`.delete` and (PR #199 note #3) `lmsAlternatingGroupApi.delete`, which runs with no transaction at all (Active in `03-deferred.md`). 8.2 is HTTP, does NOT touch these methods; stays deferred to a separate `/fix`.
-- **QA-E3** — `userId === undefined` propagation across all guards including the new `verifyAlternatingGroupOwnership` (Active). HTTP layer typically validates `userId` from session/auth before calling the api; verify the auth wrap catches `undefined` before the guard call (likely already does — confirm at prompt-write).
-- **8.1d Stage-6 QA-1** — concurrency test for D-A4 dissolve-below-2 under interleaved `removeMember` + `lmsSchemaApi.delete` is NOT written (planner-allowed skip per `[[postgres-ssi-upsert-unique-key]]`). Correctness is by-design (Serializable + `retryOnP2034`); regression watch only. Out of 8.2 scope.
+- **QA-I1** — the `useReorderSchemas` hook must send the scope key absent (not `null`); the `z.union` request schema rejects explicit `null`. Active in `03-deferred.md`. The 8.3 thesis addresses the hook's TVars scope shape.
+- **REVIEW-I4/I5/I6 + QA-W1 + QA-D1** — deferred `/fix` bundle (`03-deferred.md`); 8.3 is client hooks, touches none of them. QA-D1 widened at the 8.2 close-out (the reorder `.max()` gap is codebase-wide).
+- **No read hook.** 8.3 hooks call only the 12 write routes — no GET route exists (D-8.2-2). The read surface is Step 8.3.5.
 
 ## Process reminders (active from Step 8.1c)
 
-- Thesis = two voice-coded sections (coach view + developer view) per `[[thesis-format]]`; coach view carries the mandatory 1-paragraph walkthrough per `[[coach-walkthrough-gate]]`. For backend-only Step 8.2: describe the final coach UX the routes will serve.
+- Thesis = two voice-coded sections (coach view + developer view) per `[[thesis-format]]`; coach view carries the mandatory 1-paragraph walkthrough per `[[coach-walkthrough-gate]]`, **screen-only language** per `[[coach-daily-ux-priority]]` (no HTTP / route / hook / query-key terms in the coach view).
 - Prompt is spec-only per `[[planner-strategic-level]]` — § 0 verbatim quotes of existing code stay; no prescriptive new-code skeletons in § 3.
+- When prescribing any schema / type shape, simulate its inferred type, not just its runtime behaviour — flavour (i) `[[planner-lint-impact-trace]]` Zod sub-axis (Step 8.2 finding).
 - `/feature` (small or full per scope), `feat/training-domain` long-lived branch, no branch cut.
 
-## After Step 8.2 close-out
+## After Step 8.3 close-out
 
-Per [01-step-queue.md](01-step-queue.md) execution order: 8.2 → 8.3 (client hooks) → 8.3.5 (read-embed) → 8.3.6 (SchemaRow `@@unique`) → 8.3.7 (Schema partial-unique) → **8.4 anchor** → **9.1..9.11** → **8.5..8.20** → 10.
+Per [01-step-queue.md](01-step-queue.md) execution order: 8.3 → 8.3.5 (read-embed) → 8.3.6 (SchemaRow `@@unique`) → 8.3.7 (Schema partial-unique) → **8.4 anchor** → **9.1..9.11** → **8.5..8.20** → 10.
