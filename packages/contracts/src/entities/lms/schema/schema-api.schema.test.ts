@@ -12,14 +12,11 @@ import {
   updateSchemaRequestSchema,
   updateSchemaResponseSchema,
 } from "./schema-api.schema";
-import {
-  createSchemaSchema,
-  reorderSchemasSchema,
-  schemaSchema,
-  updateSchemaSchema,
-} from "./schema.schema";
+import { createSchemaSchema, schemaSchema, updateSchemaSchema } from "./schema.schema";
 
 const cuid = "clz1234567890123456789aaa";
+const cuidB = "clz1234567890123456789bbb";
+const cuidC = "clz1234567890123456789ccc";
 
 describe("schema id param schemas", () => {
   it("getSchemaByIdParamsSchema accepts a cuid id", () => {
@@ -51,9 +48,36 @@ describe("schema request/response aliases", () => {
   it("updateSchemaResponseSchema is schemaSchema", () => {
     expect(updateSchemaResponseSchema).toBe(schemaSchema);
   });
+});
 
-  it("reorderSchemasRequestSchema is reorderSchemasSchema", () => {
-    expect(reorderSchemasRequestSchema).toBe(reorderSchemasSchema);
+describe("reorderSchemasRequestSchema", () => {
+  it("accepts a block-scoped payload", () => {
+    expect(
+      reorderSchemasRequestSchema.safeParse({ blockId: cuid, orderedIds: [cuidB, cuidC] }).success,
+    ).toBe(true);
+  });
+
+  it("accepts a parent-schema-scoped payload", () => {
+    expect(
+      reorderSchemasRequestSchema.safeParse({ parentSchemaId: cuid, orderedIds: [cuidB, cuidC] })
+        .success,
+    ).toBe(true);
+  });
+
+  it("rejects a payload carrying both scope keys", () => {
+    expect(
+      reorderSchemasRequestSchema.safeParse({
+        blockId: cuid,
+        parentSchemaId: cuidB,
+        orderedIds: [cuidC],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects a payload carrying neither scope key", () => {
+    expect(reorderSchemasRequestSchema.safeParse({ orderedIds: [cuidB, cuidC] }).success).toBe(
+      false,
+    );
   });
 });
 

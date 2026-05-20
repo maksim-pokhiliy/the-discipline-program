@@ -12,14 +12,11 @@ import {
   updateSchemaRowRequestSchema,
   updateSchemaRowResponseSchema,
 } from "./schema-row-api.schema";
-import {
-  createSchemaRowSchema,
-  reorderSchemaRowsSchema,
-  schemaRowSchema,
-  updateSchemaRowSchema,
-} from "./schema-row.schema";
+import { createSchemaRowSchema, schemaRowSchema, updateSchemaRowSchema } from "./schema-row.schema";
 
 const cuid = "clz1234567890123456789aaa";
+const cuidB = "clz1234567890123456789bbb";
+const cuidC = "clz1234567890123456789ccc";
 
 describe("schema-row id param schemas", () => {
   it("getSchemaRowByIdParamsSchema accepts a cuid id", () => {
@@ -51,9 +48,27 @@ describe("schema-row request/response aliases", () => {
   it("updateSchemaRowResponseSchema is schemaRowSchema", () => {
     expect(updateSchemaRowResponseSchema).toBe(schemaRowSchema);
   });
+});
 
-  it("reorderSchemaRowsRequestSchema is reorderSchemaRowsSchema", () => {
-    expect(reorderSchemaRowsRequestSchema).toBe(reorderSchemaRowsSchema);
+describe("reorderSchemaRowsRequestSchema", () => {
+  it("accepts a payload carrying schemaId and orderedIds", () => {
+    expect(
+      reorderSchemaRowsRequestSchema.safeParse({ schemaId: cuid, orderedIds: [cuidB, cuidC] })
+        .success,
+    ).toBe(true);
+  });
+
+  it("rejects a payload missing schemaId", () => {
+    expect(reorderSchemaRowsRequestSchema.safeParse({ orderedIds: [cuidB, cuidC] }).success).toBe(
+      false,
+    );
+  });
+
+  it("rejects a non-cuid schemaId", () => {
+    expect(
+      reorderSchemaRowsRequestSchema.safeParse({ schemaId: "not-a-cuid", orderedIds: [cuidB] })
+        .success,
+    ).toBe(false);
   });
 });
 
