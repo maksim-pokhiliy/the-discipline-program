@@ -143,7 +143,7 @@ describe("archetypeParamsSchema (34-variant flat union)", () => {
   it("accepts alternating-sets", () => {
     const r = archetypeParamsSchema.safeParse({
       archetype: "alternating-sets",
-      params: { setEnumeration: [1, 2, 3], pairedWithSchemaId: cuidA },
+      params: { setEnumeration: [1, 2, 3] },
     });
 
     expect(r.success).toBe(true);

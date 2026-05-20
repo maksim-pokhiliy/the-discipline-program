@@ -43,7 +43,6 @@ const parallelLadderEntrySchema = z.object({
 
 const archetypeAlternatingSetsParamsSchema = z.object({
   setEnumeration: z.array(positiveInt).min(1),
-  pairedWithSchemaId: z.string().cuid().optional(),
 });
 
 const archetypeAmrapFlatParamsSchema = z.object({ durationMin: positiveInt });

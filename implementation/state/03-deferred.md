@@ -10,7 +10,7 @@
 
 - **QA-W2 — `lmsSchemaRowApi.reorder` array-form `$transaction([...])` cannot embed plan re-fetch** (WARNING). Array form, not interactive tx. Either convert к interactive `$transaction(async tx)` or accept the race as known-defer. **Action when triggered**: future `/fix` cycle, decide form at that time.
 
-- **REVIEW-I3 — `lms-guards.ts` at ~293/300 logical LOC** (INFO; Step 8.1c heads-up). The `authz/guards.ts` split (Step 8.1b D-1) produced `lms-guards.ts` holding the full ownership chain — 7-line headroom. Appending `verifySchemaPairingOwnership` in Step 8.1c trips eslint `max-lines: 300`. **Action**: executor-side tactical — when 8.1c executor hits the cap, it splits `lms-guards.ts` further (e.g. plan/session/block vs schema-family). No planner pre-work; just a non-surprising scope note for the 8.1c close-out.
+- ~~**REVIEW-I3 — `lms-guards.ts` at ~293/300 logical LOC**~~ — **CLOSED 2026-05-20** via Step 8.1d commit `f99d9ba6` (own-file axis): executor placed `verifyAlternatingGroupOwnership` in a new `authz/alternating-group-guards.ts` (83 lines) joined to the `authz/guards.ts` barrel, leaving `lms-guards.ts` byte-identical at 331 physical / ~293 logical lines (under the 300 cap). Zero churn risk in the four shipped sibling guards; importers continue resolving via `from "…/authz/guards"`. The cap is cleared via separate-file split rather than in-place — acceptable axis, planner-concur'd at close-out.
 
 ### Step 8.1a follow-ups
 
@@ -40,7 +40,7 @@
 
 ### Step 8 surface triggers
 
-- **WORKFLOW-001 — `db:seed` vs test suite incompatibility through `idx_single_head_coach`** (Step 7.3.6 D-3 carry-forward; landing Step 8.3.7-pre per D13). `apply-sql-checks.ts:1-6` creates partial unique index blocking 2nd HEAD_COACH user; seed creates 1; tests create their own → P2002. Workflow requires «`db:reset` alone before tests» convention but undocumented. Options surfaced в `step-07.3.6/output.md` and D13: (a) new `db:reset:for-tests` alias; (b) test setup find-and-reuse seed HEAD_COACH; (c) document «reset-without-seed-and-checks» convention в WORKFLOW.md. Picks at 8.3.7-pre thesis.
+- ~~**WORKFLOW-001 — `db:seed` vs test suite incompatibility through `idx_single_head_coach`**~~ — **CLOSED 2026-05-20** via Step 8.1c commit `8c3a701b` (D13 path (b)): `schema/admin.test.ts` + `label/platform.test.ts` — the 2 files that created a 2nd `HEAD_COACH` without clearing the seeded one — now demote any pre-existing `HEAD_COACH` → `COACH` before promoting their fixture; the other 4 HEAD_COACH-creating test files already carried the pattern. Deterministic collision no longer reproduces; `pnpm test` green on a `db:reset`+`db:seed` DB. Step 8.3.7-pre DROPPED (D13 SUPERSEDED). Convention recorded in Standing context below.
 
 - **`DAY_INCLUDE` hoist к shared module** (Step 7.3.5 D-1 carry-forward; Step 8 trigger). `lms/day/admin.ts` defines `DAY_INCLUDE` const inline. Hoist к `endpoints/lms/_shared/` when 3rd callsite materializes (likely Step 8.1a or 8.3.5 — Schema entity Day-include extension).
 
@@ -103,3 +103,5 @@
 - **ZWS / control-char normalization on Day notes** (Step 6.6 deferred). Trigger: QA reports "notes appear empty but have characters". Implementation: hoist `normalizeText` helper from `lms/label/label.schema.ts:7` к shared module.
 
 - **Label autocomplete preload + filter-by-applicability** (Step 6.4 ratified mid-thesis 2026-05-16): coach opens label-select → all applicable labels preloaded server-side; in-form filter narrows by `applicableLevels`. Driven `lmsLabelPlatformApi.list({q?, level?})`, `LABEL_SEARCH_CAP` 50→500.
+
+- **HEAD_COACH test-setup convention** (established Step 8.1c, WORKFLOW-001 closure): the seed creates exactly one `HEAD_COACH`; the `idx_single_head_coach` partial unique index allows only one. Any api-server test that needs its own `HEAD_COACH` fixture MUST first demote any pre-existing `HEAD_COACH` → `COACH` before promoting. Pattern in `authz/guards.test.ts`, `lms/plan-enrollment/admin.test.ts`, `iam/users-admin-actor-role.test.ts`, `lms/schema/admin.test.ts`, `lms/label/platform.test.ts`.

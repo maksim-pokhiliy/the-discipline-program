@@ -200,14 +200,15 @@ schema-2:
 
 ```
 Block (order=M, labels=["STRENGTH ENDURANCE"])
+  ├─ AlternatingGroup (id=group-1, block=this, relation_kind="alternating_sets")
   ├─ Schema (
   │     order=1,
   │     kind="atomic",
   │     archetype="alternating-sets",
   │     header="1st | 3rd | 5th sets:",
+  │     alternating_group_id=group-1,
   │     archetype_params={
-  │       set_enumeration: [1, 3, 5],
-  │       paired_with_schema_ref: schema-2_id
+  │       set_enumeration: [1, 3, 5]
   │     },
   │     body=[
   │       ExerciseRow(exercise=Exercise("Jumping Jacks"), reps=count(36), load=Bodyweight),
@@ -225,9 +226,9 @@ Block (order=M, labels=["STRENGTH ENDURANCE"])
         kind="atomic",
         archetype="alternating-sets",
         header="2nd | 4th | 6th sets",
+        alternating_group_id=group-1,
         archetype_params={
-          set_enumeration: [2, 4, 6],
-          paired_with_schema_ref: schema-1_id
+          set_enumeration: [2, 4, 6]
         },
         body=[
           ExerciseRow(exercise=Exercise("Jumping Jacks"), reps=count(36), load=Bodyweight),
@@ -245,11 +246,11 @@ Block (order=M, labels=["STRENGTH ENDURANCE"])
 
 ### Gaps / observations
 
-1. **paired_with_schema_ref**: archetype-singleton requires cross-schema reference (1st|3rd|5th paired с 2nd|4th|6th). Model: `archetype_params.paired_with_schema_ref` — bidirectional FK. Phase 6 решает: separate join-table или direct FK.
+1. **alternating-sets group membership**: archetype requires a cross-schema link (1st|3rd|5th + 2nd|4th|6th — здесь 2 schemas, но `alternating-sets` — N-ary, 2..N без потолка). Model (D14, 2026-05-20): block-scoped `AlternatingGroup` entity; membership — single nullable FK `Schema.alternatingGroupId`. block-009 даёт ровно 2 member schemas. Phase 6 первоначально шипнул 2-FK pair-таблицу `SchemaPairing`; D14 заменил её на N-ary `AlternatingGroup`, т.к. pair-таблица не выражала N>2.
 2. **`KB clean & jerk` composite-named**: Exercise.canonical_compound_type=`composite_named`, atomic. OK per Phase 3.2 Option (c).
 3. **InlineRestRow scope `between_sets`**: rest применяется не между schemas, а внутри alternating execution (после каждого set из 1+2). Phase 5: scope=`between_sets` корректно покрывает (block-level rest применяется к sets across two paired schemas).
 
-### Status: укладывается. Paired-schema reference требует Phase 6 decision на persistence shape.
+### Status: укладывается. Cross-schema membership persisted via the `AlternatingGroup` N-ary grouping entity (D14).
 
 ---
 
@@ -800,7 +801,7 @@ Block (
 | --------- | --------- | ------------------------------------------------------------ | ---------------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------- |
 | 1         | block-037 | parallel-ladders-descending (canonical) + EXAMPLE annotation | no (15 occurrences)                | yes         | 2 minor: alternating annotation in PerLimbDistribution; EXAMPLE row needs Schema.notes field                   |
 | 2         | block-003 | time-window-outer                                            | yes (block-level singleton)        | yes         | dual-value resolver deferred — model-ready                                                                     |
-| 3         | block-009 | alternating-sets                                             | yes (block-level singleton)        | yes         | paired_with_schema_ref persistence — Phase 6                                                                   |
+| 3         | block-009 | alternating-sets                                             | yes (block-level singleton)        | yes         | group membership — `AlternatingGroup` N-ary grouping entity (D14)                                              |
 | 4         | block-080 | emom-nested-per-minute + REST sub-schema body                | no (6 wrappers)                    | yes         | rest_slot row kind addition needed                                                                             |
 | 5         | block-008 | parallel-ladders + named-exercise-program (Bulgarian)        | no (named-program: 9 occurrences)  | yes         | StagedProgram VO embeds program (Phase 7 rename ex-DropSetProgram); exercise_name → maybe Exercise ref Phase 6 |
 | 6         | block-145 | flat-list-headerless + CHIPPER label singleton               | yes (CHIPPER label singleton, 1)   | yes         | trivial fit                                                                                                    |
@@ -813,7 +814,7 @@ Block (
 - **Schema.notes field** — для EXAMPLE-style explanatory annotations (block-037).
 - **`rest_slot` row kind** или специальный handling для REST body в EMOM sub-schemas (block-080).
 - **`alternating` variant** в PerLimbDistribution (block-037 `[ alternative ]`).
-- **`paired_with_schema_ref`** — bidirectional FK для alternating-sets archetype (block-009).
+- **alternating-sets group membership** — cross-schema link для alternating-sets archetype (block-009); persisted via the `AlternatingGroup` N-ary grouping entity (D14, 2026-05-20).
 - **`exercise_name → Exercise FK`** в named-exercise-program archetype (block-008) — Phase 6 decision.
 - **SequenceIndicator.target_label** — string vs Label ref (block-006 METCON).
 - **Phase 5 pace=intensity correction** (block-055) — eschalation tracked.

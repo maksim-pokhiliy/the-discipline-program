@@ -584,7 +584,7 @@ enum OneRMRecordSource {
   TESTED
 }
 
-enum SchemaPairingRelation {
+enum AlternatingGroupRelation {
   ALTERNATING_SETS
 }
 
@@ -659,9 +659,10 @@ model Block {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  session          Session                @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  labelAssignments BlockLabelAssignment[]
-  schemas          Schema[]
+  session           Session                @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  labelAssignments  BlockLabelAssignment[]
+  schemas           Schema[]
+  alternatingGroups AlternatingGroup[]
 
   @@unique([sessionId, order])
   @@index([sessionId, order])
@@ -684,46 +685,47 @@ model BlockLabelAssignment {
 }
 
 model Schema {
-  id                String     @id @default(cuid())
-  blockId           String
-  parentSchemaId    String?
-  order             Int
-  kind              SchemaKind
-  archetypeId       String
-  header            String?
-  archetypeParams   Json
-  intensity         Json?
-  trailingConnector Json?
-  notes             String?
-  createdAt         DateTime   @default(now())
-  updatedAt         DateTime   @updatedAt
+  id                 String     @id @default(cuid())
+  blockId            String
+  parentSchemaId     String?
+  alternatingGroupId String?
+  order              Int
+  kind               SchemaKind
+  archetypeId        String
+  header             String?
+  archetypeParams    Json
+  intensity          Json?
+  trailingConnector  Json?
+  notes              String?
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
 
-  block        Block           @relation(fields: [blockId], references: [id], onDelete: Cascade)
-  parentSchema Schema?         @relation("SchemaSubSchemas", fields: [parentSchemaId], references: [id], onDelete: Cascade)
-  subSchemas   Schema[]        @relation("SchemaSubSchemas")
-  archetype    Archetype       @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
-  rows         SchemaRow[]
-  pairingsA    SchemaPairing[] @relation("SchemaPairingA")
-  pairingsB    SchemaPairing[] @relation("SchemaPairingB")
+  block            Block             @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  parentSchema     Schema?           @relation("SchemaSubSchemas", fields: [parentSchemaId], references: [id], onDelete: Cascade)
+  subSchemas       Schema[]          @relation("SchemaSubSchemas")
+  archetype        Archetype         @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
+  alternatingGroup AlternatingGroup? @relation(fields: [alternatingGroupId], references: [id], onDelete: SetNull)
+  rows             SchemaRow[]
 
   @@index([blockId, order])
   @@index([parentSchemaId, order])
   @@index([archetypeId])
+  @@index([alternatingGroupId])
   @@map("training_schemas")
 }
 
-model SchemaPairing {
-  id           String                @id @default(cuid())
-  schemaAId    String
-  schemaBId    String
-  relationKind SchemaPairingRelation
+model AlternatingGroup {
+  id           String                   @id @default(cuid())
+  blockId      String
+  relationKind AlternatingGroupRelation
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
 
-  schemaA Schema @relation("SchemaPairingA", fields: [schemaAId], references: [id], onDelete: Cascade)
-  schemaB Schema @relation("SchemaPairingB", fields: [schemaBId], references: [id], onDelete: Cascade)
+  block   Block    @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  schemas Schema[]
 
-  @@unique([schemaAId, schemaBId])
-  @@index([schemaBId])
-  @@map("training_schema_pairings")
+  @@index([blockId])
+  @@map("training_alternating_groups")
 }
 
 model SchemaRow {

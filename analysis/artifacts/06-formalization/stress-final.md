@@ -79,7 +79,7 @@ Schema(
 - `3 sets | legs & glutes:` (paired schema-2).
 - `3-4 sets | legs & glutes:` (paired schema-2).
 
-Paired structure (shoulders + legs & glutes pair) — оба сохраняются как distinct schemas в одном Block, без SchemaPairing (это не alternating execution — sequential workload).
+Paired structure (shoulders + legs & glutes pair) — оба сохраняются как distinct schemas в одном Block, без `AlternatingGroup` (это не alternating execution — sequential workload).
 
 **Fit**: 44/44 ✓.
 
@@ -508,16 +508,20 @@ Schema(
 **Representative**: block-009 / schema-1 + schema-2.
 
 ```
+AlternatingGroup(id=group-1.id, blockId=block-009.id, relationKind=ALTERNATING_SETS)
 Schema-1(
   order=10, kind=ATOMIC, archetype=alternating-sets, header="1st | 3rd | 5th sets:",
-  archetypeParams={ archetype: "alternating-sets", params: { setEnumeration: [1, 3, 5], pairedWithSchemaId: schema-2.id } }
+  alternatingGroupId=group-1.id,
+  archetypeParams={ archetype: "alternating-sets", params: { setEnumeration: [1, 3, 5] } }
 )
 Schema-2(
   order=20, kind=ATOMIC, archetype=alternating-sets, header="2nd | 4th | 6th sets",
-  archetypeParams={ archetype: "alternating-sets", params: { setEnumeration: [2, 4, 6], pairedWithSchemaId: schema-1.id } }
+  alternatingGroupId=group-1.id,
+  archetypeParams={ archetype: "alternating-sets", params: { setEnumeration: [2, 4, 6] } }
 )
-SchemaPairing(schemaAId=schema-1.id, schemaBId=schema-2.id, relationKind=ALTERNATING_SETS)
 ```
+
+block-009 содержит ровно 2 member schemas, объединённые в один `AlternatingGroup` через FK `Schema.alternatingGroupId` (D14). Модель N-ary — группа поддерживает любой N≥2 (3 серии — sets 1·4·7 / 2·5·8 / 3·6·9 — легли бы в одну группу из 3 членов); empirical sample даёт cardinality-2.
 
 **Fit**: 2/2 ✓.
 
@@ -876,7 +880,7 @@ Note: Phase 6 model хранит постpreprocessor state. Migration preproces
 | EMOM REST body (`REST` single word)         | block-080 / sub-4, block-081 / sub-3, block-082 (если REST sub) | `RowKind.REST_SLOT` (Q12)                       |
 | `[ alternative ]` annotation на DB Snatches | block-037 (canonical example)                                   | `PerLimbDistribution.kind: "alternating"` (Q13) |
 | EXAMPLE annotation row                      | block-014, block-037, block-038, block-140, block-141           | `Schema.notes` (Q15)                            |
-| `paired_with_schema_ref`                    | block-009 (alternating-sets)                                    | `SchemaPairing` join table                      |
+| alternating-sets group membership           | block-009 (alternating-sets)                                    | `AlternatingGroup` N-ary grouping entity (D14)  |
 | `target_label`                              | block-006 (METCON), block-051 (BAR DIPS complex)                | `SequenceIndicator.targetLabel: string` (Q14)   |
 
 Все 5 special cases имеют first-class representation в Phase 6 model.
@@ -931,7 +935,7 @@ Note: Phase 6 model хранит постpreprocessor state. Migration preproces
 - Cross-movement percentage: `PercentageReference { scope: "other_exercise", targetExerciseId }` ✓
 - MovementFamily as string: `Exercise.movementFamily: String?` ✓
 - MediaReference embedded VO: `SchemaRow.media: Json?` + `Exercise.defaultDemoUrl` ✓
-- SCHEMA_PAIRING separate join table ✓
+- AlternatingGroup N-ary grouping entity for alternating-sets (D14) ✓
 
 ---
 
@@ -939,7 +943,7 @@ Note: Phase 6 model хранит постpreprocessor state. Migration preproces
 
 - [x] 198/198 block instances укладываются в model.
 - [x] 33 archetypes used, 0 unmapped.
-- [x] All 5 special cases (Q12-Q15 + paired schemas) имеют first-class representation.
+- [x] All 5 special cases (Q12-Q15 + alternating-sets group membership) имеют first-class representation.
 - [x] Empty-body blocks (3) валидны через `schemas: []`.
 - [x] Implicit blocks (75) валидны через `labelAssignments: []`.
 - [x] Composite multi-label blocks (13) decompose per Phase 4 rules.
@@ -1155,7 +1159,7 @@ Block(
           ]
 ```
 
-**Покрытие**: archetype `super-set` (Ext 5) с `ArchetypeSuperSetParams.pairs` ссылается на `SchemaRow.id` через `SuperSetPair.schemaRows`. Family `ROUNDS_SETS` (close family — не отдельная). `SchemaPairing` **не** переиспользуется (это для bidirectional alternating-sets relation; super-set — ordered exercise sequence внутри одной schemы).
+**Покрытие**: archetype `super-set` (Ext 5) с `ArchetypeSuperSetParams.pairs` ссылается на `SchemaRow.id` через `SuperSetPair.schemaRows`. Family `ROUNDS_SETS` (close family — не отдельная). `AlternatingGroup` **не** переиспользуется (это N-ary cross-schema grouping для alternating-sets; super-set — ordered exercise sequence внутри одной schemы).
 
 **Fit**: 1/1 ✓.
 

@@ -38,7 +38,6 @@ export const ROUNDS_LADDER_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
       required: ["setEnumeration"],
       properties: {
         setEnumeration: { type: "array", items: { type: "integer", minimum: 1 } },
-        pairedWithSchemaId: { type: "string", nullable: true },
       },
     },
     relatedArchetypes: [{ kind: "specialization_of", target: "n-rounds" }],

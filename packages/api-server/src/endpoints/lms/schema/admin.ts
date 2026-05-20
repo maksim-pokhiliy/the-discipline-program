@@ -25,6 +25,8 @@ type SchemaBodyData = Omit<CreateSchemaData, "blockId" | "parentSchemaId">;
 
 const STRUCTURAL_UPDATE_KEYS = ["kind", "archetypeId", "parentSchemaId", "blockId"] as const;
 
+const SURVIVING_GROUP_FLOOR = 2;
+
 export const lmsSchemaApi = {
   create: async (
     userId: string,
@@ -227,7 +229,31 @@ export const lmsSchemaApi = {
     verifyPlanEditable(owner);
 
     try {
-      await prisma.schema.delete({ where: { id: schemaId } });
+      await retryOnP2034(() =>
+        prisma.$transaction(
+          async (tx) => {
+            const target = await tx.schema.findUnique({
+              where: { id: schemaId },
+              select: { alternatingGroupId: true },
+            });
+
+            await tx.schema.delete({ where: { id: schemaId } });
+
+            if (target?.alternatingGroupId) {
+              const remaining = await tx.schema.count({
+                where: { alternatingGroupId: target.alternatingGroupId },
+              });
+
+              if (remaining < SURVIVING_GROUP_FLOOR) {
+                await tx.alternatingGroup.delete({
+                  where: { id: target.alternatingGroupId },
+                });
+              }
+            }
+          },
+          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+        ),
+      );
     } catch (error) {
       return handlePrismaError(error, { entity: "Schema" });
     }

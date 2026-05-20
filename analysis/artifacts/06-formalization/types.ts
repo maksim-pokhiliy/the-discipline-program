@@ -5,7 +5,7 @@ import type {
   Block,
   BlockLabelAssignment,
   Schema as PrismaSchema,
-  SchemaPairing,
+  AlternatingGroup,
   SchemaRow,
   Exercise,
   Label,
@@ -21,7 +21,7 @@ import type {
   ArchetypeFamily,
   Position,
   OneRMRecordSource,
-  SchemaPairingRelation,
+  AlternatingGroupRelation,
   AppLevel,
   DayOfWeek,
 } from "@prisma/client";
@@ -33,7 +33,7 @@ export type {
   Block,
   BlockLabelAssignment,
   PrismaSchema,
-  SchemaPairing,
+  AlternatingGroup,
   SchemaRow,
   Exercise,
   Label,
@@ -49,7 +49,7 @@ export type {
   ArchetypeFamily,
   Position,
   OneRMRecordSource,
-  SchemaPairingRelation,
+  AlternatingGroupRelation,
   AppLevel,
   DayOfWeek,
 };
@@ -399,7 +399,6 @@ export interface ArchetypeRoundsSetsParams {
 
 export interface ArchetypeAlternatingSetsParams {
   setEnumeration: number[];
-  pairedWithSchemaId?: string;
 }
 
 export interface ArchetypeAmrapFlatParams {
