@@ -230,6 +230,18 @@ describe("lmsLabelPlatformApi.list", () => {
   });
 
   it("authorizes a HEAD_COACH caller", async () => {
+    const preexisting = await cleanupRaw.user.findMany({
+      where: { role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] },
+      select: { id: true },
+    });
+
+    for (const hc of preexisting) {
+      await cleanupRaw.user.update({
+        where: { id: hc.id },
+        data: { role: ROLE_TO_PRISMA_MAP[UserRole.COACH] },
+      });
+    }
+
     const headCoach = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.HEAD_COACH] });
 
     createdUserIds.push(headCoach.id);

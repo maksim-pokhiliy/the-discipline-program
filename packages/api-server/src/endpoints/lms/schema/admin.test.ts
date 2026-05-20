@@ -86,6 +86,18 @@ describe("lmsSchemaApi", () => {
     otherCoach = await createTestCoach();
     headCoach = await createTestCoach();
 
+    const preexisting = await cleanupRaw.user.findMany({
+      where: { role: "HEAD_COACH" },
+      select: { id: true },
+    });
+
+    for (const hc of preexisting) {
+      await cleanupRaw.user.update({
+        where: { id: hc.id },
+        data: { role: "COACH" },
+      });
+    }
+
     await cleanupRaw.user.update({
       where: { id: headCoach.user.id },
       data: { role: "HEAD_COACH" },
