@@ -928,7 +928,7 @@ Schema entity имеет:
 | Archetype           | Kind   | archetype_params shape                                                                                                                     |
 | ------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | n-rounds            | atomic | `{ count_form: "exact" \| "range" \| "count_times_reps", count?: int, count_range?: {min,max}, reps_per_set?: int, rest_spec?: RestSpec }` |
-| alternating-sets    | atomic | `{ set_enumeration: int[], paired_with_schema_ref?: ref }`                                                                                 |
+| alternating-sets    | atomic | `{ set_enumeration: int[] }` (group membership — `AlternatingGroup` entity, не archetype_param; см. §7 summary + D14)                      |
 | super-set (Phase 7) | atomic | `{ pairs: Array<{ label: string, schema_rows: SchemaRowRef[] }>, rest_between_pairs?: RestSpec, rounds: int }`                             |
 
 ### 3.2 Ladder family
@@ -1173,6 +1173,7 @@ Per Phase 2.1: `then:` / `...then...:` / `...then N rounds:` маркируют 
 ## §7. Summary
 
 - **Entities**: 13 in-scope в этом срезе (Week, Day, Session, Block, Schema, SubSchema, SchemaRow, Exercise, Label, Archetype, OneRMRecord, PerformedSession, PerformedExerciseInstance) + 2 external stubs (TrainingPlan, User — full shape в app-level schema). Standalone `Athlete` убран per D2 — athlete identity = `User` + `AthleteProfile`.
+- **AlternatingGroup** (D14, 2026-05-20): block-scoped N-ary grouping entity для `alternating-sets` archetype — объединяет 2..N member schemas в один чередующийся цикл, без потолка участников. Membership — single nullable FK `Schema.alternatingGroupId` (schema принадлежит максимум одной группе, без junction table). `onDelete`: Block → Cascade, `Schema.alternatingGroup` → SetNull (удаление группы оставляет member schemas живыми). Managed mutable entity — несёт `createdAt`/`updatedAt`. Заменяет 2-FK pair-таблицу `SchemaPairing`, которая не выражала N>2 (block-009 case — 2 schemas, но модель поддерживает любой N≥2). Не входит в content-hierarchy census выше — это группирующая сущность, как `BlockLabelAssignment`. Canonical shape — `06-formalization/implementation-notes.md` §4.9.
 - **Value Objects**: 18 (Load, Weight, Intensity, RepNotation, CompoundRepDefinition, PerLimbDistribution, TempoModifier, PositionEquipmentModifier, SequenceIndicator, StagedProgram, PerSetSubstitution, OrAlternative, MediaReference, TimeCap, CyclicalCompound, SandwichCompound, CompoundRow, ArchetypeSuperSetParams). Phase 7: StagedProgram = rename DropSetProgram + generalize; ArchetypeSuperSetParams = new VO.
 - **Schema kinds**: 5 (atomic, headerless, nested, named, composite).
 - **Archetypes**: 34 catalog (33 Phase 1-6 + super-set Phase 7) — **configuration** per D4 (mandatory system seed, no admin CRUD).

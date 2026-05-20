@@ -1160,7 +1160,7 @@ Validation:
 - `pairs.length >= 1`; `pairs[i].schemaRows.length >= 2` (super-set по definition — 2+ rows последовательно).
 - `pair.label` unique внутри params (`A1`, `A2`, `B1`, ...) — soft warning if duplicate.
 
-Family = `ROUNDS_SETS` (не отдельный family). Differentiation от `n-rounds`: explicit ordered pair grouping + per-pair rest scheme. От `alternating-sets`: super-set — single schema, alternating-sets — 2 paired schemas через `SchemaPairing`.
+Family = `ROUNDS_SETS` (не отдельный family). Differentiation от `n-rounds`: explicit ordered pair grouping + per-pair rest scheme. От `alternating-sets`: super-set — single schema; alternating-sets — 2..N schemas, объединённые в `AlternatingGroup` (block-scoped N-ary grouping entity, см. §4.9 / D14).
 
 ---
 
@@ -1338,6 +1338,24 @@ Reorder fix (scope-expansion ratified at execution time after intermediate-state
 
 Per D12 ratify 2026-05-18 (planning thesis cycle Step 8 top-level): `Schema.trailingConnector Json?` field on the Schema entity is canonical persistence для трейлинг-коннектора. The earlier Phase 5 ratification of «ConnectorRow as explicit row at body tail» (domain-model.md §1.6.9 pre-D12) was overridden. `RowKind.CONNECTOR` enum value dropped from Prisma schema + 06-formalization/schema.prisma mirror + 06-formalization/types.ts SchemaRowPayload variant. Resulting `RowKind` enum = 9 values (was 10). `ConnectorForm` enum (`then` / `then_dots` / `then_n_rounds`) survives в `_shared/enums.ts` shipped Step 8.0a — consumed by `Schema.trailingConnector` field via `trailingConnectorSchema` (XOR refine: `form === "then_n_rounds"` requires `roundsCount`; else `roundsCount` forbidden). Per coach POV: "then 3 rounds" = modifier на schema-to-schema transition (meta), not content tail body; cleaner data shape; render logic не фильтрует CONNECTOR row из body iteration.
 
+### §4.9 Step 8.1c — SchemaPairing → AlternatingGroup redesign per D14 (2026-05-20)
+
+Per D14 ratify 2026-05-20 (planner-user thesis cycle): the `SchemaPairing` 2-FK pair table is replaced by `AlternatingGroup`, a block-scoped N-ary grouping entity.
+
+Rationale: `alternating-sets` is an **N-ary** relation — a coach links 2..N schemas into one alternating cycle with no upper bound (sets 1·4·7 / 2·5·8 / 3·6·9 cycled in turn). `SchemaPairing` carried exactly two FKs (`schemaAId` + `schemaBId`, `@@unique([schemaAId, schemaBId])`) and could not express N>2. The analysis modelled "pair" from a single cardinality-2 sample (block-009, 2 schemas) and `05-synthesis/edge-cases.md` §1.2 explicitly flagged that as provisional ("если block-singleton appears в новом блоке → cardinality растёт") — D14 is the anticipated correction, not a contradiction of the analysis. Escalated and ratified per the WORKFLOW.md "Domain-model change protocol" before any code.
+
+Model change:
+
+- **Dropped**: `enum SchemaPairingRelation`, `model SchemaPairing`.
+- **Added**: `enum AlternatingGroupRelation { ALTERNATING_SETS }` (extensible; mirrors the old enum); `model AlternatingGroup { id, blockId, relationKind, createdAt, updatedAt }`.
+- **Membership**: single nullable FK `Schema.alternatingGroupId` (`String?`) + `@@index([alternatingGroupId])`. A schema belongs to at most one group — single FK is structurally sufficient, no junction table. `Schema.pairingsA`/`pairingsB` relation fields removed; `Block` gains the `alternatingGroups` back-relation.
+- **`onDelete`**: `AlternatingGroup.block` → `Cascade` (deleting a Block deletes its groups); `Schema.alternatingGroup` → `SetNull` (deleting a group leaves the member schemas alive and ungrouped — "delete = unlink, schemas survive"). `SetNull` is valid only because `alternatingGroupId` is nullable.
+- **Timestamps** — yes. Unlike the bare `SchemaPairing` join row, `AlternatingGroup` is a managed mutable entity (members added/removed), so it carries `createdAt`/`updatedAt` (mirrors the `Schema`/`SchemaRow` convention, departs from `BlockLabelAssignment`).
+- **No member-order column** (C-A1): the set sequence is already in each member's `setEnumeration` (`[1,4,7]` vs `[2,5,8]` vs `[3,6,9]`); card order on screen = `Schema.order`. The group only records membership. The contract `schemaIds` array is therefore an unordered set.
+- **Archetype params**: the `alternating-sets` archetype params lose the superseded `pairedWithSchemaId` field (`ArchetypeAlternatingSetsParams` = `{ setEnumeration }` only). Membership is read via a future `AlternatingGroup` embed (D-A2), not via `archetypeParams`.
+
+block-009 stays exactly as-is in cardinality — 2 schemas — but its representation changes from a `SchemaPairing` row to a 2-member `AlternatingGroup`; the model now supports any N≥2. Step 8.1c is the schema-change sub-step (definition layer only — no api endpoint, no mapper, no guard); `lmsAlternatingGroupApi` + `verifyAlternatingGroupOwnership` + `mapToAlternatingGroup` follow in Step 8.1d.
+
 ---
 
 ## §5. Open items / future work
@@ -1360,7 +1378,7 @@ Per D12 ratify 2026-05-18 (planning thesis cycle Step 8 top-level): `Schema.trai
 1. **Library entities first**: Label, Archetype, Exercise — seed + CRUD. Эти library tables не зависят от others, можно реализовать isolated.
 2. **Day/Session/Block hierarchy**: container CRUD, label assignment (BlockLabelAssignment + UI).
 3. **Schema + SchemaRow**: archetype-aware ingest, JSON validation через Zod.
-4. **SchemaPairing**: alternating-sets edge case.
+4. **AlternatingGroup**: alternating-sets N-ary grouping (см. §4.9 / D14).
 5. **Athlete / OneRMRecord**: для percentage resolution.
 6. **PerformedSession / PerformedExerciseInstance**: после planned session работает.
 7. **Resolution algorithms**: parse-time + render-time. Cover all DPs (1-4) + Q10 freeze.
