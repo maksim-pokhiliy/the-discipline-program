@@ -1055,6 +1055,31 @@ describe("lmsSchemaApi", () => {
         await ctx.cleanup();
       }
     });
+
+    it("dissolves a degenerate 1-member orphan group when deleting its sole member", async () => {
+      const ctx = await provisionBlock();
+      const orphanGroup = await cleanupRaw.alternatingGroup.create({
+        data: { blockId: ctx.block.id, relationKind: "ALTERNATING_SETS" },
+      });
+      const soleMember = await createAlternatingSetsSchema({
+        blockId: ctx.block.id,
+        alternatingGroupId: orphanGroup.id,
+      });
+
+      try {
+        await lmsSchemaApi.delete(coach.user.id, soleMember.id);
+
+        const memberAfter = await cleanupRaw.schema.findUnique({ where: { id: soleMember.id } });
+        const groupAfter = await cleanupRaw.alternatingGroup.findUnique({
+          where: { id: orphanGroup.id },
+        });
+
+        expect(memberAfter).toBeNull();
+        expect(groupAfter).toBeNull();
+      } finally {
+        await ctx.cleanup();
+      }
+    });
   });
 
   describe("reorder", () => {

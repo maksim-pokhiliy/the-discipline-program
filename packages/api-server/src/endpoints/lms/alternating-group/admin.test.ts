@@ -724,6 +724,31 @@ describe("lmsAlternatingGroupApi", () => {
         await cleanupRaw.trainingPlan.delete({ where: { id: softDeletedPlan.id } }).catch(() => {});
       }
     });
+
+    it("rejects a schema that lives in another plan owned by the same coach (NotFoundError)", async () => {
+      const groupCtx = await provisionBlock();
+      const otherPlan = await createTestPlan(coach.user.id, { status: "ACTIVE" });
+      const schemaCtx = await provisionBlock({ planId: otherPlan.id });
+      const { group } = await seedGroup(groupCtx.block.id, 2);
+      const crossPlanMember = await createAlternatingSetsSchema({ blockId: schemaCtx.block.id });
+
+      try {
+        await expect(
+          lmsAlternatingGroupApi.addMember(coach.user.id, group.id, crossPlanMember.id),
+        ).rejects.toThrow(NotFoundError);
+
+        const stored = await cleanupRaw.schema.findUnique({
+          where: { id: crossPlanMember.id },
+          select: { alternatingGroupId: true },
+        });
+
+        expect(stored?.alternatingGroupId).toBeNull();
+      } finally {
+        await schemaCtx.cleanup();
+        await groupCtx.cleanup();
+        await cleanupRaw.trainingPlan.delete({ where: { id: otherPlan.id } }).catch(() => {});
+      }
+    });
   });
 
   describe("removeMember", () => {
@@ -888,6 +913,43 @@ describe("lmsAlternatingGroupApi", () => {
         });
         await ctx.cleanup();
         await cleanupRaw.trainingPlan.delete({ where: { id: softDeletedPlan.id } }).catch(() => {});
+      }
+    });
+
+    it("dissolves a degenerate 1-member orphan group on the first removeMember call", async () => {
+      const ctx = await provisionBlock();
+      const orphanGroup = await cleanupRaw.alternatingGroup.create({
+        data: { blockId: ctx.block.id, relationKind: "ALTERNATING_SETS" },
+      });
+      const soleMember = await createAlternatingSetsSchema({
+        blockId: ctx.block.id,
+        alternatingGroupId: orphanGroup.id,
+      });
+
+      try {
+        const result = await lmsAlternatingGroupApi.removeMember(
+          coach.user.id,
+          orphanGroup.id,
+          soleMember.id,
+        );
+
+        expect(result).toBeNull();
+
+        const groupAfter = await cleanupRaw.alternatingGroup.findUnique({
+          where: { id: orphanGroup.id },
+        });
+
+        expect(groupAfter).toBeNull();
+
+        const memberAfter = await cleanupRaw.schema.findUnique({
+          where: { id: soleMember.id },
+          select: { id: true, alternatingGroupId: true },
+        });
+
+        expect(memberAfter).not.toBeNull();
+        expect(memberAfter?.alternatingGroupId).toBeNull();
+      } finally {
+        await ctx.cleanup();
       }
     });
   });
