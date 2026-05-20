@@ -46,7 +46,7 @@
 **Scope (in):**
 
 - Plan / Week / Day / Session / Block: UI + backend + tests (большая часть done через Step 1–7.5)
-- Schema / SchemaRow / SchemaPairing: backend через Step 8.0a/8.0b/8.1a/8.1b/8.1c, HTTP routes Step 8.2, client hooks Step 8.3, partial-uniques Step 8.3.6/8.3.7
+- Schema / SchemaRow / AlternatingGroup: backend через Step 8.0a/8.0b/8.1a/8.1b/8.1c/8.1d, HTTP routes Step 8.2, client hooks Step 8.3, partial-uniques Step 8.3.6/8.3.7
 - ArchetypePicker UI + **все 34 archetypeParams формы hand-rolled** (per analysis/, юзеровская decision D3)
 - SchemaRow editor: **все 9 row variants hand-rolled** + все composite VOs (Load / RepNotation / Intensity / Tempo / Side / Media / CompoundRep)
 - Exercise catalog admin: done (Step 3)
