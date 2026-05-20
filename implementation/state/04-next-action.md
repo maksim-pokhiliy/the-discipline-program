@@ -32,4 +32,4 @@
 
 ## After Step 8.1c close-out
 
-Server vertical complete. Per [01-step-queue.md](01-step-queue.md) execution order: 8.2 (HTTP routes) → 8.3 (client hooks) → 8.3.5 (read-embed) → 8.3.6 (SchemaRow @@unique) → 8.3.7-pre (WORKFLOW-001) → 8.3.7 (Schema partial-unique) → **8.4 anchor** (first coach-visible Schema editor) → **9.1..9.11** (SchemaRow editor) → **8.5..8.20** (archetype expansion) → 10. Next PR candidate accumulates 8.1c onto the branch (6 commits ahead post-8.1b).
+Server vertical complete. Per [01-step-queue.md](01-step-queue.md) execution order: 8.2 (HTTP routes) → 8.3 (client hooks) → 8.3.5 (read-embed) → 8.3.6 (SchemaRow @@unique) → 8.3.7-pre (WORKFLOW-001) → 8.3.7 (Schema partial-unique) → **8.4 anchor** (first coach-visible Schema editor) → **9.1..9.11** (SchemaRow editor) → **8.5..8.20** (archetype expansion) → 10. `feat/training-domain` recreated from fresh `main` post-#198 merge (0 commits ahead); next PR candidate accumulates from Step 8.1c.

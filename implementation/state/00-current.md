@@ -4,22 +4,20 @@
 
 **Last updated**: 2026-05-20.
 
-**Current step status**: Step 8.1b CLOSED 2026-05-19 (close-out docs 2026-05-20). `lmsSchemaRowApi.{create, update, delete, reorder}` + `verifySchemaRowOwnership` guard + `mapToSchemaRow` mapper + `TxClient` hoist к `endpoints/lms/_shared/`. 5 atomic commits + docs (`d2e9b7e5..12e71770`). 17 files / +2126 / −333 LOC. Verifications all-green: check-types 16/16, lint 16/16, api-server 661 tests, root 1609 tests, dep:check 0 violations. Planner spot-check at close-out confirmed key artifacts. **Fifth cleanest run в ряд** (7.5 → 8.0a → 8.0b → 8.1a → 8.1b). Schema vertical api-server slice now 2/3 done (8.1a Schema + 8.1b SchemaRow; 8.1c Pairing pending). Full entry: [log/step-08.1b.md](../log/step-08.1b.md).
+**Current step status**: Step 8.1b CLOSED + **PR #198 merged 2026-05-20** (`ad964f73` — Step 8.1b SchemaRow api-server vertical + planning docs landed on `main`). Shipped: `lmsSchemaRowApi.{create, update, delete, reorder}` + `verifySchemaRowOwnership` guard + `mapToSchemaRow` mapper + `TxClient` hoist к `endpoints/lms/_shared/` + `authz/guards.ts` domain split (`_role-helpers` / `role-guards` / `lms-guards` / barrel). 661 api-server tests + 1609 root tests, all gates green. **Fifth cleanest run в ряд** (7.5 → 8.0a → 8.0b → 8.1a → 8.1b). Schema vertical api-server slice now 2/3 done (8.1a Schema + 8.1b SchemaRow; 8.1c Pairing pending). Full entry: [log/step-08.1b.md](../log/step-08.1b.md).
 
-**One executor-time decision** ratified mid-cycle: `authz/guards.ts` exceeded eslint `max-lines: 300` on the guard append; executor split it by domain into `_role-helpers.ts` + `role-guards.ts` + `lms-guards.ts` + `guards.ts` (2-line barrel). Normal tactical refactor — consumer imports unchanged (`../authz/guards` barrel preserved). `lms-guards.ts` now ~293/300 — next LMS guard (8.1c) will trip the cap again; executor will split, no planner pre-work needed.
+**Next planner action**: Step 8.1c thesis cycle (`lmsSchemaPairingApi` — last api-server slice of Schema vertical). **First step under the `[[coach-walkthrough-gate]]` rule** (thesis coach view несёт 1-параграф walkthrough) **+ first spec-only prompt** (per `[[planner-strategic-level]]` — no prescriptive code skeletons). See [04-next-action.md](04-next-action.md). Heads-up: `lms-guards.ts` at ~293/300 — appending `verifySchemaPairingOwnership` trips eslint `max-lines`; executor splits tactically, no planner pre-work (REVIEW-I3 в [03-deferred.md](03-deferred.md)).
 
-**Next planner action**: Step 8.1c thesis cycle (`lmsSchemaPairingApi` — last api-server slice of Schema vertical). **First step under the `[[coach-walkthrough-gate]]` rule** — thesis coach view MUST carry a 1-paragraph walkthrough. See [04-next-action.md](04-next-action.md).
+**Branch state**: `feat/training-domain` recreated from fresh `main` post-#198 merge (0 commits ahead). Old `origin/feat/training-domain` deleted via `fetch --prune` per merge cleanup convention. Next PR candidate accumulates from Step 8.1c per Step 6.x precedent.
 
-**Branch state**: `feat/training-domain` long-lived — 6 commits ahead of `main` from Step 8.1b + this close-out docs commit. Next PR candidate accumulates Step 8.1c (server vertical complete) per Step 6.x precedent.
+**Step queue (expanded 2026-05-20 under D3)**: `01-step-queue.md` Step 8 + Step 9 sections expanded — full hand-rolled coverage всех 34 archetypes + 9 SchemaRow rowKinds + 7 composite VOs. Step 8 → 28 sub-steps; Step 9 → 11 sub-steps. **Execution order** (full interleave): infrastructure (8.1c → 8.3.7) → 8.4 anchor → 9.1..9.11 row editor → 8.5..8.20 archetype expansion → 10. Rationale в queue file §"Adversarial review concerns" #3.
 
-**Step queue rewrite 2026-05-20**: `01-step-queue.md` Step 8 + Step 9 sections expanded under D3 (roadmap.md §"Phase 0" — full hand-rolled coverage всех 34 archetypes + 9 SchemaRow rowKinds + 7 composite VOs). Step 8 → 28 sub-steps; Step 9 → 11 sub-steps. **Execution order resequenced** (full interleave): infrastructure → 8.4 anchor → 9.1..9.11 row editor → 8.5..8.20 archetype expansion → 10. Rationale в queue file §"Adversarial review concerns" #3.
+**Process shifts codified в current arc** (2026-05-19 → 2026-05-20):
 
-**Process shift codified в current arc**:
-
-- `[[coach-walkthrough-gate]]` — каждый thesis несёт 1-параграф coach walkthrough (текст в thesis, не UI prototype); active from Step 8.1c.
-- `[[coach-daily-ux-priority]]` + `[[planner-coach-role]]` — coach daily UX > pattern elegance; planner смотрит через призму professional CrossFit coach.
-- `[[planner-strategic-level]]` — planner = стратегия (что/зачем, паттерны, инварианты, декомпозиция); executor = тактика + код. Промпты переходят на spec-only (без prescriptive code skeletons; § 0 verbatim quotes existing code остаются как reference).
-- `[[training-domain-validation-gate]]` — **DEPRECATED**; Step 10 coach gate dropped; scope = full analysis/ implementation.
-- `[[no-en-ru-mixing]]` — чистый русский в чате.
+- `[[coach-walkthrough-gate]]` — каждый thesis несёт 1-параграф coach walkthrough («тренер открывает X / делает Y / видит Z»); текст в thesis, НЕ UI prototype; active from Step 8.1c.
+- `[[planner-strategic-level]]` — planner = стратегия (что/зачем, паттерны, инварианты, декомпозиция); executor = тактика + код. Промпты переходят на spec-only: § 0 verbatim quotes existing code остаются как reference, § 3 prescriptive new-code skeletons убираются.
+- `[[coach-daily-ux-priority]]` + `[[planner-coach-role]]` — coach daily UX > pattern elegance; planner оценивает решения через призму professional CrossFit coach (групповой + Games level).
+- `[[training-domain-validation-gate]]` — **DEPRECATED**; Step 10 coach gate dropped; scope = full реализация `analysis/`.
+- `[[no-en-ru-mixing]]` — чистый русский в чате, английский только для идентификаторов/путей.
 
 **Refactor 2026-05-18**: `implementation/` migrated к structured folders `state/` + `log/`. Historical archive at [log/\_archive-pre-refactor.md](../log/_archive-pre-refactor.md) (Steps 1 → 8.0a).
