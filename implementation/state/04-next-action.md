@@ -4,7 +4,7 @@
 
 ## Status: Step 8.1d CLOSED 2026-05-20
 
-`lmsAlternatingGroupApi` api-server vertical shipped — 6 commits `a2e261e8..66626a11` + close-out docs commit on `feat/training-domain` (local, unpushed). 4-method endpoint (`create` / `addMember` / `removeMember` / `delete`) + `verifyAlternatingGroupOwnership` guard + `mapToAlternatingGroup` mapper + `addMember` / `removeMember` contract schemas (response nullable for D-A4 dissolve) + `createAlternatingGroupSchema.schemaIds.max(24)` (QA-004 closure) + D-A4 scope expansion to `lmsSchemaApi.delete` (group-aware, one Serializable tx). Review APPROVE / QA PASS, 1670/1670 tests, 38 adversarial attacks attempted with 0 exploited. Full entry: [../log/step-08.1d.md](../log/step-08.1d.md).
+`lmsAlternatingGroupApi` api-server vertical shipped — 6 commits `a2e261e8..66626a11` + close-out docs commit on `feat/training-domain`, pushed; **PR #199 open against `main`** (unmerged, Steps 8.1c + 8.1d together). 4-method endpoint (`create` / `addMember` / `removeMember` / `delete`) + `verifyAlternatingGroupOwnership` guard + `mapToAlternatingGroup` mapper + `addMember` / `removeMember` contract schemas (response nullable for D-A4 dissolve) + `createAlternatingGroupSchema.schemaIds.max(24)` (QA-004 closure) + D-A4 scope expansion to `lmsSchemaApi.delete` (group-aware, one Serializable tx). Review APPROVE / QA PASS, 1670/1670 tests, 38 adversarial attacks attempted with 0 exploited. Full entry: [../log/step-08.1d.md](../log/step-08.1d.md).
 
 ## Next planner action: Step 8.2 thesis cycle — platform HTTP routes
 
