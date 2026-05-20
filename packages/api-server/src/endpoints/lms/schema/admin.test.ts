@@ -26,6 +26,11 @@ const NESTED_PARAMS = {
   params: { outerCount: 3 },
 };
 
+const ALTERNATING_SETS_PARAMS = (setEnumeration: number[]) => ({
+  archetype: "alternating-sets" as const,
+  params: { setEnumeration },
+});
+
 describe("lmsSchemaApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
@@ -38,6 +43,9 @@ describe("lmsSchemaApi", () => {
   let secondAtomicArchetypeId: string;
   let headerlessArchetypeId: string;
   let nestedArchetypeId: string;
+  let alternatingSetsArchetypeId: string;
+
+  let orderCounter = 0;
 
   let weekCounter = 0;
 
@@ -72,6 +80,9 @@ describe("lmsSchemaApi", () => {
         await cleanupRaw.schemaRow
           .deleteMany({ where: { schema: { blockId: block.id } } })
           .catch(() => {});
+        await cleanupRaw.alternatingGroup
+          .deleteMany({ where: { blockId: block.id } })
+          .catch(() => {});
         await cleanupRaw.schema.deleteMany({ where: { blockId: block.id } }).catch(() => {});
         await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
         await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
@@ -79,6 +90,25 @@ describe("lmsSchemaApi", () => {
         await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
       },
     };
+  };
+
+  const createAlternatingSetsSchema = async (options: {
+    blockId: string;
+    alternatingGroupId?: string;
+    setEnumeration?: number[];
+  }) => {
+    orderCounter += 1;
+
+    return cleanupRaw.schema.create({
+      data: {
+        blockId: options.blockId,
+        alternatingGroupId: options.alternatingGroupId ?? null,
+        order: orderCounter,
+        kind: "ATOMIC",
+        archetypeId: alternatingSetsArchetypeId,
+        archetypeParams: ALTERNATING_SETS_PARAMS(options.setEnumeration ?? [1, 3, 5]),
+      },
+    });
   };
 
   beforeAll(async () => {
@@ -144,6 +174,13 @@ describe("lmsSchemaApi", () => {
     });
 
     nestedArchetypeId = nested.id;
+
+    const alternatingSets = await cleanupRaw.archetype.findUniqueOrThrow({
+      where: { name: "alternating-sets" },
+      select: { id: true },
+    });
+
+    alternatingSetsArchetypeId = alternatingSets.id;
   });
 
   afterAll(async () => {
@@ -907,6 +944,113 @@ describe("lmsSchemaApi", () => {
         const stored = await cleanupRaw.schema.findUnique({ where: { id: schema.id } });
 
         expect(stored).not.toBeNull();
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("dissolves nothing when deleting an ungrouped schema", async () => {
+      const ctx = await provisionBlock();
+      const schema = await lmsSchemaApi.create(
+        coach.user.id,
+        activePlanId,
+        { blockId: ctx.block.id },
+        { kind: "ATOMIC", archetypeId: atomicArchetypeId, archetypeParams: ATOMIC_PARAMS },
+      );
+
+      try {
+        await lmsSchemaApi.delete(coach.user.id, schema.id);
+
+        const stored = await cleanupRaw.schema.findUnique({ where: { id: schema.id } });
+        const groupCount = await cleanupRaw.alternatingGroup.count({
+          where: { blockId: ctx.block.id },
+        });
+
+        expect(stored).toBeNull();
+        expect(groupCount).toBe(0);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("keeps the alternating group alive when deleting one member of a 3-member group", async () => {
+      const ctx = await provisionBlock();
+      const group = await cleanupRaw.alternatingGroup.create({
+        data: { blockId: ctx.block.id, relationKind: "ALTERNATING_SETS" },
+      });
+      const memberA = await createAlternatingSetsSchema({
+        blockId: ctx.block.id,
+        alternatingGroupId: group.id,
+        setEnumeration: [1, 4],
+      });
+      const memberB = await createAlternatingSetsSchema({
+        blockId: ctx.block.id,
+        alternatingGroupId: group.id,
+        setEnumeration: [2, 5],
+      });
+      const memberC = await createAlternatingSetsSchema({
+        blockId: ctx.block.id,
+        alternatingGroupId: group.id,
+        setEnumeration: [3, 6],
+      });
+
+      try {
+        await lmsSchemaApi.delete(coach.user.id, memberA.id);
+
+        const memberAAfter = await cleanupRaw.schema.findUnique({ where: { id: memberA.id } });
+
+        expect(memberAAfter).toBeNull();
+
+        const groupAfter = await cleanupRaw.alternatingGroup.findUnique({
+          where: { id: group.id },
+        });
+
+        expect(groupAfter).not.toBeNull();
+
+        const survivingMembers = await cleanupRaw.schema.findMany({
+          where: { alternatingGroupId: group.id },
+          orderBy: { order: "asc" },
+          select: { id: true, alternatingGroupId: true },
+        });
+
+        expect(survivingMembers).toEqual([
+          { id: memberB.id, alternatingGroupId: group.id },
+          { id: memberC.id, alternatingGroupId: group.id },
+        ]);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("dissolves the alternating group when deleting one member of a 2-member group", async () => {
+      const ctx = await provisionBlock();
+      const group = await cleanupRaw.alternatingGroup.create({
+        data: { blockId: ctx.block.id, relationKind: "ALTERNATING_SETS" },
+      });
+      const memberA = await createAlternatingSetsSchema({
+        blockId: ctx.block.id,
+        alternatingGroupId: group.id,
+        setEnumeration: [1, 3, 5],
+      });
+      const memberB = await createAlternatingSetsSchema({
+        blockId: ctx.block.id,
+        alternatingGroupId: group.id,
+        setEnumeration: [2, 4, 6],
+      });
+
+      try {
+        await lmsSchemaApi.delete(coach.user.id, memberA.id);
+
+        const memberAAfter = await cleanupRaw.schema.findUnique({ where: { id: memberA.id } });
+        const groupAfter = await cleanupRaw.alternatingGroup.findUnique({
+          where: { id: group.id },
+        });
+        const memberBAfter = await cleanupRaw.schema.findUnique({ where: { id: memberB.id } });
+
+        expect(memberAAfter).toBeNull();
+        expect(groupAfter).toBeNull();
+        expect(memberBAfter).not.toBeNull();
+        expect(memberBAfter?.alternatingGroupId).toBeNull();
       } finally {
         await ctx.cleanup();
       }
