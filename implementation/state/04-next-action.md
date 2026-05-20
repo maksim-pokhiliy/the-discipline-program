@@ -10,6 +10,8 @@
 
 **Update 2026-05-20**: thesis ratified (D-8.2-1..6 — collapsed `/feature` full · no GET routes · contracts touched for route-param + reorder-scope schemas · discriminated scope in request body · `removeMember` via `createAuthActionHandler` · QA-E3 route-closed; user approved all hypotheses). `implementation/step-08.2/prompt.md` written and handed to the executor. Next planner action — validate the executor's `output.md` + `.feature-dev/` when it returns, then close out. The thesis-cycle brief below is retained for reference.
 
+**Mid-execution escalation 2026-05-20**: executor flagged `reorderSchemasRequestSchema` Zod shape — `object + superRefine` validates but does not narrow its inferred type to `CreateScope`, forcing a dead `throw` in the reorder handler. Ratified **`z.union`** of two scope members (narrows cleanly, no throw — per `[[type-quality]]`); recorded in `prompt.md` § 3.1 op 2. At Step 8.2 close-out, consider extending `[[planner-lint-impact-trace]]` with a Zod inferred-type-shape axis.
+
 HTTP routes for the `Schema` / `SchemaRow` / `AlternatingGroup` api slices (mirror Step 7.2 for Block). The api-server vertical is complete after 8.1d; Step 8.2 wires HTTP in `packages/api-routes` + handler files in `apps/platform/src/app/api/...`. **`/feature small`** unless the file count > 6-7 (then per-entity split 8.2a/b/c). Walkthrough gate: thesis must include a 1-paragraph coach walkthrough — Step 8.2 is HTTP-only, so the walkthrough describes the **final coach UX** the routes will serve (the plan-editor schema/row/group mutations that 8.3 hooks + 8.4 UI surface).
 
 **Thesis OQ surface (8.2's to ratify):**
