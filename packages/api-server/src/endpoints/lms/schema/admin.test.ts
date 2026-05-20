@@ -69,9 +69,6 @@ describe("lmsSchemaApi", () => {
       session,
       block,
       cleanup: async () => {
-        await cleanupRaw.schemaPairing
-          .deleteMany({ where: { schemaA: { blockId: block.id } } })
-          .catch(() => {});
         await cleanupRaw.schemaRow
           .deleteMany({ where: { schema: { blockId: block.id } } })
           .catch(() => {});
@@ -138,17 +135,6 @@ describe("lmsSchemaApi", () => {
   });
 
   afterAll(async () => {
-    await cleanupRaw.schemaPairing
-      .deleteMany({
-        where: {
-          schemaA: {
-            block: {
-              session: { day: { week: { planId: { in: [activePlanId, archivedPlanId] } } } },
-            },
-          },
-        },
-      })
-      .catch(() => {});
     await cleanupRaw.schemaRow
       .deleteMany({
         where: {
@@ -804,7 +790,7 @@ describe("lmsSchemaApi", () => {
   });
 
   describe("delete", () => {
-    it("removes the Schema and cascades sub-schemas, rows, and pairings", async () => {
+    it("removes the Schema and cascades sub-schemas and rows", async () => {
       const ctx = await provisionBlock();
       const parent = await lmsSchemaApi.create(
         coach.user.id,
@@ -832,13 +818,6 @@ describe("lmsSchemaApi", () => {
           rowPayload: {},
         },
       });
-      const pairing = await cleanupRaw.schemaPairing.create({
-        data: {
-          schemaAId: parent.id,
-          schemaBId: sibling.id,
-          relationKind: "ALTERNATING_SETS",
-        },
-      });
 
       try {
         await lmsSchemaApi.delete(coach.user.id, parent.id);
@@ -846,14 +825,10 @@ describe("lmsSchemaApi", () => {
         const parentAfter = await cleanupRaw.schema.findUnique({ where: { id: parent.id } });
         const subAfter = await cleanupRaw.schema.findUnique({ where: { id: sub.id } });
         const rowAfter = await cleanupRaw.schemaRow.findUnique({ where: { id: row.id } });
-        const pairingAfter = await cleanupRaw.schemaPairing.findUnique({
-          where: { id: pairing.id },
-        });
 
         expect(parentAfter).toBeNull();
         expect(subAfter).toBeNull();
         expect(rowAfter).toBeNull();
-        expect(pairingAfter).toBeNull();
 
         const siblingAfter = await cleanupRaw.schema.findUnique({ where: { id: sibling.id } });
 

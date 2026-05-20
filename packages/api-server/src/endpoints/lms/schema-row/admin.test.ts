@@ -66,9 +66,6 @@ describe("lmsSchemaRowApi", () => {
         await cleanupRaw.performedSession
           .deleteMany({ where: { sessionId: session.id } })
           .catch(() => {});
-        await cleanupRaw.schemaPairing
-          .deleteMany({ where: { schemaA: { blockId: block.id } } })
-          .catch(() => {});
         await cleanupRaw.schemaRow
           .deleteMany({ where: { schema: { blockId: block.id } } })
           .catch(() => {});
@@ -193,17 +190,6 @@ describe("lmsSchemaRowApi", () => {
       .deleteMany({
         where: {
           session: { day: { week: { planId: { in: [activePlanId, archivedPlanId] } } } },
-        },
-      })
-      .catch(() => {});
-    await cleanupRaw.schemaPairing
-      .deleteMany({
-        where: {
-          schemaA: {
-            block: {
-              session: { day: { week: { planId: { in: [activePlanId, archivedPlanId] } } } },
-            },
-          },
         },
       })
       .catch(() => {});
