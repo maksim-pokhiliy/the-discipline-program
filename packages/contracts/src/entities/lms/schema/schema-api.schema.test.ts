@@ -79,6 +79,28 @@ describe("reorderSchemasRequestSchema", () => {
       false,
     );
   });
+
+  it("rejects an explicit parentSchemaId null (MT-5)", () => {
+    expect(
+      reorderSchemasRequestSchema.safeParse({
+        blockId: cuid,
+        parentSchemaId: null,
+        orderedIds: [cuidB, cuidC],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an empty orderedIds array (MT-6)", () => {
+    expect(reorderSchemasRequestSchema.safeParse({ blockId: cuid, orderedIds: [] }).success).toBe(
+      false,
+    );
+  });
+
+  it("rejects orderedIds with duplicate ids (MT-7)", () => {
+    expect(
+      reorderSchemasRequestSchema.safeParse({ blockId: cuid, orderedIds: [cuidB, cuidB] }).success,
+    ).toBe(false);
+  });
 });
 
 describe("getSchemasResponseSchema", () => {

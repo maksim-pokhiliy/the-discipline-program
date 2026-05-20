@@ -70,6 +70,19 @@ describe("reorderSchemaRowsRequestSchema", () => {
         .success,
     ).toBe(false);
   });
+
+  it("rejects an empty orderedIds array (MT-11)", () => {
+    expect(
+      reorderSchemaRowsRequestSchema.safeParse({ schemaId: cuid, orderedIds: [] }).success,
+    ).toBe(false);
+  });
+
+  it("rejects orderedIds with duplicate ids (MT-11)", () => {
+    expect(
+      reorderSchemaRowsRequestSchema.safeParse({ schemaId: cuid, orderedIds: [cuidB, cuidB] })
+        .success,
+    ).toBe(false);
+  });
 });
 
 describe("getSchemaRowsResponseSchema", () => {
