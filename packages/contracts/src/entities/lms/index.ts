@@ -1,4 +1,5 @@
 export * from "./_shared";
+export * from "./alternating-group";
 export * from "./archetype";
 export * from "./block";
 export * from "./day";
@@ -6,7 +7,6 @@ export * from "./exercise";
 export * from "./label";
 export * from "./plan-enrollment";
 export * from "./schema";
-export * from "./schema-pairing";
 export * from "./schema-row";
 export * from "./session";
 export * from "./training-plan";
