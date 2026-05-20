@@ -18,6 +18,7 @@ import {
 import { prisma } from "../../../db/client";
 import { mapToBlock, mapToBlockWithLabels } from "../../../mappers/lms";
 import { handlePrismaError, retryOnP2034, toInputJson } from "../../../utils";
+import { type TxClient } from "../_shared";
 
 const BLOCK_WITH_LABELS_INCLUDE = {
   labelAssignments: {
@@ -25,11 +26,6 @@ const BLOCK_WITH_LABELS_INCLUDE = {
     orderBy: { order: "asc" as const },
   },
 } satisfies Prisma.BlockInclude;
-
-type TxClient = Omit<
-  typeof prisma,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
->;
 
 const assertLabelsApplicable = async (tx: TxClient, labelIds: readonly string[]): Promise<void> => {
   if (labelIds.length === 0) {

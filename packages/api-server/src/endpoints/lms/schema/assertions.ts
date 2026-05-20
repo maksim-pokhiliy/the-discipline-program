@@ -1,12 +1,7 @@
 import { type SchemaKind, SUB_SCHEMA_ALLOWED_KINDS } from "@repo/contracts/lms/schema";
 import { BadRequestError, NotFoundError } from "@repo/errors";
 
-import { type prisma } from "../../../db/client";
-
-type TxClient = Omit<
-  typeof prisma,
-  "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"
->;
+import { type TxClient } from "../_shared";
 
 export const assertArchetypeConsistency = async (
   tx: TxClient,
