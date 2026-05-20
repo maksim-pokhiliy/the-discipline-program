@@ -2,9 +2,17 @@
 
 > Active + closed carry-forwards. Default hypothesis applied; revisit on contact. Resolved items struck through with closing commit reference.
 
-## Active (as of 2026-05-19)
+## Active (as of 2026-05-20)
 
-### Step 8.1a follow-ups (NEW)
+### Step 8.1b follow-ups (NEW)
+
+- **QA-W1 — `lmsSchemaRowApi.update` / `.delete` lack in-tx `plan.deletedAt` re-check** (WARNING). Race: another tx soft-deletes the plan between guard return and write. Not blocking 8.1b ship (api-server slice, no HTTP exposure). **Action when triggered**: future `/fix` cycle bundled with regression tests for those branches.
+
+- **QA-W2 — `lmsSchemaRowApi.reorder` array-form `$transaction([...])` cannot embed plan re-fetch** (WARNING). Array form, not interactive tx. Either convert к interactive `$transaction(async tx)` or accept the race as known-defer. **Action when triggered**: future `/fix` cycle, decide form at that time.
+
+- **REVIEW-I3 — `lms-guards.ts` at ~293/300 logical LOC** (INFO; Step 8.1c heads-up). The `authz/guards.ts` split (Step 8.1b D-1) produced `lms-guards.ts` holding the full ownership chain — 7-line headroom. Appending `verifySchemaPairingOwnership` in Step 8.1c trips eslint `max-lines: 300`. **Action**: executor-side tactical — when 8.1c executor hits the cap, it splits `lms-guards.ts` further (e.g. plan/session/block vs schema-family). No planner pre-work; just a non-surprising scope note for the 8.1c close-out.
+
+### Step 8.1a follow-ups
 
 - **QA-B4 — `lmsSchemaApi.reorder` без `retryOnP2034`** (WARNING). Concurrent create on same scope can lose reorder под SSI. Mirror Block precedent (`lmsBlockApi.reorder` also unwrapped). **Action when triggered**: address при Step 8.2 HTTP route layer retry semantics (preserves UX without bloating api-server method). Defer.
 
@@ -16,9 +24,9 @@
 
 - **QA-F2 — Delete-blocked-by-PerformedExerciseInstance surfaces as misleading "Referenced Schema does not exist" P2003** (WARNING). Actually FK violation от downstream entity. Defer к Step 8.1b/c (SchemaRow API + delete-blocked semantics + improved error message). Surface будет fire когда athlete-facing entities materialize (out of this workflow's primary scope; may stay deferred indefinitely).
 
-- **FIND-001 — `lmsSchemaApi.create` body 132 lines exceeds manifesto 2.2 soft cap 100** (WARNING; review note). Drivers: discriminated-scope full TOCTOU re-fetch (~45 lines) + 3-Json-column conditional marshalling (~20 lines) + tx-wrapper boilerplate. Block precedent at 91; Session at 88. **Action when triggered**: candidate для `resolveStorageContext` helper extraction at Step 8.1b/c (~35-line savings; brings к ~97 lines). Effort S; not blocking.
+- **Schema 8.1a INFO bundle (7 items)** — purely advisory, no immediate action: QA-A3 int32 overflow on `_max(order)+10` (200M+ inserts), QA-A4 UTF-16 vs codepoint length semantics on `header.max(500)`, QA-A5 discriminated-scope runtime-erasure `{blockId, parentSchemaId}` silent top-route, QA-B1 P2034 retry-exhaustion deterministic, QA-B2 P2003 message imprecision Block-vs-Schema, QA-B5 last-writer-wins reorder без optimistic-concurrency, QA-F3 duplicate-id reorder error reports `missing: []` (partially Stage 7-covered C30). _(QA-I1 `TxClient` hoist — CLOSED via Step 8.1b, see Closed section.)_
 
-- **Schema 8.1a INFO bundle (8 items)** — purely advisory, no immediate action: QA-A3 int32 overflow on `_max(order)+10` (200M+ inserts), QA-A4 UTF-16 vs codepoint length semantics on `header.max(500)`, QA-A5 discriminated-scope runtime-erasure `{blockId, parentSchemaId}` silent top-route, QA-B1 P2034 retry-exhaustion deterministic, QA-B2 P2003 message imprecision Block-vs-Schema, QA-B5 last-writer-wins reorder без optimistic-concurrency, QA-F3 duplicate-id reorder error reports `missing: []` (partially Stage 7-covered C30), QA-I1 `TxClient` structural-typing leak (local alias duplicated 3 sites; hoist к `endpoints/lms/_shared/` when 4th consumer materializes — likely Step 8.1b or 8.1c).
+- **FIND-001 — `lmsSchemaApi.create` body 132 lines** (WARNING; review note, Schema-specific). NOT triggered by Step 8.1b — SchemaRow single-scope create did not repeat Schema's discriminated-scope 132-LOC pattern. Remains a Schema-specific carry-forward; `resolveStorageContext` extraction revisit only if `lmsSchemaApi.create` is ever re-touched. Not blocking.
 
 - **Cross-step planner-discipline note — `[[planner-verbatim-registration]]` (c) consumer-package package.json exports axis**. Two-layer miss surfaced 8.1a-time (Step 8.0b shipped barrels but forgot exports map; Step 8.1a planner didn't Read package.json verbatim at prompt-write). Memory entry update queued — extend `[[planner-verbatim-registration]]` body 1-2 sentences к explicitly include "consumer-package `package.json` `exports` field" alongside existing list (barrels/dep-cruiser/turbo.json/pnpm-workspace.yaml). Не a new flavour; axis expansion to existing (c). **Action**: update memory file body during this close-out cycle.
 
@@ -59,6 +67,8 @@
 - **`mapToSessionWithLabel` extraction as named symbol** (Step 6.2 deferred per output.md D-2). Currently inline `{ ...mapToSession(s), label: s.label ? mapToLabel(s.label) : null }` inside `mapToDaySlot`. Single use site; extract if Step 6.6 WeekGrid builds the same shape on the client.
 
 ## Closed (selected — chronological recent first)
+
+- ~~**QA-I1 — `TxClient` structural-typing leak / local-alias duplication**~~ — CLOSED 2026-05-19 via Step 8.1b Phase 0 (`d2e9b7e5`). Hoisted к `endpoints/lms/_shared/tx-client.ts`; `block/admin.ts` + `schema/assertions.ts` migrated к import; `grep "type TxClient = Omit"` → 1 canonical site only.
 
 - ~~**Step 7.1 Stage 6 QA-001 — `@@unique([sessionId, order])` constraint on `Block` model**~~ — CLOSED 2026-05-18 via Step 7.3.6 (`85866ba1`). 8th planner-discipline flavour `[[planner-mutation-invariant-trace]]` saved.
 
