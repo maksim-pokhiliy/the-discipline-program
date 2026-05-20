@@ -20,7 +20,7 @@ The platform HTTP layer for the three api slices: 10 Next.js App Router `route.t
 7. `716c95f2 test(contracts): cover the widened reorder schema validation invariants` — adversarial + behavioural cases.
 8. `0728017f docs(step-08.2): write executor output report`.
 
-**18 code files** (10 route created + 8 contract modified). Verifications all-green (planner spot-checked): `pnpm check-types` 16/16 · `pnpm lint` 16/16 (0 warnings) · `pnpm test` 1680/1680 (no flake) · `pnpm dep:check` 0 violations. Scope-guard: `api-server` / `api-routes` / Prisma / `analysis/` — 0 lines (`git diff main..HEAD`). Husky clean on every commit (`44a3680a` — 1 commitlint warning `footer-leading-blank`, 0 errors, hook passed); zero `--no-verify` / `--no-edit` / `--no-gpg-sign`. Stage 5 Review **APPROVED** (0 CRITICAL, 0 WARNING, 1 INFO CODE-002 fixed). Stage 6 QA **Score A** (0 CRITICAL; QA-W2 / QA-I1 / QA-I2 → forward-notes).
+**18 code files** (10 route created + 8 contract modified). Verifications all-green (planner spot-checked): `pnpm check-types` 16/16 · `pnpm lint` 16/16 (0 warnings) · `pnpm test` 1680/1680 (no flake) · `pnpm dep:check` 0 violations. Scope-guard: `api-server` / `api-routes` / Prisma / `analysis/` — 0 lines (`git diff main..HEAD`). Husky clean on every commit (`44a3680a` — 1 commitlint warning `footer-leading-blank`, 0 errors, hook passed); zero `--no-verify` / `--no-edit` / `--no-gpg-sign`. Stage 5 Review **APPROVED** (0 CRITICAL, 0 WARNING, 1 INFO CODE-002 fixed). Stage 6 QA **Score A** (0 CRITICAL; 3 forward-notes — the codebase-wide reorder `.max()` gap folded into `QA-D1`, plus `QA-I1` / `QA-I2` in `03-deferred.md`).
 
 **Planner spot-check** confirmed verbatim:
 
