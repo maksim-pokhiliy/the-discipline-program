@@ -6,7 +6,9 @@
 
 `lmsAlternatingGroupApi` api-server vertical shipped — 6 commits `a2e261e8..66626a11` + close-out docs commit; **PR #199 merged into `main` 2026-05-20** (Steps 8.1c + 8.1d together), `feat/training-domain` re-cut from fresh `main` (`9a5c217e`). 4-method endpoint (`create` / `addMember` / `removeMember` / `delete`) + `verifyAlternatingGroupOwnership` guard + `mapToAlternatingGroup` mapper + `addMember` / `removeMember` contract schemas (response nullable for D-A4 dissolve) + `createAlternatingGroupSchema.schemaIds.max(24)` (QA-004 closure) + D-A4 scope expansion to `lmsSchemaApi.delete` (group-aware, one Serializable tx). Review APPROVE / QA PASS, 1670/1670 tests, 38 adversarial attacks attempted with 0 exploited. Full entry: [../log/step-08.1d.md](../log/step-08.1d.md).
 
-## Next planner action: Step 8.2 thesis cycle — platform HTTP routes
+## Next planner action: Step 8.2 — validate executor output
+
+**Update 2026-05-20**: thesis ratified (D-8.2-1..6 — collapsed `/feature` full · no GET routes · contracts touched for route-param + reorder-scope schemas · discriminated scope in request body · `removeMember` via `createAuthActionHandler` · QA-E3 route-closed; user approved all hypotheses). `implementation/step-08.2/prompt.md` written and handed to the executor. Next planner action — validate the executor's `output.md` + `.feature-dev/` when it returns, then close out. The thesis-cycle brief below is retained for reference.
 
 HTTP routes for the `Schema` / `SchemaRow` / `AlternatingGroup` api slices (mirror Step 7.2 for Block). The api-server vertical is complete after 8.1d; Step 8.2 wires HTTP in `packages/api-routes` + handler files in `apps/platform/src/app/api/...`. **`/feature small`** unless the file count > 6-7 (then per-entity split 8.2a/b/c). Walkthrough gate: thesis must include a 1-paragraph coach walkthrough — Step 8.2 is HTTP-only, so the walkthrough describes the **final coach UX** the routes will serve (the plan-editor schema/row/group mutations that 8.3 hooks + 8.4 UI surface).
 
@@ -29,7 +31,7 @@ HTTP routes for the `Schema` / `SchemaRow` / `AlternatingGroup` api slices (mirr
 
 **Carry-forwards into the 8.2 thesis:**
 
-- **PR #199 review (`claude[bot]`)** — CI review on merged #199, verdict LGTM, all notes non-blocking. 3 polish items logged as `REVIEW-I4/I5/I6` in `03-deferred.md` (one `/fix` bundle, schedulable with QA-W1). Review note #1 — `schemaIds` is not contract-documented as ordered, though `mapToAlternatingGroup` orders by `Schema.order asc` — **lands as an 8.2 acceptance item**: the 8.2 route response is the consumer surface, so the prompt pins the ordering with an explicit route-handler ordering-assertion test (no code comment — project no-comments rule). Note #3 folded into QA-W1; note #5 discarded (ADR-0019).
+- **PR #199 review (`claude[bot]`)** — CI review on merged #199, verdict LGTM, all notes non-blocking. 3 polish items logged as `REVIEW-I4/I5/I6` in `03-deferred.md` (one `/fix` bundle, schedulable with QA-W1). Review note #1 (`schemaIds` ordering) — at 8.2 prompt-write verbatim-research found no route-level tests exist (Block precedent) and the ordering is already pinned by the 8.1d mapper-determinism test; recorded covered, no further artifact (`step-08.2/prompt.md` § 7). Note #3 folded into QA-W1; note #5 discarded (ADR-0019).
 
 - **QA-W1** — in-tx `plan` re-check missing on `lmsSchemaRowApi.update`/`.delete` and (PR #199 note #3) `lmsAlternatingGroupApi.delete`, which runs with no transaction at all (Active in `03-deferred.md`). 8.2 is HTTP, does NOT touch these methods; stays deferred to a separate `/fix`.
 - **QA-E3** — `userId === undefined` propagation across all guards including the new `verifyAlternatingGroupOwnership` (Active). HTTP layer typically validates `userId` from session/auth before calling the api; verify the auth wrap catches `undefined` before the guard call (likely already does — confirm at prompt-write).
