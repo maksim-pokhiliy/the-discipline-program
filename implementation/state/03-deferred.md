@@ -4,9 +4,19 @@
 
 ## Active (as of 2026-05-20)
 
+### Step 8.1c/8.1d follow-ups — PR #199 review (`claude[bot]`, 2026-05-20)
+
+> CI review on merged PR #199 — verdict **LGTM**, all notes non-blocking. Comment: <https://github.com/maksim-pokhiliy/the-discipline-program/pull/199#issuecomment-4499978671>. Bundle target: one `/fix` cycle schedulable alongside QA-W1 (shared delete-path theme) — post-merge, before/with Step 8 infrastructure. Review note #1 (`schemaIds` ordering not contract-documented) is folded into the Step 8.2 acceptance — the 8.2 route is the consumer surface, so ordering is pinned by a route-handler assertion test, not a code comment (no-comments rule) — so it is not carried here. Note #3 (`lmsAlternatingGroupApi.delete` runs outside a tx) is folded into QA-W1 below. Note #5 (no migration file) discarded — ADR-0019 ratified no `migrations/` during the workflow; `SchemaPairing` never reached prod (no prod data), so no hand-written data migration is owed; the workflow-end baseline migration ships the final schema directly.
+
+- **REVIEW-I4 — bare `.max(24)` on `createAlternatingGroupSchema.schemaIds`** (INFO; PR #199 note #6). Magic number in `packages/contracts/src/entities/lms/alternating-group/alternating-group.schema.ts`; the schema test hardcodes 24/25 the same way. **Action**: extract a named `ALTERNATING_GROUP_MAX_MEMBERS = 24` beside the existing `ALTERNATING_GROUP_RELATIONS` in `alternating-group.constants.ts`, reference it from schema + test. Pattern-compliance fix — the file already names its sibling constants. Effort XS (~3-5 LOC).
+
+- **REVIEW-I5 — one conceptual member floor, two comparators + timings** (INFO; PR #199 note #2). `lmsAlternatingGroupApi.removeMember` checks `memberCount <= SURVIVING_MEMBER_FLOOR` pre-unlink; `lmsSchemaApi.delete` checks `remaining < SURVIVING_GROUP_FLOOR` post-delete. Both correct, but a maintainer reads two constants + two comparators for one invariant. **Action**: rename to encode the boundary (`MIN_PRE_REMOVE_COUNT` / `MIN_POST_DELETE_COUNT`) or align both to a single pre/post pattern. Effort XS.
+
+- **REVIEW-I6 — `lmsAlternatingGroupApi.create` runs N sequential `verifySchemaOwnership` round-trips** (INFO; PR #199 note #4). At `.max(24)` that is up to 24 chain-walking guard calls before the tx opens. Not hot — no HTTP route or UI consumer exists yet. **Action when triggered**: collapse to one `prisma.schema.findMany` joining `plan.creatorId`/`deletedAt`/`status` only if a real consumer ever puts this on a hot path. Lowest priority; may stay deferred indefinitely.
+
 ### Step 8.1b follow-ups (NEW)
 
-- **QA-W1 — `lmsSchemaRowApi.update` / `.delete` lack in-tx `plan.deletedAt` re-check** (WARNING). Race: another tx soft-deletes the plan between guard return and write. Not blocking 8.1b ship (api-server slice, no HTTP exposure). **Action when triggered**: future `/fix` cycle bundled with regression tests for those branches.
+- **QA-W1 — delete/update paths lack in-tx `plan` re-check** (WARNING). `lmsSchemaRowApi.update` / `.delete` lack an in-tx `plan.deletedAt` re-check; **`lmsAlternatingGroupApi.delete` runs with no transaction at all** (PR #199 review note #3) — it loses the commit-time re-verify of `plan.deletedAt === null` + `plan.status !== ARCHIVED` that its siblings `create`/`addMember`/`removeMember` get via `assertPlanEditableInTx`. Race: another tx soft-deletes or archives the plan between guard return and write. Not blocking (api-server slice, no HTTP exposure). **Action when triggered**: one `/fix` cycle — wrap each write in interactive `$transaction` with the in-tx plan re-check, bundled with regression tests per branch.
 
 - **QA-W2 — `lmsSchemaRowApi.reorder` array-form `$transaction([...])` cannot embed plan re-fetch** (WARNING). Array form, not interactive tx. Either convert к interactive `$transaction(async tx)` or accept the race as known-defer. **Action when triggered**: future `/fix` cycle, decide form at that time.
 

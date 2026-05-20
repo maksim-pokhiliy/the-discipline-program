@@ -8,7 +8,7 @@
 
 **Next planner action**: Step 8.2 thesis cycle — platform HTTP routes for `Schema` / `SchemaRow` / `AlternatingGroup` api slices, mirroring Step 7.2 (Block). Per-entity split possible if file count > 6-7; collapsed otherwise. `/feature small`. See [04-next-action.md](04-next-action.md).
 
-**Branch state**: `feat/training-domain` — pushed to `origin`; **PR #199 open against `main`** (`maksim-pokhiliy/the-discipline-program#199`, unmerged) — Steps 8.1c + 8.1d together. The api-server vertical for `AlternatingGroup` is complete; only HTTP wiring + read surface remain before the UI anchor. Next cycle's first housekeeping commit records the #199 outcome (mirror `a94bebb6` post-#198).
+**Branch state**: **PR #199 merged into `main` 2026-05-20** (`maksim-pokhiliy/the-discipline-program#199`, Steps 8.1c + 8.1d together) — `main` advanced `ad964f73..9a5c217e`; `feat/training-domain` deleted on `origin` and re-cut locally from fresh `main` (0 ahead, mirror of `a94bebb6` post-#198). The api-server vertical for `AlternatingGroup` is complete; only HTTP wiring + read surface remain before the UI anchor. `claude[bot]` posted a CI review on #199 (verdict LGTM, all notes non-blocking) — carry-forwards recorded in [03-deferred.md](03-deferred.md).
 
 **Step queue (expanded 2026-05-20 under D3)**: `01-step-queue.md` Step 8 + Step 9 sections expanded — full hand-rolled coverage всех 34 archetypes + 9 SchemaRow rowKinds + 7 composite VOs. Step 8 → 28 sub-steps; Step 9 → 11 sub-steps. **Execution order** (full interleave): infrastructure (8.2 → 8.3.7) → 8.4 anchor → 9.1..9.11 row editor → 8.5..8.20 archetype expansion → 10. **Queue updated at 8.1d close-out 2026-05-20**: 8.1d → COMPLETED; cursor advances to 8.2.
 

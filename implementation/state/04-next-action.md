@@ -4,7 +4,7 @@
 
 ## Status: Step 8.1d CLOSED 2026-05-20
 
-`lmsAlternatingGroupApi` api-server vertical shipped — 6 commits `a2e261e8..66626a11` + close-out docs commit on `feat/training-domain`, pushed; **PR #199 open against `main`** (unmerged, Steps 8.1c + 8.1d together). 4-method endpoint (`create` / `addMember` / `removeMember` / `delete`) + `verifyAlternatingGroupOwnership` guard + `mapToAlternatingGroup` mapper + `addMember` / `removeMember` contract schemas (response nullable for D-A4 dissolve) + `createAlternatingGroupSchema.schemaIds.max(24)` (QA-004 closure) + D-A4 scope expansion to `lmsSchemaApi.delete` (group-aware, one Serializable tx). Review APPROVE / QA PASS, 1670/1670 tests, 38 adversarial attacks attempted with 0 exploited. Full entry: [../log/step-08.1d.md](../log/step-08.1d.md).
+`lmsAlternatingGroupApi` api-server vertical shipped — 6 commits `a2e261e8..66626a11` + close-out docs commit; **PR #199 merged into `main` 2026-05-20** (Steps 8.1c + 8.1d together), `feat/training-domain` re-cut from fresh `main` (`9a5c217e`). 4-method endpoint (`create` / `addMember` / `removeMember` / `delete`) + `verifyAlternatingGroupOwnership` guard + `mapToAlternatingGroup` mapper + `addMember` / `removeMember` contract schemas (response nullable for D-A4 dissolve) + `createAlternatingGroupSchema.schemaIds.max(24)` (QA-004 closure) + D-A4 scope expansion to `lmsSchemaApi.delete` (group-aware, one Serializable tx). Review APPROVE / QA PASS, 1670/1670 tests, 38 adversarial attacks attempted with 0 exploited. Full entry: [../log/step-08.1d.md](../log/step-08.1d.md).
 
 ## Next planner action: Step 8.2 thesis cycle — platform HTTP routes
 
@@ -29,7 +29,9 @@ HTTP routes for the `Schema` / `SchemaRow` / `AlternatingGroup` api slices (mirr
 
 **Carry-forwards into the 8.2 thesis:**
 
-- **QA-W1** — in-tx `plan.deletedAt` re-check for `lmsSchemaApi.delete` / `lmsSchemaRowApi.update`/`.delete` (Active in `03-deferred.md`). 8.2 is HTTP, does NOT touch these methods; stays deferred to a separate `/fix`.
+- **PR #199 review (`claude[bot]`)** — CI review on merged #199, verdict LGTM, all notes non-blocking. 3 polish items logged as `REVIEW-I4/I5/I6` in `03-deferred.md` (one `/fix` bundle, schedulable with QA-W1). Review note #1 — `schemaIds` is not contract-documented as ordered, though `mapToAlternatingGroup` orders by `Schema.order asc` — **lands as an 8.2 acceptance item**: the 8.2 route response is the consumer surface, so the prompt pins the ordering with an explicit route-handler ordering-assertion test (no code comment — project no-comments rule). Note #3 folded into QA-W1; note #5 discarded (ADR-0019).
+
+- **QA-W1** — in-tx `plan` re-check missing on `lmsSchemaRowApi.update`/`.delete` and (PR #199 note #3) `lmsAlternatingGroupApi.delete`, which runs with no transaction at all (Active in `03-deferred.md`). 8.2 is HTTP, does NOT touch these methods; stays deferred to a separate `/fix`.
 - **QA-E3** — `userId === undefined` propagation across all guards including the new `verifyAlternatingGroupOwnership` (Active). HTTP layer typically validates `userId` from session/auth before calling the api; verify the auth wrap catches `undefined` before the guard call (likely already does — confirm at prompt-write).
 - **8.1d Stage-6 QA-1** — concurrency test for D-A4 dissolve-below-2 under interleaved `removeMember` + `lmsSchemaApi.delete` is NOT written (planner-allowed skip per `[[postgres-ssi-upsert-unique-key]]`). Correctness is by-design (Serializable + `retryOnP2034`); regression watch only. Out of 8.2 scope.
 
