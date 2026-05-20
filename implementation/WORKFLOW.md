@@ -28,7 +28,7 @@ Everything beyond (athlete flow, analytics, UX optimization) is a separate workf
 
 ## Per-step cycle
 
-1. Planner drafts **тезисы** (thesis) for the step in **two voice-coded sections** per `[[feedback-planner-language-style]]` + `[[thesis-format]]` (codified 2026-05-18): **coach view** (что тренер видит/делает в продукте после шага) + **developer view** (engineering scope). Each section contains **only Goal + Open Questions** (each open question stated **with a hypothesis** — «from a coach's view it's probably X; right?» в coach view, или «по существующему pattern X — согласны?» в developer view). Inputs / Outputs / Acceptance criteria / Known risks / Adversarial pass / Commit strategy / Verifications — write into the `prompt.md` proper after thesis ratify (item 2 below), NOT in the thesis itself.
+1. Planner drafts **тезисы** (thesis) for the step in **two voice-coded sections** per `[[feedback-planner-language-style]]` + `[[thesis-format]]` (codified 2026-05-18): **coach view** + **developer view** (engineering scope). **Coach view section** (from Step 8.1c onwards per `[[coach-walkthrough-gate]]`, codified 2026-05-19) MUST contain a **1-paragraph coach walkthrough** in the format «Тренер открывает [экран X], делает [действие Y], видит [результат Z]» (concrete URL / screen state, concrete microinteraction, concrete visual result). If a walkthrough cannot be written (the step is pure backend / DB / infrastructure) — **STOP**, do not write the thesis with an empty walkthrough; instead split the step into (a) backend / infrastructure shipped to `main` as usual and (b) a thin UI prototype (mock page, Storybook story, or real wire-up of just-shipped backend) that makes the walkthrough concrete. After walkthrough — coach view continues with Goal (optional 1-2 sentences) + Open Questions with hypotheses. **Developer view section** is Goal + OQs as before. Inputs / Outputs / Acceptance criteria / Known risks / Adversarial pass / Commit strategy / Verifications — write into the `prompt.md` proper after thesis ratify (item 2 below), NOT in the thesis itself.
 2. User reads, asks/adjusts. When both agree — planner writes the full prompt to `implementation/step-NN/prompt.md`.
 3. User carries the prompt path to a fresh executor session.
 4. Executor runs the step, writes `implementation/step-NN/output.md`, commits per-layer on `feat/training-domain`.
@@ -104,6 +104,23 @@ Any step adding/changing a Prisma entity updates the seed in the same session �
 - **Catalogs/libraries** live in `apps/admin` as table modules, mirroring the 10+ existing ones. Table + form, CRUD, nothing novel. `apps/admin/src/modules/exercises/` (Step 3) is the canonical reference template for catalog-library CRUD.
 - **Plan editor** lives in `apps/platform/src/modules/plan-detail/` (currently a stub). Primary view is the WEEK, with week-by-week navigation.
 - **Athlete platform** is NOT built in this workflow.
+
+## Coach walkthrough gate (per `[[coach-walkthrough-gate]]`, codified 2026-05-19, active from Step 8.1c)
+
+Every thesis must include a **1-paragraph coach walkthrough** in the coach view section: «Тренер открывает [конкретный экран X], делает [конкретное действие Y], видит [конкретный результат Z]».
+
+**Walkthrough is a planning artifact (text in the thesis), NOT a build artifact.** No Storybook stories, no mock pages, no wire-up code, no extra prototype steps in `state/01-step-queue.md`. Walkthrough is a force-it-to-be-concrete discipline for the planner: it makes you describe the concrete coach UX (the final affordance this step contributes to), preventing abstract «backend-only под Step N.M» framing that hides un-thought-through UX assumptions.
+
+If a walkthrough cannot be written for a backend / DB / infrastructure step (no coach affordance materialises even in textual description) — **STOP**. Do not ship the thesis. Either:
+
+- Describe the **final coach UX** the backend step contributes to (e.g. for `@@unique([schemaId, order])` — describe what concurrent-edit error the constraint surfaces to the coach in the final UI), OR
+- Reconsider the step entirely — if no coach affordance ever materialises through this work, it may be dead-end / engineer-cargo.
+
+No physical step duplication. The queue keeps existing granularity. Walkthrough is a discipline at thesis-text level.
+
+Rationale: previous workflow had long backend-only series (Step 8.0a → 8.0b → 8.1a → 8.1b → ...) where thesis coach view dissolved into «тренер ничего не увидит». That framing hid un-thought-through UX commitments — backend would ship under implicit UX assumptions never made concrete until full UI lands (Step 8.4+). Walkthrough gate forces concretization at thesis time, surfacing UX OQs before backend commits. This is **not** coach validation (no actual UI for interaction); user reads walkthrough in thesis and can pushback on UX semantics, which propagates back to backend spec corrections. Per user clarification 2026-05-19 ([[training-domain-validation-gate]] DEPRECATED), workflow scope is locked to full implementation of `analysis/artifacts/`; no Step 10 rip-eject contingency planning.
+
+Step 8.1b grandfather'ed (prompt written before rule codification); rule active for every step thereafter.
 
 ## Language & commit conventions
 
