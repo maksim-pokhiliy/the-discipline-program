@@ -2,7 +2,12 @@ import { z } from "zod";
 
 import { idParamSchema } from "../../../common";
 
-import { createSchemaRowSchema, schemaRowSchema, updateSchemaRowSchema } from "./schema-row.schema";
+import {
+  createSchemaRowSchema,
+  reorderSchemaRowsSchema,
+  schemaRowSchema,
+  updateSchemaRowSchema,
+} from "./schema-row.schema";
 
 export const getSchemaRowsResponseSchema = z.array(schemaRowSchema);
 
@@ -26,14 +31,8 @@ export const updateSchemaRowResponseSchema = schemaRowSchema;
 
 export const deleteSchemaRowParamsSchema = idParamSchema;
 
-export const reorderSchemaRowsRequestSchema = z.object({
+export const reorderSchemaRowsRequestSchema = reorderSchemaRowsSchema.extend({
   schemaId: z.string().cuid(),
-  orderedIds: z
-    .array(z.string().cuid())
-    .min(1)
-    .refine((ids) => new Set(ids).size === ids.length, {
-      message: "orderedIds must be unique",
-    }),
 });
 export const reorderSchemaRowsResponseSchema = z.object({
   schemaRows: getSchemaRowsResponseSchema,
