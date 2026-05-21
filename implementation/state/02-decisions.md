@@ -2,6 +2,22 @@
 
 > Canonical D-numbered decisions catalog. Each entry preserves full ratification body. Newest groups at top per chronological ratify date.
 
+## 2026-05-21 — Step 8.3 — Platform client API + hooks (D-8.3-1..6)
+
+Ratified in the planner-user thesis cycle 2026-05-21 (two-voice; all hypotheses approved). Implemented Step 8.3 (commits `f0adca8a..10bcd4b6`).
+
+- **D-8.3-1 (collapsed single step, `/feature small`).** 8.3 is one step — 3 endpoint factories + 3 hook files + 3 barrel edits, the Step 7.3 thin-wrapper pattern ×3, single-package, no new architecture. Step 7.3 (Block, 5 methods) ran `/feature small`; 8.3 is the same kind at 12 methods → `/feature small`.
+
+- **D-8.3-2 (`useWeekMutation` reused as-is; no read hook).** All 12 hooks reuse `useWeekMutation` byte-identically; each invalidates `platformKeys.weeks.byDate(planId, startDate)` (the plan-editor renders all three entity types inside the week view → one consistent week-tree refresh). `useWeekMutation` / `keys.ts` not modified. No query/read hook — no GET route exists (D-8.2-2); the read surface is Step 8.3.5.
+
+- **D-8.3-3 (hook signatures `(planId, startDate)` + everything else in TVars).** Block's `useCreateBlock` carries a `sessionId` param only because `sessionId` is a URL path segment. The Schema/SchemaRow/AG create+reorder routes carry their parent scope in the request body, not the URL — so the same Block rule (fixed URL segment → hook param; varying id + body → TVars) yields `(planId, startDate)`-only signatures, everything else in TVars. Not a divergence from Block — the same rule on a different contract shape.
+
+- **D-8.3-4 (api-level `*Request` types for reorder/addMember; closes QA-I1).** The reorder factory methods + `useReorder*` hook TVars import the api-level `ReorderSchemasRequest` / `ReorderSchemaRowsRequest` — NOT the entity `ReorderSchemasData` / `ReorderSchemaRowsData`, which lack the body-scope (`blockId`/`parentSchemaId`/`schemaId`) the route's `z.union`/`.extend` requires (an entity type compiles clean but yields a runtime `400`). `useReorderSchemas` TVars being exactly `ReorderSchemasRequest` (the `z.union`) closes QA-I1 at the type level — `null` is unassignable to either scope key, no call site can construct the route-rejected payload; the hook forwards TVars verbatim. The executor took api-level types uniformly (create/update too, where api ≡ entity) for in-file consistency; the entity domain types `Schema` / `SchemaRow` / `AlternatingGroup` stay the `TResult` payloads.
+
+- **D-8.3-5 (`removeMember` via `client.request`, not `requestNoContent`).** `removeMember` is a `DELETE` verb that returns a body (`AlternatingGroup | null` — `null` = the group dissolved). Every prior platform-client `delete` uses `client.requestNoContent` (discards body, expects `204`). `removeMember`'s route is `createAuthActionHandler` → `200` + JSON, never `204` → `client.request<…>(url, "DELETE")` (`request` parses the body, throws only on a `204` — which this route never returns). `requestNoContent` would silently drop the result. The `AlternatingGroup | null` flows through `useWeekMutation`'s generic `TResult` to the caller unmodified — the future grouping UI branches on it.
+
+- **D-8.3-6 (toasts unchanged — mirror Block; toast-policy deferred).** Every 8.3 hook reuses `useWeekMutation` including its success + error toast. The toast-policy idea (drop editor-wide success toasts except on session-delete, behind a confirm modal) was raised in the 8.3 thesis cycle and deferred by the user 2026-05-21 ("leave it as is for now"). 8.3 does not modify `useWeekMutation` or touch toast behaviour. The deferred toast-policy is an `03-deferred.md` carry-forward — revisit once the schema-editing UI lands (Step 8.4+) and the cadence is observable.
+
 ## 2026-05-20 — Step 8.2 — Platform HTTP routes (D-8.2-1..7)
 
 Ratified in the planner-user thesis cycle 2026-05-20 (D-8.2-1..6 upfront, all hypotheses approved; D-8.2-7 added during Design and re-ratified mid-execution after an executor escalation). Implemented Step 8.2 (commits `499b11cb..716c95f2`).

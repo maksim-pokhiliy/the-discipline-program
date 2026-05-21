@@ -2,43 +2,45 @@
 
 > Concrete next-action handoff brief. Updated every close-out as the queue shifts.
 
-## Status: Step 8.2 CLOSED 2026-05-20
+## Status: Step 8.3 CLOSED 2026-05-21
 
-Platform HTTP routes for the `Schema` / `SchemaRow` / `AlternatingGroup` api slices shipped — 10 Next.js App Router `route.ts` handlers over all 12 write methods + contract enablers (named route-param schemas + `z.union`-widened reorder-request schemas). 7 executor code/test commits `499b11cb..716c95f2` + 2 planner docs commits + close-out. Composition mirrors the Block precedent (Step 7.2): `withCoachAuth( withAuthRateLimit( createAuth*Handler(...), RATE_LIMIT_TIER.API ) )`. D-8.2-7 ratified mid-execution: the widened reorder request schema is a `z.union`, not `superRefine`. Review APPROVED / QA Score A; `pnpm test` 1680/1680; scope confined (`api-server` / `api-routes` / Prisma / `analysis/` 0 lines). Full entry: [../log/step-08.2.md](../log/step-08.2.md).
+Platform client API + TanStack hooks for the three slices shipped — 3 `createXxxAPI` endpoint factories (12 methods) + 12 `useXxx` mutation hooks on `useWeekMutation`, mirroring Step 7.3 (Block). 2 code commits `f0adca8a..10bcd4b6` + prompt/output docs + close-out. Review-Light APPROVED (0 findings); `pnpm test` 1680/1680; scope confined to `apps/platform/src/lib/{api,hooks}/`. D-8.3-4 (api-level `*Request` reorder types — closes `QA-I1`) and D-8.3-5 (`removeMember` via `client.request`) the two load-bearing points. Full entry: [../log/step-08.3.md](../log/step-08.3.md).
 
-## Next planner action: Step 8.3 thesis cycle — platform client API + hooks
+## Next planner action: Step 8.3.5 thesis cycle — `schemas[]` read-embed
 
-Client API factories + TanStack Query mutation hooks for the `Schema` / `SchemaRow` / `AlternatingGroup` slices, mirroring Step 7.3 (Block). The 8.2 HTTP routes are the call target. 8.3 wires `apps/platform/src/lib/api/endpoints/` factories + `apps/platform/src/lib/hooks/use-*.ts` mutation hooks. **`/feature small`** likely — Step 7.3 (Block hooks) was `small`; 8.3 is 3× the same thin-wrapper pattern, confirm at prompt-write by the file count. Walkthrough gate: 8.3 ships no UI — the thesis walkthrough describes the **final coach UX** the hooks will serve (the plan-editor mutations 8.4 surfaces), screen-only language per `[[coach-daily-ux-priority]]` (no HTTP / hook / query-key terms in the coach view).
+The read surface. After 8.3 the **write** path for the three slices is complete end-to-end (contracts → api-server → routes → client hooks), but nothing reads a Schema back — `blockSchema` does not embed `schemas[]`, and there is no GET route (D-8.2-2). Step 8.3.5 adds the read: a `schemas[]` embed into `blockSchema` so the future plan-editor (8.4) can render the schemas inside each block. Mirror Step 7.3.5 (Block embed into the week response). Cross-package — `packages/contracts` (`blockSchema` widened) + `packages/api-server` (mapper + include) — a likely squash candidate per `[[husky-cross-package-squash]]`; confirm at prompt-write by reading `.husky` + the fan-out. `/feature small` per the queue.
 
-**Thesis OQ surface (8.3's to ratify):**
+**Thesis OQ surface (8.3.5's to ratify):**
 
-- **Collapsed vs. per-entity split.** ~3 endpoint files + ~3 hook files + barrels. Hypothesis: collapsed single step — Step 7.3 Block was one `/feature small`; 8.3 is 3× the same thin pattern, well within one step.
-- **Hook helper + invalidation.** Step 7.3 built mutation hooks via the `useWeekMutation` helper, each invalidating `platformKeys.weeks.byDate(planId, startDate)` (full week-tree refresh). Hypothesis: 8.3 reuses `useWeekMutation` identically — Schema / SchemaRow / AlternatingGroup mutations all invalidate the same week-tree key (the editor renders them inside the week view).
-- **`removeMember` nullable result.** The `useRemoveMember` mutation result type is `AlternatingGroup | null` (the contract response). Hypothesis: pass the nullable through to the caller; the future UI branches on `null` = group dissolved.
-- **reorder scope shape (carry QA-I1).** The `useReorderSchemas` hook builds the `reorderSchemasRequestSchema` body — the `z.union` rejects an explicit `parentSchemaId: null`. Hypothesis: the hook's TVars carries a `CreateScope`-shaped discriminated arg and sends the scope key **absent**, never `null`.
-- **API factory signature.** Step 7.3 `createBlocksAPI` used a flat id-addressed signature (no `DayOfWeek` import). Hypothesis: `createSchemasAPI` / etc. mirror it — `planId` + the route-specific ids/body.
+- **`schemas[]` embed shape + recursion depth.** `blockSchema` gains `schemas: SchemaWithBody[]`. `SchemaWithBody` (`schema.types.ts`) is recursive (`{ schema, rows, subSchemas: SchemaWithBody[] }`) — but the domain bounds it: a sub-schema is always `kind === "ATOMIC"` (domain §1.5), and an atomic schema has no sub-schemas → the tree is depth-2 (schema → atomic sub-schema). Hypothesis: a fixed depth-2 Prisma `include` — the embed carries `rows` + one level of `subSchemas` (each with its own `rows`, no deeper nesting).
+- **`AlternatingGroup` embed — same step or separate.** D-A2 deferred `Schema` group-membership read to "a future `AlternatingGroup` embed (mirrors the Step 8.3.5 `schemas[]` read-embed pattern)". Hypothesis: fold the group read into 8.3.5 — one read-enabler step; 8.4 renders schemas and their alternating grouping together. Confirm scope at thesis-time; split only if it bloats the step.
+- **Mapper.** `mapToBlockWithSchemas` extending `mapToBlock` with the nested `Schema → SchemaWithBody` assembly — a pre-existing `03-deferred.md` carry-forward, triggered here. The `DAY_INCLUDE` / `BLOCK_WITH_LABELS_INCLUDE` hoist carry-forwards may reach their 3rd callsite here too.
+- **Client adapter.** Once `blockSchema` embeds `schemas[]`, `useWeek` already carries them — likely no new client hook, just the widened type flowing through. Confirm whether any client-side adapter is needed (per `[[planner-read-surface-trace]]` — trace the read path forward to where 8.4 consumes it).
 
-**Reference points to read at 8.3 prompt-write time:**
+**Reference points to read at 8.3.5 prompt-write time:**
 
-- Step 7.3 entry — `implementation/log/_archive-pre-refactor.md` (search `## Step 7.3`) — the canonical client-API + hooks precedent (`createBlocksAPI` + 5 `useBlock*` hooks via `useWeekMutation`).
-- `apps/platform/src/lib/api/endpoints/blocks.ts` + `apps/platform/src/lib/api/endpoints/index.ts` + `apps/platform/src/lib/api/index.ts` — the client-API factory + its barrels (registration files — read verbatim per `[[planner-verbatim-registration]]`).
-- `apps/platform/src/lib/hooks/use-blocks.ts` + `apps/platform/src/lib/hooks/index.ts` — the hook precedent.
-- `apps/platform/src/lib/api/keys.ts` — the `platformKeys` query-key factory (invalidation targets).
-- The 8.2 routes (`apps/platform/src/app/api/platform/training-plans/[planId]/{schemas,schema-rows,alternating-groups}/`) — the call target; the request/response contract schemas are their inputs.
+- Step 7.3.5 entry — `implementation/log/_archive-pre-refactor.md` (search `## Step 07.3.5`) — the canonical read-embed enabler precedent (Block embed into the week response, `mapToSessionWithLabelAndBlocks`).
+- `packages/contracts/src/entities/lms/block/block.schema.ts` — `blockSchema`, the file widened.
+- `packages/api-server/src/mappers/lms/block.mapper.ts` + the week/day include chain — the mapper + include surface.
+- `analysis/artifacts/05-synthesis/domain-model.md` §1.4-1.5 — Schema / SubSchema semantics + the `sub.kind === atomic` recursion bound.
 
-**Carry-forwards into the 8.3 thesis:**
+**Walkthrough gate (8.3.5).** 8.3.5 is a backend/contract enabler — the thesis walkthrough describes the **final coach UX** the embed serves: the coach opening a block in the plan-editor and seeing its schemas (header + body) rendered inside it, which Step 8.4 surfaces. Screen-only language per `[[coach-daily-ux-priority]]`.
 
-- **QA-I1** — the `useReorderSchemas` hook must send the scope key absent (not `null`); the `z.union` request schema rejects explicit `null`. Active in `03-deferred.md`. The 8.3 thesis addresses the hook's TVars scope shape.
-- **REVIEW-I4/I5/I6 + QA-W1 + QA-D1** — deferred `/fix` bundle (`03-deferred.md`); 8.3 is client hooks, touches none of them. QA-D1 widened at the 8.2 close-out (the reorder `.max()` gap is codebase-wide).
-- **No read hook.** 8.3 hooks call only the 12 write routes — no GET route exists (D-8.2-2). The read surface is Step 8.3.5.
+## Carry-forwards into the 8.3.5 thesis
+
+- **`mapToBlockWithSchemas` / `DAY_INCLUDE` hoist / `BLOCK_WITH_LABELS_INCLUDE` hoist** — `03-deferred.md` "Step 8 surface triggers"; 8.3.5 is their natural trigger.
+- **D-A2** — `Schema` group-membership read deferred to "a future `AlternatingGroup` embed"; 8.3.5 is that step (or its sibling — see the OQ above).
+- **Toast-policy** — deferred (D-8.3-6, `03-deferred.md` "Step 8.3 follow-ups"); not 8.3.5 scope (read-side, no mutation).
+- **REVIEW-I4/I5/I6 + QA-W1/W2 + QA-D1 + QA-I2** — separate `/fix` bundle (`03-deferred.md`); 8.3.5 touches none.
 
 ## Process reminders (active from Step 8.1c)
 
-- Thesis = two voice-coded sections (coach view + developer view) per `[[thesis-format]]`; coach view carries the mandatory 1-paragraph walkthrough per `[[coach-walkthrough-gate]]`, **screen-only language** per `[[coach-daily-ux-priority]]` (no HTTP / route / hook / query-key terms in the coach view).
+- Thesis = two voice-coded sections (coach view + developer view) per `[[thesis-format]]`; coach view carries the mandatory 1-paragraph walkthrough per `[[coach-walkthrough-gate]]`, screen-only language per `[[coach-daily-ux-priority]]`. **Walkthrough concrete examples (archetype names, rowKinds, exercise prescriptions) are domain claims** — ground them in `analysis/artifacts/` or keep them generic (Step 8.3 thesis-cycle lesson — the "EMOM 12" instinct-spec, flavour (b) `[[coach-pov-first]]`).
 - Prompt is spec-only per `[[planner-strategic-level]]` — § 0 verbatim quotes of existing code stay; no prescriptive new-code skeletons in § 3.
-- When prescribing any schema / type shape, simulate its inferred type, not just its runtime behaviour — flavour (i) `[[planner-lint-impact-trace]]` Zod sub-axis (Step 8.2 finding).
+- When prescribing any schema / type shape, simulate its inferred type, not just its runtime behaviour — flavour (i) `[[planner-lint-impact-trace]]`.
+- For a contract response-shape change read every consumer verbatim — flavour (f) `[[planner-consumer-pattern-read]]` (8.3.5 widens `blockSchema` — every route handler + client hook reading a block is a consumer).
 - `/feature` (small or full per scope), `feat/training-domain` long-lived branch, no branch cut.
 
-## After Step 8.3 close-out
+## After Step 8.3.5 close-out
 
-Per [01-step-queue.md](01-step-queue.md) execution order: 8.3 → 8.3.5 (read-embed) → 8.3.6 (SchemaRow `@@unique`) → 8.3.7 (Schema partial-unique) → **8.4 anchor** → **9.1..9.11** → **8.5..8.20** → 10.
+Per [01-step-queue.md](01-step-queue.md) execution order: 8.3.5 → 8.3.6 (SchemaRow `@@unique`) → 8.3.7 (Schema partial-unique) → **8.4 anchor** → **9.1..9.11** → **8.5..8.20** → 10.

@@ -2,11 +2,13 @@
 
 > Active + closed carry-forwards. Default hypothesis applied; revisit on contact. Resolved items struck through with closing commit reference.
 
-## Active (as of 2026-05-20)
+## Active (as of 2026-05-21)
+
+### Step 8.3 follow-ups
+
+- **Toast-policy — drop editor-wide success toasts except session-delete** (DEFERRED by the user 2026-05-21). In the Step 8.3 thesis cycle the user ratified the policy: success toasts should fire only on session deletion (coach taps delete → confirm modal → toast); every other plan-editor mutation (Schema / SchemaRow / Block / Session / Day edits) should be silent. Then deferred — "leave it as is for now". 8.3 ships its 12 hooks toasting like Block (D-8.3-6); `useWeekMutation` untouched. **Action when triggered**: a step touching `useWeekMutation` (drop the unconditional `toast.success`, or make `successMessage` optional) + the existing Block / Session / Day hooks (`use-blocks.ts` ×5, `use-sessions.ts` ×4, `use-day-metadata.ts` ×2) + `useUpdateWeekNotes` (its own `toast.success` in `use-weeks.ts`), **retaining** the success toast on `useDeleteSession`. A behavioural change to already-shipped UX — distinct in nature from an additive layer; ~5 files; `/feature small`. The confirm modal itself is UI-layer work. **Trigger**: once the schema-editing UI lands (Step 8.4+) and the toast cadence is observable.
 
 ### Step 8.2 follow-ups
-
-- **QA-I1 — `reorderSchemasRequestSchema` rejects an explicit `parentSchemaId: null`** (INFO). The `z.union` members use `z.undefined().optional()` for the forbidden scope key, so an explicit `null` (vs. an absent key) is rejected — whereas `createSchemaSchema` accepts `parentSchemaId: null` (`.nullable()`). A cross-route asymmetry, harmless at the route layer (the api re-validates scope). **Action when triggered**: a note for the Step 8.3 client — the `useReorderSchemas` hook must send the scope key **absent**, not `null`. No 8.2 patch.
 
 - **QA-I2 — ownership guards return `403` for another coach's id, `404` for a nonexistent id** (INFO). An existence oracle. Api-server-layer behaviour, codebase-wide, not introduced by 8.2 (the routes inherit it). **Action when triggered**: a codebase-wide guard-response-policy review if information-disclosure ever becomes a concern; low priority.
 
@@ -83,6 +85,8 @@
 - **`mapToSessionWithLabel` extraction as named symbol** (Step 6.2 deferred per output.md D-2). Currently inline `{ ...mapToSession(s), label: s.label ? mapToLabel(s.label) : null }` inside `mapToDaySlot`. Single use site; extract if Step 6.6 WeekGrid builds the same shape on the client.
 
 ## Closed (selected — chronological recent first)
+
+- ~~**QA-I1 (Step 8.2 — `reorderSchemasRequestSchema` rejects an explicit `parentSchemaId: null`)**~~ — CLOSED 2026-05-21 via Step 8.3 (D-8.3-4). `useReorderSchemas` TVars is exactly `ReorderSchemasRequest` (the `z.union`); `null` is unassignable to either scope key at the type level, so no call site can construct the route-rejected payload — the hook forwards TVars verbatim. (Distinct from the older `QA-I1 — TxClient` entry just below — a pre-existing ordinal collision in this catalog; the Step 8.2 follow-up reused the `I1` ordinal.)
 
 - ~~**QA-I1 — `TxClient` structural-typing leak / local-alias duplication**~~ — CLOSED 2026-05-19 via Step 8.1b Phase 0 (`d2e9b7e5`). Hoisted к `endpoints/lms/_shared/tx-client.ts`; `block/admin.ts` + `schema/assertions.ts` migrated к import; `grep "type TxClient = Omit"` → 1 canonical site only.
 
