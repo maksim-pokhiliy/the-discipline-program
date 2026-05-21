@@ -13,6 +13,15 @@ export const getSchemaRowsResponseSchema = z.array(schemaRowSchema);
 
 export const getSchemaRowByIdParamsSchema = idParamSchema;
 
+export const schemaRowByPlanParamsSchema = z.object({
+  planId: z.string().cuid(),
+});
+
+export const schemaRowByIdParamsSchema = z.object({
+  planId: z.string().cuid(),
+  schemaRowId: z.string().cuid(),
+});
+
 export const createSchemaRowRequestSchema = createSchemaRowSchema;
 export const createSchemaRowResponseSchema = schemaRowSchema;
 
@@ -22,7 +31,9 @@ export const updateSchemaRowResponseSchema = schemaRowSchema;
 
 export const deleteSchemaRowParamsSchema = idParamSchema;
 
-export const reorderSchemaRowsRequestSchema = reorderSchemaRowsSchema;
+export const reorderSchemaRowsRequestSchema = reorderSchemaRowsSchema.extend({
+  schemaId: z.string().cuid(),
+});
 export const reorderSchemaRowsResponseSchema = z.object({
   schemaRows: getSchemaRowsResponseSchema,
 });

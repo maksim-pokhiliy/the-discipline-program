@@ -2,11 +2,29 @@
 
 > Active + closed carry-forwards. Default hypothesis applied; revisit on contact. Resolved items struck through with closing commit reference.
 
-## Active (as of 2026-05-20)
+## Active (as of 2026-05-21)
+
+### Step 8.3 follow-ups
+
+- **Toast-policy — drop editor-wide success toasts except session-delete** (DEFERRED by the user 2026-05-21). In the Step 8.3 thesis cycle the user ratified the policy: success toasts should fire only on session deletion (coach taps delete → confirm modal → toast); every other plan-editor mutation (Schema / SchemaRow / Block / Session / Day edits) should be silent. Then deferred — "leave it as is for now". 8.3 ships its 12 hooks toasting like Block (D-8.3-6); `useWeekMutation` untouched. **Action when triggered**: a step touching `useWeekMutation` (drop the unconditional `toast.success`, or make `successMessage` optional) + the existing Block / Session / Day hooks (`use-blocks.ts` ×5, `use-sessions.ts` ×4, `use-day-metadata.ts` ×2) + `useUpdateWeekNotes` (its own `toast.success` in `use-weeks.ts`), **retaining** the success toast on `useDeleteSession`. A behavioural change to already-shipped UX — distinct in nature from an additive layer; ~5 files; `/feature small`. The confirm modal itself is UI-layer work. **Trigger**: once the schema-editing UI lands (Step 8.4+) and the toast cadence is observable.
+
+### Step 8.2 follow-ups
+
+- **QA-I2 — ownership guards return `403` for another coach's id, `404` for a nonexistent id** (INFO). An existence oracle. Api-server-layer behaviour, codebase-wide, not introduced by 8.2 (the routes inherit it). **Action when triggered**: a codebase-wide guard-response-policy review if information-disclosure ever becomes a concern; low priority.
+
+### Step 8.1c/8.1d follow-ups — PR #199 review (`claude[bot]`, 2026-05-20)
+
+> CI review on merged PR #199 — verdict **LGTM**, all notes non-blocking. Comment: <https://github.com/maksim-pokhiliy/the-discipline-program/pull/199#issuecomment-4499978671>. Bundle target: one `/fix` cycle schedulable alongside QA-W1 (shared delete-path theme) — post-merge, before/with Step 8 infrastructure. Review note #1 (`schemaIds` ordering not contract-documented) — 8.2 prompt-write verbatim-research found Block route handlers carry no route-level tests, and `mapToAlternatingGroup`'s `Schema.order asc` ordering is already pinned by the 8.1d mapper-determinism test; Zod arrays cannot express array ordering structurally and the no-comments rule forbids a JSDoc — note #1 is recorded **covered** (no further artifact owed), see `step-08.2/prompt.md` § 7. Not carried here. Note #3 (`lmsAlternatingGroupApi.delete` runs outside a tx) is folded into QA-W1 below. Note #5 (no migration file) discarded — ADR-0019 ratified no `migrations/` during the workflow; `SchemaPairing` never reached prod (no prod data), so no hand-written data migration is owed; the workflow-end baseline migration ships the final schema directly.
+
+- **REVIEW-I4 — bare `.max(24)` on `createAlternatingGroupSchema.schemaIds`** (INFO; PR #199 note #6). Magic number in `packages/contracts/src/entities/lms/alternating-group/alternating-group.schema.ts`; the schema test hardcodes 24/25 the same way. **Action**: extract a named `ALTERNATING_GROUP_MAX_MEMBERS = 24` beside the existing `ALTERNATING_GROUP_RELATIONS` in `alternating-group.constants.ts`, reference it from schema + test. Pattern-compliance fix — the file already names its sibling constants. Effort XS (~3-5 LOC).
+
+- **REVIEW-I5 — one conceptual member floor, two comparators + timings** (INFO; PR #199 note #2). `lmsAlternatingGroupApi.removeMember` checks `memberCount <= SURVIVING_MEMBER_FLOOR` pre-unlink; `lmsSchemaApi.delete` checks `remaining < SURVIVING_GROUP_FLOOR` post-delete. Both correct, but a maintainer reads two constants + two comparators for one invariant. **Action**: rename to encode the boundary (`MIN_PRE_REMOVE_COUNT` / `MIN_POST_DELETE_COUNT`) or align both to a single pre/post pattern. Effort XS.
+
+- **REVIEW-I6 — `lmsAlternatingGroupApi.create` runs N sequential `verifySchemaOwnership` round-trips** (INFO; PR #199 note #4). At `.max(24)` that is up to 24 chain-walking guard calls before the tx opens. Not hot — no HTTP route or UI consumer exists yet. **Action when triggered**: collapse to one `prisma.schema.findMany` joining `plan.creatorId`/`deletedAt`/`status` only if a real consumer ever puts this on a hot path. Lowest priority; may stay deferred indefinitely.
 
 ### Step 8.1b follow-ups (NEW)
 
-- **QA-W1 — `lmsSchemaRowApi.update` / `.delete` lack in-tx `plan.deletedAt` re-check** (WARNING). Race: another tx soft-deletes the plan between guard return and write. Not blocking 8.1b ship (api-server slice, no HTTP exposure). **Action when triggered**: future `/fix` cycle bundled with regression tests for those branches.
+- **QA-W1 — delete/update paths lack in-tx `plan` re-check** (WARNING). `lmsSchemaRowApi.update` / `.delete` lack an in-tx `plan.deletedAt` re-check; **`lmsAlternatingGroupApi.delete` runs with no transaction at all** (PR #199 review note #3) — it loses the commit-time re-verify of `plan.deletedAt === null` + `plan.status !== ARCHIVED` that its siblings `create`/`addMember`/`removeMember` get via `assertPlanEditableInTx`. Race: another tx soft-deletes or archives the plan between guard return and write. Not blocking (api-server slice, no HTTP exposure). **Action when triggered**: one `/fix` cycle — wrap each write in interactive `$transaction` with the in-tx plan re-check, bundled with regression tests per branch.
 
 - **QA-W2 — `lmsSchemaRowApi.reorder` array-form `$transaction([...])` cannot embed plan re-fetch** (WARNING). Array form, not interactive tx. Either convert к interactive `$transaction(async tx)` or accept the race as known-defer. **Action when triggered**: future `/fix` cycle, decide form at that time.
 
@@ -18,7 +36,7 @@
 
 - **QA-C2 — `handlePrismaError` не маппит P2028 (tx-timeout)** (WARNING). Surfaces as raw 500. Out-of-zone for 8.1a (file unmodified). **Action when triggered**: separate `/fix` ticket covering P2028 mapping across all error paths. Effort S (~5 LOC + 1 test).
 
-- **QA-D1 — `reorderSchemasSchema.orderedIds` имеет `.min(1)` без `.max()` cap** (WARNING). DoS-class via tx-timeout на гигантских массивах. Out-of-zone for 8.1a (Step 8.0b contracts territory). **Action when triggered**: Step 8.0b follow-up `.max(N)` cap или `/fix`. Suggest `N = 1000` matching reasonable schema-per-block upper bound. Effort S.
+- **QA-D1 — reorder-schema `orderedIds` has `.min(1)` without a `.max()` cap** (WARNING; codebase-wide). DoS-class via tx-timeout on giant arrays. **Confirmed codebase-wide at Step 8.2 QA**: the entity-level `reorderSchemasSchema` / `reorderSchemaRowsSchema` and the Block `reorderBlocksSchema` all share the gap; the Step 8.2 widened reorder _request_ schemas inherit `orderedIds` from those entity schemas via `.extend`, so a route-level cap would not help — the fix belongs on the entity schemas. **Action when triggered**: one codebase-wide `/fix` adding `.max(N)` to every reorder schema's `orderedIds`. Suggest `N = 1000` (reasonable per-scope upper bound). Effort S.
 
 - **QA-E3 — All 4 guards propagate `PrismaClientValidationError` на `userId = undefined`** (WARNING). Plan/Block/Schema + future Row/Pairing guards. 4 × 2-line defensive fix exceeds `[[inline-fix-pre-existing]]` 5-LOC threshold. **Action when triggered**: separate cross-guard `/fix` уни formly adding `if (!userId) throw new ForbiddenError(...)` early-throw at each guard entry. Effort S (4 × 2 LOC + 4 tests).
 
@@ -67,6 +85,8 @@
 - **`mapToSessionWithLabel` extraction as named symbol** (Step 6.2 deferred per output.md D-2). Currently inline `{ ...mapToSession(s), label: s.label ? mapToLabel(s.label) : null }` inside `mapToDaySlot`. Single use site; extract if Step 6.6 WeekGrid builds the same shape on the client.
 
 ## Closed (selected — chronological recent first)
+
+- ~~**QA-I1 (Step 8.2 — `reorderSchemasRequestSchema` rejects an explicit `parentSchemaId: null`)**~~ — CLOSED 2026-05-21 via Step 8.3 (D-8.3-4). `useReorderSchemas` TVars is exactly `ReorderSchemasRequest` (the `z.union`); `null` is unassignable to either scope key at the type level, so no call site can construct the route-rejected payload — the hook forwards TVars verbatim. (Distinct from the older `QA-I1 — TxClient` entry just below — a pre-existing ordinal collision in this catalog; the Step 8.2 follow-up reused the `I1` ordinal.)
 
 - ~~**QA-I1 — `TxClient` structural-typing leak / local-alias duplication**~~ — CLOSED 2026-05-19 via Step 8.1b Phase 0 (`d2e9b7e5`). Hoisted к `endpoints/lms/_shared/tx-client.ts`; `block/admin.ts` + `schema/assertions.ts` migrated к import; `grep "type TxClient = Omit"` → 1 canonical site only.
 

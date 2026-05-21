@@ -1,3 +1,4 @@
+export { createAlternatingGroupsAPI } from "./alternating-groups";
 export { createBlocksAPI } from "./blocks";
 export { createCoachAthletesAPI } from "./coach-athletes";
 export { createCoachActionItemsAPI } from "./coach-action-items";
@@ -5,6 +6,8 @@ export { createCoachDashboardAPI } from "./coach-dashboard";
 export { createCoachInviteAPI } from "./coach-invite";
 export { createDayMetadataAPI } from "./day-metadata";
 export { createLabelsAPI } from "./labels";
+export { createSchemaRowsAPI } from "./schema-rows";
+export { createSchemasAPI } from "./schemas";
 export { createSessionsAPI } from "./sessions";
 export { createTrainingPlansAPI } from "./training-plans";
 export { createUsersAPI } from "./users";

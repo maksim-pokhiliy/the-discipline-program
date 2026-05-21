@@ -6,6 +6,21 @@ import { alternatingGroupSchema, createAlternatingGroupSchema } from "./alternat
 
 export const getAlternatingGroupsResponseSchema = z.array(alternatingGroupSchema);
 
+export const alternatingGroupByPlanParamsSchema = z.object({
+  planId: z.string().cuid(),
+});
+
+export const alternatingGroupByIdParamsSchema = z.object({
+  planId: z.string().cuid(),
+  groupId: z.string().cuid(),
+});
+
+export const alternatingGroupMemberParamsSchema = z.object({
+  planId: z.string().cuid(),
+  groupId: z.string().cuid(),
+  schemaId: z.string().cuid(),
+});
+
 export const createAlternatingGroupRequestSchema = createAlternatingGroupSchema;
 export const createAlternatingGroupResponseSchema = alternatingGroupSchema;
 

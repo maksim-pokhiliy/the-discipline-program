@@ -8,6 +8,8 @@ import {
   type getSchemasResponseSchema,
   type reorderSchemasRequestSchema,
   type reorderSchemasResponseSchema,
+  type schemaByIdParamsSchema,
+  type schemaByPlanParamsSchema,
   type updateSchemaParamsSchema,
   type updateSchemaRequestSchema,
   type updateSchemaResponseSchema,
@@ -15,6 +17,8 @@ import {
 
 export type GetSchemasResponse = z.infer<typeof getSchemasResponseSchema>;
 export type GetSchemaByIdParams = z.infer<typeof getSchemaByIdParamsSchema>;
+export type SchemaByPlanParams = z.infer<typeof schemaByPlanParamsSchema>;
+export type SchemaByIdParams = z.infer<typeof schemaByIdParamsSchema>;
 export type CreateSchemaRequest = z.infer<typeof createSchemaRequestSchema>;
 export type CreateSchemaResponse = z.infer<typeof createSchemaResponseSchema>;
 export type UpdateSchemaParams = z.infer<typeof updateSchemaParamsSchema>;
