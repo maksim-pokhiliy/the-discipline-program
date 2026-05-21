@@ -60,11 +60,11 @@
 
 - ~~**WORKFLOW-001 — `db:seed` vs test suite incompatibility through `idx_single_head_coach`**~~ — **CLOSED 2026-05-20** via Step 8.1c commit `8c3a701b` (D13 path (b)): `schema/admin.test.ts` + `label/platform.test.ts` — the 2 files that created a 2nd `HEAD_COACH` without clearing the seeded one — now demote any pre-existing `HEAD_COACH` → `COACH` before promoting their fixture; the other 4 HEAD_COACH-creating test files already carried the pattern. Deterministic collision no longer reproduces; `pnpm test` green on a `db:reset`+`db:seed` DB. Step 8.3.7-pre DROPPED (D13 SUPERSEDED). Convention recorded in Standing context below.
 
-- **`DAY_INCLUDE` hoist к shared module** (Step 7.3.5 D-1 carry-forward; Step 8 trigger). `lms/day/admin.ts` defines `DAY_INCLUDE` const inline. Hoist к `endpoints/lms/_shared/` when 3rd callsite materializes (likely Step 8.1a or 8.3.5 — Schema entity Day-include extension).
+- **`DAY_INCLUDE` hoist к shared module** (Step 7.3.5 D-1 carry-forward; Step 8 trigger). `lms/day/admin.ts` defines `DAY_INCLUDE` const inline. Hoist к `endpoints/lms/_shared/` when 3rd callsite materializes. **Step 8.3.5 widened `DAY_INCLUDE`'s block sub-include in place (the `schemas`/`alternatingGroups` embed), identically to the `week/admin.ts` copy — still only 2 callsites, hoist still deferred (3rd-callsite trigger).**
 
-- **`BLOCK_WITH_LABELS_INCLUDE` hoist** (Step 7.x carry-forward; Step 8 trigger). Similar — Block include shape currently inline в week endpoint; hoist when 3rd callsite materializes.
+- **`BLOCK_WITH_LABELS_INCLUDE` hoist** (Step 7.x carry-forward; Step 8 trigger). Similar — Block include shape currently inline в week endpoint; hoist when 3rd callsite materializes. **Step 8.3.5 grew the duplicated block include to a ~30-line depth-2 structure (`week/admin.ts` inline + `DAY_INCLUDE`), the 2 copies byte-identical modulo `as const` — hoist still deferred (no 3rd callsite); the duplication is larger now, revisit priority if a 3rd consumer appears.**
 
-- **`mapToBlockWithSchemas` mapper** (Step 7.x carry-forward; Step 8.0b/8.1 trigger — Schema entity arrives). When schemas[] embed lands в blockSchema (Step 8.3.5), mapper-side needs `mapToBlockWithSchemas` extending `mapToBlock` with nested Schema → SchemaWithBody assembly.
+- ~~**`mapToBlockWithSchemas` mapper**~~ — **CLOSED 2026-05-21** via Step 8.3.5 (`2ee659cd`). `mapToBlockWithSchemas` shipped — extends `mapToBlockWithLabels` (not `mapToBlock` — the week embed carries `labels` too), assembles the depth-2 `SchemaWithBody` tree via `mapToSchema` + `mapToSchemaRow`.
 
 ### Architectural cleanup
 
