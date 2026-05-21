@@ -28,13 +28,9 @@ Granularity locked at thesis time; some steps may expand into sub-steps as decom
 - **Step 8.3** — Platform client API + TanStack hooks for the `Schema` / `SchemaRow` / `AlternatingGroup` slices: 3 `createXxxAPI` endpoint factories (12 methods over the 8.2 routes) + 12 `useXxx` mutation hooks on `useWeekMutation`. Mirror Step 7.3 (Block); strictly `apps/platform/src/lib/{api,hooks}/`, purely additive. D-8.3-1..6 ratified (D-8.3-4 api-level `*Request` reorder types closes `QA-I1`; D-8.3-5 `removeMember` via `client.request`). **COMPLETED** 2026-05-21. 2 code commits `f0adca8a..10bcd4b6` + prompt/output docs. Review-Light APPROVED (0 findings); 1680/1680 root tests; scope confined.
 - **Step 8.3.5** — `schemas[]` + `alternatingGroups[]` read-embed into `blockSchema`: recursive `schemaWithBodySchema` (depth-2) + `blockSchema` widened + `mapToBlockWithSchemas` + the `week/admin.ts` include and `DAY_INCLUDE` widened identically. Structural twin of Step 7.3.5, cross-package. **COMPLETED** 2026-05-21. 1 squash commit `2ee659cd` + output docs. Review-Light APPROVED (0 CRITICAL/WARNING, 1 closed INFO); 1691/1691 root tests; D-8.3.5-2 wiring deviation (OQ-1) intent-preserved; scope confined.
 - **Step 8.3.6** — `SchemaRow @@unique([schemaId, order])` composite-uniqueness constraint: DB-level positional-uniqueness enforcement, structural mirror of Step 7.3.6 (`Block`). `lmsSchemaRowApi.reorder` NOT rewritten — already two-pass since Step 8.1b (`e1091719`); the flavour-(h) intra-tx trace ran upfront and confirmed the constraint compatible with zero changes (D-8.3.6-3, `schema-row/admin.ts` byte-identical). **COMPLETED** 2026-05-21. 1 atomic commit `b32fd892` (5 files, +41/−0) + close-out docs. Review-Light APPROVED (0 findings); 1692/1692 root tests; `db:reset`+`db:seed` clean; scope confined.
+- **Step 8.3.7** — `Schema` dual-scope positional-uniqueness constraint: `@@unique([parentSchemaId, order])` (Prisma DSL, sub-schemas) + `schemas_block_top_order` partial unique index in `lms-checks.sql` (top-level, `WHERE "parentSchemaId" IS NULL`). Two mechanisms — Prisma `@@unique` cannot express a `WHERE`, and a flat `@@unique([blockId, order])` would wrongly reject sub-schemas of different parents sharing an `order` in one block. `lmsSchemaApi.reorder` NOT rewritten — already two-pass since `0d7c6943`; the flavour-(h) intra-tx trace confirmed compatibility with both constraints across both scopes (D-8.3.7-3, `schema/admin.ts` byte-identical). Last Step 8 infrastructure sub-step. Executed in-session by the planner (no executor shuttle — a proportionality call, see `log/step-08.3.7.md`). **COMPLETED** 2026-05-21. 1 atomic commit `cda82308` (6 files, +152/−0) + close-out docs. Independent review APPROVED (1 INFO applied); 76 files / 722 api-server tests green; `db:reset`+`db:seed` clean; scope confined.
 
-## Pending — Step 8 infrastructure (pre-anchor, untouched по задаче)
-
-Backend plumbing — coach UI surface не materialise-ится здесь; walkthrough stubs не добавляются per «untouched» constraint. Thesis для каждого включает walkthrough параграф per [[coach-walkthrough-gate]] на момент написания.
-
-- ~~**Step 8.3.7-pre**~~ — WORKFLOW-001 fix per D13. **DROPPED 2026-05-20** — WORKFLOW-001 resolved inline in Step 8.1c (commit `8c3a701b`, D13 path (b)); deterministic collision no longer reproduces, `pnpm test` green on `db:reset`+`db:seed`. See `log/step-08.1c.md`.
-- **Step 8.3.7** — Schema partial-unique constraint: `schemas_block_top_order` partial index в `apply-sql-checks.ts` WHERE parent_schema_id IS NULL + `@@unique([parentSchemaId, order])` Prisma DSL + reorder two-pass с dual scope semantics. `/feature small`, apply-sql-checks.ts touch.
+> ~~**Step 8.3.7-pre**~~ — WORKFLOW-001 fix per D13. **DROPPED 2026-05-20** — resolved inline in Step 8.1c (commit `8c3a701b`); see `log/step-08.1c.md`. (All Step 8 infrastructure sub-steps — 8.0a → 8.3.7 — are now COMPLETED.)
 
 ## Pending — Step 8.4 (anchor: first coach-visible Schema editor)
 
@@ -212,7 +208,7 @@ Pace: 1-4 archetypes per sub-step. Group batching по UI shape similarity.
 
 ## Calendar / scope estimates
 
-- **Execution order**: ~~8.1c~~ (done) → ~~8.1d~~ (done) → ~~8.2~~ (done) → ~~8.3~~ (done) → ~~8.3.5~~ (done) → ~~8.3.6~~ (done) → ~~8.3.7-pre~~ (dropped) → 8.3.7 → **8.4 anchor** → **9.1..9.11 row editor** → **8.5..8.20 archetype expansion** → 10.
+- **Execution order**: ~~8.1c~~ (done) → ~~8.1d~~ (done) → ~~8.2~~ (done) → ~~8.3~~ (done) → ~~8.3.5~~ (done) → ~~8.3.6~~ (done) → ~~8.3.7-pre~~ (dropped) → ~~8.3.7~~ (done) → **8.4 anchor** → **9.1..9.11 row editor** → **8.5..8.20 archetype expansion** → 10.
 - Step 8 sub-steps total: **28** (8 completed + 3 infrastructure + 1 anchor + 16 archetype expansion). 8.1c split into redesign (8.1c, done) + api (8.1d, done); 8.3.7-pre dropped — net 0.
 - Step 9 sub-steps total: **11** (9.1..9.11).
 - Step 10: 1.
