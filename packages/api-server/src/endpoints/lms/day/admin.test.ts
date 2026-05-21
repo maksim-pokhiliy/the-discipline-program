@@ -10,6 +10,13 @@ const MONDAY_PARAM = "2026-05-18";
 const WEDNESDAY_PARAM = "2026-05-20";
 const EXPECTED_UTC_MONDAY = new Date(Date.UTC(2026, 4, 18));
 
+const N_ROUNDS_PARAMS = {
+  archetype: "n-rounds" as const,
+  params: { countForm: "exact" as const, count: 5 },
+};
+
+const REST_SLOT_PAYLOAD = { rowKind: "REST_SLOT" as const };
+
 describe("lmsDayMetadataApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
@@ -19,6 +26,7 @@ describe("lmsDayMetadataApi", () => {
   let dayLabelId: string;
   let sessionOnlyLabelId: string;
   let sessionLabelId: string;
+  let atomicArchetypeId: string;
 
   beforeAll(async () => {
     coach = await createTestCoach();
@@ -67,6 +75,13 @@ describe("lmsDayMetadataApi", () => {
     });
 
     sessionLabelId = sessionLabel.id;
+
+    const atomic = await cleanupRaw.archetype.findUniqueOrThrow({
+      where: { name: "n-rounds" },
+      select: { id: true },
+    });
+
+    atomicArchetypeId = atomic.id;
   });
 
   afterAll(async () => {
@@ -275,6 +290,63 @@ describe("lmsDayMetadataApi", () => {
       } finally {
         await cleanupRaw.session.delete({ where: { id: sessionA.id } }).catch(() => {});
         await cleanupRaw.session.delete({ where: { id: sessionB.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+
+    it("returns blocks carrying a populated schemas tree (DAY_INCLUDE embed)", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "TUESDAY" },
+      });
+      const session = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
+      const block = await cleanupRaw.block.create({
+        data: { sessionId: session.id, order: 10 },
+      });
+      const schema = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          order: 10,
+          kind: "ATOMIC",
+          archetypeId: atomicArchetypeId,
+          archetypeParams: N_ROUNDS_PARAMS,
+        },
+      });
+      const row = await cleanupRaw.schemaRow.create({
+        data: {
+          schemaId: schema.id,
+          order: 10,
+          rowKind: "REST_SLOT",
+          rowPayload: REST_SLOT_PAYLOAD,
+        },
+      });
+
+      try {
+        const slot = await lmsDayMetadataApi.setLabel(
+          coach.user.id,
+          activePlanId,
+          MONDAY_PARAM,
+          "TUESDAY",
+          { labelId: dayLabelId },
+        );
+
+        const embedded = slot.sessions[0]?.blocks[0];
+
+        expect(embedded?.id).toBe(block.id);
+        expect(embedded?.schemas).toHaveLength(1);
+        expect(embedded?.schemas[0]?.schema.id).toBe(schema.id);
+        expect(embedded?.schemas[0]?.rows).toHaveLength(1);
+        expect(embedded?.schemas[0]?.rows[0]?.id).toBe(row.id);
+        expect(embedded?.schemas[0]?.subSchemas).toEqual([]);
+        expect(embedded?.alternatingGroups).toEqual([]);
+      } finally {
+        await cleanupRaw.schemaRow.deleteMany({ where: { schemaId: schema.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: schema.id } }).catch(() => {});
+        await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
         await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
         await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
       }

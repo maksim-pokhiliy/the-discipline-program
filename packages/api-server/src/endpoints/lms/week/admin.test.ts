@@ -22,12 +22,27 @@ const expectEmptySlot = (
   expect(slot.sessions).toEqual([]);
 };
 
+const N_ROUNDS_PARAMS = {
+  archetype: "n-rounds" as const,
+  params: { countForm: "exact" as const, count: 5 },
+};
+
+const NESTED_PARAMS = {
+  archetype: "nested-rounds-over-rounds" as const,
+  params: { outerCount: 3 },
+};
+
+const REST_SLOT_PAYLOAD = { rowKind: "REST_SLOT" as const };
+
 describe("lmsWeekApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
 
   let activePlanId: string;
   let archivedPlanId: string;
+
+  let atomicArchetypeId: string;
+  let nestedArchetypeId: string;
 
   beforeAll(async () => {
     coach = await createTestCoach();
@@ -44,6 +59,20 @@ describe("lmsWeekApi", () => {
     });
 
     archivedPlanId = archivedPlan.id;
+
+    const atomic = await cleanupRaw.archetype.findUniqueOrThrow({
+      where: { name: "n-rounds" },
+      select: { id: true },
+    });
+
+    atomicArchetypeId = atomic.id;
+
+    const nested = await cleanupRaw.archetype.findUniqueOrThrow({
+      where: { name: "nested-rounds-over-rounds" },
+      select: { id: true },
+    });
+
+    nestedArchetypeId = nested.id;
   });
 
   afterAll(async () => {
@@ -372,6 +401,302 @@ describe("lmsWeekApi", () => {
         await cleanupRaw.block.delete({ where: { id: blockB.id } }).catch(() => {});
         await cleanupRaw.session.delete({ where: { id: sessionA.id } }).catch(() => {});
         await cleanupRaw.session.delete({ where: { id: sessionB.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+
+    it("embeds a top-level schema with its rows under the block", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "TUESDAY" },
+      });
+      const session = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
+      const block = await cleanupRaw.block.create({
+        data: { sessionId: session.id, order: 10 },
+      });
+      const schema = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          order: 10,
+          kind: "ATOMIC",
+          archetypeId: atomicArchetypeId,
+          archetypeParams: N_ROUNDS_PARAMS,
+        },
+      });
+      const rowFirst = await cleanupRaw.schemaRow.create({
+        data: {
+          schemaId: schema.id,
+          order: 10,
+          rowKind: "REST_SLOT",
+          rowPayload: REST_SLOT_PAYLOAD,
+        },
+      });
+      const rowSecond = await cleanupRaw.schemaRow.create({
+        data: {
+          schemaId: schema.id,
+          order: 20,
+          rowKind: "REST_SLOT",
+          rowPayload: REST_SLOT_PAYLOAD,
+        },
+      });
+
+      try {
+        const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
+
+        const embedded = result.days[1]?.sessions[0]?.blocks[0];
+
+        expect(embedded?.id).toBe(block.id);
+        expect(embedded?.schemas).toHaveLength(1);
+        expect(embedded?.schemas[0]?.schema.id).toBe(schema.id);
+        expect(embedded?.schemas[0]?.schema.kind).toBe("ATOMIC");
+        expect(embedded?.schemas[0]?.rows).toHaveLength(2);
+        expect(embedded?.schemas[0]?.rows.map((r) => r.id)).toEqual([rowFirst.id, rowSecond.id]);
+        expect(embedded?.schemas[0]?.subSchemas).toEqual([]);
+      } finally {
+        await cleanupRaw.schemaRow.deleteMany({ where: { schemaId: schema.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: schema.id } }).catch(() => {});
+        await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+
+    it("nests a depth-2 sub-schema under subSchemas and not at the top level", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "WEDNESDAY" },
+      });
+      const session = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
+      const block = await cleanupRaw.block.create({
+        data: { sessionId: session.id, order: 10 },
+      });
+      const parent = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          order: 10,
+          kind: "NESTED",
+          archetypeId: nestedArchetypeId,
+          archetypeParams: NESTED_PARAMS,
+        },
+      });
+      const child = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          parentSchemaId: parent.id,
+          order: 10,
+          kind: "ATOMIC",
+          archetypeId: atomicArchetypeId,
+          archetypeParams: N_ROUNDS_PARAMS,
+        },
+      });
+
+      try {
+        const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
+
+        const embedded = result.days[2]?.sessions[0]?.blocks[0];
+
+        expect(embedded?.schemas).toHaveLength(1);
+        expect(embedded?.schemas[0]?.schema.id).toBe(parent.id);
+        expect(embedded?.schemas[0]?.subSchemas).toHaveLength(1);
+        expect(embedded?.schemas[0]?.subSchemas[0]?.schema.id).toBe(child.id);
+        expect(embedded?.schemas.map((s) => s.schema.id)).not.toContain(child.id);
+      } finally {
+        await cleanupRaw.schema.delete({ where: { id: child.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: parent.id } }).catch(() => {});
+        await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+
+    it("returns schemas: [] and alternatingGroups: [] for a block without an embed tree", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "THURSDAY" },
+      });
+      const session = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
+      const block = await cleanupRaw.block.create({
+        data: { sessionId: session.id, order: 10 },
+      });
+
+      try {
+        const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
+
+        const embedded = result.days[3]?.sessions[0]?.blocks[0];
+
+        expect(embedded?.id).toBe(block.id);
+        expect(embedded?.schemas).toEqual([]);
+        expect(embedded?.alternatingGroups).toEqual([]);
+      } finally {
+        await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+
+    it("returns schemas, rows and subSchemas each sorted ascending by order", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "FRIDAY" },
+      });
+      const session = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
+      const block = await cleanupRaw.block.create({
+        data: { sessionId: session.id, order: 10 },
+      });
+      const schemaLater = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          order: 20,
+          kind: "ATOMIC",
+          archetypeId: atomicArchetypeId,
+          archetypeParams: N_ROUNDS_PARAMS,
+        },
+      });
+      const schemaEarlier = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          order: 10,
+          kind: "NESTED",
+          archetypeId: nestedArchetypeId,
+          archetypeParams: NESTED_PARAMS,
+        },
+      });
+      const subLater = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          parentSchemaId: schemaEarlier.id,
+          order: 20,
+          kind: "ATOMIC",
+          archetypeId: atomicArchetypeId,
+          archetypeParams: N_ROUNDS_PARAMS,
+        },
+      });
+      const subEarlier = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          parentSchemaId: schemaEarlier.id,
+          order: 10,
+          kind: "ATOMIC",
+          archetypeId: atomicArchetypeId,
+          archetypeParams: N_ROUNDS_PARAMS,
+        },
+      });
+      const rowLater = await cleanupRaw.schemaRow.create({
+        data: {
+          schemaId: schemaLater.id,
+          order: 20,
+          rowKind: "REST_SLOT",
+          rowPayload: REST_SLOT_PAYLOAD,
+        },
+      });
+      const rowEarlier = await cleanupRaw.schemaRow.create({
+        data: {
+          schemaId: schemaLater.id,
+          order: 10,
+          rowKind: "REST_SLOT",
+          rowPayload: REST_SLOT_PAYLOAD,
+        },
+      });
+
+      try {
+        const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
+
+        const embedded = result.days[4]?.sessions[0]?.blocks[0];
+        const nested = embedded?.schemas[0];
+
+        expect(embedded?.schemas.map((s) => s.schema.order)).toEqual([10, 20]);
+        expect(embedded?.schemas.map((s) => s.schema.id)).toEqual([
+          schemaEarlier.id,
+          schemaLater.id,
+        ]);
+        expect(nested?.subSchemas.map((s) => s.schema.order)).toEqual([10, 20]);
+        expect(nested?.subSchemas.map((s) => s.schema.id)).toEqual([subEarlier.id, subLater.id]);
+        expect(embedded?.schemas[1]?.rows.map((r) => r.order)).toEqual([10, 20]);
+        expect(embedded?.schemas[1]?.rows.map((r) => r.id)).toEqual([rowEarlier.id, rowLater.id]);
+      } finally {
+        await cleanupRaw.schemaRow
+          .deleteMany({ where: { schemaId: schemaLater.id } })
+          .catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: subEarlier.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: subLater.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: schemaEarlier.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: schemaLater.id } }).catch(() => {});
+        await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+
+    it("embeds an alternating group whose schemaIds are a subset of the block's schemas", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "SATURDAY" },
+      });
+      const session = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
+      const block = await cleanupRaw.block.create({
+        data: { sessionId: session.id, order: 10 },
+      });
+      const group = await cleanupRaw.alternatingGroup.create({
+        data: { blockId: block.id, relationKind: "ALTERNATING_SETS" },
+      });
+      const memberFirst = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          alternatingGroupId: group.id,
+          order: 10,
+          kind: "ATOMIC",
+          archetypeId: atomicArchetypeId,
+          archetypeParams: N_ROUNDS_PARAMS,
+        },
+      });
+      const memberSecond = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          alternatingGroupId: group.id,
+          order: 20,
+          kind: "ATOMIC",
+          archetypeId: atomicArchetypeId,
+          archetypeParams: N_ROUNDS_PARAMS,
+        },
+      });
+
+      try {
+        const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
+
+        const embedded = result.days[5]?.sessions[0]?.blocks[0];
+
+        expect(embedded?.alternatingGroups).toHaveLength(1);
+        expect(embedded?.alternatingGroups[0]?.id).toBe(group.id);
+        expect([...(embedded?.alternatingGroups[0]?.schemaIds ?? [])].sort()).toEqual(
+          [memberFirst.id, memberSecond.id].sort(),
+        );
+
+        const embeddedSchemaIds = new Set(embedded?.schemas.map((s) => s.schema.id));
+
+        expect(
+          embedded?.alternatingGroups[0]?.schemaIds.every((id) => embeddedSchemaIds.has(id)),
+        ).toBe(true);
+      } finally {
+        await cleanupRaw.schema.delete({ where: { id: memberFirst.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: memberSecond.id } }).catch(() => {});
+        await cleanupRaw.alternatingGroup.delete({ where: { id: group.id } }).catch(() => {});
+        await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
         await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
         await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
       }

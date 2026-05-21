@@ -28,6 +28,20 @@ const DAY_INCLUDE = {
             orderBy: { order: "asc" as const },
             include: { label: true },
           },
+          schemas: {
+            where: { parentSchemaId: null },
+            orderBy: { order: "asc" as const },
+            include: {
+              rows: { orderBy: { order: "asc" as const } },
+              subSchemas: {
+                orderBy: { order: "asc" as const },
+                include: { rows: { orderBy: { order: "asc" as const } } },
+              },
+            },
+          },
+          alternatingGroups: {
+            include: { schemas: { select: { id: true } } },
+          },
         },
       },
     },

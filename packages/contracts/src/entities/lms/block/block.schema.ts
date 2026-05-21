@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import { intensitySchema, timeCapSchema } from "../_shared";
+import { alternatingGroupSchema } from "../alternating-group";
 import { labelSchema } from "../label";
+import { schemaWithBodySchema } from "../schema";
 
 import { BLOCK_CONSTANTS } from "./block.constants";
 
@@ -13,6 +15,8 @@ export const blockSchema = z.object({
   timeCap: timeCapSchema.nullable(),
   notes: z.string().nullable(),
   labels: z.array(labelSchema),
+  schemas: z.array(schemaWithBodySchema),
+  alternatingGroups: z.array(alternatingGroupSchema),
   createdAt: z.date(),
   updatedAt: z.date(),
 });

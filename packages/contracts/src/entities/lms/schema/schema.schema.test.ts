@@ -10,6 +10,7 @@ import {
   schemaKindSchema,
   schemaSchema,
   schemaSchemaWithInvariants,
+  schemaWithBodySchema,
   trailingConnectorSchema,
   updateSchemaSchema,
 } from "./schema.schema";
@@ -17,6 +18,8 @@ import {
 const cuidA = "clz1234567890123456789aaa";
 const cuidB = "clz1234567890123456789bbb";
 const cuidC = "clz1234567890123456789ccc";
+const cuidD = "clz1234567890123456789ddd";
+const cuidE = "clz1234567890123456789eee";
 
 const baseSchema = {
   id: cuidA,
@@ -32,6 +35,26 @@ const baseSchema = {
   },
   intensity: null,
   trailingConnector: null,
+  notes: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+const baseRow = {
+  id: cuidD,
+  schemaId: cuidA,
+  order: 1,
+  rowKind: "REST_SLOT" as const,
+  rowPayload: { rowKind: "REST_SLOT" as const },
+  load: null,
+  reps: null,
+  side: null,
+  tempo: null,
+  position: null,
+  sequence: null,
+  intensity: null,
+  media: null,
+  compoundRep: null,
   notes: null,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -533,6 +556,70 @@ describe("schemaSchema", () => {
 
   it("rejects a non-cuid id", () => {
     expect(schemaSchema.safeParse({ ...baseSchema, id: "not-a-cuid" }).success).toBe(false);
+  });
+});
+
+describe("schemaWithBodySchema", () => {
+  it("accepts a flat schema with populated rows and empty subSchemas", () => {
+    const result = schemaWithBodySchema.safeParse({
+      schema: baseSchema,
+      rows: [baseRow],
+      subSchemas: [],
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.schema.id).toBe(baseSchema.id);
+      expect(result.data.rows).toHaveLength(1);
+      expect(result.data.rows[0]?.id).toBe(baseRow.id);
+      expect(result.data.subSchemas).toEqual([]);
+    }
+  });
+
+  it("accepts a nested schema, depth-2, with populated subSchemas", () => {
+    const result = schemaWithBodySchema.safeParse({
+      schema: { ...baseSchema, kind: "NESTED" },
+      rows: [],
+      subSchemas: [
+        {
+          schema: { ...baseSchema, id: cuidE, parentSchemaId: cuidA, kind: "ATOMIC" },
+          rows: [{ ...baseRow, schemaId: cuidE }],
+          subSchemas: [],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.schema.kind).toBe("NESTED");
+      expect(result.data.subSchemas).toHaveLength(1);
+      expect(result.data.subSchemas[0]?.schema.id).toBe(cuidE);
+      expect(result.data.subSchemas[0]?.schema.parentSchemaId).toBe(cuidA);
+      expect(result.data.subSchemas[0]?.rows).toHaveLength(1);
+      expect(result.data.subSchemas[0]?.subSchemas).toEqual([]);
+    }
+  });
+
+  it("accepts a schema with empty rows", () => {
+    const result = schemaWithBodySchema.safeParse({
+      schema: baseSchema,
+      rows: [],
+      subSchemas: [],
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.rows).toEqual([]);
+    }
+  });
+
+  it("rejects a missing subSchemas field", () => {
+    const result = schemaWithBodySchema.safeParse({ schema: baseSchema, rows: [] });
+
+    expect(result.success).toBe(false);
   });
 });
 
