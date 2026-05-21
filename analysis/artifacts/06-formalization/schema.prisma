@@ -246,6 +246,7 @@ model Schema {
   rows             SchemaRow[]
 
   @@index([blockId, order])
+  @@unique([parentSchemaId, order])
   @@index([parentSchemaId, order])
   @@index([archetypeId])
   @@index([alternatingGroupId])
