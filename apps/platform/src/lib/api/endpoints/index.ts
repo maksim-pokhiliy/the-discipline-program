@@ -1,3 +1,4 @@
+export { createArchetypesAPI } from "./archetypes";
 export { createAlternatingGroupsAPI } from "./alternating-groups";
 export { createBlocksAPI } from "./blocks";
 export { createCoachAthletesAPI } from "./coach-athletes";

@@ -4,6 +4,7 @@ import { browserApiClient } from "./client";
 import * as endpoints from "./endpoints";
 
 export const createApi = (client: ApiClient) => ({
+  archetypes: endpoints.createArchetypesAPI(client),
   alternatingGroups: endpoints.createAlternatingGroupsAPI(client),
   blocks: endpoints.createBlocksAPI(client),
   coachAthletes: endpoints.createCoachAthletesAPI(client),

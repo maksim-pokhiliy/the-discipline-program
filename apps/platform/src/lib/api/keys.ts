@@ -25,4 +25,7 @@ export const platformKeys = {
     search: (level?: AppLevelValue, q?: string) =>
       [...ROOT, "labels", "search", level ?? null, q ?? null] as const,
   },
+  archetypes: {
+    all: () => [...ROOT, "archetypes"] as const,
+  },
 } as const;
