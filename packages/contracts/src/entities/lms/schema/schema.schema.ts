@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { connectorFormSchema, intensitySchema } from "../_shared";
+import { type SchemaRow, schemaRowSchema } from "../schema-row";
 
 import { archetypeParamsSchema } from "./archetype-params.schema";
 import {
@@ -69,6 +70,20 @@ export const schemaSchema: z.ZodType<SchemaShape> = z.lazy(() =>
     notes: z.string().max(SCHEMA_CONSTANTS.MAX_NOTES_LENGTH).nullable(),
     createdAt: z.date(),
     updatedAt: z.date(),
+  }),
+);
+
+export type SchemaWithBody = {
+  schema: z.infer<typeof schemaSchema>;
+  rows: SchemaRow[];
+  subSchemas: SchemaWithBody[];
+};
+
+export const schemaWithBodySchema: z.ZodType<SchemaWithBody> = z.lazy(() =>
+  z.object({
+    schema: schemaSchema,
+    rows: z.array(schemaRowSchema),
+    subSchemas: z.array(schemaWithBodySchema),
   }),
 );
 

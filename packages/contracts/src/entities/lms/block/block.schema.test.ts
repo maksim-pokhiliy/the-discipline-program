@@ -26,6 +26,64 @@ const labelTwo = {
   nameLower: "strength",
 };
 
+const cuidA = "clz1234567890123456789aaa";
+const cuidB = "clz1234567890123456789bbb";
+const cuidC = "clz1234567890123456789ccc";
+
+const atomicSchema = {
+  id: "clz1234567890123456789sa1",
+  blockId: "clz1234567890123456789012",
+  parentSchemaId: null,
+  order: 1,
+  kind: "ATOMIC" as const,
+  archetypeId: "clz1234567890123456789ar1",
+  header: null,
+  archetypeParams: {
+    archetype: "n-rounds" as const,
+    params: { countForm: "exact" as const, count: 5 },
+  },
+  intensity: null,
+  trailingConnector: null,
+  notes: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+const restSlotRow = {
+  id: "clz1234567890123456789rr1",
+  schemaId: "clz1234567890123456789sa1",
+  order: 1,
+  rowKind: "REST_SLOT" as const,
+  rowPayload: { rowKind: "REST_SLOT" as const },
+  load: null,
+  reps: null,
+  side: null,
+  tempo: null,
+  position: null,
+  sequence: null,
+  intensity: null,
+  media: null,
+  compoundRep: null,
+  notes: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
+const schemaWithBody = {
+  schema: atomicSchema,
+  rows: [restSlotRow],
+  subSchemas: [],
+};
+
+const alternatingGroup = {
+  id: "clz1234567890123456789ag1",
+  blockId: "clz1234567890123456789012",
+  relationKind: "ALTERNATING_SETS" as const,
+  schemaIds: [cuidA, cuidB],
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
+
 const baseBlock = {
   id: "clz1234567890123456789012",
   sessionId: "clz1234567890123456789ccc",
@@ -34,13 +92,11 @@ const baseBlock = {
   timeCap: { min: 10, max: 15, unit: "min" as const },
   notes: "block focus",
   labels: [labelOne],
+  schemas: [],
+  alternatingGroups: [],
   createdAt: new Date(),
   updatedAt: new Date(),
 };
-
-const cuidA = "clz1234567890123456789aaa";
-const cuidB = "clz1234567890123456789bbb";
-const cuidC = "clz1234567890123456789ccc";
 
 describe("blockSchema", () => {
   it("accepts a fully-populated valid object (with intensity + timeCap + labels)", () => {
@@ -112,8 +168,36 @@ describe("blockSchema", () => {
     expect(blockSchema.safeParse({ ...baseBlock, sessionId: "not-a-cuid" }).success).toBe(false);
   });
 
-  it("does not expose schemas (Step 8 surface; regression guard)", () => {
-    expect(blockSchema.shape).not.toHaveProperty("schemas");
+  it("accepts schemas: [] and alternatingGroups: [] (block without an embed tree)", () => {
+    const result = blockSchema.safeParse(baseBlock);
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.schemas).toEqual([]);
+      expect(result.data.alternatingGroups).toEqual([]);
+    }
+  });
+
+  it("accepts a populated schemas embed and alternatingGroups", () => {
+    const result = blockSchema.safeParse({
+      ...baseBlock,
+      schemas: [schemaWithBody],
+      alternatingGroups: [alternatingGroup],
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.schemas).toHaveLength(1);
+      expect(result.data.schemas[0]?.schema.id).toBe(atomicSchema.id);
+      expect(result.data.schemas[0]?.rows).toHaveLength(1);
+      expect(result.data.schemas[0]?.rows[0]?.id).toBe(restSlotRow.id);
+      expect(result.data.schemas[0]?.subSchemas).toEqual([]);
+      expect(result.data.alternatingGroups).toHaveLength(1);
+      expect(result.data.alternatingGroups[0]?.id).toBe(alternatingGroup.id);
+      expect(result.data.alternatingGroups[0]?.schemaIds).toEqual([cuidA, cuidB]);
+    }
   });
 
   it("does not expose name (Block.name guardrail, parallel to Session.name Q10)", () => {

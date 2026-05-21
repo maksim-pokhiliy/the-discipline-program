@@ -42,6 +42,8 @@ const baseBlock = {
   timeCap: { min: 10, max: 15, unit: "min" as const },
   notes: "block focus",
   labels: [baseLabel],
+  schemas: [],
+  alternatingGroups: [],
   createdAt: new Date(),
   updatedAt: new Date(),
 };

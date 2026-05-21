@@ -38,6 +38,20 @@ export const lmsWeekApi = {
                       orderBy: { order: "asc" },
                       include: { label: true },
                     },
+                    schemas: {
+                      where: { parentSchemaId: null },
+                      orderBy: { order: "asc" },
+                      include: {
+                        rows: { orderBy: { order: "asc" } },
+                        subSchemas: {
+                          orderBy: { order: "asc" },
+                          include: { rows: { orderBy: { order: "asc" } } },
+                        },
+                      },
+                    },
+                    alternatingGroups: {
+                      include: { schemas: { select: { id: true } } },
+                    },
                   },
                 },
               },
