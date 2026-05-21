@@ -378,6 +378,7 @@ Archetype catalog: 33 → **34** после Phase 7 (super-set добавлен 
 9. **PerformedSession** unique `(sessionId, userId)`: latest-only (Q9). Re-do = new Session. Per D2 (2026-05-12), `userId` references `User` (external).
 10. **Week** unique `(planId, startDate)`: один Week per ISO-week per Plan (D1, 2026-05-12). Day unique `(weekId, dayOfWeek)`: ≤7 Days per Week, индексированы перечислением, не sparse integer.
 11. **Block** unique `(sessionId, order)`: composite uniqueness — sparse-int positional ordering (#7), no duplicates within session. Engineering enforcement to prevent silent corruption under concurrent create/reorder races (Step 7.3.6 — closes Step 7.1 QA-001 pre-Step-8 surface).
+12. **SchemaRow** unique `(schemaId, order)`: composite uniqueness — sparse-int positional ordering (#7), no duplicates within schema. Engineering enforcement to prevent silent corruption under concurrent create/reorder races (Step 8.3.6 — mirrors #11; hardens the SchemaRow row-order surface before the Step 8.4 schema editor drives concurrent row writes).
 
 ---
 

@@ -286,6 +286,7 @@ model SchemaRow {
   schema                     Schema                      @relation(fields: [schemaId], references: [id], onDelete: Cascade)
   performedExerciseInstances PerformedExerciseInstance[]
 
+  @@unique([schemaId, order])
   @@index([schemaId, order])
 }
 

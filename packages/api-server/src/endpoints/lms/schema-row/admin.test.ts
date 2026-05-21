@@ -953,6 +953,40 @@ describe("lmsSchemaRowApi", () => {
       }
     });
 
+    it("enforces composite uniqueness on (schemaId, order) via P2002", async () => {
+      const ctx = await provisionSchema();
+
+      try {
+        await cleanupRaw.schemaRow.create({
+          data: {
+            schemaId: ctx.schema.id,
+            order: 10,
+            rowKind: "REST_SLOT",
+            rowPayload: { rowKind: "REST_SLOT" },
+          },
+        });
+
+        await expect(
+          cleanupRaw.schemaRow.create({
+            data: {
+              schemaId: ctx.schema.id,
+              order: 10,
+              rowKind: "REST_SLOT",
+              rowPayload: { rowKind: "REST_SLOT" },
+            },
+          }),
+        ).rejects.toMatchObject({
+          code: "P2002",
+        });
+
+        const stored = await cleanupRaw.schemaRow.count({ where: { schemaId: ctx.schema.id } });
+
+        expect(stored).toBe(1);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
     it("updates position enum independent of rowPayload variant", async () => {
       const ctx = await provisionSchema();
       const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
