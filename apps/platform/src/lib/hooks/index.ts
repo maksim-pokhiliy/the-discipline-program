@@ -1,3 +1,4 @@
+export * from "./use-alternating-groups";
 export * from "./use-blocks";
 export * from "./use-blur-commit";
 export * from "./use-coach-athletes";
@@ -8,6 +9,8 @@ export * from "./use-coach-invite";
 export * from "./use-day-metadata";
 export * from "./use-label-options";
 export * from "./use-label-search";
+export * from "./use-schema-rows";
+export * from "./use-schemas";
 export * from "./use-sessions";
 export * from "./use-training-plans";
 export * from "./use-users";
