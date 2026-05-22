@@ -2,7 +2,13 @@
 
 > Active + closed carry-forwards. Default hypothesis applied; revisit on contact. Resolved items struck through with closing commit reference.
 
-## Active (as of 2026-05-21)
+## Active (as of 2026-05-22)
+
+### Step 8.4 follow-ups
+
+- **QA-201 — param integer upper bounds** (WARNING; Step 8.4 QA, planner-ratified deferred 2026-05-22). The `n-rounds` / `amrap-flat` / RestSpec param integers — `durationMin`, `count`, `countRange.min/max`, `repsPerSet`, RestSpec `duration.value` / `rangeMax` — are unbounded in the frozen contract Zod (`positiveInt`, `z.number().positive()`); the 8.4 forms correctly mirror that and invent no `.max()`. A coach typo (`1e9` rounds) persists cleanly — no corruption, but a malformed plan. Whether the domain wants ceilings is a planner/coach call with no current spec citation. **Action when triggered**: a ratified sub-step — add `.max(N)` to the integer fields in `archetype-params.schema.ts` (`archetypeRoundsSetsParamsSchema`, `archetypeAmrapFlatParamsSchema`) + `cap-spec.ts` (`restSpecSchema`) + `db:reset` + `analysis/` sync per the WORKFLOW.md domain-model change protocol; the form schemas inherit the bound. Concrete ceilings need grounding in `analysis/source/plan.xlsx` ranges or a Denys consultation — do not invent. Not blocking; `/feature small` when scheduled.
+
+- **QA-204-adjacent — Block/Session/Day editor forms lack per-field validation feedback** (INFO; Step 8.4 finding). Step 8.4's `*SchemaForm` components wire `fieldState.error` into every form field; the pre-existing `block-editor-modal` (and the session/day editors) do not — a rejected value gives a dead Save button with no field-level message. A minor UX-consistency gap, codebase-wide, not an 8.4 regression (8.4 raised the bar). **Action when triggered**: fold into the toast-policy `/feature small` or a separate plan-editor UX-polish pass — wire `fieldState.error` into the Block/Session/Day form fields uniformly. Effort XS.
 
 ### Step 8.3 follow-ups
 
