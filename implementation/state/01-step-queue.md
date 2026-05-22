@@ -31,11 +31,15 @@ Granularity locked at thesis time; some steps may expand into sub-steps as decom
 - **Step 8.3.7** — `Schema` dual-scope positional-uniqueness constraint: `@@unique([parentSchemaId, order])` (Prisma DSL, sub-schemas) + `schemas_block_top_order` partial unique index in `lms-checks.sql` (top-level, `WHERE "parentSchemaId" IS NULL`). Two mechanisms — Prisma `@@unique` cannot express a `WHERE`, and a flat `@@unique([blockId, order])` would wrongly reject sub-schemas of different parents sharing an `order` in one block. `lmsSchemaApi.reorder` NOT rewritten — already two-pass since `0d7c6943`; the flavour-(h) intra-tx trace confirmed compatibility with both constraints across both scopes (D-8.3.7-3, `schema/admin.ts` byte-identical). Last Step 8 infrastructure sub-step. Executed in-session by the planner (no executor shuttle — a proportionality call, see `log/step-08.3.7.md`). **COMPLETED** 2026-05-21. 1 atomic commit `cda82308` (6 files, +152/−0) + close-out docs. Independent review APPROVED (1 INFO applied); 76 files / 722 api-server tests green; `db:reset`+`db:seed` clean; scope confined.
 
 - **Step 8.4** — the anchor: first coach-visible Schema editor. Phase 0 — archetype read-path (`lmsArchetypePlatformApi.list` + `mapToArchetype` + platform route/api/`use-archetypes` hook; folded into 8.4 per D-8.4-1). Phases 1-4 — `plan-detail` UI: `SchemaList`/`SchemaCard`/`AddSchemaButton` in `BlockCard`, `ArchetypePicker` (all 34 grouped by family, no availability logic), `SchemaEditorModal` thin dispatcher + `SCHEMA_PARAM_FORM_REGISTRY` of self-contained `*SchemaForm` components, the `amrap-flat` + `n-rounds` forms, `RestSpecFields` sub-editor. Approach (A) ratified at the Design gate (a single-`useForm` dispatcher is not type-safe over heterogeneous forms); the registry pattern is the template for 8.5-8.20. **COMPLETED** 2026-05-22. 6 per-layer atomic commits `ed386142..7f1b6cbd` (27 files, +1572/−0). Review APPROVE; QA verdict C re-assessed (2 CRITICAL → WARNING, planner-concurred); `check-types` 16/16, `lint` 16/16, `dep:check` 0, `pnpm test` 1701; browser smoke user-run + accepted; scope confined.
+
   - **Counter**: 2/34 archetypes done (`amrap-flat`, `n-rounds`).
+
+- **Step 9.1** — SchemaRow body editor begins: `STANDALONE_LOAD` rowKind + `LoadEditor` (5 kinds, `switch`-dispatch) + `WeightEditor` (8 variants, `switch`-dispatch) + `PercentageReferenceEditor` (2 scopes; `other_exercise` deferred to 9.3) + `LoadSummary` formatter + the self-contained `StandaloneLoadRowForm` + row-kind dispatch infra (`ROW_KIND_FORM_REGISTRY` / `RowEditorModal` / `AddRowButton` — 8-rowKind menu, unimplemented = no-op) + `SchemaRowList` / `SchemaRowCard` body rendering embedded in `SchemaCard`. D-9.1-4 (load-bearing) — `switch`-dispatch over the discriminant, NOT a `Record`-registry — specced with the type simulated upfront (the flavour-(i) lesson of 8.4); implemented zero-escalation. Platform-only on the shipped 8.0b-8.3.5 backend. **COMPLETED** 2026-05-22. 6 commits `d6e770bf..4e4421ce` (30 code files, +2387/−0, additive). Review APPROVE (0/0/3); QA verdict B (0 CRITICAL / 2 WARNING / 5 INFO — QA-307 deferred to 9.3 as a hard prerequisite, QA-301 re-assessed deferred-domain); `check-types` 16/16, `lint` 16/16, `dep:check` 0, `vitest --project platform` 64/64 (planner re-ran all FULL); browser smoke user-run + accepted; scope confined.
+  - **Counter**: 1/9 rowKinds + 1/7 composite VOs (Load) done.
 
 > ~~**Step 8.3.7-pre**~~ — WORKFLOW-001 fix per D13. **DROPPED 2026-05-20** — resolved inline in Step 8.1c (commit `8c3a701b`); see `log/step-08.1c.md`. (All Step 8 infrastructure sub-steps — 8.0a → 8.3.7 — and the 8.4 anchor are now COMPLETED.)
 
-## Pending — Step 9.1..9.11 — SchemaRow editor (9 rowKinds + 7 composite VOs)
+## Pending — Step 9.2..9.11 — SchemaRow editor (remaining rowKinds + composite VOs)
 
 > **Executes immediately after anchor 8.4, before archetype expansion 8.5..8.20.** Row editor работает внутри любой schema независимо от archetype (rows живут в schema body; archetype определяет structure/header, не row mechanics). После 8.4 + Step 9 тренер имеет полностью рабочий schema+row editor для 2 archetypes — первый genuinely usable продукт.
 
@@ -43,10 +47,7 @@ Pace: composite VO editors ship paired с first rowKind that consumes them (foun
 
 **Composite VO scheduling decision (codified)**: composite editors ship **paired с rowKind / archetype that first consumes them in real coach use**, NOT as standalone «foundation-only» sub-steps. Обеспечивает walkthrough quality (editor виден в context) + ESLint headroom (no orphan exports). RestSpec — exception: впервые в 8.4 anchor (n-rounds rest), reused here в 9.2.
 
-- **Step 9.1** — **STANDALONE_LOAD rowKind + LoadEditor composite + WeightEditor sub-composite**. LoadEditor: 5 kinds discriminated (absolute / percentage / bodyweight / without_weight / unspecified); WeightEditor (внутри absolute): 8 variants (single / dual / single_arm / compound_device / split_tier / dual_value / with_asymmetric_arm / with_depth_modifier). `/feature` full.
-
-  - **Counter**: 1/9 rowKinds + 1/7 composite VOs (Load).
-  - **Walkthrough**: Денис в созданной `n-rounds 5×5` schema добавляет STANDALONE_LOAD row для применения load к preceding rows. «add row» → «standalone load» из row-kind menu (8 опций, REST_SLOT internal). Видит LoadEditor (5 kinds dropdown); выбирает «absolute» → WeightEditor с 8 variant tabs. Picks «single_arm», вводит «32 kg», scope «applies_to_all_preceding_rows». Schema renders row с load annotation.
+- ~~**Step 9.1**~~ — **STANDALONE_LOAD rowKind + LoadEditor + WeightEditor**. **COMPLETED 2026-05-22** — see Completed section above + `log/step-09.1.md`. (1/9 rowKinds + 1/7 composite VOs done.)
 
 - **Step 9.2** — **REST + INNER_LADDER_MARKER + STANDALONE_URL rowKinds** (3 simple rowKinds batch). REST reuses RestSpec sub-editor from 8.4. `/feature`.
 
@@ -205,7 +206,7 @@ Pace: 1-4 archetypes per sub-step. Group batching по UI shape similarity.
 
 ## Calendar / scope estimates
 
-- **Execution order**: ~~8.1c~~ (done) → ~~8.1d~~ (done) → ~~8.2~~ (done) → ~~8.3~~ (done) → ~~8.3.5~~ (done) → ~~8.3.6~~ (done) → ~~8.3.7-pre~~ (dropped) → ~~8.3.7~~ (done) → ~~8.4 anchor~~ (done) → **9.1..9.11 row editor** → **8.5..8.20 archetype expansion** → 10.
+- **Execution order**: ~~8.1c~~ (done) → ~~8.1d~~ (done) → ~~8.2~~ (done) → ~~8.3~~ (done) → ~~8.3.5~~ (done) → ~~8.3.6~~ (done) → ~~8.3.7-pre~~ (dropped) → ~~8.3.7~~ (done) → ~~8.4 anchor~~ (done) → ~~9.1~~ (done) → **9.2..9.11 row editor** → **8.5..8.20 archetype expansion** → 10.
 - Step 8 sub-steps total: **28** (8 completed + 3 infrastructure + 1 anchor + 16 archetype expansion). 8.1c split into redesign (8.1c, done) + api (8.1d, done); 8.3.7-pre dropped — net 0.
 - Step 9 sub-steps total: **11** (9.1..9.11).
 - Step 10: 1.
