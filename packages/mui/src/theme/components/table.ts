@@ -18,7 +18,7 @@ export const MuiTableRow: NonNullable<Components<Theme>["MuiTableRow"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       "&.MuiTableRow-hover:hover": {
-        backgroundColor: alpha(theme.palette.common.white, 0.03),
+        backgroundColor: theme.palette.action.hover,
       },
     }),
   },

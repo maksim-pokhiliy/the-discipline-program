@@ -42,10 +42,7 @@ export const AdminHeader = ({ onMenuClick, navigation }: AdminHeaderProps) => {
       sx={{
         height: LAYOUT.adminHeaderHeight,
         justifyContent: "center",
-        borderBottom: 1,
-        borderColor: "divider",
         position: "static",
-        backgroundColor: "background.paper",
       }}
     >
       <Toolbar>

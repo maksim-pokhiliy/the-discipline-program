@@ -1,6 +1,6 @@
 # `@repo/mui`
 
-Shared MUI 7 theme + provider plumbing for the apps. Owns the Nunito Sans font setup, the project's design tokens, and the `<MuiProvider>` that wires emotion cache + theme + Next.js App Router compatibility.
+Shared MUI 7 theme + provider plumbing for the apps. Owns the Barlow + Barlow Condensed font setup, the project's design tokens, and the `<MuiProvider>` that wires emotion cache + theme + Next.js App Router compatibility.
 
 ## Public API
 
@@ -9,14 +9,14 @@ import {} from /* theme, provider, primitives */ "@repo/mui";
 import {} from /* font helpers */ "@repo/mui/fonts";
 ```
 
-The `/fonts` entry exports the next/font loaders so apps can preload the same Nunito Sans family without duplicating the configuration.
+The `/fonts` entry exports the next/font loaders so apps can preload the same Barlow + Barlow Condensed families without duplicating the configuration.
 
 ## Layout
 
 ```
 src/
   index.ts          Barrel — theme tokens + <MuiProvider>
-  fonts/index.ts    Nunito Sans next/font loader + CSS variable bindings
+  fonts/index.ts    Barlow + Barlow Condensed next/font loaders + CSS variable bindings
   <theme files>     Palette, typography, component overrides
 ```
 

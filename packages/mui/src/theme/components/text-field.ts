@@ -26,7 +26,22 @@ export const MuiOutlinedInput: NonNullable<Components<Theme>["MuiOutlinedInput"]
       },
     }),
 
-    input: ({ theme }) => ({ fontSize: theme.typography.body1.fontSize }),
+    input: ({ theme }) => ({
+      fontSize: theme.typography.body1.fontSize,
+
+      "&:not(.MuiInputBase-inputMultiline)": {
+        paddingTop: theme.spacing(1.25),
+        paddingBottom: theme.spacing(1.25),
+      },
+
+      "&:not(.MuiInputBase-inputMultiline, .MuiInputBase-inputAdornedStart)": {
+        paddingLeft: theme.spacing(1.5),
+      },
+
+      "&:not(.MuiInputBase-inputMultiline, .MuiInputBase-inputAdornedEnd)": {
+        paddingRight: theme.spacing(1.5),
+      },
+    }),
 
     sizeSmall: ({ theme }) => ({
       "& .MuiOutlinedInput-input": { fontSize: theme.typography.body2.fontSize },
@@ -77,6 +92,14 @@ export const MuiInputLabel: NonNullable<Components<Theme>["MuiInputLabel"]> = {
     }),
 
     sizeSmall: ({ theme }) => ({ fontSize: theme.typography.body2.fontSize }),
+
+    outlined: {
+      transform: "translate(12px, 10px) scale(1)",
+
+      "&.MuiInputLabel-shrink": {
+        transform: "translate(12px, -9px) scale(0.75)",
+      },
+    },
   },
 };
 
