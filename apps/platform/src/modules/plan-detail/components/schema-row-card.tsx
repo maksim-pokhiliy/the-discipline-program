@@ -24,9 +24,12 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteSchemaRow, useUpdateSchemaRow } from "@app/lib/hooks";
 
+import { formatRestRaw } from "./format-rest-raw";
 import { LoadSummary } from "./load-summary";
 import { RowEditorModal } from "./row-editor-modal";
 import type { RowEditorMode } from "./row-editor-types";
+
+const STEP_SEPARATOR = " → ";
 
 type SchemaRowCardProps = {
   row: SchemaRow;
@@ -64,6 +67,12 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({ row, planId, start
     switch (row.rowPayload.rowKind) {
       case "STANDALONE_LOAD":
         return <LoadSummary load={row.rowPayload.load} />;
+      case "REST":
+        return <Chip size="small" label={formatRestRaw(row.rowPayload.parsed)} />;
+      case "INNER_LADDER_MARKER":
+        return <Chip size="small" label={row.rowPayload.steps.join(STEP_SEPARATOR)} />;
+      case "STANDALONE_URL":
+        return <Chip size="small" label={row.rowPayload.url} />;
       default:
         return <Chip size="small" variant="outlined" label={row.rowPayload.rowKind} />;
     }
