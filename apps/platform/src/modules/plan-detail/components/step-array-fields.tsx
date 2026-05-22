@@ -3,14 +3,16 @@
 import { useState } from "react";
 
 import { Chip, FormHelperText, Stack, TextField } from "@mui/material";
-import type { FieldError } from "react-hook-form";
+import type { FieldError, FieldErrorsImpl, Merge } from "react-hook-form";
 
 const MIN_STEPS = 1;
+
+type StepArrayFieldsError = Merge<FieldError, FieldErrorsImpl<number[]>>;
 
 type StepArrayFieldsProps = {
   value: number[];
   onChange: (next: number[]) => void;
-  error?: FieldError | undefined;
+  error?: StepArrayFieldsError | undefined;
   disabled?: boolean;
 };
 

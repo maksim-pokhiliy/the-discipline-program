@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { Load } from "@repo/contracts/lms/_shared";
-import { ROW_KINDS, type SchemaRow } from "@repo/contracts/lms/schema-row";
+import { ROW_KINDS, type RowKind, type SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import { ROW_KIND_FORM_REGISTRY } from "./row-kind-form-registry";
 import { standaloneLoadRowFormSchema, toFormData } from "./standalone-load-row-form";
@@ -138,13 +138,24 @@ describe("standaloneLoadRowFormSchema", () => {
   });
 });
 
+const IMPLEMENTED_KINDS: readonly RowKind[] = [
+  "STANDALONE_LOAD",
+  "REST",
+  "INNER_LADDER_MARKER",
+  "STANDALONE_URL",
+];
+
 describe("ROW_KIND_FORM_REGISTRY", () => {
-  it("registers exactly STANDALONE_LOAD and misses the other 8 row kinds (QA-#14, T24)", () => {
-    expect(ROW_KIND_FORM_REGISTRY.STANDALONE_LOAD).not.toBeUndefined();
+  it("registers the 4 implemented row kinds (QA-#14, T24)", () => {
+    for (const kind of IMPLEMENTED_KINDS) {
+      expect(ROW_KIND_FORM_REGISTRY[kind]).not.toBeUndefined();
+    }
+  });
 
-    const otherKinds = ROW_KINDS.filter((kind) => kind !== "STANDALONE_LOAD");
+  it("misses the 5 unimplemented row kinds (QA-#14, T24)", () => {
+    const unimplementedKinds = ROW_KINDS.filter((kind) => !IMPLEMENTED_KINDS.includes(kind));
 
-    for (const kind of otherKinds) {
+    for (const kind of unimplementedKinds) {
       expect(ROW_KIND_FORM_REGISTRY[kind]).toBeUndefined();
     }
   });
