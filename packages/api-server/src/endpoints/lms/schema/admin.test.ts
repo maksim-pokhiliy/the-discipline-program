@@ -1448,4 +1448,145 @@ describe("lmsSchemaApi", () => {
       }
     });
   });
+
+  describe("cross-cutting", () => {
+    it("enforces sub-schema composite uniqueness on (parentSchemaId, order) via P2002", async () => {
+      const ctx = await provisionBlock();
+      const parent = await cleanupRaw.schema.create({
+        data: {
+          blockId: ctx.block.id,
+          order: 10,
+          kind: "NESTED",
+          archetypeId: nestedArchetypeId,
+          archetypeParams: NESTED_PARAMS,
+        },
+      });
+
+      try {
+        await cleanupRaw.schema.create({
+          data: {
+            blockId: ctx.block.id,
+            parentSchemaId: parent.id,
+            order: 10,
+            kind: "ATOMIC",
+            archetypeId: atomicArchetypeId,
+            archetypeParams: ATOMIC_PARAMS,
+          },
+        });
+
+        await expect(
+          cleanupRaw.schema.create({
+            data: {
+              blockId: ctx.block.id,
+              parentSchemaId: parent.id,
+              order: 10,
+              kind: "ATOMIC",
+              archetypeId: atomicArchetypeId,
+              archetypeParams: ATOMIC_PARAMS,
+            },
+          }),
+        ).rejects.toMatchObject({ code: "P2002" });
+
+        const stored = await cleanupRaw.schema.count({ where: { parentSchemaId: parent.id } });
+
+        expect(stored).toBe(1);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("enforces top-level composite uniqueness on (blockId, order) where parentSchemaId is null via P2002", async () => {
+      const ctx = await provisionBlock();
+
+      try {
+        await cleanupRaw.schema.create({
+          data: {
+            blockId: ctx.block.id,
+            order: 10,
+            kind: "ATOMIC",
+            archetypeId: atomicArchetypeId,
+            archetypeParams: ATOMIC_PARAMS,
+          },
+        });
+
+        await expect(
+          cleanupRaw.schema.create({
+            data: {
+              blockId: ctx.block.id,
+              order: 10,
+              kind: "ATOMIC",
+              archetypeId: atomicArchetypeId,
+              archetypeParams: ATOMIC_PARAMS,
+            },
+          }),
+        ).rejects.toMatchObject({ code: "P2002" });
+
+        const stored = await cleanupRaw.schema.count({
+          where: { blockId: ctx.block.id, parentSchemaId: null },
+        });
+
+        expect(stored).toBe(1);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("allows two sub-schemas of different parents in one block to share an order", async () => {
+      const ctx = await provisionBlock();
+      const parentA = await cleanupRaw.schema.create({
+        data: {
+          blockId: ctx.block.id,
+          order: 10,
+          kind: "NESTED",
+          archetypeId: nestedArchetypeId,
+          archetypeParams: NESTED_PARAMS,
+        },
+      });
+      const parentB = await cleanupRaw.schema.create({
+        data: {
+          blockId: ctx.block.id,
+          order: 20,
+          kind: "NESTED",
+          archetypeId: nestedArchetypeId,
+          archetypeParams: NESTED_PARAMS,
+        },
+      });
+
+      try {
+        const subA = await cleanupRaw.schema.create({
+          data: {
+            blockId: ctx.block.id,
+            parentSchemaId: parentA.id,
+            order: 10,
+            kind: "ATOMIC",
+            archetypeId: atomicArchetypeId,
+            archetypeParams: ATOMIC_PARAMS,
+          },
+        });
+        const subB = await cleanupRaw.schema.create({
+          data: {
+            blockId: ctx.block.id,
+            parentSchemaId: parentB.id,
+            order: 10,
+            kind: "ATOMIC",
+            archetypeId: atomicArchetypeId,
+            archetypeParams: ATOMIC_PARAMS,
+          },
+        });
+
+        expect(subA.order).toBe(10);
+        expect(subB.order).toBe(10);
+        expect(subA.parentSchemaId).toBe(parentA.id);
+        expect(subB.parentSchemaId).toBe(parentB.id);
+
+        const stored = await cleanupRaw.schema.count({
+          where: { blockId: ctx.block.id, parentSchemaId: { not: null } },
+        });
+
+        expect(stored).toBe(2);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+  });
 });

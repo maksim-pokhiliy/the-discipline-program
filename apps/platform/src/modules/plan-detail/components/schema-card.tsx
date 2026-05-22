@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -8,34 +8,39 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import EditIcon from "@mui/icons-material/Edit";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack } from "@mui/material";
+import {
+  Box,
+  IconButton,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
+  Stack,
+  Typography,
+} from "@mui/material";
 
-import type { Block } from "@repo/contracts/lms/block";
+import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useAssignBlockLabels, useDeleteBlock, useUpdateBlock } from "@app/lib/hooks";
+import { useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
 
-import { BlockEditorModal } from "./block-editor-modal";
-import { BlockIntensitySummary } from "./block-intensity-summary";
-import { BlockLabelSelect } from "./block-label-select";
-import { BlockNotesField } from "./block-notes-field";
-import { BlockTimeCapSummary } from "./block-time-cap-summary";
-import { SchemaList } from "./schema-list";
+import { SchemaEditorModal } from "./schema-editor-modal";
+import type { SchemaEditorMode } from "./schema-editor-types";
+import { SchemaParamsSummary } from "./schema-params-summary";
 
-type BlockCardProps = {
-  block: Block;
+type SchemaCardProps = {
+  schema: SchemaWithBody;
   planId: string;
   startDate: string;
 };
 
-export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }) => {
-  const updateBlock = useUpdateBlock(planId, startDate);
-  const deleteBlock = useDeleteBlock(planId, startDate);
-  const assignLabels = useAssignBlockLabels(planId, startDate);
+export const SchemaCard: React.FC<SchemaCardProps> = ({ schema, planId, startDate }) => {
+  const updateSchema = useUpdateSchema(planId, startDate);
+  const deleteSchema = useDeleteSchema(planId, startDate);
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: block.id,
-    disabled: updateBlock.isPending || deleteBlock.isPending || assignLabels.isPending,
+    id: schema.schema.id,
+    disabled: updateSchema.isPending || deleteSchema.isPending,
   });
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -43,14 +48,8 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
   const [deleteOpen, setDeleteOpen] = useState(false);
   const anchorRef = useRef<HTMLButtonElement>(null);
 
-  const handleLabelsChange = (labelIds: string[]) =>
-    assignLabels.mutate({ blockId: block.id, data: { labelIds } });
-
-  const handleNotesCommit = (notes: string | null) =>
-    updateBlock.mutate({ blockId: block.id, data: { notes } });
-
   const handleDeleteConfirm = () => {
-    deleteBlock.mutate({ blockId: block.id }, { onSuccess: () => setDeleteOpen(false) });
+    deleteSchema.mutate({ schemaId: schema.schema.id }, { onSuccess: () => setDeleteOpen(false) });
   };
 
   const style = {
@@ -59,10 +58,9 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const deleteDetails =
-    block.labels.length > 0 ? block.labels.map((l) => l.name).join(", ") : "Empty block";
+  const title = schema.schema.header ?? schema.schema.archetypeParams.archetype;
 
-  const hasSummary = block.intensity !== null || block.timeCap !== null;
+  const editorMode = useMemo<SchemaEditorMode>(() => ({ kind: "edit", schema }), [schema]);
 
   return (
     <Box
@@ -73,7 +71,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
         border: 1,
         borderColor: "divider",
         borderRadius: 1,
-        bgcolor: "background.default",
+        bgcolor: "background.paper",
       }}
     >
       <Stack direction="row" spacing={1.5} alignItems="flex-start">
@@ -81,45 +79,31 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
           {...attributes}
           {...listeners}
           size="small"
-          aria-label="Drag block"
+          aria-label="Drag schema"
           sx={{ cursor: "grab", touchAction: "none" }}
         >
           <DragIndicatorIcon fontSize="small" />
         </IconButton>
 
-        <Box sx={{ width: 240, flexShrink: 0 }}>
-          <BlockLabelSelect value={block.labels} onChange={handleLabelsChange} />
-        </Box>
-
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <BlockNotesField value={block.notes} onCommit={handleNotesCommit} />
+          <Typography variant="subtitle2" noWrap>
+            {title}
+          </Typography>
+
+          <Box sx={{ pt: 0.5 }}>
+            <SchemaParamsSummary archetypeParams={schema.schema.archetypeParams} />
+          </Box>
         </Box>
 
         <IconButton
           ref={anchorRef}
           onClick={() => setMenuOpen(true)}
-          aria-label="Block actions"
+          aria-label="Schema actions"
           size="small"
         >
           <MoreVertIcon fontSize="small" />
         </IconButton>
       </Stack>
-
-      {hasSummary && (
-        <Box sx={{ pt: 1, display: "flex", gap: 0.5, flexWrap: "wrap" }}>
-          <BlockIntensitySummary intensity={block.intensity} />
-          <BlockTimeCapSummary timeCap={block.timeCap} />
-        </Box>
-      )}
-
-      <Box sx={{ pt: 1 }}>
-        <SchemaList
-          planId={planId}
-          startDate={startDate}
-          blockId={block.id}
-          schemas={block.schemas}
-        />
-      </Box>
 
       <Menu anchorEl={anchorRef.current} open={menuOpen} onClose={() => setMenuOpen(false)}>
         <MenuItem
@@ -131,7 +115,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
           <ListItemIcon>
             <EditIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>Edit details</ListItemText>
+          <ListItemText>Edit</ListItemText>
         </MenuItem>
 
         <MenuItem
@@ -148,10 +132,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
         </MenuItem>
       </Menu>
 
-      <BlockEditorModal
+      <SchemaEditorModal
         open={editOpen}
         onClose={() => setEditOpen(false)}
-        block={block}
+        mode={editorMode}
         planId={planId}
         startDate={startDate}
       />
@@ -159,12 +143,12 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
       <ConfirmationModal
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        title="Delete block"
+        title="Delete schema"
         type="danger"
-        message="Delete this block?"
-        details={deleteDetails}
+        message="Delete this schema?"
+        details={title}
         onConfirm={handleDeleteConfirm}
-        isConfirming={deleteBlock.isPending}
+        isConfirming={deleteSchema.isPending}
       />
     </Box>
   );

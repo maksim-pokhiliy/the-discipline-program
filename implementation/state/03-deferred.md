@@ -2,7 +2,13 @@
 
 > Active + closed carry-forwards. Default hypothesis applied; revisit on contact. Resolved items struck through with closing commit reference.
 
-## Active (as of 2026-05-21)
+## Active (as of 2026-05-22)
+
+### Step 8.4 follow-ups
+
+- **QA-201 — param integer upper bounds** (WARNING; Step 8.4 QA, planner-ratified deferred 2026-05-22). The `n-rounds` / `amrap-flat` / RestSpec param integers — `durationMin`, `count`, `countRange.min/max`, `repsPerSet`, RestSpec `duration.value` / `rangeMax` — are unbounded in the frozen contract Zod (`positiveInt`, `z.number().positive()`); the 8.4 forms correctly mirror that and invent no `.max()`. A coach typo (`1e9` rounds) persists cleanly — no corruption, but a malformed plan. Whether the domain wants ceilings is a planner/coach call with no current spec citation. **Action when triggered**: a ratified sub-step — add `.max(N)` to the integer fields in `archetype-params.schema.ts` (`archetypeRoundsSetsParamsSchema`, `archetypeAmrapFlatParamsSchema`) + `cap-spec.ts` (`restSpecSchema`) + `db:reset` + `analysis/` sync per the WORKFLOW.md domain-model change protocol; the form schemas inherit the bound. Concrete ceilings need grounding in `analysis/source/plan.xlsx` ranges or a Denys consultation — do not invent. Not blocking; `/feature small` when scheduled.
+
+- **QA-204-adjacent — Block/Session/Day editor forms lack per-field validation feedback** (INFO; Step 8.4 finding). Step 8.4's `*SchemaForm` components wire `fieldState.error` into every form field; the pre-existing `block-editor-modal` (and the session/day editors) do not — a rejected value gives a dead Save button with no field-level message. A minor UX-consistency gap, codebase-wide, not an 8.4 regression (8.4 raised the bar). **Action when triggered**: fold into the toast-policy `/feature small` or a separate plan-editor UX-polish pass — wire `fieldState.error` into the Block/Session/Day form fields uniformly. Effort XS.
 
 ### Step 8.3 follow-ups
 
@@ -32,7 +38,7 @@
 
 ### Step 8.1a follow-ups
 
-- **QA-B4 — `lmsSchemaApi.reorder` без `retryOnP2034`** (WARNING). Concurrent create on same scope can lose reorder под SSI. Mirror Block precedent (`lmsBlockApi.reorder` also unwrapped). **Action when triggered**: address при Step 8.2 HTTP route layer retry semantics (preserves UX without bloating api-server method). Defer.
+- **QA-B4 — `lmsSchemaApi.reorder` без `retryOnP2034`** (WARNING). Concurrent create on same scope can lose reorder под SSI. Mirror Block precedent (`lmsBlockApi.reorder` also unwrapped). **Action when triggered**: address при Step 8.2 HTTP route layer retry semantics (preserves UX without bloating api-server method). Defer. **8.3.7 note**: 8.3.7 re-touched the reorder zone (verbatim read only); `lmsSchemaApi.reorder` is confirmed two-pass + compatible with both new `Schema` constraints across both scopes (intra-tx trace — `log/step-08.3.7.md` Summary); `schema/admin.ts` was not touched — the `retryOnP2034` gap is unchanged, the WARNING stands.
 
 - **QA-C2 — `handlePrismaError` не маппит P2028 (tx-timeout)** (WARNING). Surfaces as raw 500. Out-of-zone for 8.1a (file unmodified). **Action when triggered**: separate `/fix` ticket covering P2028 mapping across all error paths. Effort S (~5 LOC + 1 test).
 
@@ -52,7 +58,7 @@
 
 - **QA-001b — `Session @@unique([dayId, order])` mirror constraint** (WARNING; Step 7.3.6 D-2 carry-forward). Session model has identical `@@index([dayId, order])` without `@@unique`; same SSI-mechanism protection as pre-Step-7.3.6 Block (Step 6.4.5 `retryOnP2034` wrap on `lmsSessionApi.create`); same latent regression surface when Step 8 Schema adds more concurrent write paths. **Action when triggered**: mirror Step 7.3.6 implementation pattern — schema edit + `lmsSessionApi.reorder` two-pass rewrite + 2 tests + analysis sync. Single atomic commit. `/feature small` pipeline.
 
-- **QA-001c — `retryOnP2034` widening к also retry P2002 on `_max+N` insert pattern** (INFO; Step 7.3.6 D-2 carry-forward). Post-`@@unique` constraint, loser сейчас видит immediate P2002 ConflictError вместо retry. Helper extension (new variant `retryOnConcurrentInsertRace` taking both P2002 + P2034 codes) preserves prior concurrent UX где two simultaneous creates often produced fulfilledCount=2. **Action when triggered**: design new variant helper в `packages/api-server/src/utils/`; apply к `lmsBlockApi.create` + `lmsSchemaRowApi.create` (post-8.3.6 `@@unique([schemaId, order])` — the same loser-sees-P2002 surface as Block) + `lmsSessionApi.create` (if QA-001b shipped) + `lmsDayMetadataApi.{setLabel,setNotes}`. Step 7.x or pre-Step-8 cleanup.
+- **QA-001c — `retryOnP2034` widening к also retry P2002 on `_max+N` insert pattern** (INFO; Step 7.3.6 D-2 carry-forward). Post-`@@unique` constraint, loser сейчас видит immediate P2002 ConflictError вместо retry. Helper extension (new variant `retryOnConcurrentInsertRace` taking both P2002 + P2034 codes) preserves prior concurrent UX где two simultaneous creates often produced fulfilledCount=2. **Action when triggered**: design new variant helper в `packages/api-server/src/utils/`; apply к `lmsBlockApi.create` + `lmsSchemaRowApi.create` (post-8.3.6 `@@unique([schemaId, order])` — the same loser-sees-P2002 surface as Block) + `lmsSchemaApi.create` (post-8.3.7 `@@unique([parentSchemaId, order])` + the `schemas_block_top_order` partial index — same surface, both scopes) + `lmsSessionApi.create` (if QA-001b shipped) + `lmsDayMetadataApi.{setLabel,setNotes}`. Step 7.x or pre-Step-8 cleanup.
 
 - **QA-023 — Flaky timing-proxy assertion в `packages/api-server/src/endpoints/lms/block/admin.test.ts:406`** (INFRA/test-quality; Step 7.4 carry-forward). Test uses `expect(elapsed).toBeLessThan(50)` proxy для verifying absence of retry. Threshold too tight под нагрузкой (1/3 repeat runs fail at 68ms). **Fix options**: (1) widen threshold к 200ms; (2) replace timing-proxy с call-counter spy via `vi.spyOn`; (3) verify absence of retry via `retryOnP2034` internal logging. **Action when triggered**: pick option at next opportunity OR separate `/fix` loop; prefer (1) для minimal-touch fix.
 
