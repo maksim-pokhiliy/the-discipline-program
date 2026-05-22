@@ -82,6 +82,7 @@ export const typography = (baseTheme: Theme): NonNullable<ThemeOptions["typograp
     },
 
     h1: {
+      fontWeight: 400,
       fontSize: baseTheme.typography.pxToRem(40),
 
       lineHeight: 1.3,
@@ -92,6 +93,7 @@ export const typography = (baseTheme: Theme): NonNullable<ThemeOptions["typograp
     },
 
     h2: {
+      fontWeight: 400,
       fontSize: baseTheme.typography.pxToRem(30),
 
       lineHeight: 1.35,
@@ -116,6 +118,7 @@ export const typography = (baseTheme: Theme): NonNullable<ThemeOptions["typograp
     },
 
     h6: {
+      fontWeight: 400,
       fontSize: baseTheme.typography.pxToRem(14),
 
       lineHeight: 1.5,

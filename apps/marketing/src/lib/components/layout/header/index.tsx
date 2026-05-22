@@ -14,6 +14,7 @@ export const MarketingHeader = () => {
     <AppBar
       sx={{
         backgroundColor: "transparent",
+        borderBottom: 0,
       }}
     >
       <Toolbar sx={{ position: "relative" }}>

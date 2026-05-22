@@ -6,7 +6,7 @@ export const MuiListItemButton: NonNullable<Components<Theme>["MuiListItemButton
       padding: theme.spacing(0.75, 1.5),
 
       "&:hover": {
-        backgroundColor: alpha(theme.palette.common.white, 0.04),
+        backgroundColor: theme.palette.action.hover,
       },
 
       "&.Mui-selected": {

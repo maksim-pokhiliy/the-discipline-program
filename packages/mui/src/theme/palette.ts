@@ -10,9 +10,13 @@ export const palette: PaletteOptions = {
   mode: "dark",
   primary: {
     main: "#E07B35",
+    dark: "#c96b2c",
+    contrastText: "#1F1F1F",
   },
   secondary: {
     main: "#7A8FA6",
+    dark: "#69819b",
+    contrastText: "#1F1F1F",
   },
   background: {
     default: "#191919",
@@ -23,6 +27,9 @@ export const palette: PaletteOptions = {
     secondary: "rgba(255, 255, 255, 0.60)",
     muted: "rgba(255, 255, 255, 0.50)",
     disabled: "rgba(255, 255, 255, 0.38)",
+  },
+  action: {
+    hover: "rgba(255, 255, 255, 0.04)",
   },
   divider: "rgba(255, 255, 255, 0.12)",
   error: {

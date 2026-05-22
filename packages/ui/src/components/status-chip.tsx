@@ -16,7 +16,6 @@ export const StatusChip: React.FC<StatusChipProps> = ({ label, color, icon, tool
       label={label}
       {...(color !== undefined && { color })}
       {...(icon !== undefined && { icon })}
-      variant="outlined"
     />
   );
 

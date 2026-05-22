@@ -25,14 +25,7 @@ export const PlatformHeader = ({
   onSignOut,
 }: PlatformHeaderProps) => {
   return (
-    <AppBar
-      position="sticky"
-      sx={{
-        bgcolor: "background.paper",
-        borderBottom: 1,
-        borderColor: "divider",
-      }}
-    >
+    <AppBar position="sticky">
       <Container maxWidth="lg">
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ py: 2 }}>
           <Logo href={logoHref} width={LAYOUT.platformLogoSize} height={LAYOUT.platformLogoSize} />

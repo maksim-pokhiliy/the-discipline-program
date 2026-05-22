@@ -6,9 +6,11 @@ export const MuiAppBar: NonNullable<Components<Theme>["MuiAppBar"]> = {
   },
 
   styleOverrides: {
-    root: {
-      border: "none",
-    },
+    root: ({ theme }) => ({
+      backgroundColor: theme.palette.background.paper,
+      color: theme.palette.text.primary,
+      borderBottom: `1px solid ${theme.palette.divider}`,
+    }),
   },
 };
 
