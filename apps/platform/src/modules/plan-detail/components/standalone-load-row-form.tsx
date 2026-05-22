@@ -34,7 +34,7 @@ export const standaloneLoadRowFormSchema = z
 
 type StandaloneLoadFormData = z.infer<typeof standaloneLoadRowFormSchema>;
 
-const toFormData = (mode: RowEditorMode): StandaloneLoadFormData => {
+export const toFormData = (mode: RowEditorMode): StandaloneLoadFormData => {
   if (mode.kind === "create") {
     return { load: buildDefaultLoad("absolute") };
   }
