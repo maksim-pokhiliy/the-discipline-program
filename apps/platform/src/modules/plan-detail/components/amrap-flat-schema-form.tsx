@@ -100,7 +100,7 @@ export const AmrapFlatSchemaForm: React.FC<SchemaParamFormProps> = ({
         <Controller
           name="durationMin"
           control={control}
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <TextField
               label="Duration (minutes)"
               type="number"
@@ -108,6 +108,8 @@ export const AmrapFlatSchemaForm: React.FC<SchemaParamFormProps> = ({
               value={field.value}
               onChange={(e) => field.onChange(Number(e.target.value))}
               inputProps={{ min: 1, step: 1 }}
+              error={fieldState.error !== undefined}
+              helperText={fieldState.error?.message}
               disabled={isSubmitting}
               sx={{ maxWidth: 200 }}
             />

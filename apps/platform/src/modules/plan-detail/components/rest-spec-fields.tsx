@@ -4,6 +4,7 @@ import {
   Box,
   FormControl,
   FormControlLabel,
+  FormHelperText,
   InputLabel,
   MenuItem,
   Select,
@@ -11,6 +12,7 @@ import {
   Switch,
   TextField,
 } from "@mui/material";
+import type { FieldErrors } from "react-hook-form";
 import { z } from "zod";
 
 import {
@@ -84,12 +86,19 @@ const isRangeUnit = (unit: RestDurationUnit): boolean =>
 type RestSpecFieldsProps = {
   value: RestSpecFormValue;
   onChange: (next: RestSpecFormValue) => void;
+  error?: FieldErrors<RestSpecFormValue> | undefined;
   disabled?: boolean;
 };
 
-export const RestSpecFields = ({ value, onChange, disabled = false }: RestSpecFieldsProps) => {
+export const RestSpecFields = ({
+  value,
+  onChange,
+  error,
+  disabled = false,
+}: RestSpecFieldsProps) => {
   const rangeUnit = isRangeUnit(value.duration.unit);
   const qualifierEnabled = value.qualifier !== undefined;
+  const durationError = error?.duration;
 
   const handleUnitChange = (next: RestDurationUnit) => {
     if (isRangeUnit(next)) {
@@ -144,6 +153,8 @@ export const RestSpecFields = ({ value, onChange, disabled = false }: RestSpecFi
             })
           }
           inputProps={{ min: 1, step: 1 }}
+          error={durationError?.value !== undefined}
+          helperText={durationError?.value?.message}
           disabled={disabled}
           sx={{ maxWidth: 140 }}
         />
@@ -153,7 +164,7 @@ export const RestSpecFields = ({ value, onChange, disabled = false }: RestSpecFi
             label="Rest max"
             type="number"
             size="small"
-            value={value.duration.rangeMax ?? 0}
+            value={value.duration.rangeMax ?? ""}
             onChange={(e) =>
               onChange({
                 ...value,
@@ -161,12 +172,19 @@ export const RestSpecFields = ({ value, onChange, disabled = false }: RestSpecFi
               })
             }
             inputProps={{ min: 1, step: 1 }}
+            error={durationError?.rangeMax !== undefined}
+            helperText={durationError?.rangeMax?.message}
             disabled={disabled}
             sx={{ maxWidth: 140 }}
           />
         )}
 
-        <FormControl size="small" sx={{ minWidth: 180 }} disabled={disabled}>
+        <FormControl
+          size="small"
+          sx={{ minWidth: 180 }}
+          disabled={disabled}
+          error={durationError?.unit !== undefined}
+        >
           <InputLabel>Unit</InputLabel>
           <Select
             value={value.duration.unit}
@@ -179,10 +197,18 @@ export const RestSpecFields = ({ value, onChange, disabled = false }: RestSpecFi
               </MenuItem>
             ))}
           </Select>
+          {durationError?.unit !== undefined && (
+            <FormHelperText>{durationError.unit.message}</FormHelperText>
+          )}
         </FormControl>
       </Stack>
 
-      <FormControl size="small" sx={{ minWidth: 220 }} disabled={disabled}>
+      <FormControl
+        size="small"
+        sx={{ minWidth: 220 }}
+        disabled={disabled}
+        error={error?.scope !== undefined}
+      >
         <InputLabel>Rest placement</InputLabel>
         <Select
           value={value.scope}
@@ -197,6 +223,7 @@ export const RestSpecFields = ({ value, onChange, disabled = false }: RestSpecFi
             </MenuItem>
           ))}
         </Select>
+        {error?.scope !== undefined && <FormHelperText>{error.scope.message}</FormHelperText>}
       </FormControl>
 
       <Box>
@@ -213,7 +240,12 @@ export const RestSpecFields = ({ value, onChange, disabled = false }: RestSpecFi
 
         {qualifierEnabled && value.qualifier !== undefined && (
           <Stack sx={{ pl: 4, pt: 1 }}>
-            <FormControl size="small" sx={{ minWidth: 200 }} disabled={disabled}>
+            <FormControl
+              size="small"
+              sx={{ minWidth: 200 }}
+              disabled={disabled}
+              error={error?.qualifier !== undefined}
+            >
               <InputLabel>Qualifier</InputLabel>
               <Select
                 value={value.qualifier}
@@ -226,6 +258,9 @@ export const RestSpecFields = ({ value, onChange, disabled = false }: RestSpecFi
                   </MenuItem>
                 ))}
               </Select>
+              {error?.qualifier !== undefined && (
+                <FormHelperText>{error.qualifier.message}</FormHelperText>
+              )}
             </FormControl>
           </Stack>
         )}
@@ -238,6 +273,8 @@ export const RestSpecFields = ({ value, onChange, disabled = false }: RestSpecFi
         value={value.setIndex ?? ""}
         onChange={(e) => handleSetIndexChange(e.target.value)}
         inputProps={{ min: 1, step: 1 }}
+        error={error?.setIndex !== undefined}
+        helperText={error?.setIndex?.message}
         disabled={disabled}
         sx={{ maxWidth: 200 }}
       />
