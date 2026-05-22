@@ -35,11 +35,15 @@ Granularity locked at thesis time; some steps may expand into sub-steps as decom
   - **Counter**: 2/34 archetypes done (`amrap-flat`, `n-rounds`).
 
 - **Step 9.1** — SchemaRow body editor begins: `STANDALONE_LOAD` rowKind + `LoadEditor` (5 kinds, `switch`-dispatch) + `WeightEditor` (8 variants, `switch`-dispatch) + `PercentageReferenceEditor` (2 scopes; `other_exercise` deferred to 9.3) + `LoadSummary` formatter + the self-contained `StandaloneLoadRowForm` + row-kind dispatch infra (`ROW_KIND_FORM_REGISTRY` / `RowEditorModal` / `AddRowButton` — 8-rowKind menu, unimplemented = no-op) + `SchemaRowList` / `SchemaRowCard` body rendering embedded in `SchemaCard`. D-9.1-4 (load-bearing) — `switch`-dispatch over the discriminant, NOT a `Record`-registry — specced with the type simulated upfront (the flavour-(i) lesson of 8.4); implemented zero-escalation. Platform-only on the shipped 8.0b-8.3.5 backend. **COMPLETED** 2026-05-22. 6 commits `d6e770bf..4e4421ce` (30 code files, +2387/−0, additive). Review APPROVE (0/0/3); QA verdict B (0 CRITICAL / 2 WARNING / 5 INFO — QA-307 deferred to 9.3 as a hard prerequisite, QA-301 re-assessed deferred-domain); `check-types` 16/16, `lint` 16/16, `dep:check` 0, `vitest --project platform` 64/64 (planner re-ran all FULL); browser smoke user-run + accepted; scope confined.
+
   - **Counter**: 1/9 rowKinds + 1/7 composite VOs (Load) done.
+
+- **Step 9.2** — SchemaRow body editor: `REST` + `INNER_LADDER_MARKER` + `STANDALONE_URL` rowKinds. Three self-contained `*RowForm` mirroring the 9.1 `StandaloneLoadRowForm`, registered in `ROW_KIND_FORM_REGISTRY` (now 4); the dispatch infra (`RowEditorModal`/`AddRowButton`/`SchemaRowList`) untouched — rowKind-agnostic. Plus `StepArrayFields` (a reusable chip-array number editor, built for Step 8.5/8.6 archetype-form reuse), the `formatRestRaw` pure formatter, 3 `SchemaRowCard.renderBody` summary branches. OQ-C3 (`STANDALONE_URL.wrapped`) resolved from `analysis/` verbatim — a non-semantic notation artifact, pinned `true`, no control (D-9.2-3). Platform-only on the shipped 8.0b-8.3.5 backend. **COMPLETED** 2026-05-22. 6 commits `c19c0725..1a41a453` (14 code files, +1101/−5, additive). Review APPROVE (0/0/3); QA verdict B (0 CRITICAL / 2 WARNING — QA-902/QA-903, both fixed in-pipeline `fe4bee40` and verified verbatim / 5 INFO); `check-types` 16/16, `lint` 16/16, `dep:check` 0, `vitest --project platform` 140/140 (planner re-ran all FULL); browser smoke user-run + accepted; scope confined.
+  - **Counter**: 4/9 rowKinds + 1/7 composite VOs (Load) done.
 
 > ~~**Step 8.3.7-pre**~~ — WORKFLOW-001 fix per D13. **DROPPED 2026-05-20** — resolved inline in Step 8.1c (commit `8c3a701b`); see `log/step-08.1c.md`. (All Step 8 infrastructure sub-steps — 8.0a → 8.3.7 — and the 8.4 anchor are now COMPLETED.)
 
-## Pending — Step 9.2..9.11 — SchemaRow editor (remaining rowKinds + composite VOs)
+## Pending — Step 9.3..9.11 — SchemaRow editor (remaining rowKinds + composite VOs)
 
 > **Executes immediately after anchor 8.4, before archetype expansion 8.5..8.20.** Row editor работает внутри любой schema независимо от archetype (rows живут в schema body; archetype определяет structure/header, не row mechanics). После 8.4 + Step 9 тренер имеет полностью рабочий schema+row editor для 2 archetypes — первый genuinely usable продукт.
 
@@ -49,10 +53,7 @@ Pace: composite VO editors ship paired с first rowKind that consumes them (foun
 
 - ~~**Step 9.1**~~ — **STANDALONE_LOAD rowKind + LoadEditor + WeightEditor**. **COMPLETED 2026-05-22** — see Completed section above + `log/step-09.1.md`. (1/9 rowKinds + 1/7 composite VOs done.)
 
-- **Step 9.2** — **REST + INNER_LADDER_MARKER + STANDALONE_URL rowKinds** (3 simple rowKinds batch). REST reuses RestSpec sub-editor from 8.4. `/feature`.
-
-  - **Counter**: 4/9 rowKinds.
-  - **Walkthrough**: Денис добавляет REST row между упражнениями («90 sec rest») — raw input + auto-parsed scope dropdown (между раундами / сетами / интервалами). Затем INNER_LADDER_MARKER в schema: chip-array «[10, 8, 6]» (marker для associated exercise row). Затем STANDALONE_URL для warm-up видео: url input + wrapped checkbox + appliesTo dropdown.
+- ~~**Step 9.2**~~ — **REST + INNER_LADDER_MARKER + STANDALONE_URL rowKinds**. **COMPLETED 2026-05-22** — see Completed section above + `log/step-09.2.md`. (4/9 rowKinds done; `StepArrayFields` chip-array editor shipped for Step 8.5/8.6 reuse.)
 
 - **Step 9.3** — **EXERCISE (atomic form) + RepNotationEditor + SideEditor + exerciseForm picker shell**. exerciseId picker from library + RepNotation composite (7 kinds: count / range / unit_bound / max / implicit / total_flag / compound_rep_unit) + Side composite (4 kinds: each_leg / each_arm / explicit_split / alternating) + reuses LoadEditor from 9.1. **Largest single sub-step** (3 composite VOs ship — concern #2; kept single, см. adversarial section). `/feature` full.
 
@@ -206,7 +207,7 @@ Pace: 1-4 archetypes per sub-step. Group batching по UI shape similarity.
 
 ## Calendar / scope estimates
 
-- **Execution order**: ~~8.1c~~ (done) → ~~8.1d~~ (done) → ~~8.2~~ (done) → ~~8.3~~ (done) → ~~8.3.5~~ (done) → ~~8.3.6~~ (done) → ~~8.3.7-pre~~ (dropped) → ~~8.3.7~~ (done) → ~~8.4 anchor~~ (done) → ~~9.1~~ (done) → **9.2..9.11 row editor** → **8.5..8.20 archetype expansion** → 10.
+- **Execution order**: ~~8.1c~~ (done) → ~~8.1d~~ (done) → ~~8.2~~ (done) → ~~8.3~~ (done) → ~~8.3.5~~ (done) → ~~8.3.6~~ (done) → ~~8.3.7-pre~~ (dropped) → ~~8.3.7~~ (done) → ~~8.4 anchor~~ (done) → ~~9.1~~ (done) → ~~9.2~~ (done) → **9.3..9.11 row editor** → **8.5..8.20 archetype expansion** → 10.
 - Step 8 sub-steps total: **28** (8 completed + 3 infrastructure + 1 anchor + 16 archetype expansion). 8.1c split into redesign (8.1c, done) + api (8.1d, done); 8.3.7-pre dropped — net 0.
 - Step 9 sub-steps total: **11** (9.1..9.11).
 - Step 10: 1.
