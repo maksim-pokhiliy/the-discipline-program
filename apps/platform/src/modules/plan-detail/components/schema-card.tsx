@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -25,6 +25,7 @@ import { ConfirmationModal } from "@repo/ui";
 import { useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
 
 import { SchemaEditorModal } from "./schema-editor-modal";
+import type { SchemaEditorMode } from "./schema-editor-types";
 import { SchemaParamsSummary } from "./schema-params-summary";
 
 type SchemaCardProps = {
@@ -58,6 +59,8 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({ schema, planId, startDat
   };
 
   const title = schema.schema.header ?? schema.schema.archetypeParams.archetype;
+
+  const editorMode = useMemo<SchemaEditorMode>(() => ({ kind: "edit", schema }), [schema]);
 
   return (
     <Box
@@ -132,7 +135,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({ schema, planId, startDat
       <SchemaEditorModal
         open={editOpen}
         onClose={() => setEditOpen(false)}
-        mode={{ kind: "edit", schema }}
+        mode={editorMode}
         planId={planId}
         startDate={startDate}
       />

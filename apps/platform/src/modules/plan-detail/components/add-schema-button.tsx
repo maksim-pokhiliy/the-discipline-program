@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import AddIcon from "@mui/icons-material/Add";
 import { Button } from "@mui/material";
 
 import { ArchetypePicker } from "./archetype-picker";
 import { SchemaEditorModal } from "./schema-editor-modal";
-import type { SelectedArchetype } from "./schema-editor-types";
+import type { SchemaEditorMode, SelectedArchetype } from "./schema-editor-types";
 import { SCHEMA_PARAM_FORM_REGISTRY } from "./schema-param-form-registry";
 
 type AddSchemaButtonProps = {
@@ -30,6 +30,12 @@ export const AddSchemaButton: React.FC<AddSchemaButtonProps> = ({ planId, startD
     setPendingArchetype(selected);
   };
 
+  const editorMode = useMemo<SchemaEditorMode | null>(
+    () =>
+      pendingArchetype === null ? null : { kind: "create", blockId, archetype: pendingArchetype },
+    [blockId, pendingArchetype],
+  );
+
   return (
     <>
       <Button
@@ -47,11 +53,11 @@ export const AddSchemaButton: React.FC<AddSchemaButtonProps> = ({ planId, startD
         onSelect={handleSelect}
       />
 
-      {pendingArchetype !== null && (
+      {editorMode !== null && (
         <SchemaEditorModal
           open
           onClose={() => setPendingArchetype(null)}
-          mode={{ kind: "create", blockId, archetype: pendingArchetype }}
+          mode={editorMode}
           planId={planId}
           startDate={startDate}
         />
