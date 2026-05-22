@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
+import { ARCHETYPE_NAMES } from "@repo/contracts/lms/schema";
 import { ForbiddenError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
@@ -91,6 +92,18 @@ describe("lmsArchetypePlatformApi.list", () => {
     expect(rows.length).toBeGreaterThanOrEqual(SEEDED_ARCHETYPE_COUNT);
   });
 
+  it("returns archetypes whose name set is exactly the 34 known archetype names", async () => {
+    const coach = await createTestCoach();
+
+    createdCoachProfileIds.push(coach.profile.id);
+    createdUserIds.push(coach.user.id);
+
+    const rows = await lmsArchetypePlatformApi.list(coach.user.id);
+    const returnedNames = new Set(rows.map((row) => row.name));
+
+    expect(returnedNames).toEqual(new Set(ARCHETYPE_NAMES));
+  });
+
   it("returns each archetype with the full Archetype shape", async () => {
     const coach = await createTestCoach();
 
@@ -115,27 +128,30 @@ describe("lmsArchetypePlatformApi.list", () => {
     }
   });
 
-  it("returns archetypes ordered by family then name", async () => {
+  it("returns archetypes grouped contiguously by family and name-sorted within each family", async () => {
     const coach = await createTestCoach();
 
     createdCoachProfileIds.push(coach.profile.id);
     createdUserIds.push(coach.user.id);
 
     const rows = await lmsArchetypePlatformApi.list(coach.user.id);
+    const seenFamilies = new Set<string>();
 
-    for (let index = 1; index < rows.length; index++) {
-      const previous = rows[index - 1];
+    for (let index = 0; index < rows.length; index++) {
       const current = rows[index];
+      const previous = index > 0 ? rows[index - 1] : undefined;
 
-      if (previous === undefined || current === undefined) {
+      if (current === undefined) {
         continue;
       }
 
-      expect(previous.family <= current.family).toBe(true);
-
-      if (previous.family === current.family) {
-        expect(previous.name <= current.name).toBe(true);
+      if (previous === undefined || previous.family !== current.family) {
+        expect(seenFamilies.has(current.family)).toBe(false);
+        seenFamilies.add(current.family);
+        continue;
       }
+
+      expect(previous.name <= current.name).toBe(true);
     }
   });
 });
