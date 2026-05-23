@@ -7,7 +7,7 @@ export const MuiIconButton: NonNullable<Components<Theme>["MuiIconButton"]> = {
     color: "inherit",
   },
   styleOverrides: {
-    sizeSmall: {
+    root: {
       minWidth: MIN_TOUCH_TARGET_PX,
       minHeight: MIN_TOUCH_TARGET_PX,
     },

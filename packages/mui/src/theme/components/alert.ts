@@ -17,6 +17,7 @@ export const MuiAlert: NonNullable<Components<Theme>["MuiAlert"]> = {
 
   styleOverrides: {
     root: ({ theme }) => ({
+      padding: theme.spacing(1.5, 1.75),
       borderRadius: theme.shape.borderRadius,
       color: theme.palette.text.primary,
     }),

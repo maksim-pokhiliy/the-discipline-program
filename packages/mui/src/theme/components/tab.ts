@@ -24,6 +24,10 @@ export const MuiTab: NonNullable<Components<Theme>["MuiTab"]> = {
 
       "&.Mui-selected": {
         backgroundColor: alpha(theme.palette.primary.main, theme.palette.action.hoverOpacity),
+
+        "&:hover": {
+          backgroundColor: alpha(theme.palette.primary.main, 0.12),
+        },
       },
     }),
   },

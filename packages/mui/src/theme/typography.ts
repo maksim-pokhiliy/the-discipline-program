@@ -146,6 +146,7 @@ export const typography = (baseTheme: Theme): NonNullable<ThemeOptions["typograp
     caption: {
       fontSize: baseTheme.typography.pxToRem(12),
       lineHeight: 1.5,
+      color: baseTheme.palette.text.secondary,
     },
 
     overline: {

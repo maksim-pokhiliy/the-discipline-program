@@ -44,7 +44,10 @@ export const MuiOutlinedInput: NonNullable<Components<Theme>["MuiOutlinedInput"]
     }),
 
     sizeSmall: ({ theme }) => ({
-      "& .MuiOutlinedInput-input": { fontSize: theme.typography.body2.fontSize },
+      "& .MuiOutlinedInput-input": {
+        fontSize: theme.typography.body2.fontSize,
+        padding: theme.spacing(0.75, 1.25),
+      },
     }),
   },
 };
@@ -99,6 +102,14 @@ export const MuiInputLabel: NonNullable<Components<Theme>["MuiInputLabel"]> = {
       "&.MuiInputLabel-shrink": {
         transform: "translate(12px, -9px) scale(0.75)",
       },
+
+      "&.MuiInputLabel-sizeSmall": {
+        transform: "translate(10px, 6px) scale(1)",
+
+        "&.MuiInputLabel-shrink": {
+          transform: "translate(10px, -9px) scale(0.75)",
+        },
+      },
     },
   },
 };
@@ -115,12 +126,6 @@ export const MuiFormHelperText: NonNullable<Components<Theme>["MuiFormHelperText
 
 export const MuiSelect: NonNullable<Components<Theme>["MuiSelect"]> = {
   styleOverrides: {
-    select: ({ theme }) => ({
-      "&.MuiInputBase-inputSizeSmall": {
-        paddingTop: theme.spacing(1),
-        paddingBottom: theme.spacing(1),
-      },
-    }),
     icon: ({ theme }) => ({ color: theme.palette.text.secondary }),
   },
 };
