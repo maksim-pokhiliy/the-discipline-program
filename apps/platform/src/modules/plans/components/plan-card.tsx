@@ -5,7 +5,9 @@ import Link from "next/link";
 
 import type { TrainingPlanListItem } from "@repo/contracts/lms/training-plan";
 import { formatDate } from "@repo/shared";
-import { PlanStatusChip } from "@repo/ui";
+import { StatusChip } from "@repo/ui";
+
+import { PLAN_STATUS_CHIPS } from "@app/lib/config";
 
 import { PlanActionMenu } from "./plan-action-menu";
 
@@ -52,7 +54,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
             <Typography variant="subtitle1" noWrap>
               {plan.name}
             </Typography>
-            <PlanStatusChip status={plan.status} />
+            <StatusChip {...PLAN_STATUS_CHIPS[plan.status]} />
           </Stack>
 
           {plan.description && (

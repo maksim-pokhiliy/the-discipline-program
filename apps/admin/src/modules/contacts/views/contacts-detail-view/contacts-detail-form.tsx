@@ -11,8 +11,9 @@ import {
   updateContactRequestSchema,
 } from "@repo/contracts/cms/contact";
 import { formatDate } from "@repo/shared";
-import { DetailField, FormCard, FormView } from "@repo/ui";
+import { DetailField, FormView } from "@repo/ui";
 
+import { FormCard } from "@app/lib/components/form-card";
 import { useUpdateContact } from "@app/lib/hooks";
 
 import { CONTACT_STATUS_CONFIG } from "../../constants";

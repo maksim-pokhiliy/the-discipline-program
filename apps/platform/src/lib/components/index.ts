@@ -1,6 +1,7 @@
 export { AthleteCardLink } from "./athlete-card-link";
 export { DateLocalizationProvider } from "./date-localization-provider";
 export { HealthStatusChip } from "./health-status-chip";
+export { PersonCard } from "./person-card";
 export { PlatformBottomNav } from "./platform-bottom-nav";
 export { PlatformFab } from "./platform-fab";
 export { PlatformHeader } from "./platform-header";

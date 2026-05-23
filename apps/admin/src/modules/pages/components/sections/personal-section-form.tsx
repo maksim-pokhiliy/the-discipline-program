@@ -5,8 +5,9 @@ import { useFormContext } from "react-hook-form";
 import { type z } from "zod";
 
 import { type aboutPagePersonalSchema } from "@repo/contracts/cms/pages";
-import { FormCard, ImageUpload } from "@repo/ui";
+import { ImageUpload } from "@repo/ui";
 
+import { FormCard } from "@app/lib/components/form-card";
 import { useDeleteImage, useUploadImage } from "@app/lib/hooks";
 
 type PersonalSectionData = z.infer<typeof aboutPagePersonalSchema>;

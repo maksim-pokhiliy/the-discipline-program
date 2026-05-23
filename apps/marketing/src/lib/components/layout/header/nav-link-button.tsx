@@ -4,7 +4,7 @@ import { Button, type ButtonProps } from "@mui/material";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { isActiveHref } from "../hooks";
+import { isActiveHref } from "@repo/ui";
 
 export type NavLinkButtonProps = {
   href: string;

@@ -3,7 +3,7 @@
 import { Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 
-import { FormCard } from "@repo/ui";
+import { FormCard } from "@app/lib/components/form-card";
 
 type TitleFields = {
   title: string;

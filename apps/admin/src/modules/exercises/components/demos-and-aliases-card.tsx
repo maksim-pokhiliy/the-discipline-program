@@ -4,7 +4,9 @@ import { Stack } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 
 import { type CreateExerciseData } from "@repo/contracts/lms/exercise";
-import { FormCard, TagsInput } from "@repo/ui";
+import { TagsInput } from "@repo/ui";
+
+import { FormCard } from "@app/lib/components/form-card";
 
 type DemosAndAliasesCardProps = {
   isLoading: boolean;

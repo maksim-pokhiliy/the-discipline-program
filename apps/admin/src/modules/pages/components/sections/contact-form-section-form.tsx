@@ -5,7 +5,8 @@ import { type FieldError, useFormContext } from "react-hook-form";
 import { type z } from "zod";
 
 import { type contactPageFormSchema } from "@repo/contracts/cms/pages";
-import { FormCard } from "@repo/ui";
+
+import { FormCard } from "@app/lib/components/form-card";
 
 import { TitleSubtitleSectionForm } from "./title-subtitle-section-form";
 

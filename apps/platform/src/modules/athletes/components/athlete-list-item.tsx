@@ -3,9 +3,9 @@
 import { Chip, Stack, Typography } from "@mui/material";
 
 import type { CoachAthleteListItem } from "@repo/contracts/coaching/coach-athletes";
-import { PersonCard, StatusChip } from "@repo/ui";
+import { StatusChip } from "@repo/ui";
 
-import { HealthStatusChip } from "@app/lib/components";
+import { HealthStatusChip, PersonCard } from "@app/lib/components";
 import { PROCESS_STATUS_CHIPS } from "@app/lib/config";
 
 import { ResendInviteAction } from "./resend-invite-action";
