@@ -18,6 +18,9 @@ export const MuiBottomNavigation: NonNullable<Components<Theme>["MuiBottomNaviga
 export const MuiBottomNavigationAction: NonNullable<
   Components<Theme>["MuiBottomNavigationAction"]
 > = {
+  defaultProps: {
+    showLabel: true,
+  },
   styleOverrides: {
     root: ({ theme }) => ({
       borderRadius: theme.shape.borderRadius,
@@ -28,6 +31,19 @@ export const MuiBottomNavigationAction: NonNullable<
 
       "&.Mui-selected": {
         backgroundColor: alpha(theme.palette.primary.main, theme.palette.action.hoverOpacity),
+
+        "&:hover": {
+          backgroundColor: alpha(theme.palette.primary.main, 0.12),
+        },
+      },
+    }),
+
+    label: ({ theme }) => ({
+      fontSize: theme.typography.pxToRem(11),
+      fontWeight: 500,
+
+      "&.Mui-selected": {
+        fontSize: theme.typography.pxToRem(11),
       },
     }),
   },

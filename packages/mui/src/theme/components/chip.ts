@@ -2,7 +2,10 @@ import { type ChipProps } from "@mui/material";
 import { type Components, type Theme, alpha } from "@mui/material/styles";
 
 const CHIP_HEIGHT = 24;
+const CHIP_HEIGHT_SM = 20;
 const CHIP_RADIUS = 12;
+const CHIP_LABEL_PX_SM = 6;
+const CHIP_FONT_SM_PX = 11;
 const TINT_PRIMARY = 0.12;
 const TINT_COLOR = 0.18;
 const TINT_PRIMARY_HOVER = 0.18;
@@ -19,11 +22,22 @@ const hoverTintFor = (color: TintColor): number =>
 
 export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
   styleOverrides: {
-    root: {
+    root: ({ theme }) => ({
+      fontSize: theme.typography.caption.fontSize,
       fontWeight: 500,
       height: CHIP_HEIGHT,
       borderRadius: CHIP_RADIUS,
-    },
+    }),
+
+    sizeSmall: ({ theme }) => ({
+      height: CHIP_HEIGHT_SM,
+      fontSize: theme.typography.pxToRem(CHIP_FONT_SM_PX),
+
+      "& .MuiChip-label": {
+        paddingLeft: CHIP_LABEL_PX_SM,
+        paddingRight: CHIP_LABEL_PX_SM,
+      },
+    }),
 
     filled: ({ theme, ownerState }) => {
       const color = ownerState.color ?? "default";

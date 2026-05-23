@@ -30,6 +30,8 @@ export const palette: PaletteOptions = {
   },
   action: {
     hover: "rgba(255, 255, 255, 0.04)",
+    selected: "rgba(255, 255, 255, 0.08)",
+    selectedOpacity: 0.08,
   },
   divider: "rgba(255, 255, 255, 0.12)",
   error: {
