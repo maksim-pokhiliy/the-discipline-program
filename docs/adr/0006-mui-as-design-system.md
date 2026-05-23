@@ -31,7 +31,7 @@ The shared `@repo/mui` package owns:
 - The `NextProvider` wrapper (`AppRouterCacheProvider` + `ThemeProvider` + `CssBaseline` + `LocalizationProvider` for dayjs).
 - Custom fonts via `next/font`.
 
-The shared `@repo/ui` package owns higher-level compositions built on MUI primitives: `DataTable`, `FormCard`, `FormView`, `BaseModal`, `FormModal`, `ConfirmationModal`, `StatsCard`, `StatusChip`, `RichTextEditor`, and so on. `@repo/ui` depends on `@repo/mui` and re-exports the provider pattern.
+The shared `@repo/ui` package owns higher-level compositions built on MUI primitives: `DataTable`, `FormView`, `BaseModal`, `FormModal`, `ConfirmationModal`, `StatsCard`, `StatusChip`, `RichTextEditor`, and so on. `@repo/ui` depends on `@repo/mui` and re-exports the provider pattern.
 
 Per-instance styling uses the `sx` prop with theme tokens (`p: 2`, `bgcolor: "background.paper"`, `color: "text.secondary"`). Raw pixel values, hex colors, and custom transitions are forbidden by `CLAUDE.md` anti-patterns. Variants and sizes that are needed more than twice become theme-level overrides, not per-call `sx`.
 

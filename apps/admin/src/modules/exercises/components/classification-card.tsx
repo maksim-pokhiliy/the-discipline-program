@@ -15,8 +15,8 @@ import {
 import { Controller, useFormContext } from "react-hook-form";
 
 import { type CreateExerciseData } from "@repo/contracts/lms/exercise";
-import { FormCard } from "@repo/ui";
 
+import { FormCard } from "@app/lib/components/form-card";
 import { useMovementFamilies } from "@app/lib/hooks";
 
 import { COMPOUND_TYPE_LABELS } from "../constants";

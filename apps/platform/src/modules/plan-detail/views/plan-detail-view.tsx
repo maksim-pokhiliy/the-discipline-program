@@ -4,8 +4,9 @@ import { Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { formatDateParam, getMonday, parseDateParam } from "@repo/shared";
-import { PageHeader, PlanStatusChip, QueryWrapper } from "@repo/ui";
+import { PageHeader, QueryWrapper, StatusChip } from "@repo/ui";
 
+import { PLAN_STATUS_CHIPS } from "@app/lib/config";
 import { LabelOptionsProvider } from "@app/lib/contexts";
 import { useTrainingPlan, useUpdateTrainingPlan, useWeek } from "@app/lib/hooks";
 
@@ -43,7 +44,7 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
               title={plan.name}
               {...(plan.description !== null && { description: plan.description })}
               backHref="/coach/plans"
-              actions={<PlanStatusChip status={plan.status} />}
+              actions={<StatusChip {...PLAN_STATUS_CHIPS[plan.status]} />}
               onTitleCommit={(next) => updatePlan.mutate({ id: planId, data: { name: next } })}
               onDescriptionCommit={(next) =>
                 updatePlan.mutate({

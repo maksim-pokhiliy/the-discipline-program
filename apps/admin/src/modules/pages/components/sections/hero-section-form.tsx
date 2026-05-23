@@ -5,8 +5,9 @@ import { useFormContext } from "react-hook-form";
 import { type z } from "zod";
 
 import { type homePageHeroSchema } from "@repo/contracts/cms/pages";
-import { FormCard, ImageUpload } from "@repo/ui";
+import { ImageUpload } from "@repo/ui";
 
+import { FormCard } from "@app/lib/components/form-card";
 import { useUploadImage } from "@app/lib/hooks";
 
 import { SECTION_FEATURES, type HeroSectionType } from "../../config/section-features";

@@ -5,8 +5,9 @@ import { Button, Grid, Stack, useTheme } from "@mui/material";
 
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
 import { formatDate } from "@repo/shared";
-import { DetailField, FormCard, UserChip } from "@repo/ui";
+import { DetailField, UserChip } from "@repo/ui";
 
+import { FormCard } from "@app/lib/components/form-card";
 import { useResendInvite } from "@app/lib/hooks";
 
 import { ProfileCard, UserForm } from "../../components";

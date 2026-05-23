@@ -1,8 +1,8 @@
 import { Stack } from "@mui/material";
 
-import { NavLinkButton } from "@repo/ui";
-
 import { MARKETING_NAVIGATION } from "@app/lib/config";
+
+import { NavLinkButton } from "./nav-link-button";
 
 export const Navigation = () => {
   return (

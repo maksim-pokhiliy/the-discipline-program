@@ -3,7 +3,9 @@ import { Chip, Stack, Typography } from "@mui/material";
 import { type AdminUserView } from "@repo/contracts/coaching/admin-user-view";
 import { GENDER_LABELS } from "@repo/contracts/coaching/athlete-profile";
 import { UserRole } from "@repo/contracts/iam/auth";
-import { DetailField, FormCard } from "@repo/ui";
+import { DetailField } from "@repo/ui";
+
+import { FormCard } from "@app/lib/components/form-card";
 
 type ProfileCardProps = {
   user: AdminUserView;

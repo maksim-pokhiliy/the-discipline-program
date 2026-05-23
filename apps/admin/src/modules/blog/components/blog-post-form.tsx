@@ -25,13 +25,14 @@ import {
   type CreateBlogPostData,
 } from "@repo/contracts/cms/blog";
 import { UPLOAD_CONFIG } from "@repo/contracts/storage/upload";
-import { FormCard, ImageUpload, TagsInput } from "@repo/ui";
+import { ImageUpload, TagsInput } from "@repo/ui";
 
 const MarkdownEditor = dynamic(
   () => import("@repo/ui").then((m) => ({ default: m.MarkdownEditor })),
   { ssr: false },
 );
 
+import { FormCard } from "@app/lib/components/form-card";
 import { useAutoSlug, useUploadImage } from "@app/lib/hooks";
 
 type BlogPostFormProps = {

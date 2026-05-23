@@ -4,7 +4,8 @@ import { Grid, Stack, TextField } from "@mui/material";
 import { useFormContext } from "react-hook-form";
 
 import { type CreateLabelData } from "@repo/contracts/lms/label";
-import { FormCard } from "@repo/ui";
+
+import { FormCard } from "@app/lib/components/form-card";
 
 import { ApplicableLevelsField } from "./applicable-levels-field";
 
