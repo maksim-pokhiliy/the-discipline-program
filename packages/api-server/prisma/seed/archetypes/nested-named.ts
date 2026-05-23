@@ -3,6 +3,7 @@ import { type Prisma } from "@prisma/client";
 export const NESTED_NAMED_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   {
     name: "nested-rounds-over-rounds",
+    label: "Rounds over rounds",
     kind: "NESTED",
     family: "NESTED",
     headerPatternDescription: "`N sets:` or `N-M sets:` outer counter",
@@ -29,6 +30,7 @@ export const NESTED_NAMED_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "nested-rounds-over-parallel-ladder",
+    label: "Rounds over parallel ladder",
     kind: "NESTED",
     family: "NESTED",
     headerPatternDescription: "`N sets:` or `N-M sets:` outer counter",
@@ -55,6 +57,7 @@ export const NESTED_NAMED_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "nested-composite-rounds-over-ladder",
+    label: "Composite rounds over ladder",
     kind: "NESTED",
     family: "NESTED",
     headerPatternDescription: "composite `N sets | X min rest in between sets:` outer",
@@ -73,6 +76,7 @@ export const NESTED_NAMED_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "named-themed-sets",
+    label: "Themed sets",
     kind: "NAMED",
     family: "NAMED",
     headerPatternDescription:
@@ -99,6 +103,7 @@ export const NESTED_NAMED_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "named-exercise-program",
+    label: "Named program",
     kind: "NAMED",
     family: "NAMED",
     headerPatternDescription: "exercise name with `:` such as `Bulgarian split squats:`",

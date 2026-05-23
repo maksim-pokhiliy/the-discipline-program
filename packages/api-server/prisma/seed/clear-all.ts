@@ -17,5 +17,7 @@ export const clearAll = async (db: PrismaClient): Promise<void> => {
   await db.marketingReview.deleteMany();
   await db.userInviteToken.deleteMany();
   await db.user.deleteMany();
+  await db.label.deleteMany();
+  await db.exercise.deleteMany();
   await db.archetype.deleteMany();
 };

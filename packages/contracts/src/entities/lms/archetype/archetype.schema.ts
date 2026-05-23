@@ -11,6 +11,7 @@ import { ARCHETYPE_CONSTANTS } from "./archetype.constants";
 export const archetypeSchema = z.object({
   id: z.string().cuid(),
   name: archetypeNameSchema,
+  label: z.string().trim().min(1).max(ARCHETYPE_CONSTANTS.MAX_LABEL_LENGTH),
   kind: schemaKindSchema,
   family: archetypeFamilySchema,
   headerPatternDescription: z.string().max(ARCHETYPE_CONSTANTS.MAX_DESCRIPTION_LENGTH),

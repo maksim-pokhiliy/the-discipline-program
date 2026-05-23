@@ -6,6 +6,7 @@ import { archetypeNameSchema } from "@repo/contracts/lms/schema";
 export const mapToArchetype = (row: PrismaArchetype): Archetype => ({
   id: row.id,
   name: archetypeNameSchema.parse(row.name),
+  label: row.label,
   kind: row.kind,
   family: row.family,
   headerPatternDescription: row.headerPatternDescription,

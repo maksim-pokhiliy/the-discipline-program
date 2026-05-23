@@ -11,6 +11,7 @@ export const mapToSchema = (s: PrismaSchema): Schema => ({
   id: s.id,
   blockId: s.blockId,
   parentSchemaId: s.parentSchemaId,
+  alternatingGroupId: s.alternatingGroupId,
   order: s.order,
   kind: s.kind,
   archetypeId: s.archetypeId,

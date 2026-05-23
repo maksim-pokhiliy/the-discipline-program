@@ -4,6 +4,7 @@ import {
   compoundRowSchema,
   cyclicalCompoundSchema,
   exerciseFormSchema,
+  footnoteContentSchema,
   orAlternativeSchema,
   perSetSubstitutionAssignmentSchema,
   perSetSubstitutionSchema,
@@ -419,5 +420,39 @@ describe("exerciseFormSchema", () => {
 
   it("rejects atomic with invalid exerciseId", () => {
     expect(exerciseFormSchema.safeParse({ form: "atomic", exerciseId: "abc" }).success).toBe(false);
+  });
+});
+
+describe("footnoteContentSchema", () => {
+  it("accepts empty elements (note-only footnote, C0-004)", () => {
+    expect(footnoteContentSchema.safeParse({ elements: [] }).success).toBe(true);
+  });
+
+  it("accepts single-element footnote content", () => {
+    expect(
+      footnoteContentSchema.safeParse({
+        elements: [{ exerciseId: CUID_A, reps: REP_A }],
+      }).success,
+    ).toBe(true);
+  });
+
+  it("accepts multi-element footnote content with sharedModifiers", () => {
+    expect(
+      footnoteContentSchema.safeParse({
+        elements: [
+          { exerciseId: CUID_A, reps: REP_A },
+          { exerciseId: CUID_B, reps: REP_B },
+        ],
+        sharedModifiers: { load: { kind: "bodyweight" } },
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects elements with invalid element shape (non-cuid exerciseId)", () => {
+    expect(
+      footnoteContentSchema.safeParse({
+        elements: [{ exerciseId: "abc", reps: REP_A }],
+      }).success,
+    ).toBe(false);
   });
 });

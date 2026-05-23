@@ -34,6 +34,7 @@ const atomicSchema = {
   id: "clz1234567890123456789sa1",
   blockId: "clz1234567890123456789012",
   parentSchemaId: null,
+  alternatingGroupId: null,
   order: 1,
   kind: "ATOMIC" as const,
   archetypeId: "clz1234567890123456789ar1",

@@ -13,6 +13,7 @@ import { seedProducts } from "./seed/products";
 import { seedProfiles } from "./seed/profiles";
 import { seedReviews } from "./seed/reviews";
 import { seedTrainingPlans } from "./seed/training-plans";
+import { seedTrainingWeeks } from "./seed/training-weeks";
 import { seedUsers } from "./seed/users";
 
 const prisma = new PrismaClient();
@@ -35,7 +36,9 @@ const main = async (): Promise<void> => {
 
   await seedCoachNotes(prisma, coachProfile.id, users);
 
-  await seedTrainingPlans(prisma, users.coach.id);
+  const { archived } = await seedTrainingPlans(prisma, users.coach.id);
+
+  await seedTrainingWeeks(prisma, archived.id);
 
   await seedMarketingPages(prisma);
   await seedProducts(prisma);

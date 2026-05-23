@@ -28,6 +28,7 @@ const baseSessionWithLabel = {
   order: 10,
   labelId: null,
   notes: null,
+  freezeLoadsAtCreation: false,
   createdAt: new Date(),
   updatedAt: new Date(),
   label: null,
@@ -146,8 +147,8 @@ describe("sessionWithLabelSchema", () => {
     expect(sessionWithLabelSchema.shape).not.toHaveProperty("name");
   });
 
-  it("does not expose freezeLoadsAtCreation (Q10 carry-forward regression guard)", () => {
-    expect(sessionWithLabelSchema.shape).not.toHaveProperty("freezeLoadsAtCreation");
+  it("exposes freezeLoadsAtCreation (post-C0-002 — sessionWithLabelSchema extends sessionSchema)", () => {
+    expect(sessionWithLabelSchema.shape).toHaveProperty("freezeLoadsAtCreation");
   });
 
   it("accepts blocks: [] (empty array — session without blocks)", () => {

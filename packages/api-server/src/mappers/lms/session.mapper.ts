@@ -8,6 +8,7 @@ export const mapToSession = (s: PrismaSession): Session => ({
   order: s.order,
   labelId: s.labelId,
   notes: s.notes,
+  freezeLoadsAtCreation: s.freezeLoadsAtCreation,
   createdAt: s.createdAt,
   updatedAt: s.updatedAt,
 });

@@ -3,6 +3,7 @@ import { type Prisma } from "@prisma/client";
 export const HEADERLESS_MODALITY_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   {
     name: "single-line-with-then-connector",
+    label: "Single line (… then)",
     kind: "HEADERLESS",
     family: "SINGLE_LINE_HEADERLESS",
     headerPatternDescription: "no header",
@@ -17,6 +18,7 @@ export const HEADERLESS_MODALITY_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] =
   },
   {
     name: "single-line-bare",
+    label: "Single line",
     kind: "HEADERLESS",
     family: "SINGLE_LINE_HEADERLESS",
     headerPatternDescription: "no header",
@@ -30,6 +32,7 @@ export const HEADERLESS_MODALITY_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] =
   },
   {
     name: "single-line-total-counter",
+    label: "Total counter",
     kind: "HEADERLESS",
     family: "SINGLE_LINE_HEADERLESS",
     headerPatternDescription: "no header",
@@ -45,6 +48,7 @@ export const HEADERLESS_MODALITY_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] =
   },
   {
     name: "flat-list-headerless",
+    label: "Flat list",
     kind: "HEADERLESS",
     family: "FLAT_PARALLEL_HEADERLESS",
     headerPatternDescription: "no header",
@@ -58,6 +62,7 @@ export const HEADERLESS_MODALITY_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] =
   },
   {
     name: "pull-ups-dips-cycle",
+    label: "Pull-ups ↔ dips cycle",
     kind: "HEADERLESS",
     family: "FLAT_PARALLEL_HEADERLESS",
     headerPatternDescription: "no header",
@@ -71,6 +76,7 @@ export const HEADERLESS_MODALITY_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] =
   },
   {
     name: "run-distance",
+    label: "Run distance",
     kind: "HEADERLESS",
     family: "MODALITY_REFERENCE",
     headerPatternDescription: "no header",
@@ -101,6 +107,7 @@ export const HEADERLESS_MODALITY_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] =
   },
   {
     name: "placeholder-body",
+    label: "Placeholder body",
     kind: "HEADERLESS",
     family: "MODALITY_REFERENCE",
     headerPatternDescription: "no header",
@@ -111,6 +118,7 @@ export const HEADERLESS_MODALITY_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] =
   },
   {
     name: "practice-list",
+    label: "Practice list",
     kind: "HEADERLESS",
     family: "MODALITY_REFERENCE",
     headerPatternDescription: "no header",
@@ -121,6 +129,7 @@ export const HEADERLESS_MODALITY_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] =
   },
   {
     name: "url-only-body",
+    label: "URL-only body",
     kind: "HEADERLESS",
     family: "MODALITY_REFERENCE",
     headerPatternDescription: "no header",

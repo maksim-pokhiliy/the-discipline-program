@@ -143,6 +143,11 @@ jobs:
         # --accept-data-loss: empty DB, nothing to lose
         run: pnpm --filter @repo/api-server db:push --skip-generate --accept-data-loss
 
+      - name: Seed test Postgres
+        # Archetype + Exercise + Label catalog + Open Prep edge-case week.
+        # Tests use cleanupRaw.archetype.findUniqueOrThrow against this seed.
+        run: pnpm --filter @repo/api-server db:seed
+
       - name: Run tests
         run: pnpm test:coverage
 
