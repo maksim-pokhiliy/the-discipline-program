@@ -43,6 +43,7 @@ type SchemaShape = {
   id: string;
   blockId: string;
   parentSchemaId: string | null;
+  alternatingGroupId: string | null;
   order: number;
   kind: z.infer<typeof schemaKindSchema>;
   archetypeId: string;
@@ -60,6 +61,7 @@ export const schemaSchema: z.ZodType<SchemaShape> = z.lazy(() =>
     id: z.string().cuid(),
     blockId: z.string().cuid(),
     parentSchemaId: z.string().cuid().nullable(),
+    alternatingGroupId: z.string().cuid().nullable(),
     order: z.number().int().positive(),
     kind: schemaKindSchema,
     archetypeId: z.string().cuid(),
@@ -98,6 +100,14 @@ export const schemaSchemaWithInvariants = schemaSchema.superRefine((value, ctx) 
         message: `sub-schema kind must be one of ${SUB_SCHEMA_ALLOWED_KINDS.join(", ")} when parentSchemaId is set`,
       });
     }
+  }
+
+  if (value.parentSchemaId !== null && value.alternatingGroupId !== null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["alternatingGroupId"],
+      message: "alternatingGroupId is not allowed on sub-schemas (parentSchemaId is set)",
+    });
   }
 });
 

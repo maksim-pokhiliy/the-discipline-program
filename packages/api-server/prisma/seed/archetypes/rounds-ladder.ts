@@ -3,6 +3,7 @@ import { type Prisma } from "@prisma/client";
 export const ROUNDS_LADDER_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   {
     name: "n-rounds",
+    label: "N rounds",
     kind: "ATOMIC",
     family: "ROUNDS_SETS",
     headerPatternDescription:
@@ -30,6 +31,7 @@ export const ROUNDS_LADDER_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "alternating-sets",
+    label: "Alternating sets",
     kind: "ATOMIC",
     family: "ROUNDS_SETS",
     headerPatternDescription: "`<set-enumeration> sets:` such as `1st | 3rd | 5th sets:`",
@@ -44,6 +46,7 @@ export const ROUNDS_LADDER_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "super-set",
+    label: "Super-set",
     kind: "ATOMIC",
     family: "ROUNDS_SETS",
     headerPatternDescription: "`Super-set <label> | <N> rounds:`",
@@ -60,7 +63,7 @@ export const ROUNDS_LADDER_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
             required: ["label", "schemaRows"],
             properties: {
               label: { type: "string", minLength: 1 },
-              schemaRows: { type: "array", minItems: 2, items: { type: "string" } },
+              schemaRows: { type: "array", minItems: 1, items: { type: "string" } },
             },
           },
         },
@@ -75,6 +78,7 @@ export const ROUNDS_LADDER_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "ladder-descending",
+    label: "Descending ladder",
     kind: "ATOMIC",
     family: "LADDER",
     headerPatternDescription: "strictly descending `N1-N2-...-Nk:` (k=3..10)",
@@ -93,6 +97,7 @@ export const ROUNDS_LADDER_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "ladder-ascending",
+    label: "Ascending ladder",
     kind: "ATOMIC",
     family: "LADDER",
     headerPatternDescription: "strictly ascending `N1-N2-...-Nk:` (k=3..5)",
@@ -107,6 +112,7 @@ export const ROUNDS_LADDER_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "ladder-vertex-down-pyramid",
+    label: "Pyramid (down then up)",
     kind: "ATOMIC",
     family: "LADDER",
     headerPatternDescription:
@@ -125,6 +131,7 @@ export const ROUNDS_LADDER_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "ladder-spike",
+    label: "Spike ladder",
     kind: "ATOMIC",
     family: "LADDER",
     headerPatternDescription:
@@ -140,6 +147,7 @@ export const ROUNDS_LADDER_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "parallel-ladders-descending",
+    label: "Parallel ladders",
     kind: "HEADERLESS",
     family: "LADDER",
     headerPatternDescription:
@@ -173,6 +181,7 @@ export const ROUNDS_LADDER_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "parallel-ladders-mixed-direction",
+    label: "Parallel ladders · mixed",
     kind: "HEADERLESS",
     family: "LADDER",
     headerPatternDescription:
@@ -202,6 +211,7 @@ export const ROUNDS_LADDER_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "parallel-pyramids",
+    label: "Parallel pyramids",
     kind: "HEADERLESS",
     family: "LADDER",
     headerPatternDescription: "no header; body contains 2 parallel symmetric pyramid sequences",

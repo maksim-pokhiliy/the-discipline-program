@@ -14,6 +14,7 @@ const baseSession = {
   order: 10,
   labelId: "clz1234567890123456789bbb",
   notes: "warmup focus",
+  freezeLoadsAtCreation: false,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -70,12 +71,35 @@ describe("sessionSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("does not expose freezeLoadsAtCreation (Q10 guardrail)", () => {
-    expect(sessionSchema.shape).not.toHaveProperty("freezeLoadsAtCreation");
-  });
-
   it("does not expose name (Session.name guardrail)", () => {
     expect(sessionSchema.shape).not.toHaveProperty("name");
+  });
+});
+
+describe("sessionSchema.freezeLoadsAtCreation", () => {
+  it("accepts freezeLoadsAtCreation: true", () => {
+    expect(sessionSchema.safeParse({ ...baseSession, freezeLoadsAtCreation: true }).success).toBe(
+      true,
+    );
+  });
+
+  it("accepts freezeLoadsAtCreation: false", () => {
+    expect(sessionSchema.safeParse({ ...baseSession, freezeLoadsAtCreation: false }).success).toBe(
+      true,
+    );
+  });
+
+  it("rejects missing freezeLoadsAtCreation", () => {
+    const { freezeLoadsAtCreation, ...rest } = baseSession;
+
+    expect(typeof freezeLoadsAtCreation).toBe("boolean");
+    expect(sessionSchema.safeParse(rest).success).toBe(false);
+  });
+
+  it("rejects non-boolean freezeLoadsAtCreation (string)", () => {
+    expect(sessionSchema.safeParse({ ...baseSession, freezeLoadsAtCreation: "true" }).success).toBe(
+      false,
+    );
   });
 });
 
@@ -139,12 +163,16 @@ describe("createSessionSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("does not expose freezeLoadsAtCreation (Q10 guardrail)", () => {
-    expect(createSessionSchema.shape).not.toHaveProperty("freezeLoadsAtCreation");
-  });
-
   it("does not expose name (Session.name guardrail)", () => {
     expect(createSessionSchema.shape).not.toHaveProperty("name");
+  });
+
+  it("accepts { freezeLoadsAtCreation: true }", () => {
+    expect(createSessionSchema.safeParse({ freezeLoadsAtCreation: true }).success).toBe(true);
+  });
+
+  it("accepts { freezeLoadsAtCreation: false }", () => {
+    expect(createSessionSchema.safeParse({ freezeLoadsAtCreation: false }).success).toBe(true);
   });
 });
 

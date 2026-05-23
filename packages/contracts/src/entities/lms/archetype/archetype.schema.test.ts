@@ -10,6 +10,7 @@ const cuidA = "clz1234567890123456789aaa";
 const baseArchetype = {
   id: cuidA,
   name: "n-rounds" as const,
+  label: "N rounds",
   kind: "ATOMIC" as const,
   family: "ROUNDS_SETS" as const,
   headerPatternDescription: "N rounds of:",
@@ -70,5 +71,43 @@ describe("archetypeSchema", () => {
 
   it("rejects lowercase kind", () => {
     expect(archetypeSchema.safeParse({ ...baseArchetype, kind: "atomic" }).success).toBe(false);
+  });
+
+  it("rejects missing label", () => {
+    const { label: _label, ...rest } = baseArchetype;
+
+    expect(typeof _label).toBe("string");
+    expect(archetypeSchema.safeParse(rest).success).toBe(false);
+  });
+
+  it("rejects empty label", () => {
+    expect(archetypeSchema.safeParse({ ...baseArchetype, label: "" }).success).toBe(false);
+  });
+
+  it("rejects whitespace-only label", () => {
+    expect(archetypeSchema.safeParse({ ...baseArchetype, label: "   " }).success).toBe(false);
+  });
+
+  it("rejects control-char-only label", () => {
+    expect(archetypeSchema.safeParse({ ...baseArchetype, label: "\n\t\r" }).success).toBe(false);
+  });
+
+  it("trims surrounding whitespace from a valid label", () => {
+    const r = archetypeSchema.safeParse({ ...baseArchetype, label: "  N rounds  " });
+
+    expect(r.success).toBe(true);
+
+    if (r.success) {
+      expect(r.data.label).toBe("N rounds");
+    }
+  });
+
+  it("rejects label beyond MAX_LABEL_LENGTH", () => {
+    expect(
+      archetypeSchema.safeParse({
+        ...baseArchetype,
+        label: "x".repeat(ARCHETYPE_CONSTANTS.MAX_LABEL_LENGTH + 1),
+      }).success,
+    ).toBe(false);
   });
 });

@@ -135,6 +135,17 @@ describe("schemaRowPayloadSchema (9-variant union)", () => {
     ).toBe(true);
   });
 
+  it("accepts FOOTNOTE with empty content elements (note-only footnote, C0-004)", () => {
+    expect(
+      schemaRowPayloadSchema.safeParse({
+        rowKind: "FOOTNOTE",
+        marker: "*",
+        target: "each_set",
+        content: { elements: [] },
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts STANDALONE_LOAD", () => {
     expect(
       schemaRowPayloadSchema.safeParse({

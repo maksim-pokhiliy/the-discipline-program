@@ -2,8 +2,8 @@ import { z } from "zod";
 
 import {
   compoundRepDefinitionSchema,
-  compoundRowSchema,
   exerciseFormSchema,
+  footnoteContentSchema,
   footnoteTargetSchema,
   intensitySchema,
   loadSchema,
@@ -44,7 +44,7 @@ export const schemaRowPayloadSchema = z.discriminatedUnion("rowKind", [
     rowKind: z.literal("FOOTNOTE"),
     marker: footnoteMarkerSchema,
     target: footnoteTargetSchema,
-    content: compoundRowSchema,
+    content: footnoteContentSchema,
     typeLabel: z.string().min(1).optional(),
   }),
   z.object({

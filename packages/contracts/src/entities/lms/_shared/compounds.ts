@@ -32,6 +32,16 @@ export const compoundRowSchema = z.object({
     .optional(),
 });
 
+export const footnoteContentSchema = z.object({
+  elements: z.array(compoundRowElementSchema).min(0),
+  sharedModifiers: z
+    .object({
+      load: loadSchema.optional(),
+      tempo: tempoModifierSchema.optional(),
+    })
+    .optional(),
+});
+
 export const cyclicalCompoundCycleSchema = z.object({
   primaryReps: z.number().int().positive().optional(),
   secondaryReps: z.number().int().positive(),
@@ -108,6 +118,7 @@ export type ExerciseForm = z.infer<typeof exerciseFormSchema>;
 export type ExerciseFormKind = (typeof EXERCISE_FORMS)[number];
 export type CompoundRow = z.infer<typeof compoundRowSchema>;
 export type CompoundRowElement = z.infer<typeof compoundRowElementSchema>;
+export type FootnoteContent = z.infer<typeof footnoteContentSchema>;
 export type CyclicalCompound = z.infer<typeof cyclicalCompoundSchema>;
 export type CyclicalCompoundCycle = z.infer<typeof cyclicalCompoundCycleSchema>;
 export type SandwichCompound = z.infer<typeof sandwichCompoundSchema>;

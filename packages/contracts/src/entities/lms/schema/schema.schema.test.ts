@@ -25,6 +25,7 @@ const baseSchema = {
   id: cuidA,
   blockId: cuidB,
   parentSchemaId: null,
+  alternatingGroupId: null,
   order: 1,
   kind: "ATOMIC" as const,
   archetypeId: cuidC,
@@ -514,11 +515,20 @@ describe("archetypeParamsSchema (34-variant flat union)", () => {
     ).toBe(false);
   });
 
-  it("rejects super-set pair with single row (min 2)", () => {
+  it("accepts super-set pair with single row (post-C0-005 min(1))", () => {
     expect(
       archetypeParamsSchema.safeParse({
         archetype: "super-set",
         params: { pairs: [{ label: "A", schemaRows: [cuidA] }], rounds: 1 },
+      }).success,
+    ).toBe(true);
+  });
+
+  it("rejects super-set pair with empty schemaRows array (min(1) lower bound)", () => {
+    expect(
+      archetypeParamsSchema.safeParse({
+        archetype: "super-set",
+        params: { pairs: [{ label: "A", schemaRows: [] }], rounds: 1 },
       }).success,
     ).toBe(false);
   });
@@ -556,6 +566,21 @@ describe("schemaSchema", () => {
 
   it("rejects a non-cuid id", () => {
     expect(schemaSchema.safeParse({ ...baseSchema, id: "not-a-cuid" }).success).toBe(false);
+  });
+
+  it("accepts alternatingGroupId: null (top-level schema, not a member)", () => {
+    expect(schemaSchema.safeParse({ ...baseSchema, alternatingGroupId: null }).success).toBe(true);
+  });
+
+  it("accepts alternatingGroupId: valid cuid (sibling member of an alternating group)", () => {
+    expect(schemaSchema.safeParse({ ...baseSchema, alternatingGroupId: cuidD }).success).toBe(true);
+  });
+
+  it("rejects missing alternatingGroupId", () => {
+    const { alternatingGroupId: _agId, ...rest } = baseSchema;
+
+    expect(_agId).toBeNull();
+    expect(schemaSchema.safeParse(rest).success).toBe(false);
   });
 });
 
@@ -664,6 +689,50 @@ describe("schemaSchemaWithInvariants (sub-schema kind constraint)", () => {
     const candidate = { ...baseSchema, parentSchemaId: cuidB, kind: "COMPOSITE" as const };
 
     expect(schemaSchemaWithInvariants.safeParse(candidate).success).toBe(false);
+  });
+
+  it("accepts sub-schema (parentSchemaId set) with alternatingGroupId: null", () => {
+    const candidate = {
+      ...baseSchema,
+      parentSchemaId: cuidB,
+      kind: "ATOMIC" as const,
+      alternatingGroupId: null,
+    };
+
+    expect(schemaSchemaWithInvariants.safeParse(candidate).success).toBe(true);
+  });
+
+  it("accepts top-level schema (parentSchemaId: null) with alternatingGroupId set", () => {
+    const candidate = {
+      ...baseSchema,
+      parentSchemaId: null,
+      kind: "ATOMIC" as const,
+      alternatingGroupId: cuidD,
+    };
+
+    expect(schemaSchemaWithInvariants.safeParse(candidate).success).toBe(true);
+  });
+
+  it("rejects schema with both parentSchemaId and alternatingGroupId set", () => {
+    const candidate = {
+      ...baseSchema,
+      parentSchemaId: cuidB,
+      kind: "ATOMIC" as const,
+      alternatingGroupId: cuidD,
+    };
+
+    const r = schemaSchemaWithInvariants.safeParse(candidate);
+
+    expect(r.success).toBe(false);
+
+    if (!r.success) {
+      const altGroupIssue = r.error.issues.find((i) => i.path[0] === "alternatingGroupId");
+
+      expect(altGroupIssue).toBeDefined();
+      expect(altGroupIssue?.message).toBe(
+        "alternatingGroupId is not allowed on sub-schemas (parentSchemaId is set)",
+      );
+    }
   });
 });
 

@@ -3,6 +3,7 @@ import { type Prisma } from "@prisma/client";
 export const TIME_COMPOSITE_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   {
     name: "amrap-flat",
+    label: "AMRAP",
     kind: "ATOMIC",
     family: "TIME_CAP",
     headerPatternDescription: "`AMRAP N min:`",
@@ -19,6 +20,7 @@ export const TIME_COMPOSITE_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "emom-nested-per-minute",
+    label: "EMOM",
     kind: "NESTED",
     family: "TIME_CAP",
     headerPatternDescription: "`EMOM N min:` or composite `EMOM N min | M rounds:`",
@@ -38,6 +40,7 @@ export const TIME_COMPOSITE_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "emom-sub-minute-slot",
+    label: "EMOM minute slot",
     kind: "ATOMIC",
     family: "TIME_CAP",
     headerPatternDescription:
@@ -77,6 +80,7 @@ export const TIME_COMPOSITE_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "time-window-outer",
+    label: "Time window",
     kind: "NESTED",
     family: "TIME_CAP",
     headerPatternDescription: "`Hbegin:MMbegin-Hend:MMend min:` such as `0:00-10:00 min:`",
@@ -101,6 +105,7 @@ export const TIME_COMPOSITE_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "composite-rounds-with-rest",
+    label: "Rounds with rest",
     kind: "COMPOSITE",
     family: "COMPOSITE_ROUNDS",
     headerPatternDescription:
@@ -130,6 +135,7 @@ export const TIME_COMPOSITE_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "composite-intervals-then-rounds",
+    label: "Intervals → rounds",
     kind: "COMPOSITE",
     family: "COMPOSITE_ROUNDS",
     headerPatternDescription: "`N INTERVALS | X min rest in between`",
@@ -149,6 +155,7 @@ export const TIME_COMPOSITE_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "composite-intervals-work-rest-fixed",
+    label: "Work / rest intervals",
     kind: "COMPOSITE",
     family: "COMPOSITE_ROUNDS",
     headerPatternDescription: "`Nx X min WORK | Y min REST`",
@@ -167,6 +174,7 @@ export const TIME_COMPOSITE_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "composite-intervals-work-rest-progressive",
+    label: "Progressive intervals",
     kind: "COMPOSITE",
     family: "COMPOSITE_ROUNDS",
     headerPatternDescription: "`N sets | X min WORK | Y min OFF:`",
@@ -188,6 +196,7 @@ export const TIME_COMPOSITE_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "composite-intervals-on-off-max-tail",
+    label: "On / off + max tail",
     kind: "COMPOSITE",
     family: "COMPOSITE_ROUNDS",
     headerPatternDescription: "`Nx X min ON | Y min OFF`",
@@ -208,6 +217,7 @@ export const TIME_COMPOSITE_ARCHETYPES: Prisma.ArchetypeCreateManyInput[] = [
   },
   {
     name: "composite-rolling-rounds",
+    label: "Rolling rounds",
     kind: "COMPOSITE",
     family: "COMPOSITE_ROUNDS",
     headerPatternDescription: "`Every Nth min new round | xM rounds | T min`",

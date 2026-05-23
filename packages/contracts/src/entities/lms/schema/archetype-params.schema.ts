@@ -141,7 +141,7 @@ const archetypeParallelPyramidsParamsSchema = z.object({
 
 const superSetPairSchema = z.object({
   label: z.string().min(1),
-  schemaRows: z.array(z.string().cuid()).min(2),
+  schemaRows: z.array(z.string().cuid()).min(1),
 });
 
 const archetypeSuperSetParamsSchema = z.object({

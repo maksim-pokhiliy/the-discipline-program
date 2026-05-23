@@ -800,6 +800,7 @@ model Label {
 model Archetype {
   id                       String          @id @default(cuid())
   name                     String          @unique
+  label                    String
   kind                     SchemaKind
   family                   ArchetypeFamily
   headerPatternDescription String
