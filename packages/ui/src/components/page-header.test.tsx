@@ -6,6 +6,37 @@ import { render } from "../test/render";
 import { PageHeader } from "./page-header";
 
 describe("PageHeader", () => {
+  describe("chrome", () => {
+    it("renders a Card chrome surface with the outlined variant", () => {
+      const { container } = render(<PageHeader title="Plan A" />);
+      const card = container.querySelector(".MuiCard-root");
+
+      expect(card).not.toBeNull();
+      expect(card).toHaveClass("MuiPaper-outlined");
+    });
+
+    it("renders the title with h1 typography in display mode", () => {
+      const { container } = render(<PageHeader title="Plan A" />);
+      const title = container.querySelector("h1");
+
+      expect(title).not.toBeNull();
+      expect(title).toHaveClass("MuiTypography-h1");
+      expect(title).toHaveTextContent("Plan A");
+    });
+
+    it("renders the meta slot when provided", () => {
+      render(<PageHeader title="Plan A" meta={<span data-testid="meta-row">42 athletes</span>} />);
+
+      expect(screen.getByTestId("meta-row")).toBeInTheDocument();
+    });
+
+    it("omits the meta slot when not provided", () => {
+      render(<PageHeader title="Plan A" />);
+
+      expect(screen.queryByTestId("meta-row")).toBeNull();
+    });
+  });
+
   describe("display mode", () => {
     it("renders the title as static text when editable is false", () => {
       render(<PageHeader title="Plan A" />);
@@ -51,8 +82,8 @@ describe("PageHeader", () => {
         />,
       );
 
-      expect(screen.getByRole("textbox", { name: "Plan name" })).toHaveValue("Plan A");
-      expect(screen.getByRole("textbox", { name: "Plan description" })).toHaveValue(
+      expect(screen.getByRole("textbox", { name: "Title" })).toHaveValue("Plan A");
+      expect(screen.getByRole("textbox", { name: "Description" })).toHaveValue(
         "Weekly strength block",
       );
     });
@@ -61,7 +92,7 @@ describe("PageHeader", () => {
       const onTitleCommit = vi.fn();
 
       render(<PageHeader editable title="Plan A" onTitleCommit={onTitleCommit} />);
-      const input = screen.getByRole("textbox", { name: "Plan name" });
+      const input = screen.getByRole("textbox", { name: "Title" });
 
       fireEvent.focus(input);
       fireEvent.change(input, { target: { value: "  Plan B  " } });
@@ -75,7 +106,7 @@ describe("PageHeader", () => {
       const onTitleCommit = vi.fn();
 
       render(<PageHeader editable title="Plan A" onTitleCommit={onTitleCommit} />);
-      const input = screen.getByRole("textbox", { name: "Plan name" });
+      const input = screen.getByRole("textbox", { name: "Title" });
 
       fireEvent.focus(input);
       fireEvent.change(input, { target: { value: "Plan B" } });
@@ -89,7 +120,7 @@ describe("PageHeader", () => {
       const onTitleCommit = vi.fn();
 
       render(<PageHeader editable title="Plan A" onTitleCommit={onTitleCommit} />);
-      const input = screen.getByRole("textbox", { name: "Plan name" });
+      const input = screen.getByRole("textbox", { name: "Title" });
 
       fireEvent.focus(input);
       fireEvent.change(input, { target: { value: "Plan B" } });
@@ -103,7 +134,7 @@ describe("PageHeader", () => {
       const onTitleCommit = vi.fn();
 
       render(<PageHeader editable title="Plan A" onTitleCommit={onTitleCommit} />);
-      const input = screen.getByRole("textbox", { name: "Plan name" });
+      const input = screen.getByRole("textbox", { name: "Title" });
 
       fireEvent.focus(input);
       fireEvent.change(input, { target: { value: "   " } });
@@ -124,7 +155,7 @@ describe("PageHeader", () => {
           onDescriptionCommit={onDescriptionCommit}
         />,
       );
-      const input = screen.getByRole("textbox", { name: "Plan description" });
+      const input = screen.getByRole("textbox", { name: "Description" });
 
       fireEvent.focus(input);
       fireEvent.change(input, { target: { value: "" } });
@@ -145,7 +176,7 @@ describe("PageHeader", () => {
           onDescriptionCommit={onDescriptionCommit}
         />,
       );
-      const input = screen.getByRole("textbox", { name: "Plan description" });
+      const input = screen.getByRole("textbox", { name: "Description" });
 
       fireEvent.focus(input);
       fireEvent.change(input, { target: { value: "Updated" } });
@@ -158,7 +189,7 @@ describe("PageHeader", () => {
       const onTitleCommit = vi.fn();
 
       render(<PageHeader editable title="Plan A" onTitleCommit={onTitleCommit} />);
-      const input = screen.getByRole("textbox", { name: "Plan name" });
+      const input = screen.getByRole("textbox", { name: "Title" });
 
       fireEvent.focus(input);
       fireEvent.blur(input);
@@ -172,7 +203,7 @@ describe("PageHeader", () => {
       const { rerender } = render(
         <PageHeader editable title="Plan A" onTitleCommit={onTitleCommit} />,
       );
-      const input = screen.getByRole("textbox", { name: "Plan name" });
+      const input = screen.getByRole("textbox", { name: "Title" });
 
       fireEvent.focus(input);
       fireEvent.change(input, { target: { value: "User draft" } });

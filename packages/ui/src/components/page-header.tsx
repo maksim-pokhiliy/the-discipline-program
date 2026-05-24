@@ -3,7 +3,16 @@
 import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from "react";
 
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { IconButton, InputBase, Stack, type TypographyVariant, Typography } from "@mui/material";
+import {
+  Box,
+  Card,
+  CardContent,
+  IconButton,
+  InputBase,
+  Stack,
+  type TypographyVariant,
+  Typography,
+} from "@mui/material";
 import Link from "next/link";
 
 type UseInlineEditTextOptions = {
@@ -82,6 +91,7 @@ export type PageHeaderProps = {
   backHref?: string;
   actions?: ReactNode;
   description?: string;
+  meta?: ReactNode;
   editable?: boolean;
   onTitleCommit?: (next: string) => void;
   onDescriptionCommit?: (next: string) => void;
@@ -92,12 +102,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   backHref,
   actions,
   description,
+  meta,
   editable = false,
   onTitleCommit,
   onDescriptionCommit,
 }) => {
-  const hasBlock = editable || description !== undefined;
-
   const titleHandlers = useInlineEditText({
     value: title,
     onCommit: onTitleCommit ?? (() => {}),
@@ -112,51 +121,60 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     emptyIsValid: true,
   });
 
-  return (
-    <Stack direction="row" spacing={1} alignItems={hasBlock ? "flex-start" : "center"}>
-      {backHref && (
-        <IconButton component={Link} href={backHref} aria-label="Go back">
-          <ArrowBackIcon />
-        </IconButton>
-      )}
+  const hasDescriptionRow = editable || description !== undefined;
 
-      {hasBlock ? (
-        <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
-          {editable ? (
-            <>
+  return (
+    <Card variant="outlined">
+      <CardContent sx={{ p: 2.5, px: 3 }}>
+        <Stack spacing={1}>
+          <Stack direction="row" spacing={2} alignItems="center">
+            {backHref && (
+              <IconButton component={Link} href={backHref} aria-label="Go back">
+                <ArrowBackIcon />
+              </IconButton>
+            )}
+
+            {editable ? (
               <InputBase
                 {...titleHandlers}
                 fullWidth
-                inputProps={{ "aria-label": "Plan name" }}
-                sx={inlineEditSx("h2")}
+                inputProps={{ "aria-label": "Title" }}
+                sx={inlineEditSx("h1")}
               />
+            ) : (
+              <Typography variant="h1" component="h1" noWrap sx={{ flex: 1, minWidth: 0 }}>
+                {title}
+              </Typography>
+            )}
 
+            {actions && <Box sx={{ flexShrink: 0 }}>{actions}</Box>}
+          </Stack>
+
+          {meta !== undefined && (
+            <Stack direction="row" spacing={1.75} alignItems="center" flexWrap="wrap">
+              {meta}
+            </Stack>
+          )}
+
+          {hasDescriptionRow &&
+            (editable ? (
               <InputBase
                 {...descriptionHandlers}
                 multiline
                 fullWidth
                 placeholder="Add a description…"
-                inputProps={{ "aria-label": "Plan description" }}
+                inputProps={{ "aria-label": "Description" }}
                 sx={inlineEditSx("body1")}
               />
-            </>
-          ) : (
-            <>
-              <Typography variant="h3" noWrap>
-                {title}
-              </Typography>
-
-              {description !== undefined && <Typography variant="body2">{description}</Typography>}
-            </>
-          )}
+            ) : (
+              description !== undefined && (
+                <Typography variant="body1" color="text.secondary">
+                  {description}
+                </Typography>
+              )
+            ))}
         </Stack>
-      ) : (
-        <Typography variant="h3" noWrap sx={{ flex: 1 }}>
-          {title}
-        </Typography>
-      )}
-
-      {actions}
-    </Stack>
+      </CardContent>
+    </Card>
   );
 };
