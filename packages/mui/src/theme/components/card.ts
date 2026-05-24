@@ -1,4 +1,4 @@
-import { type Components, type Theme } from "@mui/material/styles";
+import { alpha, type Components, type Theme } from "@mui/material/styles";
 
 export const MuiCard: NonNullable<Components<Theme>["MuiCard"]> = {
   defaultProps: {
@@ -7,20 +7,30 @@ export const MuiCard: NonNullable<Components<Theme>["MuiCard"]> = {
   },
 
   styleOverrides: {
-    root: ({ ownerState, theme }) => ({
-      display: "flex",
-      flexDirection: "column",
-      height: "100%",
-      border: `1px solid ${theme.palette.divider}`,
+    root: ({ ownerState, theme }) => {
+      const variant: string | undefined = ownerState.variant;
 
-      ...(ownerState.variant === "elevation" && {
-        backgroundColor: theme.palette.background.default,
-      }),
+      return {
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        border: `1px solid ${theme.palette.divider}`,
 
-      ...(ownerState.variant === "outlined" && {
-        backgroundColor: theme.palette.background.paper,
-      }),
-    }),
+        ...(variant === "elevation" && {
+          backgroundColor: theme.palette.background.default,
+        }),
+
+        ...(variant === "outlined" && {
+          backgroundColor: theme.palette.background.paper,
+        }),
+
+        ...(variant === "accent-dashed" && {
+          border: "1px dashed",
+          borderColor: alpha(theme.palette.primary.main, 0.4),
+          backgroundColor: alpha(theme.palette.primary.main, 0.025),
+        }),
+      };
+    },
   },
 };
 

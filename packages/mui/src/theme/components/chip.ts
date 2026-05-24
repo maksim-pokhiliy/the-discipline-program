@@ -6,9 +6,9 @@ const CHIP_HEIGHT_SM = 20;
 const CHIP_RADIUS = 12;
 const CHIP_LABEL_PX_SM = 6;
 const CHIP_FONT_SM_PX = 11;
-const TINT_PRIMARY = 0.12;
+const TINT_PRIMARY = 0.18;
 const TINT_COLOR = 0.18;
-const TINT_PRIMARY_HOVER = 0.18;
+const TINT_PRIMARY_HOVER = 0.26;
 const TINT_COLOR_HOVER = 0.24;
 const DELETE_ICON_OPACITY = 0.7;
 
@@ -44,7 +44,7 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
 
       if (color === "default") {
         return {
-          backgroundColor: theme.palette.action.hover,
+          backgroundColor: theme.palette.action.selected,
           color: theme.palette.text.primary,
 
           "& .MuiChip-deleteIcon": {
@@ -53,7 +53,7 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
           },
 
           "&.MuiChip-clickable:hover": {
-            backgroundColor: theme.palette.action.selected,
+            backgroundColor: alpha(theme.palette.common.white, 0.12),
           },
         };
       }
