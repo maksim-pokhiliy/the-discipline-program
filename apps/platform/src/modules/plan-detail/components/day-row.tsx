@@ -38,7 +38,7 @@ export const DayRow: React.FC<DayRowProps> = ({
   const dayOfMonth = date.getDate();
 
   return (
-    <Stack direction="column" spacing={1.5} sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+    <Stack direction="column" spacing={1.5} sx={{ p: 2 }}>
       <Stack direction="row" spacing={0.75} alignItems="center" sx={{ width: 72, flexShrink: 0 }}>
         <Typography variant="subtitle2" sx={{ color: "text.secondary" }}>
           {formatDayName(date)}
