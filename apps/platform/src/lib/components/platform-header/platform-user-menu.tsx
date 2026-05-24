@@ -41,7 +41,7 @@ export const PlatformUserMenu = ({
 
   return (
     <>
-      <IconButton onClick={(e) => setAnchorEl(e.currentTarget)} aria-label="User menu">
+      <IconButton size="large" onClick={(e) => setAnchorEl(e.currentTarget)} aria-label="User menu">
         <Avatar {...(userImage != null && { src: userImage })}>
           {getInitial(userName, userEmail)}
         </Avatar>

@@ -17,6 +17,7 @@ export const ResendInviteAction: React.FC<ResendInviteActionProps> = ({ userId }
       <Tooltip title="Resend invite">
         <span>
           <IconButton
+            size="large"
             aria-label="Resend invite"
             onClick={() => mutate(userId)}
             disabled={isPending}
