@@ -38,12 +38,11 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
     <QueryWrapper isLoading={isLoading} error={error} data={plan} loadingMessage="Loading plan...">
       {(plan) => (
         <LabelOptionsProvider>
-          <Stack spacing={4}>
+          <Stack spacing={3}>
             <PageHeader
               editable
               title={plan.name}
               {...(plan.description !== null && { description: plan.description })}
-              backHref="/coach/plans"
               actions={<StatusChip {...PLAN_STATUS_CHIPS[plan.status]} />}
               onTitleCommit={(next) => updatePlan.mutate({ id: planId, data: { name: next } })}
               onDescriptionCommit={(next) =>
