@@ -1,5 +1,11 @@
 import { alpha, type Components, type Theme } from "@mui/material/styles";
 
+declare module "@mui/material/Paper" {
+  interface PaperPropsVariantOverrides {
+    "accent-dashed": true;
+  }
+}
+
 export const MuiCard: NonNullable<Components<Theme>["MuiCard"]> = {
   defaultProps: {
     variant: "outlined",
@@ -7,30 +13,26 @@ export const MuiCard: NonNullable<Components<Theme>["MuiCard"]> = {
   },
 
   styleOverrides: {
-    root: ({ ownerState, theme }) => {
-      const variant: string | undefined = ownerState.variant;
+    root: ({ ownerState, theme }) => ({
+      display: "flex",
+      flexDirection: "column",
+      height: "100%",
+      border: `1px solid ${theme.palette.divider}`,
 
-      return {
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        border: `1px solid ${theme.palette.divider}`,
+      ...(ownerState.variant === "elevation" && {
+        backgroundColor: theme.palette.background.default,
+      }),
 
-        ...(variant === "elevation" && {
-          backgroundColor: theme.palette.background.default,
-        }),
+      ...(ownerState.variant === "outlined" && {
+        backgroundColor: theme.palette.background.paper,
+      }),
 
-        ...(variant === "outlined" && {
-          backgroundColor: theme.palette.background.paper,
-        }),
-
-        ...(variant === "accent-dashed" && {
-          border: "1px dashed",
-          borderColor: alpha(theme.palette.primary.main, 0.4),
-          backgroundColor: alpha(theme.palette.primary.main, 0.025),
-        }),
-      };
-    },
+      ...(ownerState.variant === "accent-dashed" && {
+        border: "1px dashed",
+        borderColor: alpha(theme.palette.primary.main, 0.4),
+        backgroundColor: alpha(theme.palette.primary.main, 0.025),
+      }),
+    }),
   },
 };
 

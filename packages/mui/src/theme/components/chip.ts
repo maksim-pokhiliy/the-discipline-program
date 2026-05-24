@@ -1,11 +1,23 @@
 import { type ChipProps } from "@mui/material";
 import { type Components, type Theme, alpha } from "@mui/material/styles";
 
+declare module "@mui/material/Chip" {
+  interface ChipPropsVariantOverrides {
+    indicator: true;
+    tag: true;
+  }
+}
+
 const CHIP_HEIGHT = 24;
 const CHIP_HEIGHT_SM = 20;
 const CHIP_RADIUS = 12;
 const CHIP_LABEL_PX_SM = 6;
 const CHIP_FONT_SM_PX = 11;
+const CHIP_VARIANT_HEIGHT = 22;
+const CHIP_INDICATOR_FONT_PX = 11;
+const CHIP_TAG_FONT_PX = 10;
+const CHIP_INDICATOR_RADIUS = 9999;
+const CHIP_TAG_RADIUS = 2;
 const TINT_PRIMARY = 0.18;
 const TINT_COLOR = 0.18;
 const TINT_PRIMARY_HOVER = 0.26;
@@ -22,11 +34,29 @@ const hoverTintFor = (color: TintColor): number =>
 
 export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
   styleOverrides: {
-    root: ({ theme }) => ({
+    root: ({ theme, ownerState }) => ({
       fontSize: theme.typography.caption.fontSize,
       fontWeight: 500,
       height: CHIP_HEIGHT,
       borderRadius: CHIP_RADIUS,
+
+      ...(ownerState.variant === "indicator" && {
+        height: CHIP_VARIANT_HEIGHT,
+        fontWeight: 600,
+        fontSize: theme.typography.pxToRem(CHIP_INDICATOR_FONT_PX),
+        borderRadius: CHIP_INDICATOR_RADIUS,
+      }),
+
+      ...(ownerState.variant === "tag" && {
+        height: CHIP_VARIANT_HEIGHT,
+        fontWeight: 700,
+        fontSize: theme.typography.pxToRem(CHIP_TAG_FONT_PX),
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        borderRadius: CHIP_TAG_RADIUS,
+        backgroundColor: theme.palette.text.primary,
+        color: theme.palette.background.default,
+      }),
     }),
 
     sizeSmall: ({ theme }) => ({
