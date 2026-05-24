@@ -16,6 +16,10 @@ export const MuiListItemButton: NonNullable<Components<Theme>["MuiListItemButton
           backgroundColor: alpha(theme.palette.primary.main, 0.12),
         },
       },
+
+      "&.Mui-focusVisible": {
+        backgroundColor: "transparent",
+      },
     }),
   },
 };
