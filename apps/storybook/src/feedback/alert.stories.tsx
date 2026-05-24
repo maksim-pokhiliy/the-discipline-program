@@ -24,7 +24,7 @@ export const AllVariants: Story = {
         ))}
       </StorySection>
 
-      <StorySection title="filled" direction="column">
+      <StorySection title="filled — left-border accent (D-13 no-op)" direction="column">
         {SEVERITIES.map((severity) => (
           <Alert key={severity} severity={severity} variant="filled">
             This is a filled {severity} alert

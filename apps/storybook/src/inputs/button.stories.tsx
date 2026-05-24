@@ -1,7 +1,7 @@
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
 import SaveIcon from "@mui/icons-material/Save";
-import { Button } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { StoryPage, StorySection } from "../story-layout";
@@ -107,6 +107,35 @@ export const States: Story = {
         <Button variant="outlined" fullWidth>
           Full Width Outlined
         </Button>
+      </StorySection>
+    </StoryPage>
+  ),
+};
+
+export const HoverTransition: Story = {
+  render: () => (
+    <StoryPage>
+      <StorySection title="hover transition — shortest (150ms) per D-08" direction="column">
+        <Typography variant="caption" color="text.secondary">
+          Hover the buttons below — background/border/color animate at
+          theme.transitions.duration.shortest.
+        </Typography>
+        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <Button variant="contained">Contained</Button>
+          <Button variant="outlined">Outlined</Button>
+          <Button variant="text">Text</Button>
+        </Stack>
+        <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+          <Button variant="contained" color="secondary">
+            Secondary
+          </Button>
+          <Button variant="outlined" color="error">
+            Error
+          </Button>
+          <Button variant="text" color="success">
+            Success
+          </Button>
+        </Stack>
       </StorySection>
     </StoryPage>
   ),

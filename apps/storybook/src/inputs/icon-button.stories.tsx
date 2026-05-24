@@ -4,10 +4,16 @@ import EditIcon from "@mui/icons-material/Edit";
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import SettingsIcon from "@mui/icons-material/Settings";
-import { IconButton } from "@mui/material";
+import { Box, IconButton, Stack, Typography } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { StoryPage, StorySection } from "../story-layout";
+
+const NEW_SIZE_MATRIX = [
+  { size: "small", px: 28, label: "28 small" },
+  { size: "medium", px: 32, label: "32 medium" },
+  { size: "large", px: 40, label: "40 large" },
+] as const;
 
 const meta = {
   title: "Inputs/IconButton",
@@ -106,6 +112,38 @@ export const Edge: Story = {
         <IconButton edge="end" aria-label="Settings">
           <SettingsIcon />
         </IconButton>
+      </StorySection>
+    </StoryPage>
+  ),
+};
+
+export const NewSizeMatrix: Story = {
+  render: () => (
+    <StoryPage>
+      <StorySection title="28 / 32 / 40 matrix (D-01)" direction="row">
+        {NEW_SIZE_MATRIX.map(({ size, px, label }) => (
+          <Stack key={size} spacing={1} alignItems="center">
+            <Box
+              sx={{
+                width: px,
+                height: px,
+                border: "1px dashed",
+                borderColor: "divider",
+                borderRadius: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <IconButton size={size} aria-label={label}>
+                <SettingsIcon />
+              </IconButton>
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              {label}
+            </Typography>
+          </Stack>
+        ))}
       </StorySection>
     </StoryPage>
   ),
