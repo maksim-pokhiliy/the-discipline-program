@@ -43,13 +43,10 @@ describe("IndicatorChip", () => {
 
   it("fires onClick when chip is clicked", () => {
     const handleClick = vi.fn();
-    const { container } = render(
-      <IndicatorChip tone="primary" label="Today" clickable onClick={handleClick} />,
-    );
-    const chip = container.querySelector(".MuiChip-root");
 
-    expect(chip).not.toBeNull();
-    fireEvent.click(chip as Element);
+    render(<IndicatorChip tone="primary" label="Today" clickable onClick={handleClick} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Today" }));
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
