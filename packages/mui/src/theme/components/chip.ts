@@ -22,6 +22,7 @@ const TINT_PRIMARY = 0.18;
 const TINT_COLOR = 0.18;
 const TINT_PRIMARY_HOVER = 0.26;
 const TINT_COLOR_HOVER = 0.24;
+const TINT_DEFAULT_HOVER = 0.12;
 const DELETE_ICON_OPACITY = 0.7;
 
 type ChipColor = NonNullable<ChipProps["color"]>;
@@ -83,7 +84,7 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
           },
 
           "&.MuiChip-clickable:hover": {
-            backgroundColor: alpha(theme.palette.common.white, 0.12),
+            backgroundColor: alpha(theme.palette.common.white, TINT_DEFAULT_HOVER),
           },
         };
       }

@@ -55,7 +55,7 @@ export const LoginForm = ({ onSubmit, isLoading = false }: LoginFormProps) => {
             endAdornment: (
               <InputAdornment position="end">
                 <IconButton
-                  size="medium"
+                  size="large"
                   onClick={() => setShowPassword(!showPassword)}
                   edge="end"
                   disabled={isLoading}

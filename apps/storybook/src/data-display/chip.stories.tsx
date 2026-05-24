@@ -2,6 +2,8 @@ import FaceIcon from "@mui/icons-material/Face";
 import { Avatar, Box, Chip, Typography } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
+import { BlockLabel } from "@repo/ui";
+
 import { StoryPage, StorySection } from "../story-layout";
 
 const meta = {
@@ -136,8 +138,8 @@ export const TagVariant: Story = {
       </StorySection>
 
       <StorySection title="tag — outlined">
-        <Chip variant="tag" label="strength" sx={{ backgroundColor: "transparent" }} />
-        <Chip variant="tag" label="endurance" sx={{ backgroundColor: "transparent" }} />
+        <BlockLabel text="strength" />
+        <BlockLabel text="endurance" />
       </StorySection>
 
       <StorySection title="tag — deletable">
