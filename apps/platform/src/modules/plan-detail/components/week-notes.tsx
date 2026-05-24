@@ -1,6 +1,6 @@
 "use client";
 
-import { TextField } from "@mui/material";
+import { InputBase, Stack, Typography } from "@mui/material";
 
 import { formatDateParam } from "@repo/shared";
 
@@ -24,17 +24,25 @@ export const WeekNotes: React.FC<WeekNotesProps> = ({ planId, monday, notes }) =
   });
 
   return (
-    <TextField
-      label="Week notes"
-      placeholder="Add week notes…"
-      value={draft}
-      onChange={(event) => setDraft(event.target.value)}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-      multiline
-      minRows={2}
-      fullWidth
-      size="small"
-    />
+    <Stack direction="row" alignItems="flex-start" spacing={1.25} sx={{ px: 0.5 }}>
+      <Typography variant="overline" color="primary" sx={{ flexShrink: 0, pt: 0.5 }}>
+        Week note
+      </Typography>
+      <InputBase
+        multiline
+        fullWidth
+        placeholder="optional — coach reminder"
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        inputProps={{ "aria-label": "Week notes" }}
+        sx={{
+          flex: 1,
+          p: 0,
+          ".MuiInputBase-input": { p: 0, typography: "body2", color: "text.secondary" },
+        }}
+      />
+    </Stack>
   );
 };
