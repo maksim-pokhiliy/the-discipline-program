@@ -6,11 +6,16 @@ import {
   CardContent,
   CardHeader,
   CardMedia,
+  Stack,
   Typography,
+  alpha,
 } from "@mui/material";
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 
 import { StoryPage, StorySection } from "../story-layout";
+
+const ACCENT_HEADER_BG_ALPHA = 0.06;
+const ACCENT_HEADER_BORDER_ALPHA = 0.3;
 
 const meta = {
   title: "Surfaces/Card",
@@ -95,6 +100,36 @@ export const AllVariants: Story = {
               <Button size="small">Share</Button>
               <Button size="small">Learn More</Button>
             </CardActions>
+          </Card>
+        </StorySection>
+      </StoryPage>
+    </Box>
+  ),
+};
+
+export const AccentDashedVariant: Story = {
+  render: () => (
+    <Box sx={{ maxWidth: 400 }}>
+      <StoryPage>
+        <StorySection title="accent-dashed — header + body (D-07)" direction="column">
+          <Card variant="accent-dashed">
+            <Box
+              sx={(theme) => ({
+                p: 1,
+                bgcolor: alpha(theme.palette.primary.main, ACCENT_HEADER_BG_ALPHA),
+                borderBottom: "1px dashed",
+                borderColor: alpha(theme.palette.primary.main, ACCENT_HEADER_BORDER_ALPHA),
+              })}
+            >
+              <Typography variant="subtitle2">Accent group header</Typography>
+            </Box>
+            <Box sx={{ p: 1 }}>
+              <Stack spacing={0.5}>
+                <Typography variant="body2">Row one inside the accent body.</Typography>
+                <Typography variant="body2">Row two inside the accent body.</Typography>
+                <Typography variant="body2">Row three inside the accent body.</Typography>
+              </Stack>
+            </Box>
           </Card>
         </StorySection>
       </StoryPage>

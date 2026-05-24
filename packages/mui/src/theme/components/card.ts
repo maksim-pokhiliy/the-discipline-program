@@ -1,4 +1,10 @@
-import { type Components, type Theme } from "@mui/material/styles";
+import { alpha, type Components, type Theme } from "@mui/material/styles";
+
+declare module "@mui/material/Paper" {
+  interface PaperPropsVariantOverrides {
+    "accent-dashed": true;
+  }
+}
 
 export const MuiCard: NonNullable<Components<Theme>["MuiCard"]> = {
   defaultProps: {
@@ -19,6 +25,13 @@ export const MuiCard: NonNullable<Components<Theme>["MuiCard"]> = {
 
       ...(ownerState.variant === "outlined" && {
         backgroundColor: theme.palette.background.paper,
+      }),
+
+      ...(ownerState.variant === "accent-dashed" && {
+        border: "1px dashed",
+        borderColor: alpha(theme.palette.primary.main, 0.4),
+        backgroundColor: alpha(theme.palette.primary.main, 0.025),
+        height: "auto",
       }),
     }),
   },

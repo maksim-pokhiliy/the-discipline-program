@@ -18,9 +18,13 @@ export const MuiMenu: NonNullable<Components<Theme>["MuiMenu"]> = {
 export const MuiMenuItem: NonNullable<Components<Theme>["MuiMenuItem"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
-      padding: theme.spacing(1),
+      padding: theme.spacing(1, 1.25),
       minHeight: "unset",
       borderRadius: theme.shape.borderRadius,
+
+      "&.Mui-focusVisible": {
+        backgroundColor: "transparent",
+      },
     }),
   },
 };

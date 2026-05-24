@@ -36,6 +36,10 @@ export const MuiBottomNavigationAction: NonNullable<
           backgroundColor: alpha(theme.palette.primary.main, 0.12),
         },
       },
+
+      "&.Mui-focusVisible": {
+        backgroundColor: "transparent",
+      },
     }),
 
     label: ({ theme }) => ({

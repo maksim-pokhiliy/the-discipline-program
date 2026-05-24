@@ -181,7 +181,7 @@ export const SetPasswordForm = ({ token, email }: SetPasswordFormProps) => {
             endAdornment: (
               <InputAdornment position="end">
                 <IconButton
-                  size="medium"
+                  size="large"
                   onClick={() => setShowPassword((prev) => !prev)}
                   edge="end"
                   disabled={isSubmitting}
@@ -209,7 +209,7 @@ export const SetPasswordForm = ({ token, email }: SetPasswordFormProps) => {
             endAdornment: (
               <InputAdornment position="end">
                 <IconButton
-                  size="medium"
+                  size="large"
                   onClick={() => setShowConfirmPassword((prev) => !prev)}
                   edge="end"
                   disabled={isSubmitting}

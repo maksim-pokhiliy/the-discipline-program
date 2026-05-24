@@ -6,11 +6,18 @@ export const MuiButton: NonNullable<Components<Theme>["MuiButton"]> = {
   },
 
   styleOverrides: {
-    root: {
+    root: ({ theme }) => ({
       fontWeight: 500,
       textTransform: "uppercase",
       letterSpacing: "0.02857em",
-    },
+      transition: theme.transitions.create(["background-color", "border-color", "color"], {
+        duration: theme.transitions.duration.shortest,
+      }),
+
+      "&.Mui-focusVisible": {
+        backgroundColor: "transparent",
+      },
+    }),
 
     sizeSmall: ({ theme }) => ({
       fontSize: theme.typography.body2.fontSize,

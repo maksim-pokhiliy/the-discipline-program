@@ -18,7 +18,11 @@ export const MuiOutlinedInput: NonNullable<Components<Theme>["MuiOutlinedInput"]
       },
 
       "&:hover .MuiOutlinedInput-notchedOutline": {
-        borderColor: alpha(theme.palette.common.white, 0.2),
+        borderColor: theme.palette.dividerStrong,
+      },
+
+      "&.Mui-focused": {
+        backgroundColor: alpha(theme.palette.primary.main, 0.05),
       },
 
       "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
