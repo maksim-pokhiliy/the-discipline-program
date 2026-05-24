@@ -79,4 +79,20 @@ describe("IndicatorChip", () => {
     expect(iconSlot).not.toBeNull();
     expect(iconSlot).toContainElement(customIcon);
   });
+
+  it("does not crash when clickable is set without onClick (MT-04)", () => {
+    const { container } = render(<IndicatorChip tone="primary" label="Today" clickable />);
+    const chip = container.querySelector(".MuiChip-root");
+
+    expect(chip).not.toBeNull();
+    expect(chip).toHaveClass("MuiChip-clickable");
+  });
+
+  it("gets MuiChip-clickable when onClick is set without clickable (MT-04)", () => {
+    const { container } = render(<IndicatorChip tone="primary" label="Today" onClick={vi.fn()} />);
+    const chip = container.querySelector(".MuiChip-root");
+
+    expect(chip).not.toBeNull();
+    expect(chip).toHaveClass("MuiChip-clickable");
+  });
 });

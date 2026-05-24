@@ -35,6 +35,28 @@ describe("PageHeader", () => {
 
       expect(screen.queryByTestId("meta-row")).toBeNull();
     });
+
+    it("does not surface meta content when meta is null (MT-01)", () => {
+      render(<PageHeader title="Plan A" meta={null} />);
+
+      expect(screen.queryByTestId("meta-row")).toBeNull();
+    });
+
+    it("does not surface meta content when meta is an empty array (MT-02)", () => {
+      render(<PageHeader title="Plan A" meta={[]} />);
+
+      expect(screen.queryByTestId("meta-row")).toBeNull();
+    });
+
+    it("does not render the actions Box when actions is null or undefined (MT-03)", () => {
+      const { rerender } = render(<PageHeader title="Plan A" actions={null} />);
+
+      expect(screen.queryByTestId("header-action")).toBeNull();
+
+      rerender(<PageHeader title="Plan A" />);
+
+      expect(screen.queryByTestId("header-action")).toBeNull();
+    });
   });
 
   describe("display mode", () => {
