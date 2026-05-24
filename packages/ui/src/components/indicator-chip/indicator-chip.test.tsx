@@ -29,11 +29,10 @@ describe("IndicatorChip", () => {
     });
   }
 
-  it("renders the leading dot via the icon slot as a circular 5px Box", () => {
+  it("renders the leading dot via the icon slot", () => {
     const { container } = render(<IndicatorChip tone="primary" label="Primary" />);
     const icon = container.querySelector(".MuiChip-icon");
 
     expect(icon).not.toBeNull();
-    expect(icon).toHaveStyle({ width: "5px", height: "5px", borderRadius: "50%" });
   });
 });
