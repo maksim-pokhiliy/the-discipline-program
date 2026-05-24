@@ -31,6 +31,7 @@ export const MuiCard: NonNullable<Components<Theme>["MuiCard"]> = {
         border: "1px dashed",
         borderColor: alpha(theme.palette.primary.main, 0.4),
         backgroundColor: alpha(theme.palette.primary.main, 0.025),
+        height: "auto",
       }),
     }),
   },

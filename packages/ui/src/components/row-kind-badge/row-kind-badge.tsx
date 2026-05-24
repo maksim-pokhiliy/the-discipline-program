@@ -22,6 +22,8 @@ export const RowKindBadge: React.FC<RowKindBadgeProps> = ({ kind, label }): Reac
     size="small"
     label={label ?? kind.slice(0, ROW_KIND_BADGE_LABEL_LENGTH).toUpperCase()}
     sx={(theme) => ({
+      borderStyle: "solid",
+      borderWidth: 1,
       borderColor: theme.palette.kind[kind],
       color: theme.palette.kind[kind],
       minWidth: ROW_KIND_BADGE_MIN_WIDTH_PX,
