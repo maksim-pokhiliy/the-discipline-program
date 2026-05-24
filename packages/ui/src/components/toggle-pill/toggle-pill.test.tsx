@@ -63,4 +63,17 @@ describe("TogglePill", () => {
 
     expect(onChange).toHaveBeenCalledTimes(1);
   });
+
+  it("forwards every rapid click as an independent onChange call (MT-13)", () => {
+    const onChange = vi.fn();
+
+    render(<TogglePill active={false} label="Spammy" icon={<span>i</span>} onChange={onChange} />);
+    const target = screen.getByText("Spammy");
+
+    fireEvent.click(target);
+    fireEvent.click(target);
+    fireEvent.click(target);
+
+    expect(onChange).toHaveBeenCalledTimes(3);
+  });
 });

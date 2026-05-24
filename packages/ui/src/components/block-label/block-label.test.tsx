@@ -23,13 +23,14 @@ describe("BlockLabel", () => {
     expect(chip).toHaveStyle({ borderColor: theme.palette.dividerStrong });
   });
 
-  it("renders the filled variant without the outlined inline overrides when filled is true", () => {
+  it("renders the filled variant with text.primary bg and never the action.selected fallback (MT-09, MT-15)", () => {
     const { container } = render(<BlockLabel text="Block A" filled={true} />);
     const chip = container.querySelector(".MuiChip-root");
 
     expect(chip).not.toBeNull();
     expect(chip).not.toHaveStyle({ backgroundColor: "transparent" });
     expect(chip).toHaveStyle({ backgroundColor: theme.palette.text.primary });
+    expect(chip).not.toHaveStyle({ backgroundColor: theme.palette.action.selected });
   });
 
   it("renders a delete icon and calls onDelete when clicked", () => {
