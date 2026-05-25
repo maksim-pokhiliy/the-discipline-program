@@ -1,4 +1,5 @@
 import { type Components, type Theme } from "@mui/material/styles";
+import { type PickerComponents } from "@mui/x-date-pickers/themeAugmentation";
 
 import { MuiAccordion } from "./accordion";
 import { MuiAlert } from "./alert";
@@ -18,6 +19,7 @@ import { MuiIconButton } from "./icon-button";
 import { MuiListItemButton } from "./list-item-button";
 import { MuiMenu, MuiMenuItem } from "./menu";
 import { MuiPaper } from "./paper";
+import { MuiPickersOutlinedInput } from "./pickers";
 import { MuiTab, MuiTabs } from "./tab";
 import { MuiTableCell, MuiTableRow } from "./table";
 import { MuiTablePagination } from "./table-pagination";
@@ -34,7 +36,7 @@ import { MuiToggleButton } from "./toggle-button";
 import { MuiTooltip } from "./tooltip";
 import { MuiTypography } from "./typography";
 
-export const components: Components<Theme> = {
+export const components: Components<Theme> & PickerComponents<Theme> = {
   MuiAccordion,
   MuiAlert,
   MuiAppBar,
@@ -65,6 +67,7 @@ export const components: Components<Theme> = {
   MuiMenuItem,
   MuiOutlinedInput,
   MuiPaper,
+  MuiPickersOutlinedInput,
   MuiSelect,
   MuiTab,
   MuiTableCell,

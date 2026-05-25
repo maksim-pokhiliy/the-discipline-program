@@ -48,9 +48,11 @@ export const MuiOutlinedInput: NonNullable<Components<Theme>["MuiOutlinedInput"]
     }),
 
     sizeSmall: ({ theme }) => ({
+      height: 30,
+
       "& .MuiOutlinedInput-input": {
         fontSize: theme.typography.body2.fontSize,
-        padding: theme.spacing(0.75, 1.25),
+        padding: theme.spacing(0.5, 1.25),
       },
     }),
   },

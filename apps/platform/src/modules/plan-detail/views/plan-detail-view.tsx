@@ -45,18 +45,22 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
       return [];
     }
 
+    const option = (target: TrainingPlanStatus, onSelect: () => void): StatusOption => ({
+      key: target,
+      ...PLAN_STATUS_CHIPS[target],
+      onSelect,
+    });
+
     switch (plan.status) {
       case TrainingPlanStatus.DRAFT:
         return [
-          { key: "activate", label: "Activate plan", onSelect: () => activate.mutate(planId) },
-          { key: "archive", label: "Archive plan", onSelect: () => archive.mutate(planId) },
+          option(TrainingPlanStatus.ACTIVE, () => activate.mutate(planId)),
+          option(TrainingPlanStatus.ARCHIVED, () => archive.mutate(planId)),
         ];
       case TrainingPlanStatus.ACTIVE:
-        return [{ key: "archive", label: "Archive plan", onSelect: () => archive.mutate(planId) }];
+        return [option(TrainingPlanStatus.ARCHIVED, () => archive.mutate(planId))];
       case TrainingPlanStatus.ARCHIVED:
-        return [
-          { key: "restore", label: "Restore as draft", onSelect: () => restore.mutate(planId) },
-        ];
+        return [option(TrainingPlanStatus.DRAFT, () => restore.mutate(planId))];
     }
   }, [plan, planId, activate, archive, restore]);
 

@@ -11,6 +11,7 @@ declare module "@mui/material/Chip" {
 const CHIP_HEIGHT = 24;
 const CHIP_HEIGHT_SM = 20;
 const CHIP_RADIUS = 12;
+const CHIP_LABEL_PX = 10;
 const CHIP_LABEL_PX_SM = 6;
 const CHIP_FONT_SM_PX = 11;
 const CHIP_VARIANT_HEIGHT = 22;
@@ -40,6 +41,11 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
       fontWeight: 500,
       height: CHIP_HEIGHT,
       borderRadius: CHIP_RADIUS,
+
+      "& .MuiChip-label": {
+        paddingLeft: CHIP_LABEL_PX,
+        paddingRight: CHIP_LABEL_PX,
+      },
 
       ...(ownerState.variant === "indicator" && {
         height: CHIP_VARIANT_HEIGHT,

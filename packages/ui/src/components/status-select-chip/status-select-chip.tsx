@@ -4,11 +4,10 @@ import { type MouseEvent, useState } from "react";
 
 import { Chip, Menu, MenuItem } from "@mui/material";
 
-import { type StatusChipConfig } from "../status-chip";
+import { StatusChip, type StatusChipConfig } from "../status-chip";
 
-export type StatusOption = {
+export type StatusOption = StatusChipConfig & {
   key: string;
-  label: string;
   onSelect: () => void;
 };
 
@@ -42,7 +41,6 @@ export const StatusSelectChip: React.FC<StatusSelectChipProps> = ({
   return (
     <>
       <Chip
-        size="small"
         label={label}
         {...(color !== undefined && { color })}
         {...(icon !== undefined && { icon })}
@@ -50,9 +48,9 @@ export const StatusSelectChip: React.FC<StatusSelectChipProps> = ({
       />
       {hasOptions && (
         <Menu anchorEl={anchorEl} open={isMenuOpen} onClose={handleClose}>
-          {options.map((option) => (
-            <MenuItem key={option.key} onClick={() => handleSelect(option)}>
-              {option.label}
+          {options.map(({ key, onSelect, ...optionChip }) => (
+            <MenuItem key={key} onClick={() => handleSelect({ key, onSelect, ...optionChip })}>
+              <StatusChip {...optionChip} />
             </MenuItem>
           ))}
         </Menu>
