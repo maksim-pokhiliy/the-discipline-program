@@ -1,5 +1,5 @@
 import { fireEvent, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Block } from "@repo/contracts/lms/block";
 import type { SessionWithLabel } from "@repo/contracts/lms/day";
@@ -14,14 +14,22 @@ import { render } from "@app/test/render";
 
 const updateSessionMutate = vi.fn();
 const deleteSessionMutate = vi.fn();
+const updateSessionState = { isPending: false };
+const deleteSessionState = { isPending: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
 
   return {
     ...actual,
-    useUpdateSession: () => ({ mutate: updateSessionMutate, isPending: false }),
-    useDeleteSession: () => ({ mutate: deleteSessionMutate, isPending: false }),
+    useUpdateSession: () => ({
+      mutate: updateSessionMutate,
+      isPending: updateSessionState.isPending,
+    }),
+    useDeleteSession: () => ({
+      mutate: deleteSessionMutate,
+      isPending: deleteSessionState.isPending,
+    }),
   };
 });
 
@@ -111,6 +119,11 @@ const getNotesInput = (): HTMLInputElement | HTMLTextAreaElement => {
 };
 
 describe("SessionCard", () => {
+  afterEach(() => {
+    updateSessionState.isPending = false;
+    deleteSessionState.isPending = false;
+  });
+
   it("renders the head row with the chevron and BlockList visible by default (isExpanded=true)", () => {
     renderSessionCard({ session: makeSession({ blocks: [makeBlock()] }) });
 
@@ -290,5 +303,69 @@ describe("SessionCard", () => {
 
     expect(deleteSessionMutate).toHaveBeenCalledTimes(1);
     expect(deleteSessionMutate.mock.calls[0]?.[0]).toEqual({ sessionId: session.id });
+  });
+
+  it("disables the drag IconButton when useUpdateSession is pending (Q-2)", () => {
+    updateSessionState.isPending = true;
+
+    renderSessionCard();
+
+    expect(screen.getByRole("button", { name: "Drag session" })).toBeDisabled();
+  });
+
+  it("disables the freeze chip when useDeleteSession is pending (Q-3)", () => {
+    deleteSessionState.isPending = true;
+
+    renderSessionCard({ session: makeSession({ freezeLoadsAtCreation: false }) });
+
+    expect(screen.getByRole("button", { name: "Freeze: live (click to freeze)" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+  });
+
+  it("renders the LabelPickerChip as non-interactive when sessionOptions is empty and a value is set (Q-9)", () => {
+    const strength = makeLabel({ name: "STRENGTH" });
+    const session = makeSession({ labelId: strength.id, label: strength });
+
+    renderSessionCard({ session, sessionOptions: [] });
+
+    fireEvent.click(screen.getByLabelText("Session label"));
+
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("wires maxLength=2000 on the inline notes input from SESSION_CONSTANTS (Q-10)", () => {
+    renderSessionCard();
+
+    expect(getNotesInput()).toHaveAttribute("maxlength", "2000");
+  });
+
+  it("commits null on blur when only whitespace remains over a non-empty prior note (Q-4)", () => {
+    updateSessionMutate.mockClear();
+
+    renderSessionCard({ session: makeSession({ notes: "RPE 9 focus" }) });
+
+    const input = getNotesInput();
+
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: "   " } });
+    fireEvent.blur(input);
+
+    expect(updateSessionMutate).toHaveBeenCalledTimes(1);
+    expect(updateSessionMutate).toHaveBeenCalledWith({
+      sessionId: "clp9z8x7w0000abcd1234ses1",
+      data: { notes: null },
+    });
+  });
+
+  it("still opens the kebab menu while useDeleteSession is pending (Q-11)", () => {
+    deleteSessionState.isPending = true;
+
+    renderSessionCard();
+
+    fireEvent.click(screen.getByRole("button", { name: "Session actions" }));
+
+    expect(screen.getByRole("menu")).toBeInTheDocument();
   });
 });
