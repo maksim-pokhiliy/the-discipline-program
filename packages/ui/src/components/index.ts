@@ -11,6 +11,7 @@ export * from "./empty-state";
 export * from "./form-view";
 export * from "./image-upload";
 export * from "./indicator-chip";
+export * from "./inline-edit-text";
 export * from "./kbd-hint";
 export * from "./label-select";
 export * from "./layout";
