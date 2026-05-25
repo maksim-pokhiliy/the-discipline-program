@@ -34,7 +34,6 @@ import {
 } from "./text-field";
 import { MuiToggleButton } from "./toggle-button";
 import { MuiTooltip } from "./tooltip";
-import { MuiTypography } from "./typography";
 
 export const components: Components<Theme> & PickerComponents<Theme> = {
   MuiAccordion,
@@ -79,5 +78,4 @@ export const components: Components<Theme> & PickerComponents<Theme> = {
   MuiToggleButton,
   MuiToolbar,
   MuiTooltip,
-  MuiTypography,
 };

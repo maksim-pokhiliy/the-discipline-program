@@ -15,6 +15,7 @@ const labelOne = {
   nameLower: "warmup",
   applicableLevels: ["BLOCK"] as const,
   notes: null,
+  rest: false,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

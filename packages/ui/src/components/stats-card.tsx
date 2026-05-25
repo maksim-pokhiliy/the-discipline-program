@@ -8,7 +8,7 @@ import { type PaletteColorKey } from "@repo/mui";
 
 const sizeConfig = {
   small: { titleVariant: "body2", valueVariant: "h5", spacing: 3 },
-  medium: { titleVariant: "h3", valueVariant: "display2", spacing: 4 },
+  medium: { titleVariant: "h3", valueVariant: "h2", spacing: 4 },
 } as const;
 
 export type StatsCardProps = {

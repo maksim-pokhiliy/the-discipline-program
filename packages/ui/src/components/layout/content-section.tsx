@@ -108,7 +108,7 @@ export const ContentSection = ({
                   {title && (
                     <Typography
                       id={titleId}
-                      variant="display2"
+                      variant="h2"
                       sx={(theme) => ({
                         width: "100%",
                         color: theme.palette.text.primary,

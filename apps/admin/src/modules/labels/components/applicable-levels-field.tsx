@@ -1,7 +1,14 @@
 "use client";
 
-import { Checkbox, FormControl, FormControlLabel, FormGroup, FormHelperText } from "@mui/material";
-import { Controller, useFormContext } from "react-hook-form";
+import {
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
+  FormHelperText,
+  Tooltip,
+} from "@mui/material";
+import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 import { APP_LEVELS, type AppLevelValue, type CreateLabelData } from "@repo/contracts/lms/label";
 
@@ -15,7 +22,20 @@ type ApplicableLevelsFieldProps = {
 };
 
 export const ApplicableLevelsField = ({ isLoading }: ApplicableLevelsFieldProps) => {
-  const { control } = useFormContext<CreateLabelData>();
+  const { control, setValue } = useFormContext<CreateLabelData>();
+  const isRest = useWatch({ control, name: "rest" }) === true;
+
+  const isLevelDisabled = (level: AppLevelValue) => isLoading || (isRest && level !== "DAY");
+
+  const handleToggle = (current: AppLevelValue[], level: AppLevelValue): AppLevelValue[] => {
+    const next = toggleLevel(current, level);
+
+    if (level === "DAY" && !next.includes("DAY") && isRest) {
+      setValue("rest", false, { shouldDirty: true, shouldValidate: true });
+    }
+
+    return next;
+  };
 
   return (
     <Controller
@@ -25,17 +45,22 @@ export const ApplicableLevelsField = ({ isLoading }: ApplicableLevelsFieldProps)
         <FormControl error={!!fieldState.error} component="fieldset" variant="standard">
           <FormGroup>
             {APP_LEVELS.map((level) => (
-              <FormControlLabel
+              <Tooltip
                 key={level}
-                control={
-                  <Checkbox
-                    checked={field.value.includes(level)}
-                    onChange={() => field.onChange(toggleLevel(field.value, level))}
-                    disabled={isLoading}
-                  />
-                }
-                label={APP_LEVEL_LABELS[level]}
-              />
+                title={isRest && level !== "DAY" ? "Disabled — rest days are DAY-only" : ""}
+                placement="top"
+              >
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={field.value.includes(level)}
+                      onChange={() => field.onChange(handleToggle(field.value, level))}
+                      disabled={isLevelDisabled(level)}
+                    />
+                  }
+                  label={APP_LEVEL_LABELS[level]}
+                />
+              </Tooltip>
             ))}
           </FormGroup>
 

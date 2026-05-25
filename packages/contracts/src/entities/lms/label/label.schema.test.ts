@@ -2,7 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { labelSearchParamsSchema } from "./label-api.schema";
 import { LABEL_CONSTANTS } from "./label.constants";
-import { createLabelSchema, labelSchema, updateLabelSchema } from "./label.schema";
+import {
+  createLabelSchema,
+  labelSchema,
+  REST_MUTEX_MESSAGE,
+  updateLabelSchema,
+} from "./label.schema";
 
 const baseInput = {
   name: "Push Day",
@@ -16,6 +21,7 @@ const baseLabel = {
   nameLower: "push day",
   applicableLevels: ["DAY"] as const,
   notes: null,
+  rest: false,
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -138,6 +144,68 @@ describe("createLabelSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("defaults rest to false when omitted", () => {
+    const result = createLabelSchema.safeParse(baseInput);
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.rest).toBe(false);
+    }
+  });
+
+  it("accepts rest: true when applicableLevels = ['DAY']", () => {
+    const result = createLabelSchema.safeParse({
+      ...baseInput,
+      applicableLevels: ["DAY"],
+      rest: true,
+    });
+
+    expect(result.success).toBe(true);
+
+    if (result.success) {
+      expect(result.data.rest).toBe(true);
+    }
+  });
+
+  it("rejects rest: true with applicableLevels containing SESSION", () => {
+    const result = createLabelSchema.safeParse({
+      ...baseInput,
+      applicableLevels: ["SESSION"],
+      rest: true,
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(REST_MUTEX_MESSAGE);
+    }
+  });
+
+  it("rejects rest: true with multi-level applicableLevels including DAY", () => {
+    const result = createLabelSchema.safeParse({
+      ...baseInput,
+      applicableLevels: ["DAY", "SESSION"],
+      rest: true,
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(REST_MUTEX_MESSAGE);
+    }
+  });
+
+  it("accepts rest: false with multi-level applicableLevels", () => {
+    const result = createLabelSchema.safeParse({
+      ...baseInput,
+      applicableLevels: ["DAY", "SESSION", "BLOCK"],
+      rest: false,
+    });
+
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("updateLabelSchema", () => {
@@ -170,6 +238,48 @@ describe("updateLabelSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it("accepts a single-field rest: true patch (Layer A passes; Layer B catches post-merge)", () => {
+    const result = updateLabelSchema.safeParse({ rest: true });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts rest: true with applicableLevels: ['DAY'] patch", () => {
+    const result = updateLabelSchema.safeParse({
+      rest: true,
+      applicableLevels: ["DAY"],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects rest: true with applicableLevels: ['SESSION'] patch", () => {
+    const result = updateLabelSchema.safeParse({
+      rest: true,
+      applicableLevels: ["SESSION"],
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(REST_MUTEX_MESSAGE);
+    }
+  });
+});
+
+describe("Layer A intentional asymmetry (Layer B catches single-field patches)", () => {
+  it("accepts a single-field rest: true patch (Layer B catches post-merge against stored levels) (QA-001)", () => {
+    const result = updateLabelSchema.safeParse({ rest: true });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a single-field applicableLevels: ['SESSION'] patch (Layer B catches post-merge against stored rest) (QA-001)", () => {
+    const result = updateLabelSchema.safeParse({ applicableLevels: ["SESSION"] });
+
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("labelSchema", () => {
@@ -201,6 +311,50 @@ describe("labelSchema", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  it("accepts rest: true with applicableLevels: ['DAY']", () => {
+    const result = labelSchema.safeParse({
+      ...baseLabel,
+      applicableLevels: ["DAY"],
+      rest: true,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects rest: true with applicableLevels: ['SESSION']", () => {
+    const result = labelSchema.safeParse({
+      ...baseLabel,
+      applicableLevels: ["SESSION"],
+      rest: true,
+    });
+
+    expect(result.success).toBe(false);
+
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(REST_MUTEX_MESSAGE);
+    }
+  });
+
+  it("rejects rest: true with applicableLevels: ['DAY', 'SESSION']", () => {
+    const result = labelSchema.safeParse({
+      ...baseLabel,
+      applicableLevels: ["DAY", "SESSION"],
+      rest: true,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts rest: false with multi-level applicableLevels (rest off implies no mutex)", () => {
+    const result = labelSchema.safeParse({
+      ...baseLabel,
+      applicableLevels: ["DAY", "SESSION", "BLOCK"],
+      rest: false,
+    });
+
+    expect(result.success).toBe(true);
   });
 });
 

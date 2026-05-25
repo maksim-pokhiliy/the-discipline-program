@@ -56,7 +56,7 @@ export const ProductCard = ({
           <Typography variant="h5">{product.title}</Typography>
 
           <Stack direction="row" alignItems="baseline" spacing={0.5}>
-            <Typography variant="display2" component="p">
+            <Typography variant="h2" component="p">
               {activePrice ? formatPrice(activePrice.amountCents, activePrice.currency) : freeLabel}
             </Typography>
 

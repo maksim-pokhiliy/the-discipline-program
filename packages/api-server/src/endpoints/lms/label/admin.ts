@@ -4,9 +4,11 @@ import {
   type AdminLabelsPageData,
   type CreateLabelData,
   type Label,
+  labelSchema,
+  REST_MUTEX_MESSAGE,
   type UpdateLabelData,
 } from "@repo/contracts/lms/label";
-import { ConflictError } from "@repo/errors";
+import { BadRequestError, ConflictError } from "@repo/errors";
 
 import { prisma } from "../../../db/client";
 import { mapToLabel } from "../../../mappers/lms";
@@ -20,7 +22,34 @@ const buildLabelUpdateData = (data: UpdateLabelData): Prisma.LabelUpdateInput =>
   }),
   ...(data.applicableLevels !== undefined && { applicableLevels: data.applicableLevels }),
   ...(data.notes !== undefined && { notes: data.notes }),
+  ...(data.rest !== undefined && { rest: data.rest }),
 });
+
+const mergeLabelPatch = (existing: Label, data: UpdateLabelData): Label => ({
+  ...existing,
+  ...(data.name !== undefined && {
+    name: data.name,
+    nameLower: data.name.trim().toLowerCase(),
+  }),
+  ...(data.applicableLevels !== undefined && { applicableLevels: data.applicableLevels }),
+  ...(data.notes !== undefined && { notes: data.notes }),
+  ...(data.rest !== undefined && { rest: data.rest }),
+});
+
+const assertMergedLabelInvariants = (merged: Label): void => {
+  const result = labelSchema.safeParse(merged);
+
+  if (result.success) {
+    return;
+  }
+
+  const firstIssue = result.error.issues[0];
+  const message = firstIssue?.message ?? REST_MUTEX_MESSAGE;
+  const fieldPath = firstIssue?.path[0];
+  const field = typeof fieldPath === "string" ? fieldPath : "rest";
+
+  throw new BadRequestError(message, { field });
+};
 
 export const cmsLabelAdminApi = {
   getLabels: async (): Promise<Label[]> => {
@@ -48,6 +77,7 @@ export const cmsLabelAdminApi = {
           nameLower,
           applicableLevels: data.applicableLevels,
           notes: data.notes ?? null,
+          rest: data.rest ?? false,
         },
       });
 
@@ -64,7 +94,10 @@ export const cmsLabelAdminApi = {
   },
 
   updateLabel: async (id: string, data: UpdateLabelData): Promise<Label> => {
-    await findOrThrow(prisma.label.findUnique({ where: { id } }), "Label");
+    const existing = await findOrThrow(prisma.label.findUnique({ where: { id } }), "Label");
+    const merged = mergeLabelPatch(mapToLabel(existing), data);
+
+    assertMergedLabelInvariants(merged);
 
     try {
       const row = await prisma.label.update({

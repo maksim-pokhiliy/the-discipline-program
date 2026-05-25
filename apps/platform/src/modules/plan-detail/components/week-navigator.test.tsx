@@ -138,24 +138,24 @@ describe("WeekNavigator", () => {
     );
   });
 
-  it("flips the Today button color to primary when monday is the current week (MT-09)", () => {
+  it("flips the Today button color to inherit when monday is the current week (MT-09)", () => {
     const onChange = vi.fn();
     const todayMonday = getMonday(new Date());
 
     render(<WeekNavigator monday={todayMonday} onChange={onChange} />);
     const todayButton = screen.getByRole("button", { name: /Today/ });
 
-    expect(todayButton).toHaveClass("MuiButton-outlinedPrimary");
+    expect(todayButton).toHaveClass("MuiButton-outlinedInherit");
   });
 
-  it("flips the Today button color to inherit when monday is a different week (MT-09)", () => {
+  it("flips the Today button color to primary when monday is a different week (MT-09)", () => {
     const onChange = vi.fn();
     const nextWeekMonday = addDays(getMonday(new Date()), DAYS_IN_WEEK);
 
     render(<WeekNavigator monday={nextWeekMonday} onChange={onChange} />);
     const todayButton = screen.getByRole("button", { name: /Today/ });
 
-    expect(todayButton).toHaveClass("MuiButton-outlinedInherit");
-    expect(todayButton).not.toHaveClass("MuiButton-outlinedPrimary");
+    expect(todayButton).toHaveClass("MuiButton-outlinedPrimary");
+    expect(todayButton).not.toHaveClass("MuiButton-outlinedInherit");
   });
 });

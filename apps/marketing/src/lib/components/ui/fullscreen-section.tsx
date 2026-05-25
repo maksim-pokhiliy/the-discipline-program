@@ -108,7 +108,7 @@ export const FullscreenSection = ({
               sx={{ maxWidth: { md: "65%" } }}
             >
               <MotionBox variants={fadeSlideUp}>
-                <Typography variant="display1" component="h1">
+                <Typography variant="h1" component="h1">
                   {title}
                 </Typography>
               </MotionBox>

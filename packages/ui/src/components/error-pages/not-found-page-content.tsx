@@ -6,7 +6,7 @@ export type NotFoundPageContentProps = {
 
 export const NotFoundPageContent = ({ homeLabel = "Go home" }: NotFoundPageContentProps) => (
   <Stack alignItems="center" justifyContent="center" sx={{ minHeight: "60vh", py: 4 }}>
-    <Typography variant="display2" color="text.muted">
+    <Typography variant="h2" color="text.muted">
       404
     </Typography>
 

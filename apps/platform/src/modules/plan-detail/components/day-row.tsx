@@ -1,17 +1,27 @@
 "use client";
 
-import { Box, Stack, Typography } from "@mui/material";
+import { useState } from "react";
+
+import UnfoldLessIcon from "@mui/icons-material/UnfoldLess";
+import UnfoldMoreIcon from "@mui/icons-material/UnfoldMore";
+import { alpha, Box, IconButton, Stack } from "@mui/material";
 
 import type { DayOfWeek } from "@repo/contracts/lms/_shared";
-import type { SessionWithLabel } from "@repo/contracts/lms/day";
+import { DAY_CONSTANTS, type SessionWithLabel } from "@repo/contracts/lms/day";
 import type { Label } from "@repo/contracts/lms/label";
-import { formatDayName, isSameDay } from "@repo/shared";
+import { isSameDay } from "@repo/shared";
+import { InlineEditText, LabelPickerChip } from "@repo/ui";
 
-import { useUpdateDayLabel, useUpdateDayNotes } from "@app/lib/hooks";
+import { useLabelOptions, useUpdateDayLabel, useUpdateDayNotes } from "@app/lib/hooks";
 
-import { DayLabelSelect } from "./day-label-select";
-import { DayNotesField } from "./day-notes-field";
+import { DayRowEmpty } from "./day-row-empty";
+import { DayRowHead } from "./day-row-head";
+import { DayRowRest } from "./day-row-rest";
+import { DayRowSummary } from "./day-row-summary";
 import { SessionList } from "./session-list";
+
+const DAY_HEAD_WIDTH_PX = 96;
+const TODAY_BG_ALPHA = 0.025;
 
 type DayRowProps = {
   date: Date;
@@ -34,54 +44,81 @@ export const DayRow: React.FC<DayRowProps> = ({
 }) => {
   const updateLabel = useUpdateDayLabel(planId, startDate, dayOfWeek);
   const updateNotes = useUpdateDayNotes(planId, startDate, dayOfWeek);
+  const dayOptions = useLabelOptions("DAY");
+
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+  const toggleExpanded = () => setIsExpanded((previous) => !previous);
+
   const isToday = isSameDay(date, new Date());
-  const dayOfMonth = date.getDate();
+  const hasSessions = sessions.length > 0;
+  const isRest = label?.rest === true && !hasSessions;
 
   return (
-    <Stack direction="column" spacing={1.5} sx={{ p: 2 }}>
-      <Stack direction="row" spacing={0.75} alignItems="center" sx={{ width: 72, flexShrink: 0 }}>
-        <Typography variant="subtitle2" sx={{ color: "text.secondary" }}>
-          {formatDayName(date)}
-        </Typography>
-        {isToday ? (
-          <Box
-            sx={{
-              width: 24,
-              height: 24,
-              borderRadius: "50%",
-              bgcolor: "primary.main",
-              color: "primary.contrastText",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <Typography variant="subtitle2">{dayOfMonth}</Typography>
+    <Box
+      sx={(theme) => ({
+        display: "grid",
+        gridTemplateColumns: `${DAY_HEAD_WIDTH_PX}px 1fr`,
+        columnGap: 2,
+        px: 2.5,
+        py: 2,
+        transition: "background-color 150ms",
+        ...(isToday && { bgcolor: alpha(theme.palette.primary.main, TODAY_BG_ALPHA) }),
+      })}
+    >
+      <DayRowHead date={date} isToday={isToday} />
+
+      <Stack direction="column" spacing={1.5} sx={{ minWidth: 0 }}>
+        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ flexWrap: "wrap" }}>
+          <LabelPickerChip
+            value={label}
+            options={dayOptions.options}
+            level="DAY"
+            isLoading={dayOptions.isLoading}
+            onChange={(labelId) => updateLabel.mutate({ labelId })}
+            ariaLabel="Day label"
+          />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <InlineEditText
+              value={notes ?? ""}
+              onCommit={(next) => updateNotes.mutate({ notes: next === "" ? null : next })}
+              variant="body2"
+              ariaLabel="Day notes"
+              multiline
+              emptyIsValid
+              placeholder="day note (cues, focus)…"
+              maxLength={DAY_CONSTANTS.MAX_NOTES_LENGTH}
+            />
           </Box>
+          {hasSessions ? (
+            <IconButton
+              size="small"
+              onClick={toggleExpanded}
+              aria-label={isExpanded ? "Collapse day" : "Expand day"}
+            >
+              {isExpanded ? (
+                <UnfoldLessIcon fontSize="small" />
+              ) : (
+                <UnfoldMoreIcon fontSize="small" />
+              )}
+            </IconButton>
+          ) : null}
+        </Stack>
+
+        {isRest ? (
+          <DayRowRest notes={notes} />
+        ) : !hasSessions ? (
+          <DayRowEmpty />
+        ) : !isExpanded ? (
+          <DayRowSummary sessions={sessions} onClick={toggleExpanded} />
         ) : (
-          <Typography variant="subtitle2">{dayOfMonth}</Typography>
+          <SessionList
+            planId={planId}
+            startDate={startDate}
+            dayOfWeek={dayOfWeek}
+            sessions={sessions}
+          />
         )}
       </Stack>
-
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        spacing={2}
-        alignItems={{ xs: "stretch", md: "flex-start" }}
-      >
-        <Box sx={{ width: { xs: "100%", md: 280 }, flexShrink: 0 }}>
-          <DayLabelSelect value={label} onChange={(labelId) => updateLabel.mutate({ labelId })} />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <DayNotesField value={notes} onCommit={(next) => updateNotes.mutate({ notes: next })} />
-        </Box>
-      </Stack>
-
-      <SessionList
-        planId={planId}
-        startDate={startDate}
-        dayOfWeek={dayOfWeek}
-        sessions={sessions}
-      />
-    </Stack>
+    </Box>
   );
 };

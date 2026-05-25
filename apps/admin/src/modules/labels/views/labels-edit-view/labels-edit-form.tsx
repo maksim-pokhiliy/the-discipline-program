@@ -26,6 +26,7 @@ export const LabelsEditForm: React.FC<LabelsEditFormProps> = ({ label }) => {
       name: label.name,
       applicableLevels: label.applicableLevels,
       notes: label.notes,
+      rest: label.rest,
     },
   });
 
