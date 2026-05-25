@@ -5,9 +5,7 @@ import { useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import DeleteIcon from "@mui/icons-material/Delete";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { Box, IconButton, ListItemIcon, ListItemText, Menu, MenuItem, Stack } from "@mui/material";
+import { ListItemIcon, ListItemText, Menu, MenuItem, Stack } from "@mui/material";
 
 import type { SessionWithLabel } from "@repo/contracts/lms/day";
 import { ConfirmationModal } from "@repo/ui";
@@ -15,8 +13,7 @@ import { ConfirmationModal } from "@repo/ui";
 import { useDeleteSession, useUpdateSession } from "@app/lib/hooks";
 
 import { BlockList } from "./block-list";
-import { SessionLabelSelect } from "./session-label-select";
-import { SessionNotesField } from "./session-notes-field";
+import { SessionCardHead } from "./session-card-head";
 
 type SessionCardProps = {
   session: SessionWithLabel;
@@ -28,23 +25,43 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
   const updateSession = useUpdateSession(planId, startDate);
   const deleteSession = useDeleteSession(planId, startDate);
 
+  const isMutationPending = updateSession.isPending || deleteSession.isPending;
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: session.id,
-    disabled: updateSession.isPending || deleteSession.isPending,
+    disabled: isMutationPending,
   });
 
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const anchorRef = useRef<HTMLButtonElement>(null);
+  const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
+  const kebabAnchorRef = useRef<HTMLButtonElement>(null);
+
+  const toggleExpanded = () => setIsExpanded((previous) => !previous);
+  const handleKebabOpen = () => setIsMenuOpen(true);
+  const handleKebabClose = () => setIsMenuOpen(false);
 
   const handleLabelChange = (labelId: string | null) =>
     updateSession.mutate({ sessionId: session.id, data: { labelId } });
 
-  const handleNotesCommit = (notes: string | null) =>
-    updateSession.mutate({ sessionId: session.id, data: { notes } });
+  const handleFreezeChange = (next: boolean) =>
+    updateSession.mutate({ sessionId: session.id, data: { freezeLoadsAtCreation: next } });
+
+  const handleNotesCommit = (next: string) =>
+    updateSession.mutate({
+      sessionId: session.id,
+      data: { notes: next === "" ? null : next },
+    });
+
+  const handleDeleteOpen = () => {
+    handleKebabClose();
+    setIsDeleteOpen(true);
+  };
+
+  const handleDeleteClose = () => setIsDeleteOpen(false);
 
   const handleDeleteConfirm = () => {
-    deleteSession.mutate({ sessionId: session.id }, { onSuccess: () => setDeleteOpen(false) });
+    deleteSession.mutate({ sessionId: session.id }, { onSuccess: () => setIsDeleteOpen(false) });
   };
 
   const style = {
@@ -54,63 +71,45 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
   };
 
   return (
-    <Box
+    <Stack
       ref={setNodeRef}
       style={style}
-      sx={{
-        p: 1.5,
+      direction="column"
+      sx={(theme) => ({
+        bgcolor: "background.paper",
         border: 1,
         borderColor: "divider",
-        borderRadius: 1,
-        bgcolor: "background.paper",
-      }}
+        borderRadius: theme.spacing(0.5),
+        overflow: "hidden",
+      })}
     >
-      <Stack direction="row" spacing={1.5} alignItems="flex-start">
-        <IconButton
-          {...attributes}
-          {...listeners}
-          size="small"
-          aria-label="Drag session"
-          sx={{ cursor: "grab", touchAction: "none" }}
-        >
-          <DragIndicatorIcon fontSize="small" />
-        </IconButton>
+      <SessionCardHead
+        session={session}
+        isExpanded={isExpanded}
+        onToggleExpanded={toggleExpanded}
+        onLabelChange={handleLabelChange}
+        onFreezeChange={handleFreezeChange}
+        onNotesCommit={handleNotesCommit}
+        onKebabOpen={handleKebabOpen}
+        dragAttributes={attributes}
+        dragListeners={listeners}
+        kebabAnchorRef={kebabAnchorRef}
+        isMutationPending={isMutationPending}
+      />
 
-        <Box sx={{ width: 240, flexShrink: 0 }}>
-          <SessionLabelSelect value={session.label} onChange={handleLabelChange} />
-        </Box>
+      {isExpanded ? (
+        <Stack direction="column" spacing={1.25} sx={{ p: 1.5 }}>
+          <BlockList
+            planId={planId}
+            startDate={startDate}
+            sessionId={session.id}
+            blocks={session.blocks}
+          />
+        </Stack>
+      ) : null}
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <SessionNotesField value={session.notes} onCommit={handleNotesCommit} />
-        </Box>
-
-        <IconButton
-          ref={anchorRef}
-          onClick={() => setMenuOpen(true)}
-          aria-label="Session actions"
-          size="small"
-        >
-          <MoreVertIcon fontSize="small" />
-        </IconButton>
-      </Stack>
-
-      <Box sx={{ pt: 1.5 }}>
-        <BlockList
-          planId={planId}
-          startDate={startDate}
-          sessionId={session.id}
-          blocks={session.blocks}
-        />
-      </Box>
-
-      <Menu anchorEl={anchorRef.current} open={menuOpen} onClose={() => setMenuOpen(false)}>
-        <MenuItem
-          onClick={() => {
-            setMenuOpen(false);
-            setDeleteOpen(true);
-          }}
-          sx={{ color: "error.main" }}
-        >
+      <Menu anchorEl={kebabAnchorRef.current} open={isMenuOpen} onClose={handleKebabClose}>
+        <MenuItem onClick={handleDeleteOpen} sx={{ color: "error.main" }}>
           <ListItemIcon sx={{ color: "inherit" }}>
             <DeleteIcon fontSize="small" />
           </ListItemIcon>
@@ -119,8 +118,8 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
       </Menu>
 
       <ConfirmationModal
-        open={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
+        open={isDeleteOpen}
+        onClose={handleDeleteClose}
         title="Delete session"
         type="danger"
         message="Delete this session?"
@@ -128,6 +127,6 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
         onConfirm={handleDeleteConfirm}
         isConfirming={deleteSession.isPending}
       />
-    </Box>
+    </Stack>
   );
 };
