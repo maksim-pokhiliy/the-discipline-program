@@ -11,8 +11,9 @@ declare module "@mui/material/Chip" {
 const CHIP_HEIGHT = 24;
 const CHIP_HEIGHT_SM = 20;
 const CHIP_RADIUS = 12;
-const CHIP_LABEL_PX = 10;
-const CHIP_LABEL_PX_SM = 6;
+const CHIP_ROOT_PX = 12;
+const CHIP_ROOT_PX_SM = 8;
+const CHIP_GAP_PX = 4;
 const CHIP_FONT_SM_PX = 11;
 const CHIP_VARIANT_HEIGHT = 22;
 const CHIP_INDICATOR_HEIGHT = 18;
@@ -20,6 +21,8 @@ const CHIP_INDICATOR_FONT_PX = 11;
 const CHIP_TAG_FONT_PX = 10;
 const CHIP_INDICATOR_RADIUS = 4;
 const CHIP_TAG_RADIUS = 2;
+const CHIP_ICON_PX = 14;
+const CHIP_ICON_PX_SM = 12;
 const CHIP_TAG_DELETE_SIZE = 14;
 const CHIP_TAG_DELETE_ICON_PX = 12;
 const CHIP_TAG_DELETE_MARGIN_LEFT = 2;
@@ -47,10 +50,18 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
       fontWeight: 500,
       height: CHIP_HEIGHT,
       borderRadius: CHIP_RADIUS,
+      paddingLeft: CHIP_ROOT_PX,
+      paddingRight: CHIP_ROOT_PX,
+      gap: CHIP_GAP_PX,
+
+      "& .MuiChip-icon": {
+        marginLeft: 0,
+        marginRight: 0,
+      },
 
       "& .MuiChip-label": {
-        paddingLeft: CHIP_LABEL_PX,
-        paddingRight: CHIP_LABEL_PX,
+        paddingLeft: 0,
+        paddingRight: 0,
       },
 
       ...(ownerState.variant === "indicator" && {
@@ -81,6 +92,9 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
         borderRadius: CHIP_TAG_RADIUS,
         backgroundColor: theme.palette.text.primary,
         color: theme.palette.background.default,
+        paddingLeft: 0,
+        paddingRight: 0,
+        gap: 0,
 
         "& .MuiChip-deleteIcon": {
           width: CHIP_TAG_DELETE_SIZE,
@@ -105,11 +119,16 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
     sizeSmall: ({ theme }) => ({
       height: CHIP_HEIGHT_SM,
       fontSize: theme.typography.pxToRem(CHIP_FONT_SM_PX),
+      paddingLeft: CHIP_ROOT_PX_SM,
+      paddingRight: CHIP_ROOT_PX_SM,
+    }),
 
-      "& .MuiChip-label": {
-        paddingLeft: CHIP_LABEL_PX_SM,
-        paddingRight: CHIP_LABEL_PX_SM,
-      },
+    icon: ({ theme }) => ({
+      fontSize: theme.typography.pxToRem(CHIP_ICON_PX),
+    }),
+
+    iconSmall: ({ theme }) => ({
+      fontSize: theme.typography.pxToRem(CHIP_ICON_PX_SM),
     }),
 
     filled: ({ theme, ownerState }) => {
