@@ -27,7 +27,7 @@ export const PlatformHeader = ({
   return (
     <AppBar position="sticky">
       <Container maxWidth="lg">
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ py: 2 }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ py: 1 }}>
           <Logo href={logoHref} width={LAYOUT.platformLogoSize} height={LAYOUT.platformLogoSize} />
 
           <PlatformUserMenu
