@@ -44,8 +44,13 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
   const handleLabelChange = (labelId: string | null) =>
     updateSession.mutate({ sessionId: session.id, data: { labelId } });
 
-  const handleFreezeChange = (next: boolean) =>
+  const handleFreezeChange = (next: boolean) => {
+    if (next === session.freezeLoadsAtCreation) {
+      return;
+    }
+
     updateSession.mutate({ sessionId: session.id, data: { freezeLoadsAtCreation: next } });
+  };
 
   const handleNotesCommit = (next: string) =>
     updateSession.mutate({

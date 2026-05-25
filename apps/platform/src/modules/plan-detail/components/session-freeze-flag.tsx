@@ -13,6 +13,8 @@ type SessionFreezeFlagProps = {
 const FROZEN_TOOLTIP = "% loads frozen to athlete's current 1RM at session creation";
 const LIVE_TOOLTIP = "Click to freeze % loads to kg when this session is created";
 
+const tooltipWrapStyle = { display: "inline-flex" } as const;
+
 export const SessionFreezeFlag: React.FC<SessionFreezeFlagProps> = ({
   value,
   onChange,
@@ -21,32 +23,36 @@ export const SessionFreezeFlag: React.FC<SessionFreezeFlagProps> = ({
   if (value) {
     return (
       <Tooltip title={FROZEN_TOOLTIP}>
-        <Chip
-          size="small"
-          color="info"
-          icon={<LockIcon />}
-          label="frozen"
-          clickable
-          onClick={() => onChange(false)}
-          disabled={disabled}
-          aria-label="Freeze: frozen (click to switch to live)"
-        />
+        <span style={tooltipWrapStyle}>
+          <Chip
+            size="small"
+            color="info"
+            icon={<LockIcon />}
+            label="frozen"
+            clickable
+            onClick={() => onChange(false)}
+            disabled={disabled}
+            aria-label="Freeze: frozen (click to switch to live)"
+          />
+        </span>
       </Tooltip>
     );
   }
 
   return (
     <Tooltip title={LIVE_TOOLTIP}>
-      <Chip
-        size="small"
-        variant="outlined"
-        icon={<LockOpenIcon />}
-        label="live"
-        clickable
-        onClick={() => onChange(true)}
-        disabled={disabled}
-        aria-label="Freeze: live (click to freeze)"
-      />
+      <span style={tooltipWrapStyle}>
+        <Chip
+          size="small"
+          variant="outlined"
+          icon={<LockOpenIcon />}
+          label="live"
+          clickable
+          onClick={() => onChange(true)}
+          disabled={disabled}
+          aria-label="Freeze: live (click to freeze)"
+        />
+      </span>
     </Tooltip>
   );
 };
