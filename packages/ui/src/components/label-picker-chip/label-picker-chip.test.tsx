@@ -220,4 +220,22 @@ describe("LabelPickerChip", () => {
     expect(chip).not.toHaveClass("MuiChip-clickable");
     expect(screen.queryByRole("menu")).toBeNull();
   });
+
+  it("applies maxWidth and ellipsis styling on the chip label for long label names (QA-005)", () => {
+    const longLabel = buildLabel({ id: "long-1", name: "A".repeat(200) });
+    const { container } = render(
+      <LabelPickerChip value={longLabel} options={[longLabel]} level="DAY" onChange={vi.fn()} />,
+    );
+    const chipRoot = container.querySelector(".MuiChip-root");
+    const chipLabel = container.querySelector(".MuiChip-label");
+
+    expect(chipRoot).not.toBeNull();
+    expect(chipLabel).not.toBeNull();
+    expect(chipRoot).toHaveStyle({ maxWidth: "320px" });
+    expect(chipLabel).toHaveStyle({
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+    });
+  });
 });

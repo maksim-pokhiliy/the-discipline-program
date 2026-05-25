@@ -108,4 +108,22 @@ describe("computeDayStats", () => {
 
     expect(computeDayStats(sessions).estMinutes).toBe(90);
   });
+
+  it("rejects partial 'min' prefix inside a longer word like 'minute' (QA-006)", () => {
+    const session = makeSession({ notes: "45 minute walk" });
+
+    expect(computeDayStats([session]).estMinutes).toBe(0);
+  });
+
+  it("accepts 'min' as the trailing token of the notes string (QA-006)", () => {
+    const session = makeSession({ notes: "60 min" });
+
+    expect(computeDayStats([session]).estMinutes).toBe(60);
+  });
+
+  it("accepts 'min' followed by trailing non-alpha tokens (QA-006)", () => {
+    const session = makeSession({ notes: "45 min total" });
+
+    expect(computeDayStats([session]).estMinutes).toBe(45);
+  });
 });

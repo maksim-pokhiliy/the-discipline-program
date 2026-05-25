@@ -268,6 +268,20 @@ describe("updateLabelSchema", () => {
   });
 });
 
+describe("Layer A intentional asymmetry (Layer B catches single-field patches)", () => {
+  it("accepts a single-field rest: true patch (Layer B catches post-merge against stored levels) (QA-001)", () => {
+    const result = updateLabelSchema.safeParse({ rest: true });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts a single-field applicableLevels: ['SESSION'] patch (Layer B catches post-merge against stored rest) (QA-001)", () => {
+    const result = updateLabelSchema.safeParse({ applicableLevels: ["SESSION"] });
+
+    expect(result.success).toBe(true);
+  });
+});
+
 describe("labelSchema", () => {
   it("rejects empty applicableLevels (QA-Must-5)", () => {
     const result = labelSchema.safeParse({ ...baseLabel, applicableLevels: [] });

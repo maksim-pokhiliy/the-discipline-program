@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { DEFAULT_LOCALE } from "@repo/shared";
+
 import { formatMonthShort } from "./format-month-short";
 
 describe("formatMonthShort", () => {
@@ -23,5 +25,12 @@ describe("formatMonthShort", () => {
     const date = new Date(2025, 2, 10);
 
     expect(formatMonthShort(date)).toBe(formatMonthShort(date));
+  });
+
+  it("uses shared DEFAULT_LOCALE for cross-app i18n consistency (QA-003)", () => {
+    const date = new Date(2025, 5, 15);
+    const expected = new Intl.DateTimeFormat(DEFAULT_LOCALE, { month: "short" }).format(date);
+
+    expect(formatMonthShort(date)).toBe(expected);
   });
 });
