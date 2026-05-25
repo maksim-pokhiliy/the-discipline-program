@@ -15,6 +15,7 @@ const CHIP_LABEL_PX = 10;
 const CHIP_LABEL_PX_SM = 6;
 const CHIP_FONT_SM_PX = 11;
 const CHIP_VARIANT_HEIGHT = 22;
+const CHIP_INDICATOR_HEIGHT = 18;
 const CHIP_INDICATOR_FONT_PX = 11;
 const CHIP_TAG_FONT_PX = 10;
 const CHIP_INDICATOR_RADIUS = 4;
@@ -48,12 +49,22 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
       },
 
       ...(ownerState.variant === "indicator" && {
-        height: CHIP_VARIANT_HEIGHT,
+        height: CHIP_INDICATOR_HEIGHT,
         fontWeight: 700,
         fontSize: theme.typography.pxToRem(CHIP_INDICATOR_FONT_PX),
         letterSpacing: "0.08em",
         textTransform: "uppercase",
         borderRadius: CHIP_INDICATOR_RADIUS,
+        backgroundColor: "transparent",
+        border: `1px solid ${
+          ownerState.color === undefined || ownerState.color === "default"
+            ? theme.palette.divider
+            : theme.palette[ownerState.color].main
+        }`,
+        color:
+          ownerState.color === undefined || ownerState.color === "default"
+            ? theme.palette.text.primary
+            : theme.palette[ownerState.color].main,
       }),
 
       ...(ownerState.variant === "tag" && {

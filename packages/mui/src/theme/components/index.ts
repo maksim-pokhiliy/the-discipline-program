@@ -19,7 +19,7 @@ import { MuiIconButton } from "./icon-button";
 import { MuiListItemButton } from "./list-item-button";
 import { MuiMenu, MuiMenuItem } from "./menu";
 import { MuiPaper } from "./paper";
-import { MuiPickersOutlinedInput } from "./pickers";
+import { MuiDatePicker, MuiPickersOutlinedInput } from "./pickers";
 import { MuiTab, MuiTabs } from "./tab";
 import { MuiTableCell, MuiTableRow } from "./table";
 import { MuiTablePagination } from "./table-pagination";
@@ -66,6 +66,7 @@ export const components: Components<Theme> & PickerComponents<Theme> = {
   MuiMenu,
   MuiMenuItem,
   MuiOutlinedInput,
+  MuiDatePicker,
   MuiPaper,
   MuiPickersOutlinedInput,
   MuiSelect,

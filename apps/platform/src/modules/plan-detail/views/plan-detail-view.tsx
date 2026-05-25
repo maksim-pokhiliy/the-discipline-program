@@ -53,14 +53,11 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
 
     switch (plan.status) {
       case TrainingPlanStatus.DRAFT:
-        return [
-          option(TrainingPlanStatus.ACTIVE, () => activate.mutate(planId)),
-          option(TrainingPlanStatus.ARCHIVED, () => archive.mutate(planId)),
-        ];
+        return [option(TrainingPlanStatus.ACTIVE, () => activate.mutate(planId))];
       case TrainingPlanStatus.ACTIVE:
         return [option(TrainingPlanStatus.ARCHIVED, () => archive.mutate(planId))];
       case TrainingPlanStatus.ARCHIVED:
-        return [option(TrainingPlanStatus.DRAFT, () => restore.mutate(planId))];
+        return [option(TrainingPlanStatus.ACTIVE, () => restore.mutate(planId))];
     }
   }, [plan, planId, activate, archive, restore]);
 

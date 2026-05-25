@@ -61,10 +61,9 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({ monday, onChange }
           <Button
             size="small"
             variant="outlined"
-            color={isToday ? "primary" : "inherit"}
+            color={isToday ? "inherit" : "primary"}
             startIcon={<TodayIcon fontSize="small" />}
             onClick={() => onChange(getMonday(new Date()))}
-            {...(!isToday && { sx: { borderColor: "divider" } })}
           >
             Today
           </Button>
