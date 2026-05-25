@@ -2,6 +2,7 @@
 
 import { type ReactElement } from "react";
 
+import CloseIcon from "@mui/icons-material/Close";
 import { Chip, type SxProps, type Theme } from "@mui/material";
 
 const outlinedSx: SxProps<Theme> = (theme) => ({
@@ -23,7 +24,7 @@ export const BlockLabel: React.FC<BlockLabelProps> = ({ text, filled, onDelete }
     variant="tag"
     color="default"
     label={text}
-    {...(onDelete !== undefined && { onDelete })}
+    {...(onDelete !== undefined && { onDelete, deleteIcon: <CloseIcon /> })}
     {...(filled !== true && { sx: outlinedSx })}
   />
 );

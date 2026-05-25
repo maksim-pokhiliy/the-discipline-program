@@ -20,6 +20,11 @@ const CHIP_INDICATOR_FONT_PX = 11;
 const CHIP_TAG_FONT_PX = 10;
 const CHIP_INDICATOR_RADIUS = 4;
 const CHIP_TAG_RADIUS = 2;
+const CHIP_TAG_DELETE_SIZE = 14;
+const CHIP_TAG_DELETE_ICON_PX = 12;
+const CHIP_TAG_DELETE_MARGIN_LEFT = 2;
+const CHIP_TAG_DELETE_MARGIN_RIGHT = 8;
+const CHIP_TAG_DELETE_OPACITY = 0.5;
 const TINT_PRIMARY = 0.18;
 const TINT_COLOR = 0.18;
 const TINT_PRIMARY_HOVER = 0.26;
@@ -76,6 +81,24 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
         borderRadius: CHIP_TAG_RADIUS,
         backgroundColor: theme.palette.text.primary,
         color: theme.palette.background.default,
+
+        "& .MuiChip-deleteIcon": {
+          width: CHIP_TAG_DELETE_SIZE,
+          height: CHIP_TAG_DELETE_SIZE,
+          fontSize: theme.typography.pxToRem(CHIP_TAG_DELETE_ICON_PX),
+          margin: 0,
+          marginLeft: CHIP_TAG_DELETE_MARGIN_LEFT,
+          marginRight: CHIP_TAG_DELETE_MARGIN_RIGHT,
+          borderRadius: CHIP_TAG_RADIUS,
+          opacity: CHIP_TAG_DELETE_OPACITY,
+          color: "inherit",
+          transition: theme.transitions.create(["opacity", "background-color"]),
+          "&:hover, &:active": {
+            opacity: 1,
+            color: "inherit",
+            backgroundColor: theme.palette.action.hover,
+          },
+        },
       }),
     }),
 

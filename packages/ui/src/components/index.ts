@@ -13,6 +13,7 @@ export * from "./image-upload";
 export * from "./indicator-chip";
 export * from "./inline-edit-text";
 export * from "./kbd-hint";
+export * from "./label-picker-chip";
 export * from "./label-select";
 export * from "./layout";
 export * from "./loading-state";

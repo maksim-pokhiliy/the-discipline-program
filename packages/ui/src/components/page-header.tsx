@@ -48,6 +48,14 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 onCommit={onTitleCommit ?? (() => {})}
                 variant="h1"
                 ariaLabel="Title"
+                sx={{
+                  flex: 1,
+                  minWidth: 0,
+                  "& .MuiInputBase-input": {
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  },
+                }}
               />
             ) : (
               <Typography variant="h1" component="h1" noWrap sx={{ flex: 1, minWidth: 0 }}>
