@@ -1,3 +1,5 @@
+"use client";
+
 import { type MouseEvent, useState } from "react";
 
 import { Chip, Menu, MenuItem } from "@mui/material";
