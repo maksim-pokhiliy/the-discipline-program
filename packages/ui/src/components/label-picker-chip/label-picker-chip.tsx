@@ -71,7 +71,7 @@ export const LabelPickerChip: React.FC<LabelPickerChipProps> = ({
         icon={leadingIcon}
         label={chipLabel}
         color={chipColor}
-        deleteIcon={<ExpandMoreIcon fontSize="small" />}
+        deleteIcon={<ExpandMoreIcon fontSize="small" aria-label="Change label" />}
         disabled={disabled}
         sx={chipSx}
         {...(ariaLabel !== undefined && { "aria-label": ariaLabel })}
