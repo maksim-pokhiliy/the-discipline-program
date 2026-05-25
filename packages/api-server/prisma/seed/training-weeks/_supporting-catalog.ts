@@ -18,6 +18,7 @@ type ExerciseSeed = {
 type LabelSeed = {
   name: string;
   applicableLevels: readonly AppLevel[];
+  rest?: boolean;
 };
 
 const EXERCISE_SEEDS = {
@@ -172,7 +173,7 @@ const EXERCISE_SEEDS = {
 
 const LABEL_SEEDS = {
   main: { name: "MAIN", applicableLevels: ["DAY", "SESSION"] },
-  restDay: { name: "REST DAY", applicableLevels: ["DAY"] },
+  restDay: { name: "REST DAY", applicableLevels: ["DAY"], rest: true },
   strength: { name: "STRENGTH", applicableLevels: ["BLOCK"] },
   lower: { name: "LOWER", applicableLevels: ["BLOCK"] },
   metcon: { name: "METCON", applicableLevels: ["BLOCK"] },
@@ -221,6 +222,7 @@ export const seedSupportingCatalog = async (db: PrismaClient): Promise<SeedCatal
           name: seed.name,
           nameLower: seed.name.toLowerCase(),
           applicableLevels: [...seed.applicableLevels],
+          rest: seed.rest ?? false,
         },
       });
 

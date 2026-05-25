@@ -786,6 +786,7 @@ model Label {
   nameLower        String   @unique
   applicableLevels Json
   notes            String?
+  rest             Boolean  @default(false)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

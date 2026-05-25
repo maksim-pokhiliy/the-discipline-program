@@ -262,4 +262,148 @@ describe("cmsLabelAdminApi", () => {
       ).rejects.toThrow(ZodError);
     });
   });
+
+  describe("rest field — round-trip + Layer B merge-then-validate", () => {
+    it("persists rest: true when applicableLevels = ['DAY'] on create", async () => {
+      const created = await cmsLabelAdminApi.createLabel(
+        parseInput({
+          name: `Rest Round-trip ${crypto.randomUUID().slice(0, 6)}`,
+          applicableLevels: ["DAY"],
+          rest: true,
+        }),
+      );
+
+      createdLabelIds.push(created.id);
+
+      expect(created.rest).toBe(true);
+      expect(created.applicableLevels).toEqual(["DAY"]);
+
+      const fetched = await cmsLabelAdminApi.getLabelById(created.id);
+
+      expect(fetched.rest).toBe(true);
+    });
+
+    it("persists rest: false when omitted from create payload", async () => {
+      const created = await cmsLabelAdminApi.createLabel(
+        parseInput({
+          name: `Rest Default ${crypto.randomUUID().slice(0, 6)}`,
+          applicableLevels: ["BLOCK"],
+        }),
+      );
+
+      createdLabelIds.push(created.id);
+
+      expect(created.rest).toBe(false);
+    });
+
+    it("toggles rest to true when patch includes both rest and DAY-only levels", async () => {
+      const created = await cmsLabelAdminApi.createLabel(
+        baseLabelData({
+          name: `Rest Toggle ${crypto.randomUUID().slice(0, 6)}`,
+          applicableLevels: ["DAY"],
+          rest: false,
+        }),
+      );
+
+      createdLabelIds.push(created.id);
+
+      const updated = await cmsLabelAdminApi.updateLabel(created.id, {
+        rest: true,
+        applicableLevels: ["DAY"],
+      });
+
+      expect(updated.rest).toBe(true);
+      expect(updated.applicableLevels).toEqual(["DAY"]);
+    });
+
+    it("preserves stored rest when patch omits the field", async () => {
+      const created = await cmsLabelAdminApi.createLabel(
+        baseLabelData({
+          name: `Rest Preserved ${crypto.randomUUID().slice(0, 6)}`,
+          applicableLevels: ["DAY"],
+          rest: true,
+        }),
+      );
+
+      createdLabelIds.push(created.id);
+
+      const updated = await cmsLabelAdminApi.updateLabel(created.id, {
+        notes: "added a coaching cue",
+      });
+
+      expect(updated.rest).toBe(true);
+      expect(updated.notes).toBe("added a coaching cue");
+    });
+
+    it("rejects single-field {rest: true} patch when stored applicableLevels include non-DAY", async () => {
+      const created = await cmsLabelAdminApi.createLabel(
+        baseLabelData({
+          name: `Rest Merge Reject ${crypto.randomUUID().slice(0, 6)}`,
+          applicableLevels: ["DAY", "SESSION"],
+          rest: false,
+        }),
+      );
+
+      createdLabelIds.push(created.id);
+
+      const error = await cmsLabelAdminApi
+        .updateLabel(created.id, { rest: true })
+        .catch((caught: unknown) => caught);
+
+      expect(error).toBeInstanceOf(BadRequestError);
+      expect(error).toMatchObject({
+        message: "Rest label must apply only to DAY level",
+        details: { field: "rest" },
+      });
+
+      const fetched = await cmsLabelAdminApi.getLabelById(created.id);
+
+      expect(fetched.rest).toBe(false);
+      expect(fetched.applicableLevels).toEqual(["DAY", "SESSION"]);
+    });
+
+    it("rejects single-field {applicableLevels: ['SESSION']} patch when stored rest is true", async () => {
+      const created = await cmsLabelAdminApi.createLabel(
+        baseLabelData({
+          name: `Rest Levels Reject ${crypto.randomUUID().slice(0, 6)}`,
+          applicableLevels: ["DAY"],
+          rest: true,
+        }),
+      );
+
+      createdLabelIds.push(created.id);
+
+      const error = await cmsLabelAdminApi
+        .updateLabel(created.id, { applicableLevels: ["SESSION"] })
+        .catch((caught: unknown) => caught);
+
+      expect(error).toBeInstanceOf(BadRequestError);
+      expect(error).toMatchObject({ details: { field: "rest" } });
+
+      const fetched = await cmsLabelAdminApi.getLabelById(created.id);
+
+      expect(fetched.applicableLevels).toEqual(["DAY"]);
+      expect(fetched.rest).toBe(true);
+    });
+
+    it("accepts {rest: false, applicableLevels: ['SESSION']} patch (mutex doesn't apply when rest is off)", async () => {
+      const created = await cmsLabelAdminApi.createLabel(
+        baseLabelData({
+          name: `Rest Off ${crypto.randomUUID().slice(0, 6)}`,
+          applicableLevels: ["DAY"],
+          rest: true,
+        }),
+      );
+
+      createdLabelIds.push(created.id);
+
+      const updated = await cmsLabelAdminApi.updateLabel(created.id, {
+        rest: false,
+        applicableLevels: ["SESSION"],
+      });
+
+      expect(updated.rest).toBe(false);
+      expect(updated.applicableLevels).toEqual(["SESSION"]);
+    });
+  });
 });

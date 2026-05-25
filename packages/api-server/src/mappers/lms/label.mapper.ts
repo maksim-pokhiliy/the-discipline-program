@@ -8,7 +8,7 @@ export const mapToLabel = (row: PrismaLabel): Label => ({
   nameLower: row.nameLower,
   applicableLevels: row.applicableLevels as AppLevelValue[],
   notes: row.notes,
-  rest: false,
+  rest: row.rest,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
 });
