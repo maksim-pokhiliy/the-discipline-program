@@ -18,6 +18,7 @@ const baseLabelData = (overrides: Partial<CreateLabelData> = {}): CreateLabelDat
   name: `Test Label ${crypto.randomUUID().slice(0, 8)}`,
   applicableLevels: ["DAY"],
   notes: null,
+  rest: false,
   ...overrides,
 });
 

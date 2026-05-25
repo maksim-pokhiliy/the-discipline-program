@@ -18,6 +18,7 @@ const baseLabel = {
   nameLower: "push day",
   applicableLevels: ["DAY"] as const,
   notes: null,
+  rest: false,
   createdAt: new Date(),
   updatedAt: new Date(),
 };

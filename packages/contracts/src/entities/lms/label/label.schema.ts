@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { APP_LEVELS, LABEL_CONSTANTS } from "./label.constants";
+import { APP_LEVELS, type AppLevelValue, LABEL_CONSTANTS } from "./label.constants";
 
 const ZERO_WIDTH_RE = /\u200B|\u200C|\u200D|\uFEFF|\u2060/g;
 
@@ -19,22 +19,49 @@ const applicableLevelsSchema = z
     message: "Applicable levels must be unique",
   });
 
-export const labelSchema = z.object({
-  id: z.string().cuid(),
-  name: z.string().min(1).max(LABEL_CONSTANTS.MAX_NAME_LENGTH),
-  nameLower: z.string(),
-  applicableLevels: applicableLevelsSchema,
-  notes: z.string().nullable(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
+const isDayOnly = (levels: readonly AppLevelValue[]): boolean =>
+  levels.length === 1 && levels[0] === "DAY";
+
+export const REST_MUTEX_MESSAGE = "Rest label must apply only to DAY level";
+
+export const restMutexBothPresent = (data: {
+  rest?: boolean | undefined;
+  applicableLevels?: readonly AppLevelValue[] | undefined;
+}): boolean => {
+  if (data.rest !== true || data.applicableLevels === undefined) {
+    return true;
+  }
+
+  return isDayOnly(data.applicableLevels);
+};
+
+const restMutexRefineError = {
+  message: REST_MUTEX_MESSAGE,
+  path: ["rest"],
+};
+
+export const labelSchema = z
+  .object({
+    id: z.string().cuid(),
+    name: z.string().min(1).max(LABEL_CONSTANTS.MAX_NAME_LENGTH),
+    nameLower: z.string(),
+    applicableLevels: applicableLevelsSchema,
+    notes: z.string().nullable(),
+    rest: z.boolean(),
+    createdAt: z.date(),
+    updatedAt: z.date(),
+  })
+  .refine(restMutexBothPresent, restMutexRefineError);
 
 const labelFormBase = z.object({
   name: normalizedString(LABEL_CONSTANTS.MAX_NAME_LENGTH),
   applicableLevels: applicableLevelsSchema,
   notes: z.string().max(LABEL_CONSTANTS.MAX_NOTES_LENGTH).nullable().optional(),
+  rest: z.boolean().optional().default(false),
 });
 
-export const createLabelSchema = labelFormBase;
+export const createLabelSchema = labelFormBase.refine(restMutexBothPresent, restMutexRefineError);
 
-export const updateLabelSchema = labelFormBase.partial();
+export const updateLabelSchema = labelFormBase
+  .partial()
+  .refine(restMutexBothPresent, restMutexRefineError);
