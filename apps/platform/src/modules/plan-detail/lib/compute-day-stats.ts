@@ -1,6 +1,6 @@
 import type { SessionWithLabel } from "@repo/contracts/lms/day";
 
-const EST_MINUTES_PATTERN = /(\d+)\s*min/i;
+const EST_MINUTES_PATTERN = /(\d+)\s*min(?![a-z])/i;
 
 export type DayStats = {
   blocks: number;

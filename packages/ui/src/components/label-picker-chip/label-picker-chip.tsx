@@ -20,6 +20,12 @@ const LEADING_ICON_OPACITY = 0.7;
 
 const chipSx: SxProps<Theme> = (theme) => ({
   borderRadius: theme.spacing(0.25),
+  maxWidth: theme.spacing(40),
+  "& .MuiChip-label": {
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  },
   "& .MuiChip-icon": {
     fontSize: theme.typography.pxToRem(LEADING_ICON_PX),
     opacity: LEADING_ICON_OPACITY,
