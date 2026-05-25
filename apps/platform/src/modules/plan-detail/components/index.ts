@@ -11,8 +11,6 @@ export { BlockLabelSelect } from "./block-label-select";
 export { BlockList } from "./block-list";
 export { BlockNotesField } from "./block-notes-field";
 export { BlockTimeCapSummary } from "./block-time-cap-summary";
-export { DayLabelSelect } from "./day-label-select";
-export { DayNotesField } from "./day-notes-field";
 export { DayRow } from "./day-row";
 export { EffortPercentField } from "./effort-percent-field";
 export { HrZoneField } from "./hr-zone-field";
