@@ -8,6 +8,7 @@ import { type CreateLabelData } from "@repo/contracts/lms/label";
 import { FormCard } from "@app/lib/components/form-card";
 
 import { ApplicableLevelsField } from "./applicable-levels-field";
+import { RestSwitchField } from "./rest-switch-field";
 
 type LabelFormProps = {
   isLoading: boolean;
@@ -55,7 +56,10 @@ export const LabelForm = ({ isLoading }: LabelFormProps) => {
 
       <Grid size={{ xs: 12, lg: 4 }}>
         <FormCard title="Applicable levels">
-          <ApplicableLevelsField isLoading={isLoading} />
+          <Stack spacing={2}>
+            <ApplicableLevelsField isLoading={isLoading} />
+            <RestSwitchField isLoading={isLoading} />
+          </Stack>
         </FormCard>
       </Grid>
     </Grid>

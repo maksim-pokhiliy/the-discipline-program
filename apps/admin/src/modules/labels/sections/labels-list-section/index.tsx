@@ -13,6 +13,7 @@ import { formatDate } from "@repo/shared";
 import {
   ConfirmationModal,
   DataTable,
+  IndicatorChip,
   useDataTableUrlState,
   type Column,
   type DataTableFilter,
@@ -66,7 +67,7 @@ export const LabelsListSection = ({ labels }: LabelsListSectionProps) => {
       {
         id: "applicableLevels",
         label: "Applicable Levels",
-        width: "30%",
+        width: "25%",
         render: (label) => (
           <Stack direction="row" spacing={1}>
             {label.applicableLevels.map((level) => (
@@ -76,9 +77,16 @@ export const LabelsListSection = ({ labels }: LabelsListSectionProps) => {
         ),
       },
       {
+        id: "rest",
+        label: "Rest",
+        width: "10%",
+        render: (label) =>
+          label.rest === true ? <IndicatorChip tone="info" label="REST" /> : null,
+      },
+      {
         id: "createdAt",
         label: "Created",
-        width: "15%",
+        width: "10%",
         sortable: true,
         sortValue: (label) => new Date(label.createdAt).getTime(),
         render: (label) => <Typography variant="body2">{formatDate(label.createdAt)}</Typography>,

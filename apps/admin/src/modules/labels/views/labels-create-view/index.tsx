@@ -22,6 +22,7 @@ export const LabelsCreateView = () => {
       name: "",
       applicableLevels: [],
       notes: null,
+      rest: false,
     },
   });
 
