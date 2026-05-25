@@ -239,3 +239,163 @@ describe("LabelPickerChip", () => {
     });
   });
 });
+
+describe("LabelPickerChip multi-mode", () => {
+  it("renders only the +label trigger when value is empty", () => {
+    render(
+      <LabelPickerChip
+        multiple
+        value={[]}
+        options={[dayOption, skillOption]}
+        level="BLOCK"
+        onChange={vi.fn()}
+      />,
+    );
+
+    const trigger = screen.getByLabelText("Add block label");
+
+    expect(trigger).toBeInTheDocument();
+    expect(trigger).toHaveTextContent("+ label");
+  });
+
+  it("renders one chip per selected label plus the +label trigger when partial", () => {
+    const { container } = render(
+      <LabelPickerChip
+        multiple
+        value={[dayOption]}
+        options={[dayOption, skillOption]}
+        level="BLOCK"
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("MAIN")).toBeInTheDocument();
+    expect(screen.getByLabelText("Add block label")).toBeInTheDocument();
+
+    const chips = container.querySelectorAll(".MuiChip-root");
+
+    expect(chips).toHaveLength(2);
+  });
+
+  it("opens menu listing only unselected options when trigger is clicked", () => {
+    render(
+      <LabelPickerChip
+        multiple
+        value={[dayOption]}
+        options={[dayOption, skillOption]}
+        level="BLOCK"
+        onChange={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("Add block label"));
+
+    const menu = screen.getByRole("menu");
+    const items = within(menu).getAllByRole("menuitem");
+
+    expect(items).toHaveLength(1);
+    expect(within(menu).getByText("SKILL")).toBeInTheDocument();
+  });
+
+  it("fires onChange with appended ids when a menu option is selected", () => {
+    const onChange = vi.fn();
+
+    render(
+      <LabelPickerChip
+        multiple
+        value={[dayOption]}
+        options={[dayOption, skillOption]}
+        level="BLOCK"
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("Add block label"));
+    fireEvent.click(screen.getByRole("menuitem", { name: "SKILL" }));
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith(["day-1", "day-3"]);
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("fires onChange with filtered ids when a chip onDelete is clicked", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <LabelPickerChip
+        multiple
+        value={[dayOption, skillOption]}
+        options={[dayOption, skillOption]}
+        level="BLOCK"
+        onChange={onChange}
+      />,
+    );
+
+    const firstDeleteIcon = container.querySelector(".MuiChip-deleteIcon");
+
+    expect(firstDeleteIcon).not.toBeNull();
+
+    if (firstDeleteIcon === null) {
+      throw new Error("first deleteIcon node missing");
+    }
+
+    fireEvent.click(firstDeleteIcon);
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith(["day-3"]);
+  });
+
+  it("renders the trigger as disabled with 'All labels added' copy when all options are selected", () => {
+    render(
+      <LabelPickerChip
+        multiple
+        value={[dayOption, skillOption]}
+        options={[dayOption, skillOption]}
+        level="BLOCK"
+        onChange={vi.fn()}
+      />,
+    );
+
+    const trigger = screen.getByLabelText("Add block label");
+
+    expect(trigger).toHaveTextContent("All labels added");
+    expect(trigger).toHaveClass("Mui-disabled");
+
+    fireEvent.click(trigger);
+
+    expect(screen.queryByRole("menu")).toBeNull();
+  });
+
+  it("does not render onDelete on chips when disabled", () => {
+    const { container } = render(
+      <LabelPickerChip
+        multiple
+        value={[dayOption, skillOption]}
+        options={[dayOption, skillOption]}
+        level="BLOCK"
+        disabled
+        onChange={vi.fn()}
+      />,
+    );
+
+    const deleteIcons = container.querySelectorAll(".MuiChip-deleteIcon");
+
+    expect(deleteIcons).toHaveLength(0);
+  });
+
+  it("shows loading copy on the trigger when isLoading", () => {
+    render(
+      <LabelPickerChip
+        multiple
+        value={[]}
+        options={[dayOption, skillOption]}
+        level="BLOCK"
+        isLoading
+        onChange={vi.fn()}
+      />,
+    );
+
+    const trigger = screen.getByLabelText("Add block label");
+
+    expect(trigger).toHaveTextContent("Loading…");
+  });
+});
