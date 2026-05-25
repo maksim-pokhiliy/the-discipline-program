@@ -11,12 +11,14 @@ declare module "@mui/material/Chip" {
 const CHIP_HEIGHT = 24;
 const CHIP_HEIGHT_SM = 20;
 const CHIP_RADIUS = 12;
+const CHIP_LABEL_PX = 10;
 const CHIP_LABEL_PX_SM = 6;
 const CHIP_FONT_SM_PX = 11;
 const CHIP_VARIANT_HEIGHT = 22;
+const CHIP_INDICATOR_HEIGHT = 18;
 const CHIP_INDICATOR_FONT_PX = 11;
 const CHIP_TAG_FONT_PX = 10;
-const CHIP_INDICATOR_RADIUS = 9999;
+const CHIP_INDICATOR_RADIUS = 4;
 const CHIP_TAG_RADIUS = 2;
 const TINT_PRIMARY = 0.18;
 const TINT_COLOR = 0.18;
@@ -41,11 +43,28 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
       height: CHIP_HEIGHT,
       borderRadius: CHIP_RADIUS,
 
+      "& .MuiChip-label": {
+        paddingLeft: CHIP_LABEL_PX,
+        paddingRight: CHIP_LABEL_PX,
+      },
+
       ...(ownerState.variant === "indicator" && {
-        height: CHIP_VARIANT_HEIGHT,
-        fontWeight: 600,
+        height: CHIP_INDICATOR_HEIGHT,
+        fontWeight: 700,
         fontSize: theme.typography.pxToRem(CHIP_INDICATOR_FONT_PX),
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
         borderRadius: CHIP_INDICATOR_RADIUS,
+        backgroundColor: "transparent",
+        border: `1px solid ${
+          ownerState.color === undefined || ownerState.color === "default"
+            ? theme.palette.divider
+            : theme.palette[ownerState.color].main
+        }`,
+        color:
+          ownerState.color === undefined || ownerState.color === "default"
+            ? theme.palette.text.primary
+            : theme.palette[ownerState.color].main,
       }),
 
       ...(ownerState.variant === "tag" && {

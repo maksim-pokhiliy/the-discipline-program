@@ -1,4 +1,4 @@
-import { Stack } from "@mui/material";
+import { Card, Divider, Stack } from "@mui/material";
 
 import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
 import type { DaySlot } from "@repo/contracts/lms/day";
@@ -17,29 +17,31 @@ export const WeekGrid: React.FC<WeekGridProps> = ({ planId, monday, days }) => {
   const dates = getWeekDays(monday);
 
   return (
-    <Stack sx={{ borderTop: 1, borderColor: "divider" }}>
-      {dayOfWeekValues.map((dayOfWeek, idx) => {
-        const date = dates[idx];
+    <Card variant="outlined">
+      <Stack divider={<Divider flexItem />}>
+        {dayOfWeekValues.map((dayOfWeek, idx) => {
+          const date = dates[idx];
 
-        if (!date) {
-          return null;
-        }
+          if (!date) {
+            return null;
+          }
 
-        const day = days.find((d) => d.dayOfWeek === dayOfWeek);
+          const day = days.find((d) => d.dayOfWeek === dayOfWeek);
 
-        return (
-          <DayRow
-            key={formatDateParam(date)}
-            date={date}
-            planId={planId}
-            startDate={startDate}
-            dayOfWeek={dayOfWeek}
-            label={day?.label ?? null}
-            notes={day?.notes ?? null}
-            sessions={day?.sessions ?? []}
-          />
-        );
-      })}
-    </Stack>
+          return (
+            <DayRow
+              key={formatDateParam(date)}
+              date={date}
+              planId={planId}
+              startDate={startDate}
+              dayOfWeek={dayOfWeek}
+              label={day?.label ?? null}
+              notes={day?.notes ?? null}
+              sessions={day?.sessions ?? []}
+            />
+          );
+        })}
+      </Stack>
+    </Card>
   );
 };

@@ -2,11 +2,19 @@
 
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { IconButton, Stack, Typography } from "@mui/material";
+import TodayIcon from "@mui/icons-material/Today";
+import { Button, Card, Chip, IconButton, Stack, Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { isValid } from "date-fns";
 
-import { addDays, DAYS_IN_WEEK, formatWeekRange, getISOWeekNumber, getMonday } from "@repo/shared";
+import {
+  addDays,
+  DAYS_IN_WEEK,
+  formatDateParam,
+  formatWeekRange,
+  getISOWeekNumber,
+  getMonday,
+} from "@repo/shared";
 
 type WeekNavigatorProps = {
   monday: Date;
@@ -20,34 +28,47 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({ monday, onChange }
     }
   };
 
-  return (
-    <Stack spacing={1} alignItems="flex-end">
-      <Stack direction="row" spacing={1} alignItems="center">
-        <IconButton
-          aria-label="Previous week"
-          onClick={() => onChange(addDays(monday, -DAYS_IN_WEEK))}
-        >
-          <ChevronLeftIcon />
-        </IconButton>
-        <Typography variant="subtitle1">
-          {`${formatWeekRange(monday)} · W${getISOWeekNumber(monday)}`}
-        </Typography>
-        <IconButton aria-label="Next week" onClick={() => onChange(addDays(monday, DAYS_IN_WEEK))}>
-          <ChevronRightIcon />
-        </IconButton>
-      </Stack>
+  const isToday = formatDateParam(monday) === formatDateParam(getMonday(new Date()));
 
-      <Stack direction="row">
-        <DatePicker
-          label="Jump to date"
-          value={monday}
-          onChange={handleDateChange}
-          slotProps={{
-            textField: { size: "small" },
-            actionBar: { actions: ["today"] },
-          }}
-        />
+  return (
+    <Card variant="outlined" sx={{ p: 1.25, px: 1.75 }}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
+        <Stack direction="row" alignItems="center" spacing={1.5}>
+          <IconButton
+            size="large"
+            aria-label="Previous week"
+            onClick={() => onChange(addDays(monday, -DAYS_IN_WEEK))}
+          >
+            <ChevronLeftIcon />
+          </IconButton>
+          <Typography variant="h4">{formatWeekRange(monday)}</Typography>
+          <Chip variant="indicator" color="primary" label={`W ${getISOWeekNumber(monday)}`} />
+          <IconButton
+            size="large"
+            aria-label="Next week"
+            onClick={() => onChange(addDays(monday, DAYS_IN_WEEK))}
+          >
+            <ChevronRightIcon />
+          </IconButton>
+        </Stack>
+
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <DatePicker
+            value={monday}
+            onChange={handleDateChange}
+            slotProps={{ textField: { size: "small" } }}
+          />
+          <Button
+            size="small"
+            variant="outlined"
+            color={isToday ? "inherit" : "primary"}
+            startIcon={<TodayIcon fontSize="small" />}
+            onClick={() => onChange(getMonday(new Date()))}
+          >
+            Today
+          </Button>
+        </Stack>
       </Stack>
-    </Stack>
+    </Card>
   );
 };

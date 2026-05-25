@@ -82,14 +82,12 @@ export const typography = (baseTheme: Theme): NonNullable<ThemeOptions["typograp
     },
 
     h1: {
-      fontWeight: 400,
-      fontSize: baseTheme.typography.pxToRem(40),
-
-      lineHeight: 1.3,
-
-      [baseTheme.breakpoints.down("md")]: {
-        fontSize: baseTheme.typography.pxToRem(32),
-      },
+      fontFamily: FONT_DISPLAY,
+      fontWeight: 700,
+      fontSize: baseTheme.typography.pxToRem(36),
+      lineHeight: 1,
+      letterSpacing: "-0.01em",
+      textTransform: "uppercase" as const,
     },
 
     h2: {
@@ -106,9 +104,12 @@ export const typography = (baseTheme: Theme): NonNullable<ThemeOptions["typograp
     h3,
 
     h4: {
-      fontSize: baseTheme.typography.pxToRem(20),
-
-      lineHeight: 1.4,
+      fontFamily: FONT_DISPLAY,
+      fontWeight: 700,
+      fontSize: baseTheme.typography.pxToRem(22),
+      lineHeight: 1,
+      letterSpacing: "-0.005em",
+      textTransform: "uppercase" as const,
     },
 
     h5: {

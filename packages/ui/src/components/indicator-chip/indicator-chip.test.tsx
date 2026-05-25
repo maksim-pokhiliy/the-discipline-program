@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { fireEvent, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 
 import { render } from "../../test/render";
 
@@ -38,5 +39,60 @@ describe("IndicatorChip", () => {
     const icon = container.querySelector(".MuiChip-icon");
 
     expect(icon).not.toBeNull();
+  });
+
+  it("fires onClick when chip is clicked", () => {
+    const handleClick = vi.fn();
+
+    render(<IndicatorChip tone="primary" label="Today" clickable onClick={handleClick} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Today" }));
+    expect(handleClick).toHaveBeenCalledTimes(1);
+  });
+
+  it("applies clickable className when clickable is true", () => {
+    const { container } = render(
+      <IndicatorChip tone="primary" label="Today" clickable onClick={vi.fn()} />,
+    );
+    const chip = container.querySelector(".MuiChip-root");
+
+    expect(chip).not.toBeNull();
+    expect(chip).toHaveClass("MuiChip-clickable");
+  });
+
+  it("omits clickable className when clickable is not set", () => {
+    const { container } = render(<IndicatorChip tone="primary" label="Today" />);
+    const chip = container.querySelector(".MuiChip-root");
+
+    expect(chip).not.toBeNull();
+    expect(chip).not.toHaveClass("MuiChip-clickable");
+  });
+
+  it("replaces the default dot when icon prop is provided", () => {
+    const { container } = render(
+      <IndicatorChip tone="primary" label="Today" icon={<span data-testid="custom-icon" />} />,
+    );
+    const customIcon = screen.getByTestId("custom-icon");
+    const iconSlot = container.querySelector(".MuiChip-icon");
+
+    expect(customIcon).toBeInTheDocument();
+    expect(iconSlot).not.toBeNull();
+    expect(iconSlot).toContainElement(customIcon);
+  });
+
+  it("does not crash when clickable is set without onClick (MT-04)", () => {
+    const { container } = render(<IndicatorChip tone="primary" label="Today" clickable />);
+    const chip = container.querySelector(".MuiChip-root");
+
+    expect(chip).not.toBeNull();
+    expect(chip).toHaveClass("MuiChip-clickable");
+  });
+
+  it("gets MuiChip-clickable when onClick is set without clickable (MT-04)", () => {
+    const { container } = render(<IndicatorChip tone="primary" label="Today" onClick={vi.fn()} />);
+    const chip = container.querySelector(".MuiChip-root");
+
+    expect(chip).not.toBeNull();
+    expect(chip).toHaveClass("MuiChip-clickable");
   });
 });

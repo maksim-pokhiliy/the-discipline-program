@@ -1,14 +1,24 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { formatDateParam, getMonday, parseDateParam } from "@repo/shared";
-import { PageHeader, QueryWrapper, StatusChip } from "@repo/ui";
+import { PageHeader, QueryWrapper, StatusSelectChip, type StatusOption } from "@repo/ui";
 
 import { PLAN_STATUS_CHIPS } from "@app/lib/config";
 import { LabelOptionsProvider } from "@app/lib/contexts";
-import { useTrainingPlan, useUpdateTrainingPlan, useWeek } from "@app/lib/hooks";
+import {
+  useActivateTrainingPlan,
+  useArchiveTrainingPlan,
+  useRestoreTrainingPlan,
+  useTrainingPlan,
+  useUpdateTrainingPlan,
+  useWeek,
+} from "@app/lib/hooks";
 
 import { WeekGrid, WeekNavigator, WeekNotes } from "../components";
 
@@ -26,6 +36,30 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
   const { data: plan, isLoading, error } = useTrainingPlan(planId);
   const { data: weekData } = useWeek(planId, formatDateParam(activeMonday));
   const updatePlan = useUpdateTrainingPlan();
+  const activate = useActivateTrainingPlan();
+  const archive = useArchiveTrainingPlan();
+  const restore = useRestoreTrainingPlan();
+
+  const statusOptions = useMemo<StatusOption[]>(() => {
+    if (!plan) {
+      return [];
+    }
+
+    const option = (target: TrainingPlanStatus, onSelect: () => void): StatusOption => ({
+      key: target,
+      ...PLAN_STATUS_CHIPS[target],
+      onSelect,
+    });
+
+    switch (plan.status) {
+      case TrainingPlanStatus.DRAFT:
+        return [option(TrainingPlanStatus.ACTIVE, () => activate.mutate(planId))];
+      case TrainingPlanStatus.ACTIVE:
+        return [option(TrainingPlanStatus.ARCHIVED, () => archive.mutate(planId))];
+      case TrainingPlanStatus.ARCHIVED:
+        return [option(TrainingPlanStatus.ACTIVE, () => restore.mutate(planId))];
+    }
+  }, [plan, planId, activate, archive, restore]);
 
   const pushWeekParam = (nextMonday: Date) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -38,13 +72,14 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
     <QueryWrapper isLoading={isLoading} error={error} data={plan} loadingMessage="Loading plan...">
       {(plan) => (
         <LabelOptionsProvider>
-          <Stack spacing={4}>
+          <Stack spacing={3}>
             <PageHeader
               editable
               title={plan.name}
               {...(plan.description !== null && { description: plan.description })}
-              backHref="/coach/plans"
-              actions={<StatusChip {...PLAN_STATUS_CHIPS[plan.status]} />}
+              actions={
+                <StatusSelectChip {...PLAN_STATUS_CHIPS[plan.status]} options={statusOptions} />
+              }
               onTitleCommit={(next) => updatePlan.mutate({ id: planId, data: { name: next } })}
               onDescriptionCommit={(next) =>
                 updatePlan.mutate({

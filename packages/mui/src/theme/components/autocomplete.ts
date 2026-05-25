@@ -1,6 +1,13 @@
 import { type Components, type Theme } from "@mui/material/styles";
 
 export const MuiAutocomplete: NonNullable<Components<Theme>["MuiAutocomplete"]> = {
+  defaultProps: {
+    slotProps: {
+      popupIndicator: { size: "small" },
+      clearIndicator: { size: "small" },
+    },
+  },
+
   styleOverrides: {
     paper: ({ theme }) => ({
       marginTop: theme.spacing(1),

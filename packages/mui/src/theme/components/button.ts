@@ -5,6 +5,19 @@ export const MuiButton: NonNullable<Components<Theme>["MuiButton"]> = {
     disableElevation: true,
   },
 
+  variants: [
+    {
+      props: { variant: "outlined", color: "inherit" },
+      style: ({ theme }) => ({
+        borderColor: theme.palette.divider,
+
+        "&:hover": {
+          borderColor: theme.palette.dividerStrong,
+        },
+      }),
+    },
+  ],
+
   styleOverrides: {
     root: ({ theme }) => ({
       fontWeight: 500,
@@ -20,9 +33,9 @@ export const MuiButton: NonNullable<Components<Theme>["MuiButton"]> = {
     }),
 
     sizeSmall: ({ theme }) => ({
-      fontSize: theme.typography.body2.fontSize,
-      padding: theme.spacing(0.5, 1.5),
-      minHeight: 32,
+      fontSize: theme.typography.pxToRem(11),
+      padding: theme.spacing(0.5, 1.25),
+      minHeight: 30,
     }),
 
     sizeMedium: ({ theme }) => ({

@@ -1,4 +1,5 @@
 import { type Components, type Theme } from "@mui/material/styles";
+import { type PickerComponents } from "@mui/x-date-pickers/themeAugmentation";
 
 import { MuiAccordion } from "./accordion";
 import { MuiAlert } from "./alert";
@@ -8,6 +9,7 @@ import { MuiAvatar } from "./avatar";
 import { MuiBadge } from "./badge";
 import { MuiBottomNavigation, MuiBottomNavigationAction } from "./bottom-navigation";
 import { MuiButton } from "./button";
+import { MuiButtonBase } from "./button-base";
 import { MuiCard, MuiCardActionArea, MuiCardActions, MuiCardContent } from "./card";
 import { MuiChip } from "./chip";
 import { MuiCssBaseline } from "./css-baseline";
@@ -17,6 +19,7 @@ import { MuiIconButton } from "./icon-button";
 import { MuiListItemButton } from "./list-item-button";
 import { MuiMenu, MuiMenuItem } from "./menu";
 import { MuiPaper } from "./paper";
+import { MuiDatePicker, MuiPickersOutlinedInput } from "./pickers";
 import { MuiTab, MuiTabs } from "./tab";
 import { MuiTableCell, MuiTableRow } from "./table";
 import { MuiTablePagination } from "./table-pagination";
@@ -33,7 +36,7 @@ import { MuiToggleButton } from "./toggle-button";
 import { MuiTooltip } from "./tooltip";
 import { MuiTypography } from "./typography";
 
-export const components: Components<Theme> = {
+export const components: Components<Theme> & PickerComponents<Theme> = {
   MuiAccordion,
   MuiAlert,
   MuiAppBar,
@@ -43,6 +46,7 @@ export const components: Components<Theme> = {
   MuiBottomNavigation,
   MuiBottomNavigationAction,
   MuiButton,
+  MuiButtonBase,
   MuiCard,
   MuiCardActionArea,
   MuiCardActions,
@@ -62,7 +66,9 @@ export const components: Components<Theme> = {
   MuiMenu,
   MuiMenuItem,
   MuiOutlinedInput,
+  MuiDatePicker,
   MuiPaper,
+  MuiPickersOutlinedInput,
   MuiSelect,
   MuiTab,
   MuiTableCell,
