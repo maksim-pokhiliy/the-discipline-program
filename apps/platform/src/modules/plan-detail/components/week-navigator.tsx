@@ -1,10 +1,9 @@
 "use client";
 
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import EventAvailableIcon from "@mui/icons-material/EventAvailable";
-import { Card, IconButton, Stack, Typography } from "@mui/material";
+import TodayIcon from "@mui/icons-material/Today";
+import { Button, Card, IconButton, Stack, Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { isValid } from "date-fns";
 
@@ -55,21 +54,21 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({ monday, onChange }
         </Stack>
 
         <Stack direction="row" alignItems="center" spacing={1}>
-          <Stack direction="row" alignItems="center" spacing={0.5}>
-            <CalendarMonthIcon fontSize="small" color="action" />
-            <DatePicker
-              value={monday}
-              onChange={handleDateChange}
-              slotProps={{ textField: { size: "small" } }}
-            />
-          </Stack>
-          <IndicatorChip
-            tone={isToday ? "primary" : "default"}
-            label="Today"
-            clickable
-            onClick={() => onChange(getMonday(new Date()))}
-            icon={<EventAvailableIcon fontSize="small" />}
+          <DatePicker
+            value={monday}
+            onChange={handleDateChange}
+            slotProps={{ textField: { size: "small" } }}
           />
+          <Button
+            size="small"
+            variant="outlined"
+            color={isToday ? "primary" : "inherit"}
+            startIcon={<TodayIcon fontSize="small" />}
+            onClick={() => onChange(getMonday(new Date()))}
+            {...(!isToday && { sx: { borderColor: "divider" } })}
+          >
+            Today
+          </Button>
         </Stack>
       </Stack>
     </Card>

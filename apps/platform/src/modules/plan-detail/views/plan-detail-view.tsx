@@ -1,14 +1,24 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { Stack } from "@mui/material";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
+import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { formatDateParam, getMonday, parseDateParam } from "@repo/shared";
-import { PageHeader, QueryWrapper, StatusChip } from "@repo/ui";
+import { PageHeader, QueryWrapper, StatusSelectChip, type StatusOption } from "@repo/ui";
 
 import { PLAN_STATUS_CHIPS } from "@app/lib/config";
 import { LabelOptionsProvider } from "@app/lib/contexts";
-import { useTrainingPlan, useUpdateTrainingPlan, useWeek } from "@app/lib/hooks";
+import {
+  useActivateTrainingPlan,
+  useArchiveTrainingPlan,
+  useRestoreTrainingPlan,
+  useTrainingPlan,
+  useUpdateTrainingPlan,
+  useWeek,
+} from "@app/lib/hooks";
 
 import { WeekGrid, WeekNavigator, WeekNotes } from "../components";
 
@@ -26,6 +36,29 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
   const { data: plan, isLoading, error } = useTrainingPlan(planId);
   const { data: weekData } = useWeek(planId, formatDateParam(activeMonday));
   const updatePlan = useUpdateTrainingPlan();
+  const activate = useActivateTrainingPlan();
+  const archive = useArchiveTrainingPlan();
+  const restore = useRestoreTrainingPlan();
+
+  const statusOptions = useMemo<StatusOption[]>(() => {
+    if (!plan) {
+      return [];
+    }
+
+    switch (plan.status) {
+      case TrainingPlanStatus.DRAFT:
+        return [
+          { key: "activate", label: "Activate plan", onSelect: () => activate.mutate(planId) },
+          { key: "archive", label: "Archive plan", onSelect: () => archive.mutate(planId) },
+        ];
+      case TrainingPlanStatus.ACTIVE:
+        return [{ key: "archive", label: "Archive plan", onSelect: () => archive.mutate(planId) }];
+      case TrainingPlanStatus.ARCHIVED:
+        return [
+          { key: "restore", label: "Restore as draft", onSelect: () => restore.mutate(planId) },
+        ];
+    }
+  }, [plan, planId, activate, archive, restore]);
 
   const pushWeekParam = (nextMonday: Date) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -43,7 +76,9 @@ export const PlanDetailView = ({ planId }: PlanDetailViewProps) => {
               editable
               title={plan.name}
               {...(plan.description !== null && { description: plan.description })}
-              actions={<StatusChip {...PLAN_STATUS_CHIPS[plan.status]} />}
+              actions={
+                <StatusSelectChip {...PLAN_STATUS_CHIPS[plan.status]} options={statusOptions} />
+              }
               onTitleCommit={(next) => updatePlan.mutate({ id: planId, data: { name: next } })}
               onDescriptionCommit={(next) =>
                 updatePlan.mutate({

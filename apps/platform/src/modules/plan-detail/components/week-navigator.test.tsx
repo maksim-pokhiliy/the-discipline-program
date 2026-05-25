@@ -138,25 +138,24 @@ describe("WeekNavigator", () => {
     );
   });
 
-  it("flips the Today chip tone to primary when monday is the current week (MT-09)", () => {
+  it("flips the Today button color to primary when monday is the current week (MT-09)", () => {
     const onChange = vi.fn();
     const todayMonday = getMonday(new Date());
 
-    const { container } = render(<WeekNavigator monday={todayMonday} onChange={onChange} />);
-    const todayChip = container.querySelector(".MuiChip-clickable");
+    render(<WeekNavigator monday={todayMonday} onChange={onChange} />);
+    const todayButton = screen.getByRole("button", { name: /Today/ });
 
-    expect(todayChip).not.toBeNull();
-    expect(todayChip).toHaveClass("MuiChip-colorPrimary");
+    expect(todayButton).toHaveClass("MuiButton-outlinedPrimary");
   });
 
-  it("flips the Today chip tone to default when monday is a different week (MT-09)", () => {
+  it("flips the Today button color to inherit when monday is a different week (MT-09)", () => {
     const onChange = vi.fn();
     const nextWeekMonday = addDays(getMonday(new Date()), DAYS_IN_WEEK);
 
-    const { container } = render(<WeekNavigator monday={nextWeekMonday} onChange={onChange} />);
-    const todayChip = container.querySelector(".MuiChip-clickable");
+    render(<WeekNavigator monday={nextWeekMonday} onChange={onChange} />);
+    const todayButton = screen.getByRole("button", { name: /Today/ });
 
-    expect(todayChip).not.toBeNull();
-    expect(todayChip).toHaveClass("MuiChip-colorDefault");
+    expect(todayButton).toHaveClass("MuiButton-outlinedInherit");
+    expect(todayButton).not.toHaveClass("MuiButton-outlinedPrimary");
   });
 });
