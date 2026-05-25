@@ -8,6 +8,7 @@ import { MuiAvatar } from "./avatar";
 import { MuiBadge } from "./badge";
 import { MuiBottomNavigation, MuiBottomNavigationAction } from "./bottom-navigation";
 import { MuiButton } from "./button";
+import { MuiButtonBase } from "./button-base";
 import { MuiCard, MuiCardActionArea, MuiCardActions, MuiCardContent } from "./card";
 import { MuiChip } from "./chip";
 import { MuiCssBaseline } from "./css-baseline";
@@ -43,6 +44,7 @@ export const components: Components<Theme> = {
   MuiBottomNavigation,
   MuiBottomNavigationAction,
   MuiButton,
+  MuiButtonBase,
   MuiCard,
   MuiCardActionArea,
   MuiCardActions,
