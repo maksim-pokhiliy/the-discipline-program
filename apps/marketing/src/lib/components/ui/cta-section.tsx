@@ -34,7 +34,7 @@ export const CTASection = ({ title, subtitle, buttonText, buttonHref }: CtaSecti
           </Typography>
         )}
 
-        <Typography variant="display2" component="h2">
+        <Typography variant="h2" component="h2">
           {title}
         </Typography>
       </Stack>

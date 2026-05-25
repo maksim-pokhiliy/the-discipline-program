@@ -14,7 +14,7 @@ export const ErrorPageContent = ({
   homeLabel = "Go home",
 }: ErrorPageContentProps) => (
   <Stack alignItems="center" justifyContent="center" sx={{ minHeight: "60vh", py: 4 }}>
-    <Typography variant="display2" color="error.main">
+    <Typography variant="h2" color="error.main">
       Error
     </Typography>
 

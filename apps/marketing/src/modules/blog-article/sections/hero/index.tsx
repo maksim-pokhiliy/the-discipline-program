@@ -26,7 +26,7 @@ export const BlogArticleHero = ({ post, labels }: BlogArticleHeroProps) => {
     <FullscreenSection backgroundImage={post.coverImage ?? "/images/pages/home-hero.png"} priority>
       <Chip label={BLOG_CATEGORY_LABELS[post.category]} color="primary" />
 
-      <Typography variant="display1" component="h1" textAlign="center">
+      <Typography variant="h1" component="h1" textAlign="center">
         {post.title}
       </Typography>
 

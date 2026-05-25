@@ -49,7 +49,7 @@ export const InviteView = ({ token, invite }: InviteViewProps) => {
           <Stack spacing={3} alignItems="center">
             <Logo priority />
 
-            <Typography variant="display2" component="h1" textAlign="center">
+            <Typography variant="h2" component="h1" textAlign="center">
               Welcome, {greetingName}
             </Typography>
 

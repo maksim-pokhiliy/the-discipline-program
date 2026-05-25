@@ -15,20 +15,6 @@ type Story = StoryObj<typeof meta>;
 const SAMPLE_TEXT = "The quick brown fox jumps over the lazy dog";
 const SAMPLE_SHORT = "The Discipline Program";
 
-export const CustomVariants: Story = {
-  render: () => (
-    <StoryPage>
-      <StorySection title="display1" direction="column">
-        <Typography variant="display1">{SAMPLE_SHORT}</Typography>
-      </StorySection>
-
-      <StorySection title="display2" direction="column">
-        <Typography variant="display2">{SAMPLE_SHORT}</Typography>
-      </StorySection>
-    </StoryPage>
-  ),
-};
-
 export const Headings: Story = {
   render: () => (
     <StoryPage>
@@ -104,8 +90,6 @@ export const AllVariants: Story = {
   render: () => (
     <StoryPage>
       <StorySection title="all variants — scale comparison" direction="column">
-        <Typography variant="display1">{SAMPLE_SHORT}</Typography>
-        <Typography variant="display2">{SAMPLE_SHORT}</Typography>
         <Typography variant="h1">{SAMPLE_SHORT}</Typography>
         <Typography variant="h2">{SAMPLE_SHORT}</Typography>
         <Typography variant="h3">{SAMPLE_SHORT}</Typography>
