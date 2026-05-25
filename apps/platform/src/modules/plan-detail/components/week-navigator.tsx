@@ -3,7 +3,7 @@
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import TodayIcon from "@mui/icons-material/Today";
-import { Button, Card, IconButton, Stack, Typography } from "@mui/material";
+import { Button, Card, Chip, IconButton, Stack, Typography } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { isValid } from "date-fns";
 
@@ -15,7 +15,6 @@ import {
   getISOWeekNumber,
   getMonday,
 } from "@repo/shared";
-import { IndicatorChip } from "@repo/ui";
 
 type WeekNavigatorProps = {
   monday: Date;
@@ -43,7 +42,7 @@ export const WeekNavigator: React.FC<WeekNavigatorProps> = ({ monday, onChange }
             <ChevronLeftIcon />
           </IconButton>
           <Typography variant="h4">{formatWeekRange(monday)}</Typography>
-          <IndicatorChip tone="primary" label={`W ${getISOWeekNumber(monday)}`} />
+          <Chip variant="indicator" color="primary" label={`W ${getISOWeekNumber(monday)}`} />
           <IconButton
             size="large"
             aria-label="Next week"
