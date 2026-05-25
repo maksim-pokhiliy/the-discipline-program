@@ -1,6 +1,6 @@
 export const LAYOUT = {
   logoSize: 64,
-  platformLogoSize: 36,
+  platformLogoSize: 52,
   sidebarLogoExpanded: 60,
   sidebarLogoCollapsed: 50,
   adminHeaderHeight: 64,

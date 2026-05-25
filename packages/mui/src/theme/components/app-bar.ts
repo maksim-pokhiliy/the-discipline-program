@@ -18,7 +18,7 @@ export const MuiToolbar: NonNullable<Components<Theme>["MuiToolbar"]> = {
   styleOverrides: {
     root: ({ theme }) => ({
       padding: theme.spacing(1.5, 2),
-      minHeight: 56,
+      height: "unset",
     }),
   },
 };
