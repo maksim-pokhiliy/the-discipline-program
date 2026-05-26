@@ -1,4 +1,4 @@
-import { type Intensity } from "@repo/contracts/lms/_shared";
+import { type Intensity, type TimeCap } from "@repo/contracts/lms/_shared";
 
 const EFFORT_PREFIX = "@ ";
 const EN_DASH = "–";
@@ -7,6 +7,11 @@ const RPE_PREFIX = "RPE ";
 const HR_PREFIX = "HR ";
 const PACE_PREFIX = "pace · ";
 const NUMERIC_PACE_SEPARATOR = " / ";
+
+export type BlockCtx = {
+  intensity: Intensity | null;
+  timeCap: TimeCap | null;
+};
 
 export type CascadeChipDescriptor = {
   text: string;
