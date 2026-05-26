@@ -81,7 +81,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
   };
 
   return (
-    <Stack spacing={1}>
+    <Stack direction="column">
       {sortedRows.length > 0 ? (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
@@ -104,7 +104,16 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
         </DndContext>
       ) : null}
 
-      <AddRowButton schemaId={schemaId} planId={planId} startDate={startDate} />
+      <Stack
+        sx={(theme) => ({
+          p: theme.spacing(1),
+          // px: theme.spacing(1.5),
+          // pt: theme.spacing(1.25),
+          // pb: theme.spacing(1.25),
+        })}
+      >
+        <AddRowButton schemaId={schemaId} planId={planId} startDate={startDate} />
+      </Stack>
     </Stack>
   );
 };

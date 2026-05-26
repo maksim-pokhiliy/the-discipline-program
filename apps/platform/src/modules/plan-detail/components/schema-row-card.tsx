@@ -198,8 +198,8 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
           href={fmt.demoUrl}
           target="_blank"
           rel="noopener noreferrer"
-          underline="hover"
-          sx={{
+          underline="none"
+          sx={(theme) => ({
             display: "inline-flex",
             alignItems: "center",
             gap: DEMO_GAP_FACTOR,
@@ -207,11 +207,16 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
             px: DEMO_PX_FACTOR,
             py: DEMO_PY_FACTOR,
             borderRadius: DEMO_BORDER_RADIUS_FACTOR,
-            "&:hover": { bgcolor: "action.hover", color: "primary.main" },
-          }}
+            "&:hover": {
+              bgcolor: "action.hover",
+              color: theme.palette.kind.load,
+            },
+          })}
         >
           <PlayCircleOutlineIcon fontSize="small" />
-          <Typography variant="caption">demo</Typography>
+          <Typography variant="caption" color="inherit">
+            demo
+          </Typography>
         </Link>
       ) : (
         <span />

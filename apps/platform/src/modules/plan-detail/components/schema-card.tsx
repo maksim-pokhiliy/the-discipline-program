@@ -163,20 +163,13 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         </Stack>
       ) : null}
 
-      <Stack
-        sx={(theme) => ({
-          px: theme.spacing(PADDING_X_FACTOR),
-          pb: theme.spacing(PADDING_B_FACTOR),
-        })}
-      >
-        <SchemaRowList
-          rows={schema.rows}
-          schemaId={schema.schema.id}
-          planId={planId}
-          startDate={startDate}
-          exerciseById={exerciseById}
-        />
-      </Stack>
+      <SchemaRowList
+        rows={schema.rows}
+        schemaId={schema.schema.id}
+        planId={planId}
+        startDate={startDate}
+        exerciseById={exerciseById}
+      />
 
       {!isSubSchema ? (
         <>
