@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { AlternatingGroup } from "@repo/contracts/lms/alternating-group";
 import type { Block } from "@repo/contracts/lms/block";
+import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { Label } from "@repo/contracts/lms/label";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
@@ -21,6 +22,9 @@ const assignLabelsMutate = vi.fn();
 const updateBlockState = { isPending: false };
 const deleteBlockState = { isPending: false };
 const assignLabelsState = { isPending: false };
+
+type ExercisesState = { data: Exercise[] | undefined; isError: boolean };
+const exercisesState: ExercisesState = { data: [], isError: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -39,15 +43,22 @@ vi.mock("@app/lib/hooks", async () => {
       mutate: assignLabelsMutate,
       isPending: assignLabelsState.isPending,
     }),
-    useExercises: () => ({ data: [] }),
+    useExercises: () => ({ data: exercisesState.data, isError: exercisesState.isError }),
   };
 });
 
 vi.mock("./schema-list", () => ({
-  SchemaList: ({ schemas }: { schemas: SchemaWithBody[] }) => (
-    <div data-testid="schema-list-mock">{`schema-list:${String(schemas.length)}:${schemas
-      .map((s) => s.schema.id)
-      .join(",")}`}</div>
+  SchemaList: ({
+    schemas,
+    exerciseById,
+  }: {
+    schemas: SchemaWithBody[];
+    exerciseById: ReadonlyMap<string, Exercise>;
+  }) => (
+    <div
+      data-testid="schema-list-mock"
+      data-exercise-count={String(exerciseById.size)}
+    >{`schema-list:${String(schemas.length)}:${schemas.map((s) => s.schema.id).join(",")}`}</div>
   ),
 }));
 
@@ -165,6 +176,8 @@ afterEach(() => {
   updateBlockState.isPending = false;
   deleteBlockState.isPending = false;
   assignLabelsState.isPending = false;
+  exercisesState.data = [];
+  exercisesState.isError = false;
   updateBlockMutate.mockReset();
   deleteBlockMutate.mockReset();
   assignLabelsMutate.mockReset();
@@ -501,6 +514,30 @@ describe("BlockCard mutation pending / actions", () => {
     expect(deleteBlockMutate).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("heading", { name: "Delete block" })).toBeInTheDocument();
     expect(screen.getByText("Delete this block?")).toBeInTheDocument();
+  });
+});
+
+describe("BlockCard useExercises graceful fallback (QA-Must-11)", () => {
+  it("passes an empty exerciseById Map to SchemaList when useExercises succeeds with empty data", () => {
+    exercisesState.data = [];
+    exercisesState.isError = false;
+
+    renderBlockCard({ block: makeBlock({ schemas: [makeSchema()] }) });
+
+    const schemaList = screen.getByTestId("schema-list-mock");
+
+    expect(schemaList).toHaveAttribute("data-exercise-count", "0");
+  });
+
+  it("passes an empty exerciseById Map to SchemaList when useExercises is in an error state with undefined data", () => {
+    exercisesState.data = undefined;
+    exercisesState.isError = true;
+
+    renderBlockCard({ block: makeBlock({ schemas: [makeSchema()] }) });
+
+    const schemaList = screen.getByTestId("schema-list-mock");
+
+    expect(schemaList).toHaveAttribute("data-exercise-count", "0");
   });
 });
 

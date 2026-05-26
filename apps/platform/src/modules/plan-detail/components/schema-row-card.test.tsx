@@ -216,6 +216,23 @@ describe("SchemaRowCard demo link", () => {
 
     expect(screen.queryByRole("link", { name: /demo/ })).toBeNull();
   });
+
+  it("focuses the demo link when programmatically focused (accessibility — QA-Must-14)", () => {
+    renderRowCard();
+
+    const link = screen.getByRole("link", { name: /demo/ });
+
+    if (!(link instanceof HTMLAnchorElement)) {
+      throw new Error("expected demo link to be an HTMLAnchorElement");
+    }
+
+    expect(link).not.toHaveAttribute("tabindex", "-1");
+    expect(link).not.toHaveAttribute("aria-hidden", "true");
+
+    link.focus();
+
+    expect(link).toHaveFocus();
+  });
 });
 
 describe("SchemaRowCard kebab menu interactions", () => {

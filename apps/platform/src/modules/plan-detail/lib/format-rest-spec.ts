@@ -45,6 +45,11 @@ const formatScopeSuffix = (rest: RestSpec): string => {
       return ` ${BETWEEN_INTERVALS_SCOPE}`;
     case "after_specific_set":
       return ` ${AFTER_SET_PREFIX}${rest.setIndex ?? UNKNOWN_SET_INDEX_FALLBACK}`;
+    default: {
+      rest.scope satisfies never;
+
+      return "";
+    }
   }
 };
 

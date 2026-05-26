@@ -89,4 +89,16 @@ describe("formatRestSpec", () => {
       "rest 60–60 s between sets",
     );
   });
+
+  it("returns no scope suffix when scope is pathological (defensive default — QA-Must-7)", () => {
+    const pathological = {
+      duration: { value: 30, unit: "sec" },
+      scope: "unknown_scope",
+    } as unknown as RestSpec;
+
+    const result = formatRestSpec(pathological);
+
+    expect(result).not.toContain("undefined");
+    expect(result).toBe("rest 30s");
+  });
 });

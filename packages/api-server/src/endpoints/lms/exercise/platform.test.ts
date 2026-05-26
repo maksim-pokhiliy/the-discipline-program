@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { UserRole } from "@repo/contracts/iam/auth";
-import { type CreateExerciseData } from "@repo/contracts/lms/exercise";
+import { type CreateExerciseData, getExercisesResponseSchema } from "@repo/contracts/lms/exercise";
 import { ForbiddenError } from "@repo/errors";
 
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
@@ -124,6 +124,7 @@ describe("lmsExercisePlatformApi.list", () => {
     const rows = await lmsExercisePlatformApi.list(coach.user.id);
 
     expect(rows.length).toBeGreaterThan(0);
+    expect(getExercisesResponseSchema.safeParse(rows).success).toBe(true);
 
     const found = rows.find((row) => row.id === seeded.id);
 
