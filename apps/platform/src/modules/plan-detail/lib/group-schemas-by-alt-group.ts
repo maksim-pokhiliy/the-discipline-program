@@ -1,6 +1,8 @@
 import { type AlternatingGroup } from "@repo/contracts/lms/alternating-group";
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 
+const ALT_GROUP_MIN_MEMBERS = 2;
+
 export type GroupRendering =
   | { kind: "alt"; group: AlternatingGroup; schemas: SchemaWithBody[] }
   | { kind: "schema"; schema: SchemaWithBody };
@@ -32,6 +34,12 @@ export const groupSchemasByAltGroup = (
     }
 
     const members = schemas.filter((s) => s.schema.alternatingGroupId === altGroupId);
+
+    if (members.length < ALT_GROUP_MIN_MEMBERS) {
+      out.push({ kind: "schema", schema });
+      seen.add(altGroupId);
+      continue;
+    }
 
     out.push({ kind: "alt", group, schemas: members });
     seen.add(altGroupId);
