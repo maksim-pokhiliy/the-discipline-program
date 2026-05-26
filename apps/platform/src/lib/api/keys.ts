@@ -28,4 +28,7 @@ export const platformKeys = {
   archetypes: {
     all: () => [...ROOT, "archetypes"] as const,
   },
+  exercises: {
+    all: () => [...ROOT, "exercises"] as const,
+  },
 } as const;
