@@ -14,7 +14,6 @@ const RUN_PREFIX = "Run ";
 const RUN_FALLBACK = "Run";
 const SPACE = " ";
 const ARROW_SEPARATOR = " → ";
-const THEMED_FALLBACK = "Themed";
 const N_ROUNDS_FALLBACK = "N rounds";
 const PROGRAM_KIND_UNDERSCORE_RE = /_/g;
 const PROGRAM_KIND_SPACE = " ";
@@ -99,12 +98,8 @@ export const formatSchemaHeader = (
     case "ladder-descending":
     case "ladder-ascending":
       return `${archetypeParams.params.steps.join("-")}${LADDER_SUFFIX}`;
-    case "named-themed-sets": {
-      const theme = archetypeParams.params.theme;
-      const themePrefix = theme.length > 0 ? theme : THEMED_FALLBACK;
-
-      return `${themePrefix}${THEMED_SETS_SUFFIX}`;
-    }
+    case "named-themed-sets":
+      return `${archetypeParams.params.theme}${THEMED_SETS_SUFFIX}`;
     case "named-exercise-program":
       return archetypeParams.params.program.programKind.replace(
         PROGRAM_KIND_UNDERSCORE_RE,

@@ -256,5 +256,9 @@ export const formatArchetypeParams = (archetypeParams: ArchetypeParams): string[
     case "practice-list":
     case "url-only-body":
       return [];
+    default:
+      archetypeParams satisfies never;
+
+      return [];
   }
 };

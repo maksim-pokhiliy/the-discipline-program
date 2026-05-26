@@ -171,7 +171,7 @@ afterEach(() => {
 });
 
 describe("SchemaCard chrome", () => {
-  it("renders the outer Stack column shell with bgcolor, border and divider color", () => {
+  it("renders the outer Stack as a column flex container", () => {
     const { container } = renderSchemaCard();
     const shell = container.querySelector(".MuiStack-root");
 
