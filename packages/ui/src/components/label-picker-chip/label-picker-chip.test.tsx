@@ -274,7 +274,7 @@ describe("LabelPickerChip multi-mode", () => {
 
     const chips = container.querySelectorAll(".MuiChip-root");
 
-    expect(chips).toHaveLength(2);
+    expect(chips).toHaveLength(1);
   });
 
   it("opens menu listing only unselected options when trigger is clicked", () => {
@@ -344,7 +344,7 @@ describe("LabelPickerChip multi-mode", () => {
     expect(onChange).toHaveBeenCalledWith(["day-3"]);
   });
 
-  it("renders the trigger as disabled with 'All labels added' copy when all options are selected", () => {
+  it("surfaces 'All labels added.' inside the menu when every option is already selected", () => {
     render(
       <LabelPickerChip
         multiple
@@ -357,12 +357,15 @@ describe("LabelPickerChip multi-mode", () => {
 
     const trigger = screen.getByLabelText("Add block label");
 
-    expect(trigger).toHaveTextContent("All labels added");
-    expect(trigger).toHaveClass("Mui-disabled");
+    expect(trigger).toHaveTextContent("+ label");
+    expect(trigger).not.toHaveClass("Mui-disabled");
 
     fireEvent.click(trigger);
 
-    expect(screen.queryByRole("menu")).toBeNull();
+    const menu = screen.getByRole("menu");
+
+    expect(within(menu).getByText("All labels added.")).toBeInTheDocument();
+    expect(within(menu).queryAllByRole("menuitem", { name: /MAIN|SKILL/ })).toHaveLength(0);
   });
 
   it("does not render onDelete on chips when disabled", () => {
@@ -382,7 +385,7 @@ describe("LabelPickerChip multi-mode", () => {
     expect(deleteIcons).toHaveLength(0);
   });
 
-  it("shows loading copy on the trigger when isLoading", () => {
+  it("replaces the trigger with a spinner and loading copy when isLoading", () => {
     render(
       <LabelPickerChip
         multiple
@@ -394,8 +397,8 @@ describe("LabelPickerChip multi-mode", () => {
       />,
     );
 
-    const trigger = screen.getByLabelText("Add block label");
-
-    expect(trigger).toHaveTextContent("Loading…");
+    expect(screen.queryByLabelText("Add block label")).toBeNull();
+    expect(screen.getByText("Loading…")).toBeInTheDocument();
+    expect(screen.getByRole("progressbar")).toBeInTheDocument();
   });
 });

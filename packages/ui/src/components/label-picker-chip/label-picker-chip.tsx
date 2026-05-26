@@ -5,6 +5,7 @@ import { type MouseEvent, type ReactNode, useState } from "react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import {
+  Button,
   Chip,
   CircularProgress,
   Menu,
@@ -12,9 +13,12 @@ import {
   Stack,
   type SxProps,
   type Theme,
+  Typography,
 } from "@mui/material";
 
 import { type Label } from "@repo/contracts/lms/label";
+
+import { BlockLabel } from "../block-label";
 
 import { type LabelPickerChipProps } from "./label-picker-chip.types";
 
@@ -22,8 +26,8 @@ const PLACEHOLDER_LABEL_DEFAULT = "—";
 const LOADING_LABEL = "Loading…";
 const CLEAR_OPTION_KEY = "__clear__";
 const CLEAR_OPTION_LABEL = "Clear selection";
-const ALL_LABELS_ADDED_LABEL = "All labels added";
-const MULTI_TRIGGER_LABEL = "+ label";
+const ALL_LABELS_ADDED_LABEL = "All labels added.";
+const MULTI_TRIGGER_LABEL = "label";
 const MULTI_TRIGGER_ARIA = "Add block label";
 const CHANGE_LABEL_ARIA = "Change label";
 const LEADING_ICON_PX = 14;
@@ -42,14 +46,6 @@ const chipSx: SxProps<Theme> = (theme) => ({
     fontSize: theme.typography.pxToRem(LEADING_ICON_PX),
     opacity: LEADING_ICON_OPACITY,
   },
-});
-
-const multiTriggerSx: SxProps<Theme> = (theme) => ({
-  backgroundColor: "transparent",
-  borderColor: theme.palette.dividerStrong,
-  borderWidth: 1,
-  borderStyle: "solid",
-  color: theme.palette.text.primary,
 });
 
 const chipColorFor = (label: Label | null): "primary" | "default" =>
@@ -116,7 +112,7 @@ const renderSingleBody = ({
         icon={leadingIcon}
         label={chipLabel}
         color={chipColor}
-        deleteIcon={<ExpandMoreIcon fontSize="small" aria-label={CHANGE_LABEL_ARIA} />}
+        deleteIcon={<ExpandMoreIcon aria-label={CHANGE_LABEL_ARIA} />}
         disabled={disabled}
         sx={chipSx}
         {...(ariaLabel !== undefined && { "aria-label": ariaLabel })}
@@ -163,10 +159,8 @@ const renderMultiBody = ({
 }: MultiBodyArgs): ReactNode => {
   const isMenuOpen = anchorEl !== null;
   const isInteractive = !disabled && !isLoading;
-  const isAllSelected = value.length === options.length && options.length > 0;
   const remainingOptions = options.filter((option) => !value.some((v) => v.id === option.id));
-  const hasRemaining = remainingOptions.length > 0 && isInteractive;
-  const isTriggerInteractive = hasRemaining && !isAllSelected;
+  const hasRemaining = remainingOptions.length > 0;
 
   const handleRemove = (index: number) => {
     onChange(value.filter((_, j) => j !== index).map((l) => l.id));
@@ -176,16 +170,6 @@ const renderMultiBody = ({
     onChange([...value, option].map((l) => l.id));
     onClose();
   };
-
-  const triggerLabel = isLoading
-    ? LOADING_LABEL
-    : isAllSelected
-      ? ALL_LABELS_ADDED_LABEL
-      : MULTI_TRIGGER_LABEL;
-
-  const triggerIcon = isLoading ? (
-    <CircularProgress size={SPINNER_PX} color="inherit" />
-  ) : undefined;
 
   return (
     <Stack
@@ -197,38 +181,46 @@ const renderMultiBody = ({
       {...(ariaLabel !== undefined && { "aria-label": ariaLabel })}
     >
       {value.map((label, index) => (
-        <Chip
+        <BlockLabel
           key={label.id}
-          label={label.name}
-          color={chipColorFor(label)}
-          disabled={disabled}
-          sx={chipSx}
+          text={label.name}
+          filled={index === 0}
           {...(isInteractive && { onDelete: () => handleRemove(index) })}
         />
       ))}
-      <Chip
-        variant="tag"
-        color="default"
-        label={triggerLabel}
-        disabled={disabled || isLoading || isAllSelected}
-        sx={multiTriggerSx}
-        aria-label={MULTI_TRIGGER_ARIA}
-        {...(triggerIcon !== undefined && { icon: triggerIcon })}
-        {...(isTriggerInteractive && { clickable: true, onClick: onOpen })}
-      />
-      {isTriggerInteractive && (
+      {isLoading ? (
+        <Stack direction="row" spacing={0.5} alignItems="center">
+          <CircularProgress size={SPINNER_PX} color="inherit" />
+          <Typography variant="caption" color="text.subtle">
+            {LOADING_LABEL}
+          </Typography>
+        </Stack>
+      ) : (
+        <Button
+          size="tiny"
+          variant="text"
+          onClick={onOpen}
+          disabled={disabled}
+          aria-label={MULTI_TRIGGER_ARIA}
+        >
+          + {MULTI_TRIGGER_LABEL}
+        </Button>
+      )}
+      {isInteractive && (
         <Menu anchorEl={anchorEl} open={isMenuOpen} onClose={onClose}>
-          {remainingOptions.map((option) => (
-            <MenuItem key={option.id} onClick={() => handleAdd(option)}>
-              <Chip
-                size="small"
-                icon={<LocalOfferIcon />}
-                label={option.name}
-                color={chipColorFor(option)}
-                sx={chipSx}
-              />
+          {hasRemaining ? (
+            remainingOptions.map((option) => (
+              <MenuItem key={option.id} onClick={() => handleAdd(option)}>
+                <BlockLabel text={option.name} />
+              </MenuItem>
+            ))
+          ) : (
+            <MenuItem disabled>
+              <Typography variant="caption" color="text.subtle">
+                {ALL_LABELS_ADDED_LABEL}
+              </Typography>
             </MenuItem>
-          ))}
+          )}
         </Menu>
       )}
     </Stack>
