@@ -12,6 +12,7 @@ export type IndicatorChipProps = {
   onClick?: () => void;
   clickable?: boolean;
   icon?: ReactElement;
+  dot?: boolean;
 };
 
 export const IndicatorChip: React.FC<IndicatorChipProps> = ({
@@ -20,6 +21,7 @@ export const IndicatorChip: React.FC<IndicatorChipProps> = ({
   onClick,
   clickable,
   icon,
+  dot,
 }): ReactElement => {
   const dotIcon = (
     <Box
@@ -33,13 +35,15 @@ export const IndicatorChip: React.FC<IndicatorChipProps> = ({
     />
   );
 
+  const resolvedIcon = icon ?? (dot === false ? undefined : dotIcon);
+
   return (
     <Chip
       variant="filled"
       size="small"
       color={tone}
-      icon={icon ?? dotIcon}
       label={label}
+      {...(resolvedIcon !== undefined && { icon: resolvedIcon })}
       {...(clickable === true && { clickable: true })}
       {...(onClick !== undefined && { onClick })}
     />

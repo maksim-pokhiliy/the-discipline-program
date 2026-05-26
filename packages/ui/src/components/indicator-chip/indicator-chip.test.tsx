@@ -90,6 +90,26 @@ describe("IndicatorChip", () => {
     expect(iconSlot).toContainElement(customIcon);
   });
 
+  it("does not render the leading dot when dot={false}", () => {
+    const { container } = render(<IndicatorChip tone="primary" label="X" dot={false} />);
+    const icon = container.querySelector(".MuiChip-icon");
+
+    expect(icon).toBeNull();
+  });
+
+  it("renders explicit icon even when dot={false}", () => {
+    render(
+      <IndicatorChip
+        tone="primary"
+        label="X"
+        dot={false}
+        icon={<span data-testid="explicit-icon" />}
+      />,
+    );
+
+    expect(screen.getByTestId("explicit-icon")).toBeInTheDocument();
+  });
+
   it("does not crash when clickable is set without onClick (MT-04)", () => {
     const { container } = render(<IndicatorChip tone="primary" label="Today" clickable />);
     const chip = container.querySelector(".MuiChip-root");
