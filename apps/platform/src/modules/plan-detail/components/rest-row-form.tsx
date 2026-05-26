@@ -10,7 +10,8 @@ import { FormModal } from "@repo/ui";
 
 import { useCreateSchemaRow, useUpdateSchemaRow } from "@app/lib/hooks";
 
-import { formatRestRaw } from "./format-rest-raw";
+import { formatRestSpec } from "../lib/format-rest-spec";
+
 import { RestSpecFields, restSpecFormSchema, type RestSpecFormValue } from "./rest-spec-fields";
 import type { RowEditorMode, RowFormProps } from "./row-editor-types";
 
@@ -54,7 +55,7 @@ export const RestRowForm: React.FC<RowFormProps> = ({ mode, planId, startDate, o
     const rowPayload = {
       rowKind: "REST",
       parsed: data.parsed,
-      raw: formatRestRaw(data.parsed),
+      raw: formatRestSpec(data.parsed),
     } as const;
 
     if (mode.kind === "create") {

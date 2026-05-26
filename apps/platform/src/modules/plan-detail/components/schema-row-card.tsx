@@ -24,7 +24,8 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteSchemaRow, useUpdateSchemaRow } from "@app/lib/hooks";
 
-import { formatRestRaw } from "./format-rest-raw";
+import { formatRestSpec } from "../lib/format-rest-spec";
+
 import { LoadSummary } from "./load-summary";
 import { RowEditorModal } from "./row-editor-modal";
 import type { RowEditorMode } from "./row-editor-types";
@@ -68,7 +69,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({ row, planId, start
       case "STANDALONE_LOAD":
         return <LoadSummary load={row.rowPayload.load} />;
       case "REST":
-        return <Chip size="small" label={formatRestRaw(row.rowPayload.parsed)} />;
+        return <Chip size="small" label={formatRestSpec(row.rowPayload.parsed)} />;
       case "INNER_LADDER_MARKER":
         return <Chip size="small" label={row.rowPayload.steps.join(STEP_SEPARATOR)} />;
       case "STANDALONE_URL":
