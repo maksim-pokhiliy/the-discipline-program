@@ -12,19 +12,10 @@ describe("CascadeChip", () => {
     expect(screen.getByText("@ 75%")).toBeInTheDocument();
   });
 
-  it("renders the leading up arrow glyph", () => {
-    render(<CascadeChip text="RPE 8" />);
-
-    expect(screen.getByTestId("ArrowUpwardIcon")).toBeInTheDocument();
-  });
-
-  it("renders the icon inside the chip icon slot", () => {
+  it("does not inject any leading icon glyph", () => {
     const { container } = render(<CascadeChip text="cap 10:00" />);
-    const iconSlot = container.querySelector(".MuiChip-icon");
-    const arrow = screen.getByTestId("ArrowUpwardIcon");
 
-    expect(iconSlot).not.toBeNull();
-    expect(iconSlot).toContainElement(arrow);
+    expect(container.querySelector(".MuiChip-icon")).toBeNull();
   });
 
   it("uses the small chip size", () => {

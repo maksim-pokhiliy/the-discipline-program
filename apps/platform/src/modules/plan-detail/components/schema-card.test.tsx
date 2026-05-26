@@ -286,6 +286,14 @@ describe("SchemaCard archetype tag", () => {
 
     expect(screen.getByText("n-rounds")).toBeInTheDocument();
   });
+
+  it("renders the discriminator fallback when useArchetypes() reports an error (MT-5)", () => {
+    archetypesState.data = undefined;
+
+    expect(() => renderSchemaCard()).not.toThrow();
+    expect(screen.getByText("n-rounds")).toBeInTheDocument();
+    expect(screen.queryByText(ARCHETYPE_LABEL)).toBeNull();
+  });
 });
 
 describe("SchemaCard title", () => {
@@ -347,6 +355,62 @@ describe("SchemaCard title", () => {
       schemaId: SCHEMA_ID,
       data: { header: null },
     });
+  });
+
+  it("does NOT fire mutate on focus+blur of a whitespace-only header without typing (MT-1 + QA-001)", () => {
+    renderSchemaCard({ schema: makeSchema({ header: "   " }) });
+
+    const titleInput = screen.getByRole("textbox", { name: TITLE_LABEL });
+
+    fireEvent.focus(titleInput);
+    fireEvent.blur(titleInput);
+
+    expect(updateSchemaMutate).not.toHaveBeenCalled();
+  });
+
+  it("trims whitespace padding before committing a non-empty value (MT-2 + QA-001)", () => {
+    renderSchemaCard({ schema: makeSchema({ header: "old" }) });
+
+    const titleInput = screen.getByRole("textbox", { name: TITLE_LABEL });
+
+    fireEvent.focus(titleInput);
+    fireEvent.change(titleInput, { target: { value: "  new title  " } });
+    fireEvent.blur(titleInput);
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate).toHaveBeenCalledWith({
+      schemaId: SCHEMA_ID,
+      data: { header: "new title" },
+    });
+  });
+
+  it("does NOT fire mutate when committed value equals current header (MT-3 + QA-001 idempotence)", () => {
+    renderSchemaCard({ schema: makeSchema({ header: "current" }) });
+
+    const titleInput = screen.getByRole("textbox", { name: TITLE_LABEL });
+
+    fireEvent.focus(titleInput);
+    fireEvent.change(titleInput, { target: { value: "current" } });
+    fireEvent.blur(titleInput);
+
+    expect(updateSchemaMutate).not.toHaveBeenCalled();
+  });
+
+  it("reverts the draft and does NOT fire mutate when Escape is pressed (MT-8)", () => {
+    renderSchemaCard({ schema: makeSchema({ header: "original" }) });
+
+    const titleInput = screen.getByRole("textbox", { name: TITLE_LABEL });
+
+    if (!(titleInput instanceof HTMLInputElement)) {
+      throw new Error("title input not an HTMLInputElement");
+    }
+
+    fireEvent.focus(titleInput);
+    fireEvent.change(titleInput, { target: { value: "changed" } });
+    fireEvent.keyDown(titleInput, { key: "Escape" });
+
+    expect(titleInput.value).toBe("original");
+    expect(updateSchemaMutate).not.toHaveBeenCalled();
   });
 });
 
@@ -440,6 +504,39 @@ describe("SchemaCard meta row", () => {
     });
 
     expect(screen.getByText("no params")).toBeInTheDocument();
+  });
+
+  it("renders duplicate-shape ladders without React duplicate-key warning (MT-4 + QA-007)", () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    try {
+      renderSchemaCard({
+        schema: makeSchema({
+          archetypeParams: {
+            archetype: "parallel-ladders-mixed-direction",
+            params: {
+              ladders: [
+                { steps: [12, 9, 6], direction: "desc" },
+                { steps: [12, 9, 6], direction: "desc" },
+              ],
+            },
+          },
+        }),
+      });
+
+      expect(screen.getByText("2 parallel ladders")).toBeInTheDocument();
+      expect(screen.getAllByText("12-9-6 (desc)")).toHaveLength(2);
+
+      const duplicateKeyWarnings = consoleErrorSpy.mock.calls.filter((args) => {
+        const first = args[0];
+
+        return typeof first === "string" && first.includes("two children with the same key");
+      });
+
+      expect(duplicateKeyWarnings).toHaveLength(0);
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
   });
 });
 
@@ -549,6 +646,46 @@ describe("SchemaCard sub-schemas", () => {
     expect(dragHandles).toHaveLength(1);
     expect(kebabs).toHaveLength(1);
     expect(rowLists).toHaveLength(1);
+  });
+
+  it("renders the cap cascade chip on every schema (top-level + sub-schemas) per D-13/D-19/D-22 (MT-6 + QA-005)", () => {
+    const timeCap: TimeCap = { min: 10, unit: "min" };
+
+    renderSchemaCard({
+      schema: makeSchema({
+        subSchemas: [
+          makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
+          makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
+        ],
+      }),
+      blockCtx: makeBlockCtx({ timeCap }),
+    });
+
+    expect(screen.getAllByText("cap 10:00")).toHaveLength(3);
+  });
+
+  it("renders three levels gracefully when sub-schemas nest beyond contract depth (MT-7 + QA-006)", () => {
+    const GRANDCHILD_ID = "clp9z8x7w0000abcd1234grc1";
+
+    const grandchild = makeSchema({ id: GRANDCHILD_ID, parentSchemaId: SUB_SCHEMA_ID_A });
+    const child: SchemaWithBody = {
+      ...makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
+      subSchemas: [grandchild],
+    };
+
+    expect(() =>
+      renderSchemaCard({
+        schema: makeSchema({ subSchemas: [child] }),
+      }),
+    ).not.toThrow();
+
+    const rowLists = screen.getAllByTestId("schema-row-list-mock");
+    const schemaIds = rowLists.map((n) => n.getAttribute("data-schema-id"));
+
+    expect(rowLists).toHaveLength(3);
+    expect(schemaIds).toContain(SCHEMA_ID);
+    expect(schemaIds).toContain(SUB_SCHEMA_ID_A);
+    expect(schemaIds).toContain(GRANDCHILD_ID);
   });
 });
 

@@ -17,7 +17,6 @@ import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
 
 import { SchemaCardHead } from "./schema-card-head";
-import { SchemaCardMeta } from "./schema-card-meta";
 import { SchemaEditorModal } from "./schema-editor-modal";
 import { type SchemaEditorMode } from "./schema-editor-types";
 import { SchemaRowList } from "./schema-row-list";
@@ -93,11 +92,13 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
 
   const handleTitleCommit = (next: string) => {
     const trimmed = next.trim();
-    const nextHeader = trimmed === "" ? null : trimmed;
+    const currentTrimmed = (schema.schema.header ?? "").trim();
 
-    if (nextHeader === schema.schema.header) {
+    if (trimmed === currentTrimmed) {
       return;
     }
+
+    const nextHeader = trimmed === "" ? null : trimmed;
 
     updateSchema.mutate({ schemaId: schema.schema.id, data: { header: nextHeader } });
   };
@@ -123,6 +124,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     >
       <SchemaCardHead
         schema={schema}
+        blockCtx={blockCtx}
         archetypeLabel={archetypeLabel}
         isMutationPending={isMutationPending}
         isSubSchema={isSubSchema}
@@ -132,8 +134,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         onTitleCommit={handleTitleCommit}
         onKebabOpen={() => setIsMenuOpen(true)}
       />
-
-      <SchemaCardMeta schema={schema} blockCtx={blockCtx} />
 
       {schema.subSchemas.length > 0 ? (
         <Stack

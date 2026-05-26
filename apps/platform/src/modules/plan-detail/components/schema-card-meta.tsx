@@ -14,8 +14,6 @@ import { formatIntensityChips, formatTimeCap } from "../lib/format-block-meta";
 const NO_PARAMS_LABEL = "no params";
 const PARAM_SEPARATOR = "·";
 const CAP_PREFIX = "cap ";
-const META_PX_FACTOR = 1.5;
-const META_PB_FACTOR = 1;
 
 type SchemaCardMetaProps = {
   schema: SchemaWithBody;
@@ -53,14 +51,7 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
     capCascadeText === null;
 
   return (
-    <Stack
-      direction="row"
-      alignItems="center"
-      spacing={1}
-      useFlexGap
-      flexWrap="wrap"
-      sx={(theme) => ({ px: theme.spacing(META_PX_FACTOR), pb: theme.spacing(META_PB_FACTOR) })}
-    >
+    <Stack direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap">
       {paramTexts.map((text, i) => (
         <Fragment key={`${String(i)}-${text}`}>
           {i > 0 ? (
