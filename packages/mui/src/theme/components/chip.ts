@@ -61,6 +61,7 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
       "& .MuiChip-label": {
         paddingLeft: 0,
         paddingRight: 0,
+        overflow: "visible",
       },
 
       "& .MuiChip-deleteIcon": {
