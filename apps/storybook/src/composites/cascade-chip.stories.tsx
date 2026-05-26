@@ -5,12 +5,12 @@ import { CascadeChip, IndicatorChip } from "@repo/ui";
 import { StoryPage, StorySection } from "../story-layout";
 
 const COMPONENT_DESCRIPTION = [
-  "Muted italic chip with leading ↑ glyph — signals a value cascading down from a parent (block intensity, cap, etc.).",
-  "Filled sizeSmall pill with `action.hover` background and `text.subtle` color, no tone variants.",
+  "Muted italic chip signalling a value cascading down from a parent (block intensity, cap, etc.).",
+  "Filled sizeSmall pill with `action.hover` background and `text.subtle` color, no tone variants, no leading glyph.",
   "Introduced in C5 for the Plan Editor SchemaCard meta row, alongside own-override IndicatorChips.",
 ].join(" ");
 
-const INTRO_TITLE = "muted italic chip with leading ↑ — C5";
+const INTRO_TITLE = "muted italic chip — C5";
 
 const meta = {
   title: "Composites/CascadeChip",

@@ -29,7 +29,11 @@ export const SchemaArchetypeTag: React.FC<SchemaArchetypeTagProps> = ({ label })
       letterSpacing: ARCHETYPE_TAG_LETTER_SPACING,
       textTransform: "uppercase",
       borderRadius: theme.spacing(ARCHETYPE_TAG_BORDER_RADIUS_FACTOR),
-      "& .MuiChip-label": { px: ARCHETYPE_TAG_LABEL_PX, py: ARCHETYPE_TAG_LABEL_PY },
+      "& .MuiChip-label": {
+        px: ARCHETYPE_TAG_LABEL_PX,
+        py: ARCHETYPE_TAG_LABEL_PY,
+        overflow: "visible",
+      },
     })}
   />
 );

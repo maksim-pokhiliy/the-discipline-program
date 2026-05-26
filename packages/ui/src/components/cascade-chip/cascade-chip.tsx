@@ -16,6 +16,7 @@ export const CascadeChip: React.FC<CascadeChipProps> = ({ text }): ReactElement 
       bgcolor: "action.hover",
       color: "text.subtle",
       fontStyle: "italic",
+      "& .MuiChip-label": { overflow: "visible" },
     }}
   />
 );

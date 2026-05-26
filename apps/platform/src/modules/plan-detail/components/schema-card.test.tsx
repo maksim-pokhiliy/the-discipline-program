@@ -287,7 +287,7 @@ describe("SchemaCard archetype tag", () => {
     expect(screen.getByText("n-rounds")).toBeInTheDocument();
   });
 
-  it("renders the discriminator fallback when useArchetypes() reports an error (MT-5)", () => {
+  it("falls back to discriminator when useArchetypes data is undefined (loading or error) (MT-5)", () => {
     archetypesState.data = undefined;
 
     expect(() => renderSchemaCard()).not.toThrow();
