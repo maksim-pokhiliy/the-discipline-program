@@ -91,11 +91,16 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
       { onSuccess: () => setIsDeleteOpen(false) },
     );
 
-  const handleTitleCommit = (next: string) =>
-    updateSchema.mutate({
-      schemaId: schema.schema.id,
-      data: { header: next === "" ? null : next },
-    });
+  const handleTitleCommit = (next: string) => {
+    const trimmed = next.trim();
+    const nextHeader = trimmed === "" ? null : trimmed;
+
+    if (nextHeader === schema.schema.header) {
+      return;
+    }
+
+    updateSchema.mutate({ schemaId: schema.schema.id, data: { header: nextHeader } });
+  };
 
   const style = {
     transform: CSS.Transform.toString(transform),

@@ -62,7 +62,7 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
       sx={(theme) => ({ px: theme.spacing(META_PX_FACTOR), pb: theme.spacing(META_PB_FACTOR) })}
     >
       {paramTexts.map((text, i) => (
-        <Fragment key={text}>
+        <Fragment key={`${String(i)}-${text}`}>
           {i > 0 ? (
             <Typography variant="caption" component="span" color="text.disabled">
               {PARAM_SEPARATOR}
@@ -74,12 +74,12 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
         </Fragment>
       ))}
 
-      {ownChips.map((c) => (
-        <IndicatorChip key={c.text} tone={c.tone} label={c.text} dot={false} />
+      {ownChips.map((c, i) => (
+        <IndicatorChip key={`${String(i)}-${c.text}`} tone={c.tone} label={c.text} dot={false} />
       ))}
 
-      {cascadeChips.map((c) => (
-        <CascadeChip key={c.text} text={c.text} />
+      {cascadeChips.map((c, i) => (
+        <CascadeChip key={`${String(i)}-${c.text}`} text={c.text} />
       ))}
 
       {capCascadeText !== null ? <CascadeChip text={capCascadeText} /> : null}
