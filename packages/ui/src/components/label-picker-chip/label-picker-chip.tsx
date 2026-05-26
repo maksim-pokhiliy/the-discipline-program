@@ -27,6 +27,7 @@ const LOADING_LABEL = "Loading…";
 const CLEAR_OPTION_KEY = "__clear__";
 const CLEAR_OPTION_LABEL = "Clear selection";
 const ALL_LABELS_ADDED_LABEL = "All labels added.";
+const NO_LABELS_AVAILABLE_LABEL = "No labels available.";
 const MULTI_TRIGGER_LABEL = "label";
 const MULTI_TRIGGER_ARIA = "Add block label";
 const CHANGE_LABEL_ARIA = "Change label";
@@ -161,12 +162,24 @@ const renderMultiBody = ({
   const isInteractive = !disabled && !isLoading;
   const remainingOptions = options.filter((option) => !value.some((v) => v.id === option.id));
   const hasRemaining = remainingOptions.length > 0;
+  const isPoolEmpty = options.length === 0;
+  const emptyMenuLabel = isPoolEmpty ? NO_LABELS_AVAILABLE_LABEL : ALL_LABELS_ADDED_LABEL;
 
   const handleRemove = (index: number) => {
+    if (index < 0 || index >= value.length) {
+      return;
+    }
+
     onChange(value.filter((_, j) => j !== index).map((l) => l.id));
   };
 
   const handleAdd = (option: Label) => {
+    if (value.some((v) => v.id === option.id)) {
+      onClose();
+
+      return;
+    }
+
     onChange([...value, option].map((l) => l.id));
     onClose();
   };
@@ -217,7 +230,7 @@ const renderMultiBody = ({
           ) : (
             <MenuItem disabled>
               <Typography variant="caption" color="text.subtle">
-                {ALL_LABELS_ADDED_LABEL}
+                {emptyMenuLabel}
               </Typography>
             </MenuItem>
           )}
