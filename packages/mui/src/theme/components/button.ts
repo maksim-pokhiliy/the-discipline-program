@@ -1,4 +1,14 @@
-import { type Components, type Theme } from "@mui/material/styles";
+import { alpha, type Components, type Theme } from "@mui/material/styles";
+
+declare module "@mui/material/Button" {
+  interface ButtonPropsSizeOverrides {
+    tiny: true;
+  }
+}
+
+const TINY_FONT_PX = 10;
+const TINY_LETTER_SPACING = "0.08em";
+const TINY_HOVER_BG_ALPHA = 0.08;
 
 export const MuiButton: NonNullable<Components<Theme>["MuiButton"]> = {
   defaultProps: {
@@ -13,6 +23,31 @@ export const MuiButton: NonNullable<Components<Theme>["MuiButton"]> = {
 
         "&:hover": {
           borderColor: theme.palette.dividerStrong,
+        },
+      }),
+    },
+    {
+      props: { size: "tiny" },
+      style: ({ theme }) => ({
+        fontSize: theme.typography.pxToRem(TINY_FONT_PX),
+        fontWeight: 700,
+        letterSpacing: TINY_LETTER_SPACING,
+        lineHeight: 1,
+        padding: theme.spacing(0.75),
+        minHeight: 0,
+        minWidth: 0,
+        gap: theme.spacing(0.5),
+        borderRadius: theme.spacing(0.5),
+      }),
+    },
+    {
+      props: { size: "tiny", variant: "text" },
+      style: ({ theme }) => ({
+        color: theme.palette.text.secondary,
+
+        "&:hover": {
+          color: theme.palette.primary.main,
+          backgroundColor: alpha(theme.palette.primary.main, TINY_HOVER_BG_ALPHA),
         },
       }),
     },

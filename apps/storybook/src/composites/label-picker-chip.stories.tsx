@@ -31,6 +31,17 @@ const DAY_OPTIONS: Label[] = [
 const REST_OPTION = DAY_OPTIONS[3];
 const MAIN_OPTION = DAY_OPTIONS[0];
 
+const dayOpt = buildLabel({ id: "day-1", name: "STRENGTH", applicableLevels: ["BLOCK"] });
+const restOpt = buildLabel({ id: "day-2", name: "ACCESSORY", applicableLevels: ["BLOCK"] });
+const skillOpt = buildLabel({ id: "day-3", name: "SKILL", applicableLevels: ["BLOCK"] });
+const BLOCK_OPTIONS: Label[] = [dayOpt, restOpt, skillOpt];
+
+const COMPONENT_DESCRIPTION = [
+  "LabelPickerChip is a discriminated `Single | Multi` composite mirroring the prop shape of `@repo/ui/label-select`.",
+  "Single mode renders one tonal chip with a Menu trigger (today's DAY/SESSION usage).",
+  'Multi mode renders N `BlockLabel` chips plus a `+ label` trigger built on the new `MuiButton size="tiny"` variant — used by BLOCK-level rows that accept several labels.',
+].join(" ");
+
 const meta = {
   title: "Composites/LabelPickerChip",
   component: LabelPickerChip,
@@ -39,6 +50,13 @@ const meta = {
     options: DAY_OPTIONS,
     level: "DAY",
     onChange: () => {},
+  },
+  parameters: {
+    docs: {
+      description: {
+        component: COMPONENT_DESCRIPTION,
+      },
+    },
   },
 } satisfies Meta<typeof LabelPickerChip>;
 
@@ -147,6 +165,128 @@ export const Disabled: Story = {
           options={DAY_OPTIONS}
           level="DAY"
           disabled
+          onChange={() => {}}
+        />
+      </StorySection>
+    </StoryPage>
+  ),
+};
+
+export const MultiEmpty: Story = {
+  render: () => (
+    <StoryPage>
+      <StorySection title="multi · empty — trigger only, no chips" direction="row">
+        <LabelPickerChip
+          multiple
+          value={[]}
+          options={BLOCK_OPTIONS}
+          level="BLOCK"
+          onChange={() => {}}
+        />
+      </StorySection>
+    </StoryPage>
+  ),
+};
+
+export const MultiPartial: Story = {
+  render: () => {
+    const MultiPartialStory = () => {
+      const [value, setValue] = useState<Label[]>([dayOpt]);
+      const handleChange = (labelIds: string[]) => {
+        const next = labelIds
+          .map((id) => BLOCK_OPTIONS.find((option) => option.id === id))
+          .filter((option): option is Label => option !== undefined);
+
+        setValue(next);
+      };
+
+      return (
+        <LabelPickerChip
+          multiple
+          value={value}
+          options={BLOCK_OPTIONS}
+          level="BLOCK"
+          onChange={handleChange}
+        />
+      );
+    };
+
+    return (
+      <StoryPage>
+        <StorySection title="multi · partial — one chip + trigger" direction="row">
+          <MultiPartialStory />
+        </StorySection>
+      </StoryPage>
+    );
+  },
+};
+
+export const MultiAllSelected: Story = {
+  render: () => {
+    const MultiAllSelectedStory = () => {
+      const [value, setValue] = useState<Label[]>([dayOpt, restOpt, skillOpt]);
+      const handleChange = (labelIds: string[]) => {
+        const next = labelIds
+          .map((id) => BLOCK_OPTIONS.find((option) => option.id === id))
+          .filter((option): option is Label => option !== undefined);
+
+        setValue(next);
+      };
+
+      return (
+        <LabelPickerChip
+          multiple
+          value={value}
+          options={BLOCK_OPTIONS}
+          level="BLOCK"
+          onChange={handleChange}
+        />
+      );
+    };
+
+    return (
+      <StoryPage>
+        <StorySection
+          title="multi · all selected — three chips, trigger opens 'All labels added.' disabled item"
+          direction="row"
+        >
+          <MultiAllSelectedStory />
+        </StorySection>
+      </StoryPage>
+    );
+  },
+};
+
+export const MultiDisabled: Story = {
+  render: () => (
+    <StoryPage>
+      <StorySection
+        title="multi · disabled — chips without delete, trigger blocked"
+        direction="row"
+      >
+        <LabelPickerChip
+          multiple
+          value={[dayOpt, restOpt]}
+          options={BLOCK_OPTIONS}
+          level="BLOCK"
+          disabled
+          onChange={() => {}}
+        />
+      </StorySection>
+    </StoryPage>
+  ),
+};
+
+export const MultiLoading: Story = {
+  render: () => (
+    <StoryPage>
+      <StorySection title="multi · loading — inline spinner replaces trigger" direction="row">
+        <LabelPickerChip
+          multiple
+          value={[]}
+          options={BLOCK_OPTIONS}
+          level="BLOCK"
+          isLoading
           onChange={() => {}}
         />
       </StorySection>

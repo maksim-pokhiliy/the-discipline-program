@@ -25,8 +25,7 @@ const CHIP_ICON_PX = 14;
 const CHIP_ICON_PX_SM = 12;
 const CHIP_TAG_DELETE_SIZE = 14;
 const CHIP_TAG_DELETE_ICON_PX = 12;
-const CHIP_TAG_DELETE_MARGIN_LEFT = 2;
-const CHIP_TAG_DELETE_MARGIN_RIGHT = 8;
+const CHIP_ICON_MARGIN = 4;
 const CHIP_TAG_DELETE_OPACITY = 0.5;
 const TINT_PRIMARY = 0.18;
 const TINT_COLOR = 0.18;
@@ -56,12 +55,17 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
 
       "& .MuiChip-icon": {
         marginLeft: 0,
-        marginRight: 0,
+        marginRight: CHIP_ICON_MARGIN,
       },
 
       "& .MuiChip-label": {
         paddingLeft: 0,
         paddingRight: 0,
+      },
+
+      "& .MuiChip-deleteIcon": {
+        margin: 0,
+        marginLeft: CHIP_ICON_MARGIN,
       },
 
       ...(ownerState.variant === "indicator" && {
@@ -92,17 +96,23 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
         borderRadius: CHIP_TAG_RADIUS,
         backgroundColor: theme.palette.text.primary,
         color: theme.palette.background.default,
-        paddingLeft: 0,
-        paddingRight: 0,
+        paddingLeft: CHIP_ROOT_PX_SM,
+        paddingRight: CHIP_ROOT_PX_SM,
         gap: 0,
+        maxWidth: theme.spacing(40),
+
+        "& .MuiChip-label": {
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        },
 
         "& .MuiChip-deleteIcon": {
           width: CHIP_TAG_DELETE_SIZE,
           height: CHIP_TAG_DELETE_SIZE,
           fontSize: theme.typography.pxToRem(CHIP_TAG_DELETE_ICON_PX),
           margin: 0,
-          marginLeft: CHIP_TAG_DELETE_MARGIN_LEFT,
-          marginRight: CHIP_TAG_DELETE_MARGIN_RIGHT,
+          marginLeft: CHIP_ICON_MARGIN,
           borderRadius: CHIP_TAG_RADIUS,
           opacity: CHIP_TAG_DELETE_OPACITY,
           color: "inherit",

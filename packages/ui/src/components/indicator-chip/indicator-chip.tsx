@@ -35,7 +35,8 @@ export const IndicatorChip: React.FC<IndicatorChipProps> = ({
 
   return (
     <Chip
-      variant="indicator"
+      variant="filled"
+      size="small"
       color={tone}
       icon={icon ?? dotIcon}
       label={label}

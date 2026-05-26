@@ -29,10 +29,20 @@ describe("IndicatorChip", () => {
 
       expect(chip).not.toBeNull();
       expect(chip).toHaveClass(className);
+      expect(chip).toHaveClass("MuiChip-filled");
       expect(icon).not.toBeNull();
       expect(icon).toHaveClass(iconClassName);
     });
   }
+
+  it("renders the filled tonal variant, not outlined", () => {
+    const { container } = render(<IndicatorChip tone="primary" label="Primary" />);
+    const chip = container.querySelector(".MuiChip-root");
+
+    expect(chip).not.toBeNull();
+    expect(chip).toHaveClass("MuiChip-filled");
+    expect(chip).not.toHaveClass("MuiChip-outlined");
+  });
 
   it("renders the leading dot via the icon slot", () => {
     const { container } = render(<IndicatorChip tone="primary" label="Primary" />);
