@@ -468,4 +468,60 @@ describe("BlockCard mutation pending / actions", () => {
     expect(screen.getByRole("button", { name: "Delete block" })).toBeDisabled();
     expect(screen.getByLabelText("Add block label")).toBeDisabled();
   });
+
+  describe.each([
+    { name: "useUpdateBlock", flip: () => (updateBlockState.isPending = true) },
+    { name: "useDeleteBlock", flip: () => (deleteBlockState.isPending = true) },
+    { name: "useAssignBlockLabels", flip: () => (assignLabelsState.isPending = true) },
+  ])("isMutationPending derived from $name (QA-014)", ({ flip }) => {
+    it("disables drag IconButton, Tune, Delete and the LabelPickerChip trigger", () => {
+      flip();
+
+      renderBlockCard({ blockOptions: [makeLabel({ id: "lab-1", name: "STRENGTH" })] });
+
+      expect(screen.getByRole("button", { name: "Drag block" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Edit block details" })).toBeDisabled();
+      expect(screen.getByRole("button", { name: "Delete block" })).toBeDisabled();
+      expect(screen.getByLabelText("Add block label")).toBeDisabled();
+    });
+  });
+
+  it("keeps the ConfirmationModal mounted when useDeleteBlock surfaces an error path (no onSuccess fires)", () => {
+    deleteBlockMutate.mockImplementation(() => undefined);
+
+    renderBlockCard();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete block" }));
+
+    expect(screen.getByRole("heading", { name: "Delete block" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(deleteBlockMutate).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("heading", { name: "Delete block" })).toBeInTheDocument();
+    expect(screen.getByText("Delete this block?")).toBeInTheDocument();
+  });
+});
+
+describe("BlockCard alt-group degradation (QA-004 integration)", () => {
+  it("renders schemas as bare SchemaLists when the alt-group has only one matching member in block.schemas", () => {
+    const altGroupId = "clp9z8x7w0000abcd1234alt1";
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd1234sch1", alternatingGroupId: altGroupId });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd1234sch2", alternatingGroupId: null });
+
+    renderBlockCard({
+      block: makeBlock({
+        schemas: [s1, s2],
+        alternatingGroups: [makeAltGroup({ id: altGroupId, schemaIds: [s1.schema.id] })],
+      }),
+    });
+
+    expect(screen.queryByText(/Alternating sets · /)).toBeNull();
+
+    const schemaLists = screen.getAllByTestId("schema-list-mock");
+
+    expect(schemaLists).toHaveLength(2);
+    expect(schemaLists[0]).toHaveTextContent(`schema-list:1:${s1.schema.id}`);
+    expect(schemaLists[1]).toHaveTextContent(`schema-list:1:${s2.schema.id}`);
+  });
 });

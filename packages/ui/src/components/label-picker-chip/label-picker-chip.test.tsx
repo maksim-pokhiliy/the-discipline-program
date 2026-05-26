@@ -344,7 +344,7 @@ describe("LabelPickerChip multi-mode", () => {
     expect(onChange).toHaveBeenCalledWith(["day-3"]);
   });
 
-  it("surfaces 'All labels added.' inside the menu when every option is already selected", () => {
+  it("surfaces 'All labels added.' inside the menu when every option is already selected (QA-002)", () => {
     render(
       <LabelPickerChip
         multiple
@@ -366,6 +366,93 @@ describe("LabelPickerChip multi-mode", () => {
 
     expect(within(menu).getByText("All labels added.")).toBeInTheDocument();
     expect(within(menu).queryAllByRole("menuitem", { name: /MAIN|SKILL/ })).toHaveLength(0);
+  });
+
+  it("surfaces 'No labels available.' inside the menu when the option pool is empty (QA-001)", () => {
+    render(<LabelPickerChip multiple value={[]} options={[]} level="BLOCK" onChange={vi.fn()} />);
+
+    const trigger = screen.getByLabelText("Add block label");
+
+    expect(trigger).toHaveTextContent("+ label");
+
+    fireEvent.click(trigger);
+
+    const menu = screen.getByRole("menu");
+
+    expect(within(menu).getByText("No labels available.")).toBeInTheDocument();
+    expect(within(menu).queryByText("All labels added.")).toBeNull();
+  });
+
+  it("applies maxWidth and ellipsis styling on multi-mode chips for long label names (QA-003)", () => {
+    const longLabel = buildLabel({ id: "long-1", name: "A".repeat(200) });
+    const { container } = render(
+      <LabelPickerChip
+        multiple
+        value={[longLabel]}
+        options={[longLabel]}
+        level="BLOCK"
+        onChange={vi.fn()}
+      />,
+    );
+    const chipRoot = container.querySelector(".MuiChip-root");
+    const chipLabel = container.querySelector(".MuiChip-label");
+
+    expect(chipRoot).not.toBeNull();
+    expect(chipLabel).not.toBeNull();
+    expect(chipRoot).toHaveStyle({ maxWidth: "320px" });
+    expect(chipLabel).toHaveStyle({
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap",
+    });
+  });
+
+  it("renders MAX_LABELS_PER_BLOCK chips with the trigger surfacing 'All labels added.' (QA-Gap-K)", () => {
+    const labels = Array.from({ length: 10 }, (_, index) =>
+      buildLabel({ id: `lab-${String(index)}`, name: `LABEL_${String(index)}` }),
+    );
+    const { container } = render(
+      <LabelPickerChip multiple value={labels} options={labels} level="BLOCK" onChange={vi.fn()} />,
+    );
+
+    const chips = container.querySelectorAll(".MuiChip-root");
+
+    expect(chips).toHaveLength(10);
+
+    const trigger = screen.getByLabelText("Add block label");
+
+    fireEvent.click(trigger);
+
+    const menu = screen.getByRole("menu");
+
+    expect(within(menu).getByText("All labels added.")).toBeInTheDocument();
+  });
+
+  it("filters duplicate ids out of the menu and does not fire onChange when adding an already-present label (QA-009)", () => {
+    const onChange = vi.fn();
+    const { container } = render(
+      <LabelPickerChip
+        multiple
+        value={[dayOption, dayOption]}
+        options={[dayOption, skillOption]}
+        level="BLOCK"
+        onChange={onChange}
+      />,
+    );
+
+    const chips = container.querySelectorAll(".MuiChip-root");
+
+    expect(chips).toHaveLength(2);
+
+    fireEvent.click(screen.getByLabelText("Add block label"));
+
+    const menu = screen.getByRole("menu");
+    const items = within(menu).getAllByRole("menuitem");
+
+    expect(items).toHaveLength(1);
+    expect(within(menu).queryByText("MAIN")).toBeNull();
+    expect(within(menu).getByText("SKILL")).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it("does not render onDelete on chips when disabled", () => {

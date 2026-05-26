@@ -176,4 +176,49 @@ describe("groupSchemasByAltGroup", () => {
     expect(altEntry.group.id).toBe(groupId);
     expect(schemaEntry.schema.schema.id).toBe("clp9z8x7w0000abcd1234sch3");
   });
+
+  it("preserves first-occurrence order across interleaved alt-groups (QA-Gap-A)", () => {
+    const groupAId = "clp9z8x7w0000abcd1234aga1";
+    const groupBId = "clp9z8x7w0000abcd1234agb1";
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd1234sch1", alternatingGroupId: groupAId });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd1234sch2", alternatingGroupId: groupBId });
+    const s3 = makeSchema({ id: "clp9z8x7w0000abcd1234sch3", alternatingGroupId: groupAId });
+    const s4 = makeSchema({ id: "clp9z8x7w0000abcd1234sch4", alternatingGroupId: groupBId });
+    const groupA = makeAltGroup({ id: groupAId, schemaIds: [s1.schema.id, s3.schema.id] });
+    const groupB = makeAltGroup({ id: groupBId, schemaIds: [s2.schema.id, s4.schema.id] });
+
+    const out = groupSchemasByAltGroup([s1, s2, s3, s4], [groupA, groupB]);
+
+    expect(out).toHaveLength(2);
+
+    const first = out[0];
+    const second = out[1];
+
+    if (first === undefined || first.kind !== "alt") {
+      throw new Error("expected alt entry at index 0");
+    }
+
+    if (second === undefined || second.kind !== "alt") {
+      throw new Error("expected alt entry at index 1");
+    }
+
+    expect(first.group.id).toBe(groupAId);
+    expect(first.schemas.map((s) => s.schema.id)).toEqual([s1.schema.id, s3.schema.id]);
+    expect(second.group.id).toBe(groupBId);
+    expect(second.schemas.map((s) => s.schema.id)).toEqual([s2.schema.id, s4.schema.id]);
+  });
+
+  it("degrades to standalone when alt-group has only one matching member in schemas (QA-004)", () => {
+    const groupId = "clp9z8x7w0000abcd1234ag01";
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd1234sch1", alternatingGroupId: groupId });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd1234sch2", alternatingGroupId: null });
+    const group = makeAltGroup({ id: groupId, schemaIds: [s1.schema.id] });
+
+    const out = groupSchemasByAltGroup([s1, s2], [group]);
+
+    expect(out).toEqual([
+      { kind: "schema", schema: s1 },
+      { kind: "schema", schema: s2 },
+    ]);
+  });
 });

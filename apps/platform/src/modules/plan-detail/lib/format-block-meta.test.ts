@@ -114,6 +114,10 @@ describe("formatTimeCap", () => {
   it("formats sec with a max as <min>–<max>s using EN DASH", () => {
     expect(formatTimeCap({ min: 30, max: 60, unit: "sec" })).toBe("30–60s");
   });
+
+  it("formats fractional minutes verbatim as '<min>:00' (latent — see QA-005)", () => {
+    expect(formatTimeCap({ min: 0.5, unit: "min" })).toBe("0.5:00");
+  });
 });
 
 describe("intensityHasAny", () => {
