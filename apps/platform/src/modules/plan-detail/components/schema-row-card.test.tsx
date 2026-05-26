@@ -69,9 +69,14 @@ const KEBAB_LABEL = "Row actions";
 type RenderOptions = {
   row?: SchemaRow;
   index?: number;
+  isReorderPending?: boolean;
 };
 
-const renderRowCard = ({ row = makeExerciseRow(), index = 0 }: RenderOptions = {}) =>
+const renderRowCard = ({
+  row = makeExerciseRow(),
+  index = 0,
+  isReorderPending = false,
+}: RenderOptions = {}) =>
   render(
     <SchemaRowCard
       row={row}
@@ -79,6 +84,7 @@ const renderRowCard = ({ row = makeExerciseRow(), index = 0 }: RenderOptions = {
       startDate={START_DATE}
       exerciseById={exerciseById}
       index={index}
+      isReorderPending={isReorderPending}
     />,
   );
 
@@ -290,6 +296,13 @@ describe("SchemaRowCard mutation-pending", () => {
     deleteSchemaRowState.isPending = true;
 
     renderRowCard();
+
+    expect(screen.getByRole("button", { name: DRAG_LABEL })).toBeDisabled();
+    expect(screen.getByRole("button", { name: KEBAB_LABEL })).toBeDisabled();
+  });
+
+  it("disables drag handle and kebab when isReorderPending is true (QA-004)", () => {
+    renderRowCard({ isReorderPending: true });
 
     expect(screen.getByRole("button", { name: DRAG_LABEL })).toBeDisabled();
     expect(screen.getByRole("button", { name: KEBAB_LABEL })).toBeDisabled();

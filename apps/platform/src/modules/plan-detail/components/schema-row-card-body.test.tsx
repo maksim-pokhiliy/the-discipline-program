@@ -42,6 +42,7 @@ const renderRow = (row: SchemaRow, index = 0) =>
       startDate={START_DATE}
       exerciseById={exerciseById}
       index={index}
+      isReorderPending={false}
     />,
   );
 

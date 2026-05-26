@@ -97,6 +97,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
                   startDate={startDate}
                   exerciseById={exerciseById}
                   index={index}
+                  isReorderPending={reorderSchemaRows.isPending}
                 />
               ))}
             </Stack>

@@ -57,6 +57,7 @@ type SchemaRowCardProps = {
   startDate: string;
   exerciseById: ReadonlyMap<string, Exercise>;
   index: number;
+  isReorderPending: boolean;
 };
 
 type RowTintSx = {
@@ -96,11 +97,13 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   startDate,
   exerciseById,
   index,
+  isReorderPending,
 }) => {
   const updateSchemaRow = useUpdateSchemaRow(planId, startDate);
   const deleteSchemaRow = useDeleteSchemaRow(planId, startDate);
 
-  const isMutationPending = updateSchemaRow.isPending || deleteSchemaRow.isPending;
+  const isMutationPending =
+    updateSchemaRow.isPending || deleteSchemaRow.isPending || isReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: row.id,
@@ -160,9 +163,9 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         borderBottom: 1,
         borderColor: "divider",
         transition: TRANSITION_BG,
+        "&:hover": { bgcolor: "action.hover" },
         ...getRowTintSx(rowKind, theme),
         fontStyle: isFootnote ? "italic" : "inherit",
-        "&:hover": { bgcolor: "action.hover" },
         "&:last-of-type": { borderBottom: 0 },
       })}
     >
