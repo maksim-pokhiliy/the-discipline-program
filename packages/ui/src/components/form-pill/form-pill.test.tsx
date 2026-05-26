@@ -49,6 +49,14 @@ describe("FormPill", () => {
     expect(chip).toHaveStyle({ color: theme.palette.kind.load });
   });
 
+  it("applies the D-02/D-12 letterSpacing of 0.06em on the chip", () => {
+    const { container } = render(<FormPill text="compound" />);
+    const chip = container.querySelector(".MuiChip-root");
+
+    expect(chip).not.toBeNull();
+    expect(chip).toHaveStyle({ letterSpacing: "0.06em" });
+  });
+
   it("renders the text uppercased via CSS textTransform", () => {
     const { container } = render(<FormPill text="compound" />);
     const chip = container.querySelector(".MuiChip-root");

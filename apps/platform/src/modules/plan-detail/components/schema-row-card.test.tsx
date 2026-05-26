@@ -1,9 +1,11 @@
 import { createElement } from "react";
 
+import { alpha } from "@mui/material";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
+import { theme } from "@repo/mui";
 
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
@@ -17,9 +19,14 @@ import {
   makeAtomicExerciseNoDemoRow,
   makeCompoundExerciseRow,
   makeExerciseRow,
+  makeFootnoteRow,
+  makeInnerLadderMarkerRow,
   makeRestRow,
   makeStandaloneLoadRow,
 } from "./schema-row-card.fixtures";
+
+const TINT_ALPHA = 0.04;
+const LADDER_TINT_ALPHA = 0.02;
 
 const updateSchemaRowMutate = vi.fn();
 const deleteSchemaRowMutate = vi.fn();
@@ -127,6 +134,51 @@ describe("SchemaRowCard chrome", () => {
     renderRowCard();
 
     expect(screen.getByRole("button", { name: KEBAB_LABEL })).toBeInTheDocument();
+  });
+});
+
+describe("SchemaRowCard per-RowKind tint", () => {
+  it("applies kind.load tint at 0.04 alpha for STANDALONE_LOAD", () => {
+    const { container } = renderRowCard({ row: makeStandaloneLoadRow() });
+    const shell = container.firstChild;
+    const expectedBgColor = alpha(theme.palette.kind.load, TINT_ALPHA);
+
+    expect(shell).toHaveStyle({ backgroundColor: expectedBgColor });
+  });
+
+  it("applies kind.rest tint at 0.04 alpha for REST", () => {
+    const { container } = renderRowCard({ row: makeRestRow() });
+    const shell = container.firstChild;
+    const expectedBgColor = alpha(theme.palette.kind.rest, TINT_ALPHA);
+
+    expect(shell).toHaveStyle({ backgroundColor: expectedBgColor });
+  });
+
+  it("applies kind.foot tint at 0.04 alpha for FOOTNOTE", () => {
+    const { container } = renderRowCard({ row: makeFootnoteRow() });
+    const shell = container.firstChild;
+    const expectedBgColor = alpha(theme.palette.kind.foot, TINT_ALPHA);
+
+    expect(shell).toHaveStyle({ backgroundColor: expectedBgColor });
+  });
+
+  it("applies text.primary tint at 0.02 alpha for INNER_LADDER_MARKER", () => {
+    const { container } = renderRowCard({ row: makeInnerLadderMarkerRow() });
+    const shell = container.firstChild;
+    const expectedBgColor = alpha(theme.palette.text.primary, LADDER_TINT_ALPHA);
+
+    expect(shell).toHaveStyle({ backgroundColor: expectedBgColor });
+  });
+
+  it("applies no kind tint for EXERCISE rows (empty backgroundColor inline)", () => {
+    const { container } = renderRowCard();
+    const shell = container.firstChild;
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected row shell to be an HTMLElement");
+    }
+
+    expect(shell.style.backgroundColor).toBe("");
   });
 });
 

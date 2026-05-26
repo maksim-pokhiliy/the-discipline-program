@@ -107,9 +107,6 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
       <Stack
         sx={(theme) => ({
           p: theme.spacing(1),
-          // px: theme.spacing(1.5),
-          // pt: theme.spacing(1.25),
-          // pb: theme.spacing(1.25),
         })}
       >
         <AddRowButton schemaId={schemaId} planId={planId} startDate={startDate} />

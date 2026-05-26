@@ -30,6 +30,14 @@ describe("RowKindBadge", () => {
     expect(screen.getByText("EX")).toBeInTheDocument();
   });
 
+  it("applies the D-04 letterSpacing of 0.04em on the chip", () => {
+    const { container } = render(<RowKindBadge kind="ex" />);
+    const chip = container.querySelector(".MuiChip-root");
+
+    expect(chip).not.toBeNull();
+    expect(chip).toHaveStyle({ letterSpacing: "0.04em" });
+  });
+
   it("renders a provided label override", () => {
     render(<RowKindBadge kind="ex" label="Exercise" />);
 
