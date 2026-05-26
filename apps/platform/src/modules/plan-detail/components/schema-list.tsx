@@ -23,6 +23,8 @@ import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import { useReorderSchemas } from "@app/lib/hooks";
 
+import { type BlockCtx } from "../lib/build-cascade-chips";
+
 import { SchemaCard } from "./schema-card";
 
 type SchemaListProps = {
@@ -30,9 +32,16 @@ type SchemaListProps = {
   startDate: string;
   blockId: string;
   schemas: SchemaWithBody[];
+  blockCtx: BlockCtx;
 };
 
-export const SchemaList: React.FC<SchemaListProps> = ({ planId, startDate, blockId, schemas }) => {
+export const SchemaList: React.FC<SchemaListProps> = ({
+  planId,
+  startDate,
+  blockId,
+  schemas,
+  blockCtx,
+}) => {
   const reorderSchemas = useReorderSchemas(planId, startDate);
   const [sortedSchemas, setSortedSchemas] = useState<SchemaWithBody[]>(schemas);
 
@@ -88,6 +97,7 @@ export const SchemaList: React.FC<SchemaListProps> = ({ planId, startDate, block
               schema={schema}
               planId={planId}
               startDate={startDate}
+              blockCtx={blockCtx}
             />
           ))}
         </Stack>

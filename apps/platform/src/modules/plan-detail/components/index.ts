@@ -29,7 +29,6 @@ export { RpeField } from "./rpe-field";
 export { SchemaCard } from "./schema-card";
 export { SchemaEditorModal } from "./schema-editor-modal";
 export { SchemaList } from "./schema-list";
-export { SchemaParamsSummary } from "./schema-params-summary";
 export { SchemaRowCard } from "./schema-row-card";
 export { SchemaRowList } from "./schema-row-list";
 export { SessionCard } from "./session-card";

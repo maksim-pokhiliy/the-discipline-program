@@ -1,5 +1,6 @@
 export * from "./accent-group-card";
 export * from "./block-label";
+export * from "./cascade-chip";
 export * from "./chip-tab";
 export * from "./collapsible-list";
 export * from "./data-table";

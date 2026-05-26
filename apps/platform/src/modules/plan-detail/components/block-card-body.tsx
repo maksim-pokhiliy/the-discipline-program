@@ -7,6 +7,7 @@ import { Stack } from "@mui/material";
 import type { Block } from "@repo/contracts/lms/block";
 import { AccentGroupCard } from "@repo/ui";
 
+import { type BlockCtx } from "../lib/build-cascade-chips";
 import { groupSchemasByAltGroup } from "../lib/group-schemas-by-alt-group";
 
 import { AddSchemaButton } from "./add-schema-button";
@@ -28,6 +29,11 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({ block, planId, sta
     [block.schemas, block.alternatingGroups],
   );
 
+  const blockCtx = useMemo<BlockCtx>(
+    () => ({ intensity: block.intensity, timeCap: block.timeCap }),
+    [block.intensity, block.timeCap],
+  );
+
   return (
     <Stack direction="column" spacing={1.25} sx={(theme) => ({ p: theme.spacing(1.5) })}>
       {groups.map((g) =>
@@ -41,6 +47,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({ block, planId, sta
               startDate={startDate}
               blockId={block.id}
               schemas={g.schemas}
+              blockCtx={blockCtx}
             />
           </AccentGroupCard>
         ) : (
@@ -50,6 +57,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({ block, planId, sta
             startDate={startDate}
             blockId={block.id}
             schemas={[g.schema]}
+            blockCtx={blockCtx}
           />
         ),
       )}
