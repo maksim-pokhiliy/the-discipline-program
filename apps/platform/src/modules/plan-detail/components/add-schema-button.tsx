@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
-import { Button } from "@mui/material";
+import { PlusRowButton } from "@repo/ui";
 
 import { ArchetypePicker } from "./archetype-picker";
 import { SchemaEditorModal } from "./schema-editor-modal";
@@ -38,15 +37,7 @@ export const AddSchemaButton: React.FC<AddSchemaButtonProps> = ({ planId, startD
 
   return (
     <>
-      <Button
-        onClick={() => setPickerOpen(true)}
-        startIcon={<AddIcon />}
-        size="small"
-        variant="outlined"
-        sx={{ borderStyle: "dashed", alignSelf: "flex-start" }}
-      >
-        Add schema
-      </Button>
+      <PlusRowButton onClick={() => setPickerOpen(true)} label="Add schema" />
 
       <ArchetypePicker
         open={pickerOpen}

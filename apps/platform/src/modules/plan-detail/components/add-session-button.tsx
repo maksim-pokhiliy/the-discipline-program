@@ -1,9 +1,7 @@
 "use client";
 
-import AddIcon from "@mui/icons-material/Add";
-import { Button } from "@mui/material";
-
 import type { DayOfWeek } from "@repo/contracts/lms/_shared";
+import { PlusRowButton } from "@repo/ui";
 
 import { useCreateSession } from "@app/lib/hooks";
 
@@ -21,15 +19,10 @@ export const AddSessionButton: React.FC<AddSessionButtonProps> = ({
   const createSession = useCreateSession(planId, startDate, dayOfWeek);
 
   return (
-    <Button
+    <PlusRowButton
       onClick={() => createSession.mutate({})}
-      startIcon={<AddIcon />}
+      label="Add session"
       disabled={createSession.isPending}
-      size="small"
-      variant="outlined"
-      sx={{ borderStyle: "dashed", alignSelf: "flex-start" }}
-    >
-      Add session
-    </Button>
+    />
   );
 };
