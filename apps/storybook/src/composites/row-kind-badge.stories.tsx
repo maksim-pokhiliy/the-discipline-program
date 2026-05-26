@@ -48,3 +48,14 @@ export const WithLabelOverride: Story = {
     </StoryPage>
   ),
 };
+
+export const Dashed: Story = {
+  render: () => (
+    <StoryPage>
+      <StorySection title="dashed border — placeholder and ladder kinds">
+        <RowKindBadge kind="placeholder" dashed />
+        <RowKindBadge kind="ladder" dashed />
+      </StorySection>
+    </StoryPage>
+  ),
+};
