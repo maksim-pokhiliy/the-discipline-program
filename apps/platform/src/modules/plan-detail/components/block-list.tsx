@@ -73,14 +73,14 @@ export const BlockList: React.FC<BlockListProps> = ({ planId, startDate, session
   };
 
   return (
-    <Stack spacing={1}>
+    <Stack spacing={1.25}>
       {sortedBlocks.length > 0 ? (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
             items={sortedBlocks.map((b) => b.id)}
             strategy={verticalListSortingStrategy}
           >
-            <Stack spacing={1}>
+            <Stack spacing={1.25}>
               {sortedBlocks.map((block) => (
                 <BlockCard key={block.id} block={block} planId={planId} startDate={startDate} />
               ))}

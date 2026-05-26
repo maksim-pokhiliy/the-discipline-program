@@ -17,13 +17,12 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Box, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import { useReorderSchemas } from "@app/lib/hooks";
 
-import { AddSchemaButton } from "./add-schema-button";
 import { SchemaCard } from "./schema-card";
 
 type SchemaListProps = {
@@ -72,31 +71,27 @@ export const SchemaList: React.FC<SchemaListProps> = ({ planId, startDate, block
     );
   };
 
-  return (
-    <Stack spacing={1}>
-      {sortedSchemas.length > 0 ? (
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-          <SortableContext
-            items={sortedSchemas.map((s) => s.schema.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <Stack spacing={1}>
-              {sortedSchemas.map((schema) => (
-                <SchemaCard
-                  key={schema.schema.id}
-                  schema={schema}
-                  planId={planId}
-                  startDate={startDate}
-                />
-              ))}
-            </Stack>
-          </SortableContext>
-        </DndContext>
-      ) : null}
+  if (sortedSchemas.length === 0) {
+    return null;
+  }
 
-      <Box>
-        <AddSchemaButton planId={planId} startDate={startDate} blockId={blockId} />
-      </Box>
-    </Stack>
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext
+        items={sortedSchemas.map((s) => s.schema.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <Stack spacing={1}>
+          {sortedSchemas.map((schema) => (
+            <SchemaCard
+              key={schema.schema.id}
+              schema={schema}
+              planId={planId}
+              startDate={startDate}
+            />
+          ))}
+        </Stack>
+      </SortableContext>
+    </DndContext>
   );
 };
