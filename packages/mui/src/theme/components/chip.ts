@@ -99,6 +99,13 @@ export const MuiChip: NonNullable<Components<Theme>["MuiChip"]> = {
         paddingLeft: CHIP_ROOT_PX_SM,
         paddingRight: CHIP_ROOT_PX_SM,
         gap: 0,
+        maxWidth: theme.spacing(40),
+
+        "& .MuiChip-label": {
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        },
 
         "& .MuiChip-deleteIcon": {
           width: CHIP_TAG_DELETE_SIZE,
