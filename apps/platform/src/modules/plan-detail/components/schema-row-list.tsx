@@ -17,7 +17,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Box, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
@@ -88,7 +88,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
             items={sortedRows.map((r) => r.id)}
             strategy={verticalListSortingStrategy}
           >
-            <Stack spacing={1}>
+            <Stack sx={{ borderTop: 1, borderColor: "divider" }}>
               {sortedRows.map((row, index) => (
                 <SchemaRowCard
                   key={row.id}
@@ -104,9 +104,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
         </DndContext>
       ) : null}
 
-      <Box>
-        <AddRowButton schemaId={schemaId} planId={planId} startDate={startDate} />
-      </Box>
+      <AddRowButton schemaId={schemaId} planId={planId} startDate={startDate} />
     </Stack>
   );
 };

@@ -8,30 +8,48 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import EditIcon from "@mui/icons-material/Edit";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import {
   Box,
-  Chip,
   IconButton,
+  Link,
   ListItemIcon,
   ListItemText,
   Menu,
   MenuItem,
-  Stack,
+  Typography,
+  alpha,
+  type Theme,
 } from "@mui/material";
 
 import type { Exercise } from "@repo/contracts/lms/exercise";
-import type { SchemaRow } from "@repo/contracts/lms/schema-row";
-import { ConfirmationModal } from "@repo/ui";
+import type { RowKind, SchemaRow } from "@repo/contracts/lms/schema-row";
+import { ConfirmationModal, RowKindBadge } from "@repo/ui";
 
 import { useDeleteSchemaRow, useUpdateSchemaRow } from "@app/lib/hooks";
 
-import { formatRestSpec } from "../lib/format-rest-spec";
+import { formatRow } from "../lib/format-row";
 
-import { LoadSummary } from "./load-summary";
 import { RowEditorModal } from "./row-editor-modal";
-import type { RowEditorMode } from "./row-editor-types";
+import { type RowEditorMode } from "./row-editor-types";
+import { SchemaRowCardBody } from "./schema-row-card-body";
 
-const STEP_SEPARATOR = " → ";
+const GRID_TEMPLATE_COLUMNS = "24px 24px 32px 1fr auto auto";
+const GRID_GAP_FACTOR = 1.25;
+const PADDING_X_FACTOR = 1.5;
+const PADDING_Y_FACTOR = 1;
+const DEMO_GAP_FACTOR = 0.5;
+const DEMO_PX_FACTOR = 0.75;
+const DEMO_PY_FACTOR = 0.5;
+const DEMO_BORDER_RADIUS_FACTOR = 0.5;
+const TINT_ALPHA = 0.04;
+const TINT_HOVER_ALPHA = 0.07;
+const LADDER_TINT_ALPHA = 0.02;
+const DRAG_OPACITY_DRAGGING = 0.5;
+const DRAG_OPACITY_DEFAULT = 1;
+const TRANSITION_BG = "background-color 150ms";
+const DELETE_TITLE = "Delete row";
+const DELETE_MESSAGE = "Delete this row?";
 
 type SchemaRowCardProps = {
   row: SchemaRow;
@@ -41,102 +59,182 @@ type SchemaRowCardProps = {
   index: number;
 };
 
-export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({ row, planId, startDate }) => {
+type RowTintSx = {
+  bgcolor?: string;
+  "&:hover"?: { bgcolor: string };
+};
+
+const getRowTintSx = (rowKind: RowKind, theme: Theme): RowTintSx => {
+  switch (rowKind) {
+    case "STANDALONE_LOAD":
+    case "STANDALONE_URL":
+      return {
+        bgcolor: alpha(theme.palette.kind.load, TINT_ALPHA),
+        "&:hover": { bgcolor: alpha(theme.palette.kind.load, TINT_HOVER_ALPHA) },
+      };
+    case "REST":
+    case "REST_SLOT":
+      return { bgcolor: alpha(theme.palette.kind.rest, TINT_ALPHA) };
+    case "FOOTNOTE":
+      return { bgcolor: alpha(theme.palette.kind.foot, TINT_ALPHA) };
+    case "INNER_LADDER_MARKER":
+      return { bgcolor: alpha(theme.palette.text.primary, LADDER_TINT_ALPHA) };
+    case "EXERCISE":
+    case "PLACEHOLDER":
+    case "REP_DEFINITION":
+      return {};
+    default:
+      rowKind satisfies never;
+
+      return {};
+  }
+};
+
+export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
+  row,
+  planId,
+  startDate,
+  exerciseById,
+  index,
+}) => {
   const updateSchemaRow = useUpdateSchemaRow(planId, startDate);
   const deleteSchemaRow = useDeleteSchemaRow(planId, startDate);
 
+  const isMutationPending = updateSchemaRow.isPending || deleteSchemaRow.isPending;
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: row.id,
-    disabled: updateSchemaRow.isPending || deleteSchemaRow.isPending,
+    disabled: isMutationPending,
   });
 
-  const [isMenuOpen, setMenuOpen] = useState(false);
-  const [isEditOpen, setEditOpen] = useState(false);
-  const [isDeleteOpen, setDeleteOpen] = useState(false);
-  const anchorRef = useRef<HTMLButtonElement>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
+  const kebabAnchorRef = useRef<HTMLButtonElement>(null);
 
-  const handleDeleteConfirm = () => {
-    deleteSchemaRow.mutate({ schemaRowId: row.id }, { onSuccess: () => setDeleteOpen(false) });
+  const fmt = useMemo(() => formatRow(row, exerciseById, index), [row, exerciseById, index]);
+
+  const editorMode = useMemo<RowEditorMode>(() => ({ kind: "edit", row }), [row]);
+
+  const rowKind = row.rowPayload.rowKind;
+  const isFootnote = rowKind === "FOOTNOTE";
+
+  const handleMenuClose = () => setIsMenuOpen(false);
+  const handleMenuOpen = () => setIsMenuOpen(true);
+
+  const handleEditOpen = () => {
+    setIsMenuOpen(false);
+    setIsEditOpen(true);
   };
+
+  const handleEditClose = () => setIsEditOpen(false);
+
+  const handleDeleteOpen = () => {
+    setIsMenuOpen(false);
+    setIsDeleteOpen(true);
+  };
+
+  const handleDeleteClose = () => setIsDeleteOpen(false);
+
+  const handleDeleteConfirm = () =>
+    deleteSchemaRow.mutate({ schemaRowId: row.id }, { onSuccess: handleDeleteClose });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  const editorMode = useMemo<RowEditorMode>(() => ({ kind: "edit", row }), [row]);
-
-  const renderBody = (): React.ReactNode => {
-    switch (row.rowPayload.rowKind) {
-      case "STANDALONE_LOAD":
-        return <LoadSummary load={row.rowPayload.load} />;
-      case "REST":
-        return <Chip size="small" label={formatRestSpec(row.rowPayload.parsed)} />;
-      case "INNER_LADDER_MARKER":
-        return <Chip size="small" label={row.rowPayload.steps.join(STEP_SEPARATOR)} />;
-      case "STANDALONE_URL":
-        return <Chip size="small" label={row.rowPayload.url} />;
-      default:
-        return <Chip size="small" variant="outlined" label={row.rowPayload.rowKind} />;
-    }
+    opacity: isDragging ? DRAG_OPACITY_DRAGGING : DRAG_OPACITY_DEFAULT,
   };
 
   return (
     <Box
       ref={setNodeRef}
       style={style}
-      sx={{
-        p: 1.5,
-        border: 1,
+      onDoubleClick={handleEditOpen}
+      sx={(theme) => ({
+        display: "grid",
+        gridTemplateColumns: GRID_TEMPLATE_COLUMNS,
+        gap: theme.spacing(GRID_GAP_FACTOR),
+        alignItems: "center",
+        px: theme.spacing(PADDING_X_FACTOR),
+        py: theme.spacing(PADDING_Y_FACTOR),
+        borderBottom: 1,
         borderColor: "divider",
-        borderRadius: 1,
-        bgcolor: "background.paper",
-      }}
+        transition: TRANSITION_BG,
+        ...getRowTintSx(rowKind, theme),
+        fontStyle: isFootnote ? "italic" : "inherit",
+        "&:hover": { bgcolor: "action.hover" },
+        "&:last-of-type": { borderBottom: 0 },
+      })}
     >
-      <Stack direction="row" spacing={1.5} alignItems="flex-start">
-        <IconButton
-          {...attributes}
-          {...listeners}
-          size="small"
-          aria-label="Drag row"
-          sx={{ cursor: "grab", touchAction: "none" }}
-        >
-          <DragIndicatorIcon fontSize="small" />
-        </IconButton>
+      <IconButton
+        {...attributes}
+        {...listeners}
+        size="small"
+        aria-label="Drag row"
+        disabled={isMutationPending}
+        sx={{ cursor: "grab", touchAction: "none" }}
+      >
+        <DragIndicatorIcon fontSize="small" />
+      </IconButton>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>{renderBody()}</Box>
+      <Typography
+        variant="caption"
+        color="text.subtle"
+        sx={{ fontVariantNumeric: "tabular-nums", textAlign: "center" }}
+      >
+        {fmt.ord}
+      </Typography>
 
-        <IconButton
-          ref={anchorRef}
-          onClick={() => setMenuOpen(true)}
-          aria-label="Row actions"
-          size="small"
-        >
-          <MoreVertIcon fontSize="small" />
-        </IconButton>
-      </Stack>
+      <RowKindBadge kind={fmt.kindCls} label={fmt.kindBadge} dashed={fmt.dashed} />
 
-      <Menu anchorEl={anchorRef.current} open={isMenuOpen} onClose={() => setMenuOpen(false)}>
-        <MenuItem
-          onClick={() => {
-            setMenuOpen(false);
-            setEditOpen(true);
+      <SchemaRowCardBody
+        mainText={fmt.mainText}
+        formPillText={fmt.formPillText}
+        subParts={fmt.subParts}
+      />
+
+      {fmt.demoUrl !== null ? (
+        <Link
+          href={fmt.demoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          underline="hover"
+          sx={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: DEMO_GAP_FACTOR,
+            color: "text.subtle",
+            px: DEMO_PX_FACTOR,
+            py: DEMO_PY_FACTOR,
+            borderRadius: DEMO_BORDER_RADIUS_FACTOR,
+            "&:hover": { bgcolor: "action.hover", color: "primary.main" },
           }}
         >
+          <PlayCircleOutlineIcon fontSize="small" />
+          <Typography variant="caption">demo</Typography>
+        </Link>
+      ) : (
+        <span />
+      )}
+
+      <IconButton
+        ref={kebabAnchorRef}
+        onClick={handleMenuOpen}
+        aria-label="Row actions"
+        size="small"
+        disabled={isMutationPending}
+      >
+        <MoreVertIcon fontSize="small" />
+      </IconButton>
+
+      <Menu anchorEl={kebabAnchorRef.current} open={isMenuOpen} onClose={handleMenuClose}>
+        <MenuItem onClick={handleEditOpen}>
           <ListItemIcon>
             <EditIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>Edit</ListItemText>
         </MenuItem>
-
-        <MenuItem
-          onClick={() => {
-            setMenuOpen(false);
-            setDeleteOpen(true);
-          }}
-          sx={{ color: "error.main" }}
-        >
+        <MenuItem onClick={handleDeleteOpen} sx={{ color: "error.main" }}>
           <ListItemIcon sx={{ color: "inherit" }}>
             <DeleteIcon fontSize="small" />
           </ListItemIcon>
@@ -146,7 +244,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({ row, planId, start
 
       <RowEditorModal
         open={isEditOpen}
-        onClose={() => setEditOpen(false)}
+        onClose={handleEditClose}
         mode={editorMode}
         planId={planId}
         startDate={startDate}
@@ -154,10 +252,11 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({ row, planId, start
 
       <ConfirmationModal
         open={isDeleteOpen}
-        onClose={() => setDeleteOpen(false)}
-        title="Delete row"
+        onClose={handleDeleteClose}
+        title={DELETE_TITLE}
         type="danger"
-        message="Delete this row?"
+        message={DELETE_MESSAGE}
+        details={fmt.mainText}
         onConfirm={handleDeleteConfirm}
         isConfirming={deleteSchemaRow.isPending}
       />
