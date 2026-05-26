@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Intensity, TimeCap } from "@repo/contracts/lms/_shared";
 import type { Archetype } from "@repo/contracts/lms/archetype";
+import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { ArchetypeParams, SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import type * as Hooks from "@app/lib/hooks";
@@ -147,6 +148,8 @@ type RenderOptions = {
   isSubSchema?: boolean;
 };
 
+const EMPTY_EXERCISE_BY_ID: ReadonlyMap<string, Exercise> = new Map();
+
 const renderSchemaCard = ({
   schema = makeSchema(),
   blockCtx = makeBlockCtx(),
@@ -158,6 +161,7 @@ const renderSchemaCard = ({
       planId={PLAN_ID}
       startDate={START_DATE}
       blockCtx={blockCtx}
+      exerciseById={EMPTY_EXERCISE_BY_ID}
       {...(isSubSchema !== undefined && { isSubSchema })}
     />,
   );

@@ -19,6 +19,7 @@ import {
   Stack,
 } from "@mui/material";
 
+import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import { ConfirmationModal } from "@repo/ui";
 
@@ -36,6 +37,8 @@ type SchemaRowCardProps = {
   row: SchemaRow;
   planId: string;
   startDate: string;
+  exerciseById: ReadonlyMap<string, Exercise>;
+  index: number;
 };
 
 export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({ row, planId, startDate }) => {

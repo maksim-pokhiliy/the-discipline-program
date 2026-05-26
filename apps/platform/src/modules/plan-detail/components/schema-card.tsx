@@ -8,6 +8,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { ListItemIcon, ListItemText, Menu, MenuItem, Stack } from "@mui/material";
 
+import type { Exercise } from "@repo/contracts/lms/exercise";
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 import { ConfirmationModal } from "@repo/ui";
 
@@ -37,6 +38,7 @@ type SchemaCardProps = {
   planId: string;
   startDate: string;
   blockCtx: BlockCtx;
+  exerciseById: ReadonlyMap<string, Exercise>;
   isSubSchema?: boolean;
 };
 
@@ -45,6 +47,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   planId,
   startDate,
   blockCtx,
+  exerciseById,
   isSubSchema = false,
 }): ReactElement => {
   const updateSchema = useUpdateSchema(planId, startDate);
@@ -153,6 +156,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
               planId={planId}
               startDate={startDate}
               blockCtx={blockCtx}
+              exerciseById={exerciseById}
               isSubSchema
             />
           ))}
@@ -170,6 +174,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
           schemaId={schema.schema.id}
           planId={planId}
           startDate={startDate}
+          exerciseById={exerciseById}
         />
       </Stack>
 

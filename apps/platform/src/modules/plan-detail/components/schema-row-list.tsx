@@ -19,6 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { Box, Stack } from "@mui/material";
 
+import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import { useReorderSchemaRows } from "@app/lib/hooks";
@@ -31,6 +32,7 @@ type SchemaRowListProps = {
   startDate: string;
   schemaId: string;
   rows: SchemaRow[];
+  exerciseById: ReadonlyMap<string, Exercise>;
 };
 
 export const SchemaRowList: React.FC<SchemaRowListProps> = ({
@@ -38,6 +40,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
   startDate,
   schemaId,
   rows,
+  exerciseById,
 }) => {
   const reorderSchemaRows = useReorderSchemaRows(planId, startDate);
   const [sortedRows, setSortedRows] = useState<SchemaRow[]>(rows);
@@ -86,8 +89,15 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
             strategy={verticalListSortingStrategy}
           >
             <Stack spacing={1}>
-              {sortedRows.map((row) => (
-                <SchemaRowCard key={row.id} row={row} planId={planId} startDate={startDate} />
+              {sortedRows.map((row, index) => (
+                <SchemaRowCard
+                  key={row.id}
+                  row={row}
+                  planId={planId}
+                  startDate={startDate}
+                  exerciseById={exerciseById}
+                  index={index}
+                />
               ))}
             </Stack>
           </SortableContext>

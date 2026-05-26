@@ -39,6 +39,7 @@ vi.mock("@app/lib/hooks", async () => {
       mutate: assignLabelsMutate,
       isPending: assignLabelsState.isPending,
     }),
+    useExercises: () => ({ data: [] }),
   };
 });
 
