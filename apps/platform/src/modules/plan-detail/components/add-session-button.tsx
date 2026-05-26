@@ -27,6 +27,7 @@ export const AddSessionButton: React.FC<AddSessionButtonProps> = ({
       disabled={createSession.isPending}
       size="small"
       variant="outlined"
+      sx={{ borderStyle: "dashed", alignSelf: "flex-start" }}
     >
       Add session
     </Button>

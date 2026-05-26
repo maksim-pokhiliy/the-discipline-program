@@ -19,6 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { Stack } from "@mui/material";
 
+import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import { useReorderSchemas } from "@app/lib/hooks";
@@ -33,6 +34,7 @@ type SchemaListProps = {
   blockId: string;
   schemas: SchemaWithBody[];
   blockCtx: BlockCtx;
+  exerciseById: ReadonlyMap<string, Exercise>;
 };
 
 export const SchemaList: React.FC<SchemaListProps> = ({
@@ -41,6 +43,7 @@ export const SchemaList: React.FC<SchemaListProps> = ({
   blockId,
   schemas,
   blockCtx,
+  exerciseById,
 }) => {
   const reorderSchemas = useReorderSchemas(planId, startDate);
   const [sortedSchemas, setSortedSchemas] = useState<SchemaWithBody[]>(schemas);
@@ -98,6 +101,7 @@ export const SchemaList: React.FC<SchemaListProps> = ({
               planId={planId}
               startDate={startDate}
               blockCtx={blockCtx}
+              exerciseById={exerciseById}
             />
           ))}
         </Stack>

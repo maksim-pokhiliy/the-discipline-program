@@ -17,8 +17,9 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { Box, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
+import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import { useReorderSchemaRows } from "@app/lib/hooks";
@@ -31,6 +32,7 @@ type SchemaRowListProps = {
   startDate: string;
   schemaId: string;
   rows: SchemaRow[];
+  exerciseById: ReadonlyMap<string, Exercise>;
 };
 
 export const SchemaRowList: React.FC<SchemaRowListProps> = ({
@@ -38,6 +40,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
   startDate,
   schemaId,
   rows,
+  exerciseById,
 }) => {
   const reorderSchemaRows = useReorderSchemaRows(planId, startDate);
   const [sortedRows, setSortedRows] = useState<SchemaRow[]>(rows);
@@ -78,25 +81,37 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
   };
 
   return (
-    <Stack spacing={1}>
+    <Stack direction="column">
       {sortedRows.length > 0 ? (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext
             items={sortedRows.map((r) => r.id)}
             strategy={verticalListSortingStrategy}
           >
-            <Stack spacing={1}>
-              {sortedRows.map((row) => (
-                <SchemaRowCard key={row.id} row={row} planId={planId} startDate={startDate} />
+            <Stack sx={{ borderTop: 1, borderColor: "divider" }}>
+              {sortedRows.map((row, index) => (
+                <SchemaRowCard
+                  key={row.id}
+                  row={row}
+                  planId={planId}
+                  startDate={startDate}
+                  exerciseById={exerciseById}
+                  index={index}
+                  isReorderPending={reorderSchemaRows.isPending}
+                />
               ))}
             </Stack>
           </SortableContext>
         </DndContext>
       ) : null}
 
-      <Box>
+      <Stack
+        sx={(theme) => ({
+          p: theme.spacing(1),
+        })}
+      >
         <AddRowButton schemaId={schemaId} planId={planId} startDate={startDate} />
-      </Box>
+      </Stack>
     </Stack>
   );
 };

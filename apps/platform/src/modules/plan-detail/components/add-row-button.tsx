@@ -2,7 +2,6 @@
 
 import { useMemo, useRef, useState } from "react";
 
-import AddIcon from "@mui/icons-material/Add";
 import { Button, Menu, MenuItem } from "@mui/material";
 
 import type { RowKind } from "@repo/contracts/lms/schema-row";
@@ -65,11 +64,11 @@ export const AddRowButton: React.FC<AddRowButtonProps> = ({ planId, startDate, s
       <Button
         ref={anchorRef}
         onClick={() => setMenuOpen(true)}
-        startIcon={<AddIcon />}
-        size="small"
-        variant="outlined"
+        size="tiny"
+        variant="text"
+        sx={{ alignSelf: "flex-start" }}
       >
-        Add row
+        + Add row
       </Button>
 
       <Menu anchorEl={anchorRef.current} open={isMenuOpen} onClose={() => setMenuOpen(false)}>

@@ -22,7 +22,7 @@ const TITLE_ARIA = "Schema title";
 const HEAD_PX = 1.5;
 const HEAD_PY = 1.25;
 const HEAD_SPACING = 1.25;
-const INFO_SPACING = 0.375;
+const INFO_SPACING = 0.75;
 const TITLE_ROW_SPACING = 1;
 
 type SchemaCardHeadProps = {

@@ -18,7 +18,7 @@ export const DayRowRest: React.FC<DayRowRestProps> = ({ notes }) => {
         borderRadius: 0.5,
         border: `1px dashed ${theme.palette.dividerStrong}`,
         px: 2.75,
-        py: 2.25,
+        py: 2.5,
         bgcolor: alpha(theme.palette.primary.main, SURFACE_ALPHA),
         backgroundImage: `repeating-linear-gradient(135deg, transparent 0 9px, ${alpha(
           theme.palette.primary.main,
@@ -26,10 +26,11 @@ export const DayRowRest: React.FC<DayRowRestProps> = ({ notes }) => {
         )} 9px 10px)`,
       })}
     >
-      <Stack direction="row" spacing={1.5} alignItems="baseline" sx={{ flexWrap: "wrap" }}>
-        <Typography variant="h3" color="primary.main">
+      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexWrap: "wrap" }}>
+        <Typography variant="h3" color="text.secondary">
           REST DAY
         </Typography>
+
         {hasNotes ? (
           <Typography variant="body2" color="text.secondary">
             {notes}

@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Stack } from "@mui/material";
 
 import type { Block } from "@repo/contracts/lms/block";
+import type { Exercise } from "@repo/contracts/lms/exercise";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useLabelOptions } from "@app/lib/hooks";
+import { useExercises, useLabelOptions } from "@app/lib/hooks";
 import { useAssignBlockLabels, useDeleteBlock, useUpdateBlock } from "@app/lib/hooks";
 
 import { BlockCardBody } from "./block-card-body";
@@ -37,6 +38,12 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
   const deleteBlock = useDeleteBlock(planId, startDate);
   const assignLabels = useAssignBlockLabels(planId, startDate);
   const blockLabelOptions = useLabelOptions("BLOCK");
+  const exercises = useExercises();
+
+  const exerciseById = useMemo<ReadonlyMap<string, Exercise>>(
+    () => new Map((exercises.data ?? []).map((e) => [e.id, e])),
+    [exercises.data],
+  );
 
   const isMutationPending =
     updateBlock.isPending || deleteBlock.isPending || assignLabels.isPending;
@@ -104,7 +111,12 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
       />
       <BlockCardMeta intensity={block.intensity} timeCap={block.timeCap} />
       <BlockCardNote value={block.notes ?? ""} onCommit={handleNotesCommit} />
-      <BlockCardBody block={block} planId={planId} startDate={startDate} />
+      <BlockCardBody
+        block={block}
+        planId={planId}
+        startDate={startDate}
+        exerciseById={exerciseById}
+      />
 
       <BlockEditorModal
         open={isEditOpen}

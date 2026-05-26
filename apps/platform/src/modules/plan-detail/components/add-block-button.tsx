@@ -21,6 +21,7 @@ export const AddBlockButton: React.FC<AddBlockButtonProps> = ({ planId, startDat
       disabled={createBlock.isPending}
       size="small"
       variant="outlined"
+      sx={{ borderStyle: "dashed", alignSelf: "flex-start" }}
     >
       Add block
     </Button>

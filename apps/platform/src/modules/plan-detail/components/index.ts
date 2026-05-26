@@ -15,7 +15,6 @@ export { LoadAbsoluteFields } from "./load-absolute-fields";
 export { LoadBodyweightFields } from "./load-bodyweight-fields";
 export { LoadEditor } from "./load-editor";
 export { LoadPercentageFields } from "./load-percentage-fields";
-export { LoadSummary } from "./load-summary";
 export { LoadUnspecifiedFields } from "./load-unspecified-fields";
 export { LoadWithoutWeightFields } from "./load-without-weight-fields";
 export { NRoundsSchemaForm } from "./n-rounds-schema-form";

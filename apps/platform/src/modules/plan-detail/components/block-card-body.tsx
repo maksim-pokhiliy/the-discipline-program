@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { Stack } from "@mui/material";
 
 import type { Block } from "@repo/contracts/lms/block";
+import type { Exercise } from "@repo/contracts/lms/exercise";
 import { AccentGroupCard } from "@repo/ui";
 
 import { type BlockCtx } from "../lib/build-cascade-chips";
@@ -21,9 +22,15 @@ type BlockCardBodyProps = {
   block: Block;
   planId: string;
   startDate: string;
+  exerciseById: ReadonlyMap<string, Exercise>;
 };
 
-export const BlockCardBody: React.FC<BlockCardBodyProps> = ({ block, planId, startDate }) => {
+export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
+  block,
+  planId,
+  startDate,
+  exerciseById,
+}) => {
   const groups = useMemo(
     () => groupSchemasByAltGroup(block.schemas, block.alternatingGroups),
     [block.schemas, block.alternatingGroups],
@@ -48,6 +55,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({ block, planId, sta
               blockId={block.id}
               schemas={g.schemas}
               blockCtx={blockCtx}
+              exerciseById={exerciseById}
             />
           </AccentGroupCard>
         ) : (
@@ -58,6 +66,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({ block, planId, sta
             blockId={block.id}
             schemas={[g.schema]}
             blockCtx={blockCtx}
+            exerciseById={exerciseById}
           />
         ),
       )}

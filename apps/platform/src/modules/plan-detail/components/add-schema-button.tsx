@@ -43,6 +43,7 @@ export const AddSchemaButton: React.FC<AddSchemaButtonProps> = ({ planId, startD
         startIcon={<AddIcon />}
         size="small"
         variant="outlined"
+        sx={{ borderStyle: "dashed", alignSelf: "flex-start" }}
       >
         Add schema
       </Button>

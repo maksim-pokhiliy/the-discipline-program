@@ -9,6 +9,7 @@ export * from "./error-pages";
 export * from "./drawer";
 export * from "./dynamic-list-item";
 export * from "./empty-state";
+export * from "./form-pill";
 export * from "./form-view";
 export * from "./image-upload";
 export * from "./indicator-chip";
