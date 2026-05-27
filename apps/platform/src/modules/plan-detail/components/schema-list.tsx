@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import {
   closestCenter,
@@ -19,23 +19,17 @@ import {
 } from "@dnd-kit/sortable";
 import { Stack } from "@mui/material";
 
-import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import { useReorderSchemas } from "@app/lib/hooks";
-
-import { type BlockCtx } from "../lib/build-cascade-chips";
-
-import { SchemaCard } from "./schema-card";
 
 type SchemaListProps = {
   planId: string;
   startDate: string;
   parentSchemaId: string;
   schemas: SchemaWithBody[];
-  blockCtx: BlockCtx;
-  exerciseById: ReadonlyMap<string, Exercise>;
   parentIsReorderPending?: boolean;
+  renderItem: (schema: SchemaWithBody, effectivePending: boolean) => ReactNode;
 };
 
 export const SchemaList: React.FC<SchemaListProps> = ({
@@ -43,9 +37,8 @@ export const SchemaList: React.FC<SchemaListProps> = ({
   startDate,
   parentSchemaId,
   schemas,
-  blockCtx,
-  exerciseById,
   parentIsReorderPending = false,
+  renderItem,
 }) => {
   const reorderSchemas = useReorderSchemas(planId, startDate);
   const [sortedSchemas, setSortedSchemas] = useState<SchemaWithBody[]>(schemas);
@@ -97,17 +90,7 @@ export const SchemaList: React.FC<SchemaListProps> = ({
         strategy={verticalListSortingStrategy}
       >
         <Stack spacing={1}>
-          {sortedSchemas.map((schema) => (
-            <SchemaCard
-              key={schema.schema.id}
-              schema={schema}
-              planId={planId}
-              startDate={startDate}
-              blockCtx={blockCtx}
-              exerciseById={exerciseById}
-              parentIsReorderPending={effectiveReorderPending}
-            />
-          ))}
+          {sortedSchemas.map((schema) => renderItem(schema, effectiveReorderPending))}
         </Stack>
       </SortableContext>
     </DndContext>

@@ -145,9 +145,18 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
             startDate={startDate}
             parentSchemaId={schema.schema.id}
             schemas={schema.subSchemas}
-            blockCtx={blockCtx}
-            exerciseById={exerciseById}
             parentIsReorderPending={isMutationPending}
+            renderItem={(sub, pending) => (
+              <SchemaCard
+                key={sub.schema.id}
+                schema={sub}
+                planId={planId}
+                startDate={startDate}
+                blockCtx={blockCtx}
+                exerciseById={exerciseById}
+                parentIsReorderPending={pending}
+              />
+            )}
           />
         </Stack>
       ) : null}

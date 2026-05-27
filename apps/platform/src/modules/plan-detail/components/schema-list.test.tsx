@@ -5,13 +5,10 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
-
-import type { BlockCtx } from "../lib/build-cascade-chips";
 
 const reorderSchemasMutate = vi.fn();
 const reorderSchemasState = { isPending: false };
@@ -26,24 +23,6 @@ vi.mock("@app/lib/hooks", async () => {
       isPending: reorderSchemasState.isPending,
     }),
   };
-});
-
-vi.mock("./schema-card", () => {
-  const renderSchemaCardMock = (props: {
-    schema: SchemaWithBody;
-    parentIsReorderPending?: boolean;
-  }) =>
-    createElement(
-      "div",
-      {
-        "data-testid": "schema-card-mock",
-        "data-schema-id": props.schema.schema.id,
-        "data-parent-pending": props.parentIsReorderPending === true ? "true" : "false",
-      },
-      `schema-card:${props.schema.schema.id}`,
-    );
-
-  return { SchemaCard: renderSchemaCardMock };
 });
 
 let capturedOnDragEnd: ((event: DragEndEvent) => void) | null = null;
@@ -100,13 +79,17 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
   subSchemas: [],
 });
 
-const makeBlockCtx = (overrides: Partial<BlockCtx> = {}): BlockCtx => ({
-  intensity: null,
-  timeCap: null,
-  ...overrides,
-});
-
-const EMPTY_EXERCISE_BY_ID: ReadonlyMap<string, Exercise> = new Map();
+const renderTestItem = (schema: SchemaWithBody, pending: boolean): ReactNode =>
+  createElement(
+    "div",
+    {
+      key: schema.schema.id,
+      "data-testid": "schema-item-mock",
+      "data-schema-id": schema.schema.id,
+      "data-parent-pending": pending ? "true" : "false",
+    },
+    `schema:${schema.schema.id}`,
+  );
 
 const makeDragEndEvent = (activeId: string, overId: string): DragEndEvent =>
   ({
@@ -165,8 +148,7 @@ describe("SchemaList sub-schema drag-end payload", () => {
         startDate={START_DATE}
         parentSchemaId={PARENT_SCHEMA_ID}
         schemas={schemas}
-        blockCtx={makeBlockCtx()}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
+        renderItem={renderTestItem}
       />,
     );
 
@@ -195,8 +177,7 @@ describe("SchemaList drag-end guards (QA-Must-01, QA-Must-02)", () => {
         startDate={START_DATE}
         parentSchemaId={PARENT_SCHEMA_ID}
         schemas={[s1, s2]}
-        blockCtx={makeBlockCtx()}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
+        renderItem={renderTestItem}
       />,
     );
 
@@ -215,8 +196,7 @@ describe("SchemaList drag-end guards (QA-Must-01, QA-Must-02)", () => {
         startDate={START_DATE}
         parentSchemaId={PARENT_SCHEMA_ID}
         schemas={[s1, s2]}
-        blockCtx={makeBlockCtx()}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
+        renderItem={renderTestItem}
       />,
     );
 
@@ -244,15 +224,14 @@ describe("SchemaList optimistic + rollback", () => {
         startDate={START_DATE}
         parentSchemaId={PARENT_SCHEMA_ID}
         schemas={schemas}
-        blockCtx={makeBlockCtx()}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
+        renderItem={renderTestItem}
       />,
     );
 
     triggerDragEnd(makeDragEndEvent(s2.schema.id, s1.schema.id));
 
     const renderedIds = Array.from(
-      container.querySelectorAll('[data-testid="schema-card-mock"]'),
+      container.querySelectorAll('[data-testid="schema-item-mock"]'),
     ).map((node) => node.getAttribute("data-schema-id"));
 
     expect(renderedIds).toEqual([s1.schema.id, s2.schema.id]);
@@ -260,7 +239,7 @@ describe("SchemaList optimistic + rollback", () => {
 });
 
 describe("SchemaList parentIsReorderPending cascade (D-10)", () => {
-  it("propagates effective pending to every SchemaCard when parentIsReorderPending is true", () => {
+  it("propagates effective pending to every renderItem when parentIsReorderPending is true", () => {
     const s1 = makeSchema({ id: "clp9z8x7w0000abcd12cas001", order: 1 });
     const s2 = makeSchema({ id: "clp9z8x7w0000abcd12cas002", order: 2 });
     const schemas = [s1, s2];
@@ -271,22 +250,21 @@ describe("SchemaList parentIsReorderPending cascade (D-10)", () => {
         startDate={START_DATE}
         parentSchemaId={PARENT_SCHEMA_ID}
         schemas={schemas}
-        blockCtx={makeBlockCtx()}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
         parentIsReorderPending
+        renderItem={renderTestItem}
       />,
     );
 
-    const cards = screen.getAllByTestId("schema-card-mock");
+    const items = screen.getAllByTestId("schema-item-mock");
 
-    expect(cards).toHaveLength(2);
+    expect(items).toHaveLength(2);
 
-    for (const card of cards) {
-      expect(card).toHaveAttribute("data-parent-pending", "true");
+    for (const item of items) {
+      expect(item).toHaveAttribute("data-parent-pending", "true");
     }
   });
 
-  it("passes data-parent-pending='false' to every SchemaCard when parentIsReorderPending is omitted and reorderSchemas.isPending is false", () => {
+  it("passes data-parent-pending='false' to every renderItem when parentIsReorderPending is omitted and reorderSchemas.isPending is false", () => {
     const s1 = makeSchema({ id: "clp9z8x7w0000abcd12cas101", order: 1 });
     const schemas = [s1];
 
@@ -296,12 +274,11 @@ describe("SchemaList parentIsReorderPending cascade (D-10)", () => {
         startDate={START_DATE}
         parentSchemaId={PARENT_SCHEMA_ID}
         schemas={schemas}
-        blockCtx={makeBlockCtx()}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
+        renderItem={renderTestItem}
       />,
     );
 
-    expect(screen.getByTestId("schema-card-mock")).toHaveAttribute("data-parent-pending", "false");
+    expect(screen.getByTestId("schema-item-mock")).toHaveAttribute("data-parent-pending", "false");
   });
 });
 
@@ -313,13 +290,12 @@ describe("SchemaList empty schemas", () => {
         startDate={START_DATE}
         parentSchemaId={PARENT_SCHEMA_ID}
         schemas={[]}
-        blockCtx={makeBlockCtx()}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
+        renderItem={renderTestItem}
       />,
     );
 
     expect(container.firstChild).toBeNull();
     expect(screen.queryByTestId("dnd-context-mock")).toBeNull();
-    expect(screen.queryByTestId("schema-card-mock")).toBeNull();
+    expect(screen.queryByTestId("schema-item-mock")).toBeNull();
   });
 });
