@@ -5,7 +5,7 @@ import {
   type PrismaClient,
 } from "@prisma/client";
 
-import { requireId } from "./_id-helpers";
+import { requireId } from "../_id-helpers";
 
 type ExerciseSeed = {
   canonicalName: string;

@@ -1,6 +1,6 @@
 import { type PrismaClient } from "@prisma/client";
 
-import { requireId } from "../_id-helpers";
+import { requireId } from "../../_id-helpers";
 import { type SeedCatalogIds } from "../_supporting-catalog";
 
 import { type ArchetypeLookup } from "./_archetype-lookup";

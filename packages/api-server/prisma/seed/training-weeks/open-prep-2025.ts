@@ -1,6 +1,8 @@
 import { type PrismaClient } from "@prisma/client";
 
-import { monday, requireId } from "./_id-helpers";
+import { requireId } from "../_id-helpers";
+
+import { monday } from "./_id-helpers";
 import { seedSupportingCatalog } from "./_supporting-catalog";
 import { buildArchetypeLookup } from "./days/_archetype-lookup";
 import { seedFriday } from "./days/friday";
