@@ -1,13 +1,11 @@
 "use client";
 
-import { type RefObject } from "react";
-
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import ScheduleIcon from "@mui/icons-material/Schedule";
-import { IconButton, Stack } from "@mui/material";
+import { IconButton, Stack, Tooltip } from "@mui/material";
 
 import type { SessionWithLabel } from "@repo/contracts/lms/day";
 import { SESSION_CONSTANTS } from "@repo/contracts/lms/session";
@@ -18,6 +16,12 @@ import { useLabelOptions } from "@app/lib/hooks";
 import { SessionCardCollapsedStats } from "./session-card-collapsed-stats";
 import { SessionFreezeFlag } from "./session-freeze-flag";
 
+const DRAG_ARIA = "Drag session";
+const DELETE_ARIA = "Delete session";
+const DELETE_TOOLTIP = "Delete session";
+
+const tooltipChildSx = { display: "inline-flex" };
+
 type SessionCardHeadProps = {
   session: SessionWithLabel;
   isExpanded: boolean;
@@ -25,10 +29,9 @@ type SessionCardHeadProps = {
   onLabelChange: (labelId: string | null) => void;
   onFreezeChange: (next: boolean) => void;
   onNotesCommit: (next: string) => void;
-  onKebabOpen: () => void;
+  onDeleteOpen: () => void;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
-  kebabAnchorRef: RefObject<HTMLButtonElement | null>;
   isMutationPending: boolean;
 };
 
@@ -39,10 +42,9 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
   onLabelChange,
   onFreezeChange,
   onNotesCommit,
-  onKebabOpen,
+  onDeleteOpen,
   dragAttributes,
   dragListeners,
-  kebabAnchorRef,
   isMutationPending,
 }) => {
   const sessionOptions = useLabelOptions("SESSION");
@@ -68,7 +70,7 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
         {...dragAttributes}
         {...dragListeners}
         size="small"
-        aria-label="Drag session"
+        aria-label={DRAG_ARIA}
         disabled={isMutationPending}
         sx={{ cursor: "grab", touchAction: "none" }}
       >
@@ -125,14 +127,19 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
 
       {!isExpanded && hasBlocks ? <SessionCardCollapsedStats blockCount={blockCount} /> : null}
 
-      <IconButton
-        ref={kebabAnchorRef}
-        onClick={onKebabOpen}
-        aria-label="Session actions"
-        size="small"
-      >
-        <MoreVertIcon fontSize="small" />
-      </IconButton>
+      <Tooltip title={DELETE_TOOLTIP}>
+        <span style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={onDeleteOpen}
+            disabled={isMutationPending}
+            aria-label={DELETE_ARIA}
+            sx={{ color: "error.main" }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
     </Stack>
   );
 };

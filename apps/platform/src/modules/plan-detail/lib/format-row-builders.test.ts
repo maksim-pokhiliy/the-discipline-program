@@ -1,17 +1,53 @@
 import { describe, expect, it } from "vitest";
 
-import type { SchemaRow } from "@repo/contracts/lms/schema-row";
+import type { SchemaRow, SchemaRowPayload } from "@repo/contracts/lms/schema-row";
 
-import { formatRow } from "./format-row";
+import { type ExerciseById, formatRow } from "./format-row";
+import { buildExercise, buildInnerLadderMarker, buildStandaloneLoad } from "./format-row-builders";
 import {
   ID_BACK_SQUAT,
   ID_DEADLIFT,
   ID_MISS,
   baseRowFields,
   exerciseById,
+  makeExercise,
   makeExerciseRow,
   makeFootnoteRow,
 } from "./format-row.fixtures";
+
+const ID_PLACEHOLDER_ATOMIC = "ckplaceh1234567890abcdef01";
+const PLACEHOLDER_CANONICAL_NAME = "Any squat";
+const PLACEHOLDER_DEMO_URL = "https://example.com/should-not-render.mp4";
+
+const exerciseByIdWithPlaceholder: ExerciseById = new Map([
+  ...exerciseById,
+  [
+    ID_PLACEHOLDER_ATOMIC,
+    makeExercise({
+      id: ID_PLACEHOLDER_ATOMIC,
+      canonicalName: PLACEHOLDER_CANONICAL_NAME,
+      canonicalCompoundType: "PLACEHOLDER",
+      placeholderFlag: true,
+      defaultDemoUrls: [PLACEHOLDER_DEMO_URL],
+    }),
+  ],
+]);
+
+const makeStandaloneLoadPayload = (): Extract<
+  SchemaRowPayload,
+  { rowKind: "STANDALONE_LOAD" }
+> => ({
+  rowKind: "STANDALONE_LOAD",
+  load: { kind: "absolute", weight: { variant: "single", valueKg: 20 } },
+  scope: "applies_to_all_preceding_rows",
+});
+
+const makeInnerLadderMarkerPayload = (
+  steps: number[],
+): Extract<SchemaRowPayload, { rowKind: "INNER_LADDER_MARKER" }> => ({
+  rowKind: "INNER_LADDER_MARKER",
+  steps,
+});
 
 describe("EXERCISE builder permutations", () => {
   it("returns null demoUrl when atomic exercise lookup misses", () => {
@@ -124,5 +160,97 @@ describe("STANDALONE_URL builder", () => {
     const result = formatRow(row, exerciseById, 0);
 
     expect(result.subParts).toEqual(["previous-row demo"]);
+  });
+});
+
+describe("STANDALONE_LOAD builder", () => {
+  it("returns global load sub at index 0", () => {
+    const result = buildStandaloneLoad(makeStandaloneLoadPayload(), exerciseById, 0);
+
+    expect(result.subParts).toEqual(["global load"]);
+    expect(result.mainText).toBe("20 kg");
+    expect(result.kindBadge).toBe("LD");
+  });
+
+  it("returns applies-to-all-rows-above sub at index 2", () => {
+    const result = buildStandaloneLoad(makeStandaloneLoadPayload(), exerciseById, 2);
+
+    expect(result.subParts).toEqual(["applies to all rows above"]);
+    expect(result.mainText).toBe("20 kg");
+    expect(result.kindBadge).toBe("LD");
+  });
+});
+
+describe("INNER_LADDER_MARKER builder", () => {
+  it("appends colon suffix for multi-step ladder", () => {
+    const result = buildInnerLadderMarker(makeInnerLadderMarkerPayload([12, 9, 6]));
+
+    expect(result.mainText).toBe("12-9-6 :");
+    expect(result.dashed).toBe(true);
+  });
+
+  it("omits colon suffix for single-step ladder", () => {
+    const result = buildInnerLadderMarker(makeInnerLadderMarkerPayload([10]));
+
+    expect(result.mainText).toBe("10");
+    expect(result.dashed).toBe(true);
+  });
+});
+
+describe("EXERCISE builder with placeholderFlag atomic", () => {
+  const makePlaceholderAtomicRow = (): SchemaRow =>
+    makeExerciseRow({
+      rowPayload: {
+        rowKind: "EXERCISE",
+        exercise: { form: "atomic", exerciseId: ID_PLACEHOLDER_ATOMIC },
+      },
+    });
+
+  it("sets formPillText to placeholder ref when atomic form points to placeholderFlag exercise", () => {
+    const row = makePlaceholderAtomicRow();
+    const result = buildExercise(
+      row,
+      { form: "atomic", exerciseId: ID_PLACEHOLDER_ATOMIC },
+      exerciseByIdWithPlaceholder,
+      0,
+    );
+
+    expect(result.formPillText).toBe("placeholder ref");
+  });
+
+  it("sets dashed: true when atomic form points to placeholderFlag exercise", () => {
+    const row = makePlaceholderAtomicRow();
+    const result = buildExercise(
+      row,
+      { form: "atomic", exerciseId: ID_PLACEHOLDER_ATOMIC },
+      exerciseByIdWithPlaceholder,
+      0,
+    );
+
+    expect(result.dashed).toBe(true);
+  });
+
+  it("sets demoUrl: null when atomic form points to placeholderFlag exercise", () => {
+    const row = makePlaceholderAtomicRow();
+    const result = buildExercise(
+      row,
+      { form: "atomic", exerciseId: ID_PLACEHOLDER_ATOMIC },
+      exerciseByIdWithPlaceholder,
+      0,
+    );
+
+    expect(result.demoUrl).toBeNull();
+  });
+
+  it("propagates placeholder sub via subParts when atomic form points to placeholderFlag exercise", () => {
+    const row = makePlaceholderAtomicRow();
+    const result = buildExercise(
+      row,
+      { form: "atomic", exerciseId: ID_PLACEHOLDER_ATOMIC },
+      exerciseByIdWithPlaceholder,
+      0,
+    );
+
+    expect(result.subParts).toContain("placeholder");
   });
 });

@@ -563,3 +563,60 @@ describe("BlockCard alt-group degradation (QA-004 integration)", () => {
     expect(schemaLists[1]).toHaveTextContent(`schema-list:1:${s2.schema.id}`);
   });
 });
+
+describe("BlockCard double-click", () => {
+  it("opens the BlockEditorModal when the block card outer Stack is double-clicked", () => {
+    const { container } = renderBlockCard();
+    const shell = container.firstChild;
+
+    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected block-card shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(shell);
+
+    expect(screen.getByTestId("block-editor-modal-mock")).toBeInTheDocument();
+  });
+
+  it("does not open the BlockEditorModal when useUpdateBlock is pending (QA-C7-01, QA-Must-C7-2)", () => {
+    updateBlockState.isPending = true;
+
+    const { container } = renderBlockCard();
+    const shell = container.firstChild;
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected block-card shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(shell);
+
+    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
+  });
+
+  it("does not open the BlockEditorModal when useDeleteBlock is pending (QA-C7-01, QA-Must-C7-2)", () => {
+    deleteBlockState.isPending = true;
+
+    const { container } = renderBlockCard();
+    const shell = container.firstChild;
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected block-card shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(shell);
+
+    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
+  });
+
+  it("does not open the BlockEditorModal when double-click originates inside a descendant button (QA-Must-C7-12)", () => {
+    renderBlockCard();
+
+    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
+
+    fireEvent.doubleClick(screen.getByRole("button", { name: "Drag block" }));
+
+    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
+  });
+});

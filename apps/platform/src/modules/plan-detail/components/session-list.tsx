@@ -101,7 +101,7 @@ export const SessionList: React.FC<SessionListProps> = ({
       ) : null}
 
       <Box>
-        <AddSessionButton planId={planId} startDate={startDate} dayOfWeek={dayOfWeek} />
+        <AddSessionButton planId={planId} startDate={startDate} dayOfWeek={dayOfWeek} accent />
       </Box>
     </Stack>
   );

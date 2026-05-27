@@ -14,6 +14,7 @@ import { InlineEditText, LabelPickerChip } from "@repo/ui";
 
 import { useLabelOptions, useUpdateDayLabel, useUpdateDayNotes } from "@app/lib/hooks";
 
+import { AddSessionButton } from "./add-session-button";
 import { DayRowEmpty } from "./day-row-empty";
 import { DayRowHead } from "./day-row-head";
 import { DayRowRest } from "./day-row-rest";
@@ -107,7 +108,10 @@ export const DayRow: React.FC<DayRowProps> = ({
         {isRest ? (
           <DayRowRest notes={notes} />
         ) : !hasSessions ? (
-          <DayRowEmpty />
+          <Stack direction="column" spacing={1}>
+            <DayRowEmpty />
+            <AddSessionButton planId={planId} startDate={startDate} dayOfWeek={dayOfWeek} />
+          </Stack>
         ) : !isExpanded ? (
           <DayRowSummary sessions={sessions} onClick={toggleExpanded} />
         ) : (

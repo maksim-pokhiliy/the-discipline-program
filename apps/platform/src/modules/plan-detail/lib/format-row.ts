@@ -32,7 +32,7 @@ const buildByKind = (
     case "FOOTNOTE":
       return buildFootnote(payload, row.notes, exerciseById);
     case "STANDALONE_LOAD":
-      return buildStandaloneLoad(payload, exerciseById);
+      return buildStandaloneLoad(payload, exerciseById, index);
     case "STANDALONE_URL":
       return buildStandaloneUrl(payload);
     case "PLACEHOLDER":

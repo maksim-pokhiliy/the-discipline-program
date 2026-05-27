@@ -1,12 +1,10 @@
 "use client";
 
-import { type ReactElement, useMemo, useRef, useState } from "react";
+import { type ReactElement, useMemo, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import { ListItemIcon, ListItemText, Menu, MenuItem, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
@@ -61,10 +59,8 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     disabled: isSubSchema || isMutationPending,
   });
 
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
-  const kebabAnchorRef = useRef<HTMLButtonElement>(null);
 
   const archetypeById = useMemo(
     () => new Map((archetypes.data ?? []).map((a) => [a.id, a])),
@@ -75,17 +71,9 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
 
   const editorMode = useMemo<SchemaEditorMode>(() => ({ kind: "edit", schema }), [schema]);
 
-  const handleKebabClose = () => setIsMenuOpen(false);
+  const handleEditOpen = () => setIsEditOpen(true);
 
-  const handleEditOpen = () => {
-    setIsMenuOpen(false);
-    setIsEditOpen(true);
-  };
-
-  const handleDeleteOpen = () => {
-    setIsMenuOpen(false);
-    setIsDeleteOpen(true);
-  };
+  const handleDeleteOpen = () => setIsDeleteOpen(true);
 
   const handleDeleteConfirm = () =>
     deleteSchema.mutate(
@@ -106,6 +94,20 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     updateSchema.mutate({ schemaId: schema.schema.id, data: { header: nextHeader } });
   };
 
+  const handleDoubleClick = (event: React.MouseEvent) => {
+    if (event.target instanceof HTMLElement && event.target.closest("button") !== null) {
+      return;
+    }
+
+    event.stopPropagation();
+
+    if (isSubSchema || isMutationPending) {
+      return;
+    }
+
+    handleEditOpen();
+  };
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -116,6 +118,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     <Stack
       ref={setNodeRef}
       style={style}
+      onDoubleClick={handleDoubleClick}
       direction="column"
       sx={(theme) => ({
         bgcolor: "background.paper",
@@ -133,9 +136,9 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         isSubSchema={isSubSchema}
         dragAttributes={attributes}
         dragListeners={listeners}
-        kebabAnchorRef={kebabAnchorRef}
         onTitleCommit={handleTitleCommit}
-        onKebabOpen={() => setIsMenuOpen(true)}
+        onEditOpen={handleEditOpen}
+        onDeleteOpen={handleDeleteOpen}
       />
 
       {schema.subSchemas.length > 0 ? (
@@ -173,21 +176,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
 
       {!isSubSchema ? (
         <>
-          <Menu anchorEl={kebabAnchorRef.current} open={isMenuOpen} onClose={handleKebabClose}>
-            <MenuItem onClick={handleEditOpen}>
-              <ListItemIcon>
-                <EditIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Edit</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={handleDeleteOpen} sx={{ color: "error.main" }}>
-              <ListItemIcon sx={{ color: "inherit" }}>
-                <DeleteIcon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText>Delete</ListItemText>
-            </MenuItem>
-          </Menu>
-
           <SchemaEditorModal
             open={isEditOpen}
             onClose={() => setIsEditOpen(false)}

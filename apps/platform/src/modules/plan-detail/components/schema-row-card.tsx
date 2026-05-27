@@ -1,26 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import EditIcon from "@mui/icons-material/Edit";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
-import {
-  Box,
-  IconButton,
-  Link,
-  ListItemIcon,
-  ListItemText,
-  Menu,
-  MenuItem,
-  Typography,
-  alpha,
-  type Theme,
-} from "@mui/material";
+import TuneIcon from "@mui/icons-material/Tune";
+import { Box, IconButton, Link, Tooltip, Typography, alpha, type Theme } from "@mui/material";
 
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { RowKind, SchemaRow } from "@repo/contracts/lms/schema-row";
@@ -34,7 +22,7 @@ import { RowEditorModal } from "./row-editor-modal";
 import { type RowEditorMode } from "./row-editor-types";
 import { SchemaRowCardBody } from "./schema-row-card-body";
 
-const GRID_TEMPLATE_COLUMNS = "24px 24px 32px 1fr auto auto";
+const GRID_TEMPLATE_COLUMNS = "24px 24px 32px 1fr auto auto auto";
 const GRID_GAP_FACTOR = 1.25;
 const PADDING_X_FACTOR = 1.5;
 const PADDING_Y_FACTOR = 1;
@@ -50,6 +38,13 @@ const DRAG_OPACITY_DEFAULT = 1;
 const TRANSITION_BG = "background-color 150ms";
 const DELETE_TITLE = "Delete row";
 const DELETE_MESSAGE = "Delete this row?";
+const DRAG_ARIA = "Drag row";
+const EDIT_ARIA = "Edit row";
+const EDIT_TOOLTIP = "Edit row";
+const DELETE_ARIA = "Delete row";
+const DELETE_TOOLTIP = "Delete row";
+
+const tooltipChildSx = { display: "inline-flex" };
 
 type SchemaRowCardProps = {
   row: SchemaRow;
@@ -110,10 +105,8 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
     disabled: isMutationPending,
   });
 
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
-  const kebabAnchorRef = useRef<HTMLButtonElement>(null);
 
   const fmt = useMemo(() => formatRow(row, exerciseById, index), [row, exerciseById, index]);
 
@@ -122,25 +115,30 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   const rowKind = row.rowPayload.rowKind;
   const isFootnote = rowKind === "FOOTNOTE";
 
-  const handleMenuClose = () => setIsMenuOpen(false);
-  const handleMenuOpen = () => setIsMenuOpen(true);
-
-  const handleEditOpen = () => {
-    setIsMenuOpen(false);
-    setIsEditOpen(true);
-  };
+  const handleEditOpen = () => setIsEditOpen(true);
 
   const handleEditClose = () => setIsEditOpen(false);
 
-  const handleDeleteOpen = () => {
-    setIsMenuOpen(false);
-    setIsDeleteOpen(true);
-  };
+  const handleDeleteOpen = () => setIsDeleteOpen(true);
 
   const handleDeleteClose = () => setIsDeleteOpen(false);
 
   const handleDeleteConfirm = () =>
     deleteSchemaRow.mutate({ schemaRowId: row.id }, { onSuccess: handleDeleteClose });
+
+  const handleDoubleClick = (event: React.MouseEvent) => {
+    if (event.target instanceof HTMLElement && event.target.closest("button") !== null) {
+      return;
+    }
+
+    event.stopPropagation();
+
+    if (isMutationPending) {
+      return;
+    }
+
+    handleEditOpen();
+  };
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -152,7 +150,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
     <Box
       ref={setNodeRef}
       style={style}
-      onDoubleClick={handleEditOpen}
+      onDoubleClick={handleDoubleClick}
       sx={(theme) => ({
         display: "grid",
         gridTemplateColumns: GRID_TEMPLATE_COLUMNS,
@@ -173,7 +171,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         {...attributes}
         {...listeners}
         size="small"
-        aria-label="Drag row"
+        aria-label={DRAG_ARIA}
         disabled={isMutationPending}
         sx={{ cursor: "grab", touchAction: "none" }}
       >
@@ -225,30 +223,32 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         <span />
       )}
 
-      <IconButton
-        ref={kebabAnchorRef}
-        onClick={handleMenuOpen}
-        aria-label="Row actions"
-        size="small"
-        disabled={isMutationPending}
-      >
-        <MoreVertIcon fontSize="small" />
-      </IconButton>
+      <Tooltip title={EDIT_TOOLTIP}>
+        <span style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={handleEditOpen}
+            disabled={isMutationPending}
+            aria-label={EDIT_ARIA}
+          >
+            <TuneIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
 
-      <Menu anchorEl={kebabAnchorRef.current} open={isMenuOpen} onClose={handleMenuClose}>
-        <MenuItem onClick={handleEditOpen}>
-          <ListItemIcon>
-            <EditIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Edit</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleDeleteOpen} sx={{ color: "error.main" }}>
-          <ListItemIcon sx={{ color: "inherit" }}>
+      <Tooltip title={DELETE_TOOLTIP}>
+        <span style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={handleDeleteOpen}
+            disabled={isMutationPending}
+            aria-label={DELETE_ARIA}
+            sx={{ color: "error.main" }}
+          >
             <DeleteIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
-        </MenuItem>
-      </Menu>
+          </IconButton>
+        </span>
+      </Tooltip>
 
       <RowEditorModal
         open={isEditOpen}

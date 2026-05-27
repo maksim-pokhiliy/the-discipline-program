@@ -211,7 +211,7 @@ export const rowKindCases: RowKindCase[] = [
     kindCls: "load",
     dashed: false,
     mainText: "20 kg",
-    sub: "applies to all rows above",
+    sub: "global load",
   },
   {
     name: "STANDALONE_URL",

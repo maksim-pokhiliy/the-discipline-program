@@ -1,7 +1,6 @@
 "use client";
 
-import AddIcon from "@mui/icons-material/Add";
-import { Button } from "@mui/material";
+import { PlusRowButton } from "@repo/ui";
 
 import { useCreateBlock } from "@app/lib/hooks";
 
@@ -15,15 +14,10 @@ export const AddBlockButton: React.FC<AddBlockButtonProps> = ({ planId, startDat
   const createBlock = useCreateBlock(planId, startDate, sessionId);
 
   return (
-    <Button
+    <PlusRowButton
       onClick={() => createBlock.mutate({})}
-      startIcon={<AddIcon />}
+      label="Add block"
       disabled={createBlock.isPending}
-      size="small"
-      variant="outlined"
-      sx={{ borderStyle: "dashed", alignSelf: "flex-start" }}
-    >
-      Add block
-    </Button>
+    />
   );
 };

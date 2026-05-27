@@ -74,6 +74,20 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
     deleteBlock.mutate({ blockId: block.id }, { onSuccess: () => setIsDeleteOpen(false) });
   };
 
+  const handleDoubleClick = (event: React.MouseEvent) => {
+    if (event.target instanceof HTMLElement && event.target.closest("button") !== null) {
+      return;
+    }
+
+    event.stopPropagation();
+
+    if (isMutationPending) {
+      return;
+    }
+
+    handleEditOpen();
+  };
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -89,6 +103,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
     <Stack
       ref={setNodeRef}
       style={style}
+      onDoubleClick={handleDoubleClick}
       direction="column"
       sx={(theme) => ({
         bgcolor: "background.default",
