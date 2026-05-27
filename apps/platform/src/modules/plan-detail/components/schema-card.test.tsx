@@ -757,4 +757,34 @@ describe("SchemaCard double-click", () => {
 
     expect(screen.queryByTestId("schema-editor-modal-mock")).toBeNull();
   });
+
+  it("does not open the SchemaEditorModal when useUpdateSchema is pending (QA-C7-01, QA-Must-C7-3)", () => {
+    updateSchemaState.isPending = true;
+
+    const { container } = renderSchemaCard();
+    const shell = container.firstChild;
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected schema-card shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(shell);
+
+    expect(screen.queryByTestId("schema-editor-modal-mock")).toBeNull();
+  });
+
+  it("does not open the SchemaEditorModal when useDeleteSchema is pending (QA-C7-01, QA-Must-C7-3)", () => {
+    deleteSchemaState.isPending = true;
+
+    const { container } = renderSchemaCard();
+    const shell = container.firstChild;
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected schema-card shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(shell);
+
+    expect(screen.queryByTestId("schema-editor-modal-mock")).toBeNull();
+  });
 });

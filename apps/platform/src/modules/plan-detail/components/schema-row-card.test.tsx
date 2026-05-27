@@ -297,6 +297,65 @@ describe("SchemaRowCard double-click", () => {
 
     expect(screen.getByTestId("row-editor-modal-mock")).toBeInTheDocument();
   });
+
+  it("does not open the RowEditorModal when useUpdateSchemaRow is pending (QA-C7-01)", () => {
+    updateSchemaRowState.isPending = true;
+
+    const { container } = renderRowCard();
+    const shell = container.firstChild;
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected row shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(shell);
+
+    expect(screen.queryByTestId("row-editor-modal-mock")).toBeNull();
+  });
+
+  it("does not open the RowEditorModal when useDeleteSchemaRow is pending (QA-C7-01)", () => {
+    deleteSchemaRowState.isPending = true;
+
+    const { container } = renderRowCard();
+    const shell = container.firstChild;
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected row shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(shell);
+
+    expect(screen.queryByTestId("row-editor-modal-mock")).toBeNull();
+  });
+
+  it("stops propagation so parent shells do not open additional editors (QA-C7-03, QA-Must-C7-1)", () => {
+    const parentDoubleClick = vi.fn();
+
+    render(
+      <div data-testid="parent-shell" onDoubleClick={parentDoubleClick}>
+        <SchemaRowCard
+          row={makeExerciseRow()}
+          planId={PLAN_ID}
+          startDate={START_DATE}
+          exerciseById={exerciseById}
+          index={0}
+          isReorderPending={false}
+        />
+      </div>,
+    );
+
+    const parentShell = screen.getByTestId("parent-shell");
+    const rowShell = parentShell.firstChild;
+
+    if (!(rowShell instanceof HTMLElement)) {
+      throw new Error("expected row shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(rowShell);
+
+    expect(screen.getByTestId("row-editor-modal-mock")).toBeInTheDocument();
+    expect(parentDoubleClick).not.toHaveBeenCalled();
+  });
 });
 
 describe("SchemaRowCard mutation-pending", () => {

@@ -67,4 +67,16 @@ describe("PlusRowButton", () => {
     expect(ariaHidden).not.toBeNull();
     expect(ariaHidden?.textContent).toBe("+");
   });
+
+  it("renders without crashing when label contains emoji and combining marks (QA-Must-C7-10)", () => {
+    expect(() => render(<PlusRowButton onClick={noop} label="Add 🏋️‍♂️ session" />)).not.toThrow();
+
+    expect(screen.getByRole("button", { name: /Add/ })).toBeInTheDocument();
+  });
+
+  it("renders without crashing when label contains RTL characters (QA-Must-C7-10)", () => {
+    expect(() => render(<PlusRowButton onClick={noop} label="إضافة جلسة" />)).not.toThrow();
+
+    expect(screen.getByRole("button", { name: "إضافة جلسة" })).toBeInTheDocument();
+  });
 });

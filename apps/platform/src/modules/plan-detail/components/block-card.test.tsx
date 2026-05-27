@@ -579,4 +579,34 @@ describe("BlockCard double-click", () => {
 
     expect(screen.getByTestId("block-editor-modal-mock")).toBeInTheDocument();
   });
+
+  it("does not open the BlockEditorModal when useUpdateBlock is pending (QA-C7-01, QA-Must-C7-2)", () => {
+    updateBlockState.isPending = true;
+
+    const { container } = renderBlockCard();
+    const shell = container.firstChild;
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected block-card shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(shell);
+
+    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
+  });
+
+  it("does not open the BlockEditorModal when useDeleteBlock is pending (QA-C7-01, QA-Must-C7-2)", () => {
+    deleteBlockState.isPending = true;
+
+    const { container } = renderBlockCard();
+    const shell = container.firstChild;
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected block-card shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(shell);
+
+    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
+  });
 });
