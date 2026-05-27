@@ -18,6 +18,7 @@ import { formatSchemaHeader } from "../lib/format-schema-header";
 import { SchemaCardHead } from "./schema-card-head";
 import { SchemaEditorModal } from "./schema-editor-modal";
 import { type SchemaEditorMode } from "./schema-editor-types";
+import { SchemaList } from "./schema-list";
 import { SchemaRowList } from "./schema-row-list";
 
 const DELETE_TITLE = "Delete schema";
@@ -37,7 +38,7 @@ type SchemaCardProps = {
   startDate: string;
   blockCtx: BlockCtx;
   exerciseById: ReadonlyMap<string, Exercise>;
-  isSubSchema?: boolean;
+  parentIsReorderPending?: boolean;
 };
 
 export const SchemaCard: React.FC<SchemaCardProps> = ({
@@ -46,17 +47,19 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   startDate,
   blockCtx,
   exerciseById,
-  isSubSchema = false,
+  parentIsReorderPending = false,
 }): ReactElement => {
   const updateSchema = useUpdateSchema(planId, startDate);
   const deleteSchema = useDeleteSchema(planId, startDate);
   const archetypes = useArchetypes();
 
-  const isMutationPending = updateSchema.isPending || deleteSchema.isPending;
+  const isSubSchema = schema.schema.parentSchemaId !== null;
+  const isMutationPending =
+    updateSchema.isPending || deleteSchema.isPending || parentIsReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: schema.schema.id,
-    disabled: isSubSchema || isMutationPending,
+    disabled: isMutationPending,
   });
 
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
@@ -94,20 +97,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     updateSchema.mutate({ schemaId: schema.schema.id, data: { header: nextHeader } });
   };
 
-  const handleDoubleClick = (event: React.MouseEvent) => {
-    if (event.target instanceof HTMLElement && event.target.closest("button") !== null) {
-      return;
-    }
-
-    event.stopPropagation();
-
-    if (isSubSchema || isMutationPending) {
-      return;
-    }
-
-    handleEditOpen();
-  };
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -118,7 +107,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     <Stack
       ref={setNodeRef}
       style={style}
-      onDoubleClick={handleDoubleClick}
       direction="column"
       sx={(theme) => ({
         bgcolor: "background.paper",
@@ -152,17 +140,24 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
             pt: theme.spacing(PADDING_T_FACTOR),
           })}
         >
-          {schema.subSchemas.map((sub) => (
-            <SchemaCard
-              key={sub.schema.id}
-              schema={sub}
-              planId={planId}
-              startDate={startDate}
-              blockCtx={blockCtx}
-              exerciseById={exerciseById}
-              isSubSchema
-            />
-          ))}
+          <SchemaList
+            planId={planId}
+            startDate={startDate}
+            parentSchemaId={schema.schema.id}
+            schemas={schema.subSchemas}
+            parentIsReorderPending={isMutationPending}
+            renderItem={(sub, pending) => (
+              <SchemaCard
+                key={sub.schema.id}
+                schema={sub}
+                planId={planId}
+                startDate={startDate}
+                blockCtx={blockCtx}
+                exerciseById={exerciseById}
+                parentIsReorderPending={pending}
+              />
+            )}
+          />
         </Stack>
       ) : null}
 
@@ -172,6 +167,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         planId={planId}
         startDate={startDate}
         exerciseById={exerciseById}
+        parentIsReorderPending={isMutationPending}
       />
 
       {!isSubSchema ? (

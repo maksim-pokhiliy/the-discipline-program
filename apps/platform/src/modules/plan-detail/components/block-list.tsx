@@ -31,9 +31,16 @@ type BlockListProps = {
   startDate: string;
   sessionId: string;
   blocks: Block[];
+  parentIsReorderPending?: boolean;
 };
 
-export const BlockList: React.FC<BlockListProps> = ({ planId, startDate, sessionId, blocks }) => {
+export const BlockList: React.FC<BlockListProps> = ({
+  planId,
+  startDate,
+  sessionId,
+  blocks,
+  parentIsReorderPending = false,
+}) => {
   const reorderBlocks = useReorderBlocks(planId, startDate, sessionId);
   const [sortedBlocks, setSortedBlocks] = useState<Block[]>(blocks);
 
@@ -72,6 +79,8 @@ export const BlockList: React.FC<BlockListProps> = ({ planId, startDate, session
     );
   };
 
+  const effectiveBlockPending = parentIsReorderPending || reorderBlocks.isPending;
+
   return (
     <Stack spacing={1.25}>
       {sortedBlocks.length > 0 ? (
@@ -82,7 +91,13 @@ export const BlockList: React.FC<BlockListProps> = ({ planId, startDate, session
           >
             <Stack spacing={1.25}>
               {sortedBlocks.map((block) => (
-                <BlockCard key={block.id} block={block} planId={planId} startDate={startDate} />
+                <BlockCard
+                  key={block.id}
+                  block={block}
+                  planId={planId}
+                  startDate={startDate}
+                  isReorderPending={effectiveBlockPending}
+                />
               ))}
             </Stack>
           </SortableContext>

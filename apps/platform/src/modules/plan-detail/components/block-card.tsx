@@ -31,9 +31,15 @@ type BlockCardProps = {
   block: Block;
   planId: string;
   startDate: string;
+  isReorderPending?: boolean;
 };
 
-export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }) => {
+export const BlockCard: React.FC<BlockCardProps> = ({
+  block,
+  planId,
+  startDate,
+  isReorderPending = false,
+}) => {
   const updateBlock = useUpdateBlock(planId, startDate);
   const deleteBlock = useDeleteBlock(planId, startDate);
   const assignLabels = useAssignBlockLabels(planId, startDate);
@@ -46,7 +52,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
   );
 
   const isMutationPending =
-    updateBlock.isPending || deleteBlock.isPending || assignLabels.isPending;
+    updateBlock.isPending || deleteBlock.isPending || assignLabels.isPending || isReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
@@ -74,20 +80,6 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
     deleteBlock.mutate({ blockId: block.id }, { onSuccess: () => setIsDeleteOpen(false) });
   };
 
-  const handleDoubleClick = (event: React.MouseEvent) => {
-    if (event.target instanceof HTMLElement && event.target.closest("button") !== null) {
-      return;
-    }
-
-    event.stopPropagation();
-
-    if (isMutationPending) {
-      return;
-    }
-
-    handleEditOpen();
-  };
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -103,7 +95,6 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
     <Stack
       ref={setNodeRef}
       style={style}
-      onDoubleClick={handleDoubleClick}
       direction="column"
       sx={(theme) => ({
         bgcolor: "background.default",
@@ -131,6 +122,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
         planId={planId}
         startDate={startDate}
         exerciseById={exerciseById}
+        parentIsReorderPending={isMutationPending}
       />
 
       <BlockEditorModal
