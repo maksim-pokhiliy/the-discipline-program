@@ -106,6 +106,16 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     updateSchema.mutate({ schemaId: schema.schema.id, data: { header: nextHeader } });
   };
 
+  const handleDoubleClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+
+    if (isSubSchema || isMutationPending) {
+      return;
+    }
+
+    handleEditOpen();
+  };
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -116,7 +126,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     <Stack
       ref={setNodeRef}
       style={style}
-      onDoubleClick={isSubSchema ? undefined : handleEditOpen}
+      onDoubleClick={handleDoubleClick}
       direction="column"
       sx={(theme) => ({
         bgcolor: "background.paper",

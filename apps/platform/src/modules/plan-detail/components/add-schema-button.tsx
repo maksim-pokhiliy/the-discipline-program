@@ -37,7 +37,11 @@ export const AddSchemaButton: React.FC<AddSchemaButtonProps> = ({ planId, startD
 
   return (
     <>
-      <PlusRowButton onClick={() => setPickerOpen(true)} label="Add schema" />
+      <PlusRowButton
+        onClick={() => setPickerOpen(true)}
+        label="Add schema"
+        disabled={pickerOpen || pendingArchetype !== null}
+      />
 
       <ArchetypePicker
         open={pickerOpen}
