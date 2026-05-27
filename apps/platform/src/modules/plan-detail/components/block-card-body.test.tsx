@@ -194,21 +194,21 @@ describe("BlockCardBody D-14 hoisted DnD: top-level drag-end", () => {
   });
 });
 
-describe("BlockCardBody D-14: cross-alt-group drag (single SortableContext over full block)", () => {
-  it("fires mutate with FLAT block-scope orderedIds when moving a schema across alt-group / standalone boundary", () => {
-    const altGroupId = "clp9z8x7w0000abcd12crsalt1";
+describe("BlockCardBody QA-01: cross-alt-group drag is forbidden", () => {
+  it("does NOT fire mutate when active is a standalone and over is an alt-group member", () => {
+    const altGroupId = "clp9z8x7w0000abcd12qa1alt1";
     const a1 = makeSchema({
-      id: "clp9z8x7w0000abcd12crs001",
+      id: "clp9z8x7w0000abcd12qa1m001",
       alternatingGroupId: altGroupId,
       order: 1,
     });
     const a2 = makeSchema({
-      id: "clp9z8x7w0000abcd12crs002",
+      id: "clp9z8x7w0000abcd12qa1m002",
       alternatingGroupId: altGroupId,
       order: 2,
     });
     const standalone = makeSchema({
-      id: "clp9z8x7w0000abcd12crs003",
+      id: "clp9z8x7w0000abcd12qa1s003",
       alternatingGroupId: null,
       order: 3,
     });
@@ -229,13 +229,98 @@ describe("BlockCardBody D-14: cross-alt-group drag (single SortableContext over 
 
     triggerDragEnd(makeDragEndEvent(standalone.schema.id, a1.schema.id));
 
+    expect(reorderSchemasMutate).not.toHaveBeenCalled();
+  });
+
+  it("does NOT fire mutate when active and over belong to DIFFERENT alt-groups", () => {
+    const altGroupA = "clp9z8x7w0000abcd12qa2altA";
+    const altGroupB = "clp9z8x7w0000abcd12qa2altB";
+    const a1 = makeSchema({
+      id: "clp9z8x7w0000abcd12qa2a001",
+      alternatingGroupId: altGroupA,
+      order: 1,
+    });
+    const b1 = makeSchema({
+      id: "clp9z8x7w0000abcd12qa2b001",
+      alternatingGroupId: altGroupB,
+      order: 2,
+    });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({
+          schemas: [a1, b1],
+          alternatingGroups: [
+            makeAltGroup({ id: altGroupA, schemaIds: [a1.schema.id] }),
+            makeAltGroup({ id: altGroupB, schemaIds: [b1.schema.id] }),
+          ],
+        })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        exerciseById={EMPTY_EXERCISE_BY_ID}
+      />,
+    );
+
+    triggerDragEnd(makeDragEndEvent(a1.schema.id, b1.schema.id));
+
+    expect(reorderSchemasMutate).not.toHaveBeenCalled();
+  });
+
+  it("DOES fire mutate when active and over are BOTH standalone schemas in the same block", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12qa3s001", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12qa3s002", order: 2 });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        exerciseById={EMPTY_EXERCISE_BY_ID}
+      />,
+    );
+
+    triggerDragEnd(makeDragEndEvent(s2.schema.id, s1.schema.id));
+
     expect(reorderSchemasMutate).toHaveBeenCalledTimes(1);
-
-    const payload = reorderSchemasMutate.mock.calls[0]?.[0];
-
-    expect(payload).toEqual({
+    expect(reorderSchemasMutate.mock.calls[0]?.[0]).toEqual({
       blockId: BLOCK_ID,
-      orderedIds: [standalone.schema.id, a1.schema.id, a2.schema.id],
+      orderedIds: [s2.schema.id, s1.schema.id],
+    });
+  });
+
+  it("DOES fire mutate when active and over are members of the SAME alt-group", () => {
+    const altGroupId = "clp9z8x7w0000abcd12qa4alt1";
+    const a1 = makeSchema({
+      id: "clp9z8x7w0000abcd12qa4m001",
+      alternatingGroupId: altGroupId,
+      order: 1,
+    });
+    const a2 = makeSchema({
+      id: "clp9z8x7w0000abcd12qa4m002",
+      alternatingGroupId: altGroupId,
+      order: 2,
+    });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({
+          schemas: [a1, a2],
+          alternatingGroups: [
+            makeAltGroup({ id: altGroupId, schemaIds: [a1.schema.id, a2.schema.id] }),
+          ],
+        })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        exerciseById={EMPTY_EXERCISE_BY_ID}
+      />,
+    );
+
+    triggerDragEnd(makeDragEndEvent(a2.schema.id, a1.schema.id));
+
+    expect(reorderSchemasMutate).toHaveBeenCalledTimes(1);
+    expect(reorderSchemasMutate.mock.calls[0]?.[0]).toEqual({
+      blockId: BLOCK_ID,
+      orderedIds: [a2.schema.id, a1.schema.id],
     });
   });
 });

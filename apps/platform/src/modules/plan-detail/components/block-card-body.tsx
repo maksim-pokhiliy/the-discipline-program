@@ -89,6 +89,17 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
       return;
     }
 
+    const activeSchema = sortedSchemas[oldIndex];
+    const overSchema = sortedSchemas[newIndex];
+
+    if (
+      activeSchema === undefined ||
+      overSchema === undefined ||
+      activeSchema.schema.alternatingGroupId !== overSchema.schema.alternatingGroupId
+    ) {
+      return;
+    }
+
     const previousOrder = sortedSchemas;
     const nextOrder = arrayMove(sortedSchemas, oldIndex, newIndex);
 
