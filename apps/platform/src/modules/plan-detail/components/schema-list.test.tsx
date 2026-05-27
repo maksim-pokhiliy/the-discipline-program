@@ -125,6 +125,19 @@ const makeDragEndEvent = (activeId: string, overId: string): DragEndEvent =>
     delta: { x: 0, y: 0 },
   }) as unknown as DragEndEvent;
 
+const makeDragEndEventNoOver = (activeId: string): DragEndEvent =>
+  ({
+    active: {
+      id: activeId,
+      data: { current: undefined },
+      rect: { current: { initial: null, translated: null } },
+    },
+    over: null,
+    activatorEvent: new MouseEvent("mousedown"),
+    collisions: null,
+    delta: { x: 0, y: 0 },
+  }) as unknown as DragEndEvent;
+
 const triggerDragEnd = (event: DragEndEvent): void => {
   if (capturedOnDragEnd === null) {
     throw new Error("DndContext.onDragEnd was not captured");
@@ -168,6 +181,48 @@ describe("SchemaList sub-schema drag-end payload", () => {
       orderedIds: [sub0.schema.id, sub2.schema.id, sub1.schema.id],
     });
     expect(payload).not.toHaveProperty("blockId");
+  });
+});
+
+describe("SchemaList drag-end guards (QA-Must-01, QA-Must-02)", () => {
+  it("does NOT fire mutate when active.id === over.id (QA-Must-01)", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12gd1s001", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12gd1s002", order: 2 });
+
+    render(
+      <SchemaList
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        parentSchemaId={PARENT_SCHEMA_ID}
+        schemas={[s1, s2]}
+        blockCtx={makeBlockCtx()}
+        exerciseById={EMPTY_EXERCISE_BY_ID}
+      />,
+    );
+
+    triggerDragEnd(makeDragEndEvent(s1.schema.id, s1.schema.id));
+
+    expect(reorderSchemasMutate).not.toHaveBeenCalled();
+  });
+
+  it("does NOT fire mutate when over is null (QA-Must-02, also covers Escape cancel)", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12gd2s001", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12gd2s002", order: 2 });
+
+    render(
+      <SchemaList
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        parentSchemaId={PARENT_SCHEMA_ID}
+        schemas={[s1, s2]}
+        blockCtx={makeBlockCtx()}
+        exerciseById={EMPTY_EXERCISE_BY_ID}
+      />,
+    );
+
+    triggerDragEnd(makeDragEndEventNoOver(s1.schema.id));
+
+    expect(reorderSchemasMutate).not.toHaveBeenCalled();
   });
 });
 
