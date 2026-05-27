@@ -28,49 +28,20 @@ import { type BlockCtx } from "../lib/build-cascade-chips";
 
 import { SchemaCard } from "./schema-card";
 
-type SchemaListParent =
-  | { kind: "block"; blockId: string; allBlockSchemas: SchemaWithBody[] }
-  | { kind: "schema"; parentSchemaId: string };
-
 type SchemaListProps = {
   planId: string;
   startDate: string;
-  parent: SchemaListParent;
+  parentSchemaId: string;
   schemas: SchemaWithBody[];
   blockCtx: BlockCtx;
   exerciseById: ReadonlyMap<string, Exercise>;
   parentIsReorderPending?: boolean;
 };
 
-const buildFullBlockOrderedIds = (
-  allBlockSchemas: SchemaWithBody[],
-  visibleSchemas: SchemaWithBody[],
-  nextVisibleOrder: SchemaWithBody[],
-): string[] => {
-  const visibleIdSet = new Set(visibleSchemas.map((s) => s.schema.id));
-  let cursor = 0;
-
-  return allBlockSchemas.map((s) => {
-    if (!visibleIdSet.has(s.schema.id)) {
-      return s.schema.id;
-    }
-
-    const candidate = nextVisibleOrder[cursor];
-
-    if (candidate === undefined) {
-      throw new Error("invariant: nextVisibleOrder shorter than visible subset");
-    }
-
-    cursor += 1;
-
-    return candidate.schema.id;
-  });
-};
-
 export const SchemaList: React.FC<SchemaListProps> = ({
   planId,
   startDate,
-  parent,
+  parentSchemaId,
   schemas,
   blockCtx,
   exerciseById,
@@ -109,26 +80,8 @@ export const SchemaList: React.FC<SchemaListProps> = ({
 
     setSortedSchemas(nextOrder);
 
-    if (parent.kind === "block") {
-      const fullBlockOrderedIds = buildFullBlockOrderedIds(
-        parent.allBlockSchemas,
-        sortedSchemas,
-        nextOrder,
-      );
-
-      reorderSchemas.mutate(
-        { blockId: parent.blockId, orderedIds: fullBlockOrderedIds },
-        { onError: () => setSortedSchemas(previousOrder) },
-      );
-
-      return;
-    }
-
     reorderSchemas.mutate(
-      {
-        parentSchemaId: parent.parentSchemaId,
-        orderedIds: nextOrder.map((s) => s.schema.id),
-      },
+      { parentSchemaId, orderedIds: nextOrder.map((s) => s.schema.id) },
       { onError: () => setSortedSchemas(previousOrder) },
     );
   };

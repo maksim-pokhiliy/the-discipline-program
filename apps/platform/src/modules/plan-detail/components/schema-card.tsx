@@ -143,7 +143,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
           <SchemaList
             planId={planId}
             startDate={startDate}
-            parent={{ kind: "schema", parentSchemaId: schema.schema.id }}
+            parentSchemaId={schema.schema.id}
             schemas={schema.subSchemas}
             blockCtx={blockCtx}
             exerciseById={exerciseById}

@@ -63,7 +63,7 @@ vi.mock("./schema-row-list", () => {
 vi.mock("./schema-list", () => {
   const renderSchemaListMock = (props: {
     schemas: SchemaWithBody[];
-    parent: { kind: "block" | "schema" };
+    parentSchemaId: string;
     parentIsReorderPending?: boolean;
   }) =>
     createElement(
@@ -71,10 +71,10 @@ vi.mock("./schema-list", () => {
       {
         "data-testid": "schema-list-mock",
         "data-schemas-count": String(props.schemas.length),
-        "data-parent-kind": props.parent.kind,
+        "data-parent-schema-id": props.parentSchemaId,
         "data-parent-pending": props.parentIsReorderPending === true ? "true" : "false",
       },
-      `schema-list:${props.parent.kind}:${String(props.schemas.length)}`,
+      `schema-list:${props.parentSchemaId}:${String(props.schemas.length)}`,
     );
 
   return { SchemaList: renderSchemaListMock };
@@ -632,7 +632,7 @@ describe("SchemaCard edit + delete actions", () => {
 });
 
 describe("SchemaCard sub-schemas", () => {
-  it("renders a nested SchemaList (parent.kind='schema') with schema.subSchemas when non-empty", () => {
+  it("renders a nested SchemaList (parentSchemaId = parent schema id) with schema.subSchemas when non-empty", () => {
     renderSchemaCard({
       schema: makeSchema({
         subSchemas: [
@@ -644,7 +644,7 @@ describe("SchemaCard sub-schemas", () => {
 
     const subSchemaList = screen.getByTestId("schema-list-mock");
 
-    expect(subSchemaList).toHaveAttribute("data-parent-kind", "schema");
+    expect(subSchemaList).toHaveAttribute("data-parent-schema-id", SCHEMA_ID);
     expect(subSchemaList).toHaveAttribute("data-schemas-count", "2");
   });
 
@@ -712,7 +712,7 @@ describe("SchemaCard sub-schemas", () => {
 
     const subSchemaList = screen.getByTestId("schema-list-mock");
 
-    expect(subSchemaList).toHaveAttribute("data-parent-kind", "schema");
+    expect(subSchemaList).toHaveAttribute("data-parent-schema-id", SCHEMA_ID);
     expect(subSchemaList).toHaveAttribute("data-schemas-count", "1");
   });
 });

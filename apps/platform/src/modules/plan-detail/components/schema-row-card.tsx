@@ -158,7 +158,15 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         size="small"
         aria-label={DRAG_ARIA}
         disabled={isMutationPending}
-        sx={{ cursor: "grab", touchAction: "none" }}
+        sx={{
+          cursor: "grab",
+          touchAction: "none",
+          "&.Mui-focusVisible": {
+            outline: "2px solid",
+            outlineColor: "primary.main",
+            outlineOffset: 2,
+          },
+        }}
       >
         <DragIndicatorIcon fontSize="small" />
       </IconButton>

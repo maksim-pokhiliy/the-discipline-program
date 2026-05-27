@@ -5,13 +5,13 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { AlternatingGroup } from "@repo/contracts/lms/alternating-group";
+import type { Block } from "@repo/contracts/lms/block";
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
-
-import type { BlockCtx } from "../lib/build-cascade-chips";
 
 const reorderSchemasMutate = vi.fn();
 const reorderSchemasState = { isPending: false };
@@ -46,6 +46,13 @@ vi.mock("./schema-card", () => {
   return { SchemaCard: renderSchemaCardMock };
 });
 
+vi.mock("./add-schema-button", () => {
+  const renderAddSchemaButtonMock = () =>
+    createElement("div", { "data-testid": "add-schema-button-mock" });
+
+  return { AddSchemaButton: renderAddSchemaButtonMock };
+});
+
 let capturedOnDragEnd: ((event: DragEndEvent) => void) | null = null;
 
 vi.mock("@dnd-kit/core", async () => {
@@ -69,20 +76,22 @@ vi.mock("@dnd-kit/core", async () => {
   };
 });
 
-const { SchemaList } = await import("./schema-list");
+const { BlockCardBody } = await import("./block-card-body");
 
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const START_DATE = "2026-01-06";
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
-const PARENT_SCHEMA_ID = "clp9z8x7w0000abcd1234psc1";
+const SESSION_ID = "clp9z8x7w0000abcd1234ses1";
 const ARCHETYPE_ID = "clp9z8x7w0000abcd1234arc1";
 const NOW = new Date("2026-01-06T00:00:00.000Z");
+
+const EMPTY_EXERCISE_BY_ID: ReadonlyMap<string, Exercise> = new Map();
 
 const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWithBody => ({
   schema: {
     id: "clp9z8x7w0000abcd1234sch1",
     blockId: BLOCK_ID,
-    parentSchemaId: PARENT_SCHEMA_ID,
+    parentSchemaId: null,
     alternatingGroupId: null,
     order: 1,
     kind: "ATOMIC",
@@ -100,13 +109,30 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
   subSchemas: [],
 });
 
-const makeBlockCtx = (overrides: Partial<BlockCtx> = {}): BlockCtx => ({
-  intensity: null,
-  timeCap: null,
+const makeAltGroup = (overrides: Partial<AlternatingGroup> = {}): AlternatingGroup => ({
+  id: "clp9z8x7w0000abcd1234alt1",
+  blockId: BLOCK_ID,
+  relationKind: "ALTERNATING_SETS",
+  schemaIds: [],
+  createdAt: NOW,
+  updatedAt: NOW,
   ...overrides,
 });
 
-const EMPTY_EXERCISE_BY_ID: ReadonlyMap<string, Exercise> = new Map();
+const makeBlock = (overrides: Partial<Block> = {}): Block => ({
+  id: BLOCK_ID,
+  sessionId: SESSION_ID,
+  order: 1,
+  intensity: null,
+  timeCap: null,
+  notes: null,
+  labels: [],
+  schemas: [],
+  alternatingGroups: [],
+  createdAt: NOW,
+  updatedAt: NOW,
+  ...overrides,
+});
 
 const makeDragEndEvent = (activeId: string, overId: string): DragEndEvent =>
   ({
@@ -139,43 +165,85 @@ afterEach(() => {
   capturedOnDragEnd = null;
 });
 
-describe("SchemaList sub-schema drag-end payload", () => {
-  it("sends { parentSchemaId, orderedIds } payload without blockId key", () => {
-    const sub0 = makeSchema({ id: "clp9z8x7w0000abcd12345001", order: 1 });
-    const sub1 = makeSchema({ id: "clp9z8x7w0000abcd12345002", order: 2 });
-    const sub2 = makeSchema({ id: "clp9z8x7w0000abcd12345003", order: 3 });
-    const schemas = [sub0, sub1, sub2];
+describe("BlockCardBody D-14 hoisted DnD: top-level drag-end", () => {
+  it("fires reorderSchemas.mutate with { blockId, orderedIds: arrayMoved } when dragging within standalone schemas", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12bcb001", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12bcb002", order: 2 });
+    const s3 = makeSchema({ id: "clp9z8x7w0000abcd12bcb003", order: 3 });
 
     render(
-      <SchemaList
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2, s3] })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        parentSchemaId={PARENT_SCHEMA_ID}
-        schemas={schemas}
-        blockCtx={makeBlockCtx()}
         exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
-    triggerDragEnd(makeDragEndEvent(sub1.schema.id, sub2.schema.id));
+    triggerDragEnd(makeDragEndEvent(s2.schema.id, s1.schema.id));
 
     expect(reorderSchemasMutate).toHaveBeenCalledTimes(1);
 
     const payload = reorderSchemasMutate.mock.calls[0]?.[0];
 
     expect(payload).toEqual({
-      parentSchemaId: PARENT_SCHEMA_ID,
-      orderedIds: [sub0.schema.id, sub2.schema.id, sub1.schema.id],
+      blockId: BLOCK_ID,
+      orderedIds: [s2.schema.id, s1.schema.id, s3.schema.id],
     });
-    expect(payload).not.toHaveProperty("blockId");
+    expect(payload).not.toHaveProperty("parentSchemaId");
   });
 });
 
-describe("SchemaList optimistic + rollback", () => {
+describe("BlockCardBody D-14: cross-alt-group drag (single SortableContext over full block)", () => {
+  it("fires mutate with FLAT block-scope orderedIds when moving a schema across alt-group / standalone boundary", () => {
+    const altGroupId = "clp9z8x7w0000abcd12crsalt1";
+    const a1 = makeSchema({
+      id: "clp9z8x7w0000abcd12crs001",
+      alternatingGroupId: altGroupId,
+      order: 1,
+    });
+    const a2 = makeSchema({
+      id: "clp9z8x7w0000abcd12crs002",
+      alternatingGroupId: altGroupId,
+      order: 2,
+    });
+    const standalone = makeSchema({
+      id: "clp9z8x7w0000abcd12crs003",
+      alternatingGroupId: null,
+      order: 3,
+    });
+
+    render(
+      <BlockCardBody
+        block={makeBlock({
+          schemas: [a1, a2, standalone],
+          alternatingGroups: [
+            makeAltGroup({ id: altGroupId, schemaIds: [a1.schema.id, a2.schema.id] }),
+          ],
+        })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        exerciseById={EMPTY_EXERCISE_BY_ID}
+      />,
+    );
+
+    triggerDragEnd(makeDragEndEvent(standalone.schema.id, a1.schema.id));
+
+    expect(reorderSchemasMutate).toHaveBeenCalledTimes(1);
+
+    const payload = reorderSchemasMutate.mock.calls[0]?.[0];
+
+    expect(payload).toEqual({
+      blockId: BLOCK_ID,
+      orderedIds: [standalone.schema.id, a1.schema.id, a2.schema.id],
+    });
+  });
+});
+
+describe("BlockCardBody D-14: optimistic + rollback", () => {
   it("reverts sortedSchemas to previous order when mutate onError fires", () => {
-    const s1 = makeSchema({ id: "clp9z8x7w0000abcd1234ro01", order: 1 });
-    const s2 = makeSchema({ id: "clp9z8x7w0000abcd1234ro02", order: 2 });
-    const schemas = [s1, s2];
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12bcr001", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12bcr002", order: 2 });
 
     reorderSchemasMutate.mockImplementation(
       (_payload: unknown, options: { onError?: (error: Error) => void } | undefined) => {
@@ -184,12 +252,10 @@ describe("SchemaList optimistic + rollback", () => {
     );
 
     const { container } = render(
-      <SchemaList
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        parentSchemaId={PARENT_SCHEMA_ID}
-        schemas={schemas}
-        blockCtx={makeBlockCtx()}
         exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
@@ -204,19 +270,16 @@ describe("SchemaList optimistic + rollback", () => {
   });
 });
 
-describe("SchemaList parentIsReorderPending cascade (D-10)", () => {
+describe("BlockCardBody D-14: parentIsReorderPending cascade", () => {
   it("propagates effective pending to every SchemaCard when parentIsReorderPending is true", () => {
-    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12cas001", order: 1 });
-    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12cas002", order: 2 });
-    const schemas = [s1, s2];
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12cas201", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12cas202", order: 2 });
 
     render(
-      <SchemaList
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1, s2] })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        parentSchemaId={PARENT_SCHEMA_ID}
-        schemas={schemas}
-        blockCtx={makeBlockCtx()}
         exerciseById={EMPTY_EXERCISE_BY_ID}
         parentIsReorderPending
       />,
@@ -232,39 +295,17 @@ describe("SchemaList parentIsReorderPending cascade (D-10)", () => {
   });
 
   it("passes data-parent-pending='false' to every SchemaCard when parentIsReorderPending is omitted and reorderSchemas.isPending is false", () => {
-    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12cas101", order: 1 });
-    const schemas = [s1];
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12cas301", order: 1 });
 
     render(
-      <SchemaList
+      <BlockCardBody
+        block={makeBlock({ schemas: [s1] })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        parentSchemaId={PARENT_SCHEMA_ID}
-        schemas={schemas}
-        blockCtx={makeBlockCtx()}
         exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
     expect(screen.getByTestId("schema-card-mock")).toHaveAttribute("data-parent-pending", "false");
-  });
-});
-
-describe("SchemaList empty schemas", () => {
-  it("renders null when schemas is an empty array", () => {
-    const { container } = render(
-      <SchemaList
-        planId={PLAN_ID}
-        startDate={START_DATE}
-        parentSchemaId={PARENT_SCHEMA_ID}
-        schemas={[]}
-        blockCtx={makeBlockCtx()}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
-      />,
-    );
-
-    expect(container.firstChild).toBeNull();
-    expect(screen.queryByTestId("dnd-context-mock")).toBeNull();
-    expect(screen.queryByTestId("schema-card-mock")).toBeNull();
   });
 });

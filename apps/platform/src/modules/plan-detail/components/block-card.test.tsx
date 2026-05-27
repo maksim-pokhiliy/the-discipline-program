@@ -19,9 +19,11 @@ import { render } from "@app/test/render";
 const updateBlockMutate = vi.fn();
 const deleteBlockMutate = vi.fn();
 const assignLabelsMutate = vi.fn();
+const reorderSchemasMutate = vi.fn();
 const updateBlockState = { isPending: false };
 const deleteBlockState = { isPending: false };
 const assignLabelsState = { isPending: false };
+const reorderSchemasState = { isPending: false };
 
 type ExercisesState = { data: Exercise[] | undefined; isError: boolean };
 const exercisesState: ExercisesState = { data: [], isError: false };
@@ -43,25 +45,30 @@ vi.mock("@app/lib/hooks", async () => {
       mutate: assignLabelsMutate,
       isPending: assignLabelsState.isPending,
     }),
+    useReorderSchemas: () => ({
+      mutate: reorderSchemasMutate,
+      isPending: reorderSchemasState.isPending,
+    }),
     useExercises: () => ({ data: exercisesState.data, isError: exercisesState.isError }),
   };
 });
 
-vi.mock("./schema-list", () => ({
-  SchemaList: ({
-    schemas,
+vi.mock("./schema-card", () => ({
+  SchemaCard: ({
+    schema,
     exerciseById,
     parentIsReorderPending,
   }: {
-    schemas: SchemaWithBody[];
+    schema: SchemaWithBody;
     exerciseById: ReadonlyMap<string, Exercise>;
     parentIsReorderPending?: boolean;
   }) => (
     <div
-      data-testid="schema-list-mock"
+      data-testid="schema-card-mock"
+      data-schema-id={schema.schema.id}
       data-exercise-count={String(exerciseById.size)}
       data-parent-pending={parentIsReorderPending === true ? "true" : "false"}
-    >{`schema-list:${String(schemas.length)}:${schemas.map((s) => s.schema.id).join(",")}`}</div>
+    >{`schema-card:${schema.schema.id}`}</div>
   ),
 }));
 
@@ -189,11 +196,13 @@ afterEach(() => {
   updateBlockState.isPending = false;
   deleteBlockState.isPending = false;
   assignLabelsState.isPending = false;
+  reorderSchemasState.isPending = false;
   exercisesState.data = [];
   exercisesState.isError = false;
   updateBlockMutate.mockReset();
   deleteBlockMutate.mockReset();
   assignLabelsMutate.mockReset();
+  reorderSchemasMutate.mockReset();
 });
 
 describe("BlockCard chrome", () => {
@@ -211,9 +220,9 @@ describe("BlockCard chrome", () => {
     const dragBtn = screen.getByRole("button", { name: "Drag block" });
     const metaPlaceholder = screen.getByText("no intensity / cap set");
     const noteInput = getNotesInput();
-    const schemaListMock = screen.getByTestId("schema-list-mock");
+    const schemaCardMock = screen.getByTestId("schema-card-mock");
 
-    const sectionOrder = [dragBtn, metaPlaceholder, noteInput, schemaListMock];
+    const sectionOrder = [dragBtn, metaPlaceholder, noteInput, schemaCardMock];
 
     for (let i = 0; i < sectionOrder.length - 1; i += 1) {
       const earlier = sectionOrder[i];
@@ -431,13 +440,16 @@ describe("BlockCard body / alt-group", () => {
 
     expect(screen.getByText("Alternating sets · 2 variants")).toBeInTheDocument();
 
-    const schemaLists = screen.getAllByTestId("schema-list-mock");
+    const schemaCards = screen.getAllByTestId("schema-card-mock");
 
-    expect(schemaLists).toHaveLength(1);
-    expect(schemaLists[0]).toHaveTextContent("schema-list:2:");
+    expect(schemaCards).toHaveLength(2);
+    expect(schemaCards.map((node) => node.getAttribute("data-schema-id"))).toEqual([
+      s1.schema.id,
+      s2.schema.id,
+    ]);
   });
 
-  it("renders standalone schemas as bare SchemaList outside the alt-group wrapper, preserving declared order", () => {
+  it("renders alt-group members and standalones in declared order, alt-group inside AccentGroupCard wrapper", () => {
     const altGroupId = "clp9z8x7w0000abcd1234alt1";
     const s1 = makeSchema({ id: "clp9z8x7w0000abcd1234sch1", alternatingGroupId: altGroupId });
     const s2 = makeSchema({ id: "clp9z8x7w0000abcd1234sch2", alternatingGroupId: null });
@@ -452,11 +464,16 @@ describe("BlockCard body / alt-group", () => {
       }),
     });
 
-    const schemaLists = screen.getAllByTestId("schema-list-mock");
+    expect(screen.getByText("Alternating sets · 2 variants")).toBeInTheDocument();
 
-    expect(schemaLists).toHaveLength(2);
-    expect(schemaLists[0]).toHaveTextContent(`schema-list:2:${s1.schema.id},${s3.schema.id}`);
-    expect(schemaLists[1]).toHaveTextContent(`schema-list:1:${s2.schema.id}`);
+    const schemaCards = screen.getAllByTestId("schema-card-mock");
+
+    expect(schemaCards).toHaveLength(3);
+    expect(schemaCards.map((node) => node.getAttribute("data-schema-id"))).toEqual([
+      s1.schema.id,
+      s3.schema.id,
+      s2.schema.id,
+    ]);
   });
 });
 
@@ -531,31 +548,31 @@ describe("BlockCard mutation pending / actions", () => {
 });
 
 describe("BlockCard useExercises graceful fallback (QA-Must-11)", () => {
-  it("passes an empty exerciseById Map to SchemaList when useExercises succeeds with empty data", () => {
+  it("passes an empty exerciseById Map to SchemaCard when useExercises succeeds with empty data", () => {
     exercisesState.data = [];
     exercisesState.isError = false;
 
     renderBlockCard({ block: makeBlock({ schemas: [makeSchema()] }) });
 
-    const schemaList = screen.getByTestId("schema-list-mock");
+    const schemaCard = screen.getByTestId("schema-card-mock");
 
-    expect(schemaList).toHaveAttribute("data-exercise-count", "0");
+    expect(schemaCard).toHaveAttribute("data-exercise-count", "0");
   });
 
-  it("passes an empty exerciseById Map to SchemaList when useExercises is in an error state with undefined data", () => {
+  it("passes an empty exerciseById Map to SchemaCard when useExercises is in an error state with undefined data", () => {
     exercisesState.data = undefined;
     exercisesState.isError = true;
 
     renderBlockCard({ block: makeBlock({ schemas: [makeSchema()] }) });
 
-    const schemaList = screen.getByTestId("schema-list-mock");
+    const schemaCard = screen.getByTestId("schema-card-mock");
 
-    expect(schemaList).toHaveAttribute("data-exercise-count", "0");
+    expect(schemaCard).toHaveAttribute("data-exercise-count", "0");
   });
 });
 
 describe("BlockCard alt-group degradation (QA-004 integration)", () => {
-  it("renders schemas as bare SchemaLists when the alt-group has only one matching member in block.schemas", () => {
+  it("renders all schemas as bare SchemaCards without alt-group header when the alt-group has only one matching member", () => {
     const altGroupId = "clp9z8x7w0000abcd1234alt1";
     const s1 = makeSchema({ id: "clp9z8x7w0000abcd1234sch1", alternatingGroupId: altGroupId });
     const s2 = makeSchema({ id: "clp9z8x7w0000abcd1234sch2", alternatingGroupId: null });
@@ -569,11 +586,13 @@ describe("BlockCard alt-group degradation (QA-004 integration)", () => {
 
     expect(screen.queryByText(/Alternating sets · /)).toBeNull();
 
-    const schemaLists = screen.getAllByTestId("schema-list-mock");
+    const schemaCards = screen.getAllByTestId("schema-card-mock");
 
-    expect(schemaLists).toHaveLength(2);
-    expect(schemaLists[0]).toHaveTextContent(`schema-list:1:${s1.schema.id}`);
-    expect(schemaLists[1]).toHaveTextContent(`schema-list:1:${s2.schema.id}`);
+    expect(schemaCards).toHaveLength(2);
+    expect(schemaCards.map((node) => node.getAttribute("data-schema-id"))).toEqual([
+      s1.schema.id,
+      s2.schema.id,
+    ]);
   });
 });
 
@@ -601,18 +620,18 @@ describe("BlockCard isReorderPending cascade (D-10)", () => {
     expect(screen.getByLabelText("Add block label")).toBeDisabled();
   });
 
-  it("passes effective pending down to SchemaList via BlockCardBody when isReorderPending is true", () => {
+  it("passes effective pending down to SchemaCard via BlockCardBody when isReorderPending is true", () => {
     renderBlockCard({
       block: makeBlock({ schemas: [makeSchema()] }),
       isReorderPending: true,
     });
 
-    expect(screen.getByTestId("schema-list-mock")).toHaveAttribute("data-parent-pending", "true");
+    expect(screen.getByTestId("schema-card-mock")).toHaveAttribute("data-parent-pending", "true");
   });
 
-  it("passes data-parent-pending='false' to SchemaList when isReorderPending is false", () => {
+  it("passes data-parent-pending='false' to SchemaCard when isReorderPending is false", () => {
     renderBlockCard({ block: makeBlock({ schemas: [makeSchema()] }) });
 
-    expect(screen.getByTestId("schema-list-mock")).toHaveAttribute("data-parent-pending", "false");
+    expect(screen.getByTestId("schema-card-mock")).toHaveAttribute("data-parent-pending", "false");
   });
 });
