@@ -126,20 +126,6 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   const handleDeleteConfirm = () =>
     deleteSchemaRow.mutate({ schemaRowId: row.id }, { onSuccess: handleDeleteClose });
 
-  const handleDoubleClick = (event: React.MouseEvent) => {
-    if (event.target instanceof HTMLElement && event.target.closest("button") !== null) {
-      return;
-    }
-
-    event.stopPropagation();
-
-    if (isMutationPending) {
-      return;
-    }
-
-    handleEditOpen();
-  };
-
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -150,7 +136,6 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
     <Box
       ref={setNodeRef}
       style={style}
-      onDoubleClick={handleDoubleClick}
       sx={(theme) => ({
         display: "grid",
         gridTemplateColumns: GRID_TEMPLATE_COLUMNS,
