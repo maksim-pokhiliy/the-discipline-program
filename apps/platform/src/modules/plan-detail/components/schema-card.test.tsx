@@ -728,3 +728,33 @@ describe("SchemaCard body / SchemaRowList wiring", () => {
     expect(rowListMock).toHaveAttribute("data-start-date", START_DATE);
   });
 });
+
+describe("SchemaCard double-click", () => {
+  it("opens the SchemaEditorModal when a top-level schema card outer Stack is double-clicked", () => {
+    const { container } = renderSchemaCard();
+    const shell = container.firstChild;
+
+    expect(screen.queryByTestId("schema-editor-modal-mock")).toBeNull();
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected schema-card shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(shell);
+
+    expect(screen.getByTestId("schema-editor-modal-mock")).toBeInTheDocument();
+  });
+
+  it("does not open the SchemaEditorModal when a sub-schema is double-clicked", () => {
+    const { container } = renderSchemaCard({ isSubSchema: true });
+    const shell = container.firstChild;
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected sub-schema-card shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(shell);
+
+    expect(screen.queryByTestId("schema-editor-modal-mock")).toBeNull();
+  });
+});

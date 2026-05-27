@@ -116,6 +116,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     <Stack
       ref={setNodeRef}
       style={style}
+      onDoubleClick={isSubSchema ? undefined : handleEditOpen}
       direction="column"
       sx={(theme) => ({
         bgcolor: "background.paper",

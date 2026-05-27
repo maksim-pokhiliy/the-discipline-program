@@ -89,6 +89,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
     <Stack
       ref={setNodeRef}
       style={style}
+      onDoubleClick={handleEditOpen}
       direction="column"
       sx={(theme) => ({
         bgcolor: "background.default",

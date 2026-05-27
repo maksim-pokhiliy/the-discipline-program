@@ -563,3 +563,20 @@ describe("BlockCard alt-group degradation (QA-004 integration)", () => {
     expect(schemaLists[1]).toHaveTextContent(`schema-list:1:${s2.schema.id}`);
   });
 });
+
+describe("BlockCard double-click", () => {
+  it("opens the BlockEditorModal when the block card outer Stack is double-clicked", () => {
+    const { container } = renderBlockCard();
+    const shell = container.firstChild;
+
+    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
+
+    if (!(shell instanceof HTMLElement)) {
+      throw new Error("expected block-card shell to be an HTMLElement");
+    }
+
+    fireEvent.doubleClick(shell);
+
+    expect(screen.getByTestId("block-editor-modal-mock")).toBeInTheDocument();
+  });
+});
