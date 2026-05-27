@@ -1,5 +1,6 @@
 import { type ReactElement } from "react";
 
+import AddIcon from "@mui/icons-material/Add";
 import { Box, Button, alpha } from "@mui/material";
 
 const PLUS_ROW_FONT_SIZE_PT = 11;
@@ -11,10 +12,9 @@ const PLUS_ROW_PADDING_Y_FACTOR = 0.875;
 const PLUS_ROW_GAP_FACTOR = 1;
 const PLUS_ROW_BORDER_RADIUS_FACTOR = 0.5;
 const PLUS_ROW_ICON_CIRCLE_PX = 18;
-const PLUS_ROW_ICON_FONT_PX = 13;
+const PLUS_ROW_ICON_SVG_PX = 14;
 const PLUS_ROW_ICON_BORDER_RADIUS = "50%";
 const PLUS_ROW_HOVER_BG_ALPHA = 0.08;
-const PLUS_ROW_LITERAL_PLUS = "+";
 
 export type PlusRowButtonProps = {
   onClick: () => void;
@@ -69,13 +69,10 @@ export const PlusRowButton: React.FC<PlusRowButtonProps> = ({
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: `${PLUS_ROW_ICON_FONT_PX}pt`,
-        fontWeight: PLUS_ROW_FONT_WEIGHT,
-        lineHeight: 1,
         flexShrink: 0,
       }}
     >
-      {PLUS_ROW_LITERAL_PLUS}
+      <AddIcon sx={{ fontSize: PLUS_ROW_ICON_SVG_PX }} />
     </Box>
     {label}
   </Button>

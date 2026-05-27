@@ -14,10 +14,10 @@ describe("PlusRowButton", () => {
     expect(screen.getByRole("button", { name: /Add session/i })).toBeInTheDocument();
   });
 
-  it("renders the literal + glyph inside the icon-circle wrapper", () => {
+  it("renders an Add icon inside the icon-circle wrapper", () => {
     render(<PlusRowButton onClick={noop} label="Add session" />);
 
-    expect(screen.getByText("+")).toBeInTheDocument();
+    expect(screen.getByTestId("AddIcon")).toBeInTheDocument();
   });
 
   it("uses the MuiButton-outlined variant via the underlying Button", () => {
@@ -60,12 +60,12 @@ describe("PlusRowButton", () => {
     expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it("aria-hides the icon-circle wrapper so screen readers skip the glyph", () => {
+  it("aria-hides the icon-circle wrapper so screen readers skip the decorative glyph", () => {
     const { container } = render(<PlusRowButton onClick={noop} label="Add session" />);
     const ariaHidden = container.querySelector('[aria-hidden="true"]');
 
     expect(ariaHidden).not.toBeNull();
-    expect(ariaHidden?.textContent).toBe("+");
+    expect(ariaHidden?.querySelector('[data-testid="AddIcon"]')).not.toBeNull();
   });
 
   it("renders without crashing when label contains emoji and combining marks (QA-Must-C7-10)", () => {
