@@ -93,6 +93,7 @@ export const SessionList: React.FC<SessionListProps> = ({
                   session={session}
                   planId={planId}
                   startDate={startDate}
+                  isReorderPending={reorderSessions.isPending}
                 />
               ))}
             </Stack>

@@ -21,13 +21,19 @@ type SessionCardProps = {
   session: SessionWithLabel;
   planId: string;
   startDate: string;
+  isReorderPending?: boolean;
 };
 
-export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, startDate }) => {
+export const SessionCard: React.FC<SessionCardProps> = ({
+  session,
+  planId,
+  startDate,
+  isReorderPending = false,
+}) => {
   const updateSession = useUpdateSession(planId, startDate);
   const deleteSession = useDeleteSession(planId, startDate);
 
-  const isMutationPending = updateSession.isPending || deleteSession.isPending;
+  const isMutationPending = updateSession.isPending || deleteSession.isPending || isReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: session.id,
@@ -105,6 +111,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
             startDate={startDate}
             sessionId={session.id}
             blocks={session.blocks}
+            parentIsReorderPending={isMutationPending}
           />
         </Stack>
       ) : null}

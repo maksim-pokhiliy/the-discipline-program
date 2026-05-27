@@ -33,6 +33,7 @@ type SchemaRowListProps = {
   schemaId: string;
   rows: SchemaRow[];
   exerciseById: ReadonlyMap<string, Exercise>;
+  parentIsReorderPending?: boolean;
 };
 
 export const SchemaRowList: React.FC<SchemaRowListProps> = ({
@@ -41,6 +42,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
   schemaId,
   rows,
   exerciseById,
+  parentIsReorderPending = false,
 }) => {
   const reorderSchemaRows = useReorderSchemaRows(planId, startDate);
   const [sortedRows, setSortedRows] = useState<SchemaRow[]>(rows);
@@ -97,7 +99,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
                   startDate={startDate}
                   exerciseById={exerciseById}
                   index={index}
-                  isReorderPending={reorderSchemaRows.isPending}
+                  isReorderPending={parentIsReorderPending || reorderSchemaRows.isPending}
                 />
               ))}
             </Stack>

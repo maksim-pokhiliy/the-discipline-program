@@ -23,6 +23,7 @@ type BlockCardBodyProps = {
   planId: string;
   startDate: string;
   exerciseById: ReadonlyMap<string, Exercise>;
+  parentIsReorderPending?: boolean;
 };
 
 export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
@@ -30,6 +31,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
   planId,
   startDate,
   exerciseById,
+  parentIsReorderPending = false,
 }) => {
   const groups = useMemo(
     () => groupSchemasByAltGroup(block.schemas, block.alternatingGroups),
@@ -52,10 +54,11 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
             <SchemaList
               planId={planId}
               startDate={startDate}
-              blockId={block.id}
+              parent={{ kind: "block", blockId: block.id, allBlockSchemas: block.schemas }}
               schemas={g.schemas}
               blockCtx={blockCtx}
               exerciseById={exerciseById}
+              parentIsReorderPending={parentIsReorderPending}
             />
           </AccentGroupCard>
         ) : (
@@ -63,10 +66,11 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
             key={`${SCHEMA_KEY_PREFIX}${g.schema.schema.id}`}
             planId={planId}
             startDate={startDate}
-            blockId={block.id}
+            parent={{ kind: "block", blockId: block.id, allBlockSchemas: block.schemas }}
             schemas={[g.schema]}
             blockCtx={blockCtx}
             exerciseById={exerciseById}
+            parentIsReorderPending={parentIsReorderPending}
           />
         ),
       )}

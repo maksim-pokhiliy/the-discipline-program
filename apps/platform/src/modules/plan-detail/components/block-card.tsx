@@ -31,9 +31,15 @@ type BlockCardProps = {
   block: Block;
   planId: string;
   startDate: string;
+  isReorderPending?: boolean;
 };
 
-export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }) => {
+export const BlockCard: React.FC<BlockCardProps> = ({
+  block,
+  planId,
+  startDate,
+  isReorderPending = false,
+}) => {
   const updateBlock = useUpdateBlock(planId, startDate);
   const deleteBlock = useDeleteBlock(planId, startDate);
   const assignLabels = useAssignBlockLabels(planId, startDate);
@@ -46,7 +52,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
   );
 
   const isMutationPending =
-    updateBlock.isPending || deleteBlock.isPending || assignLabels.isPending;
+    updateBlock.isPending || deleteBlock.isPending || assignLabels.isPending || isReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
@@ -131,6 +137,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
         planId={planId}
         startDate={startDate}
         exerciseById={exerciseById}
+        parentIsReorderPending={isMutationPending}
       />
 
       <BlockEditorModal

@@ -62,18 +62,16 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
     spacing={HEAD_SPACING}
     sx={{ px: HEAD_PX, py: HEAD_PY, minWidth: 0 }}
   >
-    {!isSubSchema ? (
-      <IconButton
-        {...dragAttributes}
-        {...dragListeners}
-        size="small"
-        aria-label={DRAG_ARIA}
-        disabled={isMutationPending}
-        sx={{ cursor: "grab", touchAction: "none" }}
-      >
-        <DragIndicatorIcon fontSize="small" />
-      </IconButton>
-    ) : null}
+    <IconButton
+      {...dragAttributes}
+      {...dragListeners}
+      size="small"
+      aria-label={DRAG_ARIA}
+      disabled={isMutationPending}
+      sx={{ cursor: "grab", touchAction: "none" }}
+    >
+      <DragIndicatorIcon fontSize="small" />
+    </IconButton>
 
     <Stack direction="column" spacing={INFO_SPACING} sx={{ flex: 1, minWidth: 0 }}>
       <Stack

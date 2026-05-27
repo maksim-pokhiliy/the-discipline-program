@@ -18,6 +18,7 @@ import { formatSchemaHeader } from "../lib/format-schema-header";
 import { SchemaCardHead } from "./schema-card-head";
 import { SchemaEditorModal } from "./schema-editor-modal";
 import { type SchemaEditorMode } from "./schema-editor-types";
+import { SchemaList } from "./schema-list";
 import { SchemaRowList } from "./schema-row-list";
 
 const DELETE_TITLE = "Delete schema";
@@ -37,7 +38,7 @@ type SchemaCardProps = {
   startDate: string;
   blockCtx: BlockCtx;
   exerciseById: ReadonlyMap<string, Exercise>;
-  isSubSchema?: boolean;
+  parentIsReorderPending?: boolean;
 };
 
 export const SchemaCard: React.FC<SchemaCardProps> = ({
@@ -46,17 +47,19 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   startDate,
   blockCtx,
   exerciseById,
-  isSubSchema = false,
+  parentIsReorderPending = false,
 }): ReactElement => {
   const updateSchema = useUpdateSchema(planId, startDate);
   const deleteSchema = useDeleteSchema(planId, startDate);
   const archetypes = useArchetypes();
 
-  const isMutationPending = updateSchema.isPending || deleteSchema.isPending;
+  const isSubSchema = schema.schema.parentSchemaId !== null;
+  const isMutationPending =
+    updateSchema.isPending || deleteSchema.isPending || parentIsReorderPending;
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: schema.schema.id,
-    disabled: isSubSchema || isMutationPending,
+    disabled: isMutationPending,
   });
 
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
@@ -152,17 +155,15 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
             pt: theme.spacing(PADDING_T_FACTOR),
           })}
         >
-          {schema.subSchemas.map((sub) => (
-            <SchemaCard
-              key={sub.schema.id}
-              schema={sub}
-              planId={planId}
-              startDate={startDate}
-              blockCtx={blockCtx}
-              exerciseById={exerciseById}
-              isSubSchema
-            />
-          ))}
+          <SchemaList
+            planId={planId}
+            startDate={startDate}
+            parent={{ kind: "schema", parentSchemaId: schema.schema.id }}
+            schemas={schema.subSchemas}
+            blockCtx={blockCtx}
+            exerciseById={exerciseById}
+            parentIsReorderPending={isMutationPending}
+          />
         </Stack>
       ) : null}
 
@@ -172,6 +173,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         planId={planId}
         startDate={startDate}
         exerciseById={exerciseById}
+        parentIsReorderPending={isMutationPending}
       />
 
       {!isSubSchema ? (
