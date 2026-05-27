@@ -305,6 +305,27 @@ describe("SessionCard", () => {
     expect(deleteSessionMutate.mock.calls[0]?.[0]).toEqual({ sessionId: session.id });
   });
 
+  it("renders delete-confirm details with start date and label-or-empty fallback", () => {
+    const strength = makeLabel({ name: "STRENGTH" });
+    const { unmount } = renderSessionCard({
+      session: makeSession({ labelId: strength.id, label: strength }),
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Session actions" }));
+    fireEvent.click(within(screen.getByRole("menu")).getByText("Delete"));
+
+    expect(screen.getByText(`${START_DATE} · STRENGTH`)).toBeInTheDocument();
+
+    unmount();
+
+    renderSessionCard({ session: makeSession({ label: null }) });
+
+    fireEvent.click(screen.getByRole("button", { name: "Session actions" }));
+    fireEvent.click(within(screen.getByRole("menu")).getByText("Delete"));
+
+    expect(screen.getByText(`${START_DATE} · Empty session`)).toBeInTheDocument();
+  });
+
   it("disables the drag IconButton when useUpdateSession is pending (Q-2)", () => {
     updateSessionState.isPending = true;
 

@@ -15,6 +15,9 @@ import { useDeleteSession, useUpdateSession } from "@app/lib/hooks";
 import { BlockList } from "./block-list";
 import { SessionCardHead } from "./session-card-head";
 
+const SESSION_DELETE_IDENTITY_SEPARATOR = " · ";
+const SESSION_DELETE_EMPTY_LABEL = "Empty session";
+
 type SessionCardProps = {
   session: SessionWithLabel;
   planId: string;
@@ -75,6 +78,8 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const deleteDetails = `${startDate}${SESSION_DELETE_IDENTITY_SEPARATOR}${session.label?.name ?? SESSION_DELETE_EMPTY_LABEL}`;
+
   return (
     <Stack
       ref={setNodeRef}
@@ -128,7 +133,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
         title="Delete session"
         type="danger"
         message="Delete this session?"
-        details={session.label?.name ?? "Empty session"}
+        details={deleteDetails}
         onConfirm={handleDeleteConfirm}
         isConfirming={deleteSession.isPending}
       />
