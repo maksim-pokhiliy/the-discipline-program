@@ -1,11 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { ListItemIcon, ListItemText, Menu, MenuItem, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import type { SessionWithLabel } from "@repo/contracts/lms/day";
 import { ConfirmationModal } from "@repo/ui";
@@ -36,13 +35,9 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
   });
 
   const [isExpanded, setIsExpanded] = useState<boolean>(true);
-  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
-  const kebabAnchorRef = useRef<HTMLButtonElement>(null);
 
   const toggleExpanded = () => setIsExpanded((previous) => !previous);
-  const handleKebabOpen = () => setIsMenuOpen(true);
-  const handleKebabClose = () => setIsMenuOpen(false);
 
   const handleLabelChange = (labelId: string | null) =>
     updateSession.mutate({ sessionId: session.id, data: { labelId } });
@@ -61,10 +56,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
       data: { notes: next === "" ? null : next },
     });
 
-  const handleDeleteOpen = () => {
-    handleKebabClose();
-    setIsDeleteOpen(true);
-  };
+  const handleDeleteOpen = () => setIsDeleteOpen(true);
 
   const handleDeleteClose = () => setIsDeleteOpen(false);
 
@@ -100,10 +92,9 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
         onLabelChange={handleLabelChange}
         onFreezeChange={handleFreezeChange}
         onNotesCommit={handleNotesCommit}
-        onKebabOpen={handleKebabOpen}
+        onDeleteOpen={handleDeleteOpen}
         dragAttributes={attributes}
         dragListeners={listeners}
-        kebabAnchorRef={kebabAnchorRef}
         isMutationPending={isMutationPending}
       />
 
@@ -117,15 +108,6 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, planId, start
           />
         </Stack>
       ) : null}
-
-      <Menu anchorEl={kebabAnchorRef.current} open={isMenuOpen} onClose={handleKebabClose}>
-        <MenuItem onClick={handleDeleteOpen} sx={{ color: "error.main" }}>
-          <ListItemIcon sx={{ color: "inherit" }}>
-            <DeleteIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Delete</ListItemText>
-        </MenuItem>
-      </Menu>
 
       <ConfirmationModal
         open={isDeleteOpen}

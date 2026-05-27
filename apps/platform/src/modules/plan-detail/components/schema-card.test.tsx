@@ -82,7 +82,8 @@ const SUB_SCHEMA_ID_B = "clp9z8x7w0000abcd1234ssb1";
 const ARCHETYPE_ID = "clp9z8x7w0000abcd1234arc1";
 const ARCHETYPE_LABEL = "N Rounds";
 const DRAG_LABEL = "Drag schema";
-const KEBAB_LABEL = "Schema actions";
+const EDIT_LABEL = "Edit schema";
+const DELETE_LABEL = "Delete schema";
 const TITLE_LABEL = "Schema title";
 
 type MakeSchemaOverrides = Partial<SchemaWithBody["schema"]> & {
@@ -544,23 +545,21 @@ describe("SchemaCard meta row", () => {
   });
 });
 
-describe("SchemaCard kebab + modals", () => {
-  it("opens the SchemaEditorModal when Edit is clicked in the kebab menu", () => {
+describe("SchemaCard edit + delete actions", () => {
+  it("opens the SchemaEditorModal when the Edit IconButton is clicked", () => {
     renderSchemaCard();
 
     expect(screen.queryByTestId("schema-editor-modal-mock")).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: KEBAB_LABEL }));
-    fireEvent.click(within(screen.getByRole("menu")).getByText("Edit"));
+    fireEvent.click(screen.getByRole("button", { name: EDIT_LABEL }));
 
     expect(screen.getByTestId("schema-editor-modal-mock")).toBeInTheDocument();
   });
 
-  it("opens the ConfirmationModal when Delete is clicked, then fires useDeleteSchema.mutate on confirm", () => {
+  it("opens the ConfirmationModal when the Delete IconButton is clicked, then fires useDeleteSchema.mutate on confirm", () => {
     renderSchemaCard();
 
-    fireEvent.click(screen.getByRole("button", { name: KEBAB_LABEL }));
-    fireEvent.click(within(screen.getByRole("menu")).getByText("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: DELETE_LABEL }));
 
     expect(screen.getByRole("heading", { name: "Delete schema" })).toBeInTheDocument();
     expect(screen.getByText("Delete this schema?")).toBeInTheDocument();
@@ -583,26 +582,34 @@ describe("SchemaCard kebab + modals", () => {
       }),
     });
 
-    fireEvent.click(screen.getByRole("button", { name: KEBAB_LABEL }));
-    fireEvent.click(within(screen.getByRole("menu")).getByText("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: DELETE_LABEL }));
 
     const dialog = screen.getByRole("dialog");
 
     expect(within(dialog).getByText("AMRAP 12 min")).toBeInTheDocument();
   });
 
-  it("does NOT render the kebab IconButton when isSubSchema=true", () => {
+  it("does NOT render the Edit or Delete IconButtons when isSubSchema=true", () => {
     renderSchemaCard({ isSubSchema: true });
 
-    expect(screen.queryByRole("button", { name: KEBAB_LABEL })).toBeNull();
+    expect(screen.queryByRole("button", { name: EDIT_LABEL })).toBeNull();
+    expect(screen.queryByRole("button", { name: DELETE_LABEL })).toBeNull();
   });
 
-  it("disables the kebab IconButton when useUpdateSchema is pending", () => {
+  it("disables the Edit IconButton when useUpdateSchema is pending", () => {
     updateSchemaState.isPending = true;
 
     renderSchemaCard();
 
-    expect(screen.getByRole("button", { name: KEBAB_LABEL })).toBeDisabled();
+    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
+  });
+
+  it("disables the Delete IconButton when useDeleteSchema is pending", () => {
+    deleteSchemaState.isPending = true;
+
+    renderSchemaCard();
+
+    expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeDisabled();
   });
 });
 
@@ -626,7 +633,7 @@ describe("SchemaCard sub-schemas", () => {
     expect(schemaIds).toContain(SUB_SCHEMA_ID_B);
   });
 
-  it("renders sub-schemas WITHOUT drag handle and WITHOUT kebab (isSubSchema=true cascade)", () => {
+  it("renders sub-schemas WITHOUT drag handle and WITHOUT Edit/Delete IconButtons (isSubSchema=true cascade)", () => {
     renderSchemaCard({
       schema: makeSchema({
         subSchemas: [makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID })],
@@ -634,21 +641,25 @@ describe("SchemaCard sub-schemas", () => {
     });
 
     const dragHandles = screen.getAllByRole("button", { name: DRAG_LABEL });
-    const kebabs = screen.getAllByRole("button", { name: KEBAB_LABEL });
+    const editButtons = screen.getAllByRole("button", { name: EDIT_LABEL });
+    const deleteButtons = screen.getAllByRole("button", { name: DELETE_LABEL });
 
     expect(dragHandles).toHaveLength(1);
-    expect(kebabs).toHaveLength(1);
+    expect(editButtons).toHaveLength(1);
+    expect(deleteButtons).toHaveLength(1);
   });
 
   it("renders nothing for sub-schemas when schema.subSchemas is an empty array", () => {
     renderSchemaCard({ schema: makeSchema({ subSchemas: [] }) });
 
     const dragHandles = screen.getAllByRole("button", { name: DRAG_LABEL });
-    const kebabs = screen.getAllByRole("button", { name: KEBAB_LABEL });
+    const editButtons = screen.getAllByRole("button", { name: EDIT_LABEL });
+    const deleteButtons = screen.getAllByRole("button", { name: DELETE_LABEL });
     const rowLists = screen.getAllByTestId("schema-row-list-mock");
 
     expect(dragHandles).toHaveLength(1);
-    expect(kebabs).toHaveLength(1);
+    expect(editButtons).toHaveLength(1);
+    expect(deleteButtons).toHaveLength(1);
     expect(rowLists).toHaveLength(1);
   });
 

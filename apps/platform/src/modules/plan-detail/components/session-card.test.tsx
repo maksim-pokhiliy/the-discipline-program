@@ -278,14 +278,10 @@ describe("SessionCard", () => {
     });
   });
 
-  it("opens the ConfirmationModal when the kebab Delete item is clicked", () => {
+  it("opens the ConfirmationModal when the Delete IconButton is clicked", () => {
     renderSessionCard();
 
-    fireEvent.click(screen.getByRole("button", { name: "Session actions" }));
-
-    const menu = screen.getByRole("menu");
-
-    fireEvent.click(within(menu).getByText("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete session" }));
 
     expect(screen.getByRole("heading", { name: "Delete session" })).toBeInTheDocument();
     expect(screen.getByText("Delete this session?")).toBeInTheDocument();
@@ -297,8 +293,7 @@ describe("SessionCard", () => {
 
     renderSessionCard({ session });
 
-    fireEvent.click(screen.getByRole("button", { name: "Session actions" }));
-    fireEvent.click(within(screen.getByRole("menu")).getByText("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete session" }));
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
     expect(deleteSessionMutate).toHaveBeenCalledTimes(1);
@@ -311,8 +306,7 @@ describe("SessionCard", () => {
       session: makeSession({ labelId: strength.id, label: strength }),
     });
 
-    fireEvent.click(screen.getByRole("button", { name: "Session actions" }));
-    fireEvent.click(within(screen.getByRole("menu")).getByText("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete session" }));
 
     expect(screen.getByText(`${START_DATE} · STRENGTH`)).toBeInTheDocument();
 
@@ -320,8 +314,7 @@ describe("SessionCard", () => {
 
     renderSessionCard({ session: makeSession({ label: null }) });
 
-    fireEvent.click(screen.getByRole("button", { name: "Session actions" }));
-    fireEvent.click(within(screen.getByRole("menu")).getByText("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: "Delete session" }));
 
     expect(screen.getByText(`${START_DATE} · Empty session`)).toBeInTheDocument();
   });
@@ -380,13 +373,11 @@ describe("SessionCard", () => {
     });
   });
 
-  it("still opens the kebab menu while useDeleteSession is pending (Q-11)", () => {
+  it("disables the Delete IconButton while useDeleteSession is pending (Q-11)", () => {
     deleteSessionState.isPending = true;
 
     renderSessionCard();
 
-    fireEvent.click(screen.getByRole("button", { name: "Session actions" }));
-
-    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Delete session" })).toBeDisabled();
   });
 });

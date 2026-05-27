@@ -1,3 +1,5 @@
+import { createElement } from "react";
+
 import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -24,15 +26,23 @@ vi.mock("@app/lib/hooks", async () => {
   };
 });
 
-vi.mock("./session-list", () => ({
-  SessionList: ({ sessions }: { sessions: SessionWithLabel[] }) => (
-    <div data-testid="session-list-mock">{`SessionList: ${String(sessions.length)} sessions`}</div>
-  ),
-}));
+vi.mock("./session-list", () => {
+  const renderSessionListMock = ({ sessions }: { sessions: SessionWithLabel[] }) =>
+    createElement(
+      "div",
+      { "data-testid": "session-list-mock" },
+      `SessionList: ${String(sessions.length)} sessions`,
+    );
 
-vi.mock("./add-session-button", () => ({
-  AddSessionButton: () => <div data-testid="add-session-button-mock">AddSessionButton</div>,
-}));
+  return { SessionList: renderSessionListMock };
+});
+
+vi.mock("./add-session-button", () => {
+  const renderAddSessionButtonMock = () =>
+    createElement("div", { "data-testid": "add-session-button-mock" }, "AddSessionButton");
+
+  return { AddSessionButton: renderAddSessionButtonMock };
+});
 
 const { DayRow } = await import("./day-row");
 

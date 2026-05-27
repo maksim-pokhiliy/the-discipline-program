@@ -1,11 +1,12 @@
 "use client";
 
-import { type ReactElement, type RefObject } from "react";
+import { type ReactElement } from "react";
 
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
+import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { IconButton, Stack } from "@mui/material";
+import TuneIcon from "@mui/icons-material/Tune";
+import { IconButton, Stack, Tooltip } from "@mui/material";
 
 import { type SchemaWithBody, SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
@@ -17,13 +18,18 @@ import { SchemaArchetypeTag } from "./schema-archetype-tag";
 import { SchemaCardMeta } from "./schema-card-meta";
 
 const DRAG_ARIA = "Drag schema";
-const KEBAB_ARIA = "Schema actions";
+const EDIT_ARIA = "Edit schema";
+const EDIT_TOOLTIP = "Edit schema";
+const DELETE_ARIA = "Delete schema";
+const DELETE_TOOLTIP = "Delete schema";
 const TITLE_ARIA = "Schema title";
 const HEAD_PX = 1.5;
 const HEAD_PY = 1.25;
 const HEAD_SPACING = 1.25;
 const INFO_SPACING = 0.75;
 const TITLE_ROW_SPACING = 1;
+
+const tooltipChildSx = { display: "inline-flex" };
 
 type SchemaCardHeadProps = {
   schema: SchemaWithBody;
@@ -33,9 +39,9 @@ type SchemaCardHeadProps = {
   isSubSchema: boolean;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
-  kebabAnchorRef: RefObject<HTMLButtonElement | null>;
   onTitleCommit: (next: string) => void;
-  onKebabOpen: () => void;
+  onEditOpen: () => void;
+  onDeleteOpen: () => void;
 };
 
 export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
@@ -46,9 +52,9 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
   isSubSchema,
   dragAttributes,
   dragListeners,
-  kebabAnchorRef,
   onTitleCommit,
-  onKebabOpen,
+  onEditOpen,
+  onDeleteOpen,
 }): ReactElement => (
   <Stack
     direction="row"
@@ -93,15 +99,34 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
     </Stack>
 
     {!isSubSchema ? (
-      <IconButton
-        ref={kebabAnchorRef}
-        onClick={onKebabOpen}
-        aria-label={KEBAB_ARIA}
-        size="small"
-        disabled={isMutationPending}
-      >
-        <MoreVertIcon fontSize="small" />
-      </IconButton>
+      <>
+        <Tooltip title={EDIT_TOOLTIP}>
+          <span style={tooltipChildSx}>
+            <IconButton
+              size="small"
+              onClick={onEditOpen}
+              disabled={isMutationPending}
+              aria-label={EDIT_ARIA}
+            >
+              <TuneIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+
+        <Tooltip title={DELETE_TOOLTIP}>
+          <span style={tooltipChildSx}>
+            <IconButton
+              size="small"
+              onClick={onDeleteOpen}
+              disabled={isMutationPending}
+              aria-label={DELETE_ARIA}
+              sx={{ color: "error.main" }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </>
     ) : null}
   </Stack>
 );

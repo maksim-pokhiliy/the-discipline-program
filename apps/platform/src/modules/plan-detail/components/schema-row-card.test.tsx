@@ -64,7 +64,8 @@ vi.mock("./row-editor-modal", () => {
 const { SchemaRowCard } = await import("./schema-row-card");
 
 const DRAG_LABEL = "Drag row";
-const KEBAB_LABEL = "Row actions";
+const EDIT_LABEL = "Edit row";
+const DELETE_LABEL = "Delete row";
 
 type RenderOptions = {
   row?: SchemaRow;
@@ -96,25 +97,26 @@ afterEach(() => {
 });
 
 describe("SchemaRowCard chrome", () => {
-  it("renders the outer 6-column grid with the documented template (D-01)", () => {
+  it("renders the outer 7-column grid with the documented template (D-01)", () => {
     const { container } = renderRowCard();
     const shell = container.firstChild;
 
     expect(shell).toHaveStyle({
       display: "grid",
-      gridTemplateColumns: "24px 24px 32px 1fr auto auto",
+      gridTemplateColumns: "24px 24px 32px 1fr auto auto auto",
     });
   });
 
-  it("renders drag handle, ord cell, kind badge and kebab in column order", () => {
+  it("renders drag handle, ord cell, kind badge, edit button and delete button in column order", () => {
     renderRowCard();
 
     const dragBtn = screen.getByRole("button", { name: DRAG_LABEL });
     const ordCell = screen.getByText("1");
     const kindBadge = screen.getByText("EX");
-    const kebab = screen.getByRole("button", { name: KEBAB_LABEL });
+    const editBtn = screen.getByRole("button", { name: EDIT_LABEL });
+    const deleteBtn = screen.getByRole("button", { name: DELETE_LABEL });
 
-    const sectionOrder = [dragBtn, ordCell, kindBadge, kebab];
+    const sectionOrder = [dragBtn, ordCell, kindBadge, editBtn, deleteBtn];
 
     for (let i = 0; i < sectionOrder.length - 1; i += 1) {
       const earlier = sectionOrder[i];
@@ -136,10 +138,11 @@ describe("SchemaRowCard chrome", () => {
     expect(dragBtn).toHaveStyle({ cursor: "grab", touchAction: "none" });
   });
 
-  it("renders the kebab IconButton with aria 'Row actions'", () => {
+  it("renders the Edit and Delete IconButtons with their aria labels", () => {
     renderRowCard();
 
-    expect(screen.getByRole("button", { name: KEBAB_LABEL })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeInTheDocument();
   });
 });
 
@@ -235,23 +238,21 @@ describe("SchemaRowCard demo link", () => {
   });
 });
 
-describe("SchemaRowCard kebab menu interactions", () => {
-  it("opens the RowEditorModal when Edit menu item is clicked", () => {
+describe("SchemaRowCard edit + delete actions", () => {
+  it("opens the RowEditorModal when the Edit IconButton is clicked", () => {
     renderRowCard();
 
     expect(screen.queryByTestId("row-editor-modal-mock")).toBeNull();
 
-    fireEvent.click(screen.getByRole("button", { name: KEBAB_LABEL }));
-    fireEvent.click(within(screen.getByRole("menu")).getByText("Edit"));
+    fireEvent.click(screen.getByRole("button", { name: EDIT_LABEL }));
 
     expect(screen.getByTestId("row-editor-modal-mock")).toBeInTheDocument();
   });
 
-  it("opens the ConfirmationModal with the row mainText as details when Delete is clicked", () => {
+  it("opens the ConfirmationModal with the row mainText as details when the Delete IconButton is clicked", () => {
     renderRowCard({ row: makeStandaloneLoadRow() });
 
-    fireEvent.click(screen.getByRole("button", { name: KEBAB_LABEL }));
-    fireEvent.click(within(screen.getByRole("menu")).getByText("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: DELETE_LABEL }));
 
     const dialog = screen.getByRole("dialog");
 
@@ -263,8 +264,7 @@ describe("SchemaRowCard kebab menu interactions", () => {
   it("fires useDeleteSchemaRow.mutate with the schemaRowId when Confirm is clicked", () => {
     renderRowCard();
 
-    fireEvent.click(screen.getByRole("button", { name: KEBAB_LABEL }));
-    fireEvent.click(within(screen.getByRole("menu")).getByText("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: DELETE_LABEL }));
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
 
     expect(deleteSchemaRowMutate).toHaveBeenCalledTimes(1);
@@ -274,8 +274,7 @@ describe("SchemaRowCard kebab menu interactions", () => {
   it("does NOT fire useDeleteSchemaRow.mutate when Cancel is clicked", () => {
     renderRowCard();
 
-    fireEvent.click(screen.getByRole("button", { name: KEBAB_LABEL }));
-    fireEvent.click(within(screen.getByRole("menu")).getByText("Delete"));
+    fireEvent.click(screen.getByRole("button", { name: DELETE_LABEL }));
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(deleteSchemaRowMutate).not.toHaveBeenCalled();
@@ -369,28 +368,31 @@ describe("SchemaRowCard double-click", () => {
 });
 
 describe("SchemaRowCard mutation-pending", () => {
-  it("disables drag handle and kebab when useUpdateSchemaRow is pending", () => {
+  it("disables drag handle, edit and delete buttons when useUpdateSchemaRow is pending", () => {
     updateSchemaRowState.isPending = true;
 
     renderRowCard();
 
     expect(screen.getByRole("button", { name: DRAG_LABEL })).toBeDisabled();
-    expect(screen.getByRole("button", { name: KEBAB_LABEL })).toBeDisabled();
+    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
+    expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeDisabled();
   });
 
-  it("disables drag handle and kebab when useDeleteSchemaRow is pending", () => {
+  it("disables drag handle, edit and delete buttons when useDeleteSchemaRow is pending", () => {
     deleteSchemaRowState.isPending = true;
 
     renderRowCard();
 
     expect(screen.getByRole("button", { name: DRAG_LABEL })).toBeDisabled();
-    expect(screen.getByRole("button", { name: KEBAB_LABEL })).toBeDisabled();
+    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
+    expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeDisabled();
   });
 
-  it("disables drag handle and kebab when isReorderPending is true (QA-004)", () => {
+  it("disables drag handle, edit and delete buttons when isReorderPending is true (QA-004)", () => {
     renderRowCard({ isReorderPending: true });
 
     expect(screen.getByRole("button", { name: DRAG_LABEL })).toBeDisabled();
-    expect(screen.getByRole("button", { name: KEBAB_LABEL })).toBeDisabled();
+    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
+    expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeDisabled();
   });
 });
