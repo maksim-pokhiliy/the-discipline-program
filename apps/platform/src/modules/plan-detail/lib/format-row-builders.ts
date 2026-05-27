@@ -132,7 +132,7 @@ export const buildExercise = (
     subParts: buildExerciseSubParts(row, form, exerciseById),
     kindBadge: "EX",
     kindCls: "ex",
-    dashed: placeholderAtomic ? true : false,
+    dashed: placeholderAtomic,
     ord: String(index + 1),
     formPillText: placeholderAtomic ? "placeholder ref" : FORM_PILL_BY_KIND[form.form],
     demoUrl: computeDemoUrl(form, exerciseById),
