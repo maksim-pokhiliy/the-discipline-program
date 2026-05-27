@@ -9,12 +9,14 @@ type AddSessionButtonProps = {
   planId: string;
   startDate: string;
   dayOfWeek: DayOfWeek;
+  accent?: boolean | undefined;
 };
 
 export const AddSessionButton: React.FC<AddSessionButtonProps> = ({
   planId,
   startDate,
   dayOfWeek,
+  accent = false,
 }) => {
   const createSession = useCreateSession(planId, startDate, dayOfWeek);
 
@@ -23,6 +25,7 @@ export const AddSessionButton: React.FC<AddSessionButtonProps> = ({
       onClick={() => createSession.mutate({})}
       label="Add session"
       disabled={createSession.isPending}
+      accent={accent}
     />
   );
 };
