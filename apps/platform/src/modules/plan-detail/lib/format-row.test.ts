@@ -2,13 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
-import { formatRow } from "./format-row";
+import { type ExerciseById, formatRow } from "./format-row";
 import {
   DEMO_URL,
   ID_DEADLIFT,
   ID_MISS,
   baseRowFields,
   exerciseById,
+  makeExercise,
   makeExerciseRow,
   makeFootnoteRow,
   makeInnerLadderMarkerRow,
@@ -19,6 +20,24 @@ import {
   makeStandaloneLoadRow,
   makeStandaloneUrlRow,
 } from "./format-row.fixtures";
+
+const ID_PLACEHOLDER_ATOMIC = "ckplaceh1234567890abcdef01";
+const PLACEHOLDER_CANONICAL_NAME = "Any squat";
+const PLACEHOLDER_DEMO_URL = "https://example.com/should-not-render.mp4";
+
+const exerciseByIdWithPlaceholder: ExerciseById = new Map([
+  ...exerciseById,
+  [
+    ID_PLACEHOLDER_ATOMIC,
+    makeExercise({
+      id: ID_PLACEHOLDER_ATOMIC,
+      canonicalName: PLACEHOLDER_CANONICAL_NAME,
+      canonicalCompoundType: "PLACEHOLDER",
+      placeholderFlag: true,
+      defaultDemoUrls: [PLACEHOLDER_DEMO_URL],
+    }),
+  ],
+]);
 
 describe("formatRow", () => {
   describe("EXERCISE row kind", () => {
@@ -52,6 +71,22 @@ describe("formatRow", () => {
 
       expect(result.demoUrl).toBeNull();
     });
+
+    it("renders placeholder-ref chrome for atomic-form row pointing at placeholderFlag exercise", () => {
+      const row = makeExerciseRow({
+        rowPayload: {
+          rowKind: "EXERCISE",
+          exercise: { form: "atomic", exerciseId: ID_PLACEHOLDER_ATOMIC },
+        },
+      });
+      const result = formatRow(row, exerciseByIdWithPlaceholder, 0);
+
+      expect(result.formPillText).toBe("placeholder ref");
+      expect(result.dashed).toBe(true);
+      expect(result.demoUrl).toBeNull();
+      expect(result.subParts).toContain("placeholder");
+      expect(result.mainText).toBe(PLACEHOLDER_CANONICAL_NAME);
+    });
   });
 
   describe("REST row kind", () => {
@@ -84,8 +119,18 @@ describe("formatRow", () => {
   });
 
   describe("STANDALONE_LOAD row kind", () => {
-    it("renders formatted load mainText with 'applies to all rows above' sub", () => {
+    it("renders global load sub when STANDALONE_LOAD is at index 0", () => {
       const result = formatRow(makeStandaloneLoadRow(), exerciseById, 0);
+
+      expect(result.mainText).toBe("20 kg");
+      expect(result.subParts).toEqual(["global load"]);
+      expect(result.kindBadge).toBe("LD");
+      expect(result.kindCls).toBe("load");
+      expect(result.ord).toBe("L");
+    });
+
+    it("renders applies-to-all-rows-above sub when STANDALONE_LOAD is at index >= 1", () => {
+      const result = formatRow(makeStandaloneLoadRow(), exerciseById, 2);
 
       expect(result.mainText).toBe("20 kg");
       expect(result.subParts).toEqual(["applies to all rows above"]);
@@ -125,6 +170,22 @@ describe("formatRow", () => {
       const result = formatRow(makeInnerLadderMarkerRow(), exerciseById, 0);
 
       expect(result.mainText).toBe("12-9-6 :");
+      expect(result.subParts).toEqual(["ladder marker — segments rows below"]);
+      expect(result.kindBadge).toBe("↓");
+      expect(result.kindCls).toBe("ladder");
+      expect(result.dashed).toBe(true);
+      expect(result.ord).toBe("—");
+    });
+
+    it("renders single-step ladder without trailing colon", () => {
+      const row: SchemaRow = {
+        ...baseRowFields,
+        rowKind: "INNER_LADDER_MARKER",
+        rowPayload: { rowKind: "INNER_LADDER_MARKER", steps: [10] },
+      };
+      const result = formatRow(row, exerciseById, 0);
+
+      expect(result.mainText).toBe("10");
       expect(result.subParts).toEqual(["ladder marker — segments rows below"]);
       expect(result.kindBadge).toBe("↓");
       expect(result.kindCls).toBe("ladder");

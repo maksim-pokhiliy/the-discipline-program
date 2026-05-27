@@ -53,6 +53,28 @@ describe("formatExerciseForm", () => {
         sub: [],
       });
     });
+
+    it("returns placeholder shape when atomic exerciseId points to placeholderFlag exercise", () => {
+      const ID_PLACEHOLDER_ATOMIC = "ckplaceh1234567890abcdef01";
+      const placeholderExerciseById: ExerciseById = new Map([
+        ...exerciseById,
+        [
+          ID_PLACEHOLDER_ATOMIC,
+          makeExercise({
+            id: ID_PLACEHOLDER_ATOMIC,
+            canonicalName: "Any squat",
+            canonicalCompoundType: "PLACEHOLDER",
+            placeholderFlag: true,
+          }),
+        ],
+      ]);
+      const form: ExerciseForm = { form: "atomic", exerciseId: ID_PLACEHOLDER_ATOMIC };
+
+      expect(formatExerciseForm(form, placeholderExerciseById)).toEqual({
+        name: "Any squat",
+        sub: ["placeholder"],
+      });
+    });
   });
 
   describe("compound form", () => {

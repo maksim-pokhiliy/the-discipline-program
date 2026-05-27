@@ -19,6 +19,7 @@ const PLACEHOLDER_TEXT_FALLBACK = "any exercise";
 const FOOTNOTE_FALLBACK = "footnote";
 const UNKNOWN_EXERCISE_FALLBACK = "?";
 const STANDALONE_LOAD_SUB = "applies to all rows above";
+const STANDALONE_LOAD_FIRST_ROW_SUB = "global load";
 const STANDALONE_URL_WHOLE_SCHEMA_SUB = "schema reference";
 const STANDALONE_URL_PREVIOUS_ROW_SUB = "previous-row demo";
 const INNER_LADDER_MARKER_SUB = "ladder marker — segments rows below";
@@ -39,8 +40,20 @@ const FORM_PILL_BY_KIND: Record<ExerciseForm["form"], string | null> = {
 const lookupName = (id: string, exerciseById: ExerciseById, fallback: string): string =>
   exerciseById.get(id)?.canonicalName ?? fallback;
 
+const isAtomicPlaceholder = (form: ExerciseForm, exerciseById: ExerciseById): boolean => {
+  if (form.form !== "atomic") {
+    return false;
+  }
+
+  return exerciseById.get(form.exerciseId)?.placeholderFlag === true;
+};
+
 const computeDemoUrl = (form: ExerciseForm, exerciseById: ExerciseById): string | null => {
   if (form.form !== "atomic") {
+    return null;
+  }
+
+  if (exerciseById.get(form.exerciseId)?.placeholderFlag === true) {
     return null;
   }
 
@@ -111,16 +124,20 @@ export const buildExercise = (
   form: ExerciseForm,
   exerciseById: ExerciseById,
   index: number,
-): FormatRowResult => ({
-  mainText: formatExerciseForm(form, exerciseById).name,
-  subParts: buildExerciseSubParts(row, form, exerciseById),
-  kindBadge: "EX",
-  kindCls: "ex",
-  dashed: false,
-  ord: String(index + 1),
-  formPillText: FORM_PILL_BY_KIND[form.form],
-  demoUrl: computeDemoUrl(form, exerciseById),
-});
+): FormatRowResult => {
+  const placeholderAtomic = isAtomicPlaceholder(form, exerciseById);
+
+  return {
+    mainText: formatExerciseForm(form, exerciseById).name,
+    subParts: buildExerciseSubParts(row, form, exerciseById),
+    kindBadge: "EX",
+    kindCls: "ex",
+    dashed: placeholderAtomic ? true : false,
+    ord: String(index + 1),
+    formPillText: placeholderAtomic ? "placeholder ref" : FORM_PILL_BY_KIND[form.form],
+    demoUrl: computeDemoUrl(form, exerciseById),
+  };
+};
 
 export const buildRest = (
   payload: Extract<SchemaRowPayload, { rowKind: "REST" }>,
@@ -171,12 +188,13 @@ export const buildFootnote = (
 export const buildStandaloneLoad = (
   payload: Extract<SchemaRowPayload, { rowKind: "STANDALONE_LOAD" }>,
   exerciseById: ExerciseById,
+  index: number,
 ): FormatRowResult => {
   const text = formatLoad(payload.load, exerciseById);
 
   return {
     mainText: text.length > 0 ? text : "Load",
-    subParts: [STANDALONE_LOAD_SUB],
+    subParts: [index === 0 ? STANDALONE_LOAD_FIRST_ROW_SUB : STANDALONE_LOAD_SUB],
     kindBadge: "LD",
     kindCls: "load",
     dashed: false,
@@ -227,16 +245,21 @@ export const buildPlaceholder = (
 
 export const buildInnerLadderMarker = (
   payload: Extract<SchemaRowPayload, { rowKind: "INNER_LADDER_MARKER" }>,
-): FormatRowResult => ({
-  mainText: `${payload.steps.join("-")} :`,
-  subParts: [INNER_LADDER_MARKER_SUB],
-  kindBadge: "↓",
-  kindCls: "ladder",
-  dashed: true,
-  ord: "—",
-  formPillText: null,
-  demoUrl: null,
-});
+): FormatRowResult => {
+  const joined = payload.steps.join("-");
+  const mainText = payload.steps.length > 1 ? `${joined} :` : joined;
+
+  return {
+    mainText,
+    subParts: [INNER_LADDER_MARKER_SUB],
+    kindBadge: "↓",
+    kindCls: "ladder",
+    dashed: true,
+    ord: "—",
+    formPillText: null,
+    demoUrl: null,
+  };
+};
 
 export const buildRepDefinition = (
   payload: Extract<SchemaRowPayload, { rowKind: "REP_DEFINITION" }>,

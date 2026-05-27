@@ -39,11 +39,21 @@ export const formatExerciseForm = (
   exerciseById: ExerciseById,
 ): FormatExerciseFormResult => {
   switch (form.form) {
-    case "atomic":
+    case "atomic": {
+      const exercise = exerciseById.get(form.exerciseId);
+
+      if (exercise?.placeholderFlag === true) {
+        return {
+          name: exercise.canonicalName ?? PLACEHOLDER_NAME_FALLBACK,
+          sub: [PLACEHOLDER_SUB_LABEL],
+        };
+      }
+
       return {
         name: lookupName(form.exerciseId, exerciseById, UNKNOWN_EXERCISE_FALLBACK),
         sub: [],
       };
+    }
     case "compound": {
       const name = form.compound.elements
         .map((element) => formatCompoundElement(element, exerciseById))
