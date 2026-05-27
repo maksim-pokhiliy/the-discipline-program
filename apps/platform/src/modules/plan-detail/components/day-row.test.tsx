@@ -30,6 +30,10 @@ vi.mock("./session-list", () => ({
   ),
 }));
 
+vi.mock("./add-session-button", () => ({
+  AddSessionButton: () => <div data-testid="add-session-button-mock">AddSessionButton</div>,
+}));
+
 const { DayRow } = await import("./day-row");
 
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
