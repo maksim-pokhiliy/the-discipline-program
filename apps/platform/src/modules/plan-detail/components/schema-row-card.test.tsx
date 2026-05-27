@@ -356,6 +356,16 @@ describe("SchemaRowCard double-click", () => {
     expect(screen.getByTestId("row-editor-modal-mock")).toBeInTheDocument();
     expect(parentDoubleClick).not.toHaveBeenCalled();
   });
+
+  it("does not open the RowEditorModal when double-click originates inside a descendant button (QA-Must-C7-12)", () => {
+    renderRowCard();
+
+    expect(screen.queryByTestId("row-editor-modal-mock")).toBeNull();
+
+    fireEvent.doubleClick(screen.getByRole("button", { name: DRAG_LABEL }));
+
+    expect(screen.queryByTestId("row-editor-modal-mock")).toBeNull();
+  });
 });
 
 describe("SchemaRowCard mutation-pending", () => {

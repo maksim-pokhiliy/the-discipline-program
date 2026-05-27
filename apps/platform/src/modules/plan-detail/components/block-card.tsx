@@ -75,6 +75,10 @@ export const BlockCard: React.FC<BlockCardProps> = ({ block, planId, startDate }
   };
 
   const handleDoubleClick = (event: React.MouseEvent) => {
+    if (event.target instanceof HTMLElement && event.target.closest("button") !== null) {
+      return;
+    }
+
     event.stopPropagation();
 
     if (isMutationPending) {

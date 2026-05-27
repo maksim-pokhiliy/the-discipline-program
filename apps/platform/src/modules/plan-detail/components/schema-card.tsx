@@ -107,6 +107,10 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   };
 
   const handleDoubleClick = (event: React.MouseEvent) => {
+    if (event.target instanceof HTMLElement && event.target.closest("button") !== null) {
+      return;
+    }
+
     event.stopPropagation();
 
     if (isSubSchema || isMutationPending) {

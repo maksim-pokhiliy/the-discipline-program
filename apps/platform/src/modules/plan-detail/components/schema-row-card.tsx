@@ -143,6 +143,10 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
     deleteSchemaRow.mutate({ schemaRowId: row.id }, { onSuccess: handleDeleteClose });
 
   const handleDoubleClick = (event: React.MouseEvent) => {
+    if (event.target instanceof HTMLElement && event.target.closest("button") !== null) {
+      return;
+    }
+
     event.stopPropagation();
 
     if (isMutationPending) {

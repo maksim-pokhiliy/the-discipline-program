@@ -787,4 +787,14 @@ describe("SchemaCard double-click", () => {
 
     expect(screen.queryByTestId("schema-editor-modal-mock")).toBeNull();
   });
+
+  it("does not open the SchemaEditorModal when double-click originates inside a descendant button (QA-Must-C7-12)", () => {
+    renderSchemaCard();
+
+    expect(screen.queryByTestId("schema-editor-modal-mock")).toBeNull();
+
+    fireEvent.doubleClick(screen.getByRole("button", { name: "Drag schema" }));
+
+    expect(screen.queryByTestId("schema-editor-modal-mock")).toBeNull();
+  });
 });

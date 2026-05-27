@@ -609,4 +609,14 @@ describe("BlockCard double-click", () => {
 
     expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
   });
+
+  it("does not open the BlockEditorModal when double-click originates inside a descendant button (QA-Must-C7-12)", () => {
+    renderBlockCard();
+
+    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
+
+    fireEvent.doubleClick(screen.getByRole("button", { name: "Drag block" }));
+
+    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
+  });
 });
