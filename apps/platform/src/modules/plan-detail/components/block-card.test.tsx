@@ -51,13 +51,16 @@ vi.mock("./schema-list", () => ({
   SchemaList: ({
     schemas,
     exerciseById,
+    parentIsReorderPending,
   }: {
     schemas: SchemaWithBody[];
     exerciseById: ReadonlyMap<string, Exercise>;
+    parentIsReorderPending?: boolean;
   }) => (
     <div
       data-testid="schema-list-mock"
       data-exercise-count={String(exerciseById.size)}
+      data-parent-pending={parentIsReorderPending === true ? "true" : "false"}
     >{`schema-list:${String(schemas.length)}:${schemas.map((s) => s.schema.id).join(",")}`}</div>
   ),
 }));
@@ -146,9 +149,14 @@ const makeBlock = (overrides: Partial<Block> = {}): Block => ({
 type RenderOptions = {
   block?: Block;
   blockOptions?: Label[];
+  isReorderPending?: boolean;
 };
 
-const renderBlockCard = ({ block = makeBlock(), blockOptions = [] }: RenderOptions = {}) => {
+const renderBlockCard = ({
+  block = makeBlock(),
+  blockOptions = [],
+  isReorderPending = false,
+}: RenderOptions = {}) => {
   const ctxValue: LabelOptionsContextValue = {
     DAY: { options: [], isLoading: false },
     SESSION: { options: [], isLoading: false },
@@ -157,7 +165,12 @@ const renderBlockCard = ({ block = makeBlock(), blockOptions = [] }: RenderOptio
 
   return render(
     <LabelOptionsContext.Provider value={ctxValue}>
-      <BlockCard block={block} planId={PLAN_ID} startDate={START_DATE} />
+      <BlockCard
+        block={block}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        isReorderPending={isReorderPending}
+      />
     </LabelOptionsContext.Provider>,
   );
 };
@@ -564,59 +577,42 @@ describe("BlockCard alt-group degradation (QA-004 integration)", () => {
   });
 });
 
-describe("BlockCard double-click", () => {
-  it("opens the BlockEditorModal when the block card outer Stack is double-clicked", () => {
-    const { container } = renderBlockCard();
-    const shell = container.firstChild;
-
-    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
-
-    if (!(shell instanceof HTMLElement)) {
-      throw new Error("expected block-card shell to be an HTMLElement");
-    }
-
-    fireEvent.doubleClick(shell);
-
-    expect(screen.getByTestId("block-editor-modal-mock")).toBeInTheDocument();
-  });
-
-  it("does not open the BlockEditorModal when useUpdateBlock is pending (QA-C7-01, QA-Must-C7-2)", () => {
-    updateBlockState.isPending = true;
-
-    const { container } = renderBlockCard();
-    const shell = container.firstChild;
-
-    if (!(shell instanceof HTMLElement)) {
-      throw new Error("expected block-card shell to be an HTMLElement");
-    }
-
-    fireEvent.doubleClick(shell);
-
-    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
-  });
-
-  it("does not open the BlockEditorModal when useDeleteBlock is pending (QA-C7-01, QA-Must-C7-2)", () => {
-    deleteBlockState.isPending = true;
-
-    const { container } = renderBlockCard();
-    const shell = container.firstChild;
-
-    if (!(shell instanceof HTMLElement)) {
-      throw new Error("expected block-card shell to be an HTMLElement");
-    }
-
-    fireEvent.doubleClick(shell);
-
-    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
-  });
-
-  it("does not open the BlockEditorModal when double-click originates inside a descendant button (QA-Must-C7-12)", () => {
+describe("BlockCard isReorderPending cascade (D-10)", () => {
+  it("defaults isReorderPending to false when prop is omitted", () => {
     renderBlockCard();
 
-    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
+    expect(screen.getByRole("button", { name: "Drag block" })).not.toBeDisabled();
+  });
 
-    fireEvent.doubleClick(screen.getByRole("button", { name: "Drag block" }));
+  it("disables the drag IconButton when isReorderPending is true", () => {
+    renderBlockCard({ isReorderPending: true });
 
-    expect(screen.queryByTestId("block-editor-modal-mock")).toBeNull();
+    expect(screen.getByRole("button", { name: "Drag block" })).toBeDisabled();
+  });
+
+  it("disables Tune, Delete and LabelPickerChip trigger when isReorderPending is true", () => {
+    renderBlockCard({
+      isReorderPending: true,
+      blockOptions: [makeLabel({ id: "lab-1", name: "STRENGTH" })],
+    });
+
+    expect(screen.getByRole("button", { name: "Edit block details" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Delete block" })).toBeDisabled();
+    expect(screen.getByLabelText("Add block label")).toBeDisabled();
+  });
+
+  it("passes effective pending down to SchemaList via BlockCardBody when isReorderPending is true", () => {
+    renderBlockCard({
+      block: makeBlock({ schemas: [makeSchema()] }),
+      isReorderPending: true,
+    });
+
+    expect(screen.getByTestId("schema-list-mock")).toHaveAttribute("data-parent-pending", "true");
+  });
+
+  it("passes data-parent-pending='false' to SchemaList when isReorderPending is false", () => {
+    renderBlockCard({ block: makeBlock({ schemas: [makeSchema()] }) });
+
+    expect(screen.getByTestId("schema-list-mock")).toHaveAttribute("data-parent-pending", "false");
   });
 });

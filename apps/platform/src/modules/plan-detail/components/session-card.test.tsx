@@ -34,8 +34,17 @@ vi.mock("@app/lib/hooks", async () => {
 });
 
 vi.mock("./block-list", () => ({
-  BlockList: ({ blocks }: { blocks: Block[] }) => (
-    <div data-testid="block-list-mock">{`BlockList: ${String(blocks.length)} blocks`}</div>
+  BlockList: ({
+    blocks,
+    parentIsReorderPending,
+  }: {
+    blocks: Block[];
+    parentIsReorderPending?: boolean;
+  }) => (
+    <div
+      data-testid="block-list-mock"
+      data-parent-pending={parentIsReorderPending === true ? "true" : "false"}
+    >{`BlockList: ${String(blocks.length)} blocks`}</div>
   ),
 }));
 
@@ -89,11 +98,13 @@ const makeSession = (overrides: Partial<SessionWithLabel> = {}): SessionWithLabe
 type RenderOptions = {
   session?: SessionWithLabel;
   sessionOptions?: Label[];
+  isReorderPending?: boolean;
 };
 
 const renderSessionCard = ({
   session = makeSession(),
   sessionOptions = [],
+  isReorderPending = false,
 }: RenderOptions = {}) => {
   const ctxValue: LabelOptionsContextValue = {
     DAY: { options: [], isLoading: false },
@@ -103,7 +114,12 @@ const renderSessionCard = ({
 
   return render(
     <LabelOptionsContext.Provider value={ctxValue}>
-      <SessionCard session={session} planId={PLAN_ID} startDate={START_DATE} />
+      <SessionCard
+        session={session}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        isReorderPending={isReorderPending}
+      />
     </LabelOptionsContext.Provider>,
   );
 };
@@ -379,5 +395,45 @@ describe("SessionCard", () => {
     renderSessionCard();
 
     expect(screen.getByRole("button", { name: "Delete session" })).toBeDisabled();
+  });
+});
+
+describe("SessionCard isReorderPending cascade (D-10)", () => {
+  afterEach(() => {
+    updateSessionState.isPending = false;
+    deleteSessionState.isPending = false;
+  });
+
+  it("defaults isReorderPending to false when prop is omitted", () => {
+    renderSessionCard();
+
+    expect(screen.getByRole("button", { name: "Drag session" })).not.toBeDisabled();
+  });
+
+  it("disables the drag IconButton when isReorderPending is true", () => {
+    renderSessionCard({ isReorderPending: true });
+
+    expect(screen.getByRole("button", { name: "Drag session" })).toBeDisabled();
+  });
+
+  it("disables the Delete IconButton when isReorderPending is true", () => {
+    renderSessionCard({ isReorderPending: true });
+
+    expect(screen.getByRole("button", { name: "Delete session" })).toBeDisabled();
+  });
+
+  it("passes effective pending down to BlockList when isReorderPending is true", () => {
+    renderSessionCard({
+      session: makeSession({ blocks: [makeBlock()] }),
+      isReorderPending: true,
+    });
+
+    expect(screen.getByTestId("block-list-mock")).toHaveAttribute("data-parent-pending", "true");
+  });
+
+  it("passes data-parent-pending='false' to BlockList when isReorderPending is false", () => {
+    renderSessionCard({ session: makeSession({ blocks: [makeBlock()] }) });
+
+    expect(screen.getByTestId("block-list-mock")).toHaveAttribute("data-parent-pending", "false");
   });
 });
