@@ -16,6 +16,8 @@ import { SessionCardHead } from "./session-card-head";
 
 const SESSION_DELETE_IDENTITY_SEPARATOR = " · ";
 const SESSION_DELETE_EMPTY_LABEL = "Empty session";
+const DRAG_OPACITY_DRAGGING = 0.5;
+const DRAG_OPACITY_DEFAULT = 1;
 
 type SessionCardProps = {
   session: SessionWithLabel;
@@ -73,7 +75,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: isDragging ? DRAG_OPACITY_DRAGGING : DRAG_OPACITY_DEFAULT,
   };
 
   const deleteDetails = `${startDate}${SESSION_DELETE_IDENTITY_SEPARATOR}${session.label?.name ?? SESSION_DELETE_EMPTY_LABEL}`;
