@@ -8,6 +8,7 @@ import {
   bodyweightLoad,
   compositeRoundsWithRest,
   countReps,
+  cuidFromSeed,
   dualWeight,
   eachArm,
   explicitSplit,
@@ -22,6 +23,9 @@ import { EX, LBL } from "./refs";
 import { mkRow } from "./row-helpers";
 
 const REST_BETWEEN_ROUNDS_FIXED_MIN_3 = restBetweenRounds({ value: 3, unit: "min" }, "fixed");
+
+const CMP_LEFT_REF = cuidFromSeed("wk2-tue-cmp-left");
+const CMP_RIGHT_REF = cuidFromSeed("wk2-tue-cmp-right");
 
 export const BLOCK_COMPOUND_ROWS_WK2_TUE: CanonicalBlock = {
   blockInstanceRef: "block-077",
@@ -52,8 +56,8 @@ export const BLOCK_COMPOUND_ROWS_WK2_TUE: CanonicalBlock = {
             },
           },
           {
-            side: explicitSplit("left", "demo-wk2tue-cmp-left"),
-            refId: "demo-wk2tue-cmp-left",
+            side: explicitSplit("left", CMP_LEFT_REF),
+            refId: CMP_LEFT_REF,
             sequence: beforeNamed("METCON"),
           },
         ),
@@ -73,8 +77,8 @@ export const BLOCK_COMPOUND_ROWS_WK2_TUE: CanonicalBlock = {
             },
           },
           {
-            side: explicitSplit("right", "demo-wk2tue-cmp-right"),
-            refId: "demo-wk2tue-cmp-right",
+            side: explicitSplit("right", CMP_RIGHT_REF),
+            refId: CMP_RIGHT_REF,
             sequence: afterNamed("BAR DIPS complex"),
           },
         ),

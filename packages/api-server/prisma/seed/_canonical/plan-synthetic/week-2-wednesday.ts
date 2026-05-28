@@ -12,6 +12,7 @@ import {
 import type { CanonicalBlock, CanonicalDay, CanonicalSession } from "../canonical-schema";
 
 import { EX, LBL } from "./refs";
+import { BLOCK_REST_COVERAGE } from "./rest-coverage";
 import { mkRow } from "./row-helpers";
 
 const REST_AFTER_SPECIFIC_SET_MIN = restAfterSpecificSet(3, { value: 2, unit: "min" }, "fixed");
@@ -102,6 +103,7 @@ const SESSION_WK2_WED: CanonicalSession = {
     BLOCK_REST_AFTER_SPECIFIC_SET_WK2_WED,
     BLOCK_PACE_HARD_WK2_WED,
     BLOCK_UNSPECIFIED_LOAD_WK2_WED,
+    BLOCK_REST_COVERAGE,
   ],
 };
 

@@ -4,6 +4,8 @@ import {
   countReps,
   effortPercent,
   holdAfterLast,
+  maxReps,
+  mediaReference,
   namedExerciseProgram,
   nRounds,
   pauseInUp,
@@ -11,6 +13,7 @@ import {
   singleArmWeight,
   singleWeight,
   slowEccentric,
+  withoutWeight,
 } from "../builder";
 import type { CanonicalBlock } from "../canonical-schema";
 
@@ -49,6 +52,22 @@ export const BLOCK_DROP_SET_WK2_MON: CanonicalBlock = {
             exercise: { form: "atomic", exerciseId: EX.dbBulgarianSplitSquat },
           },
           { load: absoluteLoad(singleArmWeight(20)), reps: countReps(8), position: "FROM_SOFA" },
+        ),
+        mkRow(
+          2,
+          {
+            rowKind: "EXERCISE",
+            exercise: { form: "atomic", exerciseId: EX.jumpSquat },
+          },
+          {
+            load: withoutWeight(),
+            reps: maxReps({ subForm: "bare" }),
+            media: mediaReference({
+              url: "https://example.com/demo/explode-stage",
+              position: "inline",
+              appliesTo: "drop_stage",
+            }),
+          },
         ),
       ],
     }),

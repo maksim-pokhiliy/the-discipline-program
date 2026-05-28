@@ -2,6 +2,7 @@ import {
   absoluteLoad,
   bodyweightLoad,
   countReps,
+  cuidFromSeed,
   fullTempo,
   hrZone,
   namedExerciseProgram,
@@ -199,8 +200,8 @@ export const BLOCK_PULL_UP_CLUSTER: CanonicalBlock = {
   ],
 };
 
-const SUPER_PAIR_A = "demo-phase7-super-pair-a";
-const SUPER_PAIR_B = "demo-phase7-super-pair-b";
+const SUPER_PAIR_A = cuidFromSeed("super-set::pair::a");
+const SUPER_PAIR_B = cuidFromSeed("super-set::pair::b");
 const REST_BETWEEN_ROUNDS_PHASE7 = restBetweenRounds({ value: 1, unit: "min" }, "fixed");
 
 export const BLOCK_SUPER_SET_PAIR_A: CanonicalBlock = {
@@ -254,14 +255,14 @@ export const BLOCK_SUPER_SET_PAIR_B: CanonicalBlock = {
       order: 1,
       rounds: 3,
       restBetweenPairs: REST_BETWEEN_ROUNDS_PHASE7,
-      pairs: [{ label: "Demo Pair B", schemaRows: ["demo-phase7-pair-b-row"] }],
+      pairs: [{ label: "Demo Pair B", schemaRows: [cuidFromSeed("super-set::pair::b-row")] }],
       header: "Demo super-set B",
       rows: [
         mkRow(
           1,
           { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.dbHammerCurl } },
           {
-            refId: "demo-phase7-pair-b-row",
+            refId: cuidFromSeed("super-set::pair::b-row"),
             load: absoluteLoad(singleWeight(15)),
             reps: countReps(12),
           },

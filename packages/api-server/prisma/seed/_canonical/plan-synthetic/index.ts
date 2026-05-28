@@ -2,29 +2,34 @@ import type { CanonicalSeed } from "../canonical-schema";
 
 import { DEMO_EXERCISES } from "./catalog-exercises";
 import { DEMO_LABELS } from "./catalog-labels";
+import { PHASE_7_EXAMPLES } from "./phase-7";
+import { WEEK_1 } from "./week-1";
+import { WEEK_2 } from "./week-2";
+import { WEEK_TRAVEL_GAP } from "./week-travel-gap";
 
 export { DEMO_EXERCISES, DEMO_LABELS };
 
-const STUB_META: CanonicalSeed["meta"] = {
+const DEMO_PLAN_META: CanonicalSeed["meta"] = {
   schemaVersion: 1,
-  generatedAt: "1970-01-01T00:00:00.000Z",
+  generatedAt: new Date(0).toISOString(),
   sourceRepoCommit: null,
   sourceSheetsRange: { fromSheet: "sheet-01", toSheet: "sheet-01" },
-  notes: null,
+  notes: "Demo synthetic plan covering training-domain matrix sections 1-26",
 };
 
-const STUB_PLAN: CanonicalSeed["plan"] = {
-  title: "Demo Plan (stub — phase c task 6 catalog only)",
-  description: null,
+const DEMO_PLAN_SHELL: CanonicalSeed["plan"] = {
+  title: "Demo CFG Quarter — Synthetic Coverage Plan",
+  description:
+    "Demo plan authored synthetically for Coach Denys's plan editor coverage matrix. Two active weeks framed by a travel gap, followed by a Phase 7 tail covering HR-zone work, numeric pace intervals, tempo, wave, cluster, and super-set examples.",
   athleteName: "Demo Athlete",
-  totalWeeks: 1,
+  totalWeeks: 4,
   todayWeekIndex: 1,
 };
 
 export const SYNTHETIC_DEMO_PLAN: CanonicalSeed = {
-  meta: STUB_META,
+  meta: DEMO_PLAN_META,
   catalog: { exercises: DEMO_EXERCISES, labels: DEMO_LABELS },
-  plan: STUB_PLAN,
-  weeks: [],
-  phase7Examples: [],
+  plan: DEMO_PLAN_SHELL,
+  weeks: [WEEK_1, WEEK_TRAVEL_GAP, WEEK_2],
+  phase7Examples: PHASE_7_EXAMPLES,
 };
