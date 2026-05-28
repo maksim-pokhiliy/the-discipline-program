@@ -3,6 +3,8 @@ import { Prisma } from "@prisma/client";
 import { countBlock, countDay, countSchema, countSession } from "./shared";
 import { type CoverageCell } from "./types";
 
+const SUB_SCHEMA_FLOOR = 25;
+
 const ENTITY_INVARIANT_CELLS: readonly CoverageCell[] = [
   {
     id: "entity.restDay",
@@ -108,7 +110,7 @@ const ENTITY_INVARIANT_CELLS: readonly CoverageCell[] = [
     id: "entity.subSchemas",
     category: "entity-invariants",
     label: "Schema with parentSchemaId (sub-schema)",
-    required: 1,
+    required: SUB_SCHEMA_FLOOR,
     sourceRef: "coverage-matrix §2 sub-schemas",
     tally: (db, planId) => countSchema(db, planId, { NOT: { parentSchemaId: null } }),
   },
@@ -127,6 +129,22 @@ const ENTITY_INVARIANT_CELLS: readonly CoverageCell[] = [
     required: 1,
     sourceRef: "coverage-matrix §2 session-freeze",
     tally: (db, planId) => countSession(db, planId, { freezeLoadsAtCreation: true }),
+  },
+  {
+    id: "entity.labeledSession",
+    category: "entity-invariants",
+    label: "Session with a label (e.g. 1ST SESSION)",
+    required: 1,
+    sourceRef: "coverage-matrix §2 session-label",
+    tally: (db, planId) => countSession(db, planId, { NOT: { labelId: null } }),
+  },
+  {
+    id: "entity.schemaTrailingConnector",
+    category: "entity-invariants",
+    label: "Schema with trailingConnector set",
+    required: 1,
+    sourceRef: "coverage-matrix §2 schema-trailingConnector",
+    tally: (db, planId) => countSchema(db, planId, { trailingConnector: { not: Prisma.AnyNull } }),
   },
 ];
 

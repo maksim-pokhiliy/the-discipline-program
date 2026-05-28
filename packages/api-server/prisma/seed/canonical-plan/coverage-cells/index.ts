@@ -1,5 +1,6 @@
 import { type PrismaClient } from "@prisma/client";
 
+import { CATALOG_MEDIA_CELLS } from "./catalog-media";
 import { CONNECTOR_POSITION_CELLS } from "./connector-position";
 import { EXERCISE_CELLS } from "./exercises";
 import { INTENSITY_REST_CELLS } from "./intensity-rest";
@@ -21,6 +22,7 @@ export const COVERAGE_CELLS: readonly CoverageCell[] = [
   ...LOAD_REPS_SIDE_CELLS,
   ...INTENSITY_REST_CELLS,
   ...CONNECTOR_POSITION_CELLS,
+  ...CATALOG_MEDIA_CELLS,
   ...MISC_CELLS,
 ];
 
