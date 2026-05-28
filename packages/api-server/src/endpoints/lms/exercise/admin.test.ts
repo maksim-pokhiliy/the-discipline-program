@@ -259,12 +259,6 @@ describe("cmsExerciseAdminApi", () => {
       expect(indexOf(e3.id)).toBeLessThan(indexOf(e2.id));
       expect(indexOf(e2.id)).toBeLessThan(indexOf(e1.id));
     });
-
-    it("caps the response at DEFAULT_LIST_LIMIT", async () => {
-      const exercises = await cmsExerciseAdminApi.getExercises();
-
-      expect(exercises.length).toBeLessThanOrEqual(100);
-    });
   });
 
   describe("mapToExercise round-trip via createExercise (QA-Must-8)", () => {

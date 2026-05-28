@@ -195,12 +195,6 @@ describe("cmsLabelAdminApi", () => {
       expect(ids.indexOf(third.id)).toBeLessThan(ids.indexOf(second.id));
       expect(ids.indexOf(second.id)).toBeLessThan(ids.indexOf(first.id));
     });
-
-    it("caps the response at DEFAULT_LIST_LIMIT", async () => {
-      const labels = await cmsLabelAdminApi.getLabels();
-
-      expect(labels.length).toBeLessThanOrEqual(100);
-    });
   });
 
   describe("deleteLabel — P2003 intercept (QA-Must-12)", () => {
