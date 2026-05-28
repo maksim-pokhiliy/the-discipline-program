@@ -3,18 +3,17 @@ import bcrypt from "bcryptjs";
 
 import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
-import { seedArchetypes } from "./seed/archetypes";
+import { seedArchetypes } from "./seed/archetype-catalog";
 import { seedBlogPosts } from "./seed/blog-posts";
-import { seedCanonicalPlan } from "./seed/canonical-plan";
 import { clearAll } from "./seed/clear-all";
 import { seedCoachNotes } from "./seed/coach-notes";
 import { seedContactSubmissions } from "./seed/contact-submissions";
 import { seedMarketingPages } from "./seed/marketing-pages";
+import { seedCanonicalPlan } from "./seed/plan-emit";
 import { seedProducts } from "./seed/products";
 import { seedProfiles } from "./seed/profiles";
 import { seedReviews } from "./seed/reviews";
 import { seedTrainingPlans } from "./seed/training-plans";
-import { seedTrainingWeeks } from "./seed/training-weeks";
 import { seedUsers } from "./seed/users";
 
 const prisma = new PrismaClient();
@@ -37,9 +36,7 @@ const main = async (): Promise<void> => {
 
   await seedCoachNotes(prisma, coachProfile.id, users);
 
-  const { archived } = await seedTrainingPlans(prisma, users.coach.id);
-
-  await seedTrainingWeeks(prisma, archived.id);
+  await seedTrainingPlans(prisma, users.coach.id);
 
   await seedCanonicalPlan(prisma, users.coach.id);
 

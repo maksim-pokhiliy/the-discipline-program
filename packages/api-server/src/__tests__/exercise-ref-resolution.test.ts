@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { exerciseCuid } from "../../prisma/seed/_canonical/builder";
-import { canonicalSeedSchema } from "../../prisma/seed/_canonical/canonical-schema";
-import { SYNTHETIC_DEMO_PLAN } from "../../prisma/seed/_canonical/plan-synthetic";
-import { loadCanonicalSeed } from "../../prisma/seed/canonical-plan/load-and-validate";
+import { exerciseCuid } from "../../prisma/seed/plan-data/builder";
+import { canonicalSeedSchema } from "../../prisma/seed/plan-data/canonical-schema";
+import { SYNTHETIC_DEMO_PLAN } from "../../prisma/seed/plan-data/plan-synthetic";
+import { loadCanonicalSeed } from "../../prisma/seed/plan-emit/load-and-validate";
 
 import { collectExerciseRefs } from "./_seed-coverage-helpers";
 
