@@ -9,6 +9,7 @@ export const cmsReviewPublicApi = {
       where: {
         isActive: true,
       },
+      orderBy: { createdAt: "desc" },
     });
 
     return reviews.map(mapToReview);

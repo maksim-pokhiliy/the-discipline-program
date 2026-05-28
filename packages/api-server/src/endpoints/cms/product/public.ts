@@ -8,6 +8,7 @@ export const cmsProductPublicApi = {
   getAll: async (): Promise<Product[]> => {
     const products = await prisma.product.findMany({
       where: { isActive: true },
+      orderBy: [{ createdAt: "desc" }, { title: "asc" }],
       include: { prices: { where: { isActive: true } } },
     });
 
