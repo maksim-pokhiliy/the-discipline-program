@@ -10,7 +10,6 @@ import {
 import { prisma } from "../../../db/client";
 import { mapToProduct } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
-import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 import { toggleExclusiveFeatured } from "../toggle-exclusive-featured";
 
 const includeWithPrices = { prices: { where: { isActive: true } } } as const;
@@ -20,7 +19,6 @@ export const cmsProductAdminApi = {
     const products = await prisma.product.findMany({
       include: includeWithPrices,
       orderBy: [{ createdAt: "desc" }, { title: "asc" }],
-      take: DEFAULT_LIST_LIMIT,
     });
 
     return products.map(mapToProduct);

@@ -260,10 +260,27 @@ describe("cmsExerciseAdminApi", () => {
       expect(indexOf(e2.id)).toBeLessThan(indexOf(e1.id));
     });
 
-    it("caps the response at DEFAULT_LIST_LIMIT", async () => {
-      const exercises = await cmsExerciseAdminApi.getExercises();
+    it("returns the full set with no cap when more than the old limit exists", async () => {
+      const count = 101;
+      const created = await Promise.all(
+        Array.from({ length: count }, (_, i) =>
+          cmsExerciseAdminApi.createExercise(
+            baseExerciseData({
+              canonicalName: `Cap Regression ${String(i)} ${crypto.randomUUID().slice(0, 8)}`,
+            }),
+          ),
+        ),
+      );
 
-      expect(exercises.length).toBeLessThanOrEqual(100);
+      for (const exercise of created) {
+        createdIds.push(exercise.id);
+      }
+
+      const exercises = await cmsExerciseAdminApi.getExercises();
+      const returnedIds = new Set(exercises.map((row) => row.id));
+
+      expect(exercises.length).toBeGreaterThanOrEqual(count);
+      expect(created.every((exercise) => returnedIds.has(exercise.id))).toBe(true);
     });
   });
 

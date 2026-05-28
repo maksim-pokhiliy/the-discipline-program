@@ -7,7 +7,7 @@ import { ForbiddenError } from "@repo/errors";
 import { ROLE_TO_PRISMA_MAP } from "../../../mappers/iam";
 import { cleanupRaw, createTestCoach, createTestUser } from "../../../test/helpers";
 
-import { LABEL_SEARCH_CAP, lmsLabelPlatformApi } from "./platform";
+import { lmsLabelPlatformApi } from "./platform";
 
 const seedLabel = async ({ name, levels = ["DAY"] }: { name: string; levels?: AppLevelValue[] }) =>
   cleanupRaw.label.create({
@@ -169,7 +169,7 @@ describe("lmsLabelPlatformApi.list", () => {
     expect(rows).toEqual([]);
   });
 
-  it("returns all labels when total is below LABEL_SEARCH_CAP", async () => {
+  it("returns the full label set for a no-query preload", async () => {
     const coach = await createTestCoach();
 
     createdCoachProfileIds.push(coach.profile.id);
@@ -190,25 +190,6 @@ describe("lmsLabelPlatformApi.list", () => {
     expect(ours).toHaveLength(60);
     expect(ours[0]?.name).toBe("label-00");
     expect(ours[59]?.name).toBe("label-59");
-  });
-
-  it("applies LABEL_SEARCH_CAP to no-query preload when more rows exist", async () => {
-    const coach = await createTestCoach();
-
-    createdCoachProfileIds.push(coach.profile.id);
-    createdUserIds.push(coach.user.id);
-
-    const seeded = await Promise.all(
-      Array.from({ length: LABEL_SEARCH_CAP + 1 }, (_, idx) =>
-        seedLabel({ name: `cap-${String(idx).padStart(4, "0")}` }),
-      ),
-    );
-
-    createdLabelIds.push(...seeded.map((row) => row.id));
-
-    const rows = await lmsLabelPlatformApi.list(coach.user.id);
-
-    expect(rows).toHaveLength(LABEL_SEARCH_CAP);
   });
 
   it("parameterizes special LIKE characters without leaking SQL semantics", async () => {

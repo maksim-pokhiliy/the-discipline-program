@@ -13,7 +13,6 @@ import { BadRequestError, ConflictError } from "@repo/errors";
 import { prisma } from "../../../db/client";
 import { mapToLabel } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
-import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
 const buildLabelUpdateData = (data: UpdateLabelData): Prisma.LabelUpdateInput => ({
   ...(data.name !== undefined && {
@@ -55,7 +54,6 @@ export const cmsLabelAdminApi = {
   getLabels: async (): Promise<Label[]> => {
     const rows = await prisma.label.findMany({
       orderBy: { createdAt: "desc" },
-      take: DEFAULT_LIST_LIMIT,
     });
 
     return rows.map(mapToLabel);

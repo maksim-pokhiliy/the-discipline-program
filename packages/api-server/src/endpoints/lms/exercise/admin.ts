@@ -16,7 +16,6 @@ import {
   movementTypeToPrisma,
 } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
-import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
 const buildExerciseUpdateData = (data: UpdateExerciseData): Prisma.ExerciseUpdateInput => ({
   ...(data.canonicalName !== undefined && {
@@ -48,7 +47,6 @@ export const cmsExerciseAdminApi = {
   getExercises: async (): Promise<Exercise[]> => {
     const rows = await prisma.exercise.findMany({
       orderBy: { createdAt: "desc" },
-      take: DEFAULT_LIST_LIMIT,
     });
 
     return rows.map(mapToExercise);

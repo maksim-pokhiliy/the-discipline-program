@@ -9,7 +9,6 @@ import { resolveCoachId, verifyAthleteBelongsToCoach } from "../../authz/guards"
 import { prisma } from "../../db/client";
 import { mapToCoachNote } from "../../mappers/coaching";
 import { handlePrismaError } from "../../utils";
-import { DEFAULT_LIST_LIMIT } from "../../utils/list-limits";
 
 export const coachingCoachNoteApi = {
   getAll: async (userId: string): Promise<CoachNote[]> => {
@@ -18,7 +17,6 @@ export const coachingCoachNoteApi = {
     const notes = await prisma.coachNote.findMany({
       where: { coachId },
       orderBy: { createdAt: "desc" },
-      take: DEFAULT_LIST_LIMIT,
     });
 
     return notes.map(mapToCoachNote);

@@ -13,7 +13,6 @@ import { requireAdminStrict } from "../../authz/guards";
 import { prisma } from "../../db/client";
 import { mapToAdminUserListItem, mapToUser, ROLE_MAP, ROLE_TO_PRISMA_MAP } from "../../mappers/iam";
 import { findOrThrow, handlePrismaError } from "../../utils";
-import { DEFAULT_LIST_LIMIT } from "../../utils/list-limits";
 
 import { assertCoachesExist, syncAthleteAssignments } from "./assignment-sync";
 import { iamInviteTokenApi } from "./invite-token";
@@ -36,7 +35,6 @@ export const iamUserAdminApi = {
   getAll: async (): Promise<AdminUserListItem[]> => {
     const users = await prisma.user.findMany({
       orderBy: { createdAt: "desc" },
-      take: DEFAULT_LIST_LIMIT,
     });
 
     return users.map(mapToAdminUserListItem);

@@ -9,7 +9,6 @@ import { ProcessStatus } from "@repo/contracts/coaching/coach-dashboard";
 import { resolveCoachId } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { ACTION_ITEM_STATUS_TO_PRISMA_MAP, HEALTH_STATUS_MAP } from "../../../mappers/coaching";
-import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 import { buildAssignedAthleteInclude } from "../assigned-athlete-query";
 
 export const getAthletes = async (userId: string): Promise<CoachAthletesData> => {
@@ -20,7 +19,6 @@ export const getAthletes = async (userId: string): Promise<CoachAthletesData> =>
       where: { coachId, athlete: { deletedAt: null } },
       include: buildAssignedAthleteInclude(userId),
       orderBy: [{ athlete: { name: "asc" } }, { athlete: { email: "asc" } }],
-      take: DEFAULT_LIST_LIMIT,
     }),
     prisma.coachActionItem.groupBy({
       by: ["athleteId"],

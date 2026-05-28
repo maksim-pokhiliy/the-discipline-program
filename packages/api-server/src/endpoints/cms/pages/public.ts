@@ -17,7 +17,6 @@ import {
 import { prisma } from "../../../db/client";
 import { defaultMonitoring } from "../../../infrastructure/monitoring";
 import { mapToReview, mapToProduct } from "../../../mappers/cms";
-import { PUBLIC_LIST_LIMIT } from "../../../utils/list-limits";
 import { cmsBlogPublicApi } from "../blog/public";
 
 const HOME_PAGE_PRODUCTS_LIMIT = 6;
@@ -93,7 +92,6 @@ export const cmsPagesPublicApi = {
       prisma.product.findMany({
         where: { isActive: true },
         include: { prices: { where: { isActive: true } } },
-        take: PUBLIC_LIST_LIMIT,
       }),
     ]);
 
@@ -145,7 +143,6 @@ export const cmsPagesPublicApi = {
       }),
       prisma.product.findMany({
         where: { isActive: true },
-        take: PUBLIC_LIST_LIMIT,
       }),
     ]);
 
