@@ -1,5 +1,6 @@
 import { type PrismaClient } from "@prisma/client";
 
+import { exerciseCuid } from "../_canonical/builder";
 import { type CanonicalSeed } from "../_canonical/canonical-schema";
 import { requireId } from "../_id-helpers";
 
@@ -30,6 +31,7 @@ const emitExercise = async (
 ): Promise<void> => {
   const row = await db.exercise.create({
     data: {
+      id: exerciseCuid(entry.canonicalName),
       canonicalName: entry.canonicalName,
       canonicalNameLower: entry.canonicalName.toLowerCase(),
       primaryEquipment: entry.primaryEquipment,

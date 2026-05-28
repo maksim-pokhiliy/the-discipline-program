@@ -1,5 +1,6 @@
 import { archetypeParamsSchema } from "@repo/contracts/lms/schema";
 
+import { exerciseCuid } from "../_canonical/builder";
 import {
   canonicalSeedSchema,
   type CanonicalSchemaNode,
@@ -8,6 +9,18 @@ import {
 import { SYNTHETIC_DEMO_PLAN } from "../_canonical/plan-synthetic";
 
 const MAX_ZOD_ISSUES_SHOWN = 20;
+const MAX_ORPHAN_REFS_SHOWN = 20;
+
+const EXERCISE_REF_KEYS = new Set<string>([
+  "exerciseId",
+  "tailExerciseId",
+  "primaryExerciseId",
+  "secondaryExerciseId",
+  "alternativeExerciseId",
+  "optionalRotationStepExerciseId",
+  "placeholderExerciseId",
+  "targetExerciseId",
+]);
 
 const VALID_ARCHETYPE_NAMES = new Set<string>(
   archetypeParamsSchema.options.map((option) => option.shape.archetype.value),
@@ -67,6 +80,56 @@ const assertArchetypeSpellings = (seed: CanonicalSeed): void => {
   }
 };
 
+const collectExerciseRefs = (node: unknown, sink: Set<string>): void => {
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      collectExerciseRefs(item, sink);
+    }
+
+    return;
+  }
+
+  if (node === null || typeof node !== "object") {
+    return;
+  }
+
+  for (const [key, value] of Object.entries(node)) {
+    if (EXERCISE_REF_KEYS.has(key) && typeof value === "string") {
+      sink.add(value);
+    }
+
+    collectExerciseRefs(value, sink);
+  }
+};
+
+const assertExerciseRefsResolve = (seed: CanonicalSeed): void => {
+  const catalogIds = new Set(
+    seed.catalog.exercises.map((entry) => exerciseCuid(entry.canonicalName)),
+  );
+
+  if (catalogIds.size !== seed.catalog.exercises.length) {
+    throw new Error(
+      `Canonical catalog has exerciseCuid collisions: ${seed.catalog.exercises.length} entries produced ${catalogIds.size} distinct ids (duplicate canonicalName or SHA-1 truncation collision)`,
+    );
+  }
+
+  const referenced = new Set<string>();
+
+  collectExerciseRefs(seed.weeks, referenced);
+  collectExerciseRefs(seed.phase7Examples, referenced);
+
+  const orphans = [...referenced].filter((ref) => !catalogIds.has(ref));
+
+  if (orphans.length > 0) {
+    const shown = orphans.slice(0, MAX_ORPHAN_REFS_SHOWN).join(", ");
+
+    throw new Error(
+      `Canonical seed has ${orphans.length} orphan exercise ref(s) (showing first ${MAX_ORPHAN_REFS_SHOWN}): ${shown}\n` +
+        `Hint: exercise ref embedded in rowPayload has no catalog entry whose exerciseCuid(canonicalName) matches; add the catalog entry or fix the ref.`,
+    );
+  }
+};
+
 export const loadCanonicalSeed = async (): Promise<CanonicalSeed> => {
   const result = canonicalSeedSchema.safeParse(SYNTHETIC_DEMO_PLAN);
 
@@ -83,6 +146,7 @@ export const loadCanonicalSeed = async (): Promise<CanonicalSeed> => {
   }
 
   assertArchetypeSpellings(result.data);
+  assertExerciseRefsResolve(result.data);
 
   return result.data;
 };
