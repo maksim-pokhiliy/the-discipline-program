@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { ARCHETYPE_NAMES } from "@repo/contracts/lms/schema";
 
-import { COVERAGE_CELLS, tallyCoverage } from "../../prisma/seed/canonical-plan";
+import { COVERAGE_CELLS, tallyCoverage } from "../../prisma/seed/plan-emit";
 
 import {
   buildPlanScopes,
@@ -16,7 +16,7 @@ import {
   type PlanScopes,
 } from "./_seed-coverage-helpers";
 
-const DEMO_PLAN_TITLE = "Demo CFG Quarter — Synthetic Coverage Plan";
+const DEMO_PLAN_TITLE = "CFG Quarter Build";
 const ARCHIVED_PLAN_NAME = "2025 Open Prep";
 const EXPECTED_WEEK_COUNT = 4;
 const EXPECTED_PHASE_7_DAYS = 6;
@@ -26,7 +26,6 @@ const EXPECTED_EXERCISE_MIN = 149;
 const EXPECTED_ACTIVE_PLANS = 3;
 const EXPECTED_CONNECTOR_TOTAL = 3;
 const EXPECTED_CONNECTOR_FORM_MIN = 1;
-const ARCHIVED_WEEK_START_ISO = "2025-01-06T00:00:00.000Z";
 const CONNECTOR_FORMS = ["then", "then_dots", "then_n_rounds"] as const;
 const ALL_POSITIONS = [
   "NEUTRAL_GRIP",
@@ -300,7 +299,7 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     expect(blocks).toBe(EXPECTED_PHASE_7_THURSDAY_BLOCKS);
   });
 
-  it("archived '2025 Open Prep' parity preserved (ARCHIVED, 1 week, 2025-01-06 startDate)", async () => {
+  it("archived '2025 Open Prep' present and empty (ARCHIVED, no weeks)", async () => {
     const archived = await db.trainingPlan.findFirstOrThrow({
       where: { name: ARCHIVED_PLAN_NAME, deletedAt: null },
       select: { id: true, status: true },
@@ -308,13 +307,9 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
 
     expect(archived.status).toBe("ARCHIVED");
 
-    const weeks = await db.week.findMany({
-      where: { planId: archived.id },
-      select: { startDate: true },
-    });
+    const weekCount = await db.week.count({ where: { planId: archived.id } });
 
-    expect(weeks.length).toBe(1);
-    expect(weeks[0]?.startDate.toISOString()).toBe(ARCHIVED_WEEK_START_ISO);
+    expect(weekCount).toBe(0);
   });
 
   it("§2: every sub-schema parentSchemaId resolves and shares the parent's blockId", async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { extractTrailingConnector } from "../../prisma/seed/canonical-plan/trailing-connector";
+import { extractTrailingConnector } from "../../prisma/seed/plan-emit/trailing-connector";
 
 describe("extractTrailingConnector (matrix §15 ConnectorForm)", () => {
   it("returns null connector and null cleaned notes when input notes is null", () => {
