@@ -7,7 +7,7 @@ below has zero occurrences in the resulting Prisma rows.
 
 Cross-references:
 
-- `canonical-schema.ts` — Zod shape Session B writes into `plan-denys.json`.
+- `canonical-schema.ts` — Zod shape the synthetic builder produces (`_canonical/plan-synthetic/`).
 - `analysis/artifacts/06-formalization/stress-final.md` — verified
   archetype-instance + VO mapping; **every cell** below cites the
   `block-NNN` (sample) or `phase-7-*` (out-of-sample) source.
