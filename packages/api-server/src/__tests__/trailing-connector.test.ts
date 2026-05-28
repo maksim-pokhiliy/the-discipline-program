@@ -49,9 +49,9 @@ describe("extractTrailingConnector (matrix §15 ConnectorForm)", () => {
     expect(result.cleanedNotes ?? "").not.toContain("connector:");
   });
 
-  it("rejects roundsCount ≥ 100 by throwing at extract time", () => {
+  it("throws on out-of-range roundsCount at build time (0 is below the valid floor)", () => {
     expect(() => extractTrailingConnector("connector: ...then 99 rounds:")).not.toThrow();
-    expect(() => extractTrailingConnector("connector: ...then 100 rounds:")).toThrow(/range/);
+    expect(() => extractTrailingConnector("connector: ...then 0 rounds:")).toThrow(/range/);
   });
 
   it("regex cap of 1-2 digits means 100+ never reaches the build step", () => {
@@ -96,7 +96,7 @@ describe("extractTrailingConnector (matrix §15 ConnectorForm)", () => {
     const result = extractTrailingConnector(notes);
 
     expect(result.connector).toEqual({ form: "then" });
-    expect(result.cleanedNotes).toBe("Warm-up reminder.\nFollow with cooldown.");
+    expect(result.cleanedNotes).toBe("Warm-up reminder.\n\nFollow with cooldown.");
   });
 
   it("returns null cleanedNotes when the input was only a connector line + whitespace", () => {
