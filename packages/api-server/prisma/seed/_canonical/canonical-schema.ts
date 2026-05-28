@@ -1,42 +1,35 @@
-// Canonical intermediate JSON schema for the Demo Plan seed pipeline.
+// Canonical shape for the Demo Plan seed pipeline.
 //
-// Phase 7 of analysis tree. Bridges Session B (parser of 33 source sheets +
-// analysis artifacts) and Session A (Prisma emit code, /feature C8.5).
-//
-// Session B:  reads 33 sheets + analysis artifacts → emits
-//             `analysis/artifacts/07-canonical-seed/plan-denys.json`
-//             conforming to `canonicalSeedSchema` below. No Prisma calls.
-//
-// Session A:  imports this schema, parses the JSON, emits Prisma
-//             `db.exercise.create() / db.label.create() / db.trainingPlan.create() / db.week.create() / ...`
-//             through a deterministic mapper. /feature C8.5 owns this.
+// This schema defines the canonical Demo Plan structure. The plan is produced
+// by the typed builder in `_canonical/builder/` and assembled in
+// `_canonical/plan-synthetic/` as a fully-typed `SYNTHETIC_DEMO_PLAN` const.
+// It is validated by `canonicalSeedSchema` at seed time in
+// `canonical-plan/load-and-validate.ts`, then written to Prisma by the emit
+// chain (catalog → plan → blocks → schemas → rows).
 //
 // DRY policy: every VO / archetype-params / row-payload schema is imported
 // verbatim from `@repo/contracts/lms` to guarantee zero drift between the
-// canonical JSON and the production Prisma write path. Only entity hierarchy
+// canonical plan and the production Prisma write path. Only entity hierarchy
 // shells + catalog entries + reference-ID newtypes are defined locally.
 //
 // Reference IDs:
 //
-//  - Block instances:     `block-NNN` (NNN ∈ 001..198) per
-//                         `analysis/artifacts/01-inventory/block-instances.md`.
-//  - Sheets:              `sheet-NN`  (NN  ∈ 01..33)   per
-//                         `analysis/source/sheets/sheet-NN.md`.
+//  - Block instances:     `block-NNN` (NNN ∈ 001..198).
+//  - Sheets:              `sheet-NN`  (NN  ∈ 01..33).
 //  - Exercises:           string ref keyed to entries in
-//                         `catalog.exercises[].ref` (Session B owns refs;
-//                         convention: kebab-case canonical name).
+//                         `catalog.exercises[].ref`
+//                         (convention: kebab-case canonical name).
 //  - Labels:              string ref keyed to entries in
 //                         `catalog.labels[].ref` (same convention).
 //  - Archetype names:     enumerated by `archetypeParamsSchema.archetype`
-//                         discriminator (33 values; mirrors `ArchetypeName`
-//                         in `analysis/artifacts/06-formalization/types.ts`).
+//                         discriminator.
 //
 // Date semantics:
 //
-//  Session B emits no absolute calendar dates. Each week carries
-//  `weekOffsetFromTodayWeeks` ∈ Z relative to the seed-run instant. Session A
-//  resolves `Week.startDate = startOfWeek(today, MONDAY) + weekOffset * 7d`.
-//  One week per `Week` row, `Day.dayOfWeek` is the enum.
+//  No absolute calendar dates are stored. Each week carries
+//  `weekOffsetFromTodayWeeks` ∈ Z relative to the seed-run instant; the emit
+//  pipeline resolves `Week.startDate = startOfWeek(today, MONDAY) +
+//  weekOffset * 7d`. One week per `Week` row, `Day.dayOfWeek` is the enum.
 //
 // Phase 7 examples:
 //
@@ -155,10 +148,9 @@ export type { AlternatingGroupRelation };
 // ──────────────────────────────────────────────────────────────────────────
 // Catalog entries (exercises + labels)
 //
-// Session B builds the catalogs from `03-content/exercise-canonical-list.md`
-// (149 entries) and `04-structure/labels-catalog.md`. Refs are kebab-case
-// canonical names. Order does not matter; Session A creates entities and
-// retains the ref → cuid map for FK resolution.
+// The builder declares the catalogs in `_canonical/plan-synthetic/`. Refs are
+// kebab-case canonical names. Order does not matter; the emit pipeline creates
+// entities and retains the ref → cuid map for FK resolution.
 // ──────────────────────────────────────────────────────────────────────────
 
 export const exerciseCatalogEntrySchema = z.object({
@@ -195,10 +187,10 @@ export type LabelCatalogEntry = z.infer<typeof labelCatalogEntrySchema>;
 //
 // Internal references:
 //
-//  - `refId` (optional) — internal handle used inside the same JSON for FK
+//  - `refId` (optional) — internal handle used inside the same plan for FK
 //    targets (e.g. `parallel-ladders-descending.ladders[].pairedWithInnerRowId`,
-//    `super-set.pairs[].schemaRows[]`). Session A resolves refId → cuid at
-//    emit time. Refs are scoped to the containing block (uniqueness inside
+//    `super-set.pairs[].schemaRows[]`). The emit pipeline resolves refId → cuid
+//    at emit time. Refs are scoped to the containing block (uniqueness inside
 //    one block).
 // ──────────────────────────────────────────────────────────────────────────
 
@@ -223,9 +215,9 @@ export type CanonicalRow = z.infer<typeof rowSchema>;
 // ──────────────────────────────────────────────────────────────────────────
 // Schema (recursive — sub-schemas for nested / time-window-outer archetypes)
 //
-// `alternatingGroupRef`: scoped to containing block. Session B emits the same
-// ref string on every member schema; Session A creates one AlternatingGroup
-// entity per distinct ref and wires Schema.alternatingGroupId.
+// `alternatingGroupRef`: scoped to containing block. The builder emits the
+// same ref string on every member schema; the emit pipeline creates one
+// AlternatingGroup entity per distinct ref and wires Schema.alternatingGroupId.
 // ──────────────────────────────────────────────────────────────────────────
 
 export type CanonicalSchemaNode = {
@@ -265,14 +257,11 @@ export const canonicalSchemaNodeSchema = z.lazy(() =>
 // ──────────────────────────────────────────────────────────────────────────
 // Block
 //
-// `blockInstanceRef` traces back to `01-inventory/block-instances.md`. Each
-// (block-001 .. block-198) may appear in multiple `locations` per inventory;
-// Session B emits ONE block-instance per location occurrence (denormalised),
-// keeping the ref string so coverage assertions can verify every block-NNN
-// occurs at least once.
+// `blockInstanceRef` matches `block-NNN` (NNN ∈ 001..198). The builder emits
+// one block instance per block occurrence, keeping the ref string so coverage
+// assertions can track block presence.
 //
-// `labels[]` references catalog labels (0..N, empty = implicit block per
-// `04-structure/hierarchy.md` §5).
+// `labels[]` references catalog labels (0..N, empty = implicit block).
 // ──────────────────────────────────────────────────────────────────────────
 
 export const blockSchema = z.object({
@@ -343,9 +332,9 @@ export const metaSchema = z.object({
   notes: z.string().max(8000).nullable().default(null),
 });
 
-// Phase 7 examples are emitted as a flat session list (Session B does not
-// know about Week index for them — Session A appends them as a single
-// synthetic week at the plan tail).
+// Phase 7 examples are declared as a flat session list (they carry no week
+// index — the emit pipeline appends them as a single synthetic week at the
+// plan tail).
 export const phase7SessionSchema = sessionSchema.extend({
   exampleId: z.enum([
     "phase-7-hr-z2-base-run",
@@ -372,28 +361,27 @@ export const canonicalSeedSchema = z.object({
 export type CanonicalSeed = z.infer<typeof canonicalSeedSchema>;
 
 // ──────────────────────────────────────────────────────────────────────────
-// Cross-reference invariants (Session A enforces these after Zod parses;
-// kept here as documented expectations for Session B).
+// Cross-reference invariants (enforced after Zod parses; kept here as
+// documented expectations for the builder).
 //
 //  X1. Every `exerciseRef` referenced anywhere (rowPayload, archetypeParams,
 //      compoundRep, mediaReference, etc) MUST resolve in `catalog.exercises`.
+//      Enforced by `assertExerciseRefsResolve` in
+//      `canonical-plan/load-and-validate.ts`.
 //
 //  X2. Every `labelRef` referenced anywhere (day.label, session.label,
 //      block.labels[]) MUST resolve in `catalog.labels`.
 //
-//  X3. Every `blockInstanceRef` MUST match the regex AND should correspond to
-//      a real block-NNN from `01-inventory/block-instances.md`. Session B
-//      should produce ≥1 occurrence per distinct block-NNN (per locations[]
-//      cardinality). Coverage matrix tracks this.
+//  X3. Every `blockInstanceRef` MUST match the `block-NNN` regex. Coverage
+//      matrix tracks block presence.
 //
-//  X4. `archetypeParams.archetype` MUST equal `schema.kind`-compatible value
-//      per `02-patterns/schema-archetypes.md` (e.g. n-rounds → ATOMIC,
-//      headerless archetypes → HEADERLESS, etc).
+//  X4. `archetypeParams.archetype` MUST equal a `schema.kind`-compatible value
+//      (e.g. n-rounds → ATOMIC, headerless archetypes → HEADERLESS, etc).
 //
 //  X5. `parallel-ladders-*.ladders[].pairedWithInnerRowId` and
 //      `super-set.pairs[].schemaRows[]` MUST reference `rowSchema.refId`
 //      values defined in the same containing schema/block. Resolved at emit
-//      time by Session A.
+//      time by the emit pipeline.
 //
 //  X6. `alternatingGroupRef`: two or more schemas in the SAME block carrying
 //      the SAME ref form one AlternatingGroup; `alternatingGroupRelation`
@@ -404,17 +392,16 @@ export type CanonicalSeed = z.infer<typeof canonicalSeedSchema>;
 //      it as a deliberate edge case.
 //
 //  X8. `Week.weekOffsetFromTodayWeeks` values MUST be monotonic by
-//      `weekIndex` (week N+1 offset > week N offset). Session A asserts.
+//      `weekIndex` (week N+1 offset > week N offset). Asserted at emit time.
 //
 //  X9. `Week.weekIndex` values MUST be 1..plan.totalWeeks, contiguous.
-//      Missing source weeks (sheet gaps per inventory edge-cases) are
-//      represented as Week rows with `days: []` and a notes string.
+//      Calendar gaps are represented as Week rows with `days: []` and a notes
+//      string.
 //
 //  X10. `meta.schemaVersion` MUST equal 1. Future shape evolution bumps
-//       this and forks Session A's emit code.
+//       this and forks the emit code.
 //
 // Coverage matrix (separate doc `coverage-matrix.md`) tabulates per-VO-branch
-// expected occurrence counts. Session A's emit code includes a coverage
-// assertion test that fails the build if any branch is missing in the final
-// seeded DB.
+// expected occurrence counts. The emit pipeline includes a coverage assertion
+// test that fails the build if any branch is missing in the final seeded DB.
 // ──────────────────────────────────────────────────────────────────────────
