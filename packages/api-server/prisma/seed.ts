@@ -5,6 +5,7 @@ import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
 import { seedArchetypes } from "./seed/archetypes";
 import { seedBlogPosts } from "./seed/blog-posts";
+import { seedCanonicalPlan } from "./seed/canonical-plan";
 import { clearAll } from "./seed/clear-all";
 import { seedCoachNotes } from "./seed/coach-notes";
 import { seedContactSubmissions } from "./seed/contact-submissions";
@@ -39,6 +40,8 @@ const main = async (): Promise<void> => {
   const { archived } = await seedTrainingPlans(prisma, users.coach.id);
 
   await seedTrainingWeeks(prisma, archived.id);
+
+  await seedCanonicalPlan(prisma, users.coach.id);
 
   await seedMarketingPages(prisma);
   await seedProducts(prisma);
