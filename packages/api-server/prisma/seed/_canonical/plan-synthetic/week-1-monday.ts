@@ -68,7 +68,7 @@ const BLOCK_STRENGTH_NROUNDS_WK1_MON: CanonicalBlock = {
 const BLOCK_LADDER_DESC_WK1_MON: CanonicalBlock = {
   blockInstanceRef: "block-006",
   order: 2,
-  labels: [LBL.accessory],
+  labels: [LBL.warmUpFeet, LBL.warmUpRun],
   intensity: null,
   timeCap: null,
   notes: null,
