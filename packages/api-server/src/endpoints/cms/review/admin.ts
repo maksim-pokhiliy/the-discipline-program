@@ -8,13 +8,11 @@ import {
 import { prisma } from "../../../db/client";
 import { mapToReview } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
-import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
 export const cmsReviewAdminApi = {
   getReviews: async (): Promise<Review[]> => {
     const reviews = await prisma.marketingReview.findMany({
       orderBy: { createdAt: "desc" },
-      take: DEFAULT_LIST_LIMIT,
     });
 
     return reviews.map(mapToReview);

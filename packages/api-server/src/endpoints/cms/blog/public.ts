@@ -13,7 +13,6 @@ import { NotFoundError } from "@repo/errors";
 import { prisma } from "../../../db/client";
 import { defaultMonitoring } from "../../../infrastructure/monitoring";
 import { isPublishedPost, mapToPublicBlogPost } from "../../../mappers/cms";
-import { PUBLIC_LIST_LIMIT } from "../../../utils/list-limits";
 
 const extractSectionData = <TKey extends SectionSchemaKey>(
   sections: { section: string; data: Prisma.JsonValue }[],
@@ -44,7 +43,6 @@ export const cmsBlogPublicApi = {
     const posts = await prisma.marketingBlogPost.findMany({
       where: { isPublished: true, publishedAt: { not: null } },
       orderBy: { publishedAt: "desc" },
-      take: PUBLIC_LIST_LIMIT,
     });
 
     return posts.filter(isPublishedPost).map(mapToPublicBlogPost);

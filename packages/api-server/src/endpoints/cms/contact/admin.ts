@@ -9,13 +9,11 @@ import {
 import { prisma } from "../../../db/client";
 import { CONTACT_STATUS_TO_PRISMA_MAP, mapToContact } from "../../../mappers/cms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
-import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
 export const cmsContactAdminApi = {
   getContacts: async (): Promise<ContactSubmissionItem[]> => {
     const contacts = await prisma.marketingContactSubmission.findMany({
       orderBy: { createdAt: "desc" },
-      take: DEFAULT_LIST_LIMIT,
     });
 
     return contacts.map(mapToContact);

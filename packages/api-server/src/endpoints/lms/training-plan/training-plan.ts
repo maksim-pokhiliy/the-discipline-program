@@ -20,7 +20,6 @@ import {
   TRAINING_PLAN_STATUS_TO_PRISMA_MAP,
 } from "../../../mappers/lms";
 import { findOrThrow, handlePrismaError } from "../../../utils";
-import { DEFAULT_LIST_LIMIT } from "../../../utils/list-limits";
 
 const mapToListItem = (p: PrismaTrainingPlan): TrainingPlanListItem => mapToTrainingPlan(p);
 
@@ -98,7 +97,6 @@ export const lmsTrainingPlanApi = {
     const plans = await prisma.trainingPlan.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: DEFAULT_LIST_LIMIT,
     });
 
     return plans.map(mapToTrainingPlan);
@@ -110,7 +108,6 @@ export const lmsTrainingPlanApi = {
     const plans = await prisma.trainingPlan.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: DEFAULT_LIST_LIMIT,
     });
 
     return { plans: plans.map(mapToListItem) };
