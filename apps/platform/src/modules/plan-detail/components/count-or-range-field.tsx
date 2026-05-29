@@ -1,7 +1,9 @@
 "use client";
 
-import { Button, Stack, TextField, Typography } from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
+
+import { NumberField } from "./number-field";
 
 const RANGE_INCREMENT = 1;
 const COUNT_FIELD_WIDTH = 90;
@@ -20,38 +22,34 @@ type CountOrRangeProps = {
 };
 
 export const CountOrRange = ({ value, onChange, error, disabled = false }: CountOrRangeProps) => {
-  const hasError = error?.root?.message !== undefined;
+  const rootError = error?.root?.message;
 
   if (typeof value === "object") {
     return (
       <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-        <TextField
+        <NumberField
           label="Min"
-          type="number"
-          size="small"
           value={value.min}
-          onChange={(e) => onChange({ min: Number(e.target.value), max: value.max })}
-          inputProps={{ min: COUNT_FIELD_MIN, step: COUNT_FIELD_STEP }}
-          error={hasError}
+          onChange={(min) => onChange({ min, max: value.max })}
+          min={COUNT_FIELD_MIN}
+          step={COUNT_FIELD_STEP}
           disabled={disabled}
-          sx={{ maxWidth: RANGE_FIELD_WIDTH }}
+          maxWidth={RANGE_FIELD_WIDTH}
         />
 
         <Typography variant="body2" color="text.subtle">
           {EN_DASH}
         </Typography>
 
-        <TextField
+        <NumberField
           label="Max"
-          type="number"
-          size="small"
           value={value.max}
-          onChange={(e) => onChange({ min: value.min, max: Number(e.target.value) })}
-          inputProps={{ min: COUNT_FIELD_MIN, step: COUNT_FIELD_STEP }}
-          error={hasError}
-          helperText={error?.root?.message}
+          onChange={(max) => onChange({ min: value.min, max })}
+          min={COUNT_FIELD_MIN}
+          step={COUNT_FIELD_STEP}
+          error={rootError}
           disabled={disabled}
-          sx={{ maxWidth: RANGE_FIELD_WIDTH }}
+          maxWidth={RANGE_FIELD_WIDTH}
         />
 
         <Button size="tiny" variant="text" disabled={disabled} onClick={() => onChange(value.min)}>
@@ -63,17 +61,15 @@ export const CountOrRange = ({ value, onChange, error, disabled = false }: Count
 
   return (
     <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-      <TextField
+      <NumberField
         label="Count"
-        type="number"
-        size="small"
         value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        inputProps={{ min: COUNT_FIELD_MIN, step: COUNT_FIELD_STEP }}
-        error={hasError}
-        helperText={error?.root?.message}
+        onChange={onChange}
+        min={COUNT_FIELD_MIN}
+        step={COUNT_FIELD_STEP}
+        error={rootError}
         disabled={disabled}
-        sx={{ maxWidth: COUNT_FIELD_WIDTH }}
+        maxWidth={COUNT_FIELD_WIDTH}
       />
 
       <Button

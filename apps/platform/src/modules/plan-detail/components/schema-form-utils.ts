@@ -1,14 +1,4 @@
-import type { TextFieldProps } from "@mui/material";
-import type {
-  ControllerFieldState,
-  ControllerRenderProps,
-  FieldError,
-  FieldErrors,
-  FieldErrorsImpl,
-  FieldPath,
-  FieldValues,
-  Merge,
-} from "react-hook-form";
+import type { FieldError, FieldErrors, FieldErrorsImpl, Merge } from "react-hook-form";
 import type { z } from "zod";
 
 import type {
@@ -25,30 +15,7 @@ import {
   archetypeParamsSchema,
 } from "@repo/contracts/lms/schema";
 
-export const NUMBER_FIELD_DEFAULT_WIDTH = 140;
-
 const PARAMS_PATH_SEGMENT = "params";
-const NUMBER_FIELD_MIN = 1;
-const NUMBER_FIELD_STEP = 1;
-
-export const numberFieldProps = <TFieldValues extends FieldValues>(
-  label: string,
-  field: ControllerRenderProps<TFieldValues, FieldPath<TFieldValues>>,
-  fieldState: ControllerFieldState,
-  disabled: boolean,
-  maxWidth: number = NUMBER_FIELD_DEFAULT_WIDTH,
-): TextFieldProps => ({
-  label,
-  type: "number",
-  size: "small",
-  value: typeof field.value === "number" ? field.value : "",
-  onChange: (e) => field.onChange(Number(e.target.value)),
-  inputProps: { min: NUMBER_FIELD_MIN, step: NUMBER_FIELD_STEP },
-  error: fieldState.error !== undefined,
-  helperText: fieldState.error?.message,
-  disabled,
-  sx: { maxWidth },
-});
 
 export type ShellIntensityForm = {
   effortPercent?: EffortPercent | undefined;

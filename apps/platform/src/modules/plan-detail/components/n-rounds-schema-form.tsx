@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Stack, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
+import { Button, Stack, ToggleButton, ToggleButtonGroup } from "@mui/material";
 
 import { FormSection } from "@repo/ui";
 
@@ -13,17 +13,18 @@ import {
   buildParams,
   toFormData,
 } from "./n-rounds-form-schema";
+import { NumberField } from "./number-field";
 import { RestSpecFields } from "./rest-spec-fields";
 import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
 
 const COUNT_FIELD_WIDTH = 140;
+const COUNT_FIELD_MIN = 1;
+const COUNT_FIELD_STEP = 1;
 
 export const nRoundsDefaultParams: NRoundsParams = buildParams(buildBranchDefaults("exact"));
 
 export const toNRoundsParams = (mode: SchemaEditorMode): NRoundsParams =>
   buildParams(toFormData(mode));
-
-const toNumber = (raw: string): number => Number(raw);
 
 export const NRoundsSchemaForm: React.FC<SchemaParamFormProps<NRoundsParams>> = ({
   value,
@@ -88,95 +89,76 @@ export const NRoundsSchemaForm: React.FC<SchemaParamFormProps<NRoundsParams>> = 
       </FormSection>
 
       {value.countForm === "exact" && (
-        <TextField
+        <NumberField
           label="Rounds"
-          type="number"
-          size="small"
-          value={value.count ?? ""}
-          onChange={(e) => onChange({ ...value, count: toNumber(e.target.value) })}
-          inputProps={{ min: 1, step: 1 }}
-          error={error?.count?.message !== undefined}
-          helperText={error?.count?.message}
+          value={value.count ?? NaN}
+          onChange={(count) => onChange({ ...value, count })}
+          min={COUNT_FIELD_MIN}
+          step={COUNT_FIELD_STEP}
+          error={error?.count?.message}
           disabled={disabled}
-          sx={{ maxWidth: COUNT_FIELD_WIDTH }}
+          maxWidth={COUNT_FIELD_WIDTH}
         />
       )}
 
       {value.countForm === "range" && (
         <Stack direction="row" spacing={1}>
-          <TextField
+          <NumberField
             label="Min rounds"
-            type="number"
-            size="small"
-            value={value.countRange?.min ?? ""}
-            onChange={(e) =>
+            value={value.countRange?.min ?? NaN}
+            onChange={(min) =>
               onChange({
                 ...value,
-                countRange: {
-                  min: toNumber(e.target.value),
-                  max: value.countRange?.max ?? toNumber(e.target.value),
-                },
+                countRange: { min, max: value.countRange?.max ?? min },
               })
             }
-            inputProps={{ min: 1, step: 1 }}
-            error={error?.countRange?.min?.message !== undefined}
-            helperText={error?.countRange?.min?.message}
+            min={COUNT_FIELD_MIN}
+            step={COUNT_FIELD_STEP}
+            error={error?.countRange?.min?.message}
             disabled={disabled}
-            sx={{ maxWidth: COUNT_FIELD_WIDTH }}
+            maxWidth={COUNT_FIELD_WIDTH}
           />
 
-          <TextField
+          <NumberField
             label="Max rounds"
-            type="number"
-            size="small"
-            value={value.countRange?.max ?? ""}
-            onChange={(e) =>
+            value={value.countRange?.max ?? NaN}
+            onChange={(max) =>
               onChange({
                 ...value,
-                countRange: {
-                  min: value.countRange?.min ?? toNumber(e.target.value),
-                  max: toNumber(e.target.value),
-                },
+                countRange: { min: value.countRange?.min ?? max, max },
               })
             }
-            inputProps={{ min: 1, step: 1 }}
-            error={
-              error?.countRange?.max?.message !== undefined ||
-              error?.countRange?.root?.message !== undefined
-            }
-            helperText={error?.countRange?.max?.message ?? error?.countRange?.root?.message}
+            min={COUNT_FIELD_MIN}
+            step={COUNT_FIELD_STEP}
+            error={error?.countRange?.max?.message ?? error?.countRange?.root?.message}
             disabled={disabled}
-            sx={{ maxWidth: COUNT_FIELD_WIDTH }}
+            maxWidth={COUNT_FIELD_WIDTH}
           />
         </Stack>
       )}
 
       {value.countForm === "count_times_reps" && (
         <Stack direction="row" spacing={1}>
-          <TextField
+          <NumberField
             label="Rounds"
-            type="number"
-            size="small"
-            value={value.count ?? ""}
-            onChange={(e) => onChange({ ...value, count: toNumber(e.target.value) })}
-            inputProps={{ min: 1, step: 1 }}
-            error={error?.count?.message !== undefined}
-            helperText={error?.count?.message}
+            value={value.count ?? NaN}
+            onChange={(count) => onChange({ ...value, count })}
+            min={COUNT_FIELD_MIN}
+            step={COUNT_FIELD_STEP}
+            error={error?.count?.message}
             disabled={disabled}
-            sx={{ maxWidth: COUNT_FIELD_WIDTH }}
+            maxWidth={COUNT_FIELD_WIDTH}
           />
 
-          <TextField
+          <NumberField
             label="Reps per set"
-            type="number"
-            size="small"
-            value={value.repsPerSet ?? ""}
-            onChange={(e) => onChange({ ...value, repsPerSet: toNumber(e.target.value) })}
-            inputProps={{ min: 1, step: 1 }}
-            error={error?.repsPerSet?.message !== undefined}
-            helperText={error?.repsPerSet?.message}
+            value={value.repsPerSet ?? NaN}
+            onChange={(repsPerSet) => onChange({ ...value, repsPerSet })}
+            min={COUNT_FIELD_MIN}
+            step={COUNT_FIELD_STEP}
+            error={error?.repsPerSet?.message}
             disabled={disabled}
-            sx={{ maxWidth: COUNT_FIELD_WIDTH }}
+            maxWidth={COUNT_FIELD_WIDTH}
           />
         </Stack>
       )}

@@ -1,16 +1,19 @@
 "use client";
 
-import { Button, Stack, TextField } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 
 import type { ArchetypeParams } from "@repo/contracts/lms/schema";
 import { FormSection } from "@repo/ui";
 
+import { NumberField } from "./number-field";
 import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
 
 type AmrapFlatParams = Extract<ArchetypeParams, { archetype: "amrap-flat" }>["params"];
 
 const DEFAULT_DURATION_MIN = 12;
 const DURATION_FIELD_WIDTH = 200;
+const DURATION_FIELD_MIN = 1;
+const DURATION_FIELD_STEP = 1;
 const DURATION_PRESETS = [5, 7, 10, 12, 15, 20];
 
 export const amrapFlatDefaultParams: AmrapFlatParams = { durationMin: DEFAULT_DURATION_MIN };
@@ -37,17 +40,15 @@ export const AmrapFlatSchemaForm: React.FC<SchemaParamFormProps<AmrapFlatParams>
 }) => (
   <FormSection label="Duration">
     <Stack spacing={1.5}>
-      <TextField
+      <NumberField
         label="Duration (minutes)"
-        type="number"
-        size="small"
         value={value.durationMin}
-        onChange={(e) => onChange({ durationMin: Number(e.target.value) })}
-        inputProps={{ min: 1, step: 1 }}
-        error={error?.durationMin?.message !== undefined}
-        helperText={error?.durationMin?.message}
+        onChange={(durationMin) => onChange({ durationMin })}
+        min={DURATION_FIELD_MIN}
+        step={DURATION_FIELD_STEP}
+        error={error?.durationMin?.message}
         disabled={disabled}
-        sx={{ maxWidth: DURATION_FIELD_WIDTH }}
+        maxWidth={DURATION_FIELD_WIDTH}
       />
 
       <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
