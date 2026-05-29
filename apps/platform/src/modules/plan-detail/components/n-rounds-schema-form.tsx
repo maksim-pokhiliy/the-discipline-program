@@ -1,250 +1,188 @@
 "use client";
 
-import { type FormEvent, useEffect } from "react";
+import { Button, Stack, ToggleButton, ToggleButtonGroup } from "@mui/material";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Box,
-  FormControlLabel,
-  Stack,
-  Switch,
-  TextField,
-  type TextFieldProps,
-  ToggleButton,
-  ToggleButtonGroup,
-  Typography,
-} from "@mui/material";
-import {
-  type ControllerFieldState,
-  type ControllerRenderProps,
-  Controller,
-  type FieldPath,
-  useForm,
-  useWatch,
-} from "react-hook-form";
-
-import type { CreateSchemaRequest, UpdateSchemaRequest } from "@repo/contracts/lms/schema";
-import { FormModal } from "@repo/ui";
-
-import { useCreateSchema, useUpdateSchema } from "@app/lib/hooks";
+import { FormSection } from "@repo/ui";
 
 import {
   type CountForm,
   COUNT_FORM_OPTIONS,
   DEFAULT_REST,
-  type NRoundsFormData,
+  type NRoundsParams,
   buildBranchDefaults,
   buildParams,
-  nRoundsFormSchema,
   toFormData,
 } from "./n-rounds-form-schema";
+import { NumberField } from "./number-field";
 import { RestSpecFields } from "./rest-spec-fields";
-import type { SchemaParamFormProps } from "./schema-editor-types";
+import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
 
-const numberFieldProps = (
-  label: string,
-  field: ControllerRenderProps<NRoundsFormData, FieldPath<NRoundsFormData>>,
-  fieldState: ControllerFieldState,
-  disabled: boolean,
-): TextFieldProps => ({
-  label,
-  type: "number",
-  size: "small",
-  value: typeof field.value === "number" ? field.value : "",
-  onChange: (e) => field.onChange(Number(e.target.value)),
-  inputProps: { min: 1, step: 1 },
-  error: fieldState.error !== undefined,
-  helperText: fieldState.error?.message,
-  disabled,
-  sx: { maxWidth: 140 },
-});
+const COUNT_FIELD_WIDTH = 140;
+const COUNT_FIELD_MIN = 1;
+const COUNT_FIELD_STEP = 1;
 
-export const NRoundsSchemaForm: React.FC<SchemaParamFormProps> = ({
-  mode,
-  planId,
-  startDate,
-  onClose,
+export const nRoundsDefaultParams: NRoundsParams = buildParams(buildBranchDefaults("exact"));
+
+export const toNRoundsParams = (mode: SchemaEditorMode): NRoundsParams =>
+  buildParams(toFormData(mode));
+
+export const NRoundsSchemaForm: React.FC<SchemaParamFormProps<NRoundsParams>> = ({
+  value,
+  onChange,
+  error,
+  disabled = false,
 }) => {
-  const createSchema = useCreateSchema(planId, startDate);
-  const updateSchema = useUpdateSchema(planId, startDate);
-
-  const { control, handleSubmit, reset, setValue, getValues, formState } = useForm<NRoundsFormData>(
-    {
-      resolver: zodResolver(nRoundsFormSchema),
-      defaultValues: toFormData(mode),
-    },
-  );
-
-  useEffect(() => {
-    reset(toFormData(mode));
-  }, [mode, reset]);
-
-  const countForm = useWatch({ control, name: "countForm" });
-  const rest = useWatch({ control, name: "rest" });
-  const isSubmitting = createSchema.isPending || updateSchema.isPending;
-
-  const handleCountFormChange = (_: unknown, next: CountForm | null) => {
+  const handleCountFormChange = (_: unknown, next: CountForm | null): void => {
     if (next === null) {
       return;
     }
 
-    const currentRest = getValues("rest");
     const defaults = buildBranchDefaults(next);
 
-    if ("count" in defaults) {
-      const currentCount = getValues("count");
-
-      if (typeof currentCount === "number") {
-        defaults.count = currentCount;
-      }
+    if ("count" in defaults && typeof value.count === "number") {
+      defaults.count = value.count;
     }
 
-    reset({ ...defaults, ...(currentRest && { rest: currentRest }) });
+    onChange(buildParams({ ...defaults, ...(value.rest && { rest: value.rest }) }));
   };
 
-  const handleRestToggle = (_: unknown, next: boolean) => {
-    setValue("rest", next ? DEFAULT_REST : undefined);
+  const handleAddRest = (): void => {
+    onChange({ ...value, rest: DEFAULT_REST });
   };
 
-  const onSubmit = (data: NRoundsFormData) => {
-    const archetypeParams: CreateSchemaRequest["archetypeParams"] = {
-      archetype: "n-rounds",
-      params: buildParams(data),
-    };
-
-    if (mode.kind === "create") {
-      const request: CreateSchemaRequest = {
-        blockId: mode.blockId,
-        kind: mode.archetype.kind,
-        archetypeId: mode.archetype.archetypeId,
-        archetypeParams,
-      };
-
-      createSchema.mutate(request, { onSuccess: () => onClose() });
+  const handleRemoveRest = (): void => {
+    if (value.countForm === "range") {
+      onChange({ countForm: "range", countRange: value.countRange });
 
       return;
     }
 
-    const request: UpdateSchemaRequest = { archetypeParams };
+    if (value.countForm === "count_times_reps") {
+      onChange({
+        countForm: "count_times_reps",
+        count: value.count,
+        repsPerSet: value.repsPerSet,
+      });
 
-    updateSchema.mutate(
-      { schemaId: mode.schema.schema.id, data: request },
-      { onSuccess: () => onClose() },
-    );
-  };
+      return;
+    }
 
-  const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
-    void handleSubmit(onSubmit)(e);
+    onChange({ countForm: "exact", count: value.count });
   };
 
   return (
-    <FormModal
-      open
-      onClose={onClose}
-      title={mode.kind === "create" ? "Add rounds" : "Edit rounds"}
-      onSubmit={handleFormSubmit}
-      isSubmitting={isSubmitting}
-      submitText="Save"
-    >
-      <Stack spacing={2}>
-        <Box>
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-            Rounds count
-          </Typography>
+    <Stack spacing={2}>
+      <FormSection label="Rounds count">
+        <ToggleButtonGroup
+          value={value.countForm}
+          exclusive
+          onChange={handleCountFormChange}
+          size="small"
+          disabled={disabled}
+        >
+          {COUNT_FORM_OPTIONS.map((option) => (
+            <ToggleButton key={option.value} value={option.value}>
+              {option.label}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </FormSection>
 
-          <ToggleButtonGroup
-            value={countForm}
-            exclusive
-            onChange={handleCountFormChange}
-            size="small"
-            disabled={isSubmitting}
-          >
-            {COUNT_FORM_OPTIONS.map((o) => (
-              <ToggleButton key={o.value} value={o.value}>
-                {o.label}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        </Box>
+      {value.countForm === "exact" && (
+        <NumberField
+          label="Rounds"
+          value={value.count ?? NaN}
+          onChange={(count) => onChange({ ...value, count })}
+          min={COUNT_FIELD_MIN}
+          step={COUNT_FIELD_STEP}
+          error={error?.count?.message}
+          disabled={disabled}
+          maxWidth={COUNT_FIELD_WIDTH}
+        />
+      )}
 
-        {countForm === "exact" && (
-          <Controller
-            name="count"
-            control={control}
-            render={({ field, fieldState }) => (
-              <TextField {...numberFieldProps("Rounds", field, fieldState, isSubmitting)} />
-            )}
-          />
-        )}
-
-        {countForm === "range" && (
-          <Stack direction="row" spacing={1}>
-            <Controller
-              name="countRange.min"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField {...numberFieldProps("Min rounds", field, fieldState, isSubmitting)} />
-              )}
-            />
-            <Controller
-              name="countRange.max"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField {...numberFieldProps("Max rounds", field, fieldState, isSubmitting)} />
-              )}
-            />
-          </Stack>
-        )}
-
-        {countForm === "count_times_reps" && (
-          <Stack direction="row" spacing={1}>
-            <Controller
-              name="count"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField {...numberFieldProps("Rounds", field, fieldState, isSubmitting)} />
-              )}
-            />
-            <Controller
-              name="repsPerSet"
-              control={control}
-              render={({ field, fieldState }) => (
-                <TextField {...numberFieldProps("Reps per set", field, fieldState, isSubmitting)} />
-              )}
-            />
-          </Stack>
-        )}
-
-        <Box>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={rest !== undefined}
-                onChange={handleRestToggle}
-                disabled={isSubmitting}
-              />
+      {value.countForm === "range" && (
+        <Stack direction="row" spacing={1}>
+          <NumberField
+            label="Min rounds"
+            value={value.countRange?.min ?? NaN}
+            onChange={(min) =>
+              onChange({
+                ...value,
+                countRange: { min, max: value.countRange?.max ?? min },
+              })
             }
-            label="Add rest interval"
+            min={COUNT_FIELD_MIN}
+            step={COUNT_FIELD_STEP}
+            error={error?.countRange?.min?.message}
+            disabled={disabled}
+            maxWidth={COUNT_FIELD_WIDTH}
           />
 
-          {rest !== undefined && (
-            <Box sx={{ pl: 4, pt: 1 }}>
-              <Controller
-                name="rest"
-                control={control}
-                render={({ field }) => (
-                  <RestSpecFields
-                    value={field.value ?? DEFAULT_REST}
-                    onChange={field.onChange}
-                    error={formState.errors.rest}
-                    disabled={isSubmitting}
-                  />
-                )}
-              />
-            </Box>
-          )}
-        </Box>
-      </Stack>
-    </FormModal>
+          <NumberField
+            label="Max rounds"
+            value={value.countRange?.max ?? NaN}
+            onChange={(max) =>
+              onChange({
+                ...value,
+                countRange: { min: value.countRange?.min ?? max, max },
+              })
+            }
+            min={COUNT_FIELD_MIN}
+            step={COUNT_FIELD_STEP}
+            error={error?.countRange?.max?.message ?? error?.countRange?.root?.message}
+            disabled={disabled}
+            maxWidth={COUNT_FIELD_WIDTH}
+          />
+        </Stack>
+      )}
+
+      {value.countForm === "count_times_reps" && (
+        <Stack direction="row" spacing={1}>
+          <NumberField
+            label="Rounds"
+            value={value.count ?? NaN}
+            onChange={(count) => onChange({ ...value, count })}
+            min={COUNT_FIELD_MIN}
+            step={COUNT_FIELD_STEP}
+            error={error?.count?.message}
+            disabled={disabled}
+            maxWidth={COUNT_FIELD_WIDTH}
+          />
+
+          <NumberField
+            label="Reps per set"
+            value={value.repsPerSet ?? NaN}
+            onChange={(repsPerSet) => onChange({ ...value, repsPerSet })}
+            min={COUNT_FIELD_MIN}
+            step={COUNT_FIELD_STEP}
+            error={error?.repsPerSet?.message}
+            disabled={disabled}
+            maxWidth={COUNT_FIELD_WIDTH}
+          />
+        </Stack>
+      )}
+
+      <FormSection label="Rest">
+        {value.rest === undefined ? (
+          <Button size="tiny" variant="text" disabled={disabled} onClick={handleAddRest}>
+            + add rest
+          </Button>
+        ) : (
+          <Stack spacing={1}>
+            <RestSpecFields
+              value={value.rest}
+              onChange={(rest) => onChange({ ...value, rest })}
+              error={error?.rest}
+              disabled={disabled}
+            />
+
+            <Button size="tiny" variant="text" disabled={disabled} onClick={handleRemoveRest}>
+              remove rest
+            </Button>
+          </Stack>
+        )}
+      </FormSection>
+    </Stack>
   );
 };

@@ -1,30 +1,26 @@
 "use client";
 
-import { type FormEvent, useEffect } from "react";
+import { Button, Stack } from "@mui/material";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Stack, TextField } from "@mui/material";
-import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
+import type { ArchetypeParams } from "@repo/contracts/lms/schema";
+import { FormSection } from "@repo/ui";
 
-import type { CreateSchemaRequest, UpdateSchemaRequest } from "@repo/contracts/lms/schema";
-import { FormModal } from "@repo/ui";
-
-import { useCreateSchema, useUpdateSchema } from "@app/lib/hooks";
-
+import { NumberField } from "./number-field";
 import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
 
-const DEFAULT_DURATION_MIN = 10;
+type AmrapFlatParams = Extract<ArchetypeParams, { archetype: "amrap-flat" }>["params"];
 
-const amrapFlatFormSchema = z.object({
-  durationMin: z.number().int().positive(),
-});
+const DEFAULT_DURATION_MIN = 12;
+const DURATION_FIELD_WIDTH = 200;
+const DURATION_FIELD_MIN = 1;
+const DURATION_FIELD_STEP = 1;
+const DURATION_PRESETS = [5, 7, 10, 12, 15, 20];
 
-type AmrapFlatFormData = z.infer<typeof amrapFlatFormSchema>;
+export const amrapFlatDefaultParams: AmrapFlatParams = { durationMin: DEFAULT_DURATION_MIN };
 
-const toFormData = (mode: SchemaEditorMode): AmrapFlatFormData => {
+export const toAmrapFlatParams = (mode: SchemaEditorMode): AmrapFlatParams => {
   if (mode.kind === "create") {
-    return { durationMin: DEFAULT_DURATION_MIN };
+    return amrapFlatDefaultParams;
   }
 
   const { archetypeParams } = mode.schema.schema;
@@ -33,89 +29,40 @@ const toFormData = (mode: SchemaEditorMode): AmrapFlatFormData => {
     return { durationMin: archetypeParams.params.durationMin };
   }
 
-  return { durationMin: DEFAULT_DURATION_MIN };
+  return amrapFlatDefaultParams;
 };
 
-export const AmrapFlatSchemaForm: React.FC<SchemaParamFormProps> = ({
-  mode,
-  planId,
-  startDate,
-  onClose,
-}) => {
-  const createSchema = useCreateSchema(planId, startDate);
-  const updateSchema = useUpdateSchema(planId, startDate);
+export const AmrapFlatSchemaForm: React.FC<SchemaParamFormProps<AmrapFlatParams>> = ({
+  value,
+  onChange,
+  error,
+  disabled = false,
+}) => (
+  <FormSection label="Duration">
+    <Stack spacing={1.5}>
+      <NumberField
+        label="Duration (minutes)"
+        value={value.durationMin}
+        onChange={(durationMin) => onChange({ durationMin })}
+        min={DURATION_FIELD_MIN}
+        step={DURATION_FIELD_STEP}
+        error={error?.durationMin?.message}
+        disabled={disabled}
+        maxWidth={DURATION_FIELD_WIDTH}
+      />
 
-  const { control, handleSubmit, reset } = useForm<AmrapFlatFormData>({
-    resolver: zodResolver(amrapFlatFormSchema),
-    defaultValues: toFormData(mode),
-  });
-
-  useEffect(() => {
-    reset(toFormData(mode));
-  }, [mode, reset]);
-
-  const isSubmitting = createSchema.isPending || updateSchema.isPending;
-
-  const onSubmit = (data: AmrapFlatFormData) => {
-    const archetypeParams: CreateSchemaRequest["archetypeParams"] = {
-      archetype: "amrap-flat",
-      params: { durationMin: data.durationMin },
-    };
-
-    if (mode.kind === "create") {
-      const request: CreateSchemaRequest = {
-        blockId: mode.blockId,
-        kind: mode.archetype.kind,
-        archetypeId: mode.archetype.archetypeId,
-        archetypeParams,
-      };
-
-      createSchema.mutate(request, { onSuccess: () => onClose() });
-
-      return;
-    }
-
-    const request: UpdateSchemaRequest = { archetypeParams };
-
-    updateSchema.mutate(
-      { schemaId: mode.schema.schema.id, data: request },
-      { onSuccess: () => onClose() },
-    );
-  };
-
-  const handleFormSubmit = (e: FormEvent<HTMLFormElement>) => {
-    void handleSubmit(onSubmit)(e);
-  };
-
-  return (
-    <FormModal
-      open
-      onClose={onClose}
-      title={mode.kind === "create" ? "Add AMRAP" : "Edit AMRAP"}
-      onSubmit={handleFormSubmit}
-      isSubmitting={isSubmitting}
-      submitText="Save"
-    >
-      <Stack spacing={2}>
-        <Controller
-          name="durationMin"
-          control={control}
-          render={({ field, fieldState }) => (
-            <TextField
-              label="Duration (minutes)"
-              type="number"
-              size="small"
-              value={field.value}
-              onChange={(e) => field.onChange(Number(e.target.value))}
-              inputProps={{ min: 1, step: 1 }}
-              error={fieldState.error !== undefined}
-              helperText={fieldState.error?.message}
-              disabled={isSubmitting}
-              sx={{ maxWidth: 200 }}
-            />
-          )}
-        />
+      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+        {DURATION_PRESETS.map((preset) => (
+          <Button
+            key={preset}
+            size="tiny"
+            disabled={disabled}
+            onClick={() => onChange({ durationMin: preset })}
+          >
+            {preset}
+          </Button>
+        ))}
       </Stack>
-    </FormModal>
-  );
-};
+    </Stack>
+  </FormSection>
+);
