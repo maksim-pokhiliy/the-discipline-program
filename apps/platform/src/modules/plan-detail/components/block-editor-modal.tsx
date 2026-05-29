@@ -10,7 +10,6 @@ import { z } from "zod";
 import {
   effortPercentSchema,
   hrZoneSchema,
-  type Intensity,
   numericPaceSchema,
   paceSchema,
   rpeSchema,
@@ -28,6 +27,7 @@ import { HrZoneField } from "./hr-zone-field";
 import { NumericPaceField } from "./numeric-pace-field";
 import { PaceField } from "./pace-field";
 import { RpeField } from "./rpe-field";
+import { buildIntensityCandidate } from "./schema-form-utils";
 import { TimeCapFields } from "./time-cap-fields";
 
 const NOTES_PLACEHOLDER = 'e.g. "Build to a heavy 5. Slow ascent, no missed reps."';
@@ -61,14 +61,6 @@ const toFormData = (block: Block): BlockEditorFormData => ({
   },
   timeCap: block.timeCap,
   notes: block.notes ?? "",
-});
-
-const buildIntensityCandidate = (form: BlockEditorFormData["intensity"]): Intensity => ({
-  ...(form.effortPercent !== undefined && { effortPercent: form.effortPercent }),
-  ...(form.rpe !== undefined && { rpe: form.rpe }),
-  ...(form.pace !== undefined && { pace: form.pace }),
-  ...(form.hrZone !== undefined && { hrZone: form.hrZone }),
-  ...(form.numericPace !== undefined && { numericPace: form.numericPace }),
 });
 
 type BlockEditorModalProps = {
