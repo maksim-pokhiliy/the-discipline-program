@@ -29,6 +29,11 @@ export const AddSchemaButton: React.FC<AddSchemaButtonProps> = ({ planId, startD
     setPendingArchetype(selected);
   };
 
+  const handleBack = () => {
+    setPendingArchetype(null);
+    setPickerOpen(true);
+  };
+
   const editorMode = useMemo<SchemaEditorMode | null>(
     () =>
       pendingArchetype === null ? null : { kind: "create", blockId, archetype: pendingArchetype },
@@ -56,6 +61,7 @@ export const AddSchemaButton: React.FC<AddSchemaButtonProps> = ({ planId, startD
           mode={editorMode}
           planId={planId}
           startDate={startDate}
+          onBack={handleBack}
         />
       )}
     </>
