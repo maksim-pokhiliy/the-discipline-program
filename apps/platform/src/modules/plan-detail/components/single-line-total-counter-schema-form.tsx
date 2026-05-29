@@ -7,8 +7,7 @@ import { Chip } from "@mui/material";
 
 import { FormSection } from "@repo/ui";
 
-import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
-import type { ParamsFor } from "./schema-param-form-registry";
+import type { ParamsFor, SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
 
 type SingleLineTotalCounterParams = ParamsFor<"single-line-total-counter">;
 

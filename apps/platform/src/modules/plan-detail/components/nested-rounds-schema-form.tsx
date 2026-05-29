@@ -3,8 +3,7 @@
 import { FormSection } from "@repo/ui";
 
 import { CountOrRange } from "./count-or-range-field";
-import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
-import type { ParamsFor } from "./schema-param-form-registry";
+import type { ParamsFor, SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
 
 type NestedRoundsParams = ParamsFor<"nested-rounds-over-rounds">;
 

@@ -6,8 +6,7 @@ import { FormSection } from "@repo/ui";
 
 import { NumberField } from "./number-field";
 import { RestSpecFields } from "./rest-spec-fields";
-import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
-import type { ParamsFor } from "./schema-param-form-registry";
+import type { ParamsFor, SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
 
 type NestedCompositeOverLadderParams = ParamsFor<"nested-composite-rounds-over-ladder">;
 

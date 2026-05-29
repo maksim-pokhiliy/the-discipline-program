@@ -7,8 +7,7 @@ import { SLOT_SPEC_KINDS, type SlotSpec, type SlotSpecKind } from "@repo/contrac
 import { FormSection } from "@repo/ui";
 
 import { NumberField } from "./number-field";
-import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
-import type { ParamsFor } from "./schema-param-form-registry";
+import type { ParamsFor, SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
 import { StepArrayFields } from "./step-array-fields";
 
 type EmomSlotParams = ParamsFor<"emom-sub-minute-slot">;

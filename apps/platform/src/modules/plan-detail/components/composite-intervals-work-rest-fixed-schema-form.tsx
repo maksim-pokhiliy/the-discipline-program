@@ -5,8 +5,7 @@ import { Stack } from "@mui/material";
 import { FormSection } from "@repo/ui";
 
 import { NumberField } from "./number-field";
-import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
-import type { ParamsFor } from "./schema-param-form-registry";
+import type { ParamsFor, SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
 
 type CompositeIntervalsWRFixedParams = ParamsFor<"composite-intervals-work-rest-fixed">;
 

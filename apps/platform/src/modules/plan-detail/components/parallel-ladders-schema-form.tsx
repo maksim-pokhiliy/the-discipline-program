@@ -5,8 +5,7 @@ import { Button, Card, Stack, ToggleButton, ToggleButtonGroup, Typography } from
 import type { ArchetypeName } from "@repo/contracts/lms/schema";
 import { FormSection } from "@repo/ui";
 
-import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
-import type { ParamsFor } from "./schema-param-form-registry";
+import type { ParamsFor, SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
 import { StepArrayFields } from "./step-array-fields";
 
 type ParallelLaddersParams = ParamsFor<"parallel-ladders-descending">;
@@ -15,6 +14,7 @@ type LadderDirection = NonNullable<LadderEntry["direction"]>;
 
 const MIN_LADDERS = 1;
 const NEW_LADDER: LadderEntry = { steps: [21, 15, 9] };
+const NEW_MIXED_LADDER: LadderEntry = { steps: [21, 15, 9], direction: "asc" };
 const CARD_PADDING = 2;
 
 const DIRECTION_OPTIONS: { value: LadderDirection; label: string }[] = [
@@ -63,6 +63,7 @@ export const ParallelLaddersForm: React.FC<
   SchemaParamFormProps<ParallelLaddersParams> & { mixed: boolean }
 > = ({ value, onChange, error, disabled = false, mixed }) => {
   const canRemove = value.ladders.length > MIN_LADDERS;
+  const newLadder = mixed ? NEW_MIXED_LADDER : NEW_LADDER;
 
   const updateLadder = (index: number, next: LadderEntry): void => {
     onChange({ ladders: value.ladders.map((ladder, i) => (i === index ? next : ladder)) });
@@ -125,7 +126,7 @@ export const ParallelLaddersForm: React.FC<
           size="tiny"
           variant="text"
           disabled={disabled}
-          onClick={() => onChange({ ladders: [...value.ladders, NEW_LADDER] })}
+          onClick={() => onChange({ ladders: [...value.ladders, newLadder] })}
         >
           + add ladder
         </Button>

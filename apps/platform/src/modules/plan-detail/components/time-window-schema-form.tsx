@@ -4,8 +4,7 @@ import { Stack, TextField, Typography } from "@mui/material";
 
 import { FormSection } from "@repo/ui";
 
-import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
-import type { ParamsFor } from "./schema-param-form-registry";
+import type { ParamsFor, SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
 
 type TimeWindowParams = ParamsFor<"time-window-outer">;
 

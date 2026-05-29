@@ -1,6 +1,6 @@
 import { createElement } from "react";
 
-import type { ArchetypeName, ArchetypeParams } from "@repo/contracts/lms/schema";
+import type { ArchetypeName } from "@repo/contracts/lms/schema";
 
 import {
   AlternatingSetsForm,
@@ -67,7 +67,7 @@ import {
   runDistanceDefaultParams,
   toRunDistanceParams,
 } from "./run-distance-schema-form";
-import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
+import type { ParamsFor, SchemaParamFormEntry, SchemaParamFormProps } from "./schema-editor-types";
 import {
   SingleLineTotalCounterForm,
   singleLineTotalCounterDefaultParams,
@@ -78,17 +78,6 @@ import {
   timeWindowDefaultParams,
   toTimeWindowParams,
 } from "./time-window-schema-form";
-
-export type ParamsFor<N extends ArchetypeName> = Extract<
-  ArchetypeParams,
-  { archetype: N }
->["params"];
-
-export type SchemaParamFormEntry<N extends ArchetypeName> = {
-  Form: React.FC<SchemaParamFormProps<ParamsFor<N>>>;
-  defaultParams: ParamsFor<N>;
-  toParams: (mode: SchemaEditorMode) => ParamsFor<N>;
-};
 
 type EmptyParams = ParamsFor<"single-line-bare">;
 

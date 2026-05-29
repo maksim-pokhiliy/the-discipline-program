@@ -4,8 +4,7 @@ import { Button, InputAdornment, Stack, TextField, Typography } from "@mui/mater
 
 import { FormSection } from "@repo/ui";
 
-import type { SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
-import type { ParamsFor } from "./schema-param-form-registry";
+import type { ParamsFor, SchemaEditorMode, SchemaParamFormProps } from "./schema-editor-types";
 
 type RunDistanceParams = ParamsFor<"run-distance">;
 
