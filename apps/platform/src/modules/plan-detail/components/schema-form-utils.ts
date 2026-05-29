@@ -1,4 +1,4 @@
-import type { FieldError, FieldErrors, FieldErrorsImpl, Merge } from "react-hook-form";
+import type { FieldError, FieldErrors, FieldErrorsImpl, GlobalError, Merge } from "react-hook-form";
 import type { z } from "zod";
 
 import type {
@@ -136,6 +136,14 @@ const toFieldErrorValue = (node: FieldErrorLeaf | FieldErrorTree): FieldErrorVal
   return out;
 };
 
+const toRootError = (node: FieldErrorLeaf | FieldErrorTree): GlobalError => {
+  if (isLeaf(node)) {
+    return { type: node.type, message: node.message };
+  }
+
+  return {};
+};
+
 const mapZodIssuesToFieldErrors = (issues: z.ZodIssue[]): FieldErrors => {
   const tree: FieldErrorTree = {};
 
@@ -155,7 +163,7 @@ const mapZodIssuesToFieldErrors = (issues: z.ZodIssue[]): FieldErrors => {
     }
 
     if (key === ROOT_KEY) {
-      errors.root = {};
+      errors.root = toRootError(node);
 
       continue;
     }

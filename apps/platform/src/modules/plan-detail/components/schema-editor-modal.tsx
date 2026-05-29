@@ -88,7 +88,7 @@ const toShellFormData = (mode: SchemaEditorMode): SchemaShellFormData => {
   return {
     header: mode.schema.schema.header ?? "",
     intensity: toIntensityForm(mode),
-    params: entry?.toParams(mode) ?? {},
+    params: entry?.toParams(mode) ?? mode.schema.schema.archetypeParams.params,
   };
 };
 

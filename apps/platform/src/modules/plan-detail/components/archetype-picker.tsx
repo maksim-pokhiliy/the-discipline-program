@@ -128,14 +128,16 @@ export const ArchetypePicker: React.FC<ArchetypePickerProps> = ({ open, onClose,
     onClose();
   };
 
-  const handleContinue = (): void => {
-    const selected = (archetypes ?? []).find((archetype) => archetype.name === selectedId);
+  const visibleSelected = groups
+    .flatMap((group) => group.archetypes)
+    .find((archetype) => archetype.name === selectedId);
 
-    if (selected === undefined) {
+  const handleContinue = (): void => {
+    if (visibleSelected === undefined) {
       return;
     }
 
-    handlePick(selected);
+    handlePick(visibleSelected);
   };
 
   const hasArchetypes = archetypes !== undefined && archetypes.length > 0;
@@ -156,7 +158,11 @@ export const ArchetypePicker: React.FC<ArchetypePickerProps> = ({ open, onClose,
             Cancel
           </Button>
 
-          <Button variant="contained" disabled={selectedId === null} onClick={handleContinue}>
+          <Button
+            variant="contained"
+            disabled={visibleSelected === undefined}
+            onClick={handleContinue}
+          >
             Continue
           </Button>
         </>

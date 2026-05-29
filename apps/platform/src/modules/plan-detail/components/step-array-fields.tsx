@@ -87,7 +87,9 @@ export const StepArrayFields = ({
         </Box>
       </Stack>
 
-      {error !== undefined && <FormHelperText error>{error.message}</FormHelperText>}
+      {error !== undefined && (
+        <FormHelperText error>{error.message ?? error.root?.message}</FormHelperText>
+      )}
     </Stack>
   );
 };
