@@ -7,6 +7,8 @@ export const MuiDialogTitle: NonNullable<Components<Theme>["MuiDialogTitle"]> = 
       justifyContent: "space-between",
       alignItems: "center",
       fontSize: theme.typography.h4.fontSize,
+      borderBottom: "1px solid",
+      borderColor: theme.palette.divider,
     }),
   },
 };
@@ -31,6 +33,8 @@ export const MuiDialogActions: NonNullable<Components<Theme>["MuiDialogActions"]
   styleOverrides: {
     root: ({ theme }) => ({
       padding: theme.spacing(3),
+      borderTop: "1px solid",
+      borderColor: theme.palette.divider,
     }),
   },
 };

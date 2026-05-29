@@ -32,7 +32,7 @@ import {
   MuiSelect,
   MuiTextField,
 } from "./text-field";
-import { MuiToggleButton } from "./toggle-button";
+import { MuiToggleButton, MuiToggleButtonGroup } from "./toggle-button";
 import { MuiTooltip } from "./tooltip";
 
 export const components: Components<Theme> & PickerComponents<Theme> = {
@@ -76,6 +76,7 @@ export const components: Components<Theme> & PickerComponents<Theme> = {
   MuiTabs,
   MuiTextField,
   MuiToggleButton,
+  MuiToggleButtonGroup,
   MuiToolbar,
   MuiTooltip,
 };
