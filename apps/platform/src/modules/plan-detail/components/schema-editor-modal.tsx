@@ -5,7 +5,7 @@ import { type FormEvent, useEffect, useId, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import { Box, Button, CircularProgress, Stack, TextField, Typography } from "@mui/material";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import type { FieldErrors } from "react-hook-form";
 import { z } from "zod";
 
@@ -106,10 +106,12 @@ export const SchemaEditorModal: React.FC<SchemaEditorModalProps> = ({
   const { data: archetypes } = useArchetypes();
   const [paramsError, setParamsError] = useState<FieldErrors | undefined>(undefined);
 
-  const { control, handleSubmit, reset } = useForm<SchemaShellFormData>({
+  const { control, handleSubmit, reset, setValue } = useForm<SchemaShellFormData>({
     resolver: zodResolver(shellResolverSchema),
     defaultValues: toShellFormData(mode),
   });
+
+  const params = useWatch({ control, name: "params" });
 
   useEffect(() => {
     setParamsError(undefined);
@@ -241,18 +243,12 @@ export const SchemaEditorModal: React.FC<SchemaEditorModalProps> = ({
 
         <SchemaIntensityOverride control={control} isPending={isPending} />
 
-        <Controller
-          name="params"
-          control={control}
-          render={({ field }) => (
-            <SchemaParamFormDispatch
-              archetype={archetypeName}
-              value={field.value}
-              onChange={field.onChange}
-              error={paramsError}
-              disabled={isPending}
-            />
-          )}
+        <SchemaParamFormDispatch
+          archetype={archetypeName}
+          value={params}
+          onChange={(next) => setValue("params", next, { shouldDirty: true })}
+          error={paramsError}
+          disabled={isPending}
         />
       </Stack>
     </BaseModal>
