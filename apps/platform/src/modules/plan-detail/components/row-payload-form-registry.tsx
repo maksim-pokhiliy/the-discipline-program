@@ -1,3 +1,5 @@
+import type { RowKind } from "@repo/contracts/lms/schema-row";
+
 import {
   InnerLadderMarkerRowPayloadForm,
   innerLadderMarkerDefaultValue,
@@ -9,6 +11,7 @@ import {
   restSlotDefaultValue,
   toRestSlotValue,
 } from "./rest-slot-row-payload-form";
+import type { ErasedRowPayloadFormEntry } from "./row-editor-types";
 import {
   StandaloneLoadRowPayloadForm,
   standaloneLoadDefaultValue,
@@ -46,4 +49,4 @@ export const ROW_PAYLOAD_FORM_REGISTRY = {
     defaultValue: restSlotDefaultValue,
     toValue: toRestSlotValue,
   },
-};
+} as Partial<Record<RowKind, ErasedRowPayloadFormEntry>>;

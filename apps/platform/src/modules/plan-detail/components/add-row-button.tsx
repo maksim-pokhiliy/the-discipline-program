@@ -1,37 +1,15 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 
-import { Button, Menu, MenuItem } from "@mui/material";
+import { Button } from "@mui/material";
 
 import type { RowKind } from "@repo/contracts/lms/schema-row";
 
 import { RowEditorModal } from "./row-editor-modal";
 import type { RowEditorMode } from "./row-editor-types";
-import { ROW_KIND_FORM_REGISTRY } from "./row-kind-form-registry";
-
-const COACH_ROW_KINDS: RowKind[] = [
-  "EXERCISE",
-  "REST",
-  "FOOTNOTE",
-  "STANDALONE_LOAD",
-  "STANDALONE_URL",
-  "PLACEHOLDER",
-  "INNER_LADDER_MARKER",
-  "REP_DEFINITION",
-];
-
-const ROW_KIND_LABELS: Record<RowKind, string> = {
-  EXERCISE: "Exercise",
-  REST: "Rest",
-  FOOTNOTE: "Footnote",
-  STANDALONE_LOAD: "Standalone load",
-  STANDALONE_URL: "URL",
-  PLACEHOLDER: "Placeholder",
-  INNER_LADDER_MARKER: "Inner ladder marker",
-  REP_DEFINITION: "Rep definition",
-  REST_SLOT: "Rest slot",
-};
+import { RowKindPicker } from "./row-kind-picker";
+import { ROW_PAYLOAD_FORM_REGISTRY } from "./row-payload-form-registry";
 
 type AddRowButtonProps = {
   planId: string;
@@ -40,18 +18,22 @@ type AddRowButtonProps = {
 };
 
 export const AddRowButton: React.FC<AddRowButtonProps> = ({ planId, startDate, schemaId }) => {
-  const anchorRef = useRef<HTMLButtonElement>(null);
-  const [isMenuOpen, setMenuOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [pendingRowKind, setPendingRowKind] = useState<RowKind | null>(null);
 
   const handleSelect = (rowKind: RowKind) => {
-    setMenuOpen(false);
+    setPickerOpen(false);
 
-    if (ROW_KIND_FORM_REGISTRY[rowKind] === undefined) {
+    if (ROW_PAYLOAD_FORM_REGISTRY[rowKind] === undefined) {
       return;
     }
 
     setPendingRowKind(rowKind);
+  };
+
+  const handleBack = () => {
+    setPendingRowKind(null);
+    setPickerOpen(true);
   };
 
   const editorMode = useMemo<RowEditorMode | null>(
@@ -62,8 +44,7 @@ export const AddRowButton: React.FC<AddRowButtonProps> = ({ planId, startDate, s
   return (
     <>
       <Button
-        ref={anchorRef}
-        onClick={() => setMenuOpen(true)}
+        onClick={() => setPickerOpen(true)}
         size="tiny"
         variant="text"
         sx={{ alignSelf: "flex-start" }}
@@ -71,13 +52,11 @@ export const AddRowButton: React.FC<AddRowButtonProps> = ({ planId, startDate, s
         + Add row
       </Button>
 
-      <Menu anchorEl={anchorRef.current} open={isMenuOpen} onClose={() => setMenuOpen(false)}>
-        {COACH_ROW_KINDS.map((rowKind) => (
-          <MenuItem key={rowKind} onClick={() => handleSelect(rowKind)}>
-            {ROW_KIND_LABELS[rowKind]}
-          </MenuItem>
-        ))}
-      </Menu>
+      <RowKindPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={handleSelect}
+      />
 
       {editorMode !== null && (
         <RowEditorModal
@@ -86,6 +65,7 @@ export const AddRowButton: React.FC<AddRowButtonProps> = ({ planId, startDate, s
           mode={editorMode}
           planId={planId}
           startDate={startDate}
+          onBack={handleBack}
         />
       )}
     </>

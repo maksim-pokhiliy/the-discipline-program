@@ -14,21 +14,6 @@ type RowPayloadFormDispatchProps = {
   disabled?: boolean;
 };
 
-type ErasedRowPayloadFormProps = {
-  value: unknown;
-  onChange: (next: unknown) => void;
-  error?: FieldErrors | undefined;
-  disabled?: boolean | undefined;
-};
-
-type ErasedRowPayloadFormEntry = {
-  Form: React.FC<ErasedRowPayloadFormProps>;
-};
-
-const ERASED_REGISTRY = ROW_PAYLOAD_FORM_REGISTRY as Partial<
-  Record<RowKind, ErasedRowPayloadFormEntry>
->;
-
 export const RowPayloadFormDispatch: React.FC<RowPayloadFormDispatchProps> = ({
   rowKind,
   value,
@@ -36,7 +21,7 @@ export const RowPayloadFormDispatch: React.FC<RowPayloadFormDispatchProps> = ({
   error,
   disabled,
 }) => {
-  const entry = ERASED_REGISTRY[rowKind];
+  const entry = ROW_PAYLOAD_FORM_REGISTRY[rowKind];
 
   if (entry === undefined) {
     return null;
