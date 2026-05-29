@@ -122,4 +122,44 @@ describe("ToggleSection", () => {
 
     expect(onToggle).toHaveBeenCalledTimes(2);
   });
+
+  it("disables the head button when disabled is set with onToggle", () => {
+    const { container } = render(
+      <ToggleSection on={false} label="Warmup" onToggle={vi.fn()} disabled={true}>
+        <span>Body</span>
+      </ToggleSection>,
+    );
+    const button = container.querySelector("button.MuiButtonBase-root");
+
+    expect(button).not.toBeNull();
+    expect(button?.getAttribute("disabled")).not.toBeNull();
+  });
+
+  it("does not fire onToggle on click when disabled", () => {
+    const onToggle = vi.fn();
+    const { container } = render(
+      <ToggleSection on={false} label="Warmup" onToggle={onToggle} disabled={true}>
+        <span>Body</span>
+      </ToggleSection>,
+    );
+    const button = container.querySelector("button.MuiButtonBase-root");
+
+    if (button === null) {
+      throw new Error("ButtonBase not rendered");
+    }
+
+    fireEvent.click(button);
+
+    expect(onToggle).not.toHaveBeenCalled();
+  });
+
+  it("renders the body present-but-inert when disabled and on", () => {
+    render(
+      <ToggleSection on={true} label="Warmup" onToggle={vi.fn()} disabled={true}>
+        <span data-testid="toggle-body">Body content</span>
+      </ToggleSection>,
+    );
+
+    expect(screen.getByTestId("toggle-body")).toBeInTheDocument();
+  });
 });

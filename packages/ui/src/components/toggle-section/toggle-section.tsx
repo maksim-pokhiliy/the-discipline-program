@@ -15,6 +15,7 @@ export type ToggleSectionProps = {
   children: ReactNode;
   helper?: ReactNode | undefined;
   onToggle?: (() => void) | undefined;
+  disabled?: boolean | undefined;
 };
 
 export const ToggleSection: React.FC<ToggleSectionProps> = ({
@@ -23,6 +24,7 @@ export const ToggleSection: React.FC<ToggleSectionProps> = ({
   children,
   helper,
   onToggle,
+  disabled = false,
 }): ReactElement => {
   const dot = (
     <Box
@@ -51,13 +53,27 @@ export const ToggleSection: React.FC<ToggleSectionProps> = ({
 
   const head =
     onToggle !== undefined ? (
-      <ButtonBase onClick={onToggle} sx={TOGGLE_HEAD_SX}>
+      <ButtonBase
+        onClick={onToggle}
+        disabled={disabled}
+        sx={(theme) => ({
+          ...TOGGLE_HEAD_SX,
+          opacity: disabled ? theme.palette.action.disabledOpacity : 1,
+        })}
+      >
         {dot}
         {labelNode}
         {helperNode}
       </ButtonBase>
     ) : (
-      <Box sx={{ ...TOGGLE_HEAD_SX, display: "flex", alignItems: "center" }}>
+      <Box
+        sx={(theme) => ({
+          ...TOGGLE_HEAD_SX,
+          display: "flex",
+          alignItems: "center",
+          opacity: disabled ? theme.palette.action.disabledOpacity : 1,
+        })}
+      >
         {dot}
         {labelNode}
         {helperNode}
@@ -77,7 +93,20 @@ export const ToggleSection: React.FC<ToggleSectionProps> = ({
       })}
     >
       {head}
-      {on && <Box sx={{ p: 1.25, borderTop: "1px solid", borderColor: "divider" }}>{children}</Box>}
+      {on && (
+        <Box
+          sx={(theme) => ({
+            p: 1.25,
+            borderTop: "1px solid",
+            borderColor: "divider",
+            ...(disabled
+              ? { pointerEvents: "none", opacity: theme.palette.action.disabledOpacity }
+              : {}),
+          })}
+        >
+          {children}
+        </Box>
+      )}
     </Card>
   );
 };

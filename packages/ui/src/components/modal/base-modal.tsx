@@ -4,18 +4,26 @@ import { type ReactNode } from "react";
 
 import CloseIcon from "@mui/icons-material/Close";
 import {
+  Box,
   Dialog,
   DialogActions,
   DialogTitle,
   DialogContent,
   IconButton,
+  Stack,
   type DialogProps,
 } from "@mui/material";
+
+const MODAL_SUBTITLE_FONT_SIZE_PX = 11;
+const MODAL_SUBTITLE_FONT_WEIGHT = 600;
+const MODAL_SUBTITLE_LETTER_SPACING = "0.04em";
+const MODAL_TITLE_GAP = 1;
 
 export type BaseModalProps = {
   open: boolean;
   onClose: () => void;
   title: string;
+  subtitle?: ReactNode | undefined;
   maxWidth?: DialogProps["maxWidth"] | undefined;
   fullWidth?: boolean | undefined;
   children: ReactNode;
@@ -28,6 +36,7 @@ export const BaseModal = ({
   open,
   onClose,
   title,
+  subtitle,
   maxWidth = "sm",
   fullWidth = true,
   children,
@@ -57,7 +66,24 @@ export const BaseModal = ({
       disableAutoFocus={false}
     >
       <DialogTitle>
-        {title}
+        <Stack direction="row" spacing={MODAL_TITLE_GAP} sx={{ alignItems: "baseline" }}>
+          <span>{title}</span>
+
+          {subtitle !== undefined && (
+            <Box
+              component="span"
+              sx={{
+                fontSize: `${MODAL_SUBTITLE_FONT_SIZE_PX}px`,
+                fontWeight: MODAL_SUBTITLE_FONT_WEIGHT,
+                letterSpacing: MODAL_SUBTITLE_LETTER_SPACING,
+                textTransform: "uppercase",
+                color: "text.secondary",
+              }}
+            >
+              {subtitle}
+            </Box>
+          )}
+        </Stack>
 
         <IconButton onClick={onClose} aria-label="Close">
           <CloseIcon fontSize="small" />

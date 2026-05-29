@@ -1,125 +1,136 @@
 "use client";
 
 import {
-  Box,
-  FormControlLabel,
+  Button,
   Stack,
-  Switch,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
+  Typography,
 } from "@mui/material";
+import type { FieldErrors } from "react-hook-form";
 
 import { TIME_CAP_UNITS, type TimeCap, type TimeCapUnit } from "@repo/contracts/lms/_shared";
+
+const TIME_CAP_PRESETS_MIN = [8, 10, 12, 15, 20, 25] as const;
+const TIME_CAP_FIELD_WIDTH = 80;
+const PRESET_SUFFIX = ":00";
+const EN_DASH = "–";
 
 type TimeCapFieldsProps = {
   value: TimeCap | null;
   onChange: (next: TimeCap | null) => void;
+  error?: FieldErrors<TimeCap> | undefined;
   disabled?: boolean;
 };
 
-export const TimeCapFields = ({ value, onChange, disabled = false }: TimeCapFieldsProps) => {
-  const enabled = value !== null;
-  const rangeEnabled = value !== null && value.max !== undefined;
+export const TimeCapFields = ({ value, onChange, error, disabled = false }: TimeCapFieldsProps) => {
+  const activePreset =
+    value !== null &&
+    value.unit === "min" &&
+    value.max === undefined &&
+    TIME_CAP_PRESETS_MIN.some((n) => n === value.min)
+      ? value.min
+      : null;
 
-  const handleSectionToggle = (_: unknown, next: boolean) => {
-    if (next) {
-      onChange({ min: 5, unit: "min" });
-    } else {
+  const handleMinChange = (raw: string) => {
+    if (raw === "") {
       onChange(null);
-    }
-  };
 
-  const handleRangeToggle = (_: unknown, next: boolean) => {
-    if (value === null) {
       return;
     }
 
-    if (next) {
-      onChange({ ...value, max: value.min + 5 });
-    } else {
-      onChange({ min: value.min, unit: value.unit });
-    }
+    onChange({ ...(value ?? { unit: "min" }), min: Number.parseInt(raw, 10) || 0 });
   };
 
-  const handleMinChange = (n: number) => {
-    if (value === null) {
+  const handleMaxChange = (raw: string) => {
+    onChange({
+      ...(value ?? { min: 0, unit: "min" }),
+      max: raw === "" ? undefined : Number.parseInt(raw, 10) || 0,
+    });
+  };
+
+  const handleUnitChange = (_: unknown, unit: TimeCapUnit | null) => {
+    if (unit === null) {
       return;
     }
 
-    onChange({ ...value, min: n });
+    onChange({ ...(value ?? { min: 0 }), unit });
   };
-  const handleMaxChange = (n: number) => {
-    if (value === null) {
-      return;
-    }
 
-    onChange({ ...value, max: n });
-  };
-  const handleUnitChange = (_: unknown, next: TimeCapUnit | null) => {
-    if (next === null || value === null) {
-      return;
+  const handlePresetChange = (_: unknown, preset: number | null) => {
+    if (preset !== null) {
+      onChange({ min: preset, unit: "min" });
     }
-
-    onChange({ ...value, unit: next });
   };
 
   return (
-    <Box>
-      <FormControlLabel
-        control={<Switch checked={enabled} onChange={handleSectionToggle} disabled={disabled} />}
-        label="Time cap"
-      />
+    <Stack spacing={1}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+        <TextField
+          type="number"
+          size="small"
+          placeholder="—"
+          value={value?.min ?? ""}
+          onChange={(e) => handleMinChange(e.target.value)}
+          inputProps={{ min: 1, step: 1 }}
+          error={error?.min !== undefined}
+          helperText={error?.min?.message}
+          disabled={disabled}
+          sx={{ maxWidth: TIME_CAP_FIELD_WIDTH }}
+        />
 
-      {enabled && value !== null && (
-        <Stack spacing={1.5} sx={{ pl: 4, pt: 1 }}>
-          <Stack direction="row" spacing={1}>
-            <TextField
-              label="Min"
-              type="number"
-              size="small"
-              value={value.min}
-              onChange={(e) => handleMinChange(Number(e.target.value))}
-              inputProps={{ min: 1, step: 1 }}
-              disabled={disabled}
-              sx={{ maxWidth: 120 }}
-            />
-            {rangeEnabled && (
-              <TextField
-                label="Max"
-                type="number"
-                size="small"
-                value={value.max ?? 0}
-                onChange={(e) => handleMaxChange(Number(e.target.value))}
-                inputProps={{ min: 1, step: 1 }}
-                disabled={disabled}
-                sx={{ maxWidth: 120 }}
-              />
-            )}
-          </Stack>
+        <Typography variant="body2" color="text.subtle">
+          {EN_DASH}
+        </Typography>
 
-          <FormControlLabel
-            control={
-              <Switch checked={rangeEnabled} onChange={handleRangeToggle} disabled={disabled} />
-            }
-            label="Add range max"
-          />
+        <TextField
+          type="number"
+          size="small"
+          placeholder="max"
+          value={value?.max ?? ""}
+          onChange={(e) => handleMaxChange(e.target.value)}
+          inputProps={{ min: 1, step: 1 }}
+          error={error?.max !== undefined || error?.root !== undefined}
+          helperText={error?.max?.message ?? error?.root?.message}
+          disabled={disabled}
+          sx={{ maxWidth: TIME_CAP_FIELD_WIDTH }}
+        />
 
-          <ToggleButtonGroup
-            value={value.unit}
-            exclusive
-            onChange={handleUnitChange}
-            size="small"
-            disabled={disabled}
-          >
-            {TIME_CAP_UNITS.map((u) => (
-              <ToggleButton key={u} value={u}>
-                {u}
-              </ToggleButton>
-            ))}
-          </ToggleButtonGroup>
-        </Stack>
-      )}
-    </Box>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={value?.unit ?? "min"}
+          onChange={handleUnitChange}
+          disabled={disabled}
+        >
+          {TIME_CAP_UNITS.map((u) => (
+            <ToggleButton key={u} value={u}>
+              {u}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Stack>
+
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+        <ToggleButtonGroup
+          exclusive
+          size="small"
+          value={activePreset}
+          onChange={handlePresetChange}
+          disabled={disabled}
+        >
+          {TIME_CAP_PRESETS_MIN.map((n) => (
+            <ToggleButton key={n} value={n}>
+              {`${n}${PRESET_SUFFIX}`}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+
+        <Button size="tiny" variant="text" onClick={() => onChange(null)} disabled={disabled}>
+          clear
+        </Button>
+      </Stack>
+    </Stack>
   );
 };

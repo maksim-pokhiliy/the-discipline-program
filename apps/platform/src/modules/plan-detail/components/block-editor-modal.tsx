@@ -3,7 +3,7 @@
 import { type FormEvent, useEffect } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Stack, Typography } from "@mui/material";
+import { Stack, TextField } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -14,13 +14,14 @@ import {
   numericPaceSchema,
   paceSchema,
   rpeSchema,
-  type TimeCap,
   timeCapSchema,
 } from "@repo/contracts/lms/_shared";
-import type { Block } from "@repo/contracts/lms/block";
-import { FormModal } from "@repo/ui";
+import { type Block, BLOCK_CONSTANTS } from "@repo/contracts/lms/block";
+import { FormModal, FormSection } from "@repo/ui";
 
 import { useUpdateBlock } from "@app/lib/hooks";
+
+import { intensityHasAny } from "../lib/format-block-meta";
 
 import { EffortPercentField } from "./effort-percent-field";
 import { HrZoneField } from "./hr-zone-field";
@@ -28,6 +29,9 @@ import { NumericPaceField } from "./numeric-pace-field";
 import { PaceField } from "./pace-field";
 import { RpeField } from "./rpe-field";
 import { TimeCapFields } from "./time-cap-fields";
+
+const NOTES_PLACEHOLDER = 'e.g. "Build to a heavy 5. Slow ascent, no missed reps."';
+const NOTES_MIN_ROWS = 3;
 
 const blockEditorFormSchema = z.object({
   intensity: z.object({
@@ -38,6 +42,7 @@ const blockEditorFormSchema = z.object({
     numericPace: numericPaceSchema.optional(),
   }),
   timeCap: timeCapSchema.nullable(),
+  notes: z.string().max(BLOCK_CONSTANTS.MAX_NOTES_LENGTH),
 });
 
 type BlockEditorFormData = z.infer<typeof blockEditorFormSchema>;
@@ -55,30 +60,16 @@ const toFormData = (block: Block): BlockEditorFormData => ({
     }),
   },
   timeCap: block.timeCap,
+  notes: block.notes ?? "",
 });
 
-const buildIntensityPayload = (form: BlockEditorFormData["intensity"]): Intensity | null => {
-  const hasAny =
-    form.effortPercent !== undefined ||
-    form.rpe !== undefined ||
-    form.pace !== undefined ||
-    form.hrZone !== undefined ||
-    form.numericPace !== undefined;
-
-  if (!hasAny) {
-    return null;
-  }
-
-  return {
-    ...(form.effortPercent !== undefined && { effortPercent: form.effortPercent }),
-    ...(form.rpe !== undefined && { rpe: form.rpe }),
-    ...(form.pace !== undefined && { pace: form.pace }),
-    ...(form.hrZone !== undefined && { hrZone: form.hrZone }),
-    ...(form.numericPace !== undefined && { numericPace: form.numericPace }),
-  };
-};
-
-const buildTimeCapPayload = (form: BlockEditorFormData["timeCap"]): TimeCap | null => form;
+const buildIntensityCandidate = (form: BlockEditorFormData["intensity"]): Intensity => ({
+  ...(form.effortPercent !== undefined && { effortPercent: form.effortPercent }),
+  ...(form.rpe !== undefined && { rpe: form.rpe }),
+  ...(form.pace !== undefined && { pace: form.pace }),
+  ...(form.hrZone !== undefined && { hrZone: form.hrZone }),
+  ...(form.numericPace !== undefined && { numericPace: form.numericPace }),
+});
 
 type BlockEditorModalProps = {
   open: boolean;
@@ -97,7 +88,7 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
 }) => {
   const updateBlock = useUpdateBlock(planId, startDate);
 
-  const { control, handleSubmit, reset } = useForm<BlockEditorFormData>({
+  const { control, handleSubmit, reset, formState } = useForm<BlockEditorFormData>({
     resolver: zodResolver(blockEditorFormSchema),
     defaultValues: toFormData(block),
   });
@@ -107,11 +98,12 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
   }, [block, reset]);
 
   const onSubmit = (data: BlockEditorFormData) => {
-    const intensity = buildIntensityPayload(data.intensity);
-    const timeCap = buildTimeCapPayload(data.timeCap);
+    const candidate = buildIntensityCandidate(data.intensity);
+    const intensity = intensityHasAny(candidate) ? candidate : null;
+    const notes = data.notes.trim() === "" ? null : data.notes;
 
     updateBlock.mutate(
-      { blockId: block.id, data: { intensity, timeCap } },
+      { blockId: block.id, data: { intensity, timeCap: data.timeCap, notes } },
       { onSuccess: () => onClose() },
     );
   };
@@ -124,80 +116,80 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
     <FormModal
       open={open}
       onClose={onClose}
-      title="Edit block details"
+      title="Edit block"
+      subtitle="intensity + cap cascade to all schemas in this block"
+      maxWidth="sm"
       onSubmit={handleFormSubmit}
       isSubmitting={updateBlock.isPending}
       submitText="Save"
     >
-      <Stack spacing={2}>
-        <Typography variant="subtitle2" color="text.secondary">
-          Intensity (set any combination)
-        </Typography>
+      <FormSection label="Intensity — any combination of axes">
+        <Stack spacing={0.75}>
+          <Controller
+            name="intensity.effortPercent"
+            control={control}
+            render={({ field }) => (
+              <EffortPercentField
+                value={field.value}
+                onChange={field.onChange}
+                error={formState.errors.intensity?.effortPercent}
+                disabled={updateBlock.isPending}
+              />
+            )}
+          />
 
-        <Controller
-          name="intensity.effortPercent"
-          control={control}
-          render={({ field }) => (
-            <EffortPercentField
-              value={field.value}
-              onChange={field.onChange}
-              disabled={updateBlock.isPending}
-            />
-          )}
-        />
+          <Controller
+            name="intensity.rpe"
+            control={control}
+            render={({ field }) => (
+              <RpeField
+                value={field.value}
+                onChange={field.onChange}
+                disabled={updateBlock.isPending}
+              />
+            )}
+          />
 
-        <Controller
-          name="intensity.rpe"
-          control={control}
-          render={({ field }) => (
-            <RpeField
-              value={field.value}
-              onChange={field.onChange}
-              disabled={updateBlock.isPending}
-            />
-          )}
-        />
+          <Controller
+            name="intensity.pace"
+            control={control}
+            render={({ field }) => (
+              <PaceField
+                value={field.value}
+                onChange={field.onChange}
+                disabled={updateBlock.isPending}
+              />
+            )}
+          />
 
-        <Controller
-          name="intensity.pace"
-          control={control}
-          render={({ field }) => (
-            <PaceField
-              value={field.value}
-              onChange={field.onChange}
-              disabled={updateBlock.isPending}
-            />
-          )}
-        />
+          <Controller
+            name="intensity.hrZone"
+            control={control}
+            render={({ field }) => (
+              <HrZoneField
+                value={field.value}
+                onChange={field.onChange}
+                disabled={updateBlock.isPending}
+              />
+            )}
+          />
 
-        <Controller
-          name="intensity.hrZone"
-          control={control}
-          render={({ field }) => (
-            <HrZoneField
-              value={field.value}
-              onChange={field.onChange}
-              disabled={updateBlock.isPending}
-            />
-          )}
-        />
+          <Controller
+            name="intensity.numericPace"
+            control={control}
+            render={({ field }) => (
+              <NumericPaceField
+                value={field.value}
+                onChange={field.onChange}
+                error={formState.errors.intensity?.numericPace}
+                disabled={updateBlock.isPending}
+              />
+            )}
+          />
+        </Stack>
+      </FormSection>
 
-        <Controller
-          name="intensity.numericPace"
-          control={control}
-          render={({ field }) => (
-            <NumericPaceField
-              value={field.value}
-              onChange={field.onChange}
-              disabled={updateBlock.isPending}
-            />
-          )}
-        />
-
-        <Typography variant="subtitle2" color="text.secondary" sx={{ pt: 1 }}>
-          Time cap
-        </Typography>
-
+      <FormSection label="Time cap">
         <Controller
           name="timeCap"
           control={control}
@@ -205,11 +197,36 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
             <TimeCapFields
               value={field.value}
               onChange={field.onChange}
+              error={formState.errors.timeCap}
               disabled={updateBlock.isPending}
             />
           )}
         />
-      </Stack>
+      </FormSection>
+
+      <FormSection label="Block notes" helper="coaching cues, intent">
+        <Controller
+          name="notes"
+          control={control}
+          render={({ field }) => (
+            <TextField
+              multiline
+              minRows={NOTES_MIN_ROWS}
+              fullWidth
+              value={field.value}
+              onChange={field.onChange}
+              disabled={updateBlock.isPending}
+              placeholder={NOTES_PLACEHOLDER}
+              inputProps={{
+                maxLength: BLOCK_CONSTANTS.MAX_NOTES_LENGTH,
+                "aria-label": "Block notes",
+              }}
+              error={formState.errors.notes !== undefined}
+              helperText={formState.errors.notes?.message}
+            />
+          )}
+        />
+      </FormSection>
     </FormModal>
   );
 };

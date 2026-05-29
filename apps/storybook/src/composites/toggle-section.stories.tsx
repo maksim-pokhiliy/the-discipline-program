@@ -44,6 +44,34 @@ export const Off: Story = {
   ),
 };
 
+export const Disabled: Story = {
+  render: () => (
+    <StoryPage>
+      <StorySection title="disabled — pending mutation" direction="column">
+        <ToggleSection
+          on
+          label="Disabled while on"
+          helper="head dimmed, body non-interactive"
+          onToggle={() => undefined}
+          disabled
+        >
+          <Typography variant="body2">Body greyed and non-interactive.</Typography>
+        </ToggleSection>
+
+        <ToggleSection
+          on={false}
+          label="Disabled while off"
+          helper="head dimmed, click suppressed"
+          onToggle={() => undefined}
+          disabled
+        >
+          <Typography variant="body2">Hidden body.</Typography>
+        </ToggleSection>
+      </StorySection>
+    </StoryPage>
+  ),
+};
+
 const InteractiveStory = () => {
   const [on, setOn] = useState(true);
 

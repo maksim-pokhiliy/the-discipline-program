@@ -3,47 +3,38 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { ARCHETYPE_NAMES } from "@repo/contracts/lms/schema";
 
-const ARCHIVED_PLAN_NAME = "2025 Open Prep";
-const SEED_WEEK_START_ISO = "2025-01-06T00:00:00.000Z";
+const CANONICAL_PLAN_NAME = "CFG Quarter Build";
 
 describe("Seed invariants — training-domain referential integrity", () => {
   const db = new PrismaClient();
 
-  let seedWeekId: string | null = null;
+  let seedPlanId: string | null = null;
 
   beforeAll(async () => {
     const plan = await db.trainingPlan.findFirst({
-      where: { name: ARCHIVED_PLAN_NAME, deletedAt: null },
+      where: { name: CANONICAL_PLAN_NAME, deletedAt: null },
     });
 
-    if (!plan) {
-      return;
-    }
-
-    const week = await db.week.findFirst({
-      where: { planId: plan.id, startDate: new Date(SEED_WEEK_START_ISO) },
-    });
-
-    seedWeekId = week?.id ?? null;
+    seedPlanId = plan?.id ?? null;
   });
 
   afterAll(async () => {
     await db.$disconnect();
   });
 
-  it("seeded the canonical Open Prep week (pre-condition for the rest)", () => {
-    expect(seedWeekId).not.toBeNull();
+  it("seeded the canonical CFG Quarter Build plan (pre-condition for the rest)", () => {
+    expect(seedPlanId).not.toBeNull();
   });
 
   it("T1: every Schema.alternatingGroupId references an existing AlternatingGroup in the same block", async () => {
-    if (seedWeekId === null) {
-      throw new Error("seed week missing; cannot validate invariant");
+    if (seedPlanId === null) {
+      throw new Error("seed plan missing; cannot validate invariant");
     }
 
     const members = await db.schema.findMany({
       where: {
         alternatingGroupId: { not: null },
-        block: { session: { day: { weekId: seedWeekId } } },
+        block: { session: { day: { week: { planId: seedPlanId } } } },
       },
       select: { id: true, blockId: true, alternatingGroupId: true },
     });
@@ -64,12 +55,12 @@ describe("Seed invariants — training-domain referential integrity", () => {
   });
 
   it("T2: every BlockLabelAssignment.labelId references an existing Label", async () => {
-    if (seedWeekId === null) {
-      throw new Error("seed week missing; cannot validate invariant");
+    if (seedPlanId === null) {
+      throw new Error("seed plan missing; cannot validate invariant");
     }
 
     const assignments = await db.blockLabelAssignment.findMany({
-      where: { block: { session: { day: { weekId: seedWeekId } } } },
+      where: { block: { session: { day: { week: { planId: seedPlanId } } } } },
       select: { id: true, labelId: true },
     });
 
@@ -85,14 +76,14 @@ describe("Seed invariants — training-domain referential integrity", () => {
   });
 
   it("T3: every atomic EXERCISE row references an existing Exercise (resolved via rowPayload.exercise.exerciseId)", async () => {
-    if (seedWeekId === null) {
-      throw new Error("seed week missing; cannot validate invariant");
+    if (seedPlanId === null) {
+      throw new Error("seed plan missing; cannot validate invariant");
     }
 
     const rows = await db.schemaRow.findMany({
       where: {
         rowKind: "EXERCISE",
-        schema: { block: { session: { day: { weekId: seedWeekId } } } },
+        schema: { block: { session: { day: { week: { planId: seedPlanId } } } } },
       },
       select: { id: true, rowPayload: true },
     });
@@ -121,12 +112,12 @@ describe("Seed invariants — training-domain referential integrity", () => {
   });
 
   it("T4: every AlternatingGroup has at least 2 member schemas in its block (alternatingGroupSchema.schemaIds.min(2) invariant)", async () => {
-    if (seedWeekId === null) {
-      throw new Error("seed week missing; cannot validate invariant");
+    if (seedPlanId === null) {
+      throw new Error("seed plan missing; cannot validate invariant");
     }
 
     const groups = await db.alternatingGroup.findMany({
-      where: { block: { session: { day: { weekId: seedWeekId } } } },
+      where: { block: { session: { day: { week: { planId: seedPlanId } } } } },
       select: { id: true, blockId: true, schemas: { select: { id: true, blockId: true } } },
     });
 
@@ -142,14 +133,14 @@ describe("Seed invariants — training-domain referential integrity", () => {
   });
 
   it("T5: every super-set archetypeParams.pairs[].schemaRows references an existing SchemaRow (no placeholder leaks)", async () => {
-    if (seedWeekId === null) {
-      throw new Error("seed week missing; cannot validate invariant");
+    if (seedPlanId === null) {
+      throw new Error("seed plan missing; cannot validate invariant");
     }
 
     const superSetSchemas = await db.schema.findMany({
       where: {
         archetype: { name: "super-set" },
-        block: { session: { day: { weekId: seedWeekId } } },
+        block: { session: { day: { week: { planId: seedPlanId } } } },
       },
       select: { id: true, archetypeParams: true },
     });
