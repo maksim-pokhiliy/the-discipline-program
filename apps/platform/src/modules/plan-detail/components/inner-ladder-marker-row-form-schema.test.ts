@@ -1,18 +1,24 @@
+import type { FieldError } from "react-hook-form";
 import { describe, expect, it } from "vitest";
 
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
-import { innerLadderMarkerRowFormSchema, toFormData } from "./inner-ladder-marker-row-form";
+import { toInnerLadderMarkerValue } from "./inner-ladder-marker-row-payload-form";
+import { parseRowPayload } from "./row-form-utils";
 
-const issuePaths = (data: unknown): string[] => {
-  const result = innerLadderMarkerRowFormSchema.safeParse(data);
+const isFieldError = (node: unknown): node is FieldError =>
+  typeof node === "object" && node !== null && "message" in node;
 
-  if (result.success) {
-    return [];
+const readMessage = (node: unknown): string | undefined => {
+  if (isFieldError(node) && typeof node.message === "string") {
+    return node.message;
   }
 
-  return result.error.issues.map((issue) => issue.path.join("."));
+  return undefined;
 };
+
+const readBranch = (node: unknown, key: string): unknown =>
+  typeof node === "object" && node !== null ? (node as Record<string, unknown>)[key] : undefined;
 
 const baseSchemaRow = {
   id: "ckxw5p7gp0000q1mnzv5cuq0a",
@@ -44,37 +50,51 @@ const restSlotRow: SchemaRow = {
   rowPayload: { rowKind: "REST_SLOT" },
 };
 
-describe("innerLadderMarkerRowFormSchema", () => {
-  it("rejects an empty steps array at path steps", () => {
-    expect(issuePaths({ steps: [] })).toContain("steps");
+describe("parseRowPayload for INNER_LADDER_MARKER", () => {
+  it("accepts a descending ladder", () => {
+    const result = parseRowPayload("INNER_LADDER_MARKER", { steps: [21, 15, 9] });
+
+    expect(result.ok).toBe(true);
+
+    if (result.ok) {
+      expect(result.value).toEqual({ rowKind: "INNER_LADDER_MARKER", steps: [21, 15, 9] });
+    }
   });
 
   it("accepts a single-step array", () => {
-    expect(innerLadderMarkerRowFormSchema.safeParse({ steps: [21] }).success).toBe(true);
-  });
-
-  it("rejects a non-integer step", () => {
-    expect(innerLadderMarkerRowFormSchema.safeParse({ steps: [21, 15.5, 9] }).success).toBe(false);
-  });
-
-  it("rejects a zero step", () => {
-    expect(innerLadderMarkerRowFormSchema.safeParse({ steps: [21, 0, 9] }).success).toBe(false);
-  });
-
-  it("rejects a negative step", () => {
-    expect(innerLadderMarkerRowFormSchema.safeParse({ steps: [21, -15, 9] }).success).toBe(false);
+    expect(parseRowPayload("INNER_LADDER_MARKER", { steps: [21] }).ok).toBe(true);
   });
 
   it("accepts repeated steps — the vertex-pyramid case, no de-dup", () => {
-    expect(innerLadderMarkerRowFormSchema.safeParse({ steps: [11, 9, 7, 9, 11] }).success).toBe(
-      true,
-    );
+    expect(parseRowPayload("INNER_LADDER_MARKER", { steps: [11, 9, 7, 9, 11] }).ok).toBe(true);
+  });
+
+  it("rejects an empty steps array at the steps root", () => {
+    const result = parseRowPayload("INNER_LADDER_MARKER", { steps: [] });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(readBranch(result.error.steps, "root"))).toBeDefined();
+    }
+  });
+
+  it("rejects a non-integer step", () => {
+    expect(parseRowPayload("INNER_LADDER_MARKER", { steps: [21, 15.5, 9] }).ok).toBe(false);
+  });
+
+  it("rejects a zero step", () => {
+    expect(parseRowPayload("INNER_LADDER_MARKER", { steps: [21, 0, 9] }).ok).toBe(false);
+  });
+
+  it("rejects a negative step", () => {
+    expect(parseRowPayload("INNER_LADDER_MARKER", { steps: [21, -15, 9] }).ok).toBe(false);
   });
 });
 
-describe("toFormData", () => {
+describe("toInnerLadderMarkerValue", () => {
   it("returns the default single step in create mode", () => {
-    const result = toFormData({
+    const result = toInnerLadderMarkerValue({
       kind: "create",
       schemaId: baseSchemaRow.schemaId,
       rowKind: "INNER_LADDER_MARKER",
@@ -84,13 +104,13 @@ describe("toFormData", () => {
   });
 
   it("returns the row's steps when editing an INNER_LADDER_MARKER row", () => {
-    const result = toFormData({ kind: "edit", row: innerLadderMarkerRow });
+    const result = toInnerLadderMarkerValue({ kind: "edit", row: innerLadderMarkerRow });
 
     expect(result.steps).toEqual([36, 28, 20]);
   });
 
   it("falls back to the default step when editing a non-INNER_LADDER_MARKER row", () => {
-    const result = toFormData({ kind: "edit", row: restSlotRow });
+    const result = toInnerLadderMarkerValue({ kind: "edit", row: restSlotRow });
 
     expect(result.steps).toEqual([21]);
   });
