@@ -1,7 +1,7 @@
 "use client";
 
 import CloseIcon from "@mui/icons-material/Close";
-import { Button, FormHelperText, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Button, FormHelperText, IconButton, Stack, TextField } from "@mui/material";
 import type { FieldError, FieldErrorsImpl, Merge } from "react-hook-form";
 
 const MIN_STEPS = 1;
@@ -60,12 +60,6 @@ export const StepArrayFields = ({
               disabled={disabled}
               sx={{ maxWidth: CELL_MAX_WIDTH }}
             />
-
-            {index < value.length - 1 && (
-              <Typography variant="body2" color="text.disabled">
-                -
-              </Typography>
-            )}
 
             <IconButton
               aria-label="Remove step"
