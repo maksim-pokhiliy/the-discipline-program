@@ -1,6 +1,6 @@
 "use client";
 
-import { FormControl, InputLabel, MenuItem, Select, Stack } from "@mui/material";
+import { Stack, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
 import { LOAD_KINDS, type Load, type LoadKind } from "@repo/contracts/lms/_shared";
@@ -13,11 +13,11 @@ import { LoadWithoutWeightFields } from "./load-without-weight-fields";
 import { buildDefaultLoad } from "./weight-load-defaults";
 
 const LOAD_KIND_LABELS: Record<LoadKind, string> = {
-  absolute: "Exact weight",
-  percentage: "Percentage",
-  bodyweight: "Bodyweight",
-  without_weight: "Without weight",
-  unspecified: "Unspecified",
+  absolute: "Absolute kg",
+  percentage: "% of ref",
+  bodyweight: "BW",
+  without_weight: "No wt",
+  unspecified: "—",
 };
 
 type LoadEditorProps = {
@@ -28,8 +28,12 @@ type LoadEditorProps = {
 };
 
 export const LoadEditor = ({ value, onChange, error, disabled = false }: LoadEditorProps) => {
-  const handleKindChange = (nextKind: LoadKind) => {
-    onChange(buildDefaultLoad(nextKind));
+  const handleKindChange = (_: unknown, next: LoadKind | null) => {
+    if (next === null) {
+      return;
+    }
+
+    onChange(buildDefaultLoad(next));
   };
 
   const renderKind = (): React.ReactNode => {
@@ -58,20 +62,19 @@ export const LoadEditor = ({ value, onChange, error, disabled = false }: LoadEdi
 
   return (
     <Stack spacing={1.5}>
-      <FormControl size="small" sx={{ minWidth: 220 }} disabled={disabled}>
-        <InputLabel>Load type</InputLabel>
-        <Select
-          value={value.kind}
-          label="Load type"
-          onChange={(e) => handleKindChange(e.target.value as LoadKind)}
-        >
-          {LOAD_KINDS.map((kind) => (
-            <MenuItem key={kind} value={kind}>
-              {LOAD_KIND_LABELS[kind]}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <ToggleButtonGroup
+        value={value.kind}
+        exclusive
+        onChange={handleKindChange}
+        size="small"
+        disabled={disabled}
+      >
+        {LOAD_KINDS.map((kind) => (
+          <ToggleButton key={kind} value={kind}>
+            {LOAD_KIND_LABELS[kind]}
+          </ToggleButton>
+        ))}
+      </ToggleButtonGroup>
 
       {renderKind()}
     </Stack>

@@ -2,15 +2,13 @@
 
 import {
   Box,
-  FormControl,
   FormControlLabel,
-  FormHelperText,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
   Switch,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
 } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
@@ -29,14 +27,14 @@ import { DEFAULT_VALUE_KG } from "./weight-load-defaults";
 type AsymmetricArmWeight = Extract<Weight, { variant: "with_asymmetric_arm" }>;
 
 const WORKING_ARM_LABELS: Record<WeightWorkingArm, string> = {
-  left: "Left arm",
-  right: "Right arm",
+  left: "L",
+  right: "R",
 };
 
 const PASSIVE_ARM_ACTION_LABELS: Record<WeightPassiveArmAction, string> = {
-  hold_in_up: "Hold in up",
-  hold_static: "Hold static",
-  hold_with_extra_weight: "Hold with extra weight",
+  hold_in_up: "hold up",
+  hold_static: "static",
+  hold_with_extra_weight: "extra wt",
 };
 
 const PASSIVE_EQUIPMENT_LABELS: Record<WeightAsymmetricPassiveEquipment, string> = {
@@ -59,6 +57,39 @@ export const WeightAsymmetricArmFields = ({
 }: WeightAsymmetricArmFieldsProps) => {
   const hasPassiveExtraWeight = value.passiveExtraWeight !== undefined;
   const passiveError = error?.passiveExtraWeight;
+
+  const handleWorkingArmChange = (_: unknown, next: WeightWorkingArm | null) => {
+    if (next === null) {
+      return;
+    }
+
+    onChange({ ...value, workingArm: next });
+  };
+
+  const handlePassiveActionChange = (_: unknown, next: WeightPassiveArmAction | null) => {
+    if (next === null) {
+      return;
+    }
+
+    onChange({ ...value, passiveArmAction: next });
+  };
+
+  const handlePassiveEquipmentChange = (
+    _: unknown,
+    next: WeightAsymmetricPassiveEquipment | null,
+  ) => {
+    if (next === null) {
+      return;
+    }
+
+    onChange({
+      ...value,
+      passiveExtraWeight: {
+        equipment: next,
+        valueKg: value.passiveExtraWeight?.valueKg ?? DEFAULT_VALUE_KG,
+      },
+    });
+  };
 
   const handlePassiveToggle = (_: unknown, next: boolean) => {
     if (next) {
@@ -93,47 +124,45 @@ export const WeightAsymmetricArmFields = ({
         sx={{ maxWidth: 160 }}
       />
 
-      <FormControl
-        size="small"
-        sx={{ minWidth: 160 }}
-        disabled={disabled}
-        error={error?.workingArm !== undefined}
-      >
-        <InputLabel>Working arm</InputLabel>
-        <Select
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+        <Typography variant="caption" color="text.subtle">
+          working arm
+        </Typography>
+
+        <ToggleButtonGroup
           value={value.workingArm}
-          label="Working arm"
-          onChange={(e) => onChange({ ...value, workingArm: e.target.value as WeightWorkingArm })}
+          exclusive
+          onChange={handleWorkingArmChange}
+          size="small"
+          disabled={disabled}
         >
           {WEIGHT_WORKING_ARMS.map((arm) => (
-            <MenuItem key={arm} value={arm}>
+            <ToggleButton key={arm} value={arm}>
               {WORKING_ARM_LABELS[arm]}
-            </MenuItem>
+            </ToggleButton>
           ))}
-        </Select>
-      </FormControl>
+        </ToggleButtonGroup>
+      </Stack>
 
-      <FormControl
-        size="small"
-        sx={{ minWidth: 220 }}
-        disabled={disabled}
-        error={error?.passiveArmAction !== undefined}
-      >
-        <InputLabel>Passive arm action</InputLabel>
-        <Select
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+        <Typography variant="caption" color="text.subtle">
+          passive arm
+        </Typography>
+
+        <ToggleButtonGroup
           value={value.passiveArmAction}
-          label="Passive arm action"
-          onChange={(e) =>
-            onChange({ ...value, passiveArmAction: e.target.value as WeightPassiveArmAction })
-          }
+          exclusive
+          onChange={handlePassiveActionChange}
+          size="small"
+          disabled={disabled}
         >
           {WEIGHT_PASSIVE_ARM_ACTIONS.map((action) => (
-            <MenuItem key={action} value={action}>
+            <ToggleButton key={action} value={action}>
               {PASSIVE_ARM_ACTION_LABELS[action]}
-            </MenuItem>
+            </ToggleButton>
           ))}
-        </Select>
-      </FormControl>
+        </ToggleButtonGroup>
+      </Stack>
 
       <Box>
         <FormControlLabel
@@ -149,36 +178,31 @@ export const WeightAsymmetricArmFields = ({
 
         {value.passiveExtraWeight !== undefined && (
           <Stack spacing={1.5} sx={{ pl: 4, pt: 1 }}>
-            <FormControl
-              size="small"
-              sx={{ minWidth: 160 }}
-              disabled={disabled}
-              error={passiveError?.equipment !== undefined}
-            >
-              <InputLabel>Equipment</InputLabel>
-              <Select
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+              <Typography variant="caption" color="text.subtle">
+                equipment
+              </Typography>
+
+              <ToggleButtonGroup
                 value={value.passiveExtraWeight.equipment}
-                label="Equipment"
-                onChange={(e) =>
-                  onChange({
-                    ...value,
-                    passiveExtraWeight: {
-                      equipment: e.target.value as WeightAsymmetricPassiveEquipment,
-                      valueKg: value.passiveExtraWeight?.valueKg ?? DEFAULT_VALUE_KG,
-                    },
-                  })
-                }
+                exclusive
+                onChange={handlePassiveEquipmentChange}
+                size="small"
+                disabled={disabled}
               >
                 {WEIGHT_ASYMMETRIC_PASSIVE_EQUIPMENT.map((item) => (
-                  <MenuItem key={item} value={item}>
+                  <ToggleButton key={item} value={item}>
                     {PASSIVE_EQUIPMENT_LABELS[item]}
-                  </MenuItem>
+                  </ToggleButton>
                 ))}
-              </Select>
+              </ToggleButtonGroup>
+
               {passiveError?.equipment !== undefined && (
-                <FormHelperText>{passiveError.equipment.message}</FormHelperText>
+                <Typography variant="caption" color="error">
+                  {passiveError.equipment.message}
+                </Typography>
               )}
-            </FormControl>
+            </Stack>
 
             <TextField
               label="Extra weight (kg)"
