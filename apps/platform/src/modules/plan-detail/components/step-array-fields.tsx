@@ -78,13 +78,7 @@ export const StepArrayFields = ({
           </Stack>
         ))}
 
-        <Button
-          size="tiny"
-          variant="text"
-          onClick={addStep}
-          disabled={disabled}
-          sx={{ alignSelf: "flex-start" }}
-        >
+        <Button size="tiny" variant="text" onClick={addStep} disabled={disabled}>
           add step
         </Button>
       </Stack>
