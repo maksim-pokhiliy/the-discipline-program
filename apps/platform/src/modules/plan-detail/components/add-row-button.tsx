@@ -45,6 +45,7 @@ export const AddRowButton: React.FC<AddRowButtonProps> = ({ planId, startDate, s
     <>
       <Button
         onClick={() => setPickerOpen(true)}
+        disabled={pickerOpen || pendingRowKind !== null}
         size="tiny"
         variant="text"
         sx={{ alignSelf: "flex-start" }}

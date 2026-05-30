@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useEffect, useId, useState } from "react";
+import { type FormEvent, useEffect, useId, useRef, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Box, Button, CircularProgress, Stack } from "@mui/material";
@@ -64,6 +64,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
   const createSchemaRow = useCreateSchemaRow(planId, startDate);
   const updateSchemaRow = useUpdateSchemaRow(planId, startDate);
   const [payloadError, setPayloadError] = useState<FieldErrors | undefined>(undefined);
+  const isSubmittingRef = useRef(false);
 
   const { control, handleSubmit, reset, setValue } = useForm<RowShellFormData>({
     resolver: zodResolver(rowShellResolverSchema),
@@ -74,6 +75,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
 
   useEffect(() => {
     setPayloadError(undefined);
+    isSubmittingRef.current = false;
     reset(toShellFormData(mode));
   }, [mode, reset]);
 
@@ -82,6 +84,10 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
   const rowKind = resolveRowKind(mode);
 
   const onSubmit = (data: RowShellFormData): void => {
+    if (isSubmittingRef.current || isPending) {
+      return;
+    }
+
     const { payloadInput, notes } = assembleRowPayloadAndNotes(rowKind, data.value);
     const parsed = parseRowPayload(rowKind, payloadInput);
 
@@ -92,11 +98,17 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
     }
 
     setPayloadError(undefined);
+    isSubmittingRef.current = true;
 
     if (mode.kind === "create") {
       createSchemaRow.mutate(
         { schemaId: mode.schemaId, rowKind, rowPayload: parsed.value, notes },
-        { onSuccess: () => onClose() },
+        {
+          onSuccess: () => onClose(),
+          onSettled: () => {
+            isSubmittingRef.current = false;
+          },
+        },
       );
 
       return;
@@ -104,7 +116,12 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
 
     updateSchemaRow.mutate(
       { schemaRowId: mode.row.id, data: { rowPayload: parsed.value, notes } },
-      { onSuccess: () => onClose() },
+      {
+        onSuccess: () => onClose(),
+        onSettled: () => {
+          isSubmittingRef.current = false;
+        },
+      },
     );
   };
 

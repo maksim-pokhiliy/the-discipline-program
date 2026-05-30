@@ -1,6 +1,13 @@
 "use client";
 
-import { Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import {
+  FormHelperText,
+  Stack,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
+} from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 import { z } from "zod";
 
@@ -98,6 +105,7 @@ export const RestSpecFields = ({
 }: RestSpecFieldsProps) => {
   const rangeUnit = isRangeUnit(value.duration.unit);
   const durationError = error?.duration;
+  const durationRootMessage = durationError?.root?.message;
 
   const handleValueChange = (raw: string): void => {
     onChange({ ...value, duration: { ...value.duration, value: Number(raw) } });
@@ -191,8 +199,8 @@ export const RestSpecFields = ({
               value={value.duration.rangeMax ?? ""}
               onChange={(e) => handleRangeMaxChange(e.target.value)}
               inputProps={{ min: 1, step: 1 }}
-              error={durationError?.rangeMax !== undefined}
-              helperText={durationError?.rangeMax?.message}
+              error={durationError?.rangeMax !== undefined || durationRootMessage !== undefined}
+              helperText={durationError?.rangeMax?.message ?? durationRootMessage}
               disabled={disabled}
               sx={{ maxWidth: DURATION_FIELD_WIDTH }}
             />
@@ -213,6 +221,10 @@ export const RestSpecFields = ({
           ))}
         </ToggleButtonGroup>
       </Stack>
+
+      {!rangeUnit && durationRootMessage !== undefined && (
+        <FormHelperText error>{durationRootMessage}</FormHelperText>
+      )}
 
       <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
         <Typography variant="caption" color="text.subtle">
