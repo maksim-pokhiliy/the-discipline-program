@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
@@ -18,6 +18,19 @@ const onChange: Mock = vi.fn();
 afterEach(() => {
   onChange.mockReset();
 });
+
+const getRoundsSection = (): HTMLElement => {
+  const section = screen.getByText("Rounds").parentElement?.parentElement;
+
+  if (section === null || section === undefined) {
+    throw new Error("Rounds section not found");
+  }
+
+  return section;
+};
+
+const getCountToggle = (name: string): HTMLElement =>
+  within(getRoundsSection()).getByRole("button", { name });
 
 const ARCHETYPE_ID = "clp9z8x7w0000abcd1234arc1";
 const SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
@@ -55,7 +68,9 @@ describe("CompositeRoundsWithRestForm rendering", () => {
     );
 
     expect(screen.getByRole("spinbutton", { name: "Rest value" })).toBeInTheDocument();
-    expect(screen.getByText("Between rounds")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "between rounds", pressed: true }),
+    ).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /add rest/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /remove rest/i })).toBeNull();
   });
@@ -69,7 +84,7 @@ describe("CompositeRoundsWithRestForm rendering", () => {
     );
 
     expect(screen.getByRole("spinbutton", { name: "Count" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "range" })).toBeInTheDocument();
+    expect(getCountToggle("range")).toBeInTheDocument();
   });
 });
 
@@ -85,7 +100,7 @@ describe("CompositeRoundsWithRestForm count exact <-> range", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "range" }));
+    fireEvent.click(getCountToggle("range"));
 
     expect(onChange).toHaveBeenCalledWith({
       count: { min: 5, max: 6 },
