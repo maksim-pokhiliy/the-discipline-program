@@ -51,6 +51,10 @@ export const RowKindPickerTile: React.FC<RowKindPickerTileProps> = ({
       bgcolor: isSelected ? alpha(theme.palette.primary.main, SELECTED_BG_ALPHA) : "transparent",
       opacity: isDeferred ? theme.palette.action.disabledOpacity : 1,
       textAlign: "left",
+      "&:hover": {
+        borderColor: isSelected ? "primary.main" : "dividerStrong",
+        bgcolor: isSelected ? alpha(theme.palette.primary.main, SELECTED_BG_ALPHA) : "action.hover",
+      },
     })}
   >
     <Stack direction="row" spacing={0.75} sx={{ width: "100%", alignItems: "center" }}>
