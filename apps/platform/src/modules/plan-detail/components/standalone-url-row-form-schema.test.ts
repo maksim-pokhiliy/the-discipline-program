@@ -1,17 +1,20 @@
+import type { FieldError } from "react-hook-form";
 import { describe, expect, it } from "vitest";
 
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
-import { standaloneUrlRowFormSchema, toFormData } from "./standalone-url-row-form";
+import { parseRowPayload } from "./row-form-utils";
+import { toStandaloneUrlValue } from "./standalone-url-row-payload-form";
 
-const issuePaths = (data: unknown): string[] => {
-  const result = standaloneUrlRowFormSchema.safeParse(data);
+const isFieldError = (node: unknown): node is FieldError =>
+  typeof node === "object" && node !== null && "message" in node;
 
-  if (result.success) {
-    return [];
+const readMessage = (node: unknown): string | undefined => {
+  if (isFieldError(node) && typeof node.message === "string") {
+    return node.message;
   }
 
-  return result.error.issues.map((issue) => issue.path.join("."));
+  return undefined;
 };
 
 const baseSchemaRow = {
@@ -49,59 +52,121 @@ const restSlotRow: SchemaRow = {
   rowPayload: { rowKind: "REST_SLOT" },
 };
 
-describe("standaloneUrlRowFormSchema", () => {
-  it("accepts a valid url with a valid appliesTo", () => {
-    const result = standaloneUrlRowFormSchema.safeParse({
+describe("parseRowPayload for STANDALONE_URL", () => {
+  it("accepts a valid url with a wrapped flag and a valid appliesTo", () => {
+    const result = parseRowPayload("STANDALONE_URL", {
       url: "https://www.youtube.com/watch?v=abc",
+      wrapped: true,
       appliesTo: "whole_schema",
     });
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
+
+    if (result.ok) {
+      expect(result.value).toEqual({
+        rowKind: "STANDALONE_URL",
+        url: "https://www.youtube.com/watch?v=abc",
+        wrapped: true,
+        appliesTo: "whole_schema",
+      });
+    }
   });
 
-  it("rejects a non-url string at path url", () => {
-    expect(issuePaths({ url: "not a url", appliesTo: "previous_exercise_row" })).toContain("url");
-  });
-
-  it("rejects an empty url at path url", () => {
-    expect(issuePaths({ url: "", appliesTo: "previous_exercise_row" })).toContain("url");
-  });
-
-  it("rejects an unknown appliesTo at path appliesTo", () => {
-    expect(issuePaths({ url: "https://youtu.be/x", appliesTo: "anywhere" })).toContain("appliesTo");
-  });
-
-  it("parses a valid object without a wrapped key — wrapped is not a schema key", () => {
-    const result = standaloneUrlRowFormSchema.safeParse({
+  it("rejects a missing wrapped flag at path wrapped", () => {
+    const result = parseRowPayload("STANDALONE_URL", {
       url: "https://youtu.be/x",
       appliesTo: "previous_exercise_row",
     });
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(result.error.wrapped)).toBeDefined();
+    }
+  });
+
+  it("rejects a non-boolean wrapped flag at path wrapped", () => {
+    const result = parseRowPayload("STANDALONE_URL", {
+      url: "https://youtu.be/x",
+      wrapped: "yes",
+      appliesTo: "previous_exercise_row",
+    });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(result.error.wrapped)).toBeDefined();
+    }
+  });
+
+  it("rejects a non-url string at path url", () => {
+    const result = parseRowPayload("STANDALONE_URL", {
+      url: "not a url",
+      wrapped: true,
+      appliesTo: "previous_exercise_row",
+    });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(result.error.url)).toBeDefined();
+    }
+  });
+
+  it("rejects an empty url at path url", () => {
+    const result = parseRowPayload("STANDALONE_URL", {
+      url: "",
+      wrapped: true,
+      appliesTo: "previous_exercise_row",
+    });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(result.error.url)).toBeDefined();
+    }
+  });
+
+  it("rejects an unknown appliesTo at path appliesTo", () => {
+    const result = parseRowPayload("STANDALONE_URL", {
+      url: "https://youtu.be/x",
+      wrapped: true,
+      appliesTo: "anywhere",
+    });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(result.error.appliesTo)).toBeDefined();
+    }
   });
 });
 
-describe("toFormData", () => {
-  it("returns an empty url and the default appliesTo in create mode", () => {
-    const result = toFormData({
+describe("toStandaloneUrlValue", () => {
+  it("returns an empty url, wrapped true and the default appliesTo in create mode", () => {
+    const result = toStandaloneUrlValue({
       kind: "create",
       schemaId: baseSchemaRow.schemaId,
       rowKind: "STANDALONE_URL",
     });
 
-    expect(result).toEqual({ url: "", appliesTo: "previous_exercise_row" });
+    expect(result).toEqual({ url: "", wrapped: true, appliesTo: "previous_exercise_row" });
   });
 
-  it("returns the row's url and appliesTo without wrapped when editing a STANDALONE_URL row", () => {
-    const result = toFormData({ kind: "edit", row: standaloneUrlRow });
+  it("carries the row's url, wrapped and appliesTo when editing a STANDALONE_URL row", () => {
+    const result = toStandaloneUrlValue({ kind: "edit", row: standaloneUrlRow });
 
-    expect(result).toEqual({ url: "https://youtu.be/abc123", appliesTo: "whole_schema" });
-    expect(result).not.toHaveProperty("wrapped");
+    expect(result).toEqual({
+      url: "https://youtu.be/abc123",
+      wrapped: false,
+      appliesTo: "whole_schema",
+    });
+    expect(result.wrapped).toBe(false);
   });
 
   it("falls back to the create default when editing a non-STANDALONE_URL row", () => {
-    const result = toFormData({ kind: "edit", row: restSlotRow });
+    const result = toStandaloneUrlValue({ kind: "edit", row: restSlotRow });
 
-    expect(result).toEqual({ url: "", appliesTo: "previous_exercise_row" });
+    expect(result).toEqual({ url: "", wrapped: true, appliesTo: "previous_exercise_row" });
   });
 });

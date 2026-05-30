@@ -48,6 +48,11 @@ export const ArchetypePickerTile: React.FC<ArchetypePickerTileProps> = ({
         bgcolor: isSelected ? alpha(theme.palette.primary.main, SELECTED_BG_ALPHA) : "transparent",
         opacity: isDeferred ? theme.palette.action.disabledOpacity : 1,
         textAlign: "left",
+        "&:hover": {
+          bgcolor: isSelected
+            ? alpha(theme.palette.primary.main, SELECTED_BG_ALPHA)
+            : "action.hover",
+        },
       })}
     >
       <Box

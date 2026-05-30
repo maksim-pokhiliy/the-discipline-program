@@ -1,16 +1,12 @@
 "use client";
 
 import {
-  Box,
-  FormControl,
-  FormControlLabel,
   FormHelperText,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
-  Switch,
   TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
 } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 import { z } from "zod";
@@ -21,6 +17,7 @@ import {
   REST_SCOPES,
   type RestDurationUnit,
   type RestQualifier,
+  type RestScope,
 } from "@repo/contracts/lms/_shared";
 
 const restDurationFormSchema = z
@@ -58,27 +55,37 @@ export const restSpecFormSchema = z.object({
 
 export type RestSpecFormValue = z.infer<typeof restSpecFormSchema>;
 
+const QUALIFIER_NONE = "none";
+
+type QualifierOption = RestQualifier | typeof QUALIFIER_NONE;
+
+const QUALIFIER_OPTIONS: readonly QualifierOption[] = [QUALIFIER_NONE, ...REST_QUALIFIERS];
+
 const REST_UNIT_LABELS: Record<RestDurationUnit, string> = {
-  sec: "Seconds",
-  min: "Minutes",
-  range_sec: "Range (seconds)",
-  range_min: "Range (minutes)",
+  sec: "sec",
+  min: "min",
+  range_sec: "sec range",
+  range_min: "min range",
 };
 
-const REST_SCOPE_LABELS: Record<(typeof REST_SCOPES)[number], string> = {
-  between_sets: "Between sets",
-  between_rounds: "Between rounds",
-  between_intervals: "Between intervals",
-  after_specific_set: "After a specific set",
+const REST_SCOPE_LABELS: Record<RestScope, string> = {
+  between_sets: "between sets",
+  between_rounds: "between rounds",
+  between_intervals: "between intervals",
+  after_specific_set: "after set #",
 };
 
-const REST_QUALIFIER_LABELS: Record<RestQualifier, string> = {
-  until_recovery: "Until recovery",
-  fixed: "Fixed",
-  range: "Range",
+const REST_QUALIFIER_LABELS: Record<QualifierOption, string> = {
+  none: "—",
+  until_recovery: "until recovery",
+  fixed: "fixed",
+  range: "range",
 };
 
 const DEFAULT_RANGE_MAX_OFFSET = 30;
+const DURATION_FIELD_WIDTH = 88;
+const SET_INDEX_FIELD_WIDTH = 88;
+const EN_DASH = "–";
 
 const isRangeUnit = (unit: RestDurationUnit): boolean =>
   unit === "range_sec" || unit === "range_min";
@@ -97,10 +104,22 @@ export const RestSpecFields = ({
   disabled = false,
 }: RestSpecFieldsProps) => {
   const rangeUnit = isRangeUnit(value.duration.unit);
-  const qualifierEnabled = value.qualifier !== undefined;
   const durationError = error?.duration;
+  const durationRootMessage = durationError?.root?.message;
 
-  const handleUnitChange = (next: RestDurationUnit) => {
+  const handleValueChange = (raw: string): void => {
+    onChange({ ...value, duration: { ...value.duration, value: Number(raw) } });
+  };
+
+  const handleRangeMaxChange = (raw: string): void => {
+    onChange({ ...value, duration: { ...value.duration, rangeMax: Number(raw) } });
+  };
+
+  const handleUnitChange = (_: unknown, next: RestDurationUnit | null): void => {
+    if (next === null) {
+      return;
+    }
+
     if (isRangeUnit(next)) {
       onChange({
         ...value,
@@ -114,22 +133,18 @@ export const RestSpecFields = ({
       return;
     }
 
-    onChange({
-      ...value,
-      duration: { value: value.duration.value, unit: next },
-    });
+    onChange({ ...value, duration: { value: value.duration.value, unit: next } });
   };
 
-  const handleQualifierToggle = (_: unknown, next: boolean) => {
-    onChange({
-      duration: value.duration,
-      scope: value.scope,
-      ...(next && { qualifier: "fixed" }),
-      ...(value.setIndex !== undefined && { setIndex: value.setIndex }),
-    });
+  const handleScopeChange = (_: unknown, next: RestScope | null): void => {
+    if (next === null) {
+      return;
+    }
+
+    onChange({ ...value, scope: next });
   };
 
-  const handleSetIndexChange = (raw: string) => {
+  const handleSetIndexChange = (raw: string): void => {
     onChange({
       duration: value.duration,
       scope: value.scope,
@@ -138,146 +153,139 @@ export const RestSpecFields = ({
     });
   };
 
+  const handleQualifierChange = (_: unknown, next: QualifierOption | null): void => {
+    if (next === null) {
+      return;
+    }
+
+    onChange({
+      duration: value.duration,
+      scope: value.scope,
+      ...(next !== QUALIFIER_NONE && { qualifier: next }),
+      ...(value.setIndex !== undefined && { setIndex: value.setIndex }),
+    });
+  };
+
   return (
     <Stack spacing={1.5}>
-      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+        <Typography variant="caption" color="text.subtle">
+          duration
+        </Typography>
+
         <TextField
           label="Rest value"
           type="number"
           size="small"
           value={value.duration.value}
-          onChange={(e) =>
-            onChange({
-              ...value,
-              duration: { ...value.duration, value: Number(e.target.value) },
-            })
-          }
+          onChange={(e) => handleValueChange(e.target.value)}
           inputProps={{ min: 1, step: 1 }}
           error={durationError?.value !== undefined}
           helperText={durationError?.value?.message}
           disabled={disabled}
-          sx={{ maxWidth: 140 }}
+          sx={{ maxWidth: DURATION_FIELD_WIDTH }}
         />
 
         {rangeUnit && (
-          <TextField
-            label="Rest max"
-            type="number"
-            size="small"
-            value={value.duration.rangeMax ?? ""}
-            onChange={(e) =>
-              onChange({
-                ...value,
-                duration: { ...value.duration, rangeMax: Number(e.target.value) },
-              })
-            }
-            inputProps={{ min: 1, step: 1 }}
-            error={durationError?.rangeMax !== undefined}
-            helperText={durationError?.rangeMax?.message}
-            disabled={disabled}
-            sx={{ maxWidth: 140 }}
-          />
+          <>
+            <Typography variant="body2" color="text.subtle">
+              {EN_DASH}
+            </Typography>
+
+            <TextField
+              label="Rest max"
+              type="number"
+              size="small"
+              value={value.duration.rangeMax ?? ""}
+              onChange={(e) => handleRangeMaxChange(e.target.value)}
+              inputProps={{ min: 1, step: 1 }}
+              error={durationError?.rangeMax !== undefined || durationRootMessage !== undefined}
+              helperText={durationError?.rangeMax?.message ?? durationRootMessage}
+              disabled={disabled}
+              sx={{ maxWidth: DURATION_FIELD_WIDTH }}
+            />
+          </>
         )}
 
-        <FormControl
+        <ToggleButtonGroup
+          value={value.duration.unit}
+          exclusive
+          onChange={handleUnitChange}
           size="small"
-          sx={{ minWidth: 180 }}
           disabled={disabled}
-          error={durationError?.unit !== undefined}
         >
-          <InputLabel>Unit</InputLabel>
-          <Select
-            value={value.duration.unit}
-            label="Unit"
-            onChange={(e) => handleUnitChange(e.target.value as RestDurationUnit)}
-          >
-            {REST_DURATION_UNITS.map((u) => (
-              <MenuItem key={u} value={u}>
-                {REST_UNIT_LABELS[u]}
-              </MenuItem>
-            ))}
-          </Select>
-          {durationError?.unit !== undefined && (
-            <FormHelperText>{durationError.unit.message}</FormHelperText>
-          )}
-        </FormControl>
+          {REST_DURATION_UNITS.map((unit) => (
+            <ToggleButton key={unit} value={unit}>
+              {REST_UNIT_LABELS[unit]}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
       </Stack>
 
-      <FormControl
-        size="small"
-        sx={{ minWidth: 220 }}
-        disabled={disabled}
-        error={error?.scope !== undefined}
-      >
-        <InputLabel>Rest placement</InputLabel>
-        <Select
+      {!rangeUnit && durationRootMessage !== undefined && (
+        <FormHelperText error>{durationRootMessage}</FormHelperText>
+      )}
+
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+        <Typography variant="caption" color="text.subtle">
+          scope
+        </Typography>
+
+        <ToggleButtonGroup
           value={value.scope}
-          label="Rest placement"
-          onChange={(e) =>
-            onChange({ ...value, scope: e.target.value as (typeof REST_SCOPES)[number] })
-          }
+          exclusive
+          onChange={handleScopeChange}
+          size="small"
+          disabled={disabled}
         >
-          {REST_SCOPES.map((s) => (
-            <MenuItem key={s} value={s}>
-              {REST_SCOPE_LABELS[s]}
-            </MenuItem>
+          {REST_SCOPES.map((scope) => (
+            <ToggleButton key={scope} value={scope}>
+              {REST_SCOPE_LABELS[scope]}
+            </ToggleButton>
           ))}
-        </Select>
-        {error?.scope !== undefined && <FormHelperText>{error.scope.message}</FormHelperText>}
-      </FormControl>
+        </ToggleButtonGroup>
+      </Stack>
 
-      <Box>
-        <FormControlLabel
-          control={
-            <Switch
-              checked={qualifierEnabled}
-              onChange={handleQualifierToggle}
-              disabled={disabled}
-            />
-          }
-          label="Rest qualifier"
-        />
+      {value.scope === "after_specific_set" && (
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+          <Typography variant="caption" color="text.subtle">
+            set index
+          </Typography>
 
-        {qualifierEnabled && value.qualifier !== undefined && (
-          <Stack sx={{ pl: 4, pt: 1 }}>
-            <FormControl
-              size="small"
-              sx={{ minWidth: 200 }}
-              disabled={disabled}
-              error={error?.qualifier !== undefined}
-            >
-              <InputLabel>Qualifier</InputLabel>
-              <Select
-                value={value.qualifier}
-                label="Qualifier"
-                onChange={(e) => onChange({ ...value, qualifier: e.target.value as RestQualifier })}
-              >
-                {REST_QUALIFIERS.map((q) => (
-                  <MenuItem key={q} value={q}>
-                    {REST_QUALIFIER_LABELS[q]}
-                  </MenuItem>
-                ))}
-              </Select>
-              {error?.qualifier !== undefined && (
-                <FormHelperText>{error.qualifier.message}</FormHelperText>
-              )}
-            </FormControl>
-          </Stack>
-        )}
-      </Box>
+          <TextField
+            label="Set index"
+            type="number"
+            size="small"
+            value={value.setIndex ?? ""}
+            onChange={(e) => handleSetIndexChange(e.target.value)}
+            inputProps={{ min: 1, step: 1 }}
+            error={error?.setIndex !== undefined}
+            helperText={error?.setIndex?.message}
+            disabled={disabled}
+            sx={{ maxWidth: SET_INDEX_FIELD_WIDTH }}
+          />
+        </Stack>
+      )}
 
-      <TextField
-        label="Set index (optional)"
-        type="number"
-        size="small"
-        value={value.setIndex ?? ""}
-        onChange={(e) => handleSetIndexChange(e.target.value)}
-        inputProps={{ min: 1, step: 1 }}
-        error={error?.setIndex !== undefined}
-        helperText={error?.setIndex?.message}
-        disabled={disabled}
-        sx={{ maxWidth: 200 }}
-      />
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+        <Typography variant="caption" color="text.subtle">
+          qualifier
+        </Typography>
+
+        <ToggleButtonGroup
+          value={value.qualifier ?? QUALIFIER_NONE}
+          exclusive
+          onChange={handleQualifierChange}
+          size="small"
+          disabled={disabled}
+        >
+          {QUALIFIER_OPTIONS.map((option) => (
+            <ToggleButton key={option} value={option}>
+              {REST_QUALIFIER_LABELS[option]}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Stack>
     </Stack>
   );
 };

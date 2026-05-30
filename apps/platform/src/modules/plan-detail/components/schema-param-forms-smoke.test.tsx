@@ -37,13 +37,13 @@ afterEach(() => {
 });
 
 describe("AlternatingSetsForm renders the default set enumeration", () => {
-  it("shows the [1,3,5] chips and the add field", () => {
+  it("shows the [1,3,5] cells and the add step affordance", () => {
     render(<AlternatingSetsForm value={alternatingSetsDefaultParams} onChange={onChange} />);
 
-    expect(screen.getByText("1")).toBeInTheDocument();
-    expect(screen.getByText("3")).toBeInTheDocument();
-    expect(screen.getByText("5")).toBeInTheDocument();
-    expect(screen.getByRole("spinbutton", { name: "Add step" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("1")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("3")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("5")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "add step" })).toBeInTheDocument();
   });
 });
 
@@ -110,7 +110,7 @@ describe("NestedRoundsForm renders the default outer count", () => {
 });
 
 describe("NestedCompositeOverLadderForm renders the default fields", () => {
-  it("shows a plain rounds field (no range toggle) and the mandatory rest fields", () => {
+  it("shows a plain rounds field (no count-range toggle) and the mandatory rest fields", () => {
     render(
       <NestedCompositeOverLadderForm
         value={nestedCompositeOverLadderDefaultParams}
@@ -119,7 +119,8 @@ describe("NestedCompositeOverLadderForm renders the default fields", () => {
     );
 
     expect(screen.getByRole("spinbutton", { name: "Rounds" })).toHaveValue(5);
-    expect(screen.queryByRole("button", { name: "range" })).toBeNull();
+    expect(screen.getAllByRole("button", { name: "range" })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "range", pressed: false })).toBeInTheDocument();
     expect(screen.getByRole("spinbutton", { name: "Rest value" })).toBeInTheDocument();
   });
 });

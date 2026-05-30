@@ -1,20 +1,28 @@
+import type { FieldError } from "react-hook-form";
 import { describe, expect, it } from "vitest";
 
 import type { Load } from "@repo/contracts/lms/_shared";
-import { ROW_KINDS, type RowKind, type SchemaRow } from "@repo/contracts/lms/schema-row";
+import { type RowKind, type SchemaRow } from "@repo/contracts/lms/schema-row";
 
-import { ROW_KIND_FORM_REGISTRY } from "./row-kind-form-registry";
-import { standaloneLoadRowFormSchema, toFormData } from "./standalone-load-row-form";
+import { parseRowPayload } from "./row-form-utils";
+import { ROW_PAYLOAD_FORM_REGISTRY } from "./row-payload-form-registry";
+import { toStandaloneLoadValue } from "./standalone-load-row-payload-form";
 
-const issuePaths = (data: unknown): string[] => {
-  const result = standaloneLoadRowFormSchema.safeParse(data);
+const SCOPE = "applies_to_all_preceding_rows";
 
-  if (result.success) {
-    return [];
+const isFieldError = (node: unknown): node is FieldError =>
+  typeof node === "object" && node !== null && "message" in node;
+
+const readMessage = (node: unknown): string | undefined => {
+  if (isFieldError(node) && typeof node.message === "string") {
+    return node.message;
   }
 
-  return result.error.issues.map((issue) => issue.path.join("."));
+  return undefined;
 };
+
+const readBranch = (node: unknown, key: string): unknown =>
+  typeof node === "object" && node !== null ? (node as Record<string, unknown>)[key] : undefined;
 
 const baseSchemaRow = {
   id: "ckxw5p7gp0000q1mnzv5cuq0a",
@@ -52,89 +60,135 @@ const restSlotRow: SchemaRow = {
   rowPayload: { rowKind: "REST_SLOT" },
 };
 
-describe("standaloneLoadRowFormSchema", () => {
-  it("rejects a percentage load with rangeMax < value at path load.rangeMax (QA-#10, T24)", () => {
-    const paths = issuePaths({
+describe("parseRowPayload for STANDALONE_LOAD", () => {
+  it("rejects a percentage load with rangeMax < value at the load root (contract superRefine has no path)", () => {
+    const result = parseRowPayload("STANDALONE_LOAD", {
       load: { kind: "percentage", value: 70, rangeMax: 60, reference: { scope: "self" } },
+      scope: SCOPE,
     });
 
-    expect(paths).toContain("load.rangeMax");
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(readBranch(result.error.load, "root"))).toBe(
+        "percentage.rangeMax must be > value when set",
+      );
+    }
   });
 
-  it("rejects a percentage load with rangeMax === value at path load.rangeMax (QA-#10, T24)", () => {
-    const paths = issuePaths({
+  it("rejects a percentage load with rangeMax === value at the load root", () => {
+    const result = parseRowPayload("STANDALONE_LOAD", {
       load: { kind: "percentage", value: 70, rangeMax: 70, reference: { scope: "self" } },
+      scope: SCOPE,
     });
 
-    expect(paths).toContain("load.rangeMax");
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(readBranch(result.error.load, "root"))).toBe(
+        "percentage.rangeMax must be > value when set",
+      );
+    }
   });
 
-  it("accepts a percentage load with rangeMax > value (QA-#10, T24)", () => {
-    const result = standaloneLoadRowFormSchema.safeParse({
+  it("accepts a percentage load with rangeMax > value", () => {
+    const result = parseRowPayload("STANDALONE_LOAD", {
       load: { kind: "percentage", value: 70, rangeMax: 80, reference: { scope: "self" } },
+      scope: SCOPE,
     });
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
   });
 
-  it("accepts a percentage load with no rangeMax (QA-#10, T24)", () => {
-    const result = standaloneLoadRowFormSchema.safeParse({
+  it("accepts a percentage load with no rangeMax", () => {
+    const result = parseRowPayload("STANDALONE_LOAD", {
       load: { kind: "percentage", value: 70, reference: { scope: "self" } },
+      scope: SCOPE,
     });
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
   });
 
-  it("accepts a valid absolute load (QA-#10, T24)", () => {
-    const result = standaloneLoadRowFormSchema.safeParse({
+  it("accepts a valid absolute load", () => {
+    const result = parseRowPayload("STANDALONE_LOAD", {
       load: { kind: "absolute", weight: { variant: "single", valueKg: 32 } },
+      scope: SCOPE,
     });
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
   });
 
-  it("rejects valueKg of 0 at path load.weight.valueKg (QA-#11, T24)", () => {
-    const paths = issuePaths({
+  it("rejects valueKg of 0 at path load.weight.valueKg", () => {
+    const result = parseRowPayload("STANDALONE_LOAD", {
       load: { kind: "absolute", weight: { variant: "single", valueKg: 0 } },
+      scope: SCOPE,
     });
 
-    expect(paths).toContain("load.weight.valueKg");
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      const weight = readBranch(result.error.load, "weight");
+
+      expect(readMessage(readBranch(weight, "valueKg"))).toBe("Number must be greater than 0");
+    }
   });
 
-  it("rejects valueKg of NaN at path load.weight.valueKg (QA-#11, T24)", () => {
-    const paths = issuePaths({
+  it("rejects valueKg of NaN at path load.weight.valueKg", () => {
+    const result = parseRowPayload("STANDALONE_LOAD", {
       load: { kind: "absolute", weight: { variant: "single", valueKg: Number.NaN } },
+      scope: SCOPE,
     });
 
-    expect(paths).toContain("load.weight.valueKg");
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      const weight = readBranch(result.error.load, "weight");
+
+      expect(readMessage(readBranch(weight, "valueKg"))).toBeDefined();
+    }
   });
 
-  it("rejects a percentage value above 200 at path load.value (QA-#12, T24)", () => {
-    const paths = issuePaths({
+  it("rejects a percentage value above 200 at path load.value", () => {
+    const result = parseRowPayload("STANDALONE_LOAD", {
       load: { kind: "percentage", value: 250, reference: { scope: "self" } },
+      scope: SCOPE,
     });
 
-    expect(paths).toContain("load.value");
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(readBranch(result.error.load, "value"))).toBe(
+        "Number must be less than or equal to 200",
+      );
+    }
   });
 
-  it("accepts a percentage value of 0 — contract permits it (QA-#12, QA-301, T24)", () => {
-    const result = standaloneLoadRowFormSchema.safeParse({
+  it("accepts a percentage value of 0 — contract permits it", () => {
+    const result = parseRowPayload("STANDALONE_LOAD", {
       load: { kind: "percentage", value: 0, reference: { scope: "self" } },
+      scope: SCOPE,
     });
 
-    expect(result.success).toBe(true);
+    expect(result.ok).toBe(true);
   });
 
-  it("rejects an empty movementFamily at path load.reference.movementFamily (QA-#13, T24)", () => {
-    const paths = issuePaths({
+  it("rejects an empty movementFamily at path load.reference.movementFamily", () => {
+    const result = parseRowPayload("STANDALONE_LOAD", {
       load: {
         kind: "percentage",
         value: 60,
         reference: { scope: "movement_family", movementFamily: "" },
       },
+      scope: SCOPE,
     });
 
-    expect(paths).toContain("load.reference.movementFamily");
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      const reference = readBranch(result.error.load, "reference");
+
+      expect(readMessage(readBranch(reference, "movementFamily"))).toBeDefined();
+    }
   });
 });
 
@@ -143,43 +197,54 @@ const IMPLEMENTED_KINDS: readonly RowKind[] = [
   "REST",
   "INNER_LADDER_MARKER",
   "STANDALONE_URL",
+  "REST_SLOT",
 ];
 
-describe("ROW_KIND_FORM_REGISTRY", () => {
-  it("registers the 4 implemented row kinds (QA-#14, T24)", () => {
+const DEFERRED_KINDS: readonly RowKind[] = [
+  "EXERCISE",
+  "FOOTNOTE",
+  "PLACEHOLDER",
+  "REP_DEFINITION",
+];
+
+describe("ROW_PAYLOAD_FORM_REGISTRY", () => {
+  it("registers the 5 implemented row kinds", () => {
     for (const kind of IMPLEMENTED_KINDS) {
-      expect(ROW_KIND_FORM_REGISTRY[kind]).not.toBeUndefined();
+      expect(ROW_PAYLOAD_FORM_REGISTRY[kind]).toBeDefined();
     }
   });
 
-  it("misses the 5 unimplemented row kinds (QA-#14, T24)", () => {
-    const unimplementedKinds = ROW_KINDS.filter((kind) => !IMPLEMENTED_KINDS.includes(kind));
-
-    for (const kind of unimplementedKinds) {
-      expect(ROW_KIND_FORM_REGISTRY[kind]).toBeUndefined();
+  it("misses the 4 deferred row kinds", () => {
+    for (const kind of DEFERRED_KINDS) {
+      expect(ROW_PAYLOAD_FORM_REGISTRY[kind]).toBeUndefined();
     }
   });
 });
 
-describe("toFormData", () => {
-  it("returns the absolute single default in create mode (QA-#15, T24)", () => {
-    const result = toFormData({
+describe("toStandaloneLoadValue", () => {
+  it("returns the absolute single default and empty notes in create mode", () => {
+    const result = toStandaloneLoadValue({
       kind: "create",
       schemaId: baseSchemaRow.schemaId,
       rowKind: "STANDALONE_LOAD",
     });
 
     expect(result.load).toEqual({ kind: "absolute", weight: { variant: "single", valueKg: 15 } });
+    expect(result.notes).toBe("");
   });
 
-  it("returns the row's rowPayload load when editing a STANDALONE_LOAD row (QA-#15, T24)", () => {
-    const result = toFormData({ kind: "edit", row: standaloneLoadRow });
+  it("returns the row's rowPayload load and notes when editing a STANDALONE_LOAD row", () => {
+    const result = toStandaloneLoadValue({
+      kind: "edit",
+      row: { ...standaloneLoadRow, notes: "heavy day" },
+    });
 
     expect(result.load).toEqual(standaloneLoad);
+    expect(result.notes).toBe("heavy day");
   });
 
-  it("falls back to the absolute default when editing a non-STANDALONE_LOAD row (QA-#15, T24)", () => {
-    const result = toFormData({ kind: "edit", row: restSlotRow });
+  it("falls back to the absolute default when editing a non-STANDALONE_LOAD row", () => {
+    const result = toStandaloneLoadValue({ kind: "edit", row: restSlotRow });
 
     expect(result.load).toEqual({ kind: "absolute", weight: { variant: "single", valueKg: 15 } });
   });

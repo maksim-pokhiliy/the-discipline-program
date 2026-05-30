@@ -1,6 +1,6 @@
 "use client";
 
-import { FormControl, InputLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
+import { Stack, TextField, ToggleButton, ToggleButtonGroup } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
 import type { PercentageReference } from "@repo/contracts/lms/_shared";
@@ -13,8 +13,8 @@ type MovementFamilyReference = Extract<PercentageReference, { scope: "movement_f
 type RestrictedScope = RestrictedPercentageReference["scope"];
 
 const SCOPE_LABELS: Record<RestrictedScope, string> = {
-  self: "Of the same movement",
-  movement_family: "Of a movement family",
+  self: "self 1RM",
+  movement_family: "family",
 };
 
 const SCOPE_OPTIONS: RestrictedScope[] = ["self", "movement_family"];
@@ -32,8 +32,12 @@ export const PercentageReferenceEditor = ({
   error,
   disabled = false,
 }: PercentageReferenceEditorProps) => {
-  const handleScopeChange = (nextScope: RestrictedScope) => {
-    if (nextScope === "self") {
+  const handleScopeChange = (_: unknown, next: RestrictedScope | null) => {
+    if (next === null) {
+      return;
+    }
+
+    if (next === "self") {
       onChange({ scope: "self" });
 
       return;
@@ -44,20 +48,19 @@ export const PercentageReferenceEditor = ({
 
   return (
     <Stack spacing={1.5}>
-      <FormControl size="small" sx={{ minWidth: 220 }} disabled={disabled}>
-        <InputLabel>Reference</InputLabel>
-        <Select
-          value={value.scope}
-          label="Reference"
-          onChange={(e) => handleScopeChange(e.target.value as RestrictedScope)}
-        >
-          {SCOPE_OPTIONS.map((scope) => (
-            <MenuItem key={scope} value={scope}>
-              {SCOPE_LABELS[scope]}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+      <ToggleButtonGroup
+        value={value.scope}
+        exclusive
+        onChange={handleScopeChange}
+        size="small"
+        disabled={disabled}
+      >
+        {SCOPE_OPTIONS.map((scope) => (
+          <ToggleButton key={scope} value={scope}>
+            {SCOPE_LABELS[scope]}
+          </ToggleButton>
+        ))}
+      </ToggleButtonGroup>
 
       {value.scope === "movement_family" && (
         <TextField

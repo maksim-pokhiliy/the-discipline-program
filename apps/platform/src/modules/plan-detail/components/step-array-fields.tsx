@@ -1,18 +1,19 @@
 "use client";
 
-import { useState } from "react";
-
-import { Box, Button, Chip, FormHelperText, Stack, TextField } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import { Button, FormHelperText, IconButton, Stack, TextField } from "@mui/material";
 import type { FieldError, FieldErrorsImpl, Merge } from "react-hook-form";
 
 const MIN_STEPS = 1;
+const MIN_STEP_VALUE = 0;
+const FALLBACK_STEP = 0;
+const CELL_MAX_WIDTH = 72;
+const DECIMAL_RADIX = 10;
 
-const POSITIVE_INTEGER_PATTERN = /^[1-9]\d*$/;
+export const coerceStepValue = (raw: string): number => {
+  const parsed = Number.parseInt(raw, DECIMAL_RADIX);
 
-export const parseStepDraft = (draft: string): number | null => {
-  const trimmed = draft.trim();
-
-  return POSITIVE_INTEGER_PATTERN.test(trimmed) ? Number(trimmed) : null;
+  return Number.isNaN(parsed) || parsed < MIN_STEP_VALUE ? MIN_STEP_VALUE : parsed;
 };
 
 type StepArrayFieldsError = Merge<FieldError, FieldErrorsImpl<number[]>>;
@@ -30,61 +31,50 @@ export const StepArrayFields = ({
   error,
   disabled = false,
 }: StepArrayFieldsProps) => {
-  const [draft, setDraft] = useState("");
-
   const canRemove = value.length > MIN_STEPS;
 
-  const commitDraft = () => {
-    const parsed = parseStepDraft(draft);
-
-    if (parsed !== null) {
-      onChange([...value, parsed]);
-      setDraft("");
-    }
+  const updateStep = (index: number, raw: string) => {
+    onChange(value.map((step, i) => (i === index ? coerceStepValue(raw) : step)));
   };
 
   const removeStep = (index: number) => {
     onChange(value.filter((_, i) => i !== index));
   };
 
-  const isRemovable = canRemove && !disabled;
+  const addStep = () => {
+    onChange([...value, value[value.length - 1] ?? FALLBACK_STEP]);
+  };
 
   return (
     <Stack spacing={1}>
-      <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
         {value.map((step, index) => (
-          <Chip
-            key={index}
-            size="small"
-            label={step}
-            {...(isRemovable && { onDelete: () => removeStep(index) })}
-          />
+          <Stack key={index} direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
+            <TextField
+              type="number"
+              size="small"
+              aria-label={`Step ${index + 1}`}
+              value={step}
+              onChange={(e) => updateStep(index, e.target.value)}
+              inputProps={{ min: MIN_STEP_VALUE, step: 1, "aria-label": `Step ${index + 1}` }}
+              disabled={disabled}
+              sx={{ maxWidth: CELL_MAX_WIDTH }}
+            />
+
+            <IconButton
+              aria-label="Remove step"
+              size="small"
+              onClick={() => removeStep(index)}
+              disabled={disabled || !canRemove}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Stack>
         ))}
-      </Stack>
 
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-        <TextField
-          label="Add step"
-          type="number"
-          size="small"
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              commitDraft();
-            }
-          }}
-          inputProps={{ min: 1, step: 1 }}
-          disabled={disabled}
-          sx={{ maxWidth: 140 }}
-        />
-
-        <Box>
-          <Button size="small" variant="outlined" onClick={commitDraft} disabled={disabled}>
-            Add
-          </Button>
-        </Box>
+        <Button size="tiny" variant="text" onClick={addStep} disabled={disabled}>
+          add step
+        </Button>
       </Stack>
 
       {error !== undefined && (

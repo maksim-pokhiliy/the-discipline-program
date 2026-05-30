@@ -55,6 +55,8 @@ export const LoadPercentageFields = ({
     onChange({ ...value, reference });
   };
 
+  const rootMessage = error?.root?.message;
+
   return (
     <Stack spacing={1.5}>
       <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
@@ -78,8 +80,8 @@ export const LoadPercentageFields = ({
           value={typeof value.rangeMax === "number" ? value.rangeMax : ""}
           onChange={(e) => handleRangeMaxChange(e.target.value)}
           inputProps={{ min: PERCENTAGE_MIN, max: PERCENTAGE_MAX, step: 1 }}
-          error={error?.rangeMax !== undefined}
-          helperText={error?.rangeMax?.message}
+          error={error?.rangeMax !== undefined || rootMessage !== undefined}
+          helperText={error?.rangeMax?.message ?? rootMessage}
           disabled={disabled}
           sx={{ maxWidth: 180 }}
         />

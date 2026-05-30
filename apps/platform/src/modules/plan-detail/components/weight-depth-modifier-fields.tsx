@@ -1,6 +1,6 @@
 "use client";
 
-import { FormControl, InputLabel, MenuItem, Select, Stack, TextField } from "@mui/material";
+import { Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
 import {
@@ -12,9 +12,9 @@ import {
 type DepthModifierWeight = Extract<Weight, { variant: "with_depth_modifier" }>;
 
 const DEPTH_MODIFIER_LABELS: Record<WeightDepthModifier, string> = {
-  to_parallel: "To parallel",
-  full_rom: "Full ROM",
-  partial: "Partial",
+  to_parallel: "to parallel",
+  full_rom: "full ROM",
+  partial: "partial",
 };
 
 type WeightDepthModifierFieldsProps = {
@@ -30,6 +30,14 @@ export const WeightDepthModifierFields = ({
   error,
   disabled = false,
 }: WeightDepthModifierFieldsProps) => {
+  const handleDepthChange = (_: unknown, next: WeightDepthModifier | null) => {
+    if (next === null) {
+      return;
+    }
+
+    onChange({ ...value, depth: next });
+  };
+
   return (
     <Stack spacing={1.5}>
       <TextField
@@ -45,25 +53,31 @@ export const WeightDepthModifierFields = ({
         sx={{ maxWidth: 160 }}
       />
 
-      <FormControl
-        size="small"
-        sx={{ minWidth: 180 }}
-        disabled={disabled}
-        error={error?.depth !== undefined}
-      >
-        <InputLabel>Depth</InputLabel>
-        <Select
+      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+        <Typography variant="caption" color="text.subtle">
+          depth
+        </Typography>
+
+        <ToggleButtonGroup
           value={value.depth}
-          label="Depth"
-          onChange={(e) => onChange({ ...value, depth: e.target.value as WeightDepthModifier })}
+          exclusive
+          onChange={handleDepthChange}
+          size="small"
+          disabled={disabled}
         >
           {WEIGHT_DEPTH_MODIFIERS.map((depth) => (
-            <MenuItem key={depth} value={depth}>
+            <ToggleButton key={depth} value={depth}>
               {DEPTH_MODIFIER_LABELS[depth]}
-            </MenuItem>
+            </ToggleButton>
           ))}
-        </Select>
-      </FormControl>
+        </ToggleButtonGroup>
+
+        {error?.depth !== undefined && (
+          <Typography variant="caption" color="error">
+            {error.depth.message}
+          </Typography>
+        )}
+      </Stack>
     </Stack>
   );
 };

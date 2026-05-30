@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
@@ -62,28 +62,26 @@ const makeSchemaWithBody = (archetypeParams: ArchetypeParams): SchemaWithBody =>
   subSchemas: [],
 });
 
-const deleteStepChip = (label: string): void => {
-  const chip = screen.getByRole("button", { name: label });
+const removeStepAt = (index: number): void => {
+  const buttons = screen.getAllByRole("button", { name: "Remove step" });
+  const target = buttons[index];
 
-  fireEvent.click(within(chip).getByTestId("CancelIcon"));
-};
+  if (target === undefined) {
+    throw new Error(`no Remove step button at index ${index}`);
+  }
 
-const addStep = (n: number): void => {
-  fireEvent.change(screen.getByRole("spinbutton", { name: "Add step" }), {
-    target: { value: String(n) },
-  });
-  fireEvent.click(screen.getByRole("button", { name: "Add" }));
+  fireEvent.click(target);
 };
 
 describe("LadderForm rendering", () => {
-  it("renders the descending default steps as chips", () => {
+  it("renders the descending default steps as editable cells", () => {
     render(
       <LadderForm value={LADDER_DEFAULTS.descending} onChange={onChange} flavour="descending" />,
     );
 
-    expect(screen.getByText("21")).toBeInTheDocument();
-    expect(screen.getByText("15")).toBeInTheDocument();
-    expect(screen.getByText("9")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("21")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("15")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("9")).toBeInTheDocument();
   });
 
   it.each(FLAVOURS)("renders the flavour-specific caption for %s", (flavour) => {
@@ -94,28 +92,37 @@ describe("LadderForm rendering", () => {
 });
 
 describe("LadderForm step editing", () => {
-  it("emits onChange with the appended step when a step is added", () => {
+  it("emits onChange with a step duplicating the last value when add step is clicked", () => {
     render(<LadderForm value={{ steps: [21, 15, 9] }} onChange={onChange} flavour="descending" />);
 
-    addStep(5);
+    fireEvent.click(screen.getByRole("button", { name: "add step" }));
 
     expect(onChange).toHaveBeenCalledTimes(1);
-    expect(onChange).toHaveBeenCalledWith({ steps: [21, 15, 9, 5] });
+    expect(onChange).toHaveBeenCalledWith({ steps: [21, 15, 9, 9] });
   });
 
-  it("emits onChange without the removed step when a chip delete is clicked", () => {
+  it("emits onChange with the edited value when a cell is changed", () => {
     render(<LadderForm value={{ steps: [21, 15, 9] }} onChange={onChange} flavour="descending" />);
 
-    deleteStepChip("15");
+    fireEvent.change(screen.getByDisplayValue("15"), { target: { value: "12" } });
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith({ steps: [21, 12, 9] });
+  });
+
+  it("emits onChange without the removed step when a cell remove is clicked", () => {
+    render(<LadderForm value={{ steps: [21, 15, 9] }} onChange={onChange} flavour="descending" />);
+
+    removeStepAt(1);
 
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith({ steps: [21, 9] });
   });
 
-  it("does not offer a delete affordance when only one step remains (MIN_STEPS)", () => {
+  it("disables the remove affordance when only one step remains (MIN_STEPS)", () => {
     render(<LadderForm value={{ steps: [9] }} onChange={onChange} flavour="descending" />);
 
-    expect(screen.queryByTestId("CancelIcon")).toBeNull();
+    expect(screen.getByRole("button", { name: "Remove step" })).toBeDisabled();
   });
 });
 
@@ -167,10 +174,13 @@ describe("LADDER_DEFAULTS and toLadderParams cover all four flavours", () => {
   });
 });
 
-describe("LadderForm chip count integration", () => {
-  it("renders one removable delete affordance per step when above the minimum", () => {
+describe("LadderForm cell count integration", () => {
+  it("renders one enabled remove affordance per step when above the minimum", () => {
     render(<LadderForm value={{ steps: [21, 15, 9, 30] }} onChange={onChange} flavour="spike" />);
 
-    expect(screen.getAllByTestId("CancelIcon")).toHaveLength(4);
+    const buttons = screen.getAllByRole("button", { name: "Remove step" });
+
+    expect(buttons).toHaveLength(4);
+    buttons.forEach((button) => expect(button).toBeEnabled());
   });
 });
