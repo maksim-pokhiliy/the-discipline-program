@@ -67,7 +67,7 @@ describe("EmomSlotForm kind toggle", () => {
 });
 
 describe("EmomSlotForm grouped rendering", () => {
-  it("renders the StepArrayFields chips for a grouped slot", () => {
+  it("renders the StepArrayFields cells for a grouped slot", () => {
     render(
       <EmomSlotForm
         value={{ slot: { kind: "grouped", minutes: [1, 3, 5] } }}
@@ -75,23 +75,20 @@ describe("EmomSlotForm grouped rendering", () => {
       />,
     );
 
-    expect(screen.getByText("1")).toBeInTheDocument();
-    expect(screen.getByText("3")).toBeInTheDocument();
-    expect(screen.getByText("5")).toBeInTheDocument();
-    expect(screen.getByRole("spinbutton", { name: "Add step" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("1")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("3")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("5")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "add step" })).toBeInTheDocument();
   });
 
-  it("emits an updated grouped slot when a minute is appended", () => {
+  it("emits a grouped slot with a minute duplicating the last when add step is clicked", () => {
     render(
       <EmomSlotForm value={{ slot: { kind: "grouped", minutes: [1, 3] } }} onChange={onChange} />,
     );
 
-    fireEvent.change(screen.getByRole("spinbutton", { name: "Add step" }), {
-      target: { value: "5" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    fireEvent.click(screen.getByRole("button", { name: "add step" }));
 
-    expect(onChange).toHaveBeenCalledWith({ slot: { kind: "grouped", minutes: [1, 3, 5] } });
+    expect(onChange).toHaveBeenCalledWith({ slot: { kind: "grouped", minutes: [1, 3, 3] } });
   });
 
   it("emits the typed minute on the single field", () => {

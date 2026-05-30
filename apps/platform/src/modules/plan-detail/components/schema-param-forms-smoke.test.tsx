@@ -37,13 +37,13 @@ afterEach(() => {
 });
 
 describe("AlternatingSetsForm renders the default set enumeration", () => {
-  it("shows the [1,3,5] chips and the add field", () => {
+  it("shows the [1,3,5] cells and the add step affordance", () => {
     render(<AlternatingSetsForm value={alternatingSetsDefaultParams} onChange={onChange} />);
 
-    expect(screen.getByText("1")).toBeInTheDocument();
-    expect(screen.getByText("3")).toBeInTheDocument();
-    expect(screen.getByText("5")).toBeInTheDocument();
-    expect(screen.getByRole("spinbutton", { name: "Add step" })).toBeInTheDocument();
+    expect(screen.getByDisplayValue("1")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("3")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("5")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "add step" })).toBeInTheDocument();
   });
 });
 
