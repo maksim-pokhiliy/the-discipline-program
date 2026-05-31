@@ -45,7 +45,7 @@ const collapseTempo = (next: TempoModifier): TempoModifier | null => {
   return hasAny ? next : null;
 };
 
-export const TempoEditor = ({ value, onChange, disabled = false }: TempoEditorProps) => {
+export const TempoEditor = ({ value, onChange, error, disabled = false }: TempoEditorProps) => {
   const current: TempoModifier = value ?? {};
   const fullTempo = current.fullTempo;
   const slowEccentric = current.slowEccentric;
@@ -161,6 +161,8 @@ export const TempoEditor = ({ value, onChange, disabled = false }: TempoEditorPr
               value={slowEccentric.durationSec}
               onChange={(e) => setSlowEccentric(Number(e.target.value))}
               inputProps={{ min: 1, step: 0.5 }}
+              error={error?.slowEccentric?.durationSec !== undefined}
+              helperText={error?.slowEccentric?.durationSec?.message}
               disabled={disabled}
               sx={{ maxWidth: DURATION_FIELD_WIDTH }}
             />
@@ -186,6 +188,8 @@ export const TempoEditor = ({ value, onChange, disabled = false }: TempoEditorPr
               value={pauseInUp.durationSec}
               onChange={(e) => setPauseInUp(Number(e.target.value))}
               inputProps={{ min: 1, step: 0.5 }}
+              error={error?.pauseInUp?.durationSec !== undefined}
+              helperText={error?.pauseInUp?.durationSec?.message}
               disabled={disabled}
               sx={{ maxWidth: DURATION_FIELD_WIDTH }}
             />
@@ -213,6 +217,8 @@ export const TempoEditor = ({ value, onChange, disabled = false }: TempoEditorPr
               value={holdAfterLast.durationSec}
               onChange={(e) => setHoldAfterLast(Number(e.target.value))}
               inputProps={{ min: 1, step: 0.5 }}
+              error={error?.holdAfterLast?.durationSec !== undefined}
+              helperText={error?.holdAfterLast?.durationSec?.message}
               disabled={disabled}
               sx={{ maxWidth: DURATION_FIELD_WIDTH }}
             />
@@ -259,6 +265,8 @@ export const TempoEditor = ({ value, onChange, disabled = false }: TempoEditorPr
                 )
               }
               inputProps={{ min: 1, step: 1 }}
+              error={error?.perNthRepPause?.everyN !== undefined}
+              helperText={error?.perNthRepPause?.everyN?.message}
               disabled={disabled}
               sx={{ maxWidth: COUNT_FIELD_WIDTH }}
             />
@@ -280,6 +288,8 @@ export const TempoEditor = ({ value, onChange, disabled = false }: TempoEditorPr
                 )
               }
               inputProps={{ min: 1, step: 0.5 }}
+              error={error?.perNthRepPause?.pauseSec !== undefined}
+              helperText={error?.perNthRepPause?.pauseSec?.message}
               disabled={disabled}
               sx={{ maxWidth: COUNT_FIELD_WIDTH }}
             />
