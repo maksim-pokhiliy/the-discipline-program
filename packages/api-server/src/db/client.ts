@@ -173,16 +173,24 @@ const createClient = () => {
             return query(args);
           }
 
-          const delegate = getDelegate(client, model);
+          const select = args.select as Record<string, unknown> | undefined;
+          const deletedAtProjected = !select || select.deletedAt === true;
 
-          if (!delegate) {
-            return query(args);
+          if (select && !deletedAtProjected) {
+            args.select = { ...select, deletedAt: true };
           }
 
-          return delegate.findFirst({
-            ...args,
-            where: { ...args.where, deletedAt: null },
-          });
+          const row = (await query(args)) as Record<string, unknown> | null;
+
+          if (!row || row.deletedAt != null) {
+            return null;
+          }
+
+          if (!deletedAtProjected) {
+            delete row.deletedAt;
+          }
+
+          return row;
         },
 
         async findUniqueOrThrow({ model, args, query }) {
@@ -190,22 +198,30 @@ const createClient = () => {
             return query(args);
           }
 
-          const delegate = getDelegate(client, model);
+          const select = args.select as Record<string, unknown> | undefined;
+          const deletedAtProjected = !select || select.deletedAt === true;
 
-          if (!delegate) {
-            return query(args);
+          if (select && !deletedAtProjected) {
+            args.select = { ...select, deletedAt: true };
           }
 
-          const result = await delegate.findFirst({
-            ...args,
-            where: { ...args.where, deletedAt: null },
-          });
+          const row = (await query(args).catch((error: unknown) => {
+            if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+              return null;
+            }
 
-          if (!result) {
+            throw error;
+          })) as Record<string, unknown> | null;
+
+          if (!row || row.deletedAt != null) {
             throw new NotFoundError(`${model} not found`);
           }
 
-          return result;
+          if (!deletedAtProjected) {
+            delete row.deletedAt;
+          }
+
+          return row;
         },
 
         async delete({ model, args, query }) {

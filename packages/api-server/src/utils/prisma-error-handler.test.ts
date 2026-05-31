@@ -100,6 +100,25 @@ describe("handlePrismaError", () => {
     }
   });
 
+  it("domain AppError is rethrown unchanged, not wrapped as InternalServerError", () => {
+    const notFound = new NotFoundError("Coach not found", { missing: ["coachId"] });
+
+    expect(() => handlePrismaError(notFound, { entity: "User" })).toThrow(NotFoundError);
+
+    try {
+      handlePrismaError(notFound, { entity: "User" });
+    } catch (e) {
+      expect(e).toBe(notFound);
+      expect((e as NotFoundError).details).toEqual({ missing: ["coachId"] });
+    }
+
+    const badRequest = new BadRequestError("members must belong to the same block");
+
+    expect(() => handlePrismaError(badRequest, { entity: "AlternatingGroup" })).toThrow(
+      BadRequestError,
+    );
+  });
+
   it("unknown Prisma error code throws InternalServerError without leaking the raw message", () => {
     const error = makePrismaError("P9999");
 
