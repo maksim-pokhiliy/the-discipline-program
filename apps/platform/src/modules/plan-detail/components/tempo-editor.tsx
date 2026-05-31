@@ -122,6 +122,7 @@ export const TempoEditor = ({ value, onChange, disabled = false }: TempoEditorPr
                 label="con"
                 value={fullTempo.concentric}
                 onChange={(n) => setFullTempo({ ...fullTempo, concentric: n })}
+                allowX
                 disabled={disabled}
               />
 

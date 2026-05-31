@@ -25,35 +25,53 @@ const clampTempoDigit = (raw: string): number => {
   return parsed;
 };
 
+const EXPLOSIVE_TOKEN = "X";
+
 type TempoDigitProps = {
   value: number;
   onChange: (next: number) => void;
   label: string;
+  allowX?: boolean;
   disabled?: boolean;
 };
 
-export const TempoDigit = ({ value, onChange, label, disabled = false }: TempoDigitProps) => (
-  <Stack spacing={0.5} sx={{ alignItems: "center" }}>
-    <TextField
-      type="number"
-      size="small"
-      value={value}
-      onChange={(e) => onChange(clampTempoDigit(e.target.value))}
-      inputProps={{
-        min: TEMPO_DIGIT_MIN,
-        max: TEMPO_DIGIT_MAX,
-        step: 1,
-        style: { textAlign: "center" },
-      }}
-      disabled={disabled}
-      sx={{ width: TEMPO_DIGIT_WIDTH_PX }}
-    />
+export const TempoDigit = ({
+  value,
+  onChange,
+  label,
+  allowX = false,
+  disabled = false,
+}: TempoDigitProps) => {
+  const displayValue = allowX && value === 0 ? EXPLOSIVE_TOKEN : String(value);
 
-    <Typography
-      variant="overline"
-      sx={{ letterSpacing: TEMPO_DIGIT_LABEL_LETTER_SPACING, color: "text.subtle" }}
-    >
-      {label}
-    </Typography>
-  </Stack>
-);
+  const handleChange = (raw: string): void => {
+    if (allowX && (raw === EXPLOSIVE_TOKEN || raw === EXPLOSIVE_TOKEN.toLowerCase())) {
+      onChange(0);
+
+      return;
+    }
+
+    onChange(clampTempoDigit(raw));
+  };
+
+  return (
+    <Stack spacing={0.5} sx={{ alignItems: "center" }}>
+      <TextField
+        type="text"
+        size="small"
+        value={displayValue}
+        onChange={(e) => handleChange(e.target.value)}
+        inputProps={{ inputMode: "numeric", style: { textAlign: "center" } }}
+        disabled={disabled}
+        sx={{ width: TEMPO_DIGIT_WIDTH_PX }}
+      />
+
+      <Typography
+        variant="overline"
+        sx={{ letterSpacing: TEMPO_DIGIT_LABEL_LETTER_SPACING, color: "text.subtle" }}
+      >
+        {label}
+      </Typography>
+    </Stack>
+  );
+};
