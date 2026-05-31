@@ -6,7 +6,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Stack } from "@mui/material";
 
-import type { Exercise } from "@repo/contracts/lms/exercise";
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 import { ConfirmationModal } from "@repo/ui";
 
@@ -37,7 +36,6 @@ type SchemaCardProps = {
   planId: string;
   startDate: string;
   blockCtx: BlockCtx;
-  exerciseById: ReadonlyMap<string, Exercise>;
   parentIsReorderPending?: boolean;
 };
 
@@ -46,7 +44,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   planId,
   startDate,
   blockCtx,
-  exerciseById,
   parentIsReorderPending = false,
 }): ReactElement => {
   const updateSchema = useUpdateSchema(planId, startDate);
@@ -148,7 +145,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
                 planId={planId}
                 startDate={startDate}
                 blockCtx={blockCtx}
-                exerciseById={exerciseById}
                 parentIsReorderPending={pending}
               />
             )}
@@ -161,7 +157,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         schemaId={schema.schema.id}
         planId={planId}
         startDate={startDate}
-        exerciseById={exerciseById}
         parentIsReorderPending={isMutationPending}
       />
 

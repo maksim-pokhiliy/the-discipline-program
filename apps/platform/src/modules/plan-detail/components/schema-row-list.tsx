@@ -19,7 +19,6 @@ import {
 } from "@dnd-kit/sortable";
 import { Stack } from "@mui/material";
 
-import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import { useReorderSchemaRows } from "@app/lib/hooks";
@@ -32,7 +31,6 @@ type SchemaRowListProps = {
   startDate: string;
   schemaId: string;
   rows: SchemaRow[];
-  exerciseById: ReadonlyMap<string, Exercise>;
   parentIsReorderPending?: boolean;
 };
 
@@ -41,7 +39,6 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
   startDate,
   schemaId,
   rows,
-  exerciseById,
   parentIsReorderPending = false,
 }) => {
   const reorderSchemaRows = useReorderSchemaRows(planId, startDate);
@@ -97,7 +94,6 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
                   row={row}
                   planId={planId}
                   startDate={startDate}
-                  exerciseById={exerciseById}
                   index={index}
                   isReorderPending={parentIsReorderPending || reorderSchemaRows.isPending}
                 />

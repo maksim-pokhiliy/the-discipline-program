@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import { theme } from "@repo/mui";
 
+import { CatalogContext, type CatalogContextValue } from "@app/lib/contexts/catalog-provider";
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
@@ -34,16 +35,22 @@ vi.mock("./row-editor-modal", () => ({ RowEditorModal: () => null }));
 
 const { SchemaRowCard } = await import("./schema-row-card");
 
+const catalogValue: CatalogContextValue = {
+  exerciseById,
+  archetypeById: new Map(),
+};
+
 const renderRow = (row: SchemaRow, index = 0) =>
   render(
-    <SchemaRowCard
-      row={row}
-      planId={PLAN_ID}
-      startDate={START_DATE}
-      exerciseById={exerciseById}
-      index={index}
-      isReorderPending={false}
-    />,
+    <CatalogContext.Provider value={catalogValue}>
+      <SchemaRowCard
+        row={row}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        index={index}
+        isReorderPending={false}
+      />
+    </CatalogContext.Provider>,
   );
 
 afterEach(() => {

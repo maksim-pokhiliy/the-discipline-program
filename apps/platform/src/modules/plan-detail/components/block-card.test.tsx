@@ -5,7 +5,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { AlternatingGroup } from "@repo/contracts/lms/alternating-group";
 import type { Block } from "@repo/contracts/lms/block";
-import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { Label } from "@repo/contracts/lms/label";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
@@ -25,9 +24,6 @@ const updateBlockState = { isPending: false };
 const deleteBlockState = { isPending: false };
 const assignLabelsState = { isPending: false };
 const reorderSchemasState = { isPending: false };
-
-type ExercisesState = { data: Exercise[] | undefined; isError: boolean };
-const exercisesState: ExercisesState = { data: [], isError: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -56,17 +52,14 @@ vi.mock("@app/lib/hooks", async () => {
 vi.mock("./schema-card", () => ({
   SchemaCard: ({
     schema,
-    exerciseById,
     parentIsReorderPending,
   }: {
     schema: SchemaWithBody;
-    exerciseById: ReadonlyMap<string, Exercise>;
     parentIsReorderPending?: boolean;
   }) => (
     <div
       data-testid="schema-card-mock"
       data-schema-id={schema.schema.id}
-      data-exercise-count={String(exerciseById.size)}
       data-parent-pending={parentIsReorderPending === true ? "true" : "false"}
     >{`schema-card:${schema.schema.id}`}</div>
   ),
@@ -171,7 +164,7 @@ const renderBlockCard = ({
   };
 
   const catalogValue: CatalogContextValue = {
-    exerciseById: new Map((exercisesState.data ?? []).map((e) => [e.id, e])),
+    exerciseById: new Map(),
     archetypeById: new Map(),
   };
 
@@ -204,8 +197,6 @@ afterEach(() => {
   deleteBlockState.isPending = false;
   assignLabelsState.isPending = false;
   reorderSchemasState.isPending = false;
-  exercisesState.data = [];
-  exercisesState.isError = false;
   updateBlockMutate.mockReset();
   deleteBlockMutate.mockReset();
   assignLabelsMutate.mockReset();
@@ -551,30 +542,6 @@ describe("BlockCard mutation pending / actions", () => {
     expect(deleteBlockMutate).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("heading", { name: "Delete block" })).toBeInTheDocument();
     expect(screen.getByText("Delete this block?")).toBeInTheDocument();
-  });
-});
-
-describe("BlockCard useExercises graceful fallback (QA-Must-11)", () => {
-  it("passes an empty exerciseById Map to SchemaCard when useExercises succeeds with empty data", () => {
-    exercisesState.data = [];
-    exercisesState.isError = false;
-
-    renderBlockCard({ block: makeBlock({ schemas: [makeSchema()] }) });
-
-    const schemaCard = screen.getByTestId("schema-card-mock");
-
-    expect(schemaCard).toHaveAttribute("data-exercise-count", "0");
-  });
-
-  it("passes an empty exerciseById Map to SchemaCard when useExercises is in an error state with undefined data", () => {
-    exercisesState.data = undefined;
-    exercisesState.isError = true;
-
-    renderBlockCard({ block: makeBlock({ schemas: [makeSchema()] }) });
-
-    const schemaCard = screen.getByTestId("schema-card-mock");
-
-    expect(schemaCard).toHaveAttribute("data-exercise-count", "0");
   });
 });
 

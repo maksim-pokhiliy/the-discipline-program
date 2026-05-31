@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import { theme } from "@repo/mui";
 
+import { CatalogContext, type CatalogContextValue } from "@app/lib/contexts/catalog-provider";
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
@@ -73,20 +74,26 @@ type RenderOptions = {
   isReorderPending?: boolean;
 };
 
+const catalogValue: CatalogContextValue = {
+  exerciseById,
+  archetypeById: new Map(),
+};
+
 const renderRowCard = ({
   row = makeExerciseRow(),
   index = 0,
   isReorderPending = false,
 }: RenderOptions = {}) =>
   render(
-    <SchemaRowCard
-      row={row}
-      planId={PLAN_ID}
-      startDate={START_DATE}
-      exerciseById={exerciseById}
-      index={index}
-      isReorderPending={isReorderPending}
-    />,
+    <CatalogContext.Provider value={catalogValue}>
+      <SchemaRowCard
+        row={row}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        index={index}
+        isReorderPending={isReorderPending}
+      />
+    </CatalogContext.Provider>,
   );
 
 afterEach(() => {

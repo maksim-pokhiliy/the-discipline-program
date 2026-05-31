@@ -9,7 +9,7 @@ import { Stack } from "@mui/material";
 import type { Block } from "@repo/contracts/lms/block";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useCatalog, useLabelOptions } from "@app/lib/hooks";
+import { useLabelOptions } from "@app/lib/hooks";
 import { useAssignBlockLabels, useDeleteBlock, useUpdateBlock } from "@app/lib/hooks";
 
 import { BlockCardBody } from "./block-card-body";
@@ -43,7 +43,6 @@ export const BlockCard: React.FC<BlockCardProps> = ({
   const deleteBlock = useDeleteBlock(planId, startDate);
   const assignLabels = useAssignBlockLabels(planId, startDate);
   const blockLabelOptions = useLabelOptions("BLOCK");
-  const { exerciseById } = useCatalog();
 
   const isMutationPending =
     updateBlock.isPending || deleteBlock.isPending || assignLabels.isPending || isReorderPending;
@@ -115,7 +114,6 @@ export const BlockCard: React.FC<BlockCardProps> = ({
         block={block}
         planId={planId}
         startDate={startDate}
-        exerciseById={exerciseById}
         parentIsReorderPending={isMutationPending}
       />
 

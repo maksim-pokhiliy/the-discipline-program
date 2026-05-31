@@ -191,7 +191,6 @@ const renderSchemaCard = ({
         planId={PLAN_ID}
         startDate={START_DATE}
         blockCtx={blockCtx}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
         parentIsReorderPending={parentIsReorderPending}
       />
     </CatalogContext.Provider>,

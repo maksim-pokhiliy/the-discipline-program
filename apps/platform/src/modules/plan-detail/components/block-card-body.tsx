@@ -20,7 +20,6 @@ import {
 import { Stack } from "@mui/material";
 
 import type { Block } from "@repo/contracts/lms/block";
-import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import { AccentGroupCard } from "@repo/ui";
 
@@ -40,7 +39,6 @@ type BlockCardBodyProps = {
   block: Block;
   planId: string;
   startDate: string;
-  exerciseById: ReadonlyMap<string, Exercise>;
   parentIsReorderPending?: boolean;
 };
 
@@ -48,7 +46,6 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
   block,
   planId,
   startDate,
-  exerciseById,
   parentIsReorderPending = false,
 }) => {
   const reorderSchemas = useReorderSchemas(planId, startDate);
@@ -132,7 +129,6 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
                       planId={planId}
                       startDate={startDate}
                       blockCtx={blockCtx}
-                      exerciseById={exerciseById}
                       parentIsReorderPending={effectiveReorderPending}
                     />
                   ))}
@@ -145,7 +141,6 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
                 planId={planId}
                 startDate={startDate}
                 blockCtx={blockCtx}
-                exerciseById={exerciseById}
                 parentIsReorderPending={effectiveReorderPending}
               />
             ),
