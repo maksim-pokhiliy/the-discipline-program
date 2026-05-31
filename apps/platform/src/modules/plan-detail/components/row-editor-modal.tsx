@@ -50,6 +50,11 @@ const ROW_KIND_MODAL_WIDTH: Record<RowKind, "sm" | "md"> = {
   REST_SLOT: "sm",
 };
 
+const SUBMIT_MODE_SAVE = "save";
+const SUBMIT_MODE_SAVE_ADD = "save-add";
+
+type SubmitMode = typeof SUBMIT_MODE_SAVE | typeof SUBMIT_MODE_SAVE_ADD;
+
 type RowEditorModalProps = {
   open: boolean;
   onClose: () => void;
@@ -81,6 +86,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
   const updateSchemaRow = useUpdateSchemaRow(planId, startDate);
   const [payloadError, setPayloadError] = useState<FieldErrors | undefined>(undefined);
   const isSubmittingRef = useRef(false);
+  const submitModeRef = useRef<SubmitMode>(SUBMIT_MODE_SAVE);
 
   const { control, handleSubmit, reset, setValue } = useForm<RowShellFormData>({
     resolver: zodResolver(rowShellResolverSchema),
@@ -92,6 +98,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
   useEffect(() => {
     setPayloadError(undefined);
     isSubmittingRef.current = false;
+    submitModeRef.current = SUBMIT_MODE_SAVE;
     reset(toShellFormData(mode));
   }, [mode, reset]);
 
@@ -137,7 +144,16 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
             };
 
       createSchemaRow.mutate(createBody, {
-        onSuccess: () => onClose(),
+        onSuccess: () => {
+          if (submitModeRef.current === SUBMIT_MODE_SAVE_ADD) {
+            submitModeRef.current = SUBMIT_MODE_SAVE;
+            reset(toShellFormData(mode));
+
+            return;
+          }
+
+          onClose();
+        },
         onSettled: () => {
           isSubmittingRef.current = false;
         },
@@ -193,6 +209,20 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
             Cancel
           </Button>
 
+          {isCreate && (
+            <Button
+              form={formId}
+              type="submit"
+              size="small"
+              disabled={isPending}
+              onClick={() => {
+                submitModeRef.current = SUBMIT_MODE_SAVE_ADD;
+              }}
+            >
+              Save &amp; add another
+            </Button>
+          )}
+
           <Button
             form={formId}
             type="submit"
@@ -200,6 +230,9 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
             size="small"
             disabled={isPending}
             startIcon={isPending ? <CircularProgress size={16} /> : null}
+            onClick={() => {
+              submitModeRef.current = SUBMIT_MODE_SAVE;
+            }}
           >
             {isPending ? "Saving…" : "Save row"}
           </Button>
