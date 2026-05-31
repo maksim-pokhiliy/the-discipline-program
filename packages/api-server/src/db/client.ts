@@ -98,6 +98,7 @@ const buildSoftDeleteSql = (config: SoftDeleteTableConfig, ids: string[]): Prism
 
 const createClient = () => {
   const client = new PrismaClient({
+    errorFormat: "minimal",
     log: isDev
       ? [
           { emit: "event", level: "query" },
