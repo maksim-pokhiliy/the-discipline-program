@@ -87,6 +87,7 @@ export const WeightCompoundDeviceFields = ({
       </FormControl>
 
       <ToggleButtonGroup
+        aria-label="device count"
         value={value.count}
         exclusive
         onChange={handleCountChange}

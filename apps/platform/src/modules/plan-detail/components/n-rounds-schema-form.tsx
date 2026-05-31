@@ -74,6 +74,7 @@ export const NRoundsSchemaForm: React.FC<SchemaParamFormProps<NRoundsParams>> = 
     <Stack spacing={2}>
       <FormSection label="Rounds count">
         <ToggleButtonGroup
+          aria-label="rounds count form"
           value={value.countForm}
           exclusive
           onChange={handleCountFormChange}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import { Stack, TextField, ToggleButton, Typography } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
 import {
@@ -8,6 +8,7 @@ import {
   type Weight,
   type WeightDepthModifier,
 } from "@repo/contracts/lms/_shared";
+import { LabeledToggleGroup } from "@repo/ui";
 
 type DepthModifierWeight = Extract<Weight, { variant: "with_depth_modifier" }>;
 
@@ -53,31 +54,25 @@ export const WeightDepthModifierFields = ({
         sx={{ maxWidth: 160 }}
       />
 
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-        <Typography variant="caption" color="text.subtle">
-          depth
-        </Typography>
-
-        <ToggleButtonGroup
-          value={value.depth}
-          exclusive
-          onChange={handleDepthChange}
-          size="small"
-          disabled={disabled}
-        >
-          {WEIGHT_DEPTH_MODIFIERS.map((depth) => (
-            <ToggleButton key={depth} value={depth}>
-              {DEPTH_MODIFIER_LABELS[depth]}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-
-        {error?.depth !== undefined && (
-          <Typography variant="caption" color="error">
-            {error.depth.message}
-          </Typography>
-        )}
-      </Stack>
+      <LabeledToggleGroup
+        label="depth"
+        value={value.depth}
+        onChange={handleDepthChange}
+        disabled={disabled}
+        helper={
+          error?.depth !== undefined ? (
+            <Typography variant="caption" color="error">
+              {error.depth.message}
+            </Typography>
+          ) : undefined
+        }
+      >
+        {WEIGHT_DEPTH_MODIFIERS.map((depth) => (
+          <ToggleButton key={depth} value={depth}>
+            {DEPTH_MODIFIER_LABELS[depth]}
+          </ToggleButton>
+        ))}
+      </LabeledToggleGroup>
     </Stack>
   );
 };

@@ -42,6 +42,7 @@ export const PaceField = ({ value, onChange, disabled = false }: PaceFieldProps)
       disabled={disabled}
     >
       <ToggleButtonGroup
+        aria-label="Pace"
         exclusive
         size="small"
         value={value ?? null}

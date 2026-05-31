@@ -7,7 +7,6 @@ import {
   Switch,
   TextField,
   ToggleButton,
-  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
@@ -21,6 +20,7 @@ import {
   type WeightPassiveArmAction,
   type WeightWorkingArm,
 } from "@repo/contracts/lms/_shared";
+import { LabeledToggleGroup } from "@repo/ui";
 
 import { DEFAULT_VALUE_KG } from "./weight-load-defaults";
 
@@ -124,45 +124,31 @@ export const WeightAsymmetricArmFields = ({
         sx={{ maxWidth: 160 }}
       />
 
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-        <Typography variant="caption" color="text.subtle">
-          working arm
-        </Typography>
+      <LabeledToggleGroup
+        label="working arm"
+        value={value.workingArm}
+        onChange={handleWorkingArmChange}
+        disabled={disabled}
+      >
+        {WEIGHT_WORKING_ARMS.map((arm) => (
+          <ToggleButton key={arm} value={arm}>
+            {WORKING_ARM_LABELS[arm]}
+          </ToggleButton>
+        ))}
+      </LabeledToggleGroup>
 
-        <ToggleButtonGroup
-          value={value.workingArm}
-          exclusive
-          onChange={handleWorkingArmChange}
-          size="small"
-          disabled={disabled}
-        >
-          {WEIGHT_WORKING_ARMS.map((arm) => (
-            <ToggleButton key={arm} value={arm}>
-              {WORKING_ARM_LABELS[arm]}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-      </Stack>
-
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-        <Typography variant="caption" color="text.subtle">
-          passive arm
-        </Typography>
-
-        <ToggleButtonGroup
-          value={value.passiveArmAction}
-          exclusive
-          onChange={handlePassiveActionChange}
-          size="small"
-          disabled={disabled}
-        >
-          {WEIGHT_PASSIVE_ARM_ACTIONS.map((action) => (
-            <ToggleButton key={action} value={action}>
-              {PASSIVE_ARM_ACTION_LABELS[action]}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-      </Stack>
+      <LabeledToggleGroup
+        label="passive arm"
+        value={value.passiveArmAction}
+        onChange={handlePassiveActionChange}
+        disabled={disabled}
+      >
+        {WEIGHT_PASSIVE_ARM_ACTIONS.map((action) => (
+          <ToggleButton key={action} value={action}>
+            {PASSIVE_ARM_ACTION_LABELS[action]}
+          </ToggleButton>
+        ))}
+      </LabeledToggleGroup>
 
       <Box>
         <FormControlLabel
@@ -178,31 +164,25 @@ export const WeightAsymmetricArmFields = ({
 
         {value.passiveExtraWeight !== undefined && (
           <Stack spacing={1.5} sx={{ pl: 4, pt: 1 }}>
-            <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-              <Typography variant="caption" color="text.subtle">
-                equipment
-              </Typography>
-
-              <ToggleButtonGroup
-                value={value.passiveExtraWeight.equipment}
-                exclusive
-                onChange={handlePassiveEquipmentChange}
-                size="small"
-                disabled={disabled}
-              >
-                {WEIGHT_ASYMMETRIC_PASSIVE_EQUIPMENT.map((item) => (
-                  <ToggleButton key={item} value={item}>
-                    {PASSIVE_EQUIPMENT_LABELS[item]}
-                  </ToggleButton>
-                ))}
-              </ToggleButtonGroup>
-
-              {passiveError?.equipment !== undefined && (
-                <Typography variant="caption" color="error">
-                  {passiveError.equipment.message}
-                </Typography>
-              )}
-            </Stack>
+            <LabeledToggleGroup
+              label="equipment"
+              value={value.passiveExtraWeight.equipment}
+              onChange={handlePassiveEquipmentChange}
+              disabled={disabled}
+              helper={
+                passiveError?.equipment !== undefined ? (
+                  <Typography variant="caption" color="error">
+                    {passiveError.equipment.message}
+                  </Typography>
+                ) : undefined
+              }
+            >
+              {WEIGHT_ASYMMETRIC_PASSIVE_EQUIPMENT.map((item) => (
+                <ToggleButton key={item} value={item}>
+                  {PASSIVE_EQUIPMENT_LABELS[item]}
+                </ToggleButton>
+              ))}
+            </LabeledToggleGroup>
 
             <TextField
               label="Extra weight (kg)"

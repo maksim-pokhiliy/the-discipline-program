@@ -36,6 +36,7 @@ export const RpeField = ({ value, onChange, disabled = false }: RpeFieldProps) =
       disabled={disabled}
     >
       <ToggleButtonGroup
+        aria-label="RPE"
         exclusive
         size="small"
         value={value?.value ?? null}

@@ -49,6 +49,7 @@ export const PercentageReferenceEditor = ({
   return (
     <Stack spacing={1.5}>
       <ToggleButtonGroup
+        aria-label="percentage reference"
         value={value.scope}
         exclusive
         onChange={handleScopeChange}

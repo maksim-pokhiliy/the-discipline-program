@@ -63,6 +63,7 @@ export const LoadEditor = ({ value, onChange, error, disabled = false }: LoadEdi
   return (
     <Stack spacing={1.5}>
       <ToggleButtonGroup
+        aria-label="load kind"
         value={value.kind}
         exclusive
         onChange={handleKindChange}
