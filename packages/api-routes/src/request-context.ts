@@ -20,6 +20,8 @@ export const getRequestId = (): string | undefined => storage.getStore()?.reques
 
 export const getUserId = (): string | undefined => storage.getStore()?.userId;
 
+export const getRole = (): string | undefined => storage.getStore()?.role;
+
 export const updateContext = (patch: Partial<RequestContext>): void => {
   const current = storage.getStore();
 

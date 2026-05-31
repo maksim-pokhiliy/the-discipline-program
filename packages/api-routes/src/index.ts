@@ -4,6 +4,7 @@ export {
   getContext,
   getRequestId,
   getUserId,
+  getRole,
   updateContext,
 } from "./request-context";
 export type { RequestContext } from "./request-context";

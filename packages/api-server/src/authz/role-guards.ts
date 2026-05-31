@@ -1,11 +1,10 @@
 import { UserRole } from "@repo/contracts/iam/auth";
-import { ForbiddenError } from "@repo/errors";
+import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../db/client";
-import { ROLE_MAP } from "../mappers/iam";
-import { findOrThrow } from "../utils";
 
 import { isAdminOrHeadCoach } from "./_role-helpers";
+import { resolveCallerRole } from "./resolve-caller-role";
 
 const COACH_LIKE_ROLES: ReadonlySet<UserRole> = new Set([
   UserRole.COACH,
@@ -13,35 +12,34 @@ const COACH_LIKE_ROLES: ReadonlySet<UserRole> = new Set([
   UserRole.ADMIN,
 ]);
 
-export const requireAdmin = async (userId: string): Promise<void> => {
-  const user = await findOrThrow(
-    prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
-    "User",
-  );
+const resolveCallerRoleOrThrow = async (userId: string): Promise<UserRole> => {
+  const role = await resolveCallerRole(userId);
 
-  if (!isAdminOrHeadCoach(ROLE_MAP[user.role])) {
+  if (role === null) {
+    throw new NotFoundError("User not found");
+  }
+
+  return role;
+};
+
+export const requireAdmin = async (userId: string): Promise<void> => {
+  const role = await resolveCallerRoleOrThrow(userId);
+
+  if (!isAdminOrHeadCoach(role)) {
     throw new ForbiddenError("Admin role required");
   }
 };
 
 export const requireAdminStrict = async (userId: string): Promise<void> => {
-  const user = await findOrThrow(
-    prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
-    "User",
-  );
+  const role = await resolveCallerRoleOrThrow(userId);
 
-  if (ROLE_MAP[user.role] !== UserRole.ADMIN) {
+  if (role !== UserRole.ADMIN) {
     throw new ForbiddenError("Admin role required");
   }
 };
 
 export const requireCoachLikeRole = async (userId: string): Promise<UserRole> => {
-  const user = await findOrThrow(
-    prisma.user.findUnique({ where: { id: userId }, select: { role: true } }),
-    "User",
-  );
-
-  const role = ROLE_MAP[user.role];
+  const role = await resolveCallerRoleOrThrow(userId);
 
   if (!COACH_LIKE_ROLES.has(role)) {
     throw new ForbiddenError("Coach role required");
