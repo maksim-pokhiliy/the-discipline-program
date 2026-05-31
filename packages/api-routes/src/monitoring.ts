@@ -1,3 +1,5 @@
+import { logger } from "@repo/shared";
+
 export type SeverityLevel = "fatal" | "error" | "warning" | "info" | "debug";
 
 export type CaptureContext = {
@@ -16,11 +18,17 @@ export type MonitoringPort = {
 };
 
 let monitoring: MonitoringPort | undefined;
+let hasWarnedMissing = false;
 
 export const setMonitoring = (port: MonitoringPort): void => {
   monitoring = port;
 };
 
 export const getMonitoring = (): MonitoringPort | undefined => {
+  if (!monitoring && !hasWarnedMissing && process.env.NODE_ENV === "production") {
+    hasWarnedMissing = true;
+    logger.warn("monitoring.unavailable", { reason: "registry_not_bootstrapped" });
+  }
+
   return monitoring;
 };

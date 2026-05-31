@@ -1,6 +1,7 @@
 import { logger } from "@repo/shared";
 
 import { type ExtendedPrismaClient, prisma as defaultPrisma } from "../../db/client";
+import { TX_BUDGET_BULK } from "../../db/transaction-config";
 
 import {
   MS_PER_DAY,
@@ -51,7 +52,7 @@ export const runRetentionSweep = async (
       actionItemDeleted: actionItem.count,
       contactSubmissionDeleted: contactSubmissionCount,
     };
-  });
+  }, TX_BUDGET_BULK);
 
   logger.info("retention.sweep.completed", { ...result });
 

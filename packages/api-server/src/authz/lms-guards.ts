@@ -3,10 +3,10 @@ import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../db/client";
-import { ROLE_MAP } from "../mappers/iam";
 import { TRAINING_PLAN_STATUS_MAP } from "../mappers/lms";
 
 import { isAdminOrHeadCoach } from "./_role-helpers";
+import { resolveCallerRole } from "./resolve-caller-role";
 
 export const verifyPlanOwnership = async (
   planId: string,
@@ -25,12 +25,9 @@ export const verifyPlanOwnership = async (
     return { status: TRAINING_PLAN_STATUS_MAP[plan.status] };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const role = await resolveCallerRole(userId);
 
-  if (user && isAdminOrHeadCoach(ROLE_MAP[user.role])) {
+  if (role !== null && isAdminOrHeadCoach(role)) {
     return { status: TRAINING_PLAN_STATUS_MAP[plan.status] };
   }
 
@@ -80,12 +77,9 @@ export const verifySessionOwnership = async (
     };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const role = await resolveCallerRole(userId);
 
-  if (user && isAdminOrHeadCoach(ROLE_MAP[user.role])) {
+  if (role !== null && isAdminOrHeadCoach(role)) {
     return {
       status: TRAINING_PLAN_STATUS_MAP[plan.status],
       dayId: session.dayId,
@@ -146,12 +140,9 @@ export const verifyBlockOwnership = async (
     };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const role = await resolveCallerRole(userId);
 
-  if (user && isAdminOrHeadCoach(ROLE_MAP[user.role])) {
+  if (role !== null && isAdminOrHeadCoach(role)) {
     return {
       status: TRAINING_PLAN_STATUS_MAP[plan.status],
       sessionId: block.sessionId,
@@ -226,12 +217,9 @@ export const verifySchemaOwnership = async (
     };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const role = await resolveCallerRole(userId);
 
-  if (user && isAdminOrHeadCoach(ROLE_MAP[user.role])) {
+  if (role !== null && isAdminOrHeadCoach(role)) {
     return {
       status: TRAINING_PLAN_STATUS_MAP[plan.status],
       blockId: schema.blockId,
@@ -318,12 +306,9 @@ export const verifySchemaRowOwnership = async (
     return buildResponse();
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const role = await resolveCallerRole(userId);
 
-  if (user && isAdminOrHeadCoach(ROLE_MAP[user.role])) {
+  if (role !== null && isAdminOrHeadCoach(role)) {
     return buildResponse();
   }
 

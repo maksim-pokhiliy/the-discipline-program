@@ -7,11 +7,20 @@ import { getClientIp } from "./ip-utils";
 import type { RateLimitTierValue } from "./rate-limit-tiers";
 import type { RateLimitResult } from "./rate-limiter-port";
 import { getRateLimiter } from "./rate-limiter-registry";
+import { readCredentialIdentifier } from "./read-credential-identifier";
 
 const setRateLimitHeaders = (response: Response, result: RateLimitResult): void => {
   response.headers.set("X-RateLimit-Limit", String(result.limit));
   response.headers.set("X-RateLimit-Remaining", String(result.remaining));
   response.headers.set("X-RateLimit-Reset", String(result.resetAt));
+};
+
+const denyIfExceeded = (result: RateLimitResult): void => {
+  if (!result.allowed) {
+    throw new TooManyRequestsError("Too many requests", {
+      retryAfter: Math.ceil((result.resetAt - Date.now()) / 1000),
+    });
+  }
 };
 
 export const withRateLimit =
@@ -82,6 +91,55 @@ export const withAuthRateLimit =
     const response = await handler(request, context, userId);
 
     setRateLimitHeaders(response, result);
+
+    return response;
+  };
+
+export const withAuthCredentialsRateLimit =
+  (handler: RouteHandler, tier: RateLimitTierValue): RouteHandler =>
+  async (request, context) => {
+    const limiter = getRateLimiter();
+
+    if (!limiter) {
+      return handler(request, context);
+    }
+
+    let ipResult: RateLimitResult;
+
+    try {
+      const ip = getClientIp(request);
+
+      ipResult = await limiter.check(`ip:${ip}`, tier.limit, tier.windowMs);
+
+      const identifier = await readCredentialIdentifier(request);
+
+      if (identifier) {
+        const identifierResult = await limiter.check(
+          `auth:${identifier}`,
+          tier.limit,
+          tier.windowMs,
+        );
+
+        denyIfExceeded(identifierResult);
+      }
+    } catch (error) {
+      if (error instanceof TooManyRequestsError) {
+        throw error;
+      }
+
+      getMonitoring()?.captureException(error, {
+        tags: { component: "rate-limiter" },
+        level: "warning",
+      });
+
+      return handler(request, context);
+    }
+
+    denyIfExceeded(ipResult);
+
+    const response = await handler(request, context);
+
+    setRateLimitHeaders(response, ipResult);
 
     return response;
   };

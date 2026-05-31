@@ -100,12 +100,16 @@ describe("handlePrismaError", () => {
     }
   });
 
-  it("unknown Prisma error code is rethrown as-is", () => {
+  it("unknown Prisma error code throws InternalServerError without leaking the raw message", () => {
     const error = makePrismaError("P9999");
 
-    expect(() => handlePrismaError(error, { entity: "X" })).toThrow(
-      Prisma.PrismaClientKnownRequestError,
-    );
+    expect(() => handlePrismaError(error, { entity: "X" })).toThrow(InternalServerError);
+
+    try {
+      handlePrismaError(error, { entity: "X" });
+    } catch (e) {
+      expect((e as InternalServerError).message).toBe("Database operation failed for X");
+    }
   });
 
   it("PrismaClientUnknownRequestError throws InternalServerError", () => {
@@ -116,14 +120,20 @@ describe("handlePrismaError", () => {
     expect(() => handlePrismaError(error, { entity: "User" })).toThrow(InternalServerError);
   });
 
-  it("non-Prisma error is rethrown as-is", () => {
+  it("non-Prisma error throws InternalServerError without leaking the raw message", () => {
     const error = new Error("Some random error");
 
-    expect(() => handlePrismaError(error, { entity: "X" })).toThrow("Some random error");
+    expect(() => handlePrismaError(error, { entity: "X" })).toThrow(InternalServerError);
+
+    try {
+      handlePrismaError(error, { entity: "X" });
+    } catch (e) {
+      expect((e as InternalServerError).message).toBe("Database operation failed for X");
+    }
   });
 
-  it("non-Error value is rethrown", () => {
-    expect(() => handlePrismaError("string error", { entity: "X" })).toThrow();
+  it("non-Error value throws InternalServerError", () => {
+    expect(() => handlePrismaError("string error", { entity: "X" })).toThrow(InternalServerError);
   });
 
   it("ZodError throws InternalServerError with DbCorruption kind and structured issues", () => {
@@ -156,7 +166,7 @@ describe("handlePrismaError", () => {
     }
   });
 
-  it("non-Zod non-Prisma Error subclass still rethrown as-is (regression guard for ZodError branch)", () => {
+  it("non-Zod non-Prisma Error subclass throws InternalServerError (regression guard for ZodError branch)", () => {
     class CustomError extends Error {
       constructor(message: string) {
         super(message);
@@ -166,6 +176,6 @@ describe("handlePrismaError", () => {
 
     const error = new CustomError("custom failure");
 
-    expect(() => handlePrismaError(error, { entity: "X" })).toThrow(CustomError);
+    expect(() => handlePrismaError(error, { entity: "X" })).toThrow(InternalServerError);
   });
 });

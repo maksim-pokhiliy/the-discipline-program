@@ -59,5 +59,5 @@ export const handlePrismaError = (
     });
   }
 
-  throw error;
+  throw new InternalServerError(`Database operation failed for ${context.entity}`);
 };

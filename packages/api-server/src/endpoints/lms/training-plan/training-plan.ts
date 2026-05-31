@@ -11,9 +11,8 @@ import {
 } from "@repo/contracts/lms/training-plan";
 import { ConflictError, NotFoundError } from "@repo/errors";
 
-import { verifyPlanOwnership } from "../../../authz/guards";
+import { resolveCallerRole, verifyPlanOwnership } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
-import { ROLE_MAP } from "../../../mappers/iam";
 import {
   mapToTrainingPlan,
   TRAINING_PLAN_STATUS_MAP,
@@ -24,17 +23,10 @@ import { findOrThrow, handlePrismaError } from "../../../utils";
 const mapToListItem = (p: PrismaTrainingPlan): TrainingPlanListItem => mapToTrainingPlan(p);
 
 const buildPlanFilter = async (userId: string): Promise<Prisma.TrainingPlanWhereInput> => {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const role = await resolveCallerRole(userId);
 
-  if (user) {
-    const role = ROLE_MAP[user.role];
-
-    if (role === UserRole.ADMIN || role === UserRole.HEAD_COACH) {
-      return { deletedAt: null };
-    }
+  if (role === UserRole.ADMIN || role === UserRole.HEAD_COACH) {
+    return { deletedAt: null };
   }
 
   return {

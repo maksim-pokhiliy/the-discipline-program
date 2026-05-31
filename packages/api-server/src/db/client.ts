@@ -8,6 +8,7 @@ const SOFT_DELETE_MODELS = new Set([
   "User",
   "Product",
   "TrainingPlan",
+  "PlanEnrollment",
   "CoachProfile",
   "MarketingBlogPost",
   "MarketingReview",
@@ -98,6 +99,7 @@ const buildSoftDeleteSql = (config: SoftDeleteTableConfig, ids: string[]): Prism
 
 const createClient = () => {
   const client = new PrismaClient({
+    errorFormat: "minimal",
     log: isDev
       ? [
           { emit: "event", level: "query" },

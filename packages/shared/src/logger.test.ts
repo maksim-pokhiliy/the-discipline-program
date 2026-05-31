@@ -17,7 +17,7 @@ const { logMock, warnMock, errorMock, debugMock } = vi.hoisted(() => {
   return { logMock, warnMock, errorMock, debugMock };
 });
 
-import { createLogger, logger } from "./logger";
+import { createLogger, logger, redactPii } from "./logger";
 
 describe("default logger", () => {
   afterEach(() => {
@@ -108,5 +108,97 @@ describe("backward compatibility", () => {
     expect(typeof logger.info).toBe("function");
     expect(typeof logger.warn).toBe("function");
     expect(typeof logger.error).toBe("function");
+  });
+});
+
+describe("redactPii", () => {
+  const sensitiveKeys = [
+    "password",
+    "passwordHash",
+    "token",
+    "accessToken",
+    "refreshToken",
+    "idToken",
+    "apiKey",
+    "secret",
+    "authorization",
+    "cookie",
+    "creditCard",
+    "ssn",
+    "email",
+    "phone",
+    "phoneNumber",
+    "address",
+    "firstName",
+    "lastName",
+    "fullName",
+    "dob",
+    "dateOfBirth",
+    "ip",
+    "ipAddress",
+    "taxId",
+  ];
+
+  it.each(sensitiveKeys)("redacts the value under the sensitive key %s", (key) => {
+    expect(redactPii({ [key]: "raw-value" })).toEqual({ [key]: "[REDACTED]" });
+  });
+
+  it("matches keys case-insensitively", () => {
+    expect(redactPii({ EMAIL: "user@example.com", Token: "abc" })).toEqual({
+      EMAIL: "[REDACTED]",
+      Token: "[REDACTED]",
+    });
+  });
+
+  it("leaves non-sensitive keys untouched", () => {
+    expect(redactPii({ email: "user@example.com", role: "ADMIN", count: 3 })).toEqual({
+      email: "[REDACTED]",
+      role: "ADMIN",
+      count: 3,
+    });
+  });
+
+  it("redacts sensitive keys in nested objects", () => {
+    expect(redactPii({ user: { email: "user@example.com", id: "u1" } })).toEqual({
+      user: { email: "[REDACTED]", id: "u1" },
+    });
+  });
+
+  it("redacts sensitive keys inside arrays", () => {
+    expect(redactPii({ users: [{ email: "a@b.com" }, { email: "c@d.com" }] })).toEqual({
+      users: [{ email: "[REDACTED]" }, { email: "[REDACTED]" }],
+    });
+  });
+
+  it("returns the original reference when no sensitive field is present (short-circuit)", () => {
+    const input = { role: "ADMIN", nested: { count: 1 } };
+
+    expect(redactPii(input)).toBe(input);
+  });
+
+  it("does not throw and renders [Circular] on circular references", () => {
+    const input: Record<string, unknown> = { email: "user@example.com" };
+
+    input.self = input;
+
+    const result = redactPii(input) as Record<string, unknown>;
+
+    expect(result.email).toBe("[REDACTED]");
+    expect(result.self).toBe("[Circular]");
+  });
+
+  it("passes primitives through unchanged", () => {
+    expect(redactPii("user@example.com")).toBe("user@example.com");
+    expect(redactPii(null)).toBeNull();
+    expect(redactPii(undefined)).toBeUndefined();
+  });
+
+  it("does NOT redact PII embedded in a value under a non-sensitive key (key-based, not value-based)", () => {
+    expect(redactPii({ message: "failed for user@example.com" })).toEqual({
+      message: "failed for user@example.com",
+    });
+    expect(redactPii({ reason: "duplicate key for John Doe" })).toEqual({
+      reason: "duplicate key for John Doe",
+    });
   });
 });

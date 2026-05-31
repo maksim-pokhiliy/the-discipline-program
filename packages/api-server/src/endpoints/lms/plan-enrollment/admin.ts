@@ -66,12 +66,15 @@ const buildListWhere = (
   filter: { status?: EnrollmentStatus },
 ): Prisma.PlanEnrollmentWhereInput => {
   if (filter.status === EnrollmentStatus.REMOVED) {
-    return { planId, status: ENROLLMENT_STATUS_TO_PRISMA_MAP[EnrollmentStatus.REMOVED] };
+    return {
+      planId,
+      status: ENROLLMENT_STATUS_TO_PRISMA_MAP[EnrollmentStatus.REMOVED],
+      deletedAt: { not: null },
+    };
   }
 
   return {
     planId,
-    deletedAt: null,
     ...(filter.status !== undefined && {
       status: ENROLLMENT_STATUS_TO_PRISMA_MAP[filter.status],
     }),
@@ -105,7 +108,7 @@ const runStatusTransition = async (tx: TxClient, args: StatusTransitionArgs) => 
       where: { id: args.enrollmentId, planId: args.planId },
     });
 
-    if (!existing || existing.deletedAt !== null) {
+    if (!existing) {
       throw new NotFoundError("Plan enrollment not found", { enrollmentId: args.enrollmentId });
     }
 
@@ -165,7 +168,7 @@ export const lmsPlanEnrollmentApi = {
 
     const enrollment = await findOrThrow(
       prisma.planEnrollment.findFirst({
-        where: { id: enrollmentId, planId, deletedAt: null },
+        where: { id: enrollmentId, planId },
       }),
       "Plan enrollment",
     );
@@ -191,7 +194,7 @@ export const lmsPlanEnrollmentApi = {
     await ensureCoachAssignmentIfNeeded(data.athleteId, userId);
 
     const existingActive = await prisma.planEnrollment.findFirst({
-      where: { planId, athleteId: data.athleteId, deletedAt: null },
+      where: { planId, athleteId: data.athleteId },
       select: { id: true },
     });
 
@@ -252,17 +255,22 @@ export const lmsPlanEnrollmentApi = {
   remove: async (userId: string, planId: string, enrollmentId: string): Promise<void> => {
     await verifyPlanOwnership(planId, userId);
 
-    const existing = await prisma.planEnrollment.findFirst({
+    const active = await prisma.planEnrollment.findFirst({
       where: { id: enrollmentId, planId },
-      select: { deletedAt: true },
+      select: { id: true },
     });
 
-    if (!existing) {
-      throw new NotFoundError("Plan enrollment not found", { enrollmentId });
-    }
+    if (!active) {
+      const removed = await prisma.planEnrollment.findFirst({
+        where: { id: enrollmentId, planId, deletedAt: { not: null } },
+        select: { id: true },
+      });
 
-    if (existing.deletedAt !== null) {
-      return;
+      if (removed) {
+        return;
+      }
+
+      throw new NotFoundError("Plan enrollment not found", { enrollmentId });
     }
 
     const now = new Date();

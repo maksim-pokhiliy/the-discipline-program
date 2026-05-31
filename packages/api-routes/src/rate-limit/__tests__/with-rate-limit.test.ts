@@ -17,7 +17,9 @@ vi.mock("../../monitoring", () => ({
 
 const { getRateLimiter } = await import("../rate-limiter-registry");
 const { getMonitoring } = await import("../../monitoring");
-const { withRateLimit, withAuthRateLimit } = await import("../with-rate-limit");
+const { withRateLimit, withAuthRateLimit, withAuthCredentialsRateLimit } = await import(
+  "../with-rate-limit"
+);
 
 const mockGetRateLimiter = vi.mocked(getRateLimiter);
 const mockGetMonitoring = vi.mocked(getMonitoring);
@@ -130,7 +132,7 @@ describe("withRateLimit", () => {
     });
   });
 
-  it("uses ip: prefix as the rate limit key", async () => {
+  it("uses the ip: prefix and ignores an untrusted x-forwarded-for", async () => {
     const limiter = createMockLimiter({
       allowed: true,
       limit: 10,
@@ -148,7 +150,7 @@ describe("withRateLimit", () => {
 
     await wrapped(request, dummyContext);
 
-    expect(limiter.check).toHaveBeenCalledWith("ip:192.168.1.1", 10, 60_000);
+    expect(limiter.check).toHaveBeenCalledWith("ip:unknown", 10, 60_000);
   });
 });
 
@@ -224,6 +226,152 @@ describe("withAuthRateLimit", () => {
     const request = new Request("https://example.com");
 
     const response = await wrapped(request, dummyContext, "user-123");
+
+    expect(handler).toHaveBeenCalledOnce();
+    expect(response.headers.has("X-RateLimit-Limit")).toBe(false);
+  });
+});
+
+const allowed: RateLimitResult = {
+  allowed: true,
+  limit: 5,
+  remaining: 4,
+  resetAt: Date.now() + 60_000,
+};
+
+const denied: RateLimitResult = {
+  allowed: false,
+  limit: 5,
+  remaining: 0,
+  resetAt: Date.now() + 30_000,
+};
+
+const createKeyedLimiter = (byKey: Record<string, RateLimitResult>): RateLimiterPort => ({
+  check: vi.fn(async (key: string) => byKey[key] ?? allowed),
+});
+
+const createCredentialsRequest = (email: string): Request =>
+  new Request("https://example.com/api/auth/callback/credentials", {
+    method: "POST",
+    headers: { "content-type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ email, password: "secret" }).toString(),
+  });
+
+const authTier = { limit: 5, windowMs: 60_000 } as const;
+
+describe("withAuthCredentialsRateLimit", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("checks both the ip bucket and the normalized email bucket", async () => {
+    const limiter = createKeyedLimiter({});
+
+    mockGetRateLimiter.mockReturnValue(limiter);
+
+    const handler = createMockHandler();
+    const wrapped = withAuthCredentialsRateLimit(handler, authTier);
+
+    await wrapped(createCredentialsRequest("  Coach@Example.com "), dummyContext);
+
+    expect(limiter.check).toHaveBeenCalledWith("ip:unknown", 5, 60_000);
+    expect(limiter.check).toHaveBeenCalledWith("auth:coach@example.com", 5, 60_000);
+  });
+
+  it("denies when the email bucket is exhausted even if the ip bucket is fresh", async () => {
+    const limiter = createKeyedLimiter({ "auth:coach@example.com": denied });
+
+    mockGetRateLimiter.mockReturnValue(limiter);
+
+    const handler = createMockHandler();
+    const wrapped = withAuthCredentialsRateLimit(handler, authTier);
+
+    await expect(
+      wrapped(createCredentialsRequest("coach@example.com"), dummyContext),
+    ).rejects.toThrow(TooManyRequestsError);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("denies when the ip bucket is exhausted", async () => {
+    const limiter = createKeyedLimiter({ "ip:unknown": denied });
+
+    mockGetRateLimiter.mockReturnValue(limiter);
+
+    const handler = createMockHandler();
+    const wrapped = withAuthCredentialsRateLimit(handler, authTier);
+
+    await expect(
+      wrapped(createCredentialsRequest("coach@example.com"), dummyContext),
+    ).rejects.toThrow(TooManyRequestsError);
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("falls back to ip-only keying when no identifier can be parsed", async () => {
+    const limiter = createKeyedLimiter({});
+
+    mockGetRateLimiter.mockReturnValue(limiter);
+
+    const handler = createMockHandler();
+    const wrapped = withAuthCredentialsRateLimit(handler, authTier);
+    const request = new Request("https://example.com/api/auth/session", { method: "POST" });
+
+    await wrapped(request, dummyContext);
+
+    expect(limiter.check).toHaveBeenCalledOnce();
+    expect(limiter.check).toHaveBeenCalledWith("ip:unknown", 5, 60_000);
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  it("passes the original request body through to the handler", async () => {
+    const limiter = createKeyedLimiter({});
+
+    mockGetRateLimiter.mockReturnValue(limiter);
+
+    const seenBodies: string[] = [];
+    const handler: RouteHandler = vi.fn(async (request) => {
+      seenBodies.push(await request.text());
+
+      return NextResponse.json({ ok: true });
+    });
+    const wrapped = withAuthCredentialsRateLimit(handler, authTier);
+
+    await wrapped(createCredentialsRequest("coach@example.com"), dummyContext);
+
+    expect(seenBodies[0]).toContain("email=coach%40example.com");
+  });
+
+  it("passes through and logs a warning when the limiter throws", async () => {
+    const captureException = vi.fn(() => "event-id");
+
+    mockGetMonitoring.mockReturnValue({ captureException } as unknown as MonitoringPort);
+    const limiter: RateLimiterPort = {
+      check: vi.fn(async () => {
+        throw new Error("Redis connection failed");
+      }),
+    };
+
+    mockGetRateLimiter.mockReturnValue(limiter);
+
+    const handler = createMockHandler();
+    const wrapped = withAuthCredentialsRateLimit(handler, authTier);
+
+    const response = await wrapped(createCredentialsRequest("coach@example.com"), dummyContext);
+
+    expect(handler).toHaveBeenCalledOnce();
+    expect(response.headers.has("X-RateLimit-Limit")).toBe(false);
+    expect(captureException).toHaveBeenCalledWith(expect.any(Error), {
+      tags: { component: "rate-limiter" },
+      level: "warning",
+    });
+  });
+
+  it("passes through when no limiter is set", async () => {
+    mockGetRateLimiter.mockReturnValue(undefined);
+
+    const handler = createMockHandler();
+    const wrapped = withAuthCredentialsRateLimit(handler, authTier);
+
+    const response = await wrapped(createCredentialsRequest("coach@example.com"), dummyContext);
 
     expect(handler).toHaveBeenCalledOnce();
     expect(response.headers.has("X-RateLimit-Limit")).toBe(false);

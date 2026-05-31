@@ -406,20 +406,32 @@ describe("REVIEW-FOLLOWUP: wrapHandler resolves auth scope from request-context 
     const inner: RouteHandler = vi.fn(async () => new Response('{"ok":1}', { status: 201 }));
     const wrapped = wrapHandler(inner, { bodyMode: "json" });
 
-    await runWithContext({ requestId: "rid-test" }, async () => {
-      await wrapped(
-        buildJsonRequest(
-          { a: 1 },
-          {
-            headers: {
-              "Idempotency-Key": KEY,
-              "x-forwarded-for": "203.0.113.42",
+    const previousTrustedProxyHops = process.env.RATE_LIMIT_TRUSTED_PROXY_HOPS;
+
+    process.env.RATE_LIMIT_TRUSTED_PROXY_HOPS = "1";
+
+    try {
+      await runWithContext({ requestId: "rid-test" }, async () => {
+        await wrapped(
+          buildJsonRequest(
+            { a: 1 },
+            {
+              headers: {
+                "Idempotency-Key": KEY,
+                "x-forwarded-for": "203.0.113.42",
+              },
             },
-          },
-        ),
-        dummyContext(),
-      );
-    });
+          ),
+          dummyContext(),
+        );
+      });
+    } finally {
+      if (previousTrustedProxyHops === undefined) {
+        delete process.env.RATE_LIMIT_TRUSTED_PROXY_HOPS;
+      } else {
+        process.env.RATE_LIMIT_TRUSTED_PROXY_HOPS = previousTrustedProxyHops;
+      }
+    }
 
     expect(lookupMock).toHaveBeenCalledOnce();
     expect(lookupMock.mock.calls[0]?.[0]).toMatchObject({ scope: "ip:203.0.113.42" });

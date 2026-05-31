@@ -2,10 +2,10 @@ import { type TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { prisma } from "../db/client";
-import { ROLE_MAP } from "../mappers/iam";
 import { TRAINING_PLAN_STATUS_MAP } from "../mappers/lms";
 
 import { isAdminOrHeadCoach } from "./_role-helpers";
+import { resolveCallerRole } from "./resolve-caller-role";
 
 export const verifyAlternatingGroupOwnership = async (
   groupId: string,
@@ -63,12 +63,9 @@ export const verifyAlternatingGroupOwnership = async (
     };
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true },
-  });
+  const role = await resolveCallerRole(userId);
 
-  if (user && isAdminOrHeadCoach(ROLE_MAP[user.role])) {
+  if (role !== null && isAdminOrHeadCoach(role)) {
     return {
       status: TRAINING_PLAN_STATUS_MAP[plan.status],
       blockId: group.blockId,
