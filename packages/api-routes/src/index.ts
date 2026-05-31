@@ -43,6 +43,7 @@ export {
 export {
   withRateLimit,
   withAuthRateLimit,
+  withAuthCredentialsRateLimit,
   setRateLimiter,
   getRateLimiter,
   defaultRateLimiter,

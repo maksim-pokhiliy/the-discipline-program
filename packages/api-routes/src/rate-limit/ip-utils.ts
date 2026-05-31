@@ -1,5 +1,8 @@
 import { isIP } from "node:net";
 
+const TRUSTED_PROXY_HOPS_RADIX = 10;
+const UNKNOWN_CLIENT_IP = "unknown";
+
 const sanitize = (raw: string | undefined | null): string | null => {
   if (!raw) {
     return null;
@@ -14,46 +17,63 @@ const sanitize = (raw: string | undefined | null): string | null => {
   return isIP(trimmed) ? trimmed : null;
 };
 
-const isOnVercel = (): boolean => Boolean(process.env.VERCEL);
+const isOnVercel = (): boolean => Boolean(process.env.VERCEL_ENV);
 
-const leftmostForwardedFor = (forwarded: string | null): string | null => {
-  if (!forwarded) {
+const trustedProxyHops = (): number => {
+  const raw = process.env.RATE_LIMIT_TRUSTED_PROXY_HOPS;
+
+  if (!raw) {
+    return 0;
+  }
+
+  const parsed = Number.parseInt(raw.trim(), TRUSTED_PROXY_HOPS_RADIX);
+
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 0;
+};
+
+const forwardedForHopFromRight = (
+  forwarded: string | null,
+  hopsFromRight: number,
+): string | null => {
+  if (!forwarded || hopsFromRight <= 0) {
     return null;
   }
 
   const hops = forwarded.split(",");
+  const index = hops.length - hopsFromRight;
 
-  for (const hop of hops) {
-    const candidate = sanitize(hop);
-
-    if (candidate) {
-      return candidate;
-    }
+  if (index < 0) {
+    return null;
   }
 
-  return null;
+  return sanitize(hops[index]);
 };
 
 export const getClientIp = (request: Request): string => {
-  const vercelClient = sanitize(request.headers.get("x-vercel-forwarded-for"));
-
-  if (vercelClient) {
-    return vercelClient;
-  }
-
   if (isOnVercel()) {
+    const vercelClient = sanitize(request.headers.get("x-vercel-forwarded-for"));
+
+    if (vercelClient) {
+      return vercelClient;
+    }
+
     const realIp = sanitize(request.headers.get("x-real-ip"));
 
     if (realIp) {
       return realIp;
     }
+
+    return UNKNOWN_CLIENT_IP;
   }
 
-  const leftmost = leftmostForwardedFor(request.headers.get("x-forwarded-for"));
+  const trustedHop = forwardedForHopFromRight(
+    request.headers.get("x-forwarded-for"),
+    trustedProxyHops(),
+  );
 
-  if (leftmost) {
-    return leftmost;
+  if (trustedHop) {
+    return trustedHop;
   }
 
-  return "unknown";
+  return UNKNOWN_CLIENT_IP;
 };
