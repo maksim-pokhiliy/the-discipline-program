@@ -1,16 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Stack } from "@mui/material";
 
 import type { Block } from "@repo/contracts/lms/block";
-import type { Exercise } from "@repo/contracts/lms/exercise";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useExercises, useLabelOptions } from "@app/lib/hooks";
+import { useCatalog, useLabelOptions } from "@app/lib/hooks";
 import { useAssignBlockLabels, useDeleteBlock, useUpdateBlock } from "@app/lib/hooks";
 
 import { BlockCardBody } from "./block-card-body";
@@ -44,12 +43,7 @@ export const BlockCard: React.FC<BlockCardProps> = ({
   const deleteBlock = useDeleteBlock(planId, startDate);
   const assignLabels = useAssignBlockLabels(planId, startDate);
   const blockLabelOptions = useLabelOptions("BLOCK");
-  const exercises = useExercises();
-
-  const exerciseById = useMemo<ReadonlyMap<string, Exercise>>(
-    () => new Map((exercises.data ?? []).map((e) => [e.id, e])),
-    [exercises.data],
-  );
+  const { exerciseById } = useCatalog();
 
   const isMutationPending =
     updateBlock.isPending || deleteBlock.isPending || assignLabels.isPending || isReorderPending;

@@ -10,7 +10,7 @@ import type { Exercise } from "@repo/contracts/lms/exercise";
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useArchetypes, useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
+import { useCatalog, useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
 
 import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
@@ -51,7 +51,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
 }): ReactElement => {
   const updateSchema = useUpdateSchema(planId, startDate);
   const deleteSchema = useDeleteSchema(planId, startDate);
-  const archetypes = useArchetypes();
+  const { archetypeById } = useCatalog();
 
   const isSubSchema = schema.schema.parentSchemaId !== null;
   const isMutationPending =
@@ -64,11 +64,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
 
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
-
-  const archetypeById = useMemo(
-    () => new Map((archetypes.data ?? []).map((a) => [a.id, a])),
-    [archetypes.data],
-  );
 
   const archetypeLabel = archetypeById.get(schema.schema.archetypeId)?.label ?? null;
 

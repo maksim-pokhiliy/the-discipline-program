@@ -9,6 +9,7 @@ import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { Label } from "@repo/contracts/lms/label";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
+import { CatalogContext, type CatalogContextValue } from "@app/lib/contexts/catalog-provider";
 import {
   LabelOptionsContext,
   type LabelOptionsContextValue,
@@ -49,7 +50,6 @@ vi.mock("@app/lib/hooks", async () => {
       mutate: reorderSchemasMutate,
       isPending: reorderSchemasState.isPending,
     }),
-    useExercises: () => ({ data: exercisesState.data, isError: exercisesState.isError }),
   };
 });
 
@@ -170,14 +170,21 @@ const renderBlockCard = ({
     BLOCK: { options: blockOptions, isLoading: false },
   };
 
+  const catalogValue: CatalogContextValue = {
+    exerciseById: new Map((exercisesState.data ?? []).map((e) => [e.id, e])),
+    archetypeById: new Map(),
+  };
+
   return render(
     <LabelOptionsContext.Provider value={ctxValue}>
-      <BlockCard
-        block={block}
-        planId={PLAN_ID}
-        startDate={START_DATE}
-        isReorderPending={isReorderPending}
-      />
+      <CatalogContext.Provider value={catalogValue}>
+        <BlockCard
+          block={block}
+          planId={PLAN_ID}
+          startDate={START_DATE}
+          isReorderPending={isReorderPending}
+        />
+      </CatalogContext.Provider>
     </LabelOptionsContext.Provider>,
   );
 };
