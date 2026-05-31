@@ -17,7 +17,6 @@ const HOTKEYS_HINT = "hotkeys: E R F L U P I D S · enter to accept · esc to ca
 const DEFAULT_SELECTED_KIND: RowKind = "REST";
 
 const DEFERRED_ROW_KINDS: ReadonlySet<RowKind> = new Set<RowKind>([
-  "EXERCISE",
   "FOOTNOTE",
   "PLACEHOLDER",
   "REP_DEFINITION",

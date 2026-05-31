@@ -1,6 +1,11 @@
 import type { RowKind } from "@repo/contracts/lms/schema-row";
 
 import {
+  ExerciseRowPayloadForm,
+  exerciseDefaultValue,
+  toExerciseValue,
+} from "./exercise-row-payload-form";
+import {
   InnerLadderMarkerRowPayloadForm,
   innerLadderMarkerDefaultValue,
   toInnerLadderMarkerValue,
@@ -24,6 +29,11 @@ import {
 } from "./standalone-url-row-payload-form";
 
 export const ROW_PAYLOAD_FORM_REGISTRY = {
+  EXERCISE: {
+    Form: ExerciseRowPayloadForm,
+    defaultValue: exerciseDefaultValue,
+    toValue: toExerciseValue,
+  },
   REST: {
     Form: RestRowPayloadForm,
     defaultValue: restDefaultValue,

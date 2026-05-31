@@ -19,7 +19,7 @@ const ALL_TILE_LABELS = [
   "Rest slot (EMOM)",
 ] as const;
 
-const DEFERRED_LABELS = ["Exercise", "Footnote", "Placeholder", "Rep definition"] as const;
+const DEFERRED_LABELS = ["Footnote", "Placeholder", "Rep definition"] as const;
 
 const getTileButton = (label: string): HTMLButtonElement => {
   const node = screen.getByText(label).closest("button");
@@ -74,9 +74,22 @@ describe("RowKindPicker deferred tiles (MT-13)", () => {
 
     renderPicker({ onSelect });
 
-    fireEvent.click(getTileButton("Exercise"));
+    fireEvent.click(getTileButton("Footnote"));
 
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it("selects EXERCISE on click and confirms it via Continue now that it is live", () => {
+    const onSelect = vi.fn();
+    const onClose = vi.fn();
+
+    renderPicker({ onSelect, onClose });
+
+    fireEvent.click(getTileButton("Exercise"));
+    fireEvent.click(getContinue());
+
+    expect(onSelect).toHaveBeenCalledWith("EXERCISE");
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -147,7 +160,7 @@ describe("RowKindPicker hotkeys (MT-12)", () => {
     renderPicker({ onSelect });
 
     pressKey("u");
-    pressKey("e");
+    pressKey("f");
     pressKey("Enter");
 
     expect(onSelect).toHaveBeenCalledTimes(1);
