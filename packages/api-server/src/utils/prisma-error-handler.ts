@@ -1,12 +1,22 @@
 import { Prisma } from "@prisma/client";
 import { ZodError } from "zod";
 
-import { BadRequestError, ConflictError, InternalServerError, NotFoundError } from "@repo/errors";
+import {
+  AppError,
+  BadRequestError,
+  ConflictError,
+  InternalServerError,
+  NotFoundError,
+} from "@repo/errors";
 
 export const handlePrismaError = (
   error: unknown,
   context: { entity: string; field?: string },
 ): never => {
+  if (error instanceof AppError) {
+    throw error;
+  }
+
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === "P2002") {
       const target = error.meta?.target;
