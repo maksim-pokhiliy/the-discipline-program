@@ -8,6 +8,7 @@ const SOFT_DELETE_MODELS = new Set([
   "User",
   "Product",
   "TrainingPlan",
+  "PlanEnrollment",
   "CoachProfile",
   "MarketingBlogPost",
   "MarketingReview",
