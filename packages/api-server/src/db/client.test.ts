@@ -162,3 +162,54 @@ describe("soft-delete extension: deleteMany with unique-field suffix (perf-011)"
     }
   });
 });
+
+describe("soft-delete extension: findUnique transaction-context (data-002 regression)", () => {
+  const cleanup: string[] = [];
+
+  afterEach(async () => {
+    for (const id of cleanup.splice(0)) {
+      await cleanupRaw.user.delete({ where: { id } }).catch(() => undefined);
+    }
+  });
+
+  it("findUnique sees a write made earlier in the same transaction", async () => {
+    const namespace = crypto.randomUUID().slice(0, 8);
+    const user = await cleanupRaw.user.create({
+      data: { email: `tx-read-${namespace}@test.local`, name: "before" },
+    });
+
+    cleanup.push(user.id);
+
+    const seenName = await prisma.$transaction(async (tx) => {
+      await tx.user.updateMany({ where: { id: user.id }, data: { name: "after" } });
+
+      const reread = await tx.user.findUnique({ where: { id: user.id } });
+
+      return reread?.name;
+    });
+
+    expect(seenName).toBe("after");
+  });
+
+  it("findUnique filters soft-deleted rows and does not leak deletedAt under a select projection", async () => {
+    const namespace = crypto.randomUUID().slice(0, 8);
+    const user = await cleanupRaw.user.create({
+      data: { email: `softdel-find-${namespace}@test.local`, name: "active" },
+    });
+
+    cleanup.push(user.id);
+
+    const projected = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { name: true },
+    });
+
+    expect(projected).toEqual({ name: "active" });
+
+    await prisma.user.delete({ where: { id: user.id } });
+
+    const afterDelete = await prisma.user.findUnique({ where: { id: user.id } });
+
+    expect(afterDelete).toBeNull();
+  });
+});
