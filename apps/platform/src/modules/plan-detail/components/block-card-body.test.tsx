@@ -7,7 +7,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { AlternatingGroup } from "@repo/contracts/lms/alternating-group";
 import type { Block } from "@repo/contracts/lms/block";
-import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import type * as Hooks from "@app/lib/hooks";
@@ -84,8 +83,6 @@ const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 const SESSION_ID = "clp9z8x7w0000abcd1234ses1";
 const ARCHETYPE_ID = "clp9z8x7w0000abcd1234arc1";
 const NOW = new Date("2026-01-06T00:00:00.000Z");
-
-const EMPTY_EXERCISE_BY_ID: ReadonlyMap<string, Exercise> = new Map();
 
 const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWithBody => ({
   schema: {
@@ -189,7 +186,6 @@ describe("BlockCardBody D-14 hoisted DnD: top-level drag-end", () => {
         block={makeBlock({ schemas: [s1, s2, s3] })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
@@ -236,7 +232,6 @@ describe("BlockCardBody QA-01: cross-alt-group drag is forbidden", () => {
         })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
@@ -270,7 +265,6 @@ describe("BlockCardBody QA-01: cross-alt-group drag is forbidden", () => {
         })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
@@ -288,7 +282,6 @@ describe("BlockCardBody QA-01: cross-alt-group drag is forbidden", () => {
         block={makeBlock({ schemas: [s1, s2] })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
@@ -324,7 +317,6 @@ describe("BlockCardBody QA-01: cross-alt-group drag is forbidden", () => {
         })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
@@ -348,7 +340,6 @@ describe("BlockCardBody drag-end guards (QA-Must-01, QA-Must-02)", () => {
         block={makeBlock({ schemas: [s1, s2] })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
@@ -366,7 +357,6 @@ describe("BlockCardBody drag-end guards (QA-Must-01, QA-Must-02)", () => {
         block={makeBlock({ schemas: [s1, s2] })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
@@ -392,7 +382,6 @@ describe("BlockCardBody D-14: optimistic + rollback", () => {
         block={makeBlock({ schemas: [s1, s2] })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
@@ -416,7 +405,6 @@ describe("BlockCardBody D-14: parentIsReorderPending cascade", () => {
         block={makeBlock({ schemas: [s1, s2] })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
         parentIsReorderPending
       />,
     );
@@ -438,7 +426,6 @@ describe("BlockCardBody D-14: parentIsReorderPending cascade", () => {
         block={makeBlock({ schemas: [s1] })}
         planId={PLAN_ID}
         startDate={START_DATE}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 

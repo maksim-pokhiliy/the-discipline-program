@@ -82,6 +82,7 @@ export const StandaloneUrlRowPayloadForm: React.FC<
 
       <FormSection label="Applies to">
         <ToggleButtonGroup
+          aria-label="applies to"
           value={value.appliesTo}
           exclusive
           size="small"
@@ -98,6 +99,7 @@ export const StandaloneUrlRowPayloadForm: React.FC<
 
       <FormSection label="Notation" helper={NOTATION_HELPER}>
         <ToggleButtonGroup
+          aria-label="notation"
           value={value.wrapped ? WRAPPED_VALUE : BARE_VALUE}
           exclusive
           size="small"

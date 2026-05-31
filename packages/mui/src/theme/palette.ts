@@ -59,7 +59,7 @@ export const palette: PaletteOptions = {
     primary: TEXT_PRIMARY,
     secondary: TEXT_SECONDARY,
     muted: "rgba(255, 255, 255, 0.50)",
-    subtle: "rgba(255, 255, 255, 0.42)",
+    subtle: "rgba(255, 255, 255, 0.48)",
     faint: "rgba(255, 255, 255, 0.28)",
     disabled: "rgba(255, 255, 255, 0.38)",
   },

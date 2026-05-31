@@ -98,6 +98,7 @@ export const TimeCapFields = ({ value, onChange, error, disabled = false }: Time
         />
 
         <ToggleButtonGroup
+          aria-label="time cap unit"
           exclusive
           size="small"
           value={value?.unit ?? "min"}
@@ -114,6 +115,7 @@ export const TimeCapFields = ({ value, onChange, error, disabled = false }: Time
 
       <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
         <ToggleButtonGroup
+          aria-label="time cap preset"
           exclusive
           size="small"
           value={activePreset}

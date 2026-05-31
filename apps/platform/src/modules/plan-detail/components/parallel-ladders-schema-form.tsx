@@ -96,6 +96,7 @@ export const ParallelLaddersForm: React.FC<
 
               {mixed && (
                 <ToggleButtonGroup
+                  aria-label={`ladder ${index + 1} direction`}
                   value={ladder.direction ?? null}
                   exclusive
                   onChange={(_, next: LadderDirection | null) =>

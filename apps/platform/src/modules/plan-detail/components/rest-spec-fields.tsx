@@ -19,6 +19,7 @@ import {
   type RestQualifier,
   type RestScope,
 } from "@repo/contracts/lms/_shared";
+import { LabeledToggleGroup } from "@repo/ui";
 
 const restDurationFormSchema = z
   .object({
@@ -208,6 +209,7 @@ export const RestSpecFields = ({
         )}
 
         <ToggleButtonGroup
+          aria-label="duration unit"
           value={value.duration.unit}
           exclusive
           onChange={handleUnitChange}
@@ -226,25 +228,18 @@ export const RestSpecFields = ({
         <FormHelperText error>{durationRootMessage}</FormHelperText>
       )}
 
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-        <Typography variant="caption" color="text.subtle">
-          scope
-        </Typography>
-
-        <ToggleButtonGroup
-          value={value.scope}
-          exclusive
-          onChange={handleScopeChange}
-          size="small"
-          disabled={disabled}
-        >
-          {REST_SCOPES.map((scope) => (
-            <ToggleButton key={scope} value={scope}>
-              {REST_SCOPE_LABELS[scope]}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-      </Stack>
+      <LabeledToggleGroup
+        label="scope"
+        value={value.scope}
+        onChange={handleScopeChange}
+        disabled={disabled}
+      >
+        {REST_SCOPES.map((scope) => (
+          <ToggleButton key={scope} value={scope}>
+            {REST_SCOPE_LABELS[scope]}
+          </ToggleButton>
+        ))}
+      </LabeledToggleGroup>
 
       {value.scope === "after_specific_set" && (
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
@@ -267,25 +262,18 @@ export const RestSpecFields = ({
         </Stack>
       )}
 
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-        <Typography variant="caption" color="text.subtle">
-          qualifier
-        </Typography>
-
-        <ToggleButtonGroup
-          value={value.qualifier ?? QUALIFIER_NONE}
-          exclusive
-          onChange={handleQualifierChange}
-          size="small"
-          disabled={disabled}
-        >
-          {QUALIFIER_OPTIONS.map((option) => (
-            <ToggleButton key={option} value={option}>
-              {REST_QUALIFIER_LABELS[option]}
-            </ToggleButton>
-          ))}
-        </ToggleButtonGroup>
-      </Stack>
+      <LabeledToggleGroup
+        label="qualifier"
+        value={value.qualifier ?? QUALIFIER_NONE}
+        onChange={handleQualifierChange}
+        disabled={disabled}
+      >
+        {QUALIFIER_OPTIONS.map((option) => (
+          <ToggleButton key={option} value={option}>
+            {REST_QUALIFIER_LABELS[option]}
+          </ToggleButton>
+        ))}
+      </LabeledToggleGroup>
     </Stack>
   );
 };

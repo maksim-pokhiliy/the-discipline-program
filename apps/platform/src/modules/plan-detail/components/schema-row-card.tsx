@@ -10,11 +10,10 @@ import PlayCircleOutlineIcon from "@mui/icons-material/PlayCircleOutline";
 import TuneIcon from "@mui/icons-material/Tune";
 import { Box, IconButton, Link, Tooltip, Typography, alpha, type Theme } from "@mui/material";
 
-import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { RowKind, SchemaRow } from "@repo/contracts/lms/schema-row";
 import { ConfirmationModal, RowKindBadge } from "@repo/ui";
 
-import { useDeleteSchemaRow, useUpdateSchemaRow } from "@app/lib/hooks";
+import { useCatalog, useDeleteSchemaRow, useUpdateSchemaRow } from "@app/lib/hooks";
 
 import { formatRow } from "../lib/format-row";
 
@@ -50,7 +49,6 @@ type SchemaRowCardProps = {
   row: SchemaRow;
   planId: string;
   startDate: string;
-  exerciseById: ReadonlyMap<string, Exercise>;
   index: number;
   isReorderPending: boolean;
 };
@@ -90,12 +88,12 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   row,
   planId,
   startDate,
-  exerciseById,
   index,
   isReorderPending,
 }) => {
   const updateSchemaRow = useUpdateSchemaRow(planId, startDate);
   const deleteSchemaRow = useDeleteSchemaRow(planId, startDate);
+  const { exerciseById } = useCatalog();
 
   const isMutationPending =
     updateSchemaRow.isPending || deleteSchemaRow.isPending || isReorderPending;

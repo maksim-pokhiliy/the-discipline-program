@@ -100,6 +100,7 @@ export const NumericPaceField = ({
           </FormControl>
 
           <ToggleButtonGroup
+            aria-label="pace type"
             exclusive
             size="small"
             value={value.paceType}

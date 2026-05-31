@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, type ReactNode } from "react";
+import { createContext, type ReactNode, useMemo } from "react";
 
 import type { Label } from "@repo/contracts/lms/label";
 
@@ -26,11 +26,14 @@ export const LabelOptionsProvider = ({ children }: LabelOptionsProviderProps) =>
   const session = useLabelSearch({ level: "SESSION" });
   const block = useLabelSearch({ level: "BLOCK" });
 
-  const value: LabelOptionsContextValue = {
-    DAY: { options: day.data ?? [], isLoading: day.isLoading },
-    SESSION: { options: session.data ?? [], isLoading: session.isLoading },
-    BLOCK: { options: block.data ?? [], isLoading: block.isLoading },
-  };
+  const value = useMemo<LabelOptionsContextValue>(
+    () => ({
+      DAY: { options: day.data ?? [], isLoading: day.isLoading },
+      SESSION: { options: session.data ?? [], isLoading: session.isLoading },
+      BLOCK: { options: block.data ?? [], isLoading: block.isLoading },
+    }),
+    [day.data, day.isLoading, session.data, session.isLoading, block.data, block.isLoading],
+  );
 
   return <LabelOptionsContext.Provider value={value}>{children}</LabelOptionsContext.Provider>;
 };

@@ -31,6 +31,7 @@ export const HrZoneField = ({ value, onChange, disabled = false }: HrZoneFieldPr
   return (
     <ToggleSection on={isOn} label="HR zone" onToggle={handleToggle} disabled={disabled}>
       <ToggleButtonGroup
+        aria-label="HR zone"
         exclusive
         size="small"
         value={value?.zone ?? null}

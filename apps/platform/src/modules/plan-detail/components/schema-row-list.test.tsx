@@ -4,7 +4,6 @@ import type * as DndKitCore from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import type * as Hooks from "@app/lib/hooks";
@@ -75,8 +74,6 @@ const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const START_DATE = "2026-01-06";
 const SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
 const NOW = new Date("2026-01-06T00:00:00.000Z");
-
-const EMPTY_EXERCISE_BY_ID: ReadonlyMap<string, Exercise> = new Map();
 
 const makeRow = (overrides: Partial<SchemaRow> = {}): SchemaRow => ({
   id: "clp9z8x7w0000abcd1234row1",
@@ -154,7 +151,6 @@ describe("SchemaRowList drag-end guards (QA-Must-01, QA-Must-02)", () => {
         startDate={START_DATE}
         schemaId={SCHEMA_ID}
         rows={[r1, r2]}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
@@ -173,7 +169,6 @@ describe("SchemaRowList drag-end guards (QA-Must-01, QA-Must-02)", () => {
         startDate={START_DATE}
         schemaId={SCHEMA_ID}
         rows={[r1, r2]}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
@@ -200,7 +195,6 @@ describe("SchemaRowList optimistic + rollback (QA-Must-05)", () => {
         startDate={START_DATE}
         schemaId={SCHEMA_ID}
         rows={[r1, r2]}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 
@@ -223,7 +217,6 @@ describe("SchemaRowList optimistic + rollback (QA-Must-05)", () => {
         startDate={START_DATE}
         schemaId={SCHEMA_ID}
         rows={[r1, r2]}
-        exerciseById={EMPTY_EXERCISE_BY_ID}
       />,
     );
 

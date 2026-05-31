@@ -2,6 +2,7 @@ export * from "./use-archetypes";
 export * from "./use-alternating-groups";
 export * from "./use-blocks";
 export * from "./use-blur-commit";
+export * from "./use-catalog";
 export * from "./use-coach-athletes";
 export * from "./use-current-user-role";
 export * from "./use-coach-action-items";

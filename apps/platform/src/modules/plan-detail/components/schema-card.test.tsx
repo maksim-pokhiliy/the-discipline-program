@@ -8,6 +8,7 @@ import type { Archetype } from "@repo/contracts/lms/archetype";
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { ArchetypeParams, SchemaWithBody } from "@repo/contracts/lms/schema";
 
+import { CatalogContext, type CatalogContextValue } from "@app/lib/contexts/catalog-provider";
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
@@ -32,7 +33,6 @@ vi.mock("@app/lib/hooks", async () => {
       mutate: deleteSchemaMutate,
       isPending: deleteSchemaState.isPending,
     }),
-    useArchetypes: () => ({ data: archetypesState.data }),
   };
 });
 
@@ -178,17 +178,24 @@ const renderSchemaCard = ({
   schema = makeSchema(),
   blockCtx = makeBlockCtx(),
   parentIsReorderPending = false,
-}: RenderOptions = {}) =>
-  render(
-    <SchemaCard
-      schema={schema}
-      planId={PLAN_ID}
-      startDate={START_DATE}
-      blockCtx={blockCtx}
-      exerciseById={EMPTY_EXERCISE_BY_ID}
-      parentIsReorderPending={parentIsReorderPending}
-    />,
+}: RenderOptions = {}) => {
+  const catalogValue: CatalogContextValue = {
+    exerciseById: EMPTY_EXERCISE_BY_ID,
+    archetypeById: new Map((archetypesState.data ?? []).map((a) => [a.id, a])),
+  };
+
+  return render(
+    <CatalogContext.Provider value={catalogValue}>
+      <SchemaCard
+        schema={schema}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        blockCtx={blockCtx}
+        parentIsReorderPending={parentIsReorderPending}
+      />
+    </CatalogContext.Provider>,
   );
+};
 
 afterEach(() => {
   updateSchemaState.isPending = false;

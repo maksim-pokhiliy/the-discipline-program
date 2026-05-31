@@ -97,6 +97,7 @@ export const EmomSlotForm: React.FC<SchemaParamFormProps<EmomSlotParams>> = ({
     <FormSection label="EMOM slot" helper="which minute(s) within the round this fires">
       <Stack spacing={1.5}>
         <ToggleButtonGroup
+          aria-label="slot kind"
           value={slot.kind}
           exclusive
           onChange={handleKindChange}
