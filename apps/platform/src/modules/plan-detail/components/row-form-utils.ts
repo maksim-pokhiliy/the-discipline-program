@@ -1,14 +1,31 @@
 import type { FieldError, FieldErrors, FieldErrorsImpl, GlobalError, Merge } from "react-hook-form";
 import type { z } from "zod";
 
-import { restSpecSchema } from "@repo/contracts/lms/_shared";
 import {
+  type Intensity,
+  type Load,
+  type PerLimbDistribution,
+  type RepNotation,
+  type TempoModifier,
+  intensitySchema,
+  loadSchema,
+  perLimbDistributionSchema,
+  repNotationSchema,
+  restSpecSchema,
+  tempoModifierSchema,
+} from "@repo/contracts/lms/_shared";
+import {
+  type Position,
   type RowKind,
   type SchemaRowPayload,
+  positionSchema,
   schemaRowPayloadSchema,
 } from "@repo/contracts/lms/schema-row";
 
+import { intensityHasAny } from "../lib/format-block-meta";
 import { formatRestSpec } from "../lib/format-rest-spec";
+
+import { type ShellIntensityForm, buildIntensityCandidate } from "./schema-form-utils";
 
 type FieldErrorLeaf = { type: string; message: string };
 
@@ -189,9 +206,19 @@ export const parseRowPayload = (rowKind: RowKind, value: unknown): ParseRowPaylo
 
 const STANDALONE_LOAD_SCOPE = "applies_to_all_preceding_rows";
 
+export type RowSiblings = {
+  reps?: RepNotation | null;
+  load?: Load | null;
+  side?: PerLimbDistribution | null;
+  tempo?: TempoModifier | null;
+  position?: Position | null;
+  intensity?: Intensity | null;
+};
+
 type AssembledRowPayload = {
   payloadInput: Record<string, unknown>;
   notes: string | null;
+  siblings?: RowSiblings;
 };
 
 const readString = (value: unknown): string | undefined =>
@@ -221,6 +248,23 @@ const resolveRestRaw = (record: Record<string, unknown>): string => {
   return parsed.success ? formatRestSpec(parsed.data) : "";
 };
 
+const isShellIntensityForm = (value: unknown): value is ShellIntensityForm =>
+  typeof value === "object" && value !== null;
+
+const assembleExerciseSiblings = (record: Record<string, unknown>): RowSiblings => {
+  const intensityForm = isShellIntensityForm(record.intensity) ? record.intensity : {};
+  const candidate = buildIntensityCandidate(intensityForm);
+
+  return {
+    reps: (record.reps ?? null) as RepNotation | null,
+    load: (record.load ?? null) as Load | null,
+    side: (record.side ?? null) as PerLimbDistribution | null,
+    tempo: (record.tempo ?? null) as TempoModifier | null,
+    position: (record.position ?? null) as Position | null,
+    intensity: intensityHasAny(candidate) ? candidate : null,
+  };
+};
+
 export const assembleRowPayloadAndNotes = (
   rowKind: RowKind,
   rawValue: unknown,
@@ -248,6 +292,11 @@ export const assembleRowPayloadAndNotes = (
     case "REST_SLOT":
       return { payloadInput: {}, notes: toNotes(record.notes) };
     case "EXERCISE":
+      return {
+        payloadInput: { exercise: record.exercise },
+        notes: toNotes(record.notes),
+        siblings: assembleExerciseSiblings(record),
+      };
     case "FOOTNOTE":
     case "PLACEHOLDER":
     case "REP_DEFINITION":
@@ -257,4 +306,50 @@ export const assembleRowPayloadAndNotes = (
 
       return { payloadInput: record, notes: toNotes(record.notes) };
   }
+};
+
+const SIBLING_SCHEMAS = {
+  reps: repNotationSchema,
+  load: loadSchema,
+  side: perLimbDistributionSchema,
+  tempo: tempoModifierSchema,
+  position: positionSchema,
+  intensity: intensitySchema,
+} as const;
+
+type SiblingKey = keyof typeof SIBLING_SCHEMAS;
+
+const SIBLING_KEYS = Object.keys(SIBLING_SCHEMAS) as SiblingKey[];
+
+type ValidateSiblingsResult = { ok: true; value: RowSiblings } | { ok: false; error: FieldErrors };
+
+const prefixIssues = (key: SiblingKey, issues: z.ZodIssue[]): z.ZodIssue[] =>
+  issues.map((issue) => ({ ...issue, path: [key, ...issue.path] }));
+
+export const validateRowSiblings = (siblings: RowSiblings | undefined): ValidateSiblingsResult => {
+  if (siblings === undefined) {
+    return { ok: true, value: {} };
+  }
+
+  const issues: z.ZodIssue[] = [];
+
+  for (const key of SIBLING_KEYS) {
+    const candidate = siblings[key];
+
+    if (candidate === undefined || candidate === null) {
+      continue;
+    }
+
+    const parsed = SIBLING_SCHEMAS[key].safeParse(candidate);
+
+    if (!parsed.success) {
+      issues.push(...prefixIssues(key, parsed.error.issues));
+    }
+  }
+
+  if (issues.length > 0) {
+    return { ok: false, error: mapZodIssuesToFieldErrors(issues) };
+  }
+
+  return { ok: true, value: siblings };
 };
