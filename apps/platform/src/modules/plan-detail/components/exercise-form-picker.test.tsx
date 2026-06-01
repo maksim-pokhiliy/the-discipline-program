@@ -1,4 +1,4 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Mock } from "vitest";
 
@@ -36,6 +36,10 @@ const COMPOUND_VALUE: ExerciseFormValue = {
   },
 };
 
+const COMPOUND_SEED_REPS = 10;
+const MULTI_FORM_NOTICE_FRAGMENT = /coming soon/;
+const FULL_PICKER_PLACEHOLDER = "search by name, family, or modality…";
+
 const ALL_TILE_LABELS = [
   "Atomic",
   "Compound",
@@ -70,14 +74,28 @@ describe("ExerciseFormPicker tiles", () => {
     }
   });
 
-  it("keeps the atomic tile live while disabling the 5 multi-exercise tiles", () => {
+  it("keeps every form tile live", () => {
     render(<ExerciseFormPicker value={ATOMIC_VALUE} onChange={onChange} />);
 
-    expect(getTileButton("Atomic")).toBeEnabled();
-
-    for (const label of ["Compound", "Cyclical", "Sandwich", "OR alternative", "Placeholder ref"]) {
-      expect(getTileButton(label)).toBeDisabled();
+    for (const label of ALL_TILE_LABELS) {
+      expect(getTileButton(label)).toBeEnabled();
     }
+  });
+
+  it("seeds a two-element compound draft when the Compound tile is selected", () => {
+    render(<ExerciseFormPicker value={ATOMIC_VALUE} onChange={onChange} />);
+
+    fireEvent.click(getTileButton("Compound"));
+
+    expect(onChange).toHaveBeenCalledWith({
+      form: "compound",
+      compound: {
+        elements: [
+          { exerciseId: null, reps: { kind: "count", value: COMPOUND_SEED_REPS } },
+          { exerciseId: null, reps: { kind: "count", value: COMPOUND_SEED_REPS } },
+        ],
+      },
+    });
   });
 });
 
@@ -85,23 +103,19 @@ describe("ExerciseFormPicker atomic body", () => {
   it("renders the exercise picker search box inside the body for an atomic value", () => {
     render(<ExerciseFormPicker value={ATOMIC_VALUE} onChange={onChange} />);
 
-    expect(screen.getByPlaceholderText("search by name, family, or modality…")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(FULL_PICKER_PLACEHOLDER)).toBeInTheDocument();
   });
 });
 
-describe("ExerciseFormPicker non-atomic preserved state (QA-MT11, QA-005)", () => {
-  it("disables every tile and shows the preserved notice without the atomic picker", () => {
+describe("ExerciseFormPicker non-atomic body", () => {
+  it("renders the compound editor without the read-only notice for a compound value", () => {
     render(<ExerciseFormPicker value={COMPOUND_VALUE} onChange={onChange} />);
 
-    for (const label of ALL_TILE_LABELS) {
-      expect(getTileButton(label)).toBeDisabled();
-    }
+    expect(screen.getByText("add element")).toBeInTheDocument();
+    expect(screen.getByText("element 1")).toBeInTheDocument();
+    expect(screen.getByText("element 2")).toBeInTheDocument();
 
-    expect(
-      screen.getByText(
-        "Multi-exercise form (Compound) — editing the exercise itself is coming soon; it stays preserved on save.",
-      ),
-    ).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText("search by name, family, or modality…")).toBeNull();
+    expect(screen.queryByText(MULTI_FORM_NOTICE_FRAGMENT)).toBeNull();
+    expect(screen.queryByPlaceholderText(FULL_PICKER_PLACEHOLDER)).toBeNull();
   });
 });
