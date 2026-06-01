@@ -3,7 +3,6 @@
 import { Box, TextField } from "@mui/material";
 
 import {
-  type ExerciseForm,
   type Intensity,
   type Load,
   type PerLimbDistribution,
@@ -13,6 +12,7 @@ import {
 import { SCHEMA_ROW_CONSTANTS, type Position } from "@repo/contracts/lms/schema-row";
 import { FormSection } from "@repo/ui";
 
+import type { ExerciseFormValue } from "./exercise-form-draft.types";
 import { ExerciseFormPicker } from "./exercise-form-picker";
 import { LoadEditor } from "./load-editor";
 import { PositionEditor } from "./position-editor";
@@ -23,10 +23,7 @@ import type { ShellIntensityForm } from "./schema-form-utils";
 import { SideEditor } from "./side-editor";
 import { TempoEditor } from "./tempo-editor";
 
-type AtomicExerciseFormValue = { form: "atomic"; exerciseId: string | null };
-type NonAtomicExerciseForm = Exclude<ExerciseForm, { form: "atomic" }>;
-
-export type ExerciseFormValue = AtomicExerciseFormValue | NonAtomicExerciseForm;
+export type { ExerciseFormValue };
 
 type ExerciseRowFormValue = {
   exercise: ExerciseFormValue;
