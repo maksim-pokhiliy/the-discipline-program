@@ -31,6 +31,7 @@ type ExercisePickerProps = {
   error?: boolean;
   disabled?: boolean;
   placeholderOnly?: boolean;
+  compact?: boolean;
 };
 
 export const ExercisePicker = ({
@@ -39,6 +40,7 @@ export const ExercisePicker = ({
   error = false,
   disabled = false,
   placeholderOnly = false,
+  compact = false,
 }: ExercisePickerProps) => {
   const { data: exercises = [], isLoading } = useExercises();
   const options = placeholderOnly ? exercises.filter((e) => e.placeholderFlag) : exercises;
@@ -52,6 +54,7 @@ export const ExercisePicker = ({
       getOptionLabel={getOptionLabel}
       isOptionEqualToValue={(option, val) => option.id === val.id}
       disabled={disabled || isLoading}
+      {...(compact && { size: "small" })}
       renderOption={(props, option) => (
         <li {...props} key={option.id}>
           <Stack spacing={0.25} sx={{ minWidth: 0 }}>

@@ -156,3 +156,50 @@ describe("ExercisePicker required-exercise error (D-09)", () => {
     expect(screen.getByText("Pick an exercise")).toBeInTheDocument();
   });
 });
+
+describe("ExercisePicker compact mode (D-10)", () => {
+  it("renders the autocomplete combobox", () => {
+    exercisesState.data = [FRONT_SQUAT, DEADLIFT];
+
+    render(<ExercisePicker compact value={null} onChange={onChange} />);
+
+    expect(screen.getByRole("combobox")).toBeInTheDocument();
+  });
+
+  it("emits the picked exercise id when an option is selected", () => {
+    exercisesState.data = [FRONT_SQUAT, DEADLIFT];
+
+    render(<ExercisePicker compact value={null} onChange={onChange} />);
+
+    openListbox();
+    fireEvent.click(screen.getByText("Deadlift"));
+
+    expect(onChange).toHaveBeenCalledWith("ckxw5p7gp0000q1mnzv5cuq02");
+  });
+
+  it("filters options to placeholders when placeholderOnly is set", () => {
+    exercisesState.data = [
+      FRONT_SQUAT,
+      makeExercise({
+        id: "ckxw5p7gp0000q1mnzv5cuq03",
+        canonicalName: "Coach choice",
+        placeholderFlag: true,
+      }),
+    ];
+
+    render(<ExercisePicker compact value={null} onChange={onChange} placeholderOnly />);
+
+    openListbox();
+
+    expect(screen.getAllByRole("option")).toHaveLength(1);
+    expect(screen.getByText("Coach choice")).toBeInTheDocument();
+  });
+
+  it("disables the combobox when disabled is set", () => {
+    exercisesState.data = [FRONT_SQUAT, DEADLIFT];
+
+    render(<ExercisePicker compact value={null} onChange={onChange} disabled />);
+
+    expect(screen.getByRole("combobox")).toBeDisabled();
+  });
+});
