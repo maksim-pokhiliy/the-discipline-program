@@ -83,6 +83,8 @@ export const CyclicalFormEditor = ({
         value={cycle.primaryReps ?? ""}
         onChange={(e) => setPrimaryReps(index, cycle, e.target.value)}
         inputProps={{ min: 1, step: 1 }}
+        error={error?.cycles?.[index]?.primaryReps !== undefined}
+        helperText={error?.cycles?.[index]?.primaryReps?.message}
         disabled={disabled}
         sx={{ maxWidth: CYCLE_FIELD_WIDTH }}
       />
