@@ -4,11 +4,13 @@ import { Button, FormHelperText, Stack } from "@mui/material";
 
 import { FormSection } from "@repo/ui";
 
-import type { ExerciseId } from "./exercise-form-draft.types";
 import { NumberField } from "./number-field";
 import { RepDefinitionCompositionRow } from "./rep-definition-composition-row";
 import type { RowEditorMode, RowPayloadFormProps } from "./row-editor-types";
-import type { RepDefinitionRowFormValue } from "./row-payload-draft.types";
+import type {
+  RepDefinitionCompositionElementDraft,
+  RepDefinitionRowFormValue,
+} from "./row-payload-draft.types";
 
 const EQUALITY_FORM = "inline_equality";
 const TOTAL_REPS_LABEL = "Total reps";
@@ -35,7 +37,18 @@ export const toRepDefinitionValue = (mode: RowEditorMode): RepDefinitionRowFormV
   }
 
   if (mode.row.rowPayload.rowKind === "REP_DEFINITION") {
-    return { equality: mode.row.rowPayload.equality };
+    const { totalReps, composition } = mode.row.rowPayload.equality;
+
+    return {
+      equality: {
+        form: EQUALITY_FORM,
+        totalReps,
+        composition: composition.map((element) => ({
+          exerciseId: element.exerciseId,
+          count: element.count,
+        })),
+      },
+    };
   }
 
   return repDefinitionDefaultValue;
@@ -53,7 +66,7 @@ export const RepDefinitionRowPayloadForm: React.FC<
     onChange({ equality: { ...value.equality, totalReps } });
   };
 
-  const replaceElement = (index: number, next: { exerciseId: ExerciseId; count: number }): void => {
+  const replaceElement = (index: number, next: RepDefinitionCompositionElementDraft): void => {
     onChange({
       equality: {
         ...value.equality,

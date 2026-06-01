@@ -34,10 +34,15 @@ export type PlaceholderRowFormValue = {
   placeholder: PlaceholderPayloadDraft;
 };
 
+export type RepDefinitionCompositionElementDraft = {
+  exerciseId: ExerciseId;
+  count: number;
+};
+
 export type RepDefinitionRowFormValue = {
   equality: {
     form: "inline_equality";
     totalReps: number;
-    composition: { exerciseId: ExerciseId; count: number }[];
+    composition: RepDefinitionCompositionElementDraft[];
   };
 };

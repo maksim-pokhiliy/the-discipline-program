@@ -4,23 +4,18 @@ import CloseIcon from "@mui/icons-material/Close";
 import { IconButton, Stack, Typography } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
-import type { ExerciseId } from "./exercise-form-draft.types";
 import { ExercisePicker } from "./exercise-picker";
 import { NumberField } from "./number-field";
+import type { RepDefinitionCompositionElementDraft } from "./row-payload-draft.types";
 
 const REMOVE_ELEMENT_LABEL = "Remove element";
 const TIMES_SEPARATOR = "×";
 const COUNT_MIN = 1;
 const COUNT_FIELD_MAX_WIDTH = 88;
 
-type RepDefinitionCompositionValue = {
-  exerciseId: ExerciseId;
-  count: number;
-};
-
 type RepDefinitionCompositionRowProps = {
-  value: RepDefinitionCompositionValue;
-  onChange: (next: RepDefinitionCompositionValue) => void;
+  value: RepDefinitionCompositionElementDraft;
+  onChange: (next: RepDefinitionCompositionElementDraft) => void;
   onRemove: () => void;
   canRemove: boolean;
   error?: FieldErrors<{ exerciseId: string; count: number }> | undefined;
