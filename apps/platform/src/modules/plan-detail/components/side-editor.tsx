@@ -39,6 +39,10 @@ const EXPLICIT_SPLIT_SIDE_LABELS: Record<ExplicitSplitSide, string> = {
 const COUNT_PER_LIMB_FIELD_WIDTH = 80;
 const COUNT_PER_LIMB_HELPER = "count per limb (optional):";
 
+type PerLimbCount =
+  | Extract<PerLimbDistribution, { kind: "each_leg" }>
+  | Extract<PerLimbDistribution, { kind: "each_arm" }>;
+
 const buildDefaultSide = (option: SideOption): PerLimbDistribution | null => {
   switch (option) {
     case "none":
@@ -61,8 +65,9 @@ type SideEditorProps = {
   disabled?: boolean;
 };
 
-export const SideEditor = ({ value, onChange, disabled = false }: SideEditorProps) => {
+export const SideEditor = ({ value, onChange, error, disabled = false }: SideEditorProps) => {
   const selected: SideOption = value?.kind ?? SIDE_NONE;
+  const countError: FieldErrors<PerLimbCount> | undefined = error;
 
   const handleOptionChange = (_: unknown, next: SideOption | null): void => {
     if (next === null) {
@@ -117,6 +122,8 @@ export const SideEditor = ({ value, onChange, disabled = false }: SideEditorProp
             value={value.countPerLimb ?? ""}
             onChange={(e) => handleCountChange(e.target.value)}
             inputProps={{ min: 1, step: 1 }}
+            error={countError?.countPerLimb !== undefined}
+            helperText={countError?.countPerLimb?.message}
             disabled={disabled}
             sx={{ maxWidth: COUNT_PER_LIMB_FIELD_WIDTH }}
           />

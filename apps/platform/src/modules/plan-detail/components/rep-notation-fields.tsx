@@ -12,6 +12,11 @@ import {
 } from "@repo/contracts/lms/_shared";
 import { LabeledToggleGroup } from "@repo/ui";
 
+type CountReps = Extract<RepNotation, { kind: "count" }>;
+type RangeReps = Extract<RepNotation, { kind: "range" }>;
+type UnitBoundReps = Extract<RepNotation, { kind: "unit_bound" }>;
+type TotalFlagReps = Extract<RepNotation, { kind: "total_flag" }>;
+
 const UNIT_BOUND_DEFAULT_VALUE = 30;
 const UNIT_BOUND_RANGE_DEFAULT_MIN = 30;
 const UNIT_BOUND_RANGE_DEFAULT_MAX = 60;
@@ -62,7 +67,9 @@ export const RepNotationFields = ({
   };
 
   switch (value.kind) {
-    case "count":
+    case "count": {
+      const countError: FieldErrors<CountReps> | undefined = error;
+
       return (
         <Stack direction="row" spacing={1} sx={ROW_STACK_SX}>
           <TextField
@@ -71,6 +78,8 @@ export const RepNotationFields = ({
             value={value.value}
             onChange={(e) => onChange({ kind: "count", value: Number(e.target.value) })}
             inputProps={{ min: 1, step: 1 }}
+            error={countError?.value !== undefined}
+            helperText={countError?.value?.message}
             disabled={disabled}
             sx={{ maxWidth: NUMERIC_FIELD_WIDTH }}
           />
@@ -80,7 +89,10 @@ export const RepNotationFields = ({
           </Typography>
         </Stack>
       );
-    case "range":
+    }
+    case "range": {
+      const rangeError: FieldErrors<RangeReps> | undefined = error;
+
       return (
         <Stack direction="row" spacing={1} sx={ROW_STACK_SX}>
           <TextField
@@ -89,7 +101,8 @@ export const RepNotationFields = ({
             value={value.min}
             onChange={(e) => onChange({ ...value, min: Number(e.target.value) })}
             inputProps={{ min: 1, step: 1 }}
-            error={rootMessage !== undefined}
+            error={rangeError?.min !== undefined || rootMessage !== undefined}
+            helperText={rangeError?.min?.message}
             disabled={disabled}
             sx={{ maxWidth: RANGE_FIELD_WIDTH }}
           />
@@ -104,7 +117,8 @@ export const RepNotationFields = ({
             value={value.max}
             onChange={(e) => onChange({ ...value, max: Number(e.target.value) })}
             inputProps={{ min: 1, step: 1 }}
-            error={rootMessage !== undefined}
+            error={rangeError?.max !== undefined || rootMessage !== undefined}
+            helperText={rangeError?.max?.message}
             disabled={disabled}
             sx={{ maxWidth: RANGE_FIELD_WIDTH }}
           />
@@ -114,8 +128,10 @@ export const RepNotationFields = ({
           </Typography>
         </Stack>
       );
+    }
     case "unit_bound": {
       const { unit, range } = value;
+      const unitBoundError: FieldErrors<UnitBoundReps> | undefined = error;
 
       return (
         <Stack spacing={1}>
@@ -142,7 +158,8 @@ export const RepNotationFields = ({
                   onChange({ kind: "unit_bound", unit, value: Number(e.target.value) })
                 }
                 inputProps={{ min: 1, step: 0.1 }}
-                error={rootMessage !== undefined}
+                error={unitBoundError?.value !== undefined || rootMessage !== undefined}
+                helperText={unitBoundError?.value?.message}
                 disabled={disabled}
                 sx={{ maxWidth: NUMERIC_FIELD_WIDTH }}
               />
@@ -176,7 +193,8 @@ export const RepNotationFields = ({
                   })
                 }
                 inputProps={{ min: 1, step: 0.1 }}
-                error={rootMessage !== undefined}
+                error={unitBoundError?.range?.min !== undefined || rootMessage !== undefined}
+                helperText={unitBoundError?.range?.min?.message}
                 disabled={disabled}
                 sx={{ maxWidth: RANGE_FIELD_WIDTH }}
               />
@@ -197,7 +215,8 @@ export const RepNotationFields = ({
                   })
                 }
                 inputProps={{ min: 1, step: 0.1 }}
-                error={rootMessage !== undefined}
+                error={unitBoundError?.range?.max !== undefined || rootMessage !== undefined}
+                helperText={unitBoundError?.range?.max?.message}
                 disabled={disabled}
                 sx={{ maxWidth: RANGE_FIELD_WIDTH }}
               />
@@ -262,7 +281,9 @@ export const RepNotationFields = ({
           {IMPLICIT_HINT}
         </Typography>
       );
-    case "total_flag":
+    case "total_flag": {
+      const totalFlagError: FieldErrors<TotalFlagReps> | undefined = error;
+
       return (
         <Stack direction="row" spacing={1} sx={ROW_STACK_SX}>
           <Typography variant="caption" color="text.subtle">
@@ -275,11 +296,14 @@ export const RepNotationFields = ({
             value={value.value}
             onChange={(e) => onChange({ kind: "total_flag", value: Number(e.target.value) })}
             inputProps={{ min: 1, step: 1 }}
+            error={totalFlagError?.value !== undefined}
+            helperText={totalFlagError?.value?.message}
             disabled={disabled}
             sx={{ maxWidth: NUMERIC_FIELD_WIDTH }}
           />
         </Stack>
       );
+    }
     case "compound_rep_unit":
       return (
         <Typography variant="caption" color="text.subtle">
