@@ -5,7 +5,7 @@ import type { RestSpec } from "@repo/contracts/lms/_shared";
 
 import { formatRestSpec } from "../lib/format-rest-spec";
 
-import { assembleRowPayloadAndNotes, parseRowPayload } from "./row-form-utils";
+import { assembleRowPayloadAndNotes, parseRowPayload, validateRowSiblings } from "./row-form-utils";
 
 const VALID_REST_PARSED: RestSpec = {
   duration: { value: 90, unit: "sec" },
@@ -363,5 +363,125 @@ describe("assembleRowPayloadAndNotes per-kind contract (MT-7)", () => {
 
     expect(result.payloadInput).toEqual({ steps: [21] });
     expect(result.notes).toBeNull();
+  });
+});
+
+const EXERCISE_ID = "ckxw5p7gp0000q1mnzv5cuq01";
+
+const fatExerciseValue = (overrides: Record<string, unknown> = {}): Record<string, unknown> => ({
+  exercise: { form: "atomic", exerciseId: EXERCISE_ID },
+  reps: { kind: "count", value: 5 },
+  load: { kind: "percentage", value: 80, reference: { scope: "self" } },
+  side: null,
+  tempo: null,
+  position: null,
+  intensity: null,
+  notes: "",
+  ...overrides,
+});
+
+describe("assembleRowPayloadAndNotes EXERCISE branch (QA-MT10)", () => {
+  it("returns the exercise payload plus the VO siblings", () => {
+    const result = assembleRowPayloadAndNotes("EXERCISE", fatExerciseValue());
+
+    expect(result.payloadInput).toEqual({ exercise: { form: "atomic", exerciseId: EXERCISE_ID } });
+    expect(result.notes).toBeNull();
+    expect(result.siblings).toEqual({
+      reps: { kind: "count", value: 5 },
+      load: { kind: "percentage", value: 80, reference: { scope: "self" } },
+      side: null,
+      tempo: null,
+      position: null,
+      intensity: null,
+    });
+  });
+
+  it("collapses an opened-but-empty intensity override to null", () => {
+    const result = assembleRowPayloadAndNotes("EXERCISE", fatExerciseValue({ intensity: {} }));
+
+    expect(result.siblings?.intensity).toBeNull();
+  });
+
+  it("collapses an all-undefined intensity override to null", () => {
+    const result = assembleRowPayloadAndNotes(
+      "EXERCISE",
+      fatExerciseValue({ intensity: { effortPercent: undefined, rpe: undefined } }),
+    );
+
+    expect(result.siblings?.intensity).toBeNull();
+  });
+
+  it("carries a set intensity axis through to the siblings", () => {
+    const result = assembleRowPayloadAndNotes(
+      "EXERCISE",
+      fatExerciseValue({ intensity: { rpe: { value: 8 } } }),
+    );
+
+    expect(result.siblings?.intensity).toEqual({ rpe: { value: 8 } });
+  });
+});
+
+describe("validateRowSiblings (QA-MT9)", () => {
+  it("treats undefined siblings as a no-op ok with an empty value", () => {
+    expect(validateRowSiblings(undefined)).toEqual({ ok: true, value: {} });
+  });
+
+  it("returns ok and echoes valid siblings including explicit nulls", () => {
+    const result = validateRowSiblings({ position: "NEUTRAL_GRIP", side: null, tempo: null });
+
+    expect(result).toEqual({
+      ok: true,
+      value: { position: "NEUTRAL_GRIP", side: null, tempo: null },
+    });
+  });
+
+  it("routes a reps range with min >= max to error.reps.root", () => {
+    const result = validateRowSiblings({ reps: { kind: "range", min: 10, max: 5 } });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(readBranch(result.error.reps, "root"))).toBe(
+        "range.min must be < range.max",
+      );
+    }
+  });
+
+  it("routes a reps count value of 0 to error.reps.value (QA-001 keying)", () => {
+    const result = validateRowSiblings({ reps: { kind: "count", value: 0 } });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(readBranch(result.error.reps, "value"))).toBe(
+        "Number must be greater than 0",
+      );
+    }
+  });
+
+  it("routes a percentage rangeMax <= value to error.load.root", () => {
+    const result = validateRowSiblings({
+      load: { kind: "percentage", value: 70, rangeMax: 60, reference: { scope: "self" } },
+    });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(readBranch(result.error.load, "root"))).toBe(
+        "percentage.rangeMax must be > value when set",
+      );
+    }
+  });
+
+  it("routes a side countPerLimb of 0 to error.side.countPerLimb (QA-002 keying)", () => {
+    const result = validateRowSiblings({ side: { kind: "each_leg", countPerLimb: 0 } });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(readBranch(result.error.side, "countPerLimb"))).toBe(
+        "Number must be greater than 0",
+      );
+    }
   });
 });

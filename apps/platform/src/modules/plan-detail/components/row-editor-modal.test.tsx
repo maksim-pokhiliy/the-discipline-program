@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { RowKind, SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import type * as Hooks from "@app/lib/hooks";
@@ -10,10 +11,25 @@ import { formatRestSpec } from "../lib/format-rest-spec";
 
 import type { RowEditorMode } from "./row-editor-types";
 
-const createRowMutate = vi.fn();
-const updateRowMutate = vi.fn();
+type MutateOptions = { onSuccess?: () => void; onSettled?: () => void };
+
+const settleState = { settle: false };
+
+const createRowMutate = vi.fn((_body: unknown, options?: MutateOptions) => {
+  if (settleState.settle) {
+    options?.onSuccess?.();
+    options?.onSettled?.();
+  }
+});
+const updateRowMutate = vi.fn((_body: unknown, options?: MutateOptions) => {
+  if (settleState.settle) {
+    options?.onSuccess?.();
+    options?.onSettled?.();
+  }
+});
 const createRowState = { isPending: false };
 const updateRowState = { isPending: false };
+const exercisesState: { data: Exercise[]; isLoading: boolean } = { data: [], isLoading: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -22,10 +38,35 @@ vi.mock("@app/lib/hooks", async () => {
     ...actual,
     useCreateSchemaRow: () => ({ mutate: createRowMutate, isPending: createRowState.isPending }),
     useUpdateSchemaRow: () => ({ mutate: updateRowMutate, isPending: updateRowState.isPending }),
+    useExercises: () => ({ data: exercisesState.data, isLoading: exercisesState.isLoading }),
   };
 });
 
 const { RowEditorModal } = await import("./row-editor-modal");
+
+const EXERCISE_ID = "ckxw5p7gp0000q1mnzv5cuq0e";
+
+const frontSquat: Exercise = {
+  id: EXERCISE_ID,
+  canonicalName: "Front Squat",
+  canonicalNameLower: "front squat",
+  primaryEquipment: "BARBELL",
+  movementTypeTagPrimary: "SQUAT",
+  movementTypeTagSecondary: null,
+  canonicalCompoundType: "ATOMIC",
+  placeholderFlag: false,
+  movementFamily: "squat",
+  defaultDemoUrls: [],
+  aliases: [],
+  notes: null,
+  createdAt: new Date("2026-01-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+};
+
+const pickFrontSquat = (): void => {
+  fireEvent.mouseDown(screen.getByPlaceholderText("search by name, family, or modality…"));
+  fireEvent.click(screen.getByText("Front Squat"));
+};
 
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const START_DATE = "2026-01-06";
@@ -103,8 +144,11 @@ const setNumber = (name: string, value: string): void => {
 afterEach(() => {
   createRowState.isPending = false;
   updateRowState.isPending = false;
-  createRowMutate.mockReset();
-  updateRowMutate.mockReset();
+  exercisesState.data = [];
+  exercisesState.isLoading = false;
+  settleState.settle = false;
+  createRowMutate.mockClear();
+  updateRowMutate.mockClear();
 });
 
 describe("RowEditorModal open gating (MT-10)", () => {
@@ -361,5 +405,171 @@ describe("RowEditorModal Back affordance (MT-16)", () => {
     fireEvent.click(screen.getByRole("button", { name: "← Back" }));
 
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+});
+
+const exerciseRow: SchemaRow = {
+  ...baseSchemaRow,
+  rowKind: "EXERCISE",
+  rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EXERCISE_ID } },
+  reps: { kind: "range", min: 6, max: 8 },
+  load: { kind: "percentage", value: 75, reference: { scope: "self" } },
+  side: { kind: "each_leg", countPerLimb: 10 },
+  tempo: { slowEccentric: { durationSec: 4 } },
+  position: "NEUTRAL_GRIP",
+  intensity: { rpe: { value: 8 } },
+};
+
+describe("RowEditorModal EXERCISE create envelope (QA-MT1)", () => {
+  it("threads the full VO sibling envelope when an exercise is picked and saved", async () => {
+    exercisesState.data = [frontSquat];
+
+    renderModal(createMode("EXERCISE"));
+
+    pickFrontSquat();
+    saveRow();
+
+    await waitFor(() => {
+      expect(createRowMutate).toHaveBeenCalledTimes(1);
+    });
+    expect(createRowMutate.mock.calls[0]?.[0]).toEqual({
+      schemaId: SCHEMA_ID,
+      rowKind: "EXERCISE",
+      rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EXERCISE_ID } },
+      reps: { kind: "count", value: 5 },
+      load: { kind: "percentage", value: 80, reference: { scope: "self" } },
+      side: null,
+      tempo: null,
+      position: null,
+      intensity: null,
+      notes: null,
+    });
+  });
+});
+
+describe("RowEditorModal EXERCISE edit round-trip (QA-MT2)", () => {
+  it("mirrors the row VOs into the update data on save", async () => {
+    exercisesState.data = [frontSquat];
+
+    renderModal({ kind: "edit", row: exerciseRow });
+
+    saveRow();
+
+    await waitFor(() => {
+      expect(updateRowMutate).toHaveBeenCalledTimes(1);
+    });
+    expect(updateRowMutate.mock.calls[0]?.[0]).toEqual({
+      schemaRowId: baseSchemaRow.id,
+      data: {
+        rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EXERCISE_ID } },
+        notes: null,
+        reps: { kind: "range", min: 6, max: 8 },
+        load: { kind: "percentage", value: 75, reference: { scope: "self" } },
+        side: { kind: "each_leg", countPerLimb: 10 },
+        tempo: { slowEccentric: { durationSec: 4 } },
+        position: "NEUTRAL_GRIP",
+        intensity: { rpe: { value: 8 } },
+      },
+    });
+  });
+});
+
+describe("RowEditorModal required-exercise gate (QA-MT3, D-09)", () => {
+  it("blocks the mutation and shows the picker error when no exercise is picked", async () => {
+    exercisesState.data = [frontSquat];
+
+    renderModal(createMode("EXERCISE"));
+
+    saveRow();
+
+    await waitFor(() => {
+      expect(screen.getByText("Pick an exercise")).toBeInTheDocument();
+    });
+    expect(createRowMutate).not.toHaveBeenCalled();
+  });
+});
+
+describe("RowEditorModal EXERCISE modal width (QA-MT12)", () => {
+  it("opens the EXERCISE modal at the md width", () => {
+    exercisesState.data = [frontSquat];
+
+    renderModal(createMode("EXERCISE"));
+
+    expect(document.querySelector(".MuiDialog-paperWidthMd")).not.toBeNull();
+  });
+
+  it("opens a simple-kind modal at the sm width", () => {
+    renderModal(createMode("REST"));
+
+    expect(document.querySelector(".MuiDialog-paperWidthSm")).not.toBeNull();
+  });
+});
+
+describe("RowEditorModal save-and-add-another (QA-MT8, D-10)", () => {
+  it("mutates and keeps the modal open re-seeded when Save & add another is clicked", async () => {
+    settleState.settle = true;
+    exercisesState.data = [frontSquat];
+    const onClose = vi.fn();
+
+    renderModal(createMode("EXERCISE"), { onClose });
+
+    pickFrontSquat();
+    fireEvent.click(screen.getByRole("button", { name: "Save & add another" }));
+
+    await waitFor(() => {
+      expect(createRowMutate).toHaveBeenCalledTimes(1);
+    });
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Save & add another" })).toBeInTheDocument();
+  });
+
+  it("closes correctly on a plain Save after a Save & add another (QA-003)", async () => {
+    settleState.settle = true;
+    exercisesState.data = [frontSquat];
+    const onClose = vi.fn();
+
+    renderModal(createMode("EXERCISE"), { onClose });
+
+    pickFrontSquat();
+    fireEvent.click(screen.getByRole("button", { name: "Save & add another" }));
+
+    await waitFor(() => {
+      expect(createRowMutate).toHaveBeenCalledTimes(1);
+    });
+
+    pickFrontSquat();
+    saveRow();
+
+    await waitFor(() => {
+      expect(createRowMutate).toHaveBeenCalledTimes(2);
+    });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not render Save & add another in edit mode", () => {
+    exercisesState.data = [frontSquat];
+
+    renderModal({ kind: "edit", row: exerciseRow });
+
+    expect(screen.queryByRole("button", { name: "Save & add another" })).toBeNull();
+  });
+});
+
+describe("RowEditorModal EXERCISE double-submit guard (QA-MT7)", () => {
+  it("fires exactly one create mutation on a double Save click after a pick", async () => {
+    exercisesState.data = [frontSquat];
+
+    renderModal(createMode("EXERCISE"));
+
+    pickFrontSquat();
+    const save = screen.getByRole("button", { name: "Save row" });
+
+    fireEvent.click(save);
+    fireEvent.click(save);
+
+    await waitFor(() => {
+      expect(createRowMutate).toHaveBeenCalledTimes(1);
+    });
+    expect(createRowMutate).toHaveBeenCalledTimes(1);
   });
 });
