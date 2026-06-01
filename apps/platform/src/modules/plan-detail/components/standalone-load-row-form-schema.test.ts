@@ -193,6 +193,7 @@ describe("parseRowPayload for STANDALONE_LOAD", () => {
 });
 
 const IMPLEMENTED_KINDS: readonly RowKind[] = [
+  "EXERCISE",
   "STANDALONE_LOAD",
   "REST",
   "INNER_LADDER_MARKER",
@@ -200,21 +201,16 @@ const IMPLEMENTED_KINDS: readonly RowKind[] = [
   "REST_SLOT",
 ];
 
-const DEFERRED_KINDS: readonly RowKind[] = [
-  "EXERCISE",
-  "FOOTNOTE",
-  "PLACEHOLDER",
-  "REP_DEFINITION",
-];
+const DEFERRED_KINDS: readonly RowKind[] = ["FOOTNOTE", "PLACEHOLDER", "REP_DEFINITION"];
 
 describe("ROW_PAYLOAD_FORM_REGISTRY", () => {
-  it("registers the 5 implemented row kinds", () => {
+  it("registers the 6 implemented row kinds including EXERCISE", () => {
     for (const kind of IMPLEMENTED_KINDS) {
       expect(ROW_PAYLOAD_FORM_REGISTRY[kind]).toBeDefined();
     }
   });
 
-  it("misses the 4 deferred row kinds", () => {
+  it("misses the 3 still-deferred row kinds", () => {
     for (const kind of DEFERRED_KINDS) {
       expect(ROW_PAYLOAD_FORM_REGISTRY[kind]).toBeUndefined();
     }

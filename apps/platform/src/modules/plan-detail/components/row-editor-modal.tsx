@@ -8,13 +8,17 @@ import { useForm, useWatch } from "react-hook-form";
 import type { FieldErrors } from "react-hook-form";
 import { z } from "zod";
 
-import type { RowKind } from "@repo/contracts/lms/schema-row";
+import type {
+  CreateSchemaRowRequest,
+  RowKind,
+  UpdateSchemaRowRequest,
+} from "@repo/contracts/lms/schema-row";
 import { BaseModal } from "@repo/ui";
 
 import { useCreateSchemaRow, useUpdateSchemaRow } from "@app/lib/hooks";
 
 import type { RowEditorMode } from "./row-editor-types";
-import { assembleRowPayloadAndNotes, parseRowPayload } from "./row-form-utils";
+import { assembleRowPayloadAndNotes, parseRowPayload, validateRowSiblings } from "./row-form-utils";
 import { RowPayloadFormDispatch } from "./row-payload-form-dispatch";
 import { ROW_PAYLOAD_FORM_REGISTRY } from "./row-payload-form-registry";
 
@@ -33,6 +37,23 @@ const ROW_KIND_TITLE: Record<RowKind, string> = {
   REP_DEFINITION: "rep definition row",
   REST_SLOT: "rest slot row",
 };
+
+const ROW_KIND_MODAL_WIDTH: Record<RowKind, "sm" | "md"> = {
+  EXERCISE: "md",
+  REST: "sm",
+  FOOTNOTE: "sm",
+  STANDALONE_LOAD: "sm",
+  STANDALONE_URL: "sm",
+  PLACEHOLDER: "sm",
+  INNER_LADDER_MARKER: "sm",
+  REP_DEFINITION: "sm",
+  REST_SLOT: "sm",
+};
+
+const SUBMIT_MODE_SAVE = "save";
+const SUBMIT_MODE_SAVE_ADD = "save-add";
+
+type SubmitMode = typeof SUBMIT_MODE_SAVE | typeof SUBMIT_MODE_SAVE_ADD;
 
 type RowEditorModalProps = {
   open: boolean;
@@ -65,6 +86,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
   const updateSchemaRow = useUpdateSchemaRow(planId, startDate);
   const [payloadError, setPayloadError] = useState<FieldErrors | undefined>(undefined);
   const isSubmittingRef = useRef(false);
+  const submitModeRef = useRef<SubmitMode>(SUBMIT_MODE_SAVE);
 
   const { control, handleSubmit, reset, setValue } = useForm<RowShellFormData>({
     resolver: zodResolver(rowShellResolverSchema),
@@ -76,6 +98,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
   useEffect(() => {
     setPayloadError(undefined);
     isSubmittingRef.current = false;
+    submitModeRef.current = SUBMIT_MODE_SAVE;
     reset(toShellFormData(mode));
   }, [mode, reset]);
 
@@ -88,7 +111,11 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
       return;
     }
 
-    const { payloadInput, notes } = assembleRowPayloadAndNotes(rowKind, data.value);
+    const submitMode = submitModeRef.current;
+
+    submitModeRef.current = SUBMIT_MODE_SAVE;
+
+    const { payloadInput, notes, siblings } = assembleRowPayloadAndNotes(rowKind, data.value);
     const parsed = parseRowPayload(rowKind, payloadInput);
 
     if (!parsed.ok) {
@@ -97,25 +124,54 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
       return;
     }
 
-    setPayloadError(undefined);
-    isSubmittingRef.current = true;
+    const siblingResult = validateRowSiblings(siblings);
 
-    if (mode.kind === "create") {
-      createSchemaRow.mutate(
-        { schemaId: mode.schemaId, rowKind, rowPayload: parsed.value, notes },
-        {
-          onSuccess: () => onClose(),
-          onSettled: () => {
-            isSubmittingRef.current = false;
-          },
-        },
-      );
+    if (!siblingResult.ok) {
+      setPayloadError(siblingResult.error);
 
       return;
     }
 
+    setPayloadError(undefined);
+    isSubmittingRef.current = true;
+
+    if (mode.kind === "create") {
+      const createBody: CreateSchemaRowRequest =
+        siblings === undefined
+          ? { schemaId: mode.schemaId, rowKind, rowPayload: parsed.value, notes }
+          : {
+              schemaId: mode.schemaId,
+              rowKind,
+              rowPayload: parsed.value,
+              notes,
+              ...siblingResult.value,
+            };
+
+      createSchemaRow.mutate(createBody, {
+        onSuccess: () => {
+          if (submitMode === SUBMIT_MODE_SAVE_ADD) {
+            reset(toShellFormData(mode));
+
+            return;
+          }
+
+          onClose();
+        },
+        onSettled: () => {
+          isSubmittingRef.current = false;
+        },
+      });
+
+      return;
+    }
+
+    const updateBody: UpdateSchemaRowRequest =
+      siblings === undefined
+        ? { rowPayload: parsed.value, notes }
+        : { rowPayload: parsed.value, notes, ...siblingResult.value };
+
     updateSchemaRow.mutate(
-      { schemaRowId: mode.row.id, data: { rowPayload: parsed.value, notes } },
+      { schemaRowId: mode.row.id, data: updateBody },
       {
         onSuccess: () => onClose(),
         onSettled: () => {
@@ -139,7 +195,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
       onClose={onClose}
       title={`${isCreate ? "Add" : "Edit"} ${ROW_KIND_TITLE[rowKind]}`}
       subtitle={isCreate ? "step 2 of 2" : undefined}
-      maxWidth="sm"
+      maxWidth={ROW_KIND_MODAL_WIDTH[rowKind]}
       disableBackdropClick={isPending}
       disableEscapeKeyDown={isPending}
       actions={
@@ -156,6 +212,20 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
             Cancel
           </Button>
 
+          {isCreate && (
+            <Button
+              form={formId}
+              type="submit"
+              size="small"
+              disabled={isPending}
+              onClick={() => {
+                submitModeRef.current = SUBMIT_MODE_SAVE_ADD;
+              }}
+            >
+              Save &amp; add another
+            </Button>
+          )}
+
           <Button
             form={formId}
             type="submit"
@@ -163,6 +233,9 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
             size="small"
             disabled={isPending}
             startIcon={isPending ? <CircularProgress size={16} /> : null}
+            onClick={() => {
+              submitModeRef.current = SUBMIT_MODE_SAVE;
+            }}
           >
             {isPending ? "Saving…" : "Save row"}
           </Button>
