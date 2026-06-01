@@ -48,6 +48,7 @@ export const toRepDefinitionValue = (mode: RowEditorMode): RepDefinitionRowFormV
           count: element.count,
         })),
       },
+      ...(mode.row.notes !== null && { notes: mode.row.notes }),
     };
   }
 
@@ -63,11 +64,12 @@ export const RepDefinitionRowPayloadForm: React.FC<
   const compositionRootMessage = equalityError?.composition?.root?.message;
 
   const handleTotalRepsChange = (totalReps: number): void => {
-    onChange({ equality: { ...value.equality, totalReps } });
+    onChange({ ...value, equality: { ...value.equality, totalReps } });
   };
 
   const replaceElement = (index: number, next: RepDefinitionCompositionElementDraft): void => {
     onChange({
+      ...value,
       equality: {
         ...value.equality,
         composition: composition.map((element, i) => (i === index ? next : element)),
@@ -77,12 +79,14 @@ export const RepDefinitionRowPayloadForm: React.FC<
 
   const removeElement = (index: number): void => {
     onChange({
+      ...value,
       equality: { ...value.equality, composition: composition.filter((_, i) => i !== index) },
     });
   };
 
   const addElement = (): void => {
     onChange({
+      ...value,
       equality: {
         ...value.equality,
         composition: [...composition, { exerciseId: null, count: DEFAULT_COUNT }],

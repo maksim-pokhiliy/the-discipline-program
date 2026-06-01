@@ -32,6 +32,7 @@ export type PlaceholderPayloadDraft = {
 
 export type PlaceholderRowFormValue = {
   placeholder: PlaceholderPayloadDraft;
+  notes?: string | undefined;
 };
 
 export type RepDefinitionCompositionElementDraft = {
@@ -45,4 +46,5 @@ export type RepDefinitionRowFormValue = {
     totalReps: number;
     composition: RepDefinitionCompositionElementDraft[];
   };
+  notes?: string | undefined;
 };

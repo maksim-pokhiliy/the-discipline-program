@@ -69,6 +69,7 @@ export const toPlaceholderValue = (mode: RowEditorMode): PlaceholderRowFormValue
         }),
         ...(pairedConcreteRowId !== undefined && { pairedConcreteRowId }),
       },
+      ...(mode.row.notes !== null && { notes: mode.row.notes }),
     };
   }
 
@@ -89,11 +90,11 @@ export const PlaceholderRowPayloadForm: React.FC<RowPayloadFormProps<Placeholder
       return;
     }
 
-    onChange({ placeholder: { ...value.placeholder, placeholderKind: next } });
+    onChange({ ...value, placeholder: { ...value.placeholder, placeholderKind: next } });
   };
 
   const addPerSet = (): void => {
-    onChange({ placeholder: { ...value.placeholder, perSetAssignments: EMPTY_PER_SET } });
+    onChange({ ...value, placeholder: { ...value.placeholder, perSetAssignments: EMPTY_PER_SET } });
   };
 
   const removePerSet = (): void => {
@@ -105,7 +106,7 @@ export const PlaceholderRowPayloadForm: React.FC<RowPayloadFormProps<Placeholder
       }),
     };
 
-    onChange({ placeholder: next });
+    onChange({ ...value, placeholder: next });
   };
 
   return (
@@ -135,7 +136,7 @@ export const PlaceholderRowPayloadForm: React.FC<RowPayloadFormProps<Placeholder
           size="small"
           value={value.placeholder.text}
           onChange={(e) =>
-            onChange({ placeholder: { ...value.placeholder, text: e.target.value } })
+            onChange({ ...value, placeholder: { ...value.placeholder, text: e.target.value } })
           }
           error={placeholderError?.text !== undefined}
           helperText={placeholderError?.text?.message}
@@ -153,7 +154,10 @@ export const PlaceholderRowPayloadForm: React.FC<RowPayloadFormProps<Placeholder
             <PlaceholderPerSetEditor
               value={perSetAssignments}
               onChange={(next) =>
-                onChange({ placeholder: { ...value.placeholder, perSetAssignments: next } })
+                onChange({
+                  ...value,
+                  placeholder: { ...value.placeholder, perSetAssignments: next },
+                })
               }
               error={placeholderError?.perSetAssignments}
               disabled={disabled}
