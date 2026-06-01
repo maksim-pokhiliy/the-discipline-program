@@ -361,20 +361,31 @@ describe("RowEditorModal submit-while-pending guard (MT-4, QA-04)", () => {
   });
 });
 
-describe("RowEditorModal deferred-kind edit (MT-11, QA-06)", () => {
-  it("renders an empty-body modal whose Save does not mutate for a FOOTNOTE row", async () => {
+describe("RowEditorModal un-deferred FOOTNOTE edit (MT-11, QA-06)", () => {
+  it("renders the footnote form body and round-trips the row through update on Save", async () => {
     renderModal({ kind: "edit", row: footnoteRow });
 
     expect(screen.getByRole("button", { name: "Save row" })).toBeInTheDocument();
-    expect(document.querySelector("form")?.childElementCount ?? -1).toBe(0);
+    expect(document.querySelector("form")?.childElementCount ?? -1).toBeGreaterThan(0);
+    expect(screen.getByRole("group", { name: "marker" })).toBeInTheDocument();
 
     saveRow();
 
-    await new Promise((resolve) => {
-      setTimeout(resolve, 50);
+    await waitFor(() => {
+      expect(updateRowMutate).toHaveBeenCalledTimes(1);
     });
-
-    expect(updateRowMutate).not.toHaveBeenCalled();
+    expect(updateRowMutate.mock.calls[0]?.[0]).toEqual({
+      schemaRowId: baseSchemaRow.id,
+      data: {
+        rowPayload: {
+          rowKind: "FOOTNOTE",
+          marker: "*",
+          target: "each_round",
+          content: { elements: [] },
+        },
+        notes: null,
+      },
+    });
   });
 });
 

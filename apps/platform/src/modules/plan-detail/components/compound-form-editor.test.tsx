@@ -217,3 +217,23 @@ describe("CompoundFormEditor error surfacing (#115)", () => {
     expect(screen.getByText("Pick an exercise")).toBeInTheDocument();
   });
 });
+
+describe("CompoundFormEditor minElements override (D-01)", () => {
+  it("enables the lone element remove control when minElements is 0", () => {
+    const value = makeCompound({ elements: [makeElement(EXERCISE_ID_A)] });
+
+    render(<CompoundFormEditor value={value} onChange={onChange} minElements={0} />);
+
+    expect(screen.getByRole("button", { name: "Remove" })).toBeEnabled();
+  });
+
+  it("removes the last element down to empty when minElements is 0", () => {
+    const value = makeCompound({ elements: [makeElement(EXERCISE_ID_A)] });
+
+    render(<CompoundFormEditor value={value} onChange={onChange} minElements={0} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove" }));
+
+    expect(lastCallArg().elements).toHaveLength(0);
+  });
+});

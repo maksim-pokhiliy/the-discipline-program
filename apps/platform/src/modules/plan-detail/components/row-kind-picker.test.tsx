@@ -19,7 +19,11 @@ const ALL_TILE_LABELS = [
   "Rest slot (EMOM)",
 ] as const;
 
-const DEFERRED_LABELS = ["Footnote", "Placeholder", "Rep definition"] as const;
+const UN_DEFERRED_TILES = [
+  { label: "Footnote", kind: "FOOTNOTE", hotkey: "f" },
+  { label: "Placeholder", kind: "PLACEHOLDER", hotkey: "p" },
+  { label: "Rep definition", kind: "REP_DEFINITION", hotkey: "d" },
+] as const;
 
 const getTileButton = (label: string): HTMLButtonElement => {
   const node = screen.getByText(label).closest("button");
@@ -56,28 +60,67 @@ describe("RowKindPicker tiles (MT-14)", () => {
   });
 });
 
-describe("RowKindPicker deferred tiles (MT-13)", () => {
-  it("disables each deferred tile and shows the coming-soon hint", () => {
+describe("RowKindPicker un-deferred tiles (MT-13)", () => {
+  it("renders the footnote, placeholder, and rep-definition tiles enabled", () => {
     renderPicker();
 
-    for (const label of DEFERRED_LABELS) {
-      expect(getTileButton(label)).toBeDisabled();
+    for (const { label } of UN_DEFERRED_TILES) {
+      expect(getTileButton(label)).toBeEnabled();
     }
-
-    expect(screen.getAllByText("needs exercise editor — coming soon").length).toBe(
-      DEFERRED_LABELS.length,
-    );
   });
 
-  it("does not call onSelect when a deferred tile is clicked", () => {
-    const onSelect = vi.fn();
+  it("shows no coming-soon hint now that every tile is live", () => {
+    renderPicker();
 
-    renderPicker({ onSelect });
-
-    fireEvent.click(getTileButton("Footnote"));
-
-    expect(onSelect).not.toHaveBeenCalled();
+    expect(screen.queryByText("needs exercise editor — coming soon")).toBeNull();
   });
+
+  it.each(UN_DEFERRED_TILES)(
+    "selects $kind on click and confirms it via Continue",
+    ({ label, kind }) => {
+      const onSelect = vi.fn();
+      const onClose = vi.fn();
+
+      renderPicker({ onSelect, onClose });
+
+      fireEvent.click(getTileButton(label));
+      fireEvent.click(getContinue());
+
+      expect(onSelect).toHaveBeenCalledWith(kind);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each(UN_DEFERRED_TILES)(
+    "emits onSelect($kind) and closes when its tile is double-clicked",
+    ({ label, kind }) => {
+      const onSelect = vi.fn();
+      const onClose = vi.fn();
+
+      renderPicker({ onSelect, onClose });
+
+      fireEvent.doubleClick(getTileButton(label));
+
+      expect(onSelect).toHaveBeenCalledWith(kind);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each(UN_DEFERRED_TILES)(
+    "selects $kind on the $hotkey hotkey and confirms it on Enter",
+    ({ kind, hotkey }) => {
+      const onSelect = vi.fn();
+      const onClose = vi.fn();
+
+      renderPicker({ onSelect, onClose });
+
+      pressKey(hotkey);
+      pressKey("Enter");
+
+      expect(onSelect).toHaveBeenCalledWith(kind);
+      expect(onClose).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it("selects EXERCISE on click and confirms it via Continue now that it is live", () => {
     const onSelect = vi.fn();
@@ -154,7 +197,7 @@ describe("RowKindPicker hotkeys (MT-12)", () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it("ignores a deferred hotkey so selection stays on the prior pick", () => {
+  it("lets a later footnote hotkey override the prior pick", () => {
     const onSelect = vi.fn();
 
     renderPicker({ onSelect });
@@ -164,6 +207,6 @@ describe("RowKindPicker hotkeys (MT-12)", () => {
     pressKey("Enter");
 
     expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(onSelect).toHaveBeenCalledWith("STANDALONE_URL");
+    expect(onSelect).toHaveBeenCalledWith("FOOTNOTE");
   });
 });

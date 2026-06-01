@@ -485,3 +485,239 @@ describe("validateRowSiblings (QA-MT9)", () => {
     }
   });
 });
+
+const COMPOSITION_EXERCISE_ID = "ckxw5p7gp0000q1mnzv5cuq01";
+const PER_SET_EXERCISE_ID = "ckxw5p7gp0000q1mnzv5cuq02";
+const CONTENT_EXERCISE_ID = "ckxw5p7gp0000q1mnzv5cuq03";
+
+const VALID_FOOTNOTE = {
+  marker: "*",
+  target: "each_set",
+  content: { elements: [{ exerciseId: CONTENT_EXERCISE_ID, reps: { kind: "count", value: 5 } }] },
+};
+const VALID_FOOTNOTE_TYPED = {
+  marker: "**",
+  target: "each_typed_round",
+  content: { elements: [{ exerciseId: CONTENT_EXERCISE_ID, reps: { kind: "count", value: 5 } }] },
+  typeLabel: "GYMNASTICS",
+};
+const VALID_PLACEHOLDER = {
+  placeholder: {
+    placeholderKind: "coach_choice_slot",
+    text: "*DB exercise",
+    perSetAssignments: {
+      placeholderName: "DB",
+      assignments: [{ setIndex: 1, exerciseId: PER_SET_EXERCISE_ID }],
+    },
+  },
+};
+const VALID_REP_DEFINITION = {
+  equality: {
+    form: "inline_equality",
+    totalReps: 5,
+    composition: [{ exerciseId: COMPOSITION_EXERCISE_ID, count: 5 }],
+  },
+};
+
+describe("parseRowPayload accepts the 3 un-deferred kinds with the full discriminated arm (scenario 27)", () => {
+  it("returns ok with the FOOTNOTE arm including rowKind for single-element content", () => {
+    const result = parseRowPayload("FOOTNOTE", VALID_FOOTNOTE);
+
+    expect(result.ok).toBe(true);
+
+    if (result.ok) {
+      expect(result.value).toEqual({ rowKind: "FOOTNOTE", ...VALID_FOOTNOTE });
+    }
+  });
+
+  it("returns ok with the FOOTNOTE arm carrying a typeLabel at each_typed_round", () => {
+    const result = parseRowPayload("FOOTNOTE", VALID_FOOTNOTE_TYPED);
+
+    expect(result.ok).toBe(true);
+
+    if (result.ok && result.value.rowKind === "FOOTNOTE") {
+      expect(result.value.typeLabel).toBe("GYMNASTICS");
+    }
+  });
+
+  it("returns ok with the PLACEHOLDER arm carrying an exerciseId assignment", () => {
+    const result = parseRowPayload("PLACEHOLDER", VALID_PLACEHOLDER);
+
+    expect(result.ok).toBe(true);
+
+    if (result.ok) {
+      expect(result.value).toEqual({ rowKind: "PLACEHOLDER", ...VALID_PLACEHOLDER });
+    }
+  });
+
+  it("returns ok with the REP_DEFINITION inline_equality arm", () => {
+    const result = parseRowPayload("REP_DEFINITION", VALID_REP_DEFINITION);
+
+    expect(result.ok).toBe(true);
+
+    if (result.ok) {
+      expect(result.value).toEqual({ rowKind: "REP_DEFINITION", ...VALID_REP_DEFINITION });
+    }
+  });
+});
+
+describe("parseRowPayload maps the 3 un-deferred invalid classes to the form-read path (scenario 27)", () => {
+  it("routes a FOOTNOTE blank typeLabel to error.typeLabel", () => {
+    const result = parseRowPayload("FOOTNOTE", { ...VALID_FOOTNOTE_TYPED, typeLabel: "" });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(result.error.typeLabel)).toBeDefined();
+    }
+  });
+
+  it("routes a FOOTNOTE null-picker content element to error.content.elements.0.exerciseId", () => {
+    const result = parseRowPayload("FOOTNOTE", {
+      marker: "*",
+      target: "each_set",
+      content: { elements: [{ exerciseId: null, reps: { kind: "count", value: 5 } }] },
+    });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      const content = readBranch(result.error.content, "elements");
+      const first = readBranch(content, "0");
+
+      expect(readMessage(readBranch(first, "exerciseId"))).toBeDefined();
+    }
+  });
+
+  it("routes a PLACEHOLDER empty text to error.placeholder.text", () => {
+    const result = parseRowPayload("PLACEHOLDER", {
+      placeholder: { placeholderKind: "muscle_group_reference", text: "" },
+    });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(readBranch(result.error.placeholder, "text"))).toBeDefined();
+    }
+  });
+
+  it("routes a PLACEHOLDER null-picker assignment to the leaf exerciseId, not the root", () => {
+    const result = parseRowPayload("PLACEHOLDER", {
+      placeholder: {
+        placeholderKind: "coach_choice_slot",
+        text: "*DB exercise",
+        perSetAssignments: {
+          placeholderName: "DB",
+          assignments: [{ setIndex: 1, exerciseId: null }],
+        },
+      },
+    });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      const perSet = readBranch(result.error.placeholder, "perSetAssignments");
+      const assignments = readBranch(perSet, "assignments");
+      const first = readBranch(assignments, "0");
+
+      expect(readMessage(readBranch(first, "exerciseId"))).toBeDefined();
+      expect(readMessage(readBranch(first, "root"))).toBeUndefined();
+    }
+  });
+
+  it("routes a PLACEHOLDER empty assignments array to the assignments root", () => {
+    const result = parseRowPayload("PLACEHOLDER", {
+      placeholder: {
+        placeholderKind: "coach_choice_slot",
+        text: "*DB exercise",
+        perSetAssignments: { placeholderName: "DB", assignments: [] },
+      },
+    });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      const perSet = readBranch(result.error.placeholder, "perSetAssignments");
+      const assignments = readBranch(perSet, "assignments");
+
+      expect(readMessage(readBranch(assignments, "root"))).toBeDefined();
+    }
+  });
+
+  it("routes a REP_DEFINITION empty composition array to error.equality.composition.root", () => {
+    const result = parseRowPayload("REP_DEFINITION", {
+      equality: { form: "inline_equality", totalReps: 5, composition: [] },
+    });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      const composition = readBranch(result.error.equality, "composition");
+
+      expect(readMessage(readBranch(composition, "root"))).toBeDefined();
+    }
+  });
+
+  it("routes a REP_DEFINITION non-positive totalReps to error.equality.totalReps", () => {
+    const result = parseRowPayload("REP_DEFINITION", {
+      equality: {
+        form: "inline_equality",
+        totalReps: 0,
+        composition: [{ exerciseId: COMPOSITION_EXERCISE_ID, count: 5 }],
+      },
+    });
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(readMessage(readBranch(result.error.equality, "totalReps"))).toBeDefined();
+    }
+  });
+});
+
+describe("assembleRowPayloadAndNotes for the 3 un-deferred kinds (scenario 27)", () => {
+  it("trims the FOOTNOTE notes carried in its value", () => {
+    const result = assembleRowPayloadAndNotes("FOOTNOTE", {
+      ...VALID_FOOTNOTE,
+      notes: "  see below  ",
+    });
+
+    expect(result.notes).toBe("see below");
+  });
+
+  it("nulls the FOOTNOTE notes when the value carries a blank string", () => {
+    const result = assembleRowPayloadAndNotes("FOOTNOTE", { ...VALID_FOOTNOTE, notes: "   " });
+
+    expect(result.notes).toBeNull();
+  });
+
+  it("carries the PLACEHOLDER notes through assemble via the opaque carry", () => {
+    const result = assembleRowPayloadAndNotes("PLACEHOLDER", {
+      ...VALID_PLACEHOLDER,
+      notes: "keep me",
+    });
+
+    expect(result.notes).toBe("keep me");
+  });
+
+  it("nulls the PLACEHOLDER notes when no notes key is present", () => {
+    const result = assembleRowPayloadAndNotes("PLACEHOLDER", VALID_PLACEHOLDER);
+
+    expect(result.notes).toBeNull();
+  });
+
+  it("carries the REP_DEFINITION notes through assemble via the opaque carry", () => {
+    const result = assembleRowPayloadAndNotes("REP_DEFINITION", {
+      ...VALID_REP_DEFINITION,
+      notes: "keep me",
+    });
+
+    expect(result.notes).toBe("keep me");
+  });
+
+  it("nulls the REP_DEFINITION notes when no notes key is present", () => {
+    const result = assembleRowPayloadAndNotes("REP_DEFINITION", VALID_REP_DEFINITION);
+
+    expect(result.notes).toBeNull();
+  });
+});

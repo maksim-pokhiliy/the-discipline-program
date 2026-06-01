@@ -199,20 +199,15 @@ const IMPLEMENTED_KINDS: readonly RowKind[] = [
   "INNER_LADDER_MARKER",
   "STANDALONE_URL",
   "REST_SLOT",
+  "FOOTNOTE",
+  "PLACEHOLDER",
+  "REP_DEFINITION",
 ];
 
-const DEFERRED_KINDS: readonly RowKind[] = ["FOOTNOTE", "PLACEHOLDER", "REP_DEFINITION"];
-
 describe("ROW_PAYLOAD_FORM_REGISTRY", () => {
-  it("registers the 6 implemented row kinds including EXERCISE", () => {
+  it("registers every one of the 9 row kinds including the un-deferred three", () => {
     for (const kind of IMPLEMENTED_KINDS) {
       expect(ROW_PAYLOAD_FORM_REGISTRY[kind]).toBeDefined();
-    }
-  });
-
-  it("misses the 3 still-deferred row kinds", () => {
-    for (const kind of DEFERRED_KINDS) {
-      expect(ROW_PAYLOAD_FORM_REGISTRY[kind]).toBeUndefined();
     }
   });
 });
