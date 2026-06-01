@@ -2,6 +2,9 @@ import { screen } from "@testing-library/react";
 import type { Mock } from "vitest";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { Exercise } from "@repo/contracts/lms/exercise";
+
+import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
 import {
@@ -19,9 +22,32 @@ import {
   standaloneUrlDefaultValue,
 } from "./standalone-url-row-payload-form";
 
+const exercisesState: { data: Exercise[]; isLoading: boolean } = { data: [], isLoading: false };
+
+vi.mock("@app/lib/hooks", async () => {
+  const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
+
+  return {
+    ...actual,
+    useExercises: () => ({ data: exercisesState.data, isLoading: exercisesState.isLoading }),
+  };
+});
+
+const { FootnoteRowPayloadForm, footnoteDefaultValue } = await import(
+  "./footnote-row-payload-form"
+);
+const { PlaceholderRowPayloadForm, placeholderDefaultValue } = await import(
+  "./placeholder-row-payload-form"
+);
+const { RepDefinitionRowPayloadForm, repDefinitionDefaultValue } = await import(
+  "./rep-definition-row-payload-form"
+);
+
 const onChange: Mock = vi.fn();
 
 afterEach(() => {
+  exercisesState.data = [];
+  exercisesState.isLoading = false;
   onChange.mockReset();
 });
 
@@ -75,6 +101,37 @@ describe("RestSlotRowPayloadForm renders its seeded defaults (MT-15)", () => {
 
     expect(screen.getByRole("textbox")).toBeInTheDocument();
     expect(screen.getAllByRole("textbox")).toHaveLength(1);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("FootnoteRowPayloadForm renders its seeded defaults (MT-15)", () => {
+  it("shows the marker/target toggles and the content editor without calling onChange on mount", () => {
+    render(<FootnoteRowPayloadForm value={footnoteDefaultValue} onChange={onChange} />);
+
+    expect(screen.getByRole("group", { name: "marker" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "target" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "add element" })).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("PlaceholderRowPayloadForm renders its seeded defaults (MT-15)", () => {
+  it("shows the kind toggle and an add per-set affordance without calling onChange on mount", () => {
+    render(<PlaceholderRowPayloadForm value={placeholderDefaultValue} onChange={onChange} />);
+
+    expect(screen.getByRole("group", { name: "kind" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "add per-set substitutions" })).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
+describe("RepDefinitionRowPayloadForm renders its seeded defaults (MT-15)", () => {
+  it("shows the default total reps and an add element affordance without calling onChange on mount", () => {
+    render(<RepDefinitionRowPayloadForm value={repDefinitionDefaultValue} onChange={onChange} />);
+
+    expect(screen.getByDisplayValue("5")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "add element" })).toBeInTheDocument();
     expect(onChange).not.toHaveBeenCalled();
   });
 });

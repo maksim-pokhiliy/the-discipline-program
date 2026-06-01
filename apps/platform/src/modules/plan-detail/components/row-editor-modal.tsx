@@ -41,10 +41,10 @@ const ROW_KIND_TITLE: Record<RowKind, string> = {
 const ROW_KIND_MODAL_WIDTH: Record<RowKind, "sm" | "md"> = {
   EXERCISE: "md",
   REST: "sm",
-  FOOTNOTE: "sm",
+  FOOTNOTE: "md",
   STANDALONE_LOAD: "sm",
   STANDALONE_URL: "sm",
-  PLACEHOLDER: "sm",
+  PLACEHOLDER: "md",
   INNER_LADDER_MARKER: "sm",
   REP_DEFINITION: "sm",
   REST_SLOT: "sm",

@@ -34,6 +34,7 @@ type CompoundFormEditorProps = {
   onChange: (next: CompoundFormDraft) => void;
   error?: FieldErrors<CompoundRow> | undefined;
   disabled?: boolean;
+  minElements?: number;
 };
 
 export const CompoundFormEditor = ({
@@ -41,9 +42,11 @@ export const CompoundFormEditor = ({
   onChange,
   error,
   disabled = false,
+  minElements,
 }: CompoundFormEditorProps) => {
   const elementsRootMessage = error?.elements?.root?.message ?? error?.root?.message;
-  const canRemove = value.elements.length > MIN_COMPOUND_ELEMENTS;
+  const min = minElements ?? MIN_COMPOUND_ELEMENTS;
+  const canRemove = value.elements.length > min;
   const sharedLoad = value.sharedModifiers?.load;
   const sharedTempo = value.sharedModifiers?.tempo;
 
