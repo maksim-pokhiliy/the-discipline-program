@@ -21,8 +21,6 @@ export type RowKindTile = {
 type RowKindPickerTileProps = {
   tile: RowKindTile;
   isSelected: boolean;
-  isDeferred: boolean;
-  hint: string;
   onSelect: () => void;
   onConfirm: () => void;
 };
@@ -30,13 +28,10 @@ type RowKindPickerTileProps = {
 export const RowKindPickerTile: React.FC<RowKindPickerTileProps> = ({
   tile,
   isSelected,
-  isDeferred,
-  hint,
   onSelect,
   onConfirm,
 }) => (
   <ButtonBase
-    disabled={isDeferred}
     onClick={onSelect}
     onDoubleClick={onConfirm}
     sx={(theme) => ({
@@ -49,7 +44,6 @@ export const RowKindPickerTile: React.FC<RowKindPickerTileProps> = ({
       borderColor: isSelected ? "primary.main" : "divider",
       borderRadius: 1,
       bgcolor: isSelected ? alpha(theme.palette.primary.main, SELECTED_BG_ALPHA) : "transparent",
-      opacity: isDeferred ? theme.palette.action.disabledOpacity : 1,
       textAlign: "left",
       "&:hover": {
         borderColor: isSelected ? "primary.main" : "dividerStrong",
@@ -73,7 +67,7 @@ export const RowKindPickerTile: React.FC<RowKindPickerTileProps> = ({
     </Typography>
 
     <Typography variant="caption" sx={{ color: "text.subtle" }}>
-      {isDeferred ? hint : tile.desc}
+      {tile.desc}
     </Typography>
   </ButtonBase>
 );

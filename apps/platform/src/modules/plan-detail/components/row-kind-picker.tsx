@@ -16,14 +16,6 @@ const HOTKEYS_HINT = "hotkeys: E R F L U P I D S · enter to accept · esc to ca
 
 const DEFAULT_SELECTED_KIND: RowKind = "REST";
 
-const DEFERRED_ROW_KINDS: ReadonlySet<RowKind> = new Set<RowKind>([
-  "FOOTNOTE",
-  "PLACEHOLDER",
-  "REP_DEFINITION",
-]);
-
-const DEFERRED_HINT = "needs exercise editor — coming soon";
-
 const ROW_KIND_TILES: readonly RowKindTile[] = [
   {
     kind: "EXERCISE",
@@ -117,14 +109,7 @@ export type RowKindPickerProps = {
 export const RowKindPicker: React.FC<RowKindPickerProps> = ({ open, onClose, onSelect }) => {
   const [selectedKind, setSelectedKind] = useState<RowKind>(DEFAULT_SELECTED_KIND);
 
-  const isDeferred = (kind: RowKind): boolean => DEFERRED_ROW_KINDS.has(kind);
-  const selectedIsDeferred = isDeferred(selectedKind);
-
   const handlePick = (kind: RowKind): void => {
-    if (isDeferred(kind)) {
-      return;
-    }
-
     onSelect(kind);
     onClose();
   };
@@ -138,10 +123,6 @@ export const RowKindPicker: React.FC<RowKindPickerProps> = ({ open, onClose, onS
 
     const onKeyDown = (event: KeyboardEvent): void => {
       if (event.key === ENTER_KEY) {
-        if (isDeferred(selectedKind)) {
-          return;
-        }
-
         event.preventDefault();
         onSelect(selectedKind);
         onClose();
@@ -151,7 +132,7 @@ export const RowKindPicker: React.FC<RowKindPickerProps> = ({ open, onClose, onS
 
       const tile = ROW_KIND_TILES.find((candidate) => candidate.hotkey === event.key.toUpperCase());
 
-      if (tile === undefined || isDeferred(tile.kind)) {
+      if (tile === undefined) {
         return;
       }
 
@@ -183,7 +164,7 @@ export const RowKindPicker: React.FC<RowKindPickerProps> = ({ open, onClose, onS
             Cancel
           </Button>
 
-          <Button variant="contained" disabled={selectedIsDeferred} onClick={handleContinue}>
+          <Button variant="contained" onClick={handleContinue}>
             Continue
           </Button>
         </>
@@ -195,8 +176,6 @@ export const RowKindPicker: React.FC<RowKindPickerProps> = ({ open, onClose, onS
             key={tile.kind}
             tile={tile}
             isSelected={selectedKind === tile.kind}
-            isDeferred={isDeferred(tile.kind)}
-            hint={DEFERRED_HINT}
             onSelect={() => setSelectedKind(tile.kind)}
             onConfirm={() => handlePick(tile.kind)}
           />
