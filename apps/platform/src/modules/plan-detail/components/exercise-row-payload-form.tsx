@@ -3,6 +3,7 @@
 import { Box, TextField } from "@mui/material";
 
 import {
+  type ExerciseForm,
   type Intensity,
   type Load,
   type PerLimbDistribution,
@@ -22,7 +23,10 @@ import type { ShellIntensityForm } from "./schema-form-utils";
 import { SideEditor } from "./side-editor";
 import { TempoEditor } from "./tempo-editor";
 
-export type ExerciseFormValue = { form: "atomic"; exerciseId: string | null };
+type AtomicExerciseFormValue = { form: "atomic"; exerciseId: string | null };
+type NonAtomicExerciseForm = Exclude<ExerciseForm, { form: "atomic" }>;
+
+export type ExerciseFormValue = AtomicExerciseFormValue | NonAtomicExerciseForm;
 
 type ExerciseRowFormValue = {
   exercise: ExerciseFormValue;
@@ -68,11 +72,7 @@ const toExerciseFormValue = (mode: RowEditorMode): ExerciseFormValue => {
     return exerciseDefaultValue.exercise;
   }
 
-  const { exercise } = mode.row.rowPayload;
-
-  return exercise.form === "atomic"
-    ? { form: "atomic", exerciseId: exercise.exerciseId }
-    : exerciseDefaultValue.exercise;
+  return mode.row.rowPayload.exercise;
 };
 
 export const toExerciseValue = (mode: RowEditorMode): ExerciseRowFormValue => {

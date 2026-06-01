@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Stack } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
 import { EXERCISE_FORMS, type ExerciseFormKind } from "@repo/contracts/lms/_shared";
@@ -8,6 +8,8 @@ import { EXERCISE_FORMS, type ExerciseFormKind } from "@repo/contracts/lms/_shar
 import { ExerciseFormPickerTile, type ExerciseFormTile } from "./exercise-form-picker-tile";
 import { ExercisePicker } from "./exercise-picker";
 import type { ExerciseFormValue } from "./exercise-row-payload-form";
+
+type AtomicFormValue = Extract<ExerciseFormValue, { form: "atomic" }>;
 
 const DEFERRED_EXERCISE_FORMS = new Set<ExerciseFormKind>([
   "compound",
@@ -40,6 +42,12 @@ const FORM_TILES: Record<ExerciseFormKind, Omit<ExerciseFormTile, "form">> = {
 };
 
 const FORM_GRID_COLUMNS = "repeat(3, 1fr)";
+const MULTI_FORM_NOTICE_PREFIX = "Multi-exercise form (";
+const MULTI_FORM_NOTICE_SUFFIX =
+  ") — editing the exercise itself is coming soon; it stays preserved on save.";
+
+const buildMultiFormNotice = (form: ExerciseFormKind): string =>
+  `${MULTI_FORM_NOTICE_PREFIX}${FORM_TILES[form].label}${MULTI_FORM_NOTICE_SUFFIX}`;
 
 type ExerciseFormPickerProps = {
   value: ExerciseFormValue;
@@ -54,7 +62,10 @@ export const ExerciseFormPicker = ({
   error,
   disabled = false,
 }: ExerciseFormPickerProps) => {
-  const hasExerciseError = error?.exerciseId !== undefined || error?.root !== undefined;
+  const isAtomic = value.form === "atomic";
+  const atomicError: FieldErrors<AtomicFormValue> | undefined = isAtomic ? error : undefined;
+  const hasExerciseError = atomicError?.exerciseId !== undefined || atomicError?.root !== undefined;
+  const atomicExerciseId = value.form === "atomic" ? value.exerciseId : null;
 
   return (
     <Stack spacing={1.5}>
@@ -64,20 +75,26 @@ export const ExerciseFormPicker = ({
             key={form}
             tile={{ form, ...FORM_TILES[form] }}
             isSelected={value.form === form}
-            isDeferred={DEFERRED_EXERCISE_FORMS.has(form)}
+            isDeferred={!isAtomic || DEFERRED_EXERCISE_FORMS.has(form)}
             hint={DEFERRED_HINT}
-            onSelect={() => onChange({ form: "atomic", exerciseId: value.exerciseId })}
+            onSelect={() => onChange({ form: "atomic", exerciseId: atomicExerciseId })}
           />
         ))}
       </Box>
 
       <Box sx={{ p: 1.25, border: "1px solid", borderColor: "divider", borderRadius: 1 }}>
-        <ExercisePicker
-          value={value.exerciseId}
-          onChange={(id) => onChange({ form: "atomic", exerciseId: id })}
-          error={hasExerciseError}
-          disabled={disabled}
-        />
+        {value.form === "atomic" ? (
+          <ExercisePicker
+            value={value.exerciseId}
+            onChange={(id) => onChange({ form: "atomic", exerciseId: id })}
+            error={hasExerciseError}
+            disabled={disabled}
+          />
+        ) : (
+          <Typography variant="caption" color="text.subtle">
+            {buildMultiFormNotice(value.form)}
+          </Typography>
+        )}
       </Box>
     </Stack>
   );
