@@ -53,7 +53,7 @@ export const VoCard = ({
             flexShrink: 0,
           }}
         >
-          <Typography variant="caption" sx={{ fontWeight: 700, lineHeight: 1 }}>
+          <Typography variant="caption" color="inherit" sx={{ fontWeight: 700, lineHeight: 1 }}>
             {index}
           </Typography>
         </Box>
