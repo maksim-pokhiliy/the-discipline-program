@@ -111,6 +111,10 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
       return;
     }
 
+    const submitMode = submitModeRef.current;
+
+    submitModeRef.current = SUBMIT_MODE_SAVE;
+
     const { payloadInput, notes, siblings } = assembleRowPayloadAndNotes(rowKind, data.value);
     const parsed = parseRowPayload(rowKind, payloadInput);
 
@@ -145,8 +149,7 @@ export const RowEditorModal: React.FC<RowEditorModalProps> = ({
 
       createSchemaRow.mutate(createBody, {
         onSuccess: () => {
-          if (submitModeRef.current === SUBMIT_MODE_SAVE_ADD) {
-            submitModeRef.current = SUBMIT_MODE_SAVE;
+          if (submitMode === SUBMIT_MODE_SAVE_ADD) {
             reset(toShellFormData(mode));
 
             return;
