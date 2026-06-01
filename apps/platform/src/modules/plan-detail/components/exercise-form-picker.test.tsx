@@ -112,10 +112,8 @@ describe("ExerciseFormPicker non-atomic body", () => {
     render(<ExerciseFormPicker value={COMPOUND_VALUE} onChange={onChange} />);
 
     expect(screen.getByText("add element")).toBeInTheDocument();
-    expect(screen.getByText("element 1")).toBeInTheDocument();
-    expect(screen.getByText("element 2")).toBeInTheDocument();
+    expect(screen.getAllByText("element")).toHaveLength(2);
 
     expect(screen.queryByText(MULTI_FORM_NOTICE_FRAGMENT)).toBeNull();
-    expect(screen.queryByPlaceholderText(FULL_PICKER_PLACEHOLDER)).toBeNull();
   });
 });

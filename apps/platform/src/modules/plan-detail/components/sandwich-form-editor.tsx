@@ -7,21 +7,22 @@ import type { Load, SandwichCompound, TempoModifier } from "@repo/contracts/lms/
 import { FormSection } from "@repo/ui";
 
 import type { SandwichCompoundElementDraft, SandwichFormDraft } from "./exercise-form-draft.types";
-import { ExerciseRefField } from "./exercise-ref-field";
+import { ExercisePicker } from "./exercise-picker";
 import { LoadEditor } from "./load-editor";
 import { RepNotationEditor } from "./rep-notation-editor";
 import { normalizeSharedModifiers } from "./shared-modifiers-utils";
 import { TempoEditor } from "./tempo-editor";
+import { VoCard } from "./vo-card";
 import { buildDefaultLoad } from "./weight-load-defaults";
 
 const SANDWICH_SLOTS = ["opening", "middle", "closing"] as const;
 
 type SandwichSlot = (typeof SANDWICH_SLOTS)[number];
 
-const SLOT_EXERCISE_LABEL = "exercise";
 const ADD_LOAD_LABEL = "add load";
 const REMOVE_LOAD_LABEL = "remove";
 const DEFAULT_LOAD_KIND = "absolute";
+const SHARED_MODIFIERS_HEAD = "shared modifiers (all 3 slots)";
 const SHARED_LOAD_HELPER = "one load applied across every slot";
 
 type SandwichFormEditorProps = {
@@ -66,59 +67,57 @@ export const SandwichFormEditor = ({
     const slotLoad = element.load;
 
     return (
-      <FormSection key={slot} label={slot}>
-        <Stack spacing={1.5}>
-          <ExerciseRefField
-            label={SLOT_EXERCISE_LABEL}
-            value={element.exerciseId}
-            onChange={(id) => updateSlot(slot, { ...element, exerciseId: id })}
-            error={slotError?.exerciseId !== undefined}
+      <VoCard key={slot} head={slot}>
+        <ExercisePicker
+          compact
+          value={element.exerciseId}
+          onChange={(id) => updateSlot(slot, { ...element, exerciseId: id })}
+          error={slotError?.exerciseId !== undefined}
+          disabled={disabled}
+        />
+
+        <FormSection label="reps">
+          <RepNotationEditor
+            value={element.reps}
+            onChange={(reps) => updateSlot(slot, { ...element, reps })}
+            error={slotError?.reps}
             disabled={disabled}
           />
+        </FormSection>
 
-          <FormSection label="reps">
-            <RepNotationEditor
-              value={element.reps}
-              onChange={(reps) => updateSlot(slot, { ...element, reps })}
-              error={slotError?.reps}
+        <FormSection label="load (optional)">
+          {slotLoad === undefined ? (
+            <Button
+              size="tiny"
+              variant="text"
+              onClick={() =>
+                updateSlot(slot, { ...element, load: buildDefaultLoad(DEFAULT_LOAD_KIND) })
+              }
               disabled={disabled}
-            />
-          </FormSection>
+            >
+              {ADD_LOAD_LABEL}
+            </Button>
+          ) : (
+            <Stack spacing={1}>
+              <LoadEditor
+                value={slotLoad}
+                onChange={(load) => updateSlot(slot, { ...element, load })}
+                error={slotError?.load}
+                disabled={disabled}
+              />
 
-          <FormSection label="load (optional)">
-            {slotLoad === undefined ? (
               <Button
                 size="tiny"
                 variant="text"
-                onClick={() =>
-                  updateSlot(slot, { ...element, load: buildDefaultLoad(DEFAULT_LOAD_KIND) })
-                }
+                onClick={() => removeSlotLoad(slot, element)}
                 disabled={disabled}
               >
-                {ADD_LOAD_LABEL}
+                {REMOVE_LOAD_LABEL}
               </Button>
-            ) : (
-              <Stack spacing={1}>
-                <LoadEditor
-                  value={slotLoad}
-                  onChange={(load) => updateSlot(slot, { ...element, load })}
-                  error={slotError?.load}
-                  disabled={disabled}
-                />
-
-                <Button
-                  size="tiny"
-                  variant="text"
-                  onClick={() => removeSlotLoad(slot, element)}
-                  disabled={disabled}
-                >
-                  {REMOVE_LOAD_LABEL}
-                </Button>
-              </Stack>
-            )}
-          </FormSection>
-        </Stack>
-      </FormSection>
+            </Stack>
+          )}
+        </FormSection>
+      </VoCard>
     );
   };
 
@@ -126,51 +125,47 @@ export const SandwichFormEditor = ({
     <Stack spacing={2}>
       {SANDWICH_SLOTS.map(renderSlot)}
 
-      <FormSection label="shared modifiers">
-        <Stack spacing={1.5}>
-          <FormSection label="load (optional)" helper={SHARED_LOAD_HELPER}>
-            {sharedLoad === undefined ? (
+      <VoCard head={SHARED_MODIFIERS_HEAD}>
+        <FormSection label="load (optional)" helper={SHARED_LOAD_HELPER}>
+          {sharedLoad === undefined ? (
+            <Button
+              size="tiny"
+              variant="text"
+              onClick={() => applySharedModifiers(buildDefaultLoad(DEFAULT_LOAD_KIND), sharedTempo)}
+              disabled={disabled}
+            >
+              {ADD_LOAD_LABEL}
+            </Button>
+          ) : (
+            <Stack spacing={1}>
+              <LoadEditor
+                value={sharedLoad}
+                onChange={(load) => applySharedModifiers(load, sharedTempo)}
+                error={error?.sharedModifiers?.load}
+                disabled={disabled}
+              />
+
               <Button
                 size="tiny"
                 variant="text"
-                onClick={() =>
-                  applySharedModifiers(buildDefaultLoad(DEFAULT_LOAD_KIND), sharedTempo)
-                }
+                onClick={() => applySharedModifiers(undefined, sharedTempo)}
                 disabled={disabled}
               >
-                {ADD_LOAD_LABEL}
+                {REMOVE_LOAD_LABEL}
               </Button>
-            ) : (
-              <Stack spacing={1}>
-                <LoadEditor
-                  value={sharedLoad}
-                  onChange={(load) => applySharedModifiers(load, sharedTempo)}
-                  error={error?.sharedModifiers?.load}
-                  disabled={disabled}
-                />
+            </Stack>
+          )}
+        </FormSection>
 
-                <Button
-                  size="tiny"
-                  variant="text"
-                  onClick={() => applySharedModifiers(undefined, sharedTempo)}
-                  disabled={disabled}
-                >
-                  {REMOVE_LOAD_LABEL}
-                </Button>
-              </Stack>
-            )}
-          </FormSection>
-
-          <FormSection label="tempo (optional)">
-            <TempoEditor
-              value={sharedTempo ?? null}
-              onChange={(tempo) => applySharedModifiers(sharedLoad, tempo ?? undefined)}
-              error={error?.sharedModifiers?.tempo}
-              disabled={disabled}
-            />
-          </FormSection>
-        </Stack>
-      </FormSection>
+        <FormSection label="tempo (optional)">
+          <TempoEditor
+            value={sharedTempo ?? null}
+            onChange={(tempo) => applySharedModifiers(sharedLoad, tempo ?? undefined)}
+            error={error?.sharedModifiers?.tempo}
+            disabled={disabled}
+          />
+        </FormSection>
+      </VoCard>
     </Stack>
   );
 };

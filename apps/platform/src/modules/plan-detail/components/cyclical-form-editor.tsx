@@ -5,17 +5,18 @@ import { Button, FormHelperText, IconButton, Stack, TextField, Typography } from
 import type { FieldErrors } from "react-hook-form";
 
 import type { CyclicalCompound } from "@repo/contracts/lms/_shared";
-import { FormSection } from "@repo/ui";
 
 import type { CyclicalCompoundCycleDraft, CyclicalFormDraft } from "./exercise-form-draft.types";
-import { ExerciseRefField } from "./exercise-ref-field";
+import { ExercisePicker } from "./exercise-picker";
+import { VoCard } from "./vo-card";
 
 const MIN_CYCLES = 1;
 const DEFAULT_PRIMARY_REPS = 1;
 const DEFAULT_SECONDARY_REPS = 1;
 const CYCLE_FIELD_WIDTH = 60;
-const PRIMARY_LABEL = "primary ↻";
-const SECONDARY_LABEL = "secondary ↻";
+const PRIMARY_HEAD = "primary ↻";
+const SECONDARY_HEAD = "secondary ↻";
+const CYCLES_HEAD = "cycles";
 const ADD_CYCLE_LABEL = "add cycle";
 const REMOVE_CYCLE_LABEL = "remove cycle";
 const MULTIPLY_SEP = "×";
@@ -123,23 +124,27 @@ export const CyclicalFormEditor = ({
 
   return (
     <Stack spacing={2}>
-      <ExerciseRefField
-        label={PRIMARY_LABEL}
-        value={value.primaryExerciseId}
-        onChange={(id) => onChange({ ...value, primaryExerciseId: id })}
-        error={error?.primaryExerciseId !== undefined}
-        disabled={disabled}
-      />
+      <VoCard head={PRIMARY_HEAD}>
+        <ExercisePicker
+          compact
+          value={value.primaryExerciseId}
+          onChange={(id) => onChange({ ...value, primaryExerciseId: id })}
+          error={error?.primaryExerciseId !== undefined}
+          disabled={disabled}
+        />
+      </VoCard>
 
-      <ExerciseRefField
-        label={SECONDARY_LABEL}
-        value={value.secondaryExerciseId}
-        onChange={(id) => onChange({ ...value, secondaryExerciseId: id })}
-        error={error?.secondaryExerciseId !== undefined}
-        disabled={disabled}
-      />
+      <VoCard head={SECONDARY_HEAD}>
+        <ExercisePicker
+          compact
+          value={value.secondaryExerciseId}
+          onChange={(id) => onChange({ ...value, secondaryExerciseId: id })}
+          error={error?.secondaryExerciseId !== undefined}
+          disabled={disabled}
+        />
+      </VoCard>
 
-      <FormSection label="Cycles">
+      <VoCard head={CYCLES_HEAD}>
         <Stack spacing={1}>
           {value.cycles.map(renderCycleRow)}
 
@@ -151,7 +156,7 @@ export const CyclicalFormEditor = ({
             <FormHelperText error>{error.cycles.root.message}</FormHelperText>
           )}
         </Stack>
-      </FormSection>
+      </VoCard>
     </Stack>
   );
 };

@@ -11,6 +11,7 @@ import type { CompoundFormDraft, CompoundRowElementDraft } from "./exercise-form
 import { LoadEditor } from "./load-editor";
 import { normalizeSharedModifiers } from "./shared-modifiers-utils";
 import { TempoEditor } from "./tempo-editor";
+import { VoCard } from "./vo-card";
 import { buildDefaultLoad } from "./weight-load-defaults";
 
 const MIN_COMPOUND_ELEMENTS = 2;
@@ -20,6 +21,7 @@ const ELEMENTS_HELPER = "performed back-to-back as one row";
 const ADD_ELEMENT_LABEL = "add element";
 const ADD_LOAD_LABEL = "add load";
 const REMOVE_LOAD_LABEL = "remove";
+const SHARED_MODIFIERS_HEAD = "shared modifiers";
 const SHARED_LOAD_HELPER = "one load applied across every element";
 
 const NEW_ELEMENT: CompoundRowElementDraft = {
@@ -72,7 +74,7 @@ export const CompoundFormEditor = ({
   return (
     <Stack spacing={2}>
       <FormSection label="Elements" helper={ELEMENTS_HELPER}>
-        <Stack spacing={2}>
+        <Stack spacing={1.5}>
           {value.elements.map((el, index) => (
             <CompoundElementCard
               key={index}
@@ -96,51 +98,47 @@ export const CompoundFormEditor = ({
         </Stack>
       </FormSection>
 
-      <FormSection label="shared modifiers">
-        <Stack spacing={1.5}>
-          <FormSection label="load (optional)" helper={SHARED_LOAD_HELPER}>
-            {sharedLoad === undefined ? (
+      <VoCard head={SHARED_MODIFIERS_HEAD}>
+        <FormSection label="load (optional)" helper={SHARED_LOAD_HELPER}>
+          {sharedLoad === undefined ? (
+            <Button
+              size="tiny"
+              variant="text"
+              onClick={() => applySharedModifiers(buildDefaultLoad(DEFAULT_LOAD_KIND), sharedTempo)}
+              disabled={disabled}
+            >
+              {ADD_LOAD_LABEL}
+            </Button>
+          ) : (
+            <Stack spacing={1}>
+              <LoadEditor
+                value={sharedLoad}
+                onChange={(load) => applySharedModifiers(load, sharedTempo)}
+                error={error?.sharedModifiers?.load}
+                disabled={disabled}
+              />
+
               <Button
                 size="tiny"
                 variant="text"
-                onClick={() =>
-                  applySharedModifiers(buildDefaultLoad(DEFAULT_LOAD_KIND), sharedTempo)
-                }
+                onClick={() => applySharedModifiers(undefined, sharedTempo)}
                 disabled={disabled}
               >
-                {ADD_LOAD_LABEL}
+                {REMOVE_LOAD_LABEL}
               </Button>
-            ) : (
-              <Stack spacing={1}>
-                <LoadEditor
-                  value={sharedLoad}
-                  onChange={(load) => applySharedModifiers(load, sharedTempo)}
-                  error={error?.sharedModifiers?.load}
-                  disabled={disabled}
-                />
+            </Stack>
+          )}
+        </FormSection>
 
-                <Button
-                  size="tiny"
-                  variant="text"
-                  onClick={() => applySharedModifiers(undefined, sharedTempo)}
-                  disabled={disabled}
-                >
-                  {REMOVE_LOAD_LABEL}
-                </Button>
-              </Stack>
-            )}
-          </FormSection>
-
-          <FormSection label="tempo (optional)">
-            <TempoEditor
-              value={sharedTempo ?? null}
-              onChange={(tempo) => applySharedModifiers(sharedLoad, tempo ?? undefined)}
-              error={error?.sharedModifiers?.tempo}
-              disabled={disabled}
-            />
-          </FormSection>
-        </Stack>
-      </FormSection>
+        <FormSection label="tempo (optional)">
+          <TempoEditor
+            value={sharedTempo ?? null}
+            onChange={(tempo) => applySharedModifiers(sharedLoad, tempo ?? undefined)}
+            error={error?.sharedModifiers?.tempo}
+            disabled={disabled}
+          />
+        </FormSection>
+      </VoCard>
     </Stack>
   );
 };

@@ -7,13 +7,14 @@ import type { CompoundRowElement } from "@repo/contracts/lms/_shared";
 import { FormSection } from "@repo/ui";
 
 import type { CompoundRowElementDraft } from "./exercise-form-draft.types";
-import { ExerciseRefField } from "./exercise-ref-field";
+import { ExercisePicker } from "./exercise-picker";
 import { LoadEditor } from "./load-editor";
 import { RepNotationEditor } from "./rep-notation-editor";
 import { SideEditor } from "./side-editor";
+import { VoCard } from "./vo-card";
 import { buildDefaultLoad } from "./weight-load-defaults";
 
-const ELEMENT_LABEL_PREFIX = "element";
+const ELEMENT_HEAD = "element";
 const ADD_LOAD_LABEL = "add load";
 const REMOVE_LOAD_LABEL = "remove";
 const DEFAULT_LOAD_KIND = "absolute";
@@ -54,15 +55,19 @@ export const CompoundElementCard = ({
   };
 
   return (
-    <Stack spacing={1.5}>
-      <ExerciseRefField
-        label={`${ELEMENT_LABEL_PREFIX} ${index + 1}`}
+    <VoCard
+      index={index + 1}
+      head={ELEMENT_HEAD}
+      onRemove={onRemove}
+      canRemove={canRemove}
+      disabled={disabled}
+    >
+      <ExercisePicker
+        compact
         value={value.exerciseId}
         onChange={(id) => onChange({ ...value, exerciseId: id })}
         error={error?.exerciseId !== undefined}
         disabled={disabled}
-        onRemove={onRemove}
-        canRemove={canRemove}
       />
 
       <FormSection label="reps">
@@ -108,6 +113,6 @@ export const CompoundElementCard = ({
           disabled={disabled}
         />
       </FormSection>
-    </Stack>
+    </VoCard>
   );
 };

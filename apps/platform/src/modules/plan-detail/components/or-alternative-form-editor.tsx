@@ -11,11 +11,12 @@ import {
 import { FormSection, LabeledToggleGroup } from "@repo/ui";
 
 import type { OrAlternativeFormDraft } from "./exercise-form-draft.types";
-import { ExerciseRefField } from "./exercise-ref-field";
+import { ExercisePicker } from "./exercise-picker";
 import { RepNotationEditor } from "./rep-notation-editor";
+import { VoCard } from "./vo-card";
 
-const PRIMARY_LABEL = "primary";
-const ALTERNATIVE_LABEL = "alternative";
+const PRIMARY_HEAD = "primary";
+const ALTERNATIVE_HEAD = "alternative";
 const OR_DIVIDER = "· OR ·";
 const PURPOSE_LABEL = "purpose";
 
@@ -48,9 +49,9 @@ export const OrAlternativeFormEditor = ({
 
   return (
     <Stack spacing={2}>
-      <Stack spacing={1.5}>
-        <ExerciseRefField
-          label={PRIMARY_LABEL}
+      <VoCard head={PRIMARY_HEAD}>
+        <ExercisePicker
+          compact
           value={value.primaryExerciseId}
           onChange={(id) => onChange({ ...value, primaryExerciseId: id })}
           error={error?.primaryExerciseId !== undefined}
@@ -65,15 +66,15 @@ export const OrAlternativeFormEditor = ({
             disabled={disabled}
           />
         </FormSection>
-      </Stack>
+      </VoCard>
 
       <Typography variant="caption" color="text.subtle" sx={{ textAlign: "center" }}>
         {OR_DIVIDER}
       </Typography>
 
-      <Stack spacing={1.5}>
-        <ExerciseRefField
-          label={ALTERNATIVE_LABEL}
+      <VoCard head={ALTERNATIVE_HEAD}>
+        <ExercisePicker
+          compact
           value={value.alternativeExerciseId}
           onChange={(id) => onChange({ ...value, alternativeExerciseId: id })}
           error={error?.alternativeExerciseId !== undefined}
@@ -88,7 +89,7 @@ export const OrAlternativeFormEditor = ({
             disabled={disabled}
           />
         </FormSection>
-      </Stack>
+      </VoCard>
 
       <Stack spacing={0.5}>
         <LabeledToggleGroup
