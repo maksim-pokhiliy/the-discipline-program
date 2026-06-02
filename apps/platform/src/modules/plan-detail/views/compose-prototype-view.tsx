@@ -5,6 +5,7 @@ import { Box, Paper, Stack, Typography } from "@mui/material";
 import { ComposeCanvas } from "../compose/components/compose-canvas";
 import { ComposeNodeInspector } from "../compose/components/compose-node-inspector";
 import { ComposeProviderShell } from "../compose/components/compose-provider-shell";
+import type { ComposeProgram } from "../compose/compose-tree.types";
 import { useComposeProgram } from "../compose/use-compose-program";
 
 const INSPECTOR_WIDTH_PX = 360;
@@ -15,8 +16,12 @@ const INSPECTOR_PADDING = 2.5;
 const TITLE = "Compose constructor";
 const SUBTITLE = "prototype on mocks · assemble by free nesting";
 
-export const ComposePrototypeView: React.FC = () => {
-  const controller = useComposeProgram();
+type ComposePrototypeViewProps = {
+  initialProgram?: ComposeProgram;
+};
+
+export const ComposePrototypeView: React.FC<ComposePrototypeViewProps> = ({ initialProgram }) => {
+  const controller = useComposeProgram(initialProgram);
 
   return (
     <ComposeProviderShell>

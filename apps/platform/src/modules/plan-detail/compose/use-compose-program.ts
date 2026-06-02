@@ -40,8 +40,10 @@ export type ComposeProgramController = {
   upperHandlers: UpperHandlers;
 };
 
-export const useComposeProgram = (): ComposeProgramController => {
-  const [program, setProgram] = useState(MOCK_SEED);
+export const useComposeProgram = (
+  initialProgram: ComposeProgram = MOCK_SEED,
+): ComposeProgramController => {
+  const [program, setProgram] = useState(initialProgram);
   const [selectedNodeId, setSelectedNodeId] = useState<NodeId | null>(null);
 
   const select = useCallback((id: NodeId) => setSelectedNodeId(id), []);
