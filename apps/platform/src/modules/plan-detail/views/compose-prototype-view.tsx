@@ -3,6 +3,7 @@
 import { Box, Paper, Stack, Typography } from "@mui/material";
 
 import { ComposeCanvas } from "../compose/components/compose-canvas";
+import { ComposeNodeInspector } from "../compose/components/compose-node-inspector";
 import { ComposeProviderShell } from "../compose/components/compose-provider-shell";
 import { useComposeProgram } from "../compose/use-compose-program";
 
@@ -13,7 +14,6 @@ const PAGE_PADDING = 4;
 const INSPECTOR_PADDING = 2.5;
 const TITLE = "Compose constructor";
 const SUBTITLE = "prototype on mocks · assemble by free nesting";
-const INSPECTOR_EMPTY = "Select a node to edit its axes.";
 
 export const ComposePrototypeView: React.FC = () => {
   const controller = useComposeProgram();
@@ -49,9 +49,11 @@ export const ComposePrototypeView: React.FC = () => {
               top: PAGE_PADDING,
             }}
           >
-            <Typography variant="body2" color="text.subtle">
-              {INSPECTOR_EMPTY}
-            </Typography>
+            <ComposeNodeInspector
+              selectedNode={controller.selectedNode}
+              updateNode={controller.updateNode}
+              rename={controller.rename}
+            />
           </Paper>
         </Stack>
       </Stack>
