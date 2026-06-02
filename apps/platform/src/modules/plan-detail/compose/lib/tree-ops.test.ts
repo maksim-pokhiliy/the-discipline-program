@@ -101,6 +101,19 @@ describe("cloneNode", () => {
 
     expect(collectIds(root)).toStrictEqual(before);
   });
+
+  it("deep-copies leaf editorDraft so mutating the source leaves the clone untouched (QA-2.3)", () => {
+    const source = makeRow("src");
+    const clone = cloneNode(source);
+
+    (source.editorDraft as { notes: string }).notes = "mutated after clone";
+
+    expect(clone.nodeType).toBe("row");
+
+    if (clone.nodeType === "row") {
+      expect(clone.editorDraft).toStrictEqual({ notes: "" });
+    }
+  });
 });
 
 describe("insertChild", () => {
