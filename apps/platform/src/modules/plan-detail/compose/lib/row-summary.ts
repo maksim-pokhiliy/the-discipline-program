@@ -1,8 +1,11 @@
+import type { RepNotation } from "@repo/contracts/lms/_shared";
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { RowKind } from "@repo/contracts/lms/schema-row";
 import type { RowKind as BadgeKind } from "@repo/ui";
 
 import type { ExerciseFormValue } from "../../components/exercise-form-draft.types";
+import { formatLoad } from "../../lib/format-load";
+import { formatRepNotation } from "../../lib/format-rep-notation";
 import type { ComposeRow } from "../compose-tree.types";
 
 import { isRowCommitted } from "./make-row";
@@ -22,24 +25,55 @@ const ROW_BADGES: Record<RowKind, RowBadge> = {
 };
 
 const UNCOMMITTED_LABEL = "tap to set up…";
+const PART_SEPARATOR = " · ";
+const COMPOUND_SEPARATOR = " + ";
+const REPS_SUFFIX = / reps$/;
 
-const exerciseFormLabel = (
+const exerciseName = (exerciseId: string | null, exerciseById: Map<string, Exercise>): string =>
+  exerciseId === null
+    ? "pick exercise"
+    : (exerciseById.get(exerciseId)?.canonicalName ?? "exercise");
+
+const compactReps = (reps: RepNotation): string => formatRepNotation(reps).replace(REPS_SUFFIX, "");
+
+const compoundLabel = (
+  compound: Extract<ExerciseFormValue, { form: "compound" }>["compound"],
+  exerciseById: Map<string, Exercise>,
+): string =>
+  compound.elements
+    .map(
+      (element) => `${compactReps(element.reps)} ${exerciseName(element.exerciseId, exerciseById)}`,
+    )
+    .join(COMPOUND_SEPARATOR);
+
+const atomicLabel = (
+  exerciseId: string | null,
+  row: ComposeRow,
+  exerciseById: Map<string, Exercise>,
+): string => {
+  const parts = [exerciseName(exerciseId, exerciseById)];
+
+  if (row.load !== null && row.load.kind !== "unspecified") {
+    parts.push(formatLoad(row.load, exerciseById));
+  }
+
+  if (row.reps !== null && row.reps.kind !== "implicit") {
+    parts.push(formatRepNotation(row.reps));
+  }
+
+  return parts.join(PART_SEPARATOR);
+};
+
+const exerciseLabel = (
   form: ExerciseFormValue,
+  row: ComposeRow,
   exerciseById: Map<string, Exercise>,
 ): string => {
   switch (form.form) {
     case "atomic":
-      return form.exerciseId === null
-        ? "pick exercise"
-        : (exerciseById.get(form.exerciseId)?.canonicalName ?? "exercise");
+      return atomicLabel(form.exerciseId, row, exerciseById);
     case "compound":
-      return form.compound.elements
-        .map((element) =>
-          element.exerciseId === null
-            ? "?"
-            : (exerciseById.get(element.exerciseId)?.canonicalName ?? "?"),
-        )
-        .join(" + ");
+      return compoundLabel(form.compound, exerciseById);
     case "cyclical":
       return "cyclical couplet";
     case "sandwich":
@@ -60,7 +94,7 @@ const committedLabel = (row: ComposeRow, exerciseById: Map<string, Exercise>): s
 
   switch (payload.rowKind) {
     case "EXERCISE":
-      return exerciseFormLabel(payload.exercise, exerciseById);
+      return exerciseLabel(payload.exercise, row, exerciseById);
     case "REST":
       return payload.raw;
     case "FOOTNOTE":

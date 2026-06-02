@@ -124,10 +124,10 @@ describe("ComposePrototypeView", () => {
     expect(screen.getByText("Intervals, max in remaining")).toBeInTheDocument();
   });
 
-  it("renders compound exercise rows by movement name", () => {
+  it("renders compound exercise rows with per-element reps and movement names", () => {
     render(<ComposePrototypeView />);
 
-    expect(screen.getByText("Pull-up + Dip")).toBeInTheDocument();
+    expect(screen.getByText("5 Pull-up + 10 Dip")).toBeInTheDocument();
   });
 
   it("renders an axes summary for a cadence container", () => {

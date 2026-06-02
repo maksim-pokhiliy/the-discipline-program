@@ -1,4 +1,4 @@
-import type { TimeCap } from "@repo/contracts/lms/_shared";
+import type { Load, RepNotation, TimeCap } from "@repo/contracts/lms/_shared";
 
 import { MOCK_EXERCISE_IDS } from "./compose-mock-exercises";
 import { atomicExercise, compoundExercise, exerciseRow, restRow } from "./compose-mock-rows";
@@ -41,6 +41,13 @@ const container = (idSeed: string, input: ContainerInput): ComposeContainer => (
 
 const FIVE_MIN_CAP: TimeCap = { min: 5, unit: "min" };
 
+const IMPLICIT_REPS: RepNotation = { kind: "implicit" };
+const BODYWEIGHT: Load = { kind: "bodyweight" };
+const kg = (valueKg: number): Load => ({
+  kind: "absolute",
+  weight: { variant: "single", valueKg },
+});
+
 const block = (idSeed: string, label: string, root: ComposeContainer): ComposeBlock => ({
   id: asNodeId(idSeed),
   label,
@@ -55,8 +62,9 @@ const buildBlockB = (): ComposeBlock =>
       header: "EMOM-16",
       repetition: { kind: "cadence", everyMin: 1, rounds: 4 },
       children: [
-        container("block-b-min-1", { children: [] }),
+        container("block-b-min-1", { header: "Min 1", children: [] }),
         container("block-b-min-2", {
+          header: "Min 2",
           children: [
             exerciseRow("block-b-min-2-row", {
               exercise: compoundExercise([
@@ -66,18 +74,32 @@ const buildBlockB = (): ComposeBlock =>
             }),
           ],
         }),
-        container("block-b-min-3", { children: [] }),
+        container("block-b-min-3", { header: "Min 3", children: [] }),
         container("block-b-min-4", {
+          header: "Min 4",
           children: [restRow("block-b-min-4-row", 60, "active recovery")],
         }),
       ],
     }),
   );
 
-const ladderTrack = (idSeed: string, steps: number[], exerciseId: string): ComposeContainer =>
+const ladderTrack = (
+  idSeed: string,
+  header: string,
+  steps: number[],
+  exerciseId: string,
+  load: Load,
+): ComposeContainer =>
   container(idSeed, {
+    header,
     repetition: { kind: "ladder", steps },
-    children: [exerciseRow(`${idSeed}-row`, { exercise: atomicExercise(exerciseId) })],
+    children: [
+      exerciseRow(`${idSeed}-row`, {
+        exercise: atomicExercise(exerciseId),
+        load,
+        reps: IMPLICIT_REPS,
+      }),
+    ],
   });
 
 const buildBlockC = (): ComposeBlock =>
@@ -89,20 +111,35 @@ const buildBlockC = (): ComposeBlock =>
       arrangement: { kind: "ordered" },
       children: [
         container("block-c-parallel", {
+          header: "Parallel ladders",
           arrangement: { kind: "parallel" },
           scoring: { kind: "for_time" },
           children: [
-            ladderTrack("block-c-ladder-down", [21, 15, 9], MOCK_EXERCISE_IDS.thrusters),
-            ladderTrack("block-c-ladder-up", [9, 15, 21], MOCK_EXERCISE_IDS.pullUp),
+            ladderTrack(
+              "block-c-ladder-down",
+              "Thrusters",
+              [21, 15, 9],
+              MOCK_EXERCISE_IDS.thrusters,
+              kg(43),
+            ),
+            ladderTrack(
+              "block-c-ladder-up",
+              "Pull-ups",
+              [9, 15, 21],
+              MOCK_EXERCISE_IDS.pullUp,
+              BODYWEIGHT,
+            ),
           ],
         }),
         container("block-c-amrap", {
+          header: "Bike",
           repetition: { kind: "timeCap", cap: FIVE_MIN_CAP },
           scoring: { kind: "amrap" },
           children: [
             exerciseRow("block-c-amrap-row", {
               exercise: atomicExercise(MOCK_EXERCISE_IDS.assaultBike),
               intensity: { effortPercent: { value: 90 } },
+              reps: IMPLICIT_REPS,
             }),
           ],
         }),
@@ -120,12 +157,22 @@ const buildBlockD = (): ComposeBlock =>
       repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
       scoring: { kind: "max_in_remaining" },
       children: [
-        exerciseRow("block-d-kb", { exercise: atomicExercise(MOCK_EXERCISE_IDS.kettlebellSwing) }),
+        exerciseRow("block-d-kb", {
+          exercise: atomicExercise(MOCK_EXERCISE_IDS.kettlebellSwing),
+          load: kg(24),
+          reps: IMPLICIT_REPS,
+        }),
         exerciseRow("block-d-press", {
           exercise: atomicExercise(MOCK_EXERCISE_IDS.pushPress),
           side: { kind: "each_arm" },
+          load: kg(30),
+          reps: IMPLICIT_REPS,
         }),
-        exerciseRow("block-d-wallball", { exercise: atomicExercise(MOCK_EXERCISE_IDS.wallBall) }),
+        exerciseRow("block-d-wallball", {
+          exercise: atomicExercise(MOCK_EXERCISE_IDS.wallBall),
+          load: kg(9),
+          reps: IMPLICIT_REPS,
+        }),
       ],
     }),
   );
@@ -139,8 +186,16 @@ const buildGymnasticsBlock = (): ComposeBlock =>
       repetition: { kind: "ladder", steps: [12, 9, 6] },
       rest: { duration: { value: 5, unit: "min" }, scope: "between_rounds" },
       children: [
-        exerciseRow("week-gym-pullup", { exercise: atomicExercise(MOCK_EXERCISE_IDS.pullUp) }),
-        exerciseRow("week-gym-dip", { exercise: atomicExercise(MOCK_EXERCISE_IDS.dip) }),
+        exerciseRow("week-gym-pullup", {
+          exercise: atomicExercise(MOCK_EXERCISE_IDS.pullUp),
+          load: BODYWEIGHT,
+          reps: IMPLICIT_REPS,
+        }),
+        exerciseRow("week-gym-dip", {
+          exercise: atomicExercise(MOCK_EXERCISE_IDS.dip),
+          load: BODYWEIGHT,
+          reps: IMPLICIT_REPS,
+        }),
       ],
     }),
   );
