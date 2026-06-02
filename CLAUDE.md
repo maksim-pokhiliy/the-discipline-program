@@ -49,6 +49,7 @@
 
 - Don't read files listed in .claudeignore.
 - Before multi-file / cross-package changes — output a plan first, wait for approval.
+- Big features are run as **initiatives** (`initiatives/<slug>/`): resume from the active initiative's `state.md`; durable decisions → `docs/adr/`; see `initiatives/README.md`. The two-session planner/executor workflow under `implementation/` is superseded (history).
 - Respect workspace boundaries: don't add deps to the wrong package; use `catalog:` versions.
 - Don't run install/build/test at workspace level without confirmation.
 - Test runs require approval gating. Per-package runs (`pnpm --filter <pkg> test`) are fine without approval. The full root suite (`pnpm test` / `task test` / `turbo test`) and ANY `@repo/api-server` test run (`pnpm --filter @repo/api-server test`, `pnpm test:integration` against it) require explicit user approval — both are long (~10 min serial for api-server) and burn the cache window.
