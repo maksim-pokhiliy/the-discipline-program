@@ -41,6 +41,7 @@ export const ComposeBlockRow: React.FC<ComposeBlockRowProps> = ({
       exerciseById={exerciseById}
       handlers={handlers}
       onRename={onRename}
+      isRoot
     />
   </Stack>
 );

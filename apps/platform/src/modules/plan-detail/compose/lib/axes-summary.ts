@@ -54,7 +54,7 @@ const restLabel = (rest: RestAxis): string => {
   const max = rest.duration.rangeMax;
   const range = max === undefined ? `${rest.duration.value}` : `${rest.duration.value}–${max}`;
 
-  return `rest ${range}${rest.duration.unit.startsWith("min") ? MINUTE_MARK : " sec"}`;
+  return `rest ${range}${rest.duration.unit.endsWith("min") ? MINUTE_MARK : " sec"}`;
 };
 
 export const buildAxesSummary = (container: ComposeContainer): string[] => {

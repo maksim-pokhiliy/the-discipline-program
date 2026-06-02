@@ -39,6 +39,7 @@ type ComposeContainerCardProps = {
   exerciseById: Map<string, Exercise>;
   handlers: NodeHandlers;
   onRename: (id: NodeId, header: string) => void;
+  isRoot?: boolean;
 };
 
 export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
@@ -46,6 +47,7 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
   exerciseById,
   handlers,
   onRename,
+  isRoot = false,
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: container.id,
@@ -105,16 +107,18 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
         spacing={HEAD_SPACING}
         sx={{ px: HEAD_PX, py: HEAD_PY, minWidth: 0 }}
       >
-        <IconButton
-          {...attributes}
-          {...listeners}
-          size="small"
-          aria-label={DRAG_ARIA}
-          onClick={(event) => event.stopPropagation()}
-          sx={{ cursor: "grab", touchAction: "none" }}
-        >
-          <DragIndicatorIcon fontSize="small" />
-        </IconButton>
+        {!isRoot && (
+          <IconButton
+            {...attributes}
+            {...listeners}
+            size="small"
+            aria-label={DRAG_ARIA}
+            onClick={(event) => event.stopPropagation()}
+            sx={{ cursor: "grab", touchAction: "none" }}
+          >
+            <DragIndicatorIcon fontSize="small" />
+          </IconButton>
+        )}
 
         <Stack direction="column" spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
           <Box onClick={(event) => event.stopPropagation()}>
@@ -135,14 +139,16 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
           ) : null}
         </Stack>
 
-        <Box onClick={(event) => event.stopPropagation()}>
-          <ComposeNodeActions
-            nodeId={container.id}
-            onInspect={handlers.onSelect}
-            onDuplicate={handlers.onDuplicateNode}
-            onDelete={handlers.onDeleteNode}
-          />
-        </Box>
+        {!isRoot && (
+          <Box onClick={(event) => event.stopPropagation()}>
+            <ComposeNodeActions
+              nodeId={container.id}
+              onInspect={handlers.onSelect}
+              onDuplicate={handlers.onDuplicateNode}
+              onDelete={handlers.onDeleteNode}
+            />
+          </Box>
+        )}
       </Stack>
 
       <Stack
