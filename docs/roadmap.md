@@ -41,6 +41,8 @@
 
 ## Phase 0 — Training-domain (current, in-progress)
 
+> ⚠️ **Plan-content scope superseded 2026-06-02 — see the decision log (§2026-06-02) + ADR-0037.** The "all 34 archetypeParams формы hand-rolled", ArchetypePicker, and "9 row variants hand-rolled" items below are replaced by the compose-only constructor (tracked in `initiatives/plan-editor-compose/`). The Plan / Week / Day / Session / Block + SchemaRow + value-object work stands.
+
 **Goal:** Coach может полностью спроектировать тренировочный план end-to-end, end-to-end persistence, готовность к coach UAT walkthrough.
 
 **Scope (in):**
@@ -527,6 +529,18 @@ Append-only. Меняется roadmap-level scope/sequencing — фиксиру�
 - Phase order optimizes coach-side stability before athlete-side investment ([[ui-first-for-training-domain]] sequencing)
 - Coach UAT loop (Phase 1) gates everything downstream — может откатить Phase 0 если Денис fundamentally not happy
 - Phase 5 (subscription) decoupled от plan timetable (per F1) → simple billing logic, complex plan logic uncoupled
+
+### 2026-06-02 — Compose-only pivot (supersedes Phase 0 archetype scope)
+
+**Decision (ADR-0037):** plan-content goes compose-only — the coach assembles workouts by freely nesting ~8 primitives (a Container with orthogonal `repetition`/`arrangement`/`scoring`/`rest` axes + Row leaves); "archetype" becomes an emergent, computed-on-read label, not a stored entity.
+
+**Supersedes D3** ("all 34 archetypes + 9 SchemaRow variants hand-rolled, no fallback") and the Phase 0 scope lines for ArchetypePicker + the 34 hand-rolled `archetypeParams` forms. Cut: `model Archetype`, `Schema.archetypeId`, the 34-variant `archetypeParams` union, stored `kind`/`family`, the archetype contracts/endpoint/seed, the picker + ~18 per-archetype forms. Kept (sacred): Week/Day/Session/Block tree, recursion, SchemaRow + Json-VOs, Exercise/Label, Performed\*; the `step-09.x` SchemaRow editors survive.
+
+**Rationale:** acceptance = expressiveness (any structure the coach writes composes by free nesting — verified against `analysis/source/`), not corpus coverage ("N archetypes"). The picker-first UX was the flee-to-Sheets risk. No users → no migration; blast radius (~50 files) sizes the workflow, not the decision.
+
+**Deferred:** the scoring/execution layer (`scoring` axis present-but-inert) → separate later phase.
+
+**Tracking:** `initiatives/plan-editor-compose/` (replaces `implementation/state/01-step-queue.md` for the plan-editor work; the two-session planner/executor workflow is dropped — see `initiatives/README.md`).
 
 ---
 

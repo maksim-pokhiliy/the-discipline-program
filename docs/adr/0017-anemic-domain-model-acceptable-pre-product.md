@@ -1,6 +1,6 @@
 # 17. Anemic domain model acceptable pre-product
 
-- **Status:** Partially superseded by ADR-0028 (LMS context only; non-LMS endpoints still anemic)
+- **Status:** Accepted (with known gaps — see Consequences). The earlier "Partially superseded by ADR-0028 (LMS context only)" referenced an ADR that was never written; the LMS plan-content model is restructured by ADR-0037 (compose-only) — a structural decision that does not change the anemic-vs-service-layer stance recorded here.
 - **Date:** 2026-04-12
 - **Context:** The project has a classic anemic domain: Zod schemas define data shapes, mappers convert between layers, and business logic lives directly in endpoint files. There is no service layer — `packages/api-server/src/services/` contained only `auth.ts` (now moved to `iam/auth-service.ts`).
 
