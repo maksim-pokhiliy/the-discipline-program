@@ -7,8 +7,14 @@ import { render } from "@app/test/render";
 
 import { ComposePrototypeView } from "../../views/compose-prototype-view";
 import { MOCK_EXERCISES } from "../compose-mock-exercises";
-import type { ComposeBlock, ComposeContainer, ComposeNode } from "../compose-tree.types";
+import type {
+  ComposeBlock,
+  ComposeContainer,
+  ComposeNode,
+  ComposeProgram,
+} from "../compose-tree.types";
 import { asNodeId } from "../lib/id-factory";
+import { makeRow } from "../lib/make-row";
 
 import { ComposeBlockRow } from "./compose-block-row";
 import type { NodeHandlers } from "./compose-canvas-handlers";
@@ -81,6 +87,34 @@ const renderIsolatedBlock = (rootChildren: ComposeNode[]) =>
     />,
   );
 
+const miniProgram = (): ComposeProgram => ({
+  weeks: [
+    {
+      id: asNodeId("mini-week"),
+      label: "Mini week",
+      days: [
+        {
+          id: asNodeId("mini-day"),
+          label: "Mini day",
+          sessions: [
+            {
+              id: asNodeId("mini-session"),
+              label: "Mini session",
+              blocks: [
+                {
+                  id: asNodeId("mini-block"),
+                  label: "Mini block",
+                  root: container("mini-root", [makeRow("REST"), makeRow("REST")]),
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+});
+
 describe("ComposePrototypeView", () => {
   it("renders the Gauntlet blocks B, C and D from the mock seed", () => {
     render(<ComposePrototypeView />);
@@ -90,10 +124,10 @@ describe("ComposePrototypeView", () => {
     expect(screen.getByText("Intervals, max in remaining")).toBeInTheDocument();
   });
 
-  it("renders compound exercise rows by movement name", () => {
+  it("renders compound exercise rows with per-element reps and movement names", () => {
     render(<ComposePrototypeView />);
 
-    expect(screen.getByText("Pull-up + Dip")).toBeInTheDocument();
+    expect(screen.getByText("5 Pull-up + 10 Dip")).toBeInTheDocument();
   });
 
   it("renders an axes summary for a cadence container", () => {
@@ -109,7 +143,7 @@ describe("ComposePrototypeView", () => {
   });
 
   it("duplicates a block, appending one more block-duplicate affordance", () => {
-    render(<ComposePrototypeView />);
+    render(<ComposePrototypeView initialProgram={miniProgram()} />);
 
     const before = screen.getAllByRole("button", { name: "Duplicate block" }).length;
 
@@ -119,7 +153,7 @@ describe("ComposePrototypeView", () => {
   });
 
   it("deletes a leaf node, removing exactly one delete affordance", () => {
-    render(<ComposePrototypeView />);
+    render(<ComposePrototypeView initialProgram={miniProgram()} />);
 
     const deleteButtons = screen.getAllByRole("button", { name: "Delete" });
     const before = deleteButtons.length;
@@ -132,7 +166,7 @@ describe("ComposePrototypeView", () => {
   it(
     "adds an uncommitted exercise row via the picker and renders its setup placeholder",
     () => {
-      render(<ComposePrototypeView />);
+      render(<ComposePrototypeView initialProgram={miniProgram()} />);
 
       addExerciseRow();
 
@@ -185,7 +219,7 @@ describe("the sentinel uncommitted EXERCISE row (QA-3.x)", () => {
   it(
     "shows the EX badge and the setup placeholder, never the rest-slot label",
     () => {
-      render(<ComposePrototypeView />);
+      render(<ComposePrototypeView initialProgram={miniProgram()} />);
 
       addExerciseRow();
 
@@ -201,7 +235,7 @@ describe("the sentinel uncommitted EXERCISE row (QA-3.x)", () => {
   it(
     "duplicates the sentinel row into a second uncommitted EXERCISE row (QA-8)",
     () => {
-      render(<ComposePrototypeView />);
+      render(<ComposePrototypeView initialProgram={miniProgram()} />);
 
       addExerciseRow();
 
@@ -219,7 +253,7 @@ describe("the offline ExercisePicker (QA-5.2 / QA-301)", () => {
   it(
     "shows all 10 mock exercises without firing the throwing network queryFn",
     () => {
-      render(<ComposePrototypeView />);
+      render(<ComposePrototypeView initialProgram={miniProgram()} />);
 
       addExerciseRow();
 
