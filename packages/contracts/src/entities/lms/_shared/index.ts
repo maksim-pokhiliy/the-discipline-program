@@ -2,6 +2,7 @@ export * from "./cap-spec";
 export * from "./compounds";
 export * from "./day-of-week";
 export * from "./enums";
+export * from "./exact-or-range";
 export * from "./intensity";
 export * from "./load";
 export * from "./media";

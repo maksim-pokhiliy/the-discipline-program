@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  exactOrRangeSchema,
   exerciseFormSchema,
   repNotationSchema,
   restSpecSchema,
@@ -9,16 +10,6 @@ import {
 } from "../_shared";
 
 const positiveInt = z.number().int().positive();
-
-const exactOrRangeSchema = z.union([
-  positiveInt,
-  z
-    .object({
-      min: positiveInt,
-      max: positiveInt,
-    })
-    .refine((r) => r.min < r.max, { message: "range.min must be less than range.max" }),
-]);
 
 const archetypeRoundsSetsParamsSchema = z.object({
   countForm: z.enum(["exact", "range", "count_times_reps"]),
