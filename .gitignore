@@ -34,8 +34,11 @@ yarn-error.log*
 .audit/
 .audit-smells/
 
-# Claude Code runtime
-.claude/
+# Claude Code runtime — settings.local.json stays local; the initiative-process layer is tracked
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+!.claude/skills/
 
 # Misc
 .DS_Store
