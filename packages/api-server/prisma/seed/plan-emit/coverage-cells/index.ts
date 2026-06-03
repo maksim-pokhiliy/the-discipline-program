@@ -1,6 +1,7 @@
 import { type PrismaClient } from "@prisma/client";
 
 import { CATALOG_MEDIA_CELLS } from "./catalog-media";
+import { COMPOSITION_CELLS } from "./composition";
 import { CONNECTOR_POSITION_CELLS } from "./connector-position";
 import { EXERCISE_CELLS } from "./exercises";
 import { INTENSITY_REST_CELLS } from "./intensity-rest";
@@ -24,6 +25,7 @@ export const COVERAGE_CELLS: readonly CoverageCell[] = [
   ...CONNECTOR_POSITION_CELLS,
   ...CATALOG_MEDIA_CELLS,
   ...MISC_CELLS,
+  ...COMPOSITION_CELLS,
 ];
 
 export const tallyCoverage = async (db: PrismaClient, planId: string): Promise<CoverageReport> => {

@@ -84,6 +84,7 @@ const emitSchemaNode = async (
       header: node.header,
       archetypeParams: node.archetype,
       ...(node.intensity !== null && { intensity: node.intensity }),
+      ...(node.composition !== undefined && { composition: node.composition }),
       ...(connector !== null && { trailingConnector: connector }),
       notes: cleanedNotes,
     },
