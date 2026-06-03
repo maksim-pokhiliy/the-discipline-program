@@ -151,3 +151,23 @@ describe("ladder split — four-projection distinctness (anti-collision proof)",
     expect(ladderSource(franContainer)).not.toBe(ladderSource(blockCThrustersRow));
   });
 });
+
+const collisionContainer: ComposeNode = {
+  nodeType: "container",
+  id: cuidFran,
+  header: "Collision",
+  notes: null,
+  composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+  children: [ladderMarkerRow(cuidThrTrack, [21, 15, 9])],
+};
+
+describe("ladder split — a single container cannot hold both ladder sources", () => {
+  it("rejects a round-counter ladder container that also carries a rep-scheme ladder row", () => {
+    expect(composeContainerSchema.safeParse(collisionContainer).success).toBe(false);
+  });
+
+  it("keeps the canonical Fran and Block C containers valid", () => {
+    expect(composeContainerSchema.safeParse(franContainer).success).toBe(true);
+    expect(composeContainerSchema.safeParse(blockCContainer).success).toBe(true);
+  });
+});

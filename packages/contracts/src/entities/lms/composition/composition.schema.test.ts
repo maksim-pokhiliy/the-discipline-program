@@ -252,6 +252,15 @@ describe("arrangementAxisSchema", () => {
       }).success,
     ).toBe(false);
   });
+
+  it("rejects a superset pair with duplicate rowIds", () => {
+    expect(
+      arrangementAxisSchema.safeParse({
+        kind: "superset",
+        pairs: [{ label: "A", rowIds: [cuidA, cuidA] }],
+      }).success,
+    ).toBe(false);
+  });
 });
 
 describe("scoringDirectiveSchema", () => {
