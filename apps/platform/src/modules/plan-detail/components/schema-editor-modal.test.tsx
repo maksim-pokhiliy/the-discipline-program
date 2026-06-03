@@ -83,6 +83,8 @@ const makeSchemaWithBody = (archetypeParams: ArchetypeParams): SchemaWithBody =>
     archetypeParams,
     intensity: null,
     trailingConnector: null,
+    composition: null,
+    label: null,
     notes: null,
     createdAt: NOW,
     updatedAt: NOW,

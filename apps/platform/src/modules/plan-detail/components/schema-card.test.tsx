@@ -150,6 +150,8 @@ const makeSchema = (overrides: MakeSchemaOverrides = {}): SchemaWithBody => {
       archetypeParams: N_ROUNDS_PARAMS,
       intensity: null,
       trailingConnector: null,
+      composition: null,
+      label: null,
       notes: null,
       createdAt: NOW,
       updatedAt: NOW,
