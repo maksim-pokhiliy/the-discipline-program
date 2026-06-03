@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { deriveCompositionLabel } from "./composition-label";
+import { compositionLabelSchema, deriveCompositionLabel } from "./composition-label";
+import { REPETITION_AXIS_KINDS, SCORING_DIRECTIVE_KINDS } from "./composition.constants";
 import { compositionSchema } from "./composition.schema";
-import type { Composition } from "./composition.types";
+import type {
+  ArrangementAxis,
+  Composition,
+  RepetitionAxis,
+  ScoringDirective,
+} from "./composition.types";
 
 const cuidThrTrack = "clz00000000000000thrtrack1";
 const cuidPulTrack = "clz00000000000000pultrack1";
@@ -200,4 +206,87 @@ describe("deriveCompositionLabel — scoring is inert and never alters the label
 
     expect(deriveCompositionLabel(withScoring)).toEqual(deriveCompositionLabel(withoutScoring));
   });
+});
+
+const cuidTrackA = "clz00000000000000000tracka";
+const cuidTrackB = "clz00000000000000000trackb";
+const cuidPairA = "clz0000000000000000pairaaa";
+const cuidPairB = "clz0000000000000000pairbbb";
+
+function repetitionAxisOf(kind: RepetitionAxis["kind"]): RepetitionAxis {
+  switch (kind) {
+    case "once":
+      return { kind: "once" };
+    case "count":
+      return { kind: "count", count: 3 };
+    case "range":
+      return { kind: "range", range: { min: 3, max: 5 } };
+    case "ladder":
+      return { kind: "ladder", steps: [21, 15, 9] };
+    case "timeCap":
+      return { kind: "timeCap", cap: { min: 12, unit: "min" } };
+    case "cadence":
+      return { kind: "cadence", everyMin: 1, rounds: 4 };
+    case "window":
+      return { kind: "window", startHhMm: "00:00", endHhMm: "00:01" };
+    case "interval":
+      return { kind: "interval", workMin: 2, offMin: 1, count: 3 };
+  }
+}
+
+const ARRANGEMENT_CASES: ReadonlyArray<{ name: string; arrangement: ArrangementAxis | undefined }> =
+  [
+    { name: "no arrangement", arrangement: undefined },
+    { name: "ordered", arrangement: { kind: "ordered" } },
+    {
+      name: "parallel",
+      arrangement: {
+        kind: "parallel",
+        interleaveOrder: "round_by_round",
+        tracks: [{ childSchemaId: cuidTrackA }, { childSchemaId: cuidTrackB }],
+      },
+    },
+    {
+      name: "superset",
+      arrangement: { kind: "superset", pairs: [{ label: "A", rowIds: [cuidPairA, cuidPairB] }] },
+    },
+  ];
+
+function scoringDirectiveOf(kind: ScoringDirective["kind"]): ScoringDirective {
+  if (kind === "progressive") {
+    return { kind: "progressive", seed: "1-2-3" };
+  }
+
+  return { kind };
+}
+
+const SCORING_CASES: ReadonlyArray<{ name: string; scoring: ScoringDirective | undefined }> = [
+  { name: "no scoring", scoring: undefined },
+  ...SCORING_DIRECTIVE_KINDS.map((kind) => ({
+    name: kind,
+    scoring: scoringDirectiveOf(kind),
+  })),
+];
+
+describe("deriveCompositionLabel — totality across every axis combination", () => {
+  for (const repetitionKind of REPETITION_AXIS_KINDS) {
+    for (const arrangementCase of ARRANGEMENT_CASES) {
+      for (const scoringCase of SCORING_CASES) {
+        it(`derives an enum-valid label for repetition ${repetitionKind} × ${arrangementCase.name} × ${scoringCase.name}`, () => {
+          const composition = parsedComposition({
+            repetition: repetitionAxisOf(repetitionKind),
+            ...(arrangementCase.arrangement !== undefined && {
+              arrangement: arrangementCase.arrangement,
+            }),
+            ...(scoringCase.scoring !== undefined && { scoring: scoringCase.scoring }),
+          });
+
+          const label = deriveCompositionLabel(composition);
+
+          expect(() => compositionLabelSchema.parse(label)).not.toThrow();
+          expect(compositionLabelSchema.safeParse(label).success).toBe(true);
+        });
+      }
+    }
+  }
 });

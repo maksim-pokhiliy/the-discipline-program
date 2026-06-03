@@ -86,6 +86,16 @@ describe("restSpecSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts a non-1 until_recovery duration — value is NOT pinned to the qualifier (DEC-4 footgun; a future superRefine flips this to reject)", () => {
+    expect(
+      restSpecSchema.safeParse({
+        duration: { value: 300, unit: "sec" },
+        scope: "between_rounds",
+        qualifier: "until_recovery",
+      }).success,
+    ).toBe(true);
+  });
+
   it("accepts optional setIndex as positive int", () => {
     expect(
       restSpecSchema.safeParse({

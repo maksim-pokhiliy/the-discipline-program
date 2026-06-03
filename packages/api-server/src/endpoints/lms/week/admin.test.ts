@@ -1,9 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { ZodError } from "zod";
 
 import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
-import { BadRequestError, ForbiddenError } from "@repo/errors";
+import { type Composition } from "@repo/contracts/lms/composition";
+import { BadRequestError, ForbiddenError, InternalServerError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach } from "../../../test/helpers";
+import { lmsSchemaApi } from "../schema/admin";
+import { lmsSchemaRowApi } from "../schema-row/admin";
 
 import { lmsWeekApi } from "./admin";
 
@@ -699,6 +703,141 @@ describe("lmsWeekApi", () => {
         await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
         await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
         await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+  });
+
+  describe("getByPlanAndDate — composition collision (QA-001, read-time enforced)", () => {
+    const COLLISION_MONDAY_PARAM = "2026-06-01";
+    const COLLISION_UTC_MONDAY = new Date(Date.UTC(2026, 5, 1));
+    const LADDER_COMPOSITION: Composition = {
+      repetition: { kind: "ladder", steps: [21, 15, 9] },
+    };
+    const MARKER_PAYLOAD = { rowKind: "INNER_LADDER_MARKER" as const, steps: [21, 15, 9] };
+
+    const provisionCollisionWeek = async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: COLLISION_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "MONDAY" },
+      });
+      const session = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
+      const block = await cleanupRaw.block.create({
+        data: { sessionId: session.id, order: 10 },
+      });
+
+      return {
+        block,
+        cleanup: async () => {
+          await cleanupRaw.schemaRow
+            .deleteMany({ where: { schema: { blockId: block.id } } })
+            .catch(() => {});
+          await cleanupRaw.schema.deleteMany({ where: { blockId: block.id } }).catch(() => {});
+          await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+        },
+      };
+    };
+
+    const attachLadderCollision = async (blockId: string): Promise<void> => {
+      const schema = await lmsSchemaApi.create(
+        coach.user.id,
+        activePlanId,
+        { blockId },
+        {
+          kind: "ATOMIC",
+          archetypeId: atomicArchetypeId,
+          archetypeParams: N_ROUNDS_PARAMS,
+          composition: LADDER_COMPOSITION,
+        },
+      );
+
+      expect(schema.composition).toEqual(LADDER_COMPOSITION);
+
+      const markerRow = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+        schemaId: schema.id,
+        rowKind: "INNER_LADDER_MARKER",
+        rowPayload: MARKER_PAYLOAD,
+      });
+
+      expect(markerRow.rowKind).toBe("INNER_LADDER_MARKER");
+    };
+
+    it("lets both writes succeed (10.4 will add the write-time guard) then 500s the read with DbCorruption", async () => {
+      const ctx = await provisionCollisionWeek();
+
+      try {
+        await attachLadderCollision(ctx.block.id);
+
+        await expect(
+          lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM),
+        ).rejects.toThrow(InternalServerError);
+
+        try {
+          await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM);
+        } catch (error) {
+          expect(error).toBeInstanceOf(InternalServerError);
+
+          if (error instanceof InternalServerError) {
+            expect(error.statusCode).toBe(500);
+            expect(error.details?.kind).toBe("DbCorruption");
+          }
+        }
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("500s the WHOLE week even when a sibling schema is collision-free (QA-002 no per-block isolation)", async () => {
+      const ctx = await provisionCollisionWeek();
+
+      try {
+        const cleanSchema = await lmsSchemaApi.create(
+          coach.user.id,
+          activePlanId,
+          { blockId: ctx.block.id },
+          { kind: "ATOMIC", archetypeId: atomicArchetypeId, archetypeParams: N_ROUNDS_PARAMS },
+        );
+
+        expect(cleanSchema.composition).toBeNull();
+
+        await attachLadderCollision(ctx.block.id);
+
+        await expect(
+          lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM),
+        ).rejects.toThrow(InternalServerError);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("surfaces a malformed single-node composition column as a bare ZodError, not a DbCorruption 500 (QA-003 deferred)", async () => {
+      const ctx = await provisionCollisionWeek();
+
+      await cleanupRaw.schema.create({
+        data: {
+          blockId: ctx.block.id,
+          order: 10,
+          kind: "ATOMIC",
+          archetypeId: atomicArchetypeId,
+          archetypeParams: N_ROUNDS_PARAMS,
+          composition: { repetition: { kind: "ladder" } },
+        },
+      });
+
+      try {
+        await expect(
+          lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM),
+        ).rejects.toThrow(ZodError);
+
+        try {
+          await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM);
+        } catch (error) {
+          expect(error).toBeInstanceOf(ZodError);
+          expect(error).not.toBeInstanceOf(InternalServerError);
+        }
+      } finally {
+        await ctx.cleanup();
       }
     });
   });

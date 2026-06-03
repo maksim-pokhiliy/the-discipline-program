@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ARCHETYPE_NAMES } from "@repo/contracts/lms/schema";
 
 import { COVERAGE_CELLS, tallyCoverage } from "../../prisma/seed/plan-emit";
+import { lmsWeekApi } from "../endpoints/lms/week/admin";
 
 import {
   buildPlanScopes,
@@ -26,6 +27,7 @@ const EXPECTED_EXERCISE_MIN = 149;
 const EXPECTED_ACTIVE_PLANS = 3;
 const EXPECTED_CONNECTOR_TOTAL = 3;
 const EXPECTED_CONNECTOR_FORM_MIN = 1;
+const EXPECTED_COMPOSITION_MIN = 5;
 const CONNECTOR_FORMS = ["then", "then_dots", "then_n_rounds"] as const;
 const ALL_POSITIONS = [
   "NEUTRAL_GRIP",
@@ -189,6 +191,27 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     expect(thenRounds).toBeGreaterThanOrEqual(EXPECTED_CONNECTOR_FORM_MIN);
   });
 
+  it("composition.present counts only non-null composition rows, excluding absent (DbNull) rows (QA-006)", async () => {
+    const [allSchemas, withComposition, absentComposition] = await Promise.all([
+      db.schema.count({ where: scopes.schemaScope }),
+      db.schema.count({
+        where: { ...scopes.schemaScope, composition: { not: Prisma.AnyNull } },
+      }),
+      db.schema.count({ where: { ...scopes.schemaScope, composition: { equals: Prisma.DbNull } } }),
+    ]);
+
+    expect(withComposition).toBeGreaterThanOrEqual(EXPECTED_COMPOSITION_MIN);
+    expect(absentComposition).toBeGreaterThan(0);
+    expect(withComposition + absentComposition).toBe(allSchemas);
+
+    const report = await tallyCoverage(db, demoPlanId);
+    const compositionCell = report.cells.find((c) => c.cell.id === "composition.present");
+
+    expect(compositionCell?.count).toBe(withComposition);
+    expect(compositionCell?.satisfied).toBe(true);
+    expect(report.total).toBe(COVERAGE_CELLS.length);
+  });
+
   it("§25: no Schema.notes carries a leftover 'connector:' substring", async () => {
     const leaked = await db.schema.findMany({
       where: { ...scopes.schemaScope, notes: { contains: "connector:" } },
@@ -210,6 +233,29 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
 
     expect(schemaCount).toBeGreaterThan(0);
     expect(rowCount).toBeGreaterThan(0);
+  });
+
+  it("G5: every Demo Plan week reads through getByPlanAndDate without a collision 500, and ≥5 schemas carry composition", async () => {
+    const plan = await db.trainingPlan.findUniqueOrThrow({
+      where: { id: demoPlanId },
+      select: { creatorId: true, weeks: { select: { startDate: true } } },
+    });
+
+    expect(plan.weeks.length).toBeGreaterThan(0);
+
+    for (const week of plan.weeks) {
+      const startDateParam = week.startDate.toISOString().slice(0, 10);
+
+      await expect(
+        lmsWeekApi.getByPlanAndDate(plan.creatorId, demoPlanId, startDateParam),
+      ).resolves.toBeDefined();
+    }
+
+    const withComposition = await db.schema.count({
+      where: { ...scopes.schemaScope, composition: { not: Prisma.AnyNull } },
+    });
+
+    expect(withComposition).toBeGreaterThanOrEqual(EXPECTED_COMPOSITION_MIN);
   });
 
   it("§2: rest-day, active-day, empty-block, implicit-block cells filled", async () => {

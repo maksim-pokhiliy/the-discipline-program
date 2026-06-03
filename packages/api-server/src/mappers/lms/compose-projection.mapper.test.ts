@@ -14,6 +14,11 @@ const cuidMarkerRow = "clz0000000000000markerrow1";
 const cuidNullNode = "clz0000000000000000nullnod";
 const cuidBlock = "clz00000000000000000block1";
 const cuidArchetype = "clz0000000000000archetype1";
+const cuidOuter = "clz0000000000000000outer01";
+const cuidInnerLadder = "clz0000000000000innerladd1";
+const cuidSuperset = "clz0000000000000superset01";
+const cuidDangA = "clz0000000000000danglinga1";
+const cuidDangB = "clz0000000000000danglingb1";
 
 const NOW = new Date("2026-06-03T12:00:00Z");
 
@@ -101,6 +106,34 @@ const collisionNode: SchemaWithBody = {
 const nullCompositionNode: SchemaWithBody = {
   schema: makeSchema({ id: cuidNullNode, header: null, composition: null }),
   rows: [makeExerciseRow(cuidThrusters)],
+  subSchemas: [],
+};
+
+const nestedLadderCollisionNode: SchemaWithBody = {
+  schema: makeSchema({ id: cuidOuter, header: "Outer", composition: {} }),
+  rows: [],
+  subSchemas: [
+    {
+      schema: makeSchema({
+        id: cuidInnerLadder,
+        header: "Inner ladder",
+        composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+      }),
+      rows: [makeLadderMarkerRow(cuidMarkerRow, [21, 15, 9])],
+      subSchemas: [],
+    },
+  ],
+};
+
+const danglingSupersetNode: SchemaWithBody = {
+  schema: makeSchema({
+    id: cuidSuperset,
+    header: "Superset",
+    composition: {
+      arrangement: { kind: "superset", pairs: [{ label: "A", rowIds: [cuidDangA, cuidDangB] }] },
+    },
+  }),
+  rows: [makeExerciseRow(cuidThrusters), makeExerciseRow(cuidPullups)],
   subSchemas: [],
 };
 
@@ -195,5 +228,64 @@ describe("assertComposeTreeValid", () => {
         expect(Array.isArray(error.details?.issues)).toBe(true);
       }
     }
+  });
+
+  it("surfaces a row-child collision on a ladder container nested at depth 2 (the marker is always a row child)", () => {
+    expect(() => assertComposeTreeValid(nestedLadderCollisionNode)).toThrow(InternalServerError);
+
+    const innerLadder = nestedLadderCollisionNode.subSchemas[0];
+
+    expect(innerLadder?.schema.composition?.repetition?.kind).toBe("ladder");
+    expect(innerLadder?.rows[0]?.rowKind).toBe("INNER_LADDER_MARKER");
+  });
+
+  it("flattens rows and sub-schemas into one children array, so a row marker collides regardless of slot", () => {
+    const projectedInner = projectSchemaWithBody({
+      schema: makeSchema({
+        id: cuidInnerLadder,
+        composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+      }),
+      rows: [makeLadderMarkerRow(cuidMarkerRow, [21, 15, 9])],
+      subSchemas: [],
+    });
+
+    expect(projectedInner.nodeType).toBe("container");
+
+    if (projectedInner.nodeType !== "container") {
+      return;
+    }
+
+    expect(projectedInner.children).toHaveLength(1);
+    expect(projectedInner.children[0]?.nodeType).toBe("row");
+
+    const markerChild = projectedInner.children[0];
+
+    expect(markerChild?.nodeType === "row" && markerChild.rowPayload.rowKind).toBe(
+      "INNER_LADDER_MARKER",
+    );
+  });
+});
+
+describe("assertComposeTreeValid — arrangement reference existence is NOT validated (QA-004)", () => {
+  it("projects and validates a superset whose rowIds reference non-existent rows without throwing", () => {
+    expect(() => assertComposeTreeValid(danglingSupersetNode)).not.toThrow();
+
+    const projected = projectSchemaWithBody(danglingSupersetNode);
+
+    expect(projected.nodeType).toBe("container");
+
+    if (projected.nodeType !== "container") {
+      return;
+    }
+
+    expect(projected.composition.arrangement?.kind).toBe("superset");
+
+    if (projected.composition.arrangement?.kind !== "superset") {
+      return;
+    }
+
+    expect(projected.composition.arrangement.pairs[0]?.rowIds).toEqual([cuidDangA, cuidDangB]);
+    expect(projected.children.some((child) => child.id === cuidDangA)).toBe(false);
+    expect(projected.children.some((child) => child.id === cuidDangB)).toBe(false);
   });
 });
