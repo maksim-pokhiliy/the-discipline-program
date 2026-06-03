@@ -1,0 +1,153 @@
+import { describe, expect, it } from "vitest";
+
+import { schemaRowPayloadSchema } from "../schema-row";
+
+import { composeContainerSchema, compositionSchema } from "./composition.schema";
+import type { ComposeNode, ComposeRow } from "./composition.types";
+
+const cuidFran = "clz000000000000000000fran";
+const cuidThrusters = "clz00000000000000000thrust";
+const cuidPullups = "clz00000000000000000pullup";
+const cuidBlockC = "clz0000000000000000blockc1";
+const cuidThrTrack = "clz00000000000000thrtrack1";
+const cuidPulTrack = "clz00000000000000pultrack1";
+
+type LadderSource = "container.repetition" | "row.payload" | "none";
+
+function ladderSource(node: ComposeNode): LadderSource {
+  if (node.nodeType === "container" && node.composition.repetition?.kind === "ladder") {
+    return "container.repetition";
+  }
+
+  if (node.nodeType === "row" && node.rowPayload.rowKind === "INNER_LADDER_MARKER") {
+    return "row.payload";
+  }
+
+  return "none";
+}
+
+function exerciseRow(id: string): ComposeRow {
+  return {
+    nodeType: "row",
+    id,
+    rowKind: "EXERCISE",
+    rowPayload: { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: id } },
+    reps: null,
+    load: null,
+    side: null,
+    tempo: null,
+    position: null,
+    intensity: null,
+    notes: null,
+  };
+}
+
+function ladderMarkerRow(id: string, steps: number[]): ComposeRow {
+  return {
+    nodeType: "row",
+    id,
+    rowKind: "INNER_LADDER_MARKER",
+    rowPayload: { rowKind: "INNER_LADDER_MARKER", steps },
+    reps: null,
+    load: null,
+    side: null,
+    tempo: null,
+    position: null,
+    intensity: null,
+    notes: null,
+  };
+}
+
+const franComposition = {
+  repetition: { kind: "ladder", steps: [21, 15, 9] },
+  arrangement: { kind: "ordered" },
+} as const;
+
+const franThrustersRow = exerciseRow(cuidThrusters);
+const franPullupsRow = exerciseRow(cuidPullups);
+
+const franContainer: ComposeNode = {
+  nodeType: "container",
+  id: cuidFran,
+  header: "Fran",
+  notes: null,
+  composition: {
+    repetition: { kind: "ladder", steps: [21, 15, 9] },
+    arrangement: { kind: "ordered" },
+  },
+  children: [franThrustersRow, franPullupsRow],
+};
+
+const blockCComposition = {
+  arrangement: {
+    kind: "parallel",
+    interleaveOrder: "round_by_round",
+    tracks: [{ childSchemaId: cuidThrTrack }, { childSchemaId: cuidPulTrack }],
+  },
+} as const;
+
+const blockCThrustersRow = ladderMarkerRow(cuidThrTrack, [21, 15, 9]);
+const blockCPullupsRow = ladderMarkerRow(cuidPulTrack, [9, 15, 21]);
+
+const blockCContainer: ComposeNode = {
+  nodeType: "container",
+  id: cuidBlockC,
+  header: "Block C",
+  notes: null,
+  composition: {
+    arrangement: {
+      kind: "parallel",
+      interleaveOrder: "round_by_round",
+      tracks: [{ childSchemaId: cuidThrTrack }, { childSchemaId: cuidPulTrack }],
+    },
+  },
+  children: [blockCThrustersRow, blockCPullupsRow],
+};
+
+describe("Fran — round-counter ladder (container repetition axis)", () => {
+  it("validates a container ladder over two ordered EXERCISE children", () => {
+    expect(compositionSchema.safeParse(franComposition).success).toBe(true);
+    expect(composeContainerSchema.safeParse(franContainer).success).toBe(true);
+  });
+
+  it("carries no INNER_LADDER_MARKER on either child row", () => {
+    expect(franThrustersRow.rowPayload.rowKind).toBe("EXERCISE");
+    expect(franPullupsRow.rowPayload.rowKind).toBe("EXERCISE");
+  });
+});
+
+describe("Gauntlet Block C — rep-scheme ladder (per-row INNER_LADDER_MARKER)", () => {
+  it("validates a parallel container with no repetition axis", () => {
+    expect(compositionSchema.safeParse(blockCComposition).success).toBe(true);
+    expect(composeContainerSchema.safeParse(blockCContainer).success).toBe(true);
+
+    const parsed = compositionSchema.parse(blockCComposition);
+
+    expect(parsed.repetition).toBeUndefined();
+  });
+
+  it("validates each track's steps as a SchemaRow INNER_LADDER_MARKER payload", () => {
+    expect(
+      schemaRowPayloadSchema.safeParse({ rowKind: "INNER_LADDER_MARKER", steps: [21, 15, 9] })
+        .success,
+    ).toBe(true);
+    expect(
+      schemaRowPayloadSchema.safeParse({ rowKind: "INNER_LADDER_MARKER", steps: [9, 15, 21] })
+        .success,
+    ).toBe(true);
+  });
+});
+
+describe("ladder split — four-projection distinctness (anti-collision proof)", () => {
+  it("resolves Fran to the container repetition source", () => {
+    expect(ladderSource(franContainer)).toBe("container.repetition");
+  });
+
+  it("resolves a Block C track row to the row payload source", () => {
+    expect(ladderSource(blockCThrustersRow)).toBe("row.payload");
+  });
+
+  it("resolves the two ladders to different sources", () => {
+    expect(ladderSource(franContainer)).not.toBe(ladderSource(blockCThrustersRow));
+  });
+});
