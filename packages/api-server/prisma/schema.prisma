@@ -694,6 +694,7 @@ model Schema {
   archetypeId        String
   header             String?
   archetypeParams    Json
+  composition        Json?
   intensity          Json?
   trailingConnector  Json?
   notes              String?
