@@ -36,39 +36,50 @@ function hhMmToMinutes(value: string): number | null {
 
 export const repetitionAxisSchema = z
   .discriminatedUnion("kind", [
-    z.object({ kind: z.literal("once") }),
-    z.object({ kind: z.literal("count"), count: exactOrRangeSchema }),
-    z.object({
-      kind: z.literal("range"),
-      range: z
-        .object({
-          min: z.number().int().positive(),
-          max: z.number().int().positive(),
-        })
-        .refine((r) => r.min < r.max, { message: "range.min must be < range.max" }),
-    }),
-    z.object({
-      kind: z.literal("ladder"),
-      steps: z.array(z.number().int().positive()).min(1),
-    }),
-    z.object({ kind: z.literal("timeCap"), cap: timeCapSchema }),
-    z.object({
-      kind: z.literal("cadence"),
-      everyMin: z.number().int().positive(),
-      rounds: z.number().int().positive(),
-      totalMin: z.number().int().positive().optional(),
-    }),
-    z.object({
-      kind: z.literal("window"),
-      startHhMm: z.string().regex(WINDOW_HH_MM_PATTERN),
-      endHhMm: z.string().regex(WINDOW_HH_MM_PATTERN),
-    }),
-    z.object({
-      kind: z.literal("interval"),
-      workMin: z.number().int().positive(),
-      offMin: z.number().int().nonnegative(),
-      count: z.number().int().positive(),
-    }),
+    z.object({ kind: z.literal("once") }).strict(),
+    z.object({ kind: z.literal("count"), count: exactOrRangeSchema }).strict(),
+    z
+      .object({
+        kind: z.literal("range"),
+        range: z
+          .object({
+            min: z.number().int().positive(),
+            max: z.number().int().positive(),
+          })
+          .strict()
+          .refine((r) => r.min < r.max, { message: "range.min must be < range.max" }),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("ladder"),
+        steps: z.array(z.number().int().positive()).min(1),
+      })
+      .strict(),
+    z.object({ kind: z.literal("timeCap"), cap: timeCapSchema }).strict(),
+    z
+      .object({
+        kind: z.literal("cadence"),
+        everyMin: z.number().int().positive(),
+        rounds: z.number().int().positive(),
+        totalMin: z.number().int().positive().optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("window"),
+        startHhMm: z.string().regex(WINDOW_HH_MM_PATTERN),
+        endHhMm: z.string().regex(WINDOW_HH_MM_PATTERN),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("interval"),
+        workMin: z.number().int().positive(),
+        offMin: z.number().int().nonnegative(),
+        count: z.number().int().positive(),
+      })
+      .strict(),
   ])
   .superRefine((axis, ctx) => {
     if (axis.kind === "window") {
@@ -90,29 +101,36 @@ export const supersetPairSchema = z
     label: z.string().min(1),
     rowIds: z.array(z.string().cuid()).min(2),
   })
+  .strict()
   .refine((pair) => new Set(pair.rowIds).size === pair.rowIds.length, {
     message: "superset pair rowIds must be distinct",
     path: ["rowIds"],
   });
 
-export const parallelTrackSchema = z.object({
-  childSchemaId: z.string().cuid(),
-  setEnumeration: z.array(z.number().int().positive()).min(1).optional(),
-  pairedWithRowId: z.string().cuid().optional(),
-});
+export const parallelTrackSchema = z
+  .object({
+    childSchemaId: z.string().cuid(),
+    setEnumeration: z.array(z.number().int().positive()).min(1).optional(),
+    pairedWithRowId: z.string().cuid().optional(),
+  })
+  .strict();
 
 export const arrangementAxisSchema = z
   .discriminatedUnion("kind", [
-    z.object({ kind: z.literal("ordered") }),
-    z.object({
-      kind: z.literal("parallel"),
-      interleaveOrder: z.enum(PARALLEL_INTERLEAVE_ORDERS),
-      tracks: z.array(parallelTrackSchema).min(2),
-    }),
-    z.object({
-      kind: z.literal("superset"),
-      pairs: z.array(supersetPairSchema).min(1),
-    }),
+    z.object({ kind: z.literal("ordered") }).strict(),
+    z
+      .object({
+        kind: z.literal("parallel"),
+        interleaveOrder: z.enum(PARALLEL_INTERLEAVE_ORDERS),
+        tracks: z.array(parallelTrackSchema).min(2),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("superset"),
+        pairs: z.array(supersetPairSchema).min(1),
+      })
+      .strict(),
   ])
   .superRefine((axis, ctx) => {
     if (axis.kind === "parallel") {
@@ -128,31 +146,39 @@ export const arrangementAxisSchema = z
     }
   });
 
-export const scoringConditionSchema = z.object({
-  appliesToRounds: z.array(z.number().int().positive()).min(1),
-});
+export const scoringConditionSchema = z
+  .object({
+    appliesToRounds: z.array(z.number().int().positive()).min(1),
+  })
+  .strict();
 
 export const scoringDirectiveSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("prescribed") }),
-  z.object({ kind: z.literal("amrap"), condition: scoringConditionSchema.optional() }),
-  z.object({ kind: z.literal("for_time"), condition: scoringConditionSchema.optional() }),
-  z.object({ kind: z.literal("max_in_remaining"), condition: scoringConditionSchema.optional() }),
-  z.object({ kind: z.literal("total"), condition: scoringConditionSchema.optional() }),
-  z.object({
-    kind: z.literal("progressive"),
-    seed: z.string().min(1),
-    condition: scoringConditionSchema.optional(),
-  }),
+  z.object({ kind: z.literal("prescribed") }).strict(),
+  z.object({ kind: z.literal("amrap"), condition: scoringConditionSchema.optional() }).strict(),
+  z.object({ kind: z.literal("for_time"), condition: scoringConditionSchema.optional() }).strict(),
+  z
+    .object({ kind: z.literal("max_in_remaining"), condition: scoringConditionSchema.optional() })
+    .strict(),
+  z.object({ kind: z.literal("total"), condition: scoringConditionSchema.optional() }).strict(),
+  z
+    .object({
+      kind: z.literal("progressive"),
+      seed: z.string().min(1),
+      condition: scoringConditionSchema.optional(),
+    })
+    .strict(),
 ]);
 
 export const restAxisSchema = restSpecSchema;
 
-export const compositionSchema = z.object({
-  repetition: repetitionAxisSchema.optional(),
-  arrangement: arrangementAxisSchema.optional(),
-  scoring: scoringDirectiveSchema.optional(),
-  rest: restAxisSchema.optional(),
-});
+export const compositionSchema = z
+  .object({
+    repetition: repetitionAxisSchema.optional(),
+    arrangement: arrangementAxisSchema.optional(),
+    scoring: scoringDirectiveSchema.optional(),
+    rest: restAxisSchema.optional(),
+  })
+  .strict();
 
 type ComposeRowShape = {
   nodeType: "row";
@@ -179,19 +205,21 @@ type ComposeContainerShape = {
 
 type ComposeNodeShape = ComposeContainerShape | ComposeRowShape;
 
-export const composeRowSchema: z.ZodType<ComposeRowShape> = z.object({
-  nodeType: z.literal("row"),
-  id: z.string().cuid(),
-  rowKind: rowKindSchema,
-  rowPayload: schemaRowPayloadSchema,
-  reps: repNotationSchema.nullable(),
-  load: loadSchema.nullable(),
-  side: perLimbDistributionSchema.nullable(),
-  tempo: tempoModifierSchema.nullable(),
-  position: positionSchema.nullable(),
-  intensity: intensitySchema.nullable(),
-  notes: z.string().nullable(),
-});
+export const composeRowSchema: z.ZodType<ComposeRowShape> = z
+  .object({
+    nodeType: z.literal("row"),
+    id: z.string().cuid(),
+    rowKind: rowKindSchema,
+    rowPayload: schemaRowPayloadSchema,
+    reps: repNotationSchema.nullable(),
+    load: loadSchema.nullable(),
+    side: perLimbDistributionSchema.nullable(),
+    tempo: tempoModifierSchema.nullable(),
+    position: positionSchema.nullable(),
+    intensity: intensitySchema.nullable(),
+    notes: z.string().nullable(),
+  })
+  .strict();
 
 export const composeContainerSchema: z.ZodType<ComposeContainerShape> = z.lazy(() =>
   z
@@ -203,6 +231,7 @@ export const composeContainerSchema: z.ZodType<ComposeContainerShape> = z.lazy((
       composition: compositionSchema,
       children: z.array(composeNodeSchema),
     })
+    .strict()
     .superRefine((container, ctx) => {
       if (container.composition.repetition?.kind !== "ladder") {
         return;

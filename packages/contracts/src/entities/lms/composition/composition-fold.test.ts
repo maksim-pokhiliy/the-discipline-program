@@ -52,13 +52,13 @@ describe("AlternatingGroup → arrangement:parallel fold target (design §9)", (
     ).toBe(true);
   });
 
-  it("strips any steps/direction supplied on a track (direction is derived, never stored)", () => {
-    const track = parallelTrackSchema.parse({
-      childSchemaId: cuidLadderChild,
-      steps: [21, 15, 9],
-      direction: "desc",
-    });
-
-    expect(track).toStrictEqual({ childSchemaId: cuidLadderChild });
+  it("rejects steps/direction supplied on a track (direction is derived, never stored)", () => {
+    expect(
+      parallelTrackSchema.safeParse({
+        childSchemaId: cuidLadderChild,
+        steps: [21, 15, 9],
+        direction: "desc",
+      }).success,
+    ).toBe(false);
   });
 });

@@ -296,17 +296,13 @@ describe("scoringDirectiveSchema", () => {
     ).toBe(false);
   });
 
-  it("ignores an unknown extra key on prescribed (no condition slot)", () => {
-    const result = scoringDirectiveSchema.safeParse({
-      kind: "prescribed",
-      condition: { appliesToRounds: [2] },
-    });
-
-    expect(result.success).toBe(true);
-
-    if (result.success) {
-      expect(result.data).toStrictEqual({ kind: "prescribed" });
-    }
+  it("rejects an unknown extra key on prescribed (no condition slot)", () => {
+    expect(
+      scoringDirectiveSchema.safeParse({
+        kind: "prescribed",
+        condition: { appliesToRounds: [2] },
+      }).success,
+    ).toBe(false);
   });
 });
 
@@ -358,5 +354,45 @@ describe("compositionSchema", () => {
     expect(compositionSchema.safeParse({ repetition: { kind: "count", count: 0 } }).success).toBe(
       false,
     );
+  });
+});
+
+describe("strict mode — unknown keys are rejected", () => {
+  it("rejects an unknown key on a repetition variant", () => {
+    expect(repetitionAxisSchema.safeParse({ kind: "count", count: 5, bogus: 1 }).success).toBe(
+      false,
+    );
+  });
+
+  it("rejects a typo'd optional field on cadence", () => {
+    expect(
+      repetitionAxisSchema.safeParse({ kind: "cadence", everyMin: 1, rounds: 4, totalMins: 16 })
+        .success,
+    ).toBe(false);
+  });
+
+  it("rejects an unknown top-level key on the composition bundle", () => {
+    expect(compositionSchema.safeParse({ repetition: { kind: "once" }, bogus: 1 }).success).toBe(
+      false,
+    );
+  });
+
+  it("rejects an unknown key on a parallel track", () => {
+    expect(
+      arrangementAxisSchema.safeParse({
+        kind: "parallel",
+        interleaveOrder: "round_by_round",
+        tracks: [{ childSchemaId: cuidA, bogus: 1 }, { childSchemaId: cuidC }],
+      }).success,
+    ).toBe(false);
+  });
+
+  it("rejects an unknown key on a scoring condition", () => {
+    expect(
+      scoringDirectiveSchema.safeParse({
+        kind: "amrap",
+        condition: { appliesToRounds: [2, 3], bogus: 1 },
+      }).success,
+    ).toBe(false);
   });
 });
