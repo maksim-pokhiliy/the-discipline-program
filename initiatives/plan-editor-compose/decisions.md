@@ -8,28 +8,29 @@ D-numbered ratified decisions for this initiative. Step-level calls that don't m
 
 ## Index
 
-| ID                 | Topic                                                                                  | Status                                       |
-| ------------------ | -------------------------------------------------------------------------------------- | -------------------------------------------- |
-| D-PIVOT            | Compose-only model; archetype emergent                                                 | RATIFIED (ADR-0037)                          |
-| D-INTERVAL         | `interval` is a `repetition` primitive                                                 | RATIFIED (10.2)                              |
-| D-LADDER           | `ladder` splits → container-axis vs row-payload                                        | RATIFIED (10.2 §B)                           |
-| D-CADENCE          | `cadence`/`interval`/`window` are distinct                                             | RATIFIED (10.2 §5.3)                         |
-| D-EMOM-SLOT        | EMOM sub-minute slot = row-level `slotSpecSchema`, no new axis                         | RATIFIED (10.2 §F.3)                         |
-| D-EMOM-UX          | EMOM "row-as-minute" derived view (UX, computed-on-read)                               | RATIFIED principle → S2 requirement          |
-| D-CONTAINER-VS-ROW | Container ⇔ carries repetition OR >1 movement; else row                                | RATIFIED principle → S2 + basis for D-10.4-2 |
-| D-PERSIST          | Composition persists flat per-node; nesting stays on `parentSchemaId`                  | RATIFIED (10.2)                              |
-| D-STRICT           | `.strict()` on the axis contract                                                       | RATIFIED (10.2 Gate-B)                       |
-| D-DUALWRITE        | Composition optional / archetype required (Option C)                                   | RATIFIED (10.3 DEC-1)                        |
-| D-LABEL            | `deriveCompositionLabel` computed-on-read, compose-native enum, never stored           | RATIFIED (10.3 DEC-2)                        |
-| D-SEED             | Seed = Gauntlet-port, additive (10.3) → composition-native (10.4 S3)                   | RATIFIED (10.3 DEC-3)                        |
-| D-UNTILREC         | `until_recovery` sham `{value:1,unit:"sec"}` kept                                      | RATIFIED (10.3 DEC-4)                        |
-| D-SCORING-INERT    | Scoring-inert source-scan guard re-homed to api-server                                 | RATIFIED (10.3 DEC-5)                        |
-| D-ALTGROUP-FOLD    | `AlternatingGroup` → `arrangement:parallel`, preserving `setEnumeration`/N-ary         | RATIFIED (target frozen 10.2)                |
-| D-AG-FACTS         | AlternatingGroup domain facts the fold must preserve (migrated from `implementation/`) | RATIFIED (history)                           |
-| D-D4-REVERSAL      | The 34-archetype catalog-as-seeded-config is DROPPED by 10.4                           | RATIFIED (reverses old D4)                   |
-| D-10.4-1           | 10.4 shape: the arc S1→S2→S3 vs alternatives                                           | **OPEN**                                     |
-| D-10.4-2           | Drop `Schema.kind` + abolish the kind-based write guards                               | **OPEN**                                     |
-| D-10.4-3           | S2 compose-write UI scope (full four-projection vs MVP)                                | **OPEN**                                     |
+| ID                 | Topic                                                                                          | Status                                       |
+| ------------------ | ---------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| D-PIVOT            | Compose-only model; archetype emergent                                                         | RATIFIED (ADR-0037)                          |
+| D-INTERVAL         | `interval` is a `repetition` primitive                                                         | RATIFIED (10.2)                              |
+| D-LADDER           | `ladder` splits → container-axis vs row-payload                                                | RATIFIED (10.2 §B)                           |
+| D-CADENCE          | `cadence`/`interval`/`window` are distinct                                                     | RATIFIED (10.2 §5.3)                         |
+| D-EMOM-SLOT        | EMOM sub-minute slot = row-level `slotSpecSchema`, no new axis                                 | RATIFIED (10.2 §F.3)                         |
+| D-EMOM-UX          | EMOM "row-as-minute" derived view (UX, computed-on-read)                                       | RATIFIED principle → S2 requirement          |
+| D-CONTAINER-VS-ROW | Container ⇔ carries repetition OR >1 movement; else row                                        | RATIFIED principle → S2 + basis for D-10.4-2 |
+| D-PERSIST          | Composition persists flat per-node; nesting stays on `parentSchemaId`                          | RATIFIED (10.2)                              |
+| D-STRICT           | `.strict()` on the axis contract                                                               | RATIFIED (10.2 Gate-B)                       |
+| D-DUALWRITE        | Composition optional / archetype required (Option C)                                           | RATIFIED (10.3 DEC-1)                        |
+| D-LABEL            | `deriveCompositionLabel` computed-on-read, compose-native enum, never stored                   | RATIFIED (10.3 DEC-2)                        |
+| D-SEED             | Seed = Gauntlet-port, additive (10.3) → composition-native (10.4 S3)                           | RATIFIED (10.3 DEC-3)                        |
+| D-UNTILREC         | `until_recovery` sham `{value:1,unit:"sec"}` kept                                              | RATIFIED (10.3 DEC-4)                        |
+| D-SCORING-INERT    | Scoring-inert source-scan guard re-homed to api-server                                         | RATIFIED (10.3 DEC-5)                        |
+| D-ALTGROUP-FOLD    | `AlternatingGroup` → `arrangement:parallel`, preserving `setEnumeration`/N-ary                 | RATIFIED (target frozen 10.2)                |
+| D-AG-FACTS         | AlternatingGroup domain facts the fold must preserve (migrated from `implementation/`)         | RATIFIED (history)                           |
+| D-D4-REVERSAL      | The 34-archetype catalog-as-seeded-config is DROPPED by 10.4                                   | RATIFIED (reverses old D4)                   |
+| D-PHASE5-SCORING   | Scoring/execution layer = the product differentiator vs Sheets; deferred to its own initiative | DEFERRED (future initiative)                 |
+| D-10.4-1           | 10.4 shape: the arc S1→S2→S3 vs alternatives                                                   | **OPEN**                                     |
+| D-10.4-2           | Drop `Schema.kind` + abolish the kind-based write guards                                       | **OPEN**                                     |
+| D-10.4-3           | S2 compose-write UI scope (full four-projection vs MVP)                                        | **OPEN**                                     |
 
 ---
 
@@ -151,3 +152,15 @@ D-numbered ratified decisions for this initiative. Step-level calls that don't m
 - **Status:** OPEN. Recommendation: full four-projection-faithful (sequence parallel/superset LAST within S2 so it can slip to an increment without blocking simple axes).
 - **The fork.** The prototype HAS all 7 repetition fields + arrangement/scoring/rest inspector (UX validated). The productionization scope question: ship ALL axes incl. `arrangement:parallel/superset` (the hardest — refs `childSchemaId`/`rowIds`/`pairedWithRowId` + the AlternatingGroup fold + the QA-004 existence-check) day-1, or simple axes first (count/ladder/cadence/interval/timeCap + ordered + duplication + EMOM row-as-minute) and defer parallel/superset persistence to an S2 increment.
 - **Coach-POV.** The corpus uses parallel ladders (Gauntlet C) and supersets (E) on paper — so for fidelity they are needed; the question is day-1 vs increment.
+
+---
+
+## Deferred — future initiative
+
+### D-PHASE5-SCORING — the scoring/execution layer is the product differentiator (deferred, captured so the future planner starts with the full insight)
+
+- **Status:** DEFERRED to its own later initiative (NOT this one — out of scope per charter/plan ph.5). Captured here because the strategic framing lived only in the origin web-Claude chat; the durable docs (ADR-0037, algebra-spec §3/§6) name the _content_ but not the _why-it-matters_.
+- **The insight (verbatim takeaway).** Months went into the cheap layer (presentation: the 34-name taxonomy, connector-forms, headers) that masqueraded as structure. The **executable scoring/execution layer is the real feature-differentiator vs Google Sheets** — and the model is currently _empty_ there. Sheets gives a coach free structure with zero execution semantics; this layer is exactly what Sheets cannot do. That is where to invest once the compose model is clean.
+- **The content (the two Gauntlet "scrips" that fall outside structure).** (1) **Conditional scoring** — scoring tied to round/context index, e.g. Gauntlet D "MAX wall balls, but score counts only on rounds 2 & 3." (2) **Parallel-track interleave execution** — the round-by-round alternation semantics of `arrangement:parallel` (Gauntlet C: how the two ladders actually interleave), beyond just "these tracks are parallel." Both are _expressible_ today (axis values) but _not executed_ — the `scoring` axis is present-but-inert (D-SCORING-INERT) and `arrangement:parallel` carries the interleave data (D-ALTGROUP-FOLD) for this phase to consume.
+- **Design seed.** Scoring is **data, not footnote text** — a small structured scoring descriptor (a mini-DSL as data) the analytics/execution layer evaluates, NOT prose a human reads. The `scoring` axis is its home; phase 5 makes it live. The inert-guard (`scoring-inert-consumers.test.ts`) is the tripwire that must be deliberately removed when this phase starts.
+- **Links.** ADR-0037 Deferred section; algebra-spec §3 (D + C scrips), §6 (inert contract), §8 ph.5; charter Non-goals; plan ph.5. Origin: web-Claude chat 2026-06-02.
