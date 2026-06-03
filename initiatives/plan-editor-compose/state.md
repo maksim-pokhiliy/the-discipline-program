@@ -1,15 +1,43 @@
-# plan-editor-compose — state
+# plan-editor-compose — state (the board)
 
 **Updated:** 2026-06-03
 
-**Where we are.** Step **10.3 done** — the frozen `@repo/contracts/lms/composition` axis contract is now WIRED into the running api-server (branch `feat/compose-backend-10-3`, stacked on `feat/compose-contracts-10-2`; 8 commits; full api-server suite **811/811 green** after the first `db:reset`+`db:seed` since 10.2 added the column; contracts 1267; check-types 16/16; dep:check clean). The read path parses `Schema.composition` per-node and VALIDATES the assembled tree through `composeContainerSchema` (the ladder-collision invariant on the TREE projection — obligation #1; a colliding stored tree throws `InternalServerError` 500 DbCorruption); create/update DUAL-WRITE composition (optional) alongside the still-required archetype; a `deriveCompositionLabel` kind/family label is computed-on-read (pure fn in contracts, §2.5 map, NO stored column — OQ-1, grep-proven); the seed attaches 5 primitive composition trees (Gauntlet axis kinds) additively to the archetype Demo Plan + a `composition.present` coverage cell. The §6 scoring-inert source-scan is re-homed to the api-server consumers. 10.1 walkthrough PASSED; 10.2 contract FROZEN; 10.3 backend LIVE.
+A scannable board, not prose. The narrative lives in `journal.md`; the "why" in `decisions.md`; carry-forwards in `deferred.md`. This file = where we are + the one next action. **Resume here** (the SessionStart hook force-loads it).
 
-**Scope note — Option C (expand-then-contract).** 10.2+10.3 ADDED only; they removed NOTHING. The destructive cut (`Archetype` table, `Schema.archetypeId`, `archetypeParams`, `Schema.kind`, `AlternatingGroup`, `alternatingGroupId`, `trailingConnector`) is RETAINED and moves to **10.4** (the mechanical sweep, where ~40 consumers + the 18 bespoke forms + picker + the 34-way render switches die atomically; expand-then-contract = manifesto §2.8 + OQ-4). Every created/seeded Schema still carries archetypeId+archetypeParams alongside composition until 10.4 drops them.
+## Board
 
-**Next action — step 10.4 (mechanical sweep + the QA-001 write-guard).** Ultracode workflow; gated on (i) 10.1 walkthrough passed ✓, (ii) 10.2 schema frozen ✓, (iii) 10.3 backend wired ✓ — all met. Two coupled jobs: (a) the destructive sweep (remove the legacy symbols + forms + picker + `formatSchemaHeader`/`formatArchetypeParams`; render → `deriveCompositionLabel`; the `compose/` 10.1 UI dir + its now-redundant scoring guard go away — the api-server guard survives); (b) **HARD BLOCKER — the write-time collision guard (QA-001):** the ladder-collision is enforced ONLY at read today; the sibling `schema-row/admin.ts` create is unguarded, so a coach can POST an `INNER_LADDER_MARKER` row to a `repetition:ladder` container (the seed ships one) → the whole week 500s on read. **10.4 MUST add write-time subtree re-validation on schema-row create/update + schema update (re-fetch parent container + children, run `assertComposeTreeValid`, reject 400) BEFORE the compose-write UI exposes ladder authoring** — and flip the pinned read-500 test in `week/admin.test.ts` to assert the write-time 400.
+| #        | Step                                                                                                                | Status                                                | Pointer                                                                                                   |
+| -------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 10.0     | Algebra spec                                                                                                        | ✅ DONE                                               | `algebra-spec.md`                                                                                         |
+| 10.1     | Compose prototype on mocks (canvas + axis-inspector + leaf editors + duplication)                                   | ✅ DONE — coach-walkthrough PASSED                    | journal 2026-06-02; PR `feat/compose-prototype-10-1`                                                      |
+| 10.2     | Contracts + schema freeze (axis contract, ladder-split, `.strict()`, additive `Schema.composition`)                 | ✅ DONE — contract FROZEN                             | journal 2026-06-03; `feat/compose-contracts-10-2`; D-INTERVAL/LADDER/CADENCE/PERSIST/STRICT/ALTGROUP-FOLD |
+| 10.3     | Backend + seed-as-compositions (mapper read + tree-validation + dual-write + derived label + 5 Gauntlet seed trees) | ✅ DONE — api-server 811/811 green                    | journal 2026-06-03; `feat/compose-backend-10-3`; D-DUALWRITE/LABEL/SEED/UNTILREC/SCORING-INERT            |
+| **10.4** | **Destructive sweep + QA-001 write-guard** — the arc below                                                          | 🔵 PLANNING (recon done; blocked on 3 open decisions) | `10-4-recon.md`; D-10.4-1/2/3 (OPEN)                                                                      |
+| ↳ S1     | QA-001 write-guard + QA-003 fold + nullable-archetype expand                                                        | ⏳ next (after D-10.4-1/2 ratified)                   | `deferred.md` QA-001/003; `10-4-recon.md` §WRITE-GUARD                                                    |
+| ↳ S2     | Productionize the compose-write prototype (converter + persistence + type-align + mount + coach re-walkthrough)     | ⛔ blocked on S1 + D-10.4-3                           | `10-4-recon.md` MINE 2; D-EMOM-UX, D-CONTAINER-VS-ROW                                                     |
+| ↳ S3     | Mechanical sweep (ultracode workflow) + Prisma drop + `db:reset`                                                    | ⛔ blocked on S2                                      | `10-4-recon.md` §SEED + §sequence; D-D4-REVERSAL                                                          |
+| ph.5     | Scoring/execution layer                                                                                             | ⬜ OUT of scope (separate initiative)                 | —                                                                                                         |
 
-**Carried WARNINGs for 10.4 (flagged, no 10.3 action — see journal 2026-06-03 + qa.md):** QA-002 (read assembly has no per-block isolation — one corrupt node 500s the whole week), QA-003 (corrupt `composition` column → misleading 400 on the week read; mirror the day path's `handlePrismaError` wrap), QA-004 (superset/parallel axis refs validated for format/distinctness but NOT existence — add a tx-time existence+scope check when the arrangement axis is consumed), the `until_recovery` sham (`value:1` not pinned to `qualifier` — a `restSpecSchema.superRefine` closes it), QA-006 (the `composition.present required:5` cell is brittle — add per-structure assertions).
+## Next action
 
-**Open decisions** (made, overridable): Option-C expand-then-contract (two-way door); `.strict()` axis contract (Gate-B 10.2); ladder split = container `repetition:ladder` vs row `INNER_LADDER_MARKER` (the collision the read-time invariant guards); `interval` frozen primitive; `kind`/`family` computed-on-read never stored; **10.3 Gate-A:** composition nullable on read / optional on write / archetype required (dual-write); label = compose-native enum threaded into the read response; seed = Gauntlet-port (additive); keep the until_recovery sham. See journal 2026-06-03 + memory `[[compose-four-projection]]`.
+**Ratify the 3 open 10.4 decisions** (`decisions.md` D-10.4-1/2/3) — they gate execution and were surfaced for the user, not yet signed off:
 
-**Deferred.** The `analysis/` archetype artifacts carry surviving backbone/VO reasoning alongside cut archetype content. The 13-fixture `.nullable()` ripple (10.3 deviation) — recorded; 10.4's sweep deletes most of those archetype-form fixtures anyway.
+- **D-10.4-1** — the arc S1→S2→S3 (vs UI-as-separate-initiative, vs placeholder-archetype sweep). Rec: the arc.
+- **D-10.4-2** — drop `Schema.kind` + abolish the kind-based write guards (behavior change). Rec: drop.
+- **D-10.4-3** — S2 compose-write UI scope (full four-projection vs MVP, parallel/superset day-1 or increment). Coach-POV call. Rec: full, parallel/superset sequenced last-within-S2.
+
+Once ratified → launch **S1** via `/feature small` (api-server: write-guard + QA-003 + nullable expand). 1 gated DB run.
+
+## Open decisions awaiting ratification
+
+D-10.4-1 (arc), D-10.4-2 (kind drop), D-10.4-3 (S2 scope) — see `decisions.md`.
+
+## Live carry-forwards
+
+QA-001 (HARD BLOCKER → S1), QA-003 (→ S1), QA-004 (→ S2 with parallel/superset), QA-002 (deferred), QA-untilrec (deferred — frozen contract) — see `deferred.md`.
+
+## Gotchas a resuming session must know
+
+- The richest 10.x reasoning was in gitignored `.feature-dev/<ts>/` + a web-Claude chat; the durable distillate is now `decisions.md` + `deferred.md` + `10-4-recon.md`. Trust those, not a re-derivation.
+- `implementation/` is SUPERSEDED history (pre-pivot); its still-live AlternatingGroup facts are migrated to `decisions.md` D-AG-FACTS. Don't plan off `implementation/`.
+- The FROZEN contract is `@repo/contracts/lms/composition` — reuse, never edit (a genuine need = a Gate-A escalation).

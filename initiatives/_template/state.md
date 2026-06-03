@@ -1,11 +1,27 @@
-# <initiative-slug> — state
+# <initiative-slug> — state (the board)
 
 **Updated:** <YYYY-MM-DD>
 
-**Where we are.** <2-3 sentences — the cursor>
+A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`; carry-forwards → `deferred.md`. **Resume here** (the SessionStart hook force-loads it).
 
-**Next action.** <the one concrete next step. If it's a code step, say "launch /feature with a step prompt".>
+## Board
 
-**Open decisions** (made, overridable): <decisions taken without explicit sign-off, so they can be revisited>
+| #   | Step   | Status                                        | Pointer                            |
+| --- | ------ | --------------------------------------------- | ---------------------------------- |
+| <1> | <step> | ⬜ pending / 🔵 active / ✅ done / ⛔ blocked | <journal date · decision id · doc> |
 
-**Deferred.** <carry-forwards not yet scheduled>
+## Next action
+
+<the ONE concrete next step. If code: "launch /feature with a step prompt". If blocked: name the blocker (e.g. "ratify D-N").>
+
+## Open decisions awaiting ratification
+
+<D-ids from decisions.md with status OPEN — do not execute past these>
+
+## Live carry-forwards
+
+<OPEN ids from deferred.md>
+
+## Gotchas a resuming session must know
+
+<the 2-3 traps — e.g. "the frozen contract is X, reuse don't edit"; "Y is superseded history, don't plan off it">
