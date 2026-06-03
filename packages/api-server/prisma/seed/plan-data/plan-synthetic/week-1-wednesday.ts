@@ -120,20 +120,26 @@ const BLOCK_COMPOSITE_INT_WR_FIXED_WK1_WED: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    compositeIntervalsWorkRestFixed({
-      order: 1,
-      intervalsCount: 6,
-      workMin: 2,
-      restMin: 1,
-      header: "6 intervals 2 work / 1 rest",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.rowCal } },
-          { reps: unitBoundReps({ unit: "min", range: { min: 1, max: 2 } }) },
-        ),
-      ],
-    }),
+    {
+      ...compositeIntervalsWorkRestFixed({
+        order: 1,
+        intervalsCount: 6,
+        workMin: 2,
+        restMin: 1,
+        header: "6 intervals 2 work / 1 rest",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.rowCal } },
+            { reps: unitBoundReps({ unit: "min", range: { min: 1, max: 2 } }) },
+          ),
+        ],
+      }),
+      composition: {
+        repetition: { kind: "interval", workMin: 2, offMin: 1, count: 6 },
+        scoring: { kind: "max_in_remaining", condition: { appliesToRounds: [2, 3] } },
+      },
+    },
   ],
 };
 
@@ -171,24 +177,30 @@ const BLOCK_AMRAP_FLAT_WK1_WED: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    amrapFlat({
-      order: 1,
-      durationMin: 12,
-      header: "AMRAP 12 at 75-80% effort",
-      intensity: effortPercent({ range: { min: 75, max: 80 } }),
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.dbThruster } },
-          { load: absoluteLoad(singleWeight(10)), reps: countReps(15) },
-        ),
-        mkRow(
-          2,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.boxJump } },
-          { load: bodyweightLoad(), reps: countReps(12) },
-        ),
-      ],
-    }),
+    {
+      ...amrapFlat({
+        order: 1,
+        durationMin: 12,
+        header: "AMRAP 12 at 75-80% effort",
+        intensity: effortPercent({ range: { min: 75, max: 80 } }),
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.dbThruster } },
+            { load: absoluteLoad(singleWeight(10)), reps: countReps(15) },
+          ),
+          mkRow(
+            2,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.boxJump } },
+            { load: bodyweightLoad(), reps: countReps(12) },
+          ),
+        ],
+      }),
+      composition: {
+        repetition: { kind: "timeCap", cap: { min: 12, unit: "min" } },
+        scoring: { kind: "amrap" },
+      },
+    },
   ],
 };
 

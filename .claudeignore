@@ -47,7 +47,6 @@ apps/*/storybook-static/
 packages/*/dist/
 packages/*/.turbo/
 packages/*/coverage/
-docs/
 storybook-static/
 
 # /feature artifacts

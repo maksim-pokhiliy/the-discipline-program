@@ -20,45 +20,50 @@ const BLOCK_EMOM_NESTED_WK1_TUE: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    emomNestedPerMinute({
-      order: 1,
-      durationMin: 12,
-      rounds: 3,
-      header: "EMOM 12 min, 3 rounds of 4 slots",
-      rows: [],
-      subSchemas: [
-        emomSubMinuteSlot({
-          order: 1,
-          slot: singleSlot(1),
-          header: "1 min",
-          rows: [
-            mkRow(
-              1,
-              { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.burpee } },
-              { load: bodyweightLoad(), reps: maxReps({ subForm: "bare" }) },
-            ),
-          ],
-        }),
-        emomSubMinuteSlot({
-          order: 2,
-          slot: groupedSlot([2, 3]),
-          header: "2nd & 3rd min",
-          rows: [
-            mkRow(
-              1,
-              { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pullUp } },
-              { load: bodyweightLoad(), reps: countReps(10) },
-            ),
-          ],
-        }),
-        emomSubMinuteSlot({
-          order: 3,
-          slot: singleSlot(4),
-          header: "4 min",
-          rows: [mkRow(1, { rowKind: "REST_SLOT" })],
-        }),
-      ],
-    }),
+    {
+      ...emomNestedPerMinute({
+        order: 1,
+        durationMin: 12,
+        rounds: 3,
+        header: "EMOM 12 min, 3 rounds of 4 slots",
+        rows: [],
+        subSchemas: [
+          emomSubMinuteSlot({
+            order: 1,
+            slot: singleSlot(1),
+            header: "1 min",
+            rows: [
+              mkRow(
+                1,
+                { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.burpee } },
+                { load: bodyweightLoad(), reps: maxReps({ subForm: "bare" }) },
+              ),
+            ],
+          }),
+          emomSubMinuteSlot({
+            order: 2,
+            slot: groupedSlot([2, 3]),
+            header: "2nd & 3rd min",
+            rows: [
+              mkRow(
+                1,
+                { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pullUp } },
+                { load: bodyweightLoad(), reps: countReps(10) },
+              ),
+            ],
+          }),
+          emomSubMinuteSlot({
+            order: 3,
+            slot: singleSlot(4),
+            header: "4 min",
+            rows: [mkRow(1, { rowKind: "REST_SLOT" })],
+          }),
+        ],
+      }),
+      composition: {
+        repetition: { kind: "cadence", everyMin: 1, rounds: 3 },
+      },
+    },
   ],
 };
 

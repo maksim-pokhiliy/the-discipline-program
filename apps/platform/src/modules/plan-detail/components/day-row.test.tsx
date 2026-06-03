@@ -1,7 +1,7 @@
 import { createElement } from "react";
 
 import { fireEvent, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { SessionWithLabel } from "@repo/contracts/lms/day";
 import type { Label } from "@repo/contracts/lms/label";
@@ -121,6 +121,15 @@ const getNotesInput = (): HTMLInputElement | HTMLTextAreaElement => {
 
   return el;
 };
+
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(NOW);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("DayRow", () => {
   it("renders DayHead with the DOW overline, day-num h2, and month-short overline for a regular day", () => {

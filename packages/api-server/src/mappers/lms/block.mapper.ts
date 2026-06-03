@@ -12,6 +12,7 @@ import { type Block } from "@repo/contracts/lms/block";
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import { mapToAlternatingGroup } from "./alternating-group.mapper";
+import { assertComposeTreeValid } from "./compose-projection.mapper";
 import { mapToLabel } from "./label.mapper";
 import { mapToSchemaRow } from "./schema-row.mapper";
 import { mapToSchema } from "./schema.mapper";
@@ -60,11 +61,19 @@ const mapToSchemaWithBody = (s: SchemaWithRows): SchemaWithBody => ({
   subSchemas: [],
 });
 
-export const mapToBlockWithSchemas = (b: BlockWithSchemas): Block => ({
-  ...mapToBlockWithLabels(b),
-  schemas: b.schemas.map((s) => ({
+const buildValidatedSchemaWithBody = (s: SchemaWithSubSchemas): SchemaWithBody => {
+  const schemaWithBody: SchemaWithBody = {
     ...mapToSchemaWithBody(s),
     subSchemas: s.subSchemas.map(mapToSchemaWithBody),
-  })),
+  };
+
+  assertComposeTreeValid(schemaWithBody);
+
+  return schemaWithBody;
+};
+
+export const mapToBlockWithSchemas = (b: BlockWithSchemas): Block => ({
+  ...mapToBlockWithLabels(b),
+  schemas: b.schemas.map(buildValidatedSchemaWithBody),
   alternatingGroups: b.alternatingGroups.map(mapToAlternatingGroup),
 });

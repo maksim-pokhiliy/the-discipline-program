@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { connectorFormSchema, intensitySchema } from "../_shared";
+import { compositionLabelSchema, compositionSchema } from "../composition";
 import { type SchemaRow, schemaRowSchema } from "../schema-row";
 
 import { archetypeParamsSchema } from "./archetype-params.schema";
@@ -51,6 +52,8 @@ type SchemaShape = {
   archetypeParams: z.infer<typeof archetypeParamsSchema>;
   intensity: z.infer<typeof intensitySchema> | null;
   trailingConnector: z.infer<typeof trailingConnectorSchema> | null;
+  composition: z.infer<typeof compositionSchema> | null;
+  label: z.infer<typeof compositionLabelSchema> | null;
   notes: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -69,6 +72,8 @@ export const schemaSchema: z.ZodType<SchemaShape> = z.lazy(() =>
     archetypeParams: archetypeParamsSchema,
     intensity: intensitySchema.nullable(),
     trailingConnector: trailingConnectorSchema.nullable(),
+    composition: compositionSchema.nullable(),
+    label: compositionLabelSchema.nullable(),
     notes: z.string().max(SCHEMA_CONSTANTS.MAX_NOTES_LENGTH).nullable(),
     createdAt: z.date(),
     updatedAt: z.date(),
@@ -120,6 +125,7 @@ export const createSchemaSchema = z.object({
   archetypeParams: archetypeParamsSchema,
   intensity: intensitySchema.nullable().optional(),
   trailingConnector: trailingConnectorSchema.nullable().optional(),
+  composition: compositionSchema.nullable().optional(),
   notes: z.string().max(SCHEMA_CONSTANTS.MAX_NOTES_LENGTH).nullable().optional(),
 });
 

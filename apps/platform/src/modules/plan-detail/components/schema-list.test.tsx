@@ -70,6 +70,8 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
     archetypeParams: { archetype: "single-line-bare", params: {} },
     intensity: null,
     trailingConnector: null,
+    composition: null,
+    label: null,
     notes: null,
     createdAt: NOW,
     updatedAt: NOW,

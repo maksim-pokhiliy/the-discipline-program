@@ -27,7 +27,8 @@ export type CoverageCategory =
   | "perSetSubstitution"
   | "compoundForm"
   | "compoundRepDefinition.form"
-  | "footnote";
+  | "footnote"
+  | "composition";
 
 export type CoverageCell = {
   id: string;

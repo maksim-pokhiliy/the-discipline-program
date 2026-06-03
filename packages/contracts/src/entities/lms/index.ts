@@ -2,6 +2,7 @@ export * from "./_shared";
 export * from "./alternating-group";
 export * from "./archetype";
 export * from "./block";
+export * from "./composition";
 export * from "./day";
 export * from "./exercise";
 export * from "./label";
