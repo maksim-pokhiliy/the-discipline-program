@@ -147,6 +147,10 @@ export const lmsSchemaApi = {
                   data.trailingConnector === undefined || data.trailingConnector === null
                     ? Prisma.JsonNull
                     : toInputJson(data.trailingConnector),
+                composition:
+                  data.composition === undefined || data.composition === null
+                    ? Prisma.JsonNull
+                    : toInputJson(data.composition),
                 notes: data.notes ?? null,
               },
             });
@@ -212,6 +216,10 @@ export const lmsSchemaApi = {
               data.trailingConnector === null
                 ? Prisma.JsonNull
                 : toInputJson(data.trailingConnector),
+          }),
+          ...(data.composition !== undefined && {
+            composition:
+              data.composition === null ? Prisma.JsonNull : toInputJson(data.composition),
           }),
           ...(data.notes !== undefined && { notes: data.notes }),
         },

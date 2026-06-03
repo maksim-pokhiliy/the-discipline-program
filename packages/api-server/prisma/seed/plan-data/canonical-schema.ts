@@ -56,6 +56,7 @@ import {
   alternatingGroupRelationSchema,
   type AlternatingGroupRelation,
 } from "@repo/contracts/lms/alternating-group";
+import { compositionSchema } from "@repo/contracts/lms/composition";
 import { archetypeParamsSchema } from "@repo/contracts/lms/schema";
 import {
   positionSchema,
@@ -212,19 +213,12 @@ export const rowSchema = z.object({
 });
 export type CanonicalRow = z.infer<typeof rowSchema>;
 
-// ──────────────────────────────────────────────────────────────────────────
-// Schema (recursive — sub-schemas for nested / time-window-outer archetypes)
-//
-// `alternatingGroupRef`: scoped to containing block. The builder emits the
-// same ref string on every member schema; the emit pipeline creates one
-// AlternatingGroup entity per distinct ref and wires Schema.alternatingGroupId.
-// ──────────────────────────────────────────────────────────────────────────
-
 export type CanonicalSchemaNode = {
   refId?: string;
   order: number;
   kind: z.infer<typeof schemaKindSchema>;
   archetype: z.infer<typeof archetypeParamsSchema>;
+  composition?: z.infer<typeof compositionSchema>;
   header: string | null;
   intensity: z.infer<typeof intensitySchema> | null;
   notes: string | null;
@@ -234,16 +228,13 @@ export type CanonicalSchemaNode = {
   subSchemas: CanonicalSchemaNode[];
 };
 
-// Self-recursive Zod schema. The `as z.ZodType<CanonicalSchemaNode>` cast is
-// the canonical Zod 3 pattern for self-referencing structures — without it
-// TS can't infer the recursive output shape (default + optional combinations
-// confuse the inference). The type alias above is the source of truth.
 export const canonicalSchemaNodeSchema = z.lazy(() =>
   z.object({
     refId: z.string().min(1).max(48).optional(),
     order: z.number().int().positive(),
     kind: schemaKindSchema,
     archetype: archetypeParamsSchema,
+    composition: compositionSchema.optional(),
     header: z.string().min(1).max(200).nullable(),
     intensity: intensitySchema.nullable(),
     notes: z.string().max(4000).nullable(),

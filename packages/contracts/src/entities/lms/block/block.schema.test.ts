@@ -46,6 +46,8 @@ const atomicSchema = {
   },
   intensity: null,
   trailingConnector: null,
+  composition: null,
+  label: null,
   notes: null,
   createdAt: new Date(),
   updatedAt: new Date(),

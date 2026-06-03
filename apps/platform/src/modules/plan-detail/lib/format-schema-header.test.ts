@@ -27,6 +27,8 @@ const makeSchema = (
     archetypeParams,
     intensity: null,
     trailingConnector: null,
+    composition: null,
+    label: null,
     notes: null,
     createdAt: now,
     updatedAt: now,

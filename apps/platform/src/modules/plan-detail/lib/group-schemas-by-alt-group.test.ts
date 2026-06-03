@@ -25,6 +25,8 @@ const makeSchema = (overrides: Partial<SchemaFields> = {}): SchemaWithBody => ({
     archetypeParams: { archetype: "amrap-flat", params: { durationMin: 10 } },
     intensity: null,
     trailingConnector: null,
+    composition: null,
+    label: null,
     notes: null,
     createdAt: now,
     updatedAt: now,

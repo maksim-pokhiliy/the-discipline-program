@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
+import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach, createTestPlan } from "../../../test/helpers";
@@ -9,6 +10,16 @@ import { lmsSchemaApi } from "./admin";
 const ATOMIC_PARAMS = {
   archetype: "n-rounds" as const,
   params: { countForm: "exact" as const, count: 5 },
+};
+
+const LADDER_COMPOSITION: Composition = {
+  repetition: { kind: "ladder", steps: [21, 15, 9] },
+  arrangement: { kind: "ordered" },
+};
+
+const INTERVAL_COMPOSITION: Composition = {
+  repetition: { kind: "interval", workMin: 2, offMin: 1, count: 6 },
+  scoring: { kind: "max_in_remaining", condition: { appliesToRounds: [2, 3] } },
 };
 
 const SECOND_ATOMIC_PARAMS = {
@@ -389,6 +400,56 @@ describe("lmsSchemaApi", () => {
       }
     });
 
+    it("dual-writes a composition + required archetype, derives the label, and stores the bundle (QA-007 / G3)", async () => {
+      const ctx = await provisionBlock();
+
+      try {
+        const created = await lmsSchemaApi.create(
+          coach.user.id,
+          activePlanId,
+          { blockId: ctx.block.id },
+          {
+            kind: "ATOMIC",
+            archetypeId: atomicArchetypeId,
+            archetypeParams: ATOMIC_PARAMS,
+            composition: LADDER_COMPOSITION,
+          },
+        );
+
+        expect(created.composition).toEqual(LADDER_COMPOSITION);
+        expect(created.label).toEqual(deriveCompositionLabel(LADDER_COMPOSITION));
+        expect(created.archetypeParams).toEqual(ATOMIC_PARAMS);
+
+        const stored = await cleanupRaw.schema.findUnique({ where: { id: created.id } });
+
+        expect(stored?.composition).toEqual(LADDER_COMPOSITION);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("stores SQL null composition and a null label when no composition is supplied (QA-007 / G1)", async () => {
+      const ctx = await provisionBlock();
+
+      try {
+        const created = await lmsSchemaApi.create(
+          coach.user.id,
+          activePlanId,
+          { blockId: ctx.block.id },
+          { kind: "ATOMIC", archetypeId: atomicArchetypeId, archetypeParams: ATOMIC_PARAMS },
+        );
+
+        expect(created.composition).toBeNull();
+        expect(created.label).toBeNull();
+
+        const stored = await cleanupRaw.schema.findUnique({ where: { id: created.id } });
+
+        expect(stored?.composition).toBeNull();
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
     it("assigns the next sparse order on a populated block", async () => {
       const ctx = await provisionBlock();
 
@@ -690,6 +751,47 @@ describe("lmsSchemaApi", () => {
 
         expect(stored?.intensity).toBeNull();
         expect(stored?.trailingConnector).toBeNull();
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("mutates composition to a new bundle then clears it to null with a recomputed label (QA-007 / G3)", async () => {
+      const ctx = await provisionBlock();
+      const schema = await lmsSchemaApi.create(
+        coach.user.id,
+        activePlanId,
+        { blockId: ctx.block.id },
+        {
+          kind: "ATOMIC",
+          archetypeId: atomicArchetypeId,
+          archetypeParams: ATOMIC_PARAMS,
+          composition: LADDER_COMPOSITION,
+        },
+      );
+
+      try {
+        const mutated = await lmsSchemaApi.update(coach.user.id, schema.id, {
+          composition: INTERVAL_COMPOSITION,
+        });
+
+        expect(mutated.composition).toEqual(INTERVAL_COMPOSITION);
+        expect(mutated.label).toEqual(deriveCompositionLabel(INTERVAL_COMPOSITION));
+
+        const storedMutated = await cleanupRaw.schema.findUnique({ where: { id: schema.id } });
+
+        expect(storedMutated?.composition).toEqual(INTERVAL_COMPOSITION);
+
+        const cleared = await lmsSchemaApi.update(coach.user.id, schema.id, {
+          composition: null,
+        });
+
+        expect(cleared.composition).toBeNull();
+        expect(cleared.label).toBeNull();
+
+        const storedCleared = await cleanupRaw.schema.findUnique({ where: { id: schema.id } });
+
+        expect(storedCleared?.composition).toBeNull();
       } finally {
         await ctx.cleanup();
       }
