@@ -136,7 +136,7 @@ const BLOCK_COMPOSITE_INT_WR_FIXED_WK1_WED: CanonicalBlock = {
         ],
       }),
       composition: {
-        repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
+        repetition: { kind: "interval", workMin: 2, offMin: 1, count: 6 },
         scoring: { kind: "max_in_remaining", condition: { appliesToRounds: [2, 3] } },
       },
     },
