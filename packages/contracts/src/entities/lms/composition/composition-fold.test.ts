@@ -61,4 +61,13 @@ describe("AlternatingGroup → arrangement:parallel fold target (design §9)", (
       }).success,
     ).toBe(false);
   });
+
+  it("rejects the legacy pairedWithInnerRowId field name (guards the §5 rename slip)", () => {
+    expect(
+      parallelTrackSchema.safeParse({
+        childSchemaId: cuidLadderChild,
+        pairedWithInnerRowId: cuidPairedRow,
+      }).success,
+    ).toBe(false);
+  });
 });

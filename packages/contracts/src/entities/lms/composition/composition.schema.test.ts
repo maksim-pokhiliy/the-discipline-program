@@ -111,6 +111,20 @@ describe("repetitionAxisSchema", () => {
     ).toBe(true);
   });
 
+  it("accepts the EMOM one-minute box window 00:00 to 00:01", () => {
+    expect(
+      repetitionAxisSchema.safeParse({ kind: "window", startHhMm: "00:00", endHhMm: "00:01" })
+        .success,
+    ).toBe(true);
+  });
+
+  it("accepts a single-digit-hour window 9:30 to 10:30", () => {
+    expect(
+      repetitionAxisSchema.safeParse({ kind: "window", startHhMm: "9:30", endHhMm: "10:30" })
+        .success,
+    ).toBe(true);
+  });
+
   it("rejects window with an out-of-clock value", () => {
     expect(
       repetitionAxisSchema.safeParse({ kind: "window", startHhMm: "99:99", endHhMm: "10:30" })
@@ -304,6 +318,12 @@ describe("scoringDirectiveSchema", () => {
       }).success,
     ).toBe(false);
   });
+
+  it("rejects a function-valued seed (inertness holds at the parse boundary)", () => {
+    expect(scoringDirectiveSchema.safeParse({ kind: "progressive", seed: () => "x" }).success).toBe(
+      false,
+    );
+  });
 });
 
 describe("restAxisSchema", () => {
@@ -321,6 +341,22 @@ describe("restAxisSchema", () => {
         scope: "between_sets",
       }).success,
     ).toBe(false);
+  });
+
+  it("rejects a duration-free until_recovery rest (the QA-003 expressiveness gap)", () => {
+    expect(
+      restAxisSchema.safeParse({ scope: "between_rounds", qualifier: "until_recovery" }).success,
+    ).toBe(false);
+  });
+
+  it("accepts the sham fixed-duration workaround for until_recovery", () => {
+    expect(
+      restAxisSchema.safeParse({
+        duration: { value: 1, unit: "sec" },
+        scope: "between_rounds",
+        qualifier: "until_recovery",
+      }).success,
+    ).toBe(true);
   });
 });
 
