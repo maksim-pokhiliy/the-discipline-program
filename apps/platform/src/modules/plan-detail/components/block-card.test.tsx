@@ -156,7 +156,6 @@ const renderBlockCard = ({
 
   const catalogValue: CatalogContextValue = {
     exerciseById: new Map(),
-    archetypeById: new Map(),
   };
 
   return render(
