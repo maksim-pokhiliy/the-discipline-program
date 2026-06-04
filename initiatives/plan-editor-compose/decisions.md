@@ -30,7 +30,7 @@ D-numbered ratified decisions for this initiative. Step-level calls that don't m
 | D-PHASE5-SCORING   | Scoring/execution layer = the product differentiator vs Sheets; deferred to its own initiative | DEFERRED (future initiative)                 |
 | D-10.4-1           | 10.4 shape: the arc S1→S2→S3 vs alternatives                                                   | RATIFIED (S1)                                |
 | D-10.4-2           | Drop `Schema.kind` + abolish the kind-based write guards                                       | RATIFIED (dir; S1 nullable → S3 drops)       |
-| D-10.4-3           | S2 compose-write UI scope (full four-projection vs MVP)                                        | **OPEN** (leaning recorded → S2 gate)        |
+| D-10.4-3           | S2 compose-write UI scope (full four-projection vs MVP)                                        | RATIFIED (S2 kickoff 2026-06-04)             |
 | D-10.4-S1-RS       | S1 read-shape fork → option (b): non-null read + `mapToSchema` narrow                          | RATIFIED (S1 Gate A)                         |
 | D-10.4-S1-INT      | S1 ships composition-only-create as an accepted poison-intermediate                            | RATIFIED (owner override)                    |
 
@@ -151,9 +151,10 @@ D-numbered ratified decisions for this initiative. Step-level calls that don't m
 
 ### D-10.4-3 — S2 compose-write UI scope
 
-- **Status:** OPEN — leaning recorded (2026-06-04): full four-projection-faithful; parallel/superset sequenced LAST within S2 so it can slip to an increment. Ratify firmly at S2 kickoff (more info after S1; QA-004 existence-check rides with parallel/superset).
-- **The fork.** The prototype HAS all 7 repetition fields + arrangement/scoring/rest inspector (UX validated). The productionization scope question: ship ALL axes incl. `arrangement:parallel/superset` (the hardest — refs `childSchemaId`/`rowIds`/`pairedWithRowId` + the AlternatingGroup fold + the QA-004 existence-check) day-1, or simple axes first (count/ladder/cadence/interval/timeCap + ordered + duplication + EMOM row-as-minute) and defer parallel/superset persistence to an S2 increment.
-- **Coach-POV.** The corpus uses parallel ladders (Gauntlet C) and supersets (E) on paper — so for fidelity they are needed; the question is day-1 vs increment.
+- **Status:** RATIFIED (S2 kickoff, 2026-06-04). Ratified the recorded leaning verbatim.
+- **Decision.** S2 end-state = **full four-projection-faithful** (all axes, incl. `arrangement:parallel/superset`) — non-negotiable: without parallel/superset the coach re-walkthrough cannot close Gauntlet C (parallel ladders) / E (supersets). **parallel/superset authoring + QA-004 existence-check are sequenced LAST within S2** — both the hardest piece and the cleanest cut-line: if the productionization research shows S2 overflows one `/feature` full, parallel/superset slips to an S2 increment (next session), QA-004 rides with it (inert until arrangement refs are authored → no poison), and the re-walkthrough validates the shippable subset honestly with C/E arriving on the increment. **The split decision itself is delegated to the `/feature` research stage** (it owns the productionization blast-radius); not pre-committed here (would be instinct-specing).
+- **The fork (kept for the trail).** The prototype HAS all 7 repetition fields + arrangement/scoring/rest inspector (UX validated). The scope question was: ship ALL axes incl. `arrangement:parallel/superset` (refs `childSchemaId`/`rowIds`/`pairedWithRowId` + the AlternatingGroup fold + the QA-004 existence-check) day-1, or simple axes first (count/ladder/cadence/interval/timeCap + ordered + duplication + EMOM row-as-minute) and defer parallel/superset persistence to an increment. Resolved: full end-state, parallel/superset sequenced last.
+- **Coach-POV.** The corpus uses parallel ladders (Gauntlet C) and supersets (E) on paper — so for fidelity they are needed; the question was day-1 vs increment, resolved in favour of fidelity-with-late-sequencing.
 
 ### D-10.4-S1-RS — S1 read-shape fork → option (b)
 
