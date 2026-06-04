@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   closestCenter,
@@ -19,9 +19,12 @@ import {
 } from "@dnd-kit/sortable";
 import { Stack } from "@mui/material";
 
+import type { Composition } from "@repo/contracts/lms/composition";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import { useReorderSchemaRows } from "@app/lib/hooks";
+
+import { deriveMinuteView } from "../compose/lib/derive-minute-view";
 
 import { AddRowButton } from "./add-row-button";
 import { SchemaRowCard } from "./schema-row-card";
@@ -31,6 +34,7 @@ type SchemaRowListProps = {
   startDate: string;
   schemaId: string;
   rows: SchemaRow[];
+  composition?: Composition | null;
   parentIsReorderPending?: boolean;
 };
 
@@ -39,6 +43,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
   startDate,
   schemaId,
   rows,
+  composition = null,
   parentIsReorderPending = false,
 }) => {
   const reorderSchemaRows = useReorderSchemaRows(planId, startDate);
@@ -47,6 +52,25 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
   useEffect(() => {
     setSortedRows(rows);
   }, [rows]);
+
+  const minuteLabelById = useMemo<Map<string, string>>(() => {
+    if (composition === null) {
+      return new Map();
+    }
+
+    const view = deriveMinuteView(
+      composition,
+      sortedRows.map((row) => row.id),
+    );
+
+    if (view.kind === "none") {
+      return new Map();
+    }
+
+    return new Map(
+      view.assignments.map((assignment) => [assignment.rowId, assignment.minuteLabel]),
+    );
+  }, [composition, sortedRows]);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -95,6 +119,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
                   planId={planId}
                   startDate={startDate}
                   index={index}
+                  minuteLabel={minuteLabelById.get(row.id) ?? null}
                   isReorderPending={parentIsReorderPending || reorderSchemaRows.isPending}
                 />
               ))}

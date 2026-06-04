@@ -10,6 +10,7 @@ import { CascadeChip, IndicatorChip } from "@repo/ui";
 import { type BlockCtx, buildCascadeChips } from "../lib/build-cascade-chips";
 import { formatArchetypeParams } from "../lib/format-archetype-params";
 import { formatIntensityChips, formatTimeCap } from "../lib/format-block-meta";
+import { formatCompositionSummary } from "../lib/format-composition-summary";
 
 const NO_PARAMS_LABEL = "no params";
 const PARAM_SEPARATOR = "·";
@@ -25,11 +26,18 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
   blockCtx,
 }): ReactElement => {
   const archetypeParams = schema.schema.archetypeParams;
+  const composition = schema.schema.composition;
   const schemaIntensity = schema.schema.intensity;
 
   const paramTexts = useMemo(
     () => (archetypeParams === null ? [] : formatArchetypeParams(archetypeParams)),
     [archetypeParams],
+  );
+
+  const compositionTexts = useMemo(
+    () =>
+      archetypeParams === null && composition !== null ? formatCompositionSummary(composition) : [],
+    [archetypeParams, composition],
   );
 
   const ownChips = useMemo(
@@ -47,15 +55,17 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
     [blockCtx.timeCap],
   );
 
+  const metaTexts = paramTexts.length > 0 ? paramTexts : compositionTexts;
+
   const isEmpty =
-    paramTexts.length === 0 &&
+    metaTexts.length === 0 &&
     ownChips.length === 0 &&
     cascadeChips.length === 0 &&
     capCascadeText === null;
 
   return (
     <Stack direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap">
-      {paramTexts.map((text, i) => (
+      {metaTexts.map((text, i) => (
         <Fragment key={`${String(i)}-${text}`}>
           {i > 0 ? (
             <Typography variant="caption" component="span" color="text.disabled">

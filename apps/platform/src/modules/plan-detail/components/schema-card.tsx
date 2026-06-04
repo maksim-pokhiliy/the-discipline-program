@@ -158,6 +158,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
       <SchemaRowList
         rows={schema.rows}
         schemaId={schema.schema.id}
+        composition={schema.schema.composition}
         planId={planId}
         startDate={startDate}
         parentIsReorderPending={isMutationPending}

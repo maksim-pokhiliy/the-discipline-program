@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
-
 import { Stack } from "@mui/material";
 
-import { MOCK_EXERCISES } from "../compose-mock-exercises";
+import type { Exercise } from "@repo/contracts/lms/exercise";
+
 import type { ComposeProgram, NodeId } from "../compose-tree.types";
 
 import type { NodeHandlers } from "./compose-canvas-handlers";
@@ -15,6 +14,7 @@ const WEEKS_SPACING = 4;
 
 type ComposeCanvasProps = {
   program: ComposeProgram;
+  exerciseById: Map<string, Exercise>;
   handlers: NodeHandlers;
   upperHandlers: UpperHandlers;
   onRename: (id: NodeId, header: string) => void;
@@ -22,27 +22,21 @@ type ComposeCanvasProps = {
 
 export const ComposeCanvas: React.FC<ComposeCanvasProps> = ({
   program,
+  exerciseById,
   handlers,
   upperHandlers,
   onRename,
-}) => {
-  const exerciseById = useMemo(
-    () => new Map(MOCK_EXERCISES.map((exercise) => [exercise.id, exercise])),
-    [],
-  );
-
-  return (
-    <Stack direction="column" spacing={WEEKS_SPACING}>
-      {program.weeks.map((week) => (
-        <ComposeWeekRow
-          key={week.id}
-          week={week}
-          exerciseById={exerciseById}
-          handlers={handlers}
-          upperHandlers={upperHandlers}
-          onRename={onRename}
-        />
-      ))}
-    </Stack>
-  );
-};
+}) => (
+  <Stack direction="column" spacing={WEEKS_SPACING}>
+    {program.weeks.map((week) => (
+      <ComposeWeekRow
+        key={week.id}
+        week={week}
+        exerciseById={exerciseById}
+        handlers={handlers}
+        upperHandlers={upperHandlers}
+        onRename={onRename}
+      />
+    ))}
+  </Stack>
+);
