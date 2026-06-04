@@ -26,7 +26,6 @@ const ADD_PAIR_LABEL = "add pair";
 const REMOVE_PAIR_LABEL = "Remove pair";
 const LABEL_WIDTH = 220;
 const ROWS_WIDTH = 260;
-const EMPTY_PAIR: SupersetPairDraft = { label: "", rowIds: [] };
 const ROWS_SEPARATOR = ", ";
 
 const resolveRowIds = (rawIds: string[], rows: ArrangementTargetRef[]): NodeId[] =>
@@ -38,14 +37,14 @@ const labelFor = (rowIds: NodeId[], rows: ArrangementTargetRef[]): string =>
 type SupersetArrangementFieldsProps = {
   value: SupersetArrangement;
   onChange: (next: ArrangementAxis) => void;
-  descendantRows: ArrangementTargetRef[];
+  directRows: ArrangementTargetRef[];
   disabled?: boolean;
 };
 
 export const SupersetArrangementFields: React.FC<SupersetArrangementFieldsProps> = ({
   value,
   onChange,
-  descendantRows,
+  directRows,
   disabled = false,
 }) => {
   const setPairs = (pairs: SupersetPairDraft[]): void => onChange({ ...value, pairs });
@@ -55,13 +54,13 @@ export const SupersetArrangementFields: React.FC<SupersetArrangementFieldsProps>
 
   const removePair = (index: number): void => setPairs(value.pairs.filter((_, i) => i !== index));
 
-  const addPair = (): void => setPairs([...value.pairs, EMPTY_PAIR]);
+  const addPair = (): void => setPairs([...value.pairs, { label: "", rowIds: [] }]);
 
   const handleRowsChange = (index: number, event: SelectChangeEvent<string[]>): void => {
     const raw = event.target.value;
     const rawIds = typeof raw === "string" ? raw.split(ROWS_SEPARATOR) : raw;
 
-    patchPair(index, { rowIds: resolveRowIds(rawIds, descendantRows) });
+    patchPair(index, { rowIds: resolveRowIds(rawIds, directRows) });
   };
 
   return (
@@ -99,11 +98,11 @@ export const SupersetArrangementFields: React.FC<SupersetArrangementFieldsProps>
             label={ROWS_FIELD_LABEL}
             value={pair.rowIds}
             onChange={(event) => handleRowsChange(index, event)}
-            renderValue={(selected) => labelFor(selected, descendantRows)}
+            renderValue={(selected) => labelFor(selected, directRows)}
             disabled={disabled}
             sx={{ maxWidth: ROWS_WIDTH }}
           >
-            {descendantRows.map((row) => (
+            {directRows.map((row) => (
               <MenuItem key={row.id} value={row.id}>
                 <Checkbox checked={pair.rowIds.includes(row.id)} />
 

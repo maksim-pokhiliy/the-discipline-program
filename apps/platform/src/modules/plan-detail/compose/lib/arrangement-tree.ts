@@ -3,6 +3,9 @@ import type { ComposeContainer, ComposeRow } from "../compose-tree.types";
 export const collectTrackChildren = (container: ComposeContainer): ComposeContainer[] =>
   container.children.filter((child): child is ComposeContainer => child.nodeType === "container");
 
+export const collectDirectRows = (container: ComposeContainer): ComposeRow[] =>
+  container.children.filter((child): child is ComposeRow => child.nodeType === "row");
+
 export const collectDescendantRows = (container: ComposeContainer): ComposeRow[] => {
   const rows: ComposeRow[] = [];
 

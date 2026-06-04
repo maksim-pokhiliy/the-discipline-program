@@ -30,7 +30,7 @@ type ArrangementAxisFieldProps = {
   value: ArrangementAxis;
   onChange: (next: ArrangementAxis) => void;
   childContainers: ArrangementTargetRef[];
-  descendantRows: ArrangementTargetRef[];
+  directRows: ArrangementTargetRef[];
   rowsByTrack: Record<string, ArrangementTargetRef[]>;
   disabled?: boolean;
 };
@@ -39,7 +39,7 @@ export const ArrangementAxisField: React.FC<ArrangementAxisFieldProps> = ({
   value,
   onChange,
   childContainers,
-  descendantRows,
+  directRows,
   rowsByTrack,
   disabled = false,
 }) => {
@@ -70,7 +70,7 @@ export const ArrangementAxisField: React.FC<ArrangementAxisFieldProps> = ({
           <SupersetArrangementFields
             value={value}
             onChange={onChange}
-            descendantRows={descendantRows}
+            directRows={directRows}
             disabled={disabled}
           />
         );

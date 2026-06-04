@@ -6,7 +6,7 @@ import type {
   SupersetPairDraft,
 } from "../compose-tree.types";
 
-import { collectDescendantRows, collectTrackChildren } from "./arrangement-tree";
+import { collectDescendantRows, collectDirectRows, collectTrackChildren } from "./arrangement-tree";
 
 export type DraftArrangement = Exclude<ArrangementAxis, { kind: "ordered" }>;
 
@@ -15,6 +15,10 @@ export type ConvertIssue = { path: string; message: string };
 const MIN_TRACKS = 2;
 const MIN_PAIRS = 1;
 const MIN_PAIR_ROWS = 2;
+const MIN_ENUMERATION_VALUE = 1;
+
+const isPositiveInteger = (value: number): boolean =>
+  Number.isInteger(value) && value >= MIN_ENUMERATION_VALUE;
 
 const issueAt = (path: string, suffix: string, message: string): ConvertIssue => ({
   path: `${path}.composition.arrangement${suffix}`,
@@ -24,8 +28,8 @@ const issueAt = (path: string, suffix: string, message: string): ConvertIssue =>
 const collectChildSchemaIds = (container: ComposeContainer): Set<NodeId> =>
   new Set(collectTrackChildren(container).map((child) => child.id));
 
-const collectDescendantRowIds = (container: ComposeContainer): Set<NodeId> =>
-  new Set(collectDescendantRows(container).map((row) => row.id));
+const collectDirectRowIds = (container: ComposeContainer): Set<NodeId> =>
+  new Set(collectDirectRows(container).map((row) => row.id));
 
 const siblingRowIds = (
   container: ComposeContainer,
@@ -71,6 +75,18 @@ const validateParallelTrack = (
   if (!childIds.has(track.childSchemaId)) {
     issues.push(
       issueAt(path, `.tracks[${index}].childSchemaId`, "track references a missing child group"),
+    );
+  }
+
+  const { setEnumeration } = track;
+
+  if (setEnumeration !== undefined && !setEnumeration.every(isPositiveInteger)) {
+    issues.push(
+      issueAt(
+        path,
+        `.tracks[${index}].setEnumeration`,
+        "set enumeration values must be positive whole numbers",
+      ),
     );
   }
 
@@ -149,7 +165,7 @@ const validateSuperset = (
     issues.push(issueAt(path, ".pairs", "a superset arrangement needs at least one pair"));
   }
 
-  const rowIds = collectDescendantRowIds(container);
+  const rowIds = collectDirectRowIds(container);
 
   pairs.forEach((pair, index) => validateSupersetPair(pair, index, rowIds, path, issues));
 };

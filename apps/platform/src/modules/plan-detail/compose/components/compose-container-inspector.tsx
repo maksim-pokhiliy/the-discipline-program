@@ -116,7 +116,7 @@ export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps>
         value={container.arrangement ?? DEFAULT_ARRANGEMENT}
         onChange={setArrangement}
         childContainers={arrangementTargets.childContainers}
-        descendantRows={arrangementTargets.descendantRows}
+        directRows={arrangementTargets.directRows}
         rowsByTrack={arrangementTargets.rowsByTrack}
       />
 
