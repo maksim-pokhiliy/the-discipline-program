@@ -8,7 +8,6 @@ import {
   type SchemaWithBody,
   trailingConnectorSchema,
 } from "@repo/contracts/lms/schema";
-import { InternalServerError } from "@repo/errors";
 
 import { mapToSchemaRow } from "./schema-row.mapper";
 
@@ -23,14 +22,6 @@ export type PrismaSchemaWithSubSchemas = PrismaSchemaWithRows & {
 export const mapToSchema = (s: PrismaSchema): Schema => {
   const composition = s.composition === null ? null : compositionSchema.parse(s.composition);
 
-  if (s.kind === null || s.archetypeId === null || s.archetypeParams === null) {
-    throw new InternalServerError("Schema is missing archetype fields", {
-      kind: "DbCorruption",
-      entity: "Schema",
-      schemaId: s.id,
-    });
-  }
-
   return {
     id: s.id,
     blockId: s.blockId,
@@ -40,7 +31,8 @@ export const mapToSchema = (s: PrismaSchema): Schema => {
     kind: s.kind,
     archetypeId: s.archetypeId,
     header: s.header,
-    archetypeParams: archetypeParamsSchema.parse(s.archetypeParams),
+    archetypeParams:
+      s.archetypeParams === null ? null : archetypeParamsSchema.parse(s.archetypeParams),
     intensity: s.intensity === null ? null : intensitySchema.parse(s.intensity),
     trailingConnector:
       s.trailingConnector === null ? null : trailingConnectorSchema.parse(s.trailingConnector),

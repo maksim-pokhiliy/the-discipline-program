@@ -46,10 +46,10 @@ type SchemaShape = {
   parentSchemaId: string | null;
   alternatingGroupId: string | null;
   order: number;
-  kind: z.infer<typeof schemaKindSchema>;
-  archetypeId: string;
+  kind: z.infer<typeof schemaKindSchema> | null;
+  archetypeId: string | null;
   header: string | null;
-  archetypeParams: z.infer<typeof archetypeParamsSchema>;
+  archetypeParams: z.infer<typeof archetypeParamsSchema> | null;
   intensity: z.infer<typeof intensitySchema> | null;
   trailingConnector: z.infer<typeof trailingConnectorSchema> | null;
   composition: z.infer<typeof compositionSchema> | null;
@@ -66,10 +66,10 @@ export const schemaSchema: z.ZodType<SchemaShape> = z.lazy(() =>
     parentSchemaId: z.string().cuid().nullable(),
     alternatingGroupId: z.string().cuid().nullable(),
     order: z.number().int().positive(),
-    kind: schemaKindSchema,
-    archetypeId: z.string().cuid(),
+    kind: schemaKindSchema.nullable(),
+    archetypeId: z.string().cuid().nullable(),
     header: z.string().max(SCHEMA_CONSTANTS.MAX_HEADER_LENGTH).nullable(),
-    archetypeParams: archetypeParamsSchema,
+    archetypeParams: archetypeParamsSchema.nullable(),
     intensity: intensitySchema.nullable(),
     trailingConnector: trailingConnectorSchema.nullable(),
     composition: compositionSchema.nullable(),
@@ -98,7 +98,7 @@ export const schemaSchemaWithInvariants = schemaSchema.superRefine((value, ctx) 
   if (value.parentSchemaId !== null) {
     const allowed: readonly string[] = SUB_SCHEMA_ALLOWED_KINDS;
 
-    if (!allowed.includes(value.kind)) {
+    if (value.kind !== null && !allowed.includes(value.kind)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ["kind"],

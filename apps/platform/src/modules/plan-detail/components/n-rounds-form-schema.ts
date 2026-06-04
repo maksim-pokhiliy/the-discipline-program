@@ -72,6 +72,10 @@ export const toFormData = (mode: SchemaEditorMode): NRoundsFormData => {
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return buildBranchDefaults("exact");
+  }
+
   if (archetypeParams.archetype !== "n-rounds") {
     return buildBranchDefaults("exact");
   }

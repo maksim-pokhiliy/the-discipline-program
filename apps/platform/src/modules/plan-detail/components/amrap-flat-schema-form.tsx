@@ -25,6 +25,10 @@ export const toAmrapFlatParams = (mode: SchemaEditorMode): AmrapFlatParams => {
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return amrapFlatDefaultParams;
+  }
+
   if (archetypeParams.archetype === "amrap-flat") {
     return { durationMin: archetypeParams.params.durationMin };
   }

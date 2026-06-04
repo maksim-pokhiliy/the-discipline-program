@@ -29,6 +29,10 @@ export const toRunDistanceParams = (mode: SchemaEditorMode): RunDistanceParams =
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return runDistanceDefaultParams;
+  }
+
   if (archetypeParams.archetype === "run-distance") {
     return {
       modality: "RUN",

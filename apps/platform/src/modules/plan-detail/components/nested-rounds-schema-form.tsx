@@ -20,6 +20,10 @@ export const toNestedRoundsParams = (mode: SchemaEditorMode): NestedRoundsParams
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return nestedRoundsDefaultParams;
+  }
+
   if (
     archetypeParams.archetype !== "nested-rounds-over-rounds" &&
     archetypeParams.archetype !== "nested-rounds-over-parallel-ladder"

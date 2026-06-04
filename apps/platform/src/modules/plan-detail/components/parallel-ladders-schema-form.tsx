@@ -43,6 +43,11 @@ export const toParallelLaddersParams = (
   }
 
   const { archetypeParams } = mode.schema.schema;
+
+  if (archetypeParams === null) {
+    return fallback;
+  }
+
   const target: ArchetypeName = mixed
     ? "parallel-ladders-mixed-direction"
     : "parallel-ladders-descending";

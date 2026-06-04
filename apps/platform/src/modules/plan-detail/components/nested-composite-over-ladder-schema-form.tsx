@@ -30,6 +30,10 @@ export const toNestedCompositeOverLadderParams = (
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return nestedCompositeOverLadderDefaultParams;
+  }
+
   if (archetypeParams.archetype === "nested-composite-rounds-over-ladder") {
     const { outerCount, rest } = archetypeParams.params;
 

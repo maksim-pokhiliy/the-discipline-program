@@ -27,7 +27,10 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
   const archetypeParams = schema.schema.archetypeParams;
   const schemaIntensity = schema.schema.intensity;
 
-  const paramTexts = useMemo(() => formatArchetypeParams(archetypeParams), [archetypeParams]);
+  const paramTexts = useMemo(
+    () => (archetypeParams === null ? [] : formatArchetypeParams(archetypeParams)),
+    [archetypeParams],
+  );
 
   const ownChips = useMemo(
     () => (schemaIntensity !== null ? formatIntensityChips(schemaIntensity) : []),

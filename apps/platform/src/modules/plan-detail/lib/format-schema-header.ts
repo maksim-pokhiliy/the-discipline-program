@@ -88,6 +88,10 @@ export const formatSchemaHeader = (
 
   const archetypeParams = schema.schema.archetypeParams;
 
+  if (archetypeParams === null) {
+    return "";
+  }
+
   switch (archetypeParams.archetype) {
     case "n-rounds":
       return formatNRoundsHeader(archetypeParams.params);
