@@ -1,10 +1,15 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { Box, Paper, Stack, Typography } from "@mui/material";
+
+import type { Exercise } from "@repo/contracts/lms/exercise";
 
 import { ComposeCanvas } from "../compose/components/compose-canvas";
 import { ComposeNodeInspector } from "../compose/components/compose-node-inspector";
 import { ComposeProviderShell } from "../compose/components/compose-provider-shell";
+import { MOCK_EXERCISES } from "../compose/compose-mock-exercises";
 import type { ComposeProgram } from "../compose/compose-tree.types";
 import { useComposeProgram } from "../compose/use-compose-program";
 
@@ -23,6 +28,11 @@ type ComposePrototypeViewProps = {
 export const ComposePrototypeView: React.FC<ComposePrototypeViewProps> = ({ initialProgram }) => {
   const controller = useComposeProgram(initialProgram);
 
+  const exerciseById = useMemo<Map<string, Exercise>>(
+    () => new Map(MOCK_EXERCISES.map((exercise) => [exercise.id, exercise])),
+    [],
+  );
+
   return (
     <ComposeProviderShell>
       <Stack direction="column" spacing={LAYOUT_GAP} sx={{ p: PAGE_PADDING }}>
@@ -38,6 +48,7 @@ export const ComposePrototypeView: React.FC<ComposePrototypeViewProps> = ({ init
           <Box sx={{ flex: 1, minWidth: 0, maxWidth: CANVAS_MAX_WIDTH_PX }}>
             <ComposeCanvas
               program={controller.program}
+              exerciseById={exerciseById}
               handlers={controller.nodeHandlers}
               upperHandlers={controller.upperHandlers}
               onRename={controller.rename}

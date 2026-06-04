@@ -28,6 +28,10 @@ export const toCompositeRollingRoundsParams = (
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return compositeRollingRoundsDefaultParams;
+  }
+
   if (archetypeParams.archetype === "composite-rolling-rounds") {
     return {
       everyNthMin: archetypeParams.params.everyNthMin,

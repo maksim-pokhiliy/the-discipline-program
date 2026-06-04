@@ -1,5 +1,6 @@
 export { ComposePrototypeView } from "../views/compose-prototype-view";
 export { ComposeCanvas } from "./components/compose-canvas";
+export { ComposeEditorDrawer } from "./components/compose-editor-drawer";
 export { ComposeLeafEditor } from "./components/compose-leaf-editor";
 export { ComposeNodeInspector } from "./components/compose-node-inspector";
 export { ComposeProviderShell } from "./components/compose-provider-shell";

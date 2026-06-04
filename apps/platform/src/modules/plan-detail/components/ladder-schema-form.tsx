@@ -40,6 +40,10 @@ export const toLadderParams = (mode: SchemaEditorMode, flavour: LadderFlavour): 
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return LADDER_DEFAULTS[flavour];
+  }
+
   if (
     archetypeParams.archetype === "ladder-descending" ||
     archetypeParams.archetype === "ladder-ascending" ||

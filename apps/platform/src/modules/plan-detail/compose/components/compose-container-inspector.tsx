@@ -1,6 +1,6 @@
 "use client";
 
-import { Stack, Typography } from "@mui/material";
+import { Alert, Stack, Typography } from "@mui/material";
 
 import type { RestSpec } from "@repo/contracts/lms/_shared";
 import { InlineEditText } from "@repo/ui";
@@ -14,6 +14,7 @@ import type {
   RepetitionAxis,
   ScoringDirective,
 } from "../compose-tree.types";
+import { shouldBeContainer } from "../lib/should-be-container";
 
 import { ArrangementAxisField } from "./axes/arrangement-axis-field";
 import { RepetitionAxisField } from "./axes/repetition-axis-field";
@@ -24,6 +25,8 @@ const HEADER_ARIA = "Inspector header";
 const HEADER_PLACEHOLDER = "group…";
 const REST_LABEL = "rest";
 const PANEL_SPACING = 2;
+const DEMOTE_HINT =
+  "This group holds a single movement and no rep-scheme. A plain row may read cleaner — drop it down to a row, or give it a scheme to keep it as a group.";
 
 const DEFAULT_REPETITION: RepetitionAxis = { kind: "once" };
 const DEFAULT_ARRANGEMENT: ArrangementAxis = { kind: "ordered" };
@@ -73,8 +76,16 @@ export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps>
       asContainerPatch((node) => ({ ...node, rest })),
     );
 
+  const showsDemoteHint = !shouldBeContainer(container) && container.children.length === 1;
+
   return (
     <Stack direction="column" spacing={PANEL_SPACING}>
+      {showsDemoteHint ? (
+        <Alert severity="info" variant="outlined">
+          {DEMOTE_HINT}
+        </Alert>
+      ) : null}
+
       <Stack direction="column" spacing={0.5}>
         <Typography variant="caption" color="text.subtle">
           {HEADER_LABEL}

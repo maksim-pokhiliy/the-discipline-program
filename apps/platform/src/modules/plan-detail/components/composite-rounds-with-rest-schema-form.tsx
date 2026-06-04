@@ -27,6 +27,10 @@ export const toCompositeRoundsWithRestParams = (
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return compositeRoundsWithRestDefaultParams;
+  }
+
   if (archetypeParams.archetype !== "composite-rounds-with-rest") {
     return compositeRoundsWithRestDefaultParams;
   }

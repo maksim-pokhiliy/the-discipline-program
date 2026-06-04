@@ -90,7 +90,9 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
         flexWrap="wrap"
         sx={{ minWidth: 0 }}
       >
-        <SchemaArchetypeTag label={archetypeLabel ?? schema.schema.archetypeParams.archetype} />
+        <SchemaArchetypeTag
+          label={archetypeLabel ?? schema.schema.archetypeParams?.archetype ?? ""}
+        />
         <InlineEditText
           value={formatSchemaHeader(schema, archetypeLabel)}
           onCommit={onTitleCommit}

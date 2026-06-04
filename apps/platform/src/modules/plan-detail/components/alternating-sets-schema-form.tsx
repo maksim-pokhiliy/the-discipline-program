@@ -18,6 +18,10 @@ export const toAlternatingSetsParams = (mode: SchemaEditorMode): AlternatingSets
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return alternatingSetsDefaultParams;
+  }
+
   if (archetypeParams.archetype === "alternating-sets") {
     return { setEnumeration: archetypeParams.params.setEnumeration };
   }

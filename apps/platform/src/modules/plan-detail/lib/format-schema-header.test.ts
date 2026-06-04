@@ -219,3 +219,58 @@ describe("formatSchemaHeader", () => {
     expect(formatSchemaHeader(schema, null)).toBe("pull ups dips cycle");
   });
 });
+
+const NULL_TRIAD = { kind: null, archetypeId: null, archetypeParams: null } as const;
+const FALLBACK_PARAMS = { archetype: "single-line-bare" as const, params: {} };
+
+describe("formatSchemaHeader composition-only schemas (DR-1 widen, WARNING-2)", () => {
+  it("derives an EMOM header from a cadence composition when there is no archetype", () => {
+    const schema = makeSchema(FALLBACK_PARAMS, {
+      ...NULL_TRIAD,
+      composition: { repetition: { kind: "cadence", everyMin: 1, rounds: 4 } },
+      label: { kind: "cadence", family: "INTERVALIC" },
+    });
+
+    expect(formatSchemaHeader(schema, null)).toBe("EMOM 1’×4");
+  });
+
+  it("derives a rounds header from a count composition when there is no archetype", () => {
+    const schema = makeSchema(FALLBACK_PARAMS, {
+      ...NULL_TRIAD,
+      composition: { repetition: { kind: "count", count: 5 } },
+      label: { kind: "rounds", family: "ROUNDS" },
+    });
+
+    expect(formatSchemaHeader(schema, null)).toBe("5 rounds");
+  });
+
+  it("returns an empty string for a bare composition-only schema with no axes", () => {
+    const schema = makeSchema(FALLBACK_PARAMS, {
+      ...NULL_TRIAD,
+      composition: {},
+      label: { kind: "flat", family: "FLAT" },
+    });
+
+    expect(formatSchemaHeader(schema, null)).toBe("");
+  });
+
+  it("lets a coach-entered header win over the derived composition label", () => {
+    const schema = makeSchema(FALLBACK_PARAMS, {
+      ...NULL_TRIAD,
+      header: "Engine builder",
+      composition: { repetition: { kind: "cadence", everyMin: 1, rounds: 16 } },
+      label: { kind: "cadence", family: "INTERVALIC" },
+    });
+
+    expect(formatSchemaHeader(schema, null)).toBe("Engine builder");
+  });
+
+  it("routes to the archetype branch when archetypeParams is present", () => {
+    const schema = makeSchema({
+      archetype: "n-rounds",
+      params: { countForm: "exact", count: 5 },
+    });
+
+    expect(formatSchemaHeader(schema, null)).toBe("5 rounds");
+  });
+});

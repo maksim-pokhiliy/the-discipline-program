@@ -28,6 +28,10 @@ export const toCompositeIntervalsWRFixedParams = (
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return compositeIntervalsWRFixedDefaultParams;
+  }
+
   if (archetypeParams.archetype === "composite-intervals-work-rest-fixed") {
     return {
       intervalsCount: archetypeParams.params.intervalsCount,

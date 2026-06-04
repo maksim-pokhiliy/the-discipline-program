@@ -59,8 +59,10 @@ type SchemaEditorModalProps = {
   onBack?: () => void;
 };
 
-const resolveArchetypeName = (mode: SchemaEditorMode): ArchetypeName =>
-  mode.kind === "create" ? mode.archetype.name : mode.schema.schema.archetypeParams.archetype;
+const resolveArchetypeName = (mode: SchemaEditorMode): ArchetypeName | null =>
+  mode.kind === "create"
+    ? mode.archetype.name
+    : (mode.schema.schema.archetypeParams?.archetype ?? null);
 
 const toIntensityForm = (mode: SchemaEditorMode): ShellIntensityForm => {
   if (mode.kind === "create") {
@@ -79,7 +81,8 @@ const toIntensityForm = (mode: SchemaEditorMode): ShellIntensityForm => {
 };
 
 const toShellFormData = (mode: SchemaEditorMode): SchemaShellFormData => {
-  const entry = SCHEMA_PARAM_FORM_REGISTRY[resolveArchetypeName(mode)];
+  const archetypeName = resolveArchetypeName(mode);
+  const entry = archetypeName === null ? undefined : SCHEMA_PARAM_FORM_REGISTRY[archetypeName];
 
   if (mode.kind === "create") {
     return { header: "", intensity: {}, params: entry?.defaultParams ?? {} };
@@ -88,7 +91,7 @@ const toShellFormData = (mode: SchemaEditorMode): SchemaShellFormData => {
   return {
     header: mode.schema.schema.header ?? "",
     intensity: toIntensityForm(mode),
-    params: entry?.toParams(mode) ?? mode.schema.schema.archetypeParams.params,
+    params: entry?.toParams(mode) ?? mode.schema.schema.archetypeParams?.params,
   };
 };
 
@@ -124,6 +127,10 @@ export const SchemaEditorModal: React.FC<SchemaEditorModalProps> = ({
   const archetype: Archetype | undefined = archetypes?.find((a) => a.name === archetypeName);
 
   const onSubmit = (data: SchemaShellFormData): void => {
+    if (archetypeName === null) {
+      return;
+    }
+
     const parsed = parseArchetypeParams(archetypeName, data.params);
 
     if (!parsed.ok) {
@@ -167,7 +174,7 @@ export const SchemaEditorModal: React.FC<SchemaEditorModalProps> = ({
     void handleSubmit(onSubmit)(e);
   };
 
-  if (!open) {
+  if (!open || archetypeName === null) {
     return null;
   }
 

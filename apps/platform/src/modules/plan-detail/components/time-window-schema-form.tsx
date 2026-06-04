@@ -25,6 +25,10 @@ export const toTimeWindowParams = (mode: SchemaEditorMode): TimeWindowParams => 
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return timeWindowDefaultParams;
+  }
+
   if (archetypeParams.archetype === "time-window-outer") {
     return { window: { ...archetypeParams.params.window } };
   }

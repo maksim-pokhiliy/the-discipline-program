@@ -23,6 +23,10 @@ export const toEmomNestedParams = (mode: SchemaEditorMode): EmomNestedParams => 
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return emomNestedDefaultParams;
+  }
+
   if (archetypeParams.archetype === "emom-nested-per-minute") {
     const { durationMin, rounds } = archetypeParams.params;
 

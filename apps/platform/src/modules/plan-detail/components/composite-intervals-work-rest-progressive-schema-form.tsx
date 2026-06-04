@@ -34,6 +34,10 @@ export const toCompositeIntervalsWRProgressiveParams = (
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return compositeIntervalsWRProgressiveDefaultParams;
+  }
+
   if (archetypeParams.archetype === "composite-intervals-work-rest-progressive") {
     const { sets, workMin, offMin, progressiveSeed } = archetypeParams.params;
 

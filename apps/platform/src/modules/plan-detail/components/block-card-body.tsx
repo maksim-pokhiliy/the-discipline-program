@@ -28,6 +28,7 @@ import { useReorderSchemas } from "@app/lib/hooks";
 import { type BlockCtx } from "../lib/build-cascade-chips";
 import { groupSchemasByAltGroup } from "../lib/group-schemas-by-alt-group";
 
+import { AddComposeBlockButton } from "./add-compose-block-button";
 import { AddSchemaButton } from "./add-schema-button";
 import { AltGroupHeader } from "./alt-group-header";
 import { SchemaCard } from "./schema-card";
@@ -146,7 +147,11 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
             ),
           )}
 
-          <AddSchemaButton planId={planId} startDate={startDate} blockId={block.id} />
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            <AddSchemaButton planId={planId} startDate={startDate} blockId={block.id} />
+
+            <AddComposeBlockButton planId={planId} startDate={startDate} blockId={block.id} />
+          </Stack>
         </Stack>
       </SortableContext>
     </DndContext>

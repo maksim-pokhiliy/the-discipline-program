@@ -25,6 +25,10 @@ export const toParallelPyramidsParams = (mode: SchemaEditorMode): ParallelPyrami
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return PARALLEL_PYRAMIDS_DEFAULT;
+  }
+
   if (archetypeParams.archetype === "parallel-pyramids") {
     return { pyramids: archetypeParams.params.pyramids };
   }

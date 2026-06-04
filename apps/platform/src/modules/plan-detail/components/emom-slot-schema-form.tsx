@@ -68,6 +68,10 @@ export const toEmomSlotParams = (mode: SchemaEditorMode): EmomSlotParams => {
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return emomSlotDefaultParams;
+  }
+
   if (archetypeParams.archetype === "emom-sub-minute-slot") {
     return { slot: archetypeParams.params.slot };
   }

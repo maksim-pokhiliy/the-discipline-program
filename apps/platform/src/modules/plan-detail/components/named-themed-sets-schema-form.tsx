@@ -23,6 +23,10 @@ export const toNamedThemedSetsParams = (mode: SchemaEditorMode): NamedThemedSets
 
   const { archetypeParams } = mode.schema.schema;
 
+  if (archetypeParams === null) {
+    return namedThemedSetsDefaultParams;
+  }
+
   if (archetypeParams.archetype !== "named-themed-sets") {
     return namedThemedSetsDefaultParams;
   }

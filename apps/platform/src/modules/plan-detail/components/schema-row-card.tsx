@@ -50,6 +50,7 @@ type SchemaRowCardProps = {
   planId: string;
   startDate: string;
   index: number;
+  minuteLabel?: string | null;
   isReorderPending: boolean;
 };
 
@@ -89,6 +90,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   planId,
   startDate,
   index,
+  minuteLabel = null,
   isReorderPending,
 }) => {
   const updateSchemaRow = useUpdateSchemaRow(planId, startDate);
@@ -183,6 +185,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         mainText={fmt.mainText}
         formPillText={fmt.formPillText}
         subParts={fmt.subParts}
+        minuteLabel={minuteLabel}
       />
 
       {fmt.demoUrl !== null ? (

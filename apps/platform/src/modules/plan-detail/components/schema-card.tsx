@@ -62,7 +62,10 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
 
-  const archetypeLabel = archetypeById.get(schema.schema.archetypeId)?.label ?? null;
+  const archetypeLabel =
+    schema.schema.archetypeId === null
+      ? null
+      : (archetypeById.get(schema.schema.archetypeId)?.label ?? null);
 
   const editorMode = useMemo<SchemaEditorMode>(() => ({ kind: "edit", schema }), [schema]);
 
@@ -155,6 +158,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
       <SchemaRowList
         rows={schema.rows}
         schemaId={schema.schema.id}
+        composition={schema.schema.composition}
         planId={planId}
         startDate={startDate}
         parentIsReorderPending={isMutationPending}
