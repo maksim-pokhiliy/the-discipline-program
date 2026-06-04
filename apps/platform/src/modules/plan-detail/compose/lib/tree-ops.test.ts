@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import type { ComposeContainer, ComposeNode, ComposeRow, NodeId } from "../compose-tree.types";
+import type {
+  ArrangementAxis,
+  ComposeContainer,
+  ComposeNode,
+  ComposeRow,
+  NodeId,
+} from "../compose-tree.types";
 
 import { asNodeId } from "./id-factory";
 import {
@@ -225,5 +231,174 @@ describe("cloneBlock", () => {
 
     expect(clone.label).toBe("Block");
     expect(cloneIds.every((id) => !sourceIds.has(id))).toBe(true);
+  });
+});
+
+const trackContainer = (id: string, rowIds: string[]): ComposeContainer =>
+  makeContainer(id, rowIds.map(makeRow));
+
+const withArrangement = (
+  container: ComposeContainer,
+  arrangement: ArrangementAxis,
+): ComposeContainer => ({ ...container, arrangement });
+
+const parallelSource = (): ComposeContainer =>
+  withArrangement(
+    makeContainer("parallel-root", [
+      trackContainer("track-down", ["track-down-row"]),
+      trackContainer("track-up", ["track-up-row"]),
+    ]),
+    {
+      kind: "parallel",
+      interleaveOrder: "round_by_round",
+      tracks: [
+        { childSchemaId: asNodeId("track-down"), setEnumeration: [21, 15, 9] },
+        { childSchemaId: asNodeId("track-up"), pairedWithRowId: asNodeId("track-down-row") },
+      ],
+    },
+  );
+
+const supersetSource = (): ComposeContainer =>
+  withArrangement(makeContainer("superset-root", [makeRow("row-curl"), makeRow("row-ext")]), {
+    kind: "superset",
+    pairs: [{ label: "Biceps / triceps", rowIds: [asNodeId("row-curl"), asNodeId("row-ext")] }],
+  });
+
+const asContainer = (node: ComposeNode | undefined): ComposeContainer => {
+  if (node === undefined || node.nodeType !== "container") {
+    throw new Error("expected a container clone");
+  }
+
+  return node;
+};
+
+const parallelOf = (
+  container: ComposeContainer,
+): Extract<ArrangementAxis, { kind: "parallel" }> => {
+  if (container.arrangement?.kind !== "parallel") {
+    throw new Error("expected a parallel arrangement");
+  }
+
+  return container.arrangement;
+};
+
+const supersetOf = (
+  container: ComposeContainer,
+): Extract<ArrangementAxis, { kind: "superset" }> => {
+  if (container.arrangement?.kind !== "superset") {
+    throw new Error("expected a superset arrangement");
+  }
+
+  return container.arrangement;
+};
+
+describe("cloneNode arrangement-ref remap (QA-503)", () => {
+  it("remaps a parallel container's track refs to the clone's own child and row ids (B5-AC)", () => {
+    const source = parallelSource();
+    const clone = asContainer(cloneNode(source));
+
+    const sourceIds = new Set(collectIds(source));
+    const cloneChildIds = new Set(childIds(clone));
+    const cloneRowIds = new Set(clone.children.flatMap(collectIds));
+    const tracks = parallelOf(clone).tracks;
+
+    for (const track of tracks) {
+      expect(cloneChildIds.has(track.childSchemaId)).toBe(true);
+      expect(sourceIds.has(track.childSchemaId)).toBe(false);
+    }
+
+    const pairedRow = tracks[1]?.pairedWithRowId;
+
+    expect(pairedRow).toBeDefined();
+
+    if (pairedRow !== undefined) {
+      expect(cloneRowIds.has(pairedRow)).toBe(true);
+      expect(sourceIds.has(pairedRow)).toBe(false);
+    }
+
+    expect(tracks[0]?.setEnumeration).toEqual([21, 15, 9]);
+  });
+
+  it("remaps a superset container's pair rowIds to the clone's own row ids (B5-AC)", () => {
+    const source = supersetSource();
+    const clone = asContainer(cloneNode(source));
+
+    const sourceIds = new Set(collectIds(source));
+    const cloneRowIds = new Set(childIds(clone));
+    const pair = supersetOf(clone).pairs[0];
+
+    expect(pair?.rowIds).toHaveLength(2);
+
+    for (const rowId of pair?.rowIds ?? []) {
+      expect(cloneRowIds.has(rowId)).toBe(true);
+      expect(sourceIds.has(rowId)).toBe(false);
+    }
+  });
+
+  it("keeps parallel refs internally consistent across a clone-of-clone (B5-AC)", () => {
+    const firstClone = asContainer(cloneNode(parallelSource()));
+    const secondClone = asContainer(cloneNode(firstClone));
+
+    const firstCloneIds = new Set(collectIds(firstClone));
+    const secondChildIds = new Set(childIds(secondClone));
+    const secondRowIds = new Set(secondClone.children.flatMap(collectIds));
+    const tracks = parallelOf(secondClone).tracks;
+
+    for (const track of tracks) {
+      expect(secondChildIds.has(track.childSchemaId)).toBe(true);
+      expect(firstCloneIds.has(track.childSchemaId)).toBe(false);
+    }
+
+    const pairedRow = tracks[1]?.pairedWithRowId;
+
+    if (pairedRow !== undefined) {
+      expect(secondRowIds.has(pairedRow)).toBe(true);
+      expect(firstCloneIds.has(pairedRow)).toBe(false);
+    }
+  });
+
+  it("remaps both levels of a parallel-inside-parallel clone (B5-AC)", () => {
+    const innerParallel = withArrangement(
+      makeContainer("inner-parallel", [
+        trackContainer("inner-a", ["inner-a-row"]),
+        trackContainer("inner-b", ["inner-b-row"]),
+      ]),
+      {
+        kind: "parallel",
+        interleaveOrder: "track_by_track",
+        tracks: [{ childSchemaId: asNodeId("inner-a") }, { childSchemaId: asNodeId("inner-b") }],
+      },
+    );
+    const outer = withArrangement(
+      makeContainer("outer-parallel", [innerParallel, trackContainer("outer-b", ["outer-b-row"])]),
+      {
+        kind: "parallel",
+        interleaveOrder: "round_by_round",
+        tracks: [
+          { childSchemaId: asNodeId("inner-parallel") },
+          { childSchemaId: asNodeId("outer-b") },
+        ],
+      },
+    );
+
+    const clone = asContainer(cloneNode(outer));
+    const sourceIds = new Set(collectIds(outer));
+
+    const outerTracks = parallelOf(clone).tracks;
+    const outerChildIds = new Set(childIds(clone));
+
+    for (const track of outerTracks) {
+      expect(outerChildIds.has(track.childSchemaId)).toBe(true);
+      expect(sourceIds.has(track.childSchemaId)).toBe(false);
+    }
+
+    const clonedInner = asContainer(clone.children[0]);
+    const innerTracks = parallelOf(clonedInner).tracks;
+    const innerChildIds = new Set(childIds(clonedInner));
+
+    for (const track of innerTracks) {
+      expect(innerChildIds.has(track.childSchemaId)).toBe(true);
+      expect(sourceIds.has(track.childSchemaId)).toBe(false);
+    }
   });
 });
