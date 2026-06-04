@@ -1,8 +1,10 @@
+import { Prisma } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
+import { assertComposeTreeValid, buildSchemaWithBody } from "../../../mappers/lms";
 import { cleanupRaw, createTestCoach, createTestPlan } from "../../../test/helpers";
 
 import { lmsSchemaApi } from "./admin";
@@ -970,6 +972,254 @@ describe("lmsSchemaApi", () => {
       } finally {
         await ctx.cleanup();
       }
+    });
+
+    describe("QA-004 arrangement ref existence/scope", () => {
+      const BENIGN_COMPOSITION: Composition = {
+        repetition: { kind: "count", count: 3 },
+      };
+
+      const createComposeSchema = async (options: {
+        blockId: string;
+        parentSchemaId?: string;
+        composition?: Composition;
+      }) => {
+        orderCounter += 1;
+
+        return cleanupRaw.schema.create({
+          data: {
+            blockId: options.blockId,
+            parentSchemaId: options.parentSchemaId ?? null,
+            order: orderCounter,
+            composition: options.composition ?? Prisma.JsonNull,
+          },
+        });
+      };
+
+      const createRestSlotRow = async (schemaId: string) => {
+        orderCounter += 1;
+
+        return cleanupRaw.schemaRow.create({
+          data: {
+            schemaId,
+            order: orderCounter,
+            rowKind: "REST_SLOT",
+            rowPayload: { rowKind: "REST_SLOT" },
+          },
+        });
+      };
+
+      it("rejects a parallel update whose childSchemaId points outside this schema's children with 400", async () => {
+        const ctx = await provisionBlock();
+        const parent = await createComposeSchema({
+          blockId: ctx.block.id,
+          composition: BENIGN_COMPOSITION,
+        });
+        const trackA = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parent.id,
+        });
+        const foreign = await createComposeSchema({ blockId: ctx.block.id });
+
+        try {
+          await expect(
+            lmsSchemaApi.update(coach.user.id, parent.id, {
+              composition: {
+                arrangement: {
+                  kind: "parallel",
+                  interleaveOrder: "round_by_round",
+                  tracks: [{ childSchemaId: trackA.id }, { childSchemaId: foreign.id }],
+                },
+              },
+            }),
+          ).rejects.toThrow(BadRequestError);
+
+          const stored = await cleanupRaw.schema.findUnique({ where: { id: parent.id } });
+
+          expect(stored?.composition).toEqual(BENIGN_COMPOSITION);
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+
+      it("rejects a superset update whose rowId points at a different schema's row with 400", async () => {
+        const ctx = await provisionBlock();
+        const target = await createComposeSchema({
+          blockId: ctx.block.id,
+          composition: BENIGN_COMPOSITION,
+        });
+        const ownRow = await createRestSlotRow(target.id);
+        const foreign = await createComposeSchema({ blockId: ctx.block.id });
+        const foreignRow = await createRestSlotRow(foreign.id);
+
+        try {
+          await expect(
+            lmsSchemaApi.update(coach.user.id, target.id, {
+              composition: {
+                arrangement: {
+                  kind: "superset",
+                  pairs: [{ label: "pair", rowIds: [ownRow.id, foreignRow.id] }],
+                },
+              },
+            }),
+          ).rejects.toThrow(BadRequestError);
+
+          const stored = await cleanupRaw.schema.findUnique({ where: { id: target.id } });
+
+          expect(stored?.composition).toEqual(BENIGN_COMPOSITION);
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+
+      it("rejects a parallel update whose pairedWithRowId points at a non-grandchild row with 400", async () => {
+        const ctx = await provisionBlock();
+        const parent = await createComposeSchema({
+          blockId: ctx.block.id,
+          composition: BENIGN_COMPOSITION,
+        });
+        const trackA = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parent.id,
+        });
+        const trackB = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parent.id,
+        });
+        const directRow = await createRestSlotRow(parent.id);
+
+        try {
+          await expect(
+            lmsSchemaApi.update(coach.user.id, parent.id, {
+              composition: {
+                arrangement: {
+                  kind: "parallel",
+                  interleaveOrder: "round_by_round",
+                  tracks: [
+                    { childSchemaId: trackA.id },
+                    { childSchemaId: trackB.id, pairedWithRowId: directRow.id },
+                  ],
+                },
+              },
+            }),
+          ).rejects.toThrow(BadRequestError);
+
+          const stored = await cleanupRaw.schema.findUnique({ where: { id: parent.id } });
+
+          expect(stored?.composition).toEqual(BENIGN_COMPOSITION);
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+
+      it("accepts a parallel update over a real nested tree and stores the arrangement", async () => {
+        const ctx = await provisionBlock();
+        const parent = await createComposeSchema({ blockId: ctx.block.id });
+        const trackA = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parent.id,
+        });
+        const trackB = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parent.id,
+        });
+        const trackARow = await createRestSlotRow(trackA.id);
+
+        const arrangement: Composition["arrangement"] = {
+          kind: "parallel",
+          interleaveOrder: "round_by_round",
+          tracks: [
+            { childSchemaId: trackA.id },
+            { childSchemaId: trackB.id, pairedWithRowId: trackARow.id },
+          ],
+        };
+
+        try {
+          const updated = await lmsSchemaApi.update(coach.user.id, parent.id, {
+            composition: { arrangement },
+          });
+
+          expect(updated.composition?.arrangement).toEqual(arrangement);
+
+          const stored = await cleanupRaw.schema.findUnique({ where: { id: parent.id } });
+
+          expect(stored?.composition).toEqual({ arrangement });
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+
+      it("accepts a superset update over a schema with two own rows and stores the arrangement", async () => {
+        const ctx = await provisionBlock();
+        const target = await createComposeSchema({ blockId: ctx.block.id });
+        const rowOne = await createRestSlotRow(target.id);
+        const rowTwo = await createRestSlotRow(target.id);
+
+        const arrangement: Composition["arrangement"] = {
+          kind: "superset",
+          pairs: [{ label: "biceps / triceps", rowIds: [rowOne.id, rowTwo.id] }],
+        };
+
+        try {
+          const updated = await lmsSchemaApi.update(coach.user.id, target.id, {
+            composition: { arrangement },
+          });
+
+          expect(updated.composition?.arrangement).toEqual(arrangement);
+
+          const stored = await cleanupRaw.schema.findUnique({ where: { id: target.id } });
+
+          expect(stored?.composition).toEqual({ arrangement });
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+
+      it("reads a persisted valid parallel tree back through assertComposeTreeValid unchanged", async () => {
+        const ctx = await provisionBlock();
+        const parent = await createComposeSchema({ blockId: ctx.block.id });
+        const trackA = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parent.id,
+        });
+        const trackB = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parent.id,
+        });
+        const trackARow = await createRestSlotRow(trackA.id);
+
+        const arrangement: Composition["arrangement"] = {
+          kind: "parallel",
+          interleaveOrder: "round_by_round",
+          tracks: [
+            { childSchemaId: trackA.id },
+            { childSchemaId: trackB.id, pairedWithRowId: trackARow.id },
+          ],
+        };
+
+        try {
+          await lmsSchemaApi.update(coach.user.id, parent.id, { composition: { arrangement } });
+
+          const reloaded = await cleanupRaw.schema.findUnique({
+            where: { id: parent.id },
+            include: {
+              rows: { orderBy: { order: "asc" } },
+              subSchemas: {
+                orderBy: { order: "asc" },
+                include: { rows: { orderBy: { order: "asc" } } },
+              },
+            },
+          });
+
+          if (reloaded === null) {
+            throw new Error("expected reloaded schema");
+          }
+
+          expect(() => assertComposeTreeValid(buildSchemaWithBody(reloaded))).not.toThrow();
+        } finally {
+          await ctx.cleanup();
+        }
+      });
     });
   });
 
