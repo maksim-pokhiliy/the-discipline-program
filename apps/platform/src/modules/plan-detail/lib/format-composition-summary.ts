@@ -1,30 +1,11 @@
-import type {
-  ArrangementAxis,
-  Composition,
-  RepetitionAxis,
-  RestAxis,
-  ScoringDirective,
-} from "@repo/contracts/lms/composition";
+import type { Composition, RepetitionAxis, RestAxis } from "@repo/contracts/lms/composition";
+
+import { ARRANGEMENT_LABELS, SCORING_LABELS } from "./compose-axis-labels";
 
 const MINUTE_MARK = "’";
 const SECOND_MARK = " sec";
 const STEP_SEPARATOR = "-";
 const ORDERED = "ordered";
-
-const SCORING_LABELS: Record<ScoringDirective["kind"], string> = {
-  prescribed: "prescribed",
-  amrap: "AMRAP",
-  for_time: "for time",
-  max_in_remaining: "max-in-remaining",
-  total: "total",
-  progressive: "progressive",
-};
-
-const ARRANGEMENT_LABELS: Record<ArrangementAxis["kind"], string> = {
-  ordered: "ordered",
-  parallel: "parallel",
-  superset: "superset",
-};
 
 const repetitionLabel = (repetition: RepetitionAxis): string => {
   switch (repetition.kind) {

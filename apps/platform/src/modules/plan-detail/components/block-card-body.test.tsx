@@ -5,7 +5,6 @@ import type { DragEndEvent } from "@dnd-kit/core";
 import { screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { AlternatingGroup } from "@repo/contracts/lms/alternating-group";
 import type { Block } from "@repo/contracts/lms/block";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
@@ -45,11 +44,11 @@ vi.mock("./schema-card", () => {
   return { SchemaCard: renderSchemaCardMock };
 });
 
-vi.mock("./add-schema-button", () => {
-  const renderAddSchemaButtonMock = () =>
-    createElement("div", { "data-testid": "add-schema-button-mock" });
+vi.mock("./add-compose-block-button", () => {
+  const renderAddComposeBlockButtonMock = () =>
+    createElement("div", { "data-testid": "add-compose-block-button-mock" });
 
-  return { AddSchemaButton: renderAddSchemaButtonMock };
+  return { AddComposeBlockButton: renderAddComposeBlockButtonMock };
 });
 
 let capturedOnDragEnd: ((event: DragEndEvent) => void) | null = null;
@@ -81,7 +80,6 @@ const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const START_DATE = "2026-01-06";
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 const SESSION_ID = "clp9z8x7w0000abcd1234ses1";
-const ARCHETYPE_ID = "clp9z8x7w0000abcd1234arc1";
 const NOW = new Date("2026-01-06T00:00:00.000Z");
 
 const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWithBody => ({
@@ -91,10 +89,10 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
     parentSchemaId: null,
     alternatingGroupId: null,
     order: 1,
-    kind: "ATOMIC",
-    archetypeId: ARCHETYPE_ID,
+    kind: null,
+    archetypeId: null,
     header: null,
-    archetypeParams: { archetype: "single-line-bare", params: {} },
+    archetypeParams: null,
     intensity: null,
     trailingConnector: null,
     composition: null,
@@ -106,16 +104,6 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
   },
   rows: [],
   subSchemas: [],
-});
-
-const makeAltGroup = (overrides: Partial<AlternatingGroup> = {}): AlternatingGroup => ({
-  id: "clp9z8x7w0000abcd1234alt1",
-  blockId: BLOCK_ID,
-  relationKind: "ALTERNATING_SETS",
-  schemaIds: [],
-  createdAt: NOW,
-  updatedAt: NOW,
-  ...overrides,
 });
 
 const makeBlock = (overrides: Partial<Block> = {}): Block => ({
@@ -203,81 +191,10 @@ describe("BlockCardBody D-14 hoisted DnD: top-level drag-end", () => {
     });
     expect(payload).not.toHaveProperty("parentSchemaId");
   });
-});
 
-describe("BlockCardBody QA-01: cross-alt-group drag is forbidden", () => {
-  it("does NOT fire mutate when active is a standalone and over is an alt-group member", () => {
-    const altGroupId = "clp9z8x7w0000abcd12qa1alt1";
-    const a1 = makeSchema({
-      id: "clp9z8x7w0000abcd12qa1m001",
-      alternatingGroupId: altGroupId,
-      order: 1,
-    });
-    const a2 = makeSchema({
-      id: "clp9z8x7w0000abcd12qa1m002",
-      alternatingGroupId: altGroupId,
-      order: 2,
-    });
-    const standalone = makeSchema({
-      id: "clp9z8x7w0000abcd12qa1s003",
-      alternatingGroupId: null,
-      order: 3,
-    });
-
-    render(
-      <BlockCardBody
-        block={makeBlock({
-          schemas: [a1, a2, standalone],
-          alternatingGroups: [
-            makeAltGroup({ id: altGroupId, schemaIds: [a1.schema.id, a2.schema.id] }),
-          ],
-        })}
-        planId={PLAN_ID}
-        startDate={START_DATE}
-      />,
-    );
-
-    triggerDragEnd(makeDragEndEvent(standalone.schema.id, a1.schema.id));
-
-    expect(reorderSchemasMutate).not.toHaveBeenCalled();
-  });
-
-  it("does NOT fire mutate when active and over belong to DIFFERENT alt-groups", () => {
-    const altGroupA = "clp9z8x7w0000abcd12qa2altA";
-    const altGroupB = "clp9z8x7w0000abcd12qa2altB";
-    const a1 = makeSchema({
-      id: "clp9z8x7w0000abcd12qa2a001",
-      alternatingGroupId: altGroupA,
-      order: 1,
-    });
-    const b1 = makeSchema({
-      id: "clp9z8x7w0000abcd12qa2b001",
-      alternatingGroupId: altGroupB,
-      order: 2,
-    });
-
-    render(
-      <BlockCardBody
-        block={makeBlock({
-          schemas: [a1, b1],
-          alternatingGroups: [
-            makeAltGroup({ id: altGroupA, schemaIds: [a1.schema.id] }),
-            makeAltGroup({ id: altGroupB, schemaIds: [b1.schema.id] }),
-          ],
-        })}
-        planId={PLAN_ID}
-        startDate={START_DATE}
-      />,
-    );
-
-    triggerDragEnd(makeDragEndEvent(a1.schema.id, b1.schema.id));
-
-    expect(reorderSchemasMutate).not.toHaveBeenCalled();
-  });
-
-  it("DOES fire mutate when active and over are BOTH standalone schemas in the same block", () => {
-    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12qa3s001", order: 1 });
-    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12qa3s002", order: 2 });
+  it("fires reorderSchemas.mutate for any two schemas in the block (no alt-group restriction)", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd12bcb101", order: 1 });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd12bcb102", order: 2 });
 
     render(
       <BlockCardBody
@@ -293,41 +210,6 @@ describe("BlockCardBody QA-01: cross-alt-group drag is forbidden", () => {
     expect(reorderSchemasMutate.mock.calls[0]?.[0]).toEqual({
       blockId: BLOCK_ID,
       orderedIds: [s2.schema.id, s1.schema.id],
-    });
-  });
-
-  it("DOES fire mutate when active and over are members of the SAME alt-group", () => {
-    const altGroupId = "clp9z8x7w0000abcd12qa4alt1";
-    const a1 = makeSchema({
-      id: "clp9z8x7w0000abcd12qa4m001",
-      alternatingGroupId: altGroupId,
-      order: 1,
-    });
-    const a2 = makeSchema({
-      id: "clp9z8x7w0000abcd12qa4m002",
-      alternatingGroupId: altGroupId,
-      order: 2,
-    });
-
-    render(
-      <BlockCardBody
-        block={makeBlock({
-          schemas: [a1, a2],
-          alternatingGroups: [
-            makeAltGroup({ id: altGroupId, schemaIds: [a1.schema.id, a2.schema.id] }),
-          ],
-        })}
-        planId={PLAN_ID}
-        startDate={START_DATE}
-      />,
-    );
-
-    triggerDragEnd(makeDragEndEvent(a2.schema.id, a1.schema.id));
-
-    expect(reorderSchemasMutate).toHaveBeenCalledTimes(1);
-    expect(reorderSchemasMutate.mock.calls[0]?.[0]).toEqual({
-      blockId: BLOCK_ID,
-      orderedIds: [a2.schema.id, a1.schema.id],
     });
   });
 });

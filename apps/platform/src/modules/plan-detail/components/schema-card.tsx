@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactElement, useMemo, useState } from "react";
+import { type ReactElement, useState } from "react";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -9,14 +9,12 @@ import { Stack } from "@mui/material";
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 import { ConfirmationModal } from "@repo/ui";
 
-import { useCatalog, useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
+import { useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
 
 import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
 
 import { SchemaCardHead } from "./schema-card-head";
-import { SchemaEditorModal } from "./schema-editor-modal";
-import { type SchemaEditorMode } from "./schema-editor-types";
 import { SchemaList } from "./schema-list";
 import { SchemaRowList } from "./schema-row-list";
 
@@ -48,7 +46,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
 }): ReactElement => {
   const updateSchema = useUpdateSchema(planId, startDate);
   const deleteSchema = useDeleteSchema(planId, startDate);
-  const { archetypeById } = useCatalog();
 
   const isSubSchema = schema.schema.parentSchemaId !== null;
   const isMutationPending =
@@ -59,17 +56,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
     disabled: isMutationPending,
   });
 
-  const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
-
-  const archetypeLabel =
-    schema.schema.archetypeId === null
-      ? null
-      : (archetypeById.get(schema.schema.archetypeId)?.label ?? null);
-
-  const editorMode = useMemo<SchemaEditorMode>(() => ({ kind: "edit", schema }), [schema]);
-
-  const handleEditOpen = () => setIsEditOpen(true);
 
   const handleDeleteOpen = () => setIsDeleteOpen(true);
 
@@ -114,13 +101,11 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
       <SchemaCardHead
         schema={schema}
         blockCtx={blockCtx}
-        archetypeLabel={archetypeLabel}
         isMutationPending={isMutationPending}
         isSubSchema={isSubSchema}
         dragAttributes={attributes}
         dragListeners={listeners}
         onTitleCommit={handleTitleCommit}
-        onEditOpen={handleEditOpen}
         onDeleteOpen={handleDeleteOpen}
       />
 
@@ -165,26 +150,16 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
       />
 
       {!isSubSchema ? (
-        <>
-          <SchemaEditorModal
-            open={isEditOpen}
-            onClose={() => setIsEditOpen(false)}
-            mode={editorMode}
-            planId={planId}
-            startDate={startDate}
-          />
-
-          <ConfirmationModal
-            open={isDeleteOpen}
-            onClose={() => setIsDeleteOpen(false)}
-            title={DELETE_TITLE}
-            type="danger"
-            message={DELETE_MESSAGE}
-            details={formatSchemaHeader(schema, archetypeLabel)}
-            onConfirm={handleDeleteConfirm}
-            isConfirming={deleteSchema.isPending}
-          />
-        </>
+        <ConfirmationModal
+          open={isDeleteOpen}
+          onClose={() => setIsDeleteOpen(false)}
+          title={DELETE_TITLE}
+          type="danger"
+          message={DELETE_MESSAGE}
+          details={formatSchemaHeader(schema)}
+          onConfirm={handleDeleteConfirm}
+          isConfirming={deleteSchema.isPending}
+        />
       ) : null}
     </Stack>
   );
