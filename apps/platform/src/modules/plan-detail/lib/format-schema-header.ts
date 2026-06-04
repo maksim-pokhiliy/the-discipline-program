@@ -1,5 +1,7 @@
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 
+import { formatCompositionSummary } from "./format-composition-summary";
+
 const ROUNDS_SUFFIX = " rounds";
 const TIMES_SEPARATOR = " × ";
 const RANGE_SEPARATOR = "–";
@@ -89,7 +91,15 @@ export const formatSchemaHeader = (
   const archetypeParams = schema.schema.archetypeParams;
 
   if (archetypeParams === null) {
-    return "";
+    const composition = schema.schema.composition;
+
+    if (composition === null) {
+      return "";
+    }
+
+    const [repetitionPart] = formatCompositionSummary(composition);
+
+    return repetitionPart ?? "";
   }
 
   switch (archetypeParams.archetype) {
