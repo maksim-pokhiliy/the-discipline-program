@@ -3,8 +3,6 @@ import {
   type Block as PrismaBlock,
   type BlockLabelAssignment as PrismaBlockLabelAssignment,
   type Label as PrismaLabel,
-  type Schema as PrismaSchema,
-  type SchemaRow as PrismaSchemaRow,
 } from "@prisma/client";
 
 import { intensitySchema, timeCapSchema } from "@repo/contracts/lms/_shared";
@@ -14,23 +12,14 @@ import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 import { mapToAlternatingGroup } from "./alternating-group.mapper";
 import { assertComposeTreeValid } from "./compose-projection.mapper";
 import { mapToLabel } from "./label.mapper";
-import { mapToSchemaRow } from "./schema-row.mapper";
-import { mapToSchema } from "./schema.mapper";
+import { buildSchemaWithBody, type PrismaSchemaWithSubSchemas } from "./schema.mapper";
 
 type BlockWithLabels = PrismaBlock & {
   labelAssignments: (PrismaBlockLabelAssignment & { label: PrismaLabel })[];
 };
 
-type SchemaWithRows = PrismaSchema & {
-  rows: PrismaSchemaRow[];
-};
-
-type SchemaWithSubSchemas = SchemaWithRows & {
-  subSchemas: SchemaWithRows[];
-};
-
 type BlockWithSchemas = BlockWithLabels & {
-  schemas: SchemaWithSubSchemas[];
+  schemas: PrismaSchemaWithSubSchemas[];
   alternatingGroups: (PrismaAlternatingGroup & { schemas: { id: string }[] })[];
 };
 
@@ -55,17 +44,8 @@ export const mapToBlockWithLabels = (b: BlockWithLabels): Block => ({
     .map((la) => mapToLabel(la.label)),
 });
 
-const mapToSchemaWithBody = (s: SchemaWithRows): SchemaWithBody => ({
-  schema: mapToSchema(s),
-  rows: s.rows.map(mapToSchemaRow),
-  subSchemas: [],
-});
-
-const buildValidatedSchemaWithBody = (s: SchemaWithSubSchemas): SchemaWithBody => {
-  const schemaWithBody: SchemaWithBody = {
-    ...mapToSchemaWithBody(s),
-    subSchemas: s.subSchemas.map(mapToSchemaWithBody),
-  };
+const buildValidatedSchemaWithBody = (s: PrismaSchemaWithSubSchemas): SchemaWithBody => {
+  const schemaWithBody = buildSchemaWithBody(s);
 
   assertComposeTreeValid(schemaWithBody);
 

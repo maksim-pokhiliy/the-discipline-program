@@ -22,6 +22,8 @@ const INTERVAL_COMPOSITION: Composition = {
   scoring: { kind: "max_in_remaining", condition: { appliesToRounds: [2, 3] } },
 };
 
+const MARKER_PAYLOAD = { rowKind: "INNER_LADDER_MARKER" as const, steps: [21, 15, 9] };
+
 const SECOND_ATOMIC_PARAMS = {
   archetype: "amrap-flat" as const,
   params: { durationMin: 20 },
@@ -792,6 +794,37 @@ describe("lmsSchemaApi", () => {
         const storedCleared = await cleanupRaw.schema.findUnique({ where: { id: schema.id } });
 
         expect(storedCleared?.composition).toBeNull();
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("rejects a composition update that introduces a ladder over a marker-holding body with 400", async () => {
+      const ctx = await provisionBlock();
+      const schema = await lmsSchemaApi.create(
+        coach.user.id,
+        activePlanId,
+        { blockId: ctx.block.id },
+        { kind: "ATOMIC", archetypeId: atomicArchetypeId, archetypeParams: ATOMIC_PARAMS },
+      );
+
+      await cleanupRaw.schemaRow.create({
+        data: {
+          schemaId: schema.id,
+          order: 10,
+          rowKind: "INNER_LADDER_MARKER",
+          rowPayload: MARKER_PAYLOAD,
+        },
+      });
+
+      try {
+        await expect(
+          lmsSchemaApi.update(coach.user.id, schema.id, { composition: LADDER_COMPOSITION }),
+        ).rejects.toThrow(BadRequestError);
+
+        const stored = await cleanupRaw.schema.findUnique({ where: { id: schema.id } });
+
+        expect(stored?.composition).toBeNull();
       } finally {
         await ctx.cleanup();
       }

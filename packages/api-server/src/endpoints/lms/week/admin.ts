@@ -21,36 +21,38 @@ export const lmsWeekApi = {
 
     const startDate = resolveWeekStartDate(startDateParam);
 
-    const week = await prisma.week.findUnique({
-      where: { planId_startDate: { planId, startDate } },
-      include: {
-        days: {
-          include: {
-            label: true,
-            sessions: {
-              orderBy: { order: "asc" },
-              include: {
-                label: true,
-                blocks: {
-                  orderBy: { order: "asc" },
-                  include: {
-                    labelAssignments: {
-                      orderBy: { order: "asc" },
-                      include: { label: true },
-                    },
-                    schemas: {
-                      where: { parentSchemaId: null },
-                      orderBy: { order: "asc" },
-                      include: {
-                        rows: { orderBy: { order: "asc" } },
-                        subSchemas: {
-                          orderBy: { order: "asc" },
-                          include: { rows: { orderBy: { order: "asc" } } },
+    try {
+      const week = await prisma.week.findUnique({
+        where: { planId_startDate: { planId, startDate } },
+        include: {
+          days: {
+            include: {
+              label: true,
+              sessions: {
+                orderBy: { order: "asc" },
+                include: {
+                  label: true,
+                  blocks: {
+                    orderBy: { order: "asc" },
+                    include: {
+                      labelAssignments: {
+                        orderBy: { order: "asc" },
+                        include: { label: true },
+                      },
+                      schemas: {
+                        where: { parentSchemaId: null },
+                        orderBy: { order: "asc" },
+                        include: {
+                          rows: { orderBy: { order: "asc" } },
+                          subSchemas: {
+                            orderBy: { order: "asc" },
+                            include: { rows: { orderBy: { order: "asc" } } },
+                          },
                         },
                       },
-                    },
-                    alternatingGroups: {
-                      include: { schemas: { select: { id: true } } },
+                      alternatingGroups: {
+                        include: { schemas: { select: { id: true } } },
+                      },
                     },
                   },
                 },
@@ -58,15 +60,17 @@ export const lmsWeekApi = {
             },
           },
         },
-      },
-    });
+      });
 
-    const dayMap = new Map(week?.days.map((d) => [d.dayOfWeek, d]) ?? []);
-    const days = dayOfWeekValues.map((dow) =>
-      mapToDaySlot(dow, dayMap.get(DAY_OF_WEEK_TO_PRISMA[dow]) ?? null),
-    );
+      const dayMap = new Map(week?.days.map((d) => [d.dayOfWeek, d]) ?? []);
+      const days = dayOfWeekValues.map((dow) =>
+        mapToDaySlot(dow, dayMap.get(DAY_OF_WEEK_TO_PRISMA[dow]) ?? null),
+      );
 
-    return { week: week ? mapToWeek(week) : null, days };
+      return { week: week ? mapToWeek(week) : null, days };
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Week" });
+    }
   },
 
   upsertNotes: async (

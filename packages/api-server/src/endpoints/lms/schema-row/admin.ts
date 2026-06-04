@@ -6,7 +6,7 @@ import {
   type SchemaRow,
   type UpdateSchemaRowData,
 } from "@repo/contracts/lms/schema-row";
-import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
+import { BadRequestError, ForbiddenError, InternalServerError, NotFoundError } from "@repo/errors";
 
 import {
   verifyPlanEditable,
@@ -14,7 +14,11 @@ import {
   verifySchemaRowOwnership,
 } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
-import { mapToSchemaRow } from "../../../mappers/lms";
+import {
+  assertComposeTreeValidForWrite,
+  buildSchemaWithBody,
+  mapToSchemaRow,
+} from "../../../mappers/lms";
 import { handlePrismaError, retryOnP2034, toInputJson } from "../../../utils";
 
 import { assertParentKindForRow, assertRowKindPayloadAlignment } from "./assertions";
@@ -89,7 +93,7 @@ export const lmsSchemaRowApi = {
             });
             const nextOrder = (max._max.order ?? 0) + 10;
 
-            return tx.schemaRow.create({
+            const createdRow = await tx.schemaRow.create({
               data: {
                 schemaId: data.schemaId,
                 order: nextOrder,
@@ -107,6 +111,29 @@ export const lmsSchemaRowApi = {
                 notes: data.notes ?? null,
               },
             });
+
+            const full = await tx.schema.findUnique({
+              where: { id: data.schemaId },
+              include: {
+                rows: { orderBy: { order: "asc" } },
+                subSchemas: {
+                  orderBy: { order: "asc" },
+                  include: { rows: { orderBy: { order: "asc" } } },
+                },
+              },
+            });
+
+            if (full === null) {
+              throw new InternalServerError("Parent schema vanished mid-transaction", {
+                kind: "DbCorruption",
+                entity: "Schema",
+                schemaId: data.schemaId,
+              });
+            }
+
+            assertComposeTreeValidForWrite(buildSchemaWithBody(full));
+
+            return createdRow;
           },
           { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
         ),
@@ -137,16 +164,37 @@ export const lmsSchemaRowApi = {
     }
 
     if (data.rowPayload !== undefined) {
+      const nextRowPayload = data.rowPayload;
+
       const current = await prisma.schemaRow.findUnique({
         where: { id: schemaRowId },
-        select: { rowKind: true },
+        include: {
+          schema: {
+            include: {
+              rows: { orderBy: { order: "asc" } },
+              subSchemas: {
+                orderBy: { order: "asc" },
+                include: { rows: { orderBy: { order: "asc" } } },
+              },
+            },
+          },
+        },
       });
 
       if (!current) {
         throw new NotFoundError("SchemaRow not found", { schemaRowId });
       }
 
-      assertRowKindPayloadAlignment(current.rowKind, data.rowPayload.rowKind);
+      assertRowKindPayloadAlignment(current.rowKind, nextRowPayload.rowKind);
+
+      const node = buildSchemaWithBody(current.schema);
+
+      assertComposeTreeValidForWrite({
+        ...node,
+        rows: node.rows.map((row) =>
+          row.id === schemaRowId ? { ...row, rowPayload: nextRowPayload } : row,
+        ),
+      });
     }
 
     try {

@@ -17,7 +17,11 @@ import { prisma } from "../../../db/client";
 import { mapToSchema } from "../../../mappers/lms";
 import { handlePrismaError, retryOnP2034, toInputJson } from "../../../utils";
 
-import { assertArchetypeConsistency, assertSubSchemaInvariants } from "./assertions";
+import {
+  assertArchetypeConsistency,
+  assertCompositionUpdateValid,
+  assertSubSchemaInvariants,
+} from "./assertions";
 
 type CreateScope = { blockId: string } | { parentSchemaId: string };
 
@@ -26,6 +30,14 @@ type SchemaBodyData = Omit<CreateSchemaData, "blockId" | "parentSchemaId">;
 const STRUCTURAL_UPDATE_KEYS = ["kind", "archetypeId", "parentSchemaId", "blockId"] as const;
 
 const SURVIVING_GROUP_FLOOR = 2;
+
+const marshalNullableJson = (value: unknown): Prisma.InputJsonValue | typeof Prisma.JsonNull => {
+  if (value === undefined || value === null) {
+    return Prisma.JsonNull;
+  }
+
+  return toInputJson(value);
+};
 
 export const lmsSchemaApi = {
   create: async (
@@ -107,18 +119,20 @@ export const lmsSchemaApi = {
                 });
               }
 
-              assertSubSchemaInvariants(parent.kind, data.kind);
+              assertSubSchemaInvariants(parent.kind, data.kind ?? null);
 
               storageBlockId = parent.blockId;
               storageParentSchemaId = scope.parentSchemaId;
             }
 
-            await assertArchetypeConsistency(
-              tx,
-              data.archetypeId,
-              data.kind,
-              data.archetypeParams.archetype,
-            );
+            if (data.archetypeId != null && data.kind != null && data.archetypeParams != null) {
+              await assertArchetypeConsistency(
+                tx,
+                data.archetypeId,
+                data.kind,
+                data.archetypeParams.archetype,
+              );
+            }
 
             const max = await tx.schema.aggregate({
               where: {
@@ -135,22 +149,13 @@ export const lmsSchemaApi = {
                 blockId: storageBlockId,
                 parentSchemaId: storageParentSchemaId,
                 order: nextOrder,
-                kind: data.kind,
-                archetypeId: data.archetypeId,
+                kind: data.kind ?? null,
+                archetypeId: data.archetypeId ?? null,
                 header: data.header ?? null,
-                archetypeParams: toInputJson(data.archetypeParams),
-                intensity:
-                  data.intensity === undefined || data.intensity === null
-                    ? Prisma.JsonNull
-                    : toInputJson(data.intensity),
-                trailingConnector:
-                  data.trailingConnector === undefined || data.trailingConnector === null
-                    ? Prisma.JsonNull
-                    : toInputJson(data.trailingConnector),
-                composition:
-                  data.composition === undefined || data.composition === null
-                    ? Prisma.JsonNull
-                    : toInputJson(data.composition),
+                archetypeParams: marshalNullableJson(data.archetypeParams),
+                intensity: marshalNullableJson(data.intensity),
+                trailingConnector: marshalNullableJson(data.trailingConnector),
+                composition: marshalNullableJson(data.composition),
                 notes: data.notes ?? null,
               },
             });
@@ -189,6 +194,12 @@ export const lmsSchemaApi = {
         throw new NotFoundError("Schema not found", { schemaId });
       }
 
+      if (current.archetype === null) {
+        throw new BadRequestError("Cannot update archetypeParams on a composition-only schema", {
+          schemaId,
+        });
+      }
+
       if (current.archetype.name !== data.archetypeParams.archetype) {
         throw new BadRequestError(
           "archetypeParams variant must match current Archetype on update; structural change requires delete + recreate",
@@ -200,6 +211,10 @@ export const lmsSchemaApi = {
       }
     }
 
+    if (data.composition !== undefined) {
+      await assertCompositionUpdateValid(prisma, schemaId, data.composition);
+    }
+
     try {
       const updated = await prisma.schema.update({
         where: { id: schemaId },
@@ -209,17 +224,13 @@ export const lmsSchemaApi = {
           }),
           ...(data.header !== undefined && { header: data.header }),
           ...(data.intensity !== undefined && {
-            intensity: data.intensity === null ? Prisma.JsonNull : toInputJson(data.intensity),
+            intensity: marshalNullableJson(data.intensity),
           }),
           ...(data.trailingConnector !== undefined && {
-            trailingConnector:
-              data.trailingConnector === null
-                ? Prisma.JsonNull
-                : toInputJson(data.trailingConnector),
+            trailingConnector: marshalNullableJson(data.trailingConnector),
           }),
           ...(data.composition !== undefined && {
-            composition:
-              data.composition === null ? Prisma.JsonNull : toInputJson(data.composition),
+            composition: marshalNullableJson(data.composition),
           }),
           ...(data.notes !== undefined && { notes: data.notes }),
         },

@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { ZodError } from "zod";
 
 import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
 import { type Composition } from "@repo/contracts/lms/composition";
@@ -707,7 +706,7 @@ describe("lmsWeekApi", () => {
     });
   });
 
-  describe("getByPlanAndDate — composition collision (QA-001, read-time enforced)", () => {
+  describe("getByPlanAndDate — composition collision (QA-001 write-guard, read-time DbCorruption)", () => {
     const COLLISION_MONDAY_PARAM = "2026-06-01";
     const COLLISION_UTC_MONDAY = new Date(Date.UTC(2026, 5, 1));
     const LADDER_COMPOSITION: Composition = {
@@ -739,50 +738,39 @@ describe("lmsWeekApi", () => {
       };
     };
 
-    const attachLadderCollision = async (blockId: string): Promise<void> => {
-      const schema = await lmsSchemaApi.create(
-        coach.user.id,
-        activePlanId,
-        { blockId },
-        {
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
-          composition: LADDER_COMPOSITION,
-        },
-      );
-
-      expect(schema.composition).toEqual(LADDER_COMPOSITION);
-
-      const markerRow = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-        schemaId: schema.id,
-        rowKind: "INNER_LADDER_MARKER",
-        rowPayload: MARKER_PAYLOAD,
-      });
-
-      expect(markerRow.rowKind).toBe("INNER_LADDER_MARKER");
-    };
-
-    it("lets both writes succeed (10.4 will add the write-time guard) then 500s the read with DbCorruption", async () => {
+    it("rejects a ladder-collision marker-row create with 400 and persists no corruption", async () => {
       const ctx = await provisionCollisionWeek();
 
       try {
-        await attachLadderCollision(ctx.block.id);
+        const schema = await lmsSchemaApi.create(
+          coach.user.id,
+          activePlanId,
+          { blockId: ctx.block.id },
+          {
+            kind: "ATOMIC",
+            archetypeId: atomicArchetypeId,
+            archetypeParams: N_ROUNDS_PARAMS,
+            composition: LADDER_COMPOSITION,
+          },
+        );
+
+        expect(schema.composition).toEqual(LADDER_COMPOSITION);
 
         await expect(
-          lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM),
-        ).rejects.toThrow(InternalServerError);
+          lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+            schemaId: schema.id,
+            rowKind: "INNER_LADDER_MARKER",
+            rowPayload: MARKER_PAYLOAD,
+          }),
+        ).rejects.toThrow(BadRequestError);
 
-        try {
-          await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM);
-        } catch (error) {
-          expect(error).toBeInstanceOf(InternalServerError);
+        const result = await lmsWeekApi.getByPlanAndDate(
+          coach.user.id,
+          activePlanId,
+          COLLISION_MONDAY_PARAM,
+        );
 
-          if (error instanceof InternalServerError) {
-            expect(error.statusCode).toBe(500);
-            expect(error.details?.kind).toBe("DbCorruption");
-          }
-        }
+        expect(result.week).not.toBeNull();
       } finally {
         await ctx.cleanup();
       }
@@ -801,7 +789,25 @@ describe("lmsWeekApi", () => {
 
         expect(cleanSchema.composition).toBeNull();
 
-        await attachLadderCollision(ctx.block.id);
+        const collidingSchema = await cleanupRaw.schema.create({
+          data: {
+            blockId: ctx.block.id,
+            order: 20,
+            kind: "ATOMIC",
+            archetypeId: atomicArchetypeId,
+            archetypeParams: N_ROUNDS_PARAMS,
+            composition: LADDER_COMPOSITION,
+          },
+        });
+
+        await cleanupRaw.schemaRow.create({
+          data: {
+            schemaId: collidingSchema.id,
+            order: 10,
+            rowKind: "INNER_LADDER_MARKER",
+            rowPayload: MARKER_PAYLOAD,
+          },
+        });
 
         await expect(
           lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM),
@@ -811,7 +817,7 @@ describe("lmsWeekApi", () => {
       }
     });
 
-    it("surfaces a malformed single-node composition column as a bare ZodError, not a DbCorruption 500 (QA-003 deferred)", async () => {
+    it("surfaces a malformed single-node composition column as a 500 DbCorruption", async () => {
       const ctx = await provisionCollisionWeek();
 
       await cleanupRaw.schema.create({
@@ -828,13 +834,17 @@ describe("lmsWeekApi", () => {
       try {
         await expect(
           lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM),
-        ).rejects.toThrow(ZodError);
+        ).rejects.toThrow(InternalServerError);
 
         try {
           await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, COLLISION_MONDAY_PARAM);
         } catch (error) {
-          expect(error).toBeInstanceOf(ZodError);
-          expect(error).not.toBeInstanceOf(InternalServerError);
+          expect(error).toBeInstanceOf(InternalServerError);
+
+          if (error instanceof InternalServerError) {
+            expect(error.statusCode).toBe(500);
+            expect(error.details?.kind).toBe("DbCorruption");
+          }
         }
       } finally {
         await ctx.cleanup();

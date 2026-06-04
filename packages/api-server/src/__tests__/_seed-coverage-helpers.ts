@@ -115,7 +115,9 @@ export const expectArchetypeNamesAllReferenced = async (
   });
   const idToName = new Map(archetypeRows.map((a) => [a.id, a.name]));
   const referenced = new Set(
-    usage.map((u) => idToName.get(u.archetypeId)).filter((name): name is string => name != null),
+    usage
+      .map((u) => (u.archetypeId === null ? undefined : idToName.get(u.archetypeId)))
+      .filter((name): name is string => name != null),
   );
 
   for (const archetypeName of expectedNames) {

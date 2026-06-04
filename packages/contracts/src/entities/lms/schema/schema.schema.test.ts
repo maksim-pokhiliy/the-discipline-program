@@ -753,11 +753,29 @@ describe("createSchemaSchema", () => {
     expect(r.success).toBe(true);
   });
 
-  it("rejects missing required field (kind)", () => {
+  it("rejects missing required field (blockId)", () => {
     const r = createSchemaSchema.safeParse({
-      blockId: cuidA,
+      kind: "ATOMIC",
       archetypeId: cuidB,
       archetypeParams: { archetype: "n-rounds", params: { countForm: "exact", count: 3 } },
+    });
+
+    expect(r.success).toBe(false);
+  });
+
+  it("accepts a composition-only create (no kind/archetypeId/archetypeParams) when composition present", () => {
+    const r = createSchemaSchema.safeParse({
+      blockId: cuidA,
+      composition: { scoring: { kind: "prescribed" } },
+    });
+
+    expect(r.success).toBe(true);
+  });
+
+  it("rejects a partial triad (kind without archetypeId/archetypeParams)", () => {
+    const r = createSchemaSchema.safeParse({
+      blockId: cuidA,
+      kind: "ATOMIC",
     });
 
     expect(r.success).toBe(false);

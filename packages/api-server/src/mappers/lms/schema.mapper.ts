@@ -1,15 +1,35 @@
-import { type Schema as PrismaSchema } from "@prisma/client";
+import { type Schema as PrismaSchema, type SchemaRow as PrismaSchemaRow } from "@prisma/client";
 
 import { intensitySchema } from "@repo/contracts/lms/_shared";
 import { compositionSchema, deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import {
   archetypeParamsSchema,
   type Schema,
+  type SchemaWithBody,
   trailingConnectorSchema,
 } from "@repo/contracts/lms/schema";
+import { InternalServerError } from "@repo/errors";
+
+import { mapToSchemaRow } from "./schema-row.mapper";
+
+export type PrismaSchemaWithRows = PrismaSchema & {
+  rows: PrismaSchemaRow[];
+};
+
+export type PrismaSchemaWithSubSchemas = PrismaSchemaWithRows & {
+  subSchemas: PrismaSchemaWithRows[];
+};
 
 export const mapToSchema = (s: PrismaSchema): Schema => {
   const composition = s.composition === null ? null : compositionSchema.parse(s.composition);
+
+  if (s.kind === null || s.archetypeId === null || s.archetypeParams === null) {
+    throw new InternalServerError("Schema is missing archetype fields", {
+      kind: "DbCorruption",
+      entity: "Schema",
+      schemaId: s.id,
+    });
+  }
 
   return {
     id: s.id,
@@ -31,3 +51,13 @@ export const mapToSchema = (s: PrismaSchema): Schema => {
     updatedAt: s.updatedAt,
   };
 };
+
+export const buildSchemaWithBody = (s: PrismaSchemaWithSubSchemas): SchemaWithBody => ({
+  schema: mapToSchema(s),
+  rows: s.rows.map(mapToSchemaRow),
+  subSchemas: s.subSchemas.map((sub) => ({
+    schema: mapToSchema(sub),
+    rows: sub.rows.map(mapToSchemaRow),
+    subSchemas: [],
+  })),
+});

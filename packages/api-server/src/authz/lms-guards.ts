@@ -166,7 +166,7 @@ export const verifySchemaOwnership = async (
   weekId: string;
   planId: string;
   parentSchemaId: string | null;
-  kind: SchemaKind;
+  kind: SchemaKind | null;
 }> => {
   const schema = await prisma.schema.findUnique({
     where: { id: schemaId },
@@ -241,7 +241,7 @@ export const verifySchemaRowOwnership = async (
 ): Promise<{
   status: TrainingPlanStatus;
   schemaId: string;
-  schemaKind: SchemaKind;
+  schemaKind: SchemaKind | null;
   parentSchemaId: string | null;
   blockId: string;
   sessionId: string;
