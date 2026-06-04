@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import { Alert, Box, Button, CircularProgress, Paper, Stack } from "@mui/material";
 
@@ -82,6 +82,7 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
   const { exerciseById: catalogExercises } = useCatalog();
   const { persist, isPending } = usePersistComposeCascade(planId, startDate);
 
+  const isSubmittingRef = useRef(false);
   const [issues, setIssues] = useState<ConvertIssue[]>([]);
   const [partialCount, setPartialCount] = useState<number | null>(null);
 
@@ -91,32 +92,42 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
   );
 
   const handleSave = async (): Promise<void> => {
-    setIssues([]);
-    setPartialCount(null);
-
-    const root = rootOf(controller.program);
-
-    if (root === null) {
+    if (isSubmittingRef.current) {
       return;
     }
 
-    const result = composeRootToCreatePlan(root);
+    isSubmittingRef.current = true;
 
-    if (!result.ok) {
-      setIssues(result.issues);
+    try {
+      setIssues([]);
+      setPartialCount(null);
 
-      return;
+      const root = rootOf(controller.program);
+
+      if (root === null) {
+        return;
+      }
+
+      const result = composeRootToCreatePlan(root);
+
+      if (!result.ok) {
+        setIssues(result.issues);
+
+        return;
+      }
+
+      const persisted = await persist(result.nodes, blockId);
+
+      if (persisted.ok) {
+        onClose();
+
+        return;
+      }
+
+      setPartialCount(persisted.createdCount);
+    } finally {
+      isSubmittingRef.current = false;
     }
-
-    const persisted = await persist(result.nodes, blockId);
-
-    if (persisted.ok) {
-      onClose();
-
-      return;
-    }
-
-    setPartialCount(persisted.createdCount);
   };
 
   return (
@@ -164,7 +175,7 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
         ) : null}
 
         {partialCount !== null ? (
-          <Alert severity="warning">{`${PARTIAL_TITLE} — ${String(partialCount)} node(s) created before the failure. Fix the flagged issue, then re-save the rest or delete the partial via the row menu.`}</Alert>
+          <Alert severity="warning">{`${PARTIAL_TITLE} — ${String(partialCount)} node(s) created before the failure. The tree may be saved but some parallel/superset links not wired. Fix the flagged issue, then re-save the rest or delete the partial via the row menu.`}</Alert>
         ) : null}
 
         <Stack direction="row" spacing={LAYOUT_GAP} sx={{ alignItems: "flex-start" }}>
@@ -184,6 +195,7 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
           >
             <ComposeNodeInspector
               selectedNode={controller.selectedNode}
+              exerciseById={exerciseById}
               updateNode={controller.updateNode}
               rename={controller.rename}
             />

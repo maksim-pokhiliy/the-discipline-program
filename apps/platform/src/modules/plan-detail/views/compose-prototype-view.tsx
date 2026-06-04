@@ -67,6 +67,7 @@ export const ComposePrototypeView: React.FC<ComposePrototypeViewProps> = ({ init
           >
             <ComposeNodeInspector
               selectedNode={controller.selectedNode}
+              exerciseById={exerciseById}
               updateNode={controller.updateNode}
               rename={controller.rename}
             />

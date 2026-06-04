@@ -1,6 +1,7 @@
 import { arrayMove } from "@dnd-kit/sortable";
 
 import type {
+  ArrangementAxis,
   ComposeBlock,
   ComposeContainer,
   ComposeDay,
@@ -9,9 +10,12 @@ import type {
   ComposeSession,
   ComposeWeek,
   NodeId,
+  ParallelTrackDraft,
 } from "../compose-tree.types";
 
 import { makeNodeId } from "./id-factory";
+
+type IdRemap = Map<NodeId, NodeId>;
 
 type NodeMapper = (node: ComposeNode) => ComposeNode | null;
 
@@ -53,16 +57,75 @@ export const findNode = (root: ComposeNode, id: NodeId): ComposeNode | null => {
   return null;
 };
 
-export const cloneNode = (node: ComposeNode): ComposeNode => {
+const cloneSubtree = (node: ComposeNode, remap: IdRemap): ComposeNode => {
+  const id = makeNodeId();
+
+  remap.set(node.id, id);
+
   if (node.nodeType === "row") {
-    return structuredClone({ ...node, id: makeNodeId() });
+    return structuredClone({ ...node, id });
   }
 
   return {
     ...structuredClone({ ...node, children: [] }),
-    id: makeNodeId(),
-    children: node.children.map(cloneNode),
+    id,
+    children: node.children.map((child) => cloneSubtree(child, remap)),
   };
+};
+
+const remapTrack = (track: ParallelTrackDraft, remap: IdRemap): ParallelTrackDraft => {
+  const { pairedWithRowId } = track;
+
+  return {
+    childSchemaId: remap.get(track.childSchemaId) ?? track.childSchemaId,
+    ...(track.setEnumeration !== undefined && { setEnumeration: track.setEnumeration }),
+    ...(pairedWithRowId !== undefined && {
+      pairedWithRowId: remap.get(pairedWithRowId) ?? pairedWithRowId,
+    }),
+  };
+};
+
+const remapArrangement = (arrangement: ArrangementAxis, remap: IdRemap): ArrangementAxis => {
+  switch (arrangement.kind) {
+    case "ordered":
+      return arrangement;
+    case "parallel":
+      return {
+        ...arrangement,
+        tracks: arrangement.tracks.map((track) => remapTrack(track, remap)),
+      };
+    case "superset":
+      return {
+        ...arrangement,
+        pairs: arrangement.pairs.map((pair) => ({
+          ...pair,
+          rowIds: pair.rowIds.map((rowId) => remap.get(rowId) ?? rowId),
+        })),
+      };
+    default:
+      return arrangement satisfies never;
+  }
+};
+
+const remapTreeArrangements = (node: ComposeNode, remap: IdRemap): ComposeNode => {
+  if (node.nodeType === "row") {
+    return node;
+  }
+
+  const children = node.children.map((child) => remapTreeArrangements(child, remap));
+
+  if (node.arrangement === undefined) {
+    return { ...node, children };
+  }
+
+  return { ...node, arrangement: remapArrangement(node.arrangement, remap), children };
+};
+
+export const cloneNode = (node: ComposeNode): ComposeNode => {
+  const remap: IdRemap = new Map();
+  const cloned = cloneSubtree(node, remap);
+
+  return remapTreeArrangements(cloned, remap);
 };
 
 export const updateNode = (

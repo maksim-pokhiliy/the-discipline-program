@@ -42,6 +42,12 @@ const container = (idSeed: string, input: ContainerInput): ComposeContainer => (
 const FIVE_MIN_CAP: TimeCap = { min: 5, unit: "min" };
 
 const IMPLICIT_REPS: RepNotation = { kind: "implicit" };
+const TWELVE_REPS: RepNotation = { kind: "count", value: 12 };
+const PLANK_HOLD: RepNotation = { kind: "unit_bound", unit: "sec", value: 45 };
+const NINETY_SEC_REST: RestAxis = {
+  duration: { value: 90, unit: "sec" },
+  scope: "between_rounds",
+};
 const BODYWEIGHT: Load = { kind: "bodyweight" };
 const kg = (valueKg: number): Load => ({
   kind: "absolute",
@@ -112,7 +118,17 @@ const buildBlockC = (): ComposeBlock =>
       children: [
         container("block-c-parallel", {
           header: "Parallel ladders",
-          arrangement: { kind: "parallel" },
+          arrangement: {
+            kind: "parallel",
+            interleaveOrder: "round_by_round",
+            tracks: [
+              { childSchemaId: asNodeId("block-c-ladder-down"), setEnumeration: [21, 15, 9] },
+              {
+                childSchemaId: asNodeId("block-c-ladder-up"),
+                pairedWithRowId: asNodeId("block-c-ladder-down-row"),
+              },
+            ],
+          },
           scoring: { kind: "for_time" },
           children: [
             ladderTrack(
@@ -172,6 +188,41 @@ const buildBlockD = (): ComposeBlock =>
           exercise: atomicExercise(MOCK_EXERCISE_IDS.wallBall),
           load: kg(9),
           reps: IMPLICIT_REPS,
+        }),
+      ],
+    }),
+  );
+
+const buildBlockE = (): ComposeBlock =>
+  block(
+    "block-e",
+    "Superset finisher",
+    container("block-e-root", {
+      header: "3 rounds, paired",
+      repetition: { kind: "count", count: 3 },
+      arrangement: {
+        kind: "superset",
+        pairs: [
+          {
+            label: "Biceps / triceps",
+            rowIds: [asNodeId("block-e-curl"), asNodeId("block-e-ext")],
+          },
+        ],
+      },
+      rest: NINETY_SEC_REST,
+      children: [
+        exerciseRow("block-e-curl", {
+          exercise: atomicExercise(MOCK_EXERCISE_IDS.pushPress),
+          reps: TWELVE_REPS,
+        }),
+        exerciseRow("block-e-ext", {
+          exercise: atomicExercise(MOCK_EXERCISE_IDS.dip),
+          reps: TWELVE_REPS,
+        }),
+        exerciseRow("block-e-plank", {
+          exercise: atomicExercise(MOCK_EXERCISE_IDS.plank),
+          load: BODYWEIGHT,
+          reps: PLANK_HOLD,
         }),
       ],
     }),
@@ -238,6 +289,7 @@ const buildGauntletWeek = (): ComposeWeek => ({
         buildBlockB(),
         buildBlockC(),
         buildBlockD(),
+        buildBlockE(),
       ]),
     ]),
   ],
