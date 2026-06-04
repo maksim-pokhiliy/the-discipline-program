@@ -24,12 +24,18 @@ type CandidateSchema = {
   blockId: string;
   parentSchemaId: string | null;
   alternatingGroupId: string | null;
-  archetype: { name: string };
+  archetype: { name: string } | null;
 };
 
 const assertMemberShape = (schema: CandidateSchema): void => {
   if (schema.parentSchemaId !== null) {
     throw new BadRequestError("Alternating group members must be top-level block schemas", {
+      schemaId: schema.id,
+    });
+  }
+
+  if (schema.archetype === null) {
+    throw new BadRequestError("Alternating group members must use the alternating-sets archetype", {
       schemaId: schema.id,
     });
   }

@@ -4,7 +4,11 @@ import { BadRequestError } from "@repo/errors";
 
 const SCHEMA_KINDS_ALLOWING_ROWS = ["ATOMIC", "HEADERLESS", "NAMED", "COMPOSITE"] as const;
 
-export const assertParentKindForRow = (parentKind: SchemaKind): void => {
+export const assertParentKindForRow = (parentKind: SchemaKind | null): void => {
+  if (parentKind === null) {
+    return;
+  }
+
   const allowed: readonly string[] = SCHEMA_KINDS_ALLOWING_ROWS;
 
   if (!allowed.includes(parentKind)) {

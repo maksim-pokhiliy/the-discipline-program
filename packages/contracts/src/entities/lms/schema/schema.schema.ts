@@ -116,20 +116,56 @@ export const schemaSchemaWithInvariants = schemaSchema.superRefine((value, ctx) 
   }
 });
 
-export const createSchemaSchema = z.object({
+const ARCHETYPE_TRIAD_SIZE = 3;
+
+const createSchemaBaseSchema = z.object({
   blockId: z.string().cuid(),
   parentSchemaId: z.string().cuid().nullable().optional(),
-  kind: schemaKindSchema,
-  archetypeId: z.string().cuid(),
+  kind: schemaKindSchema.optional(),
+  archetypeId: z.string().cuid().optional(),
   header: z.string().max(SCHEMA_CONSTANTS.MAX_HEADER_LENGTH).nullable().optional(),
-  archetypeParams: archetypeParamsSchema,
+  archetypeParams: archetypeParamsSchema.optional(),
   intensity: intensitySchema.nullable().optional(),
   trailingConnector: trailingConnectorSchema.nullable().optional(),
   composition: compositionSchema.nullable().optional(),
   notes: z.string().max(SCHEMA_CONSTANTS.MAX_NOTES_LENGTH).nullable().optional(),
 });
 
-export const updateSchemaSchema = createSchemaSchema.partial();
+export const createSchemaSchema = createSchemaBaseSchema.superRefine((value, ctx) => {
+  const presentCount = [value.kind, value.archetypeId, value.archetypeParams].filter(
+    (field) => field !== undefined,
+  ).length;
+
+  if (presentCount === 0 || presentCount === ARCHETYPE_TRIAD_SIZE) {
+    return;
+  }
+
+  if (value.kind === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["kind"],
+      message: "kind, archetypeId and archetypeParams must be provided together or all omitted",
+    });
+  }
+
+  if (value.archetypeId === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["archetypeId"],
+      message: "kind, archetypeId and archetypeParams must be provided together or all omitted",
+    });
+  }
+
+  if (value.archetypeParams === undefined) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["archetypeParams"],
+      message: "kind, archetypeId and archetypeParams must be provided together or all omitted",
+    });
+  }
+});
+
+export const updateSchemaSchema = createSchemaBaseSchema.partial();
 
 export const reorderSchemasSchema = z.object({
   orderedIds: z

@@ -690,10 +690,10 @@ model Schema {
   parentSchemaId     String?
   alternatingGroupId String?
   order              Int
-  kind               SchemaKind
-  archetypeId        String
+  kind               SchemaKind?
+  archetypeId        String?
   header             String?
-  archetypeParams    Json
+  archetypeParams    Json?
   composition        Json?
   intensity          Json?
   trailingConnector  Json?
@@ -704,7 +704,7 @@ model Schema {
   block            Block             @relation(fields: [blockId], references: [id], onDelete: Cascade)
   parentSchema     Schema?           @relation("SchemaSubSchemas", fields: [parentSchemaId], references: [id], onDelete: Cascade)
   subSchemas       Schema[]          @relation("SchemaSubSchemas")
-  archetype        Archetype         @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
+  archetype        Archetype?        @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
   alternatingGroup AlternatingGroup? @relation(fields: [alternatingGroupId], references: [id], onDelete: SetNull)
   rows             SchemaRow[]
 

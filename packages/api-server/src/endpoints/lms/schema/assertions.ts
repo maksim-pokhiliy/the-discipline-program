@@ -64,7 +64,14 @@ export const assertCompositionUpdateValid = async (
   });
 };
 
-export const assertSubSchemaInvariants = (parentKind: SchemaKind, dataKind: SchemaKind): void => {
+export const assertSubSchemaInvariants = (
+  parentKind: SchemaKind | null,
+  dataKind: SchemaKind | null,
+): void => {
+  if (parentKind === null || dataKind === null) {
+    return;
+  }
+
   if (parentKind !== "NESTED") {
     throw new BadRequestError("Cannot nest schemas under non-NESTED parent kind", {
       parentKind,
