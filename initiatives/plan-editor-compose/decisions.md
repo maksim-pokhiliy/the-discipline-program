@@ -28,9 +28,11 @@ D-numbered ratified decisions for this initiative. Step-level calls that don't m
 | D-AG-FACTS         | AlternatingGroup domain facts the fold must preserve (migrated from `implementation/`)         | RATIFIED (history)                           |
 | D-D4-REVERSAL      | The 34-archetype catalog-as-seeded-config is DROPPED by 10.4                                   | RATIFIED (reverses old D4)                   |
 | D-PHASE5-SCORING   | Scoring/execution layer = the product differentiator vs Sheets; deferred to its own initiative | DEFERRED (future initiative)                 |
-| D-10.4-1           | 10.4 shape: the arc S1→S2→S3 vs alternatives                                                   | **OPEN**                                     |
-| D-10.4-2           | Drop `Schema.kind` + abolish the kind-based write guards                                       | **OPEN**                                     |
-| D-10.4-3           | S2 compose-write UI scope (full four-projection vs MVP)                                        | **OPEN**                                     |
+| D-10.4-1           | 10.4 shape: the arc S1→S2→S3 vs alternatives                                                   | RATIFIED (S1)                                |
+| D-10.4-2           | Drop `Schema.kind` + abolish the kind-based write guards                                       | RATIFIED (dir; S1 nullable → S3 drops)       |
+| D-10.4-3           | S2 compose-write UI scope (full four-projection vs MVP)                                        | **OPEN** (leaning recorded → S2 gate)        |
+| D-10.4-S1-RS       | S1 read-shape fork → option (b): non-null read + `mapToSchema` narrow                          | RATIFIED (S1 Gate A)                         |
+| D-10.4-S1-INT      | S1 ships composition-only-create as an accepted poison-intermediate                            | RATIFIED (owner override)                    |
 
 ---
 
@@ -131,27 +133,42 @@ D-numbered ratified decisions for this initiative. Step-level calls that don't m
 
 ---
 
-## OPEN — 10.4 forks (awaiting user ratification; do NOT execute past these)
+## 10.4 forks — S1 ratified (D-10.4-1/2 + two S1 calls); D-10.4-3 deferred to S2
 
 ### D-10.4-1 — 10.4 shape: the arc S1 → S2 → S3
 
-- **Status:** OPEN. Recommendation: the arc.
+- **Status:** RATIFIED (2026-06-04). The arc. S1 shipped (PR #241); S2 next.
 - **The constraint (proven, not preference).** Removing archetype removes the only authoring path (picker + 18 forms + `SchemaEditorModal`). The replacement — the compose-write UI — exists as a walkthrough-validated mock prototype but does NOT persist (zero mutation wiring, local types ≠ frozen contract, no draft→`Composition` converter — verified). So the destructive cut cannot complete until the prototype is productionized.
 - **Recommended arc.** S1: QA-001 write-guard + nullable-archetype expand (api-server, ~1 session). S2: productionize the validated prototype — converter + persistence + type-alignment + mounts + coach re-walkthrough (UI-first `/feature`, ~1 session). S3: mechanical sweep — delete old authoring → render-flip → seed composition-native → contract/api-server archetype removal → Prisma drop + `db:reset` (ultracode workflow, ~1 session). ~3 sessions, 2 gated DB runs.
 - **Alternatives.** (a) UI as a separate initiative, 10.4 = guard + expand + seed only (minimal destruct now). (b) Sweep with a placeholder-archetype dual-write (faster to clean schema, but placeholder = archetypeId-reincarnation risk, violates OQ-1).
 
 ### D-10.4-2 — drop `Schema.kind` + abolish the kind-based write guards
 
-- **Status:** OPEN. Recommendation: drop + abolish.
+- **Status:** RATIFIED (direction, 2026-06-04) — drop + abolish. S1 made `kind` NULLABLE as the stepping stone (the kind-consuming guards `assertParentKindForRow`/`assertSubSchemaInvariants` + the two ownership guards are now null-tolerant, behavior-preserved for non-null); **S3** drops the column + abolishes the two assertions.
 - **Finding.** `kind` is NOT a pure-archetype field — `assertParentKindForRow` ("no rows on NESTED") + `assertSubSchemaInvariants` ("sub-schema only ATOMIC/HEADERLESS under NESTED") consume it at write time, and the ownership guards return it. Algebra §2.4 ("any container accepts any child") abolishes these restrictions; the structural discipline moves to the S2 UX (D-CONTAINER-VS-ROW), not a stored discriminator.
 - **Behavior change (flagged).** Post-drop a coach can put a row in a grouping container. This follows from the ratified algebra; it touches the authz-guard result contract (the returned `kind`/`schemaKind` lose their only consumers — the two assertions that also die).
 - **Alternative.** Retain `kind` (stored or computed) + the guards — safer for current behavior, but a vestigial archetype-era field, contradicts the spec's "kind computed-on-read, not stored."
 
 ### D-10.4-3 — S2 compose-write UI scope
 
-- **Status:** OPEN. Recommendation: full four-projection-faithful (sequence parallel/superset LAST within S2 so it can slip to an increment without blocking simple axes).
+- **Status:** OPEN — leaning recorded (2026-06-04): full four-projection-faithful; parallel/superset sequenced LAST within S2 so it can slip to an increment. Ratify firmly at S2 kickoff (more info after S1; QA-004 existence-check rides with parallel/superset).
 - **The fork.** The prototype HAS all 7 repetition fields + arrangement/scoring/rest inspector (UX validated). The productionization scope question: ship ALL axes incl. `arrangement:parallel/superset` (the hardest — refs `childSchemaId`/`rowIds`/`pairedWithRowId` + the AlternatingGroup fold + the QA-004 existence-check) day-1, or simple axes first (count/ladder/cadence/interval/timeCap + ordered + duplication + EMOM row-as-minute) and defer parallel/superset persistence to an S2 increment.
 - **Coach-POV.** The corpus uses parallel ladders (Gauntlet C) and supersets (E) on paper — so for fidelity they are needed; the question is day-1 vs increment.
+
+### D-10.4-S1-RS — S1 read-shape fork → option (b)
+
+- **Status:** RATIFIED (S1 Gate A, 2026-06-04).
+- **Decision.** Making the Prisma archetype columns nullable forces `mapToSchema` to read `SchemaKind | null` etc., which doesn't fit the non-null read contract `schemaSchema`. Two resolutions: **(a)** widen `schemaSchema`/`SchemaShape.{kind,archetypeId,archetypeParams}` to nullable — but `turbo check-types` fans out (`^check-types`), so this type-breaks ~6 platform read sites IN-GATE, all doomed code S3 deletes; **(b)** keep the read contract non-null; `mapToSchema` narrows the nullable Prisma columns with a runtime `if (x === null) throw InternalServerError(DbCorruption)` (no `!`/`as`). Chose **(b)**.
+- **Rationale.** Smallest reversible change; platform stays untouched (its consumers are rewritten in S2 anyway); no throwaway null-guards in an api-server step. The write-side null-tolerance (ownership guards return `| null`; `assertParentKindForRow`/`assertSubSchemaInvariants` null-tolerant; `assertArchetypeConsistency` caller-gated; `createSchemaSchema` triad optional + all-present-or-all-absent `superRefine`, base-object pattern so `updateSchemaSchema.partial()` still derives) is needed under BOTH (a) and (b) — the fork is ONLY the read RESPONSE shape.
+- **Consequence → S2 (DR-1).** Defers the read-shape widen + the ~6 platform null-guards to S2. Full design lived in the S1 `/feature` `design.md` §6.1; obligation is `deferred.md` DR-1.
+
+### D-10.4-S1-INT — S1 ships composition-only-create as an accepted poison-intermediate
+
+- **Status:** RATIFIED (owner override, 2026-06-04).
+- **The finding (Review REVIEW-001 + QA-101/102 — independent, offline-proven).** `createSchemaSchema`'s now-optional triad means the contract ACCEPTS a composition-only create (`{ blockId, composition }` or even `{ blockId }`), and nothing in the handler gates it. Such a create PERSISTS, then `mapToSchema` (option-b narrow-guard) 500s on read-back → the whole week read 500s until `db:reset`. Plus the write-guard inverts to 500 (not 400) on a composition-only parent (hooks route through `mapToSchema`). API-only (no S1 UI path emits composition-only creates).
+- **Decision.** Do NOT gate it in S1. Ship the poison-intermediate as-is.
+- **Rationale (owner).** Migration errors mid-process are normal; the code is LOCAL, won't be pushed/merged broken; "это ПРОЦЕСС, не результат." The ~10-line `if (archetypeId == null) throw` gate I recommended was declined — not worth fussing over an API-only, `db:reset`-recoverable intermediate that S2 closes anyway. (Co-ownership note: I held the line once — week-bricking poison + a guard-contract inversion ≠ mere UI lag — then complied on contentful pushback.)
+- **Closes in S2 (DR-1).** S2 widens the read shape + enables the composition-only handler path together → the poison window ends. Until then: do NOT create composition-only schemas via the API.
 
 ---
 
