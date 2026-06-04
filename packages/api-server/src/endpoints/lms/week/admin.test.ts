@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { dayOfWeekValues } from "@repo/contracts/lms/_shared";
-import { type Composition } from "@repo/contracts/lms/composition";
+import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { BadRequestError, ForbiddenError, InternalServerError } from "@repo/errors";
 
 import { cleanupRaw, createTestCoach } from "../../../test/helpers";
@@ -846,6 +846,150 @@ describe("lmsWeekApi", () => {
             expect(error.details?.kind).toBe("DbCorruption");
           }
         }
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+  });
+
+  describe("getByPlanAndDate — composition-only round-trip (DR-1, QA-101 acceptance)", () => {
+    const COMPOSITION_MONDAY_PARAM = "2026-06-08";
+    const COMPOSITION_UTC_MONDAY = new Date(Date.UTC(2026, 5, 8));
+    const CADENCE_COMPOSITION: Composition = {
+      repetition: { kind: "cadence", everyMin: 1, rounds: 4 },
+    };
+    const REST_ROW_PAYLOAD = { rowKind: "REST_SLOT" as const };
+
+    const provisionCompositionWeek = async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: COMPOSITION_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "MONDAY" },
+      });
+      const session = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
+      const block = await cleanupRaw.block.create({
+        data: { sessionId: session.id, order: 10 },
+      });
+
+      return {
+        block,
+        cleanup: async () => {
+          await cleanupRaw.schemaRow
+            .deleteMany({ where: { schema: { blockId: block.id } } })
+            .catch(() => {});
+          await cleanupRaw.schema.deleteMany({ where: { blockId: block.id } }).catch(() => {});
+          await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+        },
+      };
+    };
+
+    it("creates a composition-only Schema whose create-return carries a null triad and a derived label", async () => {
+      const ctx = await provisionCompositionWeek();
+
+      try {
+        const created = await lmsSchemaApi.create(
+          coach.user.id,
+          activePlanId,
+          { blockId: ctx.block.id },
+          { composition: CADENCE_COMPOSITION },
+        );
+
+        expect(created.kind).toBeNull();
+        expect(created.archetypeId).toBeNull();
+        expect(created.archetypeParams).toBeNull();
+        expect(created.composition).toEqual(CADENCE_COMPOSITION);
+        expect(created.label).toEqual(deriveCompositionLabel(CADENCE_COMPOSITION));
+
+        const stored = await cleanupRaw.schema.findUnique({ where: { id: created.id } });
+
+        expect(stored?.kind).toBeNull();
+        expect(stored?.archetypeId).toBeNull();
+        expect(stored?.archetypeParams).toBeNull();
+        expect(stored?.composition).toEqual(CADENCE_COMPOSITION);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("reads the composition-only Schema back through the week read with no 500 and a null triad", async () => {
+      const ctx = await provisionCompositionWeek();
+
+      try {
+        const created = await lmsSchemaApi.create(
+          coach.user.id,
+          activePlanId,
+          { blockId: ctx.block.id },
+          { composition: CADENCE_COMPOSITION, header: "EMOM 4" },
+        );
+
+        await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+          schemaId: created.id,
+          rowKind: "REST_SLOT",
+          rowPayload: REST_ROW_PAYLOAD,
+        });
+        await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+          schemaId: created.id,
+          rowKind: "REST_SLOT",
+          rowPayload: REST_ROW_PAYLOAD,
+        });
+
+        const result = await lmsWeekApi.getByPlanAndDate(
+          coach.user.id,
+          activePlanId,
+          COMPOSITION_MONDAY_PARAM,
+        );
+
+        expect(result.week).not.toBeNull();
+
+        const embedded = result.days[0]?.sessions[0]?.blocks[0]?.schemas[0];
+
+        expect(embedded?.schema.id).toBe(created.id);
+        expect(embedded?.schema.kind).toBeNull();
+        expect(embedded?.schema.archetypeId).toBeNull();
+        expect(embedded?.schema.archetypeParams).toBeNull();
+        expect(embedded?.schema.composition).toEqual(CADENCE_COMPOSITION);
+        expect(embedded?.schema.label).toEqual(deriveCompositionLabel(CADENCE_COMPOSITION));
+        expect(embedded?.schema.header).toBe("EMOM 4");
+        expect(embedded?.rows).toHaveLength(2);
+        expect(embedded?.subSchemas).toEqual([]);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("renders a week that mixes a composition-only Schema and an archetype Schema without a 500", async () => {
+      const ctx = await provisionCompositionWeek();
+
+      try {
+        const compositionOnly = await lmsSchemaApi.create(
+          coach.user.id,
+          activePlanId,
+          { blockId: ctx.block.id },
+          { composition: CADENCE_COMPOSITION },
+        );
+        const archetype = await lmsSchemaApi.create(
+          coach.user.id,
+          activePlanId,
+          { blockId: ctx.block.id },
+          { kind: "ATOMIC", archetypeId: atomicArchetypeId, archetypeParams: N_ROUNDS_PARAMS },
+        );
+
+        const result = await lmsWeekApi.getByPlanAndDate(
+          coach.user.id,
+          activePlanId,
+          COMPOSITION_MONDAY_PARAM,
+        );
+
+        const schemas = result.days[0]?.sessions[0]?.blocks[0]?.schemas ?? [];
+        const compositionNode = schemas.find((s) => s.schema.id === compositionOnly.id);
+        const archetypeNode = schemas.find((s) => s.schema.id === archetype.id);
+
+        expect(compositionNode?.schema.kind).toBeNull();
+        expect(compositionNode?.schema.archetypeParams).toBeNull();
+        expect(archetypeNode?.schema.kind).toBe("ATOMIC");
+        expect(archetypeNode?.schema.archetypeParams).toEqual(N_ROUNDS_PARAMS);
+        expect(archetypeNode?.schema.composition).toBeNull();
       } finally {
         await ctx.cleanup();
       }

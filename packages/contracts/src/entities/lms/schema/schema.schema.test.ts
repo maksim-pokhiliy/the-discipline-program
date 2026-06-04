@@ -584,6 +584,23 @@ describe("schemaSchema", () => {
     expect(_agId).toBeNull();
     expect(schemaSchema.safeParse(rest).success).toBe(false);
   });
+
+  it("accepts a composition-only read shape with a null archetype triad (DR-1 widen)", () => {
+    const compositionOnly = {
+      ...baseSchema,
+      kind: null,
+      archetypeId: null,
+      archetypeParams: null,
+      composition: { repetition: { kind: "cadence" as const, everyMin: 1, rounds: 4 } },
+      label: { kind: "cadence" as const, family: "INTERVALIC" as const },
+    };
+
+    expect(schemaSchema.safeParse(compositionOnly).success).toBe(true);
+  });
+
+  it("still accepts the non-null archetype read shape after the widen", () => {
+    expect(schemaSchema.safeParse(baseSchema).success).toBe(true);
+  });
 });
 
 describe("schemaWithBodySchema", () => {

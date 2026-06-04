@@ -4,7 +4,13 @@ import { compositionSchema } from "@repo/contracts/lms/composition";
 import { createSchemaRowSchema } from "@repo/contracts/lms/schema-row";
 
 import { MOCK_SEED } from "../compose-mock-seed";
-import type { ComposeBlock, ComposeContainer, ComposeNode } from "../compose-tree.types";
+import type {
+  ComposeBlock,
+  ComposeContainer,
+  ComposeNode,
+  ComposeRow,
+  RepetitionAxis,
+} from "../compose-tree.types";
 
 import {
   composeRootToCreatePlan,
@@ -306,6 +312,121 @@ describe("composeRootToCreatePlan", () => {
 
     if (!result.ok) {
       expect(result.issues.length).toBeGreaterThanOrEqual(2);
+    }
+  });
+});
+
+const repetitionContainer = (id: string, repetition: RepetitionAxis): ComposeContainer => ({
+  nodeType: "container",
+  id: asNodeId(id),
+  header: null,
+  notes: null,
+  repetition,
+  children: [],
+});
+
+const committedRow = (
+  rowKind: ComposeRow["rowKind"],
+  rowPayload: ComposeRow["rowPayload"],
+): ComposeRow => ({
+  nodeType: "row",
+  id: asNodeId(`committed-${rowKind}`),
+  rowKind,
+  rowPayload,
+  reps: null,
+  load: null,
+  side: null,
+  tempo: null,
+  position: null,
+  intensity: null,
+  notes: null,
+  editorDraft: null,
+});
+
+describe("composeRootToCreatePlan out-of-bounds axes (frozen safeParse gate, never throws)", () => {
+  it("rejects a count range with min greater than max without throwing", () => {
+    const container = repetitionContainer("count-min-gt-max", {
+      kind: "count",
+      count: { min: 5, max: 3 },
+    });
+
+    const run = () => composeRootToCreatePlan(mountRoot([container]));
+
+    expect(run).not.toThrow();
+    expect(run().ok).toBe(false);
+  });
+
+  it("rejects a zero count without throwing", () => {
+    const container = repetitionContainer("count-zero", { kind: "count", count: 0 });
+
+    const run = () => composeRootToCreatePlan(mountRoot([container]));
+
+    expect(run).not.toThrow();
+    expect(run().ok).toBe(false);
+  });
+
+  it("rejects a negative count without throwing", () => {
+    const container = repetitionContainer("count-negative", { kind: "count", count: -2 });
+
+    const run = () => composeRootToCreatePlan(mountRoot([container]));
+
+    expect(run).not.toThrow();
+    expect(run().ok).toBe(false);
+  });
+
+  it("rejects a ladder with a negative step without throwing", () => {
+    const container = repetitionContainer("ladder-negative-step", {
+      kind: "ladder",
+      steps: [21, -15, 9],
+    });
+
+    const run = () => composeRootToCreatePlan(mountRoot([container]));
+
+    expect(run).not.toThrow();
+    expect(run().ok).toBe(false);
+  });
+
+  it("rejects a window whose end is not after its start without throwing", () => {
+    const container = repetitionContainer("window-end-before-start", {
+      kind: "window",
+      startHhMm: "10:30",
+      endHhMm: "09:00",
+    });
+
+    const run = () => composeRootToCreatePlan(mountRoot([container]));
+
+    expect(run).not.toThrow();
+    expect(run().ok).toBe(false);
+  });
+});
+
+describe("composeRootToCreatePlan does not catch the ladder/marker collision (QA-001 is server-side)", () => {
+  it("passes a ladder container holding an INNER_LADDER_MARKER row as ok (server in-tx guard rejects it later)", () => {
+    const marker = committedRow("INNER_LADDER_MARKER", {
+      rowKind: "INNER_LADDER_MARKER",
+      steps: [21, 15, 9],
+    });
+    const container: ComposeContainer = {
+      nodeType: "container",
+      id: asNodeId("ladder-with-marker"),
+      header: null,
+      notes: null,
+      repetition: { kind: "ladder", steps: [21, 15, 9] },
+      children: [marker],
+    };
+
+    const result = composeRootToCreatePlan(mountRoot([container]));
+
+    expect(result.ok).toBe(true);
+
+    if (result.ok) {
+      const node = result.nodes[0];
+
+      expect(node?.schema.composition).toEqual({
+        repetition: { kind: "ladder", steps: [21, 15, 9] },
+      });
+      expect(node?.rows).toHaveLength(1);
+      expect(node?.rows[0]?.rowKind).toBe("INNER_LADDER_MARKER");
     }
   });
 });
