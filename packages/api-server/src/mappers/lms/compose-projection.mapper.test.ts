@@ -3,9 +3,13 @@ import { describe, expect, it } from "vitest";
 import { type Composition } from "@repo/contracts/lms/composition";
 import { type Schema, type SchemaWithBody } from "@repo/contracts/lms/schema";
 import { type SchemaRow } from "@repo/contracts/lms/schema-row";
-import { InternalServerError } from "@repo/errors";
+import { BadRequestError, InternalServerError } from "@repo/errors";
 
-import { assertComposeTreeValid, projectSchemaWithBody } from "./compose-projection.mapper";
+import {
+  assertComposeTreeValid,
+  assertComposeTreeValidForWrite,
+  projectSchemaWithBody,
+} from "./compose-projection.mapper";
 
 const cuidFran = "clz000000000000000000fran";
 const cuidThrusters = "clz00000000000000000thrust";
@@ -263,6 +267,26 @@ describe("assertComposeTreeValid", () => {
     expect(markerChild?.nodeType === "row" && markerChild.rowPayload.rowKind).toBe(
       "INNER_LADDER_MARKER",
     );
+  });
+});
+
+describe("assertComposeTreeValidForWrite", () => {
+  it("throws BadRequestError (400) on a ladder collision", () => {
+    expect(() => assertComposeTreeValidForWrite(collisionNode)).toThrow(BadRequestError);
+
+    try {
+      assertComposeTreeValidForWrite(collisionNode);
+    } catch (error) {
+      expect(error).toBeInstanceOf(BadRequestError);
+
+      if (error instanceof BadRequestError) {
+        expect(error.statusCode).toBe(400);
+        expect(error.message).toBe("Schema composition tree is invalid");
+        expect(error.details?.kind).toBeUndefined();
+        expect(error.details?.entity).toBe("Schema");
+        expect(Array.isArray(error.details?.issues)).toBe(true);
+      }
+    }
   });
 });
 

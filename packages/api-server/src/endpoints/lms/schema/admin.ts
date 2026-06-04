@@ -17,7 +17,11 @@ import { prisma } from "../../../db/client";
 import { mapToSchema } from "../../../mappers/lms";
 import { handlePrismaError, retryOnP2034, toInputJson } from "../../../utils";
 
-import { assertArchetypeConsistency, assertSubSchemaInvariants } from "./assertions";
+import {
+  assertArchetypeConsistency,
+  assertCompositionUpdateValid,
+  assertSubSchemaInvariants,
+} from "./assertions";
 
 type CreateScope = { blockId: string } | { parentSchemaId: string };
 
@@ -198,6 +202,10 @@ export const lmsSchemaApi = {
           },
         );
       }
+    }
+
+    if (data.composition !== undefined) {
+      await assertCompositionUpdateValid(prisma, schemaId, data.composition);
     }
 
     try {

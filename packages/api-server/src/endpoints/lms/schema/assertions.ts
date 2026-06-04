@@ -1,6 +1,8 @@
+import { type Composition } from "@repo/contracts/lms/composition";
 import { type SchemaKind, SUB_SCHEMA_ALLOWED_KINDS } from "@repo/contracts/lms/schema";
 import { BadRequestError, NotFoundError } from "@repo/errors";
 
+import { assertComposeTreeValidForWrite, buildSchemaWithBody } from "../../../mappers/lms";
 import { type TxClient } from "../_shared";
 
 export const assertArchetypeConsistency = async (
@@ -32,6 +34,34 @@ export const assertArchetypeConsistency = async (
       archetypeName: archetype.name,
     });
   }
+};
+
+export const assertCompositionUpdateValid = async (
+  client: TxClient,
+  schemaId: string,
+  nextComposition: Composition | null,
+): Promise<void> => {
+  const current = await client.schema.findUnique({
+    where: { id: schemaId },
+    include: {
+      rows: { orderBy: { order: "asc" } },
+      subSchemas: {
+        orderBy: { order: "asc" },
+        include: { rows: { orderBy: { order: "asc" } } },
+      },
+    },
+  });
+
+  if (!current) {
+    throw new NotFoundError("Schema not found", { schemaId });
+  }
+
+  const node = buildSchemaWithBody(current);
+
+  assertComposeTreeValidForWrite({
+    ...node,
+    schema: { ...node.schema, composition: nextComposition },
+  });
 };
 
 export const assertSubSchemaInvariants = (parentKind: SchemaKind, dataKind: SchemaKind): void => {
