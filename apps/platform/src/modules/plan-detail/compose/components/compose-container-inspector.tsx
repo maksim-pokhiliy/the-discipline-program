@@ -3,6 +3,7 @@
 import { Alert, Stack, Typography } from "@mui/material";
 
 import type { RestSpec } from "@repo/contracts/lms/_shared";
+import type { Exercise } from "@repo/contracts/lms/exercise";
 import { InlineEditText } from "@repo/ui";
 
 import { RestSpecFields } from "../../components/rest-spec-fields";
@@ -14,6 +15,7 @@ import type {
   RepetitionAxis,
   ScoringDirective,
 } from "../compose-tree.types";
+import { collectArrangementTargets } from "../lib/arrangement-targets";
 import { shouldBeContainer } from "../lib/should-be-container";
 
 import { ArrangementAxisField } from "./axes/arrangement-axis-field";
@@ -38,6 +40,7 @@ const DEFAULT_REST: RestSpec = {
 
 type ComposeContainerInspectorProps = {
   container: ComposeContainer;
+  exerciseById: Map<string, Exercise>;
   onUpdateNode: (id: NodeId, patch: (node: ComposeNode) => ComposeNode) => void;
   onRename: (id: NodeId, header: string) => void;
 };
@@ -49,9 +52,12 @@ const asContainerPatch =
 
 export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps> = ({
   container,
+  exerciseById,
   onUpdateNode,
   onRename,
 }) => {
+  const arrangementTargets = collectArrangementTargets(container, exerciseById);
+
   const setRepetition = (repetition: RepetitionAxis): void =>
     onUpdateNode(
       container.id,
@@ -109,6 +115,9 @@ export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps>
       <ArrangementAxisField
         value={container.arrangement ?? DEFAULT_ARRANGEMENT}
         onChange={setArrangement}
+        childContainers={arrangementTargets.childContainers}
+        descendantRows={arrangementTargets.descendantRows}
+        rowsByTrack={arrangementTargets.rowsByTrack}
       />
 
       <ScoringAxisField value={container.scoring ?? DEFAULT_SCORING} onChange={setScoring} />

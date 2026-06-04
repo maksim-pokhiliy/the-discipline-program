@@ -1,0 +1,24 @@
+import type { ComposeContainer, ComposeRow } from "../compose-tree.types";
+
+export const collectTrackChildren = (container: ComposeContainer): ComposeContainer[] =>
+  container.children.filter((child): child is ComposeContainer => child.nodeType === "container");
+
+export const collectDescendantRows = (container: ComposeContainer): ComposeRow[] => {
+  const rows: ComposeRow[] = [];
+
+  const walk = (node: ComposeContainer): void => {
+    for (const child of node.children) {
+      if (child.nodeType === "row") {
+        rows.push(child);
+
+        continue;
+      }
+
+      walk(child);
+    }
+  };
+
+  walk(container);
+
+  return rows;
+};

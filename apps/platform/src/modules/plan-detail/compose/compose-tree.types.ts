@@ -7,6 +7,7 @@ import type {
   TempoModifier,
   TimeCap,
 } from "@repo/contracts/lms/_shared";
+import type { ParallelInterleaveOrder } from "@repo/contracts/lms/composition";
 import type { Position, RowKind, SchemaRowPayload } from "@repo/contracts/lms/schema-row";
 
 import type { CountOrRangeValue } from "../components/count-or-range-field";
@@ -22,14 +23,18 @@ export type RepetitionAxis =
   | { kind: "window"; startHhMm: string; endHhMm: string }
   | { kind: "interval"; workMin: number; offMin: number; count: number };
 
-export type SupersetGrouping = {
-  pairs: { label: string; rowIds: NodeId[] }[];
+export type ParallelTrackDraft = {
+  childSchemaId: NodeId;
+  setEnumeration?: number[];
+  pairedWithRowId?: NodeId;
 };
 
-export type ArrangementAxis = {
-  kind: "ordered" | "parallel" | "superset";
-  superset?: SupersetGrouping;
-};
+export type SupersetPairDraft = { label: string; rowIds: NodeId[] };
+
+export type ArrangementAxis =
+  | { kind: "ordered" }
+  | { kind: "parallel"; interleaveOrder: ParallelInterleaveOrder; tracks: ParallelTrackDraft[] }
+  | { kind: "superset"; pairs: SupersetPairDraft[] };
 
 export type ScoringDirective =
   | { kind: "prescribed" }

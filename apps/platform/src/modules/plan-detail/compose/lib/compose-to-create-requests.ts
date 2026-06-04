@@ -8,23 +8,35 @@ import type { CreateSchemaRequest } from "@repo/contracts/lms/schema";
 import type { CreateSchemaRowRequest } from "@repo/contracts/lms/schema-row";
 
 import type {
-  ArrangementAxis,
   ComposeContainer,
   ComposeNode,
   ComposeRow,
+  NodeId,
   RepetitionAxis,
   ScoringDirective,
 } from "../compose-tree.types";
 
+import {
+  type ConvertIssue,
+  type DraftArrangement,
+  validateDeferredArrangement,
+} from "./arrangement-convert";
 import { isRowCommitted } from "./make-row";
 
-export type CreateSchemaPlanNode = {
-  schema: Omit<CreateSchemaRequest, "blockId" | "parentSchemaId">;
-  rows: Omit<CreateSchemaRowRequest, "schemaId">[];
-  children: CreateSchemaPlanNode[];
+export type { ConvertIssue, DraftArrangement };
+
+export type RowWithDraftId = {
+  draftNodeId: NodeId;
+  row: Omit<CreateSchemaRowRequest, "schemaId">;
 };
 
-export type ConvertIssue = { path: string; message: string };
+export type CreateSchemaPlanNode = {
+  draftNodeId: NodeId;
+  schema: Omit<CreateSchemaRequest, "blockId" | "parentSchemaId">;
+  rows: RowWithDraftId[];
+  deferredArrangement?: DraftArrangement;
+  children: CreateSchemaPlanNode[];
+};
 
 export type ConvertResult =
   | { ok: true; nodes: CreateSchemaPlanNode[] }
@@ -32,12 +44,9 @@ export type ConvertResult =
 
 type AssembledComposition = {
   repetition?: ContractRepetitionAxis;
-  arrangement?: ArrangementAxis;
   scoring?: ContractScoringDirective;
   rest?: RestSpec;
 };
-
-const ORDERED = "ordered";
 
 const mapRepetition = (repetition: RepetitionAxis): ContractRepetitionAxis => {
   switch (repetition.kind) {
@@ -91,8 +100,6 @@ const mapScoring = (scoring: ScoringDirective): ContractScoringDirective => {
 
 const assembleComposition = (container: ComposeContainer): AssembledComposition => ({
   ...(container.repetition !== undefined && { repetition: mapRepetition(container.repetition) }),
-  ...(container.arrangement !== undefined &&
-    container.arrangement.kind !== ORDERED && { arrangement: container.arrangement }),
   ...(container.scoring !== undefined && { scoring: mapScoring(container.scoring) }),
   ...(container.rest !== undefined && { rest: container.rest }),
 });
@@ -115,6 +122,22 @@ const hasAnyAxis = (container: ComposeContainer): boolean =>
   container.scoring !== undefined ||
   container.rest !== undefined;
 
+const deferArrangement = (
+  container: ComposeContainer,
+  path: string,
+  issues: ConvertIssue[],
+): DraftArrangement | undefined => {
+  const { arrangement } = container;
+
+  if (arrangement === undefined || arrangement.kind === "ordered") {
+    return undefined;
+  }
+
+  const isValid = validateDeferredArrangement(arrangement, container, path, issues);
+
+  return isValid ? arrangement : undefined;
+};
+
 const convertContainer = (
   container: ComposeContainer,
   path: string,
@@ -129,13 +152,17 @@ const convertContainer = (
     }
   }
 
+  const deferredArrangement = deferArrangement(container, path, issues);
+
   const node: CreateSchemaPlanNode = {
+    draftNodeId: container.id,
     schema: {
       composition: parsed.success ? parsed.data : {},
       header: container.header,
       notes: container.notes,
     },
     rows: [],
+    ...(deferredArrangement !== undefined && { deferredArrangement }),
     children: [],
   };
 
@@ -160,7 +187,7 @@ function collectChildren(
         return;
       }
 
-      parentNode.rows.push(mapRow(child));
+      parentNode.rows.push({ draftNodeId: child.id, row: mapRow(child) });
 
       return;
     }

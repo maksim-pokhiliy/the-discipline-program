@@ -2,6 +2,8 @@
 
 import { Typography } from "@mui/material";
 
+import type { Exercise } from "@repo/contracts/lms/exercise";
+
 import type { ComposeNode, NodeId } from "../compose-tree.types";
 
 import { ComposeContainerInspector } from "./compose-container-inspector";
@@ -11,12 +13,14 @@ const EMPTY_TEXT = "Select a node to edit its axes.";
 
 type ComposeNodeInspectorProps = {
   selectedNode: ComposeNode | null;
+  exerciseById: Map<string, Exercise>;
   updateNode: (id: NodeId, patch: (node: ComposeNode) => ComposeNode) => void;
   rename: (id: NodeId, header: string) => void;
 };
 
 export const ComposeNodeInspector: React.FC<ComposeNodeInspectorProps> = ({
   selectedNode,
+  exerciseById,
   updateNode,
   rename,
 }) => {
@@ -33,6 +37,7 @@ export const ComposeNodeInspector: React.FC<ComposeNodeInspectorProps> = ({
       <ComposeContainerInspector
         key={selectedNode.id}
         container={selectedNode}
+        exerciseById={exerciseById}
         onUpdateNode={updateNode}
         onRename={rename}
       />

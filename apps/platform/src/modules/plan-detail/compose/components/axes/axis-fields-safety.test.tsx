@@ -3,6 +3,8 @@ import { type ReactElement, useState } from "react";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
+import type { Exercise } from "@repo/contracts/lms/exercise";
+
 import { render } from "@app/test/render";
 
 import type {
@@ -46,6 +48,7 @@ const InspectorHarness = ({ initial }: { initial: ComposeContainer }): ReactElem
       <div data-testid="summary">{buildAxesSummary(container).join(" | ")}</div>
       <ComposeContainerInspector
         container={container}
+        exerciseById={new Map<string, Exercise>()}
         onUpdateNode={handleUpdateNode}
         onRename={() => undefined}
       />

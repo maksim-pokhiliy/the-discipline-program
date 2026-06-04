@@ -49,7 +49,10 @@ describe("shouldBeContainer", () => {
   });
 
   it("returns true when arrangement is non-ordered", () => {
-    const container = baseContainer({ arrangement: { kind: "parallel" }, children: oneChild() });
+    const container = baseContainer({
+      arrangement: { kind: "parallel", interleaveOrder: "round_by_round", tracks: [] },
+      children: oneChild(),
+    });
 
     expect(shouldBeContainer(container)).toBe(true);
   });

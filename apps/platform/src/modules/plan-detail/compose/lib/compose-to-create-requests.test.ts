@@ -64,17 +64,48 @@ const eachComposition = (nodes: CreateSchemaPlanNode[]): unknown[] => {
   return compositions;
 };
 
-const eachRow = (nodes: CreateSchemaPlanNode[]): CreateSchemaPlanNode["rows"] => {
-  const rows: CreateSchemaPlanNode["rows"] = [];
+const eachRow = (nodes: CreateSchemaPlanNode[]): CreateSchemaPlanNode["rows"][number]["row"][] => {
+  const rows: CreateSchemaPlanNode["rows"][number]["row"][] = [];
 
   const walk = (node: CreateSchemaPlanNode): void => {
-    rows.push(...node.rows);
+    rows.push(...node.rows.map((entry) => entry.row));
     node.children.forEach(walk);
   };
 
   nodes.forEach(walk);
 
   return rows;
+};
+
+const findDeferred = (
+  nodes: CreateSchemaPlanNode[],
+  kind: "parallel" | "superset",
+): CreateSchemaPlanNode | undefined => {
+  const walk = (node: CreateSchemaPlanNode): CreateSchemaPlanNode | undefined => {
+    if (node.deferredArrangement?.kind === kind) {
+      return node;
+    }
+
+    for (const child of node.children) {
+      const found = walk(child);
+
+      if (found !== undefined) {
+        return found;
+      }
+    }
+
+    return undefined;
+  };
+
+  for (const node of nodes) {
+    const found = walk(node);
+
+    if (found !== undefined) {
+      return found;
+    }
+  }
+
+  return undefined;
 };
 
 const SIMPLE_AXES_BLOCKS = [
@@ -113,16 +144,26 @@ describe("composeRootToCreatePlan", () => {
     }
   });
 
-  it("rejects a parallel arrangement block via the frozen schema", () => {
+  it("converts the valid parallel gauntlet block to ok with a deferred arrangement", () => {
     const block = blockByLabel("Parallel ladders into AMRAP");
 
-    const result = composeRootToCreatePlan(mountRoot([block.root]));
+    const nodes = expectOk(composeRootToCreatePlan(mountRoot([block.root])));
+    const parallel = findDeferred(nodes, "parallel");
 
-    expect(result.ok).toBe(false);
+    expect(parallel).not.toBeUndefined();
+    expect(parallel?.deferredArrangement?.kind).toBe("parallel");
+    expect(parallel?.schema.composition).not.toHaveProperty("arrangement");
+  });
 
-    if (!result.ok) {
-      expect(result.issues.some((issue) => issue.path.includes("composition"))).toBe(true);
-    }
+  it("converts the valid superset gauntlet block to ok with a deferred arrangement", () => {
+    const block = blockByLabel("Superset finisher");
+
+    const nodes = expectOk(composeRootToCreatePlan(mountRoot([block.root])));
+    const superset = findDeferred(nodes, "superset");
+
+    expect(superset).not.toBeUndefined();
+    expect(superset?.deferredArrangement?.kind).toBe("superset");
+    expect(superset?.schema.composition).not.toHaveProperty("arrangement");
   });
 
   it("rejects an uncommitted row", () => {
@@ -163,34 +204,69 @@ describe("composeRootToCreatePlan", () => {
     }
   });
 
-  it("rejects a bare parallel container built by hand (frozen-schema rejection, no special branch)", () => {
+  it("rejects an under-filled parallel container as an arrangement cardinality issue", () => {
     const container: ComposeContainer = {
       nodeType: "container",
       id: asNodeId("bare-parallel"),
       header: null,
       notes: null,
-      arrangement: { kind: "parallel" },
+      arrangement: { kind: "parallel", interleaveOrder: "round_by_round", tracks: [] },
       children: [],
     };
 
     const result = composeRootToCreatePlan(mountRoot([container]));
 
     expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(result.issues.some((issue) => issue.path.includes("composition.arrangement"))).toBe(
+        true,
+      );
+    }
   });
 
-  it("rejects a bare superset container via the frozen schema", () => {
+  it("rejects an under-filled superset container as an arrangement cardinality issue", () => {
     const container: ComposeContainer = {
       nodeType: "container",
       id: asNodeId("bare-superset"),
       header: null,
       notes: null,
-      arrangement: { kind: "superset" },
+      arrangement: { kind: "superset", pairs: [] },
       children: [],
     };
 
     const result = composeRootToCreatePlan(mountRoot([container]));
 
     expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(result.issues.some((issue) => issue.path.includes("composition.arrangement"))).toBe(
+        true,
+      );
+    }
+  });
+
+  it("rejects a parallel with a single track and a dangling childSchemaId", () => {
+    const container: ComposeContainer = {
+      nodeType: "container",
+      id: asNodeId("dangling-parallel"),
+      header: null,
+      notes: null,
+      arrangement: {
+        kind: "parallel",
+        interleaveOrder: "round_by_round",
+        tracks: [{ childSchemaId: asNodeId("not-a-child") }],
+      },
+      children: [],
+    };
+
+    const result = composeRootToCreatePlan(mountRoot([container]));
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(result.issues.some((issue) => issue.path.includes("tracks"))).toBe(true);
+    }
   });
 
   it("omits an ordered arrangement from the emitted composition", () => {
@@ -426,7 +502,7 @@ describe("composeRootToCreatePlan does not catch the ladder/marker collision (QA
         repetition: { kind: "ladder", steps: [21, 15, 9] },
       });
       expect(node?.rows).toHaveLength(1);
-      expect(node?.rows[0]?.rowKind).toBe("INNER_LADDER_MARKER");
+      expect(node?.rows[0]?.row.rowKind).toBe("INNER_LADDER_MARKER");
     }
   });
 });

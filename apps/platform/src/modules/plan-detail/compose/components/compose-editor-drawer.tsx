@@ -164,7 +164,7 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
         ) : null}
 
         {partialCount !== null ? (
-          <Alert severity="warning">{`${PARTIAL_TITLE} — ${String(partialCount)} node(s) created before the failure. Fix the flagged issue, then re-save the rest or delete the partial via the row menu.`}</Alert>
+          <Alert severity="warning">{`${PARTIAL_TITLE} — ${String(partialCount)} node(s) created before the failure. The tree may be saved but some parallel/superset links not wired. Fix the flagged issue, then re-save the rest or delete the partial via the row menu.`}</Alert>
         ) : null}
 
         <Stack direction="row" spacing={LAYOUT_GAP} sx={{ alignItems: "flex-start" }}>
@@ -184,6 +184,7 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
           >
             <ComposeNodeInspector
               selectedNode={controller.selectedNode}
+              exerciseById={exerciseById}
               updateNode={controller.updateNode}
               rename={controller.rename}
             />

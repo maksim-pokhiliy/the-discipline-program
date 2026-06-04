@@ -4,12 +4,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type * as Hooks from "@app/lib/hooks";
 
 import type { CreateSchemaPlanNode } from "./compose-to-create-requests";
+import { asNodeId } from "./id-factory";
 
-type Call = { hook: "schema" | "row"; args: Record<string, unknown> };
+type Call = { hook: "schema" | "row" | "update"; args: Record<string, unknown> };
 
 const calls: Call[] = [];
 const schemaMutateAsync = vi.fn();
 const rowMutateAsync = vi.fn();
+const updateMutateAsync = vi.fn();
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -18,6 +20,7 @@ vi.mock("@app/lib/hooks", async () => {
     ...actual,
     useCreateSchema: () => ({ mutateAsync: schemaMutateAsync, isPending: false }),
     useCreateSchemaRow: () => ({ mutateAsync: rowMutateAsync, isPending: false }),
+    useUpdateSchema: () => ({ mutateAsync: updateMutateAsync, isPending: false }),
   };
 });
 
@@ -28,32 +31,48 @@ const START_DATE = "2025-01-06";
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const node = (overrides: Partial<CreateSchemaPlanNode>): CreateSchemaPlanNode => ({
-  schema: { composition: {} },
-  rows: [],
-  children: [],
-  ...overrides,
-});
+let nodeCounter = 0;
 
-const restRow = (): CreateSchemaPlanNode["rows"][number] => ({
-  rowKind: "REST_SLOT",
-  rowPayload: { rowKind: "REST_SLOT" },
-  load: null,
-  reps: null,
-  side: null,
-  tempo: null,
-  position: null,
-  intensity: null,
-  notes: null,
-});
+const node = (overrides: Partial<CreateSchemaPlanNode>): CreateSchemaPlanNode => {
+  nodeCounter += 1;
+
+  return {
+    draftNodeId: asNodeId(`draft-node-${nodeCounter}`),
+    schema: { composition: {} },
+    rows: [],
+    children: [],
+    ...overrides,
+  };
+};
+
+const restRow = (): CreateSchemaPlanNode["rows"][number] => {
+  nodeCounter += 1;
+
+  return {
+    draftNodeId: asNodeId(`draft-row-${nodeCounter}`),
+    row: {
+      rowKind: "REST_SLOT",
+      rowPayload: { rowKind: "REST_SLOT" },
+      load: null,
+      reps: null,
+      side: null,
+      tempo: null,
+      position: null,
+      intensity: null,
+      notes: null,
+    },
+  };
+};
 
 const renderPersist = () =>
   renderHook(() => usePersistComposeCascade(PLAN_ID, START_DATE)).result.current.persist;
 
 beforeEach(() => {
   calls.length = 0;
+  nodeCounter = 0;
   schemaMutateAsync.mockReset();
   rowMutateAsync.mockReset();
+  updateMutateAsync.mockReset();
 
   let schemaCounter = 0;
 
@@ -68,6 +87,12 @@ beforeEach(() => {
     calls.push({ hook: "row", args });
 
     return Promise.resolve({ id: `ckrow0000000000000000000${calls.length}` });
+  });
+
+  updateMutateAsync.mockImplementation((args: Record<string, unknown>) => {
+    calls.push({ hook: "update", args });
+
+    return Promise.resolve({ id: String(args.schemaId) });
   });
 });
 
