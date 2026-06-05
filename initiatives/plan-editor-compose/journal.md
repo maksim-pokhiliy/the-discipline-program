@@ -136,3 +136,8 @@ Append-only.
 - **DEFER-001 stays OPEN** → a later row-payload phase (D/E did NOT add a row-level `program`/`slotSpec` field — out of archetype-removal scope). `coverage-matrix.md` got a staleness banner (not deletable — live `sourceRef` labels still cite its valid VO sections). ADR-0023 + cosmetic-stale remain non-blocking-open.
 - **Milestone: the `plan-editor-compose` core arc (10.0–10.4) is COMPLETE** — archetype gone across UI (A/B) + seed (C) + contract/api-server (D) + Prisma (E); the compose-only model is fully in place. ph.5 (scoring/execution layer) is a separate future initiative.
 - **Next:** push `feat/compose-s3` + open the PR (close-out docs ride IN it). See `state.md` Next action.
+
+## 2026-06-05 — S3 merged to main; core arc concluded
+
+- PR #245 squash-merged → `main` (`c20c082a`; 208 files, +2630/−16431); `feat/compose-s3` deleted. The `plan-editor-compose` core arc (10.0–10.4) is concluded — compose-only model fully shipped, archetype excised across every layer (UI, seed, contract, api-server, Prisma).
+- **Next session = a deep analytical reconciliation** (NOT a build): the web-Claude origin dialogue (the premises/theory of the compose pivot, pasted by the user) + the durable artifacts ↔ the current shipped code — where faithful, where it ratified-diverged (D-rationale), and where theory/requirements remain UNbuilt (scoring-execution / conditional-scoring / parallel-interleave / DEFER-001). The step AFTER is decided live with the user; ph.5 (scoring) is the candidate next build (separate initiative, D-PHASE5-SCORING) but gated behind the findings.
