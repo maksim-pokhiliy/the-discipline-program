@@ -1,0 +1,69 @@
+# compose-hardening — deferred
+
+Carry-forwards: every gap from the 2026-06-05 audit (`audit-findings.md`), with disposition + status. IDs match the audit. **Promote here at every gate.**
+
+**Status:** `OPEN` (live) · `SCHEDULED` (assigned to a step) · `CLOSED` (done — kept for the trail) · `DROPPED` (decided not to). **Tag:** NEW = surfaced by this audit · CARRY = re-homed from `plan-editor-compose/deferred.md`.
+
+## Tier 0 — structural authoring (gates the rest)
+
+| ID   | One-liner                                                                                                      | Disposition                                                                                                                            | Status         |
+| ---- | -------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | -------------- |
+| T0-1 | Create-only: no UI to edit axes of an existing block — `count:3→5` = delete+recreate                           | Inverse adapter `Composition+SchemaWithBody→ComposeProgram` (real `schemaId`) + edit-mode drawer + save-via-`update`. Needs **D-EDIT** | OPEN (plan 0a) |
+| T0-2 | program/slot unauthorable — wave/cluster/drop-set/named-program/EMOM-slot flatten on input (CARRY `DEFER-001`) | Resolve ontology (**D-ONTOLOGY**) → wire form + Prisma + seed instances; or delete the zombie VOs                                      | OPEN (plan 0b) |
+
+## Tier 1 — correctness (silent bugs)
+
+| ID   | One-liner                                                                                                                                                                                                                                       | Disposition                                                                                                | Status                |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------- |
+| T1-1 | composition guard asymmetric: create writes composition with NO validation; arrangement-ref scope checked only on update (`admin.ts:121-131` vs `:157-158`). API-reachable; normal cascade wires arrangement via a guarded phase-2 update (NEW) | Call `assertCompositionUpdateValid` (or just the ref-scope check) on the create path too — symmetric guard | OPEN (plan 1)         |
+| T1-2 | `mapScoring` strips `condition` — silent data-loss if it ever enters the draft (NEW)                                                                                                                                                            | Tripwire test pinning "draft cannot emit condition"; full pass-through when conditional-authoring lands    | OPEN (plan 1)         |
+| T1-3 | depth-2 projector truncation — depth-3 ladder/marker collision evades both guards (CARRY `QA-106`)                                                                                                                                              | Recurse `buildSchemaWithBody` to arbitrary depth, or assert depth ≤ 2 explicitly                           | OPEN (plan 1; latent) |
+
+## Tier 2 — read honesty / authoring UX
+
+| ID   | One-liner                                                                     | Disposition                                                                               | Status                        |
+| ---- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------- |
+| T2-1 | `scoring` rendered as active though INERT — no draft/inert cue (NEW)          | Visual inert signal, or hide scoring in the editor until ph.5. Needs **D-SCORING-RENDER** | OPEN (plan 2)                 |
+| T2-2 | `interleaveOrder`/superset-`pairs`/`condition` never rendered (NEW)           | Render arrangement structure (interleave order, grouped pairs) + condition on the card    | OPEN (plan 2)                 |
+| T2-3 | EMOM `MIN n` not in drawer canvas, only read-side (V5; owner snag #1)         | Thread `deriveMinuteView` into `compose-container-card`; share the MIN pill style         | OPEN (plan 2; cheap)          |
+| T2-4 | ladder-collision reject is late (on persist, not input; owner snag #2)        | Surface the mutex at authoring time (inspector), not only at `safeParse`                  | OPEN (plan 2)                 |
+| T2-5 | axis fields silently store malformed input (owner snag #3)                    | Field-level UI validation (everyMin>0, workMin>0, HH:MM, rangeMax≥value)                  | OPEN (plan 2)                 |
+| T2-6 | demote-hint advertises an action that doesn't exist (owner snag #4)           | Add the promote/demote handler in `useComposeProgram` + button, or drop the hint          | OPEN (plan 2)                 |
+| T2-7 | `BlockEditorModal` "Edit block" edits meta, not axes — confuses coaches (NEW) | Re-label, or route it to the axes editor once T0-1 lands                                  | OPEN (plan 2; compounds T0-1) |
+
+## Tier 3 — hygiene / debt
+
+| ID        | One-liner                                                                      | Disposition                                                                                      | Status                    |
+| --------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | ------------------------- |
+| T3-CT-1   | zombie `stagedProgramSchema`/`slotSpecSchema` — 0 consumers (NEW)              | Wire (T0-2) or delete; don't leave "looks supported, isn't"                                      | OPEN                      |
+| T3-CT-2   | `until_recovery` not pinned `value:1` (CARRY `QA-untilrec`)                    | `restSpecSchema.superRefine` — FROZEN contract → Gate-A escalation                               | OPEN                      |
+| T3-CT-3   | ladder `superRefine` matches `"INNER_LADDER_MARKER"` by string literal (NEW)   | Import the rowKind const so a rename fails at compile                                            | OPEN                      |
+| T3-CT-4   | platform `RepetitionAxis` 7/8 — no `range` (NEW)                               | Add `range` to draft type + `mapRepetition` + `axes-summary` (or ratify range-folded-into-count) | OPEN                      |
+| T3-DB-1   | `Schema.composition Json?` nullable, no DB validation (NEW)                    | Decide: NOT NULL + `{}` default, or keep + document the contract                                 | OPEN                      |
+| T3-DB-2   | no DB-level ladder enforcement (CARRY `QA-108`)                                | Postgres exclusion/trigger — long-term hardening, low priority                                   | OPEN (long-term)          |
+| T3-API-1  | `scoring-inert` SCAN_ROOTS misses `endpoints/lms/schema-row` (NEW)             | Add schema-row/ to SCAN_ROOTS                                                                    | OPEN                      |
+| T3-API-2  | reorder is non-atomic two-pass outside Serializable (NEW)                      | Wrap in `isolationLevel:Serializable` or accept (single-coach)                                   | OPEN (low)                |
+| T3-RD-1   | `formatSchemaHeader` empty for scoring-only composition (NEW)                  | Fallback to a kind/structure hint when summary[0] is empty                                       | OPEN                      |
+| T3-RD-2   | two divergent axis formatters (CARRY `REVIEW-005`)                             | Dedup once `compose-tree.types` aligns to the contract                                           | OPEN (blocked on T3-CT-4) |
+| T3-RD-3   | `derive-minute-view` (authoring `compose/`) imported by read-side (NEW)        | Extract to a shared lib — fix the authoring→read leak                                            | OPEN                      |
+| T3-SEED-1 | `coverage-matrix.md` lies (claims program/slot/marker covered) (CARRY)         | Rewrite to the per-axis `COVERAGE_CELLS` reality, or delete                                      | OPEN                      |
+| T3-SEED-2 | duplicate `blockInstanceRef` block-008/047/098 across weeks (NEW)              | Uniqueness assertion in `load-and-validate.ts`; renumber the dups                                | OPEN                      |
+| T3-SEED-3 | `BLOCK_EMOM_20` is actually 22 minutes (NEW)                                   | Rename or fix `EMOM_MINUTES`                                                                     | OPEN (cosmetic)           |
+| T3-SEED-4 | `block-020` empty stub (0 rows, 0 sub-schemas) (NEW)                           | Fill or remove                                                                                   | OPEN (cosmetic)           |
+| T3-SEED-5 | `INNER_LADDER_MARKER` 0 seed + Gauntlet C not assembled (V7)                   | Seed ≥1 marker + a full Block C, OR deprecate marker-via-row (**D-MARKER**)                      | OPEN (tied to ph.5)       |
+| T3-ARCH-1 | `analysis/artifacts/06-formalization/` = sole archetype-ontology carrier (NEW) | Archive/quarantine so repo-wide `grep archetype` is clean                                        | OPEN                      |
+| T3-MISC-1 | reconcile `ADR-0023` — `fast-check` is now a real dep (CARRY)                  | One-line ADR update                                                                              | OPEN                      |
+
+## Detail on the load-bearing ones
+
+### T0-1 — create-only (the headline)
+
+The compose algebra is create-only end-to-end: `emptyBlockProgram` seed (`compose-editor-drawer.tsx:80`) + `composeRootToCreatePlan` with no inverse + a draft container type carrying only a synthetic `NodeId` (`compose-tree.types.ts:49`) + zero `Composition→ComposeProgram` adapter (repo grep empty). The wire to UPDATE composition exists (`use-persist-compose-cascade.ts:54` fires `updateSchema` with composition, but ONLY inside `wireArrangements` during the create cascade). So the blocker is the **data-mapping layer + an edit entry point**, not the persistence API. Until the adapter exists, any "edit axes" feature is blocked at data-mapping, not at the button.
+
+### T0-2 — program/slot (the ⅓-of-the-algebra gap)
+
+Three resolution shapes for **D-ONTOLOGY**: (i) **new `rowKind` + `stagedProgram` in `schemaRowPayloadSchema`** — the VO is already written + tested, cheapest: add the union variant + a Prisma column + a form + seed; (ii) **a 5th composition axis** — requires a four-projection legitimacy proof (`[[compose-four-projection]]`); (iii) **nested schema via `parentSchemaId`** with per-stage load. (i) is the lowest-friction unless four-projection says program belongs on the container. The decision also disposes the zombie types (T3-CT-1) and the seed flattening.
+
+## Closed history
+
+_None yet — initiative just opened._
