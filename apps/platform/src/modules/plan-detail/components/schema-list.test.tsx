@@ -54,7 +54,6 @@ const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
 const START_DATE = "2026-01-06";
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 const PARENT_SCHEMA_ID = "clp9z8x7w0000abcd1234psc1";
-const ARCHETYPE_ID = "clp9z8x7w0000abcd1234arc1";
 const NOW = new Date("2026-01-06T00:00:00.000Z");
 
 const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWithBody => ({
@@ -62,14 +61,9 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
     id: "clp9z8x7w0000abcd1234sch1",
     blockId: BLOCK_ID,
     parentSchemaId: PARENT_SCHEMA_ID,
-    alternatingGroupId: null,
     order: 1,
-    kind: "ATOMIC",
-    archetypeId: ARCHETYPE_ID,
     header: null,
-    archetypeParams: { archetype: "single-line-bare", params: {} },
     intensity: null,
-    trailingConnector: null,
     composition: null,
     label: null,
     notes: null,

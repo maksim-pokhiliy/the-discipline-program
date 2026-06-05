@@ -4,8 +4,6 @@ export const CUID_HEX_LENGTH = 24;
 export const CUID_LENGTH = CUID_HEX_LENGTH + 1;
 export const CUID_REGEX = /^c[0-9a-f]{24}$/;
 
-const ALT_GROUP_REF_INFIX = "-alt-";
-
 const assertCuidFormat = (value: string, seed: string): void => {
   if (!CUID_REGEX.test(value)) {
     throw new Error(
@@ -47,14 +45,4 @@ export const rowCuid = (blockRef: string, schemaPath: string, rowOrder: number):
   }
 
   return cuidFromSeed(`row::${blockRef}::${schemaPath}::${rowOrder}`);
-};
-
-export const alternatingGroupRef = (blockRef: string, groupKey: string): string => {
-  if (blockRef.length === 0 || groupKey.length === 0) {
-    throw new Error(
-      `alternatingGroupRef: empty segment (blockRef="${blockRef}", groupKey="${groupKey}")`,
-    );
-  }
-
-  return `${blockRef}${ALT_GROUP_REF_INFIX}${groupKey}`;
 };

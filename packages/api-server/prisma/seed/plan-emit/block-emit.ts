@@ -3,7 +3,6 @@ import { type PrismaClient } from "@prisma/client";
 import { requireId } from "../_id-helpers";
 import {
   type CanonicalBlock,
-  type CanonicalSchemaNode,
   type CanonicalSeed,
   type CanonicalSession,
 } from "../plan-data/canonical-schema";
@@ -13,7 +12,6 @@ import { buildSessionKey, type SessionRefMap } from "./plan-emit";
 import { type RefResolver } from "./ref-resolver";
 
 export type BlockRefMap = Map<string, string>;
-export type AltGroupRefMap = Map<string, ReadonlyMap<string, string>>;
 
 export const buildBlockKey = (
   weekIndex: number,
@@ -27,48 +25,6 @@ type BlockEmitContext = {
   sessionRefs: SessionRefMap;
   resolver: RefResolver;
   blockRefs: BlockRefMap;
-  altGroupRefs: Map<string, Map<string, string>>;
-};
-
-const collectAltGroupRefs = (schemas: ReadonlyArray<CanonicalSchemaNode>): string[] => {
-  const refs: string[] = [];
-  const seen = new Set<string>();
-
-  const walk = (node: CanonicalSchemaNode): void => {
-    if (node.alternatingGroupRef !== null && !seen.has(node.alternatingGroupRef)) {
-      seen.add(node.alternatingGroupRef);
-      refs.push(node.alternatingGroupRef);
-    }
-
-    for (const sub of node.subSchemas) {
-      walk(sub);
-    }
-  };
-
-  for (const schema of schemas) {
-    walk(schema);
-  }
-
-  return refs;
-};
-
-const emitAltGroups = async (
-  db: PrismaClient,
-  blockId: string,
-  block: CanonicalBlock,
-): Promise<Map<string, string>> => {
-  const refs = collectAltGroupRefs(block.schemas);
-  const mapping = new Map<string, string>();
-
-  for (const ref of refs) {
-    const group = await db.alternatingGroup.create({
-      data: { blockId, relationKind: "ALTERNATING_SETS" },
-    });
-
-    mapping.set(ref, requireId(group));
-  }
-
-  return mapping;
 };
 
 const buildLabelAssignmentData = (
@@ -101,10 +57,6 @@ const emitOneBlock = async (
   const blockId = requireId(created);
 
   ctx.blockRefs.set(blockKey, blockId);
-
-  const altGroupMapping = await emitAltGroups(ctx.db, blockId, block);
-
-  ctx.altGroupRefs.set(blockKey, altGroupMapping);
 };
 
 const emitSessionBlocks = async (
@@ -157,17 +109,14 @@ export const seedCanonicalBlocks = async (
   seed: CanonicalSeed,
   sessionRefs: SessionRefMap,
   resolver: RefResolver,
-): Promise<{ blockRefs: BlockRefMap; altGroupRefs: AltGroupRefMap }> => {
+): Promise<{ blockRefs: BlockRefMap }> => {
   const blockRefs: BlockRefMap = new Map();
-  const altGroupRefs = new Map<string, Map<string, string>>();
-  const ctx: BlockEmitContext = { db, sessionRefs, resolver, blockRefs, altGroupRefs };
+  const ctx: BlockEmitContext = { db, sessionRefs, resolver, blockRefs };
 
   await emitSheetWeeksBlocks(ctx, seed);
   await emitPhase7Blocks(ctx, seed);
 
-  const totalAltGroups = [...altGroupRefs.values()].reduce((sum, m) => sum + m.size, 0);
+  console.log(`  plan blocks: ${blockRefs.size} blocks`);
 
-  console.log(`  plan blocks: ${blockRefs.size} blocks + ${totalAltGroups} alternating groups`);
-
-  return { blockRefs, altGroupRefs };
+  return { blockRefs };
 };

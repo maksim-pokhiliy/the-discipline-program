@@ -1,29 +1,9 @@
-import type {
-  ArrangementAxis,
-  ComposeContainer,
-  RepetitionAxis,
-  RestAxis,
-  ScoringDirective,
-} from "../compose-tree.types";
+import { ARRANGEMENT_LABELS, SCORING_LABELS } from "../../lib/compose-axis-labels";
+import type { ComposeContainer, RepetitionAxis, RestAxis } from "../compose-tree.types";
 
 const MINUTE_MARK = "’";
 const STEP_SEPARATOR = "-";
 const DASH_SEPARATOR = " · ";
-
-const SCORING_LABELS: Record<ScoringDirective["kind"], string> = {
-  prescribed: "prescribed",
-  amrap: "AMRAP",
-  for_time: "for time",
-  max_in_remaining: "max-in-remaining",
-  total: "total",
-  progressive: "progressive",
-};
-
-const ARRANGEMENT_LABELS: Record<ArrangementAxis["kind"], string> = {
-  ordered: "ordered",
-  parallel: "parallel",
-  superset: "superset",
-};
 
 const repetitionLabel = (repetition: RepetitionAxis): string => {
   switch (repetition.kind) {

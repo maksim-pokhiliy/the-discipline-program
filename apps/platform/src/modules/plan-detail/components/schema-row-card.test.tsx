@@ -76,7 +76,6 @@ type RenderOptions = {
 
 const catalogValue: CatalogContextValue = {
   exerciseById,
-  archetypeById: new Map(),
 };
 
 const renderRowCard = ({

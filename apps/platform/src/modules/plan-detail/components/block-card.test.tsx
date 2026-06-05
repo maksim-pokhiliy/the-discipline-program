@@ -3,7 +3,6 @@ import { createElement } from "react";
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { AlternatingGroup } from "@repo/contracts/lms/alternating-group";
 import type { Block } from "@repo/contracts/lms/block";
 import type { Label } from "@repo/contracts/lms/label";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
@@ -72,11 +71,11 @@ vi.mock("./block-editor-modal", () => {
   return { BlockEditorModal: renderEditorMock };
 });
 
-vi.mock("./add-schema-button", () => {
-  const renderAddSchemaMock = () =>
-    createElement("div", { "data-testid": "add-schema-button-mock" });
+vi.mock("./add-compose-block-button", () => {
+  const renderAddComposeBlockButtonMock = () =>
+    createElement("div", { "data-testid": "add-compose-block-button-mock" });
 
-  return { AddSchemaButton: renderAddSchemaMock };
+  return { AddComposeBlockButton: renderAddComposeBlockButtonMock };
 });
 
 const { BlockCard } = await import("./block-card");
@@ -104,14 +103,9 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
     id: "clp9z8x7w0000abcd1234sch1",
     blockId: BLOCK_ID,
     parentSchemaId: null,
-    alternatingGroupId: null,
     order: 1,
-    kind: "ATOMIC",
-    archetypeId: "clp9z8x7w0000abcd1234arc1",
     header: null,
-    archetypeParams: { archetype: "single-line-bare", params: {} },
     intensity: null,
-    trailingConnector: null,
     composition: null,
     label: null,
     notes: null,
@@ -123,16 +117,6 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
   subSchemas: [],
 });
 
-const makeAltGroup = (overrides: Partial<AlternatingGroup> = {}): AlternatingGroup => ({
-  id: "clp9z8x7w0000abcd1234alt1",
-  blockId: BLOCK_ID,
-  relationKind: "ALTERNATING_SETS",
-  schemaIds: ["clp9z8x7w0000abcd1234sch1", "clp9z8x7w0000abcd1234sch2"],
-  createdAt: NOW,
-  updatedAt: NOW,
-  ...overrides,
-});
-
 const makeBlock = (overrides: Partial<Block> = {}): Block => ({
   id: BLOCK_ID,
   sessionId: SESSION_ID,
@@ -142,7 +126,6 @@ const makeBlock = (overrides: Partial<Block> = {}): Block => ({
   notes: null,
   labels: [],
   schemas: [],
-  alternatingGroups: [],
   createdAt: NOW,
   updatedAt: NOW,
   ...overrides,
@@ -167,7 +150,6 @@ const renderBlockCard = ({
 
   const catalogValue: CatalogContextValue = {
     exerciseById: new Map(),
-    archetypeById: new Map(),
   };
 
   return render(
@@ -423,56 +405,21 @@ describe("BlockCard note row", () => {
   });
 });
 
-describe("BlockCard body / alt-group", () => {
-  it("groups schemas with shared alternatingGroupId inside an AccentGroupCard wrapper rendering 'Alternating sets · N variants'", () => {
-    const altGroupId = "clp9z8x7w0000abcd1234alt1";
-    const s1 = makeSchema({ id: "clp9z8x7w0000abcd1234sch1", alternatingGroupId: altGroupId });
-    const s2 = makeSchema({ id: "clp9z8x7w0000abcd1234sch2", alternatingGroupId: altGroupId });
+describe("BlockCard body / schema rendering", () => {
+  it("renders every block schema as a flat SchemaCard in declared order", () => {
+    const s1 = makeSchema({ id: "clp9z8x7w0000abcd1234sch1" });
+    const s2 = makeSchema({ id: "clp9z8x7w0000abcd1234sch2" });
+    const s3 = makeSchema({ id: "clp9z8x7w0000abcd1234sch3" });
 
-    renderBlockCard({
-      block: makeBlock({
-        schemas: [s1, s2],
-        alternatingGroups: [
-          makeAltGroup({ id: altGroupId, schemaIds: [s1.schema.id, s2.schema.id] }),
-        ],
-      }),
-    });
-
-    expect(screen.getByText("Alternating sets · 2 variants")).toBeInTheDocument();
-
-    const schemaCards = screen.getAllByTestId("schema-card-mock");
-
-    expect(schemaCards).toHaveLength(2);
-    expect(schemaCards.map((node) => node.getAttribute("data-schema-id"))).toEqual([
-      s1.schema.id,
-      s2.schema.id,
-    ]);
-  });
-
-  it("renders alt-group members and standalones in declared order, alt-group inside AccentGroupCard wrapper", () => {
-    const altGroupId = "clp9z8x7w0000abcd1234alt1";
-    const s1 = makeSchema({ id: "clp9z8x7w0000abcd1234sch1", alternatingGroupId: altGroupId });
-    const s2 = makeSchema({ id: "clp9z8x7w0000abcd1234sch2", alternatingGroupId: null });
-    const s3 = makeSchema({ id: "clp9z8x7w0000abcd1234sch3", alternatingGroupId: altGroupId });
-
-    renderBlockCard({
-      block: makeBlock({
-        schemas: [s1, s2, s3],
-        alternatingGroups: [
-          makeAltGroup({ id: altGroupId, schemaIds: [s1.schema.id, s3.schema.id] }),
-        ],
-      }),
-    });
-
-    expect(screen.getByText("Alternating sets · 2 variants")).toBeInTheDocument();
+    renderBlockCard({ block: makeBlock({ schemas: [s1, s2, s3] }) });
 
     const schemaCards = screen.getAllByTestId("schema-card-mock");
 
     expect(schemaCards).toHaveLength(3);
     expect(schemaCards.map((node) => node.getAttribute("data-schema-id"))).toEqual([
       s1.schema.id,
-      s3.schema.id,
       s2.schema.id,
+      s3.schema.id,
     ]);
   });
 });
@@ -544,31 +491,6 @@ describe("BlockCard mutation pending / actions", () => {
     expect(deleteBlockMutate).toHaveBeenCalledTimes(1);
     expect(screen.getByRole("heading", { name: "Delete block" })).toBeInTheDocument();
     expect(screen.getByText("Delete this block?")).toBeInTheDocument();
-  });
-});
-
-describe("BlockCard alt-group degradation (QA-004 integration)", () => {
-  it("renders all schemas as bare SchemaCards without alt-group header when the alt-group has only one matching member", () => {
-    const altGroupId = "clp9z8x7w0000abcd1234alt1";
-    const s1 = makeSchema({ id: "clp9z8x7w0000abcd1234sch1", alternatingGroupId: altGroupId });
-    const s2 = makeSchema({ id: "clp9z8x7w0000abcd1234sch2", alternatingGroupId: null });
-
-    renderBlockCard({
-      block: makeBlock({
-        schemas: [s1, s2],
-        alternatingGroups: [makeAltGroup({ id: altGroupId, schemaIds: [s1.schema.id] })],
-      }),
-    });
-
-    expect(screen.queryByText(/Alternating sets · /)).toBeNull();
-
-    const schemaCards = screen.getAllByTestId("schema-card-mock");
-
-    expect(schemaCards).toHaveLength(2);
-    expect(schemaCards.map((node) => node.getAttribute("data-schema-id"))).toEqual([
-      s1.schema.id,
-      s2.schema.id,
-    ]);
   });
 });
 

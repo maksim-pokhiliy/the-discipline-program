@@ -25,16 +25,6 @@ const expectEmptySlot = (
   expect(slot.sessions).toEqual([]);
 };
 
-const N_ROUNDS_PARAMS = {
-  archetype: "n-rounds" as const,
-  params: { countForm: "exact" as const, count: 5 },
-};
-
-const NESTED_PARAMS = {
-  archetype: "nested-rounds-over-rounds" as const,
-  params: { outerCount: 3 },
-};
-
 const REST_SLOT_PAYLOAD = { rowKind: "REST_SLOT" as const };
 
 describe("lmsWeekApi", () => {
@@ -43,9 +33,6 @@ describe("lmsWeekApi", () => {
 
   let activePlanId: string;
   let archivedPlanId: string;
-
-  let atomicArchetypeId: string;
-  let nestedArchetypeId: string;
 
   beforeAll(async () => {
     coach = await createTestCoach();
@@ -62,20 +49,6 @@ describe("lmsWeekApi", () => {
     });
 
     archivedPlanId = archivedPlan.id;
-
-    const atomic = await cleanupRaw.archetype.findUniqueOrThrow({
-      where: { name: "n-rounds" },
-      select: { id: true },
-    });
-
-    atomicArchetypeId = atomic.id;
-
-    const nested = await cleanupRaw.archetype.findUniqueOrThrow({
-      where: { name: "nested-rounds-over-rounds" },
-      select: { id: true },
-    });
-
-    nestedArchetypeId = nested.id;
   });
 
   afterAll(async () => {
@@ -424,9 +397,6 @@ describe("lmsWeekApi", () => {
         data: {
           blockId: block.id,
           order: 10,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
         },
       });
       const rowFirst = await cleanupRaw.schemaRow.create({
@@ -454,7 +424,6 @@ describe("lmsWeekApi", () => {
         expect(embedded?.id).toBe(block.id);
         expect(embedded?.schemas).toHaveLength(1);
         expect(embedded?.schemas[0]?.schema.id).toBe(schema.id);
-        expect(embedded?.schemas[0]?.schema.kind).toBe("ATOMIC");
         expect(embedded?.schemas[0]?.rows).toHaveLength(2);
         expect(embedded?.schemas[0]?.rows.map((r) => r.id)).toEqual([rowFirst.id, rowSecond.id]);
         expect(embedded?.schemas[0]?.subSchemas).toEqual([]);
@@ -483,9 +452,6 @@ describe("lmsWeekApi", () => {
         data: {
           blockId: block.id,
           order: 10,
-          kind: "NESTED",
-          archetypeId: nestedArchetypeId,
-          archetypeParams: NESTED_PARAMS,
         },
       });
       const child = await cleanupRaw.schema.create({
@@ -493,9 +459,6 @@ describe("lmsWeekApi", () => {
           blockId: block.id,
           parentSchemaId: parent.id,
           order: 10,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
         },
       });
 
@@ -519,7 +482,7 @@ describe("lmsWeekApi", () => {
       }
     });
 
-    it("returns schemas: [] and alternatingGroups: [] for a block without an embed tree", async () => {
+    it("returns schemas: [] for a block without an embed tree", async () => {
       const week = await cleanupRaw.week.create({
         data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
       });
@@ -538,7 +501,6 @@ describe("lmsWeekApi", () => {
 
         expect(embedded?.id).toBe(block.id);
         expect(embedded?.schemas).toEqual([]);
-        expect(embedded?.alternatingGroups).toEqual([]);
       } finally {
         await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
         await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
@@ -562,18 +524,12 @@ describe("lmsWeekApi", () => {
         data: {
           blockId: block.id,
           order: 20,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
         },
       });
       const schemaEarlier = await cleanupRaw.schema.create({
         data: {
           blockId: block.id,
           order: 10,
-          kind: "NESTED",
-          archetypeId: nestedArchetypeId,
-          archetypeParams: NESTED_PARAMS,
         },
       });
       const subLater = await cleanupRaw.schema.create({
@@ -581,9 +537,6 @@ describe("lmsWeekApi", () => {
           blockId: block.id,
           parentSchemaId: schemaEarlier.id,
           order: 20,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
         },
       });
       const subEarlier = await cleanupRaw.schema.create({
@@ -591,9 +544,6 @@ describe("lmsWeekApi", () => {
           blockId: block.id,
           parentSchemaId: schemaEarlier.id,
           order: 10,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
         },
       });
       const rowLater = await cleanupRaw.schemaRow.create({
@@ -642,68 +592,6 @@ describe("lmsWeekApi", () => {
         await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
       }
     });
-
-    it("embeds an alternating group whose schemaIds are a subset of the block's schemas", async () => {
-      const week = await cleanupRaw.week.create({
-        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
-      });
-      const day = await cleanupRaw.day.create({
-        data: { weekId: week.id, dayOfWeek: "SATURDAY" },
-      });
-      const session = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
-      const block = await cleanupRaw.block.create({
-        data: { sessionId: session.id, order: 10 },
-      });
-      const group = await cleanupRaw.alternatingGroup.create({
-        data: { blockId: block.id, relationKind: "ALTERNATING_SETS" },
-      });
-      const memberFirst = await cleanupRaw.schema.create({
-        data: {
-          blockId: block.id,
-          alternatingGroupId: group.id,
-          order: 10,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
-        },
-      });
-      const memberSecond = await cleanupRaw.schema.create({
-        data: {
-          blockId: block.id,
-          alternatingGroupId: group.id,
-          order: 20,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
-        },
-      });
-
-      try {
-        const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
-
-        const embedded = result.days[5]?.sessions[0]?.blocks[0];
-
-        expect(embedded?.alternatingGroups).toHaveLength(1);
-        expect(embedded?.alternatingGroups[0]?.id).toBe(group.id);
-        expect([...(embedded?.alternatingGroups[0]?.schemaIds ?? [])].sort()).toEqual(
-          [memberFirst.id, memberSecond.id].sort(),
-        );
-
-        const embeddedSchemaIds = new Set(embedded?.schemas.map((s) => s.schema.id));
-
-        expect(
-          embedded?.alternatingGroups[0]?.schemaIds.every((id) => embeddedSchemaIds.has(id)),
-        ).toBe(true);
-      } finally {
-        await cleanupRaw.schema.delete({ where: { id: memberFirst.id } }).catch(() => {});
-        await cleanupRaw.schema.delete({ where: { id: memberSecond.id } }).catch(() => {});
-        await cleanupRaw.alternatingGroup.delete({ where: { id: group.id } }).catch(() => {});
-        await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
-        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
-        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
-        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
-      }
-    });
   });
 
   describe("getByPlanAndDate — composition collision (QA-001 write-guard, read-time DbCorruption)", () => {
@@ -746,12 +634,7 @@ describe("lmsWeekApi", () => {
           coach.user.id,
           activePlanId,
           { blockId: ctx.block.id },
-          {
-            kind: "ATOMIC",
-            archetypeId: atomicArchetypeId,
-            archetypeParams: N_ROUNDS_PARAMS,
-            composition: LADDER_COMPOSITION,
-          },
+          { composition: LADDER_COMPOSITION },
         );
 
         expect(schema.composition).toEqual(LADDER_COMPOSITION);
@@ -784,7 +667,7 @@ describe("lmsWeekApi", () => {
           coach.user.id,
           activePlanId,
           { blockId: ctx.block.id },
-          { kind: "ATOMIC", archetypeId: atomicArchetypeId, archetypeParams: N_ROUNDS_PARAMS },
+          {},
         );
 
         expect(cleanSchema.composition).toBeNull();
@@ -793,9 +676,6 @@ describe("lmsWeekApi", () => {
           data: {
             blockId: ctx.block.id,
             order: 20,
-            kind: "ATOMIC",
-            archetypeId: atomicArchetypeId,
-            archetypeParams: N_ROUNDS_PARAMS,
             composition: LADDER_COMPOSITION,
           },
         });
@@ -824,9 +704,6 @@ describe("lmsWeekApi", () => {
         data: {
           blockId: ctx.block.id,
           order: 10,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
           composition: { repetition: { kind: "ladder" } },
         },
       });
@@ -895,17 +772,11 @@ describe("lmsWeekApi", () => {
           { composition: CADENCE_COMPOSITION },
         );
 
-        expect(created.kind).toBeNull();
-        expect(created.archetypeId).toBeNull();
-        expect(created.archetypeParams).toBeNull();
         expect(created.composition).toEqual(CADENCE_COMPOSITION);
         expect(created.label).toEqual(deriveCompositionLabel(CADENCE_COMPOSITION));
 
         const stored = await cleanupRaw.schema.findUnique({ where: { id: created.id } });
 
-        expect(stored?.kind).toBeNull();
-        expect(stored?.archetypeId).toBeNull();
-        expect(stored?.archetypeParams).toBeNull();
         expect(stored?.composition).toEqual(CADENCE_COMPOSITION);
       } finally {
         await ctx.cleanup();
@@ -945,51 +816,11 @@ describe("lmsWeekApi", () => {
         const embedded = result.days[0]?.sessions[0]?.blocks[0]?.schemas[0];
 
         expect(embedded?.schema.id).toBe(created.id);
-        expect(embedded?.schema.kind).toBeNull();
-        expect(embedded?.schema.archetypeId).toBeNull();
-        expect(embedded?.schema.archetypeParams).toBeNull();
         expect(embedded?.schema.composition).toEqual(CADENCE_COMPOSITION);
         expect(embedded?.schema.label).toEqual(deriveCompositionLabel(CADENCE_COMPOSITION));
         expect(embedded?.schema.header).toBe("EMOM 4");
         expect(embedded?.rows).toHaveLength(2);
         expect(embedded?.subSchemas).toEqual([]);
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("renders a week that mixes a composition-only Schema and an archetype Schema without a 500", async () => {
-      const ctx = await provisionCompositionWeek();
-
-      try {
-        const compositionOnly = await lmsSchemaApi.create(
-          coach.user.id,
-          activePlanId,
-          { blockId: ctx.block.id },
-          { composition: CADENCE_COMPOSITION },
-        );
-        const archetype = await lmsSchemaApi.create(
-          coach.user.id,
-          activePlanId,
-          { blockId: ctx.block.id },
-          { kind: "ATOMIC", archetypeId: atomicArchetypeId, archetypeParams: N_ROUNDS_PARAMS },
-        );
-
-        const result = await lmsWeekApi.getByPlanAndDate(
-          coach.user.id,
-          activePlanId,
-          COMPOSITION_MONDAY_PARAM,
-        );
-
-        const schemas = result.days[0]?.sessions[0]?.blocks[0]?.schemas ?? [];
-        const compositionNode = schemas.find((s) => s.schema.id === compositionOnly.id);
-        const archetypeNode = schemas.find((s) => s.schema.id === archetype.id);
-
-        expect(compositionNode?.schema.kind).toBeNull();
-        expect(compositionNode?.schema.archetypeParams).toBeNull();
-        expect(archetypeNode?.schema.kind).toBe("ATOMIC");
-        expect(archetypeNode?.schema.archetypeParams).toEqual(N_ROUNDS_PARAMS);
-        expect(archetypeNode?.schema.composition).toBeNull();
       } finally {
         await ctx.cleanup();
       }

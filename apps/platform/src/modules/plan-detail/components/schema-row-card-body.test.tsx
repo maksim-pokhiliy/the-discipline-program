@@ -37,7 +37,6 @@ const { SchemaRowCard } = await import("./schema-row-card");
 
 const catalogValue: CatalogContextValue = {
   exerciseById,
-  archetypeById: new Map(),
 };
 
 const renderRow = (row: SchemaRow, index = 0) =>

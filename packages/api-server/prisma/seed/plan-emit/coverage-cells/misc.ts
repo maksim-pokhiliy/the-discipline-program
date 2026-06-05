@@ -117,10 +117,13 @@ const ENTITY_INVARIANT_CELLS: readonly CoverageCell[] = [
   {
     id: "entity.alternatingGroup",
     category: "entity-invariants",
-    label: "Schema with alternatingGroupId set",
+    label: "Schema with arrangement:parallel presence",
     required: 2,
-    sourceRef: "coverage-matrix §2 alternating-group",
-    tally: (db, planId) => countSchema(db, planId, { NOT: { alternatingGroupId: null } }),
+    sourceRef: "coverage-matrix §2 arrangement:parallel presence",
+    tally: (db, planId) =>
+      countSchema(db, planId, {
+        composition: { path: ["arrangement", "kind"], equals: "parallel" },
+      }),
   },
   {
     id: "entity.sessionFreeze",
@@ -137,14 +140,6 @@ const ENTITY_INVARIANT_CELLS: readonly CoverageCell[] = [
     required: 1,
     sourceRef: "coverage-matrix §2 session-label",
     tally: (db, planId) => countSession(db, planId, { NOT: { labelId: null } }),
-  },
-  {
-    id: "entity.schemaTrailingConnector",
-    category: "entity-invariants",
-    label: "Schema with trailingConnector set",
-    required: 1,
-    sourceRef: "coverage-matrix §2 schema-trailingConnector",
-    tally: (db, planId) => countSchema(db, planId, { trailingConnector: { not: Prisma.AnyNull } }),
   },
 ];
 

@@ -15,29 +15,15 @@ import {
 } from "../../../authz/guards";
 import { prisma } from "../../../db/client";
 import { mapToSchema } from "../../../mappers/lms";
-import { handlePrismaError, retryOnP2034, toInputJson } from "../../../utils";
+import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
 
-import {
-  assertArchetypeConsistency,
-  assertCompositionUpdateValid,
-  assertSubSchemaInvariants,
-} from "./assertions";
+import { assertCompositionUpdateValid } from "./assertions";
 
 type CreateScope = { blockId: string } | { parentSchemaId: string };
 
 type SchemaBodyData = Omit<CreateSchemaData, "blockId" | "parentSchemaId">;
 
-const STRUCTURAL_UPDATE_KEYS = ["kind", "archetypeId", "parentSchemaId", "blockId"] as const;
-
-const SURVIVING_GROUP_FLOOR = 2;
-
-const marshalNullableJson = (value: unknown): Prisma.InputJsonValue | typeof Prisma.JsonNull => {
-  if (value === undefined || value === null) {
-    return Prisma.JsonNull;
-  }
-
-  return toInputJson(value);
-};
+const STRUCTURAL_UPDATE_KEYS = ["parentSchemaId", "blockId"] as const;
 
 export const lmsSchemaApi = {
   create: async (
@@ -100,7 +86,6 @@ export const lmsSchemaApi = {
                 where: { id: scope.parentSchemaId },
                 select: {
                   id: true,
-                  kind: true,
                   blockId: true,
                   block: {
                     select: {
@@ -119,19 +104,8 @@ export const lmsSchemaApi = {
                 });
               }
 
-              assertSubSchemaInvariants(parent.kind, data.kind ?? null);
-
               storageBlockId = parent.blockId;
               storageParentSchemaId = scope.parentSchemaId;
-            }
-
-            if (data.archetypeId != null && data.kind != null && data.archetypeParams != null) {
-              await assertArchetypeConsistency(
-                tx,
-                data.archetypeId,
-                data.kind,
-                data.archetypeParams.archetype,
-              );
             }
 
             const max = await tx.schema.aggregate({
@@ -149,12 +123,8 @@ export const lmsSchemaApi = {
                 blockId: storageBlockId,
                 parentSchemaId: storageParentSchemaId,
                 order: nextOrder,
-                kind: data.kind ?? null,
-                archetypeId: data.archetypeId ?? null,
                 header: data.header ?? null,
-                archetypeParams: marshalNullableJson(data.archetypeParams),
                 intensity: marshalNullableJson(data.intensity),
-                trailingConnector: marshalNullableJson(data.trailingConnector),
                 composition: marshalNullableJson(data.composition),
                 notes: data.notes ?? null,
               },
@@ -184,33 +154,6 @@ export const lmsSchemaApi = {
       );
     }
 
-    if (data.archetypeParams !== undefined) {
-      const current = await prisma.schema.findUnique({
-        where: { id: schemaId },
-        select: { archetype: { select: { name: true } } },
-      });
-
-      if (!current) {
-        throw new NotFoundError("Schema not found", { schemaId });
-      }
-
-      if (current.archetype === null) {
-        throw new BadRequestError("Cannot update archetypeParams on a composition-only schema", {
-          schemaId,
-        });
-      }
-
-      if (current.archetype.name !== data.archetypeParams.archetype) {
-        throw new BadRequestError(
-          "archetypeParams variant must match current Archetype on update; structural change requires delete + recreate",
-          {
-            current: current.archetype.name,
-            provided: data.archetypeParams.archetype,
-          },
-        );
-      }
-    }
-
     if (data.composition !== undefined) {
       await assertCompositionUpdateValid(prisma, schemaId, data.composition);
     }
@@ -219,15 +162,9 @@ export const lmsSchemaApi = {
       const updated = await prisma.schema.update({
         where: { id: schemaId },
         data: {
-          ...(data.archetypeParams !== undefined && {
-            archetypeParams: toInputJson(data.archetypeParams),
-          }),
           ...(data.header !== undefined && { header: data.header }),
           ...(data.intensity !== undefined && {
             intensity: marshalNullableJson(data.intensity),
-          }),
-          ...(data.trailingConnector !== undefined && {
-            trailingConnector: marshalNullableJson(data.trailingConnector),
           }),
           ...(data.composition !== undefined && {
             composition: marshalNullableJson(data.composition),
@@ -248,31 +185,7 @@ export const lmsSchemaApi = {
     verifyPlanEditable(owner);
 
     try {
-      await retryOnP2034(() =>
-        prisma.$transaction(
-          async (tx) => {
-            const target = await tx.schema.findUnique({
-              where: { id: schemaId },
-              select: { alternatingGroupId: true },
-            });
-
-            await tx.schema.delete({ where: { id: schemaId } });
-
-            if (target?.alternatingGroupId) {
-              const remaining = await tx.schema.count({
-                where: { alternatingGroupId: target.alternatingGroupId },
-              });
-
-              if (remaining < SURVIVING_GROUP_FLOOR) {
-                await tx.alternatingGroup.delete({
-                  where: { id: target.alternatingGroupId },
-                });
-              }
-            }
-          },
-          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
-        ),
-      );
+      await prisma.schema.delete({ where: { id: schemaId } });
     } catch (error) {
       return handlePrismaError(error, { entity: "Schema" });
     }

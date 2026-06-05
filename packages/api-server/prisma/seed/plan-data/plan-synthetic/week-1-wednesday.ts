@@ -1,17 +1,14 @@
 import {
   absoluteLoad,
-  amrapFlat,
   bodyweightLoad,
-  compositeIntervalsThenRounds,
-  compositeIntervalsWorkRestFixed,
-  compositeIntervalsWorkRestProgressive,
-  compositeRoundsWithRest,
+  buildComposeNode,
   countReps,
   effortPercent,
+  intervalRep,
   mediaReference,
   pace,
   restBetweenRounds,
-  runDistance,
+  rounds,
   singleWeight,
   totalFlagReps,
   unitBoundReps,
@@ -38,24 +35,26 @@ const BLOCK_COMPOSITE_ROUNDS_REST_WK1_WED: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    compositeRoundsWithRest({
-      order: 1,
-      count: { min: 4, max: 5 },
-      rest: REST_BETWEEN_ROUNDS_RANGE_MIN,
-      header: "4-5 rounds with rest",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.thruster } },
-          { load: absoluteLoad(singleWeight(43)), reps: countReps(15) },
-        ),
-        mkRow(
-          2,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pullUp } },
-          { load: bodyweightLoad(), reps: countReps(12) },
-        ),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "4-5 rounds with rest",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.thruster } },
+            { load: absoluteLoad(singleWeight(43)), reps: countReps(15) },
+          ),
+          mkRow(
+            2,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pullUp } },
+            { load: bodyweightLoad(), reps: countReps(12) },
+          ),
+        ],
+      },
+      { ...rounds({ min: 4, max: 5 }), rest: REST_BETWEEN_ROUNDS_RANGE_MIN },
+      null,
+    ),
   ],
 };
 
@@ -67,48 +66,63 @@ const BLOCK_COMPOSITE_INT_THEN_ROUNDS_WK1_WED: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    compositeIntervalsThenRounds({
-      order: 1,
-      intervalsCount: 4,
-      restMin: 1,
-      innerRounds: 3,
-      preambleExercise: { form: "atomic", exerciseId: EX.run },
-      preambleReps: unitBoundReps({ unit: "min", value: 1 }),
-      header: "intervals then rounds",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.kbSwing } },
-          { load: absoluteLoad(singleWeight(24)), reps: countReps(15) },
-        ),
-        mkRow(
-          2,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.boxJump } },
-          {
-            load: bodyweightLoad(),
-            reps: countReps(10),
-            media: mediaReference({
-              url: "https://example.com/demo/box-jump",
-              position: "inline",
-              appliesTo: "current_row",
-            }),
-          },
-        ),
-        mkRow(
-          3,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.burpee } },
-          {
-            load: bodyweightLoad(),
-            reps: countReps(10),
-            media: mediaReference({
-              url: "https://example.com/demo/burpee-follow",
-              position: "inline",
-              appliesTo: "previous_row",
-            }),
-          },
-        ),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "intervals then rounds",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.run } },
+            { reps: unitBoundReps({ unit: "min", value: 1 }) },
+          ),
+        ],
+        subSchemas: [
+          buildComposeNode(
+            {
+              order: 1,
+              rows: [
+                mkRow(
+                  1,
+                  { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.kbSwing } },
+                  { load: absoluteLoad(singleWeight(24)), reps: countReps(15) },
+                ),
+                mkRow(
+                  2,
+                  { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.boxJump } },
+                  {
+                    load: bodyweightLoad(),
+                    reps: countReps(10),
+                    media: mediaReference({
+                      url: "https://example.com/demo/box-jump",
+                      position: "inline",
+                      appliesTo: "current_row",
+                    }),
+                  },
+                ),
+                mkRow(
+                  3,
+                  { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.burpee } },
+                  {
+                    load: bodyweightLoad(),
+                    reps: countReps(10),
+                    media: mediaReference({
+                      url: "https://example.com/demo/burpee-follow",
+                      position: "inline",
+                      appliesTo: "previous_row",
+                    }),
+                  },
+                ),
+              ],
+            },
+            { repetition: { kind: "count", count: 3 } },
+            null,
+          ),
+        ],
+      },
+      { repetition: { kind: "interval", workMin: 1, offMin: 1, count: 4 } },
+      null,
+    ),
   ],
 };
 
@@ -120,12 +134,9 @@ const BLOCK_COMPOSITE_INT_WR_FIXED_WK1_WED: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    {
-      ...compositeIntervalsWorkRestFixed({
+    buildComposeNode(
+      {
         order: 1,
-        intervalsCount: 6,
-        workMin: 2,
-        restMin: 1,
         header: "6 intervals 2 work / 1 rest",
         rows: [
           mkRow(
@@ -134,12 +145,13 @@ const BLOCK_COMPOSITE_INT_WR_FIXED_WK1_WED: CanonicalBlock = {
             { reps: unitBoundReps({ unit: "min", range: { min: 1, max: 2 } }) },
           ),
         ],
-      }),
-      composition: {
+      },
+      {
         repetition: { kind: "interval", workMin: 2, offMin: 1, count: 6 },
         scoring: { kind: "max_in_remaining", condition: { appliesToRounds: [2, 3] } },
       },
-    },
+      null,
+    ),
   ],
 };
 
@@ -151,21 +163,24 @@ const BLOCK_COMPOSITE_INT_WR_PROG_WK1_WED: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    compositeIntervalsWorkRestProgressive({
-      order: 1,
-      sets: 4,
-      workMin: 2,
-      offMin: 2,
-      progressiveSeed: "progressive-2:00-3:00-4:00-5:00",
-      header: "progressive intervals",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.skiCal } },
-          { reps: totalFlagReps(60) },
-        ),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "progressive intervals",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.skiCal } },
+            { reps: totalFlagReps(60) },
+          ),
+        ],
+      },
+      {
+        ...intervalRep(2, 2, 4),
+        scoring: { kind: "progressive", seed: "progressive-2:00-3:00-4:00-5:00" },
+      },
+      null,
+    ),
   ],
 };
 
@@ -177,10 +192,9 @@ const BLOCK_AMRAP_FLAT_WK1_WED: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    {
-      ...amrapFlat({
+    buildComposeNode(
+      {
         order: 1,
-        durationMin: 12,
         header: "AMRAP 12 at 75-80% effort",
         intensity: effortPercent({ range: { min: 75, max: 80 } }),
         rows: [
@@ -195,12 +209,13 @@ const BLOCK_AMRAP_FLAT_WK1_WED: CanonicalBlock = {
             { load: bodyweightLoad(), reps: countReps(12) },
           ),
         ],
-      }),
-      composition: {
+      },
+      {
         repetition: { kind: "timeCap", cap: { min: 12, unit: "min" } },
         scoring: { kind: "amrap" },
       },
-    },
+      null,
+    ),
   ],
 };
 
@@ -212,23 +227,26 @@ const BLOCK_RUN_DISTANCE_WK1_WED: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    runDistance({
-      order: 1,
-      distance: { range: { min: 5, max: 7 } },
-      header: "Run 5-7 km easy pace",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.run } },
-          { reps: unitBoundReps({ unit: "km", range: { min: 5, max: 7 } }) },
-        ),
-        mkRow(
-          2,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.run } },
-          { reps: unitBoundReps({ unit: "min", value: 60 }) },
-        ),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "Run 5-7 km easy pace",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.run } },
+            { reps: unitBoundReps({ unit: "km", range: { min: 5, max: 7 } }) },
+          ),
+          mkRow(
+            2,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.run } },
+            { reps: unitBoundReps({ unit: "min", value: 60 }) },
+          ),
+        ],
+      },
+      {},
+      null,
+    ),
   ],
 };
 
@@ -240,19 +258,21 @@ const BLOCK_REST_BETWEEN_ROUNDS_SEC_WK1_WED: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    compositeRoundsWithRest({
-      order: 1,
-      count: 3,
-      rest: REST_BETWEEN_ROUNDS_RANGE_SEC,
-      header: "3 rounds rest 60-90 sec",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.dbSnatch } },
-          { load: absoluteLoad(singleWeight(22.5)), reps: countReps(10) },
-        ),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "3 rounds rest 60-90 sec",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.dbSnatch } },
+            { load: absoluteLoad(singleWeight(22.5)), reps: countReps(10) },
+          ),
+        ],
+      },
+      { ...rounds(3), rest: REST_BETWEEN_ROUNDS_RANGE_SEC },
+      null,
+    ),
   ],
 };
 

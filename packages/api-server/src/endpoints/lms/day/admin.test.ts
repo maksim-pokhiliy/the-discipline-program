@@ -10,11 +10,6 @@ const MONDAY_PARAM = "2026-05-18";
 const WEDNESDAY_PARAM = "2026-05-20";
 const EXPECTED_UTC_MONDAY = new Date(Date.UTC(2026, 4, 18));
 
-const N_ROUNDS_PARAMS = {
-  archetype: "n-rounds" as const,
-  params: { countForm: "exact" as const, count: 5 },
-};
-
 const REST_SLOT_PAYLOAD = { rowKind: "REST_SLOT" as const };
 
 describe("lmsDayMetadataApi", () => {
@@ -26,7 +21,6 @@ describe("lmsDayMetadataApi", () => {
   let dayLabelId: string;
   let sessionOnlyLabelId: string;
   let sessionLabelId: string;
-  let atomicArchetypeId: string;
 
   beforeAll(async () => {
     coach = await createTestCoach();
@@ -75,13 +69,6 @@ describe("lmsDayMetadataApi", () => {
     });
 
     sessionLabelId = sessionLabel.id;
-
-    const atomic = await cleanupRaw.archetype.findUniqueOrThrow({
-      where: { name: "n-rounds" },
-      select: { id: true },
-    });
-
-    atomicArchetypeId = atomic.id;
   });
 
   afterAll(async () => {
@@ -310,9 +297,6 @@ describe("lmsDayMetadataApi", () => {
         data: {
           blockId: block.id,
           order: 10,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
         },
       });
       const row = await cleanupRaw.schemaRow.create({
@@ -341,7 +325,6 @@ describe("lmsDayMetadataApi", () => {
         expect(embedded?.schemas[0]?.rows).toHaveLength(1);
         expect(embedded?.schemas[0]?.rows[0]?.id).toBe(row.id);
         expect(embedded?.schemas[0]?.subSchemas).toEqual([]);
-        expect(embedded?.alternatingGroups).toEqual([]);
       } finally {
         await cleanupRaw.schemaRow.deleteMany({ where: { schemaId: schema.id } }).catch(() => {});
         await cleanupRaw.schema.delete({ where: { id: schema.id } }).catch(() => {});

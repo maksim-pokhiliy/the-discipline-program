@@ -1,12 +1,11 @@
 import {
   absoluteLoad,
   bodyweightLoad,
+  buildComposeNode,
   countReps,
   dualWeight,
   eachLeg,
   implicitReps,
-  ladderDescending,
-  nRounds,
   restBetweenSets,
   singleWeight,
 } from "../builder";
@@ -16,10 +15,6 @@ import { EX, LBL } from "./refs";
 import { mkRow } from "./row-helpers";
 
 const REST_BETWEEN_SETS_FIXED_MIN = restBetweenSets({ value: 2, unit: "min" }, "fixed");
-const REST_BETWEEN_SETS_UNTIL_RECOVERY = restBetweenSets(
-  { value: 3, unit: "min" },
-  "until_recovery",
-);
 
 const BLOCK_STRENGTH_NROUNDS_WK1_MON: CanonicalBlock = {
   blockInstanceRef: "block-001",
@@ -29,13 +24,9 @@ const BLOCK_STRENGTH_NROUNDS_WK1_MON: CanonicalBlock = {
   timeCap: null,
   notes: "Week 1 MON strength block",
   schemas: [
-    {
-      ...nRounds({
+    buildComposeNode(
+      {
         order: 1,
-        countForm: "exact",
-        count: 5,
-        repsPerSet: 5,
-        rest: REST_BETWEEN_SETS_UNTIL_RECOVERY,
         header: "5 rounds for strength",
         rows: [
           mkRow(
@@ -62,8 +53,8 @@ const BLOCK_STRENGTH_NROUNDS_WK1_MON: CanonicalBlock = {
             scope: "applies_to_all_preceding_rows",
           }),
         ],
-      }),
-      composition: {
+      },
+      {
         repetition: { kind: "count", count: 5 },
         rest: {
           duration: { value: 1, unit: "sec" },
@@ -71,7 +62,8 @@ const BLOCK_STRENGTH_NROUNDS_WK1_MON: CanonicalBlock = {
           qualifier: "until_recovery",
         },
       },
-    },
+      null,
+    ),
   ],
 };
 
@@ -83,10 +75,9 @@ const BLOCK_LADDER_DESC_WK1_MON: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    {
-      ...ladderDescending({
+    buildComposeNode(
+      {
         order: 1,
-        steps: [15, 12, 9],
         header: "15-12-9 ladder",
         rows: [
           mkRow(
@@ -100,12 +91,13 @@ const BLOCK_LADDER_DESC_WK1_MON: CanonicalBlock = {
             { load: bodyweightLoad(), reps: implicitReps() },
           ),
         ],
-      }),
-      composition: {
+      },
+      {
         repetition: { kind: "ladder", steps: [15, 12, 9] },
         arrangement: { kind: "ordered" },
       },
-    },
+      null,
+    ),
   ],
 };
 

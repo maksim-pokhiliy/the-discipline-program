@@ -532,14 +532,6 @@ enum CanonicalCompoundType {
   ALTERNATIVE_OR
 }
 
-enum SchemaKind {
-  ATOMIC
-  HEADERLESS
-  NESTED
-  NAMED
-  COMPOSITE
-}
-
 enum RowKind {
   EXERCISE
   REST
@@ -550,18 +542,6 @@ enum RowKind {
   INNER_LADDER_MARKER
   REP_DEFINITION
   REST_SLOT
-}
-
-enum ArchetypeFamily {
-  ROUNDS_SETS
-  LADDER
-  TIME_CAP
-  COMPOSITE_ROUNDS
-  NESTED
-  NAMED
-  SINGLE_LINE_HEADERLESS
-  FLAT_PARALLEL_HEADERLESS
-  MODALITY_REFERENCE
 }
 
 enum Position {
@@ -582,10 +562,6 @@ enum OneRMRecordSource {
   MANUAL
   AUTO_INFERRED
   TESTED
-}
-
-enum AlternatingGroupRelation {
-  ALTERNATING_SETS
 }
 
 enum AppLevel {
@@ -659,10 +635,9 @@ model Block {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  session           Session                @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  labelAssignments  BlockLabelAssignment[]
-  schemas           Schema[]
-  alternatingGroups AlternatingGroup[]
+  session          Session                @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  labelAssignments BlockLabelAssignment[]
+  schemas          Schema[]
 
   @@unique([sessionId, order])
   @@index([sessionId, order])
@@ -685,49 +660,26 @@ model BlockLabelAssignment {
 }
 
 model Schema {
-  id                 String     @id @default(cuid())
-  blockId            String
-  parentSchemaId     String?
-  alternatingGroupId String?
-  order              Int
-  kind               SchemaKind?
-  archetypeId        String?
-  header             String?
-  archetypeParams    Json?
-  composition        Json?
-  intensity          Json?
-  trailingConnector  Json?
-  notes              String?
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
+  id             String   @id @default(cuid())
+  blockId        String
+  parentSchemaId String?
+  order          Int
+  header         String?
+  composition    Json?
+  intensity      Json?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  block            Block             @relation(fields: [blockId], references: [id], onDelete: Cascade)
-  parentSchema     Schema?           @relation("SchemaSubSchemas", fields: [parentSchemaId], references: [id], onDelete: Cascade)
-  subSchemas       Schema[]          @relation("SchemaSubSchemas")
-  archetype        Archetype?        @relation(fields: [archetypeId], references: [id], onDelete: Restrict)
-  alternatingGroup AlternatingGroup? @relation(fields: [alternatingGroupId], references: [id], onDelete: SetNull)
-  rows             SchemaRow[]
+  block        Block       @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  parentSchema Schema?     @relation("SchemaSubSchemas", fields: [parentSchemaId], references: [id], onDelete: Cascade)
+  subSchemas   Schema[]    @relation("SchemaSubSchemas")
+  rows         SchemaRow[]
 
-  @@index([blockId, order])
   @@unique([parentSchemaId, order])
+  @@index([blockId, order])
   @@index([parentSchemaId, order])
-  @@index([archetypeId])
-  @@index([alternatingGroupId])
   @@map("training_schemas")
-}
-
-model AlternatingGroup {
-  id           String                   @id @default(cuid())
-  blockId      String
-  relationKind AlternatingGroupRelation
-  createdAt    DateTime                 @default(now())
-  updatedAt    DateTime                 @updatedAt
-
-  block   Block    @relation(fields: [blockId], references: [id], onDelete: Cascade)
-  schemas Schema[]
-
-  @@index([blockId])
-  @@map("training_alternating_groups")
 }
 
 model SchemaRow {
@@ -797,24 +749,6 @@ model Label {
 
   @@index([name])
   @@map("training_labels")
-}
-
-model Archetype {
-  id                       String          @id @default(cuid())
-  name                     String          @unique
-  label                    String
-  kind                     SchemaKind
-  family                   ArchetypeFamily
-  headerPatternDescription String
-  bodyLayoutDescription    String
-  archetypeParamsSchema    Json
-  relatedArchetypes        Json
-  createdAt                DateTime        @default(now())
-  updatedAt                DateTime        @updatedAt
-
-  schemas Schema[]
-
-  @@map("training_archetypes")
 }
 
 model OneRMRecord {

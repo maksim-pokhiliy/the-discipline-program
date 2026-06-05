@@ -1,19 +1,13 @@
 import { type PrismaClient as PrismaClientType, Prisma, PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { ARCHETYPE_NAMES } from "@repo/contracts/lms/schema";
-
 import { COVERAGE_CELLS, tallyCoverage } from "../../prisma/seed/plan-emit";
 import { lmsWeekApi } from "../endpoints/lms/week/admin";
 
 import {
   buildPlanScopes,
   collectExerciseRefs,
-  expectArchetypeNamesAllReferenced,
-  expectArchetypeRefsResolveToRows,
   expectWeeksAreMondayMonotonic,
-  extractParallelPyramidRefs,
-  extractSuperSetRowRefs,
   type PlanScopes,
 } from "./_seed-coverage-helpers";
 
@@ -25,10 +19,7 @@ const EXPECTED_PHASE_7_THURSDAY_BLOCKS = 2;
 const EXPECTED_LABEL_MIN = 20;
 const EXPECTED_EXERCISE_MIN = 149;
 const EXPECTED_ACTIVE_PLANS = 3;
-const EXPECTED_CONNECTOR_TOTAL = 3;
-const EXPECTED_CONNECTOR_FORM_MIN = 1;
 const EXPECTED_COMPOSITION_MIN = 5;
-const CONNECTOR_FORMS = ["then", "then_dots", "then_n_rounds"] as const;
 const ALL_POSITIONS = [
   "NEUTRAL_GRIP",
   "FROM_SOFA",
@@ -42,9 +33,18 @@ const ALL_POSITIONS = [
   "HANDS_ON_DB",
   "HAND_ON_DB_NEUTRAL_GRIP",
 ] as const;
-const STAGED_PROGRAM_KINDS = ["drop_set", "wave", "cluster"] as const;
 const MEDIA_POSITIONS = ["inline", "standalone_row", "bare"] as const;
 const MEDIA_APPLIES_TO = ["previous_row", "current_row", "whole_schema", "drop_stage"] as const;
+const COMPOSITION_REPETITION_KINDS = [
+  "count",
+  "ladder",
+  "timeCap",
+  "cadence",
+  "window",
+  "interval",
+] as const;
+const COMPOSITION_ARRANGEMENT_KINDS = ["ordered", "parallel", "superset"] as const;
+const COMPOSITION_SCORING_KINDS = ["amrap", "max_in_remaining", "progressive", "total"] as const;
 
 describe("Seed coverage — synthetic canonical Demo Plan", () => {
   const db: PrismaClientType = new PrismaClient();
@@ -133,65 +133,7 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     }
   });
 
-  it("§3/§2: alt-groups under Demo Plan are well-formed (≥2 members, ≥1 pair-group, exactly one group on the shared-ref block)", async () => {
-    const groups = await db.alternatingGroup.findMany({
-      where: { block: scopes.blockScope },
-      select: { blockId: true, schemas: { select: { id: true, blockId: true } } },
-    });
-
-    expect(groups.length).toBeGreaterThanOrEqual(1);
-
-    for (const group of groups) {
-      expect(group.schemas.length).toBeGreaterThanOrEqual(2);
-
-      for (const member of group.schemas) {
-        expect(member.blockId).toBe(group.blockId);
-      }
-    }
-
-    expect(groups.filter((g) => g.schemas.length === 2).length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("back-patch (QA-10): super-set archetypeParams.params.pairs[].schemaRows resolve to real SchemaRow ids", async () => {
-    await expectArchetypeRefsResolveToRows(
-      db,
-      scopes.schemaScope,
-      "super-set",
-      extractSuperSetRowRefs,
-    );
-  });
-
-  it("back-patch (QA-10): parallel-pyramids pairedWithInnerRowId values resolve to real SchemaRow ids", async () => {
-    await expectArchetypeRefsResolveToRows(
-      db,
-      scopes.schemaScope,
-      "parallel-pyramids",
-      extractParallelPyramidRefs,
-    );
-  });
-
-  it("§15: trailingConnector populated with all 3 forms, none leaked into Schema.notes", async () => {
-    const formCount = async (form: string): Promise<number> =>
-      db.schema.count({
-        where: { ...scopes.schemaScope, trailingConnector: { path: ["form"], equals: form } },
-      });
-
-    const [total, thenCount, thenDots, thenRounds] = await Promise.all([
-      db.schema.count({
-        where: { ...scopes.schemaScope, trailingConnector: { not: Prisma.AnyNull } },
-      }),
-      formCount("then"),
-      formCount("then_dots"),
-      formCount("then_n_rounds"),
-    ]);
-
-    expect(total).toBeGreaterThanOrEqual(EXPECTED_CONNECTOR_TOTAL);
-    expect(thenCount).toBeGreaterThanOrEqual(EXPECTED_CONNECTOR_FORM_MIN);
-    expect(thenDots).toBeGreaterThanOrEqual(EXPECTED_CONNECTOR_FORM_MIN);
-    expect(thenRounds).toBeGreaterThanOrEqual(EXPECTED_CONNECTOR_FORM_MIN);
-  });
-
-  it("composition.present counts only non-null composition rows, excluding absent (DbNull) rows (QA-006)", async () => {
+  it("composition.present counts every schema; composition is required post-pivot so none are DbNull (QA-006)", async () => {
     const [allSchemas, withComposition, absentComposition] = await Promise.all([
       db.schema.count({ where: scopes.schemaScope }),
       db.schema.count({
@@ -201,7 +143,7 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     ]);
 
     expect(withComposition).toBeGreaterThanOrEqual(EXPECTED_COMPOSITION_MIN);
-    expect(absentComposition).toBeGreaterThan(0);
+    expect(absentComposition).toBe(0);
     expect(withComposition + absentComposition).toBe(allSchemas);
 
     const report = await tallyCoverage(db, demoPlanId);
@@ -210,19 +152,6 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     expect(compositionCell?.count).toBe(withComposition);
     expect(compositionCell?.satisfied).toBe(true);
     expect(report.total).toBe(COVERAGE_CELLS.length);
-  });
-
-  it("§25: no Schema.notes carries a leftover 'connector:' substring", async () => {
-    const leaked = await db.schema.findMany({
-      where: { ...scopes.schemaScope, notes: { contains: "connector:" } },
-      select: { id: true },
-    });
-
-    expect(leaked).toEqual([]);
-  });
-
-  it("§3: 34 Archetype rows seeded; every name referenced by ≥1 Demo Plan schema", async () => {
-    await expectArchetypeNamesAllReferenced(db, scopes.schemaScope, ARCHETYPE_NAMES);
   });
 
   it("schemas + rows under Demo Plan exist (FK integrity smoke check)", async () => {
@@ -305,7 +234,10 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
       "catalog.exercise",
       "catalog.label",
       ...ALL_POSITIONS.map((p) => `position.${p}`),
-      ...STAGED_PROGRAM_KINDS.map((k) => `stagedProgram.${k}`),
+      ...COMPOSITION_REPETITION_KINDS.map((k) => `repetition.kind.${k}`),
+      ...COMPOSITION_ARRANGEMENT_KINDS.map((k) => `arrangement.kind.${k}`),
+      ...COMPOSITION_SCORING_KINDS.map((k) => `scoring.kind.${k}`),
+      "rest.present",
       ...MEDIA_POSITIONS.map((p) => `mediaReference.position.${p}`),
       ...MEDIA_APPLIES_TO.map((a) => `mediaReference.appliesTo.${a}`),
     ];
@@ -370,21 +302,6 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
       expect(sub.parentSchema).not.toBeNull();
       expect(sub.parentSchema?.blockId).toBe(sub.blockId);
     }
-  });
-
-  it("§15: every non-null trailingConnector resolves to a canonical form name", async () => {
-    const orPredicates = CONNECTOR_FORMS.map((form) => ({
-      trailingConnector: { path: ["form"], equals: form },
-    }));
-
-    const [withConnector, validForm] = await Promise.all([
-      db.schema.count({
-        where: { ...scopes.schemaScope, trailingConnector: { not: Prisma.AnyNull } },
-      }),
-      db.schema.count({ where: { ...scopes.schemaScope, OR: orPredicates } }),
-    ]);
-
-    expect(validForm).toBe(withConnector);
   });
 });
 

@@ -5,21 +5,19 @@ import { type ReactElement } from "react";
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import TuneIcon from "@mui/icons-material/Tune";
 import { IconButton, Stack, Tooltip } from "@mui/material";
 
+import { deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { type SchemaWithBody, SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
 
 import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
 
-import { SchemaArchetypeTag } from "./schema-archetype-tag";
 import { SchemaCardMeta } from "./schema-card-meta";
+import { SchemaCompositionTag } from "./schema-composition-tag";
 
 const DRAG_ARIA = "Drag schema";
-const EDIT_ARIA = "Edit schema";
-const EDIT_TOOLTIP = "Edit schema";
 const DELETE_ARIA = "Delete schema";
 const DELETE_TOOLTIP = "Delete schema";
 const TITLE_ARIA = "Schema title";
@@ -34,26 +32,22 @@ const tooltipChildSx = { display: "inline-flex" };
 type SchemaCardHeadProps = {
   schema: SchemaWithBody;
   blockCtx: BlockCtx;
-  archetypeLabel: string | null;
   isMutationPending: boolean;
   isSubSchema: boolean;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
   onTitleCommit: (next: string) => void;
-  onEditOpen: () => void;
   onDeleteOpen: () => void;
 };
 
 export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
   schema,
   blockCtx,
-  archetypeLabel,
   isMutationPending,
   isSubSchema,
   dragAttributes,
   dragListeners,
   onTitleCommit,
-  onEditOpen,
   onDeleteOpen,
 }): ReactElement => (
   <Stack
@@ -90,11 +84,11 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
         flexWrap="wrap"
         sx={{ minWidth: 0 }}
       >
-        <SchemaArchetypeTag
-          label={archetypeLabel ?? schema.schema.archetypeParams?.archetype ?? ""}
-        />
+        {schema.schema.composition !== null ? (
+          <SchemaCompositionTag label={deriveCompositionLabel(schema.schema.composition).kind} />
+        ) : null}
         <InlineEditText
-          value={formatSchemaHeader(schema, archetypeLabel)}
+          value={formatSchemaHeader(schema)}
           onCommit={onTitleCommit}
           variant="h4"
           ariaLabel={TITLE_ARIA}
@@ -107,34 +101,19 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
     </Stack>
 
     {!isSubSchema ? (
-      <>
-        <Tooltip title={EDIT_TOOLTIP}>
-          <span style={tooltipChildSx}>
-            <IconButton
-              size="small"
-              onClick={onEditOpen}
-              disabled={isMutationPending}
-              aria-label={EDIT_ARIA}
-            >
-              <TuneIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-
-        <Tooltip title={DELETE_TOOLTIP}>
-          <span style={tooltipChildSx}>
-            <IconButton
-              size="small"
-              onClick={onDeleteOpen}
-              disabled={isMutationPending}
-              aria-label={DELETE_ARIA}
-              sx={{ color: "error.main" }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-      </>
+      <Tooltip title={DELETE_TOOLTIP}>
+        <span style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={onDeleteOpen}
+            disabled={isMutationPending}
+            aria-label={DELETE_ARIA}
+            sx={{ color: "error.main" }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
     ) : null}
   </Stack>
 );

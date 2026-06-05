@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 
 import { AUTH_CONSTANTS } from "@repo/contracts/iam/auth";
 
-import { seedArchetypes } from "./seed/archetype-catalog";
 import { seedBlogPosts } from "./seed/blog-posts";
 import { clearAll } from "./seed/clear-all";
 import { seedCoachNotes } from "./seed/coach-notes";
@@ -26,8 +25,6 @@ const main = async (): Promise<void> => {
   console.log("Starting seed...\n");
 
   await clearAll(prisma);
-
-  await seedArchetypes(prisma);
 
   const passwordHash = await bcrypt.hash("password12345", AUTH_CONSTANTS.BCRYPT_COST_FACTOR);
 

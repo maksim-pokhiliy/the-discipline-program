@@ -1,10 +1,11 @@
 import {
   bodyweightLoad,
+  buildComposeNode,
   countReps,
-  nRounds,
   restBetweenIntervals,
   restBetweenRounds,
   restBetweenSets,
+  rounds,
 } from "../builder";
 import type { CanonicalBlock } from "../canonical-schema";
 
@@ -25,43 +26,45 @@ export const BLOCK_REST_COVERAGE: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    nRounds({
-      order: 1,
-      countForm: "exact",
-      count: 5,
-      header: "rest-spec coverage block",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.burpee } },
-          { load: bodyweightLoad(), reps: countReps(10) },
-        ),
-        mkRow(2, {
-          rowKind: "REST",
-          raw: "Rest 2-3 min between rounds",
-          parsed: REST_BR_RANGE_MIN,
-        }),
-        mkRow(3, {
-          rowKind: "REST",
-          raw: "Rest 60-90 sec between sets",
-          parsed: REST_BS_RANGE_SEC,
-        }),
-        mkRow(4, {
-          rowKind: "REST",
-          raw: "Rest between sets until recovery",
-          parsed: REST_BS_UNTIL_RECOVERY,
-        }),
-        mkRow(5, {
-          rowKind: "REST",
-          raw: "Rest 3 min between rounds",
-          parsed: REST_BR_FIXED_MIN,
-        }),
-        mkRow(6, {
-          rowKind: "REST",
-          raw: "Rest 30 sec between intervals",
-          parsed: REST_BI_FIXED_SEC,
-        }),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "rest-spec coverage block",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.burpee } },
+            { load: bodyweightLoad(), reps: countReps(10) },
+          ),
+          mkRow(2, {
+            rowKind: "REST",
+            raw: "Rest 2-3 min between rounds",
+            parsed: REST_BR_RANGE_MIN,
+          }),
+          mkRow(3, {
+            rowKind: "REST",
+            raw: "Rest 60-90 sec between sets",
+            parsed: REST_BS_RANGE_SEC,
+          }),
+          mkRow(4, {
+            rowKind: "REST",
+            raw: "Rest between sets until recovery",
+            parsed: REST_BS_UNTIL_RECOVERY,
+          }),
+          mkRow(5, {
+            rowKind: "REST",
+            raw: "Rest 3 min between rounds",
+            parsed: REST_BR_FIXED_MIN,
+          }),
+          mkRow(6, {
+            rowKind: "REST",
+            raw: "Rest 30 sec between intervals",
+            parsed: REST_BI_FIXED_SEC,
+          }),
+        ],
+      },
+      rounds(5),
+      null,
+    ),
   ],
 };

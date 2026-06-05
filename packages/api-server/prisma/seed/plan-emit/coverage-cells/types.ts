@@ -3,7 +3,6 @@ import { type PrismaClient } from "@prisma/client";
 export type CoverageCategory =
   | "catalog"
   | "entity-invariants"
-  | "archetype"
   | "rowKind"
   | "exerciseForm"
   | "load.kind"
@@ -18,17 +17,17 @@ export type CoverageCategory =
   | "restSpec.unit"
   | "restSpec.qualifier"
   | "timeCap"
-  | "schemaKind"
-  | "connectorForm"
   | "position"
-  | "stagedProgram.kind"
-  | "slotSpec.kind"
   | "mediaReference"
   | "perSetSubstitution"
   | "compoundForm"
   | "compoundRepDefinition.form"
   | "footnote"
-  | "composition";
+  | "composition"
+  | "repetition.kind"
+  | "arrangement.kind"
+  | "scoring.kind"
+  | "rest";
 
 export type CoverageCell = {
   id: string;

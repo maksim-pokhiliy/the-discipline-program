@@ -1,4 +1,3 @@
-import { type SchemaKind } from "@repo/contracts/lms/schema";
 import { TrainingPlanStatus } from "@repo/contracts/lms/training-plan";
 import { ForbiddenError, NotFoundError } from "@repo/errors";
 
@@ -166,14 +165,12 @@ export const verifySchemaOwnership = async (
   weekId: string;
   planId: string;
   parentSchemaId: string | null;
-  kind: SchemaKind | null;
 }> => {
   const schema = await prisma.schema.findUnique({
     where: { id: schemaId },
     select: {
       blockId: true,
       parentSchemaId: true,
-      kind: true,
       block: {
         select: {
           sessionId: true,
@@ -213,7 +210,6 @@ export const verifySchemaOwnership = async (
       weekId: schema.block.session.day.weekId,
       planId: schema.block.session.day.week.planId,
       parentSchemaId: schema.parentSchemaId,
-      kind: schema.kind,
     };
   }
 
@@ -228,7 +224,6 @@ export const verifySchemaOwnership = async (
       weekId: schema.block.session.day.weekId,
       planId: schema.block.session.day.week.planId,
       parentSchemaId: schema.parentSchemaId,
-      kind: schema.kind,
     };
   }
 
@@ -241,7 +236,6 @@ export const verifySchemaRowOwnership = async (
 ): Promise<{
   status: TrainingPlanStatus;
   schemaId: string;
-  schemaKind: SchemaKind | null;
   parentSchemaId: string | null;
   blockId: string;
   sessionId: string;
@@ -255,7 +249,6 @@ export const verifySchemaRowOwnership = async (
       schemaId: true,
       schema: {
         select: {
-          kind: true,
           parentSchemaId: true,
           blockId: true,
           block: {
@@ -293,7 +286,6 @@ export const verifySchemaRowOwnership = async (
   const buildResponse = () => ({
     status: TRAINING_PLAN_STATUS_MAP[plan.status],
     schemaId: row.schemaId,
-    schemaKind: row.schema.kind,
     parentSchemaId: row.schema.parentSchemaId,
     blockId: row.schema.blockId,
     sessionId: row.schema.block.sessionId,

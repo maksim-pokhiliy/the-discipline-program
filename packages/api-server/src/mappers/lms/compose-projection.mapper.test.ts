@@ -17,7 +17,6 @@ const cuidPullups = "clz00000000000000000pullup";
 const cuidMarkerRow = "clz0000000000000markerrow1";
 const cuidNullNode = "clz0000000000000000nullnod";
 const cuidBlock = "clz00000000000000000block1";
-const cuidArchetype = "clz0000000000000archetype1";
 const cuidOuter = "clz0000000000000000outer01";
 const cuidInnerLadder = "clz0000000000000innerladd1";
 const cuidSuperset = "clz0000000000000superset01";
@@ -30,14 +29,9 @@ const makeSchema = (overrides: Partial<Schema>): Schema => ({
   id: cuidFran,
   blockId: cuidBlock,
   parentSchemaId: null,
-  alternatingGroupId: null,
   order: 10,
-  kind: "ATOMIC",
-  archetypeId: cuidArchetype,
   header: null,
-  archetypeParams: { archetype: "single-line-bare", params: {} },
   intensity: null,
-  trailingConnector: null,
   composition: null,
   label: null,
   notes: null,

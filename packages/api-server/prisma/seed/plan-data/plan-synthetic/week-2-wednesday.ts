@@ -1,11 +1,12 @@
 import {
   absoluteLoad,
   bodyweightLoad,
-  compositeRoundsWithRest,
+  buildComposeNode,
   countReps,
-  nRounds,
   pace,
   restAfterSpecificSet,
+  restBetweenRounds,
+  rounds,
   singleWeight,
   unspecifiedLoad,
 } from "../builder";
@@ -25,24 +26,26 @@ const BLOCK_REST_AFTER_SPECIFIC_SET_WK2_WED: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    nRounds({
-      order: 1,
-      countForm: "exact",
-      count: 5,
-      header: "strength with rest after set 3",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.benchPress } },
-          { load: absoluteLoad(singleWeight(70)), reps: countReps(5) },
-        ),
-        mkRow(2, {
-          rowKind: "REST",
-          raw: "Rest 2 min after set 3",
-          parsed: REST_AFTER_SPECIFIC_SET_MIN,
-        }),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "strength with rest after set 3",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.benchPress } },
+            { load: absoluteLoad(singleWeight(70)), reps: countReps(5) },
+          ),
+          mkRow(2, {
+            rowKind: "REST",
+            raw: "Rest 2 min after set 3",
+            parsed: REST_AFTER_SPECIFIC_SET_MIN,
+          }),
+        ],
+      },
+      rounds(5),
+      null,
+    ),
   ],
 };
 
@@ -54,19 +57,21 @@ const BLOCK_PACE_HARD_WK2_WED: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    compositeRoundsWithRest({
-      order: 1,
-      count: 3,
-      rest: { duration: { value: 2, unit: "min" }, scope: "between_rounds", qualifier: "fixed" },
-      header: "hard pace 3 rounds",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.burpee } },
-          { load: bodyweightLoad(), reps: countReps(20) },
-        ),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "hard pace 3 rounds",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.burpee } },
+            { load: bodyweightLoad(), reps: countReps(20) },
+          ),
+        ],
+      },
+      { ...rounds(3), rest: restBetweenRounds({ value: 2, unit: "min" }, "fixed") },
+      null,
+    ),
   ],
 };
 
@@ -78,19 +83,21 @@ const BLOCK_UNSPECIFIED_LOAD_WK2_WED: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    nRounds({
-      order: 1,
-      countForm: "exact",
-      count: 3,
-      header: "unspecified load placeholder",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.dbLateralRaise } },
-          { load: unspecifiedLoad(), reps: countReps(12) },
-        ),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "unspecified load placeholder",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.dbLateralRaise } },
+            { load: unspecifiedLoad(), reps: countReps(12) },
+          ),
+        ],
+      },
+      rounds(3),
+      null,
+    ),
   ],
 };
 

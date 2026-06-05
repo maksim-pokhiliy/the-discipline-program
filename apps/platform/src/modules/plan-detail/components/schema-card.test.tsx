@@ -4,11 +4,8 @@ import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { Intensity, TimeCap } from "@repo/contracts/lms/_shared";
-import type { Archetype } from "@repo/contracts/lms/archetype";
-import type { Exercise } from "@repo/contracts/lms/exercise";
-import type { ArchetypeParams, SchemaWithBody } from "@repo/contracts/lms/schema";
+import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
-import { CatalogContext, type CatalogContextValue } from "@app/lib/contexts/catalog-provider";
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
@@ -18,7 +15,6 @@ const updateSchemaMutate = vi.fn();
 const deleteSchemaMutate = vi.fn();
 const updateSchemaState = { isPending: false };
 const deleteSchemaState = { isPending: false };
-const archetypesState: { data: Archetype[] | undefined } = { data: [] };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -80,18 +76,6 @@ vi.mock("./schema-list", () => {
   return { SchemaList: renderSchemaListMock };
 });
 
-vi.mock("./schema-editor-modal", () => {
-  const renderEditorMock = (props: { open: boolean }) =>
-    props.open
-      ? createElement("div", {
-          "data-testid": "schema-editor-modal-mock",
-          "data-open": String(props.open),
-        })
-      : null;
-
-  return { SchemaEditorModal: renderEditorMock };
-});
-
 const { SchemaCard } = await import("./schema-card");
 
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";
@@ -102,36 +86,17 @@ const SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
 const PARENT_SCHEMA_ID = "clp9z8x7w0000abcd1234psc1";
 const SUB_SCHEMA_ID_A = "clp9z8x7w0000abcd1234ssa1";
 const SUB_SCHEMA_ID_B = "clp9z8x7w0000abcd1234ssb1";
-const ARCHETYPE_ID = "clp9z8x7w0000abcd1234arc1";
-const ARCHETYPE_LABEL = "N Rounds";
 const DRAG_LABEL = "Drag schema";
-const EDIT_LABEL = "Edit schema";
 const DELETE_LABEL = "Delete schema";
 const TITLE_LABEL = "Schema title";
+
+const COUNT_5: SchemaWithBody["schema"]["composition"] = {
+  repetition: { kind: "count", count: 5 },
+};
 
 type MakeSchemaOverrides = Partial<SchemaWithBody["schema"]> & {
   rows?: SchemaWithBody["rows"];
   subSchemas?: SchemaWithBody[];
-};
-
-const makeArchetype = (overrides: Partial<Archetype> = {}): Archetype => ({
-  id: ARCHETYPE_ID,
-  name: "n-rounds",
-  label: ARCHETYPE_LABEL,
-  kind: "ATOMIC",
-  family: "ROUNDS_SETS",
-  headerPatternDescription: "",
-  bodyLayoutDescription: "",
-  archetypeParamsSchema: {},
-  relatedArchetypes: {},
-  createdAt: NOW,
-  updatedAt: NOW,
-  ...overrides,
-});
-
-const N_ROUNDS_PARAMS: ArchetypeParams = {
-  archetype: "n-rounds",
-  params: { countForm: "exact", count: 5, repsPerSet: 8 },
 };
 
 const makeSchema = (overrides: MakeSchemaOverrides = {}): SchemaWithBody => {
@@ -142,15 +107,10 @@ const makeSchema = (overrides: MakeSchemaOverrides = {}): SchemaWithBody => {
       id: SCHEMA_ID,
       blockId: BLOCK_ID,
       parentSchemaId: null,
-      alternatingGroupId: null,
       order: 1,
-      kind: "ATOMIC",
-      archetypeId: ARCHETYPE_ID,
       header: null,
-      archetypeParams: N_ROUNDS_PARAMS,
       intensity: null,
-      trailingConnector: null,
-      composition: null,
+      composition: COUNT_5,
       label: null,
       notes: null,
       createdAt: NOW,
@@ -174,35 +134,24 @@ type RenderOptions = {
   parentIsReorderPending?: boolean;
 };
 
-const EMPTY_EXERCISE_BY_ID: ReadonlyMap<string, Exercise> = new Map();
-
 const renderSchemaCard = ({
   schema = makeSchema(),
   blockCtx = makeBlockCtx(),
   parentIsReorderPending = false,
-}: RenderOptions = {}) => {
-  const catalogValue: CatalogContextValue = {
-    exerciseById: EMPTY_EXERCISE_BY_ID,
-    archetypeById: new Map((archetypesState.data ?? []).map((a) => [a.id, a])),
-  };
-
-  return render(
-    <CatalogContext.Provider value={catalogValue}>
-      <SchemaCard
-        schema={schema}
-        planId={PLAN_ID}
-        startDate={START_DATE}
-        blockCtx={blockCtx}
-        parentIsReorderPending={parentIsReorderPending}
-      />
-    </CatalogContext.Provider>,
+}: RenderOptions = {}) =>
+  render(
+    <SchemaCard
+      schema={schema}
+      planId={PLAN_ID}
+      startDate={START_DATE}
+      blockCtx={blockCtx}
+      parentIsReorderPending={parentIsReorderPending}
+    />,
   );
-};
 
 afterEach(() => {
   updateSchemaState.isPending = false;
   deleteSchemaState.isPending = false;
-  archetypesState.data = [makeArchetype()];
   updateSchemaMutate.mockReset();
   deleteSchemaMutate.mockReset();
 });
@@ -292,44 +241,48 @@ describe("SchemaCard drag handle", () => {
   });
 });
 
-describe("SchemaCard archetype tag", () => {
-  it("renders the archetype label from useArchetypes() when found in the catalog", () => {
-    archetypesState.data = [makeArchetype({ label: ARCHETYPE_LABEL })];
-
+describe("SchemaCard composition tag", () => {
+  it("renders the derived composition-kind tag (rounds) for a count composition", () => {
     renderSchemaCard();
 
-    expect(screen.getByText(ARCHETYPE_LABEL)).toBeInTheDocument();
+    expect(screen.getByText("rounds")).toBeInTheDocument();
   });
 
-  it("falls back to the discriminator string when useArchetypes() returns empty", () => {
-    archetypesState.data = [];
+  it("renders the 'ladder' tag for a ladder composition", () => {
+    renderSchemaCard({
+      schema: makeSchema({ composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } } }),
+    });
 
-    renderSchemaCard();
-
-    expect(screen.getByText("n-rounds")).toBeInTheDocument();
+    expect(screen.getByText("ladder")).toBeInTheDocument();
   });
 
-  it("falls back to the discriminator string when useArchetypes() data is undefined (loading)", () => {
-    archetypesState.data = undefined;
+  it("renders the 'parallel' tag for a parallel arrangement composition", () => {
+    renderSchemaCard({
+      schema: makeSchema({
+        composition: {
+          arrangement: {
+            kind: "parallel",
+            interleaveOrder: "round_by_round",
+            tracks: [{ childSchemaId: SUB_SCHEMA_ID_A }, { childSchemaId: SUB_SCHEMA_ID_B }],
+          },
+        },
+      }),
+    });
 
-    renderSchemaCard();
-
-    expect(screen.getByText("n-rounds")).toBeInTheDocument();
+    expect(screen.getAllByText("parallel").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("falls back to discriminator when useArchetypes data is undefined (loading or error) (MT-5)", () => {
-    archetypesState.data = undefined;
+  it("renders no composition-kind tag when composition is null", () => {
+    renderSchemaCard({ schema: makeSchema({ composition: null }) });
 
-    expect(() => renderSchemaCard()).not.toThrow();
-    expect(screen.getByText("n-rounds")).toBeInTheDocument();
-    expect(screen.queryByText(ARCHETYPE_LABEL)).toBeNull();
+    expect(screen.queryByText("rounds")).toBeNull();
+    expect(screen.queryByText("flat")).toBeNull();
+    expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
   });
 });
 
 describe("SchemaCard title", () => {
-  it("renders the InlineEditText with formatSchemaHeader output when schema.header is null", () => {
-    archetypesState.data = [makeArchetype({ label: ARCHETYPE_LABEL })];
-
+  it("renders the InlineEditText with the derived composition header when schema.header is null", () => {
     renderSchemaCard();
 
     const titleInput = screen.getByRole("textbox", { name: TITLE_LABEL });
@@ -445,23 +398,10 @@ describe("SchemaCard title", () => {
 });
 
 describe("SchemaCard meta row", () => {
-  it("renders archetype param chips for an n-rounds count_times_reps schema with rest", () => {
-    renderSchemaCard({
-      schema: makeSchema({
-        archetypeParams: {
-          archetype: "n-rounds",
-          params: {
-            countForm: "count_times_reps",
-            count: 5,
-            repsPerSet: 5,
-            rest: { duration: { value: 2, unit: "min" }, scope: "between_rounds" },
-          },
-        },
-      }),
-    });
+  it("renders the composition summary text for a count composition", () => {
+    renderSchemaCard();
 
-    expect(screen.getByText("5 × 5")).toBeInTheDocument();
-    expect(screen.getByText("rest 2 min between rounds")).toBeInTheDocument();
+    expect(screen.getByText("5 rounds")).toBeInTheDocument();
   });
 
   it("renders an own IndicatorChip when schema.intensity is set (dot=false filled-pill)", () => {
@@ -526,61 +466,14 @@ describe("SchemaCard meta row", () => {
     expect(screen.queryByText(/^cap /)).toBeNull();
   });
 
-  it("renders the 'no params' italic fallback when paramTexts, ownChips, cascadeChips and cap are all empty", () => {
-    renderSchemaCard({
-      schema: makeSchema({
-        archetypeParams: { archetype: "single-line-bare", params: {} },
-      }),
-    });
+  it("renders the 'no params' italic fallback when the composition, intensity and cascade are all empty", () => {
+    renderSchemaCard({ schema: makeSchema({ composition: {} }) });
 
     expect(screen.getByText("no params")).toBeInTheDocument();
   });
-
-  it("renders duplicate-shape ladders without React duplicate-key warning (MT-4 + QA-007)", () => {
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-
-    try {
-      renderSchemaCard({
-        schema: makeSchema({
-          archetypeParams: {
-            archetype: "parallel-ladders-mixed-direction",
-            params: {
-              ladders: [
-                { steps: [12, 9, 6], direction: "desc" },
-                { steps: [12, 9, 6], direction: "desc" },
-              ],
-            },
-          },
-        }),
-      });
-
-      expect(screen.getByText("2 parallel ladders")).toBeInTheDocument();
-      expect(screen.getAllByText("12-9-6 (desc)")).toHaveLength(2);
-
-      const duplicateKeyWarnings = consoleErrorSpy.mock.calls.filter((args) => {
-        const first = args[0];
-
-        return typeof first === "string" && first.includes("two children with the same key");
-      });
-
-      expect(duplicateKeyWarnings).toHaveLength(0);
-    } finally {
-      consoleErrorSpy.mockRestore();
-    }
-  });
 });
 
-describe("SchemaCard edit + delete actions", () => {
-  it("opens the SchemaEditorModal when the Edit IconButton is clicked", () => {
-    renderSchemaCard();
-
-    expect(screen.queryByTestId("schema-editor-modal-mock")).toBeNull();
-
-    fireEvent.click(screen.getByRole("button", { name: EDIT_LABEL }));
-
-    expect(screen.getByTestId("schema-editor-modal-mock")).toBeInTheDocument();
-  });
-
+describe("SchemaCard delete action", () => {
   it("opens the ConfirmationModal when the Delete IconButton is clicked, then fires useDeleteSchema.mutate on confirm", () => {
     renderSchemaCard();
 
@@ -595,15 +488,10 @@ describe("SchemaCard edit + delete actions", () => {
     expect(deleteSchemaMutate.mock.calls[0]?.[0]).toEqual({ schemaId: SCHEMA_ID });
   });
 
-  it("passes formatSchemaHeader(schema, archetypeLabel) as the ConfirmationModal details copy", () => {
-    archetypesState.data = [makeArchetype({ label: ARCHETYPE_LABEL })];
-
+  it("passes the derived composition header as the ConfirmationModal details copy", () => {
     renderSchemaCard({
       schema: makeSchema({
-        archetypeParams: {
-          archetype: "amrap-flat",
-          params: { durationMin: 12 },
-        },
+        composition: { repetition: { kind: "cadence", everyMin: 1, rounds: 12 } },
       }),
     });
 
@@ -611,24 +499,15 @@ describe("SchemaCard edit + delete actions", () => {
 
     const dialog = screen.getByRole("dialog");
 
-    expect(within(dialog).getByText("AMRAP 12 min")).toBeInTheDocument();
+    expect(within(dialog).getByText("EMOM 1’×12")).toBeInTheDocument();
   });
 
-  it("does NOT render the Edit or Delete IconButtons when schema.parentSchemaId is non-null (D-08)", () => {
+  it("does NOT render the Delete IconButton when schema.parentSchemaId is non-null (D-08)", () => {
     renderSchemaCard({
       schema: makeSchema({ parentSchemaId: PARENT_SCHEMA_ID }),
     });
 
-    expect(screen.queryByRole("button", { name: EDIT_LABEL })).toBeNull();
     expect(screen.queryByRole("button", { name: DELETE_LABEL })).toBeNull();
-  });
-
-  it("disables the Edit IconButton when useUpdateSchema is pending", () => {
-    updateSchemaState.isPending = true;
-
-    renderSchemaCard();
-
-    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
   });
 
   it("disables the Delete IconButton when useDeleteSchema is pending", () => {
@@ -657,7 +536,7 @@ describe("SchemaCard sub-schemas", () => {
     expect(subSchemaList).toHaveAttribute("data-schemas-count", "2");
   });
 
-  it("renders the parent's drag handle, Edit, and Delete IconButtons exactly once when subSchemas non-empty (D-03 sub-schema drag lives inside nested SchemaList mock)", () => {
+  it("renders the parent's drag handle and Delete IconButton exactly once when subSchemas non-empty (D-03 sub-schema drag lives inside nested SchemaList mock)", () => {
     renderSchemaCard({
       schema: makeSchema({
         subSchemas: [makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID })],
@@ -665,11 +544,9 @@ describe("SchemaCard sub-schemas", () => {
     });
 
     const dragHandles = screen.getAllByRole("button", { name: DRAG_LABEL });
-    const editButtons = screen.getAllByRole("button", { name: EDIT_LABEL });
     const deleteButtons = screen.getAllByRole("button", { name: DELETE_LABEL });
 
     expect(dragHandles).toHaveLength(1);
-    expect(editButtons).toHaveLength(1);
     expect(deleteButtons).toHaveLength(1);
   });
 
@@ -677,12 +554,10 @@ describe("SchemaCard sub-schemas", () => {
     renderSchemaCard({ schema: makeSchema({ subSchemas: [] }) });
 
     const dragHandles = screen.getAllByRole("button", { name: DRAG_LABEL });
-    const editButtons = screen.getAllByRole("button", { name: EDIT_LABEL });
     const deleteButtons = screen.getAllByRole("button", { name: DELETE_LABEL });
     const rowLists = screen.getAllByTestId("schema-row-list-mock");
 
     expect(dragHandles).toHaveLength(1);
-    expect(editButtons).toHaveLength(1);
     expect(deleteButtons).toHaveLength(1);
     expect(rowLists).toHaveLength(1);
     expect(screen.queryByTestId("schema-list-mock")).toBeNull();
@@ -775,10 +650,9 @@ describe("SchemaCard parentIsReorderPending cascade (D-10)", () => {
     expect(screen.getByRole("button", { name: DRAG_LABEL })).toBeDisabled();
   });
 
-  it("disables Edit and Delete IconButtons when parentIsReorderPending is true", () => {
+  it("disables the Delete IconButton when parentIsReorderPending is true", () => {
     renderSchemaCard({ parentIsReorderPending: true });
 
-    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
     expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeDisabled();
   });
 

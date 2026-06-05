@@ -84,7 +84,6 @@ const makeBlock = (overrides: Partial<Block> = {}): Block => ({
   notes: null,
   labels: [],
   schemas: [],
-  alternatingGroups: [],
   createdAt: NOW,
   updatedAt: NOW,
   ...overrides,

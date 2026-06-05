@@ -16,8 +16,6 @@
     "./cms/review": "./src/entities/cms/review/index.ts",
     "./lms": "./src/entities/lms/index.ts",
     "./lms/_shared": "./src/entities/lms/_shared/index.ts",
-    "./lms/alternating-group": "./src/entities/lms/alternating-group/index.ts",
-    "./lms/archetype": "./src/entities/lms/archetype/index.ts",
     "./lms/block": "./src/entities/lms/block/index.ts",
     "./lms/composition": "./src/entities/lms/composition/index.ts",
     "./lms/day": "./src/entities/lms/day/index.ts",

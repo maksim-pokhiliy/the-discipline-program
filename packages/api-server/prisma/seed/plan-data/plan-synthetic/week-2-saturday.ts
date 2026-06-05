@@ -1,4 +1,11 @@
-import { bodyweightLoad, countReps, nRounds, pace, runDistance, unitBoundReps } from "../builder";
+import {
+  bodyweightLoad,
+  buildComposeNode,
+  countReps,
+  pace,
+  rounds,
+  unitBoundReps,
+} from "../builder";
 import type { CanonicalBlock, CanonicalDay, CanonicalSession } from "../canonical-schema";
 
 import { EX, LBL } from "./refs";
@@ -12,18 +19,21 @@ const BLOCK_PACE_RECOVERY_WK2_SAT: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    runDistance({
-      order: 1,
-      distance: { value: 3 },
-      header: "recovery 3 km",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.run } },
-          { reps: unitBoundReps({ unit: "km", value: 3 }) },
-        ),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "recovery 3 km",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.run } },
+            { reps: unitBoundReps({ unit: "km", value: 3 }) },
+          ),
+        ],
+      },
+      {},
+      null,
+    ),
   ],
 };
 
@@ -35,20 +45,22 @@ const BLOCK_NOTES_EXAMPLE_WK2_SAT: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    nRounds({
-      order: 1,
-      countForm: "exact",
-      count: 2,
-      header: "mobility flow",
-      notes: "EXAMPLE: hip mobility flow, then thoracic openers; coach adapts to athlete",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.airSquat } },
-          { load: bodyweightLoad(), reps: countReps(10) },
-        ),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "mobility flow",
+        notes: "EXAMPLE: hip mobility flow, then thoracic openers; coach adapts to athlete",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.airSquat } },
+            { load: bodyweightLoad(), reps: countReps(10) },
+          ),
+        ],
+      },
+      rounds(2),
+      null,
+    ),
   ],
 };
 

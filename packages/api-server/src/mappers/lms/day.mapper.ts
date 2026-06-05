@@ -1,5 +1,4 @@
 import {
-  type AlternatingGroup as PrismaAlternatingGroup,
   type Block as PrismaBlock,
   type BlockLabelAssignment as PrismaBlockLabelAssignment,
   type Day as PrismaDay,
@@ -23,7 +22,6 @@ type SchemaWithRowsRelation = PrismaSchema & {
 type BlockWithSchemasRelation = PrismaBlock & {
   labelAssignments: (PrismaBlockLabelAssignment & { label: PrismaLabel })[];
   schemas: (SchemaWithRowsRelation & { subSchemas: SchemaWithRowsRelation[] })[];
-  alternatingGroups: (PrismaAlternatingGroup & { schemas: { id: string }[] })[];
 };
 
 type SessionWithRelations = PrismaSession & {
