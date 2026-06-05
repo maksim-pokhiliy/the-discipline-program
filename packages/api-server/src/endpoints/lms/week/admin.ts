@@ -50,9 +50,6 @@ export const lmsWeekApi = {
                           },
                         },
                       },
-                      alternatingGroups: {
-                        include: { schemas: { select: { id: true } } },
-                      },
                     },
                   },
                 },

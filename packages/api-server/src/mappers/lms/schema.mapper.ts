@@ -2,12 +2,7 @@ import { type Schema as PrismaSchema, type SchemaRow as PrismaSchemaRow } from "
 
 import { intensitySchema } from "@repo/contracts/lms/_shared";
 import { compositionSchema, deriveCompositionLabel } from "@repo/contracts/lms/composition";
-import {
-  archetypeParamsSchema,
-  type Schema,
-  type SchemaWithBody,
-  trailingConnectorSchema,
-} from "@repo/contracts/lms/schema";
+import { type Schema, type SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import { mapToSchemaRow } from "./schema-row.mapper";
 
@@ -26,16 +21,9 @@ export const mapToSchema = (s: PrismaSchema): Schema => {
     id: s.id,
     blockId: s.blockId,
     parentSchemaId: s.parentSchemaId,
-    alternatingGroupId: s.alternatingGroupId,
     order: s.order,
-    kind: s.kind,
-    archetypeId: s.archetypeId,
     header: s.header,
-    archetypeParams:
-      s.archetypeParams === null ? null : archetypeParamsSchema.parse(s.archetypeParams),
     intensity: s.intensity === null ? null : intensitySchema.parse(s.intensity),
-    trailingConnector:
-      s.trailingConnector === null ? null : trailingConnectorSchema.parse(s.trailingConnector),
     composition,
     label: composition === null ? null : deriveCompositionLabel(composition),
     notes: s.notes,

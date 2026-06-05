@@ -15,7 +15,6 @@ import {
 
 import {
   resolveCoachId,
-  verifyAlternatingGroupOwnership,
   verifyAthleteBelongsToCoach,
   verifyBlockOwnership,
   verifyPlanOwnership,
@@ -316,7 +315,6 @@ describe("platform guards", () => {
         weekId,
         planId: plan.id,
         parentSchemaId: null,
-        kind: "ATOMIC",
       });
     });
 
@@ -335,7 +333,6 @@ describe("platform guards", () => {
         weekId,
         planId: plan.id,
         parentSchemaId: null,
-        kind: "ATOMIC",
       });
     });
 
@@ -425,7 +422,6 @@ describe("platform guards", () => {
       await expect(verifySchemaRowOwnership(schemaRowId, coach.user.id)).resolves.toEqual({
         status: TrainingPlanStatus.DRAFT,
         schemaId,
-        schemaKind: "ATOMIC",
         parentSchemaId: null,
         blockId,
         sessionId,
@@ -439,7 +435,6 @@ describe("platform guards", () => {
       await expect(verifySchemaRowOwnership(schemaRowId, headCoachUser.id)).resolves.toEqual({
         status: TrainingPlanStatus.DRAFT,
         schemaId,
-        schemaKind: "ATOMIC",
         parentSchemaId: null,
         blockId,
         sessionId,
@@ -469,123 +464,6 @@ describe("platform guards", () => {
 
       try {
         await expect(verifySchemaRowOwnership(schemaRowId, coach.user.id)).rejects.toThrow(
-          NotFoundError,
-        );
-      } finally {
-        await cleanupRaw.trainingPlan.update({
-          where: { id: plan.id },
-          data: { deletedAt: null },
-        });
-      }
-    });
-  });
-
-  describe("verifyAlternatingGroupOwnership", () => {
-    let weekId: string;
-    let dayId: string;
-    let sessionId: string;
-    let blockId: string;
-    let groupId: string;
-
-    beforeAll(async () => {
-      const week = await cleanupRaw.week.create({
-        data: { planId: plan.id, startDate: new Date(Date.UTC(2026, 5, 8)) },
-      });
-
-      weekId = week.id;
-
-      const day = await cleanupRaw.day.create({
-        data: { weekId, dayOfWeek: "FRIDAY" },
-      });
-
-      dayId = day.id;
-
-      const session = await cleanupRaw.session.create({
-        data: { dayId, order: 10 },
-      });
-
-      sessionId = session.id;
-
-      const block = await cleanupRaw.block.create({
-        data: { sessionId, order: 10 },
-      });
-
-      blockId = block.id;
-
-      const group = await cleanupRaw.alternatingGroup.create({
-        data: { blockId, relationKind: "ALTERNATING_SETS" },
-      });
-
-      groupId = group.id;
-    });
-
-    afterAll(async () => {
-      await cleanupRaw.alternatingGroup.delete({ where: { id: groupId } }).catch(() => {});
-      await cleanupRaw.block.delete({ where: { id: blockId } }).catch(() => {});
-      await cleanupRaw.session.delete({ where: { id: sessionId } }).catch(() => {});
-      await cleanupRaw.day.delete({ where: { id: dayId } }).catch(() => {});
-      await cleanupRaw.week.delete({ where: { id: weekId } }).catch(() => {});
-    });
-
-    it("returns chain ids and status for the plan creator", async () => {
-      await expect(verifyAlternatingGroupOwnership(groupId, coach.user.id)).resolves.toEqual({
-        status: TrainingPlanStatus.DRAFT,
-        blockId,
-        sessionId,
-        dayId,
-        weekId,
-        planId: plan.id,
-      });
-    });
-
-    it("throws ForbiddenError for an unrelated coach", async () => {
-      await expect(verifyAlternatingGroupOwnership(groupId, otherCoach.user.id)).rejects.toThrow(
-        ForbiddenError,
-      );
-    });
-
-    it("returns chain ids and status for a HEAD_COACH bypass", async () => {
-      await expect(verifyAlternatingGroupOwnership(groupId, headCoachUser.id)).resolves.toEqual({
-        status: TrainingPlanStatus.DRAFT,
-        blockId,
-        sessionId,
-        dayId,
-        weekId,
-        planId: plan.id,
-      });
-    });
-
-    it("returns chain ids and status for an ADMIN bypass", async () => {
-      const adminUser = await createTestUser({ role: ROLE_TO_PRISMA_MAP[UserRole.ADMIN] });
-
-      try {
-        await expect(verifyAlternatingGroupOwnership(groupId, adminUser.id)).resolves.toEqual({
-          status: TrainingPlanStatus.DRAFT,
-          blockId,
-          sessionId,
-          dayId,
-          weekId,
-          planId: plan.id,
-        });
-      } finally {
-        await cleanupRaw.user.delete({ where: { id: adminUser.id } });
-      }
-    });
-
-    it("throws NotFoundError when the alternating group does not exist", async () => {
-      await expect(
-        verifyAlternatingGroupOwnership("clz0000000000000000000000", coach.user.id),
-      ).rejects.toThrow(NotFoundError);
-    });
-
-    it("throws NotFoundError when the parent plan is soft-deleted", async () => {
-      await cleanupRaw.trainingPlan.update({
-        where: { id: plan.id },
-        data: { deletedAt: new Date() },
-      });
-
-      try {
-        await expect(verifyAlternatingGroupOwnership(groupId, coach.user.id)).rejects.toThrow(
           NotFoundError,
         );
       } finally {

@@ -19,19 +19,11 @@ import {
   buildSchemaWithBody,
   mapToSchemaRow,
 } from "../../../mappers/lms";
-import { handlePrismaError, retryOnP2034, toInputJson } from "../../../utils";
+import { handlePrismaError, marshalNullableJson, retryOnP2034, toInputJson } from "../../../utils";
 
-import { assertParentKindForRow, assertRowKindPayloadAlignment } from "./assertions";
+import { assertRowKindPayloadAlignment } from "./assertions";
 
 const STRUCTURAL_UPDATE_KEYS = ["rowKind", "schemaId"] as const;
-
-const marshalNullableJson = (value: unknown): Prisma.InputJsonValue | typeof Prisma.JsonNull => {
-  if (value === undefined || value === null) {
-    return Prisma.JsonNull;
-  }
-
-  return toInputJson(value);
-};
 
 export const lmsSchemaRowApi = {
   create: async (userId: string, planId: string, data: CreateSchemaRowData): Promise<SchemaRow> => {
@@ -44,7 +36,6 @@ export const lmsSchemaRowApi = {
     verifyPlanEditable(owner);
 
     assertRowKindPayloadAlignment(data.rowKind, data.rowPayload.rowKind);
-    assertParentKindForRow(owner.kind);
 
     try {
       const created = await retryOnP2034(() =>
@@ -67,7 +58,6 @@ export const lmsSchemaRowApi = {
               where: { id: data.schemaId },
               select: {
                 id: true,
-                kind: true,
                 block: {
                   select: {
                     session: {
@@ -84,8 +74,6 @@ export const lmsSchemaRowApi = {
                 planId,
               });
             }
-
-            assertParentKindForRow(parent.kind);
 
             const max = await tx.schemaRow.aggregate({
               where: { schemaId: data.schemaId },

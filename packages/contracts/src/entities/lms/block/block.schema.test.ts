@@ -35,17 +35,9 @@ const atomicSchema = {
   id: "clz1234567890123456789sa1",
   blockId: "clz1234567890123456789012",
   parentSchemaId: null,
-  alternatingGroupId: null,
   order: 1,
-  kind: "ATOMIC" as const,
-  archetypeId: "clz1234567890123456789ar1",
   header: null,
-  archetypeParams: {
-    archetype: "n-rounds" as const,
-    params: { countForm: "exact" as const, count: 5 },
-  },
   intensity: null,
-  trailingConnector: null,
   composition: null,
   label: null,
   notes: null,
@@ -79,15 +71,6 @@ const schemaWithBody = {
   subSchemas: [],
 };
 
-const alternatingGroup = {
-  id: "clz1234567890123456789ag1",
-  blockId: "clz1234567890123456789012",
-  relationKind: "ALTERNATING_SETS" as const,
-  schemaIds: [cuidA, cuidB],
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
 const baseBlock = {
   id: "clz1234567890123456789012",
   sessionId: "clz1234567890123456789ccc",
@@ -97,7 +80,6 @@ const baseBlock = {
   notes: "block focus",
   labels: [labelOne],
   schemas: [],
-  alternatingGroups: [],
   createdAt: new Date(),
   updatedAt: new Date(),
 };
@@ -172,22 +154,20 @@ describe("blockSchema", () => {
     expect(blockSchema.safeParse({ ...baseBlock, sessionId: "not-a-cuid" }).success).toBe(false);
   });
 
-  it("accepts schemas: [] and alternatingGroups: [] (block without an embed tree)", () => {
+  it("accepts schemas: [] (block without an embed tree)", () => {
     const result = blockSchema.safeParse(baseBlock);
 
     expect(result.success).toBe(true);
 
     if (result.success) {
       expect(result.data.schemas).toEqual([]);
-      expect(result.data.alternatingGroups).toEqual([]);
     }
   });
 
-  it("accepts a populated schemas embed and alternatingGroups", () => {
+  it("accepts a populated schemas embed", () => {
     const result = blockSchema.safeParse({
       ...baseBlock,
       schemas: [schemaWithBody],
-      alternatingGroups: [alternatingGroup],
     });
 
     expect(result.success).toBe(true);
@@ -198,9 +178,6 @@ describe("blockSchema", () => {
       expect(result.data.schemas[0]?.rows).toHaveLength(1);
       expect(result.data.schemas[0]?.rows[0]?.id).toBe(restSlotRow.id);
       expect(result.data.schemas[0]?.subSchemas).toEqual([]);
-      expect(result.data.alternatingGroups).toHaveLength(1);
-      expect(result.data.alternatingGroups[0]?.id).toBe(alternatingGroup.id);
-      expect(result.data.alternatingGroups[0]?.schemaIds).toEqual([cuidA, cuidB]);
     }
   });
 

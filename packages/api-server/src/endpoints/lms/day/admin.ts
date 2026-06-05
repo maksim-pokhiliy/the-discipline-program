@@ -39,9 +39,6 @@ const DAY_INCLUDE = {
               },
             },
           },
-          alternatingGroups: {
-            include: { schemas: { select: { id: true } } },
-          },
         },
       },
     },

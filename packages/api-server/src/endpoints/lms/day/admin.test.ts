@@ -341,7 +341,6 @@ describe("lmsDayMetadataApi", () => {
         expect(embedded?.schemas[0]?.rows).toHaveLength(1);
         expect(embedded?.schemas[0]?.rows[0]?.id).toBe(row.id);
         expect(embedded?.schemas[0]?.subSchemas).toEqual([]);
-        expect(embedded?.alternatingGroups).toEqual([]);
       } finally {
         await cleanupRaw.schemaRow.deleteMany({ where: { schemaId: schema.id } }).catch(() => {});
         await cleanupRaw.schema.delete({ where: { id: schema.id } }).catch(() => {});

@@ -45,7 +45,6 @@ const baseBlock = {
   notes: "block focus",
   labels: [baseLabel],
   schemas: [],
-  alternatingGroups: [],
   createdAt: new Date(),
   updatedAt: new Date(),
 };

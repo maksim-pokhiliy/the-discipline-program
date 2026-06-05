@@ -1,6 +1,4 @@
 export * from "./_shared";
-export * from "./archetype";
-export * from "./alternating-group";
 export * from "./block";
 export * from "./day";
 export * from "./exercise";
