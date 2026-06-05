@@ -9,11 +9,6 @@ import { cleanupRaw, createTestCoach, createTestPlan } from "../../../test/helpe
 
 import { lmsSchemaApi } from "./admin";
 
-const ATOMIC_PARAMS = {
-  archetype: "n-rounds" as const,
-  params: { countForm: "exact" as const, count: 5 },
-};
-
 const LADDER_COMPOSITION: Composition = {
   repetition: { kind: "ladder", steps: [21, 15, 9] },
   arrangement: { kind: "ordered" },
@@ -26,11 +21,6 @@ const INTERVAL_COMPOSITION: Composition = {
 
 const MARKER_PAYLOAD = { rowKind: "INNER_LADDER_MARKER" as const, steps: [21, 15, 9] };
 
-const NESTED_PARAMS = {
-  archetype: "nested-rounds-over-rounds" as const,
-  params: { outerCount: 3 },
-};
-
 describe("lmsSchemaApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
@@ -38,9 +28,6 @@ describe("lmsSchemaApi", () => {
 
   let activePlanId: string;
   let archivedPlanId: string;
-
-  let atomicArchetypeId: string;
-  let nestedArchetypeId: string;
 
   let orderCounter = 0;
 
@@ -76,9 +63,6 @@ describe("lmsSchemaApi", () => {
       cleanup: async () => {
         await cleanupRaw.schemaRow
           .deleteMany({ where: { schema: { blockId: block.id } } })
-          .catch(() => {});
-        await cleanupRaw.alternatingGroup
-          .deleteMany({ where: { blockId: block.id } })
           .catch(() => {});
         await cleanupRaw.schema.deleteMany({ where: { blockId: block.id } }).catch(() => {});
         await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
@@ -124,20 +108,6 @@ describe("lmsSchemaApi", () => {
     });
 
     archivedPlanId = archivedPlan.id;
-
-    const atomic = await cleanupRaw.archetype.findUniqueOrThrow({
-      where: { name: "n-rounds" },
-      select: { id: true },
-    });
-
-    atomicArchetypeId = atomic.id;
-
-    const nested = await cleanupRaw.archetype.findUniqueOrThrow({
-      where: { name: "nested-rounds-over-rounds" },
-      select: { id: true },
-    });
-
-    nestedArchetypeId = nested.id;
   });
 
   afterAll(async () => {
@@ -1378,9 +1348,6 @@ describe("lmsSchemaApi", () => {
         data: {
           blockId: ctx.block.id,
           order: 10,
-          kind: "NESTED",
-          archetypeId: nestedArchetypeId,
-          archetypeParams: NESTED_PARAMS,
         },
       });
 
@@ -1390,9 +1357,6 @@ describe("lmsSchemaApi", () => {
             blockId: ctx.block.id,
             parentSchemaId: parent.id,
             order: 10,
-            kind: "ATOMIC",
-            archetypeId: atomicArchetypeId,
-            archetypeParams: ATOMIC_PARAMS,
           },
         });
 
@@ -1402,9 +1366,6 @@ describe("lmsSchemaApi", () => {
               blockId: ctx.block.id,
               parentSchemaId: parent.id,
               order: 10,
-              kind: "ATOMIC",
-              archetypeId: atomicArchetypeId,
-              archetypeParams: ATOMIC_PARAMS,
             },
           }),
         ).rejects.toMatchObject({ code: "P2002" });
@@ -1425,9 +1386,6 @@ describe("lmsSchemaApi", () => {
           data: {
             blockId: ctx.block.id,
             order: 10,
-            kind: "ATOMIC",
-            archetypeId: atomicArchetypeId,
-            archetypeParams: ATOMIC_PARAMS,
           },
         });
 
@@ -1436,9 +1394,6 @@ describe("lmsSchemaApi", () => {
             data: {
               blockId: ctx.block.id,
               order: 10,
-              kind: "ATOMIC",
-              archetypeId: atomicArchetypeId,
-              archetypeParams: ATOMIC_PARAMS,
             },
           }),
         ).rejects.toMatchObject({ code: "P2002" });
@@ -1459,18 +1414,12 @@ describe("lmsSchemaApi", () => {
         data: {
           blockId: ctx.block.id,
           order: 10,
-          kind: "NESTED",
-          archetypeId: nestedArchetypeId,
-          archetypeParams: NESTED_PARAMS,
         },
       });
       const parentB = await cleanupRaw.schema.create({
         data: {
           blockId: ctx.block.id,
           order: 20,
-          kind: "NESTED",
-          archetypeId: nestedArchetypeId,
-          archetypeParams: NESTED_PARAMS,
         },
       });
 
@@ -1480,9 +1429,6 @@ describe("lmsSchemaApi", () => {
             blockId: ctx.block.id,
             parentSchemaId: parentA.id,
             order: 10,
-            kind: "ATOMIC",
-            archetypeId: atomicArchetypeId,
-            archetypeParams: ATOMIC_PARAMS,
           },
         });
         const subB = await cleanupRaw.schema.create({
@@ -1490,9 +1436,6 @@ describe("lmsSchemaApi", () => {
             blockId: ctx.block.id,
             parentSchemaId: parentB.id,
             order: 10,
-            kind: "ATOMIC",
-            archetypeId: atomicArchetypeId,
-            archetypeParams: ATOMIC_PARAMS,
           },
         });
 

@@ -7,25 +7,12 @@ import { cleanupRaw, createTestCoach, createTestPlan } from "../../../test/helpe
 
 import { lmsSchemaRowApi } from "./admin";
 
-const ATOMIC_PARAMS = {
-  archetype: "n-rounds" as const,
-  params: { countForm: "exact" as const, count: 5 },
-};
-
-const NESTED_PARAMS = {
-  archetype: "nested-rounds-over-rounds" as const,
-  params: { outerCount: 3 },
-};
-
 describe("lmsSchemaRowApi", () => {
   let coach: Awaited<ReturnType<typeof createTestCoach>>;
   let otherCoach: Awaited<ReturnType<typeof createTestCoach>>;
 
   let activePlanId: string;
   let archivedPlanId: string;
-
-  let atomicArchetypeId: string;
-  let nestedArchetypeId: string;
 
   let exerciseAId: string;
   let exerciseBId: string;
@@ -78,27 +65,14 @@ describe("lmsSchemaRowApi", () => {
     };
   };
 
-  const provisionSchema = async (
-    options: {
-      planId?: string;
-      kind?: "ATOMIC" | "HEADERLESS" | "NESTED" | "NAMED" | "COMPOSITE";
-      archetypeId?: string;
-      archetypeParams?: typeof ATOMIC_PARAMS | typeof NESTED_PARAMS;
-    } = {},
-  ) => {
+  const provisionSchema = async (options: { planId?: string } = {}) => {
     const blockCtx = await provisionBlock({ planId: options.planId });
-    const kind = options.kind ?? "ATOMIC";
-    const archetypeId = options.archetypeId ?? atomicArchetypeId;
-    const archetypeParams = options.archetypeParams ?? ATOMIC_PARAMS;
 
     const schema = await cleanupRaw.schema.create({
       data: {
         blockId: blockCtx.block.id,
         parentSchemaId: null,
         order: 10,
-        kind,
-        archetypeId,
-        archetypeParams,
       },
     });
 
@@ -125,20 +99,6 @@ describe("lmsSchemaRowApi", () => {
     });
 
     archivedPlanId = archivedPlan.id;
-
-    const atomic = await cleanupRaw.archetype.findUniqueOrThrow({
-      where: { name: "n-rounds" },
-      select: { id: true },
-    });
-
-    atomicArchetypeId = atomic.id;
-
-    const nested = await cleanupRaw.archetype.findUniqueOrThrow({
-      where: { name: "nested-rounds-over-rounds" },
-      select: { id: true },
-    });
-
-    nestedArchetypeId = nested.id;
 
     const uniqueA = crypto.randomUUID().slice(0, 8);
     const uniqueB = crypto.randomUUID().slice(0, 8);
@@ -469,33 +429,6 @@ describe("lmsSchemaRowApi", () => {
 
         expect(created.rowKind).toBe("REST_SLOT");
         expect(created.rowPayload).toEqual({ rowKind: "REST_SLOT" });
-      } finally {
-        await ctx.cleanup();
-      }
-    });
-
-    it("rejects when parent schema is NESTED", async () => {
-      const ctx = await provisionSchema({
-        kind: "NESTED",
-        archetypeId: nestedArchetypeId,
-        archetypeParams: NESTED_PARAMS,
-      });
-
-      try {
-        await expect(
-          lmsSchemaRowApi.create(coach.user.id, activePlanId, {
-            schemaId: ctx.schema.id,
-            rowKind: "EXERCISE",
-            rowPayload: {
-              rowKind: "EXERCISE",
-              exercise: { form: "atomic", exerciseId: exerciseAId },
-            },
-          }),
-        ).rejects.toThrow(BadRequestError);
-
-        const count = await cleanupRaw.schemaRow.count({ where: { schemaId: ctx.schema.id } });
-
-        expect(count).toBe(0);
       } finally {
         await ctx.cleanup();
       }

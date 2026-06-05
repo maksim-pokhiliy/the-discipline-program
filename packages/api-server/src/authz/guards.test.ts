@@ -276,22 +276,10 @@ describe("platform guards", () => {
 
       blockId = block.id;
 
-      const archetype = await cleanupRaw.archetype.findFirst({
-        where: { name: "n-rounds" },
-        select: { id: true },
-      });
-
-      if (!archetype) {
-        throw new Error("n-rounds archetype not seeded; cannot run verifySchemaOwnership tests");
-      }
-
       const schema = await cleanupRaw.schema.create({
         data: {
           blockId,
           order: 10,
-          kind: "ATOMIC",
-          archetypeId: archetype.id,
-          archetypeParams: { archetype: "n-rounds", params: { countForm: "exact", count: 5 } },
         },
       });
 
@@ -376,22 +364,10 @@ describe("platform guards", () => {
 
       blockId = block.id;
 
-      const archetype = await cleanupRaw.archetype.findFirst({
-        where: { name: "n-rounds" },
-        select: { id: true },
-      });
-
-      if (!archetype) {
-        throw new Error("n-rounds archetype not seeded; cannot run verifySchemaRowOwnership tests");
-      }
-
       const schema = await cleanupRaw.schema.create({
         data: {
           blockId,
           order: 10,
-          kind: "ATOMIC",
-          archetypeId: archetype.id,
-          archetypeParams: { archetype: "n-rounds", params: { countForm: "exact", count: 5 } },
         },
       });
 

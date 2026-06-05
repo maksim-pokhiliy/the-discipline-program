@@ -25,16 +25,6 @@ const expectEmptySlot = (
   expect(slot.sessions).toEqual([]);
 };
 
-const N_ROUNDS_PARAMS = {
-  archetype: "n-rounds" as const,
-  params: { countForm: "exact" as const, count: 5 },
-};
-
-const NESTED_PARAMS = {
-  archetype: "nested-rounds-over-rounds" as const,
-  params: { outerCount: 3 },
-};
-
 const REST_SLOT_PAYLOAD = { rowKind: "REST_SLOT" as const };
 
 describe("lmsWeekApi", () => {
@@ -43,9 +33,6 @@ describe("lmsWeekApi", () => {
 
   let activePlanId: string;
   let archivedPlanId: string;
-
-  let atomicArchetypeId: string;
-  let nestedArchetypeId: string;
 
   beforeAll(async () => {
     coach = await createTestCoach();
@@ -62,20 +49,6 @@ describe("lmsWeekApi", () => {
     });
 
     archivedPlanId = archivedPlan.id;
-
-    const atomic = await cleanupRaw.archetype.findUniqueOrThrow({
-      where: { name: "n-rounds" },
-      select: { id: true },
-    });
-
-    atomicArchetypeId = atomic.id;
-
-    const nested = await cleanupRaw.archetype.findUniqueOrThrow({
-      where: { name: "nested-rounds-over-rounds" },
-      select: { id: true },
-    });
-
-    nestedArchetypeId = nested.id;
   });
 
   afterAll(async () => {
@@ -424,9 +397,6 @@ describe("lmsWeekApi", () => {
         data: {
           blockId: block.id,
           order: 10,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
         },
       });
       const rowFirst = await cleanupRaw.schemaRow.create({
@@ -482,9 +452,6 @@ describe("lmsWeekApi", () => {
         data: {
           blockId: block.id,
           order: 10,
-          kind: "NESTED",
-          archetypeId: nestedArchetypeId,
-          archetypeParams: NESTED_PARAMS,
         },
       });
       const child = await cleanupRaw.schema.create({
@@ -492,9 +459,6 @@ describe("lmsWeekApi", () => {
           blockId: block.id,
           parentSchemaId: parent.id,
           order: 10,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
         },
       });
 
@@ -560,18 +524,12 @@ describe("lmsWeekApi", () => {
         data: {
           blockId: block.id,
           order: 20,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
         },
       });
       const schemaEarlier = await cleanupRaw.schema.create({
         data: {
           blockId: block.id,
           order: 10,
-          kind: "NESTED",
-          archetypeId: nestedArchetypeId,
-          archetypeParams: NESTED_PARAMS,
         },
       });
       const subLater = await cleanupRaw.schema.create({
@@ -579,9 +537,6 @@ describe("lmsWeekApi", () => {
           blockId: block.id,
           parentSchemaId: schemaEarlier.id,
           order: 20,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
         },
       });
       const subEarlier = await cleanupRaw.schema.create({
@@ -589,9 +544,6 @@ describe("lmsWeekApi", () => {
           blockId: block.id,
           parentSchemaId: schemaEarlier.id,
           order: 10,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
         },
       });
       const rowLater = await cleanupRaw.schemaRow.create({
@@ -724,9 +676,6 @@ describe("lmsWeekApi", () => {
           data: {
             blockId: ctx.block.id,
             order: 20,
-            kind: "ATOMIC",
-            archetypeId: atomicArchetypeId,
-            archetypeParams: N_ROUNDS_PARAMS,
             composition: LADDER_COMPOSITION,
           },
         });
@@ -755,9 +704,6 @@ describe("lmsWeekApi", () => {
         data: {
           blockId: ctx.block.id,
           order: 10,
-          kind: "ATOMIC",
-          archetypeId: atomicArchetypeId,
-          archetypeParams: N_ROUNDS_PARAMS,
           composition: { repetition: { kind: "ladder" } },
         },
       });
@@ -831,9 +777,6 @@ describe("lmsWeekApi", () => {
 
         const stored = await cleanupRaw.schema.findUnique({ where: { id: created.id } });
 
-        expect(stored?.kind).toBeNull();
-        expect(stored?.archetypeId).toBeNull();
-        expect(stored?.archetypeParams).toBeNull();
         expect(stored?.composition).toEqual(CADENCE_COMPOSITION);
       } finally {
         await ctx.cleanup();

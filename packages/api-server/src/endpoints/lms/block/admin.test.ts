@@ -389,21 +389,21 @@ describe("lmsBlockApi", () => {
       });
 
       try {
-        const start = Date.now();
+        let attempts = 0;
 
         await expect(
-          retryOnP2034(() =>
-            cleanupRaw.block.create({
+          retryOnP2034(() => {
+            attempts += 1;
+
+            return cleanupRaw.block.create({
               data: { sessionId: ctx.session.id, order: 10 },
-            }),
-          ),
+            });
+          }),
         ).rejects.toMatchObject({
           code: "P2002",
         });
 
-        const elapsed = Date.now() - start;
-
-        expect(elapsed).toBeLessThan(50);
+        expect(attempts).toBe(1);
       } finally {
         await ctx.cleanup();
       }
@@ -530,21 +530,12 @@ describe("lmsBlockApi", () => {
         ],
       });
 
-      const archetype = await cleanupRaw.archetype.findFirst({
-        select: { id: true, kind: true },
+      await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          order: 10,
+        },
       });
-
-      if (archetype) {
-        await cleanupRaw.schema.create({
-          data: {
-            blockId: block.id,
-            order: 10,
-            kind: archetype.kind,
-            archetypeId: archetype.id,
-            archetypeParams: {},
-          },
-        });
-      }
 
       try {
         await lmsBlockApi.delete(coach.user.id, block.id);
@@ -559,13 +550,11 @@ describe("lmsBlockApi", () => {
 
         expect(assignmentsAfter).toEqual([]);
 
-        if (archetype) {
-          const schemasAfter = await cleanupRaw.schema.findMany({
-            where: { blockId: block.id },
-          });
+        const schemasAfter = await cleanupRaw.schema.findMany({
+          where: { blockId: block.id },
+        });
 
-          expect(schemasAfter).toEqual([]);
-        }
+        expect(schemasAfter).toEqual([]);
       } finally {
         await cleanupRaw.schema.deleteMany({ where: { blockId: block.id } }).catch(() => {});
         await ctx.cleanup();
