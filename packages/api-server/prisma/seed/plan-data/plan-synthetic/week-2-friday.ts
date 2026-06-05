@@ -1,4 +1,4 @@
-import { absoluteLoad, countReps, nRounds, pace, singleWeight } from "../builder";
+import { absoluteLoad, buildComposeNode, countReps, pace, rounds, singleWeight } from "../builder";
 import type { CanonicalBlock, CanonicalDay, CanonicalSession } from "../canonical-schema";
 
 import { EX, LBL } from "./refs";
@@ -13,19 +13,21 @@ const BLOCK_PACE_MODERATE_WK2_FRI: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    nRounds({
-      order: 1,
-      countForm: "exact",
-      count: 4,
-      header: "moderate pace strength endurance",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.bbWalkingLunge } },
-          { load: absoluteLoad(singleWeight(40)), reps: countReps(20) },
-        ),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "moderate pace strength endurance",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.bbWalkingLunge } },
+            { load: absoluteLoad(singleWeight(40)), reps: countReps(20) },
+          ),
+        ],
+      },
+      rounds(4),
+      null,
+    ),
   ],
 };
 

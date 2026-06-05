@@ -65,10 +65,6 @@ export const row = (input: RowInput): CanonicalRow => {
 export const schemaNode = (input: SchemaNodeInput): CanonicalSchemaNode => {
   requirePositiveInt(input.order, "order", "schemaNode");
 
-  if (input.archetype.archetype.length === 0) {
-    throw new Error("schemaNode: archetype.archetype literal must be non-empty");
-  }
-
   return input;
 };
 

@@ -8,29 +8,14 @@ import {
   type CanonicalSeed,
 } from "../plan-data/canonical-schema";
 
-import { type AltGroupRefMap, type BlockRefMap, buildBlockKey } from "./block-emit";
+import { type BlockRefMap, buildBlockKey } from "./block-emit";
 import { phase7WeekIndex, stampPhase7ExamplesOrder } from "./phase7-helpers";
 import { type RefResolver } from "./ref-resolver";
-import { backPatchSchema, hasRowRefs } from "./schema-emit-back-patch";
-import { extractTrailingConnector } from "./trailing-connector";
+import { arrangementHasRefs, backPatchComposition } from "./schema-emit-back-patch";
 
 type SchemaEmitContext = {
   db: PrismaClient;
-  archetypeIdByName: ReadonlyMap<string, string>;
   resolver: RefResolver;
-};
-
-const requireArchetypeId = (
-  archetypeIdByName: ReadonlyMap<string, string>,
-  name: string,
-): string => {
-  const id = archetypeIdByName.get(name);
-
-  if (id === undefined) {
-    throw new Error(`schema-emit: archetype "${name}" not found in archetypeIdByName lookup`);
-  }
-
-  return id;
 };
 
 const emitSchemaRow = async (
@@ -62,35 +47,39 @@ const emitSchemaRow = async (
   }
 };
 
+const stripArrangement = (
+  composition: CanonicalSchemaNode["composition"],
+): CanonicalSchemaNode["composition"] => ({
+  ...(composition.repetition !== undefined && { repetition: composition.repetition }),
+  ...(composition.scoring !== undefined && { scoring: composition.scoring }),
+  ...(composition.rest !== undefined && { rest: composition.rest }),
+});
+
 const emitSchemaNode = async (
   ctx: SchemaEmitContext,
   blockId: string,
   parentSchemaId: string | null,
   node: CanonicalSchemaNode,
 ): Promise<void> => {
-  const { connector, cleanedNotes } = extractTrailingConnector(node.notes);
-  const archetypeId = requireArchetypeId(ctx.archetypeIdByName, node.archetype.archetype);
-  const alternatingGroupId =
-    node.alternatingGroupRef === null ? null : ctx.resolver.getAltGroup(node.alternatingGroupRef);
+  const needsBackPatch = arrangementHasRefs(node.composition.arrangement);
 
   const created = await ctx.db.schema.create({
     data: {
       blockId,
       parentSchemaId,
-      alternatingGroupId,
       order: node.order,
-      kind: node.kind,
-      archetypeId,
       header: node.header,
-      archetypeParams: node.archetype,
       ...(node.intensity !== null && { intensity: node.intensity }),
-      ...(node.composition !== undefined && { composition: node.composition }),
-      ...(connector !== null && { trailingConnector: connector }),
-      notes: cleanedNotes,
+      composition: needsBackPatch ? stripArrangement(node.composition) : node.composition,
+      notes: node.notes,
     },
   });
 
   const schemaId = requireId(created);
+
+  if (node.refId !== undefined) {
+    ctx.resolver.setSchema(node.refId, schemaId);
+  }
 
   for (const row of node.rows) {
     await emitSchemaRow(ctx, schemaId, row);
@@ -100,45 +89,39 @@ const emitSchemaNode = async (
     await emitSchemaNode(ctx, blockId, schemaId, sub);
   }
 
-  if (hasRowRefs(node.archetype)) {
-    await backPatchSchema(ctx.db, schemaId, node.archetype, ctx.resolver);
+  if (needsBackPatch) {
+    await backPatchComposition(ctx.db, schemaId, node.composition, ctx.resolver);
   }
 };
 
-const collectReferencedRowRefs = (
+const collectReferencedRefs = (
   schemas: readonly CanonicalSchemaNode[],
-  acc: Set<string> = new Set(),
-): Set<string> => {
+  rowRefs: Set<string> = new Set(),
+  schemaRefs: Set<string> = new Set(),
+): { rowRefs: Set<string>; schemaRefs: Set<string> } => {
   for (const schema of schemas) {
-    const params = schema.archetype;
+    const { arrangement } = schema.composition;
 
-    if (
-      params.archetype === "parallel-ladders-descending" ||
-      params.archetype === "parallel-ladders-mixed-direction"
-    ) {
-      for (const ladder of params.params.ladders) {
-        if (ladder.pairedWithInnerRowId !== undefined) {
-          acc.add(ladder.pairedWithInnerRowId);
+    if (arrangement?.kind === "parallel") {
+      for (const track of arrangement.tracks) {
+        schemaRefs.add(track.childSchemaId);
+
+        if (track.pairedWithRowId !== undefined) {
+          rowRefs.add(track.pairedWithRowId);
         }
       }
-    } else if (params.archetype === "parallel-pyramids") {
-      for (const pyramid of params.params.pyramids) {
-        if (pyramid.pairedWithInnerRowId !== undefined) {
-          acc.add(pyramid.pairedWithInnerRowId);
-        }
-      }
-    } else if (params.archetype === "super-set") {
-      for (const pair of params.params.pairs) {
-        for (const rowRef of pair.schemaRows) {
-          acc.add(rowRef);
+    } else if (arrangement?.kind === "superset") {
+      for (const pair of arrangement.pairs) {
+        for (const rowRef of pair.rowIds) {
+          rowRefs.add(rowRef);
         }
       }
     }
 
-    collectReferencedRowRefs(schema.subSchemas, acc);
+    collectReferencedRefs(schema.subSchemas, rowRefs, schemaRefs);
   }
 
-  return acc;
+  return { rowRefs, schemaRefs };
 };
 
 const assertUniqueTopLevelOrders = (block: CanonicalBlock, blockKey: string): void => {
@@ -160,16 +143,12 @@ const emitBlockSchemas = async (
   block: CanonicalBlock,
   blockId: string,
   blockKey: string,
-  altGroupRefs: AltGroupRefMap,
 ): Promise<void> => {
   assertUniqueTopLevelOrders(block, blockKey);
-  ctx.resolver.enterBlock(blockKey, collectReferencedRowRefs(block.schemas));
 
-  const blockAltGroups = altGroupRefs.get(blockKey) ?? new Map<string, string>();
+  const { rowRefs, schemaRefs } = collectReferencedRefs(block.schemas);
 
-  for (const [ref, id] of blockAltGroups) {
-    ctx.resolver.setAltGroup(ref, id);
-  }
+  ctx.resolver.enterBlock(blockKey, rowRefs, schemaRefs);
 
   for (const schema of block.schemas) {
     await emitSchemaNode(ctx, blockId, null, schema);
@@ -194,7 +173,6 @@ const emitSheetWeeksSchemas = async (
   ctx: SchemaEmitContext,
   seed: CanonicalSeed,
   blockRefs: BlockRefMap,
-  altGroupRefs: AltGroupRefMap,
 ): Promise<number> => {
   let schemaCount = 0;
 
@@ -205,7 +183,7 @@ const emitSheetWeeksSchemas = async (
           const blockKey = buildBlockKey(week.weekIndex, day.dayOfWeek, session.order, block.order);
           const blockId = requireBlockId(blockRefs, blockKey);
 
-          await emitBlockSchemas(ctx, block, blockId, blockKey, altGroupRefs);
+          await emitBlockSchemas(ctx, block, blockId, blockKey);
           schemaCount += block.schemas.length;
         }
       }
@@ -219,7 +197,6 @@ const emitPhase7Schemas = async (
   ctx: SchemaEmitContext,
   seed: CanonicalSeed,
   blockRefs: BlockRefMap,
-  altGroupRefs: AltGroupRefMap,
 ): Promise<number> => {
   if (seed.phase7Examples.length === 0) {
     return 0;
@@ -234,7 +211,7 @@ const emitPhase7Schemas = async (
       const blockKey = buildBlockKey(weekIndex, example.dayOfWeek, example.order, block.order);
       const blockId = requireBlockId(blockRefs, blockKey);
 
-      await emitBlockSchemas(ctx, block, blockId, blockKey, altGroupRefs);
+      await emitBlockSchemas(ctx, block, blockId, blockKey);
       schemaCount += block.schemas.length;
     }
   }
@@ -246,13 +223,11 @@ export const seedCanonicalSchemas = async (
   db: PrismaClient,
   seed: CanonicalSeed,
   blockRefs: BlockRefMap,
-  altGroupRefs: AltGroupRefMap,
-  archetypeIdByName: ReadonlyMap<string, string>,
   resolver: RefResolver,
 ): Promise<{ schemaCount: number }> => {
-  const ctx: SchemaEmitContext = { db, archetypeIdByName, resolver };
-  const sheetCount = await emitSheetWeeksSchemas(ctx, seed, blockRefs, altGroupRefs);
-  const phase7Count = await emitPhase7Schemas(ctx, seed, blockRefs, altGroupRefs);
+  const ctx: SchemaEmitContext = { db, resolver };
+  const sheetCount = await emitSheetWeeksSchemas(ctx, seed, blockRefs);
+  const phase7Count = await emitPhase7Schemas(ctx, seed, blockRefs);
   const schemaCount = sheetCount + phase7Count;
 
   console.log(

@@ -1,95 +1,62 @@
 import { type Prisma, type PrismaClient } from "@prisma/client";
 
-import { type CanonicalSchemaNode } from "../plan-data/canonical-schema";
+import type { ArrangementAxis, Composition } from "@repo/contracts/lms/composition";
 
 import { type RefResolver } from "./ref-resolver";
 
-type CanonicalArchetypeParams = CanonicalSchemaNode["archetype"];
+type SeedArrangement = NonNullable<Composition["arrangement"]>;
 
-const substitutePairedLadders = (
-  params: CanonicalArchetypeParams,
+const resolveArrangement = (
+  arrangement: SeedArrangement,
   resolver: RefResolver,
-): CanonicalArchetypeParams => {
-  if (
-    params.archetype !== "parallel-ladders-descending" &&
-    params.archetype !== "parallel-ladders-mixed-direction"
-  ) {
-    return params;
+): ArrangementAxis => {
+  switch (arrangement.kind) {
+    case "ordered":
+      return arrangement;
+    case "parallel":
+      return {
+        kind: "parallel",
+        interleaveOrder: arrangement.interleaveOrder,
+        tracks: arrangement.tracks.map((track) => ({
+          childSchemaId: resolver.getSchema(track.childSchemaId),
+          ...(track.setEnumeration !== undefined && { setEnumeration: track.setEnumeration }),
+          ...(track.pairedWithRowId !== undefined && {
+            pairedWithRowId: resolver.getRow(track.pairedWithRowId),
+          }),
+        })),
+      };
+    case "superset":
+      return {
+        kind: "superset",
+        pairs: arrangement.pairs.map((pair) => ({
+          label: pair.label,
+          rowIds: pair.rowIds.map((rowRef) => resolver.getRow(rowRef)),
+        })),
+      };
+    default:
+      return arrangement satisfies never;
   }
-
-  return {
-    ...params,
-    params: {
-      ...params.params,
-      ladders: params.params.ladders.map((ladder) =>
-        ladder.pairedWithInnerRowId === undefined
-          ? ladder
-          : { ...ladder, pairedWithInnerRowId: resolver.getRow(ladder.pairedWithInnerRowId) },
-      ),
-    },
-  };
 };
 
-const substitutePyramids = (
-  params: CanonicalArchetypeParams,
-  resolver: RefResolver,
-): CanonicalArchetypeParams => {
-  if (params.archetype !== "parallel-pyramids") {
-    return params;
-  }
+export const arrangementHasRefs = (arrangement: SeedArrangement | undefined): boolean =>
+  arrangement !== undefined && (arrangement.kind === "parallel" || arrangement.kind === "superset");
 
-  return {
-    ...params,
-    params: {
-      ...params.params,
-      pyramids: params.params.pyramids.map((pyramid) =>
-        pyramid.pairedWithInnerRowId === undefined
-          ? pyramid
-          : { ...pyramid, pairedWithInnerRowId: resolver.getRow(pyramid.pairedWithInnerRowId) },
-      ),
-    },
-  };
-};
-
-const substituteSuperSet = (
-  params: CanonicalArchetypeParams,
-  resolver: RefResolver,
-): CanonicalArchetypeParams => {
-  if (params.archetype !== "super-set") {
-    return params;
-  }
-
-  return {
-    ...params,
-    params: {
-      ...params.params,
-      pairs: params.params.pairs.map((pair) => ({
-        ...pair,
-        schemaRows: pair.schemaRows.map((ref) => resolver.getRow(ref)),
-      })),
-    },
-  };
-};
-
-export const hasRowRefs = (params: CanonicalArchetypeParams): boolean =>
-  params.archetype === "parallel-ladders-descending" ||
-  params.archetype === "parallel-ladders-mixed-direction" ||
-  params.archetype === "parallel-pyramids" ||
-  params.archetype === "super-set";
-
-export const backPatchSchema = async (
+export const backPatchComposition = async (
   db: PrismaClient,
   schemaId: string,
-  params: CanonicalArchetypeParams,
+  composition: Composition,
   resolver: RefResolver,
 ): Promise<void> => {
-  let substituted = substitutePairedLadders(params, resolver);
+  if (composition.arrangement === undefined) {
+    return;
+  }
 
-  substituted = substitutePyramids(substituted, resolver);
-  substituted = substituteSuperSet(substituted, resolver);
+  const resolved = resolveArrangement(composition.arrangement, resolver);
 
   await db.schema.update({
     where: { id: schemaId },
-    data: { archetypeParams: substituted satisfies Prisma.InputJsonValue },
+    data: {
+      composition: { ...composition, arrangement: resolved } satisfies Prisma.InputJsonValue,
+    },
   });
 };

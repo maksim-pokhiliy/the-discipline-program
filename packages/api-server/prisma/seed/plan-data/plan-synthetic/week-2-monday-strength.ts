@@ -1,15 +1,15 @@
 import {
   absoluteLoad,
   bodyweightLoad,
+  buildComposeNode,
   countReps,
   effortPercent,
   holdAfterLast,
   maxReps,
   mediaReference,
-  namedExerciseProgram,
-  nRounds,
   pauseInUp,
   perNthRepPause,
+  rounds,
   singleArmWeight,
   singleWeight,
   slowEccentric,
@@ -28,49 +28,40 @@ export const BLOCK_DROP_SET_WK2_MON: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    namedExerciseProgram({
-      order: 1,
-      exerciseId: EX.dbBulgarianSplitSquat,
-      program: {
-        programKind: "drop_set",
-        stages: [
-          { reps: 8, load: absoluteLoad(singleArmWeight(20)) },
-          { reps: 8, load: absoluteLoad(singleArmWeight(15)) },
-          {
-            reps: 8,
-            load: { kind: "without_weight", context: "drop_set_stage" },
-            indicator: "explode",
-          },
+    buildComposeNode(
+      {
+        order: 1,
+        header: "Bulgarian Split Squat drop set (each leg)",
+        rows: [
+          mkRow(
+            1,
+            {
+              rowKind: "EXERCISE",
+              exercise: { form: "atomic", exerciseId: EX.dbBulgarianSplitSquat },
+            },
+            { load: absoluteLoad(singleArmWeight(20)), reps: countReps(8), position: "FROM_SOFA" },
+          ),
+          mkRow(
+            2,
+            {
+              rowKind: "EXERCISE",
+              exercise: { form: "atomic", exerciseId: EX.jumpSquat },
+            },
+            {
+              load: withoutWeight(),
+              reps: maxReps({ subForm: "bare" }),
+              media: mediaReference({
+                url: "https://example.com/demo/explode-stage",
+                position: "inline",
+                appliesTo: "drop_stage",
+              }),
+            },
+          ),
         ],
       },
-      header: "Bulgarian Split Squat drop set (each leg)",
-      rows: [
-        mkRow(
-          1,
-          {
-            rowKind: "EXERCISE",
-            exercise: { form: "atomic", exerciseId: EX.dbBulgarianSplitSquat },
-          },
-          { load: absoluteLoad(singleArmWeight(20)), reps: countReps(8), position: "FROM_SOFA" },
-        ),
-        mkRow(
-          2,
-          {
-            rowKind: "EXERCISE",
-            exercise: { form: "atomic", exerciseId: EX.jumpSquat },
-          },
-          {
-            load: withoutWeight(),
-            reps: maxReps({ subForm: "bare" }),
-            media: mediaReference({
-              url: "https://example.com/demo/explode-stage",
-              position: "inline",
-              appliesTo: "drop_stage",
-            }),
-          },
-        ),
-      ],
-    }),
+      {},
+      null,
+    ),
   ],
 };
 
@@ -82,33 +73,35 @@ export const BLOCK_TEMPO_HOLDS_WK2_MON: CanonicalBlock = {
   timeCap: null,
   notes: null,
   schemas: [
-    nRounds({
-      order: 1,
-      countForm: "exact",
-      count: 3,
-      header: "Tempo holds",
-      rows: [
-        mkRow(
-          1,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.benchPress } },
-          { load: absoluteLoad(singleWeight(60)), reps: countReps(5), tempo: slowEccentric(4) },
-        ),
-        mkRow(
-          2,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.backSquat } },
-          { load: absoluteLoad(singleWeight(80)), reps: countReps(5), tempo: pauseInUp(2) },
-        ),
-        mkRow(
-          3,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.frontSquat } },
-          { load: absoluteLoad(singleWeight(70)), reps: countReps(5), tempo: holdAfterLast(10) },
-        ),
-        mkRow(
-          4,
-          { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pullUp } },
-          { load: bodyweightLoad(), reps: countReps(10), tempo: perNthRepPause(3, 2) },
-        ),
-      ],
-    }),
+    buildComposeNode(
+      {
+        order: 1,
+        header: "Tempo holds",
+        rows: [
+          mkRow(
+            1,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.benchPress } },
+            { load: absoluteLoad(singleWeight(60)), reps: countReps(5), tempo: slowEccentric(4) },
+          ),
+          mkRow(
+            2,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.backSquat } },
+            { load: absoluteLoad(singleWeight(80)), reps: countReps(5), tempo: pauseInUp(2) },
+          ),
+          mkRow(
+            3,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.frontSquat } },
+            { load: absoluteLoad(singleWeight(70)), reps: countReps(5), tempo: holdAfterLast(10) },
+          ),
+          mkRow(
+            4,
+            { rowKind: "EXERCISE", exercise: { form: "atomic", exerciseId: EX.pullUp } },
+            { load: bodyweightLoad(), reps: countReps(10), tempo: perNthRepPause(3, 2) },
+          ),
+        ],
+      },
+      rounds(3),
+      null,
+    ),
   ],
 };

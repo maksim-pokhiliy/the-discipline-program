@@ -1,8 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { ARCHETYPE_NAMES } from "@repo/contracts/lms/schema";
-
 const CANONICAL_PLAN_NAME = "CFG Quarter Build";
 
 describe("Seed invariants — training-domain referential integrity", () => {
@@ -24,34 +22,6 @@ describe("Seed invariants — training-domain referential integrity", () => {
 
   it("seeded the canonical CFG Quarter Build plan (pre-condition for the rest)", () => {
     expect(seedPlanId).not.toBeNull();
-  });
-
-  it("T1: every Schema.alternatingGroupId references an existing AlternatingGroup in the same block", async () => {
-    if (seedPlanId === null) {
-      throw new Error("seed plan missing; cannot validate invariant");
-    }
-
-    const members = await db.schema.findMany({
-      where: {
-        alternatingGroupId: { not: null },
-        block: { session: { day: { week: { planId: seedPlanId } } } },
-      },
-      select: { id: true, blockId: true, alternatingGroupId: true },
-    });
-
-    expect(members.length).toBeGreaterThan(0);
-
-    for (const member of members) {
-      expect(member.alternatingGroupId).not.toBeNull();
-
-      const group = await db.alternatingGroup.findUnique({
-        where: { id: member.alternatingGroupId as string },
-        select: { id: true, blockId: true },
-      });
-
-      expect(group).not.toBeNull();
-      expect(group?.blockId).toBe(member.blockId);
-    }
   });
 
   it("T2: every BlockLabelAssignment.labelId references an existing Label", async () => {
@@ -109,78 +79,5 @@ describe("Seed invariants — training-domain referential integrity", () => {
     });
 
     expect(existing.length).toBe(referencedExerciseIds.size);
-  });
-
-  it("T4: every AlternatingGroup has at least 2 member schemas in its block (alternatingGroupSchema.schemaIds.min(2) invariant)", async () => {
-    if (seedPlanId === null) {
-      throw new Error("seed plan missing; cannot validate invariant");
-    }
-
-    const groups = await db.alternatingGroup.findMany({
-      where: { block: { session: { day: { week: { planId: seedPlanId } } } } },
-      select: { id: true, blockId: true, schemas: { select: { id: true, blockId: true } } },
-    });
-
-    expect(groups.length).toBeGreaterThan(0);
-
-    for (const group of groups) {
-      expect(group.schemas.length).toBeGreaterThanOrEqual(2);
-
-      for (const member of group.schemas) {
-        expect(member.blockId).toBe(group.blockId);
-      }
-    }
-  });
-
-  it("T5: every super-set archetypeParams.pairs[].schemaRows references an existing SchemaRow (no placeholder leaks)", async () => {
-    if (seedPlanId === null) {
-      throw new Error("seed plan missing; cannot validate invariant");
-    }
-
-    const superSetSchemas = await db.schema.findMany({
-      where: {
-        archetype: { name: "super-set" },
-        block: { session: { day: { week: { planId: seedPlanId } } } },
-      },
-      select: { id: true, archetypeParams: true },
-    });
-
-    expect(superSetSchemas.length).toBeGreaterThan(0);
-
-    const referencedRowIds = new Set<string>();
-
-    for (const schema of superSetSchemas) {
-      const archetypeParams = schema.archetypeParams as {
-        params?: { pairs?: { schemaRows?: string[] }[] };
-      };
-
-      for (const pair of archetypeParams.params?.pairs ?? []) {
-        for (const rowId of pair.schemaRows ?? []) {
-          referencedRowIds.add(rowId);
-        }
-      }
-    }
-
-    expect(referencedRowIds.size).toBeGreaterThan(0);
-
-    const existing = await db.schemaRow.findMany({
-      where: { id: { in: Array.from(referencedRowIds) } },
-      select: { id: true },
-    });
-
-    expect(existing.length).toBe(referencedRowIds.size);
-  });
-
-  it("T6: every Archetype exposes a non-empty label (C0-001 + QA-001 invariant)", async () => {
-    const archetypes = await db.archetype.findMany({
-      select: { name: true, label: true },
-    });
-
-    expect(archetypes.length).toBe(ARCHETYPE_NAMES.length);
-
-    for (const archetype of archetypes) {
-      expect(archetype.label).toBeTruthy();
-      expect(archetype.label.trim().length).toBeGreaterThan(0);
-    }
   });
 });

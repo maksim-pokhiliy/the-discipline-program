@@ -4,12 +4,16 @@ export type RefResolver = {
   setLabel: (ref: string, id: string) => void;
   getLabel: (ref: string) => string;
 
-  enterBlock: (blockKey: string, referencedRefs?: ReadonlySet<string>) => void;
+  enterBlock: (
+    blockKey: string,
+    referencedRowRefs?: ReadonlySet<string>,
+    referencedSchemaRefs?: ReadonlySet<string>,
+  ) => void;
   exitBlock: () => void;
   setRow: (refId: string, id: string) => void;
   getRow: (refId: string) => string;
-  setAltGroup: (ref: string, id: string) => void;
-  getAltGroup: (ref: string) => string;
+  setSchema: (refId: string, id: string) => void;
+  getSchema: (refId: string) => string;
 
   stats: () => {
     exerciseCount: number;
@@ -21,8 +25,9 @@ export type RefResolver = {
 type BlockScope = {
   blockKey: string;
   rows: Map<string, string>;
-  altGroups: Map<string, string>;
-  referencedRefs: ReadonlySet<string>;
+  schemas: Map<string, string>;
+  referencedRowRefs: ReadonlySet<string>;
+  referencedSchemaRefs: ReadonlySet<string>;
 };
 
 const requireBlockScope = (scope: BlockScope | null, op: string): BlockScope => {
@@ -79,12 +84,17 @@ export const createRefResolver = (): RefResolver => {
 
   const getLabel = (ref: string): string => requireValue(labels, ref, "label", "catalog");
 
-  const enterBlock = (blockKey: string, referencedRefs: ReadonlySet<string> = new Set()): void => {
+  const enterBlock = (
+    blockKey: string,
+    referencedRowRefs: ReadonlySet<string> = new Set(),
+    referencedSchemaRefs: ReadonlySet<string> = new Set(),
+  ): void => {
     blockScope = {
       blockKey,
       rows: new Map<string, string>(),
-      altGroups: new Map<string, string>(),
-      referencedRefs,
+      schemas: new Map<string, string>(),
+      referencedRowRefs,
+      referencedSchemaRefs,
     };
   };
 
@@ -95,7 +105,7 @@ export const createRefResolver = (): RefResolver => {
   const setRow = (refId: string, id: string): void => {
     const scope = requireBlockScope(blockScope, "setRow");
 
-    if (scope.referencedRefs.has(refId) && scope.rows.has(refId)) {
+    if (scope.referencedRowRefs.has(refId) && scope.rows.has(refId)) {
       throw new Error(
         `RefResolver: duplicate setRow for referenced refId "${refId}" in block "${scope.blockKey}" — referenced refIds (back-patch targets) must be unique within a block`,
       );
@@ -110,22 +120,22 @@ export const createRefResolver = (): RefResolver => {
     return requireValue(scope.rows, refId, "row", `block "${scope.blockKey}" scope`);
   };
 
-  const setAltGroup = (ref: string, id: string): void => {
-    const scope = requireBlockScope(blockScope, "setAltGroup");
+  const setSchema = (refId: string, id: string): void => {
+    const scope = requireBlockScope(blockScope, "setSchema");
 
-    if (scope.altGroups.has(ref)) {
+    if (scope.referencedSchemaRefs.has(refId) && scope.schemas.has(refId)) {
       throw new Error(
-        `RefResolver: duplicate setAltGroup for ref "${ref}" in block "${scope.blockKey}" — alt-group refs must be unique within a block`,
+        `RefResolver: duplicate setSchema for referenced refId "${refId}" in block "${scope.blockKey}" — referenced child-schema refIds (back-patch targets) must be unique within a block`,
       );
     }
 
-    scope.altGroups.set(ref, id);
+    scope.schemas.set(refId, id);
   };
 
-  const getAltGroup = (ref: string): string => {
-    const scope = requireBlockScope(blockScope, "getAltGroup");
+  const getSchema = (refId: string): string => {
+    const scope = requireBlockScope(blockScope, "getSchema");
 
-    return requireValue(scope.altGroups, ref, "alt-group", `block "${scope.blockKey}" scope`);
+    return requireValue(scope.schemas, refId, "child-schema", `block "${scope.blockKey}" scope`);
   };
 
   const stats = (): {
@@ -147,8 +157,8 @@ export const createRefResolver = (): RefResolver => {
     exitBlock,
     setRow,
     getRow,
-    setAltGroup,
-    getAltGroup,
+    setSchema,
+    getSchema,
     stats,
   };
 };

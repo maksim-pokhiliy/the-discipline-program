@@ -1,6 +1,4 @@
-import type { RestSpec, SlotSpec } from "@repo/contracts/lms/_shared";
-
-const GROUPED_SLOT_MIN_MINUTES = 2;
+import type { RestSpec } from "@repo/contracts/lms/_shared";
 
 export type RestDurationInput =
   | { value: number; unit: "sec" }
@@ -58,16 +56,4 @@ export const restAfterSpecificSet = (
   }
 
   return buildRest("after_specific_set", duration, qualifier, setIndex);
-};
-
-export const singleSlot = (minute: number): SlotSpec => ({ kind: "single", minute });
-
-export const groupedSlot = (minutes: number[]): SlotSpec => {
-  if (minutes.length < GROUPED_SLOT_MIN_MINUTES) {
-    throw new Error(
-      `groupedSlot: requires at least ${GROUPED_SLOT_MIN_MINUTES} minutes (got ${minutes.length})`,
-    );
-  }
-
-  return { kind: "grouped", minutes };
 };

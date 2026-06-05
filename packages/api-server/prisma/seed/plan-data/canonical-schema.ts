@@ -7,7 +7,7 @@
 // `plan-emit/load-and-validate.ts`, then written to Prisma by the emit
 // chain (catalog → plan → blocks → schemas → rows).
 //
-// DRY policy: every VO / archetype-params / row-payload schema is imported
+// DRY policy: every VO / composition-axis / row-payload schema is imported
 // verbatim from `@repo/contracts/lms` to guarantee zero drift between the
 // canonical plan and the production Prisma write path. Only entity hierarchy
 // shells + catalog entries + reference-ID newtypes are defined locally.
@@ -21,8 +21,6 @@
 //                         (convention: kebab-case canonical name).
 //  - Labels:              string ref keyed to entries in
 //                         `catalog.labels[].ref` (same convention).
-//  - Archetype names:     enumerated by `archetypeParamsSchema.archetype`
-//                         discriminator.
 //
 // Date semantics:
 //
@@ -52,12 +50,7 @@ import {
   tempoModifierSchema,
   timeCapSchema,
 } from "@repo/contracts/lms/_shared";
-import {
-  alternatingGroupRelationSchema,
-  type AlternatingGroupRelation,
-} from "@repo/contracts/lms/alternating-group";
 import { compositionSchema } from "@repo/contracts/lms/composition";
-import { archetypeParamsSchema } from "@repo/contracts/lms/schema";
 import {
   positionSchema,
   rowKindSchema,
@@ -136,15 +129,8 @@ export const canonicalCompoundTypeEnum = [
 ] as const;
 export const canonicalCompoundTypeSchema = z.enum(canonicalCompoundTypeEnum);
 
-export const schemaKindEnum = ["ATOMIC", "HEADERLESS", "NESTED", "NAMED", "COMPOSITE"] as const;
-export const schemaKindSchema = z.enum(schemaKindEnum);
-
 export const appLevelEnum = ["DAY", "SESSION", "BLOCK"] as const;
 export const appLevelSchema = z.enum(appLevelEnum);
-
-// alternatingGroupRelationSchema imported from @repo/contracts/lms/alternating-group
-// (kept here as a type alias so cross-references stay readable).
-export type { AlternatingGroupRelation };
 
 // ──────────────────────────────────────────────────────────────────────────
 // Catalog entries (exercises + labels)
@@ -189,10 +175,10 @@ export type LabelCatalogEntry = z.infer<typeof labelCatalogEntrySchema>;
 // Internal references:
 //
 //  - `refId` (optional) — internal handle used inside the same plan for FK
-//    targets (e.g. `parallel-ladders-descending.ladders[].pairedWithInnerRowId`,
-//    `super-set.pairs[].schemaRows[]`). The emit pipeline resolves refId → cuid
-//    at emit time. Refs are scoped to the containing block (uniqueness inside
-//    one block).
+//    targets (e.g. `composition.arrangement.superset.pairs[].rowIds`,
+//    `composition.arrangement.parallel.tracks[].childSchemaId`). The emit
+//    pipeline resolves refId → cuid at emit time. Refs are scoped to the
+//    containing block (uniqueness inside one block).
 // ──────────────────────────────────────────────────────────────────────────
 
 export const rowSchema = z.object({
@@ -216,14 +202,10 @@ export type CanonicalRow = z.infer<typeof rowSchema>;
 export type CanonicalSchemaNode = {
   refId?: string;
   order: number;
-  kind: z.infer<typeof schemaKindSchema>;
-  archetype: z.infer<typeof archetypeParamsSchema>;
-  composition?: z.infer<typeof compositionSchema>;
+  composition: z.infer<typeof compositionSchema>;
   header: string | null;
   intensity: z.infer<typeof intensitySchema> | null;
   notes: string | null;
-  alternatingGroupRef: string | null;
-  alternatingGroupRelation: AlternatingGroupRelation | null;
   rows: CanonicalRow[];
   subSchemas: CanonicalSchemaNode[];
 };
@@ -232,14 +214,10 @@ export const canonicalSchemaNodeSchema = z.lazy(() =>
   z.object({
     refId: z.string().min(1).max(48).optional(),
     order: z.number().int().positive(),
-    kind: schemaKindSchema,
-    archetype: archetypeParamsSchema,
-    composition: compositionSchema.optional(),
+    composition: compositionSchema,
     header: z.string().min(1).max(200).nullable(),
     intensity: intensitySchema.nullable(),
     notes: z.string().max(4000).nullable(),
-    alternatingGroupRef: z.string().min(1).max(48).nullable(),
-    alternatingGroupRelation: alternatingGroupRelationSchema.nullable(),
     rows: z.array(rowSchema),
     subSchemas: z.array(canonicalSchemaNodeSchema),
   }),
@@ -355,10 +333,9 @@ export type CanonicalSeed = z.infer<typeof canonicalSeedSchema>;
 // Cross-reference invariants (enforced after Zod parses; kept here as
 // documented expectations for the builder).
 //
-//  X1. Every `exerciseRef` referenced anywhere (rowPayload, archetypeParams,
-//      compoundRep, mediaReference, etc) MUST resolve in `catalog.exercises`.
-//      Enforced by `assertExerciseRefsResolve` in
-//      `plan-emit/load-and-validate.ts`.
+//  X1. Every `exerciseRef` referenced anywhere (rowPayload, compoundRep,
+//      mediaReference, etc) MUST resolve in `catalog.exercises`. Enforced by
+//      `assertExerciseRefsResolve` in `plan-emit/load-and-validate.ts`.
 //
 //  X2. Every `labelRef` referenced anywhere (day.label, session.label,
 //      block.labels[]) MUST resolve in `catalog.labels`.
@@ -366,31 +343,26 @@ export type CanonicalSeed = z.infer<typeof canonicalSeedSchema>;
 //  X3. Every `blockInstanceRef` MUST match the `block-NNN` regex. Coverage
 //      matrix tracks block presence.
 //
-//  X4. `archetypeParams.archetype` MUST equal a `schema.kind`-compatible value
-//      (e.g. n-rounds → ATOMIC, headerless archetypes → HEADERLESS, etc).
+//  X4. `composition.arrangement.superset.pairs[].rowIds` MUST reference a
+//      row `refId` defined on a DIRECT row of the same schema, and
+//      `composition.arrangement.parallel.tracks[].childSchemaId` MUST
+//      reference a child subSchema `refId` defined in the same block. Both
+//      are authored cuid-format (`cuidFromSeed`) and resolved refId → cuid at
+//      emit time by the two-phase back-patch.
 //
-//  X5. `parallel-ladders-*.ladders[].pairedWithInnerRowId` and
-//      `super-set.pairs[].schemaRows[]` MUST reference `rowSchema.refId`
-//      values defined in the same containing schema/block. Resolved at emit
-//      time by the emit pipeline.
-//
-//  X6. `alternatingGroupRef`: two or more schemas in the SAME block carrying
-//      the SAME ref form one AlternatingGroup; `alternatingGroupRelation`
-//      must be set on every member.
-//
-//  X7. `Day.label` references with `applicableLevels` including "DAY" SHOULD
+//  X5. `Day.label` references with `applicableLevels` including "DAY" SHOULD
 //      hold; cross-level misassignment is allowed but coverage matrix flags
 //      it as a deliberate edge case.
 //
-//  X8. `Week.weekOffsetFromTodayWeeks` values MUST be monotonic by
+//  X6. `Week.weekOffsetFromTodayWeeks` values MUST be monotonic by
 //      `weekIndex` (week N+1 offset > week N offset). Asserted at emit time.
 //
-//  X9. `Week.weekIndex` values MUST be 1..plan.totalWeeks, contiguous.
+//  X7. `Week.weekIndex` values MUST be 1..plan.totalWeeks, contiguous.
 //      Calendar gaps are represented as Week rows with `days: []` and a notes
 //      string.
 //
-//  X10. `meta.schemaVersion` MUST equal 1. Future shape evolution bumps
-//       this and forks the emit code.
+//  X8. `meta.schemaVersion` MUST equal 1. Future shape evolution bumps
+//      this and forks the emit code.
 //
 // Coverage matrix (separate doc `coverage-matrix.md`) tabulates per-VO-branch
 // expected occurrence counts. The emit pipeline includes a coverage assertion
