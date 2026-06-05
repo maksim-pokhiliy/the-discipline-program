@@ -8,34 +8,37 @@ D-numbered ratified decisions for this initiative. Step-level calls that don't m
 
 ## Index
 
-| ID                 | Topic                                                                                          | Status                                       |
-| ------------------ | ---------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| D-PIVOT            | Compose-only model; archetype emergent                                                         | RATIFIED (ADR-0037)                          |
-| D-INTERVAL         | `interval` is a `repetition` primitive                                                         | RATIFIED (10.2)                              |
-| D-LADDER           | `ladder` splits → container-axis vs row-payload                                                | RATIFIED (10.2 §B)                           |
-| D-CADENCE          | `cadence`/`interval`/`window` are distinct                                                     | RATIFIED (10.2 §5.3)                         |
-| D-EMOM-SLOT        | EMOM sub-minute slot = row-level `slotSpecSchema`, no new axis                                 | RATIFIED (10.2 §F.3)                         |
-| D-EMOM-UX          | EMOM "row-as-minute" derived view (UX, computed-on-read)                                       | RATIFIED principle → S2 requirement          |
-| D-CONTAINER-VS-ROW | Container ⇔ carries repetition OR >1 movement; else row                                        | RATIFIED principle → S2 + basis for D-10.4-2 |
-| D-PERSIST          | Composition persists flat per-node; nesting stays on `parentSchemaId`                          | RATIFIED (10.2)                              |
-| D-STRICT           | `.strict()` on the axis contract                                                               | RATIFIED (10.2 Gate-B)                       |
-| D-DUALWRITE        | Composition optional / archetype required (Option C)                                           | RATIFIED (10.3 DEC-1)                        |
-| D-LABEL            | `deriveCompositionLabel` computed-on-read, compose-native enum, never stored                   | RATIFIED (10.3 DEC-2)                        |
-| D-SEED             | Seed = Gauntlet-port, additive (10.3) → composition-native (10.4 S3)                           | RATIFIED (10.3 DEC-3)                        |
-| D-UNTILREC         | `until_recovery` sham `{value:1,unit:"sec"}` kept                                              | RATIFIED (10.3 DEC-4)                        |
-| D-SCORING-INERT    | Scoring-inert source-scan guard re-homed to api-server                                         | RATIFIED (10.3 DEC-5)                        |
-| D-ALTGROUP-FOLD    | `AlternatingGroup` → `arrangement:parallel`, preserving `setEnumeration`/N-ary                 | RATIFIED (target frozen 10.2)                |
-| D-AG-FACTS         | AlternatingGroup domain facts the fold must preserve (migrated from `implementation/`)         | RATIFIED (history)                           |
-| D-D4-REVERSAL      | The 34-archetype catalog-as-seeded-config is DROPPED by 10.4                                   | RATIFIED (reverses old D4)                   |
-| D-PHASE5-SCORING   | Scoring/execution layer = the product differentiator vs Sheets; deferred to its own initiative | DEFERRED (future initiative)                 |
-| D-10.4-1           | 10.4 shape: the arc S1→S2→S3 vs alternatives                                                   | RATIFIED (S1)                                |
-| D-10.4-2           | Drop `Schema.kind` + abolish the kind-based write guards                                       | RATIFIED (dir; S1 nullable → S3 drops)       |
-| D-10.4-3           | S2 compose-write UI scope (full four-projection vs MVP)                                        | RATIFIED (S2 kickoff 2026-06-04)             |
-| D-10.4-S1-RS       | S1 read-shape fork → option (b): non-null read + `mapToSchema` narrow                          | RATIFIED (S1 Gate A)                         |
-| D-10.4-S1-INT      | S1 ships composition-only-create as an accepted poison-intermediate                            | RATIFIED (owner override)                    |
-| D-10.4-S2          | S2 Run-1 calls: cascade partial-failure, converter shape, persistence loc, FK + philosophy     | RATIFIED (S2 Run-1; PR #242)                 |
-| D-10.4-S2-R2       | S2 Run-2 calls: arrangement authoring + two-phase ref persist + QA-004 + property test         | RATIFIED (S2 Run-2; PR #244)                 |
-| D-10.4-S3          | S3 split (A-B UI done / C-E next); discover corrected recon; Phase C = `/feature` not Workflow | RATIFIED (S3; A+B done, C-E next)            |
+| ID                 | Topic                                                                                               | Status                                       |
+| ------------------ | --------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| D-PIVOT            | Compose-only model; archetype emergent                                                              | RATIFIED (ADR-0037)                          |
+| D-INTERVAL         | `interval` is a `repetition` primitive                                                              | RATIFIED (10.2)                              |
+| D-LADDER           | `ladder` splits → container-axis vs row-payload                                                     | RATIFIED (10.2 §B)                           |
+| D-CADENCE          | `cadence`/`interval`/`window` are distinct                                                          | RATIFIED (10.2 §5.3)                         |
+| D-EMOM-SLOT        | EMOM sub-minute slot = row-level `slotSpecSchema`, no new axis                                      | RATIFIED (10.2 §F.3)                         |
+| D-EMOM-UX          | EMOM "row-as-minute" derived view (UX, computed-on-read)                                            | RATIFIED principle → S2 requirement          |
+| D-CONTAINER-VS-ROW | Container ⇔ carries repetition OR >1 movement; else row                                             | RATIFIED principle → S2 + basis for D-10.4-2 |
+| D-PERSIST          | Composition persists flat per-node; nesting stays on `parentSchemaId`                               | RATIFIED (10.2)                              |
+| D-STRICT           | `.strict()` on the axis contract                                                                    | RATIFIED (10.2 Gate-B)                       |
+| D-DUALWRITE        | Composition optional / archetype required (Option C)                                                | RATIFIED (10.3 DEC-1)                        |
+| D-LABEL            | `deriveCompositionLabel` computed-on-read, compose-native enum, never stored                        | RATIFIED (10.3 DEC-2)                        |
+| D-SEED             | Seed = Gauntlet-port, additive (10.3) → composition-native (10.4 S3)                                | RATIFIED (10.3 DEC-3)                        |
+| D-UNTILREC         | `until_recovery` sham `{value:1,unit:"sec"}` kept                                                   | RATIFIED (10.3 DEC-4)                        |
+| D-SCORING-INERT    | Scoring-inert source-scan guard re-homed to api-server                                              | RATIFIED (10.3 DEC-5)                        |
+| D-ALTGROUP-FOLD    | `AlternatingGroup` → `arrangement:parallel`, preserving `setEnumeration`/N-ary                      | RATIFIED (target frozen 10.2)                |
+| D-AG-FACTS         | AlternatingGroup domain facts the fold must preserve (migrated from `implementation/`)              | RATIFIED (history)                           |
+| D-D4-REVERSAL      | The 34-archetype catalog-as-seeded-config is DROPPED by 10.4                                        | RATIFIED (reverses old D4)                   |
+| D-PHASE5-SCORING   | Scoring/execution layer = the product differentiator vs Sheets; deferred to its own initiative      | DEFERRED (future initiative)                 |
+| D-10.4-1           | 10.4 shape: the arc S1→S2→S3 vs alternatives                                                        | RATIFIED (S1)                                |
+| D-10.4-2           | Drop `Schema.kind` + abolish the kind-based write guards                                            | RATIFIED (dir; S1 nullable → S3 drops)       |
+| D-10.4-3           | S2 compose-write UI scope (full four-projection vs MVP)                                             | RATIFIED (S2 kickoff 2026-06-04)             |
+| D-10.4-S1-RS       | S1 read-shape fork → option (b): non-null read + `mapToSchema` narrow                               | RATIFIED (S1 Gate A)                         |
+| D-10.4-S1-INT      | S1 ships composition-only-create as an accepted poison-intermediate                                 | RATIFIED (owner override)                    |
+| D-10.4-S2          | S2 Run-1 calls: cascade partial-failure, converter shape, persistence loc, FK + philosophy          | RATIFIED (S2 Run-1; PR #242)                 |
+| D-10.4-S2-R2       | S2 Run-2 calls: arrangement authoring + two-phase ref persist + QA-004 + property test              | RATIFIED (S2 Run-2; PR #244)                 |
+| D-10.4-S3          | S3 split (A-B UI done / C-E next); discover corrected recon; Phase C = `/feature` not Workflow      | RATIFIED (S3; A+B done, C-E next)            |
+| D-10.4-S3-C        | Phase C execution: seed composition-native (ALT-1 back-patch, per-axis gate, DEFER-001)             | RATIFIED (`ff8b0392`)                        |
+| D-10.4-S3-D        | Phase D execution: contract+api-server archetype removal (MINE-3 DROP, guard abolition, REVIEW-004) | RATIFIED (`1bb52d85`)                        |
+| D-10.4-S3-E        | Phase E execution: Prisma drop + reseed + gated suite green (726); seed runtime-validated           | RATIFIED (`40bd87a9`)                        |
 
 ---
 
@@ -147,7 +150,7 @@ D-numbered ratified decisions for this initiative. Step-level calls that don't m
 
 ### D-10.4-2 — drop `Schema.kind` + abolish the kind-based write guards
 
-- **Status:** RATIFIED (direction, 2026-06-04) — drop + abolish. S1 made `kind` NULLABLE as the stepping stone (the kind-consuming guards `assertParentKindForRow`/`assertSubSchemaInvariants` + the two ownership guards are now null-tolerant, behavior-preserved for non-null); **S3** drops the column + abolishes the two assertions.
+- **Status:** RATIFIED + **EXECUTED** (2026-06-05). S1 made `kind` NULLABLE (the stepping stone); **D** (`1bb52d85`) dropped the contract `kind` + abolished `assertParentKindForRow`/`assertSubSchemaInvariants`/`assertArchetypeConsistency` + stripped `kind`/`schemaKind` from the two ownership-guard returns (auth-neutral — verified `kind` never participated in an allow/deny branch); **E** (`40bd87a9`) dropped the Prisma `kind` column + the `SchemaKind` enum. Behavior change now LIVE: a coach can put a row in a grouping container, and nest a sub-schema under any parent kind (was 400; now accepted).
 - **Finding.** `kind` is NOT a pure-archetype field — `assertParentKindForRow` ("no rows on NESTED") + `assertSubSchemaInvariants` ("sub-schema only ATOMIC/HEADERLESS under NESTED") consume it at write time, and the ownership guards return it. Algebra §2.4 ("any container accepts any child") abolishes these restrictions; the structural discipline moves to the S2 UX (D-CONTAINER-VS-ROW), not a stored discriminator.
 - **Behavior change (flagged).** Post-drop a coach can put a row in a grouping container. This follows from the ratified algebra; it touches the authz-guard result contract (the returned `kind`/`schemaKind` lose their only consumers — the two assertions that also die).
 - **Alternative.** Retain `kind` (stored or computed) + the guards — safer for current behavior, but a vestigial archetype-era field, contradicts the spec's "kind computed-on-read, not stored."
@@ -217,6 +220,28 @@ D-numbered ratified decisions for this initiative. Step-level calls that don't m
 - **Gate B caught 2 gated-run-burners** (invisible to check-types, would abort the Phase-E ~10-min run): the `rowKind.INNER_LADDER_MARKER` cell (0 producers after the parallel marker-drop) + the kept QA-006 `absentComposition>0` assertion (composition now always present). Both fixed + amended into `ff8b0392`.
 - **Design corrections:** real `COVERAGE_CELLS.length` 196→161 (the design's 112→78 was a family-undercount; no test hard-codes it — `.length` auto-tracks); the back-patch was DEFINITIVELY NET-NEW (3 confirmations); design §8 OQ-THEN ("leave connector-marker notes un-stripped, harmless") was WRONG (post-extractor-removal the marker stores as notes cruft) → cleaned to null.
 - **Links:** `phase-c-seed-conversion.md`, journal 2026-06-05, [[D-10.4-S3]], [[D-10.4-2]] (→ D), DEFER-001 + `coverage-matrix.md` + REVIEW-004 (`deferred.md`), [[aggressive-migration-no-bridge]].
+
+### D-10.4-S3-D — Phase D execution (contract + api-server archetype removal; committed `1bb52d85`)
+
+- **Status:** RATIFIED (2026-06-05; `feat/compose-s3` `1bb52d85`). Ran via `/feature` full ([[always-via-feature-skill]]); ONE squash (68 files, +84/−4858) — the contract type + its api-server consumers are mutually type-dependent → one green end-state ([[husky-cross-package-squash]]), intermediate check-types-RED allowed ([[aggressive-migration-no-bridge]]). Monorepo check-types + lint + dep:check green = the D ceiling; the gated runtime is E.
+- **Verify-not-trust paid off 3× (the research/design's first framing was wrong each time — Gate-A / implement-stage re-verification caught it):** (1) **platform NOT auto-green** — A/B removed the platform archetype _consumers_ + the `/api/platform/archetypes` route, but **9 platform test fixtures** hard-code the 5 removed `SchemaShape` fields + `alternatingGroups:[]`; under `exactOptionalPropertyTypes` the contract cut makes these excess-property errors → monorepo ceiling RED. Had to be in the squash. (2) **DR-CONTRACTTESTS** — 3 contract test files (`schema.schema.test`/`block.schema.test`/`day.schema.test`) the research §(f) missed also type-break (typed fixtures). (3) **`schema/admin.test.ts` mis-scoped** — research classed it with the 3 "raw-Prisma → leave for E" gated tests, but it drives ~67 CONTRACT-typed `lmsSchemaApi.create({kind,archetypeId,archetypeParams})` + reads → 79 type-breaks; it HAD to be fixed in D (its raw-Prisma `cleanupRaw` scaffolding stayed for E). Lesson: a verify-not-trust research stage is not optional even when a removal "looks mechanical."
+- **R1 — MINE-3 is a DROP, not a rewire (highest-risk call; ratified at Gate A on conclusive evidence).** The brief said "rewire `block.mapper`/`day.mapper` alternatingGroups → arrangement:parallel render, NOT clean delete." The rewire ALREADY happened, distributed across A/B/C: A re-pointed the platform render at `Schema.composition`, C seeded parallel data into `composition.arrangement.parallel.tracks[]`. Evidence: (a) grep — the ONLY reader of the block-level `Block.alternatingGroups` projection is its own producer (`block.mapper.ts`); ZERO live consumers in any app source; (b) `block-card-body.tsx` reads zero from the embed; (c) D-AG-FACTS datum-by-datum survives in the frozen `arrangement.parallel` (D14→`tracks.min(2)`, D-A5→`setEnumeration`, C-A1→tracks order + `Schema.order`, `pairedWithRowId`→track field). Per [[D-ALTGROUP-FOLD]] "the relation data moves into the axis, it is not deleted" — the MOVE already happened; D removes the now-redundant OLD representation (the block embed + its 2 Prisma includes). Loses nothing.
+- **R2 — leave the raw-Prisma gated tests for E** (ratified; partially overtaken — see the `schema/admin.test.ts` mis-scope: 1 of 3 had to be partly fixed in D; the other 2 (`schema-row/admin.test`, `block/admin.test`) left whole for E).
+- **R3 — drop `SUB_SCHEMA_ALLOWED_KINDS`** (ratified): grep-proven orphan after its 2 consumers (`assertSubSchemaInvariants` + `schemaSchemaWithInvariants`) die — dead code (manifesto 2.2).
+- **R4 — collapse `schema/admin.ts` `delete()` tx** (ratified): after dropping the alt-group cleanup the `$transaction` wrapped a single statement → bare `prisma.schema.delete` (a single delete needs no serializable tx; `retryOnP2034` kept for `create`).
+- **REVIEW-004 done:** `marshalNullableJson` → `utils/to-input-json.ts` (`import type Prisma` flipped to a value import for `Prisma.JsonNull`); both local copies deleted; `schema/admin.ts` also dropped its now-unused `toInputJson` import.
+- **Review A− / QA A, 0 CRITICAL** — both independently re-ran the gates (contracts 1067 + platform 972 tests green; check-types/lint/dep:check green; FROZEN composition + Prisma byte-untouched). The guard abolition is provably auth-neutral.
+- **Links:** journal 2026-06-05, [[D-10.4-2]], [[D-10.4-S3]], [[D-ALTGROUP-FOLD]], [[D-AG-FACTS]], REVIEW-004 (`deferred.md`), `10-4-recon.md` §removal-surface + MINE-3.
+
+### D-10.4-S3-E — Phase E execution (Prisma drop + reseed + gated suite green; committed `40bd87a9`)
+
+- **Status:** RATIFIED (2026-06-05; `feat/compose-s3` `40bd87a9`). Direct (not `/feature`); gated. 7 files (+37/−335). The first RUNTIME validation of the whole compose pivot.
+- **Prisma drops (per-line, NOT range-delete — interleaving foot-gun):** `Schema.{archetypeId+@relation(Restrict)+@@index, archetypeParams, kind, alternatingGroupId+@relation+@@index, trailingConnector}` (`composition` stays); models `Archetype` + `AlternatingGroup`; enums `SchemaKind`/`ArchetypeFamily`/`AlternatingGroupRelation`; the `Block.alternatingGroups` back-ref. Boundary line numbers were zero-drift vs the recon. `prisma format` + `prisma validate` green (no dangling relation — the Schema→Archetype `onDelete:Restrict` relation dropped WITH the model).
+- **`db:reset` + `db:seed` — the Phase-C seed RAN clean at runtime for the first time** (it was check-types-only validated through C/D): archetype-free schema, 4 plans, the canonical plan = 57 blocks / 57 schemas / 126 rows / 151 exercises. The NET-NEW arrangement back-patch (refId→cuid) persists. QA's C-stage `safeParse` pre-verification held.
+- **6 gated test files stripped of raw-Prisma archetype scaffolding** (after `db:generate` regenerated the client, `cleanupRaw.archetype`/`.alternatingGroup` + `kind`/`archetypeId`/`archetypeParams` in raw `schema.create` type-broke — 37 errors). The D review/QA carry-forward was right that **all 6** (not the recon's 3) needed it. One whole case deleted (`schema-row/admin.test` "rejects when parent schema is NESTED") — it pinned the abolished `assertParentKindForRow` behavior (verified at source: the only surviving `composeContainerSchema` reject is the QA-001 ladder/marker collision), so it would false-fail; the relaxation IS the point (D-10.4-2).
+- **Gated full api-server suite GREEN — 726 tests** (725 out of the box + 1 fixed). seed-coverage + the author-only QA-004 arrangement-ref cases (carried from #244) + the 6 stripped gated files all pass → closes QA-004-run.
+- **One pre-existing flaky test fixed in passing (unrelated to archetype):** `block/admin.test` "does not retry P2002 collision under retryOnP2034 wrap" asserted `elapsed < 50ms` — a wall-clock threshold sitting on the Neon round-trip latency (failed at 50/52ms; consistent, not random). Proven unrelated (the test + `retryOnP2034` + `block/admin.ts` are untouched by D/E; `retryOnP2034` throws P2002 immediately, no backoff). Replaced the wall-clock assertion with a flake-proof call-count (`attempts === 1` — the test's true intent). In the touch zone → [[inline-fix-pre-existing]]; logged FLAKE-002 CLOSED.
+- **Links:** journal 2026-06-05, [[D-10.4-S3-D]], [[D-10.4-2]], `10-4-recon.md` §removal-surface (Prisma), DEFER-001 (still OPEN — D/E did NOT add a row-level program/slot field), `deferred.md`.
 
 ---
 

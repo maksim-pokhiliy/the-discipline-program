@@ -1,5 +1,14 @@
 # Coverage matrix — Demo Plan seed
 
+> **⚠️ PARTIALLY SUPERSEDED (2026-06-05, 10.4 archetype removal).** The live SSOT
+> for seed coverage is the per-axis `COVERAGE_CELLS` code in
+> `../plan-emit/coverage-cells/*.ts` (the seed-run gate tallies those). The
+> **archetype / schemaKind / connectorForm / INNER_LADDER_MARKER / staged-program /
+> slot** sections below are DEAD — those axes were removed in 10.4 (composition
+> replaced archetype). The VO / exercise / intensity / rest sections (still cited by
+> live `sourceRef: "coverage-matrix §N"` labels in the cells) remain valid. A full
+> rewrite is deferred (low-priority; see `initiatives/plan-editor-compose/deferred.md`).
+
 Single source of truth for **what Session B must emit** so the seeded DB
 covers 100% of the training-domain discriminator space. Session A's emit
 pipeline includes a runtime assertion that fails the seed run if any cell
