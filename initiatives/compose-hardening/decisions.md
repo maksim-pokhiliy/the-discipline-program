@@ -8,13 +8,13 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 
 ## Index
 
-| ID               | Topic                                                                 | Status   |
-| ---------------- | --------------------------------------------------------------------- | -------- |
-| D-1              | Initiative origin: audit → compose-hardening, scope = Tiers 0–3       | RATIFIED |
-| D-ONTOLOGY       | program/slot home: rowKind+VO vs 5th-axis vs nested-schema            | **OPEN** |
-| D-EDIT           | edit-mode shape: inverse adapter + edit drawer + save-via-update      | **OPEN** |
-| D-SCORING-RENDER | inert `scoring` presentation: hide-in-editor vs read-only draft-badge | **OPEN** |
-| D-MARKER         | `INNER_LADDER_MARKER`: deprecate-vs-seed                              | **OPEN** |
+| ID               | Topic                                                              | Status   |
+| ---------------- | ------------------------------------------------------------------ | -------- |
+| D-1              | Initiative origin: audit → compose-hardening, scope = Tiers 0–3    | RATIFIED |
+| D-ONTOLOGY       | program/slot home: rowKind+VO vs 5th-axis vs nested-schema         | **OPEN** |
+| D-EDIT           | edit-mode shape: inverse adapter + edit drawer + save-via-update   | RATIFIED |
+| D-SCORING-RENDER | inert `scoring` presentation: static-disabled in editor (Option A) | RATIFIED |
+| D-MARKER         | `INNER_LADDER_MARKER`: deprecate-vs-seed                           | **OPEN** |
 
 ---
 
@@ -32,17 +32,31 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 - **Leaning (not ratified).** (i) — the VO is already written + tested, lowest friction, keeps program a leaf concern (algebra §1 once called it a "sacred Row-VO"; `DEFER-001` found it "was always an archetype param" — but as a _row payload_ it can be a legit leaf, distinct from the archetype catalog). (ii) requires a four-projection proof that program is a container property. Resolve before any code.
 - **Touches.** FROZEN contract (`schema-row` payload union) → Gate-A escalation for (i)/(ii). Prisma column. Disposes T3-CT-1 (zombies).
 
-### D-EDIT — edit-mode shape (OPEN)
+### D-EDIT — edit-mode shape (RATIFIED 2026-06-06)
 
-- **Status:** OPEN. **Do not execute plan 0a past this.**
-- **The question.** How to give the drawer an edit path (T0-1). Shape: an inverse adapter `Composition + SchemaWithBody subtree → ComposeProgram/ComposeContainer` carrying real `schemaId`s, then an edit-mode `ComposeEditorDrawer` that hydrates from it and routes Save through `update` (lifting the existing arrangement-wiring `updateSchema`-with-composition path into a general edit-persist). Open sub-questions: per-node update vs whole-subtree replace; how edits to nested structure (add/remove/reparent) map to create+delete+update; whether the prototype route (`/coach/compose-prototype`, which already accepts `initialProgram`) becomes the edit harness.
-- **Leaning.** Inverse adapter first (it's the true blocker); then edit-drawer. Decide the update granularity at the `/feature` research stage (it owns the blast-radius), not here.
+- **Status:** RATIFIED (2026-06-06) — ratified at `/feature` Gate A, implemented + shipped on `feat/compose-edit-mode` (commits `990b7164`, `1de6c958`, `b528e784`, `7380801a`, `792888ea`).
+- **Decision.** An **axis-only EDIT path** for an existing top-level compose schema, via three net-new client-side pieces — **no Prisma / contract / endpoint change**:
+  1. **Inverse adapter** (`compose/lib/schema-to-compose.ts`) — `schemaWithBodyToComposeProgram(schema): InverseResult` (+ `schemaWithBodyToComposeContainer`, `isComposeEditable`). Maps a persisted `SchemaWithBody` subtree → the platform draft `ComposeProgram`, **keeping every real cuid as the draft `NodeId` via `asNodeId`** — so `arrangement` refs (stored as real cuids) round-trip with zero remap (the keystone that made this cheap). Splits `Schema.composition` into the four draft axes; hydrates each row's `editorDraft` via the existing `ROW_PAYLOAD_FORM_REGISTRY[kind].toValue({kind:"edit",row})`. Authoring-side only (no read leak).
+  2. **Drawer `mode` prop** — `ComposeEditorDrawer` gains `mode?: {kind:"create"} | {kind:"edit"; schema}` (mirrors `RowEditorMode`), **optional, defaulting to create** → the existing create call site stays byte-identical. Edit-entry = a per-`SchemaCard` "Edit axes" IconButton in `SchemaCardHead`, gated `!isSubSchema` (mirrors the delete affordance).
+  3. **Per-node save-via-update** — `diffComposeAxesAgainstOriginal(original, editedRoot): DiffResult` → `SchemaCompositionUpdate[]` (one per changed container, keyed by real schemaId); `useEditComposeAxes.saveEdits` fires one `updateSchema.mutateAsync({schemaId, data:{composition}})` per change — the exact update-with-composition wire lifted out of `use-persist-compose-cascade.ts:54`.
+- **Resolved sub-questions** (decided at the `/feature` research stage on live-code evidence): (a) **per-node update**, NOT whole-subtree replace (replace = delete+recreate under the hood — id churn, partial-save failure mode, guard asymmetry); (b) **axis-only scope, structural deferred** — add/remove/reparent are OUT (reparent is impossible via `update` anyway — `STRUCTURAL_UPDATE_KEYS` blocks `parentSchemaId`/`blockId`); arrangement re-pointing among EXISTING children is IN; (c) the **real drawer**, NOT the mock-only `/coach/compose-prototype`.
+- **Invariants shipped (beyond the bare shape, hardened during review/QA):**
+  - **Scoring-verbatim (HARD):** the edit path never routes stored `scoring` through the lossy `mapScoring` (which drops `condition`); the diff re-emits the original `scoring` byte-for-byte. A seeded `scoring.condition` survives an unrelated-axis edit (tripwire-tested). Closes the T1-2 strip for the edit path.
+  - **Structural-divergence guard:** the diff fail-closes (`{ok:false, reason:"structural-divergence"}`) on any add/remove/reparent/root-sibling, via an id→parent linkage map + `children.length===1` — defense-in-depth behind the UI affordance-disabling, so a structural edit can NEVER silently drop. (Stronger than the design's "1:1 by schemaId".)
+  - **Range-refuse:** `{kind:"range"}` repetition (unrepresentable in the draft — extending it = T3-CT-4, an explicit non-goal) is gracefully refused (edit affordance disabled + tooltip, never a silent drop). Datum: 0 `range`-repetition instances in seed.
+  - **Edit-mode is axis-only at the UI too:** structural affordances (add/duplicate/delete/reorder, incl. the upper-row Duplicate) hidden; header/notes read-only (rename stays on the card).
+- **Consequences.** The create-only blocker is removed; coaches edit existing block axes with no data loss. The edit path is a _guarded_ write (inherits the validated side of the T1-1 asymmetry). Additive — the create path is untouched.
+- **Reversibility.** Two-way door — net-new pure modules + an optional prop + one button; revert = delete them. No contract/schema/data migration.
+- **Deferred follow-ups** (from the review/QA pass): QA-103 (edit-mode arrangement validation parity), REV-W2 (`isComposeEditable` read→`compose/lib` boundary edge), QA-201 (multi-PUT N>1 partial), QA-302 (lazy-seed footgun) — see `deferred.md`.
 
-### D-SCORING-RENDER — inert scoring presentation (OPEN)
+### D-SCORING-RENDER — inert scoring presentation (RATIFIED 2026-06-06)
 
-- **Status:** OPEN.
-- **The question.** `scoring` is present-but-inert until ph.5, yet read cards show it as an active fact (T2-1) and an edit-mode would expose a control that computes nothing. Hide scoring in the editor until ph.5, or show it read-only with a "draft/not-yet-scored" badge on both card + editor?
-- **Note.** Whatever ships, it must not imply execution. Ties to the ph.5 inert-tripwire — do not remove the guard here.
+- **Status:** RATIFIED (2026-06-06) — Gate A; shipped with D-EDIT.
+- **Decision — Option A: `scoring` is NON-EDITABLE in the T0-1 editor.** The `<ScoringAxisField>` renders **static-disabled** in edit-mode (shows the stored kind, greyed, not authorable), via an `isCreateMode` flag threaded drawer→inspector; create-mode keeps it fully editable. This governs the EDITOR only — the read-CARD honesty cue (T2-1) stays a separate Tier-2 item.
+- **Why it cannot imply execution.** Disabling an input is pure presentation — it introduces no `computeScore`/`evaluateScoring`/`score(` symbol and no digit in any scoring badge. The inert tripwire `scoring-axis-is-inert.test.ts` is untouched and stays green.
+- **Reconciliation with the D-EDIT scoring-verbatim invariant.** Because scoring is non-editable, the editor never emits a draft-reconstructed scoring; combined with the diff re-emitting the original verbatim, the scoring round-trip is provably lossless from both directions.
+- **Reversibility.** Two-way door — one boolean. ph.5 conditional-scoring authoring flips it editable by dropping the disable (the flag will split from header-editability at that point).
+- **Note.** The same `isCreateMode` flag also locks header/notes read-only in edit-mode (QA-102 fix); the flag is honestly named for "create vs edit", not the original `isScoringEditable`.
 
 ### D-MARKER — INNER_LADDER_MARKER deprecate-vs-seed (OPEN)
 
