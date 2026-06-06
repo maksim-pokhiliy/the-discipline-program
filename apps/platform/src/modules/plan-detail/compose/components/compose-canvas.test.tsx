@@ -63,6 +63,8 @@ const noopHandlers: NodeHandlers = {
   onAddRow: vi.fn(),
 };
 
+const readOnlyHandlers: NodeHandlers = { ...noopHandlers, isStructuralEditingAllowed: false };
+
 const container = (idSeed: string, children: ComposeNode[]): ComposeContainer => ({
   nodeType: "container",
   id: asNodeId(idSeed),
@@ -83,6 +85,19 @@ const renderIsolatedBlock = (rootChildren: ComposeNode[]) =>
       block={blockWith(rootChildren)}
       exerciseById={new Map<string, Exercise>()}
       handlers={noopHandlers}
+      isStructuralEditingAllowed
+      onRename={() => undefined}
+      onDuplicateBlock={() => undefined}
+    />,
+  );
+
+const renderReadOnlyBlock = (rootChildren: ComposeNode[]) =>
+  render(
+    <ComposeBlockRow
+      block={blockWith(rootChildren)}
+      exerciseById={new Map<string, Exercise>()}
+      handlers={readOnlyHandlers}
+      isStructuralEditingAllowed={false}
       onRename={() => undefined}
       onDuplicateBlock={() => undefined}
     />,
@@ -187,6 +202,21 @@ describe("the block-root container card omits the delete and drag controls (QA-0
 
   it("does not throw when the block-root useSortable runs outside a DndContext", () => {
     expect(() => renderIsolatedBlock([])).not.toThrow();
+  });
+});
+
+describe("the container card header is read-only in edit-mode (QA-102)", () => {
+  it("renders the stored container header as static text with no editable input when structural editing is disallowed", () => {
+    renderReadOnlyBlock([container("nested-non-root", [])]);
+
+    expect(screen.queryByRole("textbox", { name: "Group header" })).not.toBeInTheDocument();
+    expect(screen.getByText("nested-non-root")).toBeInTheDocument();
+  });
+
+  it("renders editable header inputs when structural editing is allowed", () => {
+    renderIsolatedBlock([container("nested-non-root", [])]);
+
+    expect(screen.getAllByRole("textbox", { name: "Group header" }).length).toBeGreaterThan(0);
   });
 });
 

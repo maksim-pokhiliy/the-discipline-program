@@ -123,14 +123,24 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
 
         <Stack direction="column" spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
           <Box onClick={(event) => event.stopPropagation()}>
-            <InlineEditText
-              value={container.header ?? ""}
-              onCommit={(next) => onRename(container.id, next)}
-              variant="h4"
-              ariaLabel={HEADER_ARIA}
-              emptyIsValid
-              placeholder={HEADER_PLACEHOLDER}
-            />
+            {handlers.isStructuralEditingAllowed ? (
+              <InlineEditText
+                value={container.header ?? ""}
+                onCommit={(next) => onRename(container.id, next)}
+                variant="h4"
+                ariaLabel={HEADER_ARIA}
+                emptyIsValid
+                placeholder={HEADER_PLACEHOLDER}
+              />
+            ) : (
+              <Typography
+                variant="h4"
+                color={container.header === null ? "text.subtle" : "text.primary"}
+                aria-label={HEADER_ARIA}
+              >
+                {container.header ?? HEADER_PLACEHOLDER}
+              </Typography>
+            )}
           </Box>
 
           {axesSummary !== "" ? (

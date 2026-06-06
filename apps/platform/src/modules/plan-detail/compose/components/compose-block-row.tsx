@@ -17,6 +17,7 @@ type ComposeBlockRowProps = {
   block: ComposeBlock;
   exerciseById: Map<string, Exercise>;
   handlers: NodeHandlers;
+  isStructuralEditingAllowed: boolean;
   onRename: (id: NodeId, header: string) => void;
   onDuplicateBlock: (id: NodeId) => void;
 };
@@ -25,6 +26,7 @@ export const ComposeBlockRow: React.FC<ComposeBlockRowProps> = ({
   block,
   exerciseById,
   handlers,
+  isStructuralEditingAllowed,
   onRename,
   onDuplicateBlock,
 }) => (
@@ -33,6 +35,7 @@ export const ComposeBlockRow: React.FC<ComposeBlockRowProps> = ({
       label={block.label}
       variant="subtitle2"
       duplicateAria={DUPLICATE_ARIA}
+      isStructuralEditingAllowed={isStructuralEditingAllowed}
       onDuplicate={() => onDuplicateBlock(block.id)}
     />
 

@@ -35,6 +35,7 @@ export const ComposeSessionRow: React.FC<ComposeSessionRowProps> = ({
       label={session.label}
       variant="subtitle1"
       duplicateAria={DUPLICATE_ARIA}
+      isStructuralEditingAllowed={upperHandlers.isStructuralEditingAllowed}
       onDuplicate={() => upperHandlers.onDuplicateSession(session.id)}
     />
 
@@ -45,6 +46,7 @@ export const ComposeSessionRow: React.FC<ComposeSessionRowProps> = ({
           block={block}
           exerciseById={exerciseById}
           handlers={handlers}
+          isStructuralEditingAllowed={upperHandlers.isStructuralEditingAllowed}
           onRename={onRename}
           onDuplicateBlock={upperHandlers.onDuplicateBlock}
         />

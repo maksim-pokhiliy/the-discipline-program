@@ -12,6 +12,7 @@ type ComposeUpperRowHeadProps = {
   label: string;
   variant: TypographyVariant;
   duplicateAria: string;
+  isStructuralEditingAllowed: boolean;
   onDuplicate: () => void;
 };
 
@@ -19,6 +20,7 @@ export const ComposeUpperRowHead: React.FC<ComposeUpperRowHeadProps> = ({
   label,
   variant,
   duplicateAria,
+  isStructuralEditingAllowed,
   onDuplicate,
 }) => (
   <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
@@ -26,12 +28,14 @@ export const ComposeUpperRowHead: React.FC<ComposeUpperRowHeadProps> = ({
       {label}
     </Typography>
 
-    <Tooltip title={DUPLICATE_TOOLTIP}>
-      <span style={tooltipChildSx}>
-        <IconButton size="small" aria-label={duplicateAria} onClick={onDuplicate}>
-          <ContentCopyIcon fontSize="small" />
-        </IconButton>
-      </span>
-    </Tooltip>
+    {isStructuralEditingAllowed && (
+      <Tooltip title={DUPLICATE_TOOLTIP}>
+        <span style={tooltipChildSx}>
+          <IconButton size="small" aria-label={duplicateAria} onClick={onDuplicate}>
+            <ContentCopyIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
+    )}
   </Stack>
 );

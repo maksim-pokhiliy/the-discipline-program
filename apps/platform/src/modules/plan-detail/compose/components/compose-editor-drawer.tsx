@@ -128,7 +128,7 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
   );
 
   const isEdit = mode.kind === "edit";
-  const isScoringEditable = mode.kind === "create";
+  const isCreateMode = mode.kind === "create";
   const isStructuralEditingAllowed = mode.kind === "create";
   const isPending = isEdit ? editAxes.isPending : createCascade.isPending;
   const isSaveDisabled = isPending || refusal !== null;
@@ -136,6 +136,11 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
   const handlers = useMemo(
     () => ({ ...controller.nodeHandlers, isStructuralEditingAllowed }),
     [controller.nodeHandlers, isStructuralEditingAllowed],
+  );
+
+  const upperHandlers = useMemo(
+    () => ({ ...controller.upperHandlers, isStructuralEditingAllowed }),
+    [controller.upperHandlers, isStructuralEditingAllowed],
   );
 
   const idleSaveLabel = isEdit ? EDIT_SAVE_LABEL : CREATE_SAVE_LABEL;
@@ -265,7 +270,7 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
               program={controller.program}
               exerciseById={exerciseById}
               handlers={handlers}
-              upperHandlers={controller.upperHandlers}
+              upperHandlers={upperHandlers}
               onRename={controller.rename}
             />
           </Box>
@@ -277,7 +282,7 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
             <ComposeNodeInspector
               selectedNode={controller.selectedNode}
               exerciseById={exerciseById}
-              isScoringEditable={isScoringEditable}
+              isCreateMode={isCreateMode}
               updateNode={controller.updateNode}
               rename={controller.rename}
             />

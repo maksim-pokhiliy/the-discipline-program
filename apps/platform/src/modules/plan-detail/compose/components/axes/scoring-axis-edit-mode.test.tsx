@@ -10,22 +10,24 @@ import { asNodeId } from "../../lib/id-factory";
 import { ComposeContainerInspector } from "../compose-container-inspector";
 
 const STORED_KIND_LABEL = "AMRAP";
+const STORED_HEADER = "Scored group";
+const HEADER_ARIA = "Inspector header";
 
 const containerWithScoring = (scoring: ScoringDirective): ComposeContainer => ({
   nodeType: "container",
   id: asNodeId("scored-container"),
-  header: "Scored group",
+  header: STORED_HEADER,
   notes: null,
   scoring,
   children: [],
 });
 
-const renderInspector = (isScoringEditable: boolean) =>
+const renderInspector = (isCreateMode: boolean) =>
   render(
     <ComposeContainerInspector
       container={containerWithScoring({ kind: "amrap" })}
       exerciseById={new Map<string, Exercise>()}
-      isScoringEditable={isScoringEditable}
+      isCreateMode={isCreateMode}
       onUpdateNode={() => undefined}
       onRename={() => undefined}
     />,
@@ -48,5 +50,20 @@ describe("compose container inspector scoring axis is read-only in edit-mode (D-
 
     expect(storedKindButton()).toBeInTheDocument();
     expect(storedKindButton()).toBeEnabled();
+  });
+});
+
+describe("compose container inspector header is read-only in edit-mode (QA-102)", () => {
+  it("renders the stored header as static, non-editable text in edit-mode", () => {
+    renderInspector(false);
+
+    expect(screen.queryByRole("textbox", { name: HEADER_ARIA })).not.toBeInTheDocument();
+    expect(screen.getByText(STORED_HEADER)).toBeInTheDocument();
+  });
+
+  it("keeps the header an editable input in create-mode", () => {
+    renderInspector(true);
+
+    expect(screen.getByRole("textbox", { name: HEADER_ARIA })).toBeInTheDocument();
   });
 });
