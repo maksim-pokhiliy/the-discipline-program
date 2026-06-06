@@ -115,7 +115,8 @@ const hasAnyAxis = (container: ComposeContainer): boolean =>
   container.repetition !== undefined ||
   container.arrangement !== undefined ||
   container.scoring !== undefined ||
-  container.rest !== undefined;
+  container.rest !== undefined ||
+  container.programKind !== undefined;
 
 const deferArrangement = (
   container: ComposeContainer,

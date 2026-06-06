@@ -204,6 +204,25 @@ describe("composeRootToCreatePlan", () => {
     }
   });
 
+  it("rejects a root that carries a programKind classifier", () => {
+    const root: ComposeContainer = {
+      nodeType: "container",
+      id: asNodeId("program-kind-root"),
+      header: null,
+      notes: null,
+      programKind: "wave",
+      children: [],
+    };
+
+    const result = composeRootToCreatePlan(root);
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(result.issues.some((issue) => issue.path === "root")).toBe(true);
+    }
+  });
+
   it("rejects an under-filled parallel container as an arrangement cardinality issue", () => {
     const container: ComposeContainer = {
       nodeType: "container",
