@@ -43,7 +43,7 @@ const BLOCK_NAMED_THEMED_SETS_WK1_FRI: CanonicalBlock = {
 };
 
 const BLOCK_NAMED_EXERCISE_PROGRAM_WK1_FRI: CanonicalBlock = {
-  blockInstanceRef: "block-008",
+  blockInstanceRef: "block-181",
   order: 2,
   labels: [LBL.strength],
   intensity: null,
