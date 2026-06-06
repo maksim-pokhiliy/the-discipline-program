@@ -109,13 +109,23 @@ describe("formatCompositionSummary other axes", () => {
 });
 
 describe("formatCompositionSummary programKind badge", () => {
-  it("renders the program kind after the repetition so the header fallback stays the count", () => {
+  it("renders the program kind after the structural axes", () => {
     const composition: Composition = {
       repetition: { kind: "count", count: 5 },
       programKind: "cluster",
     };
 
     expect(formatCompositionSummary(composition)).toEqual(["5 rounds", "cluster"]);
+  });
+
+  it("appends the program kind last across multiple structural axes", () => {
+    const composition: Composition = {
+      repetition: { kind: "count", count: 5 },
+      scoring: { kind: "amrap" },
+      programKind: "cluster",
+    };
+
+    expect(formatCompositionSummary(composition)).toEqual(["5 rounds", "AMRAP", "cluster"]);
   });
 
   it("renders a bare program kind when no other axis is present", () => {

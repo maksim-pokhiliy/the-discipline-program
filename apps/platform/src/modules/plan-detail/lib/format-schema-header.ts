@@ -1,6 +1,6 @@
 import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 
-import { formatCompositionSummary } from "./format-composition-summary";
+import { formatStructuralSummary } from "./format-composition-summary";
 
 export const formatSchemaHeader = (schema: SchemaWithBody): string => {
   const header = schema.schema.header;
@@ -15,7 +15,7 @@ export const formatSchemaHeader = (schema: SchemaWithBody): string => {
     return "";
   }
 
-  const [repetitionPart] = formatCompositionSummary(composition);
+  const [structuralPart] = formatStructuralSummary(composition);
 
-  return repetitionPart ?? "";
+  return structuralPart ?? "";
 };

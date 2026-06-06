@@ -40,15 +40,11 @@ const restLabel = (rest: RestAxis): string => {
   return `rest ${range}${mark}`;
 };
 
-export const formatCompositionSummary = (composition: Composition): string[] => {
+const buildStructuralParts = (composition: Composition): string[] => {
   const parts: string[] = [];
 
   if (composition.repetition !== undefined) {
     parts.push(repetitionLabel(composition.repetition));
-  }
-
-  if (composition.programKind !== undefined) {
-    parts.push(PROGRAM_KIND_LABELS[composition.programKind]);
   }
 
   if (composition.arrangement !== undefined && composition.arrangement.kind !== ORDERED) {
@@ -61,6 +57,19 @@ export const formatCompositionSummary = (composition: Composition): string[] => 
 
   if (composition.rest !== undefined) {
     parts.push(restLabel(composition.rest));
+  }
+
+  return parts;
+};
+
+export const formatStructuralSummary = (composition: Composition): string[] =>
+  buildStructuralParts(composition);
+
+export const formatCompositionSummary = (composition: Composition): string[] => {
+  const parts = buildStructuralParts(composition);
+
+  if (composition.programKind !== undefined) {
+    parts.push(PROGRAM_KIND_LABELS[composition.programKind]);
   }
 
   return parts;
