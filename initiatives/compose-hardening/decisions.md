@@ -8,13 +8,13 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 
 ## Index
 
-| ID               | Topic                                                              | Status   |
-| ---------------- | ------------------------------------------------------------------ | -------- |
-| D-1              | Initiative origin: audit → compose-hardening, scope = Tiers 0–3    | RATIFIED |
-| D-ONTOLOGY       | program/slot home: rowKind+VO vs 5th-axis vs nested-schema         | **OPEN** |
-| D-EDIT           | edit-mode shape: inverse adapter + edit drawer + save-via-update   | RATIFIED |
-| D-SCORING-RENDER | inert `scoring` presentation: static-disabled in editor (Option A) | RATIFIED |
-| D-MARKER         | `INNER_LADDER_MARKER`: deprecate-vs-seed                           | **OPEN** |
+| ID               | Topic                                                                | Status   |
+| ---------------- | -------------------------------------------------------------------- | -------- |
+| D-1              | Initiative origin: audit → compose-hardening, scope = Tiers 0–3      | RATIFIED |
+| D-ONTOLOGY       | program/slot home: stages=rows + thin `programKind` axis; delete VOs | RATIFIED |
+| D-EDIT           | edit-mode shape: inverse adapter + edit drawer + save-via-update     | RATIFIED |
+| D-SCORING-RENDER | inert `scoring` presentation: static-disabled in editor (Option A)   | RATIFIED |
+| D-MARKER         | `INNER_LADDER_MARKER`: deprecate-vs-seed                             | **OPEN** |
 
 ---
 
@@ -25,12 +25,26 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 - **Rationale.** Owner directive: "все дефекты и дыры — это теперь наш план, фиксируй в рабочий флоу." The project's flow for multi-session work is the initiatives system; promotion discipline says findings live in `deferred.md`, not a chat. The audit re-confirmed zero model drift, so the remaining work is a finishing initiative on a clean foundation, not a rescue.
 - **Links.** `audit-findings.md`; Workflow `wf_fc0a986c-5ae`; [[plan-editor-compose]] (concluded); ADR-0037.
 
-### D-ONTOLOGY — where program/slot lives (OPEN)
+### D-ONTOLOGY — where program/slot lives (RATIFIED 2026-06-06 · Gate-A)
 
-- **Status:** OPEN — awaiting ratification. **Do not execute plan 0b past this.**
-- **The question.** Wave/cluster/drop-set/named-program/EMOM-slot are unauthorable + flatten on input (T0-2). Where does `StagedProgram`/`SlotSpec` belong? (i) a new `rowKind` variant carrying the existing `stagedProgram` VO in `schemaRowPayloadSchema` (+ Prisma column + form + seed); (ii) a 5th composition axis on the container; (iii) a nested schema via `parentSchemaId` with per-stage load.
-- **Leaning (not ratified).** (i) — the VO is already written + tested, lowest friction, keeps program a leaf concern (algebra §1 once called it a "sacred Row-VO"; `DEFER-001` found it "was always an archetype param" — but as a _row payload_ it can be a legit leaf, distinct from the archetype catalog). (ii) requires a four-projection proof that program is a container property. Resolve before any code.
-- **Touches.** FROZEN contract (`schema-row` payload union) → Gate-A escalation for (i)/(ii). Prisma column. Disposes T3-CT-1 (zombies).
+- **Status:** RATIFIED (2026-06-06) — owner ruled the four-projection domain questions as coach authority; this ratification authorises the Gate-A `composition` contract change below. Executes in 0b (`/feature`, UI-first).
+- **The question.** Wave/cluster/drop-set/named-program/EMOM-slot are unauthorable + flatten on input (T0-2). The board framed three homes for the `StagedProgram`/`SlotSpec` VOs: (i) a new `rowKind` carrying the fat `stagedProgram` VO as a row payload; (ii) a 5th composition axis carrying the VO on the container; (iii) nested sub-schemas. The leaning was (i).
+- **The owner's four-projection ruling (the pivot).** Verify-then-spec on live code reframed the question before the answer:
+  - **Q1 SET = "separate sets"** (not one atomic unit). A "separate set" (snatch 80%×2) is on live code literally **one `EXERCISE` row** with its own `load`/`reps` columns — not a payload-with-`stages[]`, not a sub-schema. `useComposeProgram.addRow` + `reorderChildren` already exist (`compose/use-compose-program.ts:92-95`) → N stage-rows are **already authorable**; the seed flatten (`phase-7-blocks.ts:152` = 1 row) was a seed-author shortcut, not a tool gap.
+  - **Q2 ANALYTICS = per-stage** (tonnage per intensity band, 3 points). Fully carried by each row's `load`/`reps` — no new structure needed for the data.
+  - **Q3 EMOM = window-centric.** EMOM minute-structure is already nested `window` sub-containers under `cadence` (`composition-gauntlet.test.ts` Gauntlet B); `slotSpec` is a redundant flatter alias, 0 consumers.
+  - **Classification = needed** (owner: render badge + analytics grouping/intra-wave progression must know "these rows ARE a wave/cluster/drop_set").
+- **Decision.**
+  1. **Stages = sibling rows.** Wave/drop-set = N `EXERCISE` rows (per-stage `load`/`reps` on the row). Cluster `5×(3+3+3)` = container `repetition.count:5` over the stage-rows + `REST(scope:between_intervals)` (the pattern the seed already uses, `phase-7-blocks.ts:171`). named-program = the existing `scoring.progressive` path. **No new `rowKind`, no `stages[]` payload.**
+  2. **Classification = a thin `programKind` field on `composition`** — `programKind: stagedProgramKindSchema.optional()` (reuses the KEPT `STAGED_PROGRAM_KINDS` enum: `drop_set`/`wave`/`cluster`). Group-level classifier → its home is the container's composition, next to `repetition`/`arrangement`/`scoring`/`rest`. **This is a Gate-A change to the FROZEN, charter-sacred `@repo/contracts/lms/composition` — authorised by this ratification.** Thin + additive (optional enum) = the safest frozen-contract change.
+  3. **DELETE both fat VOs** — `stagedProgramSchema` + `stageSchema`/`Stage`/`StagedProgram` (`_shared/staged-program.ts`) and `slotSpecSchema`/`SlotSpec`/`SLOT_SPEC_KINDS` (`_shared/cap-spec.ts`, keep `restSpecSchema`). Remove from the `_shared` barrel + the gauntlet/unit tests. The fat VO's data redistributes: `stages[]`→rows, `setsCount`→`repetition.count`, `restBetweenStages`→`REST` rows, `mediaPerStage`→`row.media`, `separatorForm`→render-derived. **KEEP** `stagedProgramKindSchema` (now consumed by #2 — no longer a zombie).
+- **Why M1 (thin `programKind` on `composition`) over M2 (a classifier `rowKind` marker, à la `INNER_LADDER_MARKER`).** (a) Classification is a property of the GROUP, not a row — `composition` is exactly "how the container's children compose". (b) The ratified D-LADDER split reads in favour: round-counter ladder (group/structural) → container axis `repetition.ladder`; rep-scheme (per-row data) → `INNER_LADDER_MARKER` row. `programKind` is a group classifier → container, like the round-counter. (c) Analytics-grouping robustness (the owner's Q2 concern): M1's group boundary = the container, stable under reorder; M2's = "the marker's siblings", implicit + reorder-fragile. (d) Cluster needs `repetition.count` on the container anyway → `programKind` co-locates with the count it classifies.
+- **Why NOT the board's (i)/(ii)/(iii).** The owner's SET ruling ("separate sets") killed (i)'s atomic-unit premise — cramming independently-edited stages into one row's `stages[]` contradicts it. (ii) (fat VO on container) fails four-projection — per-movement stages on a heterogeneous container = analytics ambiguity (M1 ≠ (ii): M1 carries only the KIND label, stages stay in rows). (iii) (nested sub-schemas) over-models a "set" (a set is a row, not a container) + risks the depth-2 read truncation (`schema.mapper.ts:41`) for clusters + erases the discriminant. The audit's (i)-leaning assumed the atomic-unit model **untested against the coach** — exactly what this gated session corrected; the audit was not wrong-at-the-time, its premise was unratified.
+- **Blast radius.** FROZEN contract: `composition.schema.ts` += `programKind` (Gate-A, sacred module); DELETE `staged-program.ts` + slot from `cap-spec.ts` + barrel + tests. **Prisma: none** (composition is `Json?`; no `rowKind` added; no column). Platform: `compose-tree.types.ts` composition draft += `programKind`; drawer/inspector `programKind` selector + render badge (`format-composition-summary`/`axes-summary`). Seed: re-author `block-163`/`164`/`008` as multi-row + `programKind` (also fixes the `block-008` duplicate, T3-SEED-2).
+- **Disposes.** **T3-CT-1 fully** — `slotSpec` deleted, `stagedProgram` fat-VO deleted, the surviving `stagedProgramKindSchema` now consumed. program-flatten (re-authored as rows). T3-ARCH-1 unaffected (06-formalization stays quarantine).
+- **Open follow-ups for 0b** (do not block ratification): per-stage execution cue `STAGE_INDICATORS` (`explode`/`without_weight`) — rehome onto a row field/notes or delete (it orphans when `stageSchema` dies); `without_weight` is already expressible via the `withoutWeight()` load VO. Whether `programKind` needs a movement-homogeneity `superRefine` (a "wave" container's rows should be one movement) — decide at design.
+- **Reversibility.** The `programKind` field is additive/optional — two-way door. The VO deletes are one-way but safe (0 production consumers, verified by repo-wide grep 2026-06-06).
+- **Links.** T0-2 / T3-CT-1 (`deferred.md`); `[[compose-four-projection]]` (the legitimacy lens); `[[compose-ph5-seed]]` (DEFER-001 origin); `composition-gauntlet.test.ts` (Gauntlet A/B evidence).
 
 ### D-EDIT — edit-mode shape (RATIFIED 2026-06-06)
 
