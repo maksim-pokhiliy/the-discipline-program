@@ -7,6 +7,7 @@ import {
   perLimbDistributionSchema,
   repNotationSchema,
   restSpecSchema,
+  stagedProgramKindSchema,
   tempoModifierSchema,
   timeCapSchema,
 } from "../_shared";
@@ -177,6 +178,7 @@ export const compositionSchema = z
     arrangement: arrangementAxisSchema.optional(),
     scoring: scoringDirectiveSchema.optional(),
     rest: restAxisSchema.optional(),
+    programKind: stagedProgramKindSchema.optional(),
   })
   .strict();
 
