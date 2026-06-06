@@ -1,6 +1,6 @@
 import type { Composition, RepetitionAxis, RestAxis } from "@repo/contracts/lms/composition";
 
-import { ARRANGEMENT_LABELS, SCORING_LABELS } from "./compose-axis-labels";
+import { ARRANGEMENT_LABELS, PROGRAM_KIND_LABELS, SCORING_LABELS } from "./compose-axis-labels";
 
 const MINUTE_MARK = "’";
 const SECOND_MARK = " sec";
@@ -45,6 +45,10 @@ export const formatCompositionSummary = (composition: Composition): string[] => 
 
   if (composition.repetition !== undefined) {
     parts.push(repetitionLabel(composition.repetition));
+  }
+
+  if (composition.programKind !== undefined) {
+    parts.push(PROGRAM_KIND_LABELS[composition.programKind]);
   }
 
   if (composition.arrangement !== undefined && composition.arrangement.kind !== ORDERED) {

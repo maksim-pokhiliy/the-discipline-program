@@ -1,4 +1,8 @@
-import { ARRANGEMENT_LABELS, SCORING_LABELS } from "../../lib/compose-axis-labels";
+import {
+  ARRANGEMENT_LABELS,
+  PROGRAM_KIND_LABELS,
+  SCORING_LABELS,
+} from "../../lib/compose-axis-labels";
 import type { ComposeContainer, RepetitionAxis, RestAxis } from "../compose-tree.types";
 
 const MINUTE_MARK = "’";
@@ -39,6 +43,10 @@ const restLabel = (rest: RestAxis): string => {
 
 export const buildAxesSummary = (container: ComposeContainer): string[] => {
   const parts: string[] = [];
+
+  if (container.programKind !== undefined) {
+    parts.push(PROGRAM_KIND_LABELS[container.programKind]);
+  }
 
   if (container.repetition !== undefined) {
     parts.push(repetitionLabel(container.repetition));

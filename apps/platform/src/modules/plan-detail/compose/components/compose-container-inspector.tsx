@@ -2,7 +2,7 @@
 
 import { Alert, Stack, Typography } from "@mui/material";
 
-import type { RestSpec } from "@repo/contracts/lms/_shared";
+import type { RestSpec, StagedProgramKind } from "@repo/contracts/lms/_shared";
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import { InlineEditText } from "@repo/ui";
 
@@ -19,6 +19,7 @@ import { collectArrangementTargets } from "../lib/arrangement-targets";
 import { shouldBeContainer } from "../lib/should-be-container";
 
 import { ArrangementAxisField } from "./axes/arrangement-axis-field";
+import { ProgramKindAxisField } from "./axes/program-kind-axis-field";
 import { RepetitionAxisField } from "./axes/repetition-axis-field";
 import { ScoringAxisField } from "./axes/scoring-axis-field";
 
@@ -76,6 +77,15 @@ export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps>
     onUpdateNode(
       container.id,
       asContainerPatch((node) => ({ ...node, scoring })),
+    );
+
+  const setProgramKind = (next?: StagedProgramKind): void =>
+    onUpdateNode(
+      container.id,
+      asContainerPatch(({ programKind: _previous, ...node }) => ({
+        ...node,
+        ...(next !== undefined && { programKind: next }),
+      })),
     );
 
   const setRest = (rest: RestSpec): void =>
@@ -137,6 +147,8 @@ export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps>
         onChange={setScoring}
         disabled={!isCreateMode}
       />
+
+      <ProgramKindAxisField value={container.programKind} onChange={setProgramKind} />
 
       <Stack direction="column" spacing={0.5}>
         <Typography variant="caption" color="text.subtle">
