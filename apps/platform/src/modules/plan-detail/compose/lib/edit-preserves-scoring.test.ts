@@ -25,7 +25,7 @@ const seededComposition: Composition = {
   scoring: SEEDED_SCORING,
 };
 
-const seededSchema = (): SchemaWithBody => ({
+const schemaWithComposition = (composition: Composition): SchemaWithBody => ({
   schema: {
     id: TOP_CUID,
     blockId: BLOCK_CUID,
@@ -33,7 +33,7 @@ const seededSchema = (): SchemaWithBody => ({
     order: 1,
     header: null,
     intensity: null,
-    composition: seededComposition,
+    composition,
     label: null,
     notes: null,
     createdAt: EPOCH,
@@ -42,6 +42,8 @@ const seededSchema = (): SchemaWithBody => ({
   rows: [],
   subSchemas: [],
 });
+
+const seededSchema = (): SchemaWithBody => schemaWithComposition(seededComposition);
 
 const restSlotRow = (id: string): SchemaRow => ({
   id,
@@ -167,4 +169,39 @@ describe("diffComposeAxesAgainstOriginal preserves seeded scoring.condition", ()
 
     expect(result).toEqual({ ok: false, reason: "structural-divergence" });
   });
+});
+
+const scoringShapes: { name: string; scoring: Composition["scoring"] }[] = [
+  {
+    name: "a for_time directive carrying a round condition",
+    scoring: { kind: "for_time", condition: { appliesToRounds: [1] } },
+  },
+  {
+    name: "a progressive directive carrying both a seed and a round condition",
+    scoring: { kind: "progressive", seed: "21-15-9", condition: { appliesToRounds: [2] } },
+  },
+];
+
+describe("diffComposeAxesAgainstOriginal preserves seeded scoring across more kinds", () => {
+  for (const { name, scoring } of scoringShapes) {
+    it(`re-emits ${name} verbatim after an unrelated repetition edit`, () => {
+      const schema = schemaWithComposition({ repetition: { kind: "count", count: 3 }, scoring });
+      const root = hydratedRoot(schema);
+      const top = topContainer(root);
+
+      top.repetition = { kind: "count", count: 8 };
+
+      const result = diffComposeAxesAgainstOriginal(schema, root);
+
+      expect(result.ok).toBe(true);
+
+      if (!result.ok) {
+        return;
+      }
+
+      expect(result.updates).toHaveLength(1);
+      expect(result.updates[0]?.composition?.scoring).toEqual(scoring);
+      expect(result.updates[0]?.composition?.repetition).toEqual({ kind: "count", count: 8 });
+    });
+  }
 });

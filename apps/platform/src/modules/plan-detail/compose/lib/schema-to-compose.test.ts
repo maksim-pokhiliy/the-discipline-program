@@ -394,3 +394,35 @@ describe("schemaWithBodyToComposeContainer refusals and null composition", () =>
     expect(rowSet(hydrated.children)).toEqual(new Set([`${cuidRow1}:REST_SLOT`]));
   });
 });
+
+const explicitRepetitionFixtures: { name: string; repetition: Composition["repetition"] }[] = [
+  {
+    name: "a count carried as a {min,max} range",
+    repetition: { kind: "count", count: { min: 2, max: 4 } },
+  },
+  { name: "a multi-step ladder", repetition: { kind: "ladder", steps: [21, 15, 9] } },
+  { name: "a window", repetition: { kind: "window", startHhMm: "06:00", endHhMm: "07:30" } },
+  { name: "an interval", repetition: { kind: "interval", workMin: 3, offMin: 1, count: 5 } },
+];
+
+describe("schemaWithBodyToComposeContainer hydrates explicit repetition shapes the arbitrary may miss", () => {
+  for (const { name, repetition } of explicitRepetitionFixtures) {
+    it(`hydrates ${name} into an identical draft repetition`, () => {
+      const schema = topSchema({ repetition }, []);
+
+      const result = schemaWithBodyToComposeContainer(schema);
+
+      expect(result.ok).toBe(true);
+
+      if (!result.ok) {
+        return;
+      }
+
+      const hydrated = onlyContainer(
+        result.program.weeks[0]?.days[0]?.sessions[0]?.blocks[0]?.root.children ?? [],
+      );
+
+      expect(hydrated.repetition).toEqual(repetition);
+    });
+  }
+});

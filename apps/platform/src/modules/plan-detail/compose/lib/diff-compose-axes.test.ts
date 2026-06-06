@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import type { Composition } from "@repo/contracts/lms/composition";
+import type { Composition, RepetitionAxis } from "@repo/contracts/lms/composition";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
+import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import type { ComposeContainer } from "../compose-tree.types";
 
@@ -13,8 +14,38 @@ const EPOCH = new Date(0);
 const TOP_CUID = "ckdifftopaaaaaaaaaaaaaaaa";
 const CHILD_A_CUID = "ckdiffchildaaaaaaaaaaaaaa";
 const CHILD_B_CUID = "ckdiffchildbbbbbbbbbbbbbb";
+const ROW_DOWN_CUID = "ckdiffrowdownaaaaaaaaaaaa";
+const ROW_UP_CUID = "ckdiffrowupaaaaaaaaaaaaaa";
+const ROW_CURL_CUID = "ckdiffrowcurlaaaaaaaaaaaa";
+const ROW_EXT_CUID = "ckdiffrowextaaaaaaaaaaaaa";
+const ROW_PRESS_CUID = "ckdiffrowpressaaaaaaaaaaa";
+const ROW_PULL_CUID = "ckdiffrowpullaaaaaaaaaaaa";
 
-const leafSchema = (id: string, composition: Composition | null): SchemaWithBody => ({
+const restSlotRow = (id: string, schemaId: string): SchemaRow => ({
+  id,
+  schemaId,
+  order: 1,
+  rowKind: "REST_SLOT",
+  rowPayload: { rowKind: "REST_SLOT" },
+  load: null,
+  reps: null,
+  side: null,
+  tempo: null,
+  position: null,
+  sequence: null,
+  intensity: null,
+  media: null,
+  compoundRep: null,
+  notes: null,
+  createdAt: EPOCH,
+  updatedAt: EPOCH,
+});
+
+const leafSchema = (
+  id: string,
+  composition: Composition | null,
+  rows: SchemaRow[] = [],
+): SchemaWithBody => ({
   schema: {
     id,
     blockId: TOP_CUID,
@@ -28,7 +59,7 @@ const leafSchema = (id: string, composition: Composition | null): SchemaWithBody
     createdAt: EPOCH,
     updatedAt: EPOCH,
   },
-  rows: [],
+  rows,
   subSchemas: [],
 });
 
@@ -235,5 +266,224 @@ describe("diffComposeAxesAgainstOriginal is insensitive to stored composition ke
     const result = diffComposeAxesAgainstOriginal(schema, root);
 
     expect(result).toEqual({ ok: true, updates: [] });
+  });
+});
+
+const UNRELATED_REST_EDIT: Composition["rest"] = {
+  duration: { value: 45, unit: "sec" },
+  scope: "between_rounds",
+};
+
+const repetitionShapes: { name: string; repetition: RepetitionAxis }[] = [
+  {
+    name: "a count carried as a {min,max} range (not the range axis)",
+    repetition: { kind: "count", count: { min: 2, max: 4 } },
+  },
+  { name: "a multi-step ladder", repetition: { kind: "ladder", steps: [21, 15, 9] } },
+  { name: "a window", repetition: { kind: "window", startHhMm: "06:00", endHhMm: "07:30" } },
+  { name: "an interval", repetition: { kind: "interval", workMin: 3, offMin: 1, count: 5 } },
+];
+
+describe("diffComposeAxesAgainstOriginal round-trips every representable repetition shape through an unrelated edit", () => {
+  for (const { name, repetition } of repetitionShapes) {
+    it(`re-emits ${name} byte-for-byte after editing rest`, () => {
+      const schema = topSchema({ repetition }, []);
+      const root = hydratedRoot(schema);
+
+      topContainer(root).rest = UNRELATED_REST_EDIT;
+
+      const result = diffComposeAxesAgainstOriginal(schema, root);
+
+      expect(result.ok).toBe(true);
+
+      if (!result.ok) {
+        return;
+      }
+
+      expect(result.updates).toHaveLength(1);
+      expect(result.updates[0]?.composition?.repetition).toEqual(repetition);
+      expect(result.updates[0]?.composition?.rest).toEqual(UNRELATED_REST_EDIT);
+    });
+  }
+});
+
+const restShapes: { name: string; rest: Composition["rest"] }[] = [
+  {
+    name: "a range_sec unit carrying rangeMax",
+    rest: { duration: { value: 60, unit: "range_sec", rangeMax: 90 }, scope: "between_rounds" },
+  },
+  {
+    name: "a qualifier and a setIndex on an after_specific_set scope",
+    rest: {
+      duration: { value: 120, unit: "sec" },
+      scope: "after_specific_set",
+      qualifier: "until_recovery",
+      setIndex: 3,
+    },
+  },
+];
+
+describe("diffComposeAxesAgainstOriginal round-trips every RestSpec shape through a repetition edit", () => {
+  for (const { name, rest } of restShapes) {
+    it(`re-emits ${name} byte-for-byte after editing repetition`, () => {
+      const schema = topSchema({ repetition: { kind: "count", count: 3 }, rest }, []);
+      const root = hydratedRoot(schema);
+
+      topContainer(root).repetition = { kind: "count", count: 6 };
+
+      const result = diffComposeAxesAgainstOriginal(schema, root);
+
+      expect(result.ok).toBe(true);
+
+      if (!result.ok) {
+        return;
+      }
+
+      expect(result.updates).toHaveLength(1);
+      expect(result.updates[0]?.composition?.rest).toEqual(rest);
+      expect(result.updates[0]?.composition?.repetition).toEqual({ kind: "count", count: 6 });
+    });
+  }
+});
+
+const richParallelSchema = (): SchemaWithBody =>
+  topSchema(
+    {
+      arrangement: {
+        kind: "parallel",
+        interleaveOrder: "round_by_round",
+        tracks: [
+          { childSchemaId: CHILD_A_CUID, setEnumeration: [1, 2] },
+          { childSchemaId: CHILD_B_CUID, pairedWithRowId: ROW_DOWN_CUID },
+        ],
+      },
+    },
+    [
+      leafSchema(CHILD_A_CUID, null, [restSlotRow(ROW_DOWN_CUID, CHILD_A_CUID)]),
+      leafSchema(CHILD_B_CUID, null, [restSlotRow(ROW_UP_CUID, CHILD_B_CUID)]),
+    ],
+  );
+
+describe("diffComposeAxesAgainstOriginal preserves the richest arrangement shapes", () => {
+  it("keeps both setEnumeration and pairedWithRowId on a parallel track after re-pointing interleaveOrder", () => {
+    const schema = richParallelSchema();
+    const root = hydratedRoot(schema);
+    const top = topContainer(root);
+
+    if (top.arrangement?.kind === "parallel") {
+      top.arrangement.interleaveOrder = "track_by_track";
+    }
+
+    const result = diffComposeAxesAgainstOriginal(schema, root);
+
+    expect(result.ok).toBe(true);
+
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.updates).toHaveLength(1);
+    expect(result.updates[0]?.composition?.arrangement).toEqual({
+      kind: "parallel",
+      interleaveOrder: "track_by_track",
+      tracks: [
+        { childSchemaId: CHILD_A_CUID, setEnumeration: [1, 2] },
+        { childSchemaId: CHILD_B_CUID, pairedWithRowId: ROW_DOWN_CUID },
+      ],
+    });
+  });
+
+  it("emits no update for an unchanged superset of two pairs each holding two distinct rows", () => {
+    const schema = topSchema(
+      {
+        arrangement: {
+          kind: "superset",
+          pairs: [
+            { label: "Biceps / triceps", rowIds: [ROW_CURL_CUID, ROW_EXT_CUID] },
+            { label: "Press / pull", rowIds: [ROW_PRESS_CUID, ROW_PULL_CUID] },
+          ],
+        },
+      },
+      [],
+    );
+
+    schema.rows = [
+      restSlotRow(ROW_CURL_CUID, TOP_CUID),
+      restSlotRow(ROW_EXT_CUID, TOP_CUID),
+      restSlotRow(ROW_PRESS_CUID, TOP_CUID),
+      restSlotRow(ROW_PULL_CUID, TOP_CUID),
+    ];
+
+    const root = hydratedRoot(schema);
+
+    const result = diffComposeAxesAgainstOriginal(schema, root);
+
+    expect(result).toEqual({ ok: true, updates: [] });
+  });
+});
+
+describe("diffComposeAxesAgainstOriginal refuses every structural-divergence variant", () => {
+  it("refuses when a row is reparented to a sibling container (ids same, parent differs)", () => {
+    const schema = topSchema({ repetition: { kind: "count", count: 3 } }, [
+      leafSchema(CHILD_A_CUID, null, [restSlotRow(ROW_DOWN_CUID, CHILD_A_CUID)]),
+      leafSchema(CHILD_B_CUID, null),
+    ]);
+    const root = hydratedRoot(schema);
+    const top = topContainer(root);
+
+    const fromContainer = childContainer(top, CHILD_A_CUID);
+    const toContainer = childContainer(top, CHILD_B_CUID);
+    const movedRow = fromContainer.children.find((child) => child.id === ROW_DOWN_CUID);
+
+    if (movedRow === undefined) {
+      throw new Error("seeded row missing from hydrated tree");
+    }
+
+    fromContainer.children = fromContainer.children.filter((child) => child.id !== ROW_DOWN_CUID);
+    toContainer.children.push(movedRow);
+
+    const result = diffComposeAxesAgainstOriginal(schema, root);
+
+    expect(result).toEqual({ ok: false, reason: "structural-divergence" });
+  });
+
+  it("refuses when two sibling containers swap their nested children so a per-id parent differs", () => {
+    const schema = topSchema({ repetition: { kind: "count", count: 3 } }, [
+      leafSchema(CHILD_A_CUID, null, [restSlotRow(ROW_DOWN_CUID, CHILD_A_CUID)]),
+      leafSchema(CHILD_B_CUID, null, [restSlotRow(ROW_UP_CUID, CHILD_B_CUID)]),
+    ]);
+    const root = hydratedRoot(schema);
+    const top = topContainer(root);
+
+    const containerA = childContainer(top, CHILD_A_CUID);
+    const containerB = childContainer(top, CHILD_B_CUID);
+    const rowFromA = containerA.children.find((child) => child.id === ROW_DOWN_CUID);
+    const rowFromB = containerB.children.find((child) => child.id === ROW_UP_CUID);
+
+    if (rowFromA === undefined || rowFromB === undefined) {
+      throw new Error("seeded rows missing from hydrated tree");
+    }
+
+    containerA.children = [rowFromB];
+    containerB.children = [rowFromA];
+
+    const result = diffComposeAxesAgainstOriginal(schema, root);
+
+    expect(result).toEqual({ ok: false, reason: "structural-divergence" });
+  });
+
+  it("refuses when a sub-container is deleted leaving N-1 children (size mismatch)", () => {
+    const schema = topSchema({ repetition: { kind: "count", count: 3 } }, [
+      leafSchema(CHILD_A_CUID, null),
+      leafSchema(CHILD_B_CUID, null),
+    ]);
+    const root = hydratedRoot(schema);
+    const top = topContainer(root);
+
+    top.children = top.children.filter((child) => child.id !== CHILD_B_CUID);
+
+    const result = diffComposeAxesAgainstOriginal(schema, root);
+
+    expect(result).toEqual({ ok: false, reason: "structural-divergence" });
   });
 });
