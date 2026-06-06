@@ -1,5 +1,5 @@
-import type { RestSpec } from "@repo/contracts/lms/_shared";
 import type {
+  Composition,
   RepetitionAxis as ContractRepetitionAxis,
   ScoringDirective as ContractScoringDirective,
 } from "@repo/contracts/lms/composition";
@@ -41,12 +41,6 @@ export type CreateSchemaPlanNode = {
 export type ConvertResult =
   | { ok: true; nodes: CreateSchemaPlanNode[] }
   | { ok: false; issues: ConvertIssue[] };
-
-type AssembledComposition = {
-  repetition?: ContractRepetitionAxis;
-  scoring?: ContractScoringDirective;
-  rest?: RestSpec;
-};
 
 const mapRepetition = (repetition: RepetitionAxis): ContractRepetitionAxis => {
   switch (repetition.kind) {
@@ -98,7 +92,7 @@ const mapScoring = (scoring: ScoringDirective): ContractScoringDirective => {
   }
 };
 
-const assembleComposition = (container: ComposeContainer): AssembledComposition => ({
+export const composeContainerToComposition = (container: ComposeContainer): Composition => ({
   ...(container.repetition !== undefined && { repetition: mapRepetition(container.repetition) }),
   ...(container.scoring !== undefined && { scoring: mapScoring(container.scoring) }),
   ...(container.rest !== undefined && { rest: container.rest }),
@@ -143,7 +137,7 @@ const convertContainer = (
   path: string,
   issues: ConvertIssue[],
 ): CreateSchemaPlanNode => {
-  const assembled = assembleComposition(container);
+  const assembled = composeContainerToComposition(container);
   const parsed = compositionSchema.safeParse(assembled);
 
   if (!parsed.success) {
