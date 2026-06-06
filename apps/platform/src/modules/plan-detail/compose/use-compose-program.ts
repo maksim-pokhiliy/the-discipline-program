@@ -104,6 +104,7 @@ export const useComposeProgram = (
   const nodeHandlers = useMemo<NodeHandlers>(
     () => ({
       selectedNodeId,
+      isStructuralEditingAllowed: true,
       onSelect: select,
       onDuplicateNode: duplicateNode,
       onDeleteNode: deleteNode,

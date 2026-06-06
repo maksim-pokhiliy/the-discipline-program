@@ -77,6 +77,7 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
         row={child}
         exerciseById={exerciseById}
         isSelected={child.id === handlers.selectedNodeId}
+        isStructuralEditingAllowed={handlers.isStructuralEditingAllowed}
         onSelect={handlers.onSelect}
         onDuplicate={handlers.onDuplicateNode}
         onDelete={handlers.onDeleteNode}
@@ -107,7 +108,7 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
         spacing={HEAD_SPACING}
         sx={{ px: HEAD_PX, py: HEAD_PY, minWidth: 0 }}
       >
-        {!isRoot && (
+        {!isRoot && handlers.isStructuralEditingAllowed && (
           <IconButton
             {...attributes}
             {...listeners}
@@ -143,6 +144,7 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
           <Box onClick={(event) => event.stopPropagation()}>
             <ComposeNodeActions
               nodeId={container.id}
+              isStructuralEditingAllowed={handlers.isStructuralEditingAllowed}
               onInspect={handlers.onSelect}
               onDuplicate={handlers.onDuplicateNode}
               onDelete={handlers.onDeleteNode}
@@ -160,12 +162,14 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
         <ComposeTreeDnd
           parentId={container.id}
           nodes={container.children}
+          isReorderAllowed={handlers.isStructuralEditingAllowed}
           onReorder={handlers.onReorderChildren}
           renderChild={renderChild}
         />
 
         <ComposeAddNodeMenu
           parentId={container.id}
+          isStructuralEditingAllowed={handlers.isStructuralEditingAllowed}
           onAddContainer={handlers.onAddContainer}
           onAddRow={handlers.onAddRow}
         />

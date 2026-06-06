@@ -41,6 +41,7 @@ const DEFAULT_REST: RestSpec = {
 type ComposeContainerInspectorProps = {
   container: ComposeContainer;
   exerciseById: Map<string, Exercise>;
+  isScoringEditable: boolean;
   onUpdateNode: (id: NodeId, patch: (node: ComposeNode) => ComposeNode) => void;
   onRename: (id: NodeId, header: string) => void;
 };
@@ -53,6 +54,7 @@ const asContainerPatch =
 export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps> = ({
   container,
   exerciseById,
+  isScoringEditable,
   onUpdateNode,
   onRename,
 }) => {
@@ -120,7 +122,11 @@ export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps>
         rowsByTrack={arrangementTargets.rowsByTrack}
       />
 
-      <ScoringAxisField value={container.scoring ?? DEFAULT_SCORING} onChange={setScoring} />
+      <ScoringAxisField
+        value={container.scoring ?? DEFAULT_SCORING}
+        onChange={setScoring}
+        disabled={!isScoringEditable}
+      />
 
       <Stack direction="column" spacing={0.5}>
         <Typography variant="caption" color="text.subtle">

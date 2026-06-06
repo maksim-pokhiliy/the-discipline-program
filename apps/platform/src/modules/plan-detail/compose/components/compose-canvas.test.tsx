@@ -54,6 +54,7 @@ const addExerciseRow = (): void => {
 
 const noopHandlers: NodeHandlers = {
   selectedNodeId: null,
+  isStructuralEditingAllowed: true,
   onSelect: vi.fn(),
   onDuplicateNode: vi.fn(),
   onDeleteNode: vi.fn(),
@@ -204,6 +205,7 @@ describe("ComposeTreeDnd scopes a sortable to its own children (QA-6.2 cross-con
       <ComposeTreeDnd
         parentId={asNodeId("scope-parent")}
         nodes={[container("scope-a", []), container("scope-b", [])]}
+        isReorderAllowed
         onReorder={vi.fn()}
         renderChild={(child: ComposeNode) => <div key={child.id}>{child.id}</div>}
       />,

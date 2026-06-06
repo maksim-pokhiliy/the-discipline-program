@@ -4,9 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
+import type * as EditAxes from "../lib/use-edit-compose-axes";
 import type * as Cascade from "../lib/use-persist-compose-cascade";
 
 const persistMock = vi.fn();
+const saveEditsMock = vi.fn();
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -23,6 +25,15 @@ vi.mock("../lib/use-persist-compose-cascade", async () => {
   return {
     ...actual,
     usePersistComposeCascade: () => ({ persist: persistMock, isPending: false }),
+  };
+});
+
+vi.mock("../lib/use-edit-compose-axes", async () => {
+  const actual = await vi.importActual<typeof EditAxes>("../lib/use-edit-compose-axes");
+
+  return {
+    ...actual,
+    useEditComposeAxes: () => ({ saveEdits: saveEditsMock, isPending: false }),
   };
 });
 
@@ -48,6 +59,7 @@ const saveButton = (): HTMLElement => screen.getByRole("button", { name: "Save b
 beforeEach(() => {
   persistMock.mockReset();
   persistMock.mockImplementation(() => new Promise<never>(() => undefined));
+  saveEditsMock.mockReset();
 });
 
 afterEach(() => {

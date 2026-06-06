@@ -25,6 +25,7 @@ const CHILD_SPACING = 1;
 type ComposeTreeDndProps = {
   parentId: NodeId;
   nodes: ComposeNode[];
+  isReorderAllowed: boolean;
   onReorder: (parentId: NodeId, fromIndex: number, toIndex: number) => void;
   renderChild: (child: ComposeNode) => ReactNode;
 };
@@ -32,6 +33,7 @@ type ComposeTreeDndProps = {
 export const ComposeTreeDnd: React.FC<ComposeTreeDndProps> = ({
   parentId,
   nodes,
+  isReorderAllowed,
   onReorder,
   renderChild,
 }) => {
@@ -59,6 +61,14 @@ export const ComposeTreeDnd: React.FC<ComposeTreeDndProps> = ({
 
   if (nodes.length === 0) {
     return null;
+  }
+
+  if (!isReorderAllowed) {
+    return (
+      <Stack direction="column" spacing={CHILD_SPACING}>
+        {nodes.map((child) => renderChild(child))}
+      </Stack>
+    );
   }
 
   return (

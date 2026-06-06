@@ -15,12 +15,14 @@ const ADD_ROW_LABEL = "+ row";
 
 type ComposeAddNodeMenuProps = {
   parentId: NodeId;
+  isStructuralEditingAllowed: boolean;
   onAddContainer: (parentId: NodeId) => void;
   onAddRow: (parentId: NodeId, rowKind: RowKind) => void;
 };
 
 export const ComposeAddNodeMenu: React.FC<ComposeAddNodeMenuProps> = ({
   parentId,
+  isStructuralEditingAllowed,
   onAddContainer,
   onAddRow,
 }) => {
@@ -29,6 +31,10 @@ export const ComposeAddNodeMenu: React.FC<ComposeAddNodeMenuProps> = ({
   const handlePick = (rowKind: RowKind): void => {
     onAddRow(parentId, rowKind);
   };
+
+  if (!isStructuralEditingAllowed) {
+    return null;
+  }
 
   return (
     <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
