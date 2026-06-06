@@ -12,6 +12,9 @@ import { ComposeContainerInspector } from "../compose-container-inspector";
 const STORED_KIND_LABEL = "AMRAP";
 const STORED_HEADER = "Scored group";
 const HEADER_ARIA = "Inspector header";
+const PROGRAM_GROUP_LABEL = "program";
+const STORED_PROGRAM_KIND_LABEL = "wave";
+const NONE_LABEL = "none";
 
 const containerWithScoring = (scoring: ScoringDirective): ComposeContainer => ({
   nodeType: "container",
@@ -19,6 +22,7 @@ const containerWithScoring = (scoring: ScoringDirective): ComposeContainer => ({
   header: STORED_HEADER,
   notes: null,
   scoring,
+  programKind: "wave",
   children: [],
 });
 
@@ -65,5 +69,30 @@ describe("compose container inspector header is read-only in edit-mode (QA-102)"
     renderInspector(true);
 
     expect(screen.getByRole("textbox", { name: HEADER_ARIA })).toBeInTheDocument();
+  });
+});
+
+const storedProgramKindButton = (): HTMLElement =>
+  screen.getByRole("button", { name: STORED_PROGRAM_KIND_LABEL, pressed: true });
+
+describe("compose container inspector programKind axis stays editable in edit-mode (QA-006)", () => {
+  it("renders the program toggle group enabled in edit-mode, unlike scoring", () => {
+    renderInspector(false);
+
+    expect(screen.getByRole("group", { name: PROGRAM_GROUP_LABEL })).toBeInTheDocument();
+    expect(storedKindButton()).toBeDisabled();
+    expect(storedProgramKindButton()).toBeEnabled();
+  });
+
+  it("keeps the clear affordance enabled in edit-mode", () => {
+    renderInspector(false);
+
+    expect(screen.getByRole("button", { name: NONE_LABEL })).toBeEnabled();
+  });
+
+  it("keeps the program toggle group enabled in create-mode", () => {
+    renderInspector(true);
+
+    expect(storedProgramKindButton()).toBeEnabled();
   });
 });

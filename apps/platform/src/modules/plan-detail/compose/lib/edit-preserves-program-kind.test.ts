@@ -16,6 +16,7 @@ const EPOCH = new Date(0);
 const TOP_CUID = "ckprogramkindtopaaaaaaaaa";
 const BLOCK_CUID = "ckprogramkindblockaaaaaaa";
 const DRAFT_CUID = "ckprogramkinddraftaaaaaaa";
+const NESTED_CUID = "ckprogramkindnestedaaaaaa";
 
 const seededComposition: Composition = {
   repetition: { kind: "count", count: 3 },
@@ -41,6 +42,29 @@ const schemaWithComposition = (composition: Composition): SchemaWithBody => ({
 });
 
 const seededSchema = (): SchemaWithBody => schemaWithComposition(seededComposition);
+
+const nestedSubSchema = (composition: Composition): SchemaWithBody => ({
+  schema: {
+    id: NESTED_CUID,
+    blockId: BLOCK_CUID,
+    parentSchemaId: TOP_CUID,
+    order: 1,
+    header: null,
+    intensity: null,
+    composition,
+    label: null,
+    notes: null,
+    createdAt: EPOCH,
+    updatedAt: EPOCH,
+  },
+  rows: [],
+  subSchemas: [],
+});
+
+const schemaWithNestedComposition = (top: Composition, nested: Composition): SchemaWithBody => ({
+  ...schemaWithComposition(top),
+  subSchemas: [nestedSubSchema(nested)],
+});
 
 const hydratedRoot = (schema: SchemaWithBody): ComposeContainer => {
   const result = schemaWithBodyToComposeContainer(schema);
@@ -68,6 +92,18 @@ const topContainer = (root: ComposeContainer): ComposeContainer => {
   }
 
   return top;
+};
+
+const nestedContainer = (top: ComposeContainer, id: string): ComposeContainer => {
+  const nested = top.children.find(
+    (node): node is ComposeContainer => node.nodeType === "container" && node.id === id,
+  );
+
+  if (nested === undefined) {
+    throw new Error(`missing nested container ${id}`);
+  }
+
+  return nested;
 };
 
 const withoutProgramKind = ({
@@ -143,6 +179,76 @@ describe("diffComposeAxesAgainstOriginal carries programKind through an editable
 
     expect(result.updates).toHaveLength(1);
     expect(result.updates[0]?.composition).not.toHaveProperty("programKind");
+  });
+});
+
+describe("diffComposeAxesAgainstOriginal carries programKind through a NESTED container (QA-004)", () => {
+  const nestedSchema = (): SchemaWithBody =>
+    schemaWithNestedComposition(
+      { repetition: { kind: "count", count: 4 } },
+      { repetition: { kind: "count", count: 3 }, programKind: "wave" },
+    );
+
+  it("preserves a nested container's programKind when its own unrelated axis is edited", () => {
+    const schema = nestedSchema();
+    const root = hydratedRoot(schema);
+    const nested = nestedContainer(topContainer(root), NESTED_CUID);
+
+    nested.repetition = { kind: "count", count: 5 };
+
+    const result = diffComposeAxesAgainstOriginal(schema, root);
+
+    expect(result.ok).toBe(true);
+
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.updates).toHaveLength(1);
+    expect(result.updates[0]?.schemaId).toBe(NESTED_CUID);
+    expect(result.updates[0]?.composition).toEqual({
+      repetition: { kind: "count", count: 5 },
+      programKind: "wave",
+    });
+  });
+
+  it("persists an edited programKind on the nested container (wave → cluster at depth)", () => {
+    const schema = nestedSchema();
+    const root = hydratedRoot(schema);
+    const nested = nestedContainer(topContainer(root), NESTED_CUID);
+
+    nested.programKind = "cluster";
+
+    const result = diffComposeAxesAgainstOriginal(schema, root);
+
+    expect(result.ok).toBe(true);
+
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.updates).toHaveLength(1);
+    expect(result.updates[0]?.schemaId).toBe(NESTED_CUID);
+    expect(result.updates[0]?.composition?.programKind).toBe("cluster");
+  });
+
+  it("preserves a nested container's programKind when only the top container is edited", () => {
+    const schema = nestedSchema();
+    const root = hydratedRoot(schema);
+
+    topContainer(root).repetition = { kind: "count", count: 6 };
+
+    const result = diffComposeAxesAgainstOriginal(schema, root);
+
+    expect(result.ok).toBe(true);
+
+    if (!result.ok) {
+      return;
+    }
+
+    expect(result.updates).toHaveLength(1);
+    expect(result.updates[0]?.schemaId).toBe(TOP_CUID);
+    expect(nestedContainer(topContainer(root), NESTED_CUID).programKind).toBe("wave");
   });
 });
 
