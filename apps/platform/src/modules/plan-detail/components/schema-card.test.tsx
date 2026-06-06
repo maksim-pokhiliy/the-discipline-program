@@ -89,6 +89,12 @@ const SUB_SCHEMA_ID_B = "clp9z8x7w0000abcd1234ssb1";
 const DRAG_LABEL = "Drag schema";
 const DELETE_LABEL = "Delete schema";
 const TITLE_LABEL = "Schema title";
+const EDIT_LABEL = "Edit axes";
+const EDIT_REFUSAL_TOOLTIP = "Contains a rep-scheme not yet editable";
+const GRANDCHILD_RANGE_ID = "clp9z8x7w0000abcd1234grr1";
+const RANGE_COMPOSITION: SchemaWithBody["schema"]["composition"] = {
+  repetition: { kind: "range", range: { min: 3, max: 5 } },
+};
 
 const COUNT_5: SchemaWithBody["schema"]["composition"] = {
   repetition: { kind: "count", count: 5 },
@@ -516,6 +522,50 @@ describe("SchemaCard delete action", () => {
     renderSchemaCard();
 
     expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeDisabled();
+  });
+});
+
+describe("SchemaCard edit-axes range refusal gate (QA-008)", () => {
+  it("enables the Edit axes IconButton for a representable top-level schema", () => {
+    renderSchemaCard();
+
+    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeEnabled();
+  });
+
+  it("disables the Edit axes IconButton when the top-level schema carries a range repetition", () => {
+    renderSchemaCard({ schema: makeSchema({ composition: RANGE_COMPOSITION }) });
+
+    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
+  });
+
+  it("disables the top card's Edit axes IconButton when a nested grandchild carries a range repetition", () => {
+    const grandchild = makeSchema({
+      id: GRANDCHILD_RANGE_ID,
+      parentSchemaId: SUB_SCHEMA_ID_A,
+      composition: RANGE_COMPOSITION,
+    });
+    const child: SchemaWithBody = {
+      ...makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
+      subSchemas: [grandchild],
+    };
+
+    renderSchemaCard({ schema: makeSchema({ subSchemas: [child] }) });
+
+    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
+  });
+
+  it("surfaces the refusal tooltip on the disabled Edit axes button for a range schema", async () => {
+    renderSchemaCard({ schema: makeSchema({ composition: RANGE_COMPOSITION }) });
+
+    const wrapper = screen.getByRole("button", { name: EDIT_LABEL }).parentElement;
+
+    if (wrapper === null) {
+      throw new Error("edit button tooltip wrapper missing");
+    }
+
+    fireEvent.mouseOver(wrapper);
+
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(EDIT_REFUSAL_TOOLTIP);
   });
 });
 

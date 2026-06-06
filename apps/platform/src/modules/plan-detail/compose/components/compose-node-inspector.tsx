@@ -14,6 +14,7 @@ const EMPTY_TEXT = "Select a node to edit its axes.";
 type ComposeNodeInspectorProps = {
   selectedNode: ComposeNode | null;
   exerciseById: Map<string, Exercise>;
+  isCreateMode: boolean;
   updateNode: (id: NodeId, patch: (node: ComposeNode) => ComposeNode) => void;
   rename: (id: NodeId, header: string) => void;
 };
@@ -21,6 +22,7 @@ type ComposeNodeInspectorProps = {
 export const ComposeNodeInspector: React.FC<ComposeNodeInspectorProps> = ({
   selectedNode,
   exerciseById,
+  isCreateMode,
   updateNode,
   rename,
 }) => {
@@ -38,6 +40,7 @@ export const ComposeNodeInspector: React.FC<ComposeNodeInspectorProps> = ({
         key={selectedNode.id}
         container={selectedNode}
         exerciseById={exerciseById}
+        isCreateMode={isCreateMode}
         onUpdateNode={updateNode}
         onRename={rename}
       />

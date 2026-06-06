@@ -11,6 +11,7 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
 
+import { ComposeEditorDrawer } from "../compose/components/compose-editor-drawer";
 import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
 
@@ -57,8 +58,11 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   });
 
   const [isDeleteOpen, setIsDeleteOpen] = useState<boolean>(false);
+  const [isEditOpen, setIsEditOpen] = useState<boolean>(false);
 
   const handleDeleteOpen = () => setIsDeleteOpen(true);
+  const handleEditOpen = () => setIsEditOpen(true);
+  const handleEditClose = () => setIsEditOpen(false);
 
   const handleDeleteConfirm = () =>
     deleteSchema.mutate(
@@ -107,6 +111,7 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         dragListeners={listeners}
         onTitleCommit={handleTitleCommit}
         onDeleteOpen={handleDeleteOpen}
+        onEditOpen={handleEditOpen}
       />
 
       {schema.subSchemas.length > 0 ? (
@@ -159,6 +164,17 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
           details={formatSchemaHeader(schema)}
           onConfirm={handleDeleteConfirm}
           isConfirming={deleteSchema.isPending}
+        />
+      ) : null}
+
+      {!isSubSchema && isEditOpen ? (
+        <ComposeEditorDrawer
+          open={isEditOpen}
+          onClose={handleEditClose}
+          mode={{ kind: "edit", schema }}
+          planId={planId}
+          startDate={startDate}
+          blockId={schema.schema.blockId}
         />
       ) : null}
     </Stack>

@@ -15,6 +15,7 @@ const tooltipChildSx = { display: "inline-flex" };
 
 type ComposeNodeActionsProps = {
   nodeId: NodeId;
+  isStructuralEditingAllowed: boolean;
   onInspect: (id: NodeId) => void;
   onDuplicate: (id: NodeId) => void;
   onDelete: (id: NodeId) => void;
@@ -22,6 +23,7 @@ type ComposeNodeActionsProps = {
 
 export const ComposeNodeActions: React.FC<ComposeNodeActionsProps> = ({
   nodeId,
+  isStructuralEditingAllowed,
   onInspect,
   onDuplicate,
   onDelete,
@@ -35,25 +37,33 @@ export const ComposeNodeActions: React.FC<ComposeNodeActionsProps> = ({
       </span>
     </Tooltip>
 
-    <Tooltip title={DUPLICATE_TOOLTIP}>
-      <span style={tooltipChildSx}>
-        <IconButton size="small" aria-label={DUPLICATE_TOOLTIP} onClick={() => onDuplicate(nodeId)}>
-          <ContentCopyIcon fontSize="small" />
-        </IconButton>
-      </span>
-    </Tooltip>
+    {isStructuralEditingAllowed ? (
+      <>
+        <Tooltip title={DUPLICATE_TOOLTIP}>
+          <span style={tooltipChildSx}>
+            <IconButton
+              size="small"
+              aria-label={DUPLICATE_TOOLTIP}
+              onClick={() => onDuplicate(nodeId)}
+            >
+              <ContentCopyIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
 
-    <Tooltip title={DELETE_TOOLTIP}>
-      <span style={tooltipChildSx}>
-        <IconButton
-          size="small"
-          aria-label={DELETE_TOOLTIP}
-          onClick={() => onDelete(nodeId)}
-          sx={{ color: "error.main" }}
-        >
-          <DeleteIcon fontSize="small" />
-        </IconButton>
-      </span>
-    </Tooltip>
+        <Tooltip title={DELETE_TOOLTIP}>
+          <span style={tooltipChildSx}>
+            <IconButton
+              size="small"
+              aria-label={DELETE_TOOLTIP}
+              onClick={() => onDelete(nodeId)}
+              sx={{ color: "error.main" }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </>
+    ) : null}
   </Stack>
 );

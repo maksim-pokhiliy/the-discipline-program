@@ -41,6 +41,7 @@ const DEFAULT_REST: RestSpec = {
 type ComposeContainerInspectorProps = {
   container: ComposeContainer;
   exerciseById: Map<string, Exercise>;
+  isCreateMode: boolean;
   onUpdateNode: (id: NodeId, patch: (node: ComposeNode) => ComposeNode) => void;
   onRename: (id: NodeId, header: string) => void;
 };
@@ -53,6 +54,7 @@ const asContainerPatch =
 export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps> = ({
   container,
   exerciseById,
+  isCreateMode,
   onUpdateNode,
   onRename,
 }) => {
@@ -97,14 +99,24 @@ export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps>
           {HEADER_LABEL}
         </Typography>
 
-        <InlineEditText
-          value={container.header ?? ""}
-          onCommit={(next) => onRename(container.id, next)}
-          variant="h4"
-          ariaLabel={HEADER_ARIA}
-          emptyIsValid
-          placeholder={HEADER_PLACEHOLDER}
-        />
+        {isCreateMode ? (
+          <InlineEditText
+            value={container.header ?? ""}
+            onCommit={(next) => onRename(container.id, next)}
+            variant="h4"
+            ariaLabel={HEADER_ARIA}
+            emptyIsValid
+            placeholder={HEADER_PLACEHOLDER}
+          />
+        ) : (
+          <Typography
+            variant="h4"
+            color={container.header === null ? "text.subtle" : "text.primary"}
+            aria-label={HEADER_ARIA}
+          >
+            {container.header ?? HEADER_PLACEHOLDER}
+          </Typography>
+        )}
       </Stack>
 
       <RepetitionAxisField
@@ -120,7 +132,11 @@ export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps>
         rowsByTrack={arrangementTargets.rowsByTrack}
       />
 
-      <ScoringAxisField value={container.scoring ?? DEFAULT_SCORING} onChange={setScoring} />
+      <ScoringAxisField
+        value={container.scoring ?? DEFAULT_SCORING}
+        onChange={setScoring}
+        disabled={!isCreateMode}
+      />
 
       <Stack direction="column" spacing={0.5}>
         <Typography variant="caption" color="text.subtle">

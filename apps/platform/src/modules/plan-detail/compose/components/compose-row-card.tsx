@@ -57,6 +57,7 @@ type ComposeRowCardProps = {
   row: ComposeRow;
   exerciseById: Map<string, Exercise>;
   isSelected: boolean;
+  isStructuralEditingAllowed: boolean;
   onSelect: (id: NodeId) => void;
   onDuplicate: (id: NodeId) => void;
   onDelete: (id: NodeId) => void;
@@ -66,6 +67,7 @@ export const ComposeRowCard: React.FC<ComposeRowCardProps> = ({
   row,
   exerciseById,
   isSelected,
+  isStructuralEditingAllowed,
   onSelect,
   onDuplicate,
   onDelete,
@@ -104,16 +106,20 @@ export const ComposeRowCard: React.FC<ComposeRowCardProps> = ({
         ...getRowTintSx(row.rowKind, theme),
       })}
     >
-      <IconButton
-        {...attributes}
-        {...listeners}
-        size="small"
-        aria-label={DRAG_ARIA}
-        onClick={(event) => event.stopPropagation()}
-        sx={{ cursor: "grab", touchAction: "none" }}
-      >
-        <DragIndicatorIcon fontSize="small" />
-      </IconButton>
+      {isStructuralEditingAllowed ? (
+        <IconButton
+          {...attributes}
+          {...listeners}
+          size="small"
+          aria-label={DRAG_ARIA}
+          onClick={(event) => event.stopPropagation()}
+          sx={{ cursor: "grab", touchAction: "none" }}
+        >
+          <DragIndicatorIcon fontSize="small" />
+        </IconButton>
+      ) : (
+        <Box />
+      )}
 
       <RowKindBadge
         kind={summary.badge.kind}
@@ -131,6 +137,7 @@ export const ComposeRowCard: React.FC<ComposeRowCardProps> = ({
       <Box onClick={(event) => event.stopPropagation()}>
         <ComposeNodeActions
           nodeId={row.id}
+          isStructuralEditingAllowed={isStructuralEditingAllowed}
           onInspect={onSelect}
           onDuplicate={onDuplicate}
           onDelete={onDelete}

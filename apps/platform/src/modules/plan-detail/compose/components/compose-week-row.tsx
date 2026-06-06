@@ -35,6 +35,7 @@ export const ComposeWeekRow: React.FC<ComposeWeekRowProps> = ({
       label={week.label}
       variant="h5"
       duplicateAria={DUPLICATE_ARIA}
+      isStructuralEditingAllowed={upperHandlers.isStructuralEditingAllowed}
       onDuplicate={() => upperHandlers.onDuplicateWeek(week.id)}
     />
 

@@ -5,12 +5,14 @@ import { type ReactElement } from "react";
 import type { DraggableAttributes, DraggableSyntheticListeners } from "@dnd-kit/core";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import TuneIcon from "@mui/icons-material/Tune";
 import { IconButton, Stack, Tooltip } from "@mui/material";
 
 import { deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { type SchemaWithBody, SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
 
+import { isComposeEditable } from "../compose/lib/schema-to-compose";
 import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
 
@@ -20,6 +22,9 @@ import { SchemaCompositionTag } from "./schema-composition-tag";
 const DRAG_ARIA = "Drag schema";
 const DELETE_ARIA = "Delete schema";
 const DELETE_TOOLTIP = "Delete schema";
+const EDIT_ARIA = "Edit axes";
+const EDIT_TOOLTIP = "Edit axes";
+const EDIT_REFUSAL_TOOLTIP = "Contains a rep-scheme not yet editable";
 const TITLE_ARIA = "Schema title";
 const HEAD_PX = 1.5;
 const HEAD_PY = 1.25;
@@ -38,6 +43,7 @@ type SchemaCardHeadProps = {
   dragListeners: DraggableSyntheticListeners;
   onTitleCommit: (next: string) => void;
   onDeleteOpen: () => void;
+  onEditOpen: () => void;
 };
 
 export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
@@ -49,71 +55,91 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
   dragListeners,
   onTitleCommit,
   onDeleteOpen,
-}): ReactElement => (
-  <Stack
-    direction="row"
-    alignItems="flex-start"
-    spacing={HEAD_SPACING}
-    sx={{ px: HEAD_PX, py: HEAD_PY, minWidth: 0 }}
-  >
-    <IconButton
-      {...dragAttributes}
-      {...dragListeners}
-      size="small"
-      aria-label={DRAG_ARIA}
-      disabled={isMutationPending}
-      sx={{
-        cursor: "grab",
-        touchAction: "none",
-        "&.Mui-focusVisible": {
-          outline: "2px solid",
-          outlineColor: "primary.main",
-          outlineOffset: 2,
-        },
-      }}
+  onEditOpen,
+}): ReactElement => {
+  const isEditable = isComposeEditable(schema);
+
+  return (
+    <Stack
+      direction="row"
+      alignItems="flex-start"
+      spacing={HEAD_SPACING}
+      sx={{ px: HEAD_PX, py: HEAD_PY, minWidth: 0 }}
     >
-      <DragIndicatorIcon fontSize="small" />
-    </IconButton>
-
-    <Stack direction="column" spacing={INFO_SPACING} sx={{ flex: 1, minWidth: 0 }}>
-      <Stack
-        direction="row"
-        alignItems="center"
-        spacing={TITLE_ROW_SPACING}
-        useFlexGap
-        flexWrap="wrap"
-        sx={{ minWidth: 0 }}
+      <IconButton
+        {...dragAttributes}
+        {...dragListeners}
+        size="small"
+        aria-label={DRAG_ARIA}
+        disabled={isMutationPending}
+        sx={{
+          cursor: "grab",
+          touchAction: "none",
+          "&.Mui-focusVisible": {
+            outline: "2px solid",
+            outlineColor: "primary.main",
+            outlineOffset: 2,
+          },
+        }}
       >
-        {schema.schema.composition !== null ? (
-          <SchemaCompositionTag label={deriveCompositionLabel(schema.schema.composition).kind} />
-        ) : null}
-        <InlineEditText
-          value={formatSchemaHeader(schema)}
-          onCommit={onTitleCommit}
-          variant="h4"
-          ariaLabel={TITLE_ARIA}
-          emptyIsValid
-          maxLength={SCHEMA_CONSTANTS.MAX_HEADER_LENGTH}
-          sx={{ flex: 1, minWidth: 0 }}
-        />
-      </Stack>
-      <SchemaCardMeta schema={schema} blockCtx={blockCtx} />
-    </Stack>
+        <DragIndicatorIcon fontSize="small" />
+      </IconButton>
 
-    {!isSubSchema ? (
-      <Tooltip title={DELETE_TOOLTIP}>
-        <span style={tooltipChildSx}>
-          <IconButton
-            size="small"
-            onClick={onDeleteOpen}
-            disabled={isMutationPending}
-            aria-label={DELETE_ARIA}
-            sx={{ color: "error.main" }}
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
-        </span>
-      </Tooltip>
-    ) : null}
-  </Stack>
-);
+      <Stack direction="column" spacing={INFO_SPACING} sx={{ flex: 1, minWidth: 0 }}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={TITLE_ROW_SPACING}
+          useFlexGap
+          flexWrap="wrap"
+          sx={{ minWidth: 0 }}
+        >
+          {schema.schema.composition !== null ? (
+            <SchemaCompositionTag label={deriveCompositionLabel(schema.schema.composition).kind} />
+          ) : null}
+          <InlineEditText
+            value={formatSchemaHeader(schema)}
+            onCommit={onTitleCommit}
+            variant="h4"
+            ariaLabel={TITLE_ARIA}
+            emptyIsValid
+            maxLength={SCHEMA_CONSTANTS.MAX_HEADER_LENGTH}
+            sx={{ flex: 1, minWidth: 0 }}
+          />
+        </Stack>
+        <SchemaCardMeta schema={schema} blockCtx={blockCtx} />
+      </Stack>
+
+      {!isSubSchema ? (
+        <Tooltip title={isEditable ? EDIT_TOOLTIP : EDIT_REFUSAL_TOOLTIP}>
+          <span style={tooltipChildSx}>
+            <IconButton
+              size="small"
+              onClick={onEditOpen}
+              disabled={isMutationPending || !isEditable}
+              aria-label={EDIT_ARIA}
+            >
+              <TuneIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      ) : null}
+
+      {!isSubSchema ? (
+        <Tooltip title={DELETE_TOOLTIP}>
+          <span style={tooltipChildSx}>
+            <IconButton
+              size="small"
+              onClick={onDeleteOpen}
+              disabled={isMutationPending}
+              aria-label={DELETE_ARIA}
+              sx={{ color: "error.main" }}
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      ) : null}
+    </Stack>
+  );
+};

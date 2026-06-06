@@ -104,6 +104,7 @@ export const useComposeProgram = (
   const nodeHandlers = useMemo<NodeHandlers>(
     () => ({
       selectedNodeId,
+      isStructuralEditingAllowed: true,
       onSelect: select,
       onDuplicateNode: duplicateNode,
       onDeleteNode: deleteNode,
@@ -116,6 +117,7 @@ export const useComposeProgram = (
 
   const upperHandlers = useMemo<UpperHandlers>(
     () => ({
+      isStructuralEditingAllowed: true,
       onDuplicateBlock: (id) => setProgram((current) => duplicateBlock(current, id)),
       onDuplicateSession: (id) => setProgram((current) => duplicateSession(current, id)),
       onDuplicateDay: (id) => setProgram((current) => duplicateDay(current, id)),

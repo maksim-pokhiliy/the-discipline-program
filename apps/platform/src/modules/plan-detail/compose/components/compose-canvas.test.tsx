@@ -54,6 +54,7 @@ const addExerciseRow = (): void => {
 
 const noopHandlers: NodeHandlers = {
   selectedNodeId: null,
+  isStructuralEditingAllowed: true,
   onSelect: vi.fn(),
   onDuplicateNode: vi.fn(),
   onDeleteNode: vi.fn(),
@@ -61,6 +62,8 @@ const noopHandlers: NodeHandlers = {
   onAddContainer: vi.fn(),
   onAddRow: vi.fn(),
 };
+
+const readOnlyHandlers: NodeHandlers = { ...noopHandlers, isStructuralEditingAllowed: false };
 
 const container = (idSeed: string, children: ComposeNode[]): ComposeContainer => ({
   nodeType: "container",
@@ -82,6 +85,19 @@ const renderIsolatedBlock = (rootChildren: ComposeNode[]) =>
       block={blockWith(rootChildren)}
       exerciseById={new Map<string, Exercise>()}
       handlers={noopHandlers}
+      isStructuralEditingAllowed
+      onRename={() => undefined}
+      onDuplicateBlock={() => undefined}
+    />,
+  );
+
+const renderReadOnlyBlock = (rootChildren: ComposeNode[]) =>
+  render(
+    <ComposeBlockRow
+      block={blockWith(rootChildren)}
+      exerciseById={new Map<string, Exercise>()}
+      handlers={readOnlyHandlers}
+      isStructuralEditingAllowed={false}
       onRename={() => undefined}
       onDuplicateBlock={() => undefined}
     />,
@@ -189,6 +205,21 @@ describe("the block-root container card omits the delete and drag controls (QA-0
   });
 });
 
+describe("the container card header is read-only in edit-mode (QA-102)", () => {
+  it("renders the stored container header as static text with no editable input when structural editing is disallowed", () => {
+    renderReadOnlyBlock([container("nested-non-root", [])]);
+
+    expect(screen.queryByRole("textbox", { name: "Group header" })).not.toBeInTheDocument();
+    expect(screen.getByText("nested-non-root")).toBeInTheDocument();
+  });
+
+  it("renders editable header inputs when structural editing is allowed", () => {
+    renderIsolatedBlock([container("nested-non-root", [])]);
+
+    expect(screen.getAllByRole("textbox", { name: "Group header" }).length).toBeGreaterThan(0);
+  });
+});
+
 describe("an empty container still renders the add-menu and no empty dnd scope (QA-1.3 / QA-7.3)", () => {
   it("shows the + group and + row affordances for an empty nested container", () => {
     renderIsolatedBlock([container("empty-nested", [])]);
@@ -204,6 +235,7 @@ describe("ComposeTreeDnd scopes a sortable to its own children (QA-6.2 cross-con
       <ComposeTreeDnd
         parentId={asNodeId("scope-parent")}
         nodes={[container("scope-a", []), container("scope-b", [])]}
+        isReorderAllowed
         onReorder={vi.fn()}
         renderChild={(child: ComposeNode) => <div key={child.id}>{child.id}</div>}
       />,

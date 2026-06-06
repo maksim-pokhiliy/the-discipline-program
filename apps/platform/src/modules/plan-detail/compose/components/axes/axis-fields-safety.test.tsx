@@ -49,6 +49,7 @@ const InspectorHarness = ({ initial }: { initial: ComposeContainer }): ReactElem
       <ComposeContainerInspector
         container={container}
         exerciseById={new Map<string, Exercise>()}
+        isCreateMode
         onUpdateNode={handleUpdateNode}
         onRename={() => undefined}
       />

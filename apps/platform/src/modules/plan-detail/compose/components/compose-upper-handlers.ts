@@ -1,6 +1,7 @@
 import type { NodeId } from "../compose-tree.types";
 
 export type UpperHandlers = {
+  isStructuralEditingAllowed: boolean;
   onDuplicateBlock: (id: NodeId) => void;
   onDuplicateSession: (id: NodeId) => void;
   onDuplicateDay: (id: NodeId) => void;

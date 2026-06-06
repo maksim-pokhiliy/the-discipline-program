@@ -77,6 +77,7 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
         row={child}
         exerciseById={exerciseById}
         isSelected={child.id === handlers.selectedNodeId}
+        isStructuralEditingAllowed={handlers.isStructuralEditingAllowed}
         onSelect={handlers.onSelect}
         onDuplicate={handlers.onDuplicateNode}
         onDelete={handlers.onDeleteNode}
@@ -107,7 +108,7 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
         spacing={HEAD_SPACING}
         sx={{ px: HEAD_PX, py: HEAD_PY, minWidth: 0 }}
       >
-        {!isRoot && (
+        {!isRoot && handlers.isStructuralEditingAllowed && (
           <IconButton
             {...attributes}
             {...listeners}
@@ -122,14 +123,24 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
 
         <Stack direction="column" spacing={0.25} sx={{ flex: 1, minWidth: 0 }}>
           <Box onClick={(event) => event.stopPropagation()}>
-            <InlineEditText
-              value={container.header ?? ""}
-              onCommit={(next) => onRename(container.id, next)}
-              variant="h4"
-              ariaLabel={HEADER_ARIA}
-              emptyIsValid
-              placeholder={HEADER_PLACEHOLDER}
-            />
+            {handlers.isStructuralEditingAllowed ? (
+              <InlineEditText
+                value={container.header ?? ""}
+                onCommit={(next) => onRename(container.id, next)}
+                variant="h4"
+                ariaLabel={HEADER_ARIA}
+                emptyIsValid
+                placeholder={HEADER_PLACEHOLDER}
+              />
+            ) : (
+              <Typography
+                variant="h4"
+                color={container.header === null ? "text.subtle" : "text.primary"}
+                aria-label={HEADER_ARIA}
+              >
+                {container.header ?? HEADER_PLACEHOLDER}
+              </Typography>
+            )}
           </Box>
 
           {axesSummary !== "" ? (
@@ -143,6 +154,7 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
           <Box onClick={(event) => event.stopPropagation()}>
             <ComposeNodeActions
               nodeId={container.id}
+              isStructuralEditingAllowed={handlers.isStructuralEditingAllowed}
               onInspect={handlers.onSelect}
               onDuplicate={handlers.onDuplicateNode}
               onDelete={handlers.onDeleteNode}
@@ -160,12 +172,14 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
         <ComposeTreeDnd
           parentId={container.id}
           nodes={container.children}
+          isReorderAllowed={handlers.isStructuralEditingAllowed}
           onReorder={handlers.onReorderChildren}
           renderChild={renderChild}
         />
 
         <ComposeAddNodeMenu
           parentId={container.id}
+          isStructuralEditingAllowed={handlers.isStructuralEditingAllowed}
           onAddContainer={handlers.onAddContainer}
           onAddRow={handlers.onAddRow}
         />

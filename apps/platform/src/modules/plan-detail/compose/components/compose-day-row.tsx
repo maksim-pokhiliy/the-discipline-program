@@ -35,6 +35,7 @@ export const ComposeDayRow: React.FC<ComposeDayRowProps> = ({
       label={day.label}
       variant="h6"
       duplicateAria={DUPLICATE_ARIA}
+      isStructuralEditingAllowed={upperHandlers.isStructuralEditingAllowed}
       onDuplicate={() => upperHandlers.onDuplicateDay(day.id)}
     />
 

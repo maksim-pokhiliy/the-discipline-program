@@ -1,0 +1,29 @@
+# compose-hardening — journal
+
+Append-only. One entry per session/step.
+
+## 2026-06-05 — initiative opened from the state-of-the-feature audit
+
+- **Origin.** Mid-UX-polish session, owner stopped and asked for the real picture: "рванул полировать UX, а в коде, может, бардак и непонятны границы — кто за что отвечает." Ran an independent 13-agent audit (Workflow `wf_fc0a986c-5ae`; 6 layer-mappers + 7 adversarial verifiers; 588s; 514 tool-uses) over the merged `plan-editor-compose` (PR #245), deliberately re-verifying the prior `theory-vs-code-reconciliation.md` rather than trusting it.
+- **Verdict.** Model / contract / persistence production-grade, zero drift (re-confirmed). Authoring half-built: create-only (T0-1) + ⅓ algebra unauthorable (T0-2 program/slot; conditional-scoring). "Bardak" not supported; "UX-polish premature" supported — a readiness boundary, not messy code. Owner's instinct to stop was right, the stated reason wrong.
+- **NEW finds beyond the prior reconciliation** (the payoff of an independent fan-out, not a re-run): T1-1 (`assertArrangementRefsInScope` create-skip), T1-2 (`mapScoring` condition-drop), T2-7 (BlockEditor terminology), T3-API-1 (SCAN_ROOTS gap), T3-RD-1 (empty scoring-only header), T3-SEED-2 (duplicate `blockInstanceRef`), T3-SEED-3/4 (EMOM-20/22, block-020 stub), T3-RD-3 (module leak), T3-CT-3/4 (literal-match guard, 7/8 range).
+- **Created the initiative** (analysis + docs only, no code): `charter`, `audit-findings` (full evidence + verifier verdicts + carry-over map), `deferred` (Tiers 0–3, ~26 finds), `decisions` (D-1 RATIFIED + 4 OPEN: D-EDIT/D-ONTOLOGY/D-SCORING-RENDER/D-MARKER), `plan`, `state`. Set `initiatives/ACTIVE` → `compose-hardening`; pointed memory.
+- **Next.** Ratify D-EDIT + D-ONTOLOGY; recommended first cut = T0-1 edit-mode. No code until ratified.
+
+### Close-out verification (spot-check vs live code, owner: "проверь себя 10 раз")
+
+Re-verified the load-bearing + all NEW findings against current source (not agent reports):
+
+- **Confirmed exact:** T0-1 (`compose-editor-drawer.tsx:80` `emptyBlockProgram`); T0-2 (`phase-7-blocks.ts:141-169` snatch wave = 1 row + composition `{}`, stages 80/90 gone; `schema-row.schema.ts` payload = 9 variants, no `program`/`stagedProgram`/`slotSpec`); T1-2 (`compose-to-create-requests.ts:82-97` `mapScoring`, no `condition`); T1-3 (`schema.mapper.ts:41` `subSchemas: []`); T2-1 (`format-composition-summary.ts:54-55`); T3-API-1 (`scoring-inert-consumers.test.ts:11-13` SCAN_ROOTS = mappers/lms + endpoints/lms/schema, schema-row absent); T3-CT-3 (`composition.schema.ts:241` string-literal match); **T3-SEED-2** (`block-008` dup: `week-1-friday.ts:46` + `week-2-monday-strength.ts:24` — my first grep was a false alarm, the dup is real); T3-SEED-3 (`sub-schema-coverage.ts:32` `EMOM_MINUTES=22`, `:62` `BLOCK_EMOM_20_SUBSCHEMAS` → 22-minute block named "20").
+- **Corrected one:** **T1-1.** Initial wording claimed "the ladder-collision check runs on create." Source (`admin.ts:121-131`) shows create does **no** composition validation at all; the asymmetry is the arrangement-ref scope check (update-only, `:157-158`), and the normal S2 cascade wires arrangement via a _guarded phase-2 update_ — so it's an API-level asymmetry, not a normal-UI hole. Fixed in `audit-findings.md` + `deferred.md`.
+- **Not individually re-verified** (carry agent `file:line`, low-stakes cosmetics — flagged in `state.md`): T3-SEED-4 (`block-020` stub), T3-RD-1 (empty scoring-only header), T3-API-2 (reorder atomicity), the duplicate-formatter line numbers. Re-verify before acting on any single one.
+
+## 2026-06-06 — T0-1 edit-mode shipped (`/feature` full)
+
+- **Ran `/feature` (full) on T0-1** (compose edit-mode) end-to-end: Research → Design+Plan → Gate A → Implement → Review∥QA → Test∥Docs → close-out. Branch `feat/compose-edit-mode` off `main` (owner picked "docs→main, feat from main" at Gate A; the 2 initiative-docs commits were rebased onto `main` first so the feat PR diff stays clean).
+- **Ratified at Gate A: D-EDIT + D-SCORING-RENDER** (see `decisions.md`). Research resolved the open sub-questions on live code: per-node `updateSchema` (not subtree-replace), axis-only scope (structural deferred), the real drawer (not the mock prototype). Keystone confirmed: stored `arrangement` refs are real cuids = the subtree's `schema.id`/`row.id`, so branding them as draft `NodeId` round-trips arrangement with zero remap → the inverse adapter was the entire blocker; no Prisma/contract/endpoint change.
+- **Shipped (5 commits):** `990b7164` inverse adapter · `1de6c958` edit-persist diff + per-node update hook · `b528e784` drawer mode + entry button + axis-only guards · `7380801a` fix (lock header read-only + hide upper-row Duplicate in edit-mode — QA-101/102) · `792888ea` test coverage (per-axis round-trips, edit latch, divergence matrix).
+- **Hardened beyond the design** (orchestrator Gate-A catch + review): scoring-verbatim invariant (edit never routes stored `scoring` through the lossy `mapScoring` → `condition` survives byte-for-byte; closes T1-2 for the edit path); structural-divergence guard as a typed `DiffResult` refusal (fail-closed on any add/remove/reparent/root-sibling — defense-in-depth behind the UI affordance-disabling); graceful range-refuse.
+- **Review B / QA zero-CRITICAL** — data-loss spine verified independently from both sides. Fixed before Gate B: QA-101 (phantom upper-row Duplicate) + QA-102 (in-drawer header silent-drop → read-only) + an `isScoringEditable→isCreateMode` naming cleanup. Deferred (→ `deferred.md`): QA-103, REV-W2, QA-201, QA-302.
+- **Verification:** check-types + lint clean; full platform project suite **89 files / 1031 tests green** (~40 new). FROZEN contract + inert tripwire untouched; archetype not reintroduced.
+- **Next.** PR pending the owner landing the docs branch on `origin/main` first. Then 0b (program/slot, T0-2) — ratify **D-ONTOLOGY** first.

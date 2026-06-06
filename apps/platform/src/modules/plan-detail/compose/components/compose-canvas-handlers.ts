@@ -4,6 +4,7 @@ import type { NodeId } from "../compose-tree.types";
 
 export type NodeHandlers = {
   selectedNodeId: NodeId | null;
+  isStructuralEditingAllowed: boolean;
   onSelect: (id: NodeId) => void;
   onDuplicateNode: (id: NodeId) => void;
   onDeleteNode: (id: NodeId) => void;
