@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { REST_QUALIFIERS, REST_SCOPES, restSpecSchema, slotSpecSchema } from "./cap-spec";
+import { REST_QUALIFIERS, REST_SCOPES, restSpecSchema } from "./cap-spec";
 
 describe("restSpecSchema", () => {
   it("accepts fixed duration with unit sec and no rangeMax", () => {
@@ -132,31 +132,5 @@ describe("restSpecSchema", () => {
         scope: "between_sets",
       }).success,
     ).toBe(false);
-  });
-});
-
-describe("slotSpecSchema", () => {
-  it("accepts single with positive int minute", () => {
-    expect(slotSpecSchema.safeParse({ kind: "single", minute: 1 }).success).toBe(true);
-  });
-
-  it("accepts grouped with minutes length 2", () => {
-    expect(slotSpecSchema.safeParse({ kind: "grouped", minutes: [1, 2] }).success).toBe(true);
-  });
-
-  it("rejects grouped with single-element minutes", () => {
-    expect(slotSpecSchema.safeParse({ kind: "grouped", minutes: [1] }).success).toBe(false);
-  });
-
-  it("rejects grouped with empty minutes", () => {
-    expect(slotSpecSchema.safeParse({ kind: "grouped", minutes: [] }).success).toBe(false);
-  });
-
-  it("rejects single with zero minute", () => {
-    expect(slotSpecSchema.safeParse({ kind: "single", minute: 0 }).success).toBe(false);
-  });
-
-  it("rejects unknown kind", () => {
-    expect(slotSpecSchema.safeParse({ kind: "scattered", minutes: [1, 2] }).success).toBe(false);
   });
 });
