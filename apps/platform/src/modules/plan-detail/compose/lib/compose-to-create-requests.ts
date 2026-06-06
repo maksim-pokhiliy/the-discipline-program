@@ -96,6 +96,7 @@ export const composeContainerToComposition = (container: ComposeContainer): Comp
   ...(container.repetition !== undefined && { repetition: mapRepetition(container.repetition) }),
   ...(container.scoring !== undefined && { scoring: mapScoring(container.scoring) }),
   ...(container.rest !== undefined && { rest: container.rest }),
+  ...(container.programKind !== undefined && { programKind: container.programKind }),
 });
 
 const mapRow = (row: ComposeRow): Omit<CreateSchemaRowRequest, "schemaId"> => ({

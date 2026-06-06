@@ -144,6 +144,7 @@ const assembleEditedComposition = (
     ...(arrangement !== undefined && { arrangement }),
     ...(scoring !== undefined && { scoring }),
     ...(base.rest !== undefined && { rest: base.rest }),
+    ...(base.programKind !== undefined && { programKind: base.programKind }),
   };
 };
 

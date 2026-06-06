@@ -1,3 +1,4 @@
+import type { StagedProgramKind } from "@repo/contracts/lms/_shared";
 import type {
   ArrangementAxis as ContractArrangementAxis,
   Composition,
@@ -158,6 +159,7 @@ const splitAxes = (
   arrangement?: ArrangementAxis;
   scoring?: ScoringDirective;
   rest?: RestAxis;
+  programKind?: StagedProgramKind;
 } => ({
   ...(composition.arrangement !== undefined && {
     arrangement: arrangementFromComposition(composition.arrangement),
@@ -166,6 +168,7 @@ const splitAxes = (
     scoring: scoringFromComposition(composition.scoring),
   }),
   ...(composition.rest !== undefined && { rest: restFromComposition(composition.rest) }),
+  ...(composition.programKind !== undefined && { programKind: composition.programKind }),
 });
 
 const containerFromSchemaWithBody = (node: SchemaWithBody): ContainerResult => {
