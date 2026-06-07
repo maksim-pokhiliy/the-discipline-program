@@ -107,3 +107,42 @@ describe("formatCompositionSummary other axes", () => {
     expect(formatCompositionSummary({})).toEqual([]);
   });
 });
+
+describe("formatCompositionSummary programKind badge", () => {
+  it("renders the program kind after the structural axes", () => {
+    const composition: Composition = {
+      repetition: { kind: "count", count: 5 },
+      programKind: "cluster",
+    };
+
+    expect(formatCompositionSummary(composition)).toEqual(["5 rounds", "cluster"]);
+  });
+
+  it("appends the program kind last across multiple structural axes", () => {
+    const composition: Composition = {
+      repetition: { kind: "count", count: 5 },
+      scoring: { kind: "amrap" },
+      programKind: "cluster",
+    };
+
+    expect(formatCompositionSummary(composition)).toEqual(["5 rounds", "AMRAP", "cluster"]);
+  });
+
+  it("renders a bare program kind when no other axis is present", () => {
+    const composition: Composition = { programKind: "wave" };
+
+    expect(formatCompositionSummary(composition)).toEqual(["wave"]);
+  });
+
+  it("maps drop_set to its spaced label", () => {
+    const composition: Composition = { programKind: "drop_set" };
+
+    expect(formatCompositionSummary(composition)).toEqual(["drop set"]);
+  });
+
+  it("omits the program kind label when it is absent", () => {
+    const composition: Composition = { repetition: { kind: "count", count: 5 } };
+
+    expect(formatCompositionSummary(composition)).toEqual(["5 rounds"]);
+  });
+});

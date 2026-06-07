@@ -9,7 +9,6 @@ export * from "./media";
 export * from "./reps";
 export * from "./sequence";
 export * from "./side";
-export * from "./staged-program";
 export * from "./tempo";
 export * from "./time-cap";
 export * from "./weight";

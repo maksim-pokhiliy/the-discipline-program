@@ -6,10 +6,9 @@ import {
   BLOCK_NUMERIC_PACE_ROW,
   BLOCK_PULL_UP_CLUSTER,
   BLOCK_SNATCH_WAVE,
-  BLOCK_SUPER_SET_PAIR_A,
-  BLOCK_SUPER_SET_PAIR_B,
   BLOCK_TEMPO_BACK_SQUAT,
 } from "./phase-7-blocks";
+import { BLOCK_SUPER_SET_PAIR_A, BLOCK_SUPER_SET_PAIR_B } from "./phase-7-superset-blocks";
 import { LBL } from "./refs";
 
 export const PHASE_7_HR_Z2_BASE_RUN: Phase7Session = phase7Session({

@@ -7,14 +7,12 @@ import {
   OR_ALTERNATIVE_PURPOSES,
   PLACEHOLDER_KINDS,
   STAGED_PROGRAM_KINDS,
-  STAGE_INDICATORS,
   STANDALONE_LOAD_SCOPES,
   connectorFormSchema,
   countFormSchema,
   footnoteTargetSchema,
   orAlternativePurposeSchema,
   placeholderKindSchema,
-  stageIndicatorSchema,
   stagedProgramKindSchema,
   standaloneLoadScopeSchema,
 } from "./enums";
@@ -64,18 +62,6 @@ describe("countFormSchema", () => {
 
   it("rejects unknown form", () => {
     expect(countFormSchema.safeParse("approx").success).toBe(false);
-  });
-});
-
-describe("stageIndicatorSchema", () => {
-  it("accepts all 2 STAGE_INDICATORS", () => {
-    for (const indicator of STAGE_INDICATORS) {
-      expect(stageIndicatorSchema.safeParse(indicator).success).toBe(true);
-    }
-  });
-
-  it("rejects unknown indicator", () => {
-    expect(stageIndicatorSchema.safeParse("light").success).toBe(false);
   });
 });
 

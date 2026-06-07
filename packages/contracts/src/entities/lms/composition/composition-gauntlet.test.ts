@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { stagedProgramSchema } from "../_shared";
 import { schemaRowPayloadSchema } from "../schema-row";
 
 import { composeContainerSchema, compositionSchema } from "./composition.schema";
@@ -230,6 +229,7 @@ describe("Gauntlet A — back squat wave + box jumps, rest until recovery (sham-
     notes: null,
     composition: {
       repetition: { kind: "count", count: 3 },
+      programKind: "wave",
       rest: {
         duration: { value: 1, unit: "sec" },
         scope: "between_rounds",
@@ -239,16 +239,10 @@ describe("Gauntlet A — back squat wave + box jumps, rest until recovery (sham-
     children: [waveRow, boxJumpsRow],
   };
 
-  it("expresses the back-squat wave as a standalone staged-program value off the projection", () => {
+  it("classifies the wave via programKind on the container composition", () => {
     expect(
-      stagedProgramSchema.safeParse({
-        programKind: "wave",
-        stages: [
-          { reps: 5, load: { kind: "percentage", value: 75, reference: { scope: "self" } } },
-          { reps: 3, load: { kind: "percentage", value: 85, reference: { scope: "self" } } },
-          { reps: 1, load: { kind: "percentage", value: 95, reference: { scope: "self" } } },
-        ],
-      }).success,
+      compositionSchema.safeParse({ repetition: { kind: "count", count: 3 }, programKind: "wave" })
+        .success,
     ).toBe(true);
   });
 

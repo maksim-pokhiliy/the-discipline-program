@@ -4,6 +4,7 @@ import type {
   PerLimbDistribution,
   RepNotation,
   RestSpec,
+  StagedProgramKind,
   TempoModifier,
   TimeCap,
 } from "@repo/contracts/lms/_shared";
@@ -55,6 +56,7 @@ export type ComposeContainer = {
   arrangement?: ArrangementAxis;
   scoring?: ScoringDirective;
   rest?: RestAxis;
+  programKind?: StagedProgramKind;
   children: ComposeNode[];
 };
 

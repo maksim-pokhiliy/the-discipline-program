@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { STAGED_PROGRAM_KINDS } from "../_shared";
+
 import { PARALLEL_INTERLEAVE_ORDERS, SCORING_DIRECTIVE_KINDS } from "./composition.constants";
 import {
   arrangementAxisSchema,
@@ -430,5 +432,51 @@ describe("strict mode — unknown keys are rejected", () => {
         condition: { appliesToRounds: [2, 3], bogus: 1 },
       }).success,
     ).toBe(false);
+  });
+});
+
+describe("compositionSchema programKind classifier (D-ONTOLOGY)", () => {
+  it("accepts every staged program kind on the composition bundle", () => {
+    for (const programKind of STAGED_PROGRAM_KINDS) {
+      expect(compositionSchema.safeParse({ programKind }).success).toBe(true);
+    }
+  });
+
+  it("rejects an unknown program kind", () => {
+    expect(compositionSchema.safeParse({ programKind: "ramp" }).success).toBe(false);
+  });
+
+  it("accepts a bundle with no programKind (the classifier is optional)", () => {
+    expect(compositionSchema.safeParse({}).success).toBe(true);
+  });
+
+  it("parses an existing full composition that carries no programKind", () => {
+    expect(
+      compositionSchema.safeParse({
+        repetition: { kind: "count", count: 3 },
+        arrangement: { kind: "ordered" },
+        scoring: { kind: "for_time" },
+        rest: { duration: { value: 90, unit: "sec" }, scope: "between_rounds" },
+      }).success,
+    ).toBe(true);
+  });
+
+  it("classifies the cluster as a round-counter plus a programKind (block-164 shape)", () => {
+    expect(
+      compositionSchema.safeParse({
+        repetition: { kind: "count", count: 5 },
+        programKind: "cluster",
+      }).success,
+    ).toBe(true);
+  });
+
+  it("round-trips programKind through a parse alongside the round counter", () => {
+    const parsed = compositionSchema.parse({
+      repetition: { kind: "count", count: 5 },
+      programKind: "cluster",
+    });
+
+    expect(parsed.programKind).toBe("cluster");
+    expect(parsed.repetition).toEqual({ kind: "count", count: 5 });
   });
 });
