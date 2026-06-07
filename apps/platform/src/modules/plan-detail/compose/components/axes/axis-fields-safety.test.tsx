@@ -10,6 +10,7 @@ import { render } from "@app/test/render";
 import type {
   ComposeContainer,
   ComposeNode,
+  ComposeRow,
   NodeId,
   RepetitionAxis,
 } from "../../compose-tree.types";
@@ -24,6 +25,26 @@ const baseContainer = (repetition?: RepetitionAxis): ComposeContainer => ({
   notes: null,
   ...(repetition !== undefined && { repetition }),
   children: [],
+});
+
+const uncommittedMarkerRow = (): ComposeRow => ({
+  nodeType: "row",
+  id: asNodeId("ladder-marker-row"),
+  rowKind: "INNER_LADDER_MARKER",
+  rowPayload: { rowKind: "REST_SLOT" },
+  reps: null,
+  load: null,
+  side: null,
+  tempo: null,
+  position: null,
+  intensity: null,
+  notes: null,
+  editorDraft: null,
+});
+
+const containerWithChild = (repetition: RepetitionAxis, child: ComposeNode): ComposeContainer => ({
+  ...baseContainer(repetition),
+  children: [child],
 });
 
 const InspectorHarness = ({ initial }: { initial: ComposeContainer }): ReactElement => {
@@ -68,20 +89,25 @@ const readRest = (): Record<string, unknown> | null =>
 
 const spinbuttonByLabel = (name: string): HTMLElement => screen.getByRole("spinbutton", { name });
 
-describe("cadence/interval axis fields store empty→0 input but stay inert (QA-10, SAFETY-PROBE: validation deferred to 10.2)", () => {
-  it("stores cadence everyMin as 0 when cleared, keeping a structurally-valid cadence node", () => {
+const POSITIVE_MESSAGE = "Number must be greater than 0";
+const HH_MM_INVALID_MESSAGE = "Invalid";
+const WINDOW_ORDER_MESSAGE = "window.endHhMm must be a valid HH:MM after startHhMm";
+const REST_RANGE_MESSAGE = "rangeMax is required and must be greater than value for range units";
+
+describe("cadence/interval axis fields surface contract errors while storing the typed value (T2-5)", () => {
+  it("shows the positivity error on cadence everyMin when cleared, still storing everyMin 0", () => {
     render(
       <InspectorHarness initial={baseContainer({ kind: "cadence", everyMin: 1, rounds: 4 })} />,
     );
 
     fireEvent.change(spinbuttonByLabel("Every (min)"), { target: { value: "" } });
 
-    const stored = readRepetition();
-
-    expect(stored).toStrictEqual({ kind: "cadence", everyMin: 0, rounds: 4 });
+    expect(readRepetition()).toStrictEqual({ kind: "cadence", everyMin: 0, rounds: 4 });
+    expect(spinbuttonByLabel("Every (min)")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByText(POSITIVE_MESSAGE)).toBeInTheDocument();
   });
 
-  it("stores a negative interval workMin verbatim, keeping a structurally-valid interval node", () => {
+  it("shows the positivity error on a negative interval workMin, still storing -5", () => {
     render(
       <InspectorHarness
         initial={baseContainer({ kind: "interval", workMin: 2, offMin: 1, count: 3 })}
@@ -90,29 +116,32 @@ describe("cadence/interval axis fields store empty→0 input but stay inert (QA-
 
     fireEvent.change(spinbuttonByLabel("Work (min)"), { target: { value: "-5" } });
 
-    const stored = readRepetition();
-
-    expect(stored).toStrictEqual({ kind: "interval", workMin: -5, offMin: 1, count: 3 });
+    expect(readRepetition()).toStrictEqual({ kind: "interval", workMin: -5, offMin: 1, count: 3 });
+    expect(spinbuttonByLabel("Work (min)")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByText(POSITIVE_MESSAGE)).toBeInTheDocument();
   });
 
-  it("renders the axes summary for the malformed cadence/interval values without throwing", () => {
+  it("accepts interval offMin 0 with no error and a min attribute of 0", () => {
     render(
-      <InspectorHarness initial={baseContainer({ kind: "cadence", everyMin: 1, rounds: 4 })} />,
+      <InspectorHarness
+        initial={baseContainer({ kind: "interval", workMin: 2, offMin: 1, count: 3 })}
+      />,
     );
 
-    expect(() =>
-      fireEvent.change(spinbuttonByLabel("Every (min)"), { target: { value: "" } }),
-    ).not.toThrow();
-    expect(screen.getByTestId("summary").textContent).toContain("EMOM");
+    fireEvent.change(spinbuttonByLabel("Off (min)"), { target: { value: "0" } });
+
+    expect(readRepetition()).toStrictEqual({ kind: "interval", workMin: 2, offMin: 0, count: 3 });
+    expect(spinbuttonByLabel("Off (min)")).toHaveAttribute("aria-invalid", "false");
+    expect(spinbuttonByLabel("Off (min)")).toHaveAttribute("min", "0");
   });
 });
 
-describe("window axis field stores malformed HH:MM but stays inert (QA-11, SAFETY-PROBE: validation deferred to 10.2)", () => {
+describe("window axis field surfaces contract errors while storing the typed value (T2-5)", () => {
   const selectWindow = (): void => {
     fireEvent.click(within(screen.getByRole("group", { name: "repetition" })).getByText("window"));
   };
 
-  it("stores a malformed start time verbatim, keeping a structurally-valid window node", () => {
+  it("shows the HH:MM error on a malformed start time, still storing the raw value", () => {
     render(<InspectorHarness initial={baseContainer()} />);
 
     selectWindow();
@@ -125,24 +154,52 @@ describe("window axis field stores malformed HH:MM but stays inert (QA-11, SAFET
       startHhMm: "25:99",
       endHhMm: "09:00",
     });
+    expect(screen.getByRole("textbox", { name: "Start HH:MM" })).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(screen.getByText(HH_MM_INVALID_MESSAGE)).toBeInTheDocument();
   });
 
-  it("stores an empty end time verbatim without crashing the inspector or summary", () => {
+  it("shows the ordering error on the end field when start ≥ end, still storing an empty end", () => {
     render(<InspectorHarness initial={baseContainer()} />);
 
     selectWindow();
+    fireEvent.change(screen.getByRole("textbox", { name: "End HH:MM" }), {
+      target: { value: "" },
+    });
 
-    expect(() =>
-      fireEvent.change(screen.getByRole("textbox", { name: "End HH:MM" }), {
-        target: { value: "" },
-      }),
-    ).not.toThrow();
     expect(readRepetition()).toStrictEqual({ kind: "window", startHhMm: "06:00", endHhMm: "" });
+    expect(screen.getByRole("textbox", { name: "End HH:MM" })).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(screen.getByText(HH_MM_INVALID_MESSAGE)).toBeInTheDocument();
+  });
+
+  it("lands the cross-field ordering error on the end field for a valid-but-late start", () => {
+    render(<InspectorHarness initial={baseContainer()} />);
+
+    selectWindow();
+    fireEvent.change(screen.getByRole("textbox", { name: "Start HH:MM" }), {
+      target: { value: "10:00" },
+    });
+
+    expect(readRepetition()).toStrictEqual({
+      kind: "window",
+      startHhMm: "10:00",
+      endHhMm: "09:00",
+    });
+    expect(screen.getByRole("textbox", { name: "End HH:MM" })).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(screen.getByText(WINDOW_ORDER_MESSAGE)).toBeInTheDocument();
   });
 });
 
-describe("rest axis field stores a refine-invalid RestSpec but stays inert (QA-12, SAFETY-PROBE: validation deferred to 10.2)", () => {
-  it("stores a min-range rest whose rangeMax ≤ value verbatim, keeping a structurally-valid rest node", () => {
+describe("rest axis field surfaces the refine error while storing the typed value (T2-5)", () => {
+  it("shows the rangeMax error when rangeMax ≤ value, still storing the typed rest", () => {
     render(<InspectorHarness initial={baseContainer()} />);
 
     fireEvent.click(
@@ -159,21 +216,33 @@ describe("rest axis field stores a refine-invalid RestSpec but stays inert (QA-1
 
     expect(stored).not.toBeNull();
     expect(stored?.duration).toStrictEqual({ value: 100, unit: "range_min", rangeMax: 50 });
+    expect(screen.getByRole("spinbutton", { name: "Rest max" })).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
+    expect(screen.getByText(REST_RANGE_MESSAGE)).toBeInTheDocument();
   });
+});
 
-  it("renders the rest summary for the refine-invalid value without throwing", () => {
-    render(<InspectorHarness initial={baseContainer()} />);
-
-    fireEvent.click(
-      within(screen.getByRole("group", { name: "duration unit" })).getByText("min range"),
+describe("ladder × inner-marker mutex surfaces an inline repetition error (T2-4)", () => {
+  it("shows the conflict error when a ladder container holds an uncommitted marker row", () => {
+    render(
+      <InspectorHarness
+        initial={containerWithChild({ kind: "ladder", steps: [21, 15, 9] }, uncommittedMarkerRow())}
+      />,
     );
 
-    expect(() =>
-      fireEvent.change(screen.getByRole("spinbutton", { name: "Rest max" }), {
-        target: { value: "50" },
-      }),
-    ).not.toThrow();
-    expect(screen.getByTestId("summary").textContent).toContain("rest");
+    expect(screen.getByText(/inner-ladder-marker row/i)).toBeInTheDocument();
+  });
+
+  it("shows no conflict error when the same marker sits under a non-ladder repetition", () => {
+    render(
+      <InspectorHarness
+        initial={containerWithChild({ kind: "count", count: 3 }, uncommittedMarkerRow())}
+      />,
+    );
+
+    expect(screen.queryByText(/inner-ladder-marker row/i)).not.toBeInTheDocument();
   });
 });
 

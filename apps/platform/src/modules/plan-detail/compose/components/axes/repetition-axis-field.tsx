@@ -2,7 +2,7 @@
 
 import { type MouseEvent, type ReactNode } from "react";
 
-import { Stack, ToggleButton } from "@mui/material";
+import { FormHelperText, Stack, ToggleButton } from "@mui/material";
 
 import type { TimeCap } from "@repo/contracts/lms/_shared";
 import { LabeledToggleGroup } from "@repo/ui";
@@ -43,12 +43,14 @@ const REPETITION_OPTIONS: { kind: RepetitionAxis["kind"]; label: string }[] = [
 type RepetitionAxisFieldProps = {
   value: RepetitionAxis;
   onChange: (next: RepetitionAxis) => void;
+  error?: string | undefined;
   disabled?: boolean;
 };
 
 export const RepetitionAxisField: React.FC<RepetitionAxisFieldProps> = ({
   value,
   onChange,
+  error,
   disabled = false,
 }) => {
   const handleKindChange = (_: MouseEvent<HTMLElement>, next: RepetitionAxis["kind"] | null) => {
@@ -132,6 +134,8 @@ export const RepetitionAxisField: React.FC<RepetitionAxisFieldProps> = ({
           </ToggleButton>
         ))}
       </LabeledToggleGroup>
+
+      {error !== undefined ? <FormHelperText error>{error}</FormHelperText> : null}
 
       {renderVariantBody()}
     </Stack>
