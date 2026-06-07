@@ -4,6 +4,7 @@ import type * as DndKitCore from "@dnd-kit/core";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { Composition } from "@repo/contracts/lms/composition";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import type * as Hooks from "@app/lib/hooks";
@@ -25,12 +26,13 @@ vi.mock("@app/lib/hooks", async () => {
 });
 
 vi.mock("./schema-row-card", () => {
-  const renderSchemaRowCardMock = (props: { row: SchemaRow }) =>
+  const renderSchemaRowCardMock = (props: { row: SchemaRow; supersetLabel?: string | null }) =>
     createElement(
       "div",
       {
         "data-testid": "schema-row-card-mock",
         "data-row-id": props.row.id,
+        "data-superset-label": props.supersetLabel ?? "",
       },
       `schema-row-card:${props.row.id}`,
     );
@@ -227,5 +229,72 @@ describe("SchemaRowList optimistic + rollback (QA-Must-05)", () => {
     const payload = reorderSchemaRowsMutate.mock.calls[0]?.[0];
 
     expect(payload).toEqual({ schemaId: SCHEMA_ID, orderedIds: [r2.id, r1.id] });
+  });
+});
+
+const supersetLabelsOf = (container: HTMLElement): (string | null)[] =>
+  Array.from(container.querySelectorAll('[data-testid="schema-row-card-mock"]')).map((node) =>
+    node.getAttribute("data-superset-label"),
+  );
+
+describe("SchemaRowList superset pair labels (T2-2)", () => {
+  it("maps a superset pair label onto every member row", () => {
+    const r1 = makeRow({ id: "clp9z8x7w0000abcd12ss1r001", order: 1 });
+    const r2 = makeRow({ id: "clp9z8x7w0000abcd12ss1r002", order: 2 });
+    const composition: Composition = {
+      arrangement: { kind: "superset", pairs: [{ label: "Pair A", rowIds: [r1.id, r2.id] }] },
+    };
+
+    const { container } = render(
+      <SchemaRowList
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        schemaId={SCHEMA_ID}
+        rows={[r1, r2]}
+        composition={composition}
+      />,
+    );
+
+    expect(supersetLabelsOf(container)).toEqual(["Pair A", "Pair A"]);
+  });
+
+  it("labels only rows that belong to a pair, leaving the rest unlabeled", () => {
+    const r1 = makeRow({ id: "clp9z8x7w0000abcd12pp1r001", order: 1 });
+    const r2 = makeRow({ id: "clp9z8x7w0000abcd12pp1r002", order: 2 });
+    const composition: Composition = {
+      arrangement: {
+        kind: "superset",
+        pairs: [{ label: "Pair A", rowIds: [r1.id, "clp9z8x7w0000abcd12absent01"] }],
+      },
+    };
+
+    const { container } = render(
+      <SchemaRowList
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        schemaId={SCHEMA_ID}
+        rows={[r1, r2]}
+        composition={composition}
+      />,
+    );
+
+    expect(supersetLabelsOf(container)).toEqual(["Pair A", ""]);
+  });
+
+  it("assigns no pair label when the arrangement is not a superset", () => {
+    const r1 = makeRow({ id: "clp9z8x7w0000abcd12ns1r001", order: 1 });
+    const composition: Composition = { arrangement: { kind: "ordered" } };
+
+    const { container } = render(
+      <SchemaRowList
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        schemaId={SCHEMA_ID}
+        rows={[r1]}
+        composition={composition}
+      />,
+    );
+
+    expect(supersetLabelsOf(container)).toEqual([""]);
   });
 });

@@ -9,7 +9,14 @@ import { CascadeChip, IndicatorChip } from "@repo/ui";
 
 import { type BlockCtx, buildCascadeChips } from "../lib/build-cascade-chips";
 import { formatIntensityChips, formatTimeCap } from "../lib/format-block-meta";
-import { formatCompositionSummary } from "../lib/format-composition-summary";
+import {
+  type CompositionSummaryPart,
+  formatCompositionSummary,
+} from "../lib/format-composition-summary";
+
+import { InertScoringChip } from "./inert-scoring-chip";
+
+const EMPTY_PARTS: CompositionSummaryPart[] = [];
 
 const NO_PARAMS_LABEL = "no params";
 const PARAM_SEPARATOR = "·";
@@ -27,10 +34,17 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
   const composition = schema.schema.composition;
   const schemaIntensity = schema.schema.intensity;
 
-  const metaTexts = useMemo(
-    () => (composition === null ? [] : formatCompositionSummary(composition)),
+  const metaParts = useMemo(
+    () => (composition === null ? EMPTY_PARTS : formatCompositionSummary(composition)),
     [composition],
   );
+
+  const activeParts = useMemo(
+    () => metaParts.filter((part) => part.tone === "active"),
+    [metaParts],
+  );
+
+  const inertPart = useMemo(() => metaParts.find((part) => part.tone === "inert"), [metaParts]);
 
   const ownChips = useMemo(
     () => (schemaIntensity !== null ? formatIntensityChips(schemaIntensity) : []),
@@ -48,25 +62,28 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
   );
 
   const isEmpty =
-    metaTexts.length === 0 &&
+    activeParts.length === 0 &&
+    inertPart === undefined &&
     ownChips.length === 0 &&
     cascadeChips.length === 0 &&
     capCascadeText === null;
 
   return (
     <Stack direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap">
-      {metaTexts.map((text, i) => (
-        <Fragment key={`${String(i)}-${text}`}>
+      {activeParts.map((part, i) => (
+        <Fragment key={`${String(i)}-${part.text}`}>
           {i > 0 ? (
             <Typography variant="caption" component="span" color="text.disabled">
               {PARAM_SEPARATOR}
             </Typography>
           ) : null}
           <Typography variant="caption" component="span" color="text.secondary">
-            {text}
+            {part.text}
           </Typography>
         </Fragment>
       ))}
+
+      {inertPart !== undefined ? <InertScoringChip text={inertPart.text} /> : null}
 
       {ownChips.map((c, i) => (
         <IndicatorChip key={`${String(i)}-${c.text}`} tone={c.tone} label={c.text} dot={false} />
