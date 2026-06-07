@@ -522,3 +522,95 @@ describe("diffComposeAxesAgainstOriginal validates the edited arrangement with c
     expect(result.issues.length).toBeGreaterThan(0);
   });
 });
+
+const GRANDCHILD_A_CUID = "ckdiffgrandaaaaaaaaaaaaaa";
+const GRANDCHILD_B_CUID = "ckdiffgrandbbbbbbbbbbbbbb";
+const GRANDCHILD_ROW_A_CUID = "ckdiffgrowaaaaaaaaaaaaaaa";
+const GRANDCHILD_ROW_B_CUID = "ckdiffgrowbbbbbbbbbbbbbbb";
+
+const nestedSelfPairedSchema = (): SchemaWithBody =>
+  topSchema({ repetition: { kind: "count", count: 3 } }, [
+    {
+      schema: {
+        id: CHILD_A_CUID,
+        blockId: TOP_CUID,
+        parentSchemaId: TOP_CUID,
+        order: 1,
+        header: null,
+        intensity: null,
+        composition: {
+          arrangement: {
+            kind: "parallel",
+            interleaveOrder: "round_by_round",
+            tracks: [
+              { childSchemaId: GRANDCHILD_A_CUID, pairedWithRowId: GRANDCHILD_ROW_A_CUID },
+              { childSchemaId: GRANDCHILD_B_CUID },
+            ],
+          },
+        },
+        label: null,
+        notes: null,
+        createdAt: EPOCH,
+        updatedAt: EPOCH,
+      },
+      rows: [],
+      subSchemas: [
+        leafSchema(GRANDCHILD_A_CUID, null, [
+          restSlotRow(GRANDCHILD_ROW_A_CUID, GRANDCHILD_A_CUID),
+        ]),
+        leafSchema(GRANDCHILD_B_CUID, null, [
+          restSlotRow(GRANDCHILD_ROW_B_CUID, GRANDCHILD_B_CUID),
+        ]),
+      ],
+    },
+  ]);
+
+describe("diffComposeAxesAgainstOriginal recurses arrangement validation into nested containers (QA-103, nested)", () => {
+  it("refuses with arrangement-invalid when a descendant container's arrangement self-pairs, not the top", () => {
+    const schema = nestedSelfPairedSchema();
+    const root = hydratedRoot(schema);
+
+    const result = diffComposeAxesAgainstOriginal(schema, root);
+
+    expect(result.ok).toBe(false);
+
+    if (result.ok || result.reason !== "arrangement-invalid") {
+      throw new Error("expected an arrangement-invalid diff result from the nested container");
+    }
+
+    expect(result.issues.length).toBeGreaterThan(0);
+  });
+});
+
+const duplicateRowSupersetSchema = (): SchemaWithBody => {
+  const schema = topSchema(
+    {
+      arrangement: {
+        kind: "superset",
+        pairs: [{ label: "Curls only", rowIds: [ROW_CURL_CUID, ROW_CURL_CUID] }],
+      },
+    },
+    [],
+  );
+
+  schema.rows = [restSlotRow(ROW_CURL_CUID, TOP_CUID)];
+
+  return schema;
+};
+
+describe("diffComposeAxesAgainstOriginal validates edited supersets with create-parity (QA-103, superset)", () => {
+  it("refuses with arrangement-invalid when a superset pair has fewer than two distinct rows", () => {
+    const schema = duplicateRowSupersetSchema();
+    const root = hydratedRoot(schema);
+
+    const result = diffComposeAxesAgainstOriginal(schema, root);
+
+    expect(result.ok).toBe(false);
+
+    if (result.ok || result.reason !== "arrangement-invalid") {
+      throw new Error("expected an arrangement-invalid diff result from the superset");
+    }
+
+    expect(result.issues.length).toBeGreaterThan(0);
+  });
+});

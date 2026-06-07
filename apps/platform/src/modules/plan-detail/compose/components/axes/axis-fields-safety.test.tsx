@@ -90,6 +90,7 @@ const readRest = (): Record<string, unknown> | null =>
 const spinbuttonByLabel = (name: string): HTMLElement => screen.getByRole("spinbutton", { name });
 
 const POSITIVE_MESSAGE = "Number must be greater than 0";
+const NONNEGATIVE_MESSAGE = "Number must be greater than or equal to 0";
 const HH_MM_INVALID_MESSAGE = "Invalid";
 const WINDOW_ORDER_MESSAGE = "window.endHhMm must be a valid HH:MM after startHhMm";
 const REST_RANGE_MESSAGE = "rangeMax is required and must be greater than value for range units";
@@ -133,6 +134,20 @@ describe("cadence/interval axis fields surface contract errors while storing the
     expect(readRepetition()).toStrictEqual({ kind: "interval", workMin: 2, offMin: 0, count: 3 });
     expect(spinbuttonByLabel("Off (min)")).toHaveAttribute("aria-invalid", "false");
     expect(spinbuttonByLabel("Off (min)")).toHaveAttribute("min", "0");
+  });
+
+  it("shows the nonnegative error on a negative interval offMin, still storing -1 (QA-T25-7)", () => {
+    render(
+      <InspectorHarness
+        initial={baseContainer({ kind: "interval", workMin: 2, offMin: 1, count: 3 })}
+      />,
+    );
+
+    fireEvent.change(spinbuttonByLabel("Off (min)"), { target: { value: "-1" } });
+
+    expect(readRepetition()).toStrictEqual({ kind: "interval", workMin: 2, offMin: -1, count: 3 });
+    expect(spinbuttonByLabel("Off (min)")).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByText(NONNEGATIVE_MESSAGE)).toBeInTheDocument();
   });
 });
 

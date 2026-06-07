@@ -40,6 +40,14 @@ const containerWith = (repetition: RepetitionAxis, children: ComposeNode[]): Com
 const exerciseRows = (count: number): ComposeNode[] =>
   Array.from({ length: count }, () => makeRow("EXERCISE"));
 
+const nestedContainer = (children: ComposeNode[]): ComposeContainer => ({
+  nodeType: "container",
+  id: asNodeId("nested-container"),
+  header: "Nested group",
+  notes: null,
+  children,
+});
+
 const renderContainer = (repetition: RepetitionAxis, children: ComposeNode[]) =>
   render(
     <ComposeContainerCard
@@ -63,6 +71,14 @@ describe("the authoring canvas EMOM minute pill (T2-3)", () => {
 
   it("renders no minute pill for a non-cadence container", () => {
     renderContainer({ kind: "count", count: ROW_COUNT }, exerciseRows(ROW_COUNT));
+
+    expect(screen.queryByText(/^MIN /)).not.toBeInTheDocument();
+  });
+
+  it("does not bleed minute pills into a nested container's rows (QA-T23-3, schema boundary)", () => {
+    renderContainer({ kind: "cadence", everyMin: 1, rounds: CADENCE_ROUNDS }, [
+      nestedContainer(exerciseRows(ROW_COUNT)),
+    ]);
 
     expect(screen.queryByText(/^MIN /)).not.toBeInTheDocument();
   });
