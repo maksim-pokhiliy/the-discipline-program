@@ -3,7 +3,11 @@ import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import type { ArrangementAxis, ComposeContainer, ComposeNode, NodeId } from "../compose-tree.types";
 
-import type { DraftArrangement } from "./arrangement-convert";
+import {
+  type ConvertIssue,
+  type DraftArrangement,
+  validateDeferredArrangement,
+} from "./arrangement-convert";
 import { resolveArrangement } from "./arrangement-resolve";
 import { composeContainerToComposition } from "./compose-to-create-requests";
 
@@ -11,7 +15,8 @@ export type SchemaCompositionUpdate = { schemaId: string; composition: Compositi
 
 export type DiffResult =
   | { ok: true; updates: SchemaCompositionUpdate[] }
-  | { ok: false; reason: "structural-divergence" };
+  | { ok: false; reason: "structural-divergence" }
+  | { ok: false; reason: "arrangement-invalid"; issues: ConvertIssue[] };
 
 const ROOT_SENTINEL = "__root__";
 
@@ -154,6 +159,18 @@ const byId = (subSchemas: SchemaWithBody[]): Map<string, SchemaWithBody> =>
 const directContainers = (children: ComposeNode[]): ComposeContainer[] =>
   children.filter((child): child is ComposeContainer => child.nodeType === "container");
 
+const collectArrangementIssues = (top: ComposeContainer, issues: ConvertIssue[]): void => {
+  const { arrangement } = top;
+
+  if (arrangement !== undefined && arrangement.kind !== "ordered") {
+    validateDeferredArrangement(arrangement, top, top.id, issues);
+  }
+
+  for (const child of directContainers(top.children)) {
+    collectArrangementIssues(child, issues);
+  }
+};
+
 const collectUpdates = (
   original: SchemaWithBody,
   editedContainer: ComposeContainer,
@@ -189,6 +206,14 @@ export const diffComposeAxesAgainstOriginal = (
     isStructurallyDivergent(original, editedTop)
   ) {
     return { ok: false, reason: "structural-divergence" };
+  }
+
+  const issues: ConvertIssue[] = [];
+
+  collectArrangementIssues(editedTop, issues);
+
+  if (issues.length > 0) {
+    return { ok: false, reason: "arrangement-invalid", issues };
   }
 
   const updates: SchemaCompositionUpdate[] = [];

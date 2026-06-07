@@ -487,3 +487,38 @@ describe("diffComposeAxesAgainstOriginal refuses every structural-divergence var
     expect(result).toEqual({ ok: false, reason: "structural-divergence" });
   });
 });
+
+const selfPairedParallelSchema = (): SchemaWithBody =>
+  topSchema(
+    {
+      arrangement: {
+        kind: "parallel",
+        interleaveOrder: "round_by_round",
+        tracks: [
+          { childSchemaId: CHILD_A_CUID, pairedWithRowId: ROW_DOWN_CUID },
+          { childSchemaId: CHILD_B_CUID },
+        ],
+      },
+    },
+    [
+      leafSchema(CHILD_A_CUID, null, [restSlotRow(ROW_DOWN_CUID, CHILD_A_CUID)]),
+      leafSchema(CHILD_B_CUID, null, [restSlotRow(ROW_UP_CUID, CHILD_B_CUID)]),
+    ],
+  );
+
+describe("diffComposeAxesAgainstOriginal validates the edited arrangement with create-parity (QA-103)", () => {
+  it("refuses with arrangement-invalid when a parallel track pairs with a row in its own track", () => {
+    const schema = selfPairedParallelSchema();
+    const root = hydratedRoot(schema);
+
+    const result = diffComposeAxesAgainstOriginal(schema, root);
+
+    expect(result.ok).toBe(false);
+
+    if (result.ok || result.reason !== "arrangement-invalid") {
+      throw new Error("expected an arrangement-invalid diff result");
+    }
+
+    expect(result.issues.length).toBeGreaterThan(0);
+  });
+});

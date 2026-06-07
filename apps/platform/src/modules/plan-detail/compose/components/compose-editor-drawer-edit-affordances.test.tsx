@@ -1,9 +1,10 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Composition } from "@repo/contracts/lms/composition";
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
+import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
@@ -176,5 +177,105 @@ describe("ComposeContainerInspector gates the demote-to-row affordance to create
 
     expect(screen.queryByRole("button", { name: DEMOTE_BUTTON_NAME })).toBeNull();
     expect(screen.queryByText(DEMOTE_HINT_TEXT)).toBeNull();
+  });
+});
+
+const CHILD_A_CUID = "ckaffordchildaaaaaaaaaaaa";
+const CHILD_B_CUID = "ckaffordchildbbbbbbbbbbbb";
+const SELF_PAIRED_ROW_CUID = "ckaffordrowdownaaaaaaaaaa";
+const SIBLING_ROW_CUID = "ckaffordrowupaaaaaaaaaaaa";
+const SAVE_AXES_BUTTON_NAME = "Save axes";
+const ISSUES_TITLE = "Cannot save this block yet";
+
+const restSlotRow = (id: string, schemaId: string): SchemaRow => ({
+  id,
+  schemaId,
+  order: 1,
+  rowKind: "REST_SLOT",
+  rowPayload: { rowKind: "REST_SLOT" },
+  load: null,
+  reps: null,
+  side: null,
+  tempo: null,
+  position: null,
+  sequence: null,
+  intensity: null,
+  media: null,
+  compoundRep: null,
+  notes: null,
+  createdAt: EPOCH,
+  updatedAt: EPOCH,
+});
+
+const leafSchema = (id: string, rows: SchemaRow[]): SchemaWithBody => ({
+  schema: {
+    id,
+    blockId: BLOCK_ID,
+    parentSchemaId: TOP_CUID,
+    order: 1,
+    header: null,
+    intensity: null,
+    composition: null,
+    label: null,
+    notes: null,
+    createdAt: EPOCH,
+    updatedAt: EPOCH,
+  },
+  rows,
+  subSchemas: [],
+});
+
+const selfPairedSchema = (): SchemaWithBody => ({
+  schema: {
+    id: TOP_CUID,
+    blockId: BLOCK_ID,
+    parentSchemaId: null,
+    order: 1,
+    header: "Parallel block",
+    intensity: null,
+    composition: {
+      arrangement: {
+        kind: "parallel",
+        interleaveOrder: "round_by_round",
+        tracks: [
+          { childSchemaId: CHILD_A_CUID, pairedWithRowId: SELF_PAIRED_ROW_CUID },
+          { childSchemaId: CHILD_B_CUID },
+        ],
+      },
+    },
+    label: null,
+    notes: null,
+    createdAt: EPOCH,
+    updatedAt: EPOCH,
+  },
+  rows: [],
+  subSchemas: [
+    leafSchema(CHILD_A_CUID, [restSlotRow(SELF_PAIRED_ROW_CUID, CHILD_A_CUID)]),
+    leafSchema(CHILD_B_CUID, [restSlotRow(SIBLING_ROW_CUID, CHILD_B_CUID)]),
+  ],
+});
+
+const renderSelfPairedEditDrawer = () =>
+  render(
+    <ComposeEditorDrawer
+      open={true}
+      onClose={vi.fn()}
+      planId={PLAN_ID}
+      startDate={START_DATE}
+      blockId={BLOCK_ID}
+      mode={{ kind: "edit", schema: selfPairedSchema() }}
+    />,
+  );
+
+describe("ComposeEditorDrawer validates the arrangement on edit save (QA-103)", () => {
+  it("blocks the update and surfaces the issues Alert for a self-paired parallel track", async () => {
+    renderSelfPairedEditDrawer();
+
+    fireEvent.click(screen.getByRole("button", { name: SAVE_AXES_BUTTON_NAME }));
+
+    await waitFor(() => {
+      expect(screen.getByText(ISSUES_TITLE)).toBeInTheDocument();
+    });
+    expect(saveEditsMock).not.toHaveBeenCalled();
   });
 });
