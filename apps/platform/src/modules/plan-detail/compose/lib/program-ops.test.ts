@@ -1,7 +1,12 @@
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import type { ComposeNode } from "../compose-tree.types";
+import type {
+  ComposeContainer,
+  ComposeNode,
+  ComposeProgram,
+  ComposeRow,
+} from "../compose-tree.types";
 import { useComposeProgram } from "../use-compose-program";
 
 import { asNodeId } from "./id-factory";
@@ -9,6 +14,59 @@ import { findNodeInProgram } from "./tree-ops";
 
 const childIdsOf = (node: ComposeNode | null): string[] =>
   node !== null && node.nodeType === "container" ? node.children.map((child) => child.id) : [];
+
+const demoteRow = (): ComposeRow => ({
+  nodeType: "row",
+  id: asNodeId("demote-row"),
+  rowKind: "REST_SLOT",
+  rowPayload: { rowKind: "REST_SLOT" },
+  reps: null,
+  load: null,
+  side: null,
+  tempo: null,
+  position: null,
+  intensity: null,
+  notes: null,
+  editorDraft: null,
+});
+
+const demoteContainer = (id: string, children: ComposeNode[]): ComposeContainer => ({
+  nodeType: "container",
+  id: asNodeId(id),
+  header: null,
+  notes: null,
+  children,
+});
+
+const demotableProgram = (): ComposeProgram => ({
+  weeks: [
+    {
+      id: asNodeId("demote-week"),
+      label: "Week",
+      days: [
+        {
+          id: asNodeId("demote-day"),
+          label: "Day",
+          sessions: [
+            {
+              id: asNodeId("demote-session"),
+              label: "Session",
+              blocks: [
+                {
+                  id: asNodeId("demote-block"),
+                  label: "Block",
+                  root: demoteContainer("demote-root", [
+                    demoteContainer("demote-group", [demoteRow()]),
+                  ]),
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+});
 
 describe("useComposeProgram selection lifecycle on delete (QA-1)", () => {
   it("clears the selection when the selected node is deleted", () => {
@@ -91,5 +149,22 @@ describe("useComposeProgram duplicate-as-sibling (QA-6)", () => {
 
     expect(result.current.selectedNodeId).toBe(source);
     expect(result.current.selectedNodeId).not.toBe(cloneId);
+  });
+});
+
+describe("useComposeProgram re-selects the surviving row after demote (T2-6, QA-T26-4)", () => {
+  it("selects the unwrapped child row and drops the demoted container", () => {
+    const { result } = renderHook(() => useComposeProgram(demotableProgram()));
+    const group = asNodeId("demote-group");
+    const childRow = asNodeId("demote-row");
+
+    act(() => result.current.demoteNode(group));
+
+    expect(result.current.selectedNodeId).toBe(childRow);
+    expect(findNodeInProgram(result.current.program, group)).toBeNull();
+    expect(findNodeInProgram(result.current.program, childRow)?.nodeType).toBe("row");
+    expect(
+      childIdsOf(findNodeInProgram(result.current.program, asNodeId("demote-root"))),
+    ).toContain(childRow);
   });
 });

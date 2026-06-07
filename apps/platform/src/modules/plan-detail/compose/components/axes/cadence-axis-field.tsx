@@ -3,6 +3,7 @@
 import { Stack } from "@mui/material";
 
 import { NumberField } from "../../../components/number-field";
+import { fieldErrorsFor } from "../../lib/axis-field-errors";
 
 const FIELD_MIN = 1;
 const FIELD_STEP = 1;
@@ -28,36 +29,43 @@ export const CadenceAxisField: React.FC<CadenceAxisFieldProps> = ({
   value,
   onChange,
   disabled = false,
-}) => (
-  <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
-    <NumberField
-      label={EVERY_LABEL}
-      value={value.everyMin}
-      onChange={(everyMin) => onChange({ ...value, everyMin })}
-      min={FIELD_MIN}
-      step={FIELD_STEP}
-      disabled={disabled}
-      maxWidth={FIELD_WIDTH}
-    />
+}) => {
+  const errors = fieldErrorsFor({ kind: "cadence", ...value });
 
-    <NumberField
-      label={ROUNDS_LABEL}
-      value={value.rounds}
-      onChange={(rounds) => onChange({ ...value, rounds })}
-      min={FIELD_MIN}
-      step={FIELD_STEP}
-      disabled={disabled}
-      maxWidth={FIELD_WIDTH}
-    />
+  return (
+    <Stack direction="row" spacing={1} sx={{ alignItems: "center", flexWrap: "wrap" }}>
+      <NumberField
+        label={EVERY_LABEL}
+        value={value.everyMin}
+        onChange={(everyMin) => onChange({ ...value, everyMin })}
+        min={FIELD_MIN}
+        step={FIELD_STEP}
+        error={errors.get("everyMin")}
+        disabled={disabled}
+        maxWidth={FIELD_WIDTH}
+      />
 
-    <NumberField
-      label={TOTAL_LABEL}
-      value={value.totalMin ?? Number.NaN}
-      onChange={(totalMin) => onChange(withTotalMin(value, totalMin))}
-      min={FIELD_MIN}
-      step={FIELD_STEP}
-      disabled={disabled}
-      maxWidth={FIELD_WIDTH}
-    />
-  </Stack>
-);
+      <NumberField
+        label={ROUNDS_LABEL}
+        value={value.rounds}
+        onChange={(rounds) => onChange({ ...value, rounds })}
+        min={FIELD_MIN}
+        step={FIELD_STEP}
+        error={errors.get("rounds")}
+        disabled={disabled}
+        maxWidth={FIELD_WIDTH}
+      />
+
+      <NumberField
+        label={TOTAL_LABEL}
+        value={value.totalMin ?? Number.NaN}
+        onChange={(totalMin) => onChange(withTotalMin(value, totalMin))}
+        min={FIELD_MIN}
+        step={FIELD_STEP}
+        error={errors.get("totalMin")}
+        disabled={disabled}
+        maxWidth={FIELD_WIDTH}
+      />
+    </Stack>
+  );
+};

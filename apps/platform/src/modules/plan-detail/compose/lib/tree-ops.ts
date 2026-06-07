@@ -277,3 +277,72 @@ export const moveChildInProgram = (
   mapBlockRoot(program, (root) =>
     scopeNodeOp(root, (node) => moveChild(node, parentId, fromIndex, toIndex)),
   );
+
+type ParentLocation = { parentId: NodeId; index: number };
+
+const locateInContainer = (root: ComposeNode, id: NodeId): ParentLocation | null => {
+  if (root.nodeType === "row") {
+    return null;
+  }
+
+  const index = root.children.findIndex((child) => child.id === id);
+
+  if (index >= 0) {
+    return { parentId: root.id, index };
+  }
+
+  for (const child of root.children) {
+    const found = locateInContainer(child, id);
+
+    if (found !== null) {
+      return found;
+    }
+  }
+
+  return null;
+};
+
+export const locateInProgram = (program: ComposeProgram, id: NodeId): ParentLocation | null => {
+  for (const week of program.weeks) {
+    for (const day of week.days) {
+      for (const session of day.sessions) {
+        for (const block of session.blocks) {
+          const found = locateInContainer(block.root, id);
+
+          if (found !== null) {
+            return found;
+          }
+        }
+      }
+    }
+  }
+
+  return null;
+};
+
+export const demoteContainerInProgram = (program: ComposeProgram, id: NodeId): ComposeProgram => {
+  const node = findNodeInProgram(program, id);
+
+  if (node === null || node.nodeType !== "container" || node.children.length !== 1) {
+    return program;
+  }
+
+  const child = node.children[0];
+
+  if (child === undefined || child.nodeType !== "row") {
+    return program;
+  }
+
+  const location = locateInProgram(program, id);
+
+  if (location === null) {
+    return program;
+  }
+
+  return insertChildInProgram(
+    removeNodeFromProgram(program, id),
+    location.parentId,
+    child,
+    location.index,
+  );
+};

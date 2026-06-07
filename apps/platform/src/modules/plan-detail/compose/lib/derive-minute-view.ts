@@ -1,6 +1,7 @@
 import type { Composition } from "@repo/contracts/lms/composition";
 
 const MIN_PREFIX = "MIN ";
+const MIN_ROUNDS = 1;
 
 export type MinuteView =
   | { kind: "none" }
@@ -14,6 +15,11 @@ export const deriveMinuteView = (composition: Composition, childRowIds: string[]
   }
 
   const rounds = repetition.rounds;
+
+  if (!Number.isInteger(rounds) || rounds < MIN_ROUNDS) {
+    return { kind: "none" };
+  }
+
   const assignments = childRowIds.map((rowId, index) => ({
     rowId,
     minuteLabel: `${MIN_PREFIX}${(index % rounds) + 1}`,

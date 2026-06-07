@@ -169,6 +169,12 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
     const diff = diffComposeAxesAgainstOriginal(schema, root);
 
     if (!diff.ok) {
+      if (diff.reason === "arrangement-invalid") {
+        setIssues(diff.issues);
+
+        return;
+      }
+
       setIsStructurallyDivergent(true);
 
       return;
@@ -285,6 +291,7 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
               isCreateMode={isCreateMode}
               updateNode={controller.updateNode}
               rename={controller.rename}
+              onDemoteNode={controller.demoteNode}
             />
           </Paper>
         </Stack>

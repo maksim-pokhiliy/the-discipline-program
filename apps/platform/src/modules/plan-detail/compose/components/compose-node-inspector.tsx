@@ -17,6 +17,7 @@ type ComposeNodeInspectorProps = {
   isCreateMode: boolean;
   updateNode: (id: NodeId, patch: (node: ComposeNode) => ComposeNode) => void;
   rename: (id: NodeId, header: string) => void;
+  onDemoteNode?: ((id: NodeId) => void) | undefined;
 };
 
 export const ComposeNodeInspector: React.FC<ComposeNodeInspectorProps> = ({
@@ -25,6 +26,7 @@ export const ComposeNodeInspector: React.FC<ComposeNodeInspectorProps> = ({
   isCreateMode,
   updateNode,
   rename,
+  onDemoteNode,
 }) => {
   if (selectedNode === null) {
     return (
@@ -43,6 +45,7 @@ export const ComposeNodeInspector: React.FC<ComposeNodeInspectorProps> = ({
         isCreateMode={isCreateMode}
         onUpdateNode={updateNode}
         onRename={rename}
+        onDemoteNode={onDemoteNode}
       />
     );
   }

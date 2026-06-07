@@ -76,10 +76,10 @@ afterEach(() => {
 });
 
 describe("BlockEditorModal chrome", () => {
-  it("renders the 'Edit block' title and the cascade subtitle", () => {
+  it("renders the 'Block intensity & cap' title and the cascade subtitle", () => {
     renderModal();
 
-    expect(screen.getByText("Edit block")).toBeInTheDocument();
+    expect(screen.getByText("Block intensity & cap")).toBeInTheDocument();
     expect(
       screen.getByText("intensity + cap cascade to all schemas in this block"),
     ).toBeInTheDocument();
@@ -202,7 +202,7 @@ describe("BlockEditorModal render smoke (QA-13)", () => {
   it("renders an empty block without crashing", () => {
     renderModal(makeBlock());
 
-    expect(screen.getByText("Edit block")).toBeInTheDocument();
+    expect(screen.getByText("Block intensity & cap")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 
@@ -221,7 +221,7 @@ describe("BlockEditorModal render smoke (QA-13)", () => {
       }),
     );
 
-    expect(screen.getByText("Edit block")).toBeInTheDocument();
+    expect(screen.getByText("Block intensity & cap")).toBeInTheDocument();
     expect(screen.getByText("Effort %")).toBeInTheDocument();
     expect(screen.getByText("Numeric pace")).toBeInTheDocument();
   });

@@ -14,6 +14,8 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 | D-ONTOLOGY       | program/slot home: stages=rows + thin `programKind` axis; delete VOs | RATIFIED |
 | D-EDIT           | edit-mode shape: inverse adapter + edit drawer + save-via-update     | RATIFIED |
 | D-SCORING-RENDER | inert `scoring` presentation: static-disabled in editor (Option A)   | RATIFIED |
+| D-DEMOTE         | T2-6 demote-to-row affordance: unwrap op + Option-2 wiring + gates   | RATIFIED |
+| D-ARR-EDIT-VALID | QA-103 edit-path arrangement validation parity (new diff variant)    | RATIFIED |
 | D-MARKER         | `INNER_LADDER_MARKER`: deprecate-vs-seed                             | **OPEN** |
 
 ---
@@ -71,6 +73,31 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 - **Reconciliation with the D-EDIT scoring-verbatim invariant.** Because scoring is non-editable, the editor never emits a draft-reconstructed scoring; combined with the diff re-emitting the original verbatim, the scoring round-trip is provably lossless from both directions.
 - **Reversibility.** Two-way door — one boolean. ph.5 conditional-scoring authoring flips it editable by dropping the disable (the flag will split from header-editability at that point).
 - **Note.** The same `isCreateMode` flag also locks header/notes read-only in edit-mode (QA-102 fix); the flag is honestly named for "create vs edit", not the original `isScoringEditable`.
+
+### D-DEMOTE — T2-6 demote-to-row affordance (RATIFIED 2026-06-07)
+
+- **Status:** RATIFIED (2026-06-07) — owner picked "build the action" over "soften the hint" via `AskUserQuestion` (planner recon, with ASCII previews); shipped on `feat/compose-tier2-cut2`.
+- **The question.** The inspector showed a demote-HINT ("…drop it down to a row…") for a single-child no-axis container, but there was no action behind it — `compose-node-actions.tsx` had only inspect/duplicate/delete, `useComposeProgram` had no demote handler, and no unwrap tree-op existed. Owner named the dead-advertised hint a snag. Fork: (a) build the action vs (b) reword the hint to advisory-only.
+- **Decision — BUILD.** A "Demote to row" affordance that **unwraps** a container holding exactly one ROW child, replacing it with that child at the same index in the same parent:
+  1. **New pure op** `demoteContainerInProgram(program, id)` in `tree-ops.ts` — reuses `removeNodeFromProgram` + `insertChildInProgram` (structural-sharing → auto no-mutation); no-ops unless container with exactly one ROW child + a locatable parent.
+  2. **Wiring = Option 2** — a `demoteNode(id)` method on `ComposeProgramController`, threaded into the inspector as an OPTIONAL callback, exactly how `updateNode`/`rename` already bypass `NodeHandlers`. **`NodeHandlers` is NOT touched** (it is canvas-only; no canvas demote affordance is planned). Chosen over Option 1 (`NodeHandlers.onDemoteNode` + inspector prop) because the inspector already takes bare controller callbacks → Option 1 is redundant surface.
+  3. **Create-mode gating.** Both the hint AND the button render only when `isCreateMode && !shouldBeContainer(container) && single-ROW-child`. Edit-mode disables structural editing and the diff fail-closes on any structural divergence → demote there would be inert/unsavable; the pre-existing hint had been leaking into edit-mode (now fixed).
+  4. **Post-demote selection** re-selects the surviving ROW child (read pre-demote from a `programRef` latest-value mirror), so the inspector stays populated on what the coach was editing.
+- **Blast radius.** `tree-ops.ts` (new op + `locateInProgram` **relocated** here from `sibling-ops.ts` to keep `tree-ops` the import leaf — cycle verified absent via `dep:check`); `use-compose-program.ts` (+`demoteNode`, +`programRef`); inspector + `compose-node-inspector` + drawer (thread the optional callback). No contract / api-server / Prisma.
+- **Reversibility.** Two-way door — additive pure op + an optional prop + a button; revert = delete them.
+- **Links.** T2-6 (`deferred.md`); plan T5; `[[shipping-coach-role]]` (owner-snag = direct coach pain).
+
+### D-ARR-EDIT-VALID — QA-103 edit-path arrangement validation parity (RATIFIED 2026-06-07)
+
+- **Status:** RATIFIED (2026-06-07) — Gate-equivalent at planner recon (the citation-shift reframed QA-103 from "opaque 400 UX" to a real create/edit asymmetry); shipped on `feat/compose-tier2-cut2`.
+- **The question.** The edit path's `foldArrangement` resolved arrangements under an identity refMap → it checked only ref-REACHABILITY, never the semantic rules `validateDeferredArrangement` runs on create (min-tracks/pairs, distinct, label, **sibling-track for `pairedWithRowId`**). For the min-count cases the server contract still rejected (opaque 400). But a **self-paired track** (`pairedWithRowId` in its own track) is checked by NOBODY server-side (`parallelTrackSchema` has no sibling check) — only the client create-path `validateParallelTrack`→`siblingRowIds`. So edit-mode could **persist a semantically-invalid self-pairing that create rejects** — a real create/edit asymmetry, not merely a worse error surface.
+- **Decision.** Run the **same** `validateDeferredArrangement` on the edit path, inline:
+  1. **New `DiffResult` failure variant** `{ ok:false; reason:"arrangement-invalid"; issues: ConvertIssue[] }`.
+  2. `diffComposeAxesAgainstOriginal` validates every edited **draft** container (recursively, via `collectArrangementIssues`) AFTER the structural-divergence guard and BEFORE assembling; on issues it returns the new variant.
+  3. The drawer's `handleEditSave` splits the `!diff.ok` branch and feeds the issues into the **existing** create-path issues `Alert` (same `ConvertIssue[]` shape) — no new state, no new Alert. Reaches true create/edit parity.
+- **Consequence + carry-forward.** This gives the edit path inline parity with create; it does **NOT** close the SERVER-side gap. Closing the server gap (`parallelTrackSchema` += sibling-track `superRefine`) is a FROZEN-contract Gate-A → recorded as **T3-CT-5 (OPEN)** in `deferred.md`. The server fail-closes for every other invalid arrangement today; only the self-pair slips it, now caught client-side on both create and edit.
+- **Reversibility.** Two-way door — additive union variant + a branch split + a recursion helper.
+- **Links.** QA-103 / T3-CT-5 (`deferred.md`); plan T7; `[[no-list-caps-honest-counts]]`-sibling discipline (the validator is reused as-is, not re-implemented).
 
 ### D-MARKER — INNER_LADDER_MARKER deprecate-vs-seed (OPEN)
 

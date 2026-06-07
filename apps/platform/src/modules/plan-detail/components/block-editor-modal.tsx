@@ -108,7 +108,7 @@ export const BlockEditorModal: React.FC<BlockEditorModalProps> = ({
     <FormModal
       open={open}
       onClose={onClose}
-      title="Edit block"
+      title="Block intensity & cap"
       subtitle="intensity + cap cascade to all schemas in this block"
       maxWidth="sm"
       onSubmit={handleFormSubmit}

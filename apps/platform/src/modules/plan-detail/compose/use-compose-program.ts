@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { RowKind } from "@repo/contracts/lms/schema-row";
 
@@ -13,6 +13,7 @@ import { makeRow } from "./lib/make-row";
 import { duplicateBlock, duplicateDay, duplicateSession, duplicateWeek } from "./lib/program-ops";
 import { duplicateNodeAsSibling } from "./lib/sibling-ops";
 import {
+  demoteContainerInProgram,
   findNodeInProgram,
   insertChildInProgram,
   moveChildInProgram,
@@ -36,6 +37,7 @@ export type ComposeProgramController = {
   clearSelection: () => void;
   updateNode: (id: NodeId, patch: (node: ComposeNode) => ComposeNode) => void;
   rename: (id: NodeId, header: string) => void;
+  demoteNode: (id: NodeId) => void;
   nodeHandlers: NodeHandlers;
   upperHandlers: UpperHandlers;
 };
@@ -45,6 +47,10 @@ export const useComposeProgram = (
 ): ComposeProgramController => {
   const [program, setProgram] = useState(initialProgram);
   const [selectedNodeId, setSelectedNodeId] = useState<NodeId | null>(null);
+
+  const programRef = useRef(program);
+
+  programRef.current = program;
 
   const select = useCallback((id: NodeId) => setSelectedNodeId(id), []);
   const clearSelection = useCallback(() => setSelectedNodeId(null), []);
@@ -74,6 +80,15 @@ export const useComposeProgram = (
   const deleteNode = useCallback((id: NodeId) => {
     setProgram((current) => removeNodeFromProgram(current, id));
     setSelectedNodeId((current) => (current === id ? null : current));
+  }, []);
+
+  const demoteNode = useCallback((id: NodeId) => {
+    const node = findNodeInProgram(programRef.current, id);
+    const child =
+      node !== null && node.nodeType === "container" ? (node.children[0] ?? null) : null;
+
+    setProgram((current) => demoteContainerInProgram(current, id));
+    setSelectedNodeId(child !== null && child.nodeType === "row" ? child.id : null);
   }, []);
 
   const reorderChildren = useCallback(
@@ -134,6 +149,7 @@ export const useComposeProgram = (
     clearSelection,
     updateNode,
     rename,
+    demoteNode,
     nodeHandlers,
     upperHandlers,
   };

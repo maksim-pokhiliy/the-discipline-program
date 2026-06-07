@@ -6,16 +6,12 @@ import { FormPill } from "@repo/ui";
 
 import { type FormatRowResult } from "../lib/format-row";
 
+import { MinutePill } from "./minute-pill";
+
 const BODY_GAP_FACTOR = 0.125;
 const BODY_MAIN_GAP_FACTOR = 0.75;
 const SUB_GAP_FACTOR = 1;
 const SEPARATOR_MR_FACTOR = 0.75;
-const MINUTE_LABEL_FONT_SIZE_PX = 10;
-const MINUTE_LABEL_FONT_WEIGHT = 700;
-const MINUTE_LABEL_LETTER_SPACING = "0.06em";
-const MINUTE_LABEL_PX_FACTOR = 0.625;
-const MINUTE_LABEL_PY_FACTOR = 0.125;
-const MINUTE_LABEL_BORDER_RADIUS_FACTOR = 0.5;
 const SUPERSET_LABEL_FONT_SIZE_PX = 10;
 const SUPERSET_LABEL_FONT_WEIGHT = 700;
 const SUPERSET_LABEL_LETTER_SPACING = "0.06em";
@@ -54,24 +50,7 @@ export const SchemaRowCardBody: React.FC<SchemaRowCardBodyProps> = ({
       useFlexGap
       flexWrap="wrap"
     >
-      {minuteLabel !== null ? (
-        <Box
-          component="span"
-          sx={(theme) => ({
-            bgcolor: "action.selected",
-            color: "text.secondary",
-            px: theme.spacing(MINUTE_LABEL_PX_FACTOR),
-            py: theme.spacing(MINUTE_LABEL_PY_FACTOR),
-            borderRadius: theme.spacing(MINUTE_LABEL_BORDER_RADIUS_FACTOR),
-            fontSize: `${MINUTE_LABEL_FONT_SIZE_PX}px`,
-            fontWeight: MINUTE_LABEL_FONT_WEIGHT,
-            letterSpacing: MINUTE_LABEL_LETTER_SPACING,
-            flexShrink: 0,
-          })}
-        >
-          {minuteLabel}
-        </Box>
-      ) : null}
+      {minuteLabel !== null ? <MinutePill label={minuteLabel} /> : null}
 
       {supersetLabel !== null ? (
         <Box

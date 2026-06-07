@@ -4,6 +4,7 @@ import type {
   ArrangementAxis,
   ComposeContainer,
   ComposeNode,
+  ComposeProgram,
   ComposeRow,
   NodeId,
 } from "../compose-tree.types";
@@ -12,7 +13,9 @@ import { asNodeId } from "./id-factory";
 import {
   cloneBlock,
   cloneNode,
+  demoteContainerInProgram,
   findNode,
+  findNodeInProgram,
   insertChild,
   moveChild,
   removeNode,
@@ -400,5 +403,91 @@ describe("cloneNode arrangement-ref remap (QA-503)", () => {
       expect(innerChildIds.has(track.childSchemaId)).toBe(true);
       expect(sourceIds.has(track.childSchemaId)).toBe(false);
     }
+  });
+});
+
+const programOf = (root: ComposeContainer): ComposeProgram => ({
+  weeks: [
+    {
+      id: asNodeId("week"),
+      label: "Week",
+      days: [
+        {
+          id: asNodeId("day"),
+          label: "Day",
+          sessions: [
+            {
+              id: asNodeId("session"),
+              label: "Session",
+              blocks: [{ id: asNodeId("block"), label: "Block", root }],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+});
+
+const rootChildIds = (program: ComposeProgram): NodeId[] => {
+  const root = findNodeInProgram(program, asNodeId("root"));
+
+  return root !== null && root.nodeType === "container"
+    ? root.children.map((child) => child.id)
+    : [];
+};
+
+describe("demoteContainerInProgram (T2-6)", () => {
+  it("replaces a single-row-child container with its child at the same parent index", () => {
+    const program = programOf(
+      makeContainer("root", [makeRow("a"), makeContainer("group", [makeRow("b")]), makeRow("c")]),
+    );
+
+    const next = demoteContainerInProgram(program, asNodeId("group"));
+
+    expect(rootChildIds(next)).toStrictEqual([asNodeId("a"), asNodeId("b"), asNodeId("c")]);
+    expect(findNodeInProgram(next, asNodeId("group"))).toBeNull();
+    expect(findNodeInProgram(next, asNodeId("b"))?.nodeType).toBe("row");
+  });
+
+  it("does not mutate the source program", () => {
+    const program = programOf(
+      makeContainer("root", [makeRow("a"), makeContainer("group", [makeRow("b")])]),
+    );
+    const snapshot = structuredClone(program);
+
+    demoteContainerInProgram(program, asNodeId("group"));
+
+    expect(program).toStrictEqual(snapshot);
+  });
+
+  it("is a no-op when the container has more than one child", () => {
+    const program = programOf(
+      makeContainer("root", [makeContainer("group", [makeRow("b"), makeRow("c")])]),
+    );
+
+    const next = demoteContainerInProgram(program, asNodeId("group"));
+
+    expect(findNodeInProgram(next, asNodeId("group"))?.nodeType).toBe("container");
+    expect(rootChildIds(next)).toStrictEqual([asNodeId("group")]);
+  });
+
+  it("is a no-op when the single child is a container", () => {
+    const program = programOf(
+      makeContainer("root", [makeContainer("group", [makeContainer("inner", [makeRow("b")])])]),
+    );
+
+    const next = demoteContainerInProgram(program, asNodeId("group"));
+
+    expect(findNodeInProgram(next, asNodeId("group"))?.nodeType).toBe("container");
+    expect(findNodeInProgram(next, asNodeId("inner"))?.nodeType).toBe("container");
+  });
+
+  it("is a no-op for the block-root container", () => {
+    const program = programOf(makeContainer("root", [makeRow("a")]));
+
+    const next = demoteContainerInProgram(program, asNodeId("root"));
+
+    expect(findNodeInProgram(next, asNodeId("root"))?.nodeType).toBe("container");
+    expect(rootChildIds(next)).toStrictEqual([asNodeId("a")]);
   });
 });
