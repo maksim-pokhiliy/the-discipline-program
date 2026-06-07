@@ -5,12 +5,13 @@ import { useMemo } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { alpha, Box, IconButton, type Theme, Typography } from "@mui/material";
+import { alpha, Box, IconButton, Stack, type Theme, Typography } from "@mui/material";
 
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { RowKind } from "@repo/contracts/lms/schema-row";
 import { RowKindBadge } from "@repo/ui";
 
+import { MinutePill } from "../../components/minute-pill";
 import type { ComposeRow, NodeId } from "../compose-tree.types";
 import { buildRowSummary } from "../lib/row-summary";
 
@@ -18,6 +19,7 @@ import { ComposeNodeActions } from "./compose-node-actions";
 
 const GRID_TEMPLATE_COLUMNS = "24px 36px 1fr auto";
 const GRID_GAP_FACTOR = 1.25;
+const CONTENT_GAP_FACTOR = 0.75;
 const PADDING_X_FACTOR = 1.5;
 const PADDING_Y_FACTOR = 0.75;
 const BORDER_RADIUS_FACTOR = 0.5;
@@ -61,6 +63,7 @@ type ComposeRowCardProps = {
   onSelect: (id: NodeId) => void;
   onDuplicate: (id: NodeId) => void;
   onDelete: (id: NodeId) => void;
+  minuteLabel?: string | null;
 };
 
 export const ComposeRowCard: React.FC<ComposeRowCardProps> = ({
@@ -71,6 +74,7 @@ export const ComposeRowCard: React.FC<ComposeRowCardProps> = ({
   onSelect,
   onDuplicate,
   onDelete,
+  minuteLabel = null,
 }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: row.id,
@@ -127,12 +131,16 @@ export const ComposeRowCard: React.FC<ComposeRowCardProps> = ({
         dashed={summary.badge.dashed}
       />
 
-      <Typography
-        variant="body2"
-        sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}
-      >
-        {summary.label}
-      </Typography>
+      <Stack direction="row" alignItems="center" spacing={CONTENT_GAP_FACTOR} sx={{ minWidth: 0 }}>
+        {minuteLabel !== null ? <MinutePill label={minuteLabel} /> : null}
+
+        <Typography
+          variant="body2"
+          sx={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}
+        >
+          {summary.label}
+        </Typography>
+      </Stack>
 
       <Box onClick={(event) => event.stopPropagation()}>
         <ComposeNodeActions

@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
@@ -10,6 +12,8 @@ import { InlineEditText } from "@repo/ui";
 
 import type { ComposeContainer, ComposeNode, NodeId } from "../compose-tree.types";
 import { formatAxesSummary } from "../lib/axes-summary";
+import { composeContainerToComposition } from "../lib/compose-to-create-requests";
+import { deriveMinuteView } from "../lib/derive-minute-view";
 
 import { ComposeAddNodeMenu } from "./compose-add-node-menu";
 import type { NodeHandlers } from "./compose-canvas-handlers";
@@ -56,6 +60,18 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
   const isSelected = container.id === handlers.selectedNodeId;
   const axesSummary = formatAxesSummary(container);
 
+  const minuteLabelById = useMemo<Map<string, string>>(() => {
+    const composition = composeContainerToComposition(container);
+    const directRowIds = container.children
+      .filter((child) => child.nodeType === "row")
+      .map((child) => child.id);
+    const view = deriveMinuteView(composition, directRowIds);
+
+    return view.kind === "none"
+      ? new Map()
+      : new Map(view.assignments.map((assignment) => [assignment.rowId, assignment.minuteLabel]));
+  }, [container]);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -81,6 +97,7 @@ export const ComposeContainerCard: React.FC<ComposeContainerCardProps> = ({
         onSelect={handlers.onSelect}
         onDuplicate={handlers.onDuplicateNode}
         onDelete={handlers.onDeleteNode}
+        minuteLabel={minuteLabelById.get(child.id) ?? null}
       />
     );
 
