@@ -55,4 +55,10 @@ describe("deriveMinuteView", () => {
   it("returns an empty assignments list for a cadence with no rows", () => {
     expect(deriveMinuteView(cadence(4), [])).toEqual({ kind: "minutes", assignments: [] });
   });
+
+  it("returns none for a non-positive or non-integer rounds (malformed authoring draft)", () => {
+    expect(deriveMinuteView(cadence(0), ["r1", "r2"])).toEqual({ kind: "none" });
+    expect(deriveMinuteView(cadence(-1), ["r1"])).toEqual({ kind: "none" });
+    expect(deriveMinuteView(cadence(2.5), ["r1"])).toEqual({ kind: "none" });
+  });
 });
