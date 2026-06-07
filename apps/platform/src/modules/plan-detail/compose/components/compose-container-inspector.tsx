@@ -1,6 +1,6 @@
 "use client";
 
-import { Alert, Stack, Typography } from "@mui/material";
+import { Alert, Button, Stack, Typography } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
 import type { RestSpec, StagedProgramKind } from "@repo/contracts/lms/_shared";
@@ -40,6 +40,7 @@ const LADDER_MARKER_CONFLICT =
   "A ladder rep-scheme group can't also hold an inner-ladder-marker row — move the marker out or change the repetition.";
 const DEMOTE_HINT =
   "This group holds a single movement and no rep-scheme. A plain row may read cleaner — drop it down to a row, or give it a scheme to keep it as a group.";
+const DEMOTE_BUTTON_LABEL = "Demote to row";
 
 const DEFAULT_REPETITION: RepetitionAxis = { kind: "once" };
 const DEFAULT_ARRANGEMENT: ArrangementAxis = { kind: "ordered" };
@@ -85,6 +86,7 @@ type ComposeContainerInspectorProps = {
   isCreateMode: boolean;
   onUpdateNode: (id: NodeId, patch: (node: ComposeNode) => ComposeNode) => void;
   onRename: (id: NodeId, header: string) => void;
+  onDemoteNode?: ((id: NodeId) => void) | undefined;
 };
 
 const asContainerPatch =
@@ -98,6 +100,7 @@ export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps>
   isCreateMode,
   onUpdateNode,
   onRename,
+  onDemoteNode,
 }) => {
   const arrangementTargets = collectArrangementTargets(container, exerciseById);
 
@@ -140,13 +143,25 @@ export const ComposeContainerInspector: React.FC<ComposeContainerInspectorProps>
   const isLadder = (container.repetition ?? DEFAULT_REPETITION).kind === "ladder";
   const repetitionError = isLadder && hasInnerLadderMarker ? LADDER_MARKER_CONFLICT : undefined;
 
-  const showsDemoteHint = !shouldBeContainer(container) && container.children.length === 1;
+  const showsDemoteHint =
+    isCreateMode && !shouldBeContainer(container) && container.children.length === 1;
+  const isSingleRowChild =
+    container.children.length === 1 && container.children[0]?.nodeType === "row";
+  const showsDemote = isCreateMode && !shouldBeContainer(container) && isSingleRowChild;
 
   return (
     <Stack direction="column" spacing={PANEL_SPACING}>
       {showsDemoteHint ? (
         <Alert severity="info" variant="outlined">
-          {DEMOTE_HINT}
+          <Stack direction="column" spacing={1} sx={{ alignItems: "flex-start" }}>
+            <Typography variant="body2">{DEMOTE_HINT}</Typography>
+
+            {showsDemote && onDemoteNode !== undefined ? (
+              <Button size="small" onClick={() => onDemoteNode(container.id)}>
+                {DEMOTE_BUTTON_LABEL}
+              </Button>
+            ) : null}
+          </Stack>
         </Alert>
       ) : null}
 

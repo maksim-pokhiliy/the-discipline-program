@@ -285,6 +285,7 @@ export const ComposeEditorDrawer: React.FC<ComposeEditorDrawerProps> = ({
               isCreateMode={isCreateMode}
               updateNode={controller.updateNode}
               rename={controller.rename}
+              onDemoteNode={controller.demoteNode}
             />
           </Paper>
         </Stack>
