@@ -10,14 +10,14 @@ A scannable board, not prose. Narrative → `journal.md`; why → `decisions.md`
 | ----- | ---------------------------------------- | ---------- | ----------------------------------------------- |
 | audit | 13-agent state-of-the-feature audit      | ✅ done    | `audit-findings.md`; Workflow `wf_fc0a986c-5ae` |
 | 0a    | Edit-mode (T0-1)                         | ✅ done    | D-EDIT + D-SCORING-RENDER ratified; merged #247 |
-| 0b    | program/slot ontology + authoring (T0-2) | ✅ done    | shipped `feat/compose-program-kind`; D-ONTOLOGY |
-| 1     | Correctness (T1-1/2/3)                   | ⬜ pending | plan §1                                         |
+| 0b    | program/slot ontology + authoring (T0-2) | ✅ done    | merged #248 (`b949f0cf`); D-ONTOLOGY            |
+| 1     | Correctness (T1-1/2/3)                   | 🔄 active  | T1-1 + T1-3 this session; plan §1               |
 | 2     | Read honesty + UX snag-list (T2-1..7)    | ⬜ pending | plan §2                                         |
 | 3     | Hygiene (T3-\*)                          | ⬜ pending | plan §3                                         |
 
 ## Next action
 
-**0b (T0-2 program/slot) is DONE** — D-ONTOLOGY implemented + shipped on `feat/compose-program-kind` (7 feature commits, `/feature` full pipeline). The coach's four-projection ruling executed: stages = sibling EXERCISE rows (already authorable), classification = a thin `programKind` field on `composition` (the one authorised Gate-A contract change, now in), both fat VOs (`stagedProgram` + `slotSpec`) DELETED, EMOM stays nested-window. Selector + card badge + create/edit round-trip (the keystone: programKind from the edited draft, not `original`); seed re-authored (block-163 wave un-flattened to 3 stage-rows, block-164 cluster `rounds(5)`, block-008 drop_set + dup-fix→block-181). Review A / QA B, 0 CRITICAL; QA-001 (root silent-drop) + QA-002 (header leak) fixed in-pipeline. Disposes **T0-2 + T3-CT-1**. **PR pending owner review** (gated pre-merge: `db:reset && db:seed` + api-server suite). **Next cut: Tier 1 (correctness — T1-1/T1-2/T1-3) via `/feature`/`/fix`.** Then Tier 2 (read-honesty + owner snag-list), Tier 3 (hygiene). Budget ≤1 `/feature`/session → each its own session.
+**0b (T0-2 program/slot) is DONE** — D-ONTOLOGY implemented + shipped on `feat/compose-program-kind` (7 feature commits, `/feature` full pipeline). The coach's four-projection ruling executed: stages = sibling EXERCISE rows (already authorable), classification = a thin `programKind` field on `composition` (the one authorised Gate-A contract change, now in), both fat VOs (`stagedProgram` + `slotSpec`) DELETED, EMOM stays nested-window. Selector + card badge + create/edit round-trip (the keystone: programKind from the edited draft, not `original`); seed re-authored (block-163 wave un-flattened to 3 stage-rows, block-164 cluster `rounds(5)`, block-008 drop_set + dup-fix→block-181). Review A / QA B, 0 CRITICAL; QA-001 (root silent-drop) + QA-002 (header leak) fixed in-pipeline. Disposes **T0-2 + T3-CT-1**. **Merged to main — PR #248 (squash `b949f0cf`).** **Current cut: Tier 1 (correctness)** — T1-1 (arrangement-ref create-skip) + T1-3 (depth-2 projector) via `/feature small` this session; **T1-2 ph.5-gated → deferred** (no create-path condition-authoring until ph.5). Then Tier 2 (read-honesty + owner snag-list), Tier 3 (hygiene). Budget ≤1 `/feature`/session → each its own session.
 
 ## Open decisions awaiting ratification
 
