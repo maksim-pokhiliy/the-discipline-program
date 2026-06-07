@@ -118,7 +118,7 @@ export const lmsSchemaApi = {
 
             const nextOrder = (max._max.order ?? 0) + 10;
 
-            return tx.schema.create({
+            const created = await tx.schema.create({
               data: {
                 blockId: storageBlockId,
                 parentSchemaId: storageParentSchemaId,
@@ -129,6 +129,12 @@ export const lmsSchemaApi = {
                 notes: data.notes ?? null,
               },
             });
+
+            if (data.composition !== undefined) {
+              await assertCompositionUpdateValid(tx, created.id, data.composition);
+            }
+
+            return created;
           },
           { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
         ),
