@@ -41,3 +41,22 @@ export const buildSchemaWithBody = (s: PrismaSchemaWithSubSchemas): SchemaWithBo
     subSchemas: [],
   })),
 });
+
+export const buildSchemaForest = (flat: PrismaSchemaWithRows[]): SchemaWithBody[] => {
+  const childrenByParent = new Map<string | null, PrismaSchemaWithRows[]>();
+
+  for (const s of flat) {
+    const bucket = childrenByParent.get(s.parentSchemaId) ?? [];
+
+    bucket.push(s);
+    childrenByParent.set(s.parentSchemaId, bucket);
+  }
+
+  const build = (node: PrismaSchemaWithRows): SchemaWithBody => ({
+    schema: mapToSchema(node),
+    rows: node.rows.map(mapToSchemaRow),
+    subSchemas: (childrenByParent.get(node.id) ?? []).sort((a, b) => a.order - b.order).map(build),
+  });
+
+  return (childrenByParent.get(null) ?? []).sort((a, b) => a.order - b.order).map(build);
+};

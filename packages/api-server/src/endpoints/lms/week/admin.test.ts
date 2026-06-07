@@ -482,6 +482,118 @@ describe("lmsWeekApi", () => {
       }
     });
 
+    it("reads a depth-3 schema tree back with the level-3 ladder tracks and rows intact (T1-3)", async () => {
+      const week = await cleanupRaw.week.create({
+        data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
+      });
+      const day = await cleanupRaw.day.create({
+        data: { weekId: week.id, dayOfWeek: "SATURDAY" },
+      });
+      const session = await cleanupRaw.session.create({ data: { dayId: day.id, order: 10 } });
+      const block = await cleanupRaw.block.create({
+        data: { sessionId: session.id, order: 10 },
+      });
+      const rounds = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          order: 10,
+          composition: { repetition: { kind: "count", count: 2 } },
+        },
+      });
+      const trackA = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          parentSchemaId: rounds.id,
+          order: 10,
+          composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+        },
+      });
+      const trackB = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          parentSchemaId: rounds.id,
+          order: 20,
+          composition: { repetition: { kind: "ladder", steps: [9, 15, 21] } },
+        },
+      });
+      const parallel = await cleanupRaw.schema.create({
+        data: {
+          blockId: block.id,
+          parentSchemaId: rounds.id,
+          order: 30,
+          composition: {
+            arrangement: {
+              kind: "parallel",
+              interleaveOrder: "round_by_round",
+              tracks: [{ childSchemaId: trackA.id }, { childSchemaId: trackB.id }],
+            },
+          },
+        },
+      });
+      const rowA = await cleanupRaw.schemaRow.create({
+        data: {
+          schemaId: trackA.id,
+          order: 10,
+          rowKind: "EXERCISE",
+          rowPayload: {
+            rowKind: "EXERCISE",
+            exercise: { form: "atomic", exerciseId: "clz00000000000000exercisea" },
+          },
+        },
+      });
+      const rowB = await cleanupRaw.schemaRow.create({
+        data: {
+          schemaId: trackB.id,
+          order: 10,
+          rowKind: "EXERCISE",
+          rowPayload: {
+            rowKind: "EXERCISE",
+            exercise: { form: "atomic", exerciseId: "clz00000000000000exerciseb" },
+          },
+        },
+      });
+
+      try {
+        const result = await lmsWeekApi.getByPlanAndDate(coach.user.id, activePlanId, MONDAY_PARAM);
+
+        const embedded = result.days[5]?.sessions[0]?.blocks[0];
+        const level1 = embedded?.schemas[0];
+        const level2Parallel = level1?.subSchemas.find((s) => s.schema.id === parallel.id);
+        const level2A = level1?.subSchemas.find((s) => s.schema.id === trackA.id);
+        const level2B = level1?.subSchemas.find((s) => s.schema.id === trackB.id);
+
+        expect(embedded?.schemas).toHaveLength(1);
+        expect(level1?.schema.id).toBe(rounds.id);
+        expect(level1?.subSchemas.map((s) => s.schema.id)).toEqual([
+          trackA.id,
+          trackB.id,
+          parallel.id,
+        ]);
+        expect(level2A?.rows.map((r) => r.id)).toEqual([rowA.id]);
+        expect(level2B?.rows.map((r) => r.id)).toEqual([rowB.id]);
+
+        const arrangement = level2Parallel?.schema.composition?.arrangement;
+
+        expect(arrangement?.kind).toBe("parallel");
+
+        if (arrangement?.kind === "parallel") {
+          expect(arrangement.tracks.map((t) => t.childSchemaId)).toEqual([trackA.id, trackB.id]);
+        }
+      } finally {
+        await cleanupRaw.schemaRow
+          .deleteMany({ where: { schema: { blockId: block.id } } })
+          .catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: parallel.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: trackB.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: trackA.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: rounds.id } }).catch(() => {});
+        await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
+        await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
+        await cleanupRaw.day.delete({ where: { id: day.id } }).catch(() => {});
+        await cleanupRaw.week.delete({ where: { id: week.id } }).catch(() => {});
+      }
+    });
+
     it("returns schemas: [] for a block without an embed tree", async () => {
       const week = await cleanupRaw.week.create({
         data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },

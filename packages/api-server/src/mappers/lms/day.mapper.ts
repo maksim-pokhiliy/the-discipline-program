@@ -21,7 +21,7 @@ type SchemaWithRowsRelation = PrismaSchema & {
 
 type BlockWithSchemasRelation = PrismaBlock & {
   labelAssignments: (PrismaBlockLabelAssignment & { label: PrismaLabel })[];
-  schemas: (SchemaWithRowsRelation & { subSchemas: SchemaWithRowsRelation[] })[];
+  schemas: SchemaWithRowsRelation[];
 };
 
 type SessionWithRelations = PrismaSession & {

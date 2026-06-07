@@ -421,6 +421,86 @@ describe("lmsSchemaApi", () => {
         await ctx.cleanup();
       }
     });
+
+    describe("T1-1 symmetric composition guard on create", () => {
+      const LEAF_COUNT_COMPOSITION: Composition = {
+        repetition: { kind: "count", count: 3 },
+      };
+
+      it("persists a leaf composition with no arrangement on create (T1-1)", async () => {
+        const ctx = await provisionBlock();
+
+        try {
+          const created = await lmsSchemaApi.create(
+            coach.user.id,
+            activePlanId,
+            { blockId: ctx.block.id },
+            { composition: LEAF_COUNT_COMPOSITION },
+          );
+
+          expect(created.composition).toEqual(LEAF_COUNT_COMPOSITION);
+
+          const stored = await cleanupRaw.schema.findUnique({ where: { id: created.id } });
+
+          expect(stored?.composition).toEqual(LEAF_COUNT_COMPOSITION);
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+
+      it("rejects a parallel arrangement whose track refs cannot resolve on a childless new schema with 400 (T1-1)", async () => {
+        const ctx = await provisionBlock();
+
+        try {
+          await expect(
+            lmsSchemaApi.create(
+              coach.user.id,
+              activePlanId,
+              { blockId: ctx.block.id },
+              {
+                composition: {
+                  arrangement: {
+                    kind: "parallel",
+                    interleaveOrder: "round_by_round",
+                    tracks: [
+                      { childSchemaId: "clz0000000000000000track1" },
+                      { childSchemaId: "clz0000000000000000track2" },
+                    ],
+                  },
+                },
+              },
+            ),
+          ).rejects.toThrow(BadRequestError);
+
+          const stored = await cleanupRaw.schema.findMany({ where: { blockId: ctx.block.id } });
+
+          expect(stored).toHaveLength(0);
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+
+      it("persists an ordered arrangement on create because it carries no refs (T1-1)", async () => {
+        const ctx = await provisionBlock();
+
+        try {
+          const created = await lmsSchemaApi.create(
+            coach.user.id,
+            activePlanId,
+            { blockId: ctx.block.id },
+            { composition: { arrangement: { kind: "ordered" } } },
+          );
+
+          expect(created.composition).toEqual({ arrangement: { kind: "ordered" } });
+
+          const stored = await cleanupRaw.schema.findUnique({ where: { id: created.id } });
+
+          expect(stored?.composition).toEqual({ arrangement: { kind: "ordered" } });
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+    });
   });
 
   describe("update", () => {
