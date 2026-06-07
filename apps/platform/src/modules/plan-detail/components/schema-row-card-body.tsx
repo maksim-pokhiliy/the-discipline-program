@@ -16,6 +16,12 @@ const MINUTE_LABEL_LETTER_SPACING = "0.06em";
 const MINUTE_LABEL_PX_FACTOR = 0.625;
 const MINUTE_LABEL_PY_FACTOR = 0.125;
 const MINUTE_LABEL_BORDER_RADIUS_FACTOR = 0.5;
+const SUPERSET_LABEL_FONT_SIZE_PX = 10;
+const SUPERSET_LABEL_FONT_WEIGHT = 700;
+const SUPERSET_LABEL_LETTER_SPACING = "0.06em";
+const SUPERSET_LABEL_PX_FACTOR = 0.625;
+const SUPERSET_LABEL_PY_FACTOR = 0.125;
+const SUPERSET_LABEL_BORDER_RADIUS_FACTOR = 0.5;
 const SEPARATOR_CONTENT = "'\\00b7\\00a0'";
 const SEPARATOR_SX = {
   "&::before": {
@@ -30,6 +36,7 @@ type SchemaRowCardBodyProps = {
   formPillText: string | null;
   subParts: FormatRowResult["subParts"];
   minuteLabel?: string | null;
+  supersetLabel?: string | null;
 };
 
 export const SchemaRowCardBody: React.FC<SchemaRowCardBodyProps> = ({
@@ -37,6 +44,7 @@ export const SchemaRowCardBody: React.FC<SchemaRowCardBodyProps> = ({
   formPillText,
   subParts,
   minuteLabel = null,
+  supersetLabel = null,
 }) => (
   <Stack direction="column" spacing={BODY_GAP_FACTOR} sx={{ minWidth: 0 }}>
     <Stack
@@ -62,6 +70,27 @@ export const SchemaRowCardBody: React.FC<SchemaRowCardBodyProps> = ({
           })}
         >
           {minuteLabel}
+        </Box>
+      ) : null}
+
+      {supersetLabel !== null ? (
+        <Box
+          component="span"
+          sx={(theme) => ({
+            border: 1,
+            borderColor: "divider",
+            bgcolor: "transparent",
+            color: "text.secondary",
+            px: theme.spacing(SUPERSET_LABEL_PX_FACTOR),
+            py: theme.spacing(SUPERSET_LABEL_PY_FACTOR),
+            borderRadius: theme.spacing(SUPERSET_LABEL_BORDER_RADIUS_FACTOR),
+            fontSize: `${SUPERSET_LABEL_FONT_SIZE_PX}px`,
+            fontWeight: SUPERSET_LABEL_FONT_WEIGHT,
+            letterSpacing: SUPERSET_LABEL_LETTER_SPACING,
+            flexShrink: 0,
+          })}
+        >
+          {supersetLabel}
         </Box>
       ) : null}
 

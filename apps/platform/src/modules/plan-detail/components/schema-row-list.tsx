@@ -72,6 +72,18 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
     );
   }, [composition, sortedRows]);
 
+  const supersetLabelById = useMemo<Map<string, string>>(() => {
+    if (composition?.arrangement?.kind !== "superset") {
+      return new Map();
+    }
+
+    return new Map(
+      composition.arrangement.pairs.flatMap((pair) =>
+        pair.rowIds.map((id) => [id, pair.label] as const),
+      ),
+    );
+  }, [composition]);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -120,6 +132,7 @@ export const SchemaRowList: React.FC<SchemaRowListProps> = ({
                   startDate={startDate}
                   index={index}
                   minuteLabel={minuteLabelById.get(row.id) ?? null}
+                  supersetLabel={supersetLabelById.get(row.id) ?? null}
                   isReorderPending={parentIsReorderPending || reorderSchemaRows.isPending}
                 />
               ))}

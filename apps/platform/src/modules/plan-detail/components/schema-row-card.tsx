@@ -51,6 +51,7 @@ type SchemaRowCardProps = {
   startDate: string;
   index: number;
   minuteLabel?: string | null;
+  supersetLabel?: string | null;
   isReorderPending: boolean;
 };
 
@@ -91,6 +92,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
   startDate,
   index,
   minuteLabel = null,
+  supersetLabel = null,
   isReorderPending,
 }) => {
   const updateSchemaRow = useUpdateSchemaRow(planId, startDate);
@@ -186,6 +188,7 @@ export const SchemaRowCard: React.FC<SchemaRowCardProps> = ({
         formPillText={fmt.formPillText}
         subParts={fmt.subParts}
         minuteLabel={minuteLabel}
+        supersetLabel={supersetLabel}
       />
 
       {fmt.demoUrl !== null ? (
