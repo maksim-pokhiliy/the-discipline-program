@@ -10,14 +10,14 @@ import { type SchemaWithBody } from "@repo/contracts/lms/schema";
 
 import { assertComposeTreeValid } from "./compose-projection.mapper";
 import { mapToLabel } from "./label.mapper";
-import { buildSchemaWithBody, type PrismaSchemaWithSubSchemas } from "./schema.mapper";
+import { buildSchemaForest, type PrismaSchemaWithRows } from "./schema.mapper";
 
 type BlockWithLabels = PrismaBlock & {
   labelAssignments: (PrismaBlockLabelAssignment & { label: PrismaLabel })[];
 };
 
 type BlockWithSchemas = BlockWithLabels & {
-  schemas: PrismaSchemaWithSubSchemas[];
+  schemas: PrismaSchemaWithRows[];
 };
 
 export const mapToBlock = (b: PrismaBlock): Block => ({
@@ -40,15 +40,13 @@ export const mapToBlockWithLabels = (b: BlockWithLabels): Block => ({
     .map((la) => mapToLabel(la.label)),
 });
 
-const buildValidatedSchemaWithBody = (s: PrismaSchemaWithSubSchemas): SchemaWithBody => {
-  const schemaWithBody = buildSchemaWithBody(s);
+const validateSchemaTree = (tree: SchemaWithBody): SchemaWithBody => {
+  assertComposeTreeValid(tree);
 
-  assertComposeTreeValid(schemaWithBody);
-
-  return schemaWithBody;
+  return tree;
 };
 
 export const mapToBlockWithSchemas = (b: BlockWithSchemas): Block => ({
   ...mapToBlockWithLabels(b),
-  schemas: b.schemas.map(buildValidatedSchemaWithBody),
+  schemas: buildSchemaForest(b.schemas).map(validateSchemaTree),
 });

@@ -40,14 +40,9 @@ export const lmsWeekApi = {
                         include: { label: true },
                       },
                       schemas: {
-                        where: { parentSchemaId: null },
                         orderBy: { order: "asc" },
                         include: {
                           rows: { orderBy: { order: "asc" } },
-                          subSchemas: {
-                            orderBy: { order: "asc" },
-                            include: { rows: { orderBy: { order: "asc" } } },
-                          },
                         },
                       },
                     },
