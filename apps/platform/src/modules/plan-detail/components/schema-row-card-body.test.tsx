@@ -213,6 +213,31 @@ describe("SchemaRowCard FOOTNOTE italic cascade", () => {
   });
 });
 
+describe("SchemaRowCard superset pair chip (T2-2)", () => {
+  it("renders the pair-label chip when supersetLabel is set", () => {
+    render(
+      <CatalogContext.Provider value={catalogValue}>
+        <SchemaRowCard
+          row={makeExerciseRow()}
+          planId={PLAN_ID}
+          startDate={START_DATE}
+          index={0}
+          isReorderPending={false}
+          supersetLabel="Pair A"
+        />
+      </CatalogContext.Provider>,
+    );
+
+    expect(screen.getByText("Pair A")).toBeInTheDocument();
+  });
+
+  it("does NOT render a pair chip when supersetLabel is absent", () => {
+    renderRow(makeExerciseRow());
+
+    expect(screen.queryByText("Pair A")).toBeNull();
+  });
+});
+
 describe("SchemaRowCard duplicate-string sub-parts (anti-pattern #45)", () => {
   it("renders sub-parts without a React duplicate-key warning when same text repeats", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
