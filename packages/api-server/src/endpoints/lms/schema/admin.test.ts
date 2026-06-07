@@ -844,6 +844,46 @@ describe("lmsSchemaApi", () => {
         }
       });
 
+      it("rejects a parallel update whose pairedWithRowId points at a row in its OWN track (self-pair)", async () => {
+        const ctx = await provisionBlock();
+        const parent = await createComposeSchema({
+          blockId: ctx.block.id,
+          composition: BENIGN_COMPOSITION,
+        });
+        const trackA = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parent.id,
+        });
+        const trackB = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parent.id,
+        });
+        const trackARow = await createRestSlotRow(trackA.id);
+
+        try {
+          await expect(
+            lmsSchemaApi.update(coach.user.id, parent.id, {
+              composition: {
+                arrangement: {
+                  kind: "parallel",
+                  interleaveOrder: "round_by_round",
+                  tracks: [
+                    { childSchemaId: trackA.id, pairedWithRowId: trackARow.id },
+                    { childSchemaId: trackB.id },
+                  ],
+                },
+              },
+            }),
+          ).rejects.toThrow(BadRequestError);
+
+          const stored = await cleanupRaw.schema.findUnique({ where: { id: parent.id } });
+
+          expect(stored?.composition).toEqual(BENIGN_COMPOSITION);
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+
       it("accepts a parallel update over a real nested tree and stores the arrangement", async () => {
         const ctx = await provisionBlock();
         const parent = await createComposeSchema({ blockId: ctx.block.id });

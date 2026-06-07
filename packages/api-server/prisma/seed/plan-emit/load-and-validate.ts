@@ -1,9 +1,15 @@
 import { exerciseCuid } from "../plan-data/builder";
-import { canonicalSeedSchema, type CanonicalSeed } from "../plan-data/canonical-schema";
+import {
+  canonicalSeedSchema,
+  type CanonicalBlock,
+  type CanonicalSeed,
+  type CanonicalSession,
+} from "../plan-data/canonical-schema";
 import { SYNTHETIC_DEMO_PLAN } from "../plan-data/plan-synthetic";
 
 const MAX_ZOD_ISSUES_SHOWN = 20;
 const MAX_ORPHAN_REFS_SHOWN = 20;
+const MAX_DUP_BLOCK_REFS_SHOWN = 20;
 
 const EXERCISE_REF_KEYS = new Set<string>([
   "exerciseId",
@@ -66,6 +72,46 @@ const assertExerciseRefsResolve = (seed: CanonicalSeed): void => {
   }
 };
 
+const collectBlocksFromSessions = (sessions: CanonicalSession[], sink: CanonicalBlock[]): void => {
+  for (const session of sessions) {
+    for (const block of session.blocks) {
+      sink.push(block);
+    }
+  }
+};
+
+const assertBlockRefsUnique = (seed: CanonicalSeed): void => {
+  const blocks: CanonicalBlock[] = [];
+
+  for (const week of seed.weeks) {
+    for (const day of week.days) {
+      collectBlocksFromSessions(day.sessions, blocks);
+    }
+  }
+
+  collectBlocksFromSessions(seed.phase7Examples, blocks);
+
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+
+  for (const block of blocks) {
+    if (seen.has(block.blockInstanceRef)) {
+      duplicates.add(block.blockInstanceRef);
+    }
+
+    seen.add(block.blockInstanceRef);
+  }
+
+  if (duplicates.size > 0) {
+    const shown = [...duplicates].slice(0, MAX_DUP_BLOCK_REFS_SHOWN).join(", ");
+
+    throw new Error(
+      `Canonical seed has ${duplicates.size} duplicate blockInstanceRef(s) (showing first ${MAX_DUP_BLOCK_REFS_SHOWN}): ${shown}\n` +
+        `Hint: each block instance must carry a unique block-NNN ref; rename the colliding occurrence.`,
+    );
+  }
+};
+
 export const loadCanonicalSeed = async (): Promise<CanonicalSeed> => {
   const result = canonicalSeedSchema.safeParse(SYNTHETIC_DEMO_PLAN);
 
@@ -82,6 +128,7 @@ export const loadCanonicalSeed = async (): Promise<CanonicalSeed> => {
   }
 
   assertExerciseRefsResolve(result.data);
+  assertBlockRefsUnique(result.data);
 
   return result.data;
 };

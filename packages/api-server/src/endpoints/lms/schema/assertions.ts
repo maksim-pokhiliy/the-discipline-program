@@ -4,11 +4,30 @@ import { BadRequestError, NotFoundError } from "@repo/errors";
 import { assertComposeTreeValidForWrite, buildSchemaWithBody } from "../../../mappers/lms";
 import { type TxClient } from "../_shared";
 
+const siblingTrackRowIds = (
+  rowsByChildSchemaId: ReadonlyMap<string, ReadonlySet<string>>,
+  ownChildSchemaId: string,
+): Set<string> => {
+  const rowIds = new Set<string>();
+
+  for (const [childSchemaId, trackRowIds] of rowsByChildSchemaId) {
+    if (childSchemaId === ownChildSchemaId) {
+      continue;
+    }
+
+    for (const rowId of trackRowIds) {
+      rowIds.add(rowId);
+    }
+  }
+
+  return rowIds;
+};
+
 export const assertArrangementRefsInScope = (
   arrangement: ArrangementAxis,
   directSchemaIds: ReadonlySet<string>,
   directRowIds: ReadonlySet<string>,
-  grandchildRowIds: ReadonlySet<string>,
+  rowsByChildSchemaId: ReadonlyMap<string, ReadonlySet<string>>,
 ): void => {
   if (arrangement.kind === "parallel") {
     for (const track of arrangement.tracks) {
@@ -18,8 +37,11 @@ export const assertArrangementRefsInScope = (
         });
       }
 
-      if (track.pairedWithRowId !== undefined && !grandchildRowIds.has(track.pairedWithRowId)) {
-        throw new BadRequestError("arrangement pairedWithRowId is not a row of any track", {
+      if (
+        track.pairedWithRowId !== undefined &&
+        !siblingTrackRowIds(rowsByChildSchemaId, track.childSchemaId).has(track.pairedWithRowId)
+      ) {
+        throw new BadRequestError("arrangement pairedWithRowId is not a row of a sibling track", {
           pairedWithRowId: track.pairedWithRowId,
         });
       }
@@ -73,10 +95,13 @@ export const assertCompositionUpdateValid = async (
   if (arrangement !== undefined && arrangement.kind !== "ordered") {
     const directSchemaIds = new Set(current.subSchemas.map((sub) => sub.id));
     const directRowIds = new Set(current.rows.map((row) => row.id));
-    const grandchildRowIds = new Set(
-      current.subSchemas.flatMap((sub) => sub.rows.map((row) => row.id)),
+    const rowsByChildSchemaId = new Map<string, ReadonlySet<string>>(
+      current.subSchemas.map((sub): [string, ReadonlySet<string>] => [
+        sub.id,
+        new Set(sub.rows.map((row) => row.id)),
+      ]),
     );
 
-    assertArrangementRefsInScope(arrangement, directSchemaIds, directRowIds, grandchildRowIds);
+    assertArrangementRefsInScope(arrangement, directSchemaIds, directRowIds, rowsByChildSchemaId);
   }
 };
