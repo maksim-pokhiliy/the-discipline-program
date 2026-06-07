@@ -25,6 +25,10 @@ The test suite is reliable — all 240 tests pass consistently, with Neon cold-s
 
 **cleanup() silent failure.** `.catch(() => {})` swallows cleanup errors, potentially leaving orphaned test data. Fixed to log errors via `logger.error` while still allowing the cleanup sequence to continue.
 
+### Implemented since
+
+**Property-based tests (fast-check).** Adopted in the plan-editor compose work, not for money/date math. `fast-check` is a platform catalog dep, exercised by the compose arrangement round-trip property tests (`apps/platform/src/modules/plan-detail/compose/lib/compose-roundtrip.property.test.ts`, with arbitraries in `compose-arbitraries.ts`): generated draft arrangement trees must reject every deliberately-invalid tree with an arrangement-pathed issue, round-trip every resolvable tree through `composeRootToCreatePlan`, and fold the resolved arrangement into the projected composition.
+
 ### Coverage gaps (documented, not fixed)
 
 **Untested endpoints (~14):**
@@ -45,16 +49,15 @@ The test suite is reliable — all 240 tests pass consistently, with Neon cold-s
 
 ### Deferred improvements with triggers
 
-| Improvement                               | Trigger                                               | Approach                                               |
-| ----------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------ |
-| E2E tests (Playwright)                    | First critical user flow (signup → purchase → access) | Start with 3-5 smoke tests for golden paths            |
-| Frontend component tests                  | Platform app active development (Phase 3)             | testing-library + happy-dom for @repo/ui components    |
-| Property-based tests (fast-check)         | Money math change or date math refactor               | Focus on money VO, date-helpers, Zod schema edge cases |
-| Mutation testing (Stryker)                | Test count exceeds 500                                | Verify test quality, not just coverage                 |
-| Contract tests (api-client ↔ api-server) | First client/server schema drift incident             | Shared Zod schema validation in test suite             |
-| Visual regression                         | Design system stabilization                           | Chromatic or similar for @repo/ui Storybook            |
-| Endpoint test coverage push               | Pre-launch quality gate                               | Start with CMS (most user-facing), then coaching       |
-| Mapper test coverage push                 | Mapper logic change or bug found via mapper           | Pure function tests, easy to write in bulk             |
+| Improvement                               | Trigger                                               | Approach                                            |
+| ----------------------------------------- | ----------------------------------------------------- | --------------------------------------------------- |
+| E2E tests (Playwright)                    | First critical user flow (signup → purchase → access) | Start with 3-5 smoke tests for golden paths         |
+| Frontend component tests                  | Platform app active development (Phase 3)             | testing-library + happy-dom for @repo/ui components |
+| Mutation testing (Stryker)                | Test count exceeds 500                                | Verify test quality, not just coverage              |
+| Contract tests (api-client ↔ api-server) | First client/server schema drift incident             | Shared Zod schema validation in test suite          |
+| Visual regression                         | Design system stabilization                           | Chromatic or similar for @repo/ui Storybook         |
+| Endpoint test coverage push               | Pre-launch quality gate                               | Start with CMS (most user-facing), then coaching    |
+| Mapper test coverage push                 | Mapper logic change or bug found via mapper           | Pure function tests, easy to write in bulk          |
 
 ## Consequences
 
