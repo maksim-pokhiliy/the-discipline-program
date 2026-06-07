@@ -11,6 +11,7 @@ const TEST_DIR = dirname(fileURLToPath(import.meta.url));
 const SCAN_ROOTS = [
   join(TEST_DIR, "..", "mappers", "lms"),
   join(TEST_DIR, "..", "endpoints", "lms", "schema"),
+  join(TEST_DIR, "..", "endpoints", "lms", "schema-row"),
 ];
 
 type Offender = { file: string; pattern: string };
