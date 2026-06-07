@@ -8,15 +8,16 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 
 ## Index
 
-| ID               | Topic                                                                | Status   |
-| ---------------- | -------------------------------------------------------------------- | -------- |
-| D-1              | Initiative origin: audit → compose-hardening, scope = Tiers 0–3      | RATIFIED |
-| D-ONTOLOGY       | program/slot home: stages=rows + thin `programKind` axis; delete VOs | RATIFIED |
-| D-EDIT           | edit-mode shape: inverse adapter + edit drawer + save-via-update     | RATIFIED |
-| D-SCORING-RENDER | inert `scoring` presentation: static-disabled in editor (Option A)   | RATIFIED |
-| D-DEMOTE         | T2-6 demote-to-row affordance: unwrap op + Option-2 wiring + gates   | RATIFIED |
-| D-ARR-EDIT-VALID | QA-103 edit-path arrangement validation parity (new diff variant)    | RATIFIED |
-| D-MARKER         | `INNER_LADDER_MARKER`: deprecate-vs-seed                             | **OPEN** |
+| ID               | Topic                                                                             | Status   |
+| ---------------- | --------------------------------------------------------------------------------- | -------- |
+| D-1              | Initiative origin: audit → compose-hardening, scope = Tiers 0–3                   | RATIFIED |
+| D-ONTOLOGY       | program/slot home: stages=rows + thin `programKind` axis; delete VOs              | RATIFIED |
+| D-EDIT           | edit-mode shape: inverse adapter + edit drawer + save-via-update                  | RATIFIED |
+| D-SCORING-RENDER | inert `scoring` presentation: static-disabled in editor (Option A)                | RATIFIED |
+| D-DEMOTE         | T2-6 demote-to-row affordance: unwrap op + Option-2 wiring + gates                | RATIFIED |
+| D-ARR-EDIT-VALID | QA-103 edit-path arrangement validation parity (new diff variant)                 | RATIFIED |
+| D-CT-TIER3       | Tier-3 contract dispositions: CT-2 drop · CT-4 fold · CT-5 api-server · CT-3 drop | RATIFIED |
+| D-MARKER         | `INNER_LADDER_MARKER`: deprecate-vs-seed                                          | **OPEN** |
 
 ---
 
@@ -104,3 +105,13 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 - **Status:** OPEN.
 - **The question.** The seed expresses parallel-ladders via `container.repetition.ladder` (block-037); the row-payload `INNER_LADDER_MARKER` ladder has 0 seed instances and lives only in the four-projection test (T3-SEED-5). Either (a) ratify marker-via-row as deprecated in favour of container-ladder (then it's an inert-tripwire to drop with ph.5 — see `[[compose-ph5-seed]]`), or (b) seed ≥1 marker + a full Gauntlet Block C so the read pipeline is exercised on live data.
 - **Note.** The four-projection split (D-LADDER) proved the two ladders are distinct primitives — dropping the row form would narrow expressiveness; weigh against whether any real coach plan needs per-track personal rep-schemes that a container-ladder can't carry.
+
+### D-CT-TIER3 — Tier-3 contract / draft dispositions (RATIFIED 2026-06-07 · planner recon)
+
+- **Status:** RATIFIED (2026-06-07) — owner ratified all four via one `AskUserQuestion` after a verify-then-spec pass read the FROZEN `composition` contract + both arrangement validators + the read formatter verbatim on live code. Three of the four citations shifted in meaning vs the 2026-06-05 catalog. No code executes under this decision except T3-CT-5 (scheduled into Cut B); CT-2/CT-3/CT-4 are ratified **non-actions**.
+- **T3-CT-2 (`until_recovery` value-pin) → DROP.** `restSpecSchema` (`_shared/cap-spec.ts:14-36`) leaves `duration.value` free under `qualifier:"until_recovery"`. Pinning to `value:1` is a FROZEN-contract Gate-A (a new `superRefine` that newly _rejects_ currently-valid input) + a seed re-author (`rest-coverage.ts:17` is `value:3`) + a test invert (`cap-spec.test.ts:89` asserts non-1 is accepted, self-documented "a future superRefine flips this to reject"). And it does **not** fix the real footgun: `restLabel` (`format-composition-summary.ts:49-55`) renders the sham value _and drops the qualifier_ — the card shows "rest 3’" regardless of any pin. The value is sham across all four projections; canonicalising it buys nothing a consumer reads. Carry the documented note. The actual read-honesty gap (`until_recovery` qualifier never rendered on the read card) is a **separate, out-of-catalog read-side item** — noted here, deliberately NOT scheduled (scope = close the initiative, not expand it).
+- **T3-CT-4 (`range` repetition in the platform draft) → RATIFY folded-into-count.** The contract `repetitionAxisSchema` carries both `count: exactOrRangeSchema` (= `number | {min,max}`) and a distinct `range` kind; `repetitionLabel:29-33` renders `count:{min,max}` and `range:{min,max}` **identically** ("min–max rounds"). The draft already expresses a round-range via `count`; the contract `range` kind is a near-duplicate with **0 seed instances**, and `D-EDIT` already gracefully refuses editing a loaded `range`. No draft / `mapRepetition` / `axes-summary` change. This **dissolves T3-RD-2's "blocked on T3-CT-4" premise** — a future formatter dedup takes the contract type as the shared input; `range` is read-only and irrelevant to the authoring formatter.
+- **T3-CT-5 (server self-pair) → api-server fix, NOT a contract Gate-A.** Re-verified: the client (`arrangement-convert.ts:93-106`, `siblingRowIds:34-59`) requires `pairedWithRowId` in a _sibling_ track; the server (`assertions.ts:21-25`) only checks membership in `grandchildRowIds` = _all_ tracks' rows → a self-pair passes. The fix lives in api-server `assertArrangementRefsInScope`, which holds the tree-context (`current.subSchemas` + rows); the FROZEN `parallelTrackSchema` (pure composition) **cannot** express it — it has no row↔track membership. The catalog's "add a `superRefine` to `parallelTrackSchema` (Gate-A)" framing was **mis-homed**. Scheduled into Cut B: exclude each track's own-`childSchemaId` rows from the `pairedWithRowId` membership set. ~15 LOC; needs the gated api-server suite.
+- **T3-CT-3 (ladder `superRefine` string literal) → DROP.** `composition.schema.ts:243` compares `rowKind === "INNER_LADDER_MARKER"`. A const swap is byte-identical at runtime (no type / validation / wire change → not a Gate-A in spirit), there is no clean named const to import (`ROW_KINDS` is a positional tuple, not a keyed object), and a member rename is already caught by the ladder×marker mutex test. Marginal insurance; dropped.
+- **Reversibility.** CT-2/CT-3/CT-4 are non-actions (two-way doors by definition); CT-5 is an additive server check (two-way door).
+- **Links.** `deferred.md` T3-CT-2/3/4/5 + T3-RD-2; `[[compose-four-projection]]`; sources `cap-spec.ts`, `composition.schema.ts`, `arrangement-convert.ts`, `endpoints/lms/schema/assertions.ts`, `format-composition-summary.ts`.

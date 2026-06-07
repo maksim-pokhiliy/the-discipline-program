@@ -12,9 +12,9 @@ import { deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { type SchemaWithBody, SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
 
-import { isComposeEditable } from "../compose/lib/schema-to-compose";
 import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
+import { isComposeEditable } from "../lib/is-compose-editable";
 
 import { SchemaCardMeta } from "./schema-card-meta";
 import { SchemaCompositionTag } from "./schema-composition-tag";

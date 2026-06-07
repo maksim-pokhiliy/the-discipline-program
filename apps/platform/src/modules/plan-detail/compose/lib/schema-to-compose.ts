@@ -257,13 +257,3 @@ export const schemaWithBodyToComposeContainer = (schema: SchemaWithBody): Invers
 
 export const schemaWithBodyToComposeProgram = (schema: SchemaWithBody): InverseResult =>
   schemaWithBodyToComposeContainer(schema);
-
-export const isComposeEditable = (schema: SchemaWithBody): boolean => {
-  const composition = schema.schema.composition;
-
-  if (composition?.repetition?.kind === "range") {
-    return false;
-  }
-
-  return schema.subSchemas.every(isComposeEditable);
-};
