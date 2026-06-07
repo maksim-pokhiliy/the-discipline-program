@@ -59,7 +59,7 @@ const SUB_SLOTS: CanonicalSchemaNode[] = Array.from({ length: EMOM_MINUTES }, (_
   buildSlot(i + 1),
 );
 
-export const BLOCK_EMOM_20_SUBSCHEMAS: CanonicalBlock = {
+export const BLOCK_EMOM_22_SUBSCHEMAS: CanonicalBlock = {
   blockInstanceRef: "block-180",
   order: 2,
   labels: [LBL.conditioning],
@@ -70,7 +70,7 @@ export const BLOCK_EMOM_20_SUBSCHEMAS: CanonicalBlock = {
     buildComposeNode(
       {
         order: 1,
-        header: "20-min EMOM (sub-schema coverage)",
+        header: "22-min EMOM (sub-schema coverage)",
         rows: [],
         subSchemas: SUB_SLOTS,
       },

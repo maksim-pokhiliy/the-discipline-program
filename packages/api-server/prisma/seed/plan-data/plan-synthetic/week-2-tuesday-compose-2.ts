@@ -34,7 +34,7 @@ export const BLOCK_TIME_WINDOW_OUTER_WK2_TUE: CanonicalBlock = {
 };
 
 export const BLOCK_PULL_UPS_DIPS_CYCLE_WK2_TUE: CanonicalBlock = {
-  blockInstanceRef: "block-047",
+  blockInstanceRef: "block-182",
   order: 6,
   labels: [LBL.gymnastics],
   intensity: null,

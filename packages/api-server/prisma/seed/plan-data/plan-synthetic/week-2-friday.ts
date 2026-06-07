@@ -3,7 +3,7 @@ import type { CanonicalBlock, CanonicalDay, CanonicalSession } from "../canonica
 
 import { EX, LBL } from "./refs";
 import { mkRow } from "./row-helpers";
-import { BLOCK_EMOM_20_SUBSCHEMAS } from "./sub-schema-coverage";
+import { BLOCK_EMOM_22_SUBSCHEMAS } from "./sub-schema-coverage";
 
 const BLOCK_PACE_MODERATE_WK2_FRI: CanonicalBlock = {
   blockInstanceRef: "block-111",
@@ -36,7 +36,7 @@ const SESSION_WK2_FRI: CanonicalSession = {
   label: LBL.firstSession,
   notes: null,
   freezeLoadsAtCreation: false,
-  blocks: [BLOCK_PACE_MODERATE_WK2_FRI, BLOCK_EMOM_20_SUBSCHEMAS],
+  blocks: [BLOCK_PACE_MODERATE_WK2_FRI, BLOCK_EMOM_22_SUBSCHEMAS],
 };
 
 export const DAY_WK2_FRI: CanonicalDay = {

@@ -200,22 +200,3 @@ export const BLOCK_NESTED_OVER_PARALLEL_LADDER_WK2_TUE: CanonicalBlock = {
     ),
   ],
 };
-
-export const BLOCK_NESTED_COMPOSITE_OVER_LADDER_WK2_TUE: CanonicalBlock = {
-  blockInstanceRef: "block-020",
-  order: 4,
-  labels: [LBL.metcon],
-  intensity: null,
-  timeCap: null,
-  notes: null,
-  schemas: [
-    buildComposeNode(
-      {
-        order: 1,
-        header: "nested composite rounds over ladder",
-      },
-      { ...rounds(2), rest: REST_BETWEEN_ROUNDS_FIXED_MIN_3 },
-      null,
-    ),
-  ],
-};
