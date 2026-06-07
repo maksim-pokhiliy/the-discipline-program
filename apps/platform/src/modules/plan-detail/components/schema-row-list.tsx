@@ -24,7 +24,7 @@ import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import { useReorderSchemaRows } from "@app/lib/hooks";
 
-import { deriveMinuteView } from "../compose/lib/derive-minute-view";
+import { deriveMinuteView } from "../lib/derive-minute-view";
 
 import { AddRowButton } from "./add-row-button";
 import { SchemaRowCard } from "./schema-row-card";
