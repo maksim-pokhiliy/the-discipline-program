@@ -3,11 +3,13 @@
 > **⚠️ PARTIALLY SUPERSEDED (2026-06-05, 10.4 archetype removal).** The live SSOT
 > for seed coverage is the per-axis `COVERAGE_CELLS` code in
 > `../plan-emit/coverage-cells/*.ts` (the seed-run gate tallies those). The
-> **archetype / schemaKind / connectorForm / INNER_LADDER_MARKER / staged-program /
-> slot** sections below are DEAD — those axes were removed in 10.4 (composition
-> replaced archetype). The VO / exercise / intensity / rest sections (still cited by
-> live `sourceRef: "coverage-matrix §N"` labels in the cells) remain valid. A full
-> rewrite is deferred (low-priority; see `initiatives/plan-editor-compose/deferred.md`).
+> **archetype / schemaKind / connectorForm / INNER_LADDER_MARKER** sections below
+> are DEAD — those axes were removed in 10.4 (composition replaced archetype). The
+> VO / exercise / intensity / rest sections (still cited by live
+> `sourceRef: "coverage-matrix §N"` labels in the cells) remain valid. §17 was
+> reconciled to the thin `composition.programKind` enum and the old SlotSpec section
+> was dropped (compose-hardening Cut B); a full rewrite of the remaining dead
+> archetype/schemaKind/connectorForm tables is still deferred (low-priority).
 
 Single source of truth for **what Session B must emit** so the seeded DB
 covers 100% of the training-domain discriminator space. Session A's emit
@@ -88,7 +90,7 @@ All 33 archetypes must appear ≥1 time in the seeded DB. Counts below match
 | `single-line-with-then-connector`           | 11                 | block-006 / sch-1           | ≥1       |
 | `run-distance`                              | 11                 | block-060                   | ≥1       |
 | `flat-list-headerless`                      | 10                 | block-145                   | ≥1       |
-| `named-exercise-program`                    | 9                  | block-008                   | ≥1       |
+| `named-exercise-program`                    | 9                  | block-181                   | ≥1       |
 | `single-line-bare`                          | 7                  | block-046 / sch-1           | ≥1       |
 | `pull-ups-dips-cycle`                       | 6                  | block-047                   | ≥1       |
 | `emom-nested-per-minute`                    | 6                  | block-080                   | ≥1       |
@@ -102,7 +104,6 @@ All 33 archetypes must appear ≥1 time in the seeded DB. Counts below match
 | `alternating-sets`                          | 2                  | block-009                   | ≥2       |
 | `time-window-outer`                         | 2                  | block-003                   | ≥1       |
 | `parallel-ladders-mixed-direction`          | 2                  | block-005                   | ≥1       |
-| `nested-composite-rounds-over-ladder`       | 2                  | block-020                   | ≥1       |
 | `composite-intervals-work-rest-progressive` | 2                  | block-140                   | ≥1       |
 | `url-only-body`                             | 2                  | block-147                   | ≥1       |
 | `ladder-vertex-down-pyramid`                | 1                  | block-098                   | ≥1       |
@@ -125,7 +126,7 @@ two member schemas; coverage must keep that N-ary group intact.
 | `rowKind`             | Sample anchor                                                   | Required | Notes                                       |
 | --------------------- | --------------------------------------------------------------- | -------- | ------------------------------------------- |
 | `EXERCISE`            | block-001 (all four rows)                                       | ≥1       | dominant kind                               |
-| `REST`                | block-008 / row "REST IN BETWEEN SETS UNTIL RECOVERY"           | ≥1       | inline rest row, parsed RestSpec            |
+| `REST`                | block-170 rest-spec coverage block (inline `REST` rows)         | ≥1       | inline rest row, parsed RestSpec            |
 | `FOOTNOTE`            | block-032 footnote `** 5 strict HSPU [ AFTER EACH ROUND ]`      | ≥1       | marker `**`, target `each_round`            |
 | `STANDALONE_LOAD`     | block-005 / row `[ DB 2x 15 kg ]` (or block-077 `[ 2x 15 kg ]`) | ≥1       | scope `applies_to_all_preceding_rows`       |
 | `STANDALONE_URL`      | block-147 wrapped URL + block-149 bare URL                      | ≥2       | wrapped=true and wrapped=false              |
@@ -255,7 +256,7 @@ phase-7 wave (or named-exercise-program progressive seed),
 
 | Cell                                | Sample anchor                                     | Required |
 | ----------------------------------- | ------------------------------------------------- | -------- |
-| `scope = between_sets`              | block-008 `REST IN BETWEEN SETS UNTIL RECOVERY`   | ≥1       |
+| `scope = between_sets`              | block-170 `restBetweenSets` rest rows             | ≥1       |
 | `scope = between_rounds`            | block-017 `3 min rest in between rounds`          | ≥1       |
 | `scope = between_intervals`         | phase-7 §7.5 (15 sec intra-cluster rest)          | ≥1       |
 | `scope = after_specific_set`        | introduce in Demo Plan (e.g. `2 min after set 3`) | ≥1       |
@@ -263,7 +264,7 @@ phase-7 wave (or named-exercise-program progressive seed),
 | `duration.unit = min`               | block-017 (3 min)                                 | ≥1       |
 | `duration.unit = range_sec`         | sample range-sec `[ 90-120 sec ]`                 | ≥1       |
 | `duration.unit = range_min`         | sample range-min `[ 2-3 min ]`                    | ≥1       |
-| `qualifier = until_recovery`        | block-008 `UNTIL RECOVERY`                        | ≥1       |
+| `qualifier = until_recovery`        | block-170 `REST_BS_UNTIL_RECOVERY`                | ≥1       |
 | `qualifier = fixed`                 | block-017 `3 min rest`                            | ≥1       |
 | `qualifier = range`                 | sample range qualifier                            | ≥1       |
 | `setIndex` set (after_specific_set) | introduce in Demo Plan                            | ≥1       |
@@ -287,7 +288,7 @@ phase-7 wave (or named-exercise-program progressive seed),
 | `ATOMIC`     | block-001 (n-rounds)                    | yes     | ≥1       |
 | `HEADERLESS` | block-037 (parallel-ladders-descending) | null    | ≥1       |
 | `NESTED`     | block-003 (time-window-outer)           | yes     | ≥1       |
-| `NAMED`      | block-008 (named-exercise-program)      | yes     | ≥1       |
+| `NAMED`      | block-181 (named-exercise-program)      | yes     | ≥1       |
 | `COMPOSITE`  | block-017 (composite-rounds-with-rest)  | yes     | ≥1       |
 
 ---
@@ -322,26 +323,22 @@ Note: Position enum values come from `03-content/modifier-scope.md` / `01-invent
 
 ---
 
-## 17. StagedProgram (Phase 7 + sample drop-set)
+## 17. composition.programKind (thin staged-program enum)
 
-| `programKind` | Sample anchor                       | Required |
-| ------------- | ----------------------------------- | -------- |
-| `drop_set`    | block-008 Bulgarian split squats    | ≥1       |
-| `wave`        | phase-7 §7.4 snatch wave loading    | ≥1       |
-| `cluster`     | phase-7 §7.5 strict pull-up cluster | ≥1       |
+`StagedProgram` as a fat VO with `.stages` was deleted in the 10.4 / D-ONTOLOGY
+re-authoring. What survives is a thin `programKind` enum on `composition`
+(`drop_set` / `wave` / `cluster`); the staged structure is expressed via
+ordinary schema rows + composition axes, not a dedicated VO.
 
----
-
-## 18. SlotSpec (under `emom-sub-minute-slot`)
-
-| Cell             | Sample anchor                                | Required |
-| ---------------- | -------------------------------------------- | -------- |
-| `kind = single`  | block-080 / sub-1 (`1 min:`)                 | ≥1       |
-| `kind = grouped` | block-079 (`1st & 2nd min:` → minutes=[1,2]) | ≥1       |
+| `programKind` | Sample anchor                                              | Required |
+| ------------- | ---------------------------------------------------------- | -------- |
+| `drop_set`    | block-008 Bulgarian Split Squat drop set                   | ≥1       |
+| `wave`        | block-163 Snatch wave 70/80/90 (phase-7-snatch-wave)       | ≥1       |
+| `cluster`     | block-164 strict pull-up cluster (phase-7-pull-up-cluster) | ≥1       |
 
 ---
 
-## 19. MediaReference (under SchemaRow.media + StagedProgram.stages)
+## 19. MediaReference (under SchemaRow.media)
 
 | `position` / `appliesTo`    | Sample anchor                                   | Required |
 | --------------------------- | ----------------------------------------------- | -------- |
@@ -359,8 +356,8 @@ Note: Position enum values come from `03-content/modifier-scope.md` / `01-invent
 
 | Cell                                   | Sample anchor                                                                                                              | Required          |
 | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| placeholder + per-set assignments      | block-020 / sub-1 (`*DB exercise` placeholder + PerSetSubstitution)                                                        | ≥1                |
-| placeholder `placeholderKind` variants | `muscle_group_reference` (block-152), `purpose_category` (block-193 `ABS`), `coach_choice_slot` (block-020 `*DB exercise`) | ≥3 (one per kind) |
+| placeholder + per-set assignments      | block-152 / row-3 (`*DB exercise` placeholder + `perSetAssignments`)                                                       | ≥1                |
+| placeholder `placeholderKind` variants | `muscle_group_reference` (block-152), `purpose_category` (block-152 `ABS`), `coach_choice_slot` (block-152 `*DB exercise`) | ≥3 (one per kind) |
 
 ---
 
@@ -399,14 +396,14 @@ Note: Position enum values come from `03-content/modifier-scope.md` / `01-invent
 
 ## 24. Phase 7 examples (out-of-sample, one synthetic week tail)
 
-| Example                              | Carrier(s)                                                                 |
-| ------------------------------------ | -------------------------------------------------------------------------- |
-| `phase-7-hr-z2-base-run`             | Intensity.hrZone `Z2` + run 60 min                                         |
-| `phase-7-numeric-pace-row-intervals` | Intensity.numericPace + Equipment `ROW_ERG`                                |
-| `phase-7-tempo-back-squat`           | TempoModifier.fullTempo `3-1-2-0` + Load.percentage.reference.self         |
-| `phase-7-snatch-wave`                | StagedProgram.programKind `wave` + Load.percentage (3 stages)              |
-| `phase-7-strict-pull-up-cluster`     | StagedProgram.programKind `cluster` + RestSpec scope `between_intervals`   |
-| `phase-7-accessory-super-set`        | Archetype `super-set` + SuperSetPair × 2 + RestSpec scope `between_rounds` |
+| Example                              | Carrier(s)                                                                         |
+| ------------------------------------ | ---------------------------------------------------------------------------------- |
+| `phase-7-hr-z2-base-run`             | Intensity.hrZone `Z2` + run 60 min                                                 |
+| `phase-7-numeric-pace-row-intervals` | Intensity.numericPace + Equipment `ROW_ERG`                                        |
+| `phase-7-tempo-back-squat`           | TempoModifier.fullTempo `3-1-2-0` + Load.percentage.reference.self                 |
+| `phase-7-snatch-wave`                | composition.programKind `wave` (block-163) + Load.percentage (3 stages)            |
+| `phase-7-strict-pull-up-cluster`     | composition.programKind `cluster` (block-164) + RestSpec scope `between_intervals` |
+| `phase-7-accessory-super-set`        | Archetype `super-set` + SuperSetPair × 2 + RestSpec scope `between_rounds`         |
 
 Coverage assertion treats Phase 7 sessions as filling cells that the
 33-sheet sample doesn't reach.
