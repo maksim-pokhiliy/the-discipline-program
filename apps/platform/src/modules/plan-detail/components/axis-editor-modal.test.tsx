@@ -1,7 +1,8 @@
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { SchemaWithBody } from "@repo/contracts/lms/schema";
+import { SCHEMA_CONSTANTS, type SchemaWithBody } from "@repo/contracts/lms/schema";
+import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
@@ -36,6 +37,8 @@ const NOW = new Date("2026-01-06T00:00:00.000Z");
 const BLOCK_ID = "clp9z8x7w0000abcd1234blk1";
 const SCHEMA_ID = "clp9z8x7w0000abcd1234sch1";
 const SUB_SCHEMA_ID = "clp9z8x7w0000abcd1234ssa1";
+const SUB_SCHEMA_ID_B = "clp9z8x7w0000abcd1234ssb1";
+const MARKER_ROW_ID = "clp9z8x7w0000abcd1234row1";
 
 const CREATE_TITLE = "Add schema";
 const EDIT_TITLE = "Container composition";
@@ -59,6 +62,26 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
   },
   rows: [],
   subSchemas: [],
+});
+
+const makeMarkerRow = (): SchemaRow => ({
+  id: MARKER_ROW_ID,
+  schemaId: SCHEMA_ID,
+  order: 1,
+  rowKind: "INNER_LADDER_MARKER",
+  rowPayload: { rowKind: "INNER_LADDER_MARKER", steps: [21, 15, 9] },
+  load: null,
+  reps: null,
+  side: null,
+  tempo: null,
+  position: null,
+  sequence: null,
+  intensity: null,
+  media: null,
+  compoundRep: null,
+  notes: null,
+  createdAt: NOW,
+  updatedAt: NOW,
 });
 
 const renderCreate = () =>
@@ -233,5 +256,97 @@ describe("AxisEditorModal error surfacing", () => {
 
     expect(screen.getByRole("alert")).toBeInTheDocument();
     expect(createSchemaMutate).not.toHaveBeenCalled();
+  });
+});
+
+describe("AxisEditorModal edit-on-children arrangement fold (REV-003)", () => {
+  const parallelSeedSchema = (): SchemaWithBody => {
+    const top = makeSchema({ composition: { repetition: { kind: "count", count: 4 } } });
+
+    return {
+      ...top,
+      subSchemas: [
+        makeSchema({ id: SUB_SCHEMA_ID, parentSchemaId: SCHEMA_ID, header: "Track A" }),
+        makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID, header: "Track B" }),
+      ],
+    };
+  };
+
+  it("folds two sub-schemas into a valid parallel arrangement on submit", () => {
+    renderEdit(parallelSeedSchema());
+
+    toggle("arrangement", "parallel");
+    fireEvent.click(screen.getByRole("switch", { name: "track · Track A" }));
+    fireEvent.click(screen.getByRole("switch", { name: "track · Track B" }));
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+
+    const arrangement = updateSchemaMutate.mock.calls[0]?.[0]?.data?.composition?.arrangement;
+
+    expect(arrangement?.kind).toBe("parallel");
+    expect(arrangement?.tracks).toHaveLength(2);
+    expect(
+      arrangement?.tracks?.map((track: { childSchemaId: string }) => track.childSchemaId),
+    ).toEqual([SUB_SCHEMA_ID, SUB_SCHEMA_ID_B]);
+  });
+});
+
+describe("AxisEditorModal edit-mode header (REV-004)", () => {
+  const headerSeedSchema = (): SchemaWithBody =>
+    makeSchema({ composition: { repetition: { kind: "count", count: 4 } }, header: "Original" });
+
+  it("keeps the header editable in edit-mode and sends the new value on submit", () => {
+    renderEdit(headerSeedSchema());
+
+    const headerInput = screen.getByRole("textbox", { name: HEADER_ARIA });
+
+    fireEvent.change(headerInput, { target: { value: "Renamed opener" } });
+    fireEvent.blur(headerInput);
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate.mock.calls[0]?.[0]?.data).toMatchObject({ header: "Renamed opener" });
+  });
+});
+
+describe("AxisEditorModal double-submit guard (QA-201)", () => {
+  it("fires createSchema once for a synchronous double-click", () => {
+    renderCreate();
+
+    toggle("repetition", "count");
+    submit();
+    submit();
+
+    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("AxisEditorModal ladder-marker conflict on edit (QA-202)", () => {
+  const ladderWithMarkerSchema = (): SchemaWithBody => ({
+    ...makeSchema({ composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } } }),
+    rows: [makeMarkerRow()],
+  });
+
+  it("blocks Save without mutating and surfaces the conflict message", () => {
+    renderEdit(ladderWithMarkerSchema());
+
+    submitEdit();
+
+    expect(updateSchemaMutate).not.toHaveBeenCalled();
+    expect(
+      within(screen.getByRole("alert")).getByText(/inner-ladder-marker row/i),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("AxisEditorModal header length cap (QA-204)", () => {
+  it("caps the header input at the contract maximum length", () => {
+    renderCreate();
+
+    expect(screen.getByRole("textbox", { name: HEADER_ARIA })).toHaveAttribute(
+      "maxlength",
+      String(SCHEMA_CONSTANTS.MAX_HEADER_LENGTH),
+    );
   });
 });

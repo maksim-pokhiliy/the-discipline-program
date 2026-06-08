@@ -5,10 +5,11 @@ import type { FieldErrors } from "react-hook-form";
 
 import type { RestSpec, StagedProgramKind } from "@repo/contracts/lms/_shared";
 import type { Exercise } from "@repo/contracts/lms/exercise";
-import type { RowKind } from "@repo/contracts/lms/schema-row";
+import { SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
 
 import { collectArrangementTargets } from "../../lib/arrangement-targets";
+import { hasLadderMarkerConflict, LADDER_MARKER_CONFLICT } from "../../lib/ladder-marker-conflict";
 import { shouldBeContainer } from "../../lib/should-be-container";
 import { RestSpecFields, restSpecFormSchema, type RestSpecFormValue } from "../rest-spec-fields";
 
@@ -31,9 +32,6 @@ const HEADER_PLACEHOLDER = "group…";
 const REST_LABEL = "rest";
 const PANEL_SPACING = 2;
 const REST_ISSUE_TYPE = "contract";
-const LADDER_MARKER_ROW_KIND: RowKind = "INNER_LADDER_MARKER";
-const LADDER_MARKER_CONFLICT =
-  "A ladder rep-scheme group can't also hold an inner-ladder-marker row — move the marker out or change the repetition.";
 const DEMOTE_HINT =
   "This group holds a single movement and no rep-scheme. A plain row may read cleaner — drop it down to a row, or give it a scheme to keep it as a group.";
 const DEMOTE_BUTTON_LABEL = "Demote to row";
@@ -135,11 +133,7 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
       asContainerPatch((node) => ({ ...node, rest })),
     );
 
-  const hasInnerLadderMarker = container.children.some(
-    (child) => child.nodeType === "row" && child.rowKind === LADDER_MARKER_ROW_KIND,
-  );
-  const isLadder = (container.repetition ?? DEFAULT_REPETITION).kind === "ladder";
-  const repetitionError = isLadder && hasInnerLadderMarker ? LADDER_MARKER_CONFLICT : undefined;
+  const repetitionError = hasLadderMarkerConflict(container) ? LADDER_MARKER_CONFLICT : undefined;
 
   const showsDemoteHint =
     isCreateMode && !shouldBeContainer(container) && container.children.length === 1;
@@ -175,6 +169,7 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
             variant="h4"
             ariaLabel={HEADER_ARIA}
             emptyIsValid
+            maxLength={SCHEMA_CONSTANTS.MAX_HEADER_LENGTH}
             placeholder={HEADER_PLACEHOLDER}
           />
         ) : (

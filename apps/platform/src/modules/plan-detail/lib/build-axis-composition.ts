@@ -1,3 +1,5 @@
+import type { ZodIssue } from "zod";
+
 import { type Composition, compositionSchema } from "@repo/contracts/lms/composition";
 
 import type {
@@ -13,8 +15,14 @@ import {
 } from "./arrangement-convert";
 import { resolveArrangement } from "./arrangement-resolve";
 import { composeContainerToComposition } from "./compose-container-to-composition";
+import { hasLadderMarkerConflict, LADDER_MARKER_CONFLICT } from "./ladder-marker-conflict";
 
 export const AXIS_REFUSAL_MESSAGE = "This schema contains a rep-scheme not yet editable.";
+
+const PATH_SEPARATOR = ".";
+
+const formatIssue = (issue: ZodIssue): string =>
+  issue.path.length > 0 ? `${issue.path.join(PATH_SEPARATOR)}: ${issue.message}` : issue.message;
 
 export type CompositionResult =
   | { ok: true; composition: Composition }
@@ -78,6 +86,10 @@ export const previewComposition = (draft: ComposeContainer): Composition => {
 };
 
 export const buildComposition = (draft: ComposeContainer): CompositionResult => {
+  if (hasLadderMarkerConflict(draft)) {
+    return { ok: false, error: LADDER_MARKER_CONFLICT };
+  }
+
   const base = composeContainerToComposition(draft);
   const folded = foldArrangement(draft);
 
@@ -94,7 +106,7 @@ export const buildComposition = (draft: ComposeContainer): CompositionResult => 
   if (!parsed.success) {
     const [issue] = parsed.error.issues;
 
-    return { ok: false, error: issue === undefined ? AXIS_REFUSAL_MESSAGE : issue.message };
+    return { ok: false, error: issue === undefined ? AXIS_REFUSAL_MESSAGE : formatIssue(issue) };
   }
 
   return { ok: true, composition: parsed.data };

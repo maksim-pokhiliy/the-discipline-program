@@ -109,11 +109,14 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
 
   modeRef.current = mode;
 
+  const isSubmittingRef = useRef(false);
+
   const key = modeKey(mode);
 
   useEffect(() => {
     setSeed(seedDraft(modeRef.current));
     setError(null);
+    isSubmittingRef.current = false;
   }, [key]);
 
   const onUpdateNode = (id: NodeId, patch: (node: ComposeNode) => ComposeNode): void =>
@@ -145,6 +148,10 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
     labelKind === FLAT_KIND && activeParts.length === 0 && inertPart === undefined;
 
   const handleSubmit = (): void => {
+    if (isSubmittingRef.current || isPending) {
+      return;
+    }
+
     setError(null);
 
     const result = buildComposition(draft);
@@ -157,10 +164,18 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
 
     const header = draft.header;
 
+    isSubmittingRef.current = true;
+
     if (mode.kind === "create") {
       createSchema.mutate(
         { blockId: mode.blockId, composition: result.composition, header, notes: null },
-        { onSuccess: onClose, onError: (cause) => setError(cause.message) },
+        {
+          onSuccess: onClose,
+          onError: (cause) => setError(cause.message),
+          onSettled: () => {
+            isSubmittingRef.current = false;
+          },
+        },
       );
 
       return;
@@ -168,7 +183,13 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
 
     updateSchema.mutate(
       { schemaId: mode.schema.schema.id, data: { composition: result.composition, header } },
-      { onSuccess: onClose, onError: (cause) => setError(cause.message) },
+      {
+        onSuccess: onClose,
+        onError: (cause) => setError(cause.message),
+        onSettled: () => {
+          isSubmittingRef.current = false;
+        },
+      },
     );
   };
 
