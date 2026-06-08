@@ -44,6 +44,9 @@ const CREATE_TITLE = "Add schema";
 const EDIT_TITLE = "Container composition";
 const HEADER_ARIA = "Inspector header";
 const CONDITION_LABEL = "Applies to rounds (optional condition)";
+const REFUSAL_MESSAGE = "This schema contains a rep-scheme not yet editable.";
+
+const alertText = (): string => screen.getByRole("alert").textContent ?? "";
 
 const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWithBody => ({
   schema: {
@@ -348,5 +351,272 @@ describe("AxisEditorModal header length cap (QA-204)", () => {
       "maxlength",
       String(SCHEMA_CONSTANTS.MAX_HEADER_LENGTH),
     );
+  });
+});
+
+describe("AxisEditorModal scoring appliesToRounds rejection (QA-Must-3)", () => {
+  it("rejects a zero round and surfaces the path-prefixed message without mutating", () => {
+    renderCreate();
+
+    toggle("scoring", "AMRAP");
+    fireEvent.change(screen.getByRole("textbox", { name: CONDITION_LABEL }), {
+      target: { value: "0" },
+    });
+    submit();
+
+    expect(createSchemaMutate).not.toHaveBeenCalled();
+    expect(alertText()).toContain("scoring.condition.appliesToRounds");
+    expect(alertText()).toMatch(/greater than 0/i);
+  });
+
+  it("rejects a negative round and surfaces the path-prefixed message without mutating", () => {
+    renderCreate();
+
+    toggle("scoring", "AMRAP");
+    fireEvent.change(screen.getByRole("textbox", { name: CONDITION_LABEL }), {
+      target: { value: "-1" },
+    });
+    submit();
+
+    expect(createSchemaMutate).not.toHaveBeenCalled();
+    expect(alertText()).toContain("scoring.condition.appliesToRounds");
+  });
+
+  it("treats non-numeric rounds as no condition and submits a valid scoring", () => {
+    renderCreate();
+
+    toggle("scoring", "AMRAP");
+    fireEvent.change(screen.getByRole("textbox", { name: CONDITION_LABEL }), {
+      target: { value: "abc" },
+    });
+    submit();
+
+    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(createSchemaMutate.mock.calls[0]?.[0]?.composition?.scoring).toEqual({ kind: "amrap" });
+  });
+});
+
+describe("AxisEditorModal progressive empty seed rejection (QA-Must-3)", () => {
+  it("rejects an empty progressive seed and surfaces the seed message without mutating", () => {
+    renderCreate();
+
+    toggle("scoring", "progressive");
+    submit();
+
+    expect(createSchemaMutate).not.toHaveBeenCalled();
+    expect(alertText()).toContain("scoring.seed");
+    expect(alertText()).toMatch(/at least 1 character/i);
+  });
+});
+
+describe("AxisEditorModal scoring condition round-trip through edit (QA-Must-4)", () => {
+  const conditionSeedSchema = (): SchemaWithBody =>
+    makeSchema({
+      composition: { scoring: { kind: "amrap", condition: { appliesToRounds: [2, 3] } } },
+    });
+
+  it("pre-fills the rounds input and re-emits the identical condition on Save", () => {
+    renderEdit(conditionSeedSchema());
+
+    expect(screen.getByRole("textbox", { name: CONDITION_LABEL })).toHaveValue("2, 3");
+
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate.mock.calls[0]?.[0]?.data?.composition?.scoring).toEqual({
+      kind: "amrap",
+      condition: { appliesToRounds: [2, 3] },
+    });
+  });
+});
+
+describe("AxisEditorModal stored arrangement survives open then Save (QA-Must-5)", () => {
+  const parallelStoredSchema = (): SchemaWithBody => {
+    const top = makeSchema({
+      composition: {
+        repetition: { kind: "count", count: 4 },
+        arrangement: {
+          kind: "parallel",
+          interleaveOrder: "round_by_round",
+          tracks: [
+            { childSchemaId: SUB_SCHEMA_ID, setEnumeration: [21, 15, 9] },
+            { childSchemaId: SUB_SCHEMA_ID_B },
+          ],
+        },
+      },
+    });
+
+    return {
+      ...top,
+      subSchemas: [
+        makeSchema({ id: SUB_SCHEMA_ID, parentSchemaId: SCHEMA_ID }),
+        makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
+      ],
+    };
+  };
+
+  const supersetStoredSchema = (): SchemaWithBody => {
+    const rowA = "clp9z8x7w0000abcd1234rowa1";
+    const rowB = "clp9z8x7w0000abcd1234rowb1";
+    const top = makeSchema({
+      composition: {
+        arrangement: { kind: "superset", pairs: [{ label: "A1", rowIds: [rowA, rowB] }] },
+      },
+    });
+
+    return {
+      ...top,
+      rows: [
+        {
+          ...makeMarkerRow(),
+          id: rowA,
+          rowKind: "REST_SLOT",
+          rowPayload: { rowKind: "REST_SLOT" },
+        },
+        {
+          ...makeMarkerRow(),
+          id: rowB,
+          rowKind: "REST_SLOT",
+          rowPayload: { rowKind: "REST_SLOT" },
+        },
+      ],
+    };
+  };
+
+  it("re-emits the stored parallel arrangement byte-for-byte with no edit", () => {
+    const stored = parallelStoredSchema();
+
+    renderEdit(stored);
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate.mock.calls[0]?.[0]?.data?.composition?.arrangement).toEqual(
+      stored.schema.composition?.arrangement,
+    );
+  });
+
+  it("re-emits the stored superset arrangement byte-for-byte with no edit", () => {
+    const stored = supersetStoredSchema();
+
+    renderEdit(stored);
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate.mock.calls[0]?.[0]?.data?.composition?.arrangement).toEqual(
+      stored.schema.composition?.arrangement,
+    );
+  });
+});
+
+describe("AxisEditorModal range repetition refusal (QA-Must-7)", () => {
+  const rangeSchema = (): SchemaWithBody =>
+    makeSchema({ composition: { repetition: { kind: "range", range: { min: 3, max: 5 } } } });
+
+  it("disables Save and surfaces the refusal Alert without mutating", () => {
+    renderEdit(rangeSchema());
+
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    expect(alertText()).toContain(REFUSAL_MESSAGE);
+
+    submitEdit();
+
+    expect(updateSchemaMutate).not.toHaveBeenCalled();
+  });
+});
+
+describe("AxisEditorModal mutation error surfacing (QA-Must-8)", () => {
+  it("surfaces the mutation error and re-enables Save for a retry", () => {
+    createSchemaMutate.mockImplementationOnce((_vars, options) => {
+      options?.onError?.(new Error("Network boom"));
+      options?.onSettled?.();
+    });
+
+    renderCreate();
+
+    toggle("repetition", "count");
+    submit();
+
+    expect(alertText()).toContain("Network boom");
+    expect(screen.getByRole("button", { name: "Add schema" })).toBeEnabled();
+
+    submit();
+
+    expect(createSchemaMutate).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("AxisEditorModal count range refinement (QA-Must-10)", () => {
+  const setRangeMinMax = (min: string, max: string): void => {
+    fireEvent.click(within(screen.getByRole("group", { name: "repetition" })).getByText("count"));
+
+    const [rangeButton] = screen.getAllByRole("button", { name: "range" });
+
+    fireEvent.click(rangeButton as HTMLElement);
+
+    const [minField, maxField] = screen.getAllByRole("spinbutton");
+
+    fireEvent.change(minField as HTMLElement, { target: { value: min } });
+    fireEvent.change(maxField as HTMLElement, { target: { value: max } });
+  };
+
+  it("rejects a min equal to max and surfaces the range message without mutating", () => {
+    renderCreate();
+
+    setRangeMinMax("3", "3");
+    submit();
+
+    expect(createSchemaMutate).not.toHaveBeenCalled();
+    expect(alertText()).toContain("repetition.count");
+    expect(alertText()).toMatch(/range\.min must be less than range\.max/i);
+  });
+
+  it("rejects a min greater than max and surfaces the range message without mutating", () => {
+    renderCreate();
+
+    setRangeMinMax("5", "2");
+    submit();
+
+    expect(createSchemaMutate).not.toHaveBeenCalled();
+    expect(alertText()).toContain("repetition.count");
+  });
+});
+
+describe("AxisEditorModal window ordering refinement (QA-Must-10)", () => {
+  it("rejects a start at or after the end and surfaces the window message without mutating", () => {
+    renderCreate();
+
+    toggle("repetition", "window");
+    fireEvent.change(screen.getByRole("textbox", { name: "Start HH:MM" }), {
+      target: { value: "10:00" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "End HH:MM" }), {
+      target: { value: "09:00" },
+    });
+    submit();
+
+    expect(createSchemaMutate).not.toHaveBeenCalled();
+    expect(alertText()).toContain("endHhMm");
+  });
+});
+
+describe("AxisEditorModal create-mode arrangement with no children (QA-Must-5)", () => {
+  it("blocks a parallel arrangement that has no tracks and surfaces the issue without mutating", () => {
+    renderCreate();
+
+    toggle("arrangement", "parallel");
+    submit();
+
+    expect(createSchemaMutate).not.toHaveBeenCalled();
+    expect(alertText()).toMatch(/at least two tracks/i);
+  });
+
+  it("blocks a superset arrangement that has no rows and surfaces the issue without mutating", () => {
+    renderCreate();
+
+    toggle("arrangement", "superset");
+    submit();
+
+    expect(createSchemaMutate).not.toHaveBeenCalled();
+    expect(alertText()).toMatch(/superset pair needs/i);
   });
 });
