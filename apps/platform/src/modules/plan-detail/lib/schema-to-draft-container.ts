@@ -17,6 +17,7 @@ import type {
   ParallelTrackDraft,
   RepetitionAxis,
   RestAxis,
+  ScoringCondition,
   ScoringDirective,
   SupersetPairDraft,
 } from "../components/axes/axis-draft.types";
@@ -115,20 +116,25 @@ const arrangementFromComposition = (arrangement: ContractArrangementAxis): Arran
 
 const restFromComposition = (rest: ContractRestAxis): RestAxis => rest;
 
+const conditionFrom = (scoring: ContractScoringDirective): { condition?: ScoringCondition } =>
+  scoring.kind !== "prescribed" && scoring.condition !== undefined
+    ? { condition: scoring.condition }
+    : {};
+
 const scoringFromComposition = (scoring: ContractScoringDirective): ScoringDirective => {
   switch (scoring.kind) {
     case "prescribed":
       return { kind: "prescribed" };
     case "amrap":
-      return { kind: "amrap" };
+      return { kind: "amrap", ...conditionFrom(scoring) };
     case "for_time":
-      return { kind: "for_time" };
+      return { kind: "for_time", ...conditionFrom(scoring) };
     case "max_in_remaining":
-      return { kind: "max_in_remaining" };
+      return { kind: "max_in_remaining", ...conditionFrom(scoring) };
     case "total":
-      return { kind: "total" };
+      return { kind: "total", ...conditionFrom(scoring) };
     case "progressive":
-      return { kind: "progressive", seed: scoring.seed };
+      return { kind: "progressive", seed: scoring.seed, ...conditionFrom(scoring) };
     default:
       return scoring satisfies never;
   }

@@ -1,0 +1,153 @@
+import { describe, expect, it } from "vitest";
+
+import { compositionSchema } from "@repo/contracts/lms/composition";
+
+import type {
+  ComposeContainer,
+  RepetitionAxis,
+  ScoringDirective,
+} from "../components/axes/axis-draft.types";
+
+import { asNodeId } from "./axis-draft-id";
+import { composeContainerToComposition } from "./compose-container-to-composition";
+
+const container = (overrides: Partial<ComposeContainer>): ComposeContainer => ({
+  nodeType: "container",
+  id: asNodeId("flat-container"),
+  header: null,
+  notes: null,
+  children: [],
+  ...overrides,
+});
+
+const repetitionContainer = (repetition: RepetitionAxis): ComposeContainer =>
+  container({ repetition });
+
+const scoringContainer = (scoring: ScoringDirective): ComposeContainer => container({ scoring });
+
+describe("composeContainerToComposition flat repetition mapping", () => {
+  it("emits an empty composition for a bare container with an ordered arrangement", () => {
+    expect(composeContainerToComposition(container({ arrangement: { kind: "ordered" } }))).toEqual(
+      {},
+    );
+  });
+
+  it("never carries arrangement into the flat composition (it is folded elsewhere)", () => {
+    const composition = composeContainerToComposition(
+      container({ arrangement: { kind: "ordered" } }),
+    );
+
+    expect(composition).not.toHaveProperty("arrangement");
+  });
+
+  it("round-trips a count repetition as a number", () => {
+    expect(composeContainerToComposition(repetitionContainer({ kind: "count", count: 5 }))).toEqual(
+      {
+        repetition: { kind: "count", count: 5 },
+      },
+    );
+  });
+
+  it("round-trips a count repetition as a min/max range", () => {
+    expect(
+      composeContainerToComposition(
+        repetitionContainer({ kind: "count", count: { min: 3, max: 5 } }),
+      ),
+    ).toEqual({ repetition: { kind: "count", count: { min: 3, max: 5 } } });
+  });
+
+  it("round-trips ladder, cadence, interval, timeCap and window repetitions", () => {
+    const cases: { repetition: RepetitionAxis; expected: unknown }[] = [
+      {
+        repetition: { kind: "ladder", steps: [21, 15, 9] },
+        expected: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+      },
+      {
+        repetition: { kind: "cadence", everyMin: 1, rounds: 16 },
+        expected: { repetition: { kind: "cadence", everyMin: 1, rounds: 16 } },
+      },
+      {
+        repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
+        expected: { repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 } },
+      },
+      {
+        repetition: { kind: "timeCap", cap: { min: 5, unit: "min" } },
+        expected: { repetition: { kind: "timeCap", cap: { min: 5, unit: "min" } } },
+      },
+      {
+        repetition: { kind: "window", startHhMm: "09:00", endHhMm: "10:30" },
+        expected: { repetition: { kind: "window", startHhMm: "09:00", endHhMm: "10:30" } },
+      },
+    ];
+
+    for (const { repetition, expected } of cases) {
+      expect(composeContainerToComposition(repetitionContainer(repetition))).toEqual(expected);
+    }
+  });
+
+  it("maps rest and programKind through unchanged", () => {
+    const rest = { duration: { value: 90, unit: "sec" }, scope: "between_sets" } as const;
+    const composition = composeContainerToComposition(container({ rest, programKind: "wave" }));
+
+    expect(composition).toEqual({ rest, programKind: "wave" });
+  });
+});
+
+describe("composeContainerToComposition produces contract-valid compositions", () => {
+  const valid: RepetitionAxis[] = [
+    { kind: "once" },
+    { kind: "count", count: 5 },
+    { kind: "count", count: { min: 3, max: 5 } },
+    { kind: "ladder", steps: [21, 15, 9] },
+    { kind: "cadence", everyMin: 1, rounds: 16 },
+    { kind: "interval", workMin: 2, offMin: 1, count: 3 },
+    { kind: "timeCap", cap: { min: 5, unit: "min" } },
+    { kind: "window", startHhMm: "09:00", endHhMm: "10:30" },
+  ];
+
+  it.each(valid)("safeParse accepts the composition for %j", (repetition) => {
+    const composition = composeContainerToComposition(repetitionContainer(repetition));
+
+    expect(compositionSchema.safeParse(composition).success).toBe(true);
+  });
+});
+
+describe("mapScoring carries the appliesToRounds condition (D4)", () => {
+  it("round-trips a non-prescribed condition with the rounds it applies to", () => {
+    const composition = composeContainerToComposition(
+      scoringContainer({ kind: "amrap", condition: { appliesToRounds: [2, 3] } }),
+    );
+
+    expect(composition.scoring).toEqual({ kind: "amrap", condition: { appliesToRounds: [2, 3] } });
+    expect(compositionSchema.safeParse(composition).success).toBe(true);
+  });
+
+  it("carries the condition on a progressive kind alongside its seed", () => {
+    const composition = composeContainerToComposition(
+      scoringContainer({ kind: "progressive", seed: "3", condition: { appliesToRounds: [4] } }),
+    );
+
+    expect(composition.scoring).toEqual({
+      kind: "progressive",
+      seed: "3",
+      condition: { appliesToRounds: [4] },
+    });
+    expect(compositionSchema.safeParse(composition).success).toBe(true);
+  });
+
+  it("omits the condition when it is absent", () => {
+    const composition = composeContainerToComposition(scoringContainer({ kind: "amrap" }));
+
+    expect(composition.scoring).toEqual({ kind: "amrap" });
+    expect(composition.scoring).not.toHaveProperty("condition");
+  });
+
+  it("omits the condition when appliesToRounds is empty", () => {
+    const composition = composeContainerToComposition(
+      scoringContainer({ kind: "for_time", condition: { appliesToRounds: [] } }),
+    );
+
+    expect(composition.scoring).toEqual({ kind: "for_time" });
+    expect(composition.scoring).not.toHaveProperty("condition");
+  });
+});

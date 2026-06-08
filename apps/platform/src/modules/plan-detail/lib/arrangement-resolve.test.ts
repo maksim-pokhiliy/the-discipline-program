@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import type { NodeId } from "../compose-tree.types";
+import type { NodeId } from "../components/axes/axis-draft.types";
 
 import type { DraftArrangement } from "./arrangement-convert";
 import { resolveArrangement } from "./arrangement-resolve";
-import { asNodeId } from "./id-factory";
+import { asNodeId } from "./axis-draft-id";
 
 const CUID = {
   trackDown: "ckschematrackdown00000001",

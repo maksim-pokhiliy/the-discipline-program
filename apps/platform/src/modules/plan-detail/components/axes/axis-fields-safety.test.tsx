@@ -7,16 +7,16 @@ import type { Exercise } from "@repo/contracts/lms/exercise";
 
 import { render } from "@app/test/render";
 
+import { asNodeId } from "../../lib/axis-draft-id";
+
 import type {
   ComposeContainer,
   ComposeNode,
   ComposeRow,
   NodeId,
   RepetitionAxis,
-} from "../../compose-tree.types";
-import { buildAxesSummary } from "../../lib/axes-summary";
-import { asNodeId } from "../../lib/id-factory";
-import { ComposeContainerInspector } from "../compose-container-inspector";
+} from "./axis-draft.types";
+import { ContainerInspector } from "./container-inspector";
 
 const baseContainer = (repetition?: RepetitionAxis): ComposeContainer => ({
   nodeType: "container",
@@ -66,8 +66,7 @@ const InspectorHarness = ({ initial }: { initial: ComposeContainer }): ReactElem
     <>
       <div data-testid="repetition-json">{JSON.stringify(container.repetition ?? null)}</div>
       <div data-testid="rest-json">{JSON.stringify(container.rest ?? null)}</div>
-      <div data-testid="summary">{buildAxesSummary(container).join(" | ")}</div>
-      <ComposeContainerInspector
+      <ContainerInspector
         container={container}
         exerciseById={new Map<string, Exercise>()}
         isCreateMode

@@ -44,11 +44,11 @@ vi.mock("./schema-card", () => {
   return { SchemaCard: renderSchemaCardMock };
 });
 
-vi.mock("./add-compose-block-button", () => {
-  const renderAddComposeBlockButtonMock = () =>
-    createElement("div", { "data-testid": "add-compose-block-button-mock" });
+vi.mock("./add-schema-button", () => {
+  const renderAddSchemaButtonMock = () =>
+    createElement("div", { "data-testid": "add-schema-button-mock" });
 
-  return { AddComposeBlockButton: renderAddComposeBlockButtonMock };
+  return { AddSchemaButton: renderAddSchemaButtonMock };
 });
 
 let capturedOnDragEnd: ((event: DragEndEvent) => void) | null = null;

@@ -5,10 +5,10 @@ import type {
   ComposeContainer,
   ComposeNode,
   ComposeRow,
-} from "../compose-tree.types";
+} from "../components/axes/axis-draft.types";
 
 import { type ConvertIssue, validateDeferredArrangement } from "./arrangement-convert";
-import { asNodeId } from "./id-factory";
+import { asNodeId } from "./axis-draft-id";
 
 const row = (id: string): ComposeRow => ({
   nodeType: "row",

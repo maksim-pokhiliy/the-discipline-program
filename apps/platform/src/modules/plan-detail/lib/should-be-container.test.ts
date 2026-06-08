@@ -1,10 +1,34 @@
 import { describe, expect, it } from "vitest";
 
-import type { ComposeContainer, ComposeNode, ComposeRow } from "../compose-tree.types";
+import type {
+  ComposeContainer,
+  ComposeNode,
+  ComposeRow,
+} from "../components/axes/axis-draft.types";
 
-import { asNodeId } from "./id-factory";
-import { makeRow } from "./make-row";
+import { asNodeId } from "./axis-draft-id";
 import { shouldBeContainer } from "./should-be-container";
+
+let rowCounter = 0;
+
+const makeRestSlotRow = (): ComposeRow => {
+  rowCounter += 1;
+
+  return {
+    nodeType: "row",
+    id: asNodeId(`predicate-row-${String(rowCounter)}`),
+    rowKind: "REST_SLOT",
+    rowPayload: { rowKind: "REST_SLOT" },
+    reps: null,
+    load: null,
+    side: null,
+    tempo: null,
+    position: null,
+    intensity: null,
+    notes: null,
+    editorDraft: undefined,
+  };
+};
 
 const baseContainer = (overrides: Partial<ComposeContainer>): ComposeContainer => ({
   nodeType: "container",
@@ -15,12 +39,12 @@ const baseContainer = (overrides: Partial<ComposeContainer>): ComposeContainer =
   ...overrides,
 });
 
-const oneChild = (): ComposeNode[] => [makeRow("REST_SLOT")];
-const twoChildren = (): ComposeNode[] => [makeRow("REST_SLOT"), makeRow("REST_SLOT")];
+const oneChild = (): ComposeNode[] => [makeRestSlotRow()];
+const twoChildren = (): ComposeNode[] => [makeRestSlotRow(), makeRestSlotRow()];
 
 describe("shouldBeContainer", () => {
   it("returns false for a row node", () => {
-    const row: ComposeRow = makeRow("EXERCISE");
+    const row: ComposeRow = makeRestSlotRow();
 
     expect(shouldBeContainer(row)).toBe(false);
   });
