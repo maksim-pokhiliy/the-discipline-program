@@ -112,7 +112,13 @@ const renderEdit = (schema: SchemaWithBody, onClose = vi.fn()) =>
 const submit = () => fireEvent.click(screen.getByRole("button", { name: "Add schema" }));
 const submitEdit = () => fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
-const toggle = (groupName: string, optionLabel: string) =>
+const selectRepetition = (label: string) =>
+  fireEvent.click(screen.getByRole("radio", { name: label }));
+
+const selectScoring = (kind: string) =>
+  fireEvent.change(screen.getByRole("combobox", { name: "scoring" }), { target: { value: kind } });
+
+const toggleGroup = (groupName: string, optionLabel: string) =>
   fireEvent.click(within(screen.getByRole("group", { name: groupName })).getByText(optionLabel));
 
 afterEach(() => {
@@ -135,7 +141,7 @@ describe("AxisEditorModal create mode", () => {
 
     expect(screen.getByText("flat — plain container")).toBeInTheDocument();
 
-    toggle("repetition", "count");
+    selectRepetition("Count");
 
     expect(screen.getByText("rounds")).toBeInTheDocument();
   });
@@ -143,7 +149,7 @@ describe("AxisEditorModal create mode", () => {
   it("submits createSchema with the count composition, a null header and null notes", () => {
     renderCreate();
 
-    toggle("repetition", "count");
+    selectRepetition("Count");
     submit();
 
     expect(createSchemaMutate).toHaveBeenCalledTimes(1);
@@ -216,7 +222,7 @@ describe("AxisEditorModal scoring condition (D4)", () => {
   it("reveals the inert chip and the appliesToRounds input when a non-prescribed kind is selected", () => {
     renderCreate();
 
-    toggle("scoring", "AMRAP");
+    selectScoring("amrap");
 
     expect(screen.getByRole("textbox", { name: CONDITION_LABEL })).toBeInTheDocument();
     expect(screen.getAllByText("AMRAP").length).toBeGreaterThanOrEqual(1);
@@ -225,7 +231,7 @@ describe("AxisEditorModal scoring condition (D4)", () => {
   it("submits scoring.condition.appliesToRounds parsed from the rounds input", () => {
     renderCreate();
 
-    toggle("scoring", "AMRAP");
+    selectScoring("amrap");
     fireEvent.change(screen.getByRole("textbox", { name: CONDITION_LABEL }), {
       target: { value: "2, 3" },
     });
@@ -240,8 +246,8 @@ describe("AxisEditorModal scoring condition (D4)", () => {
   it("excludes scoring from the live composition-kind tag", () => {
     renderCreate();
 
-    toggle("repetition", "count");
-    toggle("scoring", "AMRAP");
+    selectRepetition("Count");
+    selectScoring("amrap");
 
     expect(screen.getByText("rounds")).toBeInTheDocument();
   });
@@ -251,7 +257,7 @@ describe("AxisEditorModal error surfacing", () => {
   it("surfaces a contract-invalid composition in the FormModal error Alert and does not mutate", () => {
     renderCreate();
 
-    toggle("repetition", "window");
+    selectRepetition("Clock window");
     fireEvent.change(screen.getByRole("textbox", { name: "End HH:MM" }), {
       target: { value: "" },
     });
@@ -278,7 +284,7 @@ describe("AxisEditorModal edit-on-children arrangement fold (REV-003)", () => {
   it("folds two sub-schemas into a valid parallel arrangement on submit", () => {
     renderEdit(parallelSeedSchema());
 
-    toggle("arrangement", "parallel");
+    toggleGroup("arrangement", "parallel");
     fireEvent.click(screen.getByRole("switch", { name: "track · Track A" }));
     fireEvent.click(screen.getByRole("switch", { name: "track · Track B" }));
     submitEdit();
@@ -317,7 +323,7 @@ describe("AxisEditorModal double-submit guard (QA-201)", () => {
   it("fires createSchema once for a synchronous double-click", () => {
     renderCreate();
 
-    toggle("repetition", "count");
+    selectRepetition("Count");
     submit();
     submit();
 
@@ -358,7 +364,7 @@ describe("AxisEditorModal scoring appliesToRounds rejection (QA-Must-3)", () => 
   it("rejects a zero round and surfaces the path-prefixed message without mutating", () => {
     renderCreate();
 
-    toggle("scoring", "AMRAP");
+    selectScoring("amrap");
     fireEvent.change(screen.getByRole("textbox", { name: CONDITION_LABEL }), {
       target: { value: "0" },
     });
@@ -372,7 +378,7 @@ describe("AxisEditorModal scoring appliesToRounds rejection (QA-Must-3)", () => 
   it("rejects a negative round and surfaces the path-prefixed message without mutating", () => {
     renderCreate();
 
-    toggle("scoring", "AMRAP");
+    selectScoring("amrap");
     fireEvent.change(screen.getByRole("textbox", { name: CONDITION_LABEL }), {
       target: { value: "-1" },
     });
@@ -385,7 +391,7 @@ describe("AxisEditorModal scoring appliesToRounds rejection (QA-Must-3)", () => 
   it("treats non-numeric rounds as no condition and submits a valid scoring", () => {
     renderCreate();
 
-    toggle("scoring", "AMRAP");
+    selectScoring("amrap");
     fireEvent.change(screen.getByRole("textbox", { name: CONDITION_LABEL }), {
       target: { value: "abc" },
     });
@@ -400,7 +406,7 @@ describe("AxisEditorModal progressive empty seed rejection (QA-Must-3)", () => {
   it("rejects an empty progressive seed and surfaces the seed message without mutating", () => {
     renderCreate();
 
-    toggle("scoring", "progressive");
+    selectScoring("progressive");
     submit();
 
     expect(createSchemaMutate).not.toHaveBeenCalled();
@@ -533,7 +539,7 @@ describe("AxisEditorModal mutation error surfacing (QA-Must-8)", () => {
 
     renderCreate();
 
-    toggle("repetition", "count");
+    selectRepetition("Count");
     submit();
 
     expect(alertText()).toContain("Network boom");
@@ -547,7 +553,7 @@ describe("AxisEditorModal mutation error surfacing (QA-Must-8)", () => {
 
 describe("AxisEditorModal count range refinement (QA-Must-10)", () => {
   const setRangeMinMax = (min: string, max: string): void => {
-    fireEvent.click(within(screen.getByRole("group", { name: "repetition" })).getByText("count"));
+    fireEvent.click(screen.getByRole("radio", { name: "Count" }));
 
     const [rangeButton] = screen.getAllByRole("button", { name: "range" });
 
@@ -585,7 +591,7 @@ describe("AxisEditorModal window ordering refinement (QA-Must-10)", () => {
   it("rejects a start at or after the end and surfaces the window message without mutating", () => {
     renderCreate();
 
-    toggle("repetition", "window");
+    selectRepetition("Clock window");
     fireEvent.change(screen.getByRole("textbox", { name: "Start HH:MM" }), {
       target: { value: "10:00" },
     });
@@ -603,7 +609,7 @@ describe("AxisEditorModal create-mode arrangement with no children (QA-Must-5)",
   it("blocks a parallel arrangement that has no tracks and surfaces the issue without mutating", () => {
     renderCreate();
 
-    toggle("arrangement", "parallel");
+    toggleGroup("arrangement", "parallel");
     submit();
 
     expect(createSchemaMutate).not.toHaveBeenCalled();
@@ -613,10 +619,48 @@ describe("AxisEditorModal create-mode arrangement with no children (QA-Must-5)",
   it("blocks a superset arrangement that has no rows and surfaces the issue without mutating", () => {
     renderCreate();
 
-    toggle("arrangement", "superset");
+    toggleGroup("arrangement", "superset");
     submit();
 
     expect(createSchemaMutate).not.toHaveBeenCalled();
     expect(alertText()).toMatch(/superset pair needs/i);
+  });
+});
+
+describe("AxisEditorModal repetition radiogroup a11y contract (T13)", () => {
+  const REPETITION_TILE_COUNT = 7;
+
+  it("exposes a single-select radiogroup with one radio per repetition tile", () => {
+    renderCreate();
+
+    const radiogroup = screen.getByRole("radiogroup", { name: "repetition" });
+
+    expect(within(radiogroup).getAllByRole("radio")).toHaveLength(REPETITION_TILE_COUNT);
+  });
+
+  it("marks only the active repetition tile aria-checked and moves the mark on select", () => {
+    renderCreate();
+
+    const radiogroup = screen.getByRole("radiogroup", { name: "repetition" });
+
+    expect(within(radiogroup).getByRole("radio", { checked: true })).toHaveAccessibleName("Once");
+
+    selectRepetition("Count");
+
+    expect(within(radiogroup).getByRole("radio", { checked: true })).toHaveAccessibleName("Count");
+  });
+});
+
+describe("AxisEditorModal scoring combobox a11y contract (T13)", () => {
+  it("flips the scoring combobox value when a kind is selected", () => {
+    renderCreate();
+
+    const scoringCombobox = screen.getByRole("combobox", { name: "scoring" });
+
+    expect(scoringCombobox).toHaveValue("prescribed");
+
+    selectScoring("amrap");
+
+    expect(scoringCombobox).toHaveValue("amrap");
   });
 });

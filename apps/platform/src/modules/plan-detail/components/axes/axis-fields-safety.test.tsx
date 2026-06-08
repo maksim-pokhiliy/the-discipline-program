@@ -152,7 +152,7 @@ describe("cadence/interval axis fields surface contract errors while storing the
 
 describe("window axis field surfaces contract errors while storing the typed value (T2-5)", () => {
   const selectWindow = (): void => {
-    fireEvent.click(within(screen.getByRole("group", { name: "repetition" })).getByText("window"));
+    fireEvent.click(screen.getByRole("radio", { name: "Clock window" }));
   };
 
   it("shows the HH:MM error on a malformed start time, still storing the raw value", () => {
@@ -264,7 +264,7 @@ describe("switching repetition variant wholesale-replaces the body (QA-14, no st
   it("drops ladder steps when switching ladder → cadence", () => {
     render(<InspectorHarness initial={baseContainer({ kind: "ladder", steps: [21, 15, 9] })} />);
 
-    fireEvent.click(within(screen.getByRole("group", { name: "repetition" })).getByText("cadence"));
+    fireEvent.click(screen.getByRole("radio", { name: "EMOM" }));
 
     const stored = readRepetition();
 
