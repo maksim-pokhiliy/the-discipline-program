@@ -29,7 +29,7 @@ export const AxisModeButtonGrid = <TKind extends string>({
   onChange,
 }: AxisModeButtonGridProps<TKind>): ReactNode => (
   <Box
-    role="radiogroup"
+    role="group"
     aria-label={label}
     sx={{ display: "grid", gridTemplateColumns: GRID_COLUMNS, gap: GRID_GAP }}
   >
@@ -39,7 +39,11 @@ export const AxisModeButtonGrid = <TKind extends string>({
         label={tile.label}
         icon={tile.icon}
         isActive={tile.kind === value}
-        onSelect={() => onChange(tile.kind)}
+        onSelect={() => {
+          if (tile.kind !== value) {
+            onChange(tile.kind);
+          }
+        }}
       />
     ))}
   </Box>

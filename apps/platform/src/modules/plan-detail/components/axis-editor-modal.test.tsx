@@ -113,7 +113,7 @@ const submit = () => fireEvent.click(screen.getByRole("button", { name: "Add sch
 const submitEdit = () => fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
 const selectRepetition = (label: string) =>
-  fireEvent.click(screen.getByRole("radio", { name: label }));
+  fireEvent.click(screen.getByRole("button", { name: label }));
 
 const selectScoring = (kind: string) =>
   fireEvent.change(screen.getByRole("combobox", { name: "scoring" }), { target: { value: kind } });
@@ -139,6 +139,7 @@ describe("AxisEditorModal create mode", () => {
   it("shows the flat hint for a fresh draft and a rounds tag once a count repetition is set", () => {
     renderCreate();
 
+    expect(screen.getByText("Derived label")).toBeInTheDocument();
     expect(screen.getByText("flat — plain container")).toBeInTheDocument();
 
     selectRepetition("Count");
@@ -553,7 +554,7 @@ describe("AxisEditorModal mutation error surfacing (QA-Must-8)", () => {
 
 describe("AxisEditorModal count range refinement (QA-Must-10)", () => {
   const setRangeMinMax = (min: string, max: string): void => {
-    fireEvent.click(screen.getByRole("radio", { name: "Count" }));
+    fireEvent.click(screen.getByRole("button", { name: "Count" }));
 
     const [rangeButton] = screen.getAllByRole("button", { name: "range" });
 
@@ -627,27 +628,27 @@ describe("AxisEditorModal create-mode arrangement with no children (QA-Must-5)",
   });
 });
 
-describe("AxisEditorModal repetition radiogroup a11y contract (T13)", () => {
+describe("AxisEditorModal repetition tile-group a11y contract (T13)", () => {
   const REPETITION_TILE_COUNT = 7;
 
-  it("exposes a single-select radiogroup with one radio per repetition tile", () => {
+  it("exposes a tile group with one button per repetition tile", () => {
     renderCreate();
 
-    const radiogroup = screen.getByRole("radiogroup", { name: "repetition" });
+    const group = screen.getByRole("group", { name: "repetition" });
 
-    expect(within(radiogroup).getAllByRole("radio")).toHaveLength(REPETITION_TILE_COUNT);
+    expect(within(group).getAllByRole("button")).toHaveLength(REPETITION_TILE_COUNT);
   });
 
-  it("marks only the active repetition tile aria-checked and moves the mark on select", () => {
+  it("marks only the active repetition tile aria-pressed and moves the mark on select", () => {
     renderCreate();
 
-    const radiogroup = screen.getByRole("radiogroup", { name: "repetition" });
+    const group = screen.getByRole("group", { name: "repetition" });
 
-    expect(within(radiogroup).getByRole("radio", { checked: true })).toHaveAccessibleName("Once");
+    expect(within(group).getByRole("button", { pressed: true })).toHaveAccessibleName("Once");
 
     selectRepetition("Count");
 
-    expect(within(radiogroup).getByRole("radio", { checked: true })).toHaveAccessibleName("Count");
+    expect(within(group).getByRole("button", { pressed: true })).toHaveAccessibleName("Count");
   });
 });
 

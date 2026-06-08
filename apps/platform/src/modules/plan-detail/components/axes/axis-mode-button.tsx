@@ -24,8 +24,7 @@ export const AxisModeButton: React.FC<AxisModeButtonProps> = ({
   onSelect,
 }) => (
   <ButtonBase
-    role="radio"
-    aria-checked={isActive}
+    aria-pressed={isActive}
     aria-label={label}
     onClick={onSelect}
     sx={(theme) => ({
