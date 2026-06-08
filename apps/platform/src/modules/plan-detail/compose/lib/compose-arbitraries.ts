@@ -1,5 +1,6 @@
 import fc from "fast-check";
 
+import { asNodeId } from "../../lib/axis-draft-id";
 import type {
   ComposeContainer,
   ComposeNode,
@@ -18,7 +19,6 @@ import {
   type RawNode,
   type RawRow,
 } from "./compose-arbitrary-arrangement";
-import { asNodeId } from "./id-factory";
 
 const MAX_DEPTH = 3;
 

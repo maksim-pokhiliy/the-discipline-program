@@ -1,5 +1,6 @@
 import { arrayMove } from "@dnd-kit/sortable";
 
+import { makeNodeId } from "../../lib/axis-draft-id";
 import type {
   ArrangementAxis,
   ComposeBlock,
@@ -12,8 +13,6 @@ import type {
   NodeId,
   ParallelTrackDraft,
 } from "../compose-tree.types";
-
-import { makeNodeId } from "./id-factory";
 
 type IdRemap = Map<NodeId, NodeId>;
 

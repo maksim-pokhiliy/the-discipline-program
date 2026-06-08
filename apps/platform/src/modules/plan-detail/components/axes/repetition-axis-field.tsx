@@ -7,11 +7,11 @@ import { FormHelperText, Stack, ToggleButton } from "@mui/material";
 import type { TimeCap } from "@repo/contracts/lms/_shared";
 import { LabeledToggleGroup } from "@repo/ui";
 
-import { CountOrRange } from "../../../components/count-or-range-field";
-import { StepArrayFields } from "../../../components/step-array-fields";
-import { TimeCapFields } from "../../../components/time-cap-fields";
-import type { RepetitionAxis } from "../../compose-tree.types";
+import { CountOrRange } from "../count-or-range-field";
+import { StepArrayFields } from "../step-array-fields";
+import { TimeCapFields } from "../time-cap-fields";
 
+import type { RepetitionAxis } from "./axis-draft.types";
 import { CadenceAxisField } from "./cadence-axis-field";
 import { IntervalAxisField } from "./interval-axis-field";
 import { WindowAxisField } from "./window-axis-field";

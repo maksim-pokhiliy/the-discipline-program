@@ -1,9 +1,9 @@
 import type { Exercise } from "@repo/contracts/lms/exercise";
 
-import type { ComposeContainer, ComposeRow, NodeId } from "../compose-tree.types";
+import type { ComposeContainer, ComposeRow, NodeId } from "../components/axes/axis-draft.types";
 
 import { collectDescendantRows, collectDirectRows, collectTrackChildren } from "./arrangement-tree";
-import { buildRowSummary } from "./row-summary";
+import { buildRowSummary } from "./draft-row-summary";
 
 export type ArrangementTargetRef = { id: NodeId; label: string };
 

@@ -4,9 +4,9 @@ import { Typography } from "@mui/material";
 
 import type { Exercise } from "@repo/contracts/lms/exercise";
 
+import { ContainerInspector } from "../../components/axes/container-inspector";
 import type { ComposeNode, NodeId } from "../compose-tree.types";
 
-import { ComposeContainerInspector } from "./compose-container-inspector";
 import { ComposeLeafEditor } from "./compose-leaf-editor";
 
 const EMPTY_TEXT = "Select a node to edit its axes.";
@@ -38,7 +38,7 @@ export const ComposeNodeInspector: React.FC<ComposeNodeInspectorProps> = ({
 
   if (selectedNode.nodeType === "container") {
     return (
-      <ComposeContainerInspector
+      <ContainerInspector
         key={selectedNode.id}
         container={selectedNode}
         exerciseById={exerciseById}

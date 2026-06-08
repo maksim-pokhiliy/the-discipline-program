@@ -1,15 +1,14 @@
 import type { Composition } from "@repo/contracts/lms/composition";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 
-import type { ArrangementAxis, ComposeContainer, ComposeNode, NodeId } from "../compose-tree.types";
-
 import {
   type ConvertIssue,
   type DraftArrangement,
   validateDeferredArrangement,
-} from "./arrangement-convert";
-import { resolveArrangement } from "./arrangement-resolve";
-import { composeContainerToComposition } from "./compose-to-create-requests";
+} from "../../lib/arrangement-convert";
+import { resolveArrangement } from "../../lib/arrangement-resolve";
+import { composeContainerToComposition } from "../../lib/compose-container-to-composition";
+import type { ArrangementAxis, ComposeContainer, ComposeNode, NodeId } from "../compose-tree.types";
 
 export type SchemaCompositionUpdate = { schemaId: string; composition: Composition | null };
 

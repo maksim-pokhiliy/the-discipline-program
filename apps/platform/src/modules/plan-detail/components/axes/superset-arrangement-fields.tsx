@@ -14,8 +14,9 @@ import {
   Typography,
 } from "@mui/material";
 
-import type { ArrangementAxis, NodeId, SupersetPairDraft } from "../../compose-tree.types";
 import type { ArrangementTargetRef } from "../../lib/arrangement-targets";
+
+import type { ArrangementAxis, NodeId, SupersetPairDraft } from "./axis-draft.types";
 
 type SupersetArrangement = Extract<ArrangementAxis, { kind: "superset" }>;
 

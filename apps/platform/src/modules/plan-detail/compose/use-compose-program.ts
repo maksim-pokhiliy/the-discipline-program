@@ -4,11 +4,12 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import type { RowKind } from "@repo/contracts/lms/schema-row";
 
+import { makeNodeId } from "../lib/axis-draft-id";
+
 import type { NodeHandlers } from "./components/compose-canvas-handlers";
 import type { UpperHandlers } from "./components/compose-upper-handlers";
 import { MOCK_SEED } from "./compose-mock-seed";
 import type { ComposeContainer, ComposeNode, ComposeProgram, NodeId } from "./compose-tree.types";
-import { makeNodeId } from "./lib/id-factory";
 import { makeRow } from "./lib/make-row";
 import { duplicateBlock, duplicateDay, duplicateSession, duplicateWeek } from "./lib/program-ops";
 import { duplicateNodeAsSibling } from "./lib/sibling-ops";

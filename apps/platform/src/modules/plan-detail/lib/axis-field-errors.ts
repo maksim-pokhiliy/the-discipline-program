@@ -1,6 +1,6 @@
 import { repetitionAxisSchema } from "@repo/contracts/lms/composition";
 
-import type { RepetitionAxis } from "../compose-tree.types";
+import type { RepetitionAxis } from "../components/axes/axis-draft.types";
 
 export const fieldErrorsFor = (axis: RepetitionAxis): Map<string, string> => {
   const result = repetitionAxisSchema.safeParse(axis);

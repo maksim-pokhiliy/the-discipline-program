@@ -4,9 +4,9 @@ import { useCallback } from "react";
 
 import { useCreateSchema, useCreateSchemaRow, useUpdateSchema } from "@app/lib/hooks";
 
+import { resolveArrangement } from "../../lib/arrangement-resolve";
 import type { NodeId } from "../compose-tree.types";
 
-import { resolveArrangement } from "./arrangement-resolve";
 import type { CreateSchemaPlanNode } from "./compose-to-create-requests";
 
 export type PersistResult = { ok: true } | { ok: false; createdCount: number; error: Error };

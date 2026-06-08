@@ -6,9 +6,8 @@ import {
   validateRowSiblings,
 } from "../../components/row-form-utils";
 import { ROW_PAYLOAD_FORM_REGISTRY } from "../../components/row-payload-form-registry";
+import { makeNodeId } from "../../lib/axis-draft-id";
 import type { ComposeRow } from "../compose-tree.types";
-
-import { makeNodeId } from "./id-factory";
 
 const UNCOMMITTED_PAYLOAD: SchemaRowPayload = { rowKind: "REST_SLOT" };
 

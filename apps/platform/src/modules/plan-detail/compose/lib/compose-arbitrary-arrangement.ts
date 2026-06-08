@@ -1,5 +1,7 @@
 import type { ParallelInterleaveOrder } from "@repo/contracts/lms/composition";
 
+import { collectDescendantRows } from "../../lib/arrangement-tree";
+import { asNodeId } from "../../lib/axis-draft-id";
 import type {
   ArrangementAxis,
   ComposeContainer,
@@ -9,9 +11,6 @@ import type {
   RestAxis,
   ScoringDirective,
 } from "../compose-tree.types";
-
-import { collectDescendantRows } from "./arrangement-tree";
-import { asNodeId } from "./id-factory";
 
 const MIN_TRACKS = 2;
 const MIN_PAIR_ROWS = 2;

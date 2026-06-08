@@ -14,9 +14,10 @@ import {
 
 import { LabeledToggleGroup } from "@repo/ui";
 
-import { StepArrayFields } from "../../../components/step-array-fields";
-import type { ArrangementAxis, NodeId, ParallelTrackDraft } from "../../compose-tree.types";
 import type { ArrangementTargetRef } from "../../lib/arrangement-targets";
+import { StepArrayFields } from "../step-array-fields";
+
+import type { ArrangementAxis, NodeId, ParallelTrackDraft } from "./axis-draft.types";
 
 type ParallelArrangement = Extract<ArrangementAxis, { kind: "parallel" }>;
 

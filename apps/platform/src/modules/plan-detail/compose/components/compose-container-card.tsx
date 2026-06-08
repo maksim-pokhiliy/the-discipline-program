@@ -10,10 +10,10 @@ import { alpha, Box, IconButton, Stack, Typography } from "@mui/material";
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import { InlineEditText } from "@repo/ui";
 
+import { composeContainerToComposition } from "../../lib/compose-container-to-composition";
 import { deriveMinuteView } from "../../lib/derive-minute-view";
 import type { ComposeContainer, ComposeNode, NodeId } from "../compose-tree.types";
 import { formatAxesSummary } from "../lib/axes-summary";
-import { composeContainerToComposition } from "../lib/compose-to-create-requests";
 
 import { ComposeAddNodeMenu } from "./compose-add-node-menu";
 import type { NodeHandlers } from "./compose-canvas-handlers";

@@ -5,9 +5,8 @@ import {
   parseRowPayload,
   validateRowSiblings,
 } from "../../components/row-form-utils";
+import { asNodeId } from "../../lib/axis-draft-id";
 import type { ComposeRow, NodeId } from "../compose-tree.types";
-
-import { asNodeId } from "./id-factory";
 
 const CUID_BODY_LENGTH = 24;
 const CUID_PAD_CHAR = "0";

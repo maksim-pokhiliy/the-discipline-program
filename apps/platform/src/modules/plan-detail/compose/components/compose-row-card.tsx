@@ -12,8 +12,8 @@ import type { RowKind } from "@repo/contracts/lms/schema-row";
 import { RowKindBadge } from "@repo/ui";
 
 import { MinutePill } from "../../components/minute-pill";
+import { buildRowSummary } from "../../lib/draft-row-summary";
 import type { ComposeRow, NodeId } from "../compose-tree.types";
-import { buildRowSummary } from "../lib/row-summary";
 
 import { ComposeNodeActions } from "./compose-node-actions";
 

@@ -2,8 +2,8 @@
 
 import { Stack } from "@mui/material";
 
-import { NumberField } from "../../../components/number-field";
 import { fieldErrorsFor } from "../../lib/axis-field-errors";
+import { NumberField } from "../number-field";
 
 const FIELD_MIN = 1;
 const FIELD_STEP = 1;

@@ -1,5 +1,7 @@
 import type { Load, RepNotation, TimeCap } from "@repo/contracts/lms/_shared";
 
+import { asNodeId } from "../lib/axis-draft-id";
+
 import { MOCK_EXERCISE_IDS } from "./compose-mock-exercises";
 import { atomicExercise, compoundExercise, exerciseRow, restRow } from "./compose-mock-rows";
 import type {
@@ -15,7 +17,6 @@ import type {
   RestAxis,
   ScoringDirective,
 } from "./compose-tree.types";
-import { asNodeId } from "./lib/id-factory";
 
 type ContainerInput = {
   header?: string;

@@ -1,4 +1,4 @@
-import type { ComposeContainer, ComposeRow } from "../compose-tree.types";
+import type { ComposeContainer, ComposeRow } from "../components/axes/axis-draft.types";
 
 export const collectTrackChildren = (container: ComposeContainer): ComposeContainer[] =>
   container.children.filter((child): child is ComposeContainer => child.nodeType === "container");

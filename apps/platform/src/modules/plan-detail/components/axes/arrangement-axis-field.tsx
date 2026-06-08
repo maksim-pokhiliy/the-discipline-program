@@ -6,9 +6,9 @@ import { Stack, ToggleButton } from "@mui/material";
 
 import { LabeledToggleGroup } from "@repo/ui";
 
-import type { ArrangementAxis } from "../../compose-tree.types";
 import type { ArrangementTargetRef } from "../../lib/arrangement-targets";
 
+import type { ArrangementAxis } from "./axis-draft.types";
 import { ParallelArrangementFields } from "./parallel-arrangement-fields";
 import { SupersetArrangementFields } from "./superset-arrangement-fields";
 

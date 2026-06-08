@@ -6,7 +6,7 @@ import { Stack, TextField, ToggleButton } from "@mui/material";
 
 import { LabeledToggleGroup } from "@repo/ui";
 
-import type { ScoringDirective } from "../../compose-tree.types";
+import type { ScoringDirective } from "./axis-draft.types";
 
 const LABEL = "scoring";
 const SEED_LABEL = "Progressive seed";

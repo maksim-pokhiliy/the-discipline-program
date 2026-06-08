@@ -10,10 +10,10 @@ import { BaseModal } from "@repo/ui";
 
 import { useCatalog } from "@app/lib/hooks";
 
+import { makeNodeId } from "../../lib/axis-draft-id";
 import type { ComposeContainer, ComposeProgram } from "../compose-tree.types";
 import { composeRootToCreatePlan, type ConvertIssue } from "../lib/compose-to-create-requests";
 import { diffComposeAxesAgainstOriginal } from "../lib/diff-compose-axes";
-import { makeNodeId } from "../lib/id-factory";
 import {
   type InverseRefusalReason,
   schemaWithBodyToComposeProgram,
