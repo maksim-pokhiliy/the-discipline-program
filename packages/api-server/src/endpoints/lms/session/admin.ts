@@ -97,9 +97,6 @@ export const lmsSessionApi = {
                 order: nextOrder,
                 labelId: data.labelId ?? null,
                 notes: data.notes ?? null,
-                ...(data.freezeLoadsAtCreation !== undefined && {
-                  freezeLoadsAtCreation: data.freezeLoadsAtCreation,
-                }),
               },
             });
           },
@@ -144,9 +141,6 @@ export const lmsSessionApi = {
         data: {
           ...(data.labelId !== undefined && { labelId: data.labelId }),
           ...(data.notes !== undefined && { notes: data.notes }),
-          ...(data.freezeLoadsAtCreation !== undefined && {
-            freezeLoadsAtCreation: data.freezeLoadsAtCreation,
-          }),
         },
       });
 

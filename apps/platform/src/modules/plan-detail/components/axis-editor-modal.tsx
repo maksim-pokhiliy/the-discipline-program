@@ -17,10 +17,7 @@ import {
   buildComposition,
   previewComposition,
 } from "../lib/build-axis-composition";
-import {
-  type CompositionSummaryPart,
-  formatCompositionSummary,
-} from "../lib/format-composition-summary";
+import { formatCompositionSummary } from "../lib/format-composition-summary";
 import {
   type InverseRefusalReason,
   schemaWithBodyToDraftContainer,
@@ -75,12 +72,6 @@ const seedDraft = (mode: AxisEditorMode): DraftSeed => {
 
 const modeKey = (mode: AxisEditorMode): string =>
   mode.kind === "create" ? `create:${mode.blockId}` : `edit:${mode.schema.schema.id}`;
-
-const activePartsOf = (parts: CompositionSummaryPart[]): CompositionSummaryPart[] =>
-  parts.filter((part) => part.tone === "active");
-
-const inertPartOf = (parts: CompositionSummaryPart[]): CompositionSummaryPart | undefined =>
-  parts.find((part) => part.tone === "inert");
 
 export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
   open,
@@ -137,10 +128,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
   const preview = useMemo(() => previewComposition(draft), [draft]);
   const parts = useMemo(() => formatCompositionSummary(preview), [preview]);
   const labelKind = deriveCompositionLabel(preview).kind;
-  const activeParts = activePartsOf(parts);
-  const inertPart = inertPartOf(parts);
-  const showsFlatHint =
-    labelKind === FLAT_KIND && activeParts.length === 0 && inertPart === undefined;
+  const showsFlatHint = labelKind === FLAT_KIND && parts.length === 0;
 
   const handleSubmit = (): void => {
     if (isSubmittingRef.current || isPending) {
@@ -204,12 +192,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
       error={error ?? (refusal !== null ? AXIS_REFUSAL_MESSAGE : null)}
     >
       <Stack direction="column" spacing={BODY_SPACING}>
-        <DerivedLabelCard
-          labelKind={labelKind}
-          activeParts={activeParts}
-          inertPart={inertPart}
-          showsFlatHint={showsFlatHint}
-        />
+        <DerivedLabelCard labelKind={labelKind} parts={parts} showsFlatHint={showsFlatHint} />
 
         <ContainerInspector
           container={draft}

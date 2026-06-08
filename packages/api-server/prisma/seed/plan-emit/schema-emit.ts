@@ -51,7 +51,6 @@ const stripArrangement = (
   composition: CanonicalSchemaNode["composition"],
 ): CanonicalSchemaNode["composition"] => ({
   ...(composition.repetition !== undefined && { repetition: composition.repetition }),
-  ...(composition.scoring !== undefined && { scoring: composition.scoring }),
   ...(composition.rest !== undefined && { rest: composition.rest }),
 });
 

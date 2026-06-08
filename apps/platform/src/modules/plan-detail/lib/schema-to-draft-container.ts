@@ -4,7 +4,6 @@ import type {
   Composition,
   RepetitionAxis as ContractRepetitionAxis,
   RestAxis as ContractRestAxis,
-  ScoringDirective as ContractScoringDirective,
 } from "@repo/contracts/lms/composition";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
@@ -17,8 +16,6 @@ import type {
   ParallelTrackDraft,
   RepetitionAxis,
   RestAxis,
-  ScoringCondition,
-  ScoringDirective,
   SupersetPairDraft,
 } from "../components/axes/axis-draft.types";
 
@@ -116,30 +113,6 @@ const arrangementFromComposition = (arrangement: ContractArrangementAxis): Arran
 
 const restFromComposition = (rest: ContractRestAxis): RestAxis => rest;
 
-const conditionFrom = (scoring: ContractScoringDirective): { condition?: ScoringCondition } =>
-  scoring.kind !== "prescribed" && scoring.condition !== undefined
-    ? { condition: scoring.condition }
-    : {};
-
-const scoringFromComposition = (scoring: ContractScoringDirective): ScoringDirective => {
-  switch (scoring.kind) {
-    case "prescribed":
-      return { kind: "prescribed" };
-    case "amrap":
-      return { kind: "amrap", ...conditionFrom(scoring) };
-    case "for_time":
-      return { kind: "for_time", ...conditionFrom(scoring) };
-    case "max_in_remaining":
-      return { kind: "max_in_remaining", ...conditionFrom(scoring) };
-    case "total":
-      return { kind: "total", ...conditionFrom(scoring) };
-    case "progressive":
-      return { kind: "progressive", seed: scoring.seed, ...conditionFrom(scoring) };
-    default:
-      return scoring satisfies never;
-  }
-};
-
 const rowFromSchemaRow = (row: SchemaRow): ComposeRow => ({
   nodeType: "row",
   id: asNodeId(row.id),
@@ -159,15 +132,11 @@ const splitAxes = (
   composition: Composition,
 ): {
   arrangement?: ArrangementAxis;
-  scoring?: ScoringDirective;
   rest?: RestAxis;
   programKind?: StagedProgramKind;
 } => ({
   ...(composition.arrangement !== undefined && {
     arrangement: arrangementFromComposition(composition.arrangement),
-  }),
-  ...(composition.scoring !== undefined && {
-    scoring: scoringFromComposition(composition.scoring),
   }),
   ...(composition.rest !== undefined && { rest: restFromComposition(composition.rest) }),
   ...(composition.programKind !== undefined && { programKind: composition.programKind }),

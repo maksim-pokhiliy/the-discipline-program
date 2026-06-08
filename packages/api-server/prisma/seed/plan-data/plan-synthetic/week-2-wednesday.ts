@@ -105,7 +105,6 @@ const SESSION_WK2_WED: CanonicalSession = {
   order: 1,
   label: LBL.firstSession,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [
     BLOCK_REST_AFTER_SPECIFIC_SET_WK2_WED,
     BLOCK_PACE_HARD_WK2_WED,

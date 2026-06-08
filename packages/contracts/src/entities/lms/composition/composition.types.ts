@@ -9,15 +9,11 @@ import {
   type parallelTrackSchema,
   type repetitionAxisSchema,
   type restAxisSchema,
-  type scoringConditionSchema,
-  type scoringDirectiveSchema,
   type supersetPairSchema,
 } from "./composition.schema";
 
 export type RepetitionAxis = z.infer<typeof repetitionAxisSchema>;
 export type ArrangementAxis = z.infer<typeof arrangementAxisSchema>;
-export type ScoringDirective = z.infer<typeof scoringDirectiveSchema>;
-export type ScoringCondition = z.infer<typeof scoringConditionSchema>;
 export type RestAxis = z.infer<typeof restAxisSchema>;
 export type Composition = z.infer<typeof compositionSchema>;
 export type SupersetPair = z.infer<typeof supersetPairSchema>;

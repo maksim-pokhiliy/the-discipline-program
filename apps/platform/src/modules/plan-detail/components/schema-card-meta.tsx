@@ -14,8 +14,6 @@ import {
   formatCompositionSummary,
 } from "../lib/format-composition-summary";
 
-import { InertScoringChip } from "./inert-scoring-chip";
-
 const EMPTY_PARTS: CompositionSummaryPart[] = [];
 
 const NO_PARAMS_LABEL = "no params";
@@ -39,13 +37,6 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
     [composition],
   );
 
-  const activeParts = useMemo(
-    () => metaParts.filter((part) => part.tone === "active"),
-    [metaParts],
-  );
-
-  const inertPart = useMemo(() => metaParts.find((part) => part.tone === "inert"), [metaParts]);
-
   const ownChips = useMemo(
     () => (schemaIntensity !== null ? formatIntensityChips(schemaIntensity) : []),
     [schemaIntensity],
@@ -62,15 +53,14 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
   );
 
   const isEmpty =
-    activeParts.length === 0 &&
-    inertPart === undefined &&
+    metaParts.length === 0 &&
     ownChips.length === 0 &&
     cascadeChips.length === 0 &&
     capCascadeText === null;
 
   return (
     <Stack direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap">
-      {activeParts.map((part, i) => (
+      {metaParts.map((part, i) => (
         <Fragment key={`${String(i)}-${part.text}`}>
           {i > 0 ? (
             <Typography variant="caption" component="span" color="text.disabled">
@@ -82,8 +72,6 @@ export const SchemaCardMeta: React.FC<SchemaCardMetaProps> = ({
           </Typography>
         </Fragment>
       ))}
-
-      {inertPart !== undefined ? <InertScoringChip text={inertPart.text} /> : null}
 
       {ownChips.map((c, i) => (
         <IndicatorChip key={`${String(i)}-${c.text}`} tone={c.tone} label={c.text} dot={false} />

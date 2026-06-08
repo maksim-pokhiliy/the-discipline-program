@@ -35,7 +35,6 @@ const SESSION_WK2_FRI: CanonicalSession = {
   order: 1,
   label: LBL.firstSession,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [BLOCK_PACE_MODERATE_WK2_FRI, BLOCK_EMOM_22_SUBSCHEMAS],
 };
 

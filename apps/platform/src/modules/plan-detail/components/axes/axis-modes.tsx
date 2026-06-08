@@ -8,11 +8,7 @@ import Schedule from "@mui/icons-material/Schedule";
 import Stairs from "@mui/icons-material/Stairs";
 import Timer from "@mui/icons-material/Timer";
 
-import {
-  type ArrangementAxis,
-  type RepetitionAxis,
-  type ScoringDirective,
-} from "./axis-draft.types";
+import { type ArrangementAxis, type RepetitionAxis } from "./axis-draft.types";
 import { type AxisModeTile } from "./axis-mode-button-grid";
 
 const ICON_FONT_SIZE = "small" as const;
@@ -69,13 +65,4 @@ export const ARRANGEMENT_HINTS: Record<ArrangementAxis["kind"], string> = {
   parallel:
     "Tracks run together; each carries its own rep-scheme. Interleave: round-by-round or track-by-track.",
   superset: "Children coupled back-to-back, repeated as a unit.",
-};
-
-export const SCORING_NOTES: Record<ScoringDirective["kind"], string> = {
-  prescribed: "Do the prescribed work",
-  amrap: "As many rounds/reps as possible",
-  for_time: "Time to complete",
-  max_in_remaining: "Max reps in leftover time",
-  total: "Total reps / load",
-  progressive: "Ascending load / effort",
 };

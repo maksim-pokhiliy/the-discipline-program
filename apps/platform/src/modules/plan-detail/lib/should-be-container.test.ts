@@ -53,11 +53,10 @@ describe("shouldBeContainer", () => {
     expect(shouldBeContainer(baseContainer({ children: oneChild() }))).toBe(false);
   });
 
-  it("returns false for an empty container with once/ordered/prescribed axes", () => {
+  it("returns false for an empty container with once/ordered axes", () => {
     const container = baseContainer({
       repetition: { kind: "once" },
       arrangement: { kind: "ordered" },
-      scoring: { kind: "prescribed" },
     });
 
     expect(shouldBeContainer(container)).toBe(false);
@@ -77,12 +76,6 @@ describe("shouldBeContainer", () => {
       arrangement: { kind: "parallel", interleaveOrder: "round_by_round", tracks: [] },
       children: oneChild(),
     });
-
-    expect(shouldBeContainer(container)).toBe(true);
-  });
-
-  it("returns true when scoring is non-prescribed", () => {
-    const container = baseContainer({ scoring: { kind: "amrap" }, children: oneChild() });
 
     expect(shouldBeContainer(container)).toBe(true);
   });

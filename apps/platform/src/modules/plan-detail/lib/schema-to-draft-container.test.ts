@@ -67,7 +67,6 @@ describe("schemaWithBodyToDraftContainer rebuilds the draft container", () => {
   it("rebuilds the container axes from the stored composition", () => {
     const composition: Composition = {
       repetition: { kind: "count", count: 5 },
-      scoring: { kind: "amrap" },
       rest: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
       programKind: "wave",
     };
@@ -82,31 +81,11 @@ describe("schemaWithBodyToDraftContainer rebuilds the draft container", () => {
 
     expect(result.container.id).toBe(TOP_ID);
     expect(result.container.repetition).toEqual({ kind: "count", count: 5 });
-    expect(result.container.scoring).toEqual({ kind: "amrap" });
     expect(result.container.rest).toEqual({
       duration: { value: 90, unit: "sec" },
       scope: "between_sets",
     });
     expect(result.container.programKind).toBe("wave");
-  });
-
-  it("carries the scoring condition back onto the draft", () => {
-    const composition: Composition = {
-      scoring: { kind: "amrap", condition: { appliesToRounds: [2, 3] } },
-    };
-
-    const result = schemaWithBodyToDraftContainer(schema(TOP_ID, composition, [], []));
-
-    expect(result.ok).toBe(true);
-
-    if (!result.ok) {
-      return;
-    }
-
-    expect(result.container.scoring).toEqual({
-      kind: "amrap",
-      condition: { appliesToRounds: [2, 3] },
-    });
   });
 
   it("rebuilds direct rows as row children carrying the persisted id", () => {
@@ -151,7 +130,6 @@ describe("schemaWithBodyToDraftContainer rebuilds the draft container", () => {
 
     expect(result.container.repetition).toBeUndefined();
     expect(result.container.arrangement).toBeUndefined();
-    expect(result.container.scoring).toBeUndefined();
     expect(result.container.rest).toBeUndefined();
   });
 });

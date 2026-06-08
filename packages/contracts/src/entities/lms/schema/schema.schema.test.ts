@@ -150,7 +150,7 @@ describe("schemaWithBodySchema", () => {
 describe("createSchemaSchema", () => {
   it("rejects missing required field (blockId)", () => {
     const r = createSchemaSchema.safeParse({
-      composition: { scoring: { kind: "prescribed" } },
+      composition: { repetition: { kind: "once" } },
     });
 
     expect(r.success).toBe(false);
@@ -159,7 +159,7 @@ describe("createSchemaSchema", () => {
   it("accepts a composition-only create when composition present", () => {
     const r = createSchemaSchema.safeParse({
       blockId: cuidA,
-      composition: { scoring: { kind: "prescribed" } },
+      composition: { repetition: { kind: "once" } },
     });
 
     expect(r.success).toBe(true);

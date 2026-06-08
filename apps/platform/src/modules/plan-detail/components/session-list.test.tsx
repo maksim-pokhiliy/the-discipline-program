@@ -82,7 +82,6 @@ const makeSession = (overrides: Partial<SessionWithLabel> = {}): SessionWithLabe
   order: 1,
   labelId: null,
   notes: null,
-  freezeLoadsAtCreation: false,
   createdAt: NOW,
   updatedAt: NOW,
   label: null,

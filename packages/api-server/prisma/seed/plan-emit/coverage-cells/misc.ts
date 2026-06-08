@@ -126,14 +126,6 @@ const ENTITY_INVARIANT_CELLS: readonly CoverageCell[] = [
       }),
   },
   {
-    id: "entity.sessionFreeze",
-    category: "entity-invariants",
-    label: "Session with freezeLoadsAtCreation = true",
-    required: 1,
-    sourceRef: "coverage-matrix §2 session-freeze",
-    tally: (db, planId) => countSession(db, planId, { freezeLoadsAtCreation: true }),
-  },
-  {
     id: "entity.labeledSession",
     category: "entity-invariants",
     label: "Session with a label (e.g. 1ST SESSION)",

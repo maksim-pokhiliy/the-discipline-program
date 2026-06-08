@@ -2,13 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import { STAGED_PROGRAM_KINDS } from "../_shared";
 
-import { PARALLEL_INTERLEAVE_ORDERS, SCORING_DIRECTIVE_KINDS } from "./composition.constants";
+import { PARALLEL_INTERLEAVE_ORDERS } from "./composition.constants";
 import {
   arrangementAxisSchema,
   compositionSchema,
   repetitionAxisSchema,
   restAxisSchema,
-  scoringDirectiveSchema,
 } from "./composition.schema";
 
 const cuidA = "clz0000000000000000000aaa";
@@ -279,55 +278,6 @@ describe("arrangementAxisSchema", () => {
   });
 });
 
-describe("scoringDirectiveSchema", () => {
-  it("accepts every scoring kind", () => {
-    for (const kind of SCORING_DIRECTIVE_KINDS) {
-      const input = kind === "progressive" ? { kind, seed: "3-2-1" } : { kind };
-
-      expect(scoringDirectiveSchema.safeParse(input).success).toBe(true);
-    }
-  });
-
-  it("accepts progressive with a seed", () => {
-    expect(scoringDirectiveSchema.safeParse({ kind: "progressive", seed: "3-2-1" }).success).toBe(
-      true,
-    );
-  });
-
-  it("rejects progressive without a seed", () => {
-    expect(scoringDirectiveSchema.safeParse({ kind: "progressive" }).success).toBe(false);
-  });
-
-  it("accepts a scored variant with an inert condition", () => {
-    expect(
-      scoringDirectiveSchema.safeParse({ kind: "amrap", condition: { appliesToRounds: [2, 3] } })
-        .success,
-    ).toBe(true);
-  });
-
-  it("rejects a condition with empty appliesToRounds", () => {
-    expect(
-      scoringDirectiveSchema.safeParse({ kind: "total", condition: { appliesToRounds: [] } })
-        .success,
-    ).toBe(false);
-  });
-
-  it("rejects an unknown extra key on prescribed (no condition slot)", () => {
-    expect(
-      scoringDirectiveSchema.safeParse({
-        kind: "prescribed",
-        condition: { appliesToRounds: [2] },
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects a function-valued seed (inertness holds at the parse boundary)", () => {
-    expect(scoringDirectiveSchema.safeParse({ kind: "progressive", seed: () => "x" }).success).toBe(
-      false,
-    );
-  });
-});
-
 describe("restAxisSchema", () => {
   it("accepts a valid RestSpec", () => {
     expect(
@@ -373,7 +323,7 @@ describe("compositionSchema", () => {
     ).toBe(true);
   });
 
-  it("accepts an all-four-axes bundle", () => {
+  it("accepts an all-axes bundle", () => {
     expect(
       compositionSchema.safeParse({
         repetition: { kind: "count", count: 3 },
@@ -382,7 +332,6 @@ describe("compositionSchema", () => {
           interleaveOrder: "round_by_round",
           tracks: [{ childSchemaId: cuidA }, { childSchemaId: cuidC }],
         },
-        scoring: { kind: "for_time" },
         rest: { duration: { value: 90, unit: "sec" }, scope: "between_rounds" },
       }).success,
     ).toBe(true);
@@ -424,15 +373,6 @@ describe("strict mode — unknown keys are rejected", () => {
       }).success,
     ).toBe(false);
   });
-
-  it("rejects an unknown key on a scoring condition", () => {
-    expect(
-      scoringDirectiveSchema.safeParse({
-        kind: "amrap",
-        condition: { appliesToRounds: [2, 3], bogus: 1 },
-      }).success,
-    ).toBe(false);
-  });
 });
 
 describe("compositionSchema programKind classifier (D-ONTOLOGY)", () => {
@@ -455,7 +395,6 @@ describe("compositionSchema programKind classifier (D-ONTOLOGY)", () => {
       compositionSchema.safeParse({
         repetition: { kind: "count", count: 3 },
         arrangement: { kind: "ordered" },
-        scoring: { kind: "for_time" },
         rest: { duration: { value: 90, unit: "sec" }, scope: "between_rounds" },
       }).success,
     ).toBe(true);

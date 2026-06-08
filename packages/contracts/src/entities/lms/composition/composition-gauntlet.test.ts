@@ -160,7 +160,7 @@ describe("Gauntlet B — EMOM 16 / 4 rounds (cadence + per-minute window childre
   });
 });
 
-describe("Gauntlet D — 3x(2min work / 1min off), MAX, scoring-condition rounds 2 & 3", () => {
+describe("Gauntlet D — 3x(2min work / 1min off) interval, ordered children", () => {
   const intervalContainer: ComposeNode = {
     nodeType: "container",
     id: cuidIntervalD,
@@ -169,7 +169,6 @@ describe("Gauntlet D — 3x(2min work / 1min off), MAX, scoring-condition rounds
     composition: {
       repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
       arrangement: { kind: "ordered" },
-      scoring: { kind: "max_in_remaining", condition: { appliesToRounds: [2, 3] } },
     },
     children: [
       exerciseRow(cuidKbSwings, cuidKbSwings),
@@ -178,12 +177,11 @@ describe("Gauntlet D — 3x(2min work / 1min off), MAX, scoring-condition rounds
     ],
   };
 
-  it("expresses interval(work:2, off:1, count:3) with an inert scoring-condition bundle", () => {
+  it("expresses interval(work:2, off:1, count:3) with an ordered-arrangement bundle", () => {
     expect(
       compositionSchema.safeParse({
         repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
         arrangement: { kind: "ordered" },
-        scoring: { kind: "max_in_remaining", condition: { appliesToRounds: [2, 3] } },
       }).success,
     ).toBe(true);
   });

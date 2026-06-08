@@ -21,7 +21,6 @@ const SESSION_WK2_TUE: CanonicalSession = {
   order: 1,
   label: LBL.firstSession,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [
     BLOCK_ALTERNATING_SETS_WK2_TUE,
     BLOCK_NESTED_ROUNDS_OVER_ROUNDS_WK2_TUE,

@@ -44,7 +44,6 @@ const COMPOSITION_REPETITION_KINDS = [
   "interval",
 ] as const;
 const COMPOSITION_ARRANGEMENT_KINDS = ["ordered", "parallel", "superset"] as const;
-const COMPOSITION_SCORING_KINDS = ["amrap", "max_in_remaining", "progressive", "total"] as const;
 
 describe("Seed coverage — synthetic canonical Demo Plan", () => {
   const db: PrismaClientType = new PrismaClient();
@@ -203,14 +202,6 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     expect(implicitBlocks).toBeGreaterThanOrEqual(1);
   });
 
-  it("§2: at least one Session has freezeLoadsAtCreation=true", async () => {
-    const frozen = await db.session.count({
-      where: { day: scopes.dayScope, freezeLoadsAtCreation: true },
-    });
-
-    expect(frozen).toBeGreaterThanOrEqual(1);
-  });
-
   it("every coverage-matrix cell is hit at least Required count — 100% gate (QA-1, MT-21)", async () => {
     const report = await tallyCoverage(db, demoPlanId);
 
@@ -236,7 +227,6 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
       ...ALL_POSITIONS.map((p) => `position.${p}`),
       ...COMPOSITION_REPETITION_KINDS.map((k) => `repetition.kind.${k}`),
       ...COMPOSITION_ARRANGEMENT_KINDS.map((k) => `arrangement.kind.${k}`),
-      ...COMPOSITION_SCORING_KINDS.map((k) => `scoring.kind.${k}`),
       "rest.present",
       ...MEDIA_POSITIONS.map((p) => `mediaReference.position.${p}`),
       ...MEDIA_APPLIES_TO.map((a) => `mediaReference.appliesTo.${a}`),

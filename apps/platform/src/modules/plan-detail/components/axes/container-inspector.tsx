@@ -20,12 +20,10 @@ import type {
   ComposeNode,
   NodeId,
   RepetitionAxis,
-  ScoringDirective,
 } from "./axis-draft.types";
 import { AxisFieldSection } from "./axis-field-section";
 import { ProgramKindAxisField } from "./program-kind-axis-field";
 import { RepetitionAxisField } from "./repetition-axis-field";
-import { ScoringAxisField } from "./scoring-axis-field";
 
 const HEADER_LABEL = "Header";
 const HEADER_ARIA = "Inspector header";
@@ -39,7 +37,6 @@ const DEMOTE_BUTTON_LABEL = "Demote to row";
 
 const DEFAULT_REPETITION: RepetitionAxis = { kind: "once" };
 const DEFAULT_ARRANGEMENT: ArrangementAxis = { kind: "ordered" };
-const DEFAULT_SCORING: ScoringDirective = { kind: "prescribed" };
 const DEFAULT_REST: RestSpec = {
   duration: { value: 90, unit: "sec" },
   scope: "between_sets",
@@ -111,12 +108,6 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
     onUpdateNode(
       container.id,
       asContainerPatch((node) => ({ ...node, arrangement })),
-    );
-
-  const setScoring = (scoring: ScoringDirective): void =>
-    onUpdateNode(
-      container.id,
-      asContainerPatch((node) => ({ ...node, scoring })),
     );
 
   const setProgramKind = (next?: StagedProgramKind): void =>
@@ -197,8 +188,6 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
         directRows={arrangementTargets.directRows}
         rowsByTrack={arrangementTargets.rowsByTrack}
       />
-
-      <ScoringAxisField value={container.scoring ?? DEFAULT_SCORING} onChange={setScoring} />
 
       <ProgramKindAxisField value={container.programKind} onChange={setProgramKind} />
 

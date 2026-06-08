@@ -56,7 +56,6 @@ const makeSession = ({
   order: 10,
   labelId: null,
   notes,
-  freezeLoadsAtCreation: false,
   createdAt: now,
   updatedAt: now,
   label: null,

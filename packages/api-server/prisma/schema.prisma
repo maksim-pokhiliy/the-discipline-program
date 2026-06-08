@@ -611,7 +611,6 @@ model Session {
   order                 Int
   labelId               String?
   notes                 String?
-  freezeLoadsAtCreation Boolean  @default(false)
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 

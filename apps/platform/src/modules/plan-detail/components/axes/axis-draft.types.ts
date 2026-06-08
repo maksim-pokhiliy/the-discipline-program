@@ -37,16 +37,6 @@ export type ArrangementAxis =
   | { kind: "parallel"; interleaveOrder: ParallelInterleaveOrder; tracks: ParallelTrackDraft[] }
   | { kind: "superset"; pairs: SupersetPairDraft[] };
 
-export type ScoringCondition = { appliesToRounds: number[] };
-
-export type ScoringDirective =
-  | { kind: "prescribed" }
-  | { kind: "amrap"; condition?: ScoringCondition }
-  | { kind: "for_time"; condition?: ScoringCondition }
-  | { kind: "max_in_remaining"; condition?: ScoringCondition }
-  | { kind: "total"; condition?: ScoringCondition }
-  | { kind: "progressive"; seed: string; condition?: ScoringCondition };
-
 export type RestAxis = RestSpec;
 
 export type ComposeContainer = {
@@ -56,7 +46,6 @@ export type ComposeContainer = {
   notes: string | null;
   repetition?: RepetitionAxis;
   arrangement?: ArrangementAxis;
-  scoring?: ScoringDirective;
   rest?: RestAxis;
   programKind?: StagedProgramKind;
   children: ComposeNode[];

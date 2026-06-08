@@ -16,7 +16,6 @@ const LADDER_COMPOSITION: Composition = {
 
 const INTERVAL_COMPOSITION: Composition = {
   repetition: { kind: "interval", workMin: 2, offMin: 1, count: 6 },
-  scoring: { kind: "max_in_remaining", condition: { appliesToRounds: [2, 3] } },
 };
 
 const MARKER_PAYLOAD = { rowKind: "INNER_LADDER_MARKER" as const, steps: [21, 15, 9] };

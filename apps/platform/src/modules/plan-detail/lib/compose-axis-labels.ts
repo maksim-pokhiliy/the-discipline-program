@@ -1,18 +1,5 @@
 import type { StagedProgramKind } from "@repo/contracts/lms/_shared";
-import type {
-  ArrangementAxis,
-  ParallelInterleaveOrder,
-  ScoringDirective,
-} from "@repo/contracts/lms/composition";
-
-export const SCORING_LABELS: Record<ScoringDirective["kind"], string> = {
-  prescribed: "prescribed",
-  amrap: "AMRAP",
-  for_time: "for time",
-  max_in_remaining: "max-in-remaining",
-  total: "total",
-  progressive: "progressive",
-};
+import type { ArrangementAxis, ParallelInterleaveOrder } from "@repo/contracts/lms/composition";
 
 export const ARRANGEMENT_LABELS: Record<ArrangementAxis["kind"], string> = {
   ordered: "ordered",

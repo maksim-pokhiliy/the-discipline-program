@@ -1,14 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { compositionLabelSchema, deriveCompositionLabel } from "./composition-label";
-import { REPETITION_AXIS_KINDS, SCORING_DIRECTIVE_KINDS } from "./composition.constants";
+import { REPETITION_AXIS_KINDS } from "./composition.constants";
 import { compositionSchema } from "./composition.schema";
-import type {
-  ArrangementAxis,
-  Composition,
-  RepetitionAxis,
-  ScoringDirective,
-} from "./composition.types";
+import type { ArrangementAxis, Composition, RepetitionAxis } from "./composition.types";
 
 const cuidThrTrack = "clz00000000000000thrtrack1";
 const cuidPulTrack = "clz00000000000000pultrack1";
@@ -165,46 +160,15 @@ describe("deriveCompositionLabel — canonical gauntlet compositions", () => {
     expect(deriveCompositionLabel(supersetE)).toEqual({ kind: "superset", family: "SUPERSET" });
   });
 
-  it("labels a timeCap + amrap container as timeCap / TIME_BOUNDED", () => {
+  it("labels a timeCap container as timeCap / TIME_BOUNDED", () => {
     const timeCapped = parsedComposition({
       repetition: { kind: "timeCap", cap: { min: 12, unit: "min" } },
-      scoring: { kind: "amrap" },
     });
 
     expect(deriveCompositionLabel(timeCapped)).toEqual({
       kind: "timeCap",
       family: "TIME_BOUNDED",
     });
-  });
-});
-
-describe("deriveCompositionLabel — scoring is inert and never alters the label", () => {
-  it("labels Gauntlet D interval with a max_in_remaining scoring as interval / INTERVALIC", () => {
-    const withScoring = parsedComposition({
-      repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
-      arrangement: { kind: "ordered" },
-      scoring: { kind: "max_in_remaining", condition: { appliesToRounds: [2, 3] } },
-    });
-
-    expect(deriveCompositionLabel(withScoring)).toEqual({
-      kind: "interval",
-      family: "INTERVALIC",
-    });
-  });
-
-  it("derives an identical label for the same interval without any scoring axis", () => {
-    const withScoring = parsedComposition({
-      repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
-      arrangement: { kind: "ordered" },
-      scoring: { kind: "max_in_remaining", condition: { appliesToRounds: [2, 3] } },
-    });
-
-    const withoutScoring = parsedComposition({
-      repetition: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
-      arrangement: { kind: "ordered" },
-    });
-
-    expect(deriveCompositionLabel(withScoring)).toEqual(deriveCompositionLabel(withoutScoring));
   });
 });
 
@@ -252,41 +216,22 @@ const ARRANGEMENT_CASES: ReadonlyArray<{ name: string; arrangement: ArrangementA
     },
   ];
 
-function scoringDirectiveOf(kind: ScoringDirective["kind"]): ScoringDirective {
-  if (kind === "progressive") {
-    return { kind: "progressive", seed: "1-2-3" };
-  }
-
-  return { kind };
-}
-
-const SCORING_CASES: ReadonlyArray<{ name: string; scoring: ScoringDirective | undefined }> = [
-  { name: "no scoring", scoring: undefined },
-  ...SCORING_DIRECTIVE_KINDS.map((kind) => ({
-    name: kind,
-    scoring: scoringDirectiveOf(kind),
-  })),
-];
-
 describe("deriveCompositionLabel — totality across every axis combination", () => {
   for (const repetitionKind of REPETITION_AXIS_KINDS) {
     for (const arrangementCase of ARRANGEMENT_CASES) {
-      for (const scoringCase of SCORING_CASES) {
-        it(`derives an enum-valid label for repetition ${repetitionKind} × ${arrangementCase.name} × ${scoringCase.name}`, () => {
-          const composition = parsedComposition({
-            repetition: repetitionAxisOf(repetitionKind),
-            ...(arrangementCase.arrangement !== undefined && {
-              arrangement: arrangementCase.arrangement,
-            }),
-            ...(scoringCase.scoring !== undefined && { scoring: scoringCase.scoring }),
-          });
-
-          const label = deriveCompositionLabel(composition);
-
-          expect(() => compositionLabelSchema.parse(label)).not.toThrow();
-          expect(compositionLabelSchema.safeParse(label).success).toBe(true);
+      it(`derives an enum-valid label for repetition ${repetitionKind} × ${arrangementCase.name}`, () => {
+        const composition = parsedComposition({
+          repetition: repetitionAxisOf(repetitionKind),
+          ...(arrangementCase.arrangement !== undefined && {
+            arrangement: arrangementCase.arrangement,
+          }),
         });
-      }
+
+        const label = deriveCompositionLabel(composition);
+
+        expect(() => compositionLabelSchema.parse(label)).not.toThrow();
+        expect(compositionLabelSchema.safeParse(label).success).toBe(true);
+      });
     }
   }
 });

@@ -71,7 +71,6 @@ const SESSION_WK1_TUE: CanonicalSession = {
   order: 1,
   label: LBL.firstSession,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [BLOCK_EMOM_NESTED_WK1_TUE],
 };
 
