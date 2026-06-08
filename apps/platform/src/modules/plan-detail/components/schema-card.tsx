@@ -11,10 +11,10 @@ import { ConfirmationModal } from "@repo/ui";
 
 import { useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
 
-import { ComposeEditorDrawer } from "../compose/components/compose-editor-drawer";
 import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
 
+import { AxisEditorModal } from "./axis-editor-modal";
 import { SchemaCardHead } from "./schema-card-head";
 import { SchemaList } from "./schema-list";
 import { SchemaRowList } from "./schema-row-list";
@@ -168,13 +168,12 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
       ) : null}
 
       {!isSubSchema && isEditOpen ? (
-        <ComposeEditorDrawer
+        <AxisEditorModal
           open={isEditOpen}
           onClose={handleEditClose}
           mode={{ kind: "edit", schema }}
           planId={planId}
           startDate={startDate}
-          blockId={schema.schema.blockId}
         />
       ) : null}
     </Stack>
