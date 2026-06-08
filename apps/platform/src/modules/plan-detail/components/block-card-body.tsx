@@ -26,7 +26,7 @@ import { useReorderSchemas } from "@app/lib/hooks";
 
 import { type BlockCtx } from "../lib/build-cascade-chips";
 
-import { AddComposeBlockButton } from "./add-compose-block-button";
+import { AddSchemaButton } from "./add-schema-button";
 import { SchemaCard } from "./schema-card";
 
 type BlockCardBodyProps = {
@@ -105,7 +105,7 @@ export const BlockCardBody: React.FC<BlockCardBodyProps> = ({
           ))}
 
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-            <AddComposeBlockButton planId={planId} startDate={startDate} blockId={block.id} />
+            <AddSchemaButton planId={planId} startDate={startDate} blockId={block.id} />
           </Stack>
         </Stack>
       </SortableContext>
