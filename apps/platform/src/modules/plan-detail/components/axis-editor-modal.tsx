@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, type ReactElement, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 
 import { Stack, Typography } from "@mui/material";
 
@@ -28,20 +28,15 @@ import {
 
 import type { ComposeContainer, ComposeNode, NodeId } from "./axes/axis-draft.types";
 import { ContainerInspector } from "./axes/container-inspector";
-import { InertScoringChip } from "./inert-scoring-chip";
-import { SchemaCompositionTag } from "./schema-composition-tag";
+import { DerivedLabelCard } from "./derived-label-card";
 
 const CREATE_TITLE = "Add schema";
 const EDIT_TITLE = "Container composition";
 const CREATE_SUBMIT = "Add schema";
 const EDIT_SUBMIT = "Save";
-const LABEL_CAPTION = "computed (arrangement-first, scoring excluded)";
-const FLAT_HINT = "flat — plain container";
 const FLAT_KIND = "flat";
 const CREATE_ARRANGEMENT_HINT =
   "parallel / superset unlock once this schema has rows or sub-schemas — add those first, then tune here.";
-const PART_SEPARATOR = "·";
-const LABEL_SPACING = 1;
 const BODY_SPACING = 2;
 
 export type AxisEditorMode =
@@ -209,40 +204,12 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
       error={error ?? (refusal !== null ? AXIS_REFUSAL_MESSAGE : null)}
     >
       <Stack direction="column" spacing={BODY_SPACING}>
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={LABEL_SPACING}
-          useFlexGap
-          flexWrap="wrap"
-        >
-          <SchemaCompositionTag label={labelKind} />
-
-          {activeParts.map((part, i) => (
-            <Fragment key={`${String(i)}-${part.text}`}>
-              {i > 0 ? (
-                <Typography variant="caption" component="span" color="text.disabled">
-                  {PART_SEPARATOR}
-                </Typography>
-              ) : null}
-              <Typography variant="caption" component="span" color="text.secondary">
-                {part.text}
-              </Typography>
-            </Fragment>
-          ))}
-
-          {inertPart !== undefined ? <InertScoringChip text={inertPart.text} /> : null}
-
-          {showsFlatHint ? (
-            <Typography variant="caption" color="text.subtle" fontStyle="italic">
-              {FLAT_HINT}
-            </Typography>
-          ) : null}
-
-          <Typography variant="caption" color="text.subtle" sx={{ ml: "auto" }} fontStyle="italic">
-            {LABEL_CAPTION}
-          </Typography>
-        </Stack>
+        <DerivedLabelCard
+          labelKind={labelKind}
+          activeParts={activeParts}
+          inertPart={inertPart}
+          showsFlatHint={showsFlatHint}
+        />
 
         <ContainerInspector
           container={draft}

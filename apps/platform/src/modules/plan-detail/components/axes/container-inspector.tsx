@@ -22,6 +22,7 @@ import type {
   RepetitionAxis,
   ScoringDirective,
 } from "./axis-draft.types";
+import { AxisFieldSection } from "./axis-field-section";
 import { ProgramKindAxisField } from "./program-kind-axis-field";
 import { RepetitionAxisField } from "./repetition-axis-field";
 import { ScoringAxisField } from "./scoring-axis-field";
@@ -201,17 +202,13 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
 
       <ProgramKindAxisField value={container.programKind} onChange={setProgramKind} />
 
-      <Stack direction="column" spacing={0.5}>
-        <Typography variant="caption" color="text.subtle">
-          {REST_LABEL}
-        </Typography>
-
+      <AxisFieldSection label={REST_LABEL}>
         <RestSpecFields
           value={container.rest ?? DEFAULT_REST}
           onChange={setRest}
           error={restErrorsFromParse(container.rest ?? DEFAULT_REST)}
         />
-      </Stack>
+      </AxisFieldSection>
     </Stack>
   );
 };

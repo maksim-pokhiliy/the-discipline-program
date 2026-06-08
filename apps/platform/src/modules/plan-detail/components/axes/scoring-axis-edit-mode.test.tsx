@@ -10,7 +10,6 @@ import { asNodeId } from "../../lib/axis-draft-id";
 import type { ComposeContainer, ComposeNode, NodeId, ScoringDirective } from "./axis-draft.types";
 import { ContainerInspector } from "./container-inspector";
 
-const STORED_KIND_LABEL = "AMRAP";
 const STORED_HEADER = "Scored group";
 const HEADER_ARIA = "Inspector header";
 const PROGRAM_GROUP_LABEL = "program";
@@ -42,16 +41,15 @@ const renderInspector = (
     />,
   );
 
-const storedKindButton = (): HTMLElement =>
-  screen.getByRole("button", { name: STORED_KIND_LABEL, pressed: true });
+const scoringSelect = (): HTMLElement => screen.getByRole("combobox", { name: "scoring" });
 
 describe("container inspector scoring axis is editable in edit-mode (R4)", () => {
-  it("keeps the stored scoring kind toggle enabled in edit-mode", () => {
+  it("keeps the stored scoring kind select enabled in edit-mode", () => {
     renderInspector(false);
 
-    expect(screen.getByRole("group", { name: "scoring" })).toBeInTheDocument();
-    expect(storedKindButton()).toBeInTheDocument();
-    expect(storedKindButton()).toBeEnabled();
+    expect(scoringSelect()).toBeInTheDocument();
+    expect(scoringSelect()).toHaveValue("amrap");
+    expect(scoringSelect()).toBeEnabled();
   });
 
   it("renders the appliesToRounds condition input for the non-prescribed kind in edit-mode", () => {
@@ -79,11 +77,11 @@ describe("container inspector scoring axis is editable in edit-mode (R4)", () =>
     });
   });
 
-  it("keeps the scoring kind toggle enabled in create-mode", () => {
+  it("keeps the scoring kind select enabled in create-mode", () => {
     renderInspector(true);
 
-    expect(storedKindButton()).toBeInTheDocument();
-    expect(storedKindButton()).toBeEnabled();
+    expect(scoringSelect()).toBeInTheDocument();
+    expect(scoringSelect()).toBeEnabled();
   });
 });
 
@@ -110,7 +108,7 @@ describe("container inspector programKind axis stays editable in edit-mode (QA-0
     renderInspector(false);
 
     expect(screen.getByRole("group", { name: PROGRAM_GROUP_LABEL })).toBeInTheDocument();
-    expect(storedKindButton()).toBeEnabled();
+    expect(scoringSelect()).toBeEnabled();
     expect(storedProgramKindButton()).toBeEnabled();
   });
 

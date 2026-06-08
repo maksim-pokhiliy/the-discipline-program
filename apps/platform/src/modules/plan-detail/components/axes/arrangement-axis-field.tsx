@@ -2,13 +2,14 @@
 
 import { type MouseEvent, type ReactNode } from "react";
 
-import { Stack, ToggleButton } from "@mui/material";
+import { Stack, ToggleButton, Typography } from "@mui/material";
 
 import { LabeledToggleGroup } from "@repo/ui";
 
 import type { ArrangementTargetRef } from "../../lib/arrangement-targets";
 
 import type { ArrangementAxis } from "./axis-draft.types";
+import { ARRANGEMENT_HINTS } from "./axis-modes";
 import { ParallelArrangementFields } from "./parallel-arrangement-fields";
 import { SupersetArrangementFields } from "./superset-arrangement-fields";
 
@@ -95,6 +96,10 @@ export const ArrangementAxisField: React.FC<ArrangementAxisFieldProps> = ({
           </ToggleButton>
         ))}
       </LabeledToggleGroup>
+
+      <Typography variant="caption" color="text.faint">
+        {ARRANGEMENT_HINTS[value.kind]}
+      </Typography>
 
       {renderVariantBody()}
     </Stack>
