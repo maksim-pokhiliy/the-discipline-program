@@ -14,7 +14,6 @@ import { InlineEditText, LabelPickerChip } from "@repo/ui";
 import { useLabelOptions } from "@app/lib/hooks";
 
 import { SessionCardCollapsedStats } from "./session-card-collapsed-stats";
-import { SessionFreezeFlag } from "./session-freeze-flag";
 
 const DRAG_ARIA = "Drag session";
 const DELETE_ARIA = "Delete session";
@@ -27,7 +26,6 @@ type SessionCardHeadProps = {
   isExpanded: boolean;
   onToggleExpanded: () => void;
   onLabelChange: (labelId: string | null) => void;
-  onFreezeChange: (next: boolean) => void;
   onNotesCommit: (next: string) => void;
   onDeleteOpen: () => void;
   dragAttributes: DraggableAttributes;
@@ -40,7 +38,6 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
   isExpanded,
   onToggleExpanded,
   onLabelChange,
-  onFreezeChange,
   onNotesCommit,
   onDeleteOpen,
   dragAttributes,
@@ -114,12 +111,6 @@ export const SessionCardHead: React.FC<SessionCardHeadProps> = ({
         isLoading={sessionOptions.isLoading}
         onChange={onLabelChange}
         ariaLabel="Session label"
-      />
-
-      <SessionFreezeFlag
-        value={session.freezeLoadsAtCreation}
-        onChange={onFreezeChange}
-        disabled={isMutationPending}
       />
 
       <InlineEditText

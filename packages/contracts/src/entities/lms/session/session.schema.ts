@@ -8,7 +8,6 @@ export const sessionSchema = z.object({
   order: z.number().int().positive(),
   labelId: z.string().cuid().nullable(),
   notes: z.string().nullable(),
-  freezeLoadsAtCreation: z.boolean(),
   createdAt: z.date(),
   updatedAt: z.date(),
 });
@@ -16,7 +15,6 @@ export const sessionSchema = z.object({
 export const createSessionSchema = z.object({
   labelId: z.string().cuid().nullable().optional(),
   notes: z.string().max(SESSION_CONSTANTS.MAX_NOTES_LENGTH).nullable().optional(),
-  freezeLoadsAtCreation: z.boolean().optional(),
 });
 
 export const updateSessionSchema = createSessionSchema;

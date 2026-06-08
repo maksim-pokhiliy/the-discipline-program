@@ -6,28 +6,25 @@ import { Box, Stack, Typography } from "@mui/material";
 
 import { type CompositionSummaryPart } from "../lib/format-composition-summary";
 
-import { InertScoringChip } from "./inert-scoring-chip";
 import { SchemaCompositionTag } from "./schema-composition-tag";
 
 const CARD_PADDING_Y = 1.25;
 const CARD_PADDING_X = 1.5;
 const ROW_SPACING = 1;
 const PREFIX_LABEL = "Derived label";
-const LABEL_CAPTION = "computed (arrangement-first, scoring excluded)";
+const LABEL_CAPTION = "computed (arrangement-first)";
 const FLAT_HINT = "flat — plain container";
 const PART_SEPARATOR = "·";
 
 type DerivedLabelCardProps = {
   labelKind: string;
-  activeParts: CompositionSummaryPart[];
-  inertPart: CompositionSummaryPart | undefined;
+  parts: CompositionSummaryPart[];
   showsFlatHint: boolean;
 };
 
 export const DerivedLabelCard: React.FC<DerivedLabelCardProps> = ({
   labelKind,
-  activeParts,
-  inertPart,
+  parts,
   showsFlatHint,
 }): ReactElement => (
   <Box
@@ -47,7 +44,7 @@ export const DerivedLabelCard: React.FC<DerivedLabelCardProps> = ({
 
       <SchemaCompositionTag label={labelKind} />
 
-      {activeParts.map((part, i) => (
+      {parts.map((part, i) => (
         <Fragment key={`${String(i)}-${part.text}`}>
           {i > 0 ? (
             <Typography variant="caption" component="span" color="text.disabled">
@@ -59,8 +56,6 @@ export const DerivedLabelCard: React.FC<DerivedLabelCardProps> = ({
           </Typography>
         </Fragment>
       ))}
-
-      {inertPart !== undefined ? <InertScoringChip text={inertPart.text} /> : null}
 
       {showsFlatHint ? (
         <Typography variant="caption" color="text.subtle" fontStyle="italic">

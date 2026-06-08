@@ -54,24 +54,23 @@ the count is per cell, not per block.
 
 ## 2. Entity-hierarchy invariants
 
-| Cell                                         | Required | Source                                                                     | Notes                                       |
-| -------------------------------------------- | -------- | -------------------------------------------------------------------------- | ------------------------------------------- |
-| Day with `label = REST DAY`                  | ≥1       | sample (every sheet × THU+SUN = 66)                                        | per `hierarchy.md` §1                       |
-| Day with `label = null` (active day)         | ≥1       | sample (most active days)                                                  |                                             |
-| Day with `sessions = []` (REST DAY)          | ≥1       | sample                                                                     |                                             |
-| Session with `label = 1ST SESSION`           | ≥1       | sample (165 occurrences)                                                   |                                             |
-| Session with `freezeLoadsAtCreation = true`  | ≥1       | introduce in Demo Plan tail                                                | Phase 6 Q10; pick one cluster-style session |
-| Block with `labels = []` (implicit)          | ≥1       | sample 75 occurrences                                                      | `hierarchy.md` §5                           |
-| Block with `labels.length === 1`             | ≥1       | sample (most active blocks)                                                |                                             |
-| Block with `labels.length ≥ 2` (multi-label) | ≥1       | sample `STRENGTH ENDURANCE \| Gymnastics` (block-047..054, 12 occurrences) |                                             |
-| Block with `schemas = []` (empty body)       | ≥1       | sample (block-002 `STRENGTH ENDURANCE`, sheet-18 MONDAY)                   | `hierarchy.md` §6                           |
-| Block with `intensity` set                   | ≥1       | sample block-055 (`EASY PACE [ 70% EFFORT ]`)                              |                                             |
-| Block with `timeCap` set                     | ≥1       | sample block-146 (`PRACTICE [ 5-10 min ]`)                                 |                                             |
-| Schema with `notes` set                      | ≥1       | sample block-005 / 037 / 087 / 140 / 141 EXAMPLE annotation Q15            |                                             |
-| Schema with `intensity` set (schema-level)   | ≥1       | sample block-078 / schema-1 (`[ 75-80% Effort ]`) AMRAP body               |                                             |
-| Schema with `parentSchemaId` (sub-schema)    | ≥25      | sample 25 sub-schemas                                                      | from `stress-final.md` §1 aggregate         |
-| Schema with `alternatingGroupRef`            | ≥2       | sample block-009 (alternating-sets)                                        | `hierarchy.md` ratifies N-ary; sample N=2   |
-| Schema with `trailingConnector`              | ≥1       | sample block-006 (single-line-with-then-connector)                         |                                             |
+| Cell                                         | Required | Source                                                                     | Notes                                     |
+| -------------------------------------------- | -------- | -------------------------------------------------------------------------- | ----------------------------------------- |
+| Day with `label = REST DAY`                  | ≥1       | sample (every sheet × THU+SUN = 66)                                        | per `hierarchy.md` §1                     |
+| Day with `label = null` (active day)         | ≥1       | sample (most active days)                                                  |                                           |
+| Day with `sessions = []` (REST DAY)          | ≥1       | sample                                                                     |                                           |
+| Session with `label = 1ST SESSION`           | ≥1       | sample (165 occurrences)                                                   |                                           |
+| Block with `labels = []` (implicit)          | ≥1       | sample 75 occurrences                                                      | `hierarchy.md` §5                         |
+| Block with `labels.length === 1`             | ≥1       | sample (most active blocks)                                                |                                           |
+| Block with `labels.length ≥ 2` (multi-label) | ≥1       | sample `STRENGTH ENDURANCE \| Gymnastics` (block-047..054, 12 occurrences) |                                           |
+| Block with `schemas = []` (empty body)       | ≥1       | sample (block-002 `STRENGTH ENDURANCE`, sheet-18 MONDAY)                   | `hierarchy.md` §6                         |
+| Block with `intensity` set                   | ≥1       | sample block-055 (`EASY PACE [ 70% EFFORT ]`)                              |                                           |
+| Block with `timeCap` set                     | ≥1       | sample block-146 (`PRACTICE [ 5-10 min ]`)                                 |                                           |
+| Schema with `notes` set                      | ≥1       | sample block-005 / 037 / 087 / 140 / 141 EXAMPLE annotation Q15            |                                           |
+| Schema with `intensity` set (schema-level)   | ≥1       | sample block-078 / schema-1 (`[ 75-80% Effort ]`) AMRAP body               |                                           |
+| Schema with `parentSchemaId` (sub-schema)    | ≥25      | sample 25 sub-schemas                                                      | from `stress-final.md` §1 aggregate       |
+| Schema with `alternatingGroupRef`            | ≥2       | sample block-009 (alternating-sets)                                        | `hierarchy.md` ratifies N-ary; sample N=2 |
+| Schema with `trailingConnector`              | ≥1       | sample block-006 (single-line-with-then-connector)                         |                                           |
 
 ---
 

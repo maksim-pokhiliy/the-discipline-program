@@ -12,7 +12,6 @@ const SESSION_WK2_MON: CanonicalSession = {
   order: 1,
   label: LBL.firstSession,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [
     BLOCK_DROP_SET_WK2_MON,
     BLOCK_WEIGHT_VARIANTS_WK2_MON,

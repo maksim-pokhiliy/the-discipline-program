@@ -17,7 +17,6 @@ export const PHASE_7_HR_Z2_BASE_RUN: Phase7Session = phase7Session({
   order: 1,
   label: LBL.endurance,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [BLOCK_HR_Z2_RUN],
 });
 
@@ -27,7 +26,6 @@ export const PHASE_7_NUMERIC_PACE_ROW: Phase7Session = phase7Session({
   order: 1,
   label: LBL.conditioning,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [BLOCK_NUMERIC_PACE_ROW],
 });
 
@@ -37,7 +35,6 @@ export const PHASE_7_TEMPO_BACK_SQUAT: Phase7Session = phase7Session({
   order: 1,
   label: LBL.strength,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [BLOCK_TEMPO_BACK_SQUAT],
 });
 
@@ -47,7 +44,6 @@ export const PHASE_7_SNATCH_WAVE: Phase7Session = phase7Session({
   order: 1,
   label: LBL.olympic,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [BLOCK_SNATCH_WAVE],
 });
 
@@ -57,7 +53,6 @@ export const PHASE_7_PULL_UP_CLUSTER: Phase7Session = phase7Session({
   order: 1,
   label: LBL.gymnastics,
   notes: null,
-  freezeLoadsAtCreation: true,
   blocks: [BLOCK_PULL_UP_CLUSTER],
 });
 
@@ -67,7 +62,6 @@ export const PHASE_7_ACCESSORY_SUPER_SET: Phase7Session = phase7Session({
   order: 1,
   label: LBL.accessory,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [BLOCK_SUPER_SET_PAIR_A, BLOCK_SUPER_SET_PAIR_B],
 });
 

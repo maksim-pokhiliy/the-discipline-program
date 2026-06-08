@@ -26,7 +26,6 @@ export type CoverageCategory =
   | "composition"
   | "repetition.kind"
   | "arrangement.kind"
-  | "scoring.kind"
   | "rest";
 
 export type CoverageCell = {

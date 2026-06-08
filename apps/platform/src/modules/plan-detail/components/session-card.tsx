@@ -50,14 +50,6 @@ export const SessionCard: React.FC<SessionCardProps> = ({
   const handleLabelChange = (labelId: string | null) =>
     updateSession.mutate({ sessionId: session.id, data: { labelId } });
 
-  const handleFreezeChange = (next: boolean) => {
-    if (next === session.freezeLoadsAtCreation) {
-      return;
-    }
-
-    updateSession.mutate({ sessionId: session.id, data: { freezeLoadsAtCreation: next } });
-  };
-
   const handleNotesCommit = (next: string) =>
     updateSession.mutate({
       sessionId: session.id,
@@ -98,7 +90,6 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         isExpanded={isExpanded}
         onToggleExpanded={toggleExpanded}
         onLabelChange={handleLabelChange}
-        onFreezeChange={handleFreezeChange}
         onNotesCommit={handleNotesCommit}
         onDeleteOpen={handleDeleteOpen}
         dragAttributes={attributes}

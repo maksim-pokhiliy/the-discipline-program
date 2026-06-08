@@ -148,7 +148,6 @@ const BLOCK_COMPOSITE_INT_WR_FIXED_WK1_WED: CanonicalBlock = {
       },
       {
         repetition: { kind: "interval", workMin: 2, offMin: 1, count: 6 },
-        scoring: { kind: "max_in_remaining", condition: { appliesToRounds: [2, 3] } },
       },
       null,
     ),
@@ -177,7 +176,6 @@ const BLOCK_COMPOSITE_INT_WR_PROG_WK1_WED: CanonicalBlock = {
       },
       {
         ...intervalRep(2, 2, 4),
-        scoring: { kind: "progressive", seed: "progressive-2:00-3:00-4:00-5:00" },
       },
       null,
     ),
@@ -212,7 +210,6 @@ const BLOCK_AMRAP_FLAT_WK1_WED: CanonicalBlock = {
       },
       {
         repetition: { kind: "timeCap", cap: { min: 12, unit: "min" } },
-        scoring: { kind: "amrap" },
       },
       null,
     ),
@@ -280,7 +277,6 @@ const SESSION_WK1_WED: CanonicalSession = {
   order: 1,
   label: LBL.firstSession,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [
     BLOCK_COMPOSITE_ROUNDS_REST_WK1_WED,
     BLOCK_COMPOSITE_INT_THEN_ROUNDS_WK1_WED,

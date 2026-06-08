@@ -2,11 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { compositionSchema } from "@repo/contracts/lms/composition";
 
-import type {
-  ComposeContainer,
-  RepetitionAxis,
-  ScoringDirective,
-} from "../components/axes/axis-draft.types";
+import type { ComposeContainer, RepetitionAxis } from "../components/axes/axis-draft.types";
 
 import { asNodeId } from "./axis-draft-id";
 import { composeContainerToComposition } from "./compose-container-to-composition";
@@ -22,8 +18,6 @@ const container = (overrides: Partial<ComposeContainer>): ComposeContainer => ({
 
 const repetitionContainer = (repetition: RepetitionAxis): ComposeContainer =>
   container({ repetition });
-
-const scoringContainer = (scoring: ScoringDirective): ComposeContainer => container({ scoring });
 
 describe("composeContainerToComposition flat repetition mapping", () => {
   it("emits an empty composition for a bare container with an ordered arrangement", () => {
@@ -109,45 +103,5 @@ describe("composeContainerToComposition produces contract-valid compositions", (
     const composition = composeContainerToComposition(repetitionContainer(repetition));
 
     expect(compositionSchema.safeParse(composition).success).toBe(true);
-  });
-});
-
-describe("mapScoring carries the appliesToRounds condition (D4)", () => {
-  it("round-trips a non-prescribed condition with the rounds it applies to", () => {
-    const composition = composeContainerToComposition(
-      scoringContainer({ kind: "amrap", condition: { appliesToRounds: [2, 3] } }),
-    );
-
-    expect(composition.scoring).toEqual({ kind: "amrap", condition: { appliesToRounds: [2, 3] } });
-    expect(compositionSchema.safeParse(composition).success).toBe(true);
-  });
-
-  it("carries the condition on a progressive kind alongside its seed", () => {
-    const composition = composeContainerToComposition(
-      scoringContainer({ kind: "progressive", seed: "3", condition: { appliesToRounds: [4] } }),
-    );
-
-    expect(composition.scoring).toEqual({
-      kind: "progressive",
-      seed: "3",
-      condition: { appliesToRounds: [4] },
-    });
-    expect(compositionSchema.safeParse(composition).success).toBe(true);
-  });
-
-  it("omits the condition when it is absent", () => {
-    const composition = composeContainerToComposition(scoringContainer({ kind: "amrap" }));
-
-    expect(composition.scoring).toEqual({ kind: "amrap" });
-    expect(composition.scoring).not.toHaveProperty("condition");
-  });
-
-  it("omits the condition when appliesToRounds is empty", () => {
-    const composition = composeContainerToComposition(
-      scoringContainer({ kind: "for_time", condition: { appliesToRounds: [] } }),
-    );
-
-    expect(composition.scoring).toEqual({ kind: "for_time" });
-    expect(composition.scoring).not.toHaveProperty("condition");
   });
 });

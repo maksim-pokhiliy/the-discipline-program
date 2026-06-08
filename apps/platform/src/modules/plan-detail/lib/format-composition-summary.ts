@@ -1,25 +1,17 @@
-import type {
-  Composition,
-  RepetitionAxis,
-  RestAxis,
-  ScoringDirective,
-} from "@repo/contracts/lms/composition";
+import type { Composition, RepetitionAxis, RestAxis } from "@repo/contracts/lms/composition";
 
 import {
   ARRANGEMENT_LABELS,
   INTERLEAVE_ORDER_LABELS,
   PROGRAM_KIND_LABELS,
-  SCORING_LABELS,
 } from "./compose-axis-labels";
 
 const MINUTE_MARK = "’";
 const SECOND_MARK = " sec";
 const STEP_SEPARATOR = "-";
 const ORDERED = "ordered";
-const CONDITION_PREFIX = " · rounds ";
-const CONDITION_JOINER = ", ";
 
-export type CompositionSummaryPart = { text: string; tone: "active" | "inert" };
+export type CompositionSummaryPart = { text: string };
 
 const repetitionLabel = (repetition: RepetitionAxis): string => {
   switch (repetition.kind) {
@@ -66,35 +58,21 @@ const arrangementLabel = (arrangement: Composition["arrangement"]): string | nul
   return ARRANGEMENT_LABELS.superset;
 };
 
-const scoringLabel = (scoring: ScoringDirective): string => {
-  const base = SCORING_LABELS[scoring.kind];
-
-  if (scoring.kind === "prescribed" || scoring.condition === undefined) {
-    return base;
-  }
-
-  return `${base}${CONDITION_PREFIX}${scoring.condition.appliesToRounds.join(CONDITION_JOINER)}`;
-};
-
 const buildStructuralParts = (composition: Composition): CompositionSummaryPart[] => {
   const parts: CompositionSummaryPart[] = [];
 
   if (composition.repetition !== undefined) {
-    parts.push({ text: repetitionLabel(composition.repetition), tone: "active" });
+    parts.push({ text: repetitionLabel(composition.repetition) });
   }
 
   const arrangement = arrangementLabel(composition.arrangement);
 
   if (arrangement !== null) {
-    parts.push({ text: arrangement, tone: "active" });
-  }
-
-  if (composition.scoring !== undefined) {
-    parts.push({ text: scoringLabel(composition.scoring), tone: "inert" });
+    parts.push({ text: arrangement });
   }
 
   if (composition.rest !== undefined) {
-    parts.push({ text: restLabel(composition.rest), tone: "active" });
+    parts.push({ text: restLabel(composition.rest) });
   }
 
   return parts;
@@ -107,7 +85,7 @@ export const formatCompositionSummary = (composition: Composition): CompositionS
   const parts = buildStructuralParts(composition);
 
   if (composition.programKind !== undefined) {
-    parts.push({ text: PROGRAM_KIND_LABELS[composition.programKind], tone: "active" });
+    parts.push({ text: PROGRAM_KIND_LABELS[composition.programKind] });
   }
 
   return parts;

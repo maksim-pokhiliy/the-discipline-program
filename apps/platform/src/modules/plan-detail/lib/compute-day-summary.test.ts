@@ -24,7 +24,6 @@ const makeSession = (label: Label | null): SessionWithLabel => ({
   order: 10,
   labelId: label?.id ?? null,
   notes: null,
-  freezeLoadsAtCreation: false,
   createdAt: now,
   updatedAt: now,
   label,

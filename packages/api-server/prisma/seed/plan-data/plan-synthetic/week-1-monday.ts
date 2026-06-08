@@ -105,7 +105,6 @@ const SESSION_WK1_MON: CanonicalSession = {
   order: 1,
   label: LBL.firstSession,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [BLOCK_STRENGTH_NROUNDS_WK1_MON, BLOCK_LADDER_DESC_WK1_MON],
 };
 

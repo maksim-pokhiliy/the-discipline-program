@@ -86,7 +86,6 @@ const makeSession = (overrides: Partial<SessionWithLabel> = {}): SessionWithLabe
   order: 1,
   labelId: null,
   notes: null,
-  freezeLoadsAtCreation: false,
   createdAt: NOW,
   updatedAt: NOW,
   label: null,
@@ -200,42 +199,6 @@ describe("SessionCard", () => {
     expect(screen.queryByText(/blocks?$/)).toBeNull();
   });
 
-  it('renders the freeze flag as "frozen" when freezeLoadsAtCreation=true and fires mutate with { freezeLoadsAtCreation: false } on click', () => {
-    updateSessionMutate.mockClear();
-    const session = makeSession({ freezeLoadsAtCreation: true });
-
-    renderSessionCard({ session });
-
-    expect(screen.getByText("frozen")).toBeInTheDocument();
-
-    fireEvent.click(
-      screen.getByRole("button", { name: "Freeze: frozen (click to switch to live)" }),
-    );
-
-    expect(updateSessionMutate).toHaveBeenCalledTimes(1);
-    expect(updateSessionMutate).toHaveBeenCalledWith({
-      sessionId: session.id,
-      data: { freezeLoadsAtCreation: false },
-    });
-  });
-
-  it('renders the freeze flag as "live" when freezeLoadsAtCreation=false and fires mutate with { freezeLoadsAtCreation: true } on click', () => {
-    updateSessionMutate.mockClear();
-    const session = makeSession({ freezeLoadsAtCreation: false });
-
-    renderSessionCard({ session });
-
-    expect(screen.getByText("live")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Freeze: live (click to freeze)" }));
-
-    expect(updateSessionMutate).toHaveBeenCalledTimes(1);
-    expect(updateSessionMutate).toHaveBeenCalledWith({
-      sessionId: session.id,
-      data: { freezeLoadsAtCreation: true },
-    });
-  });
-
   it("fires useUpdateSession.mutate with the selected option id when a label is picked", () => {
     updateSessionMutate.mockClear();
     const strength = makeLabel({ name: "STRENGTH" });
@@ -340,17 +303,6 @@ describe("SessionCard", () => {
     renderSessionCard();
 
     expect(screen.getByRole("button", { name: "Drag session" })).toBeDisabled();
-  });
-
-  it("disables the freeze chip when useDeleteSession is pending (Q-3)", () => {
-    deleteSessionState.isPending = true;
-
-    renderSessionCard({ session: makeSession({ freezeLoadsAtCreation: false }) });
-
-    expect(screen.getByRole("button", { name: "Freeze: live (click to freeze)" })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
   });
 
   it("renders the LabelPickerChip as non-interactive when sessionOptions is empty and a value is set (Q-9)", () => {

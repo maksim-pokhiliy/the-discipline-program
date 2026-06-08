@@ -13,16 +13,6 @@ export type RepetitionAxisKind = (typeof REPETITION_AXIS_KINDS)[number];
 export const ARRANGEMENT_AXIS_KINDS = ["ordered", "parallel", "superset"] as const;
 export type ArrangementAxisKind = (typeof ARRANGEMENT_AXIS_KINDS)[number];
 
-export const SCORING_DIRECTIVE_KINDS = [
-  "prescribed",
-  "amrap",
-  "for_time",
-  "max_in_remaining",
-  "total",
-  "progressive",
-] as const;
-export type ScoringDirectiveKind = (typeof SCORING_DIRECTIVE_KINDS)[number];
-
 export const PARALLEL_INTERLEAVE_ORDERS = ["round_by_round", "track_by_track"] as const;
 export type ParallelInterleaveOrder = (typeof PARALLEL_INTERLEAVE_ORDERS)[number];
 

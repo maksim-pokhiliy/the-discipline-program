@@ -165,7 +165,6 @@ const SESSION_WK1_SAT: CanonicalSession = {
   order: 1,
   label: LBL.firstSession,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [
     BLOCK_PARALLEL_LADDERS_DESC_WK1_SAT,
     BLOCK_LADDER_ASCENDING_WK1_SAT,

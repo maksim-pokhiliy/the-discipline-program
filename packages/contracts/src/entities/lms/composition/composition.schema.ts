@@ -147,36 +147,12 @@ export const arrangementAxisSchema = z
     }
   });
 
-export const scoringConditionSchema = z
-  .object({
-    appliesToRounds: z.array(z.number().int().positive()).min(1),
-  })
-  .strict();
-
-export const scoringDirectiveSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("prescribed") }).strict(),
-  z.object({ kind: z.literal("amrap"), condition: scoringConditionSchema.optional() }).strict(),
-  z.object({ kind: z.literal("for_time"), condition: scoringConditionSchema.optional() }).strict(),
-  z
-    .object({ kind: z.literal("max_in_remaining"), condition: scoringConditionSchema.optional() })
-    .strict(),
-  z.object({ kind: z.literal("total"), condition: scoringConditionSchema.optional() }).strict(),
-  z
-    .object({
-      kind: z.literal("progressive"),
-      seed: z.string().min(1),
-      condition: scoringConditionSchema.optional(),
-    })
-    .strict(),
-]);
-
 export const restAxisSchema = restSpecSchema;
 
 export const compositionSchema = z
   .object({
     repetition: repetitionAxisSchema.optional(),
     arrangement: arrangementAxisSchema.optional(),
-    scoring: scoringDirectiveSchema.optional(),
     rest: restAxisSchema.optional(),
     programKind: stagedProgramKindSchema.optional(),
   })

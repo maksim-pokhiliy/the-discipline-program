@@ -43,7 +43,6 @@ const MARKER_ROW_ID = "clp9z8x7w0000abcd1234row1";
 const CREATE_TITLE = "Add schema";
 const EDIT_TITLE = "Container composition";
 const HEADER_ARIA = "Inspector header";
-const CONDITION_LABEL = "Applies to rounds (optional condition)";
 const REFUSAL_MESSAGE = "This schema contains a rep-scheme not yet editable.";
 
 const alertText = (): string => screen.getByRole("alert").textContent ?? "";
@@ -114,9 +113,6 @@ const submitEdit = () => fireEvent.click(screen.getByRole("button", { name: "Sav
 
 const selectRepetition = (label: string) =>
   fireEvent.click(screen.getByRole("button", { name: label }));
-
-const selectScoring = (kind: string) =>
-  fireEvent.change(screen.getByRole("combobox", { name: "scoring" }), { target: { value: kind } });
 
 const toggleGroup = (groupName: string, optionLabel: string) =>
   fireEvent.click(within(screen.getByRole("group", { name: groupName })).getByText(optionLabel));
@@ -216,41 +212,6 @@ describe("AxisEditorModal edit mode", () => {
       schemaId: SCHEMA_ID,
       data: { composition: { repetition: { kind: "count", count: 4 } }, header: null },
     });
-  });
-});
-
-describe("AxisEditorModal scoring condition (D4)", () => {
-  it("reveals the inert chip and the appliesToRounds input when a non-prescribed kind is selected", () => {
-    renderCreate();
-
-    selectScoring("amrap");
-
-    expect(screen.getByRole("textbox", { name: CONDITION_LABEL })).toBeInTheDocument();
-    expect(screen.getAllByText("AMRAP").length).toBeGreaterThanOrEqual(1);
-  });
-
-  it("submits scoring.condition.appliesToRounds parsed from the rounds input", () => {
-    renderCreate();
-
-    selectScoring("amrap");
-    fireEvent.change(screen.getByRole("textbox", { name: CONDITION_LABEL }), {
-      target: { value: "2, 3" },
-    });
-    submit();
-
-    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(createSchemaMutate.mock.calls[0]?.[0]).toMatchObject({
-      composition: { scoring: { kind: "amrap", condition: { appliesToRounds: [2, 3] } } },
-    });
-  });
-
-  it("excludes scoring from the live composition-kind tag", () => {
-    renderCreate();
-
-    selectRepetition("Count");
-    selectScoring("amrap");
-
-    expect(screen.getByText("rounds")).toBeInTheDocument();
   });
 });
 
@@ -358,82 +319,6 @@ describe("AxisEditorModal header length cap (QA-204)", () => {
       "maxlength",
       String(SCHEMA_CONSTANTS.MAX_HEADER_LENGTH),
     );
-  });
-});
-
-describe("AxisEditorModal scoring appliesToRounds rejection (QA-Must-3)", () => {
-  it("rejects a zero round and surfaces the path-prefixed message without mutating", () => {
-    renderCreate();
-
-    selectScoring("amrap");
-    fireEvent.change(screen.getByRole("textbox", { name: CONDITION_LABEL }), {
-      target: { value: "0" },
-    });
-    submit();
-
-    expect(createSchemaMutate).not.toHaveBeenCalled();
-    expect(alertText()).toContain("scoring.condition.appliesToRounds");
-    expect(alertText()).toMatch(/greater than 0/i);
-  });
-
-  it("rejects a negative round and surfaces the path-prefixed message without mutating", () => {
-    renderCreate();
-
-    selectScoring("amrap");
-    fireEvent.change(screen.getByRole("textbox", { name: CONDITION_LABEL }), {
-      target: { value: "-1" },
-    });
-    submit();
-
-    expect(createSchemaMutate).not.toHaveBeenCalled();
-    expect(alertText()).toContain("scoring.condition.appliesToRounds");
-  });
-
-  it("treats non-numeric rounds as no condition and submits a valid scoring", () => {
-    renderCreate();
-
-    selectScoring("amrap");
-    fireEvent.change(screen.getByRole("textbox", { name: CONDITION_LABEL }), {
-      target: { value: "abc" },
-    });
-    submit();
-
-    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(createSchemaMutate.mock.calls[0]?.[0]?.composition?.scoring).toEqual({ kind: "amrap" });
-  });
-});
-
-describe("AxisEditorModal progressive empty seed rejection (QA-Must-3)", () => {
-  it("rejects an empty progressive seed and surfaces the seed message without mutating", () => {
-    renderCreate();
-
-    selectScoring("progressive");
-    submit();
-
-    expect(createSchemaMutate).not.toHaveBeenCalled();
-    expect(alertText()).toContain("scoring.seed");
-    expect(alertText()).toMatch(/at least 1 character/i);
-  });
-});
-
-describe("AxisEditorModal scoring condition round-trip through edit (QA-Must-4)", () => {
-  const conditionSeedSchema = (): SchemaWithBody =>
-    makeSchema({
-      composition: { scoring: { kind: "amrap", condition: { appliesToRounds: [2, 3] } } },
-    });
-
-  it("pre-fills the rounds input and re-emits the identical condition on Save", () => {
-    renderEdit(conditionSeedSchema());
-
-    expect(screen.getByRole("textbox", { name: CONDITION_LABEL })).toHaveValue("2, 3");
-
-    submitEdit();
-
-    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(updateSchemaMutate.mock.calls[0]?.[0]?.data?.composition?.scoring).toEqual({
-      kind: "amrap",
-      condition: { appliesToRounds: [2, 3] },
-    });
   });
 });
 
@@ -649,19 +534,5 @@ describe("AxisEditorModal repetition tile-group a11y contract (T13)", () => {
     selectRepetition("Count");
 
     expect(within(group).getByRole("button", { pressed: true })).toHaveAccessibleName("Count");
-  });
-});
-
-describe("AxisEditorModal scoring combobox a11y contract (T13)", () => {
-  it("flips the scoring combobox value when a kind is selected", () => {
-    renderCreate();
-
-    const scoringCombobox = screen.getByRole("combobox", { name: "scoring" });
-
-    expect(scoringCombobox).toHaveValue("prescribed");
-
-    selectScoring("amrap");
-
-    expect(scoringCombobox).toHaveValue("amrap");
   });
 });

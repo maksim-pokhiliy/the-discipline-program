@@ -9,8 +9,6 @@ const REPETITION_KINDS = ["count", "ladder", "timeCap", "cadence", "window", "in
 
 const ARRANGEMENT_KINDS = ["ordered", "parallel", "superset"] as const;
 
-const SCORING_KINDS = ["amrap", "max_in_remaining", "progressive", "total"] as const;
-
 const repetitionKindCell = (kind: (typeof REPETITION_KINDS)[number]): CoverageCell => ({
   id: `repetition.kind.${kind}`,
   category: "repetition.kind",
@@ -29,16 +27,6 @@ const arrangementKindCell = (kind: (typeof ARRANGEMENT_KINDS)[number]): Coverage
   sourceRef: `compose-axis arrangement.${kind}`,
   tally: (db, planId) =>
     countSchema(db, planId, { composition: { path: ["arrangement", "kind"], equals: kind } }),
-});
-
-const scoringKindCell = (kind: (typeof SCORING_KINDS)[number]): CoverageCell => ({
-  id: `scoring.kind.${kind}`,
-  category: "scoring.kind",
-  label: `composition.scoring.kind = ${kind}`,
-  required: 1,
-  sourceRef: `compose-axis scoring.${kind}`,
-  tally: (db, planId) =>
-    countSchema(db, planId, { composition: { path: ["scoring", "kind"], equals: kind } }),
 });
 
 const REST_PRESENT_CELL: CoverageCell = {
@@ -62,6 +50,5 @@ export const COMPOSITION_CELLS: readonly CoverageCell[] = [
   },
   ...REPETITION_KINDS.map(repetitionKindCell),
   ...ARRANGEMENT_KINDS.map(arrangementKindCell),
-  ...SCORING_KINDS.map(scoringKindCell),
   REST_PRESENT_CELL,
 ];

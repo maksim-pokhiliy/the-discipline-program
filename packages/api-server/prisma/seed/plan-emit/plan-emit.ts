@@ -84,7 +84,6 @@ const emitSession = async (
       order: session.order,
       labelId,
       notes: session.notes,
-      freezeLoadsAtCreation: session.freezeLoadsAtCreation,
     },
   });
 
@@ -184,7 +183,6 @@ const buildPhase7WeekInput = (
       order: item.order,
       label: item.label,
       notes: item.notes,
-      freezeLoadsAtCreation: item.freezeLoadsAtCreation,
       blocks: item.blocks,
     })),
   }));

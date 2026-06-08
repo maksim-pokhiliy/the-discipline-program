@@ -68,7 +68,6 @@ const SESSION_WK2_SAT: CanonicalSession = {
   order: 1,
   label: LBL.firstSession,
   notes: null,
-  freezeLoadsAtCreation: false,
   blocks: [BLOCK_PACE_RECOVERY_WK2_SAT, BLOCK_NOTES_EXAMPLE_WK2_SAT],
 };
 

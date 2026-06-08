@@ -248,14 +248,12 @@ export type CanonicalBlock = z.infer<typeof blockSchema>;
 // Session / Day / Week
 //
 // `sessionLabel` / `dayLabel`: single ref per `hierarchy.md` §1 + §2.
-// `freezeLoadsAtCreation` defaults false (rare flag, Phase 6 D-10).
 // ──────────────────────────────────────────────────────────────────────────
 
 export const sessionSchema = z.object({
   order: z.number().int().positive(),
   label: labelRefSchema.nullable().default(null),
   notes: z.string().max(4000).nullable().default(null),
-  freezeLoadsAtCreation: z.boolean().default(false),
   blocks: z.array(blockSchema).default([]),
 });
 export type CanonicalSession = z.infer<typeof sessionSchema>;
