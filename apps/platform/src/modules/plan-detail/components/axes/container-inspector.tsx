@@ -80,6 +80,7 @@ type ContainerInspectorProps = {
   container: ComposeContainer;
   exerciseById: Map<string, Exercise>;
   isCreateMode: boolean;
+  headerEditable?: boolean;
   onUpdateNode: (id: NodeId, patch: (node: ComposeNode) => ComposeNode) => void;
   onRename: (id: NodeId, header: string) => void;
   onDemoteNode?: ((id: NodeId) => void) | undefined;
@@ -94,6 +95,7 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
   container,
   exerciseById,
   isCreateMode,
+  headerEditable = isCreateMode,
   onUpdateNode,
   onRename,
   onDemoteNode,
@@ -166,7 +168,7 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
           {HEADER_LABEL}
         </Typography>
 
-        {isCreateMode ? (
+        {headerEditable ? (
           <InlineEditText
             value={container.header ?? ""}
             onCommit={(next) => onRename(container.id, next)}
@@ -200,11 +202,7 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
         rowsByTrack={arrangementTargets.rowsByTrack}
       />
 
-      <ScoringAxisField
-        value={container.scoring ?? DEFAULT_SCORING}
-        onChange={setScoring}
-        disabled={!isCreateMode}
-      />
+      <ScoringAxisField value={container.scoring ?? DEFAULT_SCORING} onChange={setScoring} />
 
       <ProgramKindAxisField value={container.programKind} onChange={setProgramKind} />
 

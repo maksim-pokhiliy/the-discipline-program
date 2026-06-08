@@ -41,20 +41,25 @@ const mapRepetition = (repetition: RepetitionAxis): ContractRepetitionAxis => {
   }
 };
 
+type ScoringCondition = NonNullable<Exclude<ScoringDirective, { kind: "prescribed" }>["condition"]>;
+
+const mapCondition = (condition: ScoringCondition | undefined): { condition?: ScoringCondition } =>
+  condition !== undefined && condition.appliesToRounds.length > 0 ? { condition } : {};
+
 const mapScoring = (scoring: ScoringDirective): ContractScoringDirective => {
   switch (scoring.kind) {
     case "prescribed":
       return { kind: "prescribed" };
     case "amrap":
-      return { kind: "amrap" };
+      return { kind: "amrap", ...mapCondition(scoring.condition) };
     case "for_time":
-      return { kind: "for_time" };
+      return { kind: "for_time", ...mapCondition(scoring.condition) };
     case "max_in_remaining":
-      return { kind: "max_in_remaining" };
+      return { kind: "max_in_remaining", ...mapCondition(scoring.condition) };
     case "total":
-      return { kind: "total" };
+      return { kind: "total", ...mapCondition(scoring.condition) };
     case "progressive":
-      return { kind: "progressive", seed: scoring.seed };
+      return { kind: "progressive", seed: scoring.seed, ...mapCondition(scoring.condition) };
     default:
       return scoring satisfies never;
   }

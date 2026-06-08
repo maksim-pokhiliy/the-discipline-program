@@ -37,13 +37,15 @@ export type ArrangementAxis =
   | { kind: "parallel"; interleaveOrder: ParallelInterleaveOrder; tracks: ParallelTrackDraft[] }
   | { kind: "superset"; pairs: SupersetPairDraft[] };
 
+export type ScoringCondition = { appliesToRounds: number[] };
+
 export type ScoringDirective =
   | { kind: "prescribed" }
-  | { kind: "amrap" }
-  | { kind: "for_time" }
-  | { kind: "max_in_remaining" }
-  | { kind: "total" }
-  | { kind: "progressive"; seed: string };
+  | { kind: "amrap"; condition?: ScoringCondition }
+  | { kind: "for_time"; condition?: ScoringCondition }
+  | { kind: "max_in_remaining"; condition?: ScoringCondition }
+  | { kind: "total"; condition?: ScoringCondition }
+  | { kind: "progressive"; seed: string; condition?: ScoringCondition };
 
 export type RestAxis = RestSpec;
 
