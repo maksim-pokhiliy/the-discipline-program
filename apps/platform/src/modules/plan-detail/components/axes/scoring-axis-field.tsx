@@ -1,12 +1,11 @@
 "use client";
 
-import { type MouseEvent } from "react";
-
-import { Stack, TextField, ToggleButton } from "@mui/material";
-
-import { LabeledToggleGroup } from "@repo/ui";
+import { Stack, TextField } from "@mui/material";
 
 import type { ScoringCondition, ScoringDirective } from "./axis-draft.types";
+import { AxisFieldSection } from "./axis-field-section";
+import { SCORING_NOTES } from "./axis-modes";
+import { ScoringInfoNote } from "./scoring-info-note";
 
 const LABEL = "scoring";
 const SEED_LABEL = "Progressive seed";
@@ -68,13 +67,8 @@ export const ScoringAxisField: React.FC<ScoringAxisFieldProps> = ({
   const seed = value.kind === "progressive" ? value.seed : EMPTY_VALUE;
   const condition = conditionOf(value);
 
-  const handleKindChange = (_: MouseEvent<HTMLElement>, next: ScoringDirective["kind"] | null) => {
-    if (next === null) {
-      return;
-    }
-
+  const handleKindChange = (next: ScoringDirective["kind"]): void =>
     onChange(toDirective(next, seed, condition));
-  };
 
   const handleSeedChange = (next: string): void =>
     onChange(toDirective("progressive", next, condition));
@@ -84,18 +78,22 @@ export const ScoringAxisField: React.FC<ScoringAxisFieldProps> = ({
 
   return (
     <Stack direction="column" spacing={1}>
-      <LabeledToggleGroup
-        label={LABEL}
-        value={value.kind}
-        onChange={handleKindChange}
-        disabled={disabled}
-      >
-        {SCORING_OPTIONS.map((option) => (
-          <ToggleButton key={option.kind} value={option.kind}>
-            {option.label}
-          </ToggleButton>
-        ))}
-      </LabeledToggleGroup>
+      <AxisFieldSection label={LABEL}>
+        <TextField
+          select
+          size="small"
+          value={value.kind}
+          onChange={(event) => handleKindChange(event.target.value as ScoringDirective["kind"])}
+          disabled={disabled}
+          SelectProps={{ native: true, inputProps: { "aria-label": LABEL } }}
+        >
+          {SCORING_OPTIONS.map((option) => (
+            <option key={option.kind} value={option.kind}>
+              {option.label}
+            </option>
+          ))}
+        </TextField>
+      </AxisFieldSection>
 
       {value.kind === "progressive" ? (
         <TextField
@@ -119,6 +117,8 @@ export const ScoringAxisField: React.FC<ScoringAxisFieldProps> = ({
           sx={{ maxWidth: CONDITION_WIDTH }}
         />
       ) : null}
+
+      <ScoringInfoNote note={SCORING_NOTES[value.kind]} />
     </Stack>
   );
 };
