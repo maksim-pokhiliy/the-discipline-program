@@ -7,6 +7,8 @@ import { PlusRowButton } from "@repo/ui";
 
 import { StepArrayFields } from "../step-array-fields";
 
+import type { NodeId } from "./axis-draft.types";
+
 const STACK_SPACING = 1.5;
 const TRACK_SPACING = 0.75;
 const ADD_TRACK_LABEL = "another ladder";
@@ -16,8 +18,10 @@ const TRACK_LABEL_FONT_SIZE_PX = 11;
 const TRACK_LABEL_FONT_WEIGHT = 600;
 const TRACK_LABEL_LETTER_SPACING = "0.06em";
 
+export type LadderTrack = { id: NodeId; steps: number[] };
+
 type LadderTrackStackProps = {
-  tracks: number[][];
+  tracks: ReadonlyArray<LadderTrack>;
   onChangeTrack: (index: number, steps: number[]) => void;
   onAppendTrack: () => void;
   onRemoveTrack: (index: number) => void;
@@ -35,8 +39,8 @@ export const LadderTrackStack: React.FC<LadderTrackStackProps> = ({
 
   return (
     <Stack direction="column" spacing={STACK_SPACING}>
-      {tracks.map((steps, index) => (
-        <Stack key={index} direction="column" spacing={TRACK_SPACING}>
+      {tracks.map((track, index) => (
+        <Stack key={track.id} direction="column" spacing={TRACK_SPACING}>
           {hasMultipleTracks ? (
             <Stack direction="row" spacing={0.5} sx={{ alignItems: "center" }}>
               <Typography
@@ -62,7 +66,7 @@ export const LadderTrackStack: React.FC<LadderTrackStackProps> = ({
             </Stack>
           ) : null}
 
-          <StepArrayFields value={steps} onChange={(next) => onChangeTrack(index, next)} />
+          <StepArrayFields value={track.steps} onChange={(next) => onChangeTrack(index, next)} />
         </Stack>
       ))}
 

@@ -1,0 +1,263 @@
+import { useState } from "react";
+
+import { fireEvent, screen, within } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
+import { render } from "@app/test/render";
+
+import { collectTrackChildren } from "../lib/arrangement-tree";
+import { asNodeId } from "../lib/axis-draft-id";
+import { isParallelDraft } from "../lib/parallel-ladder-draft";
+
+import type { ComposeContainer } from "./axes/axis-draft.types";
+import { CreateSchemaFlow } from "./create-schema-flow";
+
+const REPETITION_GROUP = "repetition";
+const ANOTHER_LADDER = "another ladder";
+const FIRST_LADDER_STEPS = [21, 15, 9];
+const STEPS_PER_DEFAULT_LADDER = 3;
+
+const NON_LADDER_TILE_LABELS = ["Once", "Count", "Time cap", "EMOM", "Interval"];
+
+const draftRef: { current: ComposeContainer | undefined } = { current: undefined };
+
+const freshDraft = (): ComposeContainer => ({
+  nodeType: "container",
+  id: asNodeId("draft-fresh"),
+  header: null,
+  notes: null,
+  children: [],
+});
+
+const flatLadderDraft = (steps: number[] = FIRST_LADDER_STEPS): ComposeContainer => ({
+  nodeType: "container",
+  id: asNodeId("draft-flat"),
+  header: null,
+  notes: null,
+  repetition: { kind: "ladder", steps },
+  children: [],
+});
+
+const StatefulFlow: React.FC<{ seed: ComposeContainer }> = ({ seed }) => {
+  const [draft, setDraft] = useState<ComposeContainer>(seed);
+
+  draftRef.current = draft;
+
+  return (
+    <CreateSchemaFlow
+      draft={draft}
+      onDraftChange={(next) => {
+        draftRef.current = next;
+        setDraft(next);
+      }}
+    />
+  );
+};
+
+const renderFlow = (seed: ComposeContainer): void => {
+  draftRef.current = seed;
+  render(<StatefulFlow seed={seed} />);
+};
+
+const repetitionGroups = (): HTMLElement[] =>
+  screen.getAllByRole("group", { name: REPETITION_GROUP });
+
+const repetitionGroup = (): HTMLElement => screen.getByRole("group", { name: REPETITION_GROUP });
+
+const pressedTiles = (): HTMLElement[] =>
+  within(repetitionGroup()).getAllByRole("button", { pressed: true });
+
+const pressedTileName = (): string | null => {
+  const [pressed] = pressedTiles();
+
+  return pressed?.textContent ?? null;
+};
+
+const clickTile = (label: string): void => {
+  fireEvent.click(within(repetitionGroup()).getByText(label));
+};
+
+const clickAnotherLadder = (): void => {
+  fireEvent.click(screen.getByRole("button", { name: ANOTHER_LADDER }));
+};
+
+const anotherLadderButton = (): HTMLElement | null =>
+  screen.queryByRole("button", { name: ANOTHER_LADDER });
+
+const stepperCells = (): HTMLElement[] => screen.getAllByRole("spinbutton");
+
+const stepperCount = (): number => screen.queryAllByRole("spinbutton").length;
+
+const editStepCell = (cellIndex: number, value: string): void => {
+  const cell = stepperCells()[cellIndex];
+
+  if (cell === undefined) {
+    throw new Error(`step cell ${cellIndex} not found`);
+  }
+
+  fireEvent.change(cell, { target: { value } });
+};
+
+const trackCaptions = (): string[] =>
+  screen
+    .queryAllByText(/^LADDER \d+$/)
+    .map((node) => node.textContent ?? "")
+    .filter((text) => text.length > 0);
+
+const removeTrackButtons = (): HTMLElement[] =>
+  screen.queryAllByRole("button", { name: /^Remove ladder \d+$/ });
+
+const currentDraft = (): ComposeContainer => {
+  const draft = draftRef.current;
+
+  if (draft === undefined) {
+    throw new Error("draft not initialised");
+  }
+
+  return draft;
+};
+
+const trackSteps = (container: ComposeContainer): number[][] =>
+  collectTrackChildren(container).map((track) =>
+    track.repetition?.kind === "ladder" ? track.repetition.steps : [],
+  );
+
+const expectSingleGridAndPress = (): void => {
+  expect(repetitionGroups()).toHaveLength(1);
+  expect(pressedTiles()).toHaveLength(1);
+};
+
+describe("CreateSchemaFlow materialize keeps the editor alive (Must-Test #1, catches QA-001)", () => {
+  it("renders two ladder steppers with Ladder still active after tapping another ladder", () => {
+    renderFlow(freshDraft());
+
+    clickTile("Ladder");
+    clickAnotherLadder();
+
+    expect(pressedTileName()).toBe("Ladder");
+    expect(trackCaptions()).toEqual(["LADDER 1", "LADDER 2"]);
+    expect(stepperCount()).toBe(STEPS_PER_DEFAULT_LADDER * 2);
+    expect(anotherLadderButton()).toBeInTheDocument();
+  });
+});
+
+describe("CreateSchemaFlow track-2 editing after materialize (Must-Test #3)", () => {
+  it("patches the second track's first step from the rendered cell", () => {
+    renderFlow(flatLadderDraft());
+
+    clickAnotherLadder();
+    editStepCell(STEPS_PER_DEFAULT_LADDER, "12");
+
+    expect(trackSteps(currentDraft())[1]).toEqual([12, 12, 9]);
+  });
+});
+
+describe("CreateSchemaFlow another-ladder is gated to Ladder (Must-Test #4)", () => {
+  it("hides the another-ladder control for every non-ladder pattern", () => {
+    renderFlow(freshDraft());
+
+    for (const label of NON_LADDER_TILE_LABELS) {
+      clickTile(label);
+
+      expect(anotherLadderButton()).toBeNull();
+    }
+  });
+
+  it("shows the another-ladder control outside the tile group under Ladder", () => {
+    renderFlow(freshDraft());
+
+    clickTile("Ladder");
+
+    expect(anotherLadderButton()).toBeInTheDocument();
+    expect(within(repetitionGroup()).queryByRole("button", { name: ANOTHER_LADDER })).toBeNull();
+  });
+});
+
+describe("CreateSchemaFlow remove-track collapses 2 to 1 (Must-Test #5)", () => {
+  it("returns to a flat single ladder when the second track is removed", () => {
+    renderFlow(flatLadderDraft());
+
+    clickAnotherLadder();
+    fireEvent.click(screen.getByRole("button", { name: "Remove ladder 2" }));
+
+    expect(trackCaptions()).toEqual([]);
+    expect(removeTrackButtons()).toEqual([]);
+    expect(stepperCount()).toBe(STEPS_PER_DEFAULT_LADDER);
+    expect(isParallelDraft(currentDraft())).toBe(false);
+  });
+});
+
+describe("CreateSchemaFlow append grows to three tracks (Must-Test #6)", () => {
+  it("renders three steppers and three remove controls after a second append", () => {
+    renderFlow(flatLadderDraft());
+
+    clickAnotherLadder();
+    clickAnotherLadder();
+
+    expect(trackCaptions()).toEqual(["LADDER 1", "LADDER 2", "LADDER 3"]);
+    expect(removeTrackButtons()).toHaveLength(3);
+    expect(stepperCount()).toBe(STEPS_PER_DEFAULT_LADDER * 3);
+  });
+});
+
+describe("CreateSchemaFlow kind-switch off a materialized parallel (Must-Test #10)", () => {
+  it("collapses to a single count container with no stray repetition alongside children", () => {
+    renderFlow(flatLadderDraft());
+
+    clickAnotherLadder();
+    clickTile("Count");
+
+    const collapsed = currentDraft();
+
+    expect(isParallelDraft(collapsed)).toBe(false);
+    expect(collapsed.children).toEqual([]);
+    expect(collapsed.repetition).toEqual({ kind: "count", count: 3 });
+  });
+
+  it("never produces a parent carrying both repetition.ladder and container children", () => {
+    renderFlow(flatLadderDraft());
+
+    clickAnotherLadder();
+    clickTile("Count");
+    clickTile("Ladder");
+
+    const reladdered = currentDraft();
+
+    const carriesBoth =
+      reladdered.repetition?.kind === "ladder" && collectTrackChildren(reladdered).length > 0;
+
+    expect(carriesBoth).toBe(false);
+  });
+
+  it("treats re-selecting Ladder while parallel as a no-op (QA-003 unreachable)", () => {
+    renderFlow(flatLadderDraft());
+
+    clickAnotherLadder();
+    clickTile("Ladder");
+
+    const stillParallel = currentDraft();
+
+    expect(isParallelDraft(stillParallel)).toBe(true);
+    expect(stillParallel.repetition).toBeUndefined();
+  });
+});
+
+describe("CreateSchemaFlow tile-group a11y invariant (Must-Test #12)", () => {
+  it("keeps exactly one tile group and one pressed tile in every reachable state", () => {
+    renderFlow(freshDraft());
+
+    expectSingleGridAndPress();
+
+    clickTile("Ladder");
+    expectSingleGridAndPress();
+
+    clickAnotherLadder();
+    expectSingleGridAndPress();
+
+    fireEvent.click(screen.getByRole("button", { name: "Remove ladder 2" }));
+    expectSingleGridAndPress();
+
+    clickTile("Count");
+    expectSingleGridAndPress();
+  });
+});

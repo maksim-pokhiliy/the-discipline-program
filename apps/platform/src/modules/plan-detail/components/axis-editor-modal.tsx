@@ -4,7 +4,7 @@ import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 
 import { Stack } from "@mui/material";
 
-import { deriveCompositionLabel } from "@repo/contracts/lms/composition";
+import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import type { SchemaWithBody } from "@repo/contracts/lms/schema";
 import { FormModal } from "@repo/ui";
@@ -29,6 +29,7 @@ const CREATE_SUBMIT = "Add schema";
 const EDIT_SUBMIT = "Save";
 const FLAT_KIND = "flat";
 const BODY_SPACING = 2;
+const EMPTY_COMPOSITION: Composition = {};
 
 export type AxisEditorMode =
   | { kind: "create"; blockId: string; parentSchemaId?: string }
@@ -117,7 +118,10 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
 
   const isCreateMode = mode.kind === "create";
   const isPending = createSchema.isPending || updateSchema.isPending || parallelCreate.isPending;
-  const preview = useMemo(() => previewComposition(draft), [draft]);
+  const preview = useMemo(
+    () => (isCreateMode ? EMPTY_COMPOSITION : previewComposition(draft)),
+    [isCreateMode, draft],
+  );
   const parts = useMemo(() => formatCompositionSummary(preview), [preview]);
   const labelKind = deriveCompositionLabel(preview).kind;
   const showsFlatHint = labelKind === FLAT_KIND && parts.length === 0;

@@ -15,7 +15,7 @@ import type { ComposeContainer, ComposeNode, RepetitionAxis } from "./axes/axis-
 import { AxisFieldSection } from "./axes/axis-field-section";
 import { AxisModeButtonGrid } from "./axes/axis-mode-button-grid";
 import { REPETITION_TILES } from "./axes/axis-modes";
-import { LadderTrackStack } from "./axes/ladder-track-stack";
+import { type LadderTrack, LadderTrackStack } from "./axes/ladder-track-stack";
 import { REPETITION_DEFAULTS, RepetitionAxisField } from "./axes/repetition-axis-field";
 
 const REPETITION_LABEL = "repetition";
@@ -41,22 +41,39 @@ const flattenToKind = (
 
 const patchTrackSteps = (
   draft: ComposeContainer,
-  index: number,
+  trackIndex: number,
   steps: number[],
-): ComposeContainer => ({
-  ...draft,
-  children: draft.children.map(
-    (child, childIndex): ComposeNode =>
-      childIndex === index && child.nodeType === "container"
-        ? { ...child, repetition: ladderRepetition(steps) }
-        : child,
-  ),
-});
+): ComposeContainer => {
+  let cursor = -1;
 
-const removeTrack = (draft: ComposeContainer, index: number): ComposeContainer => {
+  return {
+    ...draft,
+    children: draft.children.map((child): ComposeNode => {
+      if (child.nodeType !== "container") {
+        return child;
+      }
+
+      cursor += 1;
+
+      return cursor === trackIndex ? { ...child, repetition: ladderRepetition(steps) } : child;
+    }),
+  };
+};
+
+const removeTrack = (draft: ComposeContainer, trackIndex: number): ComposeContainer => {
+  let cursor = -1;
+
   const remaining: ComposeContainer = {
     ...draft,
-    children: draft.children.filter((_, childIndex) => childIndex !== index),
+    children: draft.children.filter((child) => {
+      if (child.nodeType !== "container") {
+        return true;
+      }
+
+      cursor += 1;
+
+      return cursor !== trackIndex;
+    }),
   };
 
   return collectTrackChildren(remaining).length === 1 ? dematerializeToFlat(remaining) : remaining;
@@ -68,7 +85,9 @@ type CreateSchemaFlowProps = {
 };
 
 export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({ draft, onDraftChange }) => {
-  const activeKind = draft.repetition?.kind ?? FALLBACK_KIND;
+  const activeKind: RepetitionAxis["kind"] = isParallelDraft(draft)
+    ? LADDER_KIND
+    : (draft.repetition?.kind ?? FALLBACK_KIND);
   const ladderError = hasLadderMarkerConflict(draft) ? LADDER_MARKER_CONFLICT : undefined;
 
   const handleKind = (nextKind: RepetitionAxis["kind"]): void => {
@@ -109,9 +128,9 @@ export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({ draft, onDra
     );
   }
 
-  const tracks = isParallelDraft(draft)
-    ? collectTrackChildren(draft).map(ladderSteps)
-    : [ladderSteps(draft)];
+  const tracks: LadderTrack[] = isParallelDraft(draft)
+    ? collectTrackChildren(draft).map((child) => ({ id: child.id, steps: ladderSteps(child) }))
+    : [{ id: draft.id, steps: ladderSteps(draft) }];
 
   const ladderHint = REPETITION_TILES.find((tile) => tile.kind === LADDER_KIND)?.hint;
 
