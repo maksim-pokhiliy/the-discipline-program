@@ -2,7 +2,7 @@
 
 import { type ReactElement, useEffect, useMemo, useRef, useState } from "react";
 
-import { Stack, Typography } from "@mui/material";
+import { Stack } from "@mui/material";
 
 import { deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import type { Exercise } from "@repo/contracts/lms/exercise";
@@ -14,10 +14,13 @@ import { useCatalog, useCreateSchema, useUpdateSchema } from "@app/lib/hooks";
 import { makeNodeId } from "../lib/axis-draft-id";
 import { buildComposition, previewComposition } from "../lib/build-axis-composition";
 import { formatCompositionSummary } from "../lib/format-composition-summary";
+import { isParallelDraft } from "../lib/parallel-ladder-draft";
 import { schemaWithBodyToDraftContainer } from "../lib/schema-to-draft-container";
+import { useCreateParallelSchemas } from "../lib/use-create-parallel-schemas";
 
 import type { ComposeContainer, ComposeNode, NodeId } from "./axes/axis-draft.types";
 import { ContainerInspector } from "./axes/container-inspector";
+import { CreateSchemaFlow } from "./create-schema-flow";
 import { DerivedLabelCard } from "./derived-label-card";
 
 const CREATE_TITLE = "Add schema";
@@ -25,8 +28,6 @@ const EDIT_TITLE = "Container composition";
 const CREATE_SUBMIT = "Add schema";
 const EDIT_SUBMIT = "Save";
 const FLAT_KIND = "flat";
-const CREATE_ARRANGEMENT_HINT =
-  "parallel / superset unlock once this schema has rows or sub-schemas — add those first, then tune here.";
 const BODY_SPACING = 2;
 
 export type AxisEditorMode =
@@ -70,6 +71,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
 }): ReactElement => {
   const createSchema = useCreateSchema(planId, startDate);
   const updateSchema = useUpdateSchema(planId, startDate);
+  const parallelCreate = useCreateParallelSchemas(planId, startDate);
   const { exerciseById: catalogExercises } = useCatalog();
   const exerciseById = useMemo<Map<string, Exercise>>(
     () => new Map(catalogExercises),
@@ -111,20 +113,20 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
         : prev,
     );
 
+  const onDraftChange = (next: ComposeContainer): void => setSeed({ container: next });
+
   const isCreateMode = mode.kind === "create";
-  const isPending = createSchema.isPending || updateSchema.isPending;
+  const isPending = createSchema.isPending || updateSchema.isPending || parallelCreate.isPending;
   const preview = useMemo(() => previewComposition(draft), [draft]);
   const parts = useMemo(() => formatCompositionSummary(preview), [preview]);
   const labelKind = deriveCompositionLabel(preview).kind;
   const showsFlatHint = labelKind === FLAT_KIND && parts.length === 0;
 
-  const handleSubmit = (): void => {
-    if (isSubmittingRef.current || isPending) {
-      return;
-    }
+  const releaseGuard = (): void => {
+    isSubmittingRef.current = false;
+  };
 
-    setError(null);
-
+  const submitFlatCreate = (createMode: Extract<AxisEditorMode, { kind: "create" }>): void => {
     const result = buildComposition(draft);
 
     if (!result.ok) {
@@ -133,41 +135,79 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
       return;
     }
 
-    const header = draft.header;
-
     isSubmittingRef.current = true;
+    createSchema.mutate(
+      {
+        blockId: createMode.blockId,
+        ...(createMode.parentSchemaId != null && { parentSchemaId: createMode.parentSchemaId }),
+        composition: result.composition,
+        header: draft.header,
+        notes: null,
+      },
+      { onSuccess: onClose, onError: (cause) => setError(cause.message), onSettled: releaseGuard },
+    );
+  };
 
-    if (mode.kind === "create") {
-      createSchema.mutate(
-        {
-          blockId: mode.blockId,
-          ...(mode.parentSchemaId != null && { parentSchemaId: mode.parentSchemaId }),
-          composition: result.composition,
-          header,
-          notes: null,
+  const submitParallelCreate = (createMode: Extract<AxisEditorMode, { kind: "create" }>): void => {
+    isSubmittingRef.current = true;
+    void parallelCreate.run(
+      {
+        blockId: createMode.blockId,
+        ...(createMode.parentSchemaId != null && { parentSchemaId: createMode.parentSchemaId }),
+        draft,
+      },
+      {
+        onSuccess: () => {
+          releaseGuard();
+          onClose();
         },
-        {
-          onSuccess: onClose,
-          onError: (cause) => setError(cause.message),
-          onSettled: () => {
-            isSubmittingRef.current = false;
-          },
+        onError: (message) => {
+          setError(message);
+          releaseGuard();
         },
-      );
+      },
+    );
+  };
+
+  const submitEdit = (editMode: Extract<AxisEditorMode, { kind: "edit" }>): void => {
+    const result = buildComposition(draft);
+
+    if (!result.ok) {
+      setError(result.error);
 
       return;
     }
 
+    isSubmittingRef.current = true;
     updateSchema.mutate(
-      { schemaId: mode.schema.schema.id, data: { composition: result.composition, header } },
       {
-        onSuccess: onClose,
-        onError: (cause) => setError(cause.message),
-        onSettled: () => {
-          isSubmittingRef.current = false;
-        },
+        schemaId: editMode.schema.schema.id,
+        data: { composition: result.composition, header: draft.header },
       },
+      { onSuccess: onClose, onError: (cause) => setError(cause.message), onSettled: releaseGuard },
     );
+  };
+
+  const handleSubmit = (): void => {
+    if (isSubmittingRef.current || isPending) {
+      return;
+    }
+
+    setError(null);
+
+    if (mode.kind === "edit") {
+      submitEdit(mode);
+
+      return;
+    }
+
+    if (isParallelDraft(draft)) {
+      submitParallelCreate(mode);
+
+      return;
+    }
+
+    submitFlatCreate(mode);
   };
 
   return (
@@ -184,25 +224,23 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
       submitText={isCreateMode ? CREATE_SUBMIT : EDIT_SUBMIT}
       error={error}
     >
-      <Stack direction="column" spacing={BODY_SPACING}>
-        <DerivedLabelCard labelKind={labelKind} parts={parts} showsFlatHint={showsFlatHint} />
+      {isCreateMode ? (
+        <CreateSchemaFlow draft={draft} onDraftChange={onDraftChange} />
+      ) : (
+        <Stack direction="column" spacing={BODY_SPACING}>
+          <DerivedLabelCard labelKind={labelKind} parts={parts} showsFlatHint={showsFlatHint} />
 
-        <ContainerInspector
-          container={draft}
-          exerciseById={exerciseById}
-          isCreateMode={isCreateMode}
-          headerEditable
-          onUpdateNode={onUpdateNode}
-          onRename={onRename}
-          onDemoteNode={undefined}
-        />
-
-        {isCreateMode ? (
-          <Typography variant="caption" color="text.subtle">
-            {CREATE_ARRANGEMENT_HINT}
-          </Typography>
-        ) : null}
-      </Stack>
+          <ContainerInspector
+            container={draft}
+            exerciseById={exerciseById}
+            isCreateMode={isCreateMode}
+            headerEditable
+            onUpdateNode={onUpdateNode}
+            onRename={onRename}
+            onDemoteNode={undefined}
+          />
+        </Stack>
+      )}
     </FormModal>
   );
 };

@@ -9,8 +9,10 @@ import { render } from "@app/test/render";
 
 const createSchemaMutate = vi.fn();
 const updateSchemaMutate = vi.fn();
+const parallelRun = vi.fn();
 const createSchemaState = { isPending: false };
 const updateSchemaState = { isPending: false };
+const parallelState = { isPending: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -28,6 +30,10 @@ vi.mock("@app/lib/hooks", async () => {
     }),
   };
 });
+
+vi.mock("../lib/use-create-parallel-schemas", () => ({
+  useCreateParallelSchemas: () => ({ run: parallelRun, isPending: parallelState.isPending }),
+}));
 
 const { AxisEditorModal } = await import("./axis-editor-modal");
 
@@ -130,8 +136,10 @@ const toggleGroup = (groupName: string, optionLabel: string) =>
 afterEach(() => {
   createSchemaState.isPending = false;
   updateSchemaState.isPending = false;
+  parallelState.isPending = false;
   createSchemaMutate.mockReset();
   updateSchemaMutate.mockReset();
+  parallelRun.mockReset();
 });
 
 describe("AxisEditorModal create mode", () => {
@@ -140,17 +148,6 @@ describe("AxisEditorModal create mode", () => {
 
     expect(screen.getByRole("dialog", { name: CREATE_TITLE })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add schema" })).toBeInTheDocument();
-  });
-
-  it("shows the flat hint for a fresh draft and a rounds tag once a count repetition is set", () => {
-    renderCreate();
-
-    expect(screen.getByText("Derived label")).toBeInTheDocument();
-    expect(screen.getByText("flat — plain container")).toBeInTheDocument();
-
-    selectRepetition("Count");
-
-    expect(screen.getByText("rounds")).toBeInTheDocument();
   });
 
   it("submits createSchema with the count composition, a null header and null notes", () => {
@@ -192,28 +189,6 @@ describe("AxisEditorModal create mode", () => {
       header: null,
       notes: null,
     });
-  });
-
-  it("sends an authored header on submit", () => {
-    renderCreate();
-
-    fireEvent.change(screen.getByRole("textbox", { name: HEADER_ARIA }), {
-      target: { value: "Opener" },
-    });
-    fireEvent.blur(screen.getByRole("textbox", { name: HEADER_ARIA }));
-    submit();
-
-    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(createSchemaMutate.mock.calls[0]?.[0]).toMatchObject({ header: "Opener" });
-  });
-
-  it("sends a null header when the header is left blank", () => {
-    renderCreate();
-
-    submit();
-
-    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(createSchemaMutate.mock.calls[0]?.[0]).toMatchObject({ header: null });
   });
 });
 
@@ -333,8 +308,11 @@ describe("AxisEditorModal ladder-marker conflict on edit (QA-202)", () => {
 });
 
 describe("AxisEditorModal header length cap (QA-204)", () => {
+  const headerCapSchema = (): SchemaWithBody =>
+    makeSchema({ composition: { repetition: { kind: "count", count: 4 } } });
+
   it("caps the header input at the contract maximum length", () => {
-    renderCreate();
+    renderEdit(headerCapSchema());
 
     expect(screen.getByRole("textbox", { name: HEADER_ARIA })).toHaveAttribute(
       "maxlength",
@@ -475,28 +453,6 @@ describe("AxisEditorModal count range refinement (QA-Must-10)", () => {
   });
 });
 
-describe("AxisEditorModal create-mode arrangement with no children (QA-Must-5)", () => {
-  it("blocks a parallel arrangement that has no tracks and surfaces the issue without mutating", () => {
-    renderCreate();
-
-    toggleGroup("arrangement", "parallel");
-    submit();
-
-    expect(createSchemaMutate).not.toHaveBeenCalled();
-    expect(alertText()).toMatch(/at least two tracks/i);
-  });
-
-  it("blocks a superset arrangement that has no rows and surfaces the issue without mutating", () => {
-    renderCreate();
-
-    toggleGroup("arrangement", "superset");
-    submit();
-
-    expect(createSchemaMutate).not.toHaveBeenCalled();
-    expect(alertText()).toMatch(/superset pair needs/i);
-  });
-});
-
 describe("AxisEditorModal repetition tile-group a11y contract (T13)", () => {
   const REPETITION_TILE_COUNT = 6;
 
@@ -518,5 +474,17 @@ describe("AxisEditorModal repetition tile-group a11y contract (T13)", () => {
     selectRepetition("Count");
 
     expect(within(group).getByRole("button", { pressed: true })).toHaveAccessibleName("Count");
+  });
+
+  it("renders the another-ladder control outside the repetition tile group once Ladder is active", () => {
+    renderCreate();
+
+    selectRepetition("Ladder");
+
+    const group = screen.getByRole("group", { name: "repetition" });
+    const anotherLadder = screen.getByRole("button", { name: "another ladder" });
+
+    expect(anotherLadder).toBeInTheDocument();
+    expect(within(group).queryByRole("button", { name: "another ladder" })).toBeNull();
   });
 });
