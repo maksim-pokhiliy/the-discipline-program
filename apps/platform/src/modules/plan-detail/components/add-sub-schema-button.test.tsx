@@ -17,6 +17,10 @@ vi.mock("@app/lib/hooks", async () => {
   };
 });
 
+vi.mock("../lib/use-create-parallel-schemas", () => ({
+  useCreateParallelSchemas: () => ({ run: vi.fn(), isPending: false }),
+}));
+
 const { AddSubSchemaButton } = await import("./add-sub-schema-button");
 
 const PLAN_ID = "ckxw5p7gp0000q1mnzv5cuq0a";

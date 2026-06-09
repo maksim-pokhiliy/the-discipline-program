@@ -21,7 +21,7 @@ const LABEL = "repetition";
 
 const DEFAULT_TIME_CAP: TimeCap = { min: 12, unit: "min" };
 
-const REPETITION_DEFAULTS: Record<RepetitionAxis["kind"], RepetitionAxis> = {
+export const REPETITION_DEFAULTS: Record<RepetitionAxis["kind"], RepetitionAxis> = {
   once: { kind: "once" },
   count: { kind: "count", count: 3 },
   ladder: { kind: "ladder", steps: [21, 15, 9] },

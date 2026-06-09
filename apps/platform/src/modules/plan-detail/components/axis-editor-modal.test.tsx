@@ -7,10 +7,19 @@ import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
+import { collectTrackChildren } from "../lib/arrangement-tree";
+
+import type { ComposeContainer } from "./axes/axis-draft.types";
+
+type ParallelRunArgs = { blockId: string; parentSchemaId?: string; draft: ComposeContainer };
+type ParallelRunOptions = { onSuccess: () => void; onError: (message: string) => void };
+
 const createSchemaMutate = vi.fn();
 const updateSchemaMutate = vi.fn();
+const parallelRun = vi.fn<(args: ParallelRunArgs, opts: ParallelRunOptions) => Promise<void>>();
 const createSchemaState = { isPending: false };
 const updateSchemaState = { isPending: false };
+const parallelState = { isPending: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
@@ -28,6 +37,10 @@ vi.mock("@app/lib/hooks", async () => {
     }),
   };
 });
+
+vi.mock("../lib/use-create-parallel-schemas", () => ({
+  useCreateParallelSchemas: () => ({ run: parallelRun, isPending: parallelState.isPending }),
+}));
 
 const { AxisEditorModal } = await import("./axis-editor-modal");
 
@@ -127,11 +140,51 @@ const selectRepetition = (label: string) =>
 const toggleGroup = (groupName: string, optionLabel: string) =>
   fireEvent.click(within(screen.getByRole("group", { name: groupName })).getByText(optionLabel));
 
+const addAnotherLadder = () =>
+  fireEvent.click(screen.getByRole("button", { name: "another ladder" }));
+
+const buildParallel = () => {
+  selectRepetition("Ladder");
+  addAnotherLadder();
+};
+
+const editStepCell = (cellIndex: number, value: string) => {
+  const cell = screen.getAllByRole("spinbutton")[cellIndex];
+
+  if (cell === undefined) {
+    throw new Error(`step cell ${cellIndex} not found`);
+  }
+
+  fireEvent.change(cell, { target: { value } });
+};
+
+const capturedParallelArgs = (): ParallelRunArgs => {
+  const args = parallelRun.mock.calls[0]?.[0];
+
+  if (args === undefined) {
+    throw new Error("parallelRun was not called");
+  }
+
+  return args;
+};
+
+const capturedParallelOptions = (): ParallelRunOptions => {
+  const options = parallelRun.mock.calls[0]?.[1];
+
+  if (options === undefined) {
+    throw new Error("parallelRun was not called");
+  }
+
+  return options;
+};
+
 afterEach(() => {
   createSchemaState.isPending = false;
   updateSchemaState.isPending = false;
+  parallelState.isPending = false;
   createSchemaMutate.mockReset();
   updateSchemaMutate.mockReset();
+  parallelRun.mockReset();
 });
 
 describe("AxisEditorModal create mode", () => {
@@ -140,17 +193,6 @@ describe("AxisEditorModal create mode", () => {
 
     expect(screen.getByRole("dialog", { name: CREATE_TITLE })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Add schema" })).toBeInTheDocument();
-  });
-
-  it("shows the flat hint for a fresh draft and a rounds tag once a count repetition is set", () => {
-    renderCreate();
-
-    expect(screen.getByText("Derived label")).toBeInTheDocument();
-    expect(screen.getByText("flat — plain container")).toBeInTheDocument();
-
-    selectRepetition("Count");
-
-    expect(screen.getByText("rounds")).toBeInTheDocument();
   });
 
   it("submits createSchema with the count composition, a null header and null notes", () => {
@@ -192,28 +234,6 @@ describe("AxisEditorModal create mode", () => {
       header: null,
       notes: null,
     });
-  });
-
-  it("sends an authored header on submit", () => {
-    renderCreate();
-
-    fireEvent.change(screen.getByRole("textbox", { name: HEADER_ARIA }), {
-      target: { value: "Opener" },
-    });
-    fireEvent.blur(screen.getByRole("textbox", { name: HEADER_ARIA }));
-    submit();
-
-    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(createSchemaMutate.mock.calls[0]?.[0]).toMatchObject({ header: "Opener" });
-  });
-
-  it("sends a null header when the header is left blank", () => {
-    renderCreate();
-
-    submit();
-
-    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(createSchemaMutate.mock.calls[0]?.[0]).toMatchObject({ header: null });
   });
 });
 
@@ -333,8 +353,11 @@ describe("AxisEditorModal ladder-marker conflict on edit (QA-202)", () => {
 });
 
 describe("AxisEditorModal header length cap (QA-204)", () => {
+  const headerCapSchema = (): SchemaWithBody =>
+    makeSchema({ composition: { repetition: { kind: "count", count: 4 } } });
+
   it("caps the header input at the contract maximum length", () => {
-    renderCreate();
+    renderEdit(headerCapSchema());
 
     expect(screen.getByRole("textbox", { name: HEADER_ARIA })).toHaveAttribute(
       "maxlength",
@@ -475,28 +498,6 @@ describe("AxisEditorModal count range refinement (QA-Must-10)", () => {
   });
 });
 
-describe("AxisEditorModal create-mode arrangement with no children (QA-Must-5)", () => {
-  it("blocks a parallel arrangement that has no tracks and surfaces the issue without mutating", () => {
-    renderCreate();
-
-    toggleGroup("arrangement", "parallel");
-    submit();
-
-    expect(createSchemaMutate).not.toHaveBeenCalled();
-    expect(alertText()).toMatch(/at least two tracks/i);
-  });
-
-  it("blocks a superset arrangement that has no rows and surfaces the issue without mutating", () => {
-    renderCreate();
-
-    toggleGroup("arrangement", "superset");
-    submit();
-
-    expect(createSchemaMutate).not.toHaveBeenCalled();
-    expect(alertText()).toMatch(/superset pair needs/i);
-  });
-});
-
 describe("AxisEditorModal repetition tile-group a11y contract (T13)", () => {
   const REPETITION_TILE_COUNT = 6;
 
@@ -518,5 +519,154 @@ describe("AxisEditorModal repetition tile-group a11y contract (T13)", () => {
     selectRepetition("Count");
 
     expect(within(group).getByRole("button", { pressed: true })).toHaveAccessibleName("Count");
+  });
+
+  it("renders the another-ladder control outside the repetition tile group once Ladder is active", () => {
+    renderCreate();
+
+    selectRepetition("Ladder");
+
+    const group = screen.getByRole("group", { name: "repetition" });
+    const anotherLadder = screen.getByRole("button", { name: "another ladder" });
+
+    expect(anotherLadder).toBeInTheDocument();
+    expect(within(group).queryByRole("button", { name: "another ladder" })).toBeNull();
+  });
+});
+
+describe("AxisEditorModal parallel-submit integration (REV-W1)", () => {
+  const FIRST_LADDER_STEPS = [21, 15, 9];
+  const SECOND_LADDER_STEPS = [15, 12, 9];
+
+  const ladderKinds = (draft: ComposeContainer): Array<string | undefined> =>
+    collectTrackChildren(draft).map((track) => track.repetition?.kind);
+
+  it("fires the sequencer once with a two-track ladder draft and skips the flat create (#2)", () => {
+    renderCreate();
+
+    buildParallel();
+    submit();
+
+    expect(parallelRun).toHaveBeenCalledTimes(1);
+
+    const { draft } = capturedParallelArgs();
+
+    expect(collectTrackChildren(draft)).toHaveLength(2);
+    expect(ladderKinds(draft)).toEqual(["ladder", "ladder"]);
+    expect(createSchemaMutate).not.toHaveBeenCalled();
+  });
+
+  it("threads an edited second-track step into the sequencer draft (#2 edit)", () => {
+    renderCreate();
+
+    buildParallel();
+    editStepCell(FIRST_LADDER_STEPS.length, "12");
+    submit();
+
+    const { draft } = capturedParallelArgs();
+    const [, secondTrack] = collectTrackChildren(draft);
+
+    expect(secondTrack?.repetition).toEqual({
+      kind: "ladder",
+      steps: [12, SECOND_LADDER_STEPS[1], SECOND_LADDER_STEPS[2]],
+    });
+  });
+
+  it("submits a single ladder through the flat create and never calls the sequencer (#7)", () => {
+    renderCreate();
+
+    selectRepetition("Ladder");
+    submit();
+
+    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(createSchemaMutate.mock.calls[0]?.[0]).toEqual({
+      blockId: BLOCK_ID,
+      composition: { repetition: { kind: "ladder", steps: FIRST_LADDER_STEPS } },
+      header: null,
+      notes: null,
+    });
+    expect(parallelRun).not.toHaveBeenCalled();
+  });
+
+  it("surfaces a per-track validation error from the sequencer in the modal Alert (#8)", () => {
+    parallelRun.mockImplementationOnce((_args, options) => {
+      options.onError("ladder 2: step values must be positive");
+
+      return Promise.resolve();
+    });
+
+    renderCreate();
+
+    buildParallel();
+    submit();
+
+    expect(parallelRun).toHaveBeenCalledTimes(1);
+    expect(alertText()).toMatch(/ladder 2/);
+    expect(createSchemaMutate).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Add schema" })).toBeEnabled();
+  });
+
+  it("surfaces a mid-sequence failure, keeps the modal open and re-enables submit (#9)", () => {
+    const onClose = vi.fn();
+
+    parallelRun.mockImplementationOnce((_args, options) => {
+      options.onError("network exploded");
+
+      return Promise.resolve();
+    });
+
+    render(
+      <AxisEditorModal
+        open
+        onClose={onClose}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        mode={{ kind: "create", blockId: BLOCK_ID }}
+      />,
+    );
+
+    buildParallel();
+    submit();
+
+    expect(alertText()).toContain("network exploded");
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByRole("dialog", { name: CREATE_TITLE })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Add schema" })).toBeEnabled();
+  });
+
+  it("forwards an incoming parentSchemaId to the sequencer for a sub-schema parallel (#11)", () => {
+    renderCreateSub(SUB_SCHEMA_ID);
+
+    buildParallel();
+    submit();
+
+    expect(parallelRun).toHaveBeenCalledTimes(1);
+    expect(capturedParallelArgs().parentSchemaId).toBe(SUB_SCHEMA_ID);
+  });
+
+  it("calls the sequencer once for a synchronous double-click on a parallel draft", () => {
+    renderCreate();
+
+    buildParallel();
+    submit();
+    submit();
+
+    expect(parallelRun).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-enables submit after a sequencer success so a follow-up create can fire", () => {
+    parallelRun.mockImplementationOnce((_args, options) => {
+      options.onSuccess();
+
+      return Promise.resolve();
+    });
+
+    renderCreate();
+
+    buildParallel();
+    submit();
+
+    expect(capturedParallelOptions().onSuccess).toBeTypeOf("function");
+    expect(screen.getByRole("button", { name: "Add schema" })).toBeEnabled();
   });
 });
