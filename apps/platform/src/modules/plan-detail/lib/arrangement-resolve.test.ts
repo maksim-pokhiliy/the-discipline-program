@@ -9,7 +9,6 @@ import { asNodeId } from "./axis-draft-id";
 const CUID = {
   trackDown: "ckschematrackdown00000001",
   trackUp: "ckschematrackup0000000002",
-  rowDown: "ckrowtrackdownrow00000003",
   rowCurl: "ckrowcurl0000000000000004",
   rowExt: "ckrowext00000000000000005",
 };
@@ -21,7 +20,6 @@ const fullParallelMap = (): Map<NodeId, string> =>
   refMap([
     ["track-down", CUID.trackDown],
     ["track-up", CUID.trackUp],
-    ["track-down-row", CUID.rowDown],
   ]);
 
 const fullSupersetMap = (): Map<NodeId, string> =>
@@ -35,10 +33,7 @@ describe("resolveArrangement (QA-504)", () => {
     const deferred: DraftArrangement = {
       kind: "parallel",
       interleaveOrder: "track_by_track",
-      tracks: [
-        { childSchemaId: asNodeId("track-down"), setEnumeration: [21, 15, 9] },
-        { childSchemaId: asNodeId("track-up"), pairedWithRowId: asNodeId("track-down-row") },
-      ],
+      tracks: [{ childSchemaId: asNodeId("track-down") }, { childSchemaId: asNodeId("track-up") }],
     };
 
     const result = resolveArrangement(deferred, fullParallelMap());
@@ -48,30 +43,9 @@ describe("resolveArrangement (QA-504)", () => {
       arrangement: {
         kind: "parallel",
         interleaveOrder: "track_by_track",
-        tracks: [
-          { childSchemaId: CUID.trackDown, setEnumeration: [21, 15, 9] },
-          { childSchemaId: CUID.trackUp, pairedWithRowId: CUID.rowDown },
-        ],
+        tracks: [{ childSchemaId: CUID.trackDown }, { childSchemaId: CUID.trackUp }],
       },
     });
-  });
-
-  it("omits an absent setEnumeration and pairedWithRowId from a resolved track (B4-AC)", () => {
-    const deferred: DraftArrangement = {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [{ childSchemaId: asNodeId("track-down") }, { childSchemaId: asNodeId("track-up") }],
-    };
-
-    const result = resolveArrangement(deferred, fullParallelMap());
-
-    expect(result.ok).toBe(true);
-
-    if (result.ok && result.arrangement.kind === "parallel") {
-      expect(result.arrangement.tracks[0]).not.toHaveProperty("setEnumeration");
-      expect(result.arrangement.tracks[0]).not.toHaveProperty("pairedWithRowId");
-      expect(result.arrangement.tracks[0]).toEqual({ childSchemaId: CUID.trackDown });
-    }
   });
 
   it("resolves a superset arrangement to server cuid rowIds (B4-AC)", () => {
@@ -102,25 +76,6 @@ describe("resolveArrangement (QA-504)", () => {
     const result = resolveArrangement(deferred, partialMap);
 
     expect(result).toEqual({ ok: false, missing: asNodeId("track-up") });
-  });
-
-  it("fails loud with the missing id when a parallel pairedWithRowId is absent (B4-AC)", () => {
-    const deferred: DraftArrangement = {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [
-        { childSchemaId: asNodeId("track-down") },
-        { childSchemaId: asNodeId("track-up"), pairedWithRowId: asNodeId("track-down-row") },
-      ],
-    };
-    const mapWithoutRow = refMap([
-      ["track-down", CUID.trackDown],
-      ["track-up", CUID.trackUp],
-    ]);
-
-    const result = resolveArrangement(deferred, mapWithoutRow);
-
-    expect(result).toEqual({ ok: false, missing: asNodeId("track-down-row") });
   });
 
   it("fails loud with the missing id when a superset rowId is absent from the map (B4-AC)", () => {

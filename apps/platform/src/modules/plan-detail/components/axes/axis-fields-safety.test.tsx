@@ -90,8 +90,6 @@ const spinbuttonByLabel = (name: string): HTMLElement => screen.getByRole("spinb
 
 const POSITIVE_MESSAGE = "Number must be greater than 0";
 const NONNEGATIVE_MESSAGE = "Number must be greater than or equal to 0";
-const HH_MM_INVALID_MESSAGE = "Invalid";
-const WINDOW_ORDER_MESSAGE = "window.endHhMm must be a valid HH:MM after startHhMm";
 const REST_RANGE_MESSAGE = "rangeMax is required and must be greater than value for range units";
 
 describe("cadence/interval axis fields surface contract errors while storing the typed value (T2-5)", () => {
@@ -147,68 +145,6 @@ describe("cadence/interval axis fields surface contract errors while storing the
     expect(readRepetition()).toStrictEqual({ kind: "interval", workMin: 2, offMin: -1, count: 3 });
     expect(spinbuttonByLabel("Off (min)")).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByText(NONNEGATIVE_MESSAGE)).toBeInTheDocument();
-  });
-});
-
-describe("window axis field surfaces contract errors while storing the typed value (T2-5)", () => {
-  const selectWindow = (): void => {
-    fireEvent.click(screen.getByRole("button", { name: "Clock window" }));
-  };
-
-  it("shows the HH:MM error on a malformed start time, still storing the raw value", () => {
-    render(<InspectorHarness initial={baseContainer()} />);
-
-    selectWindow();
-    fireEvent.change(screen.getByRole("textbox", { name: "Start HH:MM" }), {
-      target: { value: "25:99" },
-    });
-
-    expect(readRepetition()).toStrictEqual({
-      kind: "window",
-      startHhMm: "25:99",
-      endHhMm: "09:00",
-    });
-    expect(screen.getByRole("textbox", { name: "Start HH:MM" })).toHaveAttribute(
-      "aria-invalid",
-      "true",
-    );
-    expect(screen.getByText(HH_MM_INVALID_MESSAGE)).toBeInTheDocument();
-  });
-
-  it("shows the ordering error on the end field when start ≥ end, still storing an empty end", () => {
-    render(<InspectorHarness initial={baseContainer()} />);
-
-    selectWindow();
-    fireEvent.change(screen.getByRole("textbox", { name: "End HH:MM" }), {
-      target: { value: "" },
-    });
-
-    expect(readRepetition()).toStrictEqual({ kind: "window", startHhMm: "06:00", endHhMm: "" });
-    expect(screen.getByRole("textbox", { name: "End HH:MM" })).toHaveAttribute(
-      "aria-invalid",
-      "true",
-    );
-    expect(screen.getByText(HH_MM_INVALID_MESSAGE)).toBeInTheDocument();
-  });
-
-  it("lands the cross-field ordering error on the end field for a valid-but-late start", () => {
-    render(<InspectorHarness initial={baseContainer()} />);
-
-    selectWindow();
-    fireEvent.change(screen.getByRole("textbox", { name: "Start HH:MM" }), {
-      target: { value: "10:00" },
-    });
-
-    expect(readRepetition()).toStrictEqual({
-      kind: "window",
-      startHhMm: "10:00",
-      endHhMm: "09:00",
-    });
-    expect(screen.getByRole("textbox", { name: "End HH:MM" })).toHaveAttribute(
-      "aria-invalid",
-      "true",
-    );
-    expect(screen.getByText(WINDOW_ORDER_MESSAGE)).toBeInTheDocument();
   });
 });
 

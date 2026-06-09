@@ -104,10 +104,6 @@ const collectReferencedRefs = (
     if (arrangement?.kind === "parallel") {
       for (const track of arrangement.tracks) {
         schemaRefs.add(track.childSchemaId);
-
-        if (track.pairedWithRowId !== undefined) {
-          rowRefs.add(track.pairedWithRowId);
-        }
       }
     } else if (arrangement?.kind === "superset") {
       for (const pair of arrangement.pairs) {

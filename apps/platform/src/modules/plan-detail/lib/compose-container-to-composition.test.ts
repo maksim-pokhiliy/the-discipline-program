@@ -50,7 +50,7 @@ describe("composeContainerToComposition flat repetition mapping", () => {
     ).toEqual({ repetition: { kind: "count", count: { min: 3, max: 5 } } });
   });
 
-  it("round-trips ladder, cadence, interval, timeCap and window repetitions", () => {
+  it("round-trips ladder, cadence, interval and timeCap repetitions", () => {
     const cases: { repetition: RepetitionAxis; expected: unknown }[] = [
       {
         repetition: { kind: "ladder", steps: [21, 15, 9] },
@@ -68,10 +68,6 @@ describe("composeContainerToComposition flat repetition mapping", () => {
         repetition: { kind: "timeCap", cap: { min: 5, unit: "min" } },
         expected: { repetition: { kind: "timeCap", cap: { min: 5, unit: "min" } } },
       },
-      {
-        repetition: { kind: "window", startHhMm: "09:00", endHhMm: "10:30" },
-        expected: { repetition: { kind: "window", startHhMm: "09:00", endHhMm: "10:30" } },
-      },
     ];
 
     for (const { repetition, expected } of cases) {
@@ -79,11 +75,11 @@ describe("composeContainerToComposition flat repetition mapping", () => {
     }
   });
 
-  it("maps rest and programKind through unchanged", () => {
+  it("maps rest through unchanged", () => {
     const rest = { duration: { value: 90, unit: "sec" }, scope: "between_sets" } as const;
-    const composition = composeContainerToComposition(container({ rest, programKind: "wave" }));
+    const composition = composeContainerToComposition(container({ rest }));
 
-    expect(composition).toEqual({ rest, programKind: "wave" });
+    expect(composition).toEqual({ rest });
   });
 });
 
@@ -96,7 +92,6 @@ describe("composeContainerToComposition produces contract-valid compositions", (
     { kind: "cadence", everyMin: 1, rounds: 16 },
     { kind: "interval", workMin: 2, offMin: 1, count: 3 },
     { kind: "timeCap", cap: { min: 5, unit: "min" } },
-    { kind: "window", startHhMm: "09:00", endHhMm: "10:30" },
   ];
 
   it.each(valid)("safeParse accepts the composition for %j", (repetition) => {

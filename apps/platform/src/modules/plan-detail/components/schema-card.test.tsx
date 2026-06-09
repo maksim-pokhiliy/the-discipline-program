@@ -13,14 +13,21 @@ import type { BlockCtx } from "../lib/build-cascade-chips";
 
 const updateSchemaMutate = vi.fn();
 const deleteSchemaMutate = vi.fn();
+const createSchemaMutate = vi.fn();
 const updateSchemaState = { isPending: false };
 const deleteSchemaState = { isPending: false };
+const createSchemaState = { isPending: false };
 
 vi.mock("@app/lib/hooks", async () => {
   const actual = await vi.importActual<typeof Hooks>("@app/lib/hooks");
 
   return {
     ...actual,
+    useCatalog: () => ({ exerciseById: new Map() }),
+    useCreateSchema: () => ({
+      mutate: createSchemaMutate,
+      isPending: createSchemaState.isPending,
+    }),
     useUpdateSchema: () => ({
       mutate: updateSchemaMutate,
       isPending: updateSchemaState.isPending,
@@ -90,11 +97,7 @@ const DRAG_LABEL = "Drag schema";
 const DELETE_LABEL = "Delete schema";
 const TITLE_LABEL = "Schema title";
 const EDIT_LABEL = "Edit axes";
-const EDIT_REFUSAL_TOOLTIP = "Contains a rep-scheme not yet editable";
-const GRANDCHILD_RANGE_ID = "clp9z8x7w0000abcd1234grr1";
-const RANGE_COMPOSITION: SchemaWithBody["schema"]["composition"] = {
-  repetition: { kind: "range", range: { min: 3, max: 5 } },
-};
+const ADD_SUB_LABEL = "Add sub-schema";
 
 const COUNT_5: SchemaWithBody["schema"]["composition"] = {
   repetition: { kind: "count", count: 5 },
@@ -158,8 +161,10 @@ const renderSchemaCard = ({
 afterEach(() => {
   updateSchemaState.isPending = false;
   deleteSchemaState.isPending = false;
+  createSchemaState.isPending = false;
   updateSchemaMutate.mockReset();
   deleteSchemaMutate.mockReset();
+  createSchemaMutate.mockReset();
 });
 
 describe("SchemaCard chrome", () => {
@@ -508,12 +513,24 @@ describe("SchemaCard delete action", () => {
     expect(within(dialog).getByText("EMOM 1’×12")).toBeInTheDocument();
   });
 
-  it("does NOT render the Delete IconButton when schema.parentSchemaId is non-null (D-08)", () => {
+  it("DOES render the Delete IconButton when schema.parentSchemaId is non-null (F5 — sub-schemas deletable)", () => {
     renderSchemaCard({
       schema: makeSchema({ parentSchemaId: PARENT_SCHEMA_ID }),
     });
 
-    expect(screen.queryByRole("button", { name: DELETE_LABEL })).toBeNull();
+    expect(screen.getByRole("button", { name: DELETE_LABEL })).toBeInTheDocument();
+  });
+
+  it("fires useDeleteSchema.mutate on confirm for a sub-schema (F5 — sub-schemas deletable)", () => {
+    renderSchemaCard({
+      schema: makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: PARENT_SCHEMA_ID }),
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: DELETE_LABEL }));
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+
+    expect(deleteSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(deleteSchemaMutate.mock.calls[0]?.[0]).toEqual({ schemaId: SUB_SCHEMA_ID_A });
   });
 
   it("disables the Delete IconButton when useDeleteSchema is pending", () => {
@@ -525,47 +542,72 @@ describe("SchemaCard delete action", () => {
   });
 });
 
-describe("SchemaCard edit-axes range refusal gate (QA-008)", () => {
-  it("enables the Edit axes IconButton for a representable top-level schema", () => {
+describe("SchemaCard edit-axes affordance", () => {
+  it("enables the Edit axes IconButton for a top-level schema", () => {
     renderSchemaCard();
 
     expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeEnabled();
   });
 
-  it("disables the Edit axes IconButton when the top-level schema carries a range repetition", () => {
-    renderSchemaCard({ schema: makeSchema({ composition: RANGE_COMPOSITION }) });
-
-    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
-  });
-
-  it("disables the top card's Edit axes IconButton when a nested grandchild carries a range repetition", () => {
-    const grandchild = makeSchema({
-      id: GRANDCHILD_RANGE_ID,
-      parentSchemaId: SUB_SCHEMA_ID_A,
-      composition: RANGE_COMPOSITION,
+  it("renders the Edit axes IconButton for a sub-schema (F5 — sub-schemas tunable)", () => {
+    renderSchemaCard({
+      schema: makeSchema({ parentSchemaId: PARENT_SCHEMA_ID }),
     });
-    const child: SchemaWithBody = {
-      ...makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
-      subSchemas: [grandchild],
-    };
 
-    renderSchemaCard({ schema: makeSchema({ subSchemas: [child] }) });
-
-    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeDisabled();
+    expect(screen.getByRole("button", { name: EDIT_LABEL })).toBeEnabled();
   });
 
-  it("surfaces the refusal tooltip on the disabled Edit axes button for a range schema", async () => {
-    renderSchemaCard({ schema: makeSchema({ composition: RANGE_COMPOSITION }) });
+  it("opens the edit AxisEditorModal (title 'Container composition') when Edit axes is clicked on a sub-schema", () => {
+    renderSchemaCard({
+      schema: makeSchema({ parentSchemaId: PARENT_SCHEMA_ID }),
+    });
 
-    const wrapper = screen.getByRole("button", { name: EDIT_LABEL }).parentElement;
+    fireEvent.click(screen.getByRole("button", { name: EDIT_LABEL }));
 
-    if (wrapper === null) {
-      throw new Error("edit button tooltip wrapper missing");
-    }
+    expect(screen.getByRole("dialog", { name: "Container composition" })).toBeInTheDocument();
+  });
+});
 
-    fireEvent.mouseOver(wrapper);
+describe("SchemaCard add-sub-schema affordance (F5)", () => {
+  it("renders the Add-sub-schema button on a card with zero sub-schemas", () => {
+    renderSchemaCard({ schema: makeSchema({ subSchemas: [] }) });
 
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(EDIT_REFUSAL_TOOLTIP);
+    expect(screen.getByRole("button", { name: ADD_SUB_LABEL })).toBeInTheDocument();
+  });
+
+  it("renders the Add-sub-schema button on a card that already has sub-schemas", () => {
+    renderSchemaCard({
+      schema: makeSchema({
+        subSchemas: [makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID })],
+      }),
+    });
+
+    expect(screen.getByRole("button", { name: ADD_SUB_LABEL })).toBeInTheDocument();
+  });
+
+  it("opens the create AxisEditorModal (title 'Add schema') when Add-sub-schema is clicked", () => {
+    renderSchemaCard();
+
+    fireEvent.click(screen.getByRole("button", { name: ADD_SUB_LABEL }));
+
+    expect(screen.getByRole("dialog", { name: "Add schema" })).toBeInTheDocument();
+  });
+
+  it("submits createSchema carrying parentSchemaId (parent id) and the parent's blockId", () => {
+    renderSchemaCard();
+
+    fireEvent.click(screen.getByRole("button", { name: ADD_SUB_LABEL }));
+    fireEvent.click(screen.getByRole("button", { name: "Count" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add schema" }));
+
+    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(createSchemaMutate.mock.calls[0]?.[0]).toEqual({
+      blockId: BLOCK_ID,
+      parentSchemaId: SCHEMA_ID,
+      composition: { repetition: { kind: "count", count: 3 } },
+      header: null,
+      notes: null,
+    });
   });
 });
 

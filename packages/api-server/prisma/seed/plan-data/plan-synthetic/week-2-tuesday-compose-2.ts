@@ -27,7 +27,7 @@ export const BLOCK_TIME_WINDOW_OUTER_WK2_TUE: CanonicalBlock = {
         order: 1,
         header: "20-min time window",
       },
-      { repetition: { kind: "window", startHhMm: "0:00", endHhMm: "20:00" } },
+      { repetition: { kind: "timeCap", cap: { min: 20, unit: "min" } } },
       null,
     ),
   ],

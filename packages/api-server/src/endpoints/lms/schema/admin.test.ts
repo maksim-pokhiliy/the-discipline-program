@@ -803,86 +803,6 @@ describe("lmsSchemaApi", () => {
         }
       });
 
-      it("rejects a parallel update whose pairedWithRowId points at a non-grandchild row with 400", async () => {
-        const ctx = await provisionBlock();
-        const parent = await createComposeSchema({
-          blockId: ctx.block.id,
-          composition: BENIGN_COMPOSITION,
-        });
-        const trackA = await createComposeSchema({
-          blockId: ctx.block.id,
-          parentSchemaId: parent.id,
-        });
-        const trackB = await createComposeSchema({
-          blockId: ctx.block.id,
-          parentSchemaId: parent.id,
-        });
-        const directRow = await createRestSlotRow(parent.id);
-
-        try {
-          await expect(
-            lmsSchemaApi.update(coach.user.id, parent.id, {
-              composition: {
-                arrangement: {
-                  kind: "parallel",
-                  interleaveOrder: "round_by_round",
-                  tracks: [
-                    { childSchemaId: trackA.id },
-                    { childSchemaId: trackB.id, pairedWithRowId: directRow.id },
-                  ],
-                },
-              },
-            }),
-          ).rejects.toThrow(BadRequestError);
-
-          const stored = await cleanupRaw.schema.findUnique({ where: { id: parent.id } });
-
-          expect(stored?.composition).toEqual(BENIGN_COMPOSITION);
-        } finally {
-          await ctx.cleanup();
-        }
-      });
-
-      it("rejects a parallel update whose pairedWithRowId points at a row in its OWN track (self-pair)", async () => {
-        const ctx = await provisionBlock();
-        const parent = await createComposeSchema({
-          blockId: ctx.block.id,
-          composition: BENIGN_COMPOSITION,
-        });
-        const trackA = await createComposeSchema({
-          blockId: ctx.block.id,
-          parentSchemaId: parent.id,
-        });
-        const trackB = await createComposeSchema({
-          blockId: ctx.block.id,
-          parentSchemaId: parent.id,
-        });
-        const trackARow = await createRestSlotRow(trackA.id);
-
-        try {
-          await expect(
-            lmsSchemaApi.update(coach.user.id, parent.id, {
-              composition: {
-                arrangement: {
-                  kind: "parallel",
-                  interleaveOrder: "round_by_round",
-                  tracks: [
-                    { childSchemaId: trackA.id, pairedWithRowId: trackARow.id },
-                    { childSchemaId: trackB.id },
-                  ],
-                },
-              },
-            }),
-          ).rejects.toThrow(BadRequestError);
-
-          const stored = await cleanupRaw.schema.findUnique({ where: { id: parent.id } });
-
-          expect(stored?.composition).toEqual(BENIGN_COMPOSITION);
-        } finally {
-          await ctx.cleanup();
-        }
-      });
-
       it("accepts a parallel update over a real nested tree and stores the arrangement", async () => {
         const ctx = await provisionBlock();
         const parent = await createComposeSchema({ blockId: ctx.block.id });
@@ -894,15 +814,11 @@ describe("lmsSchemaApi", () => {
           blockId: ctx.block.id,
           parentSchemaId: parent.id,
         });
-        const trackARow = await createRestSlotRow(trackA.id);
 
         const arrangement: Composition["arrangement"] = {
           kind: "parallel",
           interleaveOrder: "round_by_round",
-          tracks: [
-            { childSchemaId: trackA.id },
-            { childSchemaId: trackB.id, pairedWithRowId: trackARow.id },
-          ],
+          tracks: [{ childSchemaId: trackA.id }, { childSchemaId: trackB.id }],
         };
 
         try {
@@ -957,15 +873,11 @@ describe("lmsSchemaApi", () => {
           blockId: ctx.block.id,
           parentSchemaId: parent.id,
         });
-        const trackARow = await createRestSlotRow(trackA.id);
 
         const arrangement: Composition["arrangement"] = {
           kind: "parallel",
           interleaveOrder: "round_by_round",
-          tracks: [
-            { childSchemaId: trackA.id },
-            { childSchemaId: trackB.id, pairedWithRowId: trackARow.id },
-          ],
+          tracks: [{ childSchemaId: trackA.id }, { childSchemaId: trackB.id }],
         };
 
         try {

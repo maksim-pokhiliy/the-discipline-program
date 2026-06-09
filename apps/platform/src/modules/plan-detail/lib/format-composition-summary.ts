@@ -1,10 +1,6 @@
 import type { Composition, RepetitionAxis, RestAxis } from "@repo/contracts/lms/composition";
 
-import {
-  ARRANGEMENT_LABELS,
-  INTERLEAVE_ORDER_LABELS,
-  PROGRAM_KIND_LABELS,
-} from "./compose-axis-labels";
+import { ARRANGEMENT_LABELS, INTERLEAVE_ORDER_LABELS } from "./compose-axis-labels";
 
 const MINUTE_MARK = "’";
 const SECOND_MARK = " sec";
@@ -21,16 +17,12 @@ const repetitionLabel = (repetition: RepetitionAxis): string => {
       return typeof repetition.count === "number"
         ? `${repetition.count} rounds`
         : `${repetition.count.min}${STEP_SEPARATOR}${repetition.count.max} rounds`;
-    case "range":
-      return `${repetition.range.min}${STEP_SEPARATOR}${repetition.range.max} rounds`;
     case "ladder":
       return `ladder ${repetition.steps.join(STEP_SEPARATOR)}`;
     case "timeCap":
       return `cap ${repetition.cap.min}${MINUTE_MARK}`;
     case "cadence":
       return `EMOM ${repetition.everyMin}${MINUTE_MARK}×${repetition.rounds}`;
-    case "window":
-      return `${repetition.startHhMm}–${repetition.endHhMm}`;
     case "interval":
       return `${repetition.count}×${repetition.workMin}${MINUTE_MARK}/${repetition.offMin}${MINUTE_MARK}`;
     default:
@@ -81,12 +73,5 @@ const buildStructuralParts = (composition: Composition): CompositionSummaryPart[
 export const formatStructuralSummary = (composition: Composition): string[] =>
   buildStructuralParts(composition).map((part) => part.text);
 
-export const formatCompositionSummary = (composition: Composition): CompositionSummaryPart[] => {
-  const parts = buildStructuralParts(composition);
-
-  if (composition.programKind !== undefined) {
-    parts.push({ text: PROGRAM_KIND_LABELS[composition.programKind] });
-  }
-
-  return parts;
-};
+export const formatCompositionSummary = (composition: Composition): CompositionSummaryPart[] =>
+  buildStructuralParts(composition);

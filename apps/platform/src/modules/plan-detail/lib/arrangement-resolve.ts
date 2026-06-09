@@ -32,21 +32,7 @@ const resolveTrack = (
     return { ok: false, missing: track.childSchemaId };
   }
 
-  const { pairedWithRowId } = track;
-  const resolvedPairedRow = pairedWithRowId === undefined ? undefined : refMap.get(pairedWithRowId);
-
-  if (pairedWithRowId !== undefined && resolvedPairedRow === undefined) {
-    return { ok: false, missing: pairedWithRowId };
-  }
-
-  return {
-    ok: true,
-    value: {
-      childSchemaId,
-      ...(track.setEnumeration !== undefined && { setEnumeration: track.setEnumeration }),
-      ...(resolvedPairedRow !== undefined && { pairedWithRowId: resolvedPairedRow }),
-    },
-  };
+  return { ok: true, value: { childSchemaId } };
 };
 
 const resolvePair = (pair: SupersetPairDraft, refMap: RefMap): Resolved<ContractSupersetPair> => {

@@ -6,7 +6,7 @@ import type {
   SupersetPairDraft,
 } from "../components/axes/axis-draft.types";
 
-import { collectDescendantRows, collectDirectRows, collectTrackChildren } from "./arrangement-tree";
+import { collectDirectRows, collectTrackChildren } from "./arrangement-tree";
 
 export type DraftArrangement = Exclude<ArrangementAxis, { kind: "ordered" }>;
 
@@ -15,10 +15,6 @@ export type ConvertIssue = { path: string; message: string };
 const MIN_TRACKS = 2;
 const MIN_PAIRS = 1;
 const MIN_PAIR_ROWS = 2;
-const MIN_ENUMERATION_VALUE = 1;
-
-const isPositiveInteger = (value: number): boolean =>
-  Number.isInteger(value) && value >= MIN_ENUMERATION_VALUE;
 
 const issueAt = (path: string, suffix: string, message: string): ConvertIssue => ({
   path: `${path}.composition.arrangement${suffix}`,
@@ -31,35 +27,7 @@ const collectChildSchemaIds = (container: ComposeContainer): Set<NodeId> =>
 const collectDirectRowIds = (container: ComposeContainer): Set<NodeId> =>
   new Set(collectDirectRows(container).map((row) => row.id));
 
-const siblingRowIds = (
-  container: ComposeContainer,
-  tracks: ParallelTrackDraft[],
-  trackIndex: number,
-): Set<NodeId> => {
-  const childById = new Map(collectTrackChildren(container).map((child) => [child.id, child]));
-  const rowIds = new Set<NodeId>();
-
-  tracks.forEach((track, index) => {
-    if (index === trackIndex) {
-      return;
-    }
-
-    const child = childById.get(track.childSchemaId);
-
-    if (child === undefined) {
-      return;
-    }
-
-    for (const row of collectDescendantRows(child)) {
-      rowIds.add(row.id);
-    }
-  });
-
-  return rowIds;
-};
-
 const validateParallelTrack = (
-  container: ComposeContainer,
   tracks: ParallelTrackDraft[],
   index: number,
   childIds: Set<NodeId>,
@@ -75,33 +43,6 @@ const validateParallelTrack = (
   if (!childIds.has(track.childSchemaId)) {
     issues.push(
       issueAt(path, `.tracks[${index}].childSchemaId`, "track references a missing child group"),
-    );
-  }
-
-  const { setEnumeration } = track;
-
-  if (setEnumeration !== undefined && !setEnumeration.every(isPositiveInteger)) {
-    issues.push(
-      issueAt(
-        path,
-        `.tracks[${index}].setEnumeration`,
-        "set enumeration values must be positive whole numbers",
-      ),
-    );
-  }
-
-  const { pairedWithRowId } = track;
-
-  if (
-    pairedWithRowId !== undefined &&
-    !siblingRowIds(container, tracks, index).has(pairedWithRowId)
-  ) {
-    issues.push(
-      issueAt(
-        path,
-        `.tracks[${index}].pairedWithRowId`,
-        "paired-with row is not in a sibling track",
-      ),
     );
   }
 };
@@ -125,7 +66,7 @@ const validateParallel = (
     }
 
     seen.add(track.childSchemaId);
-    validateParallelTrack(container, tracks, index, childIds, path, issues);
+    validateParallelTrack(tracks, index, childIds, path, issues);
   });
 };
 

@@ -14,6 +14,7 @@ import { useDeleteSchema, useUpdateSchema } from "@app/lib/hooks";
 import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
 
+import { AddSubSchemaButton } from "./add-sub-schema-button";
 import { AxisEditorModal } from "./axis-editor-modal";
 import { SchemaCardHead } from "./schema-card-head";
 import { SchemaList } from "./schema-list";
@@ -48,7 +49,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
   const updateSchema = useUpdateSchema(planId, startDate);
   const deleteSchema = useDeleteSchema(planId, startDate);
 
-  const isSubSchema = schema.schema.parentSchemaId !== null;
   const isMutationPending =
     updateSchema.isPending || deleteSchema.isPending || parentIsReorderPending;
 
@@ -106,7 +106,6 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         schema={schema}
         blockCtx={blockCtx}
         isMutationPending={isMutationPending}
-        isSubSchema={isSubSchema}
         dragAttributes={attributes}
         dragListeners={listeners}
         onTitleCommit={handleTitleCommit}
@@ -114,17 +113,17 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         onEditOpen={handleEditOpen}
       />
 
-      {schema.subSchemas.length > 0 ? (
-        <Stack
-          direction="column"
-          spacing={SUB_SCHEMAS_SPACING}
-          sx={(theme) => ({
-            pl: theme.spacing(SUB_SCHEMAS_PL_FACTOR),
-            pr: theme.spacing(PADDING_X_FACTOR),
-            pb: theme.spacing(PADDING_B_FACTOR),
-            pt: theme.spacing(PADDING_T_FACTOR),
-          })}
-        >
+      <Stack
+        direction="column"
+        spacing={SUB_SCHEMAS_SPACING}
+        sx={(theme) => ({
+          pl: theme.spacing(SUB_SCHEMAS_PL_FACTOR),
+          pr: theme.spacing(PADDING_X_FACTOR),
+          pb: theme.spacing(PADDING_B_FACTOR),
+          pt: theme.spacing(PADDING_T_FACTOR),
+        })}
+      >
+        {schema.subSchemas.length > 0 ? (
           <SchemaList
             planId={planId}
             startDate={startDate}
@@ -142,8 +141,15 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
               />
             )}
           />
-        </Stack>
-      ) : null}
+        ) : null}
+
+        <AddSubSchemaButton
+          planId={planId}
+          startDate={startDate}
+          blockId={schema.schema.blockId}
+          parentSchemaId={schema.schema.id}
+        />
+      </Stack>
 
       <SchemaRowList
         rows={schema.rows}
@@ -154,20 +160,18 @@ export const SchemaCard: React.FC<SchemaCardProps> = ({
         parentIsReorderPending={isMutationPending}
       />
 
-      {!isSubSchema ? (
-        <ConfirmationModal
-          open={isDeleteOpen}
-          onClose={() => setIsDeleteOpen(false)}
-          title={DELETE_TITLE}
-          type="danger"
-          message={DELETE_MESSAGE}
-          details={formatSchemaHeader(schema)}
-          onConfirm={handleDeleteConfirm}
-          isConfirming={deleteSchema.isPending}
-        />
-      ) : null}
+      <ConfirmationModal
+        open={isDeleteOpen}
+        onClose={() => setIsDeleteOpen(false)}
+        title={DELETE_TITLE}
+        type="danger"
+        message={DELETE_MESSAGE}
+        details={formatSchemaHeader(schema)}
+        onConfirm={handleDeleteConfirm}
+        isConfirming={deleteSchema.isPending}
+      />
 
-      {!isSubSchema && isEditOpen ? (
+      {isEditOpen ? (
         <AxisEditorModal
           open={isEditOpen}
           onClose={handleEditClose}

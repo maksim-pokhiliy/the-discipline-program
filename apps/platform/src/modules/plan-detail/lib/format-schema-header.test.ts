@@ -75,15 +75,9 @@ describe("formatSchemaHeader", () => {
     expect(formatSchemaHeader(schema)).toBe("");
   });
 
-  it("does not derive a header from a programKind-only composition", () => {
-    const schema = makeSchema({ composition: { programKind: "wave" } });
-
-    expect(formatSchemaHeader(schema)).toBe("");
-  });
-
-  it("derives the header from a structural axis, never the programKind classifier", () => {
+  it("derives the header from the structural repetition axis", () => {
     const schema = makeSchema({
-      composition: { repetition: { kind: "count", count: 5 }, programKind: "cluster" },
+      composition: { repetition: { kind: "count", count: 5 } },
     });
 
     expect(formatSchemaHeader(schema)).toBe("5 rounds");

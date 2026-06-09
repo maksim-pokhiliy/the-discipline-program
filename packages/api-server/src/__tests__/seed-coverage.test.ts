@@ -35,14 +35,7 @@ const ALL_POSITIONS = [
 ] as const;
 const MEDIA_POSITIONS = ["inline", "standalone_row", "bare"] as const;
 const MEDIA_APPLIES_TO = ["previous_row", "current_row", "whole_schema", "drop_stage"] as const;
-const COMPOSITION_REPETITION_KINDS = [
-  "count",
-  "ladder",
-  "timeCap",
-  "cadence",
-  "window",
-  "interval",
-] as const;
+const COMPOSITION_REPETITION_KINDS = ["count", "ladder", "timeCap", "cadence", "interval"] as const;
 const COMPOSITION_ARRANGEMENT_KINDS = ["ordered", "parallel", "superset"] as const;
 
 describe("Seed coverage — synthetic canonical Demo Plan", () => {

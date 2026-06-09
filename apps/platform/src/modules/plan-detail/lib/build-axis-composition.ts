@@ -17,7 +17,7 @@ import { resolveArrangement } from "./arrangement-resolve";
 import { composeContainerToComposition } from "./compose-container-to-composition";
 import { hasLadderMarkerConflict, LADDER_MARKER_CONFLICT } from "./ladder-marker-conflict";
 
-export const AXIS_REFUSAL_MESSAGE = "This schema contains a rep-scheme not yet editable.";
+const BUILD_FAILURE_FALLBACK = "Could not build composition.";
 
 const PATH_SEPARATOR = ".";
 
@@ -34,10 +34,6 @@ const identityRefMap = (arrangement: DraftArrangement): ReadonlyMap<NodeId, stri
   if (arrangement.kind === "parallel") {
     for (const track of arrangement.tracks) {
       map.set(track.childSchemaId, track.childSchemaId);
-
-      if (track.pairedWithRowId !== undefined) {
-        map.set(track.pairedWithRowId, track.pairedWithRowId);
-      }
     }
 
     return map;
@@ -96,7 +92,7 @@ export const buildComposition = (draft: ComposeContainer): CompositionResult => 
   if (!folded.ok) {
     const [first] = folded.issues;
 
-    return { ok: false, error: first === undefined ? AXIS_REFUSAL_MESSAGE : first.message };
+    return { ok: false, error: first === undefined ? BUILD_FAILURE_FALLBACK : first.message };
   }
 
   const composition: Composition =
@@ -106,7 +102,7 @@ export const buildComposition = (draft: ComposeContainer): CompositionResult => 
   if (!parsed.success) {
     const [issue] = parsed.error.issues;
 
-    return { ok: false, error: issue === undefined ? AXIS_REFUSAL_MESSAGE : formatIssue(issue) };
+    return { ok: false, error: issue === undefined ? BUILD_FAILURE_FALLBACK : formatIssue(issue) };
   }
 
   return { ok: true, composition: parsed.data };

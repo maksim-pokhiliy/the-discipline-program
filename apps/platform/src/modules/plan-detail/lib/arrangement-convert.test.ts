@@ -145,82 +145,6 @@ describe("validateDeferredArrangement (QA-504)", () => {
     ).toBe(true);
   });
 
-  it("rejects a parallel track with non-positive setEnumeration (QA-202, QA-504)", () => {
-    const arrangement: ArrangementAxis = {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [
-        { childSchemaId: asNodeId("track-down"), setEnumeration: [0] },
-        { childSchemaId: asNodeId("track-up") },
-      ],
-    };
-
-    const { ok, issues } = validate(arrangement, parallelHost());
-
-    expect(ok).toBe(false);
-    expect(
-      issues.some(
-        (issue) => issue.path === `${PATH}.composition.arrangement.tracks[0].setEnumeration`,
-      ),
-    ).toBe(true);
-  });
-
-  it("rejects a parallel track with a negative setEnumeration value (QA-202, QA-504)", () => {
-    const arrangement: ArrangementAxis = {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [
-        { childSchemaId: asNodeId("track-down"), setEnumeration: [21, -15, 9] },
-        { childSchemaId: asNodeId("track-up") },
-      ],
-    };
-
-    const { ok, issues } = validate(arrangement, parallelHost());
-
-    expect(ok).toBe(false);
-    expect(
-      issues.some(
-        (issue) => issue.path === `${PATH}.composition.arrangement.tracks[0].setEnumeration`,
-      ),
-    ).toBe(true);
-  });
-
-  it("accepts a parallel track whose pairedWithRowId is a row of a sibling track (B4-AC)", () => {
-    const arrangement: ArrangementAxis = {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [
-        { childSchemaId: asNodeId("track-down") },
-        { childSchemaId: asNodeId("track-up"), pairedWithRowId: asNodeId("track-down-row") },
-      ],
-    };
-
-    const { ok, issues } = validate(arrangement, parallelHost());
-
-    expect(ok).toBe(true);
-    expect(issues).toHaveLength(0);
-  });
-
-  it("rejects a parallel track whose pairedWithRowId belongs to the same track (QA-101)", () => {
-    const arrangement: ArrangementAxis = {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [
-        { childSchemaId: asNodeId("track-down"), pairedWithRowId: asNodeId("track-down-row") },
-        { childSchemaId: asNodeId("track-up") },
-      ],
-    };
-
-    const { ok, issues } = validate(arrangement, parallelHost());
-
-    expect(ok).toBe(false);
-    expect(
-      issues.some(
-        (issue) => issue.path === `${PATH}.composition.arrangement.tracks[0].pairedWithRowId`,
-      ),
-    ).toBe(true);
-  });
-
   it("rejects a superset with no pairs (QA-504)", () => {
     const arrangement: ArrangementAxis = { kind: "superset", pairs: [] };
 
@@ -307,10 +231,7 @@ describe("validateDeferredArrangement (QA-504)", () => {
     const arrangement: ArrangementAxis = {
       kind: "parallel",
       interleaveOrder: "round_by_round",
-      tracks: [
-        { childSchemaId: asNodeId("ghost-a"), setEnumeration: [-1] },
-        { childSchemaId: asNodeId("ghost-a"), pairedWithRowId: asNodeId("nowhere") },
-      ],
+      tracks: [{ childSchemaId: asNodeId("ghost-a") }, { childSchemaId: asNodeId("ghost-a") }],
     };
     const issues: ConvertIssue[] = [];
     const run = () => validateDeferredArrangement(arrangement, parallelHost(), PATH, issues);

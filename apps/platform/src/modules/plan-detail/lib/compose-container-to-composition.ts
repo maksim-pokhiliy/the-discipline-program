@@ -16,14 +16,7 @@ const mapRepetition = (repetition: RepetitionAxis): ContractRepetitionAxis => {
     case "timeCap":
       return { kind: "timeCap", cap: repetition.cap };
     case "cadence":
-      return {
-        kind: "cadence",
-        everyMin: repetition.everyMin,
-        rounds: repetition.rounds,
-        ...(repetition.totalMin !== undefined && { totalMin: repetition.totalMin }),
-      };
-    case "window":
-      return { kind: "window", startHhMm: repetition.startHhMm, endHhMm: repetition.endHhMm };
+      return { kind: "cadence", everyMin: repetition.everyMin, rounds: repetition.rounds };
     case "interval":
       return {
         kind: "interval",
@@ -39,5 +32,4 @@ const mapRepetition = (repetition: RepetitionAxis): ContractRepetitionAxis => {
 export const composeContainerToComposition = (container: ComposeContainer): Composition => ({
   ...(container.repetition !== undefined && { repetition: mapRepetition(container.repetition) }),
   ...(container.rest !== undefined && { rest: container.rest }),
-  ...(container.programKind !== undefined && { programKind: container.programKind }),
 });

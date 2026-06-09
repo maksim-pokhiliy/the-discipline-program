@@ -32,7 +32,6 @@ type ArrangementAxisFieldProps = {
   onChange: (next: ArrangementAxis) => void;
   childContainers: ArrangementTargetRef[];
   directRows: ArrangementTargetRef[];
-  rowsByTrack: Record<string, ArrangementTargetRef[]>;
   disabled?: boolean;
 };
 
@@ -41,7 +40,6 @@ export const ArrangementAxisField: React.FC<ArrangementAxisFieldProps> = ({
   onChange,
   childContainers,
   directRows,
-  rowsByTrack,
   disabled = false,
 }) => {
   const handleKindChange = (_: MouseEvent<HTMLElement>, next: ArrangementAxis["kind"] | null) => {
@@ -62,7 +60,6 @@ export const ArrangementAxisField: React.FC<ArrangementAxisFieldProps> = ({
             value={value}
             onChange={onChange}
             childContainers={childContainers}
-            rowsByTrack={rowsByTrack}
             disabled={disabled}
           />
         );

@@ -202,7 +202,7 @@ const BLOCK_COMPOSITE_ROLLING_ROUNDS_WK1_FRI: CanonicalBlock = {
           ),
         ],
       },
-      cadenceRep(3, 5, 15),
+      cadenceRep(3, 5),
       null,
     ),
   ],

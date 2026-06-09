@@ -10,20 +10,14 @@ const FIELD_STEP = 1;
 const FIELD_WIDTH = 110;
 const EVERY_LABEL = "Every (min)";
 const ROUNDS_LABEL = "Rounds";
-const TOTAL_LABEL = "Total (min)";
 
-type CadenceAxisValue = { everyMin: number; rounds: number; totalMin?: number };
+type CadenceAxisValue = { everyMin: number; rounds: number };
 
 type CadenceAxisFieldProps = {
   value: CadenceAxisValue;
   onChange: (next: CadenceAxisValue) => void;
   disabled?: boolean;
 };
-
-const withTotalMin = (value: CadenceAxisValue, totalMin: number): CadenceAxisValue =>
-  Number.isFinite(totalMin) && totalMin >= FIELD_MIN
-    ? { everyMin: value.everyMin, rounds: value.rounds, totalMin }
-    : { everyMin: value.everyMin, rounds: value.rounds };
 
 export const CadenceAxisField: React.FC<CadenceAxisFieldProps> = ({
   value,
@@ -52,17 +46,6 @@ export const CadenceAxisField: React.FC<CadenceAxisFieldProps> = ({
         min={FIELD_MIN}
         step={FIELD_STEP}
         error={errors.get("rounds")}
-        disabled={disabled}
-        maxWidth={FIELD_WIDTH}
-      />
-
-      <NumberField
-        label={TOTAL_LABEL}
-        value={value.totalMin ?? Number.NaN}
-        onChange={(totalMin) => onChange(withTotalMin(value, totalMin))}
-        min={FIELD_MIN}
-        step={FIELD_STEP}
-        error={errors.get("totalMin")}
         disabled={disabled}
         maxWidth={FIELD_WIDTH}
       />

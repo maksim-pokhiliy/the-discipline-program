@@ -5,7 +5,7 @@ import { type CoverageCell } from "./types";
 
 const COMPOSITION_PRESENT_FLOOR = 40;
 
-const REPETITION_KINDS = ["count", "ladder", "timeCap", "cadence", "window", "interval"] as const;
+const REPETITION_KINDS = ["count", "ladder", "timeCap", "cadence", "interval"] as const;
 
 const ARRANGEMENT_KINDS = ["ordered", "parallel", "superset"] as const;
 
