@@ -75,10 +75,7 @@ export const BLOCK_ALTERNATING_SETS_WK2_TUE: CanonicalBlock = {
         arrangement: {
           kind: "parallel",
           interleaveOrder: "round_by_round",
-          tracks: [
-            { childSchemaId: ALT_SET_A, setEnumeration: [1, 2, 3, 4, 5] },
-            { childSchemaId: ALT_SET_B, setEnumeration: [1, 2, 3, 4, 5] },
-          ],
+          tracks: [{ childSchemaId: ALT_SET_A }, { childSchemaId: ALT_SET_B }],
         },
       },
       null,

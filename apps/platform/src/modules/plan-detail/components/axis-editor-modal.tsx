@@ -12,16 +12,9 @@ import { FormModal } from "@repo/ui";
 import { useCatalog, useCreateSchema, useUpdateSchema } from "@app/lib/hooks";
 
 import { makeNodeId } from "../lib/axis-draft-id";
-import {
-  AXIS_REFUSAL_MESSAGE,
-  buildComposition,
-  previewComposition,
-} from "../lib/build-axis-composition";
+import { buildComposition, previewComposition } from "../lib/build-axis-composition";
 import { formatCompositionSummary } from "../lib/format-composition-summary";
-import {
-  type InverseRefusalReason,
-  schemaWithBodyToDraftContainer,
-} from "../lib/schema-to-draft-container";
+import { schemaWithBodyToDraftContainer } from "../lib/schema-to-draft-container";
 
 import type { ComposeContainer, ComposeNode, NodeId } from "./axes/axis-draft.types";
 import { ContainerInspector } from "./axes/container-inspector";
@@ -37,7 +30,7 @@ const CREATE_ARRANGEMENT_HINT =
 const BODY_SPACING = 2;
 
 export type AxisEditorMode =
-  | { kind: "create"; blockId: string }
+  | { kind: "create"; blockId: string; parentSchemaId?: string }
   | { kind: "edit"; schema: SchemaWithBody };
 
 type AxisEditorModalProps = {
@@ -48,7 +41,7 @@ type AxisEditorModalProps = {
   mode: AxisEditorMode;
 };
 
-type DraftSeed = { container: ComposeContainer; refusal: InverseRefusalReason | null };
+type DraftSeed = { container: ComposeContainer };
 
 const defaultDraftContainer = (): ComposeContainer => ({
   nodeType: "container",
@@ -58,20 +51,15 @@ const defaultDraftContainer = (): ComposeContainer => ({
   children: [],
 });
 
-const seedDraft = (mode: AxisEditorMode): DraftSeed => {
-  if (mode.kind === "create") {
-    return { container: defaultDraftContainer(), refusal: null };
-  }
-
-  const result = schemaWithBodyToDraftContainer(mode.schema);
-
-  return result.ok
-    ? { container: result.container, refusal: null }
-    : { container: defaultDraftContainer(), refusal: result.reason };
-};
+const seedDraft = (mode: AxisEditorMode): DraftSeed =>
+  mode.kind === "create"
+    ? { container: defaultDraftContainer() }
+    : { container: schemaWithBodyToDraftContainer(mode.schema) };
 
 const modeKey = (mode: AxisEditorMode): string =>
-  mode.kind === "create" ? `create:${mode.blockId}` : `edit:${mode.schema.schema.id}`;
+  mode.kind === "create"
+    ? `create:${mode.blockId}:${mode.parentSchemaId ?? ""}`
+    : `edit:${mode.schema.schema.id}`;
 
 export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
   open,
@@ -88,7 +76,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
     [catalogExercises],
   );
 
-  const [{ container: draft, refusal }, setSeed] = useState<DraftSeed>(() => seedDraft(mode));
+  const [{ container: draft }, setSeed] = useState<DraftSeed>(() => seedDraft(mode));
   const [error, setError] = useState<string | null>(null);
 
   const modeRef = useRef(mode);
@@ -151,7 +139,13 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
 
     if (mode.kind === "create") {
       createSchema.mutate(
-        { blockId: mode.blockId, composition: result.composition, header, notes: null },
+        {
+          blockId: mode.blockId,
+          ...(mode.parentSchemaId != null && { parentSchemaId: mode.parentSchemaId }),
+          composition: result.composition,
+          header,
+          notes: null,
+        },
         {
           onSuccess: onClose,
           onError: (cause) => setError(cause.message),
@@ -188,8 +182,7 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
       }}
       isSubmitting={isPending}
       submitText={isCreateMode ? CREATE_SUBMIT : EDIT_SUBMIT}
-      submitDisabled={refusal !== null}
-      error={error ?? (refusal !== null ? AXIS_REFUSAL_MESSAGE : null)}
+      error={error}
     >
       <Stack direction="column" spacing={BODY_SPACING}>
         <DerivedLabelCard labelKind={labelKind} parts={parts} showsFlatHint={showsFlatHint} />

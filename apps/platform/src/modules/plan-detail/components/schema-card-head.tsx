@@ -14,7 +14,6 @@ import { InlineEditText } from "@repo/ui";
 
 import { type BlockCtx } from "../lib/build-cascade-chips";
 import { formatSchemaHeader } from "../lib/format-schema-header";
-import { isComposeEditable } from "../lib/is-compose-editable";
 
 import { SchemaCardMeta } from "./schema-card-meta";
 import { SchemaCompositionTag } from "./schema-composition-tag";
@@ -24,7 +23,6 @@ const DELETE_ARIA = "Delete schema";
 const DELETE_TOOLTIP = "Delete schema";
 const EDIT_ARIA = "Edit axes";
 const EDIT_TOOLTIP = "Edit axes";
-const EDIT_REFUSAL_TOOLTIP = "Contains a rep-scheme not yet editable";
 const TITLE_ARIA = "Schema title";
 const HEAD_PX = 1.5;
 const HEAD_PY = 1.25;
@@ -38,7 +36,6 @@ type SchemaCardHeadProps = {
   schema: SchemaWithBody;
   blockCtx: BlockCtx;
   isMutationPending: boolean;
-  isSubSchema: boolean;
   dragAttributes: DraggableAttributes;
   dragListeners: DraggableSyntheticListeners;
   onTitleCommit: (next: string) => void;
@@ -50,15 +47,12 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
   schema,
   blockCtx,
   isMutationPending,
-  isSubSchema,
   dragAttributes,
   dragListeners,
   onTitleCommit,
   onDeleteOpen,
   onEditOpen,
 }): ReactElement => {
-  const isEditable = isComposeEditable(schema);
-
   return (
     <Stack
       direction="row"
@@ -110,36 +104,32 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
         <SchemaCardMeta schema={schema} blockCtx={blockCtx} />
       </Stack>
 
-      {!isSubSchema ? (
-        <Tooltip title={isEditable ? EDIT_TOOLTIP : EDIT_REFUSAL_TOOLTIP}>
-          <span style={tooltipChildSx}>
-            <IconButton
-              size="small"
-              onClick={onEditOpen}
-              disabled={isMutationPending || !isEditable}
-              aria-label={EDIT_ARIA}
-            >
-              <TuneIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-      ) : null}
+      <Tooltip title={EDIT_TOOLTIP}>
+        <span style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={onEditOpen}
+            disabled={isMutationPending}
+            aria-label={EDIT_ARIA}
+          >
+            <TuneIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
 
-      {!isSubSchema ? (
-        <Tooltip title={DELETE_TOOLTIP}>
-          <span style={tooltipChildSx}>
-            <IconButton
-              size="small"
-              onClick={onDeleteOpen}
-              disabled={isMutationPending}
-              aria-label={DELETE_ARIA}
-              sx={{ color: "error.main" }}
-            >
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </span>
-        </Tooltip>
-      ) : null}
+      <Tooltip title={DELETE_TOOLTIP}>
+        <span style={tooltipChildSx}>
+          <IconButton
+            size="small"
+            onClick={onDeleteOpen}
+            disabled={isMutationPending}
+            aria-label={DELETE_ARIA}
+            sx={{ color: "error.main" }}
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </span>
+      </Tooltip>
     </Stack>
   );
 };

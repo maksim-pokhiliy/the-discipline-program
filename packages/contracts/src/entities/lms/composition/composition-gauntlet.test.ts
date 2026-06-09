@@ -49,7 +49,7 @@ function exerciseRow(id: string, exerciseId: string): ComposeRow {
   };
 }
 
-describe("Gauntlet B — EMOM 16 / 4 rounds (cadence + per-minute window children)", () => {
+describe("Gauntlet B — EMOM 16 / 4 rounds (outer cadence + per-minute child containers)", () => {
   const compoundMinRow: ComposeRow = {
     nodeType: "row",
     id: cuidRowCompound,
@@ -93,7 +93,7 @@ describe("Gauntlet B — EMOM 16 / 4 rounds (cadence + per-minute window childre
     id: cuidMin1,
     header: null,
     notes: null,
-    composition: { repetition: { kind: "window", startHhMm: "00:00", endHhMm: "00:01" } },
+    composition: {},
     children: [exerciseRow(cuidPullups, cuidPullups)],
   };
 
@@ -102,7 +102,7 @@ describe("Gauntlet B — EMOM 16 / 4 rounds (cadence + per-minute window childre
     id: cuidMin2,
     header: null,
     notes: null,
-    composition: { repetition: { kind: "window", startHhMm: "00:00", endHhMm: "00:01" } },
+    composition: {},
     children: [compoundMinRow],
   };
 
@@ -111,7 +111,7 @@ describe("Gauntlet B — EMOM 16 / 4 rounds (cadence + per-minute window childre
     id: cuidMin4,
     header: null,
     notes: null,
-    composition: { repetition: { kind: "window", startHhMm: "00:00", endHhMm: "00:01" } },
+    composition: {},
     children: [restMinRow],
   };
 
@@ -129,7 +129,7 @@ describe("Gauntlet B — EMOM 16 / 4 rounds (cadence + per-minute window childre
         id: cuidMin3,
         header: null,
         notes: null,
-        composition: { repetition: { kind: "window", startHhMm: "00:00", endHhMm: "00:01" } },
+        composition: {},
         children: [exerciseRow(cuidDips, cuidDips)],
       },
       restMinute,
@@ -140,14 +140,6 @@ describe("Gauntlet B — EMOM 16 / 4 rounds (cadence + per-minute window childre
     expect(
       compositionSchema.safeParse({ repetition: { kind: "cadence", everyMin: 1, rounds: 4 } })
         .success,
-    ).toBe(true);
-  });
-
-  it("pins the 1-minute box window 00:00 to 00:01 as a valid child repetition axis", () => {
-    expect(
-      compositionSchema.safeParse({
-        repetition: { kind: "window", startHhMm: "00:00", endHhMm: "00:01" },
-      }).success,
     ).toBe(true);
   });
 
@@ -227,7 +219,6 @@ describe("Gauntlet A — back squat wave + box jumps, rest until recovery (sham-
     notes: null,
     composition: {
       repetition: { kind: "count", count: 3 },
-      programKind: "wave",
       rest: {
         duration: { value: 1, unit: "sec" },
         scope: "between_rounds",
@@ -236,13 +227,6 @@ describe("Gauntlet A — back squat wave + box jumps, rest until recovery (sham-
     },
     children: [waveRow, boxJumpsRow],
   };
-
-  it("classifies the wave via programKind on the container composition", () => {
-    expect(
-      compositionSchema.safeParse({ repetition: { kind: "count", count: 3 }, programKind: "wave" })
-        .success,
-    ).toBe(true);
-  });
 
   it("represents rest until recovery via the sham fixed duration plus the until_recovery qualifier", () => {
     expect(

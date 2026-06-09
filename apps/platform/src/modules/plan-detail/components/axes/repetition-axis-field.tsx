@@ -16,7 +16,6 @@ import { AxisModeButtonGrid } from "./axis-mode-button-grid";
 import { REPETITION_TILES } from "./axis-modes";
 import { CadenceAxisField } from "./cadence-axis-field";
 import { IntervalAxisField } from "./interval-axis-field";
-import { WindowAxisField } from "./window-axis-field";
 
 const LABEL = "repetition";
 
@@ -28,7 +27,6 @@ const REPETITION_DEFAULTS: Record<RepetitionAxis["kind"], RepetitionAxis> = {
   ladder: { kind: "ladder", steps: [21, 15, 9] },
   timeCap: { kind: "timeCap", cap: DEFAULT_TIME_CAP },
   cadence: { kind: "cadence", everyMin: 1, rounds: 4 },
-  window: { kind: "window", startHhMm: "06:00", endHhMm: "09:00" },
   interval: { kind: "interval", workMin: 2, offMin: 1, count: 3 },
 };
 
@@ -88,14 +86,6 @@ export const RepetitionAxisField: React.FC<RepetitionAxisFieldProps> = ({
           <CadenceAxisField
             value={value}
             onChange={(next) => onChange({ kind: "cadence", ...next })}
-            disabled={disabled}
-          />
-        );
-      case "window":
-        return (
-          <WindowAxisField
-            value={value}
-            onChange={(next) => onChange({ kind: "window", ...next })}
             disabled={disabled}
           />
         );

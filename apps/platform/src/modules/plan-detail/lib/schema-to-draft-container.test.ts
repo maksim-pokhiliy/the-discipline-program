@@ -68,51 +68,31 @@ describe("schemaWithBodyToDraftContainer rebuilds the draft container", () => {
     const composition: Composition = {
       repetition: { kind: "count", count: 5 },
       rest: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
-      programKind: "wave",
     };
 
-    const result = schemaWithBodyToDraftContainer(schema(TOP_ID, composition, [], []));
+    const container = schemaWithBodyToDraftContainer(schema(TOP_ID, composition, [], []));
 
-    expect(result.ok).toBe(true);
-
-    if (!result.ok) {
-      return;
-    }
-
-    expect(result.container.id).toBe(TOP_ID);
-    expect(result.container.repetition).toEqual({ kind: "count", count: 5 });
-    expect(result.container.rest).toEqual({
+    expect(container.id).toBe(TOP_ID);
+    expect(container.repetition).toEqual({ kind: "count", count: 5 });
+    expect(container.rest).toEqual({
       duration: { value: 90, unit: "sec" },
       scope: "between_sets",
     });
-    expect(result.container.programKind).toBe("wave");
   });
 
   it("rebuilds direct rows as row children carrying the persisted id", () => {
-    const result = schemaWithBodyToDraftContainer(
+    const container = schemaWithBodyToDraftContainer(
       schema(TOP_ID, null, [restSlotRow(ROW_ID, TOP_ID)], []),
     );
 
-    expect(result.ok).toBe(true);
-
-    if (!result.ok) {
-      return;
-    }
-
-    expect(onlyRowIds(result.container.children)).toEqual([ROW_ID]);
+    expect(onlyRowIds(container.children)).toEqual([ROW_ID]);
   });
 
   it("rebuilds sub-schemas as nested container children", () => {
     const sub = schema(SUB_ID, { repetition: { kind: "once" } }, [], []);
-    const result = schemaWithBodyToDraftContainer(schema(TOP_ID, null, [], [sub]));
+    const container = schemaWithBodyToDraftContainer(schema(TOP_ID, null, [], [sub]));
 
-    expect(result.ok).toBe(true);
-
-    if (!result.ok) {
-      return;
-    }
-
-    const containers = onlyContainers(result.container.children);
+    const containers = onlyContainers(container.children);
 
     expect(containers).toHaveLength(1);
     expect(containers[0]?.id).toBe(SUB_ID);
@@ -120,46 +100,10 @@ describe("schemaWithBodyToDraftContainer rebuilds the draft container", () => {
   });
 
   it("leaves the container axis-free when the stored composition is null", () => {
-    const result = schemaWithBodyToDraftContainer(schema(TOP_ID, null, [], []));
+    const container = schemaWithBodyToDraftContainer(schema(TOP_ID, null, [], []));
 
-    expect(result.ok).toBe(true);
-
-    if (!result.ok) {
-      return;
-    }
-
-    expect(result.container.repetition).toBeUndefined();
-    expect(result.container.arrangement).toBeUndefined();
-    expect(result.container.rest).toBeUndefined();
-  });
-});
-
-describe("schemaWithBodyToDraftContainer refuses unrepresentable repetitions", () => {
-  it("refuses a top-level range repetition with the schema id and kind", () => {
-    const result = schemaWithBodyToDraftContainer(
-      schema(TOP_ID, { repetition: { kind: "range", range: { min: 3, max: 5 } } }, [], []),
-    );
-
-    expect(result).toEqual({
-      ok: false,
-      reason: { kind: "unrepresentable-repetition", schemaId: TOP_ID, repetitionKind: "range" },
-    });
-  });
-
-  it("refuses when a nested sub-schema carries a range repetition", () => {
-    const sub = schema(
-      SUB_ID,
-      { repetition: { kind: "range", range: { min: 2, max: 4 } } },
-      [],
-      [],
-    );
-    const result = schemaWithBodyToDraftContainer(
-      schema(TOP_ID, { repetition: { kind: "count", count: 3 } }, [], [sub]),
-    );
-
-    expect(result).toEqual({
-      ok: false,
-      reason: { kind: "unrepresentable-repetition", schemaId: SUB_ID, repetitionKind: "range" },
-    });
+    expect(container.repetition).toBeUndefined();
+    expect(container.arrangement).toBeUndefined();
+    expect(container.rest).toBeUndefined();
   });
 });

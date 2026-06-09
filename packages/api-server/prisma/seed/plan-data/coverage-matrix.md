@@ -6,9 +6,10 @@
 > **archetype / schemaKind / connectorForm / INNER_LADDER_MARKER** sections below
 > are DEAD — those axes were removed in 10.4 (composition replaced archetype). The
 > VO / exercise / intensity / rest sections (still cited by live
-> `sourceRef: "coverage-matrix §N"` labels in the cells) remain valid. §17 was
-> reconciled to the thin `composition.programKind` enum and the old SlotSpec section
-> was dropped (compose-hardening Cut B); a full rewrite of the remaining dead
+> `sourceRef: "coverage-matrix §N"` labels in the cells) remain valid. The old
+> SlotSpec section was dropped (compose-hardening Cut B) and §17
+> (`composition.programKind`) plus the `window` repetition kind were removed in the
+> compose-axis cleanup (ADR-0039); a full rewrite of the remaining dead
 > archetype/schemaKind/connectorForm tables is still deferred (low-priority).
 
 Single source of truth for **what Session B must emit** so the seeded DB
@@ -322,21 +323,6 @@ Note: Position enum values come from `03-content/modifier-scope.md` / `01-invent
 
 ---
 
-## 17. composition.programKind (thin staged-program enum)
-
-`StagedProgram` as a fat VO with `.stages` was deleted in the 10.4 / D-ONTOLOGY
-re-authoring. What survives is a thin `programKind` enum on `composition`
-(`drop_set` / `wave` / `cluster`); the staged structure is expressed via
-ordinary schema rows + composition axes, not a dedicated VO.
-
-| `programKind` | Sample anchor                                              | Required |
-| ------------- | ---------------------------------------------------------- | -------- |
-| `drop_set`    | block-008 Bulgarian Split Squat drop set                   | ≥1       |
-| `wave`        | block-163 Snatch wave 70/80/90 (phase-7-snatch-wave)       | ≥1       |
-| `cluster`     | block-164 strict pull-up cluster (phase-7-pull-up-cluster) | ≥1       |
-
----
-
 ## 19. MediaReference (under SchemaRow.media)
 
 | `position` / `appliesTo`    | Sample anchor                                   | Required |
@@ -395,14 +381,14 @@ ordinary schema rows + composition axes, not a dedicated VO.
 
 ## 24. Phase 7 examples (out-of-sample, one synthetic week tail)
 
-| Example                              | Carrier(s)                                                                         |
-| ------------------------------------ | ---------------------------------------------------------------------------------- |
-| `phase-7-hr-z2-base-run`             | Intensity.hrZone `Z2` + run 60 min                                                 |
-| `phase-7-numeric-pace-row-intervals` | Intensity.numericPace + Equipment `ROW_ERG`                                        |
-| `phase-7-tempo-back-squat`           | TempoModifier.fullTempo `3-1-2-0` + Load.percentage.reference.self                 |
-| `phase-7-snatch-wave`                | composition.programKind `wave` (block-163) + Load.percentage (3 stages)            |
-| `phase-7-strict-pull-up-cluster`     | composition.programKind `cluster` (block-164) + RestSpec scope `between_intervals` |
-| `phase-7-accessory-super-set`        | Archetype `super-set` + SuperSetPair × 2 + RestSpec scope `between_rounds`         |
+| Example                              | Carrier(s)                                                                 |
+| ------------------------------------ | -------------------------------------------------------------------------- |
+| `phase-7-hr-z2-base-run`             | Intensity.hrZone `Z2` + run 60 min                                         |
+| `phase-7-numeric-pace-row-intervals` | Intensity.numericPace + Equipment `ROW_ERG`                                |
+| `phase-7-tempo-back-squat`           | TempoModifier.fullTempo `3-1-2-0` + Load.percentage.reference.self         |
+| `phase-7-snatch-wave`                | Load.percentage (block-163, 3 stages)                                      |
+| `phase-7-strict-pull-up-cluster`     | RestSpec scope `between_intervals` (block-164)                             |
+| `phase-7-accessory-super-set`        | Archetype `super-set` + SuperSetPair × 2 + RestSpec scope `between_rounds` |
 
 Coverage assertion treats Phase 7 sessions as filling cells that the
 33-sheet sample doesn't reach.

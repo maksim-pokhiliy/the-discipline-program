@@ -4,7 +4,6 @@ import AvTimer from "@mui/icons-material/AvTimer";
 import HourglassBottom from "@mui/icons-material/HourglassBottom";
 import LooksOne from "@mui/icons-material/LooksOne";
 import Repeat from "@mui/icons-material/Repeat";
-import Schedule from "@mui/icons-material/Schedule";
 import Stairs from "@mui/icons-material/Stairs";
 import Timer from "@mui/icons-material/Timer";
 
@@ -51,12 +50,6 @@ export const REPETITION_TILES: readonly RepetitionTile[] = [
     label: "Interval",
     icon: <AvTimer fontSize={ICON_FONT_SIZE} />,
     hint: "Work / rest cycle × N (Tabata). work:rest is a first-class unit.",
-  },
-  {
-    kind: "window",
-    label: "Clock window",
-    icon: <Schedule fontSize={ICON_FONT_SIZE} />,
-    hint: "A clock-time window (06:00–09:00). Distinct from EMOM's duration.",
   },
 ];
 

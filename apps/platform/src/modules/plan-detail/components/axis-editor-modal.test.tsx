@@ -43,7 +43,6 @@ const MARKER_ROW_ID = "clp9z8x7w0000abcd1234row1";
 const CREATE_TITLE = "Add schema";
 const EDIT_TITLE = "Container composition";
 const HEADER_ARIA = "Inspector header";
-const REFUSAL_MESSAGE = "This schema contains a rep-scheme not yet editable.";
 
 const alertText = (): string => screen.getByRole("alert").textContent ?? "";
 
@@ -94,6 +93,17 @@ const renderCreate = () =>
       planId={PLAN_ID}
       startDate={START_DATE}
       mode={{ kind: "create", blockId: BLOCK_ID }}
+    />,
+  );
+
+const renderCreateSub = (parentSchemaId: string) =>
+  render(
+    <AxisEditorModal
+      open
+      onClose={vi.fn()}
+      planId={PLAN_ID}
+      startDate={START_DATE}
+      mode={{ kind: "create", blockId: BLOCK_ID, parentSchemaId }}
     />,
   );
 
@@ -158,6 +168,32 @@ describe("AxisEditorModal create mode", () => {
     });
   });
 
+  it("omits parentSchemaId from the payload for a top-level create (no parentSchemaId in mode)", () => {
+    renderCreate();
+
+    selectRepetition("Count");
+    submit();
+
+    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(createSchemaMutate.mock.calls[0]?.[0]).not.toHaveProperty("parentSchemaId");
+  });
+
+  it("forwards parentSchemaId in the payload when the create mode carries one (F5 sub-schema)", () => {
+    renderCreateSub(SUB_SCHEMA_ID);
+
+    selectRepetition("Count");
+    submit();
+
+    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(createSchemaMutate.mock.calls[0]?.[0]).toEqual({
+      blockId: BLOCK_ID,
+      parentSchemaId: SUB_SCHEMA_ID,
+      composition: { repetition: { kind: "count", count: 3 } },
+      header: null,
+      notes: null,
+    });
+  });
+
   it("sends an authored header on submit", () => {
     renderCreate();
 
@@ -212,21 +248,6 @@ describe("AxisEditorModal edit mode", () => {
       schemaId: SCHEMA_ID,
       data: { composition: { repetition: { kind: "count", count: 4 } }, header: null },
     });
-  });
-});
-
-describe("AxisEditorModal error surfacing", () => {
-  it("surfaces a contract-invalid composition in the FormModal error Alert and does not mutate", () => {
-    renderCreate();
-
-    selectRepetition("Clock window");
-    fireEvent.change(screen.getByRole("textbox", { name: "End HH:MM" }), {
-      target: { value: "" },
-    });
-    submit();
-
-    expect(screen.getByRole("alert")).toBeInTheDocument();
-    expect(createSchemaMutate).not.toHaveBeenCalled();
   });
 });
 
@@ -330,10 +351,7 @@ describe("AxisEditorModal stored arrangement survives open then Save (QA-Must-5)
         arrangement: {
           kind: "parallel",
           interleaveOrder: "round_by_round",
-          tracks: [
-            { childSchemaId: SUB_SCHEMA_ID, setEnumeration: [21, 15, 9] },
-            { childSchemaId: SUB_SCHEMA_ID_B },
-          ],
+          tracks: [{ childSchemaId: SUB_SCHEMA_ID }, { childSchemaId: SUB_SCHEMA_ID_B }],
         },
       },
     });
@@ -400,22 +418,6 @@ describe("AxisEditorModal stored arrangement survives open then Save (QA-Must-5)
   });
 });
 
-describe("AxisEditorModal range repetition refusal (QA-Must-7)", () => {
-  const rangeSchema = (): SchemaWithBody =>
-    makeSchema({ composition: { repetition: { kind: "range", range: { min: 3, max: 5 } } } });
-
-  it("disables Save and surfaces the refusal Alert without mutating", () => {
-    renderEdit(rangeSchema());
-
-    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
-    expect(alertText()).toContain(REFUSAL_MESSAGE);
-
-    submitEdit();
-
-    expect(updateSchemaMutate).not.toHaveBeenCalled();
-  });
-});
-
 describe("AxisEditorModal mutation error surfacing (QA-Must-8)", () => {
   it("surfaces the mutation error and re-enables Save for a retry", () => {
     createSchemaMutate.mockImplementationOnce((_vars, options) => {
@@ -473,24 +475,6 @@ describe("AxisEditorModal count range refinement (QA-Must-10)", () => {
   });
 });
 
-describe("AxisEditorModal window ordering refinement (QA-Must-10)", () => {
-  it("rejects a start at or after the end and surfaces the window message without mutating", () => {
-    renderCreate();
-
-    selectRepetition("Clock window");
-    fireEvent.change(screen.getByRole("textbox", { name: "Start HH:MM" }), {
-      target: { value: "10:00" },
-    });
-    fireEvent.change(screen.getByRole("textbox", { name: "End HH:MM" }), {
-      target: { value: "09:00" },
-    });
-    submit();
-
-    expect(createSchemaMutate).not.toHaveBeenCalled();
-    expect(alertText()).toContain("endHhMm");
-  });
-});
-
 describe("AxisEditorModal create-mode arrangement with no children (QA-Must-5)", () => {
   it("blocks a parallel arrangement that has no tracks and surfaces the issue without mutating", () => {
     renderCreate();
@@ -514,7 +498,7 @@ describe("AxisEditorModal create-mode arrangement with no children (QA-Must-5)",
 });
 
 describe("AxisEditorModal repetition tile-group a11y contract (T13)", () => {
-  const REPETITION_TILE_COUNT = 7;
+  const REPETITION_TILE_COUNT = 6;
 
   it("exposes a tile group with one button per repetition tile", () => {
     renderCreate();

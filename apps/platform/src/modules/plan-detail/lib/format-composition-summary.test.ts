@@ -17,12 +17,6 @@ describe("formatCompositionSummary repetition labels", () => {
     expect(formatCompositionSummary(composition)).toEqual([{ text: "3-5 rounds" }]);
   });
 
-  it("labels the dedicated range kind as rounds", () => {
-    const composition: Composition = { repetition: { kind: "range", range: { min: 2, max: 4 } } };
-
-    expect(formatCompositionSummary(composition)).toEqual([{ text: "2-4 rounds" }]);
-  });
-
   it("labels a ladder with its joined steps", () => {
     const composition: Composition = { repetition: { kind: "ladder", steps: [21, 15, 9] } };
 
@@ -51,14 +45,6 @@ describe("formatCompositionSummary repetition labels", () => {
     };
 
     expect(formatCompositionSummary(composition)).toEqual([{ text: "3×2’/1’" }]);
-  });
-
-  it("labels a window with its start and end times", () => {
-    const composition: Composition = {
-      repetition: { kind: "window", startHhMm: "09:00", endHhMm: "10:30" },
-    };
-
-    expect(formatCompositionSummary(composition)).toEqual([{ text: "09:00–10:30" }]);
   });
 
   it("omits a once repetition while still rendering it", () => {
@@ -122,51 +108,5 @@ describe("formatCompositionSummary rest labels", () => {
 
   it("returns an empty list for an empty composition", () => {
     expect(formatCompositionSummary({})).toEqual([]);
-  });
-});
-
-describe("formatCompositionSummary programKind badge", () => {
-  it("renders the program kind after the structural axes", () => {
-    const composition: Composition = {
-      repetition: { kind: "count", count: 5 },
-      programKind: "cluster",
-    };
-
-    expect(formatCompositionSummary(composition)).toEqual([
-      { text: "5 rounds" },
-      { text: "cluster" },
-    ]);
-  });
-
-  it("appends the program kind last across multiple structural axes", () => {
-    const composition: Composition = {
-      repetition: { kind: "count", count: 5 },
-      rest: { duration: { value: 90, unit: "sec" }, scope: "between_sets" },
-      programKind: "cluster",
-    };
-
-    expect(formatCompositionSummary(composition)).toEqual([
-      { text: "5 rounds" },
-      { text: "rest 90 sec" },
-      { text: "cluster" },
-    ]);
-  });
-
-  it("renders a bare program kind when no other axis is present", () => {
-    const composition: Composition = { programKind: "wave" };
-
-    expect(formatCompositionSummary(composition)).toEqual([{ text: "wave" }]);
-  });
-
-  it("maps drop_set to its spaced label", () => {
-    const composition: Composition = { programKind: "drop_set" };
-
-    expect(formatCompositionSummary(composition)).toEqual([{ text: "drop set" }]);
-  });
-
-  it("omits the program kind label when it is absent", () => {
-    const composition: Composition = { repetition: { kind: "count", count: 5 } };
-
-    expect(formatCompositionSummary(composition)).toEqual([{ text: "5 rounds" }]);
   });
 });

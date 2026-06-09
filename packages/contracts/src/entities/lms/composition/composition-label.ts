@@ -8,7 +8,6 @@ export const COMPOSITION_LABEL_KINDS = [
   "ladder",
   "cadence",
   "interval",
-  "window",
   "timeCap",
   "rounds",
   "flat",
@@ -40,7 +39,6 @@ const KIND_TO_FAMILY: Record<CompositionLabelKind, CompositionLabelFamily> = {
   ladder: "LADDER",
   cadence: "INTERVALIC",
   interval: "INTERVALIC",
-  window: "INTERVALIC",
   timeCap: "TIME_BOUNDED",
   rounds: "ROUNDS",
   flat: "FLAT",
@@ -61,11 +59,7 @@ const deriveKind = (composition: Composition): CompositionLabelKind => {
     return "ladder";
   }
 
-  if (
-    repetitionKind === "cadence" ||
-    repetitionKind === "interval" ||
-    repetitionKind === "window"
-  ) {
+  if (repetitionKind === "cadence" || repetitionKind === "interval") {
     return repetitionKind;
   }
 
@@ -73,7 +67,7 @@ const deriveKind = (composition: Composition): CompositionLabelKind => {
     return "timeCap";
   }
 
-  if (repetitionKind === "count" || repetitionKind === "range") {
+  if (repetitionKind === "count") {
     return "rounds";
   }
 

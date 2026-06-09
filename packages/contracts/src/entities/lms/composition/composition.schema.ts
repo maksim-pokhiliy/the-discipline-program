@@ -7,95 +7,39 @@ import {
   perLimbDistributionSchema,
   repNotationSchema,
   restSpecSchema,
-  stagedProgramKindSchema,
   tempoModifierSchema,
   timeCapSchema,
 } from "../_shared";
 import { positionSchema, rowKindSchema, schemaRowPayloadSchema } from "../schema-row";
 
-import { PARALLEL_INTERLEAVE_ORDERS, WINDOW_HH_MM_PATTERN } from "./composition.constants";
+import { PARALLEL_INTERLEAVE_ORDERS } from "./composition.constants";
 
-const MINUTES_PER_HOUR = 60;
-
-function hhMmToMinutes(value: string): number | null {
-  const match = WINDOW_HH_MM_PATTERN.exec(value);
-
-  if (match === null) {
-    return null;
-  }
-
-  const [hoursPart, minutesPart] = value.split(":");
-  const hours = Number(hoursPart);
-  const minutes = Number(minutesPart);
-
-  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
-    return null;
-  }
-
-  return hours * MINUTES_PER_HOUR + minutes;
-}
-
-export const repetitionAxisSchema = z
-  .discriminatedUnion("kind", [
-    z.object({ kind: z.literal("once") }).strict(),
-    z.object({ kind: z.literal("count"), count: exactOrRangeSchema }).strict(),
-    z
-      .object({
-        kind: z.literal("range"),
-        range: z
-          .object({
-            min: z.number().int().positive(),
-            max: z.number().int().positive(),
-          })
-          .strict()
-          .refine((r) => r.min < r.max, { message: "range.min must be < range.max" }),
-      })
-      .strict(),
-    z
-      .object({
-        kind: z.literal("ladder"),
-        steps: z.array(z.number().int().positive()).min(1),
-      })
-      .strict(),
-    z.object({ kind: z.literal("timeCap"), cap: timeCapSchema }).strict(),
-    z
-      .object({
-        kind: z.literal("cadence"),
-        everyMin: z.number().int().positive(),
-        rounds: z.number().int().positive(),
-        totalMin: z.number().int().positive().optional(),
-      })
-      .strict(),
-    z
-      .object({
-        kind: z.literal("window"),
-        startHhMm: z.string().regex(WINDOW_HH_MM_PATTERN),
-        endHhMm: z.string().regex(WINDOW_HH_MM_PATTERN),
-      })
-      .strict(),
-    z
-      .object({
-        kind: z.literal("interval"),
-        workMin: z.number().int().positive(),
-        offMin: z.number().int().nonnegative(),
-        count: z.number().int().positive(),
-      })
-      .strict(),
-  ])
-  .superRefine((axis, ctx) => {
-    if (axis.kind === "window") {
-      const start = hhMmToMinutes(axis.startHhMm);
-      const end = hhMmToMinutes(axis.endHhMm);
-
-      if (start === null || end === null || start >= end) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["endHhMm"],
-          message: "window.endHhMm must be a valid HH:MM after startHhMm",
-        });
-      }
-    }
-  });
+export const repetitionAxisSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("once") }).strict(),
+  z.object({ kind: z.literal("count"), count: exactOrRangeSchema }).strict(),
+  z
+    .object({
+      kind: z.literal("ladder"),
+      steps: z.array(z.number().int().positive()).min(1),
+    })
+    .strict(),
+  z.object({ kind: z.literal("timeCap"), cap: timeCapSchema }).strict(),
+  z
+    .object({
+      kind: z.literal("cadence"),
+      everyMin: z.number().int().positive(),
+      rounds: z.number().int().positive(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("interval"),
+      workMin: z.number().int().positive(),
+      offMin: z.number().int().nonnegative(),
+      count: z.number().int().positive(),
+    })
+    .strict(),
+]);
 
 export const supersetPairSchema = z
   .object({
@@ -108,13 +52,7 @@ export const supersetPairSchema = z
     path: ["rowIds"],
   });
 
-export const parallelTrackSchema = z
-  .object({
-    childSchemaId: z.string().cuid(),
-    setEnumeration: z.array(z.number().int().positive()).min(1).optional(),
-    pairedWithRowId: z.string().cuid().optional(),
-  })
-  .strict();
+export const parallelTrackSchema = z.object({ childSchemaId: z.string().cuid() }).strict();
 
 export const arrangementAxisSchema = z
   .discriminatedUnion("kind", [
@@ -154,7 +92,6 @@ export const compositionSchema = z
     repetition: repetitionAxisSchema.optional(),
     arrangement: arrangementAxisSchema.optional(),
     rest: restAxisSchema.optional(),
-    programKind: stagedProgramKindSchema.optional(),
   })
   .strict();
 

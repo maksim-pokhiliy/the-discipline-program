@@ -59,7 +59,7 @@ export const BLOCK_DROP_SET_WK2_MON: CanonicalBlock = {
           ),
         ],
       },
-      { programKind: "drop_set" },
+      {},
       null,
     ),
   ],

@@ -3,7 +3,7 @@
 import { Alert, Button, Stack, Typography } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
-import type { RestSpec, StagedProgramKind } from "@repo/contracts/lms/_shared";
+import type { RestSpec } from "@repo/contracts/lms/_shared";
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import { SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
@@ -22,7 +22,6 @@ import type {
   RepetitionAxis,
 } from "./axis-draft.types";
 import { AxisFieldSection } from "./axis-field-section";
-import { ProgramKindAxisField } from "./program-kind-axis-field";
 import { RepetitionAxisField } from "./repetition-axis-field";
 
 const HEADER_LABEL = "Header";
@@ -110,15 +109,6 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
       asContainerPatch((node) => ({ ...node, arrangement })),
     );
 
-  const setProgramKind = (next?: StagedProgramKind): void =>
-    onUpdateNode(
-      container.id,
-      asContainerPatch(({ programKind: _previous, ...node }) => ({
-        ...node,
-        ...(next !== undefined && { programKind: next }),
-      })),
-    );
-
   const setRest = (rest: RestSpec): void =>
     onUpdateNode(
       container.id,
@@ -186,10 +176,7 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
         onChange={setArrangement}
         childContainers={arrangementTargets.childContainers}
         directRows={arrangementTargets.directRows}
-        rowsByTrack={arrangementTargets.rowsByTrack}
       />
-
-      <ProgramKindAxisField value={container.programKind} onChange={setProgramKind} />
 
       <AxisFieldSection label={REST_LABEL}>
         <RestSpecFields

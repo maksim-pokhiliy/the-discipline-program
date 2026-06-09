@@ -4,7 +4,6 @@ import type {
   PerLimbDistribution,
   RepNotation,
   RestSpec,
-  StagedProgramKind,
   TempoModifier,
   TimeCap,
 } from "@repo/contracts/lms/_shared";
@@ -20,14 +19,11 @@ export type RepetitionAxis =
   | { kind: "count"; count: CountOrRangeValue }
   | { kind: "ladder"; steps: number[] }
   | { kind: "timeCap"; cap: TimeCap }
-  | { kind: "cadence"; everyMin: number; rounds: number; totalMin?: number }
-  | { kind: "window"; startHhMm: string; endHhMm: string }
+  | { kind: "cadence"; everyMin: number; rounds: number }
   | { kind: "interval"; workMin: number; offMin: number; count: number };
 
 export type ParallelTrackDraft = {
   childSchemaId: NodeId;
-  setEnumeration?: number[];
-  pairedWithRowId?: NodeId;
 };
 
 export type SupersetPairDraft = { label: string; rowIds: NodeId[] };
@@ -47,7 +43,6 @@ export type ComposeContainer = {
   repetition?: RepetitionAxis;
   arrangement?: ArrangementAxis;
   rest?: RestAxis;
-  programKind?: StagedProgramKind;
   children: ComposeNode[];
 };
 

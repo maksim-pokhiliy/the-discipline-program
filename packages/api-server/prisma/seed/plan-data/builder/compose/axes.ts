@@ -12,16 +12,11 @@ export const ladderRep = (steps: number[]): RepetitionFragment => ({
   repetition: { kind: "ladder", steps },
 });
 
-export const cadenceRep = (
-  everyMin: number,
-  rounds: number,
-  totalMin?: number,
-): RepetitionFragment => ({
+export const cadenceRep = (everyMin: number, rounds: number): RepetitionFragment => ({
   repetition: {
     kind: "cadence",
     everyMin,
     rounds,
-    ...(totalMin !== undefined && { totalMin }),
   },
 });
 

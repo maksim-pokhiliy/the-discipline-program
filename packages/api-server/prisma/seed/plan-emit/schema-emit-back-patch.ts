@@ -19,10 +19,6 @@ const resolveArrangement = (
         interleaveOrder: arrangement.interleaveOrder,
         tracks: arrangement.tracks.map((track) => ({
           childSchemaId: resolver.getSchema(track.childSchemaId),
-          ...(track.setEnumeration !== undefined && { setEnumeration: track.setEnumeration }),
-          ...(track.pairedWithRowId !== undefined && {
-            pairedWithRowId: resolver.getRow(track.pairedWithRowId),
-          }),
         })),
       };
     case "superset":

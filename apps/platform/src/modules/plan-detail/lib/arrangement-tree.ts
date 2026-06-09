@@ -5,23 +5,3 @@ export const collectTrackChildren = (container: ComposeContainer): ComposeContai
 
 export const collectDirectRows = (container: ComposeContainer): ComposeRow[] =>
   container.children.filter((child): child is ComposeRow => child.nodeType === "row");
-
-export const collectDescendantRows = (container: ComposeContainer): ComposeRow[] => {
-  const rows: ComposeRow[] = [];
-
-  const walk = (node: ComposeContainer): void => {
-    for (const child of node.children) {
-      if (child.nodeType === "row") {
-        rows.push(child);
-
-        continue;
-      }
-
-      walk(child);
-    }
-  };
-
-  walk(container);
-
-  return rows;
-};

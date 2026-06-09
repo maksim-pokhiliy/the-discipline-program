@@ -60,14 +60,6 @@ describe("deriveCompositionLabel — §2.5 axis-configuration mapping", () => {
     expect(deriveCompositionLabel(composition)).toEqual({ kind: "interval", family: "INTERVALIC" });
   });
 
-  it("maps repetition window to window / INTERVALIC", () => {
-    const composition = parsedComposition({
-      repetition: { kind: "window", startHhMm: "00:00", endHhMm: "00:01" },
-    });
-
-    expect(deriveCompositionLabel(composition)).toEqual({ kind: "window", family: "INTERVALIC" });
-  });
-
   it("maps repetition timeCap to timeCap / TIME_BOUNDED", () => {
     const composition = parsedComposition({
       repetition: { kind: "timeCap", cap: { min: 10, unit: "min" } },
@@ -81,14 +73,6 @@ describe("deriveCompositionLabel — §2.5 axis-configuration mapping", () => {
 
   it("maps repetition count to rounds / ROUNDS", () => {
     const composition = parsedComposition({ repetition: { kind: "count", count: 3 } });
-
-    expect(deriveCompositionLabel(composition)).toEqual({ kind: "rounds", family: "ROUNDS" });
-  });
-
-  it("maps repetition range to rounds / ROUNDS", () => {
-    const composition = parsedComposition({
-      repetition: { kind: "range", range: { min: 3, max: 5 } },
-    });
 
     expect(deriveCompositionLabel(composition)).toEqual({ kind: "rounds", family: "ROUNDS" });
   });
@@ -183,16 +167,12 @@ function repetitionAxisOf(kind: RepetitionAxis["kind"]): RepetitionAxis {
       return { kind: "once" };
     case "count":
       return { kind: "count", count: 3 };
-    case "range":
-      return { kind: "range", range: { min: 3, max: 5 } };
     case "ladder":
       return { kind: "ladder", steps: [21, 15, 9] };
     case "timeCap":
       return { kind: "timeCap", cap: { min: 12, unit: "min" } };
     case "cadence":
       return { kind: "cadence", everyMin: 1, rounds: 4 };
-    case "window":
-      return { kind: "window", startHhMm: "00:00", endHhMm: "00:01" };
     case "interval":
       return { kind: "interval", workMin: 2, offMin: 1, count: 3 };
   }
