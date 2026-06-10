@@ -117,7 +117,7 @@ describe("arrangementAxisSchema", () => {
     expect(arrangementAxisSchema.safeParse({ kind: "ordered" }).success).toBe(true);
   });
 
-  it("accepts parallel for every interleave order", () => {
+  it("rejects the removed parallel arm for every legacy interleave order", () => {
     for (const interleaveOrder of PARALLEL_INTERLEAVE_ORDERS) {
       expect(
         arrangementAxisSchema.safeParse({
@@ -125,38 +125,8 @@ describe("arrangementAxisSchema", () => {
           interleaveOrder,
           tracks: [{ childSchemaId: cuidA }, { childSchemaId: cuidB }],
         }).success,
-      ).toBe(true);
+      ).toBe(false);
     }
-  });
-
-  it("rejects parallel with fewer than two tracks", () => {
-    expect(
-      arrangementAxisSchema.safeParse({
-        kind: "parallel",
-        interleaveOrder: "round_by_round",
-        tracks: [{ childSchemaId: cuidA }],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects parallel with duplicate childSchemaId", () => {
-    expect(
-      arrangementAxisSchema.safeParse({
-        kind: "parallel",
-        interleaveOrder: "round_by_round",
-        tracks: [{ childSchemaId: cuidA }, { childSchemaId: cuidA }],
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects parallel with a bad interleave order", () => {
-    expect(
-      arrangementAxisSchema.safeParse({
-        kind: "parallel",
-        interleaveOrder: "zigzag",
-        tracks: [{ childSchemaId: cuidA }, { childSchemaId: cuidB }],
-      }).success,
-    ).toBe(false);
   });
 
   it("accepts superset with pairs of at least two rows", () => {
@@ -241,13 +211,35 @@ describe("compositionSchema", () => {
       compositionSchema.safeParse({
         repetition: { kind: "count", count: 3 },
         arrangement: {
-          kind: "parallel",
-          interleaveOrder: "round_by_round",
-          tracks: [{ childSchemaId: cuidA }, { childSchemaId: cuidC }],
+          kind: "superset",
+          pairs: [{ label: "A", rowIds: [cuidA, cuidC] }],
         },
+        interleaveOrder: "round_by_round",
         rest: { duration: { value: 90, unit: "sec" }, scope: "between_rounds" },
       }).success,
     ).toBe(true);
+  });
+
+  it("accepts a root interleaveOrder for every interleave order", () => {
+    for (const interleaveOrder of PARALLEL_INTERLEAVE_ORDERS) {
+      expect(compositionSchema.safeParse({ interleaveOrder }).success).toBe(true);
+    }
+  });
+
+  it("rejects a root interleaveOrder outside the enum", () => {
+    expect(compositionSchema.safeParse({ interleaveOrder: "zigzag" }).success).toBe(false);
+  });
+
+  it("rejects a stale stored-tracks parallel arrangement blob", () => {
+    expect(
+      compositionSchema.safeParse({
+        arrangement: {
+          kind: "parallel",
+          interleaveOrder: "round_by_round",
+          tracks: [{ childSchemaId: cuidA }, { childSchemaId: cuidB }],
+        },
+      }).success,
+    ).toBe(false);
   });
 
   it("rejects a malformed nested axis", () => {
@@ -270,13 +262,9 @@ describe("strict mode — unknown keys are rejected", () => {
     );
   });
 
-  it("rejects an unknown key on a parallel track", () => {
+  it("rejects an unknown key alongside a root interleaveOrder", () => {
     expect(
-      arrangementAxisSchema.safeParse({
-        kind: "parallel",
-        interleaveOrder: "round_by_round",
-        tracks: [{ childSchemaId: cuidA, bogus: 1 }, { childSchemaId: cuidC }],
-      }).success,
+      compositionSchema.safeParse({ interleaveOrder: "round_by_round", bogus: 1 }).success,
     ).toBe(false);
   });
 });
