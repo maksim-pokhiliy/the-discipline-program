@@ -5,14 +5,12 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import type { CreateSchemaRequest, Schema } from "@repo/contracts/lms/schema";
-
 import { api } from "@app/lib/api";
 import { platformKeys } from "@app/lib/api/keys";
 
 import type { ComposeContainer } from "../components/axes/axis-draft.types";
 
-import { buildParallelCreateSequence } from "./build-parallel-schemas";
+import { buildParallelCreateRequest } from "./build-parallel-schemas";
 
 const SUCCESS_MESSAGE = "Parallel ladder created";
 
@@ -46,10 +44,10 @@ export const useCreateParallelSchemas = (
     { blockId, parentSchemaId, draft }: RunArgs,
     { onSuccess, onError }: RunOptions,
   ): Promise<void> => {
-    const sequence = buildParallelCreateSequence(draft);
+    const built = buildParallelCreateRequest(draft, blockId, parentSchemaId);
 
-    if (!sequence.ok) {
-      onError(sequence.error);
+    if (!built.ok) {
+      onError(built.error);
 
       return;
     }
@@ -57,28 +55,7 @@ export const useCreateParallelSchemas = (
     setIsPending(true);
 
     try {
-      const parentRequest: CreateSchemaRequest = {
-        blockId,
-        ...(parentSchemaId != null && { parentSchemaId }),
-        composition: sequence.parentComposition,
-        header: sequence.parentHeader,
-        notes: null,
-      };
-
-      const parent: Schema = await api.schemas.create(planId, parentRequest);
-
-      for (const track of sequence.tracks) {
-        const trackRequest: CreateSchemaRequest = {
-          blockId,
-          parentSchemaId: parent.id,
-          composition: track.composition,
-          header: track.header,
-          notes: null,
-        };
-
-        await api.schemas.create(planId, trackRequest);
-      }
-
+      await api.schemas.createParallel(planId, built.request);
       toast.success(SUCCESS_MESSAGE);
       onSuccess();
     } catch (error) {
