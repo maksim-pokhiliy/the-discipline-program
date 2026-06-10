@@ -17,6 +17,7 @@ import { AxisModeButtonGrid } from "./axes/axis-mode-button-grid";
 import { REPETITION_TILES } from "./axes/axis-modes";
 import { type LadderTrack, LadderTrackStack } from "./axes/ladder-track-stack";
 import { REPETITION_DEFAULTS, RepetitionAxisField } from "./axes/repetition-axis-field";
+import { GroupIntoBoxCheckbox } from "./group-into-box-checkbox";
 
 const REPETITION_LABEL = "repetition";
 const LADDER_KIND = "ladder";
@@ -82,9 +83,16 @@ const removeTrack = (draft: ComposeContainer, trackIndex: number): ComposeContai
 type CreateSchemaFlowProps = {
   draft: ComposeContainer;
   onDraftChange: (next: ComposeContainer) => void;
+  linkIntoBox?: boolean;
+  onLinkIntoBoxChange?: (checked: boolean) => void;
 };
 
-export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({ draft, onDraftChange }) => {
+export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({
+  draft,
+  onDraftChange,
+  linkIntoBox = true,
+  onLinkIntoBoxChange,
+}) => {
   const activeKind: RepetitionAxis["kind"] = isParallelDraft(draft)
     ? LADDER_KIND
     : (draft.repetition?.kind ?? FALLBACK_KIND);
@@ -151,7 +159,12 @@ export const CreateSchemaFlow: React.FC<CreateSchemaFlowProps> = ({ draft, onDra
         onAppendTrack={handleAppendTrack}
         onRemoveTrack={handleRemoveTrack}
         error={ladderError}
+        isBoxed={linkIntoBox}
       />
+
+      {isParallelDraft(draft) && onLinkIntoBoxChange !== undefined ? (
+        <GroupIntoBoxCheckbox checked={linkIntoBox} onChange={onLinkIntoBoxChange} />
+      ) : null}
     </Stack>
   );
 };
