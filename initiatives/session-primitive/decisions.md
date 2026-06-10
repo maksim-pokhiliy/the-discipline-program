@@ -8,17 +8,22 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 
 ## Index
 
-| ID               | Topic                                                                          | Status   |
-| ---------------- | ------------------------------------------------------------------------------ | -------- |
-| D-1 SCOPE        | Target = the session primitive; fixed floors Session→Block→Schema→Row          | RATIFIED |
-| D-2 BOX          | Relations = explicit Group boxes; opaque coach-owned label; no derivation      | RATIFIED |
-| D-3 NO-RECURSION | Sub-schemas die; no "group" schema-type tile; no graph                         | RATIFIED |
-| D-4 NO-TYPED-REL | No typed relation kinds (no parallel\|choice\|superset enum); text label only  | RATIFIED |
-| D-5 CHANNELS     | Notation → structure \| typed field \| human text \| dropped syntax            | RATIFIED |
-| D-6 GRID         | `primitive-spec.md` grid = the per-notation disposition (statuses inside)      | RATIFIED |
-| D-7 PROCESS      | Orchestrator/runner model: план → промпт → ревью; /feature wrap; git review    | RATIFIED |
-| D-8 JIT-FREEZE   | Implementation starts now; OPEN items close just-in-time before their wave     | RATIFIED |
-| D-MARKER-DEATH   | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group | **OPEN** |
+| ID                  | Topic                                                                            | Status   |
+| ------------------- | -------------------------------------------------------------------------------- | -------- |
+| D-1 SCOPE           | Target = the session primitive; fixed floors Session→Block→Schema→Row            | RATIFIED |
+| D-2 BOX             | Relations = explicit Group boxes; opaque coach-owned label; no derivation        | RATIFIED |
+| D-3 NO-RECURSION    | Sub-schemas die; no "group" schema-type tile; no graph                           | RATIFIED |
+| D-4 NO-TYPED-REL    | No typed relation kinds (no parallel\|choice\|superset enum); text label only    | RATIFIED |
+| D-5 CHANNELS        | Notation → structure \| typed field \| human text \| dropped syntax              | RATIFIED |
+| D-6 GRID            | `primitive-spec.md` grid = the per-notation disposition (statuses inside)        | RATIFIED |
+| D-7 PROCESS         | Orchestrator/runner model: план → промпт → ревью; /feature wrap; git review      | RATIFIED |
+| D-8 JIT-FREEZE      | Implementation starts now; OPEN items close just-in-time before their wave       | RATIFIED |
+| D-MARKER-DEATH      | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group   | **OPEN** |
+| DR-W1-1 BOX-RENDER  | Parallel parent → `AccentGroupCard` box gated by the live one-predicate          | RATIFIED |
+| DR-W1-2 CHECKBOX    | «Group into one box» = submit-branch flag; unchecked → N non-atomic flat creates | RATIFIED |
+| DR-W1-3 HEAD-DEDUP  | Boxed parent: chip+title suppressed; `header` shown once in the box label zone   | RATIFIED |
+| DR-W1-4 COPY        | Checkbox copy = English "Group into one box" (Gate A)                            | RATIFIED |
+| DR-W1-5 INDEP-VALID | Unchecked path validates ladder steps client-side, coach-message parity (Gate B) | RATIFIED |
 
 ---
 
@@ -81,3 +86,41 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 - **Status:** RATIFIED (2026-06-10, owner: "давай промпт, я готов запускать").
 - **Decision.** The founding plan's full-spec-freeze gate is relaxed. Runner sessions may start NOW under one rule: a runner works ONLY on grid rows whose status is RATIFIED/ACCEPTED; every OPEN item (F-\*, D-MARKER-DEATH) closes just-in-time before the wave that needs it. Wave map (plan.md): W1 Group/box UX on mocks needs nothing open; W2 model core needs D-MARKER-DEATH; W4 row grammar + leaf residuals needs F-PLAQUE + the leaf F-rows.
 - **Rationale.** Dependency-honest: the schema-level world is fully ratified (D-2/D-3); the OPEN items gate only the row-level grammar and part of the leaf. Serializing all implementation behind design-fatigued follow-ups buys no safety — the house aggressive-migration rules already tolerate staged green intermediate states.
+
+---
+
+## W1 implementation calls (DR-W1-\*) — Group/box UX on the existing model
+
+W1 re-skins the live ADR-0040 mechanism and adds an explicit creation affordance; it does NOT build the Group entity (that is W2). All five are platform-only, ratified during the W1 `/feature` build (2026-06-10), forks routed through Gate A / Gate B.
+
+### DR-W1-1 BOX-RENDER — parallel parent renders as a box, gated by the one-predicate
+
+- **Status:** RATIFIED (2026-06-10, W1 build; visual chosen by owner at Gate A).
+- **Decision.** A structurally-parallel parent renders as a BOX: the shared `@repo/ui` `AccentGroupCard` (`accent-dashed` — dashed `alpha(primary.main)` frame + tinted label zone) wrapping the member sub-schema list + the relocated in-box `AddSubSchemaButton`. Box-ness is `composition !== null && isStructurallyParallel(composition, { containerChildCount: subSchemas.length })`, computed ONCE in `schema-card.tsx` and threaded down — byte-identical to the chip signal, NEVER a hand-rolled child-count.
+- **Rationale.** The ONE-PREDICATE rule: ADR-0040's CRITICAL came from a reader consulting a field instead of the shared predicate. Gate A chose `accent-dashed` over the calmer solid-divider alternative ("reads unmistakably as ONE unit"); colours stay in the palette (`alpha`, no hex). EMOM/cadence/rounds/leaf parents keep the plain list (predicate-gated). Depth-3 (block-010) works for free via recursion — the outer rounds card stays plain, the middle parent draws its own box.
+- **Consequences.** Supersede-forward at W2: when the Group entity lands, box-ness re-points from `isStructurallyParallel` to real Group membership — the render swaps its gating source, the visual is unchanged (carry-forward W1-RENDER-REPOINT).
+
+### DR-W1-2 CHECKBOX — explicit-link checkbox is a submit-branch flag, not a draft mutation
+
+- **Status:** RATIFIED (2026-06-10, W1 build).
+- **Decision.** The «Group into one box» checkbox (default CHECKED, shown only at ≥2 ladder tracks) is a submit-branch `boolean` in `AxisEditorModal`: checked → `submitParallelCreate` (atomic `POST …/schemas/parallel`, unchanged); unchecked → `submitIndependentLadders` via the new platform-local `useCreateIndependentLadders` hook, firing N independent flat `POST …/schemas` (no `parentSchemaId` → N top-level cards, no box). The draft stays N-track-shaped; the `parallel-ladder-draft` transforms are untouched.
+- **Rationale.** D-2's de-bear-ification of auto-link: ≥2 ladders no longer FORCE a box. The materialize/dematerialize-toggle alternative was rejected — `dematerializeToFlat` only collapses exactly 1 track and would destroy N-track editing. The unchecked path is non-atomic BY DESIGN (D-2: batch-create is UX convenience, not a semantic guarantee; partial-success has no rollback, each schema is a complete unit).
+- **Consequences.** Retry-after-partial-failure can duplicate the already-created cards (no idempotency, no `@@unique` on top-level schemas) — accepted for W1, carried to W2 (W1-DUP-RETRY).
+
+### DR-W1-3 HEAD-DEDUP — header appears once, in the box label zone
+
+- **Status:** RATIFIED (2026-06-10, W1 build).
+- **Decision.** On a boxed parent the `parallel` `SchemaCompositionTag` chip AND the card-head title are suppressed; the parent's `header` is shown + edited ONCE, in the box label zone, via `InlineEditText` reusing the existing `handleTitleCommit` → `useUpdateSchema` → `{ header }` path. The label binds the RAW `header ?? ""` (empty → neutral placeholder "group…", NOT the derived structural label, NOT an empty chip). The `deriveCompositionLabel` / `formatCompositionSummary` MECHANISM and the meta summary ("parallel (round by round)") are untouched.
+- **Rationale.** Deliverable-2 directive: dedupe the PRESENTATION, not the mechanism. No information is lost — the interleave-order stays in the meta summary; non-boxed parents are byte-identical to before. No new field (header is already a stored, updatable column).
+
+### DR-W1-4 COPY — checkbox copy is English
+
+- **Status:** RATIFIED (2026-06-10, owner at Gate A).
+- **Decision.** The checkbox visible copy is "Group into one box" (English), not the Russian "связать в коробку" of the prompt's semantics.
+- **Rationale.** The platform UI is all-English ("Add schema", "another ladder"); a lone Russian string would read foreign. Localization, if it ever comes, is a separate systematic pass. (The prompt gave Russian only as the SEMANTICS; the exact copy was deferred to design → Gate A.)
+
+### DR-W1-5 INDEP-VALID — the unchecked path validates client-side with coach-message parity
+
+- **Status:** RATIFIED (2026-06-10, owner at Gate B — QA-003 fix).
+- **Decision.** Before firing any create, `useCreateIndependentLadders` validates each track's ladder steps client-side against the exact `createSchemaRequestSchema` it will POST, and on the first invalid track surfaces a coach-friendly per-ladder message ("ladder N, step M: …") mirroring the parallel path's `formatCoachIssue`. A degenerate step (e.g. `0`, producible via the step input's `coerceStepValue`) is caught up-front, never as a raw server-error string. The hook's invalidate + pending-clear were wrapped in `finally` (parity with the parallel sibling) since the validation added a throw point.
+- **Rationale.** UX parity — the checked (parallel) path already validated client-side with coach-friendly messages; the unchecked path degraded to a cryptic server string for the same input. coach-daily-UX is the project's #1 bar. Validating all tracks up-front also prevents firing K good creates and then 400-ing on the (K+1)th. Owner elected the fix at Gate B over deferring.

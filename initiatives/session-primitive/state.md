@@ -9,14 +9,14 @@ Resume here (SessionStart hook force-loads this). Narrative → `journal.md`; wh
 | #   | Wave                                                   | Status                  | Pointer                        |
 | --- | ------------------------------------------------------ | ----------------------- | ------------------------------ |
 | 0   | Founding: review → skeleton + grid + spec              | 🟢 done                 | `primitive-spec.md` · D-1..D-8 |
-| W1  | Group/box UX on the existing model (platform-only)     | 🔵 launched 2026-06-10  | plan §W1 · prompt issued       |
+| W1  | Group/box UX on the existing model (platform-only)     | 🟢 built · PR open      | plan §W1 · DR-W1-1..5          |
 | W2  | Model core (Group entity, recursion/arrangement death) | ⚪ needs D-MARKER-DEATH | plan §W2                       |
 | W3  | Editor remap (DnD/ungroup persistence)                 | ⚪                      | plan §W3                       |
 | W4  | Row grammar + leaf residuals                           | ⚪ needs F-PLAQUE+      | plan §W4                       |
 
 ## Next action
 
-**W1 runner session is out** (`/feature` full; prompt issued 2026-06-10; owner transports). On its return: the orchestrator reviews the GIT DIFF (never the runner's self-report) against the W1 red lines (platform-only; one-predicate rule; no DnD/ungroup fakes) before W2 launches. **From the owner, any time before W2: D-MARKER-DEATH yes/no** (`decisions.md` — everything needed for the call is written there).
+**W1 is built (PR open)** — `/feature` full ran 2026-06-10; 9 platform-only commits; box render via the live one-predicate, `header` box-label, «Group into one box» checkbox + `useCreateIndependentLadders`. Diff reviewed against the W1 red lines (platform-only; one-predicate rule; no DnD/ungroup fakes) — held; ratified calls promoted as DR-W1-1..5. **Remaining W1 gate:** owner acceptance walkthrough (boxes feel right — the 4 seed shapes + block-010 depth-3; W1-BOX-FRAME double-frame is the thing to eyeball) + merge. **Then, gating W2: D-MARKER-DEATH yes/no** from the owner (`decisions.md` — everything needed for the call is written there).
 
 ## Open decisions awaiting ratification
 
@@ -25,6 +25,7 @@ Resume here (SessionStart hook force-loads this). Narrative → `journal.md`; wh
 
 ## Live carry-forwards
 
+From W1 (`deferred.md`): **W1-DUP-RETRY** (unchecked batch dup-on-retry → W2 idempotency) · **W1-RENDER-REPOINT** (re-point box-ness from the predicate to Group membership at W2) · **W1-BOX-FRAME** (double-frame — eyeball at acceptance) · W1-INSESSION-CHECK (low).
 Inherited: QA-004 (confirm/undo rides the editor rebuild) · MARKER-FATE (→ D-MARKER-DEATH) · BACKLOG-ROUNDS (Group label until an engine) · BACKLOG-TAIL / BACKLOG-PATTERNS (dissolve by design — confirm at freeze). Standing debts out-of-scope: `Performed*`/`OneRMRecord` known-wrong (Phase-4 redesign); roadmap §4.2 stale; reuse features post-primitive.
 
 ## Gotchas a resuming session must know
