@@ -76,10 +76,6 @@ const emitSchemaNode = async (
 
   const schemaId = requireId(created);
 
-  if (node.refId !== undefined) {
-    ctx.resolver.setSchema(node.refId, schemaId);
-  }
-
   for (const row of node.rows) {
     await emitSchemaRow(ctx, schemaId, row);
   }
