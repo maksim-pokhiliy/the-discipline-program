@@ -482,7 +482,7 @@ describe("lmsWeekApi", () => {
       }
     });
 
-    it("reads a depth-3 schema tree back with the level-3 ladder tracks and rows intact (T1-3)", async () => {
+    it("reads a depth-3 structurally-parallel tree back with derived labels and level-3 rows intact (T1-3)", async () => {
       const week = await cleanupRaw.week.create({
         data: { planId: activePlanId, startDate: EXPECTED_UTC_MONDAY },
       });
@@ -500,34 +500,28 @@ describe("lmsWeekApi", () => {
           composition: { repetition: { kind: "count", count: 2 } },
         },
       });
-      const trackA = await cleanupRaw.schema.create({
+      const parallel = await cleanupRaw.schema.create({
         data: {
           blockId: block.id,
           parentSchemaId: rounds.id,
           order: 10,
-          composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+          composition: {},
         },
       });
       const trackB = await cleanupRaw.schema.create({
         data: {
           blockId: block.id,
-          parentSchemaId: rounds.id,
+          parentSchemaId: parallel.id,
           order: 20,
           composition: { repetition: { kind: "ladder", steps: [9, 15, 21] } },
         },
       });
-      const parallel = await cleanupRaw.schema.create({
+      const trackA = await cleanupRaw.schema.create({
         data: {
           blockId: block.id,
-          parentSchemaId: rounds.id,
-          order: 30,
-          composition: {
-            arrangement: {
-              kind: "parallel",
-              interleaveOrder: "round_by_round",
-              tracks: [{ childSchemaId: trackA.id }, { childSchemaId: trackB.id }],
-            },
-          },
+          parentSchemaId: parallel.id,
+          order: 10,
+          composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
         },
       });
       const rowA = await cleanupRaw.schemaRow.create({
@@ -558,34 +552,28 @@ describe("lmsWeekApi", () => {
 
         const embedded = result.days[5]?.sessions[0]?.blocks[0];
         const level1 = embedded?.schemas[0];
-        const level2Parallel = level1?.subSchemas.find((s) => s.schema.id === parallel.id);
-        const level2A = level1?.subSchemas.find((s) => s.schema.id === trackA.id);
-        const level2B = level1?.subSchemas.find((s) => s.schema.id === trackB.id);
+        const level2Parallel = level1?.subSchemas[0];
+        const level3A = level2Parallel?.subSchemas.find((s) => s.schema.id === trackA.id);
+        const level3B = level2Parallel?.subSchemas.find((s) => s.schema.id === trackB.id);
 
         expect(embedded?.schemas).toHaveLength(1);
         expect(level1?.schema.id).toBe(rounds.id);
-        expect(level1?.subSchemas.map((s) => s.schema.id)).toEqual([
-          trackA.id,
-          trackB.id,
-          parallel.id,
-        ]);
-        expect(level2A?.rows.map((r) => r.id)).toEqual([rowA.id]);
-        expect(level2B?.rows.map((r) => r.id)).toEqual([rowB.id]);
-
-        const arrangement = level2Parallel?.schema.composition?.arrangement;
-
-        expect(arrangement?.kind).toBe("parallel");
-
-        if (arrangement?.kind === "parallel") {
-          expect(arrangement.tracks.map((t) => t.childSchemaId)).toEqual([trackA.id, trackB.id]);
-        }
+        expect(level1?.schema.label).toEqual({ kind: "rounds", family: "ROUNDS" });
+        expect(level1?.subSchemas.map((s) => s.schema.id)).toEqual([parallel.id]);
+        expect(level2Parallel?.schema.composition).toEqual({});
+        expect(level2Parallel?.schema.label).toEqual({ kind: "parallel", family: "PARALLEL" });
+        expect(level2Parallel?.subSchemas.map((s) => s.schema.id)).toEqual([trackA.id, trackB.id]);
+        expect(level2Parallel?.subSchemas.map((s) => s.schema.order)).toEqual([10, 20]);
+        expect(level3A?.schema.label).toEqual({ kind: "ladder", family: "LADDER" });
+        expect(level3A?.rows.map((r) => r.id)).toEqual([rowA.id]);
+        expect(level3B?.rows.map((r) => r.id)).toEqual([rowB.id]);
       } finally {
         await cleanupRaw.schemaRow
           .deleteMany({ where: { schema: { blockId: block.id } } })
           .catch(() => {});
-        await cleanupRaw.schema.delete({ where: { id: parallel.id } }).catch(() => {});
-        await cleanupRaw.schema.delete({ where: { id: trackB.id } }).catch(() => {});
         await cleanupRaw.schema.delete({ where: { id: trackA.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: trackB.id } }).catch(() => {});
+        await cleanupRaw.schema.delete({ where: { id: parallel.id } }).catch(() => {});
         await cleanupRaw.schema.delete({ where: { id: rounds.id } }).catch(() => {});
         await cleanupRaw.block.delete({ where: { id: block.id } }).catch(() => {});
         await cleanupRaw.session.delete({ where: { id: session.id } }).catch(() => {});
