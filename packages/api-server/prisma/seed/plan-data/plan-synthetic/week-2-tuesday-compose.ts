@@ -5,7 +5,6 @@ import {
   buildComposeNode,
   compoundRepUnitReps,
   countReps,
-  cuidFromSeed,
   dualWeight,
   ladderRep,
   restBetweenRounds,
@@ -18,12 +17,6 @@ import { EX, LBL } from "./refs";
 import { mkRow } from "./row-helpers";
 
 const REST_BETWEEN_ROUNDS_FIXED_MIN_3 = restBetweenRounds({ value: 3, unit: "min" }, "fixed");
-
-const ALT_SET_A = cuidFromSeed("schema::block-009::set-a");
-const ALT_SET_B = cuidFromSeed("schema::block-009::set-b");
-
-const MIXED_LADDER_TRACK_A = cuidFromSeed("schema::block-010::track-a");
-const MIXED_LADDER_TRACK_B = cuidFromSeed("schema::block-010::track-b");
 
 export const BLOCK_ALTERNATING_SETS_WK2_TUE: CanonicalBlock = {
   blockInstanceRef: "block-009",
@@ -40,7 +33,6 @@ export const BLOCK_ALTERNATING_SETS_WK2_TUE: CanonicalBlock = {
           buildComposeNode(
             {
               order: 1,
-              refId: ALT_SET_A,
               header: "Alternating Sets A",
               rows: [
                 mkRow(
@@ -56,7 +48,6 @@ export const BLOCK_ALTERNATING_SETS_WK2_TUE: CanonicalBlock = {
           buildComposeNode(
             {
               order: 2,
-              refId: ALT_SET_B,
               header: "Alternating Sets B",
               rows: [
                 mkRow(
@@ -71,13 +62,7 @@ export const BLOCK_ALTERNATING_SETS_WK2_TUE: CanonicalBlock = {
           ),
         ],
       },
-      {
-        arrangement: {
-          kind: "parallel",
-          interleaveOrder: "round_by_round",
-          tracks: [{ childSchemaId: ALT_SET_A }, { childSchemaId: ALT_SET_B }],
-        },
-      },
+      {},
       null,
     ),
   ],
@@ -139,7 +124,6 @@ export const BLOCK_NESTED_OVER_PARALLEL_LADDER_WK2_TUE: CanonicalBlock = {
                 buildComposeNode(
                   {
                     order: 1,
-                    refId: MIXED_LADDER_TRACK_A,
                     rows: [
                       mkRow(
                         1,
@@ -161,7 +145,6 @@ export const BLOCK_NESTED_OVER_PARALLEL_LADDER_WK2_TUE: CanonicalBlock = {
                 buildComposeNode(
                   {
                     order: 2,
-                    refId: MIXED_LADDER_TRACK_B,
                     rows: [
                       mkRow(
                         1,
@@ -178,16 +161,7 @@ export const BLOCK_NESTED_OVER_PARALLEL_LADDER_WK2_TUE: CanonicalBlock = {
                 ),
               ],
             },
-            {
-              arrangement: {
-                kind: "parallel",
-                interleaveOrder: "round_by_round",
-                tracks: [
-                  { childSchemaId: MIXED_LADDER_TRACK_A },
-                  { childSchemaId: MIXED_LADDER_TRACK_B },
-                ],
-              },
-            },
+            {},
             null,
           ),
         ],

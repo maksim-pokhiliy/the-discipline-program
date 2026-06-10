@@ -2,7 +2,6 @@ import {
   absoluteLoad,
   bodyweightLoad,
   buildComposeNode,
-  cuidFromSeed,
   dualWeight,
   ladderRep,
   rangeReps,
@@ -20,9 +19,6 @@ import {
   BLOCK_URL_ONLY_BODY_WRAPPED_WK1_SAT,
 } from "./week-1-saturday-modality";
 
-const TRACK_A = cuidFromSeed("schema::block-037::track-a");
-const TRACK_B = cuidFromSeed("schema::block-037::track-b");
-
 const BLOCK_PARALLEL_LADDERS_DESC_WK1_SAT: CanonicalBlock = {
   blockInstanceRef: "block-037",
   order: 1,
@@ -39,7 +35,6 @@ const BLOCK_PARALLEL_LADDERS_DESC_WK1_SAT: CanonicalBlock = {
           buildComposeNode(
             {
               order: 1,
-              refId: TRACK_A,
               rows: [
                 mkRow(
                   1,
@@ -57,7 +52,6 @@ const BLOCK_PARALLEL_LADDERS_DESC_WK1_SAT: CanonicalBlock = {
           buildComposeNode(
             {
               order: 2,
-              refId: TRACK_B,
               rows: [
                 mkRow(
                   1,
@@ -71,13 +65,7 @@ const BLOCK_PARALLEL_LADDERS_DESC_WK1_SAT: CanonicalBlock = {
           ),
         ],
       },
-      {
-        arrangement: {
-          kind: "parallel",
-          interleaveOrder: "round_by_round",
-          tracks: [{ childSchemaId: TRACK_A }, { childSchemaId: TRACK_B }],
-        },
-      },
+      {},
       null,
     ),
   ],
