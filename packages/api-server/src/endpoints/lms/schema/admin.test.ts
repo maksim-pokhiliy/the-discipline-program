@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { type Composition, deriveCompositionLabel } from "@repo/contracts/lms/composition";
-import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
+import { BadRequestError, ForbiddenError, InternalServerError, NotFoundError } from "@repo/errors";
 
 import { assertComposeTreeValid, buildSchemaSubtree } from "../../../mappers/lms";
 import { cleanupRaw, createTestCoach, createTestPlan } from "../../../test/helpers";
@@ -550,6 +550,36 @@ describe("lmsSchemaApi", () => {
       } finally {
         await foreignCtx.cleanup();
         await cleanupRaw.trainingPlan.delete({ where: { id: otherPlan.id } }).catch(() => {});
+      }
+    });
+
+    it("rolls back the whole created tree when composition validation fails in-tx (atomicity witness)", async () => {
+      const ctx = await provisionBlock();
+
+      try {
+        const failure = lmsSchemaApi.createParallel(
+          coach.user.id,
+          activePlanId,
+          { blockId: ctx.block.id },
+          {
+            tracks: [
+              { header: "Track A", steps: [21, 15, 9] },
+              { header: "Track B", steps: [] },
+            ],
+          },
+        );
+
+        await expect(failure).rejects.toThrow(InternalServerError);
+        await expect(failure).rejects.toMatchObject({
+          statusCode: 500,
+          details: { kind: "DbCorruption", entity: "Schema" },
+        });
+
+        const count = await cleanupRaw.schema.count({ where: { blockId: ctx.block.id } });
+
+        expect(count).toBe(0);
+      } finally {
+        await ctx.cleanup();
       }
     });
 
