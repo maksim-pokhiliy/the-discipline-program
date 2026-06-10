@@ -3,15 +3,12 @@ import { type Schema as PrismaSchema, type SchemaRow as PrismaSchemaRow } from "
 import { intensitySchema } from "@repo/contracts/lms/_shared";
 import { compositionSchema, deriveCompositionLabel } from "@repo/contracts/lms/composition";
 import { type Schema, type SchemaWithBody } from "@repo/contracts/lms/schema";
+import { InternalServerError } from "@repo/errors";
 
 import { mapToSchemaRow } from "./schema-row.mapper";
 
 export type PrismaSchemaWithRows = PrismaSchema & {
   rows: PrismaSchemaRow[];
-};
-
-export type PrismaSchemaWithSubSchemas = PrismaSchemaWithRows & {
-  subSchemas: PrismaSchemaWithRows[];
 };
 
 export const mapToSchema = (s: PrismaSchema): Schema => {
@@ -32,18 +29,10 @@ export const mapToSchema = (s: PrismaSchema): Schema => {
   };
 };
 
-export const buildSchemaWithBody = (s: PrismaSchemaWithSubSchemas): SchemaWithBody => ({
-  schema: mapToSchema(s),
-  rows: s.rows.map(mapToSchemaRow),
-  subSchemas: s.subSchemas.map((sub) => ({
-    schema: mapToSchema(sub),
-    rows: sub.rows.map(mapToSchemaRow),
-    subSchemas: [],
-  })),
-});
+type ChildrenByParent = Map<string | null, PrismaSchemaWithRows[]>;
 
-export const buildSchemaForest = (flat: PrismaSchemaWithRows[]): SchemaWithBody[] => {
-  const childrenByParent = new Map<string | null, PrismaSchemaWithRows[]>();
+const bucketByParent = (flat: PrismaSchemaWithRows[]): ChildrenByParent => {
+  const childrenByParent: ChildrenByParent = new Map();
 
   for (const s of flat) {
     const bucket = childrenByParent.get(s.parentSchemaId) ?? [];
@@ -52,11 +41,54 @@ export const buildSchemaForest = (flat: PrismaSchemaWithRows[]): SchemaWithBody[
     childrenByParent.set(s.parentSchemaId, bucket);
   }
 
-  const build = (node: PrismaSchemaWithRows): SchemaWithBody => ({
-    schema: mapToSchema(node),
-    rows: node.rows.map(mapToSchemaRow),
-    subSchemas: (childrenByParent.get(node.id) ?? []).sort((a, b) => a.order - b.order).map(build),
-  });
+  return childrenByParent;
+};
 
-  return (childrenByParent.get(null) ?? []).sort((a, b) => a.order - b.order).map(build);
+const buildNode = (
+  node: PrismaSchemaWithRows,
+  childrenByParent: ChildrenByParent,
+): SchemaWithBody => {
+  const subSchemas = (childrenByParent.get(node.id) ?? [])
+    .sort((a, b) => a.order - b.order)
+    .map((child) => buildNode(child, childrenByParent));
+  const schema = mapToSchema(node);
+
+  return {
+    schema: {
+      ...schema,
+      label:
+        schema.composition === null
+          ? null
+          : deriveCompositionLabel(schema.composition, {
+              containerChildCount: subSchemas.length,
+            }),
+    },
+    rows: node.rows.map(mapToSchemaRow),
+    subSchemas,
+  };
+};
+
+export const buildSchemaForest = (flat: PrismaSchemaWithRows[]): SchemaWithBody[] => {
+  const childrenByParent = bucketByParent(flat);
+
+  return (childrenByParent.get(null) ?? [])
+    .sort((a, b) => a.order - b.order)
+    .map((node) => buildNode(node, childrenByParent));
+};
+
+export const buildSchemaSubtree = (
+  flat: PrismaSchemaWithRows[],
+  rootId: string,
+): SchemaWithBody => {
+  const root = flat.find((s) => s.id === rootId);
+
+  if (root === undefined) {
+    throw new InternalServerError("Schema subtree root not found", {
+      kind: "DbCorruption",
+      entity: "Schema",
+      schemaId: rootId,
+    });
+  }
+
+  return buildNode(root, bucketByParent(flat));
 };

@@ -1,9 +1,10 @@
 import { type SchemaRow as PrismaSchemaRow } from "@prisma/client";
 import { describe, expect, it } from "vitest";
 
-import { type Composition } from "@repo/contracts/lms/composition";
+import { type Composition, type CompositionLabel } from "@repo/contracts/lms/composition";
+import { InternalServerError } from "@repo/errors";
 
-import { buildSchemaForest, type PrismaSchemaWithRows } from "./schema.mapper";
+import { buildSchemaForest, buildSchemaSubtree, type PrismaSchemaWithRows } from "./schema.mapper";
 
 const NOW = new Date("2026-06-07T12:00:00Z");
 const BLOCK_ID = "clz00000000000000000block1";
@@ -54,14 +55,53 @@ const ROOT_ID = cuid("root");
 const CHILD_ID = cuid("child");
 const GRANDCHILD_ID = cuid("grand");
 
+const OUTER_ID = cuid("outer");
+const MIDDLE_ID = cuid("middle");
+const TRACK_ONE_ID = cuid("trackone");
+const TRACK_TWO_ID = cuid("tracktwo");
+const TRACK_ONE_ROW_ID = cuid("rowone");
+const TRACK_TWO_ROW_ID = cuid("rowtwo");
+
 const ROUNDS_COMPOSITION: Composition = { repetition: { kind: "count", count: 2 } };
-const PARALLEL_COMPOSITION = (trackOne: string, trackTwo: string): Composition => ({
-  arrangement: {
-    kind: "parallel",
-    interleaveOrder: "round_by_round",
-    tracks: [{ childSchemaId: trackOne }, { childSchemaId: trackTwo }],
-  },
+const PARALLEL_PARENT_COMPOSITION: Composition = {};
+const EMOM_COMPOSITION: Composition = { repetition: { kind: "cadence", everyMin: 1, rounds: 12 } };
+const LADDER_COMPOSITION = (steps: number[]): Composition => ({
+  repetition: { kind: "ladder", steps },
 });
+
+const ROUNDS_LABEL: CompositionLabel = { kind: "rounds", family: "ROUNDS" };
+const PARALLEL_LABEL: CompositionLabel = { kind: "parallel", family: "PARALLEL" };
+const LADDER_LABEL: CompositionLabel = { kind: "ladder", family: "LADDER" };
+const CADENCE_LABEL: CompositionLabel = { kind: "cadence", family: "INTERVALIC" };
+
+const makeDepth3ParallelFlat = (): PrismaSchemaWithRows[] => [
+  makeFlatSchema({
+    id: OUTER_ID,
+    parentSchemaId: null,
+    order: 10,
+    composition: ROUNDS_COMPOSITION,
+  }),
+  makeFlatSchema({
+    id: MIDDLE_ID,
+    parentSchemaId: OUTER_ID,
+    order: 10,
+    composition: PARALLEL_PARENT_COMPOSITION,
+  }),
+  makeFlatSchema({
+    id: TRACK_ONE_ID,
+    parentSchemaId: MIDDLE_ID,
+    order: 10,
+    composition: LADDER_COMPOSITION([9, 6, 3]),
+    rows: [makeExerciseRow(TRACK_ONE_ROW_ID, TRACK_ONE_ID)],
+  }),
+  makeFlatSchema({
+    id: TRACK_TWO_ID,
+    parentSchemaId: MIDDLE_ID,
+    order: 20,
+    composition: LADDER_COMPOSITION([3, 6, 9]),
+    rows: [makeExerciseRow(TRACK_TWO_ROW_ID, TRACK_TWO_ID)],
+  }),
+];
 
 describe("buildSchemaForest", () => {
   it("rebuilds a depth-3 tree without truncating level 3 (T1-3)", () => {
@@ -83,6 +123,7 @@ describe("buildSchemaForest", () => {
     const root = forest[0];
 
     expect(root?.schema.id).toBe(ROOT_ID);
+    expect(root?.schema.label).toBeNull();
     expect(root?.subSchemas).toHaveLength(1);
 
     const child = root?.subSchemas[0];
@@ -98,55 +139,44 @@ describe("buildSchemaForest", () => {
     expect(grandchild?.subSchemas).toEqual([]);
   });
 
-  it("preserves the parallel arrangement track refs that resolve to the depth-3 ladder tracks (T1-3)", () => {
-    const containerId = cuid("parallel");
-    const trackOneId = cuid("trackone");
-    const trackTwoId = cuid("tracktwo");
+  it("derives structural labels at every depth of a rounds → parallel → ladder tree", () => {
+    const forest = buildSchemaForest(makeDepth3ParallelFlat());
 
+    expect(forest).toHaveLength(1);
+
+    const outer = forest[0];
+
+    expect(outer?.schema.id).toBe(OUTER_ID);
+    expect(outer?.schema.label).toEqual(ROUNDS_LABEL);
+
+    const middle = outer?.subSchemas[0];
+
+    expect(middle?.schema.id).toBe(MIDDLE_ID);
+    expect(middle?.schema.label).toEqual(PARALLEL_LABEL);
+    expect(middle?.subSchemas.map((s) => s.schema.id)).toEqual([TRACK_ONE_ID, TRACK_TWO_ID]);
+    expect(middle?.subSchemas.map((s) => s.schema.label)).toEqual([LADDER_LABEL, LADDER_LABEL]);
+    expect(middle?.subSchemas[0]?.rows[0]?.id).toBe(TRACK_ONE_ROW_ID);
+    expect(middle?.subSchemas[1]?.rows[0]?.id).toBe(TRACK_TWO_ROW_ID);
+  });
+
+  it("labels a cadence parent with container children as cadence, not parallel", () => {
+    const emomId = cuid("emom");
     const flat: PrismaSchemaWithRows[] = [
       makeFlatSchema({
-        id: ROOT_ID,
+        id: emomId,
         parentSchemaId: null,
         order: 10,
-        composition: ROUNDS_COMPOSITION,
+        composition: EMOM_COMPOSITION,
       }),
-      makeFlatSchema({
-        id: containerId,
-        parentSchemaId: ROOT_ID,
-        order: 10,
-        composition: PARALLEL_COMPOSITION(trackOneId, trackTwoId),
-      }),
-      makeFlatSchema({
-        id: trackOneId,
-        parentSchemaId: containerId,
-        order: 10,
-        rows: [makeExerciseRow(cuid("rowone"), trackOneId)],
-      }),
-      makeFlatSchema({
-        id: trackTwoId,
-        parentSchemaId: containerId,
-        order: 20,
-        rows: [makeExerciseRow(cuid("rowtwo"), trackTwoId)],
-      }),
+      makeFlatSchema({ id: cuid("slotone"), parentSchemaId: emomId, order: 10 }),
+      makeFlatSchema({ id: cuid("slottwo"), parentSchemaId: emomId, order: 20 }),
+      makeFlatSchema({ id: cuid("slotthree"), parentSchemaId: emomId, order: 30 }),
     ];
 
     const forest = buildSchemaForest(flat);
-    const container = forest[0]?.subSchemas[0];
-    const arrangement = container?.schema.composition?.arrangement;
 
-    expect(container?.subSchemas.map((s) => s.schema.id)).toEqual([trackOneId, trackTwoId]);
-    expect(arrangement?.kind).toBe("parallel");
-
-    if (arrangement?.kind !== "parallel") {
-      return;
-    }
-
-    const trackRefs = arrangement.tracks.map((t) => t.childSchemaId);
-    const builtTrackIds = container?.subSchemas.map((s) => s.schema.id) ?? [];
-
-    expect(trackRefs.every((ref) => builtTrackIds.includes(ref))).toBe(true);
-    expect(container?.subSchemas[0]?.rows[0]?.id).toBe(cuid("rowone"));
-    expect(container?.subSchemas[1]?.rows[0]?.id).toBe(cuid("rowtwo"));
+    expect(forest[0]?.schema.label).toEqual(CADENCE_LABEL);
+    expect(forest[0]?.subSchemas).toHaveLength(3);
   });
 
   it("orders children by order at every level and roots by order", () => {
@@ -201,5 +231,61 @@ describe("buildSchemaForest", () => {
     expect(forest[1]?.subSchemas).toEqual([]);
     expect(forest[0]?.subSchemas[0]?.schema.id).toBe(childA);
     expect(forest[0]?.subSchemas[0]?.subSchemas[0]?.schema.id).toBe(grandchildA);
+  });
+});
+
+describe("buildSchemaSubtree", () => {
+  it("projects the full-depth subtree from the outer root including the grandchild level", () => {
+    const subtree = buildSchemaSubtree(makeDepth3ParallelFlat(), OUTER_ID);
+
+    expect(subtree.schema.id).toBe(OUTER_ID);
+    expect(subtree.schema.label).toEqual(ROUNDS_LABEL);
+
+    const middle = subtree.subSchemas[0];
+
+    expect(middle?.schema.id).toBe(MIDDLE_ID);
+    expect(middle?.schema.label).toEqual(PARALLEL_LABEL);
+    expect(middle?.subSchemas.map((s) => s.schema.id)).toEqual([TRACK_ONE_ID, TRACK_TWO_ID]);
+    expect(middle?.subSchemas.map((s) => s.schema.label)).toEqual([LADDER_LABEL, LADDER_LABEL]);
+    expect(middle?.subSchemas[0]?.rows[0]?.id).toBe(TRACK_ONE_ROW_ID);
+  });
+
+  it("projects a mid-tree root with its track children and without the outer level", () => {
+    const subtree = buildSchemaSubtree(makeDepth3ParallelFlat(), MIDDLE_ID);
+
+    expect(subtree.schema.id).toBe(MIDDLE_ID);
+    expect(subtree.schema.label).toEqual(PARALLEL_LABEL);
+    expect(subtree.subSchemas.map((s) => s.schema.id)).toEqual([TRACK_ONE_ID, TRACK_TWO_ID]);
+    expect(subtree.subSchemas[1]?.rows[0]?.id).toBe(TRACK_TWO_ROW_ID);
+  });
+
+  it("projects a leaf root with its rows and empty subSchemas", () => {
+    const subtree = buildSchemaSubtree(makeDepth3ParallelFlat(), TRACK_ONE_ID);
+
+    expect(subtree.schema.id).toBe(TRACK_ONE_ID);
+    expect(subtree.schema.label).toEqual(LADDER_LABEL);
+    expect(subtree.rows.map((r) => r.id)).toEqual([TRACK_ONE_ROW_ID]);
+    expect(subtree.subSchemas).toEqual([]);
+  });
+
+  it("throws an InternalServerError with DbCorruption detail when the root id is missing", () => {
+    const missingId = cuid("missing");
+    const flat = makeDepth3ParallelFlat();
+
+    expect(() => buildSchemaSubtree(flat, missingId)).toThrow(InternalServerError);
+
+    try {
+      buildSchemaSubtree(flat, missingId);
+    } catch (error) {
+      expect(error).toBeInstanceOf(InternalServerError);
+
+      if (error instanceof InternalServerError) {
+        expect(error.statusCode).toBe(500);
+        expect(error.message).toBe("Schema subtree root not found");
+        expect(error.details?.kind).toBe("DbCorruption");
+        expect(error.details?.entity).toBe("Schema");
+        expect(error.details?.schemaId).toBe(missingId);
+      }
+    }
   });
 });
