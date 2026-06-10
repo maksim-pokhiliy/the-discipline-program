@@ -73,7 +73,10 @@ describe("shouldBeContainer", () => {
 
   it("returns true when arrangement is non-ordered", () => {
     const container = baseContainer({
-      arrangement: { kind: "parallel", interleaveOrder: "round_by_round", tracks: [] },
+      arrangement: {
+        kind: "superset",
+        pairs: [{ label: "A", rowIds: [asNodeId("predicate-ref-1"), asNodeId("predicate-ref-2")] }],
+      },
       children: oneChild(),
     });
 
@@ -82,5 +85,16 @@ describe("shouldBeContainer", () => {
 
   it("returns true when it holds more than one child", () => {
     expect(shouldBeContainer(baseContainer({ children: twoChildren() }))).toBe(true);
+  });
+
+  it("returns true for a structurally parallel draft via the multi-child arm", () => {
+    const container = baseContainer({
+      children: [
+        baseContainer({ id: asNodeId("predicate-track-1") }),
+        baseContainer({ id: asNodeId("predicate-track-2") }),
+      ],
+    });
+
+    expect(shouldBeContainer(container)).toBe(true);
   });
 });

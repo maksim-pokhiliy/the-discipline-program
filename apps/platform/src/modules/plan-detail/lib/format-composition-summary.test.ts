@@ -71,29 +71,65 @@ describe("formatCompositionSummary arrangement labels", () => {
 
     expect(formatCompositionSummary(composition)).toEqual([{ text: "superset" }]);
   });
+});
 
-  it("folds the round-by-round interleave order into the parallel label", () => {
-    const composition: Composition = {
-      arrangement: {
-        kind: "parallel",
-        interleaveOrder: "round_by_round",
-        tracks: [{ childSchemaId: "ck1" }, { childSchemaId: "ck2" }],
-      },
-    };
-
-    expect(formatCompositionSummary(composition)).toEqual([{ text: "parallel (round by round)" }]);
+describe("formatCompositionSummary structural parallel", () => {
+  it("labels an empty composition with two container children as parallel with the default interleave order", () => {
+    expect(formatCompositionSummary({}, { containerChildCount: 2 })).toEqual([
+      { text: "parallel (round by round)" },
+    ]);
   });
 
-  it("folds the track-by-track interleave order into the parallel label", () => {
+  it("folds a stored track-by-track interleave order into the parallel label", () => {
+    const composition: Composition = { interleaveOrder: "track_by_track" };
+
+    expect(formatCompositionSummary(composition, { containerChildCount: 2 })).toEqual([
+      { text: "parallel (track by track)" },
+    ]);
+  });
+
+  it("emits the parallel part before the rest part", () => {
     const composition: Composition = {
-      arrangement: {
-        kind: "parallel",
-        interleaveOrder: "track_by_track",
-        tracks: [{ childSchemaId: "ck1" }, { childSchemaId: "ck2" }],
-      },
+      rest: { duration: { value: 60, unit: "sec" }, scope: "between_rounds" },
     };
 
-    expect(formatCompositionSummary(composition)).toEqual([{ text: "parallel (track by track)" }]);
+    expect(formatCompositionSummary(composition, { containerChildCount: 2 })).toEqual([
+      { text: "parallel (round by round)" },
+      { text: "rest 60 sec" },
+    ]);
+  });
+
+  it("does not label a single-child parent as parallel", () => {
+    expect(formatCompositionSummary({}, { containerChildCount: 1 })).toEqual([]);
+  });
+
+  it("does not label a cadence parent with children as parallel", () => {
+    const composition: Composition = { repetition: { kind: "cadence", everyMin: 1, rounds: 12 } };
+
+    expect(formatCompositionSummary(composition, { containerChildCount: 3 })).toEqual([
+      { text: "EMOM 1’×12" },
+    ]);
+  });
+
+  it("lets an explicit superset arrangement win over structure", () => {
+    const composition: Composition = {
+      arrangement: { kind: "superset", pairs: [{ label: "A", rowIds: ["ck1", "ck2"] }] },
+    };
+
+    expect(formatCompositionSummary(composition, { containerChildCount: 2 })).toEqual([
+      { text: "superset" },
+    ]);
+  });
+
+  it("ignores a stranded interleave order when the structure is not parallel", () => {
+    const composition: Composition = {
+      repetition: { kind: "count", count: 3 },
+      interleaveOrder: "track_by_track",
+    };
+
+    expect(formatCompositionSummary(composition, { containerChildCount: 1 })).toEqual([
+      { text: "3 rounds" },
+    ]);
   });
 });
 

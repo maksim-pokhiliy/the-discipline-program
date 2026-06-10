@@ -1,4 +1,12 @@
-import type { Composition, RepetitionAxis, RestAxis } from "@repo/contracts/lms/composition";
+import {
+  type Composition,
+  type CompositionLabelKind,
+  type CompositionStructure,
+  DEFAULT_INTERLEAVE_ORDER,
+  isStructurallyParallel,
+  type RepetitionAxis,
+  type RestAxis,
+} from "@repo/contracts/lms/composition";
 
 import { ARRANGEMENT_LABELS, INTERLEAVE_ORDER_LABELS } from "./compose-axis-labels";
 
@@ -6,6 +14,7 @@ const MINUTE_MARK = "’";
 const SECOND_MARK = " sec";
 const STEP_SEPARATOR = "-";
 const ORDERED = "ordered";
+const PARALLEL: CompositionLabelKind = "parallel";
 
 export type CompositionSummaryPart = { text: string };
 
@@ -43,15 +52,21 @@ const arrangementLabel = (arrangement: Composition["arrangement"]): string | nul
     return null;
   }
 
-  if (arrangement.kind === "parallel") {
-    return `${ARRANGEMENT_LABELS.parallel} (${INTERLEAVE_ORDER_LABELS[arrangement.interleaveOrder]})`;
-  }
-
   return ARRANGEMENT_LABELS.superset;
 };
 
-const buildStructuralParts = (composition: Composition): CompositionSummaryPart[] => {
+const parallelLabel = (composition: Composition): string =>
+  `${PARALLEL} (${INTERLEAVE_ORDER_LABELS[composition.interleaveOrder ?? DEFAULT_INTERLEAVE_ORDER]})`;
+
+const buildStructuralParts = (
+  composition: Composition,
+  structure?: CompositionStructure,
+): CompositionSummaryPart[] => {
   const parts: CompositionSummaryPart[] = [];
+
+  if (structure !== undefined && isStructurallyParallel(composition, structure)) {
+    parts.push({ text: parallelLabel(composition) });
+  }
 
   if (composition.repetition !== undefined) {
     parts.push({ text: repetitionLabel(composition.repetition) });
@@ -70,8 +85,12 @@ const buildStructuralParts = (composition: Composition): CompositionSummaryPart[
   return parts;
 };
 
-export const formatStructuralSummary = (composition: Composition): string[] =>
-  buildStructuralParts(composition).map((part) => part.text);
+export const formatStructuralSummary = (
+  composition: Composition,
+  structure?: CompositionStructure,
+): string[] => buildStructuralParts(composition, structure).map((part) => part.text);
 
-export const formatCompositionSummary = (composition: Composition): CompositionSummaryPart[] =>
-  buildStructuralParts(composition);
+export const formatCompositionSummary = (
+  composition: Composition,
+  structure?: CompositionStructure,
+): CompositionSummaryPart[] => buildStructuralParts(composition, structure);

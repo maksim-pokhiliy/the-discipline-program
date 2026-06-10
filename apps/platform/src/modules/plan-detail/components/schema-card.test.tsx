@@ -271,20 +271,43 @@ describe("SchemaCard composition tag", () => {
     expect(screen.getByText("ladder")).toBeInTheDocument();
   });
 
-  it("renders the 'parallel' tag for a parallel arrangement composition", () => {
+  it("renders the 'parallel' tag for an empty composition with two ladder sub-schemas", () => {
     renderSchemaCard({
       schema: makeSchema({
-        composition: {
-          arrangement: {
-            kind: "parallel",
-            interleaveOrder: "round_by_round",
-            tracks: [{ childSchemaId: SUB_SCHEMA_ID_A }, { childSchemaId: SUB_SCHEMA_ID_B }],
-          },
-        },
+        composition: {},
+        subSchemas: [
+          makeSchema({
+            id: SUB_SCHEMA_ID_A,
+            parentSchemaId: SCHEMA_ID,
+            composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+          }),
+          makeSchema({
+            id: SUB_SCHEMA_ID_B,
+            parentSchemaId: SCHEMA_ID,
+            composition: { repetition: { kind: "ladder", steps: [15, 12, 9] } },
+          }),
+        ],
       }),
     });
 
     expect(screen.getAllByText("parallel").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("parallel (round by round)")).toBeInTheDocument();
+  });
+
+  it("renders the 'cadence' tag, not 'parallel', for an EMOM parent with sub-schemas", () => {
+    renderSchemaCard({
+      schema: makeSchema({
+        composition: { repetition: { kind: "cadence", everyMin: 1, rounds: 12 } },
+        subSchemas: [
+          makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
+          makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
+        ],
+      }),
+    });
+
+    expect(screen.getByText("cadence")).toBeInTheDocument();
+    expect(screen.queryByText("parallel")).toBeNull();
+    expect(screen.getAllByText("EMOM 1’×12").length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders no composition-kind tag when composition is null", () => {

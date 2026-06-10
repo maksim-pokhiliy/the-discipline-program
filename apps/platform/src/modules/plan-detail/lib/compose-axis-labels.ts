@@ -2,7 +2,6 @@ import type { ArrangementAxis, ParallelInterleaveOrder } from "@repo/contracts/l
 
 export const ARRANGEMENT_LABELS: Record<ArrangementAxis["kind"], string> = {
   ordered: "ordered",
-  parallel: "parallel",
   superset: "superset",
 };
 

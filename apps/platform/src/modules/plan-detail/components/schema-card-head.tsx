@@ -89,7 +89,13 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
           sx={{ minWidth: 0 }}
         >
           {schema.schema.composition !== null ? (
-            <SchemaCompositionTag label={deriveCompositionLabel(schema.schema.composition).kind} />
+            <SchemaCompositionTag
+              label={
+                deriveCompositionLabel(schema.schema.composition, {
+                  containerChildCount: schema.subSchemas.length,
+                }).kind
+              }
+            />
           ) : null}
           <InlineEditText
             value={formatSchemaHeader(schema)}
