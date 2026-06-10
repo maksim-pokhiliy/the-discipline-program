@@ -4,9 +4,10 @@ import {
   type CreateSchemaData,
   type ReorderSchemasData,
   type Schema,
+  type SchemaWithBody,
   type UpdateSchemaData,
 } from "@repo/contracts/lms/schema";
-import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
+import { BadRequestError, NotFoundError } from "@repo/errors";
 
 import {
   verifyBlockOwnership,
@@ -18,8 +19,14 @@ import { mapToSchema } from "../../../mappers/lms";
 import { handlePrismaError, marshalNullableJson, retryOnP2034 } from "../../../utils";
 
 import { assertCompositionUpdateValid } from "./assertions";
-
-type CreateScope = { blockId: string } | { parentSchemaId: string };
+import {
+  assertPlanWritable,
+  type CreateScope,
+  materializeParallelTree,
+  nextOrderInScope,
+  type ParallelSchemasBodyData,
+  resolveStorageScope,
+} from "./create-steps";
 
 type SchemaBodyData = Omit<CreateSchemaData, "blockId" | "parentSchemaId">;
 
@@ -50,78 +57,15 @@ export const lmsSchemaApi = {
       const created = await retryOnP2034(() =>
         prisma.$transaction(
           async (tx) => {
-            const planCheck = await tx.trainingPlan.findUnique({
-              where: { id: planId },
-              select: { deletedAt: true, status: true },
-            });
+            await assertPlanWritable(tx, planId);
 
-            if (!planCheck || planCheck.deletedAt !== null) {
-              throw new NotFoundError("Training plan not found", { planId });
-            }
-
-            if (planCheck.status === "ARCHIVED") {
-              throw new ForbiddenError("Plan is archived; edits not allowed");
-            }
-
-            let storageBlockId: string;
-            let storageParentSchemaId: string | null;
-
-            if ("blockId" in scope) {
-              const blockCheck = await tx.block.findUnique({
-                where: { id: scope.blockId },
-                select: {
-                  id: true,
-                  session: { select: { day: { select: { week: { select: { planId: true } } } } } },
-                },
-              });
-
-              if (!blockCheck || blockCheck.session.day.week.planId !== planId) {
-                throw new NotFoundError("Block not found", { blockId: scope.blockId, planId });
-              }
-
-              storageBlockId = scope.blockId;
-              storageParentSchemaId = null;
-            } else {
-              const parent = await tx.schema.findUnique({
-                where: { id: scope.parentSchemaId },
-                select: {
-                  id: true,
-                  blockId: true,
-                  block: {
-                    select: {
-                      session: {
-                        select: { day: { select: { week: { select: { planId: true } } } } },
-                      },
-                    },
-                  },
-                },
-              });
-
-              if (!parent || parent.block.session.day.week.planId !== planId) {
-                throw new NotFoundError("Parent schema not found", {
-                  parentSchemaId: scope.parentSchemaId,
-                  planId,
-                });
-              }
-
-              storageBlockId = parent.blockId;
-              storageParentSchemaId = scope.parentSchemaId;
-            }
-
-            const max = await tx.schema.aggregate({
-              where: {
-                blockId: storageBlockId,
-                parentSchemaId: storageParentSchemaId,
-              },
-              _max: { order: true },
-            });
-
-            const nextOrder = (max._max.order ?? 0) + 10;
+            const storage = await resolveStorageScope(tx, planId, scope);
+            const nextOrder = await nextOrderInScope(tx, storage);
 
             const created = await tx.schema.create({
               data: {
-                blockId: storageBlockId,
-                parentSchemaId: storageParentSchemaId,
+                blockId: storage.blockId,
+                parentSchemaId: storage.parentSchemaId,
                 order: nextOrder,
                 header: data.header ?? null,
                 intensity: marshalNullableJson(data.intensity),
@@ -141,6 +85,37 @@ export const lmsSchemaApi = {
       );
 
       return mapToSchema(created);
+    } catch (error) {
+      return handlePrismaError(error, { entity: "Schema" });
+    }
+  },
+
+  createParallel: async (
+    userId: string,
+    planId: string,
+    scope: CreateScope,
+    data: ParallelSchemasBodyData,
+  ): Promise<SchemaWithBody> => {
+    const owner =
+      "blockId" in scope
+        ? await verifyBlockOwnership(scope.blockId, userId)
+        : await verifySchemaOwnership(scope.parentSchemaId, userId);
+
+    if (owner.planId !== planId) {
+      throw new NotFoundError("Scope target not found in plan", {
+        planId,
+        scope,
+      });
+    }
+
+    verifyPlanEditable(owner);
+
+    try {
+      return await retryOnP2034(() =>
+        prisma.$transaction((tx) => materializeParallelTree(tx, planId, scope, data), {
+          isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+        }),
+      );
     } catch (error) {
       return handlePrismaError(error, { entity: "Schema" });
     }
