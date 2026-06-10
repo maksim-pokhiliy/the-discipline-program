@@ -1,26 +1,13 @@
 import { type ArrangementAxis, type Composition } from "@repo/contracts/lms/composition";
 import { BadRequestError, NotFoundError } from "@repo/errors";
 
-import { assertComposeTreeValidForWrite, buildSchemaWithBody } from "../../../mappers/lms";
+import { assertComposeTreeValidForWrite, buildSchemaSubtree } from "../../../mappers/lms";
 import { type TxClient } from "../_shared";
 
 export const assertArrangementRefsInScope = (
   arrangement: ArrangementAxis,
-  directSchemaIds: ReadonlySet<string>,
   directRowIds: ReadonlySet<string>,
 ): void => {
-  if (arrangement.kind === "parallel") {
-    for (const track of arrangement.tracks) {
-      if (!directSchemaIds.has(track.childSchemaId)) {
-        throw new BadRequestError("arrangement track childSchemaId is not a child of this schema", {
-          childSchemaId: track.childSchemaId,
-        });
-      }
-    }
-
-    return;
-  }
-
   if (arrangement.kind === "superset") {
     for (const pair of arrangement.pairs) {
       for (const rowId of pair.rowIds) {
@@ -41,20 +28,18 @@ export const assertCompositionUpdateValid = async (
 ): Promise<void> => {
   const current = await client.schema.findUnique({
     where: { id: schemaId },
-    include: {
-      rows: { orderBy: { order: "asc" } },
-      subSchemas: {
-        orderBy: { order: "asc" },
-        include: { rows: { orderBy: { order: "asc" } } },
-      },
-    },
+    select: { id: true, blockId: true },
   });
 
   if (!current) {
     throw new NotFoundError("Schema not found", { schemaId });
   }
 
-  const node = buildSchemaWithBody(current);
+  const flat = await client.schema.findMany({
+    where: { blockId: current.blockId },
+    include: { rows: { orderBy: { order: "asc" } } },
+  });
+  const node = buildSchemaSubtree(flat, schemaId);
 
   assertComposeTreeValidForWrite({
     ...node,
@@ -64,9 +49,8 @@ export const assertCompositionUpdateValid = async (
   const arrangement = nextComposition?.arrangement;
 
   if (arrangement !== undefined && arrangement.kind !== "ordered") {
-    const directSchemaIds = new Set(current.subSchemas.map((sub) => sub.id));
-    const directRowIds = new Set(current.rows.map((row) => row.id));
+    const directRowIds = new Set(node.rows.map((row) => row.id));
 
-    assertArrangementRefsInScope(arrangement, directSchemaIds, directRowIds);
+    assertArrangementRefsInScope(arrangement, directRowIds);
   }
 };

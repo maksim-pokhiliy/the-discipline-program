@@ -6,7 +6,7 @@ import {
   type SchemaRow,
   type UpdateSchemaRowData,
 } from "@repo/contracts/lms/schema-row";
-import { BadRequestError, ForbiddenError, InternalServerError, NotFoundError } from "@repo/errors";
+import { BadRequestError, ForbiddenError, NotFoundError } from "@repo/errors";
 
 import {
   verifyPlanEditable,
@@ -16,7 +16,7 @@ import {
 import { prisma } from "../../../db/client";
 import {
   assertComposeTreeValidForWrite,
-  buildSchemaWithBody,
+  buildSchemaSubtree,
   mapToSchemaRow,
 } from "../../../mappers/lms";
 import { handlePrismaError, marshalNullableJson, retryOnP2034, toInputJson } from "../../../utils";
@@ -58,6 +58,7 @@ export const lmsSchemaRowApi = {
               where: { id: data.schemaId },
               select: {
                 id: true,
+                blockId: true,
                 block: {
                   select: {
                     session: {
@@ -100,26 +101,12 @@ export const lmsSchemaRowApi = {
               },
             });
 
-            const full = await tx.schema.findUnique({
-              where: { id: data.schemaId },
-              include: {
-                rows: { orderBy: { order: "asc" } },
-                subSchemas: {
-                  orderBy: { order: "asc" },
-                  include: { rows: { orderBy: { order: "asc" } } },
-                },
-              },
+            const flat = await tx.schema.findMany({
+              where: { blockId: parent.blockId },
+              include: { rows: { orderBy: { order: "asc" } } },
             });
 
-            if (full === null) {
-              throw new InternalServerError("Parent schema vanished mid-transaction", {
-                kind: "DbCorruption",
-                entity: "Schema",
-                schemaId: data.schemaId,
-              });
-            }
-
-            assertComposeTreeValidForWrite(buildSchemaWithBody(full));
+            assertComposeTreeValidForWrite(buildSchemaSubtree(flat, data.schemaId));
 
             return createdRow;
           },
@@ -156,17 +143,7 @@ export const lmsSchemaRowApi = {
 
       const current = await prisma.schemaRow.findUnique({
         where: { id: schemaRowId },
-        include: {
-          schema: {
-            include: {
-              rows: { orderBy: { order: "asc" } },
-              subSchemas: {
-                orderBy: { order: "asc" },
-                include: { rows: { orderBy: { order: "asc" } } },
-              },
-            },
-          },
-        },
+        select: { rowKind: true, schema: { select: { id: true, blockId: true } } },
       });
 
       if (!current) {
@@ -175,7 +152,11 @@ export const lmsSchemaRowApi = {
 
       assertRowKindPayloadAlignment(current.rowKind, nextRowPayload.rowKind);
 
-      const node = buildSchemaWithBody(current.schema);
+      const flat = await prisma.schema.findMany({
+        where: { blockId: current.schema.blockId },
+        include: { rows: { orderBy: { order: "asc" } } },
+      });
+      const node = buildSchemaSubtree(flat, current.schema.id);
 
       assertComposeTreeValidForWrite({
         ...node,
