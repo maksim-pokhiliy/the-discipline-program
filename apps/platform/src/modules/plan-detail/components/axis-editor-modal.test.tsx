@@ -1,6 +1,7 @@
 import { fireEvent, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { Composition } from "@repo/contracts/lms/composition";
 import { SCHEMA_CONSTANTS, type SchemaWithBody } from "@repo/contracts/lms/schema";
 import type { SchemaRow } from "@repo/contracts/lms/schema-row";
 
@@ -8,15 +9,17 @@ import type * as Hooks from "@app/lib/hooks";
 import { render } from "@app/test/render";
 
 import { collectTrackChildren } from "../lib/arrangement-tree";
+import type { UseCreateParallelSchemasResult } from "../lib/use-create-parallel-schemas";
 
 import type { ComposeContainer } from "./axes/axis-draft.types";
 
-type ParallelRunArgs = { blockId: string; parentSchemaId?: string; draft: ComposeContainer };
-type ParallelRunOptions = { onSuccess: () => void; onError: (message: string) => void };
+type ParallelRun = UseCreateParallelSchemasResult["run"];
+type ParallelRunArgs = Parameters<ParallelRun>[0];
+type ParallelRunOptions = Parameters<ParallelRun>[1];
 
 const createSchemaMutate = vi.fn();
 const updateSchemaMutate = vi.fn();
-const parallelRun = vi.fn<(args: ParallelRunArgs, opts: ParallelRunOptions) => Promise<void>>();
+const parallelRun = vi.fn<ParallelRun>();
 const createSchemaState = { isPending: false };
 const updateSchemaState = { isPending: false };
 const parallelState = { isPending: false };
@@ -76,6 +79,14 @@ const makeSchema = (overrides: Partial<SchemaWithBody["schema"]> = {}): SchemaWi
   },
   rows: [],
   subSchemas: [],
+});
+
+const makeStructurallyParallelSchema = (composition: Composition = {}): SchemaWithBody => ({
+  ...makeSchema({ composition }),
+  subSchemas: [
+    makeSchema({ id: SUB_SCHEMA_ID, parentSchemaId: SCHEMA_ID, header: "Track A" }),
+    makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID, header: "Track B" }),
+  ],
 });
 
 const makeMarkerRow = (): SchemaRow => ({
@@ -271,36 +282,24 @@ describe("AxisEditorModal edit mode", () => {
   });
 });
 
-describe("AxisEditorModal edit-on-children arrangement fold (REV-003)", () => {
-  const parallelSeedSchema = (): SchemaWithBody => {
-    const top = makeSchema({ composition: { repetition: { kind: "count", count: 4 } } });
+describe("AxisEditorModal structurally-parallel edit (REV-003)", () => {
+  it("shows the parallel derived label for a structurally-parallel schema", () => {
+    renderEdit(makeStructurallyParallelSchema());
 
-    return {
-      ...top,
-      subSchemas: [
-        makeSchema({ id: SUB_SCHEMA_ID, parentSchemaId: SCHEMA_ID, header: "Track A" }),
-        makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID, header: "Track B" }),
-      ],
-    };
-  };
+    expect(screen.getByText("parallel")).toBeInTheDocument();
+  });
 
-  it("folds two sub-schemas into a valid parallel arrangement on submit", () => {
-    renderEdit(parallelSeedSchema());
+  it("writes interleaveOrder on Save when the interleave toggle flips", () => {
+    renderEdit(makeStructurallyParallelSchema());
 
-    toggleGroup("arrangement", "parallel");
-    fireEvent.click(screen.getByRole("switch", { name: "track · Track A" }));
-    fireEvent.click(screen.getByRole("switch", { name: "track · Track B" }));
+    toggleGroup("interleave", "track by track");
     submitEdit();
 
     expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
-
-    const arrangement = updateSchemaMutate.mock.calls[0]?.[0]?.data?.composition?.arrangement;
-
-    expect(arrangement?.kind).toBe("parallel");
-    expect(arrangement?.tracks).toHaveLength(2);
-    expect(
-      arrangement?.tracks?.map((track: { childSchemaId: string }) => track.childSchemaId),
-    ).toEqual([SUB_SCHEMA_ID, SUB_SCHEMA_ID_B]);
+    expect(updateSchemaMutate.mock.calls[0]?.[0]).toStrictEqual({
+      schemaId: SCHEMA_ID,
+      data: { composition: { interleaveOrder: "track_by_track" }, header: null },
+    });
   });
 });
 
@@ -366,28 +365,7 @@ describe("AxisEditorModal header length cap (QA-204)", () => {
   });
 });
 
-describe("AxisEditorModal stored arrangement survives open then Save (QA-Must-5)", () => {
-  const parallelStoredSchema = (): SchemaWithBody => {
-    const top = makeSchema({
-      composition: {
-        repetition: { kind: "count", count: 4 },
-        arrangement: {
-          kind: "parallel",
-          interleaveOrder: "round_by_round",
-          tracks: [{ childSchemaId: SUB_SCHEMA_ID }, { childSchemaId: SUB_SCHEMA_ID_B }],
-        },
-      },
-    });
-
-    return {
-      ...top,
-      subSchemas: [
-        makeSchema({ id: SUB_SCHEMA_ID, parentSchemaId: SCHEMA_ID }),
-        makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
-      ],
-    };
-  };
-
+describe("AxisEditorModal stored composition survives open then Save (QA-Must-5)", () => {
   const supersetStoredSchema = (): SchemaWithBody => {
     const rowA = "clp9z8x7w0000abcd1234rowa1";
     const rowB = "clp9z8x7w0000abcd1234rowb1";
@@ -416,16 +394,26 @@ describe("AxisEditorModal stored arrangement survives open then Save (QA-Must-5)
     };
   };
 
-  it("re-emits the stored parallel arrangement byte-for-byte with no edit", () => {
-    const stored = parallelStoredSchema();
-
-    renderEdit(stored);
+  it("re-emits the empty structural-parallel composition byte-for-byte with no children in the payload", () => {
+    renderEdit(makeStructurallyParallelSchema());
     submitEdit();
 
     expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
-    expect(updateSchemaMutate.mock.calls[0]?.[0]?.data?.composition?.arrangement).toEqual(
-      stored.schema.composition?.arrangement,
-    );
+    expect(updateSchemaMutate.mock.calls[0]?.[0]).toStrictEqual({
+      schemaId: SCHEMA_ID,
+      data: { composition: {}, header: null },
+    });
+  });
+
+  it("re-emits an explicit stored interleaveOrder byte-for-byte with no edit", () => {
+    renderEdit(makeStructurallyParallelSchema({ interleaveOrder: "track_by_track" }));
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate.mock.calls[0]?.[0]).toStrictEqual({
+      schemaId: SCHEMA_ID,
+      data: { composition: { interleaveOrder: "track_by_track" }, header: null },
+    });
   });
 
   it("re-emits the stored superset arrangement byte-for-byte with no edit", () => {
@@ -541,7 +529,7 @@ describe("AxisEditorModal parallel-submit integration (REV-W1)", () => {
   const ladderKinds = (draft: ComposeContainer): Array<string | undefined> =>
     collectTrackChildren(draft).map((track) => track.repetition?.kind);
 
-  it("fires the sequencer once with a two-track ladder draft and skips the flat create (#2)", () => {
+  it("fires the parallel-create request once with a two-track ladder draft and skips the flat create (#2)", () => {
     renderCreate();
 
     buildParallel();
@@ -556,7 +544,7 @@ describe("AxisEditorModal parallel-submit integration (REV-W1)", () => {
     expect(createSchemaMutate).not.toHaveBeenCalled();
   });
 
-  it("threads an edited second-track step into the sequencer draft (#2 edit)", () => {
+  it("threads an edited second-track step into the parallel-create draft (#2 edit)", () => {
     renderCreate();
 
     buildParallel();
@@ -572,7 +560,7 @@ describe("AxisEditorModal parallel-submit integration (REV-W1)", () => {
     });
   });
 
-  it("submits a single ladder through the flat create and never calls the sequencer (#7)", () => {
+  it("submits a single ladder through the flat create and never calls the parallel create (#7)", () => {
     renderCreate();
 
     selectRepetition("Ladder");
@@ -588,7 +576,7 @@ describe("AxisEditorModal parallel-submit integration (REV-W1)", () => {
     expect(parallelRun).not.toHaveBeenCalled();
   });
 
-  it("surfaces a per-track validation error from the sequencer in the modal Alert (#8)", () => {
+  it("surfaces a per-track validation error from the parallel create in the modal Alert (#8)", () => {
     parallelRun.mockImplementationOnce((_args, options) => {
       options.onError("ladder 2: step values must be positive");
 
@@ -606,7 +594,7 @@ describe("AxisEditorModal parallel-submit integration (REV-W1)", () => {
     expect(screen.getByRole("button", { name: "Add schema" })).toBeEnabled();
   });
 
-  it("surfaces a mid-sequence failure, keeps the modal open and re-enables submit (#9)", () => {
+  it("surfaces a request failure, keeps the modal open and re-enables submit (#9)", () => {
     const onClose = vi.fn();
 
     parallelRun.mockImplementationOnce((_args, options) => {
@@ -634,7 +622,7 @@ describe("AxisEditorModal parallel-submit integration (REV-W1)", () => {
     expect(screen.getByRole("button", { name: "Add schema" })).toBeEnabled();
   });
 
-  it("forwards an incoming parentSchemaId to the sequencer for a sub-schema parallel (#11)", () => {
+  it("forwards an incoming parentSchemaId to the parallel create for a sub-schema parallel (#11)", () => {
     renderCreateSub(SUB_SCHEMA_ID);
 
     buildParallel();
@@ -644,7 +632,7 @@ describe("AxisEditorModal parallel-submit integration (REV-W1)", () => {
     expect(capturedParallelArgs().parentSchemaId).toBe(SUB_SCHEMA_ID);
   });
 
-  it("calls the sequencer once for a synchronous double-click on a parallel draft", () => {
+  it("calls the parallel create once for a synchronous double-click on a parallel draft", () => {
     renderCreate();
 
     buildParallel();
@@ -654,7 +642,7 @@ describe("AxisEditorModal parallel-submit integration (REV-W1)", () => {
     expect(parallelRun).toHaveBeenCalledTimes(1);
   });
 
-  it("re-enables submit after a sequencer success so a follow-up create can fire", () => {
+  it("re-enables submit after a parallel-create success so a follow-up create can fire", () => {
     parallelRun.mockImplementationOnce((_args, options) => {
       options.onSuccess();
 
