@@ -41,6 +41,7 @@ type SchemaCardHeadProps = {
   onTitleCommit: (next: string) => void;
   onDeleteOpen: () => void;
   onEditOpen: () => void;
+  isBoxed?: boolean;
 };
 
 export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
@@ -52,6 +53,7 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
   onTitleCommit,
   onDeleteOpen,
   onEditOpen,
+  isBoxed = false,
 }): ReactElement => {
   return (
     <Stack
@@ -80,33 +82,35 @@ export const SchemaCardHead: React.FC<SchemaCardHeadProps> = ({
       </IconButton>
 
       <Stack direction="column" spacing={INFO_SPACING} sx={{ flex: 1, minWidth: 0 }}>
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={TITLE_ROW_SPACING}
-          useFlexGap
-          flexWrap="wrap"
-          sx={{ minWidth: 0 }}
-        >
-          {schema.schema.composition !== null ? (
-            <SchemaCompositionTag
-              label={
-                deriveCompositionLabel(schema.schema.composition, {
-                  containerChildCount: schema.subSchemas.length,
-                }).kind
-              }
+        {!isBoxed ? (
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={TITLE_ROW_SPACING}
+            useFlexGap
+            flexWrap="wrap"
+            sx={{ minWidth: 0 }}
+          >
+            {schema.schema.composition !== null ? (
+              <SchemaCompositionTag
+                label={
+                  deriveCompositionLabel(schema.schema.composition, {
+                    containerChildCount: schema.subSchemas.length,
+                  }).kind
+                }
+              />
+            ) : null}
+            <InlineEditText
+              value={formatSchemaHeader(schema)}
+              onCommit={onTitleCommit}
+              variant="h4"
+              ariaLabel={TITLE_ARIA}
+              emptyIsValid
+              maxLength={SCHEMA_CONSTANTS.MAX_HEADER_LENGTH}
+              sx={{ flex: 1, minWidth: 0 }}
             />
-          ) : null}
-          <InlineEditText
-            value={formatSchemaHeader(schema)}
-            onCommit={onTitleCommit}
-            variant="h4"
-            ariaLabel={TITLE_ARIA}
-            emptyIsValid
-            maxLength={SCHEMA_CONSTANTS.MAX_HEADER_LENGTH}
-            sx={{ flex: 1, minWidth: 0 }}
-          />
-        </Stack>
+          </Stack>
+        ) : null}
         <SchemaCardMeta schema={schema} blockCtx={blockCtx} />
       </Stack>
 
