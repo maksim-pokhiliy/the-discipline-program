@@ -41,8 +41,12 @@ const foldArrangement = (
   | { ok: false; issues: ConvertIssue[] } => {
   const arrangement: ArrangementAxis | undefined = draft.arrangement;
 
-  if (arrangement === undefined || arrangement.kind === "ordered") {
+  if (arrangement === undefined) {
     return { ok: true, arrangement: undefined };
+  }
+
+  if (arrangement.kind === "ordered") {
+    return { ok: true, arrangement: { kind: "ordered" } };
   }
 
   const issues: ConvertIssue[] = [];

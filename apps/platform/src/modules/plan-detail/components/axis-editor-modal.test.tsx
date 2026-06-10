@@ -427,6 +427,56 @@ describe("AxisEditorModal stored composition survives open then Save (QA-Must-5)
       stored.schema.composition?.arrangement,
     );
   });
+
+  it("re-emits a stored explicit ordered arrangement byte-for-byte with no edit", () => {
+    renderEdit(makeStructurallyParallelSchema({ arrangement: { kind: "ordered" } }));
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate.mock.calls[0]?.[0]).toStrictEqual({
+      schemaId: SCHEMA_ID,
+      data: { composition: { arrangement: { kind: "ordered" } }, header: null },
+    });
+  });
+});
+
+describe("AxisEditorModal ordered escape hatch (REV-S2-W2)", () => {
+  const supersetSeedSchema = (): SchemaWithBody =>
+    makeSchema({
+      composition: { arrangement: { kind: "superset", pairs: [{ label: "A1", rowIds: [] }] } },
+    });
+
+  it("keeps a multi-child parent with stored ordered suppressed instead of parallel", () => {
+    renderEdit(makeStructurallyParallelSchema({ arrangement: { kind: "ordered" } }));
+
+    expect(screen.queryByText("parallel")).toBeNull();
+    expect(screen.getByRole("group", { name: "arrangement" })).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "interleave" })).toBeNull();
+  });
+
+  it("persists ordered selected in the edit UI in place of a stored superset", () => {
+    renderEdit(supersetSeedSchema());
+
+    toggleGroup("arrangement", "ordered");
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate.mock.calls[0]?.[0]).toStrictEqual({
+      schemaId: SCHEMA_ID,
+      data: { composition: { arrangement: { kind: "ordered" } }, header: null },
+    });
+  });
+
+  it("emits no arrangement for an untouched container that never stored one", () => {
+    renderEdit(makeSchema({ composition: { repetition: { kind: "count", count: 4 } } }));
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate.mock.calls[0]?.[0]).toStrictEqual({
+      schemaId: SCHEMA_ID,
+      data: { composition: { repetition: { kind: "count", count: 4 } }, header: null },
+    });
+  });
 });
 
 describe("AxisEditorModal mutation error surfacing (QA-Must-8)", () => {
