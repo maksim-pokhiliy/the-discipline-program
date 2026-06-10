@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 
-import { countSchema, countStructurallyParallelParents } from "./shared";
+import { countSchema, countStructurallyParallelParents, STRUCTURAL_PARALLEL_FLOOR } from "./shared";
 import { type CoverageCell } from "./types";
 
 const COMPOSITION_PRESENT_FLOOR = 40;
@@ -33,8 +33,8 @@ const STRUCTURAL_PARALLEL_CELL: CoverageCell = {
   id: "structural.parallel",
   category: "composition",
   label:
-    "Parent schema with ≥2 sub-schemas and neither repetition nor arrangement (derived parallel)",
-  required: 1,
+    "Parent schema with ≥2 sub-schemas, repetition absent or once, no arrangement (derived parallel)",
+  required: STRUCTURAL_PARALLEL_FLOOR,
   sourceRef: "compose-authoring-ux DR-S2-1",
   tally: countStructurallyParallelParents,
 };

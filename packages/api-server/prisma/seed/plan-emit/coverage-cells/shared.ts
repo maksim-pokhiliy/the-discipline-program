@@ -69,11 +69,20 @@ export const countDay = async (
     where: { ...dayWhere(planId), ...extra },
   });
 
-const isDerivedParallelComposition = (composition: Prisma.JsonValue): boolean =>
+export const STRUCTURAL_PARALLEL_FLOOR = 4;
+
+const isRepetitionAbsentOrOnce = (repetition: Prisma.JsonValue | undefined): boolean =>
+  repetition === undefined ||
+  (repetition !== null &&
+    typeof repetition === "object" &&
+    !Array.isArray(repetition) &&
+    repetition.kind === "once");
+
+export const isDerivedParallelComposition = (composition: Prisma.JsonValue): boolean =>
   composition !== null &&
   typeof composition === "object" &&
   !Array.isArray(composition) &&
-  !("repetition" in composition) &&
+  isRepetitionAbsentOrOnce(composition.repetition) &&
   !("arrangement" in composition);
 
 export const countStructurallyParallelParents = async (

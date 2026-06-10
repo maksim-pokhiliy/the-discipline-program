@@ -6,6 +6,7 @@ import {
   countSchema,
   countSession,
   countStructurallyParallelParents,
+  STRUCTURAL_PARALLEL_FLOOR,
 } from "./shared";
 import { type CoverageCell } from "./types";
 
@@ -123,8 +124,8 @@ const ENTITY_INVARIANT_CELLS: readonly CoverageCell[] = [
   {
     id: "entity.alternatingGroup",
     category: "entity-invariants",
-    label: "Alternating-group schema: ≥2 sub-schemas, neither repetition nor arrangement",
-    required: 2,
+    label: "Alternating-group schema: ≥2 sub-schemas, repetition absent or once, no arrangement",
+    required: STRUCTURAL_PARALLEL_FLOOR,
     sourceRef: "coverage-matrix §2 alternating-group presence",
     tally: countStructurallyParallelParents,
   },

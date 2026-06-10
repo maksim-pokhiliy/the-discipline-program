@@ -1,7 +1,13 @@
 import { type PrismaClient as PrismaClientType, Prisma, PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { COVERAGE_CELLS, tallyCoverage } from "../../prisma/seed/plan-emit";
+import { compositionSchema, isStructurallyParallel } from "@repo/contracts/lms/composition";
+
+import {
+  COVERAGE_CELLS,
+  isDerivedParallelComposition,
+  tallyCoverage,
+} from "../../prisma/seed/plan-emit";
 import { lmsWeekApi } from "../endpoints/lms/week/admin";
 
 import {
@@ -37,7 +43,7 @@ const MEDIA_POSITIONS = ["inline", "standalone_row", "bare"] as const;
 const MEDIA_APPLIES_TO = ["previous_row", "current_row", "whole_schema", "drop_stage"] as const;
 const COMPOSITION_REPETITION_KINDS = ["count", "ladder", "timeCap", "cadence", "interval"] as const;
 const COMPOSITION_ARRANGEMENT_KINDS = ["ordered", "superset"] as const;
-const EXPECTED_STRUCTURAL_PARALLEL_MIN = 2;
+const EXPECTED_STRUCTURAL_PARALLEL_COUNT = 4;
 
 describe("Seed coverage — synthetic canonical Demo Plan", () => {
   const db: PrismaClientType = new PrismaClient();
@@ -196,42 +202,53 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     expect(implicitBlocks).toBeGreaterThanOrEqual(1);
   });
 
-  it("structural parallel: ≥2 parents with ≥2 sub-schemas and neither repetition nor arrangement; cells mirror the direct count (DR-S2-1)", async () => {
+  it("structural parallel: seed helper agrees with the contracts predicate on every parent; canonical count pinned; cells mirror it (QA-303, DR-S2-1)", async () => {
     const grouped = await db.schema.groupBy({
       by: ["parentSchemaId"],
       where: { ...scopes.schemaScope, parentSchemaId: { not: null } },
       _count: { parentSchemaId: true },
     });
 
-    const parentIds = grouped.flatMap((group) =>
-      group.parentSchemaId !== null && group._count.parentSchemaId >= 2
-        ? [group.parentSchemaId]
-        : [],
-    );
+    const childCounts = new Map<string, number>();
+
+    for (const group of grouped) {
+      if (group.parentSchemaId !== null) {
+        childCounts.set(group.parentSchemaId, group._count.parentSchemaId);
+      }
+    }
 
     const parents = await db.schema.findMany({
-      where: { ...scopes.schemaScope, id: { in: parentIds } },
-      select: { composition: true },
+      where: { ...scopes.schemaScope, id: { in: [...childCounts.keys()] } },
+      select: { id: true, composition: true },
     });
 
-    const structurallyParallel = parents.filter(
-      (parent) =>
-        parent.composition !== null &&
-        typeof parent.composition === "object" &&
-        !Array.isArray(parent.composition) &&
-        !("repetition" in parent.composition) &&
-        !("arrangement" in parent.composition),
-    ).length;
+    expect(parents.length).toBeGreaterThan(0);
 
-    expect(structurallyParallel).toBeGreaterThanOrEqual(EXPECTED_STRUCTURAL_PARALLEL_MIN);
+    const verdicts = parents.map((parent) => {
+      const containerChildCount = childCounts.get(parent.id) ?? 0;
+
+      return {
+        id: parent.id,
+        seed: containerChildCount >= 2 && isDerivedParallelComposition(parent.composition),
+        contracts: isStructurallyParallel(compositionSchema.parse(parent.composition), {
+          containerChildCount,
+        }),
+      };
+    });
+
+    expect(verdicts.filter((v) => v.seed !== v.contracts).map((v) => v.id)).toEqual([]);
+
+    const contractsParallelCount = verdicts.filter((v) => v.contracts).length;
+
+    expect(contractsParallelCount).toBe(EXPECTED_STRUCTURAL_PARALLEL_COUNT);
 
     const report = await tallyCoverage(db, demoPlanId);
     const structuralCell = report.cells.find((c) => c.cell.id === "structural.parallel");
     const alternatingCell = report.cells.find((c) => c.cell.id === "entity.alternatingGroup");
 
-    expect(structuralCell?.count).toBe(structurallyParallel);
+    expect(structuralCell?.count).toBe(contractsParallelCount);
     expect(structuralCell?.satisfied).toBe(true);
-    expect(alternatingCell?.count).toBe(structurallyParallel);
+    expect(alternatingCell?.count).toBe(contractsParallelCount);
     expect(alternatingCell?.satisfied).toBe(true);
   });
 

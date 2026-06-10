@@ -4,6 +4,7 @@ import {
   type CompositionLabelKind,
   compositionLabelSchema,
   deriveCompositionLabel,
+  isStructurallyParallel,
 } from "./composition-label";
 import { REPETITION_AXIS_KINDS } from "./composition.constants";
 import { compositionSchema } from "./composition.schema";
@@ -181,6 +182,30 @@ describe("deriveCompositionLabel — canonical compositions", () => {
   });
 });
 
+describe("isStructurallyParallel — once counts as repetition absence (QA-301)", () => {
+  it("keeps a structurally parallel parent parallel after repetition once is written onto it", () => {
+    const toggledBackToOnce = parsedComposition({ repetition: { kind: "once" } });
+    const structure = { containerChildCount: 2 };
+
+    expect(isStructurallyParallel(toggledBackToOnce, structure)).toBe(true);
+    expect(deriveCompositionLabel(toggledBackToOnce, structure)).toEqual({
+      kind: "parallel",
+      family: "PARALLEL",
+    });
+  });
+
+  it("still suppresses parallel when repetition carries semantics (count)", () => {
+    const counted = parsedComposition({ repetition: { kind: "count", count: 3 } });
+    const structure = { containerChildCount: 2 };
+
+    expect(isStructurallyParallel(counted, structure)).toBe(false);
+    expect(deriveCompositionLabel(counted, structure)).toEqual({
+      kind: "rounds",
+      family: "ROUNDS",
+    });
+  });
+});
+
 const cuidPairA = "clz0000000000000000pairaaa";
 const cuidPairB = "clz0000000000000000pairbbb";
 
@@ -233,8 +258,9 @@ describe("deriveCompositionLabel — totality across every axis combination", ()
   }
 });
 
-const MATRIX_REPETITIONS: Record<"present" | "absent", RepetitionAxis | undefined> = {
-  present: repetitionAxisOf("cadence"),
+const MATRIX_REPETITIONS: Record<"cadence" | "once" | "absent", RepetitionAxis | undefined> = {
+  cadence: repetitionAxisOf("cadence"),
+  once: repetitionAxisOf("once"),
   absent: undefined,
 };
 
@@ -261,16 +287,24 @@ const PREDICATE_MATRIX: ReadonlyArray<PredicateMatrixCase> = [
     arrangement: "superset",
     expectedKind: "superset",
   },
-  { containerChildCount: 0, repetition: "present", arrangement: "absent", expectedKind: "cadence" },
+  { containerChildCount: 0, repetition: "once", arrangement: "absent", expectedKind: "flat" },
+  { containerChildCount: 0, repetition: "once", arrangement: "ordered", expectedKind: "flat" },
   {
     containerChildCount: 0,
-    repetition: "present",
+    repetition: "once",
+    arrangement: "superset",
+    expectedKind: "superset",
+  },
+  { containerChildCount: 0, repetition: "cadence", arrangement: "absent", expectedKind: "cadence" },
+  {
+    containerChildCount: 0,
+    repetition: "cadence",
     arrangement: "ordered",
     expectedKind: "cadence",
   },
   {
     containerChildCount: 0,
-    repetition: "present",
+    repetition: "cadence",
     arrangement: "superset",
     expectedKind: "superset",
   },
@@ -282,16 +316,24 @@ const PREDICATE_MATRIX: ReadonlyArray<PredicateMatrixCase> = [
     arrangement: "superset",
     expectedKind: "superset",
   },
-  { containerChildCount: 1, repetition: "present", arrangement: "absent", expectedKind: "cadence" },
+  { containerChildCount: 1, repetition: "once", arrangement: "absent", expectedKind: "flat" },
+  { containerChildCount: 1, repetition: "once", arrangement: "ordered", expectedKind: "flat" },
   {
     containerChildCount: 1,
-    repetition: "present",
+    repetition: "once",
+    arrangement: "superset",
+    expectedKind: "superset",
+  },
+  { containerChildCount: 1, repetition: "cadence", arrangement: "absent", expectedKind: "cadence" },
+  {
+    containerChildCount: 1,
+    repetition: "cadence",
     arrangement: "ordered",
     expectedKind: "cadence",
   },
   {
     containerChildCount: 1,
-    repetition: "present",
+    repetition: "cadence",
     arrangement: "superset",
     expectedKind: "superset",
   },
@@ -303,16 +345,24 @@ const PREDICATE_MATRIX: ReadonlyArray<PredicateMatrixCase> = [
     arrangement: "superset",
     expectedKind: "superset",
   },
-  { containerChildCount: 2, repetition: "present", arrangement: "absent", expectedKind: "cadence" },
+  { containerChildCount: 2, repetition: "once", arrangement: "absent", expectedKind: "parallel" },
+  { containerChildCount: 2, repetition: "once", arrangement: "ordered", expectedKind: "flat" },
   {
     containerChildCount: 2,
-    repetition: "present",
+    repetition: "once",
+    arrangement: "superset",
+    expectedKind: "superset",
+  },
+  { containerChildCount: 2, repetition: "cadence", arrangement: "absent", expectedKind: "cadence" },
+  {
+    containerChildCount: 2,
+    repetition: "cadence",
     arrangement: "ordered",
     expectedKind: "cadence",
   },
   {
     containerChildCount: 2,
-    repetition: "present",
+    repetition: "cadence",
     arrangement: "superset",
     expectedKind: "superset",
   },

@@ -40,7 +40,7 @@ export const isStructurallyParallel = (
   structure: CompositionStructure,
 ): boolean =>
   structure.containerChildCount >= 2 &&
-  composition.repetition === undefined &&
+  (composition.repetition === undefined || composition.repetition.kind === "once") &&
   composition.arrangement === undefined;
 
 const KIND_TO_FAMILY: Record<CompositionLabelKind, CompositionLabelFamily> = {
