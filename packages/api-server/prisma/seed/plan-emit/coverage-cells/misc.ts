@@ -1,6 +1,12 @@
 import { Prisma } from "@prisma/client";
 
-import { countBlock, countDay, countSchema, countSession } from "./shared";
+import {
+  countBlock,
+  countDay,
+  countSchema,
+  countSession,
+  countStructurallyParallelParents,
+} from "./shared";
 import { type CoverageCell } from "./types";
 
 const SUB_SCHEMA_FLOOR = 25;
@@ -117,13 +123,10 @@ const ENTITY_INVARIANT_CELLS: readonly CoverageCell[] = [
   {
     id: "entity.alternatingGroup",
     category: "entity-invariants",
-    label: "Schema with arrangement:parallel presence",
+    label: "Alternating-group schema: ≥2 sub-schemas, neither repetition nor arrangement",
     required: 2,
-    sourceRef: "coverage-matrix §2 arrangement:parallel presence",
-    tally: (db, planId) =>
-      countSchema(db, planId, {
-        composition: { path: ["arrangement", "kind"], equals: "parallel" },
-      }),
+    sourceRef: "coverage-matrix §2 alternating-group presence",
+    tally: countStructurallyParallelParents,
   },
   {
     id: "entity.labeledSession",

@@ -68,3 +68,36 @@ export const countDay = async (
   db.day.count({
     where: { ...dayWhere(planId), ...extra },
   });
+
+const isDerivedParallelComposition = (composition: Prisma.JsonValue): boolean =>
+  composition !== null &&
+  typeof composition === "object" &&
+  !Array.isArray(composition) &&
+  !("repetition" in composition) &&
+  !("arrangement" in composition);
+
+export const countStructurallyParallelParents = async (
+  db: PrismaClient,
+  planId: string,
+): Promise<number> => {
+  const grouped = await db.schema.groupBy({
+    by: ["parentSchemaId"],
+    where: { ...schemaWhere(planId), parentSchemaId: { not: null } },
+    _count: { parentSchemaId: true },
+  });
+
+  const parentIds = grouped.flatMap((group) =>
+    group.parentSchemaId !== null && group._count.parentSchemaId >= 2 ? [group.parentSchemaId] : [],
+  );
+
+  if (parentIds.length === 0) {
+    return 0;
+  }
+
+  const parents = await db.schema.findMany({
+    where: { ...schemaWhere(planId), id: { in: parentIds } },
+    select: { id: true, composition: true },
+  });
+
+  return parents.filter((parent) => isDerivedParallelComposition(parent.composition)).length;
+};

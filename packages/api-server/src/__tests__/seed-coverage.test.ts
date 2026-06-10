@@ -36,7 +36,8 @@ const ALL_POSITIONS = [
 const MEDIA_POSITIONS = ["inline", "standalone_row", "bare"] as const;
 const MEDIA_APPLIES_TO = ["previous_row", "current_row", "whole_schema", "drop_stage"] as const;
 const COMPOSITION_REPETITION_KINDS = ["count", "ladder", "timeCap", "cadence", "interval"] as const;
-const COMPOSITION_ARRANGEMENT_KINDS = ["ordered", "parallel", "superset"] as const;
+const COMPOSITION_ARRANGEMENT_KINDS = ["ordered", "superset"] as const;
+const EXPECTED_STRUCTURAL_PARALLEL_MIN = 2;
 
 describe("Seed coverage — synthetic canonical Demo Plan", () => {
   const db: PrismaClientType = new PrismaClient();
@@ -195,6 +196,45 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     expect(implicitBlocks).toBeGreaterThanOrEqual(1);
   });
 
+  it("structural parallel: ≥2 parents with ≥2 sub-schemas and neither repetition nor arrangement; cells mirror the direct count (DR-S2-1)", async () => {
+    const grouped = await db.schema.groupBy({
+      by: ["parentSchemaId"],
+      where: { ...scopes.schemaScope, parentSchemaId: { not: null } },
+      _count: { parentSchemaId: true },
+    });
+
+    const parentIds = grouped.flatMap((group) =>
+      group.parentSchemaId !== null && group._count.parentSchemaId >= 2
+        ? [group.parentSchemaId]
+        : [],
+    );
+
+    const parents = await db.schema.findMany({
+      where: { ...scopes.schemaScope, id: { in: parentIds } },
+      select: { composition: true },
+    });
+
+    const structurallyParallel = parents.filter(
+      (parent) =>
+        parent.composition !== null &&
+        typeof parent.composition === "object" &&
+        !Array.isArray(parent.composition) &&
+        !("repetition" in parent.composition) &&
+        !("arrangement" in parent.composition),
+    ).length;
+
+    expect(structurallyParallel).toBeGreaterThanOrEqual(EXPECTED_STRUCTURAL_PARALLEL_MIN);
+
+    const report = await tallyCoverage(db, demoPlanId);
+    const structuralCell = report.cells.find((c) => c.cell.id === "structural.parallel");
+    const alternatingCell = report.cells.find((c) => c.cell.id === "entity.alternatingGroup");
+
+    expect(structuralCell?.count).toBe(structurallyParallel);
+    expect(structuralCell?.satisfied).toBe(true);
+    expect(alternatingCell?.count).toBe(structurallyParallel);
+    expect(alternatingCell?.satisfied).toBe(true);
+  });
+
   it("every coverage-matrix cell is hit at least Required count — 100% gate (QA-1, MT-21)", async () => {
     const report = await tallyCoverage(db, demoPlanId);
 
@@ -220,6 +260,7 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
       ...ALL_POSITIONS.map((p) => `position.${p}`),
       ...COMPOSITION_REPETITION_KINDS.map((k) => `repetition.kind.${k}`),
       ...COMPOSITION_ARRANGEMENT_KINDS.map((k) => `arrangement.kind.${k}`),
+      "structural.parallel",
       "rest.present",
       ...MEDIA_POSITIONS.map((p) => `mediaReference.position.${p}`),
       ...MEDIA_APPLIES_TO.map((a) => `mediaReference.appliesTo.${a}`),
