@@ -52,38 +52,15 @@ export const supersetPairSchema = z
     path: ["rowIds"],
   });
 
-export const parallelTrackSchema = z.object({ childSchemaId: z.string().cuid() }).strict();
-
-export const arrangementAxisSchema = z
-  .discriminatedUnion("kind", [
-    z.object({ kind: z.literal("ordered") }).strict(),
-    z
-      .object({
-        kind: z.literal("parallel"),
-        interleaveOrder: z.enum(PARALLEL_INTERLEAVE_ORDERS),
-        tracks: z.array(parallelTrackSchema).min(2),
-      })
-      .strict(),
-    z
-      .object({
-        kind: z.literal("superset"),
-        pairs: z.array(supersetPairSchema).min(1),
-      })
-      .strict(),
-  ])
-  .superRefine((axis, ctx) => {
-    if (axis.kind === "parallel") {
-      const ids = axis.tracks.map((t) => t.childSchemaId);
-
-      if (new Set(ids).size !== ids.length) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ["tracks"],
-          message: "parallel tracks must reference distinct childSchemaId",
-        });
-      }
-    }
-  });
+export const arrangementAxisSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("ordered") }).strict(),
+  z
+    .object({
+      kind: z.literal("superset"),
+      pairs: z.array(supersetPairSchema).min(1),
+    })
+    .strict(),
+]);
 
 export const restAxisSchema = restSpecSchema;
 
@@ -91,6 +68,7 @@ export const compositionSchema = z
   .object({
     repetition: repetitionAxisSchema.optional(),
     arrangement: arrangementAxisSchema.optional(),
+    interleaveOrder: z.enum(PARALLEL_INTERLEAVE_ORDERS).optional(),
     rest: restAxisSchema.optional(),
   })
   .strict();

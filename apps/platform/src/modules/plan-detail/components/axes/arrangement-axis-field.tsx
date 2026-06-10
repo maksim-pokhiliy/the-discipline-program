@@ -10,27 +10,23 @@ import type { ArrangementTargetRef } from "../../lib/arrangement-targets";
 
 import type { ArrangementAxis } from "./axis-draft.types";
 import { ARRANGEMENT_HINTS } from "./axis-modes";
-import { ParallelArrangementFields } from "./parallel-arrangement-fields";
 import { SupersetArrangementFields } from "./superset-arrangement-fields";
 
 const LABEL = "arrangement";
 
 const ARRANGEMENT_DEFAULTS: Record<ArrangementAxis["kind"], ArrangementAxis> = {
   ordered: { kind: "ordered" },
-  parallel: { kind: "parallel", interleaveOrder: "round_by_round", tracks: [] },
   superset: { kind: "superset", pairs: [{ label: "", rowIds: [] }] },
 };
 
 const ARRANGEMENT_OPTIONS: { kind: ArrangementAxis["kind"]; label: string }[] = [
   { kind: "ordered", label: "ordered" },
-  { kind: "parallel", label: "parallel" },
   { kind: "superset", label: "superset" },
 ];
 
 type ArrangementAxisFieldProps = {
   value: ArrangementAxis;
   onChange: (next: ArrangementAxis) => void;
-  childContainers: ArrangementTargetRef[];
   directRows: ArrangementTargetRef[];
   disabled?: boolean;
 };
@@ -38,7 +34,6 @@ type ArrangementAxisFieldProps = {
 export const ArrangementAxisField: React.FC<ArrangementAxisFieldProps> = ({
   value,
   onChange,
-  childContainers,
   directRows,
   disabled = false,
 }) => {
@@ -54,15 +49,6 @@ export const ArrangementAxisField: React.FC<ArrangementAxisFieldProps> = ({
     switch (value.kind) {
       case "ordered":
         return null;
-      case "parallel":
-        return (
-          <ParallelArrangementFields
-            value={value}
-            onChange={onChange}
-            childContainers={childContainers}
-            disabled={disabled}
-          />
-        );
       case "superset":
         return (
           <SupersetArrangementFields

@@ -81,6 +81,18 @@ describe("composeContainerToComposition flat repetition mapping", () => {
 
     expect(composition).toEqual({ rest });
   });
+
+  it("emits a carried interleaveOrder byte-for-byte", () => {
+    const composition = composeContainerToComposition(
+      container({ interleaveOrder: "track_by_track" }),
+    );
+
+    expect(composition).toEqual({ interleaveOrder: "track_by_track" });
+  });
+
+  it("emits exactly {} for a bare container without an interleaveOrder", () => {
+    expect(composeContainerToComposition(container({}))).toEqual({});
+  });
 });
 
 describe("composeContainerToComposition produces contract-valid compositions", () => {
@@ -96,6 +108,14 @@ describe("composeContainerToComposition produces contract-valid compositions", (
 
   it.each(valid)("safeParse accepts the composition for %j", (repetition) => {
     const composition = composeContainerToComposition(repetitionContainer(repetition));
+
+    expect(compositionSchema.safeParse(composition).success).toBe(true);
+  });
+
+  it("safeParse accepts a composition carrying an interleaveOrder", () => {
+    const composition = composeContainerToComposition(
+      container({ interleaveOrder: "round_by_round" }),
+    );
 
     expect(compositionSchema.safeParse(composition).success).toBe(true);
   });

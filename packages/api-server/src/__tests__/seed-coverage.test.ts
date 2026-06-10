@@ -1,7 +1,13 @@
 import { type PrismaClient as PrismaClientType, Prisma, PrismaClient } from "@prisma/client";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { COVERAGE_CELLS, tallyCoverage } from "../../prisma/seed/plan-emit";
+import { compositionSchema, isStructurallyParallel } from "@repo/contracts/lms/composition";
+
+import {
+  COVERAGE_CELLS,
+  isDerivedParallelComposition,
+  tallyCoverage,
+} from "../../prisma/seed/plan-emit";
 import { lmsWeekApi } from "../endpoints/lms/week/admin";
 
 import {
@@ -36,7 +42,8 @@ const ALL_POSITIONS = [
 const MEDIA_POSITIONS = ["inline", "standalone_row", "bare"] as const;
 const MEDIA_APPLIES_TO = ["previous_row", "current_row", "whole_schema", "drop_stage"] as const;
 const COMPOSITION_REPETITION_KINDS = ["count", "ladder", "timeCap", "cadence", "interval"] as const;
-const COMPOSITION_ARRANGEMENT_KINDS = ["ordered", "parallel", "superset"] as const;
+const COMPOSITION_ARRANGEMENT_KINDS = ["ordered", "superset"] as const;
+const EXPECTED_STRUCTURAL_PARALLEL_COUNT = 4;
 
 describe("Seed coverage — synthetic canonical Demo Plan", () => {
   const db: PrismaClientType = new PrismaClient();
@@ -195,6 +202,56 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
     expect(implicitBlocks).toBeGreaterThanOrEqual(1);
   });
 
+  it("structural parallel: seed helper agrees with the contracts predicate on every parent; canonical count pinned; cells mirror it (QA-303, DR-S2-1)", async () => {
+    const grouped = await db.schema.groupBy({
+      by: ["parentSchemaId"],
+      where: { ...scopes.schemaScope, parentSchemaId: { not: null } },
+      _count: { parentSchemaId: true },
+    });
+
+    const childCounts = new Map<string, number>();
+
+    for (const group of grouped) {
+      if (group.parentSchemaId !== null) {
+        childCounts.set(group.parentSchemaId, group._count.parentSchemaId);
+      }
+    }
+
+    const parents = await db.schema.findMany({
+      where: { ...scopes.schemaScope, id: { in: [...childCounts.keys()] } },
+      select: { id: true, composition: true },
+    });
+
+    expect(parents.length).toBeGreaterThan(0);
+
+    const verdicts = parents.map((parent) => {
+      const containerChildCount = childCounts.get(parent.id) ?? 0;
+
+      return {
+        id: parent.id,
+        seed: containerChildCount >= 2 && isDerivedParallelComposition(parent.composition),
+        contracts: isStructurallyParallel(compositionSchema.parse(parent.composition), {
+          containerChildCount,
+        }),
+      };
+    });
+
+    expect(verdicts.filter((v) => v.seed !== v.contracts).map((v) => v.id)).toEqual([]);
+
+    const contractsParallelCount = verdicts.filter((v) => v.contracts).length;
+
+    expect(contractsParallelCount).toBe(EXPECTED_STRUCTURAL_PARALLEL_COUNT);
+
+    const report = await tallyCoverage(db, demoPlanId);
+    const structuralCell = report.cells.find((c) => c.cell.id === "structural.parallel");
+    const alternatingCell = report.cells.find((c) => c.cell.id === "entity.alternatingGroup");
+
+    expect(structuralCell?.count).toBe(contractsParallelCount);
+    expect(structuralCell?.satisfied).toBe(true);
+    expect(alternatingCell?.count).toBe(contractsParallelCount);
+    expect(alternatingCell?.satisfied).toBe(true);
+  });
+
   it("every coverage-matrix cell is hit at least Required count — 100% gate (QA-1, MT-21)", async () => {
     const report = await tallyCoverage(db, demoPlanId);
 
@@ -220,6 +277,7 @@ describe("Seed coverage — synthetic canonical Demo Plan", () => {
       ...ALL_POSITIONS.map((p) => `position.${p}`),
       ...COMPOSITION_REPETITION_KINDS.map((k) => `repetition.kind.${k}`),
       ...COMPOSITION_ARRANGEMENT_KINDS.map((k) => `arrangement.kind.${k}`),
+      "structural.parallel",
       "rest.present",
       ...MEDIA_POSITIONS.map((p) => `mediaReference.position.${p}`),
       ...MEDIA_APPLIES_TO.map((a) => `mediaReference.appliesTo.${a}`),

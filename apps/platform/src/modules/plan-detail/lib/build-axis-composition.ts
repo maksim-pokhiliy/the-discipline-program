@@ -25,14 +25,6 @@ export type CompositionResult =
 const identityRefMap = (arrangement: DraftArrangement): ReadonlyMap<NodeId, string> => {
   const map = new Map<NodeId, string>();
 
-  if (arrangement.kind === "parallel") {
-    for (const track of arrangement.tracks) {
-      map.set(track.childSchemaId, track.childSchemaId);
-    }
-
-    return map;
-  }
-
   for (const pair of arrangement.pairs) {
     for (const rowId of pair.rowIds) {
       map.set(rowId, rowId);
@@ -49,8 +41,12 @@ const foldArrangement = (
   | { ok: false; issues: ConvertIssue[] } => {
   const arrangement: ArrangementAxis | undefined = draft.arrangement;
 
-  if (arrangement === undefined || arrangement.kind === "ordered") {
+  if (arrangement === undefined) {
     return { ok: true, arrangement: undefined };
+  }
+
+  if (arrangement.kind === "ordered") {
+    return { ok: true, arrangement: { kind: "ordered" } };
   }
 
   const issues: ConvertIssue[] = [];

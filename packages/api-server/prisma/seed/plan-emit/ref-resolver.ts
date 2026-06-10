@@ -4,16 +4,10 @@ export type RefResolver = {
   setLabel: (ref: string, id: string) => void;
   getLabel: (ref: string) => string;
 
-  enterBlock: (
-    blockKey: string,
-    referencedRowRefs?: ReadonlySet<string>,
-    referencedSchemaRefs?: ReadonlySet<string>,
-  ) => void;
+  enterBlock: (blockKey: string, referencedRowRefs?: ReadonlySet<string>) => void;
   exitBlock: () => void;
   setRow: (refId: string, id: string) => void;
   getRow: (refId: string) => string;
-  setSchema: (refId: string, id: string) => void;
-  getSchema: (refId: string) => string;
 
   stats: () => {
     exerciseCount: number;
@@ -25,9 +19,7 @@ export type RefResolver = {
 type BlockScope = {
   blockKey: string;
   rows: Map<string, string>;
-  schemas: Map<string, string>;
   referencedRowRefs: ReadonlySet<string>;
-  referencedSchemaRefs: ReadonlySet<string>;
 };
 
 const requireBlockScope = (scope: BlockScope | null, op: string): BlockScope => {
@@ -87,14 +79,11 @@ export const createRefResolver = (): RefResolver => {
   const enterBlock = (
     blockKey: string,
     referencedRowRefs: ReadonlySet<string> = new Set(),
-    referencedSchemaRefs: ReadonlySet<string> = new Set(),
   ): void => {
     blockScope = {
       blockKey,
       rows: new Map<string, string>(),
-      schemas: new Map<string, string>(),
       referencedRowRefs,
-      referencedSchemaRefs,
     };
   };
 
@@ -120,24 +109,6 @@ export const createRefResolver = (): RefResolver => {
     return requireValue(scope.rows, refId, "row", `block "${scope.blockKey}" scope`);
   };
 
-  const setSchema = (refId: string, id: string): void => {
-    const scope = requireBlockScope(blockScope, "setSchema");
-
-    if (scope.referencedSchemaRefs.has(refId) && scope.schemas.has(refId)) {
-      throw new Error(
-        `RefResolver: duplicate setSchema for referenced refId "${refId}" in block "${scope.blockKey}" — referenced child-schema refIds (back-patch targets) must be unique within a block`,
-      );
-    }
-
-    scope.schemas.set(refId, id);
-  };
-
-  const getSchema = (refId: string): string => {
-    const scope = requireBlockScope(blockScope, "getSchema");
-
-    return requireValue(scope.schemas, refId, "child-schema", `block "${scope.blockKey}" scope`);
-  };
-
   const stats = (): {
     exerciseCount: number;
     labelCount: number;
@@ -157,8 +128,6 @@ export const createRefResolver = (): RefResolver => {
     exitBlock,
     setRow,
     getRow,
-    setSchema,
-    getSchema,
     stats,
   };
 };

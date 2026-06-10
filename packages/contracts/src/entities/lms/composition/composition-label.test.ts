@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { compositionLabelSchema, deriveCompositionLabel } from "./composition-label";
+import {
+  type CompositionLabelKind,
+  compositionLabelSchema,
+  deriveCompositionLabel,
+  isStructurallyParallel,
+} from "./composition-label";
 import { REPETITION_AXIS_KINDS } from "./composition.constants";
 import { compositionSchema } from "./composition.schema";
 import type { ArrangementAxis, Composition, RepetitionAxis } from "./composition.types";
 
-const cuidThrTrack = "clz00000000000000thrtrack1";
-const cuidPulTrack = "clz00000000000000pultrack1";
 const cuidPlaceholder = "clz000000000000placeholder";
 const cuidPlank = "clz00000000000000000plankr";
 
@@ -15,16 +18,22 @@ function parsedComposition(composition: Composition): Composition {
 }
 
 describe("deriveCompositionLabel — §2.5 axis-configuration mapping", () => {
-  it("maps arrangement parallel to parallel / PARALLEL", () => {
-    const composition = parsedComposition({
-      arrangement: {
-        kind: "parallel",
-        interleaveOrder: "round_by_round",
-        tracks: [{ childSchemaId: cuidThrTrack }, { childSchemaId: cuidPulTrack }],
-      },
-    });
+  it("maps a structurally parallel composition to parallel / PARALLEL", () => {
+    const composition = parsedComposition({});
 
-    expect(deriveCompositionLabel(composition)).toEqual({ kind: "parallel", family: "PARALLEL" });
+    expect(deriveCompositionLabel(composition, { containerChildCount: 2 })).toEqual({
+      kind: "parallel",
+      family: "PARALLEL",
+    });
+  });
+
+  it("maps an explicit ordered arrangement over two container children to flat / FLAT", () => {
+    const composition = parsedComposition({ arrangement: { kind: "ordered" } });
+
+    expect(deriveCompositionLabel(composition, { containerChildCount: 2 })).toEqual({
+      kind: "flat",
+      family: "FLAT",
+    });
   });
 
   it("maps arrangement superset to superset / SUPERSET", () => {
@@ -90,7 +99,7 @@ describe("deriveCompositionLabel — §2.5 axis-configuration mapping", () => {
   });
 });
 
-describe("deriveCompositionLabel — canonical gauntlet compositions", () => {
+describe("deriveCompositionLabel — canonical compositions", () => {
   it("labels Fran (container ladder) as ladder / LADDER", () => {
     const fran = parsedComposition({
       repetition: { kind: "ladder", steps: [21, 15, 9] },
@@ -100,22 +109,39 @@ describe("deriveCompositionLabel — canonical gauntlet compositions", () => {
     expect(deriveCompositionLabel(fran)).toEqual({ kind: "ladder", family: "LADDER" });
   });
 
-  it("labels Block C (parallel tracks) as parallel / PARALLEL", () => {
-    const blockC = parsedComposition({
-      arrangement: {
-        kind: "parallel",
-        interleaveOrder: "round_by_round",
-        tracks: [{ childSchemaId: cuidThrTrack }, { childSchemaId: cuidPulTrack }],
-      },
-    });
+  it("labels Block C (marker rows, no container children) as flat / FLAT", () => {
+    const blockC = parsedComposition({});
 
-    expect(deriveCompositionLabel(blockC)).toEqual({ kind: "parallel", family: "PARALLEL" });
+    expect(deriveCompositionLabel(blockC, { containerChildCount: 0 })).toEqual({
+      kind: "flat",
+      family: "FLAT",
+    });
+  });
+
+  it("labels block-009 (axis-free parent over two alternating-set containers) as parallel / PARALLEL", () => {
+    const alternatingSets = parsedComposition({});
+
+    expect(deriveCompositionLabel(alternatingSets, { containerChildCount: 2 })).toEqual({
+      kind: "parallel",
+      family: "PARALLEL",
+    });
   });
 
   it("labels Gauntlet B EMOM (cadence) as cadence / INTERVALIC", () => {
     const emom = parsedComposition({ repetition: { kind: "cadence", everyMin: 1, rounds: 4 } });
 
     expect(deriveCompositionLabel(emom)).toEqual({ kind: "cadence", family: "INTERVALIC" });
+  });
+
+  it("labels block-080 (cadence over three slot containers) as cadence / INTERVALIC", () => {
+    const emomTwelve = parsedComposition({
+      repetition: { kind: "cadence", everyMin: 1, rounds: 12 },
+    });
+
+    expect(deriveCompositionLabel(emomTwelve, { containerChildCount: 3 })).toEqual({
+      kind: "cadence",
+      family: "INTERVALIC",
+    });
   });
 
   it("labels Gauntlet A (count + until_recovery rest) as rounds / ROUNDS", () => {
@@ -156,8 +182,30 @@ describe("deriveCompositionLabel — canonical gauntlet compositions", () => {
   });
 });
 
-const cuidTrackA = "clz00000000000000000tracka";
-const cuidTrackB = "clz00000000000000000trackb";
+describe("isStructurallyParallel — once counts as repetition absence (QA-301)", () => {
+  it("keeps a structurally parallel parent parallel after repetition once is written onto it", () => {
+    const toggledBackToOnce = parsedComposition({ repetition: { kind: "once" } });
+    const structure = { containerChildCount: 2 };
+
+    expect(isStructurallyParallel(toggledBackToOnce, structure)).toBe(true);
+    expect(deriveCompositionLabel(toggledBackToOnce, structure)).toEqual({
+      kind: "parallel",
+      family: "PARALLEL",
+    });
+  });
+
+  it("still suppresses parallel when repetition carries semantics (count)", () => {
+    const counted = parsedComposition({ repetition: { kind: "count", count: 3 } });
+    const structure = { containerChildCount: 2 };
+
+    expect(isStructurallyParallel(counted, structure)).toBe(false);
+    expect(deriveCompositionLabel(counted, structure)).toEqual({
+      kind: "rounds",
+      family: "ROUNDS",
+    });
+  });
+});
+
 const cuidPairA = "clz0000000000000000pairaaa";
 const cuidPairB = "clz0000000000000000pairbbb";
 
@@ -178,22 +226,16 @@ function repetitionAxisOf(kind: RepetitionAxis["kind"]): RepetitionAxis {
   }
 }
 
+const supersetArrangement: ArrangementAxis = {
+  kind: "superset",
+  pairs: [{ label: "A", rowIds: [cuidPairA, cuidPairB] }],
+};
+
 const ARRANGEMENT_CASES: ReadonlyArray<{ name: string; arrangement: ArrangementAxis | undefined }> =
   [
     { name: "no arrangement", arrangement: undefined },
     { name: "ordered", arrangement: { kind: "ordered" } },
-    {
-      name: "parallel",
-      arrangement: {
-        kind: "parallel",
-        interleaveOrder: "round_by_round",
-        tracks: [{ childSchemaId: cuidTrackA }, { childSchemaId: cuidTrackB }],
-      },
-    },
-    {
-      name: "superset",
-      arrangement: { kind: "superset", pairs: [{ label: "A", rowIds: [cuidPairA, cuidPairB] }] },
-    },
+    { name: "superset", arrangement: supersetArrangement },
   ];
 
 describe("deriveCompositionLabel — totality across every axis combination", () => {
@@ -214,4 +256,131 @@ describe("deriveCompositionLabel — totality across every axis combination", ()
       });
     }
   }
+});
+
+const MATRIX_REPETITIONS: Record<"cadence" | "once" | "absent", RepetitionAxis | undefined> = {
+  cadence: repetitionAxisOf("cadence"),
+  once: repetitionAxisOf("once"),
+  absent: undefined,
+};
+
+const MATRIX_ARRANGEMENTS: Record<"ordered" | "superset" | "absent", ArrangementAxis | undefined> =
+  {
+    ordered: { kind: "ordered" },
+    superset: supersetArrangement,
+    absent: undefined,
+  };
+
+type PredicateMatrixCase = {
+  containerChildCount: number;
+  repetition: keyof typeof MATRIX_REPETITIONS;
+  arrangement: keyof typeof MATRIX_ARRANGEMENTS;
+  expectedKind: CompositionLabelKind;
+};
+
+const PREDICATE_MATRIX: ReadonlyArray<PredicateMatrixCase> = [
+  { containerChildCount: 0, repetition: "absent", arrangement: "absent", expectedKind: "flat" },
+  { containerChildCount: 0, repetition: "absent", arrangement: "ordered", expectedKind: "flat" },
+  {
+    containerChildCount: 0,
+    repetition: "absent",
+    arrangement: "superset",
+    expectedKind: "superset",
+  },
+  { containerChildCount: 0, repetition: "once", arrangement: "absent", expectedKind: "flat" },
+  { containerChildCount: 0, repetition: "once", arrangement: "ordered", expectedKind: "flat" },
+  {
+    containerChildCount: 0,
+    repetition: "once",
+    arrangement: "superset",
+    expectedKind: "superset",
+  },
+  { containerChildCount: 0, repetition: "cadence", arrangement: "absent", expectedKind: "cadence" },
+  {
+    containerChildCount: 0,
+    repetition: "cadence",
+    arrangement: "ordered",
+    expectedKind: "cadence",
+  },
+  {
+    containerChildCount: 0,
+    repetition: "cadence",
+    arrangement: "superset",
+    expectedKind: "superset",
+  },
+  { containerChildCount: 1, repetition: "absent", arrangement: "absent", expectedKind: "flat" },
+  { containerChildCount: 1, repetition: "absent", arrangement: "ordered", expectedKind: "flat" },
+  {
+    containerChildCount: 1,
+    repetition: "absent",
+    arrangement: "superset",
+    expectedKind: "superset",
+  },
+  { containerChildCount: 1, repetition: "once", arrangement: "absent", expectedKind: "flat" },
+  { containerChildCount: 1, repetition: "once", arrangement: "ordered", expectedKind: "flat" },
+  {
+    containerChildCount: 1,
+    repetition: "once",
+    arrangement: "superset",
+    expectedKind: "superset",
+  },
+  { containerChildCount: 1, repetition: "cadence", arrangement: "absent", expectedKind: "cadence" },
+  {
+    containerChildCount: 1,
+    repetition: "cadence",
+    arrangement: "ordered",
+    expectedKind: "cadence",
+  },
+  {
+    containerChildCount: 1,
+    repetition: "cadence",
+    arrangement: "superset",
+    expectedKind: "superset",
+  },
+  { containerChildCount: 2, repetition: "absent", arrangement: "absent", expectedKind: "parallel" },
+  { containerChildCount: 2, repetition: "absent", arrangement: "ordered", expectedKind: "flat" },
+  {
+    containerChildCount: 2,
+    repetition: "absent",
+    arrangement: "superset",
+    expectedKind: "superset",
+  },
+  { containerChildCount: 2, repetition: "once", arrangement: "absent", expectedKind: "parallel" },
+  { containerChildCount: 2, repetition: "once", arrangement: "ordered", expectedKind: "flat" },
+  {
+    containerChildCount: 2,
+    repetition: "once",
+    arrangement: "superset",
+    expectedKind: "superset",
+  },
+  { containerChildCount: 2, repetition: "cadence", arrangement: "absent", expectedKind: "cadence" },
+  {
+    containerChildCount: 2,
+    repetition: "cadence",
+    arrangement: "ordered",
+    expectedKind: "cadence",
+  },
+  {
+    containerChildCount: 2,
+    repetition: "cadence",
+    arrangement: "superset",
+    expectedKind: "superset",
+  },
+];
+
+describe("deriveCompositionLabel — structural-parallel predicate matrix", () => {
+  it.each(PREDICATE_MATRIX)(
+    "derives $expectedKind for $containerChildCount container children × repetition $repetition × arrangement $arrangement",
+    ({ containerChildCount, repetition, arrangement, expectedKind }) => {
+      const repetitionAxis = MATRIX_REPETITIONS[repetition];
+      const arrangementAxis = MATRIX_ARRANGEMENTS[arrangement];
+
+      const composition = parsedComposition({
+        ...(repetitionAxis !== undefined && { repetition: repetitionAxis }),
+        ...(arrangementAxis !== undefined && { arrangement: arrangementAxis }),
+      });
+
+      expect(deriveCompositionLabel(composition, { containerChildCount }).kind).toBe(expectedKind);
+    },
+  );
 });

@@ -33,6 +33,16 @@ export const compositionLabelSchema = z
   .strict();
 export type CompositionLabel = z.infer<typeof compositionLabelSchema>;
 
+export type CompositionStructure = { containerChildCount: number };
+
+export const isStructurallyParallel = (
+  composition: Composition,
+  structure: CompositionStructure,
+): boolean =>
+  structure.containerChildCount >= 2 &&
+  (composition.repetition === undefined || composition.repetition.kind === "once") &&
+  composition.arrangement === undefined;
+
 const KIND_TO_FAMILY: Record<CompositionLabelKind, CompositionLabelFamily> = {
   parallel: "PARALLEL",
   superset: "SUPERSET",
@@ -44,8 +54,11 @@ const KIND_TO_FAMILY: Record<CompositionLabelKind, CompositionLabelFamily> = {
   flat: "FLAT",
 };
 
-const deriveKind = (composition: Composition): CompositionLabelKind => {
-  if (composition.arrangement?.kind === "parallel") {
+const deriveKind = (
+  composition: Composition,
+  structure?: CompositionStructure,
+): CompositionLabelKind => {
+  if (structure !== undefined && isStructurallyParallel(composition, structure)) {
     return "parallel";
   }
 
@@ -74,8 +87,11 @@ const deriveKind = (composition: Composition): CompositionLabelKind => {
   return "flat";
 };
 
-export const deriveCompositionLabel = (composition: Composition): CompositionLabel => {
-  const kind = deriveKind(composition);
+export const deriveCompositionLabel = (
+  composition: Composition,
+  structure?: CompositionStructure,
+): CompositionLabel => {
+  const kind = deriveKind(composition, structure);
 
   return { kind, family: KIND_TO_FAMILY[kind] };
 };

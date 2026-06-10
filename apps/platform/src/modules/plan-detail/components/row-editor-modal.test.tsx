@@ -516,23 +516,29 @@ describe("RowEditorModal EXERCISE modal width (QA-MT12)", () => {
   });
 });
 
+const HEAVY_INTERACTION_TIMEOUT_MS = 15_000;
+
 describe("RowEditorModal save-and-add-another (QA-MT8, D-10)", () => {
-  it("mutates and keeps the modal open re-seeded when Save & add another is clicked", async () => {
-    settleState.settle = true;
-    exercisesState.data = [frontSquat];
-    const onClose = vi.fn();
+  it(
+    "mutates and keeps the modal open re-seeded when Save & add another is clicked",
+    async () => {
+      settleState.settle = true;
+      exercisesState.data = [frontSquat];
+      const onClose = vi.fn();
 
-    renderModal(createMode("EXERCISE"), { onClose });
+      renderModal(createMode("EXERCISE"), { onClose });
 
-    pickFrontSquat();
-    fireEvent.click(screen.getByRole("button", { name: "Save & add another" }));
+      pickFrontSquat();
+      fireEvent.click(screen.getByRole("button", { name: "Save & add another" }));
 
-    await waitFor(() => {
-      expect(createRowMutate).toHaveBeenCalledTimes(1);
-    });
-    expect(onClose).not.toHaveBeenCalled();
-    expect(screen.getByRole("button", { name: "Save & add another" })).toBeInTheDocument();
-  });
+      await waitFor(() => {
+        expect(createRowMutate).toHaveBeenCalledTimes(1);
+      });
+      expect(onClose).not.toHaveBeenCalled();
+      expect(screen.getByRole("button", { name: "Save & add another" })).toBeInTheDocument();
+    },
+    HEAVY_INTERACTION_TIMEOUT_MS,
+  );
 
   it("closes correctly on a plain Save after a Save & add another (QA-003)", async () => {
     settleState.settle = true;

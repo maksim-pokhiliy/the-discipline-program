@@ -1,13 +1,13 @@
 import { Prisma } from "@prisma/client";
 
-import { countSchema } from "./shared";
+import { countSchema, countStructurallyParallelParents, STRUCTURAL_PARALLEL_FLOOR } from "./shared";
 import { type CoverageCell } from "./types";
 
 const COMPOSITION_PRESENT_FLOOR = 40;
 
 const REPETITION_KINDS = ["count", "ladder", "timeCap", "cadence", "interval"] as const;
 
-const ARRANGEMENT_KINDS = ["ordered", "parallel", "superset"] as const;
+const ARRANGEMENT_KINDS = ["ordered", "superset"] as const;
 
 const repetitionKindCell = (kind: (typeof REPETITION_KINDS)[number]): CoverageCell => ({
   id: `repetition.kind.${kind}`,
@@ -28,6 +28,16 @@ const arrangementKindCell = (kind: (typeof ARRANGEMENT_KINDS)[number]): Coverage
   tally: (db, planId) =>
     countSchema(db, planId, { composition: { path: ["arrangement", "kind"], equals: kind } }),
 });
+
+const STRUCTURAL_PARALLEL_CELL: CoverageCell = {
+  id: "structural.parallel",
+  category: "composition",
+  label:
+    "Parent schema with ≥2 sub-schemas, repetition absent or once, no arrangement (derived parallel)",
+  required: STRUCTURAL_PARALLEL_FLOOR,
+  sourceRef: "compose-authoring-ux DR-S2-1",
+  tally: countStructurallyParallelParents,
+};
 
 const REST_PRESENT_CELL: CoverageCell = {
   id: "rest.present",
@@ -50,5 +60,6 @@ export const COMPOSITION_CELLS: readonly CoverageCell[] = [
   },
   ...REPETITION_KINDS.map(repetitionKindCell),
   ...ARRANGEMENT_KINDS.map(arrangementKindCell),
+  STRUCTURAL_PARALLEL_CELL,
   REST_PRESENT_CELL,
 ];

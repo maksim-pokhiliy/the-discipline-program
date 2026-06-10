@@ -9,7 +9,7 @@ import { seedCanonicalPlanShell } from "./plan-emit";
 import { createRefResolver } from "./ref-resolver";
 import { seedCanonicalSchemas } from "./schema-emit";
 
-export { COVERAGE_CELLS, tallyCoverage } from "./coverage-cells";
+export { COVERAGE_CELLS, isDerivedParallelComposition, tallyCoverage } from "./coverage-cells";
 export type {
   CoverageCategory,
   CoverageCell,

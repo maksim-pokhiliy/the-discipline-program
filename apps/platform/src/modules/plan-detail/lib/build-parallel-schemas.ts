@@ -1,4 +1,9 @@
-import { type Composition, compositionSchema } from "@repo/contracts/lms/composition";
+import type { ZodIssue } from "zod";
+
+import {
+  type CreateParallelSchemasRequest,
+  createParallelSchemasRequestSchema,
+} from "@repo/contracts/lms/schema";
 
 import type { ComposeContainer } from "../components/axes/axis-draft.types";
 
@@ -8,48 +13,71 @@ import { isParallelDraft } from "./parallel-ladder-draft";
 
 const NOT_PARALLEL_ERROR = "Expected a parallel draft with at least two ladder tracks.";
 
-const TRACK_BUILD_FALLBACK = "could not build the ladder composition.";
+const REQUEST_BUILD_FALLBACK = "could not build the parallel create request.";
 
-const PARENT_COMPOSITION: Composition = {};
-
-type ParallelTrackDescriptor = {
-  composition: Composition;
-  header: string | null;
-};
-
-export type ParallelCreateSequence =
-  | {
-      ok: true;
-      parentComposition: Composition;
-      parentHeader: string | null;
-      tracks: ParallelTrackDescriptor[];
-    }
+export type ParallelCreateRequestResult =
+  | { ok: true; request: CreateParallelSchemasRequest }
   | { ok: false; error: string };
 
 const trackLadderSteps = (track: ComposeContainer): number[] =>
   track.repetition?.kind === "ladder" ? track.repetition.steps : [];
 
-export const buildParallelCreateSequence = (parent: ComposeContainer): ParallelCreateSequence => {
+const coachIssuePath = (path: ZodIssue["path"]): ZodIssue["path"] => {
+  const [root, trackIndex, field, stepIndex] = path;
+
+  if (root !== "tracks") {
+    return path;
+  }
+
+  if (typeof trackIndex !== "number") {
+    return ["ladders"];
+  }
+
+  const ladder = `ladder ${trackIndex + 1}`;
+
+  if (field === "header") {
+    return [`${ladder} name`];
+  }
+
+  if (field !== "steps") {
+    return [ladder];
+  }
+
+  return typeof stepIndex === "number" ? [`${ladder}, step ${stepIndex + 1}`] : [`${ladder} steps`];
+};
+
+const formatCoachIssue = (issue: ZodIssue): string =>
+  formatZodIssue({ ...issue, path: coachIssuePath(issue.path) });
+
+export const buildParallelCreateRequest = (
+  parent: ComposeContainer,
+  blockId: string,
+  parentSchemaId?: string,
+): ParallelCreateRequestResult => {
   if (!isParallelDraft(parent)) {
     return { ok: false, error: NOT_PARALLEL_ERROR };
   }
 
-  const tracks: ParallelTrackDescriptor[] = [];
-  const trackContainers = collectTrackChildren(parent);
+  const tracks = collectTrackChildren(parent).map((track) => ({
+    header: track.header,
+    steps: trackLadderSteps(track),
+  }));
 
-  for (const [index, track] of trackContainers.entries()) {
-    const composition = { repetition: { kind: "ladder", steps: trackLadderSteps(track) } };
-    const parsed = compositionSchema.safeParse(composition);
+  const parsed = createParallelSchemasRequestSchema.safeParse({
+    blockId,
+    ...(parentSchemaId != null && { parentSchemaId }),
+    header: parent.header,
+    tracks,
+  });
 
-    if (!parsed.success) {
-      const [issue] = parsed.error.issues;
-      const detail = issue === undefined ? TRACK_BUILD_FALLBACK : formatZodIssue(issue);
+  if (!parsed.success) {
+    const [issue] = parsed.error.issues;
 
-      return { ok: false, error: `ladder ${index + 1}: ${detail}` };
-    }
-
-    tracks.push({ composition: parsed.data, header: track.header });
+    return {
+      ok: false,
+      error: issue === undefined ? REQUEST_BUILD_FALLBACK : formatCoachIssue(issue),
+    };
   }
 
-  return { ok: true, parentComposition: PARENT_COMPOSITION, parentHeader: parent.header, tracks };
+  return { ok: true, request: parsed.data };
 };

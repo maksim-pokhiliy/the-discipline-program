@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { schemaRowPayloadSchema } from "../schema-row";
 
+import { deriveCompositionLabel, isStructurallyParallel } from "./composition-label";
 import { composeContainerSchema, compositionSchema } from "./composition.schema";
-import type { ComposeNode, ComposeRow } from "./composition.types";
+import type { ComposeNode, ComposeRow, Composition } from "./composition.types";
 
 const cuidFran = "clz000000000000000000fran";
 const cuidThrusters = "clz00000000000000000thrust";
@@ -78,13 +79,7 @@ const franContainer: ComposeNode = {
   children: [franThrustersRow, franPullupsRow],
 };
 
-const blockCComposition = {
-  arrangement: {
-    kind: "parallel",
-    interleaveOrder: "round_by_round",
-    tracks: [{ childSchemaId: cuidThrTrack }, { childSchemaId: cuidPulTrack }],
-  },
-} as const;
+const blockCComposition: Composition = {};
 
 const blockCThrustersRow = ladderMarkerRow(cuidThrTrack, [21, 15, 9]);
 const blockCPullupsRow = ladderMarkerRow(cuidPulTrack, [9, 15, 21]);
@@ -94,13 +89,7 @@ const blockCContainer: ComposeNode = {
   id: cuidBlockC,
   header: "Block C",
   notes: null,
-  composition: {
-    arrangement: {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [{ childSchemaId: cuidThrTrack }, { childSchemaId: cuidPulTrack }],
-    },
-  },
+  composition: {},
   children: [blockCThrustersRow, blockCPullupsRow],
 };
 
@@ -117,7 +106,7 @@ describe("Fran — round-counter ladder (container repetition axis)", () => {
 });
 
 describe("Gauntlet Block C — rep-scheme ladder (per-row INNER_LADDER_MARKER)", () => {
-  it("validates a parallel container with no repetition axis", () => {
+  it("validates the marker container with an empty composition and no repetition axis", () => {
     expect(compositionSchema.safeParse(blockCComposition).success).toBe(true);
     expect(composeContainerSchema.safeParse(blockCContainer).success).toBe(true);
 
@@ -169,5 +158,72 @@ describe("ladder split — a single container cannot hold both ladder sources", 
   it("keeps the canonical Fran and Block C containers valid", () => {
     expect(composeContainerSchema.safeParse(franContainer).success).toBe(true);
     expect(composeContainerSchema.safeParse(blockCContainer).success).toBe(true);
+  });
+});
+
+const cuidParallelParent = "clz00000000000000parparent";
+const cuidTrackA = "clz00000000000000000tracka";
+const cuidTrackB = "clz00000000000000000trackb";
+
+function containerChildCount(node: ComposeNode): number {
+  if (node.nodeType !== "container") {
+    return 0;
+  }
+
+  return node.children.filter((child) => child.nodeType === "container").length;
+}
+
+const parallelParentComposition: Composition = {};
+
+const parallelParent: ComposeNode = {
+  nodeType: "container",
+  id: cuidParallelParent,
+  header: "Parallel ladders",
+  notes: null,
+  composition: {},
+  children: [
+    {
+      nodeType: "container",
+      id: cuidTrackA,
+      header: null,
+      notes: null,
+      composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+      children: [exerciseRow(cuidThrusters)],
+    },
+    {
+      nodeType: "container",
+      id: cuidTrackB,
+      header: null,
+      notes: null,
+      composition: { repetition: { kind: "ladder", steps: [15, 12, 9] } },
+      children: [exerciseRow(cuidPullups)],
+    },
+  ],
+};
+
+describe("derived parallelism — container tracks label parallel, marker rows do not", () => {
+  it("validates the axis-free parent holding two ladder-track containers", () => {
+    expect(composeContainerSchema.safeParse(parallelParent).success).toBe(true);
+  });
+
+  it("labels the two-ladder-track parent as parallel via the structural predicate", () => {
+    const structure = { containerChildCount: containerChildCount(parallelParent) };
+
+    expect(isStructurallyParallel(parallelParentComposition, structure)).toBe(true);
+    expect(deriveCompositionLabel(parallelParentComposition, structure)).toEqual({
+      kind: "parallel",
+      family: "PARALLEL",
+    });
+  });
+
+  it("does not classify the marker container as structurally parallel — rows are not container children", () => {
+    const structure = { containerChildCount: containerChildCount(blockCContainer) };
+
+    expect(structure.containerChildCount).toBe(0);
+    expect(isStructurallyParallel(blockCComposition, structure)).toBe(false);
+    expect(deriveCompositionLabel(blockCComposition, structure)).toEqual({
+      kind: "flat",
+      family: "FLAT",
+    });
   });
 });

@@ -13,14 +13,6 @@ const resolveArrangement = (
   switch (arrangement.kind) {
     case "ordered":
       return arrangement;
-    case "parallel":
-      return {
-        kind: "parallel",
-        interleaveOrder: arrangement.interleaveOrder,
-        tracks: arrangement.tracks.map((track) => ({
-          childSchemaId: resolver.getSchema(track.childSchemaId),
-        })),
-      };
     case "superset":
       return {
         kind: "superset",
@@ -35,7 +27,7 @@ const resolveArrangement = (
 };
 
 export const arrangementHasRefs = (arrangement: SeedArrangement | undefined): boolean =>
-  arrangement !== undefined && (arrangement.kind === "parallel" || arrangement.kind === "superset");
+  arrangement !== undefined && arrangement.kind === "superset";
 
 export const backPatchComposition = async (
   db: PrismaClient,

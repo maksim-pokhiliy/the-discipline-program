@@ -11,6 +11,7 @@ import { FormModal } from "@repo/ui";
 
 import { useCatalog, useCreateSchema, useUpdateSchema } from "@app/lib/hooks";
 
+import { collectTrackChildren } from "../lib/arrangement-tree";
 import { makeNodeId } from "../lib/axis-draft-id";
 import { buildComposition, previewComposition } from "../lib/build-axis-composition";
 import { formatCompositionSummary } from "../lib/format-composition-summary";
@@ -123,7 +124,9 @@ export const AxisEditorModal: React.FC<AxisEditorModalProps> = ({
     [isCreateMode, draft],
   );
   const parts = useMemo(() => formatCompositionSummary(preview), [preview]);
-  const labelKind = deriveCompositionLabel(preview).kind;
+  const labelKind = deriveCompositionLabel(preview, {
+    containerChildCount: collectTrackChildren(draft).length,
+  }).kind;
   const showsFlatHint = labelKind === FLAT_KIND && parts.length === 0;
 
   const releaseGuard = (): void => {

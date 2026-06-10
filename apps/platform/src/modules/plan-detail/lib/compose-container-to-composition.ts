@@ -31,5 +31,6 @@ const mapRepetition = (repetition: RepetitionAxis): ContractRepetitionAxis => {
 
 export const composeContainerToComposition = (container: ComposeContainer): Composition => ({
   ...(container.repetition !== undefined && { repetition: mapRepetition(container.repetition) }),
+  ...(container.interleaveOrder !== undefined && { interleaveOrder: container.interleaveOrder }),
   ...(container.rest !== undefined && { rest: container.rest }),
 });

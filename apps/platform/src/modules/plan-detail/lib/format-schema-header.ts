@@ -15,7 +15,9 @@ export const formatSchemaHeader = (schema: SchemaWithBody): string => {
     return "";
   }
 
-  const [structuralPart] = formatStructuralSummary(composition);
+  const [structuralPart] = formatStructuralSummary(composition, {
+    containerChildCount: schema.subSchemas.length,
+  });
 
   return structuralPart ?? "";
 };

@@ -76,10 +76,6 @@ const emitSchemaNode = async (
 
   const schemaId = requireId(created);
 
-  if (node.refId !== undefined) {
-    ctx.resolver.setSchema(node.refId, schemaId);
-  }
-
   for (const row of node.rows) {
     await emitSchemaRow(ctx, schemaId, row);
   }
@@ -96,16 +92,11 @@ const emitSchemaNode = async (
 const collectReferencedRefs = (
   schemas: readonly CanonicalSchemaNode[],
   rowRefs: Set<string> = new Set(),
-  schemaRefs: Set<string> = new Set(),
-): { rowRefs: Set<string>; schemaRefs: Set<string> } => {
+): Set<string> => {
   for (const schema of schemas) {
     const { arrangement } = schema.composition;
 
-    if (arrangement?.kind === "parallel") {
-      for (const track of arrangement.tracks) {
-        schemaRefs.add(track.childSchemaId);
-      }
-    } else if (arrangement?.kind === "superset") {
+    if (arrangement?.kind === "superset") {
       for (const pair of arrangement.pairs) {
         for (const rowRef of pair.rowIds) {
           rowRefs.add(rowRef);
@@ -113,10 +104,10 @@ const collectReferencedRefs = (
       }
     }
 
-    collectReferencedRefs(schema.subSchemas, rowRefs, schemaRefs);
+    collectReferencedRefs(schema.subSchemas, rowRefs);
   }
 
-  return { rowRefs, schemaRefs };
+  return rowRefs;
 };
 
 const assertUniqueTopLevelOrders = (block: CanonicalBlock, blockKey: string): void => {
@@ -141,9 +132,9 @@ const emitBlockSchemas = async (
 ): Promise<void> => {
   assertUniqueTopLevelOrders(block, blockKey);
 
-  const { rowRefs, schemaRefs } = collectReferencedRefs(block.schemas);
+  const rowRefs = collectReferencedRefs(block.schemas);
 
-  ctx.resolver.enterBlock(blockKey, rowRefs, schemaRefs);
+  ctx.resolver.enterBlock(blockKey, rowRefs);
 
   for (const schema of block.schemas) {
     await emitSchemaNode(ctx, blockId, null, schema);

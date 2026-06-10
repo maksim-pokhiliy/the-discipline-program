@@ -175,8 +175,7 @@ export type LabelCatalogEntry = z.infer<typeof labelCatalogEntrySchema>;
 // Internal references:
 //
 //  - `refId` (optional) — internal handle used inside the same plan for FK
-//    targets (e.g. `composition.arrangement.superset.pairs[].rowIds`,
-//    `composition.arrangement.parallel.tracks[].childSchemaId`). The emit
+//    targets (`composition.arrangement.superset.pairs[].rowIds`). The emit
 //    pipeline resolves refId → cuid at emit time. Refs are scoped to the
 //    containing block (uniqueness inside one block).
 // ──────────────────────────────────────────────────────────────────────────
@@ -342,10 +341,8 @@ export type CanonicalSeed = z.infer<typeof canonicalSeedSchema>;
 //      matrix tracks block presence.
 //
 //  X4. `composition.arrangement.superset.pairs[].rowIds` MUST reference a
-//      row `refId` defined on a DIRECT row of the same schema, and
-//      `composition.arrangement.parallel.tracks[].childSchemaId` MUST
-//      reference a child subSchema `refId` defined in the same block. Both
-//      are authored cuid-format (`cuidFromSeed`) and resolved refId → cuid at
+//      row `refId` defined on a DIRECT row of the same schema. Refs are
+//      authored cuid-format (`cuidFromSeed`) and resolved refId → cuid at
 //      emit time by the two-phase back-patch.
 //
 //  X5. `Day.label` references with `applicableLevels` including "DAY" SHOULD

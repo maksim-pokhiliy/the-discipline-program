@@ -55,7 +55,5 @@ export const REPETITION_TILES: readonly RepetitionTile[] = [
 
 export const ARRANGEMENT_HINTS: Record<ArrangementAxis["kind"], string> = {
   ordered: "Children performed one after another.",
-  parallel:
-    "Tracks run together; each carries its own rep-scheme. Interleave: round-by-round or track-by-track.",
   superset: "Children coupled back-to-back, repeated as a unit.",
 };

@@ -12,7 +12,6 @@ import type {
   ComposeContainer,
   ComposeNode,
   ComposeRow,
-  ParallelTrackDraft,
   RepetitionAxis,
   RestAxis,
   SupersetPairDraft,
@@ -44,12 +43,6 @@ const repetitionFromComposition = (repetition: ContractRepetitionAxis): Repetiti
   }
 };
 
-const trackFromComposition = (
-  track: Extract<ContractArrangementAxis, { kind: "parallel" }>["tracks"][number],
-): ParallelTrackDraft => ({
-  childSchemaId: asNodeId(track.childSchemaId),
-});
-
 const pairFromComposition = (
   pair: Extract<ContractArrangementAxis, { kind: "superset" }>["pairs"][number],
 ): SupersetPairDraft => ({
@@ -61,12 +54,6 @@ const arrangementFromComposition = (arrangement: ContractArrangementAxis): Arran
   switch (arrangement.kind) {
     case "ordered":
       return { kind: "ordered" };
-    case "parallel":
-      return {
-        kind: "parallel",
-        interleaveOrder: arrangement.interleaveOrder,
-        tracks: arrangement.tracks.map(trackFromComposition),
-      };
     case "superset":
       return { kind: "superset", pairs: arrangement.pairs.map(pairFromComposition) };
     default:
@@ -105,7 +92,7 @@ const splitAxes = (
 
 const containerFromSchemaWithBody = (node: SchemaWithBody): ComposeContainer => {
   const composition = node.schema.composition ?? {};
-  const { repetition } = composition;
+  const { repetition, interleaveOrder } = composition;
 
   const children: ComposeNode[] = node.rows.map(rowFromSchemaRow);
 
@@ -119,6 +106,7 @@ const containerFromSchemaWithBody = (node: SchemaWithBody): ComposeContainer => 
     header: node.schema.header,
     notes: node.schema.notes,
     ...(repetition !== undefined && { repetition: repetitionFromComposition(repetition) }),
+    ...(interleaveOrder !== undefined && { interleaveOrder }),
     ...splitAxes(composition),
     children,
   };

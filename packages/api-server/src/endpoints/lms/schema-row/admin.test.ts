@@ -503,6 +503,97 @@ describe("lmsSchemaRowApi", () => {
         }),
       ).rejects.toThrow(NotFoundError);
     });
+
+    describe("depth-3 write-guard fetch (QA-106, DR-S2-7)", () => {
+      const provisionDepth3Tree = async () => {
+        const blockCtx = await provisionBlock();
+
+        const rounds = await cleanupRaw.schema.create({
+          data: {
+            blockId: blockCtx.block.id,
+            parentSchemaId: null,
+            order: 10,
+            composition: { repetition: { kind: "count", count: 2 } },
+          },
+        });
+        const parallel = await cleanupRaw.schema.create({
+          data: {
+            blockId: blockCtx.block.id,
+            parentSchemaId: rounds.id,
+            order: 10,
+            composition: {},
+          },
+        });
+        const trackA = await cleanupRaw.schema.create({
+          data: {
+            blockId: blockCtx.block.id,
+            parentSchemaId: parallel.id,
+            order: 10,
+            composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+          },
+        });
+
+        await cleanupRaw.schema.create({
+          data: {
+            blockId: blockCtx.block.id,
+            parentSchemaId: parallel.id,
+            order: 20,
+            composition: { repetition: { kind: "ladder", steps: [15, 12, 9] } },
+          },
+        });
+
+        return { ...blockCtx, rounds, trackA };
+      };
+
+      it("creates a row on the root of a depth-3 tree — the guard projects the full subtree without truncation", async () => {
+        const ctx = await provisionDepth3Tree();
+
+        try {
+          const created = await lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+            schemaId: ctx.rounds.id,
+            rowKind: "REST_SLOT",
+            rowPayload: { rowKind: "REST_SLOT" },
+          });
+
+          expect(created.schemaId).toBe(ctx.rounds.id);
+
+          const count = await cleanupRaw.schemaRow.count({ where: { schemaId: ctx.rounds.id } });
+
+          expect(count).toBe(1);
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+
+      it("rejects a row create on the root when a level-3 track hides a ladder-marker collision (QA-106 regression witness)", async () => {
+        const ctx = await provisionDepth3Tree();
+
+        await cleanupRaw.schemaRow.create({
+          data: {
+            schemaId: ctx.trackA.id,
+            order: 10,
+            rowKind: "INNER_LADDER_MARKER",
+            rowPayload: { rowKind: "INNER_LADDER_MARKER", steps: [21, 15, 9] },
+          },
+        });
+
+        try {
+          await expect(
+            lmsSchemaRowApi.create(coach.user.id, activePlanId, {
+              schemaId: ctx.rounds.id,
+              rowKind: "REST_SLOT",
+              rowPayload: { rowKind: "REST_SLOT" },
+            }),
+          ).rejects.toThrow(BadRequestError);
+
+          const count = await cleanupRaw.schemaRow.count({ where: { schemaId: ctx.rounds.id } });
+
+          expect(count).toBe(0);
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+    });
   });
 
   describe("update", () => {

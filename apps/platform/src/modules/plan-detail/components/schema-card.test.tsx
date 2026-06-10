@@ -141,6 +141,26 @@ const makeBlockCtx = (overrides: Partial<BlockCtx> = {}): BlockCtx => ({
   ...overrides,
 });
 
+const makeRestSlotRow = (id: string): SchemaWithBody["rows"][number] => ({
+  id,
+  schemaId: SCHEMA_ID,
+  order: 1,
+  rowKind: "REST_SLOT",
+  rowPayload: { rowKind: "REST_SLOT" },
+  load: null,
+  reps: null,
+  side: null,
+  tempo: null,
+  position: null,
+  sequence: null,
+  intensity: null,
+  media: null,
+  compoundRep: null,
+  notes: null,
+  createdAt: NOW,
+  updatedAt: NOW,
+});
+
 type RenderOptions = {
   schema?: SchemaWithBody;
   blockCtx?: BlockCtx;
@@ -271,20 +291,43 @@ describe("SchemaCard composition tag", () => {
     expect(screen.getByText("ladder")).toBeInTheDocument();
   });
 
-  it("renders the 'parallel' tag for a parallel arrangement composition", () => {
+  it("renders the 'parallel' tag for an empty composition with two ladder sub-schemas", () => {
     renderSchemaCard({
       schema: makeSchema({
-        composition: {
-          arrangement: {
-            kind: "parallel",
-            interleaveOrder: "round_by_round",
-            tracks: [{ childSchemaId: SUB_SCHEMA_ID_A }, { childSchemaId: SUB_SCHEMA_ID_B }],
-          },
-        },
+        composition: {},
+        subSchemas: [
+          makeSchema({
+            id: SUB_SCHEMA_ID_A,
+            parentSchemaId: SCHEMA_ID,
+            composition: { repetition: { kind: "ladder", steps: [21, 15, 9] } },
+          }),
+          makeSchema({
+            id: SUB_SCHEMA_ID_B,
+            parentSchemaId: SCHEMA_ID,
+            composition: { repetition: { kind: "ladder", steps: [15, 12, 9] } },
+          }),
+        ],
       }),
     });
 
     expect(screen.getAllByText("parallel").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("parallel (round by round)")).toBeInTheDocument();
+  });
+
+  it("renders the 'cadence' tag, not 'parallel', for an EMOM parent with sub-schemas", () => {
+    renderSchemaCard({
+      schema: makeSchema({
+        composition: { repetition: { kind: "cadence", everyMin: 1, rounds: 12 } },
+        subSchemas: [
+          makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
+          makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
+        ],
+      }),
+    });
+
+    expect(screen.getByText("cadence")).toBeInTheDocument();
+    expect(screen.queryByText("parallel")).toBeNull();
+    expect(screen.getAllByText("EMOM 1’×12").length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders no composition-kind tag when composition is null", () => {
@@ -293,6 +336,54 @@ describe("SchemaCard composition tag", () => {
     expect(screen.queryByText("rounds")).toBeNull();
     expect(screen.queryByText("flat")).toBeNull();
     expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
+  });
+
+  it("flips the tag from 'parallel' to 'flat' when a re-render leaves one sub-schema and a stranded interleaveOrder (QA-Must-7, QA-Must-3)", () => {
+    const trackA = makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID });
+    const trackB = makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID });
+    const twoTracks = makeSchema({ composition: {}, subSchemas: [trackA, trackB] });
+    const oneTrackLeft = makeSchema({
+      composition: { interleaveOrder: "track_by_track" },
+      subSchemas: [trackA],
+    });
+
+    const { rerender } = renderSchemaCard({ schema: twoTracks });
+
+    expect(screen.getAllByText("parallel").length).toBeGreaterThanOrEqual(1);
+
+    rerender(
+      <SchemaCard
+        schema={oneTrackLeft}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        blockCtx={makeBlockCtx()}
+        parentIsReorderPending={false}
+      />,
+    );
+
+    expect(screen.queryByText("parallel")).toBeNull();
+    expect(screen.queryByText(/track by track/)).toBeNull();
+    expect(screen.getByText("flat")).toBeInTheDocument();
+  });
+
+  it("renders the 'parallel' tag and summary alongside direct rows — rows neither count nor suppress (QA-Must-11)", () => {
+    renderSchemaCard({
+      schema: makeSchema({
+        composition: {},
+        rows: [
+          makeRestSlotRow("clp9z8x7w0000abcd1234rsa1"),
+          makeRestSlotRow("clp9z8x7w0000abcd1234rsb1"),
+        ],
+        subSchemas: [
+          makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
+          makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
+        ],
+      }),
+    });
+
+    expect(screen.getAllByText("parallel").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText("parallel (round by round)")).toBeInTheDocument();
+    expect(screen.getByTestId("schema-row-list-mock")).toHaveAttribute("data-rows", "2");
   });
 });
 

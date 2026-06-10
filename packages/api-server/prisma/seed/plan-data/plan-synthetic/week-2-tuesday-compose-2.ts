@@ -2,7 +2,6 @@ import {
   absoluteLoad,
   bodyweightLoad,
   buildComposeNode,
-  cuidFromSeed,
   ladderRep,
   singleWeight,
 } from "../builder";
@@ -10,9 +9,6 @@ import type { CanonicalBlock } from "../canonical-schema";
 
 import { EX, LBL } from "./refs";
 import { mkRow } from "./row-helpers";
-
-const PYRAMID_TRACK_A = cuidFromSeed("schema::block-087::pyr-a");
-const PYRAMID_TRACK_B = cuidFromSeed("schema::block-087::pyr-b");
 
 export const BLOCK_TIME_WINDOW_OUTER_WK2_TUE: CanonicalBlock = {
   blockInstanceRef: "block-003",
@@ -89,7 +85,6 @@ export const BLOCK_PARALLEL_PYRAMIDS_WK2_TUE: CanonicalBlock = {
           buildComposeNode(
             {
               order: 1,
-              refId: PYRAMID_TRACK_A,
               rows: [
                 mkRow(
                   1,
@@ -104,7 +99,6 @@ export const BLOCK_PARALLEL_PYRAMIDS_WK2_TUE: CanonicalBlock = {
           buildComposeNode(
             {
               order: 2,
-              refId: PYRAMID_TRACK_B,
               rows: [
                 mkRow(
                   1,
@@ -118,13 +112,7 @@ export const BLOCK_PARALLEL_PYRAMIDS_WK2_TUE: CanonicalBlock = {
           ),
         ],
       },
-      {
-        arrangement: {
-          kind: "parallel",
-          interleaveOrder: "round_by_round",
-          tracks: [{ childSchemaId: PYRAMID_TRACK_A }, { childSchemaId: PYRAMID_TRACK_B }],
-        },
-      },
+      {},
       null,
     ),
   ],
