@@ -4,11 +4,18 @@ import { Alert, Button, Stack, Typography } from "@mui/material";
 import type { FieldErrors } from "react-hook-form";
 
 import type { RestSpec } from "@repo/contracts/lms/_shared";
+import {
+  DEFAULT_INTERLEAVE_ORDER,
+  deriveCompositionLabel,
+  type ParallelInterleaveOrder,
+} from "@repo/contracts/lms/composition";
 import type { Exercise } from "@repo/contracts/lms/exercise";
 import { SCHEMA_CONSTANTS } from "@repo/contracts/lms/schema";
 import { InlineEditText } from "@repo/ui";
 
 import { collectArrangementTargets } from "../../lib/arrangement-targets";
+import { collectTrackChildren } from "../../lib/arrangement-tree";
+import { previewComposition } from "../../lib/build-axis-composition";
 import { hasLadderMarkerConflict, LADDER_MARKER_CONFLICT } from "../../lib/ladder-marker-conflict";
 import { shouldBeContainer } from "../../lib/should-be-container";
 import { RestSpecFields, restSpecFormSchema, type RestSpecFormValue } from "../rest-spec-fields";
@@ -22,6 +29,7 @@ import type {
   RepetitionAxis,
 } from "./axis-draft.types";
 import { AxisFieldSection } from "./axis-field-section";
+import { InterleaveOrderField } from "./interleave-order-field";
 import { RepetitionAxisField } from "./repetition-axis-field";
 
 const HEADER_LABEL = "Header";
@@ -34,6 +42,7 @@ const DEMOTE_HINT =
   "This group holds a single movement and no rep-scheme. A plain row may read cleaner — drop it down to a row, or give it a scheme to keep it as a group.";
 const DEMOTE_BUTTON_LABEL = "Demote to row";
 
+const PARALLEL_KIND = "parallel";
 const DEFAULT_REPETITION: RepetitionAxis = { kind: "once" };
 const DEFAULT_ARRANGEMENT: ArrangementAxis = { kind: "ordered" };
 const DEFAULT_REST: RestSpec = {
@@ -115,6 +124,17 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
       asContainerPatch((node) => ({ ...node, rest })),
     );
 
+  const setInterleaveOrder = (interleaveOrder: ParallelInterleaveOrder): void =>
+    onUpdateNode(
+      container.id,
+      asContainerPatch((node) => ({ ...node, interleaveOrder })),
+    );
+
+  const labelKind = deriveCompositionLabel(previewComposition(container), {
+    containerChildCount: collectTrackChildren(container).length,
+  }).kind;
+  const isStructurallyParallelDraft = labelKind === PARALLEL_KIND;
+
   const repetitionError = hasLadderMarkerConflict(container) ? LADDER_MARKER_CONFLICT : undefined;
 
   const showsDemoteHint =
@@ -171,12 +191,18 @@ export const ContainerInspector: React.FC<ContainerInspectorProps> = ({
         error={repetitionError}
       />
 
-      <ArrangementAxisField
-        value={container.arrangement ?? DEFAULT_ARRANGEMENT}
-        onChange={setArrangement}
-        childContainers={arrangementTargets.childContainers}
-        directRows={arrangementTargets.directRows}
-      />
+      {isStructurallyParallelDraft ? (
+        <InterleaveOrderField
+          value={container.interleaveOrder ?? DEFAULT_INTERLEAVE_ORDER}
+          onChange={setInterleaveOrder}
+        />
+      ) : (
+        <ArrangementAxisField
+          value={container.arrangement ?? DEFAULT_ARRANGEMENT}
+          onChange={setArrangement}
+          directRows={arrangementTargets.directRows}
+        />
+      )}
 
       <AxisFieldSection label={REST_LABEL}>
         <RestSpecFields
