@@ -1,3 +1,5 @@
+import type { ZodIssue } from "zod";
+
 import {
   type CreateParallelSchemasRequest,
   createParallelSchemasRequestSchema,
@@ -19,6 +21,33 @@ export type ParallelCreateRequestResult =
 
 const trackLadderSteps = (track: ComposeContainer): number[] =>
   track.repetition?.kind === "ladder" ? track.repetition.steps : [];
+
+const coachIssuePath = (path: ZodIssue["path"]): ZodIssue["path"] => {
+  const [root, trackIndex, field, stepIndex] = path;
+
+  if (root !== "tracks") {
+    return path;
+  }
+
+  if (typeof trackIndex !== "number") {
+    return ["ladders"];
+  }
+
+  const ladder = `ladder ${trackIndex + 1}`;
+
+  if (field === "header") {
+    return [`${ladder} name`];
+  }
+
+  if (field !== "steps") {
+    return [ladder];
+  }
+
+  return typeof stepIndex === "number" ? [`${ladder}, step ${stepIndex + 1}`] : [`${ladder} steps`];
+};
+
+const formatCoachIssue = (issue: ZodIssue): string =>
+  formatZodIssue({ ...issue, path: coachIssuePath(issue.path) });
 
 export const buildParallelCreateRequest = (
   parent: ComposeContainer,
@@ -46,7 +75,7 @@ export const buildParallelCreateRequest = (
 
     return {
       ok: false,
-      error: issue === undefined ? REQUEST_BUILD_FALLBACK : formatZodIssue(issue),
+      error: issue === undefined ? REQUEST_BUILD_FALLBACK : formatCoachIssue(issue),
     };
   }
 

@@ -153,7 +153,7 @@ describe("useCreateParallelSchemas", () => {
 
     expect(createParallelMock).not.toHaveBeenCalled();
     expect(onError).toHaveBeenCalledTimes(1);
-    expect(onError.mock.calls[0]?.[0]).toMatch(/tracks\.1\.steps/);
+    expect(onError.mock.calls[0]?.[0]).toMatch(/^ladder 2 steps: /);
     expect(invalidateSpy).not.toHaveBeenCalled();
     expect(toastSuccessMock).not.toHaveBeenCalled();
     expect(onSuccess).not.toHaveBeenCalled();
