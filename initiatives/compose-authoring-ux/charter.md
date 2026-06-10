@@ -1,5 +1,7 @@
 # compose-authoring-ux — charter
 
+> **Status: CLOSED 2026-06-10.** Both steps shipped (PR #258; PRs #259+#260 + ADR-0040). Superseded forward by `initiatives/session-primitive/` — the box-model redesign of the session primitive (explicit Groups replace derived parallelism; the sacred clauses below were honored for this initiative's lifetime and are re-opened THERE, not here).
+
 **Goal.** Make schema authoring feel like the coach thinks: he builds "a ladder with N tracks" in one flow, instead of hand-assembling a container, nesting sub-containers, and wiring an arrangement axis. First target: parallel ladders.
 
 **Driving decision.** This is the **UX layer over the ratified compose model** (`docs/adr/0037`, initiative `plan-editor-compose` — CLOSED). It changes how the coach authors composition; it does NOT re-open the algebra. The four-projection invariance lens (a primitive means the same across coach-SETS / athlete-EXECUTES / RENDER / ANALYTICS) still governs. Memory: `[[compose-four-projection]]`, `[[pm-initiatives-system]]`.
