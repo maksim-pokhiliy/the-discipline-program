@@ -5,8 +5,6 @@ import { REPETITION_AXIS_KINDS } from "./composition.constants";
 import { compositionSchema } from "./composition.schema";
 import type { ArrangementAxis, Composition, RepetitionAxis } from "./composition.types";
 
-const cuidThrTrack = "clz00000000000000thrtrack1";
-const cuidPulTrack = "clz00000000000000pultrack1";
 const cuidPlaceholder = "clz000000000000placeholder";
 const cuidPlank = "clz00000000000000000plankr";
 
@@ -15,16 +13,13 @@ function parsedComposition(composition: Composition): Composition {
 }
 
 describe("deriveCompositionLabel — §2.5 axis-configuration mapping", () => {
-  it("maps arrangement parallel to parallel / PARALLEL", () => {
-    const composition = parsedComposition({
-      arrangement: {
-        kind: "parallel",
-        interleaveOrder: "round_by_round",
-        tracks: [{ childSchemaId: cuidThrTrack }, { childSchemaId: cuidPulTrack }],
-      },
-    });
+  it("maps a structurally parallel composition to parallel / PARALLEL", () => {
+    const composition = parsedComposition({});
 
-    expect(deriveCompositionLabel(composition)).toEqual({ kind: "parallel", family: "PARALLEL" });
+    expect(deriveCompositionLabel(composition, { containerChildCount: 2 })).toEqual({
+      kind: "parallel",
+      family: "PARALLEL",
+    });
   });
 
   it("maps arrangement superset to superset / SUPERSET", () => {
@@ -100,16 +95,13 @@ describe("deriveCompositionLabel — canonical gauntlet compositions", () => {
     expect(deriveCompositionLabel(fran)).toEqual({ kind: "ladder", family: "LADDER" });
   });
 
-  it("labels Block C (parallel tracks) as parallel / PARALLEL", () => {
-    const blockC = parsedComposition({
-      arrangement: {
-        kind: "parallel",
-        interleaveOrder: "round_by_round",
-        tracks: [{ childSchemaId: cuidThrTrack }, { childSchemaId: cuidPulTrack }],
-      },
-    });
+  it("labels Block C (marker rows, no container children) as flat / FLAT", () => {
+    const blockC = parsedComposition({});
 
-    expect(deriveCompositionLabel(blockC)).toEqual({ kind: "parallel", family: "PARALLEL" });
+    expect(deriveCompositionLabel(blockC, { containerChildCount: 0 })).toEqual({
+      kind: "flat",
+      family: "FLAT",
+    });
   });
 
   it("labels Gauntlet B EMOM (cadence) as cadence / INTERVALIC", () => {
@@ -156,8 +148,6 @@ describe("deriveCompositionLabel — canonical gauntlet compositions", () => {
   });
 });
 
-const cuidTrackA = "clz00000000000000000tracka";
-const cuidTrackB = "clz00000000000000000trackb";
 const cuidPairA = "clz0000000000000000pairaaa";
 const cuidPairB = "clz0000000000000000pairbbb";
 
@@ -182,14 +172,6 @@ const ARRANGEMENT_CASES: ReadonlyArray<{ name: string; arrangement: ArrangementA
   [
     { name: "no arrangement", arrangement: undefined },
     { name: "ordered", arrangement: { kind: "ordered" } },
-    {
-      name: "parallel",
-      arrangement: {
-        kind: "parallel",
-        interleaveOrder: "round_by_round",
-        tracks: [{ childSchemaId: cuidTrackA }, { childSchemaId: cuidTrackB }],
-      },
-    },
     {
       name: "superset",
       arrangement: { kind: "superset", pairs: [{ label: "A", rowIds: [cuidPairA, cuidPairB] }] },

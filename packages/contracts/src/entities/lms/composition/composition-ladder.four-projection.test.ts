@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { schemaRowPayloadSchema } from "../schema-row";
 
 import { composeContainerSchema, compositionSchema } from "./composition.schema";
-import type { ComposeNode, ComposeRow } from "./composition.types";
+import type { ComposeNode, ComposeRow, Composition } from "./composition.types";
 
 const cuidFran = "clz000000000000000000fran";
 const cuidThrusters = "clz00000000000000000thrust";
@@ -78,13 +78,7 @@ const franContainer: ComposeNode = {
   children: [franThrustersRow, franPullupsRow],
 };
 
-const blockCComposition = {
-  arrangement: {
-    kind: "parallel",
-    interleaveOrder: "round_by_round",
-    tracks: [{ childSchemaId: cuidThrTrack }, { childSchemaId: cuidPulTrack }],
-  },
-} as const;
+const blockCComposition: Composition = {};
 
 const blockCThrustersRow = ladderMarkerRow(cuidThrTrack, [21, 15, 9]);
 const blockCPullupsRow = ladderMarkerRow(cuidPulTrack, [9, 15, 21]);
@@ -94,13 +88,7 @@ const blockCContainer: ComposeNode = {
   id: cuidBlockC,
   header: "Block C",
   notes: null,
-  composition: {
-    arrangement: {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [{ childSchemaId: cuidThrTrack }, { childSchemaId: cuidPulTrack }],
-    },
-  },
+  composition: {},
   children: [blockCThrustersRow, blockCPullupsRow],
 };
 
@@ -117,7 +105,7 @@ describe("Fran — round-counter ladder (container repetition axis)", () => {
 });
 
 describe("Gauntlet Block C — rep-scheme ladder (per-row INNER_LADDER_MARKER)", () => {
-  it("validates a parallel container with no repetition axis", () => {
+  it("validates the marker container with an empty composition and no repetition axis", () => {
     expect(compositionSchema.safeParse(blockCComposition).success).toBe(true);
     expect(composeContainerSchema.safeParse(blockCContainer).success).toBe(true);
 

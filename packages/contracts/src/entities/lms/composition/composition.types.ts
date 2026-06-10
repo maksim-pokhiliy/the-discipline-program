@@ -6,7 +6,6 @@ import {
   type composeNodeSchema,
   type composeRowSchema,
   type compositionSchema,
-  type parallelTrackSchema,
   type repetitionAxisSchema,
   type restAxisSchema,
   type supersetPairSchema,
@@ -17,7 +16,6 @@ export type ArrangementAxis = z.infer<typeof arrangementAxisSchema>;
 export type RestAxis = z.infer<typeof restAxisSchema>;
 export type Composition = z.infer<typeof compositionSchema>;
 export type SupersetPair = z.infer<typeof supersetPairSchema>;
-export type ParallelTrack = z.infer<typeof parallelTrackSchema>;
 export type ComposeRow = z.infer<typeof composeRowSchema>;
 export type ComposeContainer = z.infer<typeof composeContainerSchema>;
 export type ComposeNode = z.infer<typeof composeNodeSchema>;
