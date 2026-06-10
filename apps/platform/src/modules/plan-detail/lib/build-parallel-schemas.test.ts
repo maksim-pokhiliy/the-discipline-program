@@ -135,6 +135,20 @@ describe("buildParallelCreateRequest", () => {
     }
   });
 
+  it("fails with coach copy before any request when the draft exceeds the track cap (QA-Must-9)", () => {
+    const tracks = Array.from({ length: SCHEMA_CONSTANTS.MAX_PARALLEL_TRACKS + 1 }, (_, i) =>
+      ladderTrack(`t${String(i + 1)}`, [21, 15, 9]),
+    );
+    const result = buildParallelCreateRequest(parent(tracks), BLOCK_ID);
+
+    expect(result.ok).toBe(false);
+
+    if (!result.ok) {
+      expect(result.error).toMatch(/^ladders: /);
+      expect(result.error).toMatch(/at most/i);
+    }
+  });
+
   it("rejects a non-parallel single-track draft", () => {
     const result = buildParallelCreateRequest(parent([ladderTrack("t1", [21, 15, 9])]), BLOCK_ID);
 

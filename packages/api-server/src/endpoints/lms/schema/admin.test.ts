@@ -721,6 +721,96 @@ describe("lmsSchemaApi", () => {
         await ctx.cleanup();
       }
     });
+
+    it("concurrent createParallel into one block — fulfilled calls land whole trees with distinct orders (QA-Must-5)", async () => {
+      const ctx = await provisionBlock();
+
+      try {
+        const results = await Promise.allSettled([
+          lmsSchemaApi.createParallel(
+            coach.user.id,
+            activePlanId,
+            { blockId: ctx.block.id },
+            { tracks: PARALLEL_TRACKS },
+          ),
+          lmsSchemaApi.createParallel(
+            coach.user.id,
+            activePlanId,
+            { blockId: ctx.block.id },
+            { tracks: PARALLEL_TRACKS },
+          ),
+        ]);
+
+        const fulfilledCount = results.filter((r) => r.status === "fulfilled").length;
+
+        expect(fulfilledCount).toBeGreaterThanOrEqual(1);
+
+        const parents = await cleanupRaw.schema.findMany({
+          where: { blockId: ctx.block.id, parentSchemaId: null },
+          orderBy: { order: "asc" },
+        });
+        const blockCount = await cleanupRaw.schema.count({ where: { blockId: ctx.block.id } });
+
+        expect(parents).toHaveLength(fulfilledCount);
+        expect(blockCount).toBe(fulfilledCount * 3);
+
+        if (fulfilledCount === 2) {
+          expect(parents.map((p) => p.order)).toEqual([10, 20]);
+        }
+
+        for (const parentRow of parents) {
+          const children = await cleanupRaw.schema.findMany({
+            where: { parentSchemaId: parentRow.id },
+            orderBy: { order: "asc" },
+          });
+
+          expect(children.map((c) => c.order)).toEqual([10, 20]);
+        }
+      } finally {
+        await ctx.cleanup();
+      }
+    });
+
+    it("flips the enclosing axis-free parent to parallel when a nested createParallel adds its second child (QA-Must-8)", async () => {
+      const ctx = await provisionBlock();
+
+      try {
+        const enclosing = await lmsSchemaApi.create(
+          coach.user.id,
+          activePlanId,
+          { blockId: ctx.block.id },
+          { composition: {} },
+        );
+
+        await lmsSchemaApi.create(
+          coach.user.id,
+          activePlanId,
+          { parentSchemaId: enclosing.id },
+          { composition: {} },
+        );
+
+        const created = await lmsSchemaApi.createParallel(
+          coach.user.id,
+          activePlanId,
+          { parentSchemaId: enclosing.id },
+          { tracks: PARALLEL_TRACKS },
+        );
+
+        const flat = await cleanupRaw.schema.findMany({
+          where: { blockId: ctx.block.id },
+          include: { rows: { orderBy: { order: "asc" } } },
+        });
+        const subtree = buildSchemaSubtree(flat, enclosing.id);
+        const nested = subtree.subSchemas.find((s) => s.schema.id === created.schema.id);
+
+        expect(subtree.schema.label).toEqual({ kind: "parallel", family: "PARALLEL" });
+        expect(subtree.subSchemas).toHaveLength(2);
+        expect(nested?.schema.label).toEqual({ kind: "parallel", family: "PARALLEL" });
+        expect(nested?.subSchemas.map((s) => s.schema.label?.kind)).toEqual(["ladder", "ladder"]);
+      } finally {
+        await ctx.cleanup();
+      }
+    });
   });
 
   describe("update", () => {
@@ -1041,6 +1131,82 @@ describe("lmsSchemaApi", () => {
           expect(() => assertComposeTreeValid(subtree)).not.toThrow();
           expect(subtree.schema.label).toEqual({ kind: "parallel", family: "PARALLEL" });
           expect(subtree.subSchemas.map((s) => s.schema.id)).toEqual([trackA.id, trackB.id]);
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+
+      it("accepts an interleaveOrder update on a non-ladder structural parallel through the full-depth guard (block-009 shape, QA-Must-12)", async () => {
+        const ctx = await provisionBlock();
+        const parent = await createComposeSchema({ blockId: ctx.block.id, composition: {} });
+        const setA = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parent.id,
+          composition: {},
+        });
+        const setB = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parent.id,
+          composition: {},
+        });
+
+        await createRestSlotRow(setA.id);
+        await createRestSlotRow(setB.id);
+
+        try {
+          const updated = await lmsSchemaApi.update(coach.user.id, parent.id, {
+            composition: { interleaveOrder: "track_by_track" },
+          });
+
+          expect(updated.composition).toEqual({ interleaveOrder: "track_by_track" });
+
+          const flat = await cleanupRaw.schema.findMany({
+            where: { blockId: ctx.block.id },
+            include: { rows: { orderBy: { order: "asc" } } },
+          });
+          const subtree = buildSchemaSubtree(flat, parent.id);
+
+          expect(subtree.schema.label).toEqual({ kind: "parallel", family: "PARALLEL" });
+          expect(subtree.subSchemas.map((s) => s.rows.length)).toEqual([1, 1]);
+        } finally {
+          await ctx.cleanup();
+        }
+      });
+
+      it("accepts a composition update on the root of a depth-3 tree through the full-depth guard (QA-106, DR-S2-7)", async () => {
+        const ctx = await provisionBlock();
+        const rounds = await createComposeSchema({
+          blockId: ctx.block.id,
+          composition: { repetition: { kind: "count", count: 2 } },
+        });
+        const parallelMid = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: rounds.id,
+          composition: {},
+        });
+        const trackA = await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parallelMid.id,
+          composition: { repetition: { kind: "ladder", steps: [9, 6, 3] } },
+        });
+
+        await createComposeSchema({
+          blockId: ctx.block.id,
+          parentSchemaId: parallelMid.id,
+          composition: { repetition: { kind: "ladder", steps: [3, 6, 9] } },
+        });
+        await createRestSlotRow(trackA.id);
+
+        try {
+          const updated = await lmsSchemaApi.update(coach.user.id, rounds.id, {
+            composition: { repetition: { kind: "count", count: 3 } },
+          });
+
+          expect(updated.composition).toEqual({ repetition: { kind: "count", count: 3 } });
+
+          const stored = await cleanupRaw.schema.findUnique({ where: { id: rounds.id } });
+
+          expect(stored?.composition).toEqual({ repetition: { kind: "count", count: 3 } });
         } finally {
           await ctx.cleanup();
         }

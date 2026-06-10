@@ -479,6 +479,81 @@ describe("AxisEditorModal ordered escape hatch (REV-S2-W2)", () => {
   });
 });
 
+describe("AxisEditorModal repetition toggles on a structural parallel (QA-301)", () => {
+  it("restores the parallel label and interleave control after a Count then Once exploration and saves once explicitly (QA-Must-1)", () => {
+    renderEdit(makeStructurallyParallelSchema());
+
+    selectRepetition("Count");
+
+    expect(screen.queryByText("parallel")).toBeNull();
+    expect(screen.queryByRole("group", { name: "interleave" })).toBeNull();
+
+    selectRepetition("Once");
+
+    expect(screen.getByText("parallel")).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "interleave" })).toBeInTheDocument();
+
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate.mock.calls[0]?.[0]).toStrictEqual({
+      schemaId: SCHEMA_ID,
+      data: { composition: { repetition: { kind: "once" } }, header: null },
+    });
+  });
+
+  it("swaps interleave for arrangement on a Count flip and retains the stranded interleaveOrder in the payload (QA-Must-2)", () => {
+    renderEdit(makeStructurallyParallelSchema({ interleaveOrder: "track_by_track" }));
+
+    expect(screen.getByRole("group", { name: "interleave" })).toBeInTheDocument();
+
+    selectRepetition("Count");
+
+    expect(screen.queryByRole("group", { name: "interleave" })).toBeNull();
+    expect(screen.getByRole("group", { name: "arrangement" })).toBeInTheDocument();
+
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate.mock.calls[0]?.[0]).toStrictEqual({
+      schemaId: SCHEMA_ID,
+      data: {
+        composition: {
+          repetition: { kind: "count", count: 3 },
+          interleaveOrder: "track_by_track",
+        },
+        header: null,
+      },
+    });
+  });
+});
+
+describe("AxisEditorModal single-track stranded interleave (QA-Must-3)", () => {
+  const singleTrackStrandedSchema = (): SchemaWithBody => ({
+    ...makeSchema({ composition: { interleaveOrder: "track_by_track" } }),
+    subSchemas: [makeSchema({ id: SUB_SCHEMA_ID, parentSchemaId: SCHEMA_ID, header: "Track A" })],
+  });
+
+  it("shows no parallel label and no interleave control for a single-child parent", () => {
+    renderEdit(singleTrackStrandedSchema());
+
+    expect(screen.queryByText("parallel")).toBeNull();
+    expect(screen.queryByRole("group", { name: "interleave" })).toBeNull();
+    expect(screen.getByRole("group", { name: "arrangement" })).toBeInTheDocument();
+  });
+
+  it("round-trips the stranded interleaveOrder byte-for-byte on an untouched save", () => {
+    renderEdit(singleTrackStrandedSchema());
+    submitEdit();
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate.mock.calls[0]?.[0]).toStrictEqual({
+      schemaId: SCHEMA_ID,
+      data: { composition: { interleaveOrder: "track_by_track" }, header: null },
+    });
+  });
+});
+
 describe("AxisEditorModal mutation error surfacing (QA-Must-8)", () => {
   it("surfaces the mutation error and re-enables Save for a retry", () => {
     createSchemaMutate.mockImplementationOnce((_vars, options) => {
