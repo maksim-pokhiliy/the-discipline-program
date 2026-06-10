@@ -37,11 +37,15 @@ export const createParallelSchemasRequestSchema = z
         z
           .object({
             header: z.string().max(SCHEMA_CONSTANTS.MAX_HEADER_LENGTH).nullable().optional(),
-            steps: z.array(z.number().int().positive()).min(1),
+            steps: z
+              .array(z.number().int().positive().max(SCHEMA_CONSTANTS.MAX_LADDER_STEP_VALUE))
+              .min(1)
+              .max(SCHEMA_CONSTANTS.MAX_LADDER_STEPS),
           })
           .strict(),
       )
-      .min(2),
+      .min(2)
+      .max(SCHEMA_CONSTANTS.MAX_PARALLEL_TRACKS),
   })
   .strict();
 export const createParallelSchemasResponseSchema = schemaWithBodySchema;

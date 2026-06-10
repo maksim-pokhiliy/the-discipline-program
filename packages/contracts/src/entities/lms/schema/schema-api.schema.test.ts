@@ -14,6 +14,7 @@ import {
   updateSchemaRequestSchema,
   updateSchemaResponseSchema,
 } from "./schema-api.schema";
+import { SCHEMA_CONSTANTS } from "./schema.constants";
 import {
   createSchemaSchema,
   schemaSchema,
@@ -67,6 +68,10 @@ describe("createParallelSchemasRequestSchema", () => {
     tracks: [{ steps: [21, 15, 9] }, { steps: [15, 12, 9] }],
   };
 
+  const makeTracks = (count: number) => Array.from({ length: count }, () => ({ steps: [21] }));
+
+  const makeSteps = (length: number) => Array.from({ length }, () => 1);
+
   it("accepts a minimal two-track payload", () => {
     expect(createParallelSchemasRequestSchema.safeParse(baseParallelPayload).success).toBe(true);
   });
@@ -94,10 +99,64 @@ describe("createParallelSchemasRequestSchema", () => {
     expect(r.success).toBe(false);
   });
 
+  it("accepts the maximum allowed tracks count", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      tracks: makeTracks(SCHEMA_CONSTANTS.MAX_PARALLEL_TRACKS),
+    });
+
+    expect(r.success).toBe(true);
+  });
+
+  it("rejects one track over the maximum", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      tracks: makeTracks(SCHEMA_CONSTANTS.MAX_PARALLEL_TRACKS + 1),
+    });
+
+    expect(r.success).toBe(false);
+  });
+
   it("rejects a track with empty steps", () => {
     const r = createParallelSchemasRequestSchema.safeParse({
       ...baseParallelPayload,
       tracks: [{ steps: [21, 15, 9] }, { steps: [] }],
+    });
+
+    expect(r.success).toBe(false);
+  });
+
+  it("accepts a track at the maximum allowed steps length", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      tracks: [{ steps: makeSteps(SCHEMA_CONSTANTS.MAX_LADDER_STEPS) }, { steps: [15, 12, 9] }],
+    });
+
+    expect(r.success).toBe(true);
+  });
+
+  it("rejects a track one step over the maximum length", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      tracks: [{ steps: makeSteps(SCHEMA_CONSTANTS.MAX_LADDER_STEPS + 1) }, { steps: [15, 12, 9] }],
+    });
+
+    expect(r.success).toBe(false);
+  });
+
+  it("accepts a step at the maximum allowed value", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      tracks: [{ steps: [SCHEMA_CONSTANTS.MAX_LADDER_STEP_VALUE] }, { steps: [15, 12, 9] }],
+    });
+
+    expect(r.success).toBe(true);
+  });
+
+  it("rejects a step over the maximum value", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      tracks: [{ steps: [SCHEMA_CONSTANTS.MAX_LADDER_STEP_VALUE + 1] }, { steps: [15, 12, 9] }],
     });
 
     expect(r.success).toBe(false);
