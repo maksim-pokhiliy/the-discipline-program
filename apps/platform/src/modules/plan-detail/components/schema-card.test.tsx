@@ -43,6 +43,10 @@ vi.mock("../lib/use-create-parallel-schemas", () => ({
   useCreateParallelSchemas: () => ({ run: vi.fn(), isPending: false }),
 }));
 
+vi.mock("../lib/use-create-independent-ladders", () => ({
+  useCreateIndependentLadders: () => ({ run: vi.fn(), isPending: false }),
+}));
+
 vi.mock("./schema-row-list", () => {
   const renderRowListMock = (props: {
     rows: SchemaWithBody["rows"];
@@ -102,6 +106,9 @@ const DELETE_LABEL = "Delete schema";
 const TITLE_LABEL = "Schema title";
 const EDIT_LABEL = "Edit axes";
 const ADD_SUB_LABEL = "Add sub-schema";
+const GROUP_BOX_TESTID = "schema-group-box";
+const GROUP_LABEL = "Group label";
+const GROUP_PLACEHOLDER = "group…";
 
 const COUNT_5: SchemaWithBody["schema"]["composition"] = {
   repetition: { kind: "count", count: 5 },
@@ -134,6 +141,11 @@ const makeSchema = (overrides: MakeSchemaOverrides = {}): SchemaWithBody => {
     subSchemas: subSchemas ?? [],
   };
 };
+
+const makeParallelSubs = (): SchemaWithBody[] => [
+  makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
+  makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
+];
 
 const makeBlockCtx = (overrides: Partial<BlockCtx> = {}): BlockCtx => ({
   intensity: null,
@@ -291,7 +303,7 @@ describe("SchemaCard composition tag", () => {
     expect(screen.getByText("ladder")).toBeInTheDocument();
   });
 
-  it("renders the 'parallel' tag for an empty composition with two ladder sub-schemas", () => {
+  it("boxes a structurally-parallel parent and drops the 'parallel' chip while keeping the summary (MT-2, MT-3)", () => {
     renderSchemaCard({
       schema: makeSchema({
         composition: {},
@@ -310,11 +322,16 @@ describe("SchemaCard composition tag", () => {
       }),
     });
 
-    expect(screen.getAllByText("parallel").length).toBeGreaterThanOrEqual(1);
+    const box = screen.getByTestId(GROUP_BOX_TESTID);
+
+    expect(box.querySelector(".MuiCard-root")).not.toBeNull();
+    expect(screen.queryByText("parallel")).toBeNull();
+    expect(screen.queryByRole("textbox", { name: TITLE_LABEL })).toBeNull();
     expect(screen.getByText("parallel (round by round)")).toBeInTheDocument();
+    expect(screen.getByTestId("schema-list-mock")).toHaveAttribute("data-schemas-count", "2");
   });
 
-  it("renders the 'cadence' tag, not 'parallel', for an EMOM parent with sub-schemas", () => {
+  it("renders the 'cadence' tag, not a box, for an EMOM parent with sub-schemas (MT-4 predicate gating)", () => {
     renderSchemaCard({
       schema: makeSchema({
         composition: { repetition: { kind: "cadence", everyMin: 1, rounds: 12 } },
@@ -325,9 +342,35 @@ describe("SchemaCard composition tag", () => {
       }),
     });
 
+    expect(screen.queryByTestId(GROUP_BOX_TESTID)).toBeNull();
     expect(screen.getByText("cadence")).toBeInTheDocument();
     expect(screen.queryByText("parallel")).toBeNull();
     expect(screen.getAllByText("EMOM 1’×12").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("boxes a `once`-repetition parent but suppresses a parent with explicit ordered arrangement (MT-5)", () => {
+    const subs = [
+      makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID }),
+      makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID }),
+    ];
+
+    const { rerender } = renderSchemaCard({
+      schema: makeSchema({ composition: { repetition: { kind: "once" } }, subSchemas: subs }),
+    });
+
+    expect(screen.getByTestId(GROUP_BOX_TESTID)).toBeInTheDocument();
+
+    rerender(
+      <SchemaCard
+        schema={makeSchema({ composition: { arrangement: { kind: "ordered" } }, subSchemas: subs })}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        blockCtx={makeBlockCtx()}
+        parentIsReorderPending={false}
+      />,
+    );
+
+    expect(screen.queryByTestId(GROUP_BOX_TESTID)).toBeNull();
   });
 
   it("renders no composition-kind tag when composition is null", () => {
@@ -338,7 +381,7 @@ describe("SchemaCard composition tag", () => {
     expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
   });
 
-  it("flips the tag from 'parallel' to 'flat' when a re-render leaves one sub-schema and a stranded interleaveOrder (QA-Must-7, QA-Must-3)", () => {
+  it("removes the box and shows the 'flat' chip when a re-render leaves one sub-schema and a stranded interleaveOrder (MT-6)", () => {
     const trackA = makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID });
     const trackB = makeSchema({ id: SUB_SCHEMA_ID_B, parentSchemaId: SCHEMA_ID });
     const twoTracks = makeSchema({ composition: {}, subSchemas: [trackA, trackB] });
@@ -349,7 +392,7 @@ describe("SchemaCard composition tag", () => {
 
     const { rerender } = renderSchemaCard({ schema: twoTracks });
 
-    expect(screen.getAllByText("parallel").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId(GROUP_BOX_TESTID)).toBeInTheDocument();
 
     rerender(
       <SchemaCard
@@ -361,12 +404,13 @@ describe("SchemaCard composition tag", () => {
       />,
     );
 
+    expect(screen.queryByTestId(GROUP_BOX_TESTID)).toBeNull();
     expect(screen.queryByText("parallel")).toBeNull();
     expect(screen.queryByText(/track by track/)).toBeNull();
     expect(screen.getByText("flat")).toBeInTheDocument();
   });
 
-  it("renders the 'parallel' tag and summary alongside direct rows — rows neither count nor suppress (QA-Must-11)", () => {
+  it("renders the box and summary alongside direct rows — rows neither count nor suppress (MT-7a)", () => {
     renderSchemaCard({
       schema: makeSchema({
         composition: {},
@@ -381,9 +425,148 @@ describe("SchemaCard composition tag", () => {
       }),
     });
 
-    expect(screen.getAllByText("parallel").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId(GROUP_BOX_TESTID)).toBeInTheDocument();
     expect(screen.getByText("parallel (round by round)")).toBeInTheDocument();
     expect(screen.getByTestId("schema-row-list-mock")).toHaveAttribute("data-rows", "2");
+  });
+});
+
+describe("SchemaCard group box", () => {
+  const renderBoxed = (header: string | null = null) =>
+    renderSchemaCard({
+      schema: makeSchema({ composition: {}, header, subSchemas: makeParallelSubs() }),
+    });
+
+  it("shows an empty 'Group label' textbox with the neutral placeholder when header is null (MT-9)", () => {
+    renderBoxed(null);
+
+    const label = screen.getByRole("textbox", { name: GROUP_LABEL });
+
+    expect(label).toBeInstanceOf(HTMLInputElement);
+
+    if (!(label instanceof HTMLInputElement)) {
+      throw new Error("group label is not an HTMLInputElement");
+    }
+
+    expect(label.value).toBe("");
+    expect(label).toHaveAttribute("placeholder", GROUP_PLACEHOLDER);
+    expect(screen.queryByText("parallel")).toBeNull();
+  });
+
+  it("commits a non-empty box label as { header: <value> } via useUpdateSchema.mutate (MT-8)", () => {
+    renderBoxed(null);
+
+    const label = screen.getByRole("textbox", { name: GROUP_LABEL });
+
+    fireEvent.focus(label);
+    fireEvent.change(label, { target: { value: "WOD A" } });
+    fireEvent.blur(label);
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate).toHaveBeenCalledWith({
+      schemaId: SCHEMA_ID,
+      data: { header: "WOD A" },
+    });
+  });
+
+  it("commits a cleared box label as { header: null } via useUpdateSchema.mutate (MT-8)", () => {
+    renderBoxed("WOD A");
+
+    const label = screen.getByRole("textbox", { name: GROUP_LABEL });
+
+    fireEvent.focus(label);
+    fireEvent.change(label, { target: { value: "" } });
+    fireEvent.blur(label);
+
+    expect(updateSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(updateSchemaMutate).toHaveBeenCalledWith({
+      schemaId: SCHEMA_ID,
+      data: { header: null },
+    });
+  });
+
+  it("does NOT fire mutate on a whitespace-only box label edit with no prior header (MT-8)", () => {
+    renderBoxed(null);
+
+    const label = screen.getByRole("textbox", { name: GROUP_LABEL });
+
+    fireEvent.focus(label);
+    fireEvent.change(label, { target: { value: "   " } });
+    fireEvent.blur(label);
+
+    expect(updateSchemaMutate).not.toHaveBeenCalled();
+  });
+
+  it("does NOT fire mutate when the box label is committed unchanged (MT-8)", () => {
+    renderBoxed("Keep me");
+
+    const label = screen.getByRole("textbox", { name: GROUP_LABEL });
+
+    fireEvent.focus(label);
+    fireEvent.change(label, { target: { value: "Keep me" } });
+    fireEvent.blur(label);
+
+    expect(updateSchemaMutate).not.toHaveBeenCalled();
+  });
+
+  it("keeps the Add-sub-schema button inside the box and fires create with parentSchemaId (MT-10)", () => {
+    renderBoxed(null);
+
+    const box = screen.getByTestId(GROUP_BOX_TESTID);
+    const addButton = within(box).getByRole("button", { name: ADD_SUB_LABEL });
+
+    expect(addButton).toBeInTheDocument();
+
+    fireEvent.click(addButton);
+    fireEvent.click(screen.getByRole("button", { name: "Count" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add schema" }));
+
+    expect(createSchemaMutate).toHaveBeenCalledTimes(1);
+    expect(createSchemaMutate.mock.calls[0]?.[0]).toEqual({
+      blockId: BLOCK_ID,
+      parentSchemaId: SCHEMA_ID,
+      composition: { repetition: { kind: "count", count: 3 } },
+      header: null,
+      notes: null,
+    });
+  });
+
+  it("keeps a plain count parent unboxed while its structurally-parallel child boxes itself (MT-7b depth-3)", () => {
+    const grandchildA = makeSchema({
+      id: "clp9z8x7w0000abcd1234gca1",
+      parentSchemaId: SUB_SCHEMA_ID_A,
+    });
+    const grandchildB = makeSchema({
+      id: "clp9z8x7w0000abcd1234gcb1",
+      parentSchemaId: SUB_SCHEMA_ID_A,
+    });
+    const boxedChild: SchemaWithBody = {
+      ...makeSchema({ id: SUB_SCHEMA_ID_A, parentSchemaId: SCHEMA_ID, composition: {} }),
+      subSchemas: [grandchildA, grandchildB],
+    };
+
+    const { rerender } = renderSchemaCard({
+      schema: makeSchema({
+        composition: { repetition: { kind: "count", count: 2 } },
+        subSchemas: [boxedChild],
+      }),
+    });
+
+    expect(screen.queryByTestId(GROUP_BOX_TESTID)).toBeNull();
+    expect(screen.getByRole("textbox", { name: TITLE_LABEL })).toBeInTheDocument();
+    expect(screen.getByTestId("schema-list-mock")).toHaveAttribute("data-schemas-count", "1");
+
+    rerender(
+      <SchemaCard
+        schema={boxedChild}
+        planId={PLAN_ID}
+        startDate={START_DATE}
+        blockCtx={makeBlockCtx()}
+        parentIsReorderPending={false}
+      />,
+    );
+
+    expect(screen.getByTestId(GROUP_BOX_TESTID)).toBeInTheDocument();
   });
 });
 

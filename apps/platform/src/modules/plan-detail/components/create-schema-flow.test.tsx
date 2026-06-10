@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { fireEvent, screen, within } from "@testing-library/react";
+import { fireEvent, type RenderResult, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { render } from "@app/test/render";
@@ -20,6 +20,7 @@ const STEPS_PER_DEFAULT_LADDER = 3;
 const NON_LADDER_TILE_LABELS = ["Once", "Count", "Time cap", "EMOM", "Interval"];
 
 const draftRef: { current: ComposeContainer | undefined } = { current: undefined };
+const linkRef: { current: boolean } = { current: true };
 
 const freshDraft = (): ComposeContainer => ({
   nodeType: "container",
@@ -40,8 +41,10 @@ const flatLadderDraft = (steps: number[] = FIRST_LADDER_STEPS): ComposeContainer
 
 const StatefulFlow: React.FC<{ seed: ComposeContainer }> = ({ seed }) => {
   const [draft, setDraft] = useState<ComposeContainer>(seed);
+  const [linkIntoBox, setLinkIntoBox] = useState(true);
 
   draftRef.current = draft;
+  linkRef.current = linkIntoBox;
 
   return (
     <CreateSchemaFlow
@@ -50,13 +53,20 @@ const StatefulFlow: React.FC<{ seed: ComposeContainer }> = ({ seed }) => {
         draftRef.current = next;
         setDraft(next);
       }}
+      linkIntoBox={linkIntoBox}
+      onLinkIntoBoxChange={(next) => {
+        linkRef.current = next;
+        setLinkIntoBox(next);
+      }}
     />
   );
 };
 
-const renderFlow = (seed: ComposeContainer): void => {
+const renderFlow = (seed: ComposeContainer): RenderResult => {
   draftRef.current = seed;
-  render(<StatefulFlow seed={seed} />);
+  linkRef.current = true;
+
+  return render(<StatefulFlow seed={seed} />);
 };
 
 const repetitionGroups = (): HTMLElement[] =>
@@ -126,6 +136,20 @@ const expectSingleGridAndPress = (): void => {
   expect(repetitionGroups()).toHaveLength(1);
   expect(pressedTiles()).toHaveLength(1);
 };
+
+const GROUP_CHECKBOX = /group into one box/i;
+
+const groupCheckbox = (): HTMLElement | null =>
+  screen.queryByRole("checkbox", { name: GROUP_CHECKBOX });
+
+const toggleGroupCheckbox = (): void => {
+  const checkbox = screen.getByRole("checkbox", { name: GROUP_CHECKBOX });
+
+  fireEvent.click(checkbox);
+};
+
+const dividerCount = (container: HTMLElement): number =>
+  container.querySelectorAll(".MuiDivider-root").length;
 
 describe("CreateSchemaFlow materialize keeps the editor alive (Must-Test #1, catches QA-001)", () => {
   it("renders two ladder steppers with Ladder still active after tapping another ladder", () => {
@@ -259,5 +283,83 @@ describe("CreateSchemaFlow tile-group a11y invariant (Must-Test #12)", () => {
 
     clickTile("Count");
     expectSingleGridAndPress();
+  });
+});
+
+describe("CreateSchemaFlow group-into-box checkbox visibility (MT-11)", () => {
+  it("hides the checkbox for a single-track ladder", () => {
+    renderFlow(freshDraft());
+
+    clickTile("Ladder");
+
+    expect(groupCheckbox()).toBeNull();
+  });
+
+  it("shows the checkbox checked by default once a second ladder is added", () => {
+    renderFlow(freshDraft());
+
+    clickTile("Ladder");
+    clickAnotherLadder();
+
+    expect(groupCheckbox()).toBeChecked();
+  });
+
+  it("hides the checkbox again when the pattern switches to a non-ladder tile", () => {
+    renderFlow(flatLadderDraft());
+
+    clickAnotherLadder();
+
+    expect(groupCheckbox()).toBeInTheDocument();
+
+    clickTile("Count");
+
+    expect(groupCheckbox()).toBeNull();
+  });
+
+  it("keeps exactly one tile group and one pressed tile while the checkbox is visible", () => {
+    renderFlow(flatLadderDraft());
+
+    clickAnotherLadder();
+
+    expect(groupCheckbox()).toBeInTheDocument();
+    expectSingleGridAndPress();
+  });
+});
+
+describe("CreateSchemaFlow group-into-box checkbox toggle (MT-12)", () => {
+  it("flips the link state off and back on across two clicks", () => {
+    renderFlow(flatLadderDraft());
+
+    clickAnotherLadder();
+
+    expect(linkRef.current).toBe(true);
+
+    toggleGroupCheckbox();
+
+    expect(linkRef.current).toBe(false);
+    expect(groupCheckbox()).not.toBeChecked();
+
+    toggleGroupCheckbox();
+
+    expect(linkRef.current).toBe(true);
+    expect(groupCheckbox()).toBeChecked();
+  });
+});
+
+describe("CreateSchemaFlow unboxed de-emphasis (MT-13)", () => {
+  it("inserts an inter-track divider only while the checkbox is unchecked", () => {
+    const { container } = renderFlow(flatLadderDraft());
+
+    clickAnotherLadder();
+
+    expect(dividerCount(container)).toBe(0);
+
+    toggleGroupCheckbox();
+
+    expect(dividerCount(container)).toBeGreaterThanOrEqual(1);
+
+    toggleGroupCheckbox();
+
+    expect(dividerCount(container)).toBe(0);
   });
 });
