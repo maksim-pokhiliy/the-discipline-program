@@ -1,33 +1,35 @@
 # session-primitive — plan
 
-Rough phasing; refined at spec freeze. Budget: ≤1 full `/feature` (or 2 small) per runner session (D-7). UI-first house rule applies to the implementation steps: the group/box UX ships on mocks before the contract reshape lands under it.
+Wave-structured per **D-8 JIT-FREEZE**: runner sessions run only on RATIFIED/ACCEPTED grid rows; OPEN items close just-in-time before the wave that needs them. Budget: ≤1 full `/feature` (or 2 small) per runner session (D-7). UI-first house rule: the box UX ships on mocks (W1) before the model lands under it (W2).
 
-| #   | Step                                                                       | Gate                                                                                       | Status     |
-| --- | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ | ---------- |
-| 0   | Founding: review → skeleton + grid + spec                                  | owner ГО (received 2026-06-10)                                                             | 🟢 done    |
-| 1   | Follow-up design: close F-\* + D-MARKER-DEATH → freeze `primitive-spec.md` | owner ratifies every grid row (no OPEN rows left)                                          | ⚪ next    |
-| 2   | Group/box UX on mocks (+ plaque if ratified)                               | coach walkthrough: build parallel ladders, an OR-pair, a superset via boxes; feel approved | ⚪ pending |
-| 3   | Contracts + Prisma + seed reshape                                          | recursion dead; Group persisted; leaf slimmed per grid; gated api-server suite + reseed    | ⚪ pending |
-| 4   | Editor remap + cleanup waves                                               | round-trips green; corpus expressibility spot-checks; no dead mapper layers left           | ⚪ pending |
+| #   | Wave                                                                                                   | Needs decided first        | Gate                                                               | Status                 |
+| --- | ------------------------------------------------------------------------------------------------------ | -------------------------- | ------------------------------------------------------------------ | ---------------------- |
+| 0   | Founding: review → skeleton + grid + spec                                                              | —                          | owner ГО                                                           | 🟢 done                |
+| W1  | Group/box UX on the existing model (platform-only)                                                     | nothing open               | coach walkthrough (boxes feel right) + platform suite green        | 🔵 launched 2026-06-10 |
+| W2  | Model core: Group entity, recursion death, arrangement death, ratified leaf kills, seed, guards        | **D-MARKER-DEATH**         | gated api-server suite + reseed + round-trips                      | ⚪                     |
+| W3  | Editor remap onto the Group model (DnD-grouping, ungroup, member add/remove — real persistence)        | — (rides W2)               | round-trips + walkthrough of the full gesture set                  | ⚪                     |
+| W4  | Row grammar + leaf residuals (plaque/rest/OR/superset carriers; position/tempo/weight/header/slot/cap) | **F-PLAQUE + leaf F-rows** | walkthrough + suites; `primitive-spec.md` has zero OPEN rows after | ⚪                     |
 
-## Step 1 — design follow-ups (owner-paced, no runner sessions needed)
+## W1 — Group/box UX on the existing model (launched 2026-06-10)
 
-The F-ledger in `deferred.md` + D-MARKER-DEATH. Owner is design-fatigued ("я устал дизайнить") — batch these into short focused discussions, one topic at a time, orchestrator brings a concrete recommendation to each. Suggested order (dependency-driven):
+Platform-only; ZERO contract/api-server/Prisma/seed changes. ADR-0040 stays the live law — W1 re-skins its render and adds an explicit creation affordance; the Group entity is W2's job.
 
-1. **F-PLAQUE** first — it decides the row-level grammar (rest rows, OR carrier, connectors, instruction strips) and feeds F-CHIPS/F-SLOT.
-2. **D-MARKER-DEATH** (one yes/no with the Block C re-expression shown).
-3. **F-POSITION-CARRIER + F-CHIPS** together (library vs plaque vs notes — one carrier conversation).
-4. **F-WEIGHT-EXOTICS + F-TEMPO** together (the "what stays typed on the row" conversation; consult `load-representation.md` + `load-edge-cases.md`).
-5. **F-HEADER + F-BLOCK-TIMECAP + F-SLOT** (small residuals).
+Deliverables: (1) a structurally-parallel parent (live `isStructurallyParallel` predicate — the ONE-predicate rule) renders as a BOX: frame/rail enclosing member cards as one unit + label zone + the add-sub-schema affordance relocated into the box; non-parallel parents (EMOM cadence) keep the list render. (2) Box label = parent `Schema.header`, displayed + edited in place through the existing update path; empty → neutral placeholder. (3) The ladder batch flow gets an explicit «связать в коробку» checkbox (default checked; unchecked → N independent flat ladders, no box) — D-2's de-bear-ification of auto-link. OUT: DnD-grouping/ungroup/member-removal persistence (need re-parenting API → W2/W3), in-modal preview (owner: "это уже потом").
 
-Output: `primitive-spec.md` with zero OPEN rows → freeze.
+Prompt issued 2026-06-10; runner session via `/feature` full; orchestrator reviews the git diff before W2 launches.
 
-## Steps 2–4 — implementation (runner sessions via `/feature`)
+## W2 — model core
 
-Sequenced after freeze; expected shape (refine then):
+Group persisted (entity + membership), `parentSchemaId` dies, arrangement axis dies (`interleaveOrder` → Group display setting), ratified leaf kills (STANDALONE_URL/LOAD, REP_DEFINITION + `compoundRep`, cyclical+sandwich → compound, footnote markers, reps/load slim incl. `byProfile`), seed re-expression (4 parallels + block-010 + EMOM slots-as-rows), guards re-derived. Marker cut rides here if D-MARKER-DEATH = yes. Aggressive, bridge-free, `db:reset` world.
 
-- **Step 2 (UI-first).** Box rendering (rail/frame + label), DnD-grouping gesture, batch-create checkbox, ungroup affordance — on mock/draft state; the existing flows must not hard-regress. Gate = coach walkthrough.
-- **Step 3 (model).** Prisma: Group table(s), `parentSchemaId` removal, leaf column slim-down; contracts: grid verdicts; seed re-authoring (corpus blocks re-expressed); api-server guards re-derived; aggressive, bridge-free, `db:reset` world. Gate = gated suite + reseed + coverage gate re-pinned.
-- **Step 4 (remap).** Editor reads/writes the new shape; the mapper layer (`schema-to-draft-container`, `build-axis-composition`, arrangement machinery) collapses; cleanup of dead surfaces. Gate = round-trips + spot-check authoring of grid's hardest rows (drop-set as stages-rows, asymmetric L/R pairs, depth-3 corpus block).
+## W3 — editor remap
 
-Each step = its own runner session with a self-contained prompt written by the orchestrator; review via git diff before the next step launches.
+The editor reads/writes Groups natively; DnD-grouping, one-click ungroup, member add/remove get real persistence; the draft↔contract mapper layer collapses.
+
+## W4 — row grammar + leaf residuals
+
+Plaque/row-group boundary per F-PLAQUE; rest/OR/superset carriers; position library (F-POSITION-CARRIER), tempo (F-TEMPO), weight exotics (F-WEIGHT-EXOTICS), header (F-HEADER), slot (F-SLOT), Block.timeCap (F-BLOCK-TIMECAP). After W4 the spec has zero OPEN rows.
+
+## Design follow-ups (owner-paced, between waves)
+
+Order: **D-MARKER-DEATH** (yes/no — needed before W2) → **F-PLAQUE** (gates W4; one focused discussion, orchestrator brings a concrete rec) → F-POSITION-CARRIER + F-CHIPS → F-WEIGHT-EXOTICS + F-TEMPO (consult `load-representation.md` + `load-edge-cases.md`) → F-HEADER + F-BLOCK-TIMECAP + F-SLOT.

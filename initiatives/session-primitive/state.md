@@ -6,32 +6,33 @@ Resume here (SessionStart hook force-loads this). Narrative → `journal.md`; wh
 
 ## Board
 
-| #   | Step                                                        | Status  | Pointer                          |
-| --- | ----------------------------------------------------------- | ------- | -------------------------------- |
-| 0   | Founding: review → skeleton + grid + spec                   | 🟢 done | `primitive-spec.md` · D-1..D-7   |
-| 1   | Follow-up design: close F-\* + D-MARKER-DEATH → spec freeze | ⚪ next | `deferred.md` F-ledger · plan §1 |
-| 2   | Group/box UX on mocks                                       | ⚪      | plan §2                          |
-| 3   | Contracts + Prisma + seed reshape                           | ⚪      | plan §3                          |
-| 4   | Editor remap + cleanup                                      | ⚪      | plan §4                          |
+| #   | Wave                                                   | Status                  | Pointer                        |
+| --- | ------------------------------------------------------ | ----------------------- | ------------------------------ |
+| 0   | Founding: review → skeleton + grid + spec              | 🟢 done                 | `primitive-spec.md` · D-1..D-8 |
+| W1  | Group/box UX on the existing model (platform-only)     | 🔵 launched 2026-06-10  | plan §W1 · prompt issued       |
+| W2  | Model core (Group entity, recursion/arrangement death) | ⚪ needs D-MARKER-DEATH | plan §W2                       |
+| W3  | Editor remap (DnD/ungroup persistence)                 | ⚪                      | plan §W3                       |
+| W4  | Row grammar + leaf residuals                           | ⚪ needs F-PLAQUE+      | plan §W4                       |
 
 ## Next action
 
-**Step 1, owner-paced follow-ups** — the owner is design-fatigued ("я устал дизайнить"); do NOT dump the whole F-ledger on him. One topic per touch, orchestrator brings a concrete recommendation each time. First topic: **F-PLAQUE** (it gates the row-level grammar — rest rows, OR carrier, connectors). The implementation steps (2–4) do not start until `primitive-spec.md` has zero OPEN rows.
+**W1 runner session is out** (`/feature` full; prompt issued 2026-06-10; owner transports). On its return: the orchestrator reviews the GIT DIFF (never the runner's self-report) against the W1 red lines (platform-only; one-predicate rule; no DnD/ungroup fakes) before W2 launches. **From the owner, any time before W2: D-MARKER-DEATH yes/no** (`decisions.md` — everything needed for the call is written there).
 
 ## Open decisions awaiting ratification
 
-- **D-MARKER-DEATH** (`decisions.md`) — marker row kind dies; rep-scheme ladder = one-row ladder-schemas in a Group. Explicitly asked 2026-06-10, not yet answered. Do not execute past it.
-- The F-ledger (`deferred.md`): F-PLAQUE · F-CHIPS · F-POSITION-CARRIER · F-WEIGHT-EXOTICS · F-TEMPO · F-BLOCK-TIMECAP · F-SLOT · F-HEADER.
+- **D-MARKER-DEATH** (`decisions.md`) — gates W2.
+- The F-ledger (`deferred.md`): F-PLAQUE (gates W4, first) · F-CHIPS · F-POSITION-CARRIER · F-WEIGHT-EXOTICS · F-TEMPO · F-BLOCK-TIMECAP · F-SLOT · F-HEADER. Owner-paced, one topic per touch, orchestrator brings a concrete rec each time.
 
 ## Live carry-forwards
 
-Inherited: QA-004 (confirm/undo rides the editor rebuild) · MARKER-FATE (→ D-MARKER-DEATH) · BACKLOG-ROUNDS (Group label until an engine) · BACKLOG-TAIL / BACKLOG-PATTERNS (dissolve by design — confirm at freeze). Standing debts acknowledged out-of-scope: `Performed*`/`OneRMRecord` known-wrong (Phase-4 redesign); roadmap §4.2 stale wording; reuse features post-primitive.
+Inherited: QA-004 (confirm/undo rides the editor rebuild) · MARKER-FATE (→ D-MARKER-DEATH) · BACKLOG-ROUNDS (Group label until an engine) · BACKLOG-TAIL / BACKLOG-PATTERNS (dissolve by design — confirm at freeze). Standing debts out-of-scope: `Performed*`/`OneRMRecord` known-wrong (Phase-4 redesign); roadmap §4.2 stale; reuse features post-primitive.
 
 ## Gotchas a resuming session must know
 
-- **ADR-0040 is the LIVE behavior of main** (derived parallelism, `isStructurallyParallel`, atomic `POST …/schemas/parallel`) until step 3 lands. D-2 supersedes it forward at implementation time — don't half-apply either world.
-- **The corpus is the floor, not the ceiling** — it's ONE personal plan; m/f loads (`dual_value`) and RX/SC are real-and-frequent in group programming despite corpus cardinality 1/0 (owner correction, D-5/D-6).
-- **No typed relation kinds, no chips-as-blanket-mechanism** — both explicitly rejected by the owner (D-4, F-CHIPS). Channel-3 carriers are decided per case in follow-ups.
-- **Owner verbatim bars** live in `decisions.md` (D-6: TOTAL dead, footnote=ordering, per-set=row-group) — don't re-litigate them in runner prompts; quote them.
-- **Predecessors are CLOSED** (`plan-editor-compose`, `compose-authoring-ux`) — their decisions are the floor of main's current code, not constraints on this redesign EXCEPT the explicitly-sacred list in the charter.
-- Verification sources for the grid: `analysis/artifacts/03-content/schema-content-primitives.md` + `modifier-scope.md` + `compound-and-alternative.md` + `edge-cases.md` (all re-read at founding); `load-representation.md`/`load-edge-cases.md` deliberately deferred to F-WEIGHT-EXOTICS.
+- **ADR-0040 is the LIVE behavior of main** (derived parallelism, atomic `POST …/schemas/parallel`) until W2 lands. W1 builds ON it (box render gated by the live `isStructurallyParallel`), it does not fight it. D-2 supersedes the mechanism only at W2 implementation time.
+- **One-predicate rule** — any "is this a box/parallel" reader consults the shared contracts predicate; a hand-rolled child-count check is how the last CRITICAL shipped.
+- **W1 red lines:** platform-only (zero contracts/api-server/Prisma/seed); no DnD/ungroup persistence fakes (no re-parenting API exists); marker artifacts untouched (OPEN decision).
+- **The corpus is the floor, not the ceiling** — one PERSONAL plan; m/f (`byProfile`) and RX/SC are real despite corpus cardinality 1/0 (D-5/D-6).
+- **No typed relation kinds; no chips-as-blanket-mechanism** (D-4; F-CHIPS rejected as "костыль") — channel-3 carriers decided per case in follow-ups.
+- **Owner verbatim bars** in `decisions.md` D-6 (TOTAL dead, footnote=ordering, per-set=row-group) — quote them in runner prompts, don't re-litigate.
+- Predecessors (`plan-editor-compose`, `compose-authoring-ux`) are CLOSED; their decisions describe main's current code, not this redesign's constraints — except the charter's Sacred list.

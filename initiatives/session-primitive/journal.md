@@ -11,3 +11,9 @@ Append-only. One entry per session/step.
 - **Predecessor closed.** `compose-authoring-ux` CLOSED the same session (both steps merged: PR #258; PRs #259+#260 + ADR-0040); its open carry-forwards transferred here; `initiatives/ACTIVE` → `session-primitive`.
 - **Working model ratified (D-7).** Orchestrator (план → промпт → ревью) + owner as transport/ratifier; runner sessions via `/feature`; review via git diff.
 - **Next.** Step 1 follow-ups, owner-paced, F-PLAQUE first. No runner sessions until spec freeze.
+
+## 2026-06-10 — D-8 ratified (JIT freeze); W1 launched
+
+- Owner: "а мы можем сейчас начать имплементацию?" → dependency-honest answer: the schema-level world (D-2/D-3) is fully ratified; OPEN items gate only the row-level grammar and part of the leaf. The founding "no runner sessions until spec freeze" gate was over-cautious — relaxed as **D-8 JIT-FREEZE** (owner: "давай промпт, я готов запускать"); `plan.md` restructured into waves W1–W4 with explicit needs-decided-first column.
+- **W1 prompt issued** (Group/box UX on the existing model): box render gated by the live `isStructurallyParallel` predicate, label = parent `header` via the existing update path, explicit «связать в коробку» checkbox (default checked) in the ladder batch flow; DnD/ungroup persistence explicitly OUT (no re-parenting API → W2/W3); platform-only red line. Runner = `/feature` full in a fresh session, owner transports; orchestrator reviews the git diff on return.
+- **Pending from owner before W2:** D-MARKER-DEATH (yes/no).

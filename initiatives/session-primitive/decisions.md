@@ -17,6 +17,7 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 | D-5 CHANNELS     | Notation → structure \| typed field \| human text \| dropped syntax            | RATIFIED |
 | D-6 GRID         | `primitive-spec.md` grid = the per-notation disposition (statuses inside)      | RATIFIED |
 | D-7 PROCESS      | Orchestrator/runner model: план → промпт → ревью; /feature wrap; git review    | RATIFIED |
+| D-8 JIT-FREEZE   | Implementation starts now; OPEN items close just-in-time before their wave     | RATIFIED |
 | D-MARKER-DEATH   | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group | **OPEN** |
 
 ---
@@ -74,3 +75,9 @@ D-numbered ratified decisions. Step-level calls that don't merit a full ADR live
 - **Status:** **OPEN** (proposed 2026-06-10; explicitly asked, not yet answered by owner).
 - **Proposal.** The marker row kind (38 corpus occurrences, ~15 schemas, no authoring flow — MARKER-FATE inherited) is removed. Its case — per-track single-movement rep-scheme ladders (Block C `21-15-9 ‖ 9-15-21`) — re-expresses as N one-row ladder-schemas inside a Group. D-LADDER's semantic distinction (shared round-counter vs per-track rep-scheme) SURVIVES as two different STRUCTURES (one ladder-schema with N rows vs a Group of N one-row ladder-schemas) instead of two different fields; the forbidden-fusion guard and QA-001 collision die as unrepresentable.
 - **Why it needs explicit ratification.** It supersedes the "D-LADDER is sacred / do NOT remove the marker" clause carried by both predecessor initiatives — mechanism superseded, semantics preserved. Do not execute past this without the owner's yes.
+
+### D-8 JIT-FREEZE — implementation starts on the ratified core; follow-ups close just-in-time
+
+- **Status:** RATIFIED (2026-06-10, owner: "давай промпт, я готов запускать").
+- **Decision.** The founding plan's full-spec-freeze gate is relaxed. Runner sessions may start NOW under one rule: a runner works ONLY on grid rows whose status is RATIFIED/ACCEPTED; every OPEN item (F-\*, D-MARKER-DEATH) closes just-in-time before the wave that needs it. Wave map (plan.md): W1 Group/box UX on mocks needs nothing open; W2 model core needs D-MARKER-DEATH; W4 row grammar + leaf residuals needs F-PLAQUE + the leaf F-rows.
+- **Rationale.** Dependency-honest: the schema-level world is fully ratified (D-2/D-3); the OPEN items gate only the row-level grammar and part of the leaf. Serializing all implementation behind design-fatigued follow-ups buys no safety — the house aggressive-migration rules already tolerate staged green intermediate states.
