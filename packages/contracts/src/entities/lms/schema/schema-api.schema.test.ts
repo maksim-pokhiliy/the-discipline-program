@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createParallelSchemasRequestSchema,
+  createParallelSchemasResponseSchema,
   createSchemaRequestSchema,
   createSchemaResponseSchema,
   deleteSchemaParamsSchema,
@@ -12,7 +14,12 @@ import {
   updateSchemaRequestSchema,
   updateSchemaResponseSchema,
 } from "./schema-api.schema";
-import { createSchemaSchema, schemaSchema, updateSchemaSchema } from "./schema.schema";
+import {
+  createSchemaSchema,
+  schemaSchema,
+  schemaWithBodySchema,
+  updateSchemaSchema,
+} from "./schema.schema";
 
 const cuid = "clz1234567890123456789aaa";
 const cuidB = "clz1234567890123456789bbb";
@@ -47,6 +54,98 @@ describe("schema request/response aliases", () => {
 
   it("updateSchemaResponseSchema is schemaSchema", () => {
     expect(updateSchemaResponseSchema).toBe(schemaSchema);
+  });
+
+  it("createParallelSchemasResponseSchema is schemaWithBodySchema", () => {
+    expect(createParallelSchemasResponseSchema).toBe(schemaWithBodySchema);
+  });
+});
+
+describe("createParallelSchemasRequestSchema", () => {
+  const baseParallelPayload = {
+    blockId: cuid,
+    tracks: [{ steps: [21, 15, 9] }, { steps: [15, 12, 9] }],
+  };
+
+  it("accepts a minimal two-track payload", () => {
+    expect(createParallelSchemasRequestSchema.safeParse(baseParallelPayload).success).toBe(true);
+  });
+
+  it("accepts parentSchemaId and nullable headers", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      parentSchemaId: cuidB,
+      header: null,
+      tracks: [
+        { header: "A", steps: [21, 15, 9] },
+        { header: null, steps: [15, 12, 9] },
+      ],
+    });
+
+    expect(r.success).toBe(true);
+  });
+
+  it("rejects a single-track payload", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      tracks: [{ steps: [21, 15, 9] }],
+    });
+
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects a track with empty steps", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      tracks: [{ steps: [21, 15, 9] }, { steps: [] }],
+    });
+
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects a non-positive step", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      tracks: [{ steps: [21, 15, 9] }, { steps: [15, 0, 9] }],
+    });
+
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects a non-integer step", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      tracks: [{ steps: [21, 15, 9] }, { steps: [15, 1.5, 9] }],
+    });
+
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects an unknown root key", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      composition: {},
+    });
+
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects an unknown track key", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      tracks: [{ steps: [21, 15, 9] }, { steps: [15, 12, 9], composition: {} }],
+    });
+
+    expect(r.success).toBe(false);
+  });
+
+  it("rejects a non-cuid blockId", () => {
+    const r = createParallelSchemasRequestSchema.safeParse({
+      ...baseParallelPayload,
+      blockId: "not-a-cuid",
+    });
+
+    expect(r.success).toBe(false);
   });
 });
 
