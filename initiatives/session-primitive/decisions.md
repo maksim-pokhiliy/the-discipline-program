@@ -1,0 +1,76 @@
+# session-primitive — decisions
+
+D-numbered ratified decisions. Step-level calls that don't merit a full ADR live here; cross-initiative architecture calls go to `docs/adr/`. **Promote here at every gate** — this file is the SSOT for "why."
+
+**Status legend:** `RATIFIED` (decided + acted) · `OPEN` (awaiting owner ratification — do not execute past it) · `SUPERSEDED` (replaced — kept for the trail).
+
+**Legitimacy lens (supersedes four-projection for this initiative):** the CHANNELS RULE (D-5). Four-projection invariance judged primitives against projections that don't exist (EXECUTES/ANALYTICS) and kept birthing inert stored surface — D-CADENCE ratified `window` days before ADR-0039 deleted it. Here a primitive is judged only against the projections that are LIVE (coach WRITES, human READS); hypothetical projections get a deferred note, never a stored field.
+
+## Index
+
+| ID               | Topic                                                                          | Status   |
+| ---------------- | ------------------------------------------------------------------------------ | -------- |
+| D-1 SCOPE        | Target = the session primitive; fixed floors Session→Block→Schema→Row          | RATIFIED |
+| D-2 BOX          | Relations = explicit Group boxes; opaque coach-owned label; no derivation      | RATIFIED |
+| D-3 NO-RECURSION | Sub-schemas die; no "group" schema-type tile; no graph                         | RATIFIED |
+| D-4 NO-TYPED-REL | No typed relation kinds (no parallel\|choice\|superset enum); text label only  | RATIFIED |
+| D-5 CHANNELS     | Notation → structure \| typed field \| human text \| dropped syntax            | RATIFIED |
+| D-6 GRID         | `primitive-spec.md` grid = the per-notation disposition (statuses inside)      | RATIFIED |
+| D-7 PROCESS      | Orchestrator/runner model: план → промпт → ревью; /feature wrap; git review    | RATIFIED |
+| D-MARKER-DEATH   | `INNER_LADDER_MARKER` dies; rep-scheme ladder = one-row ladder-schema in Group | **OPEN** |
+
+---
+
+### D-1 SCOPE — the primitive is the session and below; floors are fixed
+
+- **Status:** RATIFIED (2026-06-10, owner).
+- **Decision.** Redesign target = Session → Block → Schema → Row. Block stays a valid coach concept (a session's section: warm-up / strength / metcon). Cycles (micro/meso/macro) are a FUTURE enrichment layered above the primitive — out of scope; nothing here may block that layering.
+- **Rationale (owner verbatim).** "блок внутри тренировки это валидная история, ведь тренировочная сессия состоит из частей/блоков. а цикличность … это про микро/мезо/макро циклы. … мы сейчас дизайним модель примитива внутри программирования. примитив это тренировочная сессия и ниже, который наполняет циклы. и сделать мы не можем именно примитив." + "касательно структуры одной отдельной сессии я так и вижу: сессия - блок - схема - строка."
+
+### D-2 BOX — relations are explicit boxes with opaque labels
+
+- **Status:** RATIFIED (2026-06-10, owner-designed).
+- **Decision.** A relation between siblings = membership in an explicit Group node. The Group holds ordered, CONTIGUOUS members and an optional free-text label. The system renders the box and carries the label; it never interprets the label. No sibling→sibling references of any kind. Grouping happens only by explicit coach gesture (DnD one element onto another; batch flows via an opt-in checkbox in the add-schema modal — the box is visible and dissolves in one click). NO semantics are derived from child count.
+- **Rationale (owner verbatim).** "сиблинги не должны знать о 'связях' между собой. связывает блок. он просто берёт набор элементов и говорит 'вот, они лежат в одной коробке, а вот у меня ещё есть лейбл, я не вижу что на нём написано, но ты можешь прочитать, изменить или удалить его'. … 'связь' это исключительно представление и структура, потому как связать мы можем только элементы идущие подряд. … то что более одной лесенки мы сразу же связываем — это мы уже думаем за Дена и потенциально делаем медвежью услугу." Batch-create is UX convenience; auto-link is a semantic decision — decoupled ("это разруливается одним простым чек-боксом в модалке add schema").
+- **Consequences.** Supersedes-forward ADR-0040's derived-parallel mechanism (`isStructurallyParallel`) at implementation time — the box IS the structure, nothing is inferred from child count. The stored superset rowId-pairs (the last sibling-ref surface) die into row-level grouping. Until implementation lands, ADR-0040 remains the live behavior of main.
+
+### D-3 NO-RECURSION — the матрёшка dies
+
+- **Status:** RATIFIED (2026-06-10).
+- **Decision.** `Schema.parentSchemaId` and sub-schema nesting are removed. Grouping needs are served by the Group level(s), not recursion. Rejected alternatives: (a) "parallel as a schema TYPE" with its own add-modal tile — recursion in a hat + the picker-first smell ADR-0037 killed; the add-schema modal stays primitives-only and `add sub-schema` dies; (b) graph links — violates the owner's own contiguity rule ("связать мы можем только элементы идущие подряд"), is render-hostile, and re-opens the dangling-ref bug class ADR-0040/step-2 just buried.
+- **Rationale.** Owner's diagnosis: sub-schemas were added as the carrier of "связь" without ever designing how to SHOW it ("мы нащупали связь ещё тогда, только не раскрутили её в рассуждении достаточно"). The product evidence is damning: recursion existed for a month, the editor had to "unlock" it (ADR-0039 §B), one pattern's authoring took a bespoke initiative, and a step-1 CRITICAL came from recursion ambiguity (the structural-kind trap). Fixed levels + explicit boxes give every level a DESIGNED affordance instead of a generic tree editor.
+- **Consequences.** Corpus depth-3 ("rounds over parallel ladders", block-010) re-expresses as a Group whose label carries "5 rounds:" until an engine needs typed rounds-on-group (BACKLOG-ROUNDS disposition). Max structural depth = Block → Group → Schema → row-grouping → Row.
+
+### D-4 NO-TYPED-REL — relation kinds are not typed
+
+- **Status:** RATIFIED (2026-06-10, owner counter — assistant's typed-core proposal withdrawn).
+- **Decision.** No `relation: parallel | choice | superset | custom` enum — not on Group, not anywhere. The label is free text. If the view layer ever special-cases known labels, that is presentation only and never stored. Specific relation kinds get typed semantics ONLY when a real engine (executor/scoring/analytics) reads them — designed against that engine, per the ADR-0038 re-introduce-fresh principle.
+- **Rationale (owner's applicability-matrix counter, verbatim).** "parallel логически применяется только к схеме, choice валидно для схемы и строки (упражнения), superset пожалуй только для строки, а ты предлагаешь это всё пихать в одно место. запашок чувствуется неприятный…" — one field whose values have different validity domains = per-level guards, refusal channels, inert variants: the exact disease the June drains removed. Also by D-5's own test: today no machine reads relation semantics (composition is inert; the only consumers are write + human read), so relation meaning is channel-3 (human text), not channel-2 (typed field).
+
+### D-5 CHANNELS — the notation-mapping rule
+
+- **Status:** RATIFIED (2026-06-10).
+- **Decision.** Every notation the coach writes maps to exactly one of four channels: **structure** (grouping, ordering, nesting-by-floors) · **typed field** (only what a machine actually reads: renders specially, computes, validates) · **human text** (the system carries and displays, never interprets; concrete carrier per case — library entry / plaque / notes — see F-CHIPS/F-PLAQUE/F-POSITION-CARRIER) · **dropped syntax** (brackets, case, word order — never stored). Expressibility is mandatory for EVERYTHING the coach writes, even cardinality-1 ("если это встречается хоть раз, то уровень абстракции модели … должен позволять Дену реализовать это"); a dedicated TYPE is not.
+- **Rationale.** The genesis disease was forcing all four channels into channel 2 ("каждой нотации — личный тип"), including channel 4 (`wrapped: boolean`). The corpus is the FLOOR of expressiveness, not the ceiling: it is ONE personal plan (written for Maksim), so group-programming notations are systematically underrepresented — `dual_value` m/f load appears once precisely BECAUSE the plan had one athlete; RX/SC appears zero times. Owner: "м/ж вес в кроссфите встречается сплошь и рядом. так же как и rx/sc. … сама концепция валидная."
+
+### D-6 GRID — the per-notation disposition lives in primitive-spec.md
+
+- **Status:** RATIFIED (2026-06-10) — for rows marked RATIFIED/ACCEPTED there; rows marked OPEN (F-\*) are NOT ratified.
+- **Decision.** `primitive-spec.md` §Grid is the single disposition table: every corpus notation → channel + verdict + status. Owner-contested calls folded in verbatim:
+  - **[ TOTAL ] is dead entirely** — not even a flag: "это же буквально фложок для квадратных скобок. даже не думай об этом, этот [ TOTAL ] ни на что не влияет. строка-упражнение для тренера уже есть — добавляет, ставит 30 повторений и всё."
+  - **Footnote `*`/`**` = ordering\*\*, no type, no chip: "5 hspu после каждого раунда это просто строка Упражнение + reps которое стоит последним в раунде. … 'в конце каждого раунда' — так бляха, поставь его в конец."
+  - **Per-set substitution = row-level grouping**, no typed mapping: "так это же группа на уровне строк, это не кейс для обсуждения, уникальности ноль, модель уже это покрывает."
+  - **Placeholder slot stays typed for now**, flagged smelly: "это плохо пахнет, но я пока не понимаю почему. пока пусть живет." (→ F-SLOT)
+  - **dual_value load stays** (m/f standard; resolver designed when athlete context exists): "нет резолвера — будет … сама концепция валидная, момент её появления в модели сомнителен."
+
+### D-7 PROCESS — orchestrator/runner working model
+
+- **Status:** RATIFIED (2026-06-10, owner-proposed).
+- **Decision.** Orchestrator (this session's role): research, deep analysis, design WITH the owner, planning, writing executor prompts, reviewing executed work. Owner: discussion + ratification + transport ("взял промпт — отнес — флагнул когда модель закончила выполнение"). Mechanics: every implementation step = its own runner session wrapped in `/feature` (full or small by scope), ≤1 full (or 2 small) per session; prompts are self-contained (the runner has none of this context); the orchestrator reviews via git diff after each run — never via the runner's self-report; migration steps are aggressive/bridge-free per house style (final state green, no compat shims).
+- **Rationale.** The proven planner/executor pattern minus the shuttle ceremony; review-via-git is a standing house rule (long agent runs over-report).
+
+### D-MARKER-DEATH — `INNER_LADDER_MARKER` dies (proposal)
+
+- **Status:** **OPEN** (proposed 2026-06-10; explicitly asked, not yet answered by owner).
+- **Proposal.** The marker row kind (38 corpus occurrences, ~15 schemas, no authoring flow — MARKER-FATE inherited) is removed. Its case — per-track single-movement rep-scheme ladders (Block C `21-15-9 ‖ 9-15-21`) — re-expresses as N one-row ladder-schemas inside a Group. D-LADDER's semantic distinction (shared round-counter vs per-track rep-scheme) SURVIVES as two different STRUCTURES (one ladder-schema with N rows vs a Group of N one-row ladder-schemas) instead of two different fields; the forbidden-fusion guard and QA-001 collision die as unrepresentable.
+- **Why it needs explicit ratification.** It supersedes the "D-LADDER is sacred / do NOT remove the marker" clause carried by both predecessor initiatives — mechanism superseded, semantics preserved. Do not execute past this without the owner's yes.
