@@ -25,14 +25,6 @@ const row = (id: string): ComposeRow => ({
   editorDraft: null,
 });
 
-const track = (id: string, children: ComposeNode[]): ComposeContainer => ({
-  nodeType: "container",
-  id: asNodeId(id),
-  header: null,
-  notes: null,
-  children,
-});
-
 const container = (id: string, children: ComposeNode[]): ComposeContainer => ({
   nodeType: "container",
   id: asNodeId(id),
@@ -53,29 +45,10 @@ const validate = (
   return { ok, issues };
 };
 
-const parallelHost = (): ComposeContainer =>
-  container("parallel-host", [
-    track("track-down", [row("track-down-row")]),
-    track("track-up", [row("track-up-row")]),
-  ]);
-
 const supersetHost = (): ComposeContainer =>
   container("superset-host", [row("row-curl"), row("row-ext"), row("row-plank")]);
 
 describe("validateDeferredArrangement (QA-504)", () => {
-  it("accepts a valid parallel with two distinct tracks and no issue (B4-AC)", () => {
-    const arrangement: ArrangementAxis = {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [{ childSchemaId: asNodeId("track-down") }, { childSchemaId: asNodeId("track-up") }],
-    };
-
-    const { ok, issues } = validate(arrangement, parallelHost());
-
-    expect(ok).toBe(true);
-    expect(issues).toHaveLength(0);
-  });
-
   it("accepts a valid superset with one pair of two distinct direct rows and no issue (B4-AC)", () => {
     const arrangement: ArrangementAxis = {
       kind: "superset",
@@ -86,63 +59,6 @@ describe("validateDeferredArrangement (QA-504)", () => {
 
     expect(ok).toBe(true);
     expect(issues).toHaveLength(0);
-  });
-
-  it("rejects a parallel with fewer than two tracks (QA-203)", () => {
-    const arrangement: ArrangementAxis = {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [{ childSchemaId: asNodeId("track-down") }],
-    };
-
-    const { ok, issues } = validate(arrangement, parallelHost());
-
-    expect(ok).toBe(false);
-    expect(issues.some((issue) => issue.path === `${PATH}.composition.arrangement.tracks`)).toBe(
-      true,
-    );
-  });
-
-  it("rejects a parallel with duplicate childSchemaId (QA-504)", () => {
-    const arrangement: ArrangementAxis = {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [
-        { childSchemaId: asNodeId("track-down") },
-        { childSchemaId: asNodeId("track-down") },
-      ],
-    };
-
-    const { ok, issues } = validate(arrangement, parallelHost());
-
-    expect(ok).toBe(false);
-    expect(
-      issues.some(
-        (issue) =>
-          issue.path === `${PATH}.composition.arrangement.tracks` &&
-          issue.message.includes("distinct"),
-      ),
-    ).toBe(true);
-  });
-
-  it("rejects a parallel track with a dangling childSchemaId (QA-504)", () => {
-    const arrangement: ArrangementAxis = {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [
-        { childSchemaId: asNodeId("track-down") },
-        { childSchemaId: asNodeId("not-a-child") },
-      ],
-    };
-
-    const { ok, issues } = validate(arrangement, parallelHost());
-
-    expect(ok).toBe(false);
-    expect(
-      issues.some(
-        (issue) => issue.path === `${PATH}.composition.arrangement.tracks[1].childSchemaId`,
-      ),
-    ).toBe(true);
   });
 
   it("rejects a superset with no pairs (QA-504)", () => {
@@ -220,7 +136,7 @@ describe("validateDeferredArrangement (QA-504)", () => {
   it("never throws for an ordered arrangement and reports no issue", () => {
     const issues: ConvertIssue[] = [];
     const run = () =>
-      validateDeferredArrangement({ kind: "ordered" }, parallelHost(), PATH, issues);
+      validateDeferredArrangement({ kind: "ordered" }, supersetHost(), PATH, issues);
 
     expect(run).not.toThrow();
     expect(run()).toBe(true);
@@ -229,12 +145,11 @@ describe("validateDeferredArrangement (QA-504)", () => {
 
   it("never throws for a deeply malformed arrangement and returns false", () => {
     const arrangement: ArrangementAxis = {
-      kind: "parallel",
-      interleaveOrder: "round_by_round",
-      tracks: [{ childSchemaId: asNodeId("ghost-a") }, { childSchemaId: asNodeId("ghost-a") }],
+      kind: "superset",
+      pairs: [{ label: "Ghosts", rowIds: [asNodeId("ghost-a"), asNodeId("ghost-a")] }],
     };
     const issues: ConvertIssue[] = [];
-    const run = () => validateDeferredArrangement(arrangement, parallelHost(), PATH, issues);
+    const run = () => validateDeferredArrangement(arrangement, supersetHost(), PATH, issues);
 
     expect(run).not.toThrow();
     expect(run()).toBe(false);

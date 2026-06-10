@@ -22,15 +22,10 @@ export type RepetitionAxis =
   | { kind: "cadence"; everyMin: number; rounds: number }
   | { kind: "interval"; workMin: number; offMin: number; count: number };
 
-export type ParallelTrackDraft = {
-  childSchemaId: NodeId;
-};
-
 export type SupersetPairDraft = { label: string; rowIds: NodeId[] };
 
 export type ArrangementAxis =
   | { kind: "ordered" }
-  | { kind: "parallel"; interleaveOrder: ParallelInterleaveOrder; tracks: ParallelTrackDraft[] }
   | { kind: "superset"; pairs: SupersetPairDraft[] };
 
 export type RestAxis = RestSpec;
@@ -42,6 +37,7 @@ export type ComposeContainer = {
   notes: string | null;
   repetition?: RepetitionAxis;
   arrangement?: ArrangementAxis;
+  interleaveOrder?: ParallelInterleaveOrder;
   rest?: RestAxis;
   children: ComposeNode[];
 };
